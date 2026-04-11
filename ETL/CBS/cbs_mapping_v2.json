@@ -1,0 +1,75 @@
+[
+    {
+        "table_name": "KERNCIJFERS_WIJKEN_EN_BUURTEN",
+        "normalize": false,
+        "columns": [
+            "PersonenautoSPerHuishouden_112",
+            "PersonenautoSNaarOppervlakte_113"
+        ],
+        "indicator_name": [
+            "Personenauto's per huishouden",
+            "Personenauto's naar oppervlakte"
+        ],
+        "total_indicators": 2
+    },
+    {
+        "table_name": "KERNCIJFERS_WIJKEN_EN_BUURTEN",
+        "normalize": "HuishoudensTotaal_29",
+        "columns": [
+            "HuishoudensTotaal_29",
+            "HuishoudensZonderKinderen_31",
+            "HuishoudensMetKinderen_32"
+        ],
+        "indicator_name": [
+            "Huishoudens totaal",
+            "Huishoudens zonder kind",
+            "Huishoudens met kind"
+        ],
+        "total_indicators": 3
+    },
+    {
+        "table_name": "KERNCIJFERS_WIJKEN_EN_BUURTEN",
+        "normalize": false,
+        "columns": [
+            "Koopwoningen_41",
+            "InBezitWoningcorporatie_43",
+            "InBezitOverigeVerhuurders_44"
+        ],
+        "indicator_name": [
+            "Koopwoningen",
+            "Woningcorporatie bezit",
+            "Particulier huurbezit"
+        ],
+        "total_indicators": 3
+    },
+    {
+        "table_name": "KERNCIJFERS_WIJKEN_EN_BUURTEN",
+        "normalize": false,
+        "columns": [
+            "AfstandTotHuisartsenpraktijk_115",
+            "AfstandTotGroteSupermarkt_116",
+            "AfstandTotKinderdagverblijf_117",
+            "AfstandTotSchool_118"
+        ],
+        "indicator_name": [
+            "Afstand tot huisarts",
+            "Afstand tot grote supermarkt",
+            "Afstand tot kinderdagverblijf",
+            "Afstand tot school"
+        ],
+        "total_indicators": 4
+    },
+    {
+        "table_name": "KERNCIJFERS_WIJKEN_EN_BUURTEN",
+        "normalize": false,
+        "columns": [
+            "PercentageWerknemers_75",
+            "PercentageZelfstandigen_78"
+        ],
+        "indicator_name": [
+            "Percentage werknemers",
+            "Percentage zelfstandigen"
+        ],
+        "total_indicators": 2
+    }
+]

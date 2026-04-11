@@ -1,0 +1,2 @@
+# Deze map wordt uitgesloten van Git via .gitignore.
+# Gegenereerde exports (JSON, Excel, PDF rapporten) worden hier geplaatst maar nooit gecommit.

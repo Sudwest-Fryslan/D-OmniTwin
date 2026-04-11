@@ -1,0 +1,50 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.venv/
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Configuration
+config.ini
+.env
+
+# Agents (intern AI-werkgeheugen, niet voor repository)
+.agents/
+
+# Data (volledige uitsluiting, bevat grote datasets)
+data/
+
+# Exports (gegenereerde rapporten, JSON exports, Excel)
+exports/*
+!exports/.gitkeep
+
+# Logs
+*.log
+logs/
+
+# Obsolete
+obsolete/*
+!obsolete/.gitkeep
+
+# Intern werkdocument
+BRAINDUMP.md
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Docs: interne projectmappen (niet openbaar)
+docs/4-ux-design/
+docs/5-secops/
+docs/6-ai-parallel-track/
+docs/7-projectmanagement/

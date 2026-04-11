@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="nl" class="scroll-smooth">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kompas Visualisatie Architectuur</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- D3.js voor de Sunburst Chart -->
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        /* Custom styles for the visualization */
+        .sunburst-path {
+            stroke: #fff;
+            stroke-width: 1px;
+            transition: opacity 0.2s;
+            cursor: pointer;
+        }
+
+        .sunburst-path:hover {
+            opacity: 0.8;
+        }
+
+        .tooltip {
+            position: absolute;
+            text-align: left;
+            padding: 12px;
+            font: 12px sans-serif;
+            background: rgba(15, 23, 42, 0.95);
+            color: white;
+            border-radius: 8px;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.2s;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            z-index: 50;
+            max-width: 250px;
+        }
+
+        /* Code block styling */
+        pre {
+            background-color: #1e293b;
+            color: #e2e8f0;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            overflow-x: auto;
+            font-size: 0.875rem;
+        }
+
+        .code-comment {
+            color: #94a3b8;
+        }
+
+        .code-keyword {
+            color: #c678dd;
+        }
+
+        .code-string {
+            color: #98c379;
+        }
+
+        .code-function {
+            color: #61afef;
+        }
+
+        /* Scrollbar styling */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+    </style>
+</head>
+
+<body class="bg-slate-50 text-slate-800 font-sans antialiased selection:bg-blue-200">
+
+    <!-- Header -->
+    <header class="bg-white border-b border-slate-200 sticky top-0 z-40">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <i data-lucide="compass" class="text-blue-600 w-8 h-8"></i>
+                <h1 class="text-xl font-bold text-slate-900">Kompas Architectuur</h1>
+            </div>
+            <div class="text-sm font-medium text-slate-500 bg-slate-100 px-3 py-1 rounded-full">
+                Documentatie & Demo
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex flex-col lg:flex-row gap-8 relative">
+
+        <!-- Left Column: Content -->
+        <div class="lg:w-1/2 flex flex-col gap-12 pb-32">
+
+            <!-- Intro -->
+            <section>
+                <h2 class="text-3xl font-extrabold text-slate-900 tracking-tight mb-4">Gegevensstroom en Database
+                    Interacties</h2>
+                <p class="text-lg text-slate-600 leading-relaxed">
+                    Dit document beschrijft de volledige technische flow van hoe de Sunburst/Kompas visualisatie in de
+                    applicatie tot stand komt, van frontend requests tot onderliggende SQL iteraties in de database. De
+                    doelgroep is data scientists en backend developers die de kompas logica of scoringmechanismen verder
+                    willen uitbreiden.
+                </p>
+            </section>
+
+            <!-- 1. De Stroom -->
+            <section class="space-y-6" id="de-stroom">
+                <div class="flex items-center gap-3 border-b border-slate-200 pb-2">
+                    <div class="bg-blue-100 text-blue-600 p-2 rounded-lg"><i data-lucide="arrow-right-left"></i></div>
+                    <h3 class="text-2xl font-bold">1. De Stroom: Frontend naar Database</h3>
+                </div>
+
+                <!-- A. Initialisatie -->
+                <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+                    <h4 class="text-lg font-bold flex items-center gap-2 mb-4">
+                        <span
+                            class="bg-slate-100 text-slate-600 w-8 h-8 rounded flex items-center justify-center font-mono text-sm">A</span>
+                        Initialisatie (Welke kompassen zijn er?)
+                    </h4>
+                    <ul class="space-y-3 text-slate-600">
+                        <li class="flex gap-3"><i data-lucide="monitor"
+                                class="w-5 h-5 shrink-0 text-slate-400 mt-0.5"></i>
+                            <div><strong>Frontend:</strong> Roept in de achtergrond <code
+                                    class="bg-slate-100 px-1 rounded text-pink-600 text-sm">/api/kompas/configuraties</code>
+                                aan.</div>
+                        </li>
+                        <li class="flex gap-3"><i data-lucide="server"
+                                class="w-5 h-5 shrink-0 text-slate-400 mt-0.5"></i>
+                            <div><strong>Backend:</strong> Routeert naar <code
+                                    class="bg-slate-100 px-1 rounded text-sm text-slate-800">KompasService.get_configuraties()</code>.
+                            </div>
+                        </li>
+                        <li class="flex gap-3"><i data-lucide="database"
+                                class="w-5 h-5 shrink-0 text-slate-400 mt-0.5"></i>
+                            <div><strong>Database:</strong> Query op de view <code
+                                    class="bg-slate-100 px-1 rounded text-sm text-slate-800">v_kompas_config_stats</code>
+                                voor meta-informatie.</div>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- B. Interactie -->
+                <div
+                    class="bg-white rounded-xl shadow-sm border border-slate-200 border-l-4 border-l-blue-500 p-6 relative overflow-hidden">
+                    <div class="absolute -right-4 -top-4 opacity-5"><i data-lucide="mouse-pointer-click"
+                            class="w-32 h-32"></i></div>
+                    <h4 class="text-lg font-bold flex items-center gap-2 mb-2">
+                        <span
+                            class="bg-blue-100 text-blue-600 w-8 h-8 rounded flex items-center justify-center font-mono text-sm">B</span>
+                        Interactie (Klik op een wijk/buurt)
+                    </h4>
+                    <p class="text-sm text-slate-500 italic mb-4">Dit is de zwaarste en meest cruciale bewerking in de
+                        flow.</p>
+
+                    <div class="space-y-4">
+                        <div class="pl-4 border-l-2 border-slate-200">
+                            <strong class="text-slate-800">B1. Gebied Verificatie:</strong> Snelle query naar <code
+                                class="text-sm bg-slate-100 px-1 rounded">gebieden</code>.
+                        </div>
+                        <div class="pl-4 border-l-2 border-slate-200">
+                            <strong class="text-slate-800">B2. De Boomstructuur (<code
+                                    class="text-sm bg-slate-100 px-1 rounded">v_kompas_hierarchie</code>):</strong>
+                            Haalt de platte taxonomie op. (Titel → Thema → Onderdeel → Indicator).
+                        </div>
+                        <div class="pl-4 border-l-2 border-slate-200">
+                            <strong class="text-slate-800">B3. Waarden ophalen (Lateral Join):</strong>
+                            <pre class="mt-2 text-xs"><code><span class="code-keyword">LEFT JOIN LATERAL</span> (
+    <span class="code-keyword">SELECT</span> waarde, jaar <span class="code-keyword">FROM</span> gebied_data
+    <span class="code-keyword">WHERE</span> indicator_uuid = i.uuid <span class="code-keyword">AND</span> gebied_id = :gebied_id
+    <span class="code-keyword">ORDER BY</span> jaar <span class="code-keyword">DESC LIMIT</span> 1
+) gd <span class="code-keyword">ON true</span></code></pre>
+                        </div>
+                        <div class="pl-4 border-l-2 border-slate-200">
+                            <strong class="text-slate-800">B4. Kleuring / Thresholds:</strong> Procentuele klassen
+                            berekenen:
+                            <pre class="mt-2 text-xs"><code><span class="code-function">PERCENTILE_CONT</span>(<span class="code-keyword">ARRAY</span>[0.125, 0.25, ..., 0.875]) 
+<span class="code-keyword">WITHIN GROUP</span> (<span class="code-keyword">ORDER BY</span> waarde)</code></pre>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- C. Detailweergave -->
+                <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+                    <h4 class="text-lg font-bold flex items-center gap-2 mb-4">
+                        <span
+                            class="bg-slate-100 text-slate-600 w-8 h-8 rounded flex items-center justify-center font-mono text-sm">C</span>
+                        Detailweergave & Historie
+                    </h4>
+                    <p class="text-slate-600">Klik op de buitenste ring (Indicator) laadt de trendlijn via <code
+                            class="bg-slate-100 px-1 rounded text-pink-600 text-sm">/history/{gebied_id}/{indicator_uuid}</code>.
+                    </p>
+                </div>
+            </section>
+
+            <!-- 2. Datamodellen -->
+            <section class="space-y-6" id="datamodellen">
+                <div class="flex items-center gap-3 border-b border-slate-200 pb-2">
+                    <div class="bg-emerald-100 text-emerald-600 p-2 rounded-lg"><i data-lucide="database"></i></div>
+                    <h3 class="text-2xl font-bold">2. Tabel & Views Afhankelijkheden</h3>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+                        <h5 class="font-bold text-slate-800 mb-3 flex items-center gap-2"><i data-lucide="layers"
+                                class="w-4 h-4 text-emerald-500"></i> Tabellen (Hiërarchie)</h5>
+                        <ul class="text-sm space-y-2 text-slate-600">
+                            <li>• <code class="bg-slate-100 px-1 rounded">kompas_configuraties</code></li>
+                            <li>• <code class="bg-slate-100 px-1 rounded">kompas_titels</code></li>
+                            <li>• <code class="bg-slate-100 px-1 rounded">kompas_themas</code></li>
+                            <li>• <code class="bg-slate-100 px-1 rounded">kompas_onderdelen</code></li>
+                            <li>• <code class="bg-slate-100 px-1 rounded">kompas_indicator_mapping</code></li>
+                        </ul>
+                    </div>
+                    <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+                        <h5 class="font-bold text-slate-800 mb-3 flex items-center gap-2"><i data-lucide="bar-chart-3"
+                                class="w-4 h-4 text-emerald-500"></i> Data & Logica</h5>
+                        <ul class="text-sm space-y-2 text-slate-600">
+                            <li>• <code class="bg-slate-100 px-1 rounded font-bold text-emerald-700">gebied_data</code>
+                                (1M+ rijen)</li>
+                            <li>• <code class="bg-slate-100 px-1 rounded">indicatoren</code></li>
+                            <li>• <code class="bg-slate-100 px-1 rounded">_scoring_regels</code></li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="bg-amber-50 border border-amber-200 rounded-xl p-4 text-amber-800 text-sm flex gap-3">
+                    <i data-lucide="alert-triangle" class="w-5 h-5 shrink-0 mt-0.5 text-amber-600"></i>
+                    <div>
+                        <strong>Let op:</strong> De centrale view <code
+                            class="bg-amber-100 px-1 rounded">v_kompas_hierarchie</code> transformeert dit alles. Pas je
+                        het model aan? Wijzig dan ook deze view in <code
+                            class="bg-amber-100 px-1 rounded">data/schema_latest.sql</code>!
+                    </div>
+                </div>
+            </section>
+
+            <!-- 3. De Transformatie -->
+            <section class="space-y-6" id="transformatie">
+                <div class="flex items-center gap-3 border-b border-slate-200 pb-2">
+                    <div class="bg-purple-100 text-purple-600 p-2 rounded-lg"><i data-lucide="code-2"></i></div>
+                    <h3 class="text-2xl font-bold">3. De Sunburst Transformatie</h3>
+                </div>
+                <p class="text-slate-600">
+                    D3.js vereist een geneste JSON-structuur. De backend zet de platte SQL-rijen om naar deze
+                    boomstructuur. Kijk naar de interactieve demo hiernaast: de ringen vertegenwoordigen deze
+                    nestings-levels.
+                </p>
+                <div class="bg-[#1e293b] rounded-xl shadow-lg overflow-hidden">
+                    <div class="bg-slate-800 px-4 py-2 flex items-center gap-2 border-b border-slate-700">
+                        <div class="flex gap-1.5">
+                            <div class="w-3 h-3 rounded-full bg-red-500"></div>
+                            <div class="w-3 h-3 rounded-full bg-yellow-500"></div>
+                            <div class="w-3 h-3 rounded-full bg-green-500"></div>
+                        </div>
+                        <span class="text-slate-400 text-xs font-mono ml-2">kompas_service.py</span>
+                    </div>
+                    <pre
+                        class="!bg-transparent !p-4 !m-0"><code><span class="code-comment"># Stap 1: Flat SQL rijen groeperen per niveau</span>
+titels = {}
+<span class="code-keyword">for</span> row <span class="code-keyword">in</span> rows:
+    <span class="code-keyword">if</span> row.titel_id <span class="code-keyword">not in</span> titels:
+        titels[row.titel_id] = {
+            <span class="code-string">"name"</span>: row.titel_naam,
+            <span class="code-string">"type"</span>: <span class="code-string">"titel"</span>,
+            <span class="code-string">"color"</span>: row.titel_kleur,
+            <span class="code-string">"children"</span>: {}
+        }
+    
+    <span class="code-comment"># ... Geneste ifs voor Thema & Onderdeel ...</span>
+    
+    <span class="code-comment"># Zodra de buitenste ring (Indicator) is bereikt:</span>
+    <span class="code-keyword">if</span> row.indicator_uuid:
+        titels[row.titel_id][<span class="code-string">"children"</span>]...append({
+            <span class="code-string">"name"</span>: row.indicator_naam,
+            <span class="code-string">"type"</span>: <span class="code-string">"indicator"</span>,
+            <span class="code-string">"value"</span>: <span class="code-keyword">None</span>, <span class="code-comment"># Gevuld in Stap B3/B4</span>
+            <span class="code-string">"color"</span>: <span class="code-keyword">None</span>   
+        })
+
+<span class="code-comment"># Stap 2: Dicts -> Lists voor D3.js</span>
+root_children = convert_dicts_to_lists(titels) 
+<span class="code-keyword">return</span> { <span class="code-string">"name"</span>: <span class="code-string">"Root"</span>, <span class="code-string">"children"</span>: root_children }</code></pre>
+                </div>
+            </section>
+        </div>
+
+        <!-- Right Column: Interactive Visualization -->
+        <div class="lg:w-1/2 relative hidden lg:block">
+            <div
+                class="sticky top-24 bg-white rounded-2xl shadow-xl border border-slate-200 p-6 flex flex-col items-center justify-center min-h-[600px] overflow-hidden">
+                <div class="absolute top-6 left-6 right-6 flex justify-between items-start">
+                    <div>
+                        <h3 class="text-lg font-bold text-slate-800">Live D3.js Rendering</h3>
+                        <p class="text-sm text-slate-500">Beweeg over de ringen om de structuur te zien.</p>
+                    </div>
+                    <div class="bg-blue-50 text-blue-700 text-xs px-2 py-1 rounded font-mono font-bold">
+                        /api/kompas/1/gebied/105
+                    </div>
+                </div>
+
+                <!-- D3 Container -->
+                <div id="sunburst-container" class="mt-8"></div>
+                <div id="tooltip" class="tooltip"></div>
+
+                <!-- Legend / Status -->
+                <div class="absolute bottom-6 w-full px-8 flex justify-center gap-6 text-xs text-slate-600">
+                    <div class="flex items-center gap-2">
+                        <div class="w-3 h-3 rounded-full bg-emerald-500"></div> Top 12.5%
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <div class="w-3 h-3 rounded-full bg-slate-300"></div> Gemiddeld
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <div class="w-3 h-3 rounded-full bg-red-500"></div> Laagste 12.5%
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <script>
+        // Initialize Lucide icons
+        lucide.createIcons();
+
+        // 1. DUMMY DATA CREATION (Mimicking the Python Output)
+        // Structure: Root -> Titel -> Thema -> Onderdeel -> Indicator
+        const kompasData = {
+            name: "Root",
+            children: [
+                {
+                    name: "Fysieke Leefomgeving",
+                    type: "titel",
+                    color: "#0f766e", // Teal
+                    children: [
+                        {
+                            name: "Groen & Water",
+                            type: "thema",
+                            children: [
+                                {
+                                    name: "Openbaar Groen",
+                                    type: "onderdeel",
+                                    children: [
+                                        { name: "Oppervlakte parken", type: "indicator", value: 1, color: "#10b981", rawValue: "15.4 ha" }, // Green (Top)
+                                        { name: "Aantal bomen", type: "indicator", value: 1, color: "#cbd5e1", rawValue: "430" }, // Average
+                                        { name: "Kwaliteit water", type: "indicator", value: 1, color: "#ef4444", rawValue: "Slecht" } // Red
+                                    ]
+                                },
+                                {
+                                    name: "Biodiversiteit",
+                                    type: "onderdeel",
+                                    children: [
+                                        { name: "Vogelsoorten", type: "indicator", value: 1, color: "#10b981", rawValue: "45 soorten" },
+                                        { name: "Insectenhotel", type: "indicator", value: 1, color: "#cbd5e1", rawValue: "2" }
+                                    ]
+                                }
+                            ]
+                        },
+                        {
+                            name: "Wonen",
+                            type: "thema",
+                            children: [
+                                {
+                                    name: "Woningvoorraad",
+                                    type: "onderdeel",
+                                    children: [
+                                        { name: "Betaalbare huur", type: "indicator", value: 1, color: "#ef4444", rawValue: "12%" }, // Red
+                                        { name: "Koopwoningen", type: "indicator", value: 1, color: "#cbd5e1", rawValue: "65%" }
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    name: "Sociaal Domein",
+                    type: "titel",
+                    color: "#4338ca", // Indigo
+                    children: [
+                        {
+                            name: "Veiligheid",
+                            type: "thema",
+                            children: [
+                                {
+                                    name: "Objectief",
+                                    type: "onderdeel",
+                                    children: [
+                                        { name: "Inbraken", type: "indicator", value: 1, color: "#10b981", rawValue: "Zeer Laag" }, // Green
+                                        { name: "Geweldsdelicten", type: "indicator", value: 1, color: "#cbd5e1", rawValue: "Gemiddeld" }
+                                    ]
+                                },
+                                {
+                                    name: "Subjectief",
+                                    type: "onderdeel",
+                                    children: [
+                                        { name: "Onveiligheidsgevoel", type: "indicator", value: 1, color: "#ef4444", rawValue: "Hoog" } // Red
+                                    ]
+                                }
+                            ]
+                        },
+                        {
+                            name: "Gezondheid",
+                            type: "thema",
+                            children: [
+                                {
+                                    name: "Leefstijl",
+                                    type: "onderdeel",
+                                    children: [
+                                        { name: "Overgewicht", type: "indicator", value: 1, color: "#cbd5e1", rawValue: "48%" },
+                                        { name: "Sporters", type: "indicator", value: 1, color: "#10b981", rawValue: "62%" }
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        };
+
+        // 2. D3.JS SUNBURST RENDERING
+        const renderSunburst = () => {
+            const width = 450;
+            const radius = width / 2;
+
+            // Select container and clear
+            const container = d3.select("#sunburst-container");
+            container.selectAll("*").remove();
+
+            const svg = container.append("svg")
+                .attr("width", width)
+                .attr("height", width)
+                .style("font", "10px sans-serif");
+
+            const g = svg.append("g")
+                .attr("transform", `translate(${width / 2},${width / 2})`);
+
+            // D3 Hierarchy setup (Stap 3 in document)
+            // .sum(d => d.value) ensures leaf nodes have size, pushing them to outer rings
+            const root = d3.hierarchy(kompasData)
+                .sum(d => d.value)
+                .sort((a, b) => b.value - a.value);
+
+            // D3 Partition computes angles and radii
+            d3.partition()
+                .size([2 * Math.PI, root.height + 1])
+                (root);
+
+            // Helper to determine color based on depth or specific indicator color
+            const colorPicker = (d) => {
+                if (!d.depth) return "transparent"; // Root is invisible
+                if (d.data.color) return d.data.color; // If specific color is set (Titels or Indicatoren)
+
+                // If it's a middle ring (Thema, Onderdeel), derive color from Title (depth 1) but make it slightly lighter/transparent
+                let parentColorNode = d;
+                while (parentColorNode.depth > 1) parentColorNode = parentColorNode.parent;
+
+                const baseColor = d3.color(parentColorNode.data.color);
+                // Adjust opacity based on depth for visual hierarchy
+                baseColor.opacity = 1 - (d.depth * 0.15);
+                return baseColor;
+            };
+
+            // Arc generator
+            const arc = d3.arc()
+                .startAngle(d => d.x0)
+                .endAngle(d => d.x1)
+                .padAngle(d => Math.min((d.x1 - d.x0) / 2, 0.005))
+                .padRadius(radius / 2)
+                .innerRadius(d => d.y0 * radius / 5)
+                .outerRadius(d => Math.max(d.y0 * radius / 5, d.y1 * radius / 5 - 1));
+
+            // Tooltip setup
+            const tooltip = d3.select("#tooltip");
+
+            // Draw the paths
+            g.selectAll("path")
+                .data(root.descendants().filter(d => d.depth)) // Exclude root
+                .join("path")
+                .attr("class", "sunburst-path")
+                .attr("fill", colorPicker)
+                .attr("d", arc)
+                .on("mouseover", function (event, d) {
+                    // Highlight logic
+                    d3.selectAll(".sunburst-path").style("opacity", 0.3);
+
+                    // Highlight ancestors
+                    const ancestors = d.ancestors();
+                    d3.selectAll(".sunburst-path")
+                        .filter(node => ancestors.includes(node))
+                        .style("opacity", 1)
+                        .style("stroke", "#333");
+
+                    // Tooltip Logic
+                    const pathString = ancestors.map(a => a.data.name).reverse().slice(1).join(" <br/>↳ ");
+
+                    let tooltipHtml = `
+                        <div class="font-bold text-blue-300 text-xs mb-1">${d.data.type.toUpperCase()}</div>
+                        <div class="font-bold mb-2">${d.data.name}</div>
+                        <div class="text-xs text-slate-300 leading-tight">${pathString}</div>
+                    `;
+
+                    if (d.data.type === "indicator" && d.data.rawValue) {
+                        tooltipHtml += `
+                            <div class="mt-3 pt-2 border-t border-slate-700 flex justify-between items-center">
+                                <span class="text-xs">Berekende waarde:</span>
+                                <span class="font-bold bg-white text-slate-900 px-1.5 py-0.5 rounded">${d.data.rawValue}</span>
+                            </div>
+                        `;
+                    }
+
+                    tooltip.transition().duration(200).style("opacity", 1);
+                    tooltip.html(tooltipHtml)
+                        .style("left", (event.pageX + 15) + "px")
+                        .style("top", (event.pageY - 28) + "px");
+                })
+                .on("mouseout", function () {
+                    d3.selectAll(".sunburst-path")
+                        .style("opacity", 1)
+                        .style("stroke", "#fff");
+                    tooltip.transition().duration(500).style("opacity", 0);
+                });
+
+            // Add central text
+            g.append("text")
+                .attr("text-anchor", "middle")
+                .attr("dy", "-0.5em")
+                .style("font-size", "14px")
+                .style("font-weight", "bold")
+                .style("fill", "#1e293b")
+                .text("Wijk");
+
+            g.append("text")
+                .attr("text-anchor", "middle")
+                .attr("dy", "1em")
+                .style("font-size", "12px")
+                .style("fill", "#64748b")
+                .text("105");
+        };
+
+        // Render on load
+        renderSunburst();
+
+    </script>
+</body>
+
+</html>

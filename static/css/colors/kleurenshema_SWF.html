@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="nl">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kleurschema Opzet - Súdwest-Fryslân</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        :root {
+            /* Light Palette */
+            --light-bg: #f8fafc;
+            --light-surface: #ffffff;
+            --light-primary: #009cde;
+            /* SWF Keperblauw */
+            --light-secondary: #BF0042;
+            /* SWF Monza Rood */
+            --light-accent: #63b44b;
+            /* Natuurlijk Groen */
+            --light-text-main: #1e293b;
+            --light-text-muted: #64748b;
+            --light-border: #e2e8f0;
+
+            /* Dark Palette */
+            --dark-bg: #0f172a;
+            --dark-surface: #1e293b;
+            --dark-primary: #38bdf8;
+            /* Lichter blauw voor contrast */
+            --dark-secondary: #e11d48;
+            --dark-accent: #4ade80;
+            --dark-text-main: #f1f5f9;
+            --dark-text-muted: #94a3b8;
+            --dark-border: #334155;
+        }
+
+        .color-card {
+            transition: transform 0.2s ease;
+        }
+
+        .color-card:hover {
+            transform: translateY(-4px);
+        }
+    </style>
+</head>
+
+<body class="bg-gray-100 font-sans text-slate-900">
+
+    <header class="bg-white border-b border-gray-200 py-8 px-6 mb-12">
+        <div class="max-w-6xl mx-auto">
+            <h1 class="text-3xl font-bold text-slate-800">Kleurconcept Súdwest-Fryslân</h1>
+            <p class="mt-2 text-slate-600 max-w-2xl">
+                Dit voorstel combineert de officiële gemeentelijke kleuren (Blauw & Rood) met de sfeer van het landschap
+                en water uit de referentiebeelden. Geschikt voor zowel publieke websites als applicaties.
+            </p>
+        </div>
+    </header>
+
+    <main class="max-w-6xl mx-auto px-6 pb-20">
+
+        <!-- Light Mode Section -->
+        <section class="mb-16">
+            <div class="flex items-center gap-3 mb-6">
+                <span class="p-2 bg-yellow-100 text-yellow-700 rounded-full">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24"
+                        stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m12.728 0l-.707-.707M6.343 6.343l-.707-.707M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                </span>
+                <h2 class="text-2xl font-semibold">Licht Palet (Toegankelijk & Helder)</h2>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <!-- Preview UI -->
+                <div class="p-8 rounded-3xl shadow-xl border border-gray-200"
+                    style="background-color: var(--light-bg);">
+                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+                        <span class="inline-block px-3 py-1 text-xs font-bold rounded-full mb-4"
+                            style="background-color: #e0f2fe; color: var(--light-primary);">NIEUWS</span>
+                        <h3 class="text-xl font-bold mb-2" style="color: var(--light-text-main);">Duurzaam
+                            Súdwest-Fryslân</h3>
+                        <p class="mb-6 leading-relaxed" style="color: var(--light-text-muted);">
+                            Samen werken we aan een groenere toekomst voor onze meren en dorpen. Ontdek hoe u kunt
+                            bijdragen.
+                        </p>
+                        <div class="flex gap-4">
+                            <button
+                                class="px-5 py-2.5 rounded-xl font-medium text-white transition-opacity hover:opacity-90"
+                                style="background-color: var(--light-primary);">Lees meer</button>
+                            <button class="px-5 py-2.5 rounded-xl font-medium border transition-colors hover:bg-gray-50"
+                                style="border-color: var(--light-primary); color: var(--light-primary);">Contact</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Color Swatches -->
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="p-4 bg-white rounded-2xl shadow-sm border border-gray-100 flex items-center gap-4">
+                        <div class="w-12 h-12 rounded-lg shadow-inner" style="background-color: var(--light-primary);">
+                        </div>
+                        <div>
+                            <p class="font-mono text-sm">#009CDE</p>
+                            <p class="text-xs text-gray-400">Primary Blue</p>
+                        </div>
+                    </div>
+                    <div class="p-4 bg-white rounded-2xl shadow-sm border border-gray-100 flex items-center gap-4">
+                        <div class="w-12 h-12 rounded-lg shadow-inner"
+                            style="background-color: var(--light-secondary);"></div>
+                        <div>
+                            <p class="font-mono text-sm">#BF0042</p>
+                            <p class="text-xs text-gray-400">Monza Red</p>
+                        </div>
+                    </div>
+                    <div class="p-4 bg-white rounded-2xl shadow-sm border border-gray-100 flex items-center gap-4">
+                        <div class="w-12 h-12 rounded-lg shadow-inner" style="background-color: var(--light-accent);">
+                        </div>
+                        <div>
+                            <p class="font-mono text-sm">#63B44B</p>
+                            <p class="text-xs text-gray-400">Nature Green</p>
+                        </div>
+                    </div>
+                    <div class="p-4 bg-white rounded-2xl shadow-sm border border-gray-100 flex items-center gap-4">
+                        <div class="w-12 h-12 rounded-lg shadow-inner" style="background-color: #F8FAFC;"></div>
+                        <div>
+                            <p class="font-mono text-sm">#F8FAFC</p>
+                            <p class="text-xs text-gray-400">Background</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <hr class="border-gray-300 mb-16">
+
+        <!-- Dark Mode Section -->
+        <section>
+            <div class="flex items-center gap-3 mb-6">
+                <span class="p-2 bg-indigo-100 text-indigo-700 rounded-full">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24"
+                        stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+                    </svg>
+                </span>
+                <h2 class="text-2xl font-semibold">Donker Palet (Focus & Rust)</h2>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <!-- Preview UI -->
+                <div class="p-8 rounded-3xl shadow-2xl" style="background-color: var(--dark-bg);">
+                    <div class="p-6 rounded-2xl border"
+                        style="background-color: var(--dark-surface); border-color: var(--dark-border);">
+                        <span class="inline-block px-3 py-1 text-xs font-bold rounded-full mb-4"
+                            style="background-color: rgba(56, 189, 248, 0.1); color: var(--dark-primary);">MELDING</span>
+                        <h3 class="text-xl font-bold mb-2" style="color: var(--dark-text-main);">Wegwerkzaamheden Sneek
+                        </h3>
+                        <p class="mb-6 leading-relaxed" style="color: var(--dark-text-muted);">
+                            Houd rekening met extra reistijd rondom de stadsgrachten. De werkzaamheden duren tot
+                            vrijdag.
+                        </p>
+                        <div class="flex gap-4">
+                            <button
+                                class="px-5 py-2.5 rounded-xl font-medium text-slate-900 transition-opacity hover:opacity-90"
+                                style="background-color: var(--dark-primary);">Details bekijken</button>
+                            <button
+                                class="px-5 py-2.5 rounded-xl font-medium border transition-colors hover:bg-slate-800"
+                                style="border-color: var(--dark-border); color: var(--dark-text-main);">Sluiten</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Color Swatches -->
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="p-4 rounded-2xl flex items-center gap-4 text-white"
+                        style="background-color: var(--dark-surface);">
+                        <div class="w-12 h-12 rounded-lg shadow-inner" style="background-color: var(--dark-primary);">
+                        </div>
+                        <div>
+                            <p class="font-mono text-sm">#38BDF8</p>
+                            <p class="text-xs text-slate-400">Primary Blue</p>
+                        </div>
+                    </div>
+                    <div class="p-4 rounded-2xl flex items-center gap-4 text-white"
+                        style="background-color: var(--dark-surface);">
+                        <div class="w-12 h-12 rounded-lg shadow-inner" style="background-color: var(--dark-secondary);">
+                        </div>
+                        <div>
+                            <p class="font-mono text-sm">#E11D48</p>
+                            <p class="text-xs text-slate-400">Monza Red</p>
+                        </div>
+                    </div>
+                    <div class="p-4 rounded-2xl flex items-center gap-4 text-white"
+                        style="background-color: var(--dark-surface);">
+                        <div class="w-12 h-12 rounded-lg shadow-inner" style="background-color: var(--dark-accent);">
+                        </div>
+                        <div>
+                            <p class="font-mono text-sm">#4ADE80</p>
+                            <p class="text-xs text-slate-400">Nature Green</p>
+                        </div>
+                    </div>
+                    <div class="p-4 rounded-2xl flex items-center gap-4 text-white"
+                        style="background-color: var(--dark-surface);">
+                        <div class="w-12 h-12 rounded-lg shadow-inner" style="background-color: #0F172A;"></div>
+                        <div>
+                            <p class="font-mono text-sm">#0F172A</p>
+                            <p class="text-xs text-slate-400">Background</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Context & Details -->
+        <section class="mt-20 p-8 bg-blue-50 rounded-3xl border border-blue-100">
+            <h3 class="text-xl font-bold mb-4 text-blue-900">Ontwerpkeuzes</h3>
+            <ul class="space-y-3 text-blue-800">
+                <li class="flex gap-2"><strong>• Basis:</strong> De primaire kleur is afgeleid van het waterrijke
+                    karakter van Súdwest-Fryslân (Keperblauw).</li>
+                <li class="flex gap-2"><strong>• Contrast:</strong> Het 'Monza' rood uit de vlag en het logo wordt als
+                    accentkleur gebruikt voor belangrijke interacties.</li>
+                <li class="flex gap-2"><strong>• Toegankelijkheid:</strong> De contrastratio's voor tekst op achtergrond
+                    voldoen aan de WCAG 2.1 richtlijnen, wat essentieel is voor overheidscommunicatie.</li>
+                <li class="flex gap-2"><strong>• Natuur:</strong> De groene tint (Smaragdgroen) refereert aan de
+                    weilanden en natuurgebieden die in de afbeelding zichtbaar zijn.</li>
+            </ul>
+        </section>
+
+    </main>
+
+</body>
+
+</html>

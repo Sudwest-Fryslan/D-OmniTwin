@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>D-OmniTwin Architectuur</title>
+    <!-- Tailwind CSS voor styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons voor web -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        /* Aangepaste scrollbar voor een schonere look */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+    </style>
+</head>
+<body class="bg-slate-100 min-h-screen flex flex-col font-sans text-slate-800 overflow-hidden">
+
+    <!-- Header -->
+    <header class="bg-white border-b border-slate-200 shadow-sm z-10 flex-shrink-0">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div>
+                <h1 class="text-2xl font-bold text-slate-900 flex items-center gap-2">
+                    <i data-lucide="layers" class="text-blue-600"></i>
+                    D-OmniTwin Architectuur
+                </h1>
+                <p class="text-sm text-slate-500">AI Chat & Zoek Interface Deep-Dive • Versie 2.1.0 (Sprint 10)</p>
+            </div>
+            <div class="flex flex-wrap gap-2">
+                <span class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-semibold">Vanilla JS</span>
+                <span class="px-3 py-1 bg-green-100 text-green-800 rounded-full text-xs font-semibold">FastAPI</span>
+                <span class="px-3 py-1 bg-purple-100 text-purple-800 rounded-full text-xs font-semibold">pgvector</span>
+            </div>
+        </div>
+        
+        <!-- Tabs Navigation -->
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex overflow-x-auto" id="tab-container">
+            <!-- Tabs worden hier door JS ingevoegd -->
+        </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8 flex gap-6 overflow-hidden">
+        
+        <!-- TAB 1: ARCHITECTUUR -->
+        <div id="tab-architectuur" class="tab-content w-full flex flex-col lg:flex-row gap-6 h-full">
+            
+            <!-- Linker kolom: Nodes Lijst -->
+            <div class="flex-1 bg-white rounded-xl shadow-sm border border-slate-200 p-6 overflow-y-auto h-full relative">
+                <h2 class="text-lg font-bold mb-6 flex items-center gap-2 sticky top-0 bg-white pb-2 z-20">
+                    <i data-lucide="layout" class="text-slate-400"></i> Visuele Componenten Map
+                </h2>
+                
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-8 relative" id="nodes-container">
+                    <!-- Nodes worden hier ingevoegd via JS -->
+                </div>
+                
+                <div class="mt-8 p-4 bg-yellow-50 border border-yellow-200 rounded-lg text-sm text-yellow-800 sticky bottom-0 z-20">
+                    <strong>Kernprincipe:</strong> De AI bepaalt welke data zichtbaar wordt op de kaart, maar de gebruiker beslist via de actieknoppen in de chat of de actie wordt uitgevoerd. Alle interacties zijn omkeerbaar.
+                </div>
+            </div>
+
+            <!-- Rechter kolom: Info Panel -->
+            <div class="w-full lg:w-1/3 bg-white rounded-xl shadow-sm border border-slate-200 flex flex-col overflow-hidden hidden lg:flex h-full">
+                <div id="info-header-bar" class="h-2 w-full bg-blue-500 transition-colors duration-300"></div>
+                <div class="p-6 flex-1 overflow-y-auto">
+                    <div class="flex items-center gap-3 mb-4">
+                        <div id="info-icon-container" class="p-3 rounded-lg bg-blue-100 text-blue-600 transition-colors duration-300">
+                            <!-- Icon -->
+                        </div>
+                        <div>
+                            <h3 id="info-title" class="text-xl font-bold text-slate-900">Titel</h3>
+                            <span id="info-file" class="text-xs text-slate-500 font-mono bg-slate-100 px-2 py-1 rounded">bestand.js</span>
+                        </div>
+                    </div>
+
+                    <div class="prose prose-sm text-slate-600 mb-6">
+                        <p id="info-description" class="text-base leading-relaxed">Beschrijving komt hier...</p>
+                    </div>
+
+                    <h4 class="font-semibold text-slate-900 mb-3 flex items-center gap-2">
+                        <i data-lucide="layers" class="w-4 h-4"></i> Belangrijke Eigenschappen
+                    </h4>
+                    <ul id="info-details" class="space-y-2 mb-6 text-sm text-slate-600">
+                        <!-- Details list -->
+                    </ul>
+
+                    <div id="info-code-section" class="hidden">
+                        <h4 class="font-semibold text-slate-900 mb-2 flex items-center gap-2">
+                            <i data-lucide="code" class="w-4 h-4"></i> Code Concept
+                        </h4>
+                        <pre class="bg-slate-900 text-slate-300 p-4 rounded-lg text-xs overflow-x-auto"><code id="info-code"></code></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 2: FLOW -->
+        <div id="tab-flow" class="tab-content w-full bg-white rounded-xl shadow-sm border border-slate-200 p-6 overflow-y-auto hidden">
+            <h2 class="text-xl font-bold mb-2">Request & Response Flow</h2>
+            <p class="text-slate-500 mb-8">De end-to-end cyclus van een gebruikersvraag tot en met het updaten van de kaart en het kompas.</p>
+            
+            <div class="max-w-4xl mx-auto relative" id="flow-container">
+                <!-- Flow stappen komen hier -->
+            </div>
+        </div>
+
+        <!-- TAB 3: DATABASE & AI -->
+        <div id="tab-database" class="tab-content w-full overflow-y-auto hidden">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 h-full pb-6">
+                
+                <!-- Schema -->
+                <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+                    <h3 class="text-lg font-bold mb-4 flex items-center gap-2">
+                        <i data-lucide="database" class="text-slate-400"></i> Database Relaties (PostgreSQL)
+                    </h3>
+                    <div class="space-y-4">
+                        <div class="border border-slate-200 rounded-lg overflow-hidden">
+                            <div class="bg-slate-50 px-4 py-2 border-b border-slate-200 font-mono font-bold text-sm">indicatoren</div>
+                            <ul class="p-4 space-y-1 text-sm font-mono text-slate-600">
+                                <li>uuid <span class="text-slate-400">UUID (PK)</span></li>
+                                <li>naam <span class="text-slate-400">TEXT</span></li>
+                                <li class="text-blue-600 font-semibold bg-blue-50 -mx-4 px-4 py-0.5">ontologische_beschrijving <span class="text-slate-400 font-normal">TEXT</span> (Pri 1)</li>
+                                <li class="text-blue-600 font-semibold bg-blue-50 -mx-4 px-4 py-0.5">beschrijving_ai <span class="text-slate-400 font-normal">TEXT</span> (Pri 2)</li>
+                                <li>omschrijving <span class="text-slate-400">TEXT (Pri 3)</span></li>
+                            </ul>
+                        </div>
+                        <div class="border border-slate-200 rounded-lg overflow-hidden">
+                            <div class="bg-slate-50 px-4 py-2 border-b border-slate-200 font-mono font-bold text-sm">indicator_embeddings</div>
+                            <ul class="p-4 space-y-1 text-sm font-mono text-slate-600">
+                                <li>indicator_uuid <span class="text-slate-400">UUID (FK)</span></li>
+                                <li class="text-purple-600 font-semibold">embedding <span class="text-slate-400 font-normal">vector(384)</span></li>
+                            </ul>
+                            <div class="bg-purple-50 p-2 text-xs border-t border-purple-100 text-purple-800">
+                                Index: ivfflat (vector_cosine_ops)
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- AI Models -->
+                <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 flex flex-col gap-6">
+                    <div>
+                        <h3 class="text-lg font-bold mb-4 flex items-center gap-2">
+                            <i data-lucide="search" class="text-slate-400"></i> AI Zoekmodel
+                        </h3>
+                        <div class="bg-slate-50 rounded-lg p-4 border border-slate-200 text-sm">
+                            <div class="font-bold text-slate-800 mb-2">all-MiniLM-L6-v2 (Sentence Transformers)</div>
+                            <table class="w-full text-left mt-2">
+                                <tbody>
+                                    <tr class="border-b border-slate-200"><th class="py-2 text-slate-500 font-normal">Dimensies</th><td class="py-2 font-mono">384</td></tr>
+                                    <tr class="border-b border-slate-200"><th class="py-2 text-slate-500 font-normal">Afstand</th><td class="py-2 font-mono">Cosine Similarity</td></tr>
+                                    <tr class="border-b border-slate-200"><th class="py-2 text-slate-500 font-normal">Grootte</th><td class="py-2">~28 MB (lokaal)</td></tr>
+                                    <tr><th class="py-2 text-slate-500 font-normal">Snelheid</th><td class="py-2">50-150ms / query</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-bold mb-4 flex items-center gap-2">
+                            <i data-lucide="brain" class="text-slate-400"></i> LLM Narratief Model
+                        </h3>
+                        <div class="bg-slate-50 rounded-lg p-4 border border-slate-200 text-sm">
+                            <div class="font-bold text-slate-800 mb-2">Qwen3:30b (via Ollama)</div>
+                            <p class="text-slate-600 mb-3">Zorgt voor de natuurlijke taaluitleg in de chat interface. Werkt volledig lokaal op de server (http://localhost:11434).</p>
+                            <div class="bg-white border border-slate-200 p-3 rounded text-xs font-mono text-slate-500">
+                                System Prompt Restricties:<br/>
+                                - Max 80 woorden output<br/>
+                                - Uitsluitend Nederlands<br/>
+                                - Platte tekst (geen Markdown)<br/>
+                                - Geen technische termen
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- App Logica -->
+    <script>
+        // --- DATA ---
+        const architectureNodes = [
+            {
+                id: 'chatpanel', layer: 'frontend', title: 'ChatPanel', file: 'static/js/chat.js (341 regels)', icon: 'message-square',
+                description: 'Vanilla JS klasse die het chat-zijpaneel beheert. Stuurt vragen naar de backend en toont de actie-knoppen en LLM-responses.',
+                details: [
+                    'Geen framework (React/Vue) om bestaande app niet te verstoren.',
+                    'Beheert state: isOpen, isLoading.',
+                    'Haalt kaartcontext op (huidig gebied/indicator) om mee te sturen naar de API.'
+                ],
+                codeSnippet: `_getKaartContext() {\n  return {\n    huidig_gebied_id: window.state?.selectedGebiedId,\n    huidige_indicator_uuid: window.state?.currentIndicator\n  };\n}`
+            },
+            {
+                id: 'eventbus', layer: 'frontend', title: 'EventBus', file: 'static/js/core/event-bus.js (49 regels)', icon: 'activity',
+                description: 'De ruggengraat van de frontend. Een globale pub/sub singleton die alle componenten ontkoppelt.',
+                details: [
+                    'Voorkomt directe method-calls tussen componenten.',
+                    'Centraal event: INDICATOR_SELECTED.',
+                    'Zowel app.js (kaart) als kompas.js luisteren hiernaar.'
+                ],
+                codeSnippet: `class EventBus {\n  on(event, cb) { ... }\n  emit(event, data) { ... }\n}\nwindow.EventBus = new EventBus();`
+            },
+            {
+                id: 'kaart', layer: 'frontend', title: 'Kaart (app.js)', file: 'static/js/app.js (~2200 regels)', icon: 'layout',
+                description: 'De hoofdapplicatie die de geografische kaart beheert en datalagen rendert.',
+                details: [
+                    'Luistert naar INDICATOR_SELECTED via EventBus.',
+                    'Roept loadKaartData(indicatorUuid) aan.',
+                    'Update UI dropdowns en legenda automatisch.'
+                ]
+            },
+            {
+                id: 'kompas', layer: 'frontend', title: 'D-Omni Kompas', file: 'static/js/kompas.js (1926 regels)', icon: 'zap',
+                description: 'D3.js Sunburst visualisatie. Bevat de cruciale anti-loop guard voor synchronisatie met de chat en kaart.',
+                details: [
+                    'Zoomt naar de geselecteerde indicator in het kwadrant.',
+                    'Bevat _isSyncing flag om een oneindige EventBus loop te voorkomen.'
+                ],
+                codeSnippet: `EventBus.on('INDICATOR_SELECTED', (data) => {\n  if (kompasViz._isSyncing) return; // LOOP GUARD\n  kompasViz._isSyncing = true;\n  kompasViz.navigateToIndicator(data.uuid);\n  setTimeout(() => { kompasViz._isSyncing = false; }, 1200);\n});`
+            },
+            {
+                id: 'router', layer: 'backend', title: 'Chat Router', file: 'routers/chat.py (263 regels)', icon: 'server',
+                description: 'Het enige publieke FastAPI endpoint (POST /api/chat). Orkestreert de 5 stappen van een zoekopdracht.',
+                details: [
+                    '1. Zoeken (AISearchService)',
+                    '2. Intent classificatie',
+                    '3. Narrative generatie (LLMService)',
+                    '4. Actie-knoppen genereren',
+                    '5. Retourneren Pydantic ChatResponse'
+                ]
+            },
+            {
+                id: 'search', layer: 'backend', title: 'AI Search Service', file: 'services/ai_search_service.py (91 regels)', icon: 'search',
+                description: 'Semantisch zoeken via pgvector en sentence-transformers.',
+                details: [
+                    'Model: all-MiniLM-L6-v2 (384 dimensies).',
+                    'Cosine similarity (score = 1 - distance).',
+                    'Scores > 0.25 zijn relevant.',
+                    'Inferentietijd: 50-150ms per query.'
+                ],
+                codeSnippet: `SELECT uuid, naam, beschrijving\nFROM indicatoren i\nJOIN indicator_embeddings e ON i.uuid = e.indicator_uuid\nORDER BY (e.embedding <=> :vector) ASC\nLIMIT 8`
+            },
+            {
+                id: 'intent', layer: 'backend', title: 'Intent Classifier', file: 'classify_intent()', icon: 'git-branch',
+                description: 'Rule-based regex classifier die de bedoeling van de gebruiker bepaalt om de juiste actieknoppen te tonen.',
+                details: [
+                    'Geen ML, puur regex voor < 1ms performance.',
+                    'Intents: TOON_OP_KAART, SELECTEER_BUURTEN, MAAK_RAPPORT, ANALYSEER_GEBIED, VERBIND_THEMAS.'
+                ]
+            },
+            {
+                id: 'llm', layer: 'backend', title: 'LLM Service', file: 'services/llm_service.py (231 regels)', icon: 'brain',
+                description: 'Genereert de narratieve, menselijke toelichting in het chatvenster.',
+                details: [
+                    'Communiceert met lokale Ollama instantie.',
+                    'Model: qwen3:30b.',
+                    'Max 80 woorden output (geconfigureerd via DB prompt).',
+                    'Latentie: 2-15 seconden (afhankelijk van cold/warm start).'
+                ],
+                codeSnippet: `POST http://localhost:11434/api/generate\n{\n  "model": "qwen3:30b",\n  "system": "<system_prompt>",\n  "prompt": "<user_prompt>"\n}`
+            },
+            {
+                id: 'postgres', layer: 'database', title: 'PostgreSQL + pgvector', file: 'Database Schema', icon: 'database',
+                description: 'Opslag van indicatoren, instellingen en de vector-embeddings voor semantisch zoeken.',
+                details: [
+                    'Tabel: indicator_embeddings (vector(384)).',
+                    'Index: ivfflat (vector_cosine_ops).',
+                    'Tabel: llm_config (Ollama URL, model name).',
+                    'Tabel: system_prompts (dynamische aanpassing LLM gedrag).'
+                ]
+            }
+        ];
+
+        const userFlowSteps = [
+            { time: '0ms', actor: 'Gebruiker', action: 'Typt vraag & klikt verzenden' },
+            { time: '+1ms', actor: 'ChatPanel', action: 'Toont laad-animatie, stuurt POST /api/chat' },
+            { time: '+150ms', actor: 'AISearch', action: 'Vectoriseert vraag (MiniLM) & zoekt in pgvector (top 8)' },
+            { time: '+1ms', actor: 'Classifier', action: 'Regex bepaalt Intent (bijv. SELECTEER_BUURTEN)' },
+            { time: '+3-10s', actor: 'LLMService', action: 'Ollama (qwen3:30b) schrijft toelichting van ~80 woorden', bottleneck: true },
+            { time: '+1ms', actor: 'Router', action: 'Genereert actie-knoppen op basis van intent + resultaten' },
+            { time: '+20ms', actor: 'ChatPanel', action: 'Rendert response. Gebruiker klikt op knop "Toon op kaart"' },
+            { time: '+1ms', actor: 'EventBus', action: 'Emit INDICATOR_SELECTED(uuid)' },
+            { time: '+50ms', actor: 'app.js', action: 'Laadt nieuwe data, update legenda' },
+            { time: '+100ms', actor: 'kompas.js', action: 'Zet _isSyncing guard aan, zoomt naar node (+800ms animatie)', guard: true }
+        ];
+
+        const tabs = [
+            { id: 'architectuur', label: 'Systeem Architectuur', icon: 'layout' },
+            { id: 'flow', label: 'Interactie Flow', icon: 'activity' },
+            { id: 'database', label: 'Database & AI Info', icon: 'database' }
+        ];
+
+        // --- STATE ---
+        let activeTab = 'architectuur';
+        let selectedNodeId = 'chatpanel';
+
+        // --- RENDER LOGIC ---
+        function init() {
+            renderTabs();
+            renderNodesList();
+            renderFlow();
+            selectNode(selectedNodeId);
+            lucide.createIcons();
+        }
+
+        function renderTabs() {
+            const container = document.getElementById('tab-container');
+            container.innerHTML = tabs.map(tab => `
+                <button onclick="switchTab('${tab.id}')" id="btn-tab-${tab.id}" class="flex items-center gap-2 px-4 py-3 font-medium transition-all border-b-2 whitespace-nowrap
+                    ${activeTab === tab.id ? 'border-blue-500 text-blue-600 bg-blue-50/50' : 'border-transparent text-slate-500 hover:text-slate-800 hover:bg-slate-50'}">
+                    <i data-lucide="${tab.icon}" class="w-5 h-5"></i>
+                    ${tab.label}
+                </button>
+            `).join('');
+            lucide.createIcons();
+        }
+
+        function switchTab(tabId) {
+            activeTab = tabId;
+            
+            // Update knoppen styling
+            renderTabs(); 
+
+            // Verberg alle tabs en toon actieve
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.getElementById(`tab-${tabId}`).classList.remove('hidden');
+        }
+
+        function renderNodesList() {
+            const container = document.getElementById('nodes-container');
+            const layers = [
+                { id: 'frontend', title: 'Browser (Frontend)', color: 'blue' },
+                { id: 'backend', title: 'FastAPI (Backend)', color: 'green' },
+                { id: 'database', title: 'Data & AI (Lokaal)', color: 'purple' }
+            ];
+
+            let html = `
+                <!-- Visuele verbindingslijnen (decoratief) -->
+                <div class="absolute inset-0 pointer-events-none hidden md:block">
+                    <div class="w-1/3 h-full border-r-2 border-dashed border-slate-200 absolute left-0"></div>
+                    <div class="w-1/3 h-full border-r-2 border-dashed border-slate-200 absolute left-1/3"></div>
+                </div>
+            `;
+
+            layers.forEach(layer => {
+                const nodesInLayer = architectureNodes.filter(n => n.layer === layer.id);
+                
+                html += `
+                    <div class="relative z-10 flex flex-col gap-4">
+                        <div class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">${layer.title}</div>
+                        ${nodesInLayer.map(node => `
+                            <button onclick="selectNode('${node.id}')" id="node-${node.id}" 
+                                class="text-left p-4 rounded-lg border-2 transition-all duration-200 flex items-start gap-3 bg-white shadow-sm hover:border-${layer.color}-300 hover:bg-slate-50">
+                                <div class="node-icon-wrapper p-2 rounded-md bg-slate-100 text-slate-600">
+                                    <i data-lucide="${node.icon}"></i>
+                                </div>
+                                <div>
+                                    <div class="font-semibold text-slate-900">${node.title}</div>
+                                    <div class="text-xs text-slate-500 truncate max-w-[150px]" title="${node.file}">${node.file}</div>
+                                </div>
+                            </button>
+                        `).join('')}
+                    </div>
+                `;
+            });
+
+            container.innerHTML = html;
+        }
+
+        function selectNode(id) {
+            selectedNodeId = id;
+            const node = architectureNodes.find(n => n.id === id);
+            if (!node) return;
+
+            // Reset actieve styling op alle nodes
+            document.querySelectorAll('[id^="node-"]').forEach(el => {
+                el.className = el.className.replace(/border-(blue|green|purple)-500 bg-(blue|green|purple)-50 shadow-md transform scale-\[1.02\]/g, '');
+                el.classList.add('bg-white', 'shadow-sm', 'border-slate-200');
+                // Reset icon wrapper
+                const iconWrap = el.querySelector('.node-icon-wrapper');
+                iconWrap.className = 'node-icon-wrapper p-2 rounded-md bg-slate-100 text-slate-600';
+            });
+
+            // Pas styling toe op de geselecteerde node
+            const activeEl = document.getElementById(`node-${id}`);
+            if (activeEl) {
+                activeEl.classList.remove('bg-white', 'border-slate-200');
+                
+                let colorBase = node.layer === 'frontend' ? 'blue' : node.layer === 'backend' ? 'green' : 'purple';
+                
+                activeEl.classList.add(`border-${colorBase}-500`, `bg-${colorBase}-50`, 'shadow-md', 'transform', 'scale-[1.02]');
+                
+                const iconWrap = activeEl.querySelector('.node-icon-wrapper');
+                iconWrap.className = `node-icon-wrapper p-2 rounded-md bg-${colorBase}-500 text-white`;
+            }
+
+            // Update details panel
+            document.getElementById('info-title').innerText = node.title;
+            document.getElementById('info-file').innerText = node.file;
+            document.getElementById('info-description').innerText = node.description;
+            
+            // Render details list
+            const detailsHtml = node.details.map(d => `
+                <li class="flex items-start gap-2">
+                    <i data-lucide="arrow-right" class="text-slate-400 mt-0.5 w-4 h-4 flex-shrink-0"></i>
+                    <span>${d}</span>
+                </li>
+            `).join('');
+            document.getElementById('info-details').innerHTML = detailsHtml;
+
+            // Render code snippet
+            const codeSection = document.getElementById('info-code-section');
+            if (node.codeSnippet) {
+                document.getElementById('info-code').innerText = node.codeSnippet;
+                codeSection.classList.remove('hidden');
+            } else {
+                codeSection.classList.add('hidden');
+            }
+
+            // Update themakleuren in panel
+            let colorClass = node.layer === 'frontend' ? 'bg-blue-500' : node.layer === 'backend' ? 'bg-green-500' : 'bg-purple-500';
+            let iconBgClass = node.layer === 'frontend' ? 'bg-blue-100 text-blue-600' : node.layer === 'backend' ? 'bg-green-100 text-green-600' : 'bg-purple-100 text-purple-600';
+            
+            document.getElementById('info-header-bar').className = `h-2 w-full transition-colors duration-300 ${colorClass}`;
+            document.getElementById('info-icon-container').className = `p-3 rounded-lg transition-colors duration-300 ${iconBgClass}`;
+            document.getElementById('info-icon-container').innerHTML = `<i data-lucide="${node.icon}" class="w-6 h-6"></i>`;
+
+            // Herlaad iconen in de details view
+            lucide.createIcons();
+            
+            // Toon het paneel op mobiel door te scrollen
+            if (window.innerWidth < 1024) {
+                document.querySelector('.lg\\:flex.hidden')?.classList.remove('hidden');
+            }
+        }
+
+        function renderFlow() {
+            const container = document.getElementById('flow-container');
+            
+            let html = `
+                <!-- Verticale lijn -->
+                <div class="absolute left-[5.5rem] sm:left-[8.5rem] top-4 bottom-4 w-0.5 bg-slate-200"></div>
+            `;
+
+            userFlowSteps.forEach((step, idx) => {
+                let alertHtml = '';
+                if (step.bottleneck) {
+                    alertHtml = `
+                        <div class="mt-3 p-2 bg-purple-100 text-purple-800 text-xs rounded border border-purple-200 flex items-center gap-2">
+                            <i data-lucide="brain" class="w-4 h-4"></i> Latentie Bottleneck: Ollama API call bepaalt de totale wachttijd.
+                        </div>
+                    `;
+                }
+                if (step.guard) {
+                    alertHtml = `
+                        <div class="mt-3 p-2 bg-red-50 text-red-800 text-xs rounded border border-red-200 flex items-center gap-2">
+                            <i data-lucide="activity" class="w-4 h-4"></i> Cruciaal: Guard _isSyncing voorkomt dat Kompas een nieuw event triggert.
+                        </div>
+                    `;
+                }
+
+                html += `
+                    <div class="flex items-start gap-4 sm:gap-6 mb-8 relative group">
+                        <!-- Tijd -->
+                        <div class="w-16 sm:w-24 text-right pt-1 flex-shrink-0 text-xs sm:text-sm font-mono text-slate-400">
+                            ${step.time}
+                        </div>
+                        
+                        <!-- Node Bolletje -->
+                        <div class="relative z-10 w-8 h-8 rounded-full border-4 border-white shadow-sm flex items-center justify-center flex-shrink-0 bg-blue-500 group-hover:scale-110 transition-transform">
+                            <div class="w-2 h-2 bg-white rounded-full"></div>
+                        </div>
+
+                        <!-- Inhoud -->
+                        <div class="flex-1 bg-slate-50 border border-slate-200 rounded-lg p-4 group-hover:border-blue-300 group-hover:shadow-md transition-all">
+                            <div class="font-bold text-slate-700 mb-1">${step.actor}</div>
+                            <div class="text-slate-600 text-sm">${step.action}</div>
+                            ${alertHtml}
+                        </div>
+                    </div>
+                `;
+            });
+
+            container.innerHTML = html;
+        }
+
+        // Start de applicatie
+        document.addEventListener('DOMContentLoaded', init);
+
+    </script>
+</body>
+</html>

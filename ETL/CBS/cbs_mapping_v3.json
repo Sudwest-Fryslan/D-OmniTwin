@@ -1,0 +1,96 @@
+[
+    {
+        "table_name": "KERNCIJFERS_WIJKEN_EN_BUURTEN",
+        "normalize": false,
+        "columns": [
+            "Personenauto's per huishouden",
+            "Personenauto's naar oppervlakte",
+            "Koopwoningen",
+            "In bezit woningcorporatie",
+            "In bezit overige verhuurders",
+            "Afstand tot huisartsenpraktijk",
+            "Afstand tot grote supermarkt",
+            "Afstand tot kinderdagverblijf",
+            "Afstand tot school",
+            "Bevolkingsdichtheid",
+            "Gemiddelde WOZ-waarde van woningen",
+            "Gemiddeld inkomen per inwoner",
+            "Huishoudens met een laag inkomen",
+            "0 tot 15 jaar",
+            "15 tot 25 jaar",
+            "25 tot 45 jaar",
+            "45 tot 65 jaar",
+            "65 jaar of ouder"
+        ],
+        "indicator_name": [
+            "Personenauto's per huishouden",
+            "Personenauto's naar oppervlakte",
+            "Koopwoningen",
+            "Woningcorporatie bezit",
+            "Particulier huurbezit",
+            "Afstand tot huisarts",
+            "Afstand tot grote supermarkt",
+            "Afstand tot kinderdagverblijf",
+            "Afstand tot school",
+            "Bevolkingsdichtheid",
+            "Gemiddelde WOZ-waarde",
+            "Inkomen per inwoner",
+            "Huishoudens met laag inkomen",
+            "0-15 jaar",
+            "15-25 jaar",
+            "25-45 jaar",
+            "45-65 jaar",
+            "65+ jaar"
+        ],
+        "use_titles": true
+    },
+    {
+        "table_name": "KERNCIJFERS_WIJKEN_EN_BUURTEN",
+        "normalize": "Huishoudens totaal",
+        "columns": [
+            "Huishoudens totaal",
+            "Huishoudens zonder kinderen",
+            "Huishoudens met kinderen"
+        ],
+        "indicator_name": [
+            "Huishoudens totaal",
+            "Huishoudens zonder kind",
+            "Huishoudens met kind"
+        ],
+        "use_titles": true
+    },
+    {
+        "table_name": "GEZONDHEID_PER_WIJK_EN_BUURT_RIVM",
+        "normalize": false,
+        "columns": [
+            "Rookt tabak",
+            "Overgewicht",
+            "Eenzaam",
+            "Moeite met rondkomen",
+            "Goed ervaren gezondheid",
+            "Ernstig overgewicht (obesitas)",
+            "Overmatig drinken"
+        ],
+        "indicator_name": [
+            "Roker",
+            "Overgewicht",
+            "Eenzaam",
+            "Moeite met rondkomen",
+            "Ervaren gezondheid",
+            "Obesitas",
+            "Overmatig alcoholgebruik"
+        ],
+        "use_titles": true
+    },
+    {
+        "table_name": "GEZONDHEIDSMONITOR_JONGVOLWASSENEN",
+        "normalize": false,
+        "columns": [
+            "MoeiteMetRondkomen_1"
+        ],
+        "indicator_name": [
+            "Moeite met rondkomen"
+        ],
+        "use_titles": false
+    }
+]

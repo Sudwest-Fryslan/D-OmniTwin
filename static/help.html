@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>D-OmniTwin — Handleiding</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+    :root {
+      --bg: #0f172a;
+      --surface: #1e293b;
+      --border: rgba(255,255,255,0.08);
+      --text: #e2e8f0;
+      --text-muted: #94a3b8;
+      --accent: #3b82f6;
+      --accent-glow: rgba(59,130,246,0.15);
+      --gold: #c59d00;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Inter', -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.7;
+      padding: 2rem 1rem;
+    }
+
+    .container {
+      max-width: 740px;
+      margin: 0 auto;
+    }
+
+    /* Header */
+    .help-header {
+      text-align: center;
+      margin-bottom: 3rem;
+      padding-bottom: 2rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .help-header h1 {
+      font-size: 2rem;
+      font-weight: 700;
+      background: linear-gradient(135deg, var(--accent), #818cf8);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 0.5rem;
+    }
+
+    .help-header p {
+      color: var(--text-muted);
+      font-size: 1.05rem;
+    }
+
+    /* Feature Cards */
+    .feature-grid {
+      display: grid;
+      gap: 1.25rem;
+      margin-bottom: 2.5rem;
+    }
+
+    .feature-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.5rem;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .feature-card:hover {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 1px var(--accent), 0 4px 20px var(--accent-glow);
+    }
+
+    .feature-card h2 {
+      font-size: 1.15rem;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+    }
+
+    .feature-card h2 .icon {
+      flex-shrink: 0;
+      color: var(--accent);
+    }
+
+    .feature-card p {
+      color: var(--text-muted);
+      font-size: 0.92rem;
+    }
+
+    .feature-card .steps {
+      margin-top: 0.75rem;
+      padding-left: 1rem;
+      list-style: none;
+      counter-reset: step;
+    }
+
+    .feature-card .steps li {
+      counter-increment: step;
+      padding: 0.3rem 0;
+      font-size: 0.88rem;
+      color: var(--text-muted);
+    }
+
+    .feature-card .steps li::before {
+      content: counter(step);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: var(--accent-glow);
+      color: var(--accent);
+      font-size: 0.72rem;
+      font-weight: 600;
+      margin-right: 0.5rem;
+    }
+
+    /* Tips */
+    .tip-box {
+      background: rgba(197, 157, 0, 0.08);
+      border: 1px solid rgba(197, 157, 0, 0.2);
+      border-left: 3px solid var(--gold);
+      border-radius: 8px;
+      padding: 1rem 1.25rem;
+      margin-bottom: 2rem;
+      font-size: 0.88rem;
+      color: var(--text-muted);
+    }
+
+    .tip-box strong {
+      color: var(--gold);
+    }
+
+    /* Keyboard shortcuts */
+    kbd {
+      display: inline-block;
+      padding: 2px 6px;
+      font-family: 'Inter', monospace;
+      font-size: 0.75rem;
+      font-weight: 600;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      color: var(--text);
+    }
+
+    /* Footer */
+    .help-footer {
+      text-align: center;
+      padding-top: 2rem;
+      border-top: 1px solid var(--border);
+      color: var(--text-muted);
+      font-size: 0.82rem;
+    }
+
+    .help-footer a {
+      color: var(--accent);
+      text-decoration: none;
+    }
+
+    .help-footer a:hover {
+      text-decoration: underline;
+    }
+
+    /* Back link */
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      color: var(--accent);
+      text-decoration: none;
+      font-size: 0.88rem;
+      font-weight: 500;
+      margin-bottom: 1.5rem;
+      transition: opacity 0.2s;
+    }
+
+    .back-link:hover {
+      opacity: 0.8;
+    }
+
+    .back-link svg {
+      flex-shrink: 0;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+
+    <a href="/" class="back-link">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+        class="lucide lucide-arrow-left">
+        <path d="m12 19-7-7 7-7"/><path d="M19 12H5"/>
+      </svg>
+      Terug naar D-OmniTwin
+    </a>
+
+    <div class="help-header">
+      <h1>D-OmniTwin Handleiding</h1>
+      <p>Leer hoe je de leefomgeving verkent met data, kaarten en AI-analyses.</p>
+    </div>
+
+    <div class="feature-grid">
+
+      <!-- Kaart & Gebieden -->
+      <div class="feature-card">
+        <h2>
+          <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+            class="icon lucide lucide-map">
+            <path d="M14.106 5.553a2 2 0 0 0 1.788 0l3.659-1.83A1 1 0 0 1 21 4.619v12.764a1 1 0 0 1-.553.894l-4.553 2.277a2 2 0 0 1-1.788 0l-4.212-2.106a2 2 0 0 0-1.788 0l-3.659 1.83A1 1 0 0 1 3 19.381V6.618a1 1 0 0 1 .553-.894l4.553-2.277a2 2 0 0 1 1.788 0z"/>
+            <path d="M15 5.764v15"/><path d="M9 3.236v15"/>
+          </svg>
+          Kaart &amp; Gebieden Verkennen
+        </h2>
+        <p>De interactieve 3D-kaart is het startpunt van D-OmniTwin. Selecteer een gemeente, kies een gebiedstype en kleur de kaart in met een indicator.</p>
+        <ol class="steps">
+          <li>Kies een <strong>gemeente</strong> via het zoekveld (linker paneel).</li>
+          <li>Selecteer een <strong>gebiedstype</strong> (buurten, wijken of gemeenten).</li>
+          <li>Kies een <strong>indicator</strong> en klik op "Toon op Kaart".</li>
+          <li>Klik op een gekleurd gebied voor <strong>details en het Kompas</strong>.</li>
+        </ol>
+      </div>
+
+      <!-- Kompas -->
+      <div class="feature-card">
+        <h2>
+          <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+            class="icon lucide lucide-compass">
+            <path d="m16.24 7.76-1.804 5.411a2 2 0 0 1-1.265 1.265L7.76 16.24l1.804-5.411a2 2 0 0 1 1.265-1.265z"/>
+            <circle cx="12" cy="12" r="10"/>
+          </svg>
+          Het D-Omni Kompas
+        </h2>
+        <p>Het Kompas is een Sunburst-diagram dat 200+ indicatoren ordent in thema's, onderdelen en titels. Het kleurt automatisch in wanneer je een gebied selecteert.</p>
+        <ol class="steps">
+          <li>Klik op een <strong>gebied</strong> op de kaart — het Kompas opent automatisch.</li>
+          <li>Navigeer door de ringen: <strong>Titel → Thema → Onderdeel → Indicator</strong>.</li>
+          <li>Klik op een indicator voor een <strong>trendlijn</strong> (historische data).</li>
+          <li>Klik op een indicator → de <strong>kaart</strong> kleurt mee in.</li>
+        </ol>
+      </div>
+
+      <!-- Rapporten -->
+      <div class="feature-card">
+        <h2>
+          <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+            class="icon lucide lucide-file-chart-column">
+            <path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z"/>
+            <path d="M14 2v5a1 1 0 0 0 1 1h5"/>
+            <path d="M8 18v-1"/><path d="M12 18v-6"/><path d="M16 18v-3"/>
+          </svg>
+          Rapporten &amp; AI-Analyses
+        </h2>
+        <p>Genereer automatische analyses op basis van de geselecteerde gebieden. De AI schrijft een samenvatting in mensentaal.</p>
+        <ol class="steps">
+          <li><strong>Eén gebied</strong> selecteren → klik op "Rapport" → Gebiedsdossier met AI-samenvatting.</li>
+          <li><strong>Meerdere gebieden</strong> (<kbd>Shift</kbd>+klik) → automatisch Benchmark vergelijking.</li>
+          <li>Of vraag de <strong>D-Omni Assistent</strong>: "Maak een rapport".</li>
+        </ol>
+      </div>
+
+      <!-- D-Omni Assistent -->
+      <div class="feature-card">
+        <h2>
+          <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+            class="icon lucide lucide-cpu">
+            <path d="M12 20v2"/><path d="M12 2v2"/><path d="M17 20v2"/><path d="M17 2v2"/>
+            <path d="M2 12h2"/><path d="M2 17h2"/><path d="M2 7h2"/>
+            <path d="M20 12h2"/><path d="M20 17h2"/><path d="M20 7h2"/>
+            <path d="M7 20v2"/><path d="M7 2v2"/>
+            <rect x="4" y="4" width="16" height="16" rx="2"/>
+            <rect x="8" y="8" width="8" height="8" rx="1"/>
+          </svg>
+          De D-Omni Assistent
+        </h2>
+        <p>Stel een vraag in het Nederlands en de assistent zoekt relevante indicatoren, stuurt de kaart aan en genereert rapporten.</p>
+        <ol class="steps">
+          <li>Open de Assistent via het <strong>CPU-icoontje</strong> in de linker tab-balk.</li>
+          <li>Typ een vraag, bijvoorbeeld: <em>"Hoe zit het met inkomen in Leeuwarden?"</em></li>
+          <li>Klik op een actie-knop om de kaart of het Kompas direct aan te sturen.</li>
+          <li>Vraag <em>"Help"</em> of <em>"Wat kan jij?"</em> voor een overzicht van alle mogelijkheden.</li>
+        </ol>
+      </div>
+
+    </div>
+
+    <!-- Tips -->
+    <div class="tip-box">
+      <strong>💡 Tip:</strong> Gebruik <kbd>Ctrl</kbd>+<kbd>Drag</kbd> op de kaart om in 3D te roteren.
+      Zet de 3D-extrusie slider hoger om patronen in de hoogte te ontdekken.
+    </div>
+
+    <div class="tip-box">
+      <strong>💡 Tip:</strong> De D-Omni Assistent werkt zonder internet — alle AI draait lokaal op de server.
+      Je vragen en data verlaten nooit de organisatie.
+    </div>
+
+    <div class="help-footer">
+      <p>D-OmniTwin &copy; 2026 | Open Methodiek + Referentie-implementatie (EUPL)</p>
+      <p>Heb je vragen? Neem contact op met het <a href="mailto:info@example.com">D-OmniTwin team</a>.</p>
+    </div>
+
+  </div>
+</body>
+</html>

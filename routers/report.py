@@ -1,0 +1,210 @@
+from fastapi import APIRouter, Depends, HTTPException, Query
+from pydantic import BaseModel, Field
+from sqlalchemy.orm import Session
+from typing import Dict, Any, Optional, List
+from src.database import get_db
+from services.report_service import ReportDataService
+from services.llm_service import LLMService
+
+
+# ─── Pydantic Models ────────────────────────────────────────────────────────
+
+class MultiGebiedRequest(BaseModel):
+    """Request model voor Multi-Gebiedsdossier endpoints."""
+    gebied_ids: List[str] = Field(..., min_length=1, max_length=200, description="CBS buurt-IDs")
+    referentie: str = Field('gemeente', description="'gemeente' of 'fryslan'")
+    gemeente_code: str = Field('1900', description="Gemeente code (default: SWF)")
+    deelgebied_naam: Optional[str] = Field(None, description="Label voor de rapportheader")
+
+
+router = APIRouter(
+    prefix="/api/report",
+    tags=["Report"]
+)
+
+@router.get("/data/{gebied_id}", response_model=Dict[str, Any])
+def get_report_data(gebied_id: str, db: Session = Depends(get_db)):
+    """
+    Fase 1: Genereert de geaggregeerde payload.
+    Berekent Z-scores per indicator voor een gebied en filtert de uitschieters.
+    """
+    service = ReportDataService(db)
+    try:
+        return service.generate_report_payload(gebied_id)
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Fout tijdens data generatie: {str(e)}")
+
+@router.get("/narrative/{gebied_id}", response_model=Dict[str, Any])
+def generate_report_narrative(gebied_id: str, db: Session = Depends(get_db)):
+    """
+    Fase 2: Roept Ollama aan om een narrative (Executive Summary) te genereren
+    op basis van de data uit Fase 1 per kwadrant.
+    """
+    report_service = ReportDataService(db)
+    llm_service = LLMService(db)
+    
+    try:
+        data_payload = report_service.generate_report_payload(gebied_id)
+        
+        domain_summaries_text = {}
+        domain_responses = {}
+        debug_logs = []
+        
+        # 1. Genereer per kwadrant/domein een samenvatting
+        for domain_name, indicators in data_payload.get("significante_domeinen", {}).items():
+            result = llm_service.generate_domain_summary(domain_name, indicators)
+            domain_summaries_text[domain_name] = result["text"]
+            domain_responses[domain_name] = result["text"]
+            debug_logs.append(result["debug"])
+            
+        # 2. Genereer de overkoepelende samenvatting als er domein data is
+        overall_summary_text = "Geen significante afwijkingen gevonden om samen te vatten."
+        if domain_summaries_text:
+            overall_result = llm_service.generate_overall_summary(domain_summaries_text, data_payload.get("metadata", {}))
+            overall_summary_text = overall_result["text"]
+            debug_logs.append(overall_result["debug"])
+        
+        return {
+            "gebied_id": gebied_id,
+            "ai_summary": overall_summary_text,
+            "domain_summaries": domain_responses,
+            "debug_info": debug_logs,
+            "status": "success"
+        }
+        
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Fout tijdens AI generatie: {str(e)}")
+
+
+# ─── Sjabloon C: Benchmark Vergelijker ───────────────────────────────────────
+
+@router.get("/benchmark", response_model=Dict[str, Any])
+def get_benchmark_data(
+    gebied_a: str = Query(..., description="Gebied ID van het referentiegebied"),
+    mode: str = Query("gebieden", description="Vergelijkingsmodus: 'gebieden', 'gemeente' of 'fryslan'"),
+    gebieden_b: Optional[str] = Query(None, description="Komma-gescheiden lijst van vergelijkingsgebied IDs (max 5)"),
+    referentie_gemeente: Optional[str] = Query(None, description="Gemeente code voor gemeente-gemiddelde modus"),
+    db: Session = Depends(get_db)
+):
+    """
+    Sjabloon C — Benchmark Vergelijker.
+    Vergelijkt Gebied A met een referentie op basis van 3 modi:
+    - 'gebieden': specifieke gebieden (1-op-1 of 1-op-n, max 5)
+    - 'gemeente': gemiddelde van alle buurten in een gemeente
+    - 'fryslan': gemiddelde van alle buurten in Fryslân
+    """
+    service = ReportDataService(db)
+    try:
+        gebieden_b_list = [g.strip() for g in gebieden_b.split(",") if g.strip()] if gebieden_b else []
+        return service.generate_benchmark_payload(
+            gebied_id_a=gebied_a,
+            mode=mode,
+            gebieden_b=gebieden_b_list,
+            referentie_gemeente=referentie_gemeente
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Fout tijdens benchmark generatie: {str(e)}")
+
+
+@router.get("/benchmark/narrative", response_model=Dict[str, Any])
+def get_benchmark_narrative(
+    gebied_a: str = Query(..., description="Gebied ID van het referentiegebied"),
+    mode: str = Query("gebieden", description="Vergelijkingsmodus"),
+    gebieden_b: Optional[str] = Query(None, description="Komma-gescheiden vergelijkingsgebied IDs"),
+    referentie_gemeente: Optional[str] = Query(None, description="Gemeente code"),
+    db: Session = Depends(get_db)
+):
+    """
+    AI narrative voor de benchmark vergelijking.
+    Genereert een analyse van de belangrijkste delta's via Ollama.
+    """
+    report_service = ReportDataService(db)
+    llm_service = LLMService(db)
+    
+    try:
+        gebieden_b_list = [g.strip() for g in gebieden_b.split(",") if g.strip()] if gebieden_b else []
+        benchmark_data = report_service.generate_benchmark_payload(
+            gebied_id_a=gebied_a,
+            mode=mode,
+            gebieden_b=gebieden_b_list,
+            referentie_gemeente=referentie_gemeente
+        )
+        
+        result = llm_service.generate_benchmark_narrative(benchmark_data)
+        
+        return {
+            "gebied_a": benchmark_data["gebied_a"],
+            "referentie_label": benchmark_data["referentie_label"],
+            "ai_narrative": result["text"],
+            "debug_info": [result["debug"]],
+            "status": "success"
+        }
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Fout tijdens benchmark AI generatie: {str(e)}")
+
+
+# ─── Sjabloon A: Executive Summary ──────────────────────────────────────────
+
+@router.get("/executive/{gebied_id}", response_model=Dict[str, Any])
+def get_executive_data(gebied_id: str, db: Session = Depends(get_db)):
+    """
+    Sjabloon A — Executive Summary (1-pager).
+    Retourneert top 3 kansen en top 3 risico's.
+    """
+    service = ReportDataService(db)
+    try:
+        return service.generate_executive_payload(gebied_id)
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Fout tijdens executive payload generatie: {str(e)}")
+
+
+# ─── Sjabloon D: Multi-Gebiedsdossier ────────────────────────────────────────
+
+@router.post("/multi-gebied", response_model=Dict[str, Any])
+def get_multi_gebied_data(payload: MultiGebiedRequest, db: Session = Depends(get_db)):
+    """
+    Multi-Gebiedsdossier — Analyse payload.
+    Berekent per buurt de indicator met de sterkste z-score afwijking,
+    genereert een thema-aggregaat en rangschikt de uitschieters.
+    """
+    service = ReportDataService(db)
+    try:
+        return service.generate_multi_gebied_payload(
+            gebied_ids=payload.gebied_ids,
+            referentie=payload.referentie,
+            gemeente_code=payload.gemeente_code,
+            deelgebied_naam=payload.deelgebied_naam
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Fout tijdens multi-gebied generatie: {str(e)}")
+
+
+@router.post("/multi-gebied/geojson", response_model=Dict[str, Any])
+def get_multi_gebied_geojson(payload: MultiGebiedRequest, db: Session = Depends(get_db)):
+    """
+    Multi-Gebiedsdossier — GeoJSON voor choropleth.
+    Retourneert een FeatureCollection met geometrieën en kleurcodering per buurt.
+    """
+    service = ReportDataService(db)
+    try:
+        return service.generate_multi_gebied_geojson(
+            gebied_ids=payload.gebied_ids,
+            referentie=payload.referentie,
+            gemeente_code=payload.gemeente_code
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Fout tijdens multi-gebied GeoJSON generatie: {str(e)}")

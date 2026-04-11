@@ -1,0 +1,2697 @@
+/**
+ * D-OmniTwin Gebiedsmonitor - Frontend Application v2.0
+ * ================================================================
+ * deck.gl 3D visualisatie met Vertical Tab Bar UI en Mapbox basemap
+ */
+
+// ============================================================================
+// Configuration & State
+// ============================================================================
+
+const API_BASE = '/api/gebiedsmonitor';
+
+// Application State
+const state = {
+    currentGebiedstype: null,
+    currentIndicator: null,
+    currentGemeenteCode: localStorage.getItem('omnitwin-gemeente') || '', // Default: Alle gemeenten (empty = no filter)
+    deckgl: null,
+    currentData: null,
+    enable3D: false, // CHANGED: Default OFF
+    heightScale: 10,
+    showAll: false,
+    activePanelId: null,
+    mapboxToken: window.MAPBOX_TOKEN || null,
+    mapboxStyle: window.MAPBOX_STYLE || 'mapbox://styles/mapbox/light-v10',
+    currentMinValue: 0,
+    currentMaxValue: 0,
+    currentTheme: 'dark',
+    currentViewState: { // Track camera state so 3D toggle doesn't reset it
+        latitude: 53.0,
+        longitude: 5.8,
+        zoom: 8,
+        pitch: 0,
+        bearing: 0,
+        minZoom: 5,
+        maxZoom: 20
+    },
+    // Multi-Gebied Selectie (Sprint 7)
+    selectedGebiedIds: new Set(),  // Set van geselecteerde gebied IDs
+    // 3D BAG Panden (Sprint 12)
+    bag3dData: null,               // GeoJSON van opgehaalde 3DBAG panden
+    show3DBuildings: false,        // Toggle (wederzijds exclusief met enable3D)
+    // Omgevingsvisie Deelgebieden (Selectielaag)
+    omgevingsvisieData: null,      // GeoJSON van deelgebieden
+    showOmgevingsvisieLayer: false, // Toggle zichtbaarheid overlay
+    selectedDeelgebiedNaam: null,   // Naam van actief deelgebied (voor rapport-link)
+};
+
+// Publiceer state op window zodat chat.js en andere modules de kaartselectie kunnen lezen
+window.state = state;
+
+// Backwards-compatibility: getter/setter voor selectedGebiedId (eerste geselecteerde)
+Object.defineProperty(state, 'selectedGebiedId', {
+    get() { return this.selectedGebiedIds.size > 0 ? [...this.selectedGebiedIds][0] : null; },
+    set(val) {
+        this.selectedGebiedIds.clear();
+        if (val) this.selectedGebiedIds.add(val);
+    }
+});
+
+/** Helper: check of een gebied geselecteerd is */
+function isGebiedSelected(gebiedId) {
+    return state.selectedGebiedIds.has(gebiedId);
+}
+
+/** Helper: toggle een gebied in de selectie */
+function toggleGebiedSelection(gebiedId) {
+    if (state.selectedGebiedIds.has(gebiedId)) {
+        state.selectedGebiedIds.delete(gebiedId);
+    } else {
+        state.selectedGebiedIds.add(gebiedId);
+    }
+}
+
+/** Helper: clear alle geselecteerde gebieden */
+function clearGebiedSelection() {
+    state.selectedGebiedIds.clear();
+}
+
+/** Helper: namen ophalen van geselecteerde gebieden uit currentData */
+function getSelectedGebiedNamen() {
+    if (!state.currentData || !state.currentData.features) return [];
+    return state.currentData.features
+        .filter(f => isGebiedSelected(f.id || f.properties?.id))
+        .map(f => f.properties?.naam || f.id || f.properties?.id);
+}
+
+// ...
+
+// Colors
+getFillColor: d => {
+    // Check for selection first
+    if (state.selectedGebiedId && (d.id === state.selectedGebiedId || d.properties.id === state.selectedGebiedId)) {
+        return [197, 157, 0, 200]; // Geo Gold highlight for selection (#c59d00)
+    }
+
+    const value = d.properties.indicator_waarde;
+    if (value === null || value === undefined) {
+        return [200, 200, 200, 100]; // Grijs voor geen data
+    }
+
+    // Use Backend Color if available (Sync with Kompas)
+    if (d.properties.color) {
+        // Parse Hex to RGB and add transparency (0.6 opacity = 153 alpha)
+        const hex = d.properties.color;
+        const r = parseInt(hex.slice(1, 3), 16);
+        const g = parseInt(hex.slice(3, 5), 16);
+        const b = parseInt(hex.slice(5, 7), 16);
+        return [r, g, b, 153]; // Fixed transparency 60%
+    }
+
+    // Fallback (Client-side calc - should be avoided)
+    return getColorRGB(value, minValue, maxValue);
+},
+
+    // ============================================================================
+    // Initialization
+    // ============================================================================
+
+    document.addEventListener('DOMContentLoaded', async () => {
+        console.log('🚀 D-OmniTwin Gebiedsmonitor v2.0 starten...');
+
+        try {
+            initTheme(); // Initialize theme FIRST
+            setupThemeToggle(); // Setup toggle listener
+            initDeckGL();
+            // Initialize Floating Windows FIRST
+            if (window.DraggableWindow) {
+                state.kompasWindow = new DraggableWindow('kompas-window');
+            } else {
+                console.error('❌ DraggableWindow class not found');
+            }
+
+            await loadGemeenten(); // NEW: Load gemeente options
+            await loadGebiedstypes();
+            setupGemeenteSelector(); // NEW: Setup gemeente change handler
+            setupEventListeners();
+            setupTabBar();
+
+            // DON'T auto-open any panel - let user click tab buttons
+
+            // Escape key → reset actieve indicator
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape' && state.currentIndicator) {
+                    resetKaartIndicator();
+                }
+            });
+
+            console.log('✅ Applicatie succesvol geladen');
+            console.log(`📍 Mapbox: ${state.mapboxToken ? 'Enabled' : 'Disabled'}`)
+                ;
+            console.log(`🎨 Theme: ${state.currentTheme}`);
+        } catch (error) {
+            console.error('❌ Fout bij initialisatie:', error);
+            showError('Fout bij laden van applicatie');
+        }
+    });
+
+// ============================================================================
+// Theme Management System
+// ============================================================================
+
+const THEME_KEY = 'omnitwin-theme';
+
+function initTheme() {
+    // Load theme from localStorage or default to dark
+    state.currentTheme = localStorage.getItem(THEME_KEY) || 'dark';
+    document.documentElement.setAttribute('data-theme', state.currentTheme);
+
+    // Set Mapbox style based on theme
+    if (state.mapboxToken) {
+        state.mapboxStyle = state.currentTheme === 'dark'
+            ? 'mapbox://styles/mapbox/dark-v10'
+            : 'mapbox://styles/mapbox/light-v10';
+    }
+
+    console.log(`🎨 Theme initialized: ${state.currentTheme}`);
+    console.log(`🗺️ Mapbox style: ${state.mapboxStyle}`);
+}
+
+function setupThemeToggle() {
+    const themeToggle = document.getElementById('theme-toggle');
+    const themeIcon = themeToggle.querySelector('.theme-icon');
+
+    // Set initial icon
+    updateThemeIcon();
+
+    // Toggle handler
+    themeToggle.addEventListener('click', () => {
+        // Switch theme
+        state.currentTheme = state.currentTheme === 'dark' ? 'light' : 'dark';
+        document.documentElement.setAttribute('data-theme', state.currentTheme);
+        localStorage.setItem(THEME_KEY, state.currentTheme);
+
+        // Update UI
+        updateThemeIcon();
+        updateMapboxStyleForTheme();
+
+        // Refresh map colors if data is loaded
+        if (state.currentData) {
+            displayOnMap(state.currentData);
+        }
+
+        console.log(`🎨 Theme switched to: ${state.currentTheme}`);
+    });
+}
+
+function updateThemeIcon() {
+    // Icons are now SVGs handled by CSS visibility based on data-theme attribute
+    // No manual textContent update needed
+}
+
+function updateMapboxStyleForTheme() {
+    if (!state.mapboxToken) return;
+
+    // Determine which style should be active based on theme
+    const targetStyle = state.currentTheme === 'dark'
+        ? 'mapbox://styles/mapbox/dark-v10'
+        : 'mapbox://styles/mapbox/light-v10';
+
+    // Update state
+    state.mapboxStyle = targetStyle;
+
+    // Update selector if exists
+    const styleSelect = document.getElementById('mapbox-style-select');
+    if (styleSelect) {
+        styleSelect.value = targetStyle;
+    }
+
+    // Apply to map
+    changeMapboxStyle(targetStyle);
+
+    console.log(`🗺️ Mapbox style synced: ${targetStyle}`);
+}
+
+
+// ============================================================================
+// 3D Lighting System
+// ============================================================================
+
+let lightingEnabled = true;
+let fpsCounter = 0;
+let lastFpsCheck = Date.now();
+
+function create3DLighting() {
+    const { LightingEffect, AmbientLight, DirectionalLight } = deck;
+
+    if (!LightingEffect) {
+        console.warn('⚠️ LightingEffect not available in deck.gl');
+        return null;
+    }
+
+    const ambientLight = new AmbientLight({
+        color: [255, 255, 255],
+        intensity: 0.6  // Moderate ambient
+    });
+
+    const dirLight = new DirectionalLight({
+        color: [255, 255, 255],
+        direction: [-1, -3, -1], // Pointing down and slightly to the side
+        intensity: 1.2 // Lower intensity to avoid blowing out colors
+    });
+
+    const lightingEffect = new LightingEffect({ ambientLight, dirLight });
+
+    console.log('✨ 3D Lighting enabled');
+    return lightingEffect;
+}
+
+function checkPerformance() {
+    // Optionally track FPS, but DO NOT disable lighting!
+    // Disabling lighting while keeping materials causes all 3D objects to become black/grey.
+    fpsCounter++;
+    const now = Date.now();
+
+    if (now - lastFpsCheck > 1000) {
+        fpsCounter = 0;
+        lastFpsCheck = now;
+    }
+}
+
+function showNotification(message) {
+    // Simple notification - could be improved with toast UI
+    console.log(`📢 ${message}`);
+}
+
+
+// ============================================================================
+// Vertical Tab Bar (NEW)
+// ============================================================================
+
+function setupTabBar() {
+    document.querySelectorAll('.tab-button').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const panelId = e.currentTarget.dataset.panel;
+            togglePanel(panelId);
+        });
+    });
+}
+
+function togglePanel(panelId) {
+    const container = document.querySelector('.panel-container');
+    const panels = document.querySelectorAll('.panel-content');
+    const buttons = document.querySelectorAll('.tab-button');
+
+    // Close if clicking active panel
+    if (state.activePanelId === panelId) {
+        container.classList.remove('open');
+        state.activePanelId = null;
+        buttons.forEach(btn => btn.classList.remove('active'));
+        return;
+    }
+
+    // Switch panels
+    panels.forEach(p => p.classList.remove('active'));
+    const targetPanel = document.querySelector(`#panel-${panelId}`);
+    if (targetPanel) {
+        targetPanel.classList.add('active');
+    }
+
+    // Update UI
+    container.classList.add('open');
+    state.activePanelId = panelId;
+
+    buttons.forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.panel === panelId);
+    });
+
+    console.log(`📂 Panel opened: ${panelId}`);
+}
+
+// ============================================================================
+// deck.gl Setup with Mapbox
+// ============================================================================
+
+function initDeckGL() {
+    const { DeckGL, MapView } = deck;
+
+    // Debug: Log Mapbox token status
+    console.log('🗺️ Mapbox Token:', state.mapboxToken ? 'AVAILABLE' : 'NOT SET');
+    console.log('🎨 Mapbox Style:', state.mapboxStyle);
+
+    // Mapbox configuration (if token available)
+    const mapboxConfig = state.mapboxToken ? {
+        mapboxApiAccessToken: state.mapboxToken,
+        mapStyle: state.mapboxStyle,
+        mapOptions: {
+            preserveDrawingBuffer: true
+        }
+    } : {};
+
+    console.log('⚙️ deck.gl config:', mapboxConfig);
+
+    // Create 3D lighting effect
+    const lightingEffect = create3DLighting();
+
+    state.deckgl = new DeckGL({
+        container: 'map',
+        views: [new MapView({ repeat: true })],
+        ...mapboxConfig,
+        initialViewState: state.currentViewState,
+        onViewStateChange: ({ viewState }) => {
+            state.currentViewState = viewState;
+        },
+        controller: true,
+        layers: [],
+        effects: lightingEffect ? [lightingEffect] : [], // Add 3D lighting
+        glOptions: {
+            preserveDrawingBuffer: true
+        },
+        parameters: {
+            depthTest: true,
+            blend: true,
+            blendFunc: [770, 771] // gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA (standard blending)
+        },
+        onAfterRender: checkPerformance, // Monitor FPS
+        getTooltip: ({ object, layer }) => {
+            if (object) {
+                const props = object.properties;
+                const tooltipStyle = {
+                    backgroundColor: 'rgba(15, 23, 42, 0.95)',
+                    color: 'white',
+                    padding: '12px',
+                    borderRadius: '8px',
+                    fontSize: '13px',
+                    boxShadow: '0 4px 12px rgba(0,0,0,0.3)'
+                };
+
+                // Omgevingsvisie Deelgebied tooltip
+                if (layer?.id === 'omgevingsvisie-layer') {
+                    return {
+                        html: `
+                <div style="font-family: Inter, sans-serif;">
+                  <strong>🗺️ ${props.deelgebied}</strong><br/>
+                  <small style="opacity:0.7;">${props.naam}</small><br/>
+                  Oppervlakte: <strong>${props.oppervlakte_km2} km²</strong><br/>
+                  <small style="opacity:0.5;">Klik om buurten te selecteren</small>
+                </div>
+              `,
+                        style: tooltipStyle
+                    };
+                }
+
+                // BAG 3D Pand tooltip (Sprint 12)
+                if (layer?.id === 'bag3d-layer' || props.identificatie) {
+                    const bagId = props.identificatie || 'Onbekend';
+                    const bouwjaar = props.oorspronkelijkbouwjaar || 'Onbekend';
+                    const hoogte = props.b3_h_50p ?? props.b3_h_dak_50p;
+                    const maaiveld = props.b3_h_maaiveld ?? 0;
+                    const pandHoogte = hoogte ? (hoogte - maaiveld).toFixed(1) : '?';
+                    const opp = props.b3_opp_grond ? props.b3_opp_grond.toFixed(0) : '?';
+                    const indicatorInfo = props.indicator_waarde != null
+                        ? `<br/><small style="opacity:0.7;">Indicator: ${formatNumber(props.indicator_waarde)}</small>`
+                        : '';
+
+                    return {
+                        html: `
+                <div style="font-family: Inter, sans-serif;">
+                  <strong>🏠 Pand</strong><br/>
+                  <small style="opacity:0.6;">${bagId}</small><br/>
+                  Bouwjaar: <strong>${bouwjaar}</strong><br/>
+                  Hoogte: <strong>${pandHoogte} m</strong> · Opp: <strong>${opp} m²</strong>
+                  ${indicatorInfo}
+                </div>
+              `,
+                        style: tooltipStyle
+                    };
+                }
+
+                // Default buurt tooltip
+                const indicatorLabel = props.indicator_naam || 'Indicator';
+                const indicatorValue = props.indicator_waarde !== null ?
+                    formatNumber(props.indicator_waarde) + ' ' + (props.eenheid || '') :
+                    'Geen data';
+
+                return {
+                    html: `
+            <div style="font-family: Inter, sans-serif;">
+              <strong>${props.naam}</strong><br/>
+              ${props.indicator_naam ? `${props.indicator_naam}: ` : ''}<strong>${indicatorValue}</strong><br/>
+              <small>${props.jaar || 'Onbekend'}</small>
+            </div>
+          `,
+                    style: tooltipStyle
+                };
+            }
+            return null;
+        }
+    });
+
+    console.log('✅ deck.gl geïnitialiseerd');
+    if (state.mapboxToken) {
+        console.log('✅ Mapbox basemap should be loading...');
+        console.log('📍 Check browser console for Mapbox GL errors');
+    } else {
+        console.warn('⚠️ Mapbox basemap disabled (no token)');
+    }
+}
+
+// ============================================================================
+// Mapbox Style Switcher (NEW)
+// ============================================================================
+
+function changeMapboxStyle(styleUrl) {
+    if (!state.mapboxToken) {
+        console.warn('❌ Mapbox API key not configured');
+        return;
+    }
+
+    state.mapboxStyle = styleUrl;
+    state.deckgl.setProps({
+        mapStyle: styleUrl
+    });
+
+    console.log(`🗺️ Mapbox style changed to: ${styleUrl}`);
+}
+
+// ============================================================================
+// Data Loading Functions
+// ============================================================================
+
+// ---- Gemeente Selector (Multi-gemeente support) ----
+
+// Fallback lijst Friese gemeenten (voor als API niet beschikbaar is)
+const FRIESE_GEMEENTEN = [
+    { code: '', naam: 'Alle gemeenten', is_eiland: false },
+    { code: '0059', naam: 'Achtkarspelen', is_eiland: false },
+    { code: '0060', naam: 'Ameland', is_eiland: true },
+    { code: '1891', naam: 'Dantumadiel', is_eiland: false },
+    { code: '1921', naam: 'De Fryske Marren', is_eiland: false },
+    { code: '0072', naam: 'Harlingen', is_eiland: false },
+    { code: '0074', naam: 'Heerenveen', is_eiland: false },
+    { code: '0080', naam: 'Leeuwarden', is_eiland: false },
+    { code: '1970', naam: 'Noardeast-Fryslân', is_eiland: false },
+    { code: '0085', naam: 'Ooststellingwerf', is_eiland: false },
+    { code: '0086', naam: 'Opsterland', is_eiland: false },
+    { code: '0088', naam: 'Schiermonnikoog', is_eiland: true },
+    { code: '0140', naam: 'Smallingerland', is_eiland: false },
+    { code: '1900', naam: 'Súdwest-Fryslân', is_eiland: false },
+    { code: '0093', naam: 'Terschelling', is_eiland: true },
+    { code: '0737', naam: 'Tytsjerksteradiel', is_eiland: false },
+    { code: '0096', naam: 'Vlieland', is_eiland: true },
+    { code: '1949', naam: 'Waadhoeke', is_eiland: false },
+    { code: '0098', naam: 'Weststellingwerf', is_eiland: false }
+];
+
+// Store loaded gemeenten for lookup
+let loadedGemeenten = [];
+
+async function loadGemeenten() {
+    const datalist = document.getElementById('gemeente-options');
+    const input = document.getElementById('gemeente-input');
+    const codeInput = document.getElementById('gemeente-code');
+    const info = document.getElementById('gemeente-info');
+
+    let gemeenten = [];
+
+    try {
+        const response = await fetch('/api/gemeenten?provincie=Fryslân');
+        if (response.ok) {
+            const data = await response.json();
+            if (data.gemeenten && data.gemeenten.length > 0) {
+                gemeenten = [{ code: '', naam: 'Alle gemeenten', is_eiland: false }, ...data.gemeenten];
+                console.log(`✅ ${data.totaal} gemeenten geladen van API`);
+            }
+        }
+    } catch (error) {
+        console.warn('⚠️ Gemeente API niet beschikbaar, gebruik fallback');
+    }
+
+    if (gemeenten.length === 0) {
+        gemeenten = FRIESE_GEMEENTEN;
+        console.log('📋 Gebruik fallback gemeenten lijst');
+    }
+
+    loadedGemeenten = gemeenten;
+
+    // Populate datalist
+    datalist.innerHTML = '';
+    gemeenten.forEach(gemeente => {
+        const option = document.createElement('option');
+        option.value = gemeente.naam;
+        option.dataset.code = gemeente.code;
+        datalist.appendChild(option);
+    });
+
+    // Set initial value from state
+    const currentGemeente = gemeenten.find(g => g.code === state.currentGemeenteCode);
+    if (currentGemeente) {
+        input.value = currentGemeente.naam;
+        codeInput.value = currentGemeente.code;
+    } else {
+        input.value = 'Alle gemeenten';
+        codeInput.value = '';
+    }
+
+    info.textContent = `${gemeenten.length - 1} gemeenten beschikbaar`;
+}
+
+function setupGemeenteSelector() {
+    const input = document.getElementById('gemeente-input');
+    const codeInput = document.getElementById('gemeente-code');
+    const info = document.getElementById('gemeente-info');
+
+    if (!input) return;
+
+    // Handle selection from datalist
+    input.addEventListener('change', (e) => {
+        const inputValue = e.target.value;
+        const gemeente = loadedGemeenten.find(g => g.naam === inputValue);
+
+        if (gemeente) {
+            state.currentGemeenteCode = gemeente.code;
+            codeInput.value = gemeente.code;
+            localStorage.setItem('omnitwin-gemeente', gemeente.code);
+
+            console.log(`📍 Gemeente: ${gemeente.naam} (${gemeente.code || 'alle'})`);
+            info.textContent = gemeente.code ? `Geselecteerd: ${gemeente.naam}` : 'Alle gemeenten';
+
+            state.currentData = null;
+            clearGebiedSelection();
+            updateSelectionUI();
+
+            // Herlaad kaart data met nieuwe gemeente filter
+            if (state.currentGebiedstype) {
+                loadKaartData();
+            }
+        } else if (inputValue === '' || inputValue.toLowerCase() === 'alle') {
+            state.currentGemeenteCode = '';
+            codeInput.value = '';
+            localStorage.setItem('omnitwin-gemeente', '');
+            input.value = 'Alle gemeenten';
+            info.textContent = 'Alle gemeenten';
+
+            // Herlaad kaart data zonder gemeente filter
+            if (state.currentGebiedstype) {
+                loadKaartData();
+            }
+        }
+    });
+
+    // Select all text on focus for easy replacement
+    input.addEventListener('focus', () => {
+        input.select();
+    });
+}
+
+// ---- End Gemeente Selector ----
+
+
+async function loadGebiedstypes() {
+    showLoading(true, 'Gebiedstypes laden...');
+
+    try {
+        const response = await fetch(`${API_BASE}/gebiedstypes`);
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+        const data = await response.json();
+        populateGebiedstypeSelect(data.gebiedstypes);
+
+        console.log(`✅ ${data.gebiedstypes.length} gebiedstypes geladen`);
+    } catch (error) {
+        console.error('❌ Fout bij laden gebiedstypes:', error);
+        showError('Fout bij laden van gebiedstypes');
+    } finally {
+        showLoading(false);
+    }
+}
+
+async function loadIndicatoren(gebiedstypeId) {
+    showLoading(true, 'Indicatoren laden...');
+
+    try {
+        const response = await fetch(`${API_BASE}/indicatoren?gebiedstype_id=${gebiedstypeId}`);
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+        const data = await response.json();
+        populateIndicatorSelect(data.indicatoren);
+
+        console.log(`✅ ${data.indicatoren.length} indicatoren geladen`);
+    } catch (error) {
+        console.error('❌ Fout bij laden indicatoren:', error);
+        showError('Fout bij laden van indicatoren');
+    } finally {
+        showLoading(false);
+    }
+}
+
+async function loadKaartData() {
+    if (!state.currentGebiedstype) {
+        showError('Selecteer eerst een gebiedstype');
+        return;
+    }
+
+    showLoading(true, 'Kaart data laden...');
+
+    try {
+        let url = `${API_BASE}/kaart/${state.currentGebiedstype}?show_all=${state.showAll}`;
+        if (state.currentIndicator) {
+            url += `&indicator_uuid=${state.currentIndicator}`;
+        }
+        // Filter op geselecteerde gemeente (indien niet 'Alle gemeenten')
+        if (state.currentGemeenteCode) {
+            url += `&gemeente_code=${state.currentGemeenteCode}`;
+        }
+
+        const response = await fetch(url);
+
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+        const geojson = await response.json();
+        state.currentData = geojson;
+
+        displayOnMap(geojson);
+        updateFeatureCount(geojson.metadata);
+        updateLegenda(geojson);
+
+        // Enable export buttons
+        const geojsonBtn = document.getElementById('export-geojson-btn');
+        const csvBtn = document.getElementById('export-csv-btn');
+        if (geojsonBtn) geojsonBtn.disabled = false;
+        if (csvBtn) csvBtn.disabled = false;
+
+        console.log(`✅ ${geojson.features.length} gebieden geladen`);
+    } catch (error) {
+        console.error('❌ Fout bij laden kaart data:', error);
+        showError('Fout bij laden van kaart data');
+    } finally {
+        showLoading(false);
+    }
+}
+
+async function loadGebiedDetails(gebiedId) {
+    try {
+        const response = await fetch(`${API_BASE}/gebieden/${gebiedId}`);
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+        const data = await response.json();
+        displayGebiedDetails(data);
+
+        console.log(`✅ Details geladen voor ${gebiedId}`);
+    } catch (error) {
+        console.error('❌ Fout bij laden gebied details:', error);
+    }
+}
+// ============================================================================
+// 3D BAG Panden (Sprint 12) — On-demand gebouwmodellen
+// ============================================================================
+
+/**
+ * Laadt 3D panden vanuit de 3DBAG WFS voor de geselecteerde gebieden.
+ * Stuurt de actieve indicator_uuid mee voor kleurverrijking.
+ * Wederzijds exclusief met CBS buurt-extrusie (enable3D).
+ */
+async function loadBag3DBuildings() {
+    const ids = [...state.selectedGebiedIds];
+    if (ids.length === 0 || ids.length > 3) {
+        showError('Selecteer 1 t/m 3 gebieden voor de 3D pandweergave.');
+        return;
+    }
+
+    showLoading(true, '3D panden laden vanuit 3DBAG...');
+
+    try {
+        const res = await fetch('/api/3dbag/buildings', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                gebied_ids: ids,
+                indicator_uuid: state.currentIndicator || null
+            })
+        });
+
+        if (!res.ok) {
+            const err = await res.json().catch(() => ({}));
+            throw new Error(err.detail || `HTTP ${res.status}`);
+        }
+
+        const data = await res.json();
+        state.bag3dData = data;
+        state.show3DBuildings = true;
+
+        // Wederzijds exclusief: deactiveer buurt-extrusie
+        if (state.enable3D) {
+            state.enable3D = false;
+            const cb = document.getElementById('enable-3d');
+            if (cb) cb.checked = false;
+            document.getElementById('extrusie-controls').style.display = 'none';
+        }
+
+        // Camera: fly naar de BAG panden bounding box (dichtbij!)
+        if (data.features && data.features.length > 0) {
+            let minLat = Infinity, maxLat = -Infinity, minLng = Infinity, maxLng = -Infinity;
+            data.features.forEach(f => {
+                const coords = f.geometry?.coordinates;
+                if (!coords) return;
+                // Flatten polygon coordinates
+                const flatten = (arr) => {
+                    if (typeof arr[0] === 'number') { return [arr]; }
+                    return arr.flatMap(flatten);
+                };
+                flatten(coords).forEach(([lng, lat]) => {
+                    if (lng < minLng) minLng = lng;
+                    if (lng > maxLng) maxLng = lng;
+                    if (lat < minLat) minLat = lat;
+                    if (lat > maxLat) maxLat = lat;
+                });
+            });
+            const centerLng = (minLng + maxLng) / 2;
+            const centerLat = (minLat + maxLat) / 2;
+            // Zoom level: dichter bij dan de buurt-overzicht
+            const latSpan = maxLat - minLat;
+            const lngSpan = maxLng - minLng;
+            const maxSpan = Math.max(latSpan, lngSpan);
+            // Bereken zoom zodat de panden goed in beeld passen (straatniveau)
+            const zoom = Math.min(18, Math.max(15.5, -Math.log2(maxSpan / 0.003)));
+
+            state.currentViewState = {
+                ...state.currentViewState,
+                longitude: centerLng,
+                latitude: centerLat,
+                zoom: zoom,
+                pitch: 50,
+                bearing: -15,
+                transitionDuration: 1200,
+            };
+        } else {
+            state.currentViewState = {
+                ...state.currentViewState,
+                pitch: 50,
+                transitionDuration: 800,
+            };
+        }
+        state.deckgl.setProps({ initialViewState: state.currentViewState });
+
+        // Re-render kaart met BAG laag
+        if (state.currentData) {
+            displayOnMap(state.currentData);
+        }
+        updateSelectionUI();
+
+        const mode = data.metadata?.kleur_mode || 'geen';
+        console.log(`🏗️ ${data.metadata?.panden_count || data.features?.length} 3D panden geladen (kleur: ${mode})`);
+        console.log(`📋 ${data.metadata?.copyright}`);
+
+    } catch (e) {
+        console.error('❌ 3D BAG fout:', e);
+        showError('3D panden konden niet worden geladen: ' + e.message);
+    } finally {
+        showLoading(false);
+    }
+}
+
+// ============================================================================
+// Omgevingsvisie Deelgebieden (Selectielaag)
+// ============================================================================
+
+/**
+ * Laadt de omgevingsvisie-deelgebieden als GeoJSON overlay.
+ * Wordt eenmalig aangeroepen bij eerste toggle-activatie; data wordt gecached in state.
+ */
+async function loadOmgevingsvisieLayer() {
+    showLoading(true, 'Omgevingsvisie deelgebieden laden...');
+    try {
+        const res = await fetch('/api/omgevingsvisie/deelgebieden');
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+        const geojson = await res.json();
+        state.omgevingsvisieData = geojson;
+
+        console.log(`🗺️ ${geojson.features.length} omgevingsvisie-deelgebieden geladen`);
+    } catch (e) {
+        console.error('❌ Fout bij laden omgevingsvisie:', e);
+        showError('Omgevingsvisie deelgebieden konden niet worden geladen: ' + e.message);
+        state.showOmgevingsvisieLayer = false;
+        const toggle = document.getElementById('toggle-omgevingsvisie');
+        if (toggle) toggle.checked = false;
+    } finally {
+        showLoading(false);
+    }
+}
+
+/**
+ * Selecteert alle CBS-buurten die binnen een omgevingsvisie-deelgebied vallen.
+ * Gebruikt een -10m inward buffer om grensoverlap te voorkomen.
+ *
+ * @param {number} deelgebiedId - Database ID van het deelgebied
+ * @param {string} deelgebiedNaam - Naam voor logging en UI feedback
+ */
+async function selectBuurtenFromDeelgebied(deelgebiedId, deelgebiedNaam) {
+    showLoading(true, `Buurten laden voor ${deelgebiedNaam}...`);
+    try {
+        const res = await fetch(`/api/omgevingsvisie/deelgebieden/${deelgebiedId}/buurten`);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+        const data = await res.json();
+
+        // Clear huidige selectie en voeg alle buurten toe
+        clearGebiedSelection();
+        state.selectedDeelgebiedNaam = deelgebiedNaam;  // Bewaar voor rapport-link
+        data.buurten.forEach(b => state.selectedGebiedIds.add(b.id));
+
+        // Update UI
+        updateSelectionUI();
+        if (state.currentData) {
+            displayOnMap(state.currentData);
+        }
+
+        // Reload kompas data als die open is
+        if (state.kompasWindow && state.kompasWindow.isVisible && window.kompasViz && window.kompasViz.currentConfigId) {
+            loadKompasForSelection(window.kompasViz.currentConfigId);
+        }
+
+        console.log(`📍 ${data.totaal} buurten geselecteerd via deelgebied ${deelgebiedNaam} (buffer: ${data.buffer_m}m)`);
+
+    } catch (e) {
+        console.error('❌ Fout bij selecteren buurten:', e);
+        showError('Buurten konden niet worden geladen: ' + e.message);
+    } finally {
+        showLoading(false);
+    }
+}
+
+// ============================================================================
+// Map Visualization with deck.gl
+// ============================================================================
+
+function displayOnMap(geojson) {
+    const { GeoJsonLayer } = deck;
+
+    if (!geojson.features || geojson.features.length === 0) {
+        // Prevent blocking alert on re-renders/clicks if data is unexpectedly empty
+        console.warn('⚠️ displayOnMap called with empty/invalid data');
+        if (!state.currentData && !state.selectedGebiedId) {
+            // Only show alert if truly no data and not in a selection flow
+            showError('Geen gebieden gevonden voor deze combinatie');
+        }
+        return;
+    }
+
+    // Calculate min/max voor color scale
+    const values = geojson.features
+        .map(f => f.properties.indicator_waarde)
+        .filter(v => v !== null && v !== undefined);
+
+    const minValue = Math.min(...values);
+    const maxValue = Math.max(...values);
+
+    // Store for legenda
+    state.currentMinValue = minValue;
+    state.currentMaxValue = maxValue;
+
+    console.log(`📊 Data range: ${minValue} - ${maxValue}`);
+
+    // Debug data values
+    console.log(`📊 Validating data for ${geojson.features.length} features`);
+    const validValues = values.filter(v => typeof v === 'number');
+    console.log(`📊 Numeric values: ${validValues.length}, NaN: ${values.length - validValues.length}`);
+    if (validValues.length > 0) {
+        console.log(`📊 Range: ${Math.min(...validValues)} - ${Math.max(...validValues)}`);
+    }
+
+    // Create GeoJsonLayer (Different IDs prevent WebGL buffer corruption during 2D/3D toggle)
+    const layer = new GeoJsonLayer({
+        id: `gebieden-layer-${state.enable3D ? '3d' : '2d'}`,
+        data: geojson,
+
+        // Rendering
+        filled: true,
+        stroked: true,
+        extruded: state.enable3D,
+        wireframe: false,
+
+        // Colors
+        getFillColor: d => {
+            // Check for multi-selection first
+            const featureId = d.id || d.properties?.id;
+            if (featureId && isGebiedSelected(featureId)) {
+                const highlightOpacity = state.enable3D ? 255 : 200;
+                return [197, 157, 0, highlightOpacity]; // Geo Gold highlight for selection (#c59d00)
+            }
+
+            const value = d.properties.indicator_waarde;
+            if (value === null || value === undefined) {
+                // Determine "No Data" color based on theme
+                // Light Mode: Dark Grey (80) + High Opacity (200) -> visible dark grey shape
+                // Dark Mode: Light Grey (200) + Medium Opacity (100) -> visible light shape
+                const r = state.currentTheme === 'dark' ? 200 : 80;
+                const g = state.currentTheme === 'dark' ? 200 : 80;
+                const b = state.currentTheme === 'dark' ? 200 : 80;
+                const a = state.enable3D ? 255 : (state.currentTheme === 'dark' ? 100 : 200);
+                return [r, g, b, a];
+            }
+
+            // Use Backend Color if available (Sync with Kompas)
+            if (d.properties.color) {
+                // Parse Hex to RGB
+                const hex = d.properties.color;
+                const r = parseInt(hex.slice(1, 3), 16);
+                const g = parseInt(hex.slice(3, 5), 16);
+                const b = parseInt(hex.slice(5, 7), 16);
+
+                // Opacity based on theme (Fully opaque in 3D to prevent transparency artifacts)
+                const opacity = state.enable3D ? 255 : (state.currentTheme === 'dark' ? 204 : 240); // 80% Dark, 94% Light
+                return [r, g, b, opacity];
+            }
+
+            // Fallback (Client-side calc)
+            return getColorRGB(value, minValue, maxValue, state.enable3D);
+        },
+        // Theme-aware borders: 
+        // Dark Mode: White (standard)
+        // Light Mode: White (to contrast against the Dark Grey fill of "No Data" areas)
+        getLineColor: d => [255, 255, 255, 200], // Always white borders for best contrast against both Dark fill (Light Mode) and Color fill
+        getLineWidth: 20,
+
+        // 3D Height
+        getElevation: d => {
+            if (!state.enable3D) return 0;
+
+            const value = d.properties.indicator_waarde;
+            if (value === null || value === undefined) return 0;
+
+            // Normalize en scale
+            const normalized = (value - minValue) / (maxValue - minValue);
+            return normalized * 1000 * state.heightScale;
+        },
+
+        // Interactivity
+        pickable: true,
+        autoHighlight: true,
+        highlightColor: [234, 179, 8, 150], // Geo Gold hover (#eab308)
+
+        // 3D Material Properties for Lighting (Only in 3D)
+        material: state.enable3D ? {
+            ambient: 0.8,    // High ambient reflection to preserve base color
+            diffuse: 0.6,    // Moderate diffuse
+            shininess: 0,    // Pure matte (0 shininess)
+            specularColor: [0, 0, 0] // No white specular highlights to prevent washing out the flat tops
+        } : false, // Explicitly disable complex material lighting for 2D map
+
+        // Render Parameters to prevent Z-fighting in 2D
+        parameters: {
+            depthTest: state.enable3D, // Disable depth testing in 2D to avoid z-fighting with basemap
+            blend: true
+        },
+
+        onClick: (info, event) => {
+            if (info.object) {
+                const gebiedId = info.object.id || (info.object.properties && info.object.properties.id);
+                const gebiedNaam = (info.object.properties && info.object.properties.naam) ? info.object.properties.naam : gebiedId;
+
+                if (!gebiedId) return;
+
+                // Multi-Select: Shift+Click voegt toe/verwijdert, normale click vervangt
+                const isMultiSelect = event?.srcEvent?.shiftKey || event?.srcEvent?.ctrlKey || event?.srcEvent?.metaKey;
+
+                if (isMultiSelect) {
+                    toggleGebiedSelection(gebiedId);
+                    console.log(`🔀 Multi-select toggle: ${gebiedNaam} (${gebiedId}). Totaal: ${state.selectedGebiedIds.size}`);
+                } else {
+                    clearGebiedSelection();
+                    state.selectedGebiedIds.add(gebiedId);
+                    console.log(`📍 Gebied geselecteerd: ${gebiedNaam} (${gebiedId})`);
+                }
+
+                // Update Rapport Output UI
+                updateSelectionUI();
+
+                // Load gebied details (voor het laatst aangeklikte gebied)
+                loadGebiedDetails(gebiedId);
+
+                // Reload kompas data if window is already open
+                if (state.kompasWindow && state.kompasWindow.isVisible && window.kompasViz && window.kompasViz.currentConfigId) {
+                    loadKompasForSelection(window.kompasViz.currentConfigId);
+                }
+
+                // Trigger re-render to show selection highlight
+                if (state.currentData && state.currentData.features && state.currentData.features.length > 0) {
+                    displayOnMap(state.currentData);
+                } else {
+                    console.warn('⚠️ Cannot re-render map: state.currentData is empty/invalid');
+                }
+
+                // Camera: Auto-pan to selected area (UI Polish)
+                if (!isMultiSelect) {
+                    flyToGebied(info.object);
+                }
+            }
+        },
+
+        // Smooth transitions - RESTORED per UI Polish Plan
+        // Note: Artifacts may occur when switching 2D/3D, but smooth data updates are preferred
+        transitions: {
+            getFillColor: 300,
+            getElevation: 500
+        },
+
+        // Performance - CRITICAL FIX: Force re-render on state changes
+        updateTriggers: {
+            getFillColor: [minValue, maxValue, state.enable3D, ...state.selectedGebiedIds, state.currentTheme],
+            getLineColor: [state.currentTheme], // Update borders on theme switch
+            getElevation: [state.enable3D, state.heightScale, minValue, maxValue],
+            extruded: [state.enable3D]
+        }
+
+    });
+
+    // Build layers array (gebieden + optioneel BAG panden)
+    const layers = [layer];
+
+    // Sprint 12: 3D BAG Panden layer
+    if (state.show3DBuildings && state.bag3dData && state.bag3dData.features) {
+        const bag3dLayer = new GeoJsonLayer({
+            id: 'bag3d-layer',
+            data: state.bag3dData,
+            filled: true,
+            stroked: true,
+            extruded: true,
+            wireframe: false,
+
+            getElevation: f => {
+                const dakHoogte = f.properties.b3_h_50p ?? f.properties.b3_h_dak_50p ?? 8;
+                const maaiveld = f.properties.b3_h_maaiveld ?? 0;
+                return Math.max(dakHoogte - maaiveld, 3); // Minimaal 3m hoogte
+            },
+
+            // Indicator-kleur (verrijkt door backend)
+            getFillColor: f => {
+                const hex = f.properties.indicator_color;
+                if (!hex || hex === '#888888') return [160, 160, 160, 220];
+                const r = parseInt(hex.slice(1, 3), 16);
+                const g = parseInt(hex.slice(3, 5), 16);
+                const b = parseInt(hex.slice(5, 7), 16);
+                return [r, g, b, 230];
+            },
+            getLineColor: [255, 255, 255, 60],
+            getLineWidth: 1,
+
+            pickable: true,
+            autoHighlight: true,
+            highlightColor: [234, 179, 8, 150],
+
+            material: {
+                ambient: 0.65,
+                diffuse: 0.7,
+                shininess: 0,
+                specularColor: [0, 0, 0]
+            },
+
+            parameters: {
+                depthTest: true,
+                blend: true
+            },
+
+            updateTriggers: {
+                getFillColor: [state.bag3dData],
+                getElevation: [state.bag3dData]
+            }
+        });
+        layers.push(bag3dLayer);
+    }
+
+    // Omgevingsvisie Deelgebieden overlay layer
+    if (state.showOmgevingsvisieLayer && state.omgevingsvisieData && state.omgevingsvisieData.features) {
+        const omgVisieLayer = new GeoJsonLayer({
+            id: 'omgevingsvisie-layer',
+            data: state.omgevingsvisieData,
+            filled: true,
+            stroked: true,
+            extruded: false,
+
+            // Semi-transparante fill zodat CBS-laag eronder zichtbaar blijft
+            getFillColor: [138, 43, 226, 25],    // Paars, zeer transparant
+            getLineColor: [138, 43, 226, 200],   // Paars, duidelijk zichtbaar
+            getLineWidth: 80,                     // 80m breed = duidelijk zichtbare grens
+
+            pickable: true,
+            autoHighlight: true,
+            highlightColor: [138, 43, 226, 80],   // Paars hover highlight
+
+            parameters: {
+                depthTest: false,
+                blend: true
+            },
+
+            onClick: (info) => {
+                if (info.object) {
+                    const props = info.object.properties;
+                    selectBuurtenFromDeelgebied(props.id, props.deelgebied);
+                }
+            },
+
+            updateTriggers: {
+                getFillColor: [state.omgevingsvisieData]
+            }
+        });
+        layers.push(omgVisieLayer);
+    }
+
+    state.deckgl.setProps({ layers });
+
+    // Auto-zoom to data
+    if (geojson.features.length > 0) {
+        fitBounds(geojson);
+    }
+}
+
+function fitBounds(geojson) {
+    // Calculate bounding box
+    let minLon = Infinity, maxLon = -Infinity;
+    let minLat = Infinity, maxLat = -Infinity;
+
+    geojson.features.forEach(feature => {
+        const coords = feature.geometry.coordinates;
+
+        // Flatten coordinates (works for MultiPolygon)
+        const flattenCoords = (arr, depth = 0) => {
+            if (depth >= 3) return arr;
+            return arr.flatMap(item => flattenCoords(item, depth + 1));
+        };
+
+        const allCoords = flattenCoords(coords);
+
+        allCoords.forEach(coord => {
+            if (Array.isArray(coord) && coord.length >= 2) {
+                minLon = Math.min(minLon, coord[0]);
+                maxLon = Math.max(maxLon, coord[0]);
+                minLat = Math.min(minLat, coord[1]);
+                maxLat = Math.max(maxLat, coord[1]);
+            }
+        });
+    });
+
+    if (minLon !== Infinity) {
+        const centerLon = (minLon + maxLon) / 2;
+        const centerLat = (minLat + maxLat) / 2;
+
+        // Calculate appropriate zoom level
+        const latDiff = maxLat - minLat;
+        const lonDiff = maxLon - minLon;
+        const maxDiff = Math.max(latDiff, lonDiff);
+
+        let zoom = 7;
+        if (maxDiff < 0.1) zoom = 12;
+        else if (maxDiff < 0.5) zoom = 10;
+        else if (maxDiff < 2) zoom = 8;
+
+        state.deckgl.setProps({
+            initialViewState: {
+                longitude: centerLon,
+                latitude: centerLat,
+                zoom: zoom,
+                pitch: state.enable3D ? 45 : 0,
+                bearing: 0,
+                transitionDuration: 1000,
+                transitionInterpolator: new deck.FlyToInterpolator()
+            }
+        });
+    }
+}
+
+// ============================================================================
+// Color Scale Function (Theme-Aware)
+// ============================================================================
+
+function getColorRGB(value, min, max) {
+    // Normalize value to 0-1
+    const normalized = Math.max(0, Math.min(1, (value - min) / (max - min) || 0));
+
+    // Dark mode: brighter neon colors
+    if (state.currentTheme === 'dark') {
+        if (normalized < 0.5) {
+            // Cyan to Yellow (brighter)
+            const t = normalized * 2;
+            return [
+                Math.round(30 + (225 * t)),     // R: 30 → 255
+                Math.round(144 + (111 * t)),    // G: 144 → 255
+                Math.round(255 * (1 - t)),      // B: 255 → 0
+                255                              // Force 100% opacity to debug visibility
+            ];
+        } else {
+            // Yellow to Red
+            const t = (normalized - 0.5) * 2;
+            return [
+                255,                             // R: 255
+                Math.round(255 * (1 - t)),       // G: 255 → 30
+                0,                               // B: 0
+                255                              // Force 100% opacity to debug visibility
+            ];
+        }
+    } else {
+        // Light mode: original muted colors
+        if (normalized < 0.5) {
+            // Blue to Yellow (muted)
+            const t = normalized * 2;
+            return [
+                Math.round(0 + (255 * t)),       // R: 0 → 255
+                Math.round(100 + (155 * t)),     // G: 100 → 255
+                Math.round(255 * (1 - t)),       // B: 255 → 0
+                240                              // Higher opacity (~94%) for light mode visibility
+            ];
+        } else {
+            // Yellow to Red
+            const t = (normalized - 0.5) * 2;
+            return [
+                255,                             // R: 255
+                Math.round(255 * (1 - t)),       // G: 255 → 0
+                0,                               // B: 0
+                240                              // Higher opacity (~94%) for light mode visibility
+            ];
+        }
+    }
+}
+
+// ============================================================================
+// Legenda Generator (NEW)
+// ============================================================================
+
+function updateLegenda(geojson) {
+    /**
+     * Unified Legend Update Function
+     * Called from:
+     *   1. loadKaartData() - after loading map data via Kaart Configuratie
+     *   2. handleIndicatorSelection() - after Kompas indicator click (via EventBus)
+     * 
+     * Updates:
+     *   - Color gradient bar (SVG)
+     *   - Min/Max labels  
+     *   - Coverage bar + text
+     *   - Help text visibility
+     */
+    const container = document.getElementById('color-scale-container');
+    const svg = document.getElementById('color-gradient-bar');
+    const minLabel = document.getElementById('legend-min-label');
+    const maxLabel = document.getElementById('legend-max-label');
+    const coverageText = document.getElementById('coverage-text');
+    const coverageFill = document.getElementById('coverage-fill');
+    const helpText = document.querySelector('#legenda-content > .help-text');
+    const labels = document.querySelector('.legenda-labels');
+
+    console.log('📊 updateLegenda called', {
+        hasGeojson: !!geojson,
+        hasMetadata: !!geojson?.metadata,
+        currentIndicator: state.currentIndicator
+    });
+
+    // No indicator selected → show placeholder text, hide reset button
+    if (!state.currentIndicator) {
+        if (container) container.style.display = 'none';
+        if (helpText) helpText.style.display = 'block';
+        const resetBtn = document.getElementById('reset-indicator-btn');
+        if (resetBtn) resetBtn.style.display = 'none';
+        return;
+    }
+
+    // Indicator active → show reset button
+    const resetBtn = document.getElementById('reset-indicator-btn');
+    if (resetBtn) resetBtn.style.display = 'flex';
+
+    // No data yet → keep existing state
+    if (!geojson || !geojson.metadata) {
+        console.warn('⚠️ updateLegenda: waiting for data...');
+        return;
+    }
+
+    // Hide placeholder, show legend
+    if (helpText) helpText.style.display = 'none';
+    if (container) container.style.display = 'block';
+
+    // Get indicator name from dropdown or metadata
+    let indicatorNaam = 'Indicator';
+    const select = document.getElementById('indicator-select');
+    if (select && select.selectedIndex >= 0) {
+        const selectedOption = select.options[select.selectedIndex];
+        if (selectedOption && selectedOption.text) {
+            indicatorNaam = selectedOption.text.split(' (')[0];
+        }
+    }
+    // Fallback: use metadata indicator name if available
+    if (geojson.metadata.indicator_naam) {
+        indicatorNaam = geojson.metadata.indicator_naam;
+    }
+
+    // Update min/max labels
+    if (minLabel) minLabel.textContent = formatNumber(state.currentMinValue);
+    if (maxLabel) maxLabel.textContent = formatNumber(state.currentMaxValue);
+
+    // Also update .legenda-labels for CSS gradient display
+    if (labels) {
+        labels.innerHTML = `
+            <span>${formatNumber(state.currentMinValue)}</span>
+            <span>${formatNumber(state.currentMaxValue)}</span>
+        `;
+    }
+
+    // Generate SVG gradient bar
+    if (svg) {
+        svg.innerHTML = `
+            <defs>
+                <linearGradient id="color-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                    <stop offset="0%" style="stop-color:rgb(0,100,255);stop-opacity:1" />
+                    <stop offset="50%" style="stop-color:rgb(255,255,0);stop-opacity:1" />
+                    <stop offset="100%" style="stop-color:rgb(255,0,0);stop-opacity:1" />
+                </linearGradient>
+            </defs>
+            <rect width="100%" height="100%" fill="url(#color-gradient)" />
+        `;
+    }
+
+    // Update coverage bar
+    const total = geojson.metadata.total_features || 0;
+    const withData = geojson.metadata.features_with_data || 0;
+    const percentage = total > 0 ? Math.round((withData / total) * 100) : 0;
+
+    if (coverageText) coverageText.textContent = `${withData} van ${total} gebieden (${percentage}%)`;
+    if (coverageFill) coverageFill.style.width = `${percentage}%`;
+
+    console.log(`📊 Legenda updated: ${indicatorNaam}, range: ${formatNumber(state.currentMinValue)} - ${formatNumber(state.currentMaxValue)}, coverage ${percentage}%`);
+}
+
+
+// ============================================================================
+// UI Update Functions
+// ============================================================================
+
+/**
+ * Reset de kaart naar basisweergave (geen indicator-kleuring).
+ * Behoudt de gebiedsselectie en configuratie, wist alleen de indicator.
+ */
+function resetKaartIndicator() {
+    console.log('🔄 Kaart reset: indicator wissen');
+
+    // Reset state
+    state.currentIndicator = null;
+    state.currentData = null;
+    state.currentMinValue = null;
+    state.currentMaxValue = null;
+
+    // Reset indicator dropdown
+    const select = document.getElementById('indicator-select');
+    if (select) select.value = '';
+    const coverageEl = document.getElementById('indicator-coverage');
+    if (coverageEl) coverageEl.textContent = 'Selecteer een indicator';
+
+    // Hide reset button & legend
+    const resetBtn = document.getElementById('reset-indicator-btn');
+    if (resetBtn) resetBtn.style.display = 'none';
+    const container = document.getElementById('color-scale-container');
+    if (container) container.style.display = 'none';
+    const helpText = document.querySelector('#legenda-content > .help-text');
+    if (helpText) helpText.style.display = 'block';
+
+    // Reload map without indicator (just geometries, default grey)
+    if (typeof loadKaartData === 'function') {
+        loadKaartData();
+    }
+
+    updateButtonState();
+    console.log('✅ Kaart gereset naar basisweergave');
+}
+
+function populateGebiedstypeSelect(gebiedstypes) {
+    const select = document.getElementById('gebiedstype-select');
+    select.innerHTML = '<option value="">Selecteer een gebiedstype</option>';
+
+    gebiedstypes.forEach(gt => {
+        const option = document.createElement('option');
+        option.value = gt.id;
+        option.textContent = `${gt.naam} (${gt.aantal_gebieden} gebieden)`;
+        option.dataset.count = gt.aantal_gebieden;
+        select.appendChild(option);
+    });
+
+    document.getElementById('gebiedstype-count').textContent = 'Selecteer een gebiedstype';
+}
+
+function populateIndicatorSelect(indicatoren) {
+    const select = document.getElementById('indicator-select');
+    select.innerHTML = '<option value="">Selecteer een indicator</option>';
+    select.disabled = false;
+
+    indicatoren.forEach(ind => {
+        const option = document.createElement('option');
+        option.value = ind.uuid;
+
+        // Show coverage in option text
+        const coverage = ind.aantal_gebieden_met_data || 0;
+        option.textContent = coverage > 0
+            ? `${ind.naam} (${coverage} gebieden)`
+            : `${ind.naam} (geen data)`;
+
+        option.dataset.coverage = coverage;
+        option.dataset.eenheid = ind.eenheid || '';
+
+        // Disable options without data
+        if (coverage === 0) {
+            option.disabled = true;
+            option.style.color = '#94a3b8'; // Muted color
+        }
+
+        select.appendChild(option);
+    });
+
+    const totalWithData = indicatoren.filter(i => (i.aantal_gebieden_met_data || 0) > 0).length;
+    document.getElementById('indicator-coverage').textContent =
+        `${totalWithData} van ${indicatoren.length} indicatoren hebben data`;
+
+    // Enable button if both selected
+    updateButtonState();
+}
+
+function updateButtonState() {
+    const btn = document.getElementById('toon-kaart-btn');
+    const gebiedstypeSelected = !!state.currentGebiedstype;
+
+    // Enable if gebiedstype selected (indicator OPTIONAL)
+    btn.disabled = !gebiedstypeSelected;
+
+    // Update text based on selection
+    if (gebiedstypeSelected && !state.currentIndicator) {
+        // SVG icon + text update
+        btn.innerHTML = `
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-map" style="margin-right: 8px;">
+                <path d="M14.106 5.553a2 2 0 0 0 1.788 0l3.659-1.83A1 1 0 0 1 21 4.619v12.764a1 1 0 0 1-.553.894l-4.553 2.277a2 2 0 0 1-1.788 0l-4.212-2.106a2 2 0 0 0-1.788 0l-3.659 1.83A1 1 0 0 1 3 19.381V6.618a1 1 0 0 1 .553-.894l4.553-2.277a2 2 0 0 1 1.788 0z" />
+                <path d="M15 5.764v15" />
+                <path d="M9 3.236v15" />
+            </svg>
+            Toon Gebieden (outlines)
+        `;
+    } else {
+        btn.innerHTML = `
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-map" style="margin-right: 8px;">
+                <path d="M14.106 5.553a2 2 0 0 0 1.788 0l3.659-1.83A1 1 0 0 1 21 4.619v12.764a1 1 0 0 1-.553.894l-4.553 2.277a2 2 0 0 1-1.788 0l-4.212-2.106a2 2 0 0 0-1.788 0l-3.659 1.83A1 1 0 0 1 3 19.381V6.618a1 1 0 0 1 .553-.894l4.553-2.277a2 2 0 0 1 1.788 0z" />
+                <path d="M15 5.764v15" />
+                <path d="M9 3.236v15" />
+            </svg>
+            Toon op Kaart
+        `;
+    }
+}
+
+function updateFeatureCount(metadata) {
+    const countEl = document.getElementById('feature-count');
+    const valueEl = document.getElementById('feature-count-value');
+
+    if (metadata) {
+        valueEl.textContent = metadata.features_with_data || metadata.total_features;
+        countEl.style.display = 'block';
+        countEl.classList.add('fade-in');
+    } else {
+        countEl.style.display = 'none';
+    }
+}
+
+function displayGebiedDetails(data) {
+    const panel = document.getElementById('gebied-info');
+    const content = document.getElementById('gebied-details');
+
+    const gebied = data.gebied;
+    const indicatoren = data.indicatoren;
+
+    // Note: Rapport panel text is managed by updateSelectionUI() (Sprint 7 multi-select)
+
+    // Sprint 7: Als meerdere gebieden geselecteerd, toon vergelijking
+    if (state.selectedGebiedIds.size > 1) {
+        displayMultiGebiedComparison(data);
+        return;
+    }
+
+    let html = `
+    <div class="detail-row">
+      <span class="detail-label">ID:</span>
+      <span class="detail-value">${gebied.id}</span>
+    </div>
+    <div class="detail-row">
+      <span class="detail-label">Naam:</span>
+      <span class="detail-value">${gebied.naam}</span>
+    </div>
+    <div class="detail-row">
+      <span class="detail-label">Type:</span>
+      <span class="detail-value">${gebied.gebiedstype.naam}</span>
+    </div>
+  `;
+
+    if (indicatoren && indicatoren.length > 0) {
+        html += '<h4>Indicatoren</h4>';
+        indicatoren.slice(0, 10).forEach(ind => {
+            html += `
+        <div class="detail-row">
+          <span class="detail-label">${ind.naam}:</span>
+          <span class="detail-value">${formatNumber(ind.waarde)} ${ind.eenheid || ''}</span>
+        </div>
+      `;
+        });
+
+        if (indicatoren.length > 10) {
+            html += `<p><small>... en ${indicatoren.length - 10} meer</small></p>`;
+        }
+    } else {
+        html += '<p><em>Geen indicator data beschikbaar</em></p>';
+    }
+
+    content.innerHTML = html;
+    panel.style.display = 'block';
+}
+
+/**
+ * Sprint 7: Vergelijkende barcharts weergave bij multi-select.
+ * Haalt data op voor alle geselecteerde gebieden en toont ze naast elkaar.
+ */
+async function displayMultiGebiedComparison(lastClickedData) {
+    const panel = document.getElementById('gebied-info');
+    const content = document.getElementById('gebied-details');
+    const ids = [...state.selectedGebiedIds];
+
+    // Toon laad-indicator
+    content.innerHTML = `<p style="opacity:0.6;">⏳ Vergelijking laden voor ${ids.length} gebieden...</p>`;
+    panel.style.display = 'block';
+
+    try {
+        // Fetch all selected areas' details in parallel
+        const promises = ids.map(id =>
+            fetch(`${API_BASE}/gebieden/${id}`).then(r => r.ok ? r.json() : null)
+        );
+        const allData = (await Promise.all(promises)).filter(Boolean);
+
+        if (allData.length === 0) {
+            content.innerHTML = '<p><em>Geen data beschikbaar voor vergelijking</em></p>';
+            return;
+        }
+
+        // Header
+        let html = `
+        <div style="margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid var(--color-border, rgba(255,255,255,0.1));">
+            <strong style="font-size: 1rem;"><img src="/static/images/chart-bar.svg" alt="" style="width:18px; height:18px; vertical-align:-3px; filter: brightness(0) invert(1); margin-right: 4px;">Vergelijking: ${ids.length} gebieden</strong>
+            <div style="font-size: 0.8rem; opacity: 0.7; margin-top: 4px;">
+                ${allData.map(d => d.gebied.naam).join(' · ')}
+            </div>
+        </div>`;
+
+        // Find common indicators (present in ALL selected areas)
+        const firstIndicators = allData[0].indicatoren || [];
+
+        // For each indicator, collect values from all areas
+        const comparisonData = [];
+        firstIndicators.forEach(ind => {
+            const entry = { naam: ind.naam, eenheid: ind.eenheid || '', waarden: [] };
+            allData.forEach(areaData => {
+                const match = (areaData.indicatoren || []).find(i => i.naam === ind.naam);
+                entry.waarden.push({
+                    gebiedNaam: areaData.gebied.naam,
+                    waarde: match ? match.waarde : null
+                });
+            });
+            // Only include if at least 2 areas have data
+            const validCount = entry.waarden.filter(w => w.waarde !== null && w.waarde !== undefined).length;
+            if (validCount >= 2) {
+                comparisonData.push(entry);
+            }
+        });
+
+        // Render barcharts (max 8 indicators)
+        const toShow = comparisonData.slice(0, 8);
+
+        if (toShow.length === 0) {
+            html += '<p style="opacity:0.6;">Onvoldoende overlappende indicatoren voor vergelijking.</p>';
+        } else {
+            // Color palette for areas
+            const areaColors = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
+
+            toShow.forEach(ind => {
+                const validWaarden = ind.waarden.filter(w => w.waarde !== null && w.waarde !== undefined);
+                const maxVal = Math.max(...validWaarden.map(w => Math.abs(w.waarde)), 1);
+                const gemiddelde = validWaarden.reduce((s, w) => s + w.waarde, 0) / validWaarden.length;
+
+                html += `
+                <div style="margin-bottom: 14px;">
+                    <div style="font-size: 0.8rem; font-weight: 600; margin-bottom: 4px; color: var(--color-text-primary, #e2e8f0);">
+                        ${ind.naam} <span style="opacity:0.5; font-weight:400;">(${ind.eenheid})</span>
+                    </div>`;
+
+                ind.waarden.forEach((w, idx) => {
+                    if (w.waarde === null || w.waarde === undefined) return;
+                    const pct = Math.max(5, (Math.abs(w.waarde) / maxVal) * 100);
+                    const color = areaColors[idx % areaColors.length];
+                    const isAboveAvg = w.waarde >= gemiddelde;
+
+                    html += `
+                    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 3px; font-size: 0.75rem;">
+                        <span style="width: 80px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; opacity: 0.8;" title="${w.gebiedNaam}">
+                            ${w.gebiedNaam.length > 12 ? w.gebiedNaam.slice(0, 11) + '…' : w.gebiedNaam}
+                        </span>
+                        <div style="flex: 1; height: 16px; background: rgba(255,255,255,0.05); border-radius: 4px; overflow: hidden;">
+                            <div style="width: ${pct}%; height: 100%; background: ${color}; border-radius: 4px; transition: width 0.3s;"></div>
+                        </div>
+                        <span style="width: 55px; text-align: right; font-weight: 500; font-variant-numeric: tabular-nums;">
+                            ${formatNumber(w.waarde)}
+                        </span>
+                    </div>`;
+                });
+
+                // Gemiddelde lijn
+                html += `
+                    <div style="font-size: 0.7rem; opacity: 0.5; text-align: right; margin-top: 2px;">
+                        Gem: ${formatNumber(gemiddelde)} ${ind.eenheid}
+                    </div>
+                </div>`;
+            });
+
+            if (comparisonData.length > 8) {
+                html += `<p style="opacity:0.5; font-size: 0.8rem;">... en ${comparisonData.length - 8} meer indicatoren</p>`;
+            }
+        }
+
+        content.innerHTML = html;
+    } catch (error) {
+        console.error('❌ Fout bij multi-gebied vergelijking:', error);
+        content.innerHTML = '<p><em>Fout bij laden vergelijking</em></p>';
+    }
+}
+
+/**
+ * Sprint 8D: Rapport type keuze modal — Gebiedsdossier vs Benchmark
+ */
+function openRapportTypeModal(gebiedId, baseUrl) {
+    // Verwijder bestaande modal indien aanwezig
+    document.getElementById('rapport-type-modal')?.remove();
+
+    const modal = document.createElement('div');
+    modal.id = 'rapport-type-modal';
+    modal.style.cssText = `
+        position: fixed; inset: 0; z-index: 9999;
+        background: rgba(0,0,0,0.6); display: flex;
+        align-items: center; justify-content: center;
+    `;
+    modal.innerHTML = `
+        <div style="
+            background: var(--color-surface, #1e2535);
+            border: 1px solid var(--color-border, rgba(255,255,255,0.1));
+            border-radius: 12px; padding: 1.5rem; width: 340px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+        ">
+            <h3 style="margin:0 0 0.5rem; font-size:1rem;">Kies Rapport Type</h3>
+            <p style="margin:0 0 1.25rem; font-size:0.85rem; opacity:0.6;">
+                Welk rapport wil je genereren?
+            </p>
+            <div style="display:flex; flex-direction:column; gap:0.75rem;">
+                <button id="rapport-modal-dossier" style="
+                    padding: 0.75rem 1rem; border-radius: 8px; border: none;
+                    background: var(--color-primary, #3b82f6); color: white;
+                    font-size:0.95rem; font-weight:600; cursor:pointer; text-align:left;
+                ">📄 Gebiedsdossier<br>
+                    <span style="font-weight:400; font-size:0.8rem; opacity:0.8;">
+                        Volledige analyse van dit gebied
+                    </span>
+                </button>
+                <button id="rapport-modal-benchmark" style="
+                    padding: 0.75rem 1rem; border-radius: 8px; border: none;
+                    background: var(--color-bg-alt, #2d3748); color: white;
+                    font-size:0.95rem; font-weight:600; cursor:pointer; text-align:left;
+                    border: 1px solid var(--color-border, rgba(255,255,255,0.15));
+                ">⚖️ Benchmark Vergelijker<br>
+                    <span style="font-weight:400; font-size:0.8rem; opacity:0.8;">
+                        Vergelijk met andere gebieden of Fryslân
+                    </span>
+                </button>
+            </div>
+            <button id="rapport-modal-sluiten" style="
+                margin-top:1rem; background:none; border:none; color:inherit;
+                opacity:0.5; cursor:pointer; font-size:0.85rem; width:100%; text-align:center;
+            ">Annuleren</button>
+        </div>
+    `;
+
+    document.body.appendChild(modal);
+
+    document.getElementById('rapport-modal-dossier').addEventListener('click', () => {
+        window.open(`${baseUrl}/admin/rapport/${gebiedId}`, '_blank');
+        modal.remove();
+    });
+    document.getElementById('rapport-modal-benchmark').addEventListener('click', () => {
+        window.open(`${baseUrl}/admin/rapport/benchmark?gebied_a=${gebiedId}`, '_blank');
+        modal.remove();
+    });
+    document.getElementById('rapport-modal-sluiten').addEventListener('click', () => modal.remove());
+    modal.addEventListener('click', (e) => { if (e.target === modal) modal.remove(); });
+}
+
+/**
+ * Multi-select rapport keuze modal — Benchmark vs Multi-Gebiedsdossier
+ */
+function openMultiSelectRapportModal(ids, baseUrl) {
+    document.getElementById('rapport-type-modal')?.remove();
+
+    const deelgebiedNaam = state.selectedDeelgebiedNaam || `${ids.length} buurten`;
+    const modal = document.createElement('div');
+    modal.id = 'rapport-type-modal';
+    modal.style.cssText = `
+        position: fixed; inset: 0; z-index: 9999;
+        background: rgba(0,0,0,0.6); display: flex;
+        align-items: center; justify-content: center;
+    `;
+    modal.innerHTML = `
+        <div style="
+            background: var(--color-surface, #1e2535);
+            border: 1px solid var(--color-border, rgba(255,255,255,0.1));
+            border-radius: 12px; padding: 1.5rem; width: 380px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+        ">
+            <h3 style="margin:0 0 0.5rem; font-size:1rem;">Kies Rapport Type</h3>
+            <p style="margin:0 0 1.25rem; font-size:0.85rem; opacity:0.6;">
+                ${ids.length} gebieden geselecteerd ${state.selectedDeelgebiedNaam ? `(${state.selectedDeelgebiedNaam})` : ''}
+            </p>
+            <div style="display:flex; flex-direction:column; gap:0.75rem;">
+                <button id="rapport-modal-benchmark" style="
+                    padding: 0.75rem 1rem; border-radius: 8px; border: none;
+                    background: var(--color-bg-alt, #2d3748); color: white;
+                    font-size:0.95rem; font-weight:600; cursor:pointer; text-align:left;
+                    border: 1px solid var(--color-border, rgba(255,255,255,0.15));
+                ">⚖️ Benchmark Vergelijker<br>
+                    <span style="font-weight:400; font-size:0.8rem; opacity:0.8;">
+                        Vergelijk gebieden onderling met delta-tabel
+                    </span>
+                </button>
+                <button id="rapport-modal-multi-gebied" style="
+                    padding: 0.75rem 1rem; border-radius: 8px; border: none;
+                    background: var(--color-primary, #3b82f6); color: white;
+                    font-size:0.95rem; font-weight:600; cursor:pointer; text-align:left;
+                ">🗺️ Multi-Gebiedsdossier<br>
+                    <span style="font-weight:400; font-size:0.8rem; opacity:0.8;">
+                        Z-score analyse met kaart en ranking
+                    </span>
+                </button>
+            </div>
+            <button id="rapport-modal-sluiten-multi" style="
+                margin-top:1rem; background:none; border:none; color:inherit;
+                opacity:0.5; cursor:pointer; font-size:0.85rem; width:100%; text-align:center;
+            ">Annuleren</button>
+        </div>
+    `;
+
+    document.body.appendChild(modal);
+
+    document.getElementById('rapport-modal-benchmark').addEventListener('click', () => {
+        const [a, ...rest] = ids;
+        window.open(`${baseUrl}/admin/rapport/benchmark?gebied_a=${a}&gebieden_b=${rest.join(',')}`, '_blank');
+        modal.remove();
+    });
+    document.getElementById('rapport-modal-multi-gebied').addEventListener('click', () => {
+        const gebiedenParam = ids.join(',');
+        const naam = encodeURIComponent(deelgebiedNaam);
+        window.open(`${baseUrl}/admin/rapport/multi-gebied?gebieden=${gebiedenParam}&naam=${naam}`, '_blank');
+        modal.remove();
+    });
+    document.getElementById('rapport-modal-sluiten-multi').addEventListener('click', () => modal.remove());
+    modal.addEventListener('click', (e) => { if (e.target === modal) modal.remove(); });
+}
+
+// ============================================================================
+// Multi-Gebied Selection UI (Sprint 7)
+// ============================================================================
+
+/**
+ * Updates the UI elements to reflect the current multi-selection state:
+ * - Rapport panel text & button state
+ * - Selection badge (floating counter)
+ */
+function updateSelectionUI() {
+    const rapportInfo = document.getElementById('rapport-gebied-info');
+    const rapportBtn = document.getElementById('open-rapport-btn');
+    const count = state.selectedGebiedIds.size;
+
+    if (rapportInfo && rapportBtn) {
+        if (count === 0) {
+            rapportInfo.innerHTML = '<em>Klik op een gebied op de kaart</em>';
+            rapportBtn.disabled = true;
+        } else if (count === 1) {
+            const namen = getSelectedGebiedNamen();
+            rapportInfo.innerHTML = `<strong>Geselecteerd:</strong> ${namen[0]} (${state.selectedGebiedId})`;
+            rapportBtn.disabled = false;
+        } else {
+            const namen = getSelectedGebiedNamen();
+            const namenTekst = namen.length <= 3
+                ? namen.join(', ')
+                : `${namen.slice(0, 3).join(', ')} (+${namen.length - 3})`;
+            rapportInfo.innerHTML = `<strong>Selectie (${count}):</strong> ${namenTekst}`;
+            rapportBtn.disabled = false;
+        }
+    }
+
+    // Update or create floating selection badge (Sprint 12: ook bij count=1 voor 3D panden knop)
+    let badge = document.getElementById('selection-badge');
+    if (count >= 1) {
+        if (!badge) {
+            badge = document.createElement('div');
+            badge.id = 'selection-badge';
+            badge.style.cssText = `
+                position: fixed; bottom: 40px; left: 50%; transform: translateX(-50%); z-index: 1000;
+                background: linear-gradient(135deg, #10b981, #059669);
+                color: white; padding: 10px 18px; border-radius: 24px;
+                font-size: 14px; font-weight: 600; cursor: pointer;
+                box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+                display: flex; align-items: center; gap: 8px;
+                transition: transform 0.2s, opacity 0.2s;
+            `;
+            badge.title = 'Klik om selectie op te heffen';
+            badge.addEventListener('click', () => {
+                clearGebiedSelection();
+                updateSelectionUI();
+                if (state.currentData) displayOnMap(state.currentData);
+            });
+            document.body.appendChild(badge);
+        }
+        // Badge tekst: single vs multi
+        const badgeTekst = count === 1
+            ? `${getSelectedGebiedNamen()[0] || '1 gebied'}`
+            : `${count} gebieden geselecteerd`;
+
+        // Build badge content with optional 3D panden button  
+        const bag3dBtnHtml = (count >= 1 && count <= 3)
+            ? `<button id="bag3d-toggle-btn" style="
+                background: ${state.show3DBuildings ? 'rgba(234,179,8,0.9)' : 'rgba(255,255,255,0.15)'};
+                border: 1px solid rgba(255,255,255,0.3); border-radius: 12px;
+                color: white; padding: 4px 10px; font-size: 12px; cursor: pointer;
+                margin-left: 4px; transition: background 0.2s;
+              " title="${state.show3DBuildings ? 'BAG panden verbergen' : 'Laad 3D panden vanuit de 3DBAG'}">
+                <img src="/static/images/building.svg" alt="" style="width:14px; height:14px; filter: brightness(0) invert(1); vertical-align: -1px;"> ${state.show3DBuildings ? 'Panden uit' : '3D Panden'}
+              </button>`
+            : '';
+
+        badge.innerHTML = `<img src="/static/images/map-pin-plus.svg" alt="" style="width:18px; height:18px; filter: brightness(0) invert(1);"> ${badgeTekst} ${bag3dBtnHtml} <span style="opacity:0.7; font-size:12px;">✕</span>`;
+        badge.style.display = 'flex';
+        // Ensure centered position (also fixes pre-existing badges from cache)
+        badge.style.position = 'fixed';
+        badge.style.bottom = '40px';
+        badge.style.left = '50%';
+        badge.style.transform = 'translateX(-50%)';
+        badge.style.right = '';
+
+        // Attach 3D BAG button handler (re-attached on every UI update)
+        const bag3dBtn = document.getElementById('bag3d-toggle-btn');
+        if (bag3dBtn) {
+            bag3dBtn.addEventListener('click', (e) => {
+                e.stopPropagation(); // Prevent badge click (clear selection)
+                if (state.show3DBuildings) {
+                    // Toggle OFF
+                    state.show3DBuildings = false;
+                    state.bag3dData = null;
+                    if (state.currentData) displayOnMap(state.currentData);
+                    updateSelectionUI();
+                    console.log('🏗️ BAG 3D panden uitgeschakeld');
+                } else {
+                    // Toggle ON
+                    loadBag3DBuildings();
+                }
+            });
+        }
+    } else if (badge) {
+        badge.style.display = 'none';
+    }
+}
+
+/**
+ * Sprint 7: Laad kompas voor de huidige selectie.
+ * Kiest automatisch single of multi-gebied methode.
+ */
+function loadKompasForSelection(configId) {
+    if (!window.kompasViz) return;
+    const ids = [...state.selectedGebiedIds];
+    if (ids.length === 0) return;
+
+    if (ids.length === 1) {
+        window.kompasViz.loadGebiedData(configId, ids[0]);
+    } else {
+        window.kompasViz.loadMultiGebiedData(configId, ids);
+    }
+}
+
+// ============================================================================
+// Export Functions (NEW)
+// ============================================================================
+
+function exportScreenshot() {
+    if (!state.deckgl) {
+        showError('Geen kaart geladen om te exporteren');
+        return;
+    }
+
+    try {
+        // Use deck.gl's internal canvas (preserves WebGL context)
+        const canvas = state.deckgl.canvas;
+
+        if (!canvas) {
+            showError('Canvas niet beschikbaar');
+            return;
+        }
+
+        // Convert canvas to blob and download
+        canvas.toBlob(blob => {
+            if (!blob) {
+                showError('Screenshot gefaald - probeer opnieuw');
+                return;
+            }
+
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `omnitwin-kaart-${new Date().toISOString().split('T')[0]}.png`;
+            a.click();
+            URL.revokeObjectURL(url);
+            console.log('📸 Screenshot geëxporteerd');
+        }, 'image/png');
+    } catch (error) {
+        console.error('Screenshot error:', error);
+        showError('Fout bij maken screenshot');
+    }
+}
+
+function exportGeoJSON() {
+    if (!state.currentData) {
+        showError('Geen data geladen om te exporteren');
+        return;
+    }
+
+    const json = JSON.stringify(state.currentData, null, 2);
+    const blob = new Blob([json], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `omnitwin-data-${new Date().toISOString().split('T')[0]}.geojson`;
+    a.click();
+    URL.revokeObjectURL(url);
+    console.log('🗺️ GeoJSON geëxporteerd');
+}
+
+function exportCSV() {
+    if (!state.currentData || !state.currentData.features) {
+        showError('Geen data geladen om te exporteren');
+        return;
+    }
+
+    // Generate CSV
+    const headers = ['id', 'naam', 'indicator_naam', 'indicator_waarde', 'eenheid', 'jaar'];
+    const rows = state.currentData.features.map(f => {
+        const p = f.properties;
+        return [p.id, p.naam, p.indicator_naam, p.indicator_waarde, p.eenheid || '', p.jaar || ''].join(',');
+    });
+
+    const csv = [headers.join(','), ...rows].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `omnitwin-data-${new Date().toISOString().split('T')[0]}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    console.log('📊 CSV geëxporteerd');
+}
+
+// ============================================================================
+// Event Handlers
+// ============================================================================
+
+function setupEventListeners() {
+    // Gebiedstype selection
+    document.getElementById('gebiedstype-select').addEventListener('change', async (e) => {
+        const selectedId = e.target.value;
+        state.currentGebiedstype = selectedId || null;
+        state.currentIndicator = null;
+
+        if (selectedId) {
+            const selectedOption = e.target.options[e.target.selectedIndex];
+            const count = selectedOption.dataset.count;
+            document.getElementById('gebiedstype-count').textContent =
+                `${count} gebieden in dit type`;
+
+            await loadIndicatoren(selectedId);
+        } else {
+            document.getElementById('indicator-select').disabled = true;
+            document.getElementById('indicator-select').innerHTML =
+                '<option value="">Selecteer eerst gebiedstype</option>';
+            document.getElementById('indicator-coverage').textContent =
+                'Selecteer een indicator';
+        }
+
+        updateButtonState();
+    });
+
+    // Indicator selection
+    document.getElementById('indicator-select').addEventListener('change', (e) => {
+        const selectedId = e.target.value;
+        state.currentIndicator = selectedId || null;
+
+        if (selectedId) {
+            const selectedOption = e.target.options[e.target.selectedIndex];
+            const coverage = selectedOption.dataset.coverage;
+            document.getElementById('indicator-coverage').textContent =
+                coverage ? `${coverage} gebieden met data` : 'Data beschikbaarheid onbekend';
+        }
+
+        updateButtonState();
+    });
+
+    // 3D Toggle (wederzijds exclusief met BAG panden)
+    document.getElementById('enable-3d').addEventListener('change', (e) => {
+        state.enable3D = e.target.checked;
+
+        // Wederzijds exclusief: buurt-3D aan → BAG panden uit
+        if (state.enable3D && state.show3DBuildings) {
+            state.show3DBuildings = false;
+            state.bag3dData = null;
+            console.log('🏗️ BAG panden uitgeschakeld (buurt-extrusie actief)');
+        }
+
+        // Toggle height scale controls
+        document.getElementById('extrusie-controls').style.display =
+            state.enable3D ? 'block' : 'none';
+
+        // Update map if data loaded
+        if (state.currentData) {
+            displayOnMap(state.currentData);
+        }
+
+        // Update camera pitch
+        const currentViewState = state.currentViewState;
+        state.currentViewState = {
+            ...currentViewState,
+            pitch: state.enable3D ? 45 : 0,
+            transitionDuration: 500
+        };
+        state.deckgl.setProps({
+            initialViewState: state.currentViewState
+        });
+        updateSelectionUI(); // Update 3D panden knop state
+    });
+
+    // Height Scale
+    document.getElementById('height-scale').addEventListener('input', (e) => {
+        state.heightScale = parseInt(e.target.value);
+        document.getElementById('height-value').textContent = `${state.heightScale}x`;
+
+        // Update map if data loaded and 3D enabled
+        if (state.currentData && state.enable3D) {
+            displayOnMap(state.currentData);
+        }
+    });
+
+    // Show All Toggle
+    document.getElementById('show-all').addEventListener('change', (e) => {
+        state.showAll = e.target.checked;
+    });
+
+    // Toon Kaart Button
+    document.getElementById('toon-kaart-btn').addEventListener('click', () => {
+        loadKaartData();
+    });
+
+    // Mapbox Style Selector (if available)
+    const mapboxSelect = document.getElementById('mapbox-style-select');
+    if (mapboxSelect) {
+        mapboxSelect.addEventListener('change', (e) => {
+            changeMapboxStyle(e.target.value);
+        });
+    }
+
+    // Omgevingsvisie Deelgebieden Toggle
+    const omgVisieToggle = document.getElementById('toggle-omgevingsvisie');
+    if (omgVisieToggle) {
+        omgVisieToggle.addEventListener('change', async (e) => {
+            state.showOmgevingsvisieLayer = e.target.checked;
+            const info = document.getElementById('omgevingsvisie-info');
+
+            if (state.showOmgevingsvisieLayer && !state.omgevingsvisieData) {
+                // Eerste keer: laad data
+                await loadOmgevingsvisieLayer();
+            }
+
+            if (state.showOmgevingsvisieLayer && state.omgevingsvisieData) {
+                const count = state.omgevingsvisieData.features?.length || 0;
+                if (info) info.textContent = `${count} deelgebieden zichtbaar. Klik om buurten te selecteren.`;
+            } else {
+                if (info) info.textContent = 'Toont deelgebieden uit de omgevingsvisie. Klik om buurten te selecteren.';
+            }
+
+            // Re-render kaart met/zonder overlay
+            if (state.currentData) {
+                displayOnMap(state.currentData);
+            }
+        });
+    }
+
+    // Export Buttons
+    const screenshotBtn = document.getElementById('export-screenshot-btn');
+    if (screenshotBtn) {
+        screenshotBtn.addEventListener('click', exportScreenshot);
+    }
+
+    const geojsonBtn = document.getElementById('export-geojson-btn');
+    if (geojsonBtn) {
+        geojsonBtn.addEventListener('click', exportGeoJSON);
+    }
+
+    const csvBtn = document.getElementById('export-csv-btn');
+    if (csvBtn) {
+        csvBtn.addEventListener('click', exportCSV);
+    }
+
+    // AI Rapport Output Button — Sprint 8D: Keuze-overlay (Gebiedsdossier vs Benchmark)
+    const rapportBtn = document.getElementById('open-rapport-btn');
+    if (rapportBtn) {
+        rapportBtn.addEventListener('click', () => {
+            const ids = [...state.selectedGebiedIds];
+            if (ids.length === 0) return;
+
+            // Altijd relatieve URLs gebruiken — werkt met localhost, ngrok, en productie
+            const baseUrl = '';
+
+            if (ids.length > 1) {
+                // Multi-select: keuze-modal (Benchmark vs Multi-Gebiedsdossier)
+                openMultiSelectRapportModal(ids, baseUrl);
+            } else {
+                // Single-select: toon inline keuze-overlay
+                openRapportTypeModal(ids[0], baseUrl);
+            }
+        });
+    }
+
+    // Kompas Sync Handler - Updates map AND legend when indicator clicked in Kompas
+    const handleIndicatorSelection = async (data) => {
+        const { uuid, name } = data;
+        console.log('🔗 Kompas sync event received:', name, uuid);
+
+        state.currentIndicator = uuid;
+
+        // Update UI dropdown to match Kompas selection
+        const select = document.getElementById('indicator-select');
+        if (select) {
+            select.value = uuid;
+            // Show coverage if possible
+            const option = select.querySelector(`option[value="${uuid}"]`);
+            if (option) {
+                const coverage = option.dataset.coverage;
+                document.getElementById('indicator-coverage').textContent =
+                    coverage ? `${coverage} gebieden met data` : 'Data beschikbaarheid onbekend';
+            }
+        }
+
+        updateButtonState();
+
+        // 1. Open Legenda Panel (ensure it's visible)
+        togglePanel('legenda');
+
+        // 2. Load Map Data (this calls updateLegenda internally via loadKaartData)
+        await loadKaartData();
+
+        // 3. EXPLICIT: Force legend update after data is loaded
+        //    This ensures the legend syncs even if loadKaartData's internal call had timing issues
+        if (state.currentData) {
+            updateLegenda(state.currentData);
+            console.log('✅ Legend explicitly synced after Kompas selection:', name);
+        }
+    };
+
+    // Initialize Event Listeners
+    if (window.EventBus) {
+        console.log('🚌 Subscribing to EventBus: INDICATOR_SELECTED, GEMEENTE_SELECTED, GEBIEDSTYPE_SELECTED');
+        window.EventBus.on('INDICATOR_SELECTED', handleIndicatorSelection);
+
+        // Chat -> Map: Select Municipality (code-based lookup)
+        window.EventBus.on('GEMEENTE_SELECTED', (data) => {
+            console.log('📍 Chat sync: selecting gemeente', data.name, data.code);
+            const input = document.getElementById('gemeente-input');
+            const codeInput = document.getElementById('gemeente-code');
+            const info = document.getElementById('gemeente-info');
+            
+            if (!input || !codeInput) return;
+            
+            // Lookup gemeente by code in the loaded list
+            const gemeente = loadedGemeenten.find(g => g.code === data.code);
+            const naam = gemeente ? gemeente.naam : data.name;
+            const code = data.code;
+            
+            // Update UI
+            input.value = naam;
+            codeInput.value = code;
+            info.textContent = `Geselecteerd: ${naam}`;
+            
+            // Update state
+            state.currentGemeenteCode = code;
+            localStorage.setItem('omnitwin-gemeente', code);
+            
+            // Clear selection and reload map
+            state.currentData = null;
+            clearGebiedSelection();
+            updateSelectionUI();
+            if (state.currentGebiedstype) loadKaartData();
+            
+            console.log(`✅ Gemeente via chat: ${naam} (${code})`);
+        });
+
+        // Chat -> Map: Select Gebiedstype (direct state update)
+        window.EventBus.on('GEBIEDSTYPE_SELECTED', async (data) => {
+            console.log('🏙 Chat sync: selecting gebiedstype', data.name, data.id);
+            const select = document.getElementById('gebiedstype-select');
+            if (!select) return;
+            
+            // Try to find matching option by UUID or by name
+            let matchedId = null;
+            for (const opt of select.options) {
+                if (opt.value === data.id) {
+                    matchedId = opt.value;
+                    break;
+                }
+                // Fallback: match by name (case-insensitive, partial)
+                if (data.name && opt.textContent.toLowerCase().includes(data.name.toLowerCase())) {
+                    matchedId = opt.value;
+                    break;
+                }
+            }
+            
+            if (!matchedId) {
+                console.warn('⚠️ Gebiedstype niet gevonden:', data.name, data.id);
+                return;
+            }
+            
+            // Update select UI
+            select.value = matchedId;
+            
+            // Update state
+            state.currentGebiedstype = matchedId;
+            state.currentIndicator = null;
+            
+            // Load indicatoren for this type
+            await loadIndicatoren(matchedId);
+            
+            // Load map data
+            await loadKaartData();
+            
+            updateButtonState();
+            console.log(`✅ Gebiedstype via chat: ${data.name} (${matchedId})`);
+        });
+    } else {
+        console.error('❌ EventBus not available for subscription');
+    }
+
+    // Open Kompas Button (in Sidebar)
+    const openKompasBtn = document.getElementById('open-kompas-btn');
+    if (openKompasBtn) {
+        openKompasBtn.addEventListener('click', () => {
+            console.log('🔘 Open Kompas button clicked');
+            if (state.kompasWindow) {
+                state.kompasWindow.open();
+
+                // Load data for selected area(s) if available
+                if (state.selectedGebiedIds.size > 0 && window.kompasViz && window.kompasViz.currentConfigId) {
+                    loadKompasForSelection(window.kompasViz.currentConfigId);
+                } else if (window.kompasViz && window.kompasViz.currentConfigId) {
+                    window.kompasViz.loadHierarchie(window.kompasViz.currentConfigId);
+                }
+            } else {
+                console.error('❌ Kompas window state not initialized');
+            }
+        });
+    }
+
+    // Kompas Config Selector (Moved to Panel)
+    const kompasConfigSelect = document.getElementById('kompas-config-select');
+    if (kompasConfigSelect) {
+        kompasConfigSelect.addEventListener('change', (e) => {
+            const newConfigId = e.target.value;
+            if (window.kompasViz) {
+                window.kompasViz.currentConfigId = newConfigId;
+                console.log('🔄 Kompas config changed to:', newConfigId);
+
+                // If window is open, reload data
+                const kompasWindow = document.getElementById('kompas-window');
+                if (kompasWindow && kompasWindow.style.display !== 'none') {
+                    if (state.selectedGebiedIds.size > 0) {
+                        loadKompasForSelection(newConfigId);
+                    } else {
+                        window.kompasViz.loadHierarchie(newConfigId);
+                    }
+                }
+            }
+        });
+    }
+
+    // Luister naar requests voor snapshots vanuit test/admin dashboards
+    window.addEventListener('message', (event) => {
+        if (event.data && event.data.type === 'requestMapSnapshot') {
+            console.log('📸 MapSnapshot request received van admin dashboard');
+            if (state.deckgl) {
+                // Kleine timeout om er zeker van te zijn dat eventuele overlays klaar zijn.
+                // Mapbox heeft preserveDrawingBuffer: true, dus het vangen moet altijd kunnen.
+                setTimeout(() => {
+                    try {
+                        // Verzamel alle canvases (Mapbox base map + Deck.gl overlay) in de div
+                        const canvases = document.querySelectorAll('#map canvas');
+                        if (canvases.length > 0) {
+                            const mergedCanvas = document.createElement('canvas');
+                            mergedCanvas.width = canvases[0].width;
+                            mergedCanvas.height = canvases[0].height;
+                            const ctx = mergedCanvas.getContext('2d');
+
+                            // Teken alle lagen over elkaar heen met behoud van the resolutie (High-DPI)
+                            canvases.forEach(canvas => {
+                                if (canvas.width > 0 && canvas.height > 0) {
+                                    ctx.drawImage(canvas, 0, 0, mergedCanvas.width, mergedCanvas.height);
+                                }
+                            });
+
+                            try {
+                                const base64Image = mergedCanvas.toDataURL('image/png');
+                                event.source.postMessage({
+                                    type: 'mapSnapshot',
+                                    image: base64Image
+                                }, event.origin || '*');
+                            } catch (err) {
+                                // Als de .toDataURL crasht, komt dit bijna 100% door TaintedCanvas / CORS policy
+                                console.error('❌ Tainted Canvas / CORS Error in toDataURL:', err);
+                                event.source.postMessage({
+                                    type: 'mapSnapshotError',
+                                    error: err.toString()
+                                }, event.origin || '*');
+                            }
+                        } else {
+                            console.warn('⚠️ Geen map canvases gevonden om te exporteren.');
+                            event.source.postMessage({
+                                type: 'mapSnapshotError',
+                                error: 'Geen map canvases gevonden'
+                            }, event.origin || '*');
+                        }
+                    } catch (err) {
+                        console.error('❌ Failed to create MapSnapshot:', err);
+                        event.source.postMessage({
+                            type: 'mapSnapshotError',
+                            error: err.toString()
+                        }, event.origin || '*');
+                    }
+                }, 100);
+            }
+        }
+
+        if (event.data && event.data.type === 'requestKompasSnapshot') {
+            console.log('🧭 KompasSnapshot request received van admin dashboard');
+            const targetGebiedId = event.data.gebiedId;
+
+            const takeKompasSnapshot = () => {
+                const svgElement = document.querySelector('#kompas-container svg');
+                if (svgElement) {
+                    try {
+                        // SVG clonen om styles inline te injecteren voor print-baarheid
+                        const clone = svgElement.cloneNode(true);
+                        // Dwing een lichte achtergrond af op de kloon als die transparant is
+                        clone.style.backgroundColor = 'white';
+
+                        const serializer = new XMLSerializer();
+                        let svgString = serializer.serializeToString(clone);
+
+                        // Converteer naar een data url
+                        const base64SVG = "data:image/svg+xml;base64," + btoa(unescape(encodeURIComponent(svgString)));
+
+                        event.source.postMessage({
+                            type: 'kompasSnapshot',
+                            image: base64SVG
+                        }, event.origin || '*');
+                    } catch (err) {
+                        console.error('❌ Failed to create KompasSnapshot:', err);
+                        event.source.postMessage({
+                            type: 'kompasSnapshotError',
+                            error: err.toString()
+                        }, event.origin || '*');
+                    }
+                } else {
+                    console.warn('⚠️ Geen kompas SVG gevonden om te exporteren.');
+                    event.source.postMessage({
+                        type: 'kompasSnapshotError',
+                        error: 'Geen kompas SVG gevonden in hoofdapplicatie. Open the kompas in the D-OmniTwin monitor of the ververs the pagina.'
+                    }, event.origin || '*');
+                }
+            };
+
+            // Forceer lokaal inladen als the kompas instantie bestaat maar the data nog niet getekend is voor DIT gebied
+            if (window.kompasViz && targetGebiedId && window.kompasViz.currentConfigId) {
+                if (window.kompasViz.currentGebiedId !== targetGebiedId) {
+                    console.log(`🧭 Auto-loading kompas for snapshot: ${targetGebiedId}`);
+                    window.kompasViz.loadGebiedData(window.kompasViz.currentConfigId, targetGebiedId)
+                        .then(() => {
+                            // Geef D3 eventjes de tijd om de the render transition the voltooien (normaal is 750ms in de animatie, maar SVG rendering is sync)
+                            setTimeout(takeKompasSnapshot, 250);
+                        })
+                        .catch(err => {
+                            console.error('❌ Fout bij dynamisch laden kompas data:', err);
+                            takeKompasSnapshot(); // Fallback to normal error handling or empty svg
+                        });
+                } else {
+                    // Data is al thekening
+                    takeKompasSnapshot();
+                }
+            } else {
+                // Kon the kompas niet dynamisch laden of is al getriggerd, we thest the direct path
+                takeKompasSnapshot();
+            }
+        }
+    });
+
+    // Enable export buttons when data is loaded
+    document.addEventListener('dataLoaded', () => {
+        if (geojsonBtn) geojsonBtn.disabled = false;
+        if (csvBtn) csvBtn.disabled = false;
+    });
+}
+
+// ============================================================================
+// Legenda & Colors
+// ============================================================================
+
+// NOTE: updateLegenda is now defined once, near line 895 (consolidated)
+// Previously there was a duplicate here that caused override issues
+
+function getColorRGB(value, min, max, is3D = false) {
+    // Fallback client-side interpolation (Red -> Yellow -> Green)
+    // Used if backend color is missing
+    if (value === null || value === undefined) return [200, 200, 200, is3D ? 255 : 100];
+
+    // Normalize
+    const t = (value - min) / (max - min);
+
+    // Red to Green
+    // 0.0 -> Red (255, 0, 0)
+    // 0.5 -> Yellow (255, 255, 0)
+    // 1.0 -> Green (0, 255, 0)
+
+    let r, g, b;
+
+    if (t < 0.5) {
+        // Red to Yellow
+        r = 255;
+        g = Math.round(255 * (t * 2));
+        b = 0;
+    } else {
+        // Yellow to Green
+        r = Math.round(255 * (2 - t * 2));
+        g = 255;
+        b = 0;
+    }
+
+    const opacity = is3D ? 255 : 153;
+    return [r, g, b, opacity]; // 60% opacity in 2D, 100% in 3D
+}
+
+// ============================================================================
+// Export Functions
+// ============================================================================
+
+function exportScreenshot() {
+    if (!state.deckgl) return;
+    const canvas = document.querySelector('#map canvas');
+    if (canvas) {
+        const link = document.createElement('a');
+        link.download = `omnitwin-screenshot-${Date.now()}.png`;
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+    }
+}
+
+function exportGeoJSON() {
+    if (!state.currentData) return;
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(state.currentData));
+    const link = document.createElement('a');
+    link.href = dataStr;
+    link.download = `omnitwin-export-${Date.now()}.json`;
+    link.click();
+}
+
+function exportCSV() {
+    if (!state.currentData || !state.currentData.features) return;
+
+    const features = state.currentData.features;
+    if (features.length === 0) return;
+
+    // Get headers
+    const props = features[0].properties;
+    const headers = Object.keys(props).join(',');
+
+    // Get rows
+    const rows = features.map(f => {
+        return Object.values(f.properties).map(val => {
+            if (typeof val === 'string') return `"${val}"`;
+            return val;
+        }).join(',');
+    });
+
+    const csvContent = "data:text/csv;charset=utf-8," +
+        [headers, ...rows].join('\n');
+
+    const link = document.createElement('a');
+    link.href = csvContent;
+    link.download = `omnitwin-export-${Date.now()}.csv`;
+    link.click();
+}
+
+// ============================================================================
+// Utility Functions
+// ============================================================================
+
+function showLoading(show, message = 'Laden...') {
+    const overlay = document.getElementById('loading-indicator');
+    const text = overlay.querySelector('.loading-text');
+
+    if (text) text.textContent = message;
+    overlay.style.display = show ? 'flex' : 'none';
+}
+
+function showError(message) {
+    console.error(message);
+    alert(message); // Simple for now, could be improved with a toast notification
+}
+
+function formatNumber(num) {
+    if (num === null || num === undefined) return 'N/A';
+    return new Intl.NumberFormat('nl-NL', {
+        maximumFractionDigits: 2
+    }).format(num);
+}
+
+// ============================================================================
+// UI Utilities (Overlay Dismissal & Info Toggle)
+// ============================================================================
+
+function setupInfoToggle() {
+    const infoBtn = document.getElementById('info-toggle');
+    const overlay = document.getElementById('camera-controls-overlay');
+
+    if (!infoBtn || !overlay) return;
+
+    // Initial State Check
+    // If NOT dismissed in localstorage, show it (add .show)
+    // Actually, user wants it "under the button", implying hidden by default?
+    // User: "The info buttons are visible now, but can we put them under an info button?"
+    // Usually means hidden until requested.
+    // BUT, for new users it should be visible?
+    // Let's decided: Default HIDDEN for cleanliness, unless first visit?
+    // Let's stick to: Default OPEN on first visit, then stored.
+    // Logic:
+    // If !localStorage('dismissed'), add .show
+    // Toggle button adds/removes .show and updates localStorage? No, toggle just toggles visibility.
+
+    // Let's check status
+    const isDismissed = localStorage.getItem('omnitwin-camera-overlay-dismissed') === 'true';
+
+    if (!isDismissed) {
+        overlay.classList.add('show');
+        infoBtn.classList.add('active');
+    }
+
+    infoBtn.addEventListener('click', () => {
+        const isVisible = overlay.classList.contains('show');
+
+        if (isVisible) {
+            // Hide
+            overlay.classList.remove('show');
+            infoBtn.classList.remove('active');
+            localStorage.setItem('omnitwin-camera-overlay-dismissed', 'true'); // Creating "dismissed" state
+        } else {
+            // Show
+            overlay.classList.add('show');
+            infoBtn.classList.add('active');
+            // We can optionally remove the dismissed state if they manually open it, or just leave it.
+            // Let's leave it. The toggle overrides the preference temporarily.
+        }
+    });
+}
+
+// Check on load
+document.addEventListener('DOMContentLoaded', setupInfoToggle);
+
+
+// ============================================================================
+// Console Welcome Message
+// ============================================================================
+
+console.log(`
+%c🌍 D-OmniTwin Gebiedsmonitor v2.0 
+%cPowered by deck.gl | FastAPI | PostgreSQL/PostGIS | Mapbox
+`,
+    'font-size: 20px; font-weight: bold; color: #2563eb;',
+    'font-size: 12px; color: #64748b;'
+);
+
+// ============================================================================
+// Camera Logic (UI Polish)
+// ============================================================================
+
+function flyToGebied(feature) {
+    if (!feature || !feature.geometry) return;
+
+    // Calculate centroid
+    let centroid = [0, 0];
+    let count = 0;
+
+    const coords = feature.geometry.coordinates;
+
+    const flatten = (arr) => {
+        if (typeof arr[0] === 'number') {
+            centroid[0] += arr[0];
+            centroid[1] += arr[1];
+            count++;
+        } else {
+            arr.forEach(flatten);
+        }
+    };
+
+    flatten(coords);
+
+    if (count > 0) {
+        centroid[0] /= count;
+        centroid[1] /= count;
+
+        console.log(`🎥 Flying to area:`, centroid);
+
+        // Update DeckGL viewState with transition
+        const currentViewState = state.deckgl.props.initialViewState || { zoom: 12, pitch: 45, bearing: 0 };
+
+        state.deckgl.setProps({
+            initialViewState: {
+                ...currentViewState,
+                longitude: centroid[0],
+                latitude: centroid[1],
+                zoom: Math.max(currentViewState.zoom, 12), // Ensure we are zoomed in enough
+                transitionDuration: 1000,
+                transitionInterpolator: new deck.FlyToInterpolator()
+            }
+        });
+    }
+}
