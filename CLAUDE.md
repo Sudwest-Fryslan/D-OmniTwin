@@ -2,6 +2,8 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+See also: @.claude/soul.md | @.claude/skills.md
+
 ## Project Overview
 
 D-OmniTwin is a digital twin platform for Dutch municipalities, visualizing neighborhood-level indicators (Kompas: 217 metrics across 12 thematic quadrants) on interactive maps. Built for Súdwest-Fryslân, it combines geospatial data, AI-powered chat, and multi-area comparative reporting.
@@ -114,3 +116,15 @@ Schema is in `data/schema_latest.sql`. Key tables: `gebieden` (areas/buurten), `
 - `ROADMAP.md` — sprint planning
 - `TODO.md` — active task list by domain
 - `BUGFIX.md` — known bugs and workarounds
+
+## GitHub workflow
+
+Elke wijziging gaat via GitHub Flow:
+
+1. Issue aanmaken op TLaan/D-OmniTwin
+2. Branch aanmaken: `feature/<issue-nr>-<korte-naam>`
+3. Commits op die branch
+4. Pull Request naar `main` met `Closes #<nr>` in de beschrijving
+5. Nooit direct op `main` pushen
+
+`gh` CLI staat op: `"/c/Program Files/GitHub CLI/gh.exe"`
