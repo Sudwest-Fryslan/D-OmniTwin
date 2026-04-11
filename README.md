@@ -2,8 +2,8 @@
 
 **The Omni Twin** - Digitale spiegel van de fysieke leefomgeving
 
-**Status:** Sessie 2026-04-10 ✅ — Multi-Gebiedsdossier geïntegreerd + Bugfixes doorgevoerd
-**Versie:** 2.2.0 (Dag 55)
+**Status:** Sessie 2026-04-11 ✅ — Git Initiatie private repo voltooid
+**Versie:** 2.2.1 (Dag 56)
 **Security Status:** 🟡 MEDIUM RISK (API key auth, CORS locked, Security headers active)
 
 ---
@@ -33,6 +33,13 @@
 ---
 
 ## Recent Voltooid
+
+### Dag 56 (11-04-2026): Git Initiatie & Veiligheidsslag 🔒🚀
+**Focus:** Project opschonen voor versiebeheer en eerste release-candidate naar de private repository sturen.
+
+- ✅ **Security Cleanup:** Hardcoded beheerdersgegevens verwijderd/uitgesloten van Git en veilig verplaatst naar `.env`. De `.gitignore` waterdicht gemaakt voor zware datasets (`/data`), logs en AI geheugen.
+- ✅ **Remote Connectie:** SSH authenticatie en remote push naar `TLaan/D-OmniTwin.git` opgeleverd (319+ bestanden).
+- ✅ **Root Opschoning:** Onnodige en achterhaalde werkbestanden weggewerkt voor een opgeruimde basis `main` branch.
 
 ### Dag 55 (10-04-2026): Multi-Gebiedsdossier & Optimalisaties 🗺️📊
 **Focus:** Afronding rapportmodule voor Multi-gebied selecties en integratie van directe verbeteringen vanuit kwaliteitscontrole.

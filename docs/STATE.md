@@ -11,7 +11,7 @@
 |------|--------|
 | **Huidige versie** | v0.9.x (pre-release) |
 | **Sprint** | Sprint 11 (Track A) afgerond — Omgevingsvisie Selectielaag geïmplementeerd |
-| **Laatste update** | 2026-04-10 (Dag 55) |
+| **Laatste update** | 2026-04-11 (Dag 56) |
 | **Bijgewerkt door** | Project-manager skill (Antigravity) |
 
 ---
@@ -42,11 +42,10 @@
 
 | Datum | Wijziging | Impact |
 |-------|-----------|--------|
+| 2026-04-11 | **Git Repository Initiatie** | Base project v0.9.x opgeschoond (security/secrets verwijderd, `.gitignore` gefilterd) en gepusht naar private GitHub (`main` branch). |
 | 2026-04-10 | **Multi-Gebiedsdossier UI module** | Backend payloads en react-UI live gezet in admin-paneel. Geïntegreerd via map modal. |
 | 2026-04-10 | **BugFixes Rapportage** | Invoering Colorblind-safe kleuren, filtering van "water-buurten", en oplossen component hover-flicker. |
 | 2026-04-10 | **Omgevingsvisie Deelgebieden** geïntegreerd als selectielaag | ETL (6 polygonen), API (`/api/omgevingsvisie/`), GeoJsonLayer overlay, klik=buurtselectie via -10m buffer |
-| 2026-04-09 | HELP_ONBOARDING intent geïmplementeerd | Backend deterministisch + 4 actietypen + inline info-cards |
-| 2026-04-09 | Help/Wiki pagina aangemaakt (`/static/help.html`) | ⓘ-knop gekoppeld als tweede toegangspunt |
 
 ---
 

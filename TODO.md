@@ -1,7 +1,7 @@
 # TODO - D-OmniTwin Roadmap
 
-**Laatste Update:** 10 april 2026 (Dag 55)
-**Status:** Multi-Gebiedsdossier ✅ Voltooid — Bugfixes & Uibreidingen 📋 Gepland
+**Laatste Update:** 11 april 2026 (Dag 56)
+**Status:** Git Repository Live ✅ — Multi-Gebiedsdossier Uitbreidingen 📋 Gepland
 
 > **Volgende Sessie:** Uitbreiding Multi-gebiedsdossier (keuze thema's, top 3 afwijkingen per buurt in kaartweergave) + Bug #42 (3D pand-kleuring single-buurt) + Sprint 15 (Ontologie Tab).
 
