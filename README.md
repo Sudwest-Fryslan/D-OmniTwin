@@ -21,7 +21,7 @@
 - 🧭 **Kompas Visualisatie** - D3.js sunburst met 12 thema's, 217 indicatoren
 - 📊 **Multi-Gebied Analyse** - Shift+Click selectie of via Omgevingsvisie-deelgebieden, nieuwe rapportage-modal
 - 🗺️⃣ **Omgevingsvisie Selectielaag** - 6 deelgebieden SWF als klikbaar selectieframe (CBS-buurten via -10m buffer)
-- 🤖 **D-Omni Assistent** - Intent-based AI chat interface (lokaal Ollama, Qwen3:30b)
+- 🤖 **D-Omni Assistent** - Intent-based AI chat interface (lokaal Ollama, gemma4:e4b)
 - 🎨 **Classic Premium UI** - Dark theme met gradient accents
 
 ### Admin Panel Features
