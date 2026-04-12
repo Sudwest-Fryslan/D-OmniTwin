@@ -1354,14 +1354,30 @@ function updateLegenda(geojson) {
         `;
     }
 
-    // Generate SVG gradient bar
+    // Generate SVG gradient bar — dynamisch op basis van backend color_ramp (Gap G7 fix)
     if (svg) {
+        const colorRamp = geojson.metadata?.color_ramp;
+        let stopsHtml = '';
+
+        if (colorRamp && colorRamp.length > 0) {
+            // Dynamisch: verdeel de klassen gelijkmatig over 0%–100%
+            const step = colorRamp.length > 1 ? 100 / (colorRamp.length - 1) : 100;
+            colorRamp.forEach((hexColor, i) => {
+                const offset = colorRamp.length > 1 ? i * step : 0;
+                stopsHtml += `<stop offset="${offset.toFixed(1)}%" style="stop-color:${hexColor};stop-opacity:1" />\n`;
+            });
+        } else {
+            // Fallback naar de oude hardcoded blauw-geel-rood
+            stopsHtml = `
+                <stop offset="0%"   style="stop-color:rgb(0,100,255);stop-opacity:1" />
+                <stop offset="50%"  style="stop-color:rgb(255,255,0);stop-opacity:1" />
+                <stop offset="100%" style="stop-color:rgb(255,0,0);stop-opacity:1" />`;
+        }
+
         svg.innerHTML = `
             <defs>
                 <linearGradient id="color-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                    <stop offset="0%" style="stop-color:rgb(0,100,255);stop-opacity:1" />
-                    <stop offset="50%" style="stop-color:rgb(255,255,0);stop-opacity:1" />
-                    <stop offset="100%" style="stop-color:rgb(255,0,0);stop-opacity:1" />
+                    ${stopsHtml}
                 </linearGradient>
             </defs>
             <rect width="100%" height="100%" fill="url(#color-gradient)" />

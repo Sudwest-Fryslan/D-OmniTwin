@@ -160,12 +160,21 @@ class GebiedsmonitorService:
                 }
             })
             
+        # Coverage stats voor legenda
+        features_with_data = sum(1 for f in features if f["properties"]["heeft_data"])
+
         return {
             "type": "FeatureCollection",
             "features": features,
             "metadata": {
                 "count": len(features),
-                "method": "v2_color_schemas"
+                "method": "v2_color_schemas",
+                # Legenda: kleurenschaal sync (Gap G7 fix)
+                "color_ramp": color_ramp if indicator_uuid else [],
+                "nodata_color": nodata_color,
+                # Legenda: coverage balk
+                "total_features": len(features),
+                "features_with_data": features_with_data,
             }
         }
 

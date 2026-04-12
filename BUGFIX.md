@@ -1,5 +1,22 @@
 # BUGFIX.md - D-OmniTwin
 
+## Bug #43: SyntaxError bij het updaten van Color Schemas (12-04-2026)
+
+**Gerapporteerd:** 12-04-2026 14:40  
+**Status:** ✅ FIXED (12-04-2026)  
+**Severity:** 🔴 HIGH (Paletten opslaan stuk in Admin)
+
+### Probleem
+Bij het bewerken en opslaan van een bestaand kleurenpalet vanuit het Admin Paneel gaf de backend een 500 Internal Server Error met de log: `psycopg2.errors.SyntaxError: syntax error at or near ":"`. 
+
+### Oorzaak
+In `routers/visualisatie.py` werd in de update query de string `colors = :colors::jsonb` gebruikt. De dubbele punt syntax (`::jsonb`) conficteerde met de parameter binding van SQLAlchemy (`:colors`), waardoor SQLAlchemy weigerde de Python-variabele goed mee te sturen naar Postgres.
+
+### Fix
+De syntax `:colors::jsonb` is rechtgetrokken naar de generieke SQL functie `CAST(:colors AS jsonb)`. Hierdoor parst de under-the-hood engine het nu weer feilloos.
+
+---
+
 ## Bug #42: 3D BAG Panden Kleuren Enkel bij Multi-Selectie (28-03-2026)
 
 **Gerapporteerd:** 28-03-2026 00:33  

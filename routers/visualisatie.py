@@ -312,7 +312,7 @@ def update_palette(
     
     if data.colors is not None:
         import json
-        updates.append("colors = :colors::jsonb")
+        updates.append("colors = CAST(:colors AS jsonb)")
         params["colors"] = json.dumps(data.colors)
     
     if data.klassen is not None and data.klassen > 7:
