@@ -17,6 +17,9 @@ config.ini
 # Agents (intern AI-werkgeheugen, niet voor repository)
 .agents/
 
+# Claude Code (lokale instellingen, niet voor repository)
+.claude/settings.local.json
+
 # Data (volledige uitsluiting, bevat grote datasets)
 data/
 
