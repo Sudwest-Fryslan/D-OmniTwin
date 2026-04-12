@@ -327,6 +327,25 @@ Omdat privacygevoelige CBS data niet naar externe partijen (zoals OpenAI) gestuu
 
 ---
 
+### Dag 57 (12-04-2026): Multi-Gebiedsdossier Uitbreiding — Top 3, Themafilter & D3 Projectie 🗺️📊
+**Focus:** Verrijking van de analysefunctionaliteit en visuele correctheid van het Multi-Gebiedsdossier.
+
+- ✅ **Backend Top 3** (`report_service.py`): SQL CTE omgebouwd van `DISTINCT ON` naar `ROW_NUMBER() OVER(PARTITION BY gebied_id ORDER BY ABS(z_score) DESC)` — retourneert nu top-3 uitschieters per buurt als geneste `top_3: []` array.
+- ✅ **Backend Thema-filter** (`report_service.py`, `routers/report.py`): Optioneel `thema: Optional[str]`-parameter in Pydantic model + `WHERE thema = :thema_filter` CTE-laag. Werkt voor zowel de JSON als de GeoJSON endpoint.
+- ✅ **Backend GeoJSON** (`report_service.py`): `generate_multi_gebied_geojson()` aangevuld met `thema`-param en `top_3` in de GeoJSON `properties` per feature.
+- ✅ **Frontend D3 Projectie** (`MultiGebiedPage.tsx`): `d3.geoMercator().fitSize()` vervangt de platte lineaire XY-schaling — Fryslân wordt nu geografisch correct weergegeven.
+- ✅ **Frontend Donut Fix** (`MultiGebiedPage.tsx`): Polygonen gesorteerd op `d3.geoArea` (grootste oppervlakte eerst), zodat kleine binnenbuurten bovenop grote vlakken renderen.
+- ✅ **Frontend Thema Dropdown** (`MultiGebiedPage.tsx`): Selector met 5 opties triggert een herlaad van kaart + tabel.
+- ✅ **Frontend Hover Top 3** (`MultiGebiedPage.tsx`): Hover-paneel toont genummerde top-3 afwijkingen per buurt.
+- ✅ **Frontend Nested Tabel** (`MultiGebiedPage.tsx`): Uitklapknop `▶`/`▼` per buurt onthult subrijen voor rang 2 en 3.
+- ✅ **Frontend Lucide Icons**: `Map`, `BarChart2`, `List`, `ChevronRight`, `ChevronDown` vervangen emoji's.
+- ✅ **Bug #44 Fix** (thema case-mismatch): Dropdown-waarden gecorrigeerd naar exact DB-lowercase.
+- ✅ **Bug #45 Fix** (hover flicker loop): Vaste `height: 140px` op hover-paneel.
+- ✅ **UI** (`templates/index.html`): `🗺️` emoji → `map-pinned.svg` in Kaartlagen-paneel.
+- ✅ **Coverage Fix + Semantiek** (`gebiedsmonitor_service.py`, `index.html`, `kompas.js`): Onafhankelijke COUNT-query voor werkelijk gebiedstotaal; labels hernoemd naar "Gebiedsdekking" / "Indicatordekking".
+
+---
+
 ### Dag 56 (11-04-2026): Git Initiatie & Veiligheidsslag 🔒🚀
 **Focus:** Project opschonen voor versiebeheer en eerste release-candidate naar de private repository sturen.
 

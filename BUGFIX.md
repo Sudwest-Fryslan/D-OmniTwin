@@ -1,5 +1,48 @@
 # BUGFIX.md - D-OmniTwin
 
+## Bug #45: Hover-paneel Flicker Loop in Multi-Gebiedsdossier (12-04-2026)
+
+**Gerapporteerd:** 12-04-2026 21:15  
+**Status:** ✅ FIXED (12-04-2026)  
+**Severity:** 🟡 MEDIUM (UX - tabel springt op/neer)
+
+### Probleem
+Bij het bewegen van de muis van de kolomnamen naar de eerste tabelrij in de Uitschietertabel flikkerde de tabel op en neer. Dit maakte de pagina onbruikbaar bij interactie.
+
+### Oorzaak
+Het hover-paneel boven de tabel gebruikte `minHeight: '80px'` (variabele hoogte). Wanneer een buurt op de kaart werd gehovered, groeide het paneel en duwde het de tabel naar beneden. De tabelrij verliet daardoor de muiscursor, het hoveren stopte, het paneel kromp in, de tabel schoot omhoog — en de loop begon opnieuw.
+
+### Fix
+**File:** `admin-panel/src/pages/MultiGebiedPage.tsx`
+De `minHeight` vervangen door een vaste `height: '140px'` met `overflow: 'hidden'`. Het paneel verandert visueel via CSS `opacity` (fade in/out) maar behoudt altijd dezelfde hoogte in de layout-flow.
+
+---
+
+## Bug #44: Thema-filter Toont Geen Resultaten (Behalve Samenstelling) (12-04-2026)
+
+**Gerapporteerd:** 12-04-2026 21:27  
+**Status:** ✅ FIXED (12-04-2026)  
+**Severity:** 🔴 HIGH (Filter compleet non-functioneel)
+
+### Probleem
+Wanneer een gebruiker in het Multi-Gebiedsdossier een thema selecteerde — bijv. "Kwaliteit van Leven", "Kwaliteit Fysieke Leefomgeving" of "Kwaliteit Sociale Leefomgeving" — toonde de kaart enkel grijze (lege) polygonen en bleef de uitschietertabel leeg. Alleen "Samenstelling" en "Alle Thema's" werkten correct.
+
+### Oorzaak
+Case-mismatch tussen de hardcoded dropdown-waarden in de React-component en de werkelijke `titel_naam` waarden in de database (`v_kompas_hierarchie`):
+
+| Dropdown (fout) | Database (correct) |
+|---|---|
+| `Kwaliteit van **L**even` | `Kwaliteit van **l**even` |
+| `Kwaliteit **F**ysieke **L**eefomgeving` | `Kwaliteit **f**ysieke **l**eefomgeving` |
+| `Kwaliteit **S**ociale **L**eefomgeving` | `Kwaliteit **s**ociale **l**eefomgeving` |
+
+De SQL `WHERE thema = :thema_filter` doet een exacte string-vergelijking (case-sensitive in PostgreSQL), waardoor alle rijen werden weggefilterd.
+
+### Fix
+**File:** `admin-panel/src/pages/MultiGebiedPage.tsx` — `THEMA_OPTIONS` array gecorrigeerd naar exact-matchende lowercase waarden conform de database.
+
+---
+
 ## Bug #43: SyntaxError bij het updaten van Color Schemas (12-04-2026)
 
 **Gerapporteerd:** 12-04-2026 14:40  

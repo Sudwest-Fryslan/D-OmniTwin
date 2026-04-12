@@ -1,9 +1,9 @@
 # TODO - D-OmniTwin Roadmap
 
-**Laatste Update:** 11 april 2026 (Dag 56)
-**Status:** Git Repository Live ✅ — Multi-Gebiedsdossier Uitbreidingen 📋 Gepland
+**Laatste Update:** 12 april 2026 (Dag 57)
+**Status:** Multi-Gebiedsdossier Uitbreiding ✅ Afgerond — Sprint 15 (Ontologie Tab) 📋 Gepland
 
-> **Volgende Sessie:** Uitbreiding Multi-gebiedsdossier (keuze thema's, top 3 afwijkingen per buurt in kaartweergave) + Bug #42 (3D pand-kleuring single-buurt) + Sprint 15 (Ontologie Tab).
+> **Volgende Sessie:** Bug #42 (3D pand-kleuring single-buurt) + Sprint 15 (Ontologie Tab).
 
 ---
 
@@ -78,16 +78,27 @@
 
 ---
 
-## 📋 Volgende Sessie: Multi-Gebiedsdossier Uitbreiding
+## ✅ Sessie 2026-04-12: Multi-Gebiedsdossier Uitbreiding (Dag 57)
 
-**Doel:** Verrijking van de analysefunctionaliteit van het Multi-Gebiedsdossier.
+**Doel:** Verrijking van de analysefunctionaliteit van het Multi-Gebiedsdossier met themafilter, top-3 uitschieters en visuele verbeteringen.
 
-- [ ] **Themakeuze:** Maken van een keuze op thema's voor de vergelijking (filters toevoegen aan rapport).
-- [ ] **Top 3 Afwijkingen:** Ophalen van de top 3 z-score afwijkingen per buurt.
-- [ ] **Kaart weergave:** Tonen van top 1, top 2, en top 3 indicatoren per buurt direct of op-vraag binnen de kaartview.
-- [ ] **UI Fixes (Iconen):** Vervang tijdelijke emoji's (zoals 🗺️ en 📊) door de correcte Lucide icons uit `/static/images/` (inclusief tooltip 'Kaart' icoon, Z-score Afwijkingskaart, Thema Aggregaat).
-- [ ] **Kaartprojectie:** Corrigeer SVG projectie (Amersfoort RD 28992 mapping ten opzichte van lat/lon WGS84 of gebruik d3-geo projectie in plaats van pure lineaire schaling) om topografische vervorming ('platgeslagen' Fryslân) in de rapport SVG te voorkomen.
-- [ ] **Polygoon Rendering:** Zorg dat donut-polygonen en geneste buurten correct zichtbaar blijven (bijvoorbeeld sorteren op grootte zodat kleine buurten bovenop grote buurten renderen, of path-fill-rules voor donuts toepassen).
+- [x] **Backend `routers/report.py`:** `thema: Optional[str]` toegevoegd aan `MultiGebiedRequest`, doorgestuurd naar beide service-calls.
+- [x] **Backend `report_service.py`:** SQL-query omgebouwd van `DISTINCT ON` naar `ROW_NUMBER() OVER (PARTITION BY gebied_id ORDER BY ABS(z_score) DESC) <= 3` voor top-3 uitschieters per buurt.
+- [x] **Backend `report_service.py`:** Thema-filter `WHERE thema = :thema_filter` toegevoegd als optionele CTE-laag (`gefilterde_zscores`).
+- [x] **Backend `report_service.py`:** Geneste `top_3: []` datastructuur per buurt — hoofdrij bepaalt kleur (rang=1), subitems voor ranks 2 en 3 worden meegestuurd.
+- [x] **Backend `report_service.py`:** `generate_multi_gebied_geojson()` uitgebreid met `thema`-param + `top_3` in GeoJSON `properties`.
+- [x] **Frontend `api.ts`:** `thema?: string` toegevoegd aan payload-types van beide `reportAPI`-methodes.
+- [x] **Frontend `MultiGebiedPage.tsx`:** Thema-dropdown (5 opties), `useState` + herlaad-trigger bij selectieverandering.
+- [x] **Frontend `MultiGebiedPage.tsx`:** D3 `geoMercator().fitSize()` vervangt de platte lineaire XY-schaling.
+- [x] **Frontend `MultiGebiedPage.tsx`:** Polygonen gesorteerd op `d3.geoArea` (grootste eerst) voor correcte donut-rendering.
+- [x] **Frontend `MultiGebiedPage.tsx`:** Hover-paneel toont top-3 afwijkingen per buurt.
+- [x] **Frontend `MultiGebiedPage.tsx`:** Nested tabel met uitklapknop `▶` per buurt (subrijen voor rang 2 en 3).
+- [x] **Frontend `MultiGebiedPage.tsx`:** Lucide iconen (`Map`, `BarChart2`, `List`, `ChevronRight`, `ChevronDown`).
+- [x] **Bugfix:** Hover-paneel flicker loop opgelost met vaste `height: 140px` i.p.v. dynamische `minHeight`.
+- [x] **Bugfix #44:** Thema-filter case-mismatch gecorrigeerd — dropdown-waarden matchen nu exact de `titel_naam` in de DB.
+- [x] **UI:** `🗺️` emoji in Kaartlagen-paneel vervangen door `map-pinned.svg` icoon.
+- [x] **Coverage bugfix (Dag 56/57):** `gebiedsmonitor_service.py` gebruikt nu een onafhankelijke `COUNT(*)` query voor het werkelijke totaal (niet `len(features)`).
+- [x] **Semantische fix (Dag 56/57):** "Data Coverage" → "Gebiedsdekking" (legenda), "Coverage" → "Indicatordekking" (Kompas).
 
 ---
 

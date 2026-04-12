@@ -1,9 +1,25 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { reportAPI } from '../services/api';
-import { X, Layers, RefreshCw, Download, ArrowUpDown } from 'lucide-react';
+import { X, Layers, RefreshCw, Download, ArrowUpDown, Map, BarChart2, List, ChevronRight, ChevronDown } from 'lucide-react';
+import * as d3 from 'd3';
 
 // ─── Types ─────────────────────────────────────────────────────────────────
+
+interface Top3Entry {
+    indicator_naam: string;
+    eenheid: string;
+    thema: string;
+    score_type: string;
+    z_score: number;
+    z_score_abs: number;
+    impact: string;
+    kleur_hex: string;
+    waarde: number;
+    ref_gemiddelde: number;
+    ref_min: number;
+    ref_max: number;
+}
 
 interface BuurtAnalyse {
     buurt_id: string;
@@ -20,6 +36,7 @@ interface BuurtAnalyse {
     ref_gemiddelde: number;
     ref_min: number;
     ref_max: number;
+    top_3: Top3Entry[];
 }
 
 interface ThemaAggregaat {
@@ -51,6 +68,7 @@ interface GeoJSONFeature {
         thema: string;
         impact: string;
         kleur_hex: string;
+        top_3: Top3Entry[];
     };
 }
 
@@ -59,6 +77,15 @@ interface GeoJSONCollection {
     metadata: { referentie_label: string; totaal_buurten: number };
     features: GeoJSONFeature[];
 }
+
+// Thema opties
+const THEMA_OPTIONS = [
+    { value: 'alle', label: 'Alle Thema\'s' },
+    { value: 'Kwaliteit van leven', label: 'Kwaliteit van leven' },
+    { value: 'Kwaliteit fysieke leefomgeving', label: 'Kwaliteit fysieke leefomgeving' },
+    { value: 'Kwaliteit sociale leefomgeving', label: 'Kwaliteit sociale leefomgeving' },
+    { value: 'Samenstelling', label: 'Samenstelling' },
+];
 
 // ─── Component ─────────────────────────────────────────────────────────────
 
@@ -69,6 +96,7 @@ export const MultiGebiedPage: React.FC = () => {
     const [referentie, setReferentie] = useState<'gemeente' | 'fryslan'>(
         (searchParams.get('ref') as 'gemeente' | 'fryslan') || 'gemeente'
     );
+    const [themaFilter, setThemaFilter] = useState<string>('alle');
     const [data, setData] = useState<MultiGebiedData | null>(null);
     const [geoData, setGeoData] = useState<GeoJSONCollection | null>(null);
     const [loading, setLoading] = useState(false);
@@ -76,6 +104,7 @@ export const MultiGebiedPage: React.FC = () => {
     const [sortField, setSortField] = useState<'z_score' | 'buurt' | 'thema'>('z_score');
     const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
     const [hoveredBuurt, setHoveredBuurt] = useState<string | null>(null);
+    const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
 
     const svgRef = useRef<SVGSVGElement>(null);
 
@@ -85,22 +114,22 @@ export const MultiGebiedPage: React.FC = () => {
 
     // ─── Data Fetching ──────────────────────────────────────────────────────
 
-    const fetchData = async (ref: string) => {
+    const fetchData = async (ref: string, thema: string) => {
         if (gebiedIds.length === 0) return;
         setLoading(true);
         setError(null);
 
-        const payload = {
+        const basePayload = {
             gebied_ids: gebiedIds,
             referentie: ref,
             gemeente_code: gemeenteCode,
-            deelgebied_naam: deelgebiedNaam
+            ...(thema !== 'alle' ? { thema } : {})
         };
 
         try {
             const [dataRes, geoRes] = await Promise.all([
-                reportAPI.getMultiGebied(payload),
-                reportAPI.getMultiGebiedGeoJSON(payload)
+                reportAPI.getMultiGebied({ ...basePayload, deelgebied_naam: deelgebiedNaam }),
+                reportAPI.getMultiGebiedGeoJSON(basePayload)
             ]);
             setData(dataRes.data);
             setGeoData(geoRes.data);
@@ -112,12 +141,18 @@ export const MultiGebiedPage: React.FC = () => {
     };
 
     useEffect(() => {
-        fetchData(referentie);
+        fetchData(referentie, themaFilter);
     }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
     const handleReferentieSwitch = (newRef: 'gemeente' | 'fryslan') => {
         setReferentie(newRef);
-        fetchData(newRef);
+        fetchData(newRef, themaFilter);
+    };
+
+    const handleThemaChange = (newThema: string) => {
+        setThemaFilter(newThema);
+        setExpandedRows(new Set());
+        fetchData(referentie, newThema);
     };
 
     // ─── Sorting ────────────────────────────────────────────────────────────
@@ -137,6 +172,15 @@ export const MultiGebiedPage: React.FC = () => {
             setSortField(field);
             setSortDir('desc');
         }
+    };
+
+    const toggleRowExpand = (buurtId: string) => {
+        setExpandedRows(prev => {
+            const next = new Set(prev);
+            if (next.has(buurtId)) next.delete(buurtId);
+            else next.add(buurtId);
+            return next;
+        });
     };
 
     // ─── CSV Export ─────────────────────────────────────────────────────────
@@ -168,67 +212,52 @@ export const MultiGebiedPage: React.FC = () => {
         setTimeout(() => window.print(), 100);
     };
 
-    // ─── SVG Choropleth ─────────────────────────────────────────────────────
+    // ─── SVG Choropleth (D3 geoMercator) ────────────────────────────────────
 
     const renderChoropleth = () => {
         if (!geoData || geoData.features.length === 0) return null;
 
-        // Calculate bounds
-        let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
-        geoData.features.forEach(f => {
-            const coords = f.geometry.type === 'MultiPolygon'
-                ? f.geometry.coordinates.flat(2)
-                : f.geometry.coordinates.flat(1);
-            coords.forEach((c: number[]) => {
-                if (c[0] < minX) minX = c[0];
-                if (c[0] > maxX) maxX = c[0];
-                if (c[1] < minY) minY = c[1];
-                if (c[1] > maxY) maxY = c[1];
-            });
-        });
-
-        const padding = 20;
         const width = 500;
         const height = 400;
-        const dataWidth = maxX - minX;
-        const dataHeight = maxY - minY;
-        const scale = Math.min(
-            (width - 2 * padding) / dataWidth,
-            (height - 2 * padding) / dataHeight
+
+        // Sorteer features: grootste oppervlakte eerst (donut fix)
+        const sortedFeatures = [...geoData.features].sort(
+            (a, b) => d3.geoArea(b as any) - d3.geoArea(a as any)
         );
 
-        const projectX = (lon: number) => padding + (lon - minX) * scale;
-        const projectY = (lat: number) => height - padding - (lat - minY) * scale;
+        // D3 geoMercator projectie, fit op de bounding box
+        const projection = d3.geoMercator().fitSize(
+            [width - 40, height - 40],
+            { type: 'FeatureCollection', features: sortedFeatures } as any
+        );
+        // Offset voor padding
+        projection.translate([
+            (projection.translate()[0] || 0) + 20,
+            (projection.translate()[1] || 0) + 20
+        ]);
 
-        const toPath = (coords: number[][]) =>
-            coords.map((c, i) => `${i === 0 ? 'M' : 'L'}${projectX(c[0]).toFixed(1)},${projectY(c[1]).toFixed(1)}`).join('') + 'Z';
+        const pathGenerator = d3.geoPath().projection(projection);
 
         return (
             <svg ref={svgRef} viewBox={`0 0 ${width} ${height}`} style={{ width: '100%', height: 'auto', maxHeight: '400px' }}>
-                {geoData.features.map(f => {
+                {sortedFeatures.map(f => {
                     const isHovered = hoveredBuurt === f.properties.buurt_id;
-                    const polygons = f.geometry.type === 'MultiPolygon'
-                        ? f.geometry.coordinates.map((poly: number[][][]) => poly[0])
-                        : [f.geometry.coordinates[0]];
+                    const d = pathGenerator(f as any) || '';
 
                     return (
-                        <g key={f.properties.buurt_id}>
-                            {polygons.map((ring: number[][], ri: number) => (
-                                <path
-                                    key={ri}
-                                    d={toPath(ring)}
-                                    fill={f.properties.kleur_hex}
-                                    stroke={isHovered ? '#fff' : '#334155'}
-                                    strokeWidth={isHovered ? 2 : 0.5}
-                                    opacity={isHovered ? 1 : 0.85}
-                                    style={{ cursor: 'pointer', transition: 'opacity 0.15s' }}
-                                    onMouseEnter={() => setHoveredBuurt(f.properties.buurt_id)}
-                                    onMouseLeave={() => setHoveredBuurt(null)}
-                                >
-                                    <title>{`${f.properties.buurt_naam}\n${f.properties.indicator_naam}: z=${f.properties.max_z_score}\n${f.properties.impact}`}</title>
-                                </path>
-                            ))}
-                        </g>
+                        <path
+                            key={f.properties.buurt_id}
+                            d={d}
+                            fill={f.properties.kleur_hex}
+                            stroke={isHovered ? '#fff' : '#334155'}
+                            strokeWidth={isHovered ? 2 : 0.5}
+                            opacity={isHovered ? 1 : 0.85}
+                            style={{ cursor: 'pointer', transition: 'opacity 0.15s' }}
+                            onMouseEnter={() => setHoveredBuurt(f.properties.buurt_id)}
+                            onMouseLeave={() => setHoveredBuurt(null)}
+                        >
+                            <title>{`${f.properties.buurt_naam}\n${f.properties.indicator_naam}: z=${f.properties.max_z_score}\n${f.properties.impact}`}</title>
+                        </path>
                     );
                 })}
             </svg>
@@ -247,7 +276,6 @@ export const MultiGebiedPage: React.FC = () => {
             <div>
                 {entries.map(([thema, agg]) => {
                     const pct = Math.min((Math.abs(agg.gem_zscore) / maxZ) * 100, 100);
-                    const isNeg = agg.gem_zscore < 0;
                     const barColor = Math.abs(agg.gem_zscore) >= 1.0
                         ? '#2b6ca3'
                         : '#8c96a0';
@@ -283,6 +311,52 @@ export const MultiGebiedPage: React.FC = () => {
         { color: '#2b6ca3', label: 'Sterk afwijkend (1.5–2.0)' },
         { color: '#1a3d5c', label: 'Extreem afwijkend (> 2.0)' },
     ];
+
+    // ─── Hover Panel (Top 3) ────────────────────────────────────────────────
+
+    const renderHoverPanel = () => {
+        const b = hoveredBuurt ? data?.buurten_analyse.find(x => x.buurt_id === hoveredBuurt) : null;
+        return (
+            <div style={{
+                marginTop: '0.75rem', height: '140px', overflow: 'hidden',
+                transition: 'opacity 0.15s',
+                opacity: hoveredBuurt ? 1 : 0,
+                pointerEvents: 'none'
+            }}>
+                {!b ? (
+                    <div style={{ padding: '0.75rem', fontSize: '0.85rem', color: 'var(--color-text-muted)' }}>
+                        Beweeg muis over een buurt
+                    </div>
+                ) : (
+                    <div style={{
+                        padding: '0.75rem',
+                        background: 'var(--color-bg-alt)', borderRadius: 'var(--radius-sm)',
+                        fontSize: '0.85rem', borderLeft: `3px solid ${b.kleur_hex}`
+                    }}>
+                        <strong>{b.buurt_naam}</strong>
+                        <div style={{ marginTop: '0.5rem' }}>
+                            {b.top_3.map((t, i) => (
+                                <div key={i} style={{
+                                    display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                                    padding: '0.2rem 0',
+                                    borderTop: i > 0 ? '1px solid rgba(255,255,255,0.06)' : 'none'
+                                }}>
+                                    <span style={{ color: 'var(--color-text-muted)', marginRight: '0.5rem' }}>{i + 1}.</span>
+                                    <span style={{ flex: 1 }}>{t.indicator_naam}</span>
+                                    <span style={{
+                                        fontFamily: 'monospace', fontWeight: 600, marginLeft: '0.5rem',
+                                        color: t.z_score_abs >= 1.5 ? '#2b6ca3' : t.z_score_abs >= 1.0 ? '#c17c3e' : '#8c96a0'
+                                    }}>
+                                        z={t.z_score > 0 ? '+' : ''}{t.z_score}
+                                    </span>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
+            </div>
+        );
+    };
 
     // ─── RENDER ─────────────────────────────────────────────────────────────
 
@@ -333,8 +407,8 @@ export const MultiGebiedPage: React.FC = () => {
                 </div>
             </div>
 
-            {/* Referentie Toggle */}
-            <div className="card hide-on-print" style={{ marginBottom: '1.5rem', padding: '1rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
+            {/* Referentie Toggle + Thema Filter */}
+            <div className="card hide-on-print" style={{ marginBottom: '1.5rem', padding: '1rem', display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
                 <span style={{ fontWeight: 600, fontSize: '0.9rem' }}>Referentiekader:</span>
                 <div style={{ display: 'flex', gap: '0' }}>
                     {([
@@ -360,6 +434,30 @@ export const MultiGebiedPage: React.FC = () => {
                         </button>
                     ))}
                 </div>
+
+                {/* Thema Filter */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginLeft: '1rem' }}>
+                    <span style={{ fontWeight: 600, fontSize: '0.9rem' }}>Thema:</span>
+                    <select
+                        value={themaFilter}
+                        onChange={e => handleThemaChange(e.target.value)}
+                        disabled={loading}
+                        style={{
+                            padding: '0.5rem 0.75rem',
+                            border: '1px solid var(--color-border)',
+                            borderRadius: 'var(--radius-sm)',
+                            background: 'var(--color-surface)',
+                            color: 'var(--color-text)',
+                            fontSize: '0.85rem',
+                            cursor: loading ? 'wait' : 'pointer',
+                        }}
+                    >
+                        {THEMA_OPTIONS.map(opt => (
+                            <option key={opt.value} value={opt.value}>{opt.label}</option>
+                        ))}
+                    </select>
+                </div>
+
                 {data && (
                     <span style={{ color: 'var(--color-text-muted)', fontSize: '0.85rem', marginLeft: 'auto' }}>
                         {data.buurten_met_data} van {data.totaal_buurten} buurten met data
@@ -398,7 +496,7 @@ export const MultiGebiedPage: React.FC = () => {
                         {/* Choropleth Kaart */}
                         <div className="card" style={{ padding: '1.25rem' }}>
                             <h3 style={{ margin: '0 0 1rem', display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--color-primary)' }}>
-                                🗺️ Z-score Afwijkingskaart
+                                <Map size={18} /> Z-score Afwijkingskaart
                             </h3>
                             {renderChoropleth()}
                             {/* Legenda */}
@@ -410,37 +508,14 @@ export const MultiGebiedPage: React.FC = () => {
                                     </div>
                                 ))}
                             </div>
-                            {/* Hover info — fixed height zodat layout niet verspringt */}
-                            <div style={{
-                                marginTop: '0.75rem', minHeight: '56px',
-                                transition: 'opacity 0.15s',
-                                opacity: hoveredBuurt ? 1 : 0,
-                                pointerEvents: 'none'
-                            }}>
-                                {(() => {
-                                    const b = hoveredBuurt ? data?.buurten_analyse.find(x => x.buurt_id === hoveredBuurt) : null;
-                                    if (!b) return <div style={{ padding: '0.75rem', fontSize: '0.85rem', color: 'var(--color-text-muted)' }}>Beweeg muis over een buurt</div>;
-                                    return (
-                                        <div style={{
-                                            padding: '0.75rem',
-                                            background: 'var(--color-bg-alt)', borderRadius: 'var(--radius-sm)',
-                                            fontSize: '0.85rem', borderLeft: `3px solid ${b.kleur_hex}`
-                                        }}>
-                                            <strong>{b.buurt_naam}</strong> — {b.indicator_naam}
-                                            <br />
-                                            <span style={{ color: 'var(--color-text-muted)' }}>
-                                                Waarde: {b.waarde} {b.eenheid} · z={b.max_z_score > 0 ? '+' : ''}{b.max_z_score} · bereik: {b.ref_min}–{b.ref_max}
-                                            </span>
-                                        </div>
-                                    );
-                                })()}
-                            </div>
+                            {/* Hover info — Top 3 */}
+                            {renderHoverPanel()}
                         </div>
 
                         {/* Thema Aggregaat */}
                         <div className="card" style={{ padding: '1.25rem' }}>
-                            <h3 style={{ margin: '0 0 1rem', color: 'var(--color-primary)' }}>
-                                📊 Thema Aggregaat
+                            <h3 style={{ margin: '0 0 1rem', color: 'var(--color-primary)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                <BarChart2 size={18} /> Thema Aggregaat
                             </h3>
                             <p style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)', marginBottom: '1rem' }}>
                                 Gemiddelde z-score per thema over alle {data.buurten_met_data} buurten
@@ -449,11 +524,11 @@ export const MultiGebiedPage: React.FC = () => {
                         </div>
                     </div>
 
-                    {/* Uitschietertabel */}
+                    {/* Uitschietertabel — Nested (Top 3) */}
                     <div className="card" style={{ marginBottom: '1.5rem' }}>
                         <div style={{ padding: '1rem 1.25rem', borderBottom: '1px solid var(--color-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <h3 style={{ margin: 0, color: 'var(--color-primary)' }}>
-                                📋 Uitschietertabel — Ranking per buurt
+                            <h3 style={{ margin: 0, color: 'var(--color-primary)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                <List size={18} /> Uitschietertabel — Ranking per buurt
                             </h3>
                             <span style={{
                                 background: 'var(--color-bg-alt)', padding: '0.35rem 0.75rem',
@@ -466,6 +541,7 @@ export const MultiGebiedPage: React.FC = () => {
                             <thead>
                                 <tr>
                                     <th style={{ textAlign: 'center', padding: '0.75rem 0.5rem', width: '50px' }}>#</th>
+                                    <th style={{ textAlign: 'center', padding: '0.75rem 0.25rem', width: '30px' }}></th>
                                     <th style={{ textAlign: 'left', padding: '0.75rem 1rem', cursor: 'pointer' }}
                                         onClick={() => toggleSort('buurt')}>
                                         Buurt <ArrowUpDown size={12} style={{ opacity: sortField === 'buurt' ? 1 : 0.3 }} />
@@ -485,41 +561,98 @@ export const MultiGebiedPage: React.FC = () => {
                                 </tr>
                             </thead>
                             <tbody>
-                                {sortedBuurten.map((b, i) => (
-                                    <tr key={b.buurt_id}
-                                        style={{ background: hoveredBuurt === b.buurt_id ? 'var(--color-bg-alt)' : 'transparent' }}
-                                        onMouseEnter={() => setHoveredBuurt(b.buurt_id)}
-                                        onMouseLeave={() => setHoveredBuurt(null)}>
-                                        <td style={{ textAlign: 'center', padding: '0.6rem 0.5rem', color: 'var(--color-text-muted)' }}>{i + 1}</td>
-                                        <td style={{ padding: '0.6rem 1rem' }}>
-                                            <strong>{b.buurt_naam}</strong>
-                                            <div style={{ fontSize: '0.7rem', color: 'var(--color-text-muted)', fontFamily: 'monospace' }}>{b.buurt_id}</div>
-                                        </td>
-                                        <td style={{ padding: '0.6rem 0.5rem', fontSize: '0.85rem' }}>{b.thema}</td>
-                                        <td style={{ padding: '0.6rem 0.5rem', fontSize: '0.85rem' }}>{b.indicator_naam}</td>
-                                        <td style={{ textAlign: 'right', padding: '0.6rem 0.5rem', fontWeight: 600 }}>
-                                            {b.waarde} <span style={{ fontSize: '0.7rem', color: 'var(--color-text-muted)' }}>{b.eenheid}</span>
-                                        </td>
-                                        <td style={{ textAlign: 'center', padding: '0.6rem 0.5rem', fontSize: '0.8rem', color: 'var(--color-text-muted)', fontFamily: 'monospace' }}>
-                                            {b.ref_min}–{b.ref_max}
-                                        </td>
-                                        <td style={{
-                                            textAlign: 'right', padding: '0.6rem 0.5rem', fontWeight: 700, fontFamily: 'monospace',
-                                            color: b.max_z_score_abs >= 2.0 ? '#1a3d5c' :
-                                                b.max_z_score_abs >= 1.5 ? '#2b6ca3' :
-                                                    b.max_z_score_abs >= 1.0 ? '#c17c3e' :
-                                                        b.max_z_score_abs >= 0.5 ? '#d4b483' : '#8c96a0'
-                                        }}>
-                                            {b.max_z_score > 0 ? '+' : ''}{b.max_z_score}
-                                        </td>
-                                        <td style={{ textAlign: 'center', padding: '0.6rem 1rem' }}>
-                                            <span style={{
-                                                display: 'inline-block', width: '12px', height: '12px',
-                                                borderRadius: '50%', background: b.kleur_hex
-                                            }} title={b.impact} />
-                                        </td>
-                                    </tr>
-                                ))}
+                                {sortedBuurten.map((b, i) => {
+                                    const isExpanded = expandedRows.has(b.buurt_id);
+                                    const hasSubRows = b.top_3 && b.top_3.length > 1;
+
+                                    return (
+                                        <React.Fragment key={b.buurt_id}>
+                                            {/* Hoofdrij */}
+                                            <tr
+                                                style={{ background: hoveredBuurt === b.buurt_id ? 'var(--color-bg-alt)' : 'transparent' }}
+                                                onMouseEnter={() => setHoveredBuurt(b.buurt_id)}
+                                                onMouseLeave={() => setHoveredBuurt(null)}>
+                                                <td style={{ textAlign: 'center', padding: '0.6rem 0.5rem', color: 'var(--color-text-muted)' }}>{i + 1}</td>
+                                                <td style={{ textAlign: 'center', padding: '0.6rem 0.25rem' }}>
+                                                    {hasSubRows && (
+                                                        <button
+                                                            onClick={() => toggleRowExpand(b.buurt_id)}
+                                                            style={{
+                                                                background: 'none', border: 'none', cursor: 'pointer',
+                                                                color: 'var(--color-text-muted)', padding: '0.1rem',
+                                                                display: 'flex', alignItems: 'center'
+                                                            }}
+                                                            title="Toon top 3 afwijkingen"
+                                                        >
+                                                            {isExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+                                                        </button>
+                                                    )}
+                                                </td>
+                                                <td style={{ padding: '0.6rem 1rem' }}>
+                                                    <strong>{b.buurt_naam}</strong>
+                                                    <div style={{ fontSize: '0.7rem', color: 'var(--color-text-muted)', fontFamily: 'monospace' }}>{b.buurt_id}</div>
+                                                </td>
+                                                <td style={{ padding: '0.6rem 0.5rem', fontSize: '0.85rem' }}>{b.thema}</td>
+                                                <td style={{ padding: '0.6rem 0.5rem', fontSize: '0.85rem' }}>{b.indicator_naam}</td>
+                                                <td style={{ textAlign: 'right', padding: '0.6rem 0.5rem', fontWeight: 600 }}>
+                                                    {b.waarde} <span style={{ fontSize: '0.7rem', color: 'var(--color-text-muted)' }}>{b.eenheid}</span>
+                                                </td>
+                                                <td style={{ textAlign: 'center', padding: '0.6rem 0.5rem', fontSize: '0.8rem', color: 'var(--color-text-muted)', fontFamily: 'monospace' }}>
+                                                    {b.ref_min}–{b.ref_max}
+                                                </td>
+                                                <td style={{
+                                                    textAlign: 'right', padding: '0.6rem 0.5rem', fontWeight: 700, fontFamily: 'monospace',
+                                                    color: b.max_z_score_abs >= 2.0 ? '#1a3d5c' :
+                                                        b.max_z_score_abs >= 1.5 ? '#2b6ca3' :
+                                                            b.max_z_score_abs >= 1.0 ? '#c17c3e' :
+                                                                b.max_z_score_abs >= 0.5 ? '#d4b483' : '#8c96a0'
+                                                }}>
+                                                    {b.max_z_score > 0 ? '+' : ''}{b.max_z_score}
+                                                </td>
+                                                <td style={{ textAlign: 'center', padding: '0.6rem 1rem' }}>
+                                                    <span style={{
+                                                        display: 'inline-block', width: '12px', height: '12px',
+                                                        borderRadius: '50%', background: b.kleur_hex
+                                                    }} title={b.impact} />
+                                                </td>
+                                            </tr>
+
+                                            {/* Subrijen (top 2 & 3) */}
+                                            {isExpanded && b.top_3.slice(1).map((sub, si) => (
+                                                <tr key={`${b.buurt_id}-sub-${si}`}
+                                                    style={{ background: 'rgba(255,255,255,0.02)' }}>
+                                                    <td></td>
+                                                    <td style={{ textAlign: 'center', color: 'var(--color-text-muted)', fontSize: '0.75rem', padding: '0.4rem 0.25rem' }}>
+                                                        {si + 2}.
+                                                    </td>
+                                                    <td style={{ padding: '0.4rem 1rem', color: 'var(--color-text-muted)', fontSize: '0.8rem' }}>
+                                                        ↳
+                                                    </td>
+                                                    <td style={{ padding: '0.4rem 0.5rem', fontSize: '0.8rem', color: 'var(--color-text-muted)' }}>{sub.thema}</td>
+                                                    <td style={{ padding: '0.4rem 0.5rem', fontSize: '0.8rem', color: 'var(--color-text-muted)' }}>{sub.indicator_naam}</td>
+                                                    <td style={{ textAlign: 'right', padding: '0.4rem 0.5rem', fontSize: '0.8rem', color: 'var(--color-text-muted)' }}>
+                                                        {sub.waarde} <span style={{ fontSize: '0.65rem' }}>{sub.eenheid}</span>
+                                                    </td>
+                                                    <td style={{ textAlign: 'center', padding: '0.4rem 0.5rem', fontSize: '0.75rem', color: 'var(--color-text-muted)', fontFamily: 'monospace' }}>
+                                                        {sub.ref_min}–{sub.ref_max}
+                                                    </td>
+                                                    <td style={{
+                                                        textAlign: 'right', padding: '0.4rem 0.5rem', fontWeight: 600, fontFamily: 'monospace', fontSize: '0.8rem',
+                                                        color: sub.z_score_abs >= 1.5 ? '#2b6ca3' : sub.z_score_abs >= 1.0 ? '#c17c3e' : '#8c96a0'
+                                                    }}>
+                                                        {sub.z_score > 0 ? '+' : ''}{sub.z_score}
+                                                    </td>
+                                                    <td style={{ textAlign: 'center', padding: '0.4rem 1rem' }}>
+                                                        <span style={{
+                                                            display: 'inline-block', width: '8px', height: '8px',
+                                                            borderRadius: '50%', background: sub.kleur_hex, opacity: 0.7
+                                                        }} title={sub.impact} />
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </React.Fragment>
+                                    );
+                                })}
                             </tbody>
                         </table>
                     </div>

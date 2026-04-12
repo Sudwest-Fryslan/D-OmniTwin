@@ -383,17 +383,19 @@ class ReportDataService:
         gebied_ids: List[str],
         referentie: str = 'gemeente',
         gemeente_code: str = '1900',
-        deelgebied_naam: str = None
+        deelgebied_naam: str = None,
+        thema: str = None
     ) -> Dict[str, Any]:
         """
-        Multi-Gebiedsdossier: Berekent per buurt de indicator met de sterkste
+        Multi-Gebiedsdossier: Berekent per buurt de top 3 indicatoren met de sterkste
         z-score afwijking en aggregeert per thema.
 
         Args:
             gebied_ids: Lijst van CBS buurt-IDs (bijv. 44 buurten)
             referentie: 'gemeente' of 'fryslan'
             gemeente_code: Gemeentecode voor referentie (default SWF = '1900')
-            deelgebied_naam: Optioneel label voor rapportheader Optioneel label)
+            deelgebied_naam: Optioneel label voor rapportheader
+            thema: Optioneel thema-filter (bijv. 'Kwaliteit van Leven')
         """
         if not gebied_ids:
             raise ValueError("Minimaal 1 gebied_id is vereist.")
@@ -433,8 +435,14 @@ class ReportDataService:
             raise ValueError("Alle geselecteerde gebieden zijn water-buurten.")
         params["gebied_ids"] = gefilterde_ids
 
+        # 2c. Optioneel thema-filter
+        thema_filter_clause = ""
+        if thema and thema != 'alle':
+            thema_filter_clause = "WHERE thema = :thema_filter"
+            params["thema_filter"] = thema
+
         # 3. Bereken z-scores voor ALLE buurten × ALLE indicatoren
-        #    Inclusief waarde, referentie-gemiddelde en min/max voor context
+        #    Top 3 per buurt via ROW_NUMBER i.p.v. DISTINCT ON
         z_score_query = text(f"""
             WITH target_data AS (
                 -- Meest recente waarde per buurt per indicator
@@ -486,50 +494,85 @@ class ReportDataService:
                                        ON i.uuid = vkh.indicator_uuid AND vkh.config_id = 1
                 JOIN referentie_stats rs ON td.indicator_uuid = rs.indicator_uuid
             ),
-            max_per_buurt AS (
-                -- Per buurt: de indicator met de GROOTSTE absolute z-score
-                SELECT DISTINCT ON (gebied_id)
-                    gebied_id, buurt_naam, indicator_naam, eenheid, thema,
-                    z_score, ABS(z_score) AS z_score_abs, score_type,
-                    waarde, avg_waarde, min_waarde, max_waarde
-                FROM alle_zscores
-                ORDER BY gebied_id, ABS(z_score) DESC
+            gefilterde_zscores AS (
+                -- Optioneel thema-filter
+                SELECT * FROM alle_zscores
+                {thema_filter_clause}
+            ),
+            top_per_buurt AS (
+                -- Per buurt: top 3 indicatoren met de GROOTSTE absolute z-score
+                SELECT *,
+                    ROW_NUMBER() OVER(PARTITION BY gebied_id ORDER BY ABS(z_score) DESC) AS rang
+                FROM gefilterde_zscores
             )
-            SELECT * FROM max_per_buurt ORDER BY z_score_abs DESC
+            SELECT * FROM top_per_buurt WHERE rang <= 3 ORDER BY gebied_id, rang
         """)
 
         result = self.db.execute(z_score_query, params)
         rows = [dict(r._mapping) for r in result]
 
-        # 4. Bouw buurten_analyse met kleurmapping
-        buurten_analyse = []
+        # 4. Bouw buurten_analyse met geneste top_3 structuur
+        #    Groepeer per buurt_id, rn=1 bepaalt de hoofdrij + kleur
+        from collections import OrderedDict
+        buurt_groups: Dict[str, Dict[str, Any]] = OrderedDict()
+
         for row in rows:
             z = float(row['z_score'])
-            z_abs = float(row['z_score_abs'])
+            z_abs = abs(z)
             score_type = row['score_type']
             impact = self._determine_impact(z, score_type)
             is_negatief = 'negatief' in impact
             kleur = self._get_zscore_kleur(z_abs, is_negatief)
+            rang = int(row['rang'])
 
-            buurten_analyse.append({
-                "buurt_id": row['gebied_id'],
-                "buurt_naam": row['buurt_naam'],
-                "max_z_score": round(z, 2),
-                "max_z_score_abs": round(z_abs, 2),
+            entry = {
                 "indicator_naam": row['indicator_naam'],
                 "eenheid": row.get('eenheid') or '',
                 "thema": row['thema'],
                 "score_type": score_type,
+                "z_score": round(z, 2),
+                "z_score_abs": round(z_abs, 2),
                 "impact": impact,
                 "kleur_hex": kleur,
                 "waarde": round(float(row['waarde']), 2),
                 "ref_gemiddelde": round(float(row['avg_waarde']), 2),
                 "ref_min": round(float(row['min_waarde']), 2),
                 "ref_max": round(float(row['max_waarde']), 2)
-            })
+            }
+
+            bid = row['gebied_id']
+            if bid not in buurt_groups:
+                # Eerste (rang=1) rij wordt de hoofdrij
+                buurt_groups[bid] = {
+                    "buurt_id": bid,
+                    "buurt_naam": row['buurt_naam'],
+                    "max_z_score": round(z, 2),
+                    "max_z_score_abs": round(z_abs, 2),
+                    "indicator_naam": row['indicator_naam'],
+                    "eenheid": row.get('eenheid') or '',
+                    "thema": row['thema'],
+                    "score_type": score_type,
+                    "impact": impact,
+                    "kleur_hex": kleur,
+                    "waarde": round(float(row['waarde']), 2),
+                    "ref_gemiddelde": round(float(row['avg_waarde']), 2),
+                    "ref_min": round(float(row['min_waarde']), 2),
+                    "ref_max": round(float(row['max_waarde']), 2),
+                    "top_3": [entry]
+                }
+            else:
+                buurt_groups[bid]["top_3"].append(entry)
+
+        buurten_analyse = list(buurt_groups.values())
+        # Sorteer op sterkste afwijking (primaire rij)
+        buurten_analyse.sort(key=lambda x: x['max_z_score_abs'], reverse=True)
 
         # 5. Bereken thema-aggregaat
-        # Gebruik ALLE z-scores (niet alleen max per buurt) voor thema-gemiddelde
+        # Gebruik ALLE z-scores (niet alleen top per buurt) voor thema-gemiddelde
+        thema_agg_filter = ""
+        if thema and thema != 'alle':
+            thema_agg_filter = f"AND COALESCE(vkh.titel_naam, i.categorie, 'Overig') = :thema_filter"
+
         thema_query = text(f"""
             WITH target_data AS (
                 SELECT indicator_uuid, gebied_id, waarde, jaar
@@ -563,6 +606,7 @@ class ReportDataService:
             JOIN indicatoren i ON td.indicator_uuid = i.uuid
             JOIN v_kompas_hierarchie vkh ON i.uuid = vkh.indicator_uuid AND vkh.config_id = 1
             JOIN referentie_stats rs ON td.indicator_uuid = rs.indicator_uuid
+            WHERE 1=1 {thema_agg_filter}
             GROUP BY COALESCE(vkh.titel_naam, i.categorie, 'Overig')
             ORDER BY ABS(AVG((td.waarde - rs.avg_waarde) / rs.std_waarde)) DESC
         """)
@@ -602,23 +646,25 @@ class ReportDataService:
         self,
         gebied_ids: List[str],
         referentie: str = 'gemeente',
-        gemeente_code: str = '1900'
+        gemeente_code: str = '1900',
+        thema: str = None
     ) -> Dict[str, Any]:
         """
         Genereert een GeoJSON FeatureCollection met per buurt:
         - Geometrie (WGS84)
-        - Max z-score indicator
+        - Max z-score indicator + top_3 array
         - Kleurcodering
         Bedoeld voor de D3 SVG choropleth op de rapportpagina.
         """
-        # Haal de analyse-data op
+        # Haal de analyse-data op (inclusief thema-filter)
         payload = self.generate_multi_gebied_payload(
             gebied_ids=gebied_ids,
             referentie=referentie,
-            gemeente_code=gemeente_code
+            gemeente_code=gemeente_code,
+            thema=thema
         )
         
-        # Maak een lookup van buurt_id → analyse-data
+        # Maak een lookup van buurt_id → analyse-data (1 per buurt, met geneste top_3)
         analyse_lookup = {b['buurt_id']: b for b in payload['buurten_analyse']}
 
         # Haal geometrieën op (als GeoJSON) — filter water-buurten
@@ -649,7 +695,8 @@ class ReportDataService:
                     "indicator_naam": analyse.get('indicator_naam', ''),
                     "thema": analyse.get('thema', ''),
                     "impact": analyse.get('impact', ''),
-                    "kleur_hex": analyse.get('kleur_hex', '#6b7280')
+                    "kleur_hex": analyse.get('kleur_hex', '#6b7280'),
+                    "top_3": analyse.get('top_3', [])
                 }
             }
             features.append(feature)
@@ -662,3 +709,4 @@ class ReportDataService:
             },
             "features": features
         }
+

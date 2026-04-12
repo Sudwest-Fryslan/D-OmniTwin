@@ -185,9 +185,9 @@ export const reportAPI = {
     getExecutive: (gebiedId: string) => reportApiClient.get<import('../types').ExecutivePayload>(`/executive/${gebiedId}`),
 
     // Sjabloon D: Multi-Gebiedsdossier
-    getMultiGebied: (payload: { gebied_ids: string[]; referentie: string; gemeente_code: string; deelgebied_naam?: string }) =>
+    getMultiGebied: (payload: { gebied_ids: string[]; referentie: string; gemeente_code: string; deelgebied_naam?: string; thema?: string }) =>
         reportApiClient.post<any>('/multi-gebied', payload),
-    getMultiGebiedGeoJSON: (payload: { gebied_ids: string[]; referentie: string; gemeente_code: string }) =>
+    getMultiGebiedGeoJSON: (payload: { gebied_ids: string[]; referentie: string; gemeente_code: string; thema?: string }) =>
         reportApiClient.post<any>('/multi-gebied/geojson', payload),
 };
 

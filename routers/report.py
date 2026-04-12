@@ -15,6 +15,7 @@ class MultiGebiedRequest(BaseModel):
     referentie: str = Field('gemeente', description="'gemeente' of 'fryslan'")
     gemeente_code: str = Field('1900', description="Gemeente code (default: SWF)")
     deelgebied_naam: Optional[str] = Field(None, description="Label voor de rapportheader")
+    thema: Optional[str] = Field(None, description="Thema filter (bijv. 'Kwaliteit van Leven')")
 
 
 router = APIRouter(
@@ -183,7 +184,8 @@ def get_multi_gebied_data(payload: MultiGebiedRequest, db: Session = Depends(get
             gebied_ids=payload.gebied_ids,
             referentie=payload.referentie,
             gemeente_code=payload.gemeente_code,
-            deelgebied_naam=payload.deelgebied_naam
+            deelgebied_naam=payload.deelgebied_naam,
+            thema=payload.thema
         )
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
@@ -202,7 +204,8 @@ def get_multi_gebied_geojson(payload: MultiGebiedRequest, db: Session = Depends(
         return service.generate_multi_gebied_geojson(
             gebied_ids=payload.gebied_ids,
             referentie=payload.referentie,
-            gemeente_code=payload.gemeente_code
+            gemeente_code=payload.gemeente_code,
+            thema=payload.thema
         )
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
