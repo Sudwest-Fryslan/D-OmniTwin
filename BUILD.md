@@ -308,12 +308,252 @@ curl -L https://unpkg.com/swagger-ui-dist@5/swagger-ui.css -o static/swagger-ui/
 
 ## 13. AI Rapportagemodule (Sprint 8 - 22-02-2026)
 
-De applicatie bevat een AI-gestuurde rapportagemodule die via de React frontend (`/admin/rapport` of `/publiek-rapport`) benaderbaar is. 
+De applicatie bevat een AI-gestuurde rapportagemodule die via de React frontend (`/admin/rapport` of `/publiek-rapport`) benaderbaar is.
 
 **Lokale Inferentie met Ollama:**
-Omdat privacygevoelige CBS data niet naar externe partijen (zoals OpenAI) gestuurd mag worden, vereist D-OmniTwin een lokale LLM service via Ollama. 
+Omdat privacygevoelige CBS data niet naar externe partijen (zoals OpenAI) gestuurd mag worden, vereist D-OmniTwin een lokale LLM service via Ollama.
 
 1. **Installatie:** Installeer [Ollama](https://ollama.com).
-2. **Model Download:** Trek het benodigde model (bijv. Qwen3) via de command line: `ollama run qwen2.5:32b` (of een variant die uw hardware aankan). 
-3. **Beheer:** De modellen en systeemprompts zijn beheerbaar via het React Admin paneel in the tab "AI Configuratie". The API communiceert standaard the naar `http://localhost:11434`.
+2. **Model Download:** Trek het benodigde model (bijv. Qwen3) via de command line: `ollama run qwen3:30b` (of een kleiner model indien uw hardware dit vereist).
+3. **Beheer:** De modellen en systeemprompts zijn beheerbaar via het React Admin paneel → tab "AI Configuratie". De API communiceert standaard naar `http://localhost:11434`.
+
+---
+
+## 📋 Sprint Changelog
+
+> Volledig dag-voor-dag overzicht van alle ontwikkelsessies.
+> De laatste 3 sprints zijn samengevat in de [README.md](./README.md#-recent-voltooid).
+> Dit changelog dient als archief en basis voor toekomstige CHANGELOG.md releases.
+
+---
+
+### Dag 56 (11-04-2026): Git Initiatie & Veiligheidsslag 🔒🚀
+**Focus:** Project opschonen voor versiebeheer en eerste release-candidate naar de private repository sturen.
+
+- ✅ **Security Cleanup:** Hardcoded beheerdersgegevens verwijderd/uitgesloten van Git en veilig verplaatst naar `.env`. De `.gitignore` waterdicht gemaakt voor zware datasets (`/data`), logs en AI geheugen.
+- ✅ **Remote Connectie:** SSH authenticatie en remote push naar `TLaan/D-OmniTwin.git` opgeleverd (319+ bestanden).
+- ✅ **Root Opschoning:** Onnodige en achterhaalde werkbestanden weggewerkt voor een opgeruimde basis `main` branch.
+
+---
+
+### Dag 55 (10-04-2026): Multi-Gebiedsdossier & Optimalisaties 🗺️📊
+**Focus:** Afronding rapportmodule voor Multi-gebied selecties en integratie van directe verbeteringen vanuit kwaliteitscontrole.
+
+- ✅ **Backend Analyse** (`routers/report.py`, `services/report_service.py`): Nieuwe POST-endpoints (`/multi-gebied`, `/geojson`), generatie van dynamische payload voor thema-aggregatie, Z-scores, kleurcoderingen, en dynamisch bereik (min/max/gemiddelde).
+- ✅ **Frontend Panel** (`MultiGebiedPage.tsx`): Interactieve SVG choropleth-kaart met Z-score afwijkingen, Ranked Uitschietertabel en Thema-aggregaat bars.
+- ✅ **UI/UX Fixes:**
+    - Introductie van een divergerend **Colorblind-safe** z-score palet.
+    - Oplossen van een mouse-hover *flicker bug* via specifieke CSS/layout vastlegging.
+    - Volledige integratie via modals van de interactielaag in de `app.js` (Multi-select fallback).
+- ✅ **Data Opschoning:** Automatische detectie en filtering van "water-buurten" via metadata velden om ruis te voorkomen in statistische overzichten.
+
+**Track B aanvulling (Dag 55):**
+- ✅ **Track A — Intelligente Chat Acties** (`chat.js`, `app.js`, `kompas.js`, `chat.py`, `llm_service.py`):
+    - Nieuwe actie-types: `SELECTEER_GEMEENTE`, `SELECTEER_GEBIEDSTYPE`, `SELECTEER_KOMPAS`, `OPEN_KOMPAS`.
+    - Context-uitbreiding: De assistent bevat nu de meta-data van **49 gemeenten** (Fryslân, Groningen, Drenthe).
+    - EventBus integratie met manual event dispatching voor naadloze UI-synchronisatie.
+    - Robuuste Pydantic modellen in de backend voor volledige data-doorgifte van LLM naar frontend.
+- ✅ **Track D — Performance & Developer Experience** (`run_dev.py`, `llm_service.py`):
+    - Lazy loading van `SentenceTransformer` AI-modellen (30% snellere server start).
+    - Geoptimaliseerde Uvicorn reload (uitsluiten van `node_modules`, `admin-panel`).
+    - Introductie `run_dev.py` script voor een gestroomlijnde development loop.
+- ✅ **Track E — Admin Integratie** (`index.html`, `styles.css`):
+    - Auth-aware **"Beheer" knop** in de hoofdapp header.
+    - Dynamische routing naar `/admin/login` of `/admin/dashboard`.
+
+---
+
+### Dag 43 (20-03-2026): Sprint 10 — D-Omni Assistent Chat Interface 🤖💬
+**Focus:** Implementatie van een intent-based AI chat zijpaneel dat de kaart, het Kompas en rapport-generatie aanstuurt via natuurlijke taal.
+
+- ✅ **Fase 0 — AI Search Priority Fix** (`services/ai_search_service.py`):
+    - COALESCE beschrijvings-voorkeur: menselijk gevalideerd → AI-gegenereerd → standaard omschrijving.
+    - `ontologie_status`, `eenheid` en `score_type` beschikbaar in zoekresultaten.
+- ✅ **Fase 1 — Backend Chat Endpoint** (`routers/chat.py`, `services/llm_service.py`):
+    - Nieuw `POST /api/chat` endpoint met Command Dispatch JSON structuur.
+    - Rule-based intent classifier: `VERKEN_INDICATORS`, `VERGELIJK_GEBIEDEN`, `MAAK_RAPPORT`, `ALGEMEEN`.
+    - `generate_chat_narrative()` in `LLMService` — beknopte NL-toelichting (≤80 woorden).
+- ✅ **Fase 2 — Frontend Chat Zijpaneel** (`static/js/chat.js`, `templates/index.html`, `static/css/styles.css`):
+    - `ChatPanel` klasse: open/close/toggle, loading dots, chat-historiek (groeit omhoog).
+    - cpu.svg toggle-knop (inline SVG) in de verticale tab-balk — thema-aware.
+    - Glassmorphism rechts-zijpaneel (380px breed), identieke stijl als Kaart Configuratie.
+    - Actie-knoppen dispatchen `INDICATOR_SELECTED` via EventBus naar kaart én Kompas.
+    - `MAAK_RAPPORT`: opent gebiedsdossier of benchmark op basis van huidige kaart-selectie.
+- ✅ **Chat↔Kompas Sync** (`static/js/kompas.js`):
+    - Kompas luistert naar `INDICATOR_SELECTED` en navigeert automatisch naar het juiste kwadrant.
+    - `_isSyncing` guard voorkomt event-loop (Bug #36 gefixt).
+
+---
+
+### Dag 42 (18-03-2026): AI Ontologie Kwaliteitsfix 🧠✨
+**Focus:** Implementatie van de "Hek en Bron" filosofie voor prompt engineering en herstel van 51 indicatoren.
+
+- ✅ **"Hek en Bron" Filosofie:** Documentatie van de identiteit-gedreven prompt-strategie (`docs/6-ai-parallel-track/ai-integratie/prompt_engineering_filosofie.md`).
+- ✅ **Targeted Re-generatie:** 51 indicatoren met technische ruis (RDF/OWL) succesvol hersteld naar verhalende Nederlandse tekst met het Qwen-30b model.
+- ✅ **AI Audit Tooling:** Ontwikkeling van `src/utils/ai_audit.py` voor automatische kwaliteitscontrole van AI-output.
+
+---
+
+### Dag 41 (17-03-2026): CBS 2024 Geografie & ETL Data Gaten 🗺️🔋
+**Focus:** Implementatie van de 2024 buurtindeling voor Northern Provinces en het structureel dichten van datagaten voor Smallingerland en De Fryske Marren.
+
+**Resultaten:**
+De noordelijke provincies (Fryslân, Groningen, Drenthe) zijn nu volledig "up-to-date" met de nieuwste 2024 grenzen én een diepe historische data-stand (2020–2025).
+- **Groningen**: ~65.000 records geïmporteerd.
+- **Drenthe**: ~85.000 records geïmporteerd.
+- **Totaal Noord-Nederland**: 100% dekking op RIVM en CBS Kerncijfers voor actieve gebieden.
+- **Stabiliteit**: De kaart-API is bug-vrij voor records zonder geometrie.
+
+- ✅ **CBS 2024 Boundary Import:** Succesvolle import van buurtgeometrieën voor Fryslân, Groningen en Drenthe uit landelijke GPKG. Resolutie van overlappende geometrieën in Smallingerland door deactivering van verouderde buurtcodes.
+- ✅ **Noordelijke Provincies Data-expansie:** RIVM & CBS: Volledige import voor Groningen (10 gemeenten, ~65k records) en Drenthe (12 gemeenten, ~85k records).
+- ✅ **ETL Data Gaten gedicht (Fryslân focus):**
+    - **PC6 Mapping Update**: Nieuwe `pc6_buurt_mapping.json` op basis van CBS 2025 relatie-tabel (448.646 codes).
+    - **RIVM Her-import**: Alle Gezondheidsmonitor data voor Smallingerland gematcht aan de nieuwe 2024 indeling.
+    - **BAG & EP-Online**: Bouwjaar, woonoppervlakte en energielabels succesvol geïmporteerd voor Smallingerland en De Fryske Marren.
+- ✅ **Kaart-Service Stabiliteit:** Fix voor een kritieke `NULL geometry` fout in de GeoJSON response van de kaart-API (`get_kaart_data_v2`).
+
+---
+
+### Dag 39 (15-03-2026): Sprint 8F — AI Search Navigation & Data Lineage 🧭🤖
+**Focus:** Optimalisatie van de AI-zoekervaring, contextualiteit in het Kompas en 100% data coverage.
+
+- ✅ **AI Search Expansion (100% Coverage):** Alle **280 indicatoren** zijn voorzien van een AI-ontologische beschrijving via lokale Ollama inferentie. Vectorisatie voltooid; alle indicatoren semantisch doorzoekbaar via `pgvector`.
+- ✅ **Kompas UI & Navigatie:** Contextuele Zoom bij het selecteren van een zoekresultaat; Z-Index reparatie voor tooltips; Stability Fix voor zichtbare viewport.
+- ✅ **Data Lineage Fundament:** Introductie van de `bronnen` en `indicator_metadata` tabellen voor volledige herleidbaarheid van data-assets.
+
+---
+
+### Dag 38 (06-03-2026): Bugfix — 3D Extrusie Visualisatie & Belichting 🎮✨
+**Focus:** Herstellen van de defecte 3D-weergave van gebieden op de kaart.
+
+- ✅ **Bug #25 Fix:** Introductie van een `onViewStateChange` listener die actief de camerahoek opslaat, zodat het aanvinken van de 3D-toggle de kaart niet meer reset naar de oceaan. Oplossen van triangulatie-artifacten door de 2D en 3D laag-ID's afzonderlijk te benoemen.
+- ✅ **Materiaal & Belichtingsfixes:** Verwijdering van defecte FPS-monitor; vervangen van experimentele `_SunLight` door stabiele `DirectionalLight`; matte renderer instellen in 3D.
+
+---
+
+### Dag 37 (05-03-2026): Bugfix — Ngrok Tunneling Compatibiliteit 🔧🌐
+**Focus:** Applicatie volledig functioneel maken via ngrok tunneling.
+
+- ✅ **Bug #22 Fix:** Hardcoded `isLocalhost` check verwijderd; universele relatieve URLs.
+- ✅ **CORS Regex voor Ngrok:** `allow_origin_regex` accepteert nu automatisch `*.ngrok-free.dev` origins (alleen in DEBUG mode).
+- ✅ **Build & Deploy Workflow:** `.agents/workflows/build-admin-panel.md` aangemaakt.
+
+---
+
+### Dag 36 (03-03-2026): Sprint 8E — Kleur-Transformatie "Triple Threat" Palet 🎨
+**Focus:** Visuele revisie naar de "Deep Data" identiteit, CSS tokenisatie, map-highlights en light mode optimalisaties.
+
+- ✅ **CSS Tokenisatie:** Uniforme design-tokens (`--brand-main`, `--brand-action`, `--brand-accent`, `--brand-nature`). Sanering van hardcoded `SWF-rood` voor `Trust Blue` en `Nature Green`.
+- ✅ **Geïntegreerde Highlights:** Deck.gl map-selecties in `Geo Gold` merk-kleur.
+- ✅ **Bugfixes Light Mode (Bug #20 / #21):** Ontbrekende leesbaarheid opgelost.
+
+---
+
+### Dag 35 (02-03-2026): Sprint 8D — Benchmark Kaart-integratie & Bugfixes 🗺️⚖️
+**Focus:** Typeahead fixeren, rapport-knop uitbreiden, Benchmark publiek toegankelijk maken.
+
+- ✅ **Bug #17 Fix — Typeahead:** Nieuw `GET /api/gebieden/zoek?q=<term>` endpoint. Debounced search (300ms) vervangt de gebroken pre-load.
+- ✅ **BenchmarkPage Upgrade:** URL pre-populatie met area-IDs als queryparams.
+- ✅ **Bug #11 Fix — Rapport-knop Modal:** Single selectie: keuze-overlay (📄 Gebiedsdossier / ⚖️ Benchmark). Multi-selectie: direct naar Benchmark.
+- ✅ **Bug #18:** Benchmark publiek toegankelijk (ProtectedRoute verwijderd).
+
+---
+
+### Dag 34 (28-02-2026): Sprint 8C — Benchmark Vergelijker & Executive Summary ⚖️📋
+**Focus:** Rapportage sjablonen uitbreiden met gebiedsvergelijking en executive summary.
+
+- ✅ **Sjabloon C: Benchmark Vergelijker:** `generate_benchmark_payload()` met 3 vergelijkingsmodi: 1-op-n gebieden (max 5), gemeente-gemiddelde, Fryslân-gemiddelde.
+- ✅ **Sjabloon A: Executive Summary:** `generate_executive_payload()` filtert top 3 kansen en top 3 risico's.
+- ✅ **LLM Prompt:** Nieuwe `benchmark_vergelijker` system prompt.
+
+---
+
+### Dag 33 (24-02-2026): Sprint 7 — Multi-Gebied Analyse & Kompas Upgrade 📊🗺️
+**Focus:** Volledig nieuwe multi-area selectie en vergelijkingsvisualisatie.
+
+- ✅ **Multi-Select op de Kaart:** Shift+Click / Ctrl+Click, floating selectie-badge, groene highlights.
+- ✅ **Kompas Aggregatie:** `loadMultiGebiedData()` fetcht parallel + `_mergeHierarchies()` berekent gewogen gemiddelden.
+- ✅ **Vergelijkende Barcharts:** Bij multi-select horizontale barcharts per indicator in het detail-paneel.
+- ✅ **Wiskundig Fundament:** `scripts/ai/normalisation.py` — veilige Min-Max normalisatie `[0.01, 1.00]`.
+- ✅ **Semantisch Vector Zoeken:** PostgreSQL geüpgrade met `pgvector`, cosine similarity queries actief.
+
+---
+
+### Dag 31 (22-02-2026): Rapportage Opschoning & PDF Export 📄✅
+**Focus:** Sprint 8B — Afronding functionaliteiten rondom AI-rapportage.
+
+- ✅ **Publieke Toegang & Routing:** Alias `/publiek-rapport` en `/rapport` fallback-ready.
+- ✅ **PDF Export & Print CSS:** Verbeterd contrast voor dark-mode tabellen; dynamische bestandsnaamgeneratie.
+- ✅ **Data Correcties:** Fix impact-interpretaties voor omgekeerde z-scores; opruimen "spook"-indicatoren.
+
+---
+
+### Dag 28 (20-02-2026): AI Rapportagemodule Backend (Fase 1 & 2) 🤖📄
+**Focus:** Sprint 8 — Modulaire API voor Data Aggregatie en Lokale Ollama Integratie.
+
+- ✅ **Fase 1: Data Rekenlaag:** `ReportDataService` berekent on-the-fly Z-scores en gemiddeldes per gebied.
+- ✅ **Fase 2: Narrative Engine:** Database migratie `schema_v7_llm_prompts.sql`; nieuwe CRUD Service `/api/admin/prompts`; timeout verhoogd naar 120s voor Qwen3:30b.
+
+---
+
+### Dag 27 (16-02-2026): Data Verificatie & Legend Sync 🔧✨
+**Focus:** Sprint 5E — Gemeente data verificatie en Kompas-Legenda synchronisatie.
+
+- ✅ **Gemeente Code Verificatie:** Database codes correct (Smallingerland=0090, De Fryske Marren=1940).
+- ✅ **Bug #9 Fixed — Legenda Sync:** Root cause: twee duplicate `updateLegenda()` functies geconsolideerd.
+
+---
+
+### Dag 26 (15-02-2026): Visualisatie Standaard 🎨✨
+**Focus:** Sprint 5D — Database-driven color palettes and visualization profiles.
+
+- ✅ **Database Schema v6:** Extended `color_schemas` met palette_type, classificatie, klassen, nodata_kleur. 8 standaard palettes.
+- ✅ **Backend Integration:** New `/api/visualisatie` router; `ColorScaleService` met 4 classificatiemethoden.
+- ✅ **Admin Panel:** `KleurschemasPage` met live color previews en profile editor.
+
+---
+
+### Dag 25 (15-02-2026): BAG Integratie & Dashboard Finalization 🏘️📊
+**Focus:** Afronding BAG Fryslân en Admin Dashboard (Sprint 5C & 5F).
+
+- ✅ **BAG Data Integratie:** 6 Nieuwe indicatoren; ~18k records; 97% dekking.
+- ✅ **Admin Dashboard V1.0:** Data Export (CSV) en visualisatie van data quality per kwadrant.
+
+---
+
+### Dag 20 (10-02-2026): Nieuwe Datasets & Metadata 📚✨
+**Focus:** Inventarisatie & Documentatie van BAG, Postcodegebieden, en EP-Online.
+
+- ✅ **Uitgebreide Documentatie:** Metadata voor 4 cruciale datasets (BAG, PC4, PC6, EP-Online).
+- ✅ **Bugfix Kompas Service:** Robuuste afhandeling van JSON velden (thresholds) voor bredere driver compatibiliteit.
+
+---
+
+### Dag 19 (09-02-2026): Energielabels & Metadata 🏷️⚡
+**Focus:** Data dekking en kwaliteit.
+
+- ✅ **Energielabel Import (Heel Friesland):** Streaming XML import van RVO EP-Online (8GB); 100% dekking voor "Gemiddeld energielabel" (was 17%).
+- ✅ **Metadata Verrijking:** Automatische koppeling met CBS definities.
+- ✅ **Bugfixes:** Kaartlaag API (500 error) gefixt; Data correctie "Huishoudens totaal".
+
+---
+
+### Dag 18 (08-02-2026): RIVM Data & Map Fixes 🏥🛠️
+**Focus:** Uitbreiding databronnen en UX bugfixes.
+
+- ✅ **RIVM Data Integratie:** Directe koppeling met RIVM/CBS OData; Import van Gezondheidsmonitor (Roken, BMI, Eenzaamheid) op buurtniveau.
+- ✅ **UX Verbeteringen:** Fix voor "dode zone" op kaart onder menu's (`pointer-events` CSS fix).
+
+---
+
+### Dag 14 (01-02-2026): Beheerscherm MVP + Security Foundation 🛠️
+**Focus:** Admin Panel voor Kompas beheer.
+
+- ✅ **Backend Admin API:** 6 endpoints: health, score-types, color-schemas, indicatoren, hierarchie/tree. API key authenticatie (`X-Admin-Key` header).
+- ✅ **React Admin Panel:** TypeScript + React Router + Zustand state. Login, Dashboard, Indicatoren pagina's. D-OmniTwin matching dark theme styling.
+- ✅ **Security Hardening (Punt 0):** Environment variables (`.env`), CORS lockdown, CSP + Security headers.
+
+---
+
+*Sprint Changelog verplaatst vanuit README.md — april 2026*
 
