@@ -298,7 +298,7 @@ class KompasVisualization {
             document.getElementById('kompas-info').innerHTML =
                 `<p class="help-text"><strong>${data.gebied_naam}</strong><br>` +
                 `Configuratie: ${data.config_naam}<br>` +
-                `Coverage: ${data.coverage_percentage}%</p>`;
+                `Indicatordekking: ${data.coverage_percentage}%</p>`;
 
             // Render sunburst with data
             this.renderSunburst(data.hierarchie);
@@ -396,7 +396,7 @@ class KompasVisualization {
             document.getElementById('kompas-info').innerHTML =
                 `<p class="help-text"><strong><img src="/static/images/chart-bar.svg" alt="" style="width:16px; height:16px; vertical-align: -2px; filter: brightness(0) invert(1); margin-right: 4px;">${namenTekst}</strong><br>` +
                 `Gemiddelde van ${gebiedIds.length} gebieden<br>` +
-                `Coverage: ${avgCoverage}%</p>`;
+                `Indicatordekking: ${avgCoverage}%</p>`;
 
             // Render sunburst with merged data
             this.renderSunburst(merged.hierarchie);

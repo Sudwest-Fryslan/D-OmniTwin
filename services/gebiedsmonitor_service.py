@@ -160,8 +160,24 @@ class GebiedsmonitorService:
                 }
             })
             
-        # Coverage stats voor legenda
+        # Coverage stats voor legenda — echt totaal (incl. gebieden zonder data)
         features_with_data = sum(1 for f in features if f["properties"]["heeft_data"])
+
+        # Onafhankelijke count-query: hoeveel gebieden bestaan er in totaal
+        # voor dit gebiedstype (+ evt. gemeente filter)?
+        count_query = """
+            SELECT COUNT(*)
+            FROM vw_gebied_kaart_basis b
+            INNER JOIN gebieden g ON b.id = g.id
+            WHERE b.gebiedstype_id = CAST(:gebiedstype_id AS uuid)
+              AND b.geometry IS NOT NULL
+        """
+        count_params = {"gebiedstype_id": gebiedstype_id}
+        if gemeente_code:
+            count_query += " AND g.gemeente_code = :gemeente_code"
+            count_params["gemeente_code"] = gemeente_code
+
+        total_in_database = self.db.execute(text(count_query), count_params).scalar() or 0
 
         return {
             "type": "FeatureCollection",
@@ -172,8 +188,8 @@ class GebiedsmonitorService:
                 # Legenda: kleurenschaal sync (Gap G7 fix)
                 "color_ramp": color_ramp if indicator_uuid else [],
                 "nodata_color": nodata_color,
-                # Legenda: coverage balk
-                "total_features": len(features),
+                # Legenda: gebiedsdekking (echt totaal, niet alleen gefilterde features)
+                "total_features": total_in_database,
                 "features_with_data": features_with_data,
             }
         }
