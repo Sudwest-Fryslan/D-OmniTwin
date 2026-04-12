@@ -146,7 +146,7 @@ D-OmniTwin bevat een ingebouwde AI-assistent die werkt als een **"alternatieve m
 │  Intent Router  (routers/chat.py)                       │
 │  ┌─────────────────────────────────────────────────┐    │
 │  │  Intent Classifier (rule-based, <1ms)           │    │
-│  │  VERKEN_INDICATORS │ VERGELIJK_GEBIEDEN          │    │
+│  │  VERKEN_INDICATORS │ VERGELIJK_GEBIEDEN         │    │
 │  │  MAAK_RAPPORT      │ ALGEMEEN                   │    │
 │  └──────────────┬──────────────────────────────────┘    │
 │                 │                                       │
@@ -155,8 +155,8 @@ D-OmniTwin bevat een ingebouwde AI-assistent die werkt als een **"alternatieve m
 │  │  pgvector similarity    │  │  Ollama qwen3:30b    │  │
 │  │  ≤10 indicatoren        │  │  ≤80 woorden NL      │  │
 │  └──────────────┬──────────┘  └──────────┬───────────┘  │
-│                 └──────────────┬──────────┘              │
-│                                │ Command Dispatch JSON   │
+│                 └──────────────┬─────────┘              │
+│                                │ Command Dispatch JSON  │
 └────────────────────────────────┼────────────────────────┘
                                  │
 ┌────────────────────────────────▼────────────────────────┐
@@ -164,15 +164,15 @@ D-OmniTwin bevat een ingebouwde AI-assistent die werkt als een **"alternatieve m
 │  Narrative tekst + Actie-knoppen + Indicatorlijst       │
 │               │ INDICATOR_SELECTED    │ MAAK_RAPPORT    │
 │          EventBus                EventBus               │
-│        ┌──────▼──────┐        ┌───────▼─────────┐      │
-│        │  Kaart       │        │  Rapport Admin  │      │
-│        │  (app.js)    │        │  /admin/rapport │      │
-│        └──────┬───────┘        └─────────────────┘      │
+│        ┌──────▼──────┐        ┌───────▼─────────┐       │
+│        │  Kaart      │        │  Rapport Admin  │       │
+│        │  (app.js)   │        │  /admin/rapport │       │
+│        └──────┬──────┘        └─────────────────┘       │
 │               │ INDICATOR_SELECTED (_isSyncing guard)   │
-│        ┌──────▼───────┐                                  │
-│        │  Kompas      │  navigateToIndicator(uuid)       │
-│        │  (kompas.js) │                                  │
-│        └──────────────┘                                  │
+│        ┌──────▼───────┐                                 │
+│        │  Kompas      │  navigateToIndicator(uuid)      │
+│        │  (kompas.js) │                                 │
+│        └──────────────┘                                 │
 └─────────────────────────────────────────────────────────┘
 ```
 
