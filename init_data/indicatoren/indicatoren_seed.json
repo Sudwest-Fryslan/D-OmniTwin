@@ -1,0 +1,490 @@
+[
+  {
+    "naam": "Afstand tot belangrijk overstapstation",
+    "indicator_origineel": "Afstand treinknooppunt",
+    "titel": "Kwaliteit fysieke leefomgeving",
+    "thema": "Verkeer",
+    "onderdeel": "Bereikbaarheid en parkeren",
+    "bron": "Nabijheid_voorzieningen_buurt_2022 (CBS)"
+  },
+  {
+    "naam": "Afstand tot treinstations totaal",
+    "indicator_origineel": "Afstand treinstation",
+    "titel": "Kwaliteit fysieke leefomgeving",
+    "thema": "Verkeer",
+    "onderdeel": "Bereikbaarheid en parkeren",
+    "bron": "Nabijheid voorzieningen; afstand locatie, wijk- en buurtcijfers (CBS)"
+  },
+  {
+    "naam": "afstand tot koelteplekken",
+    "indicator_origineel": "Afstand tot koele plek",
+    "titel": "Kwaliteit fysieke leefomgeving",
+    "thema": "Openbare ruimte",
+    "onderdeel": "Klimaat",
+    "bron": "KlimaateffectAtlas (obj)"
+  },
+  {
+    "naam": "Percentage groenoppervlak in openbare ruimte",
+    "indicator_origineel": "Oppervlakte groen per inwoner",
+    "titel": "Kwaliteit fysieke leefomgeving",
+    "thema": "Openbare ruimte",
+    "onderdeel": "Klimaat",
+    "bron": "Klimaatadaptatie monitor (DW)"
+  },
+  {
+    "naam": "Percentage grijsoppervlak in openbare ruimte",
+    "indicator_origineel": "Verhouding oppervlakte water/verharding",
+    "titel": "Kwaliteit fysieke leefomgeving",
+    "thema": "Openbare ruimte",
+    "onderdeel": "Klimaat",
+    "bron": "BGT/KEA Cobra"
+  },
+  {
+    "naam": "Meubilair",
+    "indicator_origineel": "Straatmeubilair",
+    "titel": "Kwaliteit fysieke leefomgeving",
+    "thema": "Openbare ruimte",
+    "onderdeel": "Inrichting",
+    "bron": "Geovisia"
+  },
+  {
+    "naam": "Sportveld",
+    "indicator_origineel": "Sport- en spelplekken",
+    "titel": "Kwaliteit fysieke leefomgeving",
+    "thema": "Openbare ruimte",
+    "onderdeel": "Inrichting",
+    "bron": "Geovisia"
+  },
+  {
+    "naam": "Speelterrein",
+    "indicator_origineel": "Speelplekken kinderen",
+    "titel": "Kwaliteit fysieke leefomgeving",
+    "thema": "Openbare ruimte",
+    "onderdeel": "Inrichting",
+    "bron": "Geovisia"
+  },
+  {
+    "naam": "Groen",
+    "indicator_origineel": "Groen",
+    "titel": "Kwaliteit fysieke leefomgeving",
+    "thema": "Openbare ruimte",
+    "onderdeel": "Onderhoud",
+    "bron": "Geovisia(obj)"
+  },
+  {
+    "naam": "Meubilair",
+    "indicator_origineel": "Straatmeubilair",
+    "titel": "Kwaliteit fysieke leefomgeving",
+    "thema": "Openbare ruimte",
+    "onderdeel": "Onderhoud",
+    "bron": "Geovisia(obj)"
+  },
+  {
+    "naam": "Verharding",
+    "indicator_origineel": "Wegen",
+    "titel": "Kwaliteit fysieke leefomgeving",
+    "thema": "Openbare ruimte",
+    "onderdeel": "Onderhoud",
+    "bron": "Geovisia(obj)"
+  },
+  {
+    "naam": "Verharding",
+    "indicator_origineel": "Fietspaden",
+    "titel": "Kwaliteit fysieke leefomgeving",
+    "thema": "Openbare ruimte",
+    "onderdeel": "Onderhoud",
+    "bron": "Geovisia(obj)"
+  },
+  {
+    "naam": "Verharding",
+    "indicator_origineel": "Trottoirs",
+    "titel": "Kwaliteit fysieke leefomgeving",
+    "thema": "Openbare ruimte",
+    "onderdeel": "Onderhoud",
+    "bron": "Geovisia(obj)"
+  },
+  {
+    "naam": "Definitief energielabel",
+    "indicator_origineel": "Definitief energielabel",
+    "titel": "Kwaliteit fysieke leefomgeving",
+    "thema": "Wonen",
+    "onderdeel": "Technische kwaliteit",
+    "bron": "EP-Online Openbare data (07-2025)"
+  },
+  {
+    "naam": "Gemiddeld energielabel",
+    "indicator_origineel": "Gemiddeld energielabel",
+    "titel": "Kwaliteit fysieke leefomgeving",
+    "thema": "Wonen",
+    "onderdeel": "Technische kwaliteit",
+    "bron": "EP-Online Openbare data (07-2025)"
+  },
+  {
+    "naam": "Moeite met rondkomen",
+    "indicator_origineel": "Moeite met rondkomen",
+    "titel": "Kwaliteit van leven",
+    "thema": "Rondkomen",
+    "onderdeel": "Armoede",
+    "bron": "Gezondheid_per_wijk_en_buurt_2022 (CBS)"
+  },
+  {
+    "naam": "Achterstand leerlingen",
+    "indicator_origineel": "Achterstand leerlingen",
+    "titel": "Kwaliteit van leven",
+    "thema": "Opgroeien",
+    "onderdeel": "Onderwijs",
+    "bron": "Achterstandsscores_per_school_2024 (CBS)"
+  },
+  {
+    "naam": "Ernstig beperkt vanwege gezondheid",
+    "indicator_origineel": "Beperkte functionaliteit",
+    "titel": "Kwaliteit van leven",
+    "thema": "Gezondheid",
+    "onderdeel": "Eigenkracht",
+    "bron": "Gezondheid_per_wijk_en_buurt_2022 (CBS)"
+  },
+  {
+    "naam": "Beperkt vanwege gezondheid",
+    "indicator_origineel": "Beperking",
+    "titel": "Kwaliteit van leven",
+    "thema": "Gezondheid",
+    "onderdeel": "Functioneren",
+    "bron": "Gezondheid_per_wijk_en_buurt_2022 (CBS)"
+  },
+  {
+    "naam": "Roker",
+    "indicator_origineel": "Roken",
+    "titel": "Kwaliteit van leven",
+    "thema": "Gezondheid",
+    "onderdeel": "Leefstijl",
+    "bron": "Gezondheid_per_wijk_en_buurt_2022 (CBS)"
+  },
+  {
+    "naam": "Overmatige drinker",
+    "indicator_origineel": "Overmatig drinken",
+    "titel": "Kwaliteit van leven",
+    "thema": "Gezondheid",
+    "onderdeel": "Leefstijl",
+    "bron": "Gezondheid_per_wijk_en_buurt_2022 (CBS)"
+  },
+  {
+    "naam": "Drinker",
+    "indicator_origineel": "Alcohol",
+    "titel": "Kwaliteit van leven",
+    "thema": "Gezondheid",
+    "onderdeel": "Leefstijl",
+    "bron": "Gezondheid_per_wijk_en_buurt_2022 (CBS)"
+  },
+  {
+    "naam": "Overgewicht",
+    "indicator_origineel": "Overgewicht",
+    "titel": "Kwaliteit van leven",
+    "thema": "Gezondheid",
+    "onderdeel": "Leefstijl",
+    "bron": "Gezondheid_per_wijk_en_buurt_2022 (CBS)"
+  },
+  {
+    "naam": "Voldoet aan beweegrichtlijn",
+    "indicator_origineel": "Bewegen",
+    "titel": "Kwaliteit van leven",
+    "thema": "Gezondheid",
+    "onderdeel": "Leefstijl",
+    "bron": "Gezondheid_per_wijk_en_buurt_2022 (CBS)"
+  },
+  {
+    "naam": "Eenzaam",
+    "indicator_origineel": "Eenzaamheid",
+    "titel": "Kwaliteit van leven",
+    "thema": "Meedoen",
+    "onderdeel": "Netwerk",
+    "bron": "Gezondheid_per_wijk_en_buurt_2022 (CBS)"
+  },
+  {
+    "naam": "Afstand tot zwembad",
+    "indicator_origineel": "Zwembad",
+    "titel": "Kwaliteit sociale leefomgeving",
+    "thema": "Voorzieningen",
+    "onderdeel": "Sociaal culturele",
+    "bron": "Nabijheid voorzieningen; afstand locatie, wijk- en buurtcijfers (CBS)"
+  },
+  {
+    "naam": "Afstand tot bibliotheek",
+    "indicator_origineel": "Bibliotheek",
+    "titel": "Kwaliteit sociale leefomgeving",
+    "thema": "Voorzieningen",
+    "onderdeel": "Sociaal culturele",
+    "bron": "Nabijheid voorzieningen; afstand locatie, wijk- en buurtcijfers (CBS)"
+  },
+  {
+    "naam": "Afstand tot restaurant",
+    "indicator_origineel": "Restaurant",
+    "titel": "Kwaliteit sociale leefomgeving",
+    "thema": "Voorzieningen",
+    "onderdeel": "Sociaal culturele",
+    "bron": "Nabijheid voorzieningen; afstand locatie, wijk- en buurtcijfers (CBS)"
+  },
+  {
+    "naam": "Afstand tot café e.d.",
+    "indicator_origineel": "Café",
+    "titel": "Kwaliteit sociale leefomgeving",
+    "thema": "Voorzieningen",
+    "onderdeel": "Sociaal culturele",
+    "bron": "Nabijheid voorzieningen; afstand locatie, wijk- en buurtcijfers (CBS)"
+  },
+  {
+    "naam": "Afstand tot grote supermarkt",
+    "indicator_origineel": "Grote supermarkt",
+    "titel": "Kwaliteit sociale leefomgeving",
+    "thema": "Voorzieningen",
+    "onderdeel": "Maatschappelijke",
+    "bron": "Nabijheid voorzieningen; afstand locatie, wijk- en buurtcijfers (CBS)"
+  },
+  {
+    "naam": "Afstand tot huisartsenpraktijk",
+    "indicator_origineel": "Huisarts",
+    "titel": "Kwaliteit sociale leefomgeving",
+    "thema": "Voorzieningen",
+    "onderdeel": "Maatschappelijke",
+    "bron": "Nabijheid voorzieningen; afstand locatie, wijk- en buurtcijfers (CBS)"
+  },
+  {
+    "naam": "Afstand tot apotheek",
+    "indicator_origineel": "Apotheek",
+    "titel": "Kwaliteit sociale leefomgeving",
+    "thema": "Voorzieningen",
+    "onderdeel": "Maatschappelijke",
+    "bron": "Nabijheid voorzieningen; afstand locatie, wijk- en buurtcijfers (CBS)"
+  },
+  {
+    "naam": "Afstand tot kinderdagverblijf",
+    "indicator_origineel": "Kinderdagverblijf",
+    "titel": "Kwaliteit sociale leefomgeving",
+    "thema": "Voorzieningen",
+    "onderdeel": "Maatschappelijke",
+    "bron": "Nabijheid voorzieningen; afstand locatie, wijk- en buurtcijfers (CBS)"
+  },
+  {
+    "naam": "Vrijwilligerswerk",
+    "indicator_origineel": "Vrijwilliger",
+    "titel": "Kwaliteit sociale leefomgeving",
+    "thema": "Mienskip",
+    "onderdeel": "Actief betrokken",
+    "bron": "Gezondheid_per_wijk_en_buurt_2022 (CBS)"
+  },
+  {
+    "naam": "Mantelzorger",
+    "indicator_origineel": "Mantelzorger",
+    "titel": "Kwaliteit sociale leefomgeving",
+    "thema": "Mienskip",
+    "onderdeel": "Actief betrokken",
+    "bron": "Gezondheid_per_wijk_en_buurt_2022 (CBS)"
+  },
+  {
+    "naam": "Diefstal/inbraak woning",
+    "indicator_origineel": "inbraak woning",
+    "titel": "Kwaliteit sociale leefomgeving",
+    "thema": "Veilgheid",
+    "onderdeel": "Vermogensdelicten",
+    "bron": "Misdrijven_per_wijk_en_buurt_per_jaar (CBS)"
+  },
+  {
+    "naam": "Diefstal van motorvoertuigen",
+    "indicator_origineel": "inbraak auto",
+    "titel": "Kwaliteit sociale leefomgeving",
+    "thema": "Veilgheid",
+    "onderdeel": "Vermogensdelicten",
+    "bron": "Misdrijven_per_wijk_en_buurt_per_jaar (CBS)"
+  },
+  {
+    "naam": "Diefstal van brom-, snor-, fietsen",
+    "indicator_origineel": "diefstal fiets",
+    "titel": "Kwaliteit sociale leefomgeving",
+    "thema": "Veilgheid",
+    "onderdeel": "Vermogensdelicten",
+    "bron": "Misdrijven_per_wijk_en_buurt_per_jaar (CBS)"
+  },
+  {
+    "naam": "Totaal registraties overlast",
+    "indicator_origineel": "wonen",
+    "titel": "Kwaliteit sociale leefomgeving",
+    "thema": "Veilgheid",
+    "onderdeel": "Overlast",
+    "bron": "Geregistreerde_overlast_per_buurt (CBS)"
+  },
+  {
+    "naam": "Melding overlast jeugd",
+    "indicator_origineel": "jongeren",
+    "titel": "Kwaliteit sociale leefomgeving",
+    "thema": "Veilgheid",
+    "onderdeel": "Overlast",
+    "bron": "Geregistreerde_overlast_per_buurt (CBS)"
+  },
+  {
+    "naam": "Geluidshinder overig",
+    "indicator_origineel": "geluid",
+    "titel": "Kwaliteit sociale leefomgeving",
+    "thema": "Veilgheid",
+    "onderdeel": "Overlast",
+    "bron": "Geregistreerde_overlast_per_buurt (CBS)"
+  },
+  {
+    "naam": "Openbare dronkenschap",
+    "indicator_origineel": "dronken personen",
+    "titel": "Kwaliteit sociale leefomgeving",
+    "thema": "Veilgheid",
+    "onderdeel": "Overlast",
+    "bron": "Geregistreerde_overlast_per_buurt (CBS)"
+  },
+  {
+    "naam": "Overlast ivm alcohol/ drugs",
+    "indicator_origineel": "drugs",
+    "titel": "Kwaliteit sociale leefomgeving",
+    "thema": "Veilgheid",
+    "onderdeel": "Overlast",
+    "bron": "Geregistreerde_overlast_per_buurt (CBS)"
+  },
+  {
+    "naam": "In bezit overige verhuurders",
+    "indicator_origineel": "particulier",
+    "titel": "Samenstelling",
+    "thema": "Bebouwing",
+    "onderdeel": "Eigendom",
+    "bron": "Kerncijfers wijken en buurten"
+  },
+  {
+    "naam": "In bezit woningcorporatie",
+    "indicator_origineel": "cooperatief",
+    "titel": "Samenstelling",
+    "thema": "Bebouwing",
+    "onderdeel": "Eigendom",
+    "bron": "Kerncijfers_wijken_en_buurten_2023 (CBS)"
+  },
+  {
+    "naam": "Koopwoningen",
+    "indicator_origineel": "koop",
+    "titel": "Samenstelling",
+    "thema": "Bebouwing",
+    "onderdeel": "Eigendom",
+    "bron": "Kerncijfers wijken en buurten (CBS)"
+  },
+  {
+    "naam": "0 tot 15 jaar",
+    "indicator_origineel": "0-3 jaar",
+    "titel": "Samenstelling",
+    "thema": "Bevolking",
+    "onderdeel": "Leeftijd",
+    "bron": "Kerncijfers_wijken_en_buurten_2023 (CBS)"
+  },
+  {
+    "naam": "0 tot 15 jaar",
+    "indicator_origineel": "4-12 jaar",
+    "titel": "Samenstelling",
+    "thema": "Bevolking",
+    "onderdeel": "Leeftijd",
+    "bron": "Kerncijfers_wijken_en_buurten_2023 (CBS)"
+  },
+  {
+    "naam": "0 tot 15 jaar",
+    "indicator_origineel": "13-17 jaar",
+    "titel": "Samenstelling",
+    "thema": "Bevolking",
+    "onderdeel": "Leeftijd",
+    "bron": "Kerncijfers_wijken_en_buurten_2023 (CBS)"
+  },
+  {
+    "naam": "65 jaar of ouder",
+    "indicator_origineel": "65-79 jaar",
+    "titel": "Samenstelling",
+    "thema": "Bevolking",
+    "onderdeel": "Leeftijd",
+    "bron": "Kerncijfers_wijken_en_buurten_2023 (CBS)"
+  },
+  {
+    "naam": "65 jaar of ouder",
+    "indicator_origineel": "80+ jaar",
+    "titel": "Samenstelling",
+    "thema": "Bevolking",
+    "onderdeel": "Leeftijd",
+    "bron": "Kerncijfers_wijken_en_buurten_2023 (CBS)"
+  },
+  {
+    "naam": "Huishoudens zonder kinderen",
+    "indicator_origineel": "zonder kind",
+    "titel": "Samenstelling",
+    "thema": "Bevolking",
+    "onderdeel": "Huishoudens",
+    "bron": "Kerncijfers_wijken_en_buurten_2023 (CBS)"
+  },
+  {
+    "naam": "Huishoudens met kinderen",
+    "indicator_origineel": "met kind",
+    "titel": "Samenstelling",
+    "thema": "Bevolking",
+    "onderdeel": "Huishoudens",
+    "bron": "Kerncijfers_wijken_en_buurten_2023 (CBS)"
+  },
+  {
+    "naam": "Buiten Europa",
+    "indicator_origineel": "niet-westers",
+    "titel": "Samenstelling",
+    "thema": "Bevolking",
+    "onderdeel": "Huishoudens",
+    "bron": "Kerncijfers_wijken_en_buurten_2023 (CBS)"
+  },
+  {
+    "naam": "Gem. gestandaardiseerd inkomen van huish",
+    "indicator_origineel": "huishouden jaar",
+    "titel": "Samenstelling",
+    "thema": "Bevolking",
+    "onderdeel": "Sociaal economische status",
+    "bron": "Kerncijfers_wijken_en_buurten_2023 (CBS)"
+  },
+  {
+    "naam": "Gemiddeld inkomen per inwoner",
+    "indicator_origineel": "persoon",
+    "titel": "Samenstelling",
+    "thema": "Bevolking",
+    "onderdeel": "Sociaal economische status",
+    "bron": "Kerncijfers_wijken_en_buurten_2023 (CBS)"
+  },
+  {
+    "naam": "Opleidingsniveau hoog",
+    "indicator_origineel": "hoog",
+    "titel": "Samenstelling",
+    "thema": "Bevolking",
+    "onderdeel": "Sociaal economische status",
+    "bron": "Kerncijfers_wijken_en_buurten_2022 (CBS)"
+  },
+  {
+    "naam": "Opleidingsniveau middelbaar",
+    "indicator_origineel": "middelhoog",
+    "titel": "Samenstelling",
+    "thema": "Bevolking",
+    "onderdeel": "Sociaal economische status",
+    "bron": "Kerncijfers_wijken_en_buurten_2022 (CBS)"
+  },
+  {
+    "naam": "Opleidingsniveau laag",
+    "indicator_origineel": "laag",
+    "titel": "Samenstelling",
+    "thema": "Bevolking",
+    "onderdeel": "Sociaal economische status",
+    "bron": "Kerncijfers_wijken_en_buurten_2022 (CBS)"
+  },
+  {
+    "naam": "Zelfstandige",
+    "indicator_origineel": "zzp'ers",
+    "titel": "Samenstelling",
+    "thema": "Bevolking",
+    "onderdeel": "Sociaal economische status",
+    "bron": "Arbeidsdeelname_wijken_en_buurten_2022 (CBS)"
+  },
+  {
+    "naam": "Werknemer",
+    "indicator_origineel": "werkzamen",
+    "titel": "Samenstelling",
+    "thema": "Bevolking",
+    "onderdeel": "Sociaal economische status",
+    "bron": "Arbeidsdeelname_wijken_en_buurten_2022 (CBS)"
+  }
+]

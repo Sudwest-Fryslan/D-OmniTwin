@@ -1,0 +1,219 @@
+# 🚀 Getting Started — D-OmniTwin
+
+Welkom bij D-OmniTwin! Deze gids leidt je in **vier stappen** van een lege kloon naar een volledig werkende applicatie met echte data van de provincie Fryslân.
+
+> **Tijdsinschatting:** ± 30 minuten (inclusief downloads)
+
+---
+
+## Vereisten
+
+Zorg dat onderstaande software geïnstalleerd is voordat je begint:
+
+| Software | Versie | Installatie |
+|----------|--------|-------------|
+| Python | 3.12+ | [python.org](https://www.python.org/downloads/) |
+| PostgreSQL | 14+ | [postgresql.org](https://www.postgresql.org/download/) |
+| PostGIS extensie | 3.x | Via apt/brew of bij PostgreSQL installer |
+| pgvector extensie | latest | [github.com/pgvector/pgvector](https://github.com/pgvector/pgvector) |
+| Git | any | [git-scm.com](https://git-scm.com/) |
+| Node.js | 18+ | Alleen nodig voor het Admin Panel |
+
+> [!TIP]
+> **Ollama (voor AI-functies)** is optioneel. De kaart, het Kompas en de rapportage werken ook zonder. Je kunt Ollama altijd later toevoegen via het Admin Panel.
+
+---
+
+## Stap 1 — Repository klonen & omgeving inrichten
+
+```bash
+# Clone de repository
+git clone https://github.com/jouw-org/D-OmniTwin.git
+cd D-OmniTwin
+
+# Python virtual environment aanmaken en activeren
+python -m venv .venv
+source .venv/bin/activate        # Linux/macOS
+# .venv\Scripts\activate         # Windows
+
+# Dependencies installeren
+pip install -r requirements.txt
+
+# Environment configuratie kopiëren
+cp .env.example .env
+```
+
+Open `.env` in een teksteditor en vul minimaal deze waarden in:
+
+```env
+# Database
+DATABASE_HOST=localhost
+DATABASE_PORT=5432
+DATABASE_NAME=omnitwin_db
+DATABASE_USER=omnitwin_user
+DATABASE_PASSWORD=kies-een-sterk-wachtwoord
+
+# Security (genereer met: openssl rand -base64 32)
+SECRET_KEY=jouw-secret-key-hier
+
+# Mapbox (gratis account op mapbox.com)
+MAPBOX_TOKEN=pk.eyJ1IjoiLi4uCg==
+
+# Admin Panel toegang (genereer met: python -c "import secrets; print(secrets.token_hex(32))")
+ADMIN_API_KEY=jouw-admin-key-hier
+
+# CORS (pas aan naar jouw URL als je remote deployed)
+CORS_ORIGINS=http://localhost:8000,http://localhost:3000
+```
+
+---
+
+## Stap 2 — PostgreSQL database aanmaken
+
+```bash
+# Database en gebruiker aanmaken (voer uit als postgres superuser)
+sudo -u postgres psql -c "CREATE USER omnitwin_user WITH PASSWORD 'jouw-wachtwoord';"
+sudo -u postgres psql -c "CREATE DATABASE omnitwin_db OWNER omnitwin_user;"
+
+# Vereiste extensies activeren
+sudo -u postgres psql -d omnitwin_db -c "CREATE EXTENSION postgis;"
+sudo -u postgres psql -d omnitwin_db -c "CREATE EXTENSION vector;"
+```
+
+> [!NOTE]
+> **Windows/macOS:** Vervang `sudo -u postgres psql` door `psql -U postgres` en voer je postgres-wachtwoord in wanneer gevraagd.
+
+---
+
+## Stap 3 — Initiatie dataset downloaden
+
+De kaart en het Kompas hebben geodata nodig. Dit zijn CBS open data bestanden (CC BY licentie).
+
+### 3a. Buurten Fryslân extraheren uit lokale dataset
+
+De CBS buurtenindeling 2024 staat al in de repository als GPKG-bestand (`data/cbs_pc6_huisnr_buurt/CBS_BUURTEN2024.gpkg`). Het extractiescript filtert Fryslân eruit en converteert naar GeoJSON:
+
+```bash
+python init_data/scripts/extract_buurten_fryslan.py
+```
+
+Dit leest de lokale GPKG, filtert alle 18 Friese gemeenten, converteert naar WGS84 en slaat op als `init_data/fryslan/buurten_fryslan.geojson` (~5-10 MB).
+
+> [!NOTE]
+> De GPKG bevat heel Nederland (~14.000 buurten). De extractie duurt ~30-60 seconden.
+
+### 3b. Indicatorwaarden downloaden
+
+```bash
+python init_data/scripts/download_indicatoren_fryslan.py
+```
+
+Dit haalt de CBS open data op voor de Friese buurten:
+- Kerncijfers (inkomen, woningbezit, leeftijdsopbouw, opleiding)
+- Gezondheidsmonitor RIVM (eenzaamheid, overgewicht, bewegen)
+- Nabijheid voorzieningen (afstand tot huisarts, supermarkt, school, ...)
+- Veiligheid (overlast, inbraak)
+
+> [!NOTE]
+> De downloads zijn afhankelijk van de CBS OData API. Bij een trage verbinding kan dit 5–15 minuten duren.
+
+---
+
+## Stap 4 — Database initialiseren en vullen
+
+```bash
+bash init_data/scripts/init_database.sh
+```
+
+Dit script voert in volgorde uit:
+1. **Schema laden** — alle tabellen, views en triggers aanmaken
+2. **Indicatoren seeden** — 61 indicatoren met metadata
+3. **Kompas laden** — de volledige hiërarchie (Titels → Thema's → Onderdelen)
+4. **Buurten importeren** — GeoJSON met PostGIS geometrie
+5. **Waarden importeren** — CBS indicatorwaarden per buurt
+
+> [!TIP]
+> Je kunt ook individuele stappen uitvoeren:
+> ```bash
+> python init_data/scripts/seed_fryslan.py --stap buurten
+> python init_data/scripts/seed_fryslan.py --stap waarden
+> ```
+
+---
+
+## Stap 5 — Applicatie starten
+
+```bash
+source .venv/bin/activate
+python run_dev.py
+```
+
+Open in je browser: **http://localhost:8000**
+
+Je ziet nu:
+- 🗺️ **Interactieve kaart** met alle Friese buurten als choropleth
+- 🧭 **D-Omni Kompas** met de volledige indicatorhiërarchie
+- 📊 **Gebiedsmonitor** — klik een buurt aan voor direct inzicht
+- 🤖 **D-Omni Assistent** — stel een vraag zoals *"Welke buurten in Sneek zijn het eenzaamst?"*
+
+---
+
+## Admin Panel (optioneel)
+
+```bash
+cd admin-panel
+npm install        # Eerste keer
+npm start
+```
+
+Open: **http://localhost:3000/admin** — gebruik `ADMIN_API_KEY` uit je `.env`.
+
+Het Admin Panel geeft toegang tot:
+- Indicator editor (namen, beschrijvingen, kleurschema's)
+- Kompas hiërarchie beheer
+- LLM configuratie (Ollama model instellen)
+- Dashboard met statistieken
+
+---
+
+## Eigen gemeente of regio toevoegen
+
+Na de eerste start kun je data toevoegen van andere gemeenten via het ETL framework:
+
+```bash
+# Zoek een CBS dataset
+cd ETL
+python search_api.py -q "Gezondheid"
+
+# Importeer data voor een gemeente (bijv. Groningen = GM0014)
+python run_etl.py -ds 83739NED -gm 0014
+```
+
+Zie [`ETL/ETL_DOCUMENTATION.md`](ETL/ETL_DOCUMENTATION.md) voor de volledige handleiding.
+
+---
+
+## Problemen oplossen
+
+| Fout | Oplossing |
+|------|-----------|
+| `psql: FATAL: password authentication failed` | Controleer `DATABASE_PASSWORD` in `.env` |
+| `extension "postgis" does not exist` | Installeer PostGIS: `sudo apt install postgresql-14-postgis-3` |
+| `extension "vector" does not exist` | Installeer pgvector: zie [pgvector README](https://github.com/pgvector/pgvector) |
+| `ModuleNotFoundError: No module named 'psycopg2'` | Activeer virtual environment: `source .venv/bin/activate` |
+| `buurten_fryslan.geojson` niet gevonden | Voer `python init_data/scripts/extract_buurten_fryslan.py` uit |
+| Kompas is leeg | Voer seed stap kompas uit: `python init_data/scripts/seed_fryslan.py --stap kompas` |
+| PDOK download mislukt | Controleer internetverbinding. Probeer direct in browser: `https://geodata.nationaalgeoregister.nl/cbsgebiedsindelingen/wfs?service=WFS&request=GetCapabilities` |
+
+---
+
+## Volgende stappen
+
+- 📖 **Architectuur:** [`docs/2-architectuur/`](docs/2-architectuur/) — technische opzet
+- 🗺️ **Roadmap:** [`ROADMAP.md`](ROADMAP.md) — geplande features
+- 🐛 **Bugs & fixes:** [`BUGFIX.md`](BUGFIX.md) — bekende issues
+- 💬 **Vragen of samenwerking?** Open een [GitHub Discussion](../../discussions) of mail [t.vanderlaan@sudwestfryslan.nl](mailto:t.vanderlaan@sudwestfryslan.nl)
+
+---
+
+*D-OmniTwin — Open source digitale spiegel van de fysieke leefomgeving | EUPL 1.2*

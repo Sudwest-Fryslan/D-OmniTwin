@@ -1,0 +1,225 @@
+Title,Thema,Onderdeel,Indicator,Indicator actueel,Bron,Indicator SWF
+Kwaliteit fysieke leefomgeving,Verkeer,veiligheid en overlast,Verkeersongevallen,N,,
+Kwaliteit fysieke leefomgeving,Verkeer,veiligheid en overlast,Verkeersveiligheid,N,,
+Kwaliteit fysieke leefomgeving,Verkeer,veiligheid en overlast,Overlast gestalde fietsen,N,,
+Kwaliteit fysieke leefomgeving,Verkeer,veiligheid en overlast,Overlast autoverkeer,N,,
+Kwaliteit fysieke leefomgeving,Verkeer,Bereikbaarheid en parkeren,Parkeerdruk,N,,
+Kwaliteit fysieke leefomgeving,Verkeer,Bereikbaarheid en parkeren,Afstand treinknooppunt,J,Nabijheid_voorzieningen_buurt_2022 (CBS),Afstand tot belangrijk overstapstation
+Kwaliteit fysieke leefomgeving,Verkeer,Bereikbaarheid en parkeren,Afstand treinstation,J,"Nabijheid voorzieningen; afstand locatie, wijk- en buurtcijfers (CBS)",Afstand tot treinstations totaal
+Kwaliteit fysieke leefomgeving,Verkeer,Bereikbaarheid en parkeren,Openbaar vervoer,N,,
+Kwaliteit fysieke leefomgeving,Verkeer,Bereikbaarheid en parkeren,Bereikbaarheid,N,,
+Kwaliteit fysieke leefomgeving,Openbare ruimte,Klimaat,Afvoer water,N,Geovisia,Riolering
+Kwaliteit fysieke leefomgeving,Openbare ruimte,Klimaat,Maatregelen inwoners,N,,
+Kwaliteit fysieke leefomgeving,Openbare ruimte,Klimaat,Overlast weer,N,,
+Kwaliteit fysieke leefomgeving,Openbare ruimte,Klimaat,Afstand tot koele plek,J,KlimaateffectAtlas (obj),afstand tot koelteplekken
+Kwaliteit fysieke leefomgeving,Openbare ruimte,Klimaat,Oppervlakte water,N,BGT,Percentage wateroppervlak in openbare ruimte
+Kwaliteit fysieke leefomgeving,Openbare ruimte,Klimaat,Oppervlakte groen per inwoner,J,Klimaatadaptatie monitor (DW),Percentage groenoppervlak in openbare ruimte
+Kwaliteit fysieke leefomgeving,Openbare ruimte,Klimaat,Verhouding oppervlakte water/verharding,J,BGT/KEA Cobra,Percentage grijsoppervlak in openbare ruimte
+Kwaliteit fysieke leefomgeving,Openbare ruimte,Klimaat,Oppervlakte vegetatie (NDVI),N,Klimaatadaptatie monitor (DW),
+Kwaliteit fysieke leefomgeving,Openbare ruimte,Klimaat,Oppervlakte groen (openbare ruimte),N,BGT,Percentage groenoppervlak in openbare ruimte
+Kwaliteit fysieke leefomgeving,Openbare ruimte,Klimaat,Vegetatie op daken,N,Vegetatie index icm BAG panden,
+Kwaliteit fysieke leefomgeving,Openbare ruimte,Inrichting,Groen,N,Geovisia,
+Kwaliteit fysieke leefomgeving,Openbare ruimte,Inrichting,Straatmeubilair,J,Geovisia,Meubilair
+Kwaliteit fysieke leefomgeving,Openbare ruimte,Inrichting,Sport- en spelplekken,J,Geovisia,Sportveld
+Kwaliteit fysieke leefomgeving,Openbare ruimte,Inrichting,Speelplekken kinderen,J,Geovisia,Speelterrein
+Kwaliteit fysieke leefomgeving,Openbare ruimte,Verloedering,Vernielingen,N,,
+Kwaliteit fysieke leefomgeving,Openbare ruimte,Verloedering,Bekladdingen,N,,
+Kwaliteit fysieke leefomgeving,Openbare ruimte,Verloedering,Hondenpoep,N,,
+Kwaliteit fysieke leefomgeving,Openbare ruimte,Verloedering,Rommel,N,,
+Kwaliteit fysieke leefomgeving,Openbare ruimte,Onderhoud,Schoonhouden,N,,
+Kwaliteit fysieke leefomgeving,Openbare ruimte,Onderhoud,Groen,J,Geovisia(obj),Groen
+Kwaliteit fysieke leefomgeving,Openbare ruimte,Onderhoud,Straatmeubilair,J,Geovisia(obj),Meubilair
+Kwaliteit fysieke leefomgeving,Openbare ruimte,Onderhoud,Wegen,J,Geovisia(obj),Verharding
+Kwaliteit fysieke leefomgeving,Openbare ruimte,Onderhoud,Fietspaden,J,Geovisia(obj),Verharding
+Kwaliteit fysieke leefomgeving,Openbare ruimte,Onderhoud,Trottoirs,J,Geovisia(obj),Verharding
+Kwaliteit fysieke leefomgeving,Wonen,Functionele kwaliteit,Incourante eensgezins,N,,
+Kwaliteit fysieke leefomgeving,Wonen,Functionele kwaliteit,Sfeer,N,,
+Kwaliteit fysieke leefomgeving,Wonen,Functionele kwaliteit,Geschikte leefsituatie,N,,
+Kwaliteit fysieke leefomgeving,Wonen,Functionele kwaliteit,Omvang,N,,
+Kwaliteit fysieke leefomgeving,Wonen,Functionele kwaliteit,Indeling,N,,
+Kwaliteit fysieke leefomgeving,Wonen,Beschikbaar betaalbaar,Verhuiswens,N,,
+Kwaliteit fysieke leefomgeving,Wonen,Beschikbaar betaalbaar,prijs-kwaliteit,N,,
+Kwaliteit fysieke leefomgeving,Wonen,Technische kwaliteit,Definitief energielabel,J,EP-Online Openbare data (07-2025),Definitief energielabel
+Kwaliteit fysieke leefomgeving,Wonen,Technische kwaliteit,Gemiddeld energielabel,J,EP-Online Openbare data (07-2025),Gemiddeld energielabel
+Kwaliteit fysieke leefomgeving,Wonen,Technische kwaliteit,Onderhoud woningen buurt,N,,
+Kwaliteit fysieke leefomgeving,Wonen,Technische kwaliteit,Onderhoud woningen buurt,N,,
+Kwaliteit fysieke leefomgeving,Wonen,Technische kwaliteit,Ventilatie,N,,
+Kwaliteit fysieke leefomgeving,Wonen,Technische kwaliteit,Warmte isolatie,N,,
+Kwaliteit fysieke leefomgeving,Wonen,Technische kwaliteit,Geluidsisolatie,N,,
+Kwaliteit van leven,Rondkomen,Werk,Werkloze jongeren,N,,
+Kwaliteit van leven,Rondkomen,Werk,Werkloos totaal,N,,
+Kwaliteit van leven,Rondkomen,Werk,"Werkzamen deeltd 0,3+",N,,
+Kwaliteit van leven,Rondkomen,Werk,Werkzamen,N,,
+Kwaliteit van leven,Rondkomen,Armoede,Minima personen,N,,
+Kwaliteit van leven,Rondkomen,Armoede,Minima huishouden,N,,
+Kwaliteit van leven,Rondkomen,Armoede,Minima kinderen,N,,
+Kwaliteit van leven,Rondkomen,Armoede,Minima huish met kinderen,N,,
+Kwaliteit van leven,Rondkomen,Armoede,Participatiewet totaal,N,,
+Kwaliteit van leven,Rondkomen,Armoede,Participatiewet 5+ jaar,N,,
+Kwaliteit van leven,Rondkomen,Armoede,Financiële buffer,N,,
+Kwaliteit van leven,Rondkomen,Armoede,Moeite met rondkomen,J,Gezondheid_per_wijk_en_buurt_2022 (CBS),Moeite met rondkomen
+Kwaliteit van leven,Rondkomen,Armoede,Verwachting inkomen,N,,
+Kwaliteit van leven,Opgroeien,Onderwijs,Achterstand leerlingen,J,Achterstandsscores_per_school_2024 (CBS),Achterstand leerlingen
+Kwaliteit van leven,Opgroeien,Onderwijs,Niveau VO,N,,
+Kwaliteit van leven,Opgroeien,Onderwijs,Opleiding jonge volwassenen,N,,
+Kwaliteit van leven,Gezondheid,Eigenkracht,Hulp,N,,
+Kwaliteit van leven,Gezondheid,Eigenkracht,Beperkte functionaliteit,J,Gezondheid_per_wijk_en_buurt_2022 (CBS),Ernstig beperkt vanwege gezondheid
+Kwaliteit van leven,Gezondheid,Eigenkracht,Belemmerd,N,,
+Kwaliteit van leven,Gezondheid,Eigenkracht,Zelfregie,N,,
+Kwaliteit van leven,Gezondheid,Eigenkracht,Grip op leven,N,,
+Kwaliteit van leven,Gezondheid,Eigenkracht,Draad oppakken,N,,
+Kwaliteit van leven,Gezondheid,Eigenkracht,Hulp organiseren,N,,
+Kwaliteit van leven,Gezondheid,Functioneren,"Chronische aandoening, 2 of meer",N,,
+Kwaliteit van leven,Gezondheid,Functioneren,Beperking zicht,N,,
+Kwaliteit van leven,Gezondheid,Functioneren,Beperking gehoord,N,,
+Kwaliteit van leven,Gezondheid,Functioneren,Beperking,J,Gezondheid_per_wijk_en_buurt_2022 (CBS),Beperkt vanwege gezondheid
+Kwaliteit van leven,Gezondheid,Functioneren,Gezondheid,N,,
+Kwaliteit van leven,Gezondheid,Functioneren,Tevreden leven,N,,
+Kwaliteit van leven,Gezondheid,Functioneren,Geluk,N,,
+Kwaliteit van leven,Gezondheid,Functioneren,Verwachting leven,N,,
+Kwaliteit van leven,Gezondheid,Leefstijl,Roken,J,Gezondheid_per_wijk_en_buurt_2022 (CBS),Roker
+Kwaliteit van leven,Gezondheid,Leefstijl,Overmatig drinken,J,Gezondheid_per_wijk_en_buurt_2022 (CBS),Overmatige drinker
+Kwaliteit van leven,Gezondheid,Leefstijl,Alcohol,J,Gezondheid_per_wijk_en_buurt_2022 (CBS),Drinker
+Kwaliteit van leven,Gezondheid,Leefstijl,Overgewicht,J,Gezondheid_per_wijk_en_buurt_2022 (CBS),Overgewicht
+Kwaliteit van leven,Gezondheid,Leefstijl,Bewegen,J,Gezondheid_per_wijk_en_buurt_2022 (CBS),Voldoet aan beweegrichtlijn
+Kwaliteit van leven,Meedoen,Deelname,Levensbeschouwing,N,,
+Kwaliteit van leven,Meedoen,Deelname,Wijkgebouw,N,,
+Kwaliteit van leven,Meedoen,Deelname,Uitgaan,N,,
+Kwaliteit van leven,Meedoen,Deelname,Evenement,N,,
+Kwaliteit van leven,Meedoen,Deelname,Voorstelling museum,N,,
+Kwaliteit van leven,Meedoen,Deelname,Hobby's,N,,
+Kwaliteit van leven,Meedoen,Deelname,Lid sport,N,,
+Kwaliteit van leven,Meedoen,Deelname,Sporten,N,,
+Kwaliteit van leven,Meedoen,Netwerk,Familie,N,,
+Kwaliteit van leven,Meedoen,Netwerk,Vrienden,N,,
+Kwaliteit van leven,Meedoen,Netwerk,Buren,N,,
+Kwaliteit van leven,Meedoen,Netwerk,Buurtgenoten,N,,
+Kwaliteit van leven,Meedoen,Netwerk,Inwoners,N,,
+Kwaliteit van leven,Meedoen,Netwerk,Internet,N,,
+Kwaliteit van leven,Meedoen,Netwerk,Voldoende,N,,
+Kwaliteit van leven,Meedoen,Netwerk,Echt praten,N,,
+Kwaliteit van leven,Meedoen,Netwerk,Hulp vragen,N,,
+Kwaliteit van leven,Meedoen,Netwerk,Eenzaamheid,J,Gezondheid_per_wijk_en_buurt_2022 (CBS),Eenzaam
+Kwaliteit van leven,Meedoen,Netwerk,Meedoen,N,,
+Kwaliteit sociale leefomgeving,Voorzieningen,Sociaal culturele,Zwembad,J,"Nabijheid voorzieningen; afstand locatie, wijk- en buurtcijfers (CBS)",Afstand tot zwembad
+Kwaliteit sociale leefomgeving,Voorzieningen,Sociaal culturele,Bibliotheek,J,"Nabijheid voorzieningen; afstand locatie, wijk- en buurtcijfers (CBS)",Afstand tot bibliotheek
+Kwaliteit sociale leefomgeving,Voorzieningen,Sociaal culturele,Restaurant,J,"Nabijheid voorzieningen; afstand locatie, wijk- en buurtcijfers (CBS)",Afstand tot restaurant
+Kwaliteit sociale leefomgeving,Voorzieningen,Sociaal culturele,Cafetaria,N,,
+Kwaliteit sociale leefomgeving,Voorzieningen,Sociaal culturele,Café,J,"Nabijheid voorzieningen; afstand locatie, wijk- en buurtcijfers (CBS)",Afstand tot café e.d.
+Kwaliteit sociale leefomgeving,Voorzieningen,Sociaal culturele,Buitensport,N,,
+Kwaliteit sociale leefomgeving,Voorzieningen,Sociaal culturele,Binnensport,N,,
+Kwaliteit sociale leefomgeving,Voorzieningen,Sociaal culturele,Ontmoeting,N,,
+Kwaliteit sociale leefomgeving,Voorzieningen,Sociaal culturele,Zwembad,N,,
+Kwaliteit sociale leefomgeving,Voorzieningen,Maatschappelijke,Grote supermarkt,J,"Nabijheid voorzieningen; afstand locatie, wijk- en buurtcijfers (CBS)",Afstand tot grote supermarkt
+Kwaliteit sociale leefomgeving,Voorzieningen,Maatschappelijke,Overige levensmiddelen,N,,
+Kwaliteit sociale leefomgeving,Voorzieningen,Maatschappelijke,Huisarts,J,"Nabijheid voorzieningen; afstand locatie, wijk- en buurtcijfers (CBS)",Afstand tot huisartsenpraktijk
+Kwaliteit sociale leefomgeving,Voorzieningen,Maatschappelijke,Apotheek,J,"Nabijheid voorzieningen; afstand locatie, wijk- en buurtcijfers (CBS)",Afstand tot apotheek
+Kwaliteit sociale leefomgeving,Voorzieningen,Maatschappelijke,Basisschool,N,,
+Kwaliteit sociale leefomgeving,Voorzieningen,Maatschappelijke,Middelbare school,N,,
+Kwaliteit sociale leefomgeving,Voorzieningen,Maatschappelijke,Kinderdagverblijf,J,"Nabijheid voorzieningen; afstand locatie, wijk- en buurtcijfers (CBS)",Afstand tot kinderdagverblijf
+Kwaliteit sociale leefomgeving,Voorzieningen,Maatschappelijke,BSO,N,,
+Kwaliteit sociale leefomgeving,Voorzieningen,Maatschappelijke,Boodschappen,N,,
+Kwaliteit sociale leefomgeving,Voorzieningen,Maatschappelijke,Ondersteuning,N,,
+Kwaliteit sociale leefomgeving,Voorzieningen,Maatschappelijke,Medische zorg,N,,
+Kwaliteit sociale leefomgeving,Voorzieningen,Maatschappelijke,Basisscholen,N,,
+Kwaliteit sociale leefomgeving,Mienskip,Actief betrokken,Buren geholpen,N,,
+Kwaliteit sociale leefomgeving,Mienskip,Actief betrokken,Vrijwilliger,J,Gezondheid_per_wijk_en_buurt_2022 (CBS),Vrijwilligerswerk
+Kwaliteit sociale leefomgeving,Mienskip,Actief betrokken,Mantelzorger,J,Gezondheid_per_wijk_en_buurt_2022 (CBS),Mantelzorger
+Kwaliteit sociale leefomgeving,Mienskip,Actief betrokken,Actief buurt,N,,
+Kwaliteit sociale leefomgeving,Mienskip,Actief betrokken,Vertrouwen in gemeente,N,,
+Kwaliteit sociale leefomgeving,Mienskip,Actief betrokken,Oogje in het zeil,N,,
+Kwaliteit sociale leefomgeving,Mienskip,Actief betrokken,Medeverantwoordelijk,N,,
+Kwaliteit sociale leefomgeving,Mienskip,Sociale samenhang,10+ jaar woning,N,,
+Kwaliteit sociale leefomgeving,Mienskip,Sociale samenhang,10+ jaar buurt,N,,
+Kwaliteit sociale leefomgeving,Mienskip,Sociale samenhang,10+ jaar gemeente,N,,
+Kwaliteit sociale leefomgeving,Mienskip,Sociale samenhang,Verhuisd binnen buurt,N,,
+Kwaliteit sociale leefomgeving,Mienskip,Sociale samenhang,Verhuisd,N,,
+Kwaliteit sociale leefomgeving,Mienskip,Sociale samenhang,Prettige buurt,N,,
+Kwaliteit sociale leefomgeving,Mienskip,Sociale samenhang,Gehecht,N,,
+Kwaliteit sociale leefomgeving,Mienskip,Sociale samenhang,Elkaar kennen,N,,
+Kwaliteit sociale leefomgeving,Mienskip,Sociale samenhang,Thuis voelen,N,,
+Kwaliteit sociale leefomgeving,Mienskip,Sociale samenhang,Saamhorigheid,N,,
+Kwaliteit sociale leefomgeving,Mienskip,Omgang integratie,Discriminatie,N,,
+Kwaliteit sociale leefomgeving,Mienskip,Omgang integratie,Etnische groepen,N,,
+Kwaliteit sociale leefomgeving,Mienskip,Omgang integratie,Jong en oud,N,,
+Kwaliteit sociale leefomgeving,Mienskip,Omgang integratie,Student en ander,N,,
+Kwaliteit sociale leefomgeving,Mienskip,Omgang integratie,Buurtgenoten,N,,
+Kwaliteit sociale leefomgeving,Veilgheid,Vermogensdelicten,slachtoffer inbraak,N,,
+Kwaliteit sociale leefomgeving,Veilgheid,Vermogensdelicten,inbraak woning,J,Misdrijven_per_wijk_en_buurt_per_jaar (CBS),Diefstal/inbraak woning
+Kwaliteit sociale leefomgeving,Veilgheid,Vermogensdelicten,inbraak auto,J,Misdrijven_per_wijk_en_buurt_per_jaar (CBS),Diefstal van motorvoertuigen
+Kwaliteit sociale leefomgeving,Veilgheid,Vermogensdelicten,diefstal fiets,J,Misdrijven_per_wijk_en_buurt_per_jaar (CBS),"Diefstal van brom-, snor-, fietsen"
+Kwaliteit sociale leefomgeving,Veilgheid,Vermogensdelicten,inbraak woning,N,,
+Kwaliteit sociale leefomgeving,Veilgheid,Vermogensdelicten,inbraak auto's,N,,
+Kwaliteit sociale leefomgeving,Veilgheid,Vermogensdelicten,beschadiging auto's,N,,
+Kwaliteit sociale leefomgeving,Veilgheid,Vermogensdelicten,diefstal fietsen,N,,
+Kwaliteit sociale leefomgeving,Veilgheid,Overlast,wonen,J,Geregistreerde_overlast_per_buurt (CBS),Totaal registraties overlast
+Kwaliteit sociale leefomgeving,Veilgheid,Overlast,woonomgeving,N,,
+Kwaliteit sociale leefomgeving,Veilgheid,Overlast,jongeren,J,Geregistreerde_overlast_per_buurt (CBS),Melding overlast jeugd
+Kwaliteit sociale leefomgeving,Veilgheid,Overlast,omwonenden,N,,
+Kwaliteit sociale leefomgeving,Veilgheid,Overlast,geluid,J,Geregistreerde_overlast_per_buurt (CBS),Geluidshinder overig
+Kwaliteit sociale leefomgeving,Veilgheid,Overlast,dronken personen,J,Geregistreerde_overlast_per_buurt (CBS),Openbare dronkenschap
+Kwaliteit sociale leefomgeving,Veilgheid,Overlast,drugs,J,Geregistreerde_overlast_per_buurt (CBS),Overlast ivm alcohol/ drugs
+Kwaliteit sociale leefomgeving,Veilgheid,Dreiging en geweld,Geweld,N,,
+Kwaliteit sociale leefomgeving,Veilgheid,Dreiging en geweld,idee wapens,N,,
+Kwaliteit sociale leefomgeving,Veilgheid,Dreiging en geweld,idee geweldsdelicten,N,,
+Kwaliteit sociale leefomgeving,Veilgheid,Dreiging en geweld,idee bedreiging,N,,
+Kwaliteit sociale leefomgeving,Veilgheid,Dreiging en geweld,idee lastigvallen,N,,
+Kwaliteit sociale leefomgeving,Veilgheid,Dreiging en geweld,gevoel onveilig,N,,
+Samenstelling,Bebouwing,Gebruik omgeving,Woningen,N,,
+Samenstelling,Bebouwing,Gebruik omgeving,Bedrijven,N,,
+Samenstelling,Bebouwing,Bouwperiode,voor 1915,N,,
+Samenstelling,Bebouwing,Bouwperiode,1915-1945,N,,
+Samenstelling,Bebouwing,Bouwperiode,1945-1984,N,,
+Samenstelling,Bebouwing,Bouwperiode,vanaf 1985,N,,
+Samenstelling,Bebouwing,Woningtypen,rijtjes,N,,
+Samenstelling,Bebouwing,Woningtypen,2-onder-1-kap,N,,
+Samenstelling,Bebouwing,Woningtypen,vrijstaand,N,,
+Samenstelling,Bebouwing,Woningtypen,beneden boven,N,,
+Samenstelling,Bebouwing,Woningtypen,appartementen,N,,
+Samenstelling,Bebouwing,Woningtypen,studio's kamers,N,,
+Samenstelling,Bebouwing,Eigendom,wozwaarde woning,N,,
+Samenstelling,Bebouwing,Eigendom,wozwaard m2,N,,
+Samenstelling,Bebouwing,Eigendom,particulier,J,Kerncijfers wijken en buurten,In bezit overige verhuurders
+Samenstelling,Bebouwing,Eigendom,cooperatief,J,Kerncijfers_wijken_en_buurten_2023 (CBS),In bezit woningcorporatie
+Samenstelling,Bebouwing,Eigendom,koop,J,Kerncijfers wijken en buurten (CBS),Koopwoningen
+Samenstelling,Bevolking,Cultuur,vorige woonwijk,N,,
+Samenstelling,Bevolking,Cultuur,herkomst,N,,
+Samenstelling,Bevolking,Cultuur,leefstijl,N,,
+Samenstelling,Bevolking,Cultuur,Gemakgeoriënteerden,N,,
+Samenstelling,Bevolking,Cultuur,Postmoderne hedonisten,N,,
+Samenstelling,Bevolking,Cultuur,Kosmopolieten,N,,
+Samenstelling,Bevolking,Cultuur,Traditionele burgerij,N,,
+Samenstelling,Bevolking,Cultuur,Nieuw conservatieven,N,,
+Samenstelling,Bevolking,Cultuur,Post-materialisten,N,,
+Samenstelling,Bevolking,Cultuur,Opwaarts mobielen,N,,
+Samenstelling,Bevolking,Cultuur,Moderne burgerij,N,,
+Samenstelling,Bevolking,Leeftijd,0-3 jaar,J,Kerncijfers_wijken_en_buurten_2023 (CBS),0 tot 15 jaar
+Samenstelling,Bevolking,Leeftijd,4-12 jaar,J,Kerncijfers_wijken_en_buurten_2023 (CBS),0 tot 15 jaar
+Samenstelling,Bevolking,Leeftijd,13-17 jaar,J,Kerncijfers_wijken_en_buurten_2023 (CBS),0 tot 15 jaar
+Samenstelling,Bevolking,Leeftijd,65-79 jaar,J,Kerncijfers_wijken_en_buurten_2023 (CBS),65 jaar of ouder
+Samenstelling,Bevolking,Leeftijd,80+ jaar,J,Kerncijfers_wijken_en_buurten_2023 (CBS),65 jaar of ouder
+Samenstelling,Bevolking,Huishoudens,tm 27 jaar,N,,
+Samenstelling,Bevolking,Huishoudens,28-64 jaar,N,,
+Samenstelling,Bevolking,Huishoudens,65+ jaar,N,,
+Samenstelling,Bevolking,Huishoudens,jongeren,N,,
+Samenstelling,Bevolking,Huishoudens,zonder kind,J,Kerncijfers_wijken_en_buurten_2023 (CBS),Huishoudens zonder kinderen
+Samenstelling,Bevolking,Huishoudens,met kind,J,Kerncijfers_wijken_en_buurten_2023 (CBS),Huishoudens met kinderen
+Samenstelling,Bevolking,Huishoudens,niet-westers,J,Kerncijfers_wijken_en_buurten_2023 (CBS),Buiten Europa
+Samenstelling,Bevolking,Huishoudens,kind gescheid. Ouders,N,,
+Samenstelling,Bevolking,Huishoudens,één ouder gezin,N,,
+Samenstelling,Bevolking,Sociaal economische status,koopkracht,N,,
+Samenstelling,Bevolking,Sociaal economische status,huishouden jaar,J,Kerncijfers_wijken_en_buurten_2023 (CBS),Gem. gestandaardiseerd inkomen van huish
+Samenstelling,Bevolking,Sociaal economische status,persoon,J,Kerncijfers_wijken_en_buurten_2023 (CBS),Gemiddeld inkomen per inwoner
+Samenstelling,Bevolking,Sociaal economische status,hoog,J,Kerncijfers_wijken_en_buurten_2022 (CBS),Opleidingsniveau hoog
+Samenstelling,Bevolking,Sociaal economische status,middelhoog,J,Kerncijfers_wijken_en_buurten_2022 (CBS),Opleidingsniveau middelbaar
+Samenstelling,Bevolking,Sociaal economische status,laag,J,Kerncijfers_wijken_en_buurten_2022 (CBS),Opleidingsniveau laag
+Samenstelling,Bevolking,Sociaal economische status,zzp'ers,J,Arbeidsdeelname_wijken_en_buurten_2022 (CBS),Zelfstandige
+Samenstelling,Bevolking,Sociaal economische status,werkzamen,J,Arbeidsdeelname_wijken_en_buurten_2022 (CBS),Werknemer
+Samenstelling,Bevolking,Sociaal economische status,potentiële,N,,
+Kwaliteit fysieke leefomgeving,Openbare ruimte,Klimaat,Gemiddeld Laagste Grondwaterstand,J,KEA,
+Kwaliteit fysieke leefomgeving,Openbare ruimte,Klimaat,Verandering GLG nu t.o.v. 2050,J,"KEA, GLG 2050 Hoog",
+Kwaliteit fysieke leefomgeving,Openbare ruimte,Klimaat,Oppervlakte verharding (openbare ruimte),N,BGT,
+Kwaliteit fysieke leefomgeving,Openbare ruimte,Klimaat,Waterdiepte op straat,J,Friese KlimaatAtlas,
+Kwaliteit fysieke leefomgeving,Openbare ruimte,Klimaat,Aantal panden water tegen gevel,J,Friese Klimaatatlas,
+Kwaliteit fysieke leefomgeving,Openbare ruimte,Klimaat,Gevoelstemperatuur,J,KEA,
+Kwaliteit fysieke leefomgeving,Openbare ruimte,Klimaat,Aandeel bladerdek per buurt,J,,

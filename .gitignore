@@ -23,6 +23,9 @@ config.ini
 # Data (volledige uitsluiting, bevat grote datasets)
 data/
 
+# init_data staat WEL in git (publieke starter dataset)
+!init_data/
+
 # Exports (gegenereerde rapporten, JSON exports, Excel)
 exports/*
 !exports/.gitkeep

@@ -223,110 +223,41 @@ OLLAMA_MODEL=qwen3:30b
 
 ## 🚀 Snel Opstarten
 
+> 📖 **Volledige gids:** Zie [`GETTING_STARTED.md`](./GETTING_STARTED.md) voor een stap-voor-stap installatie inclusief starter dataset.
+
 ### Prerequisites
-- Python 3.12+
-- Node.js 18+ en npm 9+
-- PostgreSQL 14+ met PostGIS en pgvector
-- [Ollama](https://ollama.ai/) (voor AI-functies)
+- Python 3.12+ · Node.js 18+ · PostgreSQL 14+ (PostGIS + pgvector)
+- [Ollama](https://ollama.ai/) — optioneel, alleen voor AI-functies
 
----
-
-### 1. Environment Setup
+### Snelstart
 ```bash
-# Clone repository
+# 1. Klonen & omgeving instellen
 git clone <repo-url> && cd D-OmniTwin
-
-# Python virtual environment
-python -m venv .venv
-source .venv/bin/activate
+python -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
+cp .env.example .env  # vul DATABASE_*, SECRET_KEY, MAPBOX_TOKEN in
 
-# Environment variables
-cp .env.example .env
-nano .env
-```
-
-**Minimale `.env` configuratie:**
-```env
-# Database
-DATABASE_HOST=localhost
-DATABASE_PORT=5432
-DATABASE_NAME=omnitwin_db
-DATABASE_USER=omnitwin_user
-DATABASE_PASSWORD=<your-password>
-
-# Security
-SECRET_KEY=<genereer met: openssl rand -base64 32>
-CORS_ORIGINS=http://localhost:8000,http://localhost:3000
-
-# Mapbox
-MAPBOX_TOKEN=<your-mapbox-token>
-
-# Admin Panel
-ADMIN_API_KEY=<genereer met: python -c "import secrets; print(secrets.token_hex(32))">
-
-# AI (optioneel)
-OLLAMA_HOST=http://localhost:11434
-OLLAMA_MODEL=qwen3:30b
-```
-
----
-
-### 2. Database Setup
-```bash
-# PostgreSQL database + user aanmaken
-sudo -u postgres psql -c "CREATE USER omnitwin_user WITH PASSWORD 'your-password';"
+# 2. Database aanmaken
+sudo -u postgres psql -c "CREATE USER omnitwin_user WITH PASSWORD 'jouw-wachtwoord';"
 sudo -u postgres psql -c "CREATE DATABASE omnitwin_db OWNER omnitwin_user;"
-sudo -u postgres psql -d omnitwin_db -c "CREATE EXTENSION postgis;"
-sudo -u postgres psql -d omnitwin_db -c "CREATE EXTENSION vector;"
+sudo -u postgres psql -d omnitwin_db -c "CREATE EXTENSION postgis; CREATE EXTENSION vector;"
 
-# Geconsolideerd schema laden (alle tabellen + views)
-psql -U omnitwin_user -d omnitwin_db -f data/schema_latest.sql
+# 3. Buurten extraheren (lokale GPKG → GeoJSON) + CBS data downloaden
+python init_data/scripts/extract_buurten_fryslan.py
+python init_data/scripts/download_indicatoren_fryslan.py
+bash init_data/scripts/init_database.sh
 
-# Basis data import
-python scripts/import_gebiedsmonitor_config.py
-```
-
----
-
-### 3. Main App Starten
-```bash
-source .venv/bin/activate
+# 4. App starten
 python run_dev.py
 ```
-
-> [!TIP]
-> **Waarom `run_dev.py`?** Dit script is slimmer dan een standaard `uvicorn` commando:
-> 1. **Lazy Loading**: AI-modellen worden pas geladen als de chat wordt geopend (30% snellere start).
-> 2. **Optimized Reload**: Voorkomt onnodige herstarts door `node_modules` en `admin-panel` uit te sluiten.
 
 **Toegang:**
 - 🌐 **App:** http://localhost:8000
 - 📚 **API Docs:** http://localhost:8000/docs
+- 🔐 **Admin Panel:** `cd admin-panel && npm install && npm start` → http://localhost:3000/admin
 
----
-
-### 4. Admin Panel Starten (Optioneel)
-```bash
-cd admin-panel
-npm install   # Alleen eerste keer
-npm start
-```
-
-**Toegang:**
-- 🔐 **Admin Panel:** http://localhost:3000/admin
-- **Login:** Gebruik `ADMIN_API_KEY` uit `.env`
-
----
-
-### 5. Alles Tegelijk (Development)
-```bash
-# Terminal 1: Backend
-source .venv/bin/activate && python run_dev.py
-
-# Terminal 2: Admin Panel
-cd admin-panel && npm start
-```
+> [!TIP]
+> **Waarom `run_dev.py`?** Slimmer dan standaard uvicorn: lazy loading van AI-modellen (30% snellere start) en optimized reload die `node_modules` uitsluit.
 
 ---
 
@@ -364,14 +295,14 @@ Zie [NOTICE.md](./NOTICE.md) voor informatie over third-party licenties.
 | Document | Beschrijving |
 |----------|-------------|
 | [README.md](./README.md) | Project overview (dit document) |
+| [GETTING_STARTED.md](./GETTING_STARTED.md) | ⭐ Stap-voor-stap installatiehhandleiding met starter dataset |
+| [init_data/README.md](./init_data/README.md) | Documentatie initiatie dataset (Fryslân) |
 | [BUILD.md](./BUILD.md) | Installatie, setup & sprint changelog |
 | [TODO.md](./TODO.md) | Actieve takenlijst per domein |
 | [ROADMAP.md](./ROADMAP.md) | Lange-termijn planning en features |
 | [ARCHITECTURE_TECHNICAL_OPERATION.md](./ARCHITECTURE_TECHNICAL_OPERATION.md) | Volledige technische architectuur |
 | [docs/8-communicatie/architectuur-omnitwin.md](./docs/8-communicatie/architectuur-omnitwin.md) | Systeem architectuur (uitgebreid) |
 | [docs/8-communicatie/communicatieplan_subsidie_2026.md](./docs/8-communicatie/communicatieplan_subsidie_2026.md) | Subsidie & adoptie communicatieplan |
-| [docs/7-projectmanagement/logs/DATABASE_INITIALISATIE_HANDLEIDING.md](./docs/7-projectmanagement/logs/DATABASE_INITIALISATIE_HANDLEIDING.md) | Database initialisatie handleiding |
-| [docs/7-projectmanagement/logs/SECURITY_QUICK_WINS.md](./docs/7-projectmanagement/logs/SECURITY_QUICK_WINS.md) | Security quick wins stappenplan |
 
 ---
 
