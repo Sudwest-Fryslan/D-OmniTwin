@@ -1,11 +1,35 @@
 # TODO - D-OmniTwin Roadmap
 
-**Laatste Update:** 12 april 2026 (Dag 57)
-**Status:** Multi-Gebiedsdossier Uitbreiding ✅ Afgerond — Sprint 15 (Ontologie Tab) 📋 Gepland
+**Laatste Update:** 13 april 2026 (Dag 58)
+**Status:** Initiatie Dataset & Getting Started ✅ Afgerond — Sprint 12 (Bug #42 + 3D BAG) 📋 Volgende sessie
 
-> **Volgende Sessie:** Bug #42 (3D pand-kleuring single-buurt) + Sprint 15 (Ontologie Tab).
+> **Volgende Sessie:** Bug #42 (3D pand-kleuring single-buurt) + Sprint 15 (Ontologie Tab) + CBS indicatorwaarden downloaden op laptop.
 
 ---
+
+## ✅ Sessie 2026-04-13: Initiatie Dataset & Getting Started (Dag 58)
+
+**Doel:** Verlagen van de drempel voor nieuwe gebruikers — starter dataset + volledige documentatie.
+
+- [x] **Analyse:** Gaps geïdentificeerd (data/ volledig gitignored, schema's niet in git)
+- [x] **`init_data/` mapstructuur** aangemaakt en uitgesloten van gitignore-restrictie (`!init_data/`)
+- [x] **`init_data/schema/schema_latest.sql`** — schema snapshot nu in git
+- [x] **`init_data/kompas/kompas_hierarchie.csv`** — 224 rijen opgeschoonde Kompas structuur
+- [x] **`init_data/indicatoren/indicatoren_seed.json`** — 61 actuele indicatoren met metadata
+- [x] **`init_data/fryslan/buurten_fryslan.geojson`** — 942 CBS buurten 2024 (alle 18 Friese gemeenten, WGS84, 17MB)
+- [x] **`init_data/scripts/extract_buurten_fryslan.py`** — extractor vanuit lokale CBS_BUURTEN2024.gpkg
+- [x] **`init_data/scripts/download_indicatoren_fryslan.py`** — CBS OData downloader
+- [x] **`init_data/scripts/seed_fryslan.py`** — 4-stappen database importer (buurten/indicatoren/kompas/waarden)
+- [x] **`init_data/scripts/init_database.sh`** — master init script (alles in 1 commando)
+- [x] **`GETTING_STARTED.md`** — volledige stap-voor-stap installatiehgids (nieuw in root)
+- [x] **`README.md`** — Quick Start sectie herzien en vereenvoudigd
+- [x] **`docs/STATE.md`** bijgewerkt (Dag 58, Roadmap, Actieve Componenten)
+- [x] **Git commit `547cbf8`** gepusht naar `main` (16 bestanden, 3892 regels)
+
+⏳ **Nog te doen (op jouw laptop):** `python init_data/scripts/download_indicatoren_fryslan.py`
+
+---
+
 
 ## ⏳ Sprint 11: Chat Afronding & Visuele Overhaul (Verkenning) (Gepland)
 

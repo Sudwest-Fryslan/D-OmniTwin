@@ -10,8 +10,8 @@
 | Veld | Waarde |
 |------|--------|
 | **Huidige versie** | v0.9.x (pre-release) |
-| **Sprint** | Sprint 11 (Track A) afgerond — Omgevingsvisie Selectielaag geïmplementeerd |
-| **Laatste update** | 2026-04-11 (Dag 56) |
+| **Sprint** | Dag 58 — Initiatie Dataset & Getting Started documentatie |
+| **Laatste update** | 2026-04-13 (Dag 58) |
 | **Bijgewerkt door** | Project-manager skill (Antigravity) |
 
 ---
@@ -22,7 +22,7 @@
 |-----------|--------|---------|
 | **FastAPI backend** | 🟢 Actief | `run_dev.py` draait, WSL/Ubuntu |
 | **Mapbox + Deck.gl frontend** | 🟢 Actief | Classic Premium UI |
-| **CBS buurt-data** | 🟢 Geïmporteerd | Groningen, Drenthe afgerond |
+| **CBS buurt-data** | 🟢 Geïmporteerd | Fryslân 942 buurten (initiatie dataset) |
 | **RIVM indicatoren** | 🟢 Actief | Meerdere jaren beschikbaar |
 | **AI Chat Interface** | 🟢 Actief | HELP_ONBOARDING intent actief (deterministic, geen LLM) |
 | **Help / Wiki Pagina** | 🟢 Actief | `/static/help.html` |
@@ -31,6 +31,7 @@
 | **Admin Panel** | 🟢 Actief | Build via `/build-admin-panel` workflow |
 | **Ontologie generatie** | 🟢 Actief | Fence & Source philosophy geïmplementeerd |
 | **Multi-Gebiedsdossier rapport** | 🟢 Actief | Voltooid incl. bugfixes en colorblind-safe visualisatie |
+| **Initiatie Dataset (init_data/)** | 🟢 Nieuw | 942 Friese buurten, 61 indicatoren, scripts + GETTING_STARTED.md |
 | **Kompas Data Ontologie UI** | 🔴 Gepland | Sprint 15 — tabblad in detailpaneel |
 | **Time Slider** | 🔴 Gepland | Sprint 16 — Indicator Historie & 3D Transities |
 | **Data Lineage** | 🔴 Gepland | Sprint 8F — nog niet gestart |
@@ -42,10 +43,9 @@
 
 | Datum | Wijziging | Impact |
 |-------|-----------|--------|
+| 2026-04-13 | **Initiatie Dataset + Getting Started** | `init_data/` toegevoegd (publiek, in git): 942 Friese buurten GeoJSON, 61 indicatoren seed, Kompas CSV, schema snapshot, 4 scripts, GETTING_STARTED.md. README.md Quick Start herzien. Commit `547cbf8` gepusht naar main. |
 | 2026-04-11 | **Git Repository Initiatie** | Base project v0.9.x opgeschoond (security/secrets verwijderd, `.gitignore` gefilterd) en gepusht naar private GitHub (`main` branch). |
-| 2026-04-10 | **Multi-Gebiedsdossier UI module** | Backend payloads en react-UI live gezet in admin-paneel. Geïntegreerd via map modal. |
-| 2026-04-10 | **BugFixes Rapportage** | Invoering Colorblind-safe kleuren, filtering van "water-buurten", en oplossen component hover-flicker. |
-| 2026-04-10 | **Omgevingsvisie Deelgebieden** geïntegreerd als selectielaag | ETL (6 polygonen), API (`/api/omgevingsvisie/`), GeoJsonLayer overlay, klik=buurtselectie via -10m buffer |
+| 2026-04-12 | **Multi-Gebiedsdossier Uitbreiding (Dag 57)** | Themafilter, top-3 uitschieters, geneste tabel, Lucide iconen, bugfix #44 case-mismatch. |
 
 ---
 
@@ -75,8 +75,8 @@
 | Sprint | Focus | Verwacht |
 |--------|-------|---------|
 | **11 Track A** | Chat Onboarding (HELP_ONBOARDING) | ✅ Geïmplementeerd |
-| **Sessie 2026-04-10** | Omgevingsvisie Selectielaag | ✅ Geïmplementeerd (Dag 54) |
-| **Volgende sessie** | Multi-Gebiedsdossier (rapport + z-score kaart) | 📋 Gepland — zie PLAN_multi-gebiedsdossier.md |
+| **Dag 58 (vandaag)** | Initiatie Dataset & Getting Started | ✅ Voltooid — gepusht naar main |
+| **Jouw actie** | CBS indicatorwaarden downloaden op laptop | ⏳ Nog uit te voeren |
 | **12 (huidig)** | 3D BAG Integratie & Bug #42 | Volgende sessie |
 | **15** | Kompas UI Uitbreiding - Ontologie & Data Tabs | Volgende Sessie |
 | **16** | Time Traveler - Indicator Historie en 3D transities | Volgende Sessie |
