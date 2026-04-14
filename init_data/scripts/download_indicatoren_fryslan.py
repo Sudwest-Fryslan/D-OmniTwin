@@ -6,24 +6,19 @@ Schrijft naar: init_data/fryslan/indicatorwaarden_fryslan.csv
 Gebruik:
     python init_data/scripts/download_indicatoren_fryslan.py
 
-Vereisten: pip install requests psycopg2-binary
+Vereisten: pip install requests
 
 Databronnen (CBS OData, open data, CC BY):
-  - KERNCIJFERS_WIJKEN_EN_BUURTEN_2023: kerncijfers buurten
-  - GEZONDHEID_PER_WIJK_EN_BUURT_RIVM: gezondheidsmonitor RIVM
-  - MISDRIJVEN_PER_WIJK_EN_BUURT: veiligheidscijfers
-  - GEREGISTREERDE_OVERLAST_PER_BUURT: overlastmeldingen
-  - NABIJHEID_VOORZIENINGEN_BUURT_2022: afstandsindicatoren (CBS)
+  - 85039NED: Kerncijfers wijken en buurten 2023
+  - 50150NED: Gezondheidsmonitor RIVM via dataderden.cbs.nl (2012-2024)
 """
 import csv
-import json
 import time
 from pathlib import Path
 import requests
 
 ROOT = Path(__file__).parent.parent.parent
 OUTPUT = ROOT / "init_data" / "fryslan" / "indicatorwaarden_fryslan.csv"
-MAPPING_FILE = ROOT / "ETL" / "CBS" / "cbs_mapping_v3.json"
 
 # Alle Friese gemeentecodes (4-cijferig, zonder GM prefix)
 FRIESE_GM_CODES = [
@@ -32,100 +27,108 @@ FRIESE_GM_CODES = [
     '1900', '0093', '0737', '0096', '1949', '0098'
 ]
 
-CBS_BASE = "https://opendata.cbs.nl/ODataApi/odata"
+# Prefixen voor client-side filtering
+FRIESE_BU_PREFIXES = [f"BU{gm}" for gm in FRIESE_GM_CODES]
 
-# Dataset configuratie: (dataset_id, kolom_filter, indicator_naam_mapping, jaar)
+# CBS ODataFeed endpoint (ODataApi is deprecated)
+CBS_BASE = "https://opendata.cbs.nl/ODataFeed/odata"
+
+# ────────────────────────────────────────────────────────────
+# Dataset configuratie
+# ────────────────────────────────────────────────────────────
+# Kolomnamen in ODataFeed hebben een numeriek suffix (_N).
+# We mappen deze naar leesbare indicatornamen.
+
 DATASETS = [
     {
         "id": "85039NED",   # Kerncijfers wijken en buurten 2023
         "naam": "Kerncijfers wijken en buurten 2023",
         "jaar": 2023,
+        "base": CBS_BASE,
         "kolommen": {
-            "Koopwoningen_P": "Koopwoningen",
-            "Woningcorporaties_P": "In bezit woningcorporatie",
-            "ParticuliereVerhuur_P": "In bezit overige verhuurders",
-            "AfstandTotHuisartsenpraktijk_A": "Afstand tot huisartsenpraktijk",
-            "AfstandTotGroteSupermarkt_A": "Afstand tot grote supermarkt",
-            "AfstandTotKinderdagverblijf_A": "Afstand tot kinderdagverblijf",
-            "k_0Tot15Jaar_P": "0 tot 15 jaar",
-            "k_65JaarOfOuder_P": "65 jaar of ouder",
-            "HuishoudensZonderKinderen_P": "Huishoudens zonder kinderen",
-            "HuishoudensMetKinderen_P": "Huishoudens met kinderen",
-            "BuitenEuropa_P": "Buiten Europa",
-            "GemiddeldeInkomenPerInwoner_P": "Gemiddeld inkomen per inwoner",
-            "OpleidingsniveauHoog_P": "Opleidingsniveau hoog",
-            "OpleidingsniveauMiddelbaar_P": "Opleidingsniveau middelbaar",
-            "OpleidingsniveauLaag_P": "Opleidingsniveau laag",
+            "Koopwoningen_40": "Koopwoningen",
+            "InBezitWoningcorporatie_42": "In bezit woningcorporatie",
+            "InBezitOverigeVerhuurders_43": "In bezit overige verhuurders",
+            "AfstandTotHuisartsenpraktijk_106": "Afstand tot huisartsenpraktijk",
+            "AfstandTotGroteSupermarkt_107": "Afstand tot grote supermarkt",
+            "AfstandTotKinderdagverblijf_108": "Afstand tot kinderdagverblijf",
+            "AfstandTotSchool_109": "Afstand tot school",
+            "k_0Tot15Jaar_8": "0 tot 15 jaar",
+            "k_65JaarOfOuder_12": "65 jaar of ouder",
+            "HuishoudensZonderKinderen_30": "Huishoudens zonder kinderen",
+            "HuishoudensMetKinderen_31": "Huishoudens met kinderen",
+            "GemiddeldInkomenPerInwoner_72": "Gemiddeld inkomen per inwoner",
+            "OpleidingsniveauHoog_66": "Opleidingsniveau hoog",
+            "OpleidingsniveauMiddelbaar_65": "Opleidingsniveau middelbaar",
+            "OpleidingsniveauLaag_64": "Opleidingsniveau laag",
+            "GemiddeldeWOZWaardeVanWoningen_35": "Gemiddelde WOZ-waarde van woningen",
+            "AantalInwoners_5": "Aantal inwoners",
+            "Bevolkingsdichtheid_33": "Bevolkingsdichtheid",
+            "Woningvoorraad_34": "Woningvoorraad",
+            "Nettoarbeidsparticipatie_67": "Netto arbeidsparticipatie",
+            "HuishoudensMetEenLaagInkomen_78": "Huishoudens met een laag inkomen",
+            "PersonenPerSoortUitkeringBijstand_83": "Personen met bijstand",
         },
         "regio_filter_col": "Codering_3",
-        "regio_prefix": "BU",
-    },
-    {
-        "id": "85039NED",   # Nabijheid voorzieningen (zit ook in kerncijfers)
-        "naam": "Kerncijfers wijken en buurten 2023 (nabijheid)",
-        "jaar": 2023,
-        "kolommen": {
-            "AfstandTotZwembad_A": "Afstand tot zwembad",
-            "AfstandTotBibliotheek_A": "Afstand tot bibliotheek",
-            "AfstandTotRestaurant_A": "Afstand tot restaurant",
-            "AfstandTotCafe_A": "Afstand tot café e.d.",
-            "AfstandTotApotheek_A": "Afstand tot apotheek",
-        },
-        "regio_filter_col": "Codering_3",
-        "regio_prefix": "BU",
+        "server_filter": True,  # CBS ondersteunt server-side filtering
     },
 ]
 
-# Kolommapping voor gezondheidsdata (RIVM via dataderden)
+# RIVM Gezondheidsmonitor (dataderden.cbs.nl)
+# Deze dataset heeft dimensies: Leeftijd, Marges, Perioden
+# We willen: Leeftijd=20300 (18+), Marges=MW00000 (waarde), alle Perioden
 RIVM_DATASETS = [
     {
-        "id": "50150NED",  # Gezondheidsmonitor GGD 2022
-        "naam": "Gezondheid per wijk en buurt RIVM 2022",
-        "jaar": 2022,
-        "base": "https://dataderden.cbs.nl/ODataApi/odata",
-        "kolommen": {
-            "RokerTabak_P": "Roker",
-            "Overgewicht_P": "Overgewicht",
-            "Eenzaam_P": "Eenzaam",
-            "MoeiteMetRondkomen_P": "Moeite met rondkomen",
-            "OvermatigDrinken_P": "Overmatige drinker",
-            "VoldoetAanBeweegrichtlijn_P": "Voldoet aan beweegrichtlijn",
-            "ErnstigBeperktVanwegeGezondheid_P": "Ernstig beperkt vanwege gezondheid",
-            "BeperktVanwegeGezondheid_P": "Beperkt vanwege gezondheid",
-            "Vrijwilligerswerk_P": "Vrijwilligerswerk",
-            "Mantelzorger_P": "Mantelzorger",
-        },
+        "id": "50150NED",
+        "naam": "Gezondheidsmonitor RIVM",
+        "base": "https://dataderden.cbs.nl/ODataFeed/odata",
         "regio_filter_col": "Codering_3",
-        "regio_prefix": "BU",
+        "server_filter": False,  # dataderden ondersteunt GEEN server-side $filter op Codering_3
+        # Dimensie-filters: alleen totaal leeftijd + alleen waarde (geen betrouwbaarheidsinterval)
+        "dimensie_filters": {
+            "Leeftijd": "20300",      # 18 jaar of ouder (= totaal)
+            "Marges": "MW00000",      # Waarde (geen onder/bovengrens)
+        },
+        # Perioden kolom → jaar extractie (2022JJ00 → 2022)
+        "periode_col": "Perioden",
+        "kolommen": {
+            "Overgewicht_33": "Overgewicht",
+            "Eenzaam_25": "Eenzaam",
+            "MoeiteMetRondkomen_32": "Moeite met rondkomen",
+            "OvermatigDrinken_37": "Overmatige drinker",
+            "VoldoetAanDeBeweegrichtlijn_40": "Voldoet aan beweegrichtlijn",
+            "Vrijwilligerswerk_31": "Vrijwilligerswerk",
+            "Mantelzorger_30": "Mantelzorger",
+            "RooktTabak_35": "Roker",
+            "GoedErvarenGezondheid_4": "Goed ervaren gezondheid",
+            "HoogRisicoAngststoornisOfDepressie_14": "Hoog risico angststoornis of depressie",
+        },
     },
 ]
 
 
-def get_buurt_codes_voor_gemeenten(gm_codes):
-    """
-    Geef een set buurtcodes terug voor de gegeven Friese gemeenten.
-    Buurtcodes starten met BU + gemeentecode (bv. BU00590001).
-    """
-    prefixes = [f"BU{code}" for code in gm_codes]
-    return prefixes
+def is_friese_buurt(buurt_id):
+    """Check of een buurtcode bij een Friese gemeente hoort."""
+    return any(buurt_id.startswith(pfx) for pfx in FRIESE_BU_PREFIXES)
 
 
-def fetch_dataset_page(base_url, dataset_id, kolommen, regio_filter_col, regio_prefixes, 
-                        select_cols, skip=0, top=10000):
-    """Haal 1 pagina op van CBS OData."""
-    # Filter op buurten van Friese gemeenten via startswith emulatie
-    # CBS OData ondersteunt startswith() in $filter
-    filter_parts = [f"startswith({regio_filter_col}, '{pfx}')" for pfx in regio_prefixes]
-    filter_str = " or ".join(filter_parts)
-
+def fetch_page(base_url, dataset_id, select_cols, regio_filter_col,
+               extra_select=None, extra_filter=None, skip=0, top=10000):
+    """Haal 1 pagina op van CBS/RIVM ODataFeed."""
     url = f"{base_url}/{dataset_id}/TypedDataSet"
+
+    all_select = [regio_filter_col] + select_cols
+    if extra_select:
+        all_select = extra_select + all_select
+
     params = {
         "$format": "json",
         "$top": top,
         "$skip": skip,
-        "$select": ",".join([regio_filter_col] + select_cols),
-        "$filter": filter_str,
+        "$select": ",".join(all_select),
     }
+    if extra_filter:
+        params["$filter"] = extra_filter
 
     resp = requests.get(url, params=params, timeout=120)
     if resp.status_code != 200:
@@ -136,30 +139,29 @@ def fetch_dataset_page(base_url, dataset_id, kolommen, regio_filter_col, regio_p
     return data.get("value", [])
 
 
-def download_dataset(ds_config, alle_rijen):
-    """Download een dataset en voeg toe aan alle_rijen."""
-    base = ds_config.get("base", CBS_BASE)
+def download_cbs_dataset(ds_config, alle_rijen):
+    """Download een CBS dataset met server-side filtering."""
+    base = ds_config["base"]
     dataset_id = ds_config["id"]
     naam = ds_config["naam"]
     jaar = ds_config["jaar"]
     kolommen = ds_config["kolommen"]
     regio_filter_col = ds_config["regio_filter_col"]
-    regio_prefix = ds_config["regio_prefix"]
 
     print(f"\n  📊 {naam} ({dataset_id})")
 
-    # Genereer buurtprefixen
-    prefixes = [f"{regio_prefix}{gm}" for gm in FRIESE_GM_CODES]
-    select_cols = list(kolommen.keys())
+    # Server-side filter op Friese buurten
+    filter_parts = [f"startswith({regio_filter_col}, '{pfx}')" for pfx in FRIESE_BU_PREFIXES]
+    filter_str = " or ".join(filter_parts)
 
+    select_cols = list(kolommen.keys())
     skip = 0
     pagina = 1
-    totaal = 0
 
     while True:
         print(f"     Pagina {pagina}...", end=" ", flush=True)
-        records = fetch_dataset_page(base, dataset_id, kolommen, regio_filter_col,
-                                      prefixes, select_cols, skip=skip)
+        records = fetch_page(base, dataset_id, select_cols, regio_filter_col,
+                             extra_filter=filter_str, skip=skip)
         if not records:
             print("klaar")
             break
@@ -186,8 +188,7 @@ def download_dataset(ds_config, alle_rijen):
                     "bron": naam,
                 })
 
-        print(f"{len(records)} records → totaal buurt×indicator rijen: {len(alle_rijen)}")
-        totaal += len(records)
+        print(f"{len(records)} records → totaal rijen: {len(alle_rijen)}")
 
         if len(records) < 10000:
             break
@@ -195,7 +196,93 @@ def download_dataset(ds_config, alle_rijen):
         pagina += 1
         time.sleep(0.3)
 
-    return totaal
+
+def download_rivm_dataset(ds_config, alle_rijen):
+    """
+    Download een RIVM dataset met dimensie-filtering en client-side buurtfiltering.
+    
+    RIVM data via dataderden.cbs.nl ondersteunt geen server-side $filter op Codering_3.
+    We halen alle buurten op, maar filteren op:
+    - Leeftijd = 20300 (18 jaar of ouder = totaal)
+    - Marges = MW00000 (waarde, geen betrouwbaarheidsinterval)
+    - Alle Perioden (voor trendlines)
+    En filteren dan client-side op Friese gemeenten.
+    """
+    base = ds_config["base"]
+    dataset_id = ds_config["id"]
+    naam = ds_config["naam"]
+    kolommen = ds_config["kolommen"]
+    regio_filter_col = ds_config["regio_filter_col"]
+    dimensie_filters = ds_config.get("dimensie_filters", {})
+    periode_col = ds_config.get("periode_col", "Perioden")
+
+    print(f"\n  📊 {naam} ({dataset_id})")
+    print(f"     Dimensie-filters: {dimensie_filters}")
+    print(f"     ⚠️  Geen server-side regio filter → client-side filtering op Fryslân")
+
+    # Server-side filter op dimensies (Leeftijd + Marges)
+    dim_filter_parts = [f"{dim} eq '{val}'" for dim, val in dimensie_filters.items()]
+    dim_filter = " and ".join(dim_filter_parts) if dim_filter_parts else None
+
+    select_cols = list(kolommen.keys())
+    extra_select = [periode_col] + list(dimensie_filters.keys())
+
+    skip = 0
+    pagina = 1
+    friese_count = 0
+    overgeslagen = 0
+
+    while True:
+        print(f"     Pagina {pagina}...", end=" ", flush=True)
+        records = fetch_page(base, dataset_id, select_cols, regio_filter_col,
+                             extra_select=extra_select, extra_filter=dim_filter,
+                             skip=skip)
+        if not records:
+            print("klaar")
+            break
+
+        for record in records:
+            buurt_code = record.get(regio_filter_col, "").strip()
+
+            # Client-side filter: alleen Friese buurten
+            if not buurt_code or not is_friese_buurt(buurt_code):
+                overgeslagen += 1
+                continue
+
+            # Jaar uit perioden halen (bijv. "2022JJ00" → 2022)
+            periode = record.get(periode_col, "")
+            try:
+                jaar = int(periode[:4])
+            except (ValueError, TypeError):
+                continue
+
+            for col_naam, indicator_naam in kolommen.items():
+                waarde = record.get(col_naam)
+                if waarde is None:
+                    continue
+                try:
+                    waarde_float = float(waarde)
+                except (ValueError, TypeError):
+                    continue
+
+                alle_rijen.append({
+                    "buurt_id": buurt_code,
+                    "indicator_naam": indicator_naam,
+                    "waarde": waarde_float,
+                    "jaar": jaar,
+                    "bron": f"{naam} {jaar}",
+                })
+                friese_count += 1
+
+        print(f"{len(records)} records (Fryslân: +{friese_count}) → totaal rijen: {len(alle_rijen)}")
+
+        if len(records) < 10000:
+            break
+        skip += len(records)
+        pagina += 1
+        time.sleep(0.3)
+
+    print(f"     ✅ {friese_count} Friese metingen | {overgeslagen} niet-Fries overgeslagen")
 
 
 def main():
@@ -208,21 +295,22 @@ def main():
 
     alle_rijen = []
 
-    # CBS Kerncijfers
+    # CBS Kerncijfers (server-side filtering)
     for ds in DATASETS:
-        download_dataset(ds, alle_rijen)
+        download_cbs_dataset(ds, alle_rijen)
         time.sleep(1)
 
-    # RIVM Gezondheid (dataderden)
-    print("\n  ℹ️  RIVM data via dataderden.cbs.nl (kan langzamer zijn)")
+    # RIVM Gezondheid (client-side filtering, met perioden voor trendlines)
+    print("\n  ℹ️  RIVM data via dataderden.cbs.nl (client-side filtering)")
     for ds in RIVM_DATASETS:
         try:
-            download_dataset(ds, alle_rijen)
+            download_rivm_dataset(ds, alle_rijen)
         except Exception as e:
             print(f"  ⚠️  RIVM dataset mislukt: {e}")
         time.sleep(1)
 
     # Schrijf CSV
+    OUTPUT.parent.mkdir(parents=True, exist_ok=True)
     print(f"\n  💾 Schrijven naar {OUTPUT}...")
     with open(OUTPUT, 'w', encoding='utf-8', newline='') as f:
         fieldnames = ["buurt_id", "indicator_naam", "waarde", "jaar", "bron"]
@@ -236,11 +324,13 @@ def main():
     print(f"   Bestandsgrootte: {size_kb:.0f} KB")
 
     # Overzicht indicatoren
+    import collections
     unique_indicators = sorted(set(r["indicator_naam"] for r in alle_rijen))
     print(f"\n📊 Indicatoren ({len(unique_indicators)}):")
     for ind in unique_indicators:
+        jaren = sorted(set(r["jaar"] for r in alle_rijen if r["indicator_naam"] == ind))
         count = sum(1 for r in alle_rijen if r["indicator_naam"] == ind)
-        print(f"   • {ind}: {count} buurten")
+        print(f"   • {ind}: {count} metingen (jaren: {jaren})")
 
 
 if __name__ == "__main__":

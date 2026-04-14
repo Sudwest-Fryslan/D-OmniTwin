@@ -110,6 +110,7 @@ def import_buurten(conn):
         geom_str = json.dumps(geom) if geom else None
 
         try:
+            cur.execute("SAVEPOINT sp_buurt")
             cur.execute("""
                 INSERT INTO gebieden (id, gebiedstype_id, naam, gemeente_code, geom, actief)
                 VALUES (
@@ -126,9 +127,11 @@ def import_buurten(conn):
                     updated_at = CURRENT_TIMESTAMP
             """, (bu_id, CBS_BUURT_TYPE_ID, bu_naam, gm_code or None,
                   geom_str, geom_str))
+            cur.execute("RELEASE SAVEPOINT sp_buurt")
             inserted += 1
 
         except Exception as e:
+            cur.execute("ROLLBACK TO SAVEPOINT sp_buurt")
             errors += 1
             if errors <= 3:
                 print(f"   ⚠️  Fout bij {bu_id}: {e}")

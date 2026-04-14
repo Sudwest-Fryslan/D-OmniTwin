@@ -486,5 +486,75 @@
     "thema": "Bevolking",
     "onderdeel": "Sociaal economische status",
     "bron": "Arbeidsdeelname_wijken_en_buurten_2022 (CBS)"
+  },
+  {
+    "naam": "Aantal inwoners",
+    "titel": "",
+    "thema": "",
+    "onderdeel": "",
+    "bron": "Kerncijfers wijken en buurten"
+  },
+  {
+    "naam": "Afstand tot school",
+    "titel": "",
+    "thema": "",
+    "onderdeel": "",
+    "bron": "Kerncijfers wijken en buurten"
+  },
+  {
+    "naam": "Bevolkingsdichtheid",
+    "titel": "",
+    "thema": "",
+    "onderdeel": "",
+    "bron": "Kerncijfers wijken en buurten"
+  },
+  {
+    "naam": "Gemiddelde WOZ-waarde van woningen",
+    "titel": "",
+    "thema": "",
+    "onderdeel": "",
+    "bron": "Kerncijfers wijken en buurten"
+  },
+  {
+    "naam": "Goed ervaren gezondheid",
+    "titel": "",
+    "thema": "",
+    "onderdeel": "",
+    "bron": "Gezondheidsmonitor RIVM"
+  },
+  {
+    "naam": "Hoog risico angststoornis of depressie",
+    "titel": "",
+    "thema": "",
+    "onderdeel": "",
+    "bron": "Gezondheidsmonitor RIVM"
+  },
+  {
+    "naam": "Huishoudens met een laag inkomen",
+    "titel": "",
+    "thema": "",
+    "onderdeel": "",
+    "bron": "Kerncijfers wijken en buurten"
+  },
+  {
+    "naam": "Netto arbeidsparticipatie",
+    "titel": "",
+    "thema": "",
+    "onderdeel": "",
+    "bron": "Kerncijfers wijken en buurten"
+  },
+  {
+    "naam": "Personen met bijstand",
+    "titel": "",
+    "thema": "",
+    "onderdeel": "",
+    "bron": "Kerncijfers wijken en buurten"
+  },
+  {
+    "naam": "Woningvoorraad",
+    "titel": "",
+    "thema": "",
+    "onderdeel": "",
+    "bron": "Kerncijfers wijken en buurten"
   }
 ]
