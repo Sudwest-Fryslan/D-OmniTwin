@@ -59,8 +59,13 @@ SECRET_KEY=jouw-secret-key-hier
 # Mapbox (gratis account op mapbox.com)
 MAPBOX_TOKEN=pk.eyJ1IjoiLi4uCg==
 
-# Admin Panel toegang (genereer met: python -c "import secrets; print(secrets.token_hex(32))")
-ADMIN_API_KEY=jouw-admin-key-hier
+# Admin gebruiker (wordt aangemaakt tijdens initiatie in stap 4)
+# Laat ADMIN_PASSWORD leeg om interactief in te stellen
+ADMIN_USER=admin
+ADMIN_PASSWORD=kies-een-sterk-wachtwoord
+
+# Admin Panel API key (wordt automatisch gegenereerd in stap 4)
+# ADMIN_API_KEY=  ← wordt ingevuld door create_admin.py
 
 # CORS (pas aan naar jouw URL als je remote deployed)
 CORS_ORIGINS=http://localhost:8000,http://localhost:3000
@@ -126,17 +131,19 @@ bash init_data/scripts/init_database.sh
 ```
 
 Dit script voert in volgorde uit:
-1. **Schema laden** — alle tabellen, views en triggers aanmaken
+1. **Schema laden** — alle tabellen, views en triggers aanmaken (incl. users/sessions/api_keys)
 2. **Indicatoren seeden** — 61 indicatoren met metadata
 3. **Kompas laden** — de volledige hiërarchie (Titels → Thema's → Onderdelen)
 4. **Buurten importeren** — GeoJSON met PostGIS geometrie
 5. **Waarden importeren** — CBS indicatorwaarden per buurt
+6. **Admin aanmaken** — eerste admin gebruiker + API key (interactief)
 
 > [!TIP]
 > Je kunt ook individuele stappen uitvoeren:
 > ```bash
 > python init_data/scripts/seed_fryslan.py --stap buurten
 > python init_data/scripts/seed_fryslan.py --stap waarden
+> python init_data/scripts/create_admin.py --reset-password
 > ```
 
 ---
@@ -158,21 +165,29 @@ Je ziet nu:
 
 ---
 
-## Admin Panel (optioneel)
+## Stap 6 — Admin Panel
 
-```bash
-cd admin-panel
-npm install        # Eerste keer
-npm start
-```
+Na de start kun je inloggen op het beheerportaal:
 
-Open: **http://localhost:3000/admin** — gebruik `ADMIN_API_KEY` uit je `.env`.
+**http://localhost:8000/admin**
+
+| Gegeven | Waarde |
+|---------|--------|
+| Gebruikersnaam | `admin` (of waarde van `ADMIN_USER` in `.env`) |
+| Wachtwoord | ingesteld tijdens `init_database.sh` (stap 6) |
+| API Key | ingesteld in `.env` als `ADMIN_API_KEY` |
 
 Het Admin Panel geeft toegang tot:
 - Indicator editor (namen, beschrijvingen, kleurschema's)
 - Kompas hiërarchie beheer
 - LLM configuratie (Ollama model instellen)
 - Dashboard met statistieken
+
+> [!TIP]
+> Wachtwoord vergeten? Reset met:
+> ```bash
+> python init_data/scripts/create_admin.py --reset-password
+> ```
 
 ---
 
@@ -201,8 +216,11 @@ Zie [`ETL/ETL_DOCUMENTATION.md`](ETL/ETL_DOCUMENTATION.md) voor de volledige han
 | `extension "postgis" does not exist` | Installeer PostGIS: `sudo apt install postgresql-14-postgis-3` |
 | `extension "vector" does not exist` | Installeer pgvector: zie [pgvector README](https://github.com/pgvector/pgvector) |
 | `ModuleNotFoundError: No module named 'psycopg2'` | Activeer virtual environment: `source .venv/bin/activate` |
+| `ModuleNotFoundError: No module named 'passlib'` | Installeer: `pip install passlib[bcrypt]` |
 | `buurten_fryslan.geojson` niet gevonden | Voer `python init_data/scripts/extract_buurten_fryslan.py` uit |
 | Kompas is leeg | Voer seed stap kompas uit: `python init_data/scripts/seed_fryslan.py --stap kompas` |
+| `relation "users" does not exist` | Schema is verouderd — voer `init_database.sh` opnieuw uit op een lege DB |
+| Kan niet inloggen in Admin Panel | Voer `python init_data/scripts/create_admin.py` uit om admin aan te maken |
 | PDOK download mislukt | Controleer internetverbinding. Probeer direct in browser: `https://geodata.nationaalgeoregister.nl/cbsgebiedsindelingen/wfs?service=WFS&request=GetCapabilities` |
 
 ---

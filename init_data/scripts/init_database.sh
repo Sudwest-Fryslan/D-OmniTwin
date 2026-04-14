@@ -10,6 +10,7 @@
 #   3. Kompas hiërarchie (uit kompas_hierarchie.csv)
 #   4. Buurten + geometrie (uit buurten_fryslan.geojson)
 #   5. Indicatorwaarden (uit indicatorwaarden_fryslan.csv)
+#   6. Eerste admin gebruiker + API key aanmaken
 #
 # Vereisten:
 #   - PostgreSQL draaien met omnitwin_db en omnitwin_user
@@ -68,7 +69,7 @@ echo "✅ Schema geladen"
 
 echo ""
 echo "────────────────────────────────────────────────────────────"
-echo "STAP 2-5/5: Data seeden (indicatoren, kompas, buurten, waarden)"
+echo "STAP 2-5/6: Data seeden (indicatoren, kompas, buurten, waarden)"
 echo "────────────────────────────────────────────────────────────"
 
 # Controleer of GeoJSON aanwezig is
@@ -94,11 +95,19 @@ fi
 python "$PROJECT_ROOT/init_data/scripts/seed_fryslan.py" --stap alle
 
 echo ""
+echo "────────────────────────────────────────────────────────────"
+echo "STAP 6/6: Admin gebruiker aanmaken"
+echo "────────────────────────────────────────────────────────────"
+
+python "$PROJECT_ROOT/init_data/scripts/create_admin.py"
+
+echo ""
 echo "============================================================"
 echo "✅ Database initialisatie voltooid!"
 echo ""
 echo "   🌐 Start de applicatie:  python run_dev.py"
 echo "   🌐 Open in browser:      http://localhost:8000"
+echo "   🔐 Admin Panel:          http://localhost:8000/admin"
 echo "   📚 API documentatie:     http://localhost:8000/docs"
 echo "============================================================"
 echo ""

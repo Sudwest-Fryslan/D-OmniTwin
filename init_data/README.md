@@ -27,8 +27,9 @@ init_data/
 │   └── indicatorwaarden_fryslan.csv   # CBS open data — indicatorwaarden per buurt
 │
 └── scripts/
-    ├── init_database.sh               # ⭐ Master initiatie script (alles in 1 stap)
+    ├── init_database.sh               # ⭐ Master initiatie script (alles in 1 stap, incl. admin)
     ├── seed_fryslan.py                # Python import script (database vullen)
+    ├── create_admin.py                # 👤 Admin gebruiker + API key aanmaken (stap 6)
     ├── download_buurten_fryslan.py    # Download GeoJSON via PDOK WFS
     └── download_indicatoren_fryslan.py # Download CBS indicatorwaarden via OData API
 ```
@@ -48,8 +49,15 @@ python init_data/scripts/download_buurten_fryslan.py
 # 2. CBS indicatorwaarden downloaden (eenmalig)
 python init_data/scripts/download_indicatoren_fryslan.py
 
-# 3. Alles in de database laden
+# 3. Alles in de database laden (incl. admin gebruiker aanmaken)
 bash init_data/scripts/init_database.sh
+```
+
+Of los de admin stap separaat draaien:
+```bash
+python init_data/scripts/create_admin.py
+# Of wachtwoord resetten:
+python init_data/scripts/create_admin.py --reset-password
 ```
 
 ---

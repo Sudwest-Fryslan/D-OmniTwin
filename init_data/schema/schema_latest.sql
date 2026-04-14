@@ -19,6 +19,9 @@
 CREATE EXTENSION IF NOT EXISTS postgis;
 COMMENT ON EXTENSION postgis IS 'PostGIS geometry and geography spatial types and functions';
 
+CREATE EXTENSION IF NOT EXISTS vector;
+COMMENT ON EXTENSION vector IS 'pgvector — vector similarity search for AI embeddings';
+
 -- ============================================================================
 -- SECTION 2: HELPER FUNCTIONS
 -- ============================================================================
@@ -285,6 +288,49 @@ ALTER TABLE indicatoren
 CREATE INDEX IF NOT EXISTS idx_indicatoren_color_schema ON indicatoren(color_schema_id);
 
 -- ============================================================================
+-- SECTION 5.5: USER MANAGEMENT TABLES
+-- ============================================================================
+-- Vereist voor authenticatie (auth.py) en Admin Panel toegang
+
+-- Tabel: users
+CREATE TABLE IF NOT EXISTS users (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    username VARCHAR(100) UNIQUE NOT NULL,
+    hashed_password TEXT NOT NULL,
+    is_admin BOOLEAN DEFAULT FALSE,
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX IF NOT EXISTS idx_users_username ON users(username);
+CREATE INDEX IF NOT EXISTS idx_users_active ON users(is_active) WHERE is_active = TRUE;
+
+-- Tabel: sessions (HttpOnly cookie-gebaseerde sessies)
+CREATE TABLE IF NOT EXISTS sessions (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    token TEXT UNIQUE NOT NULL,
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    expires_at TIMESTAMP NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX IF NOT EXISTS idx_sessions_token ON sessions(token);
+CREATE INDEX IF NOT EXISTS idx_sessions_user ON sessions(user_id);
+CREATE INDEX IF NOT EXISTS idx_sessions_expires ON sessions(expires_at);
+
+-- Tabel: api_keys (database-gestuurde API sleutels)
+CREATE TABLE IF NOT EXISTS api_keys (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    key_hash TEXT UNIQUE NOT NULL,
+    label VARCHAR(100) NOT NULL,
+    user_id UUID REFERENCES users(id) ON DELETE SET NULL,
+    is_active BOOLEAN DEFAULT TRUE,
+    last_used_at TIMESTAMP,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX IF NOT EXISTS idx_api_keys_hash ON api_keys(key_hash);
+CREATE INDEX IF NOT EXISTS idx_api_keys_active ON api_keys(is_active) WHERE is_active = TRUE;
+
+-- ============================================================================
 -- SECTION 6: DATABASE VIEWS
 -- ============================================================================
 
@@ -438,6 +484,10 @@ CREATE TRIGGER trigger_gebieden_centroid
     BEFORE INSERT OR UPDATE OF geom ON gebieden
     FOR EACH ROW EXECUTE FUNCTION update_gebied_centroid();
 
+CREATE TRIGGER trigger_users_updated_at
+    BEFORE UPDATE ON users
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
 -- ============================================================================
 -- SECTION 8: SEED DATA
 -- ============================================================================
@@ -505,11 +555,16 @@ COMMENT ON TABLE kompas_titels IS 'Niveau 1 van Kompas hiërarchie - Hoofd categ
 COMMENT ON TABLE kompas_themas IS 'Niveau 2 van Kompas hiërarchie - Themas per titel';
 COMMENT ON TABLE kompas_onderdelen IS 'Niveau 3 van Kompas hiërarchie - Onderdelen per thema';
 COMMENT ON TABLE color_schemas IS 'Kleurschemas voor kaart visualisatie en kompas';
+COMMENT ON TABLE users IS 'Applicatiegebruikers voor Admin Panel en beheerscherm';
+COMMENT ON TABLE sessions IS 'Actieve inlogsessies via HttpOnly cookies (12 uur geldig)';
+COMMENT ON TABLE api_keys IS 'Gehashte API sleutels voor script/ETL toegang tot admin endpoints';
 COMMENT ON COLUMN gebieden.geom IS 'Geometrie in RD New (EPSG:28992) coördinatensysteem';
 COMMENT ON COLUMN gebieden.geom_centroid IS 'Automatisch berekend zwaartepunt voor kaartweergave';
 COMMENT ON COLUMN gebieden.gemeente_code IS 'CBS gemeente code waar dit gebied toe behoort';
 COMMENT ON COLUMN indicatoren.score_type IS '+/+ = hoog is goed, +/- = hoog is slecht, etc.';
 COMMENT ON COLUMN gebied_data.scenario_id IS 'Scenario identifier (current, 2030, 2050, etc.)';
+COMMENT ON COLUMN users.hashed_password IS 'Bcrypt gehashed wachtwoord — nooit plain text opslaan';
+COMMENT ON COLUMN api_keys.key_hash IS 'SHA-256 hash van de API key — plain key wordt nooit opgeslagen';
 
 -- ============================================================================
 -- VERIFICATION
@@ -536,8 +591,8 @@ BEGIN
     RAISE NOTICE '   Views aangemaakt: %', view_count;
     RAISE NOTICE '';
     RAISE NOTICE '   Volgende stappen:';
-    RAISE NOTICE '   1. Importeer geometrie: python scripts/import_geometrie.py';
-    RAISE NOTICE '   2. Importeer CBS data: python scripts/import_cbs_data.py';
-    RAISE NOTICE '   3. Importeer Kompas: python scripts/import_kompas_hierarchie.py';
+    RAISE NOTICE '   1. Seed data laden:   python init_data/scripts/seed_fryslan.py --stap alle';
+    RAISE NOTICE '   2. Admin aanmaken:    python init_data/scripts/create_admin.py';
+    RAISE NOTICE '   3. App starten:       python run_dev.py';
     RAISE NOTICE '=======================================================';
 END $$;

@@ -423,7 +423,7 @@ def main():
     )
     parser.add_argument(
         "--stap",
-        choices=["alle", "buurten", "indicatoren", "kompas", "waarden"],
+        choices=["alle", "buurten", "indicatoren", "kompas", "waarden", "admin"],
         default="alle",
         help="Welke stap uitvoeren (default: alle)"
     )
@@ -456,6 +456,12 @@ def main():
         import_waarden(conn)
 
     conn.close()
+
+    if stap in ("alle", "admin"):
+        # Admin aanmaken via apart script (heeft eigen DB conn + interactie)
+        import subprocess
+        admin_script = ROOT / "init_data" / "scripts" / "create_admin.py"
+        subprocess.run([sys.executable, str(admin_script)], check=False)
 
     print()
     print("=" * 60)
