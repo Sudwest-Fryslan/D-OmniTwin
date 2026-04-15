@@ -248,7 +248,7 @@ python init_data/scripts/download_indicatoren_fryslan.py
 bash init_data/scripts/init_database.sh
 
 # 4. App starten
-python run_dev.py
+source .venv/bin/activate && python run_dev.py
 ```
 
 **Toegang:**
