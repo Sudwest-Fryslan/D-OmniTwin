@@ -19,7 +19,7 @@ init_data/
 │   └── kompas_hierarchie.csv          # D-Omni Kompas structuur (titels → thema's → onderdelen → indicatoren)
 │
 ├── indicatoren/
-│   └── indicatoren_seed.json          # Metadata van 61 actuele indicatoren
+│   └── indicatoren_seed.json          # Metadata van 235 indicatoren (incl. Kompas-hiërarchie)
 │
 ├── fryslan/
 │   ├── README.md                      # Bronvermelding en licentie-informatie
@@ -84,16 +84,17 @@ python init_data/scripts/create_admin.py --reset-password
 | `jaar` | Peiljaar (2022 of 2023) |
 | `bron` | CBS dataset naam |
 
-**Opgenomen indicatoren (selectie):**
-
 | Thema | Indicatoren |
 |-------|------------|
-| Bevolking | Leeftijdsverdeling, inkomen, opleiding, huishoudens |
-| Wonen | Koopwoningen, huurwoningen, WOZ-waarde |
-| Gezondheid | Overgewicht, rokers, eenzaamheid, beweeggedrag |
-| Voorzieningen | Afstand tot huisarts, supermarkt, school, apotheek |
+| Bevolking | Leeftijdsverdeling, inkomen, opleiding, huishoudens, bevolkingsdichtheid |
+| Wonen | Koopwoningen, huurwoningen, WOZ-waarde, bouwjaar, woningoppervlakte (BAG) |
+| Gezondheid | Overgewicht, roken, eenzaamheid, bewegen, obesitas, ervaren gezondheid |
+| Voorzieningen | Afstand tot huisarts, supermarkt, school, apotheek, bibliotheek, zwembad |
 | Veiligheid | Overlastmeldingen, inbraak, diefstal |
 | Meedoen | Vrijwilligerswerk, mantelzorg |
+| Energie | Energielabels (definitief, voorlopig, totaal), coverage |
+| Bebouwing | BAG-functies (woon, winkel, kantoor, onderwijs, sport, ...) |
+| Klimaat | Koele plekken, grondwaterstand, wateroverlast (toekomstige ETL) |
 
 ---
 

@@ -132,7 +132,7 @@ bash init_data/scripts/init_database.sh
 
 Dit script voert in volgorde uit:
 1. **Schema laden** — alle tabellen, views en triggers aanmaken (incl. users/sessions/api_keys)
-2. **Indicatoren seeden** — 61 indicatoren met metadata
+2. **Indicatoren seeden** — 235 indicatoren met metadata en Kompas-hiërarchie
 3. **Kompas laden** — de volledige hiërarchie (Titels → Thema's → Onderdelen)
 4. **Buurten importeren** — GeoJSON met PostGIS geometrie
 5. **Waarden importeren** — CBS indicatorwaarden per buurt

@@ -169,29 +169,46 @@ def import_indicatoren(conn):
         if not naam:
             continue
 
-        # Bepaal score_type op basis van thema/naam
-        naam_lower = naam.lower()
-        if any(kw in naam_lower for kw in ["afstand", "criminaliteit", "overlast",
-                                             "diefstal", "inbraak", "eenzaam",
-                                             "werkloos", "moeite"]):
-            score_type = "+/-"
-        else:
-            score_type = "+/+"
+        # Gebruik score_type uit seed, val terug op heuristiek
+        score_type = ind.get("score_type")
+        if not score_type:
+            naam_lower = naam.lower()
+            if any(kw in naam_lower for kw in ["afstand", "criminaliteit", "overlast",
+                                                 "diefstal", "inbraak", "eenzaam",
+                                                 "werkloos", "moeite"]):
+                score_type = "+/-"
+            else:
+                score_type = "+/+"
 
         bron = ind.get("bron", "")
-        omschrijving = f"{ind.get('titel', '')} → {ind.get('thema', '')} → {ind.get('onderdeel', '')}"
-        code = "CBS_" + naam.upper()[:40].replace(" ", "_").replace("/", "_").replace(",", "").replace("-", "_")
+        eenheid = ind.get("eenheid", "")
+
+        # Gebruik code uit seed, val terug op gegenereerde code
+        code = ind.get("code")
+        if not code:
+            code = "IND_" + naam.upper()[:40].replace(" ", "_").replace("/", "_").replace(",", "").replace("-", "_")
+
+        # Omschrijving: gebruik seed-veld of bouw op uit hiërarchie
+        omschrijving = ind.get("omschrijving") or ""
+        if not omschrijving:
+            titel = ind.get("titel", "")
+            thema = ind.get("thema", "")
+            onderdeel = ind.get("onderdeel", "")
+            if titel or thema:
+                omschrijving = f"{titel} → {thema} → {onderdeel}"
 
         try:
             cur.execute("""
-                INSERT INTO indicatoren (uuid, naam, code, omschrijving, bron, score_type, status)
-                VALUES (gen_random_uuid(), %s, %s, %s, %s, %s, 'O')
+                INSERT INTO indicatoren (uuid, naam, code, eenheid, omschrijving, bron, score_type, status)
+                VALUES (gen_random_uuid(), %s, %s, %s, %s, %s, %s, 'O')
                 ON CONFLICT (code) DO UPDATE SET
                     naam = EXCLUDED.naam,
-                    omschrijving = EXCLUDED.omschrijving,
-                    bron = EXCLUDED.bron,
+                    eenheid = COALESCE(NULLIF(EXCLUDED.eenheid, ''), indicatoren.eenheid),
+                    omschrijving = COALESCE(NULLIF(EXCLUDED.omschrijving, ''), indicatoren.omschrijving),
+                    bron = COALESCE(NULLIF(EXCLUDED.bron, ''), indicatoren.bron),
+                    score_type = EXCLUDED.score_type,
                     updated_at = CURRENT_TIMESTAMP
-            """, (naam, code, omschrijving, bron, score_type))
+            """, (naam, code, eenheid, omschrijving, bron, score_type))
             inserted += 1
         except Exception as e:
             skipped += 1
