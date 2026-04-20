@@ -1,9 +1,33 @@
 # TODO - D-OmniTwin Roadmap
 
-**Laatste Update:** 13 april 2026 (Dag 58)
-**Status:** Initiatie Dataset & Getting Started ✅ Afgerond — Sprint 12 (Bug #42 + 3D BAG) 📋 Volgende sessie
+**Laatste Update:** 20 april 2026 (Dag 58)
+**Status:** Indicatoren Consolidatie ✅ Afgerond — Sprint 12 (Bug #42 + 3D BAG) 📋 Volgende sessie (Dag 59)
 
-> **Volgende Sessie:** Bug #42 (3D pand-kleuring single-buurt) + Sprint 15 (Ontologie Tab) + CBS indicatorwaarden downloaden op laptop.
+> **Volgende Sessie (Dag 59):** Bug #42 (3D pand-kleuring single-buurt) + Sprint 15 (Ontologie Tab) + CBS indicatorwaarden downloaden op laptop.
+
+---
+
+## ✅ Sessie 2026-04-20: Indicatoren Consolidatie & Init Data Completering (Dag 58)
+
+**Doel:** Database-indicatoren saneren, seed synchroniseren met ETL-bronnen, initiatie-workflow volledig afsluiten.
+
+- [x] **Inventarisatie:** Alle 275 DB-indicatoren gecategoriseerd (Kompas × data matrix)
+- [x] **29 wees-records verwijderd** — geen Kompas-koppeling én geen data
+- [x] **6 naam-duplicaten gemerged** — ETL-namen → Kompas-equivalenten (53.000+ datapunten behouden)
+  - `Afstand tot huisarts` → `Huisarts` | `Roker` → `Roken` | `Eenzaam` → `Eenzaamheid`
+  - `Overmatig alcoholgebruik` → `Overmatig drinken` | `Gemiddelde Woonoppervlakte` → lowercase
+  - `Percentage Woonfunctie (BAG)` → lowercase variant
+- [x] **5 legacy-records opgeruimd** — BAG-percentages (Winkel/Kantoor/Industrie/Overig) + CBS Onbekend
+- [x] **7 indicatoren aan Kompas gekoppeld** — Obesitas, BAG-bouwjaar, woonfunctie, inkomen, energielabel
+- [x] **`indicatoren_seed.json` vernieuwd** — 61 → 235 indicatoren, volledig formaat (code, eenheid, score_type, heeft_data)
+- [x] **`seed_fryslan.py` bijgewerkt** — gebruikt seed-velden direct, fallback `IND_`-prefix
+- [x] **`download_indicatoren_fryslan.py` gesynchroniseerd** — 14 indicator-namen gecorrigeerd
+- [x] **Documentatie bijgewerkt** — GETTING_STARTED.md + init_data/README.md (61→235, thematabel uitgebreid)
+- [x] **Commit `1dbd700`** gepusht naar `main` — 5 bestanden, 2450 toevoegingen
+- [x] **Sessie-samenvatting** opgeslagen in archief (dag 58)
+- [x] **STATE.md bijgewerkt**
+
+⏳ **Nog te doen (op jouw laptop):** `python init_data/scripts/download_indicatoren_fryslan.py`
 
 ---
 
@@ -21,12 +45,11 @@
 - [x] **`init_data/scripts/download_indicatoren_fryslan.py`** — CBS OData downloader
 - [x] **`init_data/scripts/seed_fryslan.py`** — 4-stappen database importer (buurten/indicatoren/kompas/waarden)
 - [x] **`init_data/scripts/init_database.sh`** — master init script (alles in 1 commando)
-- [x] **`GETTING_STARTED.md`** — volledige stap-voor-stap installatiehgids (nieuw in root)
+- [x] **`GETTING_STARTED.md`** — volledige stap-voor-stap installatiegids (nieuw in root)
 - [x] **`README.md`** — Quick Start sectie herzien en vereenvoudigd
 - [x] **`docs/STATE.md`** bijgewerkt (Dag 58, Roadmap, Actieve Componenten)
 - [x] **Git commit `547cbf8`** gepusht naar `main` (16 bestanden, 3892 regels)
 
-⏳ **Nog te doen (op jouw laptop):** `python init_data/scripts/download_indicatoren_fryslan.py`
 
 ---
 

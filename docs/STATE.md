@@ -10,8 +10,8 @@
 | Veld | Waarde |
 |------|--------|
 | **Huidige versie** | v0.9.x (pre-release) |
-| **Sprint** | Dag 58 — Initiatie Dataset & Getting Started documentatie |
-| **Laatste update** | 2026-04-13 (Dag 58) |
+| **Sprint** | Dag 58 — Indicatoren Consolidatie & Init Data Completering |
+| **Laatste update** | 2026-04-20 (Dag 58) |
 | **Bijgewerkt door** | Project-manager skill (Antigravity) |
 
 ---
@@ -31,7 +31,7 @@
 | **Admin Panel** | 🟢 Actief | Build via `/build-admin-panel` workflow |
 | **Ontologie generatie** | 🟢 Actief | Fence & Source philosophy geïmplementeerd |
 | **Multi-Gebiedsdossier rapport** | 🟢 Actief | Voltooid incl. bugfixes en colorblind-safe visualisatie |
-| **Initiatie Dataset (init_data/)** | 🟢 Nieuw | 942 Friese buurten, 61 indicatoren, scripts + GETTING_STARTED.md |
+| **Initiatie Dataset (init_data/)** | 🟢 Compleet | 942 Friese buurten, **235 indicatoren** (gesaneerd + nieuw formaat), scripts + GETTING_STARTED.md |
 | **Kompas Data Ontologie UI** | 🔴 Gepland | Sprint 15 — tabblad in detailpaneel |
 | **Time Slider** | 🔴 Gepland | Sprint 16 — Indicator Historie & 3D Transities |
 | **Data Lineage** | 🔴 Gepland | Sprint 8F — nog niet gestart |
@@ -43,8 +43,8 @@
 
 | Datum | Wijziging | Impact |
 |-------|-----------|--------|
+| 2026-04-20 | **Indicatoren Consolidatie (Dag 58)** | Database gesaneerd 275→235 indicatoren: 29 wees-records verwijderd, 6 naam-duplicaten gemerged (53.000+ datapunten behouden), 7 indicatoren aan Kompas gekoppeld. `indicatoren_seed.json` vernieuwd (61→235, nieuw formaat). Download-script namen gesynchroniseerd. Commit `1dbd700` gepusht. |
 | 2026-04-13 | **Initiatie Dataset + Getting Started** | `init_data/` toegevoegd (publiek, in git): 942 Friese buurten GeoJSON, 61 indicatoren seed, Kompas CSV, schema snapshot, 4 scripts, GETTING_STARTED.md. README.md Quick Start herzien. Commit `547cbf8` gepusht naar main. |
-| 2026-04-11 | **Git Repository Initiatie** | Base project v0.9.x opgeschoond (security/secrets verwijderd, `.gitignore` gefilterd) en gepusht naar private GitHub (`main` branch). |
 | 2026-04-12 | **Multi-Gebiedsdossier Uitbreiding (Dag 57)** | Themafilter, top-3 uitschieters, geneste tabel, Lucide iconen, bugfix #44 case-mismatch. |
 
 ---
@@ -75,9 +75,9 @@
 | Sprint | Focus | Verwacht |
 |--------|-------|---------|
 | **11 Track A** | Chat Onboarding (HELP_ONBOARDING) | ✅ Geïmplementeerd |
-| **Dag 58 (vandaag)** | Initiatie Dataset & Getting Started | ✅ Voltooid — gepusht naar main |
+| **Dag 58** | Initiatie Dataset & Indicatoren Consolidatie | ✅ Voltooid — commit `1dbd700` gepusht |
 | **Jouw actie** | CBS indicatorwaarden downloaden op laptop | ⏳ Nog uit te voeren |
-| **12 (huidig)** | 3D BAG Integratie & Bug #42 | Volgende sessie |
+| **12 (huidig)** | 3D BAG Integratie & Bug #42 | Volgende sessie (Dag 59) |
 | **15** | Kompas UI Uitbreiding - Ontologie & Data Tabs | Volgende Sessie |
 | **16** | Time Traveler - Indicator Historie en 3D transities | Volgende Sessie |
 | **13** | Architectuur Gaps & Security Hardening | Q2 2026 |
