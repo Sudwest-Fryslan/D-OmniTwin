@@ -2594,5 +2594,16 @@
     "bron": "",
     "score_type": "+/+",
     "heeft_data": false
+  },
+  {
+    "naam": "Netto arbeidsparticipatie",
+    "code": "CBS_NETTOARBEIDSPARTICIPATIE",
+    "eenheid": "%",
+    "titel": "Kwaliteit van leven",
+    "thema": "Rondkomen",
+    "onderdeel": "Werk",
+    "bron": "CBS Kerncijfers wijken en buurten",
+    "score_type": "+/+",
+    "heeft_data": true
   }
 ]
