@@ -1,218 +1,133 @@
 #!/usr/bin/env python3
 """
 Download CBS Buurten 2024 voor de provincie Fryslân via PDOK WFS.
+Dit script gebruikt Geopandas om de 'lichte' geometrie layer in GML op te halen,
+en filtert deze lokaal. Dit is de meest robuuste manier omdat PDOK WFS filters vaak negeert.
 Output: init_data/fryslan/buurten_fryslan.geojson (WGS84)
-
-Gebruik:
-    python init_data/scripts/download_buurten_fryslan.py
-
-Vereisten: pip install requests
 """
-import json
-import time
-import requests
+import geopandas as gpd
+import pandas as pd
 from pathlib import Path
 
 ROOT = Path(__file__).parent.parent.parent
 OUTPUT = ROOT / "init_data" / "fryslan" / "buurten_fryslan.geojson"
 
-# Friese gemeente CBS-codes (GM-formaat voor WFS)
-FRIESE_GEMEENTEN = [
-    'GM0059', 'GM0060', 'GM1891', 'GM1921', 'GM0072', 'GM0074',
-    'GM0080', 'GM1970', 'GM0085', 'GM0086', 'GM0088', 'GM0140',
-    'GM1900', 'GM0093', 'GM0737', 'GM0096', 'GM1949', 'GM0098'
-]
+FRIESE_GEMEENTEN = {
+    'GM0059': 'Achtkarspelen', 'GM0060': 'Ameland', 'GM1891': 'Dantumadiel',
+    'GM1921': 'De Fryske Marren', 'GM0072': 'Harlingen', 'GM0074': 'Heerenveen',
+    'GM0080': 'Leeuwarden', 'GM1970': 'Noardeast-Fryslân', 'GM0085': 'Ooststellingwerf',
+    'GM0086': 'Opsterland', 'GM0088': 'Schiermonnikoog', 'GM0140': 'Smallingerland',
+    'GM1900': 'Súdwest-Fryslân', 'GM0093': 'Terschelling', 'GM0737': 'Tytsjerksteradiel',
+    'GM0096': 'Vlieland', 'GM1949': 'Waadhoeke', 'GM0098': 'Weststellingwerf'
+}
 
-WFS_BASE = "https://geodata.nationaalgeoregister.nl/cbsgebiedsindelingen/wfs"
-LAYER = "cbsgebiedsindelingen:cbs_buurten_2024_gegeneraliseerd"
-PAGE_SIZE = 500
-
-
-def build_url(start_index=0, gemeente_filter=None):
-    params = {
-        "service": "WFS",
-        "version": "2.0.0",
-        "request": "GetFeature",
-        "typeName": LAYER,
-        "outputFormat": "application/json",
-        "srsName": "EPSG:4326",
-        "count": PAGE_SIZE,
-        "startIndex": start_index,
-    }
-    if gemeente_filter:
-        params["CQL_FILTER"] = gemeente_filter
-    return WFS_BASE, params
+WFS_BASE = "https://service.pdok.nl/cbs/gebiedsindelingen/2024/wfs/v1_0"
+LAYER = "gebiedsindelingen:buurt_gegeneraliseerd"
+PAGE_SIZE = 1000
 
 
 def download_buurten():
     print("=" * 60)
-    print("Download CBS Buurten 2024 — Fryslân")
+    print("Download CBS Buurten 2024 — Fryslân (via Geopandas GML)")
     print("=" * 60)
     print(f"Bron: PDOK WFS ({LAYER})")
-    print(f"Filter: {len(FRIESE_GEMEENTEN)} Friese gemeenten")
     print()
 
-    # Bouw CQL filter: gemeentecode IN ('GM0059', 'GM0060', ...)
-    codes_str = ",".join(f"'{c}'" for c in FRIESE_GEMEENTEN)
-    gemeente_filter = f"gemeentecode IN ({codes_str})"
-
-    all_features = []
+    all_gdfs = []
     start_index = 0
     pagina = 1
-    crs = None
 
+    print("  📥 Downloaden van alle Nederlandse buurten (GML paginering)...")
     while True:
-        print(f"  📥 Pagina {pagina} (offset {start_index})...", end=" ", flush=True)
-        url, params = build_url(start_index, gemeente_filter)
-
+        url = f"{WFS_BASE}?request=GetFeature&service=WFS&version=2.0.0&typeName={LAYER}&count={PAGE_SIZE}&startIndex={start_index}"
+        print(f"     Pagina {pagina} (offset {start_index})...", end=" ", flush=True)
         try:
-            resp = requests.get(url, params=params, timeout=60)
-            resp.raise_for_status()
-        except requests.RequestException as e:
-            print(f"\n❌ Fout: {e}")
-            break
-
-        data = resp.json()
-
-        if "features" not in data:
-            print(f"\n❌ Onverwacht response: {list(data.keys())}")
-            # Probeer zonder CQL_FILTER (layer naam misschien anders)
-            print("   Probeer zonder filter om layernaam te checken...")
-            resp2 = requests.get(WFS_BASE, params={
-                "service": "WFS", "version": "2.0.0",
-                "request": "GetFeature", "typeName": LAYER,
-                "outputFormat": "application/json", "count": "1"
-            }, timeout=30)
-            print(f"   Status: {resp2.status_code}")
-            if resp2.status_code == 200:
-                d2 = resp2.json()
-                print(f"   Keys: {list(d2.keys())}")
-                if "features" in d2 and d2["features"]:
-                    props = list(d2["features"][0].get("properties", {}).keys())
-                    print(f"   Properties: {props}")
-            break
-
-        features = data.get("features", [])
-        if crs is None:
-            crs = data.get("crs")
-        all_features.extend(features)
-        print(f"{len(features)} features → totaal: {len(all_features)}")
-
-        if len(features) < PAGE_SIZE:
-            break  # Laatste pagina
-
-        start_index += PAGE_SIZE
-        pagina += 1
-        time.sleep(0.5)  # Netjes zijn voor de API
-
-    if not all_features:
-        print("\n⚠️  Geen features ontvangen. Probeer alternatieve laagnaam...")
-        # Probeer 'gegeneraliseerd' eraf
-        return try_alternative_layer()
-
-    # Schrijf GeoJSON
-    geojson = {
-        "type": "FeatureCollection",
-        "name": "CBS Buurten 2024 - Fryslân",
-        "crs": {"type": "name", "properties": {"name": "urn:ogc:def:crs:EPSG::4326"}},
-        "features": all_features
-    }
-
-    with open(OUTPUT, 'w', encoding='utf-8') as f:
-        json.dump(geojson, f, ensure_ascii=False, separators=(',', ':'))
-
-    size_mb = OUTPUT.stat().st_size / 1024 / 1024
-    print(f"\n✅ Opgeslagen: {OUTPUT}")
-    print(f"   {len(all_features)} buurten | {size_mb:.1f} MB")
-    return True
-
-
-def try_alternative_layer():
-    """Probeer alternatieve laagnamen als de eerste niet werkt."""
-    alternative_layers = [
-        "cbsgebiedsindelingen:cbs_buurten_2024",
-        "cbsgebiedsindelingen:cbs_buurten_2023_gegeneraliseerd",
-        "cbsgebiedsindelingen:cbs_buurten_2023",
-    ]
-
-    for layer in alternative_layers:
-        print(f"  🔄 Probeer: {layer}")
-        resp = requests.get(WFS_BASE, params={
-            "service": "WFS", "version": "2.0.0",
-            "request": "GetFeature", "typeName": layer,
-            "outputFormat": "application/json", "count": "1"
-        }, timeout=30)
-
-        if resp.status_code != 200:
-            print(f"     ❌ HTTP {resp.status_code}")
-            continue
-
-        data = resp.json()
-        if "features" not in data or not data["features"]:
-            print(f"     ❌ Geen features")
-            continue
-
-        props = list(data["features"][0].get("properties", {}).keys())
-        print(f"     ✅ Werkt! Properties: {props[:8]}...")
-
-        # Voer echte download uit met deze layer
-        codes_str = ",".join(f"'{c}'" for c in FRIESE_GEMEENTEN)
-
-        # Zoek de juiste property naam voor gemeentecode
-        gem_prop = next((p for p in props if 'gemeente' in p.lower() and 'code' in p.lower()), None)
-        if not gem_prop:
-            gem_prop = next((p for p in props if 'gm_code' in p.lower() or 'gm_naam' in p.lower()), None)
-
-        print(f"     Gemeentecode property: {gem_prop}")
-        if not gem_prop:
-            print(f"     ⚠️ Alle properties: {props}")
-            continue
-
-        gemeente_filter = f"{gem_prop} IN ({codes_str})"
-        print(f"     Filter: {gemeente_filter}")
-
-        # Download alle pagina's
-        all_features = []
-        start_index = 0
-        pagina = 1
-
-        while True:
-            params = {
-                "service": "WFS", "version": "2.0.0",
-                "request": "GetFeature", "typeName": layer,
-                "outputFormat": "application/json", "srsName": "EPSG:4326",
-                "count": PAGE_SIZE, "startIndex": start_index,
-                "CQL_FILTER": gemeente_filter
-            }
-            print(f"  📥 Pagina {pagina}...", end=" ", flush=True)
-            r = requests.get(WFS_BASE, params=params, timeout=90)
-            r.raise_for_status()
-            d = r.json()
-            feats = d.get("features", [])
-            all_features.extend(feats)
-            print(f"{len(feats)} → totaal {len(all_features)}")
-            if len(feats) < PAGE_SIZE:
+            # Geopandas leest de GML stream direct
+            gdf = gpd.read_file(url)
+            print(f"{len(gdf)} features")
+            
+            if len(gdf) == 0:
                 break
+                
+            all_gdfs.append(gdf)
+            
+            if len(gdf) < PAGE_SIZE:
+                break
+                
             start_index += PAGE_SIZE
             pagina += 1
-            time.sleep(0.5)
+            
+        except Exception as e:
+            print(f"\n❌ Fout tijdens download: {e}")
+            return False
 
-        if all_features:
-            geojson = {
-                "type": "FeatureCollection",
-                "name": f"CBS Buurten — Fryslân",
-                "crs": {"type": "name", "properties": {"name": "urn:ogc:def:crs:EPSG::4326"}},
-                "features": all_features
-            }
-            with open(OUTPUT, 'w', encoding='utf-8') as f:
-                json.dump(geojson, f, ensure_ascii=False, separators=(',', ':'))
-            size_mb = OUTPUT.stat().st_size / 1024 / 1024
-            print(f"\n✅ Opgeslagen: {OUTPUT}")
-            print(f"   {len(all_features)} buurten | {size_mb:.1f} MB")
-            return True
+    if not all_gdfs:
+        print("\n⚠️  Geen features ontvangen.")
+        return False
 
-    print("\n❌ Alle alternatieven mislukt. Controleer PDOK bereikbaarheid.")
-    return False
+    print("  ⚙️  Samenvoegen en verwerken in Geopandas...")
+    combined = pd.concat(all_gdfs, ignore_index=True)
+    
+    print(f"  📊 Totaal gedownload: {len(combined)} buurten (heel NL)")
+    
+    # In deze lichte layer heten de kolommen statcode en statnaam.
+    # We hernoemen ze naar de verwachte formaten.
+    if 'statcode' in combined.columns:
+        combined['buurtcode'] = combined['statcode']
+        combined['buurtnaam'] = combined['statnaam']
+        # Gemeentecode is altijd 'GM' + de eerste 4 cijfers na 'BU'
+        combined['gemeentecode'] = 'GM' + combined['statcode'].str[2:6]
+    
+    print("  ⚙️  Filteren op Fryslân...")
+    # Lokaal filteren op de keys van onze dictionary
+    gdf_filtered = combined[combined['gemeentecode'].isin(FRIESE_GEMEENTEN.keys())].copy()
+    
+    # Voeg gemeentenaam toe
+    gdf_filtered['gemeentenaam'] = gdf_filtered['gemeentecode'].map(FRIESE_GEMEENTEN)
+    
+    print("  🗺️  Controleren op MultiPolygon compatibiliteit...")
+    # Cast alle geometrieën expliciet naar MultiPolygon, omdat PostGIS dat verwacht
+    from shapely.geometry import MultiPolygon, Polygon
+    
+    def cast_to_multipolygon(geom):
+        if geom is None:
+            return None
+        elif isinstance(geom, Polygon):
+            return MultiPolygon([geom])
+        return geom
+        
+    gdf_filtered['geometry'] = gdf_filtered['geometry'].apply(cast_to_multipolygon)
+    
+    # Zorg dat de geometrie klopt (EPSG:28992 -> EPSG:4326 voor de kaart)
+    if gdf_filtered.crs and gdf_filtered.crs.to_epsg() != 4326:
+        print("  🗺️  Reprojecteren naar EPSG:4326 (WGS84)...")
+        gdf_filtered = gdf_filtered.to_crs("EPSG:4326")
+    elif not gdf_filtered.crs:
+        # Als er geen CRS is meegekomen, ga er dan van uit dat PDOK standaard EPSG:28992 stuurt
+        gdf_filtered.set_crs("EPSG:28992", inplace=True)
+        gdf_filtered = gdf_filtered.to_crs("EPSG:4326")
+    
+    # Verwijder overtollige kolommen
+    keep_cols = ['buurtcode', 'buurtnaam', 'gemeentecode', 'gemeentenaam', 'geometry']
+    for col in gdf_filtered.columns:
+        if col not in keep_cols:
+            gdf_filtered = gdf_filtered.drop(columns=[col])
+
+    print(f"  ✅ Filter succesvol: {len(gdf_filtered)} Friese buurten over.")
+    
+    # Oude file verwijderen indien aanwezig
+    if OUTPUT.exists():
+        OUTPUT.unlink()
+        
+    # Schrijf weg als GeoJSON
+    OUTPUT.parent.mkdir(parents=True, exist_ok=True)
+    gdf_filtered.to_file(OUTPUT, driver="GeoJSON")
+    
+    size_mb = OUTPUT.stat().st_size / 1024 / 1024
+    print(f"\n✅ Opgeslagen: {OUTPUT}")
+    print(f"   {len(gdf_filtered)} buurten | {size_mb:.1f} MB")
+    
+    return True
 
 
 if __name__ == "__main__":
