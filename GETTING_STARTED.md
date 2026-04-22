@@ -39,37 +39,12 @@ source .venv/bin/activate        # Linux/macOS
 # Dependencies installeren
 pip install -r requirements.txt
 
-# Environment configuratie kopiëren
-cp .env.example .env
+# Environment instellen via de wizard
+python init_data/scripts/setup_env.py
 ```
 
-Open `.env` in een teksteditor en vul minimaal deze waarden in:
-
-```env
-# Database
-DATABASE_HOST=localhost
-DATABASE_PORT=5432
-DATABASE_NAME=omnitwin_db
-DATABASE_USER=omnitwin_user
-DATABASE_PASSWORD=kies-een-sterk-wachtwoord
-
-# Security (genereer met: openssl rand -base64 32)
-SECRET_KEY=jouw-secret-key-hier
-
-# Mapbox (gratis account op mapbox.com)
-MAPBOX_TOKEN=pk.eyJ1IjoiLi4uCg==
-
-# Admin gebruiker (wordt aangemaakt tijdens initiatie in stap 4)
-# Laat ADMIN_PASSWORD leeg om interactief in te stellen
-ADMIN_USER=admin
-ADMIN_PASSWORD=kies-een-sterk-wachtwoord
-
-# Admin Panel API key (wordt automatisch gegenereerd in stap 4)
-# ADMIN_API_KEY=  ← wordt ingevuld door create_admin.py
-
-# CORS (pas aan naar jouw URL als je remote deployed)
-CORS_ORIGINS=http://localhost:8000,http://localhost:3000
-```
+De wizard helpt je met het instellen van de benodigde inloggegevens en genereert veilige wachtwoorden en API keys.
+Je kunt ook handmatig `cp .env.example .env` uitvoeren en het bestand zelf aanpassen.
 
 ---
 
