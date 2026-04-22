@@ -113,7 +113,7 @@ CREATE TABLE IF NOT EXISTS indicatoren (
     begingeldigheid TIMESTAMP,
     eindgeldigheid TIMESTAMP,
     categorie VARCHAR(100),
-    score_type VARCHAR(10) DEFAULT '+/+' CHECK (score_type IN ('+/+', '+/-', '-/+', '-/-')),
+    score_type VARCHAR(10) DEFAULT '+/+' CHECK (score_type IN ('+/+', '+/-', '-/+', '-/-', '-=-')),
     color_schema_id INTEGER,
     admin_notes TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,

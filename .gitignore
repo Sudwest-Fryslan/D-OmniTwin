@@ -54,3 +54,11 @@ docs/4-ux-design/
 docs/5-secops/
 docs/6-ai-parallel-track/
 docs/7-projectmanagement/
+
+# ETL/local: standalone scripts (naast de app)
+# db.ini bevat database credentials — NOOIT committen!
+ETL/local/db.ini
+# output/ bevat tijdelijke CBS JSON downloads — grote bestanden, niet committen
+ETL/local/output/
+# Overige lokale ETL data
+ETL/local/data/

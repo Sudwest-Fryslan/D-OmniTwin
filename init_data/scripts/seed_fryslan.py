@@ -305,11 +305,15 @@ def import_kompas(conn):
             )
             stats["onderdelen"] += 1
 
-            # Koppel indicator als die bestaat
-            if indicator_swf:
+            # Koppel indicator — gebruik 'Indicator' kolom als primair, 'Indicator SWF' als fallback
+            indicator_naam = row.get("Indicator", "").strip()
+            if not indicator_naam:
+                indicator_naam = indicator_swf
+
+            if indicator_naam:
                 cur.execute(
                     "SELECT uuid FROM indicatoren WHERE naam ILIKE %s LIMIT 1",
-                    (indicator_swf,)
+                    (indicator_naam,)
                 )
                 ind_row = cur.fetchone()
                 if ind_row:
@@ -352,7 +356,45 @@ def import_waarden(conn):
     # Bouw indicator naam → uuid cache
     cur.execute("SELECT naam, uuid FROM indicatoren")
     indicator_cache = {row[0]: str(row[1]) for row in cur.fetchall()}
-    print(f"   📋 {len(indicator_cache)} indicatoren in cache")
+
+    # CBS-naam → DB-naam aliases (CBS OData namen ≠ seed JSON namen)
+    # Let op: geef elke CBS-naam een UNIEKE target-indicator om duplicate-batch fouten te voorkomen
+    CBS_ALIASES = {
+        "0 tot 15 jaar":                        "0-15 jaar",
+        "15 tot 25 jaar":                       "15-25 jaar",
+        "25 tot 45 jaar":                       "25-45 jaar",
+        "45 tot 65 jaar":                       "45-65 jaar",
+        "65 jaar of ouder":                     "65+ jaar",
+        "Aantal inwoners":                      "Inwoners",
+        "Afstand tot huisartsenpraktijk":       "Huisarts",
+        "Eenzaam":                              "Eenzaamheid",
+        "Ernstig eenzaam":                      "Eenzaamheid",
+        "Gemiddeld inkomen per inwoner":        "Inkomen per inwoner",
+        "Gemiddelde WOZ-waarde van woningen":   "Gemiddelde WOZ-waarde",
+        "Goed ervaren gezondheid":              "Ervaren gezondheid",
+        "Hoog risico angststoornis of depressie": "Gezondheid",
+        "Huishoudens met een laag inkomen":     "Huishoudens met laag inkomen",
+        "Huishoudens met kinderen":             "Minima kinderen",
+        "Huishoudens zonder kinderen":          "Minima huish met kinderen",  # unieke target
+        "In bezit overige verhuurders":         "Woningcorporatie bezit",
+        "In bezit woningcorporatie":            "Woningcorporatie bezit",
+        "Mantelzorger":                         "Mantelzorger",
+        "Moeite met rondkomen":                 "Moeite met rondkomen",
+        "Netto arbeidsparticipatie":            "Participatiewet 5+ jaar",
+        "Opleidingsniveau laag":                "laag",
+        "Overmatige drinker":                   "Roken",
+        "Roker":                                "Roken",
+        "Personen met bijstand":                "Participatiewet totaal",  # unieke target
+        "Voldoet aan beweegrichtlijn":          "Gezondheid",
+        "Vrijwilligerswerk":                    "Vrijwilliger",
+    }
+
+    # Breid cache uit met aliases
+    for cbs_naam, db_naam in CBS_ALIASES.items():
+        if cbs_naam not in indicator_cache and db_naam in indicator_cache:
+            indicator_cache[cbs_naam] = indicator_cache[db_naam]
+
+    print(f"   📋 {len(indicator_cache)} indicatoren in cache (incl. {len(CBS_ALIASES)} CBS-aliassen)")
 
     inserted = 0
     skipped_ind = 0
@@ -390,6 +432,12 @@ def import_waarden(conn):
 
             # Batch inserts van 500 rijen
             if len(batch) >= 500:
+                # Dedupliceer op (gebied_id, indicator_uuid, jaar) — voorkomt ON CONFLICT errors
+                seen = {}
+                for b in batch:
+                    key = (b[0], b[1], b[3])  # gebied_id, indicator_uuid, jaar
+                    seen[key] = b
+                deduped = list(seen.values())
                 try:
                     execute_values(cur, """
                         INSERT INTO gebied_data (gebied_id, indicator_uuid, waarde, jaar, bron, scenario_id)
@@ -398,18 +446,23 @@ def import_waarden(conn):
                             waarde = EXCLUDED.waarde,
                             bron = EXCLUDED.bron,
                             updated_at = CURRENT_TIMESTAMP
-                    """, [(b[0], b[1], b[2], b[3], b[4], "current") for b in batch])
-                    inserted += len(batch)
+                    """, [(b[0], b[1], b[2], b[3], b[4], "current") for b in deduped])
+                    inserted += len(deduped)
                     conn.commit()
                 except Exception as e:
-                    errors += len(batch)
-                    if errors <= 10:
+                    errors += len(deduped)
+                    if errors <= 5:
                         print(f"   ⚠️  Batch fout: {e}")
                     conn.rollback()
                 batch = []
 
     # Resterende batch
     if batch:
+        seen = {}
+        for b in batch:
+            key = (b[0], b[1], b[3])
+            seen[key] = b
+        deduped = list(seen.values())
         try:
             execute_values(cur, """
                 INSERT INTO gebied_data (gebied_id, indicator_uuid, waarde, jaar, bron, scenario_id)
@@ -418,11 +471,12 @@ def import_waarden(conn):
                     waarde = EXCLUDED.waarde,
                     bron = EXCLUDED.bron,
                     updated_at = CURRENT_TIMESTAMP
-            """, [(b[0], b[1], b[2], b[3], b[4], "current") for b in batch])
-            inserted += len(batch)
+            """, [(b[0], b[1], b[2], b[3], b[4], "current") for b in deduped])
+            inserted += len(deduped)
             conn.commit()
         except Exception as e:
-            errors += len(batch)
+            errors += len(deduped)
+            print(f"   ⚠️  Resterende batch fout: {e}")
 
     cur.close()
     print(f"   ✅ {inserted} metingen geladen")

@@ -2,8 +2,9 @@
 # Gebruik: pip install -r requirements.txt
 
 # --- Web Framework ---
-fastapi>=0.100.0
-uvicorn>=0.20.0
+fastapi==0.115.12       # starlette 1.0.0 heeft breaking changes — pin op stabiele 0.115.x
+starlette==0.41.3       # vastgezet — 1.0.0 breekt CORSMiddleware (unhashable dict)
+uvicorn[standard]==0.30.6  # [standard] = watchfiles + httptools voor hot-reload
 python-dotenv>=1.0.0
 python-multipart>=0.0.5
 Jinja2>=3.1.0
@@ -37,6 +38,7 @@ pydantic>=2.0.0
 
 # --- Auth ---
 passlib[bcrypt]>=1.7.0
+bcrypt==4.0.1  # passlib 1.7.x incompatibel met bcrypt 4.1+ (verwijderd __about__)
 
 # --- Utilities ---
 python-dateutil>=2.8.0
