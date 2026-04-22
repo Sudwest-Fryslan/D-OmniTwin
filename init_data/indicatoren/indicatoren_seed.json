@@ -2508,15 +2508,15 @@
     "heeft_data": true
   },
   {
-    "naam": "hoog",
-    "code": null,
-    "eenheid": "aantal",
+    "naam": "Opleidingsniveau hoog",
+    "code": "CBS_OPLEIDINGSNIVEAUHOOG",
+    "eenheid": "%",
     "titel": "Samenstelling",
     "thema": "Bevolking",
     "onderdeel": "Sociaal economische status",
-    "bron": "CBS (Kerncijfers_wijken_en_buurten_2020_METADATA.json)",
+    "bron": "CBS Kerncijfers wijken en buurten",
     "score_type": "+/+",
-    "heeft_data": false
+    "heeft_data": true
   },
   {
     "naam": "huishouden jaar",
@@ -2541,26 +2541,37 @@
     "heeft_data": false
   },
   {
-    "naam": "laag",
-    "code": null,
-    "eenheid": "aantal",
+    "naam": "Opleidingsniveau laag",
+    "code": "CBS_OPLEIDINGSNIVEAULAAG",
+    "eenheid": "%",
     "titel": "Samenstelling",
     "thema": "Bevolking",
     "onderdeel": "Sociaal economische status",
-    "bron": "CBS (Kerncijfers_wijken_en_buurten_2020_METADATA.json)",
-    "score_type": "+/+",
-    "heeft_data": false
+    "bron": "CBS Kerncijfers wijken en buurten",
+    "score_type": "+/-",
+    "heeft_data": true
   },
   {
-    "naam": "middelhoog",
-    "code": null,
-    "eenheid": "aantal",
+    "naam": "Opleidingsniveau middelbaar",
+    "code": "CBS_OPLEIDINGSNIVEAUMIDDELBAAR",
+    "eenheid": "%",
     "titel": "Samenstelling",
     "thema": "Bevolking",
     "onderdeel": "Sociaal economische status",
-    "bron": "CBS (Kerncijfers_wijken_en_buurten_2020_METADATA.json)",
+    "bron": "CBS Kerncijfers wijken en buurten",
     "score_type": "+/+",
-    "heeft_data": false
+    "heeft_data": true
+  },
+  {
+    "naam": "Woningvoorraad",
+    "code": "CBS_WONINGVOORRAAD",
+    "eenheid": "aantal",
+    "titel": "Samenstelling",
+    "thema": "Bebouwing",
+    "onderdeel": "Eigendom",
+    "bron": "CBS Kerncijfers wijken en buurten",
+    "score_type": "+/+",
+    "heeft_data": true
   },
   {
     "naam": "potentiële",

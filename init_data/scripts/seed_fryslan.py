@@ -374,19 +374,29 @@ def import_waarden(conn):
         "Goed ervaren gezondheid":              "Ervaren gezondheid",
         "Hoog risico angststoornis of depressie": "Gezondheid",
         "Huishoudens met een laag inkomen":     "Huishoudens met laag inkomen",
+        # ⚠️ 'Huishoudens met/zonder kinderen' (CBS) = ALLE huishoudens
+        # 'Minima kinderen/huish' = minimahuishoudens — semantisch ANDERS.
+        # TODO: maak aparte indicators aan voor Huishoudens met/zonder kinderen.
         "Huishoudens met kinderen":             "Minima kinderen",
-        "Huishoudens zonder kinderen":          "Minima huish met kinderen",  # unieke target
-        "In bezit overige verhuurders":         "Woningcorporatie bezit",
+        "Huishoudens zonder kinderen":          "Minima huish met kinderen",
+        "In bezit overige verhuurders":         "Particulier huurbezit",  # fix: was fout→Woningcorporatie
         "In bezit woningcorporatie":            "Woningcorporatie bezit",
         "Mantelzorger":                         "Mantelzorger",
         "Moeite met rondkomen":                 "Moeite met rondkomen",
+        # ⚠️ 'Netto arbeidsparticipatie' ≠ 'Participatiewet 5+ jaar' — semantisch onjuist.
+        # TODO: maak aparte indicator aan voor Netto arbeidsparticipatie.
         "Netto arbeidsparticipatie":            "Participatiewet 5+ jaar",
-        "Opleidingsniveau laag":                "laag",
-        "Overmatige drinker":                   "Roken",
+        # Opleidingsniveau: directe match na rename in DB (geen alias meer nodig als seed opnieuw geladen)
+        "Opleidingsniveau laag":                "Opleidingsniveau laag",
+        "Opleidingsniveau hoog":                "Opleidingsniveau hoog",
+        "Opleidingsniveau middelbaar":          "Opleidingsniveau middelbaar",
+        "Overmatige drinker":                   "Overmatig drinken",  # fix: was fout→Roken
         "Roker":                                "Roken",
-        "Personen met bijstand":                "Participatiewet totaal",  # unieke target
-        "Voldoet aan beweegrichtlijn":          "Gezondheid",
+        "Personen met bijstand":                "Participatiewet totaal",
+        "Voldoet aan beweegrichtlijn":          "Bewegen",  # fix: was fout→Gezondheid
         "Vrijwilligerswerk":                    "Vrijwilliger",
+        # Woningvoorraad: directe match na toevoeging indicator in DB
+        # (geen alias nodig — naam in CBS en DB zijn identiek)
     }
 
     # Breid cache uit met aliases
