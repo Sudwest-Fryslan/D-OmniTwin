@@ -103,7 +103,6 @@ CREATE TABLE IF NOT EXISTS indicatoren (
     naam VARCHAR(255) NOT NULL,
     code VARCHAR(50) UNIQUE,
     omschrijving TEXT,
-    definitie TEXT,
     eenheid VARCHAR(50),
     interpretatie_logica VARCHAR(20) DEFAULT 'pos_is_pos',
     min_waarde DECIMAL,
@@ -116,6 +115,21 @@ CREATE TABLE IF NOT EXISTS indicatoren (
     score_type VARCHAR(10) DEFAULT '+/+' CHECK (score_type IN ('+/+', '+/-', '-/+', '-/-', '-=-')),
     color_schema_id INTEGER,
     admin_notes TEXT,
+    -- Bron tracking (voor ETL en monitoring)
+    bron_systeem_api VARCHAR(255),
+    bron_tabel_referentie VARCHAR(255),
+    laatste_update_bron TIMESTAMP,
+    laatste_check_datum TIMESTAMP,
+    waarde_type VARCHAR(50),
+    -- Ontologie en AI velden (voor Admin Panel en embeddings)
+    ontologische_beschrijving TEXT,
+    ontologie_status VARCHAR(50),
+    ontologie_beoordeeld_door VARCHAR(100),
+    ontologie_beoordeeld_op TIMESTAMP,
+    beschrijving_ai TEXT,
+    gevalideerd_door UUID,
+    gevalideerd_op TIMESTAMP WITH TIME ZONE,
+    embedding_versie TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT check_status CHECK (status IN ('C', 'O', 'B'))
@@ -277,7 +291,12 @@ CREATE TABLE IF NOT EXISTS color_schemas (
     colors JSONB NOT NULL,
     is_actief BOOLEAN DEFAULT TRUE,
     created_at TIMESTAMP DEFAULT NOW(),
-    updated_at TIMESTAMP DEFAULT NOW()
+    updated_at TIMESTAMP DEFAULT NOW(),
+    -- Visualisatie configuratie
+    palette_type VARCHAR(20) DEFAULT 'sequential',  -- 'sequential' | 'diverging'
+    classificatie VARCHAR(30) DEFAULT 'quantile',   -- 'quantile' | 'equal_interval' | 'jenks' | 'diverging_midpoint'
+    klassen INTEGER DEFAULT 5,                      -- aantal klassen (5 of 7)
+    nodata_kleur VARCHAR(7) DEFAULT '#d1d5db'        -- kleur voor ontbrekende data
 );
 
 -- Foreign key toevoegen (na color_schemas bestaat)
@@ -286,6 +305,24 @@ ALTER TABLE indicatoren
     FOREIGN KEY (color_schema_id) 
     REFERENCES color_schemas(id);
 CREATE INDEX IF NOT EXISTS idx_indicatoren_color_schema ON indicatoren(color_schema_id);
+
+-- Tabel: visualisatie_profielen
+-- Pattern-gebaseerde kleurprofielen als fallback voor indicatoren zonder directe color_schema_id
+CREATE TABLE IF NOT EXISTS visualisatie_profielen (
+    id SERIAL PRIMARY KEY,
+    naam VARCHAR(100) UNIQUE NOT NULL,
+    beschrijving TEXT,
+    indicator_pattern VARCHAR(255) NOT NULL,  -- SQL LIKE pattern (bv. 'Afstand tot%')
+    color_schema_id INTEGER NOT NULL REFERENCES color_schemas(id),
+    classificatie_override VARCHAR(30),        -- overschrijft color_schema classificatie
+    klassen_override INTEGER,                  -- overschrijft color_schema klassen
+    midpoint_waarde NUMERIC,                   -- voor diverging_midpoint classificatie
+    is_actief BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_vis_profielen_actief ON visualisatie_profielen(is_actief) WHERE is_actief = TRUE;
+CREATE INDEX IF NOT EXISTS idx_vis_profielen_schema ON visualisatie_profielen(color_schema_id);
 
 -- ============================================================================
 -- SECTION 5.5: USER MANAGEMENT TABLES
@@ -422,16 +459,63 @@ CREATE OR REPLACE VIEW v_admin_indicatoren AS
 SELECT 
     i.uuid,
     i.naam,
-    i.definitie,
+    i.omschrijving,
     i.bron,
     i.eenheid,
     i.score_type,
     i.color_schema_id,
     cs.naam as color_schema_naam,
     cs.colors as color_schema_colors,
-    i.admin_notes
+    i.admin_notes,
+    i.ontologie_status,
+    i.beschrijving_ai
 FROM indicatoren i
 LEFT JOIN color_schemas cs ON i.color_schema_id = cs.id;
+
+-- View: Visualisatie config per indicator (resolved color schema)
+CREATE OR REPLACE VIEW v_visualisatie_config AS
+SELECT
+    i.uuid as indicator_uuid,
+    i.naam as indicator_naam,
+    i.score_type,
+    cs.id as schema_id,
+    cs.naam as schema_naam,
+    cs.colors,
+    cs.palette_type,
+    COALESCE(vp.classificatie_override, cs.classificatie) as classificatie,
+    COALESCE(vp.klassen_override, cs.klassen) as klassen,
+    cs.nodata_kleur,
+    vp.midpoint_waarde,
+    CASE WHEN i.color_schema_id IS NOT NULL THEN 'direct' ELSE 'profiel' END as bron_type
+FROM indicatoren i
+LEFT JOIN color_schemas cs ON i.color_schema_id = cs.id
+LEFT JOIN LATERAL (
+    SELECT vp2.classificatie_override, vp2.klassen_override, vp2.midpoint_waarde, vp2.color_schema_id
+    FROM visualisatie_profielen vp2
+    WHERE i.naam LIKE vp2.indicator_pattern AND vp2.is_actief = true
+    ORDER BY vp2.id ASC
+    LIMIT 1
+) vp ON i.color_schema_id IS NULL
+WHERE cs.id IS NOT NULL OR vp.color_schema_id IS NOT NULL;
+
+-- View: Ontologie validatiestatus
+CREATE OR REPLACE VIEW v_ontologie_validatiestatus AS
+SELECT
+    i.uuid,
+    i.naam,
+    i.ontologie_status,
+    i.ontologische_beschrijving,
+    i.ontologie_beoordeeld_door,
+    i.ontologie_beoordeeld_op,
+    i.gevalideerd_op,
+    CASE
+        WHEN i.ontologie_status = 'gevalideerd' THEN '✅'
+        WHEN i.ontologie_status = 'concept' THEN '🟡'
+        WHEN i.ontologie_status IS NULL THEN '⬜'
+        ELSE '🔴'
+    END as status_icoon
+FROM indicatoren i
+ORDER BY i.naam;
 
 -- View: Score types documentatie
 CREATE OR REPLACE VIEW v_score_types AS
@@ -522,15 +606,81 @@ INSERT INTO gemeenten (code, naam, provincie, is_eiland) VALUES
     ('0098', 'Weststellingwerf', 'Fryslân', false)
 ON CONFLICT (code) DO NOTHING;
 
-INSERT INTO color_schemas (naam, beschrijving, colors) VALUES
-    ('default', 'Standaard rood-geel-groen', 
-     '{"min": "#ef4444", "mid": "#fbbf24", "max": "#10b981"}'),
-    ('blue-red', 'Blauw naar rood', 
-     '{"min": "#3b82f6", "mid": "#a855f7", "max": "#ef4444"}'),
-    ('green-brown', 'Groen naar bruin (natuur)', 
-     '{"min": "#10b981", "mid": "#84cc16", "max": "#a16207"}'),
-    ('monochrome', 'Grijstinten', 
-     '{"min": "#1f2937", "mid": "#6b7280", "max": "#e5e7eb"}')
+INSERT INTO color_schemas (naam, beschrijving, colors, palette_type, classificatie, klassen, nodata_kleur) VALUES
+    ('default', 'Standaard rood-geel-groen (algemeen positief)',
+     '{"min": "#ef4444", "mid": "#fbbf24", "max": "#10b981"}',
+     'sequential', 'quantile', 7, '#d1d5db'),
+    ('blue-red', 'Blauw naar rood',
+     '{"min": "#3b82f6", "mid": "#a855f7", "max": "#ef4444"}',
+     'sequential', 'jenks', 7, '#d1d5db'),
+    ('green-brown', 'Groen naar bruin (natuur/klimaat)',
+     '{"min": "#10b981", "mid": "#84cc16", "max": "#a16207"}',
+     'sequential', 'quantile', 7, '#d1d5db'),
+    ('monochrome', 'Grijstinten (neutraal)',
+     '{"min": "#1f2937", "mid": "#6b7280", "max": "#e5e7eb"}',
+     'sequential', 'quantile', 7, '#d1d5db'),
+    ('sequential-blue', 'Objectief & Feitelijk (bevolking, dichtheid, aantallen)',
+     '{"min": "#deebf7", "mid": "#4292c6", "max": "#08306b"}',
+     'sequential', 'quantile', 7, '#d1d5db'),
+    ('colorblind-safe', 'Toegankelijk oordelend (gezondheid, kwaliteit, index)',
+     '{"min": "#ae2012", "mid": "#fdf0d5", "max": "#0077b6"}',
+     'diverging', 'diverging_midpoint', 7, '#d1d5db'),
+    ('subjective-gold', 'Divergerend (enquête, beleving, participatie)',
+     '{"min": "#7c3aed", "mid": "#f3f4f6", "max": "#f59e0b"}',
+     'diverging', 'diverging_midpoint', 7, '#d1d5db'),
+    ('urban-density', 'Intensiteit (bebouwing, veiligheid, verkeer)',
+     '{"min": "#fff1f2", "mid": "#fb7185", "max": "#881337"}',
+     'sequential', 'jenks', 7, '#d1d5db'),
+    ('owner-occupied-home', 'Woningmarkt eigendom (blauwschaal)',
+     '{"min": "#deebf7", "mid": "#4292c6", "max": "#08306b"}',
+     'sequential', 'equal_interval', 7, '#d1d5db')
+ON CONFLICT (naam) DO NOTHING;
+
+-- Seed: Visualisatie profielen (pattern-gebaseerde kleurprofielen als fallback)
+-- Volgorde = prioriteit: specifiekere patronen eerst (laagste id = hogere prioriteit)
+INSERT INTO visualisatie_profielen
+    (naam, beschrijving, indicator_pattern, color_schema_id, classificatie_override, klassen_override, midpoint_waarde, is_actief)
+SELECT naam, beschrijving, indicator_pattern, cs.id, classificatie_override, klassen_override, midpoint_waarde, true
+FROM (VALUES
+    -- === NABIJHEID / VOORZIENINGEN ===
+    ('profiel_afstand',     'Afstand tot voorzieningen (km)', 'Afstand tot%',         'default',          'quantile',           7, NULL),
+    -- === BEVOLKING / DEMOGRAFIE ===
+    ('profiel_leeftijd',    'Leeftijdsgroepen (aantallen)',   '%-% jaar',             'sequential-blue',  'quantile',           7, NULL),
+    ('profiel_inwoners',    'Inwonersaantallen en dichtheid', 'Inwoners%',            'sequential-blue',  'quantile',           7, NULL),
+    ('profiel_dichtheid',   'Bevolkingsdichtheid',            'Bevolkingsdichtheid%', 'sequential-blue',  'jenks',              7, NULL),
+    -- === WONEN ===
+    ('profiel_eigendom',    'Woningeigendom (corporatie, koop, particulier)', 'Woningcorporatie%', 'sequential-blue', 'equal_interval', 7, NULL),
+    ('profiel_koop',        'Koopwoningen aandeel',           'Koopwoningen%',        'sequential-blue',  'equal_interval',     7, NULL),
+    ('profiel_particulier', 'Particulier huurbezit',          'Particulier%',         'sequential-blue',  'equal_interval',     7, NULL),
+    ('profiel_woz',         'WOZ-waarden (woningprijzen)',    '%WOZ%',                'sequential-blue',  'jenks',              7, NULL),
+    ('profiel_woningmarkt', 'Woningmarkt breed',              '%woning%',             'sequential-blue',  'jenks',              7, NULL),
+    ('profiel_woningvoorraat', 'Woningvoorraad (aantallen)',  'Woningvoorraad%',      'sequential-blue',  'quantile',           7, NULL),
+    -- === OPLEIDING ===
+    ('profiel_opleiding',   'Opleidingsniveau (% per niveau)','Opleidingsniveau%',    'sequential-blue',  'equal_interval',     5, NULL),
+    -- === INKOMEN / ARMOEDE ===
+    ('profiel_inkomen',     'Inkomensindicatoren',            '%inkomen%',            'colorblind-safe',  'diverging_midpoint', 7, NULL),
+    ('profiel_minima',      'Minima- en armoedindicatoren',   'Minima%',              'colorblind-safe',  'quantile',           7, NULL),
+    ('profiel_bijstand',    'Participatiewet en bijstand',    'Participatiewet%',     'colorblind-safe',  'quantile',           7, NULL),
+    ('profiel_laag_inkomen','Huishoudens met laag inkomen',   'Huishoudens met laag%','colorblind-safe',  'quantile',           7, NULL),
+    ('profiel_rondkomen',   'Moeite met rondkomen',           'Moeite met%',          'colorblind-safe',  'quantile',           7, NULL),
+    -- === GEZONDHEID ===
+    ('profiel_ervaren_gez', 'Ervaren gezondheid (survey)',    'Ervaren%',             'colorblind-safe',  'quantile',           7, NULL),
+    ('profiel_eenzaamheid', 'Eenzaamheid en sociale isolatie','%Eenzaam%',            'colorblind-safe',  'quantile',           7, NULL),
+    ('profiel_overgewicht', 'Overgewicht en obesitas',        'Over%icht%',           'urban-density',    'quantile',           7, NULL),
+    -- === KLIMAAT / GROEN ===
+    ('profiel_groen',       'Groene leefomgeving',            '%groen%',              'green-brown',      'quantile',           7, NULL),
+    ('profiel_grondwater',  'Grondwater en wateroverlast',    '%grondwater%',         'green-brown',      'quantile',           7, NULL),
+    ('profiel_gevoelstemp', 'Gevoelstemperatuur (hittestress)','Gevoelstemperatuur%', 'urban-density',    'jenks',              7, NULL),
+    -- === VEILIGHEID ===
+    ('profiel_inbraak',     'Inbraak en diefstal',            '%inbraak%',            'urban-density',    'jenks',              7, NULL),
+    ('profiel_diefstal',    'Diefstal en beschadiging',       '%diefstal%',           'urban-density',    'jenks',              7, NULL),
+    -- === PARTICIPATIE / SOCIAAL ===
+    ('profiel_vrijwilliger','Vrijwilligerswerk',               'Vrijwilliger%',        'subjective-gold',  'quantile',           7, NULL),
+    ('profiel_mantelzorg',  'Mantelzorg',                     'Mantelzorger%',        'subjective-gold',  'quantile',           7, NULL),
+    -- === CATCH-ALL (laagste prioriteit — altijd als laatste) ===
+    ('profiel_standaard',   'Standaard kleurprofiel (catch-all voor overige indicatoren)', '%', 'default', 'quantile', 7, NULL)
+) AS p(naam, beschrijving, indicator_pattern, schema_naam, classificatie_override, klassen_override, midpoint_waarde)
+JOIN color_schemas cs ON cs.naam = p.schema_naam
 ON CONFLICT (naam) DO NOTHING;
 
 INSERT INTO kompas_configuraties (id, naam, beschrijving, is_standaard, is_actief, icoon) VALUES
