@@ -10,8 +10,8 @@
 | Veld | Waarde |
 |------|--------|
 | **Huidige versie** | v0.9.x (pre-release) |
-| **Sprint** | Dag 58 — Indicatoren Consolidatie & Init Data Completering |
-| **Laatste update** | 2026-04-20 (Dag 58) |
+| **Sprint** | Dag 59 — Initiatie Workflow & Schema Sync |
+| **Laatste update** | 2026-04-22 (Dag 59) |
 | **Bijgewerkt door** | Project-manager skill (Antigravity) |
 
 ---
@@ -43,9 +43,9 @@
 
 | Datum | Wijziging | Impact |
 |-------|-----------|--------|
+| 2026-04-22 | **Schema Sync & Setup Wizard (Dag 59)** | `schema_latest.sql` is nu 1-op-1 met de live database (toevoeging van `visualisatie_profielen` en extra kolommen in `indicatoren` en `color_schemas`). `setup_env.py` wizard toegevoegd. Python 3.10 eisen aangescherpt en pdok download script toegevoegd voor buurten. 33 visualisatie_profielen als seed geplaatst. |
 | 2026-04-20 | **Indicatoren Consolidatie (Dag 58)** | Database gesaneerd 275→235 indicatoren: 29 wees-records verwijderd, 6 naam-duplicaten gemerged (53.000+ datapunten behouden), 7 indicatoren aan Kompas gekoppeld. `indicatoren_seed.json` vernieuwd (61→235, nieuw formaat). Download-script namen gesynchroniseerd. Commit `1dbd700` gepusht. |
 | 2026-04-13 | **Initiatie Dataset + Getting Started** | `init_data/` toegevoegd (publiek, in git): 942 Friese buurten GeoJSON, 61 indicatoren seed, Kompas CSV, schema snapshot, 4 scripts, GETTING_STARTED.md. README.md Quick Start herzien. Commit `547cbf8` gepusht naar main. |
-| 2026-04-12 | **Multi-Gebiedsdossier Uitbreiding (Dag 57)** | Themafilter, top-3 uitschieters, geneste tabel, Lucide iconen, bugfix #44 case-mismatch. |
 
 ---
 
@@ -75,9 +75,9 @@
 | Sprint | Focus | Verwacht |
 |--------|-------|---------|
 | **11 Track A** | Chat Onboarding (HELP_ONBOARDING) | ✅ Geïmplementeerd |
-| **Dag 58** | Initiatie Dataset & Indicatoren Consolidatie | ✅ Voltooid — commit `1dbd700` gepusht |
+| **Dag 59** | Initiatie Workflow & Schema Sync | ✅ Voltooid — commit `a8166c4` gepusht |
 | **Jouw actie** | CBS indicatorwaarden downloaden op laptop | ⏳ Nog uit te voeren |
-| **12 (huidig)** | 3D BAG Integratie & Bug #42 | Volgende sessie (Dag 59) |
+| **12 (huidig)** | 3D BAG Integratie & Bug #42 | Volgende sessie (Dag 60) |
 | **15** | Kompas UI Uitbreiding - Ontologie & Data Tabs | Volgende Sessie |
 | **16** | Time Traveler - Indicator Historie en 3D transities | Volgende Sessie |
 | **13** | Architectuur Gaps & Security Hardening | Q2 2026 |

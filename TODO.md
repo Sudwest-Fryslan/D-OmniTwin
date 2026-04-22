@@ -1,9 +1,23 @@
 # TODO - D-OmniTwin Roadmap
 
-**Laatste Update:** 20 april 2026 (Dag 58)
-**Status:** Indicatoren Consolidatie ✅ Afgerond — Sprint 12 (Bug #42 + 3D BAG) 📋 Volgende sessie (Dag 59)
+**Laatste Update:** 22 april 2026 (Dag 59)
+**Status:** Initiatie Workflow & Schema Sync ✅ Afgerond — Sprint 12 (Bug #42 + 3D BAG) 📋 Volgende sessie (Dag 60)
 
-> **Volgende Sessie (Dag 59):** Bug #42 (3D pand-kleuring single-buurt) + Sprint 15 (Ontologie Tab) + CBS indicatorwaarden downloaden op laptop.
+> **Volgende Sessie (Dag 60):** Bug #42 (3D pand-kleuring single-buurt) + Sprint 15 (Ontologie Tab) + CBS indicatorwaarden downloaden op laptop.
+
+---
+
+## ✅ Sessie 2026-04-22: Schema Sync & Onboarding Setup (Dag 59)
+
+**Doel:** Zorgen dat een fresh install exact dezelfde database en werking oplevert als de huidige development database (Golden Source) zonder HTTP 500 crashes in de UI.
+
+- [x] **Data-Integriteit Hersteld:** Alias-mismatches in `indicatoren_seed.json` gecorrigeerd en seed-logica aangepast.
+- [x] **Setup Wizard:** Interactief script `init_data/scripts/setup_env.py` gemaakt om veilige `.env` keys te genereren zonder copy-paste werk.
+- [x] **Documentatie Opschoning:** `GETTING_STARTED.md` up-to-date (geen legacy buurten-extractor meer, fallback voor `pgvector` compilation toegevoegd).
+- [x] **Schema Sync:** 13 ontbrekende kolommen in `indicatoren`, 4 in `color_schemas` en volledige `visualisatie_profielen` tabel toegevoegd aan `schema_latest.sql`. Ontbrekende views toegevoegd.
+- [x] **Seed Data Aangevuld:** 33 `visualisatie_profielen` en 9 `color_schemas` direct in de seed/schema geïntegreerd om runtime error te voorkomen.
+- [x] **Live DB Geüpdatet:** Data ook direct in de lokale testomgeving geïnjecteerd (na het oplossen van wat blokkerende idle-in-transaction locks).
+- [x] **Commit `a8166c4`** gepusht naar `main`.
 
 ---
 
