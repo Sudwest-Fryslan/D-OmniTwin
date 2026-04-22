@@ -12,7 +12,7 @@ Zorg dat onderstaande software geïnstalleerd is voordat je begint:
 
 | Software | Versie | Installatie |
 |----------|--------|-------------|
-| Python | 3.12+ | [python.org](https://www.python.org/downloads/) |
+| Python | 3.10+ | [python.org](https://www.python.org/downloads/) |
 | PostgreSQL | 14+ | [postgresql.org](https://www.postgresql.org/download/) |
 | PostGIS extensie | 3.x | Via apt/brew of bij PostgreSQL installer |
 | pgvector extensie | latest | [github.com/pgvector/pgvector](https://github.com/pgvector/pgvector) |
@@ -94,18 +94,18 @@ sudo -u postgres psql -d omnitwin_db -c "CREATE EXTENSION vector;"
 
 De kaart en het Kompas hebben geodata nodig. Dit zijn CBS open data bestanden (CC BY licentie).
 
-### 3a. Buurten Fryslân extraheren uit lokale dataset
+### 3a. Buurten Fryslân downloaden (PDOK API)
 
-De CBS buurtenindeling 2024 staat al in de repository als GPKG-bestand (`data/cbs_pc6_huisnr_buurt/CBS_BUURTEN2024.gpkg`). Het extractiescript filtert Fryslân eruit en converteert naar GeoJSON:
+De kaart heeft geometrieën nodig van alle buurten. Het download script haalt deze direct op van de PDOK WFS API:
 
 ```bash
-python init_data/scripts/extract_buurten_fryslan.py
+python init_data/scripts/download_buurten_fryslan.py
 ```
 
-Dit leest de lokale GPKG, filtert alle 18 Friese gemeenten, converteert naar WGS84 en slaat op als `init_data/fryslan/buurten_fryslan.geojson` (~5-10 MB).
+Dit script haalt de contouren van alle 18 Friese gemeenten op (CBS gebiedsindelingen 2024), converteert ze naar het WGS84 coördinatensysteem voor de kaart, en slaat ze op als `init_data/fryslan/buurten_fryslan.geojson` (~5-10 MB).
 
 > [!NOTE]
-> De GPKG bevat heel Nederland (~14.000 buurten). De extractie duurt ~30-60 seconden.
+> Dit script vervangt het oude `extract_buurten_fryslan.py` en heeft geen lokale zware GPKG bestanden meer nodig.
 
 ### 3b. Indicatorwaarden downloaden
 
@@ -214,10 +214,10 @@ Zie [`ETL/ETL_DOCUMENTATION.md`](ETL/ETL_DOCUMENTATION.md) voor de volledige han
 |------|-----------|
 | `psql: FATAL: password authentication failed` | Controleer `DATABASE_PASSWORD` in `.env` |
 | `extension "postgis" does not exist` | Installeer PostGIS: `sudo apt install postgresql-14-postgis-3` |
-| `extension "vector" does not exist` | Installeer pgvector: zie [pgvector README](https://github.com/pgvector/pgvector) |
+| `extension "vector" does not exist` | Installeer pgvector via OS (bijv. `sudo apt install postgresql-14-pgvector`) of compileer zelf: `cd /tmp && git clone --branch v0.8.0 https://github.com/pgvector/pgvector.git && cd pgvector && make && sudo make install` |
 | `ModuleNotFoundError: No module named 'psycopg2'` | Activeer virtual environment: `source .venv/bin/activate` |
 | `ModuleNotFoundError: No module named 'passlib'` | Installeer: `pip install passlib[bcrypt]` |
-| `buurten_fryslan.geojson` niet gevonden | Voer `python init_data/scripts/extract_buurten_fryslan.py` uit |
+| `buurten_fryslan.geojson` niet gevonden | Voer `python init_data/scripts/download_buurten_fryslan.py` uit |
 | Kompas is leeg | Voer seed stap kompas uit: `python init_data/scripts/seed_fryslan.py --stap kompas` |
 | `relation "users" does not exist` | Schema is verouderd — voer `init_database.sh` opnieuw uit op een lege DB |
 | Kan niet inloggen in Admin Panel | Voer `python init_data/scripts/create_admin.py` uit om admin aan te maken |
