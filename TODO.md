@@ -87,8 +87,7 @@
 - [ ] (Aanvullen obv nieuw document)
 
 ### Track B: Visuele Overhaul Verkenning
-- [ ] Verkennen randvoorwaarden en impact van voorgestelde visuele aanpassingen
-- [ ] (Aanvullen obv nieuw document)
+- [x] Verkennen randvoorwaarden en impact van voorgestelde visuele aanpassingen *(Voltooid 2026-05-14 — zie PLAN_UX_OVERHAUL_SPRINT11B.md)*
 
 ### Track C: Indicator Type & Kwaliteit
 - [ ] Database schema uitbreiden: kolom `indicatortype` (Objectief/Subjectief) toevoegen aan `indicatoren`.
@@ -100,9 +99,91 @@
 - [ ] API-documentatie (`/docs`) beveiligen: enkel toegankelijk na login (overeenkomstig met beheeromgeving).
 
 ### Documentatie & Afsluiting
-- [ ] Nieuwe documenten analyseren en plannen concretiseren
+- [x] Nieuwe documenten analyseren en plannen concretiseren *(Voltooid — zie `docs/4-ux-design/visual/`)*
 - [ ] `ROADMAP.md` en `TODO.md` updaten na verkenning
 
+---
+
+## 🚧 Sprint 11B: UX-Overhaul — Learnability, Feedback & Cognitive Load (Gepland)
+
+**Doel:** Transitie van data-interface naar cognitief begeleid besluitvormingsplatform.  
+**Basis:** [`docs/4-ux-design/visual/PLAN_UX_OVERHAUL_SPRINT11B.md`](./docs/4-ux-design/visual/PLAN_UX_OVERHAUL_SPRINT11B.md)  
+**Branch:** `feat/ux-overhaul-sprint11b` (aan te maken)  
+**Geschatte effort:** ~13 uur (2–3 sessies)
+
+### 🔧 Voorbereiding (voor eerste codesessie)
+- [ ] **GitHub Issue aanmaken** op `github.com/TLaan/D-OmniTwin`
+    - Titel: `feat: UX-overhaul — Learnability, Feedback & Cognitive Load (Sprint 11B)`
+    - Labels: `enhancement`, `ux`, `frontend`, `sprint-11`
+    - Koppeling naar `PLAN_UX_OVERHAUL_SPRINT11B.md`
+    - Sub-tasks als GitHub task list (één per track)
+- [ ] **Feature branch aanmaken en pushen**
+    ```bash
+    git checkout -b feat/ux-overhaul-sprint11b
+    git push -u origin feat/ux-overhaul-sprint11b
+    ```
+- [ ] **Demo-omgeving opzetten** (git worktree op `main`)
+    ```bash
+    git worktree add ../D-OmniTwin-DEMO main
+    ```
+
+### Track A — Onboarding & Eerste Instap 🟥 Hoge prioriteit (~3u)
+- [ ] **A1 — Initiële onboarding** (`templates/index.html`, `app.js`, `styles.css`)
+    - [ ] Welkomstmodal HTML-structuur toevoegen aan `index.html`
+    - [ ] `initOnboarding()` functie: localStorage check `omnitwin_welcomed`, toggle modal
+    - [ ] CTA-knoppen koppelen aan EventBus-acties (identiek aan HELP_ONBOARDING intent)
+    - [ ] Glassmorphism overlay stijl + fade-in/fade-out animatie in `styles.css`
+- [ ] **A2 — Contextuele onboarding** (`app.js` — `initContextualTooltips()`)
+    - [ ] Tooltip bij eerste indicator-selectie (flag: `omnitwin_tt_indicator`)
+    - [ ] Tooltip bij eerste buurtselectie (flag: `omnitwin_tt_buurt`)
+    - [ ] Tooltip bij eerste Kompas-open (flag: `omnitwin_tt_kompas`)
+    - [ ] Tooltip bij eerste AI-response (flag: `omnitwin_tt_ai`)
+- [ ] **Commit:** `feat(ux): Track A — welkomstmodal + contextuele onboarding layer`
+
+### Track B — Directe Feedback & Micro-interacties 🟠 Gemiddelde prioriteit (~2u)
+- [ ] Hover-state pulse animatie op klikbare kaart-elementen (`styles.css`)
+- [ ] Spinner CSS voor indicator-loading state — los van 3D BAG spinner (`styles.css`)
+- [ ] Empty state styling hover-paneel (`styles.css`)
+- [ ] Tooltip direct tonen bij hover (`app.js`)
+- [ ] Hover-paneel default tekst: `"Klik op een buurt om details te bekijken"` (`app.js`)
+- [ ] Spinner activeren *vóór* choropleth-aanroep, asynchroon (`app.js`)
+- [ ] **Commit:** `feat(ux): Track B — directe feedback & micro-interacties`
+
+### Track C — Indicatornavigatie & Taxonomie-basis 🟥 Hoge prioriteit (~4u)
+- [ ] Accordion HTML-structuur met 12 thema-groepen (`templates/index.html`)
+- [ ] Zoekbalk toevoegen boven accordion (`templates/index.html`)
+- [ ] Legenda altijd zichtbaar zodra indicator actief is (`templates/index.html`)
+- [ ] `initIndicatorAccordion()`: groeperen op `thema` uit Kompas-structuur (`app.js`)
+- [ ] Zoekfilter keyup-event + debounce 150ms (`app.js`)
+- [ ] Legenda direct renderen bij selectie, niet na choropleth (`app.js`)
+- [ ] Accordion + zoekbalk stijl glassmorphism consistent (`styles.css`)
+- [ ] **Commit:** `feat(ux): Track C — indicator accordion, zoekfunctie & taxonomie-basis`
+
+### Track D — Visualisatie-consistentie & WCAG 🟡 Lage prioriteit (~2.5u)
+- [ ] Goud outline via `getLineColor` + `getLineWidth` (deck.gl) bij selectie (`app.js`)
+- [ ] Fill-kleur behouden bij selectie — niet overschrijven (`app.js`)
+- [ ] Legenda synchroon met actief kleurschema — Sprint 5D TODO afronden (`app.js` + backend)
+- [ ] Colorblind-safe palet verificatie gezondheidsdata (WCAG)
+- [ ] WCAG AA contrast check legenda-tekst (Chrome Accessibility Inspector)
+- [ ] Visuele check op beamer / extern scherm
+- [ ] Dark mode consistentie controleren
+- [ ] **Commit:** `feat(ux): Track D — outline-selectie, legenda sync & WCAG check`
+
+### Track E — LLM Trust Laag & AI-Governance 🟡 Lage prioriteit (~1.5u)
+- [ ] Badge/label onderscheid AI-gegenereerd vs. rule-based (`chat.js`)
+- [ ] Disclaimer bij LLM-response (`chat.js`)
+- [ ] Kompas detailpaneel: rule-based tekstinterpretatie hoog/laag/gemiddeld (`index.html`)
+- [ ] Optionele LLM-verrijking via `generate_chat_narrative()` in `llm_service.py`
+- [ ] **Commit:** `feat(ux): Track E — LLM trust laag, governance-notitie & rule-based interpretatie`
+
+### Afsluiting & Merge
+- [ ] Performance check alle tracks (zie budget in plan)
+- [ ] Handmatige walk-through customer journey (niet-data-vaardig perspectief)
+- [ ] Controleren: Kompas, Chat, Rapport, Multi-Gebiedsdossier intact
+- [ ] Pull Request aanmaken naar `main` met verwijzing naar GitHub issue
+- [ ] Squash merge na review
+- [ ] STATE.md bijwerken: Sprint 11B componenten op 🟢 Actief
+- [ ] Post-sprint gebruikersvalidatie plannen (3 × 30 min, pilotgemeenten)
 
 ---
 

@@ -10,8 +10,8 @@
 | Veld | Waarde |
 |------|--------|
 | **Huidige versie** | v0.9.x (pre-release) |
-| **Sprint** | Dag 59 — Initiatie Workflow & Schema Sync |
-| **Laatste update** | 2026-04-22 (Dag 59) |
+| **Sprint** | Sprint 11B — UX-Overhaul (gepland, branch aanmaken) |
+| **Laatste update** | 2026-05-14 (Dag 60) |
 | **Bijgewerkt door** | Project-manager skill (Antigravity) |
 
 ---
@@ -32,6 +32,9 @@
 | **Ontologie generatie** | 🟢 Actief | Fence & Source philosophy geïmplementeerd |
 | **Multi-Gebiedsdossier rapport** | 🟢 Actief | Voltooid incl. bugfixes en colorblind-safe visualisatie |
 | **Initiatie Dataset (init_data/)** | 🟢 Compleet | 942 Friese buurten, **235 indicatoren** (gesaneerd + nieuw formaat), scripts + GETTING_STARTED.md |
+| **Onboarding Modal + Contextuele Tooltips** | 🟡 Gepland | Sprint 11B Track A — feature branch aanmaken |
+| **Indicator Accordion + Zoekfunctie** | 🟡 Gepland | Sprint 11B Track C — eerste stap formele taxonomie |
+| **LLM Trust & Governance Laag** | 🟡 Gepland | Sprint 11B Track E — disclaimer + rule-based interpretatie |
 | **Kompas Data Ontologie UI** | 🔴 Gepland | Sprint 15 — tabblad in detailpaneel |
 | **Time Slider** | 🔴 Gepland | Sprint 16 — Indicator Historie & 3D Transities |
 | **Data Lineage** | 🔴 Gepland | Sprint 8F — nog niet gestart |
@@ -43,9 +46,9 @@
 
 | Datum | Wijziging | Impact |
 |-------|-----------|--------|
+| 2026-05-14 | **Sprint 11B UX-Overhaul Plan (Dag 60)** | Volledig implementatieplan opgesteld op basis van UX-review, extern advies en second opinion. Plan omvat 5 tracks (A–E): onboarding, feedback, indicatornavigatie, kleurconsistentie en LLM-governance. Designfilosofie vastgelegd. UX-documenten toegevoegd aan `docs/4-ux-design/visual/`. GitHub issue + branch staan klaar om aangemaakt te worden. |
 | 2026-04-22 | **Schema Sync & Setup Wizard (Dag 59)** | `schema_latest.sql` is nu 1-op-1 met de live database (toevoeging van `visualisatie_profielen` en extra kolommen in `indicatoren` en `color_schemas`). `setup_env.py` wizard toegevoegd. Python 3.10 eisen aangescherpt en pdok download script toegevoegd voor buurten. 33 visualisatie_profielen als seed geplaatst. |
 | 2026-04-20 | **Indicatoren Consolidatie (Dag 58)** | Database gesaneerd 275→235 indicatoren: 29 wees-records verwijderd, 6 naam-duplicaten gemerged (53.000+ datapunten behouden), 7 indicatoren aan Kompas gekoppeld. `indicatoren_seed.json` vernieuwd (61→235, nieuw formaat). Download-script namen gesynchroniseerd. Commit `1dbd700` gepusht. |
-| 2026-04-13 | **Initiatie Dataset + Getting Started** | `init_data/` toegevoegd (publiek, in git): 942 Friese buurten GeoJSON, 61 indicatoren seed, Kompas CSV, schema snapshot, 4 scripts, GETTING_STARTED.md. README.md Quick Start herzien. Commit `547cbf8` gepusht naar main. |
 
 ---
 
@@ -63,6 +66,7 @@
 
 | Risico | Kans | Impact | Mitigatie |
 |--------|------|--------|-----------|
+| Sprint 11B introduceert UX-schuld in monolithische `app.js` | Middel | Hoog | Werkafspraak: nieuwe code als losse init-functies + EventBus (vastgelegd in plan) |
 | Rootbestanden (README, TODO, ROADMAP) raken verouderd | Middel | Hoog | State.md als leidend document aanhouden |
 | Skills werken zonder STATE.md-context | Middel | Middel | Standaard werkwijze nu in alle skills |
 | Applicatie wordt gezien als verplicht product/SaaS | Middel | Hoog | Strikte positionering als open methodiek + referentie (EUPL) |
@@ -76,10 +80,11 @@
 |--------|-------|---------|
 | **11 Track A** | Chat Onboarding (HELP_ONBOARDING) | ✅ Geïmplementeerd |
 | **Dag 59** | Initiatie Workflow & Schema Sync | ✅ Voltooid — commit `a8166c4` gepusht |
+| **11B (huidig)** | UX-Overhaul — Tracks A t/m E | 🟡 Plan klaar — GitHub issue + branch aanmaken |
 | **Jouw actie** | CBS indicatorwaarden downloaden op laptop | ⏳ Nog uit te voeren |
-| **12 (huidig)** | 3D BAG Integratie & Bug #42 | Volgende sessie (Dag 60) |
-| **15** | Kompas UI Uitbreiding - Ontologie & Data Tabs | Volgende Sessie |
-| **16** | Time Traveler - Indicator Historie en 3D transities | Volgende Sessie |
+| **12** | 3D BAG Integratie & Bug #42 | Geparkeerd — na Sprint 11B |
+| **15** | Kompas UI Uitbreiding - Ontologie & Data Tabs + Taxonomie verdieping | Na Sprint 11B |
+| **16** | Time Traveler - Indicator Historie en 3D transities | Q3 2026 |
 | **13** | Architectuur Gaps & Security Hardening | Q2 2026 |
 | **14** | Open Source Decoupling (EUPL) | Q2 2026 |
 | **8F** | Data Lineage & Dataspace Orchestrator | Q3 2026 |
