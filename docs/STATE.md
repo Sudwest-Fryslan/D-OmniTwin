@@ -10,8 +10,8 @@
 | Veld | Waarde |
 |------|--------|
 | **Huidige versie** | v0.9.x (pre-release) |
-| **Sprint** | Sprint 11B — UX-Overhaul (Track A ✅ voltooid, Track B volgende) |
-| **Laatste update** | 2026-05-15 (Dag 61) |
+| **Sprint** | Sprint 11B — UX-Overhaul ✅ Voltooid (alle 5 tracks gemerged naar main) |
+| **Laatste update** | 2026-05-15 (Dag 62) |
 | **Bijgewerkt door** | Project-manager skill (Antigravity) |
 
 ---
@@ -34,8 +34,10 @@
 | **Initiatie Dataset (init_data/)** | 🟢 Compleet | 942 Friese buurten, **235 indicatoren** (gesaneerd + nieuw formaat), scripts + GETTING_STARTED.md |
 | **Onboarding Modal + Contextuele Tooltips** | 🟢 Actief | Sprint 11B Track A ✅ — welkomstmodal, 4 contexttooltips, `window.EventBus` fix |
 | **Error Toast Notificaties** | 🟢 Actief | Sprint 11B — `showError()` geüpgraded van `alert()` naar glassmorphism toast |
-| **Indicator Accordion + Zoekfunctie** | 🟡 Gepland | Sprint 11B Track C — volgende stap formele taxonomie |
-| **LLM Trust & Governance Laag** | 🟡 Gepland | Sprint 11B Track E — disclaimer + rule-based interpretatie |
+| **Feedback & Micro-interacties** | 🟢 Actief | Sprint 11B Track B ✅ — empty state, inline spinner, indicator badge, hover cursor |
+| **Indicator Accordion + Zoekfunctie** | 🟢 Actief | Sprint 11B Track C ✅ — Kompas-thema groepering, debounce zoek, highlight |
+| **Visualisatie WCAG & Outline Selectie** | 🟢 Actief | Sprint 11B Track D ✅ — goud outline, legenda hints, contrast fixes |
+| **LLM Trust & Governance Laag** | 🟢 Actief | Sprint 11B Track E ✅ — bronlabel (rule-based/AI), disclaimer |
 | **Kompas Data Ontologie UI** | 🔴 Gepland | Sprint 15 — tabblad in detailpaneel |
 | **Time Slider** | 🔴 Gepland | Sprint 16 — Indicator Historie & 3D Transities |
 | **Data Lineage** | 🔴 Gepland | Sprint 8F — nog niet gestart |
@@ -47,9 +49,9 @@
 
 | Datum | Wijziging | Impact |
 |-------|-----------|--------|
-| 2026-05-15 | **Sprint 11B Track A — Onboarding Layer (Dag 61)** | Welkomstmodal (A1) en contextuele tooltips (A2) volledig geïmplementeerd op feature branch `feat/ux-overhaul-sprint11b`. Bonus: `showError()` → toast, modal vóór async API-calls geplaatst. `window.EventBus` referenties gecorrigeerd. Commit `0652565` gepusht. Demo-worktree `D-OmniTwin-DEMO` + `start_demo.sh` aangemaakt. |
-| 2026-05-14 | **Sprint 11B UX-Overhaul Plan (Dag 60)** | Volledig implementatieplan opgesteld op basis van UX-review, extern advies en second opinion. GitHub Issue #7 aangemaakt, feature branch `feat/ux-overhaul-sprint11b` gepusht. Demo-worktree opgezet. |
-| 2026-04-22 | **Schema Sync & Setup Wizard (Dag 59)** | `schema_latest.sql` gesynchroniseerd met live DB, `setup_env.py` toegevoegd, 33 visualisatie_profielen als seed geplaatst. |
+| 2026-05-15 | **Sprint 11B — UX-Overhaul voltooid (Dag 62)** | Alle 5 tracks (A t/m E) geïmplementeerd en squash-gemerged naar `main` (`2fbb00c`). 1712 regels toegevoegd. Feature branch `feat/ux-overhaul-sprint11b` behouden. Closes #7. |
+| 2026-05-15 | **Sprint 11B Track A — Onboarding Layer (Dag 61)** | Welkomstmodal + tooltips + toast notificaties. |
+| 2026-05-14 | **Sprint 11B UX-Overhaul Plan (Dag 60)** | Implementatieplan, GitHub Issue #7, feature branch. |
 
 ---
 
@@ -79,14 +81,10 @@
 
 | Sprint | Focus | Verwacht |
 |--------|-------|---------|
-| **11B Track A** | UX-Overhaul — Onboarding modal + tooltips | ✅ Voltooid — commit `0652565` |
-| **11B Track B** | Directe Feedback & Micro-interacties | 🔜 Volgende sessie |
-| **11B Track C** | Indicator Accordion + Zoekfunctie + Taxonomie | 🟡 Gepland |
-| **11B Track D** | Visualisatie-consistentie & WCAG | 🟡 Gepland |
-| **11B Track E** | LLM Trust Laag & AI-Governance | 🟡 Gepland |
+| **11B** | UX-Overhaul — Alle 5 tracks | ✅ Voltooid — squash merge `2fbb00c` |
 | **Jouw actie** | CBS indicatorwaarden downloaden op laptop | ⏳ Nog uit te voeren |
-| **12** | 3D BAG Integratie & Bug #42 | Geparkeerd — na Sprint 11B |
-| **15** | Kompas UI Uitbreiding - Ontologie & Data Tabs + Taxonomie verdieping | Na Sprint 11B |
+| **12** | 3D BAG Integratie & Bug #42 | 🔜 Volgende sprint |
+| **15** | Kompas UI Uitbreiding - Ontologie & Data Tabs + Taxonomie verdieping | Na Sprint 12 |
 | **16** | Time Traveler - Indicator Historie en 3D transities | Q3 2026 |
 | **13** | Architectuur Gaps & Security Hardening | Q2 2026 |
 | **14** | Open Source Decoupling (EUPL) | Q2 2026 |

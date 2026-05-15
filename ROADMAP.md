@@ -843,8 +843,8 @@ Gebruikersinteracties verrijken het systeem:
 ### Technische Mijlpalen (volgorde):
 1. **Sprint 9 (Voltooid):** Ontologie Validatie-workflow in Admin Panel + Aggregatielagen.
 2. **Sprint 10 (Voltooid):** `POST /api/chat` met Command Dispatch output + frontend actie-knoppen + Chat↔Kompas sync.
-3. **Sprint 11 (Gepland):** Chat Afronding & Visuele Overhaul (Verkenning) — 'muis' functionaliteit verfijnen en complexe visuele aanpassingen verkennen.
-4. **Sprint 12 (Gepland):** 3D BAG Integratie — realistische pandmodellen via deck.gl Tile3DLayer + pand-niveau indicator koppeling.
+3. **Sprint 11B (Voltooid):** UX-Overhaul — 5 tracks (A t/m E) geïmplementeerd. Onboarding, feedback micro-interacties, indicator accordion, WCAG en AI-governance. Squash merge `2fbb00c` → `main`. Closes #7.
+4. **Sprint 12 (Volgende):** 3D BAG Integratie — realistische pandmodellen via deck.gl Tile3DLayer + pand-niveau indicator koppeling.
 5. **Sprint 13:** Feedback Loop UI (👍/👎) + koppeling aan validatieworkflow + Chat SSE streaming.
 6. **Sprint 14+:** Aggregatielagen (PC6, PC4, Woonplaats) + finetuning dataset opbouw.
 
