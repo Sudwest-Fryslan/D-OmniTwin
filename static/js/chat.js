@@ -98,9 +98,25 @@ class ChatPanel {
         
         let html = `<div class="chat-message-bubble assistant">`;
         
+        // Track E: Bronlabel (governance)
+        const mode = response.debug?.mode || 'unknown';
+        const isLLM = mode === 'intelligent_dispatcher' || mode === 'legacy_fallback';
+        const isRuleBased = mode === 'deterministic_onboarding';
+        const sourceLabel = isRuleBased ? '📐 Rule-based' : isLLM ? '🤖 AI-gegenereerd' : '';
+        const sourceClass = isRuleBased ? 'source-rule' : 'source-ai';
+
+        if (sourceLabel) {
+            html += `<span class="chat-source-badge ${sourceClass}">${sourceLabel}</span>`;
+        }
+
         // Narrative tekst
         if (response.narrative) {
             html += `<p class="chat-narrative">${this._escapeHtml(response.narrative)}</p>`;
+        }
+
+        // Track E: Disclaimer bij LLM-responses
+        if (isLLM) {
+            html += `<p class="chat-disclaimer">⚠️ Dit antwoord is AI-gegenereerd. Controleer belangrijke gegevens altijd via de originele bron.</p>`;
         }
 
         // Actie-knoppen

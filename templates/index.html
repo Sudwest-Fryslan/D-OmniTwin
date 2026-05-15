@@ -19,6 +19,118 @@
 </head>
 
 <body>
+
+  <!-- ================================================================
+       Track A1 — Welkomstmodal (Initiële Onboarding)
+       Toont éénmalig bij eerste bezoek via localStorage flag 'omnitwin_welcomed'
+       ================================================================ -->
+  <div id="welcome-modal-overlay" class="welcome-overlay" role="dialog" aria-modal="true" aria-labelledby="welcome-title" style="display:none;">
+    <div class="welcome-modal" id="welcome-modal">
+      <!-- Decoratieve achtergrond-accent -->
+      <div class="welcome-modal-glow"></div>
+
+      <!-- Header -->
+      <div class="welcome-modal-header">
+        <div class="welcome-logo-row">
+          <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none"
+            stroke="var(--accent-color)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="m16.24 7.76-1.804 5.411a2 2 0 0 1-1.265 1.265L7.76 16.24l1.804-5.411a2 2 0 0 1 1.265-1.265z"/>
+            <circle cx="12" cy="12" r="10"/>
+          </svg>
+          <span class="welcome-product-name">D-OmniTwin</span>
+        </div>
+        <h2 id="welcome-title" class="welcome-title">Welkom bij D-OmniTwin</h2>
+        <p class="welcome-subtitle">Een beslisondersteunend platform voor gebiedsanalyse in Fryslân</p>
+      </div>
+
+      <!-- Drie stappen -->
+      <div class="welcome-steps">
+        <div class="welcome-step">
+          <div class="welcome-step-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"/>
+              <circle cx="12" cy="10" r="3"/>
+            </svg>
+          </div>
+          <div class="welcome-step-text">
+            <strong>1. Kies gemeente</strong>
+            <span>Selecteer een Friese gemeente of bekijk heel Fryslân</span>
+          </div>
+        </div>
+        <div class="welcome-step">
+          <div class="welcome-step-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M14 4v10.54a4 4 0 1 1-4 0V4a2 2 0 0 1 4 0Z"/>
+            </svg>
+          </div>
+          <div class="welcome-step-text">
+            <strong>2. Kies indicator</strong>
+            <span>235+ indicatoren over leefbaarheid, gezondheid en meer</span>
+          </div>
+        </div>
+        <div class="welcome-step">
+          <div class="welcome-step-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="m16.24 7.76-1.804 5.411a2 2 0 0 1-1.265 1.265L7.76 16.24l1.804-5.411a2 2 0 0 1 1.265-1.265z"/>
+              <circle cx="12" cy="12" r="10"/>
+            </svg>
+          </div>
+          <div class="welcome-step-text">
+            <strong>3. Bekijk het Kompas</strong>
+            <span>Klik op een buurt voor een volledig gebiedsprofiel</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- CTA knoppen -->
+      <div class="welcome-actions">
+        <button id="welcome-btn-kaart" class="welcome-btn welcome-btn-primary" onclick="startOnboarding('kaart')">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14.106 5.553a2 2 0 0 0 1.788 0l3.659-1.83A1 1 0 0 1 21 4.619v12.764a1 1 0 0 1-.553.894l-4.553 2.277a2 2 0 0 1-1.788 0l-4.212-2.106a2 2 0 0 0-1.788 0l-3.659 1.83A1 1 0 0 1 3 19.381V6.618a1 1 0 0 1 .553-.894l4.553-2.277a2 2 0 0 1 1.788 0z"/>
+            <path d="M15 5.764v15"/><path d="M9 3.236v15"/>
+          </svg>
+          Kaart verkennen
+        </button>
+        <button id="welcome-btn-kompas" class="welcome-btn welcome-btn-secondary" onclick="startOnboarding('kompas')">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="m16.24 7.76-1.804 5.411a2 2 0 0 1-1.265 1.265L7.76 16.24l1.804-5.411a2 2 0 0 1 1.265-1.265z"/>
+            <circle cx="12" cy="12" r="10"/>
+          </svg>
+          Kompas begrijpen
+        </button>
+        <a id="welcome-btn-help" class="welcome-btn welcome-btn-ghost" href="/static/help.html" target="_blank" onclick="dismissWelcomeModal()">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/>
+            <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
+          </svg>
+          Handleiding
+        </a>
+      </div>
+
+      <!-- Sluit-link -->
+      <button class="welcome-skip" id="welcome-skip-btn" onclick="dismissWelcomeModal()">
+        Overslaan — direct naar de kaart
+      </button>
+    </div>
+  </div>
+
+  <!-- ================================================================
+       Track A2 — Contextuele Tooltip (Just-in-time onboarding)
+       Wordt aangestuurd door initContextualTooltips() in app.js
+       ================================================================ -->
+  <div id="contextual-tooltip" class="contextual-tooltip" style="display:none;" role="status" aria-live="polite">
+    <div class="contextual-tooltip-inner">
+      <span id="contextual-tooltip-text"></span>
+      <button class="contextual-tooltip-close" id="contextual-tooltip-close" aria-label="Sluit tip">✕</button>
+    </div>
+  </div>
+
   <!-- Header -->
   <header class="header">
     <img src="/static/images/TL-logo_v1.png" alt="TL Logo" class="header-logo">
@@ -241,20 +353,39 @@
             <span class="help-text" id="gebiedstype-count">Selecteer een gebiedstype</span>
           </div>
 
-          <!-- Indicator Selector -->
-          <div class="form-group">
-            <label for="indicator-select" style="display: flex; align-items: center; gap: 6px;">
+          <!-- Indicator Selector (Track C — Accordion met zoekbalk) -->
+          <div class="form-group" id="indicator-section">
+            <label style="display: flex; align-items: center; gap: 6px;">
               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
-                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                class="lucide lucide-thermometer-icon lucide-thermometer">
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M14 4v10.54a4 4 0 1 1-4 0V4a2 2 0 0 1 4 0Z" />
               </svg>
               Indicator
             </label>
-            <select id="indicator-select" class="form-control" disabled>
+
+            <!-- C1: Zoekbalk -->
+            <div class="indicator-search-wrapper">
+              <svg class="indicator-search-icon" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
+                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>
+              </svg>
+              <input type="text" id="indicator-search" class="form-control indicator-search-input"
+                placeholder="Zoek indicator..." autocomplete="off" disabled>
+              <button id="indicator-search-clear" class="indicator-search-clear" style="display:none;" aria-label="Wis zoekterm">✕</button>
+            </div>
+
+            <!-- C2: Accordion container -->
+            <div id="indicator-accordion" class="indicator-accordion">
+              <div class="indicator-accordion-empty">
+                <p>Selecteer eerst een gebiedstype</p>
+              </div>
+            </div>
+
+            <!-- C3: Telling + hidden select (fallback voor state management) -->
+            <span class="help-text" id="indicator-coverage">Selecteer een indicator</span>
+            <select id="indicator-select" class="form-control" disabled style="display:none;">
               <option value="">Selecteer eerst gebiedstype</option>
             </select>
-            <span class="help-text" id="indicator-coverage">Selecteer een indicator</span>
           </div>
 
           <!-- Visualization Options -->
@@ -296,11 +427,30 @@
           </button>
         </div>
 
-        <!-- Info Panel (Hidden by default) -->
-        <div id="gebied-info" class="panel info-panel" style="display: none;">
+        <!-- Info Panel (Track B — Empty state standaard zichtbaar) -->
+        <div id="gebied-info" class="panel info-panel">
           <h3 class="panel-title">Gebied Details</h3>
+          <!-- Track B: Actieve indicator badge (wordt gevuld door JS) -->
+          <div id="active-indicator-badge" class="active-indicator-badge" style="display:none;">
+            <span class="active-indicator-badge-dot"></span>
+            <span class="active-indicator-badge-text">
+              <span class="active-indicator-badge-name" id="active-indicator-name"></span>
+            </span>
+          </div>
           <div id="gebied-details" class="details-content">
-            <!-- Populated by JavaScript -->
+            <!-- Track B1: Default empty state -->
+            <div class="empty-state" id="gebied-empty-state">
+              <svg class="empty-state-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"/>
+                <circle cx="12" cy="10" r="3"/>
+              </svg>
+              <p class="empty-state-title">Klik op een buurt</p>
+              <p class="empty-state-text">
+                Selecteer een buurt op de kaart om details te bekijken.
+                Gebruik <kbd>Shift+klik</kbd> om meerdere buurten te vergelijken.
+              </p>
+            </div>
           </div>
         </div>
       </div>

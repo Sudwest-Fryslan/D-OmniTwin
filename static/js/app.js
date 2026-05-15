@@ -75,6 +75,8 @@ function toggleGebiedSelection(gebiedId) {
 /** Helper: clear alle geselecteerde gebieden */
 function clearGebiedSelection() {
     state.selectedGebiedIds.clear();
+    // Track B: Herstel empty state in info-paneel
+    showGebiedEmptyState();
 }
 
 /** Helper: namen ophalen van geselecteerde gebieden uit currentData */
@@ -123,6 +125,11 @@ getFillColor: d => {
         try {
             initTheme(); // Initialize theme FIRST
             setupThemeToggle(); // Setup toggle listener
+
+            // Track A — Onboarding EERST (Sprint 11B)
+            // Modal moet altijd tonen, ook als de backend tijdelijk onbereikbaar is.
+            initOnboarding();
+
             initDeckGL();
             // Initialize Floating Windows FIRST
             if (window.DraggableWindow) {
@@ -137,6 +144,15 @@ getFillColor: d => {
             setupEventListeners();
             setupTabBar();
 
+            // Track A2 — Contextuele tooltips (na alle EventBus setup)
+            initContextualTooltips();
+
+            // Track B — Directe feedback & micro-interacties (Sprint 11B)
+            initFeedbackLayer();
+
+            // Track C — Indicator zoekfunctie (Sprint 11B)
+            initIndicatorSearch();
+
             // DON'T auto-open any panel - let user click tab buttons
 
             // Escape key → reset actieve indicator
@@ -147,12 +163,11 @@ getFillColor: d => {
             });
 
             console.log('✅ Applicatie succesvol geladen');
-            console.log(`📍 Mapbox: ${state.mapboxToken ? 'Enabled' : 'Disabled'}`)
-                ;
+            console.log(`📍 Mapbox: ${state.mapboxToken ? 'Enabled' : 'Disabled'}`);
             console.log(`🎨 Theme: ${state.currentTheme}`);
         } catch (error) {
             console.error('❌ Fout bij initialisatie:', error);
-            showError('Fout bij laden van applicatie');
+            showError('Fout bij laden van applicatie — controleer de server verbinding.');
         }
     });
 
@@ -445,6 +460,13 @@ function initDeckGL() {
                 };
             }
             return null;
+        },
+
+        // Track B4: Cursor feedback bij hover over pickable objecten
+        getCursor: ({isHovering, isDragging}) => {
+            if (isDragging) return 'grabbing';
+            if (isHovering) return 'pointer';
+            return 'grab';
         }
     });
 
@@ -691,6 +713,9 @@ async function loadKaartData() {
 }
 
 async function loadGebiedDetails(gebiedId) {
+    // Track B2: Toon inline spinner terwijl data wordt geladen
+    showInlineLoading('Gebieddetails laden...');
+
     try {
         const response = await fetch(`${API_BASE}/gebieden/${gebiedId}`);
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
@@ -701,6 +726,7 @@ async function loadGebiedDetails(gebiedId) {
         console.log(`✅ Details geladen voor ${gebiedId}`);
     } catch (error) {
         console.error('❌ Fout bij laden gebied details:', error);
+        showGebiedEmptyState(); // Fallback naar empty state bij fout
     }
 }
 // ============================================================================
@@ -933,18 +959,11 @@ function displayOnMap(geojson) {
 
         // Colors
         getFillColor: d => {
-            // Check for multi-selection first
-            const featureId = d.id || d.properties?.id;
-            if (featureId && isGebiedSelected(featureId)) {
-                const highlightOpacity = state.enable3D ? 255 : 200;
-                return [197, 157, 0, highlightOpacity]; // Geo Gold highlight for selection (#c59d00)
-            }
-
+            // Track D: Geselecteerde buurten behouden hun indicator-kleur
+            // (gouden outline vervangt de oude gold fill-override)
             const value = d.properties.indicator_waarde;
             if (value === null || value === undefined) {
                 // Determine "No Data" color based on theme
-                // Light Mode: Dark Grey (80) + High Opacity (200) -> visible dark grey shape
-                // Dark Mode: Light Grey (200) + Medium Opacity (100) -> visible light shape
                 const r = state.currentTheme === 'dark' ? 200 : 80;
                 const g = state.currentTheme === 'dark' ? 200 : 80;
                 const b = state.currentTheme === 'dark' ? 200 : 80;
@@ -954,25 +973,33 @@ function displayOnMap(geojson) {
 
             // Use Backend Color if available (Sync with Kompas)
             if (d.properties.color) {
-                // Parse Hex to RGB
                 const hex = d.properties.color;
                 const r = parseInt(hex.slice(1, 3), 16);
                 const g = parseInt(hex.slice(3, 5), 16);
                 const b = parseInt(hex.slice(5, 7), 16);
-
-                // Opacity based on theme (Fully opaque in 3D to prevent transparency artifacts)
-                const opacity = state.enable3D ? 255 : (state.currentTheme === 'dark' ? 204 : 240); // 80% Dark, 94% Light
+                const opacity = state.enable3D ? 255 : (state.currentTheme === 'dark' ? 204 : 240);
                 return [r, g, b, opacity];
             }
 
             // Fallback (Client-side calc)
             return getColorRGB(value, minValue, maxValue, state.enable3D);
         },
-        // Theme-aware borders: 
-        // Dark Mode: White (standard)
-        // Light Mode: White (to contrast against the Dark Grey fill of "No Data" areas)
-        getLineColor: d => [255, 255, 255, 200], // Always white borders for best contrast against both Dark fill (Light Mode) and Color fill
-        getLineWidth: 20,
+
+        // Track D: Gouden outline bij selectie, witte borders voor overige
+        getLineColor: d => {
+            const featureId = d.id || d.properties?.id;
+            if (featureId && isGebiedSelected(featureId)) {
+                return [234, 179, 8, 255]; // Geo Gold (#eab308)
+            }
+            return [255, 255, 255, 200]; // White border
+        },
+        getLineWidth: d => {
+            const featureId = d.id || d.properties?.id;
+            if (featureId && isGebiedSelected(featureId)) {
+                return 80; // Dikke gouden rand bij selectie
+            }
+            return 20; // Standaard dunne rand
+        },
 
         // 3D Height
         getElevation: d => {
@@ -990,6 +1017,11 @@ function displayOnMap(geojson) {
         pickable: true,
         autoHighlight: true,
         highlightColor: [234, 179, 8, 150], // Geo Gold hover (#eab308)
+
+        // Track B4: Hover cursor feedback
+        onHover: (info) => {
+            setMapHoverCursor(!!info.object);
+        },
 
         // 3D Material Properties for Lighting (Only in 3D)
         material: state.enable3D ? {
@@ -1053,13 +1085,19 @@ function displayOnMap(geojson) {
         // Note: Artifacts may occur when switching 2D/3D, but smooth data updates are preferred
         transitions: {
             getFillColor: 300,
-            getElevation: 500
+            getElevation: 500,
+            getLineColor: 300,
+            getLineWidth: 200
         },
+
+        // Track D: lineWidthMinPixels zodat gouden rand altijd zichtbaar is
+        lineWidthMinPixels: 1,
 
         // Performance - CRITICAL FIX: Force re-render on state changes
         updateTriggers: {
-            getFillColor: [minValue, maxValue, state.enable3D, ...state.selectedGebiedIds, state.currentTheme],
-            getLineColor: [state.currentTheme], // Update borders on theme switch
+            getFillColor: [minValue, maxValue, state.enable3D, state.currentTheme],
+            getLineColor: [state.currentTheme, ...state.selectedGebiedIds],
+            getLineWidth: [...state.selectedGebiedIds],
             getElevation: [state.enable3D, state.heightScale, minValue, maxValue],
             extruded: [state.enable3D]
         }
@@ -1392,6 +1430,26 @@ function updateLegenda(geojson) {
     if (coverageText) coverageText.textContent = `${withData} van ${total} gebieden (${percentage}%)`;
     if (coverageFill) coverageFill.style.width = `${percentage}%`;
 
+    // Track D: Selectie- en no-data hints in legenda
+    let hintsContainer = document.getElementById('legenda-hints');
+    if (!hintsContainer && container) {
+        hintsContainer = document.createElement('div');
+        hintsContainer.id = 'legenda-hints';
+        container.parentElement.appendChild(hintsContainer);
+    }
+    if (hintsContainer) {
+        hintsContainer.innerHTML = `
+            <div class="legenda-selectie-hint">
+                <span class="legenda-selectie-sample"></span>
+                <span>Geselecteerd gebied</span>
+            </div>
+            <div class="legenda-nodata-hint">
+                <span class="legenda-nodata-sample"></span>
+                <span>Geen data beschikbaar</span>
+            </div>
+        `;
+    }
+
     console.log(`📊 Legenda updated: ${indicatorNaam}, range: ${formatNumber(state.currentMinValue)} - ${formatNumber(state.currentMaxValue)}, coverage ${percentage}%`);
 }
 
@@ -1412,6 +1470,9 @@ function resetKaartIndicator() {
     state.currentData = null;
     state.currentMinValue = null;
     state.currentMaxValue = null;
+
+    // Track B3: Badge wissen
+    updateIndicatorBadge(null);
 
     // Reset indicator dropdown
     const select = document.getElementById('indicator-select');
@@ -1481,6 +1542,9 @@ function populateIndicatorSelect(indicatoren) {
     const totalWithData = indicatoren.filter(i => (i.aantal_gebieden_met_data || 0) > 0).length;
     document.getElementById('indicator-coverage').textContent =
         `${totalWithData} van ${indicatoren.length} indicatoren hebben data`;
+
+    // Track C: Bouw ook de accordion (async, wacht niet)
+    buildIndicatorAccordion(indicatoren);
 
     // Enable button if both selected
     updateButtonState();
@@ -2209,6 +2273,9 @@ function setupEventListeners() {
 
         state.currentIndicator = uuid;
 
+        // Track B3: Update indicator badge
+        updateIndicatorBadge(name);
+
         // Update UI dropdown to match Kompas selection
         const select = document.getElementById('indicator-select');
         if (select) {
@@ -2591,7 +2658,22 @@ function showLoading(show, message = 'Laden...') {
 
 function showError(message) {
     console.error(message);
-    alert(message); // Simple for now, could be improved with a toast notification
+    // Toast notificatie (Sprint 11B upgrade van alert() → non-blocking)
+    const toast = document.createElement('div');
+    toast.className = 'error-toast';
+    toast.innerHTML = `
+        <span class="error-toast-icon">⚠️</span>
+        <span class="error-toast-msg">${message}</span>
+        <button class="error-toast-close" onclick="this.parentElement.remove()">✕</button>
+    `;
+    document.body.appendChild(toast);
+    // Auto-verwijder na 6 seconden
+    setTimeout(() => {
+        if (toast.parentElement) {
+            toast.classList.add('fade-out');
+            setTimeout(() => toast.remove(), 300);
+        }
+    }, 6000);
 }
 
 function formatNumber(num) {
@@ -2710,4 +2792,567 @@ function flyToGebied(feature) {
             }
         });
     }
+}
+
+
+// ============================================================================
+// Track A1 — Initiële Onboarding (Welkomstmodal)
+// Sprint 11B | localStorage flag: 'omnitwin_welcomed'
+// ============================================================================
+
+const ONBOARDING_KEY = 'omnitwin_welcomed';
+
+/**
+ * Initialiseer de welkomstmodal.
+ * Toont de modal alleen als de gebruiker nog niet eerder heeft bezocht.
+ */
+function initOnboarding() {
+    if (localStorage.getItem(ONBOARDING_KEY)) return; // Al eerder welkom geheten
+
+    const overlay = document.getElementById('welcome-modal-overlay');
+    if (!overlay) return;
+
+    // Toon de overlay
+    overlay.style.display = 'flex';
+
+    // Sluit modal bij klik op overlay (buiten modal)
+    overlay.addEventListener('click', (e) => {
+        if (e.target === overlay) dismissWelcomeModal();
+    });
+
+    // Sluit modal bij Escape
+    document.addEventListener('keydown', function onEscapeWelcome(e) {
+        if (e.key === 'Escape') {
+            dismissWelcomeModal();
+            document.removeEventListener('keydown', onEscapeWelcome);
+        }
+    });
+
+    console.log('👋 Welkomstmodal getoond (eerste bezoek)');
+}
+
+/**
+ * Verwerk CTA-klik vanuit de welkomstmodal.
+ * @param {'kaart'|'kompas'} action
+ */
+function startOnboarding(action) {
+    dismissWelcomeModal();
+
+    // Kleine vertraging zodat de fade-out zichtbaar is
+    setTimeout(() => {
+        if (action === 'kaart') {
+            // Open het Kaartconfiguratie-paneel
+            togglePanel('controls');
+            window.EventBus.emit('ONBOARDING_ACTION', { action: 'kaart' });
+        } else if (action === 'kompas') {
+            // Open het Kompas-paneel
+            togglePanel('kompas');
+            window.EventBus.emit('ONBOARDING_ACTION', { action: 'kompas' });
+        }
+    }, 300);
+}
+
+/**
+ * Sluit de welkomstmodal met fade-out animatie en sla de flag op.
+ */
+function dismissWelcomeModal() {
+    const overlay = document.getElementById('welcome-modal-overlay');
+    if (!overlay) return;
+
+    overlay.classList.add('fade-out');
+    setTimeout(() => {
+        overlay.style.display = 'none';
+        overlay.classList.remove('fade-out');
+    }, 260);
+
+    localStorage.setItem(ONBOARDING_KEY, '1');
+    console.log('✅ Welkomstmodal gesloten — flag opgeslagen');
+}
+
+
+// ============================================================================
+// Track A2 — Contextuele Onboarding (Just-in-time tooltips)
+// Sprint 11B | Eén localStorage flag per feature
+// ============================================================================
+
+const TOOLTIP_FLAGS = {
+    indicator: 'omnitwin_tt_indicator',
+    buurt:     'omnitwin_tt_buurt',
+    kompas:    'omnitwin_tt_kompas',
+    ai:        'omnitwin_tt_ai',
+};
+
+const TOOLTIP_MESSAGES = {
+    indicator: '💡 Tip: Elke indicator heeft een score-type (+/+ of -/+). Een hoge waarde kan zowel positief als negatief zijn — kijk altijd naar de legenda.',
+    buurt:     '💡 Tip: Klik op meerdere buurten (Shift+klik) om ze te vergelijken. Open het Kompas voor een volledig gebiedsprofiel.',
+    kompas:    '💡 Tip: Het Kompas toont een hiërarchische structuur van indicatoren. Klik op een segment om in te zoomen op een thema.',
+    ai:        '💡 Tip: De D-Omni Assistent werkt op basis van lokale AI. De output is ondersteunend — controleer altijd de brondata.',
+};
+
+let tooltipTimeout = null;
+
+/**
+ * Initialiseer de contextuele tooltip-engine.
+ * Koppelt EventBus-luisteraars voor elke te bewaken feature.
+ */
+function initContextualTooltips() {
+    const closeBtn = document.getElementById('contextual-tooltip-close');
+    if (closeBtn) {
+        closeBtn.addEventListener('click', () => hideContextualTooltip());
+    }
+
+    // Guard: EventBus moet beschikbaar zijn
+    if (!window.EventBus) {
+        console.warn('⚠️ EventBus niet beschikbaar — contextuele tooltips uitgeschakeld');
+        return;
+    }
+
+    // Luister naar relevante events via de EventBus
+    window.EventBus.on('INDICATOR_SELECTED', () => {
+        showContextualTooltip('indicator');
+    });
+
+    window.EventBus.on('GEBIED_SELECTED', () => {
+        showContextualTooltip('buurt');
+    });
+
+    window.EventBus.on('KOMPAS_OPENED', () => {
+        showContextualTooltip('kompas');
+    });
+
+    window.EventBus.on('AI_RESPONSE_RECEIVED', () => {
+        showContextualTooltip('ai');
+    });
+
+    console.log('💬 Contextuele tooltips geïnitialiseerd');
+}
+
+/**
+ * Toon een contextuele tooltip als de flag nog niet gezet is.
+ * @param {'indicator'|'buurt'|'kompas'|'ai'} key
+ */
+function showContextualTooltip(key) {
+    const flag = TOOLTIP_FLAGS[key];
+    const message = TOOLTIP_MESSAGES[key];
+    if (!flag || !message) return;
+    if (localStorage.getItem(flag)) return; // Al eerder gezien
+
+    const tooltip = document.getElementById('contextual-tooltip');
+    const textEl  = document.getElementById('contextual-tooltip-text');
+    if (!tooltip || !textEl) return;
+
+    textEl.textContent = message;
+    tooltip.classList.remove('fade-out');
+    tooltip.style.display = 'block';
+
+    // Auto-dismiss na 8 seconden
+    clearTimeout(tooltipTimeout);
+    tooltipTimeout = setTimeout(() => hideContextualTooltip(), 8000);
+
+    localStorage.setItem(flag, '1');
+    console.log(`💬 Contextuele tooltip getoond: ${key}`);
+}
+
+/**
+ * Verberg de contextuele tooltip met fade-out.
+ */
+function hideContextualTooltip() {
+    const tooltip = document.getElementById('contextual-tooltip');
+    if (!tooltip || tooltip.style.display === 'none') return;
+
+    tooltip.classList.add('fade-out');
+    setTimeout(() => {
+        tooltip.style.display = 'none';
+        tooltip.classList.remove('fade-out');
+    }, 260);
+}
+
+
+// ============================================================================
+// Track B — Directe Feedback & Micro-interacties (Sprint 11B)
+// B1: Empty state | B2: Inline spinner | B3: Indicator badge | B4: Hover cursor
+// ============================================================================
+
+/**
+ * Initialiseer Track B feedback-elementen.
+ * Roep aan na setupEventListeners() in DOMContentLoaded.
+ */
+function initFeedbackLayer() {
+    // B3: Luister naar indicator-selectie voor badge update
+    if (window.EventBus) {
+        window.EventBus.on('INDICATOR_SELECTED', (data) => {
+            updateIndicatorBadge(data?.name || null);
+        });
+    }
+
+    // B4: Hover cursor feedback via deck.gl onHover
+    // (geïntegreerd via onHover callback in displayOnMap, zie patch hieronder)
+
+    console.log('🎯 Track B feedback layer geïnitialiseerd');
+}
+
+/**
+ * B1: Herstel de empty state in het info-paneel.
+ * Wordt aangeroepen bij reset/deselectie.
+ */
+function showGebiedEmptyState() {
+    const content = document.getElementById('gebied-details');
+    if (!content) return;
+
+    content.innerHTML = `
+        <div class="empty-state" id="gebied-empty-state">
+            <svg class="empty-state-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"/>
+                <circle cx="12" cy="10" r="3"/>
+            </svg>
+            <p class="empty-state-title">Klik op een buurt</p>
+            <p class="empty-state-text">
+                Selecteer een buurt op de kaart om details te bekijken.
+                Gebruik <kbd>Shift+klik</kbd> om meerdere buurten te vergelijken.
+            </p>
+        </div>
+    `;
+}
+
+/**
+ * B2: Toon inline loading spinner in het info-paneel.
+ * @param {string} message
+ */
+function showInlineLoading(message = 'Laden...') {
+    const content = document.getElementById('gebied-details');
+    if (!content) return;
+
+    content.innerHTML = `
+        <div class="inline-spinner-container">
+            <div class="inline-spinner"></div>
+            <span class="inline-spinner-text">${message}</span>
+        </div>
+    `;
+}
+
+/**
+ * B3: Update de actieve indicator badge boven het info-paneel.
+ * @param {string|null} indicatorName - null om te verbergen
+ */
+function updateIndicatorBadge(indicatorName) {
+    const badge = document.getElementById('active-indicator-badge');
+    const nameEl = document.getElementById('active-indicator-name');
+    if (!badge || !nameEl) return;
+
+    if (indicatorName) {
+        nameEl.textContent = indicatorName;
+        badge.style.display = 'flex';
+    } else {
+        badge.style.display = 'none';
+    }
+}
+
+/**
+ * B4: Update de hover-cursor op de kaart-container.
+ * @param {boolean} isHovering
+ */
+function setMapHoverCursor(isHovering) {
+    const container = document.querySelector('.map-container');
+    if (container) {
+        container.dataset.hovering = isHovering ? 'true' : 'false';
+    }
+}
+
+
+// ============================================================================
+// Track C — Indicator Accordion & Zoekbalk (Sprint 11B)
+// Vervangt de flat dropdown met een gegroepeerd, doorzoekbaar accordeon
+// ============================================================================
+
+/** Cache voor de Kompas-hiërarchie (thema → indicator mapping) */
+let kompasHierarchie = null;
+let accordionIndicatoren = []; // Flat list met thema-info voor zoekfilter
+
+/**
+ * Haal de Kompas-hiërarchie op en bouw een thema→indicator mapping.
+ * Wordt éénmalig aangeroepen bij eerste loadIndicatoren.
+ */
+async function fetchKompasHierarchie() {
+    if (kompasHierarchie) return kompasHierarchie;
+
+    try {
+        const resp = await fetch('/api/kompas/1/hierarchie');
+        if (!resp.ok) return null;
+        const data = await resp.json();
+
+        // Bouw een map: indicator_uuid → thema-pad
+        const themaMap = {};
+        function walk(node, path) {
+            if (!node) return;
+            if (node.type === 'indicator' && node.uuid) {
+                themaMap[node.uuid] = path.length > 0 ? path[0] : 'Overig';
+            }
+            if (node.children) {
+                for (const child of node.children) {
+                    const newPath = node.name && node.name !== 'Root'
+                        ? [node.name, ...path.slice(1)]
+                        : path;
+                    walk(child, newPath.length > 0 ? newPath : [node.name || 'Overig']);
+                }
+            }
+        }
+
+        const root = data.hierarchie || data;
+        if (root.children) {
+            for (const topLevel of root.children) {
+                walk(topLevel, [topLevel.name || 'Overig']);
+            }
+        }
+
+        kompasHierarchie = themaMap;
+        console.log(`📂 Kompas-hiërarchie geladen: ${Object.keys(themaMap).length} indicatoren gemapt`);
+        return themaMap;
+    } catch (e) {
+        console.warn('⚠️ Kompas-hiërarchie niet beschikbaar, fallback naar flat lijst:', e.message);
+        return null;
+    }
+}
+
+/**
+ * Bouw de accordion UI op basis van geladen indicatoren + Kompas thema-mapping.
+ * @param {Array} indicatoren - Array van indicator objecten uit de API
+ */
+async function buildIndicatorAccordion(indicatoren) {
+    const container = document.getElementById('indicator-accordion');
+    const searchInput = document.getElementById('indicator-search');
+    if (!container) return;
+
+    // Haal Kompas-hiërarchie op (gecachet na eerste call)
+    const themaMap = await fetchKompasHierarchie();
+
+    // Groepeer indicatoren per thema
+    const groepen = {};
+    indicatoren.forEach(ind => {
+        const thema = (themaMap && themaMap[ind.uuid]) || 'Overig';
+        if (!groepen[thema]) groepen[thema] = [];
+        groepen[thema].push(ind);
+    });
+
+    // Sorteer groepen: 'Overig' altijd als laatste
+    const themaNames = Object.keys(groepen).sort((a, b) => {
+        if (a === 'Overig') return 1;
+        if (b === 'Overig') return -1;
+        return a.localeCompare(b, 'nl');
+    });
+
+    // Kleuren per thema (hergebruik Kompas kleuren)
+    const themaKleuren = {
+        'Kwaliteit fysieke leefomgeving': '#3B82F6',
+        'Kwaliteit voorzieningen': '#8B5CF6',
+        'Sociale samenhang': '#EC4899',
+        'Veiligheid': '#EF4444',
+        'Bevolking & Huishouden': '#F59E0B',
+        'Gezondheid': '#10B981',
+        'Onderwijs': '#6366F1',
+        'Inkomen & Participatie': '#F97316',
+        'Wonen': '#14B8A6',
+        'Overig': '#6B7280',
+    };
+
+    // Bouw flat list voor zoekfilter
+    accordionIndicatoren = [];
+    indicatoren.forEach(ind => {
+        const thema = (themaMap && themaMap[ind.uuid]) || 'Overig';
+        accordionIndicatoren.push({
+            uuid: ind.uuid,
+            naam: ind.naam,
+            thema: thema,
+            coverage: ind.aantal_gebieden_met_data || 0,
+            eenheid: ind.eenheid || '',
+        });
+    });
+
+    // Render accordion
+    let html = '';
+    themaNames.forEach(thema => {
+        const items = groepen[thema];
+        const withData = items.filter(i => (i.aantal_gebieden_met_data || 0) > 0).length;
+        const kleur = themaKleuren[thema] || '#6B7280';
+
+        html += `<div class="accordion-group" data-thema="${thema}">
+            <div class="accordion-header" onclick="toggleAccordionGroup(this)">
+                <svg class="accordion-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="9 18 15 12 9 6"/>
+                </svg>
+                <span class="accordion-color-dot" style="background:${kleur}"></span>
+                <span class="accordion-label">${thema}</span>
+                <span class="accordion-count">${withData}/${items.length}</span>
+            </div>
+            <div class="accordion-body">`;
+
+        // Sorteer: items met data bovenaan, dan alfabet
+        items.sort((a, b) => {
+            const aCov = a.aantal_gebieden_met_data || 0;
+            const bCov = b.aantal_gebieden_met_data || 0;
+            if (aCov > 0 && bCov === 0) return -1;
+            if (aCov === 0 && bCov > 0) return 1;
+            return a.naam.localeCompare(b.naam, 'nl');
+        });
+
+        items.forEach(ind => {
+            const coverage = ind.aantal_gebieden_met_data || 0;
+            const noData = coverage === 0;
+            const activeClass = state.currentIndicator === ind.uuid ? ' active' : '';
+            const noDataClass = noData ? ' no-data' : '';
+
+            html += `<div class="indicator-item${activeClass}${noDataClass}"
+                        data-uuid="${ind.uuid}" data-naam="${ind.naam}"
+                        ${noData ? '' : `onclick="selectAccordionIndicator('${ind.uuid}', '${ind.naam.replace(/'/g, "\\'")}')"` }>
+                <span class="indicator-item-name">${ind.naam}</span>
+                <span class="indicator-item-coverage">${coverage > 0 ? coverage : '—'}</span>
+            </div>`;
+        });
+
+        html += `</div></div>`;
+    });
+
+    container.innerHTML = html;
+
+    // Enable zoekbalk
+    if (searchInput) {
+        searchInput.disabled = false;
+        searchInput.value = '';
+    }
+
+    console.log(`📂 Accordion gebouwd: ${themaNames.length} thema's, ${indicatoren.length} indicatoren`);
+}
+
+/**
+ * Toggle een accordion-groep open/dicht.
+ */
+function toggleAccordionGroup(headerEl) {
+    const group = headerEl.closest('.accordion-group');
+    if (group) group.classList.toggle('open');
+}
+
+/**
+ * Selecteer een indicator vanuit de accordion.
+ * Synct met het hidden select element en triggert EventBus.
+ */
+function selectAccordionIndicator(uuid, naam) {
+    // Update visuele state in accordion
+    document.querySelectorAll('.indicator-item.active').forEach(el => el.classList.remove('active'));
+    const item = document.querySelector(`.indicator-item[data-uuid="${uuid}"]`);
+    if (item) item.classList.add('active');
+
+    // Sync met hidden select
+    const select = document.getElementById('indicator-select');
+    if (select) select.value = uuid;
+
+    // Update state
+    state.currentIndicator = uuid;
+    updateButtonState();
+
+    // Track B3: Update badge
+    updateIndicatorBadge(naam);
+
+    // Emit EventBus event (identiek aan Kompas-selectie flow)
+    if (window.EventBus) {
+        window.EventBus.emit('INDICATOR_SELECTED', { uuid, name: naam });
+    }
+
+    // Direct kaart laden
+    loadKaartData();
+
+    // Open legenda paneel
+    togglePanel('legenda');
+
+    console.log(`🎯 Indicator geselecteerd via accordion: ${naam}`);
+}
+
+/**
+ * C1: Zoekfilter met debounce 150ms.
+ * Filtert de accordion op indicator-naam.
+ */
+let searchDebounceTimer = null;
+
+function initIndicatorSearch() {
+    const searchInput = document.getElementById('indicator-search');
+    const clearBtn = document.getElementById('indicator-search-clear');
+    if (!searchInput) return;
+
+    searchInput.addEventListener('input', () => {
+        clearTimeout(searchDebounceTimer);
+        searchDebounceTimer = setTimeout(() => {
+            filterAccordion(searchInput.value.trim());
+        }, 150);
+
+        // Toggle clear button
+        if (clearBtn) {
+            clearBtn.style.display = searchInput.value.length > 0 ? 'block' : 'none';
+        }
+    });
+
+    if (clearBtn) {
+        clearBtn.addEventListener('click', () => {
+            searchInput.value = '';
+            clearBtn.style.display = 'none';
+            filterAccordion('');
+            searchInput.focus();
+        });
+    }
+
+    console.log('🔍 Indicator zoekfunctie geïnitialiseerd');
+}
+
+/**
+ * Filter de accordion items op basis van zoekterm.
+ * @param {string} query
+ */
+function filterAccordion(query) {
+    const container = document.getElementById('indicator-accordion');
+    if (!container) return;
+
+    const groups = container.querySelectorAll('.accordion-group');
+    const lowerQuery = query.toLowerCase();
+
+    if (!query) {
+        // Reset: alle groepen tonen, alle dichtklappen
+        groups.forEach(group => {
+            group.style.display = '';
+            group.classList.remove('open');
+            group.querySelectorAll('.indicator-item').forEach(item => {
+                item.style.display = '';
+                // Reset highlight
+                const nameEl = item.querySelector('.indicator-item-name');
+                if (nameEl) nameEl.innerHTML = item.dataset.naam;
+            });
+        });
+        return;
+    }
+
+    // Filter: toon alleen matches, open groepen met matches
+    groups.forEach(group => {
+        const items = group.querySelectorAll('.indicator-item');
+        let hasMatch = false;
+
+        items.forEach(item => {
+            const naam = item.dataset.naam || '';
+            const nameEl = item.querySelector('.indicator-item-name');
+
+            if (naam.toLowerCase().includes(lowerQuery)) {
+                item.style.display = '';
+                hasMatch = true;
+                // Highlight match
+                if (nameEl) {
+                    const idx = naam.toLowerCase().indexOf(lowerQuery);
+                    const before = naam.slice(0, idx);
+                    const match = naam.slice(idx, idx + query.length);
+                    const after = naam.slice(idx + query.length);
+                    nameEl.innerHTML = `${before}<mark>${match}</mark>${after}`;
+                }
+            } else {
+                item.style.display = 'none';
+            }
+        });
+
+        group.style.display = hasMatch ? '' : 'none';
+        if (hasMatch) group.classList.add('open');
+    });
 }

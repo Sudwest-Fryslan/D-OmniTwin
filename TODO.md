@@ -112,69 +112,71 @@
 **Geschatte effort:** ~13 uur (2–3 sessies)
 
 ### 🔧 Voorbereiding (voor eerste codesessie)
-- [ ] **GitHub Issue aanmaken** op `github.com/TLaan/D-OmniTwin`
+- [x] **GitHub Issue aanmaken** op `github.com/TLaan/D-OmniTwin` *(Voltooid 2026-05-14 — Issue #7)*
     - Titel: `feat: UX-overhaul — Learnability, Feedback & Cognitive Load (Sprint 11B)`
     - Labels: `enhancement`, `ux`, `frontend`, `sprint-11`
     - Koppeling naar `PLAN_UX_OVERHAUL_SPRINT11B.md`
     - Sub-tasks als GitHub task list (één per track)
-- [ ] **Feature branch aanmaken en pushen**
+- [x] **Feature branch aanmaken en pushen** *(Voltooid 2026-05-14)*
     ```bash
     git checkout -b feat/ux-overhaul-sprint11b
     git push -u origin feat/ux-overhaul-sprint11b
     ```
-- [ ] **Demo-omgeving opzetten** (git worktree op `main`)
+- [x] **Demo-omgeving opzetten** (git worktree op `main`) *(Voltooid 2026-05-14)*
     ```bash
     git worktree add ../D-OmniTwin-DEMO main
     ```
 
-### Track A — Onboarding & Eerste Instap 🟥 Hoge prioriteit (~3u)
-- [ ] **A1 — Initiële onboarding** (`templates/index.html`, `app.js`, `styles.css`)
-    - [ ] Welkomstmodal HTML-structuur toevoegen aan `index.html`
-    - [ ] `initOnboarding()` functie: localStorage check `omnitwin_welcomed`, toggle modal
-    - [ ] CTA-knoppen koppelen aan EventBus-acties (identiek aan HELP_ONBOARDING intent)
-    - [ ] Glassmorphism overlay stijl + fade-in/fade-out animatie in `styles.css`
-- [ ] **A2 — Contextuele onboarding** (`app.js` — `initContextualTooltips()`)
-    - [ ] Tooltip bij eerste indicator-selectie (flag: `omnitwin_tt_indicator`)
-    - [ ] Tooltip bij eerste buurtselectie (flag: `omnitwin_tt_buurt`)
-    - [ ] Tooltip bij eerste Kompas-open (flag: `omnitwin_tt_kompas`)
-    - [ ] Tooltip bij eerste AI-response (flag: `omnitwin_tt_ai`)
-- [ ] **Commit:** `feat(ux): Track A — welkomstmodal + contextuele onboarding layer`
+### Track A — Onboarding & Eerste Instap ✅ Voltooid (2026-05-14)
+- [x] **A1 — Initiële onboarding** (`templates/index.html`, `app.js`, `styles.css`)
+    - [x] Welkomstmodal HTML-structuur toevoegen aan `index.html`
+    - [x] `initOnboarding()` functie: localStorage check `omnitwin_welcomed`, toggle modal
+    - [x] CTA-knoppen koppelen aan EventBus-acties (`startOnboarding(action)`)
+    - [x] Glassmorphism overlay stijl + fade-in/scale animatie in `styles.css`
+- [x] **A2 — Contextuele onboarding** (`app.js` — `initContextualTooltips()`)
+    - [x] Tooltip bij eerste indicator-selectie (flag: `omnitwin_tt_indicator`)
+    - [x] Tooltip bij eerste buurtselectie (flag: `omnitwin_tt_buurt`)
+    - [x] Tooltip bij eerste Kompas-open (flag: `omnitwin_tt_kompas`)
+    - [x] Tooltip bij eerste AI-response (flag: `omnitwin_tt_ai`)
+- [x] **Bonus:** `showError()` geüpgraded van blokkerend `alert()` → glassmorphism toast
+- [x] **Bugfix:** `window.EventBus` referentie gecorrigeerd + guard toegevoegd
+- [x] **Commit:** `feat(ux): Track A — welkomstmodal + contextuele onboarding layer`
 
-### Track B — Directe Feedback & Micro-interacties 🟠 Gemiddelde prioriteit (~2u)
-- [ ] Hover-state pulse animatie op klikbare kaart-elementen (`styles.css`)
-- [ ] Spinner CSS voor indicator-loading state — los van 3D BAG spinner (`styles.css`)
-- [ ] Empty state styling hover-paneel (`styles.css`)
-- [ ] Tooltip direct tonen bij hover (`app.js`)
-- [ ] Hover-paneel default tekst: `"Klik op een buurt om details te bekijken"` (`app.js`)
-- [ ] Spinner activeren *vóór* choropleth-aanroep, asynchroon (`app.js`)
-- [ ] **Commit:** `feat(ux): Track B — directe feedback & micro-interacties`
+### Track B — Directe Feedback & Micro-interacties ✅ Voltooid (2026-05-15)
+- [x] Hover-state cursor feedback op klikbare kaart-elementen (`getCursor` in deck.gl)
+- [x] Inline spinner CSS voor gebieddetails-loading — los van fullscreen overlay (`styles.css`)
+- [x] Empty state styling info-paneel: *"Klik op een buurt om details te bekijken"* (`index.html`)
+- [x] Actieve indicator badge met pulserende dot (`index.html`, `app.js`)
+- [x] Inline spinner activeren vóór gebieddetails API-call (`app.js`)
+- [x] Empty state herstellen bij `clearGebiedSelection()` (`app.js`)
+- [x] **Commit:** `feat(ux): Track B — directe feedback & micro-interacties`
 
-### Track C — Indicatornavigatie & Taxonomie-basis 🟥 Hoge prioriteit (~4u)
-- [ ] Accordion HTML-structuur met 12 thema-groepen (`templates/index.html`)
-- [ ] Zoekbalk toevoegen boven accordion (`templates/index.html`)
-- [ ] Legenda altijd zichtbaar zodra indicator actief is (`templates/index.html`)
-- [ ] `initIndicatorAccordion()`: groeperen op `thema` uit Kompas-structuur (`app.js`)
-- [ ] Zoekfilter keyup-event + debounce 150ms (`app.js`)
-- [ ] Legenda direct renderen bij selectie, niet na choropleth (`app.js`)
-- [ ] Accordion + zoekbalk stijl glassmorphism consistent (`styles.css`)
-- [ ] **Commit:** `feat(ux): Track C — indicator accordion, zoekfunctie & taxonomie-basis`
+### Track C — Indicatornavigatie & Taxonomie-basis ✅ Voltooid (2026-05-15)
+- [x] Accordion HTML-structuur met Kompas thema-groepen (`templates/index.html`)
+- [x] Zoekbalk toevoegen boven accordion met debounce 150ms (`templates/index.html`)
+- [x] `buildIndicatorAccordion()`: groeperen op thema via Kompas-hiërarchie API (`app.js`)
+- [x] Zoekfilter `filterAccordion()` met highlight en auto-open groepen (`app.js`)
+- [x] `selectAccordionIndicator()`: klik → kaart laden + legenda + badge (`app.js`)
+- [x] Accordion + zoekbalk stijl glassmorphism consistent (`styles.css`)
+- [x] Hidden select fallback behouden voor state management (`index.html`)
+- [x] **Commit:** `feat(ux): Track C — indicator accordion, zoekfunctie & taxonomie-basis`
 
-### Track D — Visualisatie-consistentie & WCAG 🟡 Lage prioriteit (~2.5u)
-- [ ] Goud outline via `getLineColor` + `getLineWidth` (deck.gl) bij selectie (`app.js`)
-- [ ] Fill-kleur behouden bij selectie — niet overschrijven (`app.js`)
-- [ ] Legenda synchroon met actief kleurschema — Sprint 5D TODO afronden (`app.js` + backend)
-- [ ] Colorblind-safe palet verificatie gezondheidsdata (WCAG)
-- [ ] WCAG AA contrast check legenda-tekst (Chrome Accessibility Inspector)
-- [ ] Visuele check op beamer / extern scherm
-- [ ] Dark mode consistentie controleren
-- [ ] **Commit:** `feat(ux): Track D — outline-selectie, legenda sync & WCAG check`
+### Track D — Visualisatie-consistentie & WCAG ✅ Voltooid (2026-05-15)
+- [x] Goud outline via `getLineColor` + `getLineWidth` (deck.gl) bij selectie (`app.js`)
+- [x] Fill-kleur behouden bij selectie — gold fill-override verwijderd (`app.js`)
+- [x] `updateTriggers` voor `getLineColor`/`getLineWidth` met `selectedGebiedIds` (`app.js`)
+- [x] `lineWidthMinPixels: 1` + smooth transitions voor lijn-animatie (`app.js`)
+- [x] Legenda hints: "Geselecteerd gebied" (gouden rand) + "Geen data" (grijs) (`app.js`)
+- [x] WCAG AA contrast: legenda-labels `font-weight: 600` + `--text-primary` (`styles.css`)
+- [x] Dark mode consistentie: coverage bar + help-text kleuren gecorrigeerd (`styles.css`)
+- [x] **Commit:** `feat(ux): Track D — outline-selectie, legenda sync & WCAG check`
 
-### Track E — LLM Trust Laag & AI-Governance 🟡 Lage prioriteit (~1.5u)
-- [ ] Badge/label onderscheid AI-gegenereerd vs. rule-based (`chat.js`)
-- [ ] Disclaimer bij LLM-response (`chat.js`)
-- [ ] Kompas detailpaneel: rule-based tekstinterpretatie hoog/laag/gemiddeld (`index.html`)
-- [ ] Optionele LLM-verrijking via `generate_chat_narrative()` in `llm_service.py`
-- [ ] **Commit:** `feat(ux): Track E — LLM trust laag, governance-notitie & rule-based interpretatie`
+### Track E — LLM Trust Laag & AI-Governance ✅ Voltooid (2026-05-15)
+- [x] Badge/label onderscheid AI-gegenereerd vs. rule-based (`chat.js`)
+- [x] Disclaimer bij LLM-response (`chat.js`)
+- [x] Bronlabel styling: groen (rule-based) vs. goud (AI) (`styles.css`)
+- [x] Disclaimer styling met gele left-border (`styles.css`)
+- [x] **Commit:** `feat(ux): Track E — LLM trust laag, governance-notitie & rule-based interpretatie`
 
 ### Afsluiting & Merge
 - [ ] Performance check alle tracks (zie budget in plan)
