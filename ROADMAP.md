@@ -530,6 +530,24 @@ mapStyle: 'mapbox://styles/mapbox/light-v10'
 
 ---
 
+#### 6.3 Kaart Viewport Gedrag — Vrije-Zone Centreren (Sprint 16)
+
+**Rationale:** Het Kompas-venster, het linkerpaneel en de chat-zijbalk kunnen de geselecteerde buurt visueel bedekken. Het huidige `flyToGebied()` centreert altijd op het midden van het volledig scherm, zonder rekening te houden met overlappende UI-elementen.
+
+**Gewenst gedrag:** Bij klik op een buurt → kaart centreert in het **grootste vrije, onbedekte kaartgebied** (links of rechts van het Kompas-venster, rekening houdend met alle open panelen).
+
+**Aanpak:**
+- `getFreezone()`: berekent real-time de vrije zone op basis van tab bar (70px), linkerpaneel (360px indien open), chat panel (380px indien open) en Kompas-venster positie via `getBoundingClientRect()`
+- `flyToGebied()`: gebruikt deck.gl `padding` in `viewState` om het effectieve viewport-centrum te verschuiven naar de vrije zone
+- `fitBounds()` guard: ontkoppeld van `displayOnMap()` re-renders via `state.initialDataLoaded` flag
+
+**Details:** Zie `TODO.md` → Sprint 16  
+**Tijd:** ~3–5 uur  
+**Priority:** 🟡 MEDIUM
+
+---
+
+
 ## Implementation Timeline
 
 ### Sprint 1 (Week 1): Core UX

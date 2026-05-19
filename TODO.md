@@ -1,11 +1,137 @@
 # TODO - D-OmniTwin Roadmap
 
-**Laatste Update:** 22 april 2026 (Dag 59)
-**Status:** Initiatie Workflow & Schema Sync ✅ Afgerond — Sprint 12 (Bug #42 + 3D BAG) 📋 Volgende sessie (Dag 60)
+**Laatste Update:** 20 mei 2026 (Dag 61)
+**Status:** Sprint 16 (Viewport Vrije-Zone) ✅ Afgerond
 
-> **Volgende Sessie (Dag 60):** Bug #42 (3D pand-kleuring single-buurt) + Sprint 15 (Ontologie Tab) + CBS indicatorwaarden downloaden op laptop.
+> **Volgende Sessie:** Bug #42 (3D pand-kleuring) + Sprint 15 (Ontologie Tab)
 
 ---
+
+## ✅ Sprint 16: Kaart Viewport Gedrag — Vrije-Zone Centreren (Afgerond)
+
+**Doel:** Bij het klikken op een buurt de kaart centreren in het **grootste vrije, onbedekte kaartgebied** — niet in het midden van het volledige scherm.  
+**Aanleiding:** Het Kompas-venster, het linkerpaneel en de chat-zijbalk kunnen de geselecteerde buurt visueel bedekken. Het huidige `flyToGebied()` houdt hier geen rekening mee.  
+**Prioriteit:** 🟡 MEDIUM  
+**Effort:** ~3–5 uur
+
+### Context & Gewenst Gedrag
+
+Na het klikken op een buurt moet de kaart zo schuiven dat de buurt zichtbaar valt in het **vrije deel van het scherm** (de zone die niet bedekt is door UI-elementen). Als het Kompas-venster rechts staat, centreer dan links; als het links staat, centreer dan rechts.
+
+### UI Dimensies (vastgesteld uit code)
+
+| Element | Positie | Breedte | Zichtbaar wanneer |
+|---|---|---|---|
+| Tab bar | `left: 0` | `70px` (`--tab-bar-width`) | Altijd |
+| Linker panel (Kaart Configuratie) | `left: 70px` | `360px` (`--panel-width`) | Als geopend (`panel-container.open`) |
+| Kompas venster (`#kompas-window`) | `position: fixed`, draggable | `650px` (resizable) | Als zichtbaar (`display != none`) |
+| Chat panel (`#chat-panel`) | `right: 0` | `380px` | Als `.open` class aanwezig |
+
+### Technische Aanpak: `getFreezone()`
+
+Introduceer een helperfunctie die de **vrije rechthoek** van de kaart berekent — het gedeelte van het scherm dat niet bedekt is door enig UI-panel:
+
+```javascript
+function getFreezone() {
+    const W = window.innerWidth;
+    const H = window.innerHeight;
+
+    // Vaste panels (links)
+    const tabBar = 70; // --tab-bar-width
+    const leftPanel = document.querySelector('.panel-container.open') ? 360 : 0;
+    const leftEdge = tabBar + leftPanel;
+
+    // Chat panel (rechts)
+    const chatOpen = document.getElementById('chat-panel')?.classList.contains('open');
+    const rightEdge = chatOpen ? 380 : 0;
+
+    // Kompas venster (zwevend, draggable)
+    const kompasEl = document.getElementById('kompas-window');
+    const kompasVisible = kompasEl && kompasEl.style.display !== 'none';
+    let kompasRect = null;
+    if (kompasVisible) {
+        kompasRect = kompasEl.getBoundingClientRect();
+    }
+
+    // Bruto vrije breedte (excl. Kompas)
+    const freeLeft = leftEdge;
+    const freeRight = W - rightEdge;
+    const freeWidth = freeRight - freeLeft;
+
+    // Bepaal vrij centrum: splits het vrije gebied in "links van Kompas" vs "rechts van Kompas"
+    let centerX, centerY;
+    if (kompasRect) {
+        const spaceLeft  = kompasRect.left - freeLeft;
+        const spaceRight = freeRight - kompasRect.right;
+        if (spaceLeft > spaceRight) {
+            centerX = freeLeft + spaceLeft / 2;        // Centreer in het linkse vrije deel
+        } else {
+            centerX = kompasRect.right + spaceRight / 2; // Centreer in het rechtse vrije deel
+        }
+    } else {
+        centerX = freeLeft + freeWidth / 2;            // Geen Kompas: midden van vrije zone
+    }
+    centerY = H / 2;
+
+    return { centerX, centerY, freeLeft, freeRight, freeWidth };
+}
+```
+
+### `flyToGebied()` aanpassen
+
+Gebruik de viewport-offset om de camera te verplaatsen naar het centroid van de buurt, maar **gepositioneerd in de vrije zone**:
+
+```javascript
+// In flyToGebied(): vervang de huidige setProps() aanroep:
+const zone = getFreezone();
+const offsetX = zone.centerX - window.innerWidth / 2; // pixel-offset t.o.v. schermcentrum
+
+state.deckgl.setProps({
+    initialViewState: {
+        ...currentViewState,
+        longitude: centroid[0],
+        latitude: centroid[1],
+        zoom: Math.max(currentViewState.zoom, 12),
+        transitionDuration: 800,
+        transitionInterpolator: new deck.FlyToInterpolator(),
+        // deck.gl padding verschuift het effectieve centrum:
+        padding: { left: zone.freeLeft, right: window.innerWidth - zone.freeRight, top: 0, bottom: 0 }
+    }
+});
+```
+
+> **Noot:** deck.gl's `padding` property in `viewState` is de schone manier om het effectieve viewport-centrum te verschuiven zonder de coördinaten aan te passen. Dit is de voorkeursaanpak boven het manueel berekenen van een verschoven `longitude`.
+
+### `fitBounds()` guard (ontkoppelen van re-renders)
+
+Huidige bug: `fitBounds()` wordt bij **elke** `displayOnMap()` aangeroepen, ook bij selectie-re-renders.
+
+```javascript
+// In displayOnMap(), vervang:
+if (geojson.features.length > 0) { fitBounds(geojson); }
+
+// Door:
+if (geojson.features.length > 0 && !state.initialDataLoaded) {
+    fitBounds(geojson);
+    state.initialDataLoaded = true;  // Alleen bij eerste lading
+}
+// Reset state.initialDataLoaded = false bij loadKaartData() (nieuwe datasetselectie)
+```
+
+### Implementatie Checklist
+
+- [x] `getFreezone()` functie implementeren in `app.js`
+- [x] `flyToGebied()` aanpassen: longitude-offset op basis van vrije-zone centrum
+- [x] `fitBounds()` ontkoppelen van `displayOnMap()` re-renders via `state.initialDataLoaded` flag
+- [x] Reset `state.initialDataLoaded` bij nieuwe dataset-load in `loadKaartData()`
+- [x] Handmatig testen: Kompas links, Kompas rechts, Chat open, alle panels open tegelijk
+
+### Bekende Edge Case (acceptabel)
+
+> **Kompas gecentreerd + D-Omni Assistent open:** Als het Kompas-venster in het midden van het scherm staat én de Chat-zijbalk (380px) open is, kan de geselecteerde buurt achter de Chat vallen. Workaround: Kompas naar links verschuiven en opnieuw klikken. Mogelijke toekomstige verbetering: Chat-paneel meenemen in de Kompas-segment berekening.
+
+---
+
 
 ## ✅ Sessie 2026-04-22: Schema Sync & Onboarding Setup (Dag 59)
 

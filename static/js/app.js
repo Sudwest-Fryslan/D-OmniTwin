@@ -44,6 +44,8 @@ const state = {
     omgevingsvisieData: null,      // GeoJSON van deelgebieden
     showOmgevingsvisieLayer: false, // Toggle zichtbaarheid overlay
     selectedDeelgebiedNaam: null,   // Naam van actief deelgebied (voor rapport-link)
+    // Sprint 16: Viewport vrije-zone centreren
+    initialDataLoaded: false,      // Guard: fitBounds() alleen bij nieuw data-laden
 };
 
 // Publiceer state op window zodat chat.js en andere modules de kaartselectie kunnen lezen
@@ -692,6 +694,7 @@ async function loadKaartData() {
 
         const geojson = await response.json();
         state.currentData = geojson;
+        state.initialDataLoaded = false; // Sprint 16: reset zodat fitBounds() opnieuw mag draaien
 
         displayOnMap(geojson);
         updateFeatureCount(geojson.metadata);
@@ -1198,9 +1201,10 @@ function displayOnMap(geojson) {
 
     state.deckgl.setProps({ layers });
 
-    // Auto-zoom to data
-    if (geojson.features.length > 0) {
+    // Auto-zoom to data (Sprint 16: alleen bij initieel laden, niet bij selectie-re-renders)
+    if (geojson.features.length > 0 && !state.initialDataLoaded) {
         fitBounds(geojson);
+        state.initialDataLoaded = true;
     }
 }
 
@@ -2748,8 +2752,65 @@ console.log(`
 );
 
 // ============================================================================
-// Camera Logic (UI Polish)
+// Camera Logic (UI Polish) — Sprint 16: Vrije-Zone Centreren
 // ============================================================================
+
+/**
+ * Berekent het X-pixel centrum van de vrije (onbedekte) kaartzone.
+ * Houdt rekening met: tab bar, linker panel, chat panel en Kompas venster.
+ * Plaatst het centrum dicht bij de Kompas-rand (max 200px) i.p.v. midden in de vrije zone.
+ */
+function getFreezone() {
+    const W = window.innerWidth;
+    const MIN_ZONE = 150;       // Minimale bruikbare segmentbreedte (px)
+    const MAX_KOMPAS_DIST = 200; // Max afstand centrum vanaf Kompas-rand (px)
+
+    // Vaste panels (links)
+    const tabBar = 70;
+    const leftPanel = document.querySelector('.panel-container.open') ? 360 : 0;
+    const leftEdge = tabBar + leftPanel;
+
+    // Chat panel (rechts)
+    const chatOpen = document.getElementById('chat-panel')?.classList.contains('open');
+    const rightEdge = chatOpen ? 380 : 0;
+
+    // Vrije zone zonder Kompas
+    const freeLeft = leftEdge;
+    const freeRight = W - rightEdge;
+    const baseCenterX = freeLeft + (freeRight - freeLeft) / 2;
+
+    // Kompas venster (zwevend, draggable)
+    const kompasEl = document.getElementById('kompas-window');
+    const kompasVisible = kompasEl && kompasEl.style.display !== 'none';
+
+    if (!kompasVisible) {
+        return { centerX: baseCenterX, screenCenterX: W / 2 };
+    }
+
+    const kr = kompasEl.getBoundingClientRect();
+    const spaceLeft  = Math.max(0, kr.left - freeLeft);
+    const spaceRight = Math.max(0, freeRight - kr.right);
+
+    let centerX;
+    if (spaceLeft >= MIN_ZONE || spaceRight >= MIN_ZONE) {
+        if (spaceLeft > spaceRight) {
+            // Links van Kompas: cap afstand op MAX_KOMPAS_DIST
+            const dist = Math.min(spaceLeft / 2, MAX_KOMPAS_DIST);
+            centerX = kr.left - dist;
+        } else {
+            // Rechts van Kompas: cap afstand op MAX_KOMPAS_DIST
+            const dist = Math.min(spaceRight / 2, MAX_KOMPAS_DIST);
+            centerX = kr.right + dist;
+        }
+    } else {
+        centerX = baseCenterX;
+    }
+
+    // Zorg dat centerX binnen het bruikbare schermgebied blijft
+    centerX = Math.max(freeLeft + 50, Math.min(freeRight - 50, centerX));
+
+    return { centerX, screenCenterX: W / 2 };
+}
 
 function flyToGebied(feature) {
     if (!feature || !feature.geometry) return;
@@ -2776,18 +2837,25 @@ function flyToGebied(feature) {
         centroid[0] /= count;
         centroid[1] /= count;
 
-        console.log(`🎥 Flying to area:`, centroid);
-
-        // Update DeckGL viewState with transition
         const currentViewState = state.deckgl.props.initialViewState || { zoom: 12, pitch: 45, bearing: 0 };
+        const zoom = Math.max(currentViewState.zoom, 12);
+
+        // Sprint 16: Verschuif longitude zodat buurt in de vrije zone valt
+        const { centerX, screenCenterX } = getFreezone();
+        const pixelOffset = screenCenterX - centerX; // positief = vrije zone is links van midden
+        // Graden per pixel bij gegeven zoom (Web Mercator)
+        const degreesPerPixel = 360 / (256 * Math.pow(2, zoom));
+        const lngOffset = pixelOffset * degreesPerPixel;
+
+        console.log(`🎥 Flying to area:`, centroid, `offset: ${pixelOffset.toFixed(0)}px → ${lngOffset.toFixed(4)}°`);
 
         state.deckgl.setProps({
             initialViewState: {
                 ...currentViewState,
-                longitude: centroid[0],
+                longitude: centroid[0] + lngOffset,
                 latitude: centroid[1],
-                zoom: Math.max(currentViewState.zoom, 12), // Ensure we are zoomed in enough
-                transitionDuration: 1000,
+                zoom: zoom,
+                transitionDuration: 800,
                 transitionInterpolator: new deck.FlyToInterpolator()
             }
         });
