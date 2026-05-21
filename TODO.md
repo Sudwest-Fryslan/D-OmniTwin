@@ -1,11 +1,116 @@
 # TODO - D-OmniTwin Roadmap
 
-**Laatste Update:** 20 mei 2026 (Dag 61)
+**Laatste Update:** 21 mei 2026 (Dag 64)
 **Status:** Sprint 16 (Viewport Vrije-Zone) ✅ Afgerond
 
-> **Volgende Sessie:** Bug #42 (3D pand-kleuring) + Sprint 15 (Ontologie Tab)
+> **Volgende Sprint:** Sprint 17 — Configureerbare Logging Infrastructuur  
+> **Branch:** `feature/sprint-17-logging` (aan te maken) | **GitHub Issue:** #9 (aan te maken)  
+> **Spec:** [`docs/5-secops/logging/sprint-17-logging-spec.md`](./docs/5-secops/logging/sprint-17-logging-spec.md)
 
 ---
+
+## 📋 Sprint 17: Configureerbare Logging Infrastructuur (Gepland)
+
+**Doel:** Gedifferentieerde, configureerbare logging op alle facetten van de applicatie — instelbaar per module via de beheeromgeving, persistent in PostgreSQL, zichtbaar via admin panel dashboard, proactief via alerts.  
+**Effort:** ~3 sessies (17A + 17B + 17C)  
+**Spec:** [`docs/5-secops/logging/sprint-17-logging-spec.md`](./docs/5-secops/logging/sprint-17-logging-spec.md)
+
+### 🔧 Voorbereiding (voor eerste codesessie)
+- [ ] **GitHub Issue #9 aanmaken** op `github.com/TLaan/D-OmniTwin`
+    - Titel: `feat: Configureerbare Logging Infrastructuur (Sprint 17)`
+    - Labels: `enhancement`, `secops`, `backend`, `admin-panel`, `sprint-17`
+    - Link naar `docs/5-secops/logging/sprint-17-logging-spec.md`
+    - Sub-tasks als GitHub task list (één per fase 17A/17B/17C)
+- [ ] **Feature branch aanmaken en pushen:**
+    ```bash
+    git checkout -b feature/sprint-17-logging
+    git push -u origin feature/sprint-17-logging
+    ```
+- [ ] **Worktree aanmaken** (demo-omgeving op `main` intact houden):
+    ```bash
+    git worktree add ../D-OmniTwin-DEMO main
+    ```
+- [ ] **AVG/GDPR afstemmen** met opdrachtgever over IP-adres opslag (zie spec)
+- [ ] **SMTP-server** bepalen voor e-mail alerts (Sprint 17C)
+
+### Sprint 17A — Fundament & Server/API Logs
+- [ ] **Database schema** `migrations/schema_v13_logging.sql` aanmaken:
+    - [ ] Tabel `app_logs` (id, timestamp, level, category, message, user_id, session_id, ip_address, endpoint, response_time_ms, extra JSONB)
+    - [ ] Tabel `log_config` (category, level, enabled, updated_at, updated_by)
+    - [ ] Standaard INSERT voor alle 9 categorieën
+    - [ ] Indexen op timestamp, level, category, user_id
+- [ ] **`services/logging_service.py`** aanmaken:
+    - [ ] `AsyncLogQueue` — in-memory queue met background worker
+    - [ ] `AppLogger` — wrapper met methoden per categorie (`.info()`, `.warning()`, `.error()`, `.debug()`)
+    - [ ] Config cache: actieve `log_config` uit DB, elke 60s ververst
+    - [ ] Fallback: als queue vol → synchroon naar logbestand schrijven
+    - [ ] Rotating file handler: `logs/server.log` (10MB max, 5 backups)
+- [ ] **`main.py`** aanpassen:
+    - [ ] Python `logging` module configureren bovenaan (vóór router imports)
+    - [ ] `LOG_LEVEL` uit `.env` lezen
+    - [ ] `RequestLoggingMiddleware` toevoegen (category=API: method, path, status_code, response_time_ms, user/IP)
+    - [ ] `startup_event`: `print()` → `AppLogger.server()`
+- [ ] **`run_dev.py`** aanpassen: `log_level` dynamisch vanuit `LOG_LEVEL` env variabele
+- [ ] **`services/gebiedsmonitor_service.py`**: `print("DEBUG: ...")` → `AppLogger.debug(category="KAART")`
+- [ ] **`services/llm_service.py`**: `print(LLM REQUEST/RESPONSE)` → `AppLogger.debug(category="LLM_CHAT")`
+- [ ] **`services/color_scale_service.py`**: `print(f"ERROR: {e}")` → `AppLogger.error(category="KAART")`
+- [ ] **`routers/dashboard.py`**: `print(f"Error: {e}")` → `AppLogger.error(category="API")`
+- [ ] **`.env.example`**: `LOG_LEVEL` activeren (was dode variabele), `logs/` toevoegen aan `.gitignore`
+- [ ] **Verificatie 17A:**
+    - [ ] Server start → `app_logs` bevat SERVER/startup entries
+    - [ ] HTTP request → `app_logs` bevat API entry met response_time_ms
+    - [ ] `LOG_LEVEL=DEBUG` → debug logs in DB én in `logs/server.log`
+    - [ ] `logs/server.log` bestaat en groeit mee
+
+### Sprint 17B — Module Logs & Admin UI Log Viewer
+- [ ] **Module instrumentatie:**
+    - [ ] `routers/kompas.py` — KOMPAS events bij hierarchie/gebied opvraging
+    - [ ] `routers/gebiedsmonitor.py` — KAART events met gebiedstype, gemeente_code, indicator_uuid
+    - [ ] `routers/report.py` — RAPPORT events: type, format, duur, succes/fout
+    - [ ] `routers/auth.py` — AUTH events: login succes/fout, sessie-aanmaak, token gebruik
+    - [ ] `routers/admin.py` — ADMIN events bij elke configuratiewijziging
+    - [ ] `routers/chat.py` — upgrade bestaande `logger.*` → `AppLogger(category="LLM_CHAT")`
+    - [ ] `routers/bag3d.py` — upgrade bestaande `logger.*` → `AppLogger(category="KAART")`
+- [ ] **`routers/log_viewer.py`** aanmaken:
+    - [ ] `GET /api/admin/logs` — gefilterd + gepagineerd
+    - [ ] `GET /api/admin/logs/stats` — statistieken voor dashboard
+    - [ ] `GET /api/admin/log-config` — configuratie ophalen
+    - [ ] `PUT /api/admin/log-config/{category}` — configuratie bijwerken
+- [ ] **Admin Panel React — nieuwe pagina `/admin/logs`:**
+    - [ ] Statistieken balk (totaal logs vandaag, error rate, actieve gebruikers)
+    - [ ] Filteropties: periode, categorie (multi-select), niveau, gebruiker, zoekterm
+    - [ ] Detailtabel: timestamp | niveau | categorie | gebruiker | endpoint | bericht | expandable detail
+    - [ ] Log configuratie sectie: per categorie toggle (aan/uit) + niveau dropdown
+- [ ] **Monitor-rol** toevoegen aan auth systeem (read-only log viewer)
+- [ ] **Verificatie 17B:**
+    - [ ] Kompas opvragen → KOMPAS entry in `app_logs`
+    - [ ] Mislukt inloggen → AUTH WARNING in `app_logs`
+    - [ ] Admin panel log viewer toont entries met correcte filters
+    - [ ] Configuratiewijziging actief binnen 60 seconden
+
+### Sprint 17C — Statistieken Dashboard & Alerts
+- [ ] **Admin panel "Gebruik & Gezondheid" tabblad:**
+    - [ ] Kompas: meest geraadpleegde hiërarchieën en buurten
+    - [ ] Kaart: populairste gemeente-filters en indicatoren
+    - [ ] API: hits per endpoint, response times (gemiddeld/p95)
+    - [ ] Auth: actieve sessies, mislukte inlogpogingen (trendlijn)
+    - [ ] Errors: fout per categorie over tijd (lijndiagram)
+- [ ] **Admin panel badge:** `GET /api/admin/logs/unread-errors` → rode badge in navigatie
+- [ ] **E-mail alerts** bij ERROR/CRITICAL:
+    - [ ] `LOG_ALERT_EMAIL` in `.env` configureren
+    - [ ] Debounce: max 1 e-mail per 5 minuten per categorie
+    - [ ] E-mail template: categorie, bericht, endpoint, gebruiker, timestamp
+- [ ] **Automatische retentie cleanup** (APScheduler in `main.py`):
+    - [ ] DELETE DEBUG logs ouder dan 7 dagen
+    - [ ] DELETE INFO logs ouder dan 30 dagen
+    - [ ] BEWAAR WARNING/ERROR/CRITICAL permanent
+- [ ] **Verificatie 17C:**
+    - [ ] ERROR loggen → admin badge toont +1
+    - [ ] ERROR loggen → e-mail ontvangen binnen 5 min
+    - [ ] Cleanup job verwijdert DEBUG logs correct
+
+---
+
 
 ## ✅ Sprint 16: Kaart Viewport Gedrag — Vrije-Zone Centreren (Afgerond)
 

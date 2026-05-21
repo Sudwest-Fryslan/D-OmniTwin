@@ -10,8 +10,8 @@
 | Veld | Waarde |
 |------|--------|
 | **Huidige versie** | v0.9.x (pre-release) |
-| **Sprint** | Sprint 16 — Viewport Vrije-Zone Centreren ✅ Voltooid (gemerged naar main `e4b4836`) |
-| **Laatste update** | 2026-05-20 (Dag 63) |
+| **Sprint** | Sprint 17 — Configureerbare Logging Infrastructuur 📋 Gepland (Dag 64) |
+| **Laatste update** | 2026-05-21 (Dag 64) |
 | **Bijgewerkt door** | Project-manager skill (Antigravity) |
 
 ---
@@ -40,7 +40,8 @@
 | **LLM Trust & Governance Laag** | 🟢 Actief | Sprint 11B Track E ✅ — bronlabel (rule-based/AI), disclaimer |
 | **Kompas Data Ontologie UI** | 🔴 Gepland | Sprint 15 — tabblad in detailpaneel |
 | **Viewport Vrije-Zone Centreren** | 🟢 Actief | Sprint 16 ✅ — `getFreezone()`, `flyToGebied()` offset, `fitBounds()` guard. Closes #8 |
-| **Time Slider** | 🔴 Gepland | Sprint 17 — Indicator Historie & 3D Transities |
+| **Logging Infrastructuur** | 🔴 Gepland | Sprint 17 — AsyncLogQueue, app_logs DB, admin log viewer, alerts |
+| **Time Slider** | 🔴 Gepland | Sprint 17+ — Indicator Historie & 3D Transities |
 | **Data Lineage** | 🔴 Gepland | Sprint 8F — nog niet gestart |
 | **Dataspace Orchestrator (inc. FRLDS)** | 🔵 Visie/Concept | Innovatiebudget 2026 |
 
@@ -50,9 +51,9 @@
 
 | Datum | Wijziging | Impact |
 |-------|-----------|--------|
-| 2026-05-20 | **Sprint 16 — Viewport Vrije-Zone Centreren (Dag 63)** | `getFreezone()` berekent vrije kaartzone (linkerpaneel + chat + Kompas). `flyToGebied()` centreert buurt in vrije zone via longitude-offset. `fitBounds()` guard voorkomt viewport-reset bij re-renders. Squash merge `e4b4836`. Closes #8. |
+| 2026-05-21 | **Sprint 17 Planning — Configureerbare Logging Infrastructuur (Dag 64)** | Requirements vastgesteld. Spec aangemaakt in `docs/5-secops/logging/sprint-17-logging-spec.md`. TODO.md, ROADMAP.md en STATE.md bijgewerkt. GitHub Issue #9 en branch `feature/sprint-17-logging` aan te maken. |
+| 2026-05-20 | **Sprint 16 — Viewport Vrije-Zone Centreren (Dag 63)** | `getFreezone()` berekent vrije kaartzone. `flyToGebied()` centreert buurt in vrije zone. `fitBounds()` guard voorkomt viewport-reset. Squash merge `e4b4836`. Closes #8. |
 | 2026-05-15 | **Sprint 11B — UX-Overhaul voltooid (Dag 62)** | Alle 5 tracks (A t/m E) geïmplementeerd en squash-gemerged naar `main` (`2fbb00c`). Closes #7. |
-| 2026-05-14 | **Sprint 11B UX-Overhaul Plan (Dag 60)** | Implementatieplan, GitHub Issue #7, feature branch. |
 
 ---
 
@@ -85,14 +86,14 @@
 |--------|-------|---------|
 | **11B** | UX-Overhaul — Alle 5 tracks | ✅ Voltooid — squash merge `2fbb00c` |
 | **16** | Viewport Vrije-Zone Centreren | ✅ Voltooid — squash merge `e4b4836`, closes #8 |
+| **17** | **Configureerbare Logging Infrastructuur** | 📋 Gepland — Issue #9 · branch `feature/sprint-17-logging` |
 | **Jouw actie** | CBS indicatorwaarden downloaden op laptop | ⏳ Nog uit te voeren |
-| **12** | 3D BAG Integratie & Bug #42 | 🔜 Volgende sprint |
+| **12** | 3D BAG Integratie & Bug #42 | 🔜 Na Sprint 17 |
 | **15** | Kompas UI Uitbreiding - Ontologie & Data Tabs | Na Sprint 12 |
-| **17** | Time Traveler - Indicator Historie en 3D transities | Q3 2026 |
 | **13** | Architectuur Gaps & Security Hardening | Q2 2026 |
 | **14** | Open Source Decoupling (EUPL) | Q2 2026 |
 | **8F** | Data Lineage & Dataspace Orchestrator | Q3 2026 |
-| **18-20** | Dataspace-Native Orchestration (FRLDS / FDS) | Q3/Q4 2026 |
+| **18-21** | Dataspace-Native Orchestration (FRLDS / FDS) | Q3/Q4 2026 |
 
 ---
 

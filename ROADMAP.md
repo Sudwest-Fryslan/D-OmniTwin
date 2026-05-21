@@ -817,17 +817,18 @@ mapStyle: 'mapbox://styles/mapbox/light-v10'
 ### 🌐 Phase 9: Dataspace Orchestration (Innovation Track)
 **Visie:** D-OmniTwin als federatieve orkestratielaag bovenop Data Spaces (FRLDS / FDS).
 
-- [ ] **Sprint 17: Dataspace-Native PoC**
+- [ ] **Sprint 18: Dataspace-Native PoC**
     - Onderzoek API-koppeling met Fryslân Data Space (FRLDS).
     - Ontkoppelen van lokale indicator-tabellen naar federatieve bronnen.
-- [ ] **Sprint 18: Dynamisch Kompas v3**
+- [ ] **Sprint 19: Dynamisch Kompas v3**
     - Het Kompas-model onafhankelijk maken van de database-schema's (agnostische mappings).
-- [ ] **Sprint 19: AI Narratieven voor Burgers**
+- [ ] **Sprint 20: AI Narratieven voor Burgers**
     - LLM-vertaling voor lokale context op basis van live federatieve data.
-- [ ] **Sprint 20: Innovatiebudget Validatie**
+- [ ] **Sprint 21: Innovatiebudget Validatie**
     - Pilots in 3 gemeenten (Súdwest-Fryslân, Leeuwarden, Tytsjerksteradiel).
 
 ---
+
 
 **Documentatie:** Zie BRAINDUMP.md voor gedetailleerde technische overwegingen  
 **Tracking:** Updates in TODO.md per sprint
@@ -903,3 +904,32 @@ Gebruikersinteracties verrijken het systeem:
 
 **Afhankelijkheden:** deck.gl v8+, `@loaders.gl/3d-tiles`, EP-Online data in DB (✅ aanwezig)  
 **Details:** Zie `BRAINDUMP.md` → *3D BAG Integratie* sectie
+
+---
+
+## 📊 Sprint 17: Configureerbare Logging Infrastructuur *(Gepland — Dag 64)*
+
+**Doel:** Gedifferentieerde, configureerbare logging op alle facetten van de applicatie — instelbaar per module via de beheeromgeving, persistent in PostgreSQL, zichtbaar via admin panel dashboard en proactief via alerts.  
+**GitHub Issue:** #9 (aan te maken)  
+**Branch:** `feature/sprint-17-logging`  
+**Spec:** [`docs/5-secops/logging/sprint-17-logging-spec.md`](./docs/5-secops/logging/sprint-17-logging-spec.md)
+
+### Fasering
+
+| Fase | Scope | Status |
+|------|-------|--------|
+| **17A** | Fundament: `AsyncLogQueue`, `AppLogger`, `app_logs` DB schema, RequestLoggingMiddleware, `print()` sanering | 📋 Gepland |
+| **17B** | Module logging (Kompas, Kaart, Rapport, Auth, Admin, Chat), log viewer admin panel, Monitor-rol | 📋 Gepland |
+| **17C** | Statistieken dashboard, error alerts (badge + e-mail), automatische retentie cleanup | 📋 Gepland |
+
+### Categorieën
+`SERVER` · `API` · `AUTH` · `KOMPAS` · `KAART` · `RAPPORT` · `LLM_CHAT` · `DATABASE` · `ADMIN`
+
+### Requirements (vastgesteld Dag 64)
+- Opslag: DB (structureel) + rotating logbestand (technisch)
+- Granulariteit: per categorie instelbaar via admin panel (DEBUG/INFO/WARNING/ERROR)
+- Retentie: ERROR permanent · INFO 30 dagen · DEBUG 7 dagen
+- Alerts: admin panel badge + e-mail bij ERROR/CRITICAL
+
+**Priority:** 🔴 HIGH (SecOps fundament)  
+**Effort:** ~3 sessies
