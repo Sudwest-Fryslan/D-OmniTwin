@@ -11,6 +11,9 @@ from src.database import get_db, engine
 from dotenv import load_dotenv
 from pathlib import Path
 import os
+import time
+
+from services.logging_service import AppLogger, init_logging, shutdown_logging
 
 # Load environment variables
 project_root = Path(__file__).resolve().parent
@@ -59,8 +62,72 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         
         return response
 
+
+# ============================================================================
+# LOGGING: Request Logging Middleware (Sprint 17A)
+# ============================================================================
+class RequestLoggingMiddleware(BaseHTTPMiddleware):
+    """Logt elke HTTP request naar AppLogger (category=API).
+    
+    Uitsluitingen: /static/*, /health (noisy, geen diagnostische waarde).
+    Niveau: INFO voor 2xx/3xx, WARNING voor 4xx, ERROR voor 5xx.
+    """
+    
+    # Paden die niet gelogd worden
+    _SKIP_PREFIXES = ("/static/", "/health")
+    
+    async def dispatch(self, request: Request, call_next):
+        path = request.url.path
+        
+        # Skip noisy paden
+        if any(path.startswith(prefix) for prefix in self._SKIP_PREFIXES):
+            return await call_next(request)
+        
+        start = time.time()
+        
+        try:
+            response = await call_next(request)
+        except Exception:
+            # Onverwachte crash: log als ERROR, laat exception door
+            elapsed_ms = int((time.time() - start) * 1000)
+            ip = request.headers.get("x-forwarded-for", request.client.host if request.client else "unknown")
+            AppLogger.error(
+                f"{request.method} {path} → 500 ({elapsed_ms}ms)",
+                category="API",
+                ip_address=ip,
+                endpoint=path,
+                response_time_ms=elapsed_ms,
+            )
+            raise
+        
+        elapsed_ms = int((time.time() - start) * 1000)
+        status = response.status_code
+        ip = request.headers.get("x-forwarded-for", request.client.host if request.client else "unknown")
+        
+        # Bepaal log niveau op basis van status code
+        if status >= 500:
+            log_fn = AppLogger.error
+        elif status >= 400:
+            log_fn = AppLogger.warning
+        else:
+            log_fn = AppLogger.info
+        
+        log_fn(
+            f"{request.method} {path} → {status} ({elapsed_ms}ms)",
+            category="API",
+            ip_address=ip,
+            endpoint=path,
+            response_time_ms=elapsed_ms,
+        )
+        
+        return response
+
+
 # Add security headers middleware FIRST
 app.add_middleware(SecurityHeadersMiddleware)
+
+# Add request logging middleware
+app.add_middleware(RequestLoggingMiddleware)
 
 # ============================================================================
 # SECURITY: CORS Lockdown
@@ -121,19 +188,29 @@ app.include_router(omgevingsvisie.router)
 @app.on_event("startup")
 async def startup_event():
     """Startup checks and logging."""
+    # Initialiseer logging stack (file handler + async DB queue + config cache)
+    await init_logging()
+    
     try:
         with engine.connect() as conn:
             conn.execute(text("SELECT 1"))
-        print("✅ Database connection established successfully.")
-        print("✅ Gebiedsmonitor API registered at /api/gebiedsmonitor")
-        print("✅ Kompas API registered at /api/kompas")
-        print("✅ Gemeenten API registered at /api/gemeenten")
-        print(f"✅ CORS origins: {cors_origins}")
-        print(f"✅ Debug mode: {debug_mode}")
-        print("✅ Security headers middleware active")
-        print("✅ Frontend available at http://localhost:8000/")
+        AppLogger.info("Database connection established successfully", category="SERVER")
+        AppLogger.info("Gebiedsmonitor API registered at /api/gebiedsmonitor", category="SERVER")
+        AppLogger.info("Kompas API registered at /api/kompas", category="SERVER")
+        AppLogger.info("Gemeenten API registered at /api/gemeenten", category="SERVER")
+        AppLogger.info(f"CORS origins: {cors_origins}", category="SERVER")
+        AppLogger.info(f"Debug mode: {debug_mode}", category="SERVER")
+        AppLogger.info("Security headers middleware active", category="SERVER")
+        AppLogger.info("Request logging middleware active", category="SERVER")
+        AppLogger.info("Frontend available at http://localhost:8000/", category="SERVER")
     except Exception as e:
-        print(f"❌ Database connection failed: {e}")
+        AppLogger.error(f"Database connection failed: {e}", category="SERVER")
+
+
+@app.on_event("shutdown")
+async def shutdown_event():
+    """Graceful shutdown — flush log queue."""
+    await shutdown_logging()
 
 @app.get("/", response_class=HTMLResponse)
 async def root(request: Request):

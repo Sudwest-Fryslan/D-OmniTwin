@@ -52,8 +52,9 @@ class GebiedsmonitorService:
         Haal GeoJSON data op (V2: Gebruikt SQL Views + Color Schemas).
         """
         from services.color_scale_service import ColorScaleService
+        from services.logging_service import AppLogger
         
-        print(f"DEBUG: get_kaart_data_v2 executing for gebiedstype {gebiedstype_id}, gemeente_code={gemeente_code}")
+        AppLogger.debug(f"get_kaart_data_v2 executing for gebiedstype {gebiedstype_id}, gemeente_code={gemeente_code}", category="KAART")
         
         # 1. Base Query: Geometry + Metadata from View
         # Join met gebieden tabel voor gemeente_code filter

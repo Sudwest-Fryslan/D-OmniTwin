@@ -5,6 +5,8 @@ from sqlalchemy import text
 from typing import Dict, Any, Optional
 import os
 
+from services.logging_service import AppLogger
+
 # Fallbacks instellen, maar in deze v8 schema wordt de API URL dynamisch uit de database gehaald
 DEFAULT_OLLAMA_HOST = os.getenv("OLLAMA_HOST", "http://localhost:11434")
 DEFAULT_OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "qwen3:30b")
@@ -55,11 +57,8 @@ class LLMService:
             "user_prompt": user_prompt
         }
         
-        # Logging naar console
-        print(f"\n[{context_name}] --- LLM REQUEST START ---")
-        print(f"System Prompt:\n{system_prompt}\n")
-        print(f"User Prompt:\n{user_prompt}\n")
-        print(f"[{context_name}] --- LLM REQUEST END ---\n")
+        # Logging: volledige prompts alleen op DEBUG (GDPR: user input niet op INFO)
+        AppLogger.debug(f"[{context_name}] LLM REQUEST — system: {system_prompt[:200]}... | user: {user_prompt[:200]}...", category="LLM_CHAT")
         
         try:
             response = requests.post(url, json=payload, timeout=600)
@@ -81,9 +80,7 @@ class LLMService:
                 except Exception:
                     pass
             
-            print(f"[{context_name}] --- LLM RESPONSE START ---")
-            print(f"{cleaned.strip()}")
-            print(f"[{context_name}] --- LLM RESPONSE END ---\n")
+            AppLogger.debug(f"[{context_name}] LLM RESPONSE — {cleaned.strip()[:500]}", category="LLM_CHAT")
             
             return {
                 "text": cleaned.strip(),
@@ -92,7 +89,7 @@ class LLMService:
                 
         except requests.exceptions.RequestException as e:
             error_msg = f"Error contacting Ollama op {url}: {str(e)}"
-            print(f"[{context_name}] --- LLM ERROR ---: {error_msg}")
+            AppLogger.error(f"[{context_name}] LLM ERROR: {error_msg}", category="LLM_CHAT")
             return {
                 "text": error_msg,
                 "debug": debug_info
@@ -306,7 +303,7 @@ BELANGRIJK: Als het doel MAAK_RAPPORT is, noem dan GEEN indicatoren, maar bevest
                     "debug": response.get("debug", {})
                 }
             except json.JSONDecodeError:
-                print(f"⚠️ [Chat] JSON parseer-fout na cleaning: {response['text'][:100]}...")
+                AppLogger.warning(f"JSON parseer-fout na cleaning: {response['text'][:100]}...", category="LLM_CHAT")
                 return None
         
         return None

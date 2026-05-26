@@ -25,7 +25,8 @@ class AISearchService:
         global _model
         if _model is None:
             try:
-                print("⏳ Initialiseren van AISearch model (all-MiniLM-L6-v2)...")
+                from services.logging_service import AppLogger
+                AppLogger.info("Initialiseren van AISearch model (all-MiniLM-L6-v2)...", category="SERVER")
                 _model = SentenceTransformer('all-MiniLM-L6-v2')
             except Exception as e:
                 logger.error(f"Fout bij laden van AI model: {e}")
