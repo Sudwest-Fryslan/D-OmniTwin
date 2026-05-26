@@ -16,6 +16,7 @@ from sqlalchemy import text
 from src.database import get_db
 from routers.auth import check_auth_or_key
 from services.logging_service import AppLogger, _config_cache
+from services.log_cleanup_service import run_cleanup_now
 from pydantic import BaseModel
 from typing import Optional, List, Dict, Any
 from fastapi import Request
@@ -171,6 +172,41 @@ async def get_log_stats(
     """)
     hourly_rows = db.execute(hourly_query).fetchall()
 
+    # Top endpoints (vandaag, API categorie)
+    top_endpoints_query = text("""
+        SELECT endpoint, COUNT(*) as hits,
+               ROUND(AVG(response_time_ms)) as avg_ms,
+               ROUND(PERCENTILE_CONT(0.95) WITHIN GROUP (ORDER BY response_time_ms)) as p95_ms
+        FROM app_logs
+        WHERE timestamp >= CURRENT_DATE
+          AND category = 'API'
+          AND endpoint IS NOT NULL
+        GROUP BY endpoint
+        ORDER BY hits DESC
+        LIMIT 10
+    """)
+    top_endpoint_rows = db.execute(top_endpoints_query).fetchall()
+
+    # Error trend: errors per dag afgelopen 7 dagen
+    error_trend_query = text("""
+        SELECT DATE(timestamp) as dag, COUNT(*) as errors
+        FROM app_logs
+        WHERE level IN ('ERROR', 'CRITICAL')
+          AND timestamp >= CURRENT_DATE - INTERVAL '7 days'
+        GROUP BY dag
+        ORDER BY dag
+    """)
+    error_trend_rows = db.execute(error_trend_query).fetchall()
+
+    # p95 response time vandaag
+    p95_query = text("""
+        SELECT ROUND(PERCENTILE_CONT(0.95) WITHIN GROUP (ORDER BY response_time_ms))
+        FROM app_logs
+        WHERE timestamp >= CURRENT_DATE
+          AND response_time_ms IS NOT NULL
+    """)
+    p95_ms = db.execute(p95_query).scalar()
+
     return {
         "total_today": row[0] or 0,
         "errors_today": row[1] or 0,
@@ -178,8 +214,17 @@ async def get_log_stats(
         "active_users": row[3] or 0,
         "unique_ips": row[4] or 0,
         "avg_response_ms": int(row[5]) if row[5] else 0,
+        "p95_response_ms": int(p95_ms) if p95_ms else 0,
         "by_category": [{"category": r[0], "count": r[1]} for r in cat_rows],
         "by_hour": [{"hour": r[0], "count": r[1]} for r in hourly_rows],
+        "top_endpoints": [
+            {"endpoint": r[0], "hits": r[1], "avg_ms": int(r[2]) if r[2] else 0, "p95_ms": int(r[3]) if r[3] else 0}
+            for r in top_endpoint_rows
+        ],
+        "error_trend": [
+            {"dag": r[0].isoformat() if r[0] else None, "errors": r[1]}
+            for r in error_trend_rows
+        ],
     }
 
 
@@ -258,3 +303,28 @@ async def update_log_config(
     )
 
     return {"message": f"Configuratie voor '{category}' bijgewerkt", "category": category}
+
+
+# ============================================================================
+# POST /api/admin/logs/cleanup — Handmatige cleanup trigger
+# ============================================================================
+@router.post("/logs/cleanup")
+async def trigger_cleanup(
+    request: Request,
+    auth: dict = Depends(check_auth_or_key),
+):
+    """Voer log cleanup direct uit (admin only). Handige trigger voor testing."""
+    deleted = await run_cleanup_now()
+    total = sum(deleted.values())
+
+    AppLogger.info(
+        f"Handmatige log cleanup: {total} records verwijderd "
+        f"(DEBUG={deleted.get('DEBUG', 0)}, INFO={deleted.get('INFO', 0)})",
+        category="ADMIN",
+        user_id=auth.get("username"),
+    )
+
+    return {
+        "message": f"{total} log records verwijderd",
+        "deleted": deleted,
+    }

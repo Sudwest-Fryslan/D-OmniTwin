@@ -14,6 +14,7 @@ import os
 import time
 
 from services.logging_service import AppLogger, init_logging, shutdown_logging
+from services.log_cleanup_service import start_cleanup_scheduler, stop_cleanup_scheduler
 
 # Load environment variables
 project_root = Path(__file__).resolve().parent
@@ -207,10 +208,14 @@ async def startup_event():
     except Exception as e:
         AppLogger.error(f"Database connection failed: {e}", category="SERVER")
 
+    # Start dagelijkse log cleanup
+    start_cleanup_scheduler()
+
 
 @app.on_event("shutdown")
 async def shutdown_event():
-    """Graceful shutdown — flush log queue."""
+    """Graceful shutdown — flush log queue + stop cleanup scheduler."""
+    await stop_cleanup_scheduler()
     await shutdown_logging()
 
 @app.get("/", response_class=HTMLResponse)

@@ -3,7 +3,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../services/api';
 import {
   Activity, AlertTriangle, AlertCircle, Users, Clock,
-  Search, RefreshCw, ChevronLeft, ChevronRight, Settings
+  Search, RefreshCw, ChevronLeft, ChevronRight, Settings,
+  Trash2
 } from 'lucide-react';
 
 // ============================================================================
@@ -29,8 +30,11 @@ interface LogStats {
   active_users: number;
   unique_ips: number;
   avg_response_ms: number;
+  p95_response_ms: number;
   by_category: { category: string; count: number }[];
   by_hour: { hour: number; count: number }[];
+  top_endpoints: { endpoint: string; hits: number; avg_ms: number; p95_ms: number }[];
+  error_trend: { dag: string; errors: number }[];
 }
 
 interface LogConfig {
@@ -50,6 +54,7 @@ const logAPI = {
   getConfig: () => api.get('/log-config'),
   updateConfig: (category: string, data: { level: string; enabled: boolean }) =>
     api.put(`/log-config/${category}`, data),
+  runCleanup: () => api.post('/logs/cleanup'),
 };
 
 // ============================================================================
@@ -77,7 +82,9 @@ const LEVEL_COLORS: Record<string, string> = {
 // ============================================================================
 export const LogViewerPage: React.FC = () => {
   const queryClient = useQueryClient();
+  const [activeTab, setActiveTab] = useState<'logs' | 'gebruik'>('logs');
   const [showConfig, setShowConfig] = useState(false);
+  const [cleanupMsg, setCleanupMsg] = useState('');
 
   // Filters
   const [page, setPage] = useState(1);
@@ -113,10 +120,18 @@ export const LogViewerPage: React.FC = () => {
     },
   });
 
+  const cleanupMutation = useMutation({
+    mutationFn: () => logAPI.runCleanup(),
+    onSuccess: (res) => {
+      setCleanupMsg(res.data.message);
+      setTimeout(() => setCleanupMsg(''), 5000);
+    },
+  });
+
   const stats: LogStats = statsData?.data || {
     total_today: 0, errors_today: 0, warnings_today: 0,
-    active_users: 0, unique_ips: 0, avg_response_ms: 0,
-    by_category: [], by_hour: [],
+    active_users: 0, unique_ips: 0, avg_response_ms: 0, p95_response_ms: 0,
+    by_category: [], by_hour: [], top_endpoints: [], error_trend: [],
   };
 
   const logs: LogEntry[] = logsData?.data?.logs || [];
@@ -148,9 +163,30 @@ export const LogViewerPage: React.FC = () => {
         <StatCard icon={<AlertTriangle size={20} />} value={stats.warnings_today} label="Warnings" color="var(--color-warning)" />
         <StatCard icon={<Users size={20} />} value={stats.active_users} label="Actieve users" color="var(--color-secondary)" />
         <StatCard icon={<Clock size={20} />} value={`${stats.avg_response_ms}ms`} label="Gem. response" color="var(--color-accent)" />
+        <StatCard icon={<Clock size={20} />} value={`${stats.p95_response_ms}ms`} label="P95 response" color="var(--color-text-secondary)" />
       </div>
 
-      {/* Filters */}
+      {/* Tab switcher */}
+      <div style={{ display: 'flex', gap: '4px', borderBottom: '1px solid var(--color-border)', paddingBottom: '0' }}>
+        {(['logs', 'gebruik'] as const).map(tab => (
+          <button
+            key={tab}
+            onClick={() => setActiveTab(tab)}
+            style={{
+              padding: '0.5rem 1.25rem', border: 'none', cursor: 'pointer',
+              background: 'none', fontSize: '0.875rem', fontWeight: 600,
+              color: activeTab === tab ? 'var(--color-primary)' : 'var(--color-text-muted)',
+              borderBottom: activeTab === tab ? '2px solid var(--color-primary)' : '2px solid transparent',
+              marginBottom: '-1px',
+            }}
+          >
+            {tab === 'logs' ? '📋 Log Stream' : '📊 Gebruik & Gezondheid'}
+          </button>
+        ))}
+      </div>
+
+      {/* === TAB: LOG STREAM === */}
+      {activeTab === 'logs' && <>
       <div className="card" style={{ padding: 'var(--spacing-md)' }}>
         <div style={{ display: 'flex', gap: 'var(--spacing-sm)', flexWrap: 'wrap', alignItems: 'center' }}>
           {/* Period */}
@@ -396,6 +432,94 @@ export const LogViewerPage: React.FC = () => {
           </button>
         </div>
       </div>
+      </> }
+
+      {/* === TAB: GEBRUIK & GEZONDHEID === */}
+      {activeTab === 'gebruik' && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-lg)' }}>
+
+          {/* Uurverdeling */}
+          <div className="card">
+            <div className="card-header"><span className="card-title">Requests per uur (vandaag)</span></div>
+            <HourBarChart data={stats.by_hour} />
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--spacing-lg)' }}>
+            {/* Categorie verdeling */}
+            <div className="card">
+              <div className="card-header"><span className="card-title">Verdeling per categorie</span></div>
+              <CategoryBar data={stats.by_category} />
+            </div>
+
+            {/* Error trend */}
+            <div className="card">
+              <div className="card-header"><span className="card-title">Errors afgelopen 7 dagen</span></div>
+              <ErrorTrend data={stats.error_trend} />
+            </div>
+          </div>
+
+          {/* Top endpoints */}
+          <div className="card">
+            <div className="card-header">
+              <span className="card-title">Top endpoints (vandaag)</span>
+            </div>
+            <table className="table" style={{ fontSize: '0.8rem' }}>
+              <thead>
+                <tr>
+                  <th>Endpoint</th>
+                  <th style={{ width: '80px' }}>Hits</th>
+                  <th style={{ width: '90px' }}>Gem. (ms)</th>
+                  <th style={{ width: '90px' }}>P95 (ms)</th>
+                </tr>
+              </thead>
+              <tbody>
+                {stats.top_endpoints.length === 0 ? (
+                  <tr><td colSpan={4} style={{ textAlign: 'center', color: 'var(--color-text-muted)' }}>Nog geen data</td></tr>
+                ) : stats.top_endpoints.map(ep => (
+                  <tr key={ep.endpoint}>
+                    <td style={{ fontFamily: 'monospace', fontSize: '0.75rem' }}>{ep.endpoint}</td>
+                    <td>{ep.hits}</td>
+                    <td style={{ color: ep.avg_ms > 500 ? 'var(--color-warning)' : 'var(--color-text-secondary)' }}>{ep.avg_ms}</td>
+                    <td style={{ color: ep.p95_ms > 1000 ? 'var(--color-error)' : 'var(--color-text-secondary)' }}>{ep.p95_ms}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Log Cleanup */}
+          <div className="card">
+            <div className="card-header">
+              <span className="card-title">Log Retentie & Cleanup</span>
+            </div>
+            <div style={{ display: 'flex', gap: 'var(--spacing-lg)', alignItems: 'flex-start' }}>
+              <div style={{ flex: 1, fontSize: '0.85rem', color: 'var(--color-text-secondary)', lineHeight: 1.6 }}>
+                <p>Automatische cleanup draait dagelijks:</p>
+                <ul style={{ paddingLeft: '1.25rem', marginTop: '0.5rem' }}>
+                  <li><strong>DEBUG</strong> logs → verwijderd na 7 dagen</li>
+                  <li><strong>INFO</strong> logs → verwijderd na 30 dagen</li>
+                  <li><strong>WARNING / ERROR / CRITICAL</strong> → permanent bewaard</li>
+                </ul>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-sm)', alignItems: 'flex-end' }}>
+                <button
+                  className="btn btn-secondary"
+                  onClick={() => cleanupMutation.mutate()}
+                  disabled={cleanupMutation.isPending}
+                  style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+                >
+                  <Trash2 size={15} />
+                  {cleanupMutation.isPending ? 'Bezig...' : 'Nu uitvoeren'}
+                </button>
+                {cleanupMsg && (
+                  <span style={{ fontSize: '0.8rem', color: 'var(--color-success)' }}>✓ {cleanupMsg}</span>
+                )}
+              </div>
+            </div>
+          </div>
+
+        </div>
+      )}
     </div>
   );
 };
@@ -412,3 +536,104 @@ const StatCard: React.FC<{ icon: React.ReactNode; value: string | number; label:
     </div>
   </div>
 );
+
+// ============================================================================
+// Chart: Requests per uur (SVG bar chart)
+// ============================================================================
+const HourBarChart: React.FC<{ data: { hour: number; count: number }[] }> = ({ data }) => {
+  if (!data.length) return <p style={{ color: 'var(--color-text-muted)', fontSize: '0.85rem' }}>Nog geen data voor vandaag.</p>;
+  const max = Math.max(...data.map(d => d.count), 1);
+  const hours = Array.from({ length: 24 }, (_, h) => ({
+    hour: h,
+    count: data.find(d => d.hour === h)?.count || 0,
+  }));
+  return (
+    <div style={{ display: 'flex', alignItems: 'flex-end', gap: '2px', height: '80px', paddingTop: '8px' }}>
+      {hours.map(({ hour, count }) => (
+        <div key={hour} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px' }}>
+          <div
+            title={`${hour}:00 — ${count} requests`}
+            style={{
+              width: '100%',
+              height: `${Math.round((count / max) * 60)}px`,
+              minHeight: count > 0 ? '3px' : '0',
+              background: count > 0 ? 'var(--color-primary)' : 'var(--color-surface-light)',
+              borderRadius: '2px 2px 0 0',
+              opacity: count > 0 ? 0.85 : 0.3,
+              transition: 'opacity 0.2s',
+              cursor: count > 0 ? 'help' : 'default',
+            }}
+          />
+          {hour % 4 === 0 && (
+            <span style={{ fontSize: '0.6rem', color: 'var(--color-text-muted)' }}>{hour}u</span>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+};
+
+// ============================================================================
+// Chart: Verdeling per categorie (horizontale bars)
+// ============================================================================
+const CategoryBar: React.FC<{ data: { category: string; count: number }[] }> = ({ data }) => {
+  if (!data.length) return <p style={{ color: 'var(--color-text-muted)', fontSize: '0.85rem' }}>Nog geen data.</p>;
+  const max = Math.max(...data.map(d => d.count), 1);
+  const CAT_COLORS: Record<string, string> = {
+    API: '#3b82f6', SERVER: '#22c55e', AUTH: '#f97316',
+    KAART: '#8b5cf6', KOMPAS: '#06b6d4', RAPPORT: '#eab308',
+    LLM_CHAT: '#ec4899', DATABASE: '#ef4444', ADMIN: '#94a3b8',
+  };
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+      {data.map(({ category, count }) => (
+        <div key={category} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <span style={{ width: '80px', fontSize: '0.72rem', fontWeight: 600, color: 'var(--color-text-secondary)', textAlign: 'right', flexShrink: 0 }}>
+            {category}
+          </span>
+          <div style={{ flex: 1, background: 'var(--color-surface-light)', borderRadius: '3px', height: '14px', overflow: 'hidden' }}>
+            <div style={{
+              width: `${Math.round((count / max) * 100)}%`,
+              height: '100%',
+              background: CAT_COLORS[category] || '#64748b',
+              borderRadius: '3px',
+              opacity: 0.8,
+            }} />
+          </div>
+          <span style={{ width: '36px', fontSize: '0.72rem', color: 'var(--color-text-muted)', textAlign: 'right', flexShrink: 0 }}>{count}</span>
+        </div>
+      ))}
+    </div>
+  );
+};
+
+// ============================================================================
+// Chart: Error trend 7 dagen
+// ============================================================================
+const ErrorTrend: React.FC<{ data: { dag: string; errors: number }[] }> = ({ data }) => {
+  if (!data.length) return <p style={{ color: 'var(--color-success)', fontSize: '0.85rem' }}>✓ Geen errors in de afgelopen 7 dagen.</p>;
+  const max = Math.max(...data.map(d => d.errors), 1);
+  return (
+    <div style={{ display: 'flex', alignItems: 'flex-end', gap: '6px', height: '80px', paddingTop: '8px' }}>
+      {data.map(({ dag, errors }) => (
+        <div key={dag} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
+          <div
+            title={`${dag}: ${errors} errors`}
+            style={{
+              width: '100%',
+              height: `${Math.round((errors / max) * 60)}px`,
+              minHeight: '4px',
+              background: 'var(--color-error)',
+              borderRadius: '2px 2px 0 0',
+              opacity: 0.75,
+              cursor: 'help',
+            }}
+          />
+          <span style={{ fontSize: '0.6rem', color: 'var(--color-text-muted)' }}>
+            {new Date(dag).toLocaleDateString('nl-NL', { day: '2-digit', month: '2-digit' })}
+          </span>
+        </div>
+      ))}
+    </div>
+  );
+};
