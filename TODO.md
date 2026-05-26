@@ -1,19 +1,29 @@
 # TODO - D-OmniTwin Roadmap
 
-**Laatste Update:** 21 mei 2026 (Dag 64)
-**Status:** Sprint 16 (Viewport Vrije-Zone) ✅ Afgerond
+**Laatste Update:** 26 mei 2026 (Dag 69)
+**Status:** Sprint 17 (Logging Infrastructuur) ✅ Afgerond
 
-> **Volgende Sprint:** Sprint 17 — Configureerbare Logging Infrastructuur  
-> **Branch:** `feature/sprint-17-logging` (aan te maken) | **GitHub Issue:** #9 (aan te maken)  
+> **Volgende Sprint:** Sprint 18 — TBD
+> **Branch:** `feature/sprint-17-logging` → klaar voor merge naar `main`
+
+---
+
+## 🔴 OPEN BLOCKER — Must-have voor deelbare versie
+
+> **E-mail alerts bij ERROR/CRITICAL logs** — GitHub Issue [#10](https://github.com/TLaan/D-OmniTwin/issues/10)
+>
+> **Blocker:** SMTP-server nog niet geconfigureerd. Zodra opgelost → `services/log_alert_service.py` bouwen.
+> **Actie vereist:** Keuze SMTP-provider (SendGrid / Mailgun / eigen) + credentials in `.env`.
+> **Code placeholder:** `routers/log_viewer.py` → TODO comment bovenaan.
 > **Spec:** [`docs/5-secops/logging/sprint-17-logging-spec.md`](./docs/5-secops/logging/sprint-17-logging-spec.md)
 
 ---
 
-## 📋 Sprint 17: Configureerbare Logging Infrastructuur (Gepland)
+## ✅ Sprint 17: Configureerbare Logging Infrastructuur (Afgerond 26 mei 2026)
 
-**Doel:** Gedifferentieerde, configureerbare logging op alle facetten van de applicatie — instelbaar per module via de beheeromgeving, persistent in PostgreSQL, zichtbaar via admin panel dashboard, proactief via alerts.  
-**Effort:** ~3 sessies (17A + 17B + 17C)  
+**Doel:** Gedifferentieerde, configureerbare logging op alle facetten van de applicatie — instelbaar per module via de beheeromgeving, persistent in PostgreSQL, zichtbaar via admin panel dashboard, proactief via alerts.
 **Spec:** [`docs/5-secops/logging/sprint-17-logging-spec.md`](./docs/5-secops/logging/sprint-17-logging-spec.md)
+
 
 ### 🔧 Voorbereiding (voor eerste codesessie)
 - [ ] **GitHub Issue #9 aanmaken** op `github.com/TLaan/D-OmniTwin`

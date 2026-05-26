@@ -1,9 +1,16 @@
 import uvicorn
 import os
 from pathlib import Path
+from dotenv import load_dotenv
+
+# Load .env zodat LOG_LEVEL beschikbaar is
+load_dotenv(Path(__file__).resolve().parent / '.env')
 
 def run():
     print("🚀 Starten van D-OmniTwin Development Server met geoptimaliseerde reload...")
+    
+    # LOG_LEVEL uit .env koppelen aan uvicorn (was hardcoded "info")
+    log_level = os.getenv("LOG_LEVEL", "INFO").lower()
     
     # Gebruik uvicorn.run met specifieke reload settings
     # Dit voorkomt dat uvicorn de tienduizenden bestanden in admin-panel/node_modules scant.
@@ -30,9 +37,10 @@ def run():
             "*/__pycache__/*",
             "*.pyc",
             "*.log",
+            "logs/*",
             "exports/*"
         ],
-        log_level="info"
+        log_level=log_level
     )
 
 if __name__ == "__main__":

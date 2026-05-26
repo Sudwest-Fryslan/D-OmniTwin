@@ -19,6 +19,8 @@ from typing import List, Dict, Any, Optional
 import re
 import logging
 
+from services.logging_service import AppLogger
+
 logger = logging.getLogger(__name__)
 
 router = APIRouter(
@@ -221,13 +223,13 @@ async def chat(
     vraag = request.vraag.strip()
     context = request.context or {}
     
-    logger.info(f"[Chat] Vraag ontvangen: '{vraag}'")
+    AppLogger.info(f"Chat vraag ontvangen: '{vraag[:80]}'", category="LLM_CHAT")
     
     # ------------------------------------------------
     # Stap 0: Help/Onboarding — instant, geen LLM nodig
     # ------------------------------------------------
     if is_help_onboarding(vraag):
-        logger.info("[Chat] HELP_ONBOARDING intent gedetecteerd — deterministic response.")
+        AppLogger.info("HELP_ONBOARDING intent — deterministic response", category="LLM_CHAT")
         return get_help_onboarding_response()
     
     # ------------------------------------------------
@@ -281,7 +283,7 @@ async def chat(
         }
     else:
         # FALLBACK: Oude rule-based logica als LLM faalt of ongeldige JSON geeft
-        logger.warning("[Chat] Intelligent dispatcher faalde, terugval naar legacy mode.")
+        AppLogger.warning("Intelligent dispatcher faalde, terugval naar legacy mode", category="LLM_CHAT")
         intent = classify_intent(vraag)
         acties = generate_acties(intent, relevant_results, vraag)
         

@@ -255,7 +255,8 @@ async def get_dashboard_indicators(
                 if item["uuid"] in spark_map:
                     item["sparkline"] = spark_map[item["uuid"]]
         except Exception as e:
-            print(f"Error fetching sparklines: {e}")
+            from services.logging_service import AppLogger
+            AppLogger.error(f"Error fetching sparklines: {e}", category="ADMIN")
             # Fail silently, return empty list
             pass
         
