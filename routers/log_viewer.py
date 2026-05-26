@@ -3,11 +3,17 @@ Log Viewer API — Sprint 17B
 ==============================
 Admin panel endpoints voor log viewing en configuratie.
 
+⚠️  TODO (Sprint 17C — geblokkeerd): E-mail alerts bij ERROR/CRITICAL
+    GitHub Issue: #10 | Blocker: SMTP-server niet geconfigureerd
+    Zodra SMTP beschikbaar: services/log_alert_service.py aanmaken
+    Zie: docs/5-secops/logging/sprint-17-logging-spec.md
+
 Endpoints:
     GET  /api/admin/logs          — Gefilterd + gepagineerd
     GET  /api/admin/logs/stats    — Statistieken (vandaag)
     GET  /api/admin/log-config    — Configuratie ophalen
     PUT  /api/admin/log-config/{category} — Configuratie bijwerken
+    POST /api/admin/logs/cleanup  — Handmatige log cleanup
 """
 
 from fastapi import APIRouter, Depends, HTTPException, Query
