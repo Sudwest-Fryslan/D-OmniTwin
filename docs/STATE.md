@@ -9,9 +9,9 @@
 
 | Veld | Waarde |
 |------|--------|
-| **Huidige versie** | v0.9.x (pre-release) |
-| **Sprint** | Sprint 17 — Configureerbare Logging Infrastructuur 📋 Gepland (Dag 64) |
-| **Laatste update** | 2026-05-21 (Dag 64) |
+| **Huidige versie** | v1.0.0-beta (pre-release) |
+| **Sprint** | Sprint 17 — Configureerbare Logging Infrastructuur ✅ Afgerond (Dag 69) |
+| **Laatste update** | 2026-05-26 (Dag 69) |
 | **Bijgewerkt door** | Project-manager skill (Antigravity) |
 
 ---
@@ -40,7 +40,7 @@
 | **LLM Trust & Governance Laag** | 🟢 Actief | Sprint 11B Track E ✅ — bronlabel (rule-based/AI), disclaimer |
 | **Kompas Data Ontologie UI** | 🔴 Gepland | Sprint 15 — tabblad in detailpaneel |
 | **Viewport Vrije-Zone Centreren** | 🟢 Actief | Sprint 16 ✅ — `getFreezone()`, `flyToGebied()` offset, `fitBounds()` guard. Closes #8 |
-| **Logging Infrastructuur** | 🔴 Gepland | Sprint 17 — AsyncLogQueue, app_logs DB, admin log viewer, alerts |
+| **Logging Infrastructuur** | 🟢 Actief | Sprint 17 ✅ — `AsyncLogQueue`, `app_logs` DB, log viewer admin panel, dagelijkse cleanup. E-mail alerts on hold (Issue #10) |
 | **Time Slider** | 🔴 Gepland | Sprint 17+ — Indicator Historie & 3D Transities |
 | **Data Lineage** | 🔴 Gepland | Sprint 8F — nog niet gestart |
 | **Dataspace Orchestrator (inc. FRLDS)** | 🔵 Visie/Concept | Innovatiebudget 2026 |
@@ -51,9 +51,9 @@
 
 | Datum | Wijziging | Impact |
 |-------|-----------|--------|
-| 2026-05-21 | **Sprint 17 Planning — Configureerbare Logging Infrastructuur (Dag 64)** | Requirements vastgesteld. Spec aangemaakt in `docs/5-secops/logging/sprint-17-logging-spec.md`. TODO.md, ROADMAP.md en STATE.md bijgewerkt. GitHub Issue #9 en branch `feature/sprint-17-logging` aan te maken. |
-| 2026-05-20 | **Sprint 16 — Viewport Vrije-Zone Centreren (Dag 63)** | `getFreezone()` berekent vrije kaartzone. `flyToGebied()` centreert buurt in vrije zone. `fitBounds()` guard voorkomt viewport-reset. Squash merge `e4b4836`. Closes #8. |
-| 2026-05-15 | **Sprint 11B — UX-Overhaul voltooid (Dag 62)** | Alle 5 tracks (A t/m E) geïmplementeerd en squash-gemerged naar `main` (`2fbb00c`). Closes #7. |
+| 2026-05-26 | **Sprint 17 Afgerond — Configureerbare Logging Infrastructuur (Dag 69)** | 17A+17B+17C voltooid. `AsyncLogQueue`, `AppLogger`, 9 categorieën, `app_logs` DB, Log Viewer admin panel (tabs: Log Stream + Gebruik & Gezondheid), dagelijkse cleanup service. Merge `4ed45bd` → main. E-mail alerts (Issue #10) on hold — SMTP vereist. |
+| 2026-05-21 | **Sprint 17 Planning — Configureerbare Logging Infrastructuur (Dag 64)** | Requirements vastgesteld. Spec aangemaakt in `docs/5-secops/logging/sprint-17-logging-spec.md`. |
+| 2026-05-20 | **Sprint 16 — Viewport Vrije-Zone Centreren (Dag 63)** | `getFreezone()` berekent vrije kaartzone. `flyToGebied()` centreert buurt in vrije zone. Squash merge `e4b4836`. Closes #8. |
 
 ---
 
@@ -61,10 +61,10 @@
 
 | Issue | Ernst | Domein | Status |
 |-------|-------|--------|--------|
+| **E-mail alerts (Issue #10)** | Hoog | SecOps/Logging | 🔴 On hold — SMTP-server vereist. Must-have voor deelbare versie. Design: eigen server, configureerbaar via `.env`. |
 | Data Lineage nog niet geïmplementeerd | Hoog | Data Engineering | Gepland Sprint 8F |
 | Bug #42: 3D pand-kleuring bij single-buurt | Middel | Frontend | Open (Sprint 12) |
 | Viewport edge case: Kompas gecentreerd + Chat open | Laag | Frontend | Gedocumenteerd in TODO.md Sprint 16. Workaround: Kompas verschuiven. |
-| TODO.md heeft overlap met ROADMAP.md | Laag | Projectmanagement | Bekend, niet urgent |
 
 ---
 
@@ -84,11 +84,9 @@
 
 | **Sprint** | Focus | Verwacht |
 |--------|-------|---------|
-| **11B** | UX-Overhaul — Alle 5 tracks | ✅ Voltooid — squash merge `2fbb00c` |
-| **16** | Viewport Vrije-Zone Centreren | ✅ Voltooid — squash merge `e4b4836`, closes #8 |
-| **17** | **Configureerbare Logging Infrastructuur** | 📋 Gepland — Issue #9 · branch `feature/sprint-17-logging` |
-| **Jouw actie** | CBS indicatorwaarden downloaden op laptop | ⏳ Nog uit te voeren |
-| **12** | 3D BAG Integratie & Bug #42 | 🔜 Na Sprint 17 |
+| **17** | Configureerbare Logging Infrastructuur | ✅ Voltooid — merge `4ed45bd`, closes #9 (deels) |
+| **17C e-mail** | E-mail alerts bij ERROR/CRITICAL | ⏳ On hold — Issue #10, wacht op SMTP |
+| **12** | 3D BAG Integratie & Bug #42 | 🔜 Volgende sprint |
 | **15** | Kompas UI Uitbreiding - Ontologie & Data Tabs | Na Sprint 12 |
 | **13** | Architectuur Gaps & Security Hardening | Q2 2026 |
 | **14** | Open Source Decoupling (EUPL) | Q2 2026 |

@@ -907,29 +907,27 @@ Gebruikersinteracties verrijken het systeem:
 
 ---
 
-## 📊 Sprint 17: Configureerbare Logging Infrastructuur *(Gepland — Dag 64)*
+## ✅ Sprint 17: Configureerbare Logging Infrastructuur *(Afgerond — Dag 69, 26 mei 2026)*
 
-**Doel:** Gedifferentieerde, configureerbare logging op alle facetten van de applicatie — instelbaar per module via de beheeromgeving, persistent in PostgreSQL, zichtbaar via admin panel dashboard en proactief via alerts.  
-**GitHub Issue:** #9 (aan te maken)  
-**Branch:** `feature/sprint-17-logging`  
+**Doel:** Gedifferentieerde, configureerbare logging op alle facetten van de applicatie — instelbaar per module via de beheeromgeving, persistent in PostgreSQL, zichtbaar via admin panel dashboard.  
+**GitHub Issue:** #9  
+**Branch:** `feature/sprint-17-logging` → gemerged naar `main` (commit `4ed45bd`)  
 **Spec:** [`docs/5-secops/logging/sprint-17-logging-spec.md`](./docs/5-secops/logging/sprint-17-logging-spec.md)
 
 ### Fasering
 
 | Fase | Scope | Status |
 |------|-------|--------|
-| **17A** | Fundament: `AsyncLogQueue`, `AppLogger`, `app_logs` DB schema, RequestLoggingMiddleware, `print()` sanering | 📋 Gepland |
-| **17B** | Module logging (Kompas, Kaart, Rapport, Auth, Admin, Chat), log viewer admin panel, Monitor-rol | 📋 Gepland |
-| **17C** | Statistieken dashboard, error alerts (badge + e-mail), automatische retentie cleanup | 📋 Gepland |
+| **17A** | Fundament: `AsyncLogQueue`, `AppLogger`, `app_logs` DB schema, `RequestLoggingMiddleware`, `print()` sanering | ✅ Afgerond (`d8b1552`) |
+| **17B** | Module logging (Auth, Chat, BAG3D), log viewer admin panel (Log Stream tab, config editor) | ✅ Afgerond (`8d90932`) |
+| **17C** | Gebruik & Gezondheid dashboard, dagelijkse cleanup service, p95 stats, top endpoints | ✅ Afgerond (`481a43d`) |
+| **17C e-mail** | E-mail alerts bij ERROR/CRITICAL | ⏳ On hold — Issue #10 — wacht op SMTP-server |
 
 ### Categorieën
 `SERVER` · `API` · `AUTH` · `KOMPAS` · `KAART` · `RAPPORT` · `LLM_CHAT` · `DATABASE` · `ADMIN`
 
-### Requirements (vastgesteld Dag 64)
-- Opslag: DB (structureel) + rotating logbestand (technisch)
-- Granulariteit: per categorie instelbaar via admin panel (DEBUG/INFO/WARNING/ERROR)
-- Retentie: ERROR permanent · INFO 30 dagen · DEBUG 7 dagen
-- Alerts: admin panel badge + e-mail bij ERROR/CRITICAL
+### Open punt
+⚠️ **E-mail alerts (Issue #10)** — Must-have voor deelbare versie. Design: eigen SMTP-server, volledig configureerbaar via `.env`. Zie `TODO.md` blocker sectie.
 
 **Priority:** 🔴 HIGH (SecOps fundament)  
-**Effort:** ~3 sessies
+**Effort:** 3 sessies gerealiseerd
