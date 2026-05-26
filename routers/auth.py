@@ -14,6 +14,8 @@ import secrets
 import datetime
 import os
 
+from services.logging_service import AppLogger
+
 router = APIRouter(prefix="/api/admin/auth", tags=["Auth"])
 
 # Bcrypt voor passwoorden
@@ -97,9 +99,11 @@ async def login(
     user = result.fetchone()
 
     if not user or not user[3]: # Not active
+        AppLogger.warning(f"Login mislukt: gebruiker '{form_data.username}' niet gevonden of niet actief", category="AUTH")
         raise HTTPException(status_code=401, detail="Onjuiste gebruikersnaam of wachtwoord")
 
     if not verify_password(form_data.password, user[2]): # Check hashed pass
+        AppLogger.warning(f"Login mislukt: onjuist wachtwoord voor '{form_data.username}'", category="AUTH")
         raise HTTPException(status_code=401, detail="Onjuiste gebruikersnaam of wachtwoord")
 
     # Wachtwoord is goed! Creëer sessie token
@@ -125,6 +129,8 @@ async def login(
         secure=os.getenv("DEBUG", "false").lower() != "true" # True on prod (HTTPS)
     )
 
+    AppLogger.info(f"Login geslaagd: gebruiker '{user[1]}'", category="AUTH", user_id=str(user[0]))
+
     return {"message": "Succesvol ingelogd", "user": {"id": str(user[0]), "username": user[1]}}
 
 @router.post("/logout")
@@ -140,6 +146,7 @@ async def logout(
         db.commit()
 
     response.delete_cookie("session_token", httponly=True, samesite="lax")
+    AppLogger.info("Gebruiker uitgelogd", category="AUTH")
     return {"message": "Succesvol uitgelogd"}
 
 @router.get("/me", response_model=AuthStatus)
@@ -202,4 +209,5 @@ async def change_password(
     """), {"id": user_id, "token": request.cookies.get("session_token")})
     
     db.commit()
+    AppLogger.info(f"Wachtwoord gewijzigd voor user_id={user_id}", category="AUTH", user_id=str(user_id))
     return {"message": "Wachtwoord succesvol gewijzigd"}

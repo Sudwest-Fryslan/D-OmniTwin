@@ -177,13 +177,14 @@ from routers import kaart_v2
 app.include_router(kaart_v2.router)
 from routers import report
 app.include_router(report.router)
-from routers import llm_prompts, data_controle, ai_search, chat, bag3d, omgevingsvisie
+from routers import llm_prompts, data_controle, ai_search, chat, bag3d, omgevingsvisie, log_viewer
 app.include_router(llm_prompts.router)
 app.include_router(data_controle.router)
 app.include_router(ai_search.router)
 app.include_router(chat.router)
 app.include_router(bag3d.router)
 app.include_router(omgevingsvisie.router)
+app.include_router(log_viewer.router)
 
 @app.on_event("startup")
 async def startup_event():

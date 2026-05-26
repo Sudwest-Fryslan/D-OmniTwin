@@ -21,6 +21,8 @@ from typing import List, Optional
 import requests
 import logging
 
+from services.logging_service import AppLogger
+
 logger = logging.getLogger(__name__)
 
 router = APIRouter(
@@ -142,7 +144,7 @@ def fetch_buildings_from_wfs(bbox: dict, limit: int = 1000) -> dict:
     except requests.exceptions.Timeout:
         raise HTTPException(status_code=504, detail="3DBAG WFS timeout — probeer het later opnieuw")
     except requests.exceptions.RequestException as e:
-        logger.error(f"[3DBAG] WFS fout: {e}")
+        AppLogger.error(f"WFS fout: {e}", category="KAART")
         raise HTTPException(status_code=502, detail=f"3DBAG WFS niet bereikbaar: {str(e)}")
 
 # ============================================================================
@@ -209,7 +211,7 @@ def enrich_features_with_color(
                     else:
                         info["kleur"] = "#888888"
         except Exception as e:
-            logger.warning(f"[3DBAG] Buurt-kleur query fout: {e}")
+            AppLogger.warning(f"Buurt-kleur query fout: {e}", category="KAART")
             buurt_kleuren = {}
 
     # Verrijk elke feature
@@ -270,16 +272,16 @@ async def get_3d_buildings(
 
     © 3DBAG by 3DGI and TU Delft (CC BY 4.0)
     """
-    logger.info(f"[3DBAG] Request voor {len(request.gebied_ids)} gebieden: {request.gebied_ids}")
+    AppLogger.info(f"3DBAG request voor {len(request.gebied_ids)} gebieden: {request.gebied_ids}", category="KAART")
 
     # Stap 1: BBOX berekenen via PostGIS
     bbox = get_bbox_for_gebieden(db, request.gebied_ids)
-    logger.info(f"[3DBAG] BBOX (RD): {bbox['minx']:.0f},{bbox['miny']:.0f} → {bbox['maxx']:.0f},{bbox['maxy']:.0f}")
+    AppLogger.info(f"3DBAG BBOX (RD): {bbox['minx']:.0f},{bbox['miny']:.0f} → {bbox['maxx']:.0f},{bbox['maxy']:.0f}", category="KAART")
 
     # Stap 2: WFS ophalen
     geojson = fetch_buildings_from_wfs(bbox)
     features = geojson.get("features", [])
-    logger.info(f"[3DBAG] {len(features)} panden opgehaald van WFS")
+    AppLogger.info(f"3DBAG {len(features)} panden opgehaald van WFS", category="KAART")
 
     if not features:
         raise HTTPException(status_code=404, detail="Geen panden gevonden in het geselecteerde gebied")
