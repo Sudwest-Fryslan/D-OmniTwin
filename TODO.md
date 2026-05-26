@@ -12,10 +12,27 @@
 
 > **E-mail alerts bij ERROR/CRITICAL logs** — GitHub Issue [#10](https://github.com/TLaan/D-OmniTwin/issues/10)
 >
-> **Blocker:** SMTP-server nog niet geconfigureerd. Zodra opgelost → `services/log_alert_service.py` bouwen.
-> **Actie vereist:** Keuze SMTP-provider (SendGrid / Mailgun / eigen) + credentials in `.env`.
-> **Code placeholder:** `routers/log_viewer.py` → TODO comment bovenaan.
-> **Spec:** [`docs/5-secops/logging/sprint-17-logging-spec.md`](./docs/5-secops/logging/sprint-17-logging-spec.md)
+> **Design beslissing:** Eigen SMTP-server, volledig configureerbaar via `.env`.
+> **Blocker:** SMTP-server nog niet ingericht. Zodra beschikbaar → implementatie ~1 sessie.
+>
+> **Benodigde `.env` variabelen (nog toe te voegen):**
+> ```
+> SMTP_HOST=mail.jouwdomein.nl
+> SMTP_PORT=587
+> SMTP_USER=alerts@jouwdomein.nl
+> SMTP_PASS=...
+> SMTP_FROM=alerts@jouwdomein.nl
+> LOG_ALERT_TO=beheer@jouwdomein.nl
+> LOG_ALERT_ENABLED=true
+> ```
+>
+> **Wat er gebouwd moet worden:**
+> - `services/log_alert_service.py` — luistert op ERROR/CRITICAL in log queue
+> - Debounce: max 1 e-mail per 5 min per categorie
+> - Toggle per categorie in admin panel Log Config sectie
+> - `routers/log_viewer.py` bevat placeholder TODO comment
+>
+> **Actie vereist:** SMTP-server inrichten + credentials in `.env` zetten → daarna Issue #10 oppakken.
 
 ---
 
