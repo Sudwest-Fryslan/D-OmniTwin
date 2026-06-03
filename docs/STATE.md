@@ -10,8 +10,8 @@
 | Veld | Waarde |
 |------|--------|
 | **Huidige versie** | v1.0.0-beta (pre-release) |
-| **Sprint** | Sprint 17 — Configureerbare Logging Infrastructuur ✅ Afgerond (Dag 69) |
-| **Laatste update** | 2026-05-26 (Dag 69) |
+| **Sprint** | Sprint 18 — IJsselmeerkust als Besluitinstrument 📌 Gepland |
+| **Laatste update** | 2026-06-02 (Dag 70) |
 | **Bijgewerkt door** | Project-manager skill (Antigravity) |
 
 ---
@@ -51,9 +51,9 @@
 
 | Datum | Wijziging | Impact |
 |-------|-----------|--------|
+| 2026-06-02 | **Sprint 18 Gepland — IJsselmeerkust als Besluitinstrument (Dag 70)** | Sprintplan aangemaakt in `docs/7-projectmanagement/archief/sprint-18-plan_ijsselmeerkust-besluitinstrument.md`. TODO.md, ROADMAP.md, STATE.md, INDEX.md bijgewerkt. GitHub issue + worktree aan te maken door gebruiker. |
 | 2026-05-26 | **Sprint 17 Afgerond — Configureerbare Logging Infrastructuur (Dag 69)** | 17A+17B+17C voltooid. `AsyncLogQueue`, `AppLogger`, 9 categorieën, `app_logs` DB, Log Viewer admin panel (tabs: Log Stream + Gebruik & Gezondheid), dagelijkse cleanup service. Merge `4ed45bd` → main. E-mail alerts (Issue #10) on hold — SMTP vereist. |
 | 2026-05-21 | **Sprint 17 Planning — Configureerbare Logging Infrastructuur (Dag 64)** | Requirements vastgesteld. Spec aangemaakt in `docs/5-secops/logging/sprint-17-logging-spec.md`. |
-| 2026-05-20 | **Sprint 16 — Viewport Vrije-Zone Centreren (Dag 63)** | `getFreezone()` berekent vrije kaartzone. `flyToGebied()` centreert buurt in vrije zone. Squash merge `e4b4836`. Closes #8. |
 
 ---
 
@@ -84,14 +84,15 @@
 
 | **Sprint** | Focus | Verwacht |
 |--------|-------|---------|
+| **18** | IJsselmeerkust als Besluitinstrument — duiding, BAG woonplaatsen, benchmarking | 📌 Gepland — branch + issue aan te maken |
 | **17** | Configureerbare Logging Infrastructuur | ✅ Voltooid — merge `4ed45bd`, closes #9 (deels) |
 | **17C e-mail** | E-mail alerts bij ERROR/CRITICAL | ⏳ On hold — Issue #10, wacht op SMTP |
-| **12** | 3D BAG Integratie & Bug #42 | 🔜 Volgende sprint |
+| **12** | 3D BAG Integratie & Bug #42 | 🔜 Na Sprint 18 |
 | **15** | Kompas UI Uitbreiding - Ontologie & Data Tabs | Na Sprint 12 |
 | **13** | Architectuur Gaps & Security Hardening | Q2 2026 |
 | **14** | Open Source Decoupling (EUPL) | Q2 2026 |
 | **8F** | Data Lineage & Dataspace Orchestrator | Q3 2026 |
-| **18-21** | Dataspace-Native Orchestration (FRLDS / FDS) | Q3/Q4 2026 |
+| **19-22** | Dataspace-Native Orchestration (FRLDS / FDS) | Q3/Q4 2026 |
 
 ---
 

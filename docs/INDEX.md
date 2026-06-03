@@ -64,4 +64,13 @@
 
 ---
 
+## 📋 Actieve Sprint Plannen
+
+| Sprint | Document | Status |
+|--------|----------|--------|
+| **Sprint 18** | [`docs/7-projectmanagement/archief/sprint-18-plan_ijsselmeerkust-besluitinstrument.md`](./7-projectmanagement/archief/sprint-18-plan_ijsselmeerkust-besluitinstrument.md) | 📌 Gepland |
+| **Sprint 17** | [`docs/5-secops/logging/sprint-17-logging-spec.md`](./5-secops/logging/sprint-17-logging-spec.md) | ✅ Afgerond |
+
+---
+
 *Laatste update: zie STATE.md → `laatste_update` veld*

@@ -1,6 +1,6 @@
 # Feature Roadmap - D-OmniTwin Gebiedsmonitor
 
-**Status:** Sessie 2026-04-10 (Dag 55) — Multi-Gebiedsdossier ✅ | 📋 Fixes & Ontologie Sprint 15 gepland  
+**Status:** 2026-06-02 (Dag 70) — Sprint 17 ✅ Afgerond | Sprint 18 — IJsselmeerkust als Besluitinstrument 📌 Gepland  
 **Visie:** Van prototype naar productie-klaar, AI-gedreven gebiedsmonitor platform
 
 ---
@@ -931,3 +931,37 @@ Gebruikersinteracties verrijken het systeem:
 
 **Priority:** 🔴 HIGH (SecOps fundament)  
 **Effort:** 3 sessies gerealiseerd
+
+---
+
+## 🚧 Sprint 18: IJsselmeerkust als Besluitinstrument *(Gepland — 2026-06-02)*
+
+**Doel:** D-OmniTwin transformeren van een *verkenningsinstrument* naar een *besluitondersteunend instrument* — getoetst aan de casus IJsselmeerkust & Wadden (Makkum, Workum, Koudum).  
+**GitHub Issue:** Aan te maken  
+**Branch:** `feature/sprint-18-ijsselmeerkust` (aan te maken)  
+**Spec:** [`docs/7-projectmanagement/archief/sprint-18-plan_ijsselmeerkust-besluitinstrument.md`](./docs/7-projectmanagement/archief/sprint-18-plan_ijsselmeerkust-besluitinstrument.md)  
+**Afgeleid van:** NM-001 gap-analyse + TC-06-001 (E2E Beleidsadviseur IJsselmeerkust)
+
+### Tracks
+
+| Track | Deliverable | Testcase |
+|-------|-------------|----------|
+| **A1** | Bronvermelding + peildatum per indicator (Kompas) | TC-02-001 stap 3 |
+| **A2** | Z-score uitleg (contexttooltip) | TC-02-001 stap 4 |
+| **A3** | Trendlijn (≥ 2 meetmomenten) in Kompas-detailpaneel | TC-02-001 stap 6 |
+| **B1** | BAG woonplaatsen importeren (`bag_woonplaatsen` tabel) | TC-01-003 Track B |
+| **B2** | Woonplaatsen toggle in Kaartlagen-paneel | TC-01-003 Track B |
+| **B3** | Kompas aggregeert op woonplaatsniveau | TC-01-003 Track B |
+| **C1** | Benchmarktabel kernen naast elkaar | TC-02-001 stap 5 |
+| **C2** | Gemeentegemiddelde SWF als referentielijn | TC-02-001 |
+| **D1** | `HELP_ONBOARDING` beleidsadviseur-scenario | TC-06-001 fase 1 |
+| **D2** | Startflow: hint tot eerste selectie | TC-01-001 |
+| **E** | TC-06-001 volledig doorlopen + alle testcases bijwerken | TC-06-001 |
+
+### Bewust buiten scope
+- Bereikbaarheidsdata / OV-analyse (FRLDS fase 2)
+- Openbare ruimte / groen (gemeentelijke BOR)
+- Dataspace-integratie (Sprint 19-22)
+
+**Priority:** 🔴 HIGH (gebruikersvalidatie-fundament)  
+**Effort:** ~4 sessies

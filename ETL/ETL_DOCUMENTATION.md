@@ -9,7 +9,16 @@ Het framework bestaat in de kern uit twee hoofd-scripts die je vanuit de root `E
 1. **`search_api.py`** - De ontdekkingstool. Helpt je datasets zoeken en kolomnamen (DataProperties) inspecteren bij zowel de publieke CBS portal (`opendata.cbs.nl`) als de dataderden portal (`dataderden.cbs.nl` - voor RIVM/Politie).
 2. **`run_etl.py`** - De uitvoerings-engine. Voert de extractie (downloaden als JSON) en de import (opslaan in PostgreSQL & koppelen aan UUID's) in één vloeiende beweging uit.
 
-De daadwerkelijke data-extractors en importers leven in de modulaire `/CBS` (en `/RIVM`) mappen.
+De daadwerkelijke data-extractors en importers leven in de modulaire submappen:
+
+| Map | Bron | Type |
+|-----|------|------|
+| `/CBS` | CBS OData API | Kerncijfers, indicatoren per buurt |
+| `/RIVM` | CBS Dataderden API | Gezondheidsdata |
+| `/BAG` | Kadaster BAG | Gebouwkenmerken, woonplaatsen |
+| `/Geometrie` | CBS / PDOK | Buurt- en gemeentegrenzen |
+| `/Energielabel` | RVO EP-Online | Energielabels woningen |
+| `/OV` | OpenStreetMap / Overpass API | OV-haltes per buurt (nieuw 2026-06-02) |
 
 ---
 

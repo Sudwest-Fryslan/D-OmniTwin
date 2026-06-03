@@ -62,3 +62,6 @@ ETL/local/db.ini
 ETL/local/output/
 # Overige lokale ETL data
 ETL/local/data/
+
+# Overpass API cache (OSMPythonTools)
+cache/

@@ -1,10 +1,11 @@
 # TODO - D-OmniTwin Roadmap
 
-**Laatste Update:** 26 mei 2026 (Dag 69)
-**Status:** Sprint 17 (Logging Infrastructuur) ✅ Afgerond
+**Laatste Update:** 2 juni 2026 (Dag 70)
+**Status:** Sprint 17 ✅ Afgerond — Sprint 18 gepland
 
-> **Volgende Sprint:** Sprint 18 — TBD
-> **Branch:** `feature/sprint-17-logging` → klaar voor merge naar `main`
+> **Volgende Sprint:** Sprint 18 — IJsselmeerkust als Besluitinstrument
+> **Branch:** `feature/sprint-18-ijsselmeerkust` (aan te maken)
+> **Spec:** [`docs/7-projectmanagement/archief/sprint-18-plan_ijsselmeerkust-besluitinstrument.md`](./docs/7-projectmanagement/archief/sprint-18-plan_ijsselmeerkust-besluitinstrument.md)
 
 ---
 
@@ -33,6 +34,92 @@
 > - `routers/log_viewer.py` bevat placeholder TODO comment
 >
 > **Actie vereist:** SMTP-server inrichten + credentials in `.env` zetten → daarna Issue #10 oppakken.
+
+---
+
+## 🚧 Sprint 18: IJsselmeerkust als Besluitinstrument (Gepland)
+
+**Doel:** D-OmniTwin transformeren van een verkenningsinstrument naar een besluitondersteunend instrument — getoetst aan de casus IJsselmeerkust & Wadden (Makkum, Workum, Koudum).  
+**Aanleiding:** NM-001 gap-analyse + TC-06-001 staan al maanden open en zijn nog nooit volledig doorlopen.  
+**Spec:** [`docs/7-projectmanagement/archief/sprint-18-plan_ijsselmeerkust-besluitinstrument.md`](./docs/7-projectmanagement/archief/sprint-18-plan_ijsselmeerkust-besluitinstrument.md)  
+**GitHub Issue:** Aan te maken  
+**Branch:** `feature/sprint-18-ijsselmeerkust`
+
+### 🔧 Voorbereiding (voor eerste codesessie)
+- [ ] **GitHub Issue aanmaken** op `github.com/TLaan/D-OmniTwin`
+    - Titel: `feat: IJsselmeerkust als Besluitinstrument (Sprint 18)`
+    - Labels: `enhancement`, `ux`, `data`, `frontend`, `backend`, `sprint-18`
+    - Link naar sprintplan + NM-001 + TC-06-001
+- [ ] **Feature branch aanmaken en pushen:**
+    ```bash
+    git checkout -b feature/sprint-18-ijsselmeerkust
+    git push -u origin feature/sprint-18-ijsselmeerkust
+    ```
+- [ ] **Worktree aanmaken** (demo-omgeving op `main` intact houden):
+    ```bash
+    git worktree add ../D-OmniTwin-DEMO main
+    ```
+- [ ] **Open vragen beantwoorden** (zie sprintplan §Open vragen):
+    - BAG woonplaatsen dataset beschikbaar in `data/`?
+    - Hoeveel historische CBS-meetmomenten in DB? (`SELECT COUNT(DISTINCT jaar) FROM gebied_data`)
+    - Benchmark: alleen kernen-onderling of ook Fries gemiddelde?
+
+### Track A — Duiding & Context (Kompas-paneel)
+- [ ] **A1 — Bronvermelding per indicator**
+    - [ ] `bron` en `peildatum` veld ophalen in Kompas API response (`/api/kompas/...`)
+    - [ ] Frontend: bronregel tonen onder indicatorwaarde in detailpaneel
+    - [ ] Acceptatie: TC-02-001 stap 3 → ✅
+- [ ] **A2 — Z-score uitleg (contexttooltip)**
+    - [ ] ❓ icoontje toevoegen naast Z-score-getal in Kompas-detailpaneel
+    - [ ] Tooltip tekst: *"Een Z-score vergelijkt dit gebied met het gemiddelde van alle Friese buurten."*
+    - [ ] Acceptatie: TC-02-001 stap 4 → ✅
+- [ ] **A3 — Trendlijn in detailpaneel (≥ 2 meetmomenten)**
+    - [ ] Backend: `GET /api/kompas/indicator/{uuid}/trend?gebied_id=...` endpoint
+    - [ ] Frontend: mini SVG lijndiagram in detailpaneel
+    - [ ] Prioriteit: Wonen-indicatoren eerst
+    - [ ] Acceptatie: TC-02-001 stap 6 → ✅ (was ❌)
+
+### Track B — BAG Woonplaatsen als Selectielaag
+- [ ] **B1 — BAG woonplaatsen importeren**
+    - [ ] `ETL/import_bag_woonplaatsen.py` aanmaken
+    - [ ] Tabel `bag_woonplaatsen` aanmaken (id, naam, geometry EPSG:28992)
+    - [ ] `GET /api/bag/woonplaatsen` router endpoint
+- [ ] **B2 — Woonplaatsen toggle in Kaartlagen-paneel**
+    - [ ] Toggle "BAG Woonplaatsen" toevoegen (naast "Omgevingsvisie SWF")
+    - [ ] GeoJsonLayer overlay met naam-label en klikbaarheid
+    - [ ] ST_Intersects buurtselectie met -10m buffer (zelfde als omgevingsvisie)
+- [ ] **B3 — Kompas aggregeert op woonplaatsniveau**
+    - [ ] Badge: `"Makkum — 8 buurten geselecteerd"`
+    - [ ] Acceptatie: TC-01-003 Track B volledig ✅
+
+### Track C — Benchmarking: Kernen naast elkaar
+- [ ] **C1 — Multi-woonplaats benchmark-tabel**
+    - [ ] `/api/kompas/multi-gebied` uitbreiden met `naam` per kern
+    - [ ] Frontend: benchmarktabel met kolom per woonplaats + kleur/pijl bij afwijking
+    - [ ] Acceptatie: TC-02-001 stap 5 → ✅ (was ⚠️)
+- [ ] **C2 — Gemeentegemiddelde SWF als referentielijn**
+    - [ ] Contextuitleg boven tabel: *"Referentie: gemeentegemiddelde Súdwest-Fryslân"*
+
+### Track D — Gebruikersflow
+- [ ] **D1 — HELP_ONBOARDING beleidsadviseur-scenario**
+    - [ ] Trigger-keywords: "leefbaarheid", "IJsselmeerkust", "Makkum", "vergelijken"
+    - [ ] Stap-voor-stap responsebericht via deterministische chat-intent
+    - [ ] Acceptatie: TC-06-001 fase 1 → ✅ (was ❓)
+- [ ] **D2 — Startflow: hint tot eerste selectie**
+    - [ ] Kaartlading: subtiele hint *"Klik op een buurt of kies een woonplaats om te starten"*
+    - [ ] Verdwijnt bij eerste selectie (localStorage flag, Sprint 11B patroon)
+    - [ ] Acceptatie: TC-01-001 stap 1 → ✅ (was ❓)
+
+### Track E — Testcase executie & documentatie
+- [ ] **E1 — TC-06-001 volledig doorlopen in browser** (alle 14 stappen)
+- [ ] **E2 — TC-01-001, TC-02-001, TC-02-002 statusvelden bijwerken**
+- [ ] **E3 — NM-001 actualiseren** (opgeloste gaps ✅, FRLDS-gaps labelen)
+
+### Afsluiting & Merge
+- [ ] Pull Request aanmaken naar `main` met verwijzing naar GitHub Issue
+- [ ] Squash merge na review
+- [ ] STATE.md bijwerken: Sprint 18 componenten op 🟢 Actief
+- [ ] Testcases README bijwerken (statusvelden)
 
 ---
 
