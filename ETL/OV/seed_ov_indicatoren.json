@@ -1,0 +1,42 @@
+[
+  {
+    "naam": "Aantal OV-haltes (totaal)",
+    "code": "OV_HALTES_TOTAAL",
+    "eenheid": "aantal",
+    "score_type": "+/+",
+    "bron": "OpenStreetMap / Overpass API",
+    "omschrijving": "Totaal unieke OV-haltelocaties per buurt (bus, trein, tram, veerboot gecombineerd). Gededupliceerd op naam + 75m proximity."
+  },
+  {
+    "naam": "Aantal bushaltes",
+    "code": "OV_HALTES_BUS",
+    "eenheid": "aantal",
+    "score_type": "+/+",
+    "bron": "OpenStreetMap / Overpass API",
+    "omschrijving": "Unieke bushaltelocaties per buurt (gededupliceerd op naam + 75m). Bron: OSM highway=bus_stop en public_transport=platform."
+  },
+  {
+    "naam": "Aantal treinhaltes",
+    "code": "OV_HALTES_TREIN",
+    "eenheid": "aantal",
+    "score_type": "+/+",
+    "bron": "OpenStreetMap / Overpass API",
+    "omschrijving": "Treinstationlocaties per buurt (OSM railway=station). Eén node per stationscomplex."
+  },
+  {
+    "naam": "Aantal tramhaltes",
+    "code": "OV_HALTES_TRAM",
+    "eenheid": "aantal",
+    "score_type": "+/+",
+    "bron": "OpenStreetMap / Overpass API",
+    "omschrijving": "Tramhaltelocaties per buurt (OSM railway=tram_stop of tram=yes)."
+  },
+  {
+    "naam": "Aantal veerboten",
+    "code": "OV_HALTES_VEERBOOT",
+    "eenheid": "aantal",
+    "score_type": "+/+",
+    "bron": "OpenStreetMap / Overpass API",
+    "omschrijving": "Veerboot-aanleglocaties per buurt (OSM amenity=ferry_terminal). Inclusief Waddenveer en IJsselmeerveer."
+  }
+]
