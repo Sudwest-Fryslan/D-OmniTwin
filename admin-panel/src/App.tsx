@@ -13,6 +13,7 @@ import { MultiGebiedPage } from './pages/MultiGebiedPage';
 import { LLMConfigPage } from './pages/LLMConfigPage';
 import { AccountPage } from './pages/AccountPage';
 import { LogViewerPage } from './pages/LogViewerPage';
+import { ExterneKaartlagenPage } from './pages/ExterneKaartlagenPage';
 import {
   LayoutDashboard,
   Database,
@@ -25,7 +26,8 @@ import {
   Settings,
   User,
   ChevronDown,
-  ScrollText
+  ScrollText,
+  Globe
 } from 'lucide-react';
 import { authAPI } from './services/api';
 import './styles/admin.css';
@@ -127,6 +129,14 @@ const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
             <ScrollText size={18} />
             Log Viewer
           </NavLink>
+
+          <NavLink
+            to="/externe-lagen"
+            className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
+          >
+            <Globe size={18} />
+            Externe Lagen
+          </NavLink>
         </nav>
       </aside>
 
@@ -142,6 +152,7 @@ const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
               <Route path="/rapport/*" element={<>AI Rapportage</>} />
               <Route path="/llm" element={<>AI Configuratie</>} />
               <Route path="/logs" element={<>Log Viewer</>} />
+              <Route path="/externe-lagen" element={<>Externe Kaartlagen</>} />
               <Route path="/account" element={<>Mijn Account</>} />
             </Routes>
           </h2>
@@ -303,6 +314,10 @@ function App() {
 
           <Route path="/logs" element={
             <ProtectedRoute><LogViewerPage /></ProtectedRoute>
+          } />
+
+          <Route path="/externe-lagen" element={
+            <ProtectedRoute><ExterneKaartlagenPage /></ProtectedRoute>
           } />
 
           <Route path="*" element={<Navigate to="/dashboard" replace />} />

@@ -246,3 +246,31 @@ export interface GebiedListItem {
     naam: string;
     type: string;
 }
+
+// ─── Sprint 18: Externe Kaartlagen Beheer ───────────────────────────────────
+
+export interface ExterneKaartlaag {
+    id: number;
+    naam: string;
+    beschrijving: string | null;
+    laag_type: 'selectie' | 'data_koppel';
+    bron_type: 'WFS' | 'WMS' | 'GeoJSON';
+    url: string;
+    typename: string | null;
+    srsname: string;
+    versie: string;
+    filter_type: 'bbox' | 'provincie' | 'alles';
+    filter_waarde: string | null;
+    koppel_veld: string | null;
+    kleur_lijn: string;
+    kleur_fill: string;
+    opacity: number;
+    actief: boolean;
+    volgorde: number;
+    created_at: string | null;
+    updated_at: string | null;
+}
+
+export type ExterneKaartlaagCreate = Omit<ExterneKaartlaag, 'id' | 'created_at' | 'updated_at'>;
+export type ExterneKaartlaagUpdate = Partial<ExterneKaartlaagCreate>;
+
