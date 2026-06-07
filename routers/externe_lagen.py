@@ -1,38 +1,46 @@
 """
 Externe Kaartlagen API Router
 ==============================
-Endpoints voor het beheren en serveren van externe geo-lagen (WFS/WMS).
-Bevat een WFS proxy met 24u cache om CORS-problemen op te lossen en
-PDOK niet te overbelasten.
+Endpoints voor het beheren en serveren van externe geo-lagen (WFS/WMS/lokaal).
+Bevat een WFS proxy met 24u cache en lokale GPKG/GeoJSON leesfunctie.
 
 Sprint 18 Track B — Extern Lagen Beheersysteem
 
 Endpoints (public):
 - GET  /api/externe-lagen              → Actieve lagen (voor frontend toggles)
-- GET  /api/externe-lagen/{id}/features → WFS proxy (GeoJSON, cached 24u)
-- POST /api/externe-lagen/{id}/buurten  → CBS-buurten via ST_Intersects
+- GET  /api/externe-lagen/{id}/features → WFS proxy of lokaal bestand (GeoJSON, cached 24u)
+- POST /api/externe-lagen/{id}/buurten  → CBS-buurten via ST_Contains(centroid)
 
 Endpoints (admin):
-- GET    /api/admin/externe-lagen       → Alle lagen (incl. inactief)
-- POST   /api/admin/externe-lagen       → Nieuwe laag aanmaken
-- PUT    /api/admin/externe-lagen/{id}  → Laag bijwerken
-- DELETE /api/admin/externe-lagen/{id}  → Laag verwijderen
+- GET    /api/admin/externe-lagen              → Alle lagen (incl. inactief)
+- POST   /api/admin/externe-lagen              → Nieuwe laag aanmaken
+- PUT    /api/admin/externe-lagen/{id}         → Laag bijwerken
+- DELETE /api/admin/externe-lagen/{id}         → Laag verwijderen
+- GET    /api/admin/externe-lagen/lokale-bestanden → Beschikbare bestanden in data-upload/
+- POST   /api/admin/externe-lagen/upload       → Bestand uploaden naar data-upload/
 """
 
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException, Request, UploadFile, File
 from sqlalchemy.orm import Session
 from sqlalchemy import text
 from pydantic import BaseModel, field_validator
 from typing import Optional
+from pathlib import Path
 import httpx
 import time
 import re
+import json
 import logging
 
 from src.database import get_db
 from routers.auth import check_auth_or_key
 
 logger = logging.getLogger(__name__)
+
+# ============================================================================
+# Data-upload directory voor lokale bestanden
+# ============================================================================
+DATA_UPLOAD_DIR = Path("data-upload")
 
 # ============================================================================
 # Provincie bounding boxes (Rijksdriehoek / EPSG:28992)
@@ -93,8 +101,8 @@ class ExterneKaartlaagCreate(BaseModel):
     @field_validator("bron_type")
     @classmethod
     def check_bron_type(cls, v: str) -> str:
-        if v not in ("WFS", "WMS", "GeoJSON"):
-            raise ValueError("bron_type moet 'WFS', 'WMS' of 'GeoJSON' zijn")
+        if v not in ("WFS", "WMS", "GeoJSON", "lokaal"):
+            raise ValueError("bron_type moet 'WFS', 'WMS', 'GeoJSON' of 'lokaal' zijn")
         return v
 
     @field_validator("filter_type")
@@ -164,6 +172,119 @@ def verify_admin(request: Request, db: Session = Depends(get_db)):
 
 
 # ============================================================================
+# Hulpfuncties: lokaal bestand lezen + WFS ophalen
+# ============================================================================
+
+def _load_local_file(filename: str, layer_name: str = None) -> dict:
+    """
+    Lees een lokaal GPKG/GeoJSON bestand uit data-upload/ en converteer naar
+    GeoJSON FeatureCollection in WGS84 (EPSG:4326).
+    """
+    import fiona
+    from shapely.geometry import shape, mapping
+
+    filepath = DATA_UPLOAD_DIR / filename
+    if not filepath.exists():
+        raise HTTPException(404, f"Lokaal bestand niet gevonden: {filename}")
+
+    # Veiligheidscheck: pad mag niet buiten data-upload/ vallen
+    try:
+        filepath.resolve().relative_to(DATA_UPLOAD_DIR.resolve())
+    except ValueError:
+        raise HTTPException(400, "Ongeldig bestandspad")
+
+    allowed_extensions = {'.gpkg', '.geojson', '.json'}
+    if filepath.suffix.lower() not in allowed_extensions:
+        raise HTTPException(400, f"Bestandstype '{filepath.suffix}' niet ondersteund")
+
+    try:
+        # Bepaal layer
+        layers = fiona.listlayers(str(filepath))
+        open_layer = layer_name if layer_name and layer_name in layers else layers[0]
+
+        features = []
+        with fiona.open(str(filepath), layer=open_layer) as src:
+            src_crs = str(src.crs).upper() if src.crs else ""
+            needs_transform = "28992" in src_crs or "RD" in src_crs
+
+            for feat in src:
+                geom = shape(feat["geometry"])
+                props = dict(feat.get("properties", {}))
+
+                if needs_transform:
+                    # Gebruik bestaande _transform_rd_to_wgs84 logica
+                    geom_geojson = mapping(geom)
+                    # We transformeren de coords inline
+                    features.append({
+                        "type": "Feature",
+                        "geometry": geom_geojson,
+                        "properties": props
+                    })
+                else:
+                    features.append({
+                        "type": "Feature",
+                        "geometry": mapping(geom),
+                        "properties": props
+                    })
+
+        geojson = {"type": "FeatureCollection", "features": features}
+
+        # RD → WGS84 transformatie als nodig
+        if needs_transform:
+            geojson = _transform_rd_to_wgs84(geojson)
+
+        logger.info("Lokaal bestand geladen: %s (layer=%s, %d features, transform=%s)",
+                    filename, open_layer, len(features), needs_transform)
+        return geojson
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error("Fout bij laden lokaal bestand %s: %s", filename, e)
+        raise HTTPException(500, f"Fout bij laden van {filename}: {str(e)}")
+
+
+async def _fetch_wfs(row) -> dict:
+    """WFS request uitvoeren en GeoJSON ophalen + RD→WGS84 transformatie."""
+    params = {
+        "service": "WFS",
+        "version": row.versie or "2.0.0",
+        "request": "GetFeature",
+        "typeName": row.typename,
+        "outputFormat": "application/json",
+        "srsName": row.srsname or "EPSG:28992",
+    }
+
+    # Filter toevoegen
+    if row.filter_type == "provincie":
+        bbox_str = PROVINCIE_BBOXEN.get(row.filter_waarde)
+        if bbox_str:
+            params["bbox"] = f"{bbox_str},{row.srsname or 'EPSG:28992'}"
+    elif row.filter_type == "bbox" and row.filter_waarde:
+        params["bbox"] = f"{row.filter_waarde},{row.srsname or 'EPSG:28992'}"
+    # 'alles' → geen bbox filter
+
+    try:
+        async with httpx.AsyncClient(timeout=60.0) as client:
+            resp = await client.get(row.url, params=params)
+            resp.raise_for_status()
+            geojson = resp.json()
+    except httpx.TimeoutException:
+        raise HTTPException(504, f"Timeout bij ophalen van {row.naam} (>60s)")
+    except httpx.HTTPStatusError as e:
+        raise HTTPException(502, f"WFS fout bij {row.naam}: HTTP {e.response.status_code}")
+    except Exception as e:
+        logger.error("WFS proxy fout voor laag %s: %s", row.naam, e)
+        raise HTTPException(502, f"Fout bij ophalen van {row.naam}")
+
+    # Transformeer naar WGS84 als srsname = EPSG:28992
+    if (row.srsname or "EPSG:28992") == "EPSG:28992":
+        geojson = _transform_rd_to_wgs84(geojson)
+
+    return geojson
+
+
+# ============================================================================
 # Public endpoints
 # ============================================================================
 
@@ -222,46 +343,13 @@ async def get_laag_features(laag_id: int, db: Session = Depends(get_db)):
         logger.info("Cache hit voor externe laag %d (%s)", laag_id, row.naam)
         return cached[1]
 
-    # WFS request opbouwen
-    if row.bron_type != "WFS":
-        raise HTTPException(501, f"Bron type '{row.bron_type}' wordt nog niet ondersteund (alleen WFS)")
-
-    params = {
-        "service": "WFS",
-        "version": row.versie or "2.0.0",
-        "request": "GetFeature",
-        "typeName": row.typename,
-        "outputFormat": "application/json",
-        "srsName": row.srsname or "EPSG:28992",
-    }
-
-    # Filter toevoegen
-    if row.filter_type == "provincie":
-        bbox_str = PROVINCIE_BBOXEN.get(row.filter_waarde)
-        if bbox_str:
-            params["bbox"] = f"{bbox_str},{row.srsname or 'EPSG:28992'}"
-    elif row.filter_type == "bbox" and row.filter_waarde:
-        params["bbox"] = f"{row.filter_waarde},{row.srsname or 'EPSG:28992'}"
-    # 'alles' → geen bbox filter
-
-    try:
-        async with httpx.AsyncClient(timeout=60.0) as client:
-            resp = await client.get(row.url, params=params)
-            resp.raise_for_status()
-            geojson = resp.json()
-    except httpx.TimeoutException:
-        raise HTTPException(504, f"Timeout bij ophalen van {row.naam} (>60s)")
-    except httpx.HTTPStatusError as e:
-        raise HTTPException(502, f"WFS fout bij {row.naam}: HTTP {e.response.status_code}")
-    except Exception as e:
-        logger.error("WFS proxy fout voor laag %d: %s", laag_id, e)
-        raise HTTPException(502, f"Fout bij ophalen van {row.naam}")
-
-    # Transformeer naar WGS84 als srsname = EPSG:28992
-    # PDOK WFS met outputFormat=json levert al coords in het gevraagde SRS
-    # Deck.gl verwacht WGS84 (EPSG:4326), dus we moeten transformeren
-    if (row.srsname or "EPSG:28992") == "EPSG:28992":
-        geojson = _transform_rd_to_wgs84(geojson)
+    # Routing op bron_type
+    if row.bron_type == "lokaal":
+        geojson = _load_local_file(row.url, row.typename)
+    elif row.bron_type == "WFS":
+        geojson = await _fetch_wfs(row)
+    else:
+        raise HTTPException(501, f"Bron type '{row.bron_type}' wordt nog niet ondersteund")
 
     # Metadata toevoegen
     feature_count = len(geojson.get("features", []))
@@ -269,16 +357,17 @@ async def get_laag_features(laag_id: int, db: Session = Depends(get_db)):
         "laag_id": laag_id,
         "laag_naam": row.naam,
         "bron": row.url,
+        "bron_type": row.bron_type,
         "typename": row.typename,
-        "filter": f"{row.filter_type}={row.filter_waarde}",
+        "filter": f"{row.filter_type}={row.filter_waarde}" if row.filter_type else None,
         "features_count": feature_count,
         "crs": "EPSG:4326"
     }
 
     # Cache opslaan
     _wfs_cache[laag_id] = (time.time(), geojson)
-    logger.info("WFS features opgehaald voor laag %d (%s): %d features",
-                laag_id, row.naam, feature_count)
+    logger.info("%s features opgehaald voor laag %d (%s): %d features",
+                row.bron_type, laag_id, row.naam, feature_count)
 
     return geojson
 
@@ -496,6 +585,99 @@ async def admin_delete_laag(
 
     logger.info("Externe laag verwijderd: [%d] %s", row.id, row.naam)
     return {"id": row.id, "naam": row.naam, "status": "verwijderd"}
+
+
+# ============================================================================
+# Admin: Lokale bestanden beheer
+# ============================================================================
+
+@router.get("/api/admin/externe-lagen/lokale-bestanden")
+async def admin_lokale_bestanden(
+    _: bool = Depends(verify_admin)
+):
+    """Lijst beschikbare bestanden in data-upload/ met metadata."""
+    import fiona
+
+    if not DATA_UPLOAD_DIR.exists():
+        return {"bestanden": [], "totaal": 0}
+
+    bestanden = []
+    for f in sorted(DATA_UPLOAD_DIR.iterdir()):
+        if f.suffix.lower() in ('.gpkg', '.geojson', '.json') and f.is_file():
+            try:
+                layers = fiona.listlayers(str(f))
+                # Haal metadata van eerste layer
+                with fiona.open(str(f), layer=layers[0]) as src:
+                    bestanden.append({
+                        "bestandsnaam": f.name,
+                        "grootte_kb": round(f.stat().st_size / 1024, 1),
+                        "layers": layers,
+                        "features": len(src),
+                        "crs": str(src.crs) if src.crs else None,
+                        "geometry_type": src.schema.get("geometry", "onbekend"),
+                    })
+            except Exception as e:
+                logger.warning("Kan bestand %s niet lezen: %s", f.name, e)
+                bestanden.append({
+                    "bestandsnaam": f.name,
+                    "grootte_kb": round(f.stat().st_size / 1024, 1),
+                    "fout": str(e),
+                })
+
+    return {"bestanden": bestanden, "totaal": len(bestanden)}
+
+
+@router.post("/api/admin/externe-lagen/upload")
+async def admin_upload_bestand(
+    bestand: UploadFile = File(...),
+    _: bool = Depends(verify_admin)
+):
+    """Upload een GPKG of GeoJSON bestand naar data-upload/."""
+    import fiona
+
+    # Valideer bestandstype
+    allowed = {'.gpkg', '.geojson', '.json'}
+    suffix = Path(bestand.filename).suffix.lower()
+    if suffix not in allowed:
+        raise HTTPException(400, f"Bestandstype '{suffix}' niet toegestaan. Gebruik: {', '.join(allowed)}")
+
+    # Veilige bestandsnaam (geen pad-traversal)
+    safe_name = Path(bestand.filename).name
+    if not safe_name or safe_name.startswith('.'):
+        raise HTTPException(400, "Ongeldige bestandsnaam")
+
+    filepath = DATA_UPLOAD_DIR / safe_name
+
+    # Maximale bestandsgrootte: 50MB
+    MAX_SIZE = 50 * 1024 * 1024
+    contents = await bestand.read()
+    if len(contents) > MAX_SIZE:
+        raise HTTPException(413, f"Bestand te groot (max {MAX_SIZE // (1024*1024)}MB)")
+
+    # Opslaan
+    DATA_UPLOAD_DIR.mkdir(exist_ok=True)
+    filepath.write_bytes(contents)
+
+    # Valideer dat fiona het kan lezen
+    try:
+        layers = fiona.listlayers(str(filepath))
+        with fiona.open(str(filepath), layer=layers[0]) as src:
+            meta = {
+                "bestandsnaam": safe_name,
+                "grootte_kb": round(len(contents) / 1024, 1),
+                "layers": layers,
+                "features": len(src),
+                "crs": str(src.crs) if src.crs else None,
+                "geometry_type": src.schema.get("geometry", "onbekend"),
+            }
+    except Exception as e:
+        # Ongeldig bestand: verwijder weer
+        filepath.unlink(missing_ok=True)
+        raise HTTPException(400, f"Bestand kon niet geopend worden als geo-bestand: {str(e)}")
+
+    logger.info("Bestand geüpload: %s (%d features, %s)",
+                safe_name, meta["features"], meta["crs"])
+    return {"status": "geüpload", **meta}
 
 
 # ============================================================================

@@ -242,17 +242,7 @@
           </svg>
         </span>
       </button>
-      <button class="tab-button" data-panel="upload" title="Data Upload">
-        <span class="tab-icon">
-          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-            class="lucide lucide-upload-icon lucide-upload">
-            <path d="M12 3v12" />
-            <path d="m17 8-5-5-5 5" />
-            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-          </svg>
-        </span>
-      </button>
+      <!-- Data Upload verwijderd (Sprint 18 B4) — nu via beheeromgeving -->
       <button class="tab-button" data-panel="export" title="Exporteren">
         <span class="tab-icon">
           <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
@@ -521,17 +511,10 @@
           <p class="help-text">Configureer een token in <code>config.ini</code> onder <code>[MAPBOX]</code>.</p>
           {% endif %}
 
-          <!-- Omgevingsvisie Deelgebieden Overlay -->
+          <!-- Gebiedslagen: dynamisch ingeladen via loadExterneKaartlagen() -->
+          <!-- Omgevingsvisie SWF is nu een externe kaartlaag (Sprint 18 B4) -->
           <div class="form-group" style="margin-top: 1rem; border-top: 1px solid var(--border-color); padding-top: 1rem;">
             <h4 class="subsection-title">Gebiedslagen</h4>
-            <label class="checkbox-label">
-              <input type="checkbox" id="toggle-omgevingsvisie">
-              <span class="checkbox-custom"></span>
-              <span><img src="/static/images/map-pinned.svg" alt="" width="16" height="16" style="vertical-align: -2px; filter: brightness(0) invert(1); margin-right: 4px;"> Omgevingsvisie SWF</span>
-            </label>
-            <span class="help-text" id="omgevingsvisie-info">Toont deelgebieden uit de omgevingsvisie. Klik om buurten te selecteren.</span>
-
-            <!-- Externe kaartlagen: dynamisch ingeladen via JS -->
             <div id="externe-lagen-list" style="margin-top: 0.5rem;">
               <!-- Gevuld door loadExterneKaartlagen() -->
             </div>
@@ -539,21 +522,7 @@
         </div>
       </div>
 
-      <!-- Panel 4: Upload (Placeholder) -->
-      <div id="panel-upload" class="panel-content">
-        <div class="panel">
-          <h3 class="panel-title">Data Upload</h3>
-          <p class="help-text">📌 Deze functionaliteit wordt toegevoegd in Sprint 3</p>
-          <div class="placeholder-box">
-            <p><strong>Geplande features:</strong></p>
-            <ul>
-              <li>GeoJSON upload (drag-drop)</li>
-              <li>CSV upload met mapping wizard</li>
-              <li>Data validatie en preview</li>
-            </ul>
-          </div>
-        </div>
-      </div>
+      <!-- Panel 4: Upload VERWIJDERD (Sprint 18 B4) — nu via admin /externe-lagen -->
 
       <!-- Panel 5: Export -->
       <div id="panel-export" class="panel-content">

@@ -254,7 +254,7 @@ export interface ExterneKaartlaag {
     naam: string;
     beschrijving: string | null;
     laag_type: 'selectie' | 'data_koppel';
-    bron_type: 'WFS' | 'WMS' | 'GeoJSON';
+    bron_type: 'WFS' | 'WMS' | 'GeoJSON' | 'lokaal';
     url: string;
     typename: string | null;
     srsname: string;
@@ -274,3 +274,12 @@ export interface ExterneKaartlaag {
 export type ExterneKaartlaagCreate = Omit<ExterneKaartlaag, 'id' | 'created_at' | 'updated_at'>;
 export type ExterneKaartlaagUpdate = Partial<ExterneKaartlaagCreate>;
 
+export interface LokaalBestand {
+    bestandsnaam: string;
+    grootte_kb: number;
+    layers?: string[];
+    features?: number;
+    crs?: string | null;
+    geometry_type?: string;
+    fout?: string;
+}
