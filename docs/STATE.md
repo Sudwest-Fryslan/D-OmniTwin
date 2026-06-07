@@ -11,7 +11,7 @@
 |------|--------|
 | **Huidige versie** | v1.0.0-beta (pre-release) |
 | **Sprint** | Sprint 18 — IJsselmeerkust als Besluitinstrument 📌 Gepland |
-| **Laatste update** | 2026-06-02 (Dag 70) |
+| **Laatste update** | 2026-06-07 (Dag 71) |
 | **Bijgewerkt door** | Project-manager skill (Antigravity) |
 
 ---
@@ -32,6 +32,7 @@
 | **Ontologie generatie** | 🟢 Actief | Fence & Source philosophy geïmplementeerd |
 | **Multi-Gebiedsdossier rapport** | 🟢 Actief | Voltooid incl. bugfixes en colorblind-safe visualisatie |
 | **Initiatie Dataset (init_data/)** | 🟢 Compleet | 942 Friese buurten, **235 indicatoren** (gesaneerd + nieuw formaat), scripts + GETTING_STARTED.md |
+| **OV Haltes ETL (Issue #11)** | 🟢 Actief | FR/GR/DR: 6.945 nodes → 4.324 clusters → 961 buurten × 5 indicatoren (OV_HALTES_*) in `gebied_data`. Kompas: Bereikbaarheid en parkeren. |
 | **Onboarding Modal + Contextuele Tooltips** | 🟢 Actief | Sprint 11B Track A ✅ — welkomstmodal, 4 contexttooltips, `window.EventBus` fix |
 | **Error Toast Notificaties** | 🟢 Actief | Sprint 11B — `showError()` geüpgraded van `alert()` naar glassmorphism toast |
 | **Feedback & Micro-interacties** | 🟢 Actief | Sprint 11B Track B ✅ — empty state, inline spinner, indicator badge, hover cursor |
@@ -51,9 +52,9 @@
 
 | Datum | Wijziging | Impact |
 |-------|-----------|--------|
-| 2026-06-02 | **Sprint 18 Gepland — IJsselmeerkust als Besluitinstrument (Dag 70)** | Sprintplan aangemaakt in `docs/7-projectmanagement/archief/sprint-18-plan_ijsselmeerkust-besluitinstrument.md`. TODO.md, ROADMAP.md, STATE.md, INDEX.md bijgewerkt. GitHub issue + worktree aan te maken door gebruiker. |
-| 2026-05-26 | **Sprint 17 Afgerond — Configureerbare Logging Infrastructuur (Dag 69)** | 17A+17B+17C voltooid. `AsyncLogQueue`, `AppLogger`, 9 categorieën, `app_logs` DB, Log Viewer admin panel (tabs: Log Stream + Gebruik & Gezondheid), dagelijkse cleanup service. Merge `4ed45bd` → main. E-mail alerts (Issue #10) on hold — SMTP vereist. |
-| 2026-05-21 | **Sprint 17 Planning — Configureerbare Logging Infrastructuur (Dag 64)** | Requirements vastgesteld. Spec aangemaakt in `docs/5-secops/logging/sprint-17-logging-spec.md`. |
+| 2026-06-07 | **Issue #11 Afgerond — OV Haltes ETL (Dag 71)** | ETL pipeline volledig gebouwd en gedraaid. FR/GR/DR: 6.945 OSM nodes → 4.324 clusters → 4.805 waarden in `gebied_data`. 5 indicatoren (OV_HALTES_*) gekoppeld aan Kompas → Bereikbaarheid en parkeren. Merge `147f5d9` → main commit `7443b51`. |
+| 2026-06-02 | **Sprint 18 Gepland — IJsselmeerkust als Besluitinstrument (Dag 70)** | Sprintplan aangemaakt in `docs/7-projectmanagement/archief/sprint-18-plan_ijsselmeerkust-besluitinstrument.md`. TODO.md, ROADMAP.md, STATE.md, INDEX.md bijgewerkt. |
+| 2026-05-26 | **Sprint 17 Afgerond — Configureerbare Logging Infrastructuur (Dag 69)** | 17A+17B+17C voltooid. `AsyncLogQueue`, `AppLogger`, 9 categorieën, `app_logs` DB, Log Viewer admin panel, dagelijkse cleanup. Merge `4ed45bd` → main. E-mail alerts (Issue #10) on hold — SMTP vereist. |
 
 ---
 
@@ -84,7 +85,8 @@
 
 | **Sprint** | Focus | Verwacht |
 |--------|-------|---------|
-| **18** | IJsselmeerkust als Besluitinstrument — duiding, BAG woonplaatsen, benchmarking | 📌 Gepland — branch + issue aan te maken |
+| **18** | IJsselmeerkust als Besluitinstrument — duiding, BAG woonplaatsen, benchmarking | 📌 Gepland — issue + branch nog aan te maken |
+| **#11 (OV ETL)** | OV Haltes ETL — OSM data FR/GR/DR → Kompas indicatoren | ✅ Voltooid — merge `7443b51` |
 | **17** | Configureerbare Logging Infrastructuur | ✅ Voltooid — merge `4ed45bd`, closes #9 (deels) |
 | **17C e-mail** | E-mail alerts bij ERROR/CRITICAL | ⏳ On hold — Issue #10, wacht op SMTP |
 | **12** | 3D BAG Integratie & Bug #42 | 🔜 Na Sprint 18 |
