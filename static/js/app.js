@@ -46,6 +46,9 @@ const state = {
     selectedDeelgebiedNaam: null,   // Naam van actief deelgebied (voor rapport-link)
     // Sprint 16: Viewport vrije-zone centreren
     initialDataLoaded: false,      // Guard: fitBounds() alleen bij nieuw data-laden
+    // Sprint 18: Externe kaartlagen (WFS, PDOK, etc.)
+    externeKaartlagen: [],         // Actieve lagen definitie [{id, naam, kleur_lijn, ...}]
+    externeKaartlaagData: {},      // { laag_id: { laag, geojson } }
 };
 
 // Publiceer state op window zodat chat.js en andere modules de kaartselectie kunnen lezen
@@ -154,6 +157,9 @@ getFillColor: d => {
 
             // Track C — Indicator zoekfunctie (Sprint 11B)
             initIndicatorSearch();
+
+            // Sprint 18: Externe kaartlagen laden (dynamische toggles)
+            await loadExterneKaartlagen();
 
             // DON'T auto-open any panel - let user click tab buttons
 
@@ -402,6 +408,20 @@ function initDeckGL() {
                     fontSize: '13px',
                     boxShadow: '0 4px 12px rgba(0,0,0,0.3)'
                 };
+
+                // Externe kaartlaag tooltip (Sprint 18)
+                if (layer?.id?.startsWith('externe-laag-')) {
+                    const featureNaam = props.woonplaats || props.naam || props.name || 'Onbekend';
+                    return {
+                        html: `
+                <div style="font-family: Inter, sans-serif;">
+                  <strong>\u{1F310} ${featureNaam}</strong><br/>
+                  <small style="opacity:0.5;">Klik om buurten te selecteren</small>
+                </div>
+              `,
+                        style: tooltipStyle
+                    };
+                }
 
                 // Omgevingsvisie Deelgebied tooltip
                 if (layer?.id === 'omgevingsvisie-layer') {
@@ -911,6 +931,185 @@ async function selectBuurtenFromDeelgebied(deelgebiedId, deelgebiedNaam) {
 }
 
 // ============================================================================
+// Externe Kaartlagen (Sprint 18 — PDOK WFS proxy)
+// ============================================================================
+
+/**
+ * Laadt actieve externe kaartlagen en rendert toggles in het kaartlagen-paneel.
+ */
+async function loadExterneKaartlagen() {
+    try {
+        const res = await fetch('/api/externe-lagen');
+        if (!res.ok) return;
+        const data = await res.json();
+        state.externeKaartlagen = data.lagen || [];
+
+        const container = document.getElementById('externe-lagen-list');
+        if (!container) return;
+
+        // Render toggles veilig via DOM API (geen innerHTML)
+        container.replaceChildren();
+        state.externeKaartlagen.forEach(laag => {
+            // Label wrapper
+            const label = document.createElement('label');
+            label.className = 'checkbox-label';
+
+            // Checkbox
+            const checkbox = document.createElement('input');
+            checkbox.type = 'checkbox';
+            checkbox.id = `toggle-externe-laag-${laag.id}`;
+            checkbox.dataset.laagId = String(laag.id);
+
+            // Custom checkbox span
+            const checkboxCustom = document.createElement('span');
+            checkboxCustom.className = 'checkbox-custom';
+
+            // Label text with icon
+            const labelText = document.createElement('span');
+            labelText.textContent = `\u{1F310} ${laag.naam}`;
+
+            label.appendChild(checkbox);
+            label.appendChild(checkboxCustom);
+            label.appendChild(labelText);
+            container.appendChild(label);
+
+            // Help text
+            if (laag.beschrijving) {
+                const helpText = document.createElement('span');
+                helpText.className = 'help-text';
+                helpText.textContent = laag.beschrijving;
+                container.appendChild(helpText);
+            }
+
+            // Toggle event listener
+            checkbox.addEventListener('change', async (e) => {
+                if (e.target.checked) {
+                    await laadExterneKaartlaagFeatures(laag);
+                } else {
+                    verwijderExterneKaartlaag(laag.id);
+                }
+            });
+        });
+
+        if (state.externeKaartlagen.length > 0) {
+            console.log(`\u{1F310} ${state.externeKaartlagen.length} externe kaartlagen beschikbaar`);
+        }
+    } catch (e) {
+        console.warn('\u26A0\uFE0F Externe kaartlagen konden niet worden geladen:', e.message);
+    }
+}
+
+/**
+ * Haalt features op via de backend WFS proxy en toont ze op de kaart.
+ */
+async function laadExterneKaartlaagFeatures(laag) {
+    showLoading(true, `${laag.naam} laden...`);
+    try {
+        const res = await fetch(`/api/externe-lagen/${laag.id}/features`);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const geojson = await res.json();
+
+        state.externeKaartlaagData[laag.id] = { laag, geojson };
+
+        // Re-render kaart met de nieuwe laag
+        if (state.currentData) {
+            displayOnMap(state.currentData);
+        }
+
+        const count = geojson.features?.length || 0;
+        console.log(`\u{1F310} ${laag.naam}: ${count} features geladen`);
+    } catch (e) {
+        console.error(`\u274C Fout bij laden ${laag.naam}:`, e);
+        showError(`${laag.naam} kon niet worden geladen`);
+        // Toggle terugzetten
+        const toggle = document.getElementById(`toggle-externe-laag-${laag.id}`);
+        if (toggle) toggle.checked = false;
+    } finally {
+        showLoading(false);
+    }
+}
+
+/**
+ * Verwijdert een externe kaartlaag van de kaart.
+ */
+function verwijderExterneKaartlaag(laagId) {
+    delete state.externeKaartlaagData[laagId];
+    if (state.currentData) {
+        displayOnMap(state.currentData);
+    }
+    console.log(`\u{1F310} Externe laag ${laagId} verwijderd van kaart`);
+}
+
+/**
+ * Selecteert CBS-buurten die binnen een extern laag-feature vallen.
+ * Converteert GeoJSON geometry naar WKT en stuurt naar backend ST_Intersects.
+ */
+async function selectBuurtenVanExterneLaag(laag, feature) {
+    const wkt = geojsonGeomToWkt(feature.geometry);
+    if (!wkt) {
+        console.warn('\u26A0\uFE0F Kon geometrie niet naar WKT converteren');
+        return;
+    }
+
+    showLoading(true, `Buurten selecteren...`);
+    try {
+        const res = await fetch(`/api/externe-lagen/${laag.id}/buurten`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ wkt: wkt })
+        });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+
+        clearGebiedSelection();
+        state.selectedDeelgebiedNaam = feature.properties?.woonplaats || feature.properties?.naam || null;
+        data.buurten.forEach(b => state.selectedGebiedIds.add(b.id));
+
+        updateSelectionUI();
+        if (state.currentData) {
+            displayOnMap(state.currentData);
+        }
+
+        // Reload kompas als open
+        if (state.kompasWindow && state.kompasWindow.isVisible && window.kompasViz && window.kompasViz.currentConfigId) {
+            loadKompasForSelection(window.kompasViz.currentConfigId);
+        }
+
+        console.log(`\u{1F4CD} ${data.totaal} buurten geselecteerd via ${laag.naam}`);
+    } catch (e) {
+        console.error('\u274C Buurten selectie fout:', e);
+        showError('Buurten konden niet worden geselecteerd');
+    } finally {
+        showLoading(false);
+    }
+}
+
+/**
+ * Converteert een GeoJSON geometry naar WKT string (voor ST_Intersects).
+ * Ondersteunt Polygon en MultiPolygon.
+ */
+function geojsonGeomToWkt(geometry) {
+    if (!geometry || !geometry.coordinates) return null;
+
+    function ringToWkt(ring) {
+        return ring.map(coord => `${coord[0]} ${coord[1]}`).join(', ');
+    }
+
+    if (geometry.type === 'Polygon') {
+        const rings = geometry.coordinates.map(ring => `(${ringToWkt(ring)})`);
+        return `POLYGON(${rings.join(', ')})`;
+    }
+    if (geometry.type === 'MultiPolygon') {
+        const polygons = geometry.coordinates.map(poly => {
+            const rings = poly.map(ring => `(${ringToWkt(ring)})`);
+            return `(${rings.join(', ')})`;
+        });
+        return `MULTIPOLYGON(${polygons.join(', ')})`;
+    }
+    return null;
+}
+
+// ============================================================================
 // Map Visualization with deck.gl
 // ============================================================================
 
@@ -1160,6 +1359,55 @@ function displayOnMap(geojson) {
             }
         });
         layers.push(bag3dLayer);
+    }
+
+    // Sprint 18: Externe kaartlagen overlay layers
+    for (const [laagIdStr, entry] of Object.entries(state.externeKaartlaagData)) {
+        const { laag, geojson: laagGeojson } = entry;
+        if (!laagGeojson || !laagGeojson.features) continue;
+
+        // Parse kleur hex naar RGB array
+        const hexToRgb = (hex) => {
+            const r = parseInt(hex.slice(1, 3), 16);
+            const g = parseInt(hex.slice(3, 5), 16);
+            const b = parseInt(hex.slice(5, 7), 16);
+            return [r, g, b];
+        };
+        const lijnKleur = hexToRgb(laag.kleur_lijn || '#8B5CF6');
+        const fillKleur = hexToRgb(laag.kleur_fill || '#8B5CF6');
+        const fillOpacity = Math.round((laag.opacity || 0.15) * 255);
+
+        const externeLaag = new GeoJsonLayer({
+            id: `externe-laag-${laagIdStr}`,
+            data: laagGeojson,
+            filled: true,
+            stroked: true,
+            extruded: false,
+
+            getFillColor: [...fillKleur, fillOpacity],
+            getLineColor: [...lijnKleur, 200],
+            getLineWidth: 60,
+
+            pickable: true,
+            autoHighlight: true,
+            highlightColor: [...lijnKleur, 80],
+
+            parameters: {
+                depthTest: false,
+                blend: true
+            },
+
+            onClick: (info) => {
+                if (info.object && laag.laag_type === 'selectie') {
+                    selectBuurtenVanExterneLaag(laag, info.object);
+                }
+            },
+
+            updateTriggers: {
+                getFillColor: [laagGeojson]
+            }
+        });
+        layers.push(externeLaag);
     }
 
     // Omgevingsvisie Deelgebieden overlay layer

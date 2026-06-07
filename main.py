@@ -49,7 +49,7 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
             "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://api.mapbox.com https://cdn.jsdelivr.net https://unpkg.com; "
             "font-src 'self' https://fonts.gstatic.com data:; "
             "img-src 'self' data: https: blob:; "
-            "connect-src 'self' https://api.mapbox.com https://*.tiles.mapbox.com https://events.mapbox.com wss://*.mapbox.com https://data.3dbag.nl https://api.3dbag.nl; "
+            "connect-src 'self' https://api.mapbox.com https://*.tiles.mapbox.com https://events.mapbox.com wss://*.mapbox.com https://data.3dbag.nl https://api.3dbag.nl https://service.pdok.nl; "
             "worker-src 'self' blob:; "
             "child-src 'self' blob:; "
             "frame-src 'self';"
@@ -178,7 +178,7 @@ from routers import kaart_v2
 app.include_router(kaart_v2.router)
 from routers import report
 app.include_router(report.router)
-from routers import llm_prompts, data_controle, ai_search, chat, bag3d, omgevingsvisie, log_viewer
+from routers import llm_prompts, data_controle, ai_search, chat, bag3d, omgevingsvisie, log_viewer, externe_lagen
 app.include_router(llm_prompts.router)
 app.include_router(data_controle.router)
 app.include_router(ai_search.router)
@@ -186,6 +186,7 @@ app.include_router(chat.router)
 app.include_router(bag3d.router)
 app.include_router(omgevingsvisie.router)
 app.include_router(log_viewer.router)
+app.include_router(externe_lagen.router)
 
 @app.on_event("startup")
 async def startup_event():
