@@ -100,6 +100,14 @@ export const dashboardAPI = {
     getExport: () => api.get('/dashboard/export', { responseType: 'blob' })
 };
 
+// Externe Kaartlagen (Sprint 18 Track B)
+export const externeKaartlagenAPI = {
+    getAll: () => api.get<{ lagen: import('../types').ExterneKaartlaag[]; totaal: number }>('/externe-lagen'),
+    create: (data: import('../types').ExterneKaartlaagCreate) => api.post<{ id: number; naam: string; status: string }>('/externe-lagen', data),
+    update: (id: number, data: import('../types').ExterneKaartlaagUpdate) => api.put<{ id: number; status: string }>(`/externe-lagen/${id}`, data),
+    delete: (id: number) => api.delete<{ id: number; naam: string; status: string }>(`/externe-lagen/${id}`),
+};
+
 // Visualisatie - uses /api/visualisatie endpoints (separate prefix from /api/admin)
 const vizApi = axios.create({
     baseURL: '/api/visualisatie',
