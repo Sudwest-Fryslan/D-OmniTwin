@@ -106,6 +106,14 @@ export const externeKaartlagenAPI = {
     create: (data: import('../types').ExterneKaartlaagCreate) => api.post<{ id: number; naam: string; status: string }>('/externe-lagen', data),
     update: (id: number, data: import('../types').ExterneKaartlaagUpdate) => api.put<{ id: number; status: string }>(`/externe-lagen/${id}`, data),
     delete: (id: number) => api.delete<{ id: number; naam: string; status: string }>(`/externe-lagen/${id}`),
+    getLokaalBestanden: () => api.get<{ bestanden: import('../types').LokaalBestand[]; totaal: number }>('/externe-lagen/lokale-bestanden'),
+    upload: (file: File) => {
+        const formData = new FormData();
+        formData.append('bestand', file);
+        return api.post<import('../types').LokaalBestand & { status: string }>('/externe-lagen/upload', formData, {
+            headers: { 'Content-Type': 'multipart/form-data' },
+        });
+    },
 };
 
 // Visualisatie - uses /api/visualisatie endpoints (separate prefix from /api/admin)

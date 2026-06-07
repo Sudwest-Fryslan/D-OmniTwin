@@ -1,7 +1,7 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { externeKaartlagenAPI } from '../services/api';
-import { ExterneKaartlaag, ExterneKaartlaagCreate } from '../types';
-import { Plus, Pencil, Trash2, Globe, Eye, EyeOff } from 'lucide-react';
+import { ExterneKaartlaag, ExterneKaartlaagCreate, LokaalBestand } from '../types';
+import { Plus, Pencil, Trash2, Globe, Eye, EyeOff, Upload, HardDrive } from 'lucide-react';
 
 // ─── Default waarden voor nieuw formulier ──────────────────────────────────
 const EMPTY_FORM: ExterneKaartlaagCreate = {
@@ -38,6 +38,11 @@ export const ExterneKaartlagenPage: React.FC = () => {
     // Bevestig verwijderen
     const [deleteConfirmId, setDeleteConfirmId] = useState<number | null>(null);
 
+    // Lokale bestanden state
+    const [lokaalBestanden, setLokaalBestanden] = useState<LokaalBestand[]>([]);
+    const [isUploading, setIsUploading] = useState(false);
+    const fileInputRef = useRef<HTMLInputElement>(null);
+
     const fetchLagen = useCallback(async () => {
         try {
             const res = await externeKaartlagenAPI.getAll();
@@ -49,9 +54,17 @@ export const ExterneKaartlagenPage: React.FC = () => {
         }
     }, []);
 
+    const fetchLokaalBestanden = useCallback(async () => {
+        try {
+            const res = await externeKaartlagenAPI.getLokaalBestanden();
+            setLokaalBestanden(res.data.bestanden);
+        } catch { /* stille fout */ }
+    }, []);
+
     useEffect(() => {
         fetchLagen();
-    }, [fetchLagen]);
+        fetchLokaalBestanden();
+    }, [fetchLagen, fetchLokaalBestanden]);
 
     const clearMessages = () => { setError(null); setSuccess(null); };
 
@@ -143,6 +156,27 @@ export const ExterneKaartlagenPage: React.FC = () => {
         setForm(prev => ({ ...prev, [key]: value }));
     };
 
+    const handleUpload = async (file: File) => {
+        setIsUploading(true);
+        clearMessages();
+        try {
+            const res = await externeKaartlagenAPI.upload(file);
+            setSuccess(`Bestand "${res.data.bestandsnaam}" geüpload (${res.data.features} features)`);
+            await fetchLokaalBestanden();
+            setTimeout(() => setSuccess(null), 4000);
+        } catch (err: any) {
+            setError(err.response?.data?.detail || 'Fout bij uploaden');
+        } finally {
+            setIsUploading(false);
+        }
+    };
+
+    const handleDrop = (e: React.DragEvent) => {
+        e.preventDefault();
+        const file = e.dataTransfer.files[0];
+        if (file) handleUpload(file);
+    };
+
     if (isLoading) return <div className="p-4">Externe kaartlagen laden...</div>;
 
     return (
@@ -150,7 +184,7 @@ export const ExterneKaartlagenPage: React.FC = () => {
             <header className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                 <div>
                     <h1>Externe Kaartlagen</h1>
-                    <p className="text-secondary">Beheer externe geo-lagen (WFS/WMS) die als overlay op de kaart worden getoond.</p>
+                    <p className="text-secondary">Beheer externe geo-lagen (WFS/WMS/lokaal) die als overlay op de kaart worden getoond.</p>
                 </div>
                 <button className="btn btn-primary" onClick={openNewForm} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                     <Plus size={16} /> Nieuwe Laag
@@ -159,6 +193,62 @@ export const ExterneKaartlagenPage: React.FC = () => {
 
             {error && <div className="alert alert-error">{error}</div>}
             {success && <div className="alert alert-success">{success}</div>}
+
+            {/* Upload sectie */}
+            <div className="card mb-4">
+                <div className="card-header pb-3 mb-3 border-bottom">
+                    <h2 className="card-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <Upload size={18} /> Bestand Uploaden
+                    </h2>
+                </div>
+                <div
+                    onDrop={handleDrop}
+                    onDragOver={e => e.preventDefault()}
+                    onClick={() => fileInputRef.current?.click()}
+                    style={{
+                        border: '2px dashed var(--color-border)',
+                        borderRadius: '8px',
+                        padding: '2rem',
+                        textAlign: 'center',
+                        cursor: 'pointer',
+                        transition: 'border-color 0.2s',
+                        opacity: isUploading ? 0.5 : 1,
+                    }}
+                >
+                    <Upload size={32} style={{ color: 'var(--color-text-muted)', marginBottom: '0.5rem' }} />
+                    <p style={{ margin: 0 }}>
+                        {isUploading ? 'Bezig met uploaden...' : 'Sleep een .gpkg of .geojson bestand hierheen, of klik om te selecteren'}
+                    </p>
+                    <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept=".gpkg,.geojson,.json"
+                        style={{ display: 'none' }}
+                        onChange={e => { if (e.target.files?.[0]) handleUpload(e.target.files[0]); }}
+                    />
+                </div>
+                {lokaalBestanden.length > 0 && (
+                    <div style={{ marginTop: '1rem' }}>
+                        <p style={{ fontSize: '0.85rem', fontWeight: 600, marginBottom: '0.5rem' }}>
+                            <HardDrive size={14} style={{ verticalAlign: 'middle' }} /> Beschikbare bestanden ({lokaalBestanden.length})
+                        </p>
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+                            {lokaalBestanden.map(b => (
+                                <span key={b.bestandsnaam} style={{
+                                    padding: '0.35rem 0.75rem',
+                                    background: 'var(--color-bg-secondary)',
+                                    borderRadius: '6px',
+                                    fontSize: '0.8rem',
+                                    display: 'flex', alignItems: 'center', gap: '0.4rem',
+                                }}>
+                                    📦 {b.bestandsnaam}
+                                    {b.features !== undefined && <span style={{ color: 'var(--color-text-muted)' }}>({b.features} features)</span>}
+                                </span>
+                            ))}
+                        </div>
+                    </div>
+                )}
+            </div>
 
             {/* Formulier (toevoegen / bewerken) */}
             {showForm && (
@@ -197,11 +287,47 @@ export const ExterneKaartlagenPage: React.FC = () => {
                         <div className="form-group">
                             <label className="form-label" htmlFor="el-bron-type">Bron Type</label>
                             <select id="el-bron-type" className="form-control" value={form.bron_type}
-                                onChange={e => updateField('bron_type', e.target.value as any)}>
-                                <option value="WFS">WFS</option>
+                                onChange={e => {
+                                    const v = e.target.value as any;
+                                    updateField('bron_type', v);
+                                    if (v === 'lokaal') {
+                                        updateField('filter_type', 'alles');
+                                        updateField('filter_waarde', '');
+                                    }
+                                }}>
+                                <option value="WFS">WFS (externe service)</option>
                                 <option value="WMS">WMS</option>
-                                <option value="GeoJSON">GeoJSON</option>
+                                <option value="GeoJSON">GeoJSON (URL)</option>
+                                <option value="lokaal">Lokaal bestand (data-upload/)</option>
                             </select>
+                        </div>
+
+                        {/* URL of bestandsselector */}
+                        <div className="form-group">
+                            <label className="form-label" htmlFor="el-url">
+                                {form.bron_type === 'lokaal' ? 'Bestand *' : 'WFS/WMS URL *'}
+                            </label>
+                            {form.bron_type === 'lokaal' ? (
+                                <select id="el-url" className="form-control" value={form.url}
+                                    onChange={e => {
+                                        const filename = e.target.value;
+                                        updateField('url', filename);
+                                        // Auto-fill typename van eerste layer
+                                        const best = lokaalBestanden.find(b => b.bestandsnaam === filename);
+                                        if (best?.layers?.[0]) updateField('typename', best.layers[0]);
+                                    }}>
+                                    <option value="">— Kies een bestand —</option>
+                                    {lokaalBestanden.filter(b => !b.fout).map(b => (
+                                        <option key={b.bestandsnaam} value={b.bestandsnaam}>
+                                            {b.bestandsnaam} ({b.features} features, {b.crs})
+                                        </option>
+                                    ))}
+                                </select>
+                            ) : (
+                                <input id="el-url" className="form-control" value={form.url}
+                                    onChange={e => updateField('url', e.target.value)}
+                                    placeholder="https://service.pdok.nl/..." />
+                            )}
                         </div>
 
                         {/* TypeName */}
