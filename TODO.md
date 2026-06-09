@@ -1,10 +1,10 @@
 # TODO - D-OmniTwin Roadmap
 
-**Laatste Update:** 2 juni 2026 (Dag 70)
-**Status:** Sprint 17 ✅ Afgerond — Sprint 18 gepland
+**Laatste Update:** 8 juni 2026 (Dag 72)
+**Status:** Sprint 18 🚀 In uitvoering
 
-> **Volgende Sprint:** Sprint 18 — IJsselmeerkust als Besluitinstrument
-> **Branch:** `feature/sprint-18-ijsselmeerkust` (aan te maken)
+> **Huidige Sprint:** Sprint 18 — IJsselmeerkust als Besluitinstrument
+> **Branch:** `feature/sprint-18-ijsselmeerkust`
 > **Spec:** [`docs/7-projectmanagement/archief/sprint-18-plan_ijsselmeerkust-besluitinstrument.md`](./docs/7-projectmanagement/archief/sprint-18-plan_ijsselmeerkust-besluitinstrument.md)
 
 ---
@@ -46,16 +46,16 @@
 **Branch:** `feature/sprint-18-ijsselmeerkust`
 
 ### 🔧 Voorbereiding (voor eerste codesessie)
-- [ ] **GitHub Issue aanmaken** op `github.com/TLaan/D-OmniTwin`
+- [x] **GitHub Issue aanmaken** op `github.com/TLaan/D-OmniTwin`
     - Titel: `feat: IJsselmeerkust als Besluitinstrument (Sprint 18)`
     - Labels: `enhancement`, `ux`, `data`, `frontend`, `backend`, `sprint-18`
     - Link naar sprintplan + NM-001 + TC-06-001
-- [ ] **Feature branch aanmaken en pushen:**
+- [x] **Feature branch aanmaken en pushen:**
     ```bash
     git checkout -b feature/sprint-18-ijsselmeerkust
     git push -u origin feature/sprint-18-ijsselmeerkust
     ```
-- [ ] **Worktree aanmaken** (demo-omgeving op `main` intact houden):
+- [x] **Worktree aanmaken** (demo-omgeving op `main` intact houden):
     ```bash
     git worktree add ../D-OmniTwin-DEMO main
     ```
@@ -79,18 +79,20 @@
     - [ ] Prioriteit: Wonen-indicatoren eerst
     - [ ] Acceptatie: TC-02-001 stap 6 → ✅ (was ❌)
 
-### Track B — BAG Woonplaatsen als Selectielaag
-- [ ] **B1 — BAG woonplaatsen importeren**
-    - [ ] `ETL/import_bag_woonplaatsen.py` aanmaken
-    - [ ] Tabel `bag_woonplaatsen` aanmaken (id, naam, geometry EPSG:28992)
-    - [ ] `GET /api/bag/woonplaatsen` router endpoint
-- [ ] **B2 — Woonplaatsen toggle in Kaartlagen-paneel**
-    - [ ] Toggle "BAG Woonplaatsen" toevoegen (naast "Omgevingsvisie SWF")
-    - [ ] GeoJsonLayer overlay met naam-label en klikbaarheid
-    - [ ] ST_Intersects buurtselectie met -10m buffer (zelfde als omgevingsvisie)
-- [ ] **B3 — Kompas aggregeert op woonplaatsniveau**
-    - [ ] Badge: `"Makkum — 8 buurten geselecteerd"`
-    - [ ] Acceptatie: TC-01-003 Track B volledig ✅
+### Track B — Selectielaag: BAG Woonplaatsen + Externe Lagen ✅
+- [x] **B1 — BAG woonplaatsen (via WFS proxy / PDOK)**
+    - [x] `routers/externe_lagen.py` toegevoegd (externe_kaartlagen tabel)
+    - [x] Woonplaatsen Fryslân ophalen en cachen
+- [x] **B2 — Woonplaatsen toggle in Kaartlagen-paneel**
+    - [x] Dynamische toggles via `GET /api/externe-lagen`
+    - [x] GeoJsonLayer overlay met tooltip
+- [x] **B3 — Kompas aggregeert op externe laag-niveau**
+    - [x] Centroid-based selectie (ST_Contains + ST_Centroid)
+    - [x] Badge toont aantal buurten, Kompas laadt correct
+- [x] **B4 — Lokale geodata als externe kaartlaag (Upload)**
+    - [x] `bron_type: 'lokaal'` + GPKG/GeoJSON file uploads
+    - [x] `POST /api/admin/externe-lagen/upload` (Data Upload paneel gemigreerd naar admin)
+    - [x] Omgevingsvisie SWF succesvol gemigreerd naar lokaal externe-lagen systeem
 
 ### Track C — Benchmarking: Kernen naast elkaar
 - [ ] **C1 — Multi-woonplaats benchmark-tabel**
