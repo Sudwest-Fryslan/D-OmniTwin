@@ -1,7 +1,7 @@
 # D-OmniTwin 🌍🔐
 > Digitale spiegel van de fysieke leefomgeving — open source, federatief, dataspace-ready
 
-**Versie:** v1.0.0-beta (pre-release) | **Laatste update:** 26 mei 2026 | **Status:** 🟡 MEDIUM RISK  
+**Versie:** v1.0.0-beta (pre-release) | **Laatste update:** 9 juni 2026 | **Status:** 🟡 MEDIUM RISK  
 **Security:** API key auth actief, CORS locked, Security headers actief  
 [![Licentie: EUPL 1.2](https://img.shields.io/badge/Licentie-EUPL_1.2-blue)](./LICENSE) [![Docs: CC BY 4.0](https://img.shields.io/badge/Docs-CC_BY_4.0-green)](./LICENSE-DOCS)
 
@@ -63,7 +63,7 @@ Vier use cases worden gevalideerd in pilots bij drie gemeenten. Resultaat: open 
 - 🗺️ **Interactieve Kaart** — Mapbox + deck.gl 3D visualisatie, choropleth op buurtniveau
 - 🧭 **D-Omni Kompas** — D3.js sunburst met 12 thema's, 217 indicatoren, multi-gebied aggregatie
 - 📊 **Multi-Gebied Analyse** — Shift+Click selectie of via Omgevingsvisie-deelgebieden, Z-score rapportage
-- 🗺️ **Omgevingsvisie Selectielaag** — 6 deelgebieden SWF als klikbaar selectieframe (CBS-buurten via −10m buffer)
+- 🗺️ **Externe Kaartlagen & Selectie** — Dynamische externe bronnen (zoals BAG Woonplaatsen en de Omgevingsvisie) met klik-selectie buffer.
 - 🤖 **D-Omni Assistent** — Intent-based AI chat interface (lokale Ollama, geen cloud)
 - 🎨 **Classic Premium UI** — Dark theme met gradient accents, glassmorphism panelen
 
@@ -72,6 +72,7 @@ Vier use cases worden gevalideerd in pilots bij drie gemeenten. Resultaat: open 
 - ✏️ **Indicator Editor** — Bewerk naam, omschrijving, score type, kleurschema
 - 📈 **Dashboard** — Stats en Kompas hiërarchie overzicht
 - 📄 **Multi-Gebiedsdossier** — D3-stijl react rapportmodule voor multi-selectie van buurten (PDF export)
+- 🗺️ **Externe Lagen Beheer** — Configuratie van WFS-bronnen en lokale uploads (GPKG).
 - 🤖 **LLM Config** — Ollama host/model configureerbaar via UI
 
 ---
@@ -215,9 +216,9 @@ OLLAMA_MODEL=qwen3:30b
 
 | Sprint | Datum | Kernpunten |
 |--------|-------|------------|
-| **Dag 56** | 11-04-2026 | 🔒 **Git Initiatie & Security cleanup** — private repo live, secrets naar `.env`, `.gitignore` waterdicht, SSH push (319+ bestanden) |
-| **Dag 55** | 10-04-2026 | 📊 **Multi-Gebiedsdossier** — Z-score rapportage module, SVG choropleth, colorblind-safe palet, water-buurt filtering |
-| **Dag 43** | 20-03-2026 | 🤖 **D-Omni Assistent Chat Interface** — intent-based AI live, 49 gemeenten in context, EventBus integratie, rapportage acties |
+| **Sprint 18** | 08-06-2026 | 🗺️ **Externe Kaartlagen & Uploads (Track B)** — BAG Woonplaatsen via WFS (PDOK) geïntegreerd. Lokale (GPKG/GeoJSON) geodata uploads via Admin paneel. |
+| **Issue #11** | 07-06-2026 | 🚌 **OV Haltes ETL** — Nieuwe data-pipeline voor OV-haltes in FR/GR/DR met 5 nieuwe Kompas-indicatoren (Bereikbaarheid). |
+| **Sprint 17** | 26-05-2026 | 📝 **Configureerbare Logging Infrastructuur** — AsyncLogQueue, 9 categorieën en een In-App Log Viewer in het Admin paneel. |
 
 ---
 
@@ -334,5 +335,5 @@ Zie [NOTICE.md](./NOTICE.md) voor informatie over third-party licenties.
 
 ---
 
-**Versie:** v0.9.x (pre-release) | **Laatste Update:** 11 april 2026 | **Licentie:** EUPL 1.2 / CC BY 4.0  
+**Versie:** v1.0.0-beta (pre-release) | **Laatste Update:** 9 juni 2026 | **Licentie:** EUPL 1.2 / CC BY 4.0  
 *Ontwikkeld door Gemeente Súdwest-Fryslân in samenwerking met Leeuwarden, Tytsjerksteradiel & DataFryslân*
