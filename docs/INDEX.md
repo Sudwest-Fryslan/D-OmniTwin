@@ -19,7 +19,7 @@
 | **Visie & Concept** | `/docs/1-visie-concept/` | Projectfilosofie, doelstellingen, gebruikersscenario's | project-manager, technisch-communicatie |
 | **Architectuur** | `/docs/2-architectuur/` | Technische architectuur, API-design, component-diagram, **Dataspace integratie** | backend-db, data-architect-engineer, innovation-lab |
 | **Data Engineering** | `/docs/3-data-engineering/` | ETL-pipelines, CBS/RIVM data, scores, indicatoren | data-architect-engineer, data-gis |
-| **UX & Design** | `/docs/4-ux-design/` | UI-patronen, "Classic Premium UI", design-system | frontend-viz, web-carto-design |
+| **UX & Design** | `/docs/4-ux-design/` | UI-patronen, "Classic Premium UI", design-system, gebruikerservaringen (`gebruikerservaringen/`) | frontend-viz, web-carto-design |
 | **SecOps** | `/docs/5-secops/` | Security-beleid, deployment, toegangsbeheer | env-setup, backend-db |
 | **AI Parallel Track** | `/docs/6-ai-parallel-track/` | LLM-integratie, ontologie, AI-chat, prompting | innovation-lab, technisch-communicatie |
 | **Projectmanagement** | `/docs/7-projectmanagement/` | Sprints, voortgang, besluiten, archief | project-manager |
@@ -68,7 +68,8 @@
 
 | Sprint | Document | Status |
 |--------|----------|--------|
-| **Sprint 18** | [`docs/7-projectmanagement/archief/sprint-18-plan_ijsselmeerkust-besluitinstrument.md`](./7-projectmanagement/archief/sprint-18-plan_ijsselmeerkust-besluitinstrument.md) | 📌 Gepland |
+| **Sprint 18** | [`docs/7-projectmanagement/archief/sprint-18-plan_ijsselmeerkust-besluitinstrument.md`](./7-projectmanagement/archief/sprint-18-plan_ijsselmeerkust-besluitinstrument.md) | 🚀 In uitvoering (Track B ✅, Track F toegevoegd) |
+| **Sprint 19** | [`docs/7-projectmanagement/archief/sprint-19-plan_data-naar-inzicht.md`](./7-projectmanagement/archief/sprint-19-plan_data-naar-inzicht.md) | 📌 Gepland (na Sprint 18) |
 | **Sprint 17** | [`docs/5-secops/logging/sprint-17-logging-spec.md`](./5-secops/logging/sprint-17-logging-spec.md) | ✅ Afgerond |
 
 ---

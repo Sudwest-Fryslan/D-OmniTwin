@@ -1,7 +1,7 @@
 # TODO - D-OmniTwin Roadmap
 
-**Laatste Update:** 8 juni 2026 (Dag 72)
-**Status:** Sprint 18 🚀 In uitvoering
+**Laatste Update:** 14 juni 2026 (Dag 73)
+**Status:** Sprint 18 🚀 In uitvoering | Sprint 19 📌 Gepland
 
 > **Huidige Sprint:** Sprint 18 — IJsselmeerkust als Besluitinstrument
 > **Branch:** `feature/sprint-18-ijsselmeerkust`
@@ -117,11 +117,70 @@
 - [ ] **E2 — TC-01-001, TC-02-001, TC-02-002 statusvelden bijwerken**
 - [ ] **E3 — NM-001 actualiseren** (opgeloste gaps ✅, FRLDS-gaps labelen)
 
+### Track F — Gebruikersreview Quickwins
+**Aanleiding:** [Gebruikersreview](./docs/7-projectmanagement/testcases/Gebruikersreview.md) — laag hangend fruit direct bruikbaar binnen Sprint 18.
+- [ ] **F1 — Bug: Zoekfunctie Kompas `undefined` foutmelding**
+    - [ ] Null-check toevoegen in `kompas.js` zoeklogica
+    - [ ] Acceptatie: geen foutmelding bij lege/ongeldige invoer
+- [ ] **F2 — Top 5 buurten per indicator (grootste afwijkers)**
+    - [ ] Backend: `GET /api/indicatoren/{uuid}/top-buurten?gemeente_code=&limit=5`
+    - [ ] Frontend: collapsible sectie in detailpaneel na indicator-selectie
+    - [ ] Klik op buurt in lijst → kaart selecteert & flyTo
+    - [ ] Acceptatie: Top 5 afwijkers direct zichtbaar en klikbaar
+
 ### Afsluiting & Merge
 - [ ] Pull Request aanmaken naar `main` met verwijzing naar GitHub Issue
 - [ ] Squash merge na review
 - [ ] STATE.md bijwerken: Sprint 18 componenten op 🟢 Actief
 - [ ] Testcases README bijwerken (statusvelden)
+
+---
+
+## 📌 Sprint 19: Van Data naar Inzicht (Gepland)
+
+**Doel:** D-OmniTwin transformeren van data-exploratie naar inzicht-gedreven besluitvorming — gebruikers actief begeleiden van data naar conclusie en handelingsperspectief.  
+**Aanleiding:** [Gebruikersreview juni 2026](./docs/7-projectmanagement/testcases/Gebruikersreview.md) — consistente bevinding over alle 5 gebruikersprofielen.  
+**Spec:** [`docs/7-projectmanagement/archief/sprint-19-plan_data-naar-inzicht.md`](./docs/7-projectmanagement/archief/sprint-19-plan_data-naar-inzicht.md)  
+**Branch:** `feature/sprint-19-data-naar-inzicht` (aan te maken na Sprint 18)
+
+### Track A — Signalering: Automatische Uitschieters
+- [ ] **A1 — Stijgers & Dalers per indicator**
+    - [ ] Backend: `GET /api/indicatoren/{uuid}/trends?gemeente_code=&periodes=2`
+    - [ ] Frontend: collapsible sectie *"Beweging"* — top 3 stijgers + top 3 dalers
+    - [ ] Klik → flyTo buurt op kaart
+- [ ] **A2 — Afwijkingssignalering gemeente vs. provincie**
+    - [ ] `referentie_type: 'gemeente' | 'provincie'` param op top-buurten endpoint
+    - [ ] Frontend: toggle *Referentie: Gemeente | Provincie* op Top 5 sectie
+
+### Track B — Prioritering: Inzicht per Buurt & Thema
+- [ ] **B1 — Top 5 risico's per buurt (thema-overstijgend)**
+    - [ ] Backend: `GET /api/gebieden/{gebied_id}/prioriteiten`
+    - [ ] Frontend: nieuw blok *"⚠️ Aandachtspunten voor [buurt]"* in detailpaneel
+    - [ ] Optioneel: ook *"💚 Sterke punten"* (top 3 positief)
+- [ ] **B2 — Provinciaal gemiddelde als extra referentielijn**
+    - [ ] Backend: provinciaal gemiddelde toevoegen aan Kompas API response
+    - [ ] Frontend: extra kolom in benchmarktabel + referentielijn in trendgrafiek
+
+### Track C — Context: Scores in Gewone Taal
+- [ ] **C1 — Contextuele score-uitleg per indicator**
+    - [ ] Frontend logica: z-score → begrijpelijke label (*Aandacht / Gemiddeld / Goed*)
+    - [ ] Zichtbaar per indicatorwaarde in detailpaneel (geen extra backend call)
+- [ ] **C2 — Geleide gebruikersroute per doelgroep (rolkeuze)**
+    - [ ] Uitbreiding onboarding modal: rolkeuze (Beleidsadviseur / Wijkregisseur / Bestuurder / Verkenner)
+    - [ ] Per rol: aanbevolen startpunt getoond
+    - [ ] Rol opslaan in localStorage (`omnitwin_rol`)
+
+### Track D — AI-Ondersteuning: Automatische Samenvatting
+- [ ] **D1 — AI-samenvatting per buurt (Ollama)**
+    - [ ] Backend: `POST /api/chat/samenvatting-buurt`
+    - [ ] Frontend: knop *"📋 Genereer samenvatting"* in buurt-detailpaneel
+    - [ ] Output: samenvatting + aandachtspunten + sterke punten + AI-disclaimer
+
+### Afsluiting & Merge
+- [ ] Gebruikersreview opnieuw doorlopen (alle 5 profielen)
+- [ ] Pull Request aanmaken naar `main`
+- [ ] STATE.md bijwerken: Sprint 19 componenten
+- [ ] UX-bevindingen bijwerken na hertest
 
 ---
 

@@ -1,6 +1,6 @@
 # Feature Roadmap - D-OmniTwin Gebiedsmonitor
 
-**Status:** 2026-06-02 (Dag 70) — Sprint 17 ✅ Afgerond | Sprint 18 — IJsselmeerkust als Besluitinstrument 📌 Gepland  
+**Status:** 2026-06-14 (Dag 73) — Sprint 18 🚀 In uitvoering (Track B ✅, Track F toegevoegd) | Sprint 19 📌 Gepland  
 **Visie:** Van prototype naar productie-klaar, AI-gedreven gebiedsmonitor platform
 
 ---
@@ -98,7 +98,34 @@
 
 ---
 
-#### 1.2 Legenda Systeem
+### 📊 Sprint 19: Van Data naar Inzicht (Gepland)
+
+**Visie:** D-OmniTwin transformeren van een data-exploratie platform naar een inzicht-gedreven besluitvormingsinstrument.  
+**Aanleiding:** Gebruikersreview juni 2026 — consistente bevinding over alle 5 gebruikersprofielen.  
+**Spec:** [`docs/7-projectmanagement/archief/sprint-19-plan_data-naar-inzicht.md`](./docs/7-projectmanagement/archief/sprint-19-plan_data-naar-inzicht.md)
+
+#### Track A — Signalering: Automatische Uitschieters
+- [ ] Stijgers & Dalers per indicator (top 3 stijgers + top 3 dalers)
+- [ ] Afwijkingssignalering t.o.v. gemeenteén provinciaal gemiddelde
+
+#### Track B — Prioritering: Inzicht per Buurt
+- [ ] Top 5 risico’s per buurt (thema-overstijgend, o.b.v. z-score)
+- [ ] Provinciaal gemiddelde als extra referentielijn in benchmark & trendgrafiek
+
+#### Track C — Context: Scores in Gewone Taal
+- [ ] Contextuele score-uitleg: z-score → *Aandacht / Gemiddeld / Goed* label
+- [ ] Geleide gebruikersroute per doelgroep (rolkeuze bij onboarding)
+
+#### Track D — AI-Ondersteuning
+- [ ] AI-samenvatting per buurt via Ollama (lokaal, AVG-proof)
+
+**Effort:** ~15-20 uur (4 sessies)  
+**Priority:** 🔴 HIGH — direct gebruikerswaarde  
+**Aanleiding:** [UX-bevindingen](./docs/4-ux-design/gebruikerservaringen/UX-bevindingen_gebruikersreview_2026-06.md)
+
+---
+
+
 
 **Rationale:** Gebruikers moeten direct zien wat de kleuren betekenen
 
