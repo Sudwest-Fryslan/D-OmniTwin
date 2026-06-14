@@ -119,14 +119,29 @@
 
 ### Track F — Gebruikersreview Quickwins
 **Aanleiding:** [Gebruikersreview](./docs/7-projectmanagement/testcases/Gebruikersreview.md) — laag hangend fruit direct bruikbaar binnen Sprint 18.
-- [ ] **F1 — Bug: Zoekfunctie Kompas `undefined` foutmelding**
-    - [ ] Null-check toevoegen in `kompas.js` zoeklogica
-    - [ ] Acceptatie: geen foutmelding bij lege/ongeldige invoer
+- [x] **F1 — Bug: Zoekfunctie Kompas `undefined` foutmelding**
+    - [x] `Array.isArray` guard + `renderSearchResults([])` bij API-fout
+    - [ ] Acceptatie: foutmelding nog niet reproduceerbaar in testomgeving — open
 - [ ] **F2 — Top 5 buurten per indicator (grootste afwijkers)**
     - [ ] Backend: `GET /api/indicatoren/{uuid}/top-buurten?gemeente_code=&limit=5`
     - [ ] Frontend: collapsible sectie in detailpaneel na indicator-selectie
     - [ ] Klik op buurt in lijst → kaart selecteert & flyTo
     - [ ] Acceptatie: Top 5 afwijkers direct zichtbaar en klikbaar
+
+### Track G — Correcties n.a.v. Testbevindingen Sessie 4 (Dag 73)
+**Aanleiding:** Handmatige test na merge → twee punten vragen correctie voor volgende sessie.
+- [ ] **G1 — Eenheden consequent tonen in Kompas venster**
+    - [ ] Check: waarde `86.00` moet `86.00 %` tonen als eenheid `%` is
+    - [ ] Controleer `_enrich_tree_with_values` — eenheid zit al in data_map maar wordt niet altijd doorgegeven aan de node
+    - [ ] Controleer `expandDetails` / `showActionOverlay` — `d.data.eenheid` correct gevuld?
+    - [ ] Acceptatie: elke indicatorwaarde in het Kompas toont zijn eenheid (%, km, index, etc.)
+- [ ] **G2 — Z-score uitlegblok verplaatsen: Kompas → Rapport**
+    - [ ] **Verwijder** het z-score uitlegblok uit het Kompas detailpaneel (`zscore-explanation` div in `index.html` + JS toggle)
+    - [ ] **Verwijder** z-score tooltip icoontje uit `showActionOverlay` in `kompas.js`
+    - [ ] **Voeg toe** aan de rapportpagina (`report.js` / rapporttemplate): contextblok boven de z-score tabel
+    - [ ] Tekst: *"Z-score vergelijkt een indicator met het Friese gemiddelde. 0 = gemiddeld · >+1 = beduidend beter · <-1 = beduidend slechter"*
+    - [ ] Referentie: Afbeelding 3 (rapportage z-score tabel met WAARDE / JAAR / Z-SCORE / IMPACT kolommen)
+    - [ ] Acceptatie: Z-score uitleg zichtbaar in rapport ✅ | Niet aanwezig in Kompas ✅
 
 ### Afsluiting & Merge
 - [ ] Pull Request aanmaken naar `main` met verwijzing naar GitHub Issue
