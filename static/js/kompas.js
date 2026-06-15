@@ -1214,9 +1214,7 @@ class KompasVisualization {
         `;
 
         if (d.data.value !== null) {
-            // A2: Z-score tooltip naast waarde
-            const zScoreTooltip = `<span class="zscore-tooltip-wrapper" style="display:inline-flex;align-items:center;gap:4px;font-size:0.75rem;font-weight:400;opacity:0.7;margin-left:8px;cursor:help;" title="Een Z-score vergelijkt dit gebied met het gemiddelde van alle Friese buurten. Score 0 = gemiddeld. Score &gt;+1 = beduidend beter dan gemiddeld.">❓</span>`;
-            html += `<div class="value" style="font-size: 1.5rem; font-weight: 700; color: ${d.data.color || '#fff'}; margin-bottom: 15px; display:flex; align-items:center; justify-content:center;">${d.data.value.toFixed(2)} <span style="font-size: 0.8em; font-weight: 400; opacity: 0.8; margin-left:4px;">${d.data.eenheid || ''}</span>${zScoreTooltip}</div>`;
+            html += `<div class="value" style="font-size: 1.5rem; font-weight: 700; color: ${d.data.color || '#fff'}; margin-bottom: 15px; display:flex; align-items:center; justify-content:center;">${d.data.value.toFixed(2)} <span style="font-size: 0.8em; font-weight: 400; opacity: 0.8; margin-left:4px;">${d.data.eenheid || ''}</span></div>`;
         } else {
             html += `<div class="value no-data" style="color: #94A3B8; margin-bottom: 15px;">Geen recente data</div>`;
         }
@@ -1397,9 +1395,6 @@ class KompasVisualization {
         document.getElementById('details-definitie').innerHTML = '<span class="loading-pulse">Gegevens laden...</span>';
         document.getElementById('details-trend').textContent = '-';
         document.getElementById('details-jaar').textContent = '-';
-        // A2: Z-score uitleg tonen als indicator data heeft
-        const zscoreEl = document.getElementById('zscore-explanation');
-        if (zscoreEl) zscoreEl.style.display = (node.data.value !== null && node.data.value !== undefined) ? 'block' : 'none';
 
         // 4. Fetch Details & History (or comparison barchart)
         this.loadIndicatorDetails(node);

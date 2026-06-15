@@ -139,6 +139,7 @@ class ReportDataService:
                 "z_score": round(z, 2),
                 "score_type": score_type,
                 "score_uitleg": score_uitleg,
+                "eenheid": ind['eenheid'] or "",
                 "impact": impact
             })
 

@@ -390,6 +390,9 @@ export const MultiGebiedPage: React.FC = () => {
                         <p className="text-secondary">
                             Z-score afwijkingsanalyse voor {deelgebiedNaam} ({gebiedIds.length} buurten)
                         </p>
+                        <div style={{ background: 'var(--color-bg-alt)', borderLeft: '3px solid var(--color-primary)', borderRadius: '4px', padding: '0.6rem 1rem', marginTop: '0.75rem', fontSize: '0.85rem', color: 'var(--color-text-secondary)', lineHeight: 1.5 }}>
+                            ❓ <strong>Z-score:</strong> Vergelijkt een indicator met het gemiddelde van de referentiegroep. Score 0 = gemiddeld &nbsp;·&nbsp; Score &gt;+1 = beduidend hoger &nbsp;·&nbsp; Score &lt;-1 = beduidend lager. De kleurintensiteit op de kaart geeft de mate van afwijking weer.
+                        </div>
                     </div>
                     <div style={{ display: 'flex', gap: '1rem' }}>
                         {data && (

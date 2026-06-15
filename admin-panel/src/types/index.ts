@@ -145,6 +145,7 @@ export interface ReportIndicator {
     z_score: number;
     score_type: string;
     score_uitleg: string;
+    eenheid: string;
     impact: "bovengemiddeld positief" | "ondergemiddeld negatief" | "bovengemiddeld negatief" | "ondergemiddeld positief" | "neutraal";
 }
 

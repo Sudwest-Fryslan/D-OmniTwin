@@ -129,7 +129,7 @@ class KompasService:
                 sr.score_type,
                 sr.inverse,
                 sr.thresholds,
-                sr.eenheid
+                COALESCE(sr.eenheid, i.eenheid) AS eenheid
             FROM kompas_indicator_mapping kim
             JOIN indicatoren i ON kim.indicator_uuid = i.uuid
             LEFT JOIN LATERAL (

@@ -243,6 +243,9 @@ export const ReportPage: React.FC = () => {
                         <h2 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
                             <Database size={20} className="text-secondary" /> Significante Z-Score Datapunten
                         </h2>
+                        <div style={{ background: 'var(--color-bg-alt)', borderLeft: '3px solid var(--color-primary)', borderRadius: '4px', padding: '0.6rem 1rem', marginBottom: '1rem', fontSize: '0.85rem', color: 'var(--color-text-secondary)', lineHeight: 1.5 }}>
+                            ❓ <strong>Z-score:</strong> Vergelijkt een indicator met het gemiddelde van de referentiegroep. Score 0 = gemiddeld &nbsp;·&nbsp; Score &gt;+1 = beduidend hoger &nbsp;·&nbsp; Score &lt;-1 = beduidend lager. De kolom <em>Impact</em> geeft aan of de afwijking positief of negatief is voor de leefbaarheid.
+                        </div>
 
                         {dataLoading ? (
                             <p>Data laden...</p>
@@ -272,7 +275,7 @@ export const ReportPage: React.FC = () => {
                                                                 <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', marginTop: '0.25rem' }}>{ind.omschrijving}</div>
                                                             )}
                                                         </td>
-                                                        <td style={{ textAlign: 'left', fontWeight: 'bold' }}>{ind.waarde}</td>
+                                                        <td style={{ textAlign: 'left', fontWeight: 'bold' }}>{ind.waarde} <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', fontWeight: 'normal' }}>{ind.eenheid}</span></td>
                                                         <td style={{ textAlign: 'left', color: 'var(--color-text-secondary)' }}>{ind.meetjaar}</td>
                                                         <td style={{ textAlign: 'right', fontWeight: 'bold', color: ind.impact.includes('positief') ? 'var(--color-success)' : ind.impact.includes('negatief') ? 'var(--color-danger)' : 'var(--color-text)' }}>
                                                             {ind.z_score > 0 ? '+' : ''}{ind.z_score}
