@@ -463,9 +463,12 @@ class KompasService:
                         context=current_titel
                     )
                 else:
-                    # Indicator zonder data - toon als grijs
                     enriched["value"] = None
                     enriched["color"] = "#94A3B8"  # Grijs voor geen data
+            else:
+                enriched["value"] = None
+                enriched["color"] = "#94A3B8"
+                enriched["eenheid"] = None
         
         # Recursief voor children
         if "children" in enriched and enriched["children"]:

@@ -38,14 +38,17 @@ class ColorScaleService:
         max_color = colors["max"]
         
         ramp = []
-        # First half: min → mid
-        for i in range(num_classes // 2):
-            t = i / (num_classes // 2)
+        half_classes = num_classes // 2
+        
+        # First half: min -> mid (excluding mid itself)
+        for i in range(half_classes):
+            t = i / half_classes
             ramp.append(self.interpolate_color(min_color, mid_color, t))
         
-        # Second half: mid → max
-        for i in range(num_classes - len(ramp)):
-            t = i / (num_classes - len(ramp))
+        # Second half: mid -> max (including mid at t=0 and max at t=1)
+        remaining_classes = num_classes - half_classes
+        for i in range(remaining_classes):
+            t = i / (remaining_classes - 1) if remaining_classes > 1 else 1.0
             ramp.append(self.interpolate_color(mid_color, max_color, t))
         
         return ramp

@@ -1214,7 +1214,8 @@ class KompasVisualization {
         `;
 
         if (d.data.value !== null) {
-            html += `<div class="value" style="font-size: 1.5rem; font-weight: 700; color: ${d.data.color || '#fff'}; margin-bottom: 15px; display:flex; align-items:center; justify-content:center;">${d.data.value.toFixed(2)} <span style="font-size: 0.8em; font-weight: 400; opacity: 0.8; margin-left:4px;">${d.data.eenheid || ''}</span></div>`;
+            const eenheidText = d.data.eenheid ? ` ${d.data.eenheid}` : '';
+            html += `<div class="value" style="font-size: 1.5rem; font-weight: 700; color: ${d.data.color || '#fff'}; margin-bottom: 15px; display:flex; align-items:center; justify-content:center;">${d.data.value.toFixed(2)} <span style="font-size: 0.8em; font-weight: 400; opacity: 0.8; margin-left:4px;">${eenheidText}</span></div>`;
         } else {
             html += `<div class="value no-data" style="color: #94A3B8; margin-bottom: 15px;">Geen recente data</div>`;
         }
@@ -1380,13 +1381,14 @@ class KompasVisualization {
         // Sprint 7: Bij multi-select, toon gemiddelde waarde met label
         const isMulti = this.currentData?._multiGebiedIds?.length > 1;
         const valueEl = document.getElementById('details-value');
+        const eenheidText = node.data.eenheid ? ` ${node.data.eenheid}` : '';
         if (isMulti) {
             valueEl.textContent = node.data.value !== null
-                ? `⌀ ${node.data.value.toFixed(2)} ${node.data.eenheid || ''}`
+                ? `⌀ ${node.data.value.toFixed(2)}${eenheidText}`
                 : '-';
         } else {
             valueEl.textContent = node.data.value !== null
-                ? `${node.data.value.toFixed(2)} ${node.data.eenheid || ''}`
+                ? `${node.data.value.toFixed(2)}${eenheidText}`
                 : '-';
         }
         valueEl.style.color = node.data.color || 'var(--text-primary)';
@@ -1478,6 +1480,15 @@ class KompasVisualization {
                 this.fetchHistory(this.currentGebiedId, node.data.uuid),
                 this._fetchTopBuurten(node.data.uuid, this.currentGebiedId)
             ]);
+
+            // Update fallback eenheid if missing
+            if (historyData && historyData.eenheid && !node.data.eenheid) {
+                node.data.eenheid = historyData.eenheid;
+                const eenheidText = node.data.eenheid ? ` ${node.data.eenheid}` : '';
+                document.getElementById('details-value').textContent = node.data.value !== null 
+                    ? `${isMulti ? '⌀ ' : ''}${node.data.value.toFixed(2)}${eenheidText}`
+                    : '-';
+            }
 
             // Render Chart
             if (historyData && historyData.history && historyData.history.length > 0) {
