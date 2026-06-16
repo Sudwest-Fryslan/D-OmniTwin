@@ -477,6 +477,125 @@ class KompasService:
         return enriched
 
 
+    def get_top_afwijkende_buurten(self, indicator_uuid: str, limit: int = 3, gebied_id: Optional[str] = None) -> Optional[Dict[str, Any]]:
+        """
+        Bereken Z-scores voor alle CBS-buurten en retourneer Top N positief + Top N negatief.
+        
+        Args:
+            indicator_uuid: UUID van de indicator
+            limit: Aantal buurten per richting (default 3)
+            gebied_id: Optioneel, UUID van het gebied om de buurten te filteren op de gemeente van dit gebied
+        
+        Returns: Dict met top_positief en top_negatief lijsten, of None
+        """
+        
+        # 1. Bepaal de gemeente_code filter indien gebied_id is meegegeven
+        gemeente_filter = ""
+        params = {"uuid": indicator_uuid}
+        
+        if gebied_id:
+            gem_query = text("SELECT gemeente_code FROM gebieden WHERE id = :gebied_id")
+            gem_res = self.db.execute(gem_query, {"gebied_id": gebied_id}).fetchone()
+            if gem_res and gem_res.gemeente_code:
+                gemeente_filter = "AND g.gemeente_code = :gemeente_code"
+                params["gemeente_code"] = gem_res.gemeente_code
+        
+        query = text(f"""
+            WITH buurt_type AS (
+                SELECT id FROM gebiedstypes WHERE LOWER(naam) LIKE '%buurt%' LIMIT 1
+            ),
+            meest_recent AS (
+                SELECT MAX(gd.jaar) as jaar
+                FROM gebied_data gd
+                JOIN gebieden g ON gd.gebied_id = g.id
+                CROSS JOIN buurt_type bt
+                WHERE gd.indicator_uuid = :uuid AND g.gebiedstype_id = bt.id AND LOWER(g.naam) NOT LIKE 'wijk %' {gemeente_filter}
+            ),
+            ref_stats AS (
+                SELECT 
+                    AVG(gd.waarde) as avg_val, 
+                    STDDEV_SAMP(gd.waarde) as std_val
+                FROM gebied_data gd
+                JOIN gebieden g ON gd.gebied_id = g.id
+                CROSS JOIN meest_recent mr
+                CROSS JOIN buurt_type bt
+                WHERE gd.indicator_uuid = :uuid 
+                  AND g.gebiedstype_id = bt.id
+                  AND LOWER(g.naam) NOT LIKE 'wijk %'
+                  AND gd.jaar = mr.jaar
+                  {gemeente_filter}
+            )
+            SELECT 
+                g.id as buurt_id, 
+                g.naam as buurt_naam,
+                gd.waarde,
+                gd.jaar,
+                rs.avg_val as gemiddelde,
+                (gd.waarde - rs.avg_val) / NULLIF(rs.std_val, 0) as z_score
+            FROM gebied_data gd
+            JOIN gebieden g ON gd.gebied_id = g.id
+            CROSS JOIN ref_stats rs
+            CROSS JOIN meest_recent mr
+            CROSS JOIN buurt_type bt
+            WHERE gd.indicator_uuid = :uuid 
+              AND g.gebiedstype_id = bt.id
+              AND gd.jaar = mr.jaar 
+              AND rs.std_val > 0
+              AND LOWER(g.naam) NOT LIKE 'wijk %'
+              {gemeente_filter}
+            ORDER BY ABS((gd.waarde - rs.avg_val) / NULLIF(rs.std_val, 0)) DESC
+        """)
+        
+        rows = self.db.execute(query, params).fetchall()
+        if not rows:
+            return None
+        
+        # Haal indicator metadata op
+        meta_query = text("""
+            SELECT i.naam, COALESCE(sr.eenheid, i.eenheid) as eenheid
+            FROM indicatoren i
+            LEFT JOIN kompas_indicator_scoring_regels sr ON i.uuid = sr.indicator_uuid
+            WHERE i.uuid = :uuid
+            LIMIT 1
+        """)
+        meta = self.db.execute(meta_query, {"uuid": indicator_uuid}).fetchone()
+        
+        positief = []
+        negatief = []
+        
+        for row in rows:
+            entry = {
+                "buurt_id": row.buurt_id,
+                "buurt_naam": row.buurt_naam,
+                "waarde": round(float(row.waarde), 2),
+                "z_score": round(float(row.z_score), 2)
+            }
+            if row.z_score > 0 and len(positief) < limit:
+                positief.append(entry)
+            elif row.z_score < 0 and len(negatief) < limit:
+                negatief.append(entry)
+            
+            if len(positief) >= limit and len(negatief) >= limit:
+                break
+        
+        # 2. Return payload with context
+        context_naam = "Alle gemeenten"
+        if gebied_id and gem_res and gem_res.gemeente_code:
+            # We already have gemeente_code, let's get the naam of that gemeente
+            naam_query = text("SELECT naam FROM gemeenten WHERE code = :code")
+            naam_res = self.db.execute(naam_query, {"code": gem_res.gemeente_code}).fetchone()
+            if naam_res:
+                context_naam = naam_res.naam
+        
+        return {
+            "indicator_naam": meta.naam if meta else "",
+            "eenheid": (meta.eenheid or "") if meta else "",
+            "referentie_gemiddelde": round(float(rows[0].gemiddelde), 2) if rows else 0,
+            "context_naam": context_naam,
+            "top_positief": positief,
+            "top_negatief": negatief
+        }
+
 class KompasScoringService:
     """Service voor kleurberekening op basis van scoring regels"""
     
@@ -549,3 +668,4 @@ class KompasScoringService:
     def _normalize_value(self, value: float, min_val: float, max_val: float) -> float:
         if max_val == min_val: return 0.5
         return max(0.0, min(1.0, (value - min_val) / (max_val - min_val)))
+

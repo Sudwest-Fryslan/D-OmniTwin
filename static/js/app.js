@@ -624,6 +624,17 @@ function setupGemeenteSelector() {
             state.currentData = null;
             clearGebiedSelection();
             updateSelectionUI();
+            
+            // Werk ook het Kompas paneel bij naar de gemeente of landelijk niveau
+            if (window.kompasViz && window.kompasViz.currentConfigId) {
+                if (gemeente.id) {
+                    window.kompasViz.loadGebiedData(window.kompasViz.currentConfigId, gemeente.id);
+                } else {
+                    // Geen ID (bijv. "Alle gemeenten")
+                    window.kompasViz.currentGebiedId = null;
+                    window.kompasViz.loadHierarchie(window.kompasViz.currentConfigId);
+                }
+            }
 
             // Herlaad kaart data met nieuwe gemeente filter
             if (state.currentGebiedstype) {
@@ -635,6 +646,11 @@ function setupGemeenteSelector() {
             localStorage.setItem('omnitwin-gemeente', '');
             input.value = 'Alle gemeenten';
             info.textContent = 'Alle gemeenten';
+            
+            if (window.kompasViz && window.kompasViz.currentConfigId) {
+                window.kompasViz.currentGebiedId = null;
+                window.kompasViz.loadHierarchie(window.kompasViz.currentConfigId);
+            }
 
             // Herlaad kaart data zonder gemeente filter
             if (state.currentGebiedstype) {

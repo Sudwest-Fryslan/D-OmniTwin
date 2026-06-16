@@ -1473,8 +1473,11 @@ class KompasVisualization {
         }
 
         try {
-            // Fetch History
-            const historyData = await this.fetchHistory(this.currentGebiedId, node.data.uuid);
+            // Fetch History + Top Buurten in parallel
+            const [historyData, topBuurtenData] = await Promise.all([
+                this.fetchHistory(this.currentGebiedId, node.data.uuid),
+                this._fetchTopBuurten(node.data.uuid, this.currentGebiedId)
+            ]);
 
             // Render Chart
             if (historyData && historyData.history && historyData.history.length > 0) {
@@ -1513,10 +1516,99 @@ class KompasVisualization {
                 document.getElementById('details-definitie').textContent = "Geen trenddata beschikbaar.";
             }
 
+            // F2: Render Top Buurten
+            this._renderTopBuurten(topBuurtenData);
+
         } catch (e) {
             console.error('Error loading details:', e);
             document.getElementById('details-definitie').textContent = "Fout bij laden gegevens.";
         }
+    }
+
+    async _fetchTopBuurten(indicatorUuid, gebiedId) {
+        try {
+            const url = gebiedId 
+                ? `/api/kompas/indicator/${indicatorUuid}/top-buurten?gebied_id=${gebiedId}`
+                : `/api/kompas/indicator/${indicatorUuid}/top-buurten`;
+            const resp = await fetch(url);
+            if (!resp.ok) return null;
+            return await resp.json();
+        } catch (e) {
+            console.warn('Top buurten niet beschikbaar:', e.message);
+            return null;
+        }
+    }
+
+    _renderTopBuurten(data) {
+        // Verwijder eventueel bestaand blok
+        const existing = document.getElementById('kompas-top-buurten');
+        if (existing) existing.remove();
+
+        if (!data || (!data.top_positief?.length && !data.top_negatief?.length)) return;
+
+        const container = document.createElement('div');
+        container.id = 'kompas-top-buurten';
+        container.style.cssText = 'margin-top: 15px; border-top: 1px solid rgba(255,255,255,0.1); padding: 15px; background: rgba(0,0,0,0.15); border-radius: 6px;';
+
+        const eenheid = data.eenheid || '';
+        const contextNaam = data.context_naam || 'Alle gemeenten';
+        
+        let html = `<div style="font-size: 0.8rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">Top Uitschieters: <span style="color: var(--text-color);">${contextNaam}</span></div>`;
+
+        // Top positief (↑)
+        if (data.top_positief?.length) {
+            html += `<div style="margin-bottom: 8px;"><div style="font-size: 0.72rem; color: var(--action-color, #48BB78); font-weight: 600; margin-bottom: 4px;">↑ Hoogste waarden</div>`;
+            data.top_positief.forEach((b, i) => {
+                html += this._topBuurtRow(b, i + 1, eenheid, 'var(--action-color, #48BB78)');
+            });
+            html += `</div>`;
+        }
+
+        // Top negatief (↓)
+        if (data.top_negatief?.length) {
+            html += `<div><div style="font-size: 0.72rem; color: var(--secondary-color, #F56565); font-weight: 600; margin-bottom: 4px;">↓ Laagste waarden</div>`;
+            data.top_negatief.forEach((b, i) => {
+                html += this._topBuurtRow(b, i + 1, eenheid, 'var(--secondary-color, #F56565)');
+            });
+            html += `</div>`;
+        }
+
+        container.innerHTML = html;
+
+        // Click handlers — flyToGebied
+        container.querySelectorAll('[data-buurt-id]').forEach(el => {
+            el.addEventListener('click', () => {
+                const buurtId = el.dataset.buurtId;
+                // Zoek de feature in de huidige kaartdata
+                if (window.state?.currentData?.features) {
+                    const feature = window.state.currentData.features.find(
+                        f => f.properties.id === buurtId || f.properties.buurt_id === buurtId
+                    );
+                    if (feature && typeof flyToGebied === 'function') {
+                        flyToGebied(feature);
+                    }
+                }
+            });
+        });
+
+        // Voeg toe aan het detailpaneel
+        const detailsPanel = document.getElementById('kompas-details-panel');
+        if (detailsPanel) {
+            detailsPanel.appendChild(container);
+        }
+    }
+
+    _topBuurtRow(buurt, rank, eenheid, accentColor) {
+        return `
+            <div data-buurt-id="${buurt.buurt_id}" style="display: flex; align-items: center; justify-content: space-between; padding: 3px 6px; margin: 2px 0; border-radius: 4px; cursor: pointer; font-size: 0.78rem; transition: background 0.15s;" 
+                 onmouseover="this.style.background='rgba(255,255,255,0.08)'" 
+                 onmouseout="this.style.background='transparent'"
+                 title="Klik om naar ${buurt.buurt_naam} te vliegen">
+                <span style="color: var(--text-secondary); width: 18px;">${rank}.</span>
+                <span style="flex: 1; color: var(--text-color); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${buurt.buurt_naam}</span>
+                <span style="font-family: monospace; margin-left: 8px; color: var(--text-secondary);">${buurt.waarde} ${eenheid}</span>
+                <span style="font-family: monospace; font-weight: 600; margin-left: 8px; min-width: 50px; text-align: right; color: ${accentColor};">${buurt.z_score > 0 ? '+' : ''}${buurt.z_score}</span>
+            </div>`;
     }
 
     async _loadMultiGebiedIndicatorComparison(node) {

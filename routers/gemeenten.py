@@ -19,6 +19,7 @@ router = APIRouter(prefix="/api", tags=["Gemeenten"])
 
 class GemeenteBase(BaseModel):
     """Gemeente basis response"""
+    id: Optional[str] = None
     code: str
     naam: str
     provincie: str
@@ -113,7 +114,7 @@ async def get_gemeenten(
     """
     if provincie:
         query = text("""
-            SELECT code, naam, provincie, is_eiland 
+            SELECT id, code, naam, provincie, is_eiland 
             FROM gemeenten 
             WHERE provincie = :provincie
             ORDER BY naam
@@ -121,7 +122,7 @@ async def get_gemeenten(
         result = db.execute(query, {"provincie": provincie})
     else:
         query = text("""
-            SELECT code, naam, provincie, is_eiland 
+            SELECT id, code, naam, provincie, is_eiland 
             FROM gemeenten 
             ORDER BY provincie, naam
         """)
@@ -129,6 +130,7 @@ async def get_gemeenten(
     
     gemeenten = [
         GemeenteBase(
+            id=str(row.id) if getattr(row, 'id', None) else None,
             code=row.code,
             naam=row.naam,
             provincie=row.provincie,
@@ -159,7 +161,7 @@ async def get_gemeente(
     - Gemeente object met code, naam, provincie
     """
     query = text("""
-        SELECT code, naam, provincie, is_eiland 
+        SELECT id, code, naam, provincie, is_eiland 
         FROM gemeenten 
         WHERE code = :code
     """)
@@ -172,6 +174,7 @@ async def get_gemeente(
         )
     
     return GemeenteBase(
+        id=str(result.id) if getattr(result, 'id', None) else None,
         code=result.code,
         naam=result.naam,
         provincie=result.provincie,

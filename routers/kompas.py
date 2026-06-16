@@ -184,6 +184,38 @@ async def get_indicator_history(
 
 
 
+@router.get("/indicator/{indicator_uuid}/top-buurten")
+async def get_top_buurten(
+    indicator_uuid: str,
+    gebied_id: Optional[str] = Query(None),
+    limit: int = Query(default=3, ge=1, le=10),
+    db: Session = Depends(get_db)
+):
+    """
+    Haal Top N positief + Top N negatief afwijkende buurten op voor een indicator.
+    
+    **Args:**
+    - `indicator_uuid`: UUID van indicator
+    - `gebied_id`: Optioneel UUID van het gebied om de buurten te filteren op de gemeente van dit gebied
+    - `limit`: Aantal buurten per richting (default 3, max 10)
+    
+    **Returns:**
+    - `indicator_naam`, `eenheid`, `referentie_gemiddelde`
+    - `top_positief`: Buurten met hoogste Z-score
+    - `top_negatief`: Buurten met laagste Z-score
+    """
+    service = KompasService(db)
+    result = service.get_top_afwijkende_buurten(indicator_uuid, limit, gebied_id)
+    
+    if not result:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Geen data gevonden voor indicator {indicator_uuid}"
+        )
+    
+    return result
+
+
 # ========================================================================
 # FUTURE ENDPOINTS (voor admin panel - later)
 # ========================================================================
