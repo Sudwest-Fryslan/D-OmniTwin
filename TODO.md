@@ -132,6 +132,10 @@
     - [ ] Als men op een buurt klikt in het Kompas Top 3+3 venster, flyToGebied + highlight het gebied visueel
     - [ ] Belangrijk: **NIET** als formele selectie toevoegen, want we hebben al een gebiedsselectie actief
     - [ ] Acceptatie: Gebruiker kan de uitschieters makkelijk op de kaart vinden door de highlight, zonder de huidige selectiestatus kwijt te raken
+- [ ] **F4 — Bug: Z-score/Top uitschieters baseert zich op gemeente van aangeklikte buurt, zelfs bij 'Alle gemeenten' filter**
+    - [ ] Wanneer 'Alle gemeenten' geselecteerd is als filter, maar je klikt op een specifieke buurt op de kaart, berekent de backend (`get_top_afwijkende_buurten`) de uitschieters momenteel alleen voor de buurten binnen de gemeente van de aangeklikte buurt. 
+    - [ ] Gewenst gedrag: de Z-score referentie en top-buurten moeten over de gehele populatie (alle gemeenten) berekend worden als het globale filter op 'Alle gemeenten' staat, ongeacht welke buurt is aangeklikt.
+    - [ ] *Voor later, genoteerd als vervolgactie.*
 
 ### Track G — Correcties n.a.v. Testbevindingen Sessie 4 (Dag 73)
 **Aanleiding:** Handmatige test na merge → twee punten vragen correctie voor volgende sessie.
