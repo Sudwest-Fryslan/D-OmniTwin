@@ -122,11 +122,12 @@
 - [x] **F1 — Bug: Zoekfunctie Kompas `undefined` foutmelding**
     - [x] `Array.isArray` guard + `renderSearchResults([])` bij API-fout
     - [ ] Acceptatie: foutmelding nog niet reproduceerbaar in testomgeving — open
-- [ ] **F2 — Top 5 buurten per indicator (grootste afwijkers)**
-    - [ ] Backend: `GET /api/indicatoren/{uuid}/top-buurten?gemeente_code=&limit=5`
-    - [ ] Frontend: collapsible sectie in detailpaneel na indicator-selectie
-    - [ ] Klik op buurt in lijst → kaart selecteert & flyTo
-    - [ ] Acceptatie: Top 5 afwijkers direct zichtbaar en klikbaar
+- [x] **F2 — Top 3+3 buurten per indicator (grootste afwijkers)**
+    - [x] Backend: `GET /api/kompas/indicator/{uuid}/top-buurten?gebied_id=&limit=3`
+    - [x] Frontend: sectie in detailpaneel na indicator-selectie met Top 3+ en Top 3-
+    - [x] Klik op buurt in lijst → flyToGebied
+    - [x] Filtering per gemeente en bugfix voor 'wijk' records
+    - [x] Acceptatie: Top 3+3 afwijkers direct zichtbaar en interactief
 
 ### Track G — Correcties n.a.v. Testbevindingen Sessie 4 (Dag 73)
 **Aanleiding:** Handmatige test na merge → twee punten vragen correctie voor volgende sessie.
