@@ -128,6 +128,10 @@
     - [x] Klik op buurt in lijst → flyToGebied
     - [x] Filtering per gemeente en bugfix voor 'wijk' records
     - [x] Acceptatie: Top 3+3 afwijkers direct zichtbaar en interactief
+- [ ] **F3 — Visuele weergave/highlight bij klik op Top-buurt**
+    - [ ] Als men op een buurt klikt in het Kompas Top 3+3 venster, flyToGebied + highlight het gebied visueel
+    - [ ] Belangrijk: **NIET** als formele selectie toevoegen, want we hebben al een gebiedsselectie actief
+    - [ ] Acceptatie: Gebruiker kan de uitschieters makkelijk op de kaart vinden door de highlight, zonder de huidige selectiestatus kwijt te raken
 
 ### Track G — Correcties n.a.v. Testbevindingen Sessie 4 (Dag 73)
 **Aanleiding:** Handmatige test na merge → twee punten vragen correctie voor volgende sessie.
