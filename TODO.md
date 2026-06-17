@@ -333,78 +333,11 @@ Na het klikken op een buurt moet de kaart zo schuiven dat de buurt zichtbaar val
 
 ### Technische Aanpak: `getFreezone()`
 
-Introduceer een helperfunctie die de **vrije rechthoek** van de kaart berekent — het gedeelte van het scherm dat niet bedekt is door enig UI-panel:
+Introduceer een helperfunctie die de **vrije rechthoek** van de kaart berekent — het gedeelte van het scherm dat niet bedekt is door enig UI-panel.
+*(Noot: De implementatie hiervan is inmiddels afgerond via de `getFreezone()` functie in `app.js`)*.
 
-```javascript
-function getFreezone() {
-    const W = window.innerWidth;
-    const H = window.innerHeight;
-
-    // Vaste panels (links)
-    const tabBar = 70; // --tab-bar-width
-    const leftPanel = document.querySelector('.panel-container.open') ? 360 : 0;
-    const leftEdge = tabBar + leftPanel;
-
-    // Chat panel (rechts)
-    const chatOpen = document.getElementById('chat-panel')?.classList.contains('open');
-    const rightEdge = chatOpen ? 380 : 0;
-
-    // Kompas venster (zwevend, draggable)
-    const kompasEl = document.getElementById('kompas-window');
-    const kompasVisible = kompasEl && kompasEl.style.display !== 'none';
-    let kompasRect = null;
-    if (kompasVisible) {
-        kompasRect = kompasEl.getBoundingClientRect();
-    }
-
-    // Bruto vrije breedte (excl. Kompas)
-    const freeLeft = leftEdge;
-    const freeRight = W - rightEdge;
-    const freeWidth = freeRight - freeLeft;
-
-    // Bepaal vrij centrum: splits het vrije gebied in "links van Kompas" vs "rechts van Kompas"
-    let centerX, centerY;
-    if (kompasRect) {
-        const spaceLeft  = kompasRect.left - freeLeft;
-        const spaceRight = freeRight - kompasRect.right;
-        if (spaceLeft > spaceRight) {
-            centerX = freeLeft + spaceLeft / 2;        // Centreer in het linkse vrije deel
-        } else {
-            centerX = kompasRect.right + spaceRight / 2; // Centreer in het rechtse vrije deel
-        }
-    } else {
-        centerX = freeLeft + freeWidth / 2;            // Geen Kompas: midden van vrije zone
-    }
-    centerY = H / 2;
-
-    return { centerX, centerY, freeLeft, freeRight, freeWidth };
-}
-```
-
-### `flyToGebied()` aanpassen
-
-Gebruik de viewport-offset om de camera te verplaatsen naar het centroid van de buurt, maar **gepositioneerd in de vrije zone**:
-
-```javascript
-// In flyToGebied(): vervang de huidige setProps() aanroep:
-const zone = getFreezone();
-const offsetX = zone.centerX - window.innerWidth / 2; // pixel-offset t.o.v. schermcentrum
-
-state.deckgl.setProps({
-    initialViewState: {
-        ...currentViewState,
-        longitude: centroid[0],
-        latitude: centroid[1],
-        zoom: Math.max(currentViewState.zoom, 12),
-        transitionDuration: 800,
-        transitionInterpolator: new deck.FlyToInterpolator(),
-        // deck.gl padding verschuift het effectieve centrum:
-        padding: { left: zone.freeLeft, right: window.innerWidth - zone.freeRight, top: 0, bottom: 0 }
-    }
-});
-```
-
-> **Noot:** deck.gl's `padding` property in `viewState` is de schone manier om het effectieve viewport-centrum te verschuiven zonder de coördinaten aan te passen. Dit is de voorkeursaanpak boven het manueel berekenen van een verschoven `longitude`.
+Gebruik de viewport-offset om de camera te verplaatsen naar het centroid van de buurt, maar **gepositioneerd in de vrije zone** (zoals uitgerekend door `getFreezone()`).
+*(Noot: Ook dit is reeds succesvol verwerkt in de codebase).*
 
 ### `fitBounds()` guard (ontkoppelen van re-renders)
 
