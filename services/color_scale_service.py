@@ -54,29 +54,67 @@ class ColorScaleService:
         return ramp
     
     def classify_quantile(self, values: List[float], num_classes: int) -> List[float]:
-        """Quantile classificatie (gelijke aantallen per klasse)"""
-        if len(values) < num_classes:
+        """Quantile classificatie (gelijke aantallen per klasse) met unieke breaks"""
+        if len(values) < 2:
             return []
         
         percentiles = np.linspace(0, 100, num_classes + 1)[1:-1]
-        return [float(np.percentile(values, p)) for p in percentiles]
+        breaks = [float(np.percentile(values, p)) for p in percentiles]
+        return sorted(list(set(breaks)))
     
     def classify_equal_interval(self, values: List[float], num_classes: int) -> List[float]:
-        """Equal interval classificatie"""
+        """Equal interval classificatie met unieke breaks"""
         min_val = min(values)
         max_val = max(values)
+        if min_val == max_val:
+            return []
+            
         interval = (max_val - min_val) / num_classes
-        
-        return [min_val + interval * i for i in range(1, num_classes)]
+        breaks = [min_val + interval * i for i in range(1, num_classes)]
+        return sorted(list(set(breaks)))
     
     def classify_jenks(self, values: List[float], num_classes: int) -> List[float]:
         """
-        Natural Breaks (Jenks) classificatie.
-        Simplified implementation - uses quantile as approximation for now.
+        Natural Breaks (1D K-Means benadering).
         """
-        # TODO: Implement proper Jenks algorithm
-        # For now, fallback to quantile
-        return self.classify_quantile(values, num_classes)
+        unique_vals = sorted(list(set(values)))
+        if len(unique_vals) <= num_classes:
+            return unique_vals[:-1] if len(unique_vals) > 1 else []
+            
+        # Deterministische initialisatie van centroids
+        min_v, max_v = min(unique_vals), max(unique_vals)
+        centroids = [min_v + (max_v - min_v) * i / (num_classes - 1) for i in range(num_classes)]
+        
+        for _ in range(20):  # max iterations
+            clusters = [[] for _ in range(num_classes)]
+            for v in values:
+                distances = [abs(v - c) for c in centroids]
+                best_idx = distances.index(min(distances))
+                clusters[best_idx].append(v)
+            
+            new_centroids = []
+            for i, cl in enumerate(clusters):
+                if cl:
+                    new_centroids.append(sum(cl) / len(cl))
+                else:
+                    new_centroids.append(centroids[i])
+                    
+            if new_centroids == centroids:
+                break
+            centroids = new_centroids
+            
+        # De breaks zijn de maxima van elke cluster (behalve de laatste)
+        breaks = []
+        clusters = [[] for _ in range(num_classes)]
+        for v in values:
+            distances = [abs(v - c) for c in centroids]
+            clusters[distances.index(min(distances))].append(v)
+            
+        for i in range(num_classes - 1):
+            if clusters[i]:
+                breaks.append(max(clusters[i]))
+        
+        return sorted(list(set(breaks)))
     
     def classify_diverging_midpoint(
         self, 
@@ -86,31 +124,29 @@ class ColorScaleService:
     ) -> List[float]:
         """
         Diverging classification met midpoint (bijv. 50 voor index scores).
+        Zorgt voor robuuste omgang met scheve data.
         """
         if midpoint is None:
-            midpoint = np.median(values)
+            midpoint = float(np.median(values))
         
-        # Split in twee helften
+        # Gebruik strict < en > zodat exact de midpoint apart blijft
         below = [v for v in values if v < midpoint]
-        above = [v for v in values if v >= midpoint]
+        above = [v for v in values if v > midpoint]
         
         half_classes = num_classes // 2
         breaks = []
         
-        # Below midpoint breaks
         if len(below) > 0:
             below_breaks = self.classify_quantile(below, half_classes)
             breaks.extend(below_breaks)
         
-        # Midpoint
         breaks.append(midpoint)
         
-        # Above midpoint breaks
         if len(above) > 0:
             above_breaks = self.classify_quantile(above, half_classes)
             breaks.extend(above_breaks)
         
-        return breaks
+        return sorted(list(set(breaks)))
     
     def get_color_for_value(
         self,
@@ -119,20 +155,30 @@ class ColorScaleService:
         breaks: List[float],
         nodata_color: str = "#d1d5db"
     ) -> str:
-        """Map een waarde naar een kleur"""
+        """Map een waarde naar een kleur proportioneel verdeeld over unieke breaks"""
         if value is None:
             return nodata_color
         
-        # Find which class the value belongs to
-        class_index = 0
-        for i, threshold in enumerate(breaks):
-            if value >= threshold:
-                class_index = i + 1
+        unique_breaks = sorted(list(set(breaks)))
+        if not unique_breaks:
+            return color_ramp[0]
+            
+        bin_index = 0
+        for threshold in unique_breaks:
+            if value > threshold:
+                bin_index += 1
+            else:
+                break
+        
+        # Proportionele schaling van unieke bins naar beschikbare kleuren
+        total_bins = len(unique_breaks)
+        scale_factor = (len(color_ramp) - 1) / total_bins
+        color_index = int(round(bin_index * scale_factor))
         
         # Clamp to available colors
-        class_index = min(class_index, len(color_ramp) - 1)
+        color_index = max(0, min(color_index, len(color_ramp) - 1))
         
-        return color_ramp[class_index]
+        return color_ramp[color_index]
     
     def get_visualization_config(self, indicator_uuid: str) -> Optional[Dict[str, Any]]:
         """
@@ -225,9 +271,9 @@ class ColorScaleService:
         # 🔄 SCORE TYPE INVERSION LOGIC
         # +/+ : High value = Good → normal (low=red/blue, high=green/red)
         # +/- : High value = Bad → REVERSE colors
-        # -/+ : Low value = Good → REVERSE colors  
-        # -/- : Low value = Bad → normal
-        should_reverse = score_type in ['+/-', '-/+']
+        # -/- : Low value = Bad → REVERSE colors
+        # -/+ : Low value = Good → normal
+        should_reverse = score_type in ['+/-', '-/-', '-=-']
         if should_reverse:
             color_ramp = list(reversed(color_ramp))
         

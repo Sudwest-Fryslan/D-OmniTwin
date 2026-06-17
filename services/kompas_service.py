@@ -126,7 +126,7 @@ class KompasService:
                 i.naam as indicator_naam,
                 gd.waarde,
                 gd.jaar,
-                sr.score_type,
+                COALESCE(sr.score_type, i.score_type) as score_type,
                 sr.inverse,
                 sr.thresholds,
                 COALESCE(sr.eenheid, i.eenheid) AS eenheid
@@ -651,7 +651,12 @@ class KompasScoringService:
                 bin_idx = 7
                 
             # Inverse logic
-            if inverse or score_type == "positive_descending":
+            # +/+ : Normal (high = green)
+            # +/- : Reverse (high = red)
+            # -/- : Reverse (low = green, high = red)
+            # -/+ : Normal (low = red, high = green)
+            should_reverse = score_type in ['+/-', '-/-', '-=-'] or score_type == "positive_descending" or inverse
+            if should_reverse:
                 bin_idx = 7 - bin_idx
                 
             return palette[bin_idx]

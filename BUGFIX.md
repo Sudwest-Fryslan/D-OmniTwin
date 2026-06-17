@@ -934,3 +934,30 @@ Het programmatisch aanpassen van de `.value` van een `<select>` of `<input>` ele
 **Les:** Programmatische UI-updates vereisen handmatige event-dispatching als er listeners op die elementen vertrouwen.
 
 ---
+
+## Bug #46: Kleurschaling Corruptie & Kompas Score Type Genegeerd (17-06-2026) - FIXED ✅
+
+**Sprint:** Sprint 18  
+**Prioriteit:** 🔴 HIGH (Verkeerde kleuren op kaart en kompas)  
+**Status:** ✅ Opgelost
+
+**Symptomen:**
+- Kaart (v2_color_schemas): Indicatoren met veel dezelfde waarden (bijv. veel 0'en bij 'diefstal fiets') kleurden als één groot vlak, en negeerden het palet.
+- Kompas (v_kompas_hierarchie): De richting (+/+, +/-, -/-, -/+) was afwijkend, waardoor een negatieve indicator toch als positief groen kleurde in de ringdiagram.
+
+**Oorzaak:**
+1. *Kleurschaling:* Bij de classificatie (Quantile, Equal Interval, etc.) werden de berekende drempelwaarden (breaks) niet ontdubbeld. Wanneer waarden ophopen (skewed data), werden meerdere bins toegekend aan waarde `0`. Het toekenningsalgoritme faalde hierdoor om een vloeiend proportionele kleurschaal te tonen.
+2. *Kompas SQL:* In `kompas_service.py` haalde de query `sr.score_type` uit de scoring regels tabel. Wanneer deze NULL was (geen specifieke override rule), viel Python terug op de default `positive_ascending` in plaats van de core `indicatoren` tabel instelling, waardoor de administratie interface instelling werd genegeerd.
+3. *Kompas Inversie:* De frontend logic kende alleen `+/-` en `-/+` the omkering toe, maar negeerde `-/-`. Bovendien wilde we expliciet dat `-/+` juist Normaal (Groen) bleef, en `-/-` Reserve (Rood).
+
+**Oplossing:**
+1. **`services/color_scale_service.py`**:
+   - `sorted(list(set(breaks)))` doorgevoerd over álle classificatiefuncties.
+   - Nieuwe proporsionele `get_color_for_value` geschreven: wanneer het algoritme slechts 3 unieke bins vindt, schaalt hij netjes over het héle palet (7 indexen) heen.
+   - Fallback naar 1D K-Means (Jenks) gemaakt.
+   - Reverse logic set aangepast: `should_reverse = score_type in ['+/-', '-/-', '-=-']`.
+2. **`services/kompas_service.py`**:
+   - SQL query line veranderd naar `COALESCE(sr.score_type, i.score_type) as score_type` the om inheritence op te lossen.
+   - Reverse logic set gelijkgetrokken met map service.
+
+**Les:** Datapreparatie (SQL fallback) the is the core, the bin-scaling the fallback logic!

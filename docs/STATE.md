@@ -11,7 +11,7 @@
 |------|--------|
 | **Huidige versie** | v1.0.0-beta (pre-release) |
 | **Sprint** | Sprint 18 — IJsselmeerkust als Besluitinstrument 🚀 In uitvoering | 
-| **Laatste update** | 2026-06-14 (Dag 73) |
+| **Laatste update** | 2026-06-17 (Dag 74) |
 | **Bijgewerkt door** | Project-manager skill (Antigravity) |
 
 ---
@@ -52,9 +52,9 @@
 
 | Datum | Wijziging | Impact |
 |-------|-----------|--------|
+| 2026-06-17 | **Sprint 18 Bugfix (Dag 74)** | Fix voor Bug #46: Kleurenschaling en Kompas score_type richting gecorrigeerd. Implementatie van Jenks/1D K-Means en unieke breaks. Update van Kompas service SQL voor score fallback. |
 | 2026-06-14 | **Sprint 18 Track F toegevoegd (Dag 73)** | Gebruikersreview verwerkt: bug zoekfunctie Kompas (F1) + Top 5 buurten per indicator (F2) toegevoegd aan Sprint 18. Sprint 19 gepland als volgende sprint. UX-bevindingen gedocumenteerd in `docs/4-ux-design/gebruikerservaringen/`. |
 | 2026-06-08 | **Sprint 18 Track B (Sessie 1-3) Afgerond (Dag 72)** | BAG Woonplaatsen ingeladen via WFS (PDOK). Beheersysteem voor Externe Kaartlagen toegevoegd. Omgevingsvisie gemigreerd naar lokale externe laag (GPKG upload in admin). Commits t/m `0b63781` in feature branch. |
-| 2026-06-07 | **Issue #11 Afgerond — OV Haltes ETL (Dag 71)** | ETL pipeline volledig gebouwd en gedraaid. FR/GR/DR: 6.945 OSM nodes → 4.324 clusters → 4.805 waarden in `gebied_data`. 5 indicatoren (OV_HALTES_*) gekoppeld aan Kompas → Bereikbaarheid en parkeren. Merge `147f5d9` → main commit `7443b51`. |
 
 ---
 

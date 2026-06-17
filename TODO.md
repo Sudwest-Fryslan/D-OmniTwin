@@ -1,6 +1,6 @@
 # TODO - D-OmniTwin Roadmap
 
-**Laatste Update:** 14 juni 2026 (Dag 73)
+**Laatste Update:** 17 juni 2026 (Dag 74)
 **Status:** Sprint 18 🚀 In uitvoering | Sprint 19 📌 Gepland
 
 > **Huidige Sprint:** Sprint 18 — IJsselmeerkust als Besluitinstrument
