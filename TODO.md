@@ -9,34 +9,6 @@
 
 ---
 
-## 🔴 OPEN BLOCKER — Must-have voor deelbare versie
-
-> **E-mail alerts bij ERROR/CRITICAL logs** — GitHub Issue [#10](https://github.com/TLaan/D-OmniTwin/issues/10)
->
-> **Design beslissing:** Eigen SMTP-server, volledig configureerbaar via `.env`.
-> **Blocker:** SMTP-server nog niet ingericht. Zodra beschikbaar → implementatie ~1 sessie.
->
-> **Benodigde `.env` variabelen (nog toe te voegen):**
-> ```
-> SMTP_HOST=mail.jouwdomein.nl
-> SMTP_PORT=587
-> SMTP_USER=alerts@jouwdomein.nl
-> SMTP_PASS=...
-> SMTP_FROM=alerts@jouwdomein.nl
-> LOG_ALERT_TO=beheer@jouwdomein.nl
-> LOG_ALERT_ENABLED=true
-> ```
->
-> **Wat er gebouwd moet worden:**
-> - `services/log_alert_service.py` — luistert op ERROR/CRITICAL in log queue
-> - Debounce: max 1 e-mail per 5 min per categorie
-> - Toggle per categorie in admin panel Log Config sectie
-> - `routers/log_viewer.py` bevat placeholder TODO comment
->
-> **Actie vereist:** SMTP-server inrichten + credentials in `.env` zetten → daarna Issue #10 oppakken.
-
----
-
 ## 🚧 Sprint 18: IJsselmeerkust als Besluitinstrument (Gepland)
 
 **Doel:** D-OmniTwin transformeren van een verkenningsinstrument naar een besluitondersteunend instrument — getoetst aan de casus IJsselmeerkust & Wadden (Makkum, Workum, Koudum).  
@@ -204,6 +176,24 @@
 - [ ] Pull Request aanmaken naar `main`
 - [ ] STATE.md bijwerken: Sprint 19 componenten
 - [ ] UX-bevindingen bijwerken na hertest
+
+---
+
+## 📌 Sprint 20: E-mail Alerts & SMTP Flexibiliteit (Gepland)
+
+**Doel:** Het systeem voorzien van betrouwbare e-mail alerts bij kritieke fouten (`ERROR` of `CRITICAL`) via een flexibele SMTP configuratie (ondersteuning voor eigen mailserver, Office365, Gmail, etc).
+**Aanleiding:** Issue #10 (voorheen een blocker). Doorgeschoven naar ná Sprint 19.
+**Spec:** [`docs/5-secops/logging/plan_email_alerts_smtp.md`](./docs/5-secops/logging/plan_email_alerts_smtp.md)
+
+### Track A — Flexibele SMTP Configuratie & Test-endpoint
+- [ ] **A1 — `.env` variabelen toevoegen**
+    - [ ] `SMTP_HOST`, `SMTP_PORT`, `SMTP_USE_TLS`, `SMTP_USER`, `SMTP_PASS`, `SMTP_FROM`, `LOG_ALERT_TO`, `LOG_ALERT_ENABLED`
+- [ ] **A2 — `log_alert_service.py` bouwen**
+    - [ ] Asynchrone mail-verzending
+    - [ ] Debouncing logica: max 1 e-mail per categorie per 5 minuten
+- [ ] **A3 — Admin Test-functie**
+    - [ ] Backend: `POST /api/admin/logs/test-alert`
+    - [ ] Frontend: "Test E-mail Instellingen" knop in de Log Config tab.
 
 ---
 
