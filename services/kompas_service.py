@@ -641,14 +641,23 @@ class KompasScoringService:
             
         # 2. Threshold Binning (Percentiles)
         if thresholds and len(thresholds) == 7:
-            # thresholds = [p12.5, p25, p37.5, p50, p62.5, p75, p87.5]
+            # Bug #46 fix: Maak drempels uniek om clipping bij scheve datasets (veel 0-waarden) te voorkomen
+            unique_thresholds = sorted(list(set(thresholds)))
+            
             bin_idx = 0
-            for i, t in enumerate(thresholds):
-                if value < t:
-                    bin_idx = i
+            for t in unique_thresholds:
+                if value > t:
+                    bin_idx += 1
+                else:
                     break
-            else:
-                bin_idx = 7
+            
+            # Proportioneel schalen naar het 8-kleurenpalet als er minder unieke drempels zijn
+            if len(unique_thresholds) < 7 and len(unique_thresholds) > 0:
+                scale_factor = 7 / len(unique_thresholds)
+                bin_idx = round(bin_idx * scale_factor)
+                
+            # Zekeringscheck
+            bin_idx = min(7, max(0, bin_idx))
                 
             # Inverse logic
             # +/+ : Normal (high = green)
