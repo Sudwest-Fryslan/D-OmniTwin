@@ -69,10 +69,9 @@
     - [ ] `bron` en `peildatum` veld ophalen in Kompas API response (`/api/kompas/...`)
     - [ ] Frontend: bronregel tonen onder indicatorwaarde in detailpaneel
     - [ ] Acceptatie: TC-02-001 stap 3 → ✅
-- [ ] **A2 — Z-score uitleg (contexttooltip)**
-    - [ ] ❓ icoontje toevoegen naast Z-score-getal in Kompas-detailpaneel
-    - [ ] Tooltip tekst: *"Een Z-score vergelijkt dit gebied met het gemiddelde van alle Friese buurten."*
-    - [ ] Acceptatie: TC-02-001 stap 4 → ✅
+- [x] **A2 — Z-score uitleg (contexttooltip)** *(Obsoluut)*
+    - [x] Uit het Kompas gehaald en in Track G (Sessie 4) opgenomen in het rapportpaneel.
+    - [x] Acceptatie: Niet meer relevant in Kompas.
 - [ ] **A3 — Trendlijn in detailpaneel (≥ 2 meetmomenten)**
     - [ ] Backend: `GET /api/kompas/indicator/{uuid}/trend?gebied_id=...` endpoint
     - [ ] Frontend: mini SVG lijndiagram in detailpaneel
@@ -128,10 +127,10 @@
     - [x] Klik op buurt in lijst → flyToGebied
     - [x] Filtering per gemeente en bugfix voor 'wijk' records
     - [x] Acceptatie: Top 3+3 afwijkers direct zichtbaar en interactief
-- [ ] **F3 — Visuele weergave/highlight bij klik op Top-buurt**
-    - [ ] Als men op een buurt klikt in het Kompas Top 3+3 venster, flyToGebied + highlight het gebied visueel
-    - [ ] Belangrijk: **NIET** als formele selectie toevoegen, want we hebben al een gebiedsselectie actief
-    - [ ] Acceptatie: Gebruiker kan de uitschieters makkelijk op de kaart vinden door de highlight, zonder de huidige selectiestatus kwijt te raken
+- [x] **F3 — Visuele weergave/highlight bij klik op Top-buurt**
+    - [x] Als men op een buurt klikt in het Kompas Top 3+3 venster, flyToGebied + highlight het gebied visueel
+    - [x] Belangrijk: **NIET** als formele selectie toevoegen, want we hebben al een gebiedsselectie actief
+    - [x] Acceptatie: Gebruiker kan de uitschieters makkelijk op de kaart vinden door de highlight (Geo Gold dashed line), zonder de huidige selectiestatus kwijt te raken
 - [ ] **F4 — Bug: Z-score/Top uitschieters baseert zich op gemeente van aangeklikte buurt, zelfs bij 'Alle gemeenten' filter**
     - [ ] Wanneer 'Alle gemeenten' geselecteerd is als filter, maar je klikt op een specifieke buurt op de kaart, berekent de backend (`get_top_afwijkende_buurten`) de uitschieters momenteel alleen voor de buurten binnen de gemeente van de aangeklikte buurt. 
     - [ ] Gewenst gedrag: de Z-score referentie en top-buurten moeten over de gehele populatie (alle gemeenten) berekend worden als het globale filter op 'Alle gemeenten' staat, ongeacht welke buurt is aangeklikt.

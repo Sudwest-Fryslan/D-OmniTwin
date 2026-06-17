@@ -1597,6 +1597,11 @@ class KompasVisualization {
                     );
                     if (feature && typeof flyToGebied === 'function') {
                         flyToGebied(feature);
+                        // Sprint 18 F3: Highlight top-buurt without hard selection
+                        if (typeof window.highlightGebied === 'function') {
+                            const actualId = feature.id || feature.properties?.id || buurtId;
+                            window.highlightGebied(actualId);
+                        }
                     }
                 }
             });

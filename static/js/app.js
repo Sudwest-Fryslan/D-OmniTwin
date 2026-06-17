@@ -46,6 +46,8 @@ const state = {
     selectedDeelgebiedNaam: null,   // Naam van actief deelgebied (voor rapport-link)
     // Sprint 16: Viewport vrije-zone centreren
     initialDataLoaded: false,      // Guard: fitBounds() alleen bij nieuw data-laden
+    highlightedGebiedId: null,     // Sprint 18 F3: Visuele highlight voor Top-buurten
+
     // Sprint 18: Externe kaartlagen (WFS, PDOK, etc.)
     externeKaartlagen: [],         // Actieve lagen definitie [{id, naam, kleur_lijn, ...}]
     externeKaartlaagData: {},      // { laag_id: { laag, geojson } }
@@ -80,9 +82,18 @@ function toggleGebiedSelection(gebiedId) {
 /** Helper: clear alle geselecteerde gebieden */
 function clearGebiedSelection() {
     state.selectedGebiedIds.clear();
+    state.highlightedGebiedId = null; // Clear highlight as well
     // Track B: Herstel empty state in info-paneel
     showGebiedEmptyState();
 }
+
+/** Sprint 18 F3: Visuele weergave/highlight bij klik op Top-buurt */
+window.highlightGebied = function(gebiedId) {
+    state.highlightedGebiedId = gebiedId;
+    if (state.currentData && state.deckgl) {
+        displayOnMap(state.currentData);
+    }
+};
 
 /** Helper: namen ophalen van geselecteerde gebieden uit currentData */
 function getSelectedGebiedNamen() {
@@ -1164,10 +1175,21 @@ function displayOnMap(geojson) {
         console.log(`📊 Range: ${Math.min(...validValues)} - ${Math.max(...validValues)}`);
     }
 
+    // Sprint 18 F3: Sort features so selected & highlighted are drawn last (on top)
+    const sortedFeatures = [...geojson.features].sort((a, b) => {
+        const aId = a.id || a.properties?.id;
+        const bId = b.id || b.properties?.id;
+        const aTop = (aId && (aId === state.highlightedGebiedId || state.selectedGebiedIds.has(aId))) ? 1 : 0;
+        const bTop = (bId && (bId === state.highlightedGebiedId || state.selectedGebiedIds.has(bId))) ? 1 : 0;
+        return aTop - bTop;
+    });
+
+    const renderGeojson = { ...geojson, features: sortedFeatures };
+
     // Create GeoJsonLayer (Different IDs prevent WebGL buffer corruption during 2D/3D toggle)
     const layer = new GeoJsonLayer({
         id: `gebieden-layer-${state.enable3D ? '3d' : '2d'}`,
-        data: geojson,
+        data: renderGeojson,
 
         // Rendering
         filled: true,
@@ -1207,7 +1229,7 @@ function displayOnMap(geojson) {
         getLineColor: d => {
             const featureId = d.id || d.properties?.id;
             if (featureId && isGebiedSelected(featureId)) {
-                return [234, 179, 8, 255]; // Geo Gold (#eab308)
+                return [234, 179, 8, 255]; // Selectie goud (#eab308)
             }
             return [255, 255, 255, 200]; // White border
         },
@@ -1256,6 +1278,11 @@ function displayOnMap(geojson) {
         },
 
         onClick: (info, event) => {
+            // Sprint 18 F3: Clear visual highlight on any map click
+            if (state.highlightedGebiedId) {
+                state.highlightedGebiedId = null;
+            }
+
             if (info.object) {
                 const gebiedId = info.object.id || (info.object.properties && info.object.properties.id);
                 const gebiedNaam = (info.object.properties && info.object.properties.naam) ? info.object.properties.naam : gebiedId;
@@ -1324,6 +1351,37 @@ function displayOnMap(geojson) {
 
     // Build layers array (gebieden + optioneel BAG panden)
     const layers = [layer];
+
+    // Sprint 18 F3: Extra layer voor Top-buurt highlight (Altijd on top, onafhankelijk van dash bugs in 3D/base layer)
+    if (state.highlightedGebiedId && geojson.features) {
+        const highlightFeature = geojson.features.find(f => {
+            const id = f.id || f.properties?.id;
+            return id === state.highlightedGebiedId;
+        });
+        
+        if (highlightFeature) {
+            const { GeoJsonLayer } = deck;
+            const highlightLayer = new GeoJsonLayer({
+                id: 'highlight-layer',
+                data: { type: 'FeatureCollection', features: [highlightFeature] },
+                extensions: [new deck.PathStyleExtension({dash: true})],
+                stroked: true,
+                filled: false,
+                lineWidthUnits: 'pixels',
+                getLineColor: [236, 201, 75, 255], // Geo Gold (#ECC94B)
+                getLineWidth: 6, // 6 pixels dik, consistent ongeacht zoom level
+                getLineDashArray: d => [2, 1], // [dash, gap]
+                getDashArray: d => [2, 1], // Sometimes required instead of getLineDashArray
+                dashJustified: false, // Zet op false om render-issues met justifed path lengths te voorkomen
+                dashGapPickable: true,
+                pickable: false, // Klik-events vangen we al op de base layer
+                parameters: {
+                    depthTest: false // FORCEERT rendering BÓVENOP alle andere 2D/3D lagen
+                }
+            });
+            layers.push(highlightLayer);
+        }
+    }
 
     // Sprint 12: 3D BAG Panden layer
     if (state.show3DBuildings && state.bag3dData && state.bag3dData.features) {
