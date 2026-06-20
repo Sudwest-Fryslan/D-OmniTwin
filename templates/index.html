@@ -734,8 +734,28 @@
 
           <div class="details-content">
             <!-- Chart Container -->
-            <div class="chart-container-wrapper">
+            <div class="chart-container-wrapper" id="chart-container-wrapper" style="position: relative; min-height: 120px;">
               <canvas id="kompas-trend-chart"></canvas>
+              
+              <!-- A3: Fallback message -->
+              <div id="chart-fallback-message" class="chart-fallback" style="display:none; position: absolute; inset: 0; align-items: center; justify-content: center; background: rgba(0,0,0,0.05); border-radius: 6px; color: var(--text-secondary); font-size: 0.85rem; font-style: italic;">
+                Geen historische data (nog) beschikbaar
+              </div>
+            </div>
+
+            <!-- A3: Timeslider Container -->
+            <div id="timeslider-container" class="timeslider-container" style="display:none; align-items: center; gap: 8px; margin-top: 8px; padding: 4px 8px; background: rgba(0,0,0,0.1); border-radius: 6px;">
+              <button id="timeslider-play-btn" class="btn btn-icon" title="Afspelen/Pauzeren" style="padding: 4px; border-radius: 4px; background: transparent; border: none; color: var(--text-primary); cursor: pointer; display: flex; align-items: center; justify-content: center;">
+                <svg id="icon-play" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                </svg>
+                <svg id="icon-pause" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none;">
+                  <rect x="6" y="4" width="4" height="16"></rect>
+                  <rect x="14" y="4" width="4" height="16"></rect>
+                </svg>
+              </button>
+              <input type="range" id="timeslider-input" class="timeslider-range" min="0" max="10" value="10" style="flex: 1; cursor: pointer;">
+              <span id="timeslider-label" style="font-size: 0.8rem; font-weight: 600; color: var(--text-primary); min-width: 32px; text-align: center;">2024</span>
             </div>
 
             <!-- Metadata Section -->
@@ -749,13 +769,26 @@
                 <span class="metadata-value" id="details-trend">-</span>
               </div>
               
-              <div class="metadata-item full-width">
-                <span class="metadata-label">Definitie</span>
-                <p class="metadata-text" id="details-definitie">Selecteer een indicator voor details.</p>
+              <div class="metadata-item full-width" style="margin-bottom: 0;">
+                <div class="kompas-tabs" style="display: flex; gap: 12px; margin-bottom: 8px; border-bottom: 1px solid var(--border-color); padding-bottom: 0;">
+                  <button id="tab-definitie" class="tab-btn active" style="background: none; border: none; color: var(--text-primary); font-weight: 600; cursor: pointer; padding: 4px 0; opacity: 1; border-bottom: 2px solid var(--accent-color); font-size: 0.85rem;">Definitie</button>
+                  <button id="tab-ontologie" class="tab-btn" style="background: none; border: none; color: var(--text-secondary); font-weight: 600; cursor: pointer; padding: 4px 0; opacity: 0.7; font-size: 0.85rem;">Ontologie</button>
+                </div>
+                <div id="content-definitie" class="tab-content" style="display: block;">
+                  <p class="metadata-text" id="details-definitie">Selecteer een indicator voor details.</p>
+                </div>
+                <div id="content-ontologie" class="tab-content" style="display: none;">
+                  <p class="metadata-text" id="details-ontologie">Geen ontologische beschrijving beschikbaar.</p>
+                </div>
               </div>
-              <!-- A1: Bronvermelding + peildatum -->
-              <div class="metadata-source">
-                📊 <span id="details-bron">CBS</span> &nbsp;·&nbsp; Peildatum: <span id="details-jaar">-</span>
+              
+              <!-- A1: Bronvermelding + peildatum met tooltip -->
+              <div class="metadata-source" style="margin-top: 12px; display: flex; align-items: center; gap: 4px; font-size: 0.8rem; color: var(--text-secondary);">
+                📊 <span id="details-bron" title="Bron van deze data">CBS</span>
+                <span class="tooltip-icon" title="Deze data wordt beschikbaar gesteld via een officiële bron of model" style="cursor: help; opacity: 0.7; display: flex; align-items: center;">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M12 16v-4"></path><path d="M12 8h.01"></path></svg>
+                </span>
+                &nbsp;·&nbsp; Peildatum: <span id="details-jaar" style="font-weight: 500; color: var(--text-primary);">-</span>
               </div>
             </div>
           </div>

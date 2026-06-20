@@ -91,6 +91,15 @@ class KompasVisualization {
         if (windowEl) {
             windowEl.classList.remove('expanded');
         }
+
+        // Setup A1 Tabs
+        const tabDef = document.getElementById('tab-definitie');
+        const tabOnt = document.getElementById('tab-ontologie');
+        if (tabDef) tabDef.addEventListener('click', () => this._switchTab('definitie'));
+        if (tabOnt) tabOnt.addEventListener('click', () => this._switchTab('ontologie'));
+
+        // Setup A3 Timeslider
+        this._setupTimesliderControls();
     }
 
     handleResize() {
@@ -1341,6 +1350,178 @@ class KompasVisualization {
     }
 
     // =========================================================================
+    // Track A1: Tabbed Metadata & Track A3: Timeslider Logic
+    // =========================================================================
+
+    _updateIndicatorMetadata(historyData) {
+        const history = historyData.history || [];
+        if (history.length > 0) {
+            document.getElementById('details-jaar').textContent = history[history.length - 1].jaar;
+        } else {
+            document.getElementById('details-jaar').textContent = '-';
+        }
+        
+        if (historyData.bron) document.getElementById('details-bron').textContent = historyData.bron;
+        if (historyData.definitie) document.getElementById('details-definitie').innerHTML = historyData.definitie;
+        else document.getElementById('details-definitie').textContent = "Geen definitie beschikbaar.";
+        
+        // A1: Ontologie tab
+        const ontologieText = historyData.ontologische_beschrijving;
+        const tabOntologie = document.getElementById('tab-ontologie');
+        if (ontologieText && ontologieText.trim() !== '') {
+            document.getElementById('details-ontologie').innerHTML = ontologieText;
+            if (tabOntologie) tabOntologie.style.display = 'block';
+        } else {
+            document.getElementById('details-ontologie').textContent = "Geen ontologische beschrijving beschikbaar.";
+            if (tabOntologie) tabOntologie.style.display = 'none';
+            // Switch back to definitie if it was on ontologie
+            this._switchTab('definitie');
+        }
+    }
+
+    _switchTab(tabName) {
+        const tabDef = document.getElementById('tab-definitie');
+        const tabOnt = document.getElementById('tab-ontologie');
+        const contDef = document.getElementById('content-definitie');
+        const contOnt = document.getElementById('content-ontologie');
+        
+        if (!tabDef || !contDef) return;
+
+        if (tabName === 'definitie') {
+            tabDef.classList.add('active');
+            tabDef.style.opacity = '1';
+            tabDef.style.borderBottom = '2px solid var(--accent-color)';
+            if (tabOnt) {
+                tabOnt.classList.remove('active');
+                tabOnt.style.opacity = '0.7';
+                tabOnt.style.borderBottom = 'none';
+            }
+            contDef.style.display = 'block';
+            if (contOnt) contOnt.style.display = 'none';
+        } else if (tabName === 'ontologie') {
+            if (tabOnt) {
+                tabOnt.classList.add('active');
+                tabOnt.style.opacity = '1';
+                tabOnt.style.borderBottom = '2px solid var(--accent-color)';
+            }
+            tabDef.classList.remove('active');
+            tabDef.style.opacity = '0.7';
+            tabDef.style.borderBottom = 'none';
+            if (contOnt) contOnt.style.display = 'block';
+            contDef.style.display = 'none';
+        }
+    }
+
+    _setupTimesliderControls() {
+        const slider = document.getElementById('timeslider-input');
+        const playBtn = document.getElementById('timeslider-play-btn');
+        
+        if (!slider || !playBtn) return;
+        
+        slider.addEventListener('input', (e) => {
+            if (this._timesliderHistory && this._timesliderHistory.length > 0) {
+                const idx = parseInt(e.target.value);
+                const item = this._timesliderHistory[idx];
+                if (item) {
+                    this._updateTimesliderUI(item.jaar);
+                    // Dispatch to map
+                    this._dispatchMapYear(item.jaar);
+                }
+            }
+        });
+        
+        playBtn.addEventListener('click', () => {
+            if (this._timesliderInterval) {
+                this._pauseTimeslider();
+            } else {
+                this._playTimeslider();
+            }
+        });
+    }
+
+    _initTimeslider(history) {
+        this._timesliderHistory = history;
+        this._pauseTimeslider(); // Stop any running
+        
+        const slider = document.getElementById('timeslider-input');
+        if (!slider) return;
+        
+        slider.min = 0;
+        slider.max = history.length - 1;
+        slider.value = history.length - 1; // Default to latest
+        
+        this._updateTimesliderUI(history[history.length - 1].jaar);
+    }
+    
+    _updateTimesliderUI(jaar) {
+        const label = document.getElementById('timeslider-label');
+        if (label) label.textContent = jaar;
+        
+        const detJaar = document.getElementById('details-jaar');
+        if (detJaar) detJaar.textContent = jaar;
+    }
+    
+    _dispatchMapYear(jaar) {
+        if (window.EventBus && this.currentNode && this.currentNode.data.uuid) {
+            // Actively dispatch the specific year for rendering
+            window.EventBus.emit('YEAR_CHANGED', {
+                uuid: this.currentNode.data.uuid,
+                jaar: jaar
+            });
+        }
+    }
+    
+    _playTimeslider() {
+        const slider = document.getElementById('timeslider-input');
+        const iconPlay = document.getElementById('icon-play');
+        const iconPause = document.getElementById('icon-pause');
+        
+        if (!slider || !this._timesliderHistory) return;
+        
+        if (iconPlay) iconPlay.style.display = 'none';
+        if (iconPause) iconPause.style.display = 'block';
+        
+        // If at the end, restart
+        if (parseInt(slider.value) >= parseInt(slider.max)) {
+            slider.value = 0;
+            const item = this._timesliderHistory[0];
+            this._updateTimesliderUI(item.jaar);
+            this._dispatchMapYear(item.jaar);
+        }
+        
+        this._timesliderInterval = setInterval(() => {
+            let val = parseInt(slider.value);
+            val++;
+            
+            if (val > parseInt(slider.max)) {
+                this._pauseTimeslider();
+                return;
+            }
+            
+            slider.value = val;
+            const item = this._timesliderHistory[val];
+            this._updateTimesliderUI(item.jaar);
+            this._dispatchMapYear(item.jaar);
+            
+        }, 1500);
+    }
+    
+    _pauseTimeslider() {
+        const iconPlay = document.getElementById('icon-play');
+        const iconPause = document.getElementById('icon-pause');
+        
+        if (iconPlay && iconPause) {
+            iconPlay.style.display = 'block';
+            iconPause.style.display = 'none';
+        }
+        
+        if (this._timesliderInterval) {
+            clearInterval(this._timesliderInterval);
+            this._timesliderInterval = null;
+        }
+    }
+
+    // =========================================================================
     // Horizontal Expansion Logic (Sprint 4C)
     // =========================================================================
 
@@ -1491,8 +1672,15 @@ class KompasVisualization {
             }
 
             // Render Chart
-            if (historyData && historyData.history && historyData.history.length > 0) {
+            if (historyData && historyData.history && historyData.history.length > 1) {
+                const chartWrapper = document.getElementById('chart-container-wrapper');
+                if (chartWrapper) chartWrapper.style.display = 'block';
+                document.getElementById('chart-fallback-message').style.display = 'none';
+                document.getElementById('kompas-trend-chart').style.display = 'block';
+                document.getElementById('timeslider-container').style.display = 'flex';
+
                 this.renderTrendChart(historyData.history, node.data.color);
+                this._initTimeslider(historyData.history);
 
                 // Update Trend Text (simple logic: last vs first)
                 const history = historyData.history;
@@ -1506,24 +1694,39 @@ class KompasVisualization {
                 } else if (diff < 0) {
                     trendEl.innerHTML = `<span style="color: var(--secondary-color)">▼ Dalend</span>`;
                 } else {
-                    trendEl.dataset.value = "Stabiel";
+                    trendEl.innerHTML = "Stabiel";
                 }
 
-                // A1: Update Metadata (altijd tonen, ook bij 1 meetmoment)
-                document.getElementById('details-jaar').textContent = history[history.length - 1].jaar;
-                if (historyData.bron) document.getElementById('details-bron').textContent = historyData.bron;
-                if (historyData.definitie) document.getElementById('details-definitie').textContent = historyData.definitie;
-                else document.getElementById('details-definitie').textContent = "Geen definitie beschikbaar.";
+                // A1: Update Metadata
+                this._updateIndicatorMetadata(historyData);
 
-            } else if (historyData) {
-                // A1: Geen trenddata, maar wel metadata — toon bron en definitie
+            } else if (historyData && historyData.history && historyData.history.length === 1) {
+                // A3: 1 data point = fallback
                 this.destroyChart();
-                document.getElementById('details-definitie').textContent = historyData.definitie || "Geen definitie beschikbaar.";
-                if (historyData.bron) document.getElementById('details-bron').textContent = historyData.bron;
-                const lastHistory = historyData.history?.[0];
-                if (lastHistory) document.getElementById('details-jaar').textContent = lastHistory.jaar;
+                const chartWrapper = document.getElementById('chart-container-wrapper');
+                if (chartWrapper) chartWrapper.style.display = 'block';
+                document.getElementById('chart-fallback-message').style.display = 'flex';
+                document.getElementById('kompas-trend-chart').style.display = 'none';
+                document.getElementById('timeslider-container').style.display = 'none';
+                
+                document.getElementById('details-trend').textContent = '-';
+                
+                this._updateIndicatorMetadata(historyData);
+                
+            } else if (historyData) {
+                // Geen data
+                this.destroyChart();
+                const chartWrapper = document.getElementById('chart-container-wrapper');
+                if (chartWrapper) chartWrapper.style.display = 'none';
+                document.getElementById('timeslider-container').style.display = 'none';
+                document.getElementById('details-trend').textContent = '-';
+                
+                this._updateIndicatorMetadata(historyData);
             } else {
                 this.destroyChart();
+                const chartWrapper = document.getElementById('chart-container-wrapper');
+                if (chartWrapper) chartWrapper.style.display = 'none';
+                document.getElementById('timeslider-container').style.display = 'none';
                 document.getElementById('details-definitie').textContent = "Geen trenddata beschikbaar.";
             }
 
@@ -1826,6 +2029,17 @@ class KompasVisualization {
                 }]
             },
             options: {
+                onClick: (e, elements, chart) => {
+                    if (elements.length > 0) {
+                        const idx = elements[0].index;
+                        const slider = document.getElementById('timeslider-input');
+                        if (slider) {
+                            slider.value = idx;
+                            const evt = new Event('input');
+                            slider.dispatchEvent(evt);
+                        }
+                    }
+                },
                 responsive: true,
                 maintainAspectRatio: false,
                 plugins: {
