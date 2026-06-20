@@ -1,6 +1,6 @@
 # Feature Roadmap - D-OmniTwin Gebiedsmonitor
 
-**Status:** 2026-06-14 (Dag 73) — Sprint 18 🚀 In uitvoering (Track B ✅, Track F toegevoegd) | Sprint 19 📌 Gepland  
+**Status:** 2026-06-20 (Dag 77) — Sprint 18 🚀 In uitvoering (Track B ✅, Track F toegevoegd) | Sprint 19 📌 Gepland  
 **Visie:** Van prototype naar productie-klaar, AI-gedreven gebiedsmonitor platform
 
 ---

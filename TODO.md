@@ -1,6 +1,6 @@
 # TODO - D-OmniTwin Roadmap
 
-**Laatste Update:** 17 juni 2026 (Dag 74)
+**Laatste Update:** 20 juni 2026 (Dag 77)
 **Status:** Sprint 18 🚀 In uitvoering | Sprint 19 📌 Gepland
 
 > **Huidige Sprint:** Sprint 18 — IJsselmeerkust als Besluitinstrument
@@ -37,17 +37,19 @@
     - Benchmark: alleen kernen-onderling of ook Fries gemiddelde?
 
 ### Track A — Duiding & Context (Kompas-paneel)
-- [ ] **A1 — Bronvermelding per indicator**
-    - [ ] `bron` en `peildatum` veld ophalen in Kompas API response (`/api/kompas/...`)
-    - [ ] Frontend: bronregel tonen onder indicatorwaarde in detailpaneel
+- [ ] **A1 — Bronvermelding & Ontologie**
+    - [x] Bron en peildatum zijn reeds zichtbaar.
+    - [ ] Tooltip of externe link toevoegen aan de bron-weergave.
+    - [ ] Ontologische beschrijving ophalen via API en weergeven als tabblad naast 'Definitie'.
     - [ ] Acceptatie: TC-02-001 stap 3 → ✅
 - [x] **A2 — Z-score uitleg (contexttooltip)** *(Obsoluut)*
     - [x] Uit het Kompas gehaald en in Track G (Sessie 4) opgenomen in het rapportpaneel.
     - [x] Acceptatie: Niet meer relevant in Kompas.
-- [ ] **A3 — Trendlijn in detailpaneel (≥ 2 meetmomenten)**
-    - [ ] Backend: `GET /api/kompas/indicator/{uuid}/trend?gebied_id=...` endpoint
-    - [ ] Frontend: mini SVG lijndiagram in detailpaneel
-    - [ ] Prioriteit: Wonen-indicatoren eerst
+- [ ] **A3 — Interactieve Trendlijn & Timeslider**
+    - [x] Basis trendlijn (Chart.js) toont bij ≥ 2 meetmomenten.
+    - [ ] Fallback melding tonen wanneer er geen/onvoldoende historische data is.
+    - [ ] Klikken op een trendlijn-jaar updatet de kaart met historische data.
+    - [ ] Timeslider (play/pauze) onder de grafiek toevoegen om kaart-historie af te spelen.
     - [ ] Acceptatie: TC-02-001 stap 6 → ✅ (was ❌)
 
 ### Track B — Selectielaag: BAG Woonplaatsen + Externe Lagen ✅
