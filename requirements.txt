@@ -46,3 +46,4 @@ python-dateutil>=2.8.0
 # --- Optioneel (niet nodig voor basis functionaliteit) ---
 # sentence-transformers>=2.0.0   # AI embeddings (zwaar, ~2GB)
 # playwright>=1.40.0             # Browser testing
+httpx
