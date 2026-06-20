@@ -24,6 +24,7 @@
 | **AI Parallel Track** | `/docs/6-ai-parallel-track/` | LLM-integratie, ontologie, AI-chat, prompting | innovation-lab, technisch-communicatie |
 | **Projectmanagement** | `/docs/7-projectmanagement/` | Sprints, voortgang, besluiten, archief | project-manager |
 | **Communicatie** | `/docs/8-communicatie/` | Stakeholdercommunicatie, rapportages, presentaties | technisch-communicatie |
+| **Beheer & Applicatie** | `/docs/9-beheer/` | Handleidingen, workflows en applicatiebeheer | project-manager, backend-db |
 
 ---
 

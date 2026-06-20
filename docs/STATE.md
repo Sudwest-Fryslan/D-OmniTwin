@@ -11,7 +11,7 @@
 |------|--------|
 | **Huidige versie** | v1.0.0-beta (pre-release) |
 | **Sprint** | Sprint 18 — IJsselmeerkust als Besluitinstrument 🚀 In uitvoering | 
-| **Laatste update** | 2026-06-17 (Dag 74) |
+| **Laatste update** | 2026-06-20 (Dag 77) |
 | **Bijgewerkt door** | Project-manager skill (Antigravity) |
 
 ---
@@ -52,6 +52,7 @@
 
 | Datum | Wijziging | Impact |
 |-------|-----------|--------|
+| 2026-06-20 | **Reguliere Project Status Check (Dag 77)** | Geen code wijzigingen sinds Dag 74. Git branch `main` is up-to-date en clean. Projectdocumentatie gecontroleerd. Sprint 18 blijft de actieve focus (Tracks A, C, D, E). |
 | 2026-06-17 | **Sprint 18 Bugfix (Dag 74 Part 2)** | Fix voor Bug #46 Voltooid: Kleurenschaling in het Kompas gelijkgetrokken met de kaart door unieke breaks en proportionele schaling toe te passen (in `kompas_service.py`), plus SMTP mail alerts roadmap item toegevoegd. |
 | 2026-06-17 | **Sprint 18 Bugfix (Dag 74)** | Fix voor Bug #46: Kleurenschaling en Kompas score_type richting gecorrigeerd. Implementatie van Jenks/1D K-Means en unieke breaks. Update van Kompas service SQL voor score fallback. |
 | 2026-06-14 | **Sprint 18 Track F toegevoegd (Dag 73)** | Gebruikersreview verwerkt: bug zoekfunctie Kompas (F1) + Top 5 buurten per indicator (F2) toegevoegd aan Sprint 18. Sprint 19 gepland als volgende sprint. UX-bevindingen gedocumenteerd in `docs/4-ux-design/gebruikerservaringen/`. |
