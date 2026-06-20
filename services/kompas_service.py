@@ -124,6 +124,7 @@ class KompasService:
             SELECT 
                 i.uuid as indicator_uuid,
                 i.naam as indicator_naam,
+                i.ontologische_beschrijving,
                 gd.waarde,
                 gd.jaar,
                 COALESCE(sr.score_type, i.score_type) as score_type,
@@ -168,7 +169,8 @@ class KompasService:
                 "score_type": row.score_type,
                 "inverse": row.inverse,
                 "thresholds": thresholds,
-                "eenheid": row.eenheid
+                "eenheid": row.eenheid,
+                "ontologische_beschrijving": row.ontologische_beschrijving
             }
         
         # Haal percentiel thresholds op voor ALLE indicatoren (bulk query)
@@ -267,7 +269,7 @@ class KompasService:
         # 1. Haal indicator metadata
         meta_query = text("""
             SELECT 
-                i.naam, i.eenheid, i.bron, i.omschrijving
+                i.naam, i.eenheid, i.bron, i.omschrijving, i.ontologische_beschrijving
             FROM indicatoren i
             WHERE i.uuid = CAST(:uuid AS UUID)
         """)
@@ -312,6 +314,7 @@ class KompasService:
         return {
             "bron": meta.bron,
             "definitie": meta.omschrijving or "Geen beschrijving beschikbaar.",
+            "ontologische_beschrijving": meta.ontologische_beschrijving,
             "eenheid": meta.eenheid,
             "indicator": {
                 "uuid": indicator_uuid,
@@ -446,6 +449,7 @@ class KompasService:
                 
                 # Altijd eenheid tonen (ook bij NULL)
                 enriched["eenheid"] = data.get("eenheid")
+                enriched["ontologische_beschrijving"] = data.get("ontologische_beschrijving")
                 
                 if waarde is not None:
                     # Indicator heeft data

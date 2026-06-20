@@ -152,6 +152,10 @@ async def get_kaart_data(
         None,
         description="Filter op gemeente (CBS code, bijv. '1900' voor Súdwest-Fryslân)"
     ),
+    jaar: Optional[int] = Query(
+        None,
+        description="OPTIONEEL: Specifiek jaar voor historische weergave op kaart"
+    ),
     service: GebiedsmonitorService = Depends(get_service)
 ):
     """
@@ -195,7 +199,8 @@ async def get_kaart_data(
             gebiedstype_id=gebiedstype_id,
             indicator_uuid=indicator_uuid,
             show_all=show_all,
-            gemeente_code=gemeente_code
+            gemeente_code=gemeente_code,
+            jaar=jaar
         )
         return geojson
     

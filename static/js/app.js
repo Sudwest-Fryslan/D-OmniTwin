@@ -2636,6 +2636,34 @@ function setupEventListeners() {
         console.log('🚌 Subscribing to EventBus: INDICATOR_SELECTED, GEMEENTE_SELECTED, GEBIEDSTYPE_SELECTED');
         window.EventBus.on('INDICATOR_SELECTED', handleIndicatorSelection);
 
+        // A3: Timeslider Year Changed
+        window.EventBus.on('YEAR_CHANGED', async (data) => {
+            console.log(`⏱️ Year changed via Timeslider: ${data.jaar}`);
+            if (state.currentGebiedstype && state.currentIndicator === data.uuid) {
+                // We keep the map view but update the data for the specific year
+                try {
+                    let url = `${API_BASE}/kaart/${state.currentGebiedstype}?show_all=${state.showAll}&indicator_uuid=${state.currentIndicator}&jaar=${data.jaar}`;
+                    if (state.currentGemeenteCode) {
+                        url += `&gemeente_code=${state.currentGemeenteCode}`;
+                    }
+
+                    const response = await fetch(url);
+                    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+                    const geojson = await response.json();
+                    state.currentData = geojson;
+                    state.initialDataLoaded = false; // Prevents reset of camera
+
+                    displayOnMap(geojson);
+                    // Do not update total counts or legend heavily, but legend might need color updates if bounds change? 
+                    // Let's keep it simple, just update map.
+                    updateLegenda(geojson);
+                } catch (error) {
+                    console.error('❌ Fout bij laden historische kaart data:', error);
+                }
+            }
+        });
+
         // Chat -> Map: Select Municipality (code-based lookup)
         window.EventBus.on('GEMEENTE_SELECTED', (data) => {
             console.log('📍 Chat sync: selecting gemeente', data.name, data.code);

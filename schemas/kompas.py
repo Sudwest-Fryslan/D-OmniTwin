@@ -59,6 +59,7 @@ class KompasNode(BaseModel):
     eenheid: Optional[str] = None       # %, aantal, €, etc.
     score_type: Optional[str] = None    # Voor debug/tooltip info
     beschrijving: Optional[str] = None  # Tooltip tekst
+    ontologische_beschrijving: Optional[str] = None # Uitgebreide contextuele duiding
 
 
 class HierarchieResponse(BaseModel):

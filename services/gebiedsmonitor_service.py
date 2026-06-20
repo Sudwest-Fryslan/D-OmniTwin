@@ -32,21 +32,23 @@ class GebiedsmonitorService:
         gebiedstype_id: str,
         indicator_uuid: Optional[str] = None,
         show_all: bool = False,
-        gemeente_code: Optional[str] = None
+        gemeente_code: Optional[str] = None,
+        jaar: Optional[int] = None
     ) -> Dict[str, Any]:
         """
         Haal GeoJSON data op voor kaartvisualisatie.
         
         LEGACY (V1): Redirects naar V2 logic (met Views & Water Filter).
         """
-        return self.get_kaart_data_v2(gebiedstype_id, indicator_uuid, show_all, gemeente_code)
+        return self.get_kaart_data_v2(gebiedstype_id, indicator_uuid, show_all, gemeente_code, jaar)
 
     def get_kaart_data_v2(
         self,
         gebiedstype_id: str,
         indicator_uuid: Optional[str] = None,
         show_all: bool = False,
-        gemeente_code: Optional[str] = None
+        gemeente_code: Optional[str] = None,
+        jaar: Optional[int] = None
     ) -> Dict[str, Any]:
         """
         Haal GeoJSON data op (V2: Gebruikt SQL Views + Color Schemas).
@@ -77,13 +79,26 @@ class GebiedsmonitorService:
         
         # 2. Join Logic
         if indicator_uuid:
-            # Join with Indicator View
-            join_type = "LEFT JOIN" if show_all else "INNER JOIN"
-            query_base += f"""
-                {join_type} vw_gebied_indicator_actueel i 
-                    ON b.id = i.gebied_id AND i.indicator_uuid = CAST(:indicator_uuid AS uuid)
-                LEFT JOIN indicatoren ind ON ind.uuid = CAST(:indicator_uuid AS uuid)
-            """
+            if jaar is not None:
+                # Fetch specific year from raw table instead of actueel view
+                join_type = "LEFT JOIN" if show_all else "INNER JOIN"
+                query_base += f"""
+                    {join_type} (
+                        SELECT gebied_id, indicator_uuid, waarde, jaar, bron 
+                        FROM gebied_data 
+                        WHERE indicator_uuid = CAST(:indicator_uuid AS uuid) 
+                        AND jaar = :jaar
+                    ) i ON b.id = i.gebied_id
+                    LEFT JOIN indicatoren ind ON ind.uuid = CAST(:indicator_uuid AS uuid)
+                """
+            else:
+                # Use actueel view
+                join_type = "LEFT JOIN" if show_all else "INNER JOIN"
+                query_base += f"""
+                    {join_type} vw_gebied_indicator_actueel i 
+                        ON b.id = i.gebied_id AND i.indicator_uuid = CAST(:indicator_uuid AS uuid)
+                    LEFT JOIN indicatoren ind ON ind.uuid = CAST(:indicator_uuid AS uuid)
+                """
         else:
             # placeholders for no indicator
             query_base += """
@@ -106,6 +121,8 @@ class GebiedsmonitorService:
         }
         if gemeente_code:
             params["gemeente_code"] = gemeente_code
+        if jaar is not None:
+            params["jaar"] = jaar
             
         result = self.db.execute(text(query_base), params)
         
