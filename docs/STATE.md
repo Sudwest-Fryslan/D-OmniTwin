@@ -39,7 +39,7 @@
 | **Indicator Accordion + Zoekfunctie** | 🟢 Actief | Sprint 11B Track C ✅ — Kompas-thema groepering, debounce zoek, highlight |
 | **Visualisatie WCAG & Outline Selectie** | 🟢 Actief | Sprint 11B Track D ✅ — goud outline, legenda hints, contrast fixes |
 | **LLM Trust & Governance Laag** | 🟢 Actief | Sprint 11B Track E ✅ — bronlabel (rule-based/AI), disclaimer |
-| **Kompas Data Ontologie UI** | 🔴 Gepland | Sprint 15 — tabblad in detailpaneel |
+| **Kompas Data Ontologie UI** | 🟢 Actief | Sprint 18 ✅ — tabblad in detailpaneel met validatiestatus en oranje labels |
 | **Viewport Vrije-Zone Centreren** | 🟢 Actief | Sprint 16 ✅ — `getFreezone()`, `flyToGebied()` offset, `fitBounds()` guard. Closes #8 |
 | **Logging Infrastructuur** | 🟢 Actief | Sprint 17 ✅ — `AsyncLogQueue`, `app_logs` DB, log viewer admin panel, dagelijkse cleanup. E-mail alerts on hold (Issue #10) |
 | **Time Slider** | 🔴 Gepland | Sprint 17+ — Indicator Historie & 3D Transities |
@@ -52,6 +52,7 @@
 
 | Datum | Wijziging | Impact |
 |-------|-----------|--------|
+| 2026-06-20 | **Sprint 18 Track A Voltooid (Dag 77)** | Ontologie UI, trendlijnen en bronvermeldingen geïmplementeerd. Bugfix AI chat (`KeyError 'uuid'`) wegens defecte `sympy` dependency in `.venv` opgelost. Git `pre-commit` hook toegevoegd om `.venv` map te beveiligen. |
 | 2026-06-20 | **Reguliere Project Status Check (Dag 77)** | Geen code wijzigingen sinds Dag 74. Git branch `main` is up-to-date en clean. Projectdocumentatie gecontroleerd. Sprint 18 blijft de actieve focus (Tracks A, C, D, E). |
 | 2026-06-17 | **Sprint 18 Bugfix (Dag 74 Part 2)** | Fix voor Bug #46 Voltooid: Kleurenschaling in het Kompas gelijkgetrokken met de kaart door unieke breaks en proportionele schaling toe te passen (in `kompas_service.py`), plus SMTP mail alerts roadmap item toegevoegd. |
 | 2026-06-17 | **Sprint 18 Bugfix (Dag 74)** | Fix voor Bug #46: Kleurenschaling en Kompas score_type richting gecorrigeerd. Implementatie van Jenks/1D K-Means en unieke breaks. Update van Kompas service SQL voor score fallback. |

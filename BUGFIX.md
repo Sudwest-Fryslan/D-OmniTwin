@@ -1,5 +1,27 @@
 # BUGFIX.md - D-OmniTwin
 
+## Bug #47: AI Chat `KeyError: 'uuid'` & `500 Server Error` (20-06-2026)
+
+**Gerapporteerd:** 20-06-2026  
+**Status:** ✅ FIXED (20-06-2026)  
+**Severity:** 🔴 HIGH (Functionaliteit plat, server crashes)
+
+### Probleem
+Bij het stellen van een vraag in het chat-venster klapte de applicatie eruit met een 500 error. De server log toonde een `KeyError: 'uuid'` in `routers/chat.py` op regel 309, onmiddellijk nadat het meldde: `name 'SentenceTransformer' is not defined`. De volledige AI functionaliteit (semantisch zoeken en generatie) lag plat en veroorzaakte server-crashes.
+
+### Oorzaak (Root Cause)
+1. De virtuele omgeving (`.venv`) werd herbouwd met `python -m venv` zonder de oude map eerst volledig te deleten (`rm -rf .venv`).
+2. Hierdoor ontstond een mix van oude en nieuwe python-modules. Specifiek de wiskundige bibliotheek `sympy` (een dependency van PyTorch) bleek corrupt te zijn geraakt: de file `sympy.release` ontbrak, waardoor `pip` dacht dat de module geïnstalleerd was, maar PyTorch er bij het initialiseren direct uitsprong.
+3. `ai_search_service.py` probeerde de fout netjes af te vangen door in het resultaat een dictionary terug te geven met `{"error": "AI model niet geladen"}`.
+4. Echter, `routers/chat.py` ging er blind vanuit dat álle resultaten geldige indicatoren waren met een `uuid` veld, waardoor de dictionary call `r["uuid"]` de fatale `KeyError` veroorzaakte.
+
+### Oplossing
+1. **Herinstallatie package:** Een handmatige `.venv/bin/pip install --force-reinstall sympy` loste de corrupte dependency op, waardoor PyTorch en SentenceTransformers weer in het geheugen geladen konden worden.
+2. **Error-handling (Backend):** In `routers/chat.py` (regel ~242) is een `if "error" in search_results[0]:` check toegevoegd. Als het model niet geladen is, throwen we nu een keurige `HTTPException 503 (Service Unavailable)` in plaats van de applicatie te crashen.
+3. **Preventie (Git Hook):** Om verdere `.venv` corruptie door versies of merge-conflicten te voorkomen, is er een pre-commit hook geschreven in `.git/hooks/pre-commit` die álle commits blokkeert als er `.venv` files in staging staan.
+
+---
+
 ## Bug #45: Hover-paneel Flicker Loop in Multi-Gebiedsdossier (12-04-2026)
 
 **Gerapporteerd:** 12-04-2026 21:15  
