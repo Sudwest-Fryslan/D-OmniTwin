@@ -36,21 +36,21 @@
     - Hoeveel historische CBS-meetmomenten in DB? (`SELECT COUNT(DISTINCT jaar) FROM gebied_data`)
     - Benchmark: alleen kernen-onderling of ook Fries gemiddelde?
 
-### Track A — Duiding & Context (Kompas-paneel)
-- [ ] **A1 — Bronvermelding & Ontologie**
+### Track A — Duiding & Context (Kompas-paneel) ✅
+- [x] **A1 — Bronvermelding & Ontologie**
     - [x] Bron en peildatum zijn reeds zichtbaar.
-    - [ ] Tooltip of externe link toevoegen aan de bron-weergave.
-    - [ ] Ontologische beschrijving ophalen via API en weergeven als tabblad naast 'Definitie'.
-    - [ ] Acceptatie: TC-02-001 stap 3 → ✅
+    - [x] Tooltip of externe link toevoegen aan de bron-weergave.
+    - [x] Ontologische beschrijving ophalen via API en weergeven als tabblad naast 'Definitie'.
+    - [x] Acceptatie: TC-02-001 stap 3 → ✅
 - [x] **A2 — Z-score uitleg (contexttooltip)** *(Obsoluut)*
     - [x] Uit het Kompas gehaald en in Track G (Sessie 4) opgenomen in het rapportpaneel.
     - [x] Acceptatie: Niet meer relevant in Kompas.
-- [ ] **A3 — Interactieve Trendlijn & Timeslider**
+- [x] **A3 — Interactieve Trendlijn & Timeslider**
     - [x] Basis trendlijn (Chart.js) toont bij ≥ 2 meetmomenten.
-    - [ ] Fallback melding tonen wanneer er geen/onvoldoende historische data is.
-    - [ ] Klikken op een trendlijn-jaar updatet de kaart met historische data.
-    - [ ] Timeslider (play/pauze) onder de grafiek toevoegen om kaart-historie af te spelen.
-    - [ ] Acceptatie: TC-02-001 stap 6 → ✅ (was ❌)
+    - [x] Fallback melding tonen wanneer er geen/onvoldoende historische data is.
+    - [x] Klikken op een trendlijn-jaar updatet de kaart met historische data.
+    - [x] Timeslider (play/pauze) onder de grafiek toevoegen om kaart-historie af te spelen.
+    - [x] Acceptatie: TC-02-001 stap 6 → ✅ (was ❌)
 
 ### Track B — Selectielaag: BAG Woonplaatsen + Externe Lagen ✅
 - [x] **B1 — BAG woonplaatsen (via WFS proxy / PDOK)**
