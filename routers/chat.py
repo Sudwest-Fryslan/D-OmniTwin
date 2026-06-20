@@ -238,6 +238,11 @@ async def chat(
     search_service = AISearchService(db)
     search_results = search_service.search_indicators(vraag, limit=8)
     
+    # Check op foutmeldingen (bijv. AI model niet geladen)
+    if search_results and "error" in search_results[0]:
+        AppLogger.error(f"Fout bij zoeken indicatoren: {search_results[0]['error']}", category="LLM_CHAT")
+        raise HTTPException(status_code=503, detail="AI zoekfunctionaliteit tijdelijk niet beschikbaar.")
+        
     # Filter op minimale relevantie (score > 0.25)
     relevant_results = [r for r in search_results if r.get("score", 0) > 0.25]
     
