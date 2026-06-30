@@ -1,6 +1,6 @@
 # Feature Roadmap - D-OmniTwin Gebiedsmonitor
 
-**Status:** 2026-06-20 (Dag 77) — Sprint 18 🚀 In uitvoering (Track B ✅, Track F toegevoegd) | Sprint 19 📌 Gepland  
+**Status:** 2026-06-30 (Dag 79) — Sprint 18 ✅ Afgerond | Sprint 19 📌 Gepland  
 **Visie:** Van prototype naar productie-klaar, AI-gedreven gebiedsmonitor platform
 
 ---
@@ -984,11 +984,31 @@ Gebruikersinteracties verrijken het systeem:
 | **D1** | `HELP_ONBOARDING` beleidsadviseur-scenario | TC-06-001 fase 1 |
 | **D2** | Startflow: hint tot eerste selectie | TC-01-001 |
 | **E** | TC-06-001 volledig doorlopen + alle testcases bijwerken | TC-06-001 |
+| **F** | G3 Info tooltip Top Uitschieters | Sprint 18 quickwin |
 
 ### Bewust buiten scope
 - Bereikbaarheidsdata / OV-analyse (FRLDS fase 2)
 - Openbare ruimte / groen (gemeentelijke BOR)
 - Dataspace-integratie (Sprint 19-22)
 
+**Status:** ✅ **Afgerond** — Dag 79 (30-06-2026). Alle tracks inclusief multi-gebied benchmark geïmplementeerd. Worktree gesynchroniseerd en opgeruimd.  
 **Priority:** 🔴 HIGH (gebruikersvalidatie-fundament)  
-**Effort:** ~4 sessies
+**Effort:** 4 sessies gerealiseerd
+
+---
+
+## 💡 Braindump Kandidaten voor Toekomstige Sprints *(Dag 79 — 30-06-2026)*
+
+> Ideeën vanuit de braindump die voldoende rijp zijn om in aanmerking te komen voor opname in een toekomstige sprint. Zie `braindump.md` voor de volledige uitwerking.
+
+| Idee | Prioriteit | Kandidaat Sprint | Koppeling |
+|------|-----------|------------------|-----------|
+| **Lege indicatoren verbergen** in Kompas & Zoekfunctie | 🔴 HOOG | Sprint 19 of 20 | Beheer / UX — kleine technische ingreep, grote UX-winst |
+| **Ontologieteksten genereren vanuit beheer** (op basis van metadata) | 🔴 HOOG | Sprint 20 | Uitbreiding van Sprint 18 Track A ontologie-validatielus |
+| **Metadata ophalen bij de bron** vanuit admin panel | 🟡 MIDDEL | Sprint 20-21 | Koppeling met CBS OData / RIVM API, beheerder keurt diff goed |
+| **Gebruikersprofielen met sessie-geheugen** | 🟡 MIDDEL | Sprint 21+ | Auth-uitbreiding: saved reports, zoekhistorie, AI-chat (30 dgn) |
+| **Indicatorselectie via gebruikersvragen** in rapport | 🟡 MIDDEL | Sprint 21+ | Rapport-wizard + ontologie-tag mapping |
+| **Correlatie-analyse via lokale AI** | 🟢 LAAG | Sprint 22+ | Pearson/Spearman backend + LLM-duiding, strict AI-disclaimer |
+| **Data Virtualisatie & update-meldingen** | 🟢 LAAG | Sprint 22+ | Architectuurverkenning — If-Modified-Since + admin notificaties |
+| **Slimmer gebruik 3D BAG** | 🟢 LAAG | Sprint 12 (heropenen) | Onderzoeksvraag: pand-niveau koppeling energielabel/bouwjaar |
+
