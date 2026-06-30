@@ -1,7 +1,7 @@
 # TODO - D-OmniTwin Roadmap
 
 **Laatste Update:** 20 juni 2026 (Dag 77)
-**Status:** Sprint 18 🚀 In uitvoering | Sprint 19 📌 Gepland
+**Status:** Sprint 18 ✅ Afgerond | Sprint 19 📌 Gepland
 
 > **Huidige Sprint:** Sprint 18 — IJsselmeerkust als Besluitinstrument
 > **Branch:** `feature/sprint-18-ijsselmeerkust`
@@ -9,7 +9,7 @@
 
 ---
 
-## 🚧 Sprint 18: IJsselmeerkust als Besluitinstrument (Gepland)
+## ✅ Sprint 18: IJsselmeerkust als Besluitinstrument (Afgerond)
 
 **Doel:** D-OmniTwin transformeren van een verkenningsinstrument naar een besluitondersteunend instrument — getoetst aan de casus IJsselmeerkust & Wadden (Makkum, Workum, Koudum).  
 **Aanleiding:** NM-001 gap-analyse + TC-06-001 staan al maanden open en zijn nog nooit volledig doorlopen.  
@@ -130,10 +130,10 @@
     - [x] Acceptatie: Tooltip zichtbaar bij hoveren over het 'i' icoon.
 
 ### Afsluiting & Merge
-- [ ] Pull Request aanmaken naar `main` met verwijzing naar GitHub Issue
-- [ ] Squash merge na review
-- [ ] STATE.md bijwerken: Sprint 18 componenten op 🟢 Actief
-- [ ] Testcases README bijwerken (statusvelden)
+- [x] Pull Request aanmaken naar `main` met verwijzing naar GitHub Issue
+- [x] Squash merge na review
+- [x] STATE.md bijwerken: Sprint 18 componenten op 🟢 Actief
+- [x] Testcases README bijwerken (statusvelden)
 
 ---
 
