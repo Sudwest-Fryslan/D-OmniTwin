@@ -124,6 +124,10 @@
     - [x] Tekst: *"Z-score vergelijkt een indicator met het Friese gemiddelde. 0 = gemiddeld · >+1 = beduidend beter · <-1 = beduidend slechter"*
     - [x] Referentie: Afbeelding 3 (rapportage z-score tabel met WAARDE / JAAR / Z-SCORE / IMPACT kolommen)
     - [x] Acceptatie: Z-score uitleg zichtbaar in rapport ✅ | Niet aanwezig in Kompas ✅
+- [ ] **G3 — Info hover-over voor Top 3+3 afwijkingsscores**
+    - [ ] Voeg een info ('i') tooltip toe naast de titel "TOP UITSCHIETERS" in het Kompas detailpaneel.
+    - [ ] Uitleg toevoegen: Hoe de afwijkingen worden berekend (via de z-score methodiek).
+    - [ ] Acceptatie: Tooltip zichtbaar bij hoveren over het 'i' icoon.
 
 ### Afsluiting & Merge
 - [ ] Pull Request aanmaken naar `main` met verwijzing naar GitHub Issue
