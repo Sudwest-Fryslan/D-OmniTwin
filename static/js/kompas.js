@@ -1767,7 +1767,10 @@ class KompasVisualization {
         const eenheid = data.eenheid || '';
         const contextNaam = data.context_naam || 'Alle gemeenten';
         
-        let html = `<div style="font-size: 0.8rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">Top Uitschieters: <span style="color: var(--text-color);">${contextNaam}</span></div>`;
+        let html = `<div style="font-size: 0.8rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px; display: flex; align-items: center; justify-content: space-between;">
+            <div>Top Uitschieters: <span style="color: var(--text-color);">${contextNaam}</span></div>
+            <div title="Deze afwijkingen worden berekend middels de z-score methodiek (het verschil ten opzichte van het gemiddelde)." style="cursor: help; width: 16px; height: 16px; border-radius: 50%; border: 1.5px solid var(--text-secondary); display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: bold; font-family: monospace; color: var(--text-secondary); opacity: 0.8; transition: all 0.2s ease;" onmouseover="this.style.opacity='1'; this.style.color='var(--action-color, #48BB78)'; this.style.borderColor='var(--action-color, #48BB78)'" onmouseout="this.style.opacity='0.8'; this.style.color='var(--text-secondary)'; this.style.borderColor='var(--text-secondary)'">i</div>
+        </div>`;
 
         // Top positief (↑)
         if (data.top_positief?.length) {
