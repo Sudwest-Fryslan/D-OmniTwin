@@ -10,8 +10,8 @@
 | Veld | Waarde |
 |------|--------|
 | **Huidige versie** | v1.0.0-beta (pre-release) |
-| **Sprint** | Sprint 18 — IJsselmeerkust als Besluitinstrument 🟢 Afgerond | 
-| **Laatste update** | 2026-06-23 (Dag 78) |
+| **Sprint** | Sprint 18 — IJsselmeerkust als Besluitinstrument ✅ Afgerond | 
+| **Laatste update** | 2026-06-30 (Dag 79) |
 | **Bijgewerkt door** | Project-manager skill (Antigravity) |
 
 ---
@@ -52,9 +52,9 @@
 
 | Datum | Wijziging | Impact |
 |-------|-----------|--------|
+| 2026-06-30 | **Sprint 18 Afgerond — Dag 79** | Multi-gebied benchmark (Track C) geïmplementeerd en getest. Alle sprint 18 code gesynchroniseerd naar `main` (worktree was op F-schijf gekoppeld). Bugfix: `gemeenten` API 500-error door ontbrekende `id`-kolom opgelost. `fiona` package toegevoegd aan requirements. Worktree `D-OmniTwin-sprint18` volledig opgeruimd (E én F schijf). |
 | 2026-06-23 | **Omgeving & Git Herstel (Dag 78)** | `.venv` opgebouwd na schijfmigratie. Dependencies hersteld. `sentence-transformers` mandatory gemaakt. Git `.venv` symlink negeer-fout in `.gitignore` opgelost voor main én worktrees. |
 | 2026-06-20 | **Sprint 18 Track A Voltooid (Dag 77)** | Ontologie UI, trendlijnen en bronvermeldingen geïmplementeerd. Bugfix AI chat (`KeyError 'uuid'`) wegens defecte `sympy` dependency in `.venv` opgelost. Git `pre-commit` hook toegevoegd om `.venv` map te beveiligen. |
-| 2026-06-20 | **Reguliere Project Status Check (Dag 77)** | Geen code wijzigingen sinds Dag 74. Git branch `main` is up-to-date en clean. Projectdocumentatie gecontroleerd. Sprint 18 blijft de actieve focus (Tracks A, C, D, E). |
 
 ---
 
@@ -85,7 +85,7 @@
 
 | **Sprint** | Focus | Verwacht |
 |--------|-------|---------|
-| **18** | IJsselmeerkust als Besluitinstrument — duiding, BAG woonplaatsen, benchmarking, Track F quickwins | 🚀 In uitvoering (Track B ✅, Track F toegevoegd) |
+| **18** | IJsselmeerkust als Besluitinstrument — duiding, BAG woonplaatsen, benchmarking, Track F quickwins | ✅ Afgerond (Dag 79 — alle tracks incl. multi-gebied benchmark) |
 | **19** | Van Data naar Inzicht — signalering, prioritering, contextuele scores, AI-samenvatting | 📌 Gepland (na Sprint 18) |
 | **#11 (OV ETL)** | OV Haltes ETL — OSM data FR/GR/DR → Kompas indicatoren | ✅ Voltooid — merge `7443b51` |
 | **17** | Configureerbare Logging Infrastructuur | ✅ Voltooid — merge `4ed45bd`, closes #9 (deels) |
