@@ -484,6 +484,134 @@ class KompasService:
         return enriched
 
 
+    def get_benchmark(self, config_id: int, groepen: List[Dict], gemeente_code: str = None) -> Optional[Dict[str, Any]]:
+        """
+        Sprint 18 Track C: Berekent per groep (woonplaats) het gemiddelde per indicator,
+        plus het gemeentegemiddelde als referentie.
+        
+        Args:
+            config_id: ID van kompas configuratie
+            groepen: [{"naam": "Makkum", "buurt_ids": ["BU...", ...]}, ...]
+            gemeente_code: optioneel, voor gemeentegemiddelde
+        
+        Returns: Dict met groepen, referentie, en indicator metadata
+        """
+        if not groepen:
+            return None
+        
+        # 1. Haal alle indicator UUIDs op die in dit kompas zitten
+        indicator_query = text("""
+            SELECT 
+                i.uuid, i.naam, COALESCE(sr.eenheid, i.eenheid) as eenheid
+            FROM kompas_indicator_mapping kim
+            JOIN indicatoren i ON kim.indicator_uuid = i.uuid
+            LEFT JOIN kompas_indicator_scoring_regels sr 
+                ON i.uuid = sr.indicator_uuid AND sr.config_id = :config_id
+            WHERE kim.config_id = :config_id
+        """)
+        indicator_rows = self.db.execute(indicator_query, {"config_id": config_id}).fetchall()
+        
+        if not indicator_rows:
+            return None
+        
+        # Metadata per indicator
+        indicator_meta = {}
+        indicator_uuids = []
+        for row in indicator_rows:
+            uid = str(row.uuid)
+            indicator_uuids.append(uid)
+            indicator_meta[uid] = {
+                "naam": row.naam,
+                "eenheid": row.eenheid or ""
+            }
+        
+        # 2. Per groep: haal gemiddelde waarden op
+        result_groepen = []
+        for groep in groepen:
+            buurt_ids = groep.get("buurt_ids", [])
+            if not buurt_ids:
+                continue
+            
+            # Query: gemiddelde waarde per indicator voor deze buurt-set
+            avg_query = text("""
+                SELECT 
+                    gd.indicator_uuid,
+                    AVG(gd.waarde) as gem_waarde
+                FROM gebied_data gd
+                WHERE gd.indicator_uuid = ANY(:uuids)
+                  AND gd.gebied_id = ANY(:buurt_ids)
+                  AND gd.waarde IS NOT NULL
+                  AND gd.jaar = (
+                      SELECT MAX(gd2.jaar) FROM gebied_data gd2 
+                      WHERE gd2.indicator_uuid = gd.indicator_uuid 
+                        AND gd2.gebied_id = ANY(:buurt_ids2)
+                  )
+                GROUP BY gd.indicator_uuid
+            """)
+            
+            avg_rows = self.db.execute(avg_query, {
+                "uuids": indicator_uuids,
+                "buurt_ids": buurt_ids,
+                "buurt_ids2": buurt_ids
+            }).fetchall()
+            
+            indicatoren = {}
+            for row in avg_rows:
+                indicatoren[str(row.indicator_uuid)] = round(float(row.gem_waarde), 2)
+            
+            result_groepen.append({
+                "naam": groep.get("naam", "Onbekend"),
+                "aantal_buurten": len(buurt_ids),
+                "indicatoren": indicatoren
+            })
+        
+        # 3. Referentie: gemeentegemiddelde
+        referentie = None
+        if gemeente_code:
+            ref_query = text("""
+                SELECT 
+                    gd.indicator_uuid,
+                    AVG(gd.waarde) as gem_waarde
+                FROM gebied_data gd
+                JOIN gebieden g ON gd.gebied_id = g.id
+                JOIN gebiedstypes gt ON g.gebiedstype_id = gt.id
+                WHERE gd.indicator_uuid = ANY(:uuids)
+                  AND g.gemeente_code = :gemeente_code
+                  AND gt.code = 'CBS_BUURT'
+                  AND g.actief = true
+                  AND gd.waarde IS NOT NULL
+                  AND gd.jaar = (
+                      SELECT MAX(gd2.jaar) FROM gebied_data gd2 
+                      WHERE gd2.indicator_uuid = gd.indicator_uuid
+                  )
+                GROUP BY gd.indicator_uuid
+            """)
+            
+            ref_rows = self.db.execute(ref_query, {
+                "uuids": indicator_uuids,
+                "gemeente_code": gemeente_code
+            }).fetchall()
+            
+            ref_indicatoren = {}
+            for row in ref_rows:
+                ref_indicatoren[str(row.indicator_uuid)] = round(float(row.gem_waarde), 2)
+            
+            # Haal gemeentenaam op
+            naam_query = text("SELECT naam FROM gemeenten WHERE code = :code")
+            naam_res = self.db.execute(naam_query, {"code": gemeente_code}).fetchone()
+            
+            referentie = {
+                "naam": naam_res.naam if naam_res else f"Gemeente {gemeente_code}",
+                "indicatoren": ref_indicatoren
+            }
+        
+        return {
+            "config_id": config_id,
+            "groepen": result_groepen,
+            "referentie": referentie,
+            "indicator_meta": indicator_meta
+        }
+
     def get_top_afwijkende_buurten(self, indicator_uuid: str, limit: int = 3, gebied_id: Optional[str] = None) -> Optional[Dict[str, Any]]:
         """
         Bereken Z-scores voor alle CBS-buurten en retourneer Top N positief + Top N negatief.

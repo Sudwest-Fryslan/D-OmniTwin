@@ -67,13 +67,13 @@
     - [x] `POST /api/admin/externe-lagen/upload` (Data Upload paneel gemigreerd naar admin)
     - [x] Omgevingsvisie SWF succesvol gemigreerd naar lokaal externe-lagen systeem
 
-### Track C — Benchmarking: Kernen naast elkaar
-- [ ] **C1 — Multi-woonplaats benchmark-tabel**
-    - [ ] `/api/kompas/multi-gebied` uitbreiden met `naam` per kern
-    - [ ] Frontend: benchmarktabel met kolom per woonplaats + kleur/pijl bij afwijking
-    - [ ] Acceptatie: TC-02-001 stap 5 → ✅ (was ⚠️)
-- [ ] **C2 — Gemeentegemiddelde SWF als referentielijn**
-    - [ ] Contextuitleg boven tabel: *"Referentie: gemeentegemiddelde Súdwest-Fryslân"*
+### Track C — Benchmarking: Kernen naast elkaar ✅
+- [x] **C1 — Multi-woonplaats benchmark-tabel**
+    - [x] `/api/kompas/{config_id}/benchmark` endpoint toegevoegd, met per-groep en referentie statistieken
+    - [x] Frontend: benchmarktabel met kolom per woonplaats + kleur/pijl bij afwijking
+    - [x] Acceptatie: TC-02-001 stap 5 → ✅ (was ⚠️)
+- [x] **C2 — Gemeentegemiddelde SWF als referentielijn**
+    - [x] Contextuitleg en referentiewaarde opgenomen in de benchmark-tabel
 
 ### Track D — Gebruikersflow
 - [ ] **D1 — HELP_ONBOARDING beleidsadviseur-scenario**

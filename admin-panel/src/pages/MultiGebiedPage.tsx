@@ -105,12 +105,18 @@ export const MultiGebiedPage: React.FC = () => {
     const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
     const [hoveredBuurt, setHoveredBuurt] = useState<string | null>(null);
     const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
+    // Sprint 18 Track C: Woonplaatslaag in rapport
+    const [woonplaatsGeo, setWoonplaatsGeo] = useState<any>(null);
+    const [showWoonplaatsGrenzen, setShowWoonplaatsGrenzen] = useState(true);
 
     const svgRef = useRef<SVGSVGElement>(null);
 
     const gebiedIds = searchParams.get('gebieden')?.split(',').filter(Boolean) || [];
     const deelgebiedNaam = searchParams.get('naam') || `${gebiedIds.length} buurten`;
     const gemeenteCode = searchParams.get('gemeente') || '1900';
+    // Sprint 18 Track C: Woonplaats params
+    const laagId = searchParams.get('laag_id');
+    const woonplaatsen = searchParams.get('woonplaatsen')?.split(',').map(decodeURIComponent).filter(Boolean) || [];
 
     // ─── Data Fetching ──────────────────────────────────────────────────────
 
@@ -142,6 +148,22 @@ export const MultiGebiedPage: React.FC = () => {
 
     useEffect(() => {
         fetchData(referentie, themaFilter);
+        // Sprint 18 Track C: Haal woonplaatsgeometrie op als laag_id beschikbaar is
+        if (laagId) {
+            fetch(`/api/externe-lagen/${laagId}/features`)
+                .then(r => r.ok ? r.json() : null)
+                .then(allFeatures => {
+                    if (allFeatures?.features) {
+                        const filtered = allFeatures.features.filter((f: any) =>
+                            woonplaatsen.includes(f.properties?.woonplaats || f.properties?.naam)
+                        );
+                        if (filtered.length > 0) {
+                            setWoonplaatsGeo({ type: 'FeatureCollection', features: filtered });
+                        }
+                    }
+                })
+                .catch(err => console.warn('Woonplaatslaag niet beschikbaar:', err));
+        }
     }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
     const handleReferentieSwitch = (newRef: 'gemeente' | 'fryslan') => {
@@ -260,6 +282,21 @@ export const MultiGebiedPage: React.FC = () => {
                         </path>
                     );
                 })}
+                {/* Sprint 18 Track C: Woonplaatsgrenzen overlay */}
+                {showWoonplaatsGrenzen && woonplaatsGeo?.features?.map((f: any, i: number) => (
+                    <path
+                        key={`wp-${i}`}
+                        d={pathGenerator(f as any) || ''}
+                        fill="none"
+                        stroke="#8b5cf6"
+                        strokeWidth={2.5}
+                        strokeDasharray="6,3"
+                        opacity={0.8}
+                        pointerEvents="none"
+                    >
+                        <title>{f.properties?.woonplaats || f.properties?.naam}</title>
+                    </path>
+                ))}
             </svg>
         );
     };
@@ -501,6 +538,15 @@ export const MultiGebiedPage: React.FC = () => {
                             <h3 style={{ margin: '0 0 1rem', display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--color-primary)' }}>
                                 <Map size={18} /> Z-score Afwijkingskaart
                             </h3>
+                            {/* Sprint 18 Track C: Toggle woonplaatsgrenzen */}
+                            {woonplaatsGeo && (
+                                <label style={{ fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.5rem', cursor: 'pointer', color: 'var(--color-text-muted)' }}>
+                                    <input type="checkbox" checked={showWoonplaatsGrenzen}
+                                           onChange={e => setShowWoonplaatsGrenzen(e.target.checked)} />
+                                    Toon woonplaatsgrenzen
+                                    <span style={{ color: '#8b5cf6', fontWeight: 600 }}>━ ━</span>
+                                </label>
+                            )}
                             {renderChoropleth()}
                             {/* Legenda */}
                             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem', marginTop: '1rem', fontSize: '0.75rem' }}>

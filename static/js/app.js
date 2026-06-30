@@ -37,6 +37,9 @@ const state = {
     },
     // Multi-Gebied Selectie (Sprint 7)
     selectedGebiedIds: new Set(),  // Set van geselecteerde gebied IDs
+    // Sprint 18 Track C: Gegroepeerde selectie voor benchmark
+    selectedGroepen: [],           // [ { naam: "Makkum", buurtIds: ["BU...", ...], laagId: 5 }, ... ]
+    selectedLaagId: null,          // ID van de externe kaartlaag (BAG woonplaatsen) voor rapport
     // 3D BAG Panden (Sprint 12)
     bag3dData: null,               // GeoJSON van opgehaalde 3DBAG panden
     show3DBuildings: false,        // Toggle (wederzijds exclusief met enable3D)
@@ -82,9 +85,33 @@ function toggleGebiedSelection(gebiedId) {
 /** Helper: clear alle geselecteerde gebieden */
 function clearGebiedSelection() {
     state.selectedGebiedIds.clear();
-    state.highlightedGebiedId = null; // Clear highlight as well
+    state.selectedGroepen = [];        // Sprint 18 Track C: wis groepen
+    state.selectedLaagId = null;
+    state.highlightedGebiedId = null;  // Clear highlight as well
+    state.selectedDeelgebiedNaam = null;
     // Track B: Herstel empty state in info-paneel
     showGebiedEmptyState();
+}
+
+/**
+ * Sprint 18 Track C: Herbereken selectedGebiedIds als union van alle groepen.
+ * Wordt aangeroepen na toevoegen/verwijderen van een groep.
+ */
+function rebuildSelectedGebiedIds() {
+    state.selectedGebiedIds.clear();
+    for (const groep of state.selectedGroepen) {
+        for (const id of groep.buurtIds) {
+            state.selectedGebiedIds.add(id);
+        }
+    }
+    // Rebuild deelgebiedNaam uit groepen
+    if (state.selectedGroepen.length === 0) {
+        state.selectedDeelgebiedNaam = null;
+    } else if (state.selectedGroepen.length === 1) {
+        state.selectedDeelgebiedNaam = state.selectedGroepen[0].naam;
+    } else {
+        state.selectedDeelgebiedNaam = state.selectedGroepen.map(g => g.naam).join(', ');
+    }
 }
 
 /** Sprint 18 F3: Visuele weergave/highlight bij klik op Top-buurt */
@@ -1078,7 +1105,28 @@ async function selectBuurtenVanExterneLaag(laag, feature) {
         return;
     }
 
-    showLoading(true, `Buurten selecteren...`);
+    const groepNaam = feature.properties?.woonplaats || feature.properties?.naam || null;
+    if (!groepNaam) {
+        console.warn('\u26A0\uFE0F Feature heeft geen naam/woonplaats property');
+        return;
+    }
+
+    // Sprint 18 Track C: Toggle-logica — als deze woonplaats al geselecteerd is, verwijder de groep
+    const bestaandeIndex = state.selectedGroepen.findIndex(g => g.naam === groepNaam);
+    if (bestaandeIndex !== -1) {
+        state.selectedGroepen.splice(bestaandeIndex, 1);
+        rebuildSelectedGebiedIds();
+        updateSelectionUI();
+        if (state.currentData) displayOnMap(state.currentData);
+        if (state.kompasWindow && state.kompasWindow.isVisible && window.kompasViz && window.kompasViz.currentConfigId) {
+            loadKompasForSelection(window.kompasViz.currentConfigId);
+        }
+        console.log(`\u{1F4CD} Groep '${groepNaam}' verwijderd (toggle). ${state.selectedGroepen.length} groepen actief.`);
+        return;
+    }
+
+    // Nieuwe groep toevoegen
+    showLoading(true, `Buurten selecteren voor ${groepNaam}...`);
     try {
         const res = await fetch(`/api/externe-lagen/${laag.id}/buurten`, {
             method: 'POST',
@@ -1088,9 +1136,19 @@ async function selectBuurtenVanExterneLaag(laag, feature) {
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
 
-        clearGebiedSelection();
-        state.selectedDeelgebiedNaam = feature.properties?.woonplaats || feature.properties?.naam || null;
-        data.buurten.forEach(b => state.selectedGebiedIds.add(b.id));
+        if (data.buurten.length === 0) {
+            console.warn(`\u26A0\uFE0F Geen buurten gevonden voor '${groepNaam}'`);
+            return;
+        }
+
+        // Voeg groep toe
+        state.selectedGroepen.push({
+            naam: groepNaam,
+            buurtIds: data.buurten.map(b => b.id),
+            laagId: laag.id
+        });
+        state.selectedLaagId = laag.id;
+        rebuildSelectedGebiedIds();
 
         updateSelectionUI();
         if (state.currentData) {
@@ -1102,7 +1160,7 @@ async function selectBuurtenVanExterneLaag(laag, feature) {
             loadKompasForSelection(window.kompasViz.currentConfigId);
         }
 
-        console.log(`\u{1F4CD} ${data.totaal} buurten geselecteerd via ${laag.naam}`);
+        console.log(`\u{1F4CD} Groep '${groepNaam}' toegevoegd (${data.totaal} buurten). ${state.selectedGroepen.length} groepen actief.`);
     } catch (e) {
         console.error('\u274C Buurten selectie fout:', e);
         showError('Buurten konden niet worden geselecteerd');
@@ -1330,9 +1388,7 @@ function displayOnMap(geojson) {
         // Note: Artifacts may occur when switching 2D/3D, but smooth data updates are preferred
         transitions: {
             getFillColor: 300,
-            getElevation: 500,
-            getLineColor: 300,
-            getLineWidth: 200
+            getElevation: 500
         },
 
         // Track D: lineWidthMinPixels zodat gouden rand altijd zichtbaar is
@@ -1461,6 +1517,7 @@ function displayOnMap(geojson) {
             getFillColor: [...fillKleur, fillOpacity],
             getLineColor: [...lijnKleur, 200],
             getLineWidth: 60,
+            lineWidthMinPixels: 2,
 
             pickable: true,
             autoHighlight: true,
@@ -1495,8 +1552,9 @@ function displayOnMap(geojson) {
 
             // Semi-transparante fill zodat CBS-laag eronder zichtbaar blijft
             getFillColor: [138, 43, 226, 25],    // Paars, zeer transparant
-            getLineColor: [138, 43, 226, 200],   // Paars, duidelijk zichtbaar
+            getLineColor: [138, 43, 226, 255],   // Paars, duidelijk zichtbaar
             getLineWidth: 80,                     // 80m breed = duidelijk zichtbare grens
+            lineWidthMinPixels: 3,
 
             pickable: true,
             autoHighlight: true,
@@ -2216,7 +2274,14 @@ function openMultiSelectRapportModal(ids, baseUrl) {
     document.getElementById('rapport-modal-multi-gebied').addEventListener('click', () => {
         const gebiedenParam = ids.join(',');
         const naam = encodeURIComponent(deelgebiedNaam);
-        window.open(`${baseUrl}/admin/rapport/multi-gebied?gebieden=${gebiedenParam}&naam=${naam}`, '_blank');
+        // Sprint 18 Track C: extra params voor woonplaatslaag in rapport
+        let extraParams = '';
+        if (state.selectedGroepen.length > 0 && state.selectedLaagId) {
+            extraParams += `&laag_id=${state.selectedLaagId}`;
+            const woonplaatsen = state.selectedGroepen.map(g => encodeURIComponent(g.naam)).join(',');
+            extraParams += `&woonplaatsen=${woonplaatsen}`;
+        }
+        window.open(`${baseUrl}/admin/rapport/multi-gebied?gebieden=${gebiedenParam}&naam=${naam}${extraParams}`, '_blank');
         modal.remove();
     });
     document.getElementById('rapport-modal-sluiten-multi').addEventListener('click', () => modal.remove());
@@ -2278,10 +2343,20 @@ function updateSelectionUI() {
             });
             document.body.appendChild(badge);
         }
-        // Badge tekst: single vs multi
-        const badgeTekst = count === 1
-            ? `${getSelectedGebiedNamen()[0] || '1 gebied'}`
-            : `${count} gebieden geselecteerd`;
+        // Badge tekst: single vs multi, met groepsnamen als beschikbaar
+        let badgeTekst;
+        if (state.selectedGroepen.length >= 2) {
+            const namen = state.selectedGroepen.map(g => g.naam);
+            badgeTekst = namen.length <= 3
+                ? `${namen.join(', ')} (${count} buurten)`
+                : `${namen.length} kernen (${count} buurten)`;
+        } else if (state.selectedGroepen.length === 1) {
+            badgeTekst = `${state.selectedGroepen[0].naam} (${count} buurten)`;
+        } else if (count === 1) {
+            badgeTekst = `${getSelectedGebiedNamen()[0] || '1 gebied'}`;
+        } else {
+            badgeTekst = `${count} gebieden geselecteerd`;
+        }
 
         // Build badge content with optional 3D panden button  
         const bag3dBtnHtml = (count >= 1 && count <= 3)

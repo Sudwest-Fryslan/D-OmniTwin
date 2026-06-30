@@ -1644,8 +1644,16 @@ class KompasVisualization {
         /**
          * Fetch history and metadata.
          * Sprint 7: Bij multi-select, toon vergelijkende barchart i.p.v. trendlijn.
+         * Sprint 18 Track C: Bij 2+ groepen, toon benchmarktabel.
          */
         if (!this.currentGebiedId || !node.data.uuid) return;
+
+        // Sprint 18 Track C: Benchmark-modus — 2+ groepen (woonplaatsen) actief
+        const groepen = window.state?.selectedGroepen || [];
+        if (groepen.length >= 2) {
+            await this._loadBenchmarkComparison(node);
+            return;
+        }
 
         // Sprint 7: Multi-select → barchart vergelijking
         const isMulti = this.currentData?._multiGebiedIds?.length > 1;
@@ -1992,6 +2000,142 @@ class KompasVisualization {
                 }
             }
         });
+    }
+
+    // ─── Sprint 18 Track C: Benchmark vergelijking ──────────────────────────
+
+    async _loadBenchmarkComparison(node) {
+        /**
+         * Laad benchmark data voor alle actieve groepen (woonplaatsen)
+         * en toon als vergelijkingstabel in het detailpaneel.
+         */
+        const groepen = window.state.selectedGroepen;
+        const indicatorUuid = node.data.uuid;
+        const configId = this.currentConfigId;
+
+        // Update trend label
+        const trendEl = document.getElementById('details-trend');
+        if (trendEl) trendEl.innerHTML = `<span style="color: var(--action-color)">⚖️ Benchmark</span>`;
+
+        try {
+            const payload = {
+                groepen: groepen.map(g => ({
+                    naam: g.naam,
+                    buurt_ids: g.buurtIds
+                })),
+                gemeente_code: window.state?.currentGemeenteCode || null
+            };
+
+            const resp = await fetch(`/api/kompas/${configId}/benchmark`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+            const benchmarkData = await resp.json();
+
+            // Render benchmark tabel voor deze indicator
+            this._renderBenchmarkTable(benchmarkData, indicatorUuid, node);
+
+        } catch (e) {
+            console.error('Error loading benchmark comparison:', e);
+            document.getElementById('details-definitie').textContent = 'Fout bij laden benchmark vergelijking.';
+        }
+    }
+
+    _renderBenchmarkTable(benchmarkData, indicatorUuid, node) {
+        /**
+         * Render een compacte vergelijkingstabel met kolom per woonplaats.
+         * Toont de waarde voor de geselecteerde indicator + afwijking t.o.v. referentie.
+         */
+        const { groepen, referentie, indicator_meta } = benchmarkData;
+        const meta = indicator_meta?.[indicatorUuid];
+        const eenheid = meta?.eenheid || node.data.eenheid || '';
+
+        // Gebruik chart-container voor de tabel
+        this.destroyChart();
+        const chartWrapper = document.getElementById('chart-container-wrapper');
+        if (chartWrapper) chartWrapper.style.display = 'block';
+        document.getElementById('chart-fallback-message').style.display = 'none';
+        document.getElementById('kompas-trend-chart').style.display = 'none';
+        document.getElementById('timeslider-container').style.display = 'none';
+
+        // Verwijder eventueel bestaande benchmarktabel
+        const existing = document.getElementById('kompas-benchmark-table');
+        if (existing) existing.remove();
+
+        // Referentiewaarde
+        const refWaarde = referentie?.indicatoren?.[indicatorUuid];
+        const refNaam = referentie?.naam || 'Gemeente';
+
+        // Bouw tabel
+        const table = document.createElement('div');
+        table.id = 'kompas-benchmark-table';
+        table.style.cssText = 'margin-top: 10px; overflow-x: auto;';
+
+        let html = `
+            <div style="font-size: 0.75rem; color: var(--text-secondary); margin-bottom: 8px;">
+                ⚖️ Vergelijking ${groepen.length} kernen${referentie ? ` · Ref: ${refNaam}` : ''}
+            </div>
+            <table style="width: 100%; border-collapse: collapse; font-size: 0.82rem;">
+                <thead>
+                    <tr style="border-bottom: 1px solid rgba(255,255,255,0.15);">`;
+
+        // Kolomkoppen: per groep + referentie
+        for (const groep of groepen) {
+            html += `<th style="padding: 6px 8px; text-align: center; font-weight: 600; color: var(--text-color);">${groep.naam}</th>`;
+        }
+        if (referentie) {
+            html += `<th style="padding: 6px 8px; text-align: center; font-weight: 500; color: var(--text-secondary); font-style: italic;">${refNaam}</th>`;
+        }
+
+        html += `</tr></thead><tbody><tr>`;
+
+        // Waarden per groep
+        for (const groep of groepen) {
+            const waarde = groep.indicatoren?.[indicatorUuid];
+            if (waarde == null) {
+                html += `<td style="padding: 8px; text-align: center; color: var(--text-secondary);">-</td>`;
+            } else {
+                // Bereken afwijking t.o.v. referentie
+                let afwijkingHtml = '';
+                if (refWaarde != null) {
+                    const diff = waarde - refWaarde;
+                    const pct = refWaarde !== 0 ? ((diff / Math.abs(refWaarde)) * 100).toFixed(0) : 0;
+                    if (diff > 0) {
+                        afwijkingHtml = `<div style="font-size: 0.7rem; color: #f87171;">↑ +${pct}%</div>`;
+                    } else if (diff < 0) {
+                        afwijkingHtml = `<div style="font-size: 0.7rem; color: #34d399;">↓ ${pct}%</div>`;
+                    } else {
+                        afwijkingHtml = `<div style="font-size: 0.7rem; color: var(--text-secondary);">= 0%</div>`;
+                    }
+                }
+                html += `<td style="padding: 8px; text-align: center;">
+                    <div style="font-weight: 600; color: var(--text-color);">${waarde.toFixed(1)}</div>
+                    <div style="font-size: 0.65rem; color: var(--text-secondary);">${eenheid}</div>
+                    ${afwijkingHtml}
+                </td>`;
+            }
+        }
+
+        // Referentiekolom
+        if (referentie) {
+            if (refWaarde != null) {
+                html += `<td style="padding: 8px; text-align: center; background: rgba(255,255,255,0.03);">
+                    <div style="font-weight: 500; color: var(--text-secondary);">${refWaarde.toFixed(1)}</div>
+                    <div style="font-size: 0.65rem; color: var(--text-secondary);">${eenheid}</div>
+                </td>`;
+            } else {
+                html += `<td style="padding: 8px; text-align: center; color: var(--text-secondary);">-</td>`;
+            }
+        }
+
+        html += `</tr></tbody></table>`;
+        table.innerHTML = html;
+
+        // Insert na chart-container-wrapper
+        chartWrapper.insertAdjacentElement('afterend', table);
     }
 
     renderTrendChart(history, color) {

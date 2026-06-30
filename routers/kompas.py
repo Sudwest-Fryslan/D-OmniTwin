@@ -4,8 +4,9 @@ Endpoints voor multi-kompas configuratie systeem
 """
 
 from fastapi import APIRouter, Depends, HTTPException, Query
+from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
 from src.database import get_db
 from schemas.kompas import (
     KompasConfiguratiesResponse,
@@ -14,6 +15,18 @@ from schemas.kompas import (
     IndicatorPathResponse
 )
 from services.kompas_service import KompasService
+
+
+# ─── Pydantic Models (Sprint 18 Track C) ────────────────────────────────────
+
+class BenchmarkGroep(BaseModel):
+    naam: str = Field(..., description="Naam van de woonplaats/kern")
+    buurt_ids: List[str] = Field(..., min_length=1, description="CBS buurt-IDs in deze groep")
+
+class BenchmarkRequest(BaseModel):
+    groepen: List[BenchmarkGroep] = Field(..., min_length=1, max_length=8)
+    gemeente_code: Optional[str] = Field(None, description="Gemeente code voor referentie")
+
 
 router = APIRouter(prefix="/api/kompas", tags=["Kompas"])
 
@@ -213,6 +226,42 @@ async def get_top_buurten(
             detail=f"Geen data gevonden voor indicator {indicator_uuid}"
         )
     
+    return result
+
+
+# ─── Sprint 18 Track C: Benchmark vergelijking ──────────────────────────────
+
+@router.post("/{config_id}/benchmark")
+async def get_benchmark(
+    config_id: int,
+    payload: BenchmarkRequest,
+    db: Session = Depends(get_db)
+):
+    """
+    Benchmark vergelijking: per groep (woonplaats/kern) gemiddelde waarden
+    voor alle indicatoren, plus optioneel het gemeentegemiddelde als referentie.
+
+    **Body:**
+    ```json
+    {
+        "groepen": [
+            {"naam": "Makkum", "buurt_ids": ["BU19000100", "BU19000101"]},
+            {"naam": "Workum", "buurt_ids": ["BU19000200"]}
+        ],
+        "gemeente_code": "1900"
+    }
+    ```
+    """
+    service = KompasService(db)
+    groepen_dicts = [g.model_dump() for g in payload.groepen]
+    result = service.get_benchmark(config_id, groepen_dicts, payload.gemeente_code)
+
+    if not result:
+        raise HTTPException(
+            status_code=404,
+            detail="Geen benchmark data gevonden"
+        )
+
     return result
 
 
