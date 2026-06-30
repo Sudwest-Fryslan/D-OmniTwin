@@ -114,7 +114,7 @@ async def get_gemeenten(
     """
     if provincie:
         query = text("""
-            SELECT id, code, naam, provincie, is_eiland 
+            SELECT code, naam, provincie, is_eiland 
             FROM gemeenten 
             WHERE provincie = :provincie
             ORDER BY naam
@@ -122,7 +122,7 @@ async def get_gemeenten(
         result = db.execute(query, {"provincie": provincie})
     else:
         query = text("""
-            SELECT id, code, naam, provincie, is_eiland 
+            SELECT code, naam, provincie, is_eiland 
             FROM gemeenten 
             ORDER BY provincie, naam
         """)
@@ -161,7 +161,7 @@ async def get_gemeente(
     - Gemeente object met code, naam, provincie
     """
     query = text("""
-        SELECT id, code, naam, provincie, is_eiland 
+        SELECT code, naam, provincie, is_eiland 
         FROM gemeenten 
         WHERE code = :code
     """)
