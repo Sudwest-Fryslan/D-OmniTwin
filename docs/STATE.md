@@ -10,7 +10,7 @@
 | Veld | Waarde |
 |------|--------|
 | **Huidige versie** | v1.0.0-beta (pre-release) |
-| **Sprint** | Sprint 18 — IJsselmeerkust als Besluitinstrument 🚀 In uitvoering | 
+| **Sprint** | Sprint 18 — IJsselmeerkust als Besluitinstrument 🟢 Afgerond | 
 | **Laatste update** | 2026-06-23 (Dag 78) |
 | **Bijgewerkt door** | Project-manager skill (Antigravity) |
 
