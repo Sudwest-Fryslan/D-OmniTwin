@@ -449,7 +449,7 @@ function initDeckGL() {
 
                 // Externe kaartlaag tooltip (Sprint 18)
                 if (layer?.id?.startsWith('externe-laag-')) {
-                    const featureNaam = props.woonplaats || props.naam || props.name || 'Onbekend';
+                    const featureNaam = props.woonplaats || props.naam || props.name || props.Naam || props.Deelgebied || props.deelgebied || 'Onbekend';
                     return {
                         html: `
                 <div style="font-family: Inter, sans-serif;">
@@ -1105,7 +1105,7 @@ async function selectBuurtenVanExterneLaag(laag, feature) {
         return;
     }
 
-    const groepNaam = feature.properties?.woonplaats || feature.properties?.naam || null;
+    const groepNaam = feature.properties?.woonplaats || feature.properties?.naam || feature.properties?.name || feature.properties?.Naam || feature.properties?.Deelgebied || feature.properties?.deelgebied || null;
     if (!groepNaam) {
         console.warn('\u26A0\uFE0F Feature heeft geen naam/woonplaats property');
         return;
