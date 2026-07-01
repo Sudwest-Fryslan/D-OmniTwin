@@ -1,5 +1,23 @@
 # BUGFIX.md - D-OmniTwin
 
+## Bug #48: Deck.gl Kaart Interactie Vertraging & Re-render Loop (01-07-2026)
+
+**Gerapporteerd:** 01-07-2026  
+**Status:** ✅ FIXED (01-07-2026)  
+**Severity:** 🔴 HIGH (Ernstige interactievertraging op frontend, UX sterk belemmerd)
+
+### Probleem
+Bij het klikken op gebieden of polygonen in de kaart zat er een forse vertraging, waardoor de applicatie tijdelijk bevroor (voelde niet vloeiend). Dit was vooral hinderlijk bij het snel willen wisselen tussen gebieden.
+
+### Oorzaak (Root Cause)
+De `onClick` handler riep `displayOnMap` aan, wat elke keer de data-array `geojson.features` opnieuw sorteerde (om de geselecteerde gebieden bovenop te tekenen). Doordat de Deck.gl `GeoJsonLayer` een volledig nieuwe data-referentie binnenkreeg, werd de interne WebGL en geometrie-caching (updateTriggers) omzeild. Dit dwong de GPU/CPU om alle polygonen opnieuw te parsen en te tesseleren. Bovendien stuurde de `updateTriggers` de geselecteerde ids als een verspreide array (`[...state.selectedGebiedIds]`) mee, wat de ondiepe object-vergelijking van Deck.gl brak.
+
+### Oplossing
+1. **Verwijderen array mutatue:** De basis `geojson` data array wordt nu 1-op-1 (zonder sortering) doorgegeven aan Deck.gl. Deck.gl kan hierdoor geometriebuffers razendsnel hergebruiken.
+2. **Selection Overlay:** Om de geselecteerde objecten tóch visueel op de voorgrond (zonder bedekkende randen) te plaatsen, wordt er in de laag-array een dynamische en superlichte `selection-overlay-layer` meegerenderd die specifiek *alleen* de 1 of 2 geselecteerde polygonen bevat.
+3. **Trigger correctie:** De `updateTriggers` in `GeoJsonLayer` is omgeschreven naar een string in plaats van een array referentie (`Array.from(state.selectedGebiedIds).join(',')`), zodat Deck.gl kleuraanpassingen via zijn hardware pipeline kan updaten zonder hertesselatie.
+
+---
 ## Bug #47: AI Chat `KeyError: 'uuid'` & `500 Server Error` (20-06-2026)
 
 **Gerapporteerd:** 20-06-2026  

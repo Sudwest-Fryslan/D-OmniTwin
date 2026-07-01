@@ -1233,16 +1233,10 @@ function displayOnMap(geojson) {
         console.log(`📊 Range: ${Math.min(...validValues)} - ${Math.max(...validValues)}`);
     }
 
-    // Sprint 18 F3: Sort features so selected & highlighted are drawn last (on top)
-    const sortedFeatures = [...geojson.features].sort((a, b) => {
-        const aId = a.id || a.properties?.id;
-        const bId = b.id || b.properties?.id;
-        const aTop = (aId && (aId === state.highlightedGebiedId || state.selectedGebiedIds.has(aId))) ? 1 : 0;
-        const bTop = (bId && (bId === state.highlightedGebiedId || state.selectedGebiedIds.has(bId))) ? 1 : 0;
-        return aTop - bTop;
-    });
-
-    const renderGeojson = { ...geojson, features: sortedFeatures };
+    // Performance FIX: DO NOT sort the features array. Mutating/recreating the data object 
+    // destroys Deck.gl's internal caching and forces a full re-tessellation of all polygons, 
+    // causing massive lag on click.
+    const renderGeojson = geojson;
 
     // Create GeoJsonLayer (Different IDs prevent WebGL buffer corruption during 2D/3D toggle)
     const layer = new GeoJsonLayer({
@@ -1397,8 +1391,8 @@ function displayOnMap(geojson) {
         // Performance - CRITICAL FIX: Force re-render on state changes
         updateTriggers: {
             getFillColor: [minValue, maxValue, state.enable3D, state.currentTheme],
-            getLineColor: [state.currentTheme, ...state.selectedGebiedIds],
-            getLineWidth: [...state.selectedGebiedIds],
+            getLineColor: [state.currentTheme, Array.from(state.selectedGebiedIds).join(',')],
+            getLineWidth: [Array.from(state.selectedGebiedIds).join(',')],
             getElevation: [state.enable3D, state.heightScale, minValue, maxValue],
             extruded: [state.enable3D]
         }
@@ -1407,6 +1401,33 @@ function displayOnMap(geojson) {
 
     // Build layers array (gebieden + optioneel BAG panden)
     const layers = [layer];
+
+    // Performance FIX: Add a separate layer for selected borders to ensure they are drawn on top,
+    // without sorting the base layer data.
+    if (state.selectedGebiedIds.size > 0 && geojson.features) {
+        const selectedFeatures = geojson.features.filter(f => {
+            const id = f.id || f.properties?.id;
+            return state.selectedGebiedIds.has(id);
+        });
+
+        if (selectedFeatures.length > 0) {
+            const { GeoJsonLayer } = deck;
+            const selectionLayer = new GeoJsonLayer({
+                id: 'selection-overlay-layer',
+                data: { type: 'FeatureCollection', features: selectedFeatures },
+                filled: false,
+                stroked: true,
+                lineWidthMinPixels: 2,
+                getLineColor: [234, 179, 8, 255], // Geo Gold (#eab308)
+                getLineWidth: 80,
+                pickable: false,
+                parameters: {
+                    depthTest: false // Force draw on top in 2D
+                }
+            });
+            layers.push(selectionLayer);
+        }
+    }
 
     // Sprint 18 F3: Extra layer voor Top-buurt highlight (Altijd on top, onafhankelijk van dash bugs in 3D/base layer)
     if (state.highlightedGebiedId && geojson.features) {

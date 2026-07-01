@@ -54,6 +54,7 @@ docs/4-ux-design/
 docs/5-secops/
 docs/6-ai-parallel-track/
 docs/7-projectmanagement/
+docs/10-testen/
 
 # ETL/local: standalone scripts (naast de app)
 # db.ini bevat database credentials — NOOIT committen!
