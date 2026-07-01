@@ -1,5 +1,5 @@
 
-from fastapi import APIRouter, Depends, HTTPException, Header
+from fastapi import APIRouter, Depends, HTTPException, Header, Request
 from sqlalchemy.orm import Session
 from sqlalchemy import text
 from typing import List, Optional, Dict, Any
@@ -17,13 +17,11 @@ router = APIRouter(prefix="/api/admin/dashboard", tags=["Admin Dashboard"])
 # ============================================================================
 # Authentication
 # ============================================================================
-def verify_admin_key(x_admin_key: str = Header(...)):
-    """Verify admin API key from request header."""
-    if not ADMIN_API_KEY:
-        raise HTTPException(500, "ADMIN_API_KEY not configured on server")
-    if x_admin_key != ADMIN_API_KEY:
-        raise HTTPException(403, "Invalid admin API key")
-    return True
+from routers.auth import check_auth_or_key
+
+def verify_admin_key(request: Request, db: Session = Depends(get_db)):
+    """Verifies admin access using the Hybrid Session/Key model."""
+    return check_auth_or_key(request, db)
 
 # ============================================================================
 # Stats Endpoint

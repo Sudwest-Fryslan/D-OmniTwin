@@ -1,5 +1,21 @@
 # BUGFIX.md - D-OmniTwin
 
+## Bug #49: Beheer Dashboard Statistieken "Fout bij laden" (422 Error) (01-07-2026)
+
+**Gerapporteerd:** 01-07-2026  
+**Status:** ✅ FIXED (01-07-2026)  
+**Severity:** 🔴 HIGH (Dashboard componenten in beheeromgeving laden niet)
+
+### Probleem
+De beheerpagina voor het dashboard (`/admin-panel`) toonde de foutmelding "Fout bij laden statistieken" en gaf aan dat er geen indicatoren gevonden konden worden. Alle statistieken bleven op 0 staan.
+
+### Oorzaak (Root Cause)
+De `routers/dashboard.py` in de backend bevatte een lokaal gedefinieerde `verify_admin_key` validatiefunctie die strikt vereiste dat de header `X-Admin-Key` werd meegestuurd (`x_admin_key: str = Header(...)`). Dit verbreekt de flow voor beheerders die via de browser (React admin-panel) zijn ingelogd op de beheeromgeving, omdat deze sessies werken op basis van browser-cookies (HTTPOnly sessies) en niet via een hardcoded header. FastAPI retourneerde daardoor direct een HTTP 422 Unprocessable Entity error (Field required) bij het aanroepen van de statistiek-endpoints.
+
+### Oplossing
+De lokale auth validatie in `routers/dashboard.py` is vervangen door het centrale hybrid-auth model. Er is gebruik gemaakt van de `check_auth_or_key` module uit `routers.auth`. Hierdoor wordt nu zowel een API key (X-Admin-Key header) als een reguliere gebruikerssessie (browser cookie) geaccepteerd, conform de rest van de admin applicatie.
+
+---
 ## Bug #48: Deck.gl Kaart Interactie Vertraging & Re-render Loop (01-07-2026)
 
 **Gerapporteerd:** 01-07-2026  
