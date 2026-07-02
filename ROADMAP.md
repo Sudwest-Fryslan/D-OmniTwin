@@ -125,6 +125,32 @@
 
 ---
 
+### 🧹 Sprint 21: Data Kwaliteit & Betrouwbare Start (Gepland)
+
+**Visie:** Een schoon, betrouwbaar platform zonder ruis (lege indicatoren, duplicaten) voor een perfecte eerste gebruikerservaring.
+**Aanleiding:** Ruis in data vertroebelt het Kompas en AI-antwoorden.
+
+#### Track A — Deduplicatie Assistent (Admin Panel)
+- [ ] UI Bouwen in Beheeromgeving: Nieuwe pagina voor Deduplicatie.
+- [ ] Trapsgewijze Detectie (Backend):
+    1. Exacte & Fuzzy match (Trigrammen) op naam en bron.
+    2. Vector Similarity via `pgvector` embeddings.
+    3. LLM Evaluatie (Ollama) ter controle van de matches.
+- [ ] Samenvoegen / Deactiveren: "Primaire Indicator Kiezen" actie waarbij de overige dubbelingen op `is_actief = False` worden gezet en data gemigreerd wordt.
+
+#### Track B — Ruisvrije Frontend & API's
+- [ ] API-filtering: Lege indicatoren (zonder `gebied_data`) worden niet geretourneerd in endpoints.
+- [ ] Verbergen in UI: Voorkomen dat ze in de D3 Sunburst of AI-zoeker verschijnen.
+
+#### Track C — Gebruikersadoptie & Validatie
+- [ ] Gezamenlijke review: De voorgestelde deduplicaties met gebruikers nalopen en accorderen.
+- [ ] Controles op eenheden en waarden voltooien (bijv. percentage vs absolute aantallen).
+
+**Effort:** ~15-20 uur  
+**Priority:** 🔴 HIGH — Essentieel voor live-gang en gebruikersvertrouwen  
+
+---
+
 
 
 **Rationale:** Gebruikers moeten direct zien wat de kleuren betekenen

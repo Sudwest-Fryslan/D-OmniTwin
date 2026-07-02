@@ -203,6 +203,27 @@
 
 ---
 
+## 📌 Sprint 21: Data Kwaliteit & Betrouwbare Start (Gepland)
+
+**Doel:** Ruis uit de applicatie filteren (lege en dubbele indicatoren) en een toolset bieden voor gebruikersgestuurde deduplicatie.
+**Aanleiding:** Ruis vertroebelt het Kompas en AI-antwoorden. Goede data is essentieel voor adoptie.
+
+### Track A — Deduplicatie Assistent (Admin Panel)
+- [ ] Backend: Matchmaking algoritme bouwen (Fuzzy + pgvector + Ollama).
+- [ ] Backend: Actie "Primaire Indicator Kiezen" (`is_actief = False` voor duplicaten, data re-linken).
+- [ ] Frontend: Nieuwe pagina in Beheeromgeving om AI-voorgestelde matches te reviewen.
+
+### Track B — Ruisvrije Frontend & API's
+- [ ] Filter-logica inbouwen op `gebied_data` aanwezigheid voor alle relevante endpoints.
+- [ ] Verbergen van lege nodes in D3 Sunburst / Kompas.
+- [ ] Vector Search & AI uitsluiten van lege indicatoren.
+
+### Track C — Validatie & Opschoning
+- [ ] Opschoning "Alcohol" vs "Overmatig drinken" en andere dubbelingen samen met gebruikers.
+- [ ] Controle op eenheden (absoluut, %, etc.).
+
+---
+
 ## ✅ Sprint 17: Configureerbare Logging Infrastructuur (Afgerond 26 mei 2026)
 
 **Doel:** Gedifferentieerde, configureerbare logging op alle facetten van de applicatie — instelbaar per module via de beheeromgeving, persistent in PostgreSQL, zichtbaar via admin panel dashboard, proactief via alerts.
