@@ -11,7 +11,7 @@
 |------|--------|
 | **Huidige versie** | v1.0.0-beta (pre-release) |
 | **Sprint** | Sprint 18 — IJsselmeerkust als Besluitinstrument ✅ Afgerond | 
-| **Laatste update** | 2026-06-30 (Dag 79) |
+| **Laatste update** | 2026-07-02 (Dag 80) |
 | **Bijgewerkt door** | Project-manager skill (Antigravity) |
 
 ---
@@ -52,6 +52,7 @@
 
 | Datum | Wijziging | Impact |
 |-------|-----------|--------|
+| 2026-07-02 | **Sprint 18 Track D Voltooid (Dag 80)** | Dynamische Profielen & Deterministische Scenario's (Showcase IJsselmeerkust) geïmplementeerd. Chatbot integratie met frontend (gebied selectie, kompas openen via chat acties). Unicodes/Variation selector bugs in JS Regex opgelost. |
 | 2026-06-30 | **Sprint 18 Afgerond — Dag 79** | Multi-gebied benchmark (Track C) geïmplementeerd en getest. Alle sprint 18 code gesynchroniseerd naar `main` (worktree was op F-schijf gekoppeld). Bugfix: `gemeenten` API 500-error door ontbrekende `id`-kolom opgelost. `fiona` package toegevoegd aan requirements. Worktree `D-OmniTwin-sprint18` volledig opgeruimd (E én F schijf). |
 | 2026-06-23 | **Omgeving & Git Herstel (Dag 78)** | `.venv` opgebouwd na schijfmigratie. Dependencies hersteld. `sentence-transformers` mandatory gemaakt. Git `.venv` symlink negeer-fout in `.gitignore` opgelost voor main én worktrees. |
 | 2026-06-20 | **Sprint 18 Track A Voltooid (Dag 77)** | Ontologie UI, trendlijnen en bronvermeldingen geïmplementeerd. Bugfix AI chat (`KeyError 'uuid'`) wegens defecte `sympy` dependency in `.venv` opgelost. Git `pre-commit` hook toegevoegd om `.venv` map te beveiligen. |

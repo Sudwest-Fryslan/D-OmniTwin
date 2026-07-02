@@ -76,14 +76,19 @@
     - [x] Contextuitleg en referentiewaarde opgenomen in de benchmark-tabel
 
 ### Track D — Gebruikersflow
-- [ ] **D1 — HELP_ONBOARDING beleidsadviseur-scenario**
-    - [ ] Trigger-keywords: "leefbaarheid", "IJsselmeerkust", "Makkum", "vergelijken"
-    - [ ] Stap-voor-stap responsebericht via deterministische chat-intent
-    - [ ] Acceptatie: TC-06-001 fase 1 → ✅ (was ❓)
-- [ ] **D2 — Startflow: hint tot eerste selectie**
-    - [ ] Kaartlading: subtiele hint *"Klik op een buurt of kies een woonplaats om te starten"*
-    - [ ] Verdwijnt bij eerste selectie (localStorage flag, Sprint 11B patroon)
-    - [ ] Acceptatie: TC-01-001 stap 1 → ✅ (was ❓)
+- [x] **D1 — Dynamische Profielen & Deterministische Scenario's (Showcase IJsselmeerkust)**
+    - [x] **D1.1: Database Migratie (`migrations/schema_v14_chat_scenarios.sql`)**: Tabel `chat_scenarios` aanmaken met `rol_code`, `rol_naam`, `beschrijving`, `narrative`, `acties` (JSONB) + Seed-data (beleidsadviseur & wijkcontactfunctionaris).
+    - [x] **D1.2: Backend (`routers/chat.py`)**: `ActieKnop` schema uitbreiden met type `SEND_MESSAGE` en `rol_code`.
+    - [x] **D1.3: Backend (`routers/chat.py`)**: `get_help_onboarding_response()` async maken + DB-aanroep om actieve profielen dynamisch op te halen.
+    - [x] **D1.4: Backend (`routers/chat.py`)**: Deterministische scenario-matching logica implementeren (eerst op `rol_code` uit context, fallback op `trigger_keywords`) vóór LLM-aanroep.
+    - [x] **D1.5: Frontend (`static/js/chat.js`)**: Knop-handler uitbreiden voor `SEND_MESSAGE` (stuurt `rol_code` in context en toont `rol_naam` in de UI).
+    - [x] **D1.6: Frontend (`static/js/chat.js`)**: Hybride acties (zoals `SELECTEER_GEMEENTE` en `OPEN_KOMPAS`) uit het scenario correct laten uitvoeren door de UI.
+    - [x] Acceptatie: TC-06-001 fase 1 → ✅ (was ❓)
+- [x] **D2 — Startflow: hint tot eerste selectie**
+    - [x] Kaartlading: subtiele hint *"Klik op een buurt of kies een woonplaats om te starten"*
+    - [x] Verdwijnt bij eerste selectie (localStorage flag, Sprint 11B patroon)
+    - [x] Acceptatie: TC-01-001 stap 1 → ✅ (was ❓)
+
 
 ### Track E — Testcase executie & documentatie
 - [ ] **E1 — TC-06-001 volledig doorlopen in browser** (alle 14 stappen)
@@ -173,9 +178,10 @@
 
 ### Track D — AI-Ondersteuning: Automatische Samenvatting
 - [ ] **D1 — AI-samenvatting per buurt (Ollama)**
-    - [ ] Backend: `POST /api/chat/samenvatting-buurt`
-    - [ ] Frontend: knop *"📋 Genereer samenvatting"* in buurt-detailpaneel
-    - [ ] Output: samenvatting + aandachtspunten + sterke punten + AI-disclaimer
+    - [ ] Backend: `POST /api/gebieden/{gebied_id}/samenvatting` stuurt prompt + data naar lokaal Ollama model
+    - [ ] Frontend: nieuw AI-icoon per buurt, toont modal met gegeneerde "Executive Summary"
+- [ ] **D2 — Dynamische Gebiedsselectie Assistent**
+    - [ ] In plaats van hardcoded scenario's (bijv. "Gemeente Súdwest-Fryslân"), moet de assistent dynamisch een selectielijst/zoekfunctie genereren voor gebiedstypes en gemeenten op basis van de interactie.
 
 ### Afsluiting & Merge
 - [ ] Gebruikersreview opnieuw doorlopen (alle 5 profielen)

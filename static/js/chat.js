@@ -131,6 +131,7 @@ class ChatPanel {
                     data-config-id="${actie.config_id || ''}"
                     data-filters='${JSON.stringify(actie.filters || {})}'
                     data-thema="${actie.thema || ''}"
+                    data-rol-code="${actie.rol_code || ''}"
                     title="${this._escapeHtml(actie.label)}"
                 >${actie.label}</button>`;
             }
@@ -190,7 +191,7 @@ class ChatPanel {
     // API Communicatie
     // ========================================================================
 
-    async sendVraag(tekst) {
+    async sendVraag(tekst, extraContext = {}) {
         if (!tekst.trim() || this.isLoading) return;
 
         this.isLoading = true;
@@ -202,12 +203,13 @@ class ChatPanel {
         this.addLoadingIndicator();
 
         try {
+            const context = { ...this._getKaartContext(), ...extraContext };
             const response = await fetch('/api/chat', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     vraag: tekst,
-                    context: this._getKaartContext()
+                    context: context
                 })
             });
 
@@ -297,7 +299,7 @@ class ChatPanel {
                 if (btn.dataset.gemeenteCode && window.EventBus) {
                     window.EventBus.emit('GEMEENTE_SELECTED', {
                         code: btn.dataset.gemeenteCode,
-                        name: originalText.replace(/^[📍🗺🏙🧭\s]+(Gemeente: )?/, '')
+                        name: originalText.replace(/^[📍🗺🏙🧭✅\s\uFE0F]+(Gemeente: )?/, '')
                     });
                 }
                 break;
@@ -306,7 +308,7 @@ class ChatPanel {
                 if (window.EventBus) {
                     window.EventBus.emit('GEBIEDSTYPE_SELECTED', {
                         id: btn.dataset.gebiedstypeId || '',
-                        name: originalText.replace(/^[📍🗺🏙🧭\s]+(Toon: )?/, '')
+                        name: originalText.replace(/^[📍🗺🏙🧭✅\s\uFE0F]+(Toon: )?/, '')
                     });
                 }
                 break;
@@ -315,7 +317,7 @@ class ChatPanel {
                 if (btn.dataset.configId && window.EventBus) {
                     window.EventBus.emit('KOMPAS_CONFIG_SELECTED', {
                         id: parseInt(btn.dataset.configId),
-                        name: originalText.replace(/^[📍🗺🏙🧭\s]+(Wissel: )?/, '')
+                        name: originalText.replace(/^[📍🗺🏙🧭✅\s\uFE0F]+(Wissel: )?/, '')
                     });
                 }
                 break;
@@ -323,6 +325,13 @@ class ChatPanel {
             case 'OPEN_KOMPAS':
                 if (window.EventBus) {
                     window.EventBus.emit('KOMPAS_OPEN_REQUESTED');
+                }
+                break;
+
+            case 'SEND_MESSAGE':
+                if (btn.dataset.rolCode) {
+                    const rolNaam = originalText.replace(/^[👤✅\s]+/, '');
+                    this.sendVraag(rolNaam, { rol_code: btn.dataset.rolCode });
                 }
                 break;
 

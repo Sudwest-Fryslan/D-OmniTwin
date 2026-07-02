@@ -37,8 +37,9 @@ class ChatRequest(BaseModel):
     context: Optional[Dict[str, Any]] = Field(None, description="Optionele kaartcontext (huidig_gebied_id, etc.)")
 
 class ActieKnop(BaseModel):
-    type: str  # TOON_OP_KAART, SELECTEER_BUURTEN, MAAK_RAPPORT, SELECTEER_GEMEENTE, SELECTEER_GEBIEDSTYPE, SELECTEER_KOMPAS, OPEN_KOMPAS, INFO_KAART, INFO_KOMPAS, INFO_RAPPORT, OPEN_WIKI
+    type: str  # TOON_OP_KAART, SELECTEER_BUURTEN, MAAK_RAPPORT, SELECTEER_GEMEENTE, SELECTEER_GEBIEDSTYPE, SELECTEER_KOMPAS, OPEN_KOMPAS, INFO_KAART, INFO_KOMPAS, INFO_RAPPORT, OPEN_WIKI, SEND_MESSAGE
     label: str
+    rol_code: Optional[str] = None
     indicator_uuid: Optional[str] = None
     gemeente_code: Optional[str] = None
     gebiedstype_id: Optional[str] = None
@@ -82,24 +83,67 @@ def is_help_onboarding(vraag: str) -> bool:
     vraag_lower = vraag.lower().strip()
     return any(re.search(p, vraag_lower) for p in HELP_ONBOARDING_PATTERNS)
 
-def get_help_onboarding_response() -> ChatResponse:
-    """Retourneert een vaste, instant response voor help-vragen. Geen LLM nodig."""
+async def get_help_onboarding_response(db: Session) -> ChatResponse:
+    """Retourneert een vaste, instant response voor help-vragen, met actieve profielen uit de DB."""
+    try:
+        from sqlalchemy import text
+        scenarios = db.execute(text(
+            "SELECT rol_code, rol_naam, beschrijving FROM chat_scenarios "
+            "WHERE is_actief = true ORDER BY volgorde"
+        )).fetchall()
+        
+        acties = [
+            ActieKnop(
+                type="SEND_MESSAGE",
+                label=f"👤 {s.rol_naam}",
+                rol_code=s.rol_code
+            )
+            for s in scenarios
+        ]
+    except Exception as e:
+        AppLogger.error(f"Error loading chat scenarios: {e}", category="LLM_CHAT")
+        acties = []
+
+    acties.append(ActieKnop(type="OPEN_WIKI", label="📖 Volledige Handleiding openen"))
+
     return ChatResponse(
         intent="HELP_ONBOARDING",
         narrative=(
             "Welkom! Ik ben de D-Omni Assistent. Ik help je de leefomgeving "
             "te verkennen via data, kaarten en analyses. "
-            "Hier is wat ik voor je kan doen:"
+            "Vanuit welk perspectief wil je de data bekijken?"
         ),
-        acties=[
-            ActieKnop(type="INFO_KAART",   label="🗺️ Kaart & Gebieden verkennen"),
-            ActieKnop(type="INFO_KOMPAS",  label="🧭 Het D-Omni Kompas begrijpen"),
-            ActieKnop(type="INFO_RAPPORT", label="📄 Rapporten & Analyses genereren"),
-            ActieKnop(type="OPEN_WIKI",    label="📖 Volledige Handleiding openen"),
-        ],
+        acties=acties,
         indicatoren=[],
         debug={"mode": "deterministic_onboarding"}
     )
+
+def match_scenario(vraag: str, context: dict, db: Session):
+    """Matcht een deterministisch scenario op basis van rol_code of trigger_keywords."""
+    rol_code = context.get("rol_code")
+    from sqlalchemy import text
+    if rol_code:
+        try:
+            scenario = db.execute(text(
+                "SELECT * FROM chat_scenarios WHERE rol_code = :code AND is_actief = true"
+            ), {"code": rol_code}).fetchone()
+            if scenario:
+                return scenario
+        except Exception as e:
+            AppLogger.error(f"Error matching scenario by rol_code: {e}", category="LLM_CHAT")
+            
+    # Fallback: vrije tekst match op trigger_keywords
+    vraag_lower = vraag.lower().strip()
+    try:
+        scenarios = db.execute(text("SELECT * FROM chat_scenarios WHERE is_actief = true")).fetchall()
+        for scenario in scenarios:
+            keywords = scenario.trigger_keywords or []
+            if any(kw in vraag_lower for kw in keywords):
+                return scenario
+    except Exception as e:
+        AppLogger.error(f"Error matching scenario by keywords: {e}", category="LLM_CHAT")
+        
+    return None
 
 # --- Overige intents (LLM-driven) ---
 INTENT_PATTERNS = {
@@ -226,11 +270,33 @@ async def chat(
     AppLogger.info(f"Chat vraag ontvangen: '{vraag[:80]}'", category="LLM_CHAT")
     
     # ------------------------------------------------
-    # Stap 0: Help/Onboarding — instant, geen LLM nodig
+    # Stap 0a: Help/Onboarding — instant, geen LLM nodig
     # ------------------------------------------------
     if is_help_onboarding(vraag):
         AppLogger.info("HELP_ONBOARDING intent — deterministic response", category="LLM_CHAT")
-        return get_help_onboarding_response()
+        return await get_help_onboarding_response(db)
+        
+    # ------------------------------------------------
+    # Stap 0b: Check of een scenario is getriggerd
+    # ------------------------------------------------
+    scenario = match_scenario(vraag, context, db)
+    if scenario:
+        AppLogger.info(f"SCENARIO getriggerd: {scenario.rol_code}", category="LLM_CHAT")
+        acties_db = scenario.acties or []
+        acties = []
+        for a in acties_db:
+            try:
+                acties.append(ActieKnop(**a))
+            except Exception:
+                pass
+                
+        return ChatResponse(
+            intent="SCENARIO_" + scenario.rol_code.upper(),
+            narrative=scenario.narrative,
+            acties=acties,
+            indicatoren=[],
+            debug={"mode": "deterministic_scenario", "rol_code": scenario.rol_code}
+        )
     
     # ------------------------------------------------
     # Stap 1: Semantisch zoeken naar relevante indicatoren

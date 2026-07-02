@@ -118,6 +118,7 @@
 
 #### Track D — AI-Ondersteuning
 - [ ] AI-samenvatting per buurt via Ollama (lokaal, AVG-proof)
+- [ ] **Dynamische Gebiedsselectie Assistent:** Vervangen van hard-coded demo scenario's door een dynamische UI (selectielijsten/zoekbalk in chat) gestuurd door het rolprofiel voor gebied- en gemeente-keuze.
 
 **Effort:** ~15-20 uur (4 sessies)  
 **Priority:** 🔴 HIGH — direct gebruikerswaarde  

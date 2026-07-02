@@ -1,7 +1,7 @@
 # D-OmniTwin 🌍🔐
 > Digitale spiegel van de fysieke leefomgeving — open source, federatief, dataspace-ready
 
-**Versie:** v1.0.0-beta (pre-release) | **Laatste update:** 20 juni 2026 | **Status:** 🟡 MEDIUM RISK  
+**Versie:** v1.0.0-beta (pre-release) | **Laatste update:** 2 juli 2026 | **Status:** 🟡 MEDIUM RISK  
 **Security:** API key auth actief, CORS locked, Security headers actief  
 [![Licentie: EUPL 1.2](https://img.shields.io/badge/Licentie-EUPL_1.2-blue)](./LICENSE) [![Docs: CC BY 4.0](https://img.shields.io/badge/Docs-CC_BY_4.0-green)](./LICENSE-DOCS)
 
