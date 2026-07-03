@@ -3133,56 +3133,7 @@ function formatNumber(num) {
     }).format(num);
 }
 
-// ============================================================================
-// UI Utilities (Overlay Dismissal & Info Toggle)
-// ============================================================================
 
-function setupInfoToggle() {
-    const infoBtn = document.getElementById('info-toggle');
-    const overlay = document.getElementById('camera-controls-overlay');
-
-    if (!infoBtn || !overlay) return;
-
-    // Initial State Check
-    // If NOT dismissed in localstorage, show it (add .show)
-    // Actually, user wants it "under the button", implying hidden by default?
-    // User: "The info buttons are visible now, but can we put them under an info button?"
-    // Usually means hidden until requested.
-    // BUT, for new users it should be visible?
-    // Let's decided: Default HIDDEN for cleanliness, unless first visit?
-    // Let's stick to: Default OPEN on first visit, then stored.
-    // Logic:
-    // If !localStorage('dismissed'), add .show
-    // Toggle button adds/removes .show and updates localStorage? No, toggle just toggles visibility.
-
-    // Let's check status
-    const isDismissed = localStorage.getItem('omnitwin-camera-overlay-dismissed') === 'true';
-
-    if (!isDismissed) {
-        overlay.classList.add('show');
-        infoBtn.classList.add('active');
-    }
-
-    infoBtn.addEventListener('click', () => {
-        const isVisible = overlay.classList.contains('show');
-
-        if (isVisible) {
-            // Hide
-            overlay.classList.remove('show');
-            infoBtn.classList.remove('active');
-            localStorage.setItem('omnitwin-camera-overlay-dismissed', 'true'); // Creating "dismissed" state
-        } else {
-            // Show
-            overlay.classList.add('show');
-            infoBtn.classList.add('active');
-            // We can optionally remove the dismissed state if they manually open it, or just leave it.
-            // Let's leave it. The toggle overrides the preference temporarily.
-        }
-    });
-}
-
-// Check on load
-document.addEventListener('DOMContentLoaded', setupInfoToggle);
 
 
 // ============================================================================

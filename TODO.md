@@ -183,6 +183,15 @@
 - [ ] **D2 — Dynamische Gebiedsselectie Assistent**
     - [ ] In plaats van hardcoded scenario's (bijv. "Gemeente Súdwest-Fryslân"), moet de assistent dynamisch een selectielijst/zoekfunctie genereren voor gebiedstypes en gemeenten op basis van de interactie.
 
+### Track E — UI/UX Positionering & Optimalisatie
+- [x] **E1 — Verplaatsen actieknoppen voor betere flow**
+    - [x] Donker/Licht modus toggle verplaatsen naar rechtsboven, direct rechts naast de 'Beheer' knop.
+    - [x] Huidige 'Beheer' knop en 'Verbonden' indicator opschuiven naar links.
+- [x] **E2 — Info/Start Paneel Integratie**
+    - [x] 'i' knop transformeren naar standaard `.tab-button` en verplaatsen naar absolute top van de navigatiebalk.
+    - [x] Oude zwevende overlay `#camera-controls-overlay` vervangen door vast `#panel-info` paneel links.
+    - [x] Welkomststappen, Kaartbediening en D-Omni Assistent tips toevoegen aan `#panel-info`.
+    - [x] Overbodige CSS en JS opschonen (`setupInfoToggle`).
 ### Afsluiting & Merge
 - [ ] Gebruikersreview opnieuw doorlopen (alle 5 profielen)
 - [ ] Pull Request aanmaken naar `main`
