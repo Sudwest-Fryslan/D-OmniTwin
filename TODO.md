@@ -239,6 +239,26 @@
 
 ---
 
+## 📌 Sprint 22: Identity & Toegangsbeheer (Fase 2) (Gepland)
+
+**Doel:** Implementatie van volwaardig identiteits- en toegangsbeheer (RBAC) ter vervanging van de statische admin API-keys. Scheiding aanbrengen tussen publieke gebruikers, interne medewerkers (inwoners vs. gemeente) en systeembeheerders.
+**Aanleiding:** Architectuurvisie Fase 2 (SSO, OpenID Connect). Noodzaak voor afgeschermde delen van de applicatie.
+
+### Track A — SSO & Keycloak Integratie
+- [ ] Implementeren van Keycloak als Identity Provider (IdP).
+- [ ] Ondersteuning voor SSO via OpenID Connect (OIDC).
+- [ ] Koppelen van Windows Authenticatie (Active Directory / Entra ID) voor naadloze interne login.
+
+### Track B — Role-Based Access Control (RBAC)
+- [ ] Authenticatie middleware voor FastAPI uitbreiden naar JWT verificatie via Keycloak.
+- [ ] Frontend autorisatie-logica in React Router (`ProtectedRoute` afhankelijk van rol).
+- [ ] Rol-definities:
+    - **Publiek (Inwoners):** Open dataset, geen login vereist.
+    - **Gebruiker (Gemeente):** Ingelogd (via Windows SSO), toegang tot extra datasets of functies.
+    - **Beheerder/Admin:** Volledige toegang tot het CMS/Admin Panel en beheerstaken.
+
+---
+
 ## ✅ Sprint 17: Configureerbare Logging Infrastructuur (Afgerond 26 mei 2026)
 
 **Doel:** Gedifferentieerde, configureerbare logging op alle facetten van de applicatie — instelbaar per module via de beheeromgeving, persistent in PostgreSQL, zichtbaar via admin panel dashboard, proactief via alerts.
