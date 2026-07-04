@@ -767,7 +767,8 @@ async function loadKaartData() {
 
     try {
         // 1. Fetch Geometries via pg_featureserv (limit=10000 ensures we get all features)
-        let geoUrl = `/api/geo/collections/public.gebieden/items?gebiedstype_id=${state.currentGebiedstype}&properties=id,naam,gebiedstype_id&limit=10000`;
+        // We use vw_gebieden_features to ensure we get MultiPolygon instead of Point
+        let geoUrl = `/api/geo/collections/public.vw_gebieden_features/items?gebiedstype_id=${state.currentGebiedstype}&properties=id,naam,gebiedstype_id&limit=10000`;
         if (state.currentGemeenteCode) {
             geoUrl += `&gemeente_code=${state.currentGemeenteCode}`;
         }
@@ -836,6 +837,7 @@ async function loadGebiedDetails(gebiedId) {
         console.log(`✅ Details geladen voor ${gebiedId}`);
     } catch (error) {
         console.error('❌ Fout bij laden gebied details:', error);
+        showError('Kon gebied details niet laden: ' + (error.message || 'Onbekende fout'));
         showGebiedEmptyState(); // Fallback naar empty state bij fout
     }
 }
@@ -1392,22 +1394,42 @@ function displayOnMap(geojson) {
                 // Load gebied details (voor het laatst aangeklikte gebied)
                 loadGebiedDetails(gebiedId);
 
+                // Trigger re-render to show selection highlight
                 // Reload kompas data if window is already open
                 if (state.kompasWindow && state.kompasWindow.isVisible && window.kompasViz && window.kompasViz.currentConfigId) {
                     loadKompasForSelection(window.kompasViz.currentConfigId);
                 }
 
-                // Trigger re-render to show selection highlight
                 if (state.currentData && state.currentData.features && state.currentData.features.length > 0) {
-                    displayOnMap(state.currentData);
+                    try {
+                        displayOnMap(state.currentData);
+                    } catch (e) {
+                        console.error('⚠️ Fout tijdens displayOnMap:', e);
+                    }
                 } else {
                     console.warn('⚠️ Cannot re-render map: state.currentData is empty/invalid');
                 }
 
                 // Camera: Auto-pan to selected area (UI Polish)
                 if (!isMultiSelect) {
-                    flyToGebied(info.object);
+                    const originalFeature = state.currentData && state.currentData.features 
+                        ? state.currentData.features.find(f => (f.id || f.properties?.id) === gebiedId) 
+                        : null;
+                    const safeFeature = originalFeature || info.object;
+                    // Diepe kopie van coördinaten om garbage collection/recycling te voorkomen
+                    const safeCoordinate = info.coordinate ? [...info.coordinate] : null;
+
+                    // Decouple from MapController event loop
+                    setTimeout(() => {
+                        try {
+                            flyToGebied(safeFeature, safeCoordinate);
+                        } catch (e) {
+                            console.error('⚠️ Fout tijdens flyToGebied animatie:', e);
+                        }
+                    }, 50);
                 }
+                
+                return true; // Stop propagation to prevent MapController from canceling the transition
             }
         },
 
@@ -3253,42 +3275,53 @@ function getFreezone() {
     return { centerX, screenCenterX: W / 2 };
 }
 
-function flyToGebied(feature) {
+function flyToGebied(feature, clickCoordinate = null) {
     if (!feature || !feature.geometry) return;
 
-    // Calculate centroid
     let centroid = [0, 0];
-    let count = 0;
 
-    const coords = feature.geometry.coordinates;
+    // Gebruik de klik-coördinaat als die er is (altijd accuraat binnen de MultiPolygon)
+    if (clickCoordinate && Array.isArray(clickCoordinate) && clickCoordinate.length >= 2) {
+        centroid = [clickCoordinate[0], clickCoordinate[1]];
+    } else {
+        // Fallback: Calculate centroid by averaging all vertices
+        let count = 0;
+        const coords = feature.geometry.coordinates;
 
-    const flatten = (arr) => {
-        if (typeof arr[0] === 'number') {
-            centroid[0] += arr[0];
-            centroid[1] += arr[1];
-            count++;
+        const flatten = (arr) => {
+            if (typeof arr[0] === 'number') {
+                centroid[0] += arr[0];
+                centroid[1] += arr[1];
+                count++;
+            } else {
+                arr.forEach(flatten);
+            }
+        };
+
+        flatten(coords);
+
+        if (count > 0) {
+            centroid[0] /= count;
+            centroid[1] /= count;
         } else {
-            arr.forEach(flatten);
+            return; // Geen geldige geometrie
         }
-    };
+    }
 
-    flatten(coords);
+    // Gebruik altijd state.currentViewState als bron van waarheid voor de huidige camera
+    // DeckGL kan soms transitions missen als initialViewState niet genoeg verschilt van de vorige initialViewState,
+    // maar door de actuele (gepande) currentViewState te gebruiken, dwingen we altijd een verandering af.
+    const baseState = state.currentViewState || state.deckgl.props.initialViewState || { zoom: 12, pitch: 45, bearing: 0 };
+    const zoom = Math.max(baseState.zoom || 12, 12);
 
-    if (count > 0) {
-        centroid[0] /= count;
-        centroid[1] /= count;
+    // Sprint 16: Verschuif longitude zodat buurt in de vrije zone valt
+    const { centerX, screenCenterX } = getFreezone();
+    const pixelOffset = screenCenterX - centerX; // positief = vrije zone is links van midden
+    // Graden per pixel bij gegeven zoom (Web Mercator)
+    const degreesPerPixel = 360 / (256 * Math.pow(2, zoom));
+    const lngOffset = pixelOffset * degreesPerPixel;
 
-        const currentViewState = state.deckgl.props.initialViewState || { zoom: 12, pitch: 45, bearing: 0 };
-        const zoom = Math.max(currentViewState.zoom, 12);
-
-        // Sprint 16: Verschuif longitude zodat buurt in de vrije zone valt
-        const { centerX, screenCenterX } = getFreezone();
-        const pixelOffset = screenCenterX - centerX; // positief = vrije zone is links van midden
-        // Graden per pixel bij gegeven zoom (Web Mercator)
-        const degreesPerPixel = 360 / (256 * Math.pow(2, zoom));
-        const lngOffset = pixelOffset * degreesPerPixel;
-
-        console.log(`🎥 Flying to area:`, centroid, `offset: ${pixelOffset.toFixed(0)}px → ${lngOffset.toFixed(4)}°`);
+    console.log(`🎥 Flying to area:`, centroid, `offset: ${pixelOffset.toFixed(0)}px → ${lngOffset.toFixed(4)}°`);
 
         state.deckgl.setProps({
             initialViewState: {
@@ -3300,7 +3333,6 @@ function flyToGebied(feature) {
                 transitionInterpolator: new deck.FlyToInterpolator()
             }
         });
-    }
 }
 
 

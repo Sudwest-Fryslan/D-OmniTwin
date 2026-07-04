@@ -74,6 +74,8 @@ services:
     environment:
       DATABASE_URL: postgres://${DATABASE_USER:-omnitwin_user}:${DATABASE_PASSWORD}@postgres:5432/${DATABASE_NAME:-omnitwin_db}
       PGFS_SERVER_BASEPATH: /api/geo
+      PGFS_PAGING_LIMITMAX: 10000
+      PGFS_PAGING_LIMITDEFAULT: 10000
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.pg_featureserv.rule=PathPrefix(`/api/geo`)"

@@ -8,6 +8,11 @@
 > **Spec:** [`docs/7-projectmanagement/archief/sprint-19-plan_data-naar-inzicht.md`](./docs/7-projectmanagement/archief/sprint-19-plan_data-naar-inzicht.md)
 
 ---
+## 🔴 OPEN ISSUES VOOR MORGEN (05-07-2026)
+1. **FlyTo Animatie Faalt / MapController Interruptie**: De map zoomt/vliegt niet correct naar de buurt bij klik. De JS code in `app.js` is vanavond robuust gemaakt (crash protectie & `setTimeout` decoupling & juiste fallback attributen), maar mogelijk onderbreekt DeckGL de actie nog steeds.
+2. **Gestapelde Vlakken / Dubbele Buurten in DB**: De kaart tekent in gebieden (zoals Smallingerland) gigantisch veel dubbele / gestapelde randen. Oorzaak: Er zitten oude buurten / dubbele geometrie-rijen met dezelfde naam (maar mogelijk een ander ID) in de `gebieden` of `gebied_indicator_waarden` tabel, waardoor `displayOnMap` tientallen dezelfde vlakken op elkaar rendert. Dit verklaart ook waarom `flatten()` crashte (te veel data) en de rendering traag is.
+
+---
 
 ## ✅ Sprint 18: IJsselmeerkust als Besluitinstrument (Afgerond)
 
