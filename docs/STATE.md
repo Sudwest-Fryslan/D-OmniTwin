@@ -9,9 +9,9 @@
 
 | Veld | Waarde |
 |------|--------|
-| **Huidige versie** | v1.0.0-beta (pre-release) |
-| **Sprint** | Sprint 18 — IJsselmeerkust als Besluitinstrument ✅ Afgerond | 
-| **Laatste update** | 2026-07-03 (Dag 81) |
+| **Huidige versie** | v1.1.0-beta (Dataspace-ready) |
+| **Sprint** | Sprint 19 — Dataspace Migratie Fase 1-3 ✅ Afgerond | 
+| **Laatste update** | 2026-07-04 (Dag 82) |
 | **Bijgewerkt door** | Project-manager skill (Antigravity) |
 
 ---
@@ -20,9 +20,13 @@
 
 | Component | Status | Notitie |
 |-----------|--------|---------|
-| **FastAPI backend** | 🟢 Actief | `run_dev.py` draait, WSL/Ubuntu |
+| **API Gateway (Nginx)** | 🟢 Actief | Port 80, reverse proxy voor microservices |
+| **Data API (PostgREST)** | 🟢 Actief | Port 3000, Dataspace compliant data endpoint |
+| **Geo API (pg_featureserv)** | 🟢 Actief | Port 9000, OGC API Features endpoint |
+| **FastAPI backend** | 🟢 Actief | Hybride AI/Rapportage logic, Port 8000 |
+| **Docker Compose** | 🟢 Actief | Primary orchestration engine |
 | **Mapbox + Deck.gl frontend** | 🟢 Actief | Classic Premium UI |
-| **CBS buurt-data** | 🟢 Geïmporteerd | Fryslân 942 buurten (initiatie dataset) |
+| **CBS buurt-data** | 🟢 Geïmporteerd | Fryslân 931 buurten |
 | **RIVM indicatoren** | 🟢 Actief | Meerdere jaren beschikbaar |
 | **AI Chat Interface** | 🟢 Actief | HELP_ONBOARDING intent actief (deterministic, geen LLM) |
 | **Help / Wiki Pagina** | 🟢 Actief | `/static/help.html` |
@@ -52,9 +56,9 @@
 
 | Datum | Wijziging | Impact |
 |-------|-----------|--------|
-| 2026-07-03 | **Sprint 19 Track E Voltooid (Dag 81)** | UI/UX Positionering geoptimaliseerd. Info ('i') knop getransformeerd naar linker navigatie tab en gekoppeld aan nieuw vast paneel (`#panel-info`). Opruimen van overbodige CSS/JS gerelateerd aan oude zwevende overlay. Tevens roadmap (Sprint 22) geüpdatet met Keycloak SSO/RBAC plannen. |
-| 2026-07-02 | **Sprint 18 Track D Voltooid (Dag 80)** | Dynamische Profielen & Deterministische Scenario's (Showcase IJsselmeerkust) geïmplementeerd. Chatbot integratie met frontend (gebied selectie, kompas openen via chat acties). Unicodes/Variation selector bugs in JS Regex opgelost. |
-| 2026-06-30 | **Sprint 18 Afgerond — Dag 79** | Multi-gebied benchmark (Track C) geïmplementeerd en getest. Alle sprint 18 code gesynchroniseerd naar `main` (worktree was op F-schijf gekoppeld). Bugfix: `gemeenten` API 500-error door ontbrekende `id`-kolom opgelost. `fiona` package toegevoegd aan requirements. Worktree `D-OmniTwin-sprint18` volledig opgeruimd (E én F schijf). |
+| 2026-07-04 | **Sprint 19 Dataspace Migratie (Fase 1-3) Voltooid** | Monolithische architectuur is opgedeeld in microservices via Docker Compose. Nginx API gateway toegevoegd, PostgREST voor data ontsluiting en pg_featureserv voor geometrie (limit=10000). Frontend calls gemigreerd naar hybride-Lego model. Prestaties en dataspace-compliance verbeterd. |
+| 2026-07-03 | **Sprint 19 Track E Voltooid (Dag 81)** | UI/UX Positionering geoptimaliseerd. Info ('i') knop getransformeerd naar linker navigatie tab en gekoppeld aan nieuw vast paneel (`#panel-info`). Overbodige CSS/JS opgeruimd. |
+| 2026-07-02 | **Sprint 18 Track D Voltooid (Dag 80)** | Dynamische Profielen & Deterministische Scenario's (Showcase IJsselmeerkust) geïmplementeerd. Chatbot integratie met frontend (gebied selectie, kompas openen via chat acties). |
 | 2026-06-20 | **Sprint 18 Track A Voltooid (Dag 77)** | Ontologie UI, trendlijnen en bronvermeldingen geïmplementeerd. Bugfix AI chat (`KeyError 'uuid'`) wegens defecte `sympy` dependency in `.venv` opgelost. Git `pre-commit` hook toegevoegd om `.venv` map te beveiligen. |
 
 ---
@@ -87,8 +91,8 @@
 | **Sprint** | Focus | Verwacht |
 |--------|-------|---------|
 | **18** | IJsselmeerkust als Besluitinstrument — duiding, BAG woonplaatsen, benchmarking, Track F quickwins | ✅ Afgerond (Dag 79 — alle tracks incl. multi-gebied benchmark) |
-| **19** | Van Data naar Inzicht — signalering, prioritering, contextuele scores, AI-samenvatting | 📌 Gepland (na Sprint 18) |
-| **#11 (OV ETL)** | OV Haltes ETL — OSM data FR/GR/DR → Kompas indicatoren | ✅ Voltooid — merge `7443b51` |
+| **19** | Dataspace Architectuur Migratie — Docker, PostgREST, pg_featureserv, Nginx | ✅ Afgerond (Fase 1, 2, 3 voltooid) |
+| **19B**| Van Data naar Inzicht — signalering, prioritering, contextuele scores, AI-samenvatting | 📌 Gepland |
 | **17** | Configureerbare Logging Infrastructuur | ✅ Voltooid — merge `4ed45bd`, closes #9 (deels) |
 | **17C e-mail** | E-mail alerts bij ERROR/CRITICAL | ⏳ On hold — Issue #10, wacht op SMTP |
 | **12** | 3D BAG Integratie & Bug #42 | 🔜 Na Sprint 19 |

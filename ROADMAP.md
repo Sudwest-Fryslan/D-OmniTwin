@@ -1,6 +1,6 @@
 # Feature Roadmap - D-OmniTwin Gebiedsmonitor
 
-**Status:** 2026-06-30 (Dag 79) — Sprint 18 ✅ Afgerond | Sprint 19 📌 Gepland  
+**Status:** 2026-07-04 (Dag 82) — Sprint 19 (Migratie) ✅ Afgerond | Sprint 19B 📌 Gepland  
 **Visie:** Van prototype naar productie-klaar, AI-gedreven gebiedsmonitor platform
 
 ---
@@ -98,7 +98,7 @@
 
 ---
 
-### 📊 Sprint 19: Van Data naar Inzicht (Gepland)
+### 📊 Sprint 19B: Van Data naar Inzicht (Gepland)
 
 **Visie:** D-OmniTwin transformeren van een data-exploratie platform naar een inzicht-gedreven besluitvormingsinstrument.  
 **Aanleiding:** Gebruikersreview juni 2026 — consistente bevinding over alle 5 gebruikersprofielen.  
@@ -874,7 +874,7 @@ mapStyle: 'mapbox://styles/mapbox/light-v10'
 - [ ] **Sprint 18: Dataspace-Native PoC**
     - Onderzoek API-koppeling met Fryslân Data Space (FRLDS).
     - Ontkoppelen van lokale indicator-tabellen naar federatieve bronnen.
-- [ ] **Sprint 19: Dynamisch Kompas v3**
+- [ ] **Sprint 19B: Dynamisch Kompas v3**
     - Het Kompas-model onafhankelijk maken van de database-schema's (agnostische mappings).
 - [ ] **Sprint 20: AI Narratieven voor Burgers**
     - LLM-vertaling voor lokale context op basis van live federatieve data.
@@ -1030,7 +1030,7 @@ Gebruikersinteracties verrijken het systeem:
 
 | Idee | Prioriteit | Kandidaat Sprint | Koppeling |
 |------|-----------|------------------|-----------|
-| **Lege indicatoren verbergen** in Kompas & Zoekfunctie | 🔴 HOOG | Sprint 19 of 20 | Beheer / UX — kleine technische ingreep, grote UX-winst |
+| **Lege indicatoren verbergen** in Kompas & Zoekfunctie | 🔴 HOOG | Sprint 19B of 20 | Beheer / UX — kleine technische ingreep, grote UX-winst |
 | **Ontologieteksten genereren vanuit beheer** (op basis van metadata) | 🔴 HOOG | Sprint 20 | Uitbreiding van Sprint 18 Track A ontologie-validatielus |
 | **Metadata ophalen bij de bron** vanuit admin panel | 🟡 MIDDEL | Sprint 20-21 | Koppeling met CBS OData / RIVM API, beheerder keurt diff goed |
 | **Gebruikersprofielen met sessie-geheugen** | 🟡 MIDDEL | Sprint 21+ | Auth-uitbreiding: saved reports, zoekhistorie, AI-chat (30 dgn) |
