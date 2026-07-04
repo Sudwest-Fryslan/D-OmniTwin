@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <script src="https://unpkg.com/deck.gl@^9.0.0/dist.min.js"></script>
+  <script src="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.js"></script>
+  <link href="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.css" rel="stylesheet">
+</head>
+<body>
+  <div id="map" style="width: 100vw; height: 100vh;"></div>
+  <script>
+    const deckgl = new deck.DeckGL({
+      container: 'map',
+      mapStyle: 'https://api.pdok.nl/kadaster/brt-achtergrondkaart/ogc/v1/styles/standaard__webmercatorquad?f=mapbox',
+      initialViewState: {longitude: 5.5, latitude: 53.0, zoom: 8}
+    });
+  </script>
+</body>
+</html>

@@ -10,9 +10,9 @@
   <link rel="stylesheet" href="/static/css/styles.css">
   <link rel="stylesheet" href="/static/css/custom-dropdown.css">
 
-  <!-- Mapbox GL JS (required for deck.gl Mapbox integration) -->
-  <link href="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css" rel="stylesheet">
-  <script src="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js"></script>
+  <!-- MapLibre GL JS (replacement for Mapbox) -->
+  <link href="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.css" rel="stylesheet">
+  <script src="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.js"></script>
 
   <!-- D3.js v7 for Kompas sunburst visualization -->
   <script src="https://d3js.org/d3.v7.min.js"></script>
@@ -553,14 +553,13 @@
         <div class="panel">
           <h3 class="panel-title">Kaartlagen</h3>
 
-          {% if mapbox_token %}
           <div class="form-group">
-            <label>Mapbox Basemap</label>
+            <label>Basemap (PDOK)</label>
             <select id="mapbox-style-select" class="form-control">
-              <option value="mapbox://styles/mapbox/light-v10">Light</option>
-              <option value="mapbox://styles/mapbox/dark-v10">Dark</option>
-              <option value="mapbox://styles/mapbox/satellite-v9">Satellite</option>
-              <option value="mapbox://styles/mapbox/streets-v12">Streets</option>
+              <option value="https://api.pdok.nl/kadaster/brt-achtergrondkaart/ogc/v1/styles/standaard__webmercatorquad?f=mapbox">PDOK Standaard (Light)</option>
+              <option value="https://api.pdok.nl/kadaster/brt-achtergrondkaart/ogc/v1/styles/darkmode__webmercatorquad?f=mapbox">PDOK Dark Mode</option>
+              <option value="https://api.pdok.nl/kadaster/brt-achtergrondkaart/ogc/v1/styles/pastel__webmercatorquad?f=mapbox">PDOK Pastel</option>
+              <option value="https://api.pdok.nl/kadaster/brt-achtergrondkaart/ogc/v1/styles/water__webmercatorquad?f=mapbox">PDOK Water</option>
             </select>
           </div>
 
@@ -569,10 +568,6 @@
             <input type="range" id="basemap-opacity" class="slider" min="0" max="100" value="100" step="5">
             <span class="help-text">Huidige: <span id="opacity-value">100</span>%</span>
           </div>
-          {% else %}
-          <p class="help-text">⚠️ Mapbox API token niet geconfigureerd. Basemap functionaliteit is uitgeschakeld.</p>
-          <p class="help-text">Configureer een token in <code>config.ini</code> onder <code>[MAPBOX]</code>.</p>
-          {% endif %}
 
           <!-- Gebiedslagen: dynamisch ingeladen via loadExterneKaartlagen() -->
           <!-- Omgevingsvisie SWF is nu een externe kaartlaag (Sprint 18 B4) -->
@@ -937,7 +932,7 @@
       <img src="/static/images/DF-LOGO-1-1000x1000-TBG.png" alt="Datafryslân" class="footer-logo" title="Datafryslân">
     </div>
     <div class="footer-content">
-      <p>D-OmniTwin &copy; 2026 | Data: 1,721 gebieden | API v0.2.0 | Mapbox: {% if mapbox_token %}Enabled{% else %}Disabled{% endif %}</p>
+      <p>D-OmniTwin &copy; 2026 | Data: 1,721 gebieden | API v0.2.0 | Basemap: PDOK BRT</p>
     </div>
   </footer>
 
@@ -948,10 +943,11 @@
   <!-- Chart.js for optional charts -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 
-  <!-- Mapbox Token from Backend -->
   <script>
-    window.MAPBOX_TOKEN = "{{ mapbox_token if mapbox_token else '' }}";
-    window.MAPBOX_STYLE = "{{ mapbox_style if mapbox_style else '' }}";
+    // MapLibre Configuration (DeckGL compatibiliteit)
+    window.mapboxgl = window.maplibregl;
+    window.MAPBOX_TOKEN = "dummy-token-to-satisfy-deckgl";
+    window.MAPBOX_STYLE = "https://api.pdok.nl/kadaster/brt-achtergrondkaart/ogc/v1/styles/standaard__webmercatorquad?f=mapbox";
 
     // Auth-aware admin navigation
     async function openAdmin(event) {

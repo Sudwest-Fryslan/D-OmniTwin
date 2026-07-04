@@ -37,6 +37,7 @@
     - Benchmark: alleen kernen-onderling of ook Fries gemiddelde?
 
 ### Track A — Duiding & Context (Kompas-paneel) ✅
+- [ ] **Gemeente-weergave (Fase 3 actiepunt):** Zorgen dat gemeenten op dezelfde wijze doorzoekbaar worden, met in de toekomst een eigen gemeentelijk kompas en visualisatie van de gemeenten op de kaart.
 - [x] **A1 — Bronvermelding & Ontologie**
     - [x] Bron en peildatum zijn reeds zichtbaar.
     - [x] Tooltip of externe link toevoegen aan de bron-weergave.

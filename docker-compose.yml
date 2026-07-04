@@ -1,0 +1,86 @@
+version: '3.8'
+
+services:
+  traefik:
+    image: traefik:latest
+    container_name: traefik
+    command:
+      - "--api.insecure=true"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.web.address=:80"
+    environment:
+      - DOCKER_API_VERSION=1.44
+    ports:
+      - "80:80"
+      - "8081:8080"
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+    restart: unless-stopped
+
+  backend:
+    build: .
+    container_name: omnitwin_backend
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.backend.rule=PathPrefix(`/`)"
+      - "traefik.http.services.backend.loadbalancer.server.port=8000"
+    env_file:
+      - .env
+    volumes:
+      - .:/app
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped
+    depends_on:
+      - postgres
+
+  postgres:
+    build:
+      context: .
+      dockerfile: db.Dockerfile
+    container_name: omnitwin_db
+    environment:
+      POSTGRES_USER: ${DATABASE_USER:-omnitwin_user}
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
+      POSTGRES_DB: ${DATABASE_NAME:-omnitwin_db}
+    ports:
+      - "5433:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    restart: unless-stopped
+
+  postgrest:
+    image: postgrest/postgrest:latest
+    container_name: postgrest
+    environment:
+      PGRST_DB_URI: postgres://${DATABASE_USER:-omnitwin_user}:${DATABASE_PASSWORD}@postgres:5432/${DATABASE_NAME:-omnitwin_db}
+      PGRST_DB_SCHEMA: public
+      PGRST_DB_ANON_ROLE: ${DATABASE_USER:-omnitwin_user}
+      PGRST_SERVER_PROXY_URI: http://localhost/api/data
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.postgrest.rule=PathPrefix(`/api/data`)"
+      - "traefik.http.middlewares.postgrest-strip.stripprefix.prefixes=/api/data"
+      - "traefik.http.routers.postgrest.middlewares=postgrest-strip"
+      - "traefik.http.services.postgrest.loadbalancer.server.port=3000"
+    depends_on:
+      - postgres
+    restart: unless-stopped
+
+  pg_featureserv:
+    image: pramsey/pg_featureserv:latest
+    container_name: pg_featureserv
+    environment:
+      DATABASE_URL: postgres://${DATABASE_USER:-omnitwin_user}:${DATABASE_PASSWORD}@postgres:5432/${DATABASE_NAME:-omnitwin_db}
+      PGFS_SERVER_BASEPATH: /api/geo
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.pg_featureserv.rule=PathPrefix(`/api/geo`)"
+      - "traefik.http.services.pg_featureserv.loadbalancer.server.port=9000"
+    depends_on:
+      - postgres
+    restart: unless-stopped
+
+volumes:
+  pgdata:

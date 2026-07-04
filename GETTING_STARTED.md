@@ -31,6 +31,11 @@ Zorg dat onderstaande software geïnstalleerd is voordat je begint:
 git clone https://github.com/jouw-org/D-OmniTwin.git
 cd D-OmniTwin
 
+# Methode A: Docker Compose (Aanbevolen voor de Hybride Dataspace Architectuur)
+# Start Nginx, PostgREST, pg_featureserv, PostgreSQL en de FastAPI backend:
+docker compose up -d
+
+# Methode B: Lokale Python (Voor ontwikkeling op de FastAPI backend)
 # Python virtual environment aanmaken en activeren
 python -m venv .venv
 source .venv/bin/activate        # Linux/macOS

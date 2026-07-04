@@ -231,8 +231,12 @@ function initTheme() {
     // Set Mapbox style based on theme
     if (state.mapboxToken) {
         state.mapboxStyle = state.currentTheme === 'dark'
-            ? 'mapbox://styles/mapbox/dark-v10'
-            : 'mapbox://styles/mapbox/light-v10';
+            ? 'https://api.pdok.nl/kadaster/brt-achtergrondkaart/ogc/v1/styles/darkmode__webmercatorquad?f=mapbox'
+            : 'https://api.pdok.nl/kadaster/brt-achtergrondkaart/ogc/v1/styles/standaard__webmercatorquad?f=mapbox';
+        
+        // Sync mapbox select if exists
+        const styleSelect = document.getElementById('mapbox-style-select');
+        if (styleSelect) styleSelect.value = state.mapboxStyle;
     }
 
     console.log(`🎨 Theme initialized: ${state.currentTheme}`);
@@ -274,10 +278,13 @@ function updateThemeIcon() {
 function updateMapboxStyleForTheme() {
     if (!state.mapboxToken) return;
 
-    // Determine which style should be active based on theme
+    // Use PDOK styles instead of Mapbox styles for the themes
     const targetStyle = state.currentTheme === 'dark'
-        ? 'mapbox://styles/mapbox/dark-v10'
-        : 'mapbox://styles/mapbox/light-v10';
+        ? 'https://api.pdok.nl/kadaster/brt-achtergrondkaart/ogc/v1/styles/darkmode__webmercatorquad?f=mapbox'
+        : 'https://api.pdok.nl/kadaster/brt-achtergrondkaart/ogc/v1/styles/standaard__webmercatorquad?f=mapbox';
+
+    // Only update if changed
+    if (state.mapboxStyle === targetStyle) return;
 
     // Update state
     state.mapboxStyle = targetStyle;
@@ -391,34 +398,30 @@ function togglePanel(panelId) {
 }
 
 // ============================================================================
-// deck.gl Setup with Mapbox
+// deck.gl Setup with MapLibre
 // ============================================================================
 
 function initDeckGL() {
     const { DeckGL, MapView } = deck;
 
-    // Debug: Log Mapbox token status
-    console.log('🗺️ Mapbox Token:', state.mapboxToken ? 'AVAILABLE' : 'NOT SET');
-    console.log('🎨 Mapbox Style:', state.mapboxStyle);
-
-    // Mapbox configuration (if token available)
-    const mapboxConfig = state.mapboxToken ? {
-        mapboxApiAccessToken: state.mapboxToken,
-        mapStyle: state.mapboxStyle,
+    // MapLibre configuration
+    const mapConfig = {
+        mapStyle: state.mapboxStyle, // Uses PDOK styles from index.html
         mapOptions: {
             preserveDrawingBuffer: true
         }
-    } : {};
+    };
 
-    console.log('⚙️ deck.gl config:', mapboxConfig);
+    console.log('⚙️ deck.gl config:', mapConfig);
 
     // Create 3D lighting effect
     const lightingEffect = create3DLighting();
 
     state.deckgl = new DeckGL({
         container: 'map',
+        map: typeof maplibregl !== 'undefined' ? maplibregl : window.mapboxgl,
         views: [new MapView({ repeat: true })],
-        ...mapboxConfig,
+        ...mapConfig,
         initialViewState: state.currentViewState,
         onViewStateChange: ({ viewState }) => {
             state.currentViewState = viewState;
@@ -530,31 +533,32 @@ function initDeckGL() {
         }
     });
 
-    console.log('✅ deck.gl geïnitialiseerd');
-    if (state.mapboxToken) {
-        console.log('✅ Mapbox basemap should be loading...');
-        console.log('📍 Check browser console for Mapbox GL errors');
-    } else {
-        console.warn('⚠️ Mapbox basemap disabled (no token)');
-    }
+    // Event listeners
+    state.deckgl.setProps({
+        onWebGLInitialized: (gl) => {
+            console.log('✅ WebGL Initialized');
+        }
+    });
+
 }
 
 // ============================================================================
-// Mapbox Style Switcher (NEW)
+// MapLibre Style Switcher
 // ============================================================================
 
 function changeMapboxStyle(styleUrl) {
-    if (!state.mapboxToken) {
-        console.warn('❌ Mapbox API key not configured');
+    if (!state.deckgl) {
+        console.warn('❌ DeckGL instance not initialized yet');
         return;
     }
 
     state.mapboxStyle = styleUrl;
+
     state.deckgl.setProps({
         mapStyle: styleUrl
     });
 
-    console.log(`🗺️ Mapbox style changed to: ${styleUrl}`);
+    console.log(`🗺️ Basemap style changed to: ${styleUrl}`);
 }
 
 // ============================================================================
@@ -598,12 +602,12 @@ async function loadGemeenten() {
     let gemeenten = [];
 
     try {
-        const response = await fetch('/api/gemeenten?provincie=Fryslân');
+        const response = await fetch('/api/data/gemeenten?provincie=eq.Frysl%C3%A2n&order=naam.asc');
         if (response.ok) {
             const data = await response.json();
-            if (data.gemeenten && data.gemeenten.length > 0) {
-                gemeenten = [{ code: '', naam: 'Alle gemeenten', is_eiland: false }, ...data.gemeenten];
-                console.log(`✅ ${data.totaal} gemeenten geladen van API`);
+            if (data && data.length > 0) {
+                gemeenten = [{ code: '', naam: 'Alle gemeenten', is_eiland: false }, ...data];
+                console.log(`✅ ${data.length} gemeenten geladen van API`);
             }
         }
     } catch (error) {
@@ -710,13 +714,13 @@ async function loadGebiedstypes() {
     showLoading(true, 'Gebiedstypes laden...');
 
     try {
-        const response = await fetch(`${API_BASE}/gebiedstypes`);
+        const response = await fetch('/api/data/gebiedstypes?select=id,naam,code,beschrijving,bron,niveau&order=naam.asc');
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
 
         const data = await response.json();
-        populateGebiedstypeSelect(data.gebiedstypes);
+        populateGebiedstypeSelect(data);
 
-        console.log(`✅ ${data.gebiedstypes.length} gebiedstypes geladen`);
+        console.log(`✅ ${data.length} gebiedstypes geladen`);
     } catch (error) {
         console.error('❌ Fout bij laden gebiedstypes:', error);
         showError('Fout bij laden van gebiedstypes');
@@ -729,13 +733,22 @@ async function loadIndicatoren(gebiedstypeId) {
     showLoading(true, 'Indicatoren laden...');
 
     try {
-        const response = await fetch(`${API_BASE}/indicatoren?gebiedstype_id=${gebiedstypeId}`);
+        const response = await fetch(`/api/data/rpc/get_indicatoren_stats`);
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        
+        let url = `/api/data/rpc/get_indicatoren_stats`;
+        if (gebiedstypeId) {
+            // PostgREST verwacht POST voor RPC functies met argumenten of je kunt callen via GET als parameters query params zijn
+            url += `?p_gebiedstype_id=${gebiedstypeId}`;
+        }
+        
+        const res = await fetch(url);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
-        const data = await response.json();
-        populateIndicatorSelect(data.indicatoren);
+        const data = await res.json();
+        populateIndicatorSelect(data);
 
-        console.log(`✅ ${data.indicatoren.length} indicatoren geladen`);
+        console.log(`✅ ${data.length} indicatoren geladen`);
     } catch (error) {
         console.error('❌ Fout bij laden indicatoren:', error);
         showError('Fout bij laden van indicatoren');
@@ -753,34 +766,54 @@ async function loadKaartData() {
     showLoading(true, 'Kaart data laden...');
 
     try {
-        let url = `${API_BASE}/kaart/${state.currentGebiedstype}?show_all=${state.showAll}`;
-        if (state.currentIndicator) {
-            url += `&indicator_uuid=${state.currentIndicator}`;
-        }
-        // Filter op geselecteerde gemeente (indien niet 'Alle gemeenten')
+        // 1. Fetch Geometries via pg_featureserv (limit=10000 ensures we get all features)
+        let geoUrl = `/api/geo/collections/public.gebieden/items?gebiedstype_id=${state.currentGebiedstype}&properties=id,naam,gebiedstype_id&limit=10000`;
         if (state.currentGemeenteCode) {
-            url += `&gemeente_code=${state.currentGemeenteCode}`;
+            geoUrl += `&gemeente_code=${state.currentGemeenteCode}`;
+        }
+        
+        // 2. Fetch Attributes via FastAPI (Hybride)
+        let attrUrl = `/api/gebiedsmonitor/kaart_data/${state.currentGebiedstype}?show_all=${state.showAll}`;
+        if (state.currentIndicator) {
+            attrUrl += `&indicator_uuid=${state.currentIndicator}`;
+        }
+        if (state.currentGemeenteCode) {
+            attrUrl += `&gemeente_code=${state.currentGemeenteCode}`;
         }
 
-        const response = await fetch(url);
+        const [geoRes, attrRes] = await Promise.all([
+            fetch(geoUrl),
+            fetch(attrUrl)
+        ]);
 
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        if (!geoRes.ok) throw new Error(`Geo HTTP ${geoRes.status}`);
+        if (!attrRes.ok) throw new Error(`Attr HTTP ${attrRes.status}`);
 
-        const geojson = await response.json();
+        const geojson = await geoRes.json();
+        const attributes = await attrRes.json();
+        
+        // 3. Merge attributes into GeoJSON features
+        geojson.features.forEach(f => {
+            const props = attributes.data[f.properties.id];
+            if (props) {
+                Object.assign(f.properties, props);
+            }
+        });
+        geojson.metadata = attributes.metadata;
+
         state.currentData = geojson;
-        state.initialDataLoaded = false; // Sprint 16: reset zodat fitBounds() opnieuw mag draaien
+        state.initialDataLoaded = false;
 
         displayOnMap(geojson);
         updateFeatureCount(geojson.metadata);
         updateLegenda(geojson);
 
-        // Enable export buttons
         const geojsonBtn = document.getElementById('export-geojson-btn');
         const csvBtn = document.getElementById('export-csv-btn');
         if (geojsonBtn) geojsonBtn.disabled = false;
         if (csvBtn) csvBtn.disabled = false;
 
-        console.log(`✅ ${geojson.features.length} gebieden geladen`);
+        console.log(`✅ ${geojson.features.length} gebieden geladen (Lego architecture merge)`);
     } catch (error) {
         console.error('❌ Fout bij laden kaart data:', error);
         showError('Fout bij laden van kaart data');
@@ -794,7 +827,7 @@ async function loadGebiedDetails(gebiedId) {
     showInlineLoading('Gebieddetails laden...');
 
     try {
-        const response = await fetch(`${API_BASE}/gebieden/${gebiedId}`);
+        const response = await fetch(`/api/gebiedsmonitor/gebieden/${gebiedId}`);
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
 
         const data = await response.json();
@@ -925,7 +958,7 @@ async function loadBag3DBuildings() {
 async function loadOmgevingsvisieLayer() {
     showLoading(true, 'Omgevingsvisie deelgebieden laden...');
     try {
-        const res = await fetch('/api/omgevingsvisie/deelgebieden');
+        const res = await fetch('/api/geo/collections/public.omgevingsvisie_deelgebieden/items?limit=100');
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
         const geojson = await res.json();
@@ -993,10 +1026,10 @@ async function selectBuurtenFromDeelgebied(deelgebiedId, deelgebiedNaam) {
  */
 async function loadExterneKaartlagen() {
     try {
-        const res = await fetch('/api/externe-lagen');
+        const res = await fetch('/api/data/externe_kaartlagen?actief=eq.true&order=volgorde.asc,naam.asc');
         if (!res.ok) return;
         const data = await res.json();
-        state.externeKaartlagen = data.lagen || [];
+        state.externeKaartlagen = data || [];
 
         const container = document.getElementById('externe-lagen-list');
         if (!container) return;
@@ -1906,11 +1939,22 @@ function populateGebiedstypeSelect(gebiedstypes) {
     const select = document.getElementById('gebiedstype-select');
     select.innerHTML = '<option value="">Selecteer een gebiedstype</option>';
 
+    select.addEventListener('change', (e) => {
+        state.currentGebiedstype = e.target.value;
+        const selectedOption = e.target.options[e.target.selectedIndex];
+        
+        if (e.target.value) {
+            document.getElementById('gebiedstype-count').textContent = 'Gegevens laden...';
+        } else {
+            document.getElementById('gebiedstype-count').textContent = 'Selecteer een gebiedstype';
+        }
+    });
+
     gebiedstypes.forEach(gt => {
         const option = document.createElement('option');
         option.value = gt.id;
-        option.textContent = `${gt.naam} (${gt.aantal_gebieden} gebieden)`;
-        option.dataset.count = gt.aantal_gebieden;
+        option.textContent = gt.naam;
+        option.dataset.count = gt.aantal_gebieden || 0;
         select.appendChild(option);
     });
 
