@@ -10,8 +10,8 @@
 | Veld | Waarde |
 |------|--------|
 | **Huidige versie** | v1.0.0-beta (pre-release) |
-| **Sprint** | Sprint 18 — IJsselmeerkust als Besluitinstrument ✅ Afgerond | 
-| **Laatste update** | 2026-07-03 (Dag 81) |
+| **Sprint** | Sprint 19 (Onderzoek Multi-Level Hiërarchie & Performance) | 
+| **Laatste update** | 2026-07-04 (Dag 82) |
 | **Bijgewerkt door** | Project-manager skill (Antigravity) |
 
 ---
@@ -52,10 +52,9 @@
 
 | Datum | Wijziging | Impact |
 |-------|-----------|--------|
-| 2026-07-03 | **Sprint 19 Track E Voltooid (Dag 81)** | UI/UX Positionering geoptimaliseerd. Info ('i') knop getransformeerd naar linker navigatie tab en gekoppeld aan nieuw vast paneel (`#panel-info`). Opruimen van overbodige CSS/JS gerelateerd aan oude zwevende overlay. Tevens roadmap (Sprint 22) geüpdatet met Keycloak SSO/RBAC plannen. |
-| 2026-07-02 | **Sprint 18 Track D Voltooid (Dag 80)** | Dynamische Profielen & Deterministische Scenario's (Showcase IJsselmeerkust) geïmplementeerd. Chatbot integratie met frontend (gebied selectie, kompas openen via chat acties). Unicodes/Variation selector bugs in JS Regex opgelost. |
-| 2026-06-30 | **Sprint 18 Afgerond — Dag 79** | Multi-gebied benchmark (Track C) geïmplementeerd en getest. Alle sprint 18 code gesynchroniseerd naar `main` (worktree was op F-schijf gekoppeld). Bugfix: `gemeenten` API 500-error door ontbrekende `id`-kolom opgelost. `fiona` package toegevoegd aan requirements. Worktree `D-OmniTwin-sprint18` volledig opgeruimd (E én F schijf). |
-| 2026-06-20 | **Sprint 18 Track A Voltooid (Dag 77)** | Ontologie UI, trendlijnen en bronvermeldingen geïmplementeerd. Bugfix AI chat (`KeyError 'uuid'`) wegens defecte `sympy` dependency in `.venv` opgelost. Git `pre-commit` hook toegevoegd om `.venv` map te beveiligen. |
+| 2026-07-04 | **Fix FlyTo & Crash Prevention** | Veilige afhandeling van `flyTo` animaties met primitieven en decouple van de MapController. Try/catch blokken toegevoegd aan `app.js` en verrijkte error toasts voor beter inzicht in bugs. |
+| 2026-07-01 | **Auth fix & Hybride Datamodel** | `routers/dashboard.py` omgebouwd naar `check_auth_or_key` ondersteuning. Introductie `vw_gebieden_features` voor efficiëntere tile-serving in Sprint 19. |
+| 2026-06-30 | **Sprint 18 Afgerond — Dag 79** | Multi-gebied benchmark (Track C) geïmplementeerd en getest. Alle sprint 18 code gesynchroniseerd naar `main`. Bugfix: `gemeenten` API 500-error opgelost. |
 
 ---
 
@@ -63,10 +62,11 @@
 
 | Issue | Ernst | Domein | Status |
 |-------|-------|--------|--------|
-| **E-mail alerts (Issue #10)** | Hoog | SecOps/Logging | 🔴 On hold — SMTP-server vereist. Must-have voor deelbare versie. Design: eigen server, configureerbaar via `.env`. |
-| Data Lineage nog niet geïmplementeerd | Hoog | Data Engineering | Gepland Sprint 8F |
+| **Dashboard Backend (FastAPI)** | `routers/dashboard.py` | 🟢 Actief | Dashboards, statistieken & admin key auth. Auth scope gefixt voor admin panels via web UI cookies. |
+| **Data Importer** | `admin-panel/src/pages/DataUpload.js`| 🟡 In Ontwikkeling | UI om CBS bestanden handmatig te uploaden en asynchroon te parsen (Sprint 19 voorbereiding). |
+| **Kaart & Kompas Rendering** | `static/js/app.js` & `kompas.js` | 🟡 In Ontwikkeling | Integratie van MultiPolygons. `flyTo` bug fixes doorgevoerd. Open issue met database dubbele geometrieën veroorzaakt momenteel gestapelde vlakken. |
+| **E-mail alerts (Issue #10)** | Hoog | SecOps/Logging | 🔴 On hold — SMTP-server vereist. Must-have voor deelbare versie. |
 | Bug #42: 3D pand-kleuring bij single-buurt | Middel | Frontend | Open (Sprint 12) |
-| Viewport edge case: Kompas gecentreerd + Chat open | Laag | Frontend | Gedocumenteerd in TODO.md Sprint 16. Workaround: Kompas verschuiven. |
 
 ---
 
