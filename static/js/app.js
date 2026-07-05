@@ -818,7 +818,7 @@ async function loadKaartData() {
         console.log(`✅ ${geojson.features.length} gebieden geladen (Lego architecture merge)`);
     } catch (error) {
         console.error('❌ Fout bij laden kaart data:', error);
-        showError('Fout bij laden van kaart data');
+        showError('Fout bij laden van kaart data: ' + error.message);
     } finally {
         showLoading(false);
     }
@@ -1674,6 +1674,7 @@ function fitBounds(geojson) {
     let minLat = Infinity, maxLat = -Infinity;
 
     geojson.features.forEach(feature => {
+        if (!feature.geometry || !feature.geometry.coordinates) return;
         const coords = feature.geometry.coordinates;
 
         // Flatten coordinates (works for MultiPolygon)
