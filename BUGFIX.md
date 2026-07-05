@@ -1,22 +1,24 @@
 # BUGFIX.md - D-OmniTwin
 
-## Bug #50: DeckGL FlyTo Crash en Foutieve MapController Onderbreking (04-07-2026)
+## Bug #50: DeckGL FlyTo Crash & Gestapelde Vlakken (04-07-2026 / 05-07-2026)
 
 **Gerapporteerd:** 04-07-2026  
-**Status:** ✅ FIXED (04-07-2026)  
-**Severity:** 🔴 HIGH (Map freeze / geen rendering van de highlight laag)
+**Status:** ✅ FIXED (05-07-2026)  
+**Severity:** 🔴 HIGH (Map freeze / extreem trage rendering / crashende animaties)
 
 ### Probleem
-Wanneer een gebruiker op een buurt op de 3D-kaart klikte, verdween plots de gouden gebiedsselectie-rand en bleek de `flyTo` camera-animatie niet uit te voeren. Tevens ontstonden er "Gestapelde vlakken" bij het aanklikken. Dit triggerde onder water een kettingreactie. 
+1. Wanneer een gebruiker op een buurt op de 3D-kaart klikte, werkte de `flyTo` camera-animatie niet meer of crashte stilletjes op de achtergrond.
+2. Buurten (met name in de gemeente Smallingerland) renden als gigantische blokken met zeer donkere, in-transparante vlakken. Het leek alsof geometrieën meerdere keren op elkaar getekend ("gestapeld") werden.
 
 ### Oorzaak (Root Cause)
-1. **Crash in `flyToGebied` door `flatten()`:** Vanwege de transitie naar complexe MultiPolygons en het weglaten van een dekkende parameter crashte de handmatige geometrie-berekening (`flatten()`) die normaal gesproken de centroid berekent. Dit liet het hele click-event crashen voordat `displayOnMap` überhaupt werd afgehandeld. 
-2. **Interruptie door `MapController`:** Als direct in het event-loop van Deck.gl de `initialViewState` wordt overschreven, breekt de interne MapController (vooral bij onbewuste muis-bewegingen/drags) deze transitie genadeloos af.
+1. **Gestapelde vlakken:** De database-view `vw_gebieden_features` haalde álle rijen op voor een gemeente, inclusief inactieve/vervallen buurten (`actief = false`). Daardoor ontving Deck.gl talloze "spookbuurten" die exact over elkaar heen rendenden.
+2. **Gigantische outlines:** De Deck.gl configuratie voor outlines gebruikte `getLineWidth` in meters (80 meter), wat leidde tot extreme blokken bij inzoomen.
+3. **Interruptie & Crash in `flyToGebied`:** De camera werd in "uncontrolled" modus gezet (`initialViewState`), waardoor het DeckGL-intern overschreven werd door muis-interacties. Tijdens de ombouw naar "controlled" modus zat er een JavaScript referentiefout (`currentViewState is not defined`), waardoor de functie onzichtbaar crashte in het `setTimeout` blok.
 
 ### Oplossing
-1. **Crash Preventie & Error Handling:** `displayOnMap` en `flyToGebied` zijn onafhankelijk van elkaar in veilige `try...catch` blokken gewikkeld. Ook is `info.coordinate` uit het Deck.gl click-event hersteld om de falende centroid-rekensom (`flatten()`) voorgoed te passeren. Tevens zijn de API catch-blokken verrijkt met `.message` toevoegingen om `showError` toasts zinvoller te maken.
-2. **Asynchrone Decoupling (`setTimeout`):** De `flyToGebied`-aanroep in `onClick` is asynchroon afgehandeld (`setTimeout 50ms`) en maakt gebruik van "veilige primitieven" om object-recycling of MapController lockups te omzeilen.
-*(Let op: Het openstaande issue voor het verwijderen van de duplicate / stacked features uit de database staat nog op de backlog).*
+1. **Database filtering:** We hebben in `vw_gebieden_features` de actieve filter (`WHERE actief = true`) ingebouwd, waardoor oude geometrieën niet meer naar de frontend gestuurd worden en "gestapelde" data direct opgelost is.
+2. **Pixel-perfect rendering:** De `getLineWidth` van outlines is in `app.js` teruggezet naar 3, en we hebben expliciet `lineWidthUnits: 'pixels'` geconfigureerd voor de Deck.gl lagen.
+3. **Animatie Herstel:** DeckGL geüpgraded naar controlled state via `onViewStateChange`. De typo `currentViewState` verholpen naar de correcte fallback `baseState`, waardoor de `FlyToInterpolator` nu vlekkeloos de animaties afrondt, netjes gecentreerd binnen de beschikbare viewport.
 
 ---
 ## Bug #49: Beheer Dashboard Statistieken "Fout bij laden" (422 Error) (01-07-2026)

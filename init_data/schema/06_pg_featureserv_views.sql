@@ -10,4 +10,5 @@ SELECT
     gemeente_code, 
     provincienaam, 
     geom 
-FROM public.gebieden;
+FROM public.gebieden
+WHERE actief = true;

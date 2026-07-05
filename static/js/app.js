@@ -422,9 +422,10 @@ function initDeckGL() {
         map: typeof maplibregl !== 'undefined' ? maplibregl : window.mapboxgl,
         views: [new MapView({ repeat: true })],
         ...mapConfig,
-        initialViewState: state.currentViewState,
+        viewState: state.currentViewState,
         onViewStateChange: ({ viewState }) => {
             state.currentViewState = viewState;
+            state.deckgl.setProps({ viewState: state.currentViewState });
         },
         controller: true,
         layers: [],
@@ -1474,7 +1475,8 @@ function displayOnMap(geojson) {
                 stroked: true,
                 lineWidthMinPixels: 2,
                 getLineColor: [234, 179, 8, 255], // Geo Gold (#eab308)
-                getLineWidth: 80,
+                lineWidthUnits: 'pixels',
+                getLineWidth: 3,
                 pickable: false,
                 parameters: {
                     depthTest: false // Force draw on top in 2D
@@ -1592,7 +1594,8 @@ function displayOnMap(geojson) {
 
             getFillColor: [...fillKleur, fillOpacity],
             getLineColor: [...lijnKleur, 200],
-            getLineWidth: 60,
+            lineWidthUnits: 'pixels',
+            getLineWidth: 3,
             lineWidthMinPixels: 2,
 
             pickable: true,
@@ -1629,7 +1632,8 @@ function displayOnMap(geojson) {
             // Semi-transparante fill zodat CBS-laag eronder zichtbaar blijft
             getFillColor: [138, 43, 226, 25],    // Paars, zeer transparant
             getLineColor: [138, 43, 226, 255],   // Paars, duidelijk zichtbaar
-            getLineWidth: 80,                     // 80m breed = duidelijk zichtbare grens
+            lineWidthUnits: 'pixels',
+            getLineWidth: 3,                     // 3px breed = duidelijk zichtbare grens
             lineWidthMinPixels: 3,
 
             pickable: true,
@@ -3324,8 +3328,8 @@ function flyToGebied(feature, clickCoordinate = null) {
     console.log(`🎥 Flying to area:`, centroid, `offset: ${pixelOffset.toFixed(0)}px → ${lngOffset.toFixed(4)}°`);
 
         state.deckgl.setProps({
-            initialViewState: {
-                ...currentViewState,
+            viewState: {
+                ...baseState,
                 longitude: centroid[0] + lngOffset,
                 latitude: centroid[1],
                 zoom: zoom,
