@@ -151,7 +151,14 @@
 **Doel:** D-OmniTwin transformeren van data-exploratie naar inzicht-gedreven besluitvorming — gebruikers actief begeleiden van data naar conclusie en handelingsperspectief.  
 **Aanleiding:** [Gebruikersreview juni 2026](./docs/7-projectmanagement/testcases/Gebruikersreview.md) — consistente bevinding over alle 5 gebruikersprofielen.  
 **Spec:** [`docs/7-projectmanagement/archief/sprint-19-plan_data-naar-inzicht.md`](./docs/7-projectmanagement/archief/sprint-19-plan_data-naar-inzicht.md)  
-**Branch:** `feature/sprint-19-data-naar-inzicht` (aan te maken na Sprint 18)
+**Branch:** `feature/issue-12-sprint19-migratie`
+
+### Track 0 — Dataspace Architectuur Migratie
+- [x] **0A — Docker & Nginx API Gateway**
+- [x] **0B — PostgREST Data API Integratie**
+- [x] **0C — pg_featureserv Geo API Integratie**
+- [x] **0D — Hybride-Lego Frontend refactor**
+- [x] **0E — Database RPC functions (indicator stats)**
 
 ### Track A — Signalering: Automatische Uitschieters
 - [ ] **A1 — Stijgers & Dalers per indicator**

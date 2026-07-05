@@ -20,9 +20,13 @@
 
 | Component | Status | Notitie |
 |-----------|--------|---------|
-| **FastAPI backend** | 🟢 Actief | `run_dev.py` draait, WSL/Ubuntu |
+| **API Gateway (Nginx)** | 🟢 Actief | Port 80, reverse proxy voor microservices |
+| **Data API (PostgREST)** | 🟢 Actief | Port 3000, Dataspace compliant data endpoint |
+| **Geo API (pg_featureserv)** | 🟢 Actief | Port 9000, OGC API Features endpoint |
+| **FastAPI backend** | 🟢 Actief | Hybride AI/Rapportage logic, Port 8000 |
+| **Docker Compose** | 🟢 Actief | Primary orchestration engine |
 | **Mapbox + Deck.gl frontend** | 🟢 Actief | Classic Premium UI |
-| **CBS buurt-data** | 🟢 Geïmporteerd | Fryslân 942 buurten (initiatie dataset) |
+| **CBS buurt-data** | 🟢 Geïmporteerd | Fryslân 931 buurten |
 | **RIVM indicatoren** | 🟢 Actief | Meerdere jaren beschikbaar |
 | **AI Chat Interface** | 🟢 Actief | HELP_ONBOARDING intent actief (deterministic, geen LLM) |
 | **Help / Wiki Pagina** | 🟢 Actief | `/static/help.html` |
@@ -87,8 +91,8 @@
 | **Sprint** | Focus | Verwacht |
 |--------|-------|---------|
 | **18** | IJsselmeerkust als Besluitinstrument — duiding, BAG woonplaatsen, benchmarking, Track F quickwins | ✅ Afgerond (Dag 79 — alle tracks incl. multi-gebied benchmark) |
-| **19** | Van Data naar Inzicht — signalering, prioritering, contextuele scores, AI-samenvatting | 📌 Gepland (na Sprint 18) |
-| **#11 (OV ETL)** | OV Haltes ETL — OSM data FR/GR/DR → Kompas indicatoren | ✅ Voltooid — merge `7443b51` |
+| **19** | Dataspace Architectuur Migratie — Docker, PostgREST, pg_featureserv, Nginx | ✅ Afgerond (Fase 1, 2, 3 voltooid) |
+| **19B**| Van Data naar Inzicht — signalering, prioritering, contextuele scores, AI-samenvatting | 📌 Gepland |
 | **17** | Configureerbare Logging Infrastructuur | ✅ Voltooid — merge `4ed45bd`, closes #9 (deels) |
 | **17C e-mail** | E-mail alerts bij ERROR/CRITICAL | ⏳ On hold — Issue #10, wacht op SMTP |
 | **12** | 3D BAG Integratie & Bug #42 | 🔜 Na Sprint 19 |
