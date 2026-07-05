@@ -1,14 +1,15 @@
 # TODO - D-OmniTwin Roadmap
 
-**Laatste Update:** 30 juni 2026 (Dag 79)
-**Status:** Sprint 18 ✅ Afgerond | Sprint 19 📌 Gepland
+**Laatste Update:** 5 juli 2026 (Dag 83)
+**Status:** Sprint 19 Migratie ✅ | Sprint 19B 📌 Gepland
 
-> **Huidige Sprint:** Sprint 19 — Van Data naar Inzicht
-> **Branch:** `feature/sprint-19-data-naar-inzicht` (aan te maken bij start Sprint 19)
-> **Spec:** [`docs/7-projectmanagement/archief/sprint-19-plan_data-naar-inzicht.md`](./docs/7-projectmanagement/archief/sprint-19-plan_data-naar-inzicht.md)
+> **Huidige Sprint:** Sprint 19B — Van Data naar Inzicht
+> **Branch:** `main` 
 
 ---
 
+## 📝 Volgende Sessie (Hoge Prioriteit)
+- [ ] **Documentatie-inhaalslag:** Alle documentatie (met name `README.md` en architectuurdocumenten) nalopen en herzien. De teksten lopen achter en moeten de nieuwe Hybride Dataspace Architectuur (PostgREST, pg_featureserv, Traefik) accuraat weerspiegelen.
 
 ---
 
