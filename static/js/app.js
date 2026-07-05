@@ -2809,22 +2809,34 @@ function setupEventListeners() {
             if (state.currentGebiedstype && state.currentIndicator === data.uuid) {
                 // We keep the map view but update the data for the specific year
                 try {
-                    let url = `${API_BASE}/kaart/${state.currentGebiedstype}?show_all=${state.showAll}&indicator_uuid=${state.currentIndicator}&jaar=${data.jaar}`;
+                    let attrUrl = `/api/gebiedsmonitor/kaart_data/${state.currentGebiedstype}?show_all=${state.showAll}&indicator_uuid=${state.currentIndicator}&jaar=${data.jaar}`;
                     if (state.currentGemeenteCode) {
-                        url += `&gemeente_code=${state.currentGemeenteCode}`;
+                        attrUrl += `&gemeente_code=${state.currentGemeenteCode}`;
                     }
 
-                    const response = await fetch(url);
+                    const response = await fetch(attrUrl);
                     if (!response.ok) throw new Error(`HTTP ${response.status}`);
 
-                    const geojson = await response.json();
-                    state.currentData = geojson;
-                    state.initialDataLoaded = false; // Prevents reset of camera
+                    const attributes = await response.json();
+                    
+                    // Merge attributes into existing GeoJSON features
+                    if (state.currentData && state.currentData.features) {
+                        state.currentData.features.forEach(f => {
+                            const props = attributes.data[f.properties.id];
+                            if (props) {
+                                Object.assign(f.properties, props);
+                            } else {
+                                // Clear missing data
+                                f.properties.indicator_waarde = null;
+                                f.properties.color = '#94A3B8';
+                            }
+                        });
+                        state.currentData.metadata = attributes.metadata;
+                        state.initialDataLoaded = false; // Prevents reset of camera
 
-                    displayOnMap(geojson);
-                    // Do not update total counts or legend heavily, but legend might need color updates if bounds change? 
-                    // Let's keep it simple, just update map.
-                    updateLegenda(geojson);
+                        displayOnMap(state.currentData);
+                        updateLegenda(state.currentData);
+                    }
                 } catch (error) {
                     console.error('❌ Fout bij laden historische kaart data:', error);
                 }

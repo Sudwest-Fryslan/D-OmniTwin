@@ -28,6 +28,8 @@ services:
       - "traefik.http.services.backend.loadbalancer.server.port=8000"
     env_file:
       - .env
+    environment:
+      - DATABASE_HOST=postgres
     volumes:
       - .:/app
     extra_hosts:

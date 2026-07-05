@@ -1,5 +1,22 @@
 # BUGFIX.md - D-OmniTwin
 
+## Bug #51: Hybride Datamodel Migratie Bugs (API 404 & HTTP 500 Connectiefout) (05-07-2026)
+
+**Gerapporteerd:** 05-07-2026  
+**Status:** ✅ FIXED (05-07-2026)  
+**Severity:** 🔴 HIGH (Admin lagen paneel stuk, kaarten laden niet via backend)
+
+### Probleem
+1. **Kaarten Laden (HTTP 500):** De FastAPI backend gaf een 500 Internal Server Error in Docker omdat deze via `localhost` naar PostgreSQL probeerde te connecten in plaats van de interne Docker service-naam (`postgres`).
+2. **Lege Indicatoren:** RPC functies zoals `get_indicatoren_stats` waren verwijderd tijdens database drops in eerdere sessies, waardoor de PostgREST API geen indicatoren kon serveren.
+3. **Admin Paneel 404:** Tijdens de migratie naar PostgREST/pg_featureserv was abusievelijk de `externe_lagen` router uitgecommentarieerd in `main.py`, waardoor het admin-paneel geen WFS-lagen of lokale bestanden meer kon ophalen (HTTP 404).
+
+### Oplossing
+1. `DATABASE_HOST=postgres` toegevoegd aan de environment variabelen van de `backend` container in `docker-compose.yml`.
+2. Handmatig het `05_indicator_stats.sql` script via psql in de database gerund en de PostgREST container geherstart.
+3. De import en router-inclusie van `externe_lagen` hersteld in `main.py` omdat bestandsbeheer specifiek via Python blijft lopen.
+
+
 ## Bug #50: DeckGL FlyTo Crash & Gestapelde Vlakken (04-07-2026 / 05-07-2026)
 
 **Gerapporteerd:** 04-07-2026  
