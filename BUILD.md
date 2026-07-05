@@ -7,12 +7,20 @@
 
 ## Installatie Stappen
 
-### 1. Ontwikkelomgeving
+### 1. Ontwikkelomgeving & Applicatie Stack
 De mappenstructuur is opgezet:
 - `data/`: Databestanden
 - `scripts/`: Python scripts
 - `templates/`: Frontend templates
-- `.venv/`: Virtual environment
+- `nginx/`: Configuratie voor de reverse proxy
+- `.venv/`: Virtual environment (alleen voor lokale python run)
+
+Voor de Hybride Lego architectuur gebruiken we Docker Compose. Dit start in één keer de FastAPI backend, PostgREST, pg_featureserv, PostgreSQL en de Nginx API gateway.
+
+```bash
+docker compose up -d
+```
+(Voor lokale backend ontwikkeling via Python, zie Stap 2 hieronder)
 
 ### 2. Python Environment
 ```bash

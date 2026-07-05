@@ -13,7 +13,7 @@ Endpoints:
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
-from typing import Optional
+from typing import Optional, Dict, Any
 
 from src.database import get_db
 from services.gebiedsmonitor_service import GebiedsmonitorService
@@ -137,73 +137,41 @@ async def get_indicatoren(
     return {"indicatoren": indicatoren}
 
 
-@router.get("/kaart/{gebiedstype_id}", response_model=GeoJSONFeatureCollection)
-async def get_kaart_data(
+@router.get("/kaart_data/{gebiedstype_id}", response_model=Dict[str, Any])
+async def get_kaart_attributes(
     gebiedstype_id: str,
     indicator_uuid: Optional[str] = Query(
         None, 
         description="OPTIONEEL: UUID van indicator om te visualiseren"
     ),
     show_all: bool = Query(
-        False,
-        description="Als True, toon ook gebieden zonder data (grijze kleur op kaart)"
+        False, 
+        description="True = toon ook gebieden zonder data (grijs)"
     ),
     gemeente_code: Optional[str] = Query(
         None,
-        description="Filter op gemeente (CBS code, bijv. '1900' voor Súdwest-Fryslân)"
+        description="Filter op specifieke gemeente"
     ),
     jaar: Optional[int] = Query(
         None,
-        description="OPTIONEEL: Specifiek jaar voor historische weergave op kaart"
+        description="Optioneel: Specifiek jaar"
     ),
     service: GebiedsmonitorService = Depends(get_service)
 ):
     """
-    Haal GeoJSON data op voor kaartvisualisatie met deck.gl.
-    
-    **BELANGRIJK:** Dit endpoint gebruikt dynamic filtering.
-    Default worden ALLEEN gebieden getoond die data hebben voor de geselecteerde indicator.
-    
-    **Voorbeeld:**
-    - `/kaart/{cbs_uuid}?indicator_uuid={inwoners_uuid}` → 154 buurten (16% van 965)
-    - `/kaart/{cbs_uuid}?indicator_uuid={inwoners_uuid}&show_all=true` → Alle 965 buurten
-    - `/kaart/{cbs_uuid}?gemeente_code=1900` → Alleen Súdwest-Fryslân gebieden
-    
-    Args:
-        gebiedstype_id: UUID van gebiedstype (CBS Buurten, Welstandsgebieden, etc.)
-        indicator_uuid: UUID van indicator om te visualiseren (VERPLICHT)
-        show_all: Toon ook gebieden zonder data (default: False)
-        gemeente_code: Filter op gemeente CBS code (optioneel)
-    
-    Returns:
-        GeoJSON FeatureCollection met:
-        - geometry: MultiPolygon in WGS84 (EPSG:4326) voor deck.gl
-        - properties: gebied info + indicator waarde voor 3D extrusie en kleur
-        - metadata: statistieken over aantal features
-    
-    **Frontend gebruik:**
-    ```javascript
-    const response = await fetch(`/api/gebiedsmonitor/kaart/${typeId}?indicator_uuid=${indicatorId}&gemeente_code=1900`);
-    const geojson = await response.json();
-    
-    // GeoJsonLayer configuratie
-    new GeoJsonLayer({
-      data: geojson,
-      getFillColor: d => getColor(d.properties.indicator_waarde),
-      getElevation: d => d.properties.indicator_waarde * heightScale
-    })
-    ```
+    Haal attribuut-data en berekende kleuren op voor kaartvisualisatie (Hybride aanpak).
+    Retourneert een dictionary waarbij de keys de gebied_id's zijn, en de values
+    kleuren, meetwaarden en overige attributen bevatten. (GEEN geometrie)
     """
     try:
-        geojson = service.get_kaart_data(
+        data = service.get_kaart_attributes(
             gebiedstype_id=gebiedstype_id,
             indicator_uuid=indicator_uuid,
             show_all=show_all,
             gemeente_code=gemeente_code,
             jaar=jaar
         )
-        return geojson
-    
+        return data
     except Exception as e:
         raise HTTPException(
             status_code=500,

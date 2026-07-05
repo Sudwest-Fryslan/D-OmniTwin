@@ -42,7 +42,7 @@ class GebiedsmonitorService:
         """
         return self.get_kaart_data_v2(gebiedstype_id, indicator_uuid, show_all, gemeente_code, jaar)
 
-    def get_kaart_data_v2(
+    def get_kaart_attributes(
         self,
         gebiedstype_id: str,
         indicator_uuid: Optional[str] = None,
@@ -51,21 +51,20 @@ class GebiedsmonitorService:
         jaar: Optional[int] = None
     ) -> Dict[str, Any]:
         """
-        Haal GeoJSON data op (V2: Gebruikt SQL Views + Color Schemas).
+        Haal attribuut data op voor kaartvisualisatie (ZONDER geometry).
+        Ontworpen voor de Hybride "Lego" architectuur.
         """
         from services.color_scale_service import ColorScaleService
         from services.logging_service import AppLogger
         
-        AppLogger.debug(f"get_kaart_data_v2 executing for gebiedstype {gebiedstype_id}, gemeente_code={gemeente_code}", category="KAART")
+        AppLogger.debug(f"get_kaart_attributes executing for gebiedstype {gebiedstype_id}", category="KAART")
         
-        # 1. Base Query: Geometry + Metadata from View
-        # Join met gebieden tabel voor gemeente_code filter
+        # 1. Base Query: Zonder geometry!
         query_base = """
             SELECT 
-                b.id, 
-                b.naam, 
-                b.gebiedstype_naam, 
-                b.geometry,
+                g.id, 
+                g.naam, 
+                g.gebiedstype_id,
                 i.waarde as indicator_waarde,
                 i.jaar,
                 i.bron,
@@ -73,14 +72,12 @@ class GebiedsmonitorService:
                 ind.code as indicator_code,
                 ind.eenheid,
                 COALESCE(ind.score_type, '+/+') as score_type
-            FROM vw_gebied_kaart_basis b
-            INNER JOIN gebieden g ON b.id = g.id
+            FROM gebieden g
         """
         
         # 2. Join Logic
         if indicator_uuid:
             if jaar is not None:
-                # Fetch specific year from raw table instead of actueel view
                 join_type = "LEFT JOIN" if show_all else "INNER JOIN"
                 query_base += f"""
                     {join_type} (
@@ -88,15 +85,14 @@ class GebiedsmonitorService:
                         FROM gebied_data 
                         WHERE indicator_uuid = CAST(:indicator_uuid AS uuid) 
                         AND jaar = :jaar
-                    ) i ON b.id = i.gebied_id
+                    ) i ON g.id = i.gebied_id
                     LEFT JOIN indicatoren ind ON ind.uuid = CAST(:indicator_uuid AS uuid)
                 """
             else:
-                # Use actueel view
                 join_type = "LEFT JOIN" if show_all else "INNER JOIN"
                 query_base += f"""
                     {join_type} vw_gebied_indicator_actueel i 
-                        ON b.id = i.gebied_id AND i.indicator_uuid = CAST(:indicator_uuid AS uuid)
+                        ON g.id = i.gebied_id AND i.indicator_uuid = CAST(:indicator_uuid AS uuid)
                     LEFT JOIN indicatoren ind ON ind.uuid = CAST(:indicator_uuid AS uuid)
                 """
         else:
@@ -107,14 +103,12 @@ class GebiedsmonitorService:
             """
 
         # 3. Filters
-        query_base += " WHERE b.gebiedstype_id = CAST(:gebiedstype_id AS uuid)"
-        query_base += " AND b.geometry IS NOT NULL"
+        query_base += " WHERE g.gebiedstype_id = CAST(:gebiedstype_id AS uuid)"
         
-        # 3b. Gemeente filter (optional)
         if gemeente_code:
             query_base += " AND g.gemeente_code = :gemeente_code"
         
-        # 4. Execute - Build params dict dynamically
+        # 4. Execute
         params = {
             "gebiedstype_id": gebiedstype_id,
             "indicator_uuid": indicator_uuid
@@ -125,10 +119,9 @@ class GebiedsmonitorService:
             params["jaar"] = jaar
             
         result = self.db.execute(text(query_base), params)
-        
         rows = [dict(row._mapping) for row in result]
         
-        # 5. NEW: Calculate Colors using ColorScaleService
+        # 5. Calculate Colors using ColorScaleService
         color_service = ColorScaleService(self.db)
         all_values = [float(r["indicator_waarde"]) for r in rows if r["indicator_waarde"] is not None] if indicator_uuid else []
         
@@ -137,79 +130,52 @@ class GebiedsmonitorService:
         nodata_color = "#94A3B8"  # Default grey
         
         if indicator_uuid and len(all_values) > 0:
-            # Use ColorScaleService to get colors based on DB config
             color_ramp, breaks, nodata_color = color_service.compute_colors_for_data(
-                all_values, 
-                indicator_uuid
+                all_values, indicator_uuid
             )
         
-        features = []
+        data_dict = {}
         for row in rows:
-            # Skip records zonder geometrie (GM/WK records)
-            if not row["geometry"]:
-                continue
-            
-            color = nodata_color  # Default
+            color = nodata_color
             if row["indicator_waarde"] is not None and len(color_ramp) > 0:
                 color = color_service.get_color_for_value(
-                    float(row["indicator_waarde"]),
-                    color_ramp,
-                    breaks,
-                    nodata_color
+                    float(row["indicator_waarde"]), color_ramp, breaks, nodata_color
                 )
             elif indicator_uuid and not show_all:
-                continue # Should be handled by INNER JOIN, but for safety
+                continue 
                 
-            features.append({
-                "type": "Feature",
-                "id": row["id"],
-                "geometry": row["geometry"] if row["geometry"] else None,
-                "properties": {
-                    "id": row["id"],
-                    "naam": row["naam"],
-                    "gebiedstype_naam": row["gebiedstype_naam"],
-                    "indicator_waarde": float(row["indicator_waarde"]) if row["indicator_waarde"] is not None else None,
-                    "indicator_naam": row["indicator_naam"],
-                    "indicator_code": row["indicator_code"],
-                    "eenheid": row["eenheid"],
-                    "jaar": row["jaar"],
-                    "color": color,
-                    "heeft_data": row["indicator_waarde"] is not None
-                }
-            })
+            data_dict[str(row["id"])] = {
+                "indicator_waarde": float(row["indicator_waarde"]) if row["indicator_waarde"] is not None else None,
+                "color": color,
+                "heeft_data": row["indicator_waarde"] is not None,
+                "jaar": row["jaar"],
+                "bron": row["bron"]
+            }
             
-        # Coverage stats voor legenda — echt totaal (incl. gebieden zonder data)
-        features_with_data = sum(1 for f in features if f["properties"]["heeft_data"])
+        features_with_data = sum(1 for props in data_dict.values() if props["heeft_data"])
 
-        # Onafhankelijke count-query: hoeveel gebieden bestaan er in totaal
-        # voor dit gebiedstype (+ evt. gemeente filter)?
-        count_query = """
-            SELECT COUNT(*)
-            FROM vw_gebied_kaart_basis b
-            INNER JOIN gebieden g ON b.id = g.id
-            WHERE b.gebiedstype_id = CAST(:gebiedstype_id AS uuid)
-              AND b.geometry IS NOT NULL
-        """
+        count_query = "SELECT COUNT(*) FROM gebieden WHERE gebiedstype_id = CAST(:gebiedstype_id AS uuid)"
         count_params = {"gebiedstype_id": gebiedstype_id}
         if gemeente_code:
-            count_query += " AND g.gemeente_code = :gemeente_code"
+            count_query += " AND gemeente_code = :gemeente_code"
             count_params["gemeente_code"] = gemeente_code
 
         total_in_database = self.db.execute(text(count_query), count_params).scalar() or 0
 
         return {
-            "type": "FeatureCollection",
-            "features": features,
             "metadata": {
-                "count": len(features),
-                "method": "v2_color_schemas",
-                # Legenda: kleurenschaal sync (Gap G7 fix)
+                "count": len(data_dict),
+                "method": "hybrid_attributes_only",
                 "color_ramp": color_ramp if indicator_uuid else [],
                 "nodata_color": nodata_color,
-                # Legenda: gebiedsdekking (echt totaal, niet alleen gefilterde features)
                 "total_features": total_in_database,
                 "features_with_data": features_with_data,
-            }
+                "indicator_naam": rows[0]["indicator_naam"] if rows and indicator_uuid else None,
+                "indicator_code": rows[0]["indicator_code"] if rows and indicator_uuid else None,
+                "eenheid": rows[0]["eenheid"] if rows and indicator_uuid else None,
+                "score_type": rows[0]["score_type"] if rows and indicator_uuid else None
+            },
+            "data": data_dict
         }
 
     

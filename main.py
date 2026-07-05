@@ -21,7 +21,7 @@ project_root = Path(__file__).resolve().parent
 load_dotenv(project_root / '.env')
 
 # Import routers
-from routers import gebiedsmonitor, kompas, admin, gemeenten, dashboard, visualisatie
+from routers import gebiedsmonitor, kompas, admin, dashboard, visualisatie
 
 app = FastAPI(
     title="D-OmniTwin API",
@@ -49,7 +49,7 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
             "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://api.mapbox.com https://cdn.jsdelivr.net https://unpkg.com; "
             "font-src 'self' https://fonts.gstatic.com data:; "
             "img-src 'self' data: https: blob:; "
-            "connect-src 'self' https://api.mapbox.com https://*.tiles.mapbox.com https://events.mapbox.com wss://*.mapbox.com https://data.3dbag.nl https://api.3dbag.nl https://service.pdok.nl; "
+            "connect-src 'self' https://api.mapbox.com https://*.tiles.mapbox.com https://events.mapbox.com wss://*.mapbox.com https://data.3dbag.nl https://api.3dbag.nl https://service.pdok.nl https://api.pdok.nl; "
             "worker-src 'self' blob:; "
             "child-src 'self' blob:; "
             "frame-src 'self';"
@@ -168,7 +168,7 @@ debug_mode = os.getenv('DEBUG', 'false').lower() == 'true'
 # Register routers
 app.include_router(gebiedsmonitor.router)
 app.include_router(kompas.router)
-app.include_router(gemeenten.router)
+
 from routers import auth
 app.include_router(auth.router)
 app.include_router(admin.router)
@@ -178,15 +178,15 @@ from routers import kaart_v2
 app.include_router(kaart_v2.router)
 from routers import report
 app.include_router(report.router)
-from routers import llm_prompts, data_controle, ai_search, chat, bag3d, omgevingsvisie, log_viewer, externe_lagen
+from routers import llm_prompts, data_controle, ai_search, chat, bag3d, log_viewer
 app.include_router(llm_prompts.router)
 app.include_router(data_controle.router)
 app.include_router(ai_search.router)
 app.include_router(chat.router)
 app.include_router(bag3d.router)
-app.include_router(omgevingsvisie.router)
+# app.include_router(omgevingsvisie.router)  # Obsolete, gemigreerd naar pg_featureserv
 app.include_router(log_viewer.router)
-app.include_router(externe_lagen.router)
+# app.include_router(externe_lagen.router)   # Obsolete, gemigreerd naar PostgREST/pg_featureserv
 
 @app.on_event("startup")
 async def startup_event():
@@ -200,7 +200,6 @@ async def startup_event():
         AppLogger.info("Database connection established successfully", category="SERVER")
         AppLogger.info("Gebiedsmonitor API registered at /api/gebiedsmonitor", category="SERVER")
         AppLogger.info("Kompas API registered at /api/kompas", category="SERVER")
-        AppLogger.info("Gemeenten API registered at /api/gemeenten", category="SERVER")
         AppLogger.info(f"CORS origins: {cors_origins}", category="SERVER")
         AppLogger.info(f"Debug mode: {debug_mode}", category="SERVER")
         AppLogger.info("Security headers middleware active", category="SERVER")

@@ -55,8 +55,11 @@ Vier use cases worden gevalideerd in pilots bij drie gemeenten. Resultaat: open 
 
 | Component | Technologie | Port | Status |
 |-----------|-------------|------|--------|
-| **Main App** | FastAPI + deck.gl + D3.js | 8000 | ✅ Production Ready |
-| **Admin Panel** | React + TypeScript | 3000 | ✅ MVP Ready |
+| **API Gateway** | Nginx Reverse Proxy | 80 | ✅ Production Ready |
+| **Main Backend** | FastAPI (Hybride logic) | 8000 | ✅ Production Ready |
+| **Data API** | PostgREST | 3000 | ✅ Operationeel |
+| **Geo API** | pg_featureserv | 9000 | ✅ Operationeel |
+| **Admin Panel** | React + TypeScript | 3001 | ✅ MVP Ready |
 | **Database** | PostgreSQL + PostGIS + pgvector | 5432 | ✅ Operationeel |
 
 ### Main App Features
@@ -88,27 +91,24 @@ Vier use cases worden gevalideerd in pilots bij drie gemeenten. Resultaat: open 
 │  ┌───────────────┐  ┌──────────────────┐  ┌──────────────────────────┐  │
 │  │  Kaart        │  │  D-Omni Kompas   │  │  AI Chat Zijpaneel       │  │
 │  │  deck.gl      │  │  D3.js Sunburst  │  │  ChatPanel (chat.js)     │  │
-│  │  Mapbox GL    │  │  12 thema's      │  │  Glassmorphism UI        │  │
-│  │  app.js       │  │  217 indicatoren │  │  Actie-knoppen           │  │
+│  │  app.js       │  │  217 indicatoren │  │  Glassmorphism UI        │  │
 │  └──────┬────────┘  └────────┬─────────┘  └────────────┬─────────────┘  │
 │         └─────────── EventBus (event-bus.js) ──────────┘                │
-│                      pub/sub | INDICATOR_SELECTED                       │
 └────────────────────────────────────────┬────────────────────────────────┘
-                                         │ HTTP/REST
+                                         │ HTTP/REST (poort 80)
                                          ▼
 ┌─────────────────────────────────────────────────────────────────────────┐
-│  FASTAPI BACKEND (Python 3.12 | Uvicorn | Port 8000)                    │
-│                                                                         │
-│  main.py — Security Middleware, CORS, Router registratie                │
-│                                                                         │
-│  Routers: gebiedsmonitor · kompas · kaart_v2 · report · gemeenten       │
-│           visualisatie · admin · auth · chat · ai_search · dashboard    │
-│                                                                         │
-│  Services: gebiedsmonitor · kompas · llm · report · ai_search           │
-│            color_scale · data_controle                                  │
-└────────────────────────────────────────┬────────────────────────────────┘
-                                         │ SQLAlchemy + psycopg2
-                                         ▼
+│  NGINX API GATEWAY (Reverse Proxy)                                      │
+└──────┬───────────────────────┬───────────────────────┬──────────────────┘
+       │ /api/data/*           │ /api/geo/*            │ /api/* (overig)
+       ▼                       ▼                       ▼
+┌──────────────┐      ┌─────────────────┐    ┌───────────────────────────┐
+│  PostgREST   │      │ pg_featureserv  │    │ FastAPI Backend (8000)    │
+│  (Data API)  │      │ (Geo/MVT API)   │    │ AI, Rapportage, Admin     │
+└──────┬───────┘      └────────┬────────┘    └───────────┬───────────────┘
+       │                       │                         │ SQLAlchemy
+       └───────────────────────┼─────────────────────────┘
+                               ▼
 ┌─────────────────────────────────────────────────────────────────────────┐
 │  DATABASE (PostgreSQL 14+ | PostGIS | pgvector)                         │
 │                                                                         │

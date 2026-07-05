@@ -333,7 +333,7 @@ class KompasVisualization {
             return data;
         } catch (error) {
             console.error('❌ Fout bij ophalen gebied data:', error);
-            this.showError('Kon gebied data niet laden');
+            this.showError('Kon gebied data niet laden: ' + (error.message || 'Onbekende fout'));
             this.hideLoading();
         }
     }

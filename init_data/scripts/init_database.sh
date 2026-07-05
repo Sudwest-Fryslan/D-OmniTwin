@@ -34,7 +34,7 @@ echo ""
 
 # Laad .env variabelen
 if [ -f "$PROJECT_ROOT/.env" ]; then
-    export $(grep -v '^#' "$PROJECT_ROOT/.env" | xargs 2>/dev/null)
+    export $(grep -v '^#' "$PROJECT_ROOT/.env" | sed -e 's/ *#.*//' | xargs 2>/dev/null)
     echo "✅ .env geladen"
 else
     echo "❌ .env niet gevonden in projectroot!"
@@ -66,6 +66,16 @@ if ! PGPASSWORD="$DATABASE_PASSWORD" psql -h "$DB_HOST" -p "$DB_PORT" \
 fi
 
 echo "✅ Schema geladen"
+
+echo "Laden van AI/App configuratiedata..."
+if ! PGPASSWORD="$DATABASE_PASSWORD" psql -h "$DB_HOST" -p "$DB_PORT" \
+    -U "$DB_USER" -d "$DB_NAME" \
+    -f "$PROJECT_ROOT/init_data/schema/config_seed_fixed.sql" 2>&1; then
+    echo "⚠️ Waarschuwing: Laden van configuratiedata (config_seed_fixed.sql) deels mislukt."
+else
+    echo "✅ Configuratiedata geladen"
+fi
+
 
 echo ""
 echo "────────────────────────────────────────────────────────────"
