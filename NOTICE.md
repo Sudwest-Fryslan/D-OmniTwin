@@ -5,10 +5,15 @@ Dit bestand bevat de vermeldingen van de belangrijkste bibliotheken en framework
 ## 🐍 Backend (Python)
 - **FastAPI**: [MIT License](https://github.com/fastapi/fastapi/blob/master/LICENSE)
 - **Uvicorn**: [BSD 3-Clause License](https://github.com/encode/uvicorn/blob/master/LICENSE.md)
-- **PostgreSQL / PostGIS**: [PostgreSQL License](https://www.postgresql.org/about/licence/) / [GPL v2+](https://postgis.net/docs/manual-3.4/postgis_introduction.html#idm29)
+- **PostgreSQL / PostGIS / pgvector**: [PostgreSQL License](https://www.postgresql.org/about/licence/) / [GPL v2+](https://postgis.net/docs/manual-3.4/postgis_introduction.html#idm29) / [PostgreSQL License](https://github.com/pgvector/pgvector/blob/master/LICENSE)
 - **Pandas**: [BSD 3-Clause License](https://github.com/pandas-dev/pandas/blob/main/LICENSE)
 - **Pydantic**: [MIT License](https://github.com/pydantic/pydantic/blob/main/LICENSE)
 - **SQLAlchemy**: [MIT License](https://github.com/sqlalchemy/sqlalchemy/blob/master/LICENSE)
+
+## 🌐 API Gateway & Microservices
+- **Traefik**: [MIT License](https://github.com/traefik/traefik/blob/master/LICENSE.md)
+- **PostgREST**: [MIT License](https://github.com/PostgREST/postgrest/blob/main/LICENSE)
+- **pg_featureserv**: [Apache License 2.0](https://github.com/CrunchyData/pg_featureserv/blob/master/LICENSE.md)
 
 ## 🎨 Frontend (JavaScript/React)
 - **Mapbox GL JS**: [Mapbox License](https://github.com/mapbox/mapbox-gl-js/blob/main/LICENSE.txt) (Gebruikers dienen over een eigen API key te beschikken conform de Mapbox servicevoorwaarden)
