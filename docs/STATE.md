@@ -20,7 +20,7 @@
 
 | Component | Status | Notitie |
 |-----------|--------|---------|
-| **API Gateway (Nginx)** | 🟢 Actief | Port 80, reverse proxy voor microservices |
+| **API Gateway (Traefik)** | 🟢 Actief | Port 80, reverse proxy voor microservices |
 | **Data API (PostgREST)** | 🟢 Actief | Port 3000, Dataspace compliant data endpoint |
 | **Geo API (pg_featureserv)** | 🟢 Actief | Port 9000, OGC API Features endpoint |
 | **FastAPI backend** | 🟢 Actief | Hybride AI/Rapportage logic, Port 8000 |
@@ -91,7 +91,7 @@
 | **Sprint** | Focus | Verwacht |
 |--------|-------|---------|
 | **18** | IJsselmeerkust als Besluitinstrument — duiding, BAG woonplaatsen, benchmarking, Track F quickwins | ✅ Afgerond (Dag 79 — alle tracks incl. multi-gebied benchmark) |
-| **19** | Dataspace Architectuur Migratie — Docker, PostgREST, pg_featureserv, Nginx | ✅ Deels Afgerond (Fase 1, 2 en 4 voltooid) |
+| **19** | Dataspace Architectuur Migratie — Docker, PostgREST, pg_featureserv, Traefik | ✅ Deels Afgerond (Fase 1, 2 en 4 voltooid) |
 | **19B**| Van Data naar Inzicht — signalering, prioritering, contextuele scores, AI-samenvatting | 📌 Gepland |
 | **17** | Configureerbare Logging Infrastructuur | ✅ Voltooid — merge `4ed45bd`, closes #9 (deels) |
 | **17C e-mail** | E-mail alerts bij ERROR/CRITICAL | ⏳ On hold — Issue #10, wacht op SMTP |

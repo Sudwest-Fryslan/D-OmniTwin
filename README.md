@@ -11,6 +11,11 @@
 
 Gemeenten en provincies staan voor complexe leefomgevingsopgaven — van energietransitie en klimaatadaptatie tot sociale cohesie en brede welvaart. Data is vaak aanwezig, maar versnipperd over organisaties en systemen. D-OmniTwin biedt een **holistisch beeld van de buitenwereld**: een interactieve digitale spiegel van de fysieke leefomgeving, ontworpen voor integraal beleid en gebiedsontwikkeling.
 
+> 🏆 **Innovatiebudget 2026 Toegekend!**
+> *"D-OmniTwin: Federatieve voorziening voor inzicht in leefomgeving"*
+> Ons project is succesvol gehonoreerd door het ministerie. Dit stelt ons in staat om de referentie-implementatie door te ontwikkelen naar een gevalideerde federatieve voorziening (Dataspace-architectuur).
+> 🔗 [Bekijk de officiële toekenning](https://www.digitaleoverheid.nl/overzicht-van-alle-onderwerpen/innovatie/innovatiebudget/toekenning-innovatiebudget-2026/)
+
 Via een interactief **D-Omni Kompas** — een D3.js sunburst-visualisatie met 217 indicatoren over 12 thema's — wordt data op buurtniveau direct inzichtelijk voor beleidsmakers, wijkfunctionarissen en inwoners. Een lokale AI-assistent (geen cloud-afhankelijkheid) vertaalt complexe datasets naar begrijpelijke inzichten in gewone taal.
 
 D-OmniTwin fungeert als **dataspace-agnostische interactielaag**: data blijft bij de bron, beveiligd via iSHARE-autorisatie, in lijn met Gaia-X principes en de Fryslân Data Space (FRLDS).
@@ -55,7 +60,7 @@ Vier use cases worden gevalideerd in pilots bij drie gemeenten. Resultaat: open 
 
 | Component | Technologie | Port | Status |
 |-----------|-------------|------|--------|
-| **API Gateway** | Nginx Reverse Proxy | 80 | ✅ Production Ready |
+| **API Gateway** | Traefik Reverse Proxy | 80 | ✅ Production Ready |
 | **Main Backend** | FastAPI (Hybride logic) | 8000 | ✅ Production Ready |
 | **Data API** | PostgREST | 3000 | ✅ Operationeel |
 | **Geo API** | pg_featureserv | 9000 | ✅ Operationeel |
@@ -98,7 +103,7 @@ Vier use cases worden gevalideerd in pilots bij drie gemeenten. Resultaat: open 
                                          │ HTTP/REST (poort 80)
                                          ▼
 ┌─────────────────────────────────────────────────────────────────────────┐
-│  NGINX API GATEWAY (Reverse Proxy)                                      │
+│  TRAEFIK API GATEWAY (Reverse Proxy)                                    │
 └──────┬───────────────────────┬───────────────────────┬──────────────────┘
        │ /api/data/*           │ /api/geo/*            │ /api/* (overig)
        ▼                       ▼                       ▼
@@ -296,13 +301,13 @@ Zie [NOTICE.md](./NOTICE.md) voor informatie over third-party licenties.
 | Document | Beschrijving |
 |----------|-------------|
 | [README.md](./README.md) | Project overview (dit document) |
-| [GETTING_STARTED.md](./GETTING_STARTED.md) | ⭐ Stap-voor-stap installatiehhandleiding met starter dataset |
+| [GETTING_STARTED.md](./GETTING_STARTED.md) | ⭐ Stap-voor-stap installatiehandleiding met starter dataset |
 | [init_data/README.md](./init_data/README.md) | Documentatie initiatie dataset (Fryslân) |
 | [BUILD.md](./BUILD.md) | Installatie, setup & sprint changelog |
 | [TODO.md](./TODO.md) | Actieve takenlijst per domein |
 | [ROADMAP.md](./ROADMAP.md) | Lange-termijn planning en features |
-| [ARCHITECTURE_TECHNICAL_OPERATION.md](./ARCHITECTURE_TECHNICAL_OPERATION.md) | Volledige technische architectuur |
-| [docs/8-communicatie/architectuur-omnitwin.md](./docs/8-communicatie/architectuur-omnitwin.md) | Systeem architectuur (uitgebreid) |
+| [docs/2-architectuur/architecture/ARCHITECTURE_TECHNICAL_OPERATION.md](./docs/2-architectuur/architecture/ARCHITECTURE_TECHNICAL_OPERATION.md) | Volledige technische architectuur |
+| [docs/2-architectuur/architecture/architectuur-omnitwin.md](./docs/2-architectuur/architecture/architectuur-omnitwin.md) | Systeem architectuur (uitgebreid) |
 | [docs/8-communicatie/communicatieplan_subsidie_2026.md](./docs/8-communicatie/communicatieplan_subsidie_2026.md) | Subsidie & adoptie communicatieplan |
 
 ---
