@@ -11,7 +11,7 @@
 |------|--------|
 | **Huidige versie** | v1.0.0-beta (pre-release) |
 | **Sprint** | Sprint 19 (Onderzoek Multi-Level Hiërarchie & Performance) | 
-| **Laatste update** | 2026-07-05 (Dag 83) |
+| **Laatste update** | 2026-07-08 (Dag 84) |
 | **Bijgewerkt door** | Project-manager skill (Antigravity) |
 
 ---
@@ -56,9 +56,9 @@
 
 | Datum | Wijziging | Impact |
 |-------|-----------|--------|
+| 2026-07-08 | **Afronding Sprint 19 Track F** | Thema-Analyse dashboard UX verbeteringen, tooltip gefixt en tabel styling. AI-search query geoptimaliseerd. |
 | 2026-07-05 | **Afronding Sprint 19 Migratie** | Dataspace backend geconnecteerd, indicatoren & postgREST RPC's gefixt, Hybride TimeSlider geïmplementeerd. |
 | 2026-07-04 | **Fix FlyTo & Crash Prevention** | Veilige afhandeling van `flyTo` animaties met primitieven en decouple van de MapController. Try/catch blokken toegevoegd aan `app.js` en verrijkte error toasts voor beter inzicht in bugs. |
-| 2026-07-01 | **Auth fix & Hybride Datamodel** | `routers/dashboard.py` omgebouwd naar `check_auth_or_key` ondersteuning. Introductie `vw_gebieden_features` voor efficiëntere tile-serving in Sprint 19. |
 
 ---
 

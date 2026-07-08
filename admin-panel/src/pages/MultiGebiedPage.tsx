@@ -399,7 +399,7 @@ export const MultiGebiedPage: React.FC = () => {
 
     if (gebiedIds.length === 0) {
         return (
-            <div className="page-container">
+            <div className="page-container" style={{ maxWidth: '1400px', margin: '0 auto', padding: '2rem' }}>
                 <div className="card" style={{ padding: '3rem', textAlign: 'center' }}>
                     <Layers size={48} style={{ color: 'var(--color-text-muted)', marginBottom: '1rem' }} />
                     <h2>Geen gebieden geselecteerd</h2>
@@ -412,7 +412,7 @@ export const MultiGebiedPage: React.FC = () => {
     }
 
     return (
-        <div className="page-container">
+        <div className="page-container" style={{ maxWidth: '1400px', margin: '0 auto', padding: '2rem' }}>
             {/* Header */}
             <div className="page-header hide-on-print">
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>

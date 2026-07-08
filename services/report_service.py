@@ -711,3 +711,277 @@ class ReportDataService:
             "features": features
         }
 
+    def generate_thema_analyse_payload(
+        self,
+        gebied_ids: List[str],
+        referentie: str = 'gemeente',
+        gemeente_code: str = '1900',
+        deelgebied_naam: str = None,
+        categorie: str = None,
+        thema_naam: str = None,
+        onderdeel_naam: str = None
+    ) -> Dict[str, Any]:
+        """
+        Thema-Analyse: Berekent alle indicatoren binnen de hiërarchie-selectie
+        en groepeert deze per buurt.
+        """
+        if not gebied_ids:
+            raise ValueError("Minimaal 1 gebied_id is vereist.")
+
+        # 1. Bepaal gebiedstype
+        gebiedstype_query = text("""
+            SELECT gt.id as gebiedstype_id
+            FROM gebieden g
+            JOIN gebiedstypes gt ON g.gebiedstype_id = gt.id
+            WHERE g.id = :sample_id
+            LIMIT 1
+        """)
+        gt_row = self.db.execute(gebiedstype_query, {"sample_id": gebied_ids[0]}).fetchone()
+        if not gt_row:
+            raise ValueError(f"Gebied {gebied_ids[0]} niet gevonden.")
+        gebiedstype_id = str(gt_row._mapping['gebiedstype_id'])
+
+        # 2. Bouw referentie-filter
+        referentie_filter = "g2.gebiedstype_id = :gebiedstype_id"
+        params: Dict[str, Any] = {
+            "gebied_ids": gebied_ids,
+            "gebiedstype_id": gebiedstype_id
+        }
+        if referentie == 'gemeente':
+            referentie_filter += " AND g2.gemeente_code = :gemeente_code"
+            params["gemeente_code"] = gemeente_code
+
+        # 2b. Filter water-buurten uit
+        water_filter_query = text("""
+            SELECT g.id FROM gebieden g
+            WHERE g.id = ANY(:gebied_ids)
+              AND COALESCE(g.metadata->>'water', 'NEE') != 'JA'
+        """)
+        water_result = self.db.execute(water_filter_query, {"gebied_ids": gebied_ids})
+        gefilterde_ids = [str(r._mapping['id']) for r in water_result]
+        if not gefilterde_ids:
+            raise ValueError("Alle geselecteerde gebieden zijn water-buurten.")
+        params["gebied_ids"] = gefilterde_ids
+
+        # 2c. Bouw thema filter clause
+        filters = []
+        if categorie:
+            filters.append("titel_naam = :categorie")
+            params["categorie"] = categorie
+        if thema_naam:
+            filters.append("thema_naam = :thema_naam")
+            params["thema_naam"] = thema_naam
+        if onderdeel_naam:
+            filters.append("onderdeel_naam = :onderdeel_naam")
+            params["onderdeel_naam"] = onderdeel_naam
+        
+        thema_filter_clause = "WHERE " + " AND ".join(filters) if filters else ""
+
+        # 3. Bereken z-scores
+        z_score_query = text(f"""
+            WITH target_data AS (
+                SELECT indicator_uuid, gebied_id, waarde, jaar
+                FROM (
+                    SELECT indicator_uuid, gebied_id, waarde, jaar,
+                           ROW_NUMBER() OVER(PARTITION BY gebied_id, indicator_uuid ORDER BY jaar DESC) AS rn
+                    FROM gebied_data
+                    WHERE gebied_id = ANY(:gebied_ids)
+                ) sub
+                WHERE rn = 1
+            ),
+            referentie_stats AS (
+                SELECT gd2.indicator_uuid,
+                       AVG(gd2.waarde)         AS avg_waarde,
+                       STDDEV_SAMP(gd2.waarde) AS std_waarde,
+                       MIN(gd2.waarde)         AS min_waarde,
+                       MAX(gd2.waarde)         AS max_waarde
+                FROM (
+                    SELECT gd3.indicator_uuid, gd3.waarde, gd3.gebied_id,
+                           ROW_NUMBER() OVER(PARTITION BY gd3.indicator_uuid, gd3.gebied_id ORDER BY gd3.jaar DESC) AS rn
+                    FROM gebied_data gd3
+                    JOIN gebieden g2 ON gd3.gebied_id = g2.id
+                    WHERE {referentie_filter}
+                ) gd2
+                WHERE gd2.rn = 1
+                GROUP BY gd2.indicator_uuid
+                HAVING STDDEV_SAMP(gd2.waarde) > 0
+            ),
+            alle_zscores AS (
+                SELECT
+                    td.gebied_id,
+                    g.naam                          AS buurt_naam,
+                    i.naam                          AS indicator_naam,
+                    i.eenheid                       AS eenheid,
+                    vkh.titel_naam                  AS titel_naam,
+                    vkh.thema_naam                  AS thema_naam,
+                    vkh.onderdeel_naam              AS onderdeel_naam,
+                    COALESCE(i.score_type, '+/+')   AS score_type,
+                    td.waarde,
+                    rs.avg_waarde,
+                    rs.std_waarde,
+                    rs.min_waarde,
+                    rs.max_waarde,
+                    (td.waarde - rs.avg_waarde) / rs.std_waarde AS z_score
+                FROM target_data td
+                JOIN gebieden g        ON td.gebied_id = g.id
+                JOIN indicatoren i     ON td.indicator_uuid = i.uuid
+                JOIN v_kompas_hierarchie vkh
+                                       ON i.uuid = vkh.indicator_uuid AND vkh.config_id = 1
+                JOIN referentie_stats rs ON td.indicator_uuid = rs.indicator_uuid
+            ),
+            gefilterde_zscores AS (
+                SELECT * FROM alle_zscores
+                {thema_filter_clause}
+            )
+            SELECT * FROM gefilterde_zscores 
+            ORDER BY gebied_id, ABS(z_score) DESC
+        """)
+
+        result = self.db.execute(z_score_query, params)
+        rows = [dict(r._mapping) for r in result]
+
+        # 4. Groepeer per buurt
+        from collections import OrderedDict
+        buurt_groups: Dict[str, Dict[str, Any]] = OrderedDict()
+
+        for row in rows:
+            z = float(row['z_score'])
+            z_abs = abs(z)
+            score_type = row['score_type']
+            impact = self._determine_impact(z, score_type)
+            is_negatief = 'negatief' in impact
+            kleur = self._get_zscore_kleur(z_abs, is_negatief)
+
+            entry = {
+                "indicator_naam": row['indicator_naam'],
+                "eenheid": row.get('eenheid') or '',
+                "thema": row.get('thema_naam') or row.get('titel_naam') or 'Overig',
+                "onderdeel": row.get('onderdeel_naam') or '',
+                "score_type": score_type,
+                "z_score": round(z, 2),
+                "z_score_abs": round(z_abs, 2),
+                "impact": impact,
+                "kleur_hex": kleur,
+                "waarde": round(float(row['waarde']), 2),
+                "ref_gemiddelde": round(float(row['avg_waarde']), 2),
+                "ref_min": round(float(row['min_waarde']), 2),
+                "ref_max": round(float(row['max_waarde']), 2)
+            }
+
+            bid = row['gebied_id']
+            if bid not in buurt_groups:
+                buurt_groups[bid] = {
+                    "buurt_id": bid,
+                    "buurt_naam": row['buurt_naam'],
+                    "max_z_score": round(z, 2),
+                    "max_z_score_abs": round(z_abs, 2),
+                    "indicatoren": [entry]
+                }
+            else:
+                buurt_groups[bid]["indicatoren"].append(entry)
+                # Update max if this is higher (although SQL is ordered so first is max)
+                if z_abs > buurt_groups[bid]["max_z_score_abs"]:
+                    buurt_groups[bid]["max_z_score"] = round(z, 2)
+                    buurt_groups[bid]["max_z_score_abs"] = round(z_abs, 2)
+
+        buurten_analyse = list(buurt_groups.values())
+        buurten_analyse.sort(key=lambda x: x['max_z_score_abs'], reverse=True)
+
+        # 5. Label
+        if referentie == 'gemeente':
+            gem_naam_row = self.db.execute(
+                text("SELECT naam FROM gemeenten WHERE code = :code"),
+                {"code": gemeente_code}
+            ).fetchone()
+            referentie_label = f"⌀ Gemeente {gem_naam_row[0]}" if gem_naam_row else f"⌀ Gemeente {gemeente_code}"
+        else:
+            referentie_label = "⌀ Provincie Fryslân"
+
+        # 6. Beschrijving
+        filter_parts = []
+        if categorie: filter_parts.append(categorie)
+        if thema_naam: filter_parts.append(thema_naam)
+        if onderdeel_naam: filter_parts.append(onderdeel_naam)
+        filter_beschrijving = " › ".join(filter_parts) if filter_parts else "Alle indicatoren"
+
+        return {
+            "rapport_type": "thema-analyse",
+            "filter_beschrijving": filter_beschrijving,
+            "deelgebied_naam": deelgebied_naam or f"{len(gebied_ids)} buurten",
+            "referentie_label": referentie_label,
+            "referentie_modus": referentie,
+            "totaal_buurten": len(gebied_ids),
+            "buurten_met_data": len(buurten_analyse),
+            "buurten_analyse": buurten_analyse
+        }
+
+    def generate_thema_analyse_geojson(
+        self,
+        gebied_ids: List[str],
+        referentie: str = 'gemeente',
+        gemeente_code: str = '1900',
+        categorie: str = None,
+        thema_naam: str = None,
+        onderdeel_naam: str = None
+    ) -> Dict[str, Any]:
+        """
+        Genereert een GeoJSON FeatureCollection voor de Thema-Analyse.
+        Geometrie bevat alle indicatoren. Kleuring op basis van max z-score of gem_zscore.
+        We gebruiken de payload method en verrijken met geometry.
+        """
+        payload = self.generate_thema_analyse_payload(
+            gebied_ids=gebied_ids,
+            referentie=referentie,
+            gemeente_code=gemeente_code,
+            categorie=categorie,
+            thema_naam=thema_naam,
+            onderdeel_naam=onderdeel_naam
+        )
+        
+        analyse_lookup = {b['buurt_id']: b for b in payload['buurten_analyse']}
+
+        geom_query = text("""
+            SELECT g.id, g.naam,
+                   ST_AsGeoJSON(ST_Transform(g.geom, 4326))::json AS geometry
+            FROM gebieden g
+            WHERE g.id = ANY(:gebied_ids)
+              AND g.geom IS NOT NULL
+              AND COALESCE(g.metadata->>'water', 'NEE') != 'JA'
+        """)
+        geom_result = self.db.execute(geom_query, {"gebied_ids": gebied_ids})
+
+        features = []
+        for row in geom_result:
+            r = dict(row._mapping)
+            buurt_id = r['id']
+            analyse = analyse_lookup.get(buurt_id, {})
+
+            feature = {
+                "type": "Feature",
+                "geometry": r['geometry'],
+                "properties": {
+                    "buurt_id": buurt_id,
+                    "buurt_naam": r['naam'],
+                    "max_z_score": analyse.get('max_z_score', 0),
+                    "max_z_score_abs": analyse.get('max_z_score_abs', 0),
+                    "indicatoren": analyse.get('indicatoren', [])
+                }
+            }
+            # Kleur bepalen voor de map: we nemen de kleur van de hoogste uitschieter (al gesorteerd op 0 in array)
+            if feature["properties"]["indicatoren"]:
+                feature["properties"]["kleur_hex"] = feature["properties"]["indicatoren"][0]["kleur_hex"]
+            else:
+                feature["properties"]["kleur_hex"] = '#6b7280'
+
+            features.append(feature)
+
+        return {
+            "type": "FeatureCollection",
+            "metadata": {
+                "referentie_label": payload['referentie_label'],
+                "totaal_buurten": payload['totaal_buurten'],
+                "filter_beschrijving": payload['filter_beschrijving']
+            },
+            "features": features
+        }
+

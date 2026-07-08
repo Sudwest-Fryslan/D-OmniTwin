@@ -10,6 +10,7 @@ import { KleurschemasPage } from './pages/KleurschemasPage';
 import { ReportPage } from './pages/ReportPage';
 import { BenchmarkPage } from './pages/BenchmarkPage';
 import { MultiGebiedPage } from './pages/MultiGebiedPage';
+import { ThemaAnalysePage } from './pages/ThemaAnalysePage';
 import { LLMConfigPage } from './pages/LLMConfigPage';
 import { AccountPage } from './pages/AccountPage';
 import { LogViewerPage } from './pages/LogViewerPage';
@@ -115,6 +116,14 @@ const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
           </NavLink>
 
           <NavLink
+            to="/rapport/thema-analyse"
+            className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
+          >
+            <Layers size={18} />
+            Thema-Analyse
+          </NavLink>
+
+          <NavLink
             to="/llm"
             className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
           >
@@ -149,6 +158,7 @@ const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
               <Route path="/indicatoren" element={<>Indicatoren</>} />
               <Route path="/hierarchie" element={<>Hiërarchie</>} />
               <Route path="/kleurschemas" element={<>Kleurschema's</>} />
+              <Route path="/rapport/thema-analyse" element={<>Thema-Analyse</>} />
               <Route path="/rapport/*" element={<>AI Rapportage</>} />
               <Route path="/llm" element={<>AI Configuratie</>} />
               <Route path="/logs" element={<>Log Viewer</>} />
@@ -293,6 +303,10 @@ function App() {
 
           <Route path="/rapport/multi-gebied" element={
             <MultiGebiedPage />
+          } />
+
+          <Route path="/rapport/thema-analyse" element={
+            <ThemaAnalysePage />
           } />
 
           <Route path="/rapport/:gebied_id?" element={

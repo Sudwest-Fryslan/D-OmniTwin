@@ -2271,6 +2271,15 @@ function openRapportTypeModal(gebiedId, baseUrl) {
                         Volledige analyse van dit gebied
                     </span>
                 </button>
+                <button id="rapport-modal-thema" style="
+                    padding: 0.75rem 1rem; border-radius: 8px; border: none;
+                    background: #8b5cf6; color: white;
+                    font-size:0.95rem; font-weight:600; cursor:pointer; text-align:left;
+                ">📊 Thema-Analyse<br>
+                    <span style="font-weight:400; font-size:0.8rem; opacity:0.8;">
+                        Diepgaande analyse per Kompas thema
+                    </span>
+                </button>
                 <button id="rapport-modal-benchmark" style="
                     padding: 0.75rem 1rem; border-radius: 8px; border: none;
                     background: var(--color-bg-alt, #2d3748); color: white;
@@ -2293,6 +2302,10 @@ function openRapportTypeModal(gebiedId, baseUrl) {
 
     document.getElementById('rapport-modal-dossier').addEventListener('click', () => {
         window.open(`${baseUrl}/admin/rapport/${gebiedId}`, '_blank');
+        modal.remove();
+    });
+    document.getElementById('rapport-modal-thema').addEventListener('click', () => {
+        window.open(`${baseUrl}/admin/rapport/thema-analyse?gebieden=${gebiedId}`, '_blank');
         modal.remove();
     });
     document.getElementById('rapport-modal-benchmark').addEventListener('click', () => {
@@ -2348,6 +2361,16 @@ function openMultiSelectRapportModal(ids, baseUrl) {
                         Z-score analyse met kaart en ranking
                     </span>
                 </button>
+                <button id="rapport-modal-thema-analyse" style="
+                    padding: 0.75rem 1rem; border-radius: 8px; border: none;
+                    background: var(--color-bg-alt, #2d3748); color: white;
+                    font-size:0.95rem; font-weight:600; cursor:pointer; text-align:left;
+                    border: 1px solid var(--color-border, rgba(255,255,255,0.15));
+                ">📊 Thema-Analyse<br>
+                    <span style="font-weight:400; font-size:0.8rem; opacity:0.8;">
+                        Alle indicatoren per thema/onderdeel
+                    </span>
+                </button>
             </div>
             <button id="rapport-modal-sluiten-multi" style="
                 margin-top:1rem; background:none; border:none; color:inherit;
@@ -2374,6 +2397,18 @@ function openMultiSelectRapportModal(ids, baseUrl) {
             extraParams += `&woonplaatsen=${woonplaatsen}`;
         }
         window.open(`${baseUrl}/admin/rapport/multi-gebied?gebieden=${gebiedenParam}&naam=${naam}${extraParams}`, '_blank');
+        modal.remove();
+    });
+    document.getElementById('rapport-modal-thema-analyse').addEventListener('click', () => {
+        const gebiedenParam = ids.join(',');
+        const naam = encodeURIComponent(deelgebiedNaam);
+        let extraParams = '';
+        if (state.selectedGroepen.length > 0 && state.selectedLaagId) {
+            extraParams += `&laag_id=${state.selectedLaagId}`;
+            const woonplaatsen = state.selectedGroepen.map(g => encodeURIComponent(g.naam)).join(',');
+            extraParams += `&woonplaatsen=${woonplaatsen}`;
+        }
+        window.open(`${baseUrl}/admin/rapport/thema-analyse?gebieden=${gebiedenParam}&naam=${naam}${extraParams}`, '_blank');
         modal.remove();
     });
     document.getElementById('rapport-modal-sluiten-multi').addEventListener('click', () => modal.remove());

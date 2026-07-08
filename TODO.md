@@ -204,6 +204,13 @@
     - [x] Oude zwevende overlay `#camera-controls-overlay` vervangen door vast `#panel-info` paneel links.
     - [x] Welkomststappen, Kaartbediening en D-Omni Assistent tips toevoegen aan `#panel-info`.
     - [x] Overbodige CSS en JS opschonen (`setupInfoToggle`).
+
+### Track F — Rapportage & Multi-Gebiedsdossier
+- [ ] **F1 — Thema-specifieke Indicatoren (Subthema filter)**
+    - [ ] Mogelijkheid om in het Multi-Gebiedsdossier indicatoren te filteren op thema-laag (bijv. 'Verkeer') en één laag dieper (bijv. 'Bereikbaarheid en parkeren').
+    - [ ] Een specifiek rapport maken voor deze (sub)thema's, zonder enkel de top afwijkingen te tonen.
+- [ ] **F2 — Verduidelijking Opbouw Rapportage**
+    - [ ] Uitleg toevoegen aan de UI van het rapport hoe deze is opgebouwd (bijv: "Dit rapport toont de top afwijkende indicatoren" óf "Dit rapport toont een selectie op basis van het gekozen thema").
 ### Afsluiting & Merge
 - [ ] Gebruikersreview opnieuw doorlopen (alle 5 profielen)
 - [ ] Pull Request aanmaken naar `main`

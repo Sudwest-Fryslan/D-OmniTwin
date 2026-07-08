@@ -1,5 +1,22 @@
 # BUGFIX.md - D-OmniTwin
 
+## Bug #52: Ollama AI Assistent "Connection refused" in Docker (08-07-2026)
+
+**Gerapporteerd:** 08-07-2026  
+**Status:** ✅ FIXED (08-07-2026)  
+**Severity:** 🔴 HIGH (AI chat interface faalde met HTTP 500)
+
+### Probleem
+De AI assistent retourneerde een foutmelding in de UI: `Error contacting Ollama op http://localhost:11434/api/generate: [...] Failed to establish a new connection: [Errno 111] Connection refused`.
+
+### Oorzaak (Root Cause)
+De applicatie draait in een Docker container. De Ollama API URL was ingesteld op `http://localhost:11434`. In een container verwijst `localhost` naar de container zelf, terwijl Ollama daadwerkelijk op de fysieke host (Ubuntu) draaide.
+
+### Oplossing
+Configuratie aanpassing in de UI: de "Ollama API URL" is gewijzigd van `http://localhost:11434` naar `http://host.docker.internal:11434`. Dit zorgt ervoor dat de Docker container succesvol de host machine kan bereiken voor de LLM-generatie.
+
+---
+
 ## Bug #51: Hybride Datamodel Migratie Bugs (API 404 & HTTP 500 Connectiefout) (05-07-2026)
 
 **Gerapporteerd:** 05-07-2026  

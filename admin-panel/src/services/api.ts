@@ -205,6 +205,12 @@ export const reportAPI = {
         reportApiClient.post<any>('/multi-gebied', payload),
     getMultiGebiedGeoJSON: (payload: { gebied_ids: string[]; referentie: string; gemeente_code: string; thema?: string }) =>
         reportApiClient.post<any>('/multi-gebied/geojson', payload),
+
+    // Sjabloon E: Thema-Analyse
+    getThemaAnalyse: (payload: { gebied_ids: string[]; referentie: string; gemeente_code: string; deelgebied_naam?: string; categorie?: string; thema_naam?: string; onderdeel_naam?: string }) =>
+        reportApiClient.post<any>('/thema-analyse', payload),
+    getThemaAnalyseGeoJSON: (payload: { gebied_ids: string[]; referentie: string; gemeente_code: string; categorie?: string; thema_naam?: string; onderdeel_naam?: string }) =>
+        reportApiClient.post<any>('/thema-analyse/geojson', payload),
 };
 
 // Public API client — voor gebieden/gemeenten endpoint (geen auth nodig)
@@ -219,6 +225,11 @@ export const gebiedenAPI = {
         publicApi.get<{ gebieden: import('../types').GebiedListItem[]; totaal: number }>('/gebieden/zoek', {
             params: { q }
         }),
+};
+
+export const aiAPI = {
+    searchKompas: (q: string, limit: number = 5) =>
+        publicApi.get<any[]>('/ai/kompas/search', { params: { q, limit } }),
 };
 
 export default api;

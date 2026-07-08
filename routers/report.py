@@ -17,6 +17,16 @@ class MultiGebiedRequest(BaseModel):
     deelgebied_naam: Optional[str] = Field(None, description="Label voor de rapportheader")
     thema: Optional[str] = Field(None, description="Thema filter (bijv. 'Kwaliteit van Leven')")
 
+class ThemaAnalyseRequest(BaseModel):
+    """Request model voor Thema-Analyse rapport."""
+    gebied_ids: List[str] = Field(..., min_length=1, max_length=200)
+    referentie: str = Field('gemeente')
+    gemeente_code: str = Field('1900')
+    deelgebied_naam: Optional[str] = Field(None)
+    categorie: Optional[str] = Field(None, description="Niveau 0: bijv. 'Kwaliteit fysieke leefomgeving'")
+    thema_naam: Optional[str] = Field(None, description="Niveau 1: bijv. 'Verkeer'")
+    onderdeel_naam: Optional[str] = Field(None, description="Niveau 2: bijv. 'Bereikbaarheid en parkeren'")
+
 
 router = APIRouter(
     prefix="/api/report",
@@ -211,3 +221,50 @@ def get_multi_gebied_geojson(payload: MultiGebiedRequest, db: Session = Depends(
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Fout tijdens multi-gebied GeoJSON generatie: {str(e)}")
+
+# ─── Sjabloon E: Thema-Analyse ───────────────────────────────────────────────
+
+@router.post("/thema-analyse", response_model=Dict[str, Any])
+def get_thema_analyse_data(payload: ThemaAnalyseRequest, db: Session = Depends(get_db)):
+    """
+    Thema-Analyse — Analyse payload.
+    Berekent de z-scores en waarden voor alle indicatoren binnen het 
+    opgegeven thema/subthema zonder de top-3 limiet te forceren.
+    """
+    service = ReportDataService(db)
+    try:
+        return service.generate_thema_analyse_payload(
+            gebied_ids=payload.gebied_ids,
+            referentie=payload.referentie,
+            gemeente_code=payload.gemeente_code,
+            deelgebied_naam=payload.deelgebied_naam,
+            categorie=payload.categorie,
+            thema_naam=payload.thema_naam,
+            onderdeel_naam=payload.onderdeel_naam
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Fout tijdens thema-analyse generatie: {str(e)}")
+
+@router.post("/thema-analyse/geojson", response_model=Dict[str, Any])
+def get_thema_analyse_geojson(payload: ThemaAnalyseRequest, db: Session = Depends(get_db)):
+    """
+    Thema-Analyse — GeoJSON voor choropleth.
+    Retourneert een FeatureCollection met geometrieën en kleurcodering gebaseerd
+    op het gemiddelde z-score van alle indicatoren binnen de thema selectie.
+    """
+    service = ReportDataService(db)
+    try:
+        return service.generate_thema_analyse_geojson(
+            gebied_ids=payload.gebied_ids,
+            referentie=payload.referentie,
+            gemeente_code=payload.gemeente_code,
+            categorie=payload.categorie,
+            thema_naam=payload.thema_naam,
+            onderdeel_naam=payload.onderdeel_naam
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Fout tijdens thema-analyse GeoJSON generatie: {str(e)}")

@@ -54,13 +54,17 @@ class AISearchService:
                     NULLIF(i.beschrijving_ai, ''),
                     i.omschrijving
                 ) as beschrijving,
-                i.categorie,
+                COALESCE(vkh.titel_naam, i.categorie) as categorie,
+                vkh.thema_naam,
+                vkh.onderdeel_naam,
                 i.ontologie_status,
                 i.eenheid,
                 i.score_type,
                 (e.embedding <=> CAST(:vector AS vector)) as distance
             FROM indicatoren i
             JOIN indicator_embeddings e ON i.uuid = e.indicator_uuid
+            LEFT JOIN v_kompas_hierarchie vkh
+                ON i.uuid = vkh.indicator_uuid AND vkh.config_id = 1
             ORDER BY distance ASC
             LIMIT :limit
         """)
@@ -73,7 +77,7 @@ class AISearchService:
         # 3. Formateren van resultaten
         search_results = []
         for row in results:
-            uuid, naam, beschrijving, categorie, ontologie_status, eenheid, score_type, distance = row
+            uuid, naam, beschrijving, categorie, thema_naam, onderdeel_naam, ontologie_status, eenheid, score_type, distance = row
             # Score is 1 - distance voor Cosine Similarity
             score = 1 - float(distance)
             
@@ -82,6 +86,8 @@ class AISearchService:
                 "naam": naam,
                 "beschrijving": beschrijving,
                 "categorie": categorie,
+                "thema_naam": thema_naam,
+                "onderdeel_naam": onderdeel_naam,
                 "ontologie_status": ontologie_status or "draft",
                 "eenheid": eenheid,
                 "score_type": score_type,

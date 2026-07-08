@@ -276,7 +276,7 @@ export const BenchmarkPage: React.FC = () => {
     // ─── RENDER ─────────────────────────────────────────────────────────────
 
     return (
-        <div className="page-container">
+        <div className="page-container" style={{ maxWidth: '1400px', margin: '0 auto', padding: '2rem' }}>
             <div className="page-header hide-on-print">
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <div>
