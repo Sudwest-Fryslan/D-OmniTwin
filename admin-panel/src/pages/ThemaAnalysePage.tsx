@@ -3,6 +3,7 @@ import { useSearchParams } from 'react-router-dom';
 import { reportAPI, hierarchyAPI, aiAPI } from '../services/api';
 import { X, Layers, RefreshCw, Download, ArrowUpDown, Map, BarChart2, List, ChevronRight, ChevronDown } from 'lucide-react';
 import * as d3 from 'd3';
+import { DivergingBarChart } from '../components/charts/DivergingBarChart';
 import type { HierarchyNode } from '../types';
 
 // ─── Types ─────────────────────────────────────────────────────────────────
@@ -92,6 +93,7 @@ export const ThemaAnalysePage: React.FC = () => {
     const [sortField, setSortField] = useState<'z_score' | 'buurt' | 'thema'>('z_score');
     const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
     const [hoveredBuurt, setHoveredBuurt] = useState<string | null>(null);
+    const [selectedChartBuurt, setSelectedChartBuurt] = useState<string | null>(null);
     const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
     const [showWoonplaatsGrenzen, setShowWoonplaatsGrenzen] = useState(true);
     const [woonplaatsGeo, setWoonplaatsGeo] = useState<any>(null);
@@ -207,10 +209,7 @@ export const ThemaAnalysePage: React.FC = () => {
         }
     };
 
-    // Auto-fetch als filters veranderen
-    useEffect(() => {
-        fetchData();
-    }, [referentie, selectedCategorie, selectedThema, selectedOnderdeel]);
+    // Geen auto-fetch on mount meer; de gebruiker moet expliciet op 'Pas Filters Toe' klikken.
 
     // ─── Helpers ────────────────────────────────────────────────────────────
 
@@ -412,9 +411,37 @@ export const ThemaAnalysePage: React.FC = () => {
     const renderBarChart = () => {
         if (!data) return null;
         
+        const buurten = data.buurten_analyse;
+        const activeBuurtId = selectedChartBuurt || hoveredBuurt || buurten[0]?.buurt_id;
+        const activeBuurt = buurten.find(b => b.buurt_id === activeBuurtId) || buurten[0];
+        if (!activeBuurt) return null;
+        
         return (
-            <div style={{ width: '100%', height: '400px', background: 'var(--color-bg-alt)', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--color-text-muted)' }}>
-                <em>Experimentele Grafiek (Fase 0 Verkenning) - Binnenkort beschikbaar</em>
+            <div style={{ width: '100%' }}>
+                {buurten.length > 1 && (
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem', marginBottom: '1rem', maxHeight: '80px', overflowY: 'auto', paddingRight: '0.5rem' }}>
+                        {buurten.map(b => (
+                            <button key={b.buurt_id}
+                                onClick={() => setSelectedChartBuurt(b.buurt_id)}
+                                style={{
+                                    background: activeBuurtId === b.buurt_id ? 'var(--color-primary)' : 'var(--color-bg-alt)',
+                                    color: activeBuurtId === b.buurt_id ? '#fff' : 'var(--color-text-primary)',
+                                    border: '1px solid var(--color-border)',
+                                    borderRadius: '12px',
+                                    padding: '0.25rem 0.6rem',
+                                    fontSize: '0.75rem',
+                                    cursor: 'pointer',
+                                    transition: 'all 0.2s ease',
+                                    outline: 'none'
+                                }}>
+                                {b.buurt_naam}
+                            </button>
+                        ))}
+                    </div>
+                )}
+                <div style={{ width: '100%', background: 'var(--color-bg-alt)', borderRadius: '8px', padding: '1rem 0', minHeight: '350px' }}>
+                    <DivergingBarChart indicatoren={activeBuurt.indicatoren} maxBars={15} />
+                </div>
             </div>
         );
     };
@@ -590,22 +617,37 @@ export const ThemaAnalysePage: React.FC = () => {
                     </div>
                 )}
 
-                {/* Actieve Filter Pill */}
-                {data && (
-                    <span style={{
-                        marginLeft: 'auto',
-                        background: 'rgba(59, 130, 246, 0.15)',
-                        color: 'var(--color-primary)',
-                        padding: '0.35rem 0.75rem',
-                        borderRadius: '999px',
-                        fontSize: '0.8rem',
-                        fontWeight: 500,
-                        whiteSpace: 'nowrap',
-                        border: '1px solid rgba(59, 130, 246, 0.3)'
-                    }}>
-                        ● {data.filter_beschrijving} ({data.buurten_analyse[0]?.indicatoren.length || 0})
-                    </span>
-                )}
+                {/* Actie knop en Actieve Filter Pill */}
+                <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
+                    <button 
+                        onClick={fetchData}
+                        disabled={loading}
+                        style={{
+                            display: 'flex', alignItems: 'center', gap: '0.5rem',
+                            padding: '0.4rem 1rem', borderRadius: '4px',
+                            background: 'var(--color-primary)', color: 'white',
+                            border: 'none', cursor: loading ? 'not-allowed' : 'pointer',
+                            fontSize: '0.9rem', fontWeight: 500, transition: 'all 0.2s'
+                        }}
+                    >
+                        {loading ? <RefreshCw className="spin" size={16} /> : 'Pas Filters Toe'}
+                    </button>
+                    
+                    {data && (
+                        <span style={{
+                            background: 'rgba(59, 130, 246, 0.15)',
+                            color: 'var(--color-primary)',
+                            padding: '0.35rem 0.75rem',
+                            borderRadius: '999px',
+                            fontSize: '0.8rem',
+                            fontWeight: 500,
+                            whiteSpace: 'nowrap',
+                            border: '1px solid rgba(59, 130, 246, 0.3)'
+                        }}>
+                            ● {data.filter_beschrijving} ({data.buurten_analyse[0]?.indicatoren.length || 0})
+                        </span>
+                    )}
+                </div>
             </div>
 
             {loading && (
@@ -617,6 +659,16 @@ export const ThemaAnalysePage: React.FC = () => {
             {error && (
                 <div style={{ padding: '1.5rem', background: '#fee2e2', color: '#991b1b', borderRadius: 'var(--radius-md)', marginBottom: '1rem' }}>
                     <strong>Fout:</strong> {error}
+                </div>
+            )}
+
+            {!loading && !error && !data && (
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '5rem 2rem', color: 'var(--color-text-muted)', background: 'var(--color-bg-alt)', borderRadius: '8px', border: '1px dashed var(--color-border)', marginTop: '1.5rem' }}>
+                    <Layers size={48} style={{ opacity: 0.2, marginBottom: '1rem' }} />
+                    <h3 style={{ margin: '0 0 0.5rem', color: 'var(--color-text-primary)', fontSize: '1.2rem' }}>Klaar om te analyseren</h3>
+                    <p style={{ margin: 0, maxWidth: '450px', textAlign: 'center', fontSize: '0.9rem', lineHeight: 1.5 }}>
+                        Stel je filters in en klik op <strong>Pas Filters Toe</strong> om de data voor deze buurten op te halen en uit te rekenen.
+                    </p>
                 </div>
             )}
 

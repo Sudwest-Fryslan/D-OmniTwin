@@ -11,7 +11,7 @@
 |------|--------|
 | **Huidige versie** | v1.0.0-beta (pre-release) |
 | **Sprint** | Sprint 19 (Onderzoek Multi-Level Hiërarchie & Performance) | 
-| **Laatste update** | 2026-07-08 (Dag 84) |
+| **Laatste update** | 2026-07-10 (Dag 86) |
 | **Bijgewerkt door** | Project-manager skill (Antigravity) |
 
 ---
@@ -46,6 +46,7 @@
 | **Kompas Data Ontologie UI** | 🟢 Actief | Sprint 18 ✅ — tabblad in detailpaneel met validatiestatus en oranje labels |
 | **Viewport Vrije-Zone Centreren** | 🟢 Actief | Sprint 16 ✅ — `getFreezone()`, `flyToGebied()` offset, `fitBounds()` guard. Closes #8 |
 | **Logging Infrastructuur** | 🟢 Actief | Sprint 17 ✅ — `AsyncLogQueue`, `app_logs` DB, log viewer admin panel, dagelijkse cleanup. E-mail alerts on hold (Issue #10) |
+| **Thema-Analyse Visualisatie** | 🟢 Actief | Sprint 19B ✅ — D3 Diverging Bar Chart voor interactieve Z-score verkenning (Detail Verkenning paneel) |
 | **Time Slider** | 🔴 Gepland | Sprint 17+ — Indicator Historie & 3D Transities |
 | **Data Lineage** | 🔴 Gepland | Sprint 8F — nog niet gestart |
 | **Dataspace Orchestrator (inc. FRLDS)** | 🔵 Visie/Concept | Innovatiebudget 2026 |
@@ -56,9 +57,9 @@
 
 | Datum | Wijziging | Impact |
 |-------|-----------|--------|
+| 2026-07-10 | **Sprint 19B Thema-Analyse & Bugfixes** | D3 Diverging Bar Chart toegevoegd voor interactieve Z-score weergave. Bug opgelost met dubbele geometrieën door gebruik te maken van `actief` kenmerk in de database. |
 | 2026-07-08 | **Afronding Sprint 19 Track F** | Thema-Analyse dashboard UX verbeteringen, tooltip gefixt en tabel styling. AI-search query geoptimaliseerd. |
 | 2026-07-05 | **Afronding Sprint 19 Migratie** | Dataspace backend geconnecteerd, indicatoren & postgREST RPC's gefixt, Hybride TimeSlider geïmplementeerd. |
-| 2026-07-04 | **Fix FlyTo & Crash Prevention** | Veilige afhandeling van `flyTo` animaties met primitieven en decouple van de MapController. Try/catch blokken toegevoegd aan `app.js` en verrijkte error toasts voor beter inzicht in bugs. |
 
 ---
 
@@ -67,8 +68,8 @@
 | Issue | Ernst | Domein | Status |
 |-------|-------|--------|--------|
 | **Dashboard Backend (FastAPI)** | `routers/dashboard.py` | 🟢 Actief | Dashboards, statistieken & admin key auth. Auth scope gefixt voor admin panels via web UI cookies. |
-| **Data Importer** | `admin-panel/src/pages/DataUpload.js`| 🟡 In Ontwikkeling | UI om CBS bestanden handmatig te uploaden en asynchroon te parsen (Sprint 19 voorbereiding). |
-| **Kaart & Kompas Rendering** | `static/js/app.js` & `kompas.js` | 🟡 In Ontwikkeling | Integratie van MultiPolygons. `flyTo` bug fixes doorgevoerd. Open issue met database dubbele geometrieën veroorzaakt momenteel gestapelde vlakken. |
+| **Data Importer** | `admin-panel/src/pages/DataUpload.js`| 🟡 In Ontwikkeling | UI om CBS bestanden handmatig te uploaden en asynchroon te parsen (Voor Externe Kaartlagen is de upload al wel gerealiseerd via UI). |
+| **Kaart & Kompas Rendering** | `static/js/app.js` & `kompas.js` | 🟢 Actief | Integratie van MultiPolygons voltooid. Dubbele geometrieën opgelost (`actief/inactief` db veld). |
 | **E-mail alerts (Issue #10)** | Hoog | SecOps/Logging | 🔴 On hold — SMTP-server vereist. Must-have voor deelbare versie. |
 | Bug #42: 3D pand-kleuring bij single-buurt | Middel | Frontend | Open (Sprint 12) |
 
@@ -92,7 +93,7 @@
 |--------|-------|---------|
 | **18** | IJsselmeerkust als Besluitinstrument — duiding, BAG woonplaatsen, benchmarking, Track F quickwins | ✅ Afgerond (Dag 79 — alle tracks incl. multi-gebied benchmark) |
 | **19** | Dataspace Architectuur Migratie — Docker, PostgREST, pg_featureserv, Traefik | ✅ Deels Afgerond (Fase 1, 2 en 4 voltooid) |
-| **19B**| Van Data naar Inzicht — signalering, prioritering, contextuele scores, AI-samenvatting | 📌 Gepland |
+| **19B**| Van Data naar Inzicht — signalering, prioritering, contextuele scores, AI-samenvatting | ✅ Afgerond (Dag 86) |
 | **17** | Configureerbare Logging Infrastructuur | ✅ Voltooid — merge `4ed45bd`, closes #9 (deels) |
 | **17C e-mail** | E-mail alerts bij ERROR/CRITICAL | ⏳ On hold — Issue #10, wacht op SMTP |
 | **12** | 3D BAG Integratie & Bug #42 | 🔜 Na Sprint 19 |
