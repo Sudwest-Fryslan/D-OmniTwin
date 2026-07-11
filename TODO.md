@@ -1733,7 +1733,7 @@ if (geojson.features.length > 0 && !state.initialDataLoaded) {
 ## ⏳ Sprint 13: Advanced UX & Map Features (Fase 1/7)
 
 **Context:** Visuele features en QoL updates.
-- [ ] **Time Slider:** Historische play/pauze bediening om data af te spelen (2020-2024).
+- [x] **Time Slider:** Historische play/pauze bediening om data af te spelen (2020-2024).
 - [ ] **Locatie Filters:** Draw polygon/radius filter tools integreren op in Deck.gl.
 - [ ] **Icoon Beheer:** Admin-gedeelte voor dynamische SVG map-/kompasiconen.
 
@@ -1840,8 +1840,8 @@ if (geojson.features.length > 0 && !state.initialDataLoaded) {
 - [ ] Synchrone map interaction (linked views)
 
 ### Time Slider
-- [ ] Historische data slider (2020-2024)
-- [ ] Animation: "play" through jaren
+- [x] Historische data slider (2020-2024)
+- [x] Animation: "play" through jaren
 
 ### Advanced Selection Tools
 - [ ] Draw polygon on map → stats

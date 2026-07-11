@@ -2698,7 +2698,7 @@ function setupEventListeners() {
             transitionDuration: 500
         };
         state.deckgl.setProps({
-            initialViewState: state.currentViewState
+            viewState: state.currentViewState
         });
         updateSelectionUI(); // Update 3D panden knop state
     });

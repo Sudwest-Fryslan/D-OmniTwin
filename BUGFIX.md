@@ -1,5 +1,17 @@
 # BUGFIX.md - D-OmniTwin
 
+## Bug #53: Deck.gl 3D Extrusie Camera Kanteling (Pitch) Werkt Niet Meer (11-07-2026)
+
+### Probleem
+Bij het inschakelen van de "3D Extrusie" toggle kantelt de kaart niet meer automatisch naar een 3D view (pitch van 45 graden). De data past zich aan, maar de camera blijft vlak staan.
+
+### Oorzaak (Root Cause)
+In de `enable-3d` event listener in `app.js` werd de nieuwe camera state (`state.currentViewState`) doorgegeven via de `initialViewState` property aan `deckgl.setProps()`. Deck.gl negeert `initialViewState` wijzigingen na de allereerste render.
+
+### Oplossing
+De property `initialViewState` is vervangen door `viewState` in de `setProps()` call binnen de toggle event listener (rond regel 2701 in `app.js`). Dit forceert Deck.gl om de actieve camera state (waaronder de pitch: 45) live te animeren en te updaten.
+
+---
 ## Bug #52: Ollama AI Assistent "Connection refused" in Docker (08-07-2026)
 
 **Gerapporteerd:** 08-07-2026  

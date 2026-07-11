@@ -47,7 +47,7 @@
 | **Viewport Vrije-Zone Centreren** | 🟢 Actief | Sprint 16 ✅ — `getFreezone()`, `flyToGebied()` offset, `fitBounds()` guard. Closes #8 |
 | **Logging Infrastructuur** | 🟢 Actief | Sprint 17 ✅ — `AsyncLogQueue`, `app_logs` DB, log viewer admin panel, dagelijkse cleanup. E-mail alerts on hold (Issue #10) |
 | **Thema-Analyse Visualisatie** | 🟢 Actief | Sprint 19B ✅ — D3 Diverging Bar Chart voor interactieve Z-score verkenning (Detail Verkenning paneel) |
-| **Time Slider** | 🔴 Gepland | Sprint 17+ — Indicator Historie & 3D Transities |
+| **Time Slider** | 🟢 Actief | Sprint 19 Migratie ✅ — Hybride TimeSlider, Indicator Historie & Play/Pauze |
 | **Data Lineage** | 🔴 Gepland | Sprint 8F — nog niet gestart |
 | **Dataspace Orchestrator (inc. FRLDS)** | 🔵 Visie/Concept | Innovatiebudget 2026 |
 
