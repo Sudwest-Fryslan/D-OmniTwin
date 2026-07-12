@@ -11,7 +11,7 @@
 |------|--------|
 | **Huidige versie** | v1.0.0-beta (pre-release) |
 | **Sprint** | Sprint 19 (Onderzoek Multi-Level Hiërarchie & Performance) | 
-| **Laatste update** | 2026-07-10 (Dag 86) |
+| **Laatste update** | 2026-07-12 (Dag 88) |
 | **Bijgewerkt door** | Project-manager skill (Antigravity) |
 
 ---
@@ -57,9 +57,9 @@
 
 | Datum | Wijziging | Impact |
 |-------|-----------|--------|
+| 2026-07-12 | **Bugfix #54: Kaart Centreren** | Wiskundige correctie in `getFreezone()` om extreme offsets te voorkomen wanneer Kompas flush links of rechts staat. Polygonen centreren nu correct in het werkelijke vrije schermdeel. |
 | 2026-07-10 | **Sprint 19B Thema-Analyse & Bugfixes** | D3 Diverging Bar Chart toegevoegd voor interactieve Z-score weergave. Bug opgelost met dubbele geometrieën door gebruik te maken van `actief` kenmerk in de database. |
 | 2026-07-08 | **Afronding Sprint 19 Track F** | Thema-Analyse dashboard UX verbeteringen, tooltip gefixt en tabel styling. AI-search query geoptimaliseerd. |
-| 2026-07-05 | **Afronding Sprint 19 Migratie** | Dataspace backend geconnecteerd, indicatoren & postgREST RPC's gefixt, Hybride TimeSlider geïmplementeerd. |
 
 ---
 

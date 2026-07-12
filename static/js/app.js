@@ -3273,12 +3273,11 @@ console.log(`
 /**
  * Berekent het X-pixel centrum van de vrije (onbedekte) kaartzone.
  * Houdt rekening met: tab bar, linker panel, chat panel en Kompas venster.
- * Plaatst het centrum dicht bij de Kompas-rand (max 200px) i.p.v. midden in de vrije zone.
+ * Blend het vrije-zone-midden met het overall schermmidden om extreme offsets te voorkomen.
  */
 function getFreezone() {
     const W = window.innerWidth;
     const MIN_ZONE = 150;       // Minimale bruikbare segmentbreedte (px)
-    const MAX_KOMPAS_DIST = 200; // Max afstand centrum vanaf Kompas-rand (px)
 
     // Vaste panels (links)
     const tabBar = 70;
@@ -3308,15 +3307,14 @@ function getFreezone() {
 
     let centerX;
     if (spaceLeft >= MIN_ZONE || spaceRight >= MIN_ZONE) {
-        if (spaceLeft > spaceRight) {
-            // Links van Kompas: cap afstand op MAX_KOMPAS_DIST
-            const dist = Math.min(spaceLeft / 2, MAX_KOMPAS_DIST);
-            centerX = kr.left - dist;
-        } else {
-            // Rechts van Kompas: cap afstand op MAX_KOMPAS_DIST
-            const dist = Math.min(spaceRight / 2, MAX_KOMPAS_DIST);
-            centerX = kr.right + dist;
-        }
+        // Bepaal het midden van het grootste vrije segment
+        const zoneCenter = (spaceLeft > spaceRight)
+            ? freeLeft + (spaceLeft / 2)
+            : kr.right + (spaceRight / 2);
+
+        // Blend met het overall schermmidden: voorkomt dat brede polygonen
+        // van de tegenoverliggende schermrand vallen bij extreme Kompas-posities
+        centerX = (zoneCenter + baseCenterX) / 2;
     } else {
         centerX = baseCenterX;
     }

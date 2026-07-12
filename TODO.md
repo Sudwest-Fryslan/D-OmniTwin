@@ -10,7 +10,7 @@
 
 ## 📝 Volgende Sessie (Hoge Prioriteit)
 - [ ] **Documentatie-inhaalslag:** Alle documentatie (met name `README.md` en architectuurdocumenten) nalopen en herzien. De teksten lopen achter en moeten de nieuwe Hybride Dataspace Architectuur (PostgREST, pg_featureserv, Traefik) accuraat weerspiegelen.
-
+- [x] **Bugfix #54 & Verkenning `getFreezone`:** Analyseren waarom geselecteerde polygonen achter het Kompas centreren en de `getFreezone` logica robuust maken voor alle openstaande panelen.
 ---
 
 ## ✅ Sprint 18: IJsselmeerkust als Besluitinstrument (Afgerond)

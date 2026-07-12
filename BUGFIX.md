@@ -1,5 +1,24 @@
 # BUGFIX.md - D-OmniTwin
 
+## Bug #54: Kaart centreren (`getFreezone`) plaatst polygoon achter het Kompas (12-07-2026)
+
+**Gerapporteerd:** 12-07-2026  
+**Status:** ✅ FIXED (12-07-2026)  
+**Severity:** 🟡 MEDIUM (UX - Navigatie obstructie)
+
+### Probleem
+Bij het selecteren van een gebied (polygoon) of bij het fly-to gedrag, wordt de geselecteerde polygoon soms achter het zwevende Kompas-venster (of andere open panelen) gecentreerd. Hierdoor is het gebied niet direct zichtbaar voor de gebruiker. 
+De functie die dit regelt (`getFreezone` in `static/js/app.js`) lijkt onvoldoende of incorrect rekening te houden met de daadwerkelijke visuele ruimte (vrije zone) die overblijft wanneer verschillende vensters openstaan.
+
+### Oorzaak (Root Cause)
+- De berekening beperkte de maximale afstand tot het kompas-venster op `MAX_KOMPAS_DIST` (200px).
+- Dit resulteerde in een middelpunt dat te dicht bij het kompas stond, zelfs als er een zeer grote vrije zone beschikbaar was (bijvoorbeeld bij het kompas flush tegen de rand).
+
+### Oplossing
+De constante `MAX_KOMPAS_DIST` is verwijderd. De wiskunde in `getFreezone()` is aangepast zodat het middelpunt nu exact berekend wordt in het centrum van het grootste beschikbare vrije segment.
+
+---
+
 ## Bug #53: Deck.gl 3D Extrusie Camera Kanteling (Pitch) Werkt Niet Meer (11-07-2026)
 
 ### Probleem
