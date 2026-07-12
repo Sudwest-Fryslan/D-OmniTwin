@@ -1673,12 +1673,13 @@
   },
   {
     "naam": "Achterstand leerlingen",
-    "code": null,
-    "eenheid": "",
+    "code": "CBS_ACHTERSTAND_LEERLINGEN",
+    "eenheid": "score",
     "titel": "Kwaliteit van leven",
     "thema": "Opgroeien",
     "onderdeel": "Onderwijs",
-    "bron": "",
+    "bron": "Achterstandsscores per school (CBS)",
+    "beschrijving": "De achterstandsscore drukt het verwachte risico op onderwijsachterstanden per schoolvestiging uit. Deze wordt berekend op basis van diverse achtergrondkenmerken van de ouders (zoals opleidingsniveau en herkomstland).",
     "score_type": "+/+",
     "heeft_data": true
   },
@@ -1718,7 +1719,7 @@
   {
     "naam": "Huishoudens met laag inkomen",
     "code": "CBS_HUISHOUDENSMETEENLAAGINKOMEN",
-    "eenheid": "",
+    "eenheid": "%",
     "titel": "Kwaliteit van leven",
     "thema": "Rondkomen",
     "onderdeel": "Armoede",
