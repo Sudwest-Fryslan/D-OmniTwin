@@ -579,7 +579,10 @@ CREATE TABLE public.indicatoren (
     beschrijving_ai text,
     gevalideerd_door uuid,
     gevalideerd_op timestamp with time zone,
-    embedding_versie text
+    embedding_versie text,
+    is_actief boolean DEFAULT true,
+    vervangen_door_id integer,
+    hoofd_indicator_id integer
 );
 
 
@@ -2551,6 +2554,22 @@ ALTER TABLE ONLY public.indicatoren
 
 ALTER TABLE ONLY public.indicatoren
     ADD CONSTRAINT indicatoren_gevalideerd_door_fkey FOREIGN KEY (gevalideerd_door) REFERENCES public.users(id) ON DELETE SET NULL;
+
+
+--
+-- Name: indicatoren indicatoren_vervangen_door_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: omnitwin_user
+--
+
+ALTER TABLE ONLY public.indicatoren
+    ADD CONSTRAINT indicatoren_vervangen_door_id_fkey FOREIGN KEY (vervangen_door_id) REFERENCES public.indicatoren(id) ON DELETE SET NULL;
+
+
+--
+-- Name: indicatoren indicatoren_hoofd_indicator_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: omnitwin_user
+--
+
+ALTER TABLE ONLY public.indicatoren
+    ADD CONSTRAINT indicatoren_hoofd_indicator_id_fkey FOREIGN KEY (hoofd_indicator_id) REFERENCES public.indicatoren(id) ON DELETE SET NULL;
 
 
 --

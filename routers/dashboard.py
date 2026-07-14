@@ -34,7 +34,7 @@ async def get_dashboard_stats(
     """Get high-level dashboard statistics."""
     
     # Total indicators
-    total_query = text("SELECT COUNT(*) FROM indicatoren")
+    total_query = text("SELECT COUNT(*) FROM indicatoren WHERE is_actief = true")
     total = db.execute(total_query).scalar()
     
     # Data coverage (indicators with at least one data point)
@@ -50,7 +50,8 @@ async def get_dashboard_stats(
     meta_query = text("""
         SELECT COUNT(*) 
         FROM indicatoren 
-        WHERE omschrijving IS NOT NULL AND omschrijving != ''
+        WHERE is_actief = true 
+          AND omschrijving IS NOT NULL AND omschrijving != ''
           AND bron IS NOT NULL AND bron != ''
           AND eenheid IS NOT NULL AND eenheid != ''
     """)

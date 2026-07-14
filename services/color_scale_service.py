@@ -198,7 +198,7 @@ class ColorScaleService:
                     i.score_type
                 FROM indicatoren i
                 LEFT JOIN color_schemas cs ON i.color_schema_id = cs.id
-                WHERE i.uuid::text = :indicator_uuid AND i.color_schema_id IS NOT NULL
+                WHERE i.uuid::text = :indicator_uuid AND i.color_schema_id IS NOT NULL AND i.is_actief = true
             """)
             
             result = self.db.execute(query, {"indicator_uuid": indicator_uuid}).fetchone()
@@ -222,7 +222,7 @@ class ColorScaleService:
                 LEFT JOIN visualisatie_profielen vp 
                     ON i.naam LIKE vp.indicator_pattern AND vp.is_actief = true
                 LEFT JOIN color_schemas cs ON vp.color_schema_id = cs.id
-                WHERE i.uuid::text = :indicator_uuid AND cs.id IS NOT NULL
+                WHERE i.uuid::text = :indicator_uuid AND cs.id IS NOT NULL AND i.is_actief = true
                 ORDER BY vp.id ASC
                 LIMIT 1
             """)

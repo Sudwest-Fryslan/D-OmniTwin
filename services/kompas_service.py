@@ -144,7 +144,7 @@ class KompasService:
             LEFT JOIN kompas_indicator_scoring_regels sr 
                 ON i.uuid = sr.indicator_uuid 
                 AND sr.config_id = :config_id
-            WHERE kim.config_id = :config_id
+            WHERE kim.config_id = :config_id AND i.is_actief = true
         """)
         
         data_rows = self.db.execute(data_query, {
@@ -271,7 +271,7 @@ class KompasService:
             SELECT 
                 i.naam, i.eenheid, i.bron, i.omschrijving, i.ontologische_beschrijving
             FROM indicatoren i
-            WHERE i.uuid = CAST(:uuid AS UUID)
+            WHERE i.uuid = CAST(:uuid AS UUID) AND i.is_actief = true
         """)
         meta = self.db.execute(meta_query, {"uuid": indicator_uuid}).fetchone()
         
@@ -507,7 +507,7 @@ class KompasService:
             JOIN indicatoren i ON kim.indicator_uuid = i.uuid
             LEFT JOIN kompas_indicator_scoring_regels sr 
                 ON i.uuid = sr.indicator_uuid AND sr.config_id = :config_id
-            WHERE kim.config_id = :config_id
+            WHERE kim.config_id = :config_id AND i.is_actief = true
         """)
         indicator_rows = self.db.execute(indicator_query, {"config_id": config_id}).fetchall()
         
@@ -690,7 +690,7 @@ class KompasService:
             SELECT i.naam, COALESCE(sr.eenheid, i.eenheid) as eenheid
             FROM indicatoren i
             LEFT JOIN kompas_indicator_scoring_regels sr ON i.uuid = sr.indicator_uuid
-            WHERE i.uuid = :uuid
+            WHERE i.uuid = :uuid AND i.is_actief = true
             LIMIT 1
         """)
         meta = self.db.execute(meta_query, {"uuid": indicator_uuid}).fetchone()

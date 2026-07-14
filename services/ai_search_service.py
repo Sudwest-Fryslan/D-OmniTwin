@@ -65,6 +65,7 @@ class AISearchService:
             JOIN indicator_embeddings e ON i.uuid = e.indicator_uuid
             LEFT JOIN v_kompas_hierarchie vkh
                 ON i.uuid = vkh.indicator_uuid AND vkh.config_id = 1
+            WHERE i.is_actief = true
             ORDER BY distance ASC
             LIMIT :limit
         """)
