@@ -930,7 +930,7 @@ async function loadBag3DBuildings() {
                 transitionDuration: 800,
             };
         }
-        state.deckgl.setProps({ initialViewState: state.currentViewState });
+        state.deckgl.setProps({ viewState: state.currentViewState });
 
         // Re-render kaart met BAG laag
         if (state.currentData) {

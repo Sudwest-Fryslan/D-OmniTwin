@@ -121,7 +121,7 @@ def get_bbox_for_gebieden(db: Session, gebied_ids: List[str]) -> dict:
 WFS_BASE_URL = "https://data.3dbag.nl/api/BAG3D/wfs"
 WFS_TIMEOUT = 15  # seconden
 
-def fetch_buildings_from_wfs(bbox: dict, limit: int = 1000) -> dict:
+def fetch_buildings_from_wfs(bbox: dict, limit: int = 5000) -> dict:
     """
     Haalt gebouwen op via de 3DBAG WFS (LoD 1.2) als standaard GeoJSON.
     Input BBOX in EPSG:28992, output geometrie in EPSG:4326.
@@ -208,6 +208,9 @@ def enrich_features_with_color(
                         r = int(min(255, norm * 2 * 255))
                         g = int(min(255, (1 - norm) * 2 * 255))
                         info["kleur"] = f"#{r:02x}{g:02x}50"
+                    elif info["waarde"] is not None and max_val == min_val:
+                        # Bug #42 Fix: Neutrale kleur (Geo Gold) als er maar 1 buurt/waarde is
+                        info["kleur"] = "#fbbf24"
                     else:
                         info["kleur"] = "#888888"
         except Exception as e:

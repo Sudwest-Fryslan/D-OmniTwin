@@ -945,11 +945,16 @@ Gebruikersinteracties verrijken het systeem:
 - Toggle-knop in de verticale tab-balk
 - Verificatie op Leeuwarden binnenstad (zoom 14+)
 
-### Track B: LoD-selectie & Indicator Koppeling (Fase 1)
-- LoD-kiezer in de UI: LoD1.2 (snel) / LoD2.2 (detail)
-- Auto-switch op basis van zoomniveau (< 14 = LoD1.2)
+### Track B: Indicator Koppeling & Stabiliteit (Fase 1)
+- Optimaliseren WFS LoD 1.2 ophaal-limieten (voorkomen van gaten) ✅
 - BAG `identificatie` ↔ onze `indicatoren` koppeling
-- `getColor()` op basis van energielabel of bouwjaar
+- `getColor()` op basis van energielabel of bouwjaar (Bug #42 Fix) ✅
+
+### Track D: OGC 3D Tiles & LoD 2.2 (Fase 2 - Latere Sprint)
+- **Let op:** Conform architectuurdocument wordt LoD 2.2 (met dakvormen) pas ingezet wanneer de *use-case* dit strikt vereist (bijv. zonnepotentie, schaduw-analyse).
+- Ombouwen van WFS/GeoJSON naar OGC 3D Tiles & `Tile3DLayer`.
+- LoD-kiezer in de UI: LoD1.2 (snel) / LoD2.2 (detail)
+- Auto-switch op basis van zoomniveau en performancebudget.
 
 ### Track C: Pand-niveau Interactie (Fase 2)
 - Hover-tooltip: naam, bouwjaar, oppervlak (3D BAG REST API)

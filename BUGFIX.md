@@ -205,20 +205,20 @@ De syntax `:colors::jsonb` is rechtgetrokken naar de generieke SQL functie `CAST
 ## Bug #42: 3D BAG Panden Kleuren Enkel bij Multi-Selectie (28-03-2026)
 
 **Gerapporteerd:** 28-03-2026 00:33  
-**Status:** ⏳ OPEN  
+**Status:** ✅ FIXED (14-07-2026)  
 **Severity:** 🟡 MEDIUM (Visuele feedback ontbreekt bij 1 buurt)
 
 ### Probleem
 Wanneer een gebruiker 1 buurt selecteert en op de "🏗️ 3D Panden" knop drukt, worden de gebouwen correct geladen, maar krijgen ze niet de kleur van de geselecteerde indicator (bijv. Bouwjaar of de gebieds-gradiënt). Dit gebeurt pas als er 2 buurten geselecteerd zijn.
 
-### Mogelijke Oorzaken
-1. De backend logic in `routers/bag3d.py` zoekt expliciet naar bepaalde indicator codes (zoals `BOUWJAAR_INDICATOR_CODES`), die mogelijk niet matchen met de daadwerkelijke UUIDs of codes in de database.
-2. De context die vanuit de frontend wordt meegestuurd (via `selectedGebiedIds` en de indicator) mist mogelijk specifieke data voor singuliere selecties, of de fallback structuur wordt getriggerd bij een enkele BBOX, waarbij de kleur-metadata niet doorkomt.
+### Oorzaak (Root Cause)
+In de functie `enrich_features_with_color` in `bag3d.py` werd de kleurgradient berekend op basis van `max_val > min_val` van de geselecteerde buurten. Wanneer er slechts 1 unieke waarde is (1 geselecteerde buurt), is `max_val == min_val`. Hierdoor viel de conditie terug naar de `else`-tak en kregen de panden de standaardfoutkleur (`#888888` / grijs).
 
-### Geplande Fix
-Onderzoeken welke indicator codes/UUIDs er precies in the database hangen voor `bouwjaar` en in de backend query (`bag3d.py`) en zorgen dat single-gebied the indicator mapping correct aanhoudt.
+### Oplossing
+Er is een extra conditionele controle toegevoegd (`elif info["waarde"] is not None and max_val == min_val:`) die in het geval van één enkele waarde terugvalt op de neutrale Geo Gold kleur (`#fbbf24`), waardoor de koppeling met de dataset visueel bevestigd wordt zonder een berekende gradient.
 
----## Bug #41: Sunburst Zoom Reset bij wisselen tussen indicatoren (24-03-2026)
+---
+## Bug #41: Sunburst Zoom Reset bij wisselen tussen indicatoren (24-03-2026)
 
 **Gerapporteerd:** 24-03-2026 20:18  
 **Status:** ✅ FIXED (24-03-2026)  
