@@ -85,6 +85,31 @@ export const indicatorenAPI = {
         api.get<OntologieValidatieStatusResponse>('/ontologie/status'),
 };
 
+// Data Controle & Kwaliteit
+export const dataControleAPI = {
+    getDeduplicatieKandidaten: () => api.get<any[]>('/data-controle/deduplicatie/kandidaten'),
+    mergeDeduplicatie: (data: { primary_uuid: string; duplicate_uuids: string[]; actie: string }) => 
+        api.post('/data-controle/deduplicatie/merge', data),
+    runDataLineage: () => api.get('/data-controle/run'),
+    genereerOntologie: (indicator_uuids: string[]) => 
+        api.post('/data-controle/acties/genereer-ontologie', { indicator_uuids }),
+    herberekenStatistieken: (indicator_uuids: string[]) => 
+        api.post('/data-controle/acties/herbereken-statistieken', { indicator_uuids }),
+};
+
+// PostgREST Direct API
+export const postgrestAPI = {
+    getIndicatorenMutaties: (days: number = 30) => {
+        const d = new Date();
+        d.setDate(d.getDate() - days);
+        const isoDate = d.toISOString();
+        // Fetch items where created_at is newer than X days, or updated_at is newer than X days
+        // PostgREST syntax for OR: or=(created_at.gte.2023-01-01,updated_at.gte.2023-01-01)
+        return axios.get(`/api/data/indicatoren?or=(created_at.gte.${isoDate},updated_at.gte.${isoDate})&order=updated_at.desc`);
+    }
+};
+
+
 // Hierarchy
 export const hierarchyAPI = {
     getTree: (configId: number = 1) =>

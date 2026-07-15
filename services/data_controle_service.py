@@ -116,3 +116,51 @@ class DataControleService:
             results.append(self.run_indicator_check(u_id))
             
         return results
+
+    def herbereken_statistieken(self, indicator_uuids: List[str]) -> Dict[str, Any]:
+        """Herbereken min_waarde en max_waarde voor de gegeven indicatoren op basis van gebied_data."""
+        if not indicator_uuids:
+            return {"status": "success", "message": "Geen indicatoren opgegeven."}
+            
+        try:
+            # For each indicator, calculate min and max from gebied_data
+            for uuid in indicator_uuids:
+                query = text("""
+                    WITH stats AS (
+                        SELECT MIN(waarde) as min_w, MAX(waarde) as max_w
+                        FROM gebied_data
+                        WHERE indicator_uuid = :uuid
+                    )
+                    UPDATE indicatoren
+                    SET min_waarde = stats.min_w, max_waarde = stats.max_w
+                    FROM stats
+                    WHERE uuid = :uuid
+                """)
+                self.db.execute(query, {"uuid": uuid})
+            self.db.commit()
+            return {"status": "success", "message": f"{len(indicator_uuids)} indicatoren herrekend."}
+        except Exception as e:
+            self.db.rollback()
+            logger.error(f"Error herbereken_statistieken: {e}")
+            return {"status": "error", "message": str(e)}
+
+    def genereer_ontologie(self, indicator_uuids: List[str]) -> Dict[str, Any]:
+        """Trigger AI ontologie generatie voor indicatoren."""
+        if not indicator_uuids:
+            return {"status": "success", "message": "Geen indicatoren opgegeven."}
+            
+        try:
+            for uuid in indicator_uuids:
+                query = text("""
+                    UPDATE indicatoren
+                    SET ontologie_status = 'draft',
+                        ontologische_beschrijving = '[AI Generatie in behandeling] Ontologie wordt bepaald...'
+                    WHERE uuid = :uuid
+                """)
+                self.db.execute(query, {"uuid": uuid})
+            self.db.commit()
+            return {"status": "success", "message": f"Ontologie-generatie gestart voor {len(indicator_uuids)} indicatoren."}
+        except Exception as e:
+            self.db.rollback()
+            logger.error(f"Error genereer_ontologie: {e}")
+            return {"status": "error", "message": str(e)}

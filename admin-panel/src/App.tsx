@@ -15,6 +15,7 @@ import { LLMConfigPage } from './pages/LLMConfigPage';
 import { AccountPage } from './pages/AccountPage';
 import { LogViewerPage } from './pages/LogViewerPage';
 import { ExterneKaartlagenPage } from './pages/ExterneKaartlagenPage';
+import { DataKwaliteitPage } from './pages/DataKwaliteitPage';
 import {
   LayoutDashboard,
   Database,
@@ -28,7 +29,8 @@ import {
   User,
   ChevronDown,
   ScrollText,
-  Globe
+  Globe,
+  Activity
 } from 'lucide-react';
 import { authAPI } from './services/api';
 import './styles/admin.css';
@@ -73,6 +75,14 @@ const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
           >
             <Database size={18} />
             Indicatoren
+          </NavLink>
+
+          <NavLink
+            to="/data-kwaliteit"
+            className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
+          >
+            <Activity size={18} />
+            Data Kwaliteit
           </NavLink>
 
           <NavLink
@@ -156,6 +166,7 @@ const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
             <Routes>
               <Route path="/dashboard" element={<>Dashboard</>} />
               <Route path="/indicatoren" element={<>Indicatoren</>} />
+              <Route path="/data-kwaliteit" element={<>Data Kwaliteit</>} />
               <Route path="/hierarchie" element={<>Hiërarchie</>} />
               <Route path="/kleurschemas" element={<>Kleurschema's</>} />
               <Route path="/rapport/thema-analyse" element={<>Thema-Analyse</>} />
@@ -287,6 +298,10 @@ function App() {
 
           <Route path="/indicatoren" element={
             <ProtectedRoute><IndicatorsPage /></ProtectedRoute>
+          } />
+
+          <Route path="/data-kwaliteit" element={
+            <ProtectedRoute><DataKwaliteitPage /></ProtectedRoute>
           } />
 
           <Route path="/hierarchie" element={

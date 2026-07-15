@@ -10,6 +10,10 @@ class MergeRequest(BaseModel):
     primary_uuid: str
     duplicate_uuids: List[str]
     actie: str  # 'exact_duplicaat' of 'groepeer_bronnen'
+
+class ActiesRequest(BaseModel):
+    indicator_uuids: List[str]
+
 router = APIRouter(
     prefix="/api/data-controle",
     tags=["Data Controle & Lineage"]
@@ -49,6 +53,28 @@ async def check_single_indicator(
 async def health_check():
     """Simple health check for Data Controle API."""
     return {"status": "healthy", "service": "Data Controle API"}
+
+@router.post("/acties/herbereken-statistieken")
+async def actie_herbereken_statistieken(
+    req: ActiesRequest,
+    service: DataControleService = Depends(get_service)
+):
+    """Forceer een herberekening van statistieken (min/max) voor indicatoren."""
+    result = service.herbereken_statistieken(req.indicator_uuids)
+    if result["status"] == "error":
+        raise HTTPException(status_code=500, detail=result["message"])
+    return result
+
+@router.post("/acties/genereer-ontologie")
+async def actie_genereer_ontologie(
+    req: ActiesRequest,
+    service: DataControleService = Depends(get_service)
+):
+    """Trigger het genereren van AI-ontologie voor indicatoren."""
+    result = service.genereer_ontologie(req.indicator_uuids)
+    if result["status"] == "error":
+        raise HTTPException(status_code=500, detail=result["message"])
+    return result
 
 def get_dedup_service(db: Session = Depends(get_db)) -> DeduplicatieService:
     return DeduplicatieService(db)
