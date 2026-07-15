@@ -362,11 +362,6 @@ body {
 
 /* Print Styles voor Rapportages */
 @media print {
-    @page {
-        size: A3 landscape;
-        margin: 15mm;
-    }
-
     /* Override CSS variables for print (light mode colors) so inline styles work automatically */
     :root {
         --color-background: #ffffff;
@@ -497,5 +492,19 @@ body {
         max-height: 35vh;
         /* Zorg dat de kaart en kompas onder elkaar passen */
         object-fit: contain !important;
+    }
+
+    /* Dynamische print modifiers (via ExportPrintModal) */
+    body.print-a4-portrait .rapport-grid {
+        grid-template-columns: 1fr !important;
+    }
+    body.print-a4-landscape .rapport-grid,
+    body.print-a3-landscape .rapport-grid {
+        grid-template-columns: 1fr 1fr !important;
+    }
+    
+    body.print-a4-portrait html,
+    body.print-a4-portrait body {
+        zoom: 0.75; /* Iets verder uitzoomen voor A4 staand */
     }
 }

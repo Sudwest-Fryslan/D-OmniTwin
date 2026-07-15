@@ -1,12 +1,14 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { reportAPI } from '../services/api';
 import type { ReportDataPayload, ReportNarrativeResponse } from '../types';
-import { ArrowLeft, RefreshCw, Cpu, Database, Map as MapIcon, Compass, Terminal, ChevronDown, ChevronUp, X } from 'lucide-react';
+import { Download, RefreshCw, Printer, AlertCircle, TrendingUp, Info, Activity, ArrowLeft, Cpu, Database, Map as MapIcon, Compass, Terminal, ChevronDown, ChevronUp, X } from 'lucide-react';
+import { ExportPrintModal } from '../components/ExportPrintModal';
 
 export const ReportPage: React.FC = () => {
     const { gebied_id } = useParams<{ gebied_id?: string }>();
     const navigate = useNavigate();
+    const originalTitleRef = useRef(document.title);
 
     // Gebied Selectie State (tijdelijke hardcode of default 'BU19700104' voor test)
     const [selectedGebied, setSelectedGebied] = useState(gebied_id || 'BU19700104');
@@ -21,6 +23,7 @@ export const ReportPage: React.FC = () => {
     const [aiLoading, setAiLoading] = useState(false);
     const [aiError, setAiError] = useState<string | null>(null);
     const [showDebugLogs, setShowDebugLogs] = useState(false);
+    const [showPrintModal, setShowPrintModal] = useState(false);
 
     // Visual State (Map en Kompas Exports)
     const [mapSnapshot, setMapSnapshot] = useState<string | null>(null);
@@ -92,14 +95,14 @@ export const ReportPage: React.FC = () => {
     }, [selectedGebied]);
 
     const handlePrint = () => {
-        const originalTitle = document.title;
+        originalTitleRef.current = document.title;
         if (dataPayload?.metadata) {
             const sanitize = (str: string) => {
                 return str
-                    .normalize('NFD')                     // Splits basistekens en accenten
-                    .replace(/[\u0300-\u036f]/g, '')      // Verwijder de accenten
-                    .replace(/[^a-zA-Z0-9_\-]/g, '_')     // Behoud alleen letters, cijfers, _ en -
-                    .replace(/_+/g, '_');                 // Voorkom dubbele underscores
+                    .normalize('NFD')
+                    .replace(/[\u0300-\u036f]/g, '')
+                    .replace(/[^a-zA-Z0-9_\-]/g, '_')
+                    .replace(/_+/g, '_');
             };
 
             const type = sanitize(dataPayload.metadata.gebiedstype);
@@ -114,19 +117,14 @@ export const ReportPage: React.FC = () => {
             const minutes = String(now.getMinutes()).padStart(2, '0');
 
             const dateStr = `${year}${month}${day}_${hours}${minutes}`;
-
             document.title = `${type}_${code}_${ref}_${dateStr}-export`;
         }
+        setShowPrintModal(true);
+    };
 
-        const afterPrint = () => {
-            document.title = originalTitle;
-            window.removeEventListener('afterprint', afterPrint);
-        };
-        window.addEventListener('afterprint', afterPrint);
-
-        setTimeout(() => {
-            window.print();
-        }, 100);
+    const handleCloseModal = () => {
+        setShowPrintModal(false);
+        document.title = originalTitleRef.current;
     };
 
     return (
@@ -189,7 +187,7 @@ export const ReportPage: React.FC = () => {
                                 {aiResponse.domain_summaries && Object.keys(aiResponse.domain_summaries).length > 0 && (
                                     <div style={{ marginTop: '2rem', borderTop: '1px solid var(--color-border)', paddingTop: '1.5rem' }}>
                                         <h3 style={{ marginBottom: '1rem', fontSize: '1rem', color: 'var(--color-secondary)' }}>Analyse per Kwadrant</h3>
-                                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
+                                        <div className="rapport-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
                                             {Object.entries(aiResponse.domain_summaries).map(([domain, text]) => (
                                                 <div key={domain} className="card" style={{ padding: '1rem', background: 'var(--color-bg-alt)' }}>
                                                     <h4 style={{ color: 'var(--color-primary)', marginBottom: '0.5rem', fontSize: '0.9rem' }}>{domain}</h4>
@@ -369,6 +367,11 @@ export const ReportPage: React.FC = () => {
                     )}
                 </div>
             </div>
+            
+            <ExportPrintModal 
+                isOpen={showPrintModal} 
+                onClose={handleCloseModal} 
+            />
         </div>
     );
 };

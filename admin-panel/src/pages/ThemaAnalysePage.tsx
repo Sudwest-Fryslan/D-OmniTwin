@@ -5,6 +5,7 @@ import { X, Layers, RefreshCw, Download, ArrowUpDown, Map, BarChart2, List, Chev
 import * as d3 from 'd3';
 import { DivergingBarChart } from '../components/charts/DivergingBarChart';
 import type { HierarchyNode } from '../types';
+import { ExportPrintModal } from '../components/ExportPrintModal';
 
 // ─── Types ─────────────────────────────────────────────────────────────────
 
@@ -71,6 +72,8 @@ export const ThemaAnalysePage: React.FC = () => {
     const [referentie, setReferentie] = useState<'gemeente' | 'fryslan'>(
         (searchParams.get('ref') as 'gemeente' | 'fryslan') || 'gemeente'
     );
+    const [showPrintModal, setShowPrintModal] = useState(false);
+    const originalTitleRef = useRef(document.title);
     
     // Cascading filters
     const [filterMode, setFilterMode] = useState<'hierarchy' | 'ai'>('hierarchy');
@@ -478,7 +481,12 @@ export const ThemaAnalysePage: React.FC = () => {
                         <option value="gemeente">Vergelijk met Gemeente</option>
                         <option value="fryslan">Vergelijk met Fryslân</option>
                     </select>
-                    <button className="btn btn-secondary" onClick={() => window.print()}>
+                    <button className="btn btn-secondary" onClick={() => {
+                        originalTitleRef.current = document.title;
+                        const dateStr = new Date().toISOString().replace(/T/, '_').replace(/:/g, '').split('.')[0];
+                        document.title = `ThemaAnalyse_${selectedThema || 'Alle'}_${dateStr}`;
+                        setShowPrintModal(true);
+                    }}>
                         <Download size={16} /> Exporteer PDF
                     </button>
                     <button className="btn btn-outline" onClick={() => window.close()}>
@@ -675,7 +683,7 @@ export const ThemaAnalysePage: React.FC = () => {
             {!loading && !error && data && (
                 <>
                     {/* Kaart + Grafiek grid */}
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', marginBottom: '1.5rem' }}>
+                    <div className="rapport-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', marginBottom: '1.5rem' }}>
                         
                         {/* Choropleth Kaart */}
                         <div className="card" style={{ padding: '1.25rem' }}>
@@ -839,6 +847,14 @@ export const ThemaAnalysePage: React.FC = () => {
                     </div>
                 </>
             )}
+
+            <ExportPrintModal 
+                isOpen={showPrintModal} 
+                onClose={() => { 
+                    setShowPrintModal(false); 
+                    document.title = originalTitleRef.current; 
+                }} 
+            />
         </div>
     );
 };
