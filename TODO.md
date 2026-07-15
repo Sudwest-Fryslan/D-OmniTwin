@@ -278,6 +278,21 @@
 
 ---
 
+## 📌 Sprint 23: Backend Performance & Rapportage Optimalisatie (Gepland)
+
+**Doel:** Het drastisch verlagen van de serverbelasting en laadtijden bij zware rapportages (zoals het Multi-Gebiedsdossier).
+**Aanleiding:** Performance analyse toont aan dat dynamische `ROW_NUMBER` aggregaties over de volledige historische dataset en on-the-fly berekeningen van referentiestatistieken zorgen voor zware database-load.
+
+### Track A — Database Optimalisatie (Views & Indexes)
+- [ ] Maken van een `MATERIALIZED VIEW` voor de laatste `gebied_data` statussen (`m_gebied_data_latest`).
+- [ ] SQL-query van `generate_multi_gebied_payload` refactoren (gebruikmakend van `DISTINCT ON` in plaats van Window Functions).
+
+### Track B — Caching & Applicatie Logica
+- [ ] In-memory of Redis caching opzetten voor gemeente-brede referentiestatistieken (`AVG`, `STDDEV`).
+- [ ] De complexe `v_kompas_hierarchie` view materialiseren of cachen op applicatie-niveau.
+
+---
+
 ## ✅ Sprint 17: Configureerbare Logging Infrastructuur (Afgerond 26 mei 2026)
 
 **Doel:** Gedifferentieerde, configureerbare logging op alle facetten van de applicatie — instelbaar per module via de beheeromgeving, persistent in PostgreSQL, zichtbaar via admin panel dashboard, proactief via alerts.

@@ -152,7 +152,23 @@
 
 ---
 
+### 🚀 Sprint 23: Backend Performance & Rapportage Optimalisatie (Gepland)
 
+**Visie:** Complexe, data-zware rapportages zoals het Multi-Gebiedsdossier moeten bliksemsnel laden zonder de server overmatig te belasten.
+**Aanleiding:** Huidige database query's voor afwijkingsanalyses verrichten zware historische aggregaties on-the-fly.
+
+#### Track A — Database Optimalisatie (Views & Indexes)
+- [ ] Implementatie `MATERIALIZED VIEW` voor actuele data statussen (`m_gebied_data_latest`).
+- [ ] SQL-query refactoring met `DISTINCT ON` ter vervanging van dure Window Functions.
+
+#### Track B — Applicatie Caching
+- [ ] In-memory (Redis/applicatie-cache) opslag voor gemeente-brede referentiestatistieken (`AVG`, `STDDEV`).
+- [ ] View materialisatie voor de complexe ontologie/kompas-hiërarchie structuur.
+
+**Effort:** ~10-15 uur  
+**Priority:** 🟡 MEDIUM — Performance verbetering, cruciaal voor schaalbaarheid op de langere termijn.
+
+---
 
 **Rationale:** Gebruikers moeten direct zien wat de kleuren betekenen
 

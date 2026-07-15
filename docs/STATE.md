@@ -11,7 +11,7 @@
 |------|--------|
 | **Huidige versie** | v1.0.0-beta (pre-release) |
 | **Sprint** | Sprint 21 (Data Kwaliteit & Deduplicatie) | 
-| **Laatste update** | 2026-07-14 (Dag 89) |
+| **Laatste update** | 2026-07-15 (Dag 90) |
 | **Bijgewerkt door** | Project-manager skill (Antigravity) |
 
 ---
@@ -57,9 +57,9 @@
 
 | Datum | Wijziging | Impact |
 |-------|-----------|--------|
+| 2026-07-15 | **Sprint 23 Gepland / Issue 17 Voltooid** | Dynamische PDF/Print export layouts voor rapportages succesvol doorgevoerd. Sprint 23 (Backend Performance Optimalisatie) formeel op de ROADMAP en TODO geplaatst. |
 | 2026-07-14 | **Sprint 21 Backend (Data Kwaliteit)** | Database structuur (`is_actief`, `vervangen_door_id`) aangemaakt, filters op API's toegepast, DeduplicatieService toegevoegd voor fuzzy matching (Issue #16). |
 | 2026-07-12 | **Bugfix #54: Kaart Centreren** | Wiskundige correctie in `getFreezone()` om extreme offsets te voorkomen wanneer Kompas flush links of rechts staat. Polygonen centreren nu correct in het werkelijke vrije schermdeel. |
-| 2026-07-10 | **Sprint 19B Thema-Analyse & Bugfixes** | D3 Diverging Bar Chart toegevoegd voor interactieve Z-score weergave. Bug opgelost met dubbele geometrieën door gebruik te maken van `actief` kenmerk in de database. |
 
 ---
 
