@@ -95,6 +95,8 @@ export const dataControleAPI = {
         api.post('/data-controle/acties/genereer-ontologie', { indicator_uuids }),
     herberekenStatistieken: (indicator_uuids: string[]) => 
         api.post('/data-controle/acties/herbereken-statistieken', { indicator_uuids }),
+    markeerUitzondering: (indicator_uuids: string[]) =>
+        api.post('/data-controle/deduplicatie/uitzondering', { indicator_uuids }),
 };
 
 // PostgREST Direct API

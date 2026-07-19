@@ -36,6 +36,7 @@ class DeduplicatieService:
         
         # SQL query die alle matches vindt via trgm en embeddings
         # Drempelfilter in SQL voorkomt dat we tienduizenden irrelevante paren ophalen
+        # NOT EXISTS filtert paren die als uitzondering zijn gemarkeerd
         query_pairs = text("""
             SELECT 
                 i1.uuid as u1, 
@@ -50,6 +51,11 @@ class DeduplicatieService:
               AND (
                 similarity(i1.naam, i2.naam) > 0.4
                 OR (e1.embedding <=> e2.embedding) < 0.3
+              )
+              AND NOT EXISTS (
+                SELECT 1 FROM deduplicatie_uitzonderingen du
+                WHERE (du.indicator_uuid_1 = i1.uuid AND du.indicator_uuid_2 = i2.uuid)
+                   OR (du.indicator_uuid_1 = i2.uuid AND du.indicator_uuid_2 = i1.uuid)
               )
         """)
         
@@ -179,4 +185,35 @@ class DeduplicatieService:
             "actie": actie,
             "primary_uuid": primary_uuid,
             "verwerkt_aantal": success_count
+        }
+
+    def markeer_uitzondering(self, indicator_uuids: List[str]) -> Dict[str, Any]:
+        """
+        Markeert alle paar-combinaties van de gegeven UUIDs als 'geen duplicaat'.
+        Deze paren worden bij toekomstige scans uitgefilterd.
+        """
+        from itertools import combinations
+        
+        paren = list(combinations(sorted(indicator_uuids), 2))
+        ingevoegd = 0
+        
+        for uuid_1, uuid_2 in paren:
+            insert_query = text("""
+                INSERT INTO deduplicatie_uitzonderingen (indicator_uuid_1, indicator_uuid_2)
+                VALUES (CAST(:u1 AS UUID), CAST(:u2 AS UUID))
+                ON CONFLICT (indicator_uuid_1, indicator_uuid_2) DO NOTHING
+            """)
+            self.db.execute(insert_query, {"u1": uuid_1, "u2": uuid_2})
+            ingevoegd += 1
+        
+        self.db.commit()
+        
+        AppLogger.info(
+            f"Deduplicatie uitzondering: {len(indicator_uuids)} indicatoren gemarkeerd als 'geen duplicaat' ({ingevoegd} paren)",
+            category="DATA_KWALITEIT"
+        )
+        
+        return {
+            "status": "success",
+            "paren_gemarkeerd": ingevoegd
         }

@@ -14,6 +14,9 @@ class MergeRequest(BaseModel):
 class ActiesRequest(BaseModel):
     indicator_uuids: List[str]
 
+class UitzonderingRequest(BaseModel):
+    indicator_uuids: List[str]  # Alle UUIDs in de groep die als 'geen duplicaat' worden gemarkeerd
+
 router = APIRouter(
     prefix="/api/admin/data-controle",
     tags=["Data Controle & Lineage"]
@@ -101,3 +104,16 @@ async def merge_indicatoren(
         return service.merge_indicatoren(req.primary_uuid, req.duplicate_uuids, req.actie)
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
+
+@router.post("/deduplicatie/uitzondering", response_model=Dict[str, Any])
+async def markeer_uitzondering(
+    req: UitzonderingRequest,
+    service: DeduplicatieService = Depends(get_dedup_service)
+):
+    """Markeert een groep indicatoren als 'geen duplicaat' (worden uitgesloten bij toekomstige scans)"""
+    if len(req.indicator_uuids) < 2:
+        raise HTTPException(status_code=400, detail="Minimaal 2 UUIDs vereist")
+    try:
+        return service.markeer_uitzondering(req.indicator_uuids)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))

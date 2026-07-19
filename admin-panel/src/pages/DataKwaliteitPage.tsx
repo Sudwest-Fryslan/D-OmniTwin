@@ -84,18 +84,73 @@ export const DataKwaliteitPage: React.FC = () => {
         }
     };
 
-    const handleMerge = async (primary_uuid: string, duplicate_uuids: string[], actie: string) => {
-        if (!window.confirm(`Weet je zeker dat je deze actie ('${actie}') wilt uitvoeren?`)) return;
+    const handleMerge = async (groep_id: string, actie: string) => {
+        const kandidaat = kandidaten.find(k => k.groep_id === groep_id);
+        if (!kandidaat) return;
+        
+        const selected: string[] = kandidaat.geselecteerde_uuids || [];
+        const primaryUuid: string = kandidaat.geselecteerde_primary;
+        
+        if (selected.length < 2) {
+            alert('Selecteer minimaal 2 indicatoren om samen te voegen.');
+            return;
+        }
+        if (!primaryUuid || !selected.includes(primaryUuid)) {
+            alert('Selecteer eerst een hoofd-indicator (radio) uit je selectie.');
+            return;
+        }
+        
+        const duplicateUuids = selected.filter(u => u !== primaryUuid);
+        if (!window.confirm(`Weet je zeker dat je ${duplicateUuids.length} indicator(en) wilt ${actie === 'exact_duplicaat' ? 'samenvoegen' : 'groeperen'}?`)) return;
+        
         setLoadingDeduplicatie(true);
         try {
-            await dataControleAPI.mergeDeduplicatie({ primary_uuid, duplicate_uuids, actie });
-            await fetchDeduplicatie(); // reload
+            await dataControleAPI.mergeDeduplicatie({ primary_uuid: primaryUuid, duplicate_uuids: duplicateUuids, actie });
+            await fetchDeduplicatie();
         } catch (error: any) {
             console.error('Error merging', error);
-            alert('Fout bij samenvoegen: ' + error.response?.data?.detail || error.message);
+            alert('Fout bij samenvoegen: ' + (error.response?.data?.detail || error.message));
         } finally {
             setLoadingDeduplicatie(false);
         }
+    };
+
+    const handleUitzondering = async (groep_id: string) => {
+        const kandidaat = kandidaten.find(k => k.groep_id === groep_id);
+        if (!kandidaat) return;
+        
+        const allUuids = kandidaat.indicatoren.map((i: any) => i.uuid);
+        if (!window.confirm(`Alle ${allUuids.length} indicatoren in deze groep markeren als 'Gecheckt, geen duplicaten'? Ze verschijnen dan niet meer in toekomstige scans.`)) return;
+        
+        setLoadingDeduplicatie(true);
+        try {
+            await dataControleAPI.markeerUitzondering(allUuids);
+            await fetchDeduplicatie();
+        } catch (error: any) {
+            console.error('Error marking uitzondering', error);
+            alert('Fout: ' + (error.response?.data?.detail || error.message));
+        } finally {
+            setLoadingDeduplicatie(false);
+        }
+    };
+
+    const toggleSelectie = (groep_id: string, uuid: string) => {
+        setKandidaten(prev => prev.map(k => {
+            if (k.groep_id !== groep_id) return k;
+            const current: string[] = k.geselecteerde_uuids || [];
+            const next = current.includes(uuid) 
+                ? current.filter((u: string) => u !== uuid)
+                : [...current, uuid];
+            // Als de primary niet meer in de selectie zit, reset hem
+            const primary = next.includes(k.geselecteerde_primary) ? k.geselecteerde_primary : (next.length > 0 ? next[0] : null);
+            return { ...k, geselecteerde_uuids: next, geselecteerde_primary: primary };
+        }));
+    };
+
+    const setPrimary = (groep_id: string, uuid: string) => {
+        setKandidaten(prev => prev.map(k => 
+            k.groep_id === groep_id ? { ...k, geselecteerde_primary: uuid } : k
+        ));
     };
 
     const handleRunLineage = async () => {
@@ -194,10 +249,8 @@ export const DataKwaliteitPage: React.FC = () => {
                         ) : (
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                                 {kandidaten.map((kandidaat, idx) => {
-                                    // Default de eerste als primary
-                                    const primaryUuid = kandidaat.geselecteerde_primary || kandidaat.indicatoren[0].uuid;
-                                    const primaryInd = kandidaat.indicatoren.find((i: any) => i.uuid === primaryUuid) || kandidaat.indicatoren[0];
-                                    const duplicates = kandidaat.indicatoren.filter((i: any) => i.uuid !== primaryUuid);
+                                    const selected: string[] = kandidaat.geselecteerde_uuids || [];
+                                    const primaryUuid: string = kandidaat.geselecteerde_primary || '';
                                     
                                     return (
                                     <div key={kandidaat.groep_id || idx} style={{ border: '1px solid var(--color-border)', borderRadius: '6px', padding: '1rem', background: 'var(--color-surface-light)' }}>
@@ -207,20 +260,51 @@ export const DataKwaliteitPage: React.FC = () => {
                                                     <strong>🤖 AI Advies:</strong> {kandidaat.ai_advies}
                                                 </div>
                                                 
-                                                <h4 style={{ margin: '0 0 0.5rem 0' }}>Selecteer Hoofd Indicator:</h4>
-                                                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                                                    {kandidaat.indicatoren.map((ind: any) => (
-                                                        <label key={ind.uuid} style={{ display: 'flex', gap: '0.75rem', padding: '0.5rem', background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderRadius: '4px', cursor: 'pointer' }}>
+                                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                                                    <h4 style={{ margin: 0 }}>Selecteer indicatoren om te verwerken:</h4>
+                                                    {selected.length > 0 && (
+                                                        <span style={{ fontSize: '0.85rem', color: '#3b82f6', fontWeight: 600 }}>
+                                                            {selected.length} geselecteerd
+                                                        </span>
+                                                    )}
+                                                </div>
+                                                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                                                    {kandidaat.indicatoren.map((ind: any) => {
+                                                        const isSelected = selected.includes(ind.uuid);
+                                                        return (
+                                                        <div key={ind.uuid} style={{ 
+                                                            display: 'flex', gap: '0.75rem', padding: '0.5rem', 
+                                                            background: isSelected ? 'rgba(59, 130, 246, 0.08)' : 'var(--color-surface)', 
+                                                            border: isSelected ? '1px solid #3b82f6' : '1px solid var(--color-border)', 
+                                                            borderRadius: '4px', cursor: 'pointer',
+                                                            transition: 'all 0.15s ease'
+                                                        }}
+                                                        onClick={() => toggleSelectie(kandidaat.groep_id, ind.uuid)}
+                                                        >
                                                             <input 
-                                                                type="radio" 
-                                                                name={`primary-${kandidaat.groep_id}`} 
-                                                                checked={primaryUuid === ind.uuid}
-                                                                onChange={() => {
-                                                                    setKandidaten(prev => prev.map(k => k.groep_id === kandidaat.groep_id ? {...k, geselecteerde_primary: ind.uuid} : k));
-                                                                }}
+                                                                type="checkbox" 
+                                                                checked={isSelected}
+                                                                onChange={() => {}}
+                                                                style={{ marginTop: '2px' }}
                                                             />
+                                                            {isSelected && selected.length >= 2 && (
+                                                                <input 
+                                                                    type="radio" 
+                                                                    name={`primary-${kandidaat.groep_id}`} 
+                                                                    checked={primaryUuid === ind.uuid}
+                                                                    title="Hoofd indicator"
+                                                                    onChange={(e) => { e.stopPropagation(); setPrimary(kandidaat.groep_id, ind.uuid); }}
+                                                                    onClick={(e) => e.stopPropagation()}
+                                                                    style={{ marginTop: '2px' }}
+                                                                />
+                                                            )}
                                                             <div style={{ flex: 1 }}>
-                                                                <div style={{ fontWeight: 600 }}>{ind.naam}</div>
+                                                                <div style={{ fontWeight: 600 }}>
+                                                                    {ind.naam}
+                                                                    {isSelected && primaryUuid === ind.uuid && selected.length >= 2 && (
+                                                                        <span style={{ marginLeft: '0.5rem', fontSize: '0.75rem', background: '#3b82f6', color: 'white', padding: '1px 6px', borderRadius: '3px' }}>HOOFD</span>
+                                                                    )}
+                                                                </div>
                                                                 <div style={{ fontSize: '0.85rem', color: 'var(--color-text-secondary)' }}>
                                                                     {ind.bron} | {ind.categorie} <br/>
                                                                     <span style={{ fontFamily: 'monospace', color: '#888' }}>UUID: {ind.uuid}</span>
@@ -231,16 +315,24 @@ export const DataKwaliteitPage: React.FC = () => {
                                                                     </div>
                                                                 )}
                                                             </div>
-                                                        </label>
-                                                    ))}
+                                                        </div>
+                                                    )})}
                                                 </div>
                                             </div>
-                                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', minWidth: '200px' }}>
-                                                <button className="btn btn-primary" onClick={() => handleMerge(primaryUuid, duplicates.map((d: any) => d.uuid), 'exact_duplicaat')}>
-                                                    Merge als Exact Duplicaat
+                                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', minWidth: '220px' }}>
+                                                <button className="btn btn-primary" disabled={selected.length < 2} onClick={() => handleMerge(kandidaat.groep_id, 'exact_duplicaat')}>
+                                                    Merge Selectie ({selected.length})
                                                 </button>
-                                                <button className="btn btn-secondary" onClick={() => handleMerge(primaryUuid, duplicates.map((d: any) => d.uuid), 'groepeer_bronnen')}>
-                                                    Groepeer Bronnen
+                                                <button className="btn btn-secondary" disabled={selected.length < 2} onClick={() => handleMerge(kandidaat.groep_id, 'groepeer_bronnen')}>
+                                                    Groepeer Selectie ({selected.length})
+                                                </button>
+                                                <hr style={{ border: 'none', borderTop: '1px solid var(--color-border)', margin: '0.25rem 0' }} />
+                                                <button 
+                                                    className="btn" 
+                                                    style={{ background: 'rgba(16, 185, 129, 0.1)', color: '#10b981', border: '1px solid rgba(16, 185, 129, 0.3)' }}
+                                                    onClick={() => handleUitzondering(kandidaat.groep_id)}
+                                                >
+                                                    ✅ Gecheckt, Geen Duplicaten
                                                 </button>
                                             </div>
                                         </div>
