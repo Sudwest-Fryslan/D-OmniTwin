@@ -5,9 +5,40 @@ import { Layers, Activity, Zap, Loader2, CheckCircle, Search, RefreshCw, Bot } f
 export const DataKwaliteitPage: React.FC = () => {
     const [activeTab, setActiveTab] = useState<'deduplicatie' | 'mutaties' | 'acties'>('deduplicatie');
     
+    // Dynamic Loader Component voor betere UX tijdens AI calls
+    const DynamicLoader = () => {
+        const [textIdx, setTextIdx] = useState(0);
+        const messages = [
+            "🔍 Database doorzoeken op duplicaten...",
+            "🧮 Semantische vectoren en teksten vergelijken...",
+            "🧠 AI-model (Lokale LLM) wordt geraadpleegd voor advies...",
+            "⏳ LLM is de matches aan het valideren, dit kan even duren...",
+            "⚙️ Laatste controles uitvoeren..."
+        ];
+
+        useEffect(() => {
+            const interval = setInterval(() => {
+                setTextIdx((prev) => (prev < messages.length - 1 ? prev + 1 : prev));
+            }, 5000);
+            return () => clearInterval(interval);
+            // eslint-disable-next-line react-hooks/exhaustive-deps
+        }, []);
+
+        return (
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '4rem', gap: '1rem', background: 'var(--color-surface-light)', borderRadius: '8px', border: '1px dashed var(--color-border)' }}>
+                <Loader2 size={40} className="spin" style={{ color: '#3b82f6' }} />
+                <h4 style={{ margin: 0, color: 'var(--color-text)' }}>{messages[textIdx]}</h4>
+                <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--color-text-secondary)', textAlign: 'center', maxWidth: '400px' }}>
+                    Het lokale AI-model analyseert momenteel de inhoudelijke context van elke mogelijke match. Dit kan 10 tot 30 seconden duren.
+                </p>
+            </div>
+        );
+    };
+    
     // Deduplicatie State
     const [kandidaten, setKandidaten] = useState<any[]>([]);
     const [loadingDeduplicatie, setLoadingDeduplicatie] = useState(false);
+    const [errorDeduplicatie, setErrorDeduplicatie] = useState<string | null>(null);
     
     // Mutaties State
     const [mutaties, setMutaties] = useState<any[]>([]);
@@ -27,11 +58,14 @@ export const DataKwaliteitPage: React.FC = () => {
 
     const fetchDeduplicatie = async () => {
         setLoadingDeduplicatie(true);
+        setErrorDeduplicatie(null);
         try {
             const res = await dataControleAPI.getDeduplicatieKandidaten();
             setKandidaten(res.data);
         } catch (error: any) {
             console.error('Error fetching kandidaten', error);
+            const detail = error.response?.data?.detail || error.message || 'Onbekende fout';
+            setErrorDeduplicatie(`Fout bij ophalen: ${detail}`);
         } finally {
             setLoadingDeduplicatie(false);
         }
@@ -150,42 +184,68 @@ export const DataKwaliteitPage: React.FC = () => {
                             </button>
                         </div>
                         {loadingDeduplicatie ? (
-                            <div style={{ display: 'flex', justifyContent: 'center', padding: '2rem' }}><Loader2 size={24} className="spin" /></div>
+                            <DynamicLoader />
+                        ) : errorDeduplicatie ? (
+                            <div style={{ padding: '2rem', textAlign: 'center', color: '#ef4444', background: 'rgba(239,68,68,0.1)', borderRadius: '6px', border: '1px solid rgba(239,68,68,0.3)' }}>
+                                ⚠️ {errorDeduplicatie}
+                            </div>
                         ) : kandidaten.length === 0 ? (
                             <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--color-text-muted)' }}>Geen duplicaten gevonden!</div>
                         ) : (
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                                {kandidaten.map((kandidaat, idx) => (
-                                    <div key={idx} style={{ border: '1px solid var(--color-border)', borderRadius: '6px', padding: '1rem', background: 'var(--color-surface-light)' }}>
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                                            <div>
-                                                <h4 style={{ margin: '0 0 0.5rem 0' }}>Hoofd Indicator: {kandidaat.primary.naam}</h4>
-                                                <div style={{ fontSize: '0.85rem', color: 'var(--color-text-secondary)', marginBottom: '0.5rem' }}>
-                                                    <strong>UUID:</strong> {kandidaat.primary.uuid}<br/>
-                                                    <strong>Bron:</strong> {kandidaat.primary.bron} | <strong>Categorie:</strong> {kandidaat.primary.categorie}
+                                {kandidaten.map((kandidaat, idx) => {
+                                    // Default de eerste als primary
+                                    const primaryUuid = kandidaat.geselecteerde_primary || kandidaat.indicatoren[0].uuid;
+                                    const primaryInd = kandidaat.indicatoren.find((i: any) => i.uuid === primaryUuid) || kandidaat.indicatoren[0];
+                                    const duplicates = kandidaat.indicatoren.filter((i: any) => i.uuid !== primaryUuid);
+                                    
+                                    return (
+                                    <div key={kandidaat.groep_id || idx} style={{ border: '1px solid var(--color-border)', borderRadius: '6px', padding: '1rem', background: 'var(--color-surface-light)' }}>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '1rem' }}>
+                                            <div style={{ flex: 1 }}>
+                                                <div style={{ marginBottom: '1rem', padding: '0.75rem', background: 'rgba(59, 130, 246, 0.1)', borderLeft: '3px solid #3b82f6', borderRadius: '4px' }}>
+                                                    <strong>🤖 AI Advies:</strong> {kandidaat.ai_advies}
                                                 </div>
-                                                <div style={{ marginTop: '1rem' }}>
-                                                    <strong>Mogelijke Duplicaten ({kandidaat.duplicates.length}):</strong>
-                                                    <ul style={{ margin: '0.5rem 0', paddingLeft: '1.5rem', fontSize: '0.85rem' }}>
-                                                        {kandidaat.duplicates.map((d: any) => (
-                                                            <li key={d.uuid}>
-                                                                {d.naam} <em>(Score: {d.match_score}%)</em> - {d.bron}
-                                                            </li>
-                                                        ))}
-                                                    </ul>
+                                                
+                                                <h4 style={{ margin: '0 0 0.5rem 0' }}>Selecteer Hoofd Indicator:</h4>
+                                                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                                                    {kandidaat.indicatoren.map((ind: any) => (
+                                                        <label key={ind.uuid} style={{ display: 'flex', gap: '0.75rem', padding: '0.5rem', background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderRadius: '4px', cursor: 'pointer' }}>
+                                                            <input 
+                                                                type="radio" 
+                                                                name={`primary-${kandidaat.groep_id}`} 
+                                                                checked={primaryUuid === ind.uuid}
+                                                                onChange={() => {
+                                                                    setKandidaten(prev => prev.map(k => k.groep_id === kandidaat.groep_id ? {...k, geselecteerde_primary: ind.uuid} : k));
+                                                                }}
+                                                            />
+                                                            <div style={{ flex: 1 }}>
+                                                                <div style={{ fontWeight: 600 }}>{ind.naam}</div>
+                                                                <div style={{ fontSize: '0.85rem', color: 'var(--color-text-secondary)' }}>
+                                                                    {ind.bron} | {ind.categorie} <br/>
+                                                                    <span style={{ fontFamily: 'monospace', color: '#888' }}>UUID: {ind.uuid}</span>
+                                                                </div>
+                                                                {ind.broodkruimels && ind.broodkruimels.length > 0 && (
+                                                                    <div style={{ marginTop: '0.25rem', fontSize: '0.8rem', color: '#10b981' }}>
+                                                                        📍 {ind.broodkruimels.join(' | ')}
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                        </label>
+                                                    ))}
                                                 </div>
                                             </div>
-                                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                                                <button className="btn btn-primary" onClick={() => handleMerge(kandidaat.primary.uuid, kandidaat.duplicates.map((d: any) => d.uuid), 'exact_duplicaat')}>
+                                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', minWidth: '200px' }}>
+                                                <button className="btn btn-primary" onClick={() => handleMerge(primaryUuid, duplicates.map((d: any) => d.uuid), 'exact_duplicaat')}>
                                                     Merge als Exact Duplicaat
                                                 </button>
-                                                <button className="btn btn-secondary" onClick={() => handleMerge(kandidaat.primary.uuid, kandidaat.duplicates.map((d: any) => d.uuid), 'groepeer_bronnen')}>
+                                                <button className="btn btn-secondary" onClick={() => handleMerge(primaryUuid, duplicates.map((d: any) => d.uuid), 'groepeer_bronnen')}>
                                                     Groepeer Bronnen
                                                 </button>
                                             </div>
                                         </div>
                                     </div>
-                                ))}
+                                )})}
                             </div>
                         )}
                     </div>

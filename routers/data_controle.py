@@ -15,7 +15,7 @@ class ActiesRequest(BaseModel):
     indicator_uuids: List[str]
 
 router = APIRouter(
-    prefix="/api/data-controle",
+    prefix="/api/admin/data-controle",
     tags=["Data Controle & Lineage"]
 )
 

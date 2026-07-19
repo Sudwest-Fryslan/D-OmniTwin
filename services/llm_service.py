@@ -9,7 +9,7 @@ from services.logging_service import AppLogger
 
 # Fallbacks instellen, maar in deze v8 schema wordt de API URL dynamisch uit de database gehaald
 DEFAULT_OLLAMA_HOST = os.getenv("OLLAMA_HOST", "http://localhost:11434")
-DEFAULT_OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "qwen3:30b")
+DEFAULT_OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "gemma4")
 
 class LLMService:
     """Service class voor Ollama interactie (Lokale Qwen3) en Prompt Management."""
@@ -225,6 +225,55 @@ Schrijf een korte, behulpzame toelichting.
 BELANGRIJK: Als het doel MAAK_RAPPORT is, noem dan GEEN indicatoren, maar bevestig alleen dat je het rapport opent."""
 
         return self._call_ollama(system_prompt, user_prompt, context_name="Chat Narrative")
+    def validate_duplicates(self, indicators: list) -> Dict[str, Any]:
+        """
+        Valideert een groep potentiële duplicaten.
+        Retourneert een dict met 'is_duplicaat' (bool) en 'ai_advies' (str).
+        """
+        default_prompt = """Je bent een data-steward voor een Nederlandse gemeente. Je krijgt een lijst van indicatoren die mogelijk duplicaten van elkaar zijn.
+Je taak is puur om te valideren of dit inderdaad duplicaten (of sterke overlap) zijn.
+
+Je antwoord moet uitsluitend in valide JSON formaat zijn:
+{
+  "is_duplicaat": true,
+  "ai_advies": "Korte, verhelderende tekst over waarom dit duplicaten zijn en eventueel de nuanceverschillen."
+}
+
+Strikte Kaders:
+- Retourneer uitsluitend de JSON structuur, zonder markdown of extra tekst eromheen.
+- is_duplicaat is true als de indicatoren conceptueel hetzelfde meten of sterke overlap hebben, anders false.
+- Het ai_advies is kort en in het Nederlands."""
+
+        system_prompt = self.get_system_prompt("validate_duplicates", default_prompt)
+        
+        # Bereid de context voor
+        ind_context = []
+        for ind in indicators:
+            ind_context.append({
+                "naam": ind.get("naam"),
+                "bron": ind.get("bron"),
+                "omschrijving": ind.get("omschrijving")
+            })
+            
+        user_prompt = f"Beoordeel of de volgende indicatoren duplicaten zijn:\n\n{json.dumps(ind_context, ensure_ascii=False)}\n\nGeef je antwoord uitsluitend in JSON."
+        
+        response = self._call_ollama(system_prompt, user_prompt, context_name="Validate Duplicates")
+        
+        if response and "text" in response:
+            try:
+                parsed = json.loads(response["text"])
+                return {
+                    "is_duplicaat": parsed.get("is_duplicaat", False),
+                    "ai_advies": parsed.get("ai_advies", "Geen advies.")
+                }
+            except json.JSONDecodeError:
+                AppLogger.warning(f"JSON parseer-fout in validate_duplicates: {response['text'][:100]}...", category="LLM_CHAT")
+        
+        return {
+            "is_duplicaat": False,
+            "ai_advies": "Fout bij validatie door AI."
+        }
+
 
     def detect_intent_and_actions(self, vraag: str, indicatoren: list, context: dict = None) -> Dict[str, Any]:
         """
