@@ -24,6 +24,10 @@ interface AdminStore {
     // UI State
     sidebarOpen: boolean;
     toggleSidebar: () => void;
+
+    // Data Kwaliteit State
+    deduplicatieKandidaten: any[] | null;
+    setDeduplicatieKandidaten: (kandidaten: any[] | null) => void;
 }
 
 export const useAdminStore = create<AdminStore>((set) => ({
@@ -49,4 +53,8 @@ export const useAdminStore = create<AdminStore>((set) => ({
     // UI State
     sidebarOpen: true,
     toggleSidebar: () => set((state) => ({ sidebarOpen: !state.sidebarOpen })),
+
+    // Data Kwaliteit State
+    deduplicatieKandidaten: null,
+    setDeduplicatieKandidaten: (k) => set({ deduplicatieKandidaten: k }),
 }));

@@ -30,6 +30,8 @@ export interface Indicator {
     color_schema_naam: string | null;
     color_schema_colors?: ColorSchema['colors'];
     admin_notes: string | null;
+    is_actief?: boolean;
+    vervangen_door_id?: string | null;
     // Ontologie validatie velden (Sprint 9 Track B)
     ontologie_status?: OntologieStatus;
     ontologische_beschrijving?: string | null;

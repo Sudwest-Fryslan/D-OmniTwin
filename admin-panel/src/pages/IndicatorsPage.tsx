@@ -217,10 +217,20 @@ export const IndicatorsPage: React.FC = () => {
                                                 cursor: 'pointer',
                                                 background: selectedIndicator?.uuid === ind.uuid
                                                     ? 'var(--color-surface-light)'
-                                                    : undefined
+                                                    : undefined,
+                                                opacity: ind.is_actief === false ? 0.6 : 1
                                             }}
                                         >
-                                            <td>{ind.naam}</td>
+                                            <td>
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                    <span>{ind.naam}</span>
+                                                    {ind.is_actief === false && (
+                                                        <span style={{ fontSize: '11px', padding: '3px 8px', background: '#ffffff', color: '#ef4444', border: '1px solid #ef4444', borderRadius: '12px', fontWeight: 600, boxShadow: '0 1px 2px rgba(0,0,0,0.1)' }}>
+                                                            ● Inactief (Gemerged)
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            </td>
                                             <td>
                                                 <span className={`badge ${ind.score_type.startsWith('+') ? 'badge-positive' : 'badge-negative'}`}>
                                                     {ind.score_type}
@@ -276,11 +286,18 @@ export const IndicatorsPage: React.FC = () => {
                 <div className="card" style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
                     {selectedIndicator ? (
                         <>
-                            <div className="card-header" style={{ flexShrink: 0 }}>
-                                <h3 className="card-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.95rem' }}>
-                                    <Edit size={16} />
-                                    {selectedIndicator.naam}
-                                </h3>
+                            <div className="card-header" style={{ flexShrink: 0, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                                    <h3 className="card-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.95rem', margin: 0 }}>
+                                        <Edit size={16} />
+                                        {selectedIndicator.naam}
+                                    </h3>
+                                    {selectedIndicator.is_actief === false && (
+                                        <span style={{ fontSize: '12px', padding: '4px 10px', background: '#ef4444', color: '#ffffff', borderRadius: '12px', fontWeight: 600, boxShadow: '0 2px 4px rgba(239, 68, 68, 0.2)' }}>
+                                            ● Inactief (Gemerged)
+                                        </span>
+                                    )}
+                                </div>
                                 <button
                                     className="btn btn-secondary"
                                     onClick={() => setSelectedIndicator(null)}

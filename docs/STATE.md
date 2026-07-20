@@ -11,7 +11,7 @@
 |------|--------|
 | **Huidige versie** | v1.0.0-beta (pre-release) |
 | **Sprint** | Sprint 21 (Data Kwaliteit & Deduplicatie) | 
-| **Laatste update** | 2026-07-15 (Dag 90) |
+| **Laatste update** | 2026-07-20 |
 | **Bijgewerkt door** | Project-manager skill (Antigravity) |
 
 ---
@@ -57,9 +57,9 @@
 
 | Datum | Wijziging | Impact |
 |-------|-----------|--------|
+| 2026-07-20 | **Sprint 21 Data Kwaliteit & Deduplicatie** | Deduplicatie pipeline voltooid: pg_trgm & pgvector matching, LLM validatie (AI Advies), en interactieve Admin UI met merge, groepeer en uitsluiting (uitzonderingen) acties via checkboxes. Issue #19 opgelost. |
 | 2026-07-15 | **Sprint 23 Gepland / Issue 17 Voltooid** | Dynamische PDF/Print export layouts voor rapportages succesvol doorgevoerd. Sprint 23 (Backend Performance Optimalisatie) formeel op de ROADMAP en TODO geplaatst. |
 | 2026-07-14 | **Sprint 21 Backend (Data Kwaliteit)** | Database structuur (`is_actief`, `vervangen_door_id`) aangemaakt, filters op API's toegepast, DeduplicatieService toegevoegd voor fuzzy matching (Issue #16). |
-| 2026-07-12 | **Bugfix #54: Kaart Centreren** | Wiskundige correctie in `getFreezone()` om extreme offsets te voorkomen wanneer Kompas flush links of rechts staat. Polygonen centreren nu correct in het werkelijke vrije schermdeel. |
 
 ---
 
@@ -91,6 +91,7 @@
 
 | **Sprint** | Focus | Verwacht |
 |--------|-------|---------|
+| **21** | Data Kwaliteit & Deduplicatie | ✅ Afgerond (UI checkboxes, AI matching, pg_trgm, uitzonderingen) |
 | **18** | IJsselmeerkust als Besluitinstrument — duiding, BAG woonplaatsen, benchmarking, Track F quickwins | ✅ Afgerond (Dag 79 — alle tracks incl. multi-gebied benchmark) |
 | **19** | Dataspace Architectuur Migratie — Docker, PostgREST, pg_featureserv, Traefik | ✅ Deels Afgerond (Fase 1, 2 en 4 voltooid) |
 | **19B**| Van Data naar Inzicht — signalering, prioritering, contextuele scores, AI-samenvatting | ✅ Afgerond (Dag 86) |

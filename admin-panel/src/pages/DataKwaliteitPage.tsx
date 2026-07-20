@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { dataControleAPI, postgrestAPI } from '../services/api';
+import { useAdminStore } from '../hooks/useAdminStore';
 import { Layers, Activity, Zap, Loader2, CheckCircle, Search, RefreshCw, Bot } from 'lucide-react';
 
 export const DataKwaliteitPage: React.FC = () => {
@@ -26,6 +27,10 @@ export const DataKwaliteitPage: React.FC = () => {
 
         return (
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '4rem', gap: '1rem', background: 'var(--color-surface-light)', borderRadius: '8px', border: '1px dashed var(--color-border)' }}>
+                <style>{`
+                    @keyframes spin { 100% { transform: rotate(360deg); } }
+                    .spin { animation: spin 1s linear infinite; }
+                `}</style>
                 <Loader2 size={40} className="spin" style={{ color: '#3b82f6' }} />
                 <h4 style={{ margin: 0, color: 'var(--color-text)' }}>{messages[textIdx]}</h4>
                 <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--color-text-secondary)', textAlign: 'center', maxWidth: '400px' }}>
@@ -36,7 +41,8 @@ export const DataKwaliteitPage: React.FC = () => {
     };
     
     // Deduplicatie State
-    const [kandidaten, setKandidaten] = useState<any[]>([]);
+    const { deduplicatieKandidaten, setDeduplicatieKandidaten } = useAdminStore();
+    const kandidaten = deduplicatieKandidaten || [];
     const [loadingDeduplicatie, setLoadingDeduplicatie] = useState(false);
     const [errorDeduplicatie, setErrorDeduplicatie] = useState<string | null>(null);
     
@@ -49,19 +55,19 @@ export const DataKwaliteitPage: React.FC = () => {
     const [loadingAction, setLoadingAction] = useState(false);
 
     useEffect(() => {
-        if (activeTab === 'deduplicatie') {
+        if (activeTab === 'deduplicatie' && deduplicatieKandidaten === null) {
             fetchDeduplicatie();
         } else if (activeTab === 'mutaties') {
             fetchMutaties();
         }
-    }, [activeTab]);
+    }, [activeTab, deduplicatieKandidaten]);
 
     const fetchDeduplicatie = async () => {
         setLoadingDeduplicatie(true);
         setErrorDeduplicatie(null);
         try {
             const res = await dataControleAPI.getDeduplicatieKandidaten();
-            setKandidaten(res.data);
+            setDeduplicatieKandidaten(res.data);
         } catch (error: any) {
             console.error('Error fetching kandidaten', error);
             const detail = error.response?.data?.detail || error.message || 'Onbekende fout';
@@ -135,7 +141,7 @@ export const DataKwaliteitPage: React.FC = () => {
     };
 
     const toggleSelectie = (groep_id: string, uuid: string) => {
-        setKandidaten(prev => prev.map(k => {
+        setDeduplicatieKandidaten(kandidaten.map(k => {
             if (k.groep_id !== groep_id) return k;
             const current: string[] = k.geselecteerde_uuids || [];
             const next = current.includes(uuid) 
@@ -148,7 +154,7 @@ export const DataKwaliteitPage: React.FC = () => {
     };
 
     const setPrimary = (groep_id: string, uuid: string) => {
-        setKandidaten(prev => prev.map(k => 
+        setDeduplicatieKandidaten(kandidaten.map(k => 
             k.groep_id === groep_id ? { ...k, geselecteerde_primary: uuid } : k
         ));
     };

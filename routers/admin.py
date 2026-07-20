@@ -291,7 +291,9 @@ async def get_indicatoren(
             i.ontologie_status,
             i.ontologische_beschrijving,
             i.beschrijving_ai,
-            i.gevalideerd_op
+            i.gevalideerd_op,
+            i.is_actief,
+            i.vervangen_door_id
         FROM indicatoren i
         LEFT JOIN color_schemas cs ON i.color_schema_id = cs.id
         WHERE 1=1
@@ -344,7 +346,9 @@ async def get_indicatoren(
                 "ontologie_status": row[9],
                 "ontologische_beschrijving": row[10],
                 "beschrijving_ai": row[11],
-                "gevalideerd_op": row[12].isoformat() if row[12] else None
+                "gevalideerd_op": row[12].isoformat() if row[12] else None,
+                "is_actief": row[13],
+                "vervangen_door_id": str(row[14]) if row[14] else None
             } for row in rows
         ],
         "total": total,
@@ -377,7 +381,9 @@ async def get_indicator(
             i.gevalideerd_door::text,
             i.gevalideerd_op,
             i.embedding_versie,
-            u.username as gevalideerd_door_naam
+            u.username as gevalideerd_door_naam,
+            i.is_actief,
+            i.vervangen_door_id
         FROM indicatoren i
         LEFT JOIN color_schemas cs ON i.color_schema_id = cs.id
         LEFT JOIN users u ON i.gevalideerd_door = u.id
@@ -405,7 +411,9 @@ async def get_indicator(
         "gevalideerd_door": row[13],
         "gevalideerd_op": row[14].isoformat() if row[14] else None,
         "embedding_versie": row[15],
-        "gevalideerd_door_naam": row[16]
+        "gevalideerd_door_naam": row[16],
+        "is_actief": row[17],
+        "vervangen_door_id": str(row[18]) if row[18] else None
     }
 
 @router.put("/indicatoren/{uuid}")
