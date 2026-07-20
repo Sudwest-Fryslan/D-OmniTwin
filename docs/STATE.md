@@ -10,7 +10,7 @@
 | Veld | Waarde |
 |------|--------|
 | **Huidige versie** | v1.0.0-beta (pre-release) |
-| **Sprint** | Sprint 21 (Data Kwaliteit & Deduplicatie) | 
+| **Sprint** | Sprint 22 (Data Engineering & ETL Dataspace Track) |
 | **Laatste update** | 2026-07-20 |
 | **Bijgewerkt door** | Project-manager skill (Antigravity) |
 
@@ -48,8 +48,10 @@
 | **Logging Infrastructuur** | 🟢 Actief | Sprint 17 ✅ — `AsyncLogQueue`, `app_logs` DB, log viewer admin panel, dagelijkse cleanup. E-mail alerts on hold (Issue #10) |
 | **Thema-Analyse Visualisatie** | 🟢 Actief | Sprint 19B ✅ — D3 Diverging Bar Chart voor interactieve Z-score verkenning (Detail Verkenning paneel) |
 | **Time Slider** | 🟢 Actief | Sprint 19 Migratie ✅ — Hybride TimeSlider, Indicator Historie & Play/Pauze |
-| **Data Lineage** | 🔴 Gepland | Sprint 8F — nog niet gestart |
-| **Dataspace Orchestrator (inc. FRLDS)** | 🔵 Visie/Concept | Innovatiebudget 2026 |
+| **Indicatoren Bron (Excel Jantina)** | 🟡 In Analyse | 812 indicatoren geïdentificeerd, 11 aanwezig (1,4% dekking). Stap 2 volgt. Bestand: `data/sociaaldomein/` |
+| **ETL Dataspace Gap Analyse** | 🟢 Gedocumenteerd | `docs/3-data-engineering/etl_dataspace_gap_analyse.md` — D-OmniTwin als datamart-consumer van FRLDS |
+| **Data Lineage** | 🔴 Gepland | Sprint 8F / 22 — nog niet gestart |
+| **Dataspace Orchestrator (inc. FRLDS)** | 🔵 Visie/Concept | Innovatiebudget 2026. RFC issue klaargezet voor partners. |
 
 ---
 
@@ -57,9 +59,9 @@
 
 | Datum | Wijziging | Impact |
 |-------|-----------|--------|
+| 2026-07-20 | **Sprint 22 Data Engineering Track gestart** | ETL/Dataspace gap-analyse afgerond. D-OmniTwin hergepositioneerd als datamart-consumer (Gold laag). 812 indicatoren in Excel geïdentificeerd vs 11 aanwezig. Stap 1 (bronvergelijking) voltooid. |
 | 2026-07-20 | **Sprint 21 Data Kwaliteit & Deduplicatie** | Deduplicatie pipeline voltooid: pg_trgm & pgvector matching, LLM validatie (AI Advies), en interactieve Admin UI met merge, groepeer en uitsluiting (uitzonderingen) acties via checkboxes. Issue #19 opgelost. |
 | 2026-07-15 | **Sprint 23 Gepland / Issue 17 Voltooid** | Dynamische PDF/Print export layouts voor rapportages succesvol doorgevoerd. Sprint 23 (Backend Performance Optimalisatie) formeel op de ROADMAP en TODO geplaatst. |
-| 2026-07-14 | **Sprint 21 Backend (Data Kwaliteit)** | Database structuur (`is_actief`, `vervangen_door_id`) aangemaakt, filters op API's toegepast, DeduplicatieService toegevoegd voor fuzzy matching (Issue #16). |
 
 ---
 
@@ -89,8 +91,7 @@
 
 ## 🗺️ Roadmap focus (actief)
 
-| **Sprint** | Focus | Verwacht |
-|--------|-------|---------|
+| **22** | Data Engineering Track — ETL & Dataspace | 🔵 Actief — Stap 1 ✅ (bronvergelijking), Stap 2 volgt (metadata discovery per indicator) |
 | **21** | Data Kwaliteit & Deduplicatie | ✅ Afgerond (UI checkboxes, AI matching, pg_trgm, uitzonderingen) |
 | **18** | IJsselmeerkust als Besluitinstrument — duiding, BAG woonplaatsen, benchmarking, Track F quickwins | ✅ Afgerond (Dag 79 — alle tracks incl. multi-gebied benchmark) |
 | **19** | Dataspace Architectuur Migratie — Docker, PostgREST, pg_featureserv, Traefik | ✅ Deels Afgerond (Fase 1, 2 en 4 voltooid) |

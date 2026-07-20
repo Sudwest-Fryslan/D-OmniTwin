@@ -1,7 +1,7 @@
 # 📊 Indicatoren Bronvergelijking: Excel vs. D-OmniTwin Database
 
 **Rapport datum:** 20 juli 2026
-**Bron:** `docs/3-data-engineering/gegevensbronnen/Indicatoren gemeenteniveau met metadata voor gezonde leefomgeving.xlsx`
+**Bron:** `data/sociaaldomein/Indicatoren gemeenteniveau met metadata voor gezonde leefomgeving.xlsx`
 **Tabblad:** `Alle indicatoren per regionivea`
 
 ---
