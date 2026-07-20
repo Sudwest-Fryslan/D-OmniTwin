@@ -8,10 +8,21 @@
 
 Het eerste plan zet goede stappen, maar schiet op 5 cruciale punten tekort:
 
-### Gap 1: Geen Datawarehouse Architectuur Lagenmodel
+### Gap 1: Geen Datawarehouse Architectuur Lagenmodel — én een verkeerd perspectief op de app zelf
 Het plan beschrijft scripts en taken, maar mist een **gelaagd datamodel** dat data van rauw naar bruikbaar beweegt. Momenteel slaan we CBS OData direct op in de productie-tabellen. Dit is fragiel: een kapotte import overschrijft live data, er is geen historisch spoor, en er is geen kwaliteitscontrole tussendoor.
 
 **Wat ontbreekt:** Een *Medallion Architecture* (Bronze → Silver → Gold), waarbij elke laag een specifieke verantwoordelijkheid heeft.
+
+> **💡 Aanvullende gedachte (architectureel perspectief-shift):**
+> De huidige `indicatoren` tabel + `gebied_data` tabel in D-OmniTwin zijn **zelf al een Gold-laag** — een **datamart**, speciaal gebouwd voor deze applicatie. In Kimball-terminologie: dit is de *Data Mart* fase (Staging → Transform → **Data Mart**).
+>
+> Dat betekent dat **D-OmniTwin niet de eigenaar is van de volledige Bronze→Gold pipeline**. De app is een *consument* van een bredere data infrastructuur. De Bronze en Silver lagen — het ruwe inladen, schonen en conformeren van CBS, RIVM, BAG data — horen thuis in de **Friese Data Space (FRLDS)** of een bredere gedeelde data-infrastructuur van de provincie/gemeenten.
+>
+> **Consequentie:** De ETL Beheerpagina die we bouwen heeft twee gescheiden verantwoordelijkheden:
+> 1. **Datamart beheer (intern):** Beheren wat wij als D-OmniTwin uit de data space consumeren, hoe we het mappen naar ons Kompas-model, en hoe we het serveren aan de frontend.
+> 2. **Dataspace connectiviteit (extern):** Configureren van verbindingen naar de upstream data space(s) en het ophalen van gecureerde data producten vanuit die space.
+>
+> De Bronze/Silver verwerking *zou* idealiter niet in onze applicatie zitten maar in de data space zelf — wij consumeren enkel gecertificeerde, gekwalificeerde **Data Producten**.
 
 ### Gap 2: Data Virtualisatie is Niet Uitgewerkt
 De BRAINDUMP noemt de Dataspace Orchestrator-visie (data bij de bron laten), maar het eerste plan vertaalt dit slechts als "externe API's mappen aan indicatoren". Er is **geen concreet model** voor hoe je data-at-rest (onze DB) combineert met data-in-motion (live FRLDS/CBS calls) in één uniforme semantische laag.
@@ -35,44 +46,106 @@ De `ExterneKaartlagenPage.tsx` beheert WFS/WMS lagen voor *visualisatie*. De ETL
 
 ---
 
-## 🏗️ Verrijkt Architectuurvoorstel: Het D-OmniTwin Data Platform
+## 🏗️ Verrijkt Architectuurvoorstel: D-OmniTwin als Data Space Consumer
 
-### Leidend Principe: Medallion Architecture
+### 🔄 Perspectief-shift: Medallion vs. Kimball — en waar D-OmniTwin zit
+
+| Laag | Medallion | Kimball | D-OmniTwin positie |
+|------|-----------|---------|--------------------|
+| Ruw | **Bronze** | **Staging** | ❌ Hoort in de Friese Data Space |
+| Schoon | **Silver** | **Transform / Conform** | ❌ Hoort in de Friese Data Space |
+| Bruikbaar | **Gold** | **Data Mart** | ✅ **Dit zijn wij** — `indicatoren` + `gebied_data` |
+| Virtueel | **Virtual Layer** | *(geen equivalent)* | ✅ **Dit willen we bouwen** — FRLDS connector |
+
+D-OmniTwin is **geen data warehouse** — het is een **data product applicatie** die gecureerde data consumeert vanuit een bredere data space en deze serveert via het Kompas-model. De `indicatoren` tabel is onze **eigen datamart**, afgestemd op onze specifieke analytische use case (buurt-niveau, Z-score percentiel, Kompas-hiërarchie).
+
+### Het Nieuwe Architectuurplaatje
 
 ```
-┌────────────────────────────────────────────────────────────────┐
-│                    D-OMNITWIN DATA PLATFORM                    │
-│                                                                │
-│  EXTERN                                                        │
-│  ┌──────┐  ┌──────┐  ┌──────┐  ┌──────┐  ┌──────────────┐   │
-│  │ CBS  │  │ RIVM │  │ BAG  │  │ FRLDS│  │ Lokale Excel │   │
-│  └──┬───┘  └──┬───┘  └──┬───┘  └──┬───┘  └──────┬───────┘   │
-│     │         │          │         │              │            │
-│  ───┴─────────┴──────────┴─────────┴──────────────┴────────   │
-│                 BRONZE LAAG (Raw Ingest)                       │
-│       - Ruwe data, onveranderd opgeslagen                      │
-│       - Timestamp van ingestie, bron-identifier, run-id        │
-│                                                                │
-│  ───────────────────────────────────────────────────────────   │
-│                 SILVER LAAG (Cleaned & Validated)              │
-│       - Genormaliseerde structuur                              │
-│       - Data quality checks (nulls, outliers, types)           │
-│       - Koppeling aan Kompas-indicator UUID's                  │
-│       - Data lineage tracking                                  │
-│                                                                │
-│  ───────────────────────────────────────────────────────────   │
-│                 GOLD LAAG (Semantic / Business)                │
-│       - gebied_data tabel (onze huidige productie-data)        │
-│       - Z-score berekeningen                                   │
-│       - Materialized Views voor het Kompas                     │
-│       - Klaar voor frontend-consumptie                         │
-│                                                                │
-│  ───────────────────────────────────────────────────────────   │
-│       VIRTUAL LAYER (Dataspace / On-demand)                    │
-│       - Live feeds van FRLDS / OData APIs                      │
-│       - Gecached voor performance, data bij de bron            │
-└────────────────────────────────────────────────────────────────┘
+╔══════════════════════════════════════════════════════════════════╗
+║          FRIESE DATA SPACE / FEDERATIEF DATASTELSEL (FDS)        ║
+║                                                                  ║
+║  ┌─────────┐  ┌─────────┐  ┌─────────┐  ┌───────────────────┐  ║
+║  │   CBS   │  │  RIVM   │  │   BAG   │  │ Kadaster / PDOK   │  ║
+║  └────┬────┘  └────┬────┘  └────┬────┘  └─────────┬─────────┘  ║
+║       │            │            │                  │             ║
+║  ┌────▼────────────▼────────────▼──────────────────▼──────────┐ ║
+║  │             BRONZE / STAGING LAAG                          │ ║
+║  │   (Ruwe ingestie, onveranderd, bij de bron of in FDS)      │ ║
+║  └──────────────────────────┬──────────────────────────────────┘ ║
+║                             │                                    ║
+║  ┌──────────────────────────▼──────────────────────────────────┐ ║
+║  │             SILVER / CONFORM LAAG                           │ ║
+║  │   (Gecureerde Data Producten, gestandaardiseerd,            │ ║
+║  │    iSHARE/EDC gecertificeerd, vindbaar in catalogus)        │ ║
+║  └──────────────────────────┬──────────────────────────────────┘ ║
+╚═════════════════════════════╪════════════════════════════════════╝
+                              │  ← Data Product API / Connector
+╔═════════════════════════════▼════════════════════════════════════╗
+║                    D-OMNITWIN APPLICATIE                         ║
+║                                                                  ║
+║  ┌──────────────────────────────────────────────────────────┐   ║
+║  │         GOLD / DATA MART  (onze eigen laag)              │   ║
+║  │   indicatoren tabel  ←── Kompas-specifiek model          │   ║
+║  │   gebied_data tabel  ←── Buurt × Indicator × Jaar        │   ║
+║  │   Z-score berekeningen, Materialized Views                │   ║
+║  └──────────────────────────────────────────────────────────┘   ║
+║                              │                                   ║
+║  ┌───────────────────────────▼──────────────────────────────┐   ║
+║  │         VIRTUAL LAYER  (on-demand, geen kopie)           │   ║
+║  │   Directe FRLDS / OData queries voor live data            │   ║
+║  │   Gecached op basis van TTL per bron                      │   ║
+║  └──────────────────────────────────────────────────────────┘   ║
+║                              │                                   ║
+║  ┌───────────────────────────▼──────────────────────────────┐   ║
+║  │         FASTAPI + REACT ADMIN PANEL + FRONTEND            │   ║
+╚══════════════════════════════════════════════════════════════════╝
 ```
+
+---
+
+## 🌍 Verkenning: Bestaande Dataspace Marketplace Tooling
+
+In plaats van de Bronze/Silver pipeline volledig zelf te bouwen, kunnen we aansluiten op bestaande infrastructure. Hieronder een overzicht van relevante tools en platforms:
+
+### Nederlandse / Europese Dataspace Initiatieven
+
+| Platform | Type | Relevantie voor D-OmniTwin | Status |
+|----------|------|---------------------------|--------|
+| **FRLDS** (Fryslân Regionaal Data Space) | Regionale data space | ⭐⭐⭐ Direct — dit is onze primaire upstream bron | Pilot fase |
+| **FDS** (Federatief Datastelsel) | Nationaal NL | ⭐⭐⭐ Landelijke CBS/BAG/BRP ontsluiting | In opbouw |
+| **PDOK** | Geo-data platform NL | ⭐⭐⭐ Al in gebruik (WFS/WMS) | Productie |
+| **iSHARE** | Trust framework / data contracts | ⭐⭐ Authenticatie & autorisatie voor data sharing | Productie |
+| **Eclipse Dataspace Connector (EDC)** | Technische connector (GAIA-X) | ⭐⭐ Standaard voor EU dataspace interoperabiliteit | Actief |
+| **TNO Trusted Data Vault** | Persoonlijke/gevoelige data | ⭐ Minder relevant voor geo-indicatoren | Pilot |
+
+### Technische Data Catalogus & Marketplace Tools
+
+| Tool | Wat het doet | Overweging |
+|------|-------------|------------|
+| **OpenMetadata** | Data catalogus, lineage, quality | Open source, zelf te hosten — vervangt onze handmatige lineage tabel |
+| **Apache Atlas** | Enterprise data governance | Zwaarder, meer voor grote organisaties |
+| **DataHub (LinkedIn)** | Data discovery & catalogus | Populair, goede community, REST API |
+| **Great Expectations** | Data quality / validatie pipeline | Kan als Silver-laag kwaliteitscheck draaien |
+| **dbt (data build tool)** | SQL-gebaseerde transformaties (Kimball) | Uitstekend voor onze staging → datamart transformaties |
+
+### Aanbeveling: Pragmatisch Begin
+
+```
+Korte termijn:  D-OmniTwin beheert zelf een lichte Bronze/Silver staging
+                (etl_bronnen + etl_runs tabellen zoals beschreven)
+                → Pragmatisch, nul extra infra, snel bruikbaar
+
+Middellange    Aansluiting op FRLDS als die beschikbaar komt:
+ termijn:       D-OmniTwin vraagt gecureerde Data Producten op via API
+                Eigen ETL scripts worden overbodig voor gecertificeerde bronnen
+
+Lange termijn:  Eclipse EDC connector + iSHARE trust framework
+                D-OmniTwin als volwaardige dataspace participant
+                Data Producten publiceren (Kompas scores) terug naar de space
+```
+
+> **💡 Interessante gedachte:** D-OmniTwin kan in de toekomst niet alleen data *consumeren* uit de Friese Data Space, maar ook data *produceren* — bijvoorbeeld de berekende Z-scores en Kompas-percentielscores als een Data Product publiceren, zodat andere gemeentelijke applicaties hier ook gebruik van kunnen maken.
 
 ---
 
