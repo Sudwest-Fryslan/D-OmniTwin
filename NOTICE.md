@@ -16,7 +16,7 @@ Dit bestand bevat de vermeldingen van de belangrijkste bibliotheken en framework
 - **pg_featureserv**: [Apache License 2.0](https://github.com/CrunchyData/pg_featureserv/blob/master/LICENSE.md)
 
 ## 🎨 Frontend (JavaScript/React)
-- **Mapbox GL JS**: [Mapbox License](https://github.com/mapbox/mapbox-gl-js/blob/main/LICENSE.txt) (Gebruikers dienen over een eigen API key te beschikken conform de Mapbox servicevoorwaarden)
+- **MapLibre GL JS**: [BSD 3-Clause License](https://github.com/maplibre/maplibre-gl-js/blob/main/LICENSE.txt)
 - **Deck.gl**: [MIT License](https://github.com/visgl/deck.gl/blob/master/LICENSE)
 - **D3.js**: [ISC License](https://github.com/d3/d3/blob/main/LICENSE)
 - **React**: [MIT License](https://github.com/facebook/react/blob/main/LICENSE)

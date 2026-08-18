@@ -6,14 +6,22 @@ See also: @.claude/soul.md | @.claude/skills.md
 
 ## Project Overview
 
-D-OmniTwin is a digital twin platform for Dutch municipalities, visualizing neighborhood-level indicators (Kompas: 217 metrics across 12 thematic quadrants) on interactive maps. Built for Súdwest-Fryslân, it combines geospatial data, AI-powered chat, and multi-area comparative reporting.
+D-OmniTwin is a digital twin platform for Dutch municipalities, visualizing neighborhood-level indicators (Kompas: 235 metrics across 12 thematic quadrants) on interactive maps. Built for Súdwest-Fryslân, it combines geospatial data, AI-powered chat, and multi-area comparative reporting.
 
-- **Backend:** FastAPI (Python 3.9+) on port 8000
-- **Main Frontend:** Vanilla JS + Mapbox GL + Deck.gl (no build step, served from `/static/`)
-- **Admin Panel:** React 19 + TypeScript SPA in `/admin-panel/` (port 3000 in dev)
-- **Database:** PostgreSQL 12+ with PostGIS extension
+- **API Gateway:** Traefik on port 80 (Reverse proxy)
+- **Main Backend:** FastAPI (Python 3.10+) on port 8000
+- **Data API:** PostgREST on port 3000 (`/api/data/*`)
+- **Geo API:** pg_featureserv on port 9000 (`/api/geo/*`)
+- **Main Frontend:** Vanilla JS + MapLibre GL + Deck.gl (no build step, served from `/static/`)
+- **Admin Panel:** React 19 + TypeScript SPA in `/admin-panel/` (port 3001 in dev, built to `/static/admin-panel/`)
+- **Database:** PostgreSQL 14+ with PostGIS, pgvector, and pg_trgm extensions
 
 ## Commands
+
+### Full Stack (Docker Compose)
+```bash
+docker compose up -d
+```
 
 ### Backend
 ```bash
@@ -32,18 +40,16 @@ python -m pytest tests/test_zscore.py   # single test file
 ```bash
 cd admin-panel
 npm install
-npm start        # dev server on port 3000
-npm run build    # production build
+npm start        # dev server on port 3001
+npm run build    # production build (deploy via .agents/workflows/build-admin-panel.md)
 npm test         # run tests
 ```
 
-### Database initialization (run in order)
+### Database initialization (Starter Dataset Fryslân)
 ```bash
-python scripts/import_gebiedsmonitor_config.py
-python scripts/import_geometrie.py
-python scripts/import_metingen.py
-python scripts/import_kompas_hierarchie.py
-python scripts/import_cbs_data.py
+python init_data/scripts/download_buurten_fryslan.py
+python init_data/scripts/download_indicatoren_fryslan.py
+bash init_data/scripts/init_database.sh
 ```
 
 ### ETL
@@ -107,12 +113,13 @@ Hybrid model: API key authentication for admin panel API calls, session-based au
 Colorblind-safe diverging palettes are used throughout. Palette definitions live in `static/css/colors/`. Dynamic color generation (including diverging scales) is in `color_scale_service.py`.
 
 ### Database
-Schema is in `data/schema_latest.sql`. Key tables: `gebieden` (areas/buurten), `indicatoren` (metrics), `gebied_data` (measurements), `kompas_data` (thematic hierarchy). SQLAlchemy uses a large connection pool (`pool_size=20, max_overflow=20`) for concurrent map layer queries.
+Schema is in `init_data/schema/schema_latest.sql`. Key tables: `gebieden` (areas/buurten), `indicatoren` (metrics), `gebied_data` (measurements), `kompas_data` (thematic hierarchy). SQLAlchemy uses a large connection pool (`pool_size=20, max_overflow=20`) for concurrent map layer queries.
 
 ## Documentation
 - `docs/STATE.md` — authoritative system status and component inventory
 - `docs/INDEX.md` — documentation router by domain
-- `BUILD.md` — full setup instructions
+- `GETTING_STARTED.md` — step-by-step setup guide with starter dataset
+- `BUILD.md` — setup instructions & build reference
 - `ROADMAP.md` — sprint planning
 - `TODO.md` — active task list by domain
 - `BUGFIX.md` — known bugs and workarounds

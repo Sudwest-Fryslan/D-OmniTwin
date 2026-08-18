@@ -1,28 +1,22 @@
 # BUILD & Setup Instructions
 
 ## Vereisten
-- Python 3.9+
-- PostgreSQL + PostGIS extensie
-- Linux/WSL omgeving
+- Python 3.10+
+- PostgreSQL 14+ (met PostGIS, pgvector en pg_trgm extensies)
+- Docker & Docker Compose (aanbevolen voor Traefik, PostgREST en pg_featureserv)
+- Linux / WSL2 omgeving
 
 ## Installatie Stappen
 
 ### 1. Ontwikkelomgeving & Applicatie Stack
-De mappenstructuur is opgezet:
-- `data/`: Databestanden
-- `scripts/`: Python scripts
-- `templates/`: Frontend templates
-- `nginx/`: Configuratie voor de reverse proxy
-- `.venv/`: Virtual environment (alleen voor lokale python run)
-
-Voor de Hybride Lego architectuur gebruiken we Docker Compose. Dit start in één keer de FastAPI backend, PostgREST, pg_featureserv, PostgreSQL en de Nginx API gateway.
+De Hybride Dataspace Architectuur draait met Docker Compose. Dit start in één keer de FastAPI backend, PostgREST (Data API), pg_featureserv (Geo API), PostgreSQL en de Traefik reverse proxy.
 
 ```bash
 docker compose up -d
 ```
 (Voor lokale backend ontwikkeling via Python, zie Stap 2 hieronder)
 
-### 2. Python Environment
+### 2. Python Environment (Lokale Backend Dev)
 ```bash
 # Aanmaken (indien nog niet gedaan)
 python3 -m venv .venv
@@ -35,15 +29,18 @@ pip install -r requirements.txt
 ```
 
 ### 3. Environment Configuration (.env)
-**Versie 1.3.0+:** Secrets worden beheerd via `.env` file (niet in git!)
+Secrets worden beheerd via `.env` (nooit in git committen!). Gebruik de interactieve setup wizard om veilige sleutels te genereren:
 
-Maak een `.env` file aan in de project root:
 ```bash
-touch .env
-nano .env
+python init_data/scripts/setup_env.py
 ```
 
-Vul de volgende variabelen in:
+Of maak handmatig een `.env` aan op basis van `.env.example`:
+```bash
+cp .env.example .env
+```
+
+Belangrijke variabelen:
 ```bash
 # Database
 DATABASE_HOST=localhost
@@ -54,10 +51,11 @@ DATABASE_PASSWORD=jouw_wachtwoord_hier
 
 # API Security
 SECRET_KEY=gebruik_python_secrets_token_urlsafe_32
+ADMIN_API_KEY=jouw_admin_api_key
 CORS_ORIGINS=http://localhost:8000,http://127.0.0.1:8000
 
 # Mapbox
-MAPBOX_TOKEN=pk.eyJ1IjoidGFla2V2YW5kZXJsYWFuIiwiYSI6ImNram81ejI0azB5cnIycnRmM3hiaDBsc2sifQ.MiVfnOO0xSnNXBlngW2FRA
+MAPBOX_TOKEN=pk.eyJ1...
 MAPBOX_STYLE=mapbox://styles/mapbox/light-v10
 
 # App
@@ -65,72 +63,47 @@ DEBUG=true
 LOG_LEVEL=INFO
 ```
 
-**Secret Key genereren:**
-```bash
-python -c "import secrets; print(secrets.token_urlsafe(32))"
-```
-
-> **⚠️ BELANGRIJK:** Voeg `.env` NOOIT toe aan git! Dit bestand staat in `.gitignore`.
-
 ### 3b. Frontend Configuration (admin-panel/.env)
-Voor de Admin Panel frontend is ook een `.env` file nodig in `admin-panel/.env`:
+Voor de Admin Panel dev server is ook een `.env` file nodig in `admin-panel/.env`:
 ```bash
-RELEASE_DATE=14-02-2026
 REACT_APP_API_URL=http://localhost:8000
 REACT_APP_ADMIN_KEY=your_admin_key_here  # Must match ADMIN_API_KEY in backend .env
 ```
-**Opmerking:** De `REACT_APP_ADMIN_KEY` is nodig zodat de frontend statistieken kan ophalen zonder eerst in te loggen (voor dashoard widgets).
 
-### 4. Database Setup (PostgreSQL + PostGIS)
-Voer de volgende commando's uit om de database server en extensies te installeren:
+### 4. Database Setup & Initiatie Data
 
-### 4. Database Setup (PostgreSQL + PostGIS)
-
-> **📘 Uitgebreide Handleiding:** Zie [docs/7-projectmanagement/logs/DATABASE_INITIALISATIE_HANDLEIDING.md](docs/7-projectmanagement/logs/DATABASE_INITIALISATIE_HANDLEIDING.md) voor gedetailleerde instructies.
-
-**Korte Versie:**
+> **📘 Volledige Gids:** Zie [`GETTING_STARTED.md`](./GETTING_STARTED.md) voor de actuele stap-voor-stap installatie.
 
 ```bash
-# 1. Update package lists
-sudo apt update
+# 1. Database en gebruiker aanmaken
+sudo -u postgres psql -c "CREATE USER omnitwin_user WITH PASSWORD 'jouw-wachtwoord';"
+sudo -u postgres psql -c "CREATE DATABASE omnitwin_db OWNER omnitwin_user;"
 
-# 2. Installeer PostgreSQL en PostGIS
-sudo apt install postgresql postgresql-postgis
+# 2. Extensies activeren
+sudo -u postgres psql -d omnitwin_db -c "CREATE EXTENSION postgis; CREATE EXTENSION vector; CREATE EXTENSION pg_trgm;"
 
-# 3. Importeer het geconsolideerde schema (alle tabellen + views + seed data)
-psql -U omnitwin_user -d omnitwin_db -f data/schema_latest.sql
-```
-
-**Verificatie:**
-```bash
-psql -U omnitwin_user -d omnitwin_db -c "\dt"
-# Verwacht: 15 tabellen
+# 3. Initiatiedata ophalen (PDOK API + CBS OData) & database seeden
+python init_data/scripts/download_buurten_fryslan.py
+python init_data/scripts/download_indicatoren_fryslan.py
+bash init_data/scripts/init_database.sh
 ```
 
 ### 5. Database Migrations
 Wanneer er wijzigingen zijn aan het database schema:
-1.  Maak een SQL script in `data/migrations/` (bijv. `v1.1_add_column.sql`).
-2.  Update `data/schema_latest.sql` zodat nieuwe installaties direct de laatste versie hebben.
-3.  Documenteer de wijziging in `CHANGELOG.md` (indien aanwezig).
-
-> **Note:** Voor grote schema wijzigingen wordt aangeraden om Alembic te gebruiken (zie Roadmap).
-
-### 6. Configuratie
-Vergeet niet `config.ini` bij te werken met de juiste database credentials en API keys.
-Zie `config.ini.example` (indien aanwezig) of de [Environment Configuration](#3-environment-configuration-env) sectie.
+1. Maak een SQL migratiescript in `migrations/` (bijv. `schema_v15_xxx.sql`).
+2. Update `init_data/schema/schema_latest.sql` zodat nieuwe installaties direct up-to-date zijn.
+3. Documenteer de wijziging in [docs/STATE.md](docs/STATE.md) en [BUILD.md](BUILD.md).
 
 ### 6. Applicatie Starten
-Om de backend te starten, moet je **altijd** eerst de virtual environment activeren.
+Om de backend lokaal te starten met geoptimaliseerde live reload:
 
 ```bash
-# 1. Activeer virtual environment
 source .venv/bin/activate
-
-# 2. Start de backend server (geoptimaliseerd)
 python run_dev.py
 ```
-De API is dan beschikbaar op: `http://localhost:8000`
-Docs: `http://localhost:8000/docs`
+- App: `http://localhost:8000`
+- API Docs: `http://localhost:8000/docs`
+- Admin Panel: `http://localhost:8000/admin` (of via `cd admin-panel && npm start` op poort 3001)
 
 ### 7. Gebiedsmonitor Data Laden (Optioneel)
 
@@ -330,8 +303,45 @@ Omdat privacygevoelige CBS data niet naar externe partijen (zoals OpenAI) gestuu
 ## 📋 Sprint Changelog
 
 > Volledig dag-voor-dag overzicht van alle ontwikkelsessies.
-> De laatste 3 sprints zijn samengevat in de [README.md](./README.md#-recent-voltooid).
+> De laatste sprints zijn samengevat in de [README.md](./README.md#-recent-voltooid).
 > Dit changelog dient als archief en basis voor toekomstige CHANGELOG.md releases.
+
+---
+
+### Dag 92 (20-07-2026): Sprint 22 — Data Engineering & ETL Dataspace Track 📊🌐
+**Focus:** ETL/Dataspace gap-analyse en bronvergelijking sociaaldomein (812 indicatoren).
+- ✅ **Gap-Analyse:** `etl_dataspace_gap_analyse.md` — D-OmniTwin herpositioneerd als datamart-consument (Gold laag) van de Friese Data Space (FRLDS).
+- ✅ **Bronvergelijking:** 812 indicatoren uit Excel Jantina geïdentificeerd t.o.v. de database (1,4% dekking), plan voor geautomatiseerde ontologie mapping vastgelegd.
+
+---
+
+### Dag 90 (20-07-2026): Sprint 21 — Data Kwaliteit & Deduplicatie Assistent 🧹✨
+**Focus:** Ruisvrije database, AI matching en interactieve merge tooling.
+- ✅ **Deduplicatie Pipeline:** `pg_trgm` fuzzy matching + `pgvector` embeddings + AI-advies validatie.
+- ✅ **Admin UI:** Interactieve deduplicatie pagina met checkboxes voor samenvoegen, groeperen en uitzonderingenbeheer.
+
+---
+
+### Dag 86 (05-07-2026): Sprint 19B — Van Data naar Inzicht (Issue #15) 📈🧭
+**Focus:** Diepgaande analyse en besluitvormingsondersteuning.
+- ✅ **Thema-Analyse Visualisatie:** D3 Diverging Bar Chart voor Z-scores en thematische afwijkingen.
+- ✅ **Boomstructuur Filter:** Interactief filteren op thema en subthema in het rapportagepaneel.
+- ✅ **Dataspace Migratie (Sprint 19):** Traefik API Gateway, PostgREST (`/api/data/*`) en pg_featureserv (`/api/geo/*`) geïntegreerd in Docker stack.
+
+---
+
+### Dag 79 (30-06-2026): Sprint 18 — IJsselmeerkust als Besluitinstrument 🗺️⚖️
+**Focus:** Besluitondersteuning, BAG Woonplaatsen (WFS), multi-gebied benchmarking en top afwijkers.
+- ✅ **Externe Kaartlagen:** WFS koppeling voor BAG Woonplaatsen en lokale GPKG/GeoJSON file uploads via het beheerpaneel.
+- ✅ **Multi-Gebied Benchmarking:** Benchmark vergelijkingstabel per woonplaats vs. gemeentelijk/provinciaal gemiddelde.
+- ✅ **Top 3+3 Uitschieters:** Automatische uitschieterdetectie en highlight per indicator.
+
+---
+
+### Dag 68 (26-05-2026): Sprint 17 — Configureerbare Logging Infrastructuur 📋🔒
+**Focus:** Realtime in-app logging en monitoring.
+- ✅ **AsyncLogQueue:** Logging naar `app_logs` database en roterende server logs over 9 categorieën.
+- ✅ **Log Viewer:** React Admin Panel log viewer met filtering, statistieken en automatische retentie opschoning.
 
 ---
 

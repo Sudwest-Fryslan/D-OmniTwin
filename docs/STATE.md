@@ -25,7 +25,7 @@
 | **Geo API (pg_featureserv)** | 🟢 Actief | Port 9000, OGC API Features endpoint |
 | **FastAPI backend** | 🟢 Actief | Hybride AI/Rapportage logic, Port 8000 |
 | **Docker Compose** | 🟢 Actief | Primary orchestration engine |
-| **Mapbox + Deck.gl frontend** | 🟢 Actief | Classic Premium UI |
+| **MapLibre + Deck.gl frontend** | 🟢 Actief | Classic Premium UI |
 | **CBS buurt-data** | 🟢 Geïmporteerd | Fryslân 931 buurten |
 | **RIVM indicatoren** | 🟢 Actief | Meerdere jaren beschikbaar |
 | **AI Chat Interface** | 🟢 Actief | HELP_ONBOARDING intent actief (deterministic, geen LLM) |

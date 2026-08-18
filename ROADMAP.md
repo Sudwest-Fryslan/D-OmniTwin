@@ -1,6 +1,6 @@
 # Feature Roadmap - D-OmniTwin Gebiedsmonitor
 
-**Status:** 2026-07-04 (Dag 82) — Sprint 19 (Migratie) ✅ Afgerond | Sprint 19B 📌 Gepland  
+**Status:** 2026-07-20 (Dag 92) — Sprint 22 (Data Engineering Track) 🔵 Actief | Sprint 23 📌 Gepland  
 **Visie:** Van prototype naar productie-klaar, AI-gedreven gebiedsmonitor platform
 
 ---
@@ -98,57 +98,45 @@
 
 ---
 
-### 📊 Sprint 19B: Van Data naar Inzicht (Gepland)
+### 📊 Sprint 19B: Van Data naar Inzicht (Issue #15) ✅ Afgerond
 
 **Visie:** D-OmniTwin transformeren van een data-exploratie platform naar een inzicht-gedreven besluitvormingsinstrument.  
 **Aanleiding:** Gebruikersreview juni 2026 — consistente bevinding over alle 5 gebruikersprofielen.  
 **Spec:** [`docs/7-projectmanagement/archief/sprint-19-plan_data-naar-inzicht.md`](./docs/7-projectmanagement/archief/sprint-19-plan_data-naar-inzicht.md)
 
-#### Track A — Signalering: Automatische Uitschieters
-- [ ] Stijgers & Dalers per indicator (top 3 stijgers + top 3 dalers)
-- [ ] Afwijkingssignalering t.o.v. gemeenteén provinciaal gemiddelde
+#### Track A — Thema-Analyse & Visualisatie ✅
+- [x] D3 Diverging Bar Chart visualisatie voor z-scores en thematische vergelijking.
+- [x] Boomstructuur filter voor thema's en subthema's in het rapportagepaneel.
+- [x] Timeslider en historische trendlijnen met play/pauze bediening.
 
-#### Track B — Prioritering: Inzicht per Buurt
-- [ ] Top 5 risico’s per buurt (thema-overstijgend, o.b.v. z-score)
-- [ ] Provinciaal gemiddelde als extra referentielijn in benchmark & trendgrafiek
-
-#### Track C — Context: Scores in Gewone Taal
-- [ ] Contextuele score-uitleg: z-score → *Aandacht / Gemiddeld / Goed* label
-- [ ] Geleide gebruikersroute per doelgroep (rolkeuze bij onboarding)
-
-#### Track D — AI-Ondersteuning
-- [ ] AI-samenvatting per buurt via Ollama (lokaal, AVG-proof)
-- [ ] **Dynamische Gebiedsselectie Assistent:** Vervangen van hard-coded demo scenario's door een dynamische UI (selectielijsten/zoekbalk in chat) gestuurd door het rolprofiel voor gebied- en gemeente-keuze.
-
-**Effort:** ~15-20 uur (4 sessies)  
-**Priority:** 🔴 HIGH — direct gebruikerswaarde  
-**Aanleiding:** [UX-bevindingen](./docs/4-ux-design/gebruikerservaringen/UX-bevindingen_gebruikersreview_2026-06.md)
+#### Track B — Dataspace Architectuur (Sprint 19) ✅
+- [x] Traefik API Gateway, PostgREST (`/api/data/*`) en pg_featureserv (`/api/geo/*`) geïntegreerd in Docker stack.
 
 ---
 
-### 🧹 Sprint 21: Data Kwaliteit & Betrouwbare Start (Gepland)
+### 🧹 Sprint 21: Data Kwaliteit & Deduplicatie Assistent (Issue #16) ✅ Afgerond
 
-**Visie:** Een schoon, betrouwbaar platform zonder ruis (lege indicatoren, duplicaten) voor een perfecte eerste gebruikerservaring.
-**Aanleiding:** Ruis in data vertroebelt het Kompas en AI-antwoorden.
+**Visie:** Een schoon, betrouwbaar platform zonder ruis (lege indicatoren, duplicaten) voor een betrouwbare gebruikerservaring.
 
-#### Track A — Deduplicatie Assistent (Admin Panel)
-- [ ] UI Bouwen in Beheeromgeving: Nieuwe pagina voor Deduplicatie.
-- [ ] Trapsgewijze Detectie (Backend):
-    1. Exacte & Fuzzy match (Trigrammen) op naam en bron.
-    2. Vector Similarity via `pgvector` embeddings.
-    3. LLM Evaluatie (Ollama) ter controle van de matches.
-- [ ] Samenvoegen / Deactiveren: "Primaire Indicator Kiezen" actie waarbij de overige dubbelingen op `is_actief = False` worden gezet en data gemigreerd wordt.
+#### Track A — Deduplicatie Assistent (Admin Panel) ✅
+- [x] UI in Beheeromgeving: Nieuwe pagina voor Deduplicatie met selectievakjes.
+- [x] Trapsgewijze Detectie (Backend): Trigrammen (`pg_trgm`) + `pgvector` similarity + AI-advies validatie.
+- [x] Samenvoegen, groeperen en uitzonderingenbeheer interactief via admin panel.
 
-#### Track B — Ruisvrije Frontend & API's
-- [ ] API-filtering: Lege indicatoren (zonder `gebied_data`) worden niet geretourneerd in endpoints.
-- [ ] Verbergen in UI: Voorkomen dat ze in de D3 Sunburst of AI-zoeker verschijnen.
+---
 
-#### Track C — Gebruikersadoptie & Validatie
-- [ ] Gezamenlijke review: De voorgestelde deduplicaties met gebruikers nalopen en accorderen.
-- [ ] Controles op eenheden en waarden voltooien (bijv. percentage vs absolute aantallen).
+### 📊 Sprint 22: Data Engineering & ETL Dataspace Track 🔵 Actief
 
-**Effort:** ~15-20 uur  
-**Priority:** 🔴 HIGH — Essentieel voor live-gang en gebruikersvertrouwen  
+**Visie:** Structureren van de indicatorenvoorraad en herpositionering als datamart-consument van de Friese Data Space (FRLDS).
+**Spec:** [`docs/3-data-engineering/etl_dataspace_gap_analyse.md`](./docs/3-data-engineering/etl_dataspace_gap_analyse.md)
+
+#### Track A — Bronvergelijking & Gap-Analyse ✅
+- [x] **Stap 1:** 812 indicatoren uit sociaaldomein Excel geïdentificeerd vs. 11 in DB (1,4% dekking).
+- [x] Positionering als Gold-laag / Datamart-consument gedocumenteerd.
+
+#### Track B — Metadata Discovery & Ontologie Mapping ⏳
+- [ ] **Stap 2:** Geautomatiseerde mapping per indicator aan Kompas-hiërarchie en definities.
+- [ ] **Stap 3:** Data Lineage en geautomatiseerde ETL-ingest.
 
 ---
 

@@ -1,15 +1,16 @@
 # TODO - D-OmniTwin Roadmap
 
-**Laatste Update:** 5 juli 2026 (Dag 83)
-**Status:** Sprint 19 Migratie ✅ | Sprint 19B 📌 Gepland
+**Laatste Update:** 20 juli 2026 (Dag 92)  
+**Status:** Sprint 19/19B ✅ | Sprint 21 ✅ | Sprint 22 🔵 Actief
 
-> **Huidige Sprint:** Sprint 19B — Van Data naar Inzicht
+> **Huidige Sprint:** Sprint 22 — Data Engineering & ETL Dataspace Track  
 > **Branch:** `main` 
 
 ---
 
 ## 📝 Volgende Sessie (Hoge Prioriteit)
-- [ ] **Documentatie-inhaalslag:** Alle documentatie (met name `README.md` en architectuurdocumenten) nalopen en herzien. De teksten lopen achter en moeten de nieuwe Hybride Dataspace Architectuur (PostgREST, pg_featureserv, Traefik) accuraat weerspiegelen.
+- [x] **Documentatie-inhaalslag:** Alle root documentatie (`README.md`, `BUILD.md`, `CLAUDE.md`, `ROADMAP.md`, `TODO.md`) gesynchroniseerd met de Hybride Dataspace Architectuur (Traefik, PostgREST, pg_featureserv).
+- [ ] **Sprint 22 Stap 2 (Metadata Discovery):** Geautomatiseerde mapping per indicator aan Kompas-hiërarchie en CBS/RIVM taxonomie.
 - [x] **Bugfix #54 & Verkenning `getFreezone`:** Analyseren waarom geselecteerde polygonen achter het Kompas centreren en de `getFreezone` logica robuust maken voor alle openstaande panelen.
 ---
 
@@ -147,134 +148,70 @@
 
 ---
 
-## 📌 Sprint 19: Van Data naar Inzicht (Gepland)
+## ✅ Sprint 19 / 19B: Van Data naar Inzicht (Afgerond)
 
-**Doel:** D-OmniTwin transformeren van data-exploratie naar inzicht-gedreven besluitvorming — gebruikers actief begeleiden van data naar conclusie en handelingsperspectief.  
-**Aanleiding:** [Gebruikersreview juni 2026](./docs/7-projectmanagement/testcases/Gebruikersreview.md) — consistente bevinding over alle 5 gebruikersprofielen.  
-**Spec:** [`docs/7-projectmanagement/archief/sprint-19-plan_data-naar-inzicht.md`](./docs/7-projectmanagement/archief/sprint-19-plan_data-naar-inzicht.md)  
-**Branch:** `feature/issue-12-sprint19-migratie`
+**Doel:** D-OmniTwin transformeren van data-exploratie naar inzicht-gedreven besluitvorming met diepgaande thema-analyse en dataspace architectuur.  
+**Spec:** [`docs/7-projectmanagement/archief/sprint-19-plan_data-naar-inzicht.md`](./docs/7-projectmanagement/archief/sprint-19-plan_data-naar-inzicht.md)
 
-### Track 0 — Dataspace Architectuur Migratie
-- [x] **0A — Docker & Nginx API Gateway**
-- [x] **0B — PostgREST Data API Integratie**
-- [x] **0C — pg_featureserv Geo API Integratie**
+### Track 0 — Dataspace Architectuur Migratie ✅
+- [x] **0A — Docker & Traefik API Gateway**
+- [x] **0B — PostgREST Data API Integratie** (`/api/data/*`)
+- [x] **0C — pg_featureserv Geo API Integratie** (`/api/geo/*`)
 - [x] **0D — Hybride-Lego Frontend refactor**
 - [x] **0E — Database RPC functions (indicator stats)**
 
-### Track A — Signalering: Automatische Uitschieters
-- [ ] **A1 — Stijgers & Dalers per indicator**
-    - [ ] Backend: `GET /api/indicatoren/{uuid}/trends?gemeente_code=&periodes=2`
-    - [ ] Frontend: collapsible sectie *"Beweging"* — top 3 stijgers + top 3 dalers
-    - [ ] Klik → flyTo buurt op kaart
-- [ ] **A2 — Afwijkingssignalering gemeente vs. provincie**
-    - [ ] `referentie_type: 'gemeente' | 'provincie'` param op top-buurten endpoint
-    - [ ] Frontend: toggle *Referentie: Gemeente | Provincie* op Top 5 sectie
-
-### Track B — Prioritering: Inzicht per Buurt & Thema
-- [ ] **B1 — Top 5 risico's per buurt (thema-overstijgend)**
-    - [ ] Backend: `GET /api/gebieden/{gebied_id}/prioriteiten`
-    - [ ] Frontend: nieuw blok *"⚠️ Aandachtspunten voor [buurt]"* in detailpaneel
-    - [ ] Optioneel: ook *"💚 Sterke punten"* (top 3 positief)
-- [ ] **B2 — Provinciaal gemiddelde als extra referentielijn**
-    - [ ] Backend: provinciaal gemiddelde toevoegen aan Kompas API response
-    - [ ] Frontend: extra kolom in benchmarktabel + referentielijn in trendgrafiek
-
-### Track C — Context: Scores in Gewone Taal
-- [ ] **C1 — Contextuele score-uitleg per indicator**
-    - [ ] Frontend logica: z-score → begrijpelijke label (*Aandacht / Gemiddeld / Goed*)
-    - [ ] Zichtbaar per indicatorwaarde in detailpaneel (geen extra backend call)
-- [ ] **C2 — Geleide gebruikersroute per doelgroep (rolkeuze)**
-    - [ ] Uitbreiding onboarding modal: rolkeuze (Beleidsadviseur / Wijkregisseur / Bestuurder / Verkenner)
-    - [ ] Per rol: aanbevolen startpunt getoond
-    - [ ] Rol opslaan in localStorage (`omnitwin_rol`)
-
-### Track D — AI-Ondersteuning: Automatische Samenvatting
-- [ ] **D1 — AI-samenvatting per buurt (Ollama)**
-    - [ ] Backend: `POST /api/gebieden/{gebied_id}/samenvatting` stuurt prompt + data naar lokaal Ollama model
-    - [ ] Frontend: nieuw AI-icoon per buurt, toont modal met gegeneerde "Executive Summary"
-- [ ] **D2 — Dynamische Gebiedsselectie Assistent**
-    - [ ] In plaats van hardcoded scenario's (bijv. "Gemeente Súdwest-Fryslân"), moet de assistent dynamisch een selectielijst/zoekfunctie genereren voor gebiedstypes en gemeenten op basis van de interactie.
-
-### Track E — UI/UX Positionering & Optimalisatie
+### Track E — UI/UX Positionering & Optimalisatie ✅
 - [x] **E1 — Verplaatsen actieknoppen voor betere flow**
-    - [x] Donker/Licht modus toggle verplaatsen naar rechtsboven, direct rechts naast de 'Beheer' knop.
-    - [x] Huidige 'Beheer' knop en 'Verbonden' indicator opschuiven naar links.
-- [x] **E2 — Info/Start Paneel Integratie**
-    - [x] 'i' knop transformeren naar standaard `.tab-button` en verplaatsen naar absolute top van de navigatiebalk.
-    - [x] Oude zwevende overlay `#camera-controls-overlay` vervangen door vast `#panel-info` paneel links.
-    - [x] Welkomststappen, Kaartbediening en D-Omni Assistent tips toevoegen aan `#panel-info`.
-    - [x] Overbodige CSS en JS opschonen (`setupInfoToggle`).
+- [x] **E2 — Info/Start Paneel Integratie** (`#panel-info` links)
 
-### Track F — Rapportage & Multi-Gebiedsdossier
-- [ ] **F1 — Thema-specifieke Indicatoren (Subthema filter)**
-    - [ ] Mogelijkheid om in het Multi-Gebiedsdossier indicatoren te filteren op thema-laag (bijv. 'Verkeer') en één laag dieper (bijv. 'Bereikbaarheid en parkeren').
-    - [ ] Een specifiek rapport maken voor deze (sub)thema's, zonder enkel de top afwijkingen te tonen.
-- [ ] **F2 — Verduidelijking Opbouw Rapportage**
-    - [ ] Uitleg toevoegen aan de UI van het rapport hoe deze is opgebouwd (bijv: "Dit rapport toont de top afwijkende indicatoren" óf "Dit rapport toont een selectie op basis van het gekozen thema").
-### Afsluiting & Merge
-- [ ] Gebruikersreview opnieuw doorlopen (alle 5 profielen)
-- [ ] Pull Request aanmaken naar `main`
-- [ ] STATE.md bijwerken: Sprint 19 componenten
-- [ ] UX-bevindingen bijwerken na hertest
+### Track F — Thema-Analyse & Visualisatie (Issue #15) ✅
+- [x] **F1 — D3 Diverging Bar Chart:** Visualisatie van Z-scores en uitschieters.
+- [x] **F2 — Boomstructuur Filter:** Filteren op thema en subthema in het rapportagepaneel.
+- [x] **F3 — Timeslider & Trends:** Historische tijdreeksen met interactieve play/pauze.
 
 ---
 
 ## 📌 Sprint 20: E-mail Alerts & SMTP Flexibiliteit (Gepland)
 
-**Doel:** Het systeem voorzien van betrouwbare e-mail alerts bij kritieke fouten (`ERROR` of `CRITICAL`) via een flexibele SMTP configuratie (ondersteuning voor eigen mailserver, Office365, Gmail, etc).
+**Doel:** Het systeem voorzien van betrouwbare e-mail alerts bij kritieke fouten (`ERROR` of `CRITICAL`) via een flexibele SMTP configuratie.
 **Aanleiding:** Issue #10 (voorheen een blocker). Doorgeschoven naar ná Sprint 19.
 **Spec:** [`docs/5-secops/logging/plan_email_alerts_smtp.md`](./docs/5-secops/logging/plan_email_alerts_smtp.md)
 
-### Track A — Flexibele SMTP Configuratie & Test-endpoint
-- [ ] **A1 — `.env` variabelen toevoegen**
-    - [ ] `SMTP_HOST`, `SMTP_PORT`, `SMTP_USE_TLS`, `SMTP_USER`, `SMTP_PASS`, `SMTP_FROM`, `LOG_ALERT_TO`, `LOG_ALERT_ENABLED`
-- [ ] **A2 — `log_alert_service.py` bouwen**
-    - [ ] Asynchrone mail-verzending
-    - [ ] Debouncing logica: max 1 e-mail per categorie per 5 minuten
-- [ ] **A3 — Admin Test-functie**
-    - [ ] Backend: `POST /api/admin/logs/test-alert`
-    - [ ] Frontend: "Test E-mail Instellingen" knop in de Log Config tab.
-
 ---
 
-## 📌 Sprint 21: Data Kwaliteit & Betrouwbare Start (Gepland)
+## ✅ Sprint 21: Data Kwaliteit & Deduplicatie Assistent (Issue #16 - Afgerond)
 
 **Doel:** Ruis uit de applicatie filteren (lege en dubbele indicatoren) en een toolset bieden voor gebruikersgestuurde deduplicatie.
 **Aanleiding:** Ruis vertroebelt het Kompas en AI-antwoorden. Goede data is essentieel voor adoptie.
 
-### Track A — Deduplicatie Assistent (Admin Panel)
-- [ ] Backend: Matchmaking algoritme bouwen (Fuzzy + pgvector + Ollama).
-- [ ] Backend: Actie "Primaire Indicator Kiezen" (`is_actief = False` voor duplicaten, data re-linken).
-- [ ] Frontend: Nieuwe pagina in Beheeromgeving om AI-voorgestelde matches te reviewen.
+### Track A — Deduplicatie Assistent (Admin Panel) ✅
+- [x] Backend: Trapsgewijze matching pipeline (Trigrammen `pg_trgm` + `pgvector` + AI-advies validatie).
+- [x] Backend: Indicator merge en deactivatie acties (`is_actief = False`).
+- [x] Frontend: Nieuwe pagina `/admin/deduplicatie` met selectievakjes voor samenvoegen, groeperen en uitzonderingenbeheer.
 
-### Track B — Ruisvrije Frontend & API's
-- [ ] Filter-logica inbouwen op `gebied_data` aanwezigheid voor alle relevante endpoints.
-- [ ] Verbergen van lege nodes in D3 Sunburst / Kompas.
-- [ ] Vector Search & AI uitsluiten van lege indicatoren.
-
-### Track C — Validatie & Opschoning
-- [ ] Opschoning "Alcohol" vs "Overmatig drinken" en andere dubbelingen samen met gebruikers.
-- [ ] Controle op eenheden (absoluut, %, etc.).
+### Track B — Ruisvrije Frontend & API's ✅
+- [x] Lege indicatoren zonder data weggefilterd uit endpoints.
+- [x] D3 Sunburst en Vector Search uitsluiting voor inactieve/lege nodes.
 
 ---
 
-## 📌 Sprint 22: Identity & Toegangsbeheer (Fase 2) (Gepland)
+## 🔵 Sprint 22: Data Engineering & ETL Dataspace Track (Actief)
 
-**Doel:** Implementatie van volwaardig identiteits- en toegangsbeheer (RBAC) ter vervanging van de statische admin API-keys. Scheiding aanbrengen tussen publieke gebruikers, interne medewerkers (inwoners vs. gemeente) en systeembeheerders.
-**Aanleiding:** Architectuurvisie Fase 2 (SSO, OpenID Connect). Noodzaak voor afgeschermde delen van de applicatie.
+**Doel:** Structureren van de indicatorenvoorraad en herpositionering als datamart-consument (Gold laag) van de Friese Data Space (FRLDS).  
+**Spec:** [`docs/3-data-engineering/etl_dataspace_gap_analyse.md`](./docs/3-data-engineering/etl_dataspace_gap_analyse.md)  
+**Branch:** `main`
 
-### Track A — SSO & Keycloak Integratie
-- [ ] Implementeren van Keycloak als Identity Provider (IdP).
-- [ ] Ondersteuning voor SSO via OpenID Connect (OIDC).
-- [ ] Koppelen van Windows Authenticatie (Active Directory / Entra ID) voor naadloze interne login.
+### Track A — Bronvergelijking & Gap-Analyse ✅
+- [x] **A1 — Datasetvergelijking sociaaldomein:** 812 indicatoren uit Excel Jantina geïdentificeerd t.o.v. 11 aanwezig in DB (1,4% dekking).
+- [x] **A2 — Positionering Datamart-consument:** Architectuurrol als Gold-laag / interactielaag vastgelegd.
 
-### Track B — Role-Based Access Control (RBAC)
-- [ ] Authenticatie middleware voor FastAPI uitbreiden naar JWT verificatie via Keycloak.
-- [ ] Frontend autorisatie-logica in React Router (`ProtectedRoute` afhankelijk van rol).
-- [ ] Rol-definities:
-    - **Publiek (Inwoners):** Open dataset, geen login vereist.
-    - **Gebruiker (Gemeente):** Ingelogd (via Windows SSO), toegang tot extra datasets of functies.
-    - **Beheerder/Admin:** Volledige toegang tot het CMS/Admin Panel en beheerstaken.
+### Track B — Metadata Discovery & Ontologie Mapping ⏳
+- [ ] **B1 — Taxonomie Mapping:** Geautomatiseerde koppeling van de 812 indicatoren aan de Kompas-thema's.
+- [ ] **B2 — Metadata verrijking:** AI-ondersteunde ontologie- en definitiegeneratie voor nieuwe indicatoren.
+
+### Track C — Data Lineage & Ingest Pipelines (Gepland)
+- [ ] **C1 — Geautomatiseerde ETL-ingest:** Directe synchronisatie tussen brondata en `gebied_data`.
+- [ ] **C2 — Lineage tracking:** Vastleggen van databron, peildatum en transformatiestappen.
 
 ---
 
@@ -290,6 +227,12 @@
 ### Track B — Caching & Applicatie Logica
 - [ ] In-memory of Redis caching opzetten voor gemeente-brede referentiestatistieken (`AVG`, `STDDEV`).
 - [ ] De complexe `v_kompas_hierarchie` view materialiseren of cachen op applicatie-niveau.
+
+---
+
+## 📌 Sprint 24: Identity & Toegangsbeheer (Fase 2) (Gepland)
+
+**Doel:** Implementatie van volwaardig identiteits- en toegangsbeheer (RBAC) ter vervanging van de statische admin API-keys. Scheiding aanbrengen tussen publieke gebruikers, interne medewerkers en systeembeheerders.
 
 ---
 

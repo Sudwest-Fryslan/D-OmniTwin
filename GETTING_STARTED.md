@@ -1,6 +1,6 @@
 # 🚀 Getting Started — D-OmniTwin
 
-Welkom bij D-OmniTwin! Deze gids leidt je in **vier stappen** van een lege kloon naar een volledig werkende applicatie met echte data van de provincie Fryslân.
+Welkom bij D-OmniTwin! Deze gids leidt je in **zes stappen** van een lege kloon naar een volledig werkende applicatie met echte data van de provincie Fryslân.
 
 > **Tijdsinschatting:** ± 30 minuten (inclusief downloads)
 
@@ -16,6 +16,7 @@ Zorg dat onderstaande software geïnstalleerd is voordat je begint:
 | PostgreSQL | 14+ | [postgresql.org](https://www.postgresql.org/download/) |
 | PostGIS extensie | 3.x | Via apt/brew of bij PostgreSQL installer |
 | pgvector extensie | latest | [github.com/pgvector/pgvector](https://github.com/pgvector/pgvector) |
+| pg_trgm extensie | bundled | Onderdeel van PostgreSQL contrib modules |
 | Git | any | [git-scm.com](https://git-scm.com/) |
 | Node.js | 18+ | Alleen nodig voor het Admin Panel |
 
@@ -63,6 +64,7 @@ sudo -u postgres psql -c "CREATE DATABASE omnitwin_db OWNER omnitwin_user;"
 # Vereiste extensies activeren
 sudo -u postgres psql -d omnitwin_db -c "CREATE EXTENSION postgis;"
 sudo -u postgres psql -d omnitwin_db -c "CREATE EXTENSION vector;"
+sudo -u postgres psql -d omnitwin_db -c "CREATE EXTENSION pg_trgm;"
 ```
 
 > [!NOTE]
