@@ -11,8 +11,8 @@
 |------|--------|
 | **Huidige versie** | v1.0.0-beta (pre-release) |
 | **Sprint** | Sprint 22 (Data Engineering & ETL Dataspace Track) |
-| **Laatste update** | 2026-07-20 |
-| **Bijgewerkt door** | Project-manager skill (Antigravity) |
+| **Laatste update** | 2026-08-19 |
+| **Bijgewerkt door** | Antigravity |
 
 ---
 
@@ -30,7 +30,7 @@
 | **RIVM indicatoren** | 🟢 Actief | Meerdere jaren beschikbaar |
 | **AI Chat Interface** | 🟢 Actief | HELP_ONBOARDING intent actief (deterministic, geen LLM) |
 | **Help / Wiki Pagina** | 🟢 Actief | `/static/help.html` |
-| **Externe Kaartlagen Beheer** | 🟢 Actief | BAG Woonplaatsen (WFS) & Lokale GPKG uploads (`data-upload/`) via admin panel |
+| **Externe Kaartlagen Beheer & Rendering** | 🟢 Actief | Sprint 22 Track D ✅ — Standalone rendering (zonder CBS buurten), compacte UI, inline toelichting via ℹ️, scrollbegrenzing (max 5 items). PDOK WFS (Natura 2000, Bodemdaling, Monumenten, BAG Woonplaatsen). |
 | **3D BAG visualisatie** | 🟡 Beta | LoD 2.5D, Bug #42 open |
 | **Admin Panel** | 🟢 Actief | Build via `/build-admin-panel` workflow |
 | **Ontologie generatie** | 🟢 Actief | Fence & Source philosophy geïmplementeerd |
@@ -48,6 +48,7 @@
 | **Logging Infrastructuur** | 🟢 Actief | Sprint 17 ✅ — `AsyncLogQueue`, `app_logs` DB, log viewer admin panel, dagelijkse cleanup. E-mail alerts on hold (Issue #10) |
 | **Thema-Analyse Visualisatie** | 🟢 Actief | Sprint 19B / Track F ✅ — D3 Diverging Bar Chart en Boomstructuur Filter (Issue #15) |
 | **Time Slider** | 🟢 Actief | Sprint 19 Migratie ✅ — Hybride TimeSlider, Indicator Historie & Play/Pauze |
+| **Gebiedsagenda IJsselmeerkust Usecase** | 🟢 Gedocumenteerd | `docs/7-projectmanagement/testcases/gebiedsagenda_ijselmeerkust/` — Spiegeling, TC-06-003 E2E testcase, 85% datadekking. |
 | **Indicatoren Bron (Excel Jantina)** | 🟡 In Analyse | 812 indicatoren geïdentificeerd, 11 aanwezig (1,4% dekking). Stap 2 volgt. Bestand: `data/sociaaldomein/` |
 | **ETL Dataspace Gap Analyse** | 🟢 Gedocumenteerd | `docs/3-data-engineering/etl_dataspace_gap_analyse.md` — D-OmniTwin als datamart-consumer van FRLDS |
 | **Data Lineage** | 🔴 Gepland | Sprint 8F / 22 — nog niet gestart |
@@ -59,9 +60,9 @@
 
 | Datum | Wijziging | Impact |
 |-------|-----------|--------|
+| 2026-08-18 | **Sprint 22 Track D (Externe Kaartlagen UX) & Gebiedsagenda Usecase** | Externe kaartlagen UX en rendering geoptimaliseerd (standalone rendering zonder CBS buurten, compacte UI met inline 'ℹ️' toelichting, scrollbegrenzing). Gebiedsagenda IJsselmeergebied-Wadden usecase gespiegeld (85% dekking vs 15% gaps G1-G6). Mapbox volledig uitgefaseerd in root docs. |
 | 2026-07-20 | **Sprint 22 Data Engineering Track gestart** | ETL/Dataspace gap-analyse afgerond. D-OmniTwin hergepositioneerd als datamart-consumer (Gold laag). 812 indicatoren in Excel geïdentificeerd vs 11 aanwezig. Stap 1 (bronvergelijking) voltooid. |
 | 2026-07-20 | **Sprint 21 Data Kwaliteit & Deduplicatie** | Deduplicatie pipeline voltooid: pg_trgm & pgvector matching, LLM validatie (AI Advies), en interactieve Admin UI met merge, groepeer en uitsluiting (uitzonderingen) acties via checkboxes. Issue #16 opgelost. |
-| 2026-07-15 | **Sprint 23 Gepland / Issue 17 Voltooid** | Dynamische PDF/Print export layouts voor rapportages succesvol doorgevoerd. Sprint 23 (Backend Performance Optimalisatie) formeel op de ROADMAP en TODO geplaatst. |
 
 ---
 

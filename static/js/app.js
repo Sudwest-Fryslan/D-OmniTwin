@@ -1037,12 +1037,16 @@ async function loadExterneKaartlagen() {
         const container = document.getElementById('externe-lagen-list');
         if (!container) return;
 
-        // Render toggles veilig via DOM API (geen innerHTML)
+        // Render compacte toggles veilig via DOM API (geen innerHTML)
         container.replaceChildren();
         state.externeKaartlagen.forEach(laag => {
-            // Label wrapper
+            // Compact row wrapper
+            const item = document.createElement('div');
+            item.className = 'externe-laag-item';
+
+            // Label wrapper (checkbox + kleur-dot + naam)
             const label = document.createElement('label');
-            label.className = 'checkbox-label';
+            label.className = 'checkbox-label externe-laag-label';
 
             // Checkbox
             const checkbox = document.createElement('input');
@@ -1054,22 +1058,51 @@ async function loadExterneKaartlagen() {
             const checkboxCustom = document.createElement('span');
             checkboxCustom.className = 'checkbox-custom';
 
-            // Label text with icon
+            // Kleur-dot die de lijnkleur van de laag toont
+            const colorDot = document.createElement('span');
+            colorDot.className = 'layer-color-dot';
+            colorDot.style.backgroundColor = laag.kleur_lijn || '#8B5CF6';
+
+            // Laagnaam (compact, zonder emoji)
             const labelText = document.createElement('span');
-            labelText.textContent = `\u{1F310} ${laag.naam}`;
+            labelText.className = 'layer-naam';
+            labelText.textContent = laag.naam;
 
             label.appendChild(checkbox);
             label.appendChild(checkboxCustom);
+            label.appendChild(colorDot);
             label.appendChild(labelText);
-            container.appendChild(label);
+            item.appendChild(label);
 
-            // Help text
+            // Inline beschrijving (verborgen, verschijnt bij klik op ℹ)
+            let descDiv = null;
             if (laag.beschrijving) {
-                const helpText = document.createElement('span');
-                helpText.className = 'help-text';
-                helpText.textContent = laag.beschrijving;
-                container.appendChild(helpText);
+                // Info button
+                const infoBtn = document.createElement('button');
+                infoBtn.type = 'button';
+                infoBtn.className = 'layer-info-btn';
+                infoBtn.setAttribute('aria-label', `Informatie over ${laag.naam}`);
+                infoBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>';
+                item.appendChild(infoBtn);
+
+                // Beschrijving div (inline, onder het item)
+                descDiv = document.createElement('div');
+                descDiv.className = 'layer-desc';
+                descDiv.textContent = laag.beschrijving;
+
+                // Click handler: toggle beschrijving
+                infoBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    // Sluit alle andere beschrijvingen
+                    container.querySelectorAll('.layer-desc.open').forEach(d => {
+                        if (d !== descDiv) d.classList.remove('open');
+                    });
+                    descDiv.classList.toggle('open');
+                });
             }
+
+            container.appendChild(item);
+            if (descDiv) container.appendChild(descDiv);
 
             // Toggle event listener
             checkbox.addEventListener('change', async (e) => {
@@ -1104,6 +1137,8 @@ async function laadExterneKaartlaagFeatures(laag) {
         // Re-render kaart met de nieuwe laag
         if (state.currentData) {
             displayOnMap(state.currentData);
+        } else {
+            renderExterneLagenOnly();
         }
 
         const count = geojson.features?.length || 0;
@@ -1126,8 +1161,71 @@ function verwijderExterneKaartlaag(laagId) {
     delete state.externeKaartlaagData[laagId];
     if (state.currentData) {
         displayOnMap(state.currentData);
+    } else {
+        renderExterneLagenOnly();
     }
     console.log(`\u{1F310} Externe laag ${laagId} verwijderd van kaart`);
+}
+
+/**
+ * Rendert alleen externe kaartlagen op de Deck.gl kaart,
+ * voor gebruik wanneer er nog geen CBS-buurtdata geladen is.
+ */
+function renderExterneLagenOnly() {
+    if (!state.deckgl) return;
+    const { GeoJsonLayer } = deck;
+    const layers = [];
+
+    for (const [laagIdStr, entry] of Object.entries(state.externeKaartlaagData)) {
+        const { laag, geojson: laagGeojson } = entry;
+        if (!laagGeojson || !laagGeojson.features) continue;
+
+        const hexToRgb = (hex) => {
+            const r = parseInt(hex.slice(1, 3), 16);
+            const g = parseInt(hex.slice(3, 5), 16);
+            const b = parseInt(hex.slice(5, 7), 16);
+            return [r, g, b];
+        };
+        const lijnKleur = hexToRgb(laag.kleur_lijn || '#8B5CF6');
+        const fillKleur = hexToRgb(laag.kleur_fill || '#8B5CF6');
+        const fillOpacity = Math.round((laag.opacity || 0.15) * 255);
+
+        const externeLaag = new GeoJsonLayer({
+            id: `externe-laag-${laagIdStr}`,
+            data: laagGeojson,
+            filled: true,
+            stroked: true,
+            extruded: false,
+
+            getFillColor: [...fillKleur, fillOpacity],
+            getLineColor: [...lijnKleur, 200],
+            lineWidthUnits: 'pixels',
+            getLineWidth: 3,
+            lineWidthMinPixels: 2,
+
+            pickable: true,
+            autoHighlight: true,
+            highlightColor: [...lijnKleur, 80],
+
+            parameters: {
+                depthTest: false,
+                blend: true
+            },
+
+            onClick: (info) => {
+                if (info.object && laag.laag_type === 'selectie') {
+                    selectBuurtenVanExterneLaag(laag, info.object);
+                }
+            },
+
+            updateTriggers: {
+                getFillColor: [laagGeojson]
+            }
+        });
+        layers.push(externeLaag);
+    }
+
+    state.deckgl.setProps({ layers });
 }
 
 /**

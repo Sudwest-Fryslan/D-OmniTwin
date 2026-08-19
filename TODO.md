@@ -213,6 +213,12 @@
 - [ ] **C1 — Geautomatiseerde ETL-ingest:** Directe synchronisatie tussen brondata en `gebied_data`.
 - [ ] **C2 — Lineage tracking:** Vastleggen van databron, peildatum en transformatiestappen.
 
+### Track D — Externe Kaartlagen UX & Rendering Optimalisatie ✅
+- [x] **D1 — Standalone Kaartlaag Rendering:** Externe lagen direct op de MapLibre/Deck.gl kaart projecteren zodra aangevinkt, ook wanneer er nog géén CBS-buurten zijn geladen.
+- [x] **D2 — Compacte Kaartlagenlijst met 'i' Info Tooltip:** Uitgebreide beschrijvingen per laag vervangen door een compacte rij met een stijlvol `ℹ️` info-icoon met hover/click tooltip.
+- [x] **D3 — Begrenzing & Scrolling (Max 5 Lagen):** `#externe-lagen-list` limiteren tot 5 zichtbare items met een nette custom scrollbar.
+
+
 ---
 
 ## 📌 Sprint 23: Backend Performance & Rapportage Optimalisatie (Gepland)

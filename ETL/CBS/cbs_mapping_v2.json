@@ -14,18 +14,20 @@
     },
     {
         "table_name": "KERNCIJFERS_WIJKEN_EN_BUURTEN",
-        "normalize": "HuishoudensTotaal_29",
+        "normalize": false,
         "columns": [
             "HuishoudensTotaal_29",
+            "Eenpersoonshuishoudens_30",
             "HuishoudensZonderKinderen_31",
             "HuishoudensMetKinderen_32"
         ],
         "indicator_name": [
             "Huishoudens totaal",
+            "Eenpersoonshuishoudens",
             "Huishoudens zonder kind",
             "Huishoudens met kind"
         ],
-        "total_indicators": 3
+        "total_indicators": 4
     },
     {
         "table_name": "KERNCIJFERS_WIJKEN_EN_BUURTEN",

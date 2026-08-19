@@ -1,5 +1,24 @@
 # BUGFIX.md - D-OmniTwin
 
+## Bug #55: Hoofdapplicatie UI bevriest wanneer rapportpagina in ander tabblad in print-dialoog staat (19-08-2026)
+
+**Gerapporteerd:** 19-08-2026  
+**Status:** 🟡 OPEN  
+**Severity:** 🟡 MEDIUM (UX - Event-loop blokkade tussen tabbladen)
+
+### Probleem
+Wanneer een rapportpagina (of analyse/admin-scherm) geopend staat in een apart browsertabblad en de gebruiker start een print-actie (het browser printscherm / `window.print()` dialoogvenster staat open), reageert de hoofdapplicatie in het oorspronkelijke tabblad nergens meer op. Knoppen, interacties en kaartbewegingen blokkeren totdat het printvenster in het andere tabblad wordt gesloten of voltooid.
+
+### Oorzaak (Root Cause)
+Wanneer een nieuw tabblad geopend wordt via `window.open(url, '_blank')` zonder expliciete isolatie (`noopener,noreferrer`), behoudt het nieuwe tabblad een directe referentie naar het hoofdvenster (`window.opener`). In moderne browsers (o.a. Chrome/Chromium) draaien beide tabbladen van hetzelfde domein dan in dezelfde *browsing context group* / renderer process thread. De synchrone aanroep van `window.print()` pauzeert de JavaScript event-loop van het gehele renderer-proces, waardoor ook het hoofdtabblad stil komt te staan.
+
+### Oplossing (Gepland)
+1. Alle `window.open()` aanroepen naar rapportages en admin-panelen voorzien van `'noopener,noreferrer'` features (bijv. `window.open('/admin/dashboard', '_blank', 'noopener,noreferrer')`).
+2. HTML links voorzien van `rel="noopener noreferrer"`.
+3. In de print-componenten (`ExportPrintModal.tsx` e.d.) `window.print()` isoleren en zorgen dat tab-referenties (`window.opener = null`) verbroken zijn.
+
+---
+
 ## Bug #54: Kaart centreren (`getFreezone`) plaatst polygoon achter het Kompas (12-07-2026)
 
 **Gerapporteerd:** 12-07-2026  

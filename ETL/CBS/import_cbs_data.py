@@ -7,10 +7,10 @@ Orchestrates the fetching and importing of CBS data based on configuration mappi
 import sys
 import os
 import json
-import psycopg2
-import configparser
-from datetime import datetime
 import glob
+from datetime import datetime
+import psycopg2
+from dotenv import load_dotenv
 
 # Fetcher is in same directory
 # etl_scripts_path = os.path.join(os.path.dirname(__file__), '..', 'data', 'ETL_Scripts', 'CBS')
@@ -24,18 +24,35 @@ except ImportError as e:
     sys.exit(1)
 
 def get_db_connection():
-    """Create database connection"""
-    config = configparser.ConfigParser()
-    config_path = os.path.join(os.path.dirname(__file__), '..', '..', 'config.ini')
-    config.read(config_path)
+    """Create database connection using .env"""
+    env_path = os.path.join(os.path.dirname(__file__), '..', '..', '.env')
+    load_dotenv(env_path)
     
-    return psycopg2.connect(
-        host=config['DATABASE']['host'],
-        port=config['DATABASE']['port'],
-        dbname=config['DATABASE']['dbname'],
-        user=config['DATABASE']['user'],
-        password=config['DATABASE']['password']
-    )
+    host = os.getenv('DATABASE_HOST', '127.0.0.1')
+    if host == 'localhost':
+        host = '127.0.0.1'
+        
+    dbname = os.getenv('DATABASE_NAME', 'omnitwin_db')
+    user = os.getenv('DATABASE_USER', 'omnitwin_user')
+    password = os.getenv('DATABASE_PASSWORD', 'admin_omnitwin2026')
+    
+    # When running from host, Docker DB is on 5433. Try 5433 first, then 5432.
+    for port in [5433, int(os.getenv('DATABASE_PORT', 5432)), 5432]:
+        try:
+            conn = psycopg2.connect(
+                host=host,
+                port=port,
+                dbname=dbname,
+                user=user,
+                password=password,
+                connect_timeout=3
+            )
+            print(f"🔌 Connected to database on port {port}")
+            return conn
+        except psycopg2.OperationalError:
+            continue
+            
+    raise RuntimeError("Could not connect to PostgreSQL on ports 5433 or 5432")
 
 def load_json_file(filepath):
     """Safe load JSON file"""

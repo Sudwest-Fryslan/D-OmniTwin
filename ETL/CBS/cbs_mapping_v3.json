@@ -46,14 +46,16 @@
     },
     {
         "table_name": "KERNCIJFERS_WIJKEN_EN_BUURTEN",
-        "normalize": "Huishoudens totaal",
+        "normalize": false,
         "columns": [
             "Huishoudens totaal",
+            "Eenpersoonshuishoudens",
             "Huishoudens zonder kinderen",
             "Huishoudens met kinderen"
         ],
         "indicator_name": [
             "Huishoudens totaal",
+            "Eenpersoonshuishoudens",
             "Huishoudens zonder kind",
             "Huishoudens met kind"
         ],

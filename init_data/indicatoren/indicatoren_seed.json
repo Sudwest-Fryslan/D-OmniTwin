@@ -2388,6 +2388,17 @@
     "heeft_data": true
   },
   {
+    "naam": "Eenpersoonshuishoudens",
+    "code": "CBS_EENPERSOONSHUISHOUDENS_30",
+    "eenheid": "aantal",
+    "titel": "Samenstelling",
+    "thema": "Bevolking",
+    "onderdeel": "Huishoudens",
+    "bron": "CBS 85618NED",
+    "score_type": "+/+",
+    "heeft_data": true
+  },
+  {
     "naam": "Huishoudens zonder kind",
     "code": "CBS_HUISHOUDENSZONDERKINDEREN_31",
     "eenheid": "aantal",
@@ -2511,7 +2522,7 @@
   {
     "naam": "Opleidingsniveau hoog",
     "code": "CBS_OPLEIDINGSNIVEAUHOOG",
-    "eenheid": "%",
+    "eenheid": "aantal",
     "titel": "Samenstelling",
     "thema": "Bevolking",
     "onderdeel": "Sociaal economische status",
@@ -2544,7 +2555,7 @@
   {
     "naam": "Opleidingsniveau laag",
     "code": "CBS_OPLEIDINGSNIVEAULAAG",
-    "eenheid": "%",
+    "eenheid": "aantal",
     "titel": "Samenstelling",
     "thema": "Bevolking",
     "onderdeel": "Sociaal economische status",
@@ -2555,7 +2566,7 @@
   {
     "naam": "Opleidingsniveau middelbaar",
     "code": "CBS_OPLEIDINGSNIVEAUMIDDELBAAR",
-    "eenheid": "%",
+    "eenheid": "aantal",
     "titel": "Samenstelling",
     "thema": "Bevolking",
     "onderdeel": "Sociaal economische status",
