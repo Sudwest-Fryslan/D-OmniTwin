@@ -1361,7 +1361,43 @@ class KompasVisualization {
             document.getElementById('details-jaar').textContent = '-';
         }
         
-        if (historyData.bron) document.getElementById('details-bron').textContent = historyData.bron;
+        // Bron & Lineage (Sprint 22 Track C)
+        const bronEl = document.getElementById('details-bron');
+        const bronLinkEl = document.getElementById('details-bron-link');
+        const bronBadgeEl = document.getElementById('details-bron-badge');
+        
+        if (bronEl) {
+            bronEl.textContent = historyData.bron || 'CBS';
+            let tooltip = `Bron: ${historyData.bron || 'Onbekend'}`;
+            if (historyData.bron_tabel_referentie) {
+                tooltip += `\nDataset/Tabel: ${historyData.bron_tabel_referentie}`;
+            }
+            if (historyData.laatste_check_datum) {
+                tooltip += `\nLaatste controle: ${historyData.laatste_check_datum}`;
+            }
+            bronEl.title = tooltip;
+        }
+        
+        if (bronLinkEl) {
+            if (historyData.bron_url) {
+                bronLinkEl.href = historyData.bron_url;
+                bronLinkEl.style.display = 'inline-flex';
+                bronLinkEl.title = `Open officiële dataset (${historyData.bron_tabel_referentie || 'catalogus'})`;
+            } else {
+                bronLinkEl.style.display = 'none';
+            }
+        }
+        
+        if (bronBadgeEl) {
+            if (historyData.bron_tabel_referentie) {
+                bronBadgeEl.textContent = historyData.bron_tabel_referentie;
+                bronBadgeEl.style.display = 'inline-block';
+                bronBadgeEl.title = `Dataset code: ${historyData.bron_tabel_referentie} (${historyData.bron_systeem_api || 'API'})`;
+            } else {
+                bronBadgeEl.style.display = 'none';
+            }
+        }
+
         if (historyData.definitie) document.getElementById('details-definitie').innerHTML = historyData.definitie;
         else document.getElementById('details-definitie').textContent = "Geen definitie beschikbaar.";
         

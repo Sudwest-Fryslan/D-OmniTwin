@@ -477,6 +477,7 @@ class ReportDataService:
             alle_zscores AS (
                 SELECT
                     td.gebied_id,
+                    td.indicator_uuid,
                     g.naam                          AS buurt_naam,
                     i.naam                          AS indicator_naam,
                     i.eenheid                       AS eenheid,
@@ -527,6 +528,7 @@ class ReportDataService:
             rang = int(row['rang'])
 
             entry = {
+                "indicator_uuid": str(row.get('indicator_uuid', '')),
                 "indicator_naam": row['indicator_naam'],
                 "eenheid": row.get('eenheid') or '',
                 "thema": row['thema'],
@@ -632,6 +634,15 @@ class ReportDataService:
         else:
             referentie_label = "⌀ Provincie Fryslân"
 
+        # 7. Data Lineage & Bronverantwoording
+        used_indicator_uuids = list({
+            top['indicator_uuid'] 
+            for b in buurten_analyse 
+            for top in b.get('top_3', []) 
+            if top.get('indicator_uuid')
+        })
+        bronverantwoording = self.get_bronverantwoording_for_indicators(used_indicator_uuids)
+
         return {
             "deelgebied_naam": deelgebied_naam or f"{len(gebied_ids)} buurten",
             "referentie_label": referentie_label,
@@ -640,8 +651,62 @@ class ReportDataService:
             "buurten_met_data": len(buurten_analyse),
             "buurten_analyse": buurten_analyse,
             "thema_aggregaat": thema_aggregaat,
-            "top_uitschieters": buurten_analyse[:10]
+            "top_uitschieters": buurten_analyse[:10],
+            "bronverantwoording": bronverantwoording
         }
+
+    def get_bronverantwoording_for_indicators(self, indicator_uuids: List[str]) -> List[Dict[str, Any]]:
+        """
+        Genereert een gestructureerde lijst met bronverantwoording en peildata.
+        """
+        if not indicator_uuids:
+            return []
+        
+        query = text("""
+            SELECT 
+                uuid, naam, bron, bron_systeem_api, bron_tabel_referentie,
+                begingeldigheid, eindgeldigheid, laatste_check_datum
+            FROM indicatoren
+            WHERE uuid = ANY(CAST(:uuids AS uuid[])) AND is_actief = true
+            ORDER BY bron, naam
+        """)
+        rows = self.db.execute(query, {"uuids": indicator_uuids}).fetchall()
+        
+        result = []
+        for r in rows:
+            bron_url = None
+            if r.bron_systeem_api and r.bron_tabel_referentie:
+                s = r.bron_systeem_api.upper()
+                if s == "CBS_ODATA":
+                    bron_url = f"https://opendata.cbs.nl/#/CBS/nl/dataset/{r.bron_tabel_referentie}/table"
+                elif s == "RIVM_STATLINE":
+                    bron_url = f"https://opendata.cbs.nl/#/CBS/nl/dataset/{r.bron_tabel_referentie}/table" if "NED" in r.bron_tabel_referentie.upper() else "https://www.volksgezondheidenzorg.info/"
+                elif s == "BAG_API":
+                    bron_url = "https://bag.basisregistraties.overheid.nl/"
+                elif s == "POLITIE_DATA":
+                    bron_url = f"https://opendata.cbs.nl/#/CBS/nl/dataset/{r.bron_tabel_referentie}/table"
+                elif s == "OV_API":
+                    bron_url = "https://openov.nl/"
+                    
+            peildata_str = ""
+            if r.begingeldigheid and r.eindgeldigheid:
+                peildata_str = f"{r.begingeldigheid.year} - {r.eindgeldigheid.year}"
+            elif r.eindgeldigheid:
+                peildata_str = str(r.eindgeldigheid.year)
+            elif r.begingeldigheid:
+                peildata_str = str(r.begingeldigheid.year)
+                
+            result.append({
+                "indicator_uuid": str(r.uuid),
+                "indicator_naam": r.naam,
+                "bron": r.bron or "Centraal Bureau voor de Statistiek (CBS)",
+                "bron_systeem_api": r.bron_systeem_api,
+                "bron_tabel_referentie": r.bron_tabel_referentie,
+                "bron_url": bron_url,
+                "peildata": peildata_str,
+                "laatste_controle": r.laatste_check_datum.strftime("%d-%m-%Y") if r.laatste_check_datum else None
+            })
+        return result
 
     def generate_multi_gebied_geojson(
         self,

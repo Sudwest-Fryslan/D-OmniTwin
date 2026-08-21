@@ -345,6 +345,23 @@ export const IndicatorsPage: React.FC = () => {
                                             <label className="form-label">Bron</label>
                                             <input type="text" className="form-input" value={editForm.bron || ''} onChange={(e) => setEditForm({ ...editForm, bron: e.target.value })} />
                                         </div>
+                                        {/* Data Lineage Info (Sprint 22 Track C) */}
+                                        <div style={{ padding: '8px 12px', background: 'var(--color-surface-light, #1E293B)', borderRadius: '6px', marginBottom: '12px', fontSize: '0.8rem', display: 'flex', flexDirection: 'column', gap: '4px', border: '1px solid var(--color-border, #334155)' }}>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                                <span style={{ color: 'var(--color-text-secondary)' }}>Lineage Systeem:</span>
+                                                <span style={{ fontWeight: 600, color: '#38bdf8' }}>{selectedIndicator.bron_systeem_api || 'LOKAAL'}</span>
+                                            </div>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                                <span style={{ color: 'var(--color-text-secondary)' }}>Dataset / Tabel:</span>
+                                                <span style={{ fontFamily: 'monospace' }}>{selectedIndicator.bron_tabel_referentie || '-'}</span>
+                                            </div>
+                                            {selectedIndicator.laatste_check_datum && (
+                                                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                                    <span style={{ color: 'var(--color-text-secondary)' }}>Laatste Controle:</span>
+                                                    <span>{new Date(selectedIndicator.laatste_check_datum).toLocaleDateString('nl-NL')}</span>
+                                                </div>
+                                            )}
+                                        </div>
                                         <div className="form-group">
                                             <label className="form-label">Eenheid</label>
                                             <input type="text" className="form-input" value={editForm.eenheid || ''} onChange={(e) => setEditForm({ ...editForm, eenheid: e.target.value })} />

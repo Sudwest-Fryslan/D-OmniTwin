@@ -41,7 +41,7 @@ class DeduplicatieService:
             SELECT 
                 i1.uuid as u1, 
                 i2.uuid as u2,
-                similarity(i1.naam, i2.naam) as trgm_sim,
+                similarity(i1.naam::text, i2.naam::text) as trgm_sim,
                 (e1.embedding <=> e2.embedding) as vec_dist
             FROM indicatoren i1
             JOIN indicatoren i2 ON i1.id < i2.id
@@ -49,7 +49,7 @@ class DeduplicatieService:
             LEFT JOIN indicator_embeddings e2 ON i2.uuid = e2.indicator_uuid
             WHERE i1.is_actief = true AND i2.is_actief = true
               AND (
-                similarity(i1.naam, i2.naam) > 0.4
+                similarity(i1.naam::text, i2.naam::text) > 0.4
                 OR (e1.embedding <=> e2.embedding) < 0.3
               )
               AND NOT EXISTS (

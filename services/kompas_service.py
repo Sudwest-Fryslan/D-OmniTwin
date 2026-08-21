@@ -266,10 +266,12 @@ class KompasService:
             
         Returns: Dict met indicator info en list van history points
         """
-        # 1. Haal indicator metadata
+        # 1. Haal indicator metadata inclusief Data Lineage (Sprint 22 Track C)
         meta_query = text("""
             SELECT 
-                i.naam, i.eenheid, i.bron, i.omschrijving, i.ontologische_beschrijving
+                i.naam, i.eenheid, i.bron, i.omschrijving, i.ontologische_beschrijving,
+                i.bron_systeem_api, i.bron_tabel_referentie, i.laatste_check_datum,
+                i.begingeldigheid, i.eindgeldigheid
             FROM indicatoren i
             WHERE i.uuid = CAST(:uuid AS UUID) AND i.is_actief = true
         """)
@@ -311,8 +313,14 @@ class KompasService:
         gebied_query = text("SELECT naam FROM gebieden WHERE id = :id")
         gebied = self.db.execute(gebied_query, {"id": gebied_id}).fetchone()
         
+        bron_url = self._resolve_source_url(meta.bron_systeem_api, meta.bron_tabel_referentie)
+        
         return {
             "bron": meta.bron,
+            "bron_systeem_api": meta.bron_systeem_api,
+            "bron_tabel_referentie": meta.bron_tabel_referentie,
+            "bron_url": bron_url,
+            "laatste_check_datum": meta.laatste_check_datum.strftime("%d-%m-%Y") if meta.laatste_check_datum else None,
             "definitie": meta.omschrijving or "Geen beschrijving beschikbaar.",
             "ontologische_beschrijving": meta.ontologische_beschrijving,
             "eenheid": meta.eenheid,
@@ -320,7 +328,10 @@ class KompasService:
                 "uuid": indicator_uuid,
                 "naam": meta.naam,
                 "eenheid": meta.eenheid,
-                "bron": meta.bron
+                "bron": meta.bron,
+                "bron_systeem_api": meta.bron_systeem_api,
+                "bron_tabel_referentie": meta.bron_tabel_referentie,
+                "bron_url": bron_url
             },
             "gebied": {
                 "id": gebied_id,
@@ -328,6 +339,23 @@ class KompasService:
             },
             "history": history
         }
+
+    def _resolve_source_url(self, bron_systeem: Optional[str], bron_ref: Optional[str]) -> Optional[str]:
+        """Genereert de externe URL naar de officiële catalogus/dataset voor data lineage."""
+        if not bron_systeem or not bron_ref:
+            return None
+        s = bron_systeem.upper()
+        if s == "CBS_ODATA":
+            return f"https://opendata.cbs.nl/#/CBS/nl/dataset/{bron_ref}/table"
+        elif s == "RIVM_STATLINE":
+            return f"https://opendata.cbs.nl/#/CBS/nl/dataset/{bron_ref}/table" if "NED" in bron_ref.upper() else "https://www.volksgezondheidenzorg.info/"
+        elif s == "BAG_API":
+            return "https://bag.basisregistraties.overheid.nl/"
+        elif s == "POLITIE_DATA":
+            return f"https://opendata.cbs.nl/#/CBS/nl/dataset/{bron_ref}/table"
+        elif s == "OV_API":
+            return "https://openov.nl/"
+        return None
 
     
     # ========================================================================

@@ -1,6 +1,6 @@
 # Feature Roadmap - D-OmniTwin Gebiedsmonitor
 
-**Status:** 2026-07-20 (Dag 92) — Sprint 22 (Data Engineering Track) 🔵 Actief | Sprint 23 📌 Gepland  
+**Status:** 2026-08-21 (Dag 100) — Sprint 22 (Data Engineering Track) 🔵 Actief | Sprint 23 📌 Gepland (Multi-Tenant Identity & Keycloak)  
 **Visie:** Van prototype naar productie-klaar, AI-gedreven gebiedsmonitor platform
 
 ---
@@ -134,13 +134,66 @@
 - [x] **Stap 1:** 812 indicatoren uit sociaaldomein Excel geïdentificeerd vs. 11 in DB (1,4% dekking).
 - [x] Positionering als Gold-laag / Datamart-consument gedocumenteerd.
 
-#### Track B — Metadata Discovery & Ontologie Mapping ⏳
-- [ ] **Stap 2:** Geautomatiseerde mapping per indicator aan Kompas-hiërarchie en definities.
-- [ ] **Stap 3:** Data Lineage en geautomatiseerde ETL-ingest.
+#### Track C — Data Lineage & Bronvermelding 🔵 Actief
+**Spec:** [`docs/3-data-engineering/Data_Lineage_Bronvermelding_Spec.md`](./docs/3-data-engineering/Data_Lineage_Bronvermelding_Spec.md)
+- [ ] **Stap 1:** Metadata audit & verrijkingsscript (`scripts/enrich_indicator_lineage.py`) voor 235 actieve indicatoren.
+- [ ] **Stap 2:** Detailpaneel UI & kaartverrijking met klikbare externe brondatasets en hover tooltips.
+- [ ] **Stap 3:** Formele bronverantwoording en peildata colofon in Multi-Gebiedsdossier en rapporten.
+- [ ] **Stap 4:** DataControle service uitbreiding met CBS OData live check.
+
+#### Track B — 812 Indicatoren Mapping & Ingest ⏸️ (Backlog / Gebruikersonderzoek)
+> *Geparkeerd als Nice-to-Have. Eerst gebruikersonderzoek vereist om belanghebbenden en concrete behoeften te valideren.*
+- [ ] **Stap 1:** Taxonomie mapping aan Kompas-thema's (onderzoek).
+- [ ] **Stap 2:** AI-ondersteunde ontologie- en definitiegeneratie voor nieuwe indicatoren (onderzoek).
 
 ---
 
-### 🚀 Sprint 23: Backend Performance & Rapportage Optimalisatie (Gepland)
+### 🔐 Sprint 23: Multi-Tenant Identity, Keycloak & RBAC — De Gebruikers Sprint (Gepland)
+
+**Visie:** Toekomstvaste, multi-tenant authenticatie- en autorisatielaag op basis van Keycloak als Identity Broker. D-OmniTwin federeert naadloos met de Microsoft Entra ID-omgevingen van aangesloten gemeenten en organisaties. Elke organisatie heeft geïsoleerde data, een eigen Kompas-configuratie en eigen kaartlagen, terwijl publieke CBS/RIVM-data gedeeld blijft.
+**Spec:** [`docs/5-secops/security/Keycloak_MultiTenant_RBAC_Spec.md`](./docs/5-secops/security/Keycloak_MultiTenant_RBAC_Spec.md)
+
+#### Fase A — Database Multi-Tenancy
+- [ ] Migratiescript `migrations/schema_v20_multitenancy.sql` aanmaken.
+- [ ] Tabel `organizations` aanmaken (`slug`, `entra_tenant_id`, `allowed_domains[]`, `admin_consent_granted`, `settings JSONB`).
+- [ ] Nullable `organization_id` FK toevoegen aan `indicatoren`, `externe_kaartlagen`, `kompas_configuraties`, `users`.
+- [ ] PostgreSQL Row-Level Security (RLS) activeren op alle bovenstaande tabellen als vanglaag.
+- [ ] Test-organisaties aanmaken (`gemeente-leeuwarden`, `gemeente-swf`, `provincie-fryslan`).
+
+#### Fase B — Keycloak Stack & FastAPI BFF Integratie
+- [ ] Keycloak service toevoegen aan `docker-compose.yml` (poort 8080, PostgreSQL-backed).
+- [ ] Test-realm exporteren als `init_data/keycloak/domnitwin-realm.json`.
+- [ ] Nieuwe module `src/auth/` aanmaken (oidc.py, jwks.py, session.py, rbac.py, tenant.py).
+- [ ] OIDC BFF endpoints: `/api/auth/login`, `/api/auth/callback` (met PKCE + CSRF state), `/api/auth/logout`, `/api/auth/me`, `/api/auth/consent-callback`.
+- [ ] Allowlisting in callback: `entra_tenant_id` valideren tegen `organizations` tabel + `admin_consent_granted` check.
+- [ ] Admin Consent onboarding flow: Super-Admin UI genereert consent URL per gemeente.
+- [ ] RBAC FastAPI dependencies: `require_role()`, `require_org_access()`, `tenant_scope()`.
+- [ ] PostgREST beveiligen via Traefik ForwardAuth middleware (`/api/auth/verify` endpoint).
+- [ ] `X-Admin-Key` deprecatie-pad: fallback tijdelijk behouden met `AUTH_DEPRECATED` log.
+- [ ] ETL-scripts migreren naar Keycloak Service Account Client Credentials flow.
+
+#### Fase C — Frontend Aanpassingen
+- [ ] `openAdmin()` in `templates/index.html` migreren naar `/api/auth/me` (breaking change).
+- [ ] Login-widget toevoegen aan hoofdkaart header (Inloggen / gebruikersbadge + uitloggen).
+- [ ] `LoginPage.tsx` in Admin Panel omzetten naar BFF redirect.
+- [ ] `AuthContext` aanpassen: nieuw `GET /api/auth/me` endpoint.
+- [ ] Super-Admin: organisatie-dropdown in Admin Panel header.
+
+#### Fase D — Documentatie & Roadmap Synchronisatie
+- [ ] `docs/STATE.md` bijwerken.
+- [ ] `TODO.md` Sprint 23 taken afvinken.
+
+**Scope-uitsluitingen Sprint 23:**
+- B2B Guest users (Azure B2B-gasten) → lokaal Keycloak-account als workaround, Sprint 24+
+- Automatische Keycloak IdP-provisioning → handmatig in Sprint 23, geautomatiseerd Sprint 24+
+- Geautomatiseerde RBAC-tests → Sprint 24+
+
+**Effort:** ~25-35 uur
+**Priority:** 🔴 HIGH — Voorwaarde voor uitrol naar meerdere gemeenten
+
+---
+
+### 🚀 Sprint 24: Backend Performance & Rapportage Optimalisatie (Gepland)
 
 **Visie:** Complexe, data-zware rapportages zoals het Multi-Gebiedsdossier moeten bliksemsnel laden zonder de server overmatig te belasten.
 **Aanleiding:** Huidige database query's voor afwijkingsanalyses verrichten zware historische aggregaties on-the-fly.
@@ -153,8 +206,12 @@
 - [ ] In-memory (Redis/applicatie-cache) opslag voor gemeente-brede referentiestatistieken (`AVG`, `STDDEV`).
 - [ ] View materialisatie voor de complexe ontologie/kompas-hiërarchie structuur.
 
-**Effort:** ~10-15 uur  
-**Priority:** 🟡 MEDIUM — Performance verbetering, cruciaal voor schaalbaarheid op de langere termijn.
+#### Track C — Geautomatiseerde RBAC-tests (doorgeschoven uit Sprint 23)
+- [ ] Pytest test-suite opzetten (`tests/` directory, `pytest.ini`).
+- [ ] RBAC-tests: anoniem, org_user, org_admin, super_admin — cross-org isolatie verifiëren.
+
+**Effort:** ~15-20 uur
+**Priority:** 🟡 MEDIUM — Performance verbetering, cruciaal voor schaalbaarheid.
 
 ---
 

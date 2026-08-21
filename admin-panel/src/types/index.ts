@@ -38,8 +38,11 @@ export interface Indicator {
     beschrijving_ai?: string | null;
     gevalideerd_door?: string | null;
     gevalideerd_op?: string | null;
-    embedding_versie?: string | null;
     gevalideerd_door_naam?: string | null;
+    // Data Lineage velden (Sprint 22 Track C)
+    bron_systeem_api?: string | null;
+    bron_tabel_referentie?: string | null;
+    laatste_check_datum?: string | null;
 }
 
 export interface IndicatorUpdate {

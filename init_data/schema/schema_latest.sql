@@ -1348,7 +1348,7 @@ CREATE VIEW public.v_kompas_hierarchie AS
      LEFT JOIN public.kompas_indicator_mapping kim ON (((ko.id = kim.onderdeel_id) AND (kim.config_id = kc.id))))
      LEFT JOIN public.indicatoren i ON ((kim.indicator_uuid = i.uuid)))
      LEFT JOIN public.kompas_indicator_scoring_regels sr ON (((kim.indicator_uuid = sr.indicator_uuid) AND (sr.config_id = kc.id))))
-  WHERE (kc.is_actief = true)
+  WHERE (kc.is_actief = true) AND (i.is_actief = true OR i.uuid IS NULL)
   ORDER BY kc.id, kt.volgorde, kth.volgorde, ko.volgorde, i.naam;
 
 

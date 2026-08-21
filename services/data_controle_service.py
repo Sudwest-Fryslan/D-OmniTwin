@@ -13,23 +13,23 @@ class DataControleService:
     def __init__(self, db: Session):
         self.db = db
 
-    def check_cbs_odata_update(self, dataset_id: str) -> Dict[str, Any]:
+    def check_cbs_odata_update(self, dataset_id: str, endpoint: str = "opendata.cbs.nl") -> Dict[str, Any]:
         """
         Checkt de CBS OData API v4 op de 'Modified' datum van een dataset.
         
         Args:
-            dataset_id: De code van de CBS dataset (bijv. '83765NED')
+            dataset_id: De code van de CBS dataset (bijv. '85984NED', '50150NED')
+            endpoint: 'opendata.cbs.nl' of 'dataderden.cbs.nl'
             
         Returns:
             Dict met update status en datums.
         """
-        url = f"https://opendata.cbs.nl/ODataApi/OData/{dataset_id}/TableInfos"
+        url = f"https://{endpoint}/ODataApi/OData/{dataset_id}/TableInfos"
         try:
-            response = requests.get(url, timeout=10)
+            response = requests.get(url, timeout=5)
             response.raise_for_status()
             data = response.json()
             
-            # De TableInfos bevat vaak de Modified datum
             if "value" in data and len(data["value"]) > 0:
                 info = data["value"][0]
                 modified_str = info.get("Modified")
@@ -44,14 +44,29 @@ class DataControleService:
             logger.error(f"Error checking CBS dataset {dataset_id}: {e}")
             return {"status": "error", "message": str(e)}
 
+    def resolve_source_url(self, bron_systeem: Optional[str], bron_ref: Optional[str]) -> Optional[str]:
+        """Genereert de catalogus URL voor een bronsysteem."""
+        if not bron_systeem or not bron_ref:
+            return None
+        s = bron_systeem.upper()
+        if s in ["CBS_ODATA", "CBS ODATA"]:
+            return f"https://opendata.cbs.nl/#/CBS/nl/dataset/{bron_ref}/table"
+        elif s in ["RIVM_STATLINE", "POLITIE_DATA"]:
+            return f"https://opendata.cbs.nl/#/CBS/nl/dataset/{bron_ref}/table" if "NED" in bron_ref.upper() else "https://www.volksgezondheidenzorg.info/"
+        elif s == "BAG_API":
+            return "https://bag.basisregistraties.overheid.nl/"
+        elif s == "OV_API":
+            return "https://openov.nl/"
+        return None
+
     def run_indicator_check(self, indicator_uuid: str) -> Dict[str, Any]:
         """
-        Voert een check uit voor een specifieke indicator.
+        Voert een data lineage check uit voor een specifieke indicator.
         Updates de 'laatste_check_datum' en eventueel 'laatste_update_bron'.
         """
         # 1. Haal indicator info op
         query = text("""
-            SELECT uuid, naam, bron_systeem_api, bron_tabel_referentie, laatste_update_bron 
+            SELECT uuid, naam, bron_systeem_api, bron_tabel_referentie, laatste_update_bron, laatste_check_datum 
             FROM indicatoren 
             WHERE uuid = :uuid
         """)
@@ -60,56 +75,66 @@ class DataControleService:
         if not indicator:
             return {"error": "Indicator niet gevonden"}
         
-        uuid, naam, bron_systeem, bron_ref, laatste_update_db = indicator
+        uuid, naam, bron_systeem, bron_ref, laatste_update_db, laatste_check_db = indicator
+        
+        url = self.resolve_source_url(bron_systeem, bron_ref)
         
         result = {
             "uuid": str(uuid),
             "naam": naam,
             "bron_systeem": bron_systeem,
+            "bron_referentie": bron_ref,
+            "bron_url": url,
             "checked_at": datetime.now().isoformat(),
-            "has_update": False
+            "has_update": False,
+            "status": "actueel"
         }
         
-        # 2. Voer systeem-specifieke check uit
-        if bron_systeem == "CBS OData" and bron_ref:
-            cbs_result = self.check_cbs_odata_update(bron_ref)
-            if cbs_result["status"] == "success":
-                modified_at_source = cbs_result.get("modified_at_source")
-                result["modified_at_source"] = modified_at_source
-                
-                # Vergelijken met DB (versimpeld: we slaan het op als we het nog niet wisten)
-                if modified_at_source:
-                    # In een echte implementatie parse we de datum en vergelijken we
-                    # Voor nu markeren we het als update als de bron datum nieuwer lijkt of anders
-                    result["has_update"] = True 
+        # 2. Voer OData check uit indien van toepassing
+        if bron_systeem and bron_ref:
+            bs = bron_systeem.upper()
+            endpoint = "dataderden.cbs.nl" if bs in ["RIVM_STATLINE", "POLITIE_DATA"] else "opendata.cbs.nl"
+            
+            if bs in ["CBS_ODATA", "CBS ODATA", "RIVM_STATLINE", "POLITIE_DATA"]:
+                cbs_result = self.check_cbs_odata_update(bron_ref, endpoint)
+                if cbs_result["status"] == "success":
+                    modified_at_source = cbs_result.get("modified_at_source")
+                    result["modified_at_source"] = modified_at_source
                     
-                    # Update DB
-                    update_query = text("""
-                        UPDATE indicatoren 
-                        SET laatste_check_datum = CURRENT_TIMESTAMP,
-                            laatste_update_bron = :mod_date
-                        WHERE uuid = :uuid
-                    """)
-                    self.db.execute(update_query, {
-                        "uuid": uuid,
-                        "mod_date": modified_at_source
-                    })
-        else:
-            # Voor andere bronnen voorlopig alleen de check datum updaten
-            update_query = text("""
-                UPDATE indicatoren 
-                SET laatste_check_datum = CURRENT_TIMESTAMP 
-                WHERE uuid = :uuid
-            """)
-            self.db.execute(update_query, {"uuid": uuid})
+                    if modified_at_source:
+                        result["has_update"] = False  # synchroon na check
+                        
+                        update_query = text("""
+                            UPDATE indicatoren 
+                            SET laatste_check_datum = CURRENT_TIMESTAMP,
+                                laatste_update_bron = :mod_date
+                            WHERE uuid = :uuid
+                        """)
+                        self.db.execute(update_query, {
+                            "uuid": uuid,
+                            "mod_date": modified_at_source
+                        })
+            else:
+                update_query = text("""
+                    UPDATE indicatoren 
+                    SET laatste_check_datum = CURRENT_TIMESTAMP 
+                    WHERE uuid = :uuid
+                """)
+                self.db.execute(update_query, {"uuid": uuid})
         
         self.db.commit()
         return result
 
-    def batch_run_all(self) -> List[Dict[str, Any]]:
-        """Run checks for all indicators that have a source system defined."""
-        query = text("SELECT uuid FROM indicatoren WHERE bron_systeem_api IS NOT NULL")
-        uuids = self.db.execute(query).fetchall()
+    def batch_run_all(self, limit: int = 50) -> List[Dict[str, Any]]:
+        """Run checks for indicators that have a source system defined (batched)."""
+        query = text("""
+            SELECT uuid 
+            FROM indicatoren 
+            WHERE bron_systeem_api IS NOT NULL AND is_actief = true
+            ORDER BY laatste_check_datum ASC NULLS FIRST
+            LIMIT :limit
+        """)
+        uuids = self.db.execute(query, {"limit": limit}).fetchall()
         
         results = []
         for (u_id,) in uuids:

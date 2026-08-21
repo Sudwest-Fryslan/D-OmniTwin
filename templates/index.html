@@ -840,13 +840,18 @@
                 </div>
               </div>
               
-              <!-- A1: Bronvermelding + peildatum met tooltip -->
-              <div class="metadata-source" style="margin-top: 12px; display: flex; align-items: center; gap: 4px; font-size: 0.8rem; color: var(--text-secondary);">
-                📊 <span id="details-bron" title="Bron van deze data">CBS</span>
-                <span class="tooltip-icon" title="Deze data wordt beschikbaar gesteld via een officiële bron of model" style="cursor: help; opacity: 0.7; display: flex; align-items: center;">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M12 16v-4"></path><path d="M12 8h.01"></path></svg>
-                </span>
-                &nbsp;·&nbsp; Peildatum: <span id="details-jaar" style="font-weight: 500; color: var(--text-primary);">-</span>
+              <!-- A1: Bronvermelding + peildatum met lineage link & tooltip (Sprint 22 Track C) -->
+              <div class="metadata-source" style="margin-top: 12px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px; font-size: 0.8rem; color: var(--text-secondary); border-top: 1px solid var(--border-color, rgba(255,255,255,0.08)); padding-top: 8px;">
+                <div style="display: flex; align-items: center; gap: 4px;">
+                  📊 <span id="details-bron" title="Bron van deze data" style="font-weight: 500;">CBS</span>
+                  <a id="details-bron-link" href="#" target="_blank" rel="noopener noreferrer" title="Open officiële dataset in nieuwe tab" style="display: none; color: var(--accent-color, #38BDF8); text-decoration: none; margin-left: 2px;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+                  </a>
+                  <span id="details-bron-badge" class="lineage-badge" style="display: none; font-size: 0.7rem; padding: 1px 6px; border-radius: 4px; background: rgba(56, 189, 248, 0.15); color: #38bdf8; font-family: monospace;">-</span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 4px;">
+                  <span>Peildatum:</span> <span id="details-jaar" style="font-weight: 500; color: var(--text-primary);">-</span>
+                </div>
               </div>
             </div>
           </div>

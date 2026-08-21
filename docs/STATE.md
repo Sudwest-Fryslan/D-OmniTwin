@@ -10,8 +10,9 @@
 | Veld | Waarde |
 |------|--------|
 | **Huidige versie** | v1.0.0-beta (pre-release) |
-| **Sprint** | Sprint 22 (Data Engineering & ETL Dataspace Track) |
-| **Laatste update** | 2026-08-19 |
+| **Sprint** | Sprint 22 (Data Engineering & Lineage) ✅ Afgerond |
+| **Volgende sprint** | Sprint 23 — De Gebruikers Sprint (Multi-Tenant Identity & Keycloak) 📌 Gepland |
+| **Laatste update** | 2026-08-21 |
 | **Bijgewerkt door** | Antigravity |
 
 ---
@@ -49,20 +50,22 @@
 | **Thema-Analyse Visualisatie** | 🟢 Actief | Sprint 19B / Track F ✅ — D3 Diverging Bar Chart en Boomstructuur Filter (Issue #15) |
 | **Time Slider** | 🟢 Actief | Sprint 19 Migratie ✅ — Hybride TimeSlider, Indicator Historie & Play/Pauze |
 | **Gebiedsagenda IJsselmeerkust Usecase** | 🟢 Gedocumenteerd | `docs/7-projectmanagement/testcases/gebiedsagenda_ijselmeerkust/` — Spiegeling, TC-06-003 E2E testcase, 85% datadekking. |
-| **Indicatoren Bron (Excel Jantina)** | 🟡 In Analyse | 812 indicatoren geïdentificeerd, 11 aanwezig (1,4% dekking). Stap 2 volgt. Bestand: `data/sociaaldomein/` |
+| **Indicatoren Bron (Excel Jantina)** | ⏸️ Backlog | 812 indicatoren geparkeerd als Nice-to-Have (gebruikersonderzoek vereist). |
 | **ETL Dataspace Gap Analyse** | 🟢 Gedocumenteerd | `docs/3-data-engineering/etl_dataspace_gap_analyse.md` — D-OmniTwin als datamart-consumer van FRLDS |
-| **Data Lineage** | 🔴 Gepland | Sprint 8F / 22 — nog niet gestart |
+| **Data Lineage & Bronvermelding** | 🟢 Actief | Sprint 22 Track C ✅ Voltooid — 244 indicatoren (100%) voorzien van lineage, externe bronlinks en peildata. Spec: `docs/3-data-engineering/Data_Lineage_Bronvermelding_Spec.md` |
 | **Dataspace Orchestrator (inc. FRLDS)** | 🔵 Visie/Concept | Innovatiebudget 2026. RFC issue klaargezet voor partners. |
+| **Auth-laag (Keycloak BFF)** | 📌 Gepland Sprint 23 | Vervangt huidige sessie+API-key auth. Spec: `docs/5-secops/security/Keycloak_MultiTenant_RBAC_Spec.md` |
+| **Multi-Tenancy Datamodel** | 📌 Gepland Sprint 23 | `organizations` tabel + `organization_id` FK op `indicatoren`, `externe_kaartlagen`, `kompas_configuraties`, `users`. PostgreSQL RLS als vanglaag. |
+| **PostgREST beveiliging** | ⚠️ Open risico | Huidige setup volledig open via Traefik. Wordt gesloten in Sprint 23 via ForwardAuth middleware. |
 
 ---
 
 ## 🔄 Recente wijzigingen (laatste 3 sessies)
 
-| Datum | Wijziging | Impact |
-|-------|-----------|--------|
+| 2026-08-21 | **Sprint 22 Track C (Data Lineage & Bronvermelding) voltooid** | 244 actieve indicatoren (100%) verrijkt met `bron_systeem_api`, `bron_tabel_referentie` en peildata. Klikbare externe bronlinks in detailpaneel en bronverantwoording colofon in rapporten geïmplementeerd. Admin Panel uitgebreid. Sprint 22 afgerond. |
+| 2026-08-21 | **Sprint 23 planning: Multi-Tenant Identity & Keycloak** | Sprint 23 herdefinieert van Backend Performance naar De Gebruikers Sprint. Volledig architectuur- en implementatieplan opgesteld: Keycloak als Identity Broker, 4-niveaus RBAC, BFF-patroon, PostgreSQL RLS, Entra ID Admin Consent flow, PostgREST beveiliging. Spec: `docs/5-secops/security/Keycloak_MultiTenant_RBAC_Spec.md`. ROADMAP.md en TODO.md bijgewerkt. |
 | 2026-08-18 | **Sprint 22 Track D (Externe Kaartlagen UX) & Gebiedsagenda Usecase** | Externe kaartlagen UX en rendering geoptimaliseerd (standalone rendering zonder CBS buurten, compacte UI met inline 'ℹ️' toelichting, scrollbegrenzing). Gebiedsagenda IJsselmeergebied-Wadden usecase gespiegeld (85% dekking vs 15% gaps G1-G6). Mapbox volledig uitgefaseerd in root docs. |
 | 2026-07-20 | **Sprint 22 Data Engineering Track gestart** | ETL/Dataspace gap-analyse afgerond. D-OmniTwin hergepositioneerd als datamart-consumer (Gold laag). 812 indicatoren in Excel geïdentificeerd vs 11 aanwezig. Stap 1 (bronvergelijking) voltooid. |
-| 2026-07-20 | **Sprint 21 Data Kwaliteit & Deduplicatie** | Deduplicatie pipeline voltooid: pg_trgm & pgvector matching, LLM validatie (AI Advies), en interactieve Admin UI met merge, groepeer en uitsluiting (uitzonderingen) acties via checkboxes. Issue #16 opgelost. |
 
 ---
 
@@ -87,22 +90,23 @@
 | Skills werken zonder STATE.md-context | Middel | Middel | Standaard werkwijze nu in alle skills |
 | Applicatie wordt gezien als verplicht product/SaaS | Middel | Hoog | Strikte positionering als open methodiek + referentie (EUPL) |
 | FRLDS PoC vereist iSHARE-registratie vooraf | Hoog | Hoog | Vroeg starten met DataFryslân contact + IAMA |
+| **PostgREST volledig open (beveiligingsgat)** | Hoog | Kritiek | ⚠️ Actief risico tot Sprint 23 — Traefik ForwardAuth + RLS sluiten dit af |
+| **Multi-tenancy migratie breekt bestaande admin API-keys** | Middel | Hoog | Deprecatie-pad: `X-Admin-Key` blijft tijdelijk actief met `AUTH_DEPRECATED` log; ETL migreert naar Client Credentials |
 
 ---
 
 ## 🗺️ Roadmap focus (actief)
 
-| **22** | Data Engineering Track — ETL & Dataspace | 🔵 Actief — Stap 1 ✅ (bronvergelijking), Stap 2 volgt (metadata discovery per indicator) |
+| **23** | Multi-Tenant Identity, Keycloak & RBAC — De Gebruikers Sprint | 📌 Gepland — Spec klaar, ROADMAP + TODO bijgewerkt. Uitvoering start direct. |
+| **22** | Data Engineering Track — Lineage & Bronvermelding | ✅ Afgerond — Track A, C, D ✅, Track B ⏸️ (Backlog / Gebruikersonderzoek) |
 | **21** | Data Kwaliteit & Deduplicatie | ✅ Afgerond (UI checkboxes, AI matching, pg_trgm, uitzonderingen) |
 | **18** | IJsselmeerkust als Besluitinstrument — duiding, BAG woonplaatsen, benchmarking, Track F quickwins | ✅ Afgerond (Dag 79 — alle tracks incl. multi-gebied benchmark) |
 | **19** | Dataspace Architectuur Migratie — Docker, PostgREST, pg_featureserv, Traefik | ✅ Deels Afgerond (Fase 1, 2 en 4 voltooid) |
 | **19B / Track F**| Van Data naar Inzicht (Issue #15) — Thema-Analyse, Boomstructuur Filter | ✅ Afgerond (Dag 86) |
 | **17** | Configureerbare Logging Infrastructuur | ✅ Voltooid — merge `4ed45bd`, closes #9 (deels) |
 | **17C e-mail** | E-mail alerts bij ERROR/CRITICAL | ⏳ On hold — Issue #10, wacht op SMTP |
-| **12** | 3D BAG Integratie & Bug #42 | 🔜 Na Sprint 19 |
-| **15** | Kompas UI Uitbreiding - Ontologie & Data Tabs | Na Sprint 12 |
-| **13** | Architectuur Gaps & Security Hardening | Q2 2026 |
-| **14** | Open Source Decoupling (EUPL) | Q2 2026 |
+| **12** | 3D BAG Integratie & Bug #42 | 🔜 Na Sprint 23 |
+| **14** | Open Source Decoupling (EUPL) | Q3 2026 |
 | **8F** | Data Lineage & Dataspace Orchestrator | Q3 2026 |
 | **19-22** | Dataspace-Native Orchestration (FRLDS / FDS) | Q3/Q4 2026 |
 

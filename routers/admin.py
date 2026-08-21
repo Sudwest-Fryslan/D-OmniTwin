@@ -383,7 +383,10 @@ async def get_indicator(
             i.embedding_versie,
             u.username as gevalideerd_door_naam,
             i.is_actief,
-            i.vervangen_door_id
+            i.vervangen_door_id,
+            i.bron_systeem_api,
+            i.bron_tabel_referentie,
+            i.laatste_check_datum
         FROM indicatoren i
         LEFT JOIN color_schemas cs ON i.color_schema_id = cs.id
         LEFT JOIN users u ON i.gevalideerd_door = u.id
@@ -413,7 +416,10 @@ async def get_indicator(
         "embedding_versie": row[15],
         "gevalideerd_door_naam": row[16],
         "is_actief": row[17],
-        "vervangen_door_id": str(row[18]) if row[18] else None
+        "vervangen_door_id": str(row[18]) if row[18] else None,
+        "bron_systeem_api": row[19],
+        "bron_tabel_referentie": row[20],
+        "laatste_check_datum": row[21].isoformat() if row[21] else None
     }
 
 @router.put("/indicatoren/{uuid}")

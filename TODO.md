@@ -9,9 +9,9 @@
 ---
 
 ## 📝 Volgende Sessie (Hoge Prioriteit)
-- [x] **Documentatie-inhaalslag:** Alle root documentatie (`README.md`, `BUILD.md`, `CLAUDE.md`, `ROADMAP.md`, `TODO.md`) gesynchroniseerd met de Hybride Dataspace Architectuur (Traefik, PostgREST, pg_featureserv).
-- [ ] **Sprint 22 Stap 2 (Metadata Discovery):** Geautomatiseerde mapping per indicator aan Kompas-hiërarchie en CBS/RIVM taxonomie.
-- [x] **Bugfix #54 & Verkenning `getFreezone`:** Analyseren waarom geselecteerde polygonen achter het Kompas centreren en de `getFreezone` logica robuust maken voor alle openstaande panelen.
+- [x] **Documentatie-inhaalslag:** Alle root documentatie gesynchroniseerd met de Hybride Dataspace Architectuur.
+- [x] **Sprint 22 Track C (Data Lineage & Bronvermelding):** Metadata-verrijking voor 244 actieve indicatoren, detailpaneel bronvermelding, en rapportage colofon voltooid.
+- [ ] **Sprint 23 Fase A (Database Multi-Tenancy):** Aanmaken `migrations/schema_v20_multitenancy.sql` en `organizations` tabel voor Keycloak & RBAC integratie.
 ---
 
 ## ✅ Sprint 18: IJsselmeerkust als Besluitinstrument (Afgerond)
@@ -205,40 +205,114 @@
 - [x] **A1 — Datasetvergelijking sociaaldomein:** 812 indicatoren uit Excel Jantina geïdentificeerd t.o.v. 11 aanwezig in DB (1,4% dekking).
 - [x] **A2 — Positionering Datamart-consument:** Architectuurrol als Gold-laag / interactielaag vastgelegd.
 
-### Track B — Metadata Discovery & Ontologie Mapping ⏳
-- [ ] **B1 — Taxonomie Mapping:** Geautomatiseerde koppeling van de 812 indicatoren aan de Kompas-thema's.
-- [ ] **B2 — Metadata verrijking:** AI-ondersteunde ontologie- en definitiegeneratie voor nieuwe indicatoren.
-
-### Track C — Data Lineage & Ingest Pipelines (Gepland)
-- [ ] **C1 — Geautomatiseerde ETL-ingest:** Directe synchronisatie tussen brondata en `gebied_data`.
-- [ ] **C2 — Lineage tracking:** Vastleggen van databron, peildatum en transformatiestappen.
+### Track C — Data Lineage & Bronvermelding ✅
+**Spec:** [`docs/3-data-engineering/Data_Lineage_Bronvermelding_Spec.md`](./docs/3-data-engineering/Data_Lineage_Bronvermelding_Spec.md)
+- [x] **C1 — Metadata Audit & Verrijkingsscript:** `scripts/enrich_indicator_lineage.py` uitgevoerd — alle 244 actieve indicatoren (100%) voorzien van `bron_systeem_api`, `bron_tabel_referentie`, peildata en controle-timestamps.
+- [x] **C2 — Detailpaneel UI & Kaartverrijking:** Klikbare bronlink naar officiële dataset catalogus (CBS OData, RIVM, BAG, OV), dataset badges en hover-tooltips toegevoegd aan detailpaneel (`templates/index.html` & `static/js/kompas.js`).
+- [x] **C3 — Rapportage Colofon:** Automatische "Bronverantwoording & Peildata" tabel toegevoegd onderaan dossiers en rapporten (`services/report_service.py`).
+- [x] **C4 — DataControle Service & Admin Inzage:** `services/data_controle_service.py` en `routers/admin.py` uitgebreid met OData live checks en lineage metadata weergave in het Admin Panel.
 
 ### Track D — Externe Kaartlagen UX & Rendering Optimalisatie ✅
 - [x] **D1 — Standalone Kaartlaag Rendering:** Externe lagen direct op de MapLibre/Deck.gl kaart projecteren zodra aangevinkt, ook wanneer er nog géén CBS-buurten zijn geladen.
 - [x] **D2 — Compacte Kaartlagenlijst met 'i' Info Tooltip:** Uitgebreide beschrijvingen per laag vervangen door een compacte rij met een stijlvol `ℹ️` info-icoon met hover/click tooltip.
 - [x] **D3 — Begrenzing & Scrolling (Max 5 Lagen):** `#externe-lagen-list` limiteren tot 5 zichtbare items met een nette custom scrollbar.
 
+### Track B — 812 Indicatoren Mapping & Ingest ⏸️ (Backlog / Gebruikersonderzoek)
+> *Geparkeerd als Nice-to-Have. Eerst gebruikersonderzoek vereist om belanghebbenden en concrete behoeften te valideren.*
+- [ ] **B1 — Taxonomie Mapping:** Geautomatiseerde koppeling van de 812 indicatoren aan de Kompas-thema's (onderzoek).
+- [ ] **B2 — Metadata verrijking:** AI-ondersteunde ontologie- en definitiegeneratie voor nieuwe indicatoren (onderzoek).
+
 
 ---
 
-## 📌 Sprint 23: Backend Performance & Rapportage Optimalisatie (Gepland)
+## 📌 Sprint 23: Multi-Tenant Identity, Keycloak & RBAC — De Gebruikers Sprint (Gepland)
 
-**Doel:** Het drastisch verlagen van de serverbelasting en laadtijden bij zware rapportages (zoals het Multi-Gebiedsdossier).
-**Aanleiding:** Performance analyse toont aan dat dynamische `ROW_NUMBER` aggregaties over de volledige historische dataset en on-the-fly berekeningen van referentiestatistieken zorgen voor zware database-load.
+**Doel:** Volwaardig identiteits- en toegangsbeheer implementeren op basis van Keycloak als centrale Identity Broker, federatief gekoppeld aan Microsoft Entra ID van aangesloten gemeenten. Inclusief data-isolatie per organisatie via `organization_id` en PostgreSQL Row-Level Security.
+**Spec:** [`docs/5-secops/security/Keycloak_MultiTenant_RBAC_Spec.md`](./docs/5-secops/security/Keycloak_MultiTenant_RBAC_Spec.md)
 
-### Track A — Database Optimalisatie (Views & Indexes)
-- [ ] Maken van een `MATERIALIZED VIEW` voor de laatste `gebied_data` statussen (`m_gebied_data_latest`).
-- [ ] SQL-query van `generate_multi_gebied_payload` refactoren (gebruikmakend van `DISTINCT ON` in plaats van Window Functions).
+### Fase A — Database Multi-Tenancy
+- [ ] Migratiescript `migrations/schema_v20_multitenancy.sql` aanmaken
+    - [ ] Tabel `organizations` aanmaken (`id`, `slug`, `name`, `entra_tenant_id`, `allowed_domains TEXT[]`, `admin_consent_granted`, `settings JSONB`, `is_active`, `created_at`)
+    - [ ] Nullable `organization_id UUID` FK toevoegen aan: `indicatoren`, `externe_kaartlagen`, `kompas_configuraties`, `users`
+    - [ ] Indexen aanmaken op `organization_id` voor alle bovenstaande tabellen
+    - [ ] PostgreSQL RLS activeren op `indicatoren`, `externe_kaartlagen`, `kompas_configuraties`
+    - [ ] RLS Policy: `org_id IS NULL OR org_id = current_setting('app.current_org_id')::uuid`
+- [ ] Initialisatiedata: test-organisaties aanmaken (`gemeente-leeuwarden`, `gemeente-swf`, `provincie-fryslan`)
+
+### Fase B — Keycloak Stack & FastAPI BFF
+- [ ] Keycloak service toevoegen aan `docker-compose.yml` (poort 8080, PostgreSQL-backed, `start-dev --import-realm`)
+- [ ] Test-realm JSON exporteren naar `init_data/keycloak/domnitwin-realm.json`
+    - [ ] Client `domnitwin-backend` (Authorization Code + PKCE, confidential)
+    - [ ] Client `domnitwin-etl` (Client Credentials only, service account)
+    - [ ] Rollen: `org_user`, `org_admin`, `super_admin`
+    - [ ] Custom claim mappers: `org_id`, `org_slug` uit user-attributen; `omnitwin_entra_tid` van Microsoft `tid`
+- [ ] Nieuwe module `src/auth/` aanmaken:
+    - [ ] `oidc.py` — login redirect, PKCE + state generatie, callback handler
+    - [ ] `jwks.py` — JWKS-validatie met 60-min cache
+    - [ ] `session.py` — sessie aanmaken/ophalen/verwijderen in PostgreSQL
+    - [ ] `rbac.py` — `require_role()`, `require_org_access()` FastAPI dependencies
+    - [ ] `tenant.py` — `tenant_scope()` SQLAlchemy filter helper + `SET LOCAL app.current_org_id`
+- [ ] OIDC BFF endpoints in `routers/auth.py`:
+    - [ ] `GET /api/auth/login?org={slug}` — state token genereren, Keycloak redirect met PKCE
+    - [ ] `GET /api/auth/callback` — state valideren (CSRF), code exchange, JWT valideren, allowlist check, sessie aanmaken
+    - [ ] `GET /api/auth/consent-callback` — Admin Consent van Microsoft verwerken, `admin_consent_granted = true`
+    - [ ] `POST /api/auth/logout` — sessie verwijderen, cookie wissen
+    - [ ] `GET /api/auth/me` — sessie status + gebruiker/org/rollen
+    - [ ] `GET /api/auth/verify` — interne endpoint voor Traefik ForwardAuth
+- [ ] Allowlisting in callback: `entra_tenant_id` (Microsoft `tid` claim) valideren + `admin_consent_granted` + `is_active` controleren
+- [ ] Admin Consent onboarding flow:
+    - [ ] Super-Admin UI: consent URL genereren per gemeente
+    - [ ] `GET /api/auth/consent-callback` verwerkt Microsoft-redirect
+- [ ] PostgREST beveiligen via Traefik ForwardAuth labels op `postgrest` service
+- [ ] `X-Admin-Key` deprecatie:
+    - [ ] Fallback in `check_auth_or_key` tijdelijk behouden met `AUTH_DEPRECATED` log
+    - [ ] ETL-scripts migreren naar `KEYCLOAK_ETL_SECRET` Client Credentials flow
+- [ ] Dependencies toevoegen aan `requirements.txt`:
+    - [ ] `python-jose[cryptography]>=3.3.0`
+    - [ ] `httpx>=0.27.0` (promoveren van optioneel naar verplicht)
+
+### Fase C — Frontend Aanpassingen
+- [ ] `templates/index.html` — `openAdmin()` functie: `fetch('/api/admin/auth/me')` vervangen door `fetch('/api/auth/me')`
+- [ ] `templates/index.html` — Login-widget toevoegen aan header (badge / uitlogknop)
+- [ ] `admin-panel/src/pages/LoginPage.tsx` — form-submit vervangen door redirect naar `/api/auth/login`
+- [ ] `admin-panel/src/services/api.ts` — auth endpoints bijwerken naar `/api/auth/me`, `/api/auth/logout`
+- [ ] `admin-panel/src/App.tsx` — Super-Admin organisatie-dropdown toevoegen
+
+### Fase D — Documentatie
+- [ ] `docs/STATE.md` bijwerken (Sprint 23 status, Keycloak component toevoegen)
+- [ ] `ROADMAP.md` Sprint 23 taken afvinken
+- [ ] `README.md` authenticatiesectie bijwerken
+
+### Handmatige E2E Verificatie (geen geautomatiseerde tests in Sprint 23)
+- [ ] Scenario 1: Anoniem — alleen publieke data, PostgREST geeft 401
+- [ ] Scenario 2: Admin Consent flow — login geblokkeerd zonder consent, doorgelaten na consent
+- [ ] Scenario 3: Allowlisting — onbekende tenant geeft 403
+- [ ] Scenario 4: Org-Gebruiker — ziet eigen + publieke data, niet andere org
+- [ ] Scenario 5: Org-Beheerder — upload voor eigen org OK, andere org 403
+- [ ] Scenario 6: Super-Admin — ziet alle orgs, logging viewer volledig
+- [ ] Scenario 7: X-Admin-Key — slaagt maar logt AUTH_DEPRECATED
+- [ ] Scenario 8: PostgREST — ForwardAuth blokkeert unauthenticated requests
+
+---
+
+## 📌 Sprint 24: Backend Performance & Rapportage Optimalisatie + RBAC-tests (Gepland)
+
+**Doel:** Serverbelasting en laadtijden bij zware rapportages verlagen. Geautomatiseerde RBAC test-suite toevoegen (doorgeschoven uit Sprint 23).
+
+### Track A — Database Optimalisatie
+- [ ] `MATERIALIZED VIEW` aanmaken voor actuele `gebied_data` statussen (`m_gebied_data_latest`)
+- [ ] SQL-query `generate_multi_gebied_payload` refactoren met `DISTINCT ON`
 
 ### Track B — Caching & Applicatie Logica
-- [ ] In-memory of Redis caching opzetten voor gemeente-brede referentiestatistieken (`AVG`, `STDDEV`).
-- [ ] De complexe `v_kompas_hierarchie` view materialiseren of cachen op applicatie-niveau.
+- [ ] In-memory of Redis caching voor gemeente-brede referentiestatistieken (`AVG`, `STDDEV`)
+- [ ] `v_kompas_hierarchie` view materialiseren of cachen op applicatie-niveau
 
----
+### Track C — Geautomatiseerde RBAC-tests (doorgeschoven uit Sprint 23)
+- [ ] Pytest test-suite opzetten (`tests/` directory, `pytest.ini`, `conftest.py`)
+- [ ] RBAC-tests: anoniem, org_user, org_admin, super_admin — cross-org isolatie verifiëren
+- [ ] B2B Guest user scenario uitwerken en implementeren
+- [ ] Automatische Keycloak IdP-provisioning via Admin API
 
-## 📌 Sprint 24: Identity & Toegangsbeheer (Fase 2) (Gepland)
-
-**Doel:** Implementatie van volwaardig identiteits- en toegangsbeheer (RBAC) ter vervanging van de statische admin API-keys. Scheiding aanbrengen tussen publieke gebruikers, interne medewerkers en systeembeheerders.
 
 ---
 
