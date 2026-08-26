@@ -62,10 +62,10 @@
 
 ## 🔄 Recente wijzigingen (laatste 3 sessies)
 
+| 2026-08-26 | **Docker Uitlevering & CI/CD Pipeline Documentatie (Issues #27 & #28)** | Twee complementaire gidsen opgesteld in `docs/9-beheer/`: (1) `stappenplan_docker_installatie_externe_organisatie.md` voor Docker restore via DB-dump op externe servers, en (2) `cicd_pipeline_docker_hub.md` voor GitHub Actions → Docker Hub uitlevering (SemVer, testmethodiek, productie compose). GitHub API live gekoppeld. |
 | 2026-08-26 | **Systeemarchitectuur & Implementatiegids voor ICT & Informatieadvies** | Opgesteld in `docs/2-architectuur/architecture/systeemarchitectuur_en_implementatiegids_ict.md`. Bevat ASCII box-drawing diagrammen van de containerstack, Entra ID / Keycloak SSO identiteitsflow en de gemeentelijke Docker hostinginrichting. |
 | 2026-08-21 | **Sprint 22 Track C (Data Lineage & Bronvermelding) voltooid** | 244 actieve indicatoren (100%) verrijkt met `bron_systeem_api`, `bron_tabel_referentie` en peildata. Klikbare externe bronlinks in detailpaneel en bronverantwoording colofon in rapporten geïmplementeerd. Admin Panel uitgebreid. Sprint 22 afgerond. |
 | 2026-08-21 | **Sprint 23 planning: Multi-Tenant Identity & Keycloak** | Sprint 23 herdefinieert van Backend Performance naar De Gebruikers Sprint. Volledig architectuur- en implementatieplan opgesteld: Keycloak als Identity Broker, 4-niveaus RBAC, BFF-patroon, PostgreSQL RLS, Entra ID Admin Consent flow, PostgREST beveiliging. Spec: `docs/5-secops/security/Keycloak_MultiTenant_RBAC_Spec.md`. ROADMAP.md en TODO.md bijgewerkt. |
-| 2026-08-18 | **Sprint 22 Track D (Externe Kaartlagen UX) & Gebiedsagenda Usecase** | Externe kaartlagen UX en rendering geoptimaliseerd (standalone rendering zonder CBS buurten, compacte UI met inline 'ℹ️' toelichting, scrollbegrenzing). Gebiedsagenda IJsselmeergebied-Wadden usecase gespiegeld (85% dekking vs 15% gaps G1-G6). Mapbox volledig uitgefaseerd in root docs. |
 
 ---
 

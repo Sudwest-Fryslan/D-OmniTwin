@@ -278,6 +278,9 @@ Alle configuratieparameters worden extern aangeleverd via omgevingsvariabelen (g
     | gzip > /backups/omnitwin_db_$(date +%Y%m%d).sql.gz
   ```
 
+> 📘 **Operationeel Stappenplan:** Voor de concrete, operationele uitrol met behulp van een vooraf gegenereerd database dumpbestand, zie het complete stappenplan:  
+> [`docs/9-beheer/stappenplan_docker_installatie_externe_organisatie.md`](../../9-beheer/stappenplan_docker_installatie_externe_organisatie.md).
+
 ---
 
 ## 6. 💡 Belangrijke Gesprekspunten voor het Overleg
