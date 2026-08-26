@@ -32,7 +32,7 @@ Het systeem is opgebouwd volgens een moderne, modulaire **microservices-architec
 │  │  MapLibre GL + Deck.gl  │  │  Sunburst (244 indicat.)│  │  Zijpaneel       │  │  React 18 + TS   │  │
 │  │  app.js                 │  │  kompas.js              │  │  chat.js         │  │  Beheer & Upload │  │
 │  └────────────┬────────────┘  └────────────┬────────────┘  └────────┬─────────┘  └────────┬─────────┘  │
-│               └────────────────────────────┴─────┬──────────────────┴─────────────────────┘             │
+│               └────────────────────────────┴─────┬──────────────────┴─────────────────────┘            │
 │                                                  ▼                                                     │
 │                                      EventBus (event-bus.js)                                           │
 └──────────────────────────────────────────────────┬─────────────────────────────────────────────────────┘
@@ -40,7 +40,8 @@ Het systeem is opgebouwd volgens een moderne, modulaire **microservices-architec
                                                    ▼
 ┌────────────────────────────────────────────────────────────────────────────────────────────────────────┐
 │  TRAEFIK REVERSE PROXY & API GATEWAY (container: traefik)                                              │
-│  • Dynamische pad-routing via Docker labels  • HTTPS nog in te richten (via Let's Encrypt of corp. proxy)│
+│  • Dynamische pad-routing via Docker labels                                                            │
+|  • HTTPS nog in te richten (via Let's Encrypt of corp. proxy)                                          │
 └──────┬───────────────────────────┬───────────────────────────┬─────────────────────────────────────────┘
        │ /api/data/*               │ /api/geo/*                │ /api/* & / (Webapp)
        ▼                           ▼                           ▼
@@ -55,7 +56,7 @@ Het systeem is opgebouwd volgens een moderne, modulaire **microservices-architec
 ┌──────────────────────────────────────────────────────────────────────────────────┐
 │  DATABASE (PostgreSQL 15 + PostGIS 3.4 + pgvector) (container: omnitwin_db)      │
 │                                                                                  │
-│  • Ruimtelijke Gebieden (RD New EPSG:28992 & WGS84 EPSG:4326)                   │
+│  • Ruimtelijke Gebieden (RD New EPSG:28992 & WGS84 EPSG:4326)                    │
 │  • 244 Gevalideerde Indicatoren & Historische Tijdreeksen (2020-2025)            │
 │  • Kompas Hiërarchie, Thematische Classificaties & Data Lineage Metadata         │
 │  • Indicator Embeddings (pgvector, 384-dim) voor semantische AI-matching         │
@@ -65,15 +66,18 @@ Het systeem is opgebouwd volgens een moderne, modulaire **microservices-architec
                                                    │ Uitgaande synchronisatie & WFS queries
                                                    ▼
 ┌──────────────────────────────────────────────────────────────────────────────────────────┐
-│  EXTERNE DATAPORTALEN & DATASPACES (Data blijft bij de bron)                              │
-│  • CBS OData v4 API  • RIVM StatLine  • PDOK WFS (Natura 2000, Bodemdaling)  • FDS / FRLDS│
+│  EXTERNE DATAPORTALEN & DATASPACES (Data blijft bij de bron)                             │
+│  • CBS OData v4 API                                                                      │
+|  • RIVM StatLine                                                                         │ 
+|  • PDOK WFS (Natura 2000, Bodemdaling)                                                   │ 
+|  • FDS / FRLDS                                                                           │
 └──────────────────────────────────────────────────────────────────────────────────────────┘
 
 OPTIONEEL (buiten Docker stack):
 ┌─────────────────────────────────────┐     ┌──────────────────────────────────────────────┐
-│  LOKALE AI (Ollama)                 │     │  Keycloak Identity Broker (IN VOORBEREIDING)  │
-│  Bereikbaar via host.docker.internal│     │  OIDC / RBAC / Entra ID federatie             │
-│  Standaard model: configureerbaar   │     │  Wordt toegevoegd aan de Docker stack          │
+│  LOKALE AI (Ollama)                 │     │  Keycloak Identity Broker (IN VOORBEREIDING) │
+│  Bereikbaar via host.docker.internal│     │  OIDC / RBAC / Entra ID federatie            │
+│  Standaard model: configureerbaar   │     │  Wordt toegevoegd aan de Docker stack        │
 └─────────────────────────────────────┘     └──────────────────────────────────────────────┘
 ```
 
@@ -201,7 +205,7 @@ In onderstaande tabel staat exact welk verkeer plaatsvindt. Binnen de Docker-omg
 │           ▼                                                                            │
 │   ┌────────────────────────────────────────────────────────────────────────────────┐   │
 │   │ Optionele Gemeentelijke Reverse Proxy / WAF (F5, NGINX of Azure App Gateway)   │   │
-│   │ → SSL-terminatie en IP-whitelisting op dit niveau                               │   │
+│   │ → SSL-terminatie en IP-whitelisting op dit niveau                              │   │
 │   └───────────────────────────────────────┬────────────────────────────────────────┘   │
 │                                           │                                            │
 │                                           ▼                                            │
@@ -211,13 +215,13 @@ In onderstaande tabel staat exact welk verkeer plaatsvindt. Binnen de Docker-omg
 │   │  ┌──────────────────────────────────────────────────────────────────────────┐  │   │
 │   │  │ DOCKER ENGINE & BRIDGE NETWORK (Geïsoleerd intern netwerk)               │  │   │
 │   │  │                                                                          │  │   │
-│   │  │  [traefik] ──> [omnitwin_backend] ──> [omnitwin_db] <── Volume: pgdata  │  │   │
+│   │  │  [traefik] ──> [omnitwin_backend] ──> [omnitwin_db] <── Volume: pgdata   │  │   │
 │   │  │     │                │                     ▲                             │  │   │
 │   │  │     ├──> [postgrest] ──────────────────────┤                             │  │   │
 │   │  │     └──> [pg_featureserv] ─────────────────┘                             │  │   │
 │   │  └──────────────────────────────────────────────────────────────────────────┘  │   │
 │   │                                                                                │   │
-│   │  Optioneel: [Ollama LLM] op host (poort 11434) ← alleen voor AI-functies      │   │
+│   │  Optioneel: [Ollama LLM] op host (poort 11434) ← alleen voor AI-functies       │   │
 │   └────────────────────────────────────────────────────────────────────────────────┘   │
 └────────────────────────────────────────────────────────────────────────────────────────┘
 ```
