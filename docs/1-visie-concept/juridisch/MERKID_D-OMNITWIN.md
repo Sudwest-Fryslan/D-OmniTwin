@@ -54,22 +54,20 @@ D-Omni Live: Real-time weergave van de buitenwereld door integratie van monitori
 
 Licentie
 
-Copyright (c) 2024. Dit werk is gelicenseerd onder de Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0) licentie.
+D-OmniTwin volgt het vastgestelde SWF-beleid "Beleid publiek beschikbaar stellen van broncode" (gemeente Súdwest-Fryslân, Corsa O24.002186, 9 augustus 2024): broncode wordt uitgebracht onder de **European Union Public Licence (EUPL) v1.2** (zie `LICENSE` in de repository-root), documentatie en methodiek onder de **Creative Commons Attribution 4.0 International (CC BY 4.0)** licentie (zie `LICENSE-DOCS`).
+
+Dit merkidentiteitsdocument valt onder diezelfde CC BY 4.0-licentie:
 
 U bent vrij om:
 
 Het werk te delen: Te kopiëren, te verspreiden en door te geven via elk medium of bestandsformaat.
 
-Het werk te bewerken: Te remixen, te veranderen en afgeleide werken te maken.
+Het werk te bewerken: Te remixen, te veranderen en afgeleide werken te maken, ook voor commerciële doeleinden.
 
-Onder de volgende voorwaarden:
+Onder de volgende voorwaarde:
 
 Naamsvermelding: U dient de maker te vermelden, een link naar de licentie te voegen en aan te geven of er wijzigingen zijn aangebracht.
 
-Niet-commercieel: U mag dit werk niet gebruiken voor commerciële doeleinden.
-
-Gelijk delen: Als u het werk mixt, verandert of erop voortbouwt, moet u uw bijdragen verspreiden onder dezelfde licentie als het origineel.
-
-Voor de volledige juridische tekst, zie: https://creativecommons.org/licenses/by-nc-sa/4.0/
+Voor de volledige juridische tekst, zie `LICENSE-DOCS` in de repository-root of https://creativecommons.org/licenses/by/4.0/
 
 D-OmniTwin is niet alleen een kaart; het is de hartslag van de stad, gevangen in pixels en data.
