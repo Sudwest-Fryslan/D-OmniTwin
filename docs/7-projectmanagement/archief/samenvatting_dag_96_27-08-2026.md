@@ -1,9 +1,9 @@
 # Samenvatting Sessie — Dag 96 (27-08-2026)
 
-> **Sessie:** Dag 96 — Stand van Zaken, 3D BAG Migratie naar REST API (Issue #39) & Netwerkdiagnose  
+> **Sessie:** Dag 96 — Stand van Zaken, 3D BAG Migratie naar REST API (Issue #39), Netwerkdiagnose & PR-Afronding (#35, #36, #37)  
 > **Status:** Afgerond  
 > **Auteur:** Antigravity (Project Manager)  
-> **Context:** Herstel 3D BAG functionaliteit na uitval TU Delft 2D WFS service
+> **Context:** Herstel 3D BAG functionaliteit, repo-brede governance & opschoning openstaande pull requests
 
 ---
 
@@ -17,6 +17,8 @@
    De kapotte 2D WFS service van TU Delft (`data.3dbag.nl`) vervangen door de officiële REST API (`api.3dbag.nl`) inclusief CityJSON decoding en coördinatentransformatie naar WGS84.
 4. **Standalone Netwerkdiagnose:**  
    Buiten de applicatie om benchmarks draaien om de responstijden en status van de TU Delft server (`131.180.126.111`) vast te stellen.
+5. **Review en Afronding van Openstaande Pull Requests (#35, #36, #37):**  
+   Formele review, testplan-afvinking en merge van alle 3 openstaande PR's op GitHub.
 
 ---
 
@@ -31,11 +33,21 @@
   * **Graceful Error Handling:** Bij een timeout of onbereikbaarheid van de externe server geeft de API een nette 503 met informatieve status terug in plaats van een harde crash. Timeout verruimd naar 25 seconden.
 * **[`static/js/app.js`](../../../static/js/app.js):**
   * Vriendelijke toast-notificatie ingebouwd wanneer de externe TU Delft server tijdelijk overbelast of onbereikbaar is.
+* **[`.gitignore`](../../../.gitignore):**
+  * Uitbreiding met legacy map `ETL/local/` en interne werknotities.
 
 ### 2. Documentatie & Tracing
 * **[GitHub Issue #39](https://github.com/TLaan/D-OmniTwin/issues/39):** Aangemaakt en bijgewerkt met de uitgevoerde technische migratiestappen en standalone meetresultaten.
 * **[`BUGFIX.md`](../../../BUGFIX.md):** Bug #56 geregistreerd (oorzaak, fix, impact).
 * **[`docs/STATE.md`](../../STATE.md):** Systeemstatus bijgewerkt (3D BAG naar 🟢 Actief, datum 27-08-2026, recente wijzigingen geactualiseerd).
+
+### 3. Behandelde & Gemergde Pull Requests
+
+| PR | Titel | Sluit Issue | Resultaat & Besluit |
+|---|---|---|---|
+| **[#35](https://github.com/TLaan/D-OmniTwin/pull/35)** | `docs: AGENTS.md als gedeelde bron voor alle AI-coding-agents` | Closes #14 | ✅ **Gemerged.** `AGENTS.md` is nu de single source of truth voor alle AI-agents (Antigravity/Gemini, Claude Code, Copilot). Legacy `ETL/local/` gearchiveerd en in `.gitignore` geplaatst. |
+| **[#36](https://github.com/TLaan/D-OmniTwin/pull/36)** | `docs: licentie-inconsistentie MERKID-document opgelost (EUPL/CC BY 4.0)` | Closes #25 | ✅ **Gemerged.** Licentievermelding in `MERKID_D-OMNITWIN.md` gecorrigeerd naar EUPL v1.2 / CC BY 4.0. Intern werkdocument veilig untracked en in `.gitignore` gezet. Repo is nu 100% licentie-consistent. |
+| **[#37](https://github.com/TLaan/D-OmniTwin/pull/37)** | `docs: CONTRIBUTING.md toevoegen — workflow issue tot merge` | Closes #29 | ✅ **Gemerged.** 7-stappen GitHub Flow en GitKraken-handleiding vastgelegd. Branch ruleset `protect-main` aangemaakt in repository settings (wordt actief bij overdracht naar Sudwest-Fryslan org conform Issue #30). |
 
 ---
 
