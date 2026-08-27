@@ -55,14 +55,10 @@ docs/5-secops/
 docs/6-ai-parallel-track/
 docs/7-projectmanagement/
 docs/10-testen/
+docs/1-visie-concept/juridisch/samenvatting_open_source_model_verdienstrategie_overheid.md
 
-# ETL/local: standalone scripts (naast de app)
-# db.ini bevat database credentials — NOOIT committen!
-ETL/local/db.ini
-# output/ bevat tijdelijke CBS JSON downloads — grote bestanden, niet committen
-ETL/local/output/
-# Overige lokale ETL data
-ETL/local/data/
+# Legacy ETL map
+ETL/local/
 
 # Overpass API cache (OSMPythonTools)
 cache/
