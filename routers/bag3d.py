@@ -1,13 +1,14 @@
 """
 Router: 3D BAG Panden
-POST /api/3dbag/buildings — On-demand 3D gebouwmodellen via 3DBAG WFS
+POST /api/3dbag/buildings — On-demand 3D gebouwmodellen via 3DBAG REST API
 
 Architectuur:
 1. Frontend stuurt gebied_ids (max 3) + optionele indicator_uuid
 2. Backend berekent BBOX via PostGIS ST_Envelope(ST_Collect)
-3. WFS call naar data.3dbag.nl (LoD 1.2 footprints met hoogte-attributen)
-4. Drielaagse kleurstrategie: bouwjaar → energielabel → buurt-indicator
-5. Retourneert standaard GeoJSON FeatureCollection naar deck.gl
+3. REST API call naar api.3dbag.nl (CityJSONFeatures met LoD 0 footprint + hoogte-attributen)
+4. Decode CityJSON geometrie naar GeoJSON polygonen (RD New → WGS84 via pyproj)
+5. Drielaagse kleurstrategie: bouwjaar → energielabel → buurt-indicator
+6. Retourneert standaard GeoJSON FeatureCollection naar deck.gl
 
 Copyright: © 3DBAG by 3DGI and TU Delft (CC BY 4.0)
 """
@@ -16,6 +17,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 from sqlalchemy import text
+from pyproj import Transformer
 from src.database import get_db
 from typing import List, Optional
 import requests
@@ -44,7 +46,7 @@ class BAG3DRequest(BaseModel):
 # Kleurstrategie constanten
 # ============================================================================
 
-# Mode A: Bouwjaar (direct uit 3DBAG WFS response)
+# Mode A: Bouwjaar (direct uit 3DBAG response)
 BOUWJAAR_KLEUR = [
     (1900, "#8B0000"),   # Voor 1900 — donkerrood
     (1945, "#c0392b"),   # 1900–1945 — rood
@@ -88,7 +90,7 @@ ENERGIELABEL_INDICATOR_CODES = {"pct_energielabel", "gem_energielabel"}
 def get_bbox_for_gebieden(db: Session, gebied_ids: List[str]) -> dict:
     """
     Berekent de bounding box van een set gebieden via PostGIS.
-    Retourneert BBOX in EPSG:28992 (RD New) voor de WFS call.
+    Retourneert BBOX in EPSG:28992 (RD New) voor de 3DBAG API call.
     """
     result = db.execute(text("""
         SELECT 
@@ -115,37 +117,180 @@ def get_bbox_for_gebieden(db: Session, gebied_ids: List[str]) -> dict:
     }
 
 # ============================================================================
-# 3DBAG WFS ophalen
+# 3DBAG REST API & CityJSON Decoding (EPSG:28992 -> EPSG:4326)
 # ============================================================================
 
-WFS_BASE_URL = "https://data.3dbag.nl/api/BAG3D/wfs"
-WFS_TIMEOUT = 15  # seconden
+REST_API_BASE = "https://api.3dbag.nl/collections/pand/items"
+REST_API_TIMEOUT = 25  # seconden per request (verruimd voor grotere/dichtbevolkte buurten)
+MAX_PAGES = 3          # Maximaal aantal pagina's (max 30-50 panden voor snelle UI weergave)
 
-def fetch_buildings_from_wfs(bbox: dict, limit: int = 5000) -> dict:
+# Module-level gecachede transformer voor optimale performance
+_rd_to_wgs84 = Transformer.from_crs("EPSG:28992", "EPSG:4326", always_xy=True)
+
+
+def _decode_cityjson_geometry(boundaries: list, vertices: list, scale: list, translate: list) -> list:
     """
-    Haalt gebouwen op via de 3DBAG WFS (LoD 1.2) als standaard GeoJSON.
-    Input BBOX in EPSG:28992, output geometrie in EPSG:4326.
+    Converteert CityJSON boundary indices recursief naar GeoJSON WGS84 polygon rings.
+    
+    CityJSON vertices zijn integers:
+        x_rd = vertex[0] * scale[0] + translate[0]
+        y_rd = vertex[1] * scale[1] + translate[1]
+    Daarna transformeren naar WGS84 (EPSG:4326) voor Deck.gl.
     """
-    params = {
-        "service": "WFS",
-        "version": "2.0.0",
-        "request": "GetFeature",
-        "typeName": "BAG3D:lod12",
-        "outputFormat": "application/json",
-        "bbox": f"{bbox['minx']},{bbox['miny']},{bbox['maxx']},{bbox['maxy']},EPSG:28992",
-        "srsName": "EPSG:4326",
-        "count": str(limit),
+    if not boundaries:
+        return []
+    
+    # Als het eerste element een integer is, is dit een vertex ring
+    if isinstance(boundaries[0], int):
+        coords = []
+        for idx in boundaries:
+            if idx < len(vertices):
+                v = vertices[idx]
+                x_rd = v[0] * scale[0] + translate[0]
+                y_rd = v[1] * scale[1] + translate[1]
+                lon, lat = _rd_to_wgs84.transform(x_rd, y_rd)
+                coords.append([round(lon, 7), round(lat, 7)])
+        if coords and coords[0] != coords[-1]:
+            coords.append(coords[0])
+        return coords
+    
+    # Recursief verwerken voor diepere geneste arrays (MultiSurface / Surface / Rings)
+    return [_decode_cityjson_geometry(child, vertices, scale, translate) for child in boundaries]
+
+
+def _cityjson_feature_to_geojson(feature: dict) -> list:
+    """
+    Converteert een CityJSONFeature naar een lijst van GeoJSON features.
+    Haalt LoD 0 footprint geometrie en relevante pand-attributen op.
+    """
+    meta = feature.get("metadata", {})
+    transform = meta.get("transform", {})
+    scale = transform.get("scale", [0.001, 0.001, 0.001])
+    translate = transform.get("translate", [0, 0, 0])
+    vertices = feature.get("vertices", [])
+    city_objects = feature.get("CityObjects", {})
+
+    geojson_features = []
+
+    for obj_id, obj in city_objects.items():
+        # Filter op Building type of root pand object
+        obj_type = obj.get("type", "")
+        if obj_type != "Building" and not obj_id.startswith("NL.IMBAG.Pand."):
+            continue
+
+        attrs = obj.get("attributes", {})
+
+        # Zoek footprint geometrie (LoD 0 of eerste MultiSurface / Solid)
+        footprint_geom = None
+        for geom in obj.get("geometry", []):
+            if geom.get("type") in ("MultiSurface", "CompositeSurface", "Solid"):
+                if footprint_geom is None or str(geom.get("lod", "")) in ("0", "1.2"):
+                    footprint_geom = geom
+
+        if not footprint_geom:
+            continue
+
+        boundaries = footprint_geom.get("boundaries", [])
+        if not boundaries:
+            continue
+
+        try:
+            decoded = _decode_cityjson_geometry(boundaries, vertices, scale, translate)
+            
+            # Normaliseer naar GeoJSON Polygon coordinates: list of rings
+            # Als decoded depth 3 is (oppervlakken met ringen), pakken we het eerste oppervlak
+            coords = []
+            if decoded and isinstance(decoded[0], list):
+                if decoded[0] and isinstance(decoded[0][0], list) and isinstance(decoded[0][0][0], (int, float)):
+                    coords = decoded  # Al een lijst van ringen: [[ [lon, lat], ... ]]
+                elif decoded[0] and isinstance(decoded[0][0], list) and isinstance(decoded[0][0][0], list):
+                    coords = decoded[0]  # Eerste surface uit MultiSurface
+            
+            if not coords:
+                continue
+
+            geojson_features.append({
+                "type": "Feature",
+                "geometry": {
+                    "type": "Polygon",
+                    "coordinates": coords
+                },
+                "properties": {
+                    "identificatie": attrs.get("identificatie", obj_id),
+                    "oorspronkelijkbouwjaar": attrs.get("oorspronkelijkbouwjaar"),
+                    "status": attrs.get("status"),
+                    "b3_h_dak_50p": attrs.get("b3_h_dak_50p"),
+                    "b3_h_maaiveld": attrs.get("b3_h_maaiveld"),
+                }
+            })
+        except Exception as err:
+            logger.debug(f"Kon CityJSON object {obj_id} niet decoden: {err}")
+            continue
+
+    return geojson_features
+
+
+def fetch_buildings_from_api(bbox: dict, max_pages: int = MAX_PAGES) -> dict:
+    """
+    Haalt gebouwen op via de 3DBAG REST API (api.3dbag.nl).
+    Ondersteunt BBOX querying en automatische paginering via links.next.
+    """
+    current_url = REST_API_BASE
+    current_params = {
+        "bbox": f"{bbox['minx']:.1f},{bbox['miny']:.1f},{bbox['maxx']:.1f},{bbox['maxy']:.1f}"
     }
 
+    all_features = []
+    page = 0
+
     try:
-        response = requests.get(WFS_BASE_URL, params=params, timeout=WFS_TIMEOUT)
-        response.raise_for_status()
-        return response.json()
+        while current_url and page < max_pages:
+            page += 1
+            response = requests.get(
+                current_url,
+                params=current_params if page == 1 else None,
+                timeout=REST_API_TIMEOUT
+            )
+            response.raise_for_status()
+            data = response.json()
+
+            # Verwerk features
+            raw_features = data.get("features", [])
+            for raw_feat in raw_features:
+                all_features.extend(_cityjson_feature_to_geojson(raw_feat))
+
+            # Zoek 'next' link voor volgende pagina
+            next_url = None
+            for link in data.get("links", []):
+                if link.get("rel") == "next" and link.get("href"):
+                    next_url = link["href"]
+                    break
+
+            if next_url and next_url != current_url and len(all_features) < 100:
+                current_url = next_url
+            else:
+                break
+
     except requests.exceptions.Timeout:
-        raise HTTPException(status_code=504, detail="3DBAG WFS timeout — probeer het later opnieuw")
+        AppLogger.warning("3DBAG REST API timeout — service reageert traag", category="KAART")
+        # Als we al features hebben opgehaald, retourneren we die ipv 503
+        if not all_features:
+            raise HTTPException(
+                status_code=503,
+                detail="3DBAG service (TU Delft) is tijdelijk overbelast. Probeer het over enkele ogenblikken opnieuw."
+            )
     except requests.exceptions.RequestException as e:
-        AppLogger.error(f"WFS fout: {e}", category="KAART")
-        raise HTTPException(status_code=502, detail=f"3DBAG WFS niet bereikbaar: {str(e)}")
+        AppLogger.error(f"3DBAG REST API fout: {e}", category="KAART")
+        if not all_features:
+            raise HTTPException(
+                status_code=503,
+                detail="3DBAG service (TU Delft) is tijdelijk niet bereikbaar."
+            )
+
+    return {
+        "type": "FeatureCollection",
+        "features": all_features
+    }
 
 # ============================================================================
 # Kleur-verrijking
@@ -227,23 +372,15 @@ def enrich_features_with_color(
             props["indicator_waarde"] = bouwjaar
 
         elif kleur_mode == "energielabel":
-            # Toekomstig: lookup in ep_online tabel op basis van pand-ID
-            # Voor nu: fallback naar grijs
-            pand_id = props.get("identificatie", "")
             props["indicator_color"] = "#888888"
             props["indicator_waarde"] = None
 
         elif kleur_mode == "buurt":
-            # Spatial match: pand in welke buurt? Gebruik BBOX/centroïd heuristiek
-            # Simpele aanpak voor PoC: alle panden in de BBOX krijgen dezelfde kleur
-            # als er slechts 1 buurt is, anders grijs (nader uit te werken)
             if len(buurt_kleuren) == 1:
                 enige = list(buurt_kleuren.values())[0]
                 props["indicator_color"] = enige["kleur"]
                 props["indicator_waarde"] = enige["waarde"]
             elif len(buurt_kleuren) > 1:
-                # Bij meerdere buurten: pakken we de eerste als fallback
-                # Ideaal: PostGIS spatial join per pand
                 eerste = list(buurt_kleuren.values())[0]
                 props["indicator_color"] = eerste["kleur"]
                 props["indicator_waarde"] = eerste["waarde"]
@@ -281,13 +418,16 @@ async def get_3d_buildings(
     bbox = get_bbox_for_gebieden(db, request.gebied_ids)
     AppLogger.info(f"3DBAG BBOX (RD): {bbox['minx']:.0f},{bbox['miny']:.0f} → {bbox['maxx']:.0f},{bbox['maxy']:.0f}", category="KAART")
 
-    # Stap 2: WFS ophalen
-    geojson = fetch_buildings_from_wfs(bbox)
+    # Stap 2: 3DBAG REST API ophalen
+    geojson = fetch_buildings_from_api(bbox)
     features = geojson.get("features", [])
-    AppLogger.info(f"3DBAG {len(features)} panden opgehaald van WFS", category="KAART")
+    AppLogger.info(f"3DBAG {len(features)} panden opgehaald van REST API", category="KAART")
 
     if not features:
-        raise HTTPException(status_code=404, detail="Geen panden gevonden in het geselecteerde gebied")
+        raise HTTPException(
+            status_code=404,
+            detail="Geen 3D panden gevonden in het geselecteerde gebied op 3DBAG."
+        )
 
     # Stap 3: Kleurverrijking
     enriched = enrich_features_with_color(
@@ -312,4 +452,4 @@ async def get_3d_buildings(
 @router.get("/health")
 async def bag3d_health():
     """Health check voor 3D BAG service."""
-    return {"status": "healthy", "service": "3D BAG Panden API"}
+    return {"status": "healthy", "service": "3D BAG Panden API (api.3dbag.nl)"}

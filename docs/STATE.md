@@ -32,7 +32,7 @@
 | **AI Chat Interface** | 🟢 Actief | HELP_ONBOARDING intent actief (deterministic, geen LLM) |
 | **Help / Wiki Pagina** | 🟢 Actief | `/static/help.html` |
 | **Externe Kaartlagen Beheer & Rendering** | 🟢 Actief | Sprint 22 Track D ✅ — Standalone rendering (zonder CBS buurten), compacte UI, inline toelichting via ℹ️, scrollbegrenzing (max 5 items). PDOK WFS (Natura 2000, Bodemdaling, Monumenten, BAG Woonplaatsen). |
-| **3D BAG visualisatie** | 🟡 Beta | LoD 2.5D, Bug #42 open |
+| **3D BAG visualisatie** | 🟢 Actief | LoD 0/1.2 via 3DBAG REST API (`api.3dbag.nl`), CityJSON decoding naar WGS84, Bug #56 gefixt (Issue #39). |
 | **Admin Panel** | 🟢 Actief | Build via `/build-admin-panel` workflow |
 | **Ontologie generatie** | 🟢 Actief | Fence & Source philosophy geïmplementeerd |
 | **Multi-Gebiedsdossier rapport** | 🟢 Actief | Voltooid incl. bugfixes en colorblind-safe visualisatie |
@@ -62,9 +62,9 @@
 
 ## 🔄 Recente wijzigingen (laatste 3 sessies)
 
+| 2026-08-27 | **3D BAG Panden Migratie naar REST API (Issue #39 / Bug #56)** | Kapotte WFS van TU Delft (`data.3dbag.nl`) vervangen door de officiële 3DBAG REST API (`api.3dbag.nl`). CityJSON geometry decoder ingebouwd (RD New → WGS84 polygonen via `pyproj`), paginering via `links.next` en graceful 503 error handling. |
 | 2026-08-26 | **Docker Uitlevering & CI/CD Pipeline Documentatie (Issues #27 & #28)** | Twee complementaire gidsen opgesteld in `docs/9-beheer/`: (1) `stappenplan_docker_installatie_externe_organisatie.md` voor Docker restore via DB-dump op externe servers, en (2) `cicd_pipeline_docker_hub.md` voor GitHub Actions → Docker Hub uitlevering (SemVer, testmethodiek, productie compose). GitHub API live gekoppeld. |
 | 2026-08-26 | **Systeemarchitectuur & Implementatiegids voor ICT & Informatieadvies** | Opgesteld in `docs/2-architectuur/architecture/systeemarchitectuur_en_implementatiegids_ict.md`. Bevat ASCII box-drawing diagrammen van de containerstack, Entra ID / Keycloak SSO identiteitsflow en de gemeentelijke Docker hostinginrichting. |
-| 2026-08-21 | **Sprint 22 Track C (Data Lineage & Bronvermelding) voltooid** | 244 actieve indicatoren (100%) verrijkt met `bron_systeem_api`, `bron_tabel_referentie` en peildata. Klikbare externe bronlinks in detailpaneel en bronverantwoording colofon in rapporten geïmplementeerd. Admin Panel uitgebreid. Sprint 22 afgerond. |
 | 2026-08-21 | **Sprint 23 planning: Multi-Tenant Identity & Keycloak** | Sprint 23 herdefinieert van Backend Performance naar De Gebruikers Sprint. Volledig architectuur- en implementatieplan opgesteld: Keycloak als Identity Broker, 4-niveaus RBAC, BFF-patroon, PostgreSQL RLS, Entra ID Admin Consent flow, PostgREST beveiliging. Spec: `docs/5-secops/security/Keycloak_MultiTenant_RBAC_Spec.md`. ROADMAP.md en TODO.md bijgewerkt. |
 
 ---

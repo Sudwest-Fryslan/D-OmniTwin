@@ -944,7 +944,10 @@ async function loadBag3DBuildings() {
 
     } catch (e) {
         console.error('❌ 3D BAG fout:', e);
-        showError('3D panden konden niet worden geladen: ' + e.message);
+        const msg = e.message && (e.message.includes('503') || e.message.includes('tijdelijk') || e.message.includes('niet bereikbaar'))
+            ? '🏗️ 3D BAG service (TU Delft) is tijdelijk niet bereikbaar of overbelast. Probeer het over enkele ogenblikken opnieuw.'
+            : '3D panden konden niet worden geladen: ' + e.message;
+        showError(msg);
     } finally {
         showLoading(false);
     }

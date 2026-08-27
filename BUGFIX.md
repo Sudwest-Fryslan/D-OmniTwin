@@ -1,5 +1,29 @@
 # BUGFIX.md - D-OmniTwin
 
+## Bug #56: 3D BAG Panden WFS Timeout & Migratie naar REST API (27-08-2026)
+
+**Gerapporteerd:** 27-08-2026  
+**Status:** ✅ FIXED (27-08-2026)  
+**Severity:** 🔴 HIGH (Functionaliteit 3D panden gaf 504/502 fouten)  
+**GitHub Issue:** [#39](https://github.com/TLaan/D-OmniTwin/issues/39)
+
+### Probleem
+Bij het klikken op de knop "🏗️ 3D Panden" in de kaartweergave kregen gebruikers een foutmelding ("3D panden konden niet worden geladen: HTTP 504"). De backend probeerde data op te halen via de 2D WFS service van TU Delft (`data.3dbag.nl/api/BAG3D/wfs`), welke geen data meer retourneerde en na 15 seconden een timeout veroorzaakte.
+
+### Oorzaak (Root Cause)
+TU Delft / 3DGI heeft de oude WFS-infrastructuur afgeschaald ten gunste van de nieuwe REST API op `https://api.3dbag.nl/collections/pand/items`. De TLS-handshake op de oude WFS slaagde nog wel, maar de webserver leverde 0 bytes payload terug, waardoor de verbinding bleef hangen tot de timeout.
+
+### Oplossing
+1. **Backend Migratie (`routers/bag3d.py`):**
+   - WFS GetFeature vervangen door directe calls naar de 3DBAG REST API (`api.3dbag.nl`).
+   - CityJSONFeatures converter ingebouwd: decodeert integer boundary-indices met `transform.scale` en `transform.translate` (RD New) en projecteert naar WGS84 polygonen via `pyproj.Transformer`.
+   - Paginering ondersteuning via `links.next` (max 3 pagina's / ~50 panden voor snelle rendering).
+   - Graceful error-handling: 503 met duidelijke servicestatus-melding in plaats van harde 504/502 crashes.
+2. **Frontend UX (`static/js/app.js`):**
+   - Vriendelijke toast-notificatie ingebouwd wanneer de externe TU Delft service tijdelijk onbereikbaar of overbelast is.
+
+---
+
 ## Bug #55: Hoofdapplicatie UI bevriest wanneer rapportpagina in ander tabblad in print-dialoog staat (19-08-2026)
 
 **Gerapporteerd:** 19-08-2026  
