@@ -122,7 +122,7 @@ def get_bbox_for_gebieden(db: Session, gebied_ids: List[str]) -> dict:
 
 REST_API_BASE = "https://api.3dbag.nl/collections/pand/items"
 REST_API_TIMEOUT = 25  # seconden per request (verruimd voor grotere/dichtbevolkte buurten)
-MAX_PAGES = 3          # Maximaal aantal pagina's (max 30-50 panden voor snelle UI weergave)
+MAX_PAGES = 30         # Maximaal aantal pagina's (volledige wijk ophalen)
 
 # Module-level gecachede transformer voor optimale performance
 _rd_to_wgs84 = Transformer.from_crs("EPSG:28992", "EPSG:4326", always_xy=True)
@@ -158,13 +158,39 @@ def _decode_cityjson_geometry(boundaries: list, vertices: list, scale: list, tra
     return [_decode_cityjson_geometry(child, vertices, scale, translate) for child in boundaries]
 
 
-def _cityjson_feature_to_geojson(feature: dict) -> list:
+def _extract_polygon_rings(decoded: list) -> list:
+    """
+    Normaliseert een willekeurige diepte van CityJSON decoded boundaries naar
+    een valide GeoJSON Polygon coordinate structuur (lijst van ringen: [ [ [lon, lat], ... ] ]).
+    """
+    if not decoded or not isinstance(decoded, list):
+        return []
+    
+    # Navigeer omlaag tot we een lijst van ringen (Surface) vinden
+    curr = decoded
+    while isinstance(curr, list) and len(curr) > 0:
+        if isinstance(curr[0], list) and len(curr[0]) > 0:
+            first_elem = curr[0][0]
+            # Als first_elem een getal is: curr is één ring [ [lon, lat], ... ] -> wrap in surface
+            if isinstance(first_elem, (int, float)):
+                return [curr]
+            # Als first_elem een punt [lon, lat] is: curr is een Surface (lijst van ringen)
+            if isinstance(first_elem, list) and len(first_elem) >= 2 and isinstance(first_elem[0], (int, float)):
+                return curr
+        
+        # Dieper afdalen (bij MultiSurface of Solid)
+        curr = curr[0]
+        
+    return []
+
+
+def _cityjson_feature_to_geojson(feature: dict, default_transform: dict = None) -> list:
     """
     Converteert een CityJSONFeature naar een lijst van GeoJSON features.
-    Haalt LoD 0 footprint geometrie en relevante pand-attributen op.
+    Haalt LoD 0 footprint / LoD 1.2 geometrie en relevante pand-attributen op.
     """
-    meta = feature.get("metadata", {})
-    transform = meta.get("transform", {})
+    # Transform kan direct op feature staan (CityJSONSeq/CityJSONFeature) of fallback
+    transform = feature.get("transform") or (feature.get("metadata", {}).get("transform") if isinstance(feature.get("metadata"), dict) else None) or default_transform or {}
     scale = transform.get("scale", [0.001, 0.001, 0.001])
     translate = transform.get("translate", [0, 0, 0])
     vertices = feature.get("vertices", [])
@@ -173,18 +199,18 @@ def _cityjson_feature_to_geojson(feature: dict) -> list:
     geojson_features = []
 
     for obj_id, obj in city_objects.items():
-        # Filter op Building type of root pand object
+        # Filter op Building of BuildingPart type of root pand object
         obj_type = obj.get("type", "")
-        if obj_type != "Building" and not obj_id.startswith("NL.IMBAG.Pand."):
+        if obj_type not in ("Building", "BuildingPart") and not obj_id.startswith("NL.IMBAG.Pand."):
             continue
 
         attrs = obj.get("attributes", {})
 
-        # Zoek footprint geometrie (LoD 0 of eerste MultiSurface / Solid)
+        # Zoek footprint geometrie (LoD 0 footprint heeft voorkeur, anders LoD 1.2 / 2.2)
         footprint_geom = None
         for geom in obj.get("geometry", []):
-            if geom.get("type") in ("MultiSurface", "CompositeSurface", "Solid"):
-                if footprint_geom is None or str(geom.get("lod", "")) in ("0", "1.2"):
+            if geom.get("type") in ("MultiSurface", "CompositeSurface", "Solid", "MultiSolid"):
+                if footprint_geom is None or str(geom.get("lod", "")) in ("0", "0.0", "1.2"):
                     footprint_geom = geom
 
         if not footprint_geom:
@@ -196,18 +222,14 @@ def _cityjson_feature_to_geojson(feature: dict) -> list:
 
         try:
             decoded = _decode_cityjson_geometry(boundaries, vertices, scale, translate)
-            
-            # Normaliseer naar GeoJSON Polygon coordinates: list of rings
-            # Als decoded depth 3 is (oppervlakken met ringen), pakken we het eerste oppervlak
-            coords = []
-            if decoded and isinstance(decoded[0], list):
-                if decoded[0] and isinstance(decoded[0][0], list) and isinstance(decoded[0][0][0], (int, float)):
-                    coords = decoded  # Al een lijst van ringen: [[ [lon, lat], ... ]]
-                elif decoded[0] and isinstance(decoded[0][0], list) and isinstance(decoded[0][0][0], list):
-                    coords = decoded[0]  # Eerste surface uit MultiSurface
+            coords = _extract_polygon_rings(decoded)
             
             if not coords:
                 continue
+
+            # Hoogtebepaling uit 3DBAG attributen (dakhoogte 50 percentile of max)
+            dak_h = attrs.get("b3_h_dak_50p") or attrs.get("b3_h_dak_max") or attrs.get("h_dak")
+            maaiveld_h = attrs.get("b3_h_maaiveld") or attrs.get("h_maaiveld") or 0.0
 
             geojson_features.append({
                 "type": "Feature",
@@ -217,10 +239,10 @@ def _cityjson_feature_to_geojson(feature: dict) -> list:
                 },
                 "properties": {
                     "identificatie": attrs.get("identificatie", obj_id),
-                    "oorspronkelijkbouwjaar": attrs.get("oorspronkelijkbouwjaar"),
+                    "oorspronkelijkbouwjaar": attrs.get("oorspronkelijkbouwjaar") or attrs.get("bouwjaar"),
                     "status": attrs.get("status"),
-                    "b3_h_dak_50p": attrs.get("b3_h_dak_50p"),
-                    "b3_h_maaiveld": attrs.get("b3_h_maaiveld"),
+                    "b3_h_dak_50p": dak_h,
+                    "b3_h_maaiveld": maaiveld_h,
                 }
             })
         except Exception as err:
@@ -233,11 +255,12 @@ def _cityjson_feature_to_geojson(feature: dict) -> list:
 def fetch_buildings_from_api(bbox: dict, max_pages: int = MAX_PAGES) -> dict:
     """
     Haalt gebouwen op via de 3DBAG REST API (api.3dbag.nl).
-    Ondersteunt BBOX querying en automatische paginering via links.next.
+    Ondersteunt BBOX querying, limit parameter en paginering via links.next.
     """
     current_url = REST_API_BASE
     current_params = {
-        "bbox": f"{bbox['minx']:.1f},{bbox['miny']:.1f},{bbox['maxx']:.1f},{bbox['maxy']:.1f}"
+        "bbox": f"{bbox['minx']:.1f},{bbox['miny']:.1f},{bbox['maxx']:.1f},{bbox['maxy']:.1f}",
+        "limit": 500  # Haal direct tot 500 panden per request op voor complete buurten
     }
 
     all_features = []
@@ -254,19 +277,22 @@ def fetch_buildings_from_api(bbox: dict, max_pages: int = MAX_PAGES) -> dict:
             response.raise_for_status()
             data = response.json()
 
+            # Root transform als fallback voor alle features
+            root_transform = data.get("transform") or (data.get("metadata", {}).get("transform") if isinstance(data.get("metadata"), dict) else None)
+
             # Verwerk features
             raw_features = data.get("features", [])
             for raw_feat in raw_features:
-                all_features.extend(_cityjson_feature_to_geojson(raw_feat))
+                all_features.extend(_cityjson_feature_to_geojson(raw_feat, default_transform=root_transform))
 
-            # Zoek 'next' link voor volgende pagina
+            # Zoek 'next' link voor volgende pagina als er meer data is
             next_url = None
             for link in data.get("links", []):
                 if link.get("rel") == "next" and link.get("href"):
                     next_url = link["href"]
                     break
 
-            if next_url and next_url != current_url and len(all_features) < 100:
+            if next_url and next_url != current_url and len(all_features) < 3000:
                 current_url = next_url
             else:
                 break
