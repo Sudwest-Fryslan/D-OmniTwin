@@ -1,0 +1,1585 @@
+from pathlib import Path
+
+md = r"""# Werkpakket & Architectuurblauwdruk: 3D BAG in D-OmniTwin
+
+**Status:** Geconsolideerde versie / technische blauwdruk v2  
+**Doel:** definitieve architectuur- en implementatiegids voor de migratie van de D-OmniTwin 3D-weergave van een backend-gedreven 2.5D-adapter naar een native 3D Tiles-gebaseerde architectuur.  
+**Bronbasis:** officiële 3DBAG-documentatie, actuele Deck.gl/loaders.gl-documentatie en de bestaande D-OmniTwin-implementatie (`bag3d.py`).  
+**Primaire externe bron:** https://docs.3dbag.nl/nl/delivery/webservices/#3d-tiles
+
+> **Belangrijke ontwerpregel:** onderscheid in vervolgonderzoek altijd tussen bronfeit, vastgesteld codefeit, architectuurkeuze en nog te bewijzen hypothese.
+
+---
+
+# 0. Executive summary
+
+De huidige D-OmniTwin-integratie gebruikt de 3DBAG REST API als backend-gedreven geometrieleverancier. De backend berekent een BBOX, haalt CityJSONFeatures op, decodeert CityJSON naar GeoJSON en retourneert uiteindelijk 2D-polygonen met hoogte-attributen.
+
+Dat werkt als een pragmatische 2.5D-adapter, maar heeft een belangrijk nadeel: de D-OmniTwin-backend wordt afhankelijk van het schema, de paginering en de geometrische representatie van de 3DBAG API.
+
+De gewenste architectuur verschuift daarom naar:
+
+```text
+3DBAG 3D Tiles
+       ↓
+Deck.gl / loaders.gl
+       ↓
+native client-side streaming
+       ↓
+3D rendering
+       ↕
+D-OmniTwin semantische data
+       ↓
+indicatoren / analyses / selectie / styling
+
+De belangrijkste correctie op de eerdere blauwdruk is echter dat de voorgestelde Deck.gl-code met:
+
+getFillColor: (...)
+
+niet zonder meer geldig is voor Tile3DLayer.
+
+De huidige Deck.gl-documentatie beschrijft voor Tile3DLayer geen algemene getFillColor accessor zoals bij GeoJsonLayer. Bij picking geeft Tile3DLayer volgens de documentatie bovendien een Tile3DHeader als info.object, niet automatisch een gebouw-feature met:
+
+info.object.properties.identificatie
+
+Daarom moet metadata, picking en data-driven styling als afzonderlijk technisch werkpakket worden gevalideerd.
+
+De juiste architectuur is dus niet:
+
+"3D Tiles + simpelweg getFillColor"
+
+maar:
+
+"3D Tiles als native streaminglaag + gevalideerde metadata/picking-laag + een expliciete stylingstrategie die aansluit op de feitelijke Deck.gl/loaders.gl-capabilities."
+
+1. Visie & rol van 3D in de architectuur
+
+Binnen D-OmniTwin moet worden gewaakt voor een "3D-first"-benadering.
+
+Een gebouw is in de basis geen 3D-model, maar een semantisch data-object.
+
+Architectuurprincipe
+
+Data staat centraal; visualisatie is een afgeleide.
+
+De 3D-geometrie is slechts één visualisatielaag van het semantische gebouwobject.
+
+Alle koppelingen verlopen primair via de unieke BAG-identificatie.
+
+BAG-ID
+  ↓
+Indicatoren / Sensoren / WOZ / Vergunningen / Context
+  ↓
+3D-geometrie
+  ↓
+Rendering via 3D Tiles
+
+De geometrie is vervangbaar.
+
+De identiteit en semantische relatie zijn dat niet.
+
+2. Huidige situatie
+
+De huidige bag3d.py implementeert grofweg:
+
+Frontend
+   ↓
+POST /api/3dbag/buildings
+   ↓
+PostGIS
+   ↓
+BBOX EPSG:28992
+   ↓
+3DBAG REST API
+   ↓
+CityJSONFeatures
+   ↓
+Python CityJSON decoder
+   ↓
+GeoJSON Polygon
+   ↓
+Deck.gl
+
+De router haalt onder andere:
+
+BAG-identificatie;
+oorspronkelijk bouwjaar;
+status;
+dakhoogte;
+maaiveldhoogte;
+
+uit de CityJSON-objecten.
+
+De oorspronkelijke 3D-geometrie wordt vervolgens teruggebracht tot een GeoJSON Polygon.
+
+Gevolg
+
+De huidige oplossing is functioneel eerder:
+
+3DBAG → 2D/2.5D webadapter
+
+dan:
+
+native 3D webstreaming.
+
+Dit is voor een eerste implementatie verdedigbaar, maar niet de gewenste eindarchitectuur.
+
+3. Waarom de huidige route kwetsbaar is
+3.1 Backend is onderdeel van de geometriepipeline
+
+De backend:
+
+vraagt geometrie op;
+decodeert geometrie;
+transformeert coördinaten;
+bouwt GeoJSON;
+serialiseert de volledige response;
+stuurt deze naar de browser.
+
+Hierdoor ontstaan:
+
+CPU-belasting;
+memorygebruik;
+extra latency;
+extra payload;
+serialisatiekosten;
+parsingkosten;
+onderhoud aan een eigen CityJSON decoder.
+3.2 API-schema-afhankelijkheid
+
+De huidige code gebruikt expliciet:
+
+https://api.3dbag.nl/collections/pand/items
+
+en verwacht bepaalde CityJSON-structuren en attributen.
+
+De officiële 3DBAG-documentatie noemt de 3DBAG API momenteel nog niet OGC-compliant en beschrijft deze als CityJSONFeatures-service.
+
+Daarmee is de REST API niet de meest robuuste primaire renderinglaag voor D-OmniTwin.
+
+3.3 Eigen geometrische decoder
+
+De functie:
+
+_decode_cityjson_geometry(...)
+
+is een eigen implementatie van CityJSON boundary decoding.
+
+Dat introduceert een eigen onderhoudsoppervlak.
+
+3.4 Paginering
+
+De huidige implementatie begrenst het aantal pagina's en het aantal features.
+
+Dat is bruikbaar voor snelle UI-respons, maar geen schaalbare streamingstrategie.
+
+3.5 Server-side styling
+
+De huidige backend verrijkt geometrieën met kleurinformatie.
+
+Voor een interactieve 3D-viewer is dit niet de ideale scheiding van verantwoordelijkheden.
+
+3.6 Concrete functionele kwetsbaarheid
+
+Bij meerdere geselecteerde buurten kan de huidige buurtkleurverrijking dezelfde kleur op meerdere gebouwen toepassen, omdat na het ophalen van meerdere buurtwaarden uiteindelijk de eerste gevonden waarde als kleurbron kan worden gebruikt.
+
+Dit moet bij migratie expliciet worden opgelost.
+
+4. De nieuwe architectuur
+4.1 Hoofdpatroon
+                         D-OmniTwin
+                              │
+             ┌────────────────┴────────────────┐
+             │                                 │
+          Data layer                      Visualization
+             │                                 │
+          PostGIS                       MapLibre / Deck.gl
+             │                                 │
+     ┌───────┴────────┐                ┌───────┴────────┐
+     │                │                │                │
+ BAG / metadata    indicatoren       2D BAG          3D BAG
+                                                        │
+                                                   Tile3DLayer
+                                                        │
+                                                   3DBAG Tiles
+                                                        │
+                                      ┌─────────────────┴──────────────┐
+                                      │                                │
+                                  Geometry                         Metadata
+                                      │                                │
+                                      │                            BAG-ID
+                                      │                                │
+                                      └──────────────┬─────────────────┘
+                                                     │
+                                                     ▼
+                                               D-OmniTwin
+                                                     │
+                                             indicatorwaarden
+                                                     │
+                                                     ▼
+                                           styling / interactie
+4.2 Verantwoordelijkheden
+3DBAG
+
+Levert:
+
+3D-geometrie;
+LoD1.2;
+LoD1.3;
+LoD2.2;
+3D Tiles;
+gebouwmetadata.
+D-OmniTwin backend
+
+Levert:
+
+semantische gegevens;
+indicatorwaarden;
+BAG-koppelingen;
+analyses;
+context;
+state;
+configuratie;
+eventueel een provider-/proxylaag indien technisch of governance-matig nodig.
+Browser / renderinglaag
+
+Verzorgt:
+
+tile streaming;
+tile traversal;
+rendering;
+client-side interactie;
+picking;
+eventuele GPU-styling.
+5. Officiële 3DBAG 3D Tiles-capaciteiten
+
+De officiële 3DBAG-documentatie vermeldt:
+
+3D Tiles v1.1;
+CRS EPSG:4978 voor tileset en content;
+binaire glTF-content (.glb);
+metadata per gebouw via EXT_mesh_features en EXT_structural_metadata;
+uniforme kleurstelling van gebouwen;
+compressie via KHR_mesh_quantization;
+compressie via EXT_meshopt_compression;
+explicit tiling;
+meerdere external tilesets;
+afzonderlijke tilesets voor LoD1.2, LoD1.3 en LoD2.2.
+
+3DBAG gebruikt deze 3D Tiles zelf voor de 3D-viewer en stelt dezelfde tiles extern beschikbaar.
+
+Bron:
+
+https://docs.3dbag.nl/nl/delivery/webservices/#3d-tiles
+
+5.1 Versies niet hardcoderen als architectuurprincipe
+
+De actuele downloadpagina toont op dit moment versie v20250903, maar release-/versiebeheer moet niet in de applicatiearchitectuur als vaste waarde worden ingebakken.
+
+Gebruik liever een configureerbare providerconfiguratie:
+
+THREEDBAG_VERSION
+THREEDBAG_LOD12_URL
+THREEDBAG_LOD13_URL
+THREEDBAG_LOD22_URL
+
+of een centraal configuratieobject.
+
+Bij een nieuwe 3DBAG-release moet één configuratiewijziging voldoende zijn.
+
+6. Belangrijke correctie: Deck.gl styling is geen simpele getFillColor
+
+Dit is een van de belangrijkste gaps in de huidige blauwdruk.
+
+Voor GeoJsonLayer bestaat bijvoorbeeld:
+
+getFillColor
+
+maar de huidige Deck.gl-documentatie voor Tile3DLayer biedt geen vergelijkbare algemene getFillColor accessor voor gebouwfeatures.
+
+De gedocumenteerde Tile3DLayer-accessors zijn beperkter; onder andere getPointColor geldt voor point-cloud tiles, terwijl _getMeshColor expliciet als een beperkte/debuggerichte mogelijkheid voor mesh/I3S wordt beschreven.
+
+Daarom is deze eerdere code:
+
+const bag3dLayer = new Tile3DLayer({
+  ...
+  getFillColor: (tileFeature) => {
+    ...
+  }
+});
+
+niet als productie-implementatie aannemen.
+
+Evenmin mag worden aangenomen dat:
+
+info.object.properties.identificatie
+
+automatisch beschikbaar is bij Tile3DLayer picking.
+
+De Deck.gl-documentatie vermeldt dat info.object bij Tile3DLayer picking een Tile3DHeader kan zijn.
+
+Ontwerpconsequentie
+
+De styling- en pickingarchitectuur moet eerst empirisch worden vastgesteld.
+
+7. Metadata: wel beschikbaar, maar toegang moet worden bewezen
+
+3DBAG levert volgens de officiële documentatie metadata per gebouw via:
+
+EXT_mesh_features
+EXT_structural_metadata
+
+Ook loaders.gl documenteert ondersteuning voor deze 3D Tiles/glTF-extensies.
+
+Dit maakt semantische koppeling technisch veelbelovend.
+
+Maar:
+
+"3DBAG bevat metadata" betekent niet automatisch "Tile3DLayer geeft deze metadata als object.properties aan iedere accessor".
+
+Dat is een cruciaal onderscheid.
+
+Te bewijzen keten
+3DBAG glTF
+    ↓
+EXT_mesh_features
+    +
+EXT_structural_metadata
+    ↓
+loaders.gl 3D Tiles loader
+    ↓
+Tile3D content / feature IDs
+    ↓
+Deck.gl Tile3DLayer
+    ↓
+picking / feature identification
+    ↓
+BAG-ID
+    ↓
+D-OmniTwin
+
+Iedere stap moet afzonderlijk worden gevalideerd.
+
+8. Data joining: gewenste logica
+
+De gewenste semantische architectuur blijft:
+
+3DBAG geometry
+       │
+       │ BAG-ID
+       ▼
+D-OmniTwin lookup
+       │
+       ├── bouwjaar
+       ├── energielabel
+       ├── WOZ
+       ├── energie
+       ├── klimaat
+       ├── water
+       └── andere indicatoren
+
+Maar de implementatie van de koppeling moet niet worden gebaseerd op een niet-ondersteunde getFillColor.
+
+Ontwerpdoel
+
+De data moet onafhankelijk van de 3D-geometrie blijven.
+
+Bijvoorbeeld:
+
+{
+  "NL.IMBAG.Pand.0363100012165538": {
+    "waarde": 1923,
+    "kleur": [139, 0, 0, 255],
+    "kleur_mode": "bouwjaar"
+  }
+}
+
+Deze lookup is conceptueel goed.
+
+De renderingadapter die de lookup toepast moet echter nog worden ontworpen.
+
+9. Mogelijke stylingstrategieën
+
+Er zijn drie onderzoekspaden.
+
+Strategie A — Native Tile3D styling
+
+Onderzoeken of de gebruikte Deck.gl/loaders.gl-stack voldoende toegang biedt om:
+
+feature ID
+   ↓
+feature metadata
+   ↓
+GPU color
+
+rechtstreeks te implementeren.
+
+Voordelen:
+
+minimale extra geometrie;
+ideale GPU-route;
+volledige 3D-integratie.
+
+Nadeel:
+
+mogelijk custom Deck.gl-/shaderwerk nodig;
+huidige standaard Tile3DLayer API is hiervoor niet voldoende bewezen.
+Strategie B — Custom 3D renderinglaag
+
+Onderzoeken of een aangepaste renderinglaag bovenop loaders.gl 3D Tiles mogelijk is.
+
+Concept:
+
+Tile3DLoader
+     ↓
+feature IDs + geometry
+     ↓
+custom rendering
+     ↓
+D-OmniTwin styling
+
+Dit geeft maximale controle, maar verhoogt onderhoud en complexiteit.
+
+Strategie C — 3D Tiles + gesynchroniseerde 2D data-overlay
+
+Wanneer native feature styling te complex of te kwetsbaar blijkt:
+
+3D Tiles
+   +
+2D BAG / MVT / GeoJSON
+
+De 2D-laag kan dan de semantische kleur-/selectiecontext leveren terwijl de 3D Tiles de visuele massa renderen.
+
+Dit is minder elegant dan volledig native 3D styling, maar kan als pragmatische tussenoplossing zeer performant zijn.
+
+Niet vooraf kiezen. Eerst benchmarken.
+
+10. Picking: expliciet ontwerpen
+
+De gewenste gebruikersinteractie is:
+
+Gebouw aanklikken
+       ↓
+feature identificeren
+       ↓
+BAG-ID
+       ↓
+D-OmniTwin detail
+
+Maar Tile3DLayer picking moet hiervoor worden getest.
+
+Acceptance criteria
+
+Een klik op een gebouw moet:
+
+een reproduceerbare feature-identiteit opleveren;
+gekoppeld kunnen worden aan een BAG-ID;
+onafhankelijk zijn van de huidige tile;
+robuust blijven bij LOD-wisseling;
+robuust blijven wanneer tiles unload/reload;
+bruikbaar zijn voor hover;
+bruikbaar zijn voor click;
+niet afhankelijk zijn van geometrische centroidberekening.
+Belangrijke hypothese
+
+De metadata-/feature-ID-keten kan mogelijk worden gebruikt voor picking, maar dit moet in de concrete Deck.gl-versie worden bewezen.
+
+11. LOD-strategie
+
+De officiële 3DBAG-distributie biedt:
+
+LoD1.2
+LoD1.3
+LoD2.2
+
+Daarom moet LoD1.3 expliciet worden opgenomen in de architectuur.
+
+Eerste testhypothese
+zoom < 15
+    → 2D
+
+zoom 15–16
+    → LoD1.2
+
+zoom 16–18
+    → LoD1.3
+
+zoom > 18
+    → LoD2.2
+
+Maar de definitieve strategie mag niet uitsluitend op zoom worden gebaseerd.
+
+Betere LOD-policy
+               LOD policy
+                   │
+        ┌──────────┴──────────┐
+        │                     │
+     Camera                Use case
+        │                     │
+  zoom / distance       context / analyse
+        │                     │
+        └──────────┬──────────┘
+                   ↓
+                LOD keuze
+
+Voorbeelden:
+
+visuele context → LoD1.2;
+rijke gebouwcontext → LoD1.3;
+dakvlak-analyse → LoD2.2.
+12. Screen-space error en tile traversal
+
+Een belangrijke performancekans is dat 3D Tiles zelf een hiërarchische selectie- en laadstrategie gebruikt.
+
+De loaders.gl Tileset3D-architectuur ondersteunt:
+
+tile traversal;
+viewport-afhankelijke selectie;
+screen-space error;
+tile loading/unloading;
+tile cache;
+GPU memory accounting.
+
+Daarmee is een eigen:
+
+BBOX → maximaal 100 gebouwen
+
+strategie voor rendering niet langer de primaire performanceknop.
+
+Onderzoek
+
+Benchmark expliciet:
+
+maximumScreenSpaceError;
+tile cache;
+maximale tile memory;
+aantal geladen tiles;
+zichtbare tiles;
+unloadgedrag;
+snel pannen;
+snel zoomen;
+lange sessies.
+13. BBOX-strategie
+
+De huidige architectuur gebruikt:
+
+gebied_ids
+   ↓
+PostGIS
+   ↓
+BBOX
+   ↓
+3DBAG REST API
+
+Bij native 3D Tiles moet dit worden heroverwogen.
+
+De tileset zelf bevat een ruimtelijke hiërarchie.
+
+Daarom kan de primaire query worden:
+
+camera / viewport
+      ↓
+tileset traversal
+      ↓
+relevante tiles
+
+De gebiedselectie blijft echter relevant voor D-OmniTwin-state.
+
+Bijvoorbeeld:
+
+selectedAreas
+     ↓
+3D active?
+     ↓
+viewport / initial camera
+     ↓
+3DBAG Tile3DLayer
+
+Een BBOX kan nog steeds nuttig zijn voor:
+
+initialisatie;
+focus;
+UX;
+business rules;
+autorisatie;
+fallback;
+analytics.
+
+Maar niet noodzakelijk meer als primaire 3D-query.
+
+14. Backend API: geometrievrij
+
+De backend moet worden vereenvoudigd.
+
+Doel
+
+De backend levert:
+
+BAG-ID → semantische informatie
+
+en niet:
+
+BAG-ID → geometrie
+Conceptueel endpoint
+from fastapi import APIRouter
+from pydantic import BaseModel, Field
+from typing import List, Optional, Dict
+
+router = APIRouter(
+    prefix="/api/3dbag",
+    tags=["3D BAG Data Provider"]
+)
+
+
+class BAGDataRequest(BaseModel):
+    gebied_ids: List[str] = Field(
+        ...,
+        description="Actieve CBS buurt-IDs"
+    )
+    indicator_uuid: Optional[str] = Field(
+        None,
+        description="Actieve indicator UUID"
+    )
+
+
+class PandData(BaseModel):
+    waarde: Optional[float] = None
+    kleur: Optional[str] = None
+    kleur_mode: Optional[str] = None
+
+
+@router.post("/styling-data")
+async def get_3d_styling_data(request: BAGDataRequest):
+    """
+    Geen geometrie.
+    Alleen semantische data voor de actieve 3D-context.
+    """
+    return {}
+
+Dit is een conceptuele API, geen definitieve implementatie.
+
+De exacte response moet worden afgestemd op de uiteindelijke stylingstrategie.
+
+15. Belangrijke optimalisatie: niet alle BAG-data naar de browser sturen
+
+Een naïeve lookup:
+
+heel Nederland
+   ↓
+alle BAG-ID's
+   ↓
+browser
+
+moet worden vermeden.
+
+Gebruik een actieve context:
+
+geselecteerde gebieden
+        +
+viewport
+        +
+actieve indicator
+        ↓
+kleine lookup
+Mogelijke strategieën
+Variant 1 — gebiedsgebaseerd
+gebied_ids
+   ↓
+BAG-objecten in gebieden
+   ↓
+lookup
+Variant 2 — tile-gebaseerd
+
+Wanneer metadata/picking voldoende informatie geeft:
+
+zichtbare 3D tiles
+   ↓
+BAG-ID's
+   ↓
+semantische lookup
+Variant 3 — hybride
+gebiedselectie
+   ↓
+beperkte preload
+   +
+viewport-driven updates
+
+Voor D-OmniTwin is variant 3 waarschijnlijk een interessante startpositie.
+
+16. Caching
+Frontend
+
+Gebruik caching voor:
+
+tiles;
+semantische lookup;
+indicatorconfiguratie.
+
+Maar laat de 3D Tiles-cache zoveel mogelijk door de tile-engine/browser beheren.
+
+Backend
+
+Cache vooral:
+
+gebied_ids + indicator_uuid + jaar
+
+naar:
+
+BAG-ID → indicatorwaarde
+
+Niet:
+
+BBOX → GeoJSON geometry
+Cache invalidatie
+
+Indicatorgegevens moeten een duidelijke versie/sleutel krijgen:
+
+indicator_uuid
+jaar
+dataset_version
+17. Versionering van 3DBAG
+
+De recente breuk in de bestaande integratie maakt versionering belangrijk.
+
+Niet doen
+REST_API_BASE = "...hardcoded..."
+
+en frontend:
+
+data = "https://data.3dbag.nl/v20250903/..."
+
+als verspreide strings door de code.
+
+Wel doen
+
+Centrale configuratie:
+
+3DBAG_PROVIDER
+3DBAG_VERSION
+3DBAG_LOD12_URL
+3DBAG_LOD13_URL
+3DBAG_LOD22_URL
+
+Bij voorkeur met een release/config object:
+
+{
+  "provider": "3dbag",
+  "version": "v20250903",
+  "lod": {
+    "1.2": "...",
+    "1.3": "...",
+    "2.2": "..."
+  }
+}
+Release-validatie
+
+Bij wijziging van 3DBAG moet automatisch of handmatig worden gecontroleerd:
+
+tileset bereikbaar;
+JSON valide;
+content bereikbaar;
+CRS;
+metadata;
+feature IDs;
+glTF extensies;
+picking;
+rendering;
+performance.
+18. Service health
+
+De bestaande:
+
+GET /api/3dbag/health
+
+moet worden uitgebreid.
+
+Niet alleen:
+
+{
+  "status": "healthy"
+}
+
+maar conceptueel:
+
+{
+  "status": "healthy",
+  "provider": "3dbag",
+  "configured_version": "v20250903",
+  "lod12": true,
+  "lod13": true,
+  "lod22": true,
+  "metadata_supported": "unknown"
+}
+
+Let op: daadwerkelijke healthchecks naar alle externe tiles kunnen duur zijn.
+
+Gebruik daarom onderscheid tussen:
+
+configuration health
+provider reachability
+rendering health
+19. Fallbackarchitectuur
+
+3D mag nooit de functionele analyse blokkeren.
+
+Gewenste fallback:
+
+Native 3D Tiles
+      │
+      ├── OK → 3D
+      │
+      └── fout
+           ↓
+        LoD fallback
+           ↓
+        2D BAG
+
+Concreet:
+
+3D Tiles LoD2.2
+       ↓ fout
+3D Tiles LoD1.3
+       ↓ fout
+3D Tiles LoD1.2
+       ↓ fout
+2D BAG
+
+De fallback moet zichtbaar maar niet blokkerend zijn.
+
+20. Performancebudget
+
+Gebruik geen puur objectaantal als primaire metric.
+
+Belangrijker zijn:
+
+aantal geladen tiles;
+vertex count;
+GPU memory;
+CPU decode time;
+network payload;
+request count;
+tile cache;
+screen-space error;
+FPS;
+frame time.
+Doelmetrics
+TTFB
+Time to first visible building
+Time to usable scene
+FPS idle
+FPS pan
+FPS zoom
+FPS rotate
+GPU memory
+browser memory
+network MB
+tile count
+tile cache hit
+21. Benchmarkmatrix
+
+Test minimaal:
+
+Test	Huidige REST/GeoJSON	LoD1.2	LoD1.3	LoD2.2
+kleine buurt	meten	meten	meten	meten
+grote buurt	meten	meten	meten	meten
+centrum Sneek	meten	meten	meten	meten
+meerdere buurten	meten	meten	meten	meten
+groot viewport	meten	meten	meten	meten
+
+Per test:
+
+first visible;
+first interactive;
+totale requests;
+payload;
+tiles loaded;
+GPU memory;
+browser memory;
+FPS;
+picking latency.
+22. Testscenario's
+Scenario A — visuele context
+zoom 16
+1 buurt
+LoD1.2
+
+Doel:
+
+snelle eerste render;
+voldoende herkenning.
+Scenario B — rijke context
+zoom 17
+1 buurt
+LoD1.3
+
+Doel:
+
+beoordelen of LoD1.3 de sweet spot is.
+Scenario C — functionele analyse
+zoom 18+
+LoD2.2
+
+Doel:
+
+dakgeometrie;
+zonnepotentie;
+schaduw;
+klimaat.
+Scenario D — meerdere gebieden
+3 buurten
+
+Doel:
+
+semantische lookup;
+performance;
+selectie;
+kleurtoekenning.
+Scenario E — snelle navigatie
+pan → zoom → rotate → pan
+
+Doel:
+
+tile traversal;
+cache;
+memory;
+FPS.
+Scenario F — langdurige sessie
+10–15 minuten navigeren
+
+Doel:
+
+memory leaks;
+tile cache;
+GPU memory;
+unloadgedrag.
+23. Tile index
+
+3DBAG publiceert ook een tile-index als FlatGeobuf.
+
+Dit opent een aanvullende architectuuroptie:
+
+D-OmniTwin gebied
+       ↓
+tile index
+       ↓
+relevante 3D tiles
+       ↓
+Tile3DLayer
+
+Dit hoeft niet direct onderdeel te worden van v2.
+
+Eerst onderzoeken of de native tileset traversal al voldoende is.
+
+De tile index is vooral interessant wanneer D-OmniTwin expliciet wil beperken:
+
+"Alleen 3D laden voor geselecteerde gebieden."
+
+24. 3DBAG-versiebeheer en recente servicebreuk
+
+De officiële 3DBAG-downloadpagina toont momenteel de versie v20250903 als beschikbare release.
+
+De officiële release notes beschrijven 2025.09.03 als de release waarin 3D Tiles v1.1 als nieuw outputformaat werd toegevoegd.
+
+De gebruiker heeft echter aangegeven dat de 3D-service recent is gewijzigd en dat de bestaande 3D BAG-functionaliteit daardoor is gebroken.
+
+Daarom moet de oorzaak van die recente breuk niet worden ingevuld op basis van aannames.
+
+Onderzoeksvraag
+
+Vergelijk:
+
+laatst werkende API-response
+        vs
+huidige API-response
+
+en bepaal:
+
+endpointwijziging;
+schemawijziging;
+propertywijziging;
+pagingwijziging;
+CityJSON boundarywijziging;
+CRS-wijziging;
+statuscode;
+content-type;
+response envelope;
+timeoutgedrag.
+
+De architectuur moet vervolgens zo worden ingericht dat een dergelijke wijziging niet automatisch de primaire 3D-rendering breekt.
+
+25. Native 3D Tiles versus REST API
+Aspect	REST / CityJSON	3D Tiles
+Streaming	beperkt	sterk
+Viewport-based loading	zelf bouwen	native tile traversal
+Backend CPU	hoog	laag
+GeoJSON payload	groot	tile-gebaseerd
+3D-geometrie	decode nodig	native
+LOD	zelf regelen	tileset traversal
+Caching	zelf bouwen	tile cache
+Metadata	CityJSON	glTF metadata
+Picking	eigen implementatie	tile/feature mechanismen onderzoeken
+Styling	eenvoudig in GeoJSON	complexer, expliciet onderzoeken
+Onderhoud	hoger	lager voor geometrie
+Analyse	geschikt	niet primaire rol
+Rendering	adapter	native streaming
+
+Conclusie:
+
+3D Tiles is de voorkeursroute voor rendering; REST/CityJSON blijft nuttig als data-/extractie-/fallbackroute.
+
+26. Wat de backend niet meer moet doen
+
+Niet meer primair:
+
+BBOX
+ ↓
+3DBAG geometrie
+ ↓
+CityJSON decode
+ ↓
+GeoJSON
+ ↓
+kleur toevoegen
+
+Wel:
+
+gebiedselectie
+ ↓
+semantische query
+ ↓
+BAG-ID → indicatorwaarde
+ ↓
+JSON lookup
+27. Wat de frontend moet doen
+
+De frontend wordt verantwoordelijk voor:
+
+3D Tiles lifecycle;
+LOD policy;
+viewport;
+tile loading;
+tile cache;
+rendering;
+interactie;
+picking;
+koppeling van geselecteerd object aan D-OmniTwin;
+styling volgens de bewezen stylingstrategie.
+28. Provider abstraction
+
+Bouw een abstractielaag:
+
+ThreeDProvider
+      │
+      ├── ThreeDBagProvider
+      ├── CachedThreeDBagProvider
+      └── FutureProvider
+
+Conceptueel:
+
+interface ThreeDProvider {
+  getTilesetUrl(lod: string): string;
+  getFeatureData(ids: string[]): Promise<FeatureData>;
+  getProviderStatus(): Promise<ProviderStatus>;
+}
+
+De exacte interface moet aansluiten op de bestaande frontendarchitectuur.
+
+Het doel is vendor/provider-onafhankelijkheid.
+
+29. Governance en externe afhankelijkheid
+
+3DBAG is een externe publieke data-/servicevoorziening.
+
+Daarom moet de architectuur rekening houden met:
+
+beschikbaarheid;
+wijzigingen;
+releaseversies;
+gebruiksvoorwaarden;
+copyright;
+mogelijke toekomstige volumelimieten;
+incidenten;
+onderhoud;
+fallback.
+
+De officiële documentatie vermeldt dat er momenteel geen gebruiksvolumelimiet is, maar dat dit in de toekomst kan veranderen.
+
+De copyright notice van 3DBAG is verplicht.
+
+30. Security
+
+Omdat de 3D-geometrie extern wordt geladen:
+
+controleer CORS tijdens de daadwerkelijke integratietest;
+controleer CSP;
+controleer mixed-content;
+controleer externe resource policies;
+voorkom dat gebruikersinput rechtstreeks willekeurige externe URLs kan bepalen;
+configureer de provider-URL server-/build-side;
+valideer eventuele proxying.
+
+Niet als feit vastleggen: dat CORS of autorisatie "altijd open/zonder key" is. Dit moet in de daadwerkelijke deployment worden geverifieerd.
+
+31. Monitoring
+
+Minimaal:
+
+Backend
+styling request count;
+styling latency;
+cache hit;
+database latency;
+aantal BAG-objecten;
+payload.
+Frontend
+tile requests;
+tile load time;
+tile error count;
+visible tiles;
+loaded tiles;
+GPU memory;
+browser memory;
+frame time;
+FPS;
+picking latency.
+Provider
+tileset availability;
+tile error rate;
+versie;
+provider latency.
+32. Logging
+
+Gebruik een correlation ID per 3D-sessie/request.
+
+Bijvoorbeeld:
+
+3dbag_session_id
+indicator_uuid
+gebied_ids
+lod
+provider_version
+
+Log niet iedere tile als applicatielog op INFO-niveau.
+
+Gebruik:
+
+DEBUG → tile-level details
+INFO  → session / major state
+WARN  → provider / tile errors
+ERROR → functionele failure
+33. Foutafhandeling
+
+Maak onderscheid tussen:
+
+Provider unavailable
+Tile unavailable
+Metadata unavailable
+Styling unavailable
+D-OmniTwin data unavailable
+
+Deze moeten niet allemaal leiden tot:
+
+3D uit
+
+Voorbeeld:
+
+3D Tiles OK
+Metadata FAIL
+    ↓
+3D tonen
+    +
+neutrale kleur
+    +
+selectie eventueel beperken
+
+Dat is beter dan de hele visualisatie uitschakelen.
+
+34. Functionele use cases
+
+De architectuur moet minimaal deze use cases ondersteunen:
+
+UC1 — 3D context
+
+Gebruiker ziet gebouwen als ruimtelijke context.
+
+UC2 — gebouwselectie
+
+Gebruiker klikt gebouw.
+
+Resultaat:
+
+BAG-ID
+↓
+gebouwdetail
+UC3 — indicatorvisualisatie
+
+Gebruiker activeert indicator.
+
+Resultaat:
+
+BAG-ID
+↓
+indicatorwaarde
+↓
+kleur
+UC4 — indicatorwissel
+
+Gebruiker wisselt van indicator zonder nieuwe 3D-geometrie te downloaden.
+
+UC5 — LOD
+
+LOD verandert op basis van context/use case.
+
+UC6 — fallback
+
+Bij externe storing blijft 2D-analyse beschikbaar.
+
+35. Architectuurprincipe voor indicatoren
+
+Indicatoren mogen niet in de 3D-geometrie worden ingebakken.
+
+Dus niet:
+
+3DBAG geometry + kleur = één dataset
+
+maar:
+
+3DBAG geometry
+      +
+D-OmniTwin indicator
+      ↓
+visualisatie
+
+Dit maakt:
+
+indicatorwissel goedkoop;
+geometrie cachebaar;
+data onafhankelijk;
+analyses herbruikbaar.
+36. Backlog
+P0 — huidige breuk begrijpen
+ Huidige bag3d.py reproduceren.
+ Fout na recente 3DBAG-update vastleggen.
+ Huidige API-response opslaan.
+ Werkende response indien beschikbaar vergelijken.
+ Schema-/pagingverschil identificeren.
+ Bepalen of CityJSON-route nog als fallback behouden blijft.
+P0 — native 3D Tiles PoC
+ LoD1.2 tileset laden.
+ Deck.gl Tile3DLayer laden.
+ actuele provider-URL configureren.
+ CORS/CSP controleren.
+ EPSG:4978 correct visualiseren.
+ eerste performance benchmark.
+P0 — metadata/picking
+ glTF metadata inspecteren.
+ EXT_mesh_features inspecteren.
+ EXT_structural_metadata inspecteren.
+ loaders.gl output inspecteren.
+ Deck.gl picking testen.
+ BAG-ID mapping bewijzen.
+P1 — styling
+ Vaststellen dat getFillColor niet de standaardroute is voor Tile3DLayer.
+ native stylingmogelijkheden testen.
+ custom rendering/shaderroute onderzoeken.
+ 2D overlay fallback onderzoeken.
+ dynamische indicatorwissel benchmarken.
+P1 — LOD
+ LoD1.2 benchmark.
+ LoD1.3 benchmark.
+ LoD2.2 benchmark.
+ screen-space error testen.
+ cache/memory testen.
+P1 — backend
+ /styling-data endpoint ontwerpen.
+ BAG-ID lookup optimaliseren.
+ indicator query optimaliseren.
+ response compact maken.
+ caching implementeren.
+P2 — productie
+ provider abstraction.
+ release/config management.
+ health monitoring.
+ metrics.
+ fallback.
+ documentation.
+ automated smoke tests.
+37. Acceptance criteria
+
+De migratie is pas geslaagd wanneer:
+
+Rendering
+ LoD1.2 werkt.
+ LoD1.3 werkt.
+ LoD2.2 werkt als optionele laag.
+ viewport-based tile streaming werkt.
+ geen volledige dataset naar browser wordt geladen.
+Semantiek
+ BAG-ID kan betrouwbaar worden vastgesteld.
+ BAG-ID kan worden gekoppeld aan D-OmniTwin.
+ indicatoren kunnen onafhankelijk van geometrie worden gewijzigd.
+Interactie
+ hover werkt of is bewust niet ondersteund.
+ click werkt.
+ detailinformatie kan worden geopend.
+ selectie blijft correct bij LOD-wissel.
+Performance
+ benchmark uitgevoerd.
+ memory budget vastgesteld.
+ FPS budget vastgesteld.
+ cachegedrag vastgesteld.
+ maximale screen-space error vastgesteld.
+Robuustheid
+ externe providerstoring veroorzaakt geen analyse-uitval.
+ 3DBAG-versie configureerbaar.
+ tile errors worden afgehandeld.
+ metadata failure kan degraderen naar neutrale rendering.
+38. Gewenst eindbeeld
+                           D-OmniTwin
+                                │
+                ┌───────────────┴────────────────┐
+                │                                │
+              Data                         Visualisatie
+                │                                │
+             PostGIS                      MapLibre / Deck.gl
+                │                                │
+      ┌─────────┴─────────┐              ┌───────┴─────────┐
+      │                   │              │                 │
+ BAG / semantiek      Indicatoren      2D BAG           3D BAG
+                                                          │
+                                                     Tile3DLayer
+                                                          │
+                                                     3DBAG Tiles
+                                                          │
+                                       ┌──────────────────┴──────────────┐
+                                       │                                 │
+                                   Geometry                          Metadata
+                                       │                                 │
+                                       │                              Feature ID
+                                       │                                 │
+                                       └────────────────┬────────────────┘
+                                                        │
+                                                        ▼
+                                                 D-OmniTwin
+                                                        │
+                                                  BAG-ID lookup
+                                                        │
+                                                        ▼
+                                                Indicator context
+                                                        │
+                                                        ▼
+                                            bewezen stylingstrategie
+39. Beslispunten
+
+De volgende beslissingen moeten niet vooraf worden genomen, maar uit de PoC volgen:
+
+Direct frontend → 3DBAG of via proxy?
+LoD1.2 of LoD1.3 als standaard?
+Wanneer LoD2.2?
+Hoe wordt BAG-ID uit 3D Tiles ontsloten?
+Welke stylingtechniek wordt gebruikt?
+Is custom shader/rendering nodig?
+Is een 2D overlay als fallback voor styling acceptabel?
+Hoeveel semantische data wordt vooraf geladen?
+Is tile-index-integratie nodig?
+Welke cache- en memorybudgetten zijn acceptabel?
+40. Onderzoeksvragen voor de implementatie-agent
+
+De agent moet deze vragen in onderstaande volgorde beantwoorden.
+
+A. Provider
+Wat is de actuele 3DBAG release?
+Welke tileset-URL's zijn officieel gepubliceerd?
+Zijn de URLs versioned?
+Hoe detecteren we een nieuwe release?
+Wat is recent gewijzigd?
+B. Tileset
+Hoe is de tileset-hiërarchie opgebouwd?
+Welke external tilesets worden gebruikt?
+Welke geometric errors zijn ingesteld?
+Welke refine-methode wordt gebruikt?
+Hoe groot zijn de tiles?
+C. Metadata
+Welke metadata classes zitten in de glTF?
+Welke properties zijn beschikbaar?
+Waar zit de BAG-identificatie?
+Hoe wordt feature ID gekoppeld aan metadata?
+Hoe exposeert loaders.gl dit?
+Hoe exposeert Deck.gl dit?
+D. Picking
+Wat bevat info.object daadwerkelijk?
+Is feature-level picking beschikbaar?
+Is tile-level picking het enige wat standaard wordt ondersteund?
+Hoe kan BAG-ID betrouwbaar uit een click worden afgeleid?
+E. Styling
+Ondersteunt de gebruikte Tile3DLayer-versie feature-level styling?
+Kan metadata in shader attributes worden gebracht?
+Is getFillColor bruikbaar? Alleen aannemen na verificatie.
+Is custom shader/layer nodig?
+Kan de uniforme bronkleur worden overschreven?
+Wat is de performance-impact?
+F. Performance
+Wat is de optimale maximumScreenSpaceError?
+Wat is de optimale memory budget?
+Hoeveel tiles worden gemiddeld geladen?
+Hoe snel wordt unloaded?
+Hoe werkt caching?
+Wat gebeurt bij snel navigeren?
+G. Architectuur
+Welke data moet via FastAPI?
+Welke data moet rechtstreeks via 3DBAG?
+Welke data moet lokaal worden gecachet?
+Wanneer is een proxy nuttig?
+Hoe blijft de provider vervangbaar?
+41. Bron- en bewijsregels voor vervolgonderzoek
+
+Gebruik voor 3DBAG-feiten primair:
+
+https://docs.3dbag.nl/nl/delivery/webservices/#3d-tiles
+
+Gebruik voor actuele release/URLs:
+
+https://3dbag.nl/nl/download
+
+Gebruik voor releasewijzigingen:
+
+https://docs.3dbag.nl/nl/overview/release_notes/
+
+Gebruik voor Deck.gl Tile3DLayer-capabilities:
+
+https://deck.gl/docs/api-reference/geo-layers/tile-3d-layer
+
+Gebruik voor loaders.gl 3D Tiles:
+
+https://loaders.gl/docs/modules/3d-tiles
+
+Bewijsklassen
+BRONFEIT
+
+Direct bevestigd door officiële documentatie.
+
+CODEFEIT
+
+Direct vastgesteld in de bestaande D-OmniTwin-code.
+
+ARCHITECTUURKEUZE
+
+Bewuste ontwerpbeslissing.
+
+HYPOTHESE
+
+Nog te bewijzen door PoC/benchmark.
+
+Nooit een hypothese als feit presenteren.
+
+42. Eindadvies
+
+De migratie naar native 3D Tiles is architectonisch sterk en past beter bij D-OmniTwin dan de huidige CityJSON→GeoJSON-adapter.
+
+Maar de migratie moet niet worden opgevat als:
+
+REST API vervangen door Tile3DLayer
+
+De echte migratie is:
+
+Backend-gecentreerde geometrie
+        ↓
+native 3D streaming
+        +
+expliciete semantische koppeling
+        +
+expliciete feature picking
+        +
+gevalideerde stylingstrategie
+        +
+LOD / cache / memory management
+
+De belangrijkste open technische kwestie is niet meer het laden van 3D Tiles — dat is relatief rechttoe rechtaan — maar:
+
+Hoe ontsluiten we 3DBAG feature metadata/BAG-ID en hoe koppelen we die performant aan D-OmniTwin-indicatoren binnen de feitelijke Deck.gl Tile3DLayer-renderingpipeline?
+
+Dat is het kernexperiment voor versie 2.
+
+De architectuur moet daarom eerst een kleine maar diepgaande PoC doorlopen:
+
+3DBAG LoD1.2
+      ↓
+Tile3DLayer
+      ↓
+metadata
+      ↓
+feature/picking
+      ↓
+BAG-ID
+      ↓
+D-OmniTwin lookup
+      ↓
+styling
+      ↓
+performance benchmark
+
+Pas wanneer deze keten aantoonbaar werkt, moet de volledige 3D BAG-functionaliteit worden gemigreerd.
+
+43. Korte architectuursamenvatting voor agents
+DOEL
+----
+Native 3DBAG 3D Tiles in D-OmniTwin.
+
+PRIMAIR
+-------
+3DBAG → 3D Tiles → Deck.gl
+
+BACKEND
+-------
+Semantische data, indicatoren, lookup, analyses.
+Geen 3D-geometrie voor normale rendering.
+
+IDENTITEIT
+----------
+BAG-ID is de stabiele koppeling.
+
+LOD
+---
+LoD1.2 → LoD1.3 → LoD2.2
+Gebruik use case + camera, niet alleen zoom.
+
+CRITICAL GAP
+------------
+Tile3DLayer heeft niet automatisch GeoJsonLayer-achtige
+getFillColor feature styling.
+
+CRITICAL GAP
+------------
+Tile3DLayer picking levert niet automatisch
+info.object.properties.identificatie.
+
+CRITICAL TEST
+-------------
+3DBAG metadata → loaders.gl → Deck.gl → feature ID → BAG-ID.
+
+PERFORMANCE
+-----------
+Meet tiles, requests, payload, GPU memory, browser memory,
+FPS, frame time, cache en screen-space error.
+
+FALLBACK
+--------
+3D Tiles → lagere LOD → 2D BAG.
+
+VERSIONING
+----------
+3DBAG URLs/configuratie centraal beheren.
+
+NIET DOEN
+---------
+CityJSON → Python → GeoJSON als primaire 3D-renderingroute.
+
+BESLISCRITERIUM
+---------------
+Maximale 3D-functionaliteit bij minimale eigen
+geometrie-/streamingcomplexiteit en voorspelbare performance.
+
+"""
+path = Path("/mnt/data/Werkpakket_Architectuur_Blauwdruk_3D_BAG_D-OmniTwin_v2_Geconsolideerd.md")
+path.write_text(md, encoding="utf-8")
+print(path)

@@ -1,0 +1,369 @@
+Werkpakket & Architectuur Blauwdruk: 3D BAG in D-OmniTwin (v2)
+
+Status: Definitieve Technische Blauwdruk & Werkpakket
+
+Doel: Migratiegids van de backend-gedreven 2.5D CityJSON-adapter naar een schaalbare, native 3D Tiles-architectuur met behoud van semantische data-ontkoppeling.
+
+Bronbasis: Officiële 3DBAG-documentatie (TU Delft / 3DGI), Deck.gl v8/v9 & loaders.gl specificaties, en D-OmniTwin architectuurprincipes.
+
+Primaire webservice-bron: https://docs.3dbag.nl/nl/delivery/webservices/#3d-tiles
+
+1. Executive Summary & Kernconclusie
+
+De eerdere D-OmniTwin 3D-implementatie (bag3d.py) fungeerde als een 2.5D-adapter:
+
+De frontend stuurde buurt-IDs.
+
+De backend berekende via PostGIS een BBOX.
+
+De backend bevrroeg de 3DBAG REST API (/collections/pand/items).
+
+Een op maat gemaakte Python-decoder zette CityJSON om naar platte GeoJSON-polygonen met hoogte-attributen.
+
+Deck.gl extrudeerde deze polygonen in de browser.
+
+Waarom dit brak
+
+3DBAG migreert actief richting OGC API Features-standaarden. Schema-, attribuut- en pagineringswijzigingen in de upstream API laten zelfgebouwde CityJSON-decoders direct crashen. Bovendien veroorzaakt het ophalen en converteren van zware geometrie via Python onnodige latency, CPU-belasting en geheugendruk op de backend.
+
+Het Nieuwe Paradigma
+
+De geometrie en de semantische data worden 100% ontkoppeld:
+
+Geometrie (3D Tiles): Wordt door Deck.gl direct als binaire glTF (.glb) gestreamd vanaf de servers van de TU Delft.
+
+Semantische Data (OmniTwin): Wordt door FastAPI geleverd als een compacte lookup table (BAG-ID naar Indicator/Kleur).
+
+GPU Data-Joining: Deck.gl voegt de geometrie en de thematische data real-time samen in de browser.
+
+2. Architectuurvisie: Data Centraal, 3D als Afgeleide
+
+Binnen D-OmniTwin vermijden we de "3D-first"-valkuil. Een gebouw is in de kern een semantisch data-object; de geometrische weergave is slechts één mogelijke visualisatie daarvan.
+
+
+
+Gebouw (Semantisch Data-Object)
+ ├── BAG-ID (Unieke sleutel: bijv. 'NL.IMBAG.Pand.0363100012165538')
+ ├── Administratief (WOZ, Oppervlakte, Gebruiksdoel)
+ ├── Indicatoren (Bouwjaar, Energielabel, Demografie)
+ ├── Real-time / Analyse (Sensoren, Bezonning, Wateropvang)
+ └── Visualisatie (3D-geometrie: LoD1.2, LoD1.3 of LoD2.2)
+
+3. Officiële 3DBAG 3D Tiles Specificaties
+
+Conform de documentatie van de TU Delft en 3DGI gelden de volgende standaarden:
+
+Standaard: OGC 3D Tiles v1.1.
+
+Geometrieformaat: Binaire glTF (.glb) binnen de tegels.
+
+Coördinatenreferentiesysteem (CRS): EPSG:4978 (WGS 84 ECEF). Deck.gl en MapLibre handelen de projectie naar het scherm native af.
+
+Compressie: Gebruik van KHR_mesh_quantization en EXT_meshopt_compression voor minimale netwerkbelasting.
+
+Metadata-extensies: glTF-bestanden bevatten feature-attributen per pand via EXT_mesh_features en EXT_structural_metadata.
+
+Kleurstelling bron: Gebouwen worden uniform gekleurd aangeboden door de TU Delft.
+
+Tiling-structuur: Explicit tiling met externe hierarchische sub-tilesets (tileset.json).
+
+Gescheiden LoD-lagen: De verschillende detailniveaus zijn beschikbaar als afzonderlijke tegelservices:
+
+LoD1.2: [https://data.3dbag.nl/](https://data.3dbag.nl/){VERSION}/cesium3dtiles/lod12/tileset.json
+
+LoD1.3: [https://data.3dbag.nl/](https://data.3dbag.nl/){VERSION}/cesium3dtiles/lod13/tileset.json
+
+LoD2.2: [https://data.3dbag.nl/](https://data.3dbag.nl/){VERSION}/cesium3dtiles/lod22/tileset.json
+
+(Waarbij {VERSION} centraal configureerbaar is, bijv. v20250903).
+
+4. Technische Gaps & Oplossingspaden
+
+Gap 1: Feature-Level Styling in Deck.gl Tile3DLayer
+
+Probleem: Tile3DLayer ondersteunt geen directe getFillColor: (feature) => ... accessor zoals GeoJsonLayer. De laag rendert standaard de gehele 3D mesh via WebGL materials.
+
+Oplossing A (Aanbevolen: glTF Mesh Feature Uniforms): Met behulp van @loaders.gl/3d-tiles en @loaders.gl/gltf worden de EXT_mesh_features feature-IDs gekoppeld aan een GPU lookup-textuur of uniform buffer.
+
+Oplossing B (Pragmatisch: 3D Visual Context + Gesynchroniseerde 2D Data-Overlay): 3DBAG Tiles renderen neutraal (lichtgrijs met schaduw) voor 3D massa en dakvorm. Een transparante 2D Vector/GeoJSON-laag kleurt het grondvlak met de actieve indicator.
+
+Oplossing C (Custom Shader Injection): Overschrijven van de _subLayerProps van Tile3DLayer (ScenegraphLayer) met een custom fragment shader.
+
+Gap 2: Objectidentiteit & Picking
+
+Probleem: Een klik-event op Tile3DLayer retourneert standaard een Tile3DHeader als info.object.
+
+Oplossing: Configureer loaders.gl opties om feature metadata door te geven:
+
+gltf.loadMeshFeatures = true
+
+gltf.loadStructuralMetadata = true
+
+In onClick en onHover wordt info.featureId bevraagd om via de structural metadata tabel het exacte veld identificatie (BAG-ID) te resolven.
+
+Gap 3: LoD Hot-Swapping
+
+Probleem: Omdat LoD1.2, LoD1.3 en LoD2.2 gescheiden tilesets zijn, kan de frontend niet leunen op interne tileset-refinement tussen LoD's.
+
+Oplossing: D-OmniTwin instantieert de drie lagen en schakelt de visible-prop dynamisch in/uit op basis van camera-afstand, pitch en de actieve analysestatus.
+
+
+
+5. Doelarchitectuur & Dataflow
+
+[Frontend: MapLibre Viewport] ──────> [LOD Policy Engine] ───> [Deck.gl Tile3DLayer]
+                                                                      ▲
+[Frontend: UI State / Buurt]  ──────> [FastAPI /styling-data] ────────┤
+                                                                      │ (Data-Join)
+[TU Delft 3DBAG Tileset]      ──────> [OGC 3D Tiles v1.1 (.glb)] ─────┘
+
+
+
+6. Code Blauwdrukken
+
+6.1 Backend Router (router_3dbag_data.py)
+
+De Python backend berekent geen BBOX en verwerkt geen geometrie meer. Het retourneert uitsluitend een compacte mapping.
+
+from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel, Field
+from sqlalchemy.orm import Session
+from sqlalchemy import text
+from typing import List, Optional, Dict
+import logging
+
+from src.database import get_db
+
+logger = logging.getLogger(__name__)
+
+router = APIRouter(
+    prefix="/api/3dbag",
+    tags=["3D BAG Semantische Data Provider"]
+)
+
+# ============================================================================
+# Schemas
+# ============================================================================
+
+class StylingDataRequest(BaseModel):
+    gebied_ids: List[str] = Field(..., min_length=1, max_length=10, description="CBS Buurt-IDs")
+    indicator_uuid: Optional[str] = Field(None, description="UUID van de actieve indicator")
+    jaar: Optional[int] = Field(None, description="Peiljaar voor data")
+
+class PandStylingRecord(BaseModel):
+    waarde: Optional[float] = None
+    kleur: List[int] = Field(..., description="RGBA array: [R, G, B, A] (0-255)")
+    label: Optional[str] = None
+
+# ============================================================================
+# Kleurlogica
+# ============================================================================
+
+BOUWJAAR_DREMPELS = [
+    (1900, [139, 0, 0, 255]),
+    (1945, [192, 57, 43, 255]),
+    (1960, [231, 76, 60, 255]),
+    (1975, [230, 126, 34, 255]),
+    (1990, [241, 196, 15, 255]),
+    (2005, [46, 204, 113, 255]),
+    (9999, [39, 174, 96, 255]),
+]
+
+def get_bouwjaar_kleur(jaar: Optional[int]) -> List[int]:
+    if not jaar:
+        return [128, 128, 128, 180]
+    for drempel, rgba in BOUWJAAR_DREMPELS:
+        if jaar <= drempel:
+            return rgba
+    return [39, 174, 96, 255]
+
+# ============================================================================
+# Endpoints
+# ============================================================================
+
+@router.post("/styling-data", response_model=Dict[str, PandStylingRecord])
+async def get_3d_styling_data(
+    payload: StylingDataRequest,
+    db: Session = Depends(get_db)
+):
+    """
+    Levert een compacte Lookup Table voor Deck.gl.
+    Sleutel: BAG Identificatie (bijv. 'NL.IMBAG.Pand.0363100012165538')
+    Waarde: RGBA-kleurvector en indicatorwaarde.
+    """
+    lookup: Dict[str, PandStylingRecord] = {}
+
+    try:
+        query = text("""
+            SELECT 
+                p.identificatie,
+                p.bouwjaar,
+                pd.waarde as indicator_waarde
+            FROM panden p
+            LEFT JOIN pand_indicatoren pd 
+                ON pd.pand_identificatie = p.identificatie 
+                AND pd.indicator_uuid = :indicator_uuid
+            WHERE p.buurt_id = ANY(:buurt_ids)
+        """)
+        
+        rows = db.execute(query, {
+            "buurt_ids": payload.gebied_ids,
+            "indicator_uuid": payload.indicator_uuid
+        }).fetchall()
+
+        for row in rows:
+            val = float(row.indicator_waarde) if row.indicator_waarde is not None else (float(row.bouwjaar) if row.bouwjaar else None)
+            kleur = get_bouwjaar_kleur(row.bouwjaar)
+            
+            lookup[row.identificatie] = PandStylingRecord(
+                waarde=val,
+                kleur=kleur,
+                label=str(row.bouwjaar) if row.bouwjaar else "Onbekend"
+            )
+
+        return lookup
+
+    except Exception as e:
+        logger.error(f"Fout bij genereren 3D styling lookup: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Fout bij ophalen semantische stylingdata.")
+
+@router.get("/config")
+async def get_3dbag_config():
+    """Centraal configuratiebeheer voor 3DBAG endpoints."""
+    return {
+        "provider": "3DBAG (TU Delft / 3DGI)",
+        "version": "v20250903",
+        "tilesets": {
+            "lod12": "https://data.3dbag.nl/v20250903/cesium3dtiles/lod12/tileset.json",
+            "lod13": "https://data.3dbag.nl/v20250903/cesium3dtiles/lod13/tileset.json",
+            "lod22": "https://data.3dbag.nl/v20250903/cesium3dtiles/lod22/tileset.json"
+        },
+        "crs": "EPSG:4978",
+        "attribution": "© 3DBAG by 3DGI and TU Delft (CC BY 4.0)"
+    }
+
+6.2 Frontend Deck.gl Layer & Metadata Extractie
+
+
+
+import { Tile3DLayer } from '@deck.gl/geo-layers';
+import { Tiles3DLoader } from '@loaders.gl/3d-tiles';
+
+/**
+ * Fabrieksfunctie voor de 3DBAG Tile3DLayer
+ */
+export function create3DBagLayer({
+  lod = 'lod12',
+  tilesetConfig,
+  indicatorLookup = {},
+  visible = true,
+  onBuildingClick,
+  onBuildingHover
+}) {
+  return new Tile3DLayer({
+    id: `3dbag-layer-${lod}`,
+    data: tilesetConfig.tilesets[lod],
+    loader: Tiles3DLoader,
+    visible: visible,
+    pickable: true,
+    
+    // Performance afstelling
+    maximumScreenSpaceError: lod === 'lod22' ? 8 : 16,
+    maximumMemoryCacheSize: 512,
+    
+    // Loaders.gl configuratie voor glTF metadata extensies
+    loadOptions: {
+      '3d-tiles': {
+        loadGLTF: true,
+        decodeQuantizedPositions: true
+      },
+      gltf: {
+        loadMeshFeatures: true,
+        loadStructuralMetadata: true,
+        postProcess: true
+      }
+    },
+
+    // Interactie & Metadata Resolutie
+    onClick: (info) => {
+      if (!info || !info.object) return;
+      const bagId = extractBagIdFromTileFeature(info);
+      if (bagId && onBuildingClick) {
+        onBuildingClick(bagId, indicatorLookup[bagId]);
+      }
+    },
+
+    onHover: (info) => {
+      if (!info || !info.object) return;
+      const bagId = extractBagIdFromTileFeature(info);
+      if (onBuildingHover) {
+        onBuildingHover(bagId, info.x, info.y);
+      }
+    }
+  });
+}
+
+/**
+ * Hulpfunctie om BAG-identificatie robuust uit EXT_mesh_features te halen
+ */
+function extractBagIdFromTileFeature(info) {
+  // 1. Direct uit feature properties (indien geparseerd)
+  if (info.object?.properties?.identificatie) {
+    return info.object.properties.identificatie;
+  }
+  
+  // 2. Uit structural metadata tabel via feature ID
+  if (info.object?.structuralMetadata && info.featureId !== undefined) {
+    const table = info.object.structuralMetadata.tables?.[0];
+    if (table && table.identificatie) {
+      return table.identificatie[info.featureId];
+    }
+  }
+
+  // 3. Fallback op object identifier string uit header
+  if (typeof info.object?.id === 'string' && info.object.id.startsWith('NL.IMBAG.Pand.')) {
+    return info.object.id;
+  }
+
+  return null;
+}
+
+
+## 7. LOD Hot-Swapping Matrix
+
+| Modus | Zoom (MapLibre) | Actieve Laag | Bron URL Pad | Doel & Performance |
+| :--- | :--- | :--- | :--- | :--- |
+| **Macro Context** | `< 15` | 2D Vector Tiles | `/api/tiles/panden/{z}/{x}/{y}.pbf` | Maximale FPS, stadsdeelniveau |
+| **Standaard 3D** | `15.0 - 16.5` | 3D Tiles **LoD1.2** | `.../lod12/tileset.json` | Snelle extrusie met plat dak; minimale load |
+| **Rijke Context** | `16.5 - 18.0` | 3D Tiles **LoD1.3** | `.../lod13/tileset.json` | Goot- en nokhoogtes; herkenning |
+| **Analyse Modus** | $\ge 18.0$ (of toggle) | 3D Tiles **LoD2.2** | `.../lod22/tileset.json` | Volledige daken; zonnepotentie & bezonning |
+
+## 8. Empirisch Validatieprotocol
+
+1. **Inspectie Metadata:** Laad LoD1.2 tile via loaders.gl. Inspecteer `EXT_mesh_features` en bevestig de property-key (`identificatie`).
+2. **Benchmarking Geheugen & FPS:** Test in Sneek Binnenstad. Doel: $> 50\text{ FPS}$ tijdens rotatie, $< 300\text{ MB}$ extra GPU-geheugen.
+3. **Styling Update:** Test indicatorwissel (Bouwjaar $\rightarrow$ Energielabel). Valideer dat er géén hernieuwde tile-downloads plaatsvinden.
+4. **Fail-Safe:** Simuleer een netwerkfout naar `data.3dbag.nl` en verifieer automatische omschakeling naar 2D-footprints.
+
+## 9. Gefaseerd Werkpakket & Backlog
+
+### Fase 1: Native 3D Tiles Foundation & Ontkoppeling (P0 - Direct)
+- [ ] Verwijder CityJSON-decodering uit `bag3d.py`.
+- [ ] Implementeer `/api/3dbag/styling-data` en `/api/3dbag/config`.
+- [ ] Configureer centrale release-tag (`THREEDBAG_VERSION=v20250903`).
+- [ ] Integreer Deck.gl `Tile3DLayer` met de LoD1.2 tegelservice.
+- [ ] Toon de verplichte copyrightvermelding: *"© 3DBAG by 3DGI and TU Delft (CC BY 4.0)"*.
+
+### Fase 2: LoD Switching & Client-Side Styling (P1)
+- [ ] Koppel zoom-events aan de zichtbaarheid van LoD1.2 vs LoD1.3.
+- [ ] Realiseer de GPU-koppeling tussen de backend lookup table en de 3D-gebouwen.
+- [ ] Implementeer feature-picking zodat een klik het juiste BAG-ID doorgeeft aan D-OmniTwin detailpanelen.
+- [ ] Optimaliseer `maximumScreenSpaceError` en cache-limieten.
+
+### Fase 3: Functionele Analyse & LoD2.2 (P2 - Toekomst)
+- [ ] Activeer de LoD2.2 tileset uitsluitend bij zonne- of dakanalyses.
+- [ ] Onderzoek raycasting/picking op individuele dakvlakken.
+- [ ] Evalueer noodzaak voor een interne proxy/cache indien TU Delft volumelimieten introduceert.
+```eof
+
+Alle backslashes, gebroken links, en het foute diagram zijn nu strakgetrokken. Het document in het canvas rendert nu perfect!

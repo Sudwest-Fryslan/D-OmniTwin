@@ -164,4 +164,4 @@ Elke wijziging gaat via GitHub Flow:
 4. Pull Request naar `main` met `Closes #<nr>` in de beschrijving
 5. Nooit direct op `main` pushen
 
-`gh` CLI staat op: `"/c/Program Files/GitHub CLI/gh.exe"`
+`gh` CLI: `/usr/bin/gh` — gebruik altijd met `GH_PAGER=cat` om pager-blokkering te voorkomen.
