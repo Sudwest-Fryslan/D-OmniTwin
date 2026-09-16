@@ -689,6 +689,10 @@ function setupGemeenteSelector() {
             localStorage.setItem('omnitwin-gemeente', '');
             input.value = 'Alle gemeenten';
             info.textContent = 'Alle gemeenten';
+
+            state.currentData = null;
+            clearGebiedSelection();
+            updateSelectionUI();
             
             if (window.kompasViz && window.kompasViz.currentConfigId) {
                 window.kompasViz.currentGebiedId = null;
@@ -808,6 +812,10 @@ async function loadKaartData() {
 
         displayOnMap(geojson);
         updateFeatureCount(geojson.metadata);
+        const gtCountEl = document.getElementById('gebiedstype-count');
+        if (gtCountEl && geojson.features) {
+            gtCountEl.textContent = `${geojson.features.length} gebieden in selectie`;
+        }
         updateLegenda(geojson);
 
         const geojsonBtn = document.getElementById('export-geojson-btn');
@@ -1375,9 +1383,11 @@ function displayOnMap(geojson) {
     // causing massive lag on click.
     const renderGeojson = geojson;
 
-    // Create GeoJsonLayer (Different IDs prevent WebGL buffer corruption during 2D/3D toggle)
+    // Create GeoJsonLayer (Unieke ID per scope dwingt deck.gl om WebGL- en tessellatie-buffers
+    // volledig te vernieuwen bij scope-wissels. Voorkomt buffer-corruptie/spikes.
+    // Transitions vervallen hierdoor bewust bij gemeente/type-wissel).
     const layer = new GeoJsonLayer({
-        id: `gebieden-layer-${state.enable3D ? '3d' : '2d'}`,
+        id: `gebieden-layer-${state.enable3D ? '3d' : '2d'}-${state.currentGebiedstype || 'def'}-${state.currentGemeenteCode || 'all'}`,
         data: renderGeojson,
 
         // Rendering
