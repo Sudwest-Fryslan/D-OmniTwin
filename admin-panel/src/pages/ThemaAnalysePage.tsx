@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { reportAPI, hierarchyAPI, aiAPI } from '../services/api';
 import { X, Layers, RefreshCw, Download, ArrowUpDown, Map, BarChart2, List, ChevronRight, ChevronDown } from 'lucide-react';
@@ -107,7 +107,10 @@ export const ThemaAnalysePage: React.FC = () => {
     const deelgebiedNaam = searchParams.get('naam') || `${gebiedIds.length} buurten`;
     const gemeenteCode = searchParams.get('gemeente') || '1900';
     const laagId = searchParams.get('laag_id');
-    const woonplaatsen = searchParams.get('woonplaatsen')?.split(',').map(decodeURIComponent).filter(Boolean) || [];
+    const woonplaatsenParam = searchParams.get('woonplaatsen') || '';
+    const woonplaatsen = useMemo(() => {
+        return woonplaatsenParam ? woonplaatsenParam.split(',').map(decodeURIComponent).filter(Boolean) : [];
+    }, [woonplaatsenParam]);
 
     // ─── Data Fetching ──────────────────────────────────────────────────────
 
@@ -129,7 +132,7 @@ export const ThemaAnalysePage: React.FC = () => {
     // Fetch Woonplaatsen GeoJSON
     useEffect(() => {
         if (laagId && woonplaatsen.length > 0) {
-            fetch(`/api/admin/externe-lagen/${laagId}/geojson?features=${encodeURIComponent(woonplaatsen.join(','))}`, {
+            fetch(`/api/externe-lagen/${laagId}/features?features=${encodeURIComponent(woonplaatsen.join(','))}`, {
                 headers: { 'X-Admin-Key': localStorage.getItem('adminKey') || '' }
             })
                 .then(r => r.json())
