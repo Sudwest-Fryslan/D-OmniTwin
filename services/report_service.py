@@ -1441,4 +1441,185 @@ class ReportDataService:
             "bronverantwoording": bronverantwoording
         }
 
+    def generate_deelgebied_svg_kaart(
+        self,
+        gebied_ids: List[str],
+        referentie: str = 'gemeente',
+        gemeente_code: Optional[str] = None,
+        deelgebied_naam: Optional[str] = None
+    ) -> str:
+        """
+        Genereert een inline SVG choropleet van de geselecteerde buurten,
+        ingekleurd op de gewogen gemiddelde Z-score per buurt (over alle kwadranten).
 
+        Returns: SVG string
+        """
+        import math
+
+        # 1. Haal de analyse-data op zodat we Z-scores per buurt per indicator hebben
+        payload = self.generate_deelgebied_payload(
+            gebied_ids=gebied_ids,
+            referentie=referentie,
+            gemeente_code=gemeente_code,
+            deelgebied_naam=deelgebied_naam
+        )
+
+        # 2. Bepaal max absolute Z-score per buurt (zelfde metric als Multi-Gebiedsdossier)
+        buurt_zscores: Dict[str, List[float]] = {}
+        for kw in payload.get('kwadranten', []):
+            for thema in kw.get('themas', []):
+                for tab_key in ('top10_aandachtspunten', 'top10_kansen'):
+                    for ind in thema.get(tab_key, []):
+                        for bd in ind.get('buurten_drilldown', []):
+                            bid = bd['buurt_id']
+                            if bid not in buurt_zscores:
+                                buurt_zscores[bid] = []
+                            buurt_zscores[bid].append(abs(bd['buurt_z_score']))
+
+        buurt_max_z: Dict[str, float] = {}
+        for bid, scores in buurt_zscores.items():
+            buurt_max_z[bid] = max(scores) if scores else 0.0
+
+        # 3. Haal geometrieën op (WGS84 GeoJSON)
+        geom_query = text("""
+            SELECT g.id, g.naam,
+                   ST_AsGeoJSON(ST_Transform(g.geom, 4326))::json AS geometry
+            FROM gebieden g
+            WHERE g.id = ANY(:gebied_ids)
+              AND g.geom IS NOT NULL
+              AND COALESCE(g.metadata->>'water', 'NEE') != 'JA'
+        """)
+        geom_rows = [
+            dict(r._mapping)
+            for r in self.db.execute(geom_query, {"gebied_ids": gebied_ids}).fetchall()
+        ]
+
+        if not geom_rows:
+            return self._svg_empty_fallback(deelgebied_naam or "Geen data")
+
+        # 4. Verzamel alle coördinaten voor bounding box
+        all_coords = []
+        features = []
+        for row in geom_rows:
+            geom = row['geometry']
+            coords_list = self._extract_polygon_coords(geom)
+            all_coords.extend(coords_list)
+            z_abs = buurt_max_z.get(str(row['id']), 0.0)
+            features.append({
+                'id': str(row['id']),
+                'naam': row['naam'],
+                'geometry': geom,
+                'z_score_abs': z_abs,
+                'kleur': self._get_zscore_kleur(z_abs, z_abs >= 1.0)
+            })
+
+        if not all_coords:
+            return self._svg_empty_fallback(deelgebied_naam or "Geen data")
+
+        # 5. Bounding box berekenen
+        lons = [c[0] for c in all_coords]
+        lats = [c[1] for c in all_coords]
+        min_lon, max_lon = min(lons), max(lons)
+        min_lat, max_lat = min(lats), max(lats)
+
+        # Padding (5%)
+        pad_lon = (max_lon - min_lon) * 0.05 or 0.001
+        pad_lat = (max_lat - min_lat) * 0.05 or 0.001
+        min_lon -= pad_lon
+        max_lon += pad_lon
+        min_lat -= pad_lat
+        max_lat += pad_lat
+
+        # 6. SVG viewport
+        svg_w, svg_h = 400, 320
+
+        def lon_to_x(lon):
+            return (lon - min_lon) / (max_lon - min_lon) * svg_w
+
+        def lat_to_y(lat):
+            # Pseudo-Mercator, Y geïnverteerd (SVG Y loopt naar beneden)
+            def merc(lat_deg):
+                return math.log(math.tan(math.pi / 4 + math.radians(lat_deg) / 2))
+            y_min = merc(min_lat)
+            y_max = merc(max_lat)
+            y = merc(lat)
+            return svg_h - ((y - y_min) / (y_max - y_min) * svg_h)
+
+        # 7. SVG opbouwen — zelfde kleuren als Multi-Gebiedsdossier (_get_zscore_kleur)
+        polygons_svg = []
+        for feat in features:
+            color = feat['kleur']
+            z_label = f"|Z| {feat['z_score_abs']:.2f}"
+            title = f"{feat['naam']} ({z_label})"
+            rings = self._geom_to_svg_rings(feat['geometry'], lon_to_x, lat_to_y)
+            for ring_points in rings:
+                points_str = " ".join(f"{x:.1f},{y:.1f}" for x, y in ring_points)
+                polygons_svg.append(
+                    f'<polygon points="{points_str}" '
+                    f'fill="{color}" stroke="#1a1f2e" stroke-width="0.8" opacity="0.9">'
+                    f'<title>{title}</title></polygon>'
+                )
+
+        naam_label = deelgebied_naam or payload.get('deelgebied_naam', '')
+
+        svg = f'''<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {svg_w} {svg_h}"
+  width="{svg_w}" height="{svg_h}" style="background:#0d1117;border-radius:8px;">
+  <style>
+    polygon {{ transition: opacity 0.2s; cursor: pointer; }}
+    polygon:hover {{ opacity: 1; stroke-width: 1.6; stroke: #60a5fa; }}
+    text {{ font-family: Inter, system-ui, sans-serif; }}
+  </style>
+  {"".join(polygons_svg)}
+  <text x="8" y="16" fill="#9ca3af" font-size="11">{naam_label}</text>
+  <!-- legenda — zelfde als Multi-Gebiedsdossier -->
+  <g transform="translate(8, {svg_h - 18})">
+    <rect x="0" y="0" width="10" height="10" fill="#8c96a0" rx="1.5"/>
+    <text x="14" y="9" fill="#6b7280" font-size="7">In lijn</text>
+    <rect x="48" y="0" width="10" height="10" fill="#d4b483" rx="1.5"/>
+    <text x="62" y="9" fill="#6b7280" font-size="7">Licht</text>
+    <rect x="90" y="0" width="10" height="10" fill="#c17c3e" rx="1.5"/>
+    <text x="104" y="9" fill="#6b7280" font-size="7">Matig</text>
+    <rect x="132" y="0" width="10" height="10" fill="#2b6ca3" rx="1.5"/>
+    <text x="146" y="9" fill="#6b7280" font-size="7">Sterk</text>
+    <rect x="174" y="0" width="10" height="10" fill="#1a3d5c" rx="1.5"/>
+    <text x="188" y="9" fill="#6b7280" font-size="7">Extreem</text>
+  </g>
+</svg>'''
+
+        return svg
+
+    def _extract_polygon_coords(self, geojson: dict) -> List[List[float]]:
+        """Extraheert alle [lon, lat] coördinaten uit een GeoJSON Polygon/MultiPolygon."""
+        coords = []
+        geom_type = geojson.get('type', '')
+        if geom_type == 'Polygon':
+            for ring in geojson.get('coordinates', []):
+                coords.extend(ring)
+        elif geom_type == 'MultiPolygon':
+            for polygon in geojson.get('coordinates', []):
+                for ring in polygon:
+                    coords.extend(ring)
+        return coords
+
+    def _geom_to_svg_rings(self, geojson: dict, lon_to_x, lat_to_y) -> List[List[tuple]]:
+        """Converteert GeoJSON Polygon/MultiPolygon naar lijsten van (x, y) punten voor SVG."""
+        rings = []
+        geom_type = geojson.get('type', '')
+        if geom_type == 'Polygon':
+            for ring in geojson.get('coordinates', []):
+                rings.append([(lon_to_x(c[0]), lat_to_y(c[1])) for c in ring])
+        elif geom_type == 'MultiPolygon':
+            for polygon in geojson.get('coordinates', []):
+                for ring in polygon:
+                    rings.append([(lon_to_x(c[0]), lat_to_y(c[1])) for c in ring])
+        return rings
+
+    def _svg_empty_fallback(self, label: str) -> str:
+        """Geeft een fallback SVG terug als er geen geometrieën beschikbaar zijn."""
+        return f'''<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 320"
+  width="400" height="320" style="background:#0d1117;border-radius:8px;">
+  <text x="200" y="155" fill="#6b7280" font-size="13" text-anchor="middle"
+    font-family="Inter, system-ui, sans-serif">Geen kaartdata beschikbaar</text>
+  <text x="200" y="175" fill="#4b5563" font-size="11" text-anchor="middle"
+    font-family="Inter, system-ui, sans-serif">{label}</text>
+</svg>'''

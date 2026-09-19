@@ -246,6 +246,12 @@ export const reportAPI = {
         gemeente_code?: string;
         deelgebied_naam?: string;
     }) => reportApiClient.post<any>('/deelgebied', payload),
+    getDeelgebiedKaart: (payload: {
+        gebied_ids: string[];
+        referentie: string;
+        gemeente_code?: string;
+        deelgebied_naam?: string;
+    }) => reportApiClient.post<{ svg: string }>('/deelgebied/kaart', payload),
 };
 
 // Public API client — voor gebieden/gemeenten endpoint (geen auth nodig)

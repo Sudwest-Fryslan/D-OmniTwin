@@ -1,5 +1,6 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
+import * as d3 from 'd3';
 import { reportAPI } from '../services/api';
 import {
     ChevronDown,
@@ -15,7 +16,8 @@ import {
     Users,
     Layers,
     FileText,
-    ExternalLink
+    ExternalLink,
+    Map
 } from 'lucide-react';
 
 // ─── Interfaces ────────────────────────────────────────────────────────────
@@ -146,6 +148,12 @@ export const DeelgebiedPage: React.FC = () => {
     const [data, setData] = useState<DeelgebiedPayload | null>(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [geoData, setGeoData] = useState<any>(null);
+    const [geoLoading, setGeoLoading] = useState(false);
+    const [woonplaatsGeo, setWoonplaatsGeo] = useState<any>(null);
+    const [showWoonplaatsGrenzen, setShowWoonplaatsGrenzen] = useState(true);
+    const [hoveredBuurt, setHoveredBuurt] = useState<string | null>(null);
+    const mapSvgRef = useRef<SVGSVGElement>(null);
 
     // Per thema view mode: 'aandacht' | 'kansen' (default 'aandacht')
     const [themaMode, setThemaMode] = useState<Record<string, 'aandacht' | 'kansen'>>({});
@@ -194,6 +202,156 @@ export const DeelgebiedPage: React.FC = () => {
 
         fetchData();
     }, [gebiedIds, referentie, gemeenteCode, deelgebiedNaamParam]);
+
+    // Fetch GeoJSON voor kaart (parallel, non-blocking)
+    useEffect(() => {
+        if (!gebiedIds.length) return;
+        setGeoLoading(true);
+        reportAPI.getMultiGebiedGeoJSON({
+            gebied_ids: gebiedIds,
+            referentie,
+            gemeente_code: gemeenteCode || '1900'
+        })
+            .then(res => setGeoData(res.data))
+            .catch(err => console.warn('Kaart GeoJSON kon niet worden geladen:', err))
+            .finally(() => setGeoLoading(false));
+    }, [gebiedIds, referentie, gemeenteCode]);
+
+    // Fetch Woonplaats/Deelgebied contouren (paarse stippellijn)
+    useEffect(() => {
+        const laagId = searchParams.get('laag_id');
+        const woonplaatsenParam = searchParams.get('woonplaatsen')?.split(',').map(decodeURIComponent).filter(Boolean) || [];
+
+        if (laagId) {
+            fetch(`/api/externe-lagen/${laagId}/features`)
+                .then(r => r.ok ? r.json() : null)
+                .then(allFeatures => {
+                    if (allFeatures?.features) {
+                        const filtered = allFeatures.features.filter((f: any) =>
+                            woonplaatsenParam.includes(f.properties?.woonplaats || f.properties?.naam)
+                        );
+                        if (filtered.length > 0) {
+                            setWoonplaatsGeo({ type: 'FeatureCollection', features: filtered });
+                        }
+                    }
+                })
+                .catch(err => console.warn('Woonplaatslaag niet beschikbaar:', err));
+        } else {
+            // Fallback via pg_featureserv: haal omgevingsvisie-deelgebied op
+            fetch('/api/geo/collections/public.omgevingsvisie_deelgebieden/items?limit=100')
+                .then(r => r.ok ? r.json() : null)
+                .then(allFeatures => {
+                    if (allFeatures?.features) {
+                        const targetNaam = (deelgebiedNaamParam || '').toLowerCase();
+                        const matched = allFeatures.features.filter((f: any) => {
+                            const dName = (f.properties?.deelgebied || '').toLowerCase();
+                            const nName = (f.properties?.naam || '').toLowerCase();
+                            return dName === targetNaam || nName === targetNaam || nName.includes(targetNaam);
+                        });
+                        if (matched.length > 0) {
+                            setWoonplaatsGeo({ type: 'FeatureCollection', features: matched });
+                        }
+                    }
+                })
+                .catch(err => console.warn('Omgevingsvisie deelgebieden niet beschikbaar:', err));
+        }
+    }, [deelgebiedNaamParam, searchParams]);
+
+    // Legenda items (conform Multi-Gebiedsdossier)
+    const legendItems = [
+        { color: '#8c96a0', label: 'In lijn (|z| < 0.5)' },
+        { color: '#d4b483', label: 'Licht (0.5–1.0)' },
+        { color: '#c17c3e', label: 'Matig (1.0–1.5)' },
+        { color: '#2b6ca3', label: 'Sterk (1.5–2.0)' },
+        { color: '#1a3d5c', label: 'Extreem (> 2.0)' },
+    ];
+
+    // D3 Choropleth renderen
+    const renderChoropleth = () => {
+        if (geoLoading) {
+            return (
+                <div style={{ height: '220px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <div style={{
+                        width: '24px',
+                        height: '24px',
+                        border: '2px solid var(--color-border)',
+                        borderTopColor: 'var(--color-primary)',
+                        borderRadius: '50%',
+                        animation: 'spin 1s linear infinite'
+                    }} />
+                </div>
+            );
+        }
+
+        if (!geoData || !geoData.features || geoData.features.length === 0) {
+            return (
+                <div style={{ height: '220px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--color-text-muted)', fontSize: '0.8rem' }}>
+                    Geen kaartdata beschikbaar
+                </div>
+            );
+        }
+
+        const width = 380;
+        const height = 280;
+
+        const sortedFeatures = [...geoData.features].sort((a: any, b: any) => {
+            const aZ = a.properties?.max_z_score_abs || 0;
+            const bZ = b.properties?.max_z_score_abs || 0;
+            return aZ - bZ;
+        });
+
+        const projection = d3.geoMercator().fitSize(
+            [width - 24, height - 24],
+            { type: 'FeatureCollection', features: sortedFeatures } as any
+        );
+
+        projection.translate([
+            (projection.translate()[0] || 0) + 12,
+            (projection.translate()[1] || 0) + 12
+        ]);
+
+        const pathGenerator = d3.geoPath().projection(projection);
+
+        return (
+            <svg ref={mapSvgRef} viewBox={`0 0 ${width} ${height}`} style={{ width: '100%', height: 'auto', maxHeight: '300px', display: 'block' }}>
+                {sortedFeatures.map((f: any) => {
+                    const isHovered = hoveredBuurt === f.properties.buurt_id;
+                    const d = pathGenerator(f as any) || '';
+
+                    return (
+                        <path
+                            key={f.properties.buurt_id}
+                            d={d}
+                            fill={f.properties.kleur_hex}
+                            stroke={isHovered ? '#fff' : '#334155'}
+                            strokeWidth={isHovered ? 2 : 0.6}
+                            opacity={isHovered ? 1 : 0.85}
+                            style={{ cursor: 'pointer', transition: 'opacity 0.15s, stroke-width 0.15s' }}
+                            onMouseEnter={() => setHoveredBuurt(f.properties.buurt_id)}
+                            onMouseLeave={() => setHoveredBuurt(null)}
+                        >
+                            <title>{`${f.properties.buurt_naam}\n${f.properties.indicator_naam || 'Indicator'}: z=${f.properties.max_z_score}\n${f.properties.impact || ''}`}</title>
+                        </path>
+                    );
+                })}
+                {/* Woonplaatsgrenzen overlay (paarse stippellijn) */}
+                {showWoonplaatsGrenzen && woonplaatsGeo?.features?.map((f: any, i: number) => (
+                    <path
+                        key={`wp-${i}`}
+                        d={pathGenerator(f as any) || ''}
+                        fill="none"
+                        stroke="#8b5cf6"
+                        strokeWidth={2.5}
+                        strokeDasharray="6,3"
+                        opacity={0.85}
+                        pointerEvents="none"
+                    >
+                        <title>{f.properties?.woonplaats || f.properties?.deelgebied || f.properties?.naam}</title>
+                    </path>
+                ))}
+            </svg>
+        );
+    };
 
     // Handle referentie change
     const handleReferentieChange = (newRef: 'gemeente' | 'fryslan') => {
@@ -391,135 +549,204 @@ export const DeelgebiedPage: React.FC = () => {
                 padding: '1.75rem 2rem',
                 marginBottom: '2rem',
                 boxShadow: 'var(--shadow-sm)',
-                display: 'flex',
-                flexWrap: 'wrap',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                gap: '1.5rem'
+                display: 'grid',
+                gridTemplateColumns: 'minmax(0, 1fr) minmax(320px, 28%)',
+                gap: '1.75rem',
+                alignItems: 'start'
             }}>
-                <div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.5rem' }}>
-                        <span style={{ fontSize: '1.5rem' }}>🏘️</span>
-                        <h1 style={{ margin: 0, fontSize: '1.75rem', fontWeight: 700, letterSpacing: '-0.02em' }}>
-                            {deelgebied_naam}
-                        </h1>
-                        <span style={{
-                            fontSize: '0.8rem',
-                            fontWeight: 600,
-                            padding: '0.2rem 0.6rem',
-                            borderRadius: '999px',
-                            background: 'rgba(59, 130, 246, 0.1)',
-                            color: '#3B82F6',
-                            border: '1px solid rgba(59, 130, 246, 0.2)'
-                        }}>
-                            Woonplaats- & Deelgebiedsanalyse
-                        </span>
+                {/* Left column: metadata + controls */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                    <div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.5rem' }}>
+                            <span style={{ fontSize: '1.5rem' }}>🏘️</span>
+                            <h1 style={{ margin: 0, fontSize: '1.75rem', fontWeight: 700, letterSpacing: '-0.02em' }}>
+                                {deelgebied_naam}
+                            </h1>
+                            <span style={{
+                                fontSize: '0.8rem',
+                                fontWeight: 600,
+                                padding: '0.2rem 0.6rem',
+                                borderRadius: '999px',
+                                background: 'rgba(59, 130, 246, 0.1)',
+                                color: '#3B82F6',
+                                border: '1px solid rgba(59, 130, 246, 0.2)'
+                            }}>
+                                Woonplaats- & Deelgebiedsanalyse
+                            </span>
+                        </div>
+
+                        <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '1.25rem', color: 'var(--color-text-secondary)', fontSize: '0.875rem' }}>
+                            <span style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                                <Building2 size={15} /> <strong>{methodologie.actieve_buurten_telling}</strong> buurten
+                                {methodologie.waterbuurten_uitgesloten?.length > 0 && (
+                                    <span style={{ color: 'var(--color-text-muted)', fontSize: '0.8rem' }}>
+                                        ({methodologie.waterbuurten_uitgesloten.length} watergebied{methodologie.waterbuurten_uitgesloten.length > 1 ? 'en' : ''} uitgesloten)
+                                    </span>
+                                )}
+                            </span>
+                            <span>•</span>
+                            <span style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                                <Users size={15} /> <strong>{methodologie.totaal_inwoners_gebied.toLocaleString('nl-NL')}</strong> inwoners (gewogen)
+                            </span>
+                            <span>•</span>
+                            <span style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                                <Layers size={15} /> Referentiekader: <strong style={{ color: 'var(--color-text-primary)' }}>{referentie_label}</strong>
+                            </span>
+                        </div>
                     </div>
 
-                    <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '1.25rem', color: 'var(--color-text-secondary)', fontSize: '0.875rem' }}>
-                        <span style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                            <Building2 size={15} /> <strong>{methodologie.actieve_buurten_telling}</strong> buurten
-                            {methodologie.waterbuurten_uitgesloten?.length > 0 && (
-                                <span style={{ color: 'var(--color-text-muted)', fontSize: '0.8rem' }}>
-                                    ({methodologie.waterbuurten_uitgesloten.length} watergebied{methodologie.waterbuurten_uitgesloten.length > 1 ? 'en' : ''} uitgesloten)
-                                </span>
-                            )}
-                        </span>
-                        <span>•</span>
-                        <span style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                            <Users size={15} /> <strong>{methodologie.totaal_inwoners_gebied.toLocaleString('nl-NL')}</strong> inwoners (gewogen)
-                        </span>
-                        <span>•</span>
-                        <span style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                            <Layers size={15} /> Referentiekader: <strong style={{ color: 'var(--color-text-primary)' }}>{referentie_label}</strong>
-                        </span>
+                    {/* Controls & Exports */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+                        {/* Referentie Toggle */}
+                        <div style={{
+                            display: 'flex',
+                            background: 'var(--color-bg-alt)',
+                            padding: '0.25rem',
+                            borderRadius: 'var(--radius-md)',
+                            border: '1px solid var(--color-border)'
+                        }}>
+                            <button
+                                onClick={() => handleReferentieChange('gemeente')}
+                                style={{
+                                    padding: '0.45rem 0.9rem',
+                                    fontSize: '0.85rem',
+                                    fontWeight: 500,
+                                    border: 'none',
+                                    borderRadius: 'calc(var(--radius-md) - 2px)',
+                                    cursor: 'pointer',
+                                    background: referentie === 'gemeente' ? 'var(--color-primary)' : 'transparent',
+                                    color: referentie === 'gemeente' ? 'white' : 'var(--color-text-secondary)',
+                                    transition: 'all 0.15s ease'
+                                }}
+                            >
+                                ⌀ {methodologie.gemeente_naam || 'Gemeente'}
+                            </button>
+                            <button
+                                onClick={() => handleReferentieChange('fryslan')}
+                                style={{
+                                    padding: '0.45rem 0.9rem',
+                                    fontSize: '0.85rem',
+                                    fontWeight: 500,
+                                    border: 'none',
+                                    borderRadius: 'calc(var(--radius-md) - 2px)',
+                                    cursor: 'pointer',
+                                    background: referentie === 'fryslan' ? 'var(--color-primary)' : 'transparent',
+                                    color: referentie === 'fryslan' ? 'white' : 'var(--color-text-secondary)',
+                                    transition: 'all 0.15s ease'
+                                }}
+                            >
+                                ⌀ Provincie Fryslân
+                            </button>
+                        </div>
+
+                        <button
+                            onClick={exportCSV}
+                            title="Download analyse als CSV bestand"
+                            style={{
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '0.5rem',
+                                padding: '0.55rem 1rem',
+                                background: 'var(--color-surface)',
+                                border: '1px solid var(--color-border)',
+                                borderRadius: 'var(--radius-md)',
+                                color: 'var(--color-text-primary)',
+                                fontSize: '0.85rem',
+                                fontWeight: 500,
+                                cursor: 'pointer'
+                            }}
+                        >
+                            <Download size={15} /> CSV
+                        </button>
+
+                        <button
+                            onClick={handlePrint}
+                            title="Rapport afdrukken of exporteren naar PDF"
+                            style={{
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '0.5rem',
+                                padding: '0.55rem 1rem',
+                                background: 'var(--color-primary)',
+                                border: 'none',
+                                borderRadius: 'var(--radius-md)',
+                                color: 'white',
+                                fontSize: '0.85rem',
+                                fontWeight: 500,
+                                cursor: 'pointer',
+                                boxShadow: 'var(--shadow-sm)'
+                            }}
+                        >
+                            <Printer size={15} /> Print / PDF
+                        </button>
                     </div>
                 </div>
 
-                {/* Controls & Exports */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
-                    {/* Referentie Toggle */}
-                    <div style={{
-                        display: 'flex',
-                        background: 'var(--color-bg-alt)',
-                        padding: '0.25rem',
-                        borderRadius: 'var(--radius-md)',
-                        border: '1px solid var(--color-border)'
-                    }}>
-                        <button
-                            onClick={() => handleReferentieChange('gemeente')}
-                            style={{
-                                padding: '0.45rem 0.9rem',
-                                fontSize: '0.85rem',
-                                fontWeight: 500,
-                                border: 'none',
-                                borderRadius: 'calc(var(--radius-md) - 2px)',
-                                cursor: 'pointer',
-                                background: referentie === 'gemeente' ? 'var(--color-primary)' : 'transparent',
-                                color: referentie === 'gemeente' ? 'white' : 'var(--color-text-secondary)',
-                                transition: 'all 0.15s ease'
-                            }}
-                        >
-                            ⌀ {methodologie.gemeente_naam || 'Gemeente'}
-                        </button>
-                        <button
-                            onClick={() => handleReferentieChange('fryslan')}
-                            style={{
-                                padding: '0.45rem 0.9rem',
-                                fontSize: '0.85rem',
-                                fontWeight: 500,
-                                border: 'none',
-                                borderRadius: 'calc(var(--radius-md) - 2px)',
-                                cursor: 'pointer',
-                                background: referentie === 'fryslan' ? 'var(--color-primary)' : 'transparent',
-                                color: referentie === 'fryslan' ? 'white' : 'var(--color-text-secondary)',
-                                transition: 'all 0.15s ease'
-                            }}
-                        >
-                            ⌀ Provincie Fryslân
-                        </button>
+                {/* Right column: D3 Afwijkingskaart (25 à 30% van het beeld) */}
+                <div style={{
+                    background: 'var(--color-bg-alt, #161f2e)',
+                    border: '1px solid var(--color-border)',
+                    borderRadius: 'var(--radius-md)',
+                    padding: '1.1rem',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '0.6rem',
+                    width: '100%'
+                }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <span style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--color-primary)', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                            <Map size={15} /> Z-score Afwijkingskaart
+                        </span>
+                        {woonplaatsGeo && (
+                            <label style={{ fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.3rem', cursor: 'pointer', color: 'var(--color-text-muted)' }}>
+                                <input
+                                    type="checkbox"
+                                    checked={showWoonplaatsGrenzen}
+                                    onChange={e => setShowWoonplaatsGrenzen(e.target.checked)}
+                                />
+                                Toon woonplaatsgrenzen
+                                <span style={{ color: '#8b5cf6', fontWeight: 700 }}>━ ━</span>
+                            </label>
+                        )}
                     </div>
 
-                    <button
-                        onClick={exportCSV}
-                        title="Download analyse als CSV bestand"
-                        style={{
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: '0.5rem',
-                            padding: '0.55rem 1rem',
-                            background: 'var(--color-surface)',
-                            border: '1px solid var(--color-border)',
-                            borderRadius: 'var(--radius-md)',
-                            color: 'var(--color-text-primary)',
-                            fontSize: '0.85rem',
-                            fontWeight: 500,
-                            cursor: 'pointer'
-                        }}
-                    >
-                        <Download size={15} /> CSV
-                    </button>
+                    {renderChoropleth()}
 
-                    <button
-                        onClick={handlePrint}
-                        title="Rapport afdrukken of exporteren naar PDF"
-                        style={{
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: '0.5rem',
-                            padding: '0.55rem 1rem',
-                            background: 'var(--color-primary)',
-                            border: 'none',
-                            borderRadius: 'var(--radius-md)',
-                            color: 'white',
-                            fontSize: '0.85rem',
-                            fontWeight: 500,
-                            cursor: 'pointer',
-                            boxShadow: 'var(--shadow-sm)'
-                        }}
-                    >
-                        <Printer size={15} /> Print / PDF
-                    </button>
+                    {/* Legenda (conform Multi-Gebiedsdossier) */}
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', fontSize: '0.72rem', marginTop: '0.25rem' }}>
+                        {legendItems.map(l => (
+                            <div key={l.color} style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                                <div style={{ width: '9px', height: '9px', borderRadius: '2px', background: l.color }} />
+                                <span style={{ color: 'var(--color-text-muted)' }}>{l.label}</span>
+                            </div>
+                        ))}
+                    </div>
+
+                    {/* Hover status */}
+                    {hoveredBuurt && (
+                        <div style={{
+                            fontSize: '0.75rem',
+                            color: 'var(--color-text-secondary)',
+                            marginTop: '0.25rem',
+                            padding: '0.35rem 0.5rem',
+                            background: 'var(--color-surface)',
+                            borderRadius: 'var(--radius-sm)',
+                            border: '1px solid var(--color-border)',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap'
+                        }}>
+                            {(() => {
+                                const feat = geoData?.features?.find((f: any) => f.properties.buurt_id === hoveredBuurt);
+                                if (!feat) return null;
+                                return (
+                                    <span>
+                                        <strong>{feat.properties.buurt_naam}</strong>: z={feat.properties.max_z_score > 0 ? '+' : ''}{feat.properties.max_z_score} ({feat.properties.indicator_naam})
+                                    </span>
+                                );
+                            })()}
+                        </div>
+                    )}
                 </div>
             </header>
 

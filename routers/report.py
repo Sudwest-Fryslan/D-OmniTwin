@@ -300,3 +300,24 @@ def get_deelgebied_analyse_data(payload: DeelgebiedAnalyseRequest, db: Session =
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Fout tijdens deelgebied analyse generatie: {str(e)}")
 
+
+@router.post("/deelgebied/kaart", response_model=Dict[str, Any])
+def get_deelgebied_kaart(payload: DeelgebiedAnalyseRequest, db: Session = Depends(get_db)):
+    """
+    Genereert een inline SVG choropleet van de geselecteerde buurten,
+    ingekleurd op de gewogen gemiddelde Z-score per buurt.
+    Retourneert {"svg": "<svg ...>...</svg>"}
+    """
+    service = ReportDataService(db)
+    try:
+        svg = service.generate_deelgebied_svg_kaart(
+            gebied_ids=payload.gebied_ids,
+            referentie=payload.referentie,
+            gemeente_code=payload.gemeente_code,
+            deelgebied_naam=payload.deelgebied_naam
+        )
+        return {"svg": svg}
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Fout tijdens SVG kaart generatie: {str(e)}")

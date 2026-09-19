@@ -2428,7 +2428,13 @@ function openRapportTypeModal(gebiedId, baseUrl) {
         const ids = Array.from(state.selectedGebiedIds).length > 0 ? Array.from(state.selectedGebiedIds) : [gebiedId];
         const naam = encodeURIComponent(state.selectedDeelgebiedNaam);
         const gemeente = state.gemeenteCode || '1900';
-        window.open(`${baseUrl}/admin/rapport/deelgebied?gebieden=${ids.join(',')}&naam=${naam}&gemeente=${gemeente}`, '_blank');
+        let extraParams = '';
+        if (state.selectedGroepen && state.selectedGroepen.length > 0 && state.selectedLaagId) {
+            extraParams += `&laag_id=${state.selectedLaagId}`;
+            const woonplaatsen = state.selectedGroepen.map(g => encodeURIComponent(g.naam)).join(',');
+            extraParams += `&woonplaatsen=${woonplaatsen}`;
+        }
+        window.open(`${baseUrl}/admin/rapport/deelgebied?gebieden=${ids.join(',')}&naam=${naam}&gemeente=${gemeente}${extraParams}`, '_blank');
         modal.remove();
     });
     document.getElementById('rapport-modal-dossier').addEventListener('click', () => {
@@ -2527,7 +2533,13 @@ function openMultiSelectRapportModal(ids, baseUrl) {
         const gebiedenParam = ids.join(',');
         const naam = encodeURIComponent(deelgebiedNaam);
         const gemeente = state.gemeenteCode || '1900';
-        window.open(`${baseUrl}/admin/rapport/deelgebied?gebieden=${gebiedenParam}&naam=${naam}&gemeente=${gemeente}`, '_blank');
+        let extraParams = '';
+        if (state.selectedGroepen && state.selectedGroepen.length > 0 && state.selectedLaagId) {
+            extraParams += `&laag_id=${state.selectedLaagId}`;
+            const woonplaatsen = state.selectedGroepen.map(g => encodeURIComponent(g.naam)).join(',');
+            extraParams += `&woonplaatsen=${woonplaatsen}`;
+        }
+        window.open(`${baseUrl}/admin/rapport/deelgebied?gebieden=${gebiedenParam}&naam=${naam}&gemeente=${gemeente}${extraParams}`, '_blank');
         modal.remove();
     });
     document.getElementById('rapport-modal-benchmark').addEventListener('click', () => {
