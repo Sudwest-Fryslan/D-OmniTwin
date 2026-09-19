@@ -8,7 +8,7 @@ om een strakke JSON payload voor de LLM (Fase 2) of frontend te genereren.
 
 from sqlalchemy.orm import Session
 from sqlalchemy import text
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Optional
 import json
 
 class ReportDataService:
@@ -1049,4 +1049,396 @@ class ReportDataService:
             },
             "features": features
         }
+
+    # ─── Sjabloon F: Woonplaats- & Deelgebiedsanalyse ─────────────────────────
+
+    def generate_deelgebied_payload(
+        self,
+        gebied_ids: List[str],
+        referentie: str = 'gemeente',
+        gemeente_code: Optional[str] = None,
+        deelgebied_naam: Optional[str] = None
+    ) -> Dict[str, Any]:
+        """
+        Sjabloon F: Woonplaats- & Deelgebiedsanalyse.
+        Berekent een gewogen stads-/deelgebiedsgemiddelde op basis van inwoneraantallen,
+        geaggregeerd per thema met Top 10 uitschieters (aandachtspunten en kansen),
+        buurt-drilldowns en methodologische verantwoording.
+
+        Args:
+            gebied_ids: Lijst van CBS buurt-IDs (bijv. alle buurten van een woonplaats)
+            referentie: 'gemeente' of 'fryslan'
+            gemeente_code: Gemeentecode voor referentie (indien None afgeleid uit DB)
+            deelgebied_naam: Label van het geselecteerde deelgebied / woonplaats (bijv. 'Sneek')
+        """
+        if not gebied_ids:
+            raise ValueError("Minimaal 1 gebied_id is vereist.")
+
+        from collections import defaultdict
+
+        # 1. Bepaal geselecteerde buurten, filter waterbuurten en haal gemeente/type op
+        gebieden_query = text("""
+            SELECT g.id, g.naam, g.gemeente_code, g.gebiedstype_id,
+                   COALESCE(g.metadata->>'water', 'NEE') AS is_water
+            FROM gebieden g
+            WHERE g.id = ANY(:gebied_ids)
+        """)
+        geb_rows = [dict(r._mapping) for r in self.db.execute(gebieden_query, {"gebied_ids": gebied_ids}).fetchall()]
+        if not geb_rows:
+            raise ValueError("Geen van de opgegeven gebieden is gevonden in de database.")
+
+        waterbuurten = [
+            {"id": str(g['id']), "naam": str(g['naam'])}
+            for g in geb_rows if g.get('is_water') == 'JA'
+        ]
+        actieve_buurten = [g for g in geb_rows if g.get('is_water') != 'JA']
+
+        if not actieve_buurten:
+            raise ValueError("Alle geselecteerde gebieden zijn water-buurten en worden conform projectstandaard uitgesloten van analyse.")
+
+        first_buurt = actieve_buurten[0]
+        gebiedstype_id = str(first_buurt['gebiedstype_id'])
+        if not gemeente_code:
+            gemeente_code = str(first_buurt.get('gemeente_code') or '1900')
+
+        # Gemeente naam ophalen voor duiding
+        gem_row = self.db.execute(
+            text("SELECT naam FROM gemeenten WHERE code = :code"),
+            {"code": gemeente_code}
+        ).fetchone()
+        gemeente_naam = gem_row[0] if gem_row else gemeente_code
+
+        # 2. Bouw referentie-filter
+        if referentie == 'gemeente':
+            referentie_filter = "g2.gebiedstype_id = :gebiedstype_id AND g2.gemeente_code = :gemeente_code"
+            referentie_label = f"⌀ Gemeente {gemeente_naam}"
+        else:
+            referentie_filter = "g2.gebiedstype_id = :gebiedstype_id"
+            referentie_label = "⌀ Provincie Fryslân"
+
+        actieve_ids = [str(b['id']) for b in actieve_buurten]
+        params: Dict[str, Any] = {
+            "gebied_ids": actieve_ids,
+            "gebiedstype_id": gebiedstype_id,
+            "gemeente_code": gemeente_code
+        }
+
+        # 3. Inwoneraantallen ophalen voor gewogen aggregatie
+        inwoners_query = text("""
+            SELECT gd.gebied_id, gd.waarde AS inwoners
+            FROM gebied_data gd
+            JOIN indicatoren i ON gd.indicator_uuid = i.uuid
+            WHERE gd.gebied_id = ANY(:gebied_ids)
+              AND i.naam = 'Inwoners'
+              AND gd.jaar = (
+                  SELECT MAX(gd2.jaar)
+                  FROM gebied_data gd2
+                  WHERE gd2.gebied_id = gd.gebied_id
+                    AND gd2.indicator_uuid = gd.indicator_uuid
+              )
+        """)
+        inw_rows = self.db.execute(inwoners_query, {"gebied_ids": actieve_ids}).fetchall()
+        inw_map = {
+            str(r._mapping['gebied_id']): float(r._mapping['inwoners'])
+            for r in inw_rows
+            if r._mapping['inwoners'] is not None
+        }
+
+        inwoners_per_buurt: Dict[str, Dict[str, Any]] = {}
+        fallback_buurten: List[Dict[str, str]] = []
+        nul_inwoners_buurten: List[Dict[str, str]] = []
+        totaal_inwoners = 0.0
+
+        for b in actieve_buurten:
+            bid = str(b['id'])
+            bnaam = str(b['naam'])
+            if bid in inw_map:
+                inw_val = inw_map[bid]
+                if inw_val <= 0:
+                    nul_inwoners_buurten.append({"id": bid, "naam": bnaam})
+                    gew = 0.0
+                else:
+                    gew = inw_val
+                    totaal_inwoners += inw_val
+                inwoners_per_buurt[bid] = {
+                    "id": bid,
+                    "naam": bnaam,
+                    "inwoners": inw_val,
+                    "gewicht": gew,
+                    "is_fallback": False
+                }
+            else:
+                fallback_buurten.append({"id": bid, "naam": bnaam})
+                inwoners_per_buurt[bid] = {
+                    "id": bid,
+                    "naam": bnaam,
+                    "inwoners": 0,
+                    "gewicht": 1.0,
+                    "is_fallback": True
+                }
+
+        # Fallback als ALLE buurten 0 inwoners of fallback hebben
+        positive_weights = sum(b['gewicht'] for b in inwoners_per_buurt.values())
+        if positive_weights == 0:
+            for bid in inwoners_per_buurt:
+                inwoners_per_buurt[bid]['gewicht'] = 1.0
+
+        # 4. Target data en referentiestatistieken ophalen
+        query = text(f"""
+            WITH target_data AS (
+                SELECT indicator_uuid, gebied_id, waarde, jaar
+                FROM (
+                    SELECT indicator_uuid, gebied_id, waarde, jaar,
+                           ROW_NUMBER() OVER(PARTITION BY gebied_id, indicator_uuid ORDER BY jaar DESC) AS rn
+                    FROM gebied_data
+                    WHERE gebied_id = ANY(:gebied_ids)
+                ) sub
+                WHERE rn = 1
+            ),
+            referentie_stats AS (
+                SELECT gd2.indicator_uuid,
+                       AVG(gd2.waarde)         AS avg_waarde,
+                       STDDEV_SAMP(gd2.waarde) AS std_waarde,
+                       MIN(gd2.waarde)         AS min_waarde,
+                       MAX(gd2.waarde)         AS max_waarde,
+                       COUNT(DISTINCT gd2.gebied_id) AS n_ref_buurten
+                FROM (
+                    SELECT gd3.indicator_uuid, gd3.waarde, gd3.gebied_id,
+                           ROW_NUMBER() OVER(PARTITION BY gd3.indicator_uuid, gd3.gebied_id ORDER BY gd3.jaar DESC) AS rn
+                    FROM gebied_data gd3
+                    JOIN gebieden g2 ON gd3.gebied_id = g2.id
+                    WHERE {referentie_filter}
+                      AND COALESCE(g2.metadata->>'water', 'NEE') != 'JA'
+                ) gd2
+                WHERE gd2.rn = 1
+                GROUP BY gd2.indicator_uuid
+                HAVING STDDEV_SAMP(gd2.waarde) > 0
+            )
+            SELECT
+                td.indicator_uuid,
+                td.gebied_id,
+                g.naam                          AS buurt_naam,
+                td.waarde,
+                td.jaar,
+                rs.avg_waarde,
+                rs.std_waarde,
+                rs.min_waarde,
+                rs.max_waarde,
+                rs.n_ref_buurten,
+                i.naam                          AS indicator_naam,
+                i.eenheid                       AS eenheid,
+                COALESCE(i.score_type, '+/+')   AS score_type,
+                i.omschrijving,
+                i.ontologische_beschrijving,
+                i.bron,
+                vkh.titel_naam                  AS kwadrant_naam,
+                vkh.titel_kleur                 AS kwadrant_kleur,
+                vkh.thema_naam                  AS thema_naam,
+                vkh.onderdeel_naam              AS onderdeel_naam
+            FROM target_data td
+            JOIN gebieden g        ON td.gebied_id = g.id
+            JOIN indicatoren i     ON td.indicator_uuid = i.uuid
+            JOIN v_kompas_hierarchie vkh
+                                   ON i.uuid = vkh.indicator_uuid AND vkh.config_id = 1
+            JOIN referentie_stats rs ON td.indicator_uuid = rs.indicator_uuid
+            WHERE i.naam != 'Inwoners'
+            ORDER BY vkh.titel_naam, vkh.thema_naam, i.naam
+        """)
+
+        result_rows = [dict(r._mapping) for r in self.db.execute(query, params).fetchall()]
+
+        # 5. Groepeer per indicator en bereken gewogen gemiddelde + drilldown
+        indicator_points = defaultdict(list)
+        for r in result_rows:
+            indicator_points[str(r['indicator_uuid'])].append(r)
+
+        kwadrant_map = defaultdict(lambda: {
+            "kwadrant_naam": "",
+            "kwadrant_kleur": "#3B82F6",
+            "themas": defaultdict(list)
+        })
+
+        used_indicator_uuids = set()
+
+        for uuid_str, pts in indicator_points.items():
+            first_pt = pts[0]
+            kw_naam = first_pt['kwadrant_naam'] or 'Overig'
+            kw_kleur = first_pt['kwadrant_kleur'] or '#3B82F6'
+            th_naam = first_pt['thema_naam'] or 'Overig'
+
+            avg_waarde = float(first_pt['avg_waarde'])
+            std_waarde = float(first_pt['std_waarde'])
+
+            w_sum = 0.0
+            sum_val_w = 0.0
+            drilldown = []
+
+            for pt in pts:
+                bid = str(pt['gebied_id'])
+                w_info = inwoners_per_buurt.get(bid, {"gewicht": 1.0, "inwoners": 0})
+                gew = float(w_info['gewicht'])
+                val = float(pt['waarde'])
+
+                if gew > 0:
+                    sum_val_w += val * gew
+                    w_sum += gew
+
+                # Buurt-zscore en afwijking t.o.v. referentie
+                b_z = (val - avg_waarde) / std_waarde if std_waarde > 0 else 0.0
+                b_diff = val - avg_waarde
+                b_diff_pct = (b_diff / avg_waarde * 100.0) if avg_waarde != 0 else 0.0
+
+                drilldown.append({
+                    "buurt_id": bid,
+                    "buurt_naam": pt['buurt_naam'],
+                    "waarde": round(val, 2),
+                    "inwoners": int(w_info['inwoners']),
+                    "gewicht": round(gew, 1),
+                    "buurt_z_score": round(b_z, 2),
+                    "verschil": round(b_diff, 2),
+                    "verschil_pct": round(b_diff_pct, 1)
+                })
+
+            if w_sum <= 0:
+                continue
+
+            gewogen_waarde = sum_val_w / w_sum
+            z_score = (gewogen_waarde - avg_waarde) / std_waarde if std_waarde > 0 else 0.0
+            z_abs = abs(z_score)
+            verschil = gewogen_waarde - avg_waarde
+            verschil_pct = (verschil / avg_waarde * 100.0) if avg_waarde != 0 else 0.0
+
+            score_type = first_pt['score_type']
+            impact = self._determine_impact(z_score, score_type)
+            is_ongunstig = 'negatief' in impact
+            kleur = self._get_zscore_kleur(z_abs, is_ongunstig)
+
+            # Sorteer drilldown buurten op afwijking van referentie
+            drilldown.sort(key=lambda x: abs(x['buurt_z_score']), reverse=True)
+
+            indicator_item = {
+                "indicator_uuid": uuid_str,
+                "indicator_naam": first_pt['indicator_naam'],
+                "eenheid": first_pt.get('eenheid') or '',
+                "score_type": score_type,
+                "gewogen_waarde": round(gewogen_waarde, 2),
+                "ref_gemiddelde": round(avg_waarde, 2),
+                "ref_std": round(std_waarde, 2),
+                "ref_min": round(float(first_pt['min_waarde']), 2),
+                "ref_max": round(float(first_pt['max_waarde']), 2),
+                "z_score": round(z_score, 2),
+                "z_score_abs": round(z_abs, 2),
+                "verschil": round(verschil, 2),
+                "verschil_pct": round(verschil_pct, 1),
+                "impact": impact,
+                "is_ongunstig": is_ongunstig,
+                "kleur_hex": kleur,
+                "omschrijving": first_pt.get('omschrijving') or '',
+                "ontologische_beschrijving": first_pt.get('ontologische_beschrijving') or '',
+                "bron": first_pt.get('bron') or '',
+                "n_buurten_met_data": len(drilldown),
+                "buurten_drilldown": drilldown
+            }
+
+            kwadrant_map[kw_naam]["kwadrant_naam"] = kw_naam
+            kwadrant_map[kw_naam]["kwadrant_kleur"] = kw_kleur
+            kwadrant_map[kw_naam]["themas"][th_naam].append(indicator_item)
+            used_indicator_uuids.add(uuid_str)
+
+        # 6. Structureren per kwadrant en thema met Top 10 Aandachtspunten en Top 10 Kansen
+        kwadranten_output = []
+        kwadranten_volgorde = [
+            "Kwaliteit fysieke leefomgeving",
+            "Kwaliteit sociale leefomgeving",
+            "Kwaliteit van leven",
+            "Samenstelling"
+        ]
+
+        # Sorteer kwadranten volgens standaard volgorde
+        gesorteerde_kw_namen = sorted(
+            kwadrant_map.keys(),
+            key=lambda k: kwadranten_volgorde.index(k) if k in kwadranten_volgorde else 99
+        )
+
+        for kw_naam in gesorteerde_kw_namen:
+            kw_data = kwadrant_map[kw_naam]
+            themas_output = []
+
+            alle_kw_indicatoren = []
+
+            for th_naam, ind_list in sorted(kw_data["themas"].items()):
+                alle_kw_indicatoren.extend(ind_list)
+
+                # Splits in aandachtspunten (ongunstig) en kansen (gunstig)
+                aandachtspunten = [i for i in ind_list if i['is_ongunstig']]
+                kansen = [i for i in ind_list if not i['is_ongunstig']]
+
+                # Sorteer op absolute z-score dalend
+                aandachtspunten.sort(key=lambda x: x['z_score_abs'], reverse=True)
+                kansen.sort(key=lambda x: x['z_score_abs'], reverse=True)
+
+                themas_output.append({
+                    "thema_naam": th_naam,
+                    "totaal_indicatoren": len(ind_list),
+                    "totaal_aandachtspunten": len(aandachtspunten),
+                    "totaal_kansen": len(kansen),
+                    "top10_aandachtspunten": aandachtspunten[:10],
+                    "top10_kansen": kansen[:10]
+                })
+
+            n_ind = len(alle_kw_indicatoren)
+            gem_z = round(sum(i['z_score'] for i in alle_kw_indicatoren) / n_ind, 2) if n_ind > 0 else 0.0
+            n_uitschieters = sum(1 for i in alle_kw_indicatoren if i['z_score_abs'] >= 1.0)
+            n_aandacht = sum(1 for i in alle_kw_indicatoren if i['is_ongunstig'] and i['z_score_abs'] >= 1.0)
+            n_kans = sum(1 for i in alle_kw_indicatoren if not i['is_ongunstig'] and i['z_score_abs'] >= 1.0)
+
+            kwadranten_output.append({
+                "kwadrant_naam": kw_naam,
+                "kwadrant_kleur": kw_data["kwadrant_kleur"],
+                "gem_zscore": gem_z,
+                "n_indicatoren": n_ind,
+                "n_uitschieters": n_uitschieters,
+                "n_aandachtspunten": n_aandacht,
+                "n_kansen": n_kans,
+                "themas": themas_output
+            })
+
+        # 7. Bronverantwoording
+        bronverantwoording = self.get_bronverantwoording_for_indicators(list(used_indicator_uuids))
+
+        # 8. Methodologie object
+        methodologie = {
+            "aggregatie": "gewogen_gemiddelde",
+            "gewicht_bron": "Indicator 'Inwoners' (CBS Kerncijfers Wijken en Buurten)",
+            "referentie": referentie_label,
+            "referentie_modus": referentie,
+            "gemeente_code": gemeente_code,
+            "gemeente_naam": gemeente_naam,
+            "totaal_geselecteerde_buurten": len(gebied_ids),
+            "waterbuurten_uitgesloten": waterbuurten,
+            "actieve_buurten_telling": len(actieve_buurten),
+            "fallback_buurten": fallback_buurten,
+            "nul_inwoners_buurten": nul_inwoners_buurten,
+            "totaal_inwoners_gebied": round(totaal_inwoners),
+            "z_score_formule": "Z = (W - μ_ref) / σ_ref",
+            "statistisch_effect": "Het gewogen stadsgemiddelde (W) vlakt extreme pieken en dalen van individuele buurten uit. Hierdoor wijkt de Z-score van de stad structureel minder sterk af dan die van de meest extreme buurten. Dit is statistisch correct (de centrale limietstelling) en geen rekenfout.",
+            "scoringtype_disclaimer": "De scoringstypen (+/+, +/-, -/-, -/+) en de resulterende duiding naar aandachtspunt of kans zijn onderdeel van het Kompas-model en nog onderhevig aan methodologische validatie."
+        }
+
+        display_naam = deelgebied_naam or f"{len(actieve_buurten)} buurten"
+
+        return {
+            "deelgebied_naam": display_naam,
+            "referentie_label": referentie_label,
+            "referentie_modus": referentie,
+            "gemeente_code": gemeente_code,
+            "gemeente_naam": gemeente_naam,
+            "totaal_buurten": len(gebied_ids),
+            "buurten_met_data": len(actieve_buurten),
+            "geselecteerde_buurten": list(inwoners_per_buurt.values()),
+            "kwadranten": kwadranten_output,
+            "methodologie": methodologie,
+            "bronverantwoording": bronverantwoording
+        }
+
 

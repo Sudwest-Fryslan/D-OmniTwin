@@ -2373,10 +2373,23 @@ function openRapportTypeModal(gebiedId, baseUrl) {
                 Welk rapport wil je genereren?
             </p>
             <div style="display:flex; flex-direction:column; gap:0.75rem;">
-                <button id="rapport-modal-dossier" style="
+                ${state.selectedDeelgebiedNaam ? `
+                <button id="rapport-modal-deelgebied-single" style="
                     padding: 0.75rem 1rem; border-radius: 8px; border: none;
                     background: var(--color-primary, #3b82f6); color: white;
                     font-size:0.95rem; font-weight:600; cursor:pointer; text-align:left;
+                    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+                ">🏘️ Woonplaatsanalyse (${state.selectedDeelgebiedNaam})<br>
+                    <span style="font-weight:400; font-size:0.8rem; opacity:0.9;">
+                        Gewogen stadsbrede analyse per thema
+                    </span>
+                </button>
+                ` : ''}
+                <button id="rapport-modal-dossier" style="
+                    padding: 0.75rem 1rem; border-radius: 8px; border: none;
+                    background: ${state.selectedDeelgebiedNaam ? 'var(--color-bg-alt, #2d3748)' : 'var(--color-primary, #3b82f6)'}; color: white;
+                    font-size:0.95rem; font-weight:600; cursor:pointer; text-align:left;
+                    border: ${state.selectedDeelgebiedNaam ? '1px solid var(--color-border, rgba(255,255,255,0.15))' : 'none'};
                 ">📄 Gebiedsdossier<br>
                     <span style="font-weight:400; font-size:0.8rem; opacity:0.8;">
                         Volledige analyse van dit gebied
@@ -2411,6 +2424,13 @@ function openRapportTypeModal(gebiedId, baseUrl) {
 
     document.body.appendChild(modal);
 
+    document.getElementById('rapport-modal-deelgebied-single')?.addEventListener('click', () => {
+        const ids = Array.from(state.selectedGebiedIds).length > 0 ? Array.from(state.selectedGebiedIds) : [gebiedId];
+        const naam = encodeURIComponent(state.selectedDeelgebiedNaam);
+        const gemeente = state.gemeenteCode || '1900';
+        window.open(`${baseUrl}/admin/rapport/deelgebied?gebieden=${ids.join(',')}&naam=${naam}&gemeente=${gemeente}`, '_blank');
+        modal.remove();
+    });
     document.getElementById('rapport-modal-dossier').addEventListener('click', () => {
         window.open(`${baseUrl}/admin/rapport/${gebiedId}`, '_blank');
         modal.remove();
@@ -2453,20 +2473,21 @@ function openMultiSelectRapportModal(ids, baseUrl) {
                 ${ids.length} gebieden geselecteerd ${state.selectedDeelgebiedNaam ? `(${state.selectedDeelgebiedNaam})` : ''}
             </p>
             <div style="display:flex; flex-direction:column; gap:0.75rem;">
-                <button id="rapport-modal-benchmark" style="
+                <button id="rapport-modal-deelgebied" style="
                     padding: 0.75rem 1rem; border-radius: 8px; border: none;
-                    background: var(--color-bg-alt, #2d3748); color: white;
+                    background: var(--color-primary, #3b82f6); color: white;
                     font-size:0.95rem; font-weight:600; cursor:pointer; text-align:left;
-                    border: 1px solid var(--color-border, rgba(255,255,255,0.15));
-                ">⚖️ Benchmark Vergelijker<br>
-                    <span style="font-weight:400; font-size:0.8rem; opacity:0.8;">
-                        Vergelijk gebieden onderling met delta-tabel
+                    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+                ">🏘️ Woonplaats- & Deelgebiedsanalyse<br>
+                    <span style="font-weight:400; font-size:0.8rem; opacity:0.9;">
+                        Gewogen stadsanalyse per thema met Top 10
                     </span>
                 </button>
                 <button id="rapport-modal-multi-gebied" style="
                     padding: 0.75rem 1rem; border-radius: 8px; border: none;
-                    background: var(--color-primary, #3b82f6); color: white;
+                    background: var(--color-bg-alt, #2d3748); color: white;
                     font-size:0.95rem; font-weight:600; cursor:pointer; text-align:left;
+                    border: 1px solid var(--color-border, rgba(255,255,255,0.15));
                 ">🗺️ Multi-Gebiedsdossier<br>
                     <span style="font-weight:400; font-size:0.8rem; opacity:0.8;">
                         Z-score analyse met kaart en ranking
@@ -2482,6 +2503,16 @@ function openMultiSelectRapportModal(ids, baseUrl) {
                         Alle indicatoren per thema/onderdeel
                     </span>
                 </button>
+                <button id="rapport-modal-benchmark" style="
+                    padding: 0.75rem 1rem; border-radius: 8px; border: none;
+                    background: var(--color-bg-alt, #2d3748); color: white;
+                    font-size:0.95rem; font-weight:600; cursor:pointer; text-align:left;
+                    border: 1px solid var(--color-border, rgba(255,255,255,0.15));
+                ">⚖️ Benchmark Vergelijker<br>
+                    <span style="font-weight:400; font-size:0.8rem; opacity:0.8;">
+                        Vergelijk gebieden onderling met delta-tabel
+                    </span>
+                </button>
             </div>
             <button id="rapport-modal-sluiten-multi" style="
                 margin-top:1rem; background:none; border:none; color:inherit;
@@ -2492,6 +2523,13 @@ function openMultiSelectRapportModal(ids, baseUrl) {
 
     document.body.appendChild(modal);
 
+    document.getElementById('rapport-modal-deelgebied').addEventListener('click', () => {
+        const gebiedenParam = ids.join(',');
+        const naam = encodeURIComponent(deelgebiedNaam);
+        const gemeente = state.gemeenteCode || '1900';
+        window.open(`${baseUrl}/admin/rapport/deelgebied?gebieden=${gebiedenParam}&naam=${naam}&gemeente=${gemeente}`, '_blank');
+        modal.remove();
+    });
     document.getElementById('rapport-modal-benchmark').addEventListener('click', () => {
         const [a, ...rest] = ids;
         window.open(`${baseUrl}/admin/rapport/benchmark?gebied_a=${a}&gebieden_b=${rest.join(',')}`, '_blank');

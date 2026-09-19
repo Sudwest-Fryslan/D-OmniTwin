@@ -11,6 +11,7 @@ import { ReportPage } from './pages/ReportPage';
 import { BenchmarkPage } from './pages/BenchmarkPage';
 import { MultiGebiedPage } from './pages/MultiGebiedPage';
 import { ThemaAnalysePage } from './pages/ThemaAnalysePage';
+import { DeelgebiedPage } from './pages/DeelgebiedPage';
 import { LLMConfigPage } from './pages/LLMConfigPage';
 import { AccountPage } from './pages/AccountPage';
 import { LogViewerPage } from './pages/LogViewerPage';
@@ -322,6 +323,10 @@ function App() {
 
           <Route path="/rapport/thema-analyse" element={
             <ThemaAnalysePage />
+          } />
+
+          <Route path="/rapport/deelgebied" element={
+            <DeelgebiedPage />
           } />
 
           <Route path="/rapport/:gebied_id?" element={

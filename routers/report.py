@@ -27,6 +27,13 @@ class ThemaAnalyseRequest(BaseModel):
     thema_naam: Optional[str] = Field(None, description="Niveau 1: bijv. 'Verkeer'")
     onderdeel_naam: Optional[str] = Field(None, description="Niveau 2: bijv. 'Bereikbaarheid en parkeren'")
 
+class DeelgebiedAnalyseRequest(BaseModel):
+    """Request model voor Woonplaats- & Deelgebiedsanalyse (Sjabloon F)."""
+    gebied_ids: List[str] = Field(..., min_length=1, max_length=500, description="CBS buurt-IDs")
+    referentie: str = Field('gemeente', description="'gemeente' of 'fryslan'")
+    gemeente_code: Optional[str] = Field(None, description="Gemeentecode (optioneel, wordt automatisch afgeleid indien niet meegegeven)")
+    deelgebied_naam: Optional[str] = Field(None, description="Label voor het deelgebied of woonplaats (bijv. 'Sneek')")
+
 
 router = APIRouter(
     prefix="/api/report",
@@ -268,3 +275,28 @@ def get_thema_analyse_geojson(payload: ThemaAnalyseRequest, db: Session = Depend
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Fout tijdens thema-analyse GeoJSON generatie: {str(e)}")
+
+
+# ─── Sjabloon F: Woonplaats- & Deelgebiedsanalyse ─────────────────────────────
+
+@router.post("/deelgebied", response_model=Dict[str, Any])
+def get_deelgebied_analyse_data(payload: DeelgebiedAnalyseRequest, db: Session = Depends(get_db)):
+    """
+    Sjabloon F: Woonplaats- & Deelgebiedsanalyse.
+    Berekent een gewogen stads-/deelgebiedsgemiddelde op basis van inwoneraantallen,
+    geaggregeerd per thema met Top 10 uitschieters (aandachtspunten en kansen),
+    buurt-drilldowns en methodologische verantwoording.
+    """
+    service = ReportDataService(db)
+    try:
+        return service.generate_deelgebied_payload(
+            gebied_ids=payload.gebied_ids,
+            referentie=payload.referentie,
+            gemeente_code=payload.gemeente_code,
+            deelgebied_naam=payload.deelgebied_naam
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Fout tijdens deelgebied analyse generatie: {str(e)}")
+
