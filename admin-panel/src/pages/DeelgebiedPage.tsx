@@ -74,6 +74,10 @@ interface KwadrantGroup {
     n_uitschieters: number;
     n_aandachtspunten: number;
     n_kansen: number;
+    totaal_aandachtspunten?: number;
+    totaal_kansen?: number;
+    n_aandachtspunten_sterk?: number;
+    n_kansen_sterk?: number;
     themas: ThemaGroup[];
 }
 
@@ -291,8 +295,8 @@ export const DeelgebiedPage: React.FC = () => {
             );
         }
 
-        const width = 380;
-        const height = 280;
+        const width = 460;
+        const height = 340;
 
         const sortedFeatures = [...geoData.features].sort((a: any, b: any) => {
             const aZ = a.properties?.max_z_score_abs || 0;
@@ -313,7 +317,7 @@ export const DeelgebiedPage: React.FC = () => {
         const pathGenerator = d3.geoPath().projection(projection);
 
         return (
-            <svg ref={mapSvgRef} viewBox={`0 0 ${width} ${height}`} style={{ width: '100%', height: 'auto', maxHeight: '300px', display: 'block' }}>
+            <svg ref={mapSvgRef} viewBox={`0 0 ${width} ${height}`} style={{ width: '100%', height: 'auto', display: 'block' }}>
                 {sortedFeatures.map((f: any) => {
                     const isHovered = hoveredBuurt === f.properties.buurt_id;
                     const d = pathGenerator(f as any) || '';
@@ -550,7 +554,7 @@ export const DeelgebiedPage: React.FC = () => {
                 marginBottom: '2rem',
                 boxShadow: 'var(--shadow-sm)',
                 display: 'grid',
-                gridTemplateColumns: 'minmax(0, 1fr) minmax(320px, 28%)',
+                gridTemplateColumns: 'minmax(0, 1.05fr) minmax(440px, 0.95fr)',
                 gap: '1.75rem',
                 alignItems: 'start'
             }}>
@@ -682,71 +686,75 @@ export const DeelgebiedPage: React.FC = () => {
                     </div>
                 </div>
 
-                {/* Right column: D3 Afwijkingskaart (25 à 30% van het beeld) */}
+                {/* Right column: D3 Afwijkingskaart (~48% van het beeld) */}
                 <div style={{
                     background: 'var(--color-bg-alt, #161f2e)',
                     border: '1px solid var(--color-border)',
                     borderRadius: 'var(--radius-md)',
-                    padding: '1.1rem',
+                    padding: '1.25rem',
                     display: 'flex',
                     flexDirection: 'column',
-                    gap: '0.6rem',
+                    gap: '0.5rem',
                     width: '100%'
                 }}>
+                    {/* Bovenste rij: titel + lagen-toggle */}
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <span style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--color-primary)', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                            <Map size={15} /> Z-score Afwijkingskaart
+                        <span style={{ fontSize: '0.9rem', fontWeight: 600, color: 'var(--color-primary)', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                            <Map size={16} /> Afwijkingskaart
                         </span>
                         {woonplaatsGeo && (
-                            <label style={{ fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.3rem', cursor: 'pointer', color: 'var(--color-text-muted)' }}>
+                            <label style={{ fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.4rem', cursor: 'pointer', color: 'var(--color-text-muted)' }}>
                                 <input
                                     type="checkbox"
                                     checked={showWoonplaatsGrenzen}
                                     onChange={e => setShowWoonplaatsGrenzen(e.target.checked)}
                                 />
-                                Toon woonplaatsgrenzen
+                                Woonplaatsgrens
                                 <span style={{ color: '#8b5cf6', fontWeight: 700 }}>━ ━</span>
                             </label>
                         )}
                     </div>
 
-                    {renderChoropleth()}
-
-                    {/* Legenda (conform Multi-Gebiedsdossier) */}
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', fontSize: '0.72rem', marginTop: '0.25rem' }}>
-                        {legendItems.map(l => (
-                            <div key={l.color} style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-                                <div style={{ width: '9px', height: '9px', borderRadius: '2px', background: l.color }} />
-                                <span style={{ color: 'var(--color-text-muted)' }}>{l.label}</span>
+                    {/* Onderste rij: legenda links (auto) + kaart rechts (flex:1) */}
+                    <div style={{ display: 'flex', gap: '0.75rem', flex: 1, minHeight: 0 }}>
+                        {/* Linker subkolom: legenda + hover-info */}
+                        <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', flexShrink: 0 }}>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem', fontSize: '0.72rem' }}>
+                                {legendItems.map(l => (
+                                    <div key={l.color} style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                                        <div style={{ width: '10px', height: '10px', borderRadius: '2px', background: l.color, flexShrink: 0 }} />
+                                        <span style={{ color: 'var(--color-text-muted)', whiteSpace: 'nowrap' }}>{l.label}</span>
+                                    </div>
+                                ))}
                             </div>
-                        ))}
-                    </div>
-
-                    {/* Hover status */}
-                    {hoveredBuurt && (
-                        <div style={{
-                            fontSize: '0.75rem',
-                            color: 'var(--color-text-secondary)',
-                            marginTop: '0.25rem',
-                            padding: '0.35rem 0.5rem',
-                            background: 'var(--color-surface)',
-                            borderRadius: 'var(--radius-sm)',
-                            border: '1px solid var(--color-border)',
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis',
-                            whiteSpace: 'nowrap'
-                        }}>
-                            {(() => {
-                                const feat = geoData?.features?.find((f: any) => f.properties.buurt_id === hoveredBuurt);
-                                if (!feat) return null;
-                                return (
-                                    <span>
-                                        <strong>{feat.properties.buurt_naam}</strong>: z={feat.properties.max_z_score > 0 ? '+' : ''}{feat.properties.max_z_score} ({feat.properties.indicator_naam})
-                                    </span>
-                                );
-                            })()}
+                            {hoveredBuurt && (
+                                <div style={{
+                                    fontSize: '0.72rem',
+                                    color: 'var(--color-text-secondary)',
+                                    marginTop: '0.5rem',
+                                    maxWidth: '140px',
+                                    overflow: 'hidden',
+                                    textOverflow: 'ellipsis'
+                                }}>
+                                    {(() => {
+                                        const feat = geoData?.features?.find((f: any) => f.properties.buurt_id === hoveredBuurt);
+                                        if (!feat) return null;
+                                        return (
+                                            <span>
+                                                <strong>{feat.properties.buurt_naam}</strong><br/>
+                                                z={feat.properties.max_z_score > 0 ? '+' : ''}{feat.properties.max_z_score}
+                                            </span>
+                                        );
+                                    })()}
+                                </div>
+                            )}
                         </div>
-                    )}
+
+                        {/* Rechter subkolom: D3 kaart */}
+                        <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', minWidth: 0 }}>
+                            {renderChoropleth()}
+                        </div>
+                    </div>
                 </div>
             </header>
 
@@ -820,13 +828,33 @@ export const DeelgebiedPage: React.FC = () => {
                                 </div>
 
                                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '1rem', fontSize: '0.825rem', color: 'var(--color-text-secondary)' }}>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }} title="Sterke afwijkingen t.o.v. de referentiegroep (|Z| ≥ 1.0)">
+                                    <div
+                                        style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}
+                                        title={`Totaal ${kw.totaal_aandachtspunten ?? kw.n_aandachtspunten} aandachtspunten, waarvan ${kw.n_aandachtspunten_sterk ?? 0} met een sterke afwijking (|Z| ≥ 1.0)`}
+                                    >
                                         <AlertTriangle size={14} color="#f59e0b" />
-                                        <span><strong>{kw.n_aandachtspunten}</strong> aandacht</span>
+                                        <span>
+                                            <strong>{kw.totaal_aandachtspunten ?? kw.n_aandachtspunten}</strong> aandacht
+                                            {kw.n_aandachtspunten_sterk !== undefined && (
+                                                <span style={{ opacity: 0.65, fontSize: '0.75rem', marginLeft: '0.25rem' }}>
+                                                    ({kw.n_aandachtspunten_sterk} sterk)
+                                                </span>
+                                            )}
+                                        </span>
                                     </div>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }} title="Gunstige uitschieters t.o.v. de referentiegroep (|Z| ≥ 1.0)">
+                                    <div
+                                        style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}
+                                        title={`Totaal ${kw.totaal_kansen ?? kw.n_kansen} kansen, waarvan ${kw.n_kansen_sterk ?? 0} met een sterke afwijking (|Z| ≥ 1.0)`}
+                                    >
                                         <Sparkles size={14} color="#10b981" />
-                                        <span><strong>{kw.n_kansen}</strong> kansen</span>
+                                        <span>
+                                            <strong>{kw.totaal_kansen ?? kw.n_kansen}</strong> kansen
+                                            {kw.n_kansen_sterk !== undefined && (
+                                                <span style={{ opacity: 0.65, fontSize: '0.75rem', marginLeft: '0.25rem' }}>
+                                                    ({kw.n_kansen_sterk} sterk)
+                                                </span>
+                                            )}
+                                        </span>
                                     </div>
                                     <div style={{ color: 'var(--color-text-muted)' }}>
                                         {kw.n_indicatoren} indicatoren

@@ -1104,4 +1104,5 @@ Gebruikersinteracties verrijken het systeem:
 | **Correlatie-analyse via lokale AI** | 🟢 LAAG | Sprint 22+ | Pearson/Spearman backend + LLM-duiding, strict AI-disclaimer |
 | **Data Virtualisatie & update-meldingen** | 🟢 LAAG | Sprint 22+ | Architectuurverkenning — If-Modified-Since + admin notificaties |
 | **Slimmer gebruik 3D BAG** | 🟢 LAAG | Sprint 12 (heropenen) | Onderzoeksvraag: pand-niveau koppeling energielabel/bouwjaar |
+| **Normwaarden, Bandbreedtes en Beleidsmatige Classificatie** | 🔴 HOOG | Sprint 23+ | `indicator_normen` tabel, wettelijke vs streefwaarden, scheiding statistiek (Z-score) en betekenisgeving (Common Ground) |
 

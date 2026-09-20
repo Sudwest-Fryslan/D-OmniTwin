@@ -12,8 +12,8 @@
 | **Huidige versie** | v1.0.0-beta (pre-release) |
 | **Sprint** | Sprint 22 (Data Engineering & Lineage) ✅ Afgerond |
 | **Volgende sprint** | Sprint 23 — De Gebruikers Sprint (Multi-Tenant Identity & Keycloak) 📌 Gepland |
-| **Laatste update** | 2026-09-20 |
-| **Bijgewerkt door** | Antigravity |
+| **Laatste update** | 2026-09-20 (Dag 99) |
+| **Bijgewerkt door** | Antigravity (Project Manager) |
 
 ---
 
@@ -35,7 +35,7 @@
 | **3D BAG visualisatie** | 🟢 Actief | LoD 0/1.2 via 3DBAG REST API (`api.3dbag.nl`), CityJSON decoding naar WGS84, Bug #56 gefixt (Issue #39). |
 | **Admin Panel** | 🟢 Actief | Build via `/build-admin-panel` workflow |
 | **Ontologie generatie** | 🟢 Actief | Fence & Source philosophy geïmplementeerd |
-| **Woonplaats- & Deelgebiedsanalyse rapport** | 🟢 Actief | Issue #44 — Gewogen stadsanalyse per thema op basis van inwoneraantallen, Top 10 uitschieters (aandachtspunten en kansen), buurt-drilldown, ontologie en methodologische verantwoording met validatiedisclaimer. Inclusief D3 Z-score afwijkingskaart met paarse woonplaatscontour (28% breedte). Endpoint POST `/api/report/deelgebied` & `/admin/rapport/deelgebied`. |
+| **Woonplaats- & Deelgebiedsanalyse rapport** | 🟢 Actief | Issue #44 — Gewogen stadsanalyse per thema op basis van inwoneraantallen, Top 10 uitschieters (aandachtspunten en kansen), geharmoniseerde kwadranttelling (totaal + sterke uitschieters), buurt-drilldown, ontologie en methodologische verantwoording. D3 Z-score afwijkingskaart met flexbox indeling (~48% breedte) en paarse contour. Endpoint POST `/api/report/deelgebied` & `/admin/rapport/deelgebied`. |
 | **Multi-Gebiedsdossier rapport** | 🟢 Actief | Voltooid incl. bugfixes en colorblind-safe visualisatie |
 | **Initiatie Dataset (init_data/)** | 🟢 Compleet | 942 Friese buurten, **235 indicatoren** (gesaneerd + nieuw formaat), scripts + GETTING_STARTED.md |
 | **OV Haltes ETL (Issue #11)** | 🟢 Actief | FR/GR/DR: 6.945 nodes → 4.324 clusters → 961 buurten × 5 indicatoren (OV_HALTES_*) in `gebied_data`. Kompas: Bereikbaarheid en parkeren. |
@@ -63,9 +63,9 @@
 
 ## 🔄 Recente wijzigingen (laatste 3 sessies)
 
+| 2026-09-20 | **Kaartframe & Kwadranttelling Deelgebiedsrapport (Issue #44)** | Kaartframe vergroot naar ~48% van de header met flexbox indeling (legenda links, D3-SVG 460x340 rechts). Kwadranttelling geharmoniseerd (Optie A+C): toont totale som van aandacht/kansen en aantal sterke uitschieters `(X sterk)`. Inhoudelijk gevalideerd op actieve DB (poort 5433). |
 | 2026-09-20 | **Kaartintegratie Deelgebiedsrapport (Issue #44)** | D3 choropleet geïntegreerd in de header van DeelgebiedPage (28% breedte). Paarse woonplaatscontour (Sneek) via pg_featureserv / URL-parameters met toggle. Conform Multi-Gebiedsdossier opmaak en kleurschaal. Build & deploy naar `static/admin-panel/`. |
 | 2026-09-18 | **Woonplaats- & Deelgebiedsanalyse Rapport (Issue #44)** | Sjabloon F geïmplementeerd: gewogen aggregatie per thema met Top 10 uitschieters (aandachtspunten vs kansen), inline buurt-drilldown, ontologische toelichting, methodologische verantwoording met scoringstype-disclaimer (`+/+`, `+/-`, `--`, `-+`). Kaartintegratie via `openMultiSelectRapportModal` en `openRapportTypeModal` in `app.js`. |
-| 2026-08-27 | **3D BAG Panden Migratie naar REST API (Issue #39 / Bug #56)** | Kapotte WFS van TU Delft (`data.3dbag.nl`) vervangen door de officiële 3DBAG REST API (`api.3dbag.nl`). CityJSON geometry decoder ingebouwd (RD New → WGS84 polygonen via `pyproj`), paginering via `links.next` en graceful 503 error handling. |
 
 | 2026-08-26 | **Systeemarchitectuur & Implementatiegids voor ICT & Informatieadvies** | Opgesteld in `docs/2-architectuur/architecture/systeemarchitectuur_en_implementatiegids_ict.md`. Bevat ASCII box-drawing diagrammen van de containerstack, Entra ID / Keycloak SSO identiteitsflow en de gemeentelijke Docker hostinginrichting. |
 | 2026-08-21 | **Sprint 23 planning: Multi-Tenant Identity & Keycloak** | Sprint 23 herdefinieert van Backend Performance naar De Gebruikers Sprint. Volledig architectuur- en implementatieplan opgesteld: Keycloak als Identity Broker, 4-niveaus RBAC, BFF-patroon, PostgreSQL RLS, Entra ID Admin Consent flow, PostgREST beveiliging. Spec: `docs/5-secops/security/Keycloak_MultiTenant_RBAC_Spec.md`. ROADMAP.md en TODO.md bijgewerkt. |

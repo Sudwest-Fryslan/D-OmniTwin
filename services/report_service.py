@@ -1389,8 +1389,10 @@ class ReportDataService:
             n_ind = len(alle_kw_indicatoren)
             gem_z = round(sum(i['z_score'] for i in alle_kw_indicatoren) / n_ind, 2) if n_ind > 0 else 0.0
             n_uitschieters = sum(1 for i in alle_kw_indicatoren if i['z_score_abs'] >= 1.0)
-            n_aandacht = sum(1 for i in alle_kw_indicatoren if i['is_ongunstig'] and i['z_score_abs'] >= 1.0)
-            n_kans = sum(1 for i in alle_kw_indicatoren if not i['is_ongunstig'] and i['z_score_abs'] >= 1.0)
+            n_aandacht_sterk = sum(1 for i in alle_kw_indicatoren if i['is_ongunstig'] and i['z_score_abs'] >= 1.0)
+            n_kans_sterk = sum(1 for i in alle_kw_indicatoren if not i['is_ongunstig'] and i['z_score_abs'] >= 1.0)
+            totaal_aandacht = sum(1 for i in alle_kw_indicatoren if i['is_ongunstig'])
+            totaal_kans = sum(1 for i in alle_kw_indicatoren if not i['is_ongunstig'])
 
             kwadranten_output.append({
                 "kwadrant_naam": kw_naam,
@@ -1398,8 +1400,12 @@ class ReportDataService:
                 "gem_zscore": gem_z,
                 "n_indicatoren": n_ind,
                 "n_uitschieters": n_uitschieters,
-                "n_aandachtspunten": n_aandacht,
-                "n_kansen": n_kans,
+                "n_aandachtspunten": totaal_aandacht,
+                "n_kansen": totaal_kans,
+                "totaal_aandachtspunten": totaal_aandacht,
+                "totaal_kansen": totaal_kans,
+                "n_aandachtspunten_sterk": n_aandacht_sterk,
+                "n_kansen_sterk": n_kans_sterk,
                 "themas": themas_output
             })
 
