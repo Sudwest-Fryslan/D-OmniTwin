@@ -1,9 +1,13 @@
 # TODO - D-OmniTwin Roadmap
 
-**Laatste Update:** 20 juli 2026 (Dag 92)  
-**Status:** Sprint 19/19B ✅ | Sprint 21 ✅ | Sprint 22 🔵 Actief
+> **Eén bron van waarheid (Issue #24):**  
+> De actieve taken, sprintplanning en backlog worden beheerd via [GitHub Issues](https://github.com/TLaan/D-OmniTwin/issues) en [GitHub Milestones](https://github.com/TLaan/D-OmniTwin/milestones).  
+> Dit bestand dient als inhoudelijk historisch naslagwerk van sprint-uitwerkingen.
 
-> **Huidige Sprint:** Sprint 22 — Data Engineering & ETL Dataspace Track  
+**Laatste Update:** 25 september 2026 (Dag 100)  
+**Status:** Sprint 19/19B ✅ | Sprint 21 ✅ | Sprint 22 ✅ | Sprint 23 📌 Gepland
+
+> **Huidige Sprint:** Sprint 23 — De Gebruikers Sprint (Multi-Tenant Identity & Keycloak)  
 > **Branch:** `main` 
 
 ---

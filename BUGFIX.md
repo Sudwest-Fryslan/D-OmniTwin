@@ -1,5 +1,11 @@
 # BUGFIX.md - D-OmniTwin
 
+> **Eén bron van waarheid (Issue #24):**  
+> Alle nieuwe bugs en tracking verlopen via [GitHub Issues](https://github.com/TLaan/D-OmniTwin/issues) met het label `bug`.  
+> Dit bestand dient als historisch logboek van opgeloste problemen. Voer geen eigen nummering meer in; koppel nieuwe bevindingen direct aan het bijbehorende `#<issue-nr>`.
+
+---
+
 ## Bug #56: 3D BAG Panden WFS Timeout & Migratie naar REST API (27-08-2026 / 28-08-2026)
 
 **Gerapporteerd:** 27-08-2026  
@@ -32,7 +38,8 @@ Bij het klikken op de knop "🏗️ 3D Panden" in de kaartweergave kregen gebrui
 
 **Gerapporteerd:** 19-08-2026  
 **Status:** 🟡 OPEN  
-**Severity:** 🟡 MEDIUM (UX - Event-loop blokkade tussen tabbladen)
+**Severity:** 🟡 MEDIUM (UX - Event-loop blokkade tussen tabbladen)  
+**GitHub Issue:** [#46](https://github.com/TLaan/D-OmniTwin/issues/46)
 
 ### Probleem
 Wanneer een rapportpagina (of analyse/admin-scherm) geopend staat in een apart browsertabblad en de gebruiker start een print-actie (het browser printscherm / `window.print()` dialoogvenster staat open), reageert de hoofdapplicatie in het oorspronkelijke tabblad nergens meer op. Knoppen, interacties en kaartbewegingen blokkeren totdat het printvenster in het andere tabblad wordt gesloten of voltooid.
