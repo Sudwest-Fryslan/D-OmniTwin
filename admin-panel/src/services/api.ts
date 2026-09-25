@@ -238,6 +238,20 @@ export const reportAPI = {
         reportApiClient.post<any>('/thema-analyse', payload),
     getThemaAnalyseGeoJSON: (payload: { gebied_ids: string[]; referentie: string; gemeente_code: string; categorie?: string; thema_naam?: string; onderdeel_naam?: string }) =>
         reportApiClient.post<any>('/thema-analyse/geojson', payload),
+
+    // Sjabloon F: Woonplaats- & Deelgebiedsanalyse
+    getDeelgebied: (payload: {
+        gebied_ids: string[];
+        referentie: string;
+        gemeente_code?: string;
+        deelgebied_naam?: string;
+    }) => reportApiClient.post<any>('/deelgebied', payload),
+    getDeelgebiedKaart: (payload: {
+        gebied_ids: string[];
+        referentie: string;
+        gemeente_code?: string;
+        deelgebied_naam?: string;
+    }) => reportApiClient.post<{ svg: string }>('/deelgebied/kaart', payload),
 };
 
 // Public API client — voor gebieden/gemeenten endpoint (geen auth nodig)
