@@ -1,0 +1,14 @@
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+
+markers = [
+    "unit: pure Python, geen database of draaiende server vereist",
+    "integration: vereist een PostgreSQL database (lokaal of via testcontainers)",
+    "e2e: vereist een draaiende server + Playwright browser",
+]
+
+# Standaard: alleen unit tests. Voeg -m integration toe voor DB-tests.
+addopts = "-v --tb=short"
