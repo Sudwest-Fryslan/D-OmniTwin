@@ -239,6 +239,9 @@
   --transition-normal: 300ms ease;
   --transition-slow: 500ms ease;
 
+  /* Toegankelijkheid (WCAG 2.4.7) — focusrand */
+  --focus-ring: #1e3a8a;
+
   /* Layout */
   --tab-bar-width: 70px;
   --panel-width: 360px;
@@ -442,6 +445,8 @@ body {
   /* Nature Green Dark */
   --brand-accent: #eab308;
   /* Geo Gold Dark */
+
+  --focus-ring: #93c5fd;
 }
 
 /* Update Panel style for structure */
@@ -730,7 +735,6 @@ body {
 }
 
 .form-control:focus {
-  outline: none;
   border-color: var(--primary-color);
   box-shadow: 0 0 0 2px rgba(30, 58, 138, 0.2);
   /* Trust Blue focus ring */
@@ -909,7 +913,6 @@ body {
   height: 6px;
   border-radius: 3px;
   background: var(--border-color);
-  outline: none;
   transition: opacity var(--transition-fast);
   -webkit-appearance: none;
   appearance: none;
@@ -1453,7 +1456,6 @@ body {
 }
 
 #kompas-config-select:focus {
-  outline: none;
   border-color: var(--primary-color);
 }
 
@@ -2041,7 +2043,6 @@ body {
   color: var(--text-primary);
   font-size: 0.9rem;
   transition: all 0.3s ease;
-  outline: none;
 }
 
 #kompas-ai-search:focus {
@@ -2404,7 +2405,6 @@ body {
   color: var(--text-primary);
   font-family: inherit;
   font-size: 0.85rem;
-  outline: none;
   transition: border-color var(--transition-fast);
 }
 
@@ -3303,4 +3303,51 @@ body {
   padding: 0.35rem 0.5rem;
   border-left: 2px solid rgba(234, 179, 8, 0.3);
   line-height: 1.4;
+}
+
+/* ============================================================================
+   Toegankelijkheid (WCAG 2.1 AA, #67)
+   ============================================================================ */
+
+/* Skiplink: alleen zichtbaar bij toetsenbordfocus (WCAG 2.4.1) */
+.skip-link {
+  position: absolute;
+  top: -100px;
+  left: 1rem;
+  z-index: 10000;
+  padding: 0.5rem 1rem;
+  border-radius: var(--border-radius-sm);
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  font-weight: 600;
+  text-decoration: none;
+  box-shadow: 0 4px 12px var(--shadow-color);
+}
+
+.skip-link:focus {
+  top: 0.5rem;
+}
+
+/* Zichtbare focus voor toetsenbordgebruikers (WCAG 2.4.7) */
+:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+/* In de gekleurde header is een lichte focusrand beter zichtbaar */
+.header :focus-visible {
+  outline-color: #ffffff;
+}
+
+/* Visueel verborgen, wel beschikbaar voor schermlezers */
+.visually-hidden {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
 }
