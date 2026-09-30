@@ -25,6 +25,7 @@
 | **Projectmanagement** | `/docs/7-projectmanagement/` | Sprints, voortgang, besluiten, archief | project-manager |
 | **Communicatie** | `/docs/8-communicatie/` | Stakeholdercommunicatie, rapportages, presentaties | technisch-communicatie |
 | **Beheer & Applicatie** | `/docs/9-beheer/` | Handleidingen, workflows en applicatiebeheer | project-manager, backend-db |
+| **Testcases & Scenario's** | [`/docs/testcases/`](./testcases/) | Functionele scenario's, E2E-toetsen (TC-06-*), nulmetingen (NM-001) | project-manager, backend-db |
 
 ---
 
