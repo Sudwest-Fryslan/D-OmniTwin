@@ -3458,13 +3458,15 @@ function exportCSV() {
         }).join(',');
     });
 
-    const csvContent = "data:text/csv;charset=utf-8," +
-        [headers, ...rows].join('\n');
+    // Blob in plaats van data-URI: in een data-URI kapt een '#' (bv. in kleurcodes) de inhoud af
+    const blob = new Blob([[headers, ...rows].join('\n')], { type: 'text/csv;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
 
     const link = document.createElement('a');
-    link.href = csvContent;
+    link.href = url;
     link.download = `omnitwin-export-${Date.now()}.csv`;
     link.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
 // ============================================================================

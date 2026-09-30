@@ -118,7 +118,7 @@ Status: **geautomatiseerd** = alle stappen · **gedeeltelijk** = een deel van de
 | TC-06-001 fase 2 | `test_tc_06_001_fase2_verkeer_bereikbaarheid` | xfail: Verkeer heeft geen indicatoren in sample |
 | TC-06-001 stap 11-12 | `test_tc_06_001_handmatige_review` | handmatig |
 | TC-06-001 stap 13 (PDF) | `test_tc_06_001_pdf_rapport` | handmatig (skip: gebiedsdossier gebruikt de LLM) |
-| TC-06-001 stap 13-14 (CSV) | `test_tc_06_001_fase5_export_bronvermelding` | xfail: CSV-export kapt af op `#` in kleurcodes (bug) |
+| TC-06-001 stap 13-14 (CSV) | geautomatiseerd (bug in export gerepareerd) |
 | TC-06-002, TC-06-003 | — | nog niet geautomatiseerd |
 
 ---

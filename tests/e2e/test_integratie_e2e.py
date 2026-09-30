@@ -98,9 +98,6 @@ def test_tc_06_001_beleidsadviseur_ijsselmeerkust(app_page_fresh, tmp_path: Path
     assert page.console_fouten == [], "\n".join(page.console_fouten)
 
 
-@pytest.mark.xfail(strict=True, reason="TC-06-001 stap 13-14: CSV-export is kapot — exportCSV() zet de CSV "
-                                       "onge-encodeerd in een data-URI, waardoor de '#' van kleurcodes de inhoud "
-                                       "afkapt (alleen de kopregel blijft over)")
 def test_tc_06_001_fase5_export_bronvermelding(app_page, tmp_path: Path):
     """TC-06-001 stap 13-14: tabelexport (CSV) van de ingekleurde kaart bevat per buurt
     de waarde met bron en peildatum."""
