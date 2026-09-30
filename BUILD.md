@@ -1,5 +1,7 @@
 # BUILD & Setup Instructions
 
+> ⚠️ **Verouderd/aanvullend** — de actuele installatie staat in [`docs/9-beheer/installatie.md`](./docs/9-beheer/installatie.md). Bij verschillen geldt die gids. Dit bestand blijft voor de build-notities en de sprint-changelog.
+
 ## Vereisten
 - Python 3.10+
 - PostgreSQL 14+ (met PostGIS, pgvector en pg_trgm extensies)

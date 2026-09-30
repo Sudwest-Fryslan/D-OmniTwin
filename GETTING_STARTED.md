@@ -1,5 +1,7 @@
 # 🚀 Getting Started — D-OmniTwin
 
+> ⚠️ **Verouderd/aanvullend** — de actuele installatie staat in [`docs/9-beheer/installatie.md`](./docs/9-beheer/installatie.md). Deze gids beschrijft een installatie zonder Docker via `init_database.sh`; dat script werkt niet in de Docker-installatie. Fryslân-data laden in de Docker-installatie wordt nog niet ondersteund (#69).
+
 Welkom bij D-OmniTwin! Deze gids leidt je in **zes stappen** van een lege kloon naar een volledig werkende applicatie met echte data van de provincie Fryslân.
 
 > **Tijdsinschatting:** ± 30 minuten (inclusief downloads)
