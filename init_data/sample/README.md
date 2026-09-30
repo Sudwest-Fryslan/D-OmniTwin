@@ -16,6 +16,8 @@ Deze map bevat een compacte, zelfstandige sample dataset van de gemeente **Súdw
 ```
 init_data/sample/
 ├── README.md                           # Deze documentatie
+├── datapackage.json                    # Frictionless Data Package: resources, schema, licenties, herkomst
+├── KWALITEIT.md                        # Datakwaliteitsbevindingen (herkomst, lege velden)
 ├── 1_stuurdata/
 │   └── stuurdata_seed.sql              # Basisconfiguratie, scenario's, profielen, kleurenschema's en prompts
 └── 2_brondata/
@@ -90,6 +92,21 @@ python init_data/scripts/load_sample.py --stap kompas
 # Alléén metingen/indicatorwaarden
 python init_data/scripts/load_sample.py --stap waarden
 ```
+
+---
+
+## Datapakket (Frictionless)
+
+De map is een [Frictionless Data Package](https://datapackage.org/) (v2). `datapackage.json` beschrijft de drie bestanden als resources, met licentie per resource (CC BY 4.0 voor CBS/RIVM-data en geometrie, CC0 voor BAG, ODbL voor OpenStreetMap-afgeleide indicatoren, EUPL-1.2 voor de stuurdata-seed), de bronnen uit de kolom `bron` en een Table Schema voor `sample_indicatoren.csv`. De bestandsformaten zijn ongewijzigd; `load_sample.py` gebruikt `datapackage.json` (nog) niet. Bekende kwaliteitsproblemen (lege of onherleidbare bronnen, lege `kwaliteit`) staan in [KWALITEIT.md](KWALITEIT.md).
+
+Valideren (vanuit de repo-root, zonder lokale Python-installatie):
+
+```bash
+docker run --rm -v "$PWD":/data -w /data python:3.11-slim \
+  sh -c "pip install -q frictionless && frictionless validate init_data/sample/datapackage.json"
+```
+
+Op Windows (Git Bash) met `MSYS_NO_PATHCONV=1` en `"$(pwd -W)"` in plaats van `"$PWD"`. Een mapping van deze metadata naar DCAT-AP-NL volgt later in #63.
 
 ---
 
