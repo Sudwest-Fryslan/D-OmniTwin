@@ -254,6 +254,17 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
   return <AppLayout>{children}</AppLayout>;
 };
 
+// Publiek bereikbare rapportroutes: met menu als beheerder is ingelogd, anders standalone
+const OptionalLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { isAuthenticated } = useAdminStore();
+
+  if (!isAuthenticated) {
+    return <>{children}</>;
+  }
+
+  return <AppLayout>{children}</AppLayout>;
+};
+
 // KleurschemasPage is now imported from ./pages/KleurschemasPage
 
 function App() {
@@ -314,23 +325,23 @@ function App() {
           } />
 
           <Route path="/rapport/benchmark" element={
-            <BenchmarkPage />
+            <OptionalLayout><BenchmarkPage /></OptionalLayout>
           } />
 
           <Route path="/rapport/multi-gebied" element={
-            <MultiGebiedPage />
+            <OptionalLayout><MultiGebiedPage /></OptionalLayout>
           } />
 
           <Route path="/rapport/thema-analyse" element={
-            <ThemaAnalysePage />
+            <OptionalLayout><ThemaAnalysePage /></OptionalLayout>
           } />
 
           <Route path="/rapport/deelgebied" element={
-            <DeelgebiedPage />
+            <OptionalLayout><DeelgebiedPage /></OptionalLayout>
           } />
 
           <Route path="/rapport/:gebied_id?" element={
-            <ReportPage />
+            <OptionalLayout><ReportPage /></OptionalLayout>
           } />
 
           {/* Publieke Report Route outside of ProtectedRoute (als alias) */}
