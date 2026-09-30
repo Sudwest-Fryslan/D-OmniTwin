@@ -464,6 +464,8 @@ POST /api/kompas/config  # Upload custom config
 
 #### 3.1 Mapbox Tile Integration
 
+> **Achterhaald:** de basiskaart is MapLibre met PDOK-achtergrondkaarten; een Mapbox API key is niet nodig (#55).
+
 **Doel:** Professionele basemap in plaats van grijze achtergrond
 
 **Features:**

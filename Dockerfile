@@ -25,6 +25,14 @@ COPY . .
 # Setup entrypoint script
 RUN chmod +x /app/docker-entrypoint.sh
 
+# Draai niet als root. De code blijft van root (alleen-lezen voor de app);
+# alleen de mappen waarin de app schrijft zijn van de app-gebruiker.
+# UID 1000 komt meestal overeen met de ontwikkelaar op Linux (bind-mount in dev).
+RUN useradd --create-home --uid 1000 app \
+    && mkdir -p logs exports data-upload \
+    && chown app:app logs exports data-upload
+USER app
+
 # Expose port
 EXPOSE 8000
 

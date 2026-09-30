@@ -143,9 +143,6 @@
       <p class="header-subtitle">3D Visualisatie van <span id="header-gebieden-count">…</span> gebieden | <span id="header-indicatoren-count">…</span> indicatoren</p>
     </div>
     <div class="header-status">
-      <span class="status-badge" id="connection-status">
-        <span class="status-dot"></span> Verbonden
-      </span>
       <a href="#" id="admin-btn" class="status-badge admin-badge" title="Beheeromgeving openen" onclick="openAdmin(event)">
         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
           stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -182,6 +179,10 @@
       </button>
     </div>
   </header>
+  <!-- Alleen zichtbaar als de server niet bereikbaar is (vervangt de vaste badge "Verbonden") -->
+  <div id="verbindingsmelding" class="verbindingsmelding" role="alert" hidden>
+    Gegevens zijn tijdelijk niet beschikbaar. We proberen het automatisch opnieuw.
+  </div>
 
 
 

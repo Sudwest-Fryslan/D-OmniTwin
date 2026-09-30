@@ -1,0 +1,232 @@
+{
+  "$schema": "https://datapackage.org/profiles/2.0/datapackage.json",
+  "name": "d-omnitwin-sample-swf",
+  "title": "D-OmniTwin sample dataset Súdwest-Fryslân (13 buurten)",
+  "description": "Compacte, zelfstandige sample dataset voor D-OmniTwin: 13 CBS-buurten van de gemeente Súdwest-Fryslân met 87 indicatoren en 1.132 metingen, plus de stuurdata (configuratie, scenario's, profielen, prompts) als SQL-seed. Bedoeld voor demo, CI en lokale installaties; geladen met init_data/scripts/load_sample.py.\n\nLet op: buurt BU19000002 (Bolsward-Zuidoost) bevat demodata (bron 'DEMO: ...'), geen echte cijfers.\n\nHerkomst per meting staat in de kolom 'bron' van sample_indicatoren.csv en is nog niet overal herleidbaar: 48 regels zonder bron, 96 regels met een uploadbestandsnaam als bron, 'kwaliteit' is overal leeg. Zie KWALITEIT.md voor de telling. Opvolging in issue #60; mapping naar DCAT-AP-NL in #63.",
+  "version": "0.1.0",
+  "keywords": ["D-OmniTwin", "Súdwest-Fryslân", "buurten", "indicatoren", "CBS", "sample"],
+  "homepage": "https://github.com/TLaan/D-OmniTwin",
+  "created": "2026-09-30T00:00:00Z",
+  "licenses": [
+    {
+      "name": "CC-BY-4.0",
+      "title": "Creative Commons Attribution 4.0 (CBS, RIVM en overige open overheidsdata; CBS-buurtgeometrie)",
+      "path": "https://creativecommons.org/licenses/by/4.0/"
+    },
+    {
+      "name": "CC0-1.0",
+      "title": "Creative Commons Zero 1.0 / publiek domein (Kadaster BAG)",
+      "path": "https://creativecommons.org/publicdomain/zero/1.0/"
+    },
+    {
+      "name": "ODbL-1.0",
+      "title": "Open Database License (indicatoren afgeleid van OpenStreetMap)",
+      "path": "https://opendatacommons.org/licenses/odbl/1-0/"
+    },
+    {
+      "name": "EUPL-1.2",
+      "title": "European Union Public Licence 1.2 (stuurdata-seed als onderdeel van de software)",
+      "path": "https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12"
+    }
+  ],
+  "sources": [
+    {
+      "title": "CBS StatLine 86165NED (bron 'CBS_86165NED', 240 regels)",
+      "path": "https://opendata.cbs.nl/statline/#/CBS/nl/dataset/86165NED"
+    },
+    {
+      "title": "CBS StatLine 85618NED (bron 'CBS_85618NED', 24 regels)",
+      "path": "https://opendata.cbs.nl/statline/#/CBS/nl/dataset/85618NED"
+    },
+    {
+      "title": "CBS StatLine 85984NED (bron 'CBS_85984NED', 15 regels)",
+      "path": "https://opendata.cbs.nl/statline/#/CBS/nl/dataset/85984NED"
+    },
+    {
+      "title": "CBS StatLine 50150NED (bron 'CBS_50150NED', 12 regels)",
+      "path": "https://opendata.cbs.nl/statline/#/CBS/nl/dataset/50150NED"
+    },
+    {
+      "title": "CBS Kerncijfers wijken en buurten 2023 (bron als vrije tekst, 105 regels; tabel-ID nog te herleiden)",
+      "path": "https://www.cbs.nl/nl-nl/reeksen/kerncijfers-wijken-en-buurten-2004-2023"
+    },
+    {
+      "title": "CBS Wijk- en buurtkaart (geometrie sample_buurten.geojson, via PDOK)",
+      "path": "https://www.pdok.nl/introductie/-/article/cbs-wijken-en-buurten"
+    },
+    {
+      "title": "Kadaster BAG via PDOK (bron 'BAG' 168 regels, 'Kadaster BAG Fryslân 2026' 84 regels)",
+      "path": "https://www.kadaster.nl/zakelijk/registraties/basisregistraties/bag"
+    },
+    {
+      "title": "RIVM/GGD Gezondheidsmonitor volwassenen en ouderen 2024 (bron 'Gezondheidsmonitor RIVM 2024', 120 regels)",
+      "path": "https://statline.rivm.nl"
+    },
+    {
+      "title": "RVO EP-Online energielabels (bron 'RVO EP-Online 2026-02' 60 regels, 'Berekend: EP-Online / BAG Fryslân' 12 regels)",
+      "path": "https://www.ep-online.nl"
+    },
+    {
+      "title": "OpenStreetMap via Overpass API (bron 'OpenStreetMap / Overpass API 2026', 60 regels)",
+      "path": "https://www.openstreetmap.org/copyright"
+    },
+    {
+      "title": "DEMO: gemiddelde van Bolsward-Noord en Bolsward-Noordoost (88 regels, BU19000002; geen echte cijfers)"
+    },
+    {
+      "title": "Onbekend / te herleiden: uploadbestandsnaam '<uuid>_d_cbs_buurten.json' als bron (8 bestanden, 96 regels; vermoedelijk CBS wijken en buurten)"
+    },
+    {
+      "title": "Onbekend: lege bron (48 regels)"
+    }
+  ],
+  "contributors": [
+    {
+      "title": "Gemeente Súdwest-Fryslân",
+      "roles": ["publisher"],
+      "path": "https://www.sudwestfryslan.nl"
+    }
+  ],
+  "resources": [
+    {
+      "name": "sample-buurten",
+      "title": "Buurtgeometrieën (13 CBS-buurten Súdwest-Fryslân)",
+      "description": "GeoJSON FeatureCollection, CRS WGS84 (urn:ogc:def:crs:OGC:1.3:CRS84 / EPSG:4326). Properties: id (CBS-buurtcode), naam, gemeente_code, gebiedstype_id, provincienaam. De buurtcode in 'id' is de sleutel waar sample_indicatoren.csv/gebied_id naar verwijst (niet als foreignKey uit te drukken omdat GeoJSON geen tabel-resource is).",
+      "path": "2_brondata/sample_buurten.geojson",
+      "type": "file",
+      "format": "geojson",
+      "mediatype": "application/geo+json",
+      "encoding": "utf-8",
+      "licenses": [
+        {
+          "name": "CC-BY-4.0",
+          "path": "https://creativecommons.org/licenses/by/4.0/",
+          "title": "Creative Commons Attribution 4.0 (CBS/PDOK)"
+        }
+      ],
+      "sources": [
+        {
+          "title": "CBS Wijk- en buurtkaart via PDOK",
+          "path": "https://www.pdok.nl/introductie/-/article/cbs-wijken-en-buurten"
+        }
+      ]
+    },
+    {
+      "name": "sample-indicatoren",
+      "title": "Indicatoren en metingen per buurt",
+      "description": "Eén regel per meting (gebied, indicator, jaar, scenario). Indicator-metadata (naam, eenheid, categorie, interpretatie) wordt per regel herhaald. Herkomst per regel in kolom 'bron'; licentie volgt de bron (CBS/RIVM/overheid: CC BY 4.0, Kadaster BAG: CC0, OpenStreetMap: ODbL).",
+      "path": "2_brondata/sample_indicatoren.csv",
+      "type": "table",
+      "format": "csv",
+      "mediatype": "text/csv",
+      "encoding": "utf-8",
+      "licenses": [
+        {
+          "name": "CC-BY-4.0",
+          "path": "https://creativecommons.org/licenses/by/4.0/",
+          "title": "Creative Commons Attribution 4.0"
+        },
+        {
+          "name": "CC0-1.0",
+          "path": "https://creativecommons.org/publicdomain/zero/1.0/",
+          "title": "Creative Commons Zero 1.0 (alleen regels met bron BAG)"
+        },
+        {
+          "name": "ODbL-1.0",
+          "path": "https://opendatacommons.org/licenses/odbl/1-0/",
+          "title": "Open Database License (alleen regels met bron OpenStreetMap)"
+        }
+      ],
+      "schema": {
+        "fields": [
+          {
+            "name": "gebied_id",
+            "title": "CBS-buurtcode",
+            "description": "Verwijst naar 'id' in sample_buurten.geojson.",
+            "type": "string",
+            "constraints": { "required": true, "pattern": "BU[0-9]{8}" }
+          },
+          {
+            "name": "indicator_uuid",
+            "title": "Indicator-ID",
+            "type": "string",
+            "format": "uuid",
+            "constraints": { "required": true }
+          },
+          {
+            "name": "indicator_naam",
+            "title": "Indicatornaam",
+            "type": "string",
+            "constraints": { "required": true }
+          },
+          {
+            "name": "waarde",
+            "title": "Waarde",
+            "type": "number",
+            "constraints": { "required": true }
+          },
+          {
+            "name": "jaar",
+            "title": "Peiljaar",
+            "type": "integer",
+            "constraints": { "required": true, "minimum": 2000, "maximum": 2100 }
+          },
+          {
+            "name": "bron",
+            "title": "Bron",
+            "description": "Vrije tekst: CBS-tabelcode (CBS_<id>), bronnaam, 'DEMO: ...' of uploadbestandsnaam. Niet verplicht: 48 regels zijn leeg (zie KWALITEIT.md).",
+            "type": "string"
+          },
+          {
+            "name": "kwaliteit",
+            "title": "Kwaliteit",
+            "description": "Gereserveerd voor kwaliteitsaanduiding; momenteel overal leeg.",
+            "type": "string"
+          },
+          {
+            "name": "eenheid",
+            "title": "Eenheid",
+            "description": "Vrije tekst, niet genormaliseerd (bijv. 'aantal' en 'Aantal', '%' en 'percentage').",
+            "type": "string"
+          },
+          {
+            "name": "categorie",
+            "title": "Categorie",
+            "type": "string"
+          },
+          {
+            "name": "interpretatie_logica",
+            "title": "Interpretatielogica",
+            "description": "Richting van de indicator. Gemengde notatie: 'pos_is_pos', '-/+' en 'N/A' (zie KWALITEIT.md).",
+            "type": "string",
+            "constraints": { "required": true, "enum": ["pos_is_pos", "-/+", "N/A"] }
+          },
+          {
+            "name": "scenario_id",
+            "title": "Scenario",
+            "type": "string",
+            "constraints": { "required": true }
+          }
+        ],
+        "primaryKey": ["gebied_id", "indicator_uuid", "jaar", "scenario_id"]
+      }
+    },
+    {
+      "name": "stuurdata-seed",
+      "title": "Stuurdata-seed (configuratie)",
+      "description": "Idempotente SQL-seed (INSERT ... ON CONFLICT DO NOTHING) voor gebiedstypes, gemeenten, kompas_configuraties, visualisatie_profielen, color_schemas, chat_scenarios, system_prompts, llm_config, log_config en externe_kaartlagen. Onderdeel van de software.",
+      "path": "1_stuurdata/stuurdata_seed.sql",
+      "type": "file",
+      "format": "sql",
+      "mediatype": "application/sql",
+      "encoding": "utf-8",
+      "licenses": [
+        {
+          "name": "EUPL-1.2",
+          "path": "https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12",
+          "title": "European Union Public Licence 1.2"
+        }
+      ]
+    }
+  ]
+}

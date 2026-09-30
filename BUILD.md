@@ -1,5 +1,7 @@
 # BUILD & Setup Instructions
 
+> ⚠️ **Verouderd/aanvullend** — de actuele installatie staat in [`docs/9-beheer/installatie.md`](./docs/9-beheer/installatie.md). Bij verschillen geldt die gids. Dit bestand blijft voor de build-notities en de sprint-changelog.
+
 ## Vereisten
 - Python 3.10+
 - PostgreSQL 14+ (met PostGIS, pgvector en pg_trgm extensies)
@@ -53,10 +55,6 @@ DATABASE_PASSWORD=jouw_wachtwoord_hier
 SECRET_KEY=gebruik_python_secrets_token_urlsafe_32
 ADMIN_API_KEY=jouw_admin_api_key
 CORS_ORIGINS=http://localhost:8000,http://127.0.0.1:8000
-
-# Mapbox
-MAPBOX_TOKEN=pk.eyJ1...
-MAPBOX_STYLE=mapbox://styles/mapbox/light-v10
 
 # App
 DEBUG=true
@@ -224,9 +222,9 @@ De frontend met deck.gl 3D visualisatie wordt toegevoegd aan `templates/index.ht
 ### Nieuwe Dependencies
 De volgende externe libraries zijn toegevoegd (via CDN):
 ```html
-<!-- Mapbox GL JS v2.15.0 (voor basemap rendering) -->
-<link href="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css" rel="stylesheet">
-<script src="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js"></script>
+<!-- MapLibre GL JS (voor basemap rendering; vervangt Mapbox GL JS) -->
+<link href="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.css" rel="stylesheet">
+<script src="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.js"></script>
 
 <!-- deck.gl v9 (bestaand) -->
 <script src="https://unpkg.com/deck.gl@^9.0.0/dist.min.js"></script>
@@ -235,13 +233,8 @@ De volgende externe libraries zijn toegevoegd (via CDN):
 ### Static Assets
 - **Lucide Icons:** 12 SVG vectoren in `static/images/`. Deze worden *inline* gebruikt in HTML voor dynamische styling (currentColor support voor theming).
 
-### Mapbox Configuration
-Mapbox API token is geconfigureerd in `config.ini`:
-```ini
-[MAPBOX]
-api_token = pk.eyJ1IjoidGFla2V2YW5kZXJsYWFuIiwiYSI6ImNram81ejI0azB5cnIycnRmM3hiaDBsc2sifQ.MiVfnOO0xSnNXBlngW2FRA
-default_style = mapbox://styles/mapbox/light-v10
-```
+### Basiskaart
+De basiskaart is MapLibre met PDOK-achtergrondkaarten (stijlen in `templates/index.html`). Een Mapbox-token is niet nodig.
 
 ### Browser Cache Issue
 **BELANGRIJK:** Na updates een hard refresh doen:
@@ -277,7 +270,7 @@ Om de afhankelijkheid van externe CDN's te verwijderen en de Content Security Po
 - **Locatie assets:** `static/swagger-ui/`
 - **Configuratie:** `main.py` (custom `/docs` endpoint)
 - **CSP:** `script-src` en `style-src` staan lokale assets toe voor Swagger. 
-    - *Note:* Externe CDNs (`mapbox.com`, `unpkg.com`, `jsdelivr.net`) blijven toegestaan voor de frontend functionaliteit (kaarten, grafieken), maar zijn niet meer nodig voor de API docs.
+    - *Note:* Externe CDNs (`unpkg.com`, `jsdelivr.net`, `d3js.org`) blijven toegestaan voor de frontend functionaliteit (kaarten, grafieken), maar zijn niet meer nodig voor de API docs.
 
 **Command om assets te updaten:**
 ```bash

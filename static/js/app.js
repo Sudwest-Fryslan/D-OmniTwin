@@ -195,6 +195,7 @@ getFillColor: d => {
             await loadGemeenten(); // NEW: Load gemeente options
             await loadGebiedstypes();
             loadDataTellers(); // Kop en voet: aantallen uit de database (niet wachten)
+            startVerbindingscontrole(); // Melding alleen bij een verbindingsprobleem
             setupGemeenteSelector(); // NEW: Setup gemeente change handler
             setupEventListeners();
             setupTabBar();
@@ -741,6 +742,29 @@ async function fetchPostgrestCount(pad) {
     const range = res.headers.get('Content-Range') || '';
     const totaal = parseInt(range.split('/')[1], 10);
     return Number.isNaN(totaal) ? null : totaal;
+}
+
+// Verbindingscontrole: toont #verbindingsmelding alleen als /health niet bereikbaar is
+async function controleerVerbinding() {
+    const melding = document.getElementById('verbindingsmelding');
+    if (!melding) return;
+    let ok = navigator.onLine;
+    if (ok) {
+        try {
+            const res = await fetch('/health', { cache: 'no-store' });
+            ok = res.ok;
+        } catch (e) {
+            ok = false;
+        }
+    }
+    melding.hidden = ok;
+}
+
+function startVerbindingscontrole() {
+    controleerVerbinding();
+    setInterval(controleerVerbinding, 60000);
+    window.addEventListener('online', controleerVerbinding);
+    window.addEventListener('offline', controleerVerbinding);
 }
 
 async function loadDataTellers() {

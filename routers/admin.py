@@ -123,7 +123,7 @@ async def update_llm_config(
     return config
 
 @router.get("/llm/models")
-async def get_ollama_models(
+def get_ollama_models(
     db: Session = Depends(get_db),
     _: bool = Depends(verify_admin_key)
 ):

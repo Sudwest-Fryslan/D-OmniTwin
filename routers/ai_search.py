@@ -14,7 +14,7 @@ def get_service(db: Session = Depends(get_db)) -> AISearchService:
     return AISearchService(db)
 
 @router.get("/kompas/search", response_model=List[Dict[str, Any]])
-async def search_kompas(
+def search_kompas(
     q: str = Query(..., min_length=2, description="De zoekterm of vraag"),
     limit: int = Query(10, ge=1, le=20),
     service: AISearchService = Depends(get_service)
