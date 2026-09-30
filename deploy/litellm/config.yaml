@@ -11,6 +11,8 @@ model_list:
     litellm_params:
       model: os.environ/LITELLM_DEFAULT_MODEL   # ollama_chat/<OLLAMA_MODEL>
       api_base: os.environ/OLLAMA_HOST
+      # Denk-modus: de backend stuurt reasoning_effort=none (LLM_THINK=false); LiteLLM
+      # zet dat voor ollama_chat om naar think=false. Niet hier vastzetten.
 
   # Voorbeeld: tweede model als terugval, bv. een regionaal of federatief endpoint (FRLLLM)
   # - model_name: d-omnitwin-fallback
