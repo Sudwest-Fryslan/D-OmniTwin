@@ -59,6 +59,17 @@ const state = {
 // Publiceer state op window zodat chat.js en andere modules de kaartselectie kunnen lezen
 window.state = state;
 
+// Toegankelijkheid (WCAG 2.1.1): elementen met role="button" die geen echte
+// <button> zijn, reageren op Enter en Spatie net als op een klik.
+document.addEventListener('keydown', (e) => {
+    if (e.key !== 'Enter' && e.key !== ' ') return;
+    const el = e.target;
+    if (!(el instanceof HTMLElement) || el.getAttribute('role') !== 'button') return;
+    if (el.tagName === 'BUTTON' || el.getAttribute('aria-disabled') === 'true') return;
+    e.preventDefault();
+    el.click();
+});
+
 // Backwards-compatibility: getter/setter voor selectedGebiedId (eerste geselecteerde)
 Object.defineProperty(state, 'selectedGebiedId', {
     get() { return this.selectedGebiedIds.size > 0 ? [...this.selectedGebiedIds][0] : null; },
@@ -183,6 +194,8 @@ getFillColor: d => {
 
             await loadGemeenten(); // NEW: Load gemeente options
             await loadGebiedstypes();
+            loadDataTellers(); // Kop en voet: aantallen uit de database (niet wachten)
+            startVerbindingscontrole(); // Melding alleen bij een verbindingsprobleem
             setupGemeenteSelector(); // NEW: Setup gemeente change handler
             setupEventListeners();
             setupTabBar();
@@ -715,6 +728,65 @@ function setupGemeenteSelector() {
 // ---- End Gemeente Selector ----
 
 
+/**
+ * Telt de rijen van een PostgREST-tabel via de Content-Range-header
+ * (Prefer: count=exact), zonder de rijen zelf op te halen.
+ * Geeft null terug als het aantal niet te bepalen is.
+ */
+async function fetchPostgrestCount(pad) {
+    const res = await fetch(`/api/data/${pad}`, {
+        method: 'HEAD',
+        headers: { 'Prefer': 'count=exact' }
+    });
+    if (!res.ok) return null;
+    const range = res.headers.get('Content-Range') || '';
+    const totaal = parseInt(range.split('/')[1], 10);
+    return Number.isNaN(totaal) ? null : totaal;
+}
+
+// Verbindingscontrole: toont #verbindingsmelding alleen als /health niet bereikbaar is
+async function controleerVerbinding() {
+    const melding = document.getElementById('verbindingsmelding');
+    if (!melding) return;
+    let ok = navigator.onLine;
+    if (ok) {
+        try {
+            const res = await fetch('/health', { cache: 'no-store' });
+            ok = res.ok;
+        } catch (e) {
+            ok = false;
+        }
+    }
+    melding.hidden = ok;
+}
+
+function startVerbindingscontrole() {
+    controleerVerbinding();
+    setInterval(controleerVerbinding, 60000);
+    window.addEventListener('online', controleerVerbinding);
+    window.addEventListener('offline', controleerVerbinding);
+}
+
+async function loadDataTellers() {
+    const zet = (id, waarde) => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = waarde === null ? '?' : waarde.toLocaleString('nl-NL');
+    };
+    try {
+        const [gebieden, indicatoren] = await Promise.all([
+            fetchPostgrestCount('gebieden?select=id'),
+            fetchPostgrestCount('indicatoren?select=id')
+        ]);
+        zet('header-gebieden-count', gebieden);
+        zet('footer-gebieden-count', gebieden);
+        zet('header-indicatoren-count', indicatoren);
+    } catch (error) {
+        console.warn('⚠️ Tellers konden niet worden geladen:', error);
+        ['header-gebieden-count', 'footer-gebieden-count', 'header-indicatoren-count']
+            .forEach(id => zet(id, null));
+    }
+}
+
 async function loadGebiedstypes() {
     showLoading(true, 'Gebiedstypes laden...');
 
@@ -1000,10 +1072,18 @@ async function loadOmgevingsvisieLayer() {
 async function selectBuurtenFromDeelgebied(deelgebiedId, deelgebiedNaam) {
     showLoading(true, `Buurten laden voor ${deelgebiedNaam}...`);
     try {
-        const res = await fetch(`/api/omgevingsvisie/deelgebieden/${deelgebiedId}/buurten`);
+        // SQL-functie postgisftw.buurten_in_deelgebied, gepubliceerd door pg_featureserv (#68)
+        const bufferM = -10;
+        const params = new URLSearchParams({ deelgebied_id: deelgebiedId, buffer_m: bufferM, limit: 10000 });
+        const res = await fetch(`/api/geo/functions/postgisftw.buurten_in_deelgebied/items?${params}`);
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
-        const data = await res.json();
+        const geojson = await res.json();
+        const buurten = (geojson.features || []).map(f => ({
+            id: f.properties?.id ?? f.id,
+            naam: f.properties?.naam
+        }));
+        const data = { buurten, totaal: buurten.length, buffer_m: bufferM };
 
         // Clear huidige selectie en voeg alle buurten toe
         clearGebiedSelection();
@@ -1505,6 +1585,11 @@ function displayOnMap(geojson) {
 
                 // Load gebied details (voor het laatst aangeklikte gebied)
                 loadGebiedDetails(gebiedId);
+
+                // Kompas-paneel actief: open het Kompas-venster automatisch (zoals de hint belooft)
+                if (state.activePanelId === 'kompas' && state.kompasWindow && !state.kompasWindow.isVisible) {
+                    state.kompasWindow.open();
+                }
 
                 // Trigger re-render to show selection highlight
                 // Reload kompas data if window is already open
@@ -2092,7 +2177,6 @@ function populateGebiedstypeSelect(gebiedstypes) {
         const option = document.createElement('option');
         option.value = gt.id;
         option.textContent = gt.naam;
-        option.dataset.count = gt.aantal_gebieden || 0;
         select.appendChild(option);
     });
 
@@ -2376,7 +2460,7 @@ function openRapportTypeModal(gebiedId, baseUrl) {
                 ${state.selectedDeelgebiedNaam ? `
                 <button id="rapport-modal-deelgebied-single" style="
                     padding: 0.75rem 1rem; border-radius: 8px; border: none;
-                    background: var(--color-primary, #3b82f6); color: white;
+                    background: var(--action-fill, #2563eb); color: white;
                     font-size:0.95rem; font-weight:600; cursor:pointer; text-align:left;
                     box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
                 ">🏘️ Woonplaatsanalyse (${state.selectedDeelgebiedNaam})<br>
@@ -2387,7 +2471,7 @@ function openRapportTypeModal(gebiedId, baseUrl) {
                 ` : ''}
                 <button id="rapport-modal-dossier" style="
                     padding: 0.75rem 1rem; border-radius: 8px; border: none;
-                    background: ${state.selectedDeelgebiedNaam ? 'var(--color-bg-alt, #2d3748)' : 'var(--color-primary, #3b82f6)'}; color: white;
+                    background: ${state.selectedDeelgebiedNaam ? 'var(--color-bg-alt, #2d3748)' : 'var(--action-fill, #2563eb)'}; color: white;
                     font-size:0.95rem; font-weight:600; cursor:pointer; text-align:left;
                     border: ${state.selectedDeelgebiedNaam ? '1px solid var(--color-border, rgba(255,255,255,0.15))' : 'none'};
                 ">📄 Gebiedsdossier<br>
@@ -2481,7 +2565,7 @@ function openMultiSelectRapportModal(ids, baseUrl) {
             <div style="display:flex; flex-direction:column; gap:0.75rem;">
                 <button id="rapport-modal-deelgebied" style="
                     padding: 0.75rem 1rem; border-radius: 8px; border: none;
-                    background: var(--color-primary, #3b82f6); color: white;
+                    background: var(--action-fill, #2563eb); color: white;
                     font-size:0.95rem; font-weight:600; cursor:pointer; text-align:left;
                     box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
                 ">🏘️ Woonplaats- & Deelgebiedsanalyse<br>
@@ -2799,10 +2883,20 @@ function setupEventListeners() {
         state.currentIndicator = null;
 
         if (selectedId) {
-            const selectedOption = e.target.options[e.target.selectedIndex];
-            const count = selectedOption.dataset.count;
-            document.getElementById('gebiedstype-count').textContent =
-                `${count} gebieden in dit type`;
+            // Aantal gebieden van dit type ophalen (de gebiedstypes-query levert geen aantal)
+            const countEl = document.getElementById('gebiedstype-count');
+            countEl.textContent = '… gebieden in dit type';
+            fetchPostgrestCount(`gebieden?select=id&gebiedstype_id=eq.${encodeURIComponent(selectedId)}`)
+                .then(count => {
+                    // Niet overschrijven als intussen een ander type gekozen is of de kaart al geladen is
+                    if (state.currentGebiedstype !== selectedId || !countEl.textContent.startsWith('…')) return;
+                    countEl.textContent = count === null
+                        ? 'Aantal gebieden onbekend'
+                        : `${count} gebieden in dit type`;
+                })
+                .catch(() => {
+                    if (countEl.textContent.startsWith('…')) countEl.textContent = 'Aantal gebieden onbekend';
+                });
 
             await loadIndicatoren(selectedId);
         } else {
@@ -3364,13 +3458,15 @@ function exportCSV() {
         }).join(',');
     });
 
-    const csvContent = "data:text/csv;charset=utf-8," +
-        [headers, ...rows].join('\n');
+    // Blob in plaats van data-URI: in een data-URI kapt een '#' (bv. in kleurcodes) de inhoud af
+    const blob = new Blob([[headers, ...rows].join('\n')], { type: 'text/csv;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
 
     const link = document.createElement('a');
-    link.href = csvContent;
+    link.href = url;
     link.download = `omnitwin-export-${Date.now()}.csv`;
     link.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
 // ============================================================================
@@ -3928,7 +4024,7 @@ async function buildIndicatorAccordion(indicatoren) {
         const kleur = themaKleuren[thema] || '#6B7280';
 
         html += `<div class="accordion-group" data-thema="${thema}">
-            <div class="accordion-header" onclick="toggleAccordionGroup(this)">
+            <div class="accordion-header" role="button" tabindex="0" aria-expanded="false" onclick="toggleAccordionGroup(this)">
                 <svg class="accordion-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <polyline points="9 18 15 12 9 6"/>
                 </svg>
@@ -3955,6 +4051,7 @@ async function buildIndicatorAccordion(indicatoren) {
 
             html += `<div class="indicator-item${activeClass}${noDataClass}"
                         data-uuid="${ind.uuid}" data-naam="${ind.naam}"
+                        ${noData ? 'aria-disabled="true"' : 'role="button" tabindex="0"'}
                         ${noData ? '' : `onclick="selectAccordionIndicator('${ind.uuid}', '${ind.naam.replace(/'/g, "\\'")}')"` }>
                 <span class="indicator-item-name">${ind.naam}</span>
                 <span class="indicator-item-coverage">${coverage > 0 ? coverage : '—'}</span>
@@ -3980,7 +4077,10 @@ async function buildIndicatorAccordion(indicatoren) {
  */
 function toggleAccordionGroup(headerEl) {
     const group = headerEl.closest('.accordion-group');
-    if (group) group.classList.toggle('open');
+    if (group) {
+        const open = group.classList.toggle('open');
+        headerEl.setAttribute('aria-expanded', String(open));
+    }
 }
 
 /**
@@ -4069,6 +4169,7 @@ function filterAccordion(query) {
         groups.forEach(group => {
             group.style.display = '';
             group.classList.remove('open');
+            group.querySelector('.accordion-header')?.setAttribute('aria-expanded', 'false');
             group.querySelectorAll('.indicator-item').forEach(item => {
                 item.style.display = '';
                 // Reset highlight
@@ -4105,6 +4206,9 @@ function filterAccordion(query) {
         });
 
         group.style.display = hasMatch ? '' : 'none';
-        if (hasMatch) group.classList.add('open');
+        if (hasMatch) {
+            group.classList.add('open');
+            group.querySelector('.accordion-header')?.setAttribute('aria-expanded', 'true');
+        }
     });
 }

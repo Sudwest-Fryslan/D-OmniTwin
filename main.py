@@ -41,15 +41,15 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         response = await call_next(request)
         
         # Content Security Policy - STRICT LOCAL ONLY
-        # Required for: Mapbox GL, D3.js, deck.gl, Chart.js
+        # Required for: MapLibre GL, D3.js, deck.gl, Chart.js (basiskaart: PDOK)
         # Local Swagger UI assets (no external CDNs needed for docs)
         response.headers["Content-Security-Policy"] = (
             "default-src 'self'; "
-            "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://api.mapbox.com https://d3js.org https://unpkg.com https://cdn.jsdelivr.net; "
-            "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://api.mapbox.com https://cdn.jsdelivr.net https://unpkg.com; "
+            "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://unpkg.com https://cdn.jsdelivr.net; "
+            "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net https://unpkg.com; "
             "font-src 'self' https://fonts.gstatic.com data:; "
             "img-src 'self' data: https: blob:; "
-            "connect-src 'self' https://api.mapbox.com https://*.tiles.mapbox.com https://events.mapbox.com wss://*.mapbox.com https://data.3dbag.nl https://api.3dbag.nl https://service.pdok.nl https://api.pdok.nl; "
+            "connect-src 'self' https://data.3dbag.nl https://api.3dbag.nl https://service.pdok.nl https://api.pdok.nl; "
             "worker-src 'self' blob:; "
             "child-src 'self' blob:; "
             "frame-src 'self';"
@@ -161,8 +161,6 @@ templates = Jinja2Templates(directory="templates")
 # ============================================================================
 # App Configuration (from environment)
 # ============================================================================
-mapbox_token = os.getenv('MAPBOX_TOKEN')
-mapbox_style = os.getenv('MAPBOX_STYLE', 'mapbox://styles/mapbox/light-v10')
 debug_mode = os.getenv('DEBUG', 'false').lower() == 'true'
 
 # Register routers
@@ -174,17 +172,13 @@ app.include_router(auth.router)
 app.include_router(admin.router)
 app.include_router(dashboard.router)
 app.include_router(visualisatie.router)
-from routers import kaart_v2
-app.include_router(kaart_v2.router)
 from routers import report
 app.include_router(report.router)
-from routers import llm_prompts, data_controle, ai_search, chat, bag3d, log_viewer, externe_lagen
-app.include_router(llm_prompts.router)
+from routers import data_controle, ai_search, chat, bag3d, log_viewer, externe_lagen
 app.include_router(data_controle.router)
 app.include_router(ai_search.router)
 app.include_router(chat.router)
 app.include_router(bag3d.router)
-# app.include_router(omgevingsvisie.router)  # Obsolete, gemigreerd naar pg_featureserv
 app.include_router(log_viewer.router)
 app.include_router(externe_lagen.router)
 
@@ -221,11 +215,7 @@ async def shutdown_event():
 @app.get("/", response_class=HTMLResponse)
 async def root(request: Request):
     """Serve the frontend application."""
-    return templates.TemplateResponse("index.html", {
-        "request": request,
-        "mapbox_token": mapbox_token,
-        "mapbox_style": mapbox_style
-    })
+    return templates.TemplateResponse("index.html", {"request": request})
 
 # ============================================================================
 # React SPA Support for Admin Panel

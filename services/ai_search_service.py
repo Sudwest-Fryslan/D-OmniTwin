@@ -3,14 +3,10 @@ from sqlalchemy import text
 from typing import List, Dict, Any
 import logging
 
-# Note: We import sentence-transformers here, but we should handle the case where it's not installed
-# In a production environment, you might want to load the model once at startup.
-try:
-    from sentence_transformers import SentenceTransformer
-    # Global model instance for reuse
-    _model = None
-except ImportError:
-    _model = None
+# sentence-transformers (en daarmee torch) wordt pas in _ensure_model geïmporteerd,
+# zodat het importeren van deze module de start van de app niet vertraagt.
+# Global model instance for reuse
+_model = None
 
 logger = logging.getLogger(__name__)
 
@@ -27,6 +23,7 @@ class AISearchService:
             try:
                 from services.logging_service import AppLogger
                 AppLogger.info("Initialiseren van AISearch model (all-MiniLM-L6-v2)...", category="SERVER")
+                from sentence_transformers import SentenceTransformer
                 _model = SentenceTransformer('all-MiniLM-L6-v2')
             except Exception as e:
                 logger.error(f"Fout bij laden van AI model: {e}")

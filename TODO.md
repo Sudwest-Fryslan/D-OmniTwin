@@ -106,7 +106,7 @@
 - [ ] **E3 — NM-001 actualiseren** (opgeloste gaps ✅, FRLDS-gaps labelen)
 
 ### Track F — Gebruikersreview Quickwins
-**Aanleiding:** [Gebruikersreview](./docs/7-projectmanagement/testcases/Gebruikersreview.md) — laag hangend fruit direct bruikbaar binnen Sprint 18.
+**Aanleiding:** [Gebruikersreview](./docs/testcases/Gebruikersreview.md) — laag hangend fruit direct bruikbaar binnen Sprint 18.
 - [x] **F1 — Bug: Zoekfunctie Kompas `undefined` foutmelding**
     - [x] `Array.isArray` guard + `renderSearchResults([])` bij API-fout
     - [ ] Acceptatie: foutmelding nog niet reproduceerbaar in testomgeving — open

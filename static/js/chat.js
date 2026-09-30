@@ -144,7 +144,7 @@ class ChatPanel {
             html += `<span class="chat-indicatoren-label">${response.indicatoren.length} indicatoren gevonden</span>`;
             for (const ind of response.indicatoren) {
                 const pct = Math.round(ind.relevantie * 100);
-                html += `<div class="chat-indicator-item" data-uuid="${ind.uuid}" title="Klik om op kaart te tonen">
+                html += `<div class="chat-indicator-item" role="button" tabindex="0" data-uuid="${ind.uuid}" title="Klik om op kaart te tonen">
                     <span class="chat-ind-naam">${this._escapeHtml(ind.naam)}</span>
                     <span class="chat-ind-score">${pct}%</span>
                 </div>`;

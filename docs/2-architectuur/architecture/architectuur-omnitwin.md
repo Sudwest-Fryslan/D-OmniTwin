@@ -34,9 +34,9 @@ D-OmniTwin ("The Omni Twin") is een **digitale spiegel van de fysieke leefomgevi
 │  main.py — Security Middleware, CORS, Router registratie                │
 │                                                                         │
 │  ┌──────────────────────────── ROUTERS ──────────────────────────────┐  │
-│  │ gebiedsmonitor.py  kompas.py      kaart_v2.py   report.py         │  │
+│  │ gebiedsmonitor.py  kompas.py      report.py                       │  │
 │  │ gemeenten.py       visualisatie.py admin.py     auth.py           │  │
-│  │ chat.py            ai_search.py   llm_prompts.py dashboard.py     │  │
+│  │ chat.py            ai_search.py   dashboard.py                    │  │
 │  │ data_controle.py                                                  │  │
 │  └──────────────────────────── SERVICES ─────────────────────────────┘  │
 │  │ gebiedsmonitor_service.py   kompas_service.py                     │  │
@@ -130,7 +130,6 @@ D-OmniTwin ("The Omni Twin") is een **digitale spiegel van de fysieke leefomgevi
 |--------|--------|---------|-------------|
 | `gebiedsmonitor.py` | `/api/gebiedsmonitor` | Publiek | Gebieden & indicator waarden |
 | `kompas.py` | `/api/kompas` | Publiek | Hiërarchie, configuraties, multi-gebied |
-| `kaart_v2.py` | `/api/kaart/v2` | Publiek | GeoJSON kaartdata (NULL-geom safe) |
 | `gemeenten.py` | `/api/gemeenten` | Publiek | Gemeenten + typeahead zoek |
 | `chat.py` | `/api/chat` | Publiek | D-Omni AI Chat (POST) |
 | `ai_search.py` | `/api/search` | Publiek | Semantisch zoeken |
@@ -138,7 +137,7 @@ D-OmniTwin ("The Omni Twin") is een **digitale spiegel van de fysieke leefomgevi
 | `visualisatie.py` | `/api/visualisatie` | Publiek + Admin | Kleurschema's & profielen |
 | `auth.py` | `/api/auth` | Publiek | Admin login/token |
 | `admin.py` | `/api/admin` | 🔐 X-Admin-Key | Indicator CRUD, health |
-| `llm_prompts.py` | `/api/admin/prompts` | 🔐 X-Admin-Key | System prompt beheer |
+| `admin.py` | `/api/admin/prompts` | 🔐 X-Admin-Key | System prompt beheer (GET lijst, PUT per naam) |
 | `dashboard.py` | `/api/admin/dashboard` | 🔐 X-Admin-Key | Stats & overzicht |
 | `data_controle.py` | `/api/data-controle` | 🔐 X-Admin-Key | Data kwaliteitscheck |
 
@@ -343,7 +342,6 @@ cd admin-panel && npm run build                   # → static/admin-panel/
 DATABASE_HOST / PORT / NAME / USER / PASSWORD
 SECRET_KEY
 CORS_ORIGINS
-MAPBOX_TOKEN
 ADMIN_API_KEY
 OLLAMA_HOST=http://localhost:11434
 OLLAMA_MODEL=qwen3:30b

@@ -41,13 +41,13 @@ cp .env.example .env
 docker compose up -d --build
 ```
 
-Open daarna **http://localhost**. Alles loopt via Traefik op poort 80; de backend (poort 8000) is binnen Docker niet direct bereikbaar.
+Open daarna **http://localhost**. Alles loopt via Traefik op poort 80; de backend (poort 8000) is binnen Docker niet direct bereikbaar. Dit start de ontwikkelmodus; voor een installatie bij je organisatie volg je de **[installatiegids](./docs/9-beheer/installatie.md)** (vereisten, `.env`, backup, bijwerken, beveiliging).
 
-- Bij de eerste start maakt de backend het databaseschema aan en laadt een **sample dataset van 12 buurten in Súdwest-Fryslân** (`LOAD_SAMPLE_DATA=true` in `.env`). Zet dit op `false` voor een lege database met alleen stuurdata.
-- **Beheeromgeving:** http://localhost/admin. Inloggen met `ADMIN_USER` (standaard `admin`) en het `ADMIN_PASSWORD` uit `.env`. Laat je `ADMIN_PASSWORD` leeg, dan wordt eenmalig een wachtwoord gegenereerd en in de log getoond: `docker compose logs backend`. Laat `DEBUG=true` staan zolang je zonder HTTPS draait; anders wordt het inlogcookie alleen via HTTPS verstuurd en lukt inloggen niet.
+- Bij de eerste start maakt de eenmalige service `db-init` het databaseschema aan en laadt een **sample dataset van 12 buurten in Súdwest-Fryslân** (`LOAD_SAMPLE_DATA=true` in `.env`). Zet dit op `false` voor een lege database met alleen stuurdata.
+- **Beheeromgeving:** http://localhost/admin. Inloggen met `ADMIN_USER` (standaard `admin`) en het `ADMIN_PASSWORD` uit `.env`. Laat je `ADMIN_PASSWORD` leeg, dan wordt eenmalig een wachtwoord gegenereerd en in de log getoond: `docker compose logs db-init`. Laat `DEBUG=true` staan zolang je zonder HTTPS draait; anders wordt het inlogcookie alleen via HTTPS verstuurd en lukt inloggen niet.
 - **API-documentatie:** http://localhost/docs.
 
-Volledige data voor Fryslân laden of lokaal zonder Docker ontwikkelen: zie [Installatie voor ontwikkelaars](#-installatie-voor-ontwikkelaars) en [`GETTING_STARTED.md`](./GETTING_STARTED.md).
+Volledige data voor Fryslân laden: zie de [installatiegids](./docs/9-beheer/installatie.md#4-data). Lokaal zonder Docker ontwikkelen: zie [Installatie voor ontwikkelaars](#-installatie-voor-ontwikkelaars).
 
 **Meedoen:** zie [CONTRIBUTING.md](./CONTRIBUTING.md) en de [gedragscode](./CODE_OF_CONDUCT.md). Een kwetsbaarheid gevonden? Meld die privé volgens [SECURITY.md](./SECURITY.md), niet via een openbaar issue. Metadata voor codebase-registers staat in [publiccode.yml](./publiccode.yml).
 
@@ -276,9 +276,9 @@ OLLAMA_MODEL=qwen3:30b
 
 ## 🚀 Installatie voor ontwikkelaars
 
-> Alleen de applicatie met de sample dataset draaien? Zie [Snel starten](#-snel-starten).
+> Installeren met Docker (ook voor beheerders): zie de **[installatiegids](./docs/9-beheer/installatie.md)**. Deze sectie is alleen voor lokaal ontwikkelen zonder Docker en is deels verouderd (#21).
 >
-> 📖 **Volledige gids:** Zie [`GETTING_STARTED.md`](./GETTING_STARTED.md) voor een stap-voor-stap installatie inclusief starter dataset.
+> [`GETTING_STARTED.md`](./GETTING_STARTED.md) beschrijft dezelfde route uitgebreider, maar is verouderd.
 
 ### Prerequisites
 - Python 3.10+ · Node.js 18+ · PostgreSQL 14+ (PostGIS + pgvector + pg_trgm)
@@ -363,7 +363,8 @@ Zie [NOTICE.md](./NOTICE.md) voor informatie over third-party licenties.
 | Document | Beschrijving |
 |----------|-------------|
 | [README.md](./README.md) | Project overview (dit document) |
-| [GETTING_STARTED.md](./GETTING_STARTED.md) | ⭐ Stap-voor-stap installatiehandleiding met starter dataset |
+| [docs/9-beheer/installatie.md](./docs/9-beheer/installatie.md) | ⭐ Installatie en beheer (Docker): de actuele installatiegids |
+| [GETTING_STARTED.md](./GETTING_STARTED.md) | Installatie zonder Docker met Fryslân-dataset (verouderd, zie installatiegids) |
 | [CONTRIBUTING.md](./CONTRIBUTING.md) | Bijdragen: van issue tot merge |
 | [CODE_OF_CONDUCT.md](./CODE_OF_CONDUCT.md) | Gedragscode (Contributor Covenant 2.1) |
 | [SECURITY.md](./SECURITY.md) | Kwetsbaarheden privé melden |
@@ -371,7 +372,7 @@ Zie [NOTICE.md](./NOTICE.md) voor informatie over third-party licenties.
 | [CHANGELOG.md](./CHANGELOG.md) | Wijzigingen per versie |
 | [publiccode.yml](./publiccode.yml) | Metadata voor codebase-registers (publiccode.yml-standaard) |
 | [init_data/README.md](./init_data/README.md) | Documentatie initiatie dataset (Fryslân) |
-| [BUILD.md](./BUILD.md) | Installatie, setup & sprint changelog |
+| [BUILD.md](./BUILD.md) | Build-notities & sprint changelog (installatie: zie installatiegids) |
 | [TODO.md](./TODO.md) | Actieve takenlijst per domein |
 | [ROADMAP.md](./ROADMAP.md) | Lange-termijn planning en features |
 | [docs/STATE.md](./docs/STATE.md) | 🟢 Systeemstatus & actieve componenten (Single Source of Truth) |
@@ -407,7 +408,7 @@ Zie [NOTICE.md](./NOTICE.md) voor informatie over third-party licenties.
 | `/api/admin/deduplicatie` | GET/POST | AI-gestuurde deduplicatie van indicatoren |
 | `/api/admin/logs` | GET/PUT | In-app log viewer & categoriebeheer |
 | `/api/admin/externe-lagen/upload`| POST | GeoPackage upload voor kaartlagen |
-| `/api/admin/prompts` | GET/POST | System prompt & LLM instellingen |
+| `/api/admin/prompts` | GET/PUT | System prompt & LLM instellingen |
 | `/api/admin/dashboard/stats` | GET | Dashboard statistieken |
 | `/api/data-controle` | GET | Data kwaliteitsrapport |
 
