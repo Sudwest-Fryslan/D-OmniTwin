@@ -33,12 +33,12 @@ De D-OmniTwin stack draait als een geïsoleerd cluster van 5 microservices binne
 │           │                                                                            │
 │           ▼                                                                            │
 │   ┌────────────────────────────────────────────────────────────────────────────────┐   │
-│   │ [traefik] Reverse Proxy & API Gateway (container: traefik, poort 80/8081)      │   │
+│   │ [traefik] Reverse Proxy & API Gateway (service: traefik, poort 80)             │   │
 │   └──────┬───────────────────────────┬───────────────────────────┬─────────────────┘   │
 │          │ / (Webapp) & /api/*       │ /api/data/*               │ /api/geo/*          │
 │          ▼                           ▼                           ▼                     │
 │   ┌────────────────────────┐  ┌──────────────┐          ┌──────────────────┐           │
-│   │ [omnitwin_backend]     │  │ [postgrest]  │          │ [pg_featureserv] │           │
+│   │ [backend]              │  │ [postgrest]  │          │ [pg_featureserv] │           │
 │   │ FastAPI (Poort 8000)   │  │ Data API     │          │ Geo API          │           │
 │   │ BFF & Rapportages      │  │ (Poort 3000) │          │ (Poort 9000)     │           │
 │   └──────────┬─────────────┘  └──────┬───────┘          └────────┬─────────┘           │
@@ -46,17 +46,17 @@ De D-OmniTwin stack draait als een geïsoleerd cluster van 5 microservices binne
 │              └───────────────────────┼───────────────────────────┘                     │
 │                                      ▼                                                 │
 │   ┌────────────────────────────────────────────────────────────────────────────────┐   │
-│   │ [omnitwin_db] PostgreSQL 15 + PostGIS 3.4 + pgvector (Poort 5433:5432)         │   │
+│   │ [postgres] PostgreSQL 15 + PostGIS 3.4 + pgvector (alleen intern, poort 5432)  │   │
 │   │ ↳ Persistent Docker Volume: pgdata                                             │   │
 │   └────────────────────────────────────────────────────────────────────────────────┘   │
 └────────────────────────────────────────────────────────────────────────────────────────┘
 ```
 
-| Service | Container Naam | Interne Poort | Doel & Functionaliteit |
+| Service | Compose-service | Interne Poort | Doel & Functionaliteit |
 |---|---|---|---|
-| **Traefik** | `traefik` | `80`, `8080` | Reverse proxy, dynamic path routing, centrale toegangspoort |
-| **Backend** | `omnitwin_backend` | `8000` | FastAPI applicatie, HTML UI, rapportagemotor, REST BFF |
-| **PostgreSQL** | `omnitwin_db` | `5432` *(host: 5433)* | PostGIS ruimtelijke database, indicatorenhuis, pgvector embeddings |
+| **Traefik** | `traefik` | `80` | Reverse proxy, dynamic path routing, centrale toegangspoort |
+| **Backend** | `backend` | `8000` | FastAPI applicatie, HTML UI, rapportagemotor, REST BFF |
+| **PostgreSQL** | `postgres` | `5432` *(niet op de host)* | PostGIS ruimtelijke database, indicatorenhuis, pgvector embeddings |
 | **PostgREST** | `postgrest` | `3000` | Gestandaardiseerde REST API over PostgreSQL tabellen/views |
 | **pg_featureserv** | `pg_featureserv` | `9000` | OGC API Features endpoint voor snelle streaming van vector GeoJSON |
 
@@ -114,7 +114,7 @@ Voer het dumpcommando uit vanaf de bronomgeving:
 
 ```bash
 # Optie A (Aanbevolen): PostgreSQL Custom Format (.dump)
-docker exec omnitwin_db pg_dump \
+docker compose exec -T postgres pg_dump \
   -U omnitwin_user \
   -d omnitwin_db \
   -Fc \
@@ -125,12 +125,12 @@ docker exec omnitwin_db pg_dump \
   -f /tmp/omnitwin_db_release.dump
 
 # Kopieer het bestand uit de container naar de lokale schijf
-docker cp omnitwin_db:/tmp/omnitwin_db_release.dump ./omnitwin_db_release.dump
+docker compose cp postgres:/tmp/omnitwin_db_release.dump ./omnitwin_db_release.dump
 ```
 
 ```bash
 # Optie B (Alternatief): Gecodificeerde Plain SQL Dump (.sql.gz)
-docker exec omnitwin_db pg_dump \
+docker compose exec -T postgres pg_dump \
   -U omnitwin_user \
   -d omnitwin_db \
   --no-owner \
@@ -191,7 +191,7 @@ sudo usermod -aG docker $USER
 ### Stap 1.3: Netwerk & Firewall
 * **Inkomend (Inbound):**
   * Poort `80/TCP` (HTTP) en/of `443/TCP` (HTTPS) openstellen voor gebruikers / werkplekken.
-  * *Optioneel:* Poort `5433` (externe DB toegang) en `8081` (Traefik dashboard) **afschermen via firewall**; deze poorten mogen alleen lokaal (`127.0.0.1`) of via een beheer-VPN benaderd worden.
+  * De installatie (`docker-compose.yml`, zie `COMPOSE_FILE` in Stap 2.2) publiceert alleen poort 80. De databasepoort `5433` en het Traefik-dashboard op `8081` staan alleen in de dev-override (`docker-compose.override.yml`).
 * **Uitgaand (Outbound internet):**
   * Toegang tot `https://api.pdok.nl`, `https://opendata.cbs.nl` en `https://statline.rivm.nl` via poort `443/TCP` (voor eventuele toekomstige kaart- en dataconsumptie).
 
@@ -244,6 +244,10 @@ openssl rand -base64 24
 Pas `.env` aan met je favoriete editor (`nano .env` of `vim .env`):
 
 ```ini
+# ─── Docker Compose ──────────────────────────────────────
+# Alleen de basis laden, niet de dev-override (bind-mount, open DB-poort, dashboard)
+COMPOSE_FILE=docker-compose.yml
+
 # ─── Database ────────────────────────────────────────────
 DATABASE_HOST=postgres
 DATABASE_PORT=5432
@@ -313,7 +317,7 @@ docker compose logs -f postgres
 Zorg dat de vereiste extensies (`postgis`, `vector`, `pg_trgm`) geactiveerd zijn in de lege database:
 
 ```bash
-docker exec -i omnitwin_db psql -U omnitwin_user -d omnitwin_db -c "
+docker compose exec -T postgres psql -U omnitwin_user -d omnitwin_db -c "
   CREATE EXTENSION IF NOT EXISTS postgis;
   CREATE EXTENSION IF NOT EXISTS vector;
   CREATE EXTENSION IF NOT EXISTS pg_trgm;
@@ -322,7 +326,7 @@ docker exec -i omnitwin_db psql -U omnitwin_user -d omnitwin_db -c "
 
 *Verificatie van de extensies:*
 ```bash
-docker exec -i omnitwin_db psql -U omnitwin_user -d omnitwin_db -c "\dx"
+docker compose exec -T postgres psql -U omnitwin_user -d omnitwin_db -c "\dx"
 ```
 Je ziet nu `plpgsql`, `postgis`, `vector` en `pg_trgm` in de lijst.
 
@@ -337,7 +341,7 @@ Gebruik het juiste commando afhankelijk van het dumpformaat:
 #### Optie A (Aanbevolen: Custom Format `.dump` via `pg_restore`):
 ```bash
 # Voer pg_restore uit via stdin streaming
-docker exec -i omnitwin_db pg_restore \
+docker compose exec -T postgres pg_restore \
   -U omnitwin_user \
   -d omnitwin_db \
   --clean \
@@ -353,7 +357,7 @@ docker exec -i omnitwin_db pg_restore \
 #### Optie B (Gecodificeerde Plain SQL `.sql.gz`):
 ```bash
 gunzip -c /opt/d-omnitwin/backups/omnitwin_db_release.sql.gz \
-  | docker exec -i omnitwin_db psql -U omnitwin_user -d omnitwin_db
+  | docker compose exec -T postgres psql -U omnitwin_user -d omnitwin_db
 ```
 
 ---
@@ -362,7 +366,7 @@ gunzip -c /opt/d-omnitwin/backups/omnitwin_db_release.sql.gz \
 Voer onderstaande query uit om te verifiëren of alle tabellen, views en rijen succesvol zijn ingelezen:
 
 ```bash
-docker exec -i omnitwin_db psql -U omnitwin_user -d omnitwin_db -c "
+docker compose exec -T postgres psql -U omnitwin_user -d omnitwin_db -c "
 SELECT 'Indicatoren' AS tabel, count(*) FROM indicatoren
 UNION ALL
 SELECT 'Gebieden / Buurten', count(*) FROM gebieden
@@ -386,7 +390,7 @@ SELECT 'Gebruikers (users)', count(*) FROM users;
 
 Controleer ook de ruimtelijke projectie (SRID):
 ```bash
-docker exec -i omnitwin_db psql -U omnitwin_user -d omnitwin_db -c "
+docker compose exec -T postgres psql -U omnitwin_user -d omnitwin_db -c "
 SELECT code, naam, ST_GeometryType(geom) AS geom_type, ST_SRID(geom) AS srid 
 FROM gebieden 
 LIMIT 3;
@@ -403,7 +407,7 @@ De dump bevat mogelijk een bestaand beheeraccount uit de ontwikkelomgeving. Stel
 # Voer het beheerder setup script uit via de backend container (of direct via SQL)
 # Zodra de backend draait in Stap 5.1:
 docker compose up -d backend
-docker exec -it omnitwin_backend python init_data/scripts/create_admin.py --reset-password
+docker compose exec backend python init_data/scripts/create_admin.py --reset-password
 ```
 
 ---
@@ -417,10 +421,11 @@ Start nu de volledige microservices-stack:
 docker compose up -d
 ```
 
-Controleer of alle 5 containers de status `Up` / `running` hebben:
+Controleer of alle services de status `Up` hebben (backend en postgres met `(healthy)`):
 ```bash
-docker compose ps
+docker compose ps -a
 ```
+`db-init` staat op `Exited (0)`: die initialiseert eenmalig en stopt. Bij een teruggezette dump (tabel `gebieden` bestaat) slaat hij de initialisatie over.
 
 ---
 
@@ -507,7 +512,8 @@ RETENTION_DAYS=14
 mkdir -p "$BACKUP_DIR"
 
 # Database dump uitvoeren
-docker exec omnitwin_db pg_dump -U omnitwin_user -d omnitwin_db -Fc -b > "$BACKUP_FILE"
+cd /opt/d-omnitwin  # docker compose werkt vanuit de projectmap
+docker compose exec -T postgres pg_dump -U omnitwin_user -d omnitwin_db -Fc -b > "$BACKUP_FILE"
 
 # Loggen
 echo "[$(date)] Backup succesvol aangemaakt: $BACKUP_FILE ($(du -h "$BACKUP_FILE" | cut -f1))"
@@ -533,10 +539,12 @@ Voeg toe aan de crontab van de server (`crontab -e`):
    * *Optie A (Aanbevolen bij gemeenten):* Plaats D-OmniTwin achter de bestaande gemeentelijke WAF / Reverse Proxy (zoals F5 BIG-IP, NGINX, Azure App Gateway of Cloudflare). De WAF verzorgt het officiële SSL-certificaat en routeert intern door naar poort 80 van Traefik.
    * *Optie B:* Configureer Let's Encrypt rechtstreeks in `docker-compose.yml` via Traefik HTTPS-entrypoints.
 2. **Beperk Blootstelling van Beheerpoorten:**
-   * Poort `5433` (PostgreSQL) en `8081` (Traefik dashboard) zijn standaard gekoppeld. Indien direct extern beheer niet nodig is, pas `docker-compose.yml` aan zodat poorten alleen binden op `127.0.0.1`:
+   * Met `COMPOSE_FILE=docker-compose.yml` zijn de database (`5433`) en het Traefik-dashboard (`8081`) niet op de host bereikbaar. Is databasetoegang vanaf de host nodig, bind dan alleen op `127.0.0.1` via een eigen override-bestand:
      ```yaml
-     ports:
-       - "127.0.0.1:5433:5432"
+     services:
+       postgres:
+         ports:
+           - "127.0.0.1:5433:5432"
      ```
 3. **Logrotatie in Docker:**
    Voorkom dat Docker logbestanden de schijf vullen door logrotatie in `/etc/docker/daemon.json` te configureren:
