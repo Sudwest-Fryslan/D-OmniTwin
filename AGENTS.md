@@ -86,7 +86,6 @@ Dit framework is **niet** voor de initiële bootstrap (dat is `init_data/`, hier
 
 Copy `.env.example` to `.env` and fill in:
 - `DATABASE_*` — PostgreSQL connection (requires PostGIS extension)
-- `MAPBOX_TOKEN` — for map tiles
 - `ADMIN_API_KEY` — for admin panel authentication
 - `OLLAMA_*` — for local LLM (optional; Qwen model)
 
