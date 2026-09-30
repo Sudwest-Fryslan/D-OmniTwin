@@ -1000,10 +1000,18 @@ async function loadOmgevingsvisieLayer() {
 async function selectBuurtenFromDeelgebied(deelgebiedId, deelgebiedNaam) {
     showLoading(true, `Buurten laden voor ${deelgebiedNaam}...`);
     try {
-        const res = await fetch(`/api/omgevingsvisie/deelgebieden/${deelgebiedId}/buurten`);
+        // SQL-functie postgisftw.buurten_in_deelgebied, gepubliceerd door pg_featureserv (#68)
+        const bufferM = -10;
+        const params = new URLSearchParams({ deelgebied_id: deelgebiedId, buffer_m: bufferM, limit: 10000 });
+        const res = await fetch(`/api/geo/functions/postgisftw.buurten_in_deelgebied/items?${params}`);
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
-        const data = await res.json();
+        const geojson = await res.json();
+        const buurten = (geojson.features || []).map(f => ({
+            id: f.properties?.id ?? f.id,
+            naam: f.properties?.naam
+        }));
+        const data = { buurten, totaal: buurten.length, buffer_m: bufferM };
 
         // Clear huidige selectie en voeg alle buurten toe
         clearGebiedSelection();
