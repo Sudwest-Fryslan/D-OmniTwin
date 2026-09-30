@@ -368,13 +368,30 @@ body {
   /* Text shadow for contrast */
 }
 
-.status-dot {
-  width: 8px;
-  height: 8px;
-  background: var(--brand-nature);
-  /* Nature Green — status verbonden (was --secondary-color Monza Rood) */
-  border-radius: 50%;
-  animation: pulse 2s ease-in-out infinite;
+.verbindingsmelding {
+  position: fixed;
+  top: 76px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1000;
+  padding: 0.6rem 1.2rem;
+  border-radius: 0.5rem;
+  background: #fef3c7;
+  color: #78350f;
+  border: 1px solid #f59e0b;
+  font-size: 0.9rem;
+  font-weight: 600;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.verbindingsmelding[hidden] {
+  display: none;
+}
+
+[data-theme="dark"] .verbindingsmelding {
+  background: #451a03;
+  color: #fde68a;
+  border-color: #b45309;
 }
 
 @keyframes pulse {
