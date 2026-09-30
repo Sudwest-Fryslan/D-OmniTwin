@@ -53,7 +53,17 @@ if [ "$TABLE_EXISTS" != "1" ]; then
 
     # Admin gebruiker initialiseren
     export ADMIN_USER="${ADMIN_USER:-admin}"
-    export ADMIN_PASSWORD="${ADMIN_PASSWORD:-admin}"
+    # Geen standaardwachtwoord: zonder (ingevuld) ADMIN_PASSWORD eenmalig een willekeurig wachtwoord genereren
+    case "${ADMIN_PASSWORD:-}" in
+        ""|"<"*">")
+            export ADMIN_PASSWORD="$(python -c 'import secrets; print(secrets.token_urlsafe(16))')"
+            echo "⚠️ ADMIN_PASSWORD niet ingesteld. Gegenereerd wachtwoord voor '$ADMIN_USER' (eenmalig getoond):"
+            echo "   $ADMIN_PASSWORD"
+            ;;
+        *)
+            export ADMIN_PASSWORD
+            ;;
+    esac
     echo "👤 Admin gebruiker controleren/aanmaken ('$ADMIN_USER')..."
     python /app/init_data/scripts/create_admin.py || echo "⚠️ Admin initialisatie overgeslagen."
 
