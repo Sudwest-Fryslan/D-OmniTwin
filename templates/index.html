@@ -10,12 +10,15 @@
   <link rel="stylesheet" href="/static/css/styles.css">
   <link rel="stylesheet" href="/static/css/custom-dropdown.css">
 
-  <!-- MapLibre GL JS (replacement for Mapbox) -->
-  <link href="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.css" rel="stylesheet">
-  <script src="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.js"></script>
+  <!-- CDN-bibliotheken: exacte versie + Subresource Integrity (#58).
+       Bij een versiewijziging de hash opnieuw berekenen:
+       curl -sL <url> | openssl dgst -sha384 -binary | openssl base64 -A -->
+  <!-- MapLibre GL JS (replacement for Mapbox). 3.6.2 is de laatste 3.x; 4.x+ vraagt een aparte migratie -->
+  <link href="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.css" rel="stylesheet" integrity="sha384-p5cy4wHtKSqjnLUNjQ+8ffCwUp0vlLS+6lg1lc3qqXax2E1EmVCMCAimU+R0MOZH" crossorigin="anonymous">
+  <script src="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.js" integrity="sha384-3WUbXI7T+/GIrWP/5MDMjhzLyHQ+0utF3PnJ7ozD7UeN1/bbZ96Hk+Vvd024VYfW" crossorigin="anonymous"></script>
 
   <!-- D3.js v7 for Kompas sunburst visualization -->
-  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js" integrity="sha384-CjloA8y00+1SDAUkjs099PVfnY2KmDC2BZnws9kh8D/lX1s46w6EPhpXdqMfjK6i" crossorigin="anonymous"></script>
 </head>
 
 <body>
@@ -947,10 +950,10 @@
 
   <!-- Scripts -->
   <!-- deck.gl v9 from CDN -->
-  <script src="https://unpkg.com/deck.gl@9.4.0/dist.min.js"></script>
+  <script src="https://unpkg.com/deck.gl@9.4.0/dist.min.js" integrity="sha384-NrpHmp6N6IhXZ+gSV+uRLo+Hqprkw4BfdGzmxgWXhjakjkAabyfQxokSmn/aK0VB" crossorigin="anonymous"></script>
 
   <!-- Chart.js for optional charts -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.1/dist/chart.umd.min.js" integrity="sha384-jb8JQMbMoBUzgWatfe6COACi2ljcDdZQ2OxczGA3bGNeWe+6DChMTBJemed7ZnvJ" crossorigin="anonymous"></script>
 
   <script>
     // MapLibre Configuration (DeckGL compatibiliteit)
