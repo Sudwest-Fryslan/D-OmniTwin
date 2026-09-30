@@ -411,6 +411,11 @@ body {
         padding: 0 !important;
     }
 
+    .content {
+        overflow: visible !important;
+        padding: 0 !important;
+    }
+
     .app-container {
         height: auto !important;
         min-height: auto !important;

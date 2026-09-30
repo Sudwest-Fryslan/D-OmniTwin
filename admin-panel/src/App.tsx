@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter, Routes, Route, NavLink, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, NavLink, Navigate, useLocation } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useAdminStore } from './hooks/useAdminStore';
 import { LoginPage } from './pages/LoginPage';
@@ -42,6 +42,9 @@ const queryClient = new QueryClient();
 const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user, logout: storeLogout } = useAdminStore();
   const [dropdownOpen, setDropdownOpen] = React.useState(false);
+  // Gebiedsdossier = /rapport of /rapport/<gebied_id>, niet de andere rapporten onder /rapport/
+  const { pathname } = useLocation();
+  const isGebiedsdossier = /^\/rapport(\/(?!benchmark|multi-gebied|thema-analyse|deelgebied)[^/]+)?\/?$/.test(pathname);
 
   const handleLogout = async () => {
     try {
@@ -104,7 +107,7 @@ const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 
           <NavLink
             to="/rapport"
-            className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
+            className={() => `nav-item ${isGebiedsdossier ? 'active' : ''}`}
           >
             <FileText size={18} />
             Gebiedsdossier
@@ -254,6 +257,17 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
   return <AppLayout>{children}</AppLayout>;
 };
 
+// Publiek bereikbare rapportroutes: met menu als beheerder is ingelogd, anders standalone
+const OptionalLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { isAuthenticated } = useAdminStore();
+
+  if (!isAuthenticated) {
+    return <>{children}</>;
+  }
+
+  return <AppLayout>{children}</AppLayout>;
+};
+
 // KleurschemasPage is now imported from ./pages/KleurschemasPage
 
 function App() {
@@ -314,23 +328,23 @@ function App() {
           } />
 
           <Route path="/rapport/benchmark" element={
-            <BenchmarkPage />
+            <OptionalLayout><BenchmarkPage /></OptionalLayout>
           } />
 
           <Route path="/rapport/multi-gebied" element={
-            <MultiGebiedPage />
+            <OptionalLayout><MultiGebiedPage /></OptionalLayout>
           } />
 
           <Route path="/rapport/thema-analyse" element={
-            <ThemaAnalysePage />
+            <OptionalLayout><ThemaAnalysePage /></OptionalLayout>
           } />
 
           <Route path="/rapport/deelgebied" element={
-            <DeelgebiedPage />
+            <OptionalLayout><DeelgebiedPage /></OptionalLayout>
           } />
 
           <Route path="/rapport/:gebied_id?" element={
-            <ReportPage />
+            <OptionalLayout><ReportPage /></OptionalLayout>
           } />
 
           {/* Publieke Report Route outside of ProtectedRoute (als alias) */}

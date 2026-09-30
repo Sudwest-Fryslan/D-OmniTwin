@@ -48,11 +48,13 @@ export const LoginPage: React.FC = () => {
 
                 <form onSubmit={handleSubmit}>
                     <div className="form-group">
-                        <label className="form-label">Gebruikersnaam</label>
+                        <label className="form-label" htmlFor="login-username">Gebruikersnaam</label>
                         <div style={{ position: 'relative' }}>
                             <input
+                                id="login-username"
                                 type="text"
                                 className="form-input"
+                                autoComplete="username"
                                 value={username}
                                 onChange={(e) => setUsername(e.target.value)}
                                 placeholder="Gebruikersnaam"
@@ -60,6 +62,7 @@ export const LoginPage: React.FC = () => {
                                 style={{ paddingLeft: '2.5rem' }}
                             />
                             <User
+                                aria-hidden="true"
                                 size={18}
                                 style={{
                                     position: 'absolute',
@@ -73,11 +76,13 @@ export const LoginPage: React.FC = () => {
                     </div>
 
                     <div className="form-group">
-                        <label className="form-label">Wachtwoord</label>
+                        <label className="form-label" htmlFor="login-password">Wachtwoord</label>
                         <div style={{ position: 'relative' }}>
                             <input
+                                id="login-password"
                                 type="password"
                                 className="form-input"
+                                autoComplete="current-password"
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
                                 placeholder="Wachtwoord"
@@ -85,6 +90,7 @@ export const LoginPage: React.FC = () => {
                                 style={{ paddingLeft: '2.5rem' }}
                             />
                             <KeyRound
+                                aria-hidden="true"
                                 size={18}
                                 style={{
                                     position: 'absolute',
