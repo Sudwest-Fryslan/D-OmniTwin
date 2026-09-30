@@ -21,7 +21,7 @@ SQLAlchemy>=2.0.0
 GeoAlchemy2>=0.14.0
 
 # --- Geo / Data ---
-geopandas>=0.14.0
+geopandas>=1.1.4
 shapely>=2.0.0
 pyproj>=3.4.0
 pyogrio>=0.7.0
