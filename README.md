@@ -53,6 +53,21 @@ Volledige data voor Fryslân laden of lokaal zonder Docker ontwikkelen: zie [Ins
 
 ---
 
+## 📸 Zo ziet het eruit
+
+Schermafbeeldingen van een verse installatie met de sample dataset (`docker compose up`), ingezoomd op Bolsward.
+
+![Kaart: buurten in Bolsward gekleurd op een indicator, met PDOK-achtergrondkaart](docs/images/kaart-bolsward.jpg)
+*Kaart: buurten gekleurd op een indicator (hier "Afstand tot koele plek"), PDOK-achtergrondkaart.*
+
+![Kompas: sunburst met de thema's voor buurt Bolsward-Zuidoost](docs/images/kompas-bolsward-zuidoost.jpg)
+*D-Omni Kompas voor Bolsward-Zuidoost: alle indicatoren in thema's, gekleurd ten opzichte van de referentiegroep.*
+
+![Chat: de D-Omni Assistent met het scenario Beleidsadviseur](docs/images/chat-beleidsadviseur.jpg)
+*D-Omni Assistent: het scenario "Beleidsadviseur" zet kaart en Kompas klaar.*
+
+> Bolsward-Zuidoost bevat in de sample **demodata** (zie `init_data/sample/README.md`). De getallen in de kop ("1,721 gebieden | 226 indicatoren") zijn nog hardcoded (#79).
+
 ## 🤝 Innovatie & Samenwerking
 
 D-OmniTwin wordt ontwikkeld als **open methodiek + referentie-implementatie** (EUPL licentie), met structurele samenwerking tussen overheden en datapartners in Fryslân.
