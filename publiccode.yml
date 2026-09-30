@@ -1,0 +1,148 @@
+# publiccode.yml voor D-OmniTwin
+# Standaard: https://yml.publiccode.tools/ — controleren met publiccode-parser-go
+# of https://developer-overheid-nl.github.io/don-checker/
+#
+# Bij te werken:
+# - url: verandert bij de overdracht naar de SWF-organisatie (#30)
+# - softwareVersion/releaseDate: volgen de versieafspraken uit #27 (semantic versioning).
+#   De versies in de repo lopen nu uiteen (README: v1.0.0-beta, main.py: 1.5.0);
+#   hier staat voorlopig 1.0.0-beta.
+# - maintenance/contacts: e-mailadres nog te bevestigen.
+
+publiccodeYmlVersion: "0"
+
+name: D-OmniTwin
+url: "https://github.com/TLaan/D-OmniTwin"
+softwareVersion: "1.0.0-beta"
+releaseDate: "2026-09-30"
+
+platforms:
+  - web
+
+categories:
+  - data-analytics
+  - data-visualization
+  - geographic-information-systems
+
+developmentStatus: beta
+
+softwareType: "standalone/web"
+
+organisation:
+  uri: "https://www.sudwestfryslan.nl"
+  name: Gemeente Súdwest-Fryslân
+
+fundedBy:
+  - name: Innovatiebudget Digitale Overheid 2026
+    uri: "https://www.digitaleoverheid.nl/innovatieproject/d-omnitwin/"
+
+usedBy:
+  - Gemeente Súdwest-Fryslân
+
+intendedAudience:
+  countries:
+    - NL
+  scope:
+    - local-authorities
+    - government
+    - environment
+    - energy
+    - society
+
+description:
+  nl:
+    localisedName: D-OmniTwin
+    shortDescription: >-
+      Digitale spiegel van de leefomgeving: indicatoren op buurtniveau in kaart,
+      kompas en rapportage, met een lokale AI-assistent.
+    longDescription: |
+      D-OmniTwin is een open source webapplicatie die data over de fysieke
+      leefomgeving op buurtniveau inzichtelijk maakt voor beleidsmakers,
+      wijkfunctionarissen en inwoners. Data die nu versnipperd is over
+      organisaties en systemen komt samen in één beeld.
+
+      De kern is het D-Omni Kompas: een indeling van indicatoren in 12 thema's,
+      getoond als interactieve sunburst. Gebieden worden vergeleken met een
+      referentiegroep via Z-scores, zodat opvallende afwijkingen direct zichtbaar
+      zijn. Een interactieve kaart toont de indicatoren per buurt, en
+      gebiedsrapportages zijn te exporteren.
+
+      Een AI-assistent met een lokaal taalmodel (Ollama, geen cloud) helpt
+      vragen in gewone taal te vertalen naar kaart, kompas en rapportage.
+
+      Toepassingen zijn onder meer hittestress, energiearmoede en nabijheid van
+      voorzieningen. D-OmniTwin wordt ontwikkeld door Gemeente Súdwest-Fryslân,
+      samen met de gemeenten Leeuwarden en Tytsjerksteradiel en Coöperatie
+      DataFryslân, met steun van het Innovatiebudget Digitale Overheid 2026.
+
+      De applicatie draait met Docker Compose (FastAPI, PostgreSQL/PostGIS,
+      PostgREST, pg_featureserv en Traefik). Een sample dataset van 12 buurten
+      wordt bij de eerste start automatisch geladen.
+    documentation: "https://github.com/TLaan/D-OmniTwin/blob/main/README.md"
+    features:
+      - D-Omni Kompas met indicatoren in 12 thema's
+      - Interactieve kaart op buurtniveau
+      - Z-scores ten opzichte van een referentiegroep
+      - Gebiedsrapportages en vergelijking van meerdere gebieden
+      - AI-chat met een lokaal taalmodel (Ollama, optioneel)
+      - Beheeromgeving voor indicatoren, kompas en kaartlagen
+  en:
+    localisedName: D-OmniTwin
+    shortDescription: >-
+      Digital mirror of the living environment: neighbourhood-level indicators
+      on a map, compass and reports, with a local AI assistant.
+    longDescription: |
+      D-OmniTwin is an open source web application that makes data about the
+      physical living environment visible at neighbourhood level for policy
+      makers, district officers and residents. Data that is scattered across
+      organisations and systems is brought together in one view.
+
+      At its core is the D-Omni Kompas (compass): indicators grouped into 12
+      themes, shown as an interactive sunburst. Areas are compared with a
+      reference group using Z-scores, so notable deviations stand out. An
+      interactive map shows indicators per neighbourhood, and area reports can
+      be exported.
+
+      An AI assistant using a local language model (Ollama, no cloud) turns
+      plain-language questions into map, compass and report actions.
+
+      Use cases include heat stress, energy poverty and proximity of
+      facilities. D-OmniTwin is developed by the Municipality of
+      Súdwest-Fryslân together with the municipalities of Leeuwarden and
+      Tytsjerksteradiel and the DataFryslân cooperative, funded by the Dutch
+      Innovation Budget for Digital Government 2026.
+
+      The user interface is in Dutch.
+    features:
+      - D-Omni Kompas with indicators in 12 themes
+      - Interactive map at neighbourhood level
+      - Z-scores relative to a reference group
+      - Area reports and multi-area comparison
+      - AI chat with a local language model (Ollama, optional)
+      - Admin interface for indicators, compass and map layers
+
+legal:
+  license: EUPL-1.2
+  mainCopyrightOwner: Gemeente Súdwest-Fryslân
+
+maintenance:
+  type: internal
+  contacts:
+    - name: Taeke van der Laan
+      # E-mailadres nog te bevestigen; hier invullen zodra bekend.
+      # email: "<e-mailadres Taeke, te bevestigen>"
+      affiliation: Gemeente Súdwest-Fryslân
+
+localisation:
+  localisationReady: false
+  availableLanguages:
+    - nl
+
+dependsOn:
+  open:
+    - name: PostgreSQL
+      versionMin: "14"
+    - name: PostGIS
+    - name: pgvector
+    - name: Ollama
+      optional: true

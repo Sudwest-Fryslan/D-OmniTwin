@@ -1,5 +1,7 @@
 # 🚀 Stappenplan: Docker Installatie & Database Restore (Externe Organisatie)
 
+> ⚠️ **Verouderd/aanvullend** — de actuele installatie staat in [`installatie.md`](./installatie.md) (nieuwe installatie, backup/restore, bijwerken, beveiliging). Dit stappenplan beschrijft alleen het aanvullende scenario: een complete database van een bronomgeving via een dump overzetten. Aantallen, versies en de status "Productie-gereed" hieronder zijn niet bijgewerkt.
+
 > **Documenttype:** Technische Installatie- en Migratiehandleiding  
 > **Doelgroep:** Technisch Applicatiebeheerders, DevOps Engineers, ICT-Systeembeheerders & Implementatieconsultants  
 > **Status:** Actueel / Productie-gereed  

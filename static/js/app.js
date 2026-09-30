@@ -195,6 +195,7 @@ getFillColor: d => {
             await loadGemeenten(); // NEW: Load gemeente options
             await loadGebiedstypes();
             loadDataTellers(); // Kop en voet: aantallen uit de database (niet wachten)
+            startVerbindingscontrole(); // Melding alleen bij een verbindingsprobleem
             setupGemeenteSelector(); // NEW: Setup gemeente change handler
             setupEventListeners();
             setupTabBar();
@@ -743,6 +744,29 @@ async function fetchPostgrestCount(pad) {
     return Number.isNaN(totaal) ? null : totaal;
 }
 
+// Verbindingscontrole: toont #verbindingsmelding alleen als /health niet bereikbaar is
+async function controleerVerbinding() {
+    const melding = document.getElementById('verbindingsmelding');
+    if (!melding) return;
+    let ok = navigator.onLine;
+    if (ok) {
+        try {
+            const res = await fetch('/health', { cache: 'no-store' });
+            ok = res.ok;
+        } catch (e) {
+            ok = false;
+        }
+    }
+    melding.hidden = ok;
+}
+
+function startVerbindingscontrole() {
+    controleerVerbinding();
+    setInterval(controleerVerbinding, 60000);
+    window.addEventListener('online', controleerVerbinding);
+    window.addEventListener('offline', controleerVerbinding);
+}
+
 async function loadDataTellers() {
     const zet = (id, waarde) => {
         const el = document.getElementById(id);
@@ -1048,10 +1072,18 @@ async function loadOmgevingsvisieLayer() {
 async function selectBuurtenFromDeelgebied(deelgebiedId, deelgebiedNaam) {
     showLoading(true, `Buurten laden voor ${deelgebiedNaam}...`);
     try {
-        const res = await fetch(`/api/omgevingsvisie/deelgebieden/${deelgebiedId}/buurten`);
+        // SQL-functie postgisftw.buurten_in_deelgebied, gepubliceerd door pg_featureserv (#68)
+        const bufferM = -10;
+        const params = new URLSearchParams({ deelgebied_id: deelgebiedId, buffer_m: bufferM, limit: 10000 });
+        const res = await fetch(`/api/geo/functions/postgisftw.buurten_in_deelgebied/items?${params}`);
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
-        const data = await res.json();
+        const geojson = await res.json();
+        const buurten = (geojson.features || []).map(f => ({
+            id: f.properties?.id ?? f.id,
+            naam: f.properties?.naam
+        }));
+        const data = { buurten, totaal: buurten.length, buffer_m: bufferM };
 
         // Clear huidige selectie en voeg alle buurten toe
         clearGebiedSelection();

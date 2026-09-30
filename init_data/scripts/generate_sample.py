@@ -40,6 +40,7 @@ BRONDATA_DIR.mkdir(parents=True, exist_ok=True)
 SAMPLE_BUURTEN = [
     "BU19000004",  # Bolsward-Noordoost
     "BU19000001",  # Bolsward-Noord
+    "BU19000002",  # Bolsward-Zuidoost (in de sample: demodata, zie README)
     "BU19000108",  # Bomenbuurt
     "BU19000200",  # Workum
     "BU19000202",  # Hindeloopen
