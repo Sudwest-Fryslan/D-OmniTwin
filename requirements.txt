@@ -35,7 +35,7 @@ tqdm>=4.65.0
 
 # --- Visualization ---
 matplotlib>=3.7.0
-pydeck>=0.8.0
+pydeck>=0.9.3
 
 # --- HTTP ---
 requests>=2.28.0
