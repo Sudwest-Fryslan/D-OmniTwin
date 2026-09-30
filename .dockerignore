@@ -1,0 +1,30 @@
+# Niet in de image: secrets, VCS en lokale/dev-artefacten.
+# Let op: docker-compose.yml mount de repo nu ook over /app; dit bestand
+# beschermt vooral images die los worden gebouwd en gepubliceerd (Docker Hub).
+
+# Secrets
+.env
+.env.*
+!.env.example
+
+# Versiebeheer en tooling
+.git
+.github
+.claude
+.vscode
+.idea
+
+# Python-artefacten
+**/__pycache__
+**/*.pyc
+.pytest_cache
+.venv
+venv
+
+# Node / admin-panel broncode-artefacten (build-output staat in static/admin-panel)
+**/node_modules
+
+# Lokale output
+logs
+exports
+obsolete
