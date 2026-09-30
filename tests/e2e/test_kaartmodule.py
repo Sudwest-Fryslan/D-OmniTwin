@@ -5,6 +5,8 @@ Afwijking van de testdata: de sample dataset bevat geen Makkum. Waar de testcase
 Makkum noemt, gebruiken we Workum/Koudum/Hindeloopen (ook IJsselmeerkust).
 """
 
+import time
+
 import pytest
 from playwright.sync_api import expect
 
@@ -197,3 +199,74 @@ def test_kaart_canvas_exporteerbaar(app_page, tmp_path):
     pad = tmp_path / "kaart.png"
     dl.value.save_as(pad)
     assert pad.read_bytes()[:8] == b"\x89PNG\r\n\x1a\n"
+
+
+# ── #79 Kaart en selectie ────────────────────────────────────────────────────
+
+# Bounding box van alle geladen gebieden in schermcoördinaten, plus de camera.
+_BBOX_SCHERM_JS = """
+() => {
+  const s = window.state;
+  const vp = s.deckgl.getViewports()[0];
+  const xs = [], ys = [];
+  const plat = (a) => (typeof a[0] === 'number') ? (xs.push(a[0]), ys.push(a[1])) : a.forEach(plat);
+  s.currentData.features.forEach(f => plat(f.geometry.coordinates));
+  const hoeken = [[Math.min(...xs), Math.min(...ys)], [Math.max(...xs), Math.max(...ys)]].map(p => vp.project(p));
+  const v = s.currentViewState;
+  const kaart = document.getElementById('map').getBoundingClientRect();
+  const paneel = document.querySelector('.panel-container.open');
+  return {
+    links: paneel ? paneel.getBoundingClientRect().right - kaart.left : 0,
+    x0: Math.min(hoeken[0][0], hoeken[1][0]), x1: Math.max(hoeken[0][0], hoeken[1][0]),
+    y0: Math.min(hoeken[0][1], hoeken[1][1]), y1: Math.max(hoeken[0][1], hoeken[1][1]),
+    breedte: vp.width, hoogte: vp.height,
+    camera: [v.longitude, v.latitude, v.zoom],
+  };
+}
+"""
+
+
+def _camera_in_rust(page, timeout: float = 15.0):
+    """Schermpositie van de gebieden zodra de camera stilstaat (fly-to klaar)."""
+    # Software-WebGL kan frames honderden ms laten haperen: eis 1,5 s stilstand
+    eind = time.monotonic() + timeout
+    vorige, stil = None, 0
+    while time.monotonic() < eind:
+        nu = page.evaluate(_BBOX_SCHERM_JS)
+        if vorige and all(abs(a - b) < 1e-6 for a, b in zip(nu["camera"], vorige["camera"])):
+            stil += 1
+            if stil >= 3:
+                return nu
+        else:
+            stil = 0
+        vorige = nu
+        page.wait_for_timeout(500)
+    raise AssertionError(f"camera kwam niet tot rust: {vorige}")
+
+
+def test_kaart_zoomt_in_op_geladen_gebieden(app_page):
+    """#79: na het laden zoomt de kaart in op de gebieden (fitBounds via viewState),
+    helemaal zichtbaar naast het geopende linkerpaneel."""
+    page = app_page
+    start = page.evaluate("() => ({ ...window.state.currentViewState })")
+    laad_buurtenkaart(page)
+    page.wait_for_function(
+        "(z) => window.state.currentViewState.zoom > z + 1", arg=start["zoom"], timeout=15_000
+    )
+    b = _camera_in_rust(page)
+
+    assert b["camera"][2] > start["zoom"] + 1, f"niet ingezoomd: {b['camera']} (start {start})"
+    links = b["links"]
+    assert b["x0"] >= links - 5 and b["x1"] <= b["breedte"] + 5, f"buiten beeld horizontaal: {b}, paneel tot {links}"
+    assert b["y0"] >= -5 and b["y1"] <= b["hoogte"] + 5, f"buiten beeld verticaal: {b}"
+    # Gebieden vullen een behoorlijk deel van de vrije ruimte (echt ingezoomd, niet alleen verschoven)
+    assert (b["x1"] - b["x0"]) > 0.4 * (b["breedte"] - links) or (b["y1"] - b["y0"]) > 0.4 * b["hoogte"], b
+
+    # Nogmaals 'Toon op kaart' met hetzelfde gebiedstype: camera blijft staan
+    zoom_kaart(page, 300)
+    voor = _camera_in_rust(page)["camera"]
+    with page.expect_response(lambda r: "/api/gebiedsmonitor/kaart_data/" in r.url and r.ok):
+        page.locator("#toon-kaart-btn").click()
+    page.wait_for_timeout(1500)
+    na = _camera_in_rust(page)["camera"]
+    assert na == pytest.approx(voor), f"camera verspringt bij herladen: {voor} → {na}"
