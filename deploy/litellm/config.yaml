@@ -1,0 +1,32 @@
+# LiteLLM-gateway voor D-OmniTwin (optioneel, compose-profiel `llm-gateway`, ADR 0001)
+#
+# De backend spreekt de gateway aan als OpenAI-compatibele server:
+#   llm_config: api_type=openai, api_url=http://llm-gateway:4000, model_name=d-omnitwin-default
+#   .env:       LLM_API_KEY=<zelfde waarde als LITELLM_MASTER_KEY>
+#
+# Waarden met os.environ/ komen uit de omgeving van de container (zie docker-compose.yml).
+model_list:
+  # Standaard: doorsturen naar het lokale Ollama (OLLAMA_HOST, OLLAMA_MODEL uit .env)
+  - model_name: d-omnitwin-default
+    litellm_params:
+      model: os.environ/LITELLM_DEFAULT_MODEL   # ollama_chat/<OLLAMA_MODEL>
+      api_base: os.environ/OLLAMA_HOST
+
+  # Voorbeeld: tweede model als terugval, bv. een regionaal of federatief endpoint (FRLLLM)
+  # - model_name: d-omnitwin-fallback
+  #   litellm_params:
+  #     model: openai/<modelnaam>
+  #     api_base: https://llm.voorbeeld.nl/v1
+  #     api_key: os.environ/FALLBACK_LLM_API_KEY
+
+# router_settings:
+#   fallbacks:
+#     - d-omnitwin-default: ["d-omnitwin-fallback"]
+
+litellm_settings:
+  # Geen prompts of antwoorden naar externe telemetrie
+  telemetry: false
+  drop_params: true   # parameters die een model niet kent worden weggelaten in plaats van een fout
+
+general_settings:
+  master_key: os.environ/LITELLM_MASTER_KEY
