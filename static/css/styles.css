@@ -3365,3 +3365,13 @@ body {
   white-space: nowrap !important;
   border: 0 !important;
 }
+
+/* Focusrand binnen lijsten met overflow:hidden naar binnen zetten */
+.accordion-header:focus-visible,
+.indicator-item:focus-visible,
+.custom-option:focus-visible,
+.search-result-item:focus-visible,
+.chat-indicator-item:focus-visible,
+[data-buurt-id]:focus-visible {
+  outline-offset: -2px;
+}

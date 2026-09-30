@@ -59,6 +59,17 @@ const state = {
 // Publiceer state op window zodat chat.js en andere modules de kaartselectie kunnen lezen
 window.state = state;
 
+// Toegankelijkheid (WCAG 2.1.1): elementen met role="button" die geen echte
+// <button> zijn, reageren op Enter en Spatie net als op een klik.
+document.addEventListener('keydown', (e) => {
+    if (e.key !== 'Enter' && e.key !== ' ') return;
+    const el = e.target;
+    if (!(el instanceof HTMLElement) || el.getAttribute('role') !== 'button') return;
+    if (el.tagName === 'BUTTON' || el.getAttribute('aria-disabled') === 'true') return;
+    e.preventDefault();
+    el.click();
+});
+
 // Backwards-compatibility: getter/setter voor selectedGebiedId (eerste geselecteerde)
 Object.defineProperty(state, 'selectedGebiedId', {
     get() { return this.selectedGebiedIds.size > 0 ? [...this.selectedGebiedIds][0] : null; },
@@ -3928,7 +3939,7 @@ async function buildIndicatorAccordion(indicatoren) {
         const kleur = themaKleuren[thema] || '#6B7280';
 
         html += `<div class="accordion-group" data-thema="${thema}">
-            <div class="accordion-header" onclick="toggleAccordionGroup(this)">
+            <div class="accordion-header" role="button" tabindex="0" aria-expanded="false" onclick="toggleAccordionGroup(this)">
                 <svg class="accordion-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <polyline points="9 18 15 12 9 6"/>
                 </svg>
@@ -3955,6 +3966,7 @@ async function buildIndicatorAccordion(indicatoren) {
 
             html += `<div class="indicator-item${activeClass}${noDataClass}"
                         data-uuid="${ind.uuid}" data-naam="${ind.naam}"
+                        ${noData ? 'aria-disabled="true"' : 'role="button" tabindex="0"'}
                         ${noData ? '' : `onclick="selectAccordionIndicator('${ind.uuid}', '${ind.naam.replace(/'/g, "\\'")}')"` }>
                 <span class="indicator-item-name">${ind.naam}</span>
                 <span class="indicator-item-coverage">${coverage > 0 ? coverage : '—'}</span>
@@ -3980,7 +3992,10 @@ async function buildIndicatorAccordion(indicatoren) {
  */
 function toggleAccordionGroup(headerEl) {
     const group = headerEl.closest('.accordion-group');
-    if (group) group.classList.toggle('open');
+    if (group) {
+        const open = group.classList.toggle('open');
+        headerEl.setAttribute('aria-expanded', String(open));
+    }
 }
 
 /**
@@ -4069,6 +4084,7 @@ function filterAccordion(query) {
         groups.forEach(group => {
             group.style.display = '';
             group.classList.remove('open');
+            group.querySelector('.accordion-header')?.setAttribute('aria-expanded', 'false');
             group.querySelectorAll('.indicator-item').forEach(item => {
                 item.style.display = '';
                 // Reset highlight
@@ -4105,6 +4121,9 @@ function filterAccordion(query) {
         });
 
         group.style.display = hasMatch ? '' : 'none';
-        if (hasMatch) group.classList.add('open');
+        if (hasMatch) {
+            group.classList.add('open');
+            group.querySelector('.accordion-header')?.setAttribute('aria-expanded', 'true');
+        }
     });
 }

@@ -197,6 +197,9 @@ class KompasVisualization {
             const optionDiv = document.createElement('div');
             optionDiv.className = 'custom-option';
             optionDiv.dataset.value = config.id;
+            // Toetsenbordbediening (WCAG 2.1.1); Enter/Spatie via globale handler in app.js
+            optionDiv.setAttribute('role', 'button');
+            optionDiv.tabIndex = 0;
 
             optionDiv.innerHTML = `
                 ${getIconHtml(config)}
@@ -221,6 +224,8 @@ class KompasVisualization {
 
                 // Close dropdown
                 container.classList.remove('open');
+                trigger.setAttribute('aria-expanded', 'false');
+                trigger.focus();
 
                 // Trigger change event manually for app.js listener
                 const event = new Event('change');
@@ -233,13 +238,24 @@ class KompasVisualization {
         // Toggle Dropdown
         trigger.addEventListener('click', (e) => {
             e.stopPropagation(); // Prevent document click closing immediately
-            container.classList.toggle('open');
+            const open = container.classList.toggle('open');
+            trigger.setAttribute('aria-expanded', String(open));
+        });
+
+        // Escape sluit de lijst en zet de focus terug op de trigger
+        container.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && container.classList.contains('open')) {
+                container.classList.remove('open');
+                trigger.setAttribute('aria-expanded', 'false');
+                trigger.focus();
+            }
         });
 
         // Close on click outside
         document.addEventListener('click', (e) => {
             if (!container.contains(e.target)) {
                 container.classList.remove('open');
+                trigger.setAttribute('aria-expanded', 'false');
             }
         });
 
@@ -1866,7 +1882,7 @@ class KompasVisualization {
 
     _topBuurtRow(buurt, rank, eenheid, accentColor) {
         return `
-            <div data-buurt-id="${buurt.buurt_id}" style="display: flex; align-items: center; justify-content: space-between; padding: 3px 6px; margin: 2px 0; border-radius: 4px; cursor: pointer; font-size: 0.78rem; transition: background 0.15s;" 
+            <div data-buurt-id="${buurt.buurt_id}" role="button" tabindex="0" style="display: flex; align-items: center; justify-content: space-between; padding: 3px 6px; margin: 2px 0; border-radius: 4px; cursor: pointer; font-size: 0.78rem; transition: background 0.15s;" 
                  onmouseover="this.style.background='rgba(255,255,255,0.08)'" 
                  onmouseout="this.style.background='transparent'"
                  title="Klik om naar ${buurt.buurt_naam} te vliegen">
@@ -2309,7 +2325,7 @@ class KompasVisualization {
             resultsDropdown.innerHTML = '<div class="search-result-item" style="cursor: default; opacity: 0.6;">Geen resultaten gevonden.</div>';
         } else {
             resultsDropdown.innerHTML = results.map(res => `
-                <div class="search-result-item" data-uuid="${res.uuid}">
+                <div class="search-result-item" role="button" tabindex="0" data-uuid="${res.uuid}">
                     <div class="result-category">${res.categorie || 'Indicator'}</div>
                     <div class="result-name">${res.naam}</div>
                     <div class="result-score">Relevantie: ${Math.round(res.score * 100)}%</div>
