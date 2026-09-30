@@ -194,6 +194,7 @@ getFillColor: d => {
 
             await loadGemeenten(); // NEW: Load gemeente options
             await loadGebiedstypes();
+            loadDataTellers(); // Kop en voet: aantallen uit de database (niet wachten)
             setupGemeenteSelector(); // NEW: Setup gemeente change handler
             setupEventListeners();
             setupTabBar();
@@ -725,6 +726,42 @@ function setupGemeenteSelector() {
 
 // ---- End Gemeente Selector ----
 
+
+/**
+ * Telt de rijen van een PostgREST-tabel via de Content-Range-header
+ * (Prefer: count=exact), zonder de rijen zelf op te halen.
+ * Geeft null terug als het aantal niet te bepalen is.
+ */
+async function fetchPostgrestCount(pad) {
+    const res = await fetch(`/api/data/${pad}`, {
+        method: 'HEAD',
+        headers: { 'Prefer': 'count=exact' }
+    });
+    if (!res.ok) return null;
+    const range = res.headers.get('Content-Range') || '';
+    const totaal = parseInt(range.split('/')[1], 10);
+    return Number.isNaN(totaal) ? null : totaal;
+}
+
+async function loadDataTellers() {
+    const zet = (id, waarde) => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = waarde === null ? '?' : waarde.toLocaleString('nl-NL');
+    };
+    try {
+        const [gebieden, indicatoren] = await Promise.all([
+            fetchPostgrestCount('gebieden?select=id'),
+            fetchPostgrestCount('indicatoren?select=id')
+        ]);
+        zet('header-gebieden-count', gebieden);
+        zet('footer-gebieden-count', gebieden);
+        zet('header-indicatoren-count', indicatoren);
+    } catch (error) {
+        console.warn('⚠️ Tellers konden niet worden geladen:', error);
+        ['header-gebieden-count', 'footer-gebieden-count', 'header-indicatoren-count']
+            .forEach(id => zet(id, null));
+    }
+}
 
 async function loadGebiedstypes() {
     showLoading(true, 'Gebiedstypes laden...');
