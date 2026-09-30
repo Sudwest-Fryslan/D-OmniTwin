@@ -12,7 +12,7 @@
 | **Huidige versie** | v1.0.0-beta (pre-release) |
 | **Sprint** | Sprint 22 (Data Engineering & Lineage) ✅ Afgerond |
 | **Volgende sprint** | Sprint 23 — De Gebruikers Sprint (Multi-Tenant Identity & Keycloak) 📌 Gepland |
-| **Laatste update** | 2026-09-25 (Dag 100) |
+| **Laatste update** | 2026-10-01 (Dag 101) |
 | **Bijgewerkt door** | Antigravity (Project Manager) |
 
 ---
@@ -39,6 +39,11 @@
 | **Woonplaats- & Deelgebiedsanalyse rapport** | 🟢 Actief | Issue #44 / PR #45 gemerged naar main — Gewogen stadsanalyse per thema op basis van inwoneraantallen, Top 10 uitschieters (aandachtspunten en kansen), geharmoniseerde kwadranttelling (totaal + sterke uitschieters), buurt-drilldown, ontologie en methodologische verantwoording. D3 Z-score afwijkingskaart met flexbox indeling (~48% breedte) en paarse contour. Endpoint POST `/api/report/deelgebied` & `/admin/rapport/deelgebied`. |
 | **Multi-Gebiedsdossier rapport** | 🟢 Actief | Voltooid incl. bugfixes en colorblind-safe visualisatie |
 | **Initiatie Dataset (init_data/)** | 🟢 Compleet | 942 Friese buurten, **235 indicatoren** (gesaneerd + nieuw formaat), scripts + GETTING_STARTED.md |
+| **Sample Dataset & Auto-init** | 🟢 Actief | Issue #52, #60 (PR #53, #80, #86) — 12 SWF-buurten, Bolsward-Zuidoost demodata, Frictionless datapakket (`datapackage.json`), container-entrypoint (`docker-entrypoint.sh init`). |
+| **Integratietestsuite** | 🟢 Actief | Issue #62 (PR #70) — `tests/integration/test_sample_stack.py` toetst verse stack, 6 tests groen, 2 xfailed (#54/#57). |
+| **Toegankelijkheid (WCAG 2.1 AA)** | 🟢 Actief | Issue #67 (PR #75) — Skiplink (`.skip-link`), toetsenbordfocus (`:focus-visible`), formulierenlabels en WCAG-contrast. |
+| **Overheidsstandaarden** | 🟢 Actief | Issue #56, #61 (PR #76, #87) — `publiccode.yml`, `SECURITY.md`, `CODE_OF_CONDUCT.md`, `CHANGELOG.md`, `docs/9-beheer/installatie.md`. |
+| **Testcases & Use Cases** | 🟢 Gepubliceerd | Issue #64 (PR #77) — In [`docs/testcases/`](./testcases/) (TC-06-001, TC-06-003, NM-001, Gebruikersreview). |
 | **OV Haltes ETL (Issue #11)** | 🟢 Actief | FR/GR/DR: 6.945 nodes → 4.324 clusters → 961 buurten × 5 indicatoren (OV_HALTES_*) in `gebied_data`. Kompas: Bereikbaarheid en parkeren. |
 | **Onboarding Modal + Contextuele Tooltips** | 🟢 Actief | Sprint 11B Track A ✅ — welkomstmodal, 4 contexttooltips, `window.EventBus` fix |
 | **Error Toast Notificaties** | 🟢 Actief | Sprint 11B — `showError()` geüpgraded van `alert()` naar glassmorphism toast |
@@ -64,9 +69,9 @@
 
 ## 🔄 Recente wijzigingen (laatste 3 sessies)
 
+| 2026-10-01 | **Fundament vóór Publicatie & Overheidsstandaarden (#71)** | Grote consolidatie-release: 16 PR's gemerged. Sample dataset bootstrap (#52, PR #53), Frictionless datapakket (#60, PR #86), reproduceerbare integratietestsuite (#62, PR #70), WCAG 2.1 AA a11y (#67, PR #75), developer.overheid.nl standaarden (publiccode.yml, SECURITY, quickstart, #56/#61, PR #76), beheerinstallatiegids (#21, PR #87), Mapbox ontkoppeld (#55, PR #72), backend opschoning (#68, PR #73), PostGIS deelgebied functie (PR #85), en testcases & use cases gepubliceerd in docs/testcases/ (#64, PR #77). |
 | 2026-09-25 | **CI/CD Pipeline & Unit Test Foundation (Issue #28)** | Eerste geautomatiseerde CI pipeline via GitHub Actions. Slanke `requirements-ci.txt`, `pyproject.toml` met testmarkers, 24/24 groene unit tests voor scoring logica zonder DB, en Docker build check. PR #49 gemerged naar main. |
 | 2026-09-25 | **Consolidatie bugs en backlog naar GitHub Issues (Issue #24)** | Single Source of Truth geactiveerd. Bug #55 omgezet naar Issue #46, e-mail alerts verankerd in Issue #47. Bug #42 geverifieerd als reeds opgelost. PR #45 (Issue #44 Deelgebiedsrapport) gemerged naar main. |
-| 2026-09-20 | **Kaartframe & Kwadranttelling Deelgebiedsrapport (Issue #44)** | Kaartframe vergroot naar ~48% van de header met flexbox indeling (legenda links, D3-SVG 460x340 rechts). Kwadranttelling geharmoniseerd (Optie A+C): toont totale som van aandacht/kansen en aantal sterke uitschieters `(X sterk)`. Inhoudelijk gevalideerd op actieve DB (poort 5433). |
 
 ---
 
@@ -79,6 +84,7 @@
 | **Kaart & Kompas Rendering** | `static/js/app.js` & `kompas.js` | 🟢 Actief | Integratie van MultiPolygons voltooid. Dubbele geometrieën opgelost (`actief/inactief` db veld). |
 | **E-mail alerts (Issue #47)** | Hoog | SecOps/Logging | 🔴 On hold — SMTP-server vereist. Must-have voor deelbare versie. |
 | **Print-dialoog UI bevriezing (Issue #46)** | Middel | Frontend/UX | 🟡 Open — `window.open` met `noopener,noreferrer` isoleren. |
+| **Skiplink browser-cache (Issue #106)** | Laag | Frontend/A11y | 🟢 Opgelost — Hard refresh lost styling op; skiplink netjes verborgen. |
 
 ---
 
@@ -98,6 +104,7 @@
 
 ## 🗺️ Roadmap focus (actief)
 
+| **71** | Fundament vóór Publicatie & Overheidsstandaarden (#71) | ✅ Voltooid (Dag 101 — 16 PR's gemerged: sample stack #52/#60, integratietests #62, developer.overheid.nl #56/#61, WCAG 2.1 AA #67) |
 | **23** | Multi-Tenant Identity, Keycloak & RBAC — De Gebruikers Sprint | 📌 Gepland — Spec klaar, ROADMAP + TODO bijgewerkt. Uitvoering start direct. |
 | **28** | CI/CD Pipeline & Test Automatisering (GitHub Actions) | ✅ Fundament gerealiseerd (PR #49) — Unit tests (3.11/3.12) + Docker build check groen. |
 | **22** | Data Engineering Track — Lineage & Bronvermelding | ✅ Afgerond — Track A, C, D ✅, Track B ⏸️ (Backlog / Gebruikersonderzoek) |
