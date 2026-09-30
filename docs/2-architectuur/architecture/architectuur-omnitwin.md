@@ -34,7 +34,7 @@ D-OmniTwin ("The Omni Twin") is een **digitale spiegel van de fysieke leefomgevi
 │  main.py — Security Middleware, CORS, Router registratie                │
 │                                                                         │
 │  ┌──────────────────────────── ROUTERS ──────────────────────────────┐  │
-│  │ gebiedsmonitor.py  kompas.py      kaart_v2.py   report.py         │  │
+│  │ gebiedsmonitor.py  kompas.py      report.py                       │  │
 │  │ gemeenten.py       visualisatie.py admin.py     auth.py           │  │
 │  │ chat.py            ai_search.py   llm_prompts.py dashboard.py     │  │
 │  │ data_controle.py                                                  │  │
@@ -130,7 +130,6 @@ D-OmniTwin ("The Omni Twin") is een **digitale spiegel van de fysieke leefomgevi
 |--------|--------|---------|-------------|
 | `gebiedsmonitor.py` | `/api/gebiedsmonitor` | Publiek | Gebieden & indicator waarden |
 | `kompas.py` | `/api/kompas` | Publiek | Hiërarchie, configuraties, multi-gebied |
-| `kaart_v2.py` | `/api/kaart/v2` | Publiek | GeoJSON kaartdata (NULL-geom safe) |
 | `gemeenten.py` | `/api/gemeenten` | Publiek | Gemeenten + typeahead zoek |
 | `chat.py` | `/api/chat` | Publiek | D-Omni AI Chat (POST) |
 | `ai_search.py` | `/api/search` | Publiek | Semantisch zoeken |

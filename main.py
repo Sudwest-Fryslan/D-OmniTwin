@@ -174,8 +174,6 @@ app.include_router(auth.router)
 app.include_router(admin.router)
 app.include_router(dashboard.router)
 app.include_router(visualisatie.router)
-from routers import kaart_v2
-app.include_router(kaart_v2.router)
 from routers import report
 app.include_router(report.router)
 from routers import llm_prompts, data_controle, ai_search, chat, bag3d, log_viewer, externe_lagen
