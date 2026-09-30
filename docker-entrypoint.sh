@@ -37,7 +37,10 @@ TABLE_EXISTS=$(psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -tAc
 
 if [ "$TABLE_EXISTS" != "1" ]; then
     echo "⚙️ Database is leeg. Initialiseren via schema_latest.sql..."
-    psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -f /app/init_data/schema/schema_latest.sql >/dev/null
+    # ON_ERROR_STOP: stop bij de eerste SQL-fout in plaats van een half schema
+    psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -v ON_ERROR_STOP=1 -f /app/init_data/schema/schema_latest.sql >/dev/null
+    # Views voor pg_featureserv (vw_gebieden_features, gebruikt door de kaart) staan niet in schema_latest.sql
+    psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -v ON_ERROR_STOP=1 -f /app/init_data/schema/06_pg_featureserv_views.sql >/dev/null
     echo "✅ Database schema succesvol aangemaakt."
 
     LOAD_SAMPLE="${LOAD_SAMPLE_DATA:-true}"
