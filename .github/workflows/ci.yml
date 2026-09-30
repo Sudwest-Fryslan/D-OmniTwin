@@ -3,7 +3,8 @@
 # Triggert op elke PR naar main en bij directe pushes op main.
 # Stap 1 (Bouwen) en Stap 3/unit (Testen) uit Issue #28.
 #
-# Plus: integratietests tegen een verse compose-stack (Issue #62).
+# Plus: integratietests tegen een verse compose-stack (Issue #62) en
+# validatie van publiccode.yml (Issue #56).
 #
 # Volgende stappen die hier nog NIET in zitten (aparte PRs):
 #   - Dockerhub push (vereist semver tagging via Issue #27)
@@ -143,3 +144,16 @@ jobs:
         if: always()
         run: docker compose down -v --remove-orphans
 
+  # â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  # Job 4: publiccode.yml valideren met de officiÃ«le parser (Issue #56)
+  # â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  publiccode:
+    name: publiccode.yml valideren
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Valideer publiccode.yml
+        run: docker run --rm -v "$PWD":/data italia/publiccode-parser-go:v5.4.3 -no-network /data/publiccode.yml
