@@ -52,7 +52,7 @@ init_db() {
     # Views voor pg_featureserv (vw_gebieden_features, gebruikt door de kaart) staan niet in schema_latest.sql
     psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -v ON_ERROR_STOP=1 -f /app/init_data/schema/06_pg_featureserv_views.sql >/dev/null
     # Migraties die (nog) niet in schema_latest.sql zitten; idempotent. Structureel: migratiebeheer (#54)
-    for m in schema_v18_trigram.sql schema_v19_deduplicatie_uitzonderingen.sql; do
+    for m in schema_v18_trigram.sql schema_v19_deduplicatie_uitzonderingen.sql schema_v20_llm_api_type.sql; do
         psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -v ON_ERROR_STOP=1 -f "/app/migrations/$m" >/dev/null
     done
     echo "✅ Database schema succesvol aangemaakt."
