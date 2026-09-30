@@ -181,7 +181,6 @@ app.include_router(data_controle.router)
 app.include_router(ai_search.router)
 app.include_router(chat.router)
 app.include_router(bag3d.router)
-# app.include_router(omgevingsvisie.router)  # Obsolete, gemigreerd naar pg_featureserv
 app.include_router(log_viewer.router)
 app.include_router(externe_lagen.router)
 
