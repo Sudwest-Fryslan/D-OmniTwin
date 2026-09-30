@@ -2713,27 +2713,47 @@ function updateSelectionUI() {
     }
 
     // Update or create floating selection badge (Sprint 12: ook bij count=1 voor 3D panden knop)
+    // Opbouw (#79): naam als label (niet klikbaar), daarna twee losse knoppen:
+    // "3D-panden" (toggle) en "Selectie wissen" (✕). Eenmalig opgebouwd, zodat de
+    // toetsenbordfocus bij het bijwerken op de knop blijft.
     let badge = document.getElementById('selection-badge');
     if (count >= 1) {
         if (!badge) {
             badge = document.createElement('div');
             badge.id = 'selection-badge';
-            badge.style.cssText = `
-                position: fixed; bottom: 40px; left: 50%; transform: translateX(-50%); z-index: 1000;
-                background: linear-gradient(135deg, #10b981, #059669);
-                color: white; padding: 10px 18px; border-radius: 24px;
-                font-size: 14px; font-weight: 600; cursor: pointer;
-                box-shadow: 0 4px 16px rgba(0,0,0,0.3);
-                display: flex; align-items: center; gap: 8px;
-                transition: transform 0.2s, opacity 0.2s;
-            `;
-            badge.title = 'Klik om selectie op te heffen';
-            badge.addEventListener('click', () => {
+            badge.className = 'selection-badge';
+            badge.setAttribute('role', 'group');
+            badge.setAttribute('aria-label', 'Selectie');
+            badge.innerHTML = `
+                <span class="selection-badge-label">
+                    <img src="/static/images/map-pin-plus.svg" alt="" class="selection-badge-icon">
+                    <span id="selection-badge-naam"></span>
+                </span>
+                <button type="button" id="bag3d-toggle-btn" class="selection-badge-btn" aria-pressed="false">
+                    <img src="/static/images/building.svg" alt="" class="selection-badge-icon"> 3D-panden
+                </button>
+                <button type="button" id="selection-clear-btn" class="selection-badge-btn selection-badge-clear"
+                        aria-label="Selectie wissen" title="Selectie wissen">✕</button>`;
+            document.body.appendChild(badge);
+
+            document.getElementById('selection-clear-btn').addEventListener('click', () => {
                 clearGebiedSelection();
                 updateSelectionUI();
                 if (state.currentData) displayOnMap(state.currentData);
             });
-            document.body.appendChild(badge);
+            document.getElementById('bag3d-toggle-btn').addEventListener('click', () => {
+                if (state.show3DBuildings) {
+                    // Toggle OFF
+                    state.show3DBuildings = false;
+                    state.bag3dData = null;
+                    if (state.currentData) displayOnMap(state.currentData);
+                    updateSelectionUI();
+                    console.log('🏗️ BAG 3D panden uitgeschakeld');
+                } else {
+                    // Toggle ON
+                    loadBag3DBuildings();
+                }
+            });
         }
         // Badge tekst: single vs multi, met groepsnamen als beschikbaar
         let badgeTekst;
@@ -2749,46 +2769,15 @@ function updateSelectionUI() {
         } else {
             badgeTekst = `${count} gebieden geselecteerd`;
         }
+        document.getElementById('selection-badge-naam').textContent = badgeTekst;
 
-        // Build badge content with optional 3D panden button  
-        const bag3dBtnHtml = (count >= 1 && count <= 3)
-            ? `<button id="bag3d-toggle-btn" style="
-                background: ${state.show3DBuildings ? 'rgba(234,179,8,0.9)' : 'rgba(255,255,255,0.15)'};
-                border: 1px solid rgba(255,255,255,0.3); border-radius: 12px;
-                color: white; padding: 4px 10px; font-size: 12px; cursor: pointer;
-                margin-left: 4px; transition: background 0.2s;
-              " title="${state.show3DBuildings ? 'BAG panden verbergen' : 'Laad 3D panden vanuit de 3DBAG'}">
-                <img src="/static/images/building.svg" alt="" style="width:14px; height:14px; filter: brightness(0) invert(1); vertical-align: -1px;"> ${state.show3DBuildings ? 'Panden uit' : '3D Panden'}
-              </button>`
-            : '';
-
-        badge.innerHTML = `<img src="/static/images/map-pin-plus.svg" alt="" style="width:18px; height:18px; filter: brightness(0) invert(1);"> ${badgeTekst} ${bag3dBtnHtml} <span style="opacity:0.7; font-size:12px;">✕</span>`;
-        badge.style.display = 'flex';
-        // Ensure centered position (also fixes pre-existing badges from cache)
-        badge.style.position = 'fixed';
-        badge.style.bottom = '40px';
-        badge.style.left = '50%';
-        badge.style.transform = 'translateX(-50%)';
-        badge.style.right = '';
-
-        // Attach 3D BAG button handler (re-attached on every UI update)
+        // 3D-pandenknop alleen bij 1 t/m 3 gebieden
         const bag3dBtn = document.getElementById('bag3d-toggle-btn');
-        if (bag3dBtn) {
-            bag3dBtn.addEventListener('click', (e) => {
-                e.stopPropagation(); // Prevent badge click (clear selection)
-                if (state.show3DBuildings) {
-                    // Toggle OFF
-                    state.show3DBuildings = false;
-                    state.bag3dData = null;
-                    if (state.currentData) displayOnMap(state.currentData);
-                    updateSelectionUI();
-                    console.log('🏗️ BAG 3D panden uitgeschakeld');
-                } else {
-                    // Toggle ON
-                    loadBag3DBuildings();
-                }
-            });
-        }
+        bag3dBtn.hidden = count > 3;
+        bag3dBtn.setAttribute('aria-pressed', state.show3DBuildings ? 'true' : 'false');
+        bag3dBtn.title = state.show3DBuildings ? 'BAG-panden verbergen' : 'Laad 3D-panden vanuit de 3DBAG';
+
+        badge.style.display = 'flex';
     } else if (badge) {
         badge.style.display = 'none';
     }

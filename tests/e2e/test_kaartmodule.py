@@ -47,7 +47,7 @@ def test_tc_01_001_gebiedsselectie(app_page):
     expect(page.locator("#gebied-details")).to_contain_text("Koudum")
 
     # 5. Deselecteren via de badge → kaart neutraal
-    badge.get_by_text("✕", exact=True).click()  # midden van de badge is de knop "3D Panden"
+    badge.get_by_role("button", name="Selectie wissen").click()
     wacht_op_selectie(page, [])
     expect(badge).to_be_hidden()
     assert not selectie_overlay_aanwezig(page)
@@ -95,7 +95,7 @@ def test_tc_01_002a_meervoudige_klikselectie(app_page):
     expect(page.locator("#kompas-info")).to_contain_text("Gemiddelde van 2 gebieden")
 
     # 7. Hele selectie wissen
-    badge.get_by_text("✕", exact=True).click()  # midden van de badge is de knop "3D Panden"
+    badge.get_by_role("button", name="Selectie wissen").click()
     wacht_op_selectie(page, [])
     expect(badge).to_be_hidden()
     assert not selectie_overlay_aanwezig(page)
@@ -270,3 +270,46 @@ def test_kaart_zoomt_in_op_geladen_gebieden(app_page):
     page.wait_for_timeout(1500)
     na = _camera_in_rust(page)["camera"]
     assert na == pytest.approx(voor), f"camera verspringt bij herladen: {voor} → {na}"
+
+
+def test_selectiebadge_knoppen(app_page):
+    """#79: de selectiebadge heeft de naam als label en twee losse knoppen,
+    '3D-panden' (toggle) en 'Selectie wissen'. Klikken op de naam doet niets;
+    wissen werkt ook met het toetsenbord."""
+    page = app_page
+    laad_buurtenkaart(page)
+    selecteer_buurt_via_app(page, WORKUM)
+    wacht_op_selectie(page, [WORKUM])
+
+    badge = page.locator("#selection-badge")
+    expect(badge).to_be_visible()
+    naam = badge.locator("#selection-badge-naam")
+    expect(naam).to_have_text("Workum")
+    panden = badge.get_by_role("button", name="3D-panden")
+    wissen = badge.get_by_role("button", name="Selectie wissen")
+    expect(panden).to_have_attribute("aria-pressed", "false")
+    expect(wissen).to_be_visible()
+
+    # Label en knoppen overlappen niet; de wisknop staat rechts
+    b_naam, b_panden, b_wissen = (l.bounding_box() for l in (naam, panden, wissen))
+    assert b_naam["x"] + b_naam["width"] <= b_panden["x"] <= b_panden["x"] + b_panden["width"] <= b_wissen["x"]
+
+    # Klik op de naam: selectie blijft, geen 3D-panden
+    naam.click()
+    page.wait_for_timeout(500)
+    assert selectie(page) == [WORKUM]
+    assert page.evaluate("() => window.state.show3DBuildings") is False
+    expect(panden).to_have_attribute("aria-pressed", "false")
+
+    # Bijwerken van de badge (tweede gebied erbij) houdt dezelfde knoppen
+    selecteer_buurt_via_app(page, KOUDUM, shift=True)
+    wacht_op_selectie(page, [WORKUM, KOUDUM])
+    expect(naam).to_contain_text("2 gebieden geselecteerd")
+    expect(panden).to_be_visible()
+
+    # Wissen via het toetsenbord
+    wissen.focus()
+    page.keyboard.press("Enter")
+    wacht_op_selectie(page, [])
+    expect(badge).to_be_hidden()
+    assert page.console_fouten == [], "\n".join(page.console_fouten)
