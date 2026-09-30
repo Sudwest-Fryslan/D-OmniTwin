@@ -7,12 +7,16 @@ buurt, chat-scenario 'Beleidsadviseur', en idempotent laden van de sample.
 
 Reproduceerbaar draaien, onafhankelijk van de Python-omgeving op de host:
 
-    docker compose down -v && docker compose up -d --build
+    docker compose down -v && docker compose up -d --build --wait
     docker run --rm --network d-omnitwin_default -v "$PWD":/app -w /app \
         --env-file .env -e DATABASE_HOST=postgres -e DATABASE_PORT=5432 \
         -e OMNITWIN_BASE_URL=http://traefik \
         python:3.11-slim sh -c "pip install -q pytest requests psycopg2-binary python-dotenv \
         && pytest -m integration tests/integration"
+
+Het netwerk heet <projectnaam>_default: d-omnitwin_default, of bij een eigen
+COMPOSE_PROJECT_NAME die naam + _default. CI (.github/workflows/ci.yml, job
+integration) draait precies dit met COMPOSE_PROJECT_NAME=omnitwin-ci.
 
 Omgevingsvariabelen:
     OMNITWIN_BASE_URL   basis-URL via Traefik (standaard http://localhost)
