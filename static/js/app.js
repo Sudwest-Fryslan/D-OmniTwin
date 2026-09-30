@@ -2387,7 +2387,7 @@ function openRapportTypeModal(gebiedId, baseUrl) {
                 ${state.selectedDeelgebiedNaam ? `
                 <button id="rapport-modal-deelgebied-single" style="
                     padding: 0.75rem 1rem; border-radius: 8px; border: none;
-                    background: var(--color-primary, #3b82f6); color: white;
+                    background: var(--action-fill, #2563eb); color: white;
                     font-size:0.95rem; font-weight:600; cursor:pointer; text-align:left;
                     box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
                 ">🏘️ Woonplaatsanalyse (${state.selectedDeelgebiedNaam})<br>
@@ -2398,7 +2398,7 @@ function openRapportTypeModal(gebiedId, baseUrl) {
                 ` : ''}
                 <button id="rapport-modal-dossier" style="
                     padding: 0.75rem 1rem; border-radius: 8px; border: none;
-                    background: ${state.selectedDeelgebiedNaam ? 'var(--color-bg-alt, #2d3748)' : 'var(--color-primary, #3b82f6)'}; color: white;
+                    background: ${state.selectedDeelgebiedNaam ? 'var(--color-bg-alt, #2d3748)' : 'var(--action-fill, #2563eb)'}; color: white;
                     font-size:0.95rem; font-weight:600; cursor:pointer; text-align:left;
                     border: ${state.selectedDeelgebiedNaam ? '1px solid var(--color-border, rgba(255,255,255,0.15))' : 'none'};
                 ">📄 Gebiedsdossier<br>
@@ -2492,7 +2492,7 @@ function openMultiSelectRapportModal(ids, baseUrl) {
             <div style="display:flex; flex-direction:column; gap:0.75rem;">
                 <button id="rapport-modal-deelgebied" style="
                     padding: 0.75rem 1rem; border-radius: 8px; border: none;
-                    background: var(--color-primary, #3b82f6); color: white;
+                    background: var(--action-fill, #2563eb); color: white;
                     font-size:0.95rem; font-weight:600; cursor:pointer; text-align:left;
                     box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
                 ">🏘️ Woonplaats- & Deelgebiedsanalyse<br>

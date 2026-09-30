@@ -210,14 +210,16 @@
   --action-dark: #1e40af;
   --accent-color: #c59d00;
   /* Geo Gold Light — π-node, selecties, highlights */
+  --accent-text: #856a00;
+  /* Geo Gold voor tekst en iconen: 5,17:1 op wit, 4,72:1 op #f1f5f9 (WCAG 1.4.3) */
 
   /* Semantische kleuren */
   --color-danger: #b91c1c;
   /* Rood — UITSLUITEND errors/kritiek */
   --color-success: #15803d;
   /* Nature Green Light — status OK */
-  --color-warning: #DD6B20;
-  /* Oranje — data-alerts */
+  --color-warning: #C2410C;
+  /* Oranje — data-alerts; 5,18:1 op wit (was #DD6B20, 3,39:1) */
   --brand-nature: #15803d;
   /* Nature Green Light — milieu, duurzaamheid */
   --brand-accent: #c59d00;
@@ -241,6 +243,11 @@
 
   /* Toegankelijkheid (WCAG 2.4.7) — focusrand */
   --focus-ring: #1e3a8a;
+
+  /* Vlakken met witte tekst (knoppen, chatbubbel); in donker thema donkerder */
+  --primary-fill: var(--primary-color);
+  --action-fill: var(--action-color);
+  --action-fill-dark: var(--action-dark);
 
   /* Layout */
   --tab-bar-width: 70px;
@@ -436,6 +443,8 @@ body {
   --action-dark: #2563eb;
   --accent-color: #eab308;
   /* Geo Gold Dark */
+  --accent-text: #eab308;
+  /* 9,31:1 op #0f172a */
 
   /* Semantische kleuren */
   --color-danger: #ef4444;
@@ -447,6 +456,11 @@ body {
   /* Geo Gold Dark */
 
   --focus-ring: #93c5fd;
+
+  /* Wit op #3b82f6 is 3,68:1; wit op #2563eb 5,17:1 en op #1d4ed8 6,70:1 */
+  --primary-fill: #2563eb;
+  --action-fill: #2563eb;
+  --action-fill-dark: #1d4ed8;
 }
 
 /* Update Panel style for structure */
@@ -992,7 +1006,7 @@ body {
 }
 
 .btn-primary {
-  background: linear-gradient(135deg, var(--action-color), var(--action-dark));
+  background: linear-gradient(135deg, var(--action-fill), var(--action-fill-dark));
   color: white;
   /* Verify contrast in Light Mode */
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
@@ -1022,7 +1036,7 @@ body {
 }
 
 .btn-secondary:hover {
-  background: var(--primary-color);
+  background: var(--primary-fill);
   color: white;
 }
 
@@ -1624,7 +1638,7 @@ body {
 }
 
 .kompas-actions button:hover:not(:disabled) {
-  background: var(--primary-color);
+  background: var(--primary-fill);
   color: white;
   border-color: var(--primary-color);
   transform: translateY(-2px);
@@ -1999,7 +2013,7 @@ body {
 }
 
 .btn-kompas-action {
-  background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+  background: linear-gradient(135deg, var(--primary-fill), var(--primary-dark));
   color: white;
   border: none;
   padding: 0.6rem 1.2rem;
@@ -2122,7 +2136,7 @@ body {
 
 .result-category {
   font-size: 0.7rem;
-  color: var(--accent-color);
+  color: var(--accent-text);
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
@@ -2250,7 +2264,7 @@ body {
 }
 
 .chat-message-bubble.user {
-  background: linear-gradient(135deg, var(--action-color), var(--action-dark));
+  background: linear-gradient(135deg, var(--action-fill), var(--action-fill-dark));
   color: white;
   border-bottom-right-radius: 4px;
 }
@@ -2437,7 +2451,7 @@ body {
   height: 36px;
   border-radius: 50%;
   border: none;
-  background: linear-gradient(135deg, var(--action-color), var(--action-dark));
+  background: linear-gradient(135deg, var(--action-fill), var(--action-fill-dark));
   color: white;
   cursor: pointer;
   display: flex;
@@ -2602,7 +2616,7 @@ body {
   font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--accent-color);
+  color: var(--accent-text);
   opacity: 0.9;
 }
 
@@ -2653,7 +2667,7 @@ body {
   justify-content: center;
   background: rgba(234, 179, 8, 0.1);
   border-radius: 8px;
-  color: var(--accent-color);
+  color: var(--accent-text);
 }
 
 .welcome-step-text {
@@ -2899,7 +2913,7 @@ body {
 .empty-state-icon {
   width: 48px;
   height: 48px;
-  color: var(--accent-color);
+  color: var(--accent-text);
   opacity: 0.5;
 }
 
@@ -3162,7 +3176,7 @@ body {
 
 .indicator-item.active {
   background: rgba(234, 179, 8, 0.1);
-  color: var(--accent-color);
+  color: var(--accent-text);
   border-left-color: var(--accent-color);
   font-weight: 600;
 }
