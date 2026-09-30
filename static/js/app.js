@@ -2784,6 +2784,26 @@ function updateSelectionUI() {
 }
 
 /**
+ * Open het Kompas-venster en laad de huidige selectie (of de hiërarchie zonder selectie).
+ * Gedeeld door de knop "Open Kompas Venster" en de chatactie OPEN_KOMPAS (#79).
+ */
+function openKompasVenster() {
+    if (!state.kompasWindow) {
+        console.error('❌ Kompas window state not initialized');
+        return;
+    }
+    state.kompasWindow.open();
+
+    // Load data for selected area(s) if available
+    if (state.selectedGebiedIds.size > 0 && window.kompasViz && window.kompasViz.currentConfigId) {
+        loadKompasForSelection(window.kompasViz.currentConfigId);
+    } else if (window.kompasViz && window.kompasViz.currentConfigId) {
+        window.kompasViz.loadHierarchie(window.kompasViz.currentConfigId);
+    }
+}
+window.openKompasVenster = openKompasVenster;
+
+/**
  * Sprint 7: Laad kompas voor de huidige selectie.
  * Kiest automatisch single of multi-gebied methode.
  */
@@ -3223,18 +3243,7 @@ function setupEventListeners() {
     if (openKompasBtn) {
         openKompasBtn.addEventListener('click', () => {
             console.log('🔘 Open Kompas button clicked');
-            if (state.kompasWindow) {
-                state.kompasWindow.open();
-
-                // Load data for selected area(s) if available
-                if (state.selectedGebiedIds.size > 0 && window.kompasViz && window.kompasViz.currentConfigId) {
-                    loadKompasForSelection(window.kompasViz.currentConfigId);
-                } else if (window.kompasViz && window.kompasViz.currentConfigId) {
-                    window.kompasViz.loadHierarchie(window.kompasViz.currentConfigId);
-                }
-            } else {
-                console.error('❌ Kompas window state not initialized');
-            }
+            openKompasVenster();
         });
     }
 
