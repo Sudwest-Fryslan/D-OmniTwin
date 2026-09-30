@@ -134,6 +134,23 @@ jobs:
             python:3.11-slim sh -c "pip install -q --root-user-action=ignore pytest requests psycopg2-binary python-dotenv \
               && pytest -p no:cacheprovider -m integration tests/integration"
 
+      - name: Draai browser-e2e-tests (Playwright, docs/testcases)
+        run: |
+          docker run --rm --network "${COMPOSE_PROJECT_NAME}_default" \
+            -v "$PWD":/work -w /work \
+            -e OMNITWIN_BASE_URL=http://traefik \
+            -e PYTHONDONTWRITEBYTECODE=1 \
+            mcr.microsoft.com/playwright/python:v1.63.0-noble sh -c "pip install -q --root-user-action=ignore -r tests/e2e/requirements.txt \
+              && pytest -p no:cacheprovider -m e2e tests/e2e -rs"
+
+      - name: Bewaar e2e-screenshots bij falen
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-artifacts
+          path: tests/e2e/artifacts/
+          if-no-files-found: ignore
+
       - name: Toon status en logs bij falen
         if: failure()
         run: |
