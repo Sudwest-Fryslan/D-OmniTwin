@@ -1,0 +1,39 @@
+# Dependabot: wekelijkse update-PR's voor afhankelijkheden (#58).
+#
+# Versiesprongen van de basisimages (Python 3.11 -> 3.x, PostgreSQL/PostGIS 15 -> 16+)
+# vragen een bewuste keuze (zie #58) en worden hier genegeerd; patches komen wel door.
+#
+# Let op: Dependabot werkt requirements.txt bij, niet requirements.lock (uv-lock).
+# Genereer na zo'n PR het lockbestand opnieuw met het commando bovenin requirements.lock.
+
+version: 2
+updates:
+  - package-ecosystem: pip
+    directory: /
+    schedule:
+      interval: weekly
+
+  - package-ecosystem: docker
+    directory: /
+    schedule:
+      interval: weekly
+    ignore:
+      - dependency-name: python
+        update-types: ["version-update:semver-major", "version-update:semver-minor"]
+      - dependency-name: postgis/postgis
+        update-types: ["version-update:semver-major"]
+
+  - package-ecosystem: docker-compose
+    directory: /
+    schedule:
+      interval: weekly
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+
+  - package-ecosystem: npm
+    directory: /admin-panel
+    schedule:
+      interval: weekly

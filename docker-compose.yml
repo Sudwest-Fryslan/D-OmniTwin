@@ -1,9 +1,7 @@
-version: '3.8'
-
 name: "d-omnitwin"
 services:
   traefik:
-    image: traefik:latest
+    image: traefik:v3.7.13
     container_name: traefik
     command:
       - "--api.insecure=true"
@@ -55,7 +53,7 @@ services:
     restart: unless-stopped
 
   postgrest:
-    image: postgrest/postgrest:latest
+    image: postgrest/postgrest:v16.4
     container_name: postgrest
     environment:
       PGRST_DB_URI: postgres://${DATABASE_USER:-omnitwin_user}:${DATABASE_PASSWORD}@postgres:5432/${DATABASE_NAME:-omnitwin_db}
@@ -73,7 +71,8 @@ services:
     restart: unless-stopped
 
   pg_featureserv:
-    image: pramsey/pg_featureserv:latest
+    # Geen semver-tags op Docker Hub; datumtag van de huidige release
+    image: pramsey/pg_featureserv:20250917
     container_name: pg_featureserv
     environment:
       DATABASE_URL: postgres://${DATABASE_USER:-omnitwin_user}:${DATABASE_PASSWORD}@postgres:5432/${DATABASE_NAME:-omnitwin_db}
