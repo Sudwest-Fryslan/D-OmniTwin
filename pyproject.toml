@@ -8,6 +8,7 @@ markers = [
     "unit: pure Python, geen database of draaiende server vereist",
     "integration: vereist een PostgreSQL database (lokaal of via testcontainers)",
     "e2e: vereist een draaiende server + Playwright browser",
+    "llm: vereist een draaiende stack met een echt LLM-model (LLM_TEST=1)",
 ]
 
 # Standaard: alleen unit tests. Voeg -m integration toe voor DB-tests.
