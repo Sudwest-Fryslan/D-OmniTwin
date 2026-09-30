@@ -1,5 +1,11 @@
 # D-OmniTwin — Python Dependencies
 # Gebruik: pip install -r requirements.txt
+#
+# Dit is de handmatig bijgehouden invoer. De Docker-image installeert uit
+# requirements.lock (vaste versies + hashes, PyTorch CPU-only). Na een wijziging
+# hier het lockbestand opnieuw genereren met het commando bovenin requirements.lock,
+# bijvoorbeeld in een container:
+#   docker run --rm -v "$PWD:/w" -w /w python:3.11-slim sh -c "pip install uv && <commando>"
 
 # --- Web Framework ---
 fastapi==0.115.12       # starlette 1.0.0 heeft breaking changes — pin op stabiele 0.115.x

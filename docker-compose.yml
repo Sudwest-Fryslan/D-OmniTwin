@@ -1,27 +1,72 @@
-version: '3.8'
-
+# D-OmniTwin — basis-compose (installatie)
+#
+#   Installatie (externe organisatie): docker compose -f docker-compose.yml up -d
+#   Ontwikkelen:                       docker compose up -d
+#     (laadt automatisch docker-compose.override.yml: bind-mount van de repo,
+#      databasepoort 5433 en Traefik-dashboard op 8081)
+#
+# Opstartvolgorde: postgres (healthy) -> db-init (eenmalig, klaar) -> backend,
+# postgrest en pg_featureserv. db-init maakt bij een lege database het schema,
+# de pg_featureserv-views, de sample-/stuurdata en de admin-gebruiker aan en
+# stopt daarna; bij een bestaande database slaat hij de init over. De backend
+# initialiseert zelf niets (zie docker-entrypoint.sh), dus meerdere
+# backend-replicas racen niet.
+#
+# Poort: Traefik luistert op de host op ${OMNITWIN_HTTP_PORT:-80}.
 name: "d-omnitwin"
 services:
   traefik:
-    image: traefik:latest
-    container_name: traefik
+    image: traefik:v3.7.13
     command:
-      - "--api.insecure=true"
       - "--providers.docker=true"
       - "--providers.docker.exposedbydefault=false"
+      # Alleen containers van dit compose-project; anders botsen routers met
+      # een tweede stack (ander projectnaam) op dezelfde Docker-host
+      - "--providers.docker.constraints=Label(`com.docker.compose.project`,`${COMPOSE_PROJECT_NAME:-d-omnitwin}`)"
+      - "--providers.docker.network=${COMPOSE_PROJECT_NAME:-d-omnitwin}_default"
       - "--entrypoints.web.address=:80"
     environment:
       - DOCKER_API_VERSION=1.44
     ports:
-      - "80:80"
-      - "8081:8080"
+      - "${OMNITWIN_HTTP_PORT:-80}:80"
     volumes:
       - "/var/run/docker.sock:/var/run/docker.sock:ro"
     restart: unless-stopped
 
+  postgres:
+    build:
+      context: .
+      dockerfile: db.Dockerfile
+    environment:
+      POSTGRES_USER: ${DATABASE_USER:-omnitwin_user}
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
+      POSTGRES_DB: ${DATABASE_NAME:-omnitwin_db}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      # Via TCP (-h localhost): tijdens de eerste initdb luistert postgres alleen op de socket
+      test: ["CMD-SHELL", "pg_isready -h localhost -U \"$${POSTGRES_USER}\" -d \"$${POSTGRES_DB}\""]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    restart: unless-stopped
+
+  db-init:
+    # Eenmalige initialisatie met de backend-image; stopt na afloop (exit 0)
+    build: .
+    command: ["init"]
+    env_file:
+      - .env
+    environment:
+      - DATABASE_HOST=postgres
+      - DATABASE_PORT=5432
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: "no"
+
   backend:
     build: .
-    container_name: omnitwin_backend
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.backend.rule=PathPrefix(`/`)"
@@ -31,32 +76,23 @@ services:
     environment:
       - DATABASE_HOST=postgres
       - DATABASE_PORT=5432
-    volumes:
-      - .:/app
     extra_hosts:
       - "host.docker.internal:host-gateway"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health', timeout=4)"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 60s
     restart: unless-stopped
     depends_on:
-      - postgres
-
-  postgres:
-    build:
-      context: .
-      dockerfile: db.Dockerfile
-    container_name: omnitwin_db
-    environment:
-      POSTGRES_USER: ${DATABASE_USER:-omnitwin_user}
-      POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
-      POSTGRES_DB: ${DATABASE_NAME:-omnitwin_db}
-    ports:
-      - "5433:5432"
-    volumes:
-      - pgdata:/var/lib/postgresql/data
-    restart: unless-stopped
+      postgres:
+        condition: service_healthy
+      db-init:
+        condition: service_completed_successfully
 
   postgrest:
-    image: postgrest/postgrest:latest
-    container_name: postgrest
+    image: postgrest/postgrest:v16.4
     environment:
       PGRST_DB_URI: postgres://${DATABASE_USER:-omnitwin_user}:${DATABASE_PASSWORD}@postgres:5432/${DATABASE_NAME:-omnitwin_db}
       PGRST_DB_SCHEMA: public
@@ -69,12 +105,13 @@ services:
       - "traefik.http.routers.postgrest.middlewares=postgrest-strip"
       - "traefik.http.services.postgrest.loadbalancer.server.port=3000"
     depends_on:
-      - postgres
+      db-init:
+        condition: service_completed_successfully
     restart: unless-stopped
 
   pg_featureserv:
-    image: pramsey/pg_featureserv:latest
-    container_name: pg_featureserv
+    # Geen semver-tags op Docker Hub; datumtag van de huidige release
+    image: pramsey/pg_featureserv:20250917
     environment:
       DATABASE_URL: postgres://${DATABASE_USER:-omnitwin_user}:${DATABASE_PASSWORD}@postgres:5432/${DATABASE_NAME:-omnitwin_db}
       PGFS_SERVER_BASEPATH: /api/geo
@@ -85,7 +122,9 @@ services:
       - "traefik.http.routers.pg_featureserv.rule=PathPrefix(`/api/geo`)"
       - "traefik.http.services.pg_featureserv.loadbalancer.server.port=9000"
     depends_on:
-      - postgres
+      # Na db-init, zodat pg_featureserv de views bij het starten ziet
+      db-init:
+        condition: service_completed_successfully
     restart: unless-stopped
 
 volumes:

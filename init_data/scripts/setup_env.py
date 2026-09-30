@@ -69,9 +69,6 @@ def main():
     
     admin_user = prompt("4. Applicatie Admin gebruikersnaam", "admin")
     admin_pass = prompt_password(f"5. Wachtwoord voor {admin_user}", auto_generate=True)
-    
-    print("\nOptioneel (druk op Enter om over te slaan):")
-    mapbox_token = prompt("6. Mapbox Token (voor de kaarten)", "")
 
     # Genereer secure keys
     secret_key = secrets.token_urlsafe(32)
@@ -93,9 +90,6 @@ def main():
         r"ADMIN_PASSWORD=.*": f"ADMIN_PASSWORD={admin_pass}",
         r"ADMIN_API_KEY=.*": f"ADMIN_API_KEY={admin_api_key}",
     }
-    
-    if mapbox_token:
-        replacements[r"MAPBOX_TOKEN=.*"] = f"MAPBOX_TOKEN={mapbox_token}"
 
     for pattern, replacement in replacements.items():
         env_content = re.sub(pattern, replacement, env_content)

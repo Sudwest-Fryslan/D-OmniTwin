@@ -40,8 +40,9 @@ D-OmniTwin is a digital twin platform for Dutch municipalities, visualizing neig
 
 ### Full Stack (Docker Compose)
 ```bash
-docker compose up -d
+docker compose up -d --build   # dev: laadt ook docker-compose.override.yml (bind-mount, DB op 5433, Traefik-dashboard 8081)
 ```
+Installatie voor beheerders (`COMPOSE_FILE=docker-compose.yml` in `.env`, alleen poort 80 / `OMNITWIN_HTTP_PORT`): zie **`docs/9-beheer/installatie.md`** — de enige actuele installatiegids. Bij de eerste start richt de eenmalige service `db-init` (`docker-entrypoint.sh init`) een lege database in: schema, views, migraties v18/v19, stuurdata, sample (`LOAD_SAMPLE_DATA`) en admin-gebruiker. Een bestaande database (tabel `gebieden` aanwezig) laat hij ongemoeid; schemamigraties op bestaande databases zijn handmatig (#54).
 
 ### Backend
 ```bash
@@ -65,13 +66,13 @@ npm run build    # production build (deploy via .agents/workflows/build-admin-pa
 npm test         # run tests
 ```
 
-### Database initialisatie — eenmalige bootstrap (Starter Dataset Fryslân)
+### Database initialisatie — Fryslân-dataset zonder Docker (verouderd)
 ```bash
 python init_data/scripts/download_buurten_fryslan.py
 python init_data/scripts/download_indicatoren_fryslan.py
 bash init_data/scripts/init_database.sh   # master initiatie-script, zie init_data/README.md
 ```
-Dit is de aanbevolen route voor een **nieuwe** omgeving (zie `GETTING_STARTED.md`, stap 1–6).
+Alleen voor een PostgreSQL zonder Docker (`GETTING_STARTED.md`). Werkt niet tegen de Docker-stack: `init_database.sh` verwacht een `.env` in de container en laadt het schema opnieuw, en `seed_fryslan.py` faalt grotendeels op de database van `db-init` (tabel `gemeenten` bevat alleen 1900). Eén initialisatieroute volgt in #69.
 
 ### ETL — doorlopend nieuwe databronnen/gemeenten toevoegen (ná de initiële setup)
 ```bash
@@ -84,10 +85,10 @@ Dit framework is **niet** voor de initiële bootstrap (dat is `init_data/`, hier
 
 ## Environment Setup
 
-Copy `.env.example` to `.env` and fill in:
-- `DATABASE_*` — PostgreSQL connection (requires PostGIS extension)
-- `MAPBOX_TOKEN` — for map tiles
-- `ADMIN_API_KEY` — for admin panel authentication
+Copy `.env.example` to `.env` and fill in (details: `docs/9-beheer/installatie.md`, sectie 2.2):
+- `DATABASE_*` — PostgreSQL connection (requires PostGIS extension). `DATABASE_PASSWORD` alleen letters/cijfers: het komt in database-URL's terecht
+- `ADMIN_API_KEY` — for admin panel authentication (`X-Admin-Key`); nooit de voorbeeldwaarde laten staan
+- `ADMIN_USER` / `ADMIN_PASSWORD` — eerste beheeraccount; leeg = gegenereerd, eenmalig in `docker compose logs db-init`
 - `OLLAMA_*` — for local LLM (optional; Qwen model)
 
 For the admin panel, create `admin-panel/.env` with `REACT_APP_API_URL` and `REACT_APP_ADMIN_KEY`.
@@ -134,7 +135,7 @@ Hybrid model: API key authentication for admin panel API calls, session-based au
 Colorblind-safe diverging palettes are used throughout. Palette definitions live in `static/css/colors/`. Dynamic color generation (including diverging scales) is in `color_scale_service.py`.
 
 ### Database
-Schema is in `init_data/schema/schema_latest.sql`. Key tables: `gebieden` (areas/buurten), `indicatoren` (metrics), `gebied_data` (measurements), `kompas_data` (thematic hierarchy). Views zoals `vw_gebied_kaart_basis` gebruiken herkenbare aliassen — geen alias waarbij de tabelnaam niet herkenbaar terugkomt. SQLAlchemy uses a large connection pool (`pool_size=20, max_overflow=20`) for concurrent map layer queries. Let op water-buurt filtering (watergebieden worden uitgesloten van statistiek).
+Schema is in `init_data/schema/schema_latest.sql`. Key tables: `gebieden` (areas/buurten), `indicatoren` (metrics), `gebied_data` (measurements), `kompas_titels` / `kompas_themas` / `kompas_onderdelen` / `kompas_indicator_mapping` (thematic hierarchy, samengevoegd in view `v_kompas_hierarchie`). In Docker laadt `db-init` dit schema plus `init_data/schema/06_pg_featureserv_views.sql` en `migrations/schema_v18_*.sql`/`schema_v19_*.sql`. Views zoals `vw_gebied_kaart_basis` gebruiken herkenbare aliassen — geen alias waarbij de tabelnaam niet herkenbaar terugkomt. SQLAlchemy uses a large connection pool (`pool_size=20, max_overflow=20`) for concurrent map layer queries. Let op water-buurt filtering (watergebieden worden uitgesloten van statistiek).
 
 ### Admin UI (React/TypeScript)
 Aparte codebase in `admin-panel/`, eigen build-stap nodig. API calls via relatieve paden, geproxied naar de backend op poort 8000.
@@ -145,8 +146,9 @@ Scripts in `ETL/` en `scripts/` zijn standalone, geen deel van de web-API. CBS, 
 ## Documentation
 - `docs/STATE.md` — authoritative system status and component inventory (leidend bij tegenstrijdigheden)
 - `docs/INDEX.md` — documentation router by domain
-- `GETTING_STARTED.md` — step-by-step setup guide with starter dataset
-- `BUILD.md` — setup instructions & build reference
+- `docs/9-beheer/installatie.md` — **de** installatiegids (Docker), ook voor beheerders
+- `GETTING_STARTED.md` — installatie zonder Docker met Fryslân-dataset (verouderd)
+- `BUILD.md` — build reference & sprint changelog (installatiedeel verouderd)
 - `ROADMAP.md` — sprint planning
 - `TODO.md` — active task list by domain
 - `BUGFIX.md` — known bugs and workarounds

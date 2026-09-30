@@ -27,21 +27,6 @@ class GebiedsmonitorService:
     # Kaart Data (GeoJSON)
     # ========================================================================
     
-    def get_kaart_data(
-        self,
-        gebiedstype_id: str,
-        indicator_uuid: Optional[str] = None,
-        show_all: bool = False,
-        gemeente_code: Optional[str] = None,
-        jaar: Optional[int] = None
-    ) -> Dict[str, Any]:
-        """
-        Haal GeoJSON data op voor kaartvisualisatie.
-        
-        LEGACY (V1): Redirects naar V2 logic (met Views & Water Filter).
-        """
-        return self.get_kaart_data_v2(gebiedstype_id, indicator_uuid, show_all, gemeente_code, jaar)
-
     def get_kaart_attributes(
         self,
         gebiedstype_id: str,

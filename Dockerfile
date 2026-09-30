@@ -12,14 +12,26 @@ RUN apt-get update && apt-get install -y \
 WORKDIR /app
 
 # Copy and install python dependencies
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+# requirements.lock is gegenereerd uit requirements.txt (commando staat bovenin
+# het lockbestand). PyTorch komt van de CPU-index: geen CUDA-wheels van GBs.
+COPY requirements.lock .
+RUN pip install --no-cache-dir --require-hashes \
+    --extra-index-url https://download.pytorch.org/whl/cpu \
+    -r requirements.lock
 
 # Copy source code
 COPY . .
 
 # Setup entrypoint script
 RUN chmod +x /app/docker-entrypoint.sh
+
+# Draai niet als root. De code blijft van root (alleen-lezen voor de app);
+# alleen de mappen waarin de app schrijft zijn van de app-gebruiker.
+# UID 1000 komt meestal overeen met de ontwikkelaar op Linux (bind-mount in dev).
+RUN useradd --create-home --uid 1000 app \
+    && mkdir -p logs exports data-upload \
+    && chown app:app logs exports data-upload
+USER app
 
 # Expose port
 EXPOSE 8000
