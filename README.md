@@ -408,7 +408,7 @@ Zie [NOTICE.md](./NOTICE.md) voor informatie over third-party licenties.
 | `/api/admin/deduplicatie` | GET/POST | AI-gestuurde deduplicatie van indicatoren |
 | `/api/admin/logs` | GET/PUT | In-app log viewer & categoriebeheer |
 | `/api/admin/externe-lagen/upload`| POST | GeoPackage upload voor kaartlagen |
-| `/api/admin/prompts` | GET/POST | System prompt & LLM instellingen |
+| `/api/admin/prompts` | GET/PUT | System prompt & LLM instellingen |
 | `/api/admin/dashboard/stats` | GET | Dashboard statistieken |
 | `/api/data-controle` | GET | Data kwaliteitsrapport |
 
