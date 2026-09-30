@@ -1554,6 +1554,11 @@ function displayOnMap(geojson) {
                 // Load gebied details (voor het laatst aangeklikte gebied)
                 loadGebiedDetails(gebiedId);
 
+                // Kompas-paneel actief: open het Kompas-venster automatisch (zoals de hint belooft)
+                if (state.activePanelId === 'kompas' && state.kompasWindow && !state.kompasWindow.isVisible) {
+                    state.kompasWindow.open();
+                }
+
                 // Trigger re-render to show selection highlight
                 // Reload kompas data if window is already open
                 if (state.kompasWindow && state.kompasWindow.isVisible && window.kompasViz && window.kompasViz.currentConfigId) {
