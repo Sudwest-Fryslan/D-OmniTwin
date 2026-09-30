@@ -22,6 +22,7 @@
 | Component | Status | Notitie |
 |-----------|--------|---------|
 | **API Gateway (Traefik)** | 🟢 Actief | Port 80, reverse proxy voor microservices |
+| **CI/CD Pipeline (GitHub Actions)** | 🟢 Actief | Issue #28 / PR #49 gemerged naar main — GitHub Actions workflow (`ci.yml`) met Python 3.11 en 3.12 unit-tests matrix, slanke `requirements-ci.txt`, `pyproject.toml` markers, 24 unit tests voor `KompasScoringService` en Docker build verificatie. |
 | **Data API (PostgREST)** | 🟢 Actief | Port 3000, Dataspace compliant data endpoint |
 | **Geo API (pg_featureserv)** | 🟢 Actief | Port 9000, OGC API Features endpoint |
 | **FastAPI backend** | 🟢 Actief | Hybride AI/Rapportage logic, Port 8000 |
@@ -63,9 +64,9 @@
 
 ## 🔄 Recente wijzigingen (laatste 3 sessies)
 
+| 2026-09-25 | **CI/CD Pipeline & Unit Test Foundation (Issue #28)** | Eerste geautomatiseerde CI pipeline via GitHub Actions. Slanke `requirements-ci.txt`, `pyproject.toml` met testmarkers, 24/24 groene unit tests voor scoring logica zonder DB, en Docker build check. PR #49 gemerged naar main. |
 | 2026-09-25 | **Consolidatie bugs en backlog naar GitHub Issues (Issue #24)** | Single Source of Truth geactiveerd. Bug #55 omgezet naar Issue #46, e-mail alerts verankerd in Issue #47. Bug #42 geverifieerd als reeds opgelost. PR #45 (Issue #44 Deelgebiedsrapport) gemerged naar main. |
 | 2026-09-20 | **Kaartframe & Kwadranttelling Deelgebiedsrapport (Issue #44)** | Kaartframe vergroot naar ~48% van de header met flexbox indeling (legenda links, D3-SVG 460x340 rechts). Kwadranttelling geharmoniseerd (Optie A+C): toont totale som van aandacht/kansen en aantal sterke uitschieters `(X sterk)`. Inhoudelijk gevalideerd op actieve DB (poort 5433). |
-| 2026-09-20 | **Kaartintegratie Deelgebiedsrapport (Issue #44)** | D3 choropleet geïntegreerd in de header van DeelgebiedPage (28% breedte). Paarse woonplaatscontour (Sneek) via pg_featureserv / URL-parameters met toggle. Conform Multi-Gebiedsdossier opmaak en kleurschaal. Build & deploy naar `static/admin-panel/`. |
 
 ---
 
@@ -98,6 +99,7 @@
 ## 🗺️ Roadmap focus (actief)
 
 | **23** | Multi-Tenant Identity, Keycloak & RBAC — De Gebruikers Sprint | 📌 Gepland — Spec klaar, ROADMAP + TODO bijgewerkt. Uitvoering start direct. |
+| **28** | CI/CD Pipeline & Test Automatisering (GitHub Actions) | ✅ Fundament gerealiseerd (PR #49) — Unit tests (3.11/3.12) + Docker build check groen. |
 | **22** | Data Engineering Track — Lineage & Bronvermelding | ✅ Afgerond — Track A, C, D ✅, Track B ⏸️ (Backlog / Gebruikersonderzoek) |
 | **21** | Data Kwaliteit & Deduplicatie | ✅ Afgerond (UI checkboxes, AI matching, pg_trgm, uitzonderingen) |
 | **18** | IJsselmeerkust als Besluitinstrument — duiding, BAG woonplaatsen, benchmarking, Track F quickwins | ✅ Afgerond (Dag 79 — alle tracks incl. multi-gebied benchmark) |
