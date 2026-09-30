@@ -12,8 +12,12 @@ RUN apt-get update && apt-get install -y \
 WORKDIR /app
 
 # Copy and install python dependencies
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+# requirements.lock is gegenereerd uit requirements.txt (commando staat bovenin
+# het lockbestand). PyTorch komt van de CPU-index: geen CUDA-wheels van GBs.
+COPY requirements.lock .
+RUN pip install --no-cache-dir --require-hashes \
+    --extra-index-url https://download.pytorch.org/whl/cpu \
+    -r requirements.lock
 
 # Copy source code
 COPY . .
