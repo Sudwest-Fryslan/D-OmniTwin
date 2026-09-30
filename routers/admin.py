@@ -11,6 +11,10 @@ from src.database import get_db
 import os
 from dotenv import load_dotenv
 import json
+import logging
+from urllib.parse import urlsplit
+
+logger = logging.getLogger(__name__)
 
 # Load environment variables
 load_dotenv()
@@ -137,9 +141,17 @@ def get_ollama_models(
         models = [m['name'] for m in data.get('models', [])]
         return {"models": models}
     except Exception as e:
+        # Detail alleen in de serverlog; de UI krijgt een nette melding zonder interne fouttekst
+        logger.warning("Ollama-modellen ophalen via %s mislukt: %s", api_url, e)
+        parts = urlsplit(api_url)
+        host = f"{parts.scheme}://{parts.netloc.rpartition('@')[2]}" if parts.netloc else api_url
+        if isinstance(e, requests.RequestException):
+            melding = f"LLM-server niet bereikbaar op {host}"
+        else:
+            melding = f"Onverwacht antwoord van LLM-server op {host}"
         # Fallback to current configured model if API is offline
         current_model = db.execute(text("SELECT model_name FROM llm_config ORDER BY id DESC LIMIT 1")).fetchone()
-        return {"models": [current_model[0] if current_model else "qwen3:30b"], "error": str(e)}
+        return {"models": [current_model[0] if current_model else "qwen3:30b"], "error": melding}
 
 @router.get("/prompts", response_model=List[SystemPrompt])
 async def get_system_prompts(

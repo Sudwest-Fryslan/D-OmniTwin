@@ -368,13 +368,30 @@ body {
   /* Text shadow for contrast */
 }
 
-.status-dot {
-  width: 8px;
-  height: 8px;
-  background: var(--brand-nature);
-  /* Nature Green — status verbonden (was --secondary-color Monza Rood) */
-  border-radius: 50%;
-  animation: pulse 2s ease-in-out infinite;
+.verbindingsmelding {
+  position: fixed;
+  top: 76px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1000;
+  padding: 0.6rem 1.2rem;
+  border-radius: 0.5rem;
+  background: #fef3c7;
+  color: #78350f;
+  border: 1px solid #f59e0b;
+  font-size: 0.9rem;
+  font-weight: 600;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.verbindingsmelding[hidden] {
+  display: none;
+}
+
+[data-theme="dark"] .verbindingsmelding {
+  background: #451a03;
+  color: #fde68a;
+  border-color: #b45309;
 }
 
 @keyframes pulse {
@@ -519,8 +536,8 @@ body {
   width: 50px;
   height: 50px;
   border-radius: 25px;
-  background: transparent;
-  /* No background by default */
+  /* Dekkende achtergrond: kaartlabels (bv. "Noordzee") schemerden door de knoppen heen */
+  background: var(--bg-secondary);
   backdrop-filter: blur(4px);
   /* Slight blur for map readability */
   -webkit-backdrop-filter: blur(4px);
@@ -537,7 +554,7 @@ body {
 }
 
 .tab-button:hover {
-  background: rgba(255, 255, 255, 0.25);
+  background: var(--bg-primary);
   transform: scale(1.05);
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
 }
@@ -575,7 +592,7 @@ body {
 }
 
 :root:not([data-theme="dark"]) .tab-button:not(.active):hover {
-  background: rgba(0, 0, 0, 0.05);
+  background: var(--bg-primary);
 }
 
 /* Active button is always green with white text */
@@ -801,18 +818,23 @@ body {
   outline-offset: 2px;
 }
 
+/* Vast vakje: als flex-item kromp de lege span tot een streepje */
 .checkbox-custom {
+  display: inline-block;
+  flex: 0 0 20px;
+  box-sizing: border-box;
   width: 20px;
   height: 20px;
-  border: 2px solid var(--border-color);
+  background: var(--bg-secondary);
+  border: 2px solid var(--text-secondary);
   border-radius: 4px;
   position: relative;
   transition: all var(--transition-fast);
 }
 
 .checkbox-label input[type="checkbox"]:checked+.checkbox-custom {
-  background: var(--primary-color);
-  border-color: var(--primary-color);
+  background: var(--primary-fill);
+  border-color: var(--primary-fill);
 }
 
 .checkbox-label input[type="checkbox"]:checked+.checkbox-custom::after {
@@ -822,7 +844,8 @@ body {
   left: 50%;
   transform: translate(-50%, -50%);
   color: white;
-  font-size: 0.75rem;
+  font-size: 0.8rem;
+  line-height: 1;
   font-weight: bold;
 }
 

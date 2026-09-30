@@ -194,6 +194,8 @@ getFillColor: d => {
 
             await loadGemeenten(); // NEW: Load gemeente options
             await loadGebiedstypes();
+            loadDataTellers(); // Kop en voet: aantallen uit de database (niet wachten)
+            startVerbindingscontrole(); // Melding alleen bij een verbindingsprobleem
             setupGemeenteSelector(); // NEW: Setup gemeente change handler
             setupEventListeners();
             setupTabBar();
@@ -725,6 +727,65 @@ function setupGemeenteSelector() {
 
 // ---- End Gemeente Selector ----
 
+
+/**
+ * Telt de rijen van een PostgREST-tabel via de Content-Range-header
+ * (Prefer: count=exact), zonder de rijen zelf op te halen.
+ * Geeft null terug als het aantal niet te bepalen is.
+ */
+async function fetchPostgrestCount(pad) {
+    const res = await fetch(`/api/data/${pad}`, {
+        method: 'HEAD',
+        headers: { 'Prefer': 'count=exact' }
+    });
+    if (!res.ok) return null;
+    const range = res.headers.get('Content-Range') || '';
+    const totaal = parseInt(range.split('/')[1], 10);
+    return Number.isNaN(totaal) ? null : totaal;
+}
+
+// Verbindingscontrole: toont #verbindingsmelding alleen als /health niet bereikbaar is
+async function controleerVerbinding() {
+    const melding = document.getElementById('verbindingsmelding');
+    if (!melding) return;
+    let ok = navigator.onLine;
+    if (ok) {
+        try {
+            const res = await fetch('/health', { cache: 'no-store' });
+            ok = res.ok;
+        } catch (e) {
+            ok = false;
+        }
+    }
+    melding.hidden = ok;
+}
+
+function startVerbindingscontrole() {
+    controleerVerbinding();
+    setInterval(controleerVerbinding, 60000);
+    window.addEventListener('online', controleerVerbinding);
+    window.addEventListener('offline', controleerVerbinding);
+}
+
+async function loadDataTellers() {
+    const zet = (id, waarde) => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = waarde === null ? '?' : waarde.toLocaleString('nl-NL');
+    };
+    try {
+        const [gebieden, indicatoren] = await Promise.all([
+            fetchPostgrestCount('gebieden?select=id'),
+            fetchPostgrestCount('indicatoren?select=id')
+        ]);
+        zet('header-gebieden-count', gebieden);
+        zet('footer-gebieden-count', gebieden);
+        zet('header-indicatoren-count', indicatoren);
+    } catch (error) {
+        console.warn('⚠️ Tellers konden niet worden geladen:', error);
+        ['header-gebieden-count', 'footer-gebieden-count', 'header-indicatoren-count']
+            .forEach(id => zet(id, null));
+    }
+}
 
 async function loadGebiedstypes() {
     showLoading(true, 'Gebiedstypes laden...');
@@ -1517,6 +1578,11 @@ function displayOnMap(geojson) {
                 // Load gebied details (voor het laatst aangeklikte gebied)
                 loadGebiedDetails(gebiedId);
 
+                // Kompas-paneel actief: open het Kompas-venster automatisch (zoals de hint belooft)
+                if (state.activePanelId === 'kompas' && state.kompasWindow && !state.kompasWindow.isVisible) {
+                    state.kompasWindow.open();
+                }
+
                 // Trigger re-render to show selection highlight
                 // Reload kompas data if window is already open
                 if (state.kompasWindow && state.kompasWindow.isVisible && window.kompasViz && window.kompasViz.currentConfigId) {
@@ -2103,7 +2169,6 @@ function populateGebiedstypeSelect(gebiedstypes) {
         const option = document.createElement('option');
         option.value = gt.id;
         option.textContent = gt.naam;
-        option.dataset.count = gt.aantal_gebieden || 0;
         select.appendChild(option);
     });
 
@@ -2810,10 +2875,20 @@ function setupEventListeners() {
         state.currentIndicator = null;
 
         if (selectedId) {
-            const selectedOption = e.target.options[e.target.selectedIndex];
-            const count = selectedOption.dataset.count;
-            document.getElementById('gebiedstype-count').textContent =
-                `${count} gebieden in dit type`;
+            // Aantal gebieden van dit type ophalen (de gebiedstypes-query levert geen aantal)
+            const countEl = document.getElementById('gebiedstype-count');
+            countEl.textContent = '… gebieden in dit type';
+            fetchPostgrestCount(`gebieden?select=id&gebiedstype_id=eq.${encodeURIComponent(selectedId)}`)
+                .then(count => {
+                    // Niet overschrijven als intussen een ander type gekozen is of de kaart al geladen is
+                    if (state.currentGebiedstype !== selectedId || !countEl.textContent.startsWith('…')) return;
+                    countEl.textContent = count === null
+                        ? 'Aantal gebieden onbekend'
+                        : `${count} gebieden in dit type`;
+                })
+                .catch(() => {
+                    if (countEl.textContent.startsWith('…')) countEl.textContent = 'Aantal gebieden onbekend';
+                });
 
             await loadIndicatoren(selectedId);
         } else {

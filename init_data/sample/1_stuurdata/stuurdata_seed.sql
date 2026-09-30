@@ -234,7 +234,7 @@ ON CONFLICT (id) DO NOTHING;
 -- 7. LLM Configuratie
 -- -------------------------------------------------------------
 INSERT INTO public.llm_config (id, api_url, model_name, aangemaakt_op, bijgewerkt_op)
-VALUES (1, 'http://localhost:11434', 'qwen3:30b', '2026-02-21 11:10:29.863903+00:00', '2026-02-21 11:10:29.863903+00:00')
+VALUES (1, 'http://host.docker.internal:11434', 'qwen3:30b', '2026-02-21 11:10:29.863903+00:00', '2026-02-21 11:10:29.863903+00:00')
 ON CONFLICT (id) DO NOTHING;
 
 -- -------------------------------------------------------------
