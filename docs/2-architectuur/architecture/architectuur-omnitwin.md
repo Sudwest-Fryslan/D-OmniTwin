@@ -36,7 +36,7 @@ D-OmniTwin ("The Omni Twin") is een **digitale spiegel van de fysieke leefomgevi
 │  ┌──────────────────────────── ROUTERS ──────────────────────────────┐  │
 │  │ gebiedsmonitor.py  kompas.py      report.py                       │  │
 │  │ gemeenten.py       visualisatie.py admin.py     auth.py           │  │
-│  │ chat.py            ai_search.py   llm_prompts.py dashboard.py     │  │
+│  │ chat.py            ai_search.py   dashboard.py                    │  │
 │  │ data_controle.py                                                  │  │
 │  └──────────────────────────── SERVICES ─────────────────────────────┘  │
 │  │ gebiedsmonitor_service.py   kompas_service.py                     │  │
@@ -137,7 +137,7 @@ D-OmniTwin ("The Omni Twin") is een **digitale spiegel van de fysieke leefomgevi
 | `visualisatie.py` | `/api/visualisatie` | Publiek + Admin | Kleurschema's & profielen |
 | `auth.py` | `/api/auth` | Publiek | Admin login/token |
 | `admin.py` | `/api/admin` | 🔐 X-Admin-Key | Indicator CRUD, health |
-| `llm_prompts.py` | `/api/admin/prompts` | 🔐 X-Admin-Key | System prompt beheer |
+| `admin.py` | `/api/admin/prompts` | 🔐 X-Admin-Key | System prompt beheer (GET lijst, PUT per naam) |
 | `dashboard.py` | `/api/admin/dashboard` | 🔐 X-Admin-Key | Stats & overzicht |
 | `data_controle.py` | `/api/data-controle` | 🔐 X-Admin-Key | Data kwaliteitscheck |
 

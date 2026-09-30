@@ -176,8 +176,7 @@ app.include_router(dashboard.router)
 app.include_router(visualisatie.router)
 from routers import report
 app.include_router(report.router)
-from routers import llm_prompts, data_controle, ai_search, chat, bag3d, log_viewer, externe_lagen
-app.include_router(llm_prompts.router)
+from routers import data_controle, ai_search, chat, bag3d, log_viewer, externe_lagen
 app.include_router(data_controle.router)
 app.include_router(ai_search.router)
 app.include_router(chat.router)
