@@ -152,7 +152,7 @@
         Beheer
       </a>
       <!-- Theme Toggle Button -->
-      <button id="theme-toggle" class="theme-toggle" aria-label="Toggle theme">
+      <button id="theme-toggle" class="theme-toggle" aria-label="Wissel tussen licht en donker thema" title="Wissel tussen licht en donker thema">
         <span class="theme-icon">
           <!-- Sun Icon (Show in Dark Mode) -->
           <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
@@ -187,8 +187,8 @@
   <div class="app-layout">
 
     <!-- Vertical Tab Bar (Left, 40px) -->
-    <nav class="tab-bar">
-      <button class="tab-button" data-panel="info" title="Info & Start">
+    <nav class="tab-bar" aria-label="Panelen">
+      <button class="tab-button" data-panel="info" title="Info & Start" aria-label="Info & Start">
         <span class="tab-icon">
           <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
             stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
@@ -199,7 +199,7 @@
           </svg>
         </span>
       </button>
-      <button class="tab-button" data-panel="controls" title="Kaart Controls">
+      <button class="tab-button" data-panel="controls" title="Kaartconfiguratie" aria-label="Kaartconfiguratie">
         <span class="tab-icon">
           <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
             stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
@@ -216,7 +216,7 @@
           </svg>
         </span>
       </button>
-      <button class="tab-button" data-panel="legenda" title="Legenda">
+      <button class="tab-button" data-panel="legenda" title="Legenda" aria-label="Legenda">
         <span class="tab-icon">
           <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
             stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
@@ -230,7 +230,7 @@
           </svg>
         </span>
       </button>
-      <button class="tab-button" data-panel="layers" title="Kaartlagen">
+      <button class="tab-button" data-panel="layers" title="Kaartlagen" aria-label="Kaartlagen">
         <span class="tab-icon">
           <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
             stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
@@ -243,7 +243,7 @@
         </span>
       </button>
       <!-- Data Upload verwijderd (Sprint 18 B4) — nu via beheeromgeving -->
-      <button class="tab-button" data-panel="export" title="Exporteren">
+      <button class="tab-button" data-panel="export" title="Exporteren" aria-label="Exporteren">
         <span class="tab-icon">
           <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
             stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
@@ -254,7 +254,7 @@
           </svg>
         </span>
       </button>
-      <button class="tab-button" data-panel="kompas" title="D-Omni Kompas">
+      <button class="tab-button" data-panel="kompas" title="D-Omni Kompas" aria-label="D-Omni Kompas">
         <span class="tab-icon">
           <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
             stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
@@ -264,7 +264,7 @@
           </svg>
         </span>
       </button>
-      <button class="tab-button" data-panel="rapport" title="Rapport Output">
+      <button class="tab-button" data-panel="rapport" title="Rapport" aria-label="Rapport">
         <span class="tab-icon">
           <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
             stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
@@ -279,7 +279,7 @@
         </span>
       </button>
       <!-- D-Omni Assistant Chat Toggle -->
-      <button class="tab-button chat-tab-button" id="chat-toggle-btn" title="D-Omni Assistent">
+      <button class="tab-button chat-tab-button" id="chat-toggle-btn" title="D-Omni Assistent" aria-label="D-Omni Assistent">
         <span class="tab-icon">
           <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
             stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
@@ -409,7 +409,7 @@
 
           <!-- Indicator Selector (Track C — Accordion met zoekbalk) -->
           <div class="form-group" id="indicator-section">
-            <label style="display: flex; align-items: center; gap: 6px;">
+            <label for="indicator-search" style="display: flex; align-items: center; gap: 6px;">
               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
                 stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M14 4v10.54a4 4 0 1 1-4 0V4a2 2 0 0 1 4 0Z" />
@@ -437,7 +437,7 @@
 
             <!-- C3: Telling + hidden select (fallback voor state management) -->
             <span class="help-text" id="indicator-coverage">Selecteer een indicator</span>
-            <select id="indicator-select" class="form-control" disabled style="display:none;">
+            <select id="indicator-select" class="form-control" disabled style="display:none;" aria-label="Indicator">
               <option value="">Selecteer eerst gebiedstype</option>
             </select>
           </div>
@@ -555,7 +555,7 @@
           <h3 class="panel-title">Kaartlagen</h3>
 
           <div class="form-group">
-            <label>Basemap (PDOK)</label>
+            <label for="mapbox-style-select">Basemap (PDOK)</label>
             <select id="mapbox-style-select" class="form-control">
               <option value="https://api.pdok.nl/kadaster/brt-achtergrondkaart/ogc/v1/styles/standaard__webmercatorquad?f=mapbox">PDOK Standaard (Light)</option>
               <option value="https://api.pdok.nl/kadaster/brt-achtergrondkaart/ogc/v1/styles/darkmode__webmercatorquad?f=mapbox">PDOK Dark Mode</option>
@@ -641,7 +641,7 @@
 
           <!-- Kompas Configuration Selector (Custom Dropdown) -->
           <div class="kompas-controls" style="margin-top: 1rem;">
-            <label>Configuratie:</label>
+            <label id="kompas-config-label">Configuratie:</label>
             <div class="custom-select-container" id="kompas-config-container">
               <!-- Selection Trigger -->
               <div class="custom-select-trigger" id="custom-select-trigger">
@@ -718,8 +718,8 @@
           D-Omni Kompas
         </h3>
         <div class="window-controls">
-          <button class="btn-minimize" title="Minimaliseer">_</button>
-          <button class="btn-close" title="Sluiten">✕</button>
+          <button class="btn-minimize" title="Minimaliseer" aria-label="Kompasvenster minimaliseren">_</button>
+          <button class="btn-close" title="Sluiten" aria-label="Kompasvenster sluiten">✕</button>
         </div>
       </div>
       <div class="floating-window-content">
@@ -734,6 +734,7 @@
                 <circle cx="11" cy="11" r="8" />
                 <path d="m21 21-4.3-4.3" />
               </svg>
+              <label for="kompas-ai-search" class="visually-hidden">Zoek of chat op thema of kernwoord</label>
               <input type="text" id="kompas-ai-search" placeholder="Chat/Zoek op thema of kernwoord..."
                 autocomplete="off">
             </div>
@@ -804,7 +805,7 @@
 
             <!-- A3: Timeslider Container -->
             <div id="timeslider-container" class="timeslider-container" style="display:none; align-items: center; gap: 8px; margin-top: 8px; padding: 4px 8px; background: rgba(0,0,0,0.1); border-radius: 6px;">
-              <button id="timeslider-play-btn" class="btn btn-icon" title="Afspelen/Pauzeren" style="padding: 4px; border-radius: 4px; background: transparent; border: none; color: var(--text-primary); cursor: pointer; display: flex; align-items: center; justify-content: center;">
+              <button id="timeslider-play-btn" class="btn btn-icon" title="Afspelen/Pauzeren" aria-label="Tijdreeks afspelen of pauzeren" style="padding: 4px; border-radius: 4px; background: transparent; border: none; color: var(--text-primary); cursor: pointer; display: flex; align-items: center; justify-content: center;">
                 <svg id="icon-play" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                   <polygon points="5 3 19 12 5 21 5 3"></polygon>
                 </svg>
@@ -813,7 +814,7 @@
                   <rect x="14" y="4" width="4" height="16"></rect>
                 </svg>
               </button>
-              <input type="range" id="timeslider-input" class="timeslider-range" min="0" max="10" value="10" style="flex: 1; cursor: pointer;">
+              <input type="range" id="timeslider-input" class="timeslider-range" aria-label="Peiljaar" min="0" max="10" value="10" style="flex: 1; cursor: pointer;">
               <span id="timeslider-label" style="font-size: 0.8rem; font-weight: 600; color: var(--text-primary); min-width: 32px; text-align: center;">2024</span>
             </div>
 
@@ -845,7 +846,7 @@
               <div class="metadata-source" style="margin-top: 12px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px; font-size: 0.8rem; color: var(--text-secondary); border-top: 1px solid var(--border-color, rgba(255,255,255,0.08)); padding-top: 8px;">
                 <div style="display: flex; align-items: center; gap: 4px;">
                   📊 <span id="details-bron" title="Bron van deze data" style="font-weight: 500;">CBS</span>
-                  <a id="details-bron-link" href="#" target="_blank" rel="noopener noreferrer" title="Open officiële dataset in nieuwe tab" style="display: none; color: var(--accent-color, #38BDF8); text-decoration: none; margin-left: 2px;">
+                  <a id="details-bron-link" href="#" target="_blank" rel="noopener noreferrer" title="Open officiële dataset in nieuwe tab" aria-label="Open officiële dataset (opent in nieuw tabblad)" style="display: none; color: var(--accent-color, #38BDF8); text-decoration: none; margin-left: 2px;">
                     <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
                   </a>
                   <span id="details-bron-badge" class="lineage-badge" style="display: none; font-size: 0.7rem; padding: 1px 6px; border-radius: 4px; background: rgba(56, 189, 248, 0.15); color: #38bdf8; font-family: monospace;">-</span>
@@ -899,7 +900,7 @@
           </svg>
           <span>D-Omni Assistent</span>
         </div>
-        <button id="chat-close-btn" class="chat-close-btn" title="Sluiten">
+        <button id="chat-close-btn" class="chat-close-btn" title="Sluiten" aria-label="Assistent sluiten">
           <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
             stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M18 6 6 18" />
@@ -916,8 +917,9 @@
         </div>
       </div>
       <div class="chat-input-bar">
+        <label for="chat-input" class="visually-hidden">Vraag aan de D-Omni Assistent</label>
         <input type="text" id="chat-input" class="chat-input" placeholder="Stel een vraag over gebieden…" autocomplete="off">
-        <button id="chat-send-btn" class="chat-send-btn" disabled title="Verstuur">
+        <button id="chat-send-btn" class="chat-send-btn" disabled title="Verstuur" aria-label="Vraag versturen">
           <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
             stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="m22 2-7 20-4-9-9-4Z" />
