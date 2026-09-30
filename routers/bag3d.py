@@ -428,7 +428,7 @@ def enrich_features_with_color(
 # ============================================================================
 
 @router.post("/buildings")
-async def get_3d_buildings(
+def get_3d_buildings(
     request: BAG3DRequest,
     db: Session = Depends(get_db)
 ):

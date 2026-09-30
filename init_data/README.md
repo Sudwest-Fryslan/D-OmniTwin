@@ -1,5 +1,7 @@
 # init_data — Initiatie Dataset D-OmniTwin
 
+> ⚠️ **Installeren met Docker:** zie [`docs/9-beheer/installatie.md`](../docs/9-beheer/installatie.md). Daar laadt `db-init` het schema en de sample. De Fryslân-data laden in de Docker-installatie werkt nog niet (zie de installatiegids, sectie Data, en #69). `init_database.sh` hieronder is voor een PostgreSQL zonder Docker.
+
 Deze map bevat alle benodigde data en scripts om D-OmniTwin **vanaf nul** op te zetten.  
 Na dit proces heb je een gevulde database met **alle buurten in de provincie Fryslân** en **echte CBS open data** voor direct gebruik.
 

@@ -1,6 +1,6 @@
 # Niet in de image: secrets, VCS en lokale/dev-artefacten.
-# Let op: docker-compose.yml mount de repo nu ook over /app; dit bestand
-# beschermt vooral images die los worden gebouwd en gepubliceerd (Docker Hub).
+# Let op: in dev mount docker-compose.override.yml de repo over /app; dit bestand
+# geldt voor de image zelf (installatie via docker-compose.yml, Docker Hub).
 
 # Secrets
 .env
