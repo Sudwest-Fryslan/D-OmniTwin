@@ -1,0 +1,27 @@
+# D-OmniTwin — dev-aanvulling op docker-compose.yml
+#
+# Wordt automatisch geladen bij `docker compose up`. Niet gebruiken voor een
+# installatie; daarvoor: `docker compose -f docker-compose.yml up -d`.
+services:
+  traefik:
+    command:
+      - "--api.insecure=true"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--providers.docker.constraints=Label(`com.docker.compose.project`,`${COMPOSE_PROJECT_NAME:-d-omnitwin}`)"
+      - "--providers.docker.network=${COMPOSE_PROJECT_NAME:-d-omnitwin}_default"
+      - "--entrypoints.web.address=:80"
+    ports:
+      - "8081:8080"   # Traefik-dashboard
+
+  postgres:
+    ports:
+      - "5433:5432"   # voor scripts en tools op de host (DATABASE_HOST=localhost, DATABASE_PORT=5433)
+
+  db-init:
+    volumes:
+      - .:/app        # create_admin.py werkt ADMIN_API_KEY bij in de .env op de host
+
+  backend:
+    volumes:
+      - .:/app        # code van de host in plaats van die uit de image

@@ -274,7 +274,7 @@ Alle configuratieparameters worden extern aangeleverd via omgevingsvariabelen (g
 * **Geautomatiseerde Database Back-up:** Er kan eenvoudig een dagelijkse `pg_dump` cronjob worden ingericht die gecomprimeerde SQL-dumps exporteert naar een centrale gemeentelijke backuplocatie:
   ```bash
   # Gebruik de juiste DATABASE_USER indien afwijkend van de standaard
-  docker exec omnitwin_db pg_dump -U ${DATABASE_USER:-omnitwin_user} ${DATABASE_NAME:-omnitwin_db} \
+  docker compose exec -T postgres pg_dump -U ${DATABASE_USER:-omnitwin_user} ${DATABASE_NAME:-omnitwin_db} \
     | gzip > /backups/omnitwin_db_$(date +%Y%m%d).sql.gz
   ```
 
