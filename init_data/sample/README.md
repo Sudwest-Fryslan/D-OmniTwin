@@ -44,24 +44,28 @@ init_data/sample/
 
 ## Gebruik
 
-### 1. Eerste keer laden (nieuwe database)
+### 1. Automatisch via Docker Compose (Aanbevolen voor snelle start)
 
-Zorg dat de database draait en het schema is aangemaakt:
+Als `LOAD_SAMPLE_DATA=true` in je `.env` staat (standaard in `.env.example`), laadt de backend container bij de allereerste start automatisch het schema én de sample dataset zodra de database gereed is:
 
 ```bash
-# Stack starten
-docker compose up -d
+docker compose up
+```
+Zodra de logs aangeven dat `D-OmniTwin backend` is gestart, is de app direct operationeel op `http://localhost`.
 
-# Schema laden (als database leeg is)
-docker exec -i omnitwin_db psql -U omnitwin_user -d omnitwin_db < init_data/schema/schema_latest.sql
+### 2. Handmatig laden (CLI)
+
+Indien je de database handmatig wilt seeden of lokaal buiten Docker draait:
+
+```bash
+# Schema laden (als database nog leeg is)
+psql -h localhost -p 5433 -U omnitwin_user -d omnitwin_db -f init_data/schema/schema_latest.sql
 
 # Sample data laden
 python init_data/scripts/load_sample.py --stap alle
 ```
 
-*(Of via de virtuele omgeving: `./.venv/bin/python init_data/scripts/load_sample.py --stap alle`)*
-
-### 2. Specifieke stap uitvoeren
+### 3. Specifieke stap uitvoeren
 
 Het laadscript ondersteunt de volgende modules:
 
