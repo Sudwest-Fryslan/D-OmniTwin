@@ -142,9 +142,8 @@ def test_load_sample_idempotent(db):
     assert voor == na
 
 
-# ── Schema compleet (bekend probleem, zie #54) ───────────────────────────────
+# ── Schema compleet: migraties v18/v19 worden bij init geladen (#52, structureel #54) ──
 
-@pytest.mark.xfail(reason="schema_latest.sql mist migraties v18/v19 — #54", strict=True)
 def test_schema_bevat_alle_migraties(db):
     assert scalar(db, "SELECT count(*) FROM pg_extension WHERE extname = 'pg_trgm'") == 1
     assert scalar(db, "SELECT to_regclass('public.deduplicatie_uitzonderingen') IS NOT NULL")
