@@ -27,7 +27,7 @@ def get_service(db: Session = Depends(get_db)) -> DataControleService:
     return DataControleService(db)
 
 @router.get("/run", response_model=List[Dict[str, Any]])
-async def run_all_checks(
+def run_all_checks(
     service: DataControleService = Depends(get_service)
 ):
     """
@@ -40,7 +40,7 @@ async def run_all_checks(
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/check/{indicator_uuid}", response_model=Dict[str, Any])
-async def check_single_indicator(
+def check_single_indicator(
     indicator_uuid: str,
     service: DataControleService = Depends(get_service)
 ):
@@ -83,7 +83,7 @@ def get_dedup_service(db: Session = Depends(get_db)) -> DeduplicatieService:
     return DeduplicatieService(db)
 
 @router.get("/deduplicatie/kandidaten", response_model=List[Dict[str, Any]])
-async def get_dedup_kandidaten(
+def get_dedup_kandidaten(
     service: DeduplicatieService = Depends(get_dedup_service)
 ):
     """Haalt potentiele dubbele indicatoren op (Sprint 21 Data Kwaliteit)"""

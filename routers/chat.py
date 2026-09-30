@@ -83,7 +83,7 @@ def is_help_onboarding(vraag: str) -> bool:
     vraag_lower = vraag.lower().strip()
     return any(re.search(p, vraag_lower) for p in HELP_ONBOARDING_PATTERNS)
 
-async def get_help_onboarding_response(db: Session) -> ChatResponse:
+def get_help_onboarding_response(db: Session) -> ChatResponse:
     """Retourneert een vaste, instant response voor help-vragen, met actieve profielen uit de DB."""
     try:
         from sqlalchemy import text
@@ -255,7 +255,7 @@ def generate_acties(intent: str, indicatoren: List[Dict[str, Any]], vraag: str) 
 # ============================================================================
 
 @router.post("", response_model=ChatResponse)
-async def chat(
+def chat(
     request: ChatRequest,
     db: Session = Depends(get_db)
 ):
@@ -274,7 +274,7 @@ async def chat(
     # ------------------------------------------------
     if is_help_onboarding(vraag):
         AppLogger.info("HELP_ONBOARDING intent — deterministic response", category="LLM_CHAT")
-        return await get_help_onboarding_response(db)
+        return get_help_onboarding_response(db)
         
     # ------------------------------------------------
     # Stap 0b: Check of een scenario is getriggerd

@@ -25,6 +25,13 @@
 | **Projectmanagement** | `/docs/7-projectmanagement/` | Sprints, voortgang, besluiten, archief | project-manager |
 | **Communicatie** | `/docs/8-communicatie/` | Stakeholdercommunicatie, rapportages, presentaties | technisch-communicatie |
 | **Beheer & Applicatie** | `/docs/9-beheer/` | Handleidingen, workflows en applicatiebeheer | project-manager, backend-db |
+| **Testcases & Scenario's** | [`/docs/testcases/`](./testcases/) | Functionele scenario's, E2E-toetsen (TC-06-*), nulmetingen (NM-001) | project-manager, backend-db |
+
+---
+
+## 🛠️ Installatie
+
+**Canonieke installatiegids:** [`/docs/9-beheer/installatie.md`](./9-beheer/installatie.md) — vereisten, `.env`, `docker compose`, eerste login, data, bijwerken, backup/restore, LLM, problemen oplossen en beveiliging. Andere installatiedocumenten (`BUILD.md`, `GETTING_STARTED.md`, `DATABASE_INITIALISATIE_HANDLEIDING.md`, het stappenplan hieronder) zijn verouderd of aanvullend.
 
 ---
 
@@ -35,7 +42,7 @@
 | Document | Locatie | Onderwerp | Relevant voor |
 |----------|---------|-----------|---------------|
 | **Systeemarchitectuur & Implementatiegids (ICT)** | [`/docs/2-architectuur/architecture/systeemarchitectuur_en_implementatiegids_ict.md`](./2-architectuur/architecture/systeemarchitectuur_en_implementatiegids_ict.md) | Componentenoverzicht, interacties, Keycloak/Entra ID SSO & Docker implementatievereisten | project-manager, devops-infra, secops-identity, technisch-communicatie |
-| **Docker Installatie & DB Restore (Externe Organisatie)** | [`/docs/9-beheer/stappenplan_docker_installatie_externe_organisatie.md`](./9-beheer/stappenplan_docker_installatie_externe_organisatie.md) | Technisch stappenplan voor container deployment en database dump restore bij externe organisaties | devops-infra, project-manager, backend-db |
+| **Docker Installatie & DB Restore (Externe Organisatie)** | [`/docs/9-beheer/stappenplan_docker_installatie_externe_organisatie.md`](./9-beheer/stappenplan_docker_installatie_externe_organisatie.md) | Aanvullend op de installatiegids: complete database via een dump overzetten naar een externe organisatie | devops-infra, project-manager, backend-db |
 | **CI/CD Pipeline & Docker Hub** | [`/docs/9-beheer/cicd_pipeline_docker_hub.md`](./9-beheer/cicd_pipeline_docker_hub.md) | GitHub Actions → Docker Hub uitlevering: semantic versioning (#27), build/test/publish pipeline (#28), productie docker-compose, testmethodiek | devops-infra, project-manager |
 | **Fryslân Data Space & D-OmniTwin** | [`/docs/2-architectuur/architecture/fryslan_data_space_d_omni_twin_visiedocument.md`](./2-architectuur/architecture/fryslan_data_space_d_omni_twin_visiedocument.md) | Federatieve datalaag (FRLDS / iSHARE / FRL1000) als soevereine backend voor D-OmniTwin | data-architect-engineer, innovation-lab, samenwerking-adoptie |
 | **D-OmniTwin in het Dataspace Landschap (Herijkt)** | [`/docs/2-architectuur/architecture/frlds_in_dataspace_landschap_herijkt_visiedocument.md`](./2-architectuur/architecture/frlds_in_dataspace_landschap_herijkt_visiedocument.md) | Herijkte visie: D-OmniTwin als dataspace-agnostische interactielaag (FRLDS, FDS en overige dataspaces) | data-architect-engineer, innovation-lab, samenwerking-adoptie |
@@ -55,7 +62,7 @@
 | `TODO.md` | Actieve takenlijst per domein |
 | `BUGFIX.md` | Bekende bugs, fixes en impact |
 | `BRAINDUMP.md` | Ideeën, visie, experimentele concepten |
-| `BUILD.md` | Instructies voor env-setup en deployment |
+| `BUILD.md` | Build-notities en sprint-changelog (installatie: `docs/9-beheer/installatie.md`) |
 
 ---
 
