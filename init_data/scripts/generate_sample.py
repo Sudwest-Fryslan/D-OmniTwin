@@ -60,7 +60,7 @@ def get_conn():
     port = int(os.environ.get("DATABASE_PORT", 5433))
     dbname = os.environ.get("DATABASE_NAME", "omnitwin_db")
     user = os.environ.get("DATABASE_USER", "omnitwin_user")
-    password = os.environ.get("DATABASE_PASSWORD", "admin_omnitwin2026")
+    password = os.environ.get("DATABASE_PASSWORD", "")
     return psycopg2.connect(
         host=host, port=port, dbname=dbname, user=user, password=password, connect_timeout=5
     )
