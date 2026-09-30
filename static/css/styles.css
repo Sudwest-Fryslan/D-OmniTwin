@@ -3389,3 +3389,22 @@ body {
 [data-buurt-id]:focus-visible {
   outline-offset: -2px;
 }
+
+/* Minder beweging als de gebruiker dat heeft ingesteld (WCAG 2.3.3, advies).
+   Laadspinners blijven draaien: die geven status aan. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .loading-spinner,
+  .inline-spinner {
+    animation-duration: 1.5s !important;
+    animation-iteration-count: infinite !important;
+  }
+}
