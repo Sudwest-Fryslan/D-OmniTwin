@@ -3,6 +3,15 @@ set -e
 
 # ============================================================
 # D-OmniTwin — Container Startup & Initialisatie
+#
+#   docker-entrypoint.sh init         eenmalige database-initialisatie, daarna stoppen
+#                                     (de db-init-service in docker-compose.yml)
+#   docker-entrypoint.sh <commando>   wacht op de database en start <commando>
+#                                     (standaard uvicorn, zie CMD in het Dockerfile)
+#
+# De applicatie initialiseert de database niet zelf: zo draait de init één keer,
+# ook bij meerdere backend-replicas. Los draaien zonder compose: eerst
+# `docker run <image> init`, daarna `docker run <image>`.
 # ============================================================
 
 DB_HOST="${DATABASE_HOST:-postgres}"
@@ -13,29 +22,30 @@ DB_PASS="${DATABASE_PASSWORD:-}"
 
 export PGPASSWORD="$DB_PASS"
 
-echo "============================================================"
-echo "🌍 D-OmniTwin — Container Startup"
-echo "============================================================"
-echo "   Database target: $DB_USER@$DB_HOST:$DB_PORT/$DB_NAME"
+wait_for_db() {
+    echo "   Database target: $DB_USER@$DB_HOST:$DB_PORT/$DB_NAME"
+    echo "⏳ Wachten op PostgreSQL database verbinding..."
+    local max_retries=30 count=0
+    until psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -c "SELECT 1;" >/dev/null 2>&1; do
+        count=$((count + 1))
+        if [ $count -ge $max_retries ]; then
+            echo "❌ Kon na $max_retries seconden geen verbinding maken met PostgreSQL ($DB_HOST:$DB_PORT)."
+            exit 1
+        fi
+        sleep 1
+    done
+    echo "✅ PostgreSQL is gereed voor verbindingen."
+}
 
-# 1. Wacht tot PostgreSQL bereikbaar is
-echo "⏳ Wachten op PostgreSQL database verbinding..."
-MAX_RETRIES=30
-COUNT=0
-until psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -c "SELECT 1;" >/dev/null 2>&1; do
-    COUNT=$((COUNT + 1))
-    if [ $COUNT -ge $MAX_RETRIES ]; then
-        echo "❌ Kon na $MAX_RETRIES seconden geen verbinding maken met PostgreSQL ($DB_HOST:$DB_PORT)."
-        exit 1
+init_db() {
+    # Controleer of het schema al bestaat
+    TABLE_EXISTS=$(psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -tAc "SELECT 1 FROM information_schema.tables WHERE table_schema='public' AND table_name='gebieden';" 2>/dev/null || true)
+
+    if [ "$TABLE_EXISTS" = "1" ]; then
+        echo "✅ Bestaande database gevonden (tabel 'gebieden' aanwezig). Initialisatie overgeslagen."
+        return
     fi
-    sleep 1
-done
-echo "✅ PostgreSQL is gereed voor verbindingen."
 
-# 2. Controleer of het schema al bestaat
-TABLE_EXISTS=$(psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -tAc "SELECT 1 FROM information_schema.tables WHERE table_schema='public' AND table_name='gebieden';" 2>/dev/null || true)
-
-if [ "$TABLE_EXISTS" != "1" ]; then
     echo "⚙️ Database is leeg. Initialiseren via schema_latest.sql..."
     # ON_ERROR_STOP: stop bij de eerste SQL-fout in plaats van een half schema
     psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -v ON_ERROR_STOP=1 -f /app/init_data/schema/schema_latest.sql >/dev/null
@@ -72,8 +82,18 @@ if [ "$TABLE_EXISTS" != "1" ]; then
 
     # PostgREST schema cache herladen via NOTIFY
     psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -c "NOTIFY pgrst, 'reload schema';" >/dev/null 2>&1 || true
-else
-    echo "✅ Bestaande database gevonden (tabel 'gebieden' aanwezig). Initialisatie overgeslagen."
+}
+
+echo "============================================================"
+echo "🌍 D-OmniTwin — Container Startup"
+echo "============================================================"
+
+wait_for_db
+
+if [ "$1" = "init" ]; then
+    init_db
+    echo "✅ Initialisatie klaar."
+    exit 0
 fi
 
 echo "🚀 Start applicatie: $@"
