@@ -10,8 +10,8 @@ export const ReportPage: React.FC = () => {
     const navigate = useNavigate();
     const originalTitleRef = useRef(document.title);
 
-    // Gebied Selectie State (tijdelijke hardcode of default 'BU19700104' voor test)
-    const [selectedGebied, setSelectedGebied] = useState(gebied_id || 'BU19700104');
+    // Gebied komt uit de URL; zonder gebied wordt niets opgehaald
+    const selectedGebied = gebied_id || '';
 
     // Payload State
     const [dataPayload, setDataPayload] = useState<ReportDataPayload | null>(null);
@@ -126,6 +126,22 @@ export const ReportPage: React.FC = () => {
         setShowPrintModal(false);
         document.title = originalTitleRef.current;
     };
+
+    if (!selectedGebied) {
+        return (
+            <div className="page-container" style={{ maxWidth: '1400px', margin: '0 auto', padding: '2rem' }}>
+                <div className="page-header">
+                    <h1>D-OmniTwin Rapportage</h1>
+                </div>
+                <div className="card" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                    <Info size={20} className="text-primary" />
+                    <p className="text-secondary">
+                        Geen gebied gekozen. Selecteer een gebied op de <a href="/">kaart</a> en open daar het gebiedsdossier.
+                    </p>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="page-container" style={{ maxWidth: '1400px', margin: '0 auto', padding: '2rem' }}>

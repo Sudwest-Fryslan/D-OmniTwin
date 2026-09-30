@@ -260,12 +260,33 @@ const publicApi = axios.create({
     headers: { 'Content-Type': 'application/json' },
 });
 
+// Gemeenten en gebieden via PostgREST (/api/data), zoals de hoofdapp.
+// Response wordt omgezet naar de eerdere vorm { gemeenten|gebieden, totaal }.
 export const gebiedenAPI = {
-    getGemeenten: () => publicApi.get<{ gemeenten: { code: string; naam: string; provincie?: string }[]; totaal: number }>('/gemeenten'),
-    zoekGebieden: (q: string) =>
-        publicApi.get<{ gebieden: import('../types').GebiedListItem[]; totaal: number }>('/gebieden/zoek', {
-            params: { q }
-        }),
+    getGemeenten: async () => {
+        const res = await publicApi.get<{ code: string; naam: string; provincie?: string }[]>('/data/gemeenten', {
+            params: { order: 'naam.asc' }
+        });
+        return { ...res, data: { gemeenten: res.data, totaal: res.data.length } };
+    },
+    zoekGebieden: async (q: string) => {
+        // Tekens die de PostgREST or-filter syntax breken weglaten
+        const term = q.replace(/[,()*"\\]/g, ' ').trim();
+        const res = await publicApi.get<{ id: string; naam: string; gemeente_code: string | null; gebiedstype_id: string | null }[]>('/data/gebieden', {
+            params: {
+                select: 'id,naam,gemeente_code,gebiedstype_id',
+                or: `(naam.ilike.*${term}*,id.ilike.*${term}*)`,
+                order: 'naam.asc',
+                limit: 20
+            }
+        });
+        const gebieden: import('../types').GebiedListItem[] = res.data.map(g => ({
+            id: g.id,
+            naam: g.naam,
+            type: g.gebiedstype_id ?? ''
+        }));
+        return { ...res, data: { gebieden, totaal: gebieden.length } };
+    },
 };
 
 export const aiAPI = {
