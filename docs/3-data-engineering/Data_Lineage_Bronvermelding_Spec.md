@@ -95,7 +95,7 @@ Om uniforme weergave en klikbare bronverwijzingen te garanderen, hanteert D-Omni
 - **Docker Integratie:**
   - De applicatie draait in `docker-compose` met live volume mount (`.:/app`).
   - Backend code wijzigingen herladen automatisch via uvicorn hot-reload.
-  - Database queries en migraties/scripts verbinden via port `5433` (lokaal) of via `docker exec -it omnitwin_backend python scripts/...`.
+  - Database queries en migraties/scripts verbinden via port `5433` (lokaal) of via `docker compose exec backend python scripts/...`.
 - **Admin Panel:**
   - Wijzigingen in `admin-panel/src` worden gecompileerd via `/build-admin-panel` naar `static/admin-panel`.
 

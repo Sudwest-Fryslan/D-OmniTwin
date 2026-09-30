@@ -1,5 +1,7 @@
 # D-OmniTwin Database Initialisatie Script & Handleiding
 
+> ⚠️ **Verouderd/aanvullend** — de actuele installatie staat in [`docs/9-beheer/installatie.md`](../../9-beheer/installatie.md). In de Docker-installatie richt de service `db-init` de database automatisch in (`docker-entrypoint.sh init`).
+
 **Versie:** 1.0  
 **Datum:** 3 februari 2026  
 **Doel:** Volledige database opzet voor nieuwe installaties

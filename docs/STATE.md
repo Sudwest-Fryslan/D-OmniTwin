@@ -51,7 +51,7 @@
 | **Logging Infrastructuur** | 🟢 Actief | Sprint 17 ✅ — `AsyncLogQueue`, `app_logs` DB, log viewer admin panel, dagelijkse cleanup. E-mail alerts on hold (Issue #47) |
 | **Thema-Analyse Visualisatie** | 🟢 Actief | Sprint 19B / Track F ✅ — D3 Diverging Bar Chart en Boomstructuur Filter (Issue #15) |
 | **Time Slider** | 🟢 Actief | Sprint 19 Migratie ✅ — Hybride TimeSlider, Indicator Historie & Play/Pauze |
-| **Gebiedsagenda IJsselmeerkust Usecase** | 🟢 Gedocumenteerd | `docs/7-projectmanagement/testcases/gebiedsagenda_ijselmeerkust/` — Spiegeling, TC-06-003 E2E testcase, 85% datadekking. |
+| **Gebiedsagenda IJsselmeerkust Usecase** | 🟢 Gedocumenteerd | `docs/testcases/gebiedsagenda_ijselmeerkust/` — Spiegeling, TC-06-003 E2E testcase, 85% datadekking. |
 | **Indicatoren Bron (Excel Jantina)** | ⏸️ Backlog | 812 indicatoren geparkeerd als Nice-to-Have (gebruikersonderzoek vereist). |
 | **ETL Dataspace Gap Analyse** | 🟢 Gedocumenteerd | `docs/3-data-engineering/etl_dataspace_gap_analyse.md` — D-OmniTwin als datamart-consumer van FRLDS |
 | **Data Lineage & Bronvermelding** | 🟢 Actief | Sprint 22 Track C ✅ Voltooid — 244 indicatoren (100%) voorzien van lineage, externe bronlinks en peildata. Spec: `docs/3-data-engineering/Data_Lineage_Bronvermelding_Spec.md` |

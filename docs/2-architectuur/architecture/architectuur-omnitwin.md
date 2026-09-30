@@ -342,7 +342,6 @@ cd admin-panel && npm run build                   # → static/admin-panel/
 DATABASE_HOST / PORT / NAME / USER / PASSWORD
 SECRET_KEY
 CORS_ORIGINS
-MAPBOX_TOKEN
 ADMIN_API_KEY
 OLLAMA_HOST=http://localhost:11434
 OLLAMA_MODEL=qwen3:30b
