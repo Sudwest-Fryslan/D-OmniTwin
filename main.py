@@ -41,15 +41,15 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         response = await call_next(request)
         
         # Content Security Policy - STRICT LOCAL ONLY
-        # Required for: Mapbox GL, D3.js, deck.gl, Chart.js
+        # Required for: MapLibre GL, D3.js, deck.gl, Chart.js (basiskaart: PDOK)
         # Local Swagger UI assets (no external CDNs needed for docs)
         response.headers["Content-Security-Policy"] = (
             "default-src 'self'; "
-            "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://api.mapbox.com https://d3js.org https://unpkg.com https://cdn.jsdelivr.net; "
-            "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://api.mapbox.com https://cdn.jsdelivr.net https://unpkg.com; "
+            "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://d3js.org https://unpkg.com https://cdn.jsdelivr.net; "
+            "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net https://unpkg.com; "
             "font-src 'self' https://fonts.gstatic.com data:; "
             "img-src 'self' data: https: blob:; "
-            "connect-src 'self' https://api.mapbox.com https://*.tiles.mapbox.com https://events.mapbox.com wss://*.mapbox.com https://data.3dbag.nl https://api.3dbag.nl https://service.pdok.nl https://api.pdok.nl; "
+            "connect-src 'self' https://data.3dbag.nl https://api.3dbag.nl https://service.pdok.nl https://api.pdok.nl; "
             "worker-src 'self' blob:; "
             "child-src 'self' blob:; "
             "frame-src 'self';"
@@ -161,8 +161,6 @@ templates = Jinja2Templates(directory="templates")
 # ============================================================================
 # App Configuration (from environment)
 # ============================================================================
-mapbox_token = os.getenv('MAPBOX_TOKEN')
-mapbox_style = os.getenv('MAPBOX_STYLE', 'mapbox://styles/mapbox/light-v10')
 debug_mode = os.getenv('DEBUG', 'false').lower() == 'true'
 
 # Register routers
@@ -221,11 +219,7 @@ async def shutdown_event():
 @app.get("/", response_class=HTMLResponse)
 async def root(request: Request):
     """Serve the frontend application."""
-    return templates.TemplateResponse("index.html", {
-        "request": request,
-        "mapbox_token": mapbox_token,
-        "mapbox_style": mapbox_style
-    })
+    return templates.TemplateResponse("index.html", {"request": request})
 
 # ============================================================================
 # React SPA Support for Admin Panel

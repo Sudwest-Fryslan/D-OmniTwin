@@ -30,6 +30,44 @@ D-OmniTwin fungeert als **dataspace-agnostische interactielaag**: data blijft bi
 
 ---
 
+## ⚡ Snel starten
+
+Vereist: [Docker](https://www.docker.com/) met Docker Compose. Ollama is optioneel (alleen voor de AI-chat).
+
+```bash
+git clone https://github.com/TLaan/D-OmniTwin.git && cd D-OmniTwin
+cp .env.example .env
+# Vul in .env minimaal in: DATABASE_PASSWORD, SECRET_KEY en ADMIN_PASSWORD
+docker compose up -d --build
+```
+
+Open daarna **http://localhost**. Alles loopt via Traefik op poort 80; de backend (poort 8000) is binnen Docker niet direct bereikbaar.
+
+- Bij de eerste start maakt de backend het databaseschema aan en laadt een **sample dataset van 12 buurten in Súdwest-Fryslân** (`LOAD_SAMPLE_DATA=true` in `.env`). Zet dit op `false` voor een lege database met alleen stuurdata.
+- **Beheeromgeving:** http://localhost/admin. Inloggen met `ADMIN_USER` (standaard `admin`) en het `ADMIN_PASSWORD` uit `.env`. Laat je `ADMIN_PASSWORD` leeg, dan wordt eenmalig een wachtwoord gegenereerd en in de log getoond: `docker compose logs backend`. Laat `DEBUG=true` staan zolang je zonder HTTPS draait; anders wordt het inlogcookie alleen via HTTPS verstuurd en lukt inloggen niet.
+- **API-documentatie:** http://localhost/docs.
+
+Volledige data voor Fryslân laden of lokaal zonder Docker ontwikkelen: zie [Installatie voor ontwikkelaars](#-installatie-voor-ontwikkelaars) en [`GETTING_STARTED.md`](./GETTING_STARTED.md).
+
+**Meedoen:** zie [CONTRIBUTING.md](./CONTRIBUTING.md) en de [gedragscode](./CODE_OF_CONDUCT.md). Een kwetsbaarheid gevonden? Meld die privé volgens [SECURITY.md](./SECURITY.md), niet via een openbaar issue. Metadata voor codebase-registers staat in [publiccode.yml](./publiccode.yml).
+
+---
+
+## 📸 Zo ziet het eruit
+
+Schermafbeeldingen van een verse installatie met de sample dataset (`docker compose up`), ingezoomd op Bolsward.
+
+![Kaart: buurten in Bolsward gekleurd op een indicator, met PDOK-achtergrondkaart](docs/images/kaart-bolsward.jpg)
+*Kaart: buurten gekleurd op een indicator (hier "Afstand tot koele plek"), PDOK-achtergrondkaart.*
+
+![Kompas: sunburst met de thema's voor buurt Bolsward-Zuidoost](docs/images/kompas-bolsward-zuidoost.jpg)
+*D-Omni Kompas voor Bolsward-Zuidoost: alle indicatoren in thema's, gekleurd ten opzichte van de referentiegroep.*
+
+![Chat: de D-Omni Assistent met het scenario Beleidsadviseur](docs/images/chat-beleidsadviseur.jpg)
+*D-Omni Assistent: het scenario "Beleidsadviseur" zet kaart en Kompas klaar.*
+
+> Bolsward-Zuidoost bevat in de sample **demodata** (zie `init_data/sample/README.md`). De getallen in de kop ("1,721 gebieden | 226 indicatoren") zijn nog hardcoded (#79).
+
 ## 🤝 Innovatie & Samenwerking
 
 D-OmniTwin wordt ontwikkeld als **open methodiek + referentie-implementatie** (EUPL licentie), met structurele samenwerking tussen overheden en datapartners in Fryslân.
@@ -58,14 +96,16 @@ Vier use cases worden gevalideerd in pilots bij drie gemeenten. Resultaat: open 
 
 ## 🧩 Componenten Overzicht
 
-| Component | Technologie | Port | Status |
-|-----------|-------------|------|--------|
-| **API Gateway** | Traefik Reverse Proxy | 80 | ✅ Production Ready |
-| **Main Backend** | FastAPI (Hybride logic) | 8000 | ✅ Production Ready |
-| **Data API** | PostgREST | 3000 | ✅ Operationeel |
-| **Geo API** | pg_featureserv | 9000 | ✅ Operationeel |
-| **Admin Panel** | React + TypeScript | 3001 / 8000 | ✅ MVP Ready |
-| **Database** | PostgreSQL + PostGIS + pgvector | 5432 | ✅ Operationeel |
+| Component | Technologie | Poort (intern) | Via Traefik (Docker) | Status |
+|-----------|-------------|----------------|----------------------|--------|
+| **API Gateway** | Traefik Reverse Proxy | 80 | http://localhost | ✅ Production Ready |
+| **Main Backend** | FastAPI (Hybride logic) | 8000 | `/` en `/api/*` | ✅ Production Ready |
+| **Data API** | PostgREST | 3000 | `/api/data` | ✅ Operationeel |
+| **Geo API** | pg_featureserv | 9000 | `/api/geo` | ✅ Operationeel |
+| **Admin Panel** | React + TypeScript | via backend (dev server: 3001) | `/admin` | ✅ MVP Ready |
+| **Database** | PostgreSQL + PostGIS + pgvector | 5432 | niet via Traefik; op de host: 5433 | ✅ Operationeel |
+
+> Met Docker Compose is alleen Traefik (poort 80, dashboard op 8081) en de database (5433) op de host bereikbaar. De interne poorten gelden binnen het Docker-netwerk of bij lokaal draaien zonder Docker.
 
 ### Main App Features
 - 🗺️ **Interactieve Kaart** — MapLibre + deck.gl 3D visualisatie, choropleth op buurtniveau
@@ -234,8 +274,10 @@ OLLAMA_MODEL=qwen3:30b
 
 ---
 
-## 🚀 Snel Opstarten
+## 🚀 Installatie voor ontwikkelaars
 
+> Alleen de applicatie met de sample dataset draaien? Zie [Snel starten](#-snel-starten).
+>
 > 📖 **Volledige gids:** Zie [`GETTING_STARTED.md`](./GETTING_STARTED.md) voor een stap-voor-stap installatie inclusief starter dataset.
 
 ### Prerequisites
@@ -272,12 +314,15 @@ docker compose up -d
 source .venv/bin/activate && python run_dev.py
 ```
 
-**Toegang:**
-- 🌐 **App:** http://localhost:8000 (of http://localhost via Traefik)
-- 📚 **API Docs:** http://localhost:8000/docs
-- 🔐 **Admin Panel:** http://localhost:8000/admin (of via dev server: `cd admin-panel && npm start` → http://localhost:3001)
-- 🗄️ **Data API (PostgREST):** http://localhost/api/data (direct: port 3000)
-- 🗺️ **Geo API (pg_featureserv):** http://localhost/api/geo (direct: port 9000)
+**Toegang met Docker Compose (optie A)** — alles via Traefik op poort 80:
+- 🌐 **App:** http://localhost
+- 📚 **API Docs:** http://localhost/docs
+- 🔐 **Admin Panel:** http://localhost/admin
+- 🗄️ **Data API (PostgREST):** http://localhost/api/data
+- 🗺️ **Geo API (pg_featureserv):** http://localhost/api/geo
+
+**Toegang met de lokale dev server (optie B)** — alleen FastAPI, zonder PostgREST en pg_featureserv:
+- 🌐 **App:** http://localhost:8000 · 📚 **API Docs:** http://localhost:8000/docs · 🔐 **Admin Panel:** http://localhost:8000/admin (of via dev server: `cd admin-panel && npm start` → http://localhost:3001)
 
 > [!TIP]
 > **Waarom `run_dev.py`?** Slimmer dan standaard uvicorn: lazy loading van AI-modellen (30% snellere start) en optimized reload die `node_modules` uitsluit.
@@ -319,6 +364,12 @@ Zie [NOTICE.md](./NOTICE.md) voor informatie over third-party licenties.
 |----------|-------------|
 | [README.md](./README.md) | Project overview (dit document) |
 | [GETTING_STARTED.md](./GETTING_STARTED.md) | ⭐ Stap-voor-stap installatiehandleiding met starter dataset |
+| [CONTRIBUTING.md](./CONTRIBUTING.md) | Bijdragen: van issue tot merge |
+| [CODE_OF_CONDUCT.md](./CODE_OF_CONDUCT.md) | Gedragscode (Contributor Covenant 2.1) |
+| [SECURITY.md](./SECURITY.md) | Kwetsbaarheden privé melden |
+| [PROJECT_GOVERNANCE.md](./PROJECT_GOVERNANCE.md) | Rollen en besluitvorming (concept) |
+| [CHANGELOG.md](./CHANGELOG.md) | Wijzigingen per versie |
+| [publiccode.yml](./publiccode.yml) | Metadata voor codebase-registers (publiccode.yml-standaard) |
 | [init_data/README.md](./init_data/README.md) | Documentatie initiatie dataset (Fryslân) |
 | [BUILD.md](./BUILD.md) | Installatie, setup & sprint changelog |
 | [TODO.md](./TODO.md) | Actieve takenlijst per domein |
@@ -360,7 +411,7 @@ Zie [NOTICE.md](./NOTICE.md) voor informatie over third-party licenties.
 | `/api/admin/dashboard/stats` | GET | Dashboard statistieken |
 | `/api/data-controle` | GET | Data kwaliteitsrapport |
 
-> 📚 Volledige API documentatie beschikbaar via: http://localhost:8000/docs
+> 📚 Volledige API documentatie beschikbaar via: http://localhost/docs (Docker) of http://localhost:8000/docs (lokale dev server)
 
 ---
 
