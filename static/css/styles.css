@@ -801,18 +801,23 @@ body {
   outline-offset: 2px;
 }
 
+/* Vast vakje: als flex-item kromp de lege span tot een streepje */
 .checkbox-custom {
+  display: inline-block;
+  flex: 0 0 20px;
+  box-sizing: border-box;
   width: 20px;
   height: 20px;
-  border: 2px solid var(--border-color);
+  background: var(--bg-secondary);
+  border: 2px solid var(--text-secondary);
   border-radius: 4px;
   position: relative;
   transition: all var(--transition-fast);
 }
 
 .checkbox-label input[type="checkbox"]:checked+.checkbox-custom {
-  background: var(--primary-color);
-  border-color: var(--primary-color);
+  background: var(--primary-fill);
+  border-color: var(--primary-fill);
 }
 
 .checkbox-label input[type="checkbox"]:checked+.checkbox-custom::after {
@@ -822,7 +827,8 @@ body {
   left: 50%;
   transform: translate(-50%, -50%);
   color: white;
-  font-size: 0.75rem;
+  font-size: 0.8rem;
+  line-height: 1;
   font-weight: bold;
 }
 
