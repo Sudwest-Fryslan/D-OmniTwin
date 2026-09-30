@@ -38,7 +38,7 @@ matplotlib>=3.7.0
 pydeck>=0.8.0
 
 # --- HTTP ---
-requests>=2.28.0
+requests>=2.34.2
 
 # --- Pydantic ---
 pydantic>=2.0.0
