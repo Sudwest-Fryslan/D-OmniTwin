@@ -2140,7 +2140,6 @@ function populateGebiedstypeSelect(gebiedstypes) {
         const option = document.createElement('option');
         option.value = gt.id;
         option.textContent = gt.naam;
-        option.dataset.count = gt.aantal_gebieden || 0;
         select.appendChild(option);
     });
 
@@ -2847,10 +2846,20 @@ function setupEventListeners() {
         state.currentIndicator = null;
 
         if (selectedId) {
-            const selectedOption = e.target.options[e.target.selectedIndex];
-            const count = selectedOption.dataset.count;
-            document.getElementById('gebiedstype-count').textContent =
-                `${count} gebieden in dit type`;
+            // Aantal gebieden van dit type ophalen (de gebiedstypes-query levert geen aantal)
+            const countEl = document.getElementById('gebiedstype-count');
+            countEl.textContent = '… gebieden in dit type';
+            fetchPostgrestCount(`gebieden?select=id&gebiedstype_id=eq.${encodeURIComponent(selectedId)}`)
+                .then(count => {
+                    // Niet overschrijven als intussen een ander type gekozen is of de kaart al geladen is
+                    if (state.currentGebiedstype !== selectedId || !countEl.textContent.startsWith('…')) return;
+                    countEl.textContent = count === null
+                        ? 'Aantal gebieden onbekend'
+                        : `${count} gebieden in dit type`;
+                })
+                .catch(() => {
+                    if (countEl.textContent.startsWith('…')) countEl.textContent = 'Aantal gebieden onbekend';
+                });
 
             await loadIndicatoren(selectedId);
         } else {
