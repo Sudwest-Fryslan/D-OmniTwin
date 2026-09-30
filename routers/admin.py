@@ -174,7 +174,8 @@ def get_ollama_models(
         host = veilige_host(api_url)
         if isinstance(e, requests.HTTPError) and e.response is not None and e.response.status_code in (401, 403):
             melding = f"LLM-server op {host} weigert toegang; controleer LLM_API_KEY"
-        elif isinstance(e, requests.RequestException):
+        elif isinstance(e, requests.RequestException) and not isinstance(e, ValueError):
+            # requests' JSONDecodeError is ook een RequestException; dat is een onverwacht antwoord
             melding = f"LLM-server niet bereikbaar op {host}"
         else:
             melding = f"Onverwacht antwoord van LLM-server op {host}"

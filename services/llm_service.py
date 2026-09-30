@@ -23,6 +23,27 @@ LLM_TIMEOUT = 600
 _THINK_BLOK = re.compile(r"<think>.*?</think>", flags=re.DOTALL)
 
 
+def denken_aan() -> bool:
+    """LLM_THINK (.env): denk-modus van redeneermodellen (Qwen3, DeepSeek-R1) aan of uit.
+
+    Standaard uit: de teksten zijn kort (chat ≤ 80 woorden) en hebben geen redeneerstap
+    nodig, terwijl denken duizenden tokens en minuten kost (ADR 0001).
+    """
+    return os.getenv("LLM_THINK", "false").strip().lower() in ("1", "true", "ja", "yes", "on")
+
+
+def reasoning_effort() -> Optional[str]:
+    """Waarde voor reasoning_effort in het OpenAI-pad, of None om het veld weg te laten.
+
+    Standaard 'none' (Ollama /v1 zet dan denken uit). LLM_REASONING_EFFORT= (leeg) laat het
+    veld weg, voor servers die het niet kennen; met LLM_THINK=true wordt het nooit meegestuurd.
+    """
+    if denken_aan():
+        return None
+    waarde = os.getenv("LLM_REASONING_EFFORT", "none").strip()
+    return waarde or None
+
+
 def veilige_host(api_url: str) -> str:
     """scheme://host[:poort] zonder pad of inloggegevens, voor meldingen aan de gebruiker."""
     parts = urlsplit(api_url or "")
@@ -118,7 +139,11 @@ class LLMService:
                 "temperature": 0.3
             }
         }
-        
+        if not denken_aan():
+            # Denk-modus uit (Ollama ≥ 0.9; oudere versies en niet-denkende modellen negeren
+            # dit). Met LLM_THINK=true geen veld: dan beslist het model, zoals voorheen.
+            payload["think"] = False
+
         debug_info = {
             "context": context_name,
             "model": llm_config['model_name'],
@@ -135,7 +160,8 @@ class LLMService:
             result_json = response.json()
 
             model_output = result_json.get("response", "Generatie mislukt.")
-            cleaned = clean_model_output(model_output)
+            # Sommige modellen geven ook met think=false een (leeg) <think>-blok terug
+            cleaned = clean_model_output(strip_think(model_output))
 
             AppLogger.debug(f"[{context_name}] LLM RESPONSE — {cleaned[:500]}", category="LLM_CHAT")
 
@@ -157,9 +183,17 @@ class LLMService:
         """OpenAI Chat Completions (/v1/chat/completions); zelfde contract als _call_ollama."""
         url = f"{openai_base_url(llm_config['api_url'])}/chat/completions"
 
+        # Denk-modus uit (zie denken_aan): 'think' is geen standaardveld in de OpenAI-API.
+        # reasoning_effort=none zet het uit bij Ollama /v1; Qwen3 krijgt daarnaast de
+        # eigen schakelaar /no_think, voor servers die reasoning_effort negeren (vLLM).
+        effort = reasoning_effort()
+        systeem = system_prompt
+        if not denken_aan() and "qwen3" in (llm_config['model_name'] or "").lower():
+            systeem = f"{system_prompt}\n\n/no_think" if system_prompt else "/no_think"
+
         messages = []
-        if system_prompt:
-            messages.append({"role": "system", "content": system_prompt})
+        if systeem:
+            messages.append({"role": "system", "content": systeem})
         messages.append({"role": "user", "content": user_prompt})
 
         payload = {
@@ -168,6 +202,8 @@ class LLMService:
             "stream": False,
             "temperature": 0.3,  # zelfde waarde als de Ollama-optie
         }
+        if effort:
+            payload["reasoning_effort"] = effort
 
         debug_info = {
             "context": context_name,
@@ -194,12 +230,13 @@ class LLMService:
                 melding = f"LLM-server op {host} gaf een fout ({status})"
             AppLogger.error(f"[{context_name}] LLM ERROR: {melding}: {e}", category="LLM_CHAT")
             return {"text": melding, "debug": debug_info}
-        except requests.exceptions.RequestException as e:
-            melding = f"LLM-server niet bereikbaar op {host}"
+        except (ValueError, KeyError, IndexError, TypeError, AttributeError) as e:
+            # Vóór RequestException: requests' JSONDecodeError is ook een RequestException
+            melding = f"Onverwacht antwoord van LLM-server op {host}"
             AppLogger.error(f"[{context_name}] LLM ERROR: {melding}: {e}", category="LLM_CHAT")
             return {"text": melding, "debug": debug_info}
-        except (ValueError, KeyError, IndexError, TypeError, AttributeError) as e:
-            melding = f"Onverwacht antwoord van LLM-server op {host}"
+        except requests.exceptions.RequestException as e:
+            melding = f"LLM-server niet bereikbaar op {host}"
             AppLogger.error(f"[{context_name}] LLM ERROR: {melding}: {e}", category="LLM_CHAT")
             return {"text": melding, "debug": debug_info}
 
