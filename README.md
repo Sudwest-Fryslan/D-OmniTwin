@@ -102,7 +102,7 @@ Vier use cases worden gevalideerd in pilots bij drie gemeenten. Resultaat: open 
 | **Main Backend** | FastAPI (Hybride logic) | 8000 | `/` en `/api/*` | ✅ Production Ready |
 | **Data API** | PostgREST | 3000 | `/api/data` | ✅ Operationeel |
 | **Geo API** | pg_featureserv | 9000 | `/api/geo` | ✅ Operationeel |
-| **Admin Panel** | React + TypeScript | via backend (dev server: 3001) | `/admin` | ✅ MVP Ready |
+| **Admin Panel** | React + TypeScript | via backend (dev server: 3000) | `/admin` | ✅ MVP Ready |
 | **Database** | PostgreSQL + PostGIS + pgvector | 5432 | niet via Traefik; op de host: 5433 | ✅ Operationeel |
 
 > Met Docker Compose is alleen Traefik (poort 80, dashboard op 8081) en de database (5433) op de host bereikbaar. De interne poorten gelden binnen het Docker-netwerk of bij lokaal draaien zonder Docker.
@@ -322,7 +322,7 @@ source .venv/bin/activate && python run_dev.py
 - 🗺️ **Geo API (pg_featureserv):** http://localhost/api/geo
 
 **Toegang met de lokale dev server (optie B)** — alleen FastAPI, zonder PostgREST en pg_featureserv:
-- 🌐 **App:** http://localhost:8000 · 📚 **API Docs:** http://localhost:8000/docs · 🔐 **Admin Panel:** http://localhost:8000/admin (of via dev server: `cd admin-panel && npm start` → http://localhost:3001)
+- 🌐 **App:** http://localhost:8000 · 📚 **API Docs:** http://localhost:8000/docs · 🔐 **Admin Panel:** http://localhost:8000/admin (of via dev server: `cd admin-panel && npm start` → http://localhost:3000/admin/)
 
 > [!TIP]
 > **Waarom `run_dev.py`?** Slimmer dan standaard uvicorn: lazy loading van AI-modellen (30% snellere start) en optimized reload die `node_modules` uitsluit.
