@@ -1,0 +1,1139 @@
+{
+  "name": "cbs-kerncijfers-fryslan",
+  "title": "CBS Kerncijfers wijken en buurten 2019-2026, buurten in Fryslân",
+  "description": "Kerncijfers wijken en buurten van alle jaargangen vanaf 2019 voor de buurten in Fryslân, gemapt op de indicatoren van D-OmniTwin. Jaar = peiljaar van de CBS-tabel. Alleen buurtcodes die in de CBS-geometrie 2024 bestaan. Gemaakt met init_data/scripts/download_cbs_kerncijfers.py.",
+  "licenses": [
+    {
+      "name": "CC-BY-4.0",
+      "title": "Creative Commons Attribution 4.0",
+      "path": "https://creativecommons.org/licenses/by/4.0/"
+    }
+  ],
+  "sources": [
+    {
+      "title": "CBS Kerncijfers wijken en buurten 2019 (84583NED)",
+      "path": "https://opendata.cbs.nl/statline/#/CBS/nl/dataset/84583NED"
+    },
+    {
+      "title": "CBS Kerncijfers wijken en buurten 2020 (84799NED)",
+      "path": "https://opendata.cbs.nl/statline/#/CBS/nl/dataset/84799NED"
+    },
+    {
+      "title": "CBS Kerncijfers wijken en buurten 2021 (85039NED)",
+      "path": "https://opendata.cbs.nl/statline/#/CBS/nl/dataset/85039NED"
+    },
+    {
+      "title": "CBS Kerncijfers wijken en buurten 2022 (85318NED)",
+      "path": "https://opendata.cbs.nl/statline/#/CBS/nl/dataset/85318NED"
+    },
+    {
+      "title": "CBS Kerncijfers wijken en buurten 2023 (85618NED)",
+      "path": "https://opendata.cbs.nl/statline/#/CBS/nl/dataset/85618NED"
+    },
+    {
+      "title": "CBS Kerncijfers wijken en buurten 2024 (85984NED)",
+      "path": "https://opendata.cbs.nl/statline/#/CBS/nl/dataset/85984NED"
+    },
+    {
+      "title": "CBS Kerncijfers wijken en buurten 2025 (86165NED)",
+      "path": "https://opendata.cbs.nl/statline/#/CBS/nl/dataset/86165NED"
+    },
+    {
+      "title": "CBS Kerncijfers wijken en buurten 2026 (86358NED)",
+      "path": "https://opendata.cbs.nl/statline/#/CBS/nl/dataset/86358NED"
+    }
+  ],
+  "bronvermelding": "Centraal Bureau voor de Statistiek (CBS), Kerncijfers wijken en buurten 2019-2026. CC BY 4.0.",
+  "geometrie_jaar": 2024,
+  "gedownload": "2026-10-01",
+  "tabellen": {
+    "2019": {
+      "tabel": "84583NED",
+      "titel": "Kerncijfers wijken en buurten 2019",
+      "peiljaar": 2019
+    },
+    "2020": {
+      "tabel": "84799NED",
+      "titel": "Kerncijfers wijken en buurten 2020",
+      "peiljaar": 2020
+    },
+    "2021": {
+      "tabel": "85039NED",
+      "titel": "Kerncijfers wijken en buurten 2021",
+      "peiljaar": 2021
+    },
+    "2022": {
+      "tabel": "85318NED",
+      "titel": "Kerncijfers wijken en buurten 2022",
+      "peiljaar": 2022
+    },
+    "2023": {
+      "tabel": "85618NED",
+      "titel": "Kerncijfers wijken en buurten 2023",
+      "peiljaar": 2023
+    },
+    "2024": {
+      "tabel": "85984NED",
+      "titel": "Kerncijfers wijken en buurten 2024",
+      "peiljaar": 2024
+    },
+    "2025": {
+      "tabel": "86165NED",
+      "titel": "Kerncijfers wijken en buurten 2025",
+      "peiljaar": 2025
+    },
+    "2026": {
+      "tabel": "86358NED",
+      "titel": "Kerncijfers wijken en buurten 2026",
+      "peiljaar": 2026
+    }
+  },
+  "indicatoren": {
+    "Inwoners": {
+      "uuid": "31f70dff-c116-4267-bef0-d15b0ff4c020",
+      "jaren": [
+        2019,
+        2020,
+        2021,
+        2022,
+        2023,
+        2024,
+        2025,
+        2026
+      ],
+      "kolommen": {
+        "2019": "AantalInwoners_5",
+        "2020": "AantalInwoners_5",
+        "2021": "AantalInwoners_5",
+        "2022": "AantalInwoners_5",
+        "2023": "AantalInwoners_5",
+        "2024": "AantalInwoners_5",
+        "2025": "AantalInwoners_5",
+        "2026": "AantalInwoners_5"
+      },
+      "afgeleid": null
+    },
+    "0-15 jaar": {
+      "uuid": "356a2329-eadb-494f-a09d-906a3db264d4",
+      "jaren": [
+        2019,
+        2020,
+        2021,
+        2022,
+        2023,
+        2024,
+        2025,
+        2026
+      ],
+      "kolommen": {
+        "2019": "k_0Tot15Jaar_8",
+        "2020": "k_0Tot15Jaar_8",
+        "2021": "k_0Tot15Jaar_8",
+        "2022": "k_0Tot15Jaar_8",
+        "2023": "k_0Tot15Jaar_8",
+        "2024": "k_0Tot15Jaar_8",
+        "2025": "k_0Tot15Jaar_8",
+        "2026": "k_0Tot15Jaar_8"
+      },
+      "afgeleid": null
+    },
+    "15-25 jaar": {
+      "uuid": "026bcd11-ace5-4ec7-adbc-c06c324315cd",
+      "jaren": [
+        2019,
+        2020,
+        2021,
+        2022,
+        2023,
+        2024,
+        2025,
+        2026
+      ],
+      "kolommen": {
+        "2019": "k_15Tot25Jaar_9",
+        "2020": "k_15Tot25Jaar_9",
+        "2021": "k_15Tot25Jaar_9",
+        "2022": "k_15Tot25Jaar_9",
+        "2023": "k_15Tot25Jaar_9",
+        "2024": "k_15Tot25Jaar_9",
+        "2025": "k_15Tot25Jaar_9",
+        "2026": "k_15Tot25Jaar_9"
+      },
+      "afgeleid": null
+    },
+    "25-45 jaar": {
+      "uuid": "e6dd31a1-a056-4c07-a48c-1d4517269f1e",
+      "jaren": [
+        2019,
+        2020,
+        2021,
+        2022,
+        2023,
+        2024,
+        2025,
+        2026
+      ],
+      "kolommen": {
+        "2019": "k_25Tot45Jaar_10",
+        "2020": "k_25Tot45Jaar_10",
+        "2021": "k_25Tot45Jaar_10",
+        "2022": "k_25Tot45Jaar_10",
+        "2023": "k_25Tot45Jaar_10",
+        "2024": "k_25Tot45Jaar_10",
+        "2025": "k_25Tot45Jaar_10",
+        "2026": "k_25Tot45Jaar_10"
+      },
+      "afgeleid": null
+    },
+    "45-65 jaar": {
+      "uuid": "8225fa5c-efb8-4fd0-865b-a36ff0724a28",
+      "jaren": [
+        2019,
+        2020,
+        2021,
+        2022,
+        2023,
+        2024,
+        2025,
+        2026
+      ],
+      "kolommen": {
+        "2019": "k_45Tot65Jaar_11",
+        "2020": "k_45Tot65Jaar_11",
+        "2021": "k_45Tot65Jaar_11",
+        "2022": "k_45Tot65Jaar_11",
+        "2023": "k_45Tot65Jaar_11",
+        "2024": "k_45Tot65Jaar_11",
+        "2025": "k_45Tot65Jaar_11",
+        "2026": "k_45Tot65Jaar_11"
+      },
+      "afgeleid": null
+    },
+    "65+ jaar": {
+      "uuid": "b0ee9877-3850-4529-b352-6ec673562ef8",
+      "jaren": [
+        2019,
+        2020,
+        2021,
+        2022,
+        2023,
+        2024,
+        2025,
+        2026
+      ],
+      "kolommen": {
+        "2019": "k_65JaarOfOuder_12",
+        "2020": "k_65JaarOfOuder_12",
+        "2021": "k_65JaarOfOuder_12",
+        "2022": "k_65JaarOfOuder_12",
+        "2023": "k_65JaarOfOuder_12",
+        "2024": "k_65JaarOfOuder_12",
+        "2025": "k_65JaarOfOuder_12",
+        "2026": [
+          "k_65JaarTot80Jaar_12",
+          "k_80JaarOfOuder_13"
+        ]
+      },
+      "afgeleid": null
+    },
+    "Huishoudens totaal": {
+      "uuid": "be1a9ac4-6330-47c9-93c6-c9008b5daf89",
+      "jaren": [
+        2019,
+        2020,
+        2021,
+        2022,
+        2023,
+        2024,
+        2025,
+        2026
+      ],
+      "kolommen": {
+        "2019": "HuishoudensTotaal_28",
+        "2020": "HuishoudensTotaal_28",
+        "2021": "HuishoudensTotaal_28",
+        "2022": "HuishoudensTotaal_28",
+        "2023": "HuishoudensTotaal_29",
+        "2024": "HuishoudensTotaal_29",
+        "2025": "HuishoudensTotaal_29",
+        "2026": "HuishoudensTotaal_30"
+      },
+      "afgeleid": null
+    },
+    "Eenpersoonshuishoudens": {
+      "uuid": "257494f4-9e51-4a4a-a662-feabfe9758b0",
+      "jaren": [
+        2019,
+        2020,
+        2021,
+        2022,
+        2023,
+        2024,
+        2025,
+        2026
+      ],
+      "kolommen": {
+        "2019": "Eenpersoonshuishoudens_29",
+        "2020": "Eenpersoonshuishoudens_29",
+        "2021": "Eenpersoonshuishoudens_29",
+        "2022": "Eenpersoonshuishoudens_29",
+        "2023": "Eenpersoonshuishoudens_30",
+        "2024": "Eenpersoonshuishoudens_30",
+        "2025": "Eenpersoonshuishoudens_30",
+        "2026": "Eenpersoonshuishoudens_31"
+      },
+      "afgeleid": null
+    },
+    "Huishoudens zonder kind": {
+      "uuid": "428c1232-0213-491b-ad0c-56dcc82a8c59",
+      "jaren": [
+        2019,
+        2020,
+        2021,
+        2022,
+        2023,
+        2024,
+        2025,
+        2026
+      ],
+      "kolommen": {
+        "2019": "HuishoudensZonderKinderen_30",
+        "2020": "HuishoudensZonderKinderen_30",
+        "2021": "HuishoudensZonderKinderen_30",
+        "2022": "HuishoudensZonderKinderen_30",
+        "2023": "HuishoudensZonderKinderen_31",
+        "2024": "HuishoudensZonderKinderen_31",
+        "2025": "HuishoudensZonderKinderen_31",
+        "2026": "HuishoudensZonderKinderen_32"
+      },
+      "afgeleid": null
+    },
+    "Huishoudens met kind": {
+      "uuid": "ad3b0509-3c14-49f8-aa10-4b3b391a2d84",
+      "jaren": [
+        2019,
+        2020,
+        2021,
+        2022,
+        2023,
+        2024,
+        2025,
+        2026
+      ],
+      "kolommen": {
+        "2019": "HuishoudensMetKinderen_31",
+        "2020": "HuishoudensMetKinderen_31",
+        "2021": "HuishoudensMetKinderen_31",
+        "2022": "HuishoudensMetKinderen_31",
+        "2023": "HuishoudensMetKinderen_32",
+        "2024": "HuishoudensMetKinderen_32",
+        "2025": "HuishoudensMetKinderen_32",
+        "2026": "HuishoudensMetKinderen_33"
+      },
+      "afgeleid": null
+    },
+    "Bevolkingsdichtheid": {
+      "uuid": "f18b2c78-871b-48a7-b08f-fa743e589db8",
+      "jaren": [
+        2019,
+        2020,
+        2021,
+        2022,
+        2023,
+        2024,
+        2025,
+        2026
+      ],
+      "kolommen": {
+        "2019": "Bevolkingsdichtheid_33",
+        "2020": "Bevolkingsdichtheid_33",
+        "2021": "Bevolkingsdichtheid_33",
+        "2022": "Bevolkingsdichtheid_33",
+        "2023": "Bevolkingsdichtheid_34",
+        "2024": "Bevolkingsdichtheid_34",
+        "2025": "Bevolkingsdichtheid_34",
+        "2026": "Bevolkingsdichtheid_35"
+      },
+      "afgeleid": null
+    },
+    "Woningvoorraad": {
+      "uuid": "e3d59c6a-adf9-4bad-b842-98ce71760935",
+      "jaren": [
+        2019,
+        2020,
+        2021,
+        2022,
+        2023,
+        2024,
+        2025
+      ],
+      "kolommen": {
+        "2019": "Woningvoorraad_34",
+        "2020": "Woningvoorraad_34",
+        "2021": "Woningvoorraad_34",
+        "2022": "Woningvoorraad_34",
+        "2023": "Woningvoorraad_35",
+        "2024": "Woningvoorraad_35",
+        "2025": "Woningvoorraad_35",
+        "2026": "Woningvoorraad_36"
+      },
+      "afgeleid": null
+    },
+    "Gemiddelde WOZ-waarde": {
+      "uuid": "7053d6a5-2bcf-4254-b089-79852f12d9aa",
+      "jaren": [
+        2019,
+        2020,
+        2021,
+        2022,
+        2023,
+        2024,
+        2025
+      ],
+      "kolommen": {
+        "2019": "GemiddeldeWOZWaardeVanWoningen_35",
+        "2020": "GemiddeldeWOZWaardeVanWoningen_35",
+        "2021": "GemiddeldeWOZWaardeVanWoningen_35",
+        "2022": "GemiddeldeWOZWaardeVanWoningen_35",
+        "2023": "GemiddeldeWOZWaardeVanWoningen_36",
+        "2024": "GemiddeldeWOZWaardeVanWoningen_39",
+        "2025": "GemiddeldeWOZWaardeVanWoningen_39",
+        "2026": "GemiddeldeWOZWaardeVanWoningen_40"
+      },
+      "afgeleid": null
+    },
+    "Koopwoningen": {
+      "uuid": "a0bbfd44-bacd-4434-bc8d-3a5204d65637",
+      "jaren": [
+        2019,
+        2020,
+        2021,
+        2022,
+        2023,
+        2024,
+        2025
+      ],
+      "kolommen": {
+        "2019": "Koopwoningen_40",
+        "2020": "Koopwoningen_40",
+        "2021": "Koopwoningen_40",
+        "2022": "Koopwoningen_40",
+        "2023": "Koopwoningen_41",
+        "2024": "Koopwoningen_47",
+        "2025": "Koopwoningen_47",
+        "2026": "Koopwoningen_48"
+      },
+      "afgeleid": null
+    },
+    "Woningcorporatie bezit": {
+      "uuid": "6dd8b659-29c1-4396-a853-1abd7c6e0591",
+      "jaren": [
+        2019,
+        2020,
+        2021,
+        2022,
+        2023,
+        2024,
+        2025
+      ],
+      "kolommen": {
+        "2019": "InBezitWoningcorporatie_42",
+        "2020": "InBezitWoningcorporatie_42",
+        "2021": "InBezitWoningcorporatie_42",
+        "2022": "InBezitWoningcorporatie_42",
+        "2023": "InBezitWoningcorporatie_43",
+        "2024": "InBezitWoningcorporatie_49",
+        "2025": "InBezitWoningcorporatie_49",
+        "2026": "InBezitWoningcorporatie_50"
+      },
+      "afgeleid": null
+    },
+    "Particulier huurbezit": {
+      "uuid": "2aadb30f-860f-4f70-916f-6df00e86e870",
+      "jaren": [
+        2019,
+        2020,
+        2021,
+        2022,
+        2023,
+        2024,
+        2025
+      ],
+      "kolommen": {
+        "2019": "InBezitOverigeVerhuurders_43",
+        "2020": "InBezitOverigeVerhuurders_43",
+        "2021": "InBezitOverigeVerhuurders_43",
+        "2022": "InBezitOverigeVerhuurders_43",
+        "2023": "InBezitOverigeVerhuurders_44",
+        "2024": "InBezitOverigeVerhuurders_50",
+        "2025": "InBezitOverigeVerhuurders_50",
+        "2026": "InBezitOverigeVerhuurders_51"
+      },
+      "afgeleid": null
+    },
+    "Netto arbeidsparticipatie": {
+      "uuid": "b07f74eb-5117-4705-802c-597ba830d016",
+      "jaren": [
+        2019,
+        2020,
+        2021,
+        2022,
+        2023,
+        2024
+      ],
+      "kolommen": {
+        "2019": "Nettoarbeidsparticipatie_67",
+        "2020": "Nettoarbeidsparticipatie_67",
+        "2021": "Nettoarbeidsparticipatie_67",
+        "2022": "Nettoarbeidsparticipatie_67",
+        "2023": "Nettoarbeidsparticipatie_74",
+        "2024": "Nettoarbeidsparticipatie_71",
+        "2025": "Nettoarbeidsparticipatie_71",
+        "2026": "Nettoarbeidsparticipatie_72"
+      },
+      "afgeleid": null
+    },
+    "Percentage werknemers": {
+      "uuid": "352dda4d-5de8-4f31-b85a-6d82f812ba7c",
+      "jaren": [
+        2019,
+        2020,
+        2021,
+        2022,
+        2023,
+        2024
+      ],
+      "kolommen": {
+        "2019": "PercentageWerknemers_68",
+        "2020": "PercentageWerknemers_68",
+        "2021": "PercentageWerknemers_68",
+        "2022": "PercentageWerknemers_68",
+        "2023": "PercentageWerknemers_75",
+        "2024": "PercentageWerknemers_72",
+        "2025": "PercentageWerknemers_72",
+        "2026": "PercentageWerknemers_73"
+      },
+      "afgeleid": null
+    },
+    "Percentage zelfstandigen": {
+      "uuid": "f8d0d890-3975-4183-9555-06d673c4657f",
+      "jaren": [
+        2019,
+        2020,
+        2021,
+        2022,
+        2023,
+        2024
+      ],
+      "kolommen": {
+        "2019": "PercentageZelfstandigen_69",
+        "2020": "PercentageZelfstandigen_69",
+        "2021": "PercentageZelfstandigen_69",
+        "2022": "PercentageZelfstandigen_69",
+        "2023": "PercentageZelfstandigen_78",
+        "2024": "PercentageZelfstandigen_75",
+        "2025": "PercentageZelfstandigen_75",
+        "2026": "PercentageZelfstandigen_76"
+      },
+      "afgeleid": null
+    },
+    "Inkomen per inwoner": {
+      "uuid": "9c035f53-75a5-43eb-8496-22c4c6f08d6b",
+      "jaren": [
+        2019,
+        2020,
+        2021,
+        2022,
+        2023,
+        2024
+      ],
+      "kolommen": {
+        "2019": "GemiddeldInkomenPerInwoner_72",
+        "2020": "GemiddeldInkomenPerInwoner_72",
+        "2021": "GemiddeldInkomenPerInwoner_72",
+        "2022": "GemiddeldInkomenPerInwoner_72",
+        "2023": "GemiddeldInkomenPerInwoner_81",
+        "2024": "GemiddeldInkomenPerInwoner_78",
+        "2025": "GemiddeldInkomenPerInwoner_78",
+        "2026": "GemiddeldInkomenPerInwoner_79"
+      },
+      "afgeleid": null
+    },
+    "Huishoudens met laag inkomen": {
+      "uuid": "3dd70913-391e-4d5f-a121-d17c8b466372",
+      "jaren": [
+        2019,
+        2020,
+        2021,
+        2022,
+        2023
+      ],
+      "kolommen": {
+        "2019": "HuishoudensMetEenLaagInkomen_78",
+        "2020": "HuishoudensMetEenLaagInkomen_78",
+        "2021": "HuishoudensMetEenLaagInkomen_78",
+        "2022": "HuishoudensMetEenLaagInkomen_78",
+        "2023": "HuishoudensMetEenLaagInkomen_87"
+      },
+      "afgeleid": null
+    },
+    "Opleidingsniveau laag": {
+      "uuid": "c9719a07-57a5-48cf-8f93-b6f932aead51",
+      "jaren": [
+        2019,
+        2020,
+        2021,
+        2022,
+        2023,
+        2024
+      ],
+      "kolommen": {
+        "2019": "OpleidingsniveauLaag_64",
+        "2020": "OpleidingsniveauLaag_64",
+        "2021": "OpleidingsniveauLaag_64",
+        "2022": "OpleidingsniveauLaag_64",
+        "2023": "BasisonderwijsVmboMbo1_70",
+        "2024": "BasisonderwijsVmboMbo1_67",
+        "2025": "BasisonderwijsVmboMbo1_67",
+        "2026": "BasisonderwijsVmboMbo1_68"
+      },
+      "afgeleid": null
+    },
+    "Opleidingsniveau middelbaar": {
+      "uuid": "1fa5df89-13e3-424f-9eba-9372cae42896",
+      "jaren": [
+        2019,
+        2020,
+        2021,
+        2022,
+        2023,
+        2024
+      ],
+      "kolommen": {
+        "2019": "OpleidingsniveauMiddelbaar_65",
+        "2020": "OpleidingsniveauMiddelbaar_65",
+        "2021": "OpleidingsniveauMiddelbaar_65",
+        "2022": "OpleidingsniveauMiddelbaar_65",
+        "2023": "HavoVwoMbo24_71",
+        "2024": "HavoVwoMbo24_68",
+        "2025": "HavoVwoMbo24_68",
+        "2026": "HavoVwoMbo24_69"
+      },
+      "afgeleid": null
+    },
+    "Opleidingsniveau hoog": {
+      "uuid": "56f32b9a-bc45-4be1-9e1c-c2668c2e2a32",
+      "jaren": [
+        2019,
+        2020,
+        2021,
+        2022,
+        2023,
+        2024
+      ],
+      "kolommen": {
+        "2019": "OpleidingsniveauHoog_66",
+        "2020": "OpleidingsniveauHoog_66",
+        "2021": "OpleidingsniveauHoog_66",
+        "2022": "OpleidingsniveauHoog_66",
+        "2023": "HboWo_72",
+        "2024": "HboWo_69",
+        "2025": "HboWo_69",
+        "2026": "HboWo_70"
+      },
+      "afgeleid": null
+    },
+    "Participatiewet totaal": {
+      "uuid": "aa5ce990-a43e-439a-9e98-69899321cf40",
+      "jaren": [
+        2019,
+        2020,
+        2021,
+        2022,
+        2023,
+        2024,
+        2025
+      ],
+      "kolommen": {
+        "2019": "PersonenPerSoortUitkeringBijstand_83",
+        "2020": "PersonenPerSoortUitkeringBijstand_83",
+        "2021": "PersonenPerSoortUitkeringBijstand_83",
+        "2022": "PersonenPerSoortUitkeringBijstand_83",
+        "2023": "PersonenPerSoortUitkeringBijstand_92",
+        "2024": "PersonenPerSoortUitkeringBijstand_87",
+        "2025": "PersonenPerSoortUitkeringBijstand_87",
+        "2026": "PersonenPerSoortUitkeringBijstand_88"
+      },
+      "afgeleid": null
+    },
+    "Personenauto's per huishouden": {
+      "uuid": "461d542b-b8be-4510-9dd0-5ba554b818cb",
+      "jaren": [
+        2019,
+        2020,
+        2021,
+        2022,
+        2023,
+        2024,
+        2025
+      ],
+      "kolommen": {
+        "2019": "PersonenautoSPerHuishouden_102",
+        "2020": "PersonenautoSPerHuishouden_103",
+        "2021": "PersonenautoSPerHuishouden_103",
+        "2022": "PersonenautoSPerHuishouden_103",
+        "2023": "PersonenautoSPerHuishouden_112",
+        "2024": "PersonenautoSPerHuishouden_107",
+        "2025": "PersonenautoSPerHuishouden_107",
+        "2026": "PersonenautoSPerHuishouden_108"
+      },
+      "afgeleid": null
+    },
+    "Personenauto's naar oppervlakte": {
+      "uuid": "88192b70-faa9-4108-a473-302aa0f624a9",
+      "jaren": [
+        2019,
+        2020,
+        2021,
+        2022,
+        2023,
+        2024,
+        2025
+      ],
+      "kolommen": {
+        "2019": "PersonenautoSNaarOppervlakte_103",
+        "2020": "PersonenautoSNaarOppervlakte_104",
+        "2021": "PersonenautoSNaarOppervlakte_104",
+        "2022": "PersonenautoSNaarOppervlakte_104",
+        "2023": "PersonenautoSNaarOppervlakte_113",
+        "2024": "PersonenautoSNaarOppervlakte_108",
+        "2025": "PersonenautoSNaarOppervlakte_108",
+        "2026": "PersonenautoSNaarOppervlakte_109"
+      },
+      "afgeleid": null
+    },
+    "Afstand tot huisarts": {
+      "uuid": "1b28d9ef-f7ff-4609-9ef7-7ab8a9b6cba7",
+      "jaren": [
+        2019,
+        2020,
+        2021,
+        2022,
+        2023,
+        2024,
+        2025
+      ],
+      "kolommen": {
+        "2019": "AfstandTotHuisartsenpraktijk_105",
+        "2020": "AfstandTotHuisartsenpraktijk_106",
+        "2021": "AfstandTotHuisartsenpraktijk_106",
+        "2022": "AfstandTotHuisartsenpraktijk_106",
+        "2023": "AfstandTotHuisartsenpraktijk_115",
+        "2024": "AfstandTotHuisartsenpraktijk_110",
+        "2025": "AfstandTotHuisartsenpraktijk_110",
+        "2026": "AfstandTotHuisartsenpraktijk_111"
+      },
+      "afgeleid": null
+    },
+    "Afstand tot grote supermarkt": {
+      "uuid": "869bec9c-9b9a-4425-9cd6-09cb4f7451ae",
+      "jaren": [
+        2019,
+        2020,
+        2021,
+        2022,
+        2023,
+        2024,
+        2025
+      ],
+      "kolommen": {
+        "2019": "AfstandTotGroteSupermarkt_106",
+        "2020": "AfstandTotGroteSupermarkt_107",
+        "2021": "AfstandTotGroteSupermarkt_107",
+        "2022": "AfstandTotGroteSupermarkt_107",
+        "2023": "AfstandTotGroteSupermarkt_116",
+        "2024": "AfstandTotGroteSupermarkt_111",
+        "2025": "AfstandTotGroteSupermarkt_111",
+        "2026": "AfstandTotGroteSupermarkt_112"
+      },
+      "afgeleid": null
+    },
+    "Afstand tot kinderdagverblijf": {
+      "uuid": "76abbf47-6eb6-4c10-a4bf-ec0280435052",
+      "jaren": [
+        2019,
+        2020,
+        2021,
+        2022,
+        2023,
+        2024,
+        2025
+      ],
+      "kolommen": {
+        "2019": "AfstandTotKinderdagverblijf_107",
+        "2020": "AfstandTotKinderdagverblijf_108",
+        "2021": "AfstandTotKinderdagverblijf_108",
+        "2022": "AfstandTotKinderdagverblijf_108",
+        "2023": "AfstandTotKinderdagverblijf_117",
+        "2024": "AfstandTotKinderdagverblijf_112",
+        "2025": "AfstandTotKinderdagverblijf_112",
+        "2026": "AfstandTotKinderdagverblijf_113"
+      },
+      "afgeleid": null
+    },
+    "Afstand tot school": {
+      "uuid": "ec95fe04-04fd-4bbb-bb9f-0f3f97861e5d",
+      "jaren": [
+        2019,
+        2020,
+        2021,
+        2022,
+        2023,
+        2024,
+        2025
+      ],
+      "kolommen": {
+        "2019": "AfstandTotSchool_108",
+        "2020": "AfstandTotSchool_109",
+        "2021": "AfstandTotSchool_109",
+        "2022": "AfstandTotSchool_109",
+        "2023": "AfstandTotSchool_118",
+        "2024": "AfstandTotSchool_113",
+        "2025": "AfstandTotSchool_113",
+        "2026": "AfstandTotSchool_114"
+      },
+      "afgeleid": null
+    },
+    "65+ jaar (%)": {
+      "uuid": "4a221658-f750-50b9-90eb-6d50154c52db",
+      "jaren": [
+        2019,
+        2020,
+        2021,
+        2022,
+        2023,
+        2024,
+        2025,
+        2026
+      ],
+      "kolommen": null,
+      "afgeleid": {
+        "teller": "65+ jaar",
+        "noemer": "Inwoners",
+        "factor": 100,
+        "eenheid": "%"
+      }
+    }
+  },
+  "codecontrole": {
+    "toelichting": "Buurtcodes uit de CBS-tabel die niet in de geometrie 2024 bestaan, per peiljaar en gemeente. Deze waarden zijn niet opgenomen.",
+    "weggevallen": {
+      "2019": {
+        "GM0090 Smallingerland": 31
+      },
+      "2020": {
+        "GM0090 Smallingerland": 31
+      },
+      "2021": {
+        "GM0090 Smallingerland": 31
+      },
+      "2022": {
+        "GM0080 Leeuwarden": 3,
+        "GM0090 Smallingerland": 31
+      },
+      "2023": {
+        "GM0080 Leeuwarden": 3,
+        "GM0090 Smallingerland": 31
+      },
+      "2024": {},
+      "2025": {
+        "GM0080 Leeuwarden": 5
+      },
+      "2026": {
+        "GM0080 Leeuwarden": 5
+      }
+    },
+    "weggevallen_codes": {
+      "2019": {
+        "GM0090": [
+          "BU00900001",
+          "BU00900002",
+          "BU00900003",
+          "BU00900004",
+          "BU00900005",
+          "BU00900006",
+          "BU00900007",
+          "BU00900008",
+          "BU00900009",
+          "BU00900010",
+          "BU00900011",
+          "BU00900012",
+          "BU00900013",
+          "BU00900014",
+          "BU00900015",
+          "BU00900016",
+          "BU00900017",
+          "BU00900018",
+          "BU00900120",
+          "BU00900121",
+          "BU00900122",
+          "BU00900123",
+          "BU00900124",
+          "BU00900125",
+          "BU00900126",
+          "BU00900127",
+          "BU00900128",
+          "BU00900129",
+          "BU00900130",
+          "BU00900131",
+          "BU00900132"
+        ]
+      },
+      "2020": {
+        "GM0090": [
+          "BU00900001",
+          "BU00900002",
+          "BU00900003",
+          "BU00900004",
+          "BU00900005",
+          "BU00900006",
+          "BU00900007",
+          "BU00900008",
+          "BU00900009",
+          "BU00900010",
+          "BU00900011",
+          "BU00900012",
+          "BU00900013",
+          "BU00900014",
+          "BU00900015",
+          "BU00900016",
+          "BU00900017",
+          "BU00900018",
+          "BU00900120",
+          "BU00900121",
+          "BU00900122",
+          "BU00900123",
+          "BU00900124",
+          "BU00900125",
+          "BU00900126",
+          "BU00900127",
+          "BU00900128",
+          "BU00900129",
+          "BU00900130",
+          "BU00900131",
+          "BU00900132"
+        ]
+      },
+      "2021": {
+        "GM0090": [
+          "BU00900001",
+          "BU00900002",
+          "BU00900003",
+          "BU00900004",
+          "BU00900005",
+          "BU00900006",
+          "BU00900007",
+          "BU00900008",
+          "BU00900009",
+          "BU00900010",
+          "BU00900011",
+          "BU00900012",
+          "BU00900013",
+          "BU00900014",
+          "BU00900015",
+          "BU00900016",
+          "BU00900017",
+          "BU00900018",
+          "BU00900120",
+          "BU00900121",
+          "BU00900122",
+          "BU00900123",
+          "BU00900124",
+          "BU00900125",
+          "BU00900126",
+          "BU00900127",
+          "BU00900128",
+          "BU00900129",
+          "BU00900130",
+          "BU00900131",
+          "BU00900132"
+        ]
+      },
+      "2022": {
+        "GM0080": [
+          "BU00807403",
+          "BU00807404",
+          "BU00807405"
+        ],
+        "GM0090": [
+          "BU00900001",
+          "BU00900002",
+          "BU00900003",
+          "BU00900004",
+          "BU00900005",
+          "BU00900006",
+          "BU00900007",
+          "BU00900008",
+          "BU00900009",
+          "BU00900010",
+          "BU00900011",
+          "BU00900012",
+          "BU00900013",
+          "BU00900014",
+          "BU00900015",
+          "BU00900016",
+          "BU00900017",
+          "BU00900018",
+          "BU00900120",
+          "BU00900121",
+          "BU00900122",
+          "BU00900123",
+          "BU00900124",
+          "BU00900125",
+          "BU00900126",
+          "BU00900127",
+          "BU00900128",
+          "BU00900129",
+          "BU00900130",
+          "BU00900131",
+          "BU00900132"
+        ]
+      },
+      "2023": {
+        "GM0080": [
+          "BU00807403",
+          "BU00807404",
+          "BU00807405"
+        ],
+        "GM0090": [
+          "BU00900001",
+          "BU00900002",
+          "BU00900003",
+          "BU00900004",
+          "BU00900005",
+          "BU00900006",
+          "BU00900007",
+          "BU00900008",
+          "BU00900009",
+          "BU00900010",
+          "BU00900011",
+          "BU00900012",
+          "BU00900013",
+          "BU00900014",
+          "BU00900015",
+          "BU00900016",
+          "BU00900017",
+          "BU00900018",
+          "BU00900120",
+          "BU00900121",
+          "BU00900122",
+          "BU00900123",
+          "BU00900124",
+          "BU00900125",
+          "BU00900126",
+          "BU00900127",
+          "BU00900128",
+          "BU00900129",
+          "BU00900130",
+          "BU00900131",
+          "BU00900132"
+        ]
+      },
+      "2025": {
+        "GM0080": [
+          "BU00803204",
+          "BU00807306",
+          "BU00807403",
+          "BU00807404",
+          "BU00807405"
+        ]
+      },
+      "2026": {
+        "GM0080": [
+          "BU00803204",
+          "BU00807306",
+          "BU00807403",
+          "BU00807404",
+          "BU00807405"
+        ]
+      }
+    },
+    "geometriebuurten_zonder_tabelrij": {
+      "2019": 62,
+      "2020": 61,
+      "2021": 61,
+      "2022": 61,
+      "2023": 61,
+      "2024": 0,
+      "2025": 0,
+      "2026": 0
+    }
+  },
+  "resources": [
+    {
+      "name": "kerncijfers_fryslan",
+      "path": "kerncijfers_fryslan.csv",
+      "format": "csv",
+      "encoding": "utf-8",
+      "rows": 179749,
+      "schema": {
+        "fields": [
+          {
+            "name": "gebied_id",
+            "type": "string"
+          },
+          {
+            "name": "indicator_uuid",
+            "type": "string"
+          },
+          {
+            "name": "indicator_naam",
+            "type": "string"
+          },
+          {
+            "name": "waarde",
+            "type": "number"
+          },
+          {
+            "name": "jaar",
+            "type": "integer"
+          },
+          {
+            "name": "bron",
+            "type": "string"
+          },
+          {
+            "name": "kwaliteit",
+            "type": "string"
+          },
+          {
+            "name": "eenheid",
+            "type": "string"
+          },
+          {
+            "name": "categorie",
+            "type": "string"
+          },
+          {
+            "name": "interpretatie_logica",
+            "type": "string"
+          },
+          {
+            "name": "scenario_id",
+            "type": "string"
+          },
+          {
+            "name": "bron_tabel",
+            "type": "string"
+          }
+        ],
+        "primaryKey": [
+          "gebied_id",
+          "indicator_uuid",
+          "jaar",
+          "scenario_id"
+        ]
+      }
+    }
+  ]
+}
