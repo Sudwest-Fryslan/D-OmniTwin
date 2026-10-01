@@ -62,7 +62,10 @@ def get_db_connection():
         db_config = config['DATABASE']
         conn_str = f"postgresql://{db_config['user']}:{db_config['password']}@{db_config['host']}:{db_config['port']}/{db_config['dbname']}"
     else:
-        conn_str = "postgresql://omnitwin_user:admin_omnitwin2026@localhost:5432/omnitwin_db"
+        password = os.getenv("DATABASE_PASSWORD") or sys.exit("DATABASE_PASSWORD ontbreekt; zet hem in de omgeving of in .env.")
+        conn_str = (f"postgresql://{os.getenv('DATABASE_USER', 'omnitwin_user')}:{password}"
+                    f"@{os.getenv('DATABASE_HOST', 'localhost')}:{os.getenv('DATABASE_PORT', '5432')}"
+                    f"/{os.getenv('DATABASE_NAME', 'omnitwin_db')}")
     return create_engine(conn_str)
 
 def get_or_create_indicator(conn, naam, eenheid, uuid_fixed=None, bron="Kadaster BAG", score_type="-=-"):

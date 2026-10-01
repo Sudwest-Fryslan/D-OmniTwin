@@ -172,9 +172,122 @@ def test_schema_bevat_alle_migraties(db):
     assert scalar(db, "SELECT to_regclass('public.deduplicatie_uitzonderingen') IS NOT NULL")
 
 
-# ── Security (bekend probleem, zie #57) ──────────────────────────────────────
+# ── Security: PostgREST en pg_featureserv met eigen rollen (#57) ─────────────
+#
+# PostgREST ziet alleen schema api (views en functies) en draait anoniem als web_anon
+# (alleen lezen). pg_featureserv draait als featureserv (alleen de geo-views).
 
-@pytest.mark.xfail(reason="PostgREST anonieme rol ziet alle tabellen — #57", strict=True)
+# Wat de frontend, de admin en de tests via /api/data gebruiken; zie migrations/schema_v23_api_rollen.sql
+API_WHITELIST = [
+    "gemeenten",
+    "gebiedstypes",
+    "gebieden",
+    "externe_kaartlagen",
+    "indicatoren",
+    "vw_gebied_indicator_actueel",
+    "rpc/get_indicatoren_stats",
+]
+
+# Applicatiedata: nooit via PostgREST
+GEHEIM = ["users", "sessions", "api_keys", "llm_config", "system_prompts", "app_logs", "log_config"]
+
+
 def test_postgrest_anoniem_geen_toegang_tot_users():
     r = requests.get(f"{BASE_URL}/api/data/users", params={"select": "id", "limit": 1}, timeout=TIMEOUT)
     assert r.status_code in (401, 403, 404)
+
+
+@pytest.mark.parametrize("tabel", GEHEIM)
+def test_postgrest_anoniem_geen_applicatiedata(tabel):
+    r = requests.get(f"{BASE_URL}/api/data/{tabel}", params={"limit": 1}, timeout=TIMEOUT)
+    assert r.status_code in (401, 404), f"{tabel}: HTTP {r.status_code}"
+
+
+@pytest.mark.parametrize("pad", API_WHITELIST)
+def test_postgrest_whitelist_leesbaar(pad):
+    params = {} if pad.startswith("rpc/") else {"limit": 1}
+    r = requests.get(f"{BASE_URL}/api/data/{pad}", params=params, timeout=TIMEOUT)
+    assert r.status_code == 200, f"{pad}: HTTP {r.status_code} {r.text[:200]}"
+    assert isinstance(r.json(), list)
+
+
+def test_postgrest_toont_alleen_whitelist():
+    """De OpenAPI-beschrijving van PostgREST noemt alleen de objecten uit schema api."""
+    r = requests.get(f"{BASE_URL}/api/data/", timeout=TIMEOUT)
+    assert r.status_code == 200
+    paden = {p.strip("/") for p in r.json().get("paths", {})} - {""}
+    assert paden == set(API_WHITELIST)
+
+
+@pytest.mark.parametrize("methode,pad,body", [
+    ("POST", "gemeenten", {"code": "9999", "naam": "Test", "provincie": "Test"}),
+    ("POST", "indicatoren", {"naam": "test-57"}),
+    ("PATCH", "gemeenten?code=eq.1900", {"naam": "Gehackt"}),
+    ("PATCH", "indicatoren?id=gt.0", {"naam": "Gehackt"}),
+    ("DELETE", "gebieden?id=eq.BU19000002", None),
+    ("DELETE", "externe_kaartlagen?id=gt.0", None),
+    ("POST", "users", {"username": "x"}),
+    ("PATCH", "users?id=not.is.null", {"is_active": False}),
+    ("DELETE", "sessions?token=not.is.null", None),
+])
+def test_postgrest_anoniem_kan_niet_schrijven(methode, pad, body):
+    r = requests.request(methode, f"{BASE_URL}/api/data/{pad}", json=body, timeout=TIMEOUT)
+    assert r.status_code in (401, 403, 404, 405), f"{methode} {pad}: HTTP {r.status_code}"
+
+
+def test_postgrest_schrijfpoging_verandert_niets(db):
+    voor = scalar(db, "SELECT naam FROM gemeenten WHERE code = '1900'")
+    requests.patch(f"{BASE_URL}/api/data/gemeenten", params={"code": "eq.1900"},
+                   json={"naam": "Gehackt"}, timeout=TIMEOUT)
+    assert scalar(db, "SELECT naam FROM gemeenten WHERE code = '1900'") == voor
+
+
+@pytest.mark.parametrize("functie", [
+    "update_updated_at_column",
+    "update_gebied_centroid",
+    "postgis_full_version",
+    "st_asgeojson",
+])
+def test_postgrest_rpc_buiten_whitelist(functie):
+    r = requests.post(f"{BASE_URL}/api/data/rpc/{functie}", json={}, timeout=TIMEOUT)
+    assert r.status_code in (401, 404), f"{functie}: HTTP {r.status_code}"
+
+
+def test_featureserv_alleen_geo_views():
+    r = requests.get(f"{BASE_URL}/api/geo/collections", timeout=TIMEOUT)
+    r.raise_for_status()
+    ids = {c["id"] for c in r.json()["collections"]}
+    assert ids == {"public.vw_gebieden_features", "public.omgevingsvisie_deelgebieden"}
+    r = requests.get(f"{BASE_URL}/api/geo/collections/public.gebieden/items", params={"limit": 1}, timeout=TIMEOUT)
+    assert r.status_code == 404
+
+
+def test_featureserv_functie_buurten_in_deelgebied():
+    r = requests.get(f"{BASE_URL}/api/geo/functions/postgisftw.buurten_in_deelgebied/items",
+                     params={"deelgebied_id": 1}, timeout=TIMEOUT)
+    assert r.status_code == 200, r.text[:300]
+
+
+ROL_ATTRIBUTEN = """
+    SELECT rolsuper, rolinherit, rolcanlogin, rolcreaterole, rolcreatedb, rolbypassrls
+    FROM pg_roles WHERE rolname = %s
+"""
+
+
+def test_rollen_zonder_extra_rechten(db):
+    with db.cursor() as cur:
+        cur.execute(ROL_ATTRIBUTEN, ("authenticator",))
+        assert cur.fetchone() == (False, False, True, False, False, False)
+        cur.execute(ROL_ATTRIBUTEN, ("web_anon",))
+        assert cur.fetchone() == (False, True, False, False, False, False)
+        cur.execute(ROL_ATTRIBUTEN, ("featureserv",))
+        assert cur.fetchone()[0] is False
+
+
+@pytest.mark.parametrize("rol", ["web_anon", "authenticator", "featureserv"])
+@pytest.mark.parametrize("tabel", GEHEIM + ["gebieden", "indicatoren", "gebied_data"])
+def test_rollen_geen_rechten_op_tabellen(db, rol, tabel):
+    """Geen enkele API-rol heeft rechten op de tabellen in public; alleen via views."""
+    for recht in ("SELECT", "INSERT", "UPDATE", "DELETE"):
+        heeft = scalar(db, "SELECT has_table_privilege(%s, %s, %s)", (rol, f"public.{tabel}", recht))
+        assert not heeft, f"{rol} heeft {recht} op {tabel}"

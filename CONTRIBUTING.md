@@ -67,6 +67,15 @@ Wie mag mergen naar `main` is een keuze, geen vanzelfsprekendheid. Gangbare opti
 
 **Zonder deze afspraken vastgelegd in de repository-instellingen is de procedure vrijblijvend.** Dit besluit (en het inrichten van branch protection op `main`) vereist repository-adminrechten en staat nog open — zie [#29](https://github.com/TLaan/D-OmniTwin/issues/29).
 
+## Versies en releases
+
+- Versienummers volgen [Semantic Versioning](https://semver.org/lang/nl/); het nummer staat op één plek, het bestand `VERSION`.
+- Commitberichten en PR-titels volgen [Conventional Commits](https://www.conventionalcommits.org/nl/v1.0.0/) (`feat:`, `fix:`, `docs:`, `chore:`, ...; brekend: `feat!:`).
+- Een PR met een merkbare wijziging zet een regel onder `## [Unreleased]` in [`CHANGELOG.md`](./CHANGELOG.md).
+- Een release krijgt een branch `release/<MAJOR>.<MINOR>` en een tag `v<versie>`; fixes voor een uitgebrachte versie gaan eerst naar `main` en dan naar de release-branch.
+
+Details en de checklist voor een release: [releasebeleid](docs/9-beheer/releasebeleid.md).
+
 ## Werken met GitKraken Desktop
 
 Zelfde proces als hierboven, uitgewerkt met de stappen zoals ze in GitKraken Desktop verlopen. Screenshots zijn verwijzingen naar GitKraken's eigen documentatie (hotlinked, niet gekopieerd), dus ze blijven actueel zolang GitKraken die pagina's onderhoudt.

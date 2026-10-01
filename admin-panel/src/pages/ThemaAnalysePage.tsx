@@ -133,7 +133,7 @@ export const ThemaAnalysePage: React.FC = () => {
     useEffect(() => {
         if (laagId && woonplaatsen.length > 0) {
             fetch(`/api/externe-lagen/${laagId}/features?features=${encodeURIComponent(woonplaatsen.join(','))}`, {
-                headers: { 'X-Admin-Key': localStorage.getItem('adminKey') || '' }
+                credentials: 'same-origin'
             })
                 .then(r => r.json())
                 .then(data => setWoonplaatsGeo(data))

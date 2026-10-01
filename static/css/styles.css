@@ -1151,6 +1151,64 @@ body {
   text-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
 }
 
+/* Actief gemeentefilter boven de kaart (#140) */
+.gemeente-filter-chip {
+  position: absolute;
+  top: var(--spacing-md);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 15;
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  max-width: calc(100% - 2 * var(--spacing-md));
+  padding: 0.375rem 0.375rem 0.375rem 0.875rem;
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 999px;
+  box-shadow: 0 4px 12px var(--shadow-color);
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.gemeente-filter-chip[hidden] {
+  display: none;
+}
+
+.gemeente-filter-chip.leeg {
+  border-color: var(--color-warning);
+  color: var(--color-warning);
+}
+
+.gemeente-filter-tekst {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.gemeente-filter-wis {
+  flex: none;
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: inherit;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: background var(--transition-fast);
+}
+
+.gemeente-filter-wis:hover {
+  background: var(--bg-primary);
+}
+
+.gemeente-filter-wis:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
 /* Map Info Overlay */
 .map-info-overlay {
   position: absolute;

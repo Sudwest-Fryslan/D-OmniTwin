@@ -37,12 +37,22 @@ wait_for_db() {
     echo "✅ PostgreSQL is gereed voor verbindingen."
 }
 
+# Migraties die (nog) niet in schema_latest.sql zitten. Idempotent, dus ze draaien
+# bij elke init, ook op een bestaande database. Structureel: migratiebeheer (#54)
+run_migrations() {
+    for m in schema_v18_trigram.sql schema_v19_deduplicatie_uitzonderingen.sql schema_v20_llm_api_type.sql schema_v22_auth_hardening.sql; do
+        PGOPTIONS="-c client_min_messages=warning" psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -v ON_ERROR_STOP=1 -q -f "/app/migrations/$m" >/dev/null
+    done
+}
+
 init_db() {
     # Controleer of het schema al bestaat
     TABLE_EXISTS=$(psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -tAc "SELECT 1 FROM information_schema.tables WHERE table_schema='public' AND table_name='gebieden';" 2>/dev/null || true)
 
     if [ "$TABLE_EXISTS" = "1" ]; then
         echo "✅ Bestaande database gevonden (tabel 'gebieden' aanwezig). Initialisatie overgeslagen."
+        echo "⚙️ Migraties controleren..."
+        run_migrations
         return
     fi
 
@@ -53,10 +63,7 @@ init_db() {
     psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -v ON_ERROR_STOP=1 -f /app/init_data/schema/06_pg_featureserv_views.sql >/dev/null
     # SQL-functies die pg_featureserv publiceert onder /api/geo/functions (schema postgisftw)
     psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -v ON_ERROR_STOP=1 -f /app/init_data/schema/07_postgisftw_functions.sql >/dev/null
-    # Migraties die (nog) niet in schema_latest.sql zitten; idempotent. Structureel: migratiebeheer (#54)
-    for m in schema_v18_trigram.sql schema_v19_deduplicatie_uitzonderingen.sql schema_v20_llm_api_type.sql; do
-        psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -v ON_ERROR_STOP=1 -f "/app/migrations/$m" >/dev/null
-    done
+    run_migrations
     echo "✅ Database schema succesvol aangemaakt."
 
     # Altijd: het product zonder data (stuurdata, indicatordefinities, Kompas)
@@ -93,6 +100,22 @@ init_db() {
     psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -c "NOTIFY pgrst, 'reload schema';" >/dev/null 2>&1 || true
 }
 
+# Rollen en schema api voor PostgREST en pg_featureserv (#57). Draait bij elke start, ook bij
+# een bestaande database: zonder deze rollen kunnen PostgREST en pg_featureserv niet verbinden.
+# Idempotent. De LOGIN-rollen authenticator (PostgREST) en featureserv (pg_featureserv) krijgen
+# DATABASE_PASSWORD als wachtwoord: geen extra variabele in .env. Die containers kregen dat
+# wachtwoord al; de rollen zelf hebben geen rechten op de tabellen.
+setup_api_rollen() {
+    echo "🔐 Rollen en schema api voor PostgREST en pg_featureserv bijwerken..."
+    psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -v ON_ERROR_STOP=1 -q -f /app/migrations/schema_v23_api_rollen.sql >/dev/null
+    # Wachtwoord via een psql-variabele (:'pw' quote het correct), niet in de SQL-bestanden
+    psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -v ON_ERROR_STOP=1 -q -v pw="$DB_PASS" >/dev/null <<'SQL'
+ALTER ROLE authenticator PASSWORD :'pw';
+ALTER ROLE featureserv PASSWORD :'pw';
+SQL
+    echo "✅ Rollen authenticator, web_anon en featureserv zijn bijgewerkt."
+}
+
 # Embeddings voor AI-zoeken en de chat (#139). Draait ook bij een bestaande database:
 # het script vectoriseert alleen indicatoren zonder embedding en laadt het model alleen
 # als er iets te doen is. Geen model of geen netwerk: waarschuwing, init gaat door.
@@ -109,6 +132,7 @@ wait_for_db
 
 if [ "$1" = "init" ]; then
     init_db
+    setup_api_rollen
     generate_embeddings
     echo "✅ Initialisatie klaar."
     exit 0

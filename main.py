@@ -22,11 +22,12 @@ load_dotenv(project_root / '.env')
 
 # Import routers
 from routers import gebiedsmonitor, kompas, admin, dashboard, visualisatie
+from src.version import __version__
 
 app = FastAPI(
     title="D-OmniTwin API",
     description="Backend API voor D-OmniTwin: The Omni Twin - Digitale spiegel van de fysieke leefomgeving",
-    version="1.5.0",  # Visualisatie Standaard
+    version=__version__,  # bron: VERSION (zie docs/9-beheer/releasebeleid.md)
     docs_url=None, # Disable default docs (served locally)
     redoc_url=None # Disable default redoc (served locally)
 )
@@ -164,6 +165,7 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 
 # Setup templates
 templates = Jinja2Templates(directory="templates")
+templates.env.globals["app_version"] = __version__
 
 # ============================================================================
 # App Configuration (from environment)
@@ -179,6 +181,7 @@ app.include_router(auth.router)
 app.include_router(admin.router)
 app.include_router(dashboard.router)
 app.include_router(visualisatie.router)
+app.include_router(visualisatie.admin_router)
 from routers import report
 app.include_router(report.router)
 from routers import data_controle, ai_search, chat, bag3d, log_viewer, externe_lagen
@@ -188,6 +191,7 @@ app.include_router(chat.router)
 app.include_router(bag3d.router)
 app.include_router(log_viewer.router)
 app.include_router(externe_lagen.router)
+app.include_router(externe_lagen.admin_router)
 
 @app.on_event("startup")
 async def startup_event():
@@ -208,6 +212,11 @@ async def startup_event():
         AppLogger.info("Frontend available at http://localhost:8000/", category="SERVER")
     except Exception as e:
         AppLogger.error(f"Database connection failed: {e}", category="SERVER")
+
+    # X-Admin-Key alleen met een echte key; een lege of voorbeeldwaarde geeft geen toegang (#65)
+    from routers.auth import geldige_admin_api_key
+    if geldige_admin_api_key() is None:
+        AppLogger.warning("ADMIN_API_KEY is leeg of een voorbeeldwaarde: X-Admin-Key is uitgeschakeld", category="AUTH")
 
     # Start dagelijkse log cleanup
     start_cleanup_scheduler()
@@ -275,7 +284,7 @@ def api_root():
     return {
         "message": "Welcome to D-OmniTwin API", 
         "status": "running",
-        "version": "1.2.0",
+        "version": __version__,
         "security": "🔒 CORS locked, Security headers active",
         "apis": {
             "gebiedsmonitor": "/api/gebiedsmonitor",
@@ -293,7 +302,7 @@ def health_check(db: Session = Depends(get_db)):
         return {
             "database": "online", 
             "api": "online", 
-            "version": "1.2.0",
+            "version": __version__,
             "security": "headers_active"
         }
     except Exception as e:
