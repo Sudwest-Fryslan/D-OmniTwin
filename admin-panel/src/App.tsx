@@ -278,7 +278,8 @@ function App() {
     const checkAuthStatus = async () => {
       try {
         const res = await authAPI.getMe();
-        if (res.data.authenticated && res.data.user) {
+        // Alleen beheerders; de backend dwingt dit ook af (#65)
+        if (res.data.authenticated && res.data.user?.is_admin) {
           setAuthenticated(true, res.data.user);
         } else {
           setAuthenticated(false);

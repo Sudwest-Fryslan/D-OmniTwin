@@ -88,11 +88,11 @@ Dit framework is **niet** voor de initiële bootstrap (dat is `init_data/`, hier
 
 Copy `.env.example` to `.env` and fill in (details: `docs/9-beheer/installatie.md`, sectie 2.2):
 - `DATABASE_*` — PostgreSQL connection (requires PostGIS extension). `DATABASE_PASSWORD` alleen letters/cijfers: het komt in database-URL's terecht
-- `ADMIN_API_KEY` — for admin panel authentication (`X-Admin-Key`); nooit de voorbeeldwaarde laten staan
+- `ADMIN_API_KEY` — voor scripts (`X-Admin-Key`), niet voor de beheer-UI; minimaal 32 tekens, een lege of voorbeeldwaarde wordt geweigerd
 - `ADMIN_USER` / `ADMIN_PASSWORD` — eerste beheeraccount; leeg = gegenereerd, eenmalig in `docker compose logs db-init`
 - `OLLAMA_*` — for local LLM (optional; Qwen model)
 
-For the admin panel dev server, optionally create `admin-panel/.env` with `VITE_ADMIN_KEY` (fallback voor `X-Admin-Key`; wordt in de bundle ingebakken, dus niet voor productiebuilds).
+The admin panel authenticates only with the session cookie (log in as a user with `is_admin`). Never put secrets in `VITE_*` variables: Vite bakes them into the bundle.
 
 ## Architecture
 

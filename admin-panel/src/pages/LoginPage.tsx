@@ -20,15 +20,16 @@ export const LoginPage: React.FC = () => {
             formData.append('username', username);
             formData.append('password', password);
 
-            const response = await authAPI.login(formData);
+            await authAPI.login(formData);
 
-            // Login success, update global state
-            // The HttpOnly cookie is automatically set by the browser here
-            setAuthenticated(true, {
-                id: response.data.user.id,
-                username: response.data.user.username,
-                is_admin: true
-            });
+            // De browser heeft nu het HttpOnly-cookie; rol ophalen bij de backend
+            const me = await authAPI.getMe();
+            if (!me.data.authenticated || !me.data.user?.is_admin) {
+                await authAPI.logout();
+                setError('Dit account heeft geen beheerrechten.');
+                return;
+            }
+            setAuthenticated(true, me.data.user);
         } catch (err: any) {
             setError(err.response?.data?.detail || 'Inloggen mislukt. Controleer gegevens.');
         } finally {
