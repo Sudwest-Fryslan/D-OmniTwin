@@ -27,7 +27,7 @@ def get_connection():
     db_port = os.getenv('DATABASE_PORT', '5432')
     db_name = os.getenv('DATABASE_NAME', 'omnitwin_db')
     db_user = os.getenv('DATABASE_USER', 'omnitwin_user')
-    db_password = os.getenv('DATABASE_PASSWORD', 'admin_omnitwin2026')
+    db_password = os.getenv('DATABASE_PASSWORD') or sys.exit("DATABASE_PASSWORD ontbreekt; zet hem in de omgeving of in .env.")
     
     # Try configured port first, fallback to 5433 if local port 5432 fails
     ports_to_try = [db_port]
