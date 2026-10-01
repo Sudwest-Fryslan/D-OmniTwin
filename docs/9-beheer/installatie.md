@@ -73,6 +73,7 @@ De eerste keer duurt dit lang (10 tot 30 minuten): de backend-image installeert 
 
 1. `postgres` (PostGIS met pgvector) wordt *healthy*.
 2. `db-init` draait één keer en stopt. Bij een **lege** database maakt hij het schema aan (`init_data/schema/schema_latest.sql`, de views voor de kaart en de migraties v18 en v19), laadt de stuurdata en eventueel de sample dataset, en maakt het beheeraccount aan. Bestaat de tabel `gebieden` al, dan slaat hij dit allemaal over. Hij overschrijft dus nooit bestaande data.
+   Daarna genereert hij, ook bij een bestaande database, de embeddings voor AI-zoeken en de chat (`scripts/ai/genereer_embeddings.py`), voor alle actieve indicatoren zonder embedding, ook concepten. Daarvoor downloadt hij de eerste keer het model `all-MiniLM-L6-v2` (circa 90 MB) van HuggingFace. Lukt dat niet, bijvoorbeeld zonder internet, dan staat er een waarschuwing in de log en gaat de installatie gewoon door; AI-zoeken en de chat vinden dan geen indicatoren.
 3. `backend` (FastAPI), `postgrest` en `pg_featureserv` starten, `traefik` stuurt het verkeer door.
 
 Controleer:
@@ -281,6 +282,7 @@ De chat en de samenvattingen gebruiken een lokaal taalmodel via [Ollama](https:/
 | `function similarity(...) does not exist` of ontbrekende tabel `deduplicatie_uitzonderingen` | Oudere database zonder migraties v18/v19. Zie [Bijwerken](#5-bijwerken). |
 | Wijziging in `.env` heeft geen effect | `docker compose up -d` (niet `restart`): alleen dan worden containers met de nieuwe waarden opnieuw gemaakt. |
 | Windows: `db-init` faalt met `/bin/bash^M: bad interpreter` | Het shell-script is met CRLF uitgecheckt. Controleer of `.gitattributes` aanwezig is, zet het script opnieuw neer met `rm docker-entrypoint.sh && git checkout -- docker-entrypoint.sh` en bouw opnieuw (`docker compose up -d --build`). |
+| AI-zoeken of de chat vindt geen indicatoren | Er zijn geen embeddings. Kijk in `docker compose logs db-init` naar `Embeddings niet gegenereerd`; meestal kon het model niet worden gedownload. Zorg voor internet en draai `docker compose run --rm db-init`: die vult alleen de ontbrekende embeddings aan. Na het goedkeuren van nieuwe beschrijvingen: `docker compose exec backend python scripts/ai/genereer_embeddings.py --opnieuw`. |
 | AI-chat of samenvatting duurt minuten | Het model is een *thinking*-variant. Bij Ollama zijn `qwen3:4b` en `qwen3:30b` zonder toevoeging thinking-varianten; kies in **AI Configuratie** een `*-instruct`-variant (bijvoorbeeld `qwen3:30b-instruct`). Op een laptop zonder GPU blijft een samenvatting met een lokaal model ruim een minuut duren. |
 | AI-chat geeft geen antwoord | Controleer in **AI Configuratie** de API-URL: vanuit de container is dat `http://host.docker.internal:11434`, niet `localhost`. Op Linux moet Ollama op alle interfaces luisteren (zie [LLM](#7-llm-optioneel)). |
 | Ontwikkelmodus op Windows: backend start niet, `PermissionError: /app/logs/server.log` | De backend draait als niet-root-gebruiker en mag niet schrijven in de gemounte projectmap. Bijgewerkte `docker-compose.override.yml` gebruikt een apart logvolume (#59/#115). |

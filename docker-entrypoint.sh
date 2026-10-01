@@ -93,6 +93,14 @@ init_db() {
     psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -c "NOTIFY pgrst, 'reload schema';" >/dev/null 2>&1 || true
 }
 
+# Embeddings voor AI-zoeken en de chat (#139). Draait ook bij een bestaande database:
+# het script vectoriseert alleen indicatoren zonder embedding en laadt het model alleen
+# als er iets te doen is. Geen model of geen netwerk: waarschuwing, init gaat door.
+generate_embeddings() {
+    echo "🧠 Embeddings voor AI-zoeken genereren..."
+    python /app/scripts/ai/genereer_embeddings.py || echo "⚠️ Embeddings niet gegenereerd: AI-zoeken en de chat vinden geen indicatoren. Later opnieuw: docker compose run --rm db-init (of python scripts/ai/genereer_embeddings.py)."
+}
+
 echo "============================================================"
 echo "🌍 D-OmniTwin — Container Startup"
 echo "============================================================"
@@ -101,6 +109,7 @@ wait_for_db
 
 if [ "$1" = "init" ]; then
     init_db
+    generate_embeddings
     echo "✅ Initialisatie klaar."
     exit 0
 fi
