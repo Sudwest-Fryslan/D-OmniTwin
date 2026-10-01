@@ -22,7 +22,7 @@ Herstructurering en opschoning, zonder andere werking van de applicatie ([#182](
 ### Gewijzigd
 
 - Eén Python-pakket `src/omnitwin/` (app, routers, services, schemas, database, versie) met `pyproject.toml` (`[project]`, versie uit `VERSION`) ([#196](https://github.com/TLaan/D-OmniTwin/pull/196)).
-- Databaseschema, migraties en stuurdata samen in `db/`, met een migratierunner ([#197](https://github.com/TLaan/D-OmniTwin/pull/197), [#54](https://github.com/TLaan/D-OmniTwin/issues/54)).
+- Databaseschema, migraties en stuurdata samen in `db/`, met een migratierunner ([#198](https://github.com/TLaan/D-OmniTwin/pull/198), [#54](https://github.com/TLaan/D-OmniTwin/issues/54)).
 - Validatiescripts naar `tools/` ([#193](https://github.com/TLaan/D-OmniTwin/pull/193)).
 
 ### Verwijderd
