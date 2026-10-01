@@ -56,9 +56,11 @@ def verwachte_buurten(uc):
 
 
 def verwachte_getallen(uc):
-    """Niet-triviale getallen in verwacht.verwacht (zoals geschreven)."""
+    """Niet-triviale getallen in verwacht.verwacht (zoals geschreven), behalve die uit de vraag ('65-plussers')."""
+    in_vraag = {w for _, ws, _, _ in getallen_in_tekst(USE_CASES[uc]["persona"]["vraag"]) for w in ws}
     return [(raw, waarden, pct) for raw, waarden, pct, triviaal
-            in getallen_in_tekst(USE_CASES[uc]["verwacht"]["verwacht"]) if not triviaal]
+            in getallen_in_tekst(USE_CASES[uc]["verwacht"]["verwacht"])
+            if not triviaal and not (waarden & in_vraag)]
 
 
 _antwoorden = {}
