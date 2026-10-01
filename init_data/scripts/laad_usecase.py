@@ -2,13 +2,18 @@
 """
 D-OmniTwin — use-casepakket laden
 =================================
-Laadt een use case (usecases/<naam>/) bovenop de sample dataset:
+Alle data hoort bij een use case. Een use case (usecases/<naam>/) laadt:
 
-1. inrichting: richting van de indicatoren (hoger/lager is beter)
-2. afgeleide indicatoren: percentages berekend uit bestaande brondata
+1. data: de gebieden uit usecase.json (geometrie en alle indicatorwaarden),
+   gekozen uit de bronbibliotheek init_data/sample/2_brondata
+2. inrichting: richting van de indicatoren (hoger/lager is beter)
+3. afgeleide indicatoren: percentages berekend uit bestaande brondata
    (bijvoorbeeld 65+ jaar ÷ Inwoners), voor alle gebieden in de database
-3. extra brondata: usecases/<naam>/data/waarden.csv, zelfde formaat als
+4. extra brondata: usecases/<naam>/data/waarden.csv, zelfde formaat als
    init_data/sample/2_brondata/sample_indicatoren.csv (optioneel)
+
+Vereist: het product zonder data, geladen met
+    python init_data/scripts/load_sample.py --stap definities
 
 Idempotent: opnieuw laden overschrijft dezelfde rijen. Pakketten zijn te
 combineren; --alle laadt ze allemaal.
@@ -19,8 +24,10 @@ Gebruik:
 """
 
 import argparse
+import csv
 import json
 import sys
+import tempfile
 import uuid
 from pathlib import Path
 
@@ -104,9 +111,38 @@ def maak_afgeleid(cur, afg, bron_uc):
     print(f"   ➕ {afg['naam']}: {cur.rowcount} waarden")
 
 
+def laad_gebieden(conn, gebied_ids):
+    """Geometrie en indicatorwaarden van deze gebieden uit de bronbibliotheek laden."""
+    bron_geojson, bron_csv = load_sample.BUURTEN_GEOJSON, load_sample.INDICATOREN_CSV
+    with tempfile.TemporaryDirectory() as tmp:
+        geo = json.loads(bron_geojson.read_text(encoding="utf-8"))
+        geo["features"] = [f for f in geo["features"] if f["properties"].get("id") in gebied_ids]
+        ontbreekt = set(gebied_ids) - {f["properties"]["id"] for f in geo["features"]}
+        if ontbreekt:
+            sys.exit(f"❌ Gebieden niet in de bronbibliotheek: {sorted(ontbreekt)}")
+        geo_pad = Path(tmp) / "buurten.geojson"
+        geo_pad.write_text(json.dumps(geo), encoding="utf-8")
+
+        csv_pad = Path(tmp) / "waarden.csv"
+        with open(bron_csv, encoding="utf-8") as fin, open(csv_pad, "w", encoding="utf-8", newline="") as fout:
+            lezer = csv.DictReader(fin)
+            schrijver = csv.DictWriter(fout, fieldnames=lezer.fieldnames)
+            schrijver.writeheader()
+            schrijver.writerows(r for r in lezer if r["gebied_id"] in gebied_ids)
+
+        # load_sample leest de paden bij aanroep; tijdelijk omzetten naar de selectie
+        load_sample.BUURTEN_GEOJSON, load_sample.INDICATOREN_CSV = geo_pad, csv_pad
+        try:
+            load_sample.import_buurten(conn)
+            load_sample.import_waarden(conn)
+        finally:
+            load_sample.BUURTEN_GEOJSON, load_sample.INDICATOREN_CSV = bron_geojson, bron_csv
+
+
 def laad(conn, naam):
     uc = json.loads((USECASES_DIR / naam / "usecase.json").read_text(encoding="utf-8"))
     print(f"\n📦 {uc['id']} {naam}: {uc['titel']}")
+    laad_gebieden(conn, list(uc["data"]["gebieden"]))
     cur = conn.cursor()
     zet_richting(cur, uc["data"]["indicatoren"])
     for afg in uc["data"].get("afgeleid", []):
@@ -115,9 +151,13 @@ def laad(conn, naam):
 
     extra = USECASES_DIR / naam / "data" / "waarden.csv"
     if extra.exists():
+        bron_csv = load_sample.INDICATOREN_CSV
         load_sample.INDICATOREN_CSV = extra  # zelfde formaat als de sample
-        load_sample.import_indicatoren(conn)
-        load_sample.import_waarden(conn)
+        try:
+            load_sample.import_indicatoren(conn)
+            load_sample.import_waarden(conn)
+        finally:
+            load_sample.INDICATOREN_CSV = bron_csv
 
 
 def main():

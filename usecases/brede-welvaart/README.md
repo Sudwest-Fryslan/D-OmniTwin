@@ -42,7 +42,7 @@ Een use case is een **bundel**: data + inrichting + stappen. Alle drie staan hie
 
 | # | Actie | Verwacht | Resultaat 01-10 |
 |---|---|---|---|
-| 0 | Laad het pakket: `python init_data/scripts/laad_usecase.py <naam>` (db-init doet dit automatisch met de sample) | Richting en afgeleide indicatoren staan in de database | ✅ |
+| 0 | Laad het pakket: `python init_data/scripts/laad_usecase.py <naam>` (db-init doet dit automatisch bij `LOAD_SAMPLE_DATA=true`) | Richting en afgeleide indicatoren staan in de database | ✅ |
 | 1 | Open de app, kies **Kaart Configuratie → CBS Buurten** | 13 buurten op de kaart | ✅ |
 | 2 | Kies indicator **Inkomen per inwoner**, zoom in op Bolsward | Buurten gekleurd; **rood = slechter**, legenda met eenheid | ✅ Richting klopt (alle indicatoren hoger = beter) |
 | 3 | Klik op **Bolsward-Zuidoost** | Selectiebalk met de buurtnaam | ✅ |

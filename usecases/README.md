@@ -17,10 +17,13 @@ usecases/<naam>/
 
 **Laden:** `python init_data/scripts/laad_usecase.py <naam> [...]` of `--alle`. Bij een verse installatie met `LOAD_SAMPLE_DATA=true` laadt `db-init` alle pakketten automatisch.
 
-Een pakket ligt **bovenop de sample** (`init_data/sample`: gebieden, geometrie, algemene stuurdata) en doet drie dingen:
-1. de richting van de indicatoren zetten (hoger of lager is beter);
-2. afgeleide indicatoren berekenen uit bestaande brondata, bijvoorbeeld `65+ jaar ÷ Inwoners`, voor alle gebieden in de database;
-3. extra brondata laden uit `data/waarden.csv`, als die er is.
+**Alle data hoort bij een use case.** Een verse installatie laadt altijd het product zonder data: stuurdata, indicatordefinities en Kompas. De data komt uit de use cases. Een pakket doet vier dingen:
+1. zijn **gebieden** laden (geometrie en alle indicatorwaarden), gekozen uit de bronbibliotheek `init_data/sample/2_brondata`;
+2. de richting van de kernindicatoren controleren en zetten (hoger of lager is beter);
+3. afgeleide indicatoren berekenen uit bestaande brondata, bijvoorbeeld `65+ jaar ÷ Inwoners`;
+4. extra brondata laden uit `data/waarden.csv`, als die er is.
+
+`tests/test_usecase_pakketten.py` bewaakt dat elk gebied in de bronbibliotheek bij minstens één use case hoort.
 
 Laden is idempotent, en pakketten zijn te combineren.
 
@@ -29,6 +32,7 @@ Laden is idempotent, en pakketten zijn te combineren.
 | ID | Use case | Persona | Kompas-profiel | Status |
 |---|---|---|---|---|
 | [TC-06-007](./brede-welvaart/README.md) | Brede welvaart en functiemenging | Strateeg / economische zaken | Volledig Kompas | ⚠️ |
+| [TC-06-001](./beleidsadviseur-swf/README.md) | Beleidsadviseur verkent kernen in Súdwest-Fryslân (IJsselmeerkust) | Beleidsadviseur | Volledig Kompas | ⚠️ |
 | [TC-06-005](./energiearmoede/README.md) | Energietransitie en energiearmoede | Beleidsmaker energietransitie | — | ⚠️ |
 | [TC-06-006](./hittestress/README.md) | Klimaatadaptatie: hittestress en kwetsbaarheid | Stedenbouwkundige / GGD | Klimaat Kompas | ⚠️ |
 | [TC-06-008](./sociale-cohesie/README.md) | Zorgzwaarte en sociale cohesie | Wijkcoördinator / wijkcontactfunctionaris | Volledig Kompas | ⚠️ |

@@ -6,7 +6,10 @@ Laadt de minimale, zelfstandige sample dataset (12 SWF buurten) in de database.
 Bedoeld voor snelle start, tests en demonstraties zonder externe data-downloads.
 
 Gebruik:
-    python init_data/scripts/load_sample.py [--stap alle|stuurdata|buurten|indicatoren|kompas|waarden]
+    python init_data/scripts/load_sample.py [--stap alle|definities|stuurdata|buurten|indicatoren|kompas|waarden]
+
+    'definities' laadt het product zonder data (stuurdata, indicatordefinities, Kompas).
+    De data (gebieden en waarden) komt uit de use cases: init_data/scripts/laad_usecase.py.
 
 Vereisten:
     Database schema geladen via: init_data/schema/schema_latest.sql
@@ -454,9 +457,10 @@ def main():
     )
     parser.add_argument(
         "--stap",
-        choices=["alle", "stuurdata", "buurten", "indicatoren", "kompas", "waarden"],
+        choices=["alle", "definities", "stuurdata", "buurten", "indicatoren", "kompas", "waarden"],
         default="alle",
-        help="Welke stap uitvoeren (default: alle)"
+        help="Welke stap uitvoeren (default: alle). 'definities' = stuurdata, indicatoren en Kompas, "
+             "zonder gebieden en waarden; die komen uit de use cases (laad_usecase.py)"
     )
     args = parser.parse_args()
 
@@ -476,7 +480,7 @@ def main():
     success = True
 
     try:
-        if stap in ("alle", "stuurdata"):
+        if stap in ("alle", "definities", "stuurdata"):
             if not import_stuurdata(conn):
                 success = False
 
@@ -484,11 +488,11 @@ def main():
             if not import_buurten(conn):
                 success = False
 
-        if stap in ("alle", "indicatoren") and success:
+        if stap in ("alle", "definities", "indicatoren") and success:
             if not import_indicatoren(conn):
                 success = False
 
-        if stap in ("alle", "kompas") and success:
+        if stap in ("alle", "definities", "kompas") and success:
             if not import_kompas(conn):
                 success = False
 

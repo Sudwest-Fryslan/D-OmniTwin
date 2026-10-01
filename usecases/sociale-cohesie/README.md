@@ -42,9 +42,9 @@ Een use case is een **bundel**: data + inrichting + stappen. Alle drie staan hie
 
 | # | Actie | Verwacht | Resultaat 01-10 |
 |---|---|---|---|
-| 0 | Laad het pakket: `python init_data/scripts/laad_usecase.py <naam>` (db-init doet dit automatisch met de sample) | Richting en afgeleide indicatoren staan in de database | ✅ |
+| 0 | Laad het pakket: `python init_data/scripts/laad_usecase.py <naam>` (db-init doet dit automatisch bij `LOAD_SAMPLE_DATA=true`) | Richting en afgeleide indicatoren staan in de database | ✅ |
 | 1 | Open de app, kies **Kaart Configuratie → CBS Buurten** | 13 buurten op de kaart | ✅ |
-| 2 | Kies indicator **Eenzaamheid**, zoom in op Bolsward | Buurten gekleurd; **rood = slechter**, legenda met eenheid | ✅ Na laden van het pakket (`laad_usecase.py`) klopt de richting; zonder pakket omgekeerd (#120) |
+| 2 | Kies indicator **Eenzaamheid**, zoom in op Bolsward | Buurten gekleurd; **rood = slechter**, legenda met eenheid | ✅ Richting klopt: gecorrigeerd in de definities (#120) |
 | 3 | Klik op **Bolsward-Zuidoost** | Selectiebalk met de buurtnaam | ✅ |
 | 4 | Open het **Kompas** (Volledig Kompas) | Zonnediagram voor Bolsward-Zuidoost, dekking 100% | ✅ (Volledig Kompas) |
 | 5 | Stel de vraag aan de **D-Omni Assistent** | Antwoord noemt de relevante indicatoren en buurten. Verwacht: Bolsward-Zuidoost: eenzaamheid 48,3% (tussen Noord 55,0% en Noordoost 41,6%), vrijwilligers 27,6%. | ⚠️ Actie 'Toon: Bolsward-Zuidoost' klopt; scenario 'wijkcontactfunctionaris' wordt niet herkend bij 'wijkcoördinator'; geen indicatoren (#139) |

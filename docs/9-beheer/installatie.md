@@ -66,7 +66,7 @@ Pas `.env` aan:
 | `ADMIN_API_KEY` | **Verplicht.** Wie deze waarde in de header `X-Admin-Key` meestuurt, heeft beheerrechten. Laat de voorbeeldwaarde dus nooit staan. |
 | `ADMIN_USER`, `ADMIN_PASSWORD` | Het eerste beheeraccount. Laat je `ADMIN_PASSWORD` op de voorbeeldwaarde staan of leeg, dan wordt er een wachtwoord gegenereerd (zie [2.4](#24-eerste-keer-inloggen)). |
 | `DEBUG` | `true` zolang je zonder HTTPS draait, anders werkt inloggen in de browser niet (zie [Beveiliging](#beveiliging)). Met HTTPS: `false`. |
-| `LOAD_SAMPLE_DATA` | `true`: de sample dataset laden bij de eerste start. `false`: alleen stuurdata (configuratie, zonder buurten). Zie [Data](#4-data). |
+| `LOAD_SAMPLE_DATA` | `true`: de use cases (demodata) laden bij de eerste start. `false`: het product zonder data (indicatoren, Kompas, stuurdata). Zie [Data](#4-data). |
 | `DATABASE_NAME`, `DATABASE_USER` | Mogen blijven staan. Wijzig ze alleen vóór de eerste start. |
 | `DATABASE_HOST`, `DATABASE_PORT` | Laten staan. De containers negeren deze en gebruiken `postgres:5432`; ze gelden alleen voor scripts op de host in ontwikkelmodus. |
 | `DATABASE_SSLMODE` | `prefer` laten staan. De database is alleen binnen het Docker-netwerk bereikbaar en heeft geen TLS; `require` werkt hier niet. |
@@ -155,7 +155,7 @@ Ontwikkelen zonder Docker (Python venv, `run_dev.py`, admin-panel met `npm start
 
 ### Sample dataset (standaard)
 
-Met `LOAD_SAMPLE_DATA=true` laadt `db-init` bij de eerste start een kleine sample: buurten in Súdwest-Fryslân met indicatoren, Kompas-indeling en stuurdata (scenario's, profielen, prompts). Een deel van de waarden is demodata. Zie [`init_data/sample/README.md`](../../init_data/sample/README.md) voor de inhoud en herkomst.
+`db-init` laadt bij de eerste start altijd het product zonder data: stuurdata (scenario's, profielen, prompts), de indicatordefinities en de Kompas-indeling. Met `LOAD_SAMPLE_DATA=true` laadt het daarna de **use cases** uit [`usecases/`](../../usecases/README.md). Elke use case brengt zijn eigen gebieden en waarden mee, gekozen uit de bronbibliotheek [`init_data/sample/`](../../init_data/sample/README.md), plus de inrichting en de teststappen. Een deel van de waarden is demodata. Eén use case laden: `docker compose exec backend python init_data/scripts/laad_usecase.py hittestress`.
 
 De sample is bedoeld om de installatie te testen en te demonstreren, niet voor beleid.
 
