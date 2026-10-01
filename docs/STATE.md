@@ -38,7 +38,7 @@
 | **Ontologie generatie** | 🟢 Actief | Fence & Source philosophy geïmplementeerd |
 | **Woonplaats- & Deelgebiedsanalyse rapport** | 🟢 Actief | Issue #44 / PR #45 gemerged naar main — Gewogen stadsanalyse per thema op basis van inwoneraantallen, Top 10 uitschieters (aandachtspunten en kansen), geharmoniseerde kwadranttelling (totaal + sterke uitschieters), buurt-drilldown, ontologie en methodologische verantwoording. D3 Z-score afwijkingskaart met flexbox indeling (~48% breedte) en paarse contour. Endpoint POST `/api/report/deelgebied` & `/admin/rapport/deelgebied`. |
 | **Multi-Gebiedsdossier rapport** | 🟢 Actief | Voltooid incl. bugfixes en colorblind-safe visualisatie |
-| **Initiatie Dataset (init_data/)** | 🟢 Compleet | 942 Friese buurten, **235 indicatoren** (gesaneerd + nieuw formaat), scripts + GETTING_STARTED.md |
+| **Initiatie Dataset (init_data/)** | 🟢 Compleet | 942 Friese buurten, **235 indicatoren** (gesaneerd + nieuw formaat), scripts + GETTING_STARTED.md (nu in `docs/archief/`) |
 | **Sample Dataset & Auto-init** | 🟢 Actief | Issue #52, #60 (PR #53, #80, #86) — 12 SWF-buurten, Bolsward-Zuidoost demodata, Frictionless datapakket (`datapackage.json`), container-entrypoint (`docker-entrypoint.sh init`). |
 | **Integratietestsuite** | 🟢 Actief | Issue #62 (PR #70) — `tests/integration/test_sample_stack.py` toetst verse stack, 6 tests groen, 2 xfailed (#54/#57). |
 | **Toegankelijkheid (WCAG 2.1 AA)** | 🟢 Actief | Issue #67 (PR #75) — Skiplink (`.skip-link`), toetsenbordfocus (`:focus-visible`), formulierenlabels en WCAG-contrast. |

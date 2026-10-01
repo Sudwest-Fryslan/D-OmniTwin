@@ -9,7 +9,7 @@
 
 ### Wat Werkt Nu (Dag 15 - 30 jan 2026)
 
-![3D Kaart Prototype](docs/images/kaart-bolsward.jpg)
+![3D Kaart Prototype](../images/kaart-bolsward.jpg)
 
 ✅ **Backend API** (FastAPI)
 - 5 RESTful endpoints
@@ -53,7 +53,7 @@
 
 **Rationale:** Kaart moet centraal staan, niet verborgen achter sidebar
 
-![Huidige Layout](docs/images/kaart-bolsward.jpg)
+![Huidige Layout](../images/kaart-bolsward.jpg)
 
 **Nieuwe Layout:**
 ```
@@ -128,14 +128,14 @@
 ### 📊 Sprint 22: Data Engineering & ETL Dataspace Track 🔵 Actief
 
 **Visie:** Structureren van de indicatorenvoorraad en herpositionering als datamart-consument van de Friese Data Space (FRLDS).
-**Spec:** [`docs/3-data-engineering/etl_dataspace_gap_analyse.md`](./docs/3-data-engineering/etl_dataspace_gap_analyse.md)
+**Spec:** [`docs/3-data-engineering/etl_dataspace_gap_analyse.md`](../3-data-engineering/etl_dataspace_gap_analyse.md)
 
 #### Track A — Bronvergelijking & Gap-Analyse ✅
 - [x] **Stap 1:** 812 indicatoren uit sociaaldomein Excel geïdentificeerd vs. 11 in DB (1,4% dekking).
 - [x] Positionering als Gold-laag / Datamart-consument gedocumenteerd.
 
 #### Track C — Data Lineage & Bronvermelding 🔵 Actief
-**Spec:** [`docs/3-data-engineering/Data_Lineage_Bronvermelding_Spec.md`](./docs/3-data-engineering/Data_Lineage_Bronvermelding_Spec.md)
+**Spec:** [`docs/3-data-engineering/Data_Lineage_Bronvermelding_Spec.md`](../3-data-engineering/Data_Lineage_Bronvermelding_Spec.md)
 - [ ] **Stap 1:** Metadata audit & verrijkingsscript (`scripts/enrich_indicator_lineage.py`) voor 235 actieve indicatoren.
 - [ ] **Stap 2:** Detailpaneel UI & kaartverrijking met klikbare externe brondatasets en hover tooltips.
 - [ ] **Stap 3:** Formele bronverantwoording en peildata colofon in Multi-Gebiedsdossier en rapporten.
@@ -284,7 +284,7 @@
 
 **Visie:** Kompas is het centrale navigatie-element voor indicatoren
 
-![Kompas Screenshot](docs/images/kompas-bolsward-zuidoost.jpg)
+![Kompas Screenshot](../images/kompas-bolsward-zuidoost.jpg)
 
 #### 2.1 Sunburst Visualisatie (D3.js)
 

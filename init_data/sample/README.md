@@ -124,4 +124,4 @@ De data in deze sample is afkomstig uit openbare overheidsbronnen en vrij herbru
 - **Rijksdienst voor Ondernemend Nederland (RVO):** EP-Online energielabels (Open Data).
 - **OpenStreetMap:** Halte-informatie OV (ODbL / Open Data).
 
-Voor de volledige Friese dataset met alle 3.725 buurten en historische reeksen, zie [GETTING_STARTED.md](../../GETTING_STARTED.md).
+Voor de volledige Friese dataset met alle 3.725 buurten en historische reeksen, zie [GETTING_STARTED.md](../../docs/archief/GETTING_STARTED.md) (archief).

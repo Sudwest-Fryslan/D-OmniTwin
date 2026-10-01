@@ -106,7 +106,7 @@
 - [ ] **E3 — NM-001 actualiseren** (opgeloste gaps ✅, FRLDS-gaps labelen)
 
 ### Track F — Gebruikersreview Quickwins
-**Aanleiding:** [Gebruikersreview](./docs/testcases/Gebruikersreview.md) — laag hangend fruit direct bruikbaar binnen Sprint 18.
+**Aanleiding:** [Gebruikersreview](../testcases/Gebruikersreview.md) — laag hangend fruit direct bruikbaar binnen Sprint 18.
 - [x] **F1 — Bug: Zoekfunctie Kompas `undefined` foutmelding**
     - [x] `Array.isArray` guard + `renderSearchResults([])` bij API-fout
     - [ ] Acceptatie: foutmelding nog niet reproduceerbaar in testomgeving — open
@@ -179,7 +179,7 @@
 
 **Doel:** Het systeem voorzien van betrouwbare e-mail alerts bij kritieke fouten (`ERROR` of `CRITICAL`) via een flexibele SMTP configuratie.
 **Aanleiding:** Issue #10 (voorheen een blocker). Doorgeschoven naar ná Sprint 19.
-**Spec:** [`docs/5-secops/logging/plan_email_alerts_smtp.md`](./docs/5-secops/logging/plan_email_alerts_smtp.md)
+**Spec:** [`docs/5-secops/logging/plan_email_alerts_smtp.md`](../5-secops/logging/plan_email_alerts_smtp.md)
 
 ---
 
@@ -202,7 +202,7 @@
 ## 🔵 Sprint 22: Data Engineering & ETL Dataspace Track (Actief)
 
 **Doel:** Structureren van de indicatorenvoorraad en herpositionering als datamart-consument (Gold laag) van de Friese Data Space (FRLDS).  
-**Spec:** [`docs/3-data-engineering/etl_dataspace_gap_analyse.md`](./docs/3-data-engineering/etl_dataspace_gap_analyse.md)  
+**Spec:** [`docs/3-data-engineering/etl_dataspace_gap_analyse.md`](../3-data-engineering/etl_dataspace_gap_analyse.md)  
 **Branch:** `main`
 
 ### Track A — Bronvergelijking & Gap-Analyse ✅
@@ -210,7 +210,7 @@
 - [x] **A2 — Positionering Datamart-consument:** Architectuurrol als Gold-laag / interactielaag vastgelegd.
 
 ### Track C — Data Lineage & Bronvermelding ✅
-**Spec:** [`docs/3-data-engineering/Data_Lineage_Bronvermelding_Spec.md`](./docs/3-data-engineering/Data_Lineage_Bronvermelding_Spec.md)
+**Spec:** [`docs/3-data-engineering/Data_Lineage_Bronvermelding_Spec.md`](../3-data-engineering/Data_Lineage_Bronvermelding_Spec.md)
 - [x] **C1 — Metadata Audit & Verrijkingsscript:** `scripts/enrich_indicator_lineage.py` uitgevoerd — alle 244 actieve indicatoren (100%) voorzien van `bron_systeem_api`, `bron_tabel_referentie`, peildata en controle-timestamps.
 - [x] **C2 — Detailpaneel UI & Kaartverrijking:** Klikbare bronlink naar officiële dataset catalogus (CBS OData, RIVM, BAG, OV), dataset badges en hover-tooltips toegevoegd aan detailpaneel (`templates/index.html` & `static/js/kompas.js`).
 - [x] **C3 — Rapportage Colofon:** Automatische "Bronverantwoording & Peildata" tabel toegevoegd onderaan dossiers en rapporten (`services/report_service.py`).

@@ -7,7 +7,7 @@
 > **Gerelateerde documenten:**  
 > - [`docs/3-data-engineering/etl_dataspace_gap_analyse.md`](./etl_dataspace_gap_analyse.md)  
 > - [`docs/STATE.md`](../STATE.md)  
-> - [`TODO.md`](../../TODO.md)  
+> - [`TODO.md`](../archief/TODO.md)  
 
 ---
 

@@ -29,8 +29,7 @@ data/
 !usecases/*/data/
 
 # Exports (gegenereerde rapporten, JSON exports, Excel)
-exports/*
-!exports/.gitkeep
+exports/
 
 # E2E-testartefacten (screenshots bij fouten)
 tests/e2e/artifacts/
@@ -39,9 +38,8 @@ tests/e2e/artifacts/
 *.log
 logs/
 
-# Obsolete
-obsolete/*
-!obsolete/.gitkeep
+# Lokale oude bestanden
+obsolete/
 
 # Intern werkdocument
 BRAINDUMP.md

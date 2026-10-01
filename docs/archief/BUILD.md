@@ -1,6 +1,6 @@
 # BUILD & Setup Instructions
 
-> ⚠️ **Verouderd/aanvullend** — de actuele installatie staat in [`docs/9-beheer/installatie.md`](./docs/9-beheer/installatie.md). Bij verschillen geldt die gids. Dit bestand blijft voor de build-notities en de sprint-changelog.
+> ⚠️ **Verouderd/aanvullend** — de actuele installatie staat in [`docs/9-beheer/installatie.md`](../9-beheer/installatie.md). Bij verschillen geldt die gids. Dit bestand blijft voor de build-notities en de sprint-changelog.
 
 ## Vereisten
 - Python 3.10+
@@ -86,7 +86,7 @@ bash init_data/scripts/init_database.sh
 Wanneer er wijzigingen zijn aan het database schema:
 1. Maak een SQL migratiescript in `migrations/` (bijv. `schema_v15_xxx.sql`).
 2. Update `init_data/schema/schema_latest.sql` zodat nieuwe installaties direct up-to-date zijn.
-3. Documenteer de wijziging in [docs/STATE.md](docs/STATE.md) en [BUILD.md](BUILD.md).
+3. Documenteer de wijziging in [docs/STATE.md](../STATE.md) en [BUILD.md](BUILD.md).
 
 ### 6. Applicatie Starten
 Om de backend lokaal te starten met geoptimaliseerde live reload:
@@ -284,7 +284,7 @@ Omdat privacygevoelige CBS data niet naar externe partijen (zoals OpenAI) gestuu
 ## 📋 Sprint Changelog
 
 > Volledig dag-voor-dag overzicht van alle ontwikkelsessies.
-> De laatste sprints zijn samengevat in de [README.md](./README.md#-recent-voltooid).
+> De laatste sprints zijn samengevat in de [README.md](../../README.md#-recent-voltooid).
 > Dit changelog dient als archief en basis voor toekomstige CHANGELOG.md releases.
 
 ---

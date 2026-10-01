@@ -299,7 +299,7 @@ Met een externe aanbieder verlaten vragen en gebiedsdata de organisatie (AVG/IAM
 
 ## ✅ Recent Voltooid
 
-> Zie [BUILD.md → Sprint Changelog](./BUILD.md#-sprint-changelog) voor het volledige dag-voor-dag overzicht.
+> Zie [BUILD.md → Sprint Changelog](./docs/archief/BUILD.md#-sprint-changelog) (archief) voor het volledige dag-voor-dag overzicht.
 
 | Sprint | Datum | Kernpunten |
 |--------|-------|------------|
@@ -314,7 +314,7 @@ Met een externe aanbieder verlaten vragen en gebiedsdata de organisatie (AVG/IAM
 
 > Installeren met Docker (ook voor beheerders): zie de **[installatiegids](./docs/9-beheer/installatie.md)**. Deze sectie is alleen voor lokaal ontwikkelen zonder Docker en is deels verouderd (#21).
 >
-> [`GETTING_STARTED.md`](./GETTING_STARTED.md) beschrijft dezelfde route uitgebreider, maar is verouderd.
+> [`docs/archief/GETTING_STARTED.md`](./docs/archief/GETTING_STARTED.md) beschrijft dezelfde route uitgebreider, maar is verouderd.
 
 ### Prerequisites
 - Python 3.10+ · Node.js 18+ · PostgreSQL 14+ (PostGIS + pgvector + pg_trgm)
@@ -400,17 +400,14 @@ Zie [NOTICE.md](./NOTICE.md) voor informatie over third-party licenties.
 |----------|-------------|
 | [README.md](./README.md) | Project overview (dit document) |
 | [docs/9-beheer/installatie.md](./docs/9-beheer/installatie.md) | ⭐ Installatie en beheer (Docker): de actuele installatiegids |
-| [GETTING_STARTED.md](./GETTING_STARTED.md) | Installatie zonder Docker met Fryslân-dataset (verouderd, zie installatiegids) |
 | [CONTRIBUTING.md](./CONTRIBUTING.md) | Bijdragen: van issue tot merge |
 | [CODE_OF_CONDUCT.md](./CODE_OF_CONDUCT.md) | Gedragscode (Contributor Covenant 2.1) |
 | [SECURITY.md](./SECURITY.md) | Kwetsbaarheden privé melden |
-| [PROJECT_GOVERNANCE.md](./PROJECT_GOVERNANCE.md) | Rollen en besluitvorming (concept) |
+| [GOVERNANCE.md](./GOVERNANCE.md) | Rollen en besluitvorming (concept) |
 | [CHANGELOG.md](./CHANGELOG.md) | Wijzigingen per versie |
 | [publiccode.yml](./publiccode.yml) | Metadata voor codebase-registers (publiccode.yml-standaard) |
 | [init_data/README.md](./init_data/README.md) | Documentatie initiatie dataset (Fryslân) |
-| [BUILD.md](./BUILD.md) | Build-notities & sprint changelog (installatie: zie installatiegids) |
-| [TODO.md](./TODO.md) | Actieve takenlijst per domein |
-| [ROADMAP.md](./ROADMAP.md) | Lange-termijn planning en features |
+| [docs/archief/](./docs/archief/) | Archief: `BUILD.md`, `GETTING_STARTED.md`, `ROADMAP.md`, `TODO.md`, `BUGFIX.md` (verouderd; taken en bugs staan nu in de [issues](https://github.com/TLaan/D-OmniTwin/issues)) |
 | [docs/STATE.md](./docs/STATE.md) | 🟢 Systeemstatus & actieve componenten (Single Source of Truth) |
 | [docs/INDEX.md](./docs/INDEX.md) | Navigatielaag en router voor alle domeindocumentatie |
 | [docs/2-architectuur/architecture/ARCHITECTURE_TECHNICAL_OPERATION.md](./docs/2-architectuur/architecture/ARCHITECTURE_TECHNICAL_OPERATION.md) | Volledige technische architectuur |

@@ -59,11 +59,8 @@
 |---------|------|
 | `README.md` | Versie, quickstart, overzicht |
 | `LICENSE` & `LICENSE-DOCS` | EUPL 1.2 (Code) & CC BY 4.0 (Methodiek) |
-| `ROADMAP.md` | Sprintplanning, toekomstige features |
-| `TODO.md` | Actieve takenlijst per domein |
-| `BUGFIX.md` | Bekende bugs, fixes en impact |
 | `BRAINDUMP.md` | Ideeën, visie, experimentele concepten |
-| `BUILD.md` | Build-notities en sprint-changelog (installatie: `docs/9-beheer/installatie.md`) |
+| `docs/archief/` | Archief: `BUILD.md`, `GETTING_STARTED.md`, `ROADMAP.md`, `TODO.md`, `BUGFIX.md` (verouderd; taken en bugs staan in de GitHub-issues) |
 
 ---
 
