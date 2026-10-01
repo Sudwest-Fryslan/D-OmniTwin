@@ -72,8 +72,9 @@ def browser():
         b.close()
 
 
-def _open(browser, request, skip_onboarding):
-    context = browser.new_context(viewport={"width": 1600, "height": 1000}, locale="nl-NL")
+def _open(browser, request, skip_onboarding, reduced_motion=None):
+    opties = {"reduced_motion": reduced_motion} if reduced_motion else {}
+    context = browser.new_context(viewport={"width": 1600, "height": 1000}, locale="nl-NL", **opties)
     if skip_onboarding:
         context.add_init_script(_SKIP_ONBOARDING)
     page = context.new_page()
@@ -116,6 +117,12 @@ def _open(browser, request, skip_onboarding):
 def app_page(browser, request):
     """App geopend, onboarding overgeslagen."""
     yield from _open(browser, request, skip_onboarding=True)
+
+
+@pytest.fixture
+def app_page_reduced_motion(browser, request):
+    """App geopend met de systeeminstelling 'minder beweging' (prefers-reduced-motion: reduce)."""
+    yield from _open(browser, request, skip_onboarding=True, reduced_motion="reduce")
 
 
 @pytest.fixture

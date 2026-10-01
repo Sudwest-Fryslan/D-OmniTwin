@@ -1,7 +1,7 @@
 # D-OmniTwin 🌍🔐
 > Digitale spiegel van de fysieke leefomgeving — open source, federatief, dataspace-ready
 
-**Versie:** v1.0.0-beta (pre-release) | **Laatste update:** 20 juli 2026 | **Status:** 🟢 ACTIEF (Sprint 22)  
+**Versie:** 0.1.0 (eerste release in voorbereiding, zie [releasebeleid](./docs/9-beheer/releasebeleid.md)) | **Laatste update:** 20 juli 2026 | **Status:** 🟢 ACTIEF (Sprint 22)  
 **Security:** API key auth actief, CORS locked, Security headers actief  
 [![Licentie: EUPL 1.2](https://img.shields.io/badge/Licentie-EUPL_1.2-blue)](./LICENSE) [![Docs: CC BY 4.0](https://img.shields.io/badge/Docs-CC_BY_4.0-green)](./LICENSE-DOCS)
 
@@ -43,7 +43,7 @@ docker compose up -d --build
 
 Open daarna **http://localhost**. Alles loopt via Traefik op poort 80; de backend (poort 8000) is binnen Docker niet direct bereikbaar. Dit start de installatiemodus (`COMPOSE_FILE` in `.env`); voor alle details van een installatie bij je organisatie volg je de **[installatiegids](./docs/9-beheer/installatie.md)** (vereisten, `.env`, backup, bijwerken, beveiliging).
 
-- Bij de eerste start maakt de eenmalige service `db-init` het databaseschema aan en laadt een **sample dataset van 12 buurten in Súdwest-Fryslân** (`LOAD_SAMPLE_DATA=true` in `.env`). Zet dit op `false` voor een lege database met alleen stuurdata.
+- Bij de eerste start maakt de eenmalige service `db-init` het databaseschema aan en laadt de **use cases** in [`usecases/`](./usecases/README.md) (`LOAD_SAMPLE_DATA=true`, de standaard): 13 buurten in Súdwest-Fryslân, elk met data, inrichting en teststappen. Met `false` krijg je het product zonder data (indicatoren, Kompas, stuurdata), klaar voor eigen data.
 - **Beheeromgeving:** http://localhost/admin. Inloggen met `ADMIN_USER` (standaard `admin`) en het `ADMIN_PASSWORD` uit `.env`. Laat je `ADMIN_PASSWORD` leeg, dan wordt eenmalig een wachtwoord gegenereerd en in de log getoond: `docker compose logs db-init`. Laat `DEBUG=true` staan zolang je zonder HTTPS draait; anders wordt het inlogcookie alleen via HTTPS verstuurd en lukt inloggen niet.
 - **API-documentatie:** http://localhost/docs.
 
@@ -105,7 +105,7 @@ Vier use cases worden gevalideerd in pilots bij drie gemeenten. Resultaat: open 
 | **Main Backend** | FastAPI (Hybride logic) | 8000 | `/` en `/api/*` | ✅ Production Ready |
 | **Data API** | PostgREST | 3000 | `/api/data` | ✅ Operationeel |
 | **Geo API** | pg_featureserv | 9000 | `/api/geo` | ✅ Operationeel |
-| **Admin Panel** | React + TypeScript | via backend (dev server: 3001) | `/admin` | ✅ MVP Ready |
+| **Admin Panel** | React + TypeScript | via backend (dev server: 3000) | `/admin` | ✅ MVP Ready |
 | **Database** | PostgreSQL + PostGIS + pgvector | 5432 | niet via Traefik; op de host: 5433 | ✅ Operationeel |
 
 > Met Docker Compose is alleen Traefik (poort 80, dashboard op 8081) en de database (5433) op de host bereikbaar. De interne poorten gelden binnen het Docker-netwerk of bij lokaal draaien zonder Docker.
@@ -283,6 +283,18 @@ docker compose --profile llm-gateway up -d
 De gateway stuurt standaard door naar `OLLAMA_HOST`/`OLLAMA_MODEL`; fallbacks staan als voorbeeld in
 `deploy/litellm/config.yaml`. De gateway heeft geen poort op de host.
 
+Daarnaast kent de gateway de aliassen `d-omnitwin-ollama`, `d-omnitwin-claude`, `d-omnitwin-openai` en
+`d-omnitwin-gemini`. Wisselen en vergelijken:
+
+```bash
+docker compose exec backend python scripts/llm/kies_provider.py gemini   # ollama|claude|openai|gemini|direct-ollama
+python scripts/llm/vergelijk_providers.py --base-url http://localhost    # rapport in docs/testcases/llm-vergelijking/
+```
+
+Sleutels (`ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `GEMINI_API_KEY`) staan alleen in `.env`; leeg = niet beschikbaar.
+Met een externe aanbieder verlaten vragen en gebiedsdata de organisatie (AVG/IAMA). Zie de
+[installatiegids, §7](./docs/9-beheer/installatie.md#7-llm-optioneel).
+
 ---
 
 ## ✅ Recent Voltooid
@@ -346,7 +358,7 @@ source .venv/bin/activate && python run_dev.py
 - 🗺️ **Geo API (pg_featureserv):** http://localhost/api/geo
 
 **Toegang met de lokale dev server (optie B)** — alleen FastAPI, zonder PostgREST en pg_featureserv:
-- 🌐 **App:** http://localhost:8000 · 📚 **API Docs:** http://localhost:8000/docs · 🔐 **Admin Panel:** http://localhost:8000/admin (of via dev server: `cd admin-panel && npm start` → http://localhost:3001)
+- 🌐 **App:** http://localhost:8000 · 📚 **API Docs:** http://localhost:8000/docs · 🔐 **Admin Panel:** http://localhost:8000/admin (of via dev server: `cd admin-panel && npm start` → http://localhost:3000/admin/)
 
 > [!TIP]
 > **Waarom `run_dev.py`?** Slimmer dan standaard uvicorn: lazy loading van AI-modellen (30% snellere start) en optimized reload die `node_modules` uitsluit.
@@ -440,5 +452,5 @@ Zie [NOTICE.md](./NOTICE.md) voor informatie over third-party licenties.
 
 ---
 
-**Versie:** v1.0.0-beta (pre-release) | **Laatste Update:** 20 juli 2026 | **Licentie:** EUPL 1.2 / CC BY 4.0  
+**Versie:** 0.1.0 (eerste release in voorbereiding, zie [releasebeleid](./docs/9-beheer/releasebeleid.md)) | **Laatste Update:** 20 juli 2026 | **Licentie:** EUPL 1.2 / CC BY 4.0  
 *Ontwikkeld door Gemeente Súdwest-Fryslân in samenwerking met Leeuwarden, Tytsjerksteradiel & DataFryslân*
