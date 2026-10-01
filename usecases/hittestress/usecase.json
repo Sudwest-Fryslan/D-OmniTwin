@@ -1,0 +1,81 @@
+{
+  "id": "TC-06-006",
+  "titel": "Klimaatadaptatie: hittestress en kwetsbaarheid",
+  "persona": {
+    "rol": "Stedenbouwkundige / GGD",
+    "vraag": "Ik werk aan hittestress in Bolsward. Welke buurt ligt het verst van een koele plek, en waar wonen relatief de meeste 65-plussers?",
+    "besluit": "Waar eerst vergroenen en koele plekken inrichten?"
+  },
+  "data": {
+    "gebiedstype": "CBS Buurten",
+    "focus": "BU19000002",
+    "gebieden": {
+      "BU19000001": "Bolsward-Noord",
+      "BU19000002": "Bolsward-Zuidoost",
+      "BU19000004": "Bolsward-Noordoost"
+    },
+    "dataset": "init_data/sample",
+    "indicatoren": [
+      {
+        "naam": "Afstand tot koele plek",
+        "eenheid": "m",
+        "richting": "lager_is_beter"
+      },
+      {
+        "naam": "Oppervlak groen per inwoner",
+        "richting": "hoger_is_beter"
+      },
+      {
+        "naam": "65+ jaar",
+        "richting": "neutraal"
+      },
+      {
+        "naam": "Ervaren gezondheid",
+        "richting": "hoger_is_beter"
+      },
+      {
+        "naam": "Verhouding oppervlakte water / verharding",
+        "richting": "hoger_is_beter"
+      },
+      {
+        "naam": "65+ jaar (%)",
+        "richting": "neutraal"
+      },
+      {
+        "naam": "80 jaar of ouder (%)",
+        "richting": "neutraal"
+      },
+      {
+        "naam": "Boomkroonbedekking",
+        "richting": "hoger_is_beter"
+      },
+      {
+        "naam": "Stedelijk hitte-eiland effect",
+        "richting": "lager_is_beter"
+      }
+    ],
+    "extra_data": {
+      "bestand": "niet in git: bij het laden gedownload naar $DATA_CACHE/usecases/hittestress/waarden.csv",
+      "script": "maak_data.py",
+      "bronnen": {
+        "65+ jaar (%)": "CBS Kerncijfers wijken en buurten 2026 (86358NED), peiljaar 2026, CC BY 4.0",
+        "80 jaar of ouder (%)": "CBS Kerncijfers wijken en buurten 2026 (86358NED), peiljaar 2026, CC BY 4.0",
+        "Boomkroonbedekking": "RIVM Atlas Natuurlijk Kapitaal, Bomenkaart 2022 (10 m), Public Domain Mark 1.0",
+        "Stedelijk hitte-eiland effect": "RIVM Atlas Natuurlijk Kapitaal, Stedelijk hitte-eiland effect v2 (2022, 10 m), Public Domain Mark 1.0"
+      }
+    },
+    "ontbreekt_nog": [
+      "% 75+: CBS publiceert per buurt alleen 65-80 en 80+ (Kerncijfers 2026); 80+ is opgenomen",
+      "Gevoelstemperatuur (Klimaateffectatlas): voor Fryslân geen open download of WCS, alleen via de atlas op te vragen; vervangen door het stedelijk hitte-eiland effect (RIVM)"
+    ]
+  },
+  "inrichting": {
+    "kompas_configuratie": "Klimaat Kompas",
+    "chat_scenario": null
+  },
+  "ai_zoekvraag": "afstand tot een koele plek bij hitte",
+  "verwacht": {
+    "vraag_zoekwoord": "koele plek",
+    "verwacht": "Bolsward-Noord ligt het verst van een koele plek (246 m), Bolsward-Noordoost het dichtst bij (206 m). Relatief de meeste 65-plussers: Bolsward-Zuidoost (29,5%)."
+  }
+}

@@ -1,0 +1,55 @@
+name: Bug melden
+description: Iets werkt niet zoals verwacht.
+title: "fix: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Een beveiligingsprobleem? Meld dat **niet** hier, maar privé volgens [SECURITY.md](https://github.com/TLaan/D-OmniTwin/blob/main/SECURITY.md).
+        Gebruik geen echte persoonsgegevens in je melding.
+  - type: textarea
+    id: beschrijving
+    attributes:
+      label: Beschrijving
+      description: Wat gaat er mis?
+    validations:
+      required: true
+  - type: textarea
+    id: stappen
+    attributes:
+      label: Stappen om te reproduceren
+      placeholder: |
+        1. Open ...
+        2. Kies ...
+        3. Klik op ...
+    validations:
+      required: true
+  - type: textarea
+    id: verwacht
+    attributes:
+      label: Verwacht resultaat
+    validations:
+      required: true
+  - type: textarea
+    id: werkelijk
+    attributes:
+      label: Werkelijk resultaat
+      description: Inclusief foutmelding, console-uitvoer of schermafbeelding als dat helpt.
+    validations:
+      required: true
+  - type: input
+    id: versie
+    attributes:
+      label: Versie of commit
+      placeholder: "bijv. main @ 47abf11"
+  - type: input
+    id: omgeving
+    attributes:
+      label: Omgeving
+      placeholder: "bijv. lokale Docker-stack, Windows 11, Firefox"
+  - type: input
+    id: gebied-indicator
+    attributes:
+      label: Gebied en/of indicator (optioneel)
+      placeholder: "bijv. BU19000002 Bolsward-Zuidoost, Aantal OV-haltes"

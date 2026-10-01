@@ -28,10 +28,31 @@ VALUES ('29fc9f28-89d9-488b-bf68-2ed176187b21', 'Welstandsgebieden', 'WELSTAND',
 ON CONFLICT (id) DO NOTHING;
 
 -- -------------------------------------------------------------
--- 2. Gemeenten (Súdwest-Fryslân)
+-- 2. Gemeenten (alle 18 Friese gemeenten, CBS-indeling 2024)
+--    Codes gelijk aan gemeentecode in init_data/fryslan/buurten_fryslan.geojson,
+--    nodig voor seed_fryslan.py (FK gebieden.gemeente_code). De sample zelf
+--    gebruikt alleen 1900.
 -- -------------------------------------------------------------
 INSERT INTO public.gemeenten (code, naam, provincie, is_eiland, created_at, updated_at)
-VALUES ('1900', 'Súdwest-Fryslân', 'Fryslân', FALSE, '2026-02-08 14:31:37.011045', '2026-02-08 14:31:37.011045')
+VALUES
+    ('0059', 'Achtkarspelen',     'Fryslân', FALSE, '2026-02-08 14:31:37.011045', '2026-02-08 14:31:37.011045'),
+    ('0060', 'Ameland',           'Fryslân', TRUE,  '2026-02-08 14:31:37.011045', '2026-02-08 14:31:37.011045'),
+    ('0072', 'Harlingen',         'Fryslân', FALSE, '2026-02-08 14:31:37.011045', '2026-02-08 14:31:37.011045'),
+    ('0074', 'Heerenveen',        'Fryslân', FALSE, '2026-02-08 14:31:37.011045', '2026-02-08 14:31:37.011045'),
+    ('0080', 'Leeuwarden',        'Fryslân', FALSE, '2026-02-08 14:31:37.011045', '2026-02-08 14:31:37.011045'),
+    ('0085', 'Ooststellingwerf',  'Fryslân', FALSE, '2026-02-08 14:31:37.011045', '2026-02-08 14:31:37.011045'),
+    ('0086', 'Opsterland',        'Fryslân', FALSE, '2026-02-08 14:31:37.011045', '2026-02-08 14:31:37.011045'),
+    ('0088', 'Schiermonnikoog',   'Fryslân', TRUE,  '2026-02-08 14:31:37.011045', '2026-02-08 14:31:37.011045'),
+    ('0090', 'Smallingerland',    'Fryslân', FALSE, '2026-02-08 14:31:37.011045', '2026-02-08 14:31:37.011045'),
+    ('0093', 'Terschelling',      'Fryslân', TRUE,  '2026-02-08 14:31:37.011045', '2026-02-08 14:31:37.011045'),
+    ('0096', 'Vlieland',          'Fryslân', TRUE,  '2026-02-08 14:31:37.011045', '2026-02-08 14:31:37.011045'),
+    ('0098', 'Weststellingwerf',  'Fryslân', FALSE, '2026-02-08 14:31:37.011045', '2026-02-08 14:31:37.011045'),
+    ('0737', 'Tytsjerksteradiel', 'Fryslân', FALSE, '2026-02-08 14:31:37.011045', '2026-02-08 14:31:37.011045'),
+    ('1891', 'Dantumadiel',       'Fryslân', FALSE, '2026-02-08 14:31:37.011045', '2026-02-08 14:31:37.011045'),
+    ('1900', 'Súdwest-Fryslân',   'Fryslân', FALSE, '2026-02-08 14:31:37.011045', '2026-02-08 14:31:37.011045'),
+    ('1940', 'De Fryske Marren',  'Fryslân', FALSE, '2026-02-08 14:31:37.011045', '2026-02-08 14:31:37.011045'),
+    ('1949', 'Waadhoeke',         'Fryslân', FALSE, '2026-02-08 14:31:37.011045', '2026-02-08 14:31:37.011045'),
+    ('1970', 'Noardeast-Fryslân', 'Fryslân', FALSE, '2026-02-08 14:31:37.011045', '2026-02-08 14:31:37.011045')
 ON CONFLICT (code) DO NOTHING;
 
 -- -------------------------------------------------------------

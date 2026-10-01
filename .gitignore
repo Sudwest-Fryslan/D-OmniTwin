@@ -25,10 +25,15 @@ data/
 
 # init_data staat WEL in git (publieke starter dataset)
 !init_data/
+# Brondata van een use case (usecases/<naam>/data/waarden.csv) ook
+!usecases/*/data/
 
 # Exports (gegenereerde rapporten, JSON exports, Excel)
 exports/*
 !exports/.gitkeep
+
+# E2E-testartefacten (screenshots bij fouten)
+tests/e2e/artifacts/
 
 # Logs
 *.log
@@ -62,3 +67,6 @@ ETL/local/
 
 # Overpass API cache (OSMPythonTools)
 cache/
+
+# Cache van gedownloade open data (CBS e.d.), zie init_data/cbs
+data-cache/

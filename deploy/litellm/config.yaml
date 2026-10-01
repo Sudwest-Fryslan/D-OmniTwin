@@ -1,0 +1,61 @@
+# LiteLLM-gateway voor D-OmniTwin (optioneel, compose-profiel `llm-gateway`, ADR 0001)
+#
+# De backend spreekt de gateway aan als OpenAI-compatibele server:
+#   llm_config: api_type=openai, api_url=http://llm-gateway:4000, model_name=<alias hieronder>
+#   .env:       LLM_API_KEY=<zelfde waarde als LITELLM_MASTER_KEY>
+# Wisselen tussen aliassen: python scripts/llm/kies_provider.py <ollama|claude|openai|gemini|direct-ollama>
+#
+# Waarden met os.environ/ komen uit de omgeving van de container (zie docker-compose.yml).
+# API-sleutels van externe aanbieders staan alleen in .env, nooit hier of in de database.
+# Let op (AVG/IAMA): met claude/openai/gemini gaan vraag, kaartcontext en indicatorwaarden
+# naar een externe partij buiten de organisatie. Alleen gebruiken als dat is afgewogen.
+model_list:
+  # Standaard: doorsturen naar het lokale Ollama (OLLAMA_HOST, OLLAMA_MODEL uit .env)
+  - model_name: d-omnitwin-default
+    litellm_params:
+      model: os.environ/LITELLM_DEFAULT_MODEL   # ollama_chat/<OLLAMA_MODEL>
+      api_base: os.environ/OLLAMA_HOST
+      # Denk-modus: de backend stuurt reasoning_effort=none (LLM_THINK=false); LiteLLM
+      # zet dat voor ollama_chat om naar think=false. Niet hier vastzetten.
+
+  # Lokaal Ollama onder een expliciete naam (zelfde als default; voor vergelijkingen)
+  - model_name: d-omnitwin-ollama
+    litellm_params:
+      model: os.environ/LITELLM_DEFAULT_MODEL   # ollama_chat/<OLLAMA_MODEL>
+      api_base: os.environ/OLLAMA_HOST
+
+  # Externe aanbieders: alleen bruikbaar als de sleutel in .env staat (anders 401 van de aanbieder)
+  - model_name: d-omnitwin-claude
+    litellm_params:
+      model: anthropic/claude-haiku-4-5
+      api_key: os.environ/ANTHROPIC_API_KEY
+
+  - model_name: d-omnitwin-openai
+    litellm_params:
+      model: openai/gpt-4o-mini
+      api_key: os.environ/OPENAI_API_KEY
+
+  - model_name: d-omnitwin-gemini
+    litellm_params:
+      # gemini-2.5-flash is voor nieuwe API-sleutels niet meer beschikbaar (Google, 2026)
+      model: gemini/gemini-3.8-flash
+      api_key: os.environ/GEMINI_API_KEY
+
+  # Voorbeeld: tweede model als terugval, bv. een regionaal of federatief endpoint (FRLLLM)
+  # - model_name: d-omnitwin-fallback
+  #   litellm_params:
+  #     model: openai/<modelnaam>
+  #     api_base: https://llm.voorbeeld.nl/v1
+  #     api_key: os.environ/FALLBACK_LLM_API_KEY
+
+# router_settings:
+#   fallbacks:
+#     - d-omnitwin-default: ["d-omnitwin-fallback"]
+
+litellm_settings:
+  # Geen prompts of antwoorden naar externe telemetrie
+  telemetry: false
+  drop_params: true   # parameters die een model niet kent worden weggelaten in plaats van een fout
+
+general_settings:
+  master_key: os.environ/LITELLM_MASTER_KEY
