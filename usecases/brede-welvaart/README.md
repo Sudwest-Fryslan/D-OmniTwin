@@ -15,7 +15,7 @@ Een use case is een **bundel**: data + inrichting + stappen. Alle drie staan hie
 ## 1. Data
 
 - **Dataset:** `init_data/sample`, gebiedstype CBS Buurten
-- **Gebieden:** Bolsward-Noord (BU19000001), Bolsward-Zuidoost (BU19000002), Bolsward-Noordoost (BU19000004). Focus: Bolsward-Zuidoost (demodata).
+- **Gebieden:** Bolsward-Noord (BU19000001), Bolsward-Zuidoost (BU19000002), Bolsward-Noordoost (BU19000004). Focus: Bolsward-Zuidoost (CBS Kerncijfers echt, 2019-2026; overige indicatoren demodata).
 
 | Indicator | Richting |
 |---|---|
@@ -47,7 +47,7 @@ Een use case is een **bundel**: data + inrichting + stappen. Alle drie staan hie
 | 2 | Kies indicator **Inkomen per inwoner**, zoom in op Bolsward | Buurten gekleurd; **rood = slechter**, legenda met eenheid | ✅ Richting klopt (alle indicatoren hoger = beter) |
 | 3 | Klik op **Bolsward-Zuidoost** | Selectiebalk met de buurtnaam | ✅ |
 | 4 | Open het **Kompas** (Volledig Kompas) | Zonnediagram voor Bolsward-Zuidoost, dekking 100% | ✅ (Volledig Kompas) |
-| 5 | Stel de vraag aan de **D-Omni Assistent** | Antwoord noemt de relevante indicatoren en buurten. Verwacht: Bolsward-Zuidoost zit tussen Noord en Noordoost in (demodata = gemiddelde van de buren). | ⚠️ Herhaalt de vraag; stelt 'Toon: Welstandsgebieden' voor (niet relevant); scenario Beleidsadviseur wordt niet herkend zonder het woord 'beleidsadviseur' |
+| 5 | Stel de vraag aan de **D-Omni Assistent** | Antwoord noemt de relevante indicatoren en buurten. Verwacht: Inkomen per inwoner: Bolsward-Zuidoost 26,9 duizend euro (CBS 2023), tussen Noord (22,1; 2023) en Noordoost (30,9; 2024). Netto arbeidsparticipatie 2024: Noord 66%, Zuidoost 71%, Noordoost 73%. | ⚠️ Herhaalt de vraag; stelt 'Toon: Welstandsgebieden' voor (niet relevant); scenario Beleidsadviseur wordt niet herkend zonder het woord 'beleidsadviseur' |
 | 6 | **Rapport → Gebiedsdossier** voor Bolsward-Zuidoost | Dossier met AI-samenvatting, label "AI-gegenereerd" | ✅ (eerdere ronde, ~2 min met lokaal model) |
 
 ## Resultaat

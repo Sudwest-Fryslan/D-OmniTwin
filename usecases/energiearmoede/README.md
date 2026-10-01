@@ -15,7 +15,7 @@ Een use case is een **bundel**: data + inrichting + stappen. Alle drie staan hie
 ## 1. Data
 
 - **Dataset:** `init_data/sample`, gebiedstype CBS Buurten
-- **Gebieden:** Bolsward-Noord (BU19000001), Bolsward-Zuidoost (BU19000002), Bolsward-Noordoost (BU19000004). Focus: Bolsward-Zuidoost (demodata).
+- **Gebieden:** Bolsward-Noord (BU19000001), Bolsward-Zuidoost (BU19000002), Bolsward-Noordoost (BU19000004). Focus: Bolsward-Zuidoost (CBS Kerncijfers echt, 2019-2026; overige indicatoren demodata).
 
 | Indicator | Richting |
 |---|---|
@@ -46,7 +46,7 @@ Een use case is een **bundel**: data + inrichting + stappen. Alle drie staan hie
 | 2 | Kies indicator **Gemiddeld energielabel**, zoom in op Bolsward | Buurten gekleurd; **rood = slechter**, legenda met eenheid | ✅ Richting klopt: gecorrigeerd in de definities (#120) |
 | 3 | Klik op **Bolsward-Zuidoost** | Selectiebalk met de buurtnaam | ✅ |
 | 4 | Open het **Kompas** (— (nog geen eigen profiel)) | Zonnediagram voor Bolsward-Zuidoost, dekking 100% | ✅ (Volledig Kompas) |
-| 5 | Stel de vraag aan de **D-Omni Assistent** | Antwoord noemt de relevante indicatoren en buurten. Verwacht: Bolsward-Noord: hoogste moeite met rondkomen (19,1%) en meeste lage inkomens (4,4%) | ❌ Herhaalt de vraag; acties 'Gemeente: Bolsward' (Bolsward is geen gemeente), 'Toon: Buurten', 'Rapport'; geen indicatoren (#139) |
+| 5 | Stel de vraag aan de **D-Omni Assistent** | Antwoord noemt de relevante indicatoren en buurten. Verwacht: Bolsward-Noord: hoogste moeite met rondkomen (19,1%) en meeste lage inkomens (4,4%, CBS 2023) | ❌ Herhaalt de vraag; acties 'Gemeente: Bolsward' (Bolsward is geen gemeente), 'Toon: Buurten', 'Rapport'; geen indicatoren (#139) |
 | 6 | **Rapport → Gebiedsdossier** voor Bolsward-Zuidoost | Dossier met AI-samenvatting, label "AI-gegenereerd" | ✅ (eerdere ronde, ~2 min met lokaal model) |
 
 ## Resultaat
