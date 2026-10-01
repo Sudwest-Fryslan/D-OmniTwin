@@ -1,4 +1,4 @@
-from src.database import get_db
+from omnitwin.database import get_db
 from sqlalchemy import text
 import sys
 

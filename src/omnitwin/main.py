@@ -7,22 +7,22 @@ from fastapi.responses import HTMLResponse
 from fastapi.openapi.docs import get_swagger_ui_html # Local Swagger UI
 from sqlalchemy.orm import Session
 from sqlalchemy import text
-from src.database import get_db, engine
+from omnitwin.database import get_db, engine
 from dotenv import load_dotenv
 from pathlib import Path
 import os
 import time
 
-from services.logging_service import AppLogger, init_logging, shutdown_logging
-from services.log_cleanup_service import start_cleanup_scheduler, stop_cleanup_scheduler
+from omnitwin.services.logging_service import AppLogger, init_logging, shutdown_logging
+from omnitwin.services.log_cleanup_service import start_cleanup_scheduler, stop_cleanup_scheduler
 
 # Load environment variables
-project_root = Path(__file__).resolve().parent
+project_root = Path(__file__).resolve().parents[2]  # root van de repository (src/omnitwin/main.py)
 load_dotenv(project_root / '.env')
 
 # Import routers
-from routers import gebiedsmonitor, kompas, admin, dashboard, visualisatie
-from src.version import __version__
+from omnitwin.routers import gebiedsmonitor, kompas, admin, dashboard, visualisatie
+from omnitwin.version import __version__
 
 app = FastAPI(
     title="D-OmniTwin API",
@@ -176,15 +176,15 @@ debug_mode = os.getenv('DEBUG', 'false').lower() == 'true'
 app.include_router(gebiedsmonitor.router)
 app.include_router(kompas.router)
 
-from routers import auth
+from omnitwin.routers import auth
 app.include_router(auth.router)
 app.include_router(admin.router)
 app.include_router(dashboard.router)
 app.include_router(visualisatie.router)
 app.include_router(visualisatie.admin_router)
-from routers import report
+from omnitwin.routers import report
 app.include_router(report.router)
-from routers import data_controle, ai_search, chat, bag3d, log_viewer, externe_lagen
+from omnitwin.routers import data_controle, ai_search, chat, bag3d, log_viewer, externe_lagen
 app.include_router(data_controle.router)
 app.include_router(ai_search.router)
 app.include_router(chat.router)
@@ -214,7 +214,7 @@ async def startup_event():
         AppLogger.error(f"Database connection failed: {e}", category="SERVER")
 
     # X-Admin-Key alleen met een echte key; een lege of voorbeeldwaarde geeft geen toegang (#65)
-    from routers.auth import geldige_admin_api_key
+    from omnitwin.routers.auth import geldige_admin_api_key
     if geldige_admin_api_key() is None:
         AppLogger.warning("ADMIN_API_KEY is leeg of een voorbeeldwaarde: X-Admin-Key is uitgeschakeld", category="AUTH")
 

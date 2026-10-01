@@ -19,10 +19,10 @@ Endpoints:
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from sqlalchemy import text
-from src.database import get_db
-from routers.auth import vereis_admin
-from services.logging_service import AppLogger, _config_cache
-from services.log_cleanup_service import run_cleanup_now
+from omnitwin.database import get_db
+from omnitwin.routers.auth import vereis_admin
+from omnitwin.services.logging_service import AppLogger, _config_cache
+from omnitwin.services.log_cleanup_service import run_cleanup_now
 from pydantic import BaseModel
 from typing import Optional, List, Dict, Any
 from fastapi import Request

@@ -21,7 +21,7 @@ from typing import Optional, Dict, Any
 from datetime import datetime
 
 from sqlalchemy import text
-from src.database import SessionLocal
+from omnitwin.database import SessionLocal
 
 # =============================================================================
 # Log Level Mapping
@@ -224,7 +224,7 @@ def _setup_python_logging(log_level: str = "INFO"):
     # Rotating file handler: 10MB max, 5 backups.
     # Is logs/ niet schrijfbaar (bv. bind-mount op Windows met niet-root gebruiker),
     # dan alleen naar de console loggen in plaats van de app te laten crashen.
-    logs_dir = Path(__file__).resolve().parent.parent / "logs"
+    logs_dir = Path(__file__).resolve().parents[3] / "logs"  # logs/ in de root van de repository
     try:
         logs_dir.mkdir(exist_ok=True)
         file_handler = logging.handlers.RotatingFileHandler(
@@ -270,7 +270,7 @@ class AppLogger:
     Facade voor applicatie-logging.
 
     Gebruik:
-        from services.logging_service import AppLogger
+        from omnitwin.services.logging_service import AppLogger
         AppLogger.info("Server gestart", category="SERVER")
         AppLogger.error("Query timeout", category="DATABASE", extra={"query_ms": 5200})
     """

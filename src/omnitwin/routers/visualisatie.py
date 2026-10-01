@@ -6,7 +6,7 @@ Based on: docs/visual/kaartkleuring_visualisatie_d_omn_itwin.md (v1.1)
 from fastapi import APIRouter, Depends, HTTPException, Header, Request
 from sqlalchemy.orm import Session
 from sqlalchemy import text
-from src.database import get_db
+from omnitwin.database import get_db
 from pydantic import BaseModel
 from typing import Optional, List
 import os
@@ -14,7 +14,7 @@ import os
 router = APIRouter(prefix="/api/visualisatie", tags=["Visualisatie"])
 
 # Beheer-routes (/api/visualisatie/admin/*): apart router met admin-check (#65)
-from routers.auth import vereis_admin
+from omnitwin.routers.auth import vereis_admin
 
 admin_router = APIRouter(prefix="/api/visualisatie/admin", tags=["Visualisatie"], dependencies=[Depends(vereis_admin)])
 

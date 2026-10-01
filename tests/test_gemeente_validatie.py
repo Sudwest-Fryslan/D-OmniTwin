@@ -9,7 +9,7 @@ import pytest
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from services.gemeente_validatie import naam_uit_label, normaliseer, valideer_gemeente_actie
+from omnitwin.services.gemeente_validatie import naam_uit_label, normaliseer, valideer_gemeente_actie
 
 pytestmark = pytest.mark.unit
 

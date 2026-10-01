@@ -1,7 +1,7 @@
 import os
 import sys
 from sqlalchemy import text
-from src.database import get_db, engine
+from omnitwin.database import get_db, engine
 
 def check_dashboard_data():
     print("--- Starting Dashboard Data Check ---")

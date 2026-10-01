@@ -11,7 +11,7 @@ from sqlalchemy import text
 from typing import Dict, Any, List, Optional
 import json
 
-from services.zscore_referentie import (
+from omnitwin.services.zscore_referentie import (
     MIN_N_STANDAARD,
     SQL_ZSCORE_GEBIEDEN,
     bereken_zscore,

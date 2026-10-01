@@ -12,7 +12,7 @@ from typing import Optional, List, Dict, Any
 import numpy as np
 
 
-from services.kompas_service import KompasScoringService
+from omnitwin.services.kompas_service import KompasScoringService
 
 class GebiedsmonitorService:
     """Service class voor Gebiedsmonitor data operaties"""
@@ -39,8 +39,8 @@ class GebiedsmonitorService:
         Haal attribuut data op voor kaartvisualisatie (ZONDER geometry).
         Ontworpen voor de Hybride "Lego" architectuur.
         """
-        from services.color_scale_service import ColorScaleService
-        from services.logging_service import AppLogger
+        from omnitwin.services.color_scale_service import ColorScaleService
+        from omnitwin.services.logging_service import AppLogger
         
         AppLogger.debug(f"get_kaart_attributes executing for gebiedstype {gebiedstype_id}", category="KAART")
         

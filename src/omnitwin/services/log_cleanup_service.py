@@ -17,7 +17,7 @@ Scheduling:
 import asyncio
 import random
 import logging
-from src.database import engine
+from omnitwin.database import engine
 from sqlalchemy import text
 
 logger = logging.getLogger(__name__)
@@ -61,7 +61,7 @@ async def _run_cleanup() -> dict[str, int]:
 
 async def _cleanup_loop() -> None:
     """Achtergrondloop: wacht 24u (+jitter), dan cleanup, herhaal."""
-    from services.logging_service import AppLogger
+    from omnitwin.services.logging_service import AppLogger
 
     while True:
         # Eerste run na 24u — niet direct bij startup

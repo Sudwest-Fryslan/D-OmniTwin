@@ -5,7 +5,7 @@ import os
 sys.path.append(os.getcwd())
 
 from sqlalchemy import text
-from src.database import engine
+from omnitwin.database import engine
 
 def apply_views():
     sql_file = "data/schema_v4_views.sql"

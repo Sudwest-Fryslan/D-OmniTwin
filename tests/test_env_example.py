@@ -1,7 +1,7 @@
 """
 .env.example moet in de pas lopen met wat de app en de compose-bestanden lezen.
 
-- Elke omgevingsvariabele die de app (main.py, src/, routers/, services/) of
+- Elke omgevingsvariabele die de app (src/omnitwin/: main, routers, services, ...) of
   docker-compose*.yml gebruikt, staat in .env.example (ingevuld of als commentaar).
 - .env.example noemt geen variabelen die nergens gebruikt worden.
 
@@ -33,8 +33,7 @@ EXAMPLE_VAR = re.compile(r"^#?\s*([A-Z][A-Z0-9_]+)=", re.MULTILINE)
 
 def gebruikt():
     namen = set()
-    bestanden = [ROOT / "main.py", *(ROOT / "src").rglob("*.py"),
-                 *(ROOT / "routers").glob("*.py"), *(ROOT / "services").glob("*.py")]
+    bestanden = [*(ROOT / "src").rglob("*.py")]  # pakket omnitwin: main, routers, services, ...
     for f in bestanden:
         for m in PY_ENV.finditer(f.read_text(encoding="utf-8", errors="ignore")):
             namen.add(m.group(1) or m.group(2))

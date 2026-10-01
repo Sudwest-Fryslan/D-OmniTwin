@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import text
 from typing import Optional, List, Literal
 from pydantic import BaseModel, UUID4
-from src.database import get_db
+from omnitwin.database import get_db
 import os
 from dotenv import load_dotenv
 import json
@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 # Load environment variables
 load_dotenv()
 
-from routers.auth import vereis_admin
+from omnitwin.routers.auth import vereis_admin
 
 # Alle routes in deze router vereisen een beheerder (#65)
 router = APIRouter(prefix="/api/admin", tags=["Admin"], dependencies=[Depends(vereis_admin)])
@@ -139,7 +139,7 @@ def get_ollama_models(
 ):
     """Beschikbare modellen van de geconfigureerde LLM-server: /api/tags (ollama) of /v1/models (openai)."""
     import requests
-    from services.llm_service import openai_base_url, openai_headers, veilige_host
+    from omnitwin.services.llm_service import openai_base_url, openai_headers, veilige_host
 
     config = _lees_llm_config(db)
     api_url = config["api_url"] if config else "http://localhost:11434"
@@ -567,7 +567,7 @@ async def get_hierarchy_tree(
 ):
     """Get full hierarchy tree for visualization."""
     """Get full hierarchy tree for visualization."""
-    from services.kompas_service import KompasService
+    from omnitwin.services.kompas_service import KompasService
     
     service = KompasService(db)
     # Reuse the robust logic from KompasService which includes Titels (Quadrants)

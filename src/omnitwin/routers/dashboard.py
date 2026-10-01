@@ -4,14 +4,14 @@ from sqlalchemy.orm import Session
 from sqlalchemy import text
 from typing import List, Optional, Dict, Any
 from pydantic import BaseModel
-from src.database import get_db
+from omnitwin.database import get_db
 import os
 from dotenv import load_dotenv
 
 # Load environment variables
 load_dotenv()
 
-from routers.auth import vereis_admin
+from omnitwin.routers.auth import vereis_admin
 
 # Alle routes in deze router vereisen een beheerder (#65)
 router = APIRouter(prefix="/api/admin/dashboard", tags=["Admin Dashboard"], dependencies=[Depends(vereis_admin)])
@@ -244,7 +244,7 @@ async def get_dashboard_indicators(
                 if item["uuid"] in spark_map:
                     item["sparkline"] = spark_map[item["uuid"]]
         except Exception as e:
-            from services.logging_service import AppLogger
+            from omnitwin.services.logging_service import AppLogger
             AppLogger.error(f"Error fetching sparklines: {e}", category="ADMIN")
             # Fail silently, return empty list
             pass

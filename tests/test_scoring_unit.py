@@ -17,8 +17,8 @@ import pytest
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 # Importeer direct de scoring class (geen DB-afhankelijkheden)
-from services.kompas_service import KompasScoringService
-from services.zscore_referentie import JAARLOGICA_STANDAARD, MIN_N_STANDAARD, bereken_zscore, referentie_params
+from omnitwin.services.kompas_service import KompasScoringService
+from omnitwin.services.zscore_referentie import JAARLOGICA_STANDAARD, MIN_N_STANDAARD, bereken_zscore, referentie_params
 
 
 # ─── Fixtures ────────────────────────────────────────────────────────────────

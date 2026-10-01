@@ -14,16 +14,16 @@ Architectuur:
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
-from src.database import get_db
-from services.ai_search_service import AISearchService
-from services.llm_service import LLMService
-from services.gemeente_validatie import valideer_gemeente_acties
-from services.chat_datavraag import beantwoord_datavraag
+from omnitwin.database import get_db
+from omnitwin.services.ai_search_service import AISearchService
+from omnitwin.services.llm_service import LLMService
+from omnitwin.services.gemeente_validatie import valideer_gemeente_acties
+from omnitwin.services.chat_datavraag import beantwoord_datavraag
 from typing import List, Dict, Any, Optional
 import re
 import logging
 
-from services.logging_service import AppLogger
+from omnitwin.services.logging_service import AppLogger
 
 logger = logging.getLogger(__name__)
 

@@ -9,7 +9,7 @@ current_dir = Path(__file__).resolve().parent
 project_root = current_dir.parent
 sys.path.append(str(project_root))
 
-from src.database import SessionLocal
+from omnitwin.database import SessionLocal
 
 def main():
     print("Inspecting 'Kwaliteit van leven' Data Coverage...")

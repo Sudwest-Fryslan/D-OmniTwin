@@ -6,7 +6,7 @@ from pathlib import Path
 from dotenv import load_dotenv
 
 # Project root resolution
-project_root = Path(__file__).resolve().parent.parent
+project_root = Path(__file__).resolve().parents[2]  # root van de repository (src/omnitwin/database.py)
 
 # Load environment variables from .env file
 load_dotenv(project_root / '.env')

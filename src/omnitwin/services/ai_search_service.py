@@ -21,8 +21,8 @@ class AISearchService:
         global _model
         if _model is None:
             try:
-                from services.logging_service import AppLogger
-                from services.embedding_model import MODEL_ID, MODEL_REVISIE, laad_model
+                from omnitwin.services.logging_service import AppLogger
+                from omnitwin.services.embedding_model import MODEL_ID, MODEL_REVISIE, laad_model
                 AppLogger.info(f"Initialiseren van AISearch model ({MODEL_ID}@{MODEL_REVISIE[:8]})...", category="SERVER")
                 _model = laad_model()
             except Exception as e:

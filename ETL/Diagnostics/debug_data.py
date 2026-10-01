@@ -1,5 +1,5 @@
 
-from src.database import SessionLocal
+from omnitwin.database import SessionLocal
 from sqlalchemy import text
 
 def debug_db():

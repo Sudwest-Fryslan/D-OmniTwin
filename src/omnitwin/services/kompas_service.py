@@ -9,7 +9,7 @@ from sqlalchemy import text
 from datetime import datetime
 import json
 
-from services.zscore_referentie import (
+from omnitwin.services.zscore_referentie import (
     CBS_BUURT_CODE,
     SCENARIO_STANDAARD,
     SQL_REFERENTIE_STATS,

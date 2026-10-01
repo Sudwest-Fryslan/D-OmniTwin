@@ -235,7 +235,7 @@ class ColorScaleService:
             return None
             
         except Exception as e:
-            from services.logging_service import AppLogger
+            from omnitwin.services.logging_service import AppLogger
             AppLogger.error(f"get_visualization_config failed: {e}", category="KAART")
             return None
     

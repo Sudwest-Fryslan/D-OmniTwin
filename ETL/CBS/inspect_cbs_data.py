@@ -2,7 +2,7 @@ import sys
 import os
 sys.path.append(os.getcwd())
 from sqlalchemy import text
-from src.database import engine
+from omnitwin.database import engine
 import json
 
 def inspect_data():

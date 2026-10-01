@@ -7,7 +7,7 @@ Revisie: vastgepind op een commit van de HuggingFace-repository, zodat embedding
          reproduceerbaar zijn. Bijwerken: zie docs/9-beheer/installatie.md.
 
 In de Docker-image staat het model al in MODEL_PAD (download tijdens `docker build`,
-via `python services/embedding_model.py`). De container draait met HF_HUB_OFFLINE=1:
+via `python src/omnitwin/services/embedding_model.py`). De container draait met HF_HUB_OFFLINE=1:
 geen download en geen telemetrie bij het starten.
 
 Buiten Docker (lokaal ontwikkelen) ontbreekt MODEL_PAD meestal. Dan wordt het model
@@ -73,7 +73,7 @@ def laad_model():
             + (" en offline-modus staat aan (HF_HUB_OFFLINE=1)" if offline() else "")
             + f". In Docker: bouw de image opnieuw (docker compose build). "
             f"Lokaal: zet HF_HUB_OFFLINE uit (eenmalige download naar de HuggingFace-cache), "
-            f"of download naar een map met EMBEDDING_MODEL_PAD=<map> python services/embedding_model.py. "
+            f"of download naar een map met EMBEDDING_MODEL_PAD=<map> python src/omnitwin/services/embedding_model.py. "
             f"Oorzaak: {e}"
         ) from e
 

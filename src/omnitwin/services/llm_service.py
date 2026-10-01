@@ -7,8 +7,8 @@ import os
 import re
 from urllib.parse import urlsplit
 
-from services.logging_service import AppLogger
-from services.gemeente_validatie import laad_gemeenten
+from omnitwin.services.logging_service import AppLogger
+from omnitwin.services.gemeente_validatie import laad_gemeenten
 
 # Fallbacks instellen, maar in deze v8 schema wordt de API URL dynamisch uit de database gehaald
 DEFAULT_OLLAMA_HOST = os.getenv("OLLAMA_HOST", "http://localhost:11434")

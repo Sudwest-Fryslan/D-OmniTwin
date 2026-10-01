@@ -7,14 +7,14 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 from typing import List, Optional, Dict, Any
-from src.database import get_db
-from schemas.kompas import (
+from omnitwin.database import get_db
+from omnitwin.schemas.kompas import (
     KompasConfiguratiesResponse,
     HierarchieResponse,
     GebiedKompasResponse,
     IndicatorPathResponse
 )
-from services.kompas_service import KompasService
+from omnitwin.services.kompas_service import KompasService
 
 
 # ─── Pydantic Models (Sprint 18 Track C) ────────────────────────────────────

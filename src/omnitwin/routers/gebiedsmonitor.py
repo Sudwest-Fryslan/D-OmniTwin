@@ -15,10 +15,10 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from typing import Optional, Dict, Any
 
-from src.database import get_db
-from src.version import __version__
-from services.gebiedsmonitor_service import GebiedsmonitorService
-from schemas.gebiedsmonitor import (
+from omnitwin.database import get_db
+from omnitwin.version import __version__
+from omnitwin.services.gebiedsmonitor_service import GebiedsmonitorService
+from omnitwin.schemas.gebiedsmonitor import (
     GebiedstypesListResponse,
     GebiedenListResponse,
     GebiedDetailResponse,

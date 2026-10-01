@@ -32,8 +32,8 @@ import re
 import json
 import logging
 
-from src.database import get_db
-from routers.auth import vereis_admin
+from omnitwin.database import get_db
+from omnitwin.routers.auth import vereis_admin
 
 logger = logging.getLogger(__name__)
 

@@ -18,12 +18,12 @@ from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 from sqlalchemy import text
 from pyproj import Transformer
-from src.database import get_db
+from omnitwin.database import get_db
 from typing import List, Optional
 import requests
 import logging
 
-from services.logging_service import AppLogger
+from omnitwin.services.logging_service import AppLogger
 
 logger = logging.getLogger(__name__)
 

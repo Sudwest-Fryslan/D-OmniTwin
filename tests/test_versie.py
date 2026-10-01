@@ -2,7 +2,7 @@
 Unit test: één versienummer (#27).
 
 `VERSION` is de bron. `publiccode.yml`, `admin-panel/package.json` en de app
-(`src/version.py`, gebruikt door `main.py`) moeten hetzelfde nummer hebben, en het
+(`src/omnitwin/version.py`, gebruikt door `src/omnitwin/main.py`) moeten hetzelfde nummer hebben, en het
 moet geldige Semantic Versioning zijn. Zie docs/9-beheer/releasebeleid.md.
 """
 import json
@@ -34,14 +34,14 @@ def test_version_is_semver():
 
 
 def test_app_leest_version():
-    from src.version import __version__
+    from omnitwin.version import __version__
 
     assert __version__ == _bron()
 
 
 def test_main_gebruikt_version():
-    main = (ROOT / "main.py").read_text(encoding="utf-8")
-    assert "from src.version import __version__" in main
+    main = (ROOT / "src" / "omnitwin" / "main.py").read_text(encoding="utf-8")
+    assert "from omnitwin.version import __version__" in main
     assert "version=__version__" in main
     # Geen losse, hardgecodeerde versienummers meer in main.py
     assert not re.search(r"""["']version["']\s*:\s*["']\d""", main)

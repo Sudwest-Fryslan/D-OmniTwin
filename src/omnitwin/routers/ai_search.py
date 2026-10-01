@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
-from src.database import get_db
-from services.ai_search_service import AISearchService
+from omnitwin.database import get_db
+from omnitwin.services.ai_search_service import AISearchService
 from typing import List, Dict, Any
 
 router = APIRouter(
@@ -31,6 +31,6 @@ def search_kompas(
 @router.get("/health")
 async def health_check():
     """Health check voor AI-zoeken, met de status van het embeddingmodel (#118)."""
-    from services import embedding_model
+    from omnitwin.services import embedding_model
     return {"status": "healthy", "service": "AI Search API",
             "embedding_model": embedding_model.status()}

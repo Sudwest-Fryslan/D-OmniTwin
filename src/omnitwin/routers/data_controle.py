@@ -1,11 +1,11 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from src.database import get_db
-from services.data_controle_service import DataControleService
+from omnitwin.database import get_db
+from omnitwin.services.data_controle_service import DataControleService
 from typing import List, Dict, Any
 from pydantic import BaseModel
-from services.deduplicatie_service import DeduplicatieService
-from routers.auth import vereis_admin
+from omnitwin.services.deduplicatie_service import DeduplicatieService
+from omnitwin.routers.auth import vereis_admin
 
 class MergeRequest(BaseModel):
     primary_uuid: str

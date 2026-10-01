@@ -1,9 +1,9 @@
 import unittest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
-from src.database import get_db
-from services.report_service import ReportDataService
-from routers.report import router
+from omnitwin.database import get_db
+from omnitwin.services.report_service import ReportDataService
+from omnitwin.routers.report import router
 
 class TestDeelgebiedReport(unittest.TestCase):
     def setUp(self):

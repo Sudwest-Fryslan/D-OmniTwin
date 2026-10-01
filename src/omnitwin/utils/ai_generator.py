@@ -1,6 +1,6 @@
 import re
 from sqlalchemy.orm import Session
-from services.llm_service import LLMService
+from omnitwin.services.llm_service import LLMService
 
 def clean_ai_output(text: str) -> str:
     """Schoont de AI output op door <think> tags en markdown te verwijderen."""

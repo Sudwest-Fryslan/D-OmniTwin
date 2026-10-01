@@ -16,7 +16,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request, Response
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 from sqlalchemy import text
-from src.database import get_db
+from omnitwin.database import get_db
 from passlib.context import CryptContext
 from pydantic import BaseModel
 import hashlib
@@ -24,7 +24,7 @@ import secrets
 import datetime
 import os
 
-from services.logging_service import AppLogger
+from omnitwin.services.logging_service import AppLogger
 
 router = APIRouter(prefix="/api/admin/auth", tags=["Auth"])
 

@@ -26,7 +26,7 @@ from typing import Any, Callable, Dict, Iterable, List, Optional, Sequence, Tupl
 
 from sqlalchemy import text
 
-from services.grounding import ongegronde_getallen
+from omnitwin.services.grounding import ongegronde_getallen
 
 MAX_INDICATOREN = 4
 MAX_GEBIEDEN_IN_FEITEN = 12   # langere lijsten: top en staart
@@ -743,7 +743,7 @@ def beantwoord_datavraag(
 
     gebieden = laad_gebieden(db)
     try:
-        from services.gemeente_validatie import laad_gemeenten
+        from omnitwin.services.gemeente_validatie import laad_gemeenten
         gemeenten = laad_gemeenten(db, alleen_met_gebieden=True)
     except Exception:
         db.rollback()

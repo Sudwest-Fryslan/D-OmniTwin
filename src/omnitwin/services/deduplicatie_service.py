@@ -5,8 +5,8 @@ from collections import defaultdict
 import difflib
 import re
 
-from services.llm_service import LLMService
-from services.logging_service import AppLogger
+from omnitwin.services.llm_service import LLMService
+from omnitwin.services.logging_service import AppLogger
 
 class DeduplicatieService:
     def __init__(self, db: Session):

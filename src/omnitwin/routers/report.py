@@ -13,10 +13,10 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 from typing import Dict, Any, Optional, List
-from src.database import get_db
-from services.report_service import ReportDataService
-from services.llm_service import LLMService
-from routers.auth import huidige_gebruiker
+from omnitwin.database import get_db
+from omnitwin.services.report_service import ReportDataService
+from omnitwin.services.llm_service import LLMService
+from omnitwin.routers.auth import huidige_gebruiker
 
 
 def _is_beheerder(request: Request, db: Session) -> bool:

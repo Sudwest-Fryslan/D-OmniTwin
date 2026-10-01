@@ -16,16 +16,16 @@ def run():
     # Dit voorkomt dat uvicorn de tienduizenden bestanden in admin-panel/node_modules scant.
     
     uvicorn.run(
-        "main:app",
+        "omnitwin.main:app",
+        app_dir="src",  # pakket omnitwin staat in src/ (#182)
         host="0.0.0.0",
         port=8000,
         reload=True,
         # Alleen deze mappen/bestanden in de gaten houden voor server restarts
         reload_includes=[
-            "main.py",
-            "routers/*.py",
-            "services/*.py",
-            "src/*.py",
+            "src/omnitwin/*.py",
+            "src/omnitwin/routers/*.py",
+            "src/omnitwin/services/*.py",
             "templates/*.html",
             "static/js/*.js",
             "static/css/*.css",
