@@ -25,12 +25,16 @@ services:
       - "--providers.docker.constraints=Label(`com.docker.compose.project`,`${COMPOSE_PROJECT_NAME:-d-omnitwin}`)"
       - "--providers.docker.network=${COMPOSE_PROJECT_NAME:-d-omnitwin}_default"
       - "--entrypoints.web.address=:80"
+      # Security-headers (CSP, nosniff, ...) op alle routes; zie deploy/traefik/dynamic.yml
+      - "--providers.file.filename=/etc/traefik/dynamic.yml"
+      - "--entrypoints.web.http.middlewares=security-headers@file"
     environment:
       - DOCKER_API_VERSION=1.44
     ports:
       - "${OMNITWIN_HTTP_PORT:-80}:80"
     volumes:
       - "/var/run/docker.sock:/var/run/docker.sock:ro"
+      - "./deploy/traefik/dynamic.yml:/etc/traefik/dynamic.yml:ro"
     restart: unless-stopped
 
   postgres:

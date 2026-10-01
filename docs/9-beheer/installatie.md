@@ -128,6 +128,7 @@ Met de standaardpoort 80 (anders `http://<host>:<OMNITWIN_HTTP_PORT>/...`):
 | `http://<host>/api/data/` | PostgREST: tabellen en views als REST-API |
 | `http://<host>/api/geo/` | pg_featureserv: OGC API Features, bijvoorbeeld `/api/geo/collections` |
 | `http://<host>/health` | Healthcheck van de backend |
+| `http://<host>/.well-known/security.txt` | Meldpunt voor kwetsbaarheden (zie [Beveiliging](#securitytxt)) |
 
 Alleen Traefik publiceert een poort. De database en de afzonderlijke services zijn van buiten Docker niet bereikbaar.
 
@@ -289,7 +290,52 @@ Stel een installatie **niet** open voor internet of een breed netwerk zolang dez
 
 - **PostgREST geeft alle tabellen vrij.** `/api/data` draait als de database-eigenaar en toont en wijzigt zonder inloggen alle tabellen, ook `users` en `sessions`. Aparte rollen en een beperkt API-schema volgen in #57. Tot die tijd: alleen in een vertrouwd netwerk, of `/api/data` afschermen in een proxy ervoor.
 - **Autorisatie op beheerroutes is nog niet overal op orde** (#65).
-- **Geen HTTPS in de stack.** Traefik luistert alleen op HTTP. Zet een reverse proxy met TLS ervoor (bijvoorbeeld de bestaande proxy of WAF van je organisatie) en zet dan `DEBUG=false`. Met `DEBUG=false` stuurt de browser het inlogcookie alleen via HTTPS (behalve op `localhost`).
+- **Standaard geen HTTPS.** Traefik luistert op HTTP. Zet HTTPS aan op een van de twee manieren hieronder, en zet dan `DEBUG=false`. Met `DEBUG=false` stuurt de browser het inlogcookie alleen via HTTPS (behalve op `localhost`).
 - Houd `.env` geheim: het bevat het databasewachtwoord en de `ADMIN_API_KEY`.
 
 Kwetsbaarheden melden: zie [`SECURITY.md`](../../SECURITY.md).
+
+### HTTPS aanzetten
+
+HTTPS en HSTS zijn verplicht volgens de [Forum Standaardisatie](https://www.forumstandaardisatie.nl/open-standaarden/verplicht). Kies één manier:
+
+**A. Achter de TLS-proxy van je organisatie (aanbevolen).** De proxy of WAF handelt het certificaat af en stuurt door naar `http://<host>:<OMNITWIN_HTTP_PORT>`. Laat de stack zoals hij is en zet `DEBUG=false`. De proxy moet zelf HSTS sturen (`Strict-Transport-Security: max-age=31536000`) en HTTP doorsturen naar HTTPS; Traefik ziet alleen HTTP en zet die header dan niet.
+
+**B. Traefik zelf met Let's Encrypt.** Voor een server die direct bereikbaar is, met een DNS-naam en poort 80 en 443 open. Gebruik het voorbeeld [`deploy/traefik/tls.example.yml`](../../deploy/traefik/tls.example.yml). Zet in `.env`:
+
+```bash
+COMPOSE_FILE=docker-compose.yml:deploy/traefik/tls.example.yml   # Windows: ; in plaats van :
+OMNITWIN_DOMAIN=omnitwin.example.nl
+ACME_EMAIL=beheer@example.nl     # functioneel adres voor meldingen van Let's Encrypt
+DEBUG=false
+```
+
+en draai `docker compose up -d`. HTTP gaat dan met een redirect naar HTTPS, en HSTS staat aan. `OMNITWIN_HTTP_PORT` moet hierbij `80` blijven. Een eigen certificaat in plaats van Let's Encrypt staat beschreven in de kop van het voorbeeldbestand.
+
+### Security-headers
+
+Traefik zet op **alle** routes (de app, `/api/data`, `/api/geo`, `/health`) deze headers, vastgelegd in [`deploy/traefik/dynamic.yml`](../../deploy/traefik/dynamic.yml):
+
+| Header | Waarde |
+|--------|--------|
+| `Content-Security-Policy` | Alleen eigen bronnen, plus unpkg.com en cdn.jsdelivr.net (bibliotheken met SRI-hash), api.pdok.nl en service.pdok.nl (achtergrondkaart) en Google Fonts (helppagina). Geen framing (`frame-ancestors 'none'`), geen plugins (`object-src 'none'`). |
+| `X-Frame-Options` | `DENY` |
+| `X-Content-Type-Options` | `nosniff` |
+| `Referrer-Policy` | `strict-origin-when-cross-origin` |
+| `Permissions-Policy` | camera, microfoon, locatie, betalen en USB uit |
+| `Strict-Transport-Security` | `max-age=31536000`, alleen op HTTPS via Traefik (manier B) |
+
+De CSP staat nog `'unsafe-inline'` toe: de frontend gebruikt inline scripts, `onclick=`-attributen en inline stijlen. Dat weghalen is een aparte klus in de frontend.
+
+Voeg je een kaartlaag of bibliotheek toe die rechtstreeks een andere server aanroept, dan blokkeert de browser die. Neem de host dan op in `dynamic.yml` en draai `docker compose restart traefik`. Externe WFS-lagen lopen via de backend (`/api/externe-lagen/...`) en hebben dit niet nodig.
+
+### security.txt
+
+`/.well-known/security.txt` ([RFC 9116](https://www.rfc-editor.org/rfc/rfc9116)) verwijst naar `SECURITY.md` in de GitHub-repository. Dat is het meldpunt voor fouten in de software. Beheer je een eigen installatie, vervang dan in [`static/.well-known/security.txt`](../../static/.well-known/security.txt) `Contact` en `Policy` door het meldpunt van je organisatie en voeg `Canonical: https://<host>/.well-known/security.txt` toe. Het veld `Expires` mag hooguit een jaar vooruit liggen; verleng het op tijd.
+
+### Checklist vóór openstelling
+
+- HTTPS aan (manier A of B), `DEBUG=false`, en HSTS zichtbaar in de response-headers.
+- Het domein heeft DNSSEC en is via IPv6 bereikbaar (ook verplichte standaarden). Dat regel je bij je DNS- en hostingbeheer, niet in de stack.
+- `security.txt` verwijst naar het juiste meldpunt.
+- De punten bovenaan dit hoofdstuk (#57, #65) zijn opgelost of afgeschermd.
