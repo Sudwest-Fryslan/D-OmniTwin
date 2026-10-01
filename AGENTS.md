@@ -166,4 +166,6 @@ Elke wijziging gaat via GitHub Flow:
 4. Pull Request naar `main` met `Closes #<nr>` in de beschrijving
 5. Nooit direct op `main` pushen
 
+**Nieuwe functionaliteit = een use case erbij** (`usecases/<naam>/`: data, inrichting, stappen, verwachte uitkomst). De use case werkt out of the box, ook zonder AI-sleutel, en wordt getoetst door `tests/integration/test_usecases.py`. Zie CONTRIBUTING.md.
+
 `gh` CLI: `/usr/bin/gh` — gebruik altijd met `GH_PAGER=cat` om pager-blokkering te voorkomen.
