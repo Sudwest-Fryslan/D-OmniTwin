@@ -141,11 +141,19 @@ def test_reduced_motion_camera_springt_en_kompas_zonder_transitie(app_page_reduc
     )
     klik_kompas_segment(page, thema)
     expect(page.locator("#kompas-breadcrumb")).to_contain_text(thema)
-    page.wait_for_timeout(150)  # ruim onder de normale 750 ms
-    klaar = page.evaluate(
+    # Niet op de klok toetsen: in CI rendert de kaart in software (SwiftShader) en kan één
+    # animatieframe honderden ms duren. Toets daarom de ingestelde duur: elke zichtbare boog
+    # staat al op de eindstand, of heeft een lopende d3-transitie met duur 0 (normaal 750 ms).
+    status = page.evaluate(
         """() => [...document.querySelectorAll('#kompas-container path.kompas-arc-path')]
-              .map(p => p.__data__)
-              .filter(d => d && d.target && window.kompasViz.arcVisible(d.target))
-              .every(d => ['x0', 'x1', 'y0', 'y1'].every(k => Math.abs(d.current[k] - d.target[k]) < 1e-9))"""
+              .filter(p => p.__data__ && p.__data__.target && window.kompasViz.arcVisible(p.__data__.target))
+              .map(p => {
+                  const d = p.__data__;
+                  const klaar = ['x0', 'x1', 'y0', 'y1'].every(k => Math.abs(d.current[k] - d.target[k]) < 1e-9);
+                  const duren = Object.values(p.__transition || {}).map(t => t.duration);
+                  return {naam: d.data.name, klaar, duren};
+              })"""
     )
-    assert klaar, "zonnediagram staat 150 ms na de klik nog niet op de eindstand"
+    assert status, "geen zichtbare bogen met een doelstand na de klik"
+    afwijkend = [s for s in status if not s["klaar"] and (not s["duren"] or any(d > 0 for d in s["duren"]))]
+    assert not afwijkend, f"zonnediagram animeert ondanks reduced motion (thema {thema!r}): {afwijkend[:3]}"
