@@ -59,7 +59,7 @@ Gebruik alleen letters en cijfers (zoals hierboven): tekens als `@ : / # % $` br
 | `ADMIN_PASSWORD` | Aanbevolen. Wachtwoord van het eerste beheeraccount (`admin`). Leeg: er wordt eenmalig een wachtwoord gegenereerd (zie [2.4](#24-eerste-keer-inloggen)). |
 | `COMPOSE_FILE=docker-compose.yml` | Staat al aan: alleen de installatie-instellingen. Ontwikkelaars halen deze regel weg (zie [Ontwikkelmodus](#3-ontwikkelmodus)). |
 | `DEBUG` | `true` zolang je zonder HTTPS draait, anders werkt inloggen niet (zie [Beveiliging](#beveiliging)). Met HTTPS: `false`. |
-| Optioneel | Poort (`OMNITWIN_HTTP_PORT`), sample dataset (`LOAD_SAMPLE_DATA`), lokale AI (`OLLAMA_HOST`, zie [LLM](#7-llm-optioneel)) en `ADMIN_API_KEY` (alleen voor scripts; leeg = uitgeschakeld, laat nooit een voorbeeldwaarde staan). De standaardwaarden staan in `.env.example`. |
+| Optioneel | Poort (`OMNITWIN_HTTP_PORT`), demodata via de use cases (`LOAD_SAMPLE_DATA`; `false` = product zonder data, zie [Data](#4-data)), lokale AI (`OLLAMA_HOST`, zie [LLM](#7-llm-optioneel)) en `ADMIN_API_KEY` (alleen voor scripts; leeg = uitgeschakeld, laat nooit een voorbeeldwaarde staan). De standaardwaarden staan in `.env.example`. |
 
 Bescherm het bestand: `chmod 600 .env`.
 
@@ -142,7 +142,7 @@ Ontwikkelen zonder Docker (Python venv, `run_dev.py`, admin-panel met `npm start
 
 ### Sample dataset (standaard)
 
-Met `LOAD_SAMPLE_DATA=true` laadt `db-init` bij de eerste start een kleine sample: buurten in Súdwest-Fryslân met indicatoren, Kompas-indeling en stuurdata (scenario's, profielen, prompts). Een deel van de waarden is demodata. Zie [`init_data/sample/README.md`](../../init_data/sample/README.md) voor de inhoud en herkomst.
+`db-init` laadt bij de eerste start altijd het product zonder data: stuurdata (scenario's, profielen, prompts), de indicatordefinities en de Kompas-indeling. Met `LOAD_SAMPLE_DATA=true` laadt het daarna de **use cases** uit [`usecases/`](../../usecases/README.md). Elke use case brengt zijn eigen gebieden en waarden mee, gekozen uit de bronbibliotheek [`init_data/sample/`](../../init_data/sample/README.md), plus de inrichting en de teststappen. Een deel van de waarden is demodata. Eén use case laden: `docker compose exec backend python init_data/scripts/laad_usecase.py hittestress`.
 
 De sample is bedoeld om de installatie te testen en te demonstreren, niet voor beleid.
 
