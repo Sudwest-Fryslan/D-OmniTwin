@@ -51,7 +51,7 @@ init_data/
 
 ## 🚀 Gebruik
 
-Zie [`GETTING_STARTED.md`](../GETTING_STARTED.md) in de projectroot voor de volledige stap-voor-stap gids.
+Zie [`docs/archief/GETTING_STARTED.md`](../docs/archief/GETTING_STARTED.md) voor de volledige stap-voor-stap gids (verouderd; Docker: [installatiegids](../docs/9-beheer/installatie.md)).
 
 **Snel starten (na database aanmaken):**
 

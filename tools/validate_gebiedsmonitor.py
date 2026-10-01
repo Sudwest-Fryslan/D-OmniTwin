@@ -10,7 +10,7 @@ Dit script voert uitgebreide validatie uit op de Gebiedsmonitor database:
 - Genereren van een validatierapport in Markdown
 
 Usage:
-    python scripts/validate_gebiedsmonitor.py
+    python tools/validate_gebiedsmonitor.py
 """
 
 import os

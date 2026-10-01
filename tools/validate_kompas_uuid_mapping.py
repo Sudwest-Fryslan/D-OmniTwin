@@ -9,7 +9,7 @@ Dit script valideert de relaties tussen indicatoren in:
 4. Beschikbare data (gebied_data)
 
 Gebruik:
-    python scripts/validate_kompas_uuid_mapping.py
+    python tools/validate_kompas_uuid_mapping.py
 
 Output:
     - Console rapport met statistieken
@@ -259,7 +259,7 @@ def generate_report(
     report = f"""# Kompas UUID Mapping Validatie Rapport
 
 **Gegenereerd:** {now}  
-**Script:** `scripts/validate_kompas_uuid_mapping.py`
+**Script:** `tools/validate_kompas_uuid_mapping.py`
 
 ---
 
