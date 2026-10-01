@@ -84,6 +84,8 @@ class GebiedKompasResponse(BaseModel):
     config_naam: str
     hierarchie: KompasNode              # Met waarden + kleuren ingevuld
     coverage_percentage: float          # % indicatoren met data
+    is_waterbuurt: bool = False         # #155: waterbuurt → geen vergelijking met de referentie
+    melding: Optional[str] = None       # #155: toelichting, bijvoorbeeld bij een waterbuurt
     laatste_update: datetime = Field(default_factory=datetime.now)
 
 

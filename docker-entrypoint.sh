@@ -40,7 +40,7 @@ wait_for_db() {
 # Migraties die (nog) niet in schema_latest.sql zitten. Idempotent, dus ze draaien
 # bij elke init, ook op een bestaande database. Structureel: migratiebeheer (#54)
 run_migrations() {
-    for m in schema_v18_trigram.sql schema_v19_deduplicatie_uitzonderingen.sql schema_v20_llm_api_type.sql schema_v22_auth_hardening.sql; do
+    for m in schema_v18_trigram.sql schema_v19_deduplicatie_uitzonderingen.sql schema_v20_llm_api_type.sql schema_v21_zscore_referentie.sql schema_v22_auth_hardening.sql; do
         PGOPTIONS="-c client_min_messages=warning" psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -v ON_ERROR_STOP=1 -q -f "/app/migrations/$m" >/dev/null
     done
 }

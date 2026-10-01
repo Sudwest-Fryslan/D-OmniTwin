@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Tijdelijk beeldmerk, zie #83 (https://github.com/TLaan/D-OmniTwin/issues/83).
+  Beeldmerk plus woordmerk "D-OmniTwin", voor README, documentatie en publiccode.yml.
+  In de app zelf staat alleen static/images/beeldmerk.svg; de naam staat daar als tekst.
+  De tekstkleur volgt het licht of donker thema van de lezer (prefers-color-scheme).
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 64" width="280" height="64" role="img" aria-labelledby="woordmerk-titel">
+  <title id="woordmerk-titel">D-OmniTwin</title>
+  <style>
+    .woord { fill: #0f172a; font-family: Inter, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; font-size: 34px; font-weight: 600; }
+    @media (prefers-color-scheme: dark) { .woord { fill: #e2e8f0; } }
+  </style>
+  <rect width="64" height="64" rx="14" fill="#0f172a"/>
+  <path d="M17 14h12a18 18 0 0 1 0 36H17z" fill="none" stroke="#3b82f6" stroke-width="5" stroke-linejoin="round"/>
+  <path d="M25 23h4a9 9 0 0 1 0 18h-4z" fill="#22c55e"/>
+  <text class="woord" x="80" y="44">D-OmniTwin</text>
+</svg>
