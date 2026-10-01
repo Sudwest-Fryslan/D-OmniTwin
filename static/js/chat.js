@@ -180,6 +180,20 @@ class ChatPanel {
 
         this.messagesEl.appendChild(block);
         this._scrollToBottom();
+
+        // #149: de kaart beweegt mee met een antwoord op een datavraag (zonder klik);
+        // de knoppen blijven staan om terug te gaan of verder te klikken.
+        const ka = response.kaart_actie;
+        if (ka && Array.isArray(ka.gebied_ids) && ka.gebied_ids.length > 0 && window.EventBus) {
+            window.EventBus.emit('CHAT_GEBIEDEN_TONEN', {
+                ids: ka.gebied_ids,
+                uuid: ka.indicator_uuid || null,
+                name: ka.indicator || '',
+                gebiedstypeId: ka.gebiedstype_id || null,
+                gemeenteCode: ka.gemeente_code || null,
+                zoom: true
+            });
+        }
     }
 
     /**
@@ -273,8 +287,9 @@ class ChatPanel {
                     // #149: indicator tonen én de gebieden uit het antwoord selecteren
                     window.EventBus.emit('CHAT_GEBIEDEN_TONEN', {
                         ids: gebiedIds,
-                        gebiedstypeId: btn.dataset.gebiedstypeId || null,
+                        gebiedstypeId: btn.dataset.gebiedstypeId || null, gemeenteCode: btn.dataset.gemeenteCode || null,
                         uuid: uuid || null,
+                        zoom: true,
                         name: originalText.replace(/^[🗺📋📄\s]+/, '').replace(/^Toon( op kaart)?: /, '')
                     });
                 } else if (uuid && window.EventBus) {
@@ -349,7 +364,7 @@ class ChatPanel {
                 if (gebiedIds.length > 0 && window.EventBus) {
                     // #149: eerst de gebieden uit het antwoord selecteren, dan het Kompas daarvoor openen
                     window.EventBus.emit('CHAT_GEBIEDEN_TONEN', {
-                        ids: gebiedIds, gebiedstypeId: btn.dataset.gebiedstypeId || null, openKompas: true
+                        ids: gebiedIds, gebiedstypeId: btn.dataset.gebiedstypeId || null, gemeenteCode: btn.dataset.gemeenteCode || null, openKompas: true
                     });
                 } else if (window.EventBus) {
                     window.EventBus.emit('KOMPAS_OPEN_REQUESTED');

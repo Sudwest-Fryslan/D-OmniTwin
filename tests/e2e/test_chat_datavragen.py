@@ -44,6 +44,12 @@ def laad_usecases():
 
 
 USE_CASES = laad_usecases()
+# TC-06-004, de demo-kernvraag: geen vraagpatroon, wel gebied + indicator
+USE_CASES["TC-06-004 hoe-groen"] = {
+    "persona": {"vraag": "Hoe groen is Bolsward-Zuidoost?"},
+    "verwacht": {"verwacht": "Bolsward-Zuidoost"},
+    "data": {"gebieden": {"BU19000002": "Bolsward-Zuidoost"}},
+}
 
 _INIT = """
 () => {
@@ -113,6 +119,28 @@ def test_datavraag_in_de_chat(page, uc):
         for naam in u["data"]["gebieden"].values():
             if re.search(rf"\b{re.escape(naam)}\b(?!-)", u["verwacht"]["verwacht"]):
                 assert naam in data["narrative"], f"{uc}: {naam} ontbreekt in: {data['narrative']}"
+
+    # De kaart beweegt zonder klik mee: indicatorlaag, selectie en ingezoomd op de gebieden
+    ka = data["kaart_actie"]
+    page.wait_for_function(
+        "([uuid, n]) => window.state.currentIndicator === uuid && window.state.selectedGebiedIds.size === n",
+        arg=[ka["indicator_uuid"], len(ka["gebied_ids"])],
+        timeout=60_000,
+    )
+    expect(page.locator("#selection-badge")).to_be_visible()
+    page.wait_for_timeout(1500)  # inzoom-animatie
+    camera = page.evaluate("""(ids) => {
+        const set = new Set(ids); let x0 = 180, x1 = -180, y0 = 90, y1 = -90;
+        const walk = a => { if (typeof a[0] === 'number') { x0 = Math.min(x0, a[0]); x1 = Math.max(x1, a[0]);
+            y0 = Math.min(y0, a[1]); y1 = Math.max(y1, a[1]); } else a.forEach(walk); };
+        window.state.currentData.features.filter(f => set.has(f.properties.id)).forEach(f => walk(f.geometry.coordinates));
+        const v = window.state.currentViewState;
+        return { lon: v.longitude, lat: v.latitude, zoom: v.zoom, bbox: [x0, y0, x1, y1] };
+    }""", ka["gebied_ids"])
+    x0, y0, x1, y1 = camera["bbox"]
+    marge_x, marge_y = (x1 - x0) * 1.5 + 0.02, (y1 - y0) * 1.5 + 0.02  # vrije zone naast panelen
+    assert x0 - marge_x <= camera["lon"] <= x1 + marge_x and y0 - marge_y <= camera["lat"] <= y1 + marge_y, camera
+    assert camera["zoom"] >= 11, f"niet ingezoomd: {camera}"
 
     # Toon op kaart: gebieden geselecteerd en indicator op de kaart
     toon = next(a for a in data["acties"] if a["type"] == "TOON_OP_KAART")

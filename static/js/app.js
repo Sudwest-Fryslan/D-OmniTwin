@@ -3263,6 +3263,7 @@ function setupEventListeners() {
 
         // #149: Chat -> Kaart: gebieden uit een antwoord op een datavraag selecteren,
         // optioneel met de indicator op de kaart of het Kompas voor die gebieden.
+        // Ook automatisch na een antwoord (kaart_actie, zoom: true): de kaart beweegt mee.
         window.EventBus.on('CHAT_GEBIEDEN_TONEN', async (data) => {
             const ids = (data.ids || []).filter(Boolean);
             if (data.gebiedstypeId && state.currentGebiedstype !== data.gebiedstypeId) {
@@ -3273,6 +3274,17 @@ function setupEventListeners() {
                     state.currentIndicator = null;
                     await loadIndicatoren(data.gebiedstypeId);
                 }
+            }
+            // Een gemeentefilter op een andere gemeente zou de gebieden verbergen
+            if (data.gemeenteCode && state.currentGemeenteCode && state.currentGemeenteCode !== data.gemeenteCode) {
+                const gemeente = loadedGemeenten.find(g => g.code === data.gemeenteCode);
+                state.currentGemeenteCode = data.gemeenteCode;
+                try { localStorage.setItem('omnitwin-gemeente', data.gemeenteCode); } catch (e) { /* geen opslag */ }
+                const input = document.getElementById('gemeente-input');
+                const codeInput = document.getElementById('gemeente-code');
+                if (input && gemeente) input.value = gemeente.naam;
+                if (codeInput) codeInput.value = data.gemeenteCode;
+                state.currentData = null;
             }
 
             clearGebiedSelection();
@@ -3285,8 +3297,10 @@ function setupEventListeners() {
             } else if (state.currentGebiedstype) {
                 await loadKaartData();
             }
+            updateGemeenteFilterChip(state.currentData?.features?.length ?? null);
             updateSelectionUI();
             updateButtonState();
+            if (data.zoom) zoomNaarGebieden(ids);
 
             if (data.openKompas && state.kompasWindow) {
                 state.kompasWindow.open();
@@ -3728,6 +3742,60 @@ function flyToGebied(feature, clickCoordinate = null) {
                 transitionInterpolator: new deck.FlyToInterpolator()
             }
         });
+}
+
+/**
+ * #149: zoom in op een set gebieden (bbox van hun geometrie in state.currentData).
+ * Met prefers-reduced-motion zonder animatie. Retourneert true als er ingezoomd is.
+ */
+function zoomNaarGebieden(ids) {
+    if (!state.deckgl || !state.currentData || !Array.isArray(state.currentData.features)) return false;
+    const gezocht = new Set(ids);
+    let minLon = Infinity, maxLon = -Infinity, minLat = Infinity, maxLat = -Infinity;
+    const walk = (arr) => {
+        if (!Array.isArray(arr)) return;
+        if (typeof arr[0] === 'number') {
+            minLon = Math.min(minLon, arr[0]); maxLon = Math.max(maxLon, arr[0]);
+            minLat = Math.min(minLat, arr[1]); maxLat = Math.max(maxLat, arr[1]);
+        } else {
+            arr.forEach(walk);
+        }
+    };
+    state.currentData.features
+        .filter(f => gezocht.has(f.properties?.id ?? f.id))
+        .forEach(f => f.geometry && walk(f.geometry.coordinates));
+    if (minLon === Infinity) return false;
+
+    // Vrije zone: linkerpaneel en chat niet over de gebieden heen
+    const mapEl = document.getElementById('map');
+    const width = (mapEl && mapEl.clientWidth) || window.innerWidth;
+    const height = (mapEl && mapEl.clientHeight) || window.innerHeight;
+    const leftPanel = document.querySelector('.panel-container.open') ? 360 : 0;
+    const chatOpen = document.getElementById('chat-panel')?.classList.contains('open');
+    let padding = { top: 60, bottom: 100, left: 110 + leftPanel, right: (chatOpen ? 380 : 0) + 60 };
+    if (width - padding.left - padding.right < 100 || height - padding.top - padding.bottom < 100) padding = 20;
+
+    let longitude = (minLon + maxLon) / 2, latitude = (minLat + maxLat) / 2, zoom = 13;
+    if (typeof deck !== 'undefined' && deck.WebMercatorViewport) {
+        try {
+            const vp = new deck.WebMercatorViewport({ width, height })
+                .fitBounds([[minLon, minLat], [maxLon, maxLat]], { padding, maxZoom: 15 });
+            ({ longitude, latitude, zoom } = vp);
+        } catch (e) {
+            console.warn('zoomNaarGebieden: fitBounds mislukt, midden van de gebieden', e);
+        }
+    }
+
+    const reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const base = state.currentViewState || state.deckgl.props.viewState || state.deckgl.props.initialViewState || {};
+    state.currentViewState = {
+        ...base,
+        longitude, latitude, zoom,
+        transitionDuration: reduceMotion ? 0 : 1000,
+        ...(reduceMotion ? {} : { transitionInterpolator: new deck.FlyToInterpolator() })
+    };
+    state.deckgl.setProps({ viewState: state.currentViewState });
+    return true;
 }
 
 
