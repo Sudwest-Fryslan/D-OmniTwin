@@ -36,3 +36,4 @@ Wat wordt makkelijker, wat moeilijker, wat moet er nog gebeuren.
 | Nr | Titel | Status |
 |----|-------|--------|
 | [0001](0001-llm-koppeling-openai-standaard.md) | LLM-koppeling via de OpenAI Chat Completions-standaard, naast Ollama | voorgesteld |
+| [0004](0004-een-ingang-voor-vullen.md) | Eén ingang voor het vullen van D-OmniTwin (push, interne ETL, virtualisatie, federatie) | voorgesteld |
