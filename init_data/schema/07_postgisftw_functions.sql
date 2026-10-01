@@ -21,6 +21,10 @@ RETURNS TABLE(id text, naam text, geom geometry)
 LANGUAGE sql
 STABLE
 PARALLEL SAFE
+-- pg_featureserv verbindt als rol featureserv, die alleen de geo-views mag lezen (#57).
+-- De functie leest gebieden en deelgebieden daarom met de rechten van de eigenaar.
+SECURITY DEFINER
+SET search_path = public, pg_temp
 AS $$
     SELECT g.id::text, g.naam::text, g.geom
     FROM public.gebieden g

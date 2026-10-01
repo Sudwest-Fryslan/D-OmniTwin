@@ -9,7 +9,7 @@ Gebruik:
 Vereisten: pip install requests
 
 Databronnen (CBS OData, open data, CC BY):
-  - 85039NED: Kerncijfers wijken en buurten 2023
+  - 85039NED: Kerncijfers wijken en buurten 2021 (tot #119 abusievelijk als 2023 gelabeld)
   - 50150NED: Gezondheidsmonitor RIVM via dataderden.cbs.nl (2012-2024)
 """
 import csv
@@ -41,9 +41,9 @@ CBS_BASE = "https://opendata.cbs.nl/ODataFeed/odata"
 
 DATASETS = [
     {
-        "id": "85039NED",   # Kerncijfers wijken en buurten 2023
-        "naam": "Kerncijfers wijken en buurten 2023",
-        "jaar": 2023,
+        "id": "85039NED",   # Kerncijfers wijken en buurten 2021 (TableInfos: Period 2021, #119)
+        "naam": "Kerncijfers wijken en buurten 2021",
+        "jaar": 2021,
         "base": CBS_BASE,
         "kolommen": {
             # Namen exact gelijk aan indicatoren tabel (DB-sanering 2026-04-20)

@@ -20,14 +20,15 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from sqlalchemy import text
 from src.database import get_db
-from routers.auth import check_auth_or_key
+from routers.auth import vereis_admin
 from services.logging_service import AppLogger, _config_cache
 from services.log_cleanup_service import run_cleanup_now
 from pydantic import BaseModel
 from typing import Optional, List, Dict, Any
 from fastapi import Request
 
-router = APIRouter(prefix="/api/admin", tags=["Log Viewer"])
+# Alle routes in deze router vereisen een beheerder (#65)
+router = APIRouter(prefix="/api/admin", tags=["Log Viewer"], dependencies=[Depends(vereis_admin)])
 
 
 # ============================================================================
@@ -51,7 +52,7 @@ async def get_logs(
     search: Optional[str] = Query(None),
     period: str = Query("today"),  # today, week, month, all
     db: Session = Depends(get_db),
-    auth: dict = Depends(check_auth_or_key),
+    auth: dict = Depends(vereis_admin),
 ):
     """Gefilterde en gepagineerde logs voor admin panel."""
 
@@ -140,7 +141,7 @@ async def get_logs(
 async def get_log_stats(
     request: Request,
     db: Session = Depends(get_db),
-    auth: dict = Depends(check_auth_or_key),
+    auth: dict = Depends(vereis_admin),
 ):
     """Log statistieken voor dashboard cards."""
 
@@ -241,7 +242,7 @@ async def get_log_stats(
 async def get_log_config(
     request: Request,
     db: Session = Depends(get_db),
-    auth: dict = Depends(check_auth_or_key),
+    auth: dict = Depends(vereis_admin),
 ):
     """Huidige log configuratie per categorie."""
 
@@ -270,7 +271,7 @@ async def update_log_config(
     data: LogConfigUpdate,
     request: Request,
     db: Session = Depends(get_db),
-    auth: dict = Depends(check_auth_or_key),
+    auth: dict = Depends(vereis_admin),
 ):
     """Update log configuratie voor een specifieke categorie."""
 
@@ -317,7 +318,7 @@ async def update_log_config(
 @router.post("/logs/cleanup")
 async def trigger_cleanup(
     request: Request,
-    auth: dict = Depends(check_auth_or_key),
+    auth: dict = Depends(vereis_admin),
 ):
     """Voer log cleanup direct uit (admin only). Handige trigger voor testing."""
     deleted = await run_cleanup_now()

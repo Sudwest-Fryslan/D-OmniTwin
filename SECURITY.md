@@ -42,15 +42,16 @@ Buiten scope:
 
 ## Ondersteunde versies
 
-D-OmniTwin is in ontwikkeling (bèta) en kent nog geen formele releases (zie [#27](https://github.com/TLaan/D-OmniTwin/issues/27)). Beveiligingsoplossingen komen alleen op de `main`-branch.
+D-OmniTwin volgt [Semantic Versioning](https://semver.org/lang/nl/); de eerste release is `0.1.0`. Elke minorversie heeft een eigen release-branch (`release/0.1`, `release/0.2`, ...). Beveiligingsoplossingen komen op `main` en op de **laatste** release-branch, als patchrelease (bijvoorbeeld `0.1.1`). Oudere release-branches krijgen geen oplossingen meer. Zie het [releasebeleid](docs/9-beheer/releasebeleid.md).
 
 | Versie | Ondersteund |
 |--------|-------------|
 | `main` | Ja |
-| Oudere commits en forks | Nee |
+| Laatste release-branch (nu: `0.1.x`, zodra uitgebracht) | Ja |
+| Oudere release-branches, losse commits en forks | Nee |
 
 ---
 
 ## English summary
 
-Please **do not** report security vulnerabilities through public GitHub issues. Report them privately by e-mail to Taeke van der Laan (Municipality of Súdwest-Fryslân): `<e-mailadres Taeke, te bevestigen>`. Include the affected component, reproduction steps, the version or commit, and the expected impact. We aim to acknowledge reports within 5 working days (no guaranteed SLA) and follow coordinated vulnerability disclosure. Only the `main` branch receives security fixes.
+Please **do not** report security vulnerabilities through public GitHub issues. Report them privately by e-mail to Taeke van der Laan (Municipality of Súdwest-Fryslân): `<e-mailadres Taeke, te bevestigen>`. Include the affected component, reproduction steps, the version or commit, and the expected impact. We aim to acknowledge reports within 5 working days (no guaranteed SLA) and follow coordinated vulnerability disclosure. Security fixes go to `main` and to the latest release branch only (see the release policy in `docs/9-beheer/releasebeleid.md`).

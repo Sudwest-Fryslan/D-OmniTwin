@@ -168,6 +168,7 @@ export const LLMConfigPage: React.FC = () => {
 
                                 <textarea
                                     className="form-control mb-3"
+                                    aria-label={`Systeemprompt ${prompt.naam}`}
                                     rows={10}
                                     style={{ fontFamily: 'monospace', fontSize: '0.9rem' }}
                                     defaultValue={prompt.prompt_text}
