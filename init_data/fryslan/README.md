@@ -38,13 +38,13 @@ Bevat de CBS gebiedsindeling 2024 voor alle buurten in de provincie Fryslân.
 
 ## Over dit bestand: `indicatorwaarden_fryslan.csv`
 
-Bevat CBS open data indicatorwaarden voor de Friese buurten.
+Bevat RIVM-indicatorwaarden (Gezondheidsmonitor, via CBS dataderden) voor de Friese buurten. De CBS Kerncijfers wijken en buurten staan sinds #159 in [`init_data/cbs/`](../cbs/), met alle jaargangen 2019-2026.
 
 | Kenmerk | Waarde |
 |---------|--------|
-| **Bron** | CBS StatLine (opendata.cbs.nl) + RIVM via dataderden.cbs.nl |
+| **Bron** | RIVM Gezondheidsmonitor via dataderden.cbs.nl |
 | **Licentie** | [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) |
-| **Peiljaar** | 2022–2023 (per indicator verschillend) |
+| **Peiljaar** | 2012, 2016, 2020, 2022, 2024 |
 
 **Verplichte bronvermelding bij hergebruik:**
 

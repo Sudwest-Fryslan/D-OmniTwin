@@ -26,6 +26,11 @@ Dit bestand bevat de vermeldingen van de belangrijkste bibliotheken en framework
 - **Ollama**: [MIT License](https://github.com/ollama/ollama/blob/main/LICENSE)
 - **Sentence-Transformers**: [Apache License 2.0](https://github.com/UKPLab/sentence-transformers/blob/master/LICENSE)
 
+## 📊 Data
+- **CBS Kerncijfers wijken en buurten 2019-2026** (`init_data/cbs/`, ook in `init_data/sample/`): Centraal Bureau voor de Statistiek (CBS), tabellen 84583NED, 84799NED, 85039NED, 85318NED, 85618NED, 85984NED, 86165NED en 86358NED via [opendata.cbs.nl](https://opendata.cbs.nl). [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). Bewerkt: alleen buurten in Fryslân, kolommen gemapt op D-OmniTwin-indicatoren, `65+ jaar (%)` afgeleid. Zie [`docs/3-data-engineering/cbs_kerncijfers.md`](docs/3-data-engineering/cbs_kerncijfers.md).
+- **CBS Gebiedsindelingen 2024** (`init_data/fryslan/buurten_fryslan.geojson`): CBS via PDOK. [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
+- **RIVM Gezondheidsmonitor** (`init_data/fryslan/indicatorwaarden_fryslan.csv`): RIVM via dataderden.cbs.nl. [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
+
 ---
 
 **Opmerking:** Elk van deze componenten behoudt zijn eigen oorspronkelijke licentie. Het gebruik van deze componenten binnen D-OmniTwin tast hun respectievelijke licenties niet aan.
