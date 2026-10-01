@@ -73,7 +73,7 @@ python init_data/scripts/download_buurten_fryslan.py
 python init_data/scripts/download_indicatoren_fryslan.py
 bash init_data/scripts/init_database.sh   # master initiatie-script, zie init_data/README.md
 ```
-Alleen voor een PostgreSQL zonder Docker (`GETTING_STARTED.md`). Werkt niet tegen de Docker-stack: `init_database.sh` verwacht een `.env` in de container en laadt het schema opnieuw, en `seed_fryslan.py` faalt grotendeels op de database van `db-init` (tabel `gemeenten` bevat alleen 1900). Eén initialisatieroute volgt in #69.
+Alleen voor een PostgreSQL zonder Docker (`GETTING_STARTED.md`). Werkt niet tegen de Docker-stack: `init_database.sh` verwacht een `.env` in de container en laadt het schema opnieuw. In Docker laad je de Fryslân-data na `db-init` met `docker compose exec backend python init_data/scripts/seed_fryslan.py --stap alle` (idempotent, exitcode 1 bij fouten; zie `docs/9-beheer/installatie.md`).
 
 ### ETL — doorlopend nieuwe databronnen/gemeenten toevoegen (ná de initiële setup)
 ```bash

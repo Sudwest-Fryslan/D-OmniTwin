@@ -5,14 +5,13 @@ Manages indicators, score types, color schemas, and Kompas configurations.
 from fastapi import APIRouter, Depends, HTTPException, Request, Header
 from sqlalchemy.orm import Session
 from sqlalchemy import text
-from typing import Optional, List
+from typing import Optional, List, Literal
 from pydantic import BaseModel, UUID4
 from src.database import get_db
 import os
 from dotenv import load_dotenv
 import json
 import logging
-from urllib.parse import urlsplit
 
 logger = logging.getLogger(__name__)
 
@@ -72,6 +71,8 @@ class OntologieValidatie(BaseModel):
 class LLMConfig(BaseModel):
     api_url: str
     model_name: str
+    # 'ollama' = Ollama-eigen API, 'openai' = OpenAI Chat Completions (ADR 0001, migratie v20)
+    api_type: Literal["ollama", "openai"] = "ollama"
 
 class SystemPrompt(BaseModel):
     naam: str
@@ -87,16 +88,22 @@ class SystemPromptUpdate(BaseModel):
 # ============================================================================
 # LLM Config & System Prompts Endpoints
 # ============================================================================
+def _lees_llm_config(db: Session) -> Optional[dict]:
+    """Laatste llm_config-rij; SELECT * zodat een database zonder migratie v20 ook werkt."""
+    row = db.execute(text("SELECT * FROM llm_config ORDER BY id DESC LIMIT 1")).mappings().fetchone()
+    if not row:
+        return None
+    return {"api_url": row["api_url"], "model_name": row["model_name"], "api_type": row.get("api_type") or "ollama"}
+
 @router.get("/llm/config", response_model=LLMConfig)
 async def get_llm_config(
     db: Session = Depends(get_db),
 ):
     """Get active LLM Config."""
-    result = db.execute(text("SELECT api_url, model_name FROM llm_config ORDER BY id DESC LIMIT 1"))
-    row = result.fetchone()
-    if not row:
-        return {"api_url": "http://localhost:11434", "model_name": "qwen3:30b"}
-    return {"api_url": row[0], "model_name": row[1]}
+    config = _lees_llm_config(db)
+    if not config:
+        return {"api_url": "http://localhost:11434", "model_name": "qwen3:30b", "api_type": "ollama"}
+    return config
 
 @router.put("/llm/config", response_model=LLMConfig)
 async def update_llm_config(
@@ -104,10 +111,25 @@ async def update_llm_config(
     db: Session = Depends(get_db),
 ):
     """Update active LLM Config."""
-    db.execute(text("""
-        INSERT INTO llm_config (api_url, model_name)
-        VALUES (:api, :model)
-    """), {"api": config.api_url, "model": config.model_name})
+    heeft_api_type = db.execute(text("""
+        SELECT 1 FROM information_schema.columns
+        WHERE table_schema = 'public' AND table_name = 'llm_config' AND column_name = 'api_type'
+    """)).fetchone() is not None
+    if heeft_api_type:
+        db.execute(text("""
+            INSERT INTO llm_config (api_url, model_name, api_type)
+            VALUES (:api, :model, :api_type)
+        """), {"api": config.api_url, "model": config.model_name, "api_type": config.api_type})
+    elif config.api_type == "ollama":
+        db.execute(text("""
+            INSERT INTO llm_config (api_url, model_name)
+            VALUES (:api, :model)
+        """), {"api": config.api_url, "model": config.model_name})
+    else:
+        raise HTTPException(
+            status_code=409,
+            detail="De database kent nog geen api_type; voer migrations/schema_v20_llm_api_type.sql uit.",
+        )
     db.commit()
     return config
 
@@ -115,31 +137,38 @@ async def update_llm_config(
 def get_ollama_models(
     db: Session = Depends(get_db),
 ):
-    """Fetch available models from the configured Ollama instance."""
+    """Beschikbare modellen van de geconfigureerde LLM-server: /api/tags (ollama) of /v1/models (openai)."""
     import requests
-    
-    result = db.execute(text("SELECT api_url FROM llm_config ORDER BY id DESC LIMIT 1"))
-    row = result.fetchone()
-    api_url = row[0] if row else "http://localhost:11434"
-    
+    from services.llm_service import openai_base_url, openai_headers, veilige_host
+
+    config = _lees_llm_config(db)
+    api_url = config["api_url"] if config else "http://localhost:11434"
+    api_type = config["api_type"] if config else "ollama"
+
     try:
-        response = requests.get(f"{api_url}/api/tags", timeout=5)
-        response.raise_for_status()
-        data = response.json()
-        models = [m['name'] for m in data.get('models', [])]
+        if api_type == "openai":
+            response = requests.get(f"{openai_base_url(api_url)}/models", headers=openai_headers(), timeout=5)
+            response.raise_for_status()
+            models = [m["id"] for m in response.json().get("data", [])]
+        else:
+            response = requests.get(f"{api_url}/api/tags", timeout=5)
+            response.raise_for_status()
+            data = response.json()
+            models = [m['name'] for m in data.get('models', [])]
         return {"models": models}
     except Exception as e:
         # Detail alleen in de serverlog; de UI krijgt een nette melding zonder interne fouttekst
-        logger.warning("Ollama-modellen ophalen via %s mislukt: %s", api_url, e)
-        parts = urlsplit(api_url)
-        host = f"{parts.scheme}://{parts.netloc.rpartition('@')[2]}" if parts.netloc else api_url
-        if isinstance(e, requests.RequestException):
+        logger.warning("LLM-modellen ophalen via %s (%s) mislukt: %s", api_url, api_type, e)
+        host = veilige_host(api_url)
+        if isinstance(e, requests.HTTPError) and e.response is not None and e.response.status_code in (401, 403):
+            melding = f"LLM-server op {host} weigert toegang; controleer LLM_API_KEY"
+        elif isinstance(e, requests.RequestException) and not isinstance(e, ValueError):
+            # requests' JSONDecodeError is ook een RequestException; dat is een onverwacht antwoord
             melding = f"LLM-server niet bereikbaar op {host}"
         else:
             melding = f"Onverwacht antwoord van LLM-server op {host}"
         # Fallback to current configured model if API is offline
-        current_model = db.execute(text("SELECT model_name FROM llm_config ORDER BY id DESC LIMIT 1")).fetchone()
-        return {"models": [current_model[0] if current_model else "qwen3:30b"], "error": melding}
+        return {"models": [config["model_name"] if config else "qwen3:30b"], "error": melding}
 
 @router.get("/prompts", response_model=List[SystemPrompt])
 async def get_system_prompts(

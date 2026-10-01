@@ -49,6 +49,7 @@ const state = {
     selectedDeelgebiedNaam: null,   // Naam van actief deelgebied (voor rapport-link)
     // Sprint 16: Viewport vrije-zone centreren
     initialDataLoaded: false,      // Guard: fitBounds() alleen bij nieuw data-laden
+    fittedFor: null,               // gebiedstype|gemeente waarop de kaart laatst is ingezoomd
     highlightedGebiedId: null,     // Sprint 18 F3: Visuele highlight voor Top-buurten
 
     // Sprint 18: Externe kaartlagen (WFS, PDOK, etc.)
@@ -880,7 +881,12 @@ async function loadKaartData() {
         geojson.metadata = attributes.metadata;
 
         state.currentData = geojson;
-        state.initialDataLoaded = false;
+        // Alleen inzoomen bij een ander gebiedstype of andere gemeente, niet bij een indicatorwissel
+        const fitKey = `${state.currentGebiedstype}|${state.currentGemeenteCode || ''}`;
+        if (state.fittedFor !== fitKey) {
+            state.initialDataLoaded = false;
+            state.fittedFor = fitKey;
+        }
 
         displayOnMap(geojson);
         updateFeatureCount(geojson.metadata);
@@ -1426,6 +1432,10 @@ function geojsonGeomToWkt(geometry) {
 function displayOnMap(geojson) {
     const { GeoJsonLayer } = deck;
 
+    // Bronvermelding 3DBAG (CC BY 4.0) alleen tonen als de panden zichtbaar zijn
+    const bron3dbag = document.getElementById('bronvermelding-3dbag');
+    if (bron3dbag) bron3dbag.hidden = !(state.show3DBuildings && state.bag3dData);
+
     if (!geojson.features || geojson.features.length === 0) {
         // Prevent blocking alert on re-renders/clicks if data is unexpectedly empty
         console.warn('⚠️ displayOnMap called with empty/invalid data');
@@ -1865,58 +1875,72 @@ function displayOnMap(geojson) {
 }
 
 function fitBounds(geojson) {
-    // Calculate bounding box
+    // Bounding box over alle coördinaten (Polygon en MultiPolygon)
     let minLon = Infinity, maxLon = -Infinity;
     let minLat = Infinity, maxLat = -Infinity;
 
+    const walk = (arr) => {
+        if (!Array.isArray(arr)) return;
+        if (typeof arr[0] === 'number') {
+            minLon = Math.min(minLon, arr[0]);
+            maxLon = Math.max(maxLon, arr[0]);
+            minLat = Math.min(minLat, arr[1]);
+            maxLat = Math.max(maxLat, arr[1]);
+        } else {
+            arr.forEach(walk);
+        }
+    };
     geojson.features.forEach(feature => {
-        if (!feature.geometry || !feature.geometry.coordinates) return;
-        const coords = feature.geometry.coordinates;
-
-        // Flatten coordinates (works for MultiPolygon)
-        const flattenCoords = (arr, depth = 0) => {
-            if (depth >= 3) return arr;
-            return arr.flatMap(item => flattenCoords(item, depth + 1));
-        };
-
-        const allCoords = flattenCoords(coords);
-
-        allCoords.forEach(coord => {
-            if (Array.isArray(coord) && coord.length >= 2) {
-                minLon = Math.min(minLon, coord[0]);
-                maxLon = Math.max(maxLon, coord[0]);
-                minLat = Math.min(minLat, coord[1]);
-                maxLat = Math.max(maxLat, coord[1]);
-            }
-        });
+        if (feature.geometry) walk(feature.geometry.coordinates);
     });
+    if (minLon === Infinity) return;
 
-    if (minLon !== Infinity) {
-        const centerLon = (minLon + maxLon) / 2;
-        const centerLat = (minLat + maxLat) / 2;
-
-        // Calculate appropriate zoom level
-        const latDiff = maxLat - minLat;
-        const lonDiff = maxLon - minLon;
-        const maxDiff = Math.max(latDiff, lonDiff);
-
-        let zoom = 7;
-        if (maxDiff < 0.1) zoom = 12;
-        else if (maxDiff < 0.5) zoom = 10;
-        else if (maxDiff < 2) zoom = 8;
-
-        state.deckgl.setProps({
-            initialViewState: {
-                longitude: centerLon,
-                latitude: centerLat,
-                zoom: zoom,
-                pitch: state.enable3D ? 45 : 0,
-                bearing: 0,
-                transitionDuration: 1000,
-                transitionInterpolator: new deck.FlyToInterpolator()
-            }
-        });
+    // Kaartgrootte en padding: vrije zone naast linkerpaneel en chat, ruimte voor de badge
+    const mapEl = document.getElementById('map');
+    const width = (mapEl && mapEl.clientWidth) || window.innerWidth;
+    const height = (mapEl && mapEl.clientHeight) || window.innerHeight;
+    const leftPanel = document.querySelector('.panel-container.open') ? 360 : 0;
+    const chatOpen = document.getElementById('chat-panel')?.classList.contains('open');
+    let padding = { top: 40, bottom: 80, left: 70 + leftPanel + 40, right: (chatOpen ? 380 : 0) + 40 };
+    if (width - padding.left - padding.right < 100 || height - padding.top - padding.bottom < 100) {
+        padding = 20;
     }
+
+    let longitude, latitude, zoom;
+    if (typeof deck !== 'undefined' && deck.WebMercatorViewport) {
+        const vp = new deck.WebMercatorViewport({ width, height })
+            .fitBounds([[minLon, minLat], [maxLon, maxLat]], { padding, maxZoom: 16 });
+        ({ longitude, latitude, zoom } = vp);
+    } else {
+        // Handmatig (Web Mercator): zoom waarbij de bbox binnen het vrije deel past
+        const pad = typeof padding === 'number'
+            ? { top: padding, bottom: padding, left: padding, right: padding } : padding;
+        const mercY = lat => Math.log(Math.tan(Math.PI / 4 + lat * Math.PI / 360));
+        const worldX = Math.max(maxLon - minLon, 1e-9) / 360;
+        const worldY = Math.max(mercY(maxLat) - mercY(minLat), 1e-9) / (2 * Math.PI);
+        const zoomX = Math.log2((width - pad.left - pad.right) / (512 * worldX));
+        const zoomY = Math.log2((height - pad.top - pad.bottom) / (512 * worldY));
+        zoom = Math.min(zoomX, zoomY, 16);
+        // Midden van de bbox naar het midden van de vrije zone schuiven
+        const scale = 512 * Math.pow(2, zoom);
+        const centerY = (mercY(maxLat) + mercY(minLat)) / 2
+            - ((pad.bottom - pad.top) / 2) / scale * 2 * Math.PI;
+        longitude = (minLon + maxLon) / 2 - ((pad.left - pad.right) / 2) / scale * 360;
+        latitude = (2 * Math.atan(Math.exp(centerY)) - Math.PI / 2) * 180 / Math.PI;
+    }
+
+    // Zelfde mechanisme als de rest van de app: gecontroleerde viewState
+    state.currentViewState = {
+        ...state.currentViewState,
+        longitude,
+        latitude,
+        zoom,
+        pitch: state.enable3D ? 45 : 0,
+        bearing: 0,
+        transitionDuration: 1000,
+        transitionInterpolator: new deck.FlyToInterpolator()
+    };
+    state.deckgl.setProps({ viewState: state.currentViewState });
 }
 
 // ============================================================================
@@ -2693,27 +2717,47 @@ function updateSelectionUI() {
     }
 
     // Update or create floating selection badge (Sprint 12: ook bij count=1 voor 3D panden knop)
+    // Opbouw (#79): naam als label (niet klikbaar), daarna twee losse knoppen:
+    // "3D-panden" (toggle) en "Selectie wissen" (✕). Eenmalig opgebouwd, zodat de
+    // toetsenbordfocus bij het bijwerken op de knop blijft.
     let badge = document.getElementById('selection-badge');
     if (count >= 1) {
         if (!badge) {
             badge = document.createElement('div');
             badge.id = 'selection-badge';
-            badge.style.cssText = `
-                position: fixed; bottom: 40px; left: 50%; transform: translateX(-50%); z-index: 1000;
-                background: linear-gradient(135deg, #10b981, #059669);
-                color: white; padding: 10px 18px; border-radius: 24px;
-                font-size: 14px; font-weight: 600; cursor: pointer;
-                box-shadow: 0 4px 16px rgba(0,0,0,0.3);
-                display: flex; align-items: center; gap: 8px;
-                transition: transform 0.2s, opacity 0.2s;
-            `;
-            badge.title = 'Klik om selectie op te heffen';
-            badge.addEventListener('click', () => {
+            badge.className = 'selection-badge';
+            badge.setAttribute('role', 'group');
+            badge.setAttribute('aria-label', 'Selectie');
+            badge.innerHTML = `
+                <span class="selection-badge-label">
+                    <img src="/static/images/map-pin-plus.svg" alt="" class="selection-badge-icon">
+                    <span id="selection-badge-naam"></span>
+                </span>
+                <button type="button" id="bag3d-toggle-btn" class="selection-badge-btn" aria-pressed="false">
+                    <img src="/static/images/building.svg" alt="" class="selection-badge-icon"> 3D-panden
+                </button>
+                <button type="button" id="selection-clear-btn" class="selection-badge-btn selection-badge-clear"
+                        aria-label="Selectie wissen" title="Selectie wissen">✕</button>`;
+            document.body.appendChild(badge);
+
+            document.getElementById('selection-clear-btn').addEventListener('click', () => {
                 clearGebiedSelection();
                 updateSelectionUI();
                 if (state.currentData) displayOnMap(state.currentData);
             });
-            document.body.appendChild(badge);
+            document.getElementById('bag3d-toggle-btn').addEventListener('click', () => {
+                if (state.show3DBuildings) {
+                    // Toggle OFF
+                    state.show3DBuildings = false;
+                    state.bag3dData = null;
+                    if (state.currentData) displayOnMap(state.currentData);
+                    updateSelectionUI();
+                    console.log('🏗️ BAG 3D panden uitgeschakeld');
+                } else {
+                    // Toggle ON
+                    loadBag3DBuildings();
+                }
+            });
         }
         // Badge tekst: single vs multi, met groepsnamen als beschikbaar
         let badgeTekst;
@@ -2729,50 +2773,39 @@ function updateSelectionUI() {
         } else {
             badgeTekst = `${count} gebieden geselecteerd`;
         }
+        document.getElementById('selection-badge-naam').textContent = badgeTekst;
 
-        // Build badge content with optional 3D panden button  
-        const bag3dBtnHtml = (count >= 1 && count <= 3)
-            ? `<button id="bag3d-toggle-btn" style="
-                background: ${state.show3DBuildings ? 'rgba(234,179,8,0.9)' : 'rgba(255,255,255,0.15)'};
-                border: 1px solid rgba(255,255,255,0.3); border-radius: 12px;
-                color: white; padding: 4px 10px; font-size: 12px; cursor: pointer;
-                margin-left: 4px; transition: background 0.2s;
-              " title="${state.show3DBuildings ? 'BAG panden verbergen' : 'Laad 3D panden vanuit de 3DBAG'}">
-                <img src="/static/images/building.svg" alt="" style="width:14px; height:14px; filter: brightness(0) invert(1); vertical-align: -1px;"> ${state.show3DBuildings ? 'Panden uit' : '3D Panden'}
-              </button>`
-            : '';
-
-        badge.innerHTML = `<img src="/static/images/map-pin-plus.svg" alt="" style="width:18px; height:18px; filter: brightness(0) invert(1);"> ${escapeHtml(badgeTekst)} ${bag3dBtnHtml} <span style="opacity:0.7; font-size:12px;">✕</span>`;
-        badge.style.display = 'flex';
-        // Ensure centered position (also fixes pre-existing badges from cache)
-        badge.style.position = 'fixed';
-        badge.style.bottom = '40px';
-        badge.style.left = '50%';
-        badge.style.transform = 'translateX(-50%)';
-        badge.style.right = '';
-
-        // Attach 3D BAG button handler (re-attached on every UI update)
+        // 3D-pandenknop alleen bij 1 t/m 3 gebieden
         const bag3dBtn = document.getElementById('bag3d-toggle-btn');
-        if (bag3dBtn) {
-            bag3dBtn.addEventListener('click', (e) => {
-                e.stopPropagation(); // Prevent badge click (clear selection)
-                if (state.show3DBuildings) {
-                    // Toggle OFF
-                    state.show3DBuildings = false;
-                    state.bag3dData = null;
-                    if (state.currentData) displayOnMap(state.currentData);
-                    updateSelectionUI();
-                    console.log('🏗️ BAG 3D panden uitgeschakeld');
-                } else {
-                    // Toggle ON
-                    loadBag3DBuildings();
-                }
-            });
-        }
+        bag3dBtn.hidden = count > 3;
+        bag3dBtn.setAttribute('aria-pressed', state.show3DBuildings ? 'true' : 'false');
+        bag3dBtn.title = state.show3DBuildings ? 'BAG-panden verbergen' : 'Laad 3D-panden vanuit de 3DBAG';
+
+        badge.style.display = 'flex';
     } else if (badge) {
         badge.style.display = 'none';
     }
 }
+
+/**
+ * Open het Kompas-venster en laad de huidige selectie (of de hiërarchie zonder selectie).
+ * Gedeeld door de knop "Open Kompas Venster" en de chatactie OPEN_KOMPAS (#79).
+ */
+function openKompasVenster() {
+    if (!state.kompasWindow) {
+        console.error('❌ Kompas window state not initialized');
+        return;
+    }
+    state.kompasWindow.open();
+
+    // Load data for selected area(s) if available
+    if (state.selectedGebiedIds.size > 0 && window.kompasViz && window.kompasViz.currentConfigId) {
+        loadKompasForSelection(window.kompasViz.currentConfigId);
+    } else if (window.kompasViz && window.kompasViz.currentConfigId) {
+        window.kompasViz.loadHierarchie(window.kompasViz.currentConfigId);
+    }
+}
+window.openKompasVenster = openKompasVenster;
 
 /**
  * Sprint 7: Laad kompas voor de huidige selectie.
@@ -3122,7 +3155,6 @@ function setupEventListeners() {
                             }
                         });
                         state.currentData.metadata = attributes.metadata;
-                        state.initialDataLoaded = false; // Prevents reset of camera
 
                         displayOnMap(state.currentData);
                         updateLegenda(state.currentData);
@@ -3215,18 +3247,7 @@ function setupEventListeners() {
     if (openKompasBtn) {
         openKompasBtn.addEventListener('click', () => {
             console.log('🔘 Open Kompas button clicked');
-            if (state.kompasWindow) {
-                state.kompasWindow.open();
-
-                // Load data for selected area(s) if available
-                if (state.selectedGebiedIds.size > 0 && window.kompasViz && window.kompasViz.currentConfigId) {
-                    loadKompasForSelection(window.kompasViz.currentConfigId);
-                } else if (window.kompasViz && window.kompasViz.currentConfigId) {
-                    window.kompasViz.loadHierarchie(window.kompasViz.currentConfigId);
-                }
-            } else {
-                console.error('❌ Kompas window state not initialized');
-            }
+            openKompasVenster();
         });
     }
 
@@ -3458,13 +3479,15 @@ function exportCSV() {
         }).join(',');
     });
 
-    const csvContent = "data:text/csv;charset=utf-8," +
-        [headers, ...rows].join('\n');
+    // Blob in plaats van data-URI: in een data-URI kapt een '#' (bv. in kleurcodes) de inhoud af
+    const blob = new Blob([[headers, ...rows].join('\n')], { type: 'text/csv;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
 
     const link = document.createElement('a');
-    link.href = csvContent;
+    link.href = url;
     link.download = `omnitwin-export-${Date.now()}.csv`;
     link.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
 // ============================================================================

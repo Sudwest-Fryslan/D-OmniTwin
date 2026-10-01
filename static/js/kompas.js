@@ -2434,7 +2434,10 @@ document.addEventListener('DOMContentLoaded', async function () {
         // Chat -> Kompas: Open Window
         window.EventBus.on('KOMPAS_OPEN_REQUESTED', () => {
             console.log('🧭 Chat sync: opening kompas window');
-            if (window.state && window.state.kompasWindow) {
+            if (typeof window.openKompasVenster === 'function') {
+                // Zelfde codepad als de knop "Open Kompas Venster": laadt ook de selectie (#79)
+                window.openKompasVenster();
+            } else if (window.state && window.state.kompasWindow) {
                 window.state.kompasWindow.open();
             } else {
                 // Fallback direct DOM
