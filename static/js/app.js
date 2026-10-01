@@ -519,18 +519,20 @@ function initDeckGL() {
                     };
                 }
 
-                // Default buurt tooltip
-                const indicatorLabel = props.indicator_naam || 'Indicator';
-                const indicatorValue = props.indicator_waarde !== null ?
+                // Default buurt tooltip: waarde met jaargang en bron (#119)
+                const heeftWaarde = props.indicator_waarde !== null && props.indicator_waarde !== undefined;
+                const indicatorValue = heeftWaarde ?
                     formatNumber(props.indicator_waarde) + ' ' + (props.eenheid || '') :
                     'Geen data';
+                const herkomst = heeftWaarde
+                    ? `<br/><small class="tooltip-herkomst" style="opacity:0.75;">Jaar ${escapeHtml(props.jaar || 'onbekend')} · Bron: ${escapeHtml(props.bron || 'onbekend')}</small>`
+                    : '';
 
                 return {
                     html: `
             <div style="font-family: Inter, sans-serif;">
-              <strong>${props.naam}</strong><br/>
-              ${props.indicator_naam ? `${props.indicator_naam}: ` : ''}<strong>${indicatorValue}</strong><br/>
-              <small>${props.jaar || 'Onbekend'}</small>
+              <strong>${escapeHtml(props.naam)}</strong><br/>
+              ${props.indicator_naam ? `${escapeHtml(props.indicator_naam)}: ` : ''}<strong>${escapeHtml(indicatorValue)}</strong>${herkomst}
             </div>
           `,
                     style: tooltipStyle
@@ -3118,6 +3120,8 @@ function setupEventListeners() {
                             } else {
                                 // Clear missing data
                                 f.properties.indicator_waarde = null;
+                                f.properties.jaar = null;
+                                f.properties.bron = null;
                                 f.properties.color = '#94A3B8';
                             }
                         });
@@ -3497,6 +3501,13 @@ function showError(message) {
             setTimeout(() => toast.remove(), 300);
         }
     }, 6000);
+}
+
+// Escape tekst voor gebruik in een HTML-string (deck.gl-tooltip, #119)
+function escapeHtml(value) {
+    return String(value ?? '').replace(/[&<>"']/g, c => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    }[c]));
 }
 
 function formatNumber(num) {

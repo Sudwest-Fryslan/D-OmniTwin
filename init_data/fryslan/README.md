@@ -44,7 +44,7 @@ Bevat CBS open data indicatorwaarden voor de Friese buurten.
 |---------|--------|
 | **Bron** | CBS StatLine (opendata.cbs.nl) + RIVM via dataderden.cbs.nl |
 | **Licentie** | [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) |
-| **Peiljaar** | 2022–2023 (per indicator verschillend) |
+| **Peiljaar** | Kerncijfers: 2021 (tabel 85039NED; in de CSV gelabeld als 2023, zie #119). RIVM: 2012, 2016, 2020, 2022, 2024. Geometrie: 2024. Zie `docs/3-data-engineering/jaargangen.md`. |
 
 **Verplichte bronvermelding bij hergebruik:**
 
