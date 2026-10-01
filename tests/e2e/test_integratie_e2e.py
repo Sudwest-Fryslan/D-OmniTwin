@@ -19,15 +19,14 @@ from playwright.sync_api import expect
 
 from e2e_helpers import (
     AANTAL_SAMPLE_BUURTEN, BOLSWARD_ZUIDOOST, KOUDUM, WORKUM,
-    klik_buurt_op_kaart, kompas_namen, laad_buurtenkaart, open_indicator_in_kompas, open_kompas,
+    klik_buurt_op_kaart, klik_chatactie, kompas_namen, laad_buurtenkaart, open_indicator_in_kompas, open_kompas,
     open_paneel, selecteer_buurt_via_app, verplaats_kompasvenster_rechts, wacht_op_kaartdata, wacht_op_selectie, wacht_op_zonnediagram, TRAAG_MS,
 )
 
 
 def _chat_actie(page, label_regex):
     knop = page.locator("#chat-messages .chat-actie-btn").filter(has_text=re.compile(label_regex)).last
-    expect(knop).to_be_visible()
-    knop.click()
+    klik_chatactie(page, knop, label_regex)
     expect(knop).to_have_class(re.compile(r"actie-activated"))
 
 
