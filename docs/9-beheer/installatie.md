@@ -410,7 +410,7 @@ Traefik zet op **alle** routes (de app, `/api/data`, `/api/geo`, `/health`) deze
 
 | Header | Waarde |
 |--------|--------|
-| `Content-Security-Policy` | Alleen eigen bronnen, plus unpkg.com en cdn.jsdelivr.net (bibliotheken met SRI-hash), api.pdok.nl en service.pdok.nl (achtergrondkaart) en Google Fonts (helppagina). Geen framing (`frame-ancestors 'none'`), geen plugins (`object-src 'none'`). |
+| `Content-Security-Policy` | Alleen eigen bronnen (bibliotheken en lettertype zelf gehost, #117), plus api.pdok.nl en service.pdok.nl (achtergrondkaart). Geen framing (`frame-ancestors 'none'`), geen plugins (`object-src 'none'`). |
 | `X-Frame-Options` | `DENY` |
 | `X-Content-Type-Options` | `nosniff` |
 | `Referrer-Policy` | `strict-origin-when-cross-origin` |
