@@ -20,7 +20,7 @@ from playwright.sync_api import expect
 from e2e_helpers import (
     AANTAL_SAMPLE_BUURTEN, BOLSWARD_ZUIDOOST, KOUDUM, WORKUM,
     klik_buurt_op_kaart, kompas_namen, laad_buurtenkaart, open_indicator_in_kompas, open_kompas,
-    open_paneel, selecteer_buurt_via_app, verplaats_kompasvenster_rechts, wacht_op_kaartdata, wacht_op_selectie, wacht_op_zonnediagram,
+    open_paneel, selecteer_buurt_via_app, verplaats_kompasvenster_rechts, wacht_op_kaartdata, wacht_op_selectie, wacht_op_zonnediagram, TRAAG_MS,
 )
 
 
@@ -68,13 +68,13 @@ def test_tc_06_001_beleidsadviseur_ijsselmeerkust(app_page_fresh, tmp_path: Path
     klik_buurt_op_kaart(page, WORKUM)
     wacht_op_selectie(page, [WORKUM])
     expect(page.locator("#selection-badge")).to_contain_text("Workum")
-    expect(page.locator("#kompas-info")).to_contain_text("Workum", timeout=30_000)
+    expect(page.locator("#kompas-info")).to_contain_text("Workum", timeout=TRAAG_MS)
     wacht_op_zonnediagram(page)
 
     # 6/9. Vergelijkingskern toevoegen → Kompas toont het gemiddelde (benchmark)
     selecteer_buurt_via_app(page, KOUDUM, shift=True)
     wacht_op_selectie(page, [WORKUM, KOUDUM])
-    expect(page.locator("#kompas-info")).to_contain_text("Gemiddelde van 2 gebieden", timeout=30_000)
+    expect(page.locator("#kompas-info")).to_contain_text("Gemiddelde van 2 gebieden", timeout=TRAAG_MS)
     expect(page.locator("#kompas-info")).to_contain_text("Workum, Koudum")
     wacht_op_zonnediagram(page)
 
@@ -93,7 +93,7 @@ def test_tc_06_001_beleidsadviseur_ijsselmeerkust(app_page_fresh, tmp_path: Path
     page.wait_for_function(
         "() => window.state.currentData && window.state.currentData.metadata"
         " && window.state.currentData.metadata.indicator_naam === 'Participatiewet totaal'",
-        timeout=30_000,
+        timeout=TRAAG_MS,
     )
 
     assert page.console_fouten == [], "\n".join(page.console_fouten)
@@ -111,7 +111,7 @@ def test_tc_06_001_fase5_export_bronvermelding(app_page, tmp_path: Path):
     page.wait_for_function(
         "() => window.state.currentData && window.state.currentData.metadata"
         " && window.state.currentData.metadata.indicator_naam === 'Participatiewet totaal'",
-        timeout=30_000,
+        timeout=TRAAG_MS,
     )
     page.get_by_role("button", name="Kompasvenster sluiten").click()
 
@@ -146,7 +146,7 @@ def test_chatactie_open_kompas_laadt_selectie(app_page):
     _chat_actie(page, r"Open het D-Omni Kompas")
 
     expect(page.locator("#kompas-window")).to_be_visible()
-    expect(page.locator("#kompas-info")).to_contain_text("Gemiddelde van 2 gebieden", timeout=30_000)
+    expect(page.locator("#kompas-info")).to_contain_text("Gemiddelde van 2 gebieden", timeout=TRAAG_MS)
     expect(page.locator("#kompas-info")).to_contain_text("Workum, Koudum")
     wacht_op_zonnediagram(page)
     assert page.console_fouten == [], "\n".join(page.console_fouten)

@@ -115,7 +115,6 @@ def test_tc_02_002_drilldown_kernen(app_page):
     wacht_op_vergelijkingsgrafiek(page, ["Workum", "Koudum"])
 
 
-@pytest.mark.xfail(strict=True, reason="TC-02-002 stap 3: sample dataset heeft één meetmoment per indicator")
 def test_tc_02_002_trendlijn(app_page):
     """TC-02-002 stap 3: trendlijn met ≥ 2 meetmomenten."""
     page = app_page
