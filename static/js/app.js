@@ -649,12 +649,78 @@ async function loadGemeenten() {
     if (currentGemeente) {
         input.value = currentGemeente.naam;
         codeInput.value = currentGemeente.code;
+    } else if (state.currentGemeenteCode) {
+        // Opgeslagen code die niet in de lijst staat: niet verbergen (#140)
+        input.value = state.currentGemeenteCode;
+        codeInput.value = state.currentGemeenteCode;
     } else {
         input.value = 'Alle gemeenten';
         codeInput.value = '';
     }
 
     info.textContent = `${gemeenten.length - 1} gemeenten beschikbaar`;
+    updateGemeenteFilterChip();
+}
+
+// ---- Actief gemeentefilter zichtbaar maken (#140) ----
+
+function gemeenteNaam(code) {
+    const gemeente = loadedGemeenten.find(g => g.code === code)
+        || FRIESE_GEMEENTEN.find(g => g.code === code);
+    return gemeente ? gemeente.naam : `code ${code}`;
+}
+
+/**
+ * Toont het actieve gemeentefilter als chip boven de kaart.
+ * aantalGebieden === 0: melding dat het filter niets oplevert, met wisknop.
+ */
+function updateGemeenteFilterChip(aantalGebieden = null) {
+    const chip = document.getElementById('gemeente-filter-chip');
+    if (!chip) return;
+    const code = state.currentGemeenteCode;
+    if (!code) {
+        chip.hidden = true;
+        chip.classList.remove('leeg');
+        return;
+    }
+    const naam = gemeenteNaam(code);
+    const leeg = aantalGebieden === 0;
+    document.getElementById('gemeente-filter-tekst').textContent = leeg
+        ? `Geen gebieden in gemeente ${naam} — filter wissen?`
+        : `Gemeente: ${naam}`;
+    const knop = document.getElementById('gemeente-filter-wis');
+    knop.setAttribute('aria-label', `Gemeentefilter ${naam} wissen`);
+    knop.title = `Gemeentefilter ${naam} wissen`;
+    chip.classList.toggle('leeg', leeg);
+    chip.hidden = false;
+}
+
+/** Zet het gemeentefilter terug naar 'Alle gemeenten' en herlaadt de kaart. */
+function resetGemeenteFilter() {
+    const input = document.getElementById('gemeente-input');
+    const codeInput = document.getElementById('gemeente-code');
+    const info = document.getElementById('gemeente-info');
+
+    state.currentGemeenteCode = '';
+    if (codeInput) codeInput.value = '';
+    localStorage.setItem('omnitwin-gemeente', '');
+    if (input) input.value = 'Alle gemeenten';
+    if (info) info.textContent = 'Alle gemeenten';
+    updateGemeenteFilterChip();
+
+    state.currentData = null;
+    clearGebiedSelection();
+    updateSelectionUI();
+
+    if (window.kompasViz && window.kompasViz.currentConfigId) {
+        window.kompasViz.currentGebiedId = null;
+        window.kompasViz.loadHierarchie(window.kompasViz.currentConfigId);
+    }
+
+    // Herlaad kaart data zonder gemeente filter
+    if (state.currentGebiedstype) {
+        loadKaartData();
+    }
 }
 
 function setupGemeenteSelector() {
@@ -664,8 +730,11 @@ function setupGemeenteSelector() {
 
     if (!input) return;
 
+    const wisKnop = document.getElementById('gemeente-filter-wis');
+    if (wisKnop) wisKnop.addEventListener('click', resetGemeenteFilter);
+
     // Handle selection from datalist
-    input.addEventListener('change', (e) => {
+input.addEventListener('change', (e) => {
         const inputValue = e.target.value;
         const gemeente = loadedGemeenten.find(g => g.naam === inputValue);
 
@@ -676,6 +745,7 @@ function setupGemeenteSelector() {
 
             console.log(`📍 Gemeente: ${gemeente.naam} (${gemeente.code || 'alle'})`);
             info.textContent = gemeente.code ? `Geselecteerd: ${gemeente.naam}` : 'Alle gemeenten';
+            updateGemeenteFilterChip();
 
             state.currentData = null;
             clearGebiedSelection();
@@ -697,27 +767,9 @@ function setupGemeenteSelector() {
                 loadKaartData();
             }
         } else if (inputValue === '' || inputValue.toLowerCase() === 'alle') {
-            state.currentGemeenteCode = '';
-            codeInput.value = '';
-            localStorage.setItem('omnitwin-gemeente', '');
-            input.value = 'Alle gemeenten';
-            info.textContent = 'Alle gemeenten';
-
-            state.currentData = null;
-            clearGebiedSelection();
-            updateSelectionUI();
-            
-            if (window.kompasViz && window.kompasViz.currentConfigId) {
-                window.kompasViz.currentGebiedId = null;
-                window.kompasViz.loadHierarchie(window.kompasViz.currentConfigId);
-            }
-
-            // Herlaad kaart data zonder gemeente filter
-            if (state.currentGebiedstype) {
-                loadKaartData();
-            }
+            resetGemeenteFilter();
         }
-    });
+});
 
     // Select all text on focus for easy replacement
     input.addEventListener('focus', () => {
@@ -888,7 +940,8 @@ async function loadKaartData() {
         if (gtCountEl && geojson.features) {
             gtCountEl.textContent = `${geojson.features.length} gebieden in selectie`;
         }
-        updateLegenda(geojson);
+        updateGemeenteFilterChip(geojson.features ? geojson.features.length : null);
+updateLegenda(geojson);
 
         const geojsonBtn = document.getElementById('export-geojson-btn');
         const csvBtn = document.getElementById('export-csv-btn');
@@ -3155,8 +3208,9 @@ function setupEventListeners() {
             // Update state
             state.currentGemeenteCode = code;
             localStorage.setItem('omnitwin-gemeente', code);
-            
-            // Clear selection and reload map
+            updateGemeenteFilterChip();
+
+// Clear selection and reload map
             state.currentData = null;
             clearGebiedSelection();
             updateSelectionUI();
