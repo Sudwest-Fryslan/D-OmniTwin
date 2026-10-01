@@ -38,7 +38,7 @@
 -- Idempotent: CREATE OR REPLACE, DROP FUNCTION IF EXISTS waar de signatuur
 -- wijzigde, en een UPDATE die alleen ontbrekende watervlaggen zet.
 -- Bestaande database bijwerken:
---   psql -f migrations/schema_v21_zscore_referentie.sql
+--   psql -f db/migraties/V021__zscore_referentie.sql
 -- ============================================================
 
 

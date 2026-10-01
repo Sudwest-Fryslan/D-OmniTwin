@@ -350,7 +350,7 @@ def import_buurten():
         print(f"  💧 {n_water} waterbuurt(en) gemarkeerd op naam")
     except Exception as e:
         conn.rollback()
-        print(f"  ⚠️ Watervlag niet gezet ({e}); voer migrations/schema_v21_zscore_referentie.sql uit")
+        print(f"  ⚠️ Watervlag niet gezet ({e}); voer db/migraties/V021__zscore_referentie.sql uit")
     conn.close()
 
     t_total = time.time() - t0
