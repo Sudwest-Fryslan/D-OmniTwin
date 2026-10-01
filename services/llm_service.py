@@ -4,6 +4,8 @@ from sqlalchemy.orm import Session
 from sqlalchemy import text
 from typing import Dict, Any, Optional
 import os
+import re
+from urllib.parse import urlsplit
 
 from services.logging_service import AppLogger
 
@@ -11,20 +13,100 @@ from services.logging_service import AppLogger
 DEFAULT_OLLAMA_HOST = os.getenv("OLLAMA_HOST", "http://localhost:11434")
 DEFAULT_OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "qwen3:30b-instruct")
 
+# api_type in llm_config (migratie v20, ADR 0001):
+#   'ollama' = Ollama-eigen API (/api/generate), het oorspronkelijke gedrag
+#   'openai' = OpenAI Chat Completions (/v1/chat/completions): Ollama /v1, vLLM, LiteLLM, ...
+API_TYPES = ("ollama", "openai")
+DEFAULT_API_TYPE = "ollama"
+LLM_TIMEOUT = 600
+
+_THINK_BLOK = re.compile(r"<think>.*?</think>", flags=re.DOTALL)
+
+
+def denken_aan() -> bool:
+    """LLM_THINK (.env): denk-modus van redeneermodellen (Qwen3, DeepSeek-R1) aan of uit.
+
+    Standaard uit: de teksten zijn kort (chat ≤ 80 woorden) en hebben geen redeneerstap
+    nodig, terwijl denken duizenden tokens en minuten kost (ADR 0001).
+    """
+    return os.getenv("LLM_THINK", "false").strip().lower() in ("1", "true", "ja", "yes", "on")
+
+
+def reasoning_effort() -> Optional[str]:
+    """Waarde voor reasoning_effort in het OpenAI-pad, of None om het veld weg te laten.
+
+    Standaard 'none' (Ollama /v1 zet dan denken uit). LLM_REASONING_EFFORT= (leeg) laat het
+    veld weg, voor servers die het niet kennen; met LLM_THINK=true wordt het nooit meegestuurd.
+    """
+    if denken_aan():
+        return None
+    waarde = os.getenv("LLM_REASONING_EFFORT", "none").strip()
+    return waarde or None
+
+
+def veilige_host(api_url: str) -> str:
+    """scheme://host[:poort] zonder pad of inloggegevens, voor meldingen aan de gebruiker."""
+    parts = urlsplit(api_url or "")
+    if not parts.netloc:
+        return api_url
+    return f"{parts.scheme}://{parts.netloc.rpartition('@')[2]}"
+
+
+def openai_base_url(api_url: str) -> str:
+    """Basis-URL voor de OpenAI-API: voegt /v1 toe, tenzij die er al op staat."""
+    base = (api_url or "").rstrip("/")
+    return base if base.endswith("/v1") else f"{base}/v1"
+
+
+def openai_headers() -> Dict[str, str]:
+    """Authorization-header uit LLM_API_KEY (alleen .env, nooit de database)."""
+    key = os.getenv("LLM_API_KEY", "").strip()
+    return {"Authorization": f"Bearer {key}"} if key else {}
+
+
+def strip_think(model_output: str) -> str:
+    """Verwijdert <think>…</think>-blokken (Qwen3 denk-modus) uit modeloutput."""
+    if not model_output:
+        return ""
+    cleaned = _THINK_BLOK.sub("", model_output)
+    # Losse sluittag: denkblok zonder openingstag (sommige chat-templates)
+    if "</think>" in cleaned:
+        cleaned = cleaned.rsplit("</think>", 1)[1]
+    return cleaned.replace("<think>", "").strip()
+
+
+def clean_model_output(model_output: str) -> str:
+    """Code-fences weghalen en een {"summary": ...}-antwoord uitpakken."""
+    cleaned = model_output.strip()
+    cleaned = re.sub(r'^```(?:json)?\s*', '', cleaned)
+    cleaned = re.sub(r'```$', '', cleaned)
+
+    if cleaned.startswith('{') and '"summary":' in cleaned:
+        try:
+            parsed = json.loads(cleaned)
+            if "summary" in parsed:
+                cleaned = str(parsed["summary"])
+        except Exception:
+            pass
+    return cleaned.strip()
+
+
 class LLMService:
-    """Service class voor Ollama interactie (Lokale Qwen3) en Prompt Management."""
+    """Service class voor LLM-interactie (Ollama of OpenAI-compatibel) en Prompt Management."""
 
     def __init__(self, db: Session):
         self.db = db
 
     def get_llm_config(self) -> Dict[str, str]:
-        """Haalt de actieve LLM configuratie op (API URL en Model)."""
-        query = text("SELECT api_url, model_name FROM llm_config ORDER BY id DESC LIMIT 1")
-        result = self.db.execute(query).fetchone()
-        
+        """Haalt de actieve LLM configuratie op (API URL, model en API-type)."""
+        # SELECT *: werkt ook op een database zonder migratie v20 (dan geldt 'ollama')
+        query = text("SELECT * FROM llm_config ORDER BY id DESC LIMIT 1")
+        result = self.db.execute(query).mappings().fetchone()
+
         if result:
-            return {"api_url": result[0], "model_name": result[1]}
-        return {"api_url": DEFAULT_OLLAMA_HOST, "model_name": DEFAULT_OLLAMA_MODEL}
+            api_type = result.get("api_type") or DEFAULT_API_TYPE
+            return {"api_url": result["api_url"], "model_name": result["model_name"], "api_type": api_type}
+        return {"api_url": DEFAULT_OLLAMA_HOST, "model_name": DEFAULT_OLLAMA_MODEL, "api_type": DEFAULT_API_TYPE}
 
     def get_system_prompt(self, prompt_name: str, fallback_prompt: str) -> str:
         """Haalt een prompt op uit de database, of returnt fallback_prompt."""
@@ -35,9 +117,17 @@ class LLMService:
             return result[0]
         return fallback_prompt
 
-    def _call_ollama(self, system_prompt: str, user_prompt: str, context_name: str) -> Dict[str, Any]:
-        """Gedeelde helperfunctie voor Ollama API calls met logging en fallback parser."""
+    def _call_llm(self, system_prompt: str, user_prompt: str, context_name: str) -> Dict[str, Any]:
+        """Roept de geconfigureerde LLM aan via het juiste API-type (zie ADR 0001)."""
         llm_config = self.get_llm_config()
+        if llm_config.get("api_type") == "openai":
+            return self._call_openai(llm_config, system_prompt, user_prompt, context_name)
+        return self._call_ollama(system_prompt, user_prompt, context_name, llm_config=llm_config)
+
+    def _call_ollama(self, system_prompt: str, user_prompt: str, context_name: str,
+                     llm_config: Optional[Dict[str, str]] = None) -> Dict[str, Any]:
+        """Gedeelde helperfunctie voor Ollama API calls met logging en fallback parser."""
+        llm_config = llm_config or self.get_llm_config()
         url = f"{llm_config['api_url']}/api/generate"
         
         payload = {
@@ -49,7 +139,11 @@ class LLMService:
                 "temperature": 0.3
             }
         }
-        
+        if not denken_aan():
+            # Denk-modus uit (Ollama ≥ 0.9; oudere versies en niet-denkende modellen negeren
+            # dit). Met LLM_THINK=true geen veld: dan beslist het model, zoals voorheen.
+            payload["think"] = False
+
         debug_info = {
             "context": context_name,
             "model": llm_config['model_name'],
@@ -61,32 +155,21 @@ class LLMService:
         AppLogger.debug(f"[{context_name}] LLM REQUEST — system: {system_prompt[:200]}... | user: {user_prompt[:200]}...", category="LLM_CHAT")
         
         try:
-            response = requests.post(url, json=payload, timeout=600)
+            response = requests.post(url, json=payload, timeout=LLM_TIMEOUT)
             response.raise_for_status()
             result_json = response.json()
-            
+
             model_output = result_json.get("response", "Generatie mislukt.")
-            cleaned = model_output.strip()
-            
-            import re
-            cleaned = re.sub(r'^```(?:json)?\s*', '', cleaned)
-            cleaned = re.sub(r'```$', '', cleaned)
-            
-            if cleaned.startswith('{') and '"summary":' in cleaned:
-                try:
-                    parsed = json.loads(cleaned)
-                    if "summary" in parsed:
-                        cleaned = str(parsed["summary"])
-                except Exception:
-                    pass
-            
-            AppLogger.debug(f"[{context_name}] LLM RESPONSE — {cleaned.strip()[:500]}", category="LLM_CHAT")
-            
+            # Sommige modellen geven ook met think=false een (leeg) <think>-blok terug
+            cleaned = clean_model_output(strip_think(model_output))
+
+            AppLogger.debug(f"[{context_name}] LLM RESPONSE — {cleaned[:500]}", category="LLM_CHAT")
+
             return {
-                "text": cleaned.strip(),
+                "text": cleaned,
                 "debug": debug_info
             }
-                
+
         except requests.exceptions.RequestException as e:
             error_msg = f"Error contacting Ollama op {url}: {str(e)}"
             AppLogger.error(f"[{context_name}] LLM ERROR: {error_msg}", category="LLM_CHAT")
@@ -94,6 +177,72 @@ class LLMService:
                 "text": error_msg,
                 "debug": debug_info
             }
+
+    def _call_openai(self, llm_config: Dict[str, str], system_prompt: str, user_prompt: str,
+                     context_name: str) -> Dict[str, Any]:
+        """OpenAI Chat Completions (/v1/chat/completions); zelfde contract als _call_ollama."""
+        url = f"{openai_base_url(llm_config['api_url'])}/chat/completions"
+
+        # Denk-modus uit (zie denken_aan): 'think' is geen standaardveld in de OpenAI-API.
+        # reasoning_effort=none zet het uit bij Ollama /v1; Qwen3 krijgt daarnaast de
+        # eigen schakelaar /no_think, voor servers die reasoning_effort negeren (vLLM).
+        effort = reasoning_effort()
+        systeem = system_prompt
+        if not denken_aan() and "qwen3" in (llm_config['model_name'] or "").lower():
+            systeem = f"{system_prompt}\n\n/no_think" if system_prompt else "/no_think"
+
+        messages = []
+        if systeem:
+            messages.append({"role": "system", "content": systeem})
+        messages.append({"role": "user", "content": user_prompt})
+
+        payload = {
+            "model": llm_config['model_name'],
+            "messages": messages,
+            "stream": False,
+            "temperature": 0.3,  # zelfde waarde als de Ollama-optie
+        }
+        if effort:
+            payload["reasoning_effort"] = effort
+
+        debug_info = {
+            "context": context_name,
+            "model": llm_config['model_name'],
+            "api_type": "openai",
+            "system_prompt": system_prompt,
+            "user_prompt": user_prompt
+        }
+
+        # Logging: volledige prompts alleen op DEBUG (GDPR: user input niet op INFO)
+        AppLogger.debug(f"[{context_name}] LLM REQUEST (openai) — system: {system_prompt[:200]}... | user: {user_prompt[:200]}...", category="LLM_CHAT")
+
+        # Meldingen naar de gebruiker zonder pad, sleutel of interne fouttekst; detail alleen in de log
+        host = veilige_host(llm_config['api_url'])
+        try:
+            response = requests.post(url, json=payload, headers=openai_headers(), timeout=LLM_TIMEOUT)
+            response.raise_for_status()
+            model_output = response.json()["choices"][0]["message"].get("content") or ""
+        except requests.exceptions.HTTPError as e:
+            status = e.response.status_code if e.response is not None else "?"
+            if status in (401, 403):
+                melding = f"LLM-server op {host} weigert toegang ({status}); controleer LLM_API_KEY"
+            else:
+                melding = f"LLM-server op {host} gaf een fout ({status})"
+            AppLogger.error(f"[{context_name}] LLM ERROR: {melding}: {e}", category="LLM_CHAT")
+            return {"text": melding, "debug": debug_info}
+        except (ValueError, KeyError, IndexError, TypeError, AttributeError) as e:
+            # Vóór RequestException: requests' JSONDecodeError is ook een RequestException
+            melding = f"Onverwacht antwoord van LLM-server op {host}"
+            AppLogger.error(f"[{context_name}] LLM ERROR: {melding}: {e}", category="LLM_CHAT")
+            return {"text": melding, "debug": debug_info}
+        except requests.exceptions.RequestException as e:
+            melding = f"LLM-server niet bereikbaar op {host}"
+            AppLogger.error(f"[{context_name}] LLM ERROR: {melding}: {e}", category="LLM_CHAT")
+            return {"text": melding, "debug": debug_info}
+
+        cleaned = clean_model_output(strip_think(model_output))
+        AppLogger.debug(f"[{context_name}] LLM RESPONSE — {cleaned[:500]}", category="LLM_CHAT")
+        return {"text": cleaned, "debug": debug_info}
 
     def generate_domain_summary(self, domain_name: str, domain_data: list) -> Dict[str, Any]:
         """Genereert een samenvatting specifiek voor één kwadrant/domein."""
@@ -119,7 +268,7 @@ Strikte Kaders (Constraints):
         system_prompt = self.get_system_prompt("domain_summary", default_prompt)
         user_prompt = f"Analyseer dit specifieke kwadrant '{domain_name}' en retourneer een verhaal in natuurlijke tekst volgens je instructies:\n\n{json.dumps(domain_data, indent=2)}"
         
-        return self._call_ollama(system_prompt, user_prompt, context_name=f"Domain: {domain_name}")
+        return self._call_llm(system_prompt, user_prompt, context_name=f"Domain: {domain_name}")
 
     def generate_overall_summary(self, domain_summaries: Dict[str, str], metadata: Dict[str, str]) -> Dict[str, Any]:
         """Combineert de kwadrant samenvattingen in één overkoepelende summary."""
@@ -144,7 +293,7 @@ Strikte Kaders (Constraints):
             
         user_prompt = f"Schrijf de overkoepelende samenvatting op basis van deze input:\n\n{input_text}"
         
-        return self._call_ollama(system_prompt, user_prompt, context_name="Overall Summary")
+        return self._call_llm(system_prompt, user_prompt, context_name="Overall Summary")
 
     def generate_benchmark_narrative(self, benchmark_data: dict) -> Dict[str, Any]:
         """Genereert een vergelijkende analyse voor de Benchmark Vergelijker (Sjabloon C)."""
@@ -177,7 +326,7 @@ Hier zijn de indicatoren met de grootste verschillen:
 
 Geef een bondige, vergelijkende analyse."""
 
-        return self._call_ollama(system_prompt, user_prompt, context_name="Benchmark Vergelijking")
+        return self._call_llm(system_prompt, user_prompt, context_name="Benchmark Vergelijking")
 
     def generate_chat_narrative(self, vraag: str, indicatoren: list, intent: str, context: dict = None) -> Dict[str, Any]:
         """Genereert een korte narrative voor de D-Omni Assistant chat respons."""
@@ -224,7 +373,7 @@ Gevonden indicatoren:
 Schrijf een korte, behulpzame toelichting. 
 BELANGRIJK: Als het doel MAAK_RAPPORT is, noem dan GEEN indicatoren, maar bevestig alleen dat je het rapport opent."""
 
-        return self._call_ollama(system_prompt, user_prompt, context_name="Chat Narrative")
+        return self._call_llm(system_prompt, user_prompt, context_name="Chat Narrative")
     def validate_duplicates(self, indicators: list) -> Dict[str, Any]:
         """
         Valideert een groep potentiële duplicaten.
@@ -257,7 +406,7 @@ Strikte Kaders:
             
         user_prompt = f"Beoordeel of de volgende indicatoren duplicaten zijn:\n\n{json.dumps(ind_context, ensure_ascii=False)}\n\nGeef je antwoord uitsluitend in JSON."
         
-        response = self._call_ollama(system_prompt, user_prompt, context_name="Validate Duplicates")
+        response = self._call_llm(system_prompt, user_prompt, context_name="Validate Duplicates")
         
         if response and "text" in response:
             try:
@@ -339,7 +488,7 @@ Strikte Kaders:
         Retourneer UITSLUITEND de JSON:"""
         
         # Gebruik de gedeelde helper voor robuuste JSON cleaning
-        response = self._call_ollama(system_prompt, user_prompt, context_name="Intent Dispatcher")
+        response = self._call_llm(system_prompt, user_prompt, context_name="Intent Dispatcher")
         
         if response and "text" in response:
             try:

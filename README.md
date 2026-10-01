@@ -259,6 +259,27 @@ OLLAMA_HOST=http://localhost:11434
 # Model kiezen in Beheer → AI Configuratie
 ```
 
+**Andere LLM-servers (OpenAI-compatibel).** In Admin → AI Configuratie kies je het API-type
+([ADR 0001](./docs/2-architectuur/adr/0001-llm-koppeling-openai-standaard.md)):
+
+- `Ollama` (standaard): de eigen Ollama-API, zoals hierboven.
+- `OpenAI-compatibel`: `/v1/chat/completions` van Ollama (`http://host.docker.internal:11434`),
+  vLLM, LM Studio of een aanbieder. Een API-sleutel zet je als `LLM_API_KEY` in `.env`, nooit in de database.
+
+Bestaande databases hebben eerst migratie `migrations/schema_v20_llm_api_type.sql` nodig om `OpenAI-compatibel` op te slaan;
+zonder migratie blijft alles werken als `Ollama`.
+
+**Optionele LiteLLM-gateway** (centrale sleutels, logging, terugval naar een ander model):
+
+```bash
+# .env: LITELLM_MASTER_KEY=sk-... en LLM_API_KEY=<zelfde waarde>
+docker compose --profile llm-gateway up -d
+# Admin → AI Configuratie: OpenAI-compatibel, URL http://llm-gateway:4000, model d-omnitwin-default
+```
+
+De gateway stuurt standaard door naar `OLLAMA_HOST`/`OLLAMA_MODEL`; fallbacks staan als voorbeeld in
+`deploy/litellm/config.yaml`. De gateway heeft geen poort op de host.
+
 ---
 
 ## ✅ Recent Voltooid
