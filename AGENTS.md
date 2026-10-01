@@ -30,10 +30,10 @@ D-OmniTwin is a digital twin platform for Dutch municipalities, visualizing neig
 
 - **API Gateway:** Traefik on port 80 (Reverse proxy)
 - **Main Backend:** FastAPI (Python 3.10+) on port 8000
-- **Data API:** PostgREST on port 3000 (`/api/data/*`)
-- **Geo API:** pg_featureserv on port 9000 (`/api/geo/*`)
+- **Data API:** PostgREST on port 3000 (`/api/data/*`). Alleen-lezen: publiceert alleen schema `api` (views/functies), rol `web_anon` via `authenticator` (#57). Nieuw object voor de frontend: view/functie + `GRANT` in `migrations/schema_v23_api_rollen.sql`, nooit `users`/`sessions`/`api_keys`/`llm_config`/`system_prompts`/logs. Schrijven gaat via FastAPI met auth
+- **Geo API:** pg_featureserv on port 9000 (`/api/geo/*`), als alleen-lezen rol `featureserv` (alleen `vw_gebieden_features`, `omgevingsvisie_deelgebieden`, `postgisftw.*`)
 - **Main Frontend:** Vanilla JS + MapLibre GL + Deck.gl (no build step, served from `/static/`)
-- **Admin Panel:** React 19 + TypeScript SPA in `/admin-panel/` (port 3001 in dev, built to `/static/admin-panel/`)
+- **Admin Panel:** React 19 + TypeScript SPA in `/admin-panel/`, gebouwd met Vite (port 3000 in dev, built to `/static/admin-panel/`)
 - **Database:** PostgreSQL 14+ with PostGIS, pgvector, and pg_trgm extensions
 
 ## Commands
@@ -42,7 +42,7 @@ D-OmniTwin is a digital twin platform for Dutch municipalities, visualizing neig
 ```bash
 docker compose up -d --build   # dev: laadt ook docker-compose.override.yml (bind-mount, DB op 5433, Traefik-dashboard 8081)
 ```
-Installatie voor beheerders (`COMPOSE_FILE=docker-compose.yml` in `.env`, alleen poort 80 / `OMNITWIN_HTTP_PORT`): zie **`docs/9-beheer/installatie.md`** — de enige actuele installatiegids. Bij de eerste start richt de eenmalige service `db-init` (`docker-entrypoint.sh init`) een lege database in: schema, views, migraties v18/v19/v21, stuurdata, sample (`LOAD_SAMPLE_DATA`) en admin-gebruiker. Een bestaande database (tabel `gebieden` aanwezig) laat hij ongemoeid; schemamigraties op bestaande databases zijn handmatig (#54).
+Installatie voor beheerders (`COMPOSE_FILE=docker-compose.yml` in `.env`, alleen poort 80 / `OMNITWIN_HTTP_PORT`): zie **`docs/9-beheer/installatie.md`** — de enige actuele installatiegids. Bij de eerste start richt de eenmalige service `db-init` (`docker-entrypoint.sh init`) een lege database in: schema, views, migraties v18–v22 (o.a. v21 Z-score-referentie), stuurdata en definities (`load_sample.py --stap definities`), de use cases (`usecases/`, `laad_usecase.py --alle`, alleen bij `LOAD_SAMPLE_DATA=true`) en admin-gebruiker. Alle demodata hoort bij een use case: data + inrichting + stappen. Een bestaande database (tabel `gebieden` aanwezig) laat hij ongemoeid; schemamigraties op bestaande databases zijn handmatig (#54).
 
 ### Backend
 ```bash
@@ -61,9 +61,10 @@ python -m pytest tests/test_zscore.py   # single test file
 ```bash
 cd admin-panel
 npm install
-npm start        # dev server on port 3001
-npm run build    # production build (deploy via .agents/workflows/build-admin-panel.md)
-npm test         # run tests
+npm start        # Vite dev server on port 3000 (proxy /api -> :8000)
+npm run build:static  # production build + kopie naar static/admin-panel (commit die map mee)
+npm run typecheck     # tsc --noEmit
+npm test         # Vitest (eenmalig)
 ```
 
 ### Database initialisatie — Fryslân-dataset zonder Docker (verouderd)
@@ -87,11 +88,11 @@ Dit framework is **niet** voor de initiële bootstrap (dat is `init_data/`, hier
 
 Copy `.env.example` to `.env` and fill in (details: `docs/9-beheer/installatie.md`, sectie 2.2):
 - `DATABASE_*` — PostgreSQL connection (requires PostGIS extension). `DATABASE_PASSWORD` alleen letters/cijfers: het komt in database-URL's terecht
-- `ADMIN_API_KEY` — for admin panel authentication (`X-Admin-Key`); nooit de voorbeeldwaarde laten staan
+- `ADMIN_API_KEY` — voor scripts (`X-Admin-Key`), niet voor de beheer-UI; minimaal 32 tekens, een lege of voorbeeldwaarde wordt geweigerd
 - `ADMIN_USER` / `ADMIN_PASSWORD` — eerste beheeraccount; leeg = gegenereerd, eenmalig in `docker compose logs db-init`
 - `OLLAMA_*` — for local LLM (optional; Qwen model)
 
-For the admin panel, create `admin-panel/.env` with `REACT_APP_API_URL` and `REACT_APP_ADMIN_KEY`.
+The admin panel authenticates only with the session cookie (log in as a user with `is_admin`). Never put secrets in `VITE_*` variables: Vite bakes them into the bundle.
 
 ## Architecture
 
@@ -129,13 +130,13 @@ Hybrid model: API key authentication for admin panel API calls, session-based au
 
 ### LLM / AI
 - **Chat intent classification is rule-based** (deterministic), not LLM-driven. LLM (Ollama/Qwen, local) is used only for narrative summaries (capped at ~80 words). LLM-config en system-prompts staan in databasetabellen (`llm_config`, `system_prompts`), niet hardcoded.
-- `ai_search_service.py` doet semantische zoekopdrachten met `sentence-transformers` (model `all-MiniLM-L6-v2`, lazy-loaded) en `pgvector`: embeddings staan in tabel `indicator_embeddings` (kolom `embedding vector(384)`, HNSW-index met cosine ops), bevraagd via de `<=>`-operator. `kompas_service.py` gebruikt géén vector-zoekopdrachten.
+- `ai_search_service.py` doet semantische zoekopdrachten met `sentence-transformers` (model `all-MiniLM-L6-v2`, lazy-loaded; model en gepinde revisie in `services/embedding_model.py`, in de image onder `/opt/models`, container draait met `HF_HUB_OFFLINE=1`) en `pgvector`: embeddings staan in tabel `indicator_embeddings` (kolom `embedding vector(384)`, HNSW-index met cosine ops), bevraagd via de `<=>`-operator. `kompas_service.py` gebruikt géén vector-zoekopdrachten.
 
 ### Color System
 Colorblind-safe diverging palettes are used throughout. Palette definitions live in `static/css/colors/`. Dynamic color generation (including diverging scales) is in `color_scale_service.py`.
 
 ### Database
-Schema is in `init_data/schema/schema_latest.sql`. Key tables: `gebieden` (areas/buurten), `indicatoren` (metrics), `gebied_data` (measurements), `kompas_titels` / `kompas_themas` / `kompas_onderdelen` / `kompas_indicator_mapping` (thematic hierarchy, samengevoegd in view `v_kompas_hierarchie`). In Docker laadt `db-init` dit schema plus `init_data/schema/06_pg_featureserv_views.sql` en `migrations/schema_v18_*.sql`/`schema_v19_*.sql`/`schema_v21_*.sql`. Views zoals `vw_gebied_kaart_basis` gebruiken herkenbare aliassen — geen alias waarbij de tabelnaam niet herkenbaar terugkomt. SQLAlchemy uses a large connection pool (`pool_size=20, max_overflow=20`) for concurrent map layer queries. Let op water-buurt filtering (watergebieden worden uitgesloten van statistiek).
+Schema is in `init_data/schema/schema_latest.sql`. Key tables: `gebieden` (areas/buurten), `indicatoren` (metrics), `gebied_data` (measurements), `kompas_titels` / `kompas_themas` / `kompas_onderdelen` / `kompas_indicator_mapping` (thematic hierarchy, samengevoegd in view `v_kompas_hierarchie`). In Docker laadt `db-init` dit schema plus `init_data/schema/06_pg_featureserv_views.sql` en `migrations/schema_v18_*.sql` t/m `schema_v22_*.sql` (v21: Z-score-referentie), en werkt bij elke start de rollen en het schema `api` bij (`migrations/schema_v23_api_rollen.sql`). Views zoals `vw_gebied_kaart_basis` gebruiken herkenbare aliassen — geen alias waarbij de tabelnaam niet herkenbaar terugkomt. SQLAlchemy uses a large connection pool (`pool_size=20, max_overflow=20`) for concurrent map layer queries. Let op water-buurt filtering (watergebieden worden uitgesloten van statistiek).
 
 ### Admin UI (React/TypeScript)
 Aparte codebase in `admin-panel/`, eigen build-stap nodig. API calls via relatieve paden, geproxied naar de backend op poort 8000.
@@ -165,5 +166,8 @@ Elke wijziging gaat via GitHub Flow:
 3. Commits op die branch
 4. Pull Request naar `main` met `Closes #<nr>` in de beschrijving
 5. Nooit direct op `main` pushen
+
+Versies en releases: Semantic Versioning, één bron `VERSION`, conventional commits, regel in `CHANGELOG.md` onder `[Unreleased]`, release-branch `release/<MAJOR>.<MINOR>` met tag `v<versie>`. Zie `docs/9-beheer/releasebeleid.md`.
+**Nieuwe functionaliteit = een use case erbij** (`usecases/<naam>/`: data, inrichting, stappen, verwachte uitkomst). De use case werkt out of the box, ook zonder AI-sleutel, en wordt getoetst door `tests/integration/test_usecases.py`. Zie CONTRIBUTING.md.
 
 `gh` CLI: `/usr/bin/gh` — gebruik altijd met `GH_PAGER=cat` om pager-blokkering te voorkomen.

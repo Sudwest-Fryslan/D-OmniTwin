@@ -133,7 +133,7 @@ export const ThemaAnalysePage: React.FC = () => {
     useEffect(() => {
         if (laagId && woonplaatsen.length > 0) {
             fetch(`/api/externe-lagen/${laagId}/features?features=${encodeURIComponent(woonplaatsen.join(','))}`, {
-                headers: { 'X-Admin-Key': localStorage.getItem('adminKey') || '' }
+                credentials: 'same-origin'
             })
                 .then(r => r.json())
                 .then(data => setWoonplaatsGeo(data))
@@ -437,9 +437,9 @@ export const ThemaAnalysePage: React.FC = () => {
                                     padding: '0.25rem 0.6rem',
                                     fontSize: '0.75rem',
                                     cursor: 'pointer',
-                                    transition: 'all 0.2s ease',
-                                    outline: 'none'
-                                }}>
+                                    transition: 'all 0.2s ease'
+                                }}
+                                aria-pressed={activeBuurtId === b.buurt_id}>
                                 {b.buurt_naam}
                             </button>
                         ))}
@@ -477,6 +477,7 @@ export const ThemaAnalysePage: React.FC = () => {
                 <div style={{ display: 'flex', gap: '1rem' }}>
                     <select
                         className="select-input"
+                        aria-label="Referentie"
                         value={referentie}
                         onChange={(e) => setReferentie(e.target.value as any)}
                         style={{ padding: '0.5rem', borderRadius: 'var(--radius-md)' }}
@@ -525,6 +526,7 @@ export const ThemaAnalysePage: React.FC = () => {
                         {/* Niveau 0: Categorie */}
                         <select 
                             className="select-input" 
+                            aria-label="Categorie"
                             value={selectedCategorie} 
                             onChange={e => handleCategorieChange(e.target.value)}
                             style={{ minWidth: '200px' }}
@@ -538,6 +540,7 @@ export const ThemaAnalysePage: React.FC = () => {
                         {/* Niveau 1: Thema */}
                         <select 
                             className="select-input" 
+                            aria-label="Thema"
                             value={selectedThema} 
                             onChange={e => handleThemaChange(e.target.value)}
                             disabled={!selectedCategorie}
@@ -552,6 +555,7 @@ export const ThemaAnalysePage: React.FC = () => {
                         {/* Niveau 2: Onderdeel */}
                         <select 
                             className="select-input" 
+                            aria-label="Onderdeel"
                             value={selectedOnderdeel} 
                             onChange={e => setSelectedOnderdeel(e.target.value)}
                             disabled={!selectedThema}
@@ -568,6 +572,7 @@ export const ThemaAnalysePage: React.FC = () => {
                         <input
                             type="text"
                             className="text-input"
+                            aria-label="Vraag aan AI: op welk thema wil je focussen?"
                             placeholder="Op welk thema wil je focussen? (bijv. veiligheid, groen)"
                             value={aiQuery}
                             onChange={e => handleAiQueryChange(e.target.value)}
@@ -633,6 +638,7 @@ export const ThemaAnalysePage: React.FC = () => {
                     <button 
                         onClick={fetchData}
                         disabled={loading}
+                        aria-label={loading ? 'Filters worden toegepast' : undefined}
                         style={{
                             display: 'flex', alignItems: 'center', gap: '0.5rem',
                             padding: '0.4rem 1rem', borderRadius: '4px',
@@ -782,6 +788,8 @@ export const ThemaAnalysePage: React.FC = () => {
                                                                 display: 'flex', alignItems: 'center'
                                                             }}
                                                             title="Toon alle indicatoren"
+                                                            aria-label={`Toon alle indicatoren voor ${b.buurt_naam}`}
+                                                            aria-expanded={isExpanded}
                                                         >
                                                             {isExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
                                                         </button>

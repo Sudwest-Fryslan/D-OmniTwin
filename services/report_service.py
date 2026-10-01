@@ -189,8 +189,8 @@ class ReportDataService:
             ) gd
             JOIN indicatoren i ON gd.indicator_uuid = i.uuid
             LEFT JOIN v_kompas_hierarchie vkh ON i.uuid = vkh.indicator_uuid AND vkh.config_id = 1
-            WHERE gd.rn = 1
-        """)
+            WHERE gd.rn = 1 AND i.is_actief = true
+""")
         resultaat_a = self.db.execute(waarden_a_query, {"gebied_id_a": gebied_id_a})
         indicatoren_a = {str(r._mapping['indicator_uuid']): dict(r._mapping) for r in resultaat_a}
 

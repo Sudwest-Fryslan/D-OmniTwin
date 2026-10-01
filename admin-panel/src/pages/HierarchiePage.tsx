@@ -282,7 +282,7 @@ export const HierarchiePage: React.FC = () => {
                 <div className="card-header">
                     <h3 className="card-title">Kompas Hiërarchie</h3>
                     <div style={{ display: 'flex', gap: '0.5rem' }}>
-                        <button className="btn btn-secondary" onClick={() => refetch()} title="Ververs">
+                        <button className="btn btn-secondary" onClick={() => refetch()} title="Ververs" aria-label="Hiërarchie verversen">
                             <RefreshCw size={16} />
                         </button>
                     </div>

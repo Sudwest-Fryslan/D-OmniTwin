@@ -471,7 +471,7 @@ function initDeckGL() {
                     return {
                         html: `
                 <div style="font-family: Inter, sans-serif;">
-                  <strong>\u{1F310} ${featureNaam}</strong><br/>
+                  <strong>\u{1F310} ${escapeHtml(featureNaam)}</strong><br/>
                   <small style="opacity:0.5;">Klik om buurten te selecteren</small>
                 </div>
               `,
@@ -484,9 +484,9 @@ function initDeckGL() {
                     return {
                         html: `
                 <div style="font-family: Inter, sans-serif;">
-                  <strong>🗺️ ${props.deelgebied}</strong><br/>
-                  <small style="opacity:0.7;">${props.naam}</small><br/>
-                  Oppervlakte: <strong>${props.oppervlakte_km2} km²</strong><br/>
+                  <strong>🗺️ ${escapeHtml(props.deelgebied)}</strong><br/>
+                  <small style="opacity:0.7;">${escapeHtml(props.naam)}</small><br/>
+                  Oppervlakte: <strong>${escapeHtml(props.oppervlakte_km2)} km²</strong><br/>
                   <small style="opacity:0.5;">Klik om buurten te selecteren</small>
                 </div>
               `,
@@ -510,8 +510,8 @@ function initDeckGL() {
                         html: `
                 <div style="font-family: Inter, sans-serif;">
                   <strong>🏠 Pand</strong><br/>
-                  <small style="opacity:0.6;">${bagId}</small><br/>
-                  Bouwjaar: <strong>${bouwjaar}</strong><br/>
+                  <small style="opacity:0.6;">${escapeHtml(bagId)}</small><br/>
+                  Bouwjaar: <strong>${escapeHtml(bouwjaar)}</strong><br/>
                   Hoogte: <strong>${pandHoogte} m</strong> · Opp: <strong>${opp} m²</strong>
                   ${indicatorInfo}
                 </div>
@@ -520,18 +520,20 @@ function initDeckGL() {
                     };
                 }
 
-                // Default buurt tooltip
-                const indicatorLabel = props.indicator_naam || 'Indicator';
-                const indicatorValue = props.indicator_waarde !== null ?
+                // Default buurt tooltip: waarde met jaargang en bron (#119)
+                const heeftWaarde = props.indicator_waarde !== null && props.indicator_waarde !== undefined;
+                const indicatorValue = heeftWaarde ?
                     formatNumber(props.indicator_waarde) + ' ' + (props.eenheid || '') :
                     'Geen data';
+                const herkomst = heeftWaarde
+                    ? `<br/><small class="tooltip-herkomst" style="opacity:0.75;">Jaar ${escapeHtml(props.jaar || 'onbekend')} · Bron: ${escapeHtml(props.bron || 'onbekend')}</small>`
+                    : '';
 
                 return {
                     html: `
             <div style="font-family: Inter, sans-serif;">
-              <strong>${props.naam}</strong><br/>
-              ${props.indicator_naam ? `${props.indicator_naam}: ` : ''}<strong>${indicatorValue}</strong><br/>
-              <small>${props.jaar || 'Onbekend'}</small>
+              <strong>${escapeHtml(props.naam)}</strong><br/>
+              ${props.indicator_naam ? `${escapeHtml(props.indicator_naam)}: ` : ''}<strong>${escapeHtml(indicatorValue)}</strong>${herkomst}
             </div>
           `,
                     style: tooltipStyle
@@ -650,12 +652,78 @@ async function loadGemeenten() {
     if (currentGemeente) {
         input.value = currentGemeente.naam;
         codeInput.value = currentGemeente.code;
+    } else if (state.currentGemeenteCode) {
+        // Opgeslagen code die niet in de lijst staat: niet verbergen (#140)
+        input.value = state.currentGemeenteCode;
+        codeInput.value = state.currentGemeenteCode;
     } else {
         input.value = 'Alle gemeenten';
         codeInput.value = '';
     }
 
     info.textContent = `${gemeenten.length - 1} gemeenten beschikbaar`;
+    updateGemeenteFilterChip();
+}
+
+// ---- Actief gemeentefilter zichtbaar maken (#140) ----
+
+function gemeenteNaam(code) {
+    const gemeente = loadedGemeenten.find(g => g.code === code)
+        || FRIESE_GEMEENTEN.find(g => g.code === code);
+    return gemeente ? gemeente.naam : `code ${code}`;
+}
+
+/**
+ * Toont het actieve gemeentefilter als chip boven de kaart.
+ * aantalGebieden === 0: melding dat het filter niets oplevert, met wisknop.
+ */
+function updateGemeenteFilterChip(aantalGebieden = null) {
+    const chip = document.getElementById('gemeente-filter-chip');
+    if (!chip) return;
+    const code = state.currentGemeenteCode;
+    if (!code) {
+        chip.hidden = true;
+        chip.classList.remove('leeg');
+        return;
+    }
+    const naam = gemeenteNaam(code);
+    const leeg = aantalGebieden === 0;
+    document.getElementById('gemeente-filter-tekst').textContent = leeg
+        ? `Geen gebieden in gemeente ${naam} — filter wissen?`
+        : `Gemeente: ${naam}`;
+    const knop = document.getElementById('gemeente-filter-wis');
+    knop.setAttribute('aria-label', `Gemeentefilter ${naam} wissen`);
+    knop.title = `Gemeentefilter ${naam} wissen`;
+    chip.classList.toggle('leeg', leeg);
+    chip.hidden = false;
+}
+
+/** Zet het gemeentefilter terug naar 'Alle gemeenten' en herlaadt de kaart. */
+function resetGemeenteFilter() {
+    const input = document.getElementById('gemeente-input');
+    const codeInput = document.getElementById('gemeente-code');
+    const info = document.getElementById('gemeente-info');
+
+    state.currentGemeenteCode = '';
+    if (codeInput) codeInput.value = '';
+    localStorage.setItem('omnitwin-gemeente', '');
+    if (input) input.value = 'Alle gemeenten';
+    if (info) info.textContent = 'Alle gemeenten';
+    updateGemeenteFilterChip();
+
+    state.currentData = null;
+    clearGebiedSelection();
+    updateSelectionUI();
+
+    if (window.kompasViz && window.kompasViz.currentConfigId) {
+        window.kompasViz.currentGebiedId = null;
+        window.kompasViz.loadHierarchie(window.kompasViz.currentConfigId);
+    }
+
+    // Herlaad kaart data zonder gemeente filter
+    if (state.currentGebiedstype) {
+        loadKaartData();
+    }
 }
 
 function setupGemeenteSelector() {
@@ -665,8 +733,11 @@ function setupGemeenteSelector() {
 
     if (!input) return;
 
+    const wisKnop = document.getElementById('gemeente-filter-wis');
+    if (wisKnop) wisKnop.addEventListener('click', resetGemeenteFilter);
+
     // Handle selection from datalist
-    input.addEventListener('change', (e) => {
+input.addEventListener('change', (e) => {
         const inputValue = e.target.value;
         const gemeente = loadedGemeenten.find(g => g.naam === inputValue);
 
@@ -677,6 +748,7 @@ function setupGemeenteSelector() {
 
             console.log(`📍 Gemeente: ${gemeente.naam} (${gemeente.code || 'alle'})`);
             info.textContent = gemeente.code ? `Geselecteerd: ${gemeente.naam}` : 'Alle gemeenten';
+            updateGemeenteFilterChip();
 
             state.currentData = null;
             clearGebiedSelection();
@@ -698,27 +770,9 @@ function setupGemeenteSelector() {
                 loadKaartData();
             }
         } else if (inputValue === '' || inputValue.toLowerCase() === 'alle') {
-            state.currentGemeenteCode = '';
-            codeInput.value = '';
-            localStorage.setItem('omnitwin-gemeente', '');
-            input.value = 'Alle gemeenten';
-            info.textContent = 'Alle gemeenten';
-
-            state.currentData = null;
-            clearGebiedSelection();
-            updateSelectionUI();
-            
-            if (window.kompasViz && window.kompasViz.currentConfigId) {
-                window.kompasViz.currentGebiedId = null;
-                window.kompasViz.loadHierarchie(window.kompasViz.currentConfigId);
-            }
-
-            // Herlaad kaart data zonder gemeente filter
-            if (state.currentGebiedstype) {
-                loadKaartData();
-            }
+            resetGemeenteFilter();
         }
-    });
+});
 
     // Select all text on focus for easy replacement
     input.addEventListener('focus', () => {
@@ -894,7 +948,8 @@ async function loadKaartData() {
         if (gtCountEl && geojson.features) {
             gtCountEl.textContent = `${geojson.features.length} gebieden in selectie`;
         }
-        updateLegenda(geojson);
+        updateGemeenteFilterChip(geojson.features ? geojson.features.length : null);
+updateLegenda(geojson);
 
         const geojsonBtn = document.getElementById('export-geojson-btn');
         const csvBtn = document.getElementById('export-csv-btn');
@@ -1007,13 +1062,13 @@ async function loadBag3DBuildings() {
                 zoom: zoom,
                 pitch: 50,
                 bearing: -15,
-                transitionDuration: 1200,
+                ...A11y.cameraTransition(1200),
             };
         } else {
             state.currentViewState = {
                 ...state.currentViewState,
                 pitch: 50,
-                transitionDuration: 800,
+                ...A11y.cameraTransition(800),
             };
         }
         state.deckgl.setProps({ viewState: state.currentViewState });
@@ -1937,8 +1992,7 @@ function fitBounds(geojson) {
         zoom,
         pitch: state.enable3D ? 45 : 0,
         bearing: 0,
-        transitionDuration: 1000,
-        transitionInterpolator: new deck.FlyToInterpolator()
+        ...A11y.cameraTransition(1000, true)
     };
     state.deckgl.setProps({ viewState: state.currentViewState });
 }
@@ -2087,7 +2141,7 @@ function updateLegenda(geojson) {
             const step = colorRamp.length > 1 ? 100 / (colorRamp.length - 1) : 100;
             colorRamp.forEach((hexColor, i) => {
                 const offset = colorRamp.length > 1 ? i * step : 0;
-                stopsHtml += `<stop offset="${offset.toFixed(1)}%" style="stop-color:${hexColor};stop-opacity:1" />\n`;
+                stopsHtml += `<stop offset="${offset.toFixed(1)}%" style="stop-color:${escapeHtml(hexColor)};stop-opacity:1" />\n`;
             });
         } else {
             // Fallback naar de oude hardcoded blauw-geel-rood
@@ -2306,15 +2360,15 @@ function displayGebiedDetails(data) {
     let html = `
     <div class="detail-row">
       <span class="detail-label">ID:</span>
-      <span class="detail-value">${gebied.id}</span>
+      <span class="detail-value">${escapeHtml(gebied.id)}</span>
     </div>
     <div class="detail-row">
       <span class="detail-label">Naam:</span>
-      <span class="detail-value">${gebied.naam}</span>
+      <span class="detail-value">${escapeHtml(gebied.naam)}</span>
     </div>
     <div class="detail-row">
       <span class="detail-label">Type:</span>
-      <span class="detail-value">${gebied.gebiedstype.naam}</span>
+      <span class="detail-value">${escapeHtml(gebied.gebiedstype.naam)}</span>
     </div>
   `;
 
@@ -2323,8 +2377,8 @@ function displayGebiedDetails(data) {
         indicatoren.slice(0, 10).forEach(ind => {
             html += `
         <div class="detail-row">
-          <span class="detail-label">${ind.naam}:</span>
-          <span class="detail-value">${formatNumber(ind.waarde)} ${ind.eenheid || ''}</span>
+          <span class="detail-label">${escapeHtml(ind.naam)}:</span>
+          <span class="detail-value">${formatNumber(ind.waarde)} ${escapeHtml(ind.eenheid || '')}</span>
         </div>
       `;
         });
@@ -2370,7 +2424,7 @@ async function displayMultiGebiedComparison(lastClickedData) {
         <div style="margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid var(--color-border, rgba(255,255,255,0.1));">
             <strong style="font-size: 1rem;"><img src="/static/images/chart-bar.svg" alt="" style="width:18px; height:18px; vertical-align:-3px; filter: brightness(0) invert(1); margin-right: 4px;">Vergelijking: ${ids.length} gebieden</strong>
             <div style="font-size: 0.8rem; opacity: 0.7; margin-top: 4px;">
-                ${allData.map(d => d.gebied.naam).join(' · ')}
+                ${escapeHtml(allData.map(d => d.gebied.naam).join(' · '))}
             </div>
         </div>`;
 
@@ -2412,7 +2466,7 @@ async function displayMultiGebiedComparison(lastClickedData) {
                 html += `
                 <div style="margin-bottom: 14px;">
                     <div style="font-size: 0.8rem; font-weight: 600; margin-bottom: 4px; color: var(--color-text-primary, #e2e8f0);">
-                        ${ind.naam} <span style="opacity:0.5; font-weight:400;">(${ind.eenheid})</span>
+                        ${escapeHtml(ind.naam)} <span style="opacity:0.5; font-weight:400;">(${escapeHtml(ind.eenheid)})</span>
                     </div>`;
 
                 ind.waarden.forEach((w, idx) => {
@@ -2423,8 +2477,8 @@ async function displayMultiGebiedComparison(lastClickedData) {
 
                     html += `
                     <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 3px; font-size: 0.75rem;">
-                        <span style="width: 80px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; opacity: 0.8;" title="${w.gebiedNaam}">
-                            ${w.gebiedNaam.length > 12 ? w.gebiedNaam.slice(0, 11) + '…' : w.gebiedNaam}
+                        <span style="width: 80px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; opacity: 0.8;" title="${escapeHtml(w.gebiedNaam)}">
+                            ${escapeHtml(w.gebiedNaam.length > 12 ? w.gebiedNaam.slice(0, 11) + '…' : w.gebiedNaam)}
                         </span>
                         <div style="flex: 1; height: 16px; background: rgba(255,255,255,0.05); border-radius: 4px; overflow: hidden;">
                             <div style="width: ${pct}%; height: 100%; background: ${color}; border-radius: 4px; transition: width 0.3s;"></div>
@@ -2438,7 +2492,7 @@ async function displayMultiGebiedComparison(lastClickedData) {
                 // Gemiddelde lijn
                 html += `
                     <div style="font-size: 0.7rem; opacity: 0.5; text-align: right; margin-top: 2px;">
-                        Gem: ${formatNumber(gemiddelde)} ${ind.eenheid}
+                        Gem: ${formatNumber(gemiddelde)} ${escapeHtml(ind.eenheid)}
                     </div>
                 </div>`;
             });
@@ -2456,12 +2510,31 @@ async function displayMultiGebiedComparison(lastClickedData) {
 }
 
 /**
+ * Toon een rapportkeuze-modal als toegankelijke dialoog (#67): role="dialog",
+ * focus in de dialoog en vastgehouden, Escape of klik op de achtergrond sluit,
+ * focus terug naar de knop die de modal opende.
+ * @returns {Function} sluit()
+ */
+function toonRapportDialoog(modal) {
+    const bestaand = document.getElementById(modal.id);
+    if (bestaand) (bestaand._sluit || (() => bestaand.remove()))();
+
+    document.body.appendChild(modal);
+    let dialoog = null;
+    const sluit = () => {
+        if (dialoog) dialoog.close();
+        modal.remove();
+    };
+    dialoog = A11y.openDialog(modal.firstElementChild, { labelledBy: 'rapport-modal-titel', onEscape: sluit });
+    modal._sluit = sluit;
+    modal.addEventListener('click', (e) => { if (e.target === modal) sluit(); });
+    return sluit;
+}
+
+/**
  * Sprint 8D: Rapport type keuze modal — Gebiedsdossier vs Benchmark
  */
 function openRapportTypeModal(gebiedId, baseUrl) {
-    // Verwijder bestaande modal indien aanwezig
-    document.getElementById('rapport-type-modal')?.remove();
-
     const modal = document.createElement('div');
     modal.id = 'rapport-type-modal';
     modal.style.cssText = `
@@ -2476,7 +2549,7 @@ function openRapportTypeModal(gebiedId, baseUrl) {
             border-radius: 12px; padding: 1.5rem; width: 340px;
             box-shadow: 0 20px 60px rgba(0,0,0,0.5);
         ">
-            <h3 style="margin:0 0 0.5rem; font-size:1rem;">Kies Rapport Type</h3>
+            <h3 id="rapport-modal-titel" style="margin:0 0 0.5rem; font-size:1rem;">Kies Rapport Type</h3>
             <p style="margin:0 0 1.25rem; font-size:0.85rem; opacity:0.6;">
                 Welk rapport wil je genereren?
             </p>
@@ -2487,7 +2560,7 @@ function openRapportTypeModal(gebiedId, baseUrl) {
                     background: var(--action-fill, #2563eb); color: white;
                     font-size:0.95rem; font-weight:600; cursor:pointer; text-align:left;
                     box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
-                ">🏘️ Woonplaatsanalyse (${state.selectedDeelgebiedNaam})<br>
+                ">🏘️ Woonplaatsanalyse (${escapeHtml(state.selectedDeelgebiedNaam)})<br>
                     <span style="font-weight:400; font-size:0.8rem; opacity:0.9;">
                         Gewogen stadsbrede analyse per thema
                     </span>
@@ -2530,7 +2603,7 @@ function openRapportTypeModal(gebiedId, baseUrl) {
         </div>
     `;
 
-    document.body.appendChild(modal);
+    const sluit = toonRapportDialoog(modal);
 
     document.getElementById('rapport-modal-deelgebied-single')?.addEventListener('click', () => {
         const ids = Array.from(state.selectedGebiedIds).length > 0 ? Array.from(state.selectedGebiedIds) : [gebiedId];
@@ -2543,30 +2616,27 @@ function openRapportTypeModal(gebiedId, baseUrl) {
             extraParams += `&woonplaatsen=${woonplaatsen}`;
         }
         window.open(`${baseUrl}/admin/rapport/deelgebied?gebieden=${ids.join(',')}&naam=${naam}&gemeente=${gemeente}${extraParams}`, '_blank');
-        modal.remove();
+        sluit();
     });
     document.getElementById('rapport-modal-dossier').addEventListener('click', () => {
         window.open(`${baseUrl}/admin/rapport/${gebiedId}`, '_blank');
-        modal.remove();
+        sluit();
     });
     document.getElementById('rapport-modal-thema').addEventListener('click', () => {
         window.open(`${baseUrl}/admin/rapport/thema-analyse?gebieden=${gebiedId}`, '_blank');
-        modal.remove();
+        sluit();
     });
     document.getElementById('rapport-modal-benchmark').addEventListener('click', () => {
         window.open(`${baseUrl}/admin/rapport/benchmark?gebied_a=${gebiedId}`, '_blank');
-        modal.remove();
+        sluit();
     });
-    document.getElementById('rapport-modal-sluiten').addEventListener('click', () => modal.remove());
-    modal.addEventListener('click', (e) => { if (e.target === modal) modal.remove(); });
+    document.getElementById('rapport-modal-sluiten').addEventListener('click', sluit);
 }
 
 /**
  * Multi-select rapport keuze modal — Benchmark vs Multi-Gebiedsdossier
  */
 function openMultiSelectRapportModal(ids, baseUrl) {
-    document.getElementById('rapport-type-modal')?.remove();
-
     const deelgebiedNaam = state.selectedDeelgebiedNaam || `${ids.length} buurten`;
     const modal = document.createElement('div');
     modal.id = 'rapport-type-modal';
@@ -2582,9 +2652,9 @@ function openMultiSelectRapportModal(ids, baseUrl) {
             border-radius: 12px; padding: 1.5rem; width: 380px;
             box-shadow: 0 20px 60px rgba(0,0,0,0.5);
         ">
-            <h3 style="margin:0 0 0.5rem; font-size:1rem;">Kies Rapport Type</h3>
+            <h3 id="rapport-modal-titel" style="margin:0 0 0.5rem; font-size:1rem;">Kies Rapport Type</h3>
             <p style="margin:0 0 1.25rem; font-size:0.85rem; opacity:0.6;">
-                ${ids.length} gebieden geselecteerd ${state.selectedDeelgebiedNaam ? `(${state.selectedDeelgebiedNaam})` : ''}
+                ${ids.length} gebieden geselecteerd ${state.selectedDeelgebiedNaam ? `(${escapeHtml(state.selectedDeelgebiedNaam)})` : ''}
             </p>
             <div style="display:flex; flex-direction:column; gap:0.75rem;">
                 <button id="rapport-modal-deelgebied" style="
@@ -2635,7 +2705,7 @@ function openMultiSelectRapportModal(ids, baseUrl) {
         </div>
     `;
 
-    document.body.appendChild(modal);
+    const sluit = toonRapportDialoog(modal);
 
     document.getElementById('rapport-modal-deelgebied').addEventListener('click', () => {
         const gebiedenParam = ids.join(',');
@@ -2648,12 +2718,12 @@ function openMultiSelectRapportModal(ids, baseUrl) {
             extraParams += `&woonplaatsen=${woonplaatsen}`;
         }
         window.open(`${baseUrl}/admin/rapport/deelgebied?gebieden=${gebiedenParam}&naam=${naam}&gemeente=${gemeente}${extraParams}`, '_blank');
-        modal.remove();
+        sluit();
     });
     document.getElementById('rapport-modal-benchmark').addEventListener('click', () => {
         const [a, ...rest] = ids;
         window.open(`${baseUrl}/admin/rapport/benchmark?gebied_a=${a}&gebieden_b=${rest.join(',')}`, '_blank');
-        modal.remove();
+        sluit();
     });
     document.getElementById('rapport-modal-multi-gebied').addEventListener('click', () => {
         const gebiedenParam = ids.join(',');
@@ -2666,7 +2736,7 @@ function openMultiSelectRapportModal(ids, baseUrl) {
             extraParams += `&woonplaatsen=${woonplaatsen}`;
         }
         window.open(`${baseUrl}/admin/rapport/multi-gebied?gebieden=${gebiedenParam}&naam=${naam}${extraParams}`, '_blank');
-        modal.remove();
+        sluit();
     });
     document.getElementById('rapport-modal-thema-analyse').addEventListener('click', () => {
         const gebiedenParam = ids.join(',');
@@ -2678,10 +2748,9 @@ function openMultiSelectRapportModal(ids, baseUrl) {
             extraParams += `&woonplaatsen=${woonplaatsen}`;
         }
         window.open(`${baseUrl}/admin/rapport/thema-analyse?gebieden=${gebiedenParam}&naam=${naam}${extraParams}`, '_blank');
-        modal.remove();
+        sluit();
     });
-    document.getElementById('rapport-modal-sluiten-multi').addEventListener('click', () => modal.remove());
-    modal.addEventListener('click', (e) => { if (e.target === modal) modal.remove(); });
+    document.getElementById('rapport-modal-sluiten-multi').addEventListener('click', sluit);
 }
 
 // ============================================================================
@@ -2704,14 +2773,14 @@ function updateSelectionUI() {
             rapportBtn.disabled = true;
         } else if (count === 1) {
             const namen = getSelectedGebiedNamen();
-            rapportInfo.innerHTML = `<strong>Geselecteerd:</strong> ${namen[0]} (${state.selectedGebiedId})`;
+            rapportInfo.innerHTML = `<strong>Geselecteerd:</strong> ${escapeHtml(namen[0])} (${escapeHtml(state.selectedGebiedId)})`;
             rapportBtn.disabled = false;
         } else {
             const namen = getSelectedGebiedNamen();
             const namenTekst = namen.length <= 3
                 ? namen.join(', ')
                 : `${namen.slice(0, 3).join(', ')} (+${namen.length - 3})`;
-            rapportInfo.innerHTML = `<strong>Selectie (${count}):</strong> ${namenTekst}`;
+            rapportInfo.innerHTML = `<strong>Selectie (${count}):</strong> ${escapeHtml(namenTekst)}`;
             rapportBtn.disabled = false;
         }
     }
@@ -2983,7 +3052,7 @@ function setupEventListeners() {
         state.currentViewState = {
             ...currentViewState,
             pitch: state.enable3D ? 45 : 0,
-            transitionDuration: 500
+            ...A11y.cameraTransition(500)
         };
         state.deckgl.setProps({
             viewState: state.currentViewState
@@ -3151,6 +3220,8 @@ function setupEventListeners() {
                             } else {
                                 // Clear missing data
                                 f.properties.indicator_waarde = null;
+                                f.properties.jaar = null;
+                                f.properties.bron = null;
                                 f.properties.color = '#94A3B8';
                             }
                         });
@@ -3187,8 +3258,9 @@ function setupEventListeners() {
             // Update state
             state.currentGemeenteCode = code;
             localStorage.setItem('omnitwin-gemeente', code);
-            
-            // Clear selection and reload map
+            updateGemeenteFilterChip();
+
+// Clear selection and reload map
             state.currentData = null;
             clearGebiedSelection();
             updateSelectionUI();
@@ -3237,6 +3309,56 @@ function setupEventListeners() {
             
             updateButtonState();
             console.log(`✅ Gebiedstype via chat: ${data.name} (${matchedId})`);
+        });
+
+        // #149: Chat -> Kaart: gebieden uit een antwoord op een datavraag selecteren,
+        // optioneel met de indicator op de kaart of het Kompas voor die gebieden.
+        // Ook automatisch na een antwoord (kaart_actie, zoom: true): de kaart beweegt mee.
+        window.EventBus.on('CHAT_GEBIEDEN_TONEN', async (data) => {
+            const ids = (data.ids || []).filter(Boolean);
+            if (data.gebiedstypeId && state.currentGebiedstype !== data.gebiedstypeId) {
+                const select = document.getElementById('gebiedstype-select');
+                if (select && [...select.options].some(o => o.value === data.gebiedstypeId)) {
+                    select.value = data.gebiedstypeId;
+                    state.currentGebiedstype = data.gebiedstypeId;
+                    state.currentIndicator = null;
+                    await loadIndicatoren(data.gebiedstypeId);
+                }
+            }
+            // Een gemeentefilter op een andere gemeente zou de gebieden verbergen
+            if (data.gemeenteCode && state.currentGemeenteCode && state.currentGemeenteCode !== data.gemeenteCode) {
+                const gemeente = loadedGemeenten.find(g => g.code === data.gemeenteCode);
+                state.currentGemeenteCode = data.gemeenteCode;
+                try { localStorage.setItem('omnitwin-gemeente', data.gemeenteCode); } catch (e) { /* geen opslag */ }
+                const input = document.getElementById('gemeente-input');
+                const codeInput = document.getElementById('gemeente-code');
+                if (input && gemeente) input.value = gemeente.naam;
+                if (codeInput) codeInput.value = data.gemeenteCode;
+                state.currentData = null;
+            }
+
+            clearGebiedSelection();
+            ids.forEach(id => state.selectedGebiedIds.add(id));
+
+            if (data.uuid) {
+                await handleIndicatorSelection({ uuid: data.uuid, name: data.name || '' });
+            } else if (state.currentData) {
+                displayOnMap(state.currentData);
+            } else if (state.currentGebiedstype) {
+                await loadKaartData();
+            }
+            updateGemeenteFilterChip(state.currentData?.features?.length ?? null);
+            updateSelectionUI();
+            updateButtonState();
+            if (data.zoom) zoomNaarGebieden(ids);
+
+            if (data.openKompas && state.kompasWindow) {
+                state.kompasWindow.open();
+                if (window.kompasViz && window.kompasViz.currentConfigId) {
+                    loadKompasForSelection(window.kompasViz.currentConfigId);
+                }
+            }
+            console.log(`✅ Chat: ${ids.length} gebied(en) geselecteerd`, ids);
         });
     } else {
         console.error('❌ EventBus not available for subscription');
@@ -3509,7 +3631,7 @@ function showError(message) {
     toast.className = 'error-toast';
     toast.innerHTML = `
         <span class="error-toast-icon">⚠️</span>
-        <span class="error-toast-msg">${message}</span>
+        <span class="error-toast-msg">${escapeHtml(message)}</span>
         <button class="error-toast-close" onclick="this.parentElement.remove()">✕</button>
     `;
     document.body.appendChild(toast);
@@ -3657,10 +3779,63 @@ function flyToGebied(feature, clickCoordinate = null) {
                 longitude: centroid[0] + lngOffset,
                 latitude: centroid[1],
                 zoom: zoom,
-                transitionDuration: 800,
-                transitionInterpolator: new deck.FlyToInterpolator()
+                ...A11y.cameraTransition(800, true)
             }
         });
+}
+
+/**
+ * #149: zoom in op een set gebieden (bbox van hun geometrie in state.currentData).
+ * Met prefers-reduced-motion zonder animatie. Retourneert true als er ingezoomd is.
+ */
+function zoomNaarGebieden(ids) {
+    if (!state.deckgl || !state.currentData || !Array.isArray(state.currentData.features)) return false;
+    const gezocht = new Set(ids);
+    let minLon = Infinity, maxLon = -Infinity, minLat = Infinity, maxLat = -Infinity;
+    const walk = (arr) => {
+        if (!Array.isArray(arr)) return;
+        if (typeof arr[0] === 'number') {
+            minLon = Math.min(minLon, arr[0]); maxLon = Math.max(maxLon, arr[0]);
+            minLat = Math.min(minLat, arr[1]); maxLat = Math.max(maxLat, arr[1]);
+        } else {
+            arr.forEach(walk);
+        }
+    };
+    state.currentData.features
+        .filter(f => gezocht.has(f.properties?.id ?? f.id))
+        .forEach(f => f.geometry && walk(f.geometry.coordinates));
+    if (minLon === Infinity) return false;
+
+    // Vrije zone: linkerpaneel en chat niet over de gebieden heen
+    const mapEl = document.getElementById('map');
+    const width = (mapEl && mapEl.clientWidth) || window.innerWidth;
+    const height = (mapEl && mapEl.clientHeight) || window.innerHeight;
+    const leftPanel = document.querySelector('.panel-container.open') ? 360 : 0;
+    const chatOpen = document.getElementById('chat-panel')?.classList.contains('open');
+    let padding = { top: 60, bottom: 100, left: 110 + leftPanel, right: (chatOpen ? 380 : 0) + 60 };
+    if (width - padding.left - padding.right < 100 || height - padding.top - padding.bottom < 100) padding = 20;
+
+    let longitude = (minLon + maxLon) / 2, latitude = (minLat + maxLat) / 2, zoom = 13;
+    if (typeof deck !== 'undefined' && deck.WebMercatorViewport) {
+        try {
+            const vp = new deck.WebMercatorViewport({ width, height })
+                .fitBounds([[minLon, minLat], [maxLon, maxLat]], { padding, maxZoom: 15 });
+            ({ longitude, latitude, zoom } = vp);
+        } catch (e) {
+            console.warn('zoomNaarGebieden: fitBounds mislukt, midden van de gebieden', e);
+        }
+    }
+
+    const reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const base = state.currentViewState || state.deckgl.props.viewState || state.deckgl.props.initialViewState || {};
+    state.currentViewState = {
+        ...base,
+        longitude, latitude, zoom,
+        transitionDuration: reduceMotion ? 0 : 1000,
+        ...(reduceMotion ? {} : { transitionInterpolator: new deck.FlyToInterpolator() })
+    };
+    state.deckgl.setProps({ viewState: state.currentViewState });
+    return true;
 }
 
 
@@ -3670,6 +3845,7 @@ function flyToGebied(feature, clickCoordinate = null) {
 // ============================================================================
 
 const ONBOARDING_KEY = 'omnitwin_welcomed';
+let welcomeDialog = null;
 
 /**
  * Initialiseer de welkomstmodal.
@@ -3689,13 +3865,8 @@ function initOnboarding() {
         if (e.target === overlay) dismissWelcomeModal();
     });
 
-    // Sluit modal bij Escape
-    document.addEventListener('keydown', function onEscapeWelcome(e) {
-        if (e.key === 'Escape') {
-            dismissWelcomeModal();
-            document.removeEventListener('keydown', onEscapeWelcome);
-        }
-    });
+    // Focus in de modal en vasthouden; Escape sluit (#67)
+    welcomeDialog = A11y.openDialog(overlay, { labelledBy: 'welcome-title', onEscape: dismissWelcomeModal });
 
     console.log('👋 Welkomstmodal getoond (eerste bezoek)');
 }
@@ -3727,6 +3898,11 @@ function startOnboarding(action) {
 function dismissWelcomeModal() {
     const overlay = document.getElementById('welcome-modal-overlay');
     if (!overlay) return;
+
+    if (welcomeDialog) {
+        welcomeDialog.close();
+        welcomeDialog = null;
+    }
 
     overlay.classList.add('fade-out');
     setTimeout(() => {
@@ -3895,7 +4071,7 @@ function showInlineLoading(message = 'Laden...') {
     content.innerHTML = `
         <div class="inline-spinner-container">
             <div class="inline-spinner"></div>
-            <span class="inline-spinner-text">${message}</span>
+            <span class="inline-spinner-text">${escapeHtml(message)}</span>
         </div>
     `;
 }
@@ -4044,13 +4220,13 @@ async function buildIndicatorAccordion(indicatoren) {
         const withData = items.filter(i => (i.aantal_gebieden_met_data || 0) > 0).length;
         const kleur = themaKleuren[thema] || '#6B7280';
 
-        html += `<div class="accordion-group" data-thema="${thema}">
+        html += `<div class="accordion-group" data-thema="${escapeHtml(thema)}">
             <div class="accordion-header" role="button" tabindex="0" aria-expanded="false" onclick="toggleAccordionGroup(this)">
                 <svg class="accordion-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <polyline points="9 18 15 12 9 6"/>
                 </svg>
                 <span class="accordion-color-dot" style="background:${kleur}"></span>
-                <span class="accordion-label">${thema}</span>
+                <span class="accordion-label">${escapeHtml(thema)}</span>
                 <span class="accordion-count">${withData}/${items.length}</span>
             </div>
             <div class="accordion-body">`;
@@ -4071,10 +4247,10 @@ async function buildIndicatorAccordion(indicatoren) {
             const noDataClass = noData ? ' no-data' : '';
 
             html += `<div class="indicator-item${activeClass}${noDataClass}"
-                        data-uuid="${ind.uuid}" data-naam="${ind.naam}"
+                        data-uuid="${escapeHtml(ind.uuid)}" data-naam="${escapeHtml(ind.naam)}"
                         ${noData ? 'aria-disabled="true"' : 'role="button" tabindex="0"'}
-                        ${noData ? '' : `onclick="selectAccordionIndicator('${ind.uuid}', '${ind.naam.replace(/'/g, "\\'")}')"` }>
-                <span class="indicator-item-name">${ind.naam}</span>
+                        ${noData ? '' : 'onclick="selectAccordionIndicator(this.dataset.uuid, this.dataset.naam)"'}>
+                <span class="indicator-item-name">${escapeHtml(ind.naam)}</span>
                 <span class="indicator-item-coverage">${coverage > 0 ? coverage : '—'}</span>
             </div>`;
         });
@@ -4195,7 +4371,7 @@ function filterAccordion(query) {
                 item.style.display = '';
                 // Reset highlight
                 const nameEl = item.querySelector('.indicator-item-name');
-                if (nameEl) nameEl.innerHTML = item.dataset.naam;
+                if (nameEl) nameEl.textContent = item.dataset.naam;
             });
         });
         return;
@@ -4219,7 +4395,7 @@ function filterAccordion(query) {
                     const before = naam.slice(0, idx);
                     const match = naam.slice(idx, idx + query.length);
                     const after = naam.slice(idx + query.length);
-                    nameEl.innerHTML = `${before}<mark>${match}</mark>${after}`;
+                    nameEl.innerHTML = `${escapeHtml(before)}<mark>${escapeHtml(match)}</mark>${escapeHtml(after)}`;
                 }
             } else {
                 item.style.display = 'none';

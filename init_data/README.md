@@ -3,7 +3,7 @@
 > ⚠️ **Installeren met Docker:** zie [`docs/9-beheer/installatie.md`](../docs/9-beheer/installatie.md). Daar laadt `db-init` het schema en de sample. De volledige Fryslân-data laad je daarna met één commando:
 >
 > ```bash
-> docker compose exec backend python init_data/scripts/seed_fryslan.py --stap alle
+> docker compose run --rm db-init python init_data/scripts/seed_fryslan.py --stap alle
 > ```
 >
 > Idempotent, eindigt met een samenvatting per stap en exitcode 1 bij fouten. `init_database.sh` hieronder is voor een PostgreSQL zonder Docker.
@@ -32,14 +32,19 @@ init_data/
 ├── fryslan/
 │   ├── README.md                      # Bronvermelding en licentie-informatie
 │   ├── buurten_fryslan.geojson        # CBS buurten 2024 — provincie Fryslân (931 buurten, WGS84)
-│   └── indicatorwaarden_fryslan.csv   # CBS open data — indicatorwaarden per buurt
+│   └── indicatorwaarden_fryslan.csv   # RIVM Gezondheidsmonitor — indicatorwaarden per buurt
+│
+├── cbs/
+│   └── datapackage.json               # bron, licentie, tabellen per jaar, mapping, codecontrole
 │
 └── scripts/
     ├── init_database.sh               # ⭐ Master initiatie script (alles in 1 stap, incl. admin)
     ├── seed_fryslan.py                # Python import script (database vullen; ook in Docker)
     ├── create_admin.py                # 👤 Admin gebruiker + API key aanmaken (stap 6)
     ├── download_buurten_fryslan.py    # Download GeoJSON via PDOK WFS
-    └── download_indicatoren_fryslan.py # Download CBS indicatorwaarden via OData API
+    ├── download_indicatoren_fryslan.py # Download RIVM-indicatorwaarden via CBS dataderden
+    ├── download_cbs_kerncijfers.py    # Download CBS Kerncijfers 2019-nu (alle jaargangen) via OData
+    └── laad_cbs.py                    # CBS Kerncijfers downloaden (met cache) en laden voor de gebieden in de database
 ```
 
 ---
@@ -54,8 +59,9 @@ Zie [`GETTING_STARTED.md`](../GETTING_STARTED.md) in de projectroot voor de voll
 # 1. Geodata downloaden (eenmalig, ~5 MB)
 python init_data/scripts/download_buurten_fryslan.py
 
-# 2. CBS indicatorwaarden downloaden (eenmalig)
-python init_data/scripts/download_indicatoren_fryslan.py
+# 2. Indicatorwaarden downloaden (eenmalig; de CSV's staan ook in git)
+python init_data/scripts/download_indicatoren_fryslan.py   # RIVM
+python init_data/scripts/download_cbs_kerncijfers.py       # CBS Kerncijfers 2019-nu
 
 # 3. Alles in de database laden (incl. admin gebruiker aanmaken)
 bash init_data/scripts/init_database.sh
@@ -89,7 +95,7 @@ python init_data/scripts/create_admin.py --reset-password
 | `buurt_id` | CBS buurtcode (bijv. `BU19000101`) |
 | `indicator_naam` | Naam van de indicator |
 | `waarde` | Numerieke waarde |
-| `jaar` | Peiljaar (2022 of 2023) |
+| `jaar` | Peiljaar (RIVM 2012-2024) |
 | `bron` | CBS dataset naam |
 
 | Thema | Indicatoren |
@@ -111,7 +117,7 @@ python init_data/scripts/create_admin.py --reset-password
 | Dataset | Bron | Licentie |
 |---------|------|----------|
 | CBS Buurten 2024 | [PDOK / CBS](https://www.pdok.nl) | CC BY 4.0 |
-| Kerncijfers wijken en buurten 2023 | [CBS StatLine](https://opendata.cbs.nl) | CC BY 4.0 |
+| Kerncijfers wijken en buurten 2019-2026 (`init_data/cbs/`, zie [`cbs_kerncijfers.md`](../docs/3-data-engineering/cbs_kerncijfers.md)) | [CBS StatLine](https://opendata.cbs.nl) | CC BY 4.0 |
 | Gezondheid per wijk en buurt 2022 | [RIVM via CBS dataderden](https://dataderden.cbs.nl) | CC BY 4.0 |
 
 **Bronvermelding:** Centraal Bureau voor de Statistiek (CBS) / Rijksinstituut voor Volksgezondheid en Milieu (RIVM), [jaar van download].

@@ -1,0 +1,51 @@
+{
+  "id": "TC-06-005",
+  "titel": "Energietransitie en energiearmoede",
+  "persona": {
+    "rol": "Beleidsmaker energietransitie",
+    "vraag": "Waar in Bolsward is het risico op energiearmoede het grootst? Ik wil weten waar slechte energielabels samengaan met lage inkomens.",
+    "besluit": "Welke buurt krijgt als eerste budget voor isolatie en energiecoaches?"
+  },
+  "data": {
+    "gebiedstype": "CBS Buurten",
+    "focus": "BU19000002",
+    "gebieden": {
+      "BU19000001": "Bolsward-Noord",
+      "BU19000002": "Bolsward-Zuidoost",
+      "BU19000004": "Bolsward-Noordoost"
+    },
+    "dataset": "init_data/sample",
+    "indicatoren": [
+      {
+        "naam": "Gemiddeld energielabel",
+        "richting": "hoger_is_beter"
+      },
+      {
+        "naam": "Woningen gebouwd vóór 1945 (BAG)",
+        "richting": "neutraal"
+      },
+      {
+        "naam": "Huishoudens met laag inkomen",
+        "richting": "lager_is_beter"
+      },
+      {
+        "naam": "Moeite met rondkomen",
+        "richting": "lager_is_beter"
+      }
+    ],
+    "ontbreekt_nog": [
+      "% woningen met label E/F/G",
+      "Gemiddeld gasverbruik",
+      "Energiequote (energiearmoede TNO/CBS)"
+    ]
+  },
+  "inrichting": {
+    "kompas_configuratie": null,
+    "chat_scenario": null
+  },
+  "ai_zoekvraag": "energielabel woningen en lage inkomens",
+  "verwacht": {
+    "vraag_zoekwoord": "rondkomen",
+    "verwacht": "Bolsward-Noord: hoogste moeite met rondkomen (19,1%) en meeste lage inkomens (4,4%, CBS 2023)"
+  }
+}
