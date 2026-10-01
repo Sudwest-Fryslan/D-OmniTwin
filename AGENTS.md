@@ -129,7 +129,7 @@ Hybrid model: API key authentication for admin panel API calls, session-based au
 
 ### LLM / AI
 - **Chat intent classification is rule-based** (deterministic), not LLM-driven. LLM (Ollama/Qwen, local) is used only for narrative summaries (capped at ~80 words). LLM-config en system-prompts staan in databasetabellen (`llm_config`, `system_prompts`), niet hardcoded.
-- `ai_search_service.py` doet semantische zoekopdrachten met `sentence-transformers` (model `all-MiniLM-L6-v2`, lazy-loaded) en `pgvector`: embeddings staan in tabel `indicator_embeddings` (kolom `embedding vector(384)`, HNSW-index met cosine ops), bevraagd via de `<=>`-operator. `kompas_service.py` gebruikt géén vector-zoekopdrachten.
+- `ai_search_service.py` doet semantische zoekopdrachten met `sentence-transformers` (model `all-MiniLM-L6-v2`, lazy-loaded; model en gepinde revisie in `services/embedding_model.py`, in de image onder `/opt/models`, container draait met `HF_HUB_OFFLINE=1`) en `pgvector`: embeddings staan in tabel `indicator_embeddings` (kolom `embedding vector(384)`, HNSW-index met cosine ops), bevraagd via de `<=>`-operator. `kompas_service.py` gebruikt géén vector-zoekopdrachten.
 
 ### Color System
 Colorblind-safe diverging palettes are used throughout. Palette definitions live in `static/css/colors/`. Dynamic color generation (including diverging scales) is in `color_scale_service.py`.
