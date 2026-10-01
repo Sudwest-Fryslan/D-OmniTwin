@@ -242,7 +242,7 @@ De externe organisatie gebruikt alleen nog de gepubliceerde images van Docker Hu
 ```yaml
 # D-OmniTwin — Productie Docker Compose
 # Gebruik: docker compose -f docker-compose.prod.yml up -d
-# Vereist: .env bestand met DATABASE_PASSWORD, SECRET_KEY, etc.
+# Vereist: .env op basis van .env.example (minimaal DATABASE_PASSWORD)
 
 version: '3.8'
 name: "d-omnitwin"

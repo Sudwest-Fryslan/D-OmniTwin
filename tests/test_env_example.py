@@ -64,3 +64,21 @@ def test_verplichte_waarde_heeft_geen_voorbeeldwaarde():
     """Placeholders als <jouw-wachtwoord> werken als echte waarde (#65); verplichte velden staan leeg."""
     tekst = (ROOT / ".env.example").read_text(encoding="utf-8")
     assert not re.search(r"^[A-Z_]+=<", tekst, re.MULTILINE), "Geen <placeholder>-waarden in actieve regels"
+
+
+def _variabelen_in_installatiegids():
+    """Variabelen in de tabel van sectie 2.2 van de installatiegids (#204)."""
+    tekst = (ROOT / "docs/9-beheer/installatie.md").read_text(encoding="utf-8")
+    sectie = tekst.split("### 2.2", 1)[1].split("\n### ", 1)[0]
+    rijen = [r for r in sectie.splitlines() if r.startswith("| `")]
+    return {naam for r in rijen for naam in re.findall(r"`([A-Z][A-Z0-9_]+)(?:=[^`]*)?`", r.split("|")[1])}
+
+
+def test_installatiegids_noemt_alleen_variabelen_uit_env_example():
+    onbekend = sorted(_variabelen_in_installatiegids() - gedocumenteerd())
+    assert not onbekend, f"In installatie.md (2.2) maar niet in .env.example: {onbekend}"
+
+
+def test_installatiegids_beschrijft_elke_variabele_uit_env_example():
+    ontbreekt = sorted(gedocumenteerd() - _variabelen_in_installatiegids())
+    assert not ontbreekt, f"In .env.example maar niet in de tabel van installatie.md (2.2): {ontbreekt}"

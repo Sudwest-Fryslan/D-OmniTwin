@@ -31,6 +31,10 @@ data/
 # Exports (gegenereerde rapporten, JSON exports, Excel)
 exports/
 
+# Backups en databasedumps (installatie.md, Backup); nooit in git (#204)
+backups/
+*.dump
+
 # E2E-testartefacten (screenshots bij fouten)
 tests/e2e/artifacts/
 
