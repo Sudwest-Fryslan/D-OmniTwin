@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { visualisatieAPI } from '../services/api';
+import { useDialogFocus } from '../hooks/useDialogFocus';
 import {
     Palette,
     Plus,
@@ -188,6 +189,7 @@ const PaletteEditor: React.FC<{
         e.preventDefault();
         onSave(form);
     };
+    const dialogRef = useDialogFocus<HTMLDivElement>(true, onClose);
 
     return (
         <div
@@ -203,23 +205,27 @@ const PaletteEditor: React.FC<{
             onClick={onClose}
         >
             <div
+                ref={dialogRef}
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="palette-editor-titel"
                 className="card"
                 style={{ width: '520px', maxHeight: '80vh', overflowY: 'auto' }}
                 onClick={(e) => e.stopPropagation()}
             >
                 <div className="card-header">
-                    <h3 className="card-title">
+                    <h3 className="card-title" id="palette-editor-titel">
                         {palette?.id ? 'Palette Bewerken' : 'Nieuw Palette'}
                     </h3>
-                    <button className="btn btn-secondary" onClick={onClose}>
+                    <button type="button" className="btn btn-secondary" onClick={onClose} aria-label="Sluiten" title="Sluiten">
                         <X size={16} />
                     </button>
                 </div>
 
                 <form onSubmit={handleSubmit}>
                     <div className="form-group">
-                        <label className="form-label">Naam</label>
-                        <input
+                        <label htmlFor="kleurschemas-naam" className="form-label">Naam</label>
+                        <input id="kleurschemas-naam"
                             className="form-input"
                             value={form.naam}
                             onChange={(e) => setForm({ ...form, naam: e.target.value })}
@@ -228,8 +234,8 @@ const PaletteEditor: React.FC<{
                     </div>
 
                     <div className="form-group">
-                        <label className="form-label">Beschrijving</label>
-                        <input
+                        <label htmlFor="kleurschemas-beschrijving" className="form-label">Beschrijving</label>
+                        <input id="kleurschemas-beschrijving"
                             className="form-input"
                             value={form.beschrijving}
                             onChange={(e) => setForm({ ...form, beschrijving: e.target.value })}
@@ -239,8 +245,8 @@ const PaletteEditor: React.FC<{
                     {/* Color pickers */}
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: '12px', marginBottom: '16px' }}>
                         <div className="form-group">
-                            <label className="form-label">Min kleur</label>
-                            <input
+                            <label htmlFor="kleurschemas-min-kleur" className="form-label">Min kleur</label>
+                            <input id="kleurschemas-min-kleur"
                                 type="color"
                                 value={form.colors.min}
                                 onChange={(e) =>
@@ -251,8 +257,8 @@ const PaletteEditor: React.FC<{
                             <small style={{ color: 'var(--color-text-muted)', fontSize: '0.7rem' }}>{form.colors.min}</small>
                         </div>
                         <div className="form-group">
-                            <label className="form-label">Mid kleur</label>
-                            <input
+                            <label htmlFor="kleurschemas-mid-kleur" className="form-label">Mid kleur</label>
+                            <input id="kleurschemas-mid-kleur"
                                 type="color"
                                 value={form.colors.mid}
                                 onChange={(e) =>
@@ -263,8 +269,8 @@ const PaletteEditor: React.FC<{
                             <small style={{ color: 'var(--color-text-muted)', fontSize: '0.7rem' }}>{form.colors.mid}</small>
                         </div>
                         <div className="form-group">
-                            <label className="form-label">Max kleur</label>
-                            <input
+                            <label htmlFor="kleurschemas-max-kleur" className="form-label">Max kleur</label>
+                            <input id="kleurschemas-max-kleur"
                                 type="color"
                                 value={form.colors.max}
                                 onChange={(e) =>
@@ -275,8 +281,8 @@ const PaletteEditor: React.FC<{
                             <small style={{ color: 'var(--color-text-muted)', fontSize: '0.7rem' }}>{form.colors.max}</small>
                         </div>
                         <div className="form-group">
-                            <label className="form-label">No Data</label>
-                            <input
+                            <label htmlFor="kleurschemas-no-data" className="form-label">No Data</label>
+                            <input id="kleurschemas-no-data"
                                 type="color"
                                 value={form.nodata_kleur}
                                 onChange={(e) => setForm({ ...form, nodata_kleur: e.target.value })}
@@ -288,14 +294,14 @@ const PaletteEditor: React.FC<{
 
                     {/* Live preview */}
                     <div className="form-group">
-                        <label className="form-label">Preview ({form.klassen} klassen)</label>
+                        <div className="form-label">Preview ({form.klassen} klassen)</div>
                         <ColorGradient colors={form.colors} nodata={form.nodata_kleur} klassen={form.klassen} size="lg" />
                     </div>
 
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px' }}>
                         <div className="form-group">
-                            <label className="form-label">Type</label>
-                            <select
+                            <label htmlFor="kleurschemas-type" className="form-label">Type</label>
+                            <select id="kleurschemas-type"
                                 className="form-select"
                                 value={form.palette_type}
                                 onChange={(e) => setForm({ ...form, palette_type: e.target.value })}
@@ -306,8 +312,8 @@ const PaletteEditor: React.FC<{
                             </select>
                         </div>
                         <div className="form-group">
-                            <label className="form-label">Classificatie</label>
-                            <select
+                            <label htmlFor="kleurschemas-classificatie" className="form-label">Classificatie</label>
+                            <select id="kleurschemas-classificatie"
                                 className="form-select"
                                 value={form.classificatie}
                                 onChange={(e) => setForm({ ...form, classificatie: e.target.value })}
@@ -319,8 +325,8 @@ const PaletteEditor: React.FC<{
                             </select>
                         </div>
                         <div className="form-group">
-                            <label className="form-label">Klassen (max 7)</label>
-                            <input
+                            <label htmlFor="kleurschemas-klassen" className="form-label">Klassen (max 7)</label>
+                            <input id="kleurschemas-klassen"
                                 type="number"
                                 className="form-input"
                                 min={3}
@@ -377,6 +383,7 @@ const ProfielEditor: React.FC<{
             midpoint_waarde: form.midpoint_waarde || null,
         });
     };
+    const dialogRef = useDialogFocus<HTMLDivElement>(true, onClose);
 
     return (
         <div
@@ -392,23 +399,27 @@ const ProfielEditor: React.FC<{
             onClick={onClose}
         >
             <div
+                ref={dialogRef}
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="profiel-editor-titel"
                 className="card"
                 style={{ width: '520px', maxHeight: '80vh', overflowY: 'auto' }}
                 onClick={(e) => e.stopPropagation()}
             >
                 <div className="card-header">
-                    <h3 className="card-title">
+                    <h3 className="card-title" id="profiel-editor-titel">
                         {profiel?.id ? 'Profiel Bewerken' : 'Nieuw Profiel'}
                     </h3>
-                    <button className="btn btn-secondary" onClick={onClose}>
+                    <button type="button" className="btn btn-secondary" onClick={onClose} aria-label="Sluiten" title="Sluiten">
                         <X size={16} />
                     </button>
                 </div>
 
                 <form onSubmit={handleSubmit}>
                     <div className="form-group">
-                        <label className="form-label">Naam</label>
-                        <input
+                        <label htmlFor="kleurschemas-regel-naam" className="form-label">Naam</label>
+                        <input id="kleurschemas-regel-naam"
                             className="form-input"
                             value={form.naam}
                             onChange={(e) => setForm({ ...form, naam: e.target.value })}
@@ -417,8 +428,8 @@ const ProfielEditor: React.FC<{
                     </div>
 
                     <div className="form-group">
-                        <label className="form-label">Beschrijving</label>
-                        <input
+                        <label htmlFor="kleurschemas-regel-beschrijving" className="form-label">Beschrijving</label>
+                        <input id="kleurschemas-regel-beschrijving"
                             className="form-input"
                             value={form.beschrijving}
                             onChange={(e) => setForm({ ...form, beschrijving: e.target.value })}
@@ -426,8 +437,8 @@ const ProfielEditor: React.FC<{
                     </div>
 
                     <div className="form-group">
-                        <label className="form-label">Indicator Pattern (SQL LIKE)</label>
-                        <input
+                        <label htmlFor="kleurschemas-indicator-pattern" className="form-label">Indicator Pattern (SQL LIKE)</label>
+                        <input id="kleurschemas-indicator-pattern"
                             className="form-input"
                             value={form.indicator_pattern}
                             onChange={(e) => setForm({ ...form, indicator_pattern: e.target.value })}
@@ -439,8 +450,8 @@ const ProfielEditor: React.FC<{
                     </div>
 
                     <div className="form-group">
-                        <label className="form-label">Kleurschema</label>
-                        <select
+                        <label htmlFor="kleurschemas-kleurschema" className="form-label">Kleurschema</label>
+                        <select id="kleurschemas-kleurschema"
                             className="form-select"
                             value={form.color_schema_id ?? ''}
                             onChange={(e) => setForm({ ...form, color_schema_id: parseInt(e.target.value) })}
@@ -460,8 +471,8 @@ const ProfielEditor: React.FC<{
 
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px' }}>
                         <div className="form-group">
-                            <label className="form-label">Classificatie Override</label>
-                            <select
+                            <label htmlFor="kleurschemas-classificatie-override" className="form-label">Classificatie Override</label>
+                            <select id="kleurschemas-classificatie-override"
                                 className="form-select"
                                 value={form.classificatie_override}
                                 onChange={(e) => setForm({ ...form, classificatie_override: e.target.value })}
@@ -474,8 +485,8 @@ const ProfielEditor: React.FC<{
                             </select>
                         </div>
                         <div className="form-group">
-                            <label className="form-label">Klassen Override</label>
-                            <input
+                            <label htmlFor="kleurschemas-klassen-override" className="form-label">Klassen Override</label>
+                            <input id="kleurschemas-klassen-override"
                                 type="number"
                                 className="form-input"
                                 min={3}
@@ -488,8 +499,8 @@ const ProfielEditor: React.FC<{
                             />
                         </div>
                         <div className="form-group">
-                            <label className="form-label">Midpoint Waarde</label>
-                            <input
+                            <label htmlFor="kleurschemas-midpoint-waarde" className="form-label">Midpoint Waarde</label>
+                            <input id="kleurschemas-midpoint-waarde"
                                 type="number"
                                 className="form-input"
                                 value={form.midpoint_waarde ?? ''}
@@ -616,6 +627,7 @@ export const KleurschemasPage: React.FC = () => {
             {/* Notification */}
             {notification && (
                 <div
+                    role="status"
                     style={{
                         position: 'fixed',
                         top: '20px',
@@ -728,6 +740,8 @@ export const KleurschemasPage: React.FC = () => {
                                                 className="btn btn-secondary"
                                                 style={{ padding: '4px 8px' }}
                                                 onClick={() => setEditingPalette(p)}
+                                                aria-label={`Palette ${p.naam} bewerken`}
+                                                title="Bewerken"
                                             >
                                                 <Edit3 size={14} />
                                             </button>
@@ -816,6 +830,8 @@ export const KleurschemasPage: React.FC = () => {
                                                         className="btn btn-secondary"
                                                         style={{ padding: '4px 8px' }}
                                                         onClick={() => setEditingProfiel(p)}
+                                                        aria-label={`Profiel ${p.naam} bewerken`}
+                                                        title="Bewerken"
                                                     >
                                                         <Edit3 size={14} />
                                                     </button>
@@ -827,6 +843,8 @@ export const KleurschemasPage: React.FC = () => {
                                                                 deleteProfiel.mutate(p.id);
                                                             }
                                                         }}
+                                                        aria-label={`Profiel ${p.naam} verwijderen`}
+                                                        title="Verwijderen"
                                                     >
                                                         <Trash2 size={14} />
                                                     </button>

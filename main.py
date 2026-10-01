@@ -220,25 +220,18 @@ async def root(request: Request):
 # ============================================================================
 # React SPA Support for Admin Panel
 # ============================================================================
-@app.get("/admin/static/{file_path:path}", include_in_schema=False)
-async def serve_admin_static(request: Request, file_path: str):
-    """Serve static assets directly for the React Admin Panel, bypassing the catchall."""
-    # We map whatever /admin/static/js/... it asks for directly to /static/admin-panel/static/js/...
-    actual_path = os.path.join("static", "admin-panel", "static", file_path)
-    if os.path.exists(actual_path):
-        from fastapi.responses import FileResponse
-        return FileResponse(actual_path)
-    return HTMLResponse(content="Not Found", status_code=404)
-
 @app.get("/admin/{catchall:path}", response_class=HTMLResponse)
 async def serve_admin_spa(request: Request, catchall: str):
     """Fallback route for React Router in the Admin Panel."""
-    # Serve static assets that aren't in /static/ directly from the root if they exist 
-    # (e.g., manifest.json, favicon.ico which React places in the root build folder)
+    # Serve build files if they exist: Vite-assets (/admin/assets/...) and
+    # public-bestanden zoals manifest.json en favicon.ico in de root van de build.
     root_asset_path = os.path.join("static", "admin-panel", catchall)
     if catchall and "." in catchall and os.path.exists(root_asset_path):
         from fastapi.responses import FileResponse
         return FileResponse(root_asset_path)
+    if catchall.startswith("assets/"):
+        # Ontbrekend build-asset: 404 i.p.v. index.html (zoals eerder /admin/static/)
+        return HTMLResponse(content="Not Found", status_code=404)
 
     # Build processes put index.html in the static folder under admin-panel
     index_path = os.path.join("static", "admin-panel", "index.html")
