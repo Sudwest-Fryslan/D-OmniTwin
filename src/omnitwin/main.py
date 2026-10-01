@@ -6,8 +6,8 @@ from fastapi.templating import Jinja2Templates
 from fastapi.responses import HTMLResponse
 from fastapi.openapi.docs import get_swagger_ui_html # Local Swagger UI
 from sqlalchemy.orm import Session
-from sqlalchemy import text
-from omnitwin.config import CORS_ALLOW_HEADERS, instellingen
+from sqlalchemy import event, text
+from omnitwin.config import CORS_ALLOW_HEADERS, STATEMENT_TIMEOUT_MS, instellingen
 from omnitwin.database import get_db, engine
 import os
 import time
@@ -26,6 +26,14 @@ app = FastAPI(
     docs_url=None, # Disable default docs (served locally)
     redoc_url=None # Disable default redoc (served locally)
 )
+
+# Grens per databasequery van de webapp (#203). Alleen hier, niet in database.py:
+# db-init, migraties en ETL-scripts gebruiken dezelfde engine en mogen langer duren.
+@event.listens_for(engine, "connect")
+def _zet_statement_timeout(dbapi_connection, _record):
+    with dbapi_connection.cursor() as cursor:
+        cursor.execute(f"SET statement_timeout = {int(STATEMENT_TIMEOUT_MS)}")
+    dbapi_connection.commit()  # anders draait de rollback bij teruggave aan de pool de SET terug
 
 # Centrale foutafhandeling (#203): details in de log, naar buiten een generieke
 # melding met correlatie-id; ongeldige invoer in de database → 422, conflict → 409

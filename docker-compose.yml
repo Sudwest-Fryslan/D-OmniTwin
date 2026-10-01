@@ -112,6 +112,8 @@ services:
       PGRST_DB_URI: postgres://authenticator:${DATABASE_PASSWORD}@postgres:5432/${DATABASE_NAME:-omnitwin_db}
       PGRST_DB_SCHEMAS: api
       PGRST_DB_ANON_ROLE: web_anon
+      # Hoogstens zoveel rijen per antwoord (#203); de frontend vraagt minder op
+      PGRST_DB_MAX_ROWS: 10000
       PGRST_SERVER_PROXY_URI: http://localhost/api/data
     labels:
       - "traefik.enable=true"

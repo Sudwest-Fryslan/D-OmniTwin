@@ -15,6 +15,7 @@ from sqlalchemy.orm import Session
 from typing import Dict, Any, Optional, List
 from omnitwin.database import get_db
 from omnitwin.fouten import GebruikersFout
+from omnitwin.grenzen import beperk_llm
 from omnitwin.services.report_service import ReportDataService
 from omnitwin.services.llm_service import LLMService
 from omnitwin.routers.auth import huidige_gebruiker
@@ -95,7 +96,7 @@ def get_report_data(gebied_id: str, db: Session = Depends(get_db)):
     except GebruikersFout as e:
         raise HTTPException(status_code=404, detail=str(e))
 
-@router.get("/narrative/{gebied_id}", response_model=Dict[str, Any])
+@router.get("/narrative/{gebied_id}", response_model=Dict[str, Any], dependencies=[Depends(beperk_llm)])
 def generate_report_narrative(gebied_id: str, request: Request, db: Session = Depends(get_db)):
     """
     Fase 2: Roept Ollama aan om een narrative (Executive Summary) te genereren
@@ -179,7 +180,7 @@ def get_benchmark_data(
         raise HTTPException(status_code=400, detail=str(e))
 
 
-@router.get("/benchmark/narrative", response_model=Dict[str, Any])
+@router.get("/benchmark/narrative", response_model=Dict[str, Any], dependencies=[Depends(beperk_llm)])
 def get_benchmark_narrative(
     request: Request,
     gebied_a: str = Query(..., description="Gebied ID van het referentiegebied"),

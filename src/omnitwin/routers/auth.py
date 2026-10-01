@@ -21,9 +21,17 @@ from passlib.context import CryptContext
 from pydantic import BaseModel
 import hashlib
 import secrets
+import asyncio
 import datetime
+import math
 
-from omnitwin.config import instellingen
+from fastapi.concurrency import run_in_threadpool
+
+from omnitwin.config import (
+    LOGIN_MAX_PER_GEBRUIKER, LOGIN_MAX_PER_IP, LOGIN_VENSTER_SECONDEN, LOGIN_VERTRAGING_SECONDEN,
+    instellingen,
+)
+from omnitwin.grenzen import Limiet, client_ip, te_veel
 from omnitwin.services.logging_service import AppLogger
 
 router = APIRouter(prefix="/api/admin/auth", tags=["Auth"])
@@ -138,30 +146,39 @@ check_auth_or_key = huidige_gebruiker
 # ============================================================================
 # Endpoints
 # ============================================================================
-@router.post("/login")
-async def login(
-    request: Request,
-    response: Response,
-    form_data: OAuth2PasswordRequestForm = Depends(),
-    db: Session = Depends(get_db)
-):
-    """OAuth2 compatible inlog actie -> Zorgt voor een HttpOnly session cookie."""
+def _dummy_hash() -> str:
+    """Hash om ook bij een onbekende gebruiker bcrypt te draaien: gelijke responstijd,
+    zodat gebruikersnamen niet via de timing te achterhalen zijn (#203)."""
+    global _DUMMY_HASH
+    if _DUMMY_HASH is None:
+        _DUMMY_HASH = get_password_hash(secrets.token_urlsafe(16))
+    return _DUMMY_HASH
 
-    # Check user in DB
+_DUMMY_HASH: str | None = None
+
+# Inlogpogingen (#203): mislukte pogingen per IP + gebruikersnaam en per IP
+_mislukt_per_gebruiker = Limiet(LOGIN_MAX_PER_GEBRUIKER, LOGIN_VENSTER_SECONDEN)
+_mislukt_per_ip = Limiet(LOGIN_MAX_PER_IP, LOGIN_VENSTER_SECONDEN)
+
+
+def _inloggen(db: Session, username: str, password: str):
+    """Controleer de inloggegevens en maak een sessie (synchroon: database en bcrypt).
+    Geeft (user, token) bij succes, anders None."""
     result = db.execute(text("""
         SELECT id, username, hashed_password, is_active
         FROM users
         WHERE username = :username
-    """), {"username": form_data.username})
+    """), {"username": username})
     user = result.fetchone()
 
     if not user or not user[3]: # Not active
-        AppLogger.warning(f"Login mislukt: gebruiker '{form_data.username}' niet gevonden of niet actief", category="AUTH")
-        raise HTTPException(status_code=401, detail="Onjuiste gebruikersnaam of wachtwoord")
+        verify_password(password, _dummy_hash())
+        AppLogger.warning(f"Login mislukt: gebruiker '{username}' niet gevonden of niet actief", category="AUTH")
+        return None
 
-    if not verify_password(form_data.password, user[2]): # Check hashed pass
-        AppLogger.warning(f"Login mislukt: onjuist wachtwoord voor '{form_data.username}'", category="AUTH")
-        raise HTTPException(status_code=401, detail="Onjuiste gebruikersnaam of wachtwoord")
+    if not verify_password(password, user[2]): # Check hashed pass
+        AppLogger.warning(f"Login mislukt: onjuist wachtwoord voor '{username}'", category="AUTH")
+        return None
 
     # Wachtwoord is goed: verlopen sessies opruimen en een nieuwe sessie maken
     ruim_verlopen_sessies_op(db)
@@ -174,6 +191,39 @@ async def login(
         VALUES (:token_hash, :user_id, :expires)
     """), {"token_hash": hash_token(token), "user_id": user[0], "expires": expires})
     db.commit()
+    return user, token
+
+
+@router.post("/login")
+async def login(
+    request: Request,
+    response: Response,
+    form_data: OAuth2PasswordRequestForm = Depends(),
+    db: Session = Depends(get_db)
+):
+    """OAuth2 compatible inlog actie -> Zorgt voor een HttpOnly session cookie.
+
+    Na LOGIN_MAX_PER_GEBRUIKER mislukte pogingen (per IP + gebruikersnaam) of
+    LOGIN_MAX_PER_IP (per IP) binnen het venster: 429 met Retry-After. Elke
+    mislukte poging wacht eerst even. De database en bcrypt draaien in de
+    threadpool; het wachten blokkeert de server niet (#203, #68).
+    """
+    ip = client_ip(request)
+    sleutel = f"{ip}|{form_data.username.strip().lower()}"
+    wacht = max(_mislukt_per_gebruiker.wachttijd(sleutel), _mislukt_per_ip.wachttijd(ip))
+    if wacht:
+        AppLogger.warning(f"Login geblokkeerd voor '{form_data.username}' vanaf {ip} ({wacht}s)", category="AUTH")
+        raise te_veel(wacht, f"Te veel mislukte inlogpogingen. Probeer het over {math.ceil(wacht / 60)} minuten opnieuw.")
+
+    resultaat = await run_in_threadpool(_inloggen, db, form_data.username, form_data.password)
+    if resultaat is None:
+        _mislukt_per_gebruiker.registreer(sleutel)
+        _mislukt_per_ip.registreer(ip)
+        await asyncio.sleep(LOGIN_VERTRAGING_SECONDEN)
+        raise HTTPException(status_code=401, detail="Onjuiste gebruikersnaam of wachtwoord")
+
+    user, token = resultaat
+    _mislukt_per_gebruiker.reset(sleutel)
 
     # HttpOnly Cookie zetten (voorkomt JavaScript XSS thef van token)
     response.set_cookie(

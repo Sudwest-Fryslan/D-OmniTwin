@@ -418,7 +418,7 @@ Een gratis Gemini-sleutel (met lage limieten) maak je aan op [aistudio.google.co
 Stel een installatie **niet** open voor internet of een breed netwerk voordat deze punten geregeld zijn:
 
 - **HTTPS.** Traefik luistert in de standaardopzet alleen op HTTP. Zet HTTPS aan (zie [HTTPS aanzetten](#https-aanzetten)). Het inlogcookie krijgt dan `Secure`, zodat de browser het alleen via HTTPS stuurt: bij manier B vanzelf (`COOKIE_SECURE=auto`), bij manier A met `COOKIE_SECURE=true`.
-- **Begrenzing van anonieme verzoeken.** De stack heeft geen rate limit op inloggen en op de AI-routes (zie hieronder). Zet die in de proxy ervoor, zeker bij een externe (betaalde) LLM-aanbieder.
+- **Begrenzing van anonieme verzoeken.** De backend begrenst inloggen en de AI-routes zelf (zie hieronder). De tellers staan per backend-proces in het geheugen; wil je strakkere of gedeelde grenzen (meerdere backends, een externe betaalde LLM-aanbieder), zet dan ook een limiet in de proxy ervoor.
 - **`.env` geheim houden.** Het bevat het databasewachtwoord en eventueel de `ADMIN_API_KEY` en sleutels van LLM-aanbieders.
 
 Verder nog open: de CSP staat `'unsafe-inline'` toe (zie [Security-headers](#security-headers)), en de rollen voor PostgREST en pg_featureserv delen het databasewachtwoord (zie [hieronder](#postgrest-en-pg_featureserv)).
@@ -448,7 +448,9 @@ Verder nog open: de CSP staat `'unsafe-inline'` toe (zie [Security-headers](#sec
 
 **Principe:** rapporten hebben dezelfde rechten als een anonieme bezoeker van de kaartapplicatie (besluit #65). Een rapport toont dus niet meer dan de publieke app: geen beheervelden (notities, wie iets beoordeelde of goedkeurde), geen inactieve indicatoren, geen logs of configuratie. De technische details van AI-teksten (`debug_info`: systeemprompts en model) krijgt alleen een ingelogde beheerder.
 
-**Let op, AI-teksten:** `/api/report/narrative/*`, `/api/report/benchmark/narrative` en `/api/chat` starten zonder inloggen een aanroep naar het taalmodel. Rapportteksten worden per gebied een uur gecachet, maar er is geen rate limit. Gebruik je een externe (betaalde) LLM-aanbieder, scherm deze routes dan af in de proxy ervoor of stel daar een limiet in.
+**Let op, AI-teksten:** `/api/report/narrative/*`, `/api/report/benchmark/narrative` en `/api/chat` starten zonder inloggen een aanroep naar het taalmodel. Rapportteksten worden per gebied een uur gecachet, en per IP-adres zijn hoogstens `LLM_RATE_LIMIT` verzoeken per minuut toegestaan (standaard 60; daarboven 429). Gebruik je een externe (betaalde) LLM-aanbieder, zet de limiet dan lager of scherm deze routes af in de proxy ervoor.
+
+**Grenzen (#203):** na 5 mislukte inlogpogingen per IP-adres en gebruikersnaam (of 20 per IP-adres) binnen 15 minuten geeft inloggen 429, en elke mislukte poging wacht 1 seconde. PostgREST geeft hoogstens 10.000 rijen per antwoord (`PGRST_DB_MAX_ROWS`). Een query mag duren: 10 seconden voor PostgREST (`web_anon`), 30 seconden voor pg_featureserv en 60 seconden voor de backend. Een interne fout geeft een generieke melding met een correlatie-id; de details staan in de log (`docker compose logs backend`, zoek op de id).
 
 ### PostgREST en pg_featureserv
 
@@ -506,7 +508,7 @@ Voeg je een kaartlaag of bibliotheek toe die rechtstreeks een andere server aanr
 ### Checklist vóór openstelling
 
 - HTTPS aan (manier A of B), het inlogcookie met `Secure` (manier A: `COOKIE_SECURE=true`), en HSTS zichtbaar in de response-headers.
-- Een rate limit in de proxy op inloggen (`/api/admin/auth/login`) en op de AI-routes (`/api/chat`, `/api/report/*narrative*`).
+- `LLM_RATE_LIMIT` passend bij je LLM-aanbieder; bij meerdere backends of een externe aanbieder ook een limiet in de proxy op inloggen (`/api/admin/auth/login`) en de AI-routes (`/api/chat`, `/api/report/*narrative*`).
 - Het domein heeft DNSSEC en is via IPv6 bereikbaar (ook verplichte standaarden). Dat regel je bij je DNS- en hostingbeheer, niet in de stack.
 - `security.txt` verwijst naar het juiste meldpunt.
 - Er is een backup (database en uploads) en een geteste restore.
