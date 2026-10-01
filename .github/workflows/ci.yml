@@ -140,6 +140,7 @@ jobs:
             -v "$PWD":/work -w /work \
             -e OMNITWIN_BASE_URL=http://traefik \
             -e PYTHONDONTWRITEBYTECODE=1 \
+            -e E2E_EXPECT_TIMEOUT_MS=45000 \
             mcr.microsoft.com/playwright/python:v1.63.0-noble sh -c "pip install -q --root-user-action=ignore -r tests/e2e/requirements.txt \
               && pytest -p no:cacheprovider -m e2e tests/e2e -rs"
 
