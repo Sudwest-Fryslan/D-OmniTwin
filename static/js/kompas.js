@@ -1386,7 +1386,9 @@ class KompasVisualization {
         const bronBadgeEl = document.getElementById('details-bron-badge');
         
         if (bronEl) {
-            bronEl.textContent = historyData.bron || 'CBS';
+            // Bron van de getoonde waarde (meest recente jaar); per jaar kan die verschillen (#119)
+            const laatste = history.length > 0 ? history[history.length - 1] : null;
+            bronEl.textContent = (laatste && laatste.bron) || historyData.bron || 'Onbekend';
             let tooltip = `Bron: ${historyData.bron || 'Onbekend'}`;
             if (historyData.bron_tabel_referentie) {
                 tooltip += `\nDataset/Tabel: ${historyData.bron_tabel_referentie}`;
@@ -1514,6 +1516,11 @@ class KompasVisualization {
         
         const detJaar = document.getElementById('details-jaar');
         if (detJaar) detJaar.textContent = jaar;
+
+        // Bron hoort bij het gekozen jaar (#119)
+        const punt = (this._timesliderHistory || []).find(h => h.jaar === jaar);
+        const bronEl = document.getElementById('details-bron');
+        if (bronEl && punt && punt.bron) bronEl.textContent = punt.bron;
     }
     
     _dispatchMapYear(jaar) {
@@ -1936,9 +1943,12 @@ class KompasVisualization {
             });
 
             // Update jaar to show range
+            // Gebieden kunnen verschillende jaargangen hebben (#119): toon de spreiding
             const jaren = barData.filter(d => d.jaar).map(d => d.jaar);
             if (jaren.length > 0) {
-                document.getElementById('details-jaar').textContent = jaren[0];
+                const min = Math.min(...jaren), max = Math.max(...jaren);
+                document.getElementById('details-jaar').textContent =
+                    min === max ? String(min) : `${min}–${max} (verschilt per gebied)`;
             }
 
             // Update definitie
