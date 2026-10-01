@@ -93,6 +93,22 @@ init_db() {
     psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -c "NOTIFY pgrst, 'reload schema';" >/dev/null 2>&1 || true
 }
 
+# Rollen en schema api voor PostgREST en pg_featureserv (#57). Draait bij elke start, ook bij
+# een bestaande database: zonder deze rollen kunnen PostgREST en pg_featureserv niet verbinden.
+# Idempotent. De LOGIN-rollen authenticator (PostgREST) en featureserv (pg_featureserv) krijgen
+# DATABASE_PASSWORD als wachtwoord: geen extra variabele in .env. Die containers kregen dat
+# wachtwoord al; de rollen zelf hebben geen rechten op de tabellen.
+setup_api_rollen() {
+    echo "🔐 Rollen en schema api voor PostgREST en pg_featureserv bijwerken..."
+    psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -v ON_ERROR_STOP=1 -q -f /app/migrations/schema_v23_api_rollen.sql >/dev/null
+    # Wachtwoord via een psql-variabele (:'pw' quote het correct), niet in de SQL-bestanden
+    psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -v ON_ERROR_STOP=1 -q -v pw="$DB_PASS" >/dev/null <<'SQL'
+ALTER ROLE authenticator PASSWORD :'pw';
+ALTER ROLE featureserv PASSWORD :'pw';
+SQL
+    echo "✅ Rollen authenticator, web_anon en featureserv zijn bijgewerkt."
+}
+
 # Embeddings voor AI-zoeken en de chat (#139). Draait ook bij een bestaande database:
 # het script vectoriseert alleen indicatoren zonder embedding en laadt het model alleen
 # als er iets te doen is. Geen model of geen netwerk: waarschuwing, init gaat door.
@@ -109,6 +125,7 @@ wait_for_db
 
 if [ "$1" = "init" ]; then
     init_db
+    setup_api_rollen
     generate_embeddings
     echo "✅ Initialisatie klaar."
     exit 0
