@@ -24,12 +24,14 @@ Een use case is een **bundel**: data + inrichting + stappen. Alle drie staan hie
 | 65+ jaar | neutraal | sample (aantal) |
 | Ervaren gezondheid | hoger is beter | sample |
 | Verhouding oppervlakte water / verharding | hoger is beter | sample |
-| 65+ jaar (%) | neutraal | CBS 2026, `data/waarden.csv` |
-| 80 jaar of ouder (%) | neutraal | CBS 2026, `data/waarden.csv` |
-| Boomkroonbedekking | hoger is beter | RIVM 2022, `data/waarden.csv` |
-| Stedelijk hitte-eiland effect | lager is beter | RIVM 2022, `data/waarden.csv` |
+| 65+ jaar (%) | neutraal | CBS 2026, gedownload bij het laden |
+| 80 jaar of ouder (%) | neutraal | CBS 2026, gedownload bij het laden |
+| Boomkroonbedekking | hoger is beter | RIVM 2022, gedownload bij het laden |
+| Stedelijk hitte-eiland effect | lager is beter | RIVM 2022, gedownload bij het laden |
 
-### Extra brondata (`data/waarden.csv`)
+### Extra brondata (gedownload bij het laden)
+
+Deze data staat **niet in git**: wat bij een open bron te downloaden is, downloaden we. `maak_data.py` draait bij het laden van de use case (`laad_usecase.py`) en schrijft naar de cache `$DATA_CACHE/usecases/hittestress/waarden.csv` (in Docker het volume `bron-cache`). Zonder internet en zonder cache: een waarschuwing, en deze vier indicatoren ontbreken.
 
 Echte open data, opgehaald met [`maak_data.py`](./maak_data.py). Reproduceerbaar: `python usecases/hittestress/maak_data.py` (vereist numpy, Pillow, shapely, pyproj). De CSV staat in git, dus laden werkt offline.
 

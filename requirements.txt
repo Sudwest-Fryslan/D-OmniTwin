@@ -56,3 +56,4 @@ sentence-transformers>=6.1.0   # AI embeddings (zwaar, ~2GB)
 # --- Optioneel (niet nodig voor basis functionaliteit) ---
 # playwright>=1.40.0             # Browser testing
 httpx
+pillow>=12.0.0           # GeoTIFF lezen bij het laden van use case hittestress (RIVM-rasters)

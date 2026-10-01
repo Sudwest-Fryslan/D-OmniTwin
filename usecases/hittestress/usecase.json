@@ -54,7 +54,7 @@
       }
     ],
     "extra_data": {
-      "bestand": "data/waarden.csv",
+      "bestand": "niet in git: bij het laden gedownload naar $DATA_CACHE/usecases/hittestress/waarden.csv",
       "script": "maak_data.py",
       "bronnen": {
         "65+ jaar (%)": "CBS Kerncijfers wijken en buurten 2026 (86358NED), peiljaar 2026, CC BY 4.0",

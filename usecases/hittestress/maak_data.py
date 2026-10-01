@@ -45,6 +45,7 @@ Gebruik:
 import csv
 import io
 import json
+import os
 import urllib.parse
 import urllib.request
 import uuid
@@ -60,7 +61,8 @@ from shapely.ops import transform
 HIER = Path(__file__).resolve().parent
 ROOT = HIER.parent.parent
 GEOJSON = ROOT / "init_data" / "sample" / "2_brondata" / "sample_buurten.geojson"
-UIT = HIER / "data" / "waarden.csv"
+# Gedownloade data staat niet in git: cache ($DATA_CACHE, in Docker het volume bron-cache)
+UIT = Path(os.environ.get("DATA_CACHE", ROOT / "data-cache")) / "usecases" / HIER.name / "waarden.csv"
 VELDEN = ["gebied_id", "indicator_uuid", "indicator_naam", "waarde", "jaar", "bron", "kwaliteit",
           "eenheid", "categorie", "interpretatie_logica", "scenario_id"]
 
@@ -155,7 +157,8 @@ def raster_gemiddelde(polys, cfg):
     return uit
 
 
-def main():
+def main(uit=UIT):
+    uit = Path(uit)
     ids = gebieden()
     print(f"Gebieden: {ids}")
     waarden = {gid: {} for gid in ids}
@@ -171,8 +174,8 @@ def main():
             for gid, w in raster_gemiddelde(polys, cfg).items():
                 waarden[gid][naam] = w
 
-    UIT.parent.mkdir(exist_ok=True)
-    with open(UIT, "w", encoding="utf-8", newline="") as f:
+    uit.parent.mkdir(parents=True, exist_ok=True)
+    with open(uit, "w", encoding="utf-8", newline="") as f:
         w = csv.DictWriter(f, fieldnames=VELDEN, lineterminator="\n")
         w.writeheader()
         for gid in ids:
@@ -185,7 +188,8 @@ def main():
                     "eenheid": cfg["eenheid"], "categorie": cfg["categorie"],
                     "interpretatie_logica": cfg["logica"], "scenario_id": "current",
                 })
-    print(f"Geschreven: {UIT.relative_to(ROOT)}")
+    print(f"Geschreven: {uit}")
+    return uit
 
 
 if __name__ == "__main__":
