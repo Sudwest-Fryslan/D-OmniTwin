@@ -45,34 +45,21 @@ cd D-OmniTwin
 cp .env.example .env
 ```
 
-Genereer drie geheimen:
+Vul in `.env` alleen het databasewachtwoord in. Al het andere heeft een werkende standaard:
 
 ```bash
-openssl rand -hex 24   # DATABASE_PASSWORD
-openssl rand -hex 32   # SECRET_KEY
-openssl rand -hex 32   # ADMIN_API_KEY
+openssl rand -hex 24   # waarde voor DATABASE_PASSWORD
 ```
 
-Gebruik voor `DATABASE_PASSWORD` alleen letters en cijfers (zoals hierboven). Het wachtwoord komt in database-URL's terecht; tekens als `@ : / # % $` breken de verbinding. Gebruik daarom ook niet `init_data/scripts/setup_env.py`: die genereert wachtwoorden met zulke tekens.
-
-Pas `.env` aan:
+Gebruik alleen letters en cijfers (zoals hierboven): tekens als `@ : / # % $` breken de database-URL's.
 
 | Variabele | Wat invullen |
 |-----------|--------------|
-| `COMPOSE_FILE=docker-compose.yml` | **Verplicht voor een installatie.** Haal het `#` weg. Zonder deze regel laadt `docker compose` ook de ontwikkelinstellingen (zie [Ontwikkelmodus](#3-ontwikkelmodus)). |
-| `OMNITWIN_HTTP_PORT` | Optioneel. Poort op de host, standaard `80`. |
-| `DATABASE_PASSWORD` | **Verplicht.** Het gegenereerde wachtwoord. |
-| `SECRET_KEY` | **Verplicht invullen**, al gebruikt de code hem nu nog niet. |
-| `ADMIN_API_KEY` | **Verplicht.** Wie deze waarde in de header `X-Admin-Key` meestuurt, heeft beheerrechten. Laat de voorbeeldwaarde dus nooit staan. |
-| `ADMIN_USER`, `ADMIN_PASSWORD` | Het eerste beheeraccount. Laat je `ADMIN_PASSWORD` op de voorbeeldwaarde staan of leeg, dan wordt er een wachtwoord gegenereerd (zie [2.4](#24-eerste-keer-inloggen)). |
-| `DEBUG` | `true` zolang je zonder HTTPS draait, anders werkt inloggen in de browser niet (zie [Beveiliging](#beveiliging)). Met HTTPS: `false`. |
-| `LOAD_SAMPLE_DATA` | `true`: de sample dataset laden bij de eerste start. `false`: alleen stuurdata (configuratie, zonder buurten). Zie [Data](#4-data). |
-| `DATABASE_NAME`, `DATABASE_USER` | Mogen blijven staan. Wijzig ze alleen vóór de eerste start. |
-| `DATABASE_HOST`, `DATABASE_PORT` | Laten staan. De containers negeren deze en gebruiken `postgres:5432`; ze gelden alleen voor scripts op de host in ontwikkelmodus. |
-| `DATABASE_SSLMODE` | `prefer` laten staan. De database is alleen binnen het Docker-netwerk bereikbaar en heeft geen TLS; `require` werkt hier niet. |
-| `CORS_ORIGINS` | Alleen nodig als andere websites de API aanroepen. De app zelf draait op hetzelfde adres. |
-| `OLLAMA_*` | Optioneel, zie [LLM](#7-llm-optioneel). |
-| `LOG_ALERT_*`, `SMTP_*` | Nog niet in gebruik (#47). |
+| `DATABASE_PASSWORD` | **Verplicht.** Het gegenereerde wachtwoord. Wijzig het niet meer na de eerste start. |
+| `ADMIN_PASSWORD` | Aanbevolen. Wachtwoord van het eerste beheeraccount (`admin`). Leeg: er wordt eenmalig een wachtwoord gegenereerd (zie [2.4](#24-eerste-keer-inloggen)). |
+| `COMPOSE_FILE=docker-compose.yml` | Staat al aan: alleen de installatie-instellingen. Ontwikkelaars halen deze regel weg (zie [Ontwikkelmodus](#3-ontwikkelmodus)). |
+| `DEBUG` | `true` zolang je zonder HTTPS draait, anders werkt inloggen niet (zie [Beveiliging](#beveiliging)). Met HTTPS: `false`. |
+| Optioneel | Poort (`OMNITWIN_HTTP_PORT`), sample dataset (`LOAD_SAMPLE_DATA`), lokale AI (`OLLAMA_HOST`, zie [LLM](#7-llm-optioneel)) en `ADMIN_API_KEY` (alleen voor scripts; leeg = uitgeschakeld, laat nooit een voorbeeldwaarde staan). De standaardwaarden staan in `.env.example`. |
 
 Bescherm het bestand: `chmod 600 .env`.
 
@@ -275,9 +262,9 @@ docker compose up -d
 
 De chat en de samenvattingen gebruiken een lokaal taalmodel via [Ollama](https://ollama.com). Zonder Ollama werken kaart, Kompas en rapportage gewoon.
 
-1. Installeer Ollama op de host en haal een model op, bijvoorbeeld `ollama pull qwen3:30b` (groot; een kleiner model kan ook).
+1. Installeer Ollama op de host en haal een model op, bijvoorbeeld `ollama pull qwen3:30b-instruct` (groot; een kleiner model zoals `qwen3:4b-instruct` kan ook). Gebruik een *instruct*-variant: `qwen3:30b` zonder toevoeging is de 'thinking'-variant en is traag.
 2. Op Linux: laat Ollama op alle interfaces luisteren (`OLLAMA_HOST=0.0.0.0` in de service-omgeving van Ollama), anders kan de container er niet bij. Docker Desktop (Windows, macOS) regelt dit zelf.
-3. Zet in `.env`: `OLLAMA_HOST=http://host.docker.internal:11434` en `OLLAMA_MODEL=<model>`, en herstart: `docker compose up -d`.
+3. Laat in `.env` `OLLAMA_HOST` op de standaard staan (`http://host.docker.internal:11434`), of zet het adres van je Ollama-server.
 4. Zet in de beheeromgeving onder **AI Configuratie** de API-URL op `http://host.docker.internal:11434` en kies het model. **Dit is nodig:** de stuurdata zet hier `http://localhost:11434`, en deze instelling gaat vóór `OLLAMA_HOST`. Vanuit de container wijst `localhost` naar de container zelf.
 
 ---
