@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useAdminStore } from '../hooks/useAdminStore';
 import { authAPI } from '../services/api';
+import Beeldmerk from '../components/Beeldmerk';
 import { User, KeyRound, Loader2 } from 'lucide-react';
 
 export const LoginPage: React.FC = () => {
@@ -40,6 +41,7 @@ export const LoginPage: React.FC = () => {
         <div className="login-container">
             <div className="login-card card">
                 <div className="login-logo">
+                    <Beeldmerk size={56} />
                     <h1>D-OmniTwin</h1>
                     <p style={{ color: 'var(--color-text-secondary)', marginTop: '0.5rem' }}>
                         Beheerscherm

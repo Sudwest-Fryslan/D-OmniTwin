@@ -254,6 +254,37 @@ docker compose up -d
 
 `-v` verwijdert het volume `pgdata` en daarmee alle data. `db-init` richt de database daarna opnieuw in.
 
+### Eigen logo
+
+Het logo linksboven, het favicon en het logo in het beheerscherm en de rapporten komen uit één bestand: `static/images/beeldmerk.svg`. Standaard staat daar een neutraal, tijdelijk D-OmniTwin-beeldmerk (#83). Er is geen instelling in `.env` voor nodig.
+
+Eigen logo gebruiken:
+
+- **Vervangen:** zet je eigen bestand op `static/images/beeldmerk.svg` en bouw opnieuw (`docker compose up -d --build`).
+- **Mounten (zonder de code aan te passen):** maak naast `docker-compose.yml` een bestand `docker-compose.logo.yml`:
+
+  ```yaml
+  services:
+    backend:
+      volumes:
+        - ./mijn-logo.svg:/app/static/images/beeldmerk.svg:ro
+  ```
+
+  Voeg het toe aan `COMPOSE_FILE` in `.env` (scheidingsteken `:` op Linux en macOS, `;` op Windows):
+
+  ```
+  COMPOSE_FILE=docker-compose.yml:docker-compose.logo.yml
+  ```
+
+  Daarna `docker compose up -d`. Een update van D-OmniTwin overschrijft je logo dan niet.
+
+Aandachtspunten:
+
+- Gebruik een **SVG** en houd de bestandsnaam `beeldmerk.svg`. Een PNG werkt ook als je hem onder die naam mount, maar het favicon wordt dan minder scherp.
+- Het logo staat in de header op een gekleurd verloop (blauw/groen) en in het beheerscherm op een donkere achtergrond. Kies een versie met een eigen vlak of een lichte variant, zodat het leesbaar blijft. Er staat geen kleurfilter op: je logo houdt zijn eigen kleuren.
+- Het logo wordt getoond op 36 tot 56 pixels hoog; een (bijna) vierkant logo werkt het best.
+- Het PWA-pictogram van het beheerscherm (`static/admin-panel/favicon.ico`, `logo192.png`, `logo512.png`) is een rasterversie van het standaardbeeldmerk. Moderne browsers tonen het SVG-bestand; vervang deze PNG/ICO-bestanden alleen als je ook dat pictogram wilt aanpassen.
+
 ---
 
 ## 7. LLM (optioneel)
