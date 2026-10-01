@@ -10,9 +10,8 @@
 # overschrijft ze.
 #
 # Bronnen in de CSP (zie docs/9-beheer/installatie.md, Beveiliging):
-#   unpkg.com, cdn.jsdelivr.net   MapLibre, deck.gl, D3, Chart.js (met SRI-hash)
+#   (bibliotheken en lettertype staan zelf gehost in static/vendor, #117: geen CDN's)
 #   api.pdok.nl                   BRT-achtergrondkaart: stijl, tegels, sprites, fonts
-#   fonts.googleapis.com/gstatic  lettertype van static/help.html
 # 'unsafe-inline' is nodig voor de inline scripts, event-handlers (onclick=)
 # en style-attributen in templates/index.html en de Swagger-pagina.
 # 'wasm-unsafe-eval' is nodig voor WebAssembly in de kaartbibliotheken; het
@@ -34,9 +33,9 @@ http:
         permissionsPolicy: "camera=(), microphone=(), geolocation=(), payment=(), usb=()"
         contentSecurityPolicy: >-
           default-src 'self';
-          script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' https://unpkg.com https://cdn.jsdelivr.net;
-          style-src 'self' 'unsafe-inline' https://unpkg.com https://cdn.jsdelivr.net https://fonts.googleapis.com;
-          font-src 'self' data: https://fonts.gstatic.com;
+          script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval';
+          style-src 'self' 'unsafe-inline';
+          font-src 'self' data:;
           img-src 'self' data: blob: https://api.pdok.nl https://service.pdok.nl;
           connect-src 'self' https://api.pdok.nl https://service.pdok.nl;
           worker-src 'self' blob:;
