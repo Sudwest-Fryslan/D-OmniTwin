@@ -164,7 +164,7 @@ Push naar GitHub
 
 Eduard's issue is expliciet: de test-suites zijn **projectcode**, niet alleen CI-configuratie.
 Ze moeten geschreven en onderhouden worden in `tests/`, naast de twee bestaande testbestanden
-(`tests/test_zscore.py`, `tests/test_canvas.py`).
+(`tests/test_zscore.py`, `tests/test_canvas.py`; dat laatste is vervangen door `tests/e2e/`).
 
 ### Voorgestelde tooling
 
@@ -182,7 +182,7 @@ Ze moeten geschreven en onderhouden worden in `tests/`, naast de twee bestaande 
 tests/
 ├── conftest.py              # gedeelde fixtures (DB-connectie, test-client)
 ├── test_zscore.py           # bestaand — unit test
-├── test_canvas.py           # bestaand — unit test
+├── e2e/                     # browser-E2E per testcase (Playwright), zie tests/e2e/README.md
 ├── test_api_regression.py   # nieuw — regressie: Kompas, kaartlagen, rapporten
 └── test_performance.py      # nieuw — performance baselines kritieke endpoints
 ```

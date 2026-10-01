@@ -29,6 +29,8 @@ Laden is idempotent, en pakketten zijn te combineren.
 
 `tests/integration/test_usecases.py` leest de `usecase.json`-bestanden. Een nieuwe use case is dus een nieuwe map, zonder testcode te wijzigen.
 
+**Werkafspraak:** elke nieuwe functionaliteit krijgt een use case. De use case werkt out of the box (verse installatie, ook zonder AI-sleutel) en wordt automatisch getest. Zie [CONTRIBUTING.md](../CONTRIBUTING.md#use-case-bij-elke-nieuwe-functionaliteit).
+
 | ID | Use case | Persona | Kompas-profiel | Status |
 |---|---|---|---|---|
 | [TC-06-007](./brede-welvaart/README.md) | Brede welvaart en functiemenging | Strateeg / economische zaken | Volledig Kompas | ⚠️ |

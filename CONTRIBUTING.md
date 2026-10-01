@@ -6,6 +6,16 @@ Dit beschrijft hoe een wijziging in D-OmniTwin van melding tot productie gaat. G
 
 Stappen 2 t/m 7 volgen [GitHub Flow](https://docs.github.com/en/get-started/using-github/github-flow), het standaardproces van GitHub zelf voor branch-gebaseerd samenwerken. Stap 1 (issue als vertrekpunt) staat niet in die GitHub Flow-documentatie zelf, die begint bij het maken van een branch. [Issues](https://docs.github.com/en/issues/tracking-your-work-with-issues/using-issues/about-issues) zijn in GitHub-documentatie een los proces. De koppeling issue → branch → PR is in de praktijk gangbaar en wordt ondersteund door GitHub's [sluitingskeywords](https://docs.github.com/en/get-started/writing-on-github/working-with-advanced-formatting/using-keywords-in-issues-and-pull-requests) (`Closes #<nr>`), maar is geen apart gedocumenteerd "flow"-concept. Dit document combineert beide.
 
+## Use case bij elke nieuwe functionaliteit
+
+Nieuwe functionaliteit begint bij een **use case**: een echte gebruikersvraag met de data, de inrichting en de stappen om hem te beantwoorden. Een functie is af als die use case aantoonbaar werkt.
+
+- Voeg in [`usecases/`](usecases/README.md) een map toe, of breid een bestaande use case uit: `usecase.json` (data, inrichting, verwachte uitkomst) en `README.md` (persona, stappen).
+- De use case werkt **out of the box**: met `LOAD_SAMPLE_DATA=true` laadt een verse installatie hem automatisch, en `tests/integration/test_usecases.py` toetst hem. Dat geldt ook zonder AI-sleutel; antwoorden die een taalmodel nodig hebben, vallen dan terug op een vaste tekst uit dezelfde cijfers.
+- Noem de use case in het issue en in de PR. Een PR met nieuwe functionaliteit zonder use case is niet af.
+
+Bugfixes en onderhoud hebben geen nieuwe use case nodig, maar mogen een bestaande use case niet breken.
+
 ## 1. Issue aanmaken
 
 Iemand signaleert een probleem of wenst een feature. Dit wordt vastgelegd als issue: korte titel, beschrijving van wat er moet gebeuren of wat er mis is. Issue krijgt een nummer, bijvoorbeeld #42.

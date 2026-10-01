@@ -189,16 +189,23 @@ export const BenchmarkPage: React.FC = () => {
         onSelect: (id: string, naam: string) => void;
         placeholder: string;
         fieldId: string;
-    }> = ({ value, searchValue, onSearchChange, onSelect, placeholder, fieldId }) => {
+        ariaLabel?: string;
+    }> = ({ value, searchValue, onSearchChange, onSelect, placeholder, fieldId, ariaLabel }) => {
         const suggestions = filterGebieden(searchValue);
         const isOpen = focusedField === fieldId && suggestions.length > 0;
 
         return (
             <div style={{ position: 'relative', flex: 1 }}>
                 <input
+                    id={`benchmark-${fieldId}`}
                     type="text"
                     className="form-input"
                     placeholder={placeholder}
+                    aria-label={ariaLabel}
+                    role="combobox"
+                    aria-autocomplete="list"
+                    aria-expanded={isOpen}
+                    aria-controls={`benchmark-${fieldId}-lijst`}
                     value={searchValue}
                     onChange={(e) => { onSearchChange(e.target.value); searchGebieden(e.target.value); setFocusedField(fieldId); }}
                     onFocus={() => setFocusedField(fieldId)}
@@ -219,7 +226,7 @@ export const BenchmarkPage: React.FC = () => {
                     </span>
                 )}
                 {isOpen && (
-                    <div style={{
+                    <div id={`benchmark-${fieldId}-lijst`} role="listbox" style={{
                         position: 'absolute', top: '100%', left: 0, right: 0,
                         background: 'var(--color-surface)', border: '1px solid var(--color-border)',
                         borderRadius: 'var(--radius-sm)', maxHeight: '200px', overflowY: 'auto',
@@ -228,6 +235,8 @@ export const BenchmarkPage: React.FC = () => {
                         {suggestions.map(g => (
                             <div
                                 key={g.id}
+                                role="option"
+                                aria-selected={g.id === value}
                                 onClick={() => onSelect(g.id, g.naam)}
                                 style={{
                                     padding: '0.5rem 0.75rem', cursor: 'pointer',
@@ -309,7 +318,7 @@ export const BenchmarkPage: React.FC = () => {
             <div className="card hide-on-print" style={{ marginBottom: '1.5rem', padding: '1.5rem' }}>
                 {/* Gebied A */}
                 <div style={{ marginBottom: '1.25rem' }}>
-                    <label style={{ fontWeight: 600, marginBottom: '0.5rem', display: 'block', color: 'var(--color-primary)' }}>
+                    <label htmlFor="benchmark-gebiedA" style={{ fontWeight: 600, marginBottom: '0.5rem', display: 'block', color: 'var(--color-primary)' }}>
                         Gebied A (referentie)
                     </label>
                     <TypeaheadSelector
@@ -324,8 +333,8 @@ export const BenchmarkPage: React.FC = () => {
 
                 {/* Modus Tabs */}
                 <div style={{ marginBottom: '1.25rem' }}>
-                    <label style={{ fontWeight: 600, marginBottom: '0.5rem', display: 'block' }}>Vergelijkingsmodus</label>
-                    <div style={{ display: 'flex', gap: '0' }}>
+                    <span id="benchmark-modus-label" style={{ fontWeight: 600, marginBottom: '0.5rem', display: 'block' }}>Vergelijkingsmodus</span>
+                    <div role="group" aria-labelledby="benchmark-modus-label" style={{ display: 'flex', gap: '0' }}>
                         {([
                             { key: 'gebieden', label: 'Specifieke Gebieden' },
                             { key: 'gemeente', label: 'Gemeente Gemiddelde' },
@@ -333,6 +342,8 @@ export const BenchmarkPage: React.FC = () => {
                         ] as { key: BenchmarkMode; label: string }[]).map(tab => (
                             <button
                                 key={tab.key}
+                                type="button"
+                                aria-pressed={mode === tab.key}
                                 onClick={() => setMode(tab.key)}
                                 style={{
                                     padding: '0.5rem 1.25rem',
@@ -355,9 +366,9 @@ export const BenchmarkPage: React.FC = () => {
                 {/* Modus-specifieke opties */}
                 {mode === 'gebieden' && (
                     <div style={{ marginBottom: '1rem' }}>
-                        <label style={{ fontWeight: 600, marginBottom: '0.5rem', display: 'block' }}>
+                        <span id="benchmark-vergelijking-label" style={{ fontWeight: 600, marginBottom: '0.5rem', display: 'block' }}>
                             Vergelijkingsgebieden (max. 5)
-                        </label>
+                        </span>
                         {gebiedenB.map((g, idx) => (
                             <div key={idx} style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.5rem', alignItems: 'center' }}>
                                 <TypeaheadSelector
@@ -369,9 +380,11 @@ export const BenchmarkPage: React.FC = () => {
                                     onSelect={(id, naam) => updateGebiedB(idx, id, naam)}
                                     placeholder={`Vergelijkingsgebied ${idx + 1}`}
                                     fieldId={`gebiedB_${idx}`}
+                                    ariaLabel={`Vergelijkingsgebied ${idx + 1}`}
                                 />
                                 {gebiedenB.length > 1 && (
-                                    <button onClick={() => removeGebiedB(idx)}
+                                    <button type="button" onClick={() => removeGebiedB(idx)}
+                                        aria-label={`Vergelijkingsgebied ${idx + 1} verwijderen`} title="Verwijderen"
                                         style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-danger, #ef4444)', padding: '0.25rem' }}>
                                         <X size={18} />
                                     </button>
@@ -394,10 +407,10 @@ export const BenchmarkPage: React.FC = () => {
 
                 {mode === 'gemeente' && (
                     <div style={{ marginBottom: '1rem' }}>
-                        <label style={{ fontWeight: 600, marginBottom: '0.5rem', display: 'block' }}>
+                        <label htmlFor="benchmark-referentie-gemeente" style={{ fontWeight: 600, marginBottom: '0.5rem', display: 'block' }}>
                             Referentie Gemeente
                         </label>
-                        <select
+                        <select id="benchmark-referentie-gemeente"
                             value={referentieGemeente}
                             onChange={(e) => setReferentieGemeente(e.target.value)}
                             style={{

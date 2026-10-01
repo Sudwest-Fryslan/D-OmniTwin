@@ -1,9 +1,25 @@
-import os
+"""
+Genereert embeddings (all-MiniLM-L6-v2, 384 dimensies) voor AI-zoeken in het Kompas.
+
+Standaard worden alle actieve indicatoren zonder embedding gevectoriseerd, ook
+concepten (#139): zonder embeddings vinden AI-zoeken en de chat niets. De zoekfunctie
+geeft de ontologie_status per resultaat mee, zodat concepten herkenbaar blijven.
+
+Tekst per indicator: naam + beste beschikbare beschrijving
+(ontologische_beschrijving > beschrijving_ai > omschrijving).
+
+Gebruik:
+    python scripts/ai/genereer_embeddings.py                       # alle indicatoren zonder embedding
+    python scripts/ai/genereer_embeddings.py --alleen-goedgekeurd  # alleen status goedgekeurd_mens
+    python scripts/ai/genereer_embeddings.py --opnieuw             # ook bestaande embeddings herberekenen
+
+Exitcode 1 als het model niet geladen kan worden (geen netwerk, package ontbreekt).
+docker-entrypoint.sh vangt dat af: db-init geeft dan een waarschuwing en gaat door.
+"""
 import sys
 from pathlib import Path
-from sqlalchemy.orm import Session
+
 from sqlalchemy import text
-import numpy as np
 
 # Voeg project root toe aan python path
 project_root = Path(__file__).resolve().parent.parent.parent
@@ -11,85 +27,91 @@ sys.path.append(str(project_root))
 
 from src.database import SessionLocal
 
-# Zorg dat we sentence-transformers kunnen importeren
-try:
-    from sentence_transformers import SentenceTransformer
-except ImportError:
-    print("❌ sentence-transformers niet gevonden. Installeer deze eerst.")
-    sys.exit(1)
+MODEL_NAAM = "all-MiniLM-L6-v2"
 
-def generate_embeddings(force_all=False):
+
+def laad_model():
+    """Laadt het model, of geeft None met een waarschuwing als dat niet lukt."""
+    try:
+        from sentence_transformers import SentenceTransformer
+    except ImportError:
+        print("⚠️ sentence-transformers niet geïnstalleerd; embeddings niet gegenereerd.")
+        return None
+    try:
+        print(f"⏳ Laden van sentence-transformers model ({MODEL_NAAM})...")
+        return SentenceTransformer(MODEL_NAAM)
+    except Exception as e:
+        print(f"⚠️ Model {MODEL_NAAM} niet te laden (geen netwerk of geen lokale kopie?): {e}")
+        return None
+
+
+def generate_embeddings(alleen_goedgekeurd=False, opnieuw=False):
     """
-    Genereert embeddings voor indicatoren die een ontologische beschrijving hebben.
-    
+    Genereert embeddings voor actieve indicatoren.
+
     Args:
-        force_all: Indien True, verwerk ook 'beoordeeld_ai' status. 
-                   Indien False, alleen 'goedgekeurd_mens'.
+        alleen_goedgekeurd: alleen indicatoren met status 'goedgekeurd_mens'.
+        opnieuw: ook indicatoren die al een embedding hebben opnieuw berekenen.
+
+    Returns:
+        True bij succes (ook als er niets te doen was), False als het model ontbreekt.
     """
     db = SessionLocal()
-    
-    # 1. Model laden (local cache)
-    print("⏳ Laden van sentence-transformers model (all-MiniLM-L6-v2)...")
-    model = SentenceTransformer('all-MiniLM-L6-v2')
-    
-    # 2. Query indicatoren die een beschrijving hebben maar nog geen embedding
-    # We sluiten indicatoren uit die al een embedding hebben voor dit specifieke model
-    status_filter = "('goedgekeurd_mens')"
-    if force_all:
-        status_filter = "('goedgekeurd_mens', 'beoordeeld_ai')"
-        
-    query = text(f"""
-        SELECT i.uuid, i.naam, i.ontologische_beschrijving 
-        FROM indicatoren i
-        LEFT JOIN indicator_embeddings e ON i.uuid = e.indicator_uuid
-        WHERE i.ontologische_beschrijving IS NOT NULL 
-          AND i.ontologie_status IN {status_filter}
-          AND e.id IS NULL
-    """)
-    
-    indicatoren = db.execute(query).fetchall()
-    
-    if not indicatoren:
-        print("✅ Geen nieuwe indicatoren om te vectoriseren (of status niet op 'goedgekeurd_mens').")
-        db.close()
-        return
+    try:
+        filters = ["i.is_actief = true"]
+        if alleen_goedgekeurd:
+            filters.append("i.ontologie_status = 'goedgekeurd_mens'")
+        if not opnieuw:
+            filters.append("e.id IS NULL")
 
-    print(f"🚀 Start vectorisatie van {len(indicatoren)} indicatoren...")
-    
-    for row in indicatoren:
-        uuid, naam, description = row
-        print(f"--- Vectoriseren: {naam} ---")
-        
-        # Embedding genereren
-        embedding = model.encode(description)
-        
-        # Converteren naar list voor pgvector (SQLAlchemy text)
-        embedding_list = embedding.tolist()
-        
-        # Opslaan in database
-        # We gebruiken de vector(384) kolom
+        indicatoren = db.execute(text(f"""
+            SELECT i.uuid, i.naam,
+                   COALESCE(NULLIF(i.ontologische_beschrijving, ''),
+                            NULLIF(i.beschrijving_ai, ''),
+                            NULLIF(i.omschrijving, '')) AS beschrijving
+            FROM indicatoren i
+            LEFT JOIN indicator_embeddings e ON i.uuid = e.indicator_uuid
+            WHERE {' AND '.join(filters)}
+            ORDER BY i.naam
+        """)).fetchall()
+
+        if not indicatoren:
+            print("✅ Geen nieuwe indicatoren om te vectoriseren.")
+            return True
+
+        model = laad_model()
+        if model is None:
+            return False
+
+        print(f"🚀 Vectoriseren van {len(indicatoren)} indicatoren...")
+        teksten = [f"{naam}. {beschrijving}" if beschrijving else naam
+                   for _, naam, beschrijving in indicatoren]
+        vectoren = model.encode(teksten, batch_size=32, show_progress_bar=False)
+
         insert_query = text("""
             INSERT INTO indicator_embeddings (indicator_uuid, embedding, model_naam)
-            VALUES (:uuid, :emb, 'all-MiniLM-L6-v2')
-            ON CONFLICT (indicator_uuid) DO UPDATE 
-            SET embedding = :emb, updated_at = CURRENT_TIMESTAMP
+            VALUES (:uuid, CAST(:emb AS vector), :model)
+            ON CONFLICT (indicator_uuid) DO UPDATE
+            SET embedding = EXCLUDED.embedding, model_naam = EXCLUDED.model_naam,
+                updated_at = CURRENT_TIMESTAMP
         """)
-        
-        db.execute(insert_query, {
-            "uuid": uuid,
-            "emb": embedding_list
-        })
+        for (uuid, _, _), vector in zip(indicatoren, vectoren):
+            db.execute(insert_query, {"uuid": uuid, "emb": vector.tolist(), "model": MODEL_NAAM})
         db.commit()
-        print(f"✅ Embedding opgeslagen voor {naam}")
+        print(f"✅ {len(indicatoren)} embeddings opgeslagen.")
+        return True
+    finally:
+        db.close()
 
-    db.close()
-    print("\n🏁 Vectorisatie voltooid.")
 
 if __name__ == "__main__":
-    # In dev mode staan we force_all toe om de 5 test indicatoren te verwerken
     import argparse
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--all", action="store_true", help="Process all indicators with AI status too")
+    parser = argparse.ArgumentParser(description="Genereer embeddings voor AI-zoeken")
+    parser.add_argument("--alleen-goedgekeurd", action="store_true",
+                        help="Alleen indicatoren met status goedgekeurd_mens")
+    parser.add_argument("--opnieuw", action="store_true",
+                        help="Ook bestaande embeddings herberekenen")
     args = parser.parse_args()
-    
-    generate_embeddings(force_all=args.all)
+
+    ok = generate_embeddings(alleen_goedgekeurd=args.alleen_goedgekeurd, opnieuw=args.opnieuw)
+    sys.exit(0 if ok else 1)

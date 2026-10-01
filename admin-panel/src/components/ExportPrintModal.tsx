@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { X, FileText, LayoutTemplate, Monitor } from 'lucide-react';
+import { useDialogFocus } from '../hooks/useDialogFocus';
 
 interface ExportPrintModalProps {
     isOpen: boolean;
@@ -8,6 +9,7 @@ interface ExportPrintModalProps {
 
 export const ExportPrintModal: React.FC<ExportPrintModalProps> = ({ isOpen, onClose }) => {
     const [isPrinting, setIsPrinting] = useState(false);
+    const dialogRef = useDialogFocus<HTMLDivElement>(isOpen, onClose);
 
     if (!isOpen) return null;
 
@@ -50,10 +52,11 @@ export const ExportPrintModal: React.FC<ExportPrintModalProps> = ({ isOpen, onCl
             background: 'rgba(0,0,0,0.5)', zIndex: 9999,
             display: 'flex', alignItems: 'center', justifyContent: 'center'
         }}>
-            <div className="card" style={{ width: '400px', padding: '0', background: 'var(--color-surface)' }}>
+            <div ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby="export-print-titel"
+                className="card" style={{ width: '400px', padding: '0', background: 'var(--color-surface)' }}>
                 <div className="card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--color-border)', padding: '1rem 1.5rem' }}>
-                    <h3 style={{ margin: 0 }}>Exporteer PDF / Print</h3>
-                    <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'var(--color-text-secondary)', cursor: 'pointer' }}>
+                    <h3 id="export-print-titel" style={{ margin: 0 }}>Exporteer PDF / Print</h3>
+                    <button type="button" onClick={onClose} aria-label="Sluiten" title="Sluiten" style={{ background: 'none', border: 'none', color: 'var(--color-text-secondary)', cursor: 'pointer' }}>
                         <X size={20} />
                     </button>
                 </div>

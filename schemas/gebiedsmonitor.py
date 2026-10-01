@@ -1,5 +1,7 @@
 # Pydantic Schemas voor Gebiedsmonitor API
-from pydantic import BaseModel, Field, UUID4
+from uuid import UUID
+
+from pydantic import BaseModel, Field
 from typing import Optional, List, Dict, Any
 from datetime import datetime
 
@@ -17,7 +19,7 @@ class GebiedstypeBase(BaseModel):
 
 
 class GebiedstypeResponse(GebiedstypeBase):
-    id: UUID4
+    id: UUID
     aantal_gebieden: Optional[int] = 0
     
     class Config:
@@ -63,7 +65,7 @@ class GebiedenListResponse(BaseModel):
 # ============================================================================
 
 class IndicatorBase(BaseModel):
-    uuid: UUID4
+    uuid: UUID  # ook uuid5: afgeleide indicatoren uit use cases (#141)
     naam: str
     code: Optional[str] = None
     omschrijving: Optional[str] = None
@@ -90,7 +92,7 @@ class IndicatorenListResponse(BaseModel):
 # ============================================================================
 
 class IndicatorWaardeResponse(BaseModel):
-    uuid: UUID4
+    uuid: UUID  # ook uuid5: afgeleide indicatoren uit use cases (#141)
     naam: str
     code: Optional[str] = None
     waarde: float

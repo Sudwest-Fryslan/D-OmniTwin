@@ -25,3 +25,7 @@ services:
   backend:
     volumes:
       - .:/app        # code van de host in plaats van die uit de image
+      - backend-logs:/app/logs   # eigen volume: logs/ op de host is niet altijd schrijfbaar voor de niet-root app-gebruiker (Windows)
+
+volumes:
+  backend-logs:
