@@ -57,7 +57,9 @@ services:
     restart: unless-stopped
 
   db-init:
-    # Eenmalige initialisatie met de backend-image; stopt na afloop (exit 0)
+    # Eenmalige initialisatie met de backend-image; stopt na afloop (exit 0).
+    # Zelfde image als backend (#157): één keer bouwen, geen tweede kopie.
+    image: ${COMPOSE_PROJECT_NAME:-d-omnitwin}-backend
     build: .
     command: ["init"]
     env_file:
@@ -71,6 +73,7 @@ services:
     restart: "no"
 
   backend:
+    image: ${COMPOSE_PROJECT_NAME:-d-omnitwin}-backend
     build: .
     labels:
       - "traefik.enable=true"

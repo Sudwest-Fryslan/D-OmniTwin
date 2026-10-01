@@ -15,7 +15,7 @@ De gids gaat uit van een Linux-server of een werkplek met Docker. Alle commando'
 | Docker Engine met Compose v2 (`docker compose`, niet `docker-compose`) | Docker 24, Compose 2.20. Op Windows en macOS: Docker Desktop |
 | Git | elke recente versie |
 | Geheugen | 4 GB vrij voor de stack, 8 GB aanbevolen. Een lokaal taalmodel (Ollama) komt daar bovenop |
-| Schijf | ± 10 GB vrij: backend-image ± 4,4 GB (inclusief het embeddingmodel, circa 90 MB), database-image ± 1,1 GB, overige images ± 0,4 GB, plus de database en de build-cache |
+| Schijf | ± 6 GB vrij: backend-image ± 1,7 GB uitgepakt (Docker Desktop toont ± 2,3 GB; inclusief het embeddingmodel, circa 90 MB), database-image ± 1,1 GB, overige images ± 0,4 GB, plus de database en de build-cache (± 2 GB, op te ruimen met `docker builder prune`) |
 | Poort | 80 op de host vrij (of een andere poort, zie `OMNITWIN_HTTP_PORT`) |
 | Internet tijdens de installatie | voor Docker Hub, PyPI, de PyTorch-index en HuggingFace (images bouwen). Daarna draait de stack zonder internet, ook AI-zoeken. De kaart gebruikt PDOK-achtergrondkaarten in de browser; een token is niet nodig |
 
@@ -25,6 +25,8 @@ Controleer:
 docker --version
 docker compose version
 ```
+
+**Imagegrootte.** Backend en `db-init` gebruiken dezelfde image (`<projectnaam>-backend`); die wordt één keer gebouwd. Uitgepakt is hij ± 1,7 GB, de download (gecomprimeerd) ± 0,5 GB. Het grootste deel is PyTorch (CPU, ± 0,6 GB), dat het embeddingmodel voor AI-zoeken nodig heeft. De image bevat alleen wat de backend en `db-init` gebruiken; voor ETL-scripts installeer je de extra pakketten lokaal uit `requirements-etl.txt` (zie [`ETL/ETL_DOCUMENTATION.md`](../../ETL/ETL_DOCUMENTATION.md)). De CI faalt als de image boven 1900 MiB uitgepakt komt (#157).
 
 **Windows:** gebruik Docker Desktop met de WSL2-backend. De voorbeelden hieronder zijn voor een bash-shell; gebruik op Windows **Git Bash** (wordt met Git for Windows meegeleverd, inclusief `openssl`). Git mag regeleinden omzetten (`core.autocrlf=true`): `.gitattributes` houdt de shell-scripts op LF, zodat de containers werken.
 
@@ -218,7 +220,7 @@ Maak eerst een backup (zie hieronder). Lees bij een nieuwe versie [`CHANGELOG.md
 
 AI-zoeken en de chat gebruiken het model [`sentence-transformers/all-MiniLM-L6-v2`](https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2) (licentie Apache-2.0). Het model en de revisie (een commit-hash van HuggingFace) staan op één plek: `services/embedding_model.py`.
 
-- `docker compose build` downloadt die revisie naar `/opt/models/all-MiniLM-L6-v2` in de image. Dat maakt de image circa 90 MB groter (91,8 MB; totaal ± 4,4 GB). Alleen bij het bouwen is HuggingFace nodig.
+- `docker compose build` downloadt die revisie naar `/opt/models/all-MiniLM-L6-v2` in de image. Dat maakt de image circa 90 MB groter (91,8 MB; totaal ± 1,7 GB uitgepakt). Alleen bij het bouwen is HuggingFace nodig.
 - Backend en `db-init` draaien met `HF_HUB_OFFLINE=1`, `TRANSFORMERS_OFFLINE=1` en `HF_HUB_DISABLE_TELEMETRY=1`: geen download en geen telemetrie, ook niet bij een nieuwe container. AI-zoeken werkt zonder internet.
 - Het model staat buiten `/app`, dus ook in ontwikkelmodus (bind-mount van de repo over `/app`) blijft het zichtbaar.
 - Controleren: `/api/ai/health` toont onder `embedding_model` de revisie, `lokaal` en `offline`.
