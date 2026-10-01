@@ -176,7 +176,7 @@ class TestZScoreFormula:
 class TestReferentieParams:
     def test_standaardwaarden(self):
         p = referentie_params("afba67cb-6b38-4723-9c95-102a22d5b38a", "1900", gebied_ids=["BU19000002"])
-        assert p["zs_jaarlogica"] == JAARLOGICA_STANDAARD == "recentst_per_gebied"
+        assert p["zs_jaarlogica"] == JAARLOGICA_STANDAARD == "zelfde_jaar"
         assert p["zs_scenario_id"] == "current"
         assert p["zs_gemeente_code"] == "1900"
         assert p["zs_gebied_ids"] == ["BU19000002"]
@@ -187,9 +187,13 @@ class TestReferentieParams:
         assert p["zs_gemeente_code"] is None
         assert p["zs_gebied_ids"] is None
 
+    def test_alternatieve_jaarlogica(self):
+        p = referentie_params("afba67cb-6b38-4723-9c95-102a22d5b38a", jaarlogica="recentst_per_gebied")
+        assert p["zs_jaarlogica"] == "recentst_per_gebied"
+
     def test_onbekende_jaarlogica_geeft_fout(self):
         with pytest.raises(ValueError):
-            referentie_params("afba67cb-6b38-4723-9c95-102a22d5b38a", jaarlogica="zelfde_jaar")
+            referentie_params("afba67cb-6b38-4723-9c95-102a22d5b38a", jaarlogica="alle_jaren")
 
 
 # ─── Normalize helper ────────────────────────────────────────────────────────

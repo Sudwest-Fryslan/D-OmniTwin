@@ -185,6 +185,33 @@ def test_zscore_gebieden_volgt_formule(conn, gebiedstype_id):
             assert float(z) == pytest.approx(verwacht)
 
 
+def test_zelfde_jaar_als_doelgebied(conn, gebiedstype_id):
+    """Standaard jaarlogica: referentie = alle niet-waterbuurten met een waarde in het
+    meetjaar van het doelgebied (onafhankelijk nagerekend)."""
+    with conn.cursor() as cur:
+        cur.execute(
+            """SELECT zs.indicator_uuid, zs.jaar, zs.gemiddelde, zs.n,
+                      (SELECT AVG(gd.waarde) FROM gebied_data gd JOIN gebieden g ON g.id = gd.gebied_id
+                        WHERE gd.indicator_uuid = zs.indicator_uuid AND gd.jaar = zs.jaar
+                          AND g.gebiedstype_id = %s::uuid AND g.gemeente_code = %s
+                          AND COALESCE(g.metadata->>'water', 'NEE') != 'JA'
+                          AND COALESCE(gd.scenario_id, 'current') = 'current'),
+                      (SELECT COUNT(*) FROM gebied_data gd JOIN gebieden g ON g.id = gd.gebied_id
+                        WHERE gd.indicator_uuid = zs.indicator_uuid AND gd.jaar = zs.jaar
+                          AND g.gebiedstype_id = %s::uuid AND g.gemeente_code = %s
+                          AND COALESCE(g.metadata->>'water', 'NEE') != 'JA'
+                          AND COALESCE(gd.scenario_id, 'current') = 'current')
+               FROM zscore_gebieden(ARRAY[%s, %s]::varchar[], %s::uuid, %s) zs""",
+            (gebiedstype_id, GEMEENTE, gebiedstype_id, GEMEENTE, GEBIED, GEBIED_2, gebiedstype_id, GEMEENTE),
+        )
+        rows = cur.fetchall()
+    conn.rollback()
+    assert rows
+    for _uuid, _jaar, gem, n, gem_los, n_los in rows:
+        assert float(gem) == pytest.approx(float(gem_los))
+        assert n == n_los
+
+
 # ── Rapportroutes geven dezelfde Z-score ─────────────────────────────────────
 
 def zscores_data(gebied_id):
