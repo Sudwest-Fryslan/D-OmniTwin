@@ -66,7 +66,10 @@ Schermafbeeldingen van een verse installatie met de sample dataset (`docker comp
 ![Chat: de D-Omni Assistent met het scenario Beleidsadviseur](docs/images/chat-beleidsadviseur.jpg)
 *D-Omni Assistent: het scenario "Beleidsadviseur" zet kaart en Kompas klaar.*
 
-> Bolsward-Zuidoost bevat in de sample **demodata** (zie `init_data/sample/README.md`). De getallen in de kop ("1,721 gebieden | 226 indicatoren") zijn nog hardcoded (#79).
+![Beheerscherm: dashboard met datadekking per Kompas-kwadrant](docs/images/beheer-dashboard.jpg)
+*Beheerscherm (`/admin`): indicatoren, datakwaliteit, AI-configuratie en rapportage.*
+
+> Bolsward-Zuidoost bevat in de sample **demodata** (zie `init_data/sample/README.md`). De screenshots maak je opnieuw met [`scripts/docs/maak_screenshots.py`](scripts/docs/maak_screenshots.py).
 
 ## 🤝 Innovatie & Samenwerking
 
