@@ -192,7 +192,7 @@ def test_schema_bevat_alle_migraties(db):
 # PostgREST ziet alleen schema api (views en functies) en draait anoniem als web_anon
 # (alleen lezen). pg_featureserv draait als featureserv (alleen de geo-views).
 
-# Wat de frontend, de admin en de tests via /api/data gebruiken; zie migrations/schema_v23_api_rollen.sql
+# Wat de frontend, de admin en de tests via /api/data gebruiken; zie db/migraties/R__api_rollen.sql
 API_WHITELIST = [
     "gemeenten",
     "gebiedstypes",

@@ -68,3 +68,6 @@ cache/
 
 # Cache van gedownloade open data (CBS e.d.), zie init_data/cbs
 data-cache/
+
+# Python-pakket (pip install -e .)
+*.egg-info/

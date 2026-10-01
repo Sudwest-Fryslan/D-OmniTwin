@@ -34,7 +34,7 @@ from pathlib import Path
 LOCAL_DIR    = Path(__file__).resolve().parent
 ETL_DIR      = LOCAL_DIR.parent
 PROJECT_ROOT = ETL_DIR.parent
-SCHEMA_PATH  = PROJECT_ROOT / "init_data" / "schema" / "schema_latest.sql"
+SCHEMA_PATH  = PROJECT_ROOT / "db" / "schema" / "schema_latest.sql"
 
 sys.path.insert(0, str(LOCAL_DIR))
 from db_connect import get_connection
@@ -105,7 +105,7 @@ def run_schema(conn, force_reset: bool = False):
     """Voer het schema SQL uit."""
     if not SCHEMA_PATH.exists():
         print(f"❌ Schema bestand niet gevonden: {SCHEMA_PATH}")
-        print("   Verwacht: init_data/schema/schema_latest.sql")
+        print("   Verwacht: db/schema/schema_latest.sql")
         sys.exit(1)
 
     with open(SCHEMA_PATH, encoding="utf-8") as f:

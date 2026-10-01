@@ -35,7 +35,7 @@ from pathlib import Path
 
 LOCAL_DIR    = Path(__file__).resolve().parent
 PROJECT_ROOT = LOCAL_DIR.parent.parent
-DEFAULT_CSV  = PROJECT_ROOT / "init_data" / "kompas" / "kompas_hierarchie.csv"
+DEFAULT_CSV  = PROJECT_ROOT / "db" / "stuurdata" / "kompas_hierarchie.csv"
 
 sys.path.insert(0, str(LOCAL_DIR))
 from db_connect import get_connection

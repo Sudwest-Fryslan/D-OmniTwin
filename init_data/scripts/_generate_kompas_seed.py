@@ -9,8 +9,8 @@ from pathlib import Path
 
 ROOT = Path(__file__).parent.parent.parent
 INPUT = ROOT / "data" / "gebiedsmonitor" / "indicator_testlijst.csv"
-KOMPAS_OUT = ROOT / "init_data" / "kompas" / "kompas_hierarchie.csv"
-SEED_OUT = ROOT / "init_data" / "indicatoren" / "indicatoren_seed.json"
+KOMPAS_OUT = ROOT / "db" / "stuurdata" / "kompas_hierarchie.csv"
+SEED_OUT = ROOT / "db" / "stuurdata" / "indicatoren_seed.json"
 
 actuele_indicatoren = []
 kompas_rijen = []

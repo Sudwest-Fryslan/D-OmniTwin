@@ -17,8 +17,8 @@ import pytest
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 # Importeer direct de scoring class (geen DB-afhankelijkheden)
-from services.kompas_service import KompasScoringService
-from services.zscore_referentie import JAARLOGICA_STANDAARD, MIN_N_STANDAARD, bereken_zscore, referentie_params
+from omnitwin.services.kompas_service import KompasScoringService
+from omnitwin.services.zscore_referentie import JAARLOGICA_STANDAARD, MIN_N_STANDAARD, bereken_zscore, referentie_params
 
 
 # ─── Fixtures ────────────────────────────────────────────────────────────────
@@ -145,7 +145,7 @@ class TestScoreTypeInversion:
 @pytest.mark.unit
 class TestZScoreFormula:
     """
-    De Z-score zit in SQL (zscore() in init_data/schema/08_zscore_referentie.sql).
+    De Z-score zit in SQL (zscore() in db/schema/08_zscore_referentie.sql).
     Hier wordt de Python-tegenhanger getest die de services gebruiken voor
     afgeleide waarden (gewogen deelgebiedsgemiddelde). Dat beide gelijk
     rekenen, borgt tests/integration/test_zscore_referentie.py tegen de database.

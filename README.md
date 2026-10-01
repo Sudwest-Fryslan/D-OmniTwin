@@ -198,7 +198,7 @@ D-OmniTwin bevat een ingebouwde AI-assistent die werkt als een **"alternatieve m
 └──────────────────────┬──────────────────────────────────┘
                        │ POST /api/chat
 ┌──────────────────────▼──────────────────────────────────┐
-│  Intent Router  (routers/chat.py)                       │
+│  Intent Router  (omnitwin/routers/chat.py)              │
 │  ┌─────────────────────────────────────────────────┐    │
 │  │  Intent Classifier (rule-based, <1ms)           │    │
 │  │  VERKEN_INDICATORS │ VERGELIJK_GEBIEDEN         │    │
@@ -269,8 +269,8 @@ OLLAMA_HOST=http://localhost:11434
 - `OpenAI-compatibel`: `/v1/chat/completions` van Ollama (`http://host.docker.internal:11434`),
   vLLM, LM Studio of een aanbieder. Een API-sleutel zet je als `LLM_API_KEY` in `.env`, nooit in de database.
 
-Bestaande databases hebben eerst migratie `migrations/schema_v20_llm_api_type.sql` nodig om `OpenAI-compatibel` op te slaan;
-zonder migratie blijft alles werken als `Ollama`.
+Daarvoor is migratie `db/migraties/V020__llm_api_type.sql` nodig; `db-init` past die automatisch toe (#54).
+Zonder migratie blijft alles werken als `Ollama`.
 
 **Optionele LiteLLM-gateway** (centrale sleutels, logging, terugval naar een ander model):
 
@@ -328,6 +328,7 @@ Met een externe aanbieder verlaten vragen en gebiedsdata de organisatie (AVG/IAM
 git clone <repo-url> && cd D-OmniTwin
 python -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
+pip install -e . --no-deps   # backend-pakket omnitwin (src/omnitwin)
 
 # 2. Omgeving configureren via de interactieve wizard
 python init_data/scripts/setup_env.py  # genereert veilige .env keys en configuratie

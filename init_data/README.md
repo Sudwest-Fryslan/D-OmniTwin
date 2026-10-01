@@ -18,17 +18,10 @@ Na dit proces heb je een gevulde database met **alle buurten in de provincie Fry
 
 ## 📁 Inhoud
 
+Schema, migraties en stuurdata (Kompas-indeling, indicatordefinities) staan sinds 0.2.0 in [`db/`](../db/README.md).
+
 ```
 init_data/
-├── schema/
-│   └── schema_latest.sql              # Volledig database schema (tabellen, views, triggers)
-│
-├── kompas/
-│   └── kompas_hierarchie.csv          # D-Omni Kompas structuur (titels → thema's → onderdelen → indicatoren)
-│
-├── indicatoren/
-│   └── indicatoren_seed.json          # Metadata van 235 indicatoren (incl. Kompas-hiërarchie)
-│
 ├── fryslan/
 │   ├── README.md                      # Bronvermelding en licentie-informatie
 │   ├── buurten_fryslan.geojson        # CBS buurten 2024 — provincie Fryslân (931 buurten, WGS84)

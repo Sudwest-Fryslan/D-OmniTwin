@@ -9,7 +9,7 @@ import pytest
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from services import chat_datavraag as dv  # noqa: E402
+from omnitwin.services import chat_datavraag as dv  # noqa: E402
 
 pytestmark = pytest.mark.unit
 
@@ -332,7 +332,7 @@ def nep_route(monkeypatch):
                                                        if g["gebiedstype_id"] == BUURT])
     monkeypatch.setattr(dv, "laad_indicatoren", lambda db: [KOEL])
     monkeypatch.setattr(dv, "laad_waarden", lambda db, u, ids: [w for w in WAARDEN if w["gebied_id"] in ids])
-    import services.gemeente_validatie as gv
+    import omnitwin.services.gemeente_validatie as gv
     monkeypatch.setattr(gv, "laad_gemeenten", lambda db, alleen_met_gebieden=False: GEMEENTEN)
 
 

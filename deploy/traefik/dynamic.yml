@@ -5,7 +5,7 @@
 # /api/data (PostgREST) en /api/geo (pg_featureserv). Een router hoeft er dus
 # niets voor te doen.
 #
-# Deze headers zijn leidend. De FastAPI-middleware in main.py zet vergelijkbare
+# Deze headers zijn leidend. De FastAPI-middleware in src/omnitwin/main.py zet vergelijkbare
 # headers als terugval voor `python run_dev.py` zonder Traefik; Traefik
 # overschrijft ze.
 #

@@ -1,7 +1,7 @@
 # D-OmniTwin — Python Dependencies (backend en db-init)
 # Gebruik: pip install -r requirements.txt
 #
-# Alleen wat de backend en db-init importeren: main.py, routers/, services/, src/,
+# Alleen wat de backend en db-init importeren: src/omnitwin/ (main, routers, services, ...),
 # init_data/scripts/ (load_sample, create_admin) en scripts/ai/genereer_embeddings.py.
 # ETL-scripts en analyses hebben meer nodig (geopandas, pandas, Excel, plots):
 # zie requirements-etl.txt en ETL/ETL_DOCUMENTATION.md (#157).

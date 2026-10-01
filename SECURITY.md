@@ -29,9 +29,9 @@ We volgen hierbij de uitgangspunten van [Coordinated Vulnerability Disclosure](h
 
 Binnen scope is de code in deze repository:
 
-- de FastAPI-backend en API-routes (`main.py`, `routers/`, `services/`);
+- de FastAPI-backend en API-routes (`src/omnitwin/`: `main.py`, `routers/`, `services/`);
 - de gebruikersinterface en de beheeromgeving (`static/`, `templates/`, `admin-panel/`);
-- database-schema's, migraties en initialisatiescripts (`init_data/`, `migrations/`);
+- database-schema's, migraties en initialisatiescripts (`db/`, `init_data/`);
 - de Docker-configuratie (`Dockerfile`, `db.Dockerfile`, `docker-compose.yml`, `docker-entrypoint.sh`).
 
 Buiten scope:
