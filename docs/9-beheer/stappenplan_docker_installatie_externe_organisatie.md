@@ -579,6 +579,6 @@ Voeg toe aan de crontab van de server (`crontab -e`):
 ## 9. 📞 Contact & Technische Ondersteuning
 
 Voor vragen over deze installatieprocedure, data-updates of architectuur-ondersteuning:
-* **Contact:** Geo-groep, Gemeente Súdwest-Fryslân ([geo-groep@sudwestfryslan.nl](mailto:geo-groep@sudwestfryslan.nl))
+* **Technisch Project Lead & Architect:** Taeke van der Laan, Geo-groep Gemeente Súdwest-Fryslân ([geo-groep@sudwestfryslan.nl](mailto:geo-groep@sudwestfryslan.nl))
 * **Documentatie & Architectuurnotities:** Zie [`docs/2-architectuur/architecture/systeemarchitectuur_en_implementatiegids_ict.md`](../2-architectuur/architecture/systeemarchitectuur_en_implementatiegids_ict.md)
 * **Kennisdatabase Router:** Zie [`docs/INDEX.md`](../INDEX.md)
