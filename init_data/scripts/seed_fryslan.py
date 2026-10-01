@@ -520,8 +520,7 @@ def import_waarden(conn, res):
 # ─────────────────────────────────────────────────────────
 def import_cbs(conn, res):
     """CBS Kerncijfers 2019-nu (init_data/cbs, alle jaargangen) voor alle gebieden in de database."""
-    print("
-📈 STAP 5: CBS Kerncijfers (alle jaargangen)")
+    print("\n📈 STAP 5: CBS Kerncijfers (alle jaargangen)")
     print("-" * 50)
     sys.path.insert(0, str(Path(__file__).resolve().parent))
     import laad_cbs
