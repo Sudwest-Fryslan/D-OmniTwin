@@ -41,7 +41,7 @@ wait_for_db() {
 # bij elke init, ook op een bestaande database. Structureel: migratiebeheer (#54)
 run_migrations() {
     for m in schema_v18_trigram.sql schema_v19_deduplicatie_uitzonderingen.sql schema_v20_auth_hardening.sql; do
-        psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -v ON_ERROR_STOP=1 -q -f "/app/migrations/$m" >/dev/null
+        PGOPTIONS="-c client_min_messages=warning" psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -v ON_ERROR_STOP=1 -q -f "/app/migrations/$m" >/dev/null
     done
 }
 

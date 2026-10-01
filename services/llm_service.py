@@ -84,15 +84,17 @@ class LLMService:
             
             return {
                 "text": cleaned.strip(),
-                "debug": debug_info
+                "debug": debug_info,
+                "error": False,
             }
-                
+
         except requests.exceptions.RequestException as e:
-            error_msg = f"Error contacting Ollama op {url}: {str(e)}"
-            AppLogger.error(f"[{context_name}] LLM ERROR: {error_msg}", category="LLM_CHAT")
+            # Details (interne URL, foutmelding) alleen in de log, niet in de response (#65)
+            AppLogger.error(f"[{context_name}] LLM ERROR: Error contacting Ollama op {url}: {e}", category="LLM_CHAT")
             return {
-                "text": error_msg,
-                "debug": debug_info
+                "text": "De AI-samenvatting is nu niet beschikbaar.",
+                "debug": debug_info,
+                "error": True,
             }
 
     def generate_domain_summary(self, domain_name: str, domain_data: list) -> Dict[str, Any]:

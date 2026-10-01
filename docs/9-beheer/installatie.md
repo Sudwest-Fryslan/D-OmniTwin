@@ -314,6 +314,8 @@ Stel een installatie **niet** open voor internet of een breed netwerk zolang dez
 | `/api/admin/auth/login`, `/logout`, `/me` | Inloggen en sessiestatus |
 | `/health`, `/api`, `/docs`, `/openapi.json` | Status en API-documentatie |
 
-De rapporten zijn bewust nog publiek; of dat zo blijft, moet nog besloten worden (#65).
+**Principe:** rapporten hebben dezelfde rechten als een anonieme bezoeker van de kaartapplicatie (besluit #65). Een rapport toont dus niet meer dan de publieke app: geen beheervelden (notities, wie iets beoordeelde of goedkeurde), geen inactieve indicatoren, geen logs of configuratie. De technische details van AI-teksten (`debug_info`: systeemprompts en model) krijgt alleen een ingelogde beheerder.
+
+**Let op, AI-teksten:** `/api/report/narrative/*`, `/api/report/benchmark/narrative` en `/api/chat` starten zonder inloggen een aanroep naar het taalmodel. Rapportteksten worden per gebied een uur gecachet, maar er is geen rate-limit. Gebruik je een externe (betaalde) LLM-aanbieder, scherm deze routes dan af in de proxy ervoor of stel een limiet in.
 
 Kwetsbaarheden melden: zie [`SECURITY.md`](../../SECURITY.md).

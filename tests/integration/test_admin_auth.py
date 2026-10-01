@@ -239,3 +239,32 @@ def test_verlopen_sessies_opgeruimd_bij_inloggen(db, gewone_gebruiker):
     with db.cursor() as cur:
         cur.execute("SELECT count(*) FROM sessions WHERE expires_at <= NOW()")
         assert cur.fetchone()[0] == 0
+
+
+# ── Rapporten: publiek, maar niet meer dan de publieke app toont ────────────
+
+BEHEERVELDEN = ("admin_notes", "gevalideerd_door", "gevalideerd_op", "ontologie_status",
+                "ontologie_beoordeeld", "system_prompt", "user_prompt", "debug_info", "api_url")
+
+
+def test_rapportdata_publiek_zonder_beheervelden(buurten_ids):
+    for url in (f"/api/report/data/{buurten_ids[0]}",
+                f"/api/report/executive/{buurten_ids[0]}",
+                f"/api/report/benchmark?gebied_a={buurten_ids[0]}&mode=gebieden&gebieden_b={buurten_ids[1]}"):
+        r = requests.get(f"{BASE_URL}{url}", timeout=TIMEOUT)
+        assert r.status_code == 200, f"{url}: {r.status_code} {r.text[:200]}"
+        gevonden = [v for v in BEHEERVELDEN if v in r.text]
+        assert not gevonden, f"{url} bevat beheervelden: {gevonden}"
+
+
+@pytest.fixture(scope="module")
+def buurten_ids(db):
+    with db.cursor() as cur:
+        cur.execute("""SELECT DISTINCT gd.gebied_id FROM gebied_data gd
+                       JOIN gebieden g ON g.id = gd.gebied_id
+                       JOIN gebiedstypes gt ON gt.id = g.gebiedstype_id
+                       WHERE gd.gebied_id LIKE 'BU%%' ORDER BY 1 LIMIT 2""")
+        ids = [r[0] for r in cur.fetchall()]
+    if len(ids) < 2:
+        pytest.skip("geen sample-buurten met data")
+    return ids
