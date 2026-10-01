@@ -15,8 +15,14 @@ Methodiek: docs/3-data-engineering/zscore_methodiek.md
 from typing import Any, Dict, Optional
 
 # Standaardwaarden (gelijk aan de DEFAULTs van de SQL-functies)
-JAARLOGICA_STANDAARD = "recentst_per_gebied"
-JAARLOGICA_OPTIES = ("recentst_per_gebied", "recentst_jaar_indicator")
+# 'zelfde_jaar': referentie = waarden in het jaar van de meest recente waarde van het
+#   doelgebied (zonder doelgebied: meest recente jaar van de indicator). Zo werkten het
+#   executive-rapport en Kompas top-buurten vóór #66.
+# 'recentst_per_gebied': per gebied de meest recente waarde, ongeacht het jaar. Zo werkten
+#   multi-gebied, thema-analyse, deelgebied en benchmark vóór #66.
+# ⚠️ Zie docs/3-data-engineering/zscore_methodiek.md voor de afwijkingen t.o.v. de oude code.
+JAARLOGICA_STANDAARD = "zelfde_jaar"
+JAARLOGICA_OPTIES = ("zelfde_jaar", "recentst_per_gebied")
 SCENARIO_STANDAARD = "current"
 
 # Referentiegroep: 'gemeente' = gebiedstype + gemeente (standaard), 'fryslan' = alleen gebiedstype

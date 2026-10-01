@@ -13,7 +13,6 @@ import json
 
 from services.zscore_referentie import (
     SQL_ZSCORE_GEBIEDEN,
-    SQL_REFERENTIE_STATS,
     bereken_zscore,
     methodiek_beschrijving,
     referentie_params,
@@ -48,7 +47,8 @@ class ReportDataService:
         gemeente_naam = gebied_dict.get('gemeente_naam')
         gebiedstype_id = gebied_dict.get('gebiedstype_id')
 
-        # 2. Z-scores t.o.v. zelfde gebiedstype binnen zelfde gemeente (centrale referentie, #66).
+        # 2. Z-scores t.o.v. zelfde gebiedstype binnen zelfde gemeente, in hetzelfde jaar als de
+        #    meest recente waarde van dit gebied (centrale referentie, jaarlogica zelfde_jaar, #66).
         # Zonder gemeente_code (bijv. landelijk niveau) t.o.v. alle gebieden van dat type.
         z_score_query = text(f"""
             SELECT
@@ -220,23 +220,24 @@ class ReportDataService:
             gem_naam = self.db.execute(gemeente_naam_query, {"code": referentie_gemeente}).fetchone()
             gemeente_label = gem_naam[0] if gem_naam else referentie_gemeente
 
+            # Referentie in hetzelfde jaar als de waarde van gebied A (jaarlogica zelfde_jaar)
             ref_query = text(f"""
-                SELECT rs.indicator_uuid, rs.gemiddelde as ref_waarde, rs.n
-                FROM {SQL_REFERENTIE_STATS} rs
+                SELECT zs.indicator_uuid, zs.gemiddelde as ref_waarde, zs.n
+                FROM {SQL_ZSCORE_GEBIEDEN} zs
             """)
             ref_result = self.db.execute(ref_query, referentie_params(
-                gebied_a_dict['gebiedstype_id'], referentie_gemeente
+                gebied_a_dict['gebiedstype_id'], referentie_gemeente, gebied_ids=[gebied_id_a]
             ))
             referentie_label = f"⌀ Gemeente {gemeente_label}"
 
         elif mode == 'fryslan':
             # Gemiddelde van ALLE buurten (geheel Fryslân; centrale referentie zonder gemeente, #66)
             ref_query = text(f"""
-                SELECT rs.indicator_uuid, rs.gemiddelde as ref_waarde, rs.n
-                FROM {SQL_REFERENTIE_STATS} rs
+                SELECT zs.indicator_uuid, zs.gemiddelde as ref_waarde, zs.n
+                FROM {SQL_ZSCORE_GEBIEDEN} zs
             """)
             ref_result = self.db.execute(ref_query, referentie_params(
-                gebied_a_dict['gebiedstype_id'], None
+                gebied_a_dict['gebiedstype_id'], None, gebied_ids=[gebied_id_a]
             ))
             referentie_label = "⌀ Provincie Fryslân"
 
@@ -1151,9 +1152,13 @@ class ReportDataService:
             kw_kleur = first_pt['kwadrant_kleur'] or '#3B82F6'
             th_naam = first_pt['thema_naam'] or 'Overig'
 
-            avg_waarde = float(first_pt['avg_waarde'])
-            std_waarde = float(first_pt['std_waarde'])
-            n_ref = int(first_pt['n_ref_buurten'])
+            # Referentie voor het gewogen gemiddelde: die van het meest recente meetjaar
+            # onder de buurten. ⚠️ Bij jaarlogica zelfde_jaar kunnen buurten met een ouder
+            # meetjaar een andere referentie hebben; hun buurt-Z gebruikt hun eigen jaar.
+            ref_pt = max(pts, key=lambda p: p['jaar'])
+            avg_waarde = float(ref_pt['avg_waarde'])
+            std_waarde = float(ref_pt['std_waarde'])
+            n_ref = int(ref_pt['n_ref_buurten'])
 
             w_sum = 0.0
             sum_val_w = 0.0
@@ -1211,8 +1216,8 @@ class ReportDataService:
                 "gewogen_waarde": round(gewogen_waarde, 2),
                 "ref_gemiddelde": round(avg_waarde, 2),
                 "ref_std": round(std_waarde, 2),
-                "ref_min": round(float(first_pt['min_waarde']), 2),
-                "ref_max": round(float(first_pt['max_waarde']), 2),
+                "ref_min": round(float(ref_pt['min_waarde']), 2),
+                "ref_max": round(float(ref_pt['max_waarde']), 2),
                 "z_score": round(z_score, 2),
                 "z_score_abs": round(z_abs, 2),
                 "verschil": round(verschil, 2),

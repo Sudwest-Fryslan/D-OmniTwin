@@ -687,7 +687,7 @@ class KompasService:
             FROM {SQL_ZSCORE_GEBIEDEN} zs
             JOIN gebieden g ON zs.gebied_id = g.id
             WHERE zs.z_score IS NOT NULL
-            ORDER BY ABS(zs.z_score) DESC
+            ORDER BY ABS(zs.z_score) DESC, g.naam
         """)
 
         rows = self.db.execute(query, referentie_params(
