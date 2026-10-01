@@ -37,12 +37,22 @@ wait_for_db() {
     echo "✅ PostgreSQL is gereed voor verbindingen."
 }
 
+# Migraties die (nog) niet in schema_latest.sql zitten. Idempotent, dus ze draaien
+# bij elke init, ook op een bestaande database. Structureel: migratiebeheer (#54)
+run_migrations() {
+    for m in schema_v18_trigram.sql schema_v19_deduplicatie_uitzonderingen.sql schema_v20_auth_hardening.sql; do
+        psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -v ON_ERROR_STOP=1 -q -f "/app/migrations/$m" >/dev/null
+    done
+}
+
 init_db() {
     # Controleer of het schema al bestaat
     TABLE_EXISTS=$(psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -tAc "SELECT 1 FROM information_schema.tables WHERE table_schema='public' AND table_name='gebieden';" 2>/dev/null || true)
 
     if [ "$TABLE_EXISTS" = "1" ]; then
         echo "✅ Bestaande database gevonden (tabel 'gebieden' aanwezig). Initialisatie overgeslagen."
+        echo "⚙️ Migraties controleren..."
+        run_migrations
         return
     fi
 
@@ -53,10 +63,7 @@ init_db() {
     psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -v ON_ERROR_STOP=1 -f /app/init_data/schema/06_pg_featureserv_views.sql >/dev/null
     # SQL-functies die pg_featureserv publiceert onder /api/geo/functions (schema postgisftw)
     psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -v ON_ERROR_STOP=1 -f /app/init_data/schema/07_postgisftw_functions.sql >/dev/null
-    # Migraties die (nog) niet in schema_latest.sql zitten; idempotent. Structureel: migratiebeheer (#54)
-    for m in schema_v18_trigram.sql schema_v19_deduplicatie_uitzonderingen.sql; do
-        psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -v ON_ERROR_STOP=1 -f "/app/migrations/$m" >/dev/null
-    done
+    run_migrations
     echo "✅ Database schema succesvol aangemaakt."
 
     LOAD_SAMPLE="${LOAD_SAMPLE_DATA:-true}"

@@ -172,6 +172,7 @@ app.include_router(auth.router)
 app.include_router(admin.router)
 app.include_router(dashboard.router)
 app.include_router(visualisatie.router)
+app.include_router(visualisatie.admin_router)
 from routers import report
 app.include_router(report.router)
 from routers import data_controle, ai_search, chat, bag3d, log_viewer, externe_lagen
@@ -181,6 +182,7 @@ app.include_router(chat.router)
 app.include_router(bag3d.router)
 app.include_router(log_viewer.router)
 app.include_router(externe_lagen.router)
+app.include_router(externe_lagen.admin_router)
 
 @app.on_event("startup")
 async def startup_event():
@@ -201,6 +203,11 @@ async def startup_event():
         AppLogger.info("Frontend available at http://localhost:8000/", category="SERVER")
     except Exception as e:
         AppLogger.error(f"Database connection failed: {e}", category="SERVER")
+
+    # X-Admin-Key alleen met een echte key; een lege of voorbeeldwaarde geeft geen toegang (#65)
+    from routers.auth import geldige_admin_api_key
+    if geldige_admin_api_key() is None:
+        AppLogger.warning("ADMIN_API_KEY is leeg of een voorbeeldwaarde: X-Admin-Key is uitgeschakeld", category="AUTH")
 
     # Start dagelijkse log cleanup
     start_cleanup_scheduler()

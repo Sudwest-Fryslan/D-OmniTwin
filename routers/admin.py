@@ -18,20 +18,11 @@ logger = logging.getLogger(__name__)
 
 # Load environment variables
 load_dotenv()
-ADMIN_API_KEY = os.getenv('ADMIN_API_KEY', '')
 
-router = APIRouter(prefix="/api/admin", tags=["Admin"])
+from routers.auth import vereis_admin
 
-# ============================================================================
-# Authentication
-# ============================================================================
-from routers.auth import check_auth_or_key
-
-# We aliassen check_auth_or_key naar verify_admin_key zodat we niet elke 
-# endpoint hoeven te herschrijven in deze file.
-def verify_admin_key(request: Request, db: Session = Depends(get_db)):
-    """Verifies admin access using the new Hybrid Session/Key model."""
-    return check_auth_or_key(request, db)
+# Alle routes in deze router vereisen een beheerder (#65)
+router = APIRouter(prefix="/api/admin", tags=["Admin"], dependencies=[Depends(vereis_admin)])
 
 # ============================================================================
 # Pydantic Models
@@ -99,7 +90,6 @@ class SystemPromptUpdate(BaseModel):
 @router.get("/llm/config", response_model=LLMConfig)
 async def get_llm_config(
     db: Session = Depends(get_db),
-    _: bool = Depends(verify_admin_key)
 ):
     """Get active LLM Config."""
     result = db.execute(text("SELECT api_url, model_name FROM llm_config ORDER BY id DESC LIMIT 1"))
@@ -112,7 +102,6 @@ async def get_llm_config(
 async def update_llm_config(
     config: LLMConfig,
     db: Session = Depends(get_db),
-    _: bool = Depends(verify_admin_key)
 ):
     """Update active LLM Config."""
     db.execute(text("""
@@ -125,7 +114,6 @@ async def update_llm_config(
 @router.get("/llm/models")
 def get_ollama_models(
     db: Session = Depends(get_db),
-    _: bool = Depends(verify_admin_key)
 ):
     """Fetch available models from the configured Ollama instance."""
     import requests
@@ -156,7 +144,6 @@ def get_ollama_models(
 @router.get("/prompts", response_model=List[SystemPrompt])
 async def get_system_prompts(
     db: Session = Depends(get_db),
-    _: bool = Depends(verify_admin_key)
 ):
     """Get all system prompts."""
     result = db.execute(text("SELECT naam, beschrijving, prompt_text, is_actief FROM system_prompts ORDER BY id DESC"))
@@ -175,7 +162,6 @@ async def update_system_prompt(
     naam: str,
     data: SystemPromptUpdate,
     db: Session = Depends(get_db),
-    _: bool = Depends(verify_admin_key)
 ):
     """Update a specific system prompt."""
     
@@ -212,7 +198,6 @@ async def update_system_prompt(
 @router.get("/score-types", response_model=List[ScoreType])
 async def get_score_types(
     db: Session = Depends(get_db),
-    _: bool = Depends(verify_admin_key)
 ):
     """Get all valid score types with descriptions."""
     result = db.execute(text("SELECT * FROM v_score_types"))
@@ -232,7 +217,6 @@ async def get_score_types(
 @router.get("/color-schemas", response_model=List[ColorSchema])
 async def get_color_schemas(
     db: Session = Depends(get_db),
-    _: bool = Depends(verify_admin_key)
 ):
     """Get all available color schemas."""
     result = db.execute(text("""
@@ -256,7 +240,6 @@ async def get_color_schemas(
 async def create_color_schema(
     data: ColorSchemaCreate,
     db: Session = Depends(get_db),
-    _: bool = Depends(verify_admin_key)
 ):
     """Create a new color schema."""
     result = db.execute(text("""
@@ -286,7 +269,6 @@ async def get_indicatoren(
     limit: int = 100,
     offset: int = 0,
     db: Session = Depends(get_db),
-    _: bool = Depends(verify_admin_key)
 ):
     """Get all indicators with admin info. Filter by ontologie_status for validation workflow."""
     query = """
@@ -372,7 +354,6 @@ async def get_indicatoren(
 async def get_indicator(
     uuid: str,
     db: Session = Depends(get_db),
-    _: bool = Depends(verify_admin_key)
 ):
     """Get single indicator by UUID, including ontology validation fields."""
     result = db.execute(text("""
@@ -439,7 +420,6 @@ async def update_indicator(
     uuid: str,
     data: IndicatorUpdate,
     db: Session = Depends(get_db),
-    _: bool = Depends(verify_admin_key)
 ):
     """Update indicator fields."""
     # Build dynamic update query
@@ -481,15 +461,14 @@ async def update_indicator(
         raise HTTPException(404, f"Indicator {uuid} not found")
     
     # Return updated indicator
-    return await get_indicator(uuid, db, True)
+    return await get_indicator(uuid, db)
 
 @router.patch("/indicatoren/{uuid}/valideer")
 async def valideer_indicator_ontologie(
     uuid: str,
     data: OntologieValidatie,
-    request: Request,
     db: Session = Depends(get_db),
-    _: bool = Depends(verify_admin_key)
+    gebruiker: dict = Depends(vereis_admin)
 ):
     """
     Valideer of keur de ontologische beschrijving van een indicator goed.
@@ -500,16 +479,8 @@ async def valideer_indicator_ontologie(
     if data.ontologie_status not in valid_statuses:
         raise HTTPException(400, f"Ongeldige ontologie_status. Keuze uit: {valid_statuses}")
     
-    # Haal user_id uit sessie (indien ingelogd)
-    user_id = None
-    session_token = request.cookies.get('session_token')
-    if session_token:
-        session_row = db.execute(
-            text("SELECT user_id FROM sessions WHERE token = :token AND expires_at > NOW()"),
-            {"token": session_token}
-        ).fetchone()
-        if session_row:
-            user_id = str(session_row[0])
+    # Gebruiker uit de sessie; bij een script (X-Admin-Key) blijft dit leeg
+    user_id = str(gebruiker["user_id"]) if gebruiker.get("type") == "session" else None
     
     # Update indicator
     result = db.execute(text("""
@@ -533,12 +504,11 @@ async def valideer_indicator_ontologie(
     db.commit()
     
     # Return updated indicator
-    return await get_indicator(uuid, db, True)
+    return await get_indicator(uuid, db)
 
 @router.get("/ontologie/status")
 async def get_ontologie_validatiestatus(
     db: Session = Depends(get_db),
-    _: bool = Depends(verify_admin_key)
 ):
     """
     Haal de totale validatie-voortgang op (Dashboard widget).
@@ -565,7 +535,6 @@ async def get_ontologie_validatiestatus(
 async def get_hierarchy_tree(
     config_id: int = 1,
     db: Session = Depends(get_db),
-    _: bool = Depends(verify_admin_key)
 ):
     """Get full hierarchy tree for visualization."""
     """Get full hierarchy tree for visualization."""
@@ -634,7 +603,6 @@ async def get_hierarchy_tree(
 @router.get("/health")
 async def admin_health(
     db: Session = Depends(get_db),
-    _: bool = Depends(verify_admin_key)
 ):
     """Admin API health check."""
     # Check database connectivity
