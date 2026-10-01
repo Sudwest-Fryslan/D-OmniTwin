@@ -245,6 +245,7 @@ class KompasVisualization {
         // Escape sluit de lijst en zet de focus terug op de trigger
         container.addEventListener('keydown', (e) => {
             if (e.key === 'Escape' && container.classList.contains('open')) {
+                e.preventDefault(); // niet ook een omringende dialoog sluiten
                 container.classList.remove('open');
                 trigger.setAttribute('aria-expanded', 'false');
                 trigger.focus();
