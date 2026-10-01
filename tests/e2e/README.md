@@ -10,7 +10,7 @@ sample dataset. Elke test verwijst in naam en docstring naar zijn TC-id
 |---|---|
 | `test_kaartmodule.py` | TC-01-001, TC-01-002, TC-01-003 (+ kaart-export) |
 | `test_kompas_detail.py` | TC-02-001, TC-02-002 |
-| `test_integratie_e2e.py` | TC-06-001 |
+| `test_integratie_e2e.py` | TC-06-001, TC-06-004 |
 
 Uitkomsten:
 
@@ -40,6 +40,9 @@ docker run --rm --network d-omnitwin_default \
 Het netwerk heet `<projectnaam>_default`; bij `COMPOSE_PROJECT_NAME=e2e62` is dat
 `e2e62_default`. Op Windows (Git Bash) `MSYS_NO_PATHCONV=1` voor het commando zetten
 en het volume als Windows-pad opgeven.
+
+TC-06-004 stap 1-4 vraagt een LLM (zie `scripts/llm/kies_provider.py`); zonder LLM wordt die
+test overgeslagen. Een lokaal model op CPU kan traag zijn: `E2E_LLM_TIMEOUT` (seconden, standaard 300).
 
 Een volledige run duurt ongeveer 5 minuten (WebGL draait in de container via
 software-rendering). De browser haalt de kaartbibliotheken van de CDN's en de

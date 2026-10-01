@@ -81,6 +81,7 @@ PLAN_[beschrijvende-naam-kebab-case].md
 | [TC-06-001](./06-integratie-e2e/TC-06-001_beleidsadviseur-ijsselmeerkust.md) | Beleidsadviseur — IJsselmeerkust & Wadden | ❓ |
 | [TC-06-002](./06-integratie-e2e/TC-06-002_multi-gebiedsdossier.md) | Multi-Gebiedsdossier — Zones-analyse | 📋 Nog te implementeren |
 | [TC-06-003](./gebiedsagenda_ijselmeerkust/TC-06-003_gebiedsagenda_ijsselmeerkust_usecase.md) | Integraal Gebiedsgericht Werken — IJsselmeergebied-Wadden | 🧪 Toetsbaar |
+| [TC-06-004](./06-integratie-e2e/TC-06-004_chat-ai-en-beleidsadviseur-bolsward.md) | Chat (AI) en beleidsadviseur — Bolsward-Zuidoost | ✅ (stap 1-4 met LLM) |
 
 ### Nulmetingen & Reviews
 | ID / Document | Naam | Regio / Focus |
@@ -119,6 +120,8 @@ Status: **geautomatiseerd** = alle stappen · **gedeeltelijk** = een deel van de
 | TC-06-001 stap 11-12 | `test_tc_06_001_handmatige_review` | handmatig |
 | TC-06-001 stap 13 (PDF) | `test_tc_06_001_pdf_rapport` | handmatig (skip: gebiedsdossier gebruikt de LLM) |
 | TC-06-001 stap 13-14 (CSV) | geautomatiseerd (bug in export gerepareerd) |
+| TC-06-004 stap 1-4 | `test_tc_06_004a_chat_ai_hoe_groen` | LLM-afhankelijk: toetst label, disclaimer, Nederlands antwoord en een `TOON_OP_KAART`-actie voor de buurt; skip bij niet-LLM-terugval (`debug.mode`) |
+| TC-06-004 stap 5-8 | `test_tc_06_004bc_beleidsadviseur_kompas` | geautomatiseerd (deterministisch) |
 | TC-06-002, TC-06-003 | — | nog niet geautomatiseerd |
 
 ---
