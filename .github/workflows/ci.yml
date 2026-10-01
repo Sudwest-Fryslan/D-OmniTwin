@@ -138,7 +138,6 @@ jobs:
           set_env COMPOSE_FILE docker-compose.yml
           set_env DATABASE_PASSWORD "$(openssl rand -hex 16)"
           set_env DATABASE_SSLMODE prefer
-          set_env SECRET_KEY "$(openssl rand -hex 32)"
           set_env ADMIN_API_KEY "$(openssl rand -hex 32)"
           set_env ADMIN_PASSWORD "$(openssl rand -hex 16)"
           set_env LOAD_SAMPLE_DATA true
