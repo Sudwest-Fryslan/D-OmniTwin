@@ -128,7 +128,9 @@ def test_datavraag_in_de_chat(page, uc):
         timeout=60_000,
     )
     expect(page.locator("#selection-badge")).to_be_visible()
-    page.wait_for_timeout(1500)  # inzoom-animatie
+    # Inzoom-animatie: met software-rendering kan die langer duren dan 1 s
+    page.wait_for_function("() => (window.state.currentViewState?.zoom || 0) >= 11", timeout=20_000)
+    page.wait_for_timeout(500)
     camera = page.evaluate("""(ids) => {
         const set = new Set(ids); let x0 = 180, x1 = -180, y0 = 90, y1 = -90;
         const walk = a => { if (typeof a[0] === 'number') { x0 = Math.min(x0, a[0]); x1 = Math.max(x1, a[0]);
