@@ -13,7 +13,10 @@ import pytest
 
 ESCAPE_JS = Path(__file__).resolve().parents[1] / "static" / "js" / "core" / "escape.js"
 
-pytestmark = pytest.mark.skipif(shutil.which("node") is None, reason="Node.js niet gevonden")
+pytestmark = [
+    pytest.mark.unit,
+    pytest.mark.skipif(shutil.which("node") is None, reason="Node.js niet gevonden"),
+]
 
 
 def run_js(functie, waarden):

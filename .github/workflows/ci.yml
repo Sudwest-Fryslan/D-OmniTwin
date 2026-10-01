@@ -1,26 +1,35 @@
 # D-OmniTwin CI Pipeline
 #
-# Triggert op elke PR naar main en bij directe pushes op main.
-# Stap 1 (Bouwen) en Stap 3/unit (Testen) uit Issue #28.
+# Draait bij een push op main of een release-branch (release/<x.y>, zie
+# docs/9-beheer/releasebeleid.md) en bij elke PR daarnaartoe (#202). Een push op
+# een feature-branch draait niets; de PR wel, dus niets draait dubbel.
 #
-# Plus: integratietests tegen een verse compose-stack (Issue #62) en
-# validatie van publiccode.yml (Issue #56).
+# Jobs: unittests, Docker-build, integratie- en e2e-tests tegen een verse
+# compose-stack (#62), admin-panel (typecheck, lint, test, build; #202) en
+# validatie van publiccode.yml (#56).
 #
-# Volgende stappen die hier nog NIET in zitten (aparte PRs):
-#   - Dockerhub push (vereist semver tagging via Issue #27)
+# Nog niet: Docker Hub push (semver-tags, #27).
 
 name: CI
 
 on:
   push:
-    branches: [main]
+    branches: [main, "release/**"]
   pull_request:
-    branches: [main]
+    branches: [main, "release/**"]
+
+permissions:
+  contents: read
+
+# Een nieuwe push op dezelfde PR stopt de vorige run; runs op main/release lopen altijd af.
+concurrency:
+  group: ci-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
-  # â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-  # Job 1: Unit Tests â€” altijd snel en zonder DB
-  # â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  # ──────────────────────────────────────────────
+  # Job 1: Unit Tests — altijd snel en zonder DB
+  # ──────────────────────────────────────────────
   unit-tests:
     name: Unit Tests (Python ${{ matrix.python-version }})
     runs-on: ubuntu-latest
@@ -50,10 +59,10 @@ jobs:
       - name: Run unit tests
         run: pytest -m unit -v --tb=short
 
-  # â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-  # Job 2: Docker Build Check â€” valideert Dockerfile
+  # ──────────────────────────────────────────────
+  # Job 2: Docker Build Check — valideert Dockerfile
   # Bouwt de image maar pushed NIET (geen Dockerhub secrets vereist)
-  # â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  # ──────────────────────────────────────────────
   docker-build:
     name: Docker Build Check
     runs-on: ubuntu-latest
@@ -96,12 +105,12 @@ jobs:
             exit 1
           fi
 
-  # â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-  # Job 3: Integratietests â€” verse stack met sample dataset (Issue #62)
+  # ──────────────────────────────────────────────
+  # Job 3: Integratietests — verse stack met sample dataset (Issue #62)
   # Start docker-compose.yml (zonder dev-override) met lege volumes, wacht tot
   # alles healthy is en draait pytest -m integration in een wegwerpcontainer op
   # het compose-netwerk. Een startfout van de backend laat deze job falen.
-  # â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  # ──────────────────────────────────────────────
   integration:
     name: Integratietests (verse stack)
     runs-on: ubuntu-latest
@@ -192,9 +201,59 @@ jobs:
         if: always()
         run: docker compose down -v --remove-orphans
 
-  # â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-  # Job 4: publiccode.yml valideren met de officiÃ«le parser (Issue #56)
-  # â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  # ──────────────────────────────────────────────
+  # Job 4: admin-panel (React/Vite) — typecheck, lint, test en build (#202)
+  # De build staat gecommit in static/admin-panel (FastAPI serveert die onder
+  # /admin/). Na build:static mag daar niets veranderd zijn: anders is de
+  # gecommitte build niet van deze broncode.
+  # ──────────────────────────────────────────────
+  admin-panel:
+    name: Admin-panel (typecheck, lint, test, build)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: admin-panel
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: admin-panel/package-lock.json
+
+      - name: Installeer afhankelijkheden
+        run: npm ci --no-audit --no-fund
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Test
+        run: npm test
+
+      - name: Build naar static/admin-panel
+        run: npm run build:static
+
+      - name: Gecommitte build is actueel
+        run: |
+          wijzigingen=$(git status --porcelain -- ../static/admin-panel)
+          if [ -n "$wijzigingen" ]; then
+            echo "$wijzigingen"
+            echo "::error::static/admin-panel wijkt af van de build. Draai in admin-panel 'npm run build:static' en commit static/admin-panel."
+            exit 1
+          fi
+          echo "static/admin-panel komt overeen met de build"
+
+  # ──────────────────────────────────────────────
+  # Job 5: publiccode.yml valideren met de officiële parser (Issue #56)
+  # ──────────────────────────────────────────────
   publiccode:
     name: publiccode.yml valideren
     runs-on: ubuntu-latest

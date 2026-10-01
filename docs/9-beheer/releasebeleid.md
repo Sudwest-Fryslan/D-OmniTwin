@@ -88,7 +88,9 @@ Voorbeeld: een bug in `0.1.0`.
    git switch release/0.1
    git cherry-pick -x <commit van de fix op main>
    ```
-3. Op `release/0.1`: `VERSION` e.d. naar `0.1.1`, CHANGELOG-sectie `## [0.1.1]` (ook op `main` toevoegen), tag `v0.1.1`, GitHub-release.
+3. Op `release/0.1`: `VERSION` e.d. naar `0.1.1`, CHANGELOG-sectie `## [0.1.1]` (ook op `main` toevoegen), wacht op een groene CI, dan tag `v0.1.1`, GitHub-release.
+
+De CI (`.github/workflows/ci.yml`) draait op pushes en PR's naar `main` en `release/**`. Een release-branch gebruikt de workflow die óp die branch staat: een branch die vóór 0.2.1 is gemaakt, krijgt pas CI als de workflowwijziging van [#202](https://github.com/TLaan/D-OmniTwin/issues/202) er ook op staat (cherry-pick).
 
 Een fix die alleen op de oude versie speelt, gaat direct als PR naar de release-branch.
 

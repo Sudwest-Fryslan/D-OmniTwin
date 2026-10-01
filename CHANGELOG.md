@@ -8,6 +8,10 @@ Eerdere wijzigingen, van vóór dit bestand, zijn terug te vinden in de git-hist
 
 ## [Unreleased]
 
+### Opgelost
+
+- CI draait ook op `release/**` (push en PR), heeft een job voor het admin-panel (typecheck, lint, test, build en een controle dat `static/admin-panel` bij de broncode hoort) en `concurrency`/`permissions`. Tests die nooit draaiden, draaien weer (`test_escape_html`, `test_jaargangen_sample`, deelgebiedsrapport als integratietest) of zijn weg (debugscript `test_zscore.py`); een test zonder marker laat de collectie falen; verouderde xfail #139 weg. De migratierunner neemt een advisory lock tegen gelijktijdige runs, `--status` is alleen-lezen en toont ingelezen bestanden (V021 → `08_zscore_referentie.sql`, gedocumenteerd in `db/README.md`) ([#202](https://github.com/TLaan/D-OmniTwin/issues/202)).
+
 ## [0.2.0] - 2026-10-01
 
 Herstructurering en opschoning, zonder andere werking van de applicatie ([#182](https://github.com/TLaan/D-OmniTwin/issues/182), fases 1–3). Daarmee is de code klaar om open te zetten en te publiceren.

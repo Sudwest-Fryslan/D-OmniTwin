@@ -55,9 +55,10 @@ pip install -e . --no-deps   # pakket omnitwin (src/omnitwin), voor scripts buit
 # Start development server (optimized file watching, port 8000)
 python run_dev.py
 
-# Run tests
-python -m pytest tests/
-python -m pytest tests/test_zscore.py   # single test file
+# Run tests (elke test heeft een marker unit/integration/e2e/llm; zonder marker faalt de collectie)
+python -m pytest -m unit                  # zoals de CI-job Unit Tests, zonder database
+python -m pytest tests/test_migraties.py  # single test file
+# integration/e2e: tegen een draaiende stack, zie tests/integration/test_sample_stack.py en tests/e2e/README.md
 ```
 
 ### Admin Panel (React)
@@ -68,6 +69,8 @@ npm start        # Vite dev server on port 3000 (proxy /api -> :8000)
 npm run build:static  # production build + kopie naar static/admin-panel (commit die map mee)
 npm run typecheck     # tsc --noEmit
 npm test         # Vitest (eenmalig)
+npm run lint     # ESLint
+# CI (job Admin-panel): npm ci, typecheck, lint, test, build:static, en faalt als static/admin-panel daarna afwijkt
 ```
 
 ### Database initialisatie — Fryslân-dataset zonder Docker (verouderd)
@@ -139,7 +142,7 @@ Hybrid model: API key authentication for admin panel API calls, session-based au
 Colorblind-safe diverging palettes are used throughout. Palette definitions live in `static/css/colors/`. Dynamic color generation (including diverging scales) is in `color_scale_service.py`.
 
 ### Database
-Schema is in `db/schema/schema_latest.sql`. Key tables: `gebieden` (areas/buurten), `indicatoren` (metrics), `gebied_data` (measurements), `kompas_titels` / `kompas_themas` / `kompas_onderdelen` / `kompas_indicator_mapping` (thematic hierarchy, samengevoegd in view `v_kompas_hierarchie`). In Docker laadt `db-init` bij een lege database dit schema plus `db/schema/06_pg_featureserv_views.sql` en `07_postgisftw_functions.sql`; daarna past de migratierunner (`python -m omnitwin.migraties`, `src/omnitwin/migraties.py`) de migraties uit `db/migraties/` toe die nog niet in tabel `schema_migraties` staan, ook op een bestaande database. Bij elke start werkt hij de rollen en het schema `api` bij (`db/migraties/R__api_rollen.sql`, herhaalbaar). Stuurdata (seed, Kompas-indeling, indicatordefinities) staat in `db/stuurdata/`. **Schemawijziging:** nieuw bestand `db/migraties/V<nnn>__<naam>.sql` (volgend nummer, idempotent); een toegepaste migratie nooit aanpassen (de runner waarschuwt bij een andere checksum). `db/migraties/baseline/` bevat oude migraties die al in `schema_latest.sql` zitten; die draait de runner niet. Views zoals `vw_gebied_kaart_basis` gebruiken herkenbare aliassen — geen alias waarbij de tabelnaam niet herkenbaar terugkomt. SQLAlchemy uses a large connection pool (`pool_size=20, max_overflow=20`) for concurrent map layer queries. Let op water-buurt filtering (watergebieden worden uitgesloten van statistiek).
+Schema is in `db/schema/schema_latest.sql`. Key tables: `gebieden` (areas/buurten), `indicatoren` (metrics), `gebied_data` (measurements), `kompas_titels` / `kompas_themas` / `kompas_onderdelen` / `kompas_indicator_mapping` (thematic hierarchy, samengevoegd in view `v_kompas_hierarchie`). In Docker laadt `db-init` bij een lege database dit schema plus `db/schema/06_pg_featureserv_views.sql` en `07_postgisftw_functions.sql`; daarna past de migratierunner (`python -m omnitwin.migraties`, `src/omnitwin/migraties.py`) de migraties uit `db/migraties/` toe die nog niet in tabel `schema_migraties` staan, ook op een bestaande database. Bij elke start werkt hij de rollen en het schema `api` bij (`db/migraties/R__api_rollen.sql`, herhaalbaar). Stuurdata (seed, Kompas-indeling, indicatordefinities) staat in `db/stuurdata/`. **Schemawijziging:** nieuw bestand `db/migraties/V<nnn>__<naam>.sql` (volgend nummer, idempotent); een toegepaste migratie nooit aanpassen, ook niet een bestand dat hij met `\ir` inleest (de runner waarschuwt bij een andere checksum; V021 leest `db/schema/08_zscore_referentie.sql`, zie `db/README.md`). De runner neemt een advisory lock, dus twee runs tegelijk kan. `db/migraties/baseline/` bevat oude migraties die al in `schema_latest.sql` zitten; die draait de runner niet. Views zoals `vw_gebied_kaart_basis` gebruiken herkenbare aliassen — geen alias waarbij de tabelnaam niet herkenbaar terugkomt. SQLAlchemy uses a large connection pool (`pool_size=20, max_overflow=20`) for concurrent map layer queries. Let op water-buurt filtering (watergebieden worden uitgesloten van statistiek).
 
 ### Admin UI (React/TypeScript)
 Aparte codebase in `admin-panel/`, eigen build-stap nodig. API calls via relatieve paden, geproxied naar de backend op poort 8000.
