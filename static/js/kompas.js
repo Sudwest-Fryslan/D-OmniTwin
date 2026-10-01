@@ -245,6 +245,7 @@ class KompasVisualization {
         // Escape sluit de lijst en zet de focus terug op de trigger
         container.addEventListener('keydown', (e) => {
             if (e.key === 'Escape' && container.classList.contains('open')) {
+                e.preventDefault(); // niet ook een omringende dialoog sluiten
                 container.classList.remove('open');
                 trigger.setAttribute('aria-expanded', 'false');
                 trigger.focus();
@@ -750,7 +751,9 @@ class KompasVisualization {
                 y1: Math.max(0, d.y1 - p.depth) * k
             });
 
-            const t = self.g.transition().duration(750);
+            // Minder beweging (prefers-reduced-motion): direct naar de eindstand (#67)
+            const duur = window.A11y ? window.A11y.motionDuration(750) : 750;
+            const t = self.g.transition().duration(duur);
 
             // REFACTOR: CSS Scale removed. Geometry handles scaling now.
             // Reset transforms just in case
