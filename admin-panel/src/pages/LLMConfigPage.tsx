@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { llmAPI, systemPromptsAPI } from '../services/api';
-import { LLMConfig, SystemPrompt } from '../types';
+import { LLMApiType, LLMConfig, SystemPrompt } from '../types';
 
 export const LLMConfigPage: React.FC = () => {
-    const [config, setConfig] = useState<LLMConfig>({ api_url: '', model_name: '' });
+    const [config, setConfig] = useState<LLMConfig>({ api_url: '', model_name: '', api_type: 'ollama' });
     const [prompts, setPrompts] = useState<SystemPrompt[]>([]);
     const [availableModels, setAvailableModels] = useState<string[]>([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -20,7 +20,7 @@ export const LLMConfigPage: React.FC = () => {
                     llmAPI.getModels(),
                     systemPromptsAPI.getAll()
                 ]);
-                setConfig(configRes.data);
+                setConfig({ ...configRes.data, api_type: configRes.data.api_type || 'ollama' });
                 setAvailableModels(modelsRes.data.models);
                 setPrompts(promptsRes.data);
 
@@ -93,16 +93,34 @@ export const LLMConfigPage: React.FC = () => {
                     </div>
 
                     <div className="form-group mb-3">
-                        <label className="form-label" htmlFor="apiUrl">Ollama API URL</label>
+                        <label className="form-label" htmlFor="apiType">API-type</label>
+                        <select
+                            id="apiType"
+                            className="form-control"
+                            value={config.api_type}
+                            onChange={(e) => setConfig({ ...config, api_type: e.target.value as LLMApiType })}
+                        >
+                            <option value="ollama">Ollama</option>
+                            <option value="openai">OpenAI-compatibel</option>
+                        </select>
+                        <small className="text-secondary">
+                            Ollama gebruikt de eigen Ollama-API. OpenAI-compatibel werkt met Ollama <code>/v1</code>, vLLM,
+                            LM Studio of de LiteLLM-gateway (<code>http://llm-gateway:4000</code>). Een API-sleutel zet je
+                            als <code>LLM_API_KEY</code> in <code>.env</code>, niet hier.
+                        </small>
+                    </div>
+
+                    <div className="form-group mb-3">
+                        <label className="form-label" htmlFor="apiUrl">API URL</label>
                         <input
                             id="apiUrl"
                             type="text"
                             className="form-control"
                             value={config.api_url}
                             onChange={(e) => setConfig({ ...config, api_url: e.target.value })}
-                            placeholder="http://localhost:11434"
+                            placeholder={config.api_type === 'openai' ? 'http://llm-gateway:4000' : 'http://localhost:11434'}
                         />
-                        <small className="text-secondary">De basis URL van de Ollama server (bijv. localhost of een docker container).</small>
+                        <small className="text-secondary">De basis URL van de LLM-server (bijv. localhost of een docker container), zonder <code>/api</code> of <code>/v1</code>.</small>
                     </div>
 
                     <div className="form-group mb-4">
@@ -119,7 +137,8 @@ export const LLMConfigPage: React.FC = () => {
                             ))}
                         </select>
                         <small className="text-secondary">
-                            Beschikbare modellen worden automatisch ingeladen via <code>/api/tags</code> op de bovenstaande URL.
+                            Beschikbare modellen worden na opslaan ingeladen via{' '}
+                            <code>{config.api_type === 'openai' ? '/v1/models' : '/api/tags'}</code> op de bovenstaande URL.
                         </small>
                     </div>
 
@@ -149,6 +168,7 @@ export const LLMConfigPage: React.FC = () => {
 
                                 <textarea
                                     className="form-control mb-3"
+                                    aria-label={`Systeemprompt ${prompt.naam}`}
                                     rows={10}
                                     style={{ fontFamily: 'monospace', fontSize: '0.9rem' }}
                                     defaultValue={prompt.prompt_text}

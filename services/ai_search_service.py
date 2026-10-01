@@ -33,6 +33,8 @@ class AISearchService:
         Zoekt naar de meest relevante indicatoren op basis van een tekstquery.
         Gebruikt Cosine Similarity via pgvector.
         Prefereert menselijk gevalideerde beschrijvingen boven AI-gegenereerde.
+        Er wordt niet op ontologie_status gefilterd: ook concepten worden gevonden
+        (#139). Per resultaat staan ontologie_status en gevalideerd erbij.
         """
         if _model is None:
             return [{"error": "AI model niet geladen"}]
@@ -87,6 +89,7 @@ class AISearchService:
                 "thema_naam": thema_naam,
                 "onderdeel_naam": onderdeel_naam,
                 "ontologie_status": ontologie_status or "draft",
+                "gevalideerd": ontologie_status == "goedgekeurd_mens",
                 "eenheid": eenheid,
                 "score_type": score_type,
                 "score": round(score, 4)

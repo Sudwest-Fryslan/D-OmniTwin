@@ -245,6 +245,7 @@ class KompasVisualization {
         // Escape sluit de lijst en zet de focus terug op de trigger
         container.addEventListener('keydown', (e) => {
             if (e.key === 'Escape' && container.classList.contains('open')) {
+                e.preventDefault(); // niet ook een omringende dialoog sluiten
                 container.classList.remove('open');
                 trigger.setAttribute('aria-expanded', 'false');
                 trigger.focus();
@@ -750,7 +751,9 @@ class KompasVisualization {
                 y1: Math.max(0, d.y1 - p.depth) * k
             });
 
-            const t = self.g.transition().duration(750);
+            // Minder beweging (prefers-reduced-motion): direct naar de eindstand (#67)
+            const duur = window.A11y ? window.A11y.motionDuration(750) : 750;
+            const t = self.g.transition().duration(duur);
 
             // REFACTOR: CSS Scale removed. Geometry handles scaling now.
             // Reset transforms just in case
@@ -2434,12 +2437,22 @@ document.addEventListener('DOMContentLoaded', async function () {
         // Chat -> Kompas: Open Window
         window.EventBus.on('KOMPAS_OPEN_REQUESTED', () => {
             console.log('🧭 Chat sync: opening kompas window');
-            if (window.state && window.state.kompasWindow) {
+            if (typeof window.openKompasVenster === 'function') {
+                // Zelfde codepad als de knop "Open Kompas Venster": laadt ook de selectie (#79)
+                window.openKompasVenster();
+            } else if (window.state && window.state.kompasWindow) {
                 window.state.kompasWindow.open();
             } else {
                 // Fallback direct DOM
                 const win = document.getElementById('kompas-window');
                 if (win) win.style.display = 'block';
+            }
+            // Zelfde gedrag als de knop 'Open Kompas': toon de huidige kaartselectie
+            const ids = window.state?.selectedGebiedIds ? [...window.state.selectedGebiedIds] : [];
+            const configId = kompasViz.currentConfigId;
+            if (ids.length > 0 && configId) {
+                if (ids.length === 1) kompasViz.loadGebiedData(configId, ids[0]);
+                else kompasViz.loadMultiGebiedData(configId, ids);
             }
         });
 
