@@ -18,8 +18,9 @@ import pytest
 try:
     from playwright.sync_api import expect, sync_playwright
 
-    # Software-WebGL in de container is traag: ruimere standaardtimeout voor expect()
-    expect.set_options(timeout=15_000)
+    # Software-WebGL in de container is traag, op CI-runners zonder GPU nog trager:
+    # ruimere standaardtimeout voor expect(), instelbaar via E2E_EXPECT_TIMEOUT_MS.
+    expect.set_options(timeout=int(os.environ.get("E2E_EXPECT_TIMEOUT_MS", "15000")))
 except ImportError:  # CI-unit-job heeft geen Playwright: map dan niet verzamelen
     sync_playwright = None
     collect_ignore_glob = ["test_*.py"]
