@@ -6,11 +6,11 @@ Laadt de volledige Fryslân-dataset (931 CBS-buurten 2024 + indicatorwaarden)
 in een bestaande database, bijvoorbeeld de database die `db-init` aanmaakt.
 
 Gebruik:
-    python init_data/scripts/seed_fryslan.py [--stap alle|buurten|indicatoren|kompas|waarden]
+    python init_data/scripts/seed_fryslan.py [--stap alle|buurten|indicatoren|kompas|waarden|cbs]
                                              [--max-fouten-pct 1.0]
 
 In de Docker-installatie:
-    docker compose exec backend python init_data/scripts/seed_fryslan.py --stap alle
+    docker compose run --rm db-init python init_data/scripts/seed_fryslan.py --stap alle
 
 Vereisten:
     Schema geladen (db-init of init_data/schema/schema_latest.sql).
@@ -22,7 +22,8 @@ Volgorde:
     2. indicatoren → indicatoren (seed JSON); bestaande indicatoren met dezelfde naam
                      (bijvoorbeeld uit de sample) worden aangevuld, niet gedupliceerd
     3. kompas      → kompas_* tabellen (hiërarchie CSV)
-    4. waarden     → gebied_data (indicatorwaarden CSV); alleen voor gebieden in de database
+    4. waarden     → gebied_data (indicatorwaarden CSV, RIVM); alleen voor gebieden in de database
+    5. cbs         → gebied_data (CBS Kerncijfers 2019-nu uit init_data/cbs, via laad_cbs.py)
 
 Idempotent: opnieuw draaien werkt bestaande rijen bij en maakt geen duplicaten.
 Het script maakt geen gebruikers of API-keys aan (daarvoor: create_admin.py).
@@ -517,11 +518,22 @@ def import_waarden(conn, res):
 # ─────────────────────────────────────────────────────────
 # Main
 # ─────────────────────────────────────────────────────────
+def import_cbs(conn, res):
+    """CBS Kerncijfers 2019-nu (init_data/cbs, alle jaargangen) voor alle gebieden in de database."""
+    print("
+📈 STAP 5: CBS Kerncijfers (alle jaargangen)")
+    print("-" * 50)
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+    import laad_cbs
+    res.ok += laad_cbs.laad(conn)
+
+
 STAPPEN = [
     ("buurten", import_buurten),
     ("indicatoren", import_indicatoren),
     ("kompas", import_kompas),
     ("waarden", import_waarden),
+    ("cbs", import_cbs),
 ]
 
 

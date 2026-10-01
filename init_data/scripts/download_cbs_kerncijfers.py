@@ -161,6 +161,11 @@ MAPPING = {
     "Afstand tot school": _reeks("AfstandTotSchool", 108, 109, 109, 109, 118, 113, 113, 114),
 }
 
+# Jaren waarin CBS een variabele niet (meer) publiceert; de unittest eist dat MAPPING + dit = alle jaren.
+NIET_GEPUBLICEERD = {
+    "Huishoudens met laag inkomen": {2024, 2025, 2026},  # vervallen in de Kerncijfers na 2023
+}
+
 VELDEN = ["gebied_id", "indicator_uuid", "indicator_naam", "waarde", "jaar", "bron", "kwaliteit",
           "eenheid", "categorie", "interpretatie_logica", "scenario_id", "bron_tabel"]
 
