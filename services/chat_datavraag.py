@@ -18,6 +18,7 @@ De herkenning (stap 1-3, behalve AI-zoeken) en de opbouw van de feiten zijn zuiv
 zonder database of model te testen (tests/test_chat_datavraag.py).
 """
 
+import json
 import re
 import unicodedata
 from dataclasses import dataclass, field
@@ -579,23 +580,45 @@ def controleer_getallen(antwoord: str, feiten: Sequence[Dict[str, Any]], vraag: 
 
 # ── 5. Prompt ────────────────────────────────────────────────────────────────
 
-SYSTEEMPROMPT = """Je bent de D-Omni Assistent. Je beantwoordt een vraag over gebieden met UITSLUITEND de gegevens die je krijgt.
+SYSTEEMPROMPT = """Je bent de D-Omni Assistent. Je beantwoordt een vraag over buurten met UITSLUITEND de cijfers uit het JSON-blok in het bericht.
 
 Regels:
-- Gebruik alleen getallen die letterlijk in de gegevens staan. Reken niet, tel niet op, schat niet en verzin niets.
-- Noem bij een getal het gebied. Noem per indicator één keer de bron en het jaar.
-- Volg de richting bij elke indicator. Een waarde met 'gunstigst' is de beste, met 'ongunstigst' de slechtste; noem een gunstige waarde nooit slecht en een ongunstige nooit goed. Bij 'geen oordeel' zeg je niet of iets goed of slecht is.
-- Beantwoord precies de vraag. Staat het gevraagde niet in de gegevens, zeg dat eerlijk.
-- Staat er 'demowaarde' bij een waarde, zeg dan kort dat het om demodata gaat.
-- Schrijf in het Nederlands, kort (maximaal 100 woorden), in gewone zinnen. Geen kopjes, geen opsomming, geen begroeting."""
+1. Gebruik alleen getallen die in het JSON-blok staan. Reken niet, schat niet, verzin niets.
+2. Noem de buurten bij naam. Noem per indicator één keer de bron en het jaar.
+3. Volg de richting per indicator. 'gunstigst' is de beste waarde, 'ongunstigst' de slechtste. Noem een gunstige waarde nooit slecht. Bij 'geen oordeel' zeg je niet of iets goed of slecht is.
+4. Vraagt iemand naar de hoogste of laagste, noem dan ook het andere uiterste.
+5. Staat het gevraagde niet in de cijfers, zeg dat eerlijk.
+6. Is een waarde een demowaarde, zeg kort dat het demodata is.
+7. Antwoord in het Nederlands, in maximaal 4 zinnen. Gewone tekst: geen kopjes, geen opsomming, geen begroeting, geen JSON."""
+
+
+def feiten_als_json(feiten: Sequence[Dict[str, Any]]) -> str:
+    """De cijfers voor het taalmodel als JSON: per indicator de bron, jaar, richting en waarden."""
+    blok = []
+    for f in feiten:
+        blok.append({
+            "indicator": f["indicator"],
+            "bron": f["bron"],
+            "jaar": f["jaren"],
+            "richting": RICHTING_UITLEG[f["richting"]],
+            "aantal_gebieden": f["aantal_gebieden"],
+            "waarden": [
+                {"gebied": w["gebied"], "waarde": _waarde_tekst(w, f["eenheid"]),
+                 **({"jaar": w["jaar"]} if len(f["jaren"]) > 1 and w.get("jaar") else {}),
+                 **({"kenmerk": ", ".join(w["labels"])} if w["labels"] else {}),
+                 **({"demowaarde": True} if w["demo"] else {})}
+                for w in f["waarden"]
+            ],
+        })
+    return json.dumps(blok, ensure_ascii=False, indent=1)
 
 
 def gebruikersprompt(vraag: str, feiten: Sequence[Dict[str, Any]], herkend: Sequence[str]) -> str:
     gebieden = ", ".join(herkend) if herkend else "geen specifiek gebied genoemd"
-    return (f"Vraag: \"{vraag}\"\n"
+    return (f"Vraag: {vraag}\n"
             f"Herkende gebieden: {gebieden}\n\n"
-            f"Gegevens (meest recente jaar per gebied):\n\n{feiten_als_tekst(feiten)}\n\n"
-            "Beantwoord de vraag met alleen deze gegevens.")
+            f"Cijfers (meest recente jaar per gebied):\n{feiten_als_json(feiten)}\n\n"
+            "Beantwoord de vraag in maximaal 4 zinnen. Gebruik alleen deze getallen en noem de buurten bij naam.")
 
 
 def strip_denken(tekst: str) -> str:

@@ -260,6 +260,17 @@ def test_feiten_als_tekst_bevat_alle_getallen_en_de_richting():
     assert "lager is beter: een hoge waarde is ongunstig" in tekst and "demowaarde" in tekst
 
 
+def test_prompt_bevat_cijfers_als_json():
+    import json
+    feiten = dv.bouw_feiten([KOEL], WAARDEN, NAMEN, BOLSWARD)
+    prompt = dv.gebruikersprompt("Welke buurt ligt het verst van een koele plek?", feiten, ["Bolsward"])
+    blok = json.loads(prompt[prompt.index("["):prompt.rindex("]") + 1])
+    assert [w["waarde"] for w in blok[0]["waarden"]] == ["246", "226", "206"]
+    assert blok[0]["richting"].startswith("lager is beter")
+    assert blok[0]["waarden"][1]["demowaarde"] is True
+    assert "maximaal 4 zinnen" in prompt
+
+
 def test_vaste_tekst_is_gegrond():
     feiten = dv.bouw_feiten([KOEL], WAARDEN, NAMEN, BOLSWARD)
     assert dv.controleer_getallen(dv.vaste_tekst(feiten), feiten) == []
