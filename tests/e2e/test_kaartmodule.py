@@ -5,6 +5,8 @@ Afwijking van de testdata: de sample dataset bevat geen Makkum. Waar de testcase
 Makkum noemt, gebruiken we Workum/Koudum/Hindeloopen (ook IJsselmeerkust).
 """
 
+import time
+
 import pytest
 from playwright.sync_api import expect
 
@@ -45,7 +47,7 @@ def test_tc_01_001_gebiedsselectie(app_page):
     expect(page.locator("#gebied-details")).to_contain_text("Koudum")
 
     # 5. Deselecteren via de badge → kaart neutraal
-    badge.get_by_text("✕", exact=True).click()  # midden van de badge is de knop "3D Panden"
+    badge.get_by_role("button", name="Selectie wissen").click()
     wacht_op_selectie(page, [])
     expect(badge).to_be_hidden()
     assert not selectie_overlay_aanwezig(page)
@@ -93,7 +95,7 @@ def test_tc_01_002a_meervoudige_klikselectie(app_page):
     expect(page.locator("#kompas-info")).to_contain_text("Gemiddelde van 2 gebieden")
 
     # 7. Hele selectie wissen
-    badge.get_by_text("✕", exact=True).click()  # midden van de badge is de knop "3D Panden"
+    badge.get_by_role("button", name="Selectie wissen").click()
     wacht_op_selectie(page, [])
     expect(badge).to_be_hidden()
     assert not selectie_overlay_aanwezig(page)
@@ -197,3 +199,117 @@ def test_kaart_canvas_exporteerbaar(app_page, tmp_path):
     pad = tmp_path / "kaart.png"
     dl.value.save_as(pad)
     assert pad.read_bytes()[:8] == b"\x89PNG\r\n\x1a\n"
+
+
+# ── #79 Kaart en selectie ────────────────────────────────────────────────────
+
+# Bounding box van alle geladen gebieden in schermcoördinaten, plus de camera.
+_BBOX_SCHERM_JS = """
+() => {
+  const s = window.state;
+  const vp = s.deckgl.getViewports()[0];
+  const xs = [], ys = [];
+  const plat = (a) => (typeof a[0] === 'number') ? (xs.push(a[0]), ys.push(a[1])) : a.forEach(plat);
+  s.currentData.features.forEach(f => plat(f.geometry.coordinates));
+  const hoeken = [[Math.min(...xs), Math.min(...ys)], [Math.max(...xs), Math.max(...ys)]].map(p => vp.project(p));
+  const v = s.currentViewState;
+  const kaart = document.getElementById('map').getBoundingClientRect();
+  const paneel = document.querySelector('.panel-container.open');
+  return {
+    links: paneel ? paneel.getBoundingClientRect().right - kaart.left : 0,
+    x0: Math.min(hoeken[0][0], hoeken[1][0]), x1: Math.max(hoeken[0][0], hoeken[1][0]),
+    y0: Math.min(hoeken[0][1], hoeken[1][1]), y1: Math.max(hoeken[0][1], hoeken[1][1]),
+    breedte: vp.width, hoogte: vp.height,
+    camera: [v.longitude, v.latitude, v.zoom],
+  };
+}
+"""
+
+
+def _camera_in_rust(page, timeout: float = 15.0):
+    """Schermpositie van de gebieden zodra de camera stilstaat (fly-to klaar)."""
+    # Software-WebGL kan frames honderden ms laten haperen: eis 1,5 s stilstand
+    eind = time.monotonic() + timeout
+    vorige, stil = None, 0
+    while time.monotonic() < eind:
+        nu = page.evaluate(_BBOX_SCHERM_JS)
+        if vorige and all(abs(a - b) < 1e-6 for a, b in zip(nu["camera"], vorige["camera"])):
+            stil += 1
+            if stil >= 3:
+                return nu
+        else:
+            stil = 0
+        vorige = nu
+        page.wait_for_timeout(500)
+    raise AssertionError(f"camera kwam niet tot rust: {vorige}")
+
+
+def test_kaart_zoomt_in_op_geladen_gebieden(app_page):
+    """#79: na het laden zoomt de kaart in op de gebieden (fitBounds via viewState),
+    helemaal zichtbaar naast het geopende linkerpaneel."""
+    page = app_page
+    start = page.evaluate("() => ({ ...window.state.currentViewState })")
+    laad_buurtenkaart(page)
+    page.wait_for_function(
+        "(z) => window.state.currentViewState.zoom > z + 1", arg=start["zoom"], timeout=15_000
+    )
+    b = _camera_in_rust(page)
+
+    assert b["camera"][2] > start["zoom"] + 1, f"niet ingezoomd: {b['camera']} (start {start})"
+    links = b["links"]
+    assert b["x0"] >= links - 5 and b["x1"] <= b["breedte"] + 5, f"buiten beeld horizontaal: {b}, paneel tot {links}"
+    assert b["y0"] >= -5 and b["y1"] <= b["hoogte"] + 5, f"buiten beeld verticaal: {b}"
+    # Gebieden vullen een behoorlijk deel van de vrije ruimte (echt ingezoomd, niet alleen verschoven)
+    assert (b["x1"] - b["x0"]) > 0.4 * (b["breedte"] - links) or (b["y1"] - b["y0"]) > 0.4 * b["hoogte"], b
+
+    # Nogmaals 'Toon op kaart' met hetzelfde gebiedstype: camera blijft staan
+    zoom_kaart(page, 300)
+    voor = _camera_in_rust(page)["camera"]
+    with page.expect_response(lambda r: "/api/gebiedsmonitor/kaart_data/" in r.url and r.ok):
+        page.locator("#toon-kaart-btn").click()
+    page.wait_for_timeout(1500)
+    na = _camera_in_rust(page)["camera"]
+    assert na == pytest.approx(voor), f"camera verspringt bij herladen: {voor} → {na}"
+
+
+def test_selectiebadge_knoppen(app_page):
+    """#79: de selectiebadge heeft de naam als label en twee losse knoppen,
+    '3D-panden' (toggle) en 'Selectie wissen'. Klikken op de naam doet niets;
+    wissen werkt ook met het toetsenbord."""
+    page = app_page
+    laad_buurtenkaart(page)
+    selecteer_buurt_via_app(page, WORKUM)
+    wacht_op_selectie(page, [WORKUM])
+
+    badge = page.locator("#selection-badge")
+    expect(badge).to_be_visible()
+    naam = badge.locator("#selection-badge-naam")
+    expect(naam).to_have_text("Workum")
+    panden = badge.get_by_role("button", name="3D-panden")
+    wissen = badge.get_by_role("button", name="Selectie wissen")
+    expect(panden).to_have_attribute("aria-pressed", "false")
+    expect(wissen).to_be_visible()
+
+    # Label en knoppen overlappen niet; de wisknop staat rechts
+    b_naam, b_panden, b_wissen = (l.bounding_box() for l in (naam, panden, wissen))
+    assert b_naam["x"] + b_naam["width"] <= b_panden["x"] <= b_panden["x"] + b_panden["width"] <= b_wissen["x"]
+
+    # Klik op de naam: selectie blijft, geen 3D-panden
+    naam.click()
+    page.wait_for_timeout(500)
+    assert selectie(page) == [WORKUM]
+    assert page.evaluate("() => window.state.show3DBuildings") is False
+    expect(panden).to_have_attribute("aria-pressed", "false")
+
+    # Bijwerken van de badge (tweede gebied erbij) houdt dezelfde knoppen
+    selecteer_buurt_via_app(page, KOUDUM, shift=True)
+    wacht_op_selectie(page, [WORKUM, KOUDUM])
+    expect(naam).to_contain_text("2 gebieden geselecteerd")
+    expect(panden).to_be_visible()
+
+    # Wissen via het toetsenbord
+    wissen.focus()
+    page.keyboard.press("Enter")
+    wacht_op_selectie(page, [])
+    expect(badge).to_be_hidden()
+    assert page.console_fouten == [], "\n".join(page.console_fouten)
