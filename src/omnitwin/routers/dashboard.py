@@ -5,12 +5,6 @@ from sqlalchemy import text
 from typing import List, Optional, Dict, Any
 from pydantic import BaseModel
 from omnitwin.database import get_db
-import os
-from dotenv import load_dotenv
-
-# Load environment variables
-load_dotenv()
-
 from omnitwin.routers.auth import vereis_admin
 
 # Alle routes in deze router vereisen een beheerder (#65)

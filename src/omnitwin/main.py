@@ -7,18 +7,13 @@ from fastapi.responses import HTMLResponse
 from fastapi.openapi.docs import get_swagger_ui_html # Local Swagger UI
 from sqlalchemy.orm import Session
 from sqlalchemy import text
+from omnitwin.config import CORS_ALLOW_HEADERS, instellingen
 from omnitwin.database import get_db, engine
-from dotenv import load_dotenv
-from pathlib import Path
 import os
 import time
 
 from omnitwin.services.logging_service import AppLogger, init_logging, shutdown_logging
 from omnitwin.services.log_cleanup_service import start_cleanup_scheduler, stop_cleanup_scheduler
-
-# Load environment variables
-project_root = Path(__file__).resolve().parents[2]  # root van de repository (src/omnitwin/main.py)
-load_dotenv(project_root / '.env')
 
 # Import routers
 from omnitwin.routers import gebiedsmonitor, kompas, admin, dashboard, visualisatie
@@ -141,23 +136,16 @@ app.add_middleware(RequestLoggingMiddleware)
 # ============================================================================
 # SECURITY: CORS Lockdown
 # ============================================================================
-# Get allowed origins from environment (comma-separated)
-cors_origins_str = os.getenv('CORS_ORIGINS', 'http://localhost:8000')
-cors_origins = [origin.strip() for origin in cors_origins_str.split(',')]
-
-# In debug mode, also allow common dev origins
-if os.getenv('DEBUG', 'false').lower() == 'true':
-    dev_origins = ['http://localhost:8000', 'http://127.0.0.1:8000', 'http://localhost:3000']
-    cors_origins.extend([o for o in dev_origins if o not in cors_origins])
+# Alleen de origins uit CORS_ORIGINS (kommagescheiden). De eigen site en de
+# Vite-devserver (proxy) hebben geen CORS nodig; geen wildcards (#203).
+cors_origins = list(instellingen().cors_origins)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=cors_origins,  # 🔒 LOCKED DOWN (was: ["*"])
-    # In debug mode: accepteer ngrok/tunnel origins automatisch
-    allow_origin_regex=r"https://.*\.ngrok-free\.dev" if os.getenv('DEBUG', 'false').lower() == 'true' else None,
+    allow_origins=cors_origins,
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allow_headers=["Content-Type", "Authorization", "X-API-Key"],
+    allow_headers=list(CORS_ALLOW_HEADERS),
 )
 
 # Mount static files
@@ -166,11 +154,6 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 # Setup templates
 templates = Jinja2Templates(directory="templates")
 templates.env.globals["app_version"] = __version__
-
-# ============================================================================
-# App Configuration (from environment)
-# ============================================================================
-debug_mode = os.getenv('DEBUG', 'false').lower() == 'true'
 
 # Register routers
 app.include_router(gebiedsmonitor.router)
@@ -206,7 +189,7 @@ async def startup_event():
         AppLogger.info("Gebiedsmonitor API registered at /api/gebiedsmonitor", category="SERVER")
         AppLogger.info("Kompas API registered at /api/kompas", category="SERVER")
         AppLogger.info(f"CORS origins: {cors_origins}", category="SERVER")
-        AppLogger.info(f"Debug mode: {debug_mode}", category="SERVER")
+        AppLogger.info(f"Cookie Secure: {instellingen().cookie_secure}", category="SERVER")
         AppLogger.info("Security headers middleware active", category="SERVER")
         AppLogger.info("Request logging middleware active", category="SERVER")
         AppLogger.info("Frontend available at http://localhost:8000/", category="SERVER")

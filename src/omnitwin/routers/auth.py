@@ -22,8 +22,8 @@ from pydantic import BaseModel
 import hashlib
 import secrets
 import datetime
-import os
 
+from omnitwin.config import instellingen
 from omnitwin.services.logging_service import AppLogger
 
 router = APIRouter(prefix="/api/admin/auth", tags=["Auth"])
@@ -81,8 +81,17 @@ def is_placeholder_key(key: str | None) -> bool:
 
 def geldige_admin_api_key() -> str | None:
     """ADMIN_API_KEY uit de omgeving, of None als die leeg of een placeholder is."""
-    key = os.getenv("ADMIN_API_KEY", "").strip()
+    key = instellingen().admin_api_key
     return None if is_placeholder_key(key) else key
+
+def cookie_secure(request: Request) -> bool:
+    """Krijgt het sessiecookie `Secure`? COOKIE_SECURE=true/false, of auto (standaard):
+    alleen als het verzoek via HTTPS binnenkomt, direct of via de proxy (X-Forwarded-Proto)."""
+    instelling = instellingen().cookie_secure
+    if instelling != "auto":
+        return instelling == "true"
+    proto = request.headers.get("x-forwarded-proto", "").split(",")[0].strip().lower()
+    return (proto or request.url.scheme) == "https"
 
 def ruim_verlopen_sessies_op(db: Session) -> None:
     db.execute(text("DELETE FROM sessions WHERE expires_at <= NOW()"))
@@ -131,6 +140,7 @@ check_auth_or_key = huidige_gebruiker
 # ============================================================================
 @router.post("/login")
 async def login(
+    request: Request,
     response: Response,
     form_data: OAuth2PasswordRequestForm = Depends(),
     db: Session = Depends(get_db)
@@ -172,7 +182,7 @@ async def login(
         httponly=True,
         max_age=int(SESSIE_DUUR.total_seconds()),
         samesite="lax", # Goed voor zelfde domein protectie tegen CSRF
-        secure=os.getenv("DEBUG", "false").lower() != "true" # True on prod (HTTPS)
+        secure=cookie_secure(request),  # COOKIE_SECURE (auto: alleen via HTTPS)
     )
 
     AppLogger.info(f"Login geslaagd: gebruiker '{user[1]}'", category="AUTH", user_id=str(user[0]))

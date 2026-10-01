@@ -8,15 +8,10 @@ from sqlalchemy import text
 from typing import Optional, List, Literal
 from pydantic import BaseModel, UUID4
 from omnitwin.database import get_db
-import os
-from dotenv import load_dotenv
 import json
 import logging
 
 logger = logging.getLogger(__name__)
-
-# Load environment variables
-load_dotenv()
 
 from omnitwin.routers.auth import vereis_admin
 

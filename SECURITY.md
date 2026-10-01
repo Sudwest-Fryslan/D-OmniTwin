@@ -38,7 +38,7 @@ Buiten scope:
 
 - kwetsbaarheden in afhankelijkheden van derden (zoals PostgreSQL, PostgREST, pg_featureserv, Traefik, Ollama) — meld die bij het betreffende project; laat het ons wel weten als D-OmniTwin ze op een onveilige manier gebruikt;
 - installaties van D-OmniTwin die door andere organisaties worden beheerd — meld die bij de beheerder van die installatie;
-- de lokale ontwikkelconfiguratie (zoals het Traefik-dashboard op poort 8081 en `DEBUG=true`), die niet bedoeld is voor productie.
+- de lokale ontwikkelconfiguratie (zoals het Traefik-dashboard op poort 8081), die niet bedoeld is voor productie.
 
 ## Ondersteunde versies
 

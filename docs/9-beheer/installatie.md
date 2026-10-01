@@ -57,14 +57,15 @@ De tabel volgt de volgorde van `.env.example`. Optionele regels staan daar als c
 | `DATABASE_PASSWORD` | **Verplicht.** Het gegenereerde wachtwoord. Wijzig het niet meer na de eerste start: het geldt alleen bij het aanmaken van de database. |
 | `ADMIN_PASSWORD` | Aanbevolen. Wachtwoord van het eerste beheeraccount. Leeg: er wordt eenmalig een wachtwoord gegenereerd (zie [2.4](#24-eerste-keer-inloggen)). |
 | `COMPOSE_FILE` | Staat op `docker-compose.yml`: alleen de installatie-instellingen. Laat staan. Ontwikkelaars halen de regel weg (zie [Ontwikkelmodus](#3-ontwikkelmodus)). Extra compose-bestanden voeg je hier toe, gescheiden door `:` (Windows: `;`), zie [Eigen logo](#eigen-logo) en [HTTPS aanzetten](#https-aanzetten). |
-| `DEBUG` | `true` zolang je zonder HTTPS draait, anders werkt inloggen in de browser niet. Met HTTPS: `false` (zie [Beveiliging](#beveiliging)). |
 | `OMNITWIN_HTTP_PORT` | Optioneel. Poort op de host, standaard `80`. |
 | `LOAD_SAMPLE_DATA` | Optioneel, standaard `true`: de use cases laden bij de eerste start. `false`: alleen het product zonder data. Zie [Data](#4-data). |
 | `LOG_LEVEL` | Optioneel, standaard `INFO`. |
 | `ADMIN_USER` | Optioneel. Naam van het eerste beheeraccount, standaard `admin`. |
 | `ADMIN_API_KEY` | Optioneel, alleen voor scripts: wie deze waarde in de header `X-Admin-Key` meestuurt, heeft beheerrechten. Minimaal 32 tekens (`openssl rand -hex 32`). Leeg of een voorbeeldwaarde: de header werkt niet. De beheeromgeving gebruikt hem niet; die werkt met inloggen. |
 | `COMPOSE_PROJECT_NAME` | Optioneel. Alleen nodig voor meerdere installaties op één machine (zie [Problemen oplossen](#8-problemen-oplossen)). |
-| `CORS_ORIGINS` | Optioneel. Alleen nodig als andere websites de API aanroepen. De app zelf draait op hetzelfde adres. |
+| `CORS_ORIGINS` | Optioneel. Alleen nodig als andere websites de API aanroepen: een kommagescheiden lijst met volledige adressen, geen wildcards. De app zelf draait op hetzelfde adres. |
+| `COOKIE_SECURE` | Optioneel, standaard `auto`: het inlogcookie krijgt `Secure` (alleen via HTTPS) als de verbinding HTTPS is. Achter een eigen TLS-proxy die over HTTP naar de stack doorstuurt: `true` (zie [HTTPS aanzetten](#https-aanzetten)). |
+| `LLM_RATE_LIMIT` | Optioneel, standaard `60`: zoveel verzoeken per minuut per IP-adres op de chat en de AI-teksten; daarboven `429`. `0` = geen limiet. |
 | `OLLAMA_HOST`, `OLLAMA_MODEL`, `LLM_THINK`, `LLM_REASONING_EFFORT` | Optioneel, lokale AI. Zie [LLM](#7-llm-optioneel). |
 | `LITELLM_MASTER_KEY`, `LLM_API_KEY`, `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `GEMINI_API_KEY` | Optioneel, alleen met de LiteLLM-gateway. Zie [Andere aanbieders](#andere-aanbieders-via-de-litellm-gateway). |
 | `DATABASE_NAME`, `DATABASE_USER` | Optioneel, standaard `omnitwin_db` en `omnitwin_user`. Wijzig ze alleen vóór de eerste start. |
@@ -399,7 +400,7 @@ Een gratis Gemini-sleutel (met lage limieten) maak je aan op [aistudio.google.co
 | `db-init` meldt "De database is half geïnitialiseerd" | Een eerdere eerste start is halverwege gestopt; de oorzaak staat in de log van die run. Nieuwe installatie: `docker compose down -v` en `docker compose up -d --build`. Bestaande installatie waar alleen de beheerder ontbreekt: `docker compose run --rm db-init python /app/init_data/scripts/create_admin.py` en daarna `docker compose up -d`. De melding zelf geeft dezelfde stappen. |
 | `backend` wordt niet *healthy* | `docker compose logs backend`. De backend heeft bij de start tot een minuut nodig. Blijft hij *unhealthy*, controleer de databaseverbinding en `.env`. |
 | Kaart laadt geen buurten | Controleer `http://<host>/api/geo/collections`. Leeg of fout: kijk in `docker compose logs pg_featureserv`. Na een restore of handmatige schemawijziging: `docker compose restart pg_featureserv postgrest`. |
-| Inloggen lukt, maar je blijft op het inlogscherm | Het sessiecookie wordt zonder HTTPS alleen verstuurd als `DEBUG=true`. Zet `DEBUG=true` of zet HTTPS ervoor (zie [Beveiliging](#beveiliging)), en draai `docker compose up -d`. |
+| Inloggen lukt, maar je blijft op het inlogscherm | Het sessiecookie heeft `Secure` en de verbinding is HTTP. Staat `COOKIE_SECURE=true` in `.env` zonder HTTPS ervoor? Zet het op `auto` (standaard) en draai `docker compose up -d`. |
 | `function similarity(...) does not exist` of ontbrekende tabel `deduplicatie_uitzonderingen` | Oudere database zonder migraties V018/V019. Zie [Bijwerken](#5-bijwerken). |
 | Geüploade kaartlaag geeft "Lokaal bestand niet gevonden" | Het bestand is weg, bijvoorbeeld na een update vanaf een versie zonder volume `uploads`. Zet het terug uit de backup (zie [Bijwerken](#5-bijwerken)) of upload het opnieuw. |
 | Wijziging in `.env` heeft geen effect | `docker compose up -d` (niet `restart`): alleen dan worden containers met de nieuwe waarden opnieuw gemaakt. |
@@ -416,7 +417,7 @@ Een gratis Gemini-sleutel (met lage limieten) maak je aan op [aistudio.google.co
 
 Stel een installatie **niet** open voor internet of een breed netwerk voordat deze punten geregeld zijn:
 
-- **HTTPS.** Traefik luistert in de standaardopzet alleen op HTTP. Zet HTTPS aan (zie [HTTPS aanzetten](#https-aanzetten)) en zet dan `DEBUG=false`. Met `DEBUG=false` stuurt de browser het inlogcookie alleen via HTTPS (behalve op `localhost`).
+- **HTTPS.** Traefik luistert in de standaardopzet alleen op HTTP. Zet HTTPS aan (zie [HTTPS aanzetten](#https-aanzetten)). Het inlogcookie krijgt dan `Secure`, zodat de browser het alleen via HTTPS stuurt: bij manier B vanzelf (`COOKIE_SECURE=auto`), bij manier A met `COOKIE_SECURE=true`.
 - **Begrenzing van anonieme verzoeken.** De stack heeft geen rate limit op inloggen en op de AI-routes (zie hieronder). Zet die in de proxy ervoor, zeker bij een externe (betaalde) LLM-aanbieder.
 - **`.env` geheim houden.** Het bevat het databasewachtwoord en eventueel de `ADMIN_API_KEY` en sleutels van LLM-aanbieders.
 
@@ -469,7 +470,7 @@ Kwetsbaarheden melden: zie [`SECURITY.md`](../../SECURITY.md).
 
 HTTPS en HSTS zijn verplicht volgens de [Forum Standaardisatie](https://www.forumstandaardisatie.nl/open-standaarden/verplicht). Kies één manier:
 
-**A. Achter de TLS-proxy van je organisatie (aanbevolen).** De proxy of WAF handelt het certificaat af en stuurt door naar `http://<host>:<OMNITWIN_HTTP_PORT>`. Laat de stack zoals hij is en zet `DEBUG=false`. De proxy moet zelf HSTS sturen (`Strict-Transport-Security: max-age=31536000`) en HTTP doorsturen naar HTTPS; Traefik ziet alleen HTTP en zet die header dan niet.
+**A. Achter de TLS-proxy van je organisatie (aanbevolen).** De proxy of WAF handelt het certificaat af en stuurt door naar `http://<host>:<OMNITWIN_HTTP_PORT>`. Laat de stack zoals hij is en zet `COOKIE_SECURE=true` (Traefik ziet alleen HTTP, dus `auto` herkent de HTTPS-verbinding niet). De proxy moet zelf HSTS sturen (`Strict-Transport-Security: max-age=31536000`) en HTTP doorsturen naar HTTPS; Traefik ziet alleen HTTP en zet die header dan niet.
 
 **B. Traefik zelf met Let's Encrypt.** Voor een server die direct bereikbaar is, met een DNS-naam en poort 80 en 443 open. Gebruik het voorbeeld [`deploy/traefik/tls.example.yml`](../../deploy/traefik/tls.example.yml). Zet in `.env`:
 
@@ -477,7 +478,6 @@ HTTPS en HSTS zijn verplicht volgens de [Forum Standaardisatie](https://www.foru
 COMPOSE_FILE=docker-compose.yml:deploy/traefik/tls.example.yml   # Windows: ; in plaats van :
 OMNITWIN_DOMAIN=omnitwin.example.nl
 ACME_EMAIL=beheer@example.nl     # functioneel adres voor meldingen van Let's Encrypt
-DEBUG=false
 ```
 
 en draai `docker compose up -d`. HTTP gaat dan met een redirect naar HTTPS, en HSTS staat aan. `OMNITWIN_HTTP_PORT` moet hierbij `80` blijven. Een eigen certificaat in plaats van Let's Encrypt staat beschreven in de kop van het voorbeeldbestand.
@@ -505,7 +505,7 @@ Voeg je een kaartlaag of bibliotheek toe die rechtstreeks een andere server aanr
 
 ### Checklist vóór openstelling
 
-- HTTPS aan (manier A of B), `DEBUG=false`, en HSTS zichtbaar in de response-headers.
+- HTTPS aan (manier A of B), het inlogcookie met `Secure` (manier A: `COOKIE_SECURE=true`), en HSTS zichtbaar in de response-headers.
 - Een rate limit in de proxy op inloggen (`/api/admin/auth/login`) en op de AI-routes (`/api/chat`, `/api/report/*narrative*`).
 - Het domein heeft DNSSEC en is via IPv6 bereikbaar (ook verplichte standaarden). Dat regel je bij je DNS- en hostingbeheer, niet in de stack.
 - `security.txt` verwijst naar het juiste meldpunt.

@@ -15,12 +15,12 @@ import asyncio
 import logging
 import logging.handlers
 import time
-import os
 from pathlib import Path
 from typing import Optional, Dict, Any
 from datetime import datetime
 
 from sqlalchemy import text
+from omnitwin.config import instellingen
 from omnitwin.database import SessionLocal
 
 # =============================================================================
@@ -341,7 +341,7 @@ class AppLogger:
 # =============================================================================
 async def init_logging():
     """Bootstrap logging stack. Aanroepen in FastAPI startup event."""
-    log_level = os.getenv("LOG_LEVEL", "INFO").upper()
+    log_level = instellingen().log_level
     _setup_python_logging(log_level)
     _config_cache.refresh()
     await _log_queue.start()

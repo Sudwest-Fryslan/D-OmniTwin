@@ -1,28 +1,12 @@
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
-import os
-from pathlib import Path
-from dotenv import load_dotenv
+from omnitwin.config import instellingen
 
-# Project root resolution
-project_root = Path(__file__).resolve().parents[2]  # root van de repository (src/omnitwin/database.py)
-
-# Load environment variables from .env file
-load_dotenv(project_root / '.env')
-
-# Get database config from environment
-db_host = os.getenv('DATABASE_HOST', 'localhost')
-db_port = os.getenv('DATABASE_PORT', '5432')
-db_name = os.getenv('DATABASE_NAME', 'omnitwin_db')
-db_user = os.getenv('DATABASE_USER', 'omnitwin_user')
-db_password = os.getenv('DATABASE_PASSWORD', '')
-db_ssl_mode = os.getenv('DATABASE_SSLMODE', 'prefer')  # 'require' for production, 'prefer' for dev
-
-# Construct Database URL with SSL support
+# Databaseverbinding uit de omgeving of .env (zie src/omnitwin/config.py).
 # Format: postgresql+psycopg2://user:password@host:port/dbname?sslmode=MODE
-# Driver expliciet: SQLAlchemy 2.1+ kiest anders standaard psycopg (v3)
-DATABASE_URL = f"postgresql+psycopg2://{db_user}:{db_password}@{db_host}:{db_port}/{db_name}?sslmode={db_ssl_mode}"
+# DATABASE_SSLMODE: 'require' for production, 'prefer' for dev
+DATABASE_URL = instellingen().database_url
 
 engine = create_engine(
     DATABASE_URL,
