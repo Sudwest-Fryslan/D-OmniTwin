@@ -153,4 +153,14 @@ def test_reduced_motion_camera_springt_en_kompas_zonder_transitie(app_page_reduc
             timeout=500,
         )
     except PlaywrightTimeoutError:
-        raise AssertionError("zonnediagram staat 500 ms na de klik nog niet op de eindstand") from None
+        afwijkend = page.evaluate(
+            """() => [...document.querySelectorAll('#kompas-container path.kompas-arc-path')]
+                  .map(p => p.__data__)
+                  .filter(d => d && d.target && window.kompasViz.arcVisible(d.target))
+                  .filter(d => ['x0', 'x1', 'y0', 'y1'].some(k => Math.abs(d.current[k] - d.target[k]) >= 1e-9))
+                  .map(d => ({naam: d.data.name, current: d.current, target: d.target}))"""
+        )
+        raise AssertionError(
+            f"zonnediagram staat 500 ms na de klik nog niet op de eindstand (thema {thema!r}); "
+            f"{len(afwijkend)} bogen wijken af, eerste: {afwijkend[:3]}"
+        ) from None
