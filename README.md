@@ -280,6 +280,18 @@ docker compose --profile llm-gateway up -d
 De gateway stuurt standaard door naar `OLLAMA_HOST`/`OLLAMA_MODEL`; fallbacks staan als voorbeeld in
 `deploy/litellm/config.yaml`. De gateway heeft geen poort op de host.
 
+Daarnaast kent de gateway de aliassen `d-omnitwin-ollama`, `d-omnitwin-claude`, `d-omnitwin-openai` en
+`d-omnitwin-gemini`. Wisselen en vergelijken:
+
+```bash
+docker compose exec backend python scripts/llm/kies_provider.py gemini   # ollama|claude|openai|gemini|direct-ollama
+python scripts/llm/vergelijk_providers.py --base-url http://localhost    # rapport in docs/testcases/llm-vergelijking/
+```
+
+Sleutels (`ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `GEMINI_API_KEY`) staan alleen in `.env`; leeg = niet beschikbaar.
+Met een externe aanbieder verlaten vragen en gebiedsdata de organisatie (AVG/IAMA). Zie de
+[installatiegids, §7](./docs/9-beheer/installatie.md#7-llm-optioneel).
+
 ---
 
 ## ✅ Recent Voltooid
