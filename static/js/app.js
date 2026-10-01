@@ -470,7 +470,7 @@ function initDeckGL() {
                     return {
                         html: `
                 <div style="font-family: Inter, sans-serif;">
-                  <strong>\u{1F310} ${featureNaam}</strong><br/>
+                  <strong>\u{1F310} ${escapeHtml(featureNaam)}</strong><br/>
                   <small style="opacity:0.5;">Klik om buurten te selecteren</small>
                 </div>
               `,
@@ -483,9 +483,9 @@ function initDeckGL() {
                     return {
                         html: `
                 <div style="font-family: Inter, sans-serif;">
-                  <strong>🗺️ ${props.deelgebied}</strong><br/>
-                  <small style="opacity:0.7;">${props.naam}</small><br/>
-                  Oppervlakte: <strong>${props.oppervlakte_km2} km²</strong><br/>
+                  <strong>🗺️ ${escapeHtml(props.deelgebied)}</strong><br/>
+                  <small style="opacity:0.7;">${escapeHtml(props.naam)}</small><br/>
+                  Oppervlakte: <strong>${escapeHtml(props.oppervlakte_km2)} km²</strong><br/>
                   <small style="opacity:0.5;">Klik om buurten te selecteren</small>
                 </div>
               `,
@@ -509,8 +509,8 @@ function initDeckGL() {
                         html: `
                 <div style="font-family: Inter, sans-serif;">
                   <strong>🏠 Pand</strong><br/>
-                  <small style="opacity:0.6;">${bagId}</small><br/>
-                  Bouwjaar: <strong>${bouwjaar}</strong><br/>
+                  <small style="opacity:0.6;">${escapeHtml(bagId)}</small><br/>
+                  Bouwjaar: <strong>${escapeHtml(bouwjaar)}</strong><br/>
                   Hoogte: <strong>${pandHoogte} m</strong> · Opp: <strong>${opp} m²</strong>
                   ${indicatorInfo}
                 </div>
@@ -528,9 +528,9 @@ function initDeckGL() {
                 return {
                     html: `
             <div style="font-family: Inter, sans-serif;">
-              <strong>${props.naam}</strong><br/>
-              ${props.indicator_naam ? `${props.indicator_naam}: ` : ''}<strong>${indicatorValue}</strong><br/>
-              <small>${props.jaar || 'Onbekend'}</small>
+              <strong>${escapeHtml(props.naam)}</strong><br/>
+              ${props.indicator_naam ? `${escapeHtml(props.indicator_naam)}: ` : ''}<strong>${escapeHtml(indicatorValue)}</strong><br/>
+              <small>${escapeHtml(props.jaar || 'Onbekend')}</small>
             </div>
           `,
                     style: tooltipStyle
@@ -2063,7 +2063,7 @@ function updateLegenda(geojson) {
             const step = colorRamp.length > 1 ? 100 / (colorRamp.length - 1) : 100;
             colorRamp.forEach((hexColor, i) => {
                 const offset = colorRamp.length > 1 ? i * step : 0;
-                stopsHtml += `<stop offset="${offset.toFixed(1)}%" style="stop-color:${hexColor};stop-opacity:1" />\n`;
+                stopsHtml += `<stop offset="${offset.toFixed(1)}%" style="stop-color:${escapeHtml(hexColor)};stop-opacity:1" />\n`;
             });
         } else {
             // Fallback naar de oude hardcoded blauw-geel-rood
@@ -2282,15 +2282,15 @@ function displayGebiedDetails(data) {
     let html = `
     <div class="detail-row">
       <span class="detail-label">ID:</span>
-      <span class="detail-value">${gebied.id}</span>
+      <span class="detail-value">${escapeHtml(gebied.id)}</span>
     </div>
     <div class="detail-row">
       <span class="detail-label">Naam:</span>
-      <span class="detail-value">${gebied.naam}</span>
+      <span class="detail-value">${escapeHtml(gebied.naam)}</span>
     </div>
     <div class="detail-row">
       <span class="detail-label">Type:</span>
-      <span class="detail-value">${gebied.gebiedstype.naam}</span>
+      <span class="detail-value">${escapeHtml(gebied.gebiedstype.naam)}</span>
     </div>
   `;
 
@@ -2299,8 +2299,8 @@ function displayGebiedDetails(data) {
         indicatoren.slice(0, 10).forEach(ind => {
             html += `
         <div class="detail-row">
-          <span class="detail-label">${ind.naam}:</span>
-          <span class="detail-value">${formatNumber(ind.waarde)} ${ind.eenheid || ''}</span>
+          <span class="detail-label">${escapeHtml(ind.naam)}:</span>
+          <span class="detail-value">${formatNumber(ind.waarde)} ${escapeHtml(ind.eenheid || '')}</span>
         </div>
       `;
         });
@@ -2346,7 +2346,7 @@ async function displayMultiGebiedComparison(lastClickedData) {
         <div style="margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid var(--color-border, rgba(255,255,255,0.1));">
             <strong style="font-size: 1rem;"><img src="/static/images/chart-bar.svg" alt="" style="width:18px; height:18px; vertical-align:-3px; filter: brightness(0) invert(1); margin-right: 4px;">Vergelijking: ${ids.length} gebieden</strong>
             <div style="font-size: 0.8rem; opacity: 0.7; margin-top: 4px;">
-                ${allData.map(d => d.gebied.naam).join(' · ')}
+                ${escapeHtml(allData.map(d => d.gebied.naam).join(' · '))}
             </div>
         </div>`;
 
@@ -2388,7 +2388,7 @@ async function displayMultiGebiedComparison(lastClickedData) {
                 html += `
                 <div style="margin-bottom: 14px;">
                     <div style="font-size: 0.8rem; font-weight: 600; margin-bottom: 4px; color: var(--color-text-primary, #e2e8f0);">
-                        ${ind.naam} <span style="opacity:0.5; font-weight:400;">(${ind.eenheid})</span>
+                        ${escapeHtml(ind.naam)} <span style="opacity:0.5; font-weight:400;">(${escapeHtml(ind.eenheid)})</span>
                     </div>`;
 
                 ind.waarden.forEach((w, idx) => {
@@ -2399,8 +2399,8 @@ async function displayMultiGebiedComparison(lastClickedData) {
 
                     html += `
                     <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 3px; font-size: 0.75rem;">
-                        <span style="width: 80px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; opacity: 0.8;" title="${w.gebiedNaam}">
-                            ${w.gebiedNaam.length > 12 ? w.gebiedNaam.slice(0, 11) + '…' : w.gebiedNaam}
+                        <span style="width: 80px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; opacity: 0.8;" title="${escapeHtml(w.gebiedNaam)}">
+                            ${escapeHtml(w.gebiedNaam.length > 12 ? w.gebiedNaam.slice(0, 11) + '…' : w.gebiedNaam)}
                         </span>
                         <div style="flex: 1; height: 16px; background: rgba(255,255,255,0.05); border-radius: 4px; overflow: hidden;">
                             <div style="width: ${pct}%; height: 100%; background: ${color}; border-radius: 4px; transition: width 0.3s;"></div>
@@ -2414,7 +2414,7 @@ async function displayMultiGebiedComparison(lastClickedData) {
                 // Gemiddelde lijn
                 html += `
                     <div style="font-size: 0.7rem; opacity: 0.5; text-align: right; margin-top: 2px;">
-                        Gem: ${formatNumber(gemiddelde)} ${ind.eenheid}
+                        Gem: ${formatNumber(gemiddelde)} ${escapeHtml(ind.eenheid)}
                     </div>
                 </div>`;
             });
@@ -2463,7 +2463,7 @@ function openRapportTypeModal(gebiedId, baseUrl) {
                     background: var(--action-fill, #2563eb); color: white;
                     font-size:0.95rem; font-weight:600; cursor:pointer; text-align:left;
                     box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
-                ">🏘️ Woonplaatsanalyse (${state.selectedDeelgebiedNaam})<br>
+                ">🏘️ Woonplaatsanalyse (${escapeHtml(state.selectedDeelgebiedNaam)})<br>
                     <span style="font-weight:400; font-size:0.8rem; opacity:0.9;">
                         Gewogen stadsbrede analyse per thema
                     </span>
@@ -2560,7 +2560,7 @@ function openMultiSelectRapportModal(ids, baseUrl) {
         ">
             <h3 style="margin:0 0 0.5rem; font-size:1rem;">Kies Rapport Type</h3>
             <p style="margin:0 0 1.25rem; font-size:0.85rem; opacity:0.6;">
-                ${ids.length} gebieden geselecteerd ${state.selectedDeelgebiedNaam ? `(${state.selectedDeelgebiedNaam})` : ''}
+                ${ids.length} gebieden geselecteerd ${state.selectedDeelgebiedNaam ? `(${escapeHtml(state.selectedDeelgebiedNaam)})` : ''}
             </p>
             <div style="display:flex; flex-direction:column; gap:0.75rem;">
                 <button id="rapport-modal-deelgebied" style="
@@ -2680,14 +2680,14 @@ function updateSelectionUI() {
             rapportBtn.disabled = true;
         } else if (count === 1) {
             const namen = getSelectedGebiedNamen();
-            rapportInfo.innerHTML = `<strong>Geselecteerd:</strong> ${namen[0]} (${state.selectedGebiedId})`;
+            rapportInfo.innerHTML = `<strong>Geselecteerd:</strong> ${escapeHtml(namen[0])} (${escapeHtml(state.selectedGebiedId)})`;
             rapportBtn.disabled = false;
         } else {
             const namen = getSelectedGebiedNamen();
             const namenTekst = namen.length <= 3
                 ? namen.join(', ')
                 : `${namen.slice(0, 3).join(', ')} (+${namen.length - 3})`;
-            rapportInfo.innerHTML = `<strong>Selectie (${count}):</strong> ${namenTekst}`;
+            rapportInfo.innerHTML = `<strong>Selectie (${count}):</strong> ${escapeHtml(namenTekst)}`;
             rapportBtn.disabled = false;
         }
     }
@@ -2742,7 +2742,7 @@ function updateSelectionUI() {
               </button>`
             : '';
 
-        badge.innerHTML = `<img src="/static/images/map-pin-plus.svg" alt="" style="width:18px; height:18px; filter: brightness(0) invert(1);"> ${badgeTekst} ${bag3dBtnHtml} <span style="opacity:0.7; font-size:12px;">✕</span>`;
+        badge.innerHTML = `<img src="/static/images/map-pin-plus.svg" alt="" style="width:18px; height:18px; filter: brightness(0) invert(1);"> ${escapeHtml(badgeTekst)} ${bag3dBtnHtml} <span style="opacity:0.7; font-size:12px;">✕</span>`;
         badge.style.display = 'flex';
         // Ensure centered position (also fixes pre-existing badges from cache)
         badge.style.position = 'fixed';
@@ -3486,7 +3486,7 @@ function showError(message) {
     toast.className = 'error-toast';
     toast.innerHTML = `
         <span class="error-toast-icon">⚠️</span>
-        <span class="error-toast-msg">${message}</span>
+        <span class="error-toast-msg">${escapeHtml(message)}</span>
         <button class="error-toast-close" onclick="this.parentElement.remove()">✕</button>
     `;
     document.body.appendChild(toast);
@@ -3872,7 +3872,7 @@ function showInlineLoading(message = 'Laden...') {
     content.innerHTML = `
         <div class="inline-spinner-container">
             <div class="inline-spinner"></div>
-            <span class="inline-spinner-text">${message}</span>
+            <span class="inline-spinner-text">${escapeHtml(message)}</span>
         </div>
     `;
 }
@@ -4021,13 +4021,13 @@ async function buildIndicatorAccordion(indicatoren) {
         const withData = items.filter(i => (i.aantal_gebieden_met_data || 0) > 0).length;
         const kleur = themaKleuren[thema] || '#6B7280';
 
-        html += `<div class="accordion-group" data-thema="${thema}">
+        html += `<div class="accordion-group" data-thema="${escapeHtml(thema)}">
             <div class="accordion-header" role="button" tabindex="0" aria-expanded="false" onclick="toggleAccordionGroup(this)">
                 <svg class="accordion-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <polyline points="9 18 15 12 9 6"/>
                 </svg>
                 <span class="accordion-color-dot" style="background:${kleur}"></span>
-                <span class="accordion-label">${thema}</span>
+                <span class="accordion-label">${escapeHtml(thema)}</span>
                 <span class="accordion-count">${withData}/${items.length}</span>
             </div>
             <div class="accordion-body">`;
@@ -4048,10 +4048,10 @@ async function buildIndicatorAccordion(indicatoren) {
             const noDataClass = noData ? ' no-data' : '';
 
             html += `<div class="indicator-item${activeClass}${noDataClass}"
-                        data-uuid="${ind.uuid}" data-naam="${ind.naam}"
+                        data-uuid="${escapeHtml(ind.uuid)}" data-naam="${escapeHtml(ind.naam)}"
                         ${noData ? 'aria-disabled="true"' : 'role="button" tabindex="0"'}
-                        ${noData ? '' : `onclick="selectAccordionIndicator('${ind.uuid}', '${ind.naam.replace(/'/g, "\\'")}')"` }>
-                <span class="indicator-item-name">${ind.naam}</span>
+                        ${noData ? '' : 'onclick="selectAccordionIndicator(this.dataset.uuid, this.dataset.naam)"'}>
+                <span class="indicator-item-name">${escapeHtml(ind.naam)}</span>
                 <span class="indicator-item-coverage">${coverage > 0 ? coverage : '—'}</span>
             </div>`;
         });
@@ -4172,7 +4172,7 @@ function filterAccordion(query) {
                 item.style.display = '';
                 // Reset highlight
                 const nameEl = item.querySelector('.indicator-item-name');
-                if (nameEl) nameEl.innerHTML = item.dataset.naam;
+                if (nameEl) nameEl.textContent = item.dataset.naam;
             });
         });
         return;
@@ -4196,7 +4196,7 @@ function filterAccordion(query) {
                     const before = naam.slice(0, idx);
                     const match = naam.slice(idx, idx + query.length);
                     const after = naam.slice(idx + query.length);
-                    nameEl.innerHTML = `${before}<mark>${match}</mark>${after}`;
+                    nameEl.innerHTML = `${escapeHtml(before)}<mark>${escapeHtml(match)}</mark>${escapeHtml(after)}`;
                 }
             } else {
                 item.style.display = 'none';
