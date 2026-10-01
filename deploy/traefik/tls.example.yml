@@ -9,7 +9,6 @@
 #        COMPOSE_FILE=docker-compose.yml:deploy/traefik/tls.example.yml
 #        OMNITWIN_DOMAIN=omnitwin.example.nl
 #        ACME_EMAIL=beheer@example.nl        (functioneel adres voor verloopmeldingen)
-#        DEBUG=false
 #      Op Windows is het scheidingsteken in COMPOSE_FILE een `;` in plaats van `:`.
 #      OMNITWIN_HTTP_PORT moet 80 blijven (of leeg).
 #   2. docker compose up -d

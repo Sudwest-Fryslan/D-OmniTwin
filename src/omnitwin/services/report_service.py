@@ -11,6 +11,8 @@ from sqlalchemy import text
 from typing import Dict, Any, List, Optional
 import json
 
+from omnitwin.fouten import GebruikersFout
+
 from omnitwin.services.zscore_referentie import (
     MIN_N_STANDAARD,
     SQL_ZSCORE_GEBIEDEN,
@@ -42,7 +44,7 @@ class ReportDataService:
         gebied_info = self.db.execute(gebied_query, {"gebied_id": gebied_id}).fetchone()
         
         if not gebied_info:
-            raise ValueError(f"Gebied met ID {gebied_id} niet gevonden.")
+            raise GebruikersFout(f"Gebied met ID {gebied_id} niet gevonden.")
         
         gebied_dict = dict(gebied_info._mapping)
         gemeente_code = gebied_dict.get('gemeente_code')
@@ -193,11 +195,11 @@ class ReportDataService:
 
         # Validatie
         if mode == 'gebieden' and len(gebieden_b) == 0:
-            raise ValueError("Modus 'gebieden' vereist minstens 1 vergelijkingsgebied.")
+            raise GebruikersFout("Modus 'gebieden' vereist minstens 1 vergelijkingsgebied.")
         if mode == 'gebieden' and len(gebieden_b) > 5:
-            raise ValueError("Maximaal 5 vergelijkingsgebieden toegestaan.")
+            raise GebruikersFout("Maximaal 5 vergelijkingsgebieden toegestaan.")
         if mode == 'gemeente' and not referentie_gemeente:
-            raise ValueError("Modus 'gemeente' vereist een gemeente_code.")
+            raise GebruikersFout("Modus 'gemeente' vereist een gemeente_code.")
 
         # 1. Haal metadata Gebied A op
         gebied_a_query = text("""
@@ -208,7 +210,7 @@ class ReportDataService:
         """)
         gebied_a_info = self.db.execute(gebied_a_query, {"gebied_id": gebied_id_a}).fetchone()
         if not gebied_a_info:
-            raise ValueError(f"Gebied A met ID {gebied_id_a} niet gevonden.")
+            raise GebruikersFout(f"Gebied A met ID {gebied_id_a} niet gevonden.")
         gebied_a_dict = dict(gebied_a_info._mapping)
 
         # 2. Haal waarden voor Gebied A op (meest recente per indicator)
@@ -233,7 +235,7 @@ class ReportDataService:
         indicatoren_a = {str(r._mapping['indicator_uuid']): dict(r._mapping) for r in resultaat_a}
 
         if not indicatoren_a:
-            raise ValueError(f"Geen data beschikbaar voor gebied {gebied_id_a}.")
+            raise GebruikersFout(f"Geen data beschikbaar voor gebied {gebied_id_a}.")
 
         # 3. Bereken referentiewaarden per modus
         if mode == 'gebieden':
@@ -280,7 +282,7 @@ class ReportDataService:
             referentie_label = "⌀ Provincie Fryslân"
 
         else:
-            raise ValueError(f"Onbekende modus: {mode}")
+            raise GebruikersFout(f"Onbekende modus: {mode}")
 
         # 4. Match referentie met Gebied A en bereken delta's
         ref_dict = {str(r._mapping['indicator_uuid']): dict(r._mapping) for r in ref_result}
@@ -402,7 +404,7 @@ class ReportDataService:
             thema: Optioneel thema-filter (bijv. 'Kwaliteit van Leven')
         """
         if not gebied_ids:
-            raise ValueError("Minimaal 1 gebied_id is vereist.")
+            raise GebruikersFout("Minimaal 1 gebied_id is vereist.")
 
         # 1. Bepaal gebiedstype (CBS Buurt)
         gebiedstype_query = text("""
@@ -414,7 +416,7 @@ class ReportDataService:
         """)
         gt_row = self.db.execute(gebiedstype_query, {"sample_id": gebied_ids[0]}).fetchone()
         if not gt_row:
-            raise ValueError(f"Gebied {gebied_ids[0]} niet gevonden.")
+            raise GebruikersFout(f"Gebied {gebied_ids[0]} niet gevonden.")
         gebiedstype_id = str(gt_row._mapping['gebiedstype_id'])
 
         # 2b. Filter water-buurten uit de selectie
@@ -426,7 +428,7 @@ class ReportDataService:
         water_result = self.db.execute(water_filter_query, {"gebied_ids": gebied_ids})
         gefilterde_ids = [str(r._mapping['id']) for r in water_result]
         if not gefilterde_ids:
-            raise ValueError("Alle geselecteerde gebieden zijn water-buurten.")
+            raise GebruikersFout("Alle geselecteerde gebieden zijn water-buurten.")
 
         # 2. Referentiegroep: gebiedstype (+ gemeente bij referentie 'gemeente'), #66
         params: Dict[str, Any] = referentie_params(
@@ -758,7 +760,7 @@ class ReportDataService:
         en groepeert deze per buurt.
         """
         if not gebied_ids:
-            raise ValueError("Minimaal 1 gebied_id is vereist.")
+            raise GebruikersFout("Minimaal 1 gebied_id is vereist.")
 
         # 1. Bepaal gebiedstype
         gebiedstype_query = text("""
@@ -770,7 +772,7 @@ class ReportDataService:
         """)
         gt_row = self.db.execute(gebiedstype_query, {"sample_id": gebied_ids[0]}).fetchone()
         if not gt_row:
-            raise ValueError(f"Gebied {gebied_ids[0]} niet gevonden.")
+            raise GebruikersFout(f"Gebied {gebied_ids[0]} niet gevonden.")
         gebiedstype_id = str(gt_row._mapping['gebiedstype_id'])
 
         # 2b. Filter water-buurten uit
@@ -782,7 +784,7 @@ class ReportDataService:
         water_result = self.db.execute(water_filter_query, {"gebied_ids": gebied_ids})
         gefilterde_ids = [str(r._mapping['id']) for r in water_result]
         if not gefilterde_ids:
-            raise ValueError("Alle geselecteerde gebieden zijn water-buurten.")
+            raise GebruikersFout("Alle geselecteerde gebieden zijn water-buurten.")
 
         # 2. Referentiegroep: gebiedstype (+ gemeente bij referentie 'gemeente'), #66
         params: Dict[str, Any] = referentie_params(
@@ -1018,7 +1020,7 @@ class ReportDataService:
             deelgebied_naam: Label van het geselecteerde deelgebied / woonplaats (bijv. 'Sneek')
         """
         if not gebied_ids:
-            raise ValueError("Minimaal 1 gebied_id is vereist.")
+            raise GebruikersFout("Minimaal 1 gebied_id is vereist.")
 
         from collections import defaultdict
 
@@ -1031,7 +1033,7 @@ class ReportDataService:
         """)
         geb_rows = [dict(r._mapping) for r in self.db.execute(gebieden_query, {"gebied_ids": gebied_ids}).fetchall()]
         if not geb_rows:
-            raise ValueError("Geen van de opgegeven gebieden is gevonden in de database.")
+            raise GebruikersFout("Geen van de opgegeven gebieden is gevonden in de database.")
 
         waterbuurten = [
             {"id": str(g['id']), "naam": str(g['naam'])}
@@ -1040,7 +1042,7 @@ class ReportDataService:
         actieve_buurten = [g for g in geb_rows if not g.get('is_water')]
 
         if not actieve_buurten:
-            raise ValueError("Alle geselecteerde gebieden zijn water-buurten en worden conform projectstandaard uitgesloten van analyse.")
+            raise GebruikersFout("Alle geselecteerde gebieden zijn water-buurten en worden conform projectstandaard uitgesloten van analyse.")
 
         first_buurt = actieve_buurten[0]
         gebiedstype_id = str(first_buurt['gebiedstype_id'])

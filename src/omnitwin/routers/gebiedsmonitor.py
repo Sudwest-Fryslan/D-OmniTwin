@@ -14,6 +14,7 @@ Endpoints:
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from typing import Optional, Dict, Any
+from uuid import UUID
 
 from omnitwin.database import get_db
 from omnitwin.version import __version__
@@ -46,7 +47,7 @@ def get_service(db: Session = Depends(get_db)) -> GebiedsmonitorService:
 # ============================================================================
 
 @router.get("/gebiedstypes", response_model=GebiedstypesListResponse)
-async def get_gebiedstypes(
+def get_gebiedstypes(
     service: GebiedsmonitorService = Depends(get_service)
 ):
     """
@@ -60,7 +61,7 @@ async def get_gebiedstypes(
 
 
 @router.get("/gebieden", response_model=GebiedenListResponse)
-async def get_gebieden(
+def get_gebieden(
     gebiedstype_id: Optional[str] = Query(None, description="Filter op gebiedstype UUID"),
     limit: int = Query(50, ge=1, le=500, description="Aantal resultaten"),
     offset: int = Query(0, ge=0, description="Paginatie offset"),
@@ -86,7 +87,7 @@ async def get_gebieden(
 
 
 @router.get("/gebieden/{gebied_id}", response_model=GebiedDetailResponse)
-async def get_gebied_detail(
+def get_gebied_detail(
     gebied_id: str,
     service: GebiedsmonitorService = Depends(get_service)
 ):
@@ -115,7 +116,7 @@ async def get_gebied_detail(
 
 
 @router.get("/indicatoren", response_model=IndicatorenListResponse)
-async def get_indicatoren(
+def get_indicatoren(
     gebiedstype_id: Optional[str] = Query(
         None, 
         description="Filter indicatoren die data hebben voor dit gebiedstype"
@@ -139,9 +140,9 @@ async def get_indicatoren(
 
 
 @router.get("/kaart_data/{gebiedstype_id}", response_model=Dict[str, Any])
-async def get_kaart_attributes(
-    gebiedstype_id: str,
-    indicator_uuid: Optional[str] = Query(
+def get_kaart_attributes(
+    gebiedstype_id: UUID,  # ongeldige UUID: 422 (#203)
+    indicator_uuid: Optional[UUID] = Query(
         None, 
         description="OPTIONEEL: UUID van indicator om te visualiseren"
     ),
@@ -164,20 +165,14 @@ async def get_kaart_attributes(
     Retourneert een dictionary waarbij de keys de gebied_id's zijn, en de values
     kleuren, meetwaarden en overige attributen bevatten. (GEEN geometrie)
     """
-    try:
-        data = service.get_kaart_attributes(
-            gebiedstype_id=gebiedstype_id,
-            indicator_uuid=indicator_uuid,
-            show_all=show_all,
-            gemeente_code=gemeente_code,
-            jaar=jaar
-        )
-        return data
-    except Exception as e:
-        raise HTTPException(
-            status_code=500,
-            detail=f"Error generating kaart data: {str(e)}"
-        )
+    # Fouten gaan naar de centrale foutafhandeling: geen SQL of exceptietekst naar buiten (#203)
+    return service.get_kaart_attributes(
+        gebiedstype_id=str(gebiedstype_id),
+        indicator_uuid=str(indicator_uuid) if indicator_uuid else None,
+        show_all=show_all,
+        gemeente_code=gemeente_code,
+        jaar=jaar
+    )
 
 
 # ============================================================================
@@ -185,7 +180,7 @@ async def get_kaart_attributes(
 # ============================================================================
 
 @router.get("/health")
-async def health_check():
+def health_check():
     """
     Simple health check endpoint voor Gebiedsmonitor API.
     """

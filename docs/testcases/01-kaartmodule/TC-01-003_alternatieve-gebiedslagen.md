@@ -132,4 +132,4 @@ CBS-buurten delen exacte grenspunten. Zonder buffer pikt `ST_Intersects` ook aan
 - [TC-06-001 E2E Beleidsadviseur IJsselmeerkust](../06-integratie-e2e/TC-06-001_beleidsadviseur-ijsselmeerkust.md)
 - [TC-06-002 Multi-Gebiedsdossier](../06-integratie-e2e/TC-06-002_multi-gebiedsdossier.md)
 - [PLAN Multi-Gebiedsdossier](../04-rapportage/PLAN_multi-gebiedsdossier.md)
-- [Dataspace mapping indicatoren](../../../2-architectuur/dataspace-mapping/dataspace_mapping_indicatoren_ijsselmeerkust.md)
+- [Dataspace mapping indicatoren](../../2-architectuur/dataspace-mapping/dataspace_mapping_indicatoren_ijsselmeerkust.md)

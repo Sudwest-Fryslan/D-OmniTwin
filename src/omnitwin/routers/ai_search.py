@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 from omnitwin.database import get_db
 from omnitwin.services.ai_search_service import AISearchService
@@ -22,14 +22,10 @@ def search_kompas(
     """
     Zoekt semantisch naar indicatoren in het Kompas op basis van een natuurlijke taal query.
     """
-    try:
-        results = service.search_indicators(q, limit=limit)
-        return results
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    return service.search_indicators(q, limit=limit)
 
 @router.get("/health")
-async def health_check():
+def health_check():
     """Health check voor AI-zoeken, met de status van het embeddingmodel (#118)."""
     from omnitwin.services import embedding_model
     return {"status": "healthy", "service": "AI Search API",

@@ -17,7 +17,7 @@ De gids gaat uit van een Linux-server of een werkplek met Docker. Alle commando'
 | Geheugen | 4 GB vrij voor de stack, 8 GB aanbevolen. Een lokaal taalmodel (Ollama) komt daar bovenop |
 | Schijf | ± 6 GB vrij: backend-image ± 1,7 GB uitgepakt (Docker Desktop toont ± 2,3 GB; inclusief het embeddingmodel, circa 90 MB), database-image ± 1,1 GB, overige images ± 0,4 GB, plus de database en de build-cache (± 2 GB, op te ruimen met `docker builder prune`) |
 | Poort | 80 op de host vrij (of een andere poort, zie `OMNITWIN_HTTP_PORT`) |
-| Internet tijdens de installatie | voor Docker Hub, PyPI, de PyTorch-index en HuggingFace (images bouwen). Daarna draait de stack zonder internet, ook AI-zoeken. De kaart gebruikt PDOK-achtergrondkaarten in de browser; een token is niet nodig |
+| Internet tijdens de installatie | Voor het bouwen: Docker Hub, PyPI, de PyTorch-index en HuggingFace. Bij de eerste start met use cases: CBS (Kerncijfers) en RIVM (hittestress), zie [Data](#4-data). Daarna draait de stack zonder internet, ook AI-zoeken. De kaart gebruikt PDOK-achtergrondkaarten in de browser; een token is niet nodig |
 
 Controleer:
 
@@ -45,37 +45,31 @@ cd D-OmniTwin
 
 ```bash
 cp .env.example .env
-```
-
-Vul in `.env` alleen het databasewachtwoord in. Al het andere heeft een werkende standaard:
-
-```bash
 openssl rand -hex 24   # waarde voor DATABASE_PASSWORD
 ```
 
-Gebruik alleen letters en cijfers (zoals hierboven): tekens als `@ : / # % $` breken de database-URL's.
+Vul in `.env` het databasewachtwoord in, en bij voorkeur ook `ADMIN_PASSWORD`. Al het andere heeft een werkende standaard. Gebruik alleen letters en cijfers (zoals `openssl rand -hex` geeft): tekens als `@ : / # % $` breken de database-URL's.
+
+De tabel volgt de volgorde van `.env.example`. Optionele regels staan daar als commentaar (`# NAAM=standaard`); haal het `#` weg om ze te gebruiken.
 
 | Variabele | Wat invullen |
 |-----------|--------------|
-| `COMPOSE_FILE=docker-compose.yml` | **Verplicht voor een installatie.** Haal het `#` weg. Zonder deze regel laadt `docker compose` ook de ontwikkelinstellingen (zie [Ontwikkelmodus](#3-ontwikkelmodus)). |
+| `DATABASE_PASSWORD` | **Verplicht.** Het gegenereerde wachtwoord. Wijzig het niet meer na de eerste start: het geldt alleen bij het aanmaken van de database. |
+| `ADMIN_PASSWORD` | Aanbevolen. Wachtwoord van het eerste beheeraccount. Leeg: er wordt eenmalig een wachtwoord gegenereerd (zie [2.4](#24-eerste-keer-inloggen)). |
+| `COMPOSE_FILE` | Staat op `docker-compose.yml`: alleen de installatie-instellingen. Laat staan. Ontwikkelaars halen de regel weg (zie [Ontwikkelmodus](#3-ontwikkelmodus)). Extra compose-bestanden voeg je hier toe, gescheiden door `:` (Windows: `;`), zie [Eigen logo](#eigen-logo) en [HTTPS aanzetten](#https-aanzetten). |
 | `OMNITWIN_HTTP_PORT` | Optioneel. Poort op de host, standaard `80`. |
-| `DATABASE_PASSWORD` | **Verplicht.** Het gegenereerde wachtwoord. |
-| `SECRET_KEY` | **Verplicht invullen**, al gebruikt de code hem nu nog niet. |
-| `ADMIN_API_KEY` | Voor scripts: wie deze waarde in de header `X-Admin-Key` meestuurt, heeft beheerrechten. Minimaal 32 tekens (`openssl rand -hex 32`). Een lege of voorbeeldwaarde schakelt de header uit. De beheeromgeving gebruikt hem niet; die werkt met inloggen. |
-| `ADMIN_USER`, `ADMIN_PASSWORD` | Het eerste beheeraccount. Laat je `ADMIN_PASSWORD` op de voorbeeldwaarde staan of leeg, dan wordt er een wachtwoord gegenereerd (zie [2.4](#24-eerste-keer-inloggen)). |
-| `DEBUG` | `true` zolang je zonder HTTPS draait, anders werkt inloggen in de browser niet (zie [Beveiliging](#beveiliging)). Met HTTPS: `false`. |
-| `LOAD_SAMPLE_DATA` | `true`: de sample dataset laden bij de eerste start. `false`: alleen stuurdata (configuratie, zonder buurten). Zie [Data](#4-data). |
-| `DATABASE_NAME`, `DATABASE_USER` | Mogen blijven staan. Wijzig ze alleen vóór de eerste start. |
-| `DATABASE_HOST`, `DATABASE_PORT` | Laten staan. De containers negeren deze en gebruiken `postgres:5432`; ze gelden alleen voor scripts op de host in ontwikkelmodus. |
-| `DATABASE_SSLMODE` | `prefer` laten staan. De database is alleen binnen het Docker-netwerk bereikbaar en heeft geen TLS; `require` werkt hier niet. |
-| `CORS_ORIGINS` | Alleen nodig als andere websites de API aanroepen. De app zelf draait op hetzelfde adres. |
-| `OLLAMA_*` | Optioneel, zie [LLM](#7-llm-optioneel). |
-| `LOG_ALERT_*`, `SMTP_*` | Nog niet in gebruik (#47). |
-| `DATABASE_PASSWORD` | **Verplicht.** Het gegenereerde wachtwoord. Wijzig het niet meer na de eerste start. |
-| `ADMIN_PASSWORD` | Aanbevolen. Wachtwoord van het eerste beheeraccount (`admin`). Leeg: er wordt eenmalig een wachtwoord gegenereerd (zie [2.4](#24-eerste-keer-inloggen)). |
-| `COMPOSE_FILE=docker-compose.yml` | Staat al aan: alleen de installatie-instellingen. Ontwikkelaars halen deze regel weg (zie [Ontwikkelmodus](#3-ontwikkelmodus)). |
-| `DEBUG` | `true` zolang je zonder HTTPS draait, anders werkt inloggen niet (zie [Beveiliging](#beveiliging)). Met HTTPS: `false`. |
-| Optioneel | Poort (`OMNITWIN_HTTP_PORT`), demodata via de use cases (`LOAD_SAMPLE_DATA`; `false` = product zonder data, zie [Data](#4-data)), lokale AI (`OLLAMA_HOST`, zie [LLM](#7-llm-optioneel)) en `ADMIN_API_KEY` (alleen voor scripts; leeg = uitgeschakeld, laat nooit een voorbeeldwaarde staan). De standaardwaarden staan in `.env.example`. |
+| `LOAD_SAMPLE_DATA` | Optioneel, standaard `true`: de use cases laden bij de eerste start. `false`: alleen het product zonder data. Zie [Data](#4-data). |
+| `LOG_LEVEL` | Optioneel, standaard `INFO`. |
+| `ADMIN_USER` | Optioneel. Naam van het eerste beheeraccount, standaard `admin`. |
+| `ADMIN_API_KEY` | Optioneel, alleen voor scripts: wie deze waarde in de header `X-Admin-Key` meestuurt, heeft beheerrechten. Minimaal 32 tekens (`openssl rand -hex 32`). Leeg of een voorbeeldwaarde: de header werkt niet. De beheeromgeving gebruikt hem niet; die werkt met inloggen. |
+| `COMPOSE_PROJECT_NAME` | Optioneel. Alleen nodig voor meerdere installaties op één machine (zie [Problemen oplossen](#8-problemen-oplossen)). |
+| `CORS_ORIGINS` | Optioneel. Alleen nodig als andere websites de API aanroepen: een kommagescheiden lijst met volledige adressen, geen wildcards. De app zelf draait op hetzelfde adres. |
+| `COOKIE_SECURE` | Optioneel, standaard `auto`: het inlogcookie krijgt `Secure` (alleen via HTTPS) als de verbinding HTTPS is. Achter een eigen TLS-proxy die over HTTP naar de stack doorstuurt: `true` (zie [HTTPS aanzetten](#https-aanzetten)). |
+| `LLM_RATE_LIMIT` | Optioneel, standaard `60`: zoveel verzoeken per minuut per IP-adres op de chat en de AI-teksten; daarboven `429`. `0` = geen limiet. |
+| `OLLAMA_HOST`, `OLLAMA_MODEL`, `LLM_THINK`, `LLM_REASONING_EFFORT` | Optioneel, lokale AI. Zie [LLM](#7-llm-optioneel). |
+| `LITELLM_MASTER_KEY`, `LLM_API_KEY`, `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `GEMINI_API_KEY` | Optioneel, alleen met de LiteLLM-gateway. Zie [Andere aanbieders](#andere-aanbieders-via-de-litellm-gateway). |
+| `DATABASE_NAME`, `DATABASE_USER` | Optioneel, standaard `omnitwin_db` en `omnitwin_user`. Wijzig ze alleen vóór de eerste start. |
+| `DATABASE_HOST`, `DATABASE_PORT`, `DATABASE_SSLMODE` | Alleen voor scripts op de host in ontwikkelmodus. De containers gebruiken `postgres:5432`. Laat `DATABASE_SSLMODE` op `prefer`: de database is alleen binnen het Docker-netwerk bereikbaar en heeft geen TLS, `require` werkt hier niet. |
 
 Bescherm het bestand: `chmod 600 .env`.
 
@@ -85,15 +79,18 @@ Bescherm het bestand: `chmod 600 .env`.
 docker compose up -d --build
 ```
 
-De eerste keer duurt dit lang (10 tot 30 minuten): de backend-image installeert onder meer PyTorch en GDAL. Daarna starten de services in deze volgorde:
+De eerste keer duurt dit lang (10 tot 30 minuten, afhankelijk van de verbinding): de backend-image installeert onder meer PyTorch en GDAL. Daarna starten de services in deze volgorde:
 
 1. `postgres` (PostGIS met pgvector) wordt *healthy*.
-2. `db-init` draait één keer en stopt. Bij een **lege** database maakt hij het schema aan (`db/schema/schema_latest.sql` en de views voor de kaart), laadt de stuurdata (`db/stuurdata/`) en eventueel de sample dataset, en maakt het beheeraccount aan. Bestaat de tabel `gebieden` al, dan slaat hij dit allemaal over. Hij overschrijft dus nooit bestaande data.
-   In beide gevallen past hij daarna de schemamigraties uit `db/migraties/` toe die nog niet in de tabel `schema_migraties` staan (`python -m omnitwin.migraties`, #54).
-   Daarna genereert hij, ook bij een bestaande database, de embeddings voor AI-zoeken en de chat (`scripts/ai/genereer_embeddings.py`), voor alle actieve indicatoren zonder embedding, ook concepten. Het model daarvoor (`all-MiniLM-L6-v2`) zit al in de image; zie [Embeddingmodel](#embeddingmodel-offline). Lukt het genereren niet, dan staat er een waarschuwing in de log en gaat de installatie gewoon door; AI-zoeken en de chat vinden dan geen indicatoren.
-   Daarna werkt hij altijd de databaserollen en het schema `api` voor PostgREST en pg_featureserv bij (`db/migraties/R__api_rollen.sql`, zie [Beveiliging](#beveiliging)). Dat raakt geen data.
-   Daarna genereert hij, ook bij een bestaande database, de embeddings voor AI-zoeken en de chat (`scripts/ai/genereer_embeddings.py`), voor alle actieve indicatoren zonder embedding, ook concepten. Daarvoor downloadt hij de eerste keer het model `all-MiniLM-L6-v2` (circa 90 MB) van HuggingFace. Lukt dat niet, bijvoorbeeld zonder internet, dan staat er een waarschuwing in de log en gaat de installatie gewoon door; AI-zoeken en de chat vinden dan geen indicatoren.
-3. `backend` (FastAPI), `postgrest` en `pg_featureserv` starten, `traefik` stuurt het verkeer door.
+2. `db-init` draait één keer en stopt. Hij kijkt eerst in wat voor database hij terechtkomt:
+   - **Lege database:** hij maakt het schema aan (`db/schema/schema_latest.sql` en de views en functies voor pg_featureserv), past de schemamigraties uit `db/migraties/` toe, laadt de stuurdata (`db/stuurdata/`), met `LOAD_SAMPLE_DATA=true` de use cases en de CBS-reeksen, en maakt het beheeraccount aan.
+   - **Bestaande database** (eerdere installatie voltooid): hij laat de data met rust en past alleen de schemamigraties toe die nog niet in de tabel `schema_migraties` staan (`python -m omnitwin.migraties`, #54).
+   - **Half ingerichte database** (een eerdere eerste start is halverwege mislukt): hij stopt met een foutmelding en een herstelinstructie. Zie [Problemen oplossen](#8-problemen-oplossen).
+
+   Daarna werkt hij altijd de databaserollen en het schema `api` voor PostgREST en pg_featureserv bij (`db/migraties/R__api_rollen.sql`, zie [Beveiliging](#beveiliging)). Dat raakt geen data. Bij een nieuwe installatie legt hij dan in de tabel `installatie_status` vast dat de installatie voltooid is.
+
+   Tot slot maakt hij, ook bij een bestaande database, de embeddings voor AI-zoeken en de chat aan (`scripts/ai/genereer_embeddings.py`), voor alle actieve indicatoren zonder embedding, ook concepten. Het model daarvoor (`all-MiniLM-L6-v2`) zit al in de image; zie [Embeddingmodel](#embeddingmodel-offline). Lukt dit niet, dan staat er een waarschuwing in de log en gaat de installatie gewoon door; AI-zoeken en de chat vinden dan geen indicatoren.
+3. `backend` (FastAPI), `postgrest` en `pg_featureserv` starten, `traefik` stuurt het verkeer door. Stopt `db-init` met een fout, dan starten deze drie niet.
 
 Controleer:
 
@@ -114,8 +111,6 @@ docker compose logs db-init
 ```
 
 Zoek naar `ADMIN_PASSWORD niet ingesteld. Gegenereerd wachtwoord voor 'admin'`. Het wachtwoord staat op de regel daaronder. Het wordt niet opgeslagen; bewaar het direct.
-
-De log van `db-init` toont ook een `ADMIN_API_KEY` ("BEWAAR DEZE KEY"). Die wordt nu niet gebruikt: de backend accepteert alleen de `ADMIN_API_KEY` uit `.env`, en alleen voor scripts.
 
 Wachtwoord later wijzigen (vraagt interactief om een nieuw wachtwoord):
 
@@ -153,9 +148,9 @@ Zonder `COMPOSE_FILE` in `.env` laadt `docker compose` naast `docker-compose.yml
 docker compose up -d --build
 ```
 
-Gebruik dit niet voor een installatie: de database en het dashboard zijn dan onbeveiligd bereikbaar. In ontwikkelmodus schrijft `db-init` bovendien een nieuwe `ADMIN_API_KEY` in je `.env`.
+Gebruik dit niet voor een installatie: de database en het dashboard zijn dan onbeveiligd bereikbaar.
 
-Ontwikkelen zonder Docker (Python venv, `run_dev.py`, admin-panel met `npm start`) staat in de [README](../../README.md#-installatie-voor-ontwikkelaars) en [`AGENTS.md`](../../AGENTS.md).
+Ontwikkelen zonder Docker (Python venv, `run_dev.py`, admin-panel met `npm start`) staat in de [README](../../README.md#ontwikkelen) en [`AGENTS.md`](../../AGENTS.md).
 
 ---
 
@@ -165,7 +160,12 @@ Ontwikkelen zonder Docker (Python venv, `run_dev.py`, admin-panel met `npm start
 
 `db-init` laadt bij de eerste start altijd het product zonder data: stuurdata (scenario's, profielen, prompts), de indicatordefinities en de Kompas-indeling. Met `LOAD_SAMPLE_DATA=true` laadt het daarna de **use cases** uit [`usecases/`](../../usecases/README.md). Elke use case brengt zijn eigen gebieden en waarden mee, gekozen uit de bronbibliotheek [`init_data/sample/`](../../init_data/sample/README.md), plus de inrichting en de teststappen. Een deel van de waarden is demodata. Eén use case laden: `docker compose exec backend python init_data/scripts/laad_usecase.py hittestress`.
 
-Na de use cases laadt `db-init` ook de **CBS Kerncijfers 2019-2026** voor de gebieden die dan in de database staan (`init_data/scripts/laad_cbs.py`). Die data staat niet in git: `db-init` downloadt hem bij CBS en bewaart hem in het volume `bron-cache`; daarna werkt het ook offline. Zonder internet bij de eerste start ontbreken de CBS-reeksen, de rest werkt wel. Zo toont het Kompas-detail met de tijdslider meerdere jaren, bijvoorbeeld voor Inwoners in Bolsward-Noord. Zie [`docs/3-data-engineering/cbs_kerncijfers.md`](../3-data-engineering/cbs_kerncijfers.md).
+Twee onderdelen staan niet in git en worden bij de eerste start gedownload en bewaard in het volume `bron-cache`; daarna werkt het ook offline:
+
+- de **CBS Kerncijfers 2019-2026** voor de gebieden die dan in de database staan (`init_data/scripts/laad_cbs.py`). Zo toont het Kompas-detail met de tijdslider meerdere jaren, bijvoorbeeld voor Inwoners in Bolsward-Noord. Zie [`docs/3-data-engineering/cbs_kerncijfers.md`](../3-data-engineering/cbs_kerncijfers.md);
+- de RIVM-kaarten (boomkroonbedekking, hitte-eiland) van de use case hittestress (`usecases/hittestress/maak_data.py`, via de WCS van data.rivm.nl).
+
+Zonder internet bij de eerste start ontbreken die reeksen; de rest werkt wel.
 
 De sample is bedoeld om de installatie te testen en te demonstreren, niet voor beleid.
 
@@ -205,21 +205,36 @@ Via het ETL-framework in `ETL/`; zie [`ETL/ETL_DOCUMENTATION.md`](../../ETL/ETL_
 
 ## 5. Bijwerken
 
-```bash
-git pull
-docker compose up -d --build
-```
+1. **Maak een backup** van de database en de geüploade kaartlagen (zie [Backup](#backup)).
+2. **Lees de [`CHANGELOG.md`](../../CHANGELOG.md)** voor elke versie tussen de jouwe en de nieuwe, vooral de paragraaf "Migreren". Gebruik je een eigen compose-bestand (bijvoorbeeld voor het logo of HTTPS), controleer dan of het nog past.
+3. **Werk bij:**
+
+   ```bash
+   git pull
+   docker compose up -d --build
+   ```
+
+4. **Controleer:** `docker compose ps -a` (zoals in [2.3](#23-starten)) en de migraties:
+
+   ```bash
+   docker compose run --rm db-init python -m omnitwin.migraties --status
+   ```
 
 `db-init` draait opnieuw, ziet dat de database bestaat en laat de data met rust. Wel past hij de nieuwe schemamigraties toe: elk bestand `db/migraties/V<nnn>__<naam>.sql` dat nog niet in de tabel `schema_migraties` staat, op volgorde, en registreert het daar (#54). De rollen en het schema `api` voor PostgREST en pg_featureserv werkt hij altijd bij (`R__api_rollen.sql`, zie [Beveiliging](#beveiliging)).
 
-Een database van vóór 0.2.0 heeft nog geen tabel `schema_migraties`. De eerste keer maakt de runner die aan en draait hij V018 t/m V022 opnieuw; die zijn idempotent. Bekijken wat is toegepast en wat openstaat:
+**Vanaf 0.1.x.** Een database van vóór 0.2.0 heeft nog geen tabel `schema_migraties`. De eerste keer maakt de runner die aan en draait hij V018 t/m V022 opnieuw; die zijn idempotent. Zie "Migreren vanaf 0.1.x" in de CHANGELOG.
+
+**Geüploade kaartlagen.** Vanaf 0.2.1 staan bestanden die via beheer > externe lagen zijn geüpload in het volume `uploads` en overleven ze een update. In eerdere versies staan ze in de container en zijn ze na `--build` weg. Kopieer ze bij een update vanaf zo'n versie vóór stap 3 uit de container (dat doet de backup in stap 1) en zet ze daarna terug:
 
 ```bash
-docker compose run --rm db-init python -m omnitwin.migraties --status
-docker compose exec -T postgres sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -c "SELECT * FROM schema_migraties"'
+docker compose cp backups/data-upload-JJJJ-MM-DD/. backend:/app/data-upload
 ```
 
-Maak eerst een backup (zie hieronder). Lees bij een nieuwe versie [`CHANGELOG.md`](../../CHANGELOG.md).
+Wat er is toegepast, rechtstreeks in de database:
+
+```bash
+docker compose exec -T postgres sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -c "SELECT * FROM schema_migraties"'
+```
 
 ### Embeddingmodel (offline)
 
@@ -257,35 +272,41 @@ De backend schrijft ook naar de databasetabel voor logs; die zijn in te zien via
 ```bash
 docker compose stop        # stoppen, alles blijft bewaard
 docker compose up -d       # weer starten
-docker compose down        # containers verwijderen; de database (volume pgdata) blijft bewaard
+docker compose down        # containers verwijderen; de volumes (database, uploads) blijven bewaard
 ```
 
 ### Backup
 
-Alle data staat in het Docker-volume `pgdata`. Maak een dump:
+De data staat in twee Docker-volumes: `pgdata` (de database) en `uploads` (geüploade kaartlagen, in de container `/app/data-upload`). Het volume `bron-cache` hoeft niet mee: dat is opnieuw te downloaden.
 
 ```bash
 mkdir -p backups
+# Database
 docker compose exec postgres sh -c 'pg_dump -U "$POSTGRES_USER" -d "$POSTGRES_DB" -Fc -f /tmp/omnitwin.dump'
 docker compose cp postgres:/tmp/omnitwin.dump backups/omnitwin-$(date +%F).dump
 docker compose exec postgres sh -c 'rm /tmp/omnitwin.dump'
+# Geüploade kaartlagen
+docker compose cp backend:/app/data-upload backups/data-upload-$(date +%F)
 ```
 
-Dit werkt ook op Windows (Git Bash). Gebruik in PowerShell geen `pg_dump ... > bestand`: PowerShell 5 verminkt binaire uitvoer bij omleiden. De `sh -c '...'`-vorm voorkomt ook dat Git Bash `/tmp/...` omzet naar een Windows-pad.
+- `backups/` en `*.dump` staan in `.gitignore`; zet een backup nooit in git. Een dump bevat gebruikers, gehashte wachtwoorden en sessies, logs en de AI-configuratie: bewaar hem net zo zorgvuldig als `.env`.
+- Bewaar `.env` apart en veilig. Een restore in een nieuwe installatie werkt ook met een nieuw `DATABASE_PASSWORD`.
+- Dit werkt ook op Windows (Git Bash). Gebruik in PowerShell geen `pg_dump ... > bestand`: PowerShell 5 verminkt binaire uitvoer bij omleiden. De `sh -c '...'`-vorm voorkomt ook dat Git Bash `/tmp/...` omzet naar een Windows-pad.
 
 ### Restore
 
 Terugzetten in een lege installatie:
 
 ```bash
-docker compose down -v                 # LET OP: verwijdert de huidige database
+docker compose down -v                 # LET OP: verwijdert de huidige database en uploads
 docker compose up -d postgres
 docker compose cp backups/omnitwin-JJJJ-MM-DD.dump postgres:/tmp/omnitwin.dump
 docker compose exec postgres sh -c 'pg_restore -U "$POSTGRES_USER" -d "$POSTGRES_DB" --no-owner /tmp/omnitwin.dump'
 docker compose up -d
+docker compose cp backups/data-upload-JJJJ-MM-DD/. backend:/app/data-upload
 ```
 
-Wacht na `up -d postgres` tot `docker compose ps` voor `postgres` *healthy* toont. `pg_restore` eindigt met drie meldingen `schema "tiger" / "tiger_data" / "topology" already exists` en `errors ignored on restore: 3` (exitcode 1). Die zijn onschuldig: de PostGIS-image maakt deze schema's zelf al aan. Andere fouten zijn dat niet. Na de restore bestaat de tabel `gebieden`, dus `db-init` slaat de initialisatie over. Een dump van een oudere versie heeft mogelijk de migraties uit [Bijwerken](#5-bijwerken) nodig.
+Wacht na `up -d postgres` tot `docker compose ps` voor `postgres` *healthy* toont. `pg_restore` eindigt met drie meldingen `schema "tiger" / "tiger_data" / "topology" already exists` en `errors ignored on restore: 3` (exitcode 1). Die zijn onschuldig: de PostGIS-image maakt deze schema's zelf al aan. Andere fouten zijn dat niet. Na de restore herkent `db-init` de bestaande database: hij laat de data met rust en past alleen de migraties toe die nog openstaan (zie [Bijwerken](#5-bijwerken)).
 
 Voor het overzetten van een complete database naar een andere organisatie, zie ook [`stappenplan_docker_installatie_externe_organisatie.md`](./stappenplan_docker_installatie_externe_organisatie.md) (aanvullend).
 
@@ -296,7 +317,7 @@ docker compose down -v
 docker compose up -d
 ```
 
-`-v` verwijdert het volume `pgdata` en daarmee alle data. `db-init` richt de database daarna opnieuw in.
+`-v` verwijdert alle volumes van dit project: de database (`pgdata`), de geüploade kaartlagen (`uploads`) en de download-cache (`bron-cache`). `db-init` richt de database daarna opnieuw in.
 
 ### Eigen logo
 
@@ -376,14 +397,15 @@ Een gratis Gemini-sleutel (met lage limieten) maak je aan op [aistudio.google.co
 |----------|-----------|
 | `Bind for 0.0.0.0:80 failed: port is already allocated` | Poort 80 is bezet (webserver, IIS, andere stack). Zet `OMNITWIN_HTTP_PORT=8080` (of een andere vrije poort) in `.env` en draai `docker compose up -d`. |
 | `dependency failed to start: container ... db-init ... exited (1)` | De initialisatie is mislukt. Bekijk `docker compose logs db-init`. Vaak: verkeerd `DATABASE_PASSWORD` ten opzichte van een bestaand volume (het wachtwoord geldt alleen bij het eerste aanmaken van de database). Oplossing: het oude wachtwoord terugzetten, of `docker compose down -v` als de data weg mag. |
+| `db-init` meldt "De database is half geïnitialiseerd" | Een eerdere eerste start is halverwege gestopt; de oorzaak staat in de log van die run. Nieuwe installatie: `docker compose down -v` en `docker compose up -d --build`. Bestaande installatie waar alleen de beheerder ontbreekt: `docker compose run --rm db-init python /app/init_data/scripts/create_admin.py` en daarna `docker compose up -d`. De melding zelf geeft dezelfde stappen. |
 | `backend` wordt niet *healthy* | `docker compose logs backend`. De backend heeft bij de start tot een minuut nodig. Blijft hij *unhealthy*, controleer de databaseverbinding en `.env`. |
 | Kaart laadt geen buurten | Controleer `http://<host>/api/geo/collections`. Leeg of fout: kijk in `docker compose logs pg_featureserv`. Na een restore of handmatige schemawijziging: `docker compose restart pg_featureserv postgrest`. |
-| Inloggen lukt, maar je blijft op het inlogscherm | Het sessiecookie wordt zonder HTTPS alleen verstuurd als `DEBUG=true`. Zet `DEBUG=true` of zet HTTPS ervoor (zie [Beveiliging](#beveiliging)), en draai `docker compose up -d`. |
-| `function similarity(...) does not exist` of ontbrekende tabel `deduplicatie_uitzonderingen` | Oudere database zonder migraties v18/v19. Zie [Bijwerken](#5-bijwerken). |
+| Inloggen lukt, maar je blijft op het inlogscherm | Het sessiecookie heeft `Secure` en de verbinding is HTTP. Staat `COOKIE_SECURE=true` in `.env` zonder HTTPS ervoor? Zet het op `auto` (standaard) en draai `docker compose up -d`. |
+| `function similarity(...) does not exist` of ontbrekende tabel `deduplicatie_uitzonderingen` | Oudere database zonder migraties V018/V019. Zie [Bijwerken](#5-bijwerken). |
+| Geüploade kaartlaag geeft "Lokaal bestand niet gevonden" | Het bestand is weg, bijvoorbeeld na een update vanaf een versie zonder volume `uploads`. Zet het terug uit de backup (zie [Bijwerken](#5-bijwerken)) of upload het opnieuw. |
 | Wijziging in `.env` heeft geen effect | `docker compose up -d` (niet `restart`): alleen dan worden containers met de nieuwe waarden opnieuw gemaakt. |
 | Windows: `db-init` faalt met `/bin/bash^M: bad interpreter` | Het shell-script is met CRLF uitgecheckt. Controleer of `.gitattributes` aanwezig is, zet het script opnieuw neer met `rm docker-entrypoint.sh && git checkout -- docker-entrypoint.sh` en bouw opnieuw (`docker compose up -d --build`). |
 | AI-zoeken of de chat vindt geen indicatoren | Er zijn geen embeddings. Kijk in `docker compose logs db-init` naar `Embeddings niet gegenereerd`; controleer met `/api/ai/health` of het model lokaal staat (anders: `docker compose build`). Draai daarna `docker compose run --rm db-init`: die vult alleen de ontbrekende embeddings aan. Na het goedkeuren van nieuwe beschrijvingen: `docker compose exec backend python scripts/ai/genereer_embeddings.py --opnieuw`. |
-| AI-zoeken of de chat vindt geen indicatoren | Er zijn geen embeddings. Kijk in `docker compose logs db-init` naar `Embeddings niet gegenereerd`; meestal kon het model niet worden gedownload. Zorg voor internet en draai `docker compose run --rm db-init`: die vult alleen de ontbrekende embeddings aan. Na het goedkeuren van nieuwe beschrijvingen: `docker compose exec backend python scripts/ai/genereer_embeddings.py --opnieuw`. |
 | AI-chat of samenvatting duurt minuten | Het model is een *thinking*-variant. Bij Ollama zijn `qwen3:4b` en `qwen3:30b` zonder toevoeging thinking-varianten; kies in **AI Configuratie** een `*-instruct`-variant (bijvoorbeeld `qwen3:30b-instruct`). Op een laptop zonder GPU blijft een samenvatting met een lokaal model ruim een minuut duren. |
 | AI-chat geeft geen antwoord | Controleer in **AI Configuratie** de API-URL: vanuit de container is dat `http://host.docker.internal:11434`, niet `localhost`. Op Linux moet Ollama op alle interfaces luisteren (zie [LLM](#7-llm-optioneel)). |
 | Ontwikkelmodus op Windows: backend start niet, `PermissionError: /app/logs/server.log` | De backend draait als niet-root-gebruiker en mag niet schrijven in de gemounte projectmap. Bijgewerkte `docker-compose.override.yml` gebruikt een apart logvolume (#59/#115). |
@@ -393,11 +415,13 @@ Een gratis Gemini-sleutel (met lage limieten) maak je aan op [aistudio.google.co
 
 ## Beveiliging
 
-Stel een installatie **niet** open voor internet of een breed netwerk zolang deze punten openstaan:
+Stel een installatie **niet** open voor internet of een breed netwerk voordat deze punten geregeld zijn:
 
-- **PostgREST geeft alle tabellen vrij.** `/api/data` draait als de database-eigenaar en toont en wijzigt zonder inloggen alle tabellen, ook `users` en `sessions`. Aparte rollen en een beperkt API-schema volgen in #57. Tot die tijd: alleen in een vertrouwd netwerk, of `/api/data` afschermen in een proxy ervoor.
-- **Geen HTTPS in de stack.** Traefik luistert alleen op HTTP. Zet een reverse proxy met TLS ervoor (bijvoorbeeld de bestaande proxy of WAF van je organisatie) en zet dan `DEBUG=false`. Met `DEBUG=false` stuurt de browser het inlogcookie alleen via HTTPS (behalve op `localhost`).
-- Houd `.env` geheim: het bevat het databasewachtwoord en de `ADMIN_API_KEY`.
+- **HTTPS.** Traefik luistert in de standaardopzet alleen op HTTP. Zet HTTPS aan (zie [HTTPS aanzetten](#https-aanzetten)). Het inlogcookie krijgt dan `Secure`, zodat de browser het alleen via HTTPS stuurt: bij manier B vanzelf (`COOKIE_SECURE=auto`), bij manier A met `COOKIE_SECURE=true`.
+- **Begrenzing van anonieme verzoeken.** De backend begrenst inloggen en de AI-routes zelf (zie hieronder). De tellers staan per backend-proces in het geheugen; wil je strakkere of gedeelde grenzen (meerdere backends, een externe betaalde LLM-aanbieder), zet dan ook een limiet in de proxy ervoor.
+- **`.env` geheim houden.** Het bevat het databasewachtwoord en eventueel de `ADMIN_API_KEY` en sleutels van LLM-aanbieders.
+
+Verder nog open: de CSP staat `'unsafe-inline'` toe (zie [Security-headers](#security-headers)), en de rollen voor PostgREST en pg_featureserv delen het databasewachtwoord (zie [hieronder](#postgrest-en-pg_featureserv)).
 
 ### Wie mag wat
 
@@ -417,20 +441,20 @@ Stel een installatie **niet** open voor internet of een breed netwerk zolang dez
 | `/api/externe-lagen`, `/api/externe-lagen/*` | Externe kaartlagen (lezen en buurten per laag) |
 | `/api/chat`, `/api/ai/*` | Chat en AI-zoeken |
 | `/api/3dbag/*` | 3D-panden |
-| `/api/geo/*` | pg_featureserv (kaartgeometrie) |
-| `/api/data/*` | PostgREST, zie het punt hierboven (#57) |
+| `/api/geo/*` | pg_featureserv (kaartgeometrie), alleen-lezen |
+| `/api/data/*` | PostgREST, alleen-lezen views in schema `api` (zie hieronder) |
 | `/api/admin/auth/login`, `/logout`, `/me` | Inloggen en sessiestatus |
 | `/health`, `/api`, `/docs`, `/openapi.json` | Status en API-documentatie |
 
 **Principe:** rapporten hebben dezelfde rechten als een anonieme bezoeker van de kaartapplicatie (besluit #65). Een rapport toont dus niet meer dan de publieke app: geen beheervelden (notities, wie iets beoordeelde of goedkeurde), geen inactieve indicatoren, geen logs of configuratie. De technische details van AI-teksten (`debug_info`: systeemprompts en model) krijgt alleen een ingelogde beheerder.
 
-**Let op, AI-teksten:** `/api/report/narrative/*`, `/api/report/benchmark/narrative` en `/api/chat` starten zonder inloggen een aanroep naar het taalmodel. Rapportteksten worden per gebied een uur gecachet, maar er is geen rate-limit. Gebruik je een externe (betaalde) LLM-aanbieder, scherm deze routes dan af in de proxy ervoor of stel een limiet in.
-- **Autorisatie op beheerroutes is nog niet overal op orde** (#65).
-- **Standaard geen HTTPS.** Traefik luistert op HTTP. Zet HTTPS aan op een van de twee manieren hieronder, en zet dan `DEBUG=false`. Met `DEBUG=false` stuurt de browser het inlogcookie alleen via HTTPS (behalve op `localhost`).
+**Let op, AI-teksten:** `/api/report/narrative/*`, `/api/report/benchmark/narrative` en `/api/chat` starten zonder inloggen een aanroep naar het taalmodel. Rapportteksten worden per gebied een uur gecachet, en per IP-adres zijn hoogstens `LLM_RATE_LIMIT` verzoeken per minuut toegestaan (standaard 60; daarboven 429). Gebruik je een externe (betaalde) LLM-aanbieder, zet de limiet dan lager of scherm deze routes af in de proxy ervoor.
 
-### PostgREST en pg_featureserv (#57)
+**Grenzen (#203):** na 5 mislukte inlogpogingen per IP-adres en gebruikersnaam (of 20 per IP-adres) binnen 15 minuten geeft inloggen 429, en elke mislukte poging wacht 1 seconde. PostgREST geeft hoogstens 10.000 rijen per antwoord (`PGRST_DB_MAX_ROWS`). Een query mag duren: 10 seconden voor PostgREST (`web_anon`), 30 seconden voor pg_featureserv en 60 seconden voor de backend. Een interne fout geeft een generieke melding met een correlatie-id; de details staan in de log (`docker compose logs backend`, zoek op de id).
 
-PostgREST (`/api/data`) en pg_featureserv (`/api/geo`) verbinden niet als database-eigenaar, maar met eigen rollen. `db-init` maakt ze aan en houdt ze bij (`db/migraties/R__api_rollen.sql`):
+### PostgREST en pg_featureserv
+
+PostgREST (`/api/data`) en pg_featureserv (`/api/geo`) verbinden niet als database-eigenaar, maar met eigen rollen (#57). `db-init` maakt ze aan en houdt ze bij (`db/migraties/R__api_rollen.sql`):
 
 | Rol | Gebruikt door | Rechten |
 |-----|---------------|---------|
@@ -438,9 +462,9 @@ PostgREST (`/api/data`) en pg_featureserv (`/api/geo`) verbinden niet als databa
 | `web_anon` | PostgREST (anonieme verzoeken) | `NOLOGIN`; `USAGE` op schema `api`, `SELECT` op de views daarin, `EXECUTE` op `api.get_indicatoren_stats`. Geen schrijfrechten, geen rechten in `public` |
 | `featureserv` | pg_featureserv | alleen-lezen op `public.vw_gebieden_features`, `public.omgevingsvisie_deelgebieden` en de functies in `postgisftw` |
 
-PostgREST publiceert alleen schema `api`. Daarin staan alleen views en functies die de frontend en de beheeromgeving lezen: `gemeenten`, `gebiedstypes`, `gebieden` (zonder geometrie), `externe_kaartlagen`, `indicatoren` (zonder interne beheervelden), `vw_gebied_indicator_actueel` en `rpc/get_indicatoren_stats`. Applicatiedata zoals `users`, `sessions`, `api_keys`, `llm_config`, `system_prompts` en de logs is via `/api/data` niet bereikbaar, en schrijven kan anoniem niet. Een nieuw object publiceren: voeg een view of functie toe aan `schema_v23_api_rollen.sql` met de bijbehorende `GRANT` en draai `db-init` opnieuw (`docker compose up -d`).
+PostgREST publiceert alleen schema `api`. Daarin staan alleen views en functies die de frontend en de beheeromgeving lezen: `gemeenten`, `gebiedstypes`, `gebieden` (zonder geometrie), `externe_kaartlagen`, `indicatoren` (zonder interne beheervelden), `vw_gebied_indicator_actueel` en `rpc/get_indicatoren_stats`. Applicatiedata zoals `users`, `sessions`, `api_keys`, `llm_config`, `system_prompts` en de logs is via `/api/data` niet bereikbaar, en schrijven kan anoniem niet. Een nieuw object publiceren: voeg een view of functie toe aan `db/migraties/R__api_rollen.sql` met de bijbehorende `GRANT` en draai `db-init` opnieuw (`docker compose up -d`).
 
-**Wachtwoord:** `authenticator` en `featureserv` krijgen hetzelfde wachtwoord als `DATABASE_USER` (`DATABASE_PASSWORD`). Er is dus geen extra variabele in `.env`; `db-init` zet het wachtwoord bij elke start opnieuw. De containers van PostgREST en pg_featureserv kregen dat wachtwoord al. Een eigen wachtwoord per rol kan later, zonder de opzet te veranderen.
+**Wachtwoord:** `authenticator` en `featureserv` krijgen hetzelfde wachtwoord als `DATABASE_USER` (`DATABASE_PASSWORD`). Er is dus geen extra variabele in `.env`; `db-init` zet het wachtwoord bij elke start opnieuw. Wie de omgeving van de PostgREST- of pg_featureserv-container kan lezen, heeft daarmee ook het wachtwoord van de database-eigenaar. Een eigen wachtwoord per rol kan later, zonder de opzet te veranderen.
 
 Kwetsbaarheden melden: zie [`SECURITY.md`](../../SECURITY.md).
 
@@ -448,7 +472,7 @@ Kwetsbaarheden melden: zie [`SECURITY.md`](../../SECURITY.md).
 
 HTTPS en HSTS zijn verplicht volgens de [Forum Standaardisatie](https://www.forumstandaardisatie.nl/open-standaarden/verplicht). Kies één manier:
 
-**A. Achter de TLS-proxy van je organisatie (aanbevolen).** De proxy of WAF handelt het certificaat af en stuurt door naar `http://<host>:<OMNITWIN_HTTP_PORT>`. Laat de stack zoals hij is en zet `DEBUG=false`. De proxy moet zelf HSTS sturen (`Strict-Transport-Security: max-age=31536000`) en HTTP doorsturen naar HTTPS; Traefik ziet alleen HTTP en zet die header dan niet.
+**A. Achter de TLS-proxy van je organisatie (aanbevolen).** De proxy of WAF handelt het certificaat af en stuurt door naar `http://<host>:<OMNITWIN_HTTP_PORT>`. Laat de stack zoals hij is en zet `COOKIE_SECURE=true` (Traefik ziet alleen HTTP, dus `auto` herkent de HTTPS-verbinding niet). De proxy moet zelf HSTS sturen (`Strict-Transport-Security: max-age=31536000`) en HTTP doorsturen naar HTTPS; Traefik ziet alleen HTTP en zet die header dan niet.
 
 **B. Traefik zelf met Let's Encrypt.** Voor een server die direct bereikbaar is, met een DNS-naam en poort 80 en 443 open. Gebruik het voorbeeld [`deploy/traefik/tls.example.yml`](../../deploy/traefik/tls.example.yml). Zet in `.env`:
 
@@ -456,7 +480,6 @@ HTTPS en HSTS zijn verplicht volgens de [Forum Standaardisatie](https://www.foru
 COMPOSE_FILE=docker-compose.yml:deploy/traefik/tls.example.yml   # Windows: ; in plaats van :
 OMNITWIN_DOMAIN=omnitwin.example.nl
 ACME_EMAIL=beheer@example.nl     # functioneel adres voor meldingen van Let's Encrypt
-DEBUG=false
 ```
 
 en draai `docker compose up -d`. HTTP gaat dan met een redirect naar HTTPS, en HSTS staat aan. `OMNITWIN_HTTP_PORT` moet hierbij `80` blijven. Een eigen certificaat in plaats van Let's Encrypt staat beschreven in de kop van het voorbeeldbestand.
@@ -484,7 +507,8 @@ Voeg je een kaartlaag of bibliotheek toe die rechtstreeks een andere server aanr
 
 ### Checklist vóór openstelling
 
-- HTTPS aan (manier A of B), `DEBUG=false`, en HSTS zichtbaar in de response-headers.
+- HTTPS aan (manier A of B), het inlogcookie met `Secure` (manier A: `COOKIE_SECURE=true`), en HSTS zichtbaar in de response-headers.
+- `LLM_RATE_LIMIT` passend bij je LLM-aanbieder; bij meerdere backends of een externe aanbieder ook een limiet in de proxy op inloggen (`/api/admin/auth/login`) en de AI-routes (`/api/chat`, `/api/report/*narrative*`).
 - Het domein heeft DNSSEC en is via IPv6 bereikbaar (ook verplichte standaarden). Dat regel je bij je DNS- en hostingbeheer, niet in de stack.
 - `security.txt` verwijst naar het juiste meldpunt.
-- De punten bovenaan dit hoofdstuk (#57, #65) zijn opgelost of afgeschermd.
+- Er is een backup (database en uploads) en een geteste restore.

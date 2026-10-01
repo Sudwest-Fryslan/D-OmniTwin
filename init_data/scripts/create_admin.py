@@ -3,7 +3,7 @@
 D-OmniTwin — Admin Gebruiker Aanmaken
 ======================================
 Stap 6 van de database initialisatie.
-Maakt de eerste admin gebruiker en API key aan.
+Maakt de eerste admin gebruiker aan.
 
 Gebruik:
     python init_data/scripts/create_admin.py
@@ -16,16 +16,14 @@ Vereisten:
 Gedrag:
     - Leest ADMIN_USER en ADMIN_PASSWORD uit .env
     - Als ADMIN_PASSWORD leeg is: interactief vragen
-    - Genereert een ADMIN_API_KEY en slaat hash op in api_keys tabel
-    - Biedt aan om ADMIN_API_KEY in .env bij te werken
     - Idempotent: veilig meerdere keren te draaien
+    - Exitcode 1 bij een fout: db-init stopt dan (docker-entrypoint.sh, #201)
+    - Geen API-key: X-Admin-Key gebruikt ADMIN_API_KEY uit .env, die je zelf zet
+      (zie .env.example). Er komen geen secrets in de log.
 """
 
 import argparse
-import hashlib
 import os
-import re
-import secrets
 import sys
 from getpass import getpass
 from pathlib import Path
@@ -49,9 +47,6 @@ try:
 except ImportError:
     print("❌ passlib niet gevonden. Installeer met: pip install passlib[bcrypt]")
     sys.exit(1)
-
-ROOT = Path(__file__).parent.parent.parent
-ENV_FILE = ROOT / ".env"
 
 
 # ─────────────────────────────────────────────────────────
@@ -98,32 +93,11 @@ def get_admin_password(username: str, force_reset: bool = False) -> str:
 
 
 # ─────────────────────────────────────────────────────────
-# .env bijwerken
-# ─────────────────────────────────────────────────────────
-def update_env_key(key: str, value: str) -> bool:
-    """Schrijft of overschrijft een key=value in het .env bestand."""
-    if not ENV_FILE.exists():
-        return False
-
-    content = ENV_FILE.read_text(encoding="utf-8")
-    pattern = re.compile(rf"^{re.escape(key)}=.*$", re.MULTILINE)
-
-    if pattern.search(content):
-        new_content = pattern.sub(f"{key}={value}", content)
-    else:
-        new_content = content.rstrip("\n") + f"\n{key}={value}\n"
-
-    ENV_FILE.write_text(new_content, encoding="utf-8")
-    return True
-
-
-# ─────────────────────────────────────────────────────────
 # Hoofd functie
 # ─────────────────────────────────────────────────────────
 def create_admin(username: str, force_reset: bool = False):
     """
     Maakt een admin gebruiker aan (of update bestaande bij --reset-password).
-    Genereert altijd een nieuwe API key.
     """
     print()
     print("=" * 60)
@@ -145,10 +119,10 @@ def create_admin(username: str, force_reset: bool = False):
         cur.execute("""
             SELECT COUNT(*) FROM information_schema.tables
             WHERE table_schema = 'public'
-            AND table_name IN ('users', 'sessions', 'api_keys')
+            AND table_name = 'users'
         """)
         table_count = cur.fetchone()[0]
-        if table_count < 3:
+        if table_count < 1:
             print("❌ User management tabellen niet gevonden!")
             print("   Voer eerst het schema script uit:")
             print(f"   bash init_data/scripts/init_database.sh")
@@ -165,7 +139,8 @@ def create_admin(username: str, force_reset: bool = False):
         user_id = existing_user[0]
         print(f"\n✅ Gebruiker '{username}' bestaat al (id: {user_id})")
         print("   Gebruik --reset-password om het wachtwoord te resetten.")
-        _generate_api_key(cur, conn, user_id, username)
+        cur.close()
+        conn.close()
         return
 
     # ── Stap 3: Wachtwoord ophalen ──
@@ -194,9 +169,6 @@ def create_admin(username: str, force_reset: bool = False):
 
     conn.commit()
 
-    # ── Stap 5: API Key genereren ──
-    _generate_api_key(cur, conn, user_id, username)
-
     cur.close()
     conn.close()
 
@@ -204,65 +176,11 @@ def create_admin(username: str, force_reset: bool = False):
     print("=" * 60)
     print("✅ Admin initialisatie voltooid!")
     print()
-    print(f"   🌐 Admin Panel:      http://localhost:8000/admin")
+    print(f"   🌐 Admin Panel:      /admin/ (bijv. http://localhost/admin/)")
     print(f"   👤 Gebruikersnaam:   {username}")
     print(f"   🔐 Wachtwoord:       [zoals ingesteld]")
     print("=" * 60)
     print()
-
-
-def _generate_api_key(cur, conn, user_id, username: str):
-    """Genereert een nieuwe API key, slaat de hash op, toont de plain key éénmalig."""
-    print()
-    print("────────────────────────────────────────────────────────────")
-    print("🔑 API Key genereren")
-    print("────────────────────────────────────────────────────────────")
-
-    # Deactiveer oude keys voor deze user
-    cur.execute("""
-        UPDATE api_keys SET is_active = FALSE
-        WHERE user_id = %s AND is_active = TRUE
-    """, (user_id,))
-    old_count = cur.rowcount
-    if old_count > 0:
-        print(f"   ♻️  {old_count} oude API key(s) gedeactiveerd")
-
-    # Genereer nieuwe key (256-bit hex)
-    plain_key = secrets.token_hex(32)
-    key_hash = hashlib.sha256(plain_key.encode()).hexdigest()
-
-    cur.execute("""
-        INSERT INTO api_keys (key_hash, label, user_id, is_active)
-        VALUES (%s, %s, %s, TRUE)
-    """, (key_hash, f"admin-key-{username}", user_id))
-    conn.commit()
-
-    # Aanbod om .env bij te werken
-    if ENV_FILE.exists():
-        try:
-            answer = input("\n   📝 ADMIN_API_KEY bijwerken in .env? [J/n]: ").strip().lower()
-            if answer in ("", "j", "ja", "y", "yes"):
-                if update_env_key("ADMIN_API_KEY", plain_key):
-                    print("   ✅ ADMIN_API_KEY bijgewerkt in .env")
-                else:
-                    print("   ⚠️  .env bestand niet gevonden — sla de key handmatig op!")
-            else:
-                print("   ⏭️  .env niet bijgewerkt — sla de key hieronder handmatig op!")
-        except (EOFError, KeyboardInterrupt):
-            # Niet-interactieve modus (bijv. CI/Docker) — key altijd tonen
-            update_env_key("ADMIN_API_KEY", plain_key)
-            print("   ✅ ADMIN_API_KEY automatisch bijgewerkt in .env (niet-interactief)")
-
-    print()
-    print("   ┌─────────────────────────────────────────────────────┐")
-    print("   │ ⚠️  BEWAAR DEZE KEY — WORDT NIET OPNIEUW GETOOND!   │")
-    print("   │                                                     │")
-    print(f"   │  ADMIN_API_KEY={plain_key[:24]}...  │")
-    print("   │                                                     │")
-    print("   │  (Volledige key staat in je .env als je J koos)     │")
-    print("   └─────────────────────────────────────────────────────┘")
-    print()
-    print(f"   Gebruik in HTTP header:  X-Admin-Key: {plain_key}")
 
 
 # ─────────────────────────────────────────────────────────

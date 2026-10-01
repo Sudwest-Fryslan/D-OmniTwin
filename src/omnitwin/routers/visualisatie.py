@@ -9,6 +9,7 @@ from sqlalchemy import text
 from omnitwin.database import get_db
 from pydantic import BaseModel
 from typing import Optional, List
+from uuid import UUID
 import os
 
 router = APIRouter(prefix="/api/visualisatie", tags=["Visualisatie"])
@@ -113,7 +114,7 @@ def get_paletten(db: Session = Depends(get_db)):
     return {"paletten": paletten, "total": len(paletten)}
 
 @router.get("/config/{indicator_uuid}")
-def get_indicator_viz_config(indicator_uuid: str, db: Session = Depends(get_db)):
+def get_indicator_viz_config(indicator_uuid: UUID, db: Session = Depends(get_db)):
     """Get the visualization config for a specific indicator.
     Resolves: indicator → color_schema → palette config.
     Falls back to profile pattern matching if no direct schema assigned.
@@ -126,7 +127,7 @@ def get_indicator_viz_config(indicator_uuid: str, db: Session = Depends(get_db))
         FROM indicatoren i
         LEFT JOIN color_schemas cs ON i.color_schema_id = cs.id
         WHERE i.uuid = :uuid
-    """), {"uuid": indicator_uuid}).mappings().first()
+    """), {"uuid": str(indicator_uuid)}).mappings().first()
     
     if not result:
         raise HTTPException(status_code=404, detail=f"Indicator {indicator_uuid} not found")
@@ -282,9 +283,9 @@ def create_palette(
         
         row = result.mappings().first()
         return dict(row)
-    except Exception as e:
+    except Exception:
         db.rollback()
-        raise HTTPException(status_code=400, detail=str(e))
+        raise  # centrale foutafhandeling: 409/422/500 zonder SQL naar buiten (#203)
 
 @admin_router.put("/paletten/{palette_id}")
 def update_palette(
@@ -331,9 +332,9 @@ def update_palette(
         return dict(row)
     except HTTPException:
         raise
-    except Exception as e:
+    except Exception:
         db.rollback()
-        raise HTTPException(status_code=400, detail=str(e))
+        raise  # centrale foutafhandeling: 409/422/500 zonder SQL naar buiten (#203)
 
 # ============================================================================
 # Profiles Admin Endpoints
@@ -399,9 +400,9 @@ def create_profiel(
         
         row = result.mappings().first()
         return dict(row)
-    except Exception as e:
+    except Exception:
         db.rollback()
-        raise HTTPException(status_code=400, detail=str(e))
+        raise  # centrale foutafhandeling: 409/422/500 zonder SQL naar buiten (#203)
 
 @admin_router.put("/profielen/{profiel_id}")
 def update_profiel(
@@ -441,9 +442,9 @@ def update_profiel(
         return dict(row)
     except HTTPException:
         raise
-    except Exception as e:
+    except Exception:
         db.rollback()
-        raise HTTPException(status_code=400, detail=str(e))
+        raise  # centrale foutafhandeling: 409/422/500 zonder SQL naar buiten (#203)
 
 @admin_router.delete("/profielen/{profiel_id}")
 def delete_profiel(
@@ -464,6 +465,6 @@ def delete_profiel(
         return {"deleted": True, "id": profiel_id}
     except HTTPException:
         raise
-    except Exception as e:
+    except Exception:
         db.rollback()
-        raise HTTPException(status_code=400, detail=str(e))
+        raise  # centrale foutafhandeling: 409/422/500 zonder SQL naar buiten (#203)

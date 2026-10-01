@@ -6,19 +6,14 @@ from fastapi.templating import Jinja2Templates
 from fastapi.responses import HTMLResponse
 from fastapi.openapi.docs import get_swagger_ui_html # Local Swagger UI
 from sqlalchemy.orm import Session
-from sqlalchemy import text
+from sqlalchemy import event, text
+from omnitwin.config import CORS_ALLOW_HEADERS, STATEMENT_TIMEOUT_MS, instellingen
 from omnitwin.database import get_db, engine
-from dotenv import load_dotenv
-from pathlib import Path
 import os
 import time
 
 from omnitwin.services.logging_service import AppLogger, init_logging, shutdown_logging
 from omnitwin.services.log_cleanup_service import start_cleanup_scheduler, stop_cleanup_scheduler
-
-# Load environment variables
-project_root = Path(__file__).resolve().parents[2]  # root van de repository (src/omnitwin/main.py)
-load_dotenv(project_root / '.env')
 
 # Import routers
 from omnitwin.routers import gebiedsmonitor, kompas, admin, dashboard, visualisatie
@@ -31,6 +26,19 @@ app = FastAPI(
     docs_url=None, # Disable default docs (served locally)
     redoc_url=None # Disable default redoc (served locally)
 )
+
+# Grens per databasequery van de webapp (#203). Alleen hier, niet in database.py:
+# db-init, migraties en ETL-scripts gebruiken dezelfde engine en mogen langer duren.
+@event.listens_for(engine, "connect")
+def _zet_statement_timeout(dbapi_connection, _record):
+    with dbapi_connection.cursor() as cursor:
+        cursor.execute(f"SET statement_timeout = {int(STATEMENT_TIMEOUT_MS)}")
+    dbapi_connection.commit()  # anders draait de rollback bij teruggave aan de pool de SET terug
+
+# Centrale foutafhandeling (#203): details in de log, naar buiten een generieke
+# melding met correlatie-id; ongeldige invoer in de database → 422, conflict → 409
+from omnitwin.fouten import registreer_foutafhandeling
+registreer_foutafhandeling(app)
 
 # ============================================================================
 # SECURITY: Headers Middleware
@@ -141,23 +149,16 @@ app.add_middleware(RequestLoggingMiddleware)
 # ============================================================================
 # SECURITY: CORS Lockdown
 # ============================================================================
-# Get allowed origins from environment (comma-separated)
-cors_origins_str = os.getenv('CORS_ORIGINS', 'http://localhost:8000')
-cors_origins = [origin.strip() for origin in cors_origins_str.split(',')]
-
-# In debug mode, also allow common dev origins
-if os.getenv('DEBUG', 'false').lower() == 'true':
-    dev_origins = ['http://localhost:8000', 'http://127.0.0.1:8000', 'http://localhost:3000']
-    cors_origins.extend([o for o in dev_origins if o not in cors_origins])
+# Alleen de origins uit CORS_ORIGINS (kommagescheiden). De eigen site en de
+# Vite-devserver (proxy) hebben geen CORS nodig; geen wildcards (#203).
+cors_origins = list(instellingen().cors_origins)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=cors_origins,  # 🔒 LOCKED DOWN (was: ["*"])
-    # In debug mode: accepteer ngrok/tunnel origins automatisch
-    allow_origin_regex=r"https://.*\.ngrok-free\.dev" if os.getenv('DEBUG', 'false').lower() == 'true' else None,
+    allow_origins=cors_origins,
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allow_headers=["Content-Type", "Authorization", "X-API-Key"],
+    allow_headers=list(CORS_ALLOW_HEADERS),
 )
 
 # Mount static files
@@ -166,11 +167,6 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 # Setup templates
 templates = Jinja2Templates(directory="templates")
 templates.env.globals["app_version"] = __version__
-
-# ============================================================================
-# App Configuration (from environment)
-# ============================================================================
-debug_mode = os.getenv('DEBUG', 'false').lower() == 'true'
 
 # Register routers
 app.include_router(gebiedsmonitor.router)
@@ -206,7 +202,7 @@ async def startup_event():
         AppLogger.info("Gebiedsmonitor API registered at /api/gebiedsmonitor", category="SERVER")
         AppLogger.info("Kompas API registered at /api/kompas", category="SERVER")
         AppLogger.info(f"CORS origins: {cors_origins}", category="SERVER")
-        AppLogger.info(f"Debug mode: {debug_mode}", category="SERVER")
+        AppLogger.info(f"Cookie Secure: {instellingen().cookie_secure}", category="SERVER")
         AppLogger.info("Security headers middleware active", category="SERVER")
         AppLogger.info("Request logging middleware active", category="SERVER")
         AppLogger.info("Frontend available at http://localhost:8000/", category="SERVER")
@@ -296,16 +292,14 @@ def api_root():
 
 @app.get("/health")
 def health_check(db: Session = Depends(get_db)):
-    """Health check endpoint."""
-    try:
-        db.execute(text("SELECT 1"))
-        return {
-            "database": "online", 
-            "api": "online", 
-            "version": __version__,
-            "security": "headers_active"
-        }
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
+    """Health check endpoint. Een databasefout gaat naar de centrale foutafhandeling
+    (500 met correlatie-id, details alleen in de log)."""
+    db.execute(text("SELECT 1"))
+    return {
+        "database": "online",
+        "api": "online",
+        "version": __version__,
+        "security": "headers_active"
+    }
 
 # reload trigger 2026-03-15 15:58

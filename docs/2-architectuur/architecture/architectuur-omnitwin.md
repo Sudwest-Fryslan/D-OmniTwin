@@ -121,7 +121,7 @@ D-OmniTwin ("The Omni Twin") is een **digitale spiegel van de fysieke leefomgevi
 
 **Security middleware:**
 - `SecurityHeadersMiddleware` — CSP, X-Frame-Options, XSS-Protection, Referrer-Policy
-- `CORSMiddleware` — gelocked op `CORS_ORIGINS` env var; ngrok-regex in DEBUG mode
+- `CORSMiddleware` — gelocked op `CORS_ORIGINS` env var (expliciete lijst, geen wildcards)
 - Swagger UI wordt lokaal geserved (geen externe CDN)
 
 ### 4.2 Routers (API Endpoints)
@@ -291,7 +291,7 @@ Intent Classifier [<1ms]
 | Maatregel | Status | Detail |
 |-----------|--------|--------|
 | Environment secrets | ✅ Actief | `.env` — nooit in git |
-| CORS lockdown | ✅ Actief | `CORS_ORIGINS` env var; ngrok regex in DEBUG |
+| CORS lockdown | ✅ Actief | `CORS_ORIGINS` env var (expliciete lijst) |
 | Security headers | ✅ Actief | CSP, X-Frame-Options, XSS-Protection, Referrer-Policy |
 | API key auth (Admin) | ✅ Actief | `X-Admin-Key` header voor alle `/api/admin` routes |
 | Swagger lokaal | ✅ Actief | Geen externe CDN voor API docs |
@@ -345,7 +345,7 @@ CORS_ORIGINS
 ADMIN_API_KEY
 OLLAMA_HOST=http://localhost:11434
 OLLAMA_MODEL=qwen3:30b
-DEBUG=false
+COOKIE_SECURE=auto
 ```
 
 ---

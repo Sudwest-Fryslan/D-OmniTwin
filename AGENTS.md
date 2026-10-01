@@ -15,7 +15,7 @@ Relevante externe actoren:
 
 ### Architectuur-guardrails
 - Niets aanpassen aan projectbestanden zonder issue en PR (zie GitHub-workflow hieronder).
-- In sync blijven met `docs/STATE.md` — dit is het leidende statusdocument, bijgewerkt na elke sprint.
+- In sync blijven met de actuele stand: `CHANGELOG.md` (per versie, `[Unreleased]` voor wat er op `main` staat) en de GitHub-issues. `docs/STATE.md` is een historische momentopname (tot 0.1.0) en niet leidend.
 - Geen koppelingen introduceren die losse deployment van D-OmniTwin moeilijker maken.
 - Architectuurkeuzes toetsen aan het doelbeeld: dataspace-platform, bron blijft bron, begrijpbaarheid boven complexiteit.
 - D-OmniTwin positioneren als **methodiek + referentie-implementatie**, niet als product of platform — dit bepaalt adoptie buiten SWF.
@@ -34,7 +34,7 @@ D-OmniTwin is a digital twin platform for Dutch municipalities, visualizing neig
 - **Geo API:** pg_featureserv on port 9000 (`/api/geo/*`), als alleen-lezen rol `featureserv` (alleen `vw_gebieden_features`, `omgevingsvisie_deelgebieden`, `postgisftw.*`)
 - **Main Frontend:** Vanilla JS + MapLibre GL + Deck.gl (no build step, served from `/static/`)
 - **Admin Panel:** React 19 + TypeScript SPA in `/admin-panel/`, gebouwd met Vite (port 3000 in dev, built to `/static/admin-panel/`)
-- **Database:** PostgreSQL 14+ with PostGIS, pgvector, and pg_trgm extensions
+- **Database:** PostgreSQL 15 (image `postgis/postgis:15-3.5`, zie `db.Dockerfile`) with PostGIS, pgvector, and pg_trgm extensions
 
 ## Commands
 
@@ -42,7 +42,7 @@ D-OmniTwin is a digital twin platform for Dutch municipalities, visualizing neig
 ```bash
 docker compose up -d --build   # dev: laadt ook docker-compose.override.yml (bind-mount, DB op 5433, Traefik-dashboard 8081)
 ```
-Installatie voor beheerders (`COMPOSE_FILE=docker-compose.yml` in `.env`, alleen poort 80 / `OMNITWIN_HTTP_PORT`): zie **`docs/9-beheer/installatie.md`** — de enige actuele installatiegids. Bij de eerste start richt de eenmalige service `db-init` (`docker-entrypoint.sh init`) een lege database in: schema, views, de schemamigraties (`db/migraties/`, runner `python -m omnitwin.migraties`), stuurdata en definities (`load_sample.py --stap definities`), de use cases (`usecases/`, `laad_usecase.py --alle`, alleen bij `LOAD_SAMPLE_DATA=true`) en admin-gebruiker. Alle demodata hoort bij een use case: data + inrichting + stappen. Een bestaande database (tabel `gebieden` aanwezig) laat hij qua data ongemoeid, maar de migratierunner past wel openstaande migraties toe (#54).
+Installatie voor beheerders (`COMPOSE_FILE=docker-compose.yml` in `.env`, alleen poort 80 / `OMNITWIN_HTTP_PORT`): zie **`docs/9-beheer/installatie.md`** — de enige actuele installatiegids. Bij de eerste start richt de eenmalige service `db-init` (`docker-entrypoint.sh init`) een lege database in: schema, views, de schemamigraties (`db/migraties/`, runner `python -m omnitwin.migraties`), stuurdata en definities (`load_sample.py --stap definities`), de use cases (`usecases/`, `laad_usecase.py --alle`, alleen bij `LOAD_SAMPLE_DATA=true`) en admin-gebruiker. Alle demodata hoort bij een use case: data + inrichting + stappen. Daarna werkt hij altijd de rollen en het schema `api` bij (`db/migraties/R__api_rollen.sql`) en maakt hij ontbrekende embeddings aan. Een geslaagde eerste init legt hij vast in tabel `installatie_status` (#201). Een bestaande database (rij in `installatie_status`, of een installatie van vóór 0.2.1 met `gebieden` en een beheerder) laat hij qua data ongemoeid, maar de migratierunner past wel openstaande migraties toe (#54). Tabellen zonder markering en zonder beheerder (half mislukte eerste init): db-init stopt met een foutmelding en herstelinstructie.
 
 ### Backend
 De backend is één Python-pakket: `src/omnitwin/` (`main.py`, `routers/`, `services/`, `schemas/`, `database.py`, `version.py`, `utils/`). De app is `omnitwin.main:app`; imports altijd als `from omnitwin.services... import ...`. In de image staat `PYTHONPATH=/app/src`, pytest vindt het pakket via `pythonpath` in `pyproject.toml`. Database (SQL): `db/` (zie Database). `static/`, `templates/`, `init_data/`, `usecases/`, `scripts/`, `ETL/` en `tests/` staan (nog) in de root (RFC #182).
@@ -79,7 +79,7 @@ python init_data/scripts/download_buurten_fryslan.py
 python init_data/scripts/download_indicatoren_fryslan.py
 bash init_data/scripts/init_database.sh   # master initiatie-script, zie init_data/README.md
 ```
-Alleen voor een PostgreSQL zonder Docker (`docs/archief/GETTING_STARTED.md`). Werkt niet tegen de Docker-stack: `init_database.sh` verwacht een `.env` in de container en laadt het schema opnieuw. In Docker laad je de Fryslân-data na `db-init` met `docker compose exec backend python init_data/scripts/seed_fryslan.py --stap alle` (idempotent, exitcode 1 bij fouten; zie `docs/9-beheer/installatie.md`).
+Alleen voor een PostgreSQL zonder Docker (`docs/archief/GETTING_STARTED.md`). Loopt achter op `docker-entrypoint.sh`: geen `06`/`07`, geen migratierunner en geen `R__api_rollen.sql`. Werkt niet tegen de Docker-stack: `init_database.sh` verwacht een `.env` in de container en laadt het schema opnieuw. In Docker laad je de Fryslân-data na `db-init` met `docker compose exec backend python init_data/scripts/seed_fryslan.py --stap alle` (idempotent, exitcode 1 bij fouten; zie `docs/9-beheer/installatie.md`).
 
 ### ETL — doorlopend nieuwe databronnen/gemeenten toevoegen (ná de initiële setup)
 ```bash
@@ -113,10 +113,10 @@ Browser (Map click / Chat query)
 ```
 
 ### Frontend Architecture (non-obvious)
-The main app has **no build step**. `templates/index.html` (Jinja2) loads CDN scripts and the three main JS files:
-- `static/js/app.js` (~109KB) — map, layers, area selection, global `window.state`
-- `static/js/kompas.js` (~79KB) — D3.js sunburst chart for 12-quadrant Kompas
-- `static/js/chat.js` (~18KB) — chat panel with rule-based intent classification
+The main app has **no build step**. `templates/index.html` (Jinja2) loads the libraries from `static/vendor/` (self-hosted with SRI, no CDN, #144) and the three main JS files:
+- `static/js/app.js` (~180KB) — map, layers, area selection, global `window.state`
+- `static/js/kompas.js` (~105KB) — D3.js sunburst chart for 12-quadrant Kompas
+- `static/js/chat.js` (~21KB) — chat panel with rule-based intent classification
 
 These are large files — wijzig gericht, niet in bulk. They communicate via a **custom EventBus** (`static/js/core/`) — not via shared state or a framework. When an area is selected on the map, an event fires that kompas.js and chat.js subscribe to. State is managed through a global `window.state` object (selected areas, active layers, filters). No frameworks toevoegen.
 
@@ -128,21 +128,26 @@ Each API concern has a router in `src/omnitwin/routers/` (thin HTTP layer) and a
 - `llm_service.py` — Ollama integration (lazy-loaded, with graceful fallback)
 - `ai_search_service.py` — SentenceTransformer semantic search (lazy-loaded on first use)
 
+Conventies (#203): omgevingsvariabelen alleen via `omnitwin.config` (`instellingen()`), nooit los `os.getenv`; nieuwe variabele ook in `.env.example` en tabel 2.2 van de installatiegids. Geen `detail=str(e)`: onverwachte fouten gaan naar de centrale handler (`omnitwin/fouten.py`, 500 met correlatie-id), een melding voor de gebruiker is een `GebruikersFout`. Een route is `def`, tenzij hij iets `await`; synchroon werk daarin via `run_in_threadpool`. UUID-parameters typeren als `uuid.UUID` (422 bij ongeldige invoer).
+
 ### Z-Score Calculations
 Z-scores are computed dynamically per request, relative to a reference group defined by `gebiedstype` + `gemeente` (not globally). Eén bron: de SQL-functies in `db/schema/08_zscore_referentie.sql` (`zscore_referentie_stats`, `zscore_gebieden`, ...; migratie v21), met parameters en standaardwaarden in `src/omnitwin/services/zscore_referentie.py`. Waterbuurten (`gebieden.metadata->>'water' = 'JA'`) zitten nooit in de referentie; jaarlogica standaard `zelfde_jaar` (referentie = waarden in het jaar van de meest recente waarde van het doelgebied, zoals executive en Kompas werkten); alleen scenario `current`. Schrijf geen eigen referentie-CTE in `report_service.py` of `kompas_service.py`, gebruik deze functies. Methodiek: `docs/3-data-engineering/zscore_methodiek.md` (#66).
 
 ### Authentication
-Hybrid model: API key authentication for admin panel API calls, session-based auth for dashboard access. See `src/omnitwin/routers/auth.py`. The admin panel uses the API key for initial stats and then sessions for full access.
+Zie `src/omnitwin/routers/auth.py`.
+- **Beheeromgeving en web-UI:** sessie. Inloggen via `POST /api/admin/auth/login` (form-data; wachtwoorden bcrypt in `users`). Het cookie `session_token` is `HttpOnly`, `SameSite=lax` en `Secure` volgens `COOKIE_SECURE` (standaard `auto`: alleen bij HTTPS, ook via `X-Forwarded-Proto`); het token staat gehasht (sha256) in `sessions` en verloopt na 12 uur. Het admin-panel gebruikt alleen dit cookie (`admin-panel/src/services/api.ts`), nooit een API-key.
+- **Scripts:** header `X-Admin-Key` met de waarde van `ADMIN_API_KEY` uit `.env` (minimaal 32 tekens; leeg of een voorbeeldwaarde = uitgeschakeld). De tabel `api_keys` speelt geen rol bij de autorisatie.
+- **Autorisatie:** `vereis_admin` hangt op routerniveau aan alle beheerroutes (`/api/admin/*` behalve auth, `/api/visualisatie/admin/*`): zonder sessie of key `401`, zonder `is_admin` `403`. Publieke routes (kaart, Kompas, rapporten, chat) hebben dezelfde rechten als een anonieme bezoeker (#65); zie de installatiegids, Beveiliging.
 
 ### LLM / AI
 - **Chat intent classification is rule-based** (deterministic), not LLM-driven. LLM (Ollama/Qwen, local) is used only for narrative summaries (capped at ~80 words). LLM-config en system-prompts staan in databasetabellen (`llm_config`, `system_prompts`), niet hardcoded.
 - `ai_search_service.py` doet semantische zoekopdrachten met `sentence-transformers` (model `all-MiniLM-L6-v2`, lazy-loaded; model en gepinde revisie in `src/omnitwin/services/embedding_model.py`, in de image onder `/opt/models`, container draait met `HF_HUB_OFFLINE=1`) en `pgvector`: embeddings staan in tabel `indicator_embeddings` (kolom `embedding vector(384)`, HNSW-index met cosine ops), bevraagd via de `<=>`-operator. `kompas_service.py` gebruikt géén vector-zoekopdrachten.
 
 ### Color System
-Colorblind-safe diverging palettes are used throughout. Palette definitions live in `static/css/colors/`. Dynamic color generation (including diverging scales) is in `color_scale_service.py`.
+Colorblind-safe diverging palettes are used throughout. Palette definitions live in database table `color_schemas` (beheer via de admin-API, publiek via `/api/visualisatie/paletten`). Dynamic color generation (including diverging scales) is in `color_scale_service.py`. `static/css/colors/` is een losse demopagina met het SWF-kleurenschema, geen bron voor de app.
 
 ### Database
-Schema is in `db/schema/schema_latest.sql`. Key tables: `gebieden` (areas/buurten), `indicatoren` (metrics), `gebied_data` (measurements), `kompas_titels` / `kompas_themas` / `kompas_onderdelen` / `kompas_indicator_mapping` (thematic hierarchy, samengevoegd in view `v_kompas_hierarchie`). In Docker laadt `db-init` bij een lege database dit schema plus `db/schema/06_pg_featureserv_views.sql` en `07_postgisftw_functions.sql`; daarna past de migratierunner (`python -m omnitwin.migraties`, `src/omnitwin/migraties.py`) de migraties uit `db/migraties/` toe die nog niet in tabel `schema_migraties` staan, ook op een bestaande database. Bij elke start werkt hij de rollen en het schema `api` bij (`db/migraties/R__api_rollen.sql`, herhaalbaar). Stuurdata (seed, Kompas-indeling, indicatordefinities) staat in `db/stuurdata/`. **Schemawijziging:** nieuw bestand `db/migraties/V<nnn>__<naam>.sql` (volgend nummer, idempotent); een toegepaste migratie nooit aanpassen, ook niet een bestand dat hij met `\ir` inleest (de runner waarschuwt bij een andere checksum; V021 leest `db/schema/08_zscore_referentie.sql`, zie `db/README.md`). De runner neemt een advisory lock, dus twee runs tegelijk kan. `db/migraties/baseline/` bevat oude migraties die al in `schema_latest.sql` zitten; die draait de runner niet. Views zoals `vw_gebied_kaart_basis` gebruiken herkenbare aliassen — geen alias waarbij de tabelnaam niet herkenbaar terugkomt. SQLAlchemy uses a large connection pool (`pool_size=20, max_overflow=20`) for concurrent map layer queries. Let op water-buurt filtering (watergebieden worden uitgesloten van statistiek).
+Schema is in `db/schema/schema_latest.sql`. Key tables: `gebieden` (areas/buurten), `indicatoren` (metrics), `gebied_data` (measurements), `kompas_titels` / `kompas_themas` / `kompas_onderdelen` / `kompas_indicator_mapping` (thematic hierarchy, samengevoegd in view `v_kompas_hierarchie`). In Docker laadt `db-init` bij een lege database dit schema plus `db/schema/06_pg_featureserv_views.sql` en `07_postgisftw_functions.sql`; daarna past de migratierunner (`python -m omnitwin.migraties`, `src/omnitwin/migraties.py`) de migraties uit `db/migraties/` toe die nog niet in tabel `schema_migraties` staan, ook op een bestaande database. Bij elke run werkt `docker-entrypoint.sh` daarna de rollen en het schema `api` bij (`db/migraties/R__api_rollen.sql`, herhaalbaar). Stuurdata (seed, Kompas-indeling, indicatordefinities) staat in `db/stuurdata/`. **Schemawijziging:** nieuw bestand `db/migraties/V<nnn>__<naam>.sql` (volgend nummer, idempotent); een toegepaste migratie nooit aanpassen, ook niet een bestand dat hij met `\ir` inleest (de runner waarschuwt bij een andere checksum; V021 leest `db/schema/08_zscore_referentie.sql`, zie `db/README.md`). De runner neemt een advisory lock, dus twee runs tegelijk kan. `db/migraties/baseline/` bevat oude migraties die al in `schema_latest.sql` zitten; die draait de runner niet. Views zoals `vw_gebied_kaart_basis` gebruiken herkenbare aliassen — geen alias waarbij de tabelnaam niet herkenbaar terugkomt. SQLAlchemy uses a large connection pool (`pool_size=20, max_overflow=20`) for concurrent map layer queries. Let op water-buurt filtering (watergebieden worden uitgesloten van statistiek).
 
 ### Admin UI (React/TypeScript)
 Aparte codebase in `admin-panel/`, eigen build-stap nodig. API calls via relatieve paden, geproxied naar de backend op poort 8000.
@@ -151,14 +156,15 @@ Aparte codebase in `admin-panel/`, eigen build-stap nodig. API calls via relatie
 Scripts in `ETL/` en `scripts/` zijn standalone, geen deel van de web-API. CBS, RIVM, BAG zijn de primaire bronnen. Zie de Commands-sectie hierboven voor het onderscheid tussen initiële bootstrap (`init_data/`) en doorlopende uitbreiding (`ETL/`).
 
 ## Documentation
-- `docs/STATE.md` — authoritative system status and component inventory (leidend bij tegenstrijdigheden)
+- `CHANGELOG.md` — wijzigingen per versie, met migratie-instructies; `[Unreleased]` = wat er op `main` staat
+- `docs/STATE.md` — historische momentopname van de systeemstatus tot 0.1.0; niet leidend
 - `docs/INDEX.md` — documentation router by domain
 - `docs/9-beheer/installatie.md` — **de** installatiegids (Docker), ook voor beheerders
 - `docs/archief/` — verouderde logboeken en gidsen: `GETTING_STARTED.md` (installatie zonder Docker), `BUILD.md` (sprint changelog), `ROADMAP.md`, `TODO.md`, `BUGFIX.md`. Niet meer bijhouden; taken en bugs staan in de GitHub-issues
 - `GOVERNANCE.md` — rollen en besluitvorming (concept, #183)
 
 ## Projectmanagement
-`docs/STATE.md` is leidend. Na elke sprint bijwerken: versie, actieve componenten, recente wijzigingen, issues, roadmap.
+De stand van zaken staat in de GitHub-issues en in `CHANGELOG.md`. Elke PR met een merkbare wijziging zet een regel onder `[Unreleased]` (zie `docs/9-beheer/releasebeleid.md`). `docs/STATE.md` wordt niet meer bijgewerkt.
 
 ## GitHub workflow
 

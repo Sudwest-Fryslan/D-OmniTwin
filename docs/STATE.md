@@ -1,7 +1,12 @@
-# STATE.md — D-OmniTwin Systeemstatus
-> **Rol:** Single Source of Truth voor de huidige systeemstatus
-> **Beheer:** Project-manager skill | Updaten na elke sprint, release of architectuurwijziging
-> **Prioriteit:** Dit bestand is LEIDEND bij conflicten met andere documentatie
+# STATE.md — D-OmniTwin Systeemstatus (historisch)
+
+> **Historisch document, niet leidend.** Dit is een momentopname van de systeemstatus tot en met de voorbereiding van release 0.1.0 (sprintperiode tot sprint 22). Het wordt niet meer bijgewerkt en klopt op een aantal punten niet meer: zo is PostgREST sinds 0.1.0 afgeschermd met eigen rollen (#57), staat de code sinds 0.2.0 in `src/omnitwin/` en `db/` (#182), en gebruikt de beheeromgeving alleen de sessie, geen API-key.
+>
+> De actuele stand staat in:
+> - [`CHANGELOG.md`](../CHANGELOG.md): wat er per versie veranderd is; `[Unreleased]` is wat er op `main` staat;
+> - [`VERSION`](../VERSION): het versienummer;
+> - de [GitHub-issues](https://github.com/TLaan/D-OmniTwin/issues): wat openstaat;
+> - de [installatiegids](9-beheer/installatie.md): installatie, beheer en beveiliging.
 
 ---
 

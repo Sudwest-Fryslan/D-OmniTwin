@@ -15,6 +15,8 @@ Methodiek: docs/3-data-engineering/zscore_methodiek.md
 
 from typing import Any, Dict, Optional
 
+from omnitwin.fouten import GebruikersFout
+
 # Standaardwaarden (gelijk aan de DEFAULTs van de SQL-functies)
 # 'zelfde_jaar': referentie = waarden in het jaar van de meest recente waarde van het
 #   doelgebied (zonder doelgebied: meest recente jaar van de indicator). Zo werkten het
@@ -72,7 +74,7 @@ def referentie_params(
     gebied_ids None (bij zscore_gebieden) = alle gebieden van de referentiegroep.
     """
     if jaarlogica not in JAARLOGICA_OPTIES:
-        raise ValueError(f"Onbekende jaarlogica '{jaarlogica}', kies uit {JAARLOGICA_OPTIES}")
+        raise GebruikersFout(f"Onbekende jaarlogica '{jaarlogica}', kies uit {JAARLOGICA_OPTIES}")
     return {
         "zs_gebied_ids": list(gebied_ids) if gebied_ids is not None else None,
         "zs_gebiedstype_id": str(gebiedstype_id),

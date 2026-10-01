@@ -42,7 +42,7 @@ class DataControleService:
             return {"status": "error", "message": "Geen TableInfos gevonden voor dataset"}
         except Exception as e:
             logger.error(f"Error checking CBS dataset {dataset_id}: {e}")
-            return {"status": "error", "message": str(e)}
+            return {"status": "error", "message": "Bron niet bereikbaar of onverwacht antwoord (details in de serverlog)"}
 
     def resolve_source_url(self, bron_systeem: Optional[str], bron_ref: Optional[str]) -> Optional[str]:
         """Genereert de catalogus URL voor een bronsysteem."""
@@ -167,7 +167,7 @@ class DataControleService:
         except Exception as e:
             self.db.rollback()
             logger.error(f"Error herbereken_statistieken: {e}")
-            return {"status": "error", "message": str(e)}
+            return {"status": "error", "message": "Herberekenen mislukt (details in de serverlog)"}
 
     def genereer_ontologie(self, indicator_uuids: List[str]) -> Dict[str, Any]:
         """Trigger AI ontologie generatie voor indicatoren."""
@@ -188,4 +188,4 @@ class DataControleService:
         except Exception as e:
             self.db.rollback()
             logger.error(f"Error genereer_ontologie: {e}")
-            return {"status": "error", "message": str(e)}
+            return {"status": "error", "message": "Ontologie-generatie mislukt (details in de serverlog)"}
