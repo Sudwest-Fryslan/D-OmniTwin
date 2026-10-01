@@ -30,7 +30,7 @@ D-OmniTwin is a digital twin platform for Dutch municipalities, visualizing neig
 
 - **API Gateway:** Traefik on port 80 (Reverse proxy)
 - **Main Backend:** FastAPI (Python 3.10+) on port 8000
-- **Data API:** PostgREST on port 3000 (`/api/data/*`). Alleen-lezen: publiceert alleen schema `api` (views/functies), rol `web_anon` via `authenticator` (#57). Nieuw object voor de frontend: view/functie + `GRANT` in `migrations/schema_v20_api_rollen.sql`, nooit `users`/`sessions`/`api_keys`/`llm_config`/`system_prompts`/logs. Schrijven gaat via FastAPI met auth
+- **Data API:** PostgREST on port 3000 (`/api/data/*`). Alleen-lezen: publiceert alleen schema `api` (views/functies), rol `web_anon` via `authenticator` (#57). Nieuw object voor de frontend: view/functie + `GRANT` in `migrations/schema_v23_api_rollen.sql`, nooit `users`/`sessions`/`api_keys`/`llm_config`/`system_prompts`/logs. Schrijven gaat via FastAPI met auth
 - **Geo API:** pg_featureserv on port 9000 (`/api/geo/*`), als alleen-lezen rol `featureserv` (alleen `vw_gebieden_features`, `omgevingsvisie_deelgebieden`, `postgisftw.*`)
 - **Main Frontend:** Vanilla JS + MapLibre GL + Deck.gl (no build step, served from `/static/`)
 - **Admin Panel:** React 19 + TypeScript SPA in `/admin-panel/` (port 3001 in dev, built to `/static/admin-panel/`)
@@ -135,7 +135,7 @@ Hybrid model: API key authentication for admin panel API calls, session-based au
 Colorblind-safe diverging palettes are used throughout. Palette definitions live in `static/css/colors/`. Dynamic color generation (including diverging scales) is in `color_scale_service.py`.
 
 ### Database
-Schema is in `init_data/schema/schema_latest.sql`. Key tables: `gebieden` (areas/buurten), `indicatoren` (metrics), `gebied_data` (measurements), `kompas_titels` / `kompas_themas` / `kompas_onderdelen` / `kompas_indicator_mapping` (thematic hierarchy, samengevoegd in view `v_kompas_hierarchie`). In Docker laadt `db-init` dit schema plus `init_data/schema/06_pg_featureserv_views.sql` en `migrations/schema_v18_*.sql`/`schema_v19_*.sql`, en werkt bij elke start de rollen en het schema `api` bij (`migrations/schema_v20_api_rollen.sql`). Views zoals `vw_gebied_kaart_basis` gebruiken herkenbare aliassen — geen alias waarbij de tabelnaam niet herkenbaar terugkomt. SQLAlchemy uses a large connection pool (`pool_size=20, max_overflow=20`) for concurrent map layer queries. Let op water-buurt filtering (watergebieden worden uitgesloten van statistiek).
+Schema is in `init_data/schema/schema_latest.sql`. Key tables: `gebieden` (areas/buurten), `indicatoren` (metrics), `gebied_data` (measurements), `kompas_titels` / `kompas_themas` / `kompas_onderdelen` / `kompas_indicator_mapping` (thematic hierarchy, samengevoegd in view `v_kompas_hierarchie`). In Docker laadt `db-init` dit schema plus `init_data/schema/06_pg_featureserv_views.sql` en `migrations/schema_v18_*.sql`/`schema_v19_*.sql`, en werkt bij elke start de rollen en het schema `api` bij (`migrations/schema_v23_api_rollen.sql`). Views zoals `vw_gebied_kaart_basis` gebruiken herkenbare aliassen — geen alias waarbij de tabelnaam niet herkenbaar terugkomt. SQLAlchemy uses a large connection pool (`pool_size=20, max_overflow=20`) for concurrent map layer queries. Let op water-buurt filtering (watergebieden worden uitgesloten van statistiek).
 
 ### Admin UI (React/TypeScript)
 Aparte codebase in `admin-panel/`, eigen build-stap nodig. API calls via relatieve paden, geproxied naar de backend op poort 8000.

@@ -97,7 +97,7 @@ init_db() {
 # wachtwoord al; de rollen zelf hebben geen rechten op de tabellen.
 setup_api_rollen() {
     echo "🔐 Rollen en schema api voor PostgREST en pg_featureserv bijwerken..."
-    psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -v ON_ERROR_STOP=1 -q -f /app/migrations/schema_v20_api_rollen.sql >/dev/null
+    psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -v ON_ERROR_STOP=1 -q -f /app/migrations/schema_v23_api_rollen.sql >/dev/null
     # Wachtwoord via een psql-variabele (:'pw' quote het correct), niet in de SQL-bestanden
     psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -v ON_ERROR_STOP=1 -q -v pw="$DB_PASS" >/dev/null <<'SQL'
 ALTER ROLE authenticator PASSWORD :'pw';

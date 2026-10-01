@@ -96,7 +96,7 @@ services:
     image: postgrest/postgrest:v16.4
     # Eigen rollen (#57): verbindt als authenticator, voert verzoeken uit als web_anon en
     # ziet alleen schema api (views en functies). Rollen en wachtwoord: db-init
-    # (docker-entrypoint.sh, migrations/schema_v20_api_rollen.sql).
+    # (docker-entrypoint.sh, migrations/schema_v23_api_rollen.sql).
     environment:
       PGRST_DB_URI: postgres://authenticator:${DATABASE_PASSWORD}@postgres:5432/${DATABASE_NAME:-omnitwin_db}
       PGRST_DB_SCHEMAS: api
