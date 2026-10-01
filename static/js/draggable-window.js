@@ -269,6 +269,14 @@ class DraggableWindow {
             this.window.classList.remove('opening');
         }, 250);
 
+        // Niet-modale dialoog: focus het venster in, Escape sluit, focus terug bij sluiten (#67)
+        if (window.A11y && !this.dialog) {
+            this.dialog = window.A11y.openDialog(this.window, {
+                modal: false,
+                onEscape: () => this.close(),
+            });
+        }
+
         // Trigger kompas resize
         setTimeout(() => {
             window.dispatchEvent(new Event('resize'));
@@ -281,6 +289,11 @@ class DraggableWindow {
         this.window.classList.add('closing');
         this.window.classList.remove('opening');
         this.isVisible = false;
+
+        if (this.dialog) {
+            this.dialog.close();
+            this.dialog = null;
+        }
 
         setTimeout(() => {
             this.window.style.display = 'none';

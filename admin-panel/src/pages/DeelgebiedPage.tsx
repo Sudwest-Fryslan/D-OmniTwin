@@ -1106,6 +1106,7 @@ export const DeelgebiedPage: React.FC = () => {
                                                                                             <button
                                                                                                 onClick={() => toggleDrilldown(item.indicator_uuid)}
                                                                                                 title="Onderliggende buurten tonen/verbergen"
+                                                                                                aria-expanded={isDrilldownOpen}
                                                                                                 style={{
                                                                                                     padding: '0.35rem 0.55rem',
                                                                                                     fontSize: '0.75rem',
@@ -1122,6 +1123,8 @@ export const DeelgebiedPage: React.FC = () => {
                                                                                             <button
                                                                                                 onClick={() => toggleOntologie(item.indicator_uuid)}
                                                                                                 title="Definitie en ontologische toelichting"
+                                                                                                aria-label="Definitie en ontologische toelichting"
+                                                                                                aria-expanded={isOntologieOpen}
                                                                                                 style={{
                                                                                                     padding: '0.35rem 0.55rem',
                                                                                                     fontSize: '0.75rem',

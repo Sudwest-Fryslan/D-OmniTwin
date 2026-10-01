@@ -70,8 +70,8 @@ export const AccountPage: React.FC = () => {
 
                 <form onSubmit={handleSubmit}>
                     <div className="form-group">
-                        <label className="form-label">Huidig wachtwoord</label>
-                        <input
+                        <label htmlFor="account-huidig-wachtwoord" className="form-label">Huidig wachtwoord</label>
+                        <input id="account-huidig-wachtwoord"
                             type="password"
                             className="form-input"
                             value={oldPassword}
@@ -81,8 +81,8 @@ export const AccountPage: React.FC = () => {
                     </div>
 
                     <div className="form-group">
-                        <label className="form-label">Nieuw wachtwoord</label>
-                        <input
+                        <label htmlFor="account-nieuw-wachtwoord" className="form-label">Nieuw wachtwoord</label>
+                        <input id="account-nieuw-wachtwoord"
                             type="password"
                             className="form-input"
                             value={newPassword}
@@ -93,8 +93,8 @@ export const AccountPage: React.FC = () => {
                     </div>
 
                     <div className="form-group">
-                        <label className="form-label">Bevestig nieuw wachtwoord</label>
-                        <input
+                        <label htmlFor="account-bevestig-nieuw-wachtwoord" className="form-label">Bevestig nieuw wachtwoord</label>
+                        <input id="account-bevestig-nieuw-wachtwoord"
                             type="password"
                             className="form-input"
                             value={confirmPassword}

@@ -1091,6 +1091,27 @@ body {
   position: relative;
 }
 
+/* Bronvermelding kaart en data (licentie-eis, zie NOTICE.md) */
+.kaart-bronvermelding {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  z-index: 5;
+  max-width: 100%;
+  padding: 2px 6px;
+  font-size: 0.7rem;
+  line-height: 1.4;
+  color: var(--text-secondary);
+  background: var(--bg-primary);
+  opacity: 0.9;
+  border-top-left-radius: 4px;
+}
+
+.kaart-bronvermelding a {
+  color: inherit;
+  text-decoration: underline;
+}
+
 /* Loading Overlay */
 .loading-overlay {
   position: absolute;
@@ -3387,6 +3408,89 @@ body {
 
 /* In de gekleurde header is een lichte focusrand beter zichtbaar */
 .header :focus-visible {
+  outline-color: #ffffff;
+}
+
+/* Selectiebadge onder in beeld (#79): naam als label, losse knoppen voor
+   3D-panden en selectie wissen */
+.selection-badge {
+  position: fixed;
+  bottom: 40px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  max-width: calc(100vw - 32px);
+  padding: 6px 6px 6px 16px;
+  border-radius: 24px;
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 600;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+}
+
+.selection-badge-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  padding-right: 10px;
+  border-right: 1px solid rgba(255, 255, 255, 0.4);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: default;
+}
+
+.selection-badge-icon {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  filter: brightness(0) invert(1);
+}
+
+.selection-badge-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+  padding: 5px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.15);
+  color: #ffffff;
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.selection-badge-btn[hidden] {
+  display: none;
+}
+
+.selection-badge-btn:hover {
+  background: rgba(255, 255, 255, 0.28);
+}
+
+.selection-badge-btn[aria-pressed="true"] {
+  background: rgba(234, 179, 8, 0.9);
+  border-color: rgba(255, 255, 255, 0.6);
+}
+
+.selection-badge-clear {
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border-radius: 50%;
+  font-size: 14px;
+}
+
+.selection-badge :focus-visible {
   outline-color: #ffffff;
 }
 

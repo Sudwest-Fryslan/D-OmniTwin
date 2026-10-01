@@ -62,10 +62,9 @@ LOG_LEVEL=INFO
 ```
 
 ### 3b. Frontend Configuration (admin-panel/.env)
-Voor de Admin Panel dev server is ook een `.env` file nodig in `admin-panel/.env`:
+Voor de Admin Panel dev server (Vite) kan optioneel een `.env` file in `admin-panel/.env`; API-calls gaan via de proxy naar poort 8000:
 ```bash
-REACT_APP_API_URL=http://localhost:8000
-REACT_APP_ADMIN_KEY=your_admin_key_here  # Must match ADMIN_API_KEY in backend .env
+VITE_ADMIN_KEY=your_admin_key_here  # Optioneel; must match ADMIN_API_KEY in backend .env
 ```
 
 ### 4. Database Setup & Initiatie Data
@@ -101,7 +100,7 @@ python run_dev.py
 ```
 - App: `http://localhost:8000`
 - API Docs: `http://localhost:8000/docs`
-- Admin Panel: `http://localhost:8000/admin` (of via `cd admin-panel && npm start` op poort 3001)
+- Admin Panel: `http://localhost:8000/admin` (of via `cd admin-panel && npm start` op poort 3000)
 
 ### 7. Gebiedsmonitor Data Laden (Optioneel)
 

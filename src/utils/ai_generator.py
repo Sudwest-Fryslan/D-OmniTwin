@@ -39,7 +39,7 @@ Categorie: {categorie}
 Omschrijving: {omschrijving}
 Bron: {bron}"""
 
-    response = llm._call_ollama(system_prompt, user_prompt, context_name=f"Utility: {naam}")
+    response = llm._call_llm(system_prompt, user_prompt, context_name=f"Utility: {naam}")
     
     raw_text = response.get("text", "")
     return clean_ai_output(raw_text)
