@@ -9,6 +9,15 @@ from sqlalchemy import text
 from datetime import datetime
 import json
 
+from services.zscore_referentie import (
+    CBS_BUURT_CODE,
+    SCENARIO_STANDAARD,
+    SQL_REFERENTIE_STATS,
+    SQL_REFERENTIE_WAARDEN,
+    SQL_ZSCORE_GEBIEDEN,
+    referentie_params,
+)
+
 
 class KompasService:
     """Service voor Kompas hiërarchie en data queries"""
@@ -106,7 +115,9 @@ class KompasService:
         """
         # Check of gebied bestaat
         gebied_query = text("""
-            SELECT id, naam FROM gebieden WHERE id = :gebied_id LIMIT 1
+            SELECT id, naam, gebiedstype_id, gemeente_code,
+                   public.is_waterbuurt(naam, metadata) AS is_waterbuurt
+            FROM gebieden WHERE id = :gebied_id LIMIT 1
         """)
         gebied_row = self.db.execute(gebied_query, {"gebied_id": gebied_id}).fetchone()
         
@@ -136,8 +147,10 @@ class KompasService:
             LEFT JOIN LATERAL (
                 SELECT waarde, jaar 
                 FROM gebied_data
-                WHERE indicator_uuid = i.uuid 
+                WHERE indicator_uuid = i.uuid
                   AND gebied_id = :gebied_id
+                  AND COALESCE(scenario_id, 'current') = :scenario_id
+                  AND jaar IS NOT NULL
                 ORDER BY jaar DESC
                 LIMIT 1
             ) gd ON true
@@ -149,7 +162,8 @@ class KompasService:
         
         data_rows = self.db.execute(data_query, {
             "config_id": config_id,
-            "gebied_id": gebied_id
+            "gebied_id": gebied_id,
+            "scenario_id": SCENARIO_STANDAARD
         }).fetchall()
         
         # Converteer naar dict voor makkelijke lookup
@@ -173,8 +187,16 @@ class KompasService:
                 "ontologische_beschrijving": row.ontologische_beschrijving
             }
         
-        # Haal percentiel thresholds op voor ALLE indicatoren (bulk query)
-        bulk_thresholds = self._get_bulk_percentiles()
+        # Percentiel-drempels per indicator binnen de referentiegroep van dit gebied (#66).
+        # Een waterbuurt wordt niet met de referentiegroep vergeleken (#155): geen
+        # drempels, dus grijze kleuring, en een melding.
+        melding = None
+        if gebied_row.is_waterbuurt:
+            bulk_thresholds = {}
+            melding = ("Dit gebied is een waterbuurt. Waterbuurten worden niet vergeleken "
+                       "met de referentiegroep; de kleuring vervalt.")
+        else:
+            bulk_thresholds = self._get_bulk_percentiles(gebied_row.gebiedstype_id, gebied_row.gemeente_code)
         
         # Enrich hierarchie met waarden en kleuren
         enriched_tree = self._enrich_tree_with_values(
@@ -194,26 +216,29 @@ class KompasService:
             "config_naam": hierarchie_data["config_naam"],
             "hierarchie": enriched_tree,
             "coverage_percentage": round(coverage_pct, 1),
+            "is_waterbuurt": bool(gebied_row.is_waterbuurt),
+            "melding": melding,
             "laatste_update": datetime.now()
         }
         
-    def _get_bulk_percentiles(self) -> Dict[str, List[float]]:
+    def _get_bulk_percentiles(self, gebiedstype_id, gemeente_code: Optional[str] = None) -> Dict[str, List[float]]:
         """
-        Bereken 12.5% stap thresholds voor alle indicatoren
+        Bereken 12.5% stap thresholds voor alle indicatoren, over dezelfde
+        referentiegroep als de Z-scores (#66): gebiedstype + gemeente, meest
+        recente waarde per gebied, waterbuurten uitgesloten.
         Gebruikt PostgreSQL PERCENTILE_CONT voor performance
         """
         # We willen 7 split points voor 8 bins: 12.5, 25, 37.5, 50, 62.5, 75, 87.5
-        query = text("""
-            SELECT 
-                indicator_uuid,
-                PERCENTILE_CONT(ARRAY[0.125, 0.25, 0.375, 0.5, 0.625, 0.75, 0.875]) 
-                WITHIN GROUP (ORDER BY waarde) as thresholds
-            FROM gebied_data
-            WHERE waarde IS NOT NULL
-            GROUP BY indicator_uuid
+        query = text(f"""
+            SELECT
+                rw.indicator_uuid,
+                PERCENTILE_CONT(ARRAY[0.125, 0.25, 0.375, 0.5, 0.625, 0.75, 0.875])
+                WITHIN GROUP (ORDER BY rw.waarde) as thresholds
+            FROM {SQL_REFERENTIE_WAARDEN} rw
+            GROUP BY rw.indicator_uuid
         """)
-        
-        results = self.db.execute(query).fetchall()
+
+        results = self.db.execute(query, referentie_params(gebiedstype_id, gemeente_code)).fetchall()
         
         # Convert to dict
         threshold_map = {}
@@ -566,7 +591,7 @@ class KompasService:
                     gd.indicator_uuid,
                     AVG(gd.waarde) as gem_waarde
                 FROM gebied_data gd
-                WHERE gd.indicator_uuid = ANY(:uuids)
+                WHERE gd.indicator_uuid = ANY(CAST(:uuids AS uuid[]))
                   AND gd.gebied_id = ANY(:buurt_ids)
                   AND gd.waarde IS NOT NULL
                   AND gd.jaar = (
@@ -596,29 +621,18 @@ class KompasService:
         # 3. Referentie: gemeentegemiddelde
         referentie = None
         if gemeente_code:
-            ref_query = text("""
-                SELECT 
-                    gd.indicator_uuid,
-                    AVG(gd.waarde) as gem_waarde
-                FROM gebied_data gd
-                JOIN gebieden g ON gd.gebied_id = g.id
-                JOIN gebiedstypes gt ON g.gebiedstype_id = gt.id
-                WHERE gd.indicator_uuid = ANY(:uuids)
-                  AND g.gemeente_code = :gemeente_code
-                  AND gt.code = 'CBS_BUURT'
-                  AND g.actief = true
-                  AND gd.waarde IS NOT NULL
-                  AND gd.jaar = (
-                      SELECT MAX(gd2.jaar) FROM gebied_data gd2 
-                      WHERE gd2.indicator_uuid = gd.indicator_uuid
-                  )
-                GROUP BY gd.indicator_uuid
+            # Centrale referentie (#66): CBS-buurten van de gemeente, waterbuurten uitgesloten
+            ref_query = text(f"""
+                SELECT rs.indicator_uuid, rs.gemiddelde as gem_waarde
+                FROM {SQL_REFERENTIE_STATS} rs
             """)
-            
-            ref_rows = self.db.execute(ref_query, {
-                "uuids": indicator_uuids,
-                "gemeente_code": gemeente_code
-            }).fetchall()
+
+            buurt_type_id = self._gebiedstype_id_voor_code(CBS_BUURT_CODE)
+            ref_rows = self.db.execute(ref_query, referentie_params(
+                buurt_type_id,
+                gemeente_code,
+                indicator_uuids=indicator_uuids,
+            )).fetchall() if buurt_type_id else []
             
             ref_indicatoren = {}
             for row in ref_rows:
@@ -640,6 +654,13 @@ class KompasService:
             "indicator_meta": indicator_meta
         }
 
+    def _gebiedstype_id_voor_code(self, code: str) -> Optional[str]:
+        """Gebiedstype-id op code (bijv. CBS_BUURT); None als het type niet bestaat."""
+        row = self.db.execute(
+            text("SELECT id FROM gebiedstypes WHERE code = :code"), {"code": code}
+        ).fetchone()
+        return str(row.id) if row else None
+
     def get_top_afwijkende_buurten(self, indicator_uuid: str, limit: int = 3, gebied_id: Optional[str] = None) -> Optional[Dict[str, Any]]:
         """
         Bereken Z-scores voor alle CBS-buurten en retourneer Top N positief + Top N negatief.
@@ -652,64 +673,38 @@ class KompasService:
         Returns: Dict met top_positief en top_negatief lijsten, of None
         """
         
-        # 1. Bepaal de gemeente_code filter indien gebied_id is meegegeven
-        gemeente_filter = ""
-        params = {"uuid": indicator_uuid}
-        
+        # 1. Referentiegroep (#66): gebiedstype + gemeente van gebied_id; zonder
+        #    gebied_id alle CBS-buurten (alle gemeenten). Waterbuurten uitgesloten.
+        gem_res = None
+        gebiedstype_id = None
         if gebied_id:
-            gem_query = text("SELECT gemeente_code FROM gebieden WHERE id = :gebied_id")
+            gem_query = text("SELECT gemeente_code, gebiedstype_id FROM gebieden WHERE id = :gebied_id")
             gem_res = self.db.execute(gem_query, {"gebied_id": gebied_id}).fetchone()
-            if gem_res and gem_res.gemeente_code:
-                gemeente_filter = "AND g.gemeente_code = :gemeente_code"
-                params["gemeente_code"] = gem_res.gemeente_code
-        
+            if gem_res:
+                gebiedstype_id = gem_res.gebiedstype_id
+        if not gebiedstype_id:
+            gebiedstype_id = self._gebiedstype_id_voor_code(CBS_BUURT_CODE)
+        if not gebiedstype_id:
+            return None
+        gemeente_code = gem_res.gemeente_code if gem_res and gem_res.gemeente_code else None
+
         query = text(f"""
-            WITH buurt_type AS (
-                SELECT id FROM gebiedstypes WHERE LOWER(naam) LIKE '%buurt%' LIMIT 1
-            ),
-            meest_recent AS (
-                SELECT MAX(gd.jaar) as jaar
-                FROM gebied_data gd
-                JOIN gebieden g ON gd.gebied_id = g.id
-                CROSS JOIN buurt_type bt
-                WHERE gd.indicator_uuid = :uuid AND g.gebiedstype_id = bt.id AND LOWER(g.naam) NOT LIKE 'wijk %' {gemeente_filter}
-            ),
-            ref_stats AS (
-                SELECT 
-                    AVG(gd.waarde) as avg_val, 
-                    STDDEV_SAMP(gd.waarde) as std_val
-                FROM gebied_data gd
-                JOIN gebieden g ON gd.gebied_id = g.id
-                CROSS JOIN meest_recent mr
-                CROSS JOIN buurt_type bt
-                WHERE gd.indicator_uuid = :uuid 
-                  AND g.gebiedstype_id = bt.id
-                  AND LOWER(g.naam) NOT LIKE 'wijk %'
-                  AND gd.jaar = mr.jaar
-                  {gemeente_filter}
-            )
-            SELECT 
-                g.id as buurt_id, 
+            SELECT
+                g.id as buurt_id,
                 g.naam as buurt_naam,
-                gd.waarde,
-                gd.jaar,
-                rs.avg_val as gemiddelde,
-                (gd.waarde - rs.avg_val) / NULLIF(rs.std_val, 0) as z_score
-            FROM gebied_data gd
-            JOIN gebieden g ON gd.gebied_id = g.id
-            CROSS JOIN ref_stats rs
-            CROSS JOIN meest_recent mr
-            CROSS JOIN buurt_type bt
-            WHERE gd.indicator_uuid = :uuid 
-              AND g.gebiedstype_id = bt.id
-              AND gd.jaar = mr.jaar 
-              AND rs.std_val > 0
-              AND LOWER(g.naam) NOT LIKE 'wijk %'
-              {gemeente_filter}
-            ORDER BY ABS((gd.waarde - rs.avg_val) / NULLIF(rs.std_val, 0)) DESC
+                zs.waarde,
+                zs.jaar,
+                zs.gemiddelde,
+                zs.z_score
+            FROM {SQL_ZSCORE_GEBIEDEN} zs
+            JOIN gebieden g ON zs.gebied_id = g.id
+            WHERE zs.z_score IS NOT NULL
+            ORDER BY ABS(zs.z_score) DESC, g.naam
         """)
-        
-        rows = self.db.execute(query, params).fetchall()
+
+        rows = self.db.execute(query, referentie_params(
+            gebiedstype_id, gemeente_code, gebied_ids=None, indicator_uuids=[indicator_uuid]
+        )).fetchall()
         if not rows:
             return None
         

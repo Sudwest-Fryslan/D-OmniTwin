@@ -310,13 +310,15 @@ body {
   /* Ensure header doesn't shrink */
 }
 
+/* Beeldmerk (#83): static/images/beeldmerk.svg, per installatie te vervangen.
+   Geen kleurfilter: een eigen logo houdt zijn eigen kleuren. */
 .header-logo {
-  height: 60px;
-  /* Increased slightly */
+  height: 44px;
   width: auto;
+  max-width: 160px;
+  object-fit: contain;
   margin-right: var(--spacing-lg);
-  filter: brightness(0) invert(1) drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
-  /* Logo white + shadow for visibility on gradient */
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
 }
 
 /* ... existing header content ... */

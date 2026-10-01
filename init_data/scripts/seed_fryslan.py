@@ -214,10 +214,28 @@ def import_buurten(conn, res):
 
     conn.commit()
     cur.close()
+    markeer_waterbuurten(conn)
 
     if overgeslagen:
         res.info.append(f"{overgeslagen} features zonder buurtcode overgeslagen")
     print(f"   ✅ {res.ok} buurten geïmporteerd/bijgewerkt | {overgeslagen} overgeslagen | {res.fouten} fouten")
+
+
+def markeer_waterbuurten(conn):
+    """Watervlag in gebieden.metadata zetten voor gebieden die alleen op naam een
+    waterbuurt zijn (#155). Definitie: is_waterbuurt() in init_data/schema/08_zscore_referentie.sql."""
+    cur = conn.cursor()
+    try:
+        cur.execute("SELECT public.markeer_waterbuurten()")
+        n = cur.fetchone()[0]
+        conn.commit()
+        if n:
+            print(f"   💧 {n} waterbuurt(en) gemarkeerd op naam")
+    except Exception as e:
+        conn.rollback()
+        print(f"   ⚠️  Watervlag niet gezet ({e}); voer migrations/schema_v21_zscore_referentie.sql uit")
+    finally:
+        cur.close()
 
 
 # ─────────────────────────────────────────────────────────
