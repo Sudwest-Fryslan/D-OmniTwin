@@ -1,0 +1,31 @@
+name: Wens of verbetering
+description: Een nieuwe functie of verbetering voorstellen.
+title: "feat: "
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: beschrijving
+    attributes:
+      label: Beschrijving
+      description: Wat wil je kunnen, en waarom? Beschrijf het probleem, niet alleen de oplossing.
+    validations:
+      required: true
+  - type: textarea
+    id: voorstel
+    attributes:
+      label: Voorstel
+      description: Hoe zou het kunnen werken? Alternatieven die je hebt overwogen?
+  - type: textarea
+    id: acceptatiecriteria
+    attributes:
+      label: Wanneer is het klaar?
+      placeholder: "- [ ] ..."
+  - type: input
+    id: versie
+    attributes:
+      label: Versie of omgeving (optioneel)
+      placeholder: "bijv. main @ 47abf11, lokale Docker-stack"
+  - type: input
+    id: gebied-indicator
+    attributes:
+      label: Gebied en/of indicator (optioneel)
