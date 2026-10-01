@@ -1007,13 +1007,13 @@ async function loadBag3DBuildings() {
                 zoom: zoom,
                 pitch: 50,
                 bearing: -15,
-                transitionDuration: 1200,
+                ...A11y.cameraTransition(1200),
             };
         } else {
             state.currentViewState = {
                 ...state.currentViewState,
                 pitch: 50,
-                transitionDuration: 800,
+                ...A11y.cameraTransition(800),
             };
         }
         state.deckgl.setProps({ viewState: state.currentViewState });
@@ -1933,8 +1933,7 @@ function fitBounds(geojson) {
         zoom,
         pitch: state.enable3D ? 45 : 0,
         bearing: 0,
-        transitionDuration: 1000,
-        transitionInterpolator: new deck.FlyToInterpolator()
+        ...A11y.cameraTransition(1000, true)
     };
     state.deckgl.setProps({ viewState: state.currentViewState });
 }
@@ -2994,7 +2993,7 @@ function setupEventListeners() {
         state.currentViewState = {
             ...currentViewState,
             pitch: state.enable3D ? 45 : 0,
-            transitionDuration: 500
+            ...A11y.cameraTransition(500)
         };
         state.deckgl.setProps({
             viewState: state.currentViewState
@@ -3668,8 +3667,7 @@ function flyToGebied(feature, clickCoordinate = null) {
                 longitude: centroid[0] + lngOffset,
                 latitude: centroid[1],
                 zoom: zoom,
-                transitionDuration: 800,
-                transitionInterpolator: new deck.FlyToInterpolator()
+                ...A11y.cameraTransition(800, true)
             }
         });
 }

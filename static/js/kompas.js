@@ -751,7 +751,9 @@ class KompasVisualization {
                 y1: Math.max(0, d.y1 - p.depth) * k
             });
 
-            const t = self.g.transition().duration(750);
+            // Minder beweging (prefers-reduced-motion): direct naar de eindstand (#67)
+            const duur = window.A11y ? window.A11y.motionDuration(750) : 750;
+            const t = self.g.transition().duration(duur);
 
             // REFACTOR: CSS Scale removed. Geometry handles scaling now.
             // Reset transforms just in case
