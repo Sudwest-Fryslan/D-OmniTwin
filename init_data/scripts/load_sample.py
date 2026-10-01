@@ -12,7 +12,7 @@ Gebruik:
     De data (gebieden en waarden) komt uit de use cases: init_data/scripts/laad_usecase.py.
 
 Vereisten:
-    Database schema geladen via: init_data/schema/schema_latest.sql
+    Database schema geladen via: db/schema/schema_latest.sql (db-init)
     .env geconfigureerd (DATABASE_HOST, DATABASE_PORT, etc.)
 """
 
@@ -40,11 +40,11 @@ except ImportError:
 ROOT = Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(Path(__file__).resolve().parent))  # download_cbs_kerncijfers
 SAMPLE_DIR = ROOT / "init_data" / "sample"
-STUURDATA_SQL = SAMPLE_DIR / "1_stuurdata" / "stuurdata_seed.sql"
+STUURDATA_SQL = ROOT / "db" / "stuurdata" / "stuurdata_seed.sql"
 BUURTEN_GEOJSON = SAMPLE_DIR / "2_brondata" / "sample_buurten.geojson"
 INDICATOREN_CSV = SAMPLE_DIR / "2_brondata" / "sample_indicatoren.csv"
 STANDAARD_INDICATOREN_CSV = INDICATOREN_CSV
-KOMPAS_CSV = ROOT / "init_data" / "kompas" / "kompas_hierarchie.csv"
+KOMPAS_CSV = ROOT / "db" / "stuurdata" / "kompas_hierarchie.csv"
 
 CBS_BUURT_TYPE_ID = "afba67cb-6b38-4723-9c95-102a22d5b38a"
 
@@ -185,7 +185,7 @@ def import_buurten(conn):
 
 def markeer_waterbuurten(conn):
     """Watervlag in gebieden.metadata zetten voor gebieden die alleen op naam een
-    waterbuurt zijn (#155). Definitie: is_waterbuurt() in init_data/schema/08_zscore_referentie.sql."""
+    waterbuurt zijn (#155). Definitie: is_waterbuurt() in db/schema/08_zscore_referentie.sql."""
     cur = conn.cursor()
     try:
         cur.execute("SELECT public.markeer_waterbuurten()")
@@ -195,7 +195,7 @@ def markeer_waterbuurten(conn):
             print(f"   💧 {n} waterbuurt(en) gemarkeerd op naam")
     except Exception as e:
         conn.rollback()
-        print(f"   ⚠️  Watervlag niet gezet ({e}); voer migrations/schema_v21_zscore_referentie.sql uit")
+        print(f"   ⚠️  Watervlag niet gezet ({e}); voer python -m omnitwin.migraties uit (V021)")
     finally:
         cur.close()
 

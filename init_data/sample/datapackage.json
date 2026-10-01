@@ -2,7 +2,7 @@
   "$schema": "https://datapackage.org/profiles/2.0/datapackage.json",
   "name": "d-omnitwin-sample-swf",
   "title": "D-OmniTwin sample dataset Súdwest-Fryslân (13 buurten)",
-  "description": "Compacte, zelfstandige sample dataset voor D-OmniTwin: 13 CBS-buurten van de gemeente Súdwest-Fryslân met 728 metingen, plus de stuurdata (configuratie, scenario's, profielen, prompts) als SQL-seed. Bedoeld voor demo, CI en lokale installaties; geladen met init_data/scripts/load_sample.py.\n\nDe CBS Kerncijfers wijken en buurten staan er niet in: die worden bij het laden gedownload (init_data/scripts/laad_cbs.py, recept in init_data/cbs, #159). Wat bij een open bron te downloaden is, staat niet in git.\n\nLet op: buurt BU19000002 (Bolsward-Zuidoost) bevat voor de overige indicatoren demodata (bron 'DEMO: ...'), geen echte cijfers.\n\nHerkomst per meting staat in de kolom 'bron' van sample_indicatoren.csv en is nog niet overal herleidbaar: 48 regels zonder bron, 96 regels met een uploadbestandsnaam als bron, 'kwaliteit' is overal leeg. Zie KWALITEIT.md voor de telling. Opvolging in issue #60; mapping naar DCAT-AP-NL in #63.",
+  "description": "Compacte, zelfstandige sample dataset voor D-OmniTwin: 13 CBS-buurten van de gemeente Súdwest-Fryslân met 728 metingen. Bedoeld voor demo, CI en lokale installaties; geladen met init_data/scripts/load_sample.py. De stuurdata (configuratie, scenario's, profielen, prompts) hoort bij de software en staat in db/stuurdata/ (EUPL-1.2).\n\nDe CBS Kerncijfers wijken en buurten staan er niet in: die worden bij het laden gedownload (init_data/scripts/laad_cbs.py, recept in init_data/cbs, #159). Wat bij een open bron te downloaden is, staat niet in git.\n\nLet op: buurt BU19000002 (Bolsward-Zuidoost) bevat voor de overige indicatoren demodata (bron 'DEMO: ...'), geen echte cijfers.\n\nHerkomst per meting staat in de kolom 'bron' van sample_indicatoren.csv en is nog niet overal herleidbaar: 48 regels zonder bron, 96 regels met een uploadbestandsnaam als bron, 'kwaliteit' is overal leeg. Zie KWALITEIT.md voor de telling. Opvolging in issue #60; mapping naar DCAT-AP-NL in #63.",
   "version": "0.1.0",
   "keywords": ["D-OmniTwin", "Súdwest-Fryslân", "buurten", "indicatoren", "CBS", "sample"],
   "homepage": "https://github.com/TLaan/D-OmniTwin",
@@ -204,23 +204,6 @@
         ],
         "primaryKey": ["gebied_id", "indicator_uuid", "jaar", "scenario_id"]
       }
-    },
-    {
-      "name": "stuurdata-seed",
-      "title": "Stuurdata-seed (configuratie)",
-      "description": "Idempotente SQL-seed (INSERT ... ON CONFLICT DO NOTHING) voor gebiedstypes, gemeenten, kompas_configuraties, visualisatie_profielen, color_schemas, chat_scenarios, system_prompts, llm_config, log_config en externe_kaartlagen. Onderdeel van de software.",
-      "path": "1_stuurdata/stuurdata_seed.sql",
-      "type": "file",
-      "format": "sql",
-      "mediatype": "application/sql",
-      "encoding": "utf-8",
-      "licenses": [
-        {
-          "name": "EUPL-1.2",
-          "path": "https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12",
-          "title": "European Union Public Licence 1.2"
-        }
-      ]
     }
   ]
 }

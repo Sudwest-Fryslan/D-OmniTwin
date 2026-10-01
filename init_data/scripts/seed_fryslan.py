@@ -13,7 +13,7 @@ In de Docker-installatie:
     docker compose run --rm db-init python init_data/scripts/seed_fryslan.py --stap alle
 
 Vereisten:
-    Schema geladen (db-init of init_data/schema/schema_latest.sql).
+    Schema geladen (db-init of db/schema/schema_latest.sql).
     Databaseverbinding via omgevingsvariabelen of .env (DATABASE_HOST, DATABASE_PORT,
     DATABASE_NAME, DATABASE_USER, DATABASE_PASSWORD), zoals load_sample.py.
 
@@ -58,8 +58,8 @@ ROOT = Path(__file__).resolve().parent.parent.parent
 INIT_DATA = ROOT / "init_data"
 BUURTEN_GEOJSON = INIT_DATA / "fryslan" / "buurten_fryslan.geojson"
 WAARDEN_CSV = INIT_DATA / "fryslan" / "indicatorwaarden_fryslan.csv"
-INDICATOREN_SEED = INIT_DATA / "indicatoren" / "indicatoren_seed.json"
-KOMPAS_CSV = INIT_DATA / "kompas" / "kompas_hierarchie.csv"
+INDICATOREN_SEED = ROOT / "db" / "stuurdata" / "indicatoren_seed.json"
+KOMPAS_CSV = ROOT / "db" / "stuurdata" / "kompas_hierarchie.csv"
 
 # Gebiedstype UUID voor CBS Buurten (uit schema_latest.sql seed)
 CBS_BUURT_TYPE_ID = "afba67cb-6b38-4723-9c95-102a22d5b38a"
@@ -223,7 +223,7 @@ def import_buurten(conn, res):
 
 def markeer_waterbuurten(conn):
     """Watervlag in gebieden.metadata zetten voor gebieden die alleen op naam een
-    waterbuurt zijn (#155). Definitie: is_waterbuurt() in init_data/schema/08_zscore_referentie.sql."""
+    waterbuurt zijn (#155). Definitie: is_waterbuurt() in db/schema/08_zscore_referentie.sql."""
     cur = conn.cursor()
     try:
         cur.execute("SELECT public.markeer_waterbuurten()")
@@ -233,7 +233,7 @@ def markeer_waterbuurten(conn):
             print(f"   💧 {n} waterbuurt(en) gemarkeerd op naam")
     except Exception as e:
         conn.rollback()
-        print(f"   ⚠️  Watervlag niet gezet ({e}); voer migrations/schema_v21_zscore_referentie.sql uit")
+        print(f"   ⚠️  Watervlag niet gezet ({e}); voer python -m omnitwin.migraties uit (V021)")
     finally:
         cur.close()
 

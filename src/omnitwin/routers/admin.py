@@ -128,7 +128,7 @@ async def update_llm_config(
     else:
         raise HTTPException(
             status_code=409,
-            detail="De database kent nog geen api_type; voer migrations/schema_v20_llm_api_type.sql uit.",
+            detail="De database kent nog geen api_type; voer de migraties uit (db-init, migratie V020).",
         )
     db.commit()
     return config

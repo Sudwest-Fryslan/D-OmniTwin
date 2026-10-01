@@ -42,7 +42,7 @@ from pathlib import Path
 
 LOCAL_DIR    = Path(__file__).resolve().parent
 PROJECT_ROOT = LOCAL_DIR.parent.parent
-DEFAULT_SEED = PROJECT_ROOT / "init_data" / "indicatoren" / "indicatoren_seed.json"
+DEFAULT_SEED = PROJECT_ROOT / "db" / "stuurdata" / "indicatoren_seed.json"
 
 sys.path.insert(0, str(LOCAL_DIR))
 from db_connect import get_connection

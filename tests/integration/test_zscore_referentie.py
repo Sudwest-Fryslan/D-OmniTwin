@@ -5,7 +5,7 @@ Draait tegen een draaiende stack met de sample dataset, net als
 test_sample_stack.py (zie daar hoe je ze reproduceerbaar draait).
 
 Wat wordt bewezen:
-- de SQL-functies uit init_data/schema/08_zscore_referentie.sql bestaan;
+- de SQL-functies uit db/schema/08_zscore_referentie.sql bestaan;
 - een waterbuurt met extreme waarden, in dezelfde gemeente en hetzelfde
   gebiedstype, verandert gemiddelde, standaarddeviatie en n van de
   referentie niet (eigen testtransactie, daarna rollback);

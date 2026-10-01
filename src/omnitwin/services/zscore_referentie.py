@@ -2,7 +2,7 @@
 Z-score-referentie (#66, #155)
 ==============================
 Eén plek voor de parameters van de Z-score-referentiegroep. De berekening zelf
-staat in SQL (init_data/schema/08_zscore_referentie.sql):
+staat in SQL (db/schema/08_zscore_referentie.sql):
 
 - zscore_referentie_waarden(...)  de referentieset, één waarde per gebied en indicator
 - zscore_referentie_stats(...)    gemiddelde, standaarddeviatie en n per indicator
