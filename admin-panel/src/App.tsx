@@ -34,6 +34,7 @@ import {
   Activity
 } from 'lucide-react';
 import { authAPI } from './services/api';
+import Beeldmerk from './components/Beeldmerk';
 import './styles/admin.css';
 
 const queryClient = new QueryClient();
@@ -60,8 +61,11 @@ const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
       {/* Sidebar */}
       <aside className="sidebar">
         <div className="sidebar-header">
-          <h1>D-OmniTwin</h1>
-          <p>Beheerscherm</p>
+          <Beeldmerk size={36} />
+          <div>
+            <h1>D-OmniTwin</h1>
+            <p>Beheerscherm</p>
+          </div>
         </div>
 
         <nav className="sidebar-nav">
