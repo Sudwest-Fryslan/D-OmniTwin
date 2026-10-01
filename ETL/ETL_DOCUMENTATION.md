@@ -22,6 +22,20 @@ De daadwerkelijke data-extractors en importers leven in de modulaire submappen:
 
 ---
 
+## Stap 0: Installatie
+
+De ETL-scripts draaien niet in de Docker-image van de backend. Die bevat alleen wat de backend en `db-init` nodig hebben (#157). Draai ETL lokaal in een eigen virtualenv, vanuit de root van de repository:
+
+```bash
+python -m venv .venv-etl
+source .venv-etl/bin/activate        # Windows: .venv-etl\Scripts\activate
+pip install -r requirements-etl.txt  # backend-pakketten plus geopandas, pandas, openpyxl, matplotlib, ...
+```
+
+De scripts verbinden met de database uit `.env` (`DATABASE_HOST`, `DATABASE_PORT`, ...). In de ontwikkelstack staat PostgreSQL op poort 5433 van de host (`docker-compose.override.yml`).
+
+---
+
 ## 🔎 Stap 1: Nieuwe Data Ontdekken (`search_api.py`)
 
 Voordat je data importeert, moet je weten _welke_ dataset je nodig hebt en _hoe_ de kolommen heten.

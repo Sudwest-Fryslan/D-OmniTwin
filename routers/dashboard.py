@@ -10,18 +10,11 @@ from dotenv import load_dotenv
 
 # Load environment variables
 load_dotenv()
-ADMIN_API_KEY = os.getenv('ADMIN_API_KEY', '')
 
-router = APIRouter(prefix="/api/admin/dashboard", tags=["Admin Dashboard"])
+from routers.auth import vereis_admin
 
-# ============================================================================
-# Authentication
-# ============================================================================
-from routers.auth import check_auth_or_key
-
-def verify_admin_key(request: Request, db: Session = Depends(get_db)):
-    """Verifies admin access using the Hybrid Session/Key model."""
-    return check_auth_or_key(request, db)
+# Alle routes in deze router vereisen een beheerder (#65)
+router = APIRouter(prefix="/api/admin/dashboard", tags=["Admin Dashboard"], dependencies=[Depends(vereis_admin)])
 
 # ============================================================================
 # Stats Endpoint
@@ -29,7 +22,6 @@ def verify_admin_key(request: Request, db: Session = Depends(get_db)):
 @router.get("/stats")
 async def get_dashboard_stats(
     db: Session = Depends(get_db),
-    _: bool = Depends(verify_admin_key)
 ):
     """Get high-level dashboard statistics."""
     
@@ -85,7 +77,6 @@ async def get_dashboard_stats(
 async def get_quadrant_coverage(
     config_id: int = 1,
     db: Session = Depends(get_db),
-    _: bool = Depends(verify_admin_key)
 ):
     """Get coverage statistics per quadrant (Titel)."""
     
@@ -136,7 +127,6 @@ async def get_dashboard_indicators(
     limit: int = 50,
     offset: int = 0,
     db: Session = Depends(get_db),
-    _: bool = Depends(verify_admin_key)
 ):
     """Get detailed list of indicators with status for the dashboard."""
     
@@ -272,7 +262,6 @@ async def get_dashboard_indicators(
 @router.get("/export")
 async def export_dashboard_data(
     db: Session = Depends(get_db),
-    _: bool = Depends(verify_admin_key)
 ):
     """Export all dashboard data as CSV."""
     import csv

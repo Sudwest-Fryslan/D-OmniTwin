@@ -11,7 +11,7 @@ Bevat de CBS gebiedsindeling 2024 voor alle buurten in de provincie Fryslân.
 | **Licentie** | [Creative Commons Attribution 4.0 (CC BY 4.0)](https://creativecommons.org/licenses/by/4.0/) |
 | **Jaar** | 2024 |
 | **CRS** | WGS84 (EPSG:4326) |
-| **Buurten** | ≈ 350 (alle 18 Friese gemeenten) |
+| **Buurten** | 931 (alle 18 Friese gemeenten) |
 
 **Gemeenten opgenomen:**
 
@@ -20,7 +20,7 @@ Bevat de CBS gebiedsindeling 2024 voor alle buurten in de provincie Fryslân.
 | 0059 | Achtkarspelen |
 | 0060 | Ameland |
 | 1891 | Dantumadiel |
-| 1921 | De Fryske Marren |
+| 1940 | De Fryske Marren |
 | 0072 | Harlingen |
 | 0074 | Heerenveen |
 | 0080 | Leeuwarden |
@@ -28,7 +28,7 @@ Bevat de CBS gebiedsindeling 2024 voor alle buurten in de provincie Fryslân.
 | 0085 | Ooststellingwerf |
 | 0086 | Opsterland |
 | 0088 | Schiermonnikoog |
-| 0140 | Smallingerland |
+| 0090 | Smallingerland |
 | 1900 | Súdwest-Fryslân |
 | 0093 | Terschelling |
 | 0737 | Tytsjerksteradiel |

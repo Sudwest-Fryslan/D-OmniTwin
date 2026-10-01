@@ -1,6 +1,12 @@
 # init_data — Initiatie Dataset D-OmniTwin
 
-> ⚠️ **Installeren met Docker:** zie [`docs/9-beheer/installatie.md`](../docs/9-beheer/installatie.md). Daar laadt `db-init` het schema en de sample. De Fryslân-data laden in de Docker-installatie werkt nog niet (zie de installatiegids, sectie Data, en #69). `init_database.sh` hieronder is voor een PostgreSQL zonder Docker.
+> ⚠️ **Installeren met Docker:** zie [`docs/9-beheer/installatie.md`](../docs/9-beheer/installatie.md). Daar laadt `db-init` het schema en de sample. De volledige Fryslân-data laad je daarna met één commando:
+>
+> ```bash
+> docker compose exec backend python init_data/scripts/seed_fryslan.py --stap alle
+> ```
+>
+> Idempotent, eindigt met een samenvatting per stap en exitcode 1 bij fouten. `init_database.sh` hieronder is voor een PostgreSQL zonder Docker.
 
 Deze map bevat alle benodigde data en scripts om D-OmniTwin **vanaf nul** op te zetten.  
 Na dit proces heb je een gevulde database met **alle buurten in de provincie Fryslân** en **echte CBS open data** voor direct gebruik.
@@ -25,12 +31,12 @@ init_data/
 │
 ├── fryslan/
 │   ├── README.md                      # Bronvermelding en licentie-informatie
-│   ├── buurten_fryslan.geojson        # CBS buurten 2024 — provincie Fryslân (~350 buurten, WGS84)
+│   ├── buurten_fryslan.geojson        # CBS buurten 2024 — provincie Fryslân (931 buurten, WGS84)
 │   └── indicatorwaarden_fryslan.csv   # CBS open data — indicatorwaarden per buurt
 │
 └── scripts/
     ├── init_database.sh               # ⭐ Master initiatie script (alles in 1 stap, incl. admin)
-    ├── seed_fryslan.py                # Python import script (database vullen)
+    ├── seed_fryslan.py                # Python import script (database vullen; ook in Docker)
     ├── create_admin.py                # 👤 Admin gebruiker + API key aanmaken (stap 6)
     ├── download_buurten_fryslan.py    # Download GeoJSON via PDOK WFS
     └── download_indicatoren_fryslan.py # Download CBS indicatorwaarden via OData API
@@ -74,7 +80,7 @@ python init_data/scripts/create_admin.py --reset-password
 | Licentie | CC BY 4.0 |
 | Coördinatenstelsel | WGS84 (EPSG:4326) |
 | Gemeente coverage | Alle 18 Friese gemeenten |
-| Aantal buurten | ≈ 350 |
+| Aantal buurten | 931 |
 
 ### Indicatorwaarden (`indicatorwaarden_fryslan.csv`)
 

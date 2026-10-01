@@ -182,9 +182,15 @@ const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
             </Routes>
           </h2>
 
-          <div style={{ position: 'relative', zIndex: 51 }}>
+          <div
+            style={{ position: 'relative', zIndex: 51 }}
+            onKeyDown={(e) => { if (e.key === 'Escape' && dropdownOpen) setDropdownOpen(false); }}
+          >
             <button
               onClick={() => setDropdownOpen(!dropdownOpen)}
+              aria-expanded={dropdownOpen}
+              aria-haspopup="true"
+              aria-controls="gebruikersmenu"
               className="user-dropdown-btn"
               style={{
                 display: 'flex', alignItems: 'center', gap: '0.5rem',
@@ -192,7 +198,7 @@ const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                 color: 'var(--color-text-primary)', padding: '0.5rem 1rem',
                 borderRadius: 'var(--radius-md)', cursor: 'pointer',
                 fontSize: '0.875rem', fontWeight: 500,
-                outline: 'none', boxShadow: 'none', WebkitTapHighlightColor: 'transparent',
+                boxShadow: 'none', WebkitTapHighlightColor: 'transparent',
                 position: 'relative'
               }}
             >
@@ -204,7 +210,7 @@ const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
             </button>
 
             {dropdownOpen && (
-              <div style={{
+              <div id="gebruikersmenu" style={{
                 position: 'absolute', top: '100%', right: 0, marginTop: '0.5rem',
                 background: 'var(--color-surface)', border: '1px solid var(--color-border)',
                 borderRadius: 'var(--radius-md)', width: '200px',
@@ -278,7 +284,8 @@ function App() {
     const checkAuthStatus = async () => {
       try {
         const res = await authAPI.getMe();
-        if (res.data.authenticated && res.data.user) {
+        // Alleen beheerders; de backend dwingt dit ook af (#65)
+        if (res.data.authenticated && res.data.user?.is_admin) {
           setAuthenticated(true, res.data.user);
         } else {
           setAuthenticated(false);

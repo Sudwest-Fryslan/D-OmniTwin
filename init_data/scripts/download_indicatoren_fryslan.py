@@ -22,8 +22,8 @@ OUTPUT = ROOT / "init_data" / "fryslan" / "indicatorwaarden_fryslan.csv"
 
 # Alle Friese gemeentecodes (4-cijferig, zonder GM prefix)
 FRIESE_GM_CODES = [
-    '0059', '0060', '1891', '1921', '0072', '0074',
-    '0080', '1970', '0085', '0086', '0088', '0140',
+    '0059', '0060', '1891', '1940', '0072', '0074',
+    '0080', '1970', '0085', '0086', '0088', '0090',
     '1900', '0093', '0737', '0096', '1949', '0098'
 ]
 

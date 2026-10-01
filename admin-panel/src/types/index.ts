@@ -181,9 +181,12 @@ export interface ReportNarrativeResponse {
     status: string;
 }
 
+export type LLMApiType = 'ollama' | 'openai';
+
 export interface LLMConfig {
     api_url: string;
     model_name: string;
+    api_type: LLMApiType;
 }
 
 export interface SystemPrompt {

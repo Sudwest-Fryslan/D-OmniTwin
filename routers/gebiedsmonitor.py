@@ -16,6 +16,7 @@ from sqlalchemy.orm import Session
 from typing import Optional, Dict, Any
 
 from src.database import get_db
+from src.version import __version__
 from services.gebiedsmonitor_service import GebiedsmonitorService
 from schemas.gebiedsmonitor import (
     GebiedstypesListResponse,
@@ -191,5 +192,5 @@ async def health_check():
     return {
         "status": "healthy",
         "service": "Gebiedsmonitor API",
-        "version": "1.0.0"
+        "version": __version__
     }
