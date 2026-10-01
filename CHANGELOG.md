@@ -4,13 +4,13 @@ Alle noemenswaardige wijzigingen in D-OmniTwin worden in dit bestand bijgehouden
 
 De opmaak volgt [Keep a Changelog](https://keepachangelog.com/nl/1.1.0/). Versienummers volgen [Semantic Versioning](https://semver.org/lang/nl/). Hoe versies en releases werken staat in het [releasebeleid](docs/9-beheer/releasebeleid.md).
 
-Eerdere wijzigingen, van vóór dit bestand, zijn terug te vinden in de git-historie, de [Issues](https://github.com/TLaan/D-OmniTwin/issues) en de [pull requests](https://github.com/TLaan/D-OmniTwin/pulls). [`BUILD.md`](./BUILD.md#-sprint-changelog) bevat daarnaast een sprint-changelog.
+Eerdere wijzigingen, van vóór dit bestand, zijn terug te vinden in de git-historie, de [Issues](https://github.com/TLaan/D-OmniTwin/issues) en de [pull requests](https://github.com/TLaan/D-OmniTwin/pulls). [`BUILD.md`](./docs/archief/BUILD.md#-sprint-changelog) bevat daarnaast een sprint-changelog.
 
 ## [Unreleased]
 
 ## [0.1.0] - 2026-10-01
 
-Eerste release; deze sectie vat de ontwikkeling sinds het begin samen, details staan in de gekoppelde PR's en in [`BUILD.md`](./BUILD.md#-sprint-changelog).
+Eerste release; deze sectie vat de ontwikkeling sinds het begin samen, details staan in de gekoppelde PR's en in [`BUILD.md`](./docs/archief/BUILD.md#-sprint-changelog).
 
 ### Toegevoegd
 
