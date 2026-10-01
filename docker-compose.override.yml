@@ -23,13 +23,14 @@ services:
 
   db-init:
     volumes:
-      - .:/app        # create_admin.py werkt ADMIN_API_KEY bij in de .env op de host
+      - .:/app        # code en init-scripts van de host in plaats van die uit de image
 
   backend:
     volumes:
       - .:/app        # code van de host in plaats van die uit de image
                       # (het embeddingmodel staat buiten /app, in /opt/models: blijft zichtbaar)
       - backend-logs:/app/logs   # eigen volume: logs/ op de host is niet altijd schrijfbaar voor de niet-root app-gebruiker (Windows)
+      # data-upload/ zit ook in dev in het volume uploads (docker-compose.yml), niet in de repomap
 
 volumes:
   backend-logs:
