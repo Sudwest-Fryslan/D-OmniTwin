@@ -57,6 +57,3 @@ BEGIN
     END IF;
 END;
 $$ LANGUAGE plpgsql STABLE SECURITY DEFINER;
-
--- Zorg dat postgrest dit kan lezen
-GRANT EXECUTE ON FUNCTION public.get_indicatoren_stats(uuid) TO omnitwin_user;

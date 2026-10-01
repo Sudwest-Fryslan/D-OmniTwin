@@ -1,6 +1,8 @@
 --
 -- PostgreSQL database dump
 --
+-- Zonder OWNER TO en GRANT aan een vaste rol (#201): de objecten zijn van de gebruiker
+-- die dit script draait (DATABASE_USER). Laad het met psql --single-transaction.
 
 \restrict 3gy4bFeI4foWARkSZje9qygwfD5dXKLhbefeqXjBiK82y7d3LZ316oAy286Aj2c
 
@@ -62,7 +64,6 @@ END;
 $$;
 
 
-ALTER FUNCTION public.update_gebied_centroid() OWNER TO omnitwin_user;
 
 --
 -- Name: update_llm_config_modtime(); Type: FUNCTION; Schema: public; Owner: omnitwin_user
@@ -78,7 +79,6 @@ END;
 $$;
 
 
-ALTER FUNCTION public.update_llm_config_modtime() OWNER TO omnitwin_user;
 
 --
 -- Name: update_system_prompts_mod_time(); Type: FUNCTION; Schema: public; Owner: omnitwin_user
@@ -94,7 +94,6 @@ END;
 $$;
 
 
-ALTER FUNCTION public.update_system_prompts_mod_time() OWNER TO omnitwin_user;
 
 --
 -- Name: update_updated_at_column(); Type: FUNCTION; Schema: public; Owner: omnitwin_user
@@ -110,7 +109,6 @@ END;
 $$;
 
 
-ALTER FUNCTION public.update_updated_at_column() OWNER TO omnitwin_user;
 
 SET default_tablespace = '';
 
@@ -135,7 +133,6 @@ CREATE TABLE public.app_logs (
 );
 
 
-ALTER TABLE public.app_logs OWNER TO omnitwin_user;
 
 --
 -- Name: app_logs_id_seq; Type: SEQUENCE; Schema: public; Owner: omnitwin_user
@@ -149,7 +146,6 @@ CREATE SEQUENCE public.app_logs_id_seq
     CACHE 1;
 
 
-ALTER SEQUENCE public.app_logs_id_seq OWNER TO omnitwin_user;
 
 --
 -- Name: app_logs_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: omnitwin_user
@@ -175,7 +171,6 @@ CREATE TABLE public.chat_scenarios (
 );
 
 
-ALTER TABLE public.chat_scenarios OWNER TO omnitwin_user;
 
 --
 -- Name: chat_scenarios_id_seq; Type: SEQUENCE; Schema: public; Owner: omnitwin_user
@@ -190,7 +185,6 @@ CREATE SEQUENCE public.chat_scenarios_id_seq
     CACHE 1;
 
 
-ALTER SEQUENCE public.chat_scenarios_id_seq OWNER TO omnitwin_user;
 
 --
 -- Name: chat_scenarios_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: omnitwin_user
@@ -221,7 +215,6 @@ CREATE TABLE public.color_schemas (
 );
 
 
-ALTER TABLE public.color_schemas OWNER TO omnitwin_user;
 
 --
 -- Name: color_schemas_id_seq; Type: SEQUENCE; Schema: public; Owner: omnitwin_user
@@ -236,7 +229,6 @@ CREATE SEQUENCE public.color_schemas_id_seq
     CACHE 1;
 
 
-ALTER SEQUENCE public.color_schemas_id_seq OWNER TO omnitwin_user;
 
 --
 -- Name: color_schemas_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: omnitwin_user
@@ -276,7 +268,6 @@ CREATE TABLE public.externe_kaartlagen (
 );
 
 
-ALTER TABLE public.externe_kaartlagen OWNER TO omnitwin_user;
 
 --
 -- Name: externe_kaartlagen_id_seq; Type: SEQUENCE; Schema: public; Owner: omnitwin_user
@@ -291,7 +282,6 @@ CREATE SEQUENCE public.externe_kaartlagen_id_seq
     CACHE 1;
 
 
-ALTER SEQUENCE public.externe_kaartlagen_id_seq OWNER TO omnitwin_user;
 
 --
 -- Name: externe_kaartlagen_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: omnitwin_user
@@ -321,7 +311,6 @@ CREATE TABLE public.gebied_data (
 );
 
 
-ALTER TABLE public.gebied_data OWNER TO omnitwin_user;
 
 --
 -- Name: TABLE gebied_data; Type: COMMENT; Schema: public; Owner: omnitwin_user
@@ -349,7 +338,6 @@ CREATE SEQUENCE public.gebied_data_id_seq
     CACHE 1;
 
 
-ALTER SEQUENCE public.gebied_data_id_seq OWNER TO omnitwin_user;
 
 --
 -- Name: gebied_data_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: omnitwin_user
@@ -377,7 +365,6 @@ CREATE TABLE public.gebieden (
 );
 
 
-ALTER TABLE public.gebieden OWNER TO omnitwin_user;
 
 --
 -- Name: TABLE gebieden; Type: COMMENT; Schema: public; Owner: omnitwin_user
@@ -430,7 +417,6 @@ CREATE TABLE public.gebiedstypes (
 );
 
 
-ALTER TABLE public.gebiedstypes OWNER TO omnitwin_user;
 
 --
 -- Name: TABLE gebiedstypes; Type: COMMENT; Schema: public; Owner: omnitwin_user
@@ -453,7 +439,6 @@ CREATE TABLE public.gemeenten (
 );
 
 
-ALTER TABLE public.gemeenten OWNER TO omnitwin_user;
 
 --
 -- Name: TABLE gemeenten; Type: COMMENT; Schema: public; Owner: omnitwin_user
@@ -490,7 +475,6 @@ CREATE TABLE public.indicator_embeddings (
 );
 
 
-ALTER TABLE public.indicator_embeddings OWNER TO omnitwin_user;
 
 --
 -- Name: TABLE indicator_embeddings; Type: COMMENT; Schema: public; Owner: omnitwin_user
@@ -512,7 +496,6 @@ CREATE SEQUENCE public.indicator_embeddings_id_seq
     CACHE 1;
 
 
-ALTER SEQUENCE public.indicator_embeddings_id_seq OWNER TO omnitwin_user;
 
 --
 -- Name: indicator_embeddings_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: omnitwin_user
@@ -534,7 +517,6 @@ CREATE TABLE public.indicator_gebiedstype_relaties (
 );
 
 
-ALTER TABLE public.indicator_gebiedstype_relaties OWNER TO omnitwin_user;
 
 --
 -- Name: TABLE indicator_gebiedstype_relaties; Type: COMMENT; Schema: public; Owner: omnitwin_user
@@ -586,7 +568,6 @@ CREATE TABLE public.indicatoren (
 );
 
 
-ALTER TABLE public.indicatoren OWNER TO omnitwin_user;
 
 --
 -- Name: TABLE indicatoren; Type: COMMENT; Schema: public; Owner: omnitwin_user
@@ -692,7 +673,6 @@ CREATE SEQUENCE public.indicatoren_id_seq
     CACHE 1;
 
 
-ALTER SEQUENCE public.indicatoren_id_seq OWNER TO omnitwin_user;
 
 --
 -- Name: indicatoren_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: omnitwin_user
@@ -719,7 +699,6 @@ CREATE TABLE public.kompas_configuraties (
 );
 
 
-ALTER TABLE public.kompas_configuraties OWNER TO omnitwin_user;
 
 --
 -- Name: TABLE kompas_configuraties; Type: COMMENT; Schema: public; Owner: omnitwin_user
@@ -755,7 +734,6 @@ CREATE SEQUENCE public.kompas_configuraties_id_seq
     CACHE 1;
 
 
-ALTER SEQUENCE public.kompas_configuraties_id_seq OWNER TO omnitwin_user;
 
 --
 -- Name: kompas_configuraties_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: omnitwin_user
@@ -776,7 +754,6 @@ CREATE TABLE public.kompas_extra_onderdelen (
 );
 
 
-ALTER TABLE public.kompas_extra_onderdelen OWNER TO omnitwin_user;
 
 --
 -- Name: TABLE kompas_extra_onderdelen; Type: COMMENT; Schema: public; Owner: omnitwin_user
@@ -798,7 +775,6 @@ CREATE SEQUENCE public.kompas_extra_onderdelen_id_seq
     CACHE 1;
 
 
-ALTER SEQUENCE public.kompas_extra_onderdelen_id_seq OWNER TO omnitwin_user;
 
 --
 -- Name: kompas_extra_onderdelen_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: omnitwin_user
@@ -818,7 +794,6 @@ CREATE TABLE public.kompas_indicator_extra_tags (
 );
 
 
-ALTER TABLE public.kompas_indicator_extra_tags OWNER TO omnitwin_user;
 
 --
 -- Name: TABLE kompas_indicator_extra_tags; Type: COMMENT; Schema: public; Owner: omnitwin_user
@@ -843,7 +818,6 @@ CREATE TABLE public.kompas_indicator_mapping (
 );
 
 
-ALTER TABLE public.kompas_indicator_mapping OWNER TO omnitwin_user;
 
 --
 -- Name: TABLE kompas_indicator_mapping; Type: COMMENT; Schema: public; Owner: omnitwin_user
@@ -872,7 +846,6 @@ CREATE SEQUENCE public.kompas_indicator_mapping_id_seq
     CACHE 1;
 
 
-ALTER SEQUENCE public.kompas_indicator_mapping_id_seq OWNER TO omnitwin_user;
 
 --
 -- Name: kompas_indicator_mapping_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: omnitwin_user
@@ -901,7 +874,6 @@ CREATE TABLE public.kompas_indicator_scoring_regels (
 );
 
 
-ALTER TABLE public.kompas_indicator_scoring_regels OWNER TO omnitwin_user;
 
 --
 -- Name: TABLE kompas_indicator_scoring_regels; Type: COMMENT; Schema: public; Owner: omnitwin_user
@@ -944,7 +916,6 @@ CREATE SEQUENCE public.kompas_indicator_scoring_regels_id_seq
     CACHE 1;
 
 
-ALTER SEQUENCE public.kompas_indicator_scoring_regels_id_seq OWNER TO omnitwin_user;
 
 --
 -- Name: kompas_indicator_scoring_regels_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: omnitwin_user
@@ -966,7 +937,6 @@ CREATE TABLE public.kompas_onderdelen (
 );
 
 
-ALTER TABLE public.kompas_onderdelen OWNER TO omnitwin_user;
 
 --
 -- Name: TABLE kompas_onderdelen; Type: COMMENT; Schema: public; Owner: omnitwin_user
@@ -988,7 +958,6 @@ CREATE SEQUENCE public.kompas_onderdelen_id_seq
     CACHE 1;
 
 
-ALTER SEQUENCE public.kompas_onderdelen_id_seq OWNER TO omnitwin_user;
 
 --
 -- Name: kompas_onderdelen_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: omnitwin_user
@@ -1010,7 +979,6 @@ CREATE TABLE public.kompas_themas (
 );
 
 
-ALTER TABLE public.kompas_themas OWNER TO omnitwin_user;
 
 --
 -- Name: TABLE kompas_themas; Type: COMMENT; Schema: public; Owner: omnitwin_user
@@ -1032,7 +1000,6 @@ CREATE SEQUENCE public.kompas_themas_id_seq
     CACHE 1;
 
 
-ALTER SEQUENCE public.kompas_themas_id_seq OWNER TO omnitwin_user;
 
 --
 -- Name: kompas_themas_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: omnitwin_user
@@ -1055,7 +1022,6 @@ CREATE TABLE public.kompas_titels (
 );
 
 
-ALTER TABLE public.kompas_titels OWNER TO omnitwin_user;
 
 --
 -- Name: TABLE kompas_titels; Type: COMMENT; Schema: public; Owner: omnitwin_user
@@ -1077,7 +1043,6 @@ CREATE SEQUENCE public.kompas_titels_id_seq
     CACHE 1;
 
 
-ALTER SEQUENCE public.kompas_titels_id_seq OWNER TO omnitwin_user;
 
 --
 -- Name: kompas_titels_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: omnitwin_user
@@ -1099,7 +1064,6 @@ CREATE TABLE public.llm_config (
 );
 
 
-ALTER TABLE public.llm_config OWNER TO omnitwin_user;
 
 --
 -- Name: llm_config_id_seq; Type: SEQUENCE; Schema: public; Owner: omnitwin_user
@@ -1114,7 +1078,6 @@ CREATE SEQUENCE public.llm_config_id_seq
     CACHE 1;
 
 
-ALTER SEQUENCE public.llm_config_id_seq OWNER TO omnitwin_user;
 
 --
 -- Name: llm_config_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: omnitwin_user
@@ -1136,7 +1099,6 @@ CREATE TABLE public.log_config (
 );
 
 
-ALTER TABLE public.log_config OWNER TO omnitwin_user;
 
 --
 -- Name: omgevingsvisie_deelgebieden; Type: TABLE; Schema: public; Owner: omnitwin_user
@@ -1151,7 +1113,6 @@ CREATE TABLE public.omgevingsvisie_deelgebieden (
 );
 
 
-ALTER TABLE public.omgevingsvisie_deelgebieden OWNER TO omnitwin_user;
 
 --
 -- Name: omgevingsvisie_deelgebieden_id_seq; Type: SEQUENCE; Schema: public; Owner: omnitwin_user
@@ -1166,7 +1127,6 @@ CREATE SEQUENCE public.omgevingsvisie_deelgebieden_id_seq
     CACHE 1;
 
 
-ALTER SEQUENCE public.omgevingsvisie_deelgebieden_id_seq OWNER TO omnitwin_user;
 
 --
 -- Name: omgevingsvisie_deelgebieden_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: omnitwin_user
@@ -1193,7 +1153,6 @@ CREATE TABLE public.ov_halte_clusters (
 );
 
 
-ALTER TABLE public.ov_halte_clusters OWNER TO omnitwin_user;
 
 --
 -- Name: ov_haltes; Type: TABLE; Schema: public; Owner: omnitwin_user
@@ -1216,7 +1175,6 @@ CREATE TABLE public.ov_haltes (
 );
 
 
-ALTER TABLE public.ov_haltes OWNER TO omnitwin_user;
 
 --
 -- Name: ov_haltes_per_buurt; Type: TABLE; Schema: public; Owner: omnitwin_user
@@ -1234,7 +1192,6 @@ CREATE TABLE public.ov_haltes_per_buurt (
 );
 
 
-ALTER TABLE public.ov_haltes_per_buurt OWNER TO omnitwin_user;
 
 --
 -- Name: sessions; Type: TABLE; Schema: public; Owner: omnitwin_user
@@ -1248,7 +1205,6 @@ CREATE TABLE public.sessions (
 );
 
 
-ALTER TABLE public.sessions OWNER TO omnitwin_user;
 
 --
 -- Name: system_prompts; Type: TABLE; Schema: public; Owner: omnitwin_user
@@ -1265,7 +1221,6 @@ CREATE TABLE public.system_prompts (
 );
 
 
-ALTER TABLE public.system_prompts OWNER TO omnitwin_user;
 
 --
 -- Name: users; Type: TABLE; Schema: public; Owner: omnitwin_user
@@ -1281,7 +1236,6 @@ CREATE TABLE public.users (
 );
 
 
-ALTER TABLE public.users OWNER TO omnitwin_user;
 
 --
 -- Name: v_kompas_config_stats; Type: VIEW; Schema: public; Owner: omnitwin_user
@@ -1309,7 +1263,6 @@ CREATE VIEW public.v_kompas_config_stats AS
   ORDER BY kc.is_standaard DESC, kc.naam;
 
 
-ALTER VIEW public.v_kompas_config_stats OWNER TO omnitwin_user;
 
 --
 -- Name: VIEW v_kompas_config_stats; Type: COMMENT; Schema: public; Owner: omnitwin_user
@@ -1352,7 +1305,6 @@ CREATE VIEW public.v_kompas_hierarchie AS
   ORDER BY kc.id, kt.volgorde, kth.volgorde, ko.volgorde, i.naam;
 
 
-ALTER VIEW public.v_kompas_hierarchie OWNER TO omnitwin_user;
 
 --
 -- Name: VIEW v_kompas_hierarchie; Type: COMMENT; Schema: public; Owner: omnitwin_user
@@ -1379,7 +1331,6 @@ CREATE VIEW public.v_ontologie_validatiestatus AS
         END;
 
 
-ALTER VIEW public.v_ontologie_validatiestatus OWNER TO omnitwin_user;
 
 --
 -- Name: VIEW v_ontologie_validatiestatus; Type: COMMENT; Schema: public; Owner: omnitwin_user
@@ -1414,7 +1365,6 @@ UNION ALL
     'Vaccinatiegraad, Participatie'::text AS voorbeelden;
 
 
-ALTER VIEW public.v_score_types OWNER TO omnitwin_user;
 
 --
 -- Name: v_visualisatie_config; Type: VIEW; Schema: public; Owner: omnitwin_user
@@ -1434,7 +1384,6 @@ CREATE VIEW public.v_visualisatie_config AS
   WHERE (is_actief = true);
 
 
-ALTER VIEW public.v_visualisatie_config OWNER TO omnitwin_user;
 
 --
 -- Name: visualisatie_profielen; Type: TABLE; Schema: public; Owner: omnitwin_user
@@ -1457,7 +1406,6 @@ CREATE TABLE public.visualisatie_profielen (
 );
 
 
-ALTER TABLE public.visualisatie_profielen OWNER TO omnitwin_user;
 
 --
 -- Name: visualisatie_profielen_id_seq; Type: SEQUENCE; Schema: public; Owner: omnitwin_user
@@ -1472,7 +1420,6 @@ CREATE SEQUENCE public.visualisatie_profielen_id_seq
     CACHE 1;
 
 
-ALTER SEQUENCE public.visualisatie_profielen_id_seq OWNER TO omnitwin_user;
 
 --
 -- Name: visualisatie_profielen_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: omnitwin_user
@@ -1496,7 +1443,6 @@ CREATE VIEW public.vw_gebied_indicator_actueel AS
   ORDER BY gebied_id, indicator_uuid, jaar DESC;
 
 
-ALTER VIEW public.vw_gebied_indicator_actueel OWNER TO omnitwin_user;
 
 --
 -- Name: vw_gebied_kaart_basis; Type: VIEW; Schema: public; Owner: omnitwin_user
@@ -1514,7 +1460,6 @@ CREATE VIEW public.vw_gebied_kaart_basis AS
   WHERE ((g.actief = true) AND (((g.metadata ->> 'water'::text) IS NULL) OR ((g.metadata ->> 'water'::text) <> 'JA'::text)) AND ((g.naam)::text !~~* '%buitenwater%'::text) AND ((g.naam)::text !~~* '%Wadden Sea%'::text) AND ((g.naam)::text !~~* '%IJsselmeer%'::text));
 
 
-ALTER VIEW public.vw_gebied_kaart_basis OWNER TO omnitwin_user;
 
 --
 -- Name: app_logs id; Type: DEFAULT; Schema: public; Owner: omnitwin_user
@@ -2746,7 +2691,6 @@ END;
 $$ LANGUAGE plpgsql STABLE SECURITY DEFINER;
 
 -- Zorg dat postgrest dit kan lezen
-GRANT EXECUTE ON FUNCTION public.get_indicatoren_stats(uuid) TO omnitwin_user;
 
 CREATE OR REPLACE FUNCTION public.get_indicatoren_stats(p_gebiedstype_id uuid DEFAULT NULL)
 RETURNS TABLE (
@@ -2809,4 +2753,3 @@ END;
 $$ LANGUAGE plpgsql STABLE SECURITY DEFINER;
 
 -- Zorg dat postgrest dit kan lezen
-GRANT EXECUTE ON FUNCTION public.get_indicatoren_stats(uuid) TO omnitwin_user;
