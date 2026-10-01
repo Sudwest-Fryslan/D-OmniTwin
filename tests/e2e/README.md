@@ -11,6 +11,7 @@ sample dataset. Elke test verwijst in naam en docstring naar zijn TC-id
 | `test_kaartmodule.py` | TC-01-001, TC-01-002, TC-01-003 (+ kaart-export) |
 | `test_kompas_detail.py` | TC-02-001, TC-02-002 |
 | `test_integratie_e2e.py` | TC-06-001 |
+| `test_toegankelijkheid.py` | Toegankelijkheid (#67): focus in dialogen, `prefers-reduced-motion` |
 
 Uitkomsten:
 
