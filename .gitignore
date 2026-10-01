@@ -65,3 +65,6 @@ ETL/local/
 
 # Overpass API cache (OSMPythonTools)
 cache/
+
+# Cache van gedownloade open data (CBS e.d.), zie init_data/cbs
+data-cache/

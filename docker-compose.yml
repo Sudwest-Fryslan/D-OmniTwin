@@ -67,6 +67,10 @@ services:
     environment:
       - DATABASE_HOST=postgres
       - DATABASE_PORT=5432
+      # Gedownloade open data (CBS e.d.) wordt hier gecachet; staat niet in git (init_data/cbs)
+      - DATA_CACHE=/data-cache
+    volumes:
+      - bron-cache:/data-cache
     depends_on:
       postgres:
         condition: service_healthy
@@ -169,3 +173,4 @@ services:
 
 volumes:
   pgdata:
+  bron-cache:

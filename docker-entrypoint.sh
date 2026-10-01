@@ -75,6 +75,9 @@ init_db() {
     if [ "$LOAD_SAMPLE" = "true" ] || [ "$LOAD_SAMPLE" = "1" ]; then
         echo "🌱 LOAD_SAMPLE_DATA is actief: alle use cases inladen..."
         python /app/init_data/scripts/laad_usecase.py --alle
+        # CBS Kerncijfers 2019-nu (alle jaargangen, voor trends) voor de gebieden die nu in de
+        # database staan; gedownload bij CBS met cache in $DATA_CACHE (volume bron-cache). Heel Fryslân: seed_fryslan.py
+        python /app/init_data/scripts/laad_cbs.py
         echo "✅ Use cases ingeladen."
     else
         echo "⚙️ LOAD_SAMPLE_DATA niet actief: geen data, alleen het product."

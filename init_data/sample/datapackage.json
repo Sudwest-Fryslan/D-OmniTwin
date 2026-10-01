@@ -2,7 +2,7 @@
   "$schema": "https://datapackage.org/profiles/2.0/datapackage.json",
   "name": "d-omnitwin-sample-swf",
   "title": "D-OmniTwin sample dataset Súdwest-Fryslân (13 buurten)",
-  "description": "Compacte, zelfstandige sample dataset voor D-OmniTwin: 13 CBS-buurten van de gemeente Súdwest-Fryslân met 87 indicatoren en 1.132 metingen, plus de stuurdata (configuratie, scenario's, profielen, prompts) als SQL-seed. Bedoeld voor demo, CI en lokale installaties; geladen met init_data/scripts/load_sample.py.\n\nLet op: buurt BU19000002 (Bolsward-Zuidoost) bevat demodata (bron 'DEMO: ...'), geen echte cijfers.\n\nHerkomst per meting staat in de kolom 'bron' van sample_indicatoren.csv en is nog niet overal herleidbaar: 48 regels zonder bron, 96 regels met een uploadbestandsnaam als bron, 'kwaliteit' is overal leeg. Zie KWALITEIT.md voor de telling. Opvolging in issue #60; mapping naar DCAT-AP-NL in #63.",
+  "description": "Compacte, zelfstandige sample dataset voor D-OmniTwin: 13 CBS-buurten van de gemeente Súdwest-Fryslân met 728 metingen, plus de stuurdata (configuratie, scenario's, profielen, prompts) als SQL-seed. Bedoeld voor demo, CI en lokale installaties; geladen met init_data/scripts/load_sample.py.\n\nDe CBS Kerncijfers wijken en buurten staan er niet in: die worden bij het laden gedownload (init_data/scripts/laad_cbs.py, recept in init_data/cbs, #159). Wat bij een open bron te downloaden is, staat niet in git.\n\nLet op: buurt BU19000002 (Bolsward-Zuidoost) bevat voor de overige indicatoren demodata (bron 'DEMO: ...'), geen echte cijfers.\n\nHerkomst per meting staat in de kolom 'bron' van sample_indicatoren.csv en is nog niet overal herleidbaar: 48 regels zonder bron, 96 regels met een uploadbestandsnaam als bron, 'kwaliteit' is overal leeg. Zie KWALITEIT.md voor de telling. Opvolging in issue #60; mapping naar DCAT-AP-NL in #63.",
   "version": "0.1.0",
   "keywords": ["D-OmniTwin", "Súdwest-Fryslân", "buurten", "indicatoren", "CBS", "sample"],
   "homepage": "https://github.com/TLaan/D-OmniTwin",
@@ -31,15 +31,11 @@
   ],
   "sources": [
     {
-      "title": "CBS StatLine 86165NED (bron 'CBS_86165NED', 240 regels)",
-      "path": "https://opendata.cbs.nl/statline/#/CBS/nl/dataset/86165NED"
+      "title": "CBS Kerncijfers wijken en buurten 2019-2026 (84583NED, 84799NED, 85039NED, 85318NED, 85618NED, 85984NED, 86165NED, 86358NED; bron 'CBS Kerncijfers wijken en buurten <jaar> (<tabel>)', 2.933 regels; zie init_data/cbs/datapackage.json)",
+      "path": "https://opendata.cbs.nl/statline/#/CBS/nl/dataset/85984NED"
     },
     {
-      "title": "CBS StatLine 85618NED (bron 'CBS_85618NED', 24 regels)",
-      "path": "https://opendata.cbs.nl/statline/#/CBS/nl/dataset/85618NED"
-    },
-    {
-      "title": "CBS StatLine 85984NED (bron 'CBS_85984NED', 15 regels)",
+      "title": "CBS StatLine 85984NED (bron 'CBS_85984NED', 12 regels, indicator Huisarts)",
       "path": "https://opendata.cbs.nl/statline/#/CBS/nl/dataset/85984NED"
     },
     {
@@ -47,11 +43,7 @@
       "path": "https://opendata.cbs.nl/statline/#/CBS/nl/dataset/50150NED"
     },
     {
-      "title": "CBS StatLine 85039NED, Kerncijfers wijken en buurten 2021 (bron 'Kerncijfers wijken en buurten 2023', 105 regels; label en kolom jaar zeggen 2023, de waarden zijn van 2021, zie #119)",
-      "path": "https://opendata.cbs.nl/statline/#/CBS/nl/dataset/85039NED"
-    },
-    {
-      "title": "CBS Wijk- en buurtkaart 2024 (geometrie sample_buurten.geojson, via PDOK)",
+      "title": "CBS Wijk- en buurtkaart (geometrie sample_buurten.geojson, via PDOK)",
       "path": "https://www.pdok.nl/introductie/-/article/cbs-wijken-en-buurten"
     },
     {

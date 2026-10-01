@@ -15,7 +15,7 @@ Een use case is een **bundel**: data + inrichting + stappen. Alle drie staan hie
 ## 1. Data
 
 - **Dataset:** `init_data/sample`, gebiedstype CBS Buurten
-- **Gebieden:** Bolsward-Noord (BU19000001), Bolsward-Zuidoost (BU19000002), Bolsward-Noordoost (BU19000004). Focus: Bolsward-Zuidoost (demodata).
+- **Gebieden:** Bolsward-Noord (BU19000001), Bolsward-Zuidoost (BU19000002), Bolsward-Noordoost (BU19000004). Focus: Bolsward-Zuidoost (CBS Kerncijfers echt, 2019-2026; overige indicatoren demodata).
 
 | Indicator | Richting |
 |---|---|

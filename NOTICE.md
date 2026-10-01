@@ -31,6 +31,10 @@ MapLibre GL JS, deck.gl, D3.js, Chart.js en Inter worden zelf gehost in `static/
 - **Ollama**: [MIT License](https://github.com/ollama/ollama/blob/main/LICENSE)
 - **Sentence-Transformers**: [Apache License 2.0](https://github.com/UKPLab/sentence-transformers/blob/master/LICENSE)
 
+## 📊 Data
+- **CBS Kerncijfers wijken en buurten 2019-2026** (recept in `init_data/cbs/`; de data wordt bij het laden gedownload): Centraal Bureau voor de Statistiek (CBS), tabellen 84583NED, 84799NED, 85039NED, 85318NED, 85618NED, 85984NED, 86165NED en 86358NED via [opendata.cbs.nl](https://opendata.cbs.nl). [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). Bewerkt: alleen buurten in Fryslân, kolommen gemapt op D-OmniTwin-indicatoren, `65+ jaar (%)` afgeleid. Zie [`docs/3-data-engineering/cbs_kerncijfers.md`](docs/3-data-engineering/cbs_kerncijfers.md).
+- **CBS Gebiedsindelingen 2024** (`init_data/fryslan/buurten_fryslan.geojson`): CBS via PDOK. [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
+- **RIVM Gezondheidsmonitor** (`init_data/fryslan/indicatorwaarden_fryslan.csv`): RIVM via dataderden.cbs.nl. [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
 ## 🗺️ Databronnen en licenties
 
 De software valt onder EUPL 1.2. De data die D-OmniTwin meelevert (`init_data/`) of ophaalt, valt onder de licentie van de bron. Per meting staat de bron in de kolom `bron`; zie ook `init_data/sample/datapackage.json`. Licenties gecontroleerd op 1 oktober 2026.
