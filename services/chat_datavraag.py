@@ -720,7 +720,7 @@ def deelvragen(vraag: str) -> List[str]:
 
 
 # Foutteksten die LLMService als 'text' teruggeeft (Ollama en, na #88, OpenAI/gateway)
-_MODELFOUTEN = ("Error contacting", "Generatie mislukt", "LLM-server", "Fout bij")
+_MODELFOUTEN = ("Error contacting", "Generatie mislukt", "LLM-server", "Fout bij", "AI-samenvatting is nu niet beschikbaar")
 
 
 def beantwoord_datavraag(
@@ -821,7 +821,8 @@ def beantwoord_datavraag(
     if not context.get("geen_llm"):
         try:
             antwoord = vraag_llm(SYSTEEMPROMPT, gebruikersprompt(vraag, feiten, herkenning.herkend)) or {}
-            tekst = strip_denken(antwoord.get("text", ""))
+            # Foutvlag van LLMService (#65): de tekst is dan een foutmelding, geen antwoord
+            tekst = "" if antwoord.get("error") else strip_denken(antwoord.get("text", ""))
             model = (antwoord.get("debug") or {}).get("model")
         except Exception:
             tekst, model = "", None
