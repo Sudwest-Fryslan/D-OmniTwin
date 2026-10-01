@@ -86,6 +86,7 @@ De eerste keer duurt dit lang (10 tot 30 minuten): de backend-image installeert 
 
 1. `postgres` (PostGIS met pgvector) wordt *healthy*.
 2. `db-init` draait één keer en stopt. Bij een **lege** database maakt hij het schema aan (`init_data/schema/schema_latest.sql`, de views voor de kaart en de migraties v18 en v19), laadt de stuurdata en eventueel de sample dataset, en maakt het beheeraccount aan. Bestaat de tabel `gebieden` al, dan slaat hij dit allemaal over. Hij overschrijft dus nooit bestaande data.
+   Daarna werkt hij altijd de databaserollen en het schema `api` voor PostgREST en pg_featureserv bij (`migrations/schema_v20_api_rollen.sql`, zie [Beveiliging](#beveiliging)). Dat raakt geen data.
 3. `backend` (FastAPI), `postgrest` en `pg_featureserv` starten, `traefik` stuurt het verkeer door.
 
 Controleer:
@@ -125,7 +126,7 @@ Met de standaardpoort 80 (anders `http://<host>:<OMNITWIN_HTTP_PORT>/...`):
 | `http://<host>/` | De applicatie (kaart, Kompas, chat) |
 | `http://<host>/admin/` | Beheeromgeving |
 | `http://<host>/docs` | API-documentatie van de backend (Swagger) |
-| `http://<host>/api/data/` | PostgREST: tabellen en views als REST-API |
+| `http://<host>/api/data/` | PostgREST: alleen-lezen REST-API op de views en functies in schema `api` |
 | `http://<host>/api/geo/` | pg_featureserv: OGC API Features, bijvoorbeeld `/api/geo/collections` |
 | `http://<host>/health` | Healthcheck van de backend |
 
@@ -183,7 +184,7 @@ git pull
 docker compose up -d --build
 ```
 
-`db-init` draait opnieuw, ziet dat de database bestaat en doet niets. Schemawijzigingen worden bij een bestaande database dus **niet automatisch** doorgevoerd; geautomatiseerd migratiebeheer volgt in #54.
+`db-init` draait opnieuw, ziet dat de database bestaat en laat schema en data met rust. Alleen de rollen en het schema `api` voor PostgREST en pg_featureserv werkt hij altijd bij (v20, zie [Beveiliging](#beveiliging)). Andere schemawijzigingen worden bij een bestaande database **niet automatisch** doorgevoerd; geautomatiseerd migratiebeheer volgt in #54.
 
 Tot die tijd voer je migraties handmatig uit. Een database van vóór september 2026 mist mogelijk v18 (`pg_trgm`, nodig voor de deduplicatie) en v19. Beide zijn veilig om opnieuw te draaien:
 
@@ -287,9 +288,22 @@ De chat en de samenvattingen gebruiken een lokaal taalmodel via [Ollama](https:/
 
 Stel een installatie **niet** open voor internet of een breed netwerk zolang deze punten openstaan:
 
-- **PostgREST geeft alle tabellen vrij.** `/api/data` draait als de database-eigenaar en toont en wijzigt zonder inloggen alle tabellen, ook `users` en `sessions`. Aparte rollen en een beperkt API-schema volgen in #57. Tot die tijd: alleen in een vertrouwd netwerk, of `/api/data` afschermen in een proxy ervoor.
 - **Autorisatie op beheerroutes is nog niet overal op orde** (#65).
 - **Geen HTTPS in de stack.** Traefik luistert alleen op HTTP. Zet een reverse proxy met TLS ervoor (bijvoorbeeld de bestaande proxy of WAF van je organisatie) en zet dan `DEBUG=false`. Met `DEBUG=false` stuurt de browser het inlogcookie alleen via HTTPS (behalve op `localhost`).
 - Houd `.env` geheim: het bevat het databasewachtwoord en de `ADMIN_API_KEY`.
+
+### PostgREST en pg_featureserv (#57)
+
+PostgREST (`/api/data`) en pg_featureserv (`/api/geo`) verbinden niet als database-eigenaar, maar met eigen rollen. `db-init` maakt ze aan en houdt ze bij (`migrations/schema_v20_api_rollen.sql`):
+
+| Rol | Gebruikt door | Rechten |
+|-----|---------------|---------|
+| `authenticator` | PostgREST (verbinding) | `LOGIN`, `NOINHERIT`; mag alleen overschakelen naar `web_anon` |
+| `web_anon` | PostgREST (anonieme verzoeken) | `NOLOGIN`; `USAGE` op schema `api`, `SELECT` op de views daarin, `EXECUTE` op `api.get_indicatoren_stats`. Geen schrijfrechten, geen rechten in `public` |
+| `featureserv` | pg_featureserv | alleen-lezen op `public.vw_gebieden_features`, `public.omgevingsvisie_deelgebieden` en de functies in `postgisftw` |
+
+PostgREST publiceert alleen schema `api`. Daarin staan alleen views en functies die de frontend en de beheeromgeving lezen: `gemeenten`, `gebiedstypes`, `gebieden` (zonder geometrie), `externe_kaartlagen`, `indicatoren` (zonder interne beheervelden), `vw_gebied_indicator_actueel` en `rpc/get_indicatoren_stats`. Applicatiedata zoals `users`, `sessions`, `api_keys`, `llm_config`, `system_prompts` en de logs is via `/api/data` niet bereikbaar, en schrijven kan anoniem niet. Een nieuw object publiceren: voeg een view of functie toe aan `schema_v20_api_rollen.sql` met de bijbehorende `GRANT` en draai `db-init` opnieuw (`docker compose up -d`).
+
+**Wachtwoord:** `authenticator` en `featureserv` krijgen hetzelfde wachtwoord als `DATABASE_USER` (`DATABASE_PASSWORD`). Er is dus geen extra variabele in `.env`; `db-init` zet het wachtwoord bij elke start opnieuw. De containers van PostgREST en pg_featureserv kregen dat wachtwoord al. Een eigen wachtwoord per rol kan later, zonder de opzet te veranderen.
 
 Kwetsbaarheden melden: zie [`SECURITY.md`](../../SECURITY.md).

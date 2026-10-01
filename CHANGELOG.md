@@ -26,6 +26,8 @@ Onderstaande wijzigingen staan (deels) nog in open pull requests.
 
 ### Beveiliging
 
+- PostgREST en pg_featureserv draaien niet meer als database-eigenaar. Eigen rollen (`authenticator`, `web_anon`, `featureserv`) en een schema `api` met alleen views en functies: anoniem geen toegang meer tot `users`, `sessions`, `api_keys`, `llm_config`, `system_prompts` en de logs, en geen schrijfacties via `/api/data` ([#57](https://github.com/TLaan/D-OmniTwin/issues/57)).
+
 - Geen standaard admin/admin-wachtwoord meer bij de container-initialisatie: zonder `ADMIN_PASSWORD` wordt eenmalig een willekeurig wachtwoord gegenereerd ([#52](https://github.com/TLaan/D-OmniTwin/issues/52)).
 - Geen hardgecodeerd databasewachtwoord meer in `generate_sample.py` ([#52](https://github.com/TLaan/D-OmniTwin/issues/52)).
 - `.dockerignore` toegevoegd, zodat onder meer `.env` niet in het image belandt ([#52](https://github.com/TLaan/D-OmniTwin/issues/52)).
