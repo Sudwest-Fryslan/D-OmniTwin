@@ -27,7 +27,7 @@ import os
 import pytest
 import requests
 
-from services.zscore_referentie import bereken_zscore
+from omnitwin.services.zscore_referentie import bereken_zscore
 
 pytestmark = pytest.mark.integration
 

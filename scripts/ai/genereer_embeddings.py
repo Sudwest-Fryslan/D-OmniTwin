@@ -22,13 +22,13 @@ from pathlib import Path
 
 from sqlalchemy import text
 
-# Voeg project root toe aan python path
+# Voeg src/ (pakket omnitwin) toe aan python path
 project_root = Path(__file__).resolve().parent.parent.parent
-sys.path.append(str(project_root))
+sys.path.append(str(project_root / "src"))
 
-from src.database import SessionLocal
-from services import embedding_model
-from services.embedding_model import MODEL_NAAM
+from omnitwin.database import SessionLocal
+from omnitwin.services import embedding_model
+from omnitwin.services.embedding_model import MODEL_NAAM
 
 
 def laad_model():

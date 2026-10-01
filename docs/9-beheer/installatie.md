@@ -222,7 +222,7 @@ Maak eerst een backup (zie hieronder). Lees bij een nieuwe versie [`CHANGELOG.md
 
 ### Embeddingmodel (offline)
 
-AI-zoeken en de chat gebruiken het model [`sentence-transformers/all-MiniLM-L6-v2`](https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2) (licentie Apache-2.0). Het model en de revisie (een commit-hash van HuggingFace) staan op één plek: `services/embedding_model.py`.
+AI-zoeken en de chat gebruiken het model [`sentence-transformers/all-MiniLM-L6-v2`](https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2) (licentie Apache-2.0). Het model en de revisie (een commit-hash van HuggingFace) staan op één plek: `src/omnitwin/services/embedding_model.py`.
 
 - `docker compose build` downloadt die revisie naar `/opt/models/all-MiniLM-L6-v2` in de image. Dat maakt de image circa 90 MB groter (91,8 MB; totaal ± 1,7 GB uitgepakt). Alleen bij het bouwen is HuggingFace nodig.
 - Backend en `db-init` draaien met `HF_HUB_OFFLINE=1`, `TRANSFORMERS_OFFLINE=1` en `HF_HUB_DISABLE_TELEMETRY=1`: geen download en geen telemetrie, ook niet bij een nieuwe container. AI-zoeken werkt zonder internet.
@@ -231,7 +231,7 @@ AI-zoeken en de chat gebruiken het model [`sentence-transformers/all-MiniLM-L6-v
 
 Model bijwerken naar een nieuwere revisie:
 
-1. Zoek de commit-hash op `https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/commits/main` en zet die in `MODEL_REVISIE` in `services/embedding_model.py`.
+1. Zoek de commit-hash op `https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/commits/main` en zet die in `MODEL_REVISIE` in `src/omnitwin/services/embedding_model.py`.
 2. Bouw opnieuw: `docker compose up -d --build`.
 3. Bereken de embeddings opnieuw, want vectoren van verschillende revisies passen niet bij elkaar: `docker compose exec backend python scripts/ai/genereer_embeddings.py --opnieuw`.
 

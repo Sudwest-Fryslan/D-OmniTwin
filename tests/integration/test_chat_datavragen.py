@@ -27,7 +27,7 @@ from pathlib import Path
 import pytest
 import requests
 
-from services.chat_datavraag import is_datavraag
+from omnitwin.services.chat_datavraag import is_datavraag
 from tests.grounding import getallen_in_bron, getallen_in_tekst, grounding_melding, ongegronde_getallen
 
 BASE_URL = (os.environ.get("OMNITWIN_BASE_URL") or os.environ.get("LLM_TEST_BASE_URL")

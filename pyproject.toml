@@ -1,5 +1,33 @@
+# D-OmniTwin — Python-pakket `omnitwin` (src-layout, #182 fase 2)
+#
+# De backend staat in src/omnitwin/. Importeerbaar maken:
+#   - lokaal:           pip install -e . --no-deps   (afhankelijkheden: requirements.txt)
+#   - Docker-image:     PYTHONPATH=/app/src (zie Dockerfile)
+#   - pytest:           pythonpath = ["src"] hieronder
+# Afhankelijkheden staan (nog) in requirements*.txt en requirements.lock, niet hier.
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "omnitwin"
+description = "D-OmniTwin: digitale spiegel van de fysieke leefomgeving (backend)"
+requires-python = ">=3.10"
+license = {text = "EUPL-1.2"}
+dynamic = ["version"]
+
+[tool.setuptools.dynamic]
+version = {file = "VERSION"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["omnitwin*"]
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+# Pakket omnitwin (src/omnitwin) importeerbaar zonder installatie
+pythonpath = ["src"]
 python_files = ["test_*.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]

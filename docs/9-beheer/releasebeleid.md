@@ -34,8 +34,8 @@ Het versienummer staat op één plek: het bestand [`VERSION`](../../VERSION) in 
 
 | Plek | Hoe |
 |---|---|
-| FastAPI (`/openapi.json`, `/docs`, `/api`, `/health`) | `src/version.py` leest `VERSION` |
-| Footer van de gebruikersinterface | Jinja-variabele `app_version`, gezet in `main.py` |
+| FastAPI (`/openapi.json`, `/docs`, `/api`, `/health`) | `src/omnitwin/version.py` leest `VERSION` |
+| Footer van de gebruikersinterface | Jinja-variabele `app_version`, gezet in `src/omnitwin/main.py` |
 | `publiccode.yml` (`softwareVersion`) | met de hand, gecontroleerd door de test |
 | `admin-panel/package.json` (`version`) | met de hand, gecontroleerd door de test |
 
