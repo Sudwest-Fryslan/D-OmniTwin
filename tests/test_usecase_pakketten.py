@@ -27,6 +27,15 @@ def bron_indicatoren():
         return {r["indicator_naam"] for r in csv.DictReader(f)}
 
 
+def pakket_rijen(pad):
+    """Extra brondata van het pakket (data/waarden.csv), als die er is."""
+    extra = pad.parent / "data" / "waarden.csv"
+    if not extra.exists():
+        return []
+    with open(extra, encoding="utf-8") as f:
+        return list(csv.DictReader(f))
+
+
 @pytest.mark.parametrize("pad", PAKKETTEN, ids=lambda p: p.parent.name)
 def test_pakket_is_geldig(pad):
     uc = json.loads(pad.read_text(encoding="utf-8"))
@@ -39,12 +48,30 @@ def test_pakket_is_geldig(pad):
     onbekend = set(data["gebieden"]) - bron_gebieden()
     assert not onbekend, f"{pad.parent.name}: gebieden niet in de bronbibliotheek: {onbekend}"
 
-    namen = bron_indicatoren()
+    namen = bron_indicatoren() | {r["indicator_naam"] for r in pakket_rijen(pad)}
     for ind in data["indicatoren"]:
         assert ind["richting"] in RICHTINGEN, f"{ind['naam']}: onbekende richting {ind['richting']}"
         assert ind["naam"] in namen, f"{pad.parent.name}: indicator '{ind['naam']}' niet in de bronbibliotheek"
     for afg in data.get("afgeleid", []):
         assert {afg["teller"], afg["noemer"]} <= namen, f"{afg['naam']}: teller of noemer onbekend"
+
+
+@pytest.mark.parametrize("pad", [p for p in PAKKETTEN if pakket_rijen(p)], ids=lambda p: p.parent.name)
+def test_extra_brondata_is_geldig(pad):
+    """data/waarden.csv: zelfde kolommen als de sample, alleen gebieden van het pakket,
+    per indicator één uuid, eenheid en bron, en een waarde en jaar per rij."""
+    with open(BRON / "sample_indicatoren.csv", encoding="utf-8") as f:
+        kolommen = csv.DictReader(f).fieldnames
+    with open(pad.parent / "data" / "waarden.csv", encoding="utf-8") as f:
+        assert csv.DictReader(f).fieldnames == kolommen
+    gebieden = set(json.loads(pad.read_text(encoding="utf-8"))["data"]["gebieden"])
+    uuids = {}
+    for r in pakket_rijen(pad):
+        assert r["gebied_id"] in gebieden, f"{r['gebied_id']}: geen gebied van {pad.parent.name}"
+        assert uuids.setdefault(r["indicator_naam"], r["indicator_uuid"]) == r["indicator_uuid"]
+        assert r["eenheid"] and r["bron"] and r["jaar"].isdigit(), f"{r['indicator_naam']}: eenheid/bron/jaar leeg"
+        float(r["waarde"])
+        assert r["interpretatie_logica"] in {"pos_is_pos", "-/+"}
 
 
 def test_alle_brondata_hoort_bij_een_use_case():

@@ -25,6 +25,8 @@ data/
 
 # init_data staat WEL in git (publieke starter dataset)
 !init_data/
+# Brondata van een use case (usecases/<naam>/data/waarden.csv) ook
+!usecases/*/data/
 
 # Exports (gegenereerde rapporten, JSON exports, Excel)
 exports/*

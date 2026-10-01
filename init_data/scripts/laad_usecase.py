@@ -143,12 +143,8 @@ def laad(conn, naam):
     uc = json.loads((USECASES_DIR / naam / "usecase.json").read_text(encoding="utf-8"))
     print(f"\n📦 {uc['id']} {naam}: {uc['titel']}")
     laad_gebieden(conn, list(uc["data"]["gebieden"]))
-    cur = conn.cursor()
-    zet_richting(cur, uc["data"]["indicatoren"])
-    for afg in uc["data"].get("afgeleid", []):
-        maak_afgeleid(cur, afg, naam)
-    conn.commit()
 
+    # Extra brondata eerst: dan bestaan de nieuwe indicatoren als de richting wordt gezet
     extra = USECASES_DIR / naam / "data" / "waarden.csv"
     if extra.exists():
         bron_csv = load_sample.INDICATOREN_CSV
@@ -158,6 +154,12 @@ def laad(conn, naam):
             load_sample.import_waarden(conn)
         finally:
             load_sample.INDICATOREN_CSV = bron_csv
+
+    cur = conn.cursor()
+    zet_richting(cur, uc["data"]["indicatoren"])
+    for afg in uc["data"].get("afgeleid", []):
+        maak_afgeleid(cur, afg, naam)
+    conn.commit()
 
 
 def main():

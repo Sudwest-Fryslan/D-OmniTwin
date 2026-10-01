@@ -26,6 +26,10 @@ Dit bestand bevat de vermeldingen van de belangrijkste bibliotheken en framework
 - **Ollama**: [MIT License](https://github.com/ollama/ollama/blob/main/LICENSE)
 - **Sentence-Transformers**: [Apache License 2.0](https://github.com/UKPLab/sentence-transformers/blob/master/LICENSE)
 
+## 📊 Open data (use cases)
+- **CBS, Kerncijfers wijken en buurten 2026** (tabel 86358NED, `usecases/hittestress`): [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/deed.nl). Bron: Centraal Bureau voor de Statistiek, https://opendata.cbs.nl/ODataApi/odata/86358NED
+- **RIVM, Atlas Natuurlijk Kapitaal: Bomenkaart 2022 en Stedelijk hitte-eiland effect v2 (2022)** (`usecases/hittestress`): [Public Domain Mark 1.0](https://creativecommons.org/publicdomain/mark/1.0/deed.nl). Bron: RIVM, https://data.rivm.nl/geo/ank/wcs
+
 ---
 
 **Opmerking:** Elk van deze componenten behoudt zijn eigen oorspronkelijke licentie. Het gebruik van deze componenten binnen D-OmniTwin tast hun respectievelijke licenties niet aan.
