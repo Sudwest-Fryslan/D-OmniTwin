@@ -161,18 +161,33 @@ De sample is bedoeld om de installatie te testen en te demonstreren, niet voor b
 
 ### Volledige Fryslân-data
 
-**Nog niet ondersteund in de Docker-installatie** (#69).
+De repository bevat de CBS-buurten (indeling 2024) en indicatorwaarden voor heel Fryslân (`init_data/fryslan/`, zie [`init_data/README.md`](../../init_data/README.md)). Laad ze na de eerste start, als `db-init` klaar is en de backend draait:
 
-De repository bevat de CBS-buurten en indicatorwaarden voor heel Fryslân (`init_data/fryslan/`, zie [`init_data/README.md`](../../init_data/README.md)), maar de laadscripts sluiten niet aan op de database die `db-init` aanmaakt:
+```bash
+docker compose exec backend python init_data/scripts/seed_fryslan.py --stap alle
+```
 
-- `seed_fryslan.py` (bijvoorbeeld via `docker compose exec backend python init_data/scripts/seed_fryslan.py --stap alle`) draait wel, maar het grootste deel van de buurten en vrijwel alle indicatorwaarden wordt geweigerd: de tabel `gemeenten` bevat na `db-init` alleen Súdwest-Fryslân, en de gemeentecodes in de data wijken deels af. Het script meldt aan het eind toch "Seed voltooid"; kijk naar de regels met `Fouten`. Het maakt bovendien een nieuwe API-key aan.
-- `init_database.sh` werkt niet in Docker: het verwacht een `.env` in de container, laadt het schema opnieuw (wat op een bestaande database faalt) en is geschreven voor een PostgreSQL zonder Docker.
+Dit duurt enkele seconden (gemeten: 5 à 10 s). Het werkt met en zonder sample (`LOAD_SAMPLE_DATA`); de sample-buurten worden dan overschreven door dezelfde buurten uit de Fryslân-data. Verwachte aantallen in de database na sample + Fryslân:
 
-Eén werkende initialisatieroute voor sample en volledige data volgt in #69. Heb je nu een volledige database nodig, zet dan een dump van een bestaande omgeving terug (zie [Restore](#restore)).
+| Tabel | Aantal |
+|-------|--------|
+| `gemeenten` | 18 (alle Friese gemeenten) |
+| `gebieden` | 931 buurten |
+| `indicatoren` | 244 (238 uit `indicatoren_seed.json`; namen die de sample al heeft worden aangevuld, niet gedupliceerd) |
+| `kompas_indicator_mapping` | 185 |
+| `gebied_data` | ± 46.500 (45.591 metingen uit de Fryslân-CSV, voor 870 buurten) |
+
+- Het script eindigt met een samenvatting per stap (aantal ok en fouten) en geeft exitcode 1 als een stap mislukt of meer dan 1% fouten heeft (`--max-fouten-pct`).
+- Opnieuw draaien is veilig: bestaande rijen worden bijgewerkt, er ontstaan geen duplicaten. `load_sample.py` blijft daarna ook werken.
+- De CSV bevat ook wijk-, gemeente- en landelijke rijen en buurten buiten Fryslân. Die worden overgeslagen ("gebieden niet in database"); dat is geen fout.
+- Het script maakt geen gebruikers of API-keys aan.
+- Bekend gat: de 61 buurten van Smallingerland (0090) hebben geen indicatorwaarden. De CSV gebruikt voor Smallingerland de buurtcodes van vóór de indeling 2024.
+
+Losse stappen: `--stap buurten|indicatoren|kompas|waarden`. `init_database.sh` is alleen voor een PostgreSQL zonder Docker.
 
 ### Eigen gemeente of andere bronnen
 
-Via het ETL-framework in `ETL/`; zie [`ETL/ETL_DOCUMENTATION.md`](../../ETL/ETL_DOCUMENTATION.md). Dit is nog gericht op ontwikkelaars (#69).
+Via het ETL-framework in `ETL/`; zie [`ETL/ETL_DOCUMENTATION.md`](../../ETL/ETL_DOCUMENTATION.md). Dit is nog gericht op ontwikkelaars.
 
 ---
 
