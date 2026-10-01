@@ -4,16 +4,16 @@
 #
 # Bij te werken:
 # - url: verandert bij de overdracht naar de SWF-organisatie (#30)
-# - softwareVersion/releaseDate: volgen de versieafspraken uit #27 (semantic versioning).
-#   De versies in de repo lopen nu uiteen (README: v1.0.0-beta, main.py: 1.5.0);
-#   hier staat voorlopig 1.0.0-beta.
+# - softwareVersion: gelijk aan het bestand VERSION (Semantic Versioning, zie
+#   docs/9-beheer/releasebeleid.md); een unittest controleert dat.
+# - releaseDate: invullen bij het taggen van de release (YYYY-MM-DD).
 
 publiccodeYmlVersion: "0"
 
 name: D-OmniTwin
 url: "https://github.com/TLaan/D-OmniTwin"
-softwareVersion: "1.0.0-beta"
-releaseDate: "2026-09-30"
+softwareVersion: "0.1.0"
+# releaseDate: "<datum van de tag v0.1.0>"
 
 platforms:
   - web

@@ -1,10 +1,52 @@
-from fastapi import APIRouter, Depends, HTTPException, Query
+"""
+Rapporten (/api/report/*) zijn publiek: ze tonen niet meer dan een anonieme
+bezoeker in de app ziet (#65). Daarom:
+- debug_info (systeemprompts, model) alleen voor een ingelogde beheerder;
+- AI-teksten kort gecachet, zodat herhaald opvragen niet steeds een
+  LLM-aanroep start. Dit is geen rate-limit: andere gebieden starten nog
+  steeds een aanroep.
+"""
+import threading
+import time
+
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 from typing import Dict, Any, Optional, List
 from src.database import get_db
 from services.report_service import ReportDataService
 from services.llm_service import LLMService
+from routers.auth import huidige_gebruiker
+
+
+def _is_beheerder(request: Request, db: Session) -> bool:
+    try:
+        return bool(huidige_gebruiker(request, db).get("is_admin"))
+    except HTTPException:
+        return False
+
+
+# Kleine in-memory cache per worker voor AI-teksten (sleutel -> (tijd, waarde))
+_AI_CACHE: Dict[tuple, tuple] = {}
+_AI_CACHE_TTL = 3600
+_AI_CACHE_MAX = 256
+_AI_CACHE_LOCK = threading.Lock()
+
+
+def _cache_get(key: tuple):
+    with _AI_CACHE_LOCK:
+        hit = _AI_CACHE.get(key)
+        if hit and time.monotonic() - hit[0] < _AI_CACHE_TTL:
+            return hit[1]
+        _AI_CACHE.pop(key, None)
+        return None
+
+
+def _cache_put(key: tuple, value) -> None:
+    with _AI_CACHE_LOCK:
+        if len(_AI_CACHE) >= _AI_CACHE_MAX:
+            _AI_CACHE.pop(min(_AI_CACHE, key=lambda k: _AI_CACHE[k][0]))
+        _AI_CACHE[key] = (time.monotonic(), value)
 
 
 # ─── Pydantic Models ────────────────────────────────────────────────────────
@@ -55,17 +97,23 @@ def get_report_data(gebied_id: str, db: Session = Depends(get_db)):
         raise HTTPException(status_code=500, detail=f"Fout tijdens data generatie: {str(e)}")
 
 @router.get("/narrative/{gebied_id}", response_model=Dict[str, Any])
-def generate_report_narrative(gebied_id: str, db: Session = Depends(get_db)):
+def generate_report_narrative(gebied_id: str, request: Request, db: Session = Depends(get_db)):
     """
     Fase 2: Roept Ollama aan om een narrative (Executive Summary) te genereren
     op basis van de data uit Fase 1 per kwadrant.
     """
     report_service = ReportDataService(db)
     llm_service = LLMService(db)
-    
+    beheerder = _is_beheerder(request, db)
+    cache_key = ("narrative", gebied_id)
+    cached = _cache_get(cache_key)
+    if cached is not None and not beheerder:
+        return cached
+
     try:
         data_payload = report_service.generate_report_payload(gebied_id)
-        
+        llm_fout = False
+
         domain_summaries_text = {}
         domain_responses = {}
         debug_logs = []
@@ -73,6 +121,7 @@ def generate_report_narrative(gebied_id: str, db: Session = Depends(get_db)):
         # 1. Genereer per kwadrant/domein een samenvatting
         for domain_name, indicators in data_payload.get("significante_domeinen", {}).items():
             result = llm_service.generate_domain_summary(domain_name, indicators)
+            llm_fout = llm_fout or result.get("error", False)
             domain_summaries_text[domain_name] = result["text"]
             domain_responses[domain_name] = result["text"]
             debug_logs.append(result["debug"])
@@ -82,16 +131,21 @@ def generate_report_narrative(gebied_id: str, db: Session = Depends(get_db)):
         if domain_summaries_text:
             overall_result = llm_service.generate_overall_summary(domain_summaries_text, data_payload.get("metadata", {}))
             overall_summary_text = overall_result["text"]
+            llm_fout = llm_fout or overall_result.get("error", False)
             debug_logs.append(overall_result["debug"])
-        
-        return {
+
+        antwoord = {
             "gebied_id": gebied_id,
             "ai_summary": overall_summary_text,
             "domain_summaries": domain_responses,
-            "debug_info": debug_logs,
             "status": "success"
         }
-        
+        if not llm_fout:
+            _cache_put(cache_key, antwoord)
+        if beheerder:
+            return {**antwoord, "debug_info": debug_logs}
+        return antwoord
+
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
     except Exception as e:
@@ -132,6 +186,7 @@ def get_benchmark_data(
 
 @router.get("/benchmark/narrative", response_model=Dict[str, Any])
 def get_benchmark_narrative(
+    request: Request,
     gebied_a: str = Query(..., description="Gebied ID van het referentiegebied"),
     mode: str = Query("gebieden", description="Vergelijkingsmodus"),
     gebieden_b: Optional[str] = Query(None, description="Komma-gescheiden vergelijkingsgebied IDs"),
@@ -144,9 +199,14 @@ def get_benchmark_narrative(
     """
     report_service = ReportDataService(db)
     llm_service = LLMService(db)
-    
+    beheerder = _is_beheerder(request, db)
+
     try:
         gebieden_b_list = [g.strip() for g in gebieden_b.split(",") if g.strip()] if gebieden_b else []
+        cache_key = ("benchmark", gebied_a, mode, tuple(gebieden_b_list), referentie_gemeente)
+        cached = _cache_get(cache_key)
+        if cached is not None and not beheerder:
+            return cached
         benchmark_data = report_service.generate_benchmark_payload(
             gebied_id_a=gebied_a,
             mode=mode,
@@ -156,13 +216,17 @@ def get_benchmark_narrative(
         
         result = llm_service.generate_benchmark_narrative(benchmark_data)
         
-        return {
+        antwoord = {
             "gebied_a": benchmark_data["gebied_a"],
             "referentie_label": benchmark_data["referentie_label"],
             "ai_narrative": result["text"],
-            "debug_info": [result["debug"]],
             "status": "success"
         }
+        if not result.get("error"):
+            _cache_put(cache_key, antwoord)
+        if beheerder:
+            return {**antwoord, "debug_info": [result["debug"]]}
+        return antwoord
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:

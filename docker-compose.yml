@@ -7,8 +7,9 @@
 #
 # Opstartvolgorde: postgres (healthy) -> db-init (eenmalig, klaar) -> backend,
 # postgrest en pg_featureserv. db-init maakt bij een lege database het schema,
-# de pg_featureserv-views, de sample-/stuurdata en de admin-gebruiker aan en
-# stopt daarna; bij een bestaande database slaat hij de init over. De backend
+# de pg_featureserv-views, de sample-/stuurdata en de admin-gebruiker aan; bij een
+# bestaande database slaat hij dat over. Daarna werkt hij altijd de rollen en het
+# schema api voor PostgREST en pg_featureserv bij (#57) en stopt. De backend
 # initialiseert zelf niets (zie docker-entrypoint.sh), dus meerdere
 # backend-replicas racen niet.
 #
@@ -25,12 +26,16 @@ services:
       - "--providers.docker.constraints=Label(`com.docker.compose.project`,`${COMPOSE_PROJECT_NAME:-d-omnitwin}`)"
       - "--providers.docker.network=${COMPOSE_PROJECT_NAME:-d-omnitwin}_default"
       - "--entrypoints.web.address=:80"
+      # Security-headers (CSP, nosniff, ...) op alle routes; zie deploy/traefik/dynamic.yml
+      - "--providers.file.filename=/etc/traefik/dynamic.yml"
+      - "--entrypoints.web.http.middlewares=security-headers@file"
     environment:
       - DOCKER_API_VERSION=1.44
     ports:
       - "${OMNITWIN_HTTP_PORT:-80}:80"
     volumes:
       - "/var/run/docker.sock:/var/run/docker.sock:ro"
+      - "./deploy/traefik/dynamic.yml:/etc/traefik/dynamic.yml:ro"
     restart: unless-stopped
 
   postgres:
@@ -52,7 +57,9 @@ services:
     restart: unless-stopped
 
   db-init:
-    # Eenmalige initialisatie met de backend-image; stopt na afloop (exit 0)
+    # Eenmalige initialisatie met de backend-image; stopt na afloop (exit 0).
+    # Zelfde image als backend (#157): één keer bouwen, geen tweede kopie.
+    image: ${COMPOSE_PROJECT_NAME:-d-omnitwin}-backend
     build: .
     command: ["init"]
     env_file:
@@ -60,12 +67,17 @@ services:
     environment:
       - DATABASE_HOST=postgres
       - DATABASE_PORT=5432
+      # Gedownloade open data (CBS e.d.) wordt hier gecachet; staat niet in git (init_data/cbs)
+      - DATA_CACHE=/data-cache
+    volumes:
+      - bron-cache:/data-cache
     depends_on:
       postgres:
         condition: service_healthy
     restart: "no"
 
   backend:
+    image: ${COMPOSE_PROJECT_NAME:-d-omnitwin}-backend
     build: .
     labels:
       - "traefik.enable=true"
@@ -93,10 +105,13 @@ services:
 
   postgrest:
     image: postgrest/postgrest:v16.4
+    # Eigen rollen (#57): verbindt als authenticator, voert verzoeken uit als web_anon en
+    # ziet alleen schema api (views en functies). Rollen en wachtwoord: db-init
+    # (docker-entrypoint.sh, migrations/schema_v23_api_rollen.sql).
     environment:
-      PGRST_DB_URI: postgres://${DATABASE_USER:-omnitwin_user}:${DATABASE_PASSWORD}@postgres:5432/${DATABASE_NAME:-omnitwin_db}
-      PGRST_DB_SCHEMA: public
-      PGRST_DB_ANON_ROLE: ${DATABASE_USER:-omnitwin_user}
+      PGRST_DB_URI: postgres://authenticator:${DATABASE_PASSWORD}@postgres:5432/${DATABASE_NAME:-omnitwin_db}
+      PGRST_DB_SCHEMAS: api
+      PGRST_DB_ANON_ROLE: web_anon
       PGRST_SERVER_PROXY_URI: http://localhost/api/data
     labels:
       - "traefik.enable=true"
@@ -112,8 +127,10 @@ services:
   pg_featureserv:
     # Geen semver-tags op Docker Hub; datumtag van de huidige release
     image: pramsey/pg_featureserv:20250917
+    # Alleen-lezen rol featureserv (#57): ziet alleen vw_gebieden_features,
+    # omgevingsvisie_deelgebieden en de postgisftw-functies
     environment:
-      DATABASE_URL: postgres://${DATABASE_USER:-omnitwin_user}:${DATABASE_PASSWORD}@postgres:5432/${DATABASE_NAME:-omnitwin_db}
+      DATABASE_URL: postgres://featureserv:${DATABASE_PASSWORD}@postgres:5432/${DATABASE_NAME:-omnitwin_db}
       PGFS_SERVER_BASEPATH: /api/geo
       PGFS_PAGING_LIMITMAX: 10000
       PGFS_PAGING_LIMITDEFAULT: 10000
@@ -127,5 +144,33 @@ services:
         condition: service_completed_successfully
     restart: unless-stopped
 
+  llm-gateway:
+    # Optionele LiteLLM-gateway (ADR 0001): alleen met `--profile llm-gateway`.
+    # Alleen intern bereikbaar (geen hostpoort); de backend gebruikt
+    # http://llm-gateway:4000 met llm_config.api_type=openai.
+    image: ghcr.io/berriai/litellm:v1.103.2
+    profiles: ["llm-gateway"]
+    command: ["--config", "/app/config.yaml", "--port", "4000"]
+    environment:
+      LITELLM_MASTER_KEY: ${LITELLM_MASTER_KEY:-}
+      OLLAMA_HOST: ${OLLAMA_HOST:-http://host.docker.internal:11434}
+      LITELLM_DEFAULT_MODEL: ollama_chat/${OLLAMA_MODEL:-qwen3:30b}
+      # Optioneel: sleutels voor externe aanbieders (alleen in .env; leeg = alias niet bruikbaar)
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+    volumes:
+      - "./deploy/litellm/config.yaml:/app/config.yaml:ro"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:4000/health/liveliness', timeout=4)"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 60s
+    restart: unless-stopped
+
 volumes:
   pgdata:
+  bron-cache:

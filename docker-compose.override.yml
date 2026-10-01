@@ -11,6 +11,9 @@ services:
       - "--providers.docker.constraints=Label(`com.docker.compose.project`,`${COMPOSE_PROJECT_NAME:-d-omnitwin}`)"
       - "--providers.docker.network=${COMPOSE_PROJECT_NAME:-d-omnitwin}_default"
       - "--entrypoints.web.address=:80"
+      # Security-headers (CSP, nosniff, ...) op alle routes; zie deploy/traefik/dynamic.yml
+      - "--providers.file.filename=/etc/traefik/dynamic.yml"
+      - "--entrypoints.web.http.middlewares=security-headers@file"
     ports:
       - "8081:8080"   # Traefik-dashboard
 
@@ -25,3 +28,8 @@ services:
   backend:
     volumes:
       - .:/app        # code van de host in plaats van die uit de image
+                      # (het embeddingmodel staat buiten /app, in /opt/models: blijft zichtbaar)
+      - backend-logs:/app/logs   # eigen volume: logs/ op de host is niet altijd schrijfbaar voor de niet-root app-gebruiker (Windows)
+
+volumes:
+  backend-logs:

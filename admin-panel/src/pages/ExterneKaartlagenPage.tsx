@@ -222,6 +222,7 @@ export const ExterneKaartlagenPage: React.FC = () => {
                     <input
                         ref={fileInputRef}
                         type="file"
+                        aria-label="Bestand kiezen"
                         accept=".gpkg,.geojson,.json"
                         style={{ display: 'none' }}
                         onChange={e => { if (e.target.files?.[0]) handleUpload(e.target.files[0]); }}
@@ -402,8 +403,8 @@ export const ExterneKaartlagenPage: React.FC = () => {
 
                         {/* Kleuren */}
                         <div className="form-group">
-                            <label className="form-label">Kleuren</label>
-                            <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+                            <span className="form-label" id="el-kleuren-label">Kleuren</span>
+                            <div role="group" aria-labelledby="el-kleuren-label" style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
                                 <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem' }}>
                                     Lijn
                                     <input type="color" value={form.kleur_lijn}
@@ -523,6 +524,8 @@ export const ExterneKaartlagenPage: React.FC = () => {
                                             <button
                                                 onClick={() => handleToggleActief(laag)}
                                                 title={laag.actief ? 'Deactiveren' : 'Activeren'}
+                                                aria-label={`${laag.naam} ${laag.actief ? 'deactiveren' : 'activeren'}`}
+                                                aria-pressed={laag.actief}
                                                 style={{
                                                     background: 'none', border: 'none', cursor: 'pointer',
                                                     color: laag.actief ? 'var(--color-success)' : 'var(--color-text-muted)',
@@ -534,7 +537,7 @@ export const ExterneKaartlagenPage: React.FC = () => {
                                         <td style={{ padding: '0.75rem 0.5rem', textAlign: 'right' }}>
                                             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem' }}>
                                                 <button className="btn btn-secondary btn-sm" onClick={() => openEditForm(laag)}
-                                                    title="Bewerken" style={{ padding: '0.35rem 0.5rem' }}>
+                                                    title="Bewerken" aria-label={`${laag.naam} bewerken`} style={{ padding: '0.35rem 0.5rem' }}>
                                                     <Pencil size={14} />
                                                 </button>
                                                 {deleteConfirmId === laag.id ? (
@@ -553,7 +556,7 @@ export const ExterneKaartlagenPage: React.FC = () => {
                                                 ) : (
                                                     <button className="btn btn-secondary btn-sm"
                                                         onClick={() => setDeleteConfirmId(laag.id)}
-                                                        title="Verwijderen" style={{ padding: '0.35rem 0.5rem', color: 'var(--color-error)' }}>
+                                                        title="Verwijderen" aria-label={`${laag.naam} verwijderen`} style={{ padding: '0.35rem 0.5rem', color: 'var(--color-error)' }}>
                                                         <Trash2 size={14} />
                                                     </button>
                                                 )}

@@ -9,7 +9,7 @@
 
 ### Wat Werkt Nu (Dag 15 - 30 jan 2026)
 
-![3D Kaart Prototype](file:///home/tl_admin/.gemini/antigravity/brain/28bf6700-acd3-4a0b-96c8-4b84484d1e1e/uploaded_image_1_1768646713724.png)
+![3D Kaart Prototype](docs/images/kaart-bolsward.jpg)
 
 ✅ **Backend API** (FastAPI)
 - 5 RESTful endpoints
@@ -53,7 +53,7 @@
 
 **Rationale:** Kaart moet centraal staan, niet verborgen achter sidebar
 
-![Huidige Layout](file:///home/tl_admin/.gemini/antigravity/brain/28bf6700-acd3-4a0b-96c8-4b84484d1e1e/uploaded_image_1_1768646713724.png)
+![Huidige Layout](docs/images/kaart-bolsward.jpg)
 
 **Nieuwe Layout:**
 ```
@@ -91,7 +91,7 @@
 - [ ] **Fase 1 - Security Audit (🔴 BLOCKER):** Git-history cleanen van alle `.env` en hardcoded secrets, `.env.example` uitbrengen.
 - [ ] **Fase 2 - Technische Decoupling:** ETL scripts abstract maken, AI optioneel maken (feature flag), Docker Compose opzet.
 - [ ] **Fase 3 - Documentatie Overhaul:** Herpositioneren README, methodiek in `METHODOLOGY.md` uitschrijven, `CONTRIBUTING.md` toevoegen.
-- [ ] **Fase 4 - Publicatie Launch:** Plaatsing op public host (GitHub/GitLab), `publiccode.yml` aanmaken en release v1.0.0-beta taggen.
+- [ ] **Fase 4 - Publicatie Launch:** Plaatsing op public host (GitHub/GitLab), `publiccode.yml` aanmaken en release v0.1.0 taggen.
 
 **Tijd:** ~30-40 uur  
 **Priority:** 🔴 HIGH (Voorwaarde voor adoptie & subsidie)
@@ -284,7 +284,7 @@
 
 **Visie:** Kompas is het centrale navigatie-element voor indicatoren
 
-![Kompas Screenshot](file:///home/tl_admin/.gemini/antigravity/brain/28bf6700-acd3-4a0b-96c8-4b844d1e1e/uploaded_image_0_1768646713724.png)
+![Kompas Screenshot](docs/images/kompas-bolsward-zuidoost.jpg)
 
 #### 2.1 Sunburst Visualisatie (D3.js)
 

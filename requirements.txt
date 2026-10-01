@@ -1,5 +1,10 @@
-# D-OmniTwin — Python Dependencies
+# D-OmniTwin — Python Dependencies (backend en db-init)
 # Gebruik: pip install -r requirements.txt
+#
+# Alleen wat de backend en db-init importeren: main.py, routers/, services/, src/,
+# init_data/scripts/ (load_sample, create_admin) en scripts/ai/genereer_embeddings.py.
+# ETL-scripts en analyses hebben meer nodig (geopandas, pandas, Excel, plots):
+# zie requirements-etl.txt en ETL/ETL_DOCUMENTATION.md (#157).
 #
 # Dit is de handmatig bijgehouden invoer. De Docker-image installeert uit
 # requirements.lock (vaste versies + hashes, PyTorch CPU-only). Na een wijziging
@@ -12,33 +17,25 @@ fastapi==0.115.12       # starlette 1.0.0 heeft breaking changes — pin op stab
 starlette==0.41.3       # vastgezet — 1.0.0 breekt CORSMiddleware (unhashable dict)
 uvicorn[standard]==0.30.6  # [standard] = watchfiles + httptools voor hot-reload
 python-dotenv>=1.0.0
-python-multipart>=0.0.5
+python-multipart>=0.0.32
 Jinja2>=3.1.0
 
 # --- Database ---
-psycopg2-binary>=2.9.0
+psycopg2-binary>=2.9.13
 SQLAlchemy>=2.0.0
-GeoAlchemy2>=0.14.0
 
-# --- Geo / Data ---
-geopandas>=0.14.0
-shapely>=2.0.0
-pyproj>=3.4.0
-pyogrio>=0.7.0
-fiona>=1.9.0
+# --- Geo ---
+# fiona en pyproj brengen GDAL en PROJ mee in hun wheel; geen systeem-GDAL nodig
+shapely>=2.0.0          # routers/externe_lagen.py
+pyproj>=3.4.0           # routers/bag3d.py
+fiona>=1.9.0            # routers/externe_lagen.py (GPKG/GeoJSON uit data-upload/)
 
 # --- Data Processing ---
-pandas>=2.0.0
 numpy>=1.24.0
-openpyxl>=3.1.0
-tqdm>=4.65.0
-
-# --- Visualization ---
-matplotlib>=3.7.0
-pydeck>=0.8.0
 
 # --- HTTP ---
-requests>=2.28.0
+requests>=2.34.2
+httpx
 
 # --- Pydantic ---
 pydantic>=2.0.0
@@ -47,12 +44,8 @@ pydantic>=2.0.0
 passlib[bcrypt]>=1.7.0
 bcrypt==4.0.1  # passlib 1.7.x incompatibel met bcrypt 4.1+ (verwijderd __about__)
 
-# --- Utilities ---
-python-dateutil>=2.8.0
-
 # --- AI Functies ---
-sentence-transformers>=2.0.0   # AI embeddings (zwaar, ~2GB)
+sentence-transformers>=6.1.0   # AI embeddings; trekt PyTorch mee (CPU, ~0,6 GB)
 
-# --- Optioneel (niet nodig voor basis functionaliteit) ---
-# playwright>=1.40.0             # Browser testing
-httpx
+# --- Afbeeldingen ---
+pillow>=12.3.0          # GeoTIFF lezen bij het laden van use case hittestress (RIVM-rasters)

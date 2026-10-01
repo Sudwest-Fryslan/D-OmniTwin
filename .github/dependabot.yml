@@ -3,8 +3,12 @@
 # Versiesprongen van de basisimages (Python 3.11 -> 3.x, PostgreSQL/PostGIS 15 -> 16+)
 # vragen een bewuste keuze (zie #58) en worden hier genegeerd; patches komen wel door.
 #
-# Let op: Dependabot werkt requirements.txt bij, niet requirements.lock (uv-lock).
-# Genereer na zo'n PR het lockbestand opnieuw met het commando bovenin requirements.lock.
+# Patch- en minor-updates worden per ecosysteem gegroepeerd in één PR; majors komen los,
+# zodat ze bewust beoordeeld worden.
+#
+# Let op: Dependabot werkt requirements.txt bij, niet requirements.lock (uv-lock). De image
+# installeert uit requirements.lock; een pip-PR verandert dus pas iets na het opnieuw
+# genereren van het lockbestand (commando bovenin requirements.lock).
 
 version: 2
 updates:
@@ -12,6 +16,15 @@ updates:
     directory: /
     schedule:
       interval: weekly
+    groups:
+      python-minor-patch:
+        update-types: ["minor", "patch"]
+    ignore:
+      # Bewust vastgezet: los bijwerken faalt (ResolutionImpossible), starlette 1.x
+      # breekt CORSMiddleware. Samen upgraden via #172.
+      - dependency-name: fastapi
+      - dependency-name: starlette
+      - dependency-name: uvicorn
 
   - package-ecosystem: docker
     directory: /
@@ -32,8 +45,23 @@ updates:
     directory: /
     schedule:
       interval: weekly
+    groups:
+      github-actions:
+        patterns: ["*"]
 
   - package-ecosystem: npm
     directory: /admin-panel
     schedule:
       interval: weekly
+    groups:
+      admin-minor-patch:
+        update-types: ["minor", "patch"]
+    ignore:
+      # Majors wachten op de overstap van Create React App naar Vite (#58):
+      # onder CRA/TypeScript 4.9 passen deze niet. Na de Vite-overstap weghalen.
+      - dependency-name: "@types/node"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "@testing-library/*"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "typescript"
+        update-types: ["version-update:semver-major"]
