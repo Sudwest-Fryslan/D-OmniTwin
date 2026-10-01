@@ -1,0 +1,4 @@
+# Pinned voor de E2E-run in mcr.microsoft.com/playwright/python:v1.63.0-noble
+# (Playwright-versie moet gelijk zijn aan de image-tag)
+playwright==1.63.0
+pytest==9.1.1
