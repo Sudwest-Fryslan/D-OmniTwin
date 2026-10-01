@@ -18,7 +18,7 @@
     "indicatoren": [
       {
         "naam": "Gemiddeld energielabel",
-        "richting": "hoger_is_beter"
+        "richting": "lager_is_beter"
       },
       {
         "naam": "Woningen gebouwd vóór 1945 (BAG)",
