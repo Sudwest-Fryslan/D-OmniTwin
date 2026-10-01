@@ -53,7 +53,7 @@ init_data/sample/
 
 ### 1. Automatisch via Docker Compose (Aanbevolen voor snelle start)
 
-Als `LOAD_SAMPLE_DATA=true` in je `.env` staat (standaard in `.env.example`), laadt de backend container bij de allereerste start automatisch het schema én de sample dataset zodra de database gereed is:
+Deze map is de **bronbibliotheek** voor de use cases in [`usecases/`](../../usecases/README.md). Bij de eerste start laadt `db-init` altijd de definities: stuurdata, indicatoren en Kompas (`load_sample.py --stap definities`). Met `LOAD_SAMPLE_DATA=true` (de standaard) laadt het daarna alle use cases. Elke use case haalt zijn eigen gebieden en waarden uit deze map (`laad_usecase.py --alle`). Zo hoort alle data bij een use case; `tests/test_usecase_pakketten.py` bewaakt dat.
 
 ```bash
 docker compose up

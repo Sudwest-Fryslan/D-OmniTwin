@@ -52,6 +52,8 @@ Dit wordt de eerste release, `0.1.0`. Bij het taggen wordt dit kopje `## [0.1.0]
 
 ### Beveiliging
 
+- PostgREST en pg_featureserv draaien niet meer als database-eigenaar. Eigen rollen (`authenticator`, `web_anon`, `featureserv`) en een schema `api` met alleen views en functies: anoniem geen toegang meer tot `users`, `sessions`, `api_keys`, `llm_config`, `system_prompts` en de logs, en geen schrijfacties via `/api/data` ([#57](https://github.com/TLaan/D-OmniTwin/issues/57)).
+
 - Geen standaard admin/admin-wachtwoord meer bij de container-initialisatie: zonder `ADMIN_PASSWORD` wordt eenmalig een willekeurig wachtwoord gegenereerd ([#52](https://github.com/TLaan/D-OmniTwin/issues/52)).
 - Geen hardgecodeerd databasewachtwoord meer in `generate_sample.py` ([#52](https://github.com/TLaan/D-OmniTwin/issues/52)).
 - `.dockerignore` toegevoegd, zodat onder meer `.env` niet in het image belandt ([#52](https://github.com/TLaan/D-OmniTwin/issues/52)).
@@ -80,5 +82,6 @@ Open pull requests die in 0.1.0 horen (stand 2026-10-01, zonder Dependabot). Na 
 - Toegankelijkheid ronde 2: dialogen met focusbeheer, reduced motion, admin-labels ([#134](https://github.com/TLaan/D-OmniTwin/pull/134)).
 - Backend crasht niet meer in dev-modus op Windows ([#115](https://github.com/TLaan/D-OmniTwin/pull/115)).
 - Screenshots actueel en reproduceerbaar ([#136](https://github.com/TLaan/D-OmniTwin/pull/136)).
+- Security-headers (CSP, `X-Frame-Options`, `nosniff`, `Referrer-Policy`, `Permissions-Policy`) via Traefik op alle routes, ook `/api/data` en `/api/geo`; HSTS op HTTPS; `/.well-known/security.txt`; voorbeeld voor HTTPS met Let's Encrypt in `deploy/traefik/tls.example.yml` ([#121](https://github.com/TLaan/D-OmniTwin/issues/121)).
 
 [Unreleased]: https://github.com/TLaan/D-OmniTwin/commits/main
