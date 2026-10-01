@@ -36,22 +36,37 @@
       {
         "naam": "Verhouding oppervlakte water / verharding",
         "richting": "hoger_is_beter"
-      }
-    ],
-    "ontbreekt_nog": [
-      "% 75+ (alleen 65+ beschikbaar)",
-      "Gevoelstemperatuur / hitte-eiland (Klimaateffectatlas)",
-      "Boomkroonbedekking"
-    ],
-    "afgeleid": [
+      },
       {
         "naam": "65+ jaar (%)",
-        "teller": "65+ jaar",
-        "noemer": "Inwoners",
-        "factor": 100,
-        "eenheid": "%",
         "richting": "neutraal"
+      },
+      {
+        "naam": "80 jaar of ouder (%)",
+        "richting": "neutraal"
+      },
+      {
+        "naam": "Boomkroonbedekking",
+        "richting": "hoger_is_beter"
+      },
+      {
+        "naam": "Stedelijk hitte-eiland effect",
+        "richting": "lager_is_beter"
       }
+    ],
+    "extra_data": {
+      "bestand": "niet in git: bij het laden gedownload naar $DATA_CACHE/usecases/hittestress/waarden.csv",
+      "script": "maak_data.py",
+      "bronnen": {
+        "65+ jaar (%)": "CBS Kerncijfers wijken en buurten 2026 (86358NED), peiljaar 2026, CC BY 4.0",
+        "80 jaar of ouder (%)": "CBS Kerncijfers wijken en buurten 2026 (86358NED), peiljaar 2026, CC BY 4.0",
+        "Boomkroonbedekking": "RIVM Atlas Natuurlijk Kapitaal, Bomenkaart 2022 (10 m), Public Domain Mark 1.0",
+        "Stedelijk hitte-eiland effect": "RIVM Atlas Natuurlijk Kapitaal, Stedelijk hitte-eiland effect v2 (2022, 10 m), Public Domain Mark 1.0"
+      }
+    },
+    "ontbreekt_nog": [
+      "% 75+: CBS publiceert per buurt alleen 65-80 en 80+ (Kerncijfers 2026); 80+ is opgenomen",
+      "Gevoelstemperatuur (Klimaateffectatlas): voor Fryslân geen open download of WCS, alleen via de atlas op te vragen; vervangen door het stedelijk hitte-eiland effect (RIVM)"
     ]
   },
   "inrichting": {
@@ -61,6 +76,6 @@
   "ai_zoekvraag": "afstand tot een koele plek bij hitte",
   "verwacht": {
     "vraag_zoekwoord": "koele plek",
-    "verwacht": "Bolsward-Noord ligt het verst van een koele plek (246 m), Bolsward-Noordoost het dichtst bij (206 m). Relatief de meeste 65-plussers: Bolsward-Zuidoost (29,5%, CBS 2026; Noord 24,1%, Noordoost 24,2%)."
+    "verwacht": "Bolsward-Noord ligt het verst van een koele plek (246 m) en heeft het sterkste hitte-eiland effect (0,47 °C). Bolsward-Noordoost ligt het dichtst bij een koele plek (206 m), maar heeft de minste boomkroonbedekking (6,8%). Relatief de meeste 65-plussers en 80-plussers: Bolsward-Zuidoost (29,5% en 10,2%, CBS 2026)."
   }
 }

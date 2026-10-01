@@ -26,7 +26,9 @@ Gebruik:
 
 import argparse
 import csv
+import importlib.util
 import json
+import os
 import sys
 import tempfile
 import uuid
@@ -146,18 +148,37 @@ def laad_gebieden(conn, gebied_ids):
             load_sample.BUURTEN_GEOJSON, load_sample.INDICATOREN_CSV = bron_geojson, bron_csv
 
 
+def extra_brondata(naam, uc):
+    """Pad naar de extra brondata van een use case: de cache van zijn downloadscript
+    (extra_data.script), of de gecommitte data/waarden.csv. Downloadfout: waarschuwing, None."""
+    script = (uc["data"].get("extra_data") or {}).get("script")
+    if not script:
+        return USECASES_DIR / naam / "data" / "waarden.csv"
+    cache = Path(os.environ.get("DATA_CACHE", ROOT / "data-cache")) / "usecases" / naam / "waarden.csv"
+    if cache.exists():
+        print(f"   💾 extra brondata uit cache: {cache}")
+        return cache
+    print(f"   🌐 extra brondata downloaden ({script})")
+    try:
+        spec = importlib.util.spec_from_file_location(f"maak_data_{naam.replace('-', '_')}", USECASES_DIR / naam / script)
+        mod = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(mod)
+        return mod.main(cache)
+    except Exception as e:  # geen netwerk, bron onbereikbaar, cache niet schrijfbaar
+        print(f"   ⚠️  extra brondata van {naam} niet opgehaald ({type(e).__name__}: {e}); de use case is onvolledig")
+        return None
+
+
 def laad(conn, naam):
     uc = json.loads((USECASES_DIR / naam / "usecase.json").read_text(encoding="utf-8"))
     print(f"\n📦 {uc['id']} {naam}: {uc['titel']}")
     laad_gebieden(conn, list(uc["data"]["gebieden"]))
-    cur = conn.cursor()
-    zet_richting(cur, uc["data"]["indicatoren"])
-    for afg in uc["data"].get("afgeleid", []):
-        maak_afgeleid(cur, afg, naam)
-    conn.commit()
 
-    extra = USECASES_DIR / naam / "data" / "waarden.csv"
-    if extra.exists():
+    # Extra brondata eerst: dan bestaan de nieuwe indicatoren als de richting wordt gezet.
+    # Downloadbare data (extra_data.script) wordt bij het laden opgehaald en gecachet, niet uit git;
+    # niet-downloadbare data staat in usecases/<naam>/data/waarden.csv.
+    extra = extra_brondata(naam, uc)
+    if extra and extra.exists():
         bron_csv = load_sample.INDICATOREN_CSV
         load_sample.INDICATOREN_CSV = extra  # zelfde formaat als de sample
         try:
@@ -165,6 +186,12 @@ def laad(conn, naam):
             load_sample.import_waarden(conn)
         finally:
             load_sample.INDICATOREN_CSV = bron_csv
+
+    cur = conn.cursor()
+    zet_richting(cur, uc["data"]["indicatoren"])
+    for afg in uc["data"].get("afgeleid", []):
+        maak_afgeleid(cur, afg, naam)
+    conn.commit()
 
 
 def main():
