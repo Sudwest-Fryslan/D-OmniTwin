@@ -1,6 +1,6 @@
 # Installatie en beheer van D-OmniTwin
 
-Dit is de installatiegids voor beheerders. Andere installatiedocumenten in deze repository (`BUILD.md`, `GETTING_STARTED.md`, het stappenplan voor dump-migratie) zijn verouderd of aanvullend; bij verschillen geldt deze gids.
+Dit is de installatiegids voor beheerders. Andere installatiedocumenten in deze repository (`docs/archief/BUILD.md`, `docs/archief/GETTING_STARTED.md`, het stappenplan voor dump-migratie) zijn verouderd of aanvullend; bij verschillen geldt deze gids.
 
 De gids gaat uit van een Linux-server of een werkplek met Docker. Alle commando's draai je in de map van de repository.
 

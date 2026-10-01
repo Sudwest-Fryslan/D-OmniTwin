@@ -1,6 +1,6 @@
 # 🚀 Getting Started — D-OmniTwin
 
-> ⚠️ **Verouderd/aanvullend** — de actuele installatie staat in [`docs/9-beheer/installatie.md`](./docs/9-beheer/installatie.md). Deze gids beschrijft een installatie zonder Docker via `init_database.sh`; dat script werkt niet in de Docker-installatie. Fryslân-data laden in de Docker-installatie wordt nog niet ondersteund (#69).
+> ⚠️ **Verouderd/aanvullend** — de actuele installatie staat in [`docs/9-beheer/installatie.md`](../9-beheer/installatie.md). Deze gids beschrijft een installatie zonder Docker via `init_database.sh`; dat script werkt niet in de Docker-installatie. Fryslân-data laden in de Docker-installatie wordt nog niet ondersteund (#69).
 
 Welkom bij D-OmniTwin! Deze gids leidt je in **zes stappen** van een lege kloon naar een volledig werkende applicatie met echte data van de provincie Fryslân.
 
@@ -188,7 +188,7 @@ python search_api.py -q "Gezondheid"
 python run_etl.py -ds 83739NED -gm 0014
 ```
 
-Zie [`ETL/ETL_DOCUMENTATION.md`](ETL/ETL_DOCUMENTATION.md) voor de volledige handleiding.
+Zie [`ETL/ETL_DOCUMENTATION.md`](../../ETL/ETL_DOCUMENTATION.md) voor de volledige handleiding.
 
 ---
 
@@ -211,10 +211,10 @@ Zie [`ETL/ETL_DOCUMENTATION.md`](ETL/ETL_DOCUMENTATION.md) voor de volledige han
 
 ## Volgende stappen
 
-- 📖 **Architectuur:** [`docs/2-architectuur/`](docs/2-architectuur/) — technische opzet
+- 📖 **Architectuur:** [`docs/2-architectuur/`](../2-architectuur/) — technische opzet
 - 🗺️ **Roadmap:** [`ROADMAP.md`](ROADMAP.md) — geplande features
 - 🐛 **Bugs & fixes:** [`BUGFIX.md`](BUGFIX.md) — bekende issues
-- 💬 **Vragen of samenwerking?** Open een [GitHub Discussion](../../discussions) of mail [t.vanderlaan@sudwestfryslan.nl](mailto:t.vanderlaan@sudwestfryslan.nl)
+- 💬 **Vragen of samenwerking?** Open een [GitHub Discussion](https://github.com/TLaan/D-OmniTwin/discussions) of mail [t.vanderlaan@sudwestfryslan.nl](mailto:t.vanderlaan@sudwestfryslan.nl)
 
 ---
 

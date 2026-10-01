@@ -61,7 +61,7 @@ def check_extensions(conn) -> bool:
                     print(f"  ✅ {ext_name} v{row[0]} (zojuist geactiveerd)")
                 else:
                     print(f"  ❌ {ext_name} — niet beschikbaar op deze server")
-                    print(f"     Zie GETTING_STARTED.md voor installatie-instructies")
+                    print(f"     Zie docs/archief/GETTING_STARTED.md voor installatie-instructies")
                     ok = False
         except Exception as e:
             conn.rollback()
@@ -172,7 +172,7 @@ Voorbeelden:
     ext_ok = check_extensions(conn)
     if not ext_ok:
         print("\n❌ Verplichte extensies ontbreken. Installeer PostGIS en pgvector eerst.")
-        print("   Zie GETTING_STARTED.md voor instructies.")
+        print("   Zie docs/archief/GETTING_STARTED.md voor instructies.")
         sys.exit(1)
 
     # ── Huidige staat ──

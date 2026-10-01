@@ -73,16 +73,16 @@ python init_data/scripts/download_buurten_fryslan.py
 python init_data/scripts/download_indicatoren_fryslan.py
 bash init_data/scripts/init_database.sh   # master initiatie-script, zie init_data/README.md
 ```
-Alleen voor een PostgreSQL zonder Docker (`GETTING_STARTED.md`). Werkt niet tegen de Docker-stack: `init_database.sh` verwacht een `.env` in de container en laadt het schema opnieuw. In Docker laad je de Fryslân-data na `db-init` met `docker compose exec backend python init_data/scripts/seed_fryslan.py --stap alle` (idempotent, exitcode 1 bij fouten; zie `docs/9-beheer/installatie.md`).
+Alleen voor een PostgreSQL zonder Docker (`docs/archief/GETTING_STARTED.md`). Werkt niet tegen de Docker-stack: `init_database.sh` verwacht een `.env` in de container en laadt het schema opnieuw. In Docker laad je de Fryslân-data na `db-init` met `docker compose exec backend python init_data/scripts/seed_fryslan.py --stap alle` (idempotent, exitcode 1 bij fouten; zie `docs/9-beheer/installatie.md`).
 
 ### ETL — doorlopend nieuwe databronnen/gemeenten toevoegen (ná de initiële setup)
 ```bash
 python ETL/search_api.py                     # discovery: welke datasets bestaan bij CBS/RIVM/Politie
 python ETL/run_etl.py -ds <dataset_id> -gm <gemeentecode>   # extract + import van één dataset/gemeente
 ```
-Dit framework is **niet** voor de initiële bootstrap (dat is `init_data/`, hierboven) maar voor het uitbreiden met extra gemeenten of databronnen daarna. Zie `ETL/ETL_DOCUMENTATION.md` en `GETTING_STARTED.md` ("Eigen gemeente of regio toevoegen").
+Dit framework is **niet** voor de initiële bootstrap (dat is `init_data/`, hierboven) maar voor het uitbreiden met extra gemeenten of databronnen daarna. Zie `ETL/ETL_DOCUMENTATION.md` en `docs/archief/GETTING_STARTED.md` ("Eigen gemeente of regio toevoegen").
 
-> **Let op:** `ETL/local/` bevat een ouder/parallel pipeline-pad (`etl_01..06`, `run_pipeline.py`) dat niet in `GETTING_STARTED.md` staat en vermoedelijk legacy is. Niet gebruiken als startpunt zonder eerst te verifiëren of het nog actief onderhouden wordt.
+> **Let op:** `ETL/local/` bevat een ouder/parallel pipeline-pad (`etl_01..06`, `run_pipeline.py`) dat niet in `docs/archief/GETTING_STARTED.md` staat en vermoedelijk legacy is. Niet gebruiken als startpunt zonder eerst te verifiëren of het nog actief onderhouden wordt.
 
 ## Environment Setup
 
@@ -148,11 +148,8 @@ Scripts in `ETL/` en `scripts/` zijn standalone, geen deel van de web-API. CBS, 
 - `docs/STATE.md` — authoritative system status and component inventory (leidend bij tegenstrijdigheden)
 - `docs/INDEX.md` — documentation router by domain
 - `docs/9-beheer/installatie.md` — **de** installatiegids (Docker), ook voor beheerders
-- `GETTING_STARTED.md` — installatie zonder Docker met Fryslân-dataset (verouderd)
-- `BUILD.md` — build reference & sprint changelog (installatiedeel verouderd)
-- `ROADMAP.md` — sprint planning
-- `TODO.md` — active task list by domain
-- `BUGFIX.md` — known bugs and workarounds
+- `docs/archief/` — verouderde logboeken en gidsen: `GETTING_STARTED.md` (installatie zonder Docker), `BUILD.md` (sprint changelog), `ROADMAP.md`, `TODO.md`, `BUGFIX.md`. Niet meer bijhouden; taken en bugs staan in de GitHub-issues
+- `GOVERNANCE.md` — rollen en besluitvorming (concept, #183)
 
 ## Projectmanagement
 `docs/STATE.md` is leidend. Na elke sprint bijwerken: versie, actieve componenten, recente wijzigingen, issues, roadmap.
