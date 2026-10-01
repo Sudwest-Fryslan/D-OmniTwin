@@ -571,9 +571,9 @@ def samenvatting(f: Dict[str, Any]) -> str:
     if gevraagd_midden:
         zinnen.append(f"Daartussen: {_namen(gevraagd_midden, e)}.")
     if f["richting"] == "hoger_is_beter":
-        zinnen.append(f"Hoger is beter: {' en '.join(x['gebied'] for x in hoog)} scoort het gunstigst.")
+        zinnen.append(f"Hoger is beter: {' en '.join(x['gebied'] for x in hoog)} {'scoren' if len(hoog) > 1 else 'scoort'} het gunstigst.")
     elif f["richting"] == "lager_is_beter":
-        zinnen.append(f"Lager is beter: {' en '.join(x['gebied'] for x in laag)} scoort het gunstigst, "
+        zinnen.append(f"Lager is beter: {' en '.join(x['gebied'] for x in laag)} {'scoren' if len(laag) > 1 else 'scoort'} het gunstigst, "
                       f"{' en '.join(x['gebied'] for x in hoog)} het ongunstigst.")
     return " ".join(zinnen)
 
