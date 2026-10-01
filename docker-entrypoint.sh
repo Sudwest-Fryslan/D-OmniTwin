@@ -37,12 +37,12 @@ wait_for_db() {
     echo "✅ PostgreSQL is gereed voor verbindingen."
 }
 
-# Migraties die (nog) niet in schema_latest.sql zitten. Idempotent, dus ze draaien
-# bij elke init, ook op een bestaande database. Structureel: migratiebeheer (#54)
+# Schemamigraties (#54): db/migraties/V<versie>__<naam>.sql. De runner past toe wat nog niet
+# in de tabel schema_migraties staat, op volgorde, en registreert het. Bij een bestaande
+# database zonder die tabel draaien alle migraties één keer opnieuw (ze zijn idempotent).
+# Baseline: wat in db/migraties/baseline/ staat, zit al in db/schema/schema_latest.sql.
 run_migrations() {
-    for m in schema_v18_trigram.sql schema_v19_deduplicatie_uitzonderingen.sql schema_v20_llm_api_type.sql schema_v21_zscore_referentie.sql schema_v22_auth_hardening.sql; do
-        PGOPTIONS="-c client_min_messages=warning" psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -v ON_ERROR_STOP=1 -q -f "/app/migrations/$m" >/dev/null
-    done
+    PGHOST="$DB_HOST" PGPORT="$DB_PORT" PGDATABASE="$DB_NAME" PGUSER="$DB_USER" python -m omnitwin.migraties
 }
 
 init_db() {
@@ -58,11 +58,11 @@ init_db() {
 
     echo "⚙️ Database is leeg. Initialiseren via schema_latest.sql..."
     # ON_ERROR_STOP: stop bij de eerste SQL-fout in plaats van een half schema
-    psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -v ON_ERROR_STOP=1 -f /app/init_data/schema/schema_latest.sql >/dev/null
+    psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -v ON_ERROR_STOP=1 -f /app/db/schema/schema_latest.sql >/dev/null
     # Views voor pg_featureserv (vw_gebieden_features, gebruikt door de kaart) staan niet in schema_latest.sql
-    psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -v ON_ERROR_STOP=1 -f /app/init_data/schema/06_pg_featureserv_views.sql >/dev/null
+    psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -v ON_ERROR_STOP=1 -f /app/db/schema/06_pg_featureserv_views.sql >/dev/null
     # SQL-functies die pg_featureserv publiceert onder /api/geo/functions (schema postgisftw)
-    psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -v ON_ERROR_STOP=1 -f /app/init_data/schema/07_postgisftw_functions.sql >/dev/null
+    psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -v ON_ERROR_STOP=1 -f /app/db/schema/07_postgisftw_functions.sql >/dev/null
     run_migrations
     echo "✅ Database schema succesvol aangemaakt."
 
@@ -110,7 +110,7 @@ init_db() {
 # wachtwoord al; de rollen zelf hebben geen rechten op de tabellen.
 setup_api_rollen() {
     echo "🔐 Rollen en schema api voor PostgREST en pg_featureserv bijwerken..."
-    psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -v ON_ERROR_STOP=1 -q -f /app/migrations/schema_v23_api_rollen.sql >/dev/null
+    psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -v ON_ERROR_STOP=1 -q -f /app/db/migraties/R__api_rollen.sql >/dev/null
     # Wachtwoord via een psql-variabele (:'pw' quote het correct), niet in de SQL-bestanden
     psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -v ON_ERROR_STOP=1 -q -v pw="$DB_PASS" >/dev/null <<'SQL'
 ALTER ROLE authenticator PASSWORD :'pw';
