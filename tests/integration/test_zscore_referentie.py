@@ -177,8 +177,9 @@ def test_scenario_telt_niet_mee(conn, gebiedstype_id):
             voor = referentie_stats(cur, gebiedstype_id)
             cur.execute(
                 """INSERT INTO gebied_data (gebied_id, indicator_uuid, waarde, jaar, scenario_id, bron)
-                   SELECT gebied_id, indicator_uuid, waarde * 100 + 1000, 2099, '2050', 'test #66'
-                   FROM gebied_data WHERE gebied_id = %s""",
+                   SELECT DISTINCT ON (indicator_uuid) gebied_id, indicator_uuid, waarde * 100 + 1000, 2099, '2050', 'test #66'
+                   FROM gebied_data WHERE gebied_id = %s
+                   ORDER BY indicator_uuid, jaar DESC""",  # één rij per indicator (meerdere jaargangen, #176)
                 (GEBIED_2,),
             )
             na = referentie_stats(cur, gebiedstype_id)
