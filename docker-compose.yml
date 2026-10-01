@@ -131,6 +131,29 @@ services:
         condition: service_completed_successfully
     restart: unless-stopped
 
+  llm-gateway:
+    # Optionele LiteLLM-gateway (ADR 0001): alleen met `--profile llm-gateway`.
+    # Alleen intern bereikbaar (geen hostpoort); de backend gebruikt
+    # http://llm-gateway:4000 met llm_config.api_type=openai.
+    image: ghcr.io/berriai/litellm:v1.103.1
+    profiles: ["llm-gateway"]
+    command: ["--config", "/app/config.yaml", "--port", "4000"]
+    environment:
+      LITELLM_MASTER_KEY: ${LITELLM_MASTER_KEY:-}
+      OLLAMA_HOST: ${OLLAMA_HOST:-http://host.docker.internal:11434}
+      LITELLM_DEFAULT_MODEL: ollama_chat/${OLLAMA_MODEL:-qwen3:30b}
+    volumes:
+      - "./deploy/litellm/config.yaml:/app/config.yaml:ro"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:4000/health/liveliness', timeout=4)"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 60s
+    restart: unless-stopped
+
 volumes:
   pgdata:
   bron-cache:

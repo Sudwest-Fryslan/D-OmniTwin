@@ -210,6 +210,7 @@ export const LogViewerPage: React.FC = () => {
           {/* Category */}
           <select
             className="form-select"
+            aria-label="Categorie"
             value={category}
             onChange={e => { setCategory(e.target.value); setPage(1); }}
             style={{ width: '150px' }}
@@ -221,6 +222,7 @@ export const LogViewerPage: React.FC = () => {
           {/* Level */}
           <select
             className="form-select"
+            aria-label="Niveau"
             value={level}
             onChange={e => { setLevel(e.target.value); setPage(1); }}
             style={{ width: '130px' }}
@@ -234,11 +236,12 @@ export const LogViewerPage: React.FC = () => {
             <input
               className="form-input"
               placeholder="Zoek in berichten..."
+              aria-label="Zoek in berichten"
               value={searchInput}
               onChange={e => setSearchInput(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && handleSearch()}
             />
-            <button className="btn btn-secondary" onClick={handleSearch}>
+            <button className="btn btn-secondary" onClick={handleSearch} aria-label="Zoeken" title="Zoeken">
               <Search size={16} />
             </button>
           </div>
@@ -247,6 +250,7 @@ export const LogViewerPage: React.FC = () => {
           <button
             className={`btn ${showConfig ? 'btn-primary' : 'btn-secondary'}`}
             onClick={() => setShowConfig(!showConfig)}
+            aria-expanded={showConfig}
           >
             <Settings size={16} /> Config
           </button>
@@ -255,6 +259,8 @@ export const LogViewerPage: React.FC = () => {
           <button
             className="btn btn-secondary"
             onClick={() => queryClient.invalidateQueries({ queryKey: ['logs'] })}
+            aria-label="Verversen"
+            title="Verversen"
           >
             <RefreshCw size={16} />
           </button>
@@ -288,6 +294,7 @@ export const LogViewerPage: React.FC = () => {
                   <td>
                     <select
                       className="form-select"
+                      aria-label={`Logniveau ${cfg.category}`}
                       value={cfg.level}
                       onChange={e => configMutation.mutate({
                         cat: cfg.category,
@@ -407,6 +414,7 @@ export const LogViewerPage: React.FC = () => {
             className="btn btn-secondary"
             disabled={page <= 1}
             onClick={() => setPage(p => Math.max(1, p - 1))}
+            aria-label="Vorige pagina"
           >
             <ChevronLeft size={16} />
           </button>
@@ -427,6 +435,7 @@ export const LogViewerPage: React.FC = () => {
             className="btn btn-secondary"
             disabled={page >= totalPages}
             onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+            aria-label="Volgende pagina"
           >
             <ChevronRight size={16} />
           </button>

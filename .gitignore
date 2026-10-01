@@ -30,6 +30,9 @@ data/
 exports/*
 !exports/.gitkeep
 
+# E2E-testartefacten (screenshots bij fouten)
+tests/e2e/artifacts/
+
 # Logs
 *.log
 logs/
