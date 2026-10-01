@@ -37,11 +37,11 @@ Vereist: [Docker](https://www.docker.com/) met Docker Compose. Ollama is optione
 ```bash
 git clone https://github.com/TLaan/D-OmniTwin.git && cd D-OmniTwin
 cp .env.example .env
-# Vul in .env minimaal in: DATABASE_PASSWORD, SECRET_KEY en ADMIN_PASSWORD
+# Vul in .env alleen DATABASE_PASSWORD in (en bij voorkeur ADMIN_PASSWORD)
 docker compose up -d --build
 ```
 
-Open daarna **http://localhost**. Alles loopt via Traefik op poort 80; de backend (poort 8000) is binnen Docker niet direct bereikbaar. Dit start de ontwikkelmodus; voor een installatie bij je organisatie volg je de **[installatiegids](./docs/9-beheer/installatie.md)** (vereisten, `.env`, backup, bijwerken, beveiliging).
+Open daarna **http://localhost**. Alles loopt via Traefik op poort 80; de backend (poort 8000) is binnen Docker niet direct bereikbaar. Dit start de installatiemodus (`COMPOSE_FILE` in `.env`); voor alle details van een installatie bij je organisatie volg je de **[installatiegids](./docs/9-beheer/installatie.md)** (vereisten, `.env`, backup, bijwerken, beveiliging).
 
 - Bij de eerste start maakt de eenmalige service `db-init` het databaseschema aan en laadt een **sample dataset van 12 buurten in Súdwest-Fryslân** (`LOAD_SAMPLE_DATA=true` in `.env`). Zet dit op `false` voor een lege database met alleen stuurdata.
 - **Beheeromgeving:** http://localhost/admin. Inloggen met `ADMIN_USER` (standaard `admin`) en het `ADMIN_PASSWORD` uit `.env`. Laat je `ADMIN_PASSWORD` leeg, dan wordt eenmalig een wachtwoord gegenereerd en in de log getoond: `docker compose logs db-init`. Laat `DEBUG=true` staan zolang je zonder HTTPS draait; anders wordt het inlogcookie alleen via HTTPS verstuurd en lukt inloggen niet.
@@ -66,7 +66,10 @@ Schermafbeeldingen van een verse installatie met de sample dataset (`docker comp
 ![Chat: de D-Omni Assistent met het scenario Beleidsadviseur](docs/images/chat-beleidsadviseur.jpg)
 *D-Omni Assistent: het scenario "Beleidsadviseur" zet kaart en Kompas klaar.*
 
-> Bolsward-Zuidoost bevat in de sample **demodata** (zie `init_data/sample/README.md`). De getallen in de kop ("1,721 gebieden | 226 indicatoren") zijn nog hardcoded (#79).
+![Beheerscherm: dashboard met datadekking per Kompas-kwadrant](docs/images/beheer-dashboard.jpg)
+*Beheerscherm (`/admin`): indicatoren, datakwaliteit, AI-configuratie en rapportage.*
+
+> Bolsward-Zuidoost bevat in de sample **demodata** (zie `init_data/sample/README.md`). De screenshots maak je opnieuw met [`scripts/docs/maak_screenshots.py`](scripts/docs/maak_screenshots.py).
 
 ## 🤝 Innovatie & Samenwerking
 
@@ -251,12 +254,12 @@ D-OmniTwin bevat een ingebouwde AI-assistent die werkt als een **"alternatieve m
 ```bash
 # Ollama starten (vereist)
 ollama serve
-ollama pull qwen3:30b  # of een kleiner model indien gewenst
+ollama pull qwen3:30b-instruct  # of kleiner: qwen3:4b-instruct
 
 # Configureerbaar via Admin Panel → LLM Config
 # OF via environment variabelen (fallback):
 OLLAMA_HOST=http://localhost:11434
-OLLAMA_MODEL=qwen3:30b
+# Model kiezen in Beheer → AI Configuratie
 ```
 
 **Andere LLM-servers (OpenAI-compatibel).** In Admin → AI Configuratie kies je het API-type

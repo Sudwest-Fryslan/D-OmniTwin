@@ -11,7 +11,7 @@ from services.logging_service import AppLogger
 
 # Fallbacks instellen, maar in deze v8 schema wordt de API URL dynamisch uit de database gehaald
 DEFAULT_OLLAMA_HOST = os.getenv("OLLAMA_HOST", "http://localhost:11434")
-DEFAULT_OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "gemma4")
+DEFAULT_OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "qwen3:30b-instruct")
 
 # api_type in llm_config (migratie v20, ADR 0001):
 #   'ollama' = Ollama-eigen API (/api/generate), het oorspronkelijke gedrag
