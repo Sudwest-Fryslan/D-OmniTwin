@@ -22,9 +22,9 @@ class AISearchService:
         if _model is None:
             try:
                 from services.logging_service import AppLogger
-                AppLogger.info("Initialiseren van AISearch model (all-MiniLM-L6-v2)...", category="SERVER")
-                from sentence_transformers import SentenceTransformer
-                _model = SentenceTransformer('all-MiniLM-L6-v2')
+                from services.embedding_model import MODEL_ID, MODEL_REVISIE, laad_model
+                AppLogger.info(f"Initialiseren van AISearch model ({MODEL_ID}@{MODEL_REVISIE[:8]})...", category="SERVER")
+                _model = laad_model()
             except Exception as e:
                 logger.error(f"Fout bij laden van AI model: {e}")
 
@@ -33,6 +33,8 @@ class AISearchService:
         Zoekt naar de meest relevante indicatoren op basis van een tekstquery.
         Gebruikt Cosine Similarity via pgvector.
         Prefereert menselijk gevalideerde beschrijvingen boven AI-gegenereerde.
+        Er wordt niet op ontologie_status gefilterd: ook concepten worden gevonden
+        (#139). Per resultaat staan ontologie_status en gevalideerd erbij.
         """
         if _model is None:
             return [{"error": "AI model niet geladen"}]
@@ -87,6 +89,7 @@ class AISearchService:
                 "thema_naam": thema_naam,
                 "onderdeel_naam": onderdeel_naam,
                 "ontologie_status": ontologie_status or "draft",
+                "gevalideerd": ontologie_status == "goedgekeurd_mens",
                 "eenheid": eenheid,
                 "score_type": score_type,
                 "score": round(score, 4)

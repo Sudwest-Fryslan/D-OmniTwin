@@ -3,7 +3,9 @@ import json
 import os
 
 BASE_URL = "http://localhost:8000/api/admin/dashboard"
-ADMIN_KEY = "3aa6df22c564ae89056c42436ac1a2e0b3d27f7151fb7f2a56cef696df42a831"
+ADMIN_KEY = os.environ.get("ADMIN_API_KEY", "")
+if not ADMIN_KEY:
+    raise SystemExit("Zet ADMIN_API_KEY in de omgeving (zie .env).")
 
 def check_quadrants():
     print("Checking Dashboard Quadrants Endpoint...")

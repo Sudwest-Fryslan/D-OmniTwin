@@ -290,6 +290,7 @@ export const DataKwaliteitPage: React.FC = () => {
                                                             <input 
                                                                 type="checkbox" 
                                                                 checked={isSelected}
+                                                                aria-label={`${ind.naam} selecteren`}
                                                                 onChange={() => {}}
                                                                 style={{ marginTop: '2px' }}
                                                             />
@@ -298,6 +299,7 @@ export const DataKwaliteitPage: React.FC = () => {
                                                                     type="radio" 
                                                                     name={`primary-${kandidaat.groep_id}`} 
                                                                     checked={primaryUuid === ind.uuid}
+                                                                    aria-label={`${ind.naam} als hoofdindicator`}
                                                                     title="Hoofd indicator"
                                                                     onChange={(e) => { e.stopPropagation(); setPrimary(kandidaat.groep_id, ind.uuid); }}
                                                                     onClick={(e) => e.stopPropagation()}

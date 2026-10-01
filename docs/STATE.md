@@ -9,7 +9,7 @@
 
 | Veld | Waarde |
 |------|--------|
-| **Huidige versie** | v1.0.0-beta (pre-release) |
+| **Huidige versie** | 0.1.0 (eerste release in voorbereiding; bron: `VERSION`, zie [releasebeleid](9-beheer/releasebeleid.md)) |
 | **Sprint** | Sprint 22 (Data Engineering & Lineage) ✅ Afgerond |
 | **Volgende sprint** | Sprint 23 — De Gebruikers Sprint (Multi-Tenant Identity & Keycloak) 📌 Gepland |
 | **Laatste update** | 2026-10-01 (Dag 101) |

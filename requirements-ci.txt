@@ -7,11 +7,11 @@ fastapi==0.115.12
 starlette==0.41.3
 uvicorn[standard]==0.30.6
 python-dotenv>=1.0.0
-python-multipart>=0.0.5
+python-multipart>=0.0.32
 Jinja2>=3.1.0
 
 # --- Database (driver, geen PostGIS extensions nodig voor unit tests) ---
-psycopg2-binary>=2.9.0
+psycopg2-binary>=2.9.13
 SQLAlchemy>=2.0.0
 
 # --- Data Processing ---
@@ -34,4 +34,4 @@ python-dateutil>=2.9.0.post0
 
 # --- Testing ---
 pytest>=7.0.0
-pytest-cov>=4.0.0
+pytest-cov>=7.1.0

@@ -5,7 +5,7 @@ Deze map bevat een compacte, zelfstandige sample dataset van de gemeente **Súdw
 ## Doel en opzet
 
 - **Onafhankelijk:** Geen afhankelijkheid van externe API's of grote downloads tijdens setup of CI/CD.
-- **Representatief:** Bevat 13 diverse buurten (historisch stadje, dorpskern, lintbebouwing, woonwijk) met ~87 indicatoren en ~1.130 metingen. Eén buurt (Bolsward-Zuidoost) bevat demodata, zie hieronder.
+- **Representatief:** Bevat 13 diverse buurten (historisch stadje, dorpskern, lintbebouwing, woonwijk) met 88 indicatoren en ~3.660 metingen, waaronder de CBS Kerncijfers 2019-2026 als reeks (trends). Eén buurt (Bolsward-Zuidoost) bevat deels demodata, zie hieronder.
 - **Volledig functioneel:** Genoeg spreiding en observaties om Z-scores, Kompas-visualisaties, kaartlagen en de beleidsadviseur-chat direct te laten werken.
 - **Idempotent:** Veilig en herhaaldelijk te laden zonder dubbele records (`ON CONFLICT DO UPDATE/NOTHING`).
 
@@ -30,7 +30,7 @@ init_data/sample/
 | CBS Code | Buurtnaam | Type / Karakteristiek |
 |---|---|---|
 | `BU19000001` | Bolsward-Noord | Stedelijk / Woonwijk |
-| `BU19000002` | Bolsward-Zuidoost | Woonwijk — **demodata** (zie onder) |
+| `BU19000002` | Bolsward-Zuidoost | Woonwijk — CBS Kerncijfers echt, overige **demodata** (zie onder) |
 | `BU19000004` | Bolsward-Noordoost | Stedelijk / Centrum |
 | `BU19000108` | Bomenbuurt | Woonwijk |
 | `BU19000200` | Workum | Regionaal centrum |
@@ -45,7 +45,11 @@ init_data/sample/
 
 ### Demodata: Bolsward-Zuidoost
 
-`BU19000002` Bolsward-Zuidoost is toegevoegd als vaste testbuurt voor demo's en functionele tests. De **geometrie** is de echte CBS-buurtgrens (uit `init_data/fryslan/`, CC BY 4.0). De **indicatorwaarden zijn demodata**: per indicator en jaar het gemiddelde van Bolsward-Noord en Bolsward-Noordoost. In de kolom `bron` staat daarom `DEMO: …`. Gebruik deze waarden niet als echte cijfers. Wie de sample opnieuw genereert met `generate_sample.py` op een volledige database, krijgt voor deze buurt de echte waarden.
+`BU19000002` Bolsward-Zuidoost is toegevoegd als vaste testbuurt voor demo's en functionele tests. De **geometrie** is de echte CBS-buurtgrens (uit `init_data/fryslan/`, CC BY 4.0). De **CBS Kerncijfers** zijn echte cijfers (2019-2026, uit `init_data/cbs/`). De **overige indicatorwaarden zijn demodata**: per indicator en jaar het gemiddelde van Bolsward-Noord en Bolsward-Noordoost. In de kolom `bron` staat daarom `DEMO: …`. Gebruik die waarden niet als echte cijfers. Wie de sample opnieuw genereert met `generate_sample.py` op een volledige database, krijgt voor deze buurt de echte waarden.
+
+### CBS Kerncijfers (alle jaargangen)
+
+De sample bevat **geen** CBS Kerncijfers: die worden bij het laden gedownload voor de buurten van de use cases (`init_data/scripts/laad_cbs.py`, recept in [`init_data/cbs/`](../cbs/)). Wat bij een open bron te downloaden is, staat niet in git. Zie [`docs/3-data-engineering/cbs_kerncijfers.md`](../../docs/3-data-engineering/cbs_kerncijfers.md).
 
 ---
 
@@ -53,7 +57,7 @@ init_data/sample/
 
 ### 1. Automatisch via Docker Compose (Aanbevolen voor snelle start)
 
-Als `LOAD_SAMPLE_DATA=true` in je `.env` staat (standaard in `.env.example`), laadt de backend container bij de allereerste start automatisch het schema én de sample dataset zodra de database gereed is:
+Deze map is de **bronbibliotheek** voor de use cases in [`usecases/`](../../usecases/README.md). Bij de eerste start laadt `db-init` altijd de definities: stuurdata, indicatoren en Kompas (`load_sample.py --stap definities`). Met `LOAD_SAMPLE_DATA=true` (de standaard) laadt het daarna alle use cases. Elke use case haalt zijn eigen gebieden en waarden uit deze map (`laad_usecase.py --alle`). Zo hoort alle data bij een use case; `tests/test_usecase_pakketten.py` bewaakt dat.
 
 ```bash
 docker compose up
