@@ -879,6 +879,14 @@
         <p class="loading-text">Laden...</p>
       </div>
 
+      <!-- Actief gemeentefilter (#140): chip, of melding als het filter niets oplevert -->
+      <div id="gemeente-filter-chip" class="gemeente-filter-chip" role="status" aria-live="polite" hidden>
+        <span class="gemeente-filter-icoon" aria-hidden="true">📍</span>
+        <span id="gemeente-filter-tekst" class="gemeente-filter-tekst"></span>
+        <button type="button" id="gemeente-filter-wis" class="gemeente-filter-wis"
+          aria-label="Gemeentefilter wissen" title="Gemeentefilter wissen">✕</button>
+      </div>
+
       <!-- Bronvermelding kaart en data (licentie-eis, zie NOTICE.md) -->
       <div id="kaart-bronvermelding" class="kaart-bronvermelding">
         Achtergrondkaart &copy; <a href="https://www.kadaster.nl" target="_blank" rel="noopener">Kadaster</a> (BRT, CC BY 4.0)

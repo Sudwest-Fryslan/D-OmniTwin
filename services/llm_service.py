@@ -8,6 +8,7 @@ import re
 from urllib.parse import urlsplit
 
 from services.logging_service import AppLogger
+from services.gemeente_validatie import laad_gemeenten
 
 # Fallbacks instellen, maar in deze v8 schema wordt de API URL dynamisch uit de database gehaald
 DEFAULT_OLLAMA_HOST = os.getenv("OLLAMA_HOST", "http://localhost:11434")
@@ -450,40 +451,20 @@ Strikte Kaders:
                 "categorie": ind.get("categorie")
             })
             
-        # Municipality codes for LLM to use in SELECTEER_GEMEENTE
-        # Expanded to include Groningen and Drenthe (and some neighbors with data)
-        gemeenten_info = [
-            {"code": "1680", "naam": "Aa en Hunze"}, {"code": "0059", "naam": "Achtkarspelen"},
-            {"code": "0060", "naam": "Ameland"}, {"code": "0106", "naam": "Assen"},
-            {"code": "1681", "naam": "Borger-Odoorn"}, {"code": "0109", "naam": "Coevorden"},
-            {"code": "1891", "naam": "Dantumadiel"}, {"code": "1940", "naam": "De Fryske Marren"},
-            {"code": "1690", "naam": "De Wolden"}, {"code": "1979", "naam": "Eemsdelta"},
-            {"code": "0114", "naam": "Emmen"}, {"code": "0388", "naam": "Enkhuizen"},
-            {"code": "0014", "naam": "Groningen"}, {"code": "0160", "naam": "Hardenberg"},
-            {"code": "0072", "naam": "Harlingen"}, {"code": "0074", "naam": "Heerenveen"},
-            {"code": "1966", "naam": "Het Hogeland"}, {"code": "1911", "naam": "Hollands Kroon"},
-            {"code": "0118", "naam": "Hoogeveen"}, {"code": "0080", "naam": "Leeuwarden"},
-            {"code": "0420", "naam": "Medemblik"}, {"code": "0119", "naam": "Meppel"},
-            {"code": "1731", "naam": "Midden-Drenthe"}, {"code": "1952", "naam": "Midden-Groningen"},
-            {"code": "1970", "naam": "Noardeast-Fryslân"}, {"code": "1699", "naam": "Noordenveld"},
-            {"code": "0171", "naam": "Noordoostpolder"}, {"code": "1895", "naam": "Oldambt"},
-            {"code": "0085", "naam": "Ooststellingwerf"}, {"code": "0086", "naam": "Opsterland"},
-            {"code": "0765", "naam": "Pekela"}, {"code": "0088", "naam": "Schiermonnikoog"},
-            {"code": "0090", "naam": "Smallingerland"}, {"code": "0037", "naam": "Stadskanaal"},
-            {"code": "0180", "naam": "Staphorst"}, {"code": "1708", "naam": "Steenwijkerland"},
-            {"code": "1900", "naam": "Súdwest-Fryslân"}, {"code": "0093", "naam": "Terschelling"},
-            {"code": "0448", "naam": "Texel"}, {"code": "1730", "naam": "Tynaarlo"},
-            {"code": "0737", "naam": "Tytsjerksteradiel"}, {"code": "0184", "naam": "Urk"},
-            {"code": "0047", "naam": "Veendam"}, {"code": "0096", "naam": "Vlieland"},
-            {"code": "1949", "naam": "Waadhoeke"}, {"code": "1969", "naam": "Westerkwartier"},
-            {"code": "1701", "naam": "Westerveld"}, {"code": "1950", "naam": "Westerwolde"},
-            {"code": "0098", "naam": "Weststellingwerf"}
-        ]
+        # Gemeenten voor SELECTEER_GEMEENTE: uit de database, alleen gemeenten met
+        # geladen gebieden (#140). routers/chat.py valideert de keuze van het model.
+        try:
+            gemeenten_info = [{"code": c, "naam": n} for c, n in laad_gemeenten(self.db, alleen_met_gebieden=True).items()]
+        except Exception as e:
+            self.db.rollback()
+            AppLogger.warning(f"Gemeentelijst niet geladen: {e}", category="LLM_CHAT")
+            gemeenten_info = []
             
         user_prompt = f"""Vraag: "{vraag}"
         Context: {json.dumps(context or {}, ensure_ascii=False)}
         Indicatoren: {json.dumps(ind_context, ensure_ascii=False)}
         Gemeenten: {json.dumps(gemeenten_info, ensure_ascii=False)}
+        (SELECTEER_GEMEENTE alleen met een code en naam uit deze lijst. Een woonplaats of buurt is geen gemeente.)
         
         Retourneer UITSLUITEND de JSON:"""
         
