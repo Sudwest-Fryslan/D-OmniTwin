@@ -1,0 +1,52 @@
+{
+  "id": "TC-06-007",
+  "titel": "Brede welvaart en functiemenging",
+  "persona": {
+    "rol": "Strateeg / economische zaken",
+    "vraag": "Hoe staat het met de brede welvaart in Bolsward-Zuidoost vergeleken met de rest van Bolsward?",
+    "besluit": "Waar is extra inzet nodig op werk, inkomen en voorzieningen?"
+  },
+  "data": {
+    "gebiedstype": "CBS Buurten",
+    "focus": "BU19000002",
+    "gebieden": {
+      "BU19000001": "Bolsward-Noord",
+      "BU19000002": "Bolsward-Zuidoost",
+      "BU19000004": "Bolsward-Noordoost"
+    },
+    "dataset": "init_data/sample",
+    "indicatoren": [
+      {
+        "naam": "Inkomen per inwoner",
+        "richting": "hoger_is_beter"
+      },
+      {
+        "naam": "Netto arbeidsparticipatie",
+        "richting": "hoger_is_beter"
+      },
+      {
+        "naam": "Diversiteit Functies (Simpson Index)",
+        "richting": "hoger_is_beter"
+      },
+      {
+        "naam": "Ervaren gezondheid",
+        "richting": "hoger_is_beter"
+      }
+    ],
+    "ontbreekt_nog": [
+      "Woontevredenheid / Leefbaarometer",
+      "Veiligheidsbeleving",
+      "Trend over meerdere jaargangen",
+      "Opleidingsniveau in %"
+    ]
+  },
+  "inrichting": {
+    "kompas_configuratie": "Volledig Kompas",
+    "chat_scenario": "beleidsadviseur"
+  },
+  "ai_zoekvraag": "inkomen en werk in de buurt",
+  "verwacht": {
+    "vraag_zoekwoord": "inkomen",
+    "verwacht": "Bolsward-Zuidoost zit tussen Noord en Noordoost in (demodata = gemiddelde van de buren)."
+  }
+}

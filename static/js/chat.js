@@ -123,17 +123,18 @@ class ChatPanel {
         if (response.acties && response.acties.length > 0) {
             html += `<div class="chat-acties">`;
             for (const actie of response.acties) {
-                html += `<button class="chat-actie-btn" 
-                    data-type="${actie.type}" 
-                    data-uuid="${actie.indicator_uuid || ''}"
-                    data-gemeente-code="${actie.gemeente_code || ''}"
-                    data-gebiedstype-id="${actie.gebiedstype_id || ''}"
-                    data-config-id="${actie.config_id || ''}"
-                    data-filters='${JSON.stringify(actie.filters || {})}'
-                    data-thema="${actie.thema || ''}"
-                    data-rol-code="${actie.rol_code || ''}"
-                    title="${this._escapeHtml(actie.label)}"
-                >${actie.label}</button>`;
+                const esc = this._escapeHtml;
+                html += `<button class="chat-actie-btn"
+                    data-type="${esc(actie.type)}"
+                    data-uuid="${esc(actie.indicator_uuid || '')}"
+                    data-gemeente-code="${esc(actie.gemeente_code || '')}"
+                    data-gebiedstype-id="${esc(actie.gebiedstype_id || '')}"
+                    data-config-id="${esc(actie.config_id || '')}"
+                    data-filters="${esc(JSON.stringify(actie.filters || {}))}"
+                    data-thema="${esc(actie.thema || '')}"
+                    data-rol-code="${esc(actie.rol_code || '')}"
+                    title="${esc(actie.label)}"
+                >${esc(actie.label)}</button>`;
             }
             html += `</div>`;
         }
@@ -144,7 +145,7 @@ class ChatPanel {
             html += `<span class="chat-indicatoren-label">${response.indicatoren.length} indicatoren gevonden</span>`;
             for (const ind of response.indicatoren) {
                 const pct = Math.round(ind.relevantie * 100);
-                html += `<div class="chat-indicator-item" role="button" tabindex="0" data-uuid="${ind.uuid}" title="Klik om op kaart te tonen">
+                html += `<div class="chat-indicator-item" role="button" tabindex="0" data-uuid="${this._escapeHtml(ind.uuid)}" title="Klik om op kaart te tonen">
                     <span class="chat-ind-naam">${this._escapeHtml(ind.naam)}</span>
                     <span class="chat-ind-score">${pct}%</span>
                 </div>`;
@@ -445,9 +446,8 @@ class ChatPanel {
     }
 
     _escapeHtml(text) {
-        const div = document.createElement('div');
-        div.textContent = text;
-        return div.innerHTML;
+        // Centrale escaping (static/js/core/escape.js); ook aanhalingstekens voor attributen
+        return escapeHtml(text);
     }
 
     /**
@@ -463,7 +463,7 @@ class ChatPanel {
         }
 
         // Check of er al een info-card zit (voorkom duplicaten)
-        const existing = btn.parentElement?.querySelector(`.chat-info-card[data-title="${titel}"]`);
+        const existing = btn.parentElement?.querySelector(`.chat-info-card[data-title="${CSS.escape(titel)}"]`);
         if (existing) return;
 
         // Maak de info-card

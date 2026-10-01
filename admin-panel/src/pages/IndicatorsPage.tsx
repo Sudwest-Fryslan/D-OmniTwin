@@ -176,6 +176,7 @@ export const IndicatorsPage: React.FC = () => {
                             <input
                                 type="text"
                                 className="form-input"
+                                aria-label="Zoek indicatoren"
                                 placeholder="Zoeken..."
                                 value={search}
                                 onChange={(e) => { setSearch(e.target.value); setOffset(0); }}
@@ -263,6 +264,7 @@ export const IndicatorsPage: React.FC = () => {
                                 className="btn btn-secondary"
                                 onClick={() => setOffset(Math.max(0, offset - limit))}
                                 disabled={offset === 0}
+                                aria-label="Vorige pagina"
                             >
                                 <ChevronLeft size={16} />
                             </button>
@@ -273,6 +275,7 @@ export const IndicatorsPage: React.FC = () => {
                                 className="btn btn-secondary"
                                 onClick={() => setOffset(offset + limit)}
                                 disabled={offset + limit >= total}
+                                aria-label="Volgende pagina"
                             >
                                 <ChevronRight size={16} />
                             </button>
@@ -301,6 +304,8 @@ export const IndicatorsPage: React.FC = () => {
                                 <button
                                     className="btn btn-secondary"
                                     onClick={() => setSelectedIndicator(null)}
+                                    aria-label="Details sluiten"
+                                    title="Sluiten"
                                 >
                                     <X size={16} />
                                 </button>
@@ -322,28 +327,28 @@ export const IndicatorsPage: React.FC = () => {
                                 {activeTab === 'basis' && (
                                     <>
                                         <div className="form-group">
-                                            <label className="form-label">Naam</label>
-                                            <input type="text" className="form-input" value={editForm.naam || ''} onChange={(e) => setEditForm({ ...editForm, naam: e.target.value })} />
+                                            <label htmlFor="indicators-naam" className="form-label">Naam</label>
+                                            <input id="indicators-naam" type="text" className="form-input" value={editForm.naam || ''} onChange={(e) => setEditForm({ ...editForm, naam: e.target.value })} />
                                         </div>
                                         <div className="form-group">
-                                            <label className="form-label">Omschrijving</label>
-                                            <textarea className="form-textarea" value={editForm.omschrijving || ''} onChange={(e) => setEditForm({ ...editForm, omschrijving: e.target.value })} />
+                                            <label htmlFor="indicators-omschrijving" className="form-label">Omschrijving</label>
+                                            <textarea id="indicators-omschrijving" className="form-textarea" value={editForm.omschrijving || ''} onChange={(e) => setEditForm({ ...editForm, omschrijving: e.target.value })} />
                                         </div>
                                         <div className="form-group">
-                                            <label className="form-label">Score Type</label>
-                                            <select className="form-select" value={editForm.score_type || '+/+'} onChange={(e) => setEditForm({ ...editForm, score_type: e.target.value })}>
+                                            <label htmlFor="indicators-score-type" className="form-label">Score Type</label>
+                                            <select id="indicators-score-type" className="form-select" value={editForm.score_type || '+/+'} onChange={(e) => setEditForm({ ...editForm, score_type: e.target.value })}>
                                                 {scoreTypes.map((st) => (<option key={st.code} value={st.code}>{st.code} - {st.naam}</option>))}
                                             </select>
                                         </div>
                                         <div className="form-group">
-                                            <label className="form-label">Kleurschema</label>
-                                            <select className="form-select" value={editForm.color_schema_id || 1} onChange={(e) => setEditForm({ ...editForm, color_schema_id: Number(e.target.value) })}>
+                                            <label htmlFor="indicators-kleurschema" className="form-label">Kleurschema</label>
+                                            <select id="indicators-kleurschema" className="form-select" value={editForm.color_schema_id || 1} onChange={(e) => setEditForm({ ...editForm, color_schema_id: Number(e.target.value) })}>
                                                 {colorSchemas.map((cs) => (<option key={cs.id} value={cs.id}>{cs.naam}</option>))}
                                             </select>
                                         </div>
                                         <div className="form-group">
-                                            <label className="form-label">Bron</label>
-                                            <input type="text" className="form-input" value={editForm.bron || ''} onChange={(e) => setEditForm({ ...editForm, bron: e.target.value })} />
+                                            <label htmlFor="indicators-bron" className="form-label">Bron</label>
+                                            <input id="indicators-bron" type="text" className="form-input" value={editForm.bron || ''} onChange={(e) => setEditForm({ ...editForm, bron: e.target.value })} />
                                         </div>
                                         {/* Data Lineage Info (Sprint 22 Track C) */}
                                         <div style={{ padding: '8px 12px', background: 'var(--color-surface-light, #1E293B)', borderRadius: '6px', marginBottom: '12px', fontSize: '0.8rem', display: 'flex', flexDirection: 'column', gap: '4px', border: '1px solid var(--color-border, #334155)' }}>
@@ -363,12 +368,12 @@ export const IndicatorsPage: React.FC = () => {
                                             )}
                                         </div>
                                         <div className="form-group">
-                                            <label className="form-label">Eenheid</label>
-                                            <input type="text" className="form-input" value={editForm.eenheid || ''} onChange={(e) => setEditForm({ ...editForm, eenheid: e.target.value })} />
+                                            <label htmlFor="indicators-eenheid" className="form-label">Eenheid</label>
+                                            <input id="indicators-eenheid" type="text" className="form-input" value={editForm.eenheid || ''} onChange={(e) => setEditForm({ ...editForm, eenheid: e.target.value })} />
                                         </div>
                                         <div className="form-group">
-                                            <label className="form-label">Admin Notities</label>
-                                            <textarea className="form-textarea" value={editForm.admin_notes || ''} onChange={(e) => setEditForm({ ...editForm, admin_notes: e.target.value })} placeholder="Interne notities..." />
+                                            <label htmlFor="indicators-admin-notities" className="form-label">Admin Notities</label>
+                                            <textarea id="indicators-admin-notities" className="form-textarea" value={editForm.admin_notes || ''} onChange={(e) => setEditForm({ ...editForm, admin_notes: e.target.value })} placeholder="Interne notities..." />
                                         </div>
                                         <button className="btn btn-primary" style={{ width: '100%', justifyContent: 'center' }} onClick={handleSave} disabled={saving}>
                                             {saving ? (<><Loader2 size={16} className="spin" /> Opslaan...</>) : (<><Save size={16} /> Opslaan</>)}
@@ -400,10 +405,10 @@ export const IndicatorsPage: React.FC = () => {
 
                                         {/* AI Beschrijving (read-only) */}
                                         <div className="form-group">
-                                            <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                                <Bot size={14} /> AI-gegenereerde beschrijving
-                                            </label>
-                                            <div style={{
+                                            <div className="form-label" id="indicators-ai-beschrijving-label" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                                <Bot size={14} aria-hidden="true" /> AI-gegenereerde beschrijving
+                                            </div>
+                                            <div aria-labelledby="indicators-ai-beschrijving-label" role="region" style={{
                                                 padding: '10px 12px', borderRadius: '6px',
                                                 background: 'var(--color-surface-light, #1E293B)',
                                                 border: '1px solid var(--color-border)',
@@ -418,10 +423,10 @@ export const IndicatorsPage: React.FC = () => {
 
                                         {/* Menselijke validatie (editable) */}
                                         <div className="form-group">
-                                            <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                            <label htmlFor="indicators-gevalideerde-beschrijving" className="form-label" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                                                 <CheckCircle size={14} /> Gevalideerde beschrijving
                                             </label>
-                                            <textarea
+                                            <textarea id="indicators-gevalideerde-beschrijving"
                                                 className="form-textarea"
                                                 value={validatieBeschrijving}
                                                 onChange={(e) => setValidatieBeschrijving(e.target.value)}

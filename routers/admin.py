@@ -5,33 +5,23 @@ Manages indicators, score types, color schemas, and Kompas configurations.
 from fastapi import APIRouter, Depends, HTTPException, Request, Header
 from sqlalchemy.orm import Session
 from sqlalchemy import text
-from typing import Optional, List
+from typing import Optional, List, Literal
 from pydantic import BaseModel, UUID4
 from src.database import get_db
 import os
 from dotenv import load_dotenv
 import json
 import logging
-from urllib.parse import urlsplit
 
 logger = logging.getLogger(__name__)
 
 # Load environment variables
 load_dotenv()
-ADMIN_API_KEY = os.getenv('ADMIN_API_KEY', '')
 
-router = APIRouter(prefix="/api/admin", tags=["Admin"])
+from routers.auth import vereis_admin
 
-# ============================================================================
-# Authentication
-# ============================================================================
-from routers.auth import check_auth_or_key
-
-# We aliassen check_auth_or_key naar verify_admin_key zodat we niet elke 
-# endpoint hoeven te herschrijven in deze file.
-def verify_admin_key(request: Request, db: Session = Depends(get_db)):
-    """Verifies admin access using the new Hybrid Session/Key model."""
-    return check_auth_or_key(request, db)
+# Alle routes in deze router vereisen een beheerder (#65)
+router = APIRouter(prefix="/api/admin", tags=["Admin"], dependencies=[Depends(vereis_admin)])
 
 # ============================================================================
 # Pydantic Models
@@ -81,6 +71,8 @@ class OntologieValidatie(BaseModel):
 class LLMConfig(BaseModel):
     api_url: str
     model_name: str
+    # 'ollama' = Ollama-eigen API, 'openai' = OpenAI Chat Completions (ADR 0001, migratie v20)
+    api_type: Literal["ollama", "openai"] = "ollama"
 
 class SystemPrompt(BaseModel):
     naam: str
@@ -96,67 +88,91 @@ class SystemPromptUpdate(BaseModel):
 # ============================================================================
 # LLM Config & System Prompts Endpoints
 # ============================================================================
+def _lees_llm_config(db: Session) -> Optional[dict]:
+    """Laatste llm_config-rij; SELECT * zodat een database zonder migratie v20 ook werkt."""
+    row = db.execute(text("SELECT * FROM llm_config ORDER BY id DESC LIMIT 1")).mappings().fetchone()
+    if not row:
+        return None
+    return {"api_url": row["api_url"], "model_name": row["model_name"], "api_type": row.get("api_type") or "ollama"}
+
 @router.get("/llm/config", response_model=LLMConfig)
 async def get_llm_config(
     db: Session = Depends(get_db),
-    _: bool = Depends(verify_admin_key)
 ):
     """Get active LLM Config."""
-    result = db.execute(text("SELECT api_url, model_name FROM llm_config ORDER BY id DESC LIMIT 1"))
-    row = result.fetchone()
-    if not row:
-        return {"api_url": "http://localhost:11434", "model_name": "qwen3:30b"}
-    return {"api_url": row[0], "model_name": row[1]}
+    config = _lees_llm_config(db)
+    if not config:
+        return {"api_url": "http://localhost:11434", "model_name": "qwen3:30b", "api_type": "ollama"}
+    return config
 
 @router.put("/llm/config", response_model=LLMConfig)
 async def update_llm_config(
     config: LLMConfig,
     db: Session = Depends(get_db),
-    _: bool = Depends(verify_admin_key)
 ):
     """Update active LLM Config."""
-    db.execute(text("""
-        INSERT INTO llm_config (api_url, model_name)
-        VALUES (:api, :model)
-    """), {"api": config.api_url, "model": config.model_name})
+    heeft_api_type = db.execute(text("""
+        SELECT 1 FROM information_schema.columns
+        WHERE table_schema = 'public' AND table_name = 'llm_config' AND column_name = 'api_type'
+    """)).fetchone() is not None
+    if heeft_api_type:
+        db.execute(text("""
+            INSERT INTO llm_config (api_url, model_name, api_type)
+            VALUES (:api, :model, :api_type)
+        """), {"api": config.api_url, "model": config.model_name, "api_type": config.api_type})
+    elif config.api_type == "ollama":
+        db.execute(text("""
+            INSERT INTO llm_config (api_url, model_name)
+            VALUES (:api, :model)
+        """), {"api": config.api_url, "model": config.model_name})
+    else:
+        raise HTTPException(
+            status_code=409,
+            detail="De database kent nog geen api_type; voer migrations/schema_v20_llm_api_type.sql uit.",
+        )
     db.commit()
     return config
 
 @router.get("/llm/models")
 def get_ollama_models(
     db: Session = Depends(get_db),
-    _: bool = Depends(verify_admin_key)
 ):
-    """Fetch available models from the configured Ollama instance."""
+    """Beschikbare modellen van de geconfigureerde LLM-server: /api/tags (ollama) of /v1/models (openai)."""
     import requests
-    
-    result = db.execute(text("SELECT api_url FROM llm_config ORDER BY id DESC LIMIT 1"))
-    row = result.fetchone()
-    api_url = row[0] if row else "http://localhost:11434"
-    
+    from services.llm_service import openai_base_url, openai_headers, veilige_host
+
+    config = _lees_llm_config(db)
+    api_url = config["api_url"] if config else "http://localhost:11434"
+    api_type = config["api_type"] if config else "ollama"
+
     try:
-        response = requests.get(f"{api_url}/api/tags", timeout=5)
-        response.raise_for_status()
-        data = response.json()
-        models = [m['name'] for m in data.get('models', [])]
+        if api_type == "openai":
+            response = requests.get(f"{openai_base_url(api_url)}/models", headers=openai_headers(), timeout=5)
+            response.raise_for_status()
+            models = [m["id"] for m in response.json().get("data", [])]
+        else:
+            response = requests.get(f"{api_url}/api/tags", timeout=5)
+            response.raise_for_status()
+            data = response.json()
+            models = [m['name'] for m in data.get('models', [])]
         return {"models": models}
     except Exception as e:
         # Detail alleen in de serverlog; de UI krijgt een nette melding zonder interne fouttekst
-        logger.warning("Ollama-modellen ophalen via %s mislukt: %s", api_url, e)
-        parts = urlsplit(api_url)
-        host = f"{parts.scheme}://{parts.netloc.rpartition('@')[2]}" if parts.netloc else api_url
-        if isinstance(e, requests.RequestException):
+        logger.warning("LLM-modellen ophalen via %s (%s) mislukt: %s", api_url, api_type, e)
+        host = veilige_host(api_url)
+        if isinstance(e, requests.HTTPError) and e.response is not None and e.response.status_code in (401, 403):
+            melding = f"LLM-server op {host} weigert toegang; controleer LLM_API_KEY"
+        elif isinstance(e, requests.RequestException) and not isinstance(e, ValueError):
+            # requests' JSONDecodeError is ook een RequestException; dat is een onverwacht antwoord
             melding = f"LLM-server niet bereikbaar op {host}"
         else:
             melding = f"Onverwacht antwoord van LLM-server op {host}"
         # Fallback to current configured model if API is offline
-        current_model = db.execute(text("SELECT model_name FROM llm_config ORDER BY id DESC LIMIT 1")).fetchone()
-        return {"models": [current_model[0] if current_model else "qwen3:30b"], "error": melding}
+        return {"models": [config["model_name"] if config else "qwen3:30b"], "error": melding}
 
 @router.get("/prompts", response_model=List[SystemPrompt])
 async def get_system_prompts(
     db: Session = Depends(get_db),
-    _: bool = Depends(verify_admin_key)
 ):
     """Get all system prompts."""
     result = db.execute(text("SELECT naam, beschrijving, prompt_text, is_actief FROM system_prompts ORDER BY id DESC"))
@@ -175,7 +191,6 @@ async def update_system_prompt(
     naam: str,
     data: SystemPromptUpdate,
     db: Session = Depends(get_db),
-    _: bool = Depends(verify_admin_key)
 ):
     """Update a specific system prompt."""
     
@@ -212,7 +227,6 @@ async def update_system_prompt(
 @router.get("/score-types", response_model=List[ScoreType])
 async def get_score_types(
     db: Session = Depends(get_db),
-    _: bool = Depends(verify_admin_key)
 ):
     """Get all valid score types with descriptions."""
     result = db.execute(text("SELECT * FROM v_score_types"))
@@ -232,7 +246,6 @@ async def get_score_types(
 @router.get("/color-schemas", response_model=List[ColorSchema])
 async def get_color_schemas(
     db: Session = Depends(get_db),
-    _: bool = Depends(verify_admin_key)
 ):
     """Get all available color schemas."""
     result = db.execute(text("""
@@ -256,7 +269,6 @@ async def get_color_schemas(
 async def create_color_schema(
     data: ColorSchemaCreate,
     db: Session = Depends(get_db),
-    _: bool = Depends(verify_admin_key)
 ):
     """Create a new color schema."""
     result = db.execute(text("""
@@ -286,7 +298,6 @@ async def get_indicatoren(
     limit: int = 100,
     offset: int = 0,
     db: Session = Depends(get_db),
-    _: bool = Depends(verify_admin_key)
 ):
     """Get all indicators with admin info. Filter by ontologie_status for validation workflow."""
     query = """
@@ -372,7 +383,6 @@ async def get_indicatoren(
 async def get_indicator(
     uuid: str,
     db: Session = Depends(get_db),
-    _: bool = Depends(verify_admin_key)
 ):
     """Get single indicator by UUID, including ontology validation fields."""
     result = db.execute(text("""
@@ -439,7 +449,6 @@ async def update_indicator(
     uuid: str,
     data: IndicatorUpdate,
     db: Session = Depends(get_db),
-    _: bool = Depends(verify_admin_key)
 ):
     """Update indicator fields."""
     # Build dynamic update query
@@ -481,15 +490,14 @@ async def update_indicator(
         raise HTTPException(404, f"Indicator {uuid} not found")
     
     # Return updated indicator
-    return await get_indicator(uuid, db, True)
+    return await get_indicator(uuid, db)
 
 @router.patch("/indicatoren/{uuid}/valideer")
 async def valideer_indicator_ontologie(
     uuid: str,
     data: OntologieValidatie,
-    request: Request,
     db: Session = Depends(get_db),
-    _: bool = Depends(verify_admin_key)
+    gebruiker: dict = Depends(vereis_admin)
 ):
     """
     Valideer of keur de ontologische beschrijving van een indicator goed.
@@ -500,16 +508,8 @@ async def valideer_indicator_ontologie(
     if data.ontologie_status not in valid_statuses:
         raise HTTPException(400, f"Ongeldige ontologie_status. Keuze uit: {valid_statuses}")
     
-    # Haal user_id uit sessie (indien ingelogd)
-    user_id = None
-    session_token = request.cookies.get('session_token')
-    if session_token:
-        session_row = db.execute(
-            text("SELECT user_id FROM sessions WHERE token = :token AND expires_at > NOW()"),
-            {"token": session_token}
-        ).fetchone()
-        if session_row:
-            user_id = str(session_row[0])
+    # Gebruiker uit de sessie; bij een script (X-Admin-Key) blijft dit leeg
+    user_id = str(gebruiker["user_id"]) if gebruiker.get("type") == "session" else None
     
     # Update indicator
     result = db.execute(text("""
@@ -533,12 +533,11 @@ async def valideer_indicator_ontologie(
     db.commit()
     
     # Return updated indicator
-    return await get_indicator(uuid, db, True)
+    return await get_indicator(uuid, db)
 
 @router.get("/ontologie/status")
 async def get_ontologie_validatiestatus(
     db: Session = Depends(get_db),
-    _: bool = Depends(verify_admin_key)
 ):
     """
     Haal de totale validatie-voortgang op (Dashboard widget).
@@ -565,7 +564,6 @@ async def get_ontologie_validatiestatus(
 async def get_hierarchy_tree(
     config_id: int = 1,
     db: Session = Depends(get_db),
-    _: bool = Depends(verify_admin_key)
 ):
     """Get full hierarchy tree for visualization."""
     """Get full hierarchy tree for visualization."""
@@ -634,7 +632,6 @@ async def get_hierarchy_tree(
 @router.get("/health")
 async def admin_health(
     db: Session = Depends(get_db),
-    _: bool = Depends(verify_admin_key)
 ):
     """Admin API health check."""
     # Check database connectivity

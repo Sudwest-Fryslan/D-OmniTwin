@@ -34,7 +34,7 @@ fiona>=1.9.0            # routers/externe_lagen.py (GPKG/GeoJSON uit data-upload
 numpy>=1.24.0
 
 # --- HTTP ---
-requests>=2.28.0
+requests>=2.34.2
 httpx
 
 # --- Pydantic ---
@@ -45,4 +45,7 @@ passlib[bcrypt]>=1.7.0
 bcrypt==4.0.1  # passlib 1.7.x incompatibel met bcrypt 4.1+ (verwijderd __about__)
 
 # --- AI Functies ---
-sentence-transformers>=2.0.0   # AI embeddings; trekt PyTorch mee (CPU, ~0,6 GB)
+sentence-transformers>=6.1.0   # AI embeddings; trekt PyTorch mee (CPU, ~0,6 GB)
+
+# --- Afbeeldingen ---
+pillow>=12.0.0          # GeoTIFF lezen bij het laden van use case hittestress (RIVM-rasters)

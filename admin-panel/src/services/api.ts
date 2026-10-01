@@ -18,7 +18,7 @@ import type {
     OntologieValidatieStatusResponse
 } from '../types';
 
-// API client with auth header and cookie support
+// API client; authenticatie via de sessie-cookie
 const api = axios.create({
     baseURL: '/api/admin',
     withCredentials: true,
@@ -27,14 +27,7 @@ const api = axios.create({
     },
 });
 
-// Add admin key to all requests
-api.interceptors.request.use((config) => {
-    const adminKey = localStorage.getItem('adminKey') || process.env.REACT_APP_ADMIN_KEY;
-    if (adminKey) {
-        config.headers['X-Admin-Key'] = adminKey;
-    }
-    return config;
-});
+// Alleen de sessie-cookie (HttpOnly); de X-Admin-Key is voor scripts, niet voor de UI (#65)
 
 // Health check
 export const healthAPI = {
@@ -148,15 +141,6 @@ const vizApi = axios.create({
     baseURL: '/api/visualisatie',
     withCredentials: true,
     headers: { 'Content-Type': 'application/json' },
-});
-
-// Add admin key to viz requests
-vizApi.interceptors.request.use((config) => {
-    const adminKey = localStorage.getItem('adminKey') || process.env.REACT_APP_ADMIN_KEY;
-    if (adminKey) {
-        config.headers['X-Admin-Key'] = adminKey;
-    }
-    return config;
 });
 
 export const visualisatieAPI = {

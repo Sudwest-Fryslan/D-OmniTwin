@@ -47,17 +47,13 @@ cd D-OmniTwin
 cp .env.example .env
 ```
 
-Genereer drie geheimen:
+Vul in `.env` alleen het databasewachtwoord in. Al het andere heeft een werkende standaard:
 
 ```bash
-openssl rand -hex 24   # DATABASE_PASSWORD
-openssl rand -hex 32   # SECRET_KEY
-openssl rand -hex 32   # ADMIN_API_KEY
+openssl rand -hex 24   # waarde voor DATABASE_PASSWORD
 ```
 
-Gebruik voor `DATABASE_PASSWORD` alleen letters en cijfers (zoals hierboven). Het wachtwoord komt in database-URL's terecht; tekens als `@ : / # % $` breken de verbinding. Gebruik daarom ook niet `init_data/scripts/setup_env.py`: die genereert wachtwoorden met zulke tekens.
-
-Pas `.env` aan:
+Gebruik alleen letters en cijfers (zoals hierboven): tekens als `@ : / # % $` breken de database-URL's.
 
 | Variabele | Wat invullen |
 |-----------|--------------|
@@ -65,7 +61,7 @@ Pas `.env` aan:
 | `OMNITWIN_HTTP_PORT` | Optioneel. Poort op de host, standaard `80`. |
 | `DATABASE_PASSWORD` | **Verplicht.** Het gegenereerde wachtwoord. |
 | `SECRET_KEY` | **Verplicht invullen**, al gebruikt de code hem nu nog niet. |
-| `ADMIN_API_KEY` | **Verplicht.** Wie deze waarde in de header `X-Admin-Key` meestuurt, heeft beheerrechten. Laat de voorbeeldwaarde dus nooit staan. |
+| `ADMIN_API_KEY` | Voor scripts: wie deze waarde in de header `X-Admin-Key` meestuurt, heeft beheerrechten. Minimaal 32 tekens (`openssl rand -hex 32`). Een lege of voorbeeldwaarde schakelt de header uit. De beheeromgeving gebruikt hem niet; die werkt met inloggen. |
 | `ADMIN_USER`, `ADMIN_PASSWORD` | Het eerste beheeraccount. Laat je `ADMIN_PASSWORD` op de voorbeeldwaarde staan of leeg, dan wordt er een wachtwoord gegenereerd (zie [2.4](#24-eerste-keer-inloggen)). |
 | `DEBUG` | `true` zolang je zonder HTTPS draait, anders werkt inloggen in de browser niet (zie [Beveiliging](#beveiliging)). Met HTTPS: `false`. |
 | `LOAD_SAMPLE_DATA` | `true`: de sample dataset laden bij de eerste start. `false`: alleen stuurdata (configuratie, zonder buurten). Zie [Data](#4-data). |
@@ -75,6 +71,11 @@ Pas `.env` aan:
 | `CORS_ORIGINS` | Alleen nodig als andere websites de API aanroepen. De app zelf draait op hetzelfde adres. |
 | `OLLAMA_*` | Optioneel, zie [LLM](#7-llm-optioneel). |
 | `LOG_ALERT_*`, `SMTP_*` | Nog niet in gebruik (#47). |
+| `DATABASE_PASSWORD` | **Verplicht.** Het gegenereerde wachtwoord. Wijzig het niet meer na de eerste start. |
+| `ADMIN_PASSWORD` | Aanbevolen. Wachtwoord van het eerste beheeraccount (`admin`). Leeg: er wordt eenmalig een wachtwoord gegenereerd (zie [2.4](#24-eerste-keer-inloggen)). |
+| `COMPOSE_FILE=docker-compose.yml` | Staat al aan: alleen de installatie-instellingen. Ontwikkelaars halen deze regel weg (zie [Ontwikkelmodus](#3-ontwikkelmodus)). |
+| `DEBUG` | `true` zolang je zonder HTTPS draait, anders werkt inloggen niet (zie [Beveiliging](#beveiliging)). Met HTTPS: `false`. |
+| Optioneel | Poort (`OMNITWIN_HTTP_PORT`), demodata via de use cases (`LOAD_SAMPLE_DATA`; `false` = product zonder data, zie [Data](#4-data)), lokale AI (`OLLAMA_HOST`, zie [LLM](#7-llm-optioneel)) en `ADMIN_API_KEY` (alleen voor scripts; leeg = uitgeschakeld, laat nooit een voorbeeldwaarde staan). De standaardwaarden staan in `.env.example`. |
 
 Bescherm het bestand: `chmod 600 .env`.
 
@@ -89,6 +90,8 @@ De eerste keer duurt dit lang (10 tot 30 minuten): de backend-image installeert 
 1. `postgres` (PostGIS met pgvector) wordt *healthy*.
 2. `db-init` draait één keer en stopt. Bij een **lege** database maakt hij het schema aan (`init_data/schema/schema_latest.sql`, de views voor de kaart en de migraties v18 en v19), laadt de stuurdata en eventueel de sample dataset, en maakt het beheeraccount aan. Bestaat de tabel `gebieden` al, dan slaat hij dit allemaal over. Hij overschrijft dus nooit bestaande data.
    Daarna genereert hij, ook bij een bestaande database, de embeddings voor AI-zoeken en de chat (`scripts/ai/genereer_embeddings.py`), voor alle actieve indicatoren zonder embedding, ook concepten. Het model daarvoor (`all-MiniLM-L6-v2`) zit al in de image; zie [Embeddingmodel](#embeddingmodel-offline). Lukt het genereren niet, dan staat er een waarschuwing in de log en gaat de installatie gewoon door; AI-zoeken en de chat vinden dan geen indicatoren.
+   Daarna werkt hij altijd de databaserollen en het schema `api` voor PostgREST en pg_featureserv bij (`migrations/schema_v23_api_rollen.sql`, zie [Beveiliging](#beveiliging)). Dat raakt geen data.
+   Daarna genereert hij, ook bij een bestaande database, de embeddings voor AI-zoeken en de chat (`scripts/ai/genereer_embeddings.py`), voor alle actieve indicatoren zonder embedding, ook concepten. Daarvoor downloadt hij de eerste keer het model `all-MiniLM-L6-v2` (circa 90 MB) van HuggingFace. Lukt dat niet, bijvoorbeeld zonder internet, dan staat er een waarschuwing in de log en gaat de installatie gewoon door; AI-zoeken en de chat vinden dan geen indicatoren.
 3. `backend` (FastAPI), `postgrest` en `pg_featureserv` starten, `traefik` stuurt het verkeer door.
 
 Controleer:
@@ -111,7 +114,7 @@ docker compose logs db-init
 
 Zoek naar `ADMIN_PASSWORD niet ingesteld. Gegenereerd wachtwoord voor 'admin'`. Het wachtwoord staat op de regel daaronder. Het wordt niet opgeslagen; bewaar het direct.
 
-De log van `db-init` toont ook een `ADMIN_API_KEY` ("BEWAAR DEZE KEY"). Die wordt nu niet gebruikt: de backend accepteert alleen de `ADMIN_API_KEY` uit `.env`.
+De log van `db-init` toont ook een `ADMIN_API_KEY` ("BEWAAR DEZE KEY"). Die wordt nu niet gebruikt: de backend accepteert alleen de `ADMIN_API_KEY` uit `.env`, en alleen voor scripts.
 
 Wachtwoord later wijzigen (vraagt interactief om een nieuw wachtwoord):
 
@@ -128,9 +131,10 @@ Met de standaardpoort 80 (anders `http://<host>:<OMNITWIN_HTTP_PORT>/...`):
 | `http://<host>/` | De applicatie (kaart, Kompas, chat) |
 | `http://<host>/admin/` | Beheeromgeving |
 | `http://<host>/docs` | API-documentatie van de backend (Swagger) |
-| `http://<host>/api/data/` | PostgREST: tabellen en views als REST-API |
+| `http://<host>/api/data/` | PostgREST: alleen-lezen REST-API op de views en functies in schema `api` |
 | `http://<host>/api/geo/` | pg_featureserv: OGC API Features, bijvoorbeeld `/api/geo/collections` |
 | `http://<host>/health` | Healthcheck van de backend |
+| `http://<host>/.well-known/security.txt` | Meldpunt voor kwetsbaarheden (zie [Beveiliging](#securitytxt)) |
 
 Alleen Traefik publiceert een poort. De database en de afzonderlijke services zijn van buiten Docker niet bereikbaar.
 
@@ -158,24 +162,39 @@ Ontwikkelen zonder Docker (Python venv, `run_dev.py`, admin-panel met `npm start
 
 ### Sample dataset (standaard)
 
-Met `LOAD_SAMPLE_DATA=true` laadt `db-init` bij de eerste start een kleine sample: buurten in Súdwest-Fryslân met indicatoren, Kompas-indeling en stuurdata (scenario's, profielen, prompts). Een deel van de waarden is demodata. Zie [`init_data/sample/README.md`](../../init_data/sample/README.md) voor de inhoud en herkomst.
+`db-init` laadt bij de eerste start altijd het product zonder data: stuurdata (scenario's, profielen, prompts), de indicatordefinities en de Kompas-indeling. Met `LOAD_SAMPLE_DATA=true` laadt het daarna de **use cases** uit [`usecases/`](../../usecases/README.md). Elke use case brengt zijn eigen gebieden en waarden mee, gekozen uit de bronbibliotheek [`init_data/sample/`](../../init_data/sample/README.md), plus de inrichting en de teststappen. Een deel van de waarden is demodata. Eén use case laden: `docker compose exec backend python init_data/scripts/laad_usecase.py hittestress`.
 
 De sample is bedoeld om de installatie te testen en te demonstreren, niet voor beleid.
 
 ### Volledige Fryslân-data
 
-**Nog niet ondersteund in de Docker-installatie** (#69).
+De repository bevat de CBS-buurten (indeling 2024) en indicatorwaarden voor heel Fryslân (`init_data/fryslan/`, zie [`init_data/README.md`](../../init_data/README.md)). Laad ze na de eerste start, als `db-init` klaar is en de backend draait:
 
-De repository bevat de CBS-buurten en indicatorwaarden voor heel Fryslân (`init_data/fryslan/`, zie [`init_data/README.md`](../../init_data/README.md)), maar de laadscripts sluiten niet aan op de database die `db-init` aanmaakt:
+```bash
+docker compose exec backend python init_data/scripts/seed_fryslan.py --stap alle
+```
 
-- `seed_fryslan.py` (bijvoorbeeld via `docker compose exec backend python init_data/scripts/seed_fryslan.py --stap alle`) draait wel, maar het grootste deel van de buurten en vrijwel alle indicatorwaarden wordt geweigerd: de tabel `gemeenten` bevat na `db-init` alleen Súdwest-Fryslân, en de gemeentecodes in de data wijken deels af. Het script meldt aan het eind toch "Seed voltooid"; kijk naar de regels met `Fouten`. Het maakt bovendien een nieuwe API-key aan.
-- `init_database.sh` werkt niet in Docker: het verwacht een `.env` in de container, laadt het schema opnieuw (wat op een bestaande database faalt) en is geschreven voor een PostgreSQL zonder Docker.
+Dit duurt enkele seconden (gemeten: 5 à 10 s). Het werkt met en zonder sample (`LOAD_SAMPLE_DATA`); de sample-buurten worden dan overschreven door dezelfde buurten uit de Fryslân-data. Verwachte aantallen in de database na sample + Fryslân:
 
-Eén werkende initialisatieroute voor sample en volledige data volgt in #69. Heb je nu een volledige database nodig, zet dan een dump van een bestaande omgeving terug (zie [Restore](#restore)).
+| Tabel | Aantal |
+|-------|--------|
+| `gemeenten` | 18 (alle Friese gemeenten) |
+| `gebieden` | 931 buurten |
+| `indicatoren` | 244 (238 uit `indicatoren_seed.json`; namen die de sample al heeft worden aangevuld, niet gedupliceerd) |
+| `kompas_indicator_mapping` | 185 |
+| `gebied_data` | ± 46.500 (45.591 metingen uit de Fryslân-CSV, voor 870 buurten) |
+
+- Het script eindigt met een samenvatting per stap (aantal ok en fouten) en geeft exitcode 1 als een stap mislukt of meer dan 1% fouten heeft (`--max-fouten-pct`).
+- Opnieuw draaien is veilig: bestaande rijen worden bijgewerkt, er ontstaan geen duplicaten. `load_sample.py` blijft daarna ook werken.
+- De CSV bevat ook wijk-, gemeente- en landelijke rijen en buurten buiten Fryslân. Die worden overgeslagen ("gebieden niet in database"); dat is geen fout.
+- Het script maakt geen gebruikers of API-keys aan.
+- Bekend gat: de 61 buurten van Smallingerland (0090) hebben geen indicatorwaarden. De CSV gebruikt voor Smallingerland de buurtcodes van vóór de indeling 2024.
+
+Losse stappen: `--stap buurten|indicatoren|kompas|waarden`. `init_database.sh` is alleen voor een PostgreSQL zonder Docker.
 
 ### Eigen gemeente of andere bronnen
 
-Via het ETL-framework in `ETL/`; zie [`ETL/ETL_DOCUMENTATION.md`](../../ETL/ETL_DOCUMENTATION.md). Dit is nog gericht op ontwikkelaars (#69).
+Via het ETL-framework in `ETL/`; zie [`ETL/ETL_DOCUMENTATION.md`](../../ETL/ETL_DOCUMENTATION.md). Dit is nog gericht op ontwikkelaars.
 
 ---
 
@@ -186,7 +205,7 @@ git pull
 docker compose up -d --build
 ```
 
-`db-init` draait opnieuw, ziet dat de database bestaat en doet niets. Schemawijzigingen worden bij een bestaande database dus **niet automatisch** doorgevoerd; geautomatiseerd migratiebeheer volgt in #54.
+`db-init` draait opnieuw, ziet dat de database bestaat en laat schema en data met rust. Alleen de rollen en het schema `api` voor PostgREST en pg_featureserv werkt hij altijd bij (v23, zie [Beveiliging](#beveiliging)). Andere schemawijzigingen worden bij een bestaande database **niet automatisch** doorgevoerd; geautomatiseerd migratiebeheer volgt in #54.
 
 Tot die tijd voer je migraties handmatig uit. Een database van vóór september 2026 mist mogelijk v18 (`pg_trgm`, nodig voor de deduplicatie) en v19. Beide zijn veilig om opnieuw te draaien:
 
@@ -280,10 +299,38 @@ docker compose up -d
 
 De chat en de samenvattingen gebruiken een lokaal taalmodel via [Ollama](https://ollama.com). Zonder Ollama werken kaart, Kompas en rapportage gewoon.
 
-1. Installeer Ollama op de host en haal een model op, bijvoorbeeld `ollama pull qwen3:30b` (groot; een kleiner model kan ook).
+1. Installeer Ollama op de host en haal een model op, bijvoorbeeld `ollama pull qwen3:30b-instruct` (groot; een kleiner model zoals `qwen3:4b-instruct` kan ook). Gebruik een *instruct*-variant: `qwen3:30b` zonder toevoeging is de 'thinking'-variant en is traag.
 2. Op Linux: laat Ollama op alle interfaces luisteren (`OLLAMA_HOST=0.0.0.0` in de service-omgeving van Ollama), anders kan de container er niet bij. Docker Desktop (Windows, macOS) regelt dit zelf.
-3. Zet in `.env`: `OLLAMA_HOST=http://host.docker.internal:11434` en `OLLAMA_MODEL=<model>`, en herstart: `docker compose up -d`.
+3. Laat in `.env` `OLLAMA_HOST` op de standaard staan (`http://host.docker.internal:11434`), of zet het adres van je Ollama-server.
 4. Zet in de beheeromgeving onder **AI Configuratie** de API-URL op `http://host.docker.internal:11434` en kies het model. **Dit is nodig:** de stuurdata zet hier `http://localhost:11434`, en deze instelling gaat vóór `OLLAMA_HOST`. Vanuit de container wijst `localhost` naar de container zelf.
+
+### Andere aanbieders via de LiteLLM-gateway
+
+De optionele gateway (compose-profiel `llm-gateway`, [ADR 0001](../2-architectuur/adr/0001-llm-koppeling-openai-standaard.md)) kent vaste aliassen ([`deploy/litellm/config.yaml`](../../deploy/litellm/config.yaml)):
+
+| Alias | Model | Sleutel in `.env` |
+|---|---|---|
+| `d-omnitwin-default`, `d-omnitwin-ollama` | lokaal Ollama (`OLLAMA_MODEL`) | — |
+| `d-omnitwin-claude` | Anthropic `claude-haiku-4-5` | `ANTHROPIC_API_KEY` |
+| `d-omnitwin-openai` | OpenAI `gpt-4o-mini` | `OPENAI_API_KEY` |
+| `d-omnitwin-gemini` | Google `gemini-3.8-flash` | `GEMINI_API_KEY` |
+
+1. Zet in `.env` `LITELLM_MASTER_KEY=sk-…` en `LLM_API_KEY=<zelfde waarde>`, plus de sleutel(s) van de aanbieder. Sleutels staan **alleen in `.env`**, nooit in de database, in `config.yaml` of in git. Een lege sleutel betekent: aanbieder niet beschikbaar.
+2. Start met de gateway: `docker compose --profile llm-gateway up -d`.
+3. Kies de aanbieder (voegt een rij toe aan `llm_config`; de app gebruikt de nieuwste):
+
+   ```bash
+   docker compose exec backend python scripts/llm/kies_provider.py beschikbaar   # wat kan er
+   docker compose exec backend python scripts/llm/kies_provider.py gemini        # ollama|claude|openai|gemini|direct-ollama
+   docker compose exec backend python scripts/llm/kies_provider.py status        # wat is actief
+   ```
+
+   Het script weigert een aanbieder zonder sleutel of als de gateway de alias niet kent. `direct-ollama` gaat buiten de gateway om (`OLLAMA_HOST`/`OLLAMA_MODEL`).
+4. Vergelijken: `python scripts/llm/vergelijk_providers.py --base-url http://localhost` draait vaste scenario's (chat en rapport voor Bolsward-Zuidoost en Workum) per beschikbare aanbieder en schrijft een rapport in `docs/testcases/llm-vergelijking/`. Daarna staat de oorspronkelijke configuratie weer actief.
+
+**Let op (AVG, IAMA):** met `claude`, `openai` of `gemini` verlaten vragen, kaartcontext en indicatorwaarden de organisatie en gaan naar een externe aanbieder. Doe dat alleen met de sample dataset of na een afweging (verwerkersovereenkomst, IAMA/DPIA). Lokaal Ollama houdt alles binnen.
+
+Een gratis Gemini-sleutel (met lage limieten) maak je aan op [aistudio.google.com/apikey](https://aistudio.google.com/apikey).
 
 ---
 
@@ -300,6 +347,10 @@ De chat en de samenvattingen gebruiken een lokaal taalmodel via [Ollama](https:/
 | Wijziging in `.env` heeft geen effect | `docker compose up -d` (niet `restart`): alleen dan worden containers met de nieuwe waarden opnieuw gemaakt. |
 | Windows: `db-init` faalt met `/bin/bash^M: bad interpreter` | Het shell-script is met CRLF uitgecheckt. Controleer of `.gitattributes` aanwezig is, zet het script opnieuw neer met `rm docker-entrypoint.sh && git checkout -- docker-entrypoint.sh` en bouw opnieuw (`docker compose up -d --build`). |
 | AI-zoeken of de chat vindt geen indicatoren | Er zijn geen embeddings. Kijk in `docker compose logs db-init` naar `Embeddings niet gegenereerd`; controleer met `/api/ai/health` of het model lokaal staat (anders: `docker compose build`). Draai daarna `docker compose run --rm db-init`: die vult alleen de ontbrekende embeddings aan. Na het goedkeuren van nieuwe beschrijvingen: `docker compose exec backend python scripts/ai/genereer_embeddings.py --opnieuw`. |
+| AI-zoeken of de chat vindt geen indicatoren | Er zijn geen embeddings. Kijk in `docker compose logs db-init` naar `Embeddings niet gegenereerd`; meestal kon het model niet worden gedownload. Zorg voor internet en draai `docker compose run --rm db-init`: die vult alleen de ontbrekende embeddings aan. Na het goedkeuren van nieuwe beschrijvingen: `docker compose exec backend python scripts/ai/genereer_embeddings.py --opnieuw`. |
+| AI-chat of samenvatting duurt minuten | Het model is een *thinking*-variant. Bij Ollama zijn `qwen3:4b` en `qwen3:30b` zonder toevoeging thinking-varianten; kies in **AI Configuratie** een `*-instruct`-variant (bijvoorbeeld `qwen3:30b-instruct`). Op een laptop zonder GPU blijft een samenvatting met een lokaal model ruim een minuut duren. |
+| AI-chat geeft geen antwoord | Controleer in **AI Configuratie** de API-URL: vanuit de container is dat `http://host.docker.internal:11434`, niet `localhost`. Op Linux moet Ollama op alle interfaces luisteren (zie [LLM](#7-llm-optioneel)). |
+| Ontwikkelmodus op Windows: backend start niet, `PermissionError: /app/logs/server.log` | De backend draait als niet-root-gebruiker en mag niet schrijven in de gemounte projectmap. Bijgewerkte `docker-compose.override.yml` gebruikt een apart logvolume (#59/#115). |
 | Twee installaties op één host | Geef elke installatie een eigen map, een eigen `OMNITWIN_HTTP_PORT` en een eigen projectnaam (`COMPOSE_PROJECT_NAME=...` in `.env`). Traefik routeert alleen naar containers van het eigen project. |
 
 ---
@@ -309,8 +360,95 @@ De chat en de samenvattingen gebruiken een lokaal taalmodel via [Ollama](https:/
 Stel een installatie **niet** open voor internet of een breed netwerk zolang deze punten openstaan:
 
 - **PostgREST geeft alle tabellen vrij.** `/api/data` draait als de database-eigenaar en toont en wijzigt zonder inloggen alle tabellen, ook `users` en `sessions`. Aparte rollen en een beperkt API-schema volgen in #57. Tot die tijd: alleen in een vertrouwd netwerk, of `/api/data` afschermen in een proxy ervoor.
-- **Autorisatie op beheerroutes is nog niet overal op orde** (#65).
 - **Geen HTTPS in de stack.** Traefik luistert alleen op HTTP. Zet een reverse proxy met TLS ervoor (bijvoorbeeld de bestaande proxy of WAF van je organisatie) en zet dan `DEBUG=false`. Met `DEBUG=false` stuurt de browser het inlogcookie alleen via HTTPS (behalve op `localhost`).
 - Houd `.env` geheim: het bevat het databasewachtwoord en de `ADMIN_API_KEY`.
 
+### Wie mag wat
+
+- **Beheerroutes** (`/api/admin/*` behalve inloggen, en `/api/visualisatie/admin/*`) vereisen een ingelogde gebruiker met `is_admin`, of een geldige `X-Admin-Key`. Zonder login: `401`; ingelogd zonder beheerrechten: `403`.
+- Nieuwe gebruikers zijn standaard **geen** beheerder (`users.is_admin` standaard `false`). Het account uit `ADMIN_USER` is wel beheerder.
+- Sessies staan gehasht in de database en verlopen na 12 uur; verlopen sessies worden bij het inloggen opgeruimd.
+
+**Publiek, zonder inloggen**, zijn:
+
+| Route | Wat |
+|-------|-----|
+| `/`, `/static/*`, `/admin/*` | De kaartapplicatie en de bestanden van de beheeromgeving (de beheerpagina's zelf vragen om inloggen) |
+| `/admin/rapport/*`, `/admin/publiek-rapport/*` | Rapportpagina's |
+| `/api/report/*` | Rapportdata en AI-rapportteksten |
+| `/api/gebiedsmonitor/*`, `/api/kompas/*` | Gebieden, indicatoren en het Kompas |
+| `/api/visualisatie/paletten`, `/api/visualisatie/config/*` | Kleurpaletten voor de kaart |
+| `/api/externe-lagen`, `/api/externe-lagen/*` | Externe kaartlagen (lezen en buurten per laag) |
+| `/api/chat`, `/api/ai/*` | Chat en AI-zoeken |
+| `/api/3dbag/*` | 3D-panden |
+| `/api/geo/*` | pg_featureserv (kaartgeometrie) |
+| `/api/data/*` | PostgREST, zie het punt hierboven (#57) |
+| `/api/admin/auth/login`, `/logout`, `/me` | Inloggen en sessiestatus |
+| `/health`, `/api`, `/docs`, `/openapi.json` | Status en API-documentatie |
+
+**Principe:** rapporten hebben dezelfde rechten als een anonieme bezoeker van de kaartapplicatie (besluit #65). Een rapport toont dus niet meer dan de publieke app: geen beheervelden (notities, wie iets beoordeelde of goedkeurde), geen inactieve indicatoren, geen logs of configuratie. De technische details van AI-teksten (`debug_info`: systeemprompts en model) krijgt alleen een ingelogde beheerder.
+
+**Let op, AI-teksten:** `/api/report/narrative/*`, `/api/report/benchmark/narrative` en `/api/chat` starten zonder inloggen een aanroep naar het taalmodel. Rapportteksten worden per gebied een uur gecachet, maar er is geen rate-limit. Gebruik je een externe (betaalde) LLM-aanbieder, scherm deze routes dan af in de proxy ervoor of stel een limiet in.
+- **Autorisatie op beheerroutes is nog niet overal op orde** (#65).
+- **Standaard geen HTTPS.** Traefik luistert op HTTP. Zet HTTPS aan op een van de twee manieren hieronder, en zet dan `DEBUG=false`. Met `DEBUG=false` stuurt de browser het inlogcookie alleen via HTTPS (behalve op `localhost`).
+
+### PostgREST en pg_featureserv (#57)
+
+PostgREST (`/api/data`) en pg_featureserv (`/api/geo`) verbinden niet als database-eigenaar, maar met eigen rollen. `db-init` maakt ze aan en houdt ze bij (`migrations/schema_v23_api_rollen.sql`):
+
+| Rol | Gebruikt door | Rechten |
+|-----|---------------|---------|
+| `authenticator` | PostgREST (verbinding) | `LOGIN`, `NOINHERIT`; mag alleen overschakelen naar `web_anon` |
+| `web_anon` | PostgREST (anonieme verzoeken) | `NOLOGIN`; `USAGE` op schema `api`, `SELECT` op de views daarin, `EXECUTE` op `api.get_indicatoren_stats`. Geen schrijfrechten, geen rechten in `public` |
+| `featureserv` | pg_featureserv | alleen-lezen op `public.vw_gebieden_features`, `public.omgevingsvisie_deelgebieden` en de functies in `postgisftw` |
+
+PostgREST publiceert alleen schema `api`. Daarin staan alleen views en functies die de frontend en de beheeromgeving lezen: `gemeenten`, `gebiedstypes`, `gebieden` (zonder geometrie), `externe_kaartlagen`, `indicatoren` (zonder interne beheervelden), `vw_gebied_indicator_actueel` en `rpc/get_indicatoren_stats`. Applicatiedata zoals `users`, `sessions`, `api_keys`, `llm_config`, `system_prompts` en de logs is via `/api/data` niet bereikbaar, en schrijven kan anoniem niet. Een nieuw object publiceren: voeg een view of functie toe aan `schema_v23_api_rollen.sql` met de bijbehorende `GRANT` en draai `db-init` opnieuw (`docker compose up -d`).
+
+**Wachtwoord:** `authenticator` en `featureserv` krijgen hetzelfde wachtwoord als `DATABASE_USER` (`DATABASE_PASSWORD`). Er is dus geen extra variabele in `.env`; `db-init` zet het wachtwoord bij elke start opnieuw. De containers van PostgREST en pg_featureserv kregen dat wachtwoord al. Een eigen wachtwoord per rol kan later, zonder de opzet te veranderen.
+
 Kwetsbaarheden melden: zie [`SECURITY.md`](../../SECURITY.md).
+
+### HTTPS aanzetten
+
+HTTPS en HSTS zijn verplicht volgens de [Forum Standaardisatie](https://www.forumstandaardisatie.nl/open-standaarden/verplicht). Kies één manier:
+
+**A. Achter de TLS-proxy van je organisatie (aanbevolen).** De proxy of WAF handelt het certificaat af en stuurt door naar `http://<host>:<OMNITWIN_HTTP_PORT>`. Laat de stack zoals hij is en zet `DEBUG=false`. De proxy moet zelf HSTS sturen (`Strict-Transport-Security: max-age=31536000`) en HTTP doorsturen naar HTTPS; Traefik ziet alleen HTTP en zet die header dan niet.
+
+**B. Traefik zelf met Let's Encrypt.** Voor een server die direct bereikbaar is, met een DNS-naam en poort 80 en 443 open. Gebruik het voorbeeld [`deploy/traefik/tls.example.yml`](../../deploy/traefik/tls.example.yml). Zet in `.env`:
+
+```bash
+COMPOSE_FILE=docker-compose.yml:deploy/traefik/tls.example.yml   # Windows: ; in plaats van :
+OMNITWIN_DOMAIN=omnitwin.example.nl
+ACME_EMAIL=beheer@example.nl     # functioneel adres voor meldingen van Let's Encrypt
+DEBUG=false
+```
+
+en draai `docker compose up -d`. HTTP gaat dan met een redirect naar HTTPS, en HSTS staat aan. `OMNITWIN_HTTP_PORT` moet hierbij `80` blijven. Een eigen certificaat in plaats van Let's Encrypt staat beschreven in de kop van het voorbeeldbestand.
+
+### Security-headers
+
+Traefik zet op **alle** routes (de app, `/api/data`, `/api/geo`, `/health`) deze headers, vastgelegd in [`deploy/traefik/dynamic.yml`](../../deploy/traefik/dynamic.yml):
+
+| Header | Waarde |
+|--------|--------|
+| `Content-Security-Policy` | Alleen eigen bronnen (bibliotheken en lettertype zelf gehost, #117), plus api.pdok.nl en service.pdok.nl (achtergrondkaart). Geen framing (`frame-ancestors 'none'`), geen plugins (`object-src 'none'`). |
+| `X-Frame-Options` | `DENY` |
+| `X-Content-Type-Options` | `nosniff` |
+| `Referrer-Policy` | `strict-origin-when-cross-origin` |
+| `Permissions-Policy` | camera, microfoon, locatie, betalen en USB uit |
+| `Strict-Transport-Security` | `max-age=31536000`, alleen op HTTPS via Traefik (manier B) |
+
+De CSP staat nog `'unsafe-inline'` toe: de frontend gebruikt inline scripts, `onclick=`-attributen en inline stijlen. Dat weghalen is een aparte klus in de frontend.
+
+Voeg je een kaartlaag of bibliotheek toe die rechtstreeks een andere server aanroept, dan blokkeert de browser die. Neem de host dan op in `dynamic.yml` en draai `docker compose restart traefik`. Externe WFS-lagen lopen via de backend (`/api/externe-lagen/...`) en hebben dit niet nodig.
+
+### security.txt
+
+`/.well-known/security.txt` ([RFC 9116](https://www.rfc-editor.org/rfc/rfc9116)) verwijst naar `SECURITY.md` in de GitHub-repository. Dat is het meldpunt voor fouten in de software. Beheer je een eigen installatie, vervang dan in [`static/.well-known/security.txt`](../../static/.well-known/security.txt) `Contact` en `Policy` door het meldpunt van je organisatie en voeg `Canonical: https://<host>/.well-known/security.txt` toe. Het veld `Expires` mag hooguit een jaar vooruit liggen; verleng het op tijd.
+
+### Checklist vóór openstelling
+
+- HTTPS aan (manier A of B), `DEBUG=false`, en HSTS zichtbaar in de response-headers.
+- Het domein heeft DNSSEC en is via IPv6 bereikbaar (ook verplichte standaarden). Dat regel je bij je DNS- en hostingbeheer, niet in de stack.
+- `security.txt` verwijst naar het juiste meldpunt.
+- De punten bovenaan dit hoofdstuk (#57, #65) zijn opgelost of afgeschermd.

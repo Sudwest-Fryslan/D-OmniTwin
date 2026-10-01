@@ -189,7 +189,7 @@ class KompasVisualization {
             }
 
             // Fallback to emoji from DB if no match
-            return `<span class="option-emoji">${config.icoon}</span>`;
+            return `<span class="option-emoji">${escapeHtml(config.icoon)}</span>`;
         };
 
         // Populate Options
@@ -203,7 +203,7 @@ class KompasVisualization {
 
             optionDiv.innerHTML = `
                 ${getIconHtml(config)}
-                <span>${config.naam}</span>
+                <span>${escapeHtml(config.naam)}</span>
             `;
 
             if (config.is_standaard) {
@@ -245,6 +245,7 @@ class KompasVisualization {
         // Escape sluit de lijst en zet de focus terug op de trigger
         container.addEventListener('keydown', (e) => {
             if (e.key === 'Escape' && container.classList.contains('open')) {
+                e.preventDefault(); // niet ook een omringende dialoog sluiten
                 container.classList.remove('open');
                 trigger.setAttribute('aria-expanded', 'false');
                 trigger.focus();
@@ -285,7 +286,7 @@ class KompasVisualization {
 
             // Update UI
             document.getElementById('kompas-info').innerHTML =
-                `<p class="help-text"><strong>${data.config_naam}</strong> - ${data.total_indicators} indicatoren</p>`;
+                `<p class="help-text"><strong>${escapeHtml(data.config_naam)}</strong> - ${escapeHtml(data.total_indicators)} indicatoren</p>`;
 
             // Render sunburst
             this.renderSunburst(data.hierarchie);
@@ -321,9 +322,9 @@ class KompasVisualization {
 
             // Update UI
             document.getElementById('kompas-info').innerHTML =
-                `<p class="help-text"><strong>${data.gebied_naam}</strong><br>` +
-                `Configuratie: ${data.config_naam}<br>` +
-                `Indicatordekking: ${data.coverage_percentage}%</p>`;
+                `<p class="help-text"><strong>${escapeHtml(data.gebied_naam)}</strong><br>` +
+                `Configuratie: ${escapeHtml(data.config_naam)}<br>` +
+                `Indicatordekking: ${escapeHtml(data.coverage_percentage)}%</p>`;
 
             // Render sunburst with data
             this.renderSunburst(data.hierarchie);
@@ -419,9 +420,9 @@ class KompasVisualization {
 
             // Update UI
             document.getElementById('kompas-info').innerHTML =
-                `<p class="help-text"><strong><img src="/static/images/chart-bar.svg" alt="" style="width:16px; height:16px; vertical-align: -2px; filter: brightness(0) invert(1); margin-right: 4px;">${namenTekst}</strong><br>` +
+                `<p class="help-text"><strong><img src="/static/images/chart-bar.svg" alt="" style="width:16px; height:16px; vertical-align: -2px; filter: brightness(0) invert(1); margin-right: 4px;">${escapeHtml(namenTekst)}</strong><br>` +
                 `Gemiddelde van ${gebiedIds.length} gebieden<br>` +
-                `Indicatordekking: ${avgCoverage}%</p>`;
+                `Indicatordekking: ${escapeHtml(avgCoverage)}%</p>`;
 
             // Render sunburst with merged data
             this.renderSunburst(merged.hierarchie);
@@ -750,7 +751,9 @@ class KompasVisualization {
                 y1: Math.max(0, d.y1 - p.depth) * k
             });
 
-            const t = self.g.transition().duration(750);
+            // Minder beweging (prefers-reduced-motion): direct naar de eindstand (#67)
+            const duur = window.A11y ? window.A11y.motionDuration(750) : 750;
+            const t = self.g.transition().duration(duur);
 
             // REFACTOR: CSS Scale removed. Geometry handles scaling now.
             // Reset transforms just in case
@@ -1011,13 +1014,13 @@ class KompasVisualization {
         /**
          * Show tooltip on hover
          */
-        let html = `<strong>${d.data.name}</strong>`;
+        let html = `<strong>${escapeHtml(d.data.name)}</strong>`;
 
         // Show value or "Geen data" text
         if (d.data.value !== null && d.data.value !== undefined) {
             html += `<div class="tooltip-value">${d.data.value.toFixed(2)}`;
             if (d.data.eenheid) {
-                html += ` ${d.data.eenheid}`;
+                html += ` ${escapeHtml(d.data.eenheid)}`;
             }
             html += `</div>`;
         } else if (d.data.type === 'indicator') {
@@ -1033,7 +1036,7 @@ class KompasVisualization {
             node = node.parent;
         }
         if (path.length > 1) {
-            html += `<div class="tooltip-path">${path.join(' › ')}</div>`;
+            html += `<div class="tooltip-path">${escapeHtml(path.join(' › '))}</div>`;
         }
 
         this.tooltip
@@ -1070,9 +1073,9 @@ class KompasVisualization {
         if (path.length > 0) {
             breadcrumb.innerHTML = path.map((name, i) => {
                 if (i < path.length - 1) {
-                    return `<span>${name}</span><span class="breadcrumb-separator">›</span>`;
+                    return `<span>${escapeHtml(name)}</span><span class="breadcrumb-separator">›</span>`;
                 }
-                return `<span>${name}</span>`;
+                return `<span>${escapeHtml(name)}</span>`;
             }).join('');
         } else {
             // Root level (Default text)
@@ -1235,12 +1238,12 @@ class KompasVisualization {
                 <button class="btn-kompas-close" id="btn-kompas-close" title="Sluiten" aria-label="Sluiten" style="position: absolute; top: -10px; right: -10px; background: none; border: none; color: #fff; cursor: pointer;">
                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
                 </button>
-                <h4 style="margin: 0 0 10px; color: #fff; font-size: 1.1rem;">${d.data.name}</h4>
+                <h4 style="margin: 0 0 10px; color: #fff; font-size: 1.1rem;">${escapeHtml(d.data.name)}</h4>
         `;
 
         if (d.data.value !== null) {
-            const eenheidText = d.data.eenheid ? ` ${d.data.eenheid}` : '';
-            html += `<div class="value" style="font-size: 1.5rem; font-weight: 700; color: ${d.data.color || '#fff'}; margin-bottom: 15px; display:flex; align-items:center; justify-content:center;">${d.data.value.toFixed(2)} <span style="font-size: 0.8em; font-weight: 400; opacity: 0.8; margin-left:4px;">${eenheidText}</span></div>`;
+            const eenheidText = d.data.eenheid ? ` ${escapeHtml(d.data.eenheid)}` : '';
+            html += `<div class="value" style="font-size: 1.5rem; font-weight: 700; color: ${escapeHtml(d.data.color || '#fff')}; margin-bottom: 15px; display:flex; align-items:center; justify-content:center;">${d.data.value.toFixed(2)} <span style="font-size: 0.8em; font-weight: 400; opacity: 0.8; margin-left:4px;">${eenheidText}</span></div>`;
         } else {
             html += `<div class="value no-data" style="color: #94A3B8; margin-bottom: 15px;">Geen recente data</div>`;
         }
@@ -1360,7 +1363,7 @@ class KompasVisualization {
                     <line x1="12" y1="8" x2="12" y2="12"/>
                     <line x1="12" y1="16" x2="12.01" y2="16"/>
                 </svg>
-                <p>${message}</p>
+                <p>${escapeHtml(message)}</p>
             </div>
         `;
     }
@@ -1396,7 +1399,7 @@ class KompasVisualization {
         
         if (bronLinkEl) {
             if (historyData.bron_url) {
-                bronLinkEl.href = historyData.bron_url;
+                bronLinkEl.href = safeUrl(historyData.bron_url);
                 bronLinkEl.style.display = 'inline-flex';
                 bronLinkEl.title = `Open officiële dataset (${historyData.bron_tabel_referentie || 'catalogus'})`;
             } else {
@@ -1414,14 +1417,14 @@ class KompasVisualization {
             }
         }
 
-        if (historyData.definitie) document.getElementById('details-definitie').innerHTML = historyData.definitie;
+        if (historyData.definitie) document.getElementById('details-definitie').textContent = historyData.definitie;
         else document.getElementById('details-definitie').textContent = "Geen definitie beschikbaar.";
         
         // A1: Ontologie tab
         const ontologieText = historyData.ontologische_beschrijving;
         const tabOntologie = document.getElementById('tab-ontologie');
         if (ontologieText && ontologieText.trim() !== '') {
-            document.getElementById('details-ontologie').innerHTML = ontologieText;
+            document.getElementById('details-ontologie').textContent = ontologieText;
             if (tabOntologie) tabOntologie.style.display = 'block';
         } else {
             document.getElementById('details-ontologie').textContent = "Geen ontologische beschrijving beschikbaar.";
@@ -1828,7 +1831,7 @@ class KompasVisualization {
         const contextNaam = data.context_naam || 'Alle gemeenten';
         
         let html = `<div style="font-size: 0.8rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px; display: flex; align-items: center; justify-content: space-between;">
-            <div>Top Uitschieters: <span style="color: var(--text-color);">${contextNaam}</span></div>
+            <div>Top Uitschieters: <span style="color: var(--text-color);">${escapeHtml(contextNaam)}</span></div>
             <div title="Deze afwijkingen worden berekend middels de z-score methodiek (het verschil ten opzichte van het gemiddelde)." style="cursor: help; width: 16px; height: 16px; border-radius: 50%; border: 1.5px solid var(--text-secondary); display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: bold; font-family: monospace; color: var(--text-secondary); opacity: 0.8; transition: all 0.2s ease;" onmouseover="this.style.opacity='1'; this.style.color='var(--action-color, #48BB78)'; this.style.borderColor='var(--action-color, #48BB78)'" onmouseout="this.style.opacity='0.8'; this.style.color='var(--text-secondary)'; this.style.borderColor='var(--text-secondary)'">i</div>
         </div>`;
 
@@ -1882,14 +1885,14 @@ class KompasVisualization {
 
     _topBuurtRow(buurt, rank, eenheid, accentColor) {
         return `
-            <div data-buurt-id="${buurt.buurt_id}" role="button" tabindex="0" style="display: flex; align-items: center; justify-content: space-between; padding: 3px 6px; margin: 2px 0; border-radius: 4px; cursor: pointer; font-size: 0.78rem; transition: background 0.15s;" 
+            <div data-buurt-id="${escapeHtml(buurt.buurt_id)}" role="button" tabindex="0" style="display: flex; align-items: center; justify-content: space-between; padding: 3px 6px; margin: 2px 0; border-radius: 4px; cursor: pointer; font-size: 0.78rem; transition: background 0.15s;" 
                  onmouseover="this.style.background='rgba(255,255,255,0.08)'" 
                  onmouseout="this.style.background='transparent'"
-                 title="Klik om naar ${buurt.buurt_naam} te vliegen">
+                 title="Klik om naar ${escapeHtml(buurt.buurt_naam)} te vliegen">
                 <span style="color: var(--text-secondary); width: 18px;">${rank}.</span>
-                <span style="flex: 1; color: var(--text-color); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${buurt.buurt_naam}</span>
-                <span style="font-family: monospace; margin-left: 8px; color: var(--text-secondary);">${buurt.waarde} ${eenheid}</span>
-                <span style="font-family: monospace; font-weight: 600; margin-left: 8px; min-width: 50px; text-align: right; color: ${accentColor};">${buurt.z_score > 0 ? '+' : ''}${buurt.z_score}</span>
+                <span style="flex: 1; color: var(--text-color); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${escapeHtml(buurt.buurt_naam)}</span>
+                <span style="font-family: monospace; margin-left: 8px; color: var(--text-secondary);">${escapeHtml(buurt.waarde)} ${escapeHtml(eenheid)}</span>
+                <span style="font-family: monospace; font-weight: 600; margin-left: 8px; min-width: 50px; text-align: right; color: ${accentColor};">${buurt.z_score > 0 ? '+' : ''}${escapeHtml(buurt.z_score)}</span>
             </div>`;
     }
 
@@ -2128,7 +2131,7 @@ class KompasVisualization {
 
         let html = `
             <div style="font-size: 0.75rem; color: var(--text-secondary); margin-bottom: 8px;">
-                ⚖️ Vergelijking ${groepen.length} kernen${referentie ? ` · Ref: ${refNaam}` : ''}
+                ⚖️ Vergelijking ${groepen.length} kernen${referentie ? ` · Ref: ${escapeHtml(refNaam)}` : ''}
             </div>
             <table style="width: 100%; border-collapse: collapse; font-size: 0.82rem;">
                 <thead>
@@ -2136,10 +2139,10 @@ class KompasVisualization {
 
         // Kolomkoppen: per groep + referentie
         for (const groep of groepen) {
-            html += `<th style="padding: 6px 8px; text-align: center; font-weight: 600; color: var(--text-color);">${groep.naam}</th>`;
+            html += `<th style="padding: 6px 8px; text-align: center; font-weight: 600; color: var(--text-color);">${escapeHtml(groep.naam)}</th>`;
         }
         if (referentie) {
-            html += `<th style="padding: 6px 8px; text-align: center; font-weight: 500; color: var(--text-secondary); font-style: italic;">${refNaam}</th>`;
+            html += `<th style="padding: 6px 8px; text-align: center; font-weight: 500; color: var(--text-secondary); font-style: italic;">${escapeHtml(refNaam)}</th>`;
         }
 
         html += `</tr></thead><tbody><tr>`;
@@ -2165,7 +2168,7 @@ class KompasVisualization {
                 }
                 html += `<td style="padding: 8px; text-align: center;">
                     <div style="font-weight: 600; color: var(--text-color);">${waarde.toFixed(1)}</div>
-                    <div style="font-size: 0.65rem; color: var(--text-secondary);">${eenheid}</div>
+                    <div style="font-size: 0.65rem; color: var(--text-secondary);">${escapeHtml(eenheid)}</div>
                     ${afwijkingHtml}
                 </td>`;
             }
@@ -2176,7 +2179,7 @@ class KompasVisualization {
             if (refWaarde != null) {
                 html += `<td style="padding: 8px; text-align: center; background: rgba(255,255,255,0.03);">
                     <div style="font-weight: 500; color: var(--text-secondary);">${refWaarde.toFixed(1)}</div>
-                    <div style="font-size: 0.65rem; color: var(--text-secondary);">${eenheid}</div>
+                    <div style="font-size: 0.65rem; color: var(--text-secondary);">${escapeHtml(eenheid)}</div>
                 </td>`;
             } else {
                 html += `<td style="padding: 8px; text-align: center; color: var(--text-secondary);">-</td>`;
@@ -2325,9 +2328,9 @@ class KompasVisualization {
             resultsDropdown.innerHTML = '<div class="search-result-item" style="cursor: default; opacity: 0.6;">Geen resultaten gevonden.</div>';
         } else {
             resultsDropdown.innerHTML = results.map(res => `
-                <div class="search-result-item" role="button" tabindex="0" data-uuid="${res.uuid}">
-                    <div class="result-category">${res.categorie || 'Indicator'}</div>
-                    <div class="result-name">${res.naam}</div>
+                <div class="search-result-item" role="button" tabindex="0" data-uuid="${escapeHtml(res.uuid)}">
+                    <div class="result-category">${escapeHtml(res.categorie || 'Indicator')}</div>
+                    <div class="result-name">${escapeHtml(res.naam)}</div>
                     <div class="result-score">Relevantie: ${Math.round(res.score * 100)}%</div>
                 </div>
             `).join('');
@@ -2434,12 +2437,22 @@ document.addEventListener('DOMContentLoaded', async function () {
         // Chat -> Kompas: Open Window
         window.EventBus.on('KOMPAS_OPEN_REQUESTED', () => {
             console.log('🧭 Chat sync: opening kompas window');
-            if (window.state && window.state.kompasWindow) {
+            if (typeof window.openKompasVenster === 'function') {
+                // Zelfde codepad als de knop "Open Kompas Venster": laadt ook de selectie (#79)
+                window.openKompasVenster();
+            } else if (window.state && window.state.kompasWindow) {
                 window.state.kompasWindow.open();
             } else {
                 // Fallback direct DOM
                 const win = document.getElementById('kompas-window');
                 if (win) win.style.display = 'block';
+            }
+            // Zelfde gedrag als de knop 'Open Kompas': toon de huidige kaartselectie
+            const ids = window.state?.selectedGebiedIds ? [...window.state.selectedGebiedIds] : [];
+            const configId = kompasViz.currentConfigId;
+            if (ids.length > 0 && configId) {
+                if (ids.length === 1) kompasViz.loadGebiedData(configId, ids[0]);
+                else kompasViz.loadMultiGebiedData(configId, ids);
             }
         });
 
