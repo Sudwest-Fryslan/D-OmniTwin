@@ -17,7 +17,7 @@ fastapi==0.115.12       # starlette 1.0.0 heeft breaking changes — pin op stab
 starlette==0.41.3       # vastgezet — 1.0.0 breekt CORSMiddleware (unhashable dict)
 uvicorn[standard]==0.30.6  # [standard] = watchfiles + httptools voor hot-reload
 python-dotenv>=1.0.0
-python-multipart>=0.0.5
+python-multipart>=0.0.32
 Jinja2>=3.1.0
 
 # --- Database ---
