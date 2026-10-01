@@ -45,9 +45,12 @@ docker compose up -d --build   # dev: laadt ook docker-compose.override.yml (bin
 Installatie voor beheerders (`COMPOSE_FILE=docker-compose.yml` in `.env`, alleen poort 80 / `OMNITWIN_HTTP_PORT`): zie **`docs/9-beheer/installatie.md`** — de enige actuele installatiegids. Bij de eerste start richt de eenmalige service `db-init` (`docker-entrypoint.sh init`) een lege database in: schema, views, migraties v18–v22 (o.a. v21 Z-score-referentie), stuurdata en definities (`load_sample.py --stap definities`), de use cases (`usecases/`, `laad_usecase.py --alle`, alleen bij `LOAD_SAMPLE_DATA=true`) en admin-gebruiker. Alle demodata hoort bij een use case: data + inrichting + stappen. Een bestaande database (tabel `gebieden` aanwezig) laat hij ongemoeid; schemamigraties op bestaande databases zijn handmatig (#54).
 
 ### Backend
+De backend is één Python-pakket: `src/omnitwin/` (`main.py`, `routers/`, `services/`, `schemas/`, `database.py`, `version.py`, `utils/`). De app is `omnitwin.main:app`; imports altijd als `from omnitwin.services... import ...`. In de image staat `PYTHONPATH=/app/src`, pytest vindt het pakket via `pythonpath` in `pyproject.toml`. `static/`, `templates/`, `init_data/`, `migrations/`, `usecases/`, `scripts/`, `ETL/` en `tests/` staan (nog) in de root (RFC #182).
+
 ```bash
 # Install dependencies
 pip install -r requirements.txt
+pip install -e . --no-deps   # pakket omnitwin (src/omnitwin), voor scripts buiten pytest
 
 # Start development server (optimized file watching, port 8000)
 python run_dev.py
@@ -100,8 +103,8 @@ The admin panel authenticates only with the session cookie (log in as a user wit
 ```
 Browser (Map click / Chat query)
   → EventBus dispatch (static/js/core/)
-  → Fetch to FastAPI router (/routers/)
-  → Service layer (/services/) — Z-scores, spatial queries, LLM calls
+  → Fetch to FastAPI router (src/omnitwin/routers/)
+  → Service layer (src/omnitwin/services/) — Z-scores, spatial queries, LLM calls
   → PostgreSQL + PostGIS
   → JSON response → D3 / Deck.gl render
 ```
@@ -115,7 +118,7 @@ The main app has **no build step**. `templates/index.html` (Jinja2) loads CDN sc
 These are large files — wijzig gericht, niet in bulk. They communicate via a **custom EventBus** (`static/js/core/`) — not via shared state or a framework. When an area is selected on the map, an event fires that kompas.js and chat.js subscribe to. State is managed through a global `window.state` object (selected areas, active layers, filters). No frameworks toevoegen.
 
 ### Backend Router → Service Pattern
-Each API concern has a router in `/routers/` (thin HTTP layer) and a service in `/services/` (business logic). Wijzig zo min mogelijk, gebruik bestaande naamgeving:
+Each API concern has a router in `src/omnitwin/routers/` (thin HTTP layer) and a service in `src/omnitwin/services/` (business logic). Wijzig zo min mogelijk, gebruik bestaande naamgeving:
 - `gebiedsmonitor_service.py` — data aggregation, Z-score normalization, color scaling
 - `kompas_service.py` — thematic hierarchy aggregation and scoring
 - `report_service.py` — multi-area dossier generation with SVG choropleth rendering
@@ -123,14 +126,14 @@ Each API concern has a router in `/routers/` (thin HTTP layer) and a service in 
 - `ai_search_service.py` — SentenceTransformer semantic search (lazy-loaded on first use)
 
 ### Z-Score Calculations
-Z-scores are computed dynamically per request, relative to a reference group defined by `gebiedstype` + `gemeente` (not globally). Eén bron: de SQL-functies in `init_data/schema/08_zscore_referentie.sql` (`zscore_referentie_stats`, `zscore_gebieden`, ...; migratie v21), met parameters en standaardwaarden in `services/zscore_referentie.py`. Waterbuurten (`gebieden.metadata->>'water' = 'JA'`) zitten nooit in de referentie; jaarlogica standaard `zelfde_jaar` (referentie = waarden in het jaar van de meest recente waarde van het doelgebied, zoals executive en Kompas werkten); alleen scenario `current`. Schrijf geen eigen referentie-CTE in `report_service.py` of `kompas_service.py`, gebruik deze functies. Methodiek: `docs/3-data-engineering/zscore_methodiek.md` (#66).
+Z-scores are computed dynamically per request, relative to a reference group defined by `gebiedstype` + `gemeente` (not globally). Eén bron: de SQL-functies in `init_data/schema/08_zscore_referentie.sql` (`zscore_referentie_stats`, `zscore_gebieden`, ...; migratie v21), met parameters en standaardwaarden in `src/omnitwin/services/zscore_referentie.py`. Waterbuurten (`gebieden.metadata->>'water' = 'JA'`) zitten nooit in de referentie; jaarlogica standaard `zelfde_jaar` (referentie = waarden in het jaar van de meest recente waarde van het doelgebied, zoals executive en Kompas werkten); alleen scenario `current`. Schrijf geen eigen referentie-CTE in `report_service.py` of `kompas_service.py`, gebruik deze functies. Methodiek: `docs/3-data-engineering/zscore_methodiek.md` (#66).
 
 ### Authentication
-Hybrid model: API key authentication for admin panel API calls, session-based auth for dashboard access. See `routers/auth.py`. The admin panel uses the API key for initial stats and then sessions for full access.
+Hybrid model: API key authentication for admin panel API calls, session-based auth for dashboard access. See `src/omnitwin/routers/auth.py`. The admin panel uses the API key for initial stats and then sessions for full access.
 
 ### LLM / AI
 - **Chat intent classification is rule-based** (deterministic), not LLM-driven. LLM (Ollama/Qwen, local) is used only for narrative summaries (capped at ~80 words). LLM-config en system-prompts staan in databasetabellen (`llm_config`, `system_prompts`), niet hardcoded.
-- `ai_search_service.py` doet semantische zoekopdrachten met `sentence-transformers` (model `all-MiniLM-L6-v2`, lazy-loaded; model en gepinde revisie in `services/embedding_model.py`, in de image onder `/opt/models`, container draait met `HF_HUB_OFFLINE=1`) en `pgvector`: embeddings staan in tabel `indicator_embeddings` (kolom `embedding vector(384)`, HNSW-index met cosine ops), bevraagd via de `<=>`-operator. `kompas_service.py` gebruikt géén vector-zoekopdrachten.
+- `ai_search_service.py` doet semantische zoekopdrachten met `sentence-transformers` (model `all-MiniLM-L6-v2`, lazy-loaded; model en gepinde revisie in `src/omnitwin/services/embedding_model.py`, in de image onder `/opt/models`, container draait met `HF_HUB_OFFLINE=1`) en `pgvector`: embeddings staan in tabel `indicator_embeddings` (kolom `embedding vector(384)`, HNSW-index met cosine ops), bevraagd via de `<=>`-operator. `kompas_service.py` gebruikt géén vector-zoekopdrachten.
 
 ### Color System
 Colorblind-safe diverging palettes are used throughout. Palette definitions live in `static/css/colors/`. Dynamic color generation (including diverging scales) is in `color_scale_service.py`.

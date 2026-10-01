@@ -198,7 +198,7 @@ D-OmniTwin bevat een ingebouwde AI-assistent die werkt als een **"alternatieve m
 └──────────────────────┬──────────────────────────────────┘
                        │ POST /api/chat
 ┌──────────────────────▼──────────────────────────────────┐
-│  Intent Router  (routers/chat.py)                       │
+│  Intent Router  (omnitwin/routers/chat.py)              │
 │  ┌─────────────────────────────────────────────────┐    │
 │  │  Intent Classifier (rule-based, <1ms)           │    │
 │  │  VERKEN_INDICATORS │ VERGELIJK_GEBIEDEN         │    │
@@ -328,6 +328,7 @@ Met een externe aanbieder verlaten vragen en gebiedsdata de organisatie (AVG/IAM
 git clone <repo-url> && cd D-OmniTwin
 python -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
+pip install -e . --no-deps   # backend-pakket omnitwin (src/omnitwin)
 
 # 2. Omgeving configureren via de interactieve wizard
 python init_data/scripts/setup_env.py  # genereert veilige .env keys en configuratie
