@@ -28,6 +28,7 @@ from typing import Optional
 from pathlib import Path
 import httpx
 import os
+import shutil
 import time
 import uuid
 import re
@@ -599,8 +600,7 @@ async def admin_lokale_bestanden(
 
     bestanden = []
     for f in sorted(DATA_UPLOAD_DIR.iterdir()):
-        # Bestanden met een punt vooraan: uploads die nog bezig zijn (.upload-*)
-        if f.suffix.lower() in ('.gpkg', '.geojson', '.json') and f.is_file() and not f.name.startswith('.'):
+        if f.suffix.lower() in ('.gpkg', '.geojson', '.json') and f.is_file():
             try:
                 layers = fiona.listlayers(str(f))
                 # Haal metadata van eerste layer
@@ -651,7 +651,10 @@ async def admin_upload_bestand(
     # niet het hele bestand in het geheugen
     MAX_SIZE = 50 * 1024 * 1024
     DATA_UPLOAD_DIR.mkdir(exist_ok=True)
-    tijdelijk = DATA_UPLOAD_DIR / f".upload-{uuid.uuid4().hex}{suffix}"
+    # Eigen tijdelijke map met de echte naam: GeoJSON ontleent de laagnaam aan de bestandsnaam
+    tijdelijke_map = DATA_UPLOAD_DIR / f".upload-{uuid.uuid4().hex}"
+    tijdelijke_map.mkdir()
+    tijdelijk = tijdelijke_map / safe_name
     grootte = 0
     try:
         with tijdelijk.open("wb") as uit:
@@ -682,7 +685,7 @@ async def admin_upload_bestand(
         except FileExistsError:
             raise HTTPException(409, f"Er staat al een bestand '{safe_name}'. Kies een andere naam of verwijder het eerst.")
     finally:
-        tijdelijk.unlink(missing_ok=True)
+        shutil.rmtree(tijdelijke_map, ignore_errors=True)  # ook eventuele hulpbestanden van GDAL
 
     logger.info("Bestand geüpload: %s (%d features, %s)",
                 safe_name, meta["features"], meta["crs"])
