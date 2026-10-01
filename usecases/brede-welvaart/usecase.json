@@ -18,6 +18,7 @@
     "indicatoren": [
       {
         "naam": "Inkomen per inwoner",
+        "eenheid": "x 1 000 euro",
         "richting": "hoger_is_beter"
       },
       {

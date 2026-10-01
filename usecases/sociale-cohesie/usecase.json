@@ -18,10 +18,12 @@
     "indicatoren": [
       {
         "naam": "Eenzaamheid",
+        "eenheid": "%",
         "richting": "lager_is_beter"
       },
       {
         "naam": "Vrijwilliger",
+        "eenheid": "%",
         "richting": "hoger_is_beter"
       },
       {

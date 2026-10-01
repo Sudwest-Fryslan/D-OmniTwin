@@ -61,14 +61,30 @@ _DATAVRAAG_PATRONEN = [
     r"\btop \d+\b", r"\b(\d+|twee|drie|vier|vijf|tien) (buurten|wijken|gebieden|kernen)\b",
     r"\b(hoogste|laagste|meeste|minste|verst|verste|dichtst|dichtste|grootste|kleinste)\b",
     r"\bwat is (de|het)\b.*\b(in|van|voor)\b",
+    r"\bhoe staat\b.*\bervoor\b",
+    r"\bhoe [a-z]+ (is|zijn|ligt|liggen|woont|wonen)\b",  # 'hoe groen/veilig/oud/gezond is X'
 ]
+
+# Expliciete navigatie of uitleg: nooit een datavraag
+_NAVIGATIE = (r"^(toon|open|ga naar|selecteer|kleur|zoom)\b|^laat\b.*\bzien\b|\bop de kaart\b|"
+              r"\bwelke indicatoren\b|\bwat kan\b|\bwat kun\b|\brapport\b|\bhandleiding\b|^help\b")
+
+
+def is_navigatie(vraag: str) -> bool:
+    """'Toon eenzaamheid op de kaart', 'open het Kompas', 'maak een rapport': navigatie."""
+    return bool(re.search(_NAVIGATIE, normaliseer(vraag)))
 
 
 def is_datavraag(vraag: str) -> bool:
-    """Vraagt de gebruiker om cijfers of een rangorde (en niet om navigatie of uitleg)?"""
-    v = normaliseer(vraag)
-    if re.search(r"\bwelke indicatoren\b|\bwat kan\b|\brapport\b", v):
+    """
+    Vraagt de gebruiker zichtbaar om cijfers of een rangorde?
+
+    Ook zonder zo'n patroon wordt het een datavraag als er een gebied herkend wordt (vraag of
+    kaart) en een indicator past; zie beantwoord_datavraag.
+    """
+    if is_navigatie(vraag):
         return False
+    v = normaliseer(vraag)
     return any(re.search(p, v) for p in _DATAVRAAG_PATRONEN)
 
 
@@ -255,6 +271,11 @@ BEGRIPPEN: List[Tuple[str, str, List[str]]] = [
     ("mantelzorg", "specifiek", ["Mantelzorger"]),
     ("alleenstaanden", "specifiek", ["Eenpersoonshuishoudens (%)", "Eenpersoonshuishoudens"]),
     ("arbeidsparticipatie", "specifiek", ["Netto arbeidsparticipatie"]),
+    ("groen", "specifiek", ["Oppervlak groen per inwoner"]),
+    ("groener", "specifiek", ["Oppervlak groen per inwoner"]),
+    ("gezond", "specifiek", ["Ervaren gezondheid"]),
+    ("veilig", "thema", ["inbraak woning", "diefstal fiets", "inbraak auto"]),
+    ("veiligheid", "thema", ["inbraak woning", "diefstal fiets", "inbraak auto"]),
     ("energiearmoede", "thema", ["Gemiddeld energielabel", "Huishoudens met laag inkomen", "Moeite met rondkomen"]),
     ("armoede", "thema", ["Huishoudens met laag inkomen", "Moeite met rondkomen"]),
     ("brede welvaart", "thema", ["Inkomen per inwoner", "Netto arbeidsparticipatie", "Ervaren gezondheid",
@@ -418,6 +439,7 @@ def formatteer_getal(w: float) -> str:
 
 
 _UUIDACHTIG = re.compile(r"^[0-9a-f]{8}-[0-9a-f]{4}-", re.IGNORECASE)
+_BESTAND = re.compile(r"\.(json|geojson|csv|xlsx?|parquet|gpkg|shp|zip)$|[\\/]", re.IGNORECASE)
 
 
 def nette_bron(bron: Optional[str]) -> str:
@@ -425,8 +447,8 @@ def nette_bron(bron: Optional[str]) -> str:
     b = (bron or "").strip()
     if not b:
         return "bron onbekend"
-    if _UUIDACHTIG.match(b):
-        return "importbestand (bron niet vastgelegd)"
+    if _UUIDACHTIG.match(b) or _BESTAND.search(b):
+        return "onbekende bron (import)"
     return b
 
 
@@ -515,48 +537,56 @@ def bouw_feiten(
 
 
 def _waarde_tekst(item: Dict[str, Any], eenheid: str) -> str:
-    e = eenheid.strip()
+    """Waarde met eenheid: '48,3%', '246 m', '30,9 duizend euro'."""
+    e = (eenheid or "").strip()
     getal = formatteer_getal(item["waarde"])
-    if e == "%":
+    if e in ("%", "percentage"):
         return f"{getal}%"
+    if re.fullmatch(r"x\s*1[ .]?000\s*euro", e.lower()):
+        return f"{getal} duizend euro"
     if e and e.lower() not in ("aantal", "score", "index") and len(e) <= 12:
         return f"{getal} {e}"
     return getal
 
 
-def feiten_als_tekst(feiten: Sequence[Dict[str, Any]]) -> str:
-    """Compacte tekst voor het taalmodel: per indicator een kop en een regel per gebied."""
-    blokken = []
-    for f in feiten:
-        jaren = ", ".join(str(j) for j in f["jaren"]) or "jaar onbekend"
-        kop = (f"{f['indicator']} (bron: {f['bron']}; jaar: {jaren}; {f['aantal_gebieden']} gebieden; "
-               f"{RICHTING_UITLEG[f['richting']]})")
-        regels = []
-        for w in f["waarden"]:
-            extra = list(w["labels"])
-            if len(f["jaren"]) > 1 and w.get("jaar"):
-                extra.append(f"jaar {w['jaar']}")
-            if w["demo"]:
-                extra.append("demowaarde")
-            regels.append(f"- {w['gebied']}: {_waarde_tekst(w, f['eenheid'])}"
-                          + (f" ({', '.join(extra)})" if extra else ""))
-        blokken.append(kop + "\n" + "\n".join(regels))
-    return "\n\n".join(blokken)
+def _namen(items: Sequence[Dict[str, Any]], eenheid: str) -> str:
+    return " en ".join(f"{w['gebied']} ({_waarde_tekst(w, eenheid)})" for w in items)
+
+
+def samenvatting(f: Dict[str, Any]) -> str:
+    """
+    Vaste duiding per indicator, uit de cijfers: hoogste, laagste, de gevraagde gebieden
+    daartussen en wat gunstig is volgens de richting. Voor het taalmodel (houvast) en de terugvaltekst.
+    """
+    w, e = f["waarden"], f["eenheid"]
+    if len(w) == 1:
+        return f"{w[0]['gebied']}: {_waarde_tekst(w[0], e)}."
+    hoog = [x for x in w if "hoogste waarde" in x["labels"]]
+    laag = [x for x in w if "laagste waarde" in x["labels"]]
+    if not hoog:  # alle waarden gelijk
+        return f"Alle {len(w)} gebieden hebben dezelfde waarde ({_waarde_tekst(w[0], e)})."
+    zinnen = [f"Hoogste waarde: {_namen(hoog, e)}; laagste: {_namen(laag, e)}."]
+    midden = [x for x in w if x not in hoog and x not in laag]
+    gevraagd_midden = [x for x in midden if x["gevraagd"]] or (midden if len(midden) == 1 else [])
+    if gevraagd_midden:
+        zinnen.append(f"Daartussen: {_namen(gevraagd_midden, e)}.")
+    if f["richting"] == "hoger_is_beter":
+        zinnen.append(f"Hoger is beter: {' en '.join(x['gebied'] for x in hoog)} scoort het gunstigst.")
+    elif f["richting"] == "lager_is_beter":
+        zinnen.append(f"Lager is beter: {' en '.join(x['gebied'] for x in laag)} scoort het gunstigst, "
+                      f"{' en '.join(x['gebied'] for x in hoog)} het ongunstigst.")
+    return " ".join(zinnen)
 
 
 def vaste_tekst(feiten: Sequence[Dict[str, Any]]) -> str:
-    """Antwoord zonder taalmodel, alleen uit de feiten (terugval)."""
+    """Antwoord zonder taalmodel, alleen uit de feiten (terugval, of zonder LLM-koppeling)."""
     zinnen = []
     for f in feiten:
         jaren = ", ".join(str(j) for j in f["jaren"])
-        delen = [f"{w['gebied']} {_waarde_tekst(w, f['eenheid'])}" for w in f["waarden"]]
-        zin = f"{f['indicator']}: " + ", ".join(delen)
-        if f["richting"] != "neutraal":
-            zin += f" ({RICHTING_TEKST[f['richting']]})"
-        zin += f". Bron: {f['bron']}" + (f", {jaren}" if jaren else "") + "."
-        zinnen.append(zin)
+        zinnen.append(f"{f['indicator']} ({f['bron']}" + (f", {jaren}" if jaren else "") + "): " + samenvatting(f))
     if any(w["demo"] for f in feiten for w in f["waarden"]):
-        zinnen.append("Let op: een deel van de waarden is demodata.")
+        demo = sorted({w["gebied"] for f in feiten for w in f["waarden"] if w["demo"]})
+        zinnen.append(f"Let op: de waarden van {', '.join(demo)} zijn demodata.")
     return " ".join(zinnen)
 
 
@@ -585,11 +615,12 @@ SYSTEEMPROMPT = """Je bent de D-Omni Assistent. Je beantwoordt een vraag over bu
 Regels:
 1. Gebruik alleen getallen die in het JSON-blok staan. Reken niet, schat niet, verzin niets.
 2. Noem de buurten bij naam. Noem per indicator één keer de bron en het jaar.
-3. Volg de richting per indicator. 'gunstigst' is de beste waarde, 'ongunstigst' de slechtste. Noem een gunstige waarde nooit slecht. Bij 'geen oordeel' zeg je niet of iets goed of slecht is.
-4. Vraagt iemand naar de hoogste of laagste, noem dan ook het andere uiterste.
-5. Staat het gevraagde niet in de cijfers, zeg dat eerlijk.
-6. Is een waarde een demowaarde, zeg kort dat het demodata is.
-7. Antwoord in het Nederlands, in maximaal 4 zinnen. Gewone tekst: geen kopjes, geen opsomming, geen begroeting, geen JSON."""
+3. Neem de duiding over uit 'samenvatting': die zegt wat het hoogst, het laagst en het gunstigst is. Draai dat nooit om. Een waarde zonder 'gunstigst' of 'ongunstigst' zit daartussen; noem die niet gunstig of ongunstig. Bij 'geen oordeel' zeg je niet of iets goed of slecht is.
+4. Schrijf waarden met hun eenheid, zoals in het JSON-blok ('246 m', '48,3%').
+5. Vraagt iemand naar de hoogste of laagste, noem dan ook het andere uiterste.
+6. Staat het gevraagde niet in de cijfers, zeg dat eerlijk.
+7. Is een waarde een demowaarde, zeg kort dat het demodata is.
+8. Antwoord in het Nederlands, in maximaal 4 zinnen. Gewone tekst: geen kopjes, geen opsomming, geen begroeting, geen JSON."""
 
 
 def feiten_als_json(feiten: Sequence[Dict[str, Any]]) -> str:
@@ -600,8 +631,10 @@ def feiten_als_json(feiten: Sequence[Dict[str, Any]]) -> str:
             "indicator": f["indicator"],
             "bron": f["bron"],
             "jaar": f["jaren"],
+            "eenheid": f["eenheid"] or None,
             "richting": RICHTING_UITLEG[f["richting"]],
             "aantal_gebieden": f["aantal_gebieden"],
+            "samenvatting": samenvatting(f),
             "waarden": [
                 {"gebied": w["gebied"], "waarde": _waarde_tekst(w, f["eenheid"]),
                  **({"jaar": w["jaar"]} if len(f["jaren"]) > 1 and w.get("jaar") else {}),
@@ -686,6 +719,10 @@ def deelvragen(vraag: str) -> List[str]:
     return [d.strip() for d in delen if d and len(d.strip()) > 3]
 
 
+# Foutteksten die LLMService als 'text' teruggeeft (Ollama en, na #88, OpenAI/gateway)
+_MODELFOUTEN = ("Error contacting", "Generatie mislukt", "LLM-server", "Fout bij")
+
+
 def beantwoord_datavraag(
     vraag: str,
     context: Optional[Dict[str, Any]],
@@ -700,8 +737,9 @@ def beantwoord_datavraag(
     vraag_llm(sys, usr):  {"text": ..., "debug": {...}}
     """
     context = context or {}
-    if not is_datavraag(vraag):
+    if is_navigatie(vraag):
         return None
+    expliciet = is_datavraag(vraag)
 
     gebieden = laad_gebieden(db)
     try:
@@ -736,7 +774,10 @@ def beantwoord_datavraag(
     indicatoren = laad_indicatoren(db)
     treffers = herken_indicatoren(onderwerp, indicatoren, ai_treffers)
 
-    if not treffers and herkenning.bron not in ("vraag", "kaart"):
+    gebied_herkend = herkenning.bron in ("vraag", "kaart")
+    if not expliciet and not (gebied_herkend and treffers):
+        return None  # geen datapatroon, of geen gebied plus indicator: de gewone chat neemt het over
+    if not treffers and not gebied_herkend:
         return None  # geen onderwerp en geen gebied: de gewone chat neemt het over
 
     basis = {"herkend": herkenning.herkend, "gebieden_bron": herkenning.bron, "feiten": [],
@@ -763,7 +804,9 @@ def beantwoord_datavraag(
         herkenning.gevraagd, gevraagde_volgorde(vraag), gevraagd_aantal(vraag),
     )
     basis["gebied_ids"] = alle_ids
-    basis["gebiedstype_id"] = per_id[alle_ids[0]].get("gebiedstype_id") if alle_ids[0] in per_id else None
+    eerste = per_id.get(alle_ids[0], {})
+    basis["gebiedstype_id"] = eerste.get("gebiedstype_id")
+    basis["gemeente_code"] = eerste.get("gemeente_code")
     basis["feiten"] = feiten
 
     if not feiten:
@@ -772,14 +815,17 @@ def beantwoord_datavraag(
             f"Ik vind wel indicatoren ({namen}), maar geen waarden voor "
             f"{', '.join(herkenning.herkend) or 'deze gebieden'}. Ik verzin geen getallen.")}
 
-    # Taalmodel: alleen de feiten; daarna controle op de getallen
-    try:
-        antwoord = vraag_llm(SYSTEEMPROMPT, gebruikersprompt(vraag, feiten, herkenning.herkend)) or {}
-        tekst = strip_denken(antwoord.get("text", ""))
-        model = (antwoord.get("debug") or {}).get("model")
-    except Exception:
-        tekst, model = "", None
-    fout = (not tekst or tekst.startswith("Error contacting") or "Generatie mislukt" in tekst)
+    # Taalmodel: alleen de feiten; daarna controle op de getallen.
+    # context.geen_llm: direct de vaste tekst (werkt zonder model; ook voor tests)
+    tekst, model = "", None
+    if not context.get("geen_llm"):
+        try:
+            antwoord = vraag_llm(SYSTEEMPROMPT, gebruikersprompt(vraag, feiten, herkenning.herkend)) or {}
+            tekst = strip_denken(antwoord.get("text", ""))
+            model = (antwoord.get("debug") or {}).get("model")
+        except Exception:
+            tekst, model = "", None
+    fout = not tekst or any(m in tekst for m in _MODELFOUTEN)
     ongegrond = [] if fout else controleer_getallen(tekst, feiten, vraag)
     llm_gebruikt = not fout and not ongegrond
     if not llm_gebruikt:

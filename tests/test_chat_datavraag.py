@@ -75,6 +75,10 @@ def indicatoren(vraag, **kw):
     "vergelijk Workum met Hindeloopen op eenzaamheid",
     "top 3 buurten met de hoogste eenzaamheid",
     "Hoeveel 65-plussers wonen er in Workum?",
+    "Hoe groen is Bolsward-Zuidoost?",
+    "Hoe staat Workum ervoor op eenzaamheid?",
+    "Hoe veilig is Hindeloopen?",
+    "Wat is de eenzaamheid in Workum?",
 ])
 def test_datavraag_herkend(vraag):
     assert dv.is_datavraag(vraag)
@@ -85,6 +89,8 @@ def test_datavraag_herkend(vraag):
     "Welke indicatoren zeggen iets over eenzaamheid bij ouderen in de buurt?",
     "Maak een rapport van deze buurt",
     "Toon eenzaamheid op de kaart",
+    "Open het Kompas",
+    "Selecteer Bolsward-Zuidoost",
     "Wat kun je allemaal?",
 ])
 def test_geen_datavraag(vraag):
@@ -164,6 +170,10 @@ def test_indicatoren_hittestress():
     assert "45-65 jaar" not in gevonden
 
 
+def test_indicatoren_groen():
+    assert indicatoren("Hoe groen is Bolsward-Zuidoost?") == ["Oppervlak groen per inwoner"]
+
+
 def test_indicatoren_sociale_cohesie():
     assert indicatoren(USECASE_VRAGEN["sociale-cohesie"]) == ["Eenzaamheid", "Vrijwilliger"]
 
@@ -211,7 +221,7 @@ def test_formatteer_getal(w, verwacht):
 
 
 NAMEN = {"BU19000001": "Bolsward-Noord", "BU19000002": "Bolsward-Zuidoost", "BU19000004": "Bolsward-Noordoost"}
-KOEL = ind("Afstand tot koele plek", eenheid="", bron="bf4e5b8f-6b0a-4632-b9b4-8e29d025e68c_d_cbs_buurten.json",
+KOEL = ind("Afstand tot koele plek", eenheid="m", bron="bf4e5b8f-6b0a-4632-b9b4-8e29d025e68c_d_cbs_buurten.json",
            score_type="+/-", interpretatie_logica="-/+")
 WAARDEN = [
     {"gebied_id": "BU19000001", "indicator_uuid": KOEL["uuid"], "waarde": 246.0, "jaar": 2021, "bron": "x"},
@@ -228,7 +238,7 @@ def test_feiten_rang_en_richting():
     assert noord["labels"] == ["hoogste waarde", "ongunstigst"]
     assert noordoost["labels"] == ["laagste waarde", "gunstigst"]
     assert zuidoost["demo"] and zuidoost["rang_hoog"] == 2
-    assert f["bron"].startswith("importbestand")
+    assert f["bron"] == "onbekende bron (import)"
 
 
 def test_gelijke_waarden_delen_de_rang():
@@ -249,15 +259,40 @@ def test_neutraal_geen_gunstig_label():
     neutraal = {**KOEL, "interpretatie_logica": "neutraal", "score_type": "+/+"}
     [f] = dv.bouw_feiten([neutraal], WAARDEN, NAMEN, BOLSWARD)
     assert all("gunstigst" not in w["labels"] and "ongunstigst" not in w["labels"] for w in f["waarden"])
-    assert "geen oordeel" in dv.feiten_als_tekst([f])
+    tekst = dv.samenvatting(f)
+    assert "gunstig" not in tekst and "beter" not in tekst
 
 
-def test_feiten_als_tekst_bevat_alle_getallen_en_de_richting():
-    [f] = dv.bouw_feiten([KOEL], WAARDEN, NAMEN, BOLSWARD)
-    tekst = dv.feiten_als_tekst([f])
-    for getal in ("246", "226", "206", "2021"):
-        assert getal in tekst
-    assert "lager is beter: een hoge waarde is ongunstig" in tekst and "demowaarde" in tekst
+def test_samenvatting_hoog_laag_midden_en_richting():
+    [f] = dv.bouw_feiten([KOEL], WAARDEN, NAMEN, ["BU19000002"])
+    tekst = dv.samenvatting(f)
+    assert "Hoogste waarde: Bolsward-Noord (246 m)" in tekst
+    assert "laagste: Bolsward-Noordoost (206 m)" in tekst
+    assert "Daartussen: Bolsward-Zuidoost (226 m)" in tekst
+    assert "Bolsward-Noordoost scoort het gunstigst, Bolsward-Noord het ongunstigst" in tekst
+
+
+def test_vaste_tekst_met_eenheid_bron_en_demo():
+    feiten = dv.bouw_feiten([KOEL], WAARDEN, NAMEN, BOLSWARD)
+    tekst = dv.vaste_tekst(feiten)
+    assert "246 m" in tekst and "2021" in tekst and "onbekende bron (import)" in tekst
+    assert "Bolsward-Zuidoost zijn demodata" in tekst
+
+
+@pytest.mark.parametrize("e,verwacht", [("%", "48,3%"), ("m", "48,3 m"), ("x 1 000 euro", "48,3 duizend euro"),
+                                        ("aantal", "48,3"), ("", "48,3")])
+def test_waarde_met_eenheid(e, verwacht):
+    assert dv._waarde_tekst({"waarde": 48.3}, e) == verwacht
+
+
+@pytest.mark.parametrize("bron,verwacht", [
+    ("bf4e5b8f-6b0a-4632-b9b4-8e29d025e68c_d_cbs_buurten.json", "onbekende bron (import)"),
+    ("upload/groen_per_inwoner.csv", "onbekende bron (import)"),
+    ("Gezondheidsmonitor RIVM 2024", "Gezondheidsmonitor RIVM 2024"),
+    ("", "bron onbekend"),
+])
+def test_nette_bron(bron, verwacht):
+    assert dv.nette_bron(bron) == verwacht
 
 
 def test_prompt_bevat_cijfers_als_json():
@@ -265,7 +300,8 @@ def test_prompt_bevat_cijfers_als_json():
     feiten = dv.bouw_feiten([KOEL], WAARDEN, NAMEN, BOLSWARD)
     prompt = dv.gebruikersprompt("Welke buurt ligt het verst van een koele plek?", feiten, ["Bolsward"])
     blok = json.loads(prompt[prompt.index("["):prompt.rindex("]") + 1])
-    assert [w["waarde"] for w in blok[0]["waarden"]] == ["246", "226", "206"]
+    assert [w["waarde"] for w in blok[0]["waarden"]] == ["246 m", "226 m", "206 m"]
+    assert blok[0]["eenheid"] == "m" and "gunstigst" in blok[0]["samenvatting"]
     assert blok[0]["richting"].startswith("lager is beter")
     assert blok[0]["waarden"][1]["demowaarde"] is True
     assert "maximaal 4 zinnen" in prompt
@@ -329,3 +365,26 @@ def test_route_zonder_indicator_zegt_eerlijk_geen_data(nep_route):
 
 def test_route_geen_datavraag(nep_route):
     assert route("Ik ben beleidsadviseur", "x") is None
+
+
+def test_route_zonder_llm_geeft_vaste_tekst(nep_route):
+    r = dv.beantwoord_datavraag("Welke buurt in Bolsward ligt het verst van een koele plek?", {"geen_llm": True},
+                                NepDB(), lambda t: [], lambda s, u: pytest.fail("model mag niet gevraagd worden"))
+    assert not r["llm_gebruikt"] and r["model"] is None
+    assert "Bolsward-Noord (246 m)" in r["narrative"] and "Bolsward-Noordoost (206 m)" in r["narrative"]
+
+
+def test_route_gebied_plus_indicator_zonder_patroon_is_datavraag(nep_route):
+    """'Koele plek Bolsward-Zuidoost' heeft geen vraagpatroon, wel gebied + indicator."""
+    r = route("Koele plek Bolsward-Zuidoost", "Bolsward-Zuidoost: 226 m.")
+    assert r is not None and r["llm_gebruikt"]
+    assert r["gebied_ids"][0] == "BU19000002" and len(r["gebied_ids"]) == 3
+
+
+def test_route_navigatie_blijft_navigatie(nep_route):
+    assert route("Toon de koele plek in Bolsward-Zuidoost op de kaart", "x") is None
+
+
+def test_route_geeft_gebiedstype_en_gemeente_voor_de_kaart(nep_route):
+    r = route("Welke buurt in Bolsward ligt het verst van een koele plek?", "Bolsward-Noord: 246 m.")
+    assert r["gebiedstype_id"] == BUURT and r["gemeente_code"] == "1900"

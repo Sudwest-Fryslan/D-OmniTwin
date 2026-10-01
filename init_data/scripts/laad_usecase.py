@@ -62,7 +62,7 @@ def pakketten(namen, alle):
 def zet_richting(cur, indicatoren):
     for ind in indicatoren:
         if ind["richting"] not in RICHTING:
-            continue
+            continue  # onbekende richting: test_usecase_pakketten vangt dit af
         logica, score_type = RICHTING[ind["richting"]]
         cur.execute(
             "UPDATE indicatoren SET interpretatie_logica = %s, score_type = %s, updated_at = CURRENT_TIMESTAMP "
@@ -71,6 +71,13 @@ def zet_richting(cur, indicatoren):
         )
         if cur.rowcount == 0:
             print(f"   ⚠️ indicator niet gevonden: {ind['naam']}")
+        if ind.get("eenheid"):
+            # Eenheid aanvullen waar de bron die niet meegaf (chat: '246 m', '48,3%', #149)
+            cur.execute(
+                "UPDATE indicatoren SET eenheid = %s, updated_at = CURRENT_TIMESTAMP "
+                "WHERE naam = %s AND COALESCE(eenheid, '') = ''",
+                (ind["eenheid"], ind["naam"]),
+            )
 
 
 def maak_afgeleid(cur, afg, bron_uc):

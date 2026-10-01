@@ -28,7 +28,7 @@ import pytest
 import requests
 
 from services.chat_datavraag import is_datavraag
-from tests.grounding import getallen_in_tekst, grounding_melding, ongegronde_getallen
+from tests.grounding import getallen_in_bron, getallen_in_tekst, grounding_melding, ongegronde_getallen
 
 BASE_URL = (os.environ.get("OMNITWIN_BASE_URL") or os.environ.get("LLM_TEST_BASE_URL")
             or "http://localhost").rstrip("/")
@@ -140,6 +140,48 @@ def test_vraag_zonder_data_zegt_eerlijk_geen_cijfers():
     assert a["intent"] == "DATAVRAAG"
     assert not a.get("gegevens")
     assert "geen cijfers" in a["narrative"].lower(), a["narrative"]
+
+
+@pytest.mark.integration
+@pytest.mark.parametrize("uc", USE_CASES)
+def test_zonder_llm_vaste_tekst_met_juiste_cijfers(uc):
+    """Out of the box, zonder LLM-koppeling: de vaste tekst noemt de buurten en de verwachte getallen."""
+    r = requests.post(f"{BASE_URL}/api/chat",
+                      json={"vraag": USE_CASES[uc]["persona"]["vraag"], "context": {"geen_llm": True}}, timeout=60)
+    assert r.status_code == 200, r.text[:500]
+    a = r.json()
+    assert a["intent"] == "DATAVRAAG" and a["debug"]["llm_gebruikt"] is False
+    for naam in verwachte_buurten(uc):
+        assert naam in a["narrative"], f"{uc}: {naam} ontbreekt in: {a['narrative']}"
+    tekst_getallen = getallen_in_bron(a["narrative"])
+    for raw, _, _ in verwachte_getallen(uc):
+        assert not ongegronde_getallen(raw, tekst_getallen), f"{uc}: {raw} ontbreekt in: {a['narrative']}"
+    ongegrond = ongegronde_getallen(a["narrative"], bron(a))
+    assert not ongegrond, grounding_melding(uc, a["narrative"], bron(a), ongegrond)
+    assert "json" not in a["narrative"].lower() and "importbestand" not in a["narrative"]
+
+
+# TC-06-004 (demo-kernvraag): geen patroon als 'welke buurt', wel gebied + indicator
+GROEN_VRAAG = "Hoe groen is Bolsward-Zuidoost?"
+
+
+@pytest.mark.integration
+@pytest.mark.parametrize("geen_llm", [True, False], ids=["zonder-llm", "met-llm-of-terugval"])
+def test_tc_06_004_hoe_groen(geen_llm):
+    r = requests.post(f"{BASE_URL}/api/chat", json={"vraag": GROEN_VRAAG, "context": {"geen_llm": geen_llm}},
+                      timeout=TIMEOUT)
+    assert r.status_code == 200, r.text[:500]
+    a = r.json()
+    assert a["intent"] == "DATAVRAAG", a
+    gegevens = a["gegevens"]
+    assert {g["indicator"] for g in gegevens} >= {"Oppervlak groen per inwoner"}
+    groen = {g["gebied"]: g["waarde"] for g in gegevens if g["indicator"] == "Oppervlak groen per inwoner"}
+    assert "Bolsward-Zuidoost" in groen and {"Bolsward-Noord", "Bolsward-Noordoost"} <= set(groen), groen
+    assert "Bolsward-Zuidoost" in a["narrative"]
+    ka = a["kaart_actie"]
+    assert ka["indicator_uuid"] and ka["gebied_ids"][0] == "BU19000002" and len(ka["gebied_ids"]) == 3
+    ongegrond = ongegronde_getallen(a["narrative"], bron(a) | {"vraag": GROEN_VRAAG})
+    assert not ongegrond, grounding_melding("TC-06-004", a["narrative"], bron(a), ongegrond)
 
 
 # ── Met model ────────────────────────────────────────────────────────────────

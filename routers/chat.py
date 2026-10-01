@@ -87,6 +87,8 @@ class ChatResponse(BaseModel):
     indicatoren: List[IndicatorResultaat]
     bronnen: Optional[List[BronRegel]] = None
     gegevens: Optional[List[Gegeven]] = None
+    # #149: de kaart beweegt mee na een datavraag (gebiedstype, indicator, selectie, inzoomen)
+    kaart_actie: Optional[Dict[str, Any]] = None
     debug: Optional[Dict[str, Any]] = None
 
 # ============================================================================
@@ -284,6 +286,7 @@ def datavraag_acties(resultaat: Dict[str, Any]) -> List[ActieKnop]:
     """Toon op kaart (indicator + gebieden), Open Kompas en Rapport, met de bestaande actietypes."""
     gebied_ids = resultaat.get("gebied_ids") or None
     gebiedstype_id = resultaat.get("gebiedstype_id")
+    gemeente_code = resultaat.get("gemeente_code")
     acties = []
     for f in resultaat.get("feiten", [])[:2]:
         acties.append(ActieKnop(
@@ -292,6 +295,7 @@ def datavraag_acties(resultaat: Dict[str, Any]) -> List[ActieKnop]:
             indicator_uuid=f["indicator_uuid"],
             gebied_ids=gebied_ids,
             gebiedstype_id=gebiedstype_id,
+            gemeente_code=gemeente_code,
         ))
     if not acties:
         for t in resultaat.get("indicatoren", [])[:1]:
@@ -299,7 +303,7 @@ def datavraag_acties(resultaat: Dict[str, Any]) -> List[ActieKnop]:
                                     indicator_uuid=t.uuid))
     if gebied_ids:
         acties.append(ActieKnop(type="OPEN_KOMPAS", label="🧭 Open Kompas", gebied_ids=gebied_ids,
-                                gebiedstype_id=gebiedstype_id))
+                                gebiedstype_id=gebiedstype_id, gemeente_code=gemeente_code))
         acties.append(ActieKnop(type="MAAK_RAPPORT", label="📄 Rapport", gebied_ids=gebied_ids))
     return acties
 
@@ -352,6 +356,13 @@ def beantwoord_datavraag_route(vraag: str, context: Dict[str, Any], db: Session)
         indicatoren=indicatoren_out,
         bronnen=bronnen,
         gegevens=gegevens,
+        kaart_actie=({
+            "gebiedstype_id": resultaat.get("gebiedstype_id"),
+            "gemeente_code": resultaat.get("gemeente_code"),
+            "indicator_uuid": feiten[0]["indicator_uuid"],
+            "indicator": feiten[0]["indicator"],
+            "gebied_ids": resultaat["gebied_ids"],
+        } if feiten and resultaat.get("gebied_ids") else None),
         debug={
             "mode": "datavraag",
             "llm_gebruikt": resultaat["llm_gebruikt"],
