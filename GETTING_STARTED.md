@@ -214,7 +214,7 @@ Zie [`ETL/ETL_DOCUMENTATION.md`](ETL/ETL_DOCUMENTATION.md) voor de volledige han
 - 📖 **Architectuur:** [`docs/2-architectuur/`](docs/2-architectuur/) — technische opzet
 - 🗺️ **Roadmap:** [`ROADMAP.md`](ROADMAP.md) — geplande features
 - 🐛 **Bugs & fixes:** [`BUGFIX.md`](BUGFIX.md) — bekende issues
-- 💬 **Vragen of samenwerking?** Open een [GitHub Discussion](../../discussions) of mail [t.vanderlaan@sudwestfryslan.nl](mailto:t.vanderlaan@sudwestfryslan.nl)
+- 💬 **Vragen of samenwerking?** Open een [GitHub Discussion](../../discussions) of mail [geo-groep@sudwestfryslan.nl](mailto:geo-groep@sudwestfryslan.nl)
 
 ---
 

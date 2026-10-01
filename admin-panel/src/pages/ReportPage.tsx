@@ -4,6 +4,7 @@ import { reportAPI } from '../services/api';
 import type { ReportDataPayload, ReportNarrativeResponse } from '../types';
 import { Download, RefreshCw, Printer, AlertCircle, TrendingUp, Info, Activity, ArrowLeft, Cpu, Database, Map as MapIcon, Compass, Terminal, ChevronDown, ChevronUp, X } from 'lucide-react';
 import { ExportPrintModal } from '../components/ExportPrintModal';
+import Beeldmerk from '../components/Beeldmerk';
 
 export const ReportPage: React.FC = () => {
     const { gebied_id } = useParams<{ gebied_id?: string }>();
@@ -131,7 +132,7 @@ export const ReportPage: React.FC = () => {
         return (
             <div className="page-container" style={{ maxWidth: '1400px', margin: '0 auto', padding: '2rem' }}>
                 <div className="page-header">
-                    <h1>D-OmniTwin Rapportage</h1>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}><Beeldmerk size={40} /><h1>D-OmniTwin Rapportage</h1></div>
                 </div>
                 <div className="card" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                     <Info size={20} className="text-primary" />
@@ -155,7 +156,7 @@ export const ReportPage: React.FC = () => {
                         >
                             <X size={16} /> Sluit rapport
                         </button>
-                        <h1>D-OmniTwin Rapportage</h1>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}><Beeldmerk size={40} /><h1>D-OmniTwin Rapportage</h1></div>
                         <p className="text-secondary">AI-gedreven analyse voor {selectedGebied}</p>
                     </div>
                     <div style={{ display: 'flex', gap: '1rem' }}>

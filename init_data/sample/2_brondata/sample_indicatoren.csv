@@ -25,7 +25,7 @@ BU19000001,4661dcb9-b7c4-42f8-b7c5-a61c12568806,Eenzaamheid,55.0,2024,Gezondheid
 BU19000001,b53e54d6-ff54-4be1-b539-f915fd253831,Energielabel coverage,31.5,2025,Berekend: EP-Online / BAG Fryslân,,%,Wonen,pos_is_pos,current
 BU19000001,d20c7b4d-d305-495b-b77c-07b8121614a7,Ervaren gezondheid,65.9,2024,Gezondheidsmonitor RIVM 2024,,%,Gezondheid,pos_is_pos,current
 BU19000001,22d02bf9-99ef-4357-b797-09a714690b11,Gemiddeld bouwjaar woningen (BAG),1971.0,2025,Kadaster BAG Fryslân 2026,,jaar,Wonen,pos_is_pos,current
-BU19000001,3c2d0ca0-3a6d-4f53-809f-f82fa9b9fd22,Gemiddeld energielabel,4.357605177993528,2025,RVO EP-Online 2026-02,,score (1.0 - 9.0),,pos_is_pos,current
+BU19000001,3c2d0ca0-3a6d-4f53-809f-f82fa9b9fd22,Gemiddeld energielabel,4.357605177993528,2025,RVO EP-Online 2026-02,,score 1 (A+++++) - 9 (G),,-/+,current
 BU19000001,a4f84d1c-3263-4229-ad95-615924cb7852,Gemiddeld Laagste Grondwaterstand,1.64,2022,a4f84d1c-3263-4229-ad95-615924cb7852_d_cbs_buurten.json,,,,pos_is_pos,current
 BU19000001,7d9339e3-ea2c-474b-802a-49c854849f73,Gemiddelde woonoppervlakte (BAG),108.0,2026,BAG,,m²,Wonen,pos_is_pos,current
 BU19000001,311a6449-b145-4678-b51e-ac4e342dd1bf,Gezondheid,10.9,2024,Gezondheidsmonitor RIVM 2024,,,,pos_is_pos,current
@@ -81,7 +81,7 @@ BU19000002,4661dcb9-b7c4-42f8-b7c5-a61c12568806,Eenzaamheid,48.3,2024,DEMO: gemi
 BU19000002,b53e54d6-ff54-4be1-b539-f915fd253831,Energielabel coverage,24.8,2025,DEMO: gemiddelde Bolsward-Noord en Bolsward-Noordoost,,%,Wonen,pos_is_pos,current
 BU19000002,d20c7b4d-d305-495b-b77c-07b8121614a7,Ervaren gezondheid,71.8,2024,DEMO: gemiddelde Bolsward-Noord en Bolsward-Noordoost,,%,Gezondheid,pos_is_pos,current
 BU19000002,22d02bf9-99ef-4357-b797-09a714690b11,Gemiddeld bouwjaar woningen (BAG),1977.5,2025,DEMO: gemiddelde Bolsward-Noord en Bolsward-Noordoost,,jaar,Wonen,pos_is_pos,current
-BU19000002,3c2d0ca0-3a6d-4f53-809f-f82fa9b9fd22,Gemiddeld energielabel,4.2,2025,DEMO: gemiddelde Bolsward-Noord en Bolsward-Noordoost,,score (1.0 - 9.0),,pos_is_pos,current
+BU19000002,3c2d0ca0-3a6d-4f53-809f-f82fa9b9fd22,Gemiddeld energielabel,4.2,2025,DEMO: gemiddelde Bolsward-Noord en Bolsward-Noordoost,,score 1 (A+++++) - 9 (G),,-/+,current
 BU19000002,a4f84d1c-3263-4229-ad95-615924cb7852,Gemiddeld Laagste Grondwaterstand,1.7,2022,DEMO: gemiddelde Bolsward-Noord en Bolsward-Noordoost,,,,pos_is_pos,current
 BU19000002,7d9339e3-ea2c-474b-802a-49c854849f73,Gemiddelde woonoppervlakte (BAG),120.0,2026,DEMO: gemiddelde Bolsward-Noord en Bolsward-Noordoost,,m²,Wonen,pos_is_pos,current
 BU19000002,311a6449-b145-4678-b51e-ac4e342dd1bf,Gezondheid,8.4,2024,DEMO: gemiddelde Bolsward-Noord en Bolsward-Noordoost,,,,pos_is_pos,current
@@ -137,7 +137,7 @@ BU19000004,4661dcb9-b7c4-42f8-b7c5-a61c12568806,Eenzaamheid,41.6,2024,Gezondheid
 BU19000004,b53e54d6-ff54-4be1-b539-f915fd253831,Energielabel coverage,18.0,2025,Berekend: EP-Online / BAG Fryslân,,%,Wonen,pos_is_pos,current
 BU19000004,d20c7b4d-d305-495b-b77c-07b8121614a7,Ervaren gezondheid,77.6,2024,Gezondheidsmonitor RIVM 2024,,%,Gezondheid,pos_is_pos,current
 BU19000004,22d02bf9-99ef-4357-b797-09a714690b11,Gemiddeld bouwjaar woningen (BAG),1984.0,2025,Kadaster BAG Fryslân 2026,,jaar,Wonen,pos_is_pos,current
-BU19000004,3c2d0ca0-3a6d-4f53-809f-f82fa9b9fd22,Gemiddeld energielabel,4.081911262798635,2025,RVO EP-Online 2026-02,,score (1.0 - 9.0),,pos_is_pos,current
+BU19000004,3c2d0ca0-3a6d-4f53-809f-f82fa9b9fd22,Gemiddeld energielabel,4.081911262798635,2025,RVO EP-Online 2026-02,,score 1 (A+++++) - 9 (G),,-/+,current
 BU19000004,a4f84d1c-3263-4229-ad95-615924cb7852,Gemiddeld Laagste Grondwaterstand,1.82,2022,a4f84d1c-3263-4229-ad95-615924cb7852_d_cbs_buurten.json,,,,pos_is_pos,current
 BU19000004,7d9339e3-ea2c-474b-802a-49c854849f73,Gemiddelde woonoppervlakte (BAG),132.0,2026,BAG,,m²,Wonen,pos_is_pos,current
 BU19000004,311a6449-b145-4678-b51e-ac4e342dd1bf,Gezondheid,6.0,2024,Gezondheidsmonitor RIVM 2024,,,,pos_is_pos,current
@@ -193,7 +193,7 @@ BU19000108,4661dcb9-b7c4-42f8-b7c5-a61c12568806,Eenzaamheid,38.6,2024,Gezondheid
 BU19000108,b53e54d6-ff54-4be1-b539-f915fd253831,Energielabel coverage,26.9,2025,Berekend: EP-Online / BAG Fryslân,,%,Wonen,pos_is_pos,current
 BU19000108,d20c7b4d-d305-495b-b77c-07b8121614a7,Ervaren gezondheid,77.7,2024,Gezondheidsmonitor RIVM 2024,,%,Gezondheid,pos_is_pos,current
 BU19000108,22d02bf9-99ef-4357-b797-09a714690b11,Gemiddeld bouwjaar woningen (BAG),1953.0,2025,Kadaster BAG Fryslân 2026,,jaar,Wonen,pos_is_pos,current
-BU19000108,3c2d0ca0-3a6d-4f53-809f-f82fa9b9fd22,Gemiddeld energielabel,4.711538461538462,2025,RVO EP-Online 2026-02,,score (1.0 - 9.0),,pos_is_pos,current
+BU19000108,3c2d0ca0-3a6d-4f53-809f-f82fa9b9fd22,Gemiddeld energielabel,4.711538461538462,2025,RVO EP-Online 2026-02,,score 1 (A+++++) - 9 (G),,-/+,current
 BU19000108,a4f84d1c-3263-4229-ad95-615924cb7852,Gemiddeld Laagste Grondwaterstand,1.87,2022,a4f84d1c-3263-4229-ad95-615924cb7852_d_cbs_buurten.json,,,,pos_is_pos,current
 BU19000108,7d9339e3-ea2c-474b-802a-49c854849f73,Gemiddelde woonoppervlakte (BAG),135.0,2026,BAG,,m²,Wonen,pos_is_pos,current
 BU19000108,311a6449-b145-4678-b51e-ac4e342dd1bf,Gezondheid,4.5,2024,Gezondheidsmonitor RIVM 2024,,,,pos_is_pos,current
@@ -249,7 +249,7 @@ BU19000200,4661dcb9-b7c4-42f8-b7c5-a61c12568806,Eenzaamheid,44.9,2024,Gezondheid
 BU19000200,b53e54d6-ff54-4be1-b539-f915fd253831,Energielabel coverage,33.0,2025,Berekend: EP-Online / BAG Fryslân,,%,Wonen,pos_is_pos,current
 BU19000200,d20c7b4d-d305-495b-b77c-07b8121614a7,Ervaren gezondheid,74.6,2024,Gezondheidsmonitor RIVM 2024,,%,Gezondheid,pos_is_pos,current
 BU19000200,22d02bf9-99ef-4357-b797-09a714690b11,Gemiddeld bouwjaar woningen (BAG),1965.0,2025,Kadaster BAG Fryslân 2026,,jaar,Wonen,pos_is_pos,current
-BU19000200,3c2d0ca0-3a6d-4f53-809f-f82fa9b9fd22,Gemiddeld energielabel,4.828737300435414,2025,RVO EP-Online 2026-02,,score (1.0 - 9.0),,pos_is_pos,current
+BU19000200,3c2d0ca0-3a6d-4f53-809f-f82fa9b9fd22,Gemiddeld energielabel,4.828737300435414,2025,RVO EP-Online 2026-02,,score 1 (A+++++) - 9 (G),,-/+,current
 BU19000200,a4f84d1c-3263-4229-ad95-615924cb7852,Gemiddeld Laagste Grondwaterstand,1.75,2022,a4f84d1c-3263-4229-ad95-615924cb7852_d_cbs_buurten.json,,,,pos_is_pos,current
 BU19000200,7d9339e3-ea2c-474b-802a-49c854849f73,Gemiddelde woonoppervlakte (BAG),135.0,2026,BAG,,m²,Wonen,pos_is_pos,current
 BU19000200,311a6449-b145-4678-b51e-ac4e342dd1bf,Gezondheid,6.7,2024,Gezondheidsmonitor RIVM 2024,,,,pos_is_pos,current
@@ -305,7 +305,7 @@ BU19000202,4661dcb9-b7c4-42f8-b7c5-a61c12568806,Eenzaamheid,48.1,2024,Gezondheid
 BU19000202,b53e54d6-ff54-4be1-b539-f915fd253831,Energielabel coverage,13.6,2025,Berekend: EP-Online / BAG Fryslân,,%,Wonen,pos_is_pos,current
 BU19000202,d20c7b4d-d305-495b-b77c-07b8121614a7,Ervaren gezondheid,71.4,2024,Gezondheidsmonitor RIVM 2024,,%,Gezondheid,pos_is_pos,current
 BU19000202,22d02bf9-99ef-4357-b797-09a714690b11,Gemiddeld bouwjaar woningen (BAG),1947.0,2025,Kadaster BAG Fryslân 2026,,jaar,Wonen,pos_is_pos,current
-BU19000202,3c2d0ca0-3a6d-4f53-809f-f82fa9b9fd22,Gemiddeld energielabel,5.179245283018868,2025,RVO EP-Online 2026-02,,score (1.0 - 9.0),,pos_is_pos,current
+BU19000202,3c2d0ca0-3a6d-4f53-809f-f82fa9b9fd22,Gemiddeld energielabel,5.179245283018868,2025,RVO EP-Online 2026-02,,score 1 (A+++++) - 9 (G),,-/+,current
 BU19000202,a4f84d1c-3263-4229-ad95-615924cb7852,Gemiddeld Laagste Grondwaterstand,1.58,2022,a4f84d1c-3263-4229-ad95-615924cb7852_d_cbs_buurten.json,,,,pos_is_pos,current
 BU19000202,7d9339e3-ea2c-474b-802a-49c854849f73,Gemiddelde woonoppervlakte (BAG),124.0,2026,BAG,,m²,Wonen,pos_is_pos,current
 BU19000202,311a6449-b145-4678-b51e-ac4e342dd1bf,Gezondheid,7.6,2024,Gezondheidsmonitor RIVM 2024,,,,pos_is_pos,current
@@ -361,7 +361,7 @@ BU19000300,4661dcb9-b7c4-42f8-b7c5-a61c12568806,Eenzaamheid,44.1,2024,Gezondheid
 BU19000300,b53e54d6-ff54-4be1-b539-f915fd253831,Energielabel coverage,24.0,2025,Berekend: EP-Online / BAG Fryslân,,%,Wonen,pos_is_pos,current
 BU19000300,d20c7b4d-d305-495b-b77c-07b8121614a7,Ervaren gezondheid,74.1,2024,Gezondheidsmonitor RIVM 2024,,%,Gezondheid,pos_is_pos,current
 BU19000300,22d02bf9-99ef-4357-b797-09a714690b11,Gemiddeld bouwjaar woningen (BAG),1973.0,2025,Kadaster BAG Fryslân 2026,,jaar,Wonen,pos_is_pos,current
-BU19000300,3c2d0ca0-3a6d-4f53-809f-f82fa9b9fd22,Gemiddeld energielabel,4.552459016393443,2025,RVO EP-Online 2026-02,,score (1.0 - 9.0),,pos_is_pos,current
+BU19000300,3c2d0ca0-3a6d-4f53-809f-f82fa9b9fd22,Gemiddeld energielabel,4.552459016393443,2025,RVO EP-Online 2026-02,,score 1 (A+++++) - 9 (G),,-/+,current
 BU19000300,a4f84d1c-3263-4229-ad95-615924cb7852,Gemiddeld Laagste Grondwaterstand,2.71,2022,a4f84d1c-3263-4229-ad95-615924cb7852_d_cbs_buurten.json,,,,pos_is_pos,current
 BU19000300,7d9339e3-ea2c-474b-802a-49c854849f73,Gemiddelde woonoppervlakte (BAG),145.0,2026,BAG,,m²,Wonen,pos_is_pos,current
 BU19000300,311a6449-b145-4678-b51e-ac4e342dd1bf,Gezondheid,6.0,2024,Gezondheidsmonitor RIVM 2024,,,,pos_is_pos,current
@@ -417,7 +417,7 @@ BU19000301,4661dcb9-b7c4-42f8-b7c5-a61c12568806,Eenzaamheid,33.8,2024,Gezondheid
 BU19000301,b53e54d6-ff54-4be1-b539-f915fd253831,Energielabel coverage,13.2,2025,Berekend: EP-Online / BAG Fryslân,,%,Wonen,pos_is_pos,current
 BU19000301,d20c7b4d-d305-495b-b77c-07b8121614a7,Ervaren gezondheid,83.7,2024,Gezondheidsmonitor RIVM 2024,,%,Gezondheid,pos_is_pos,current
 BU19000301,22d02bf9-99ef-4357-b797-09a714690b11,Gemiddeld bouwjaar woningen (BAG),1944.0,2025,Kadaster BAG Fryslân 2026,,jaar,Wonen,pos_is_pos,current
-BU19000301,3c2d0ca0-3a6d-4f53-809f-f82fa9b9fd22,Gemiddeld energielabel,4.578947368421052,2025,RVO EP-Online 2026-02,,score (1.0 - 9.0),,pos_is_pos,current
+BU19000301,3c2d0ca0-3a6d-4f53-809f-f82fa9b9fd22,Gemiddeld energielabel,4.578947368421052,2025,RVO EP-Online 2026-02,,score 1 (A+++++) - 9 (G),,-/+,current
 BU19000301,a4f84d1c-3263-4229-ad95-615924cb7852,Gemiddeld Laagste Grondwaterstand,1.13,2022,a4f84d1c-3263-4229-ad95-615924cb7852_d_cbs_buurten.json,,,,pos_is_pos,current
 BU19000301,7d9339e3-ea2c-474b-802a-49c854849f73,Gemiddelde woonoppervlakte (BAG),401.0,2026,BAG,,m²,Wonen,pos_is_pos,current
 BU19000301,311a6449-b145-4678-b51e-ac4e342dd1bf,Gezondheid,4.3,2024,Gezondheidsmonitor RIVM 2024,,,,pos_is_pos,current
@@ -473,7 +473,7 @@ BU19000400,4661dcb9-b7c4-42f8-b7c5-a61c12568806,Eenzaamheid,42.7,2024,Gezondheid
 BU19000400,b53e54d6-ff54-4be1-b539-f915fd253831,Energielabel coverage,18.0,2025,Berekend: EP-Online / BAG Fryslân,,%,Wonen,pos_is_pos,current
 BU19000400,d20c7b4d-d305-495b-b77c-07b8121614a7,Ervaren gezondheid,75.1,2024,Gezondheidsmonitor RIVM 2024,,%,Gezondheid,pos_is_pos,current
 BU19000400,22d02bf9-99ef-4357-b797-09a714690b11,Gemiddeld bouwjaar woningen (BAG),1952.0,2025,Kadaster BAG Fryslân 2026,,jaar,Wonen,pos_is_pos,current
-BU19000400,3c2d0ca0-3a6d-4f53-809f-f82fa9b9fd22,Gemiddeld energielabel,5.6,2025,RVO EP-Online 2026-02,,score (1.0 - 9.0),,pos_is_pos,current
+BU19000400,3c2d0ca0-3a6d-4f53-809f-f82fa9b9fd22,Gemiddeld energielabel,5.6,2025,RVO EP-Online 2026-02,,score 1 (A+++++) - 9 (G),,-/+,current
 BU19000400,a4f84d1c-3263-4229-ad95-615924cb7852,Gemiddeld Laagste Grondwaterstand,2.85,2022,a4f84d1c-3263-4229-ad95-615924cb7852_d_cbs_buurten.json,,,,pos_is_pos,current
 BU19000400,7d9339e3-ea2c-474b-802a-49c854849f73,Gemiddelde woonoppervlakte (BAG),158.0,2026,BAG,,m²,Wonen,pos_is_pos,current
 BU19000400,311a6449-b145-4678-b51e-ac4e342dd1bf,Gezondheid,6.3,2024,Gezondheidsmonitor RIVM 2024,,,,pos_is_pos,current
@@ -529,7 +529,7 @@ BU19000401,4661dcb9-b7c4-42f8-b7c5-a61c12568806,Eenzaamheid,44.6,2024,Gezondheid
 BU19000401,b53e54d6-ff54-4be1-b539-f915fd253831,Energielabel coverage,17.0,2025,Berekend: EP-Online / BAG Fryslân,,%,Wonen,pos_is_pos,current
 BU19000401,d20c7b4d-d305-495b-b77c-07b8121614a7,Ervaren gezondheid,73.2,2024,Gezondheidsmonitor RIVM 2024,,%,Gezondheid,pos_is_pos,current
 BU19000401,22d02bf9-99ef-4357-b797-09a714690b11,Gemiddeld bouwjaar woningen (BAG),1948.0,2025,Kadaster BAG Fryslân 2026,,jaar,Wonen,pos_is_pos,current
-BU19000401,3c2d0ca0-3a6d-4f53-809f-f82fa9b9fd22,Gemiddeld energielabel,5.3474576271186445,2025,RVO EP-Online 2026-02,,score (1.0 - 9.0),,pos_is_pos,current
+BU19000401,3c2d0ca0-3a6d-4f53-809f-f82fa9b9fd22,Gemiddeld energielabel,5.3474576271186445,2025,RVO EP-Online 2026-02,,score 1 (A+++++) - 9 (G),,-/+,current
 BU19000401,a4f84d1c-3263-4229-ad95-615924cb7852,Gemiddeld Laagste Grondwaterstand,1.63,2022,a4f84d1c-3263-4229-ad95-615924cb7852_d_cbs_buurten.json,,,,pos_is_pos,current
 BU19000401,7d9339e3-ea2c-474b-802a-49c854849f73,Gemiddelde woonoppervlakte (BAG),182.0,2026,BAG,,m²,Wonen,pos_is_pos,current
 BU19000401,311a6449-b145-4678-b51e-ac4e342dd1bf,Gezondheid,6.5,2024,Gezondheidsmonitor RIVM 2024,,,,pos_is_pos,current
@@ -585,7 +585,7 @@ BU19001200,4661dcb9-b7c4-42f8-b7c5-a61c12568806,Eenzaamheid,39.5,2024,Gezondheid
 BU19001200,b53e54d6-ff54-4be1-b539-f915fd253831,Energielabel coverage,21.1,2025,Berekend: EP-Online / BAG Fryslân,,%,Wonen,pos_is_pos,current
 BU19001200,d20c7b4d-d305-495b-b77c-07b8121614a7,Ervaren gezondheid,76.4,2024,Gezondheidsmonitor RIVM 2024,,%,Gezondheid,pos_is_pos,current
 BU19001200,22d02bf9-99ef-4357-b797-09a714690b11,Gemiddeld bouwjaar woningen (BAG),1947.0,2025,Kadaster BAG Fryslân 2026,,jaar,Wonen,pos_is_pos,current
-BU19001200,3c2d0ca0-3a6d-4f53-809f-f82fa9b9fd22,Gemiddeld energielabel,4.773049645390071,2025,RVO EP-Online 2026-02,,score (1.0 - 9.0),,pos_is_pos,current
+BU19001200,3c2d0ca0-3a6d-4f53-809f-f82fa9b9fd22,Gemiddeld energielabel,4.773049645390071,2025,RVO EP-Online 2026-02,,score 1 (A+++++) - 9 (G),,-/+,current
 BU19001200,a4f84d1c-3263-4229-ad95-615924cb7852,Gemiddeld Laagste Grondwaterstand,1.3,2022,a4f84d1c-3263-4229-ad95-615924cb7852_d_cbs_buurten.json,,,,pos_is_pos,current
 BU19001200,7d9339e3-ea2c-474b-802a-49c854849f73,Gemiddelde woonoppervlakte (BAG),150.0,2026,BAG,,m²,Wonen,pos_is_pos,current
 BU19001200,311a6449-b145-4678-b51e-ac4e342dd1bf,Gezondheid,5.6,2024,Gezondheidsmonitor RIVM 2024,,,,pos_is_pos,current
@@ -641,7 +641,7 @@ BU19001300,4661dcb9-b7c4-42f8-b7c5-a61c12568806,Eenzaamheid,45.7,2024,Gezondheid
 BU19001300,b53e54d6-ff54-4be1-b539-f915fd253831,Energielabel coverage,36.3,2025,Berekend: EP-Online / BAG Fryslân,,%,Wonen,pos_is_pos,current
 BU19001300,d20c7b4d-d305-495b-b77c-07b8121614a7,Ervaren gezondheid,73.5,2024,Gezondheidsmonitor RIVM 2024,,%,Gezondheid,pos_is_pos,current
 BU19001300,22d02bf9-99ef-4357-b797-09a714690b11,Gemiddeld bouwjaar woningen (BAG),1962.0,2025,Kadaster BAG Fryslân 2026,,jaar,Wonen,pos_is_pos,current
-BU19001300,3c2d0ca0-3a6d-4f53-809f-f82fa9b9fd22,Gemiddeld energielabel,4.062068965517241,2025,RVO EP-Online 2026-02,,score (1.0 - 9.0),,pos_is_pos,current
+BU19001300,3c2d0ca0-3a6d-4f53-809f-f82fa9b9fd22,Gemiddeld energielabel,4.062068965517241,2025,RVO EP-Online 2026-02,,score 1 (A+++++) - 9 (G),,-/+,current
 BU19001300,a4f84d1c-3263-4229-ad95-615924cb7852,Gemiddeld Laagste Grondwaterstand,1.82,2022,a4f84d1c-3263-4229-ad95-615924cb7852_d_cbs_buurten.json,,,,pos_is_pos,current
 BU19001300,7d9339e3-ea2c-474b-802a-49c854849f73,Gemiddelde woonoppervlakte (BAG),132.0,2026,BAG,,m²,Wonen,pos_is_pos,current
 BU19001300,311a6449-b145-4678-b51e-ac4e342dd1bf,Gezondheid,6.8,2024,Gezondheidsmonitor RIVM 2024,,,,pos_is_pos,current
@@ -697,7 +697,7 @@ BU19002017,4661dcb9-b7c4-42f8-b7c5-a61c12568806,Eenzaamheid,38.1,2024,Gezondheid
 BU19002017,b53e54d6-ff54-4be1-b539-f915fd253831,Energielabel coverage,18.4,2025,Berekend: EP-Online / BAG Fryslân,,%,Wonen,pos_is_pos,current
 BU19002017,d20c7b4d-d305-495b-b77c-07b8121614a7,Ervaren gezondheid,78.2,2024,Gezondheidsmonitor RIVM 2024,,%,Gezondheid,pos_is_pos,current
 BU19002017,22d02bf9-99ef-4357-b797-09a714690b11,Gemiddeld bouwjaar woningen (BAG),1932.0,2025,Kadaster BAG Fryslân 2026,,jaar,Wonen,pos_is_pos,current
-BU19002017,3c2d0ca0-3a6d-4f53-809f-f82fa9b9fd22,Gemiddeld energielabel,5.596153846153846,2025,RVO EP-Online 2026-02,,score (1.0 - 9.0),,pos_is_pos,current
+BU19002017,3c2d0ca0-3a6d-4f53-809f-f82fa9b9fd22,Gemiddeld energielabel,5.596153846153846,2025,RVO EP-Online 2026-02,,score 1 (A+++++) - 9 (G),,-/+,current
 BU19002017,a4f84d1c-3263-4229-ad95-615924cb7852,Gemiddeld Laagste Grondwaterstand,1.8,2022,a4f84d1c-3263-4229-ad95-615924cb7852_d_cbs_buurten.json,,,,pos_is_pos,current
 BU19002017,7d9339e3-ea2c-474b-802a-49c854849f73,Gemiddelde woonoppervlakte (BAG),189.0,2026,BAG,,m²,Wonen,pos_is_pos,current
 BU19002017,311a6449-b145-4678-b51e-ac4e342dd1bf,Gezondheid,5.7,2024,Gezondheidsmonitor RIVM 2024,,,,pos_is_pos,current

@@ -17,7 +17,7 @@ Vastleggen wie welke rol heeft in D-OmniTwin en hoe besluiten over de code en de
 | **Coöperatie DataFryslân** | Dataspace-partner | Inbreng en afstemming over de Fryslân Data Space (FRLDS), datadeling en iSHARE-autorisatie. |
 | **Bijdragers** | Iedereen | Meldt issues, doet voorstellen en levert pull requests aan volgens [CONTRIBUTING.md](./CONTRIBUTING.md). |
 
-Contactpersoon namens de maintainer: Taeke van der Laan (Gemeente Súdwest-Fryslân), `<e-mailadres Taeke, te bevestigen>`.
+Contactpersoon namens de maintainer: Taeke van der Laan (Geo-groep, Gemeente Súdwest-Fryslân), via de team-inbox [geo-groep@sudwestfryslan.nl](mailto:geo-groep@sudwestfryslan.nl).
 
 ## Besluitvorming
 

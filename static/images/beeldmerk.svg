@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Tijdelijk beeldmerk, zie #83 (https://github.com/TLaan/D-OmniTwin/issues/83).
+  Neutrale dummy: een gestileerde "D" met een tweede, kleinere "D" erin
+  (de digitale tweeling achter de fysieke wereld). Geen initialen, geen
+  gemeentelogo, geen huisstijl van een bestaande organisatie.
+
+  Eigen logo: vervang dit bestand, of mount een eigen versie over
+  /app/static/images/beeldmerk.svg (zie docs/9-beheer/installatie.md, "Eigen logo").
+  Het bestand wordt gebruikt in de header van de app, als favicon, en in het
+  beheerscherm en de rapporten. Houd het vierkant en leesbaar op 16x16 px.
+
+  Kleuren: het donkere vlak (#0f172a) en de blauwe en groene lijn (#3b82f6, #22c55e)
+  komen uit de bestaande kleurvariabelen. Het vlak houdt het merk leesbaar op licht
+  en donker thema en op de header met kleurverloop (contrast minstens 5:1).
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-labelledby="beeldmerk-titel">
+  <title id="beeldmerk-titel">D-OmniTwin</title>
+  <rect width="64" height="64" rx="14" fill="#0f172a"/>
+  <path d="M17 14h12a18 18 0 0 1 0 36H17z" fill="none" stroke="#3b82f6" stroke-width="5" stroke-linejoin="round"/>
+  <path d="M25 23h4a9 9 0 0 1 0 18h-4z" fill="#22c55e"/>
+</svg>

@@ -7,12 +7,13 @@
 # - softwareVersion: gelijk aan het bestand VERSION (Semantic Versioning, zie
 #   docs/9-beheer/releasebeleid.md); een unittest controleert dat.
 # - releaseDate: invullen bij het taggen van de release (YYYY-MM-DD).
-# - maintenance/contacts: e-mailadres nog te bevestigen.
 
 publiccodeYmlVersion: "0"
 
 name: D-OmniTwin
 url: "https://github.com/TLaan/D-OmniTwin"
+# Tijdelijk beeldmerk, zie #83
+logo: static/images/beeldmerk-woordmerk.svg
 softwareVersion: "0.1.0"
 # releaseDate: "<datum van de tag v0.1.0>"
 
@@ -128,9 +129,8 @@ legal:
 maintenance:
   type: internal
   contacts:
-    - name: Taeke van der Laan
-      # E-mailadres nog te bevestigen; hier invullen zodra bekend.
-      # email: "<e-mailadres Taeke, te bevestigen>"
+    - name: Geo-groep Gemeente Súdwest-Fryslân
+      email: "geo-groep@sudwestfryslan.nl"
       affiliation: Gemeente Súdwest-Fryslân
 
 localisation:
