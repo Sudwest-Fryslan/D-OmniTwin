@@ -6,6 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request, Header
 from sqlalchemy.orm import Session
 from sqlalchemy import text
 from typing import Optional, List, Literal
+from uuid import UUID
 from pydantic import BaseModel, UUID4
 from omnitwin.database import get_db
 import json
@@ -376,7 +377,7 @@ async def get_indicatoren(
 
 @router.get("/indicatoren/{uuid}")
 async def get_indicator(
-    uuid: str,
+    uuid: UUID,  # ongeldige UUID: 422 (#203)
     db: Session = Depends(get_db),
 ):
     """Get single indicator by UUID, including ontology validation fields."""
@@ -408,7 +409,7 @@ async def get_indicator(
         LEFT JOIN color_schemas cs ON i.color_schema_id = cs.id
         LEFT JOIN users u ON i.gevalideerd_door = u.id
         WHERE i.uuid = :uuid
-    """), {"uuid": uuid})
+    """), {"uuid": str(uuid)})
     row = result.fetchone()
     
     if not row:
@@ -441,14 +442,14 @@ async def get_indicator(
 
 @router.put("/indicatoren/{uuid}")
 async def update_indicator(
-    uuid: str,
+    uuid: UUID,
     data: IndicatorUpdate,
     db: Session = Depends(get_db),
 ):
     """Update indicator fields."""
     # Build dynamic update query
     updates = []
-    params = {"uuid": uuid}
+    params = {"uuid": str(uuid)}
     
     if data.naam is not None:
         updates.append("naam = :naam")
@@ -489,7 +490,7 @@ async def update_indicator(
 
 @router.patch("/indicatoren/{uuid}/valideer")
 async def valideer_indicator_ontologie(
-    uuid: str,
+    uuid: UUID,
     data: OntologieValidatie,
     db: Session = Depends(get_db),
     gebruiker: dict = Depends(vereis_admin)
@@ -519,7 +520,7 @@ async def valideer_indicator_ontologie(
         "beschrijving": data.ontologische_beschrijving,
         "status": data.ontologie_status,
         "user_id": user_id,
-        "uuid": uuid
+        "uuid": str(uuid)
     })
     
     if result.rowcount == 0:

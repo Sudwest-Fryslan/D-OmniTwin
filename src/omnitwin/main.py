@@ -27,6 +27,11 @@ app = FastAPI(
     redoc_url=None # Disable default redoc (served locally)
 )
 
+# Centrale foutafhandeling (#203): details in de log, naar buiten een generieke
+# melding met correlatie-id; ongeldige invoer in de database → 422, conflict → 409
+from omnitwin.fouten import registreer_foutafhandeling
+registreer_foutafhandeling(app)
+
 # ============================================================================
 # SECURITY: Headers Middleware
 # ============================================================================
@@ -279,16 +284,14 @@ def api_root():
 
 @app.get("/health")
 def health_check(db: Session = Depends(get_db)):
-    """Health check endpoint."""
-    try:
-        db.execute(text("SELECT 1"))
-        return {
-            "database": "online", 
-            "api": "online", 
-            "version": __version__,
-            "security": "headers_active"
-        }
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
+    """Health check endpoint. Een databasefout gaat naar de centrale foutafhandeling
+    (500 met correlatie-id, details alleen in de log)."""
+    db.execute(text("SELECT 1"))
+    return {
+        "database": "online",
+        "api": "online",
+        "version": __version__,
+        "security": "headers_active"
+    }
 
 # reload trigger 2026-03-15 15:58

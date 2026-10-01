@@ -14,6 +14,7 @@ from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 from typing import Dict, Any, Optional, List
 from omnitwin.database import get_db
+from omnitwin.fouten import GebruikersFout
 from omnitwin.services.report_service import ReportDataService
 from omnitwin.services.llm_service import LLMService
 from omnitwin.routers.auth import huidige_gebruiker
@@ -91,10 +92,8 @@ def get_report_data(gebied_id: str, db: Session = Depends(get_db)):
     service = ReportDataService(db)
     try:
         return service.generate_report_payload(gebied_id)
-    except ValueError as e:
+    except GebruikersFout as e:
         raise HTTPException(status_code=404, detail=str(e))
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Fout tijdens data generatie: {str(e)}")
 
 @router.get("/narrative/{gebied_id}", response_model=Dict[str, Any])
 def generate_report_narrative(gebied_id: str, request: Request, db: Session = Depends(get_db)):
@@ -146,10 +145,8 @@ def generate_report_narrative(gebied_id: str, request: Request, db: Session = De
             return {**antwoord, "debug_info": debug_logs}
         return antwoord
 
-    except ValueError as e:
+    except GebruikersFout as e:
         raise HTTPException(status_code=404, detail=str(e))
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Fout tijdens AI generatie: {str(e)}")
 
 
 # ─── Sjabloon C: Benchmark Vergelijker ───────────────────────────────────────
@@ -178,10 +175,8 @@ def get_benchmark_data(
             gebieden_b=gebieden_b_list,
             referentie_gemeente=referentie_gemeente
         )
-    except ValueError as e:
+    except GebruikersFout as e:
         raise HTTPException(status_code=400, detail=str(e))
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Fout tijdens benchmark generatie: {str(e)}")
 
 
 @router.get("/benchmark/narrative", response_model=Dict[str, Any])
@@ -227,10 +222,8 @@ def get_benchmark_narrative(
         if beheerder:
             return {**antwoord, "debug_info": [result["debug"]]}
         return antwoord
-    except ValueError as e:
+    except GebruikersFout as e:
         raise HTTPException(status_code=400, detail=str(e))
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Fout tijdens benchmark AI generatie: {str(e)}")
 
 
 # ─── Sjabloon A: Executive Summary ──────────────────────────────────────────
@@ -244,10 +237,8 @@ def get_executive_data(gebied_id: str, db: Session = Depends(get_db)):
     service = ReportDataService(db)
     try:
         return service.generate_executive_payload(gebied_id)
-    except ValueError as e:
+    except GebruikersFout as e:
         raise HTTPException(status_code=404, detail=str(e))
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Fout tijdens executive payload generatie: {str(e)}")
 
 
 # ─── Sjabloon D: Multi-Gebiedsdossier ────────────────────────────────────────
@@ -268,10 +259,8 @@ def get_multi_gebied_data(payload: MultiGebiedRequest, db: Session = Depends(get
             deelgebied_naam=payload.deelgebied_naam,
             thema=payload.thema
         )
-    except ValueError as e:
+    except GebruikersFout as e:
         raise HTTPException(status_code=400, detail=str(e))
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Fout tijdens multi-gebied generatie: {str(e)}")
 
 
 @router.post("/multi-gebied/geojson", response_model=Dict[str, Any])
@@ -288,10 +277,8 @@ def get_multi_gebied_geojson(payload: MultiGebiedRequest, db: Session = Depends(
             gemeente_code=payload.gemeente_code,
             thema=payload.thema
         )
-    except ValueError as e:
+    except GebruikersFout as e:
         raise HTTPException(status_code=400, detail=str(e))
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Fout tijdens multi-gebied GeoJSON generatie: {str(e)}")
 
 # ─── Sjabloon E: Thema-Analyse ───────────────────────────────────────────────
 
@@ -313,10 +300,8 @@ def get_thema_analyse_data(payload: ThemaAnalyseRequest, db: Session = Depends(g
             thema_naam=payload.thema_naam,
             onderdeel_naam=payload.onderdeel_naam
         )
-    except ValueError as e:
+    except GebruikersFout as e:
         raise HTTPException(status_code=400, detail=str(e))
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Fout tijdens thema-analyse generatie: {str(e)}")
 
 @router.post("/thema-analyse/geojson", response_model=Dict[str, Any])
 def get_thema_analyse_geojson(payload: ThemaAnalyseRequest, db: Session = Depends(get_db)):
@@ -335,10 +320,8 @@ def get_thema_analyse_geojson(payload: ThemaAnalyseRequest, db: Session = Depend
             thema_naam=payload.thema_naam,
             onderdeel_naam=payload.onderdeel_naam
         )
-    except ValueError as e:
+    except GebruikersFout as e:
         raise HTTPException(status_code=400, detail=str(e))
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Fout tijdens thema-analyse GeoJSON generatie: {str(e)}")
 
 
 # ─── Sjabloon F: Woonplaats- & Deelgebiedsanalyse ─────────────────────────────
@@ -359,10 +342,8 @@ def get_deelgebied_analyse_data(payload: DeelgebiedAnalyseRequest, db: Session =
             gemeente_code=payload.gemeente_code,
             deelgebied_naam=payload.deelgebied_naam
         )
-    except ValueError as e:
+    except GebruikersFout as e:
         raise HTTPException(status_code=400, detail=str(e))
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Fout tijdens deelgebied analyse generatie: {str(e)}")
 
 
 @router.post("/deelgebied/kaart", response_model=Dict[str, Any])
@@ -381,7 +362,5 @@ def get_deelgebied_kaart(payload: DeelgebiedAnalyseRequest, db: Session = Depend
             deelgebied_naam=payload.deelgebied_naam
         )
         return {"svg": svg}
-    except ValueError as e:
+    except GebruikersFout as e:
         raise HTTPException(status_code=400, detail=str(e))
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Fout tijdens SVG kaart generatie: {str(e)}")

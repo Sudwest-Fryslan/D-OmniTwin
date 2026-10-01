@@ -7,6 +7,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 from typing import List, Optional, Dict, Any
+from uuid import UUID
 from omnitwin.database import get_db
 from omnitwin.schemas.kompas import (
     KompasConfiguratiesResponse,
@@ -139,7 +140,7 @@ async def get_gebied_kompas(
 @router.get("/{config_id}/indicator/{indicator_uuid}", response_model=IndicatorPathResponse)
 async def get_indicator_path(
     config_id: int,
-    indicator_uuid: str,
+    indicator_uuid: UUID,  # ongeldige UUID: 422 (#203)
     db: Session = Depends(get_db)
 ):
     """
@@ -163,7 +164,7 @@ async def get_indicator_path(
     ```
     """
     service = KompasService(db)
-    result = service.get_indicator_path(config_id, indicator_uuid)
+    result = service.get_indicator_path(config_id, str(indicator_uuid))
     
     if not result:
         raise HTTPException(
@@ -178,14 +179,14 @@ async def get_indicator_path(
 async def get_indicator_history(
     config_id: int,
     gebied_id: str, 
-    indicator_uuid: str,
+    indicator_uuid: UUID,
     db: Session = Depends(get_db)
 ):
     """
     Haal tijdreeks data op voor indicator/gebied combinatie (Line Chart)
     """
     service = KompasService(db)
-    result = service.get_indicator_history(config_id, gebied_id, indicator_uuid)
+    result = service.get_indicator_history(config_id, gebied_id, str(indicator_uuid))
     
     if not result:
         raise HTTPException(
@@ -199,7 +200,7 @@ async def get_indicator_history(
 
 @router.get("/indicator/{indicator_uuid}/top-buurten")
 async def get_top_buurten(
-    indicator_uuid: str,
+    indicator_uuid: UUID,
     gebied_id: Optional[str] = Query(None),
     limit: int = Query(default=3, ge=1, le=10),
     db: Session = Depends(get_db)
@@ -218,7 +219,7 @@ async def get_top_buurten(
     - `top_negatief`: Buurten met laagste Z-score
     """
     service = KompasService(db)
-    result = service.get_top_afwijkende_buurten(indicator_uuid, limit, gebied_id)
+    result = service.get_top_afwijkende_buurten(str(indicator_uuid), limit, gebied_id)
     
     if not result:
         raise HTTPException(

@@ -5,6 +5,7 @@ from collections import defaultdict
 import difflib
 import re
 
+from omnitwin.fouten import GebruikersFout
 from omnitwin.services.llm_service import LLMService
 from omnitwin.services.logging_service import AppLogger
 
@@ -147,7 +148,7 @@ class DeduplicatieService:
         primary_row = self.db.execute(check_query, {"uuid": primary_uuid}).fetchone()
         
         if not primary_row:
-            raise ValueError("Primary indicator niet gevonden")
+            raise GebruikersFout("Primary indicator niet gevonden")
         
         primary_id = primary_row[0]
         primary_naam = primary_row[1]

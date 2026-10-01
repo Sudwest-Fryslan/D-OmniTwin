@@ -238,9 +238,7 @@ def _load_local_file(filename: str, layer_name: str = None) -> dict:
 
     except HTTPException:
         raise
-    except Exception as e:
-        logger.error("Fout bij laden lokaal bestand %s: %s", filename, e)
-        raise HTTPException(500, f"Fout bij laden van {filename}: {str(e)}")
+    # Andere fouten: centrale foutafhandeling (500 met correlatie-id, details in de log; #203)
 
 
 async def _fetch_wfs(row) -> dict:
@@ -615,7 +613,7 @@ async def admin_lokale_bestanden(
                 bestanden.append({
                     "bestandsnaam": f.name,
                     "grootte_kb": round(f.stat().st_size / 1024, 1),
-                    "fout": str(e),
+                    "fout": "Niet leesbaar als geo-bestand (details in de serverlog)",
                 })
 
     return {"bestanden": bestanden, "totaal": len(bestanden)}
@@ -666,7 +664,8 @@ async def admin_upload_bestand(
     except Exception as e:
         # Ongeldig bestand: verwijder weer
         filepath.unlink(missing_ok=True)
-        raise HTTPException(400, f"Bestand kon niet geopend worden als geo-bestand: {str(e)}")
+        logger.warning("Upload %s niet leesbaar als geo-bestand: %s", safe_name, e)
+        raise HTTPException(400, "Bestand kon niet geopend worden als geo-bestand (GPKG of GeoJSON).")
 
     logger.info("Bestand geüpload: %s (%d features, %s)",
                 safe_name, meta["features"], meta["crs"])
