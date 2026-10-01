@@ -36,10 +36,12 @@ AANTAL_SAMPLE_BUURTEN = 13
 # pollt standaard per animatieframe; de helpers hieronder pollen op een vast interval.
 
 _POLL_MS = 100
-_VLOT_MS = 250  # een frame binnen deze tijd na het vorige: de renderer loopt weer
+# Een frame binnen deze tijd na het vorige: de renderer loopt weer. Ruim boven een gewoon
+# (ook traag) frame, ruim onder de gaten van seconden tijdens shadercompilatie.
+_VLOT_MS = 1000
 
 
-def wacht_op_frames(page: Page, aantal: int = 5, timeout: int = TRAAG_MS):
+def wacht_op_frames(page: Page, aantal: int = 3, timeout: int = TRAAG_MS):
     """Wacht tot de renderer weer vlot tekent: `aantal` animatieframes achter elkaar, elk
     binnen _VLOT_MS na het vorige (geen shadercompilatie of ander lang werk ertussen)."""
     page.evaluate(
