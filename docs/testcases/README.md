@@ -82,6 +82,12 @@ PLAN_[beschrijvende-naam-kebab-case].md
 | [TC-06-002](./06-integratie-e2e/TC-06-002_multi-gebiedsdossier.md) | Multi-Gebiedsdossier — Zones-analyse | 📋 Nog te implementeren |
 | [TC-06-003](./gebiedsagenda_ijselmeerkust/TC-06-003_gebiedsagenda_ijsselmeerkust_usecase.md) | Integraal Gebiedsgericht Werken — IJsselmeergebied-Wadden | 🧪 Toetsbaar |
 | [TC-06-004](./06-integratie-e2e/TC-06-004_chat-ai-en-beleidsadviseur-bolsward.md) | Chat (AI) en beleidsadviseur — Bolsward-Zuidoost | ✅ (stap 1-4 met LLM) |
+| [TC-06-005](../../usecases/energiearmoede/README.md) | Use case energiearmoede (Bolsward) | ⚠️ |
+| [TC-06-006](../../usecases/hittestress/README.md) | Use case hittestress (Bolsward) | ⚠️ |
+| [TC-06-007](../../usecases/brede-welvaart/README.md) | Use case brede welvaart (Bolsward) | ⚠️ |
+| [TC-06-008](../../usecases/sociale-cohesie/README.md) | Use case sociale cohesie (Bolsward) | ⚠️ |
+
+De use cases zijn **bundels van data, inrichting en stappen** en staan in [`usecases/`](../../usecases/README.md).
 
 ### Nulmetingen & Reviews
 | ID / Document | Naam | Regio / Focus |

@@ -274,6 +274,7 @@ export const DashboardPage: React.FC = () => {
                             <Search size={16} style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--color-text-muted)' }} />
                             <input
                                 type="text"
+                                aria-label="Zoek indicator"
                                 placeholder="Zoek indicator..."
                                 value={search}
                                 onChange={(e) => setSearch(e.target.value)}

@@ -129,6 +129,29 @@ def test_tc_06_001_fase5_export_bronvermelding(app_page, tmp_path: Path):
     assert "Kerncijfers" in workum["bron"] and re.fullmatch(r"(19|20)\d{2}", workum["jaar"])
 
 
+def test_chatactie_open_kompas_laadt_selectie(app_page):
+    """#79: de chatactie 'Open het D-Omni Kompas' laadt de huidige selectie in het
+    Kompas, net als de knop 'Open Kompas Venster' in het Kompas-paneel."""
+    page = app_page
+    laad_buurtenkaart(page)
+    selecteer_buurt_via_app(page, WORKUM, shift=True)
+    selecteer_buurt_via_app(page, KOUDUM, shift=True)
+    wacht_op_selectie(page, [WORKUM, KOUDUM])
+    expect(page.locator("#kompas-window")).to_be_hidden()
+
+    page.get_by_role("button", name="D-Omni Assistent", exact=True).click()
+    page.locator("#chat-input").fill("help")
+    page.get_by_role("button", name="Vraag versturen").click()
+    _chat_actie(page, r"Beleidsadviseur")
+    _chat_actie(page, r"Open het D-Omni Kompas")
+
+    expect(page.locator("#kompas-window")).to_be_visible()
+    expect(page.locator("#kompas-info")).to_contain_text("Gemiddelde van 2 gebieden", timeout=30_000)
+    expect(page.locator("#kompas-info")).to_contain_text("Workum, Koudum")
+    wacht_op_zonnediagram(page)
+    assert page.console_fouten == [], "\n".join(page.console_fouten)
+
+
 @pytest.mark.xfail(strict=True, reason="TC-06-001 fase 2: thema Verkeer heeft in de sample geen indicatoren "
                                        "(bereikbaarheid/afstand OV ontbreekt)")
 def test_tc_06_001_fase2_verkeer_bereikbaarheid(app_page):

@@ -59,15 +59,18 @@ init_db() {
     done
     echo "✅ Database schema succesvol aangemaakt."
 
+    # Altijd: het product zonder data (stuurdata, indicatordefinities, Kompas)
+    python /app/init_data/scripts/load_sample.py --stap definities
+    echo "✅ Stuurdata en definities ingeladen."
+
+    # Data komt uit de use cases (usecases/<naam>/): gebieden, waarden en inrichting per use case
     LOAD_SAMPLE="${LOAD_SAMPLE_DATA:-true}"
     if [ "$LOAD_SAMPLE" = "true" ] || [ "$LOAD_SAMPLE" = "1" ]; then
-        echo "🌱 LOAD_SAMPLE_DATA is actief: Sample dataset (12 SWF buurten) inladen..."
-        python /app/init_data/scripts/load_sample.py --stap alle
-        echo "✅ Sample dataset succesvol ingeladen."
+        echo "🌱 LOAD_SAMPLE_DATA is actief: alle use cases inladen..."
+        python /app/init_data/scripts/laad_usecase.py --alle
+        echo "✅ Use cases ingeladen."
     else
-        echo "⚙️ LOAD_SAMPLE_DATA niet actief: Alleen stuurdata inladen..."
-        python /app/init_data/scripts/load_sample.py --stap stuurdata
-        echo "✅ Stuurdata ingeladen."
+        echo "⚙️ LOAD_SAMPLE_DATA niet actief: geen data, alleen het product."
     fi
 
     # Admin gebruiker initialiseren
@@ -90,6 +93,14 @@ init_db() {
     psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -c "NOTIFY pgrst, 'reload schema';" >/dev/null 2>&1 || true
 }
 
+# Embeddings voor AI-zoeken en de chat (#139). Draait ook bij een bestaande database:
+# het script vectoriseert alleen indicatoren zonder embedding en laadt het model alleen
+# als er iets te doen is. Geen model of geen netwerk: waarschuwing, init gaat door.
+generate_embeddings() {
+    echo "🧠 Embeddings voor AI-zoeken genereren..."
+    python /app/scripts/ai/genereer_embeddings.py || echo "⚠️ Embeddings niet gegenereerd: AI-zoeken en de chat vinden geen indicatoren. Later opnieuw: docker compose run --rm db-init (of python scripts/ai/genereer_embeddings.py)."
+}
+
 echo "============================================================"
 echo "🌍 D-OmniTwin — Container Startup"
 echo "============================================================"
@@ -98,6 +109,7 @@ wait_for_db
 
 if [ "$1" = "init" ]; then
     init_db
+    generate_embeddings
     echo "✅ Initialisatie klaar."
     exit 0
 fi
