@@ -15,6 +15,7 @@ from sqlalchemy.orm import Session
 from src.database import get_db
 from services.ai_search_service import AISearchService
 from services.llm_service import LLMService
+from services.gemeente_validatie import valideer_gemeente_acties
 from typing import List, Dict, Any, Optional
 import re
 import logging
@@ -330,6 +331,20 @@ def chat(
         intent = intelligent_response["intent"]
         narrative = intelligent_response["narrative"]
         acties_data = intelligent_response["acties"]
+
+        # Gemeentekeuze van het model controleren tegen de database (#140)
+        try:
+            aantal_voor = len(acties_data or [])
+            acties_data = valideer_gemeente_acties(acties_data, db)
+            if len(acties_data) < aantal_voor:
+                AppLogger.warning(
+                    f"{aantal_voor - len(acties_data)} ongeldige SELECTEER_GEMEENTE-actie(s) weggelaten",
+                    category="LLM_CHAT")
+        except Exception as e:
+            db.rollback()
+            AppLogger.error(f"Gemeentevalidatie mislukt, gemeente-acties weggelaten: {e}", category="LLM_CHAT")
+            acties_data = [a for a in (acties_data or [])
+                           if not (isinstance(a, dict) and a.get("type") == "SELECTEER_GEMEENTE")]
         
         # Mappen van LLM actie-dicts naar ActieKnop Pydantic modellen
         acties = []
