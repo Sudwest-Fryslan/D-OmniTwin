@@ -1,7 +1,7 @@
 # D-OmniTwin 🌍🔐
 > Digitale spiegel van de fysieke leefomgeving — open source, federatief, dataspace-ready
 
-**Versie:** v1.0.0-beta (pre-release) | **Laatste update:** 20 juli 2026 | **Status:** 🟢 ACTIEF (Sprint 22)  
+**Versie:** 0.1.0 (eerste release in voorbereiding, zie [releasebeleid](./docs/9-beheer/releasebeleid.md)) | **Laatste update:** 20 juli 2026 | **Status:** 🟢 ACTIEF (Sprint 22)  
 **Security:** API key auth actief, CORS locked, Security headers actief  
 [![Licentie: EUPL 1.2](https://img.shields.io/badge/Licentie-EUPL_1.2-blue)](./LICENSE) [![Docs: CC BY 4.0](https://img.shields.io/badge/Docs-CC_BY_4.0-green)](./LICENSE-DOCS)
 
@@ -452,5 +452,5 @@ Zie [NOTICE.md](./NOTICE.md) voor informatie over third-party licenties.
 
 ---
 
-**Versie:** v1.0.0-beta (pre-release) | **Laatste Update:** 20 juli 2026 | **Licentie:** EUPL 1.2 / CC BY 4.0  
+**Versie:** 0.1.0 (eerste release in voorbereiding, zie [releasebeleid](./docs/9-beheer/releasebeleid.md)) | **Laatste Update:** 20 juli 2026 | **Licentie:** EUPL 1.2 / CC BY 4.0  
 *Ontwikkeld door Gemeente Súdwest-Fryslân in samenwerking met Leeuwarden, Tytsjerksteradiel & DataFryslân*
