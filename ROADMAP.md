@@ -9,7 +9,7 @@
 
 ### Wat Werkt Nu (Dag 15 - 30 jan 2026)
 
-![3D Kaart Prototype](file:///home/tl_admin/.gemini/antigravity/brain/28bf6700-acd3-4a0b-96c8-4b84484d1e1e/uploaded_image_1_1768646713724.png)
+![3D Kaart Prototype](docs/images/kaart-bolsward.jpg)
 
 ✅ **Backend API** (FastAPI)
 - 5 RESTful endpoints
@@ -53,7 +53,7 @@
 
 **Rationale:** Kaart moet centraal staan, niet verborgen achter sidebar
 
-![Huidige Layout](file:///home/tl_admin/.gemini/antigravity/brain/28bf6700-acd3-4a0b-96c8-4b84484d1e1e/uploaded_image_1_1768646713724.png)
+![Huidige Layout](docs/images/kaart-bolsward.jpg)
 
 **Nieuwe Layout:**
 ```
@@ -284,7 +284,7 @@
 
 **Visie:** Kompas is het centrale navigatie-element voor indicatoren
 
-![Kompas Screenshot](file:///home/tl_admin/.gemini/antigravity/brain/28bf6700-acd3-4a0b-96c8-4b844d1e1e/uploaded_image_0_1768646713724.png)
+![Kompas Screenshot](docs/images/kompas-bolsward-zuidoost.jpg)
 
 #### 2.1 Sunburst Visualisatie (D3.js)
 
