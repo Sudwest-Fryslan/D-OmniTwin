@@ -77,6 +77,9 @@ class _Result:
     def fetchone(self):
         return self._row
 
+    def fetchall(self):
+        return [] if self._row is None else [self._row]
+
 
 class FakeDB:
     """Minimale Session: llm_config-rij en (lege) system_prompts."""
@@ -91,6 +94,9 @@ class FakeDB:
         if "llm_config" in sql:
             return _Result(self.config_row)
         return _Result(None)  # system_prompts: val terug op de standaardprompt
+
+    def rollback(self):
+        pass
 
     def commit(self):
         pass

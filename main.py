@@ -35,21 +35,28 @@ app = FastAPI(
 # SECURITY: Headers Middleware
 # ============================================================================
 class SecurityHeadersMiddleware(BaseHTTPMiddleware):
-    """Add security headers to all responses."""
+    """Add security headers to all responses.
+
+    Terugval voor `python run_dev.py` zonder Traefik. In de Docker-stack zijn de
+    headers uit deploy/traefik/dynamic.yml leidend (ook voor /api/data en
+    /api/geo); Traefik overschrijft deze waarden.
+    """
     
     async def dispatch(self, request: Request, call_next):
         response = await call_next(request)
         
         # Content Security Policy - STRICT LOCAL ONLY
-        # Required for: MapLibre GL, D3.js, deck.gl, Chart.js (basiskaart: PDOK)
+        # MapLibre GL, D3.js, deck.gl, Chart.js en het lettertype Inter worden zelf gehost
+        # onder /static/vendor (#117); geen CDN- of font-domeinen meer nodig.
+        # Externe verbindingen zijn alleen data-API's (basiskaart en kaartlagen: PDOK).
         # Local Swagger UI assets (no external CDNs needed for docs)
         response.headers["Content-Security-Policy"] = (
             "default-src 'self'; "
-            "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://unpkg.com https://cdn.jsdelivr.net; "
-            "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net https://unpkg.com; "
-            "font-src 'self' https://fonts.gstatic.com data:; "
+            "script-src 'self' 'unsafe-inline' 'unsafe-eval'; "
+            "style-src 'self' 'unsafe-inline'; "
+            "font-src 'self' data:; "
             "img-src 'self' data: https: blob:; "
-            "connect-src 'self' https://data.3dbag.nl https://api.3dbag.nl https://service.pdok.nl https://api.pdok.nl; "
+            "connect-src 'self' https://api.3dbag.nl https://service.pdok.nl https://api.pdok.nl; "
             "worker-src 'self' blob:; "
             "child-src 'self' blob:; "
             "frame-src 'self';"
@@ -248,6 +255,15 @@ async def serve_admin_spa(request: Request, catchall: str):
     # Development fallback
     return HTMLResponse(content="<h1>Admin Panel Niet Gebouwd</h1><p>Draai `npm run build` in de admin-panel map.</p>", status_code=404)
 
+@app.get("/.well-known/security.txt", include_in_schema=False)
+async def security_txt():
+    """security.txt (RFC 9116): waar je kwetsbaarheden meldt."""
+    from fastapi.responses import FileResponse
+    return FileResponse(
+        os.path.join("static", ".well-known", "security.txt"),
+        media_type="text/plain; charset=utf-8",
+    )
+
 @app.get("/docs", include_in_schema=False)
 async def custom_swagger_ui_html():
     """Serve custom Swagger UI with local assets."""
@@ -257,6 +273,7 @@ async def custom_swagger_ui_html():
         oauth2_redirect_url=app.swagger_ui_oauth2_redirect_url,
         swagger_js_url="/static/swagger-ui/swagger-ui-bundle.js",
         swagger_css_url="/static/swagger-ui/swagger-ui.css",
+        swagger_favicon_url="/static/admin-panel/favicon.ico",  # lokaal i.p.v. fastapi.tiangolo.com (CSP)
     )
 
 @app.get("/api")

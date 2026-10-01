@@ -13,6 +13,7 @@ import warnings
 from playwright.sync_api import Page, expect
 
 # Buurten uit de sample dataset (init_data/sample/2_brondata/sample_buurten.geojson)
+BOLSWARD_ZUIDOOST = "BU19000002"
 WORKUM = "BU19000200"
 HINDELOOPEN = "BU19000202"
 KOUDUM = "BU19000300"

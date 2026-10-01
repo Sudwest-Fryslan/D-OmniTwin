@@ -650,12 +650,78 @@ async function loadGemeenten() {
     if (currentGemeente) {
         input.value = currentGemeente.naam;
         codeInput.value = currentGemeente.code;
+    } else if (state.currentGemeenteCode) {
+        // Opgeslagen code die niet in de lijst staat: niet verbergen (#140)
+        input.value = state.currentGemeenteCode;
+        codeInput.value = state.currentGemeenteCode;
     } else {
         input.value = 'Alle gemeenten';
         codeInput.value = '';
     }
 
     info.textContent = `${gemeenten.length - 1} gemeenten beschikbaar`;
+    updateGemeenteFilterChip();
+}
+
+// ---- Actief gemeentefilter zichtbaar maken (#140) ----
+
+function gemeenteNaam(code) {
+    const gemeente = loadedGemeenten.find(g => g.code === code)
+        || FRIESE_GEMEENTEN.find(g => g.code === code);
+    return gemeente ? gemeente.naam : `code ${code}`;
+}
+
+/**
+ * Toont het actieve gemeentefilter als chip boven de kaart.
+ * aantalGebieden === 0: melding dat het filter niets oplevert, met wisknop.
+ */
+function updateGemeenteFilterChip(aantalGebieden = null) {
+    const chip = document.getElementById('gemeente-filter-chip');
+    if (!chip) return;
+    const code = state.currentGemeenteCode;
+    if (!code) {
+        chip.hidden = true;
+        chip.classList.remove('leeg');
+        return;
+    }
+    const naam = gemeenteNaam(code);
+    const leeg = aantalGebieden === 0;
+    document.getElementById('gemeente-filter-tekst').textContent = leeg
+        ? `Geen gebieden in gemeente ${naam} — filter wissen?`
+        : `Gemeente: ${naam}`;
+    const knop = document.getElementById('gemeente-filter-wis');
+    knop.setAttribute('aria-label', `Gemeentefilter ${naam} wissen`);
+    knop.title = `Gemeentefilter ${naam} wissen`;
+    chip.classList.toggle('leeg', leeg);
+    chip.hidden = false;
+}
+
+/** Zet het gemeentefilter terug naar 'Alle gemeenten' en herlaadt de kaart. */
+function resetGemeenteFilter() {
+    const input = document.getElementById('gemeente-input');
+    const codeInput = document.getElementById('gemeente-code');
+    const info = document.getElementById('gemeente-info');
+
+    state.currentGemeenteCode = '';
+    if (codeInput) codeInput.value = '';
+    localStorage.setItem('omnitwin-gemeente', '');
+    if (input) input.value = 'Alle gemeenten';
+    if (info) info.textContent = 'Alle gemeenten';
+    updateGemeenteFilterChip();
+
+    state.currentData = null;
+    clearGebiedSelection();
+    updateSelectionUI();
+
+    if (window.kompasViz && window.kompasViz.currentConfigId) {
+        window.kompasViz.currentGebiedId = null;
+        window.kompasViz.loadHierarchie(window.kompasViz.currentConfigId);
+    }
+
+    // Herlaad kaart data zonder gemeente filter
+    if (state.currentGebiedstype) {
+        loadKaartData();
+    }
 }
 
 function setupGemeenteSelector() {
@@ -665,8 +731,11 @@ function setupGemeenteSelector() {
 
     if (!input) return;
 
+    const wisKnop = document.getElementById('gemeente-filter-wis');
+    if (wisKnop) wisKnop.addEventListener('click', resetGemeenteFilter);
+
     // Handle selection from datalist
-    input.addEventListener('change', (e) => {
+input.addEventListener('change', (e) => {
         const inputValue = e.target.value;
         const gemeente = loadedGemeenten.find(g => g.naam === inputValue);
 
@@ -677,6 +746,7 @@ function setupGemeenteSelector() {
 
             console.log(`📍 Gemeente: ${gemeente.naam} (${gemeente.code || 'alle'})`);
             info.textContent = gemeente.code ? `Geselecteerd: ${gemeente.naam}` : 'Alle gemeenten';
+            updateGemeenteFilterChip();
 
             state.currentData = null;
             clearGebiedSelection();
@@ -698,27 +768,9 @@ function setupGemeenteSelector() {
                 loadKaartData();
             }
         } else if (inputValue === '' || inputValue.toLowerCase() === 'alle') {
-            state.currentGemeenteCode = '';
-            codeInput.value = '';
-            localStorage.setItem('omnitwin-gemeente', '');
-            input.value = 'Alle gemeenten';
-            info.textContent = 'Alle gemeenten';
-
-            state.currentData = null;
-            clearGebiedSelection();
-            updateSelectionUI();
-            
-            if (window.kompasViz && window.kompasViz.currentConfigId) {
-                window.kompasViz.currentGebiedId = null;
-                window.kompasViz.loadHierarchie(window.kompasViz.currentConfigId);
-            }
-
-            // Herlaad kaart data zonder gemeente filter
-            if (state.currentGebiedstype) {
-                loadKaartData();
-            }
+            resetGemeenteFilter();
         }
-    });
+});
 
     // Select all text on focus for easy replacement
     input.addEventListener('focus', () => {
@@ -894,7 +946,8 @@ async function loadKaartData() {
         if (gtCountEl && geojson.features) {
             gtCountEl.textContent = `${geojson.features.length} gebieden in selectie`;
         }
-        updateLegenda(geojson);
+        updateGemeenteFilterChip(geojson.features ? geojson.features.length : null);
+updateLegenda(geojson);
 
         const geojsonBtn = document.getElementById('export-geojson-btn');
         const csvBtn = document.getElementById('export-csv-btn');
@@ -1007,13 +1060,13 @@ async function loadBag3DBuildings() {
                 zoom: zoom,
                 pitch: 50,
                 bearing: -15,
-                transitionDuration: 1200,
+                ...A11y.cameraTransition(1200),
             };
         } else {
             state.currentViewState = {
                 ...state.currentViewState,
                 pitch: 50,
-                transitionDuration: 800,
+                ...A11y.cameraTransition(800),
             };
         }
         state.deckgl.setProps({ viewState: state.currentViewState });
@@ -1937,8 +1990,7 @@ function fitBounds(geojson) {
         zoom,
         pitch: state.enable3D ? 45 : 0,
         bearing: 0,
-        transitionDuration: 1000,
-        transitionInterpolator: new deck.FlyToInterpolator()
+        ...A11y.cameraTransition(1000, true)
     };
     state.deckgl.setProps({ viewState: state.currentViewState });
 }
@@ -2456,12 +2508,31 @@ async function displayMultiGebiedComparison(lastClickedData) {
 }
 
 /**
+ * Toon een rapportkeuze-modal als toegankelijke dialoog (#67): role="dialog",
+ * focus in de dialoog en vastgehouden, Escape of klik op de achtergrond sluit,
+ * focus terug naar de knop die de modal opende.
+ * @returns {Function} sluit()
+ */
+function toonRapportDialoog(modal) {
+    const bestaand = document.getElementById(modal.id);
+    if (bestaand) (bestaand._sluit || (() => bestaand.remove()))();
+
+    document.body.appendChild(modal);
+    let dialoog = null;
+    const sluit = () => {
+        if (dialoog) dialoog.close();
+        modal.remove();
+    };
+    dialoog = A11y.openDialog(modal.firstElementChild, { labelledBy: 'rapport-modal-titel', onEscape: sluit });
+    modal._sluit = sluit;
+    modal.addEventListener('click', (e) => { if (e.target === modal) sluit(); });
+    return sluit;
+}
+
+/**
  * Sprint 8D: Rapport type keuze modal — Gebiedsdossier vs Benchmark
  */
 function openRapportTypeModal(gebiedId, baseUrl) {
-    // Verwijder bestaande modal indien aanwezig
-    document.getElementById('rapport-type-modal')?.remove();
-
     const modal = document.createElement('div');
     modal.id = 'rapport-type-modal';
     modal.style.cssText = `
@@ -2476,7 +2547,7 @@ function openRapportTypeModal(gebiedId, baseUrl) {
             border-radius: 12px; padding: 1.5rem; width: 340px;
             box-shadow: 0 20px 60px rgba(0,0,0,0.5);
         ">
-            <h3 style="margin:0 0 0.5rem; font-size:1rem;">Kies Rapport Type</h3>
+            <h3 id="rapport-modal-titel" style="margin:0 0 0.5rem; font-size:1rem;">Kies Rapport Type</h3>
             <p style="margin:0 0 1.25rem; font-size:0.85rem; opacity:0.6;">
                 Welk rapport wil je genereren?
             </p>
@@ -2530,7 +2601,7 @@ function openRapportTypeModal(gebiedId, baseUrl) {
         </div>
     `;
 
-    document.body.appendChild(modal);
+    const sluit = toonRapportDialoog(modal);
 
     document.getElementById('rapport-modal-deelgebied-single')?.addEventListener('click', () => {
         const ids = Array.from(state.selectedGebiedIds).length > 0 ? Array.from(state.selectedGebiedIds) : [gebiedId];
@@ -2543,30 +2614,27 @@ function openRapportTypeModal(gebiedId, baseUrl) {
             extraParams += `&woonplaatsen=${woonplaatsen}`;
         }
         window.open(`${baseUrl}/admin/rapport/deelgebied?gebieden=${ids.join(',')}&naam=${naam}&gemeente=${gemeente}${extraParams}`, '_blank');
-        modal.remove();
+        sluit();
     });
     document.getElementById('rapport-modal-dossier').addEventListener('click', () => {
         window.open(`${baseUrl}/admin/rapport/${gebiedId}`, '_blank');
-        modal.remove();
+        sluit();
     });
     document.getElementById('rapport-modal-thema').addEventListener('click', () => {
         window.open(`${baseUrl}/admin/rapport/thema-analyse?gebieden=${gebiedId}`, '_blank');
-        modal.remove();
+        sluit();
     });
     document.getElementById('rapport-modal-benchmark').addEventListener('click', () => {
         window.open(`${baseUrl}/admin/rapport/benchmark?gebied_a=${gebiedId}`, '_blank');
-        modal.remove();
+        sluit();
     });
-    document.getElementById('rapport-modal-sluiten').addEventListener('click', () => modal.remove());
-    modal.addEventListener('click', (e) => { if (e.target === modal) modal.remove(); });
+    document.getElementById('rapport-modal-sluiten').addEventListener('click', sluit);
 }
 
 /**
  * Multi-select rapport keuze modal — Benchmark vs Multi-Gebiedsdossier
  */
 function openMultiSelectRapportModal(ids, baseUrl) {
-    document.getElementById('rapport-type-modal')?.remove();
-
     const deelgebiedNaam = state.selectedDeelgebiedNaam || `${ids.length} buurten`;
     const modal = document.createElement('div');
     modal.id = 'rapport-type-modal';
@@ -2582,7 +2650,7 @@ function openMultiSelectRapportModal(ids, baseUrl) {
             border-radius: 12px; padding: 1.5rem; width: 380px;
             box-shadow: 0 20px 60px rgba(0,0,0,0.5);
         ">
-            <h3 style="margin:0 0 0.5rem; font-size:1rem;">Kies Rapport Type</h3>
+            <h3 id="rapport-modal-titel" style="margin:0 0 0.5rem; font-size:1rem;">Kies Rapport Type</h3>
             <p style="margin:0 0 1.25rem; font-size:0.85rem; opacity:0.6;">
                 ${ids.length} gebieden geselecteerd ${state.selectedDeelgebiedNaam ? `(${escapeHtml(state.selectedDeelgebiedNaam)})` : ''}
             </p>
@@ -2635,7 +2703,7 @@ function openMultiSelectRapportModal(ids, baseUrl) {
         </div>
     `;
 
-    document.body.appendChild(modal);
+    const sluit = toonRapportDialoog(modal);
 
     document.getElementById('rapport-modal-deelgebied').addEventListener('click', () => {
         const gebiedenParam = ids.join(',');
@@ -2648,12 +2716,12 @@ function openMultiSelectRapportModal(ids, baseUrl) {
             extraParams += `&woonplaatsen=${woonplaatsen}`;
         }
         window.open(`${baseUrl}/admin/rapport/deelgebied?gebieden=${gebiedenParam}&naam=${naam}&gemeente=${gemeente}${extraParams}`, '_blank');
-        modal.remove();
+        sluit();
     });
     document.getElementById('rapport-modal-benchmark').addEventListener('click', () => {
         const [a, ...rest] = ids;
         window.open(`${baseUrl}/admin/rapport/benchmark?gebied_a=${a}&gebieden_b=${rest.join(',')}`, '_blank');
-        modal.remove();
+        sluit();
     });
     document.getElementById('rapport-modal-multi-gebied').addEventListener('click', () => {
         const gebiedenParam = ids.join(',');
@@ -2666,7 +2734,7 @@ function openMultiSelectRapportModal(ids, baseUrl) {
             extraParams += `&woonplaatsen=${woonplaatsen}`;
         }
         window.open(`${baseUrl}/admin/rapport/multi-gebied?gebieden=${gebiedenParam}&naam=${naam}${extraParams}`, '_blank');
-        modal.remove();
+        sluit();
     });
     document.getElementById('rapport-modal-thema-analyse').addEventListener('click', () => {
         const gebiedenParam = ids.join(',');
@@ -2678,10 +2746,9 @@ function openMultiSelectRapportModal(ids, baseUrl) {
             extraParams += `&woonplaatsen=${woonplaatsen}`;
         }
         window.open(`${baseUrl}/admin/rapport/thema-analyse?gebieden=${gebiedenParam}&naam=${naam}${extraParams}`, '_blank');
-        modal.remove();
+        sluit();
     });
-    document.getElementById('rapport-modal-sluiten-multi').addEventListener('click', () => modal.remove());
-    modal.addEventListener('click', (e) => { if (e.target === modal) modal.remove(); });
+    document.getElementById('rapport-modal-sluiten-multi').addEventListener('click', sluit);
 }
 
 // ============================================================================
@@ -2983,7 +3050,7 @@ function setupEventListeners() {
         state.currentViewState = {
             ...currentViewState,
             pitch: state.enable3D ? 45 : 0,
-            transitionDuration: 500
+            ...A11y.cameraTransition(500)
         };
         state.deckgl.setProps({
             viewState: state.currentViewState
@@ -3187,8 +3254,9 @@ function setupEventListeners() {
             // Update state
             state.currentGemeenteCode = code;
             localStorage.setItem('omnitwin-gemeente', code);
-            
-            // Clear selection and reload map
+            updateGemeenteFilterChip();
+
+// Clear selection and reload map
             state.currentData = null;
             clearGebiedSelection();
             updateSelectionUI();
@@ -3657,8 +3725,7 @@ function flyToGebied(feature, clickCoordinate = null) {
                 longitude: centroid[0] + lngOffset,
                 latitude: centroid[1],
                 zoom: zoom,
-                transitionDuration: 800,
-                transitionInterpolator: new deck.FlyToInterpolator()
+                ...A11y.cameraTransition(800, true)
             }
         });
 }
@@ -3670,6 +3737,7 @@ function flyToGebied(feature, clickCoordinate = null) {
 // ============================================================================
 
 const ONBOARDING_KEY = 'omnitwin_welcomed';
+let welcomeDialog = null;
 
 /**
  * Initialiseer de welkomstmodal.
@@ -3689,13 +3757,8 @@ function initOnboarding() {
         if (e.target === overlay) dismissWelcomeModal();
     });
 
-    // Sluit modal bij Escape
-    document.addEventListener('keydown', function onEscapeWelcome(e) {
-        if (e.key === 'Escape') {
-            dismissWelcomeModal();
-            document.removeEventListener('keydown', onEscapeWelcome);
-        }
-    });
+    // Focus in de modal en vasthouden; Escape sluit (#67)
+    welcomeDialog = A11y.openDialog(overlay, { labelledBy: 'welcome-title', onEscape: dismissWelcomeModal });
 
     console.log('👋 Welkomstmodal getoond (eerste bezoek)');
 }
@@ -3727,6 +3790,11 @@ function startOnboarding(action) {
 function dismissWelcomeModal() {
     const overlay = document.getElementById('welcome-modal-overlay');
     if (!overlay) return;
+
+    if (welcomeDialog) {
+        welcomeDialog.close();
+        welcomeDialog = null;
+    }
 
     overlay.classList.add('fade-out');
     setTimeout(() => {

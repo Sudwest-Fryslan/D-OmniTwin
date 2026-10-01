@@ -1,0 +1,65 @@
+{
+  "id": "TC-06-006",
+  "titel": "Klimaatadaptatie: hittestress en kwetsbaarheid",
+  "persona": {
+    "rol": "Stedenbouwkundige / GGD",
+    "vraag": "Ik werk aan hittestress in Bolsward. Welke buurt ligt het verst van een koele plek, en waar wonen relatief de meeste 65-plussers?",
+    "besluit": "Waar eerst vergroenen en koele plekken inrichten?"
+  },
+  "data": {
+    "gebiedstype": "CBS Buurten",
+    "focus": "BU19000002",
+    "gebieden": {
+      "BU19000001": "Bolsward-Noord",
+      "BU19000002": "Bolsward-Zuidoost",
+      "BU19000004": "Bolsward-Noordoost"
+    },
+    "dataset": "init_data/sample",
+    "indicatoren": [
+      {
+        "naam": "Afstand tot koele plek",
+        "richting": "lager_is_beter"
+      },
+      {
+        "naam": "Oppervlak groen per inwoner",
+        "richting": "hoger_is_beter"
+      },
+      {
+        "naam": "65+ jaar",
+        "richting": "neutraal"
+      },
+      {
+        "naam": "Ervaren gezondheid",
+        "richting": "hoger_is_beter"
+      },
+      {
+        "naam": "Verhouding oppervlakte water / verharding",
+        "richting": "hoger_is_beter"
+      }
+    ],
+    "ontbreekt_nog": [
+      "% 75+ (alleen 65+ beschikbaar)",
+      "Gevoelstemperatuur / hitte-eiland (Klimaateffectatlas)",
+      "Boomkroonbedekking"
+    ],
+    "afgeleid": [
+      {
+        "naam": "65+ jaar (%)",
+        "teller": "65+ jaar",
+        "noemer": "Inwoners",
+        "factor": 100,
+        "eenheid": "%",
+        "richting": "neutraal"
+      }
+    ]
+  },
+  "inrichting": {
+    "kompas_configuratie": "Klimaat Kompas",
+    "chat_scenario": null
+  },
+  "ai_zoekvraag": "afstand tot een koele plek bij hitte",
+  "verwacht": {
+    "vraag_zoekwoord": "koele plek",
+    "verwacht": "Bolsward-Noord ligt het verst van een koele plek (246 m), Bolsward-Noordoost het dichtst bij (206 m). Relatief de meeste 65-plussers: Bolsward-Noord (26%)."
+  }
+}
