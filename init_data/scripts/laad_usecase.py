@@ -40,9 +40,12 @@ USECASES_DIR = ROOT / "usecases"
 NAMESPACE = uuid.UUID("6f1d3c2a-0b7e-4c8e-9a51-d0a1b2c3e4f5")
 
 RICHTING = {
-    # richting -> (interpretatie_logica, score_type); zie report_service en color_scale_service
+    # richting -> (interpretatie_logica, score_type); zie report_service en color_scale_service.
+    # Neutraal: score_type blijft '+/+' (kaartkleur), interpretatie_logica 'neutraal' zegt
+    # dat er geen oordeel bij hoort (de chat zegt dan niet 'beter' of 'slechter', #149).
     "hoger_is_beter": ("pos_is_pos", "+/+"),
     "lager_is_beter": ("-/+", "+/-"),
+    "neutraal": ("neutraal", "+/+"),
 }
 
 
@@ -59,7 +62,7 @@ def pakketten(namen, alle):
 def zet_richting(cur, indicatoren):
     for ind in indicatoren:
         if ind["richting"] not in RICHTING:
-            continue  # neutraal: niet aanpassen
+            continue  # onbekende richting: test_usecase_pakketten vangt dit af
         logica, score_type = RICHTING[ind["richting"]]
         cur.execute(
             "UPDATE indicatoren SET interpretatie_logica = %s, score_type = %s, updated_at = CURRENT_TIMESTAMP "
@@ -68,6 +71,13 @@ def zet_richting(cur, indicatoren):
         )
         if cur.rowcount == 0:
             print(f"   ⚠️ indicator niet gevonden: {ind['naam']}")
+        if ind.get("eenheid"):
+            # Eenheid aanvullen waar de bron die niet meegaf (chat: '246 m', '48,3%', #149)
+            cur.execute(
+                "UPDATE indicatoren SET eenheid = %s, updated_at = CURRENT_TIMESTAMP "
+                "WHERE naam = %s AND COALESCE(eenheid, '') = ''",
+                (ind["eenheid"], ind["naam"]),
+            )
 
 
 def maak_afgeleid(cur, afg, bron_uc):

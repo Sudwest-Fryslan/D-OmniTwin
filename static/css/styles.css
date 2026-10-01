@@ -3435,6 +3435,14 @@ body {
   line-height: 1.4;
 }
 
+/* --- #149: bronregel bij een antwoord op een datavraag --- */
+.chat-bronregel {
+  font-size: 0.72rem;
+  color: var(--text-secondary);
+  margin: 0.35rem 0 0.25rem 0;
+  line-height: 1.4;
+}
+
 /* ============================================================================
    Toegankelijkheid (WCAG 2.1 AA, #67)
    ============================================================================ */
