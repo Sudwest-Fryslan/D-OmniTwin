@@ -17,10 +17,13 @@ from __future__ import annotations
 import logging
 import traceback
 import uuid
+from typing import TYPE_CHECKING
 
-from fastapi import FastAPI, Request
-from fastapi.responses import JSONResponse
-from sqlalchemy.exc import DataError, IntegrityError
+# fastapi en sqlalchemy pas bij gebruik importeren: services (en scripts/tests die ze
+# zonder webstack gebruiken) importeren alleen GebruikersFout
+if TYPE_CHECKING:
+    from fastapi import FastAPI, Request
+    from fastapi.responses import JSONResponse
 
 logger = logging.getLogger("omnitwin.fouten")
 
@@ -36,6 +39,8 @@ def nieuwe_correlatie_id() -> str:
 
 
 def _antwoord(status: int, melding: str, correlatie_id: str) -> JSONResponse:
+    from fastapi.responses import JSONResponse
+
     return JSONResponse(
         status_code=status,
         content={"detail": melding, "correlatie_id": correlatie_id},
@@ -60,13 +65,13 @@ def _log(request: Request, exc: Exception, correlatie_id: str, status: int) -> N
     )
 
 
-async def _ongeldige_waarde(request: Request, exc: DataError) -> JSONResponse:
+async def _ongeldige_waarde(request: Request, exc: Exception) -> JSONResponse:
     cid = nieuwe_correlatie_id()
     _log(request, exc, cid, 422)
     return _antwoord(422, "Ongeldige invoer: een of meer waarden hebben niet het juiste formaat.", cid)
 
 
-async def _conflict(request: Request, exc: IntegrityError) -> JSONResponse:
+async def _conflict(request: Request, exc: Exception) -> JSONResponse:
     cid = nieuwe_correlatie_id()
     _log(request, exc, cid, 409)
     return _antwoord(409, "Conflict met bestaande gegevens (bijvoorbeeld een naam die al bestaat "
@@ -82,6 +87,8 @@ async def _interne_fout(request: Request, exc: Exception) -> JSONResponse:
 def registreer_foutafhandeling(app: FastAPI) -> None:
     """Koppel de centrale handlers aan de app. HTTPException en validatiefouten
     (422 van FastAPI) blijven de standaardafhandeling houden."""
+    from sqlalchemy.exc import DataError, IntegrityError
+
     app.add_exception_handler(DataError, _ongeldige_waarde)
     app.add_exception_handler(IntegrityError, _conflict)
     app.add_exception_handler(Exception, _interne_fout)
