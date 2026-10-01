@@ -3,6 +3,8 @@ Router: D-Omni Assistant Chat
 POST /api/chat — Intent-based chat endpoint met Command Dispatch JSON
 
 Architectuur:
+0. Datavraag ("welke buurt ligt het verst van een koele plek") → cijfers uit de database,
+   het taalmodel formuleert alleen met die cijfers (services/chat_datavraag.py, #149)
 1. Gebruikersvraag → AISearchService (semantisch zoeken in indicatoren)
 2. Intent Classificatie (rule-based)
 3. LLM Narrative (korte toelichting, max 80 woorden)
@@ -16,6 +18,7 @@ from src.database import get_db
 from services.ai_search_service import AISearchService
 from services.llm_service import LLMService
 from services.gemeente_validatie import valideer_gemeente_acties
+from services.chat_datavraag import beantwoord_datavraag
 from typing import List, Dict, Any, Optional
 import re
 import logging
@@ -47,6 +50,7 @@ class ActieKnop(BaseModel):
     config_id: Optional[int] = None
     filters: Optional[Dict[str, Any]] = None
     thema: Optional[str] = None
+    gebied_ids: Optional[List[str]] = None  # datavraag (#149): deze gebieden selecteren
 
 class IndicatorResultaat(BaseModel):
     uuid: str
@@ -57,11 +61,32 @@ class IndicatorResultaat(BaseModel):
     score_type: Optional[str] = None
     relevantie: float  # 0-1 cosine similarity score
 
+class BronRegel(BaseModel):
+    indicator: str
+    bron: str
+    jaren: List[int] = []
+
+class Gegeven(BaseModel):
+    """Eén cijfer waarop een antwoord op een datavraag steunt (#149)."""
+    indicator_uuid: str
+    indicator: str
+    gebied_id: str
+    gebied: str
+    waarde: float
+    jaar: Optional[int] = None
+    eenheid: Optional[str] = None
+    richting: str
+    rang_hoog: int
+    aantal_gebieden: int
+    demo: bool = False
+
 class ChatResponse(BaseModel):
     intent: str
     narrative: str
     acties: List[ActieKnop]
     indicatoren: List[IndicatorResultaat]
+    bronnen: Optional[List[BronRegel]] = None
+    gegevens: Optional[List[Gegeven]] = None
     debug: Optional[Dict[str, Any]] = None
 
 # ============================================================================
@@ -252,6 +277,95 @@ def generate_acties(intent: str, indicatoren: List[Dict[str, Any]], vraag: str) 
     return acties
 
 # ============================================================================
+# Datavraag (#149): grounded antwoord met cijfers uit de database
+# ============================================================================
+
+def datavraag_acties(resultaat: Dict[str, Any]) -> List[ActieKnop]:
+    """Toon op kaart (indicator + gebieden), Open Kompas en Rapport, met de bestaande actietypes."""
+    gebied_ids = resultaat.get("gebied_ids") or None
+    gebiedstype_id = resultaat.get("gebiedstype_id")
+    acties = []
+    for f in resultaat.get("feiten", [])[:2]:
+        acties.append(ActieKnop(
+            type="TOON_OP_KAART",
+            label=f"🗺 Toon op kaart: {f['indicator']}",
+            indicator_uuid=f["indicator_uuid"],
+            gebied_ids=gebied_ids,
+            gebiedstype_id=gebiedstype_id,
+        ))
+    if not acties:
+        for t in resultaat.get("indicatoren", [])[:1]:
+            acties.append(ActieKnop(type="TOON_OP_KAART", label=f"🗺 Toon op kaart: {t.naam}",
+                                    indicator_uuid=t.uuid))
+    if gebied_ids:
+        acties.append(ActieKnop(type="OPEN_KOMPAS", label="🧭 Open Kompas", gebied_ids=gebied_ids,
+                                gebiedstype_id=gebiedstype_id))
+        acties.append(ActieKnop(type="MAAK_RAPPORT", label="📄 Rapport", gebied_ids=gebied_ids))
+    return acties
+
+
+def beantwoord_datavraag_route(vraag: str, context: Dict[str, Any], db: Session) -> Optional[ChatResponse]:
+    """ChatResponse voor een datavraag, of None (dan de gewone navigatieroute)."""
+    zoeker = {}
+
+    def zoek(tekst: str):
+        # AI-zoeken pas laden als het nodig is (model laden kost tijd)
+        if "service" not in zoeker:
+            zoeker["service"] = AISearchService(db)
+        return zoeker["service"].search_indicators(tekst, limit=5)
+
+    llm = LLMService(db)
+    llm_call = getattr(llm, "_call_llm", None) or llm._call_ollama  # #88: _call_llm kiest de aanbieder
+
+    def vraag_llm(systeem: str, gebruiker: str):
+        systeem = llm.get_system_prompt("chat_datavraag", systeem)
+        return llm_call(systeem, gebruiker, context_name="Chat Datavraag")
+
+    resultaat = beantwoord_datavraag(vraag, context, db, zoek, vraag_llm)
+    if resultaat is None:
+        return None
+
+    feiten = resultaat["feiten"]
+    gegevens = [
+        Gegeven(
+            indicator_uuid=f["indicator_uuid"], indicator=f["indicator"], gebied_id=w["gebied_id"],
+            gebied=w["gebied"], waarde=w["waarde"], jaar=w.get("jaar"), eenheid=f["eenheid"] or None,
+            richting=f["richting"], rang_hoog=w["rang_hoog"], aantal_gebieden=f["aantal_gebieden"],
+            demo=w["demo"],
+        )
+        for f in feiten for w in f["waarden"]
+    ]
+    bronnen = [BronRegel(indicator=f["indicator"], bron=f["bron"], jaren=[j for j in f["jaren"] if j])
+               for f in feiten]
+    indicatoren_out = [
+        IndicatorResultaat(uuid=t.uuid, naam=t.naam, relevantie=round(min(t.score, 1.0), 4))
+        for t in resultaat["indicatoren"]
+    ]
+    AppLogger.info(
+        f"DATAVRAAG: {len(feiten)} indicator(en), {len(resultaat['gebied_ids'])} gebied(en), "
+        f"llm={resultaat['llm_gebruikt']}, verworpen getallen={resultaat['ongegrond']}",
+        category="LLM_CHAT")
+    return ChatResponse(
+        intent="DATAVRAAG",
+        narrative=resultaat["narrative"],
+        acties=datavraag_acties(resultaat),
+        indicatoren=indicatoren_out,
+        bronnen=bronnen,
+        gegevens=gegevens,
+        debug={
+            "mode": "datavraag",
+            "llm_gebruikt": resultaat["llm_gebruikt"],
+            "model": resultaat.get("model"),
+            # getallen die het model verzon; dan is het antwoord de vaste tekst uit de cijfers
+            "verworpen_getallen": resultaat["ongegrond"],
+            "llm_fout": resultaat.get("llm_fout", False),
+            "herkend": resultaat["herkend"],
+            "gebieden_bron": resultaat["gebieden_bron"],
+        },
+    )
+
+
+# ============================================================================
 # Chat Endpoint
 # ============================================================================
 
@@ -276,9 +390,23 @@ def chat(
     if is_help_onboarding(vraag):
         AppLogger.info("HELP_ONBOARDING intent — deterministic response", category="LLM_CHAT")
         return get_help_onboarding_response(db)
-        
+
     # ------------------------------------------------
-    # Stap 0b: Check of een scenario is getriggerd
+    # Stap 0b: Datavraag — antwoord met cijfers uit de database (#149).
+    # Een gekozen rol (knop) gaat voor; geen datavraag → gewone route hieronder.
+    # ------------------------------------------------
+    if not context.get("rol_code"):
+        try:
+            datavraag = beantwoord_datavraag_route(vraag, context, db)
+        except Exception as e:
+            db.rollback()
+            AppLogger.error(f"Datavraag mislukt, terugval op navigatie: {e}", category="LLM_CHAT")
+            datavraag = None
+        if datavraag is not None:
+            return datavraag
+
+    # ------------------------------------------------
+    # Stap 0c: Check of een scenario is getriggerd
     # ------------------------------------------------
     scenario = match_scenario(vraag, context, db)
     if scenario:
