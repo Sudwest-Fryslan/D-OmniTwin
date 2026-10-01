@@ -21,6 +21,10 @@ Laden (zonder netwerk, vanuit de gecommitte CSV): init_data/scripts/laad_cbs.py.
 Gebruik:
     python init_data/scripts/download_cbs_kerncijfers.py            # downloaden en schrijven
     python init_data/scripts/download_cbs_kerncijfers.py --controle # alleen tabellen en kolommen controleren
+    python init_data/scripts/download_cbs_kerncijfers.py --alleen-sample  # sample bijwerken, zonder netwerk
+
+Na de download vervangt het script ook de CBS-rijen in init_data/sample/2_brondata/sample_indicatoren.csv
+(de bronbibliotheek van de use cases) door de reeks van de samplegebieden.
 
 Licentie van de data: CC BY 4.0, bron: Centraal Bureau voor de Statistiek (CBS).
 """
@@ -39,6 +43,8 @@ ROOT = Path(__file__).resolve().parent.parent.parent
 UIT_DIR = ROOT / "init_data" / "cbs"
 UIT_CSV = UIT_DIR / "kerncijfers_fryslan.csv"
 UIT_PACKAGE = UIT_DIR / "datapackage.json"
+SAMPLE_CSV = ROOT / "init_data" / "sample" / "2_brondata" / "sample_indicatoren.csv"
+SAMPLE_GEOJSON = ROOT / "init_data" / "sample" / "2_brondata" / "sample_buurten.geojson"
 GEOMETRIE = ROOT / "init_data" / "fryslan" / "buurten_fryslan.geojson"
 GEOMETRIE_JAAR = 2024
 
@@ -235,12 +241,49 @@ def rij(gebied, naam, waarde, jaar):
             "scenario_id": "current", "bron_tabel": TABELLEN[jaar]}
 
 
+def werk_sample_bij():
+    """De CBS-rijen in de sample (bronbibliotheek van de use cases) vervangen door de reeks uit dit pakket.
+
+    Zonder netwerk: leest kerncijfers_fryslan.csv. Vervangt per CBS-indicator (zelfde UUID) alle rijen
+    van de samplegebieden; demodata (bron 'DEMO: ...') alleen als CBS voor dat gebied een waarde heeft.
+    Overige indicatoren in de sample blijven ongewijzigd.
+    """
+    gebieden = {f["properties"]["id"] for f in json.loads(SAMPLE_GEOJSON.read_text(encoding="utf-8"))["features"]}
+    cbs_uuids = {v[0] for v in INDICATOREN.values()}
+    with open(UIT_CSV, encoding="utf-8") as f:
+        nieuw = [r for r in csv.DictReader(f) if r["gebied_id"] in gebieden]
+    met_cbs = {(r["gebied_id"], r["indicator_uuid"]) for r in nieuw}
+    with open(SAMPLE_CSV, encoding="utf-8") as f:
+        lezer = csv.DictReader(f)
+        velden = lezer.fieldnames
+        oud = list(lezer)
+
+    def blijft(r):
+        if r["indicator_uuid"] not in cbs_uuids:
+            return True
+        return r["bron"].startswith("DEMO") and (r["gebied_id"], r["indicator_uuid"]) not in met_cbs
+
+    rijen = [r for r in oud if blijft(r)] + [{k: r[k] for k in velden} for r in nieuw]
+    rijen.sort(key=lambda r: (r["gebied_id"], r["indicator_naam"].casefold(), int(r["jaar"] or 0)))
+    with open(SAMPLE_CSV, "w", encoding="utf-8", newline="") as f:
+        w = csv.DictWriter(f, fieldnames=velden, lineterminator="\r\n")  # sample staat met CRLF in git
+        w.writeheader()
+        w.writerows(rijen)
+    print(f"   🧩 sample: {len(oud) - sum(map(blijft, oud))} CBS-/demorijen vervangen door {len(nieuw)} rijen "
+          f"({len(gebieden)} gebieden) → {SAMPLE_CSV.relative_to(ROOT)}")
+
+
 def main():
     parser = argparse.ArgumentParser(description="CBS Kerncijfers wijken en buurten (alle jaargangen) voor Fryslân")
     parser.add_argument("--controle", action="store_true", help="alleen tabellen (Period) en kolommen controleren")
+    parser.add_argument("--alleen-sample", action="store_true",
+                        help="geen download: alleen de sample bijwerken uit de bestaande kerncijfers_fryslan.csv")
     args = parser.parse_args()
     if hasattr(sys.stdout, "reconfigure"):
         sys.stdout.reconfigure(encoding="utf-8")  # emoji op Windows-consoles
+    if args.alleen_sample:
+        werk_sample_bij()
+        return
 
     import requests
     session = requests.Session()
@@ -250,6 +293,7 @@ def main():
     titels, rijen = {}, []
     weg = {}  # jaar -> {gemeente: [codes]}
     ontbreekt_in_tabel = {}
+    weg_waarden = Counter()
     for jaar, tabel in TABELLEN.items():
         titels[jaar] = controleer_tabel(session, jaar, tabel)
         if args.controle:
@@ -262,6 +306,7 @@ def main():
             code = rec["Codering_3"].strip()
             if code not in geo:
                 weg_jaar[f"GM{code[2:6]}"].append(code)
+                weg_waarden[jaar] += sum(waarde_van(rec, k[jaar]) is not None for k in MAPPING.values() if k.get(jaar))
                 continue
             per_ind = {}
             for naam, per_jaar in MAPPING.items():
@@ -329,6 +374,7 @@ def main():
                            "per peiljaar en gemeente. Deze waarden zijn niet opgenomen.",
             "weggevallen": {str(j): {f"{gm} {gm_naam.get(gm, '?')}": len(c) for gm, c in g.items()}
                             for j, g in weg.items()},
+            "weggevallen_waarden": {str(j): weg_waarden[j] for j in TABELLEN},
             "weggevallen_codes": {str(j): g for j, g in weg.items() if g},
             "geometriebuurten_zonder_tabelrij": {str(j): n for j, n in ontbreekt_in_tabel.items()},
         },
@@ -347,6 +393,7 @@ def main():
         if g:
             print(f"   ⚠️  {j}: weggevallen " + ", ".join(f"{gm} {gm_naam.get(gm, '?')}: {len(c)}" for gm, c in g.items()))
     print(f"   Jaren per indicator: {Counter(len(v) for v in per_ind.values())}")
+    werk_sample_bij()
 
 
 if __name__ == "__main__":

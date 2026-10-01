@@ -9,7 +9,7 @@ Gebruik:
 Vereisten: pip install requests
 
 Databronnen (CBS OData, open data, CC BY):
-  - 85039NED: Kerncijfers wijken en buurten 2023
+  - CBS Kerncijfers wijken en buurten: niet meer hier, zie download_cbs_kerncijfers.py (#159)
   - 50150NED: Gezondheidsmonitor RIVM via dataderden.cbs.nl (2012-2024)
 """
 import csv
@@ -39,41 +39,10 @@ CBS_BASE = "https://opendata.cbs.nl/ODataFeed/odata"
 # Kolomnamen in ODataFeed hebben een numeriek suffix (_N).
 # We mappen deze naar leesbare indicatornamen.
 
-DATASETS = [
-    {
-        "id": "85039NED",   # Kerncijfers wijken en buurten 2023
-        "naam": "Kerncijfers wijken en buurten 2023",
-        "jaar": 2023,
-        "base": CBS_BASE,
-        "kolommen": {
-            # Namen exact gelijk aan indicatoren tabel (DB-sanering 2026-04-20)
-            "Koopwoningen_40": "Koopwoningen",
-            "InBezitWoningcorporatie_42": "Woningcorporatie bezit",
-            "InBezitOverigeVerhuurders_43": "Particulier huurbezit",
-            "AfstandTotHuisartsenpraktijk_106": "Huisarts",
-            "AfstandTotGroteSupermarkt_107": "Afstand tot grote supermarkt",
-            "AfstandTotKinderdagverblijf_108": "Afstand tot kinderdagverblijf",
-            "AfstandTotSchool_109": "Afstand tot school",
-            "k_0Tot15Jaar_8": "0-15 jaar",
-            "k_65JaarOfOuder_12": "65+ jaar",
-            "HuishoudensZonderKinderen_30": "Huishoudens zonder kind",
-            "HuishoudensMetKinderen_31": "Huishoudens met kind",
-            "GemiddeldInkomenPerInwoner_72": "Inkomen per inwoner",
-            "OpleidingsniveauHoog_66": "Opleidingsniveau hoog",
-            "OpleidingsniveauMiddelbaar_65": "Opleidingsniveau middelbaar",
-            "OpleidingsniveauLaag_64": "Opleidingsniveau laag",
-            "GemiddeldeWOZWaardeVanWoningen_35": "Gemiddelde WOZ-waarde",
-            "AantalInwoners_5": "Inwoners",
-            "Bevolkingsdichtheid_33": "Bevolkingsdichtheid",
-            "Woningvoorraad_34": "Woningvoorraad",
-            "Nettoarbeidsparticipatie_67": "Netto arbeidsparticipatie",
-            "HuishoudensMetEenLaagInkomen_78": "Huishoudens met laag inkomen",
-            "PersonenPerSoortUitkeringBijstand_83": "Personen met bijstand",
-        },
-        "regio_filter_col": "Codering_3",
-        "server_filter": True,  # CBS ondersteunt server-side filtering
-    },
-]
+# De CBS Kerncijfers wijken en buurten staan sinds #159 in een eigen bronpakket, met alle
+# jaargangen en het echte peiljaar: init_data/scripts/download_cbs_kerncijfers.py
+# -> init_data/cbs/kerncijfers_fryslan.csv. Dit script haalt alleen nog de RIVM-data op.
+DATASETS = []
 
 # RIVM Gezondheidsmonitor (dataderden.cbs.nl)
 # Deze dataset heeft dimensies: Leeftijd, Marges, Perioden
