@@ -8,7 +8,8 @@
 # Opstartvolgorde: postgres (healthy) -> db-init (eenmalig, klaar) -> backend,
 # postgrest en pg_featureserv. db-init maakt bij een lege database het schema,
 # de pg_featureserv-views, de sample-/stuurdata en de admin-gebruiker aan; bij een
-# bestaande database slaat hij dat over. Daarna werkt hij altijd de rollen en het
+# bestaande database slaat hij dat over; een half mislukte eerste init geeft een
+# fout met herstelinstructie (#201). Daarna werkt hij altijd de rollen en het
 # schema api voor PostgREST en pg_featureserv bij (#57) en stopt. De backend
 # initialiseert zelf niets (zie docker-entrypoint.sh), dus meerdere
 # backend-replicas racen niet.
@@ -88,6 +89,11 @@ services:
     environment:
       - DATABASE_HOST=postgres
       - DATABASE_PORT=5432
+    volumes:
+      # Geüploade kaartlagen (beheer > externe lagen, #201): in een volume, zodat ze een
+      # update (docker compose up -d --build) overleven. Een nieuw volume krijgt de
+      # meegeleverde bestanden uit de image. Backup: zie db/README.md.
+      - uploads:/app/data-upload
     extra_hosts:
       - "host.docker.internal:host-gateway"
     healthcheck:
@@ -174,3 +180,4 @@ services:
 volumes:
   pgdata:
   bron-cache:
+  uploads:
