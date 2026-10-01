@@ -13,7 +13,7 @@ from playwright.sync_api import expect
 from e2e_helpers import (
     HINDELOOPEN, KOUDUM, WORKUM,
     klik_buurt_op_kaart, laad_buurtenkaart, open_kompas, open_paneel, selecteer_buurt_via_app,
-    selectie, selectie_overlay_aanwezig, wacht_op_selectie, zoom_kaart,
+    selectie, selectie_overlay_aanwezig, wacht_op_selectie, zoom_kaart, TRAAG_MS,
 )
 
 
@@ -151,7 +151,7 @@ def test_tc_01_003b_bag_woonplaatsen(app_page):
             [laag["id"], naam],
         )
         page.wait_for_function(
-            "(naam) => window.state.selectedGroepen.some(g => g.naam === naam)", arg=naam, timeout=30_000
+            "(naam) => window.state.selectedGroepen.some(g => g.naam === naam)", arg=naam, timeout=TRAAG_MS
         )
 
     groepen = page.evaluate("() => window.state.selectedGroepen")

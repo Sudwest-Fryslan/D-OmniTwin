@@ -10,6 +10,7 @@ deterministisch (geen LLM nodig).
 
 import csv
 import io
+import os
 import re
 from pathlib import Path
 
@@ -17,9 +18,9 @@ import pytest
 from playwright.sync_api import expect
 
 from e2e_helpers import (
-    AANTAL_SAMPLE_BUURTEN, KOUDUM, WORKUM,
+    AANTAL_SAMPLE_BUURTEN, BOLSWARD_ZUIDOOST, KOUDUM, WORKUM,
     klik_buurt_op_kaart, kompas_namen, laad_buurtenkaart, open_indicator_in_kompas, open_kompas,
-    open_paneel, selecteer_buurt_via_app, verplaats_kompasvenster_rechts, wacht_op_kaartdata, wacht_op_selectie, wacht_op_zonnediagram,
+    open_paneel, selecteer_buurt_via_app, verplaats_kompasvenster_rechts, wacht_op_kaartdata, wacht_op_selectie, wacht_op_zonnediagram, TRAAG_MS,
 )
 
 
@@ -67,13 +68,13 @@ def test_tc_06_001_beleidsadviseur_ijsselmeerkust(app_page_fresh, tmp_path: Path
     klik_buurt_op_kaart(page, WORKUM)
     wacht_op_selectie(page, [WORKUM])
     expect(page.locator("#selection-badge")).to_contain_text("Workum")
-    expect(page.locator("#kompas-info")).to_contain_text("Workum", timeout=30_000)
+    expect(page.locator("#kompas-info")).to_contain_text("Workum", timeout=TRAAG_MS)
     wacht_op_zonnediagram(page)
 
     # 6/9. Vergelijkingskern toevoegen → Kompas toont het gemiddelde (benchmark)
     selecteer_buurt_via_app(page, KOUDUM, shift=True)
     wacht_op_selectie(page, [WORKUM, KOUDUM])
-    expect(page.locator("#kompas-info")).to_contain_text("Gemiddelde van 2 gebieden", timeout=30_000)
+    expect(page.locator("#kompas-info")).to_contain_text("Gemiddelde van 2 gebieden", timeout=TRAAG_MS)
     expect(page.locator("#kompas-info")).to_contain_text("Workum, Koudum")
     wacht_op_zonnediagram(page)
 
@@ -92,7 +93,7 @@ def test_tc_06_001_beleidsadviseur_ijsselmeerkust(app_page_fresh, tmp_path: Path
     page.wait_for_function(
         "() => window.state.currentData && window.state.currentData.metadata"
         " && window.state.currentData.metadata.indicator_naam === 'Participatiewet totaal'",
-        timeout=30_000,
+        timeout=TRAAG_MS,
     )
 
     assert page.console_fouten == [], "\n".join(page.console_fouten)
@@ -110,7 +111,7 @@ def test_tc_06_001_fase5_export_bronvermelding(app_page, tmp_path: Path):
     page.wait_for_function(
         "() => window.state.currentData && window.state.currentData.metadata"
         " && window.state.currentData.metadata.indicator_naam === 'Participatiewet totaal'",
-        timeout=30_000,
+        timeout=TRAAG_MS,
     )
     page.get_by_role("button", name="Kompasvenster sluiten").click()
 
@@ -145,7 +146,7 @@ def test_chatactie_open_kompas_laadt_selectie(app_page):
     _chat_actie(page, r"Open het D-Omni Kompas")
 
     expect(page.locator("#kompas-window")).to_be_visible()
-    expect(page.locator("#kompas-info")).to_contain_text("Gemiddelde van 2 gebieden", timeout=30_000)
+    expect(page.locator("#kompas-info")).to_contain_text("Gemiddelde van 2 gebieden", timeout=TRAAG_MS)
     expect(page.locator("#kompas-info")).to_contain_text("Workum, Koudum")
     wacht_op_zonnediagram(page)
     assert page.console_fouten == [], "\n".join(page.console_fouten)
@@ -178,3 +179,97 @@ def test_tc_06_001_handmatige_review():
                          "niet deterministisch in de sample-stack")
 def test_tc_06_001_pdf_rapport():
     """TC-06-001 stap 13: PDF-rapport genereren."""
+
+
+# ── TC-06-004 — Chat (AI) en beleidsadviseur, Bolsward-Zuidoost ─────────────
+
+# Lokaal model op CPU: een chatantwoord kan minuten duren
+LLM_TIMEOUT_MS = int(os.environ.get("E2E_LLM_TIMEOUT", "300")) * 1000
+_NL_WOORDEN = {"de", "het", "een", "en", "van", "in", "is", "dat", "op", "voor", "met", "niet",
+               "zijn", "te", "er", "je", "ik", "wordt", "deze", "als", "ook", "om", "bij", "naar"}
+_LLM_FOUTEN = ("Error contacting", "LLM-server", "Generatie mislukt", "Fout bij")
+
+
+def _selecteer_bolsward_zuidoost(page):
+    laad_buurtenkaart(page)
+    klik_buurt_op_kaart(page, BOLSWARD_ZUIDOOST)
+    wacht_op_selectie(page, [BOLSWARD_ZUIDOOST])
+    expect(page.locator("#selection-badge")).to_contain_text("Bolsward-Zuidoost")
+
+
+def _open_assistent(page):
+    page.get_by_role("button", name="D-Omni Assistent", exact=True).click()
+    expect(page.locator("#chat-panel")).to_have_class(re.compile(r"\bopen\b"))
+
+
+def _vraag(page, tekst, timeout=30_000):
+    """Stel een vraag in de Assistent; geeft (JSON-antwoord, laatste assistent-bericht) terug."""
+    page.locator("#chat-input").fill(tekst)
+    with page.expect_response(lambda r: r.url.endswith("/api/chat") and r.request.method == "POST",
+                              timeout=timeout) as resp:
+        page.get_by_role("button", name="Vraag versturen").click()
+    assert resp.value.ok, f"/api/chat gaf {resp.value.status}"
+    data = resp.value.json()
+    bericht = page.locator("#chat-messages .chat-message-assistant").last
+    expect(bericht.locator(".chat-message-bubble")).to_be_visible()
+    return data, bericht
+
+
+def test_tc_06_004a_chat_ai_hoe_groen(app_page):
+    """TC-06-004 stap 1-4 (LLM-afhankelijk): AI-antwoord met label, disclaimer en kaartactie.
+
+    Inhoud en acties kiest het model; de test toetst alleen de vorm. Geeft de chat de
+    niet-LLM-terugval (debug.mode != intelligent_dispatcher), dan wordt de stap overgeslagen."""
+    page = app_page
+    _selecteer_bolsward_zuidoost(page)
+    _open_assistent(page)
+
+    data, bericht = _vraag(page, "Hoe groen is Bolsward-Zuidoost?", timeout=LLM_TIMEOUT_MS)
+    mode = (data.get("debug") or {}).get("mode")
+    narrative = data.get("narrative") or ""
+    if mode != "intelligent_dispatcher" or any(f in narrative for f in _LLM_FOUTEN):
+        pytest.skip(f"TC-06-004 stap 2-4: geen LLM-antwoord (debug.mode={mode!r}, "
+                    f"narrative: {narrative[:120]!r}); LLM niet geconfigureerd of gaf geen geldige JSON")
+
+    # Herkomst zichtbaar: label + disclaimer
+    expect(bericht.locator(".chat-source-badge")).to_have_text(re.compile(r"AI-gegenereerd"))
+    expect(bericht.locator(".chat-disclaimer")).to_contain_text("Dit antwoord is AI-gegenereerd")
+
+    # Kort Nederlands antwoord
+    expect(bericht.locator(".chat-narrative")).to_have_text(narrative.strip())
+    woorden = re.findall(r"[\wÀ-ÿ'-]+", narrative.lower())
+    assert woorden, "leeg antwoord"
+    assert len({w for w in woorden if w in _NL_WOORDEN}) >= 2, f"lijkt geen Nederlands: {narrative[:200]}"
+
+    # Minstens één kaartactie die naar het geselecteerde gebied verwijst
+    kaartacties = [a for a in data.get("acties", []) if a.get("type") == "TOON_OP_KAART"]
+    assert kaartacties, f"geen TOON_OP_KAART-actie: {data.get('acties')}"
+    assert any("Bolsward" in (a.get("label") or "") or BOLSWARD_ZUIDOOST in (a.get("indicator_uuid") or "")
+               for a in kaartacties), f"geen kaartactie voor Bolsward-Zuidoost: {kaartacties}"
+    expect(bericht.locator('.chat-actie-btn[data-type="TOON_OP_KAART"]').first).to_be_visible()
+
+
+def test_tc_06_004bc_beleidsadviseur_kompas(app_page):
+    """TC-06-004 stap 5-8 (deterministisch): scenario Beleidsadviseur en Kompas voor Bolsward-Zuidoost."""
+    page = app_page
+    _selecteer_bolsward_zuidoost(page)
+    _open_assistent(page)
+
+    # 5-6. Vrije tekst triggert het scenario (trefwoord 'beleidsadviseur'), geen LLM
+    data, bericht = _vraag(page, "Ik ben beleidsadviseur")
+    assert (data.get("debug") or {}).get("mode") == "deterministic_scenario", data.get("debug")
+    expect(bericht.locator(".chat-narrative")).to_contain_text("IJsselmeerkust")
+    expect(bericht.locator(".chat-disclaimer")).to_have_count(0)
+    knoppen = bericht.locator(".chat-actie-btn")
+    expect(knoppen).to_have_count(3)
+    for label in ("Toon: Buurten", "Gemeente: Súdwest-Fryslân", "Open het D-Omni Kompas"):
+        expect(knoppen.filter(has_text=label)).to_have_count(1)
+
+    # 7-8. Kompas openen vanuit de chat → venster met het geselecteerde gebied
+    _chat_actie(page, r"Open het D-Omni Kompas")
+    expect(page.locator("#kompas-window")).to_be_visible()
+    expect(page.locator("#kompas-info")).to_contain_text("Bolsward-Zuidoost", timeout=30_000)
+    expect(page.locator("#kompas-info")).to_contain_text("Indicatordekking: 100%")
+    wacht_op_zonnediagram(page)
+
+    assert page.console_fouten == [], "\n".join(page.console_fouten)

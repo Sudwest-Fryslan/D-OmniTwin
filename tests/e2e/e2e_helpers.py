@@ -7,12 +7,17 @@ De app publiceert `window.state` (kaartstaat, deck.gl-instantie) en
 """
 
 import json
+import os
 import time
 import warnings
 
 from playwright.sync_api import Page, expect
 
+# Wachttijd voor trage stappen (kaartdata, Kompas). CI-runners zonder GPU: E2E_TIMEOUT_MS hoger zetten.
+TRAAG_MS = int(os.environ.get("E2E_TIMEOUT_MS", "30000"))
+
 # Buurten uit de sample dataset (init_data/sample/2_brondata/sample_buurten.geojson)
+BOLSWARD_ZUIDOOST = "BU19000002"
 WORKUM = "BU19000200"
 HINDELOOPEN = "BU19000202"
 KOUDUM = "BU19000300"
@@ -37,7 +42,7 @@ def laad_buurtenkaart(page: Page):
     open_paneel(page, "Kaartconfiguratie")
     page.locator("#gebiedstype-select").select_option(label="CBS Buurten")
     knop = page.locator("#toon-kaart-btn")
-    expect(knop).to_be_enabled(timeout=30_000)  # pas na het laden van de indicatoren
+    expect(knop).to_be_enabled(timeout=TRAAG_MS)  # pas na het laden van de indicatoren
     with page.expect_response(lambda r: "/api/gebiedsmonitor/kaart_data/" in r.url and r.ok):
         knop.click()
     wacht_op_kaartdata(page)
@@ -48,7 +53,7 @@ def wacht_op_kaartdata(page: Page, aantal: int = AANTAL_SAMPLE_BUURTEN):
         "(n) => window.state.currentData && window.state.currentData.features.length === n"
         " && window.state.deckgl.props.layers.some(l => l.id.startsWith('gebieden-layer-'))",
         arg=aantal,
-        timeout=30_000,
+        timeout=TRAAG_MS,
     )
 
 
@@ -199,7 +204,7 @@ def open_kompas(page: Page, verwacht_in_info: str):
     open_paneel(page, "D-Omni Kompas")
     page.locator("#open-kompas-btn").click()
     expect(page.locator("#kompas-window")).to_be_visible()
-    expect(page.locator("#kompas-info")).to_contain_text(verwacht_in_info, timeout=30_000)
+    expect(page.locator("#kompas-info")).to_contain_text(verwacht_in_info, timeout=TRAAG_MS)
     wacht_op_zonnediagram(page)
 
 

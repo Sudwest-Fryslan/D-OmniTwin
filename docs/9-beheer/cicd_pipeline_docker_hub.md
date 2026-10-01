@@ -98,6 +98,8 @@ deze commit-teksten en schrijft het nieuwe versienummer automatisch naar een bes
 
 ### Wat te doen voor #27
 
+> **Stand:** de afspraken staan in [releasebeleid.md](releasebeleid.md): semver vanaf `0.1.0`, één bron `VERSION`, release-branch per minor, releases voorlopig met de hand. `semantic-release` (punt 2) is een mogelijke volgende stap.
+
 1. Team-afspraak vastleggen: altijd conventional commit-formaat gebruiken bij commits naar `main`.
 2. `semantic-release` configureren in een `.releaserc` of `package.json`.
 3. Versienummer doorschrijven naar een `BuildInfo`-bestand zodat het in de UI zichtbaar is.

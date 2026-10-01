@@ -33,7 +33,7 @@ import json
 import logging
 
 from src.database import get_db
-from routers.auth import check_auth_or_key
+from routers.auth import vereis_admin
 
 logger = logging.getLogger(__name__)
 
@@ -166,9 +166,8 @@ class BuurtenRequest(BaseModel):
 # ============================================================================
 router = APIRouter(tags=["Externe Kaartlagen"])
 
-def verify_admin(request: Request, db: Session = Depends(get_db)):
-    """Admin authenticatie — hergebruikt bestaand auth patroon."""
-    return check_auth_or_key(request, db)
+# Beheer-routes (/api/admin/externe-lagen/*): apart router met admin-check (#65)
+admin_router = APIRouter(prefix="/api/admin/externe-lagen", tags=["Externe Kaartlagen"], dependencies=[Depends(vereis_admin)])
 
 
 # ============================================================================
@@ -430,10 +429,9 @@ async def get_buurten_voor_feature(
 # Admin CRUD endpoints
 # ============================================================================
 
-@router.get("/api/admin/externe-lagen")
+@admin_router.get("")
 async def admin_get_alle_lagen(
     db: Session = Depends(get_db),
-    _: bool = Depends(verify_admin)
 ):
     """Alle externe kaartlagen ophalen (inclusief inactieve) voor admin beheer."""
     rows = db.execute(text("""
@@ -474,11 +472,10 @@ async def admin_get_alle_lagen(
     }
 
 
-@router.post("/api/admin/externe-lagen")
+@admin_router.post("")
 async def admin_create_laag(
     data: ExterneKaartlaagCreate,
     db: Session = Depends(get_db),
-    _: bool = Depends(verify_admin)
 ):
     """Nieuwe externe kaartlaag aanmaken."""
     result = db.execute(text("""
@@ -519,12 +516,11 @@ async def admin_create_laag(
     return {"id": new_id, "naam": data.naam, "status": "aangemaakt"}
 
 
-@router.put("/api/admin/externe-lagen/{laag_id}")
+@admin_router.put("/{laag_id}")
 async def admin_update_laag(
     laag_id: int,
     data: ExterneKaartlaagUpdate,
     db: Session = Depends(get_db),
-    _: bool = Depends(verify_admin)
 ):
     """Bestaande externe kaartlaag bijwerken."""
     # Verifieer dat laag bestaat
@@ -564,11 +560,10 @@ async def admin_update_laag(
     return {"id": laag_id, "status": "bijgewerkt"}
 
 
-@router.delete("/api/admin/externe-lagen/{laag_id}")
+@admin_router.delete("/{laag_id}")
 async def admin_delete_laag(
     laag_id: int,
     db: Session = Depends(get_db),
-    _: bool = Depends(verify_admin)
 ):
     """Externe kaartlaag verwijderen."""
     result = db.execute(text(
@@ -591,9 +586,8 @@ async def admin_delete_laag(
 # Admin: Lokale bestanden beheer
 # ============================================================================
 
-@router.get("/api/admin/externe-lagen/lokale-bestanden")
+@admin_router.get("/lokale-bestanden")
 async def admin_lokale_bestanden(
-    _: bool = Depends(verify_admin)
 ):
     """Lijst beschikbare bestanden in data-upload/ met metadata."""
     import fiona
@@ -627,10 +621,9 @@ async def admin_lokale_bestanden(
     return {"bestanden": bestanden, "totaal": len(bestanden)}
 
 
-@router.post("/api/admin/externe-lagen/upload")
+@admin_router.post("/upload")
 async def admin_upload_bestand(
     bestand: UploadFile = File(...),
-    _: bool = Depends(verify_admin)
 ):
     """Upload een GPKG of GeoJSON bestand naar data-upload/."""
     import fiona

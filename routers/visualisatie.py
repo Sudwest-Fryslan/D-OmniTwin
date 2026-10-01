@@ -13,14 +13,10 @@ import os
 
 router = APIRouter(prefix="/api/visualisatie", tags=["Visualisatie"])
 
-# ============================================================================
-# Authentication (same as admin.py)
-# ============================================================================
-from routers.auth import check_auth_or_key
+# Beheer-routes (/api/visualisatie/admin/*): apart router met admin-check (#65)
+from routers.auth import vereis_admin
 
-def verify_admin_key(request: Request, db: Session = Depends(get_db)):
-    """Verifies admin access using the new Hybrid Session/Key model."""
-    return check_auth_or_key(request, db)
+admin_router = APIRouter(prefix="/api/visualisatie/admin", tags=["Visualisatie"], dependencies=[Depends(vereis_admin)])
 
 # ============================================================================
 # Pydantic Models
@@ -228,10 +224,9 @@ def get_indicator_viz_config(indicator_uuid: str, db: Session = Depends(get_db))
 # Admin Endpoints (Auth Required)
 # ============================================================================
 
-@router.get("/admin/paletten")
+@admin_router.get("/paletten")
 def get_all_paletten(
     db: Session = Depends(get_db),
-    _: bool = Depends(verify_admin_key)
 ):
     """Get ALL color palettes (incl. inactive) for admin management."""
     result = db.execute(text("""
@@ -258,11 +253,10 @@ def get_all_paletten(
     
     return {"paletten": paletten, "total": len(paletten)}
 
-@router.post("/admin/paletten")
+@admin_router.post("/paletten")
 def create_palette(
     data: ColorSchemaCreate,
     db: Session = Depends(get_db),
-    _: bool = Depends(verify_admin_key)
 ):
     """Create a new color palette."""
     # Validate klassen (max 7)
@@ -292,12 +286,11 @@ def create_palette(
         db.rollback()
         raise HTTPException(status_code=400, detail=str(e))
 
-@router.put("/admin/paletten/{palette_id}")
+@admin_router.put("/paletten/{palette_id}")
 def update_palette(
     palette_id: int,
     data: ColorSchemaUpdate,
     db: Session = Depends(get_db),
-    _: bool = Depends(verify_admin_key)
 ):
     """Update an existing color palette."""
     # Build dynamic update
@@ -346,10 +339,9 @@ def update_palette(
 # Profiles Admin Endpoints
 # ============================================================================
 
-@router.get("/admin/profielen")
+@admin_router.get("/profielen")
 def get_profielen(
     db: Session = Depends(get_db),
-    _: bool = Depends(verify_admin_key)
 ):
     """Get all visualization profiles."""
     result = db.execute(text("""
@@ -379,11 +371,10 @@ def get_profielen(
     
     return {"profielen": profielen, "total": len(profielen)}
 
-@router.post("/admin/profielen")
+@admin_router.post("/profielen")
 def create_profiel(
     data: ProfielCreate,
     db: Session = Depends(get_db),
-    _: bool = Depends(verify_admin_key)
 ):
     """Create a new visualization profile."""
     try:
@@ -412,12 +403,11 @@ def create_profiel(
         db.rollback()
         raise HTTPException(status_code=400, detail=str(e))
 
-@router.put("/admin/profielen/{profiel_id}")
+@admin_router.put("/profielen/{profiel_id}")
 def update_profiel(
     profiel_id: int,
     data: ProfielUpdate,
     db: Session = Depends(get_db),
-    _: bool = Depends(verify_admin_key)
 ):
     """Update an existing visualization profile."""
     updates = []
@@ -455,11 +445,10 @@ def update_profiel(
         db.rollback()
         raise HTTPException(status_code=400, detail=str(e))
 
-@router.delete("/admin/profielen/{profiel_id}")
+@admin_router.delete("/profielen/{profiel_id}")
 def delete_profiel(
     profiel_id: int,
     db: Session = Depends(get_db),
-    _: bool = Depends(verify_admin_key)
 ):
     """Delete a visualization profile."""
     try:

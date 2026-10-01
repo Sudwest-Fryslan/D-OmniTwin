@@ -6,7 +6,10 @@ Laadt de minimale, zelfstandige sample dataset (12 SWF buurten) in de database.
 Bedoeld voor snelle start, tests en demonstraties zonder externe data-downloads.
 
 Gebruik:
-    python init_data/scripts/load_sample.py [--stap alle|stuurdata|buurten|indicatoren|kompas|waarden]
+    python init_data/scripts/load_sample.py [--stap alle|definities|stuurdata|buurten|indicatoren|kompas|waarden]
+
+    'definities' laadt het product zonder data (stuurdata, indicatordefinities, Kompas).
+    De data (gebieden en waarden) komt uit de use cases: init_data/scripts/laad_usecase.py.
 
 Vereisten:
     Database schema geladen via: init_data/schema/schema_latest.sql
@@ -35,13 +38,20 @@ except ImportError:
     sys.exit(1)
 
 ROOT = Path(__file__).resolve().parent.parent.parent
+sys.path.insert(0, str(Path(__file__).resolve().parent))  # download_cbs_kerncijfers
 SAMPLE_DIR = ROOT / "init_data" / "sample"
 STUURDATA_SQL = SAMPLE_DIR / "1_stuurdata" / "stuurdata_seed.sql"
 BUURTEN_GEOJSON = SAMPLE_DIR / "2_brondata" / "sample_buurten.geojson"
 INDICATOREN_CSV = SAMPLE_DIR / "2_brondata" / "sample_indicatoren.csv"
+STANDAARD_INDICATOREN_CSV = INDICATOREN_CSV
 KOMPAS_CSV = ROOT / "init_data" / "kompas" / "kompas_hierarchie.csv"
 
 CBS_BUURT_TYPE_ID = "afba67cb-6b38-4723-9c95-102a22d5b38a"
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from jaargang_controle import (  # noqa: E402
+    controleer_jaargangen, geometrie_codes, geometrie_jaar_sample, rapporteer,
+)
 
 
 def get_db_connection():
@@ -109,6 +119,12 @@ def import_buurten(conn):
     features = data.get("features", [])
     print(f"   📂 {len(features)} buurten gevonden in GeoJSON")
 
+    # Geometrie-jaargang vastleggen in gebieden.metadata (#119)
+    geo_jaar = geometrie_jaar_sample()
+    geo_meta = json.dumps({"geometrie_jaar": geo_jaar, "geometrie_bron": "CBS Wijk- en buurtkaart"}
+                          if geo_jaar else {})
+    print(f"   🗓️  Geometrie-jaargang: {geo_jaar or 'onbekend'}")
+
     cur = conn.cursor()
     inserted = 0
     errors = 0
@@ -131,14 +147,15 @@ def import_buurten(conn):
         try:
             cur.execute("SAVEPOINT sp_buurt")
             cur.execute("""
-                INSERT INTO gebieden (id, gebiedstype_id, naam, gemeente_code, geom, provincienaam, actief)
+                INSERT INTO gebieden (id, gebiedstype_id, naam, gemeente_code, geom, provincienaam, actief, metadata)
                 VALUES (
                     %s, %s, %s, %s,
                     CASE WHEN %s IS NOT NULL
                          THEN ST_Multi(ST_Transform(ST_SetSRID(ST_GeomFromGeoJSON(%s), 4326), 28992))
                          ELSE NULL END,
                     %s,
-                    TRUE
+                    TRUE,
+                    %s::jsonb
                 )
                 ON CONFLICT (id) DO UPDATE SET
                     naam = EXCLUDED.naam,
@@ -147,8 +164,9 @@ def import_buurten(conn):
                     geom = EXCLUDED.geom,
                     provincienaam = EXCLUDED.provincienaam,
                     actief = TRUE,
+                    metadata = COALESCE(gebieden.metadata, '{}'::jsonb) || EXCLUDED.metadata,
                     updated_at = CURRENT_TIMESTAMP;
-            """, (bu_id, type_id, naam, gm_code, geom_str, geom_str, prov))
+            """, (bu_id, type_id, naam, gm_code, geom_str, geom_str, prov, geo_meta))
             cur.execute("RELEASE SAVEPOINT sp_buurt")
             inserted += 1
         except Exception as e:
@@ -211,6 +229,18 @@ def import_indicatoren(conn):
                 }
 
     print(f"   📂 {len(unique_indicators)} unieke indicatoren gevonden in sample CSV")
+
+    # CBS Kerncijfers: de waarden worden gedownload (laad_cbs.py), de definities horen bij de
+    # stuurdata en komen uit het recept (download_cbs_kerncijfers.INDICATOREN), niet uit de sample.
+    if INDICATOREN_CSV == STANDAARD_INDICATOREN_CSV:
+        import download_cbs_kerncijfers as cbs
+        voor = len(unique_indicators)
+        for naam, (ind_uuid, eenheid, logica, categorie) in cbs.INDICATOREN.items():
+            unique_indicators.setdefault(ind_uuid, {
+                "uuid": ind_uuid, "naam": naam, "eenheid": eenheid or None, "categorie": categorie or None,
+                "interpretatie_logica": logica or "pos_is_pos", "bron": "CBS Kerncijfers wijken en buurten",
+            })
+        print(f"   📂 {len(unique_indicators) - voor} CBS-indicatoren uit het recept (init_data/cbs)")
 
     cur = conn.cursor()
     inserted = 0
@@ -373,6 +403,12 @@ def import_waarden(conn):
         print(f"❌ CSV niet gevonden: {INDICATOREN_CSV}")
         return False
 
+    # Jaargangcontrole tegen de geometrie (#119): alleen waarschuwingen
+    geo_jaar = geometrie_jaar_sample()
+    with open(INDICATOREN_CSV, "r", encoding="utf-8") as f:
+        controle = controleer_jaargangen(csv.DictReader(f), geometrie_codes(BUURTEN_GEOJSON), geo_jaar)
+    rapporteer(*controle, geo_jaar)
+
     cur = conn.cursor()
 
     # Valideer aanwezige indicatoren en buurten
@@ -472,9 +508,10 @@ def main():
     )
     parser.add_argument(
         "--stap",
-        choices=["alle", "stuurdata", "buurten", "indicatoren", "kompas", "waarden"],
+        choices=["alle", "definities", "stuurdata", "buurten", "indicatoren", "kompas", "waarden"],
         default="alle",
-        help="Welke stap uitvoeren (default: alle)"
+        help="Welke stap uitvoeren (default: alle). 'definities' = stuurdata, indicatoren en Kompas, "
+             "zonder gebieden en waarden; die komen uit de use cases (laad_usecase.py)"
     )
     args = parser.parse_args()
 
@@ -494,7 +531,7 @@ def main():
     success = True
 
     try:
-        if stap in ("alle", "stuurdata"):
+        if stap in ("alle", "definities", "stuurdata"):
             if not import_stuurdata(conn):
                 success = False
 
@@ -502,11 +539,11 @@ def main():
             if not import_buurten(conn):
                 success = False
 
-        if stap in ("alle", "indicatoren") and success:
+        if stap in ("alle", "definities", "indicatoren") and success:
             if not import_indicatoren(conn):
                 success = False
 
-        if stap in ("alle", "kompas") and success:
+        if stap in ("alle", "definities", "kompas") and success:
             if not import_kompas(conn):
                 success = False
 

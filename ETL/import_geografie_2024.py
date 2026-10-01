@@ -42,7 +42,7 @@ DB_CONFIG = {
     "port": os.getenv("DB_PORT", "5432"),
     "dbname": os.getenv("DB_NAME", "omnitwin_db"),
     "user": os.getenv("DB_USER", "omnitwin_user"),
-    "password": os.getenv("DB_PASSWORD", "admin_omnitwin2026"),
+    "password": os.getenv("DB_PASSWORD") or os.getenv("DATABASE_PASSWORD") or sys.exit("DB_PASSWORD/DATABASE_PASSWORD ontbreekt; zet hem in de omgeving of in .env."),
 }
 
 

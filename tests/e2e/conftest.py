@@ -18,8 +18,9 @@ import pytest
 try:
     from playwright.sync_api import expect, sync_playwright
 
-    # Software-WebGL in de container is traag: ruimere standaardtimeout voor expect()
-    expect.set_options(timeout=15_000)
+    # Software-WebGL in de container is traag, op CI-runners zonder GPU nog trager:
+    # ruimere standaardtimeout voor expect(), instelbaar via E2E_EXPECT_TIMEOUT_MS.
+    expect.set_options(timeout=int(os.environ.get("E2E_EXPECT_TIMEOUT_MS", "15000")))
 except ImportError:  # CI-unit-job heeft geen Playwright: map dan niet verzamelen
     sync_playwright = None
     collect_ignore_glob = ["test_*.py"]
@@ -71,8 +72,9 @@ def browser():
         b.close()
 
 
-def _open(browser, request, skip_onboarding):
-    context = browser.new_context(viewport={"width": 1600, "height": 1000}, locale="nl-NL")
+def _open(browser, request, skip_onboarding, reduced_motion=None):
+    opties = {"reduced_motion": reduced_motion} if reduced_motion else {}
+    context = browser.new_context(viewport={"width": 1600, "height": 1000}, locale="nl-NL", **opties)
     if skip_onboarding:
         context.add_init_script(_SKIP_ONBOARDING)
     page = context.new_page()
@@ -115,6 +117,12 @@ def _open(browser, request, skip_onboarding):
 def app_page(browser, request):
     """App geopend, onboarding overgeslagen."""
     yield from _open(browser, request, skip_onboarding=True)
+
+
+@pytest.fixture
+def app_page_reduced_motion(browser, request):
+    """App geopend met de systeeminstelling 'minder beweging' (prefers-reduced-motion: reduce)."""
+    yield from _open(browser, request, skip_onboarding=True, reduced_motion="reduce")
 
 
 @pytest.fixture

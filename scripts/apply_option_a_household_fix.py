@@ -25,7 +25,7 @@ def get_db_connection():
         port=5432,
         dbname=os.getenv('DATABASE_NAME', 'omnitwin_db'),
         user=os.getenv('DATABASE_USER', 'omnitwin_user'),
-        password=os.getenv('DATABASE_PASSWORD', 'admin_omnitwin2026'),
+        password=os.getenv('DATABASE_PASSWORD') or sys.exit("DATABASE_PASSWORD ontbreekt; zet hem in de omgeving of in .env."),
         connect_timeout=10
     )
 
