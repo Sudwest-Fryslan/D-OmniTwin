@@ -41,15 +41,17 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         response = await call_next(request)
         
         # Content Security Policy - STRICT LOCAL ONLY
-        # Required for: MapLibre GL, D3.js, deck.gl, Chart.js (basiskaart: PDOK)
+        # MapLibre GL, D3.js, deck.gl, Chart.js en het lettertype Inter worden zelf gehost
+        # onder /static/vendor (#117); geen CDN- of font-domeinen meer nodig.
+        # Externe verbindingen zijn alleen data-API's (basiskaart en kaartlagen: PDOK).
         # Local Swagger UI assets (no external CDNs needed for docs)
         response.headers["Content-Security-Policy"] = (
             "default-src 'self'; "
-            "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://unpkg.com https://cdn.jsdelivr.net; "
-            "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net https://unpkg.com; "
-            "font-src 'self' https://fonts.gstatic.com data:; "
+            "script-src 'self' 'unsafe-inline' 'unsafe-eval'; "
+            "style-src 'self' 'unsafe-inline'; "
+            "font-src 'self' data:; "
             "img-src 'self' data: https: blob:; "
-            "connect-src 'self' https://data.3dbag.nl https://api.3dbag.nl https://service.pdok.nl https://api.pdok.nl; "
+            "connect-src 'self' https://api.3dbag.nl https://service.pdok.nl https://api.pdok.nl; "
             "worker-src 'self' blob:; "
             "child-src 'self' blob:; "
             "frame-src 'self';"
