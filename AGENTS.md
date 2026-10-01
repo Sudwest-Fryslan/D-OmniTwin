@@ -157,6 +157,12 @@ Scripts in `ETL/` en `scripts/` zijn standalone, geen deel van de web-API. CBS, 
 ## Projectmanagement
 `docs/STATE.md` is leidend. Na elke sprint bijwerken: versie, actieve componenten, recente wijzigingen, issues, roadmap.
 
+## Richting: databronnen en use cases
+
+- **Databronnen zijn dataproducten** (ADR 0002, docs/2-architectuur/adr/): per bron ETL + datacontract (ODCS) + metadata (DCAT-AP-NL) + semantiek (SKOS/GGM) + gebruiksvoorwaarden (ODRL) + herkomst (PROV/`data_lineage`), met de governance voor ontsluiting op de bron. De kern (Gold-laag, #20) leest alleen het contract. Geen nieuwe ETL in de kern.
+- **Wat te downloaden is, staat niet in git**: alleen recept, contract en metadata; data in de cache (`$DATA_CACHE`).
+- **Elke functionaliteit is een use case** (ADR 0003): `usecases/<naam>/` met data-selectie, inrichting, tests en bewijs; out of the box, ook zonder AI-sleutel.
+
 ## GitHub workflow
 
 Elke wijziging gaat via GitHub Flow:
