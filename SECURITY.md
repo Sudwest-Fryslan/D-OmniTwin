@@ -4,7 +4,7 @@
 
 Heb je een kwetsbaarheid gevonden in D-OmniTwin? Meld die dan **niet** via een openbaar issue, discussie of pull request, maar privé per e-mail:
 
-**Taeke van der Laan** (Gemeente Súdwest-Fryslân) — [t.vanderlaan@sudwestfryslan.nl](mailto:t.vanderlaan@sudwestfryslan.nl)
+**Geo-groep, Gemeente Súdwest-Fryslân** — [geo-groep@sudwestfryslan.nl](mailto:geo-groep@sudwestfryslan.nl)
 
 Vermeld in je melding:
 
@@ -53,4 +53,4 @@ D-OmniTwin is in ontwikkeling (bèta) en kent nog geen formele releases (zie [#2
 
 ## English summary
 
-Please **do not** report security vulnerabilities through public GitHub issues. Report them privately by e-mail to Taeke van der Laan (Municipality of Súdwest-Fryslân): [t.vanderlaan@sudwestfryslan.nl](mailto:t.vanderlaan@sudwestfryslan.nl). Include the affected component, reproduction steps, the version or commit, and the expected impact. We aim to acknowledge reports within 5 working days (no guaranteed SLA) and follow coordinated vulnerability disclosure. Only the `main` branch receives security fixes.
+Please **do not** report security vulnerabilities through public GitHub issues. Report them privately by e-mail to the Geo team of the Municipality of Súdwest-Fryslân: [geo-groep@sudwestfryslan.nl](mailto:geo-groep@sudwestfryslan.nl). Include the affected component, reproduction steps, the version or commit, and the expected impact. We aim to acknowledge reports within 5 working days (no guaranteed SLA) and follow coordinated vulnerability disclosure. Only the `main` branch receives security fixes.

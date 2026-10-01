@@ -89,7 +89,7 @@ Vier use cases worden gevalideerd in pilots bij drie gemeenten. Resultaat: open 
 
 > **🤝 Interesse in samenwerking of pilotdeelname?**  
 > Open een [discussie op GitHub](../../discussions) of neem direct contact op:  
-> 📧 **[t.vanderlaan@sudwestfryslan.nl](mailto:t.vanderlaan@sudwestfryslan.nl)** 
+> 📧 **[geo-groep@sudwestfryslan.nl](mailto:geo-groep@sudwestfryslan.nl)** 
 > 🔗 Zie ook: [communicatieplan_subsidie_2026.md](./docs/8-communicatie/communicatieplan_subsidie_2026.md)
 
 ---

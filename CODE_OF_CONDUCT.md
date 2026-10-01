@@ -4,7 +4,7 @@ D-OmniTwin hanteert de [Contributor Covenant](https://www.contributor-covenant.o
 
 **Kort samengevat:** we gaan respectvol met elkaar om, ongeacht achtergrond, ervaring of identiteit. Intimidatie, discriminatie en persoonlijke aanvallen accepteren we niet, in issues, pull requests, discussies en andere projectkanalen.
 
-**Melden:** ongewenst gedrag meld je bij Taeke van der Laan (Gemeente Súdwest-Fryslân), [t.vanderlaan@sudwestfryslan.nl](mailto:t.vanderlaan@sudwestfryslan.nl). Meldingen worden vertrouwelijk behandeld.
+**Melden:** ongewenst gedrag meld je bij de Geo-groep van Gemeente Súdwest-Fryslân, [geo-groep@sudwestfryslan.nl](mailto:geo-groep@sudwestfryslan.nl). Meldingen worden vertrouwelijk behandeld.
 
 ---
 
@@ -46,7 +46,7 @@ This Code of Conduct applies within all community spaces, and also applies when 
 
 ## Enforcement
 
-Instances of abusive, harassing, or otherwise unacceptable behavior may be reported to the community leaders responsible for enforcement at [t.vanderlaan@sudwestfryslan.nl](mailto:t.vanderlaan@sudwestfryslan.nl) (Taeke van der Laan, Gemeente Súdwest-Fryslân). All complaints will be reviewed and investigated promptly and fairly.
+Instances of abusive, harassing, or otherwise unacceptable behavior may be reported to the community leaders responsible for enforcement at [geo-groep@sudwestfryslan.nl](mailto:geo-groep@sudwestfryslan.nl) (Geo-groep, Gemeente Súdwest-Fryslân). All complaints will be reviewed and investigated promptly and fairly.
 
 All community leaders are obligated to respect the privacy and security of the reporter of any incident.
 
