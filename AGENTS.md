@@ -166,4 +166,6 @@ Elke wijziging gaat via GitHub Flow:
 4. Pull Request naar `main` met `Closes #<nr>` in de beschrijving
 5. Nooit direct op `main` pushen
 
+Versies en releases: Semantic Versioning, één bron `VERSION`, conventional commits, regel in `CHANGELOG.md` onder `[Unreleased]`, release-branch `release/<MAJOR>.<MINOR>` met tag `v<versie>`. Zie `docs/9-beheer/releasebeleid.md`.
+
 `gh` CLI: `/usr/bin/gh` — gebruik altijd met `GH_PAGER=cat` om pager-blokkering te voorkomen.
