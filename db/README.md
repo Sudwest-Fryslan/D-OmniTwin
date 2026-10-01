@@ -34,3 +34,17 @@ docker compose run --rm db-init python -m omnitwin.migraties --status   # wat is
 ```
 
 **Nieuwe schemawijziging:** voeg `V<volgend nummer>__<naam>.sql` toe, idempotent (`IF NOT EXISTS`, `CREATE OR REPLACE`). Pas een toegepaste migratie nooit aan; maak een nieuwe. `schema_latest.sql` hoeft niet mee: de runner past de migratie ook op een nieuwe database toe.
+
+## Eerste initialisatie en eigenaar (#201)
+
+- **Init-status:** de tabel `installatie_status` krijgt pas een rij als de eerste initialisatie helemaal gelukt is (schema, migraties, stuurdata, use cases, beheerder, rollen). Staan er tabellen in de database zonder die rij, dan stopt `db-init` met een foutmelding en herstelinstructie, in plaats van een lege stack te starten. Een installatie van vóór 0.2.1 met `gebieden` en een beheerder wordt herkend en krijgt de rij automatisch.
+- **Eigenaar:** `schema_latest.sql` zet geen eigenaar en geen rechten voor een vaste rol. Alle objecten zijn van `DATABASE_USER`, de gebruiker die `db-init` draait; een andere naam dan `omnitwin_user` werkt dus ook. De rollen voor PostgREST en pg_featureserv maakt `R__api_rollen.sql`.
+
+## Backup van geüploade kaartlagen
+
+Bestanden die via beheer > externe lagen zijn geüpload staan in het volume `uploads` (in de container `/app/data-upload`), niet in de database. Neem ze mee in de backup:
+
+```bash
+docker compose cp backend:/app/data-upload ./backup-data-upload      # backup
+docker compose cp ./backup-data-upload/. backend:/app/data-upload    # terugzetten
+```
