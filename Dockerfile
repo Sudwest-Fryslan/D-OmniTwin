@@ -28,9 +28,10 @@ RUN chmod +x /app/docker-entrypoint.sh
 # Draai niet als root. De code blijft van root (alleen-lezen voor de app);
 # alleen de mappen waarin de app schrijft zijn van de app-gebruiker.
 # UID 1000 komt meestal overeen met de ontwikkelaar op Linux (bind-mount in dev).
+# /data-cache: cache voor gedownloade open data (volume bron-cache); een nieuw volume neemt de eigenaar over.
 RUN useradd --create-home --uid 1000 app \
-    && mkdir -p logs exports data-upload \
-    && chown app:app logs exports data-upload
+    && mkdir -p logs exports data-upload /data-cache \
+    && chown app:app logs exports data-upload /data-cache
 USER app
 
 # Expose port

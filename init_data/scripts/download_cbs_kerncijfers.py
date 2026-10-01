@@ -335,7 +335,10 @@ def rijen_voor(codes, log=print):
         return lees_csv(pad)
     log(f"   🌐 downloaden bij CBS: {len(codes)} buurten, {len(TABELLEN)} jaargangen")
     rijen, _ = download(codes, log)
-    schrijf_csv(pad, rijen)
+    try:
+        schrijf_csv(pad, rijen)
+    except OSError as e:  # cache niet schrijfbaar: wel laden, volgende keer opnieuw downloaden
+        log(f"   ⚠️  cache niet schrijfbaar ({e}); data wordt wel geladen")
     return rijen
 
 
