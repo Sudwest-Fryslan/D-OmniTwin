@@ -10,6 +10,7 @@ Toegankelijkheid (WCAG 2.1, #67): focusbeheer in dialogen en "minder beweging".
   instelling laat zien dat de overgang er normaal wel is.
 """
 
+from playwright.sync_api import TimeoutError as PlaywrightTimeoutError
 from playwright.sync_api import expect
 
 from e2e_helpers import (
@@ -141,11 +142,15 @@ def test_reduced_motion_camera_springt_en_kompas_zonder_transitie(app_page_reduc
     )
     klik_kompas_segment(page, thema)
     expect(page.locator("#kompas-breadcrumb")).to_contain_text(thema)
-    page.wait_for_timeout(150)  # ruim onder de normale 750 ms
-    klaar = page.evaluate(
-        """() => [...document.querySelectorAll('#kompas-container path.kompas-arc-path')]
-              .map(p => p.__data__)
-              .filter(d => d && d.target && window.kompasViz.arcVisible(d.target))
-              .every(d => ['x0', 'x1', 'y0', 'y1'].every(k => Math.abs(d.current[k] - d.target[k]) < 1e-9))"""
-    )
-    assert klaar, "zonnediagram staat 150 ms na de klik nog niet op de eindstand"
+    # Pollen i.p.v. vaste wacht: op een drukke CI-runner is één meting na 150 ms te krap.
+    # 500 ms blijft ruim onder de normale transitie van 750 ms.
+    try:
+        page.wait_for_function(
+            """() => [...document.querySelectorAll('#kompas-container path.kompas-arc-path')]
+                  .map(p => p.__data__)
+                  .filter(d => d && d.target && window.kompasViz.arcVisible(d.target))
+                  .every(d => ['x0', 'x1', 'y0', 'y1'].every(k => Math.abs(d.current[k] - d.target[k]) < 1e-9))""",
+            timeout=500,
+        )
+    except PlaywrightTimeoutError:
+        raise AssertionError("zonnediagram staat 500 ms na de klik nog niet op de eindstand") from None
