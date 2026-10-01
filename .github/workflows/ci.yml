@@ -136,11 +136,16 @@ jobs:
 
       - name: Draai browser-e2e-tests (Playwright, docs/testcases)
         run: |
+          # Opwarmen: eerste verzoeken (modellen laden, caches vullen) niet in de eerste test laten vallen
+          for pad in / /health /api/data/gebiedstypes "/api/ai/kompas/search?q=groen"; do
+            curl -s -o /dev/null --max-time 120 "http://localhost:${OMNITWIN_HTTP_PORT:-80}$pad" || true
+          done
           docker run --rm --network "${COMPOSE_PROJECT_NAME}_default" \
             -v "$PWD":/work -w /work \
             -e OMNITWIN_BASE_URL=http://traefik \
             -e PYTHONDONTWRITEBYTECODE=1 \
             -e E2E_EXPECT_TIMEOUT_MS=45000 \
+            -e E2E_TIMEOUT_MS=90000 \
             mcr.microsoft.com/playwright/python:v1.63.0-noble sh -c "pip install -q --root-user-action=ignore -r tests/e2e/requirements.txt \
               && pytest -p no:cacheprovider -m e2e tests/e2e -rs"
 
