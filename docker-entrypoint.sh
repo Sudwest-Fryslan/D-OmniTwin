@@ -45,24 +45,105 @@ run_migrations() {
     PGHOST="$DB_HOST" PGPORT="$DB_PORT" PGDATABASE="$DB_NAME" PGUSER="$DB_USER" python -m omnitwin.migraties
 }
 
-init_db() {
-    # Controleer of het schema al bestaat
-    TABLE_EXISTS=$(psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -tAc "SELECT 1 FROM information_schema.tables WHERE table_schema='public' AND table_name='gebieden';" 2>/dev/null || true)
+# psql met de gegevens uit .env; -X: geen psqlrc
+db_psql() {
+    psql -X -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" "$@"
+}
 
-    if [ "$TABLE_EXISTS" = "1" ]; then
-        echo "✅ Bestaande database gevonden (tabel 'gebieden' aanwezig). Initialisatie overgeslagen."
-        echo "⚙️ Migraties controleren..."
-        run_migrations
-        return
+# Eén waarde opvragen (leeg bij een fout)
+db_waarde() {
+    db_psql -tAc "$1" 2>/dev/null || true
+}
+
+# Init-status (#201). Een eerste initialisatie bestaat uit veel stappen (schema, migraties,
+# stuurdata, use cases, beheerder, rollen). Pas als die allemaal gelukt zijn, krijgt de tabel
+# installatie_status een rij (markeer_voltooid). Zo is een half mislukte init te herkennen.
+#   voltooid      rij in installatie_status
+#   leeg          geen eigen tabellen in public (alleen die van extensies zoals PostGIS)
+#   oud-compleet  van vóór 0.2.1, zonder installatie_status, maar met gebieden en een beheerder
+#   half          wel tabellen, geen markering en geen beheerder: eerdere init niet afgemaakt
+db_toestand() {
+    if [ "$(db_waarde "SELECT to_regclass('public.installatie_status') IS NOT NULL")" = "t" ] \
+        && [ "$(db_waarde "SELECT count(*) > 0 FROM public.installatie_status")" = "t" ]; then
+        echo voltooid; return
     fi
+    local tabellen
+    tabellen=$(db_waarde "SELECT count(*) FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace
+        WHERE n.nspname = 'public' AND c.relkind IN ('r', 'p', 'v', 'm')
+          AND NOT EXISTS (SELECT 1 FROM pg_depend d WHERE d.classid = 'pg_class'::regclass
+                          AND d.objid = c.oid AND d.deptype = 'e')")
+    if [ "$tabellen" = "0" ]; then
+        echo leeg; return
+    fi
+    if [ "$(db_waarde "SELECT to_regclass('public.gebieden') IS NOT NULL AND to_regclass('public.users') IS NOT NULL")" = "t" ] \
+        && [ "$(db_waarde "SELECT EXISTS (SELECT 1 FROM public.users WHERE is_admin)")" = "t" ]; then
+        echo oud-compleet; return
+    fi
+    echo half
+}
 
+markeer_voltooid() {
+    db_psql -v ON_ERROR_STOP=1 -q -v versie="$(cat /app/VERSION 2>/dev/null || echo onbekend)" -v hoe="$1" >/dev/null <<'SQL'
+CREATE TABLE IF NOT EXISTS public.installatie_status (
+    id          boolean     PRIMARY KEY DEFAULT true CHECK (id),  -- hooguit één rij
+    voltooid_op timestamptz NOT NULL DEFAULT now(),
+    versie      text        NOT NULL,
+    hoe         text        NOT NULL
+);
+COMMENT ON TABLE public.installatie_status IS
+    'Eerste initialisatie voltooid (docker-entrypoint.sh, #201). Zonder rij weigert db-init een database met tabellen.';
+INSERT INTO public.installatie_status (versie, hoe) VALUES (:'versie', :'hoe') ON CONFLICT (id) DO NOTHING;
+SQL
+}
+
+fout_half_geinitialiseerd() {
+    cat >&2 <<'EOF'
+❌ De database is half geïnitialiseerd: er staan tabellen in, maar een eerdere eerste
+   initialisatie is niet afgemaakt (geen rij in installatie_status en geen beheerder).
+   db-init stopt, zodat de stack niet start met een onvolledige database.
+
+   Oorzaak: zie de log van de eerste mislukte run (docker compose logs db-init).
+   Herstel bij een nieuwe installatie (wist de database en de andere volumes van dit project):
+     docker compose down -v
+     docker compose up -d --build
+   Alleen de database wissen: docker compose down, docker volume rm <project>_pgdata
+   (docker volume ls toont de naam), en weer docker compose up -d.
+
+   Bestaande installatie met data die je wilt houden, en ontbreekt alleen de beheerder?
+   Maak die aan en start opnieuw:
+     docker compose run --rm db-init python /app/init_data/scripts/create_admin.py
+EOF
+    exit 1
+}
+
+init_db() {
+    case "$(db_toestand)" in
+        voltooid)
+            echo "✅ Bestaande database gevonden (installatie voltooid). Initialisatie overgeslagen."
+            echo "⚙️ Migraties controleren..."
+            run_migrations
+            return
+            ;;
+        oud-compleet)
+            echo "✅ Bestaande database van vóór 0.2.1 gevonden (gebieden en beheerder aanwezig). Initialisatie overgeslagen."
+            INIT_HOE="bestaande installatie herkend"
+            echo "⚙️ Migraties controleren..."
+            run_migrations
+            return
+            ;;
+        half)
+            fout_half_geinitialiseerd
+            ;;
+    esac
+
+    INIT_HOE="nieuwe installatie"
     echo "⚙️ Database is leeg. Initialiseren via schema_latest.sql..."
-    # ON_ERROR_STOP: stop bij de eerste SQL-fout in plaats van een half schema
-    psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -v ON_ERROR_STOP=1 -f /app/db/schema/schema_latest.sql >/dev/null
+    # ON_ERROR_STOP en één transactie per bestand: bij een fout blijft er van dat bestand niets staan
+    db_psql -q -v ON_ERROR_STOP=1 --single-transaction -f /app/db/schema/schema_latest.sql >/dev/null
     # Views voor pg_featureserv (vw_gebieden_features, gebruikt door de kaart) staan niet in schema_latest.sql
-    psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -v ON_ERROR_STOP=1 -f /app/db/schema/06_pg_featureserv_views.sql >/dev/null
+    db_psql -q -v ON_ERROR_STOP=1 --single-transaction -f /app/db/schema/06_pg_featureserv_views.sql >/dev/null
     # SQL-functies die pg_featureserv publiceert onder /api/geo/functions (schema postgisftw)
-    psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -v ON_ERROR_STOP=1 -f /app/db/schema/07_postgisftw_functions.sql >/dev/null
+    db_psql -q -v ON_ERROR_STOP=1 --single-transaction -f /app/db/schema/07_postgisftw_functions.sql >/dev/null
     run_migrations
     echo "✅ Database schema succesvol aangemaakt."
 
@@ -97,10 +178,11 @@ init_db() {
             ;;
     esac
     echo "👤 Admin gebruiker controleren/aanmaken ('$ADMIN_USER')..."
-    python /app/init_data/scripts/create_admin.py || echo "⚠️ Admin initialisatie overgeslagen."
+    # Mislukt dit, dan stopt de init (set -e): zonder beheerder is de installatie niet af
+    python /app/init_data/scripts/create_admin.py
 
     # PostgREST schema cache herladen via NOTIFY
-    psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -c "NOTIFY pgrst, 'reload schema';" >/dev/null 2>&1 || true
+    db_psql -c "NOTIFY pgrst, 'reload schema';" >/dev/null 2>&1 || true
 }
 
 # Rollen en schema api voor PostgREST en pg_featureserv (#57). Draait bij elke start, ook bij
@@ -134,8 +216,14 @@ echo "============================================================"
 wait_for_db
 
 if [ "$1" = "init" ]; then
+    INIT_HOE=""
     init_db
     setup_api_rollen
+    # Pas hier is de eerste initialisatie geslaagd; embeddings zijn optioneel (zie hierboven)
+    if [ -n "$INIT_HOE" ]; then
+        markeer_voltooid "$INIT_HOE"
+        echo "✅ Installatie gemarkeerd als voltooid ($INIT_HOE)."
+    fi
     generate_embeddings
     echo "✅ Initialisatie klaar."
     exit 0
