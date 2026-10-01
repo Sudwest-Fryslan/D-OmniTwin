@@ -105,7 +105,10 @@ def test_downloadscript_levert_geldige_data(pad, tmp_path):
     extra = json.loads(pad.read_text(encoding="utf-8"))["data"]["extra_data"]
     spec = importlib.util.spec_from_file_location("maak_data_test", pad.parent / extra["script"])
     mod = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(mod)
+    try:
+        spec.loader.exec_module(mod)
+    except ImportError as e:  # geo-pakketten (shapely, pyproj, pillow) niet in de slanke CI-omgeving
+        pytest.skip(f"pakket ontbreekt: {e.name}")
     try:
         uit = mod.main(tmp_path / "waarden.csv")
     except Exception as e:
