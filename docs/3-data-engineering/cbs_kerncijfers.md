@@ -1,19 +1,22 @@
 # CBS Kerncijfers wijken en buurten: alle jaargangen (#159)
 
-De CBS Kerncijfers wijken en buurten staan als één bronpakket in [`init_data/cbs/`](../../init_data/cbs/): alle jaargangen vanaf 2019, voor alle buurten in Fryslân, gemapt op de indicatoren van D-OmniTwin. Daarmee werken trends (tijdslider in het Kompas, "Trending (5j+)" in het dashboard).
+De CBS Kerncijfers wijken en buurten van alle jaargangen vanaf 2019, voor alle buurten in Fryslân, gemapt op de indicatoren van D-OmniTwin.
+
+**Principe: wat bij CBS te downloaden is, staat niet in git.** In [`init_data/cbs/`](../../init_data/cbs/) staat alleen het recept: tabel-ID's per jaar, de kolom-mapping, licentie en codecontrole. De data wordt gedownload op het moment dat een use case geladen wordt, en gecachet. Daarmee werken trends (tijdslider in het Kompas, "Trending (5j+)" in het dashboard).
 
 ## Waarom
 
 Tot #159 kwamen de Kerncijfers uit één tabel, `85039NED`, met het label "Kerncijfers wijken en buurten 2023". Volgens CBS (`TableInfos.Period`) is dat de tabel van **2021**. Bolsward-Noord had in de app 1.770 inwoners "in 2023"; de tabel van 2023 geeft 1.920. Daarnaast deelde de afgeleide indicator `65+ jaar (%)` een teller uit 2025 door een noemer uit "2023" (= 2021).
 
-## Bronpakket
+## Recept en cache
 
-| Bestand | Inhoud |
+| Waar | Inhoud |
 |---------|--------|
-| `init_data/cbs/kerncijfers_fryslan.csv` | ± 180.000 waarden, ± 28 MB. Formaat van `sample_indicatoren.csv`, plus kolom `bron_tabel`. |
-| `init_data/cbs/datapackage.json` | Bron, licentie, tabellen per jaar, mapping per indicator, codecontrole. |
+| `init_data/cbs/datapackage.json` (git) | Bron, licentie, tabellen per jaar, mapping per indicator, codecontrole en de verwachte omvang van een volledige download. |
+| `init_data/scripts/download_cbs_kerncijfers.py` (git) | De mapping en de download (alleen `opendata.cbs.nl`). |
+| `$DATA_CACHE/cbs/` (niet in git) | De gedownloade reeksen: per set buurten, of `kerncijfers_fryslan.csv` (± 187.000 waarden) na `--alle`. In Docker het volume `bron-cache`. |
 
-Gemaakt met `init_data/scripts/download_cbs_kerncijfers.py` (alleen `opendata.cbs.nl`).
+De indicatordefinities (namen, UUID's, eenheid, richting) horen bij de stuurdata en worden altijd geladen (`load_sample.py --stap definities`), ook zonder download.
 
 ### Tabellen
 
@@ -71,11 +74,11 @@ Smallingerland heeft per 2024 een nieuwe buurtindeling: de 61 buurten van Smalli
 
 ## Laden
 
-Laden gaat altijd vanuit de gecommitte CSV, zonder netwerk.
+`laad_cbs.py` haalt de reeksen voor de gebieden in de database uit de cache, of downloadt ze bij CBS (enkele seconden voor de 13 use-casebuurten) en vult de cache. Zonder internet en zonder cache: een waarschuwing, de rest van de installatie gaat door. Voor een installatie zonder internet: vul de cache op een machine met internet (`download_cbs_kerncijfers.py --alle`) en kopieer `$DATA_CACHE/cbs` naar het volume.
 
 | Wanneer | Wat | Hoe |
 |---------|-----|-----|
-| `db-init`, `LOAD_SAMPLE_DATA=true` | de reeksen voor de gebieden in de database (de 13 use-casebuurten) | `laad_usecase.py --alle` (sample bevat de reeks), daarna `laad_cbs.py` |
+| `db-init`, `LOAD_SAMPLE_DATA=true` | de reeksen voor de gebieden in de database (de 13 use-casebuurten) | `laad_usecase.py --alle`, daarna `laad_cbs.py` (download of cache) |
 | expliciet, heel Fryslân | 931 buurten, alle jaren | `docker compose run --rm db-init python init_data/scripts/seed_fryslan.py --stap alle` (stap `cbs`) |
 | alleen de CBS-reeksen | voor alle of genoemde gebieden in de database | `docker compose run --rm db-init python init_data/scripts/laad_cbs.py [BU...]` |
 
@@ -88,9 +91,9 @@ Afgeleide indicatoren in use cases (`laad_usecase.py`) nemen teller en noemer ui
 ## Bijwerken
 
 ```bash
-python init_data/scripts/download_cbs_kerncijfers.py --controle      # tabellen (Period) en kolommen controleren
-python init_data/scripts/download_cbs_kerncijfers.py                 # downloaden, pakket + sample schrijven
-python init_data/scripts/download_cbs_kerncijfers.py --alleen-sample # alleen de sample opnieuw afleiden
+python init_data/scripts/download_cbs_kerncijfers.py --controle          # tabellen (Period) en kolommen controleren
+python init_data/scripts/download_cbs_kerncijfers.py --alle              # heel Fryslân naar de cache, recept (datapackage.json) bijwerken
+python init_data/scripts/download_cbs_kerncijfers.py BU19000001 ...      # alleen deze buurten naar de cache
 ```
 
 Nieuwe jaargang: voeg het tabel-ID toe aan `TABELLEN` en de kolommen aan `MAPPING`. `--controle` faalt als `Period` of een kolom niet klopt; de unittest faalt als een jaar zonder kolom niet in `NIET_GEPUBLICEERD` staat.

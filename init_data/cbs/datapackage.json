@@ -1,7 +1,7 @@
 {
   "name": "cbs-kerncijfers-fryslan",
   "title": "CBS Kerncijfers wijken en buurten 2019-2026, buurten in Fryslân",
-  "description": "Kerncijfers wijken en buurten van alle jaargangen vanaf 2019 voor de buurten in Fryslân, gemapt op de indicatoren van D-OmniTwin. Jaar = peiljaar van de CBS-tabel. Alleen buurtcodes die in de CBS-geometrie 2024 bestaan. Gemaakt met init_data/scripts/download_cbs_kerncijfers.py.",
+  "description": "Recept voor de Kerncijfers wijken en buurten van alle jaargangen vanaf 2019 voor de buurten in Fryslân, gemapt op de indicatoren van D-OmniTwin. De data zelf staat niet in git: init_data/scripts/laad_cbs.py downloadt bij het laden van een use case, met cache in $DATA_CACHE. Jaar = peiljaar van de CBS-tabel. Alleen buurtcodes die in de CBS-geometrie 2024 bestaan.",
   "licenses": [
     {
       "name": "CC-BY-4.0",
@@ -45,7 +45,7 @@
   ],
   "bronvermelding": "Centraal Bureau voor de Statistiek (CBS), Kerncijfers wijken en buurten 2019-2026. CC BY 4.0.",
   "geometrie_jaar": 2024,
-  "gedownload": "2026-10-01",
+  "gecontroleerd": "2026-10-01",
   "tabellen": {
     "2019": {
       "tabel": "84583NED",
@@ -823,10 +823,44 @@
         "factor": 100,
         "eenheid": "%"
       }
+    },
+    "Eenpersoonshuishoudens (%)": {
+      "uuid": "bbc993d8-52a4-5ff2-824c-3a843598c624",
+      "jaren": [
+        2019,
+        2020,
+        2021,
+        2022,
+        2023,
+        2024,
+        2025,
+        2026
+      ],
+      "kolommen": null,
+      "afgeleid": {
+        "teller": "Eenpersoonshuishoudens",
+        "noemer": "Huishoudens totaal",
+        "factor": 100,
+        "eenheid": "%"
+      }
+    }
+  },
+  "controle": {
+    "toelichting": "Omvang van een volledige download (heel Fryslân), om een nieuwe download mee te vergelijken.",
+    "rijen_totaal": 186756,
+    "rijen_per_jaar": {
+      "2019": 25551,
+      "2020": 25585,
+      "2021": 25605,
+      "2022": 25629,
+      "2023": 24781,
+      "2024": 25355,
+      "2025": 22200,
+      "2026": 12050
     }
   },
   "codecontrole": {
-    "toelichting": "Buurtcodes uit de CBS-tabel die niet in de geometrie 2024 bestaan, per peiljaar en gemeente. Deze waarden zijn niet opgenomen.",
+    "toelichting": "Buurtcodes uit de CBS-tabel die niet in de geometrie 2024 bestaan, per peiljaar en gemeente. Deze waarden worden niet opgenomen.",
     "weggevallen": {
       "2019": {
         "GM0090 Smallingerland": 31
@@ -1078,72 +1112,5 @@
       "2025": 0,
       "2026": 0
     }
-  },
-  "resources": [
-    {
-      "name": "kerncijfers_fryslan",
-      "path": "kerncijfers_fryslan.csv",
-      "format": "csv",
-      "encoding": "utf-8",
-      "rows": 179749,
-      "schema": {
-        "fields": [
-          {
-            "name": "gebied_id",
-            "type": "string"
-          },
-          {
-            "name": "indicator_uuid",
-            "type": "string"
-          },
-          {
-            "name": "indicator_naam",
-            "type": "string"
-          },
-          {
-            "name": "waarde",
-            "type": "number"
-          },
-          {
-            "name": "jaar",
-            "type": "integer"
-          },
-          {
-            "name": "bron",
-            "type": "string"
-          },
-          {
-            "name": "kwaliteit",
-            "type": "string"
-          },
-          {
-            "name": "eenheid",
-            "type": "string"
-          },
-          {
-            "name": "categorie",
-            "type": "string"
-          },
-          {
-            "name": "interpretatie_logica",
-            "type": "string"
-          },
-          {
-            "name": "scenario_id",
-            "type": "string"
-          },
-          {
-            "name": "bron_tabel",
-            "type": "string"
-          }
-        ],
-        "primaryKey": [
-          "gebied_id",
-          "indicator_uuid",
-          "jaar",
-          "scenario_id"
-        ]
-      }
-    }
-  ]
+  }
 }

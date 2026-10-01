@@ -49,7 +49,7 @@ init_data/sample/
 
 ### CBS Kerncijfers (alle jaargangen)
 
-De rijen met bron `CBS Kerncijfers wijken en buurten <jaar> (<tabel>)` komen uit het bronpakket [`init_data/cbs/`](../cbs/), voor de buurten van deze sample. Jaar = peiljaar van de CBS-tabel. Bijwerken zonder netwerk: `python init_data/scripts/download_cbs_kerncijfers.py --alleen-sample`. Zie [`docs/3-data-engineering/cbs_kerncijfers.md`](../../docs/3-data-engineering/cbs_kerncijfers.md).
+De sample bevat **geen** CBS Kerncijfers: die worden bij het laden gedownload voor de buurten van de use cases (`init_data/scripts/laad_cbs.py`, recept in [`init_data/cbs/`](../cbs/)). Wat bij een open bron te downloaden is, staat niet in git. Zie [`docs/3-data-engineering/cbs_kerncijfers.md`](../../docs/3-data-engineering/cbs_kerncijfers.md).
 
 ---
 

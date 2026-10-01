@@ -38,10 +38,12 @@ except ImportError:
     sys.exit(1)
 
 ROOT = Path(__file__).resolve().parent.parent.parent
+sys.path.insert(0, str(Path(__file__).resolve().parent))  # download_cbs_kerncijfers
 SAMPLE_DIR = ROOT / "init_data" / "sample"
 STUURDATA_SQL = SAMPLE_DIR / "1_stuurdata" / "stuurdata_seed.sql"
 BUURTEN_GEOJSON = SAMPLE_DIR / "2_brondata" / "sample_buurten.geojson"
 INDICATOREN_CSV = SAMPLE_DIR / "2_brondata" / "sample_indicatoren.csv"
+STANDAARD_INDICATOREN_CSV = INDICATOREN_CSV
 KOMPAS_CSV = ROOT / "init_data" / "kompas" / "kompas_hierarchie.csv"
 
 CBS_BUURT_TYPE_ID = "afba67cb-6b38-4723-9c95-102a22d5b38a"
@@ -196,6 +198,18 @@ def import_indicatoren(conn):
                 }
 
     print(f"   📂 {len(unique_indicators)} unieke indicatoren gevonden in sample CSV")
+
+    # CBS Kerncijfers: de waarden worden gedownload (laad_cbs.py), de definities horen bij de
+    # stuurdata en komen uit het recept (download_cbs_kerncijfers.INDICATOREN), niet uit de sample.
+    if INDICATOREN_CSV == STANDAARD_INDICATOREN_CSV:
+        import download_cbs_kerncijfers as cbs
+        voor = len(unique_indicators)
+        for naam, (ind_uuid, eenheid, logica, categorie) in cbs.INDICATOREN.items():
+            unique_indicators.setdefault(ind_uuid, {
+                "uuid": ind_uuid, "naam": naam, "eenheid": eenheid or None, "categorie": categorie or None,
+                "interpretatie_logica": logica or "pos_is_pos", "bron": "CBS Kerncijfers wijken en buurten",
+            })
+        print(f"   📂 {len(unique_indicators) - voor} CBS-indicatoren uit het recept (init_data/cbs)")
 
     cur = conn.cursor()
     inserted = 0

@@ -35,7 +35,6 @@ init_data/
 │   └── indicatorwaarden_fryslan.csv   # RIVM Gezondheidsmonitor — indicatorwaarden per buurt
 │
 ├── cbs/
-│   ├── kerncijfers_fryslan.csv        # CBS Kerncijfers wijken en buurten 2019-2026, alle Friese buurten
 │   └── datapackage.json               # bron, licentie, tabellen per jaar, mapping, codecontrole
 │
 └── scripts/
@@ -45,7 +44,7 @@ init_data/
     ├── download_buurten_fryslan.py    # Download GeoJSON via PDOK WFS
     ├── download_indicatoren_fryslan.py # Download RIVM-indicatorwaarden via CBS dataderden
     ├── download_cbs_kerncijfers.py    # Download CBS Kerncijfers 2019-nu (alle jaargangen) via OData
-    └── laad_cbs.py                    # CBS Kerncijfers laden voor de gebieden in de database (zonder netwerk)
+    └── laad_cbs.py                    # CBS Kerncijfers downloaden (met cache) en laden voor de gebieden in de database
 ```
 
 ---

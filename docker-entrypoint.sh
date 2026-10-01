@@ -69,7 +69,7 @@ init_db() {
         echo "🌱 LOAD_SAMPLE_DATA is actief: alle use cases inladen..."
         python /app/init_data/scripts/laad_usecase.py --alle
         # CBS Kerncijfers 2019-nu (alle jaargangen, voor trends) voor de gebieden die nu in de
-        # database staan; uit de gecommitte CSV, zonder netwerk. Heel Fryslân: seed_fryslan.py
+        # database staan; gedownload bij CBS met cache in $DATA_CACHE (volume bron-cache). Heel Fryslân: seed_fryslan.py
         python /app/init_data/scripts/laad_cbs.py
         echo "✅ Use cases ingeladen."
     else

@@ -3,10 +3,13 @@
 CBS Kerncijfers wijken en buurten, alle jaargangen, voor alle buurten in Fryslân
 ================================================================================
 Haalt via CBS OData (opendata.cbs.nl) de Kerncijfers wijken en buurten op van
-2019 t/m de nieuwste jaargang en schrijft één bronpakket:
+2019 t/m de nieuwste jaargang. **De data staat niet in git**: wat bij CBS te downloaden is,
+downloaden we op het moment dat het nodig is (bij het laden van een use case) naar een cache:
 
-    init_data/cbs/kerncijfers_fryslan.csv   (formaat van sample_indicatoren.csv + bron_tabel)
-    init_data/cbs/datapackage.json          (bron, licentie, tabellen per jaar, codecontrole)
+    $DATA_CACHE/cbs/kerncijfers_<gebieden>.csv   (standaard ./data-cache, in Docker het volume bron-cache)
+
+In git staat alleen het recept: tabel-ID's per jaar, de kolom-mapping, licentie en de
+codecontrole (init_data/cbs/datapackage.json, bijgewerkt met --alle).
 
 Uitgangspunten (#159):
 - jaar = het echte peiljaar van de tabel (TableInfos.Period), gecontroleerd bij elke download;
@@ -16,22 +19,21 @@ Uitgangspunten (#159):
 - alleen buurtcodes die in de geometrie van 2024 bestaan (init_data/fryslan/buurten_fryslan.geojson);
   wat wegvalt staat per jaar en gemeente in datapackage.json.
 
-Laden (zonder netwerk, vanuit de gecommitte CSV): init_data/scripts/laad_cbs.py.
+Laden: init_data/scripts/laad_cbs.py (gebruikt download() hieronder, met cache).
 
 Gebruik:
-    python init_data/scripts/download_cbs_kerncijfers.py            # downloaden en schrijven
-    python init_data/scripts/download_cbs_kerncijfers.py --controle # alleen tabellen en kolommen controleren
-    python init_data/scripts/download_cbs_kerncijfers.py --alleen-sample  # sample bijwerken, zonder netwerk
-
-Na de download vervangt het script ook de CBS-rijen in init_data/sample/2_brondata/sample_indicatoren.csv
-(de bronbibliotheek van de use cases) door de reeks van de samplegebieden.
+    python init_data/scripts/download_cbs_kerncijfers.py --controle   # tabellen (Period) en kolommen controleren
+    python init_data/scripts/download_cbs_kerncijfers.py --alle       # heel Fryslân naar de cache + datapackage.json bijwerken
+    python init_data/scripts/download_cbs_kerncijfers.py BU19000001 ...  # alleen deze buurten naar de cache
 
 Licentie van de data: CC BY 4.0, bron: Centraal Bureau voor de Statistiek (CBS).
 """
 
 import argparse
 import csv
+import hashlib
 import json
+import os
 import sys
 import time
 import uuid
@@ -41,10 +43,8 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent.parent
 UIT_DIR = ROOT / "init_data" / "cbs"
-UIT_CSV = UIT_DIR / "kerncijfers_fryslan.csv"
 UIT_PACKAGE = UIT_DIR / "datapackage.json"
-SAMPLE_CSV = ROOT / "init_data" / "sample" / "2_brondata" / "sample_indicatoren.csv"
-SAMPLE_GEOJSON = ROOT / "init_data" / "sample" / "2_brondata" / "sample_buurten.geojson"
+CACHE_DIR = Path(os.environ.get("DATA_CACHE", ROOT / "data-cache")) / "cbs"
 GEOMETRIE = ROOT / "init_data" / "fryslan" / "buurten_fryslan.geojson"
 GEOMETRIE_JAAR = 2024
 
@@ -107,6 +107,8 @@ INDICATOREN = {
 _NAMESPACE_AFGELEID = uuid.UUID("6f1d3c2a-0b7e-4c8e-9a51-d0a1b2c3e4f5")
 AFGELEID = {
     "65+ jaar (%)": {"teller": "65+ jaar", "noemer": "Inwoners", "factor": 100, "eenheid": "%"},
+    "Eenpersoonshuishoudens (%)": {"teller": "Eenpersoonshuishoudens", "noemer": "Huishoudens totaal",
+                                   "factor": 100, "eenheid": "%"},
 }
 for _naam, _a in AFGELEID.items():
     INDICATOREN[_naam] = (str(uuid.uuid5(_NAMESPACE_AFGELEID, _naam)), _a["eenheid"], "pos_is_pos", "")
@@ -201,7 +203,7 @@ def _get(session, url, params=None):
             time.sleep(2 * (poging + 1))
 
 
-def controleer_tabel(session, jaar, tabel):
+def controleer_tabel(session, jaar, tabel, log=print):
     """TableInfos.Period moet het peiljaar zijn; alle kolommen uit de mapping moeten bestaan."""
     info = _get(session, f"{CBS_API}/{tabel}/TableInfos", {"$format": "json"})["value"][0]
     periode = str(info.get("Period", "")).strip()
@@ -212,15 +214,25 @@ def controleer_tabel(session, jaar, tabel):
     ontbreekt = [k for k in kolommen(jaar) if k not in sleutels]
     if ontbreekt:
         sys.exit(f"❌ {tabel} ({jaar}): kolommen ontbreken: {ontbreekt}")
-    print(f"   ✅ {tabel}: {info.get('Title')} · Period {periode} · {len(kolommen(jaar))} kolommen")
+    log(f"   ✅ {tabel}: {info.get('Title')} · Period {periode} · {len(kolommen(jaar))} kolommen")
     return info.get("Title")
 
 
-def haal_buurten(session, tabel, cols):
-    """Friese buurten. Filter op de dimensie WijkenEnBuurten: een filter op Codering_3
-    negeert CBS stil (dan komt heel Nederland mee). ODataApi geeft max. 10.000 rijen, Fryslân heeft er ~1.000."""
+def haal_buurten(session, tabel, cols, codes=None):
+    """Buurten uit één tabel: alle Friese buurten, of alleen `codes`. Filter op de dimensie
+    WijkenEnBuurten: een filter op Codering_3 negeert CBS stil (dan komt heel Nederland mee).
+    ODataApi geeft max. 10.000 rijen, Fryslân heeft er ~1.000."""
+    select = ",".join(["Codering_3"] + cols)
+    if codes:
+        rijen = []
+        lijst = sorted(codes)
+        for i in range(0, len(lijst), 40):  # URL-lengte beperken
+            filt = " or ".join(f"WijkenEnBuurten eq '{c:<10}'" for c in lijst[i:i + 40])
+            params = {"$format": "json", "$filter": filt, "$select": select}
+            rijen += _get(session, f"{CBS_API}/{tabel}/TypedDataSet", params)["value"]
+        return rijen
     filt = " or ".join(f"startswith(WijkenEnBuurten,'BU{gm}')" for gm in FRIESE_GM_CODES)
-    params = {"$format": "json", "$filter": filt, "$select": ",".join(["Codering_3"] + cols), "$top": 9999}
+    params = {"$format": "json", "$filter": filt, "$select": select, "$top": 9999}
     rijen = _get(session, f"{CBS_API}/{tabel}/TypedDataSet", params)["value"]
     if len(rijen) >= 9999:
         sys.exit(f"❌ {tabel}: te veel rijen ({len(rijen)}); filter controleren")
@@ -246,65 +258,17 @@ def rij(gebied, naam, waarde, jaar):
             "scenario_id": "current", "bron_tabel": TABELLEN[jaar]}
 
 
-def werk_sample_bij():
-    """De CBS-rijen in de sample (bronbibliotheek van de use cases) vervangen door de reeks uit dit pakket.
-
-    Zonder netwerk: leest kerncijfers_fryslan.csv. Vervangt per CBS-indicator (zelfde UUID) alle rijen
-    van de samplegebieden; demodata (bron 'DEMO: ...') alleen als CBS voor dat gebied een waarde heeft.
-    Overige indicatoren in de sample blijven ongewijzigd.
-    """
-    gebieden = {f["properties"]["id"] for f in json.loads(SAMPLE_GEOJSON.read_text(encoding="utf-8"))["features"]}
-    cbs_uuids = {v[0] for v in INDICATOREN.values()}
-    with open(UIT_CSV, encoding="utf-8") as f:
-        nieuw = [r for r in csv.DictReader(f) if r["gebied_id"] in gebieden]
-    met_cbs = {(r["gebied_id"], r["indicator_uuid"]) for r in nieuw}
-    with open(SAMPLE_CSV, encoding="utf-8") as f:
-        lezer = csv.DictReader(f)
-        velden = lezer.fieldnames
-        oud = list(lezer)
-
-    def blijft(r):
-        if r["indicator_uuid"] not in cbs_uuids:
-            return True
-        return r["bron"].startswith("DEMO") and (r["gebied_id"], r["indicator_uuid"]) not in met_cbs
-
-    rijen = [r for r in oud if blijft(r)] + [{k: r[k] for k in velden} for r in nieuw]
-    rijen.sort(key=lambda r: (r["gebied_id"], r["indicator_naam"].casefold(), int(r["jaar"] or 0)))
-    with open(SAMPLE_CSV, "w", encoding="utf-8", newline="") as f:
-        w = csv.DictWriter(f, fieldnames=velden, lineterminator="\r\n")  # sample staat met CRLF in git
-        w.writeheader()
-        w.writerows(rijen)
-    print(f"   🧩 sample: {len(oud) - sum(map(blijft, oud))} CBS-/demorijen vervangen door {len(nieuw)} rijen "
-          f"({len(gebieden)} gebieden) → {SAMPLE_CSV.relative_to(ROOT)}")
-
-
-def main():
-    parser = argparse.ArgumentParser(description="CBS Kerncijfers wijken en buurten (alle jaargangen) voor Fryslân")
-    parser.add_argument("--controle", action="store_true", help="alleen tabellen (Period) en kolommen controleren")
-    parser.add_argument("--alleen-sample", action="store_true",
-                        help="geen download: alleen de sample bijwerken uit de bestaande kerncijfers_fryslan.csv")
-    args = parser.parse_args()
-    if hasattr(sys.stdout, "reconfigure"):
-        sys.stdout.reconfigure(encoding="utf-8")  # emoji op Windows-consoles
-    if args.alleen_sample:
-        werk_sample_bij()
-        return
-
+def download(codes=None, log=print):
+    """Download de reeksen. codes=None: alle Friese buurten. Geeft (rijen, verslag) terug.
+    Alleen buurtcodes uit de geometrie van GEOMETRIE_JAAR worden opgenomen."""
     import requests
     session = requests.Session()
     geo = geometrie_codes()
-    print(f"🗺️  Geometrie {GEOMETRIE_JAAR}: {len(geo)} buurten")
-
-    titels, rijen = {}, []
-    weg = {}  # jaar -> {gemeente: [codes]}
-    ontbreekt_in_tabel = {}
-    weg_waarden = Counter()
+    titels, rijen, weg, ontbreekt_in_tabel, weg_waarden = {}, [], {}, {}, Counter()
     for jaar, tabel in TABELLEN.items():
-        titels[jaar] = controleer_tabel(session, jaar, tabel)
-        if args.controle:
-            continue
-        records = haal_buurten(session, tabel, kolommen(jaar))
-        codes = {r["Codering_3"].strip() for r in records}
+        titels[jaar] = controleer_tabel(session, jaar, tabel, log)
+        records = haal_buurten(session, tabel, kolommen(jaar), codes)
+        tabelcodes = {r["Codering_3"].strip() for r in records}
         weg_jaar = defaultdict(list)
         n_voor = len(rijen)
         for rec in records:
@@ -327,38 +291,69 @@ def main():
                 if t is not None and n:
                     rijen.append(rij(code, naam, round(t / n * a["factor"], 1), jaar))
         weg[jaar] = {gm: sorted(c) for gm, c in sorted(weg_jaar.items())}
-        ontbreekt_in_tabel[jaar] = len(set(geo) - codes)
-        print(f"   📥 {jaar}: {len(records)} buurten · {len(rijen) - n_voor} waarden · "
-              f"{sum(len(c) for c in weg_jaar.values())} codes niet in geometrie {GEOMETRIE_JAAR} · "
-              f"{ontbreekt_in_tabel[jaar]} geometriebuurten niet in de tabel")
-        time.sleep(0.5)
-
-    if args.controle:
-        print("✅ Alle tabellen en kolommen kloppen.")
-        return
-
-    # Gemeentenamen voor het rapport (codes uit de geometrie; oude codes hebben dezelfde gemeentecode)
-    gm_naam = {}
-    for code, gnaam in geo.items():
-        gm_naam[f"GM{code[2:6]}"] = gnaam
-
+        doel = set(codes) if codes else set(geo)
+        ontbreekt_in_tabel[jaar] = len(doel - tabelcodes)
+        log(f"   📥 {jaar}: {len(records)} buurten · {len(rijen) - n_voor} waarden")
+        time.sleep(0.3)
     rijen.sort(key=lambda r: (r["gebied_id"], r["indicator_naam"], r["jaar"]))
-    UIT_DIR.mkdir(parents=True, exist_ok=True)
-    with open(UIT_CSV, "w", encoding="utf-8", newline="") as f:
+    return rijen, {"titels": titels, "weg": weg, "ontbreekt_in_tabel": ontbreekt_in_tabel,
+                   "weg_waarden": weg_waarden, "geo": geo}
+
+
+def cache_pad(codes=None):
+    """Fryslân-cache, of een cachebestand per set buurten."""
+    if not codes:
+        return CACHE_DIR / "kerncijfers_fryslan.csv"
+    sleutel = hashlib.sha1(",".join(sorted(codes)).encode()).hexdigest()[:12]
+    return CACHE_DIR / f"kerncijfers_{len(codes)}buurten_{sleutel}.csv"
+
+
+def schrijf_csv(pad, rijen):
+    pad.parent.mkdir(parents=True, exist_ok=True)
+    with open(pad, "w", encoding="utf-8", newline="") as f:
         w = csv.DictWriter(f, fieldnames=VELDEN, lineterminator="\n")
         w.writeheader()
         w.writerows(rijen)
 
+
+def lees_csv(pad, codes=None):
+    with open(pad, encoding="utf-8") as f:
+        return [r for r in csv.DictReader(f) if not codes or r["gebied_id"] in codes]
+
+
+def rijen_voor(codes, log=print):
+    """Reeksen voor deze buurten: uit de cache (Fryslân-cache of eerdere download van dezelfde set),
+    anders downloaden bij CBS en in de cache zetten. Downloadfouten gaan naar de aanroeper."""
+    codes = sorted(set(codes))
+    fryslan = cache_pad()
+    if fryslan.exists():
+        log(f"   💾 uit cache: {fryslan}")
+        return lees_csv(fryslan, set(codes))
+    pad = cache_pad(codes)
+    if pad.exists():
+        log(f"   💾 uit cache: {pad}")
+        return lees_csv(pad)
+    log(f"   🌐 downloaden bij CBS: {len(codes)} buurten, {len(TABELLEN)} jaargangen")
+    rijen, _ = download(codes, log)
+    schrijf_csv(pad, rijen)
+    return rijen
+
+
+def schrijf_package(rijen, verslag):
+    """Recept en codecontrole in git (geen data): init_data/cbs/datapackage.json."""
+    geo, weg, titels = verslag["geo"], verslag["weg"], verslag["titels"]
+    gm_naam = {f"GM{code[2:6]}": gnaam for code, gnaam in geo.items()}
     per_ind = defaultdict(set)
     for r in rijen:
         per_ind[r["indicator_naam"]].add(r["jaar"])
     package = {
         "name": "cbs-kerncijfers-fryslan",
         "title": "CBS Kerncijfers wijken en buurten 2019-%d, buurten in Fryslân" % max(TABELLEN),
-        "description": "Kerncijfers wijken en buurten van alle jaargangen vanaf 2019 voor de buurten in Fryslân, "
-                       "gemapt op de indicatoren van D-OmniTwin. Jaar = peiljaar van de CBS-tabel. Alleen "
-                       f"buurtcodes die in de CBS-geometrie {GEOMETRIE_JAAR} bestaan. "
-                       "Gemaakt met init_data/scripts/download_cbs_kerncijfers.py.",
+        "description": "Recept voor de Kerncijfers wijken en buurten van alle jaargangen vanaf 2019 voor de "
+                       "buurten in Fryslân, gemapt op de indicatoren van D-OmniTwin. De data zelf staat niet in "
+                       "git: init_data/scripts/laad_cbs.py downloadt bij het laden van een use case, met cache "
+                       "in $DATA_CACHE. Jaar = peiljaar van de CBS-tabel. Alleen buurtcodes die in de "
+                       f"CBS-geometrie {GEOMETRIE_JAAR} bestaan.",
         "licenses": [{"name": "CC-BY-4.0", "title": "Creative Commons Attribution 4.0",
                       "path": "https://creativecommons.org/licenses/by/4.0/"}],
         "sources": [{"title": bron_naam(j), "path": f"https://opendata.cbs.nl/statline/#/CBS/nl/dataset/{t}"}
@@ -366,39 +361,57 @@ def main():
         "bronvermelding": "Centraal Bureau voor de Statistiek (CBS), Kerncijfers wijken en buurten 2019-%d. "
                           "CC BY 4.0." % max(TABELLEN),
         "geometrie_jaar": GEOMETRIE_JAAR,
-        "gedownload": date.today().isoformat(),
+        "gecontroleerd": date.today().isoformat(),
         "tabellen": {str(j): {"tabel": t, "titel": titels[j], "peiljaar": j} for j, t in TABELLEN.items()},
         "indicatoren": {n: {"uuid": INDICATOREN[n][0], "jaren": sorted(per_ind[n]),
                             "kolommen": {str(j): (list(k) if isinstance(k, tuple) else k)
-                                         for j, k in MAPPING.get(n, {}).items()}
-                            if n in MAPPING else None,
+                                         for j, k in MAPPING.get(n, {}).items()} if n in MAPPING else None,
                             "afgeleid": AFGELEID.get(n)}
                         for n in INDICATOREN},
+        "controle": {
+            "toelichting": "Omvang van een volledige download (heel Fryslân), om een nieuwe download mee te "
+                           "vergelijken.",
+            "rijen_totaal": len(rijen),
+            "rijen_per_jaar": {str(j): sum(1 for r in rijen if r["jaar"] == j) for j in TABELLEN},
+        },
         "codecontrole": {
             "toelichting": f"Buurtcodes uit de CBS-tabel die niet in de geometrie {GEOMETRIE_JAAR} bestaan, "
-                           "per peiljaar en gemeente. Deze waarden zijn niet opgenomen.",
+                           "per peiljaar en gemeente. Deze waarden worden niet opgenomen.",
             "weggevallen": {str(j): {f"{gm} {gm_naam.get(gm, '?')}": len(c) for gm, c in g.items()}
                             for j, g in weg.items()},
-            "weggevallen_waarden": {str(j): weg_waarden[j] for j in TABELLEN},
+            "weggevallen_waarden": {str(j): verslag["weg_waarden"][j] for j in TABELLEN},
             "weggevallen_codes": {str(j): g for j, g in weg.items() if g},
-            "geometriebuurten_zonder_tabelrij": {str(j): n for j, n in ontbreekt_in_tabel.items()},
+            "geometriebuurten_zonder_tabelrij": {str(j): n for j, n in verslag["ontbreekt_in_tabel"].items()},
         },
-        "resources": [{
-            "name": "kerncijfers_fryslan", "path": "kerncijfers_fryslan.csv", "format": "csv",
-            "encoding": "utf-8", "rows": len(rijen),
-            "schema": {"fields": [{"name": v, "type": {"waarde": "number", "jaar": "integer"}.get(v, "string")}
-                                  for v in VELDEN],
-                       "primaryKey": ["gebied_id", "indicator_uuid", "jaar", "scenario_id"]},
-        }],
     }
     UIT_PACKAGE.write_text(json.dumps(package, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
-    print(f"\n✅ {len(rijen)} rijen → {UIT_CSV.relative_to(ROOT)} ({UIT_CSV.stat().st_size / 1024:.0f} KB)")
-    for j, g in weg.items():
-        if g:
-            print(f"   ⚠️  {j}: weggevallen " + ", ".join(f"{gm} {gm_naam.get(gm, '?')}: {len(c)}" for gm, c in g.items()))
-    print(f"   Jaren per indicator: {Counter(len(v) for v in per_ind.values())}")
-    werk_sample_bij()
+
+def main():
+    parser = argparse.ArgumentParser(description="CBS Kerncijfers wijken en buurten (alle jaargangen) voor Fryslân")
+    parser.add_argument("codes", nargs="*", help="buurtcodes (BU...) om naar de cache te downloaden")
+    parser.add_argument("--controle", action="store_true", help="alleen tabellen (Period) en kolommen controleren")
+    parser.add_argument("--alle", action="store_true", help="heel Fryslân naar de cache, en datapackage.json bijwerken")
+    args = parser.parse_args()
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8")  # emoji op Windows-consoles
+    if args.controle:
+        import requests
+        session = requests.Session()
+        for jaar, tabel in TABELLEN.items():
+            controleer_tabel(session, jaar, tabel)
+        print("✅ Alle tabellen en kolommen kloppen.")
+        return
+    if args.alle:
+        rijen, verslag = download(None)
+        schrijf_csv(cache_pad(), rijen)
+        schrijf_package(rijen, verslag)
+        print(f"✅ {len(rijen)} rijen → {cache_pad()} · recept bijgewerkt: {UIT_PACKAGE.relative_to(ROOT)}")
+        return
+    if not args.codes:
+        parser.error("geef buurtcodes, of --alle, of --controle")
+    rijen = rijen_voor(args.codes)
+    print(f"✅ {len(rijen)} rijen voor {len(args.codes)} buurten")
 
 
 if __name__ == "__main__":

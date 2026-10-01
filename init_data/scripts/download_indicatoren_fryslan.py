@@ -41,7 +41,7 @@ CBS_BASE = "https://opendata.cbs.nl/ODataFeed/odata"
 
 # De CBS Kerncijfers wijken en buurten staan sinds #159 in een eigen bronpakket, met alle
 # jaargangen en het echte peiljaar: init_data/scripts/download_cbs_kerncijfers.py
-# -> init_data/cbs/kerncijfers_fryslan.csv. Dit script haalt alleen nog de RIVM-data op.
+# -> gedownload door init_data/scripts/laad_cbs.py (recept in init_data/cbs). Dit script haalt alleen nog de RIVM-data op.
 DATASETS = []
 
 # RIVM Gezondheidsmonitor (dataderden.cbs.nl)

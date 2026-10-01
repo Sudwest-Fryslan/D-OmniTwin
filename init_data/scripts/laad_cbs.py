@@ -2,8 +2,10 @@
 """
 D-OmniTwin — CBS Kerncijfers (alle jaargangen) laden
 ====================================================
-Laadt init_data/cbs/kerncijfers_fryslan.csv (gemaakt met download_cbs_kerncijfers.py)
-in gebied_data, zonder netwerk. Alleen voor gebieden die al in de database staan:
+Haalt de CBS-reeksen op voor de gebieden die in de database staan en laadt ze in gebied_data.
+De data staat niet in git: download_cbs_kerncijfers.rijen_voor() leest de cache ($DATA_CACHE/cbs)
+of downloadt bij CBS en vult de cache. Geen netwerk en geen cache: waarschuwing, geen fout.
+Voor welke gebieden:
 
 - na db-init met LOAD_SAMPLE_DATA=true: de gebieden van de use cases;
 - na seed_fryslan.py (buurten): alle buurten van Fryslân.
@@ -21,24 +23,31 @@ Gebruik:
 """
 
 import argparse
-import csv
 import json
 import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+import download_cbs_kerncijfers as cbs  # noqa: E402
 import load_sample  # noqa: E402  (databaseverbinding hergebruiken)
 
 from psycopg2.extras import execute_values  # noqa: E402
 
 ROOT = Path(__file__).resolve().parent.parent.parent
-CBS_CSV = ROOT / "init_data" / "cbs" / "kerncijfers_fryslan.csv"
 OUDE_BRONNEN = ("Kerncijfers wijken en buurten 2023",)  # verkeerd label van 85039NED (2021)
 
 
 def lees(gebieden):
-    with open(CBS_CSV, encoding="utf-8") as f:
-        return [r for r in csv.DictReader(f) if r["gebied_id"] in gebieden]
+    """Reeksen voor deze buurten (cache of download). Alleen CBS-buurtcodes (BU...)."""
+    buurten = sorted(g for g in gebieden if g.startswith("BU"))
+    if not buurten:
+        return []
+    try:
+        return cbs.rijen_voor(buurten)
+    except Exception as e:  # geen netwerk, CBS onbereikbaar, tabel gewijzigd
+        print(f"   ⚠️  CBS Kerncijfers niet opgehaald ({type(e).__name__}: {e}). Zonder internet: "
+              f"vul de cache ($DATA_CACHE/cbs) met download_cbs_kerncijfers.py --alle op een machine met internet.")
+        return []
 
 
 def indicator_uuids(cur, rijen):
@@ -121,7 +130,7 @@ def main():
     args = parser.parse_args()
     if hasattr(sys.stdout, "reconfigure"):
         sys.stdout.reconfigure(encoding="utf-8")
-    print(f"\n📈 CBS Kerncijfers laden uit {CBS_CSV.relative_to(ROOT)}")
+    print(f"\n📈 CBS Kerncijfers laden (cache: {cbs.CACHE_DIR})")
     conn = load_sample.get_db_connection()
     try:
         laad(conn, args.gebieden or None)

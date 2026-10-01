@@ -157,7 +157,7 @@ Ontwikkelen zonder Docker (Python venv, `run_dev.py`, admin-panel met `npm start
 
 `db-init` laadt bij de eerste start altijd het product zonder data: stuurdata (scenario's, profielen, prompts), de indicatordefinities en de Kompas-indeling. Met `LOAD_SAMPLE_DATA=true` laadt het daarna de **use cases** uit [`usecases/`](../../usecases/README.md). Elke use case brengt zijn eigen gebieden en waarden mee, gekozen uit de bronbibliotheek [`init_data/sample/`](../../init_data/sample/README.md), plus de inrichting en de teststappen. Een deel van de waarden is demodata. Eén use case laden: `docker compose exec backend python init_data/scripts/laad_usecase.py hittestress`.
 
-Na de use cases laadt `db-init` ook de **CBS Kerncijfers 2019-2026** voor de gebieden die dan in de database staan (`init_data/scripts/laad_cbs.py`, uit de gecommitte CSV, zonder netwerk). Zo toont het Kompas-detail met de tijdslider meerdere jaren, bijvoorbeeld voor Inwoners in Bolsward-Noord. Zie [`docs/3-data-engineering/cbs_kerncijfers.md`](../3-data-engineering/cbs_kerncijfers.md).
+Na de use cases laadt `db-init` ook de **CBS Kerncijfers 2019-2026** voor de gebieden die dan in de database staan (`init_data/scripts/laad_cbs.py`). Die data staat niet in git: `db-init` downloadt hem bij CBS en bewaart hem in het volume `bron-cache`; daarna werkt het ook offline. Zonder internet bij de eerste start ontbreken de CBS-reeksen, de rest werkt wel. Zo toont het Kompas-detail met de tijdslider meerdere jaren, bijvoorbeeld voor Inwoners in Bolsward-Noord. Zie [`docs/3-data-engineering/cbs_kerncijfers.md`](../3-data-engineering/cbs_kerncijfers.md).
 
 De sample is bedoeld om de installatie te testen en te demonstreren, niet voor beleid.
 

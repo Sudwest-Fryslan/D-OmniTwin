@@ -1,6 +1,11 @@
 """
-CBS Kerncijfers-bronpakket (init_data/cbs, #159): mapping per jaar compleet, codes bestaan in
-de geometrie 2024, jaar = peiljaar, en geen dubbele indicatoren. Geen stack en geen netwerk nodig.
+CBS Kerncijfers (init_data/cbs, #159). De data staat niet in git; het recept wel.
+
+- Recept (zonder netwerk): tabellen, mapping per jaar compleet, datapackage beschrijft de mapping,
+  de sample bevat geen CBS-rijen (die komen via de download).
+- Download (netwerk; overgeslagen als CBS niet bereikbaar is): de drie Bolsward-buurten ophalen
+  en controleren: codes in de geometrie 2024, jaar = peiljaar, geen dubbele rijen, afgeleid uit
+  hetzelfde jaar, een reeks van minstens 5 jaar.
 """
 
 import csv
@@ -29,10 +34,16 @@ def _script():
 S = _script()
 
 
+BOLSWARD = ["BU19000001", "BU19000002", "BU19000004"]
+
+
 @pytest.fixture(scope="module")
-def rijen():
-    with open(CBS / "kerncijfers_fryslan.csv", encoding="utf-8") as f:
-        return list(csv.DictReader(f))
+def rijen(tmp_path_factory):
+    S.CACHE_DIR = tmp_path_factory.mktemp("cbs-cache")
+    try:
+        return S.rijen_voor(BOLSWARD, log=lambda *_: None)
+    except Exception as e:  # geen netwerk of CBS onbereikbaar: niet de schuld van de code
+        pytest.skip(f"CBS niet bereikbaar: {type(e).__name__}")
 
 
 @pytest.fixture(scope="module")
@@ -92,31 +103,31 @@ def test_geen_dubbele_indicatoren_of_rijen(rijen):
     assert all(len(v) == 1 for v in uuid_naam.values()), "UUID met meerdere namen"
 
 
-def test_zelfde_uuids_als_sample_en_sample_is_deelverzameling(rijen):
+def test_sample_bevat_geen_cbs_rijen_en_zelfde_uuids():
+    """CBS-waarden worden gedownload; in de sample (git) staan ze niet."""
     with open(SAMPLE, encoding="utf-8") as f:
         sample = list(csv.DictReader(f))
+    assert not [r for r in sample if r["bron"].startswith(("CBS Kerncijfers", "Kerncijfers wijken en buurten"))],         "CBS Kerncijfers horen niet in de sample: ze worden gedownload (laad_cbs.py)"
     sample_uuid = {}
     for r in sample:
         sample_uuid.setdefault(r["indicator_naam"], set()).add(r["indicator_uuid"])
     for naam, (u, *_rest) in S.INDICATOREN.items():
         assert sample_uuid.get(naam, {u}) == {u}, f"{naam}: andere UUID in de sample: {sample_uuid[naam]}"
 
-    gebieden = {r["gebied_id"] for r in sample}
-    verwacht = {(r["gebied_id"], r["indicator_uuid"], r["jaar"], r["waarde"]) for r in rijen
-                if r["gebied_id"] in gebieden}
-    cbs = {(r["gebied_id"], r["indicator_uuid"], r["jaar"], r["waarde"]) for r in sample
-           if r["bron"].startswith("CBS Kerncijfers")}
-    assert cbs == verwacht, "CBS-rijen in de sample wijken af van init_data/cbs (draai --alleen-sample)"
-    assert not [r for r in sample if r["bron"] == "Kerncijfers wijken en buurten 2023"], \
-        "verkeerd gelabelde Kerncijfers (2021 als 2023) nog in de sample"
+
+def test_cache_wordt_gebruikt(rijen):
+    """Tweede keer: uit de cache, zonder download."""
+    S.download = lambda *a, **k: (_ for _ in ()).throw(AssertionError("download terwijl cache er is"))
+    assert len(S.rijen_voor(BOLSWARD, log=lambda *_: None)) == len(rijen)
 
 
 def test_afgeleid_uit_zelfde_jaar(rijen):
     w = {(r["gebied_id"], r["indicator_naam"], r["jaar"]): float(r["waarde"]) for r in rijen}
     for (g, naam, jaar), v in w.items():
-        if naam != "65+ jaar (%)":
+        if naam not in S.AFGELEID:
             continue
-        t, n = w[(g, "65+ jaar", jaar)], w[(g, "Inwoners", jaar)]
+        a = S.AFGELEID[naam]
+        t, n = w[(g, a["teller"], jaar)], w[(g, a["noemer"], jaar)]
         assert abs(v - t / n * 100) < 0.051, f"{g} {jaar}: {v} ≠ {t}/{n}"
 
 
