@@ -11,7 +11,7 @@
 --   3. Update bestaande gebieden: set gemeente_code = '1900' (Súdwest-Fryslân)
 -- 
 -- GEBRUIK:
---   psql -U $DB_USER -d $DB_NAME -f migrations/add_gemeente_info.sql
+--   psql -U $DB_USER -d $DB_NAME -f db/migraties/baseline/add_gemeente_info.sql
 -- ============================================================================
 
 -- Start transaction

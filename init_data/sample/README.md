@@ -18,8 +18,6 @@ init_data/sample/
 ├── README.md                           # Deze documentatie
 ├── datapackage.json                    # Frictionless Data Package: resources, schema, licenties, herkomst
 ├── KWALITEIT.md                        # Datakwaliteitsbevindingen (herkomst, lege velden)
-├── 1_stuurdata/
-│   └── stuurdata_seed.sql              # Basisconfiguratie, scenario's, profielen, kleurenschema's en prompts
 └── 2_brondata/
     ├── sample_buurten.geojson          # Geometrieën van de 13 SWF-buurten (WGS84 / EPSG:4326)
     └── sample_indicatoren.csv          # Indicatoren en metingen per buurt (meest recente peiljaar)
@@ -70,7 +68,7 @@ Indien je de database handmatig wilt seeden of lokaal buiten Docker draait:
 
 ```bash
 # Schema laden (als database nog leeg is)
-psql -h localhost -p 5433 -U omnitwin_user -d omnitwin_db -f init_data/schema/schema_latest.sql
+psql -h localhost -p 5433 -U omnitwin_user -d omnitwin_db -f db/schema/schema_latest.sql
 
 # Sample data laden
 python init_data/scripts/load_sample.py --stap alle

@@ -269,8 +269,8 @@ OLLAMA_HOST=http://localhost:11434
 - `OpenAI-compatibel`: `/v1/chat/completions` van Ollama (`http://host.docker.internal:11434`),
   vLLM, LM Studio of een aanbieder. Een API-sleutel zet je als `LLM_API_KEY` in `.env`, nooit in de database.
 
-Bestaande databases hebben eerst migratie `migrations/schema_v20_llm_api_type.sql` nodig om `OpenAI-compatibel` op te slaan;
-zonder migratie blijft alles werken als `Ollama`.
+Daarvoor is migratie `db/migraties/V020__llm_api_type.sql` nodig; `db-init` past die automatisch toe (#54).
+Zonder migratie blijft alles werken als `Ollama`.
 
 **Optionele LiteLLM-gateway** (centrale sleutels, logging, terugval naar een ander model):
 

@@ -88,9 +88,10 @@ docker compose up -d --build
 De eerste keer duurt dit lang (10 tot 30 minuten): de backend-image installeert onder meer PyTorch en GDAL. Daarna starten de services in deze volgorde:
 
 1. `postgres` (PostGIS met pgvector) wordt *healthy*.
-2. `db-init` draait één keer en stopt. Bij een **lege** database maakt hij het schema aan (`init_data/schema/schema_latest.sql`, de views voor de kaart en de migraties v18 en v19), laadt de stuurdata en eventueel de sample dataset, en maakt het beheeraccount aan. Bestaat de tabel `gebieden` al, dan slaat hij dit allemaal over. Hij overschrijft dus nooit bestaande data.
+2. `db-init` draait één keer en stopt. Bij een **lege** database maakt hij het schema aan (`db/schema/schema_latest.sql` en de views voor de kaart), laadt de stuurdata (`db/stuurdata/`) en eventueel de sample dataset, en maakt het beheeraccount aan. Bestaat de tabel `gebieden` al, dan slaat hij dit allemaal over. Hij overschrijft dus nooit bestaande data.
+   In beide gevallen past hij daarna de schemamigraties uit `db/migraties/` toe die nog niet in de tabel `schema_migraties` staan (`python -m omnitwin.migraties`, #54).
    Daarna genereert hij, ook bij een bestaande database, de embeddings voor AI-zoeken en de chat (`scripts/ai/genereer_embeddings.py`), voor alle actieve indicatoren zonder embedding, ook concepten. Het model daarvoor (`all-MiniLM-L6-v2`) zit al in de image; zie [Embeddingmodel](#embeddingmodel-offline). Lukt het genereren niet, dan staat er een waarschuwing in de log en gaat de installatie gewoon door; AI-zoeken en de chat vinden dan geen indicatoren.
-   Daarna werkt hij altijd de databaserollen en het schema `api` voor PostgREST en pg_featureserv bij (`migrations/schema_v23_api_rollen.sql`, zie [Beveiliging](#beveiliging)). Dat raakt geen data.
+   Daarna werkt hij altijd de databaserollen en het schema `api` voor PostgREST en pg_featureserv bij (`db/migraties/R__api_rollen.sql`, zie [Beveiliging](#beveiliging)). Dat raakt geen data.
    Daarna genereert hij, ook bij een bestaande database, de embeddings voor AI-zoeken en de chat (`scripts/ai/genereer_embeddings.py`), voor alle actieve indicatoren zonder embedding, ook concepten. Daarvoor downloadt hij de eerste keer het model `all-MiniLM-L6-v2` (circa 90 MB) van HuggingFace. Lukt dat niet, bijvoorbeeld zonder internet, dan staat er een waarschuwing in de log en gaat de installatie gewoon door; AI-zoeken en de chat vinden dan geen indicatoren.
 3. `backend` (FastAPI), `postgrest` en `pg_featureserv` starten, `traefik` stuurt het verkeer door.
 
@@ -209,16 +210,16 @@ git pull
 docker compose up -d --build
 ```
 
-`db-init` draait opnieuw, ziet dat de database bestaat en laat schema en data met rust. Alleen de rollen en het schema `api` voor PostgREST en pg_featureserv werkt hij altijd bij (v23, zie [Beveiliging](#beveiliging)). Andere schemawijzigingen worden bij een bestaande database **niet automatisch** doorgevoerd; geautomatiseerd migratiebeheer volgt in #54.
+`db-init` draait opnieuw, ziet dat de database bestaat en laat de data met rust. Wel past hij de nieuwe schemamigraties toe: elk bestand `db/migraties/V<nnn>__<naam>.sql` dat nog niet in de tabel `schema_migraties` staat, op volgorde, en registreert het daar (#54). De rollen en het schema `api` voor PostgREST en pg_featureserv werkt hij altijd bij (`R__api_rollen.sql`, zie [Beveiliging](#beveiliging)).
 
-Tot die tijd voer je migraties handmatig uit. Een database van vóór september 2026 mist mogelijk v18 (`pg_trgm`, nodig voor de deduplicatie) en v19. Beide zijn veilig om opnieuw te draaien:
+Een database van vóór 0.2.0 heeft nog geen tabel `schema_migraties`. De eerste keer maakt de runner die aan en draait hij V018 t/m V022 opnieuw; die zijn idempotent. Bekijken wat is toegepast en wat openstaat:
 
 ```bash
-docker compose exec -T postgres sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -v ON_ERROR_STOP=1' < migrations/schema_v18_trigram.sql
-docker compose exec -T postgres sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -v ON_ERROR_STOP=1' < migrations/schema_v19_deduplicatie_uitzonderingen.sql
+docker compose run --rm db-init python -m omnitwin.migraties --status
+docker compose exec -T postgres sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -c "SELECT * FROM schema_migraties"'
 ```
 
-Maak eerst een backup (zie hieronder). Lees bij een nieuwe versie [`CHANGELOG.md`](../../CHANGELOG.md) voor nieuwe migraties.
+Maak eerst een backup (zie hieronder). Lees bij een nieuwe versie [`CHANGELOG.md`](../../CHANGELOG.md).
 
 ### Embeddingmodel (offline)
 
@@ -429,7 +430,7 @@ Stel een installatie **niet** open voor internet of een breed netwerk zolang dez
 
 ### PostgREST en pg_featureserv (#57)
 
-PostgREST (`/api/data`) en pg_featureserv (`/api/geo`) verbinden niet als database-eigenaar, maar met eigen rollen. `db-init` maakt ze aan en houdt ze bij (`migrations/schema_v23_api_rollen.sql`):
+PostgREST (`/api/data`) en pg_featureserv (`/api/geo`) verbinden niet als database-eigenaar, maar met eigen rollen. `db-init` maakt ze aan en houdt ze bij (`db/migraties/R__api_rollen.sql`):
 
 | Rol | Gebruikt door | Rechten |
 |-----|---------------|---------|

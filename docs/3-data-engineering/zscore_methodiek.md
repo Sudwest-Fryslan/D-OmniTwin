@@ -1,7 +1,7 @@
 # Z-scores: methodiek
 
 > **Status:** vastgesteld in #66 (oktober 2026), aangevuld in #155 (waterdefinitie, minimum-n, waterbuurt als doelgebied). Toezegging uit de aanvraag innovatiebudget: de berekening is navolgbaar.
-> **Code:** `init_data/schema/08_zscore_referentie.sql` (SQL-functies, migratie `migrations/schema_v21_zscore_referentie.sql`), `services/zscore_referentie.py` (parameters).
+> **Code:** `db/schema/08_zscore_referentie.sql` (SQL-functies, migratie `db/migraties/V021__zscore_referentie.sql`), `services/zscore_referentie.py` (parameters).
 > **Tests:** `tests/integration/test_zscore_referentie.py`, `tests/test_scoring_unit.py`.
 
 D-OmniTwin vergelijkt de waarde van een gebied met een referentiegroep van vergelijkbare gebieden. De Z-score zegt hoeveel standaarddeviaties een gebied van het gemiddelde van die groep afwijkt. Alle rapporten en het Kompas rekenen met dezelfde functies; er is geen tweede berekening.
@@ -56,7 +56,7 @@ Het gebied zelf telt mee in de referentiegroep als het erin valt (zelfde gebieds
 
 ## Waterbuurt
 
-Eén definitie, in SQL: `is_waterbuurt(naam, metadata)` (`init_data/schema/08_zscore_referentie.sql`). Een gebied is een waterbuurt als:
+Eén definitie, in SQL: `is_waterbuurt(naam, metadata)` (`db/schema/08_zscore_referentie.sql`). Een gebied is een waterbuurt als:
 
 1. **de data het zegt:** `gebieden.metadata->>'water' = 'JA'`. De CBS-wijk- en buurtkaart heeft een kolom `water` (JA/NEE). `ETL/Geometrie/import_geometrie.py` neemt alle kolommen mee in `metadata`; `ETL/import_geografie_2024.py` neemt de kolom `water` mee (#155);
 2. **of, als vangnet, de naam op water wijst:** `buitenwater`, `Wadden Sea` of `IJsselmeer` (hoofdletterongevoelig). Dit is de lijst uit de oude kaartview, voor bronnen zonder watervlag, zoals `init_data/fryslan/buurten_fryslan.geojson` (PDOK WFS).
@@ -163,7 +163,7 @@ JOIN indicatoren i ON i.uuid = zs.indicator_uuid
 ORDER BY abs(zs.z_score) DESC NULLS LAST;
 ```
 
-Een bestaande database bijwerken: `psql -f migrations/schema_v21_zscore_referentie.sql` (idempotent; zet ook ontbrekende watervlaggen en vervangt `vw_gebied_kaart_basis`). Een nieuwe database krijgt de functies via `db-init`.
+Nieuwe en bestaande databases krijgen de functies via `db-init`: de migratierunner past `db/migraties/V021__zscore_referentie.sql` één keer toe (idempotent; zet ook ontbrekende watervlaggen en vervangt `vw_gebied_kaart_basis`). Een latere wijziging in `08_zscore_referentie.sql` vraagt een nieuwe migratie die het bestand opnieuw laadt.
 
 ## Buiten deze methodiek
 
