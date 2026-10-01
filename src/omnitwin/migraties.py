@@ -124,10 +124,13 @@ Psql = Callable[[list[str]], str]
 
 def _psql_omgeving() -> dict[str, str]:
     env = dict(os.environ)
-    for pg, db in [("PGHOST", "DATABASE_HOST"), ("PGPORT", "DATABASE_PORT"), ("PGDATABASE", "DATABASE_NAME"),
-                   ("PGUSER", "DATABASE_USER"), ("PGPASSWORD", "DATABASE_PASSWORD")]:
-        if not env.get(pg) and env.get(db):
-            env[pg] = env[db]
+    # Standaardwaarden zoals in docker-entrypoint.sh en database.py
+    for pg, db, standaard in [("PGHOST", "DATABASE_HOST", None), ("PGPORT", "DATABASE_PORT", None),
+                              ("PGDATABASE", "DATABASE_NAME", "omnitwin_db"), ("PGUSER", "DATABASE_USER", "omnitwin_user"),
+                              ("PGPASSWORD", "DATABASE_PASSWORD", None)]:
+        waarde = env.get(pg) or env.get(db) or standaard
+        if waarde:
+            env[pg] = waarde
     # Geen NOTICE's van CREATE ... IF NOT EXISTS in de log
     env.setdefault("PGOPTIONS", "-c client_min_messages=warning")
     return env

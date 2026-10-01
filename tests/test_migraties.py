@@ -135,3 +135,15 @@ def test_migraties_in_de_repository():
         for inc in mig.INCLUDE.findall(m.pad.read_text(encoding="utf-8")):
             assert (m.pad.parent / inc).is_file(), f"{m.pad.name}: include {inc} bestaat niet"
     assert (ROOT / "db" / "migraties" / "R__api_rollen.sql").is_file()
+
+
+def test_verbinding_uit_database_variabelen(monkeypatch):
+    for k in ["PGHOST", "PGPORT", "PGDATABASE", "PGUSER", "PGPASSWORD", "DATABASE_NAME", "DATABASE_USER"]:
+        monkeypatch.delenv(k, raising=False)
+    monkeypatch.setenv("DATABASE_HOST", "postgres")
+    monkeypatch.setenv("DATABASE_PASSWORD", "geheim")
+    env = mig._psql_omgeving()
+    assert env["PGHOST"] == "postgres" and env["PGPASSWORD"] == "geheim"
+    assert env["PGUSER"] == "omnitwin_user" and env["PGDATABASE"] == "omnitwin_db"
+    monkeypatch.setenv("PGUSER", "ander")
+    assert mig._psql_omgeving()["PGUSER"] == "ander"
