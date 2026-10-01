@@ -7,7 +7,6 @@
 # - softwareVersion/releaseDate: volgen de versieafspraken uit #27 (semantic versioning).
 #   De versies in de repo lopen nu uiteen (README: v1.0.0-beta, main.py: 1.5.0);
 #   hier staat voorlopig 1.0.0-beta.
-# - maintenance/contacts: e-mailadres nog te bevestigen.
 
 publiccodeYmlVersion: "0"
 
@@ -129,8 +128,7 @@ maintenance:
   type: internal
   contacts:
     - name: Taeke van der Laan
-      # E-mailadres nog te bevestigen; hier invullen zodra bekend.
-      # email: "<e-mailadres Taeke, te bevestigen>"
+      email: "t.vanderlaan@sudwestfryslan.nl"
       affiliation: Gemeente Súdwest-Fryslân
 
 localisation:
