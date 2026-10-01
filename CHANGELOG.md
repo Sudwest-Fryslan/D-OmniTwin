@@ -8,6 +8,32 @@ Eerdere wijzigingen, van vóór dit bestand, zijn terug te vinden in de git-hist
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-10-01
+
+Herstructurering en opschoning, zonder andere werking van de applicatie ([#182](https://github.com/TLaan/D-OmniTwin/issues/182), fases 1–3). Daarmee is de code klaar om open te zetten en te publiceren.
+
+### Migreren vanaf 0.1.x
+
+- **Backend-module:** de app heet nu `omnitwin.main:app` (was `main:app`). Eigen startcommando's, scripts of overrides die `main:app` of `from services…`/`from routers…` gebruiken, moeten naar `omnitwin.…`. Buiten Docker: `pip install -e . --no-deps` of `PYTHONPATH=src`.
+- **Paden:** het databaseschema staat in `db/schema/`, de migraties in `db/migraties/` en de stuurdata in `db/stuurdata/`. De mappen `init_data/schema/` en `migrations/` bestaan niet meer.
+- **Migraties:** een migratierunner (`python -m omnitwin.migraties`, met `--status`) houdt in de tabel `schema_migraties` bij wat is toegepast. Bij de eerste start na de upgrade maakt hij die tabel aan en past hij V018–V022 (idempotent) opnieuw toe en registreert ze. Daarna draait elke migratie **één keer per database**, niet meer bij elke start. Een wijziging aan een bestaand SQL-bestand vraagt dus een nieuwe migratie; de runner waarschuwt bij een gewijzigde checksum. De rollen en het schema `api` (`R__api_rollen.sql`) worden nog wel bij elke start bijgewerkt.
+- **Documenten:** oude root-documenten (`BUILD.md`, `GETTING_STARTED.md`, `ROADMAP.md`, `TODO.md`, `BUGFIX.md`) staan in `docs/archief/`. `PROJECT_GOVERNANCE.md` heet nu `GOVERNANCE.md`.
+
+### Gewijzigd
+
+- Eén Python-pakket `src/omnitwin/` (app, routers, services, schemas, database, versie) met `pyproject.toml` (`[project]`, versie uit `VERSION`) ([#196](https://github.com/TLaan/D-OmniTwin/pull/196)).
+- Databaseschema, migraties en stuurdata samen in `db/`, met een migratierunner ([#197](https://github.com/TLaan/D-OmniTwin/pull/197), [#54](https://github.com/TLaan/D-OmniTwin/issues/54)).
+- Validatiescripts naar `tools/` ([#193](https://github.com/TLaan/D-OmniTwin/pull/193)).
+
+### Verwijderd
+
+- 43 ongebruikte scripts en ETL-bestanden (eenmalige datafixes, inspectie- en debugscripts, bulk-import Groningen/Drenthe), `obsolete/`, `exports/` en een oud schemabestand. Alles blijft in de git-historie ([#193](https://github.com/TLaan/D-OmniTwin/pull/193), [#153](https://github.com/TLaan/D-OmniTwin/issues/153)).
+
+### Opgelost
+
+- E2E-tests wachten op toestand in plaats van op tijd; minder wisselvallig op CI-runners zonder GPU ([#194](https://github.com/TLaan/D-OmniTwin/issues/194)).
+- CHANGELOG-links naar het gearchiveerde `BUILD.md`.
+
 ## [0.1.0] - 2026-10-01
 
 Eerste release; deze sectie vat de ontwikkeling sinds het begin samen, details staan in de gekoppelde PR's en in [`BUILD.md`](./docs/archief/BUILD.md#-sprint-changelog).
@@ -97,5 +123,6 @@ Eerste release; deze sectie vat de ontwikkeling sinds het begin samen, details s
 - De backend-container draait als niet-root gebruiker ([#78](https://github.com/TLaan/D-OmniTwin/pull/78)).
 - Beheeromgeving gebouwd zonder sourcemaps ([#81](https://github.com/TLaan/D-OmniTwin/pull/81)).
 
-[Unreleased]: https://github.com/TLaan/D-OmniTwin/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/TLaan/D-OmniTwin/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/TLaan/D-OmniTwin/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/TLaan/D-OmniTwin/releases/tag/v0.1.0

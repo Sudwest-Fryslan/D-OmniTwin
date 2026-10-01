@@ -14,7 +14,7 @@ name: D-OmniTwin
 url: "https://github.com/TLaan/D-OmniTwin"
 # Tijdelijk beeldmerk, zie #83
 logo: static/images/beeldmerk-woordmerk.svg
-softwareVersion: "0.1.0"
+softwareVersion: "0.2.0"
 releaseDate: "2026-10-01"
 
 platforms:
