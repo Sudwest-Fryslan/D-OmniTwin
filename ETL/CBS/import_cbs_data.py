@@ -34,7 +34,7 @@ def get_db_connection():
         
     dbname = os.getenv('DATABASE_NAME', 'omnitwin_db')
     user = os.getenv('DATABASE_USER', 'omnitwin_user')
-    password = os.getenv('DATABASE_PASSWORD', 'admin_omnitwin2026')
+    password = os.getenv('DATABASE_PASSWORD') or sys.exit("DATABASE_PASSWORD ontbreekt; zet hem in de omgeving of in .env.")
     
     # When running from host, Docker DB is on 5433. Try 5433 first, then 5432.
     for port in [5433, int(os.getenv('DATABASE_PORT', 5432)), 5432]:

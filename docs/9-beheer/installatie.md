@@ -55,6 +55,20 @@ Gebruik alleen letters en cijfers (zoals hierboven): tekens als `@ : / # % $` br
 
 | Variabele | Wat invullen |
 |-----------|--------------|
+| `COMPOSE_FILE=docker-compose.yml` | **Verplicht voor een installatie.** Haal het `#` weg. Zonder deze regel laadt `docker compose` ook de ontwikkelinstellingen (zie [Ontwikkelmodus](#3-ontwikkelmodus)). |
+| `OMNITWIN_HTTP_PORT` | Optioneel. Poort op de host, standaard `80`. |
+| `DATABASE_PASSWORD` | **Verplicht.** Het gegenereerde wachtwoord. |
+| `SECRET_KEY` | **Verplicht invullen**, al gebruikt de code hem nu nog niet. |
+| `ADMIN_API_KEY` | Voor scripts: wie deze waarde in de header `X-Admin-Key` meestuurt, heeft beheerrechten. Minimaal 32 tekens (`openssl rand -hex 32`). Een lege of voorbeeldwaarde schakelt de header uit. De beheeromgeving gebruikt hem niet; die werkt met inloggen. |
+| `ADMIN_USER`, `ADMIN_PASSWORD` | Het eerste beheeraccount. Laat je `ADMIN_PASSWORD` op de voorbeeldwaarde staan of leeg, dan wordt er een wachtwoord gegenereerd (zie [2.4](#24-eerste-keer-inloggen)). |
+| `DEBUG` | `true` zolang je zonder HTTPS draait, anders werkt inloggen in de browser niet (zie [Beveiliging](#beveiliging)). Met HTTPS: `false`. |
+| `LOAD_SAMPLE_DATA` | `true`: de sample dataset laden bij de eerste start. `false`: alleen stuurdata (configuratie, zonder buurten). Zie [Data](#4-data). |
+| `DATABASE_NAME`, `DATABASE_USER` | Mogen blijven staan. Wijzig ze alleen vóór de eerste start. |
+| `DATABASE_HOST`, `DATABASE_PORT` | Laten staan. De containers negeren deze en gebruiken `postgres:5432`; ze gelden alleen voor scripts op de host in ontwikkelmodus. |
+| `DATABASE_SSLMODE` | `prefer` laten staan. De database is alleen binnen het Docker-netwerk bereikbaar en heeft geen TLS; `require` werkt hier niet. |
+| `CORS_ORIGINS` | Alleen nodig als andere websites de API aanroepen. De app zelf draait op hetzelfde adres. |
+| `OLLAMA_*` | Optioneel, zie [LLM](#7-llm-optioneel). |
+| `LOG_ALERT_*`, `SMTP_*` | Nog niet in gebruik (#47). |
 | `DATABASE_PASSWORD` | **Verplicht.** Het gegenereerde wachtwoord. Wijzig het niet meer na de eerste start. |
 | `ADMIN_PASSWORD` | Aanbevolen. Wachtwoord van het eerste beheeraccount (`admin`). Leeg: er wordt eenmalig een wachtwoord gegenereerd (zie [2.4](#24-eerste-keer-inloggen)). |
 | `COMPOSE_FILE=docker-compose.yml` | Staat al aan: alleen de installatie-instellingen. Ontwikkelaars halen deze regel weg (zie [Ontwikkelmodus](#3-ontwikkelmodus)). |
@@ -97,7 +111,7 @@ docker compose logs db-init
 
 Zoek naar `ADMIN_PASSWORD niet ingesteld. Gegenereerd wachtwoord voor 'admin'`. Het wachtwoord staat op de regel daaronder. Het wordt niet opgeslagen; bewaar het direct.
 
-De log van `db-init` toont ook een `ADMIN_API_KEY` ("BEWAAR DEZE KEY"). Die wordt nu niet gebruikt: de backend accepteert alleen de `ADMIN_API_KEY` uit `.env`.
+De log van `db-init` toont ook een `ADMIN_API_KEY` ("BEWAAR DEZE KEY"). Die wordt nu niet gebruikt: de backend accepteert alleen de `ADMIN_API_KEY` uit `.env`, en alleen voor scripts.
 
 Wachtwoord later wijzigen (vraagt interactief om een nieuw wachtwoord):
 
@@ -324,9 +338,38 @@ Een gratis Gemini-sleutel (met lage limieten) maak je aan op [aistudio.google.co
 
 Stel een installatie **niet** open voor internet of een breed netwerk zolang deze punten openstaan:
 
+- **PostgREST geeft alle tabellen vrij.** `/api/data` draait als de database-eigenaar en toont en wijzigt zonder inloggen alle tabellen, ook `users` en `sessions`. Aparte rollen en een beperkt API-schema volgen in #57. Tot die tijd: alleen in een vertrouwd netwerk, of `/api/data` afschermen in een proxy ervoor.
+- **Geen HTTPS in de stack.** Traefik luistert alleen op HTTP. Zet een reverse proxy met TLS ervoor (bijvoorbeeld de bestaande proxy of WAF van je organisatie) en zet dan `DEBUG=false`. Met `DEBUG=false` stuurt de browser het inlogcookie alleen via HTTPS (behalve op `localhost`).
+- Houd `.env` geheim: het bevat het databasewachtwoord en de `ADMIN_API_KEY`.
+
+### Wie mag wat
+
+- **Beheerroutes** (`/api/admin/*` behalve inloggen, en `/api/visualisatie/admin/*`) vereisen een ingelogde gebruiker met `is_admin`, of een geldige `X-Admin-Key`. Zonder login: `401`; ingelogd zonder beheerrechten: `403`.
+- Nieuwe gebruikers zijn standaard **geen** beheerder (`users.is_admin` standaard `false`). Het account uit `ADMIN_USER` is wel beheerder.
+- Sessies staan gehasht in de database en verlopen na 12 uur; verlopen sessies worden bij het inloggen opgeruimd.
+
+**Publiek, zonder inloggen**, zijn:
+
+| Route | Wat |
+|-------|-----|
+| `/`, `/static/*`, `/admin/*` | De kaartapplicatie en de bestanden van de beheeromgeving (de beheerpagina's zelf vragen om inloggen) |
+| `/admin/rapport/*`, `/admin/publiek-rapport/*` | Rapportpagina's |
+| `/api/report/*` | Rapportdata en AI-rapportteksten |
+| `/api/gebiedsmonitor/*`, `/api/kompas/*` | Gebieden, indicatoren en het Kompas |
+| `/api/visualisatie/paletten`, `/api/visualisatie/config/*` | Kleurpaletten voor de kaart |
+| `/api/externe-lagen`, `/api/externe-lagen/*` | Externe kaartlagen (lezen en buurten per laag) |
+| `/api/chat`, `/api/ai/*` | Chat en AI-zoeken |
+| `/api/3dbag/*` | 3D-panden |
+| `/api/geo/*` | pg_featureserv (kaartgeometrie) |
+| `/api/data/*` | PostgREST, zie het punt hierboven (#57) |
+| `/api/admin/auth/login`, `/logout`, `/me` | Inloggen en sessiestatus |
+| `/health`, `/api`, `/docs`, `/openapi.json` | Status en API-documentatie |
+
+**Principe:** rapporten hebben dezelfde rechten als een anonieme bezoeker van de kaartapplicatie (besluit #65). Een rapport toont dus niet meer dan de publieke app: geen beheervelden (notities, wie iets beoordeelde of goedkeurde), geen inactieve indicatoren, geen logs of configuratie. De technische details van AI-teksten (`debug_info`: systeemprompts en model) krijgt alleen een ingelogde beheerder.
+
+**Let op, AI-teksten:** `/api/report/narrative/*`, `/api/report/benchmark/narrative` en `/api/chat` starten zonder inloggen een aanroep naar het taalmodel. Rapportteksten worden per gebied een uur gecachet, maar er is geen rate-limit. Gebruik je een externe (betaalde) LLM-aanbieder, scherm deze routes dan af in de proxy ervoor of stel een limiet in.
 - **Autorisatie op beheerroutes is nog niet overal op orde** (#65).
 - **Standaard geen HTTPS.** Traefik luistert op HTTP. Zet HTTPS aan op een van de twee manieren hieronder, en zet dan `DEBUG=false`. Met `DEBUG=false` stuurt de browser het inlogcookie alleen via HTTPS (behalve op `localhost`).
-- Houd `.env` geheim: het bevat het databasewachtwoord en de `ADMIN_API_KEY`.
 
 ### PostgREST en pg_featureserv (#57)
 

@@ -62,10 +62,7 @@ LOG_LEVEL=INFO
 ```
 
 ### 3b. Frontend Configuration (admin-panel/.env)
-Voor de Admin Panel dev server (Vite) kan optioneel een `.env` file in `admin-panel/.env`; API-calls gaan via de proxy naar poort 8000:
-```bash
-VITE_ADMIN_KEY=your_admin_key_here  # Optioneel; must match ADMIN_API_KEY in backend .env
-```
+De Admin Panel dev server (Vite) heeft geen `.env` nodig; API-calls gaan via de proxy naar poort 8000. Inloggen gaat met de sessie-cookie (een gebruiker met `is_admin`). Zet nooit secrets in `VITE_*`-variabelen: Vite bakt die in de bundle.
 
 ### 4. Database Setup & Initiatie Data
 

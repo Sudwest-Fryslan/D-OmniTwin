@@ -1,9 +1,3 @@
 /// <reference types="vite/client" />
 
-interface ImportMetaEnv {
-  readonly VITE_ADMIN_KEY?: string;
-}
-
-interface ImportMeta {
-  readonly env: ImportMetaEnv;
-}
+// Geen VITE_*-secrets: alles met VITE_ wordt in de bundle ingebakken (#65)
