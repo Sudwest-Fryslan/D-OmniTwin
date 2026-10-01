@@ -217,28 +217,33 @@ def _setup_python_logging(log_level: str = "INFO"):
     if _file_handler_configured:
         return
 
-    # Zorg dat logs/ directory bestaat
-    logs_dir = Path(__file__).resolve().parent.parent / "logs"
-    logs_dir.mkdir(exist_ok=True)
-
     # Root logger configureren
     root_logger = logging.getLogger()
     root_logger.setLevel(LEVEL_MAP.get(log_level.upper(), logging.INFO))
 
-    # Rotating file handler: 10MB max, 5 backups
-    file_handler = logging.handlers.RotatingFileHandler(
-        logs_dir / "server.log",
-        maxBytes=10 * 1024 * 1024,  # 10 MB
-        backupCount=5,
-        encoding="utf-8",
-    )
-    file_handler.setLevel(logging.DEBUG)  # File vangt alles op
-    file_formatter = logging.Formatter(
-        "%(asctime)s | %(levelname)-8s | %(message)s",
-        datefmt="%Y-%m-%d %H:%M:%S",
-    )
-    file_handler.setFormatter(file_formatter)
-    root_logger.addHandler(file_handler)
+    # Rotating file handler: 10MB max, 5 backups.
+    # Is logs/ niet schrijfbaar (bv. bind-mount op Windows met niet-root gebruiker),
+    # dan alleen naar de console loggen in plaats van de app te laten crashen.
+    logs_dir = Path(__file__).resolve().parent.parent / "logs"
+    try:
+        logs_dir.mkdir(exist_ok=True)
+        file_handler = logging.handlers.RotatingFileHandler(
+            logs_dir / "server.log",
+            maxBytes=10 * 1024 * 1024,  # 10 MB
+            backupCount=5,
+            encoding="utf-8",
+        )
+    except OSError as e:
+        file_handler = None
+        print(f"WAARSCHUWING: logbestand niet schrijfbaar ({e}); alleen console-logging.", flush=True)
+    if file_handler is not None:
+        file_handler.setLevel(logging.DEBUG)  # File vangt alles op
+        file_formatter = logging.Formatter(
+            "%(asctime)s | %(levelname)-8s | %(message)s",
+            datefmt="%Y-%m-%d %H:%M:%S",
+        )
+        file_handler.setFormatter(file_formatter)
+        root_logger.addHandler(file_handler)
 
     # Console handler (beknopt)
     console_handler = logging.StreamHandler()

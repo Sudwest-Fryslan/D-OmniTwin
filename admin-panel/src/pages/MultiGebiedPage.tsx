@@ -479,6 +479,7 @@ export const MultiGebiedPage: React.FC = () => {
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginLeft: '1rem' }}>
                     <span style={{ fontWeight: 600, fontSize: '0.9rem' }}>Thema:</span>
                     <select
+                        aria-label="Thema"
                         value={themaFilter}
                         onChange={e => handleThemaChange(e.target.value)}
                         disabled={loading}
@@ -632,6 +633,8 @@ export const MultiGebiedPage: React.FC = () => {
                                                                 display: 'flex', alignItems: 'center'
                                                             }}
                                                             title="Toon top 3 afwijkingen"
+                                                            aria-label={`Toon top 3 afwijkingen voor ${b.buurt_naam}`}
+                                                            aria-expanded={isExpanded}
                                                         >
                                                             {isExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
                                                         </button>

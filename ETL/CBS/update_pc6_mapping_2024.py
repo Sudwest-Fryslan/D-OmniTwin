@@ -2,6 +2,7 @@ import pandas as pd
 import geopandas as gpd
 import json
 import os
+import sys
 import psycopg2
 
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -12,7 +13,7 @@ def get_db():
         port=os.getenv('DATABASE_PORT', '5432'),
         dbname=os.getenv('DATABASE_NAME', 'omnitwin_db'),
         user=os.getenv('DATABASE_USER', 'omnitwin_user'),
-        password=os.getenv('DATABASE_PASSWORD', 'admin_omnitwin2026')
+        password=os.getenv('DATABASE_PASSWORD') or sys.exit("DATABASE_PASSWORD ontbreekt; zet hem in de omgeving of in .env.")
     )
 
 print("Laden bestaande pc6 mapping...")

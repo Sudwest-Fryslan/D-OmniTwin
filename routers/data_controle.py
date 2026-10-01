@@ -5,6 +5,7 @@ from services.data_controle_service import DataControleService
 from typing import List, Dict, Any
 from pydantic import BaseModel
 from services.deduplicatie_service import DeduplicatieService
+from routers.auth import vereis_admin
 
 class MergeRequest(BaseModel):
     primary_uuid: str
@@ -17,9 +18,11 @@ class ActiesRequest(BaseModel):
 class UitzonderingRequest(BaseModel):
     indicator_uuids: List[str]  # Alle UUIDs in de groep die als 'geen duplicaat' worden gemarkeerd
 
+# Alle routes in deze router vereisen een beheerder (#65)
 router = APIRouter(
     prefix="/api/admin/data-controle",
-    tags=["Data Controle & Lineage"]
+    tags=["Data Controle & Lineage"],
+    dependencies=[Depends(vereis_admin)],
 )
 
 def get_service(db: Session = Depends(get_db)) -> DataControleService:

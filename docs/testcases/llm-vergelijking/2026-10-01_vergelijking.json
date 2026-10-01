@@ -1,0 +1,257 @@
+{
+  "meta": {
+    "datum": "2026-10-01",
+    "base_url": "http://localhost:8106",
+    "providers": [
+      "ollama",
+      "direct-ollama",
+      "claude",
+      "openai",
+      "gemini"
+    ],
+    "beschikbaarheid": {
+      "ollama": {
+        "beschikbaar": true,
+        "reden": "via gateway, alias d-omnitwin-ollama",
+        "model": "qwen3:4b-instruct"
+      },
+      "claude": {
+        "beschikbaar": false,
+        "reden": "geen key (ANTHROPIC_API_KEY leeg of afwezig in .env)",
+        "model": "anthropic/claude-haiku-4-5"
+      },
+      "openai": {
+        "beschikbaar": false,
+        "reden": "geen key (OPENAI_API_KEY leeg of afwezig in .env)",
+        "model": "openai/gpt-4o-mini"
+      },
+      "gemini": {
+        "beschikbaar": true,
+        "reden": "via gateway, alias d-omnitwin-gemini",
+        "model": "gemini/gemini-3.8-flash"
+      },
+      "direct-ollama": {
+        "beschikbaar": true,
+        "reden": "direct naar Ollama",
+        "model": "qwen3:4b-instruct"
+      }
+    },
+    "origineel": {
+      "api_type": "openai",
+      "api_url": "http://llm-gateway:4000",
+      "model_name": "d-omnitwin-ollama"
+    },
+    "hersteld": "ja"
+  },
+  "resultaten": {
+    "ollama": {
+      "chat-groen-bolsward": {
+        "status": 200,
+        "latency_s": 5.6,
+        "modus": "intelligent_dispatcher",
+        "llm": true,
+        "model": "d-omnitwin-ollama",
+        "acties": [
+          "TOON_OP_KAART: 🗺 Toon: Bolsward-Zuidoost [BU19000002]"
+        ],
+        "woorden": 6,
+        "fragment": "Ik toon de groenindicator voor Bolsward-Zuidoost.",
+        "nederlands": true,
+        "grounding": []
+      },
+      "chat-workum": {
+        "status": 200,
+        "latency_s": 0.0,
+        "modus": "vast scenario (geen LLM)",
+        "llm": false,
+        "model": null,
+        "acties": [
+          "SELECTEER_GEBIEDSTYPE: 🗺️ Toon: Buurten",
+          "SELECTEER_GEMEENTE: 📍 Gemeente: Súdwest-Fryslân",
+          "OPEN_KOMPAS: 🧭 Open het D-Omni Kompas"
+        ],
+        "woorden": 31,
+        "fragment": "Je hebt gekozen voor het perspectief van Beleidsadviseur. Voor deze demonstratie kijken we naar de IJsselmeerkust (Súdwest-Fryslân). Ik heb de relevante data voor je klaargezet. Wat wil je als eerste doen?",
+        "nederlands": null,
+        "grounding": null
+      },
+      "rapport-bolsward": {
+        "status": 200,
+        "latency_s": 46.4,
+        "modus": "LLM",
+        "llm": true,
+        "model": "d-omnitwin-ollama",
+        "acties": [],
+        "domeinen": 3,
+        "woorden": 99,
+        "woorden_totaal": 438,
+        "nederlands": true,
+        "grounding": [],
+        "fragment": "Bolsward-Zuidoost toont een positieve kwaliteit van leven met sterke burgerdeelname en goede gezondheidsvoorwaarden, maar wordt gecompenseerd door een zwakke sociale samenhang, weinig vrijwilligerswerk en een hoog aantal…"
+      },
+      "rapport-workum": {
+        "status": 200,
+        "latency_s": 64.1,
+        "modus": "LLM",
+        "llm": true,
+        "model": "d-omnitwin-ollama",
+        "acties": [],
+        "domeinen": 4,
+        "woorden": 104,
+        "woorden_totaal": 585,
+        "nederlands": true,
+        "grounding": [],
+        "fragment": "Workum toont een duidelijke kwetsbaarheid op meerdere fronten: de sociale veiligheid is verzwakt door hoge inbreuken en schade in open ruimte, terwijl de fysieke leefomgeving tekortvalt in energie-efficiëntie en comfort.…"
+      }
+    },
+    "direct-ollama": {
+      "chat-groen-bolsward": {
+        "status": 200,
+        "latency_s": 6.1,
+        "modus": "intelligent_dispatcher",
+        "llm": true,
+        "model": "qwen3:4b-instruct",
+        "acties": [
+          "TOON_OP_KAART: 🗺 Toon: Bolsward-Zuidoost [BU19000002]"
+        ],
+        "woorden": 6,
+        "fragment": "Ik toon de groenindicator voor Bolsward-Zuidoost.",
+        "nederlands": true,
+        "grounding": []
+      },
+      "chat-workum": {
+        "status": 200,
+        "latency_s": 0.0,
+        "modus": "vast scenario (geen LLM)",
+        "llm": false,
+        "model": null,
+        "acties": [
+          "SELECTEER_GEBIEDSTYPE: 🗺️ Toon: Buurten",
+          "SELECTEER_GEMEENTE: 📍 Gemeente: Súdwest-Fryslân",
+          "OPEN_KOMPAS: 🧭 Open het D-Omni Kompas"
+        ],
+        "woorden": 31,
+        "fragment": "Je hebt gekozen voor het perspectief van Beleidsadviseur. Voor deze demonstratie kijken we naar de IJsselmeerkust (Súdwest-Fryslân). Ik heb de relevante data voor je klaargezet. Wat wil je als eerste doen?",
+        "nederlands": null,
+        "grounding": null
+      },
+      "rapport-bolsward": {
+        "status": 200,
+        "latency_s": 50.3,
+        "modus": "LLM",
+        "llm": true,
+        "model": "qwen3:4b-instruct",
+        "acties": [],
+        "domeinen": 3,
+        "woorden": 92,
+        "woorden_totaal": 422,
+        "nederlands": true,
+        "grounding": [],
+        "fragment": "Bolsward-Zuidoost toont een positieve kwaliteit van leven met sterke burgerdeelname, uitstekende onderwijsresultaten en goede gezondheid, wat een solide sociale basis vormt. Echter, er zijn duidelijke zwakke punten: een…"
+      },
+      "rapport-workum": {
+        "status": 200,
+        "latency_s": 68.0,
+        "modus": "LLM",
+        "llm": true,
+        "model": "qwen3:4b-instruct",
+        "acties": [],
+        "domeinen": 4,
+        "woorden": 92,
+        "woorden_totaal": 571,
+        "nederlands": true,
+        "grounding": [],
+        "fragment": "Workum toont een wijk met een sterke bevolkingsbasis en actieve inwoners, maar wordt gecombineerd door een duidelijke onveilige sfeer, een ouderenoverweldiging en een slechte energie-efficiëntie. De verhoogde inbreuken e…"
+      }
+    },
+    "claude": {
+      "chat-groen-bolsward": {
+        "overgeslagen": "overgeslagen (geen key)"
+      },
+      "chat-workum": {
+        "overgeslagen": "overgeslagen (geen key)"
+      },
+      "rapport-bolsward": {
+        "overgeslagen": "overgeslagen (geen key)"
+      },
+      "rapport-workum": {
+        "overgeslagen": "overgeslagen (geen key)"
+      }
+    },
+    "openai": {
+      "chat-groen-bolsward": {
+        "overgeslagen": "overgeslagen (geen key)"
+      },
+      "chat-workum": {
+        "overgeslagen": "overgeslagen (geen key)"
+      },
+      "rapport-bolsward": {
+        "overgeslagen": "overgeslagen (geen key)"
+      },
+      "rapport-workum": {
+        "overgeslagen": "overgeslagen (geen key)"
+      }
+    },
+    "gemini": {
+      "chat-groen-bolsward": {
+        "status": 200,
+        "latency_s": 6.4,
+        "modus": "intelligent_dispatcher",
+        "llm": true,
+        "model": "d-omnitwin-gemini",
+        "acties": [
+          "SELECTEER_GEMEENTE: 📍 Gemeente: Súdwest-Fryslân",
+          "SELECTEER_GEBIEDSTYPE: 🏙 Toon: Buurten"
+        ],
+        "woorden": 18,
+        "fragment": "Bolsward-Zuidoost ligt in de gemeente Súdwest-Fryslân. Ik selecteer de gemeente en de buurtenlaag om het groen te bekijken.",
+        "nederlands": true,
+        "grounding": []
+      },
+      "chat-workum": {
+        "status": 200,
+        "latency_s": 0.0,
+        "modus": "vast scenario (geen LLM)",
+        "llm": false,
+        "model": null,
+        "acties": [
+          "SELECTEER_GEBIEDSTYPE: 🗺️ Toon: Buurten",
+          "SELECTEER_GEMEENTE: 📍 Gemeente: Súdwest-Fryslân",
+          "OPEN_KOMPAS: 🧭 Open het D-Omni Kompas"
+        ],
+        "woorden": 31,
+        "fragment": "Je hebt gekozen voor het perspectief van Beleidsadviseur. Voor deze demonstratie kijken we naar de IJsselmeerkust (Súdwest-Fryslân). Ik heb de relevante data voor je klaargezet. Wat wil je als eerste doen?",
+        "nederlands": null,
+        "grounding": null
+      },
+      "rapport-bolsward": {
+        "status": 200,
+        "latency_s": 56.7,
+        "modus": "LLM-fout in 1/4 teksten (HTTP 503)",
+        "llm": false,
+        "model": "d-omnitwin-gemini",
+        "acties": [],
+        "domeinen": 3,
+        "woorden": 136,
+        "woorden_totaal": 423,
+        "nederlands": true,
+        "grounding": [],
+        "fragment": "Bolsward-Zuidoost toont een stapeling van kwetsbaarheden waarbij fysieke veroudering en sociale erosie elkaar negatief beïnvloeden. De fysieke leefomgeving blijft achter door een verouderde woningvoorraad met lage energi…"
+      },
+      "rapport-workum": {
+        "status": 200,
+        "latency_s": 27.2,
+        "modus": "LLM-fout in 5/5 teksten (HTTP 429 rate limit)",
+        "llm": false,
+        "model": "d-omnitwin-gemini",
+        "acties": [],
+        "domeinen": 4,
+        "woorden": 9,
+        "woorden_totaal": 0,
+        "nederlands": null,
+        "grounding": null,
+        "fragment": "LLM-server op http://llm-gateway:4000 gaf een fout (429)"
+      }
+    }
+  }
+}
