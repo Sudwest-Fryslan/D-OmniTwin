@@ -86,6 +86,7 @@ markeer_voltooid() {
     local versie
     versie=$(tr -d '\r\n' < /app/VERSION 2>/dev/null || echo onbekend)  # VERSION kan CRLF hebben (Windows)
     db_psql -v ON_ERROR_STOP=1 -q -v versie="$versie" -v hoe="$1" >/dev/null <<'SQL'
+SET client_min_messages = warning;
 CREATE TABLE IF NOT EXISTS public.installatie_status (
     id          boolean     PRIMARY KEY DEFAULT true CHECK (id),  -- hooguit één rij
     voltooid_op timestamptz NOT NULL DEFAULT now(),
