@@ -31,5 +31,6 @@ Onderstaande wijzigingen staan (deels) nog in open pull requests.
 - Geen standaard admin/admin-wachtwoord meer bij de container-initialisatie: zonder `ADMIN_PASSWORD` wordt eenmalig een willekeurig wachtwoord gegenereerd ([#52](https://github.com/TLaan/D-OmniTwin/issues/52)).
 - Geen hardgecodeerd databasewachtwoord meer in `generate_sample.py` ([#52](https://github.com/TLaan/D-OmniTwin/issues/52)).
 - `.dockerignore` toegevoegd, zodat onder meer `.env` niet in het image belandt ([#52](https://github.com/TLaan/D-OmniTwin/issues/52)).
+- Security-headers (CSP, `X-Frame-Options`, `nosniff`, `Referrer-Policy`, `Permissions-Policy`) via Traefik op alle routes, ook `/api/data` en `/api/geo`; HSTS op HTTPS; `/.well-known/security.txt`; voorbeeld voor HTTPS met Let's Encrypt in `deploy/traefik/tls.example.yml` ([#121](https://github.com/TLaan/D-OmniTwin/issues/121)).
 
 [Unreleased]: https://github.com/TLaan/D-OmniTwin/commits/main

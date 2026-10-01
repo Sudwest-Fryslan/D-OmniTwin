@@ -122,6 +122,29 @@ def test_chat_scenario_beleidsadviseur():
     assert any(a["type"] == "SELECTEER_GEMEENTE" and a.get("gemeente_code") == "1900" for a in acties)
 
 
+# ── AI-zoeken: embeddings na verse installatie (#139) ────────────────────────
+
+def test_embeddings_voor_alle_actieve_indicatoren(db):
+    zonder = scalar(db, """
+        SELECT count(*) FROM indicatoren i
+        LEFT JOIN indicator_embeddings e ON i.uuid = e.indicator_uuid
+        WHERE i.is_actief AND e.id IS NULL
+    """)
+    assert scalar(db, "SELECT count(*) FROM indicator_embeddings") > 0
+    assert zonder == 0
+
+
+def test_ai_zoeken_vindt_concept_indicator():
+    # De eerste zoekvraag laadt het model in de backend; ruime timeout
+    r = requests.get(f"{BASE_URL}/api/ai/kompas/search", params={"q": "koele plek"}, timeout=300)
+    assert r.status_code == 200, r.text[:300]
+    resultaten = r.json()
+    assert resultaten and "error" not in resultaten[0], resultaten
+    treffer = next((x for x in resultaten if x["naam"] == "Afstand tot koele plek"), None)
+    assert treffer, [x["naam"] for x in resultaten]
+    assert "ontologie_status" in treffer and "gevalideerd" in treffer
+
+
 # ── 5. load_sample.py is idempotent ──────────────────────────────────────────
 
 TELLINGEN = {

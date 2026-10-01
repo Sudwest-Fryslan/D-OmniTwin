@@ -1,0 +1,60 @@
+# D-OmniTwin — voorbeeld: HTTPS in Traefik met Let's Encrypt (optioneel)
+#
+# Alleen nodig als er GEEN TLS-proxy van je organisatie vóór de stack staat.
+# Voorwaarden: een DNS-naam die naar deze server wijst, en poort 80 en 443 van
+# buiten bereikbaar (Let's Encrypt controleert via HTTP op poort 80).
+#
+# Gebruik:
+#   1. Zet in .env:
+#        COMPOSE_FILE=docker-compose.yml:deploy/traefik/tls.example.yml
+#        OMNITWIN_DOMAIN=omnitwin.example.nl
+#        ACME_EMAIL=beheer@example.nl        (functioneel adres voor verloopmeldingen)
+#        DEBUG=false
+#      Op Windows is het scheidingsteken in COMPOSE_FILE een `;` in plaats van `:`.
+#      OMNITWIN_HTTP_PORT moet 80 blijven (of leeg).
+#   2. docker compose up -d
+#
+# Wat dit doet:
+#   - entrypoint `websecure` op 443 met een certificaat van Let's Encrypt;
+#   - HTTP (80) stuurt door naar HTTPS;
+#   - de security-headers uit dynamic.yml gelden ook op 443, en daar komt HSTS
+#     (Strict-Transport-Security) automatisch bij.
+#
+# Eigen certificaat in plaats van Let's Encrypt: laat de `certificatesresolvers`-
+# en `tls.certresolver`-regels weg, mount het certificaat en de sleutel in de
+# container en voeg in dynamic.yml toe:
+#   tls:
+#     certificates:
+#       - certFile: /certs/omnitwin.crt
+#         keyFile: /certs/omnitwin.key
+#
+# Let op: `command` hieronder vervangt dat uit docker-compose.yml helemaal. Neem
+# wijzigingen daar dus ook hier over.
+services:
+  traefik:
+    command:
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--providers.docker.constraints=Label(`com.docker.compose.project`,`${COMPOSE_PROJECT_NAME:-d-omnitwin}`)"
+      - "--providers.docker.network=${COMPOSE_PROJECT_NAME:-d-omnitwin}_default"
+      - "--providers.file.filename=/etc/traefik/dynamic.yml"
+      # HTTP: alleen doorsturen naar HTTPS (en de ACME-controle)
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.web.http.redirections.entrypoint.to=websecure"
+      - "--entrypoints.web.http.redirections.entrypoint.scheme=https"
+      # HTTPS met security-headers (incl. HSTS) op alle routes
+      - "--entrypoints.websecure.address=:443"
+      - "--entrypoints.websecure.http.middlewares=security-headers@file"
+      - "--entrypoints.websecure.http.tls=true"
+      - "--entrypoints.websecure.http.tls.certresolver=le"
+      - "--entrypoints.websecure.http.tls.domains[0].main=${OMNITWIN_DOMAIN:?zet OMNITWIN_DOMAIN in .env}"
+      - "--certificatesresolvers.le.acme.email=${ACME_EMAIL:?zet ACME_EMAIL in .env}"
+      - "--certificatesresolvers.le.acme.storage=/letsencrypt/acme.json"
+      - "--certificatesresolvers.le.acme.httpchallenge.entrypoint=web"
+    ports:
+      - "443:443"
+    volumes:
+      - letsencrypt:/letsencrypt
+
+volumes:
+  letsencrypt:

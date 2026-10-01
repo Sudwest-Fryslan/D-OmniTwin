@@ -33,7 +33,7 @@ D-OmniTwin is a digital twin platform for Dutch municipalities, visualizing neig
 - **Data API:** PostgREST on port 3000 (`/api/data/*`). Alleen-lezen: publiceert alleen schema `api` (views/functies), rol `web_anon` via `authenticator` (#57). Nieuw object voor de frontend: view/functie + `GRANT` in `migrations/schema_v23_api_rollen.sql`, nooit `users`/`sessions`/`api_keys`/`llm_config`/`system_prompts`/logs. Schrijven gaat via FastAPI met auth
 - **Geo API:** pg_featureserv on port 9000 (`/api/geo/*`), als alleen-lezen rol `featureserv` (alleen `vw_gebieden_features`, `omgevingsvisie_deelgebieden`, `postgisftw.*`)
 - **Main Frontend:** Vanilla JS + MapLibre GL + Deck.gl (no build step, served from `/static/`)
-- **Admin Panel:** React 19 + TypeScript SPA in `/admin-panel/` (port 3001 in dev, built to `/static/admin-panel/`)
+- **Admin Panel:** React 19 + TypeScript SPA in `/admin-panel/`, gebouwd met Vite (port 3000 in dev, built to `/static/admin-panel/`)
 - **Database:** PostgreSQL 14+ with PostGIS, pgvector, and pg_trgm extensions
 
 ## Commands
@@ -42,7 +42,7 @@ D-OmniTwin is a digital twin platform for Dutch municipalities, visualizing neig
 ```bash
 docker compose up -d --build   # dev: laadt ook docker-compose.override.yml (bind-mount, DB op 5433, Traefik-dashboard 8081)
 ```
-Installatie voor beheerders (`COMPOSE_FILE=docker-compose.yml` in `.env`, alleen poort 80 / `OMNITWIN_HTTP_PORT`): zie **`docs/9-beheer/installatie.md`** — de enige actuele installatiegids. Bij de eerste start richt de eenmalige service `db-init` (`docker-entrypoint.sh init`) een lege database in: schema, views, migraties v18/v19, stuurdata, sample (`LOAD_SAMPLE_DATA`) en admin-gebruiker. Een bestaande database (tabel `gebieden` aanwezig) laat hij ongemoeid; schemamigraties op bestaande databases zijn handmatig (#54).
+Installatie voor beheerders (`COMPOSE_FILE=docker-compose.yml` in `.env`, alleen poort 80 / `OMNITWIN_HTTP_PORT`): zie **`docs/9-beheer/installatie.md`** — de enige actuele installatiegids. Bij de eerste start richt de eenmalige service `db-init` (`docker-entrypoint.sh init`) een lege database in: schema, views, migraties v18/v19, stuurdata en definities (`load_sample.py --stap definities`), de use cases (`usecases/`, `laad_usecase.py --alle`, alleen bij `LOAD_SAMPLE_DATA=true`) en admin-gebruiker. Alle demodata hoort bij een use case: data + inrichting + stappen. Een bestaande database (tabel `gebieden` aanwezig) laat hij ongemoeid; schemamigraties op bestaande databases zijn handmatig (#54).
 
 ### Backend
 ```bash
@@ -61,9 +61,10 @@ python -m pytest tests/test_zscore.py   # single test file
 ```bash
 cd admin-panel
 npm install
-npm start        # dev server on port 3001
-npm run build    # production build (deploy via .agents/workflows/build-admin-panel.md)
-npm test         # run tests
+npm start        # Vite dev server on port 3000 (proxy /api -> :8000)
+npm run build:static  # production build + kopie naar static/admin-panel (commit die map mee)
+npm run typecheck     # tsc --noEmit
+npm test         # Vitest (eenmalig)
 ```
 
 ### Database initialisatie — Fryslân-dataset zonder Docker (verouderd)
@@ -91,7 +92,7 @@ Copy `.env.example` to `.env` and fill in (details: `docs/9-beheer/installatie.m
 - `ADMIN_USER` / `ADMIN_PASSWORD` — eerste beheeraccount; leeg = gegenereerd, eenmalig in `docker compose logs db-init`
 - `OLLAMA_*` — for local LLM (optional; Qwen model)
 
-For the admin panel, create `admin-panel/.env` with `REACT_APP_API_URL` and `REACT_APP_ADMIN_KEY`.
+For the admin panel dev server, optionally create `admin-panel/.env` with `VITE_ADMIN_KEY` (fallback voor `X-Admin-Key`; wordt in de bundle ingebakken, dus niet voor productiebuilds).
 
 ## Architecture
 
@@ -165,5 +166,7 @@ Elke wijziging gaat via GitHub Flow:
 3. Commits op die branch
 4. Pull Request naar `main` met `Closes #<nr>` in de beschrijving
 5. Nooit direct op `main` pushen
+
+**Nieuwe functionaliteit = een use case erbij** (`usecases/<naam>/`: data, inrichting, stappen, verwachte uitkomst). De use case werkt out of the box, ook zonder AI-sleutel, en wordt getoetst door `tests/integration/test_usecases.py`. Zie CONTRIBUTING.md.
 
 `gh` CLI: `/usr/bin/gh` — gebruik altijd met `GH_PAGER=cat` om pager-blokkering te voorkomen.

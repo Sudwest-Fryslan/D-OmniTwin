@@ -11,6 +11,9 @@ services:
       - "--providers.docker.constraints=Label(`com.docker.compose.project`,`${COMPOSE_PROJECT_NAME:-d-omnitwin}`)"
       - "--providers.docker.network=${COMPOSE_PROJECT_NAME:-d-omnitwin}_default"
       - "--entrypoints.web.address=:80"
+      # Security-headers (CSP, nosniff, ...) op alle routes; zie deploy/traefik/dynamic.yml
+      - "--providers.file.filename=/etc/traefik/dynamic.yml"
+      - "--entrypoints.web.http.middlewares=security-headers@file"
     ports:
       - "8081:8080"   # Traefik-dashboard
 
