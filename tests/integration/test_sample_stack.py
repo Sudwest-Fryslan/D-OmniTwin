@@ -134,6 +134,17 @@ def test_embeddings_voor_alle_actieve_indicatoren(db):
     assert zonder == 0
 
 
+def test_embeddingmodel_lokaal_en_offline():
+    # #118: het model staat in de image (gepinde revisie) en de backend draait offline,
+    # dus AI-zoeken (test hieronder) werkt zonder toegang tot huggingface.co
+    r = requests.get(f"{BASE_URL}/api/ai/health", timeout=TIMEOUT)
+    assert r.status_code == 200, r.text[:300]
+    model = r.json()["embedding_model"]
+    assert model["lokaal"], model
+    assert model["offline"], model
+    assert len(model["revisie"]) == 40, model
+
+
 def test_ai_zoeken_vindt_concept_indicator():
     # De eerste zoekvraag laadt het model in de backend; ruime timeout
     r = requests.get(f"{BASE_URL}/api/ai/kompas/search", params={"q": "koele plek"}, timeout=300)

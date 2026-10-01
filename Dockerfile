@@ -19,6 +19,19 @@ RUN pip install --no-cache-dir --require-hashes \
     --extra-index-url https://download.pytorch.org/whl/cpu \
     -r requirements.lock
 
+# Embeddingmodel voor AI-zoeken (#118): gepinde revisie, in de image (circa 90 MB).
+# Buiten /app, zodat de bind-mount van de repo in dev het niet verbergt.
+# Model en revisie staan in services/embedding_model.py; los gekopieerd zodat deze
+# laag alleen opnieuw draait als dat bestand verandert.
+ENV EMBEDDING_MODEL_PAD=/opt/models/all-MiniLM-L6-v2 \
+    HF_HUB_DISABLE_TELEMETRY=1
+COPY services/embedding_model.py /tmp/embedding_model.py
+RUN python /tmp/embedding_model.py && rm /tmp/embedding_model.py \
+    && rm -rf /root/.cache/huggingface "$EMBEDDING_MODEL_PAD/.cache"
+# Vanaf hier geen HuggingFace-verkeer meer: backend en db-init draaien offline
+ENV HF_HUB_OFFLINE=1 \
+    TRANSFORMERS_OFFLINE=1
+
 # Copy source code
 COPY . .
 

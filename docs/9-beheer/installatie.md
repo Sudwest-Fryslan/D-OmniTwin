@@ -15,9 +15,9 @@ De gids gaat uit van een Linux-server of een werkplek met Docker. Alle commando'
 | Docker Engine met Compose v2 (`docker compose`, niet `docker-compose`) | Docker 24, Compose 2.20. Op Windows en macOS: Docker Desktop |
 | Git | elke recente versie |
 | Geheugen | 4 GB vrij voor de stack, 8 GB aanbevolen. Een lokaal taalmodel (Ollama) komt daar bovenop |
-| Schijf | ± 10 GB vrij: backend-image ± 4,2 GB, database-image ± 1,1 GB, overige images ± 0,4 GB, plus de database en de build-cache |
+| Schijf | ± 10 GB vrij: backend-image ± 4,4 GB (inclusief het embeddingmodel, circa 90 MB), database-image ± 1,1 GB, overige images ± 0,4 GB, plus de database en de build-cache |
 | Poort | 80 op de host vrij (of een andere poort, zie `OMNITWIN_HTTP_PORT`) |
-| Internet tijdens de installatie | voor Docker Hub, PyPI en de PyTorch-index (images bouwen). De kaart gebruikt PDOK-achtergrondkaarten in de browser; een token is niet nodig |
+| Internet tijdens de installatie | voor Docker Hub, PyPI, de PyTorch-index en HuggingFace (images bouwen). Daarna draait de stack zonder internet, ook AI-zoeken. De kaart gebruikt PDOK-achtergrondkaarten in de browser; een token is niet nodig |
 
 Controleer:
 
@@ -87,6 +87,7 @@ De eerste keer duurt dit lang (10 tot 30 minuten): de backend-image installeert 
 
 1. `postgres` (PostGIS met pgvector) wordt *healthy*.
 2. `db-init` draait één keer en stopt. Bij een **lege** database maakt hij het schema aan (`init_data/schema/schema_latest.sql`, de views voor de kaart en de migraties v18 en v19), laadt de stuurdata en eventueel de sample dataset, en maakt het beheeraccount aan. Bestaat de tabel `gebieden` al, dan slaat hij dit allemaal over. Hij overschrijft dus nooit bestaande data.
+   Daarna genereert hij, ook bij een bestaande database, de embeddings voor AI-zoeken en de chat (`scripts/ai/genereer_embeddings.py`), voor alle actieve indicatoren zonder embedding, ook concepten. Het model daarvoor (`all-MiniLM-L6-v2`) zit al in de image; zie [Embeddingmodel](#embeddingmodel-offline). Lukt het genereren niet, dan staat er een waarschuwing in de log en gaat de installatie gewoon door; AI-zoeken en de chat vinden dan geen indicatoren.
    Daarna werkt hij altijd de databaserollen en het schema `api` voor PostgREST en pg_featureserv bij (`migrations/schema_v23_api_rollen.sql`, zie [Beveiliging](#beveiliging)). Dat raakt geen data.
    Daarna genereert hij, ook bij een bestaande database, de embeddings voor AI-zoeken en de chat (`scripts/ai/genereer_embeddings.py`), voor alle actieve indicatoren zonder embedding, ook concepten. Daarvoor downloadt hij de eerste keer het model `all-MiniLM-L6-v2` (circa 90 MB) van HuggingFace. Lukt dat niet, bijvoorbeeld zonder internet, dan staat er een waarschuwing in de log en gaat de installatie gewoon door; AI-zoeken en de chat vinden dan geen indicatoren.
 3. `backend` (FastAPI), `postgrest` en `pg_featureserv` starten, `traefik` stuurt het verkeer door.
@@ -213,6 +214,23 @@ docker compose exec -T postgres sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB
 
 Maak eerst een backup (zie hieronder). Lees bij een nieuwe versie [`CHANGELOG.md`](../../CHANGELOG.md) voor nieuwe migraties.
 
+### Embeddingmodel (offline)
+
+AI-zoeken en de chat gebruiken het model [`sentence-transformers/all-MiniLM-L6-v2`](https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2) (licentie Apache-2.0). Het model en de revisie (een commit-hash van HuggingFace) staan op één plek: `services/embedding_model.py`.
+
+- `docker compose build` downloadt die revisie naar `/opt/models/all-MiniLM-L6-v2` in de image. Dat maakt de image circa 90 MB groter (91,8 MB; totaal ± 4,4 GB). Alleen bij het bouwen is HuggingFace nodig.
+- Backend en `db-init` draaien met `HF_HUB_OFFLINE=1`, `TRANSFORMERS_OFFLINE=1` en `HF_HUB_DISABLE_TELEMETRY=1`: geen download en geen telemetrie, ook niet bij een nieuwe container. AI-zoeken werkt zonder internet.
+- Het model staat buiten `/app`, dus ook in ontwikkelmodus (bind-mount van de repo over `/app`) blijft het zichtbaar.
+- Controleren: `/api/ai/health` toont onder `embedding_model` de revisie, `lokaal` en `offline`.
+
+Model bijwerken naar een nieuwere revisie:
+
+1. Zoek de commit-hash op `https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/commits/main` en zet die in `MODEL_REVISIE` in `services/embedding_model.py`.
+2. Bouw opnieuw: `docker compose up -d --build`.
+3. Bereken de embeddings opnieuw, want vectoren van verschillende revisies passen niet bij elkaar: `docker compose exec backend python scripts/ai/genereer_embeddings.py --opnieuw`.
+
+Een ander model met een andere dimensie (niet 384) vraagt ook een schemawijziging van `indicator_embeddings`.
+
 ---
 
 ## 6. Beheer
@@ -326,6 +344,7 @@ Een gratis Gemini-sleutel (met lage limieten) maak je aan op [aistudio.google.co
 | `function similarity(...) does not exist` of ontbrekende tabel `deduplicatie_uitzonderingen` | Oudere database zonder migraties v18/v19. Zie [Bijwerken](#5-bijwerken). |
 | Wijziging in `.env` heeft geen effect | `docker compose up -d` (niet `restart`): alleen dan worden containers met de nieuwe waarden opnieuw gemaakt. |
 | Windows: `db-init` faalt met `/bin/bash^M: bad interpreter` | Het shell-script is met CRLF uitgecheckt. Controleer of `.gitattributes` aanwezig is, zet het script opnieuw neer met `rm docker-entrypoint.sh && git checkout -- docker-entrypoint.sh` en bouw opnieuw (`docker compose up -d --build`). |
+| AI-zoeken of de chat vindt geen indicatoren | Er zijn geen embeddings. Kijk in `docker compose logs db-init` naar `Embeddings niet gegenereerd`; controleer met `/api/ai/health` of het model lokaal staat (anders: `docker compose build`). Draai daarna `docker compose run --rm db-init`: die vult alleen de ontbrekende embeddings aan. Na het goedkeuren van nieuwe beschrijvingen: `docker compose exec backend python scripts/ai/genereer_embeddings.py --opnieuw`. |
 | AI-zoeken of de chat vindt geen indicatoren | Er zijn geen embeddings. Kijk in `docker compose logs db-init` naar `Embeddings niet gegenereerd`; meestal kon het model niet worden gedownload. Zorg voor internet en draai `docker compose run --rm db-init`: die vult alleen de ontbrekende embeddings aan. Na het goedkeuren van nieuwe beschrijvingen: `docker compose exec backend python scripts/ai/genereer_embeddings.py --opnieuw`. |
 | AI-chat of samenvatting duurt minuten | Het model is een *thinking*-variant. Bij Ollama zijn `qwen3:4b` en `qwen3:30b` zonder toevoeging thinking-varianten; kies in **AI Configuratie** een `*-instruct`-variant (bijvoorbeeld `qwen3:30b-instruct`). Op een laptop zonder GPU blijft een samenvatting met een lokaal model ruim een minuut duren. |
 | AI-chat geeft geen antwoord | Controleer in **AI Configuratie** de API-URL: vanuit de container is dat `http://host.docker.internal:11434`, niet `localhost`. Op Linux moet Ollama op alle interfaces luisteren (zie [LLM](#7-llm-optioneel)). |
