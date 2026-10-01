@@ -37,11 +37,11 @@ RUN pip install --require-hashes \
     && pip uninstall -y pip setuptools
 
 # Embeddingmodel voor AI-zoeken (#118): gepinde revisie (circa 90 MB).
-# Model en revisie staan in services/embedding_model.py; los gekopieerd zodat deze
+# Model en revisie staan in src/omnitwin/services/embedding_model.py; los gekopieerd zodat deze
 # laag alleen opnieuw draait als dat bestand verandert.
 ENV EMBEDDING_MODEL_PAD=/opt/models/all-MiniLM-L6-v2 \
     HF_HUB_DISABLE_TELEMETRY=1
-COPY services/embedding_model.py /tmp/embedding_model.py
+COPY src/omnitwin/services/embedding_model.py /tmp/embedding_model.py
 RUN python /tmp/embedding_model.py \
     && rm -rf /root/.cache/huggingface "$EMBEDDING_MODEL_PAD/.cache"
 
@@ -58,8 +58,10 @@ COPY --from=bouw /opt/venv /opt/venv
 # Buiten /app, zodat de bind-mount van de repo in dev het model niet verbergt
 COPY --from=bouw /opt/models /opt/models
 
-# Vanaf hier geen HuggingFace-verkeer meer: backend en db-init draaien offline
+# Vanaf hier geen HuggingFace-verkeer meer: backend en db-init draaien offline.
+# PYTHONPATH: het pakket omnitwin staat in /app/src (#182); ook bij de bind-mount in dev.
 ENV PATH=/opt/venv/bin:$PATH \
+    PYTHONPATH=/app/src \
     EMBEDDING_MODEL_PAD=/opt/models/all-MiniLM-L6-v2 \
     HF_HUB_DISABLE_TELEMETRY=1 \
     HF_HUB_OFFLINE=1 \
@@ -85,4 +87,4 @@ EXPOSE 8000
 
 # Start server via entrypoint
 ENTRYPOINT ["/app/docker-entrypoint.sh"]
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uvicorn", "omnitwin.main:app", "--host", "0.0.0.0", "--port", "8000"]

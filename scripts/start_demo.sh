@@ -73,4 +73,4 @@ echo -e "   Gebruik ${YELLOW}Ctrl+C${RESET} om te stoppen."
 echo ""
 
 cd "$DEMO_DIR"
-"$VENV_PYTHON" -m uvicorn main:app --host 0.0.0.0 --port "$PORT" --reload
+"$VENV_PYTHON" -m uvicorn omnitwin.main:app --app-dir src --host 0.0.0.0 --port "$PORT" --reload
