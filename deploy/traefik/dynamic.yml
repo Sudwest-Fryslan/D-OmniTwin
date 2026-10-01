@@ -1,0 +1,53 @@
+# D-OmniTwin — dynamische Traefik-configuratie (file provider)
+#
+# Wordt geladen door docker-compose.yml (--providers.file.filename) en via
+# --entrypoints.web.http.middlewares toegepast op ALLE routes: backend,
+# /api/data (PostgREST) en /api/geo (pg_featureserv). Een router hoeft er dus
+# niets voor te doen.
+#
+# Deze headers zijn leidend. De FastAPI-middleware in main.py zet vergelijkbare
+# headers als terugval voor `python run_dev.py` zonder Traefik; Traefik
+# overschrijft ze.
+#
+# Bronnen in de CSP (zie docs/9-beheer/installatie.md, Beveiliging):
+#   (bibliotheken en lettertype staan zelf gehost in static/vendor, #117: geen CDN's)
+#   api.pdok.nl                   BRT-achtergrondkaart: stijl, tegels, sprites, fonts
+# 'unsafe-inline' is nodig voor de inline scripts, event-handlers (onclick=)
+# en style-attributen in templates/index.html en de Swagger-pagina.
+# 'wasm-unsafe-eval' is nodig voor WebAssembly in de kaartbibliotheken; het
+# bredere 'unsafe-eval' (eval/new Function) is niet nodig.
+# Getest met Playwright: hoofdpagina, kaart, Kompas, /admin, /docs en
+# /static/help.html laden zonder CSP-schendingen. Breekt een wijziging iets,
+# zet dan tijdelijk contentSecurityPolicyReportOnly in plaats van
+# contentSecurityPolicy en kijk in de browserconsole.
+http:
+  middlewares:
+    security-headers:
+      headers:
+        contentTypeNosniff: true
+        referrerPolicy: "strict-origin-when-cross-origin"
+        frameDeny: true
+        customResponseHeaders:
+          # Verouderd XSS-filter van oude browsers uitzetten (OWASP-advies)
+          X-XSS-Protection: "0"
+        permissionsPolicy: "camera=(), microphone=(), geolocation=(), payment=(), usb=()"
+        contentSecurityPolicy: >-
+          default-src 'self';
+          script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval';
+          style-src 'self' 'unsafe-inline';
+          font-src 'self' data:;
+          img-src 'self' data: blob: https://api.pdok.nl https://service.pdok.nl;
+          connect-src 'self' https://api.pdok.nl https://service.pdok.nl;
+          worker-src 'self' blob:;
+          child-src 'self' blob:;
+          frame-src 'self';
+          frame-ancestors 'none';
+          object-src 'none';
+          base-uri 'self';
+          form-action 'self'
+        # HSTS: Traefik stuurt deze header alleen op HTTPS-verbindingen die
+        # Traefik zelf afhandelt (zie deploy/traefik/tls.example.yml). Op de
+        # standaardinstallatie (HTTP) verschijnt hij dus niet. Staat er een
+        # TLS-proxy van de organisatie vóór Traefik, dan zet die proxy HSTS.
+        stsSeconds: 31536000
+        stsIncludeSubdomains: false

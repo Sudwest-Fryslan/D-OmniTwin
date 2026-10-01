@@ -488,9 +488,8 @@ class ChatPanel {
     }
 
     _escapeHtml(text) {
-        const div = document.createElement('div');
-        div.textContent = text;
-        return div.innerHTML;
+        // Centrale escaping (static/js/core/escape.js); ook aanhalingstekens voor attributen
+        return escapeHtml(text);
     }
 
     /**
@@ -506,7 +505,7 @@ class ChatPanel {
         }
 
         // Check of er al een info-card zit (voorkom duplicaten)
-        const existing = btn.parentElement?.querySelector(`.chat-info-card[data-title="${titel}"]`);
+        const existing = btn.parentElement?.querySelector(`.chat-info-card[data-title="${CSS.escape(titel)}"]`);
         if (existing) return;
 
         // Maak de info-card

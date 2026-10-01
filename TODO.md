@@ -798,7 +798,7 @@ if (geojson.features.length > 0 && !state.initialDataLoaded) {
 ### Fase 4: Repositories & Launch
 - [ ] GitLab public/GitHub repo configureren.
 - [ ] `publiccode.yml` aanmaken t.b.v. code.overheid.nl.
-- [ ] Setup initial release `v1.0.0-beta` maken/taggen.
+- [ ] Setup initial release `v0.1.0` maken/taggen (zie `docs/9-beheer/releasebeleid.md`, #27).
 
 ---
 

@@ -97,3 +97,10 @@ def test_ai_zoeken_vindt_indicator_bij_vraag(uc):
     resultaten = get("/api/ai/kompas/search", q=USE_CASES[uc]["ai_zoekvraag"])
     gevonden = {r.get("naam") or r.get("indicator_naam") for r in resultaten}
     assert gevonden & set(namen(uc)), f"{uc}: AI-zoeken vond {sorted(n for n in gevonden if n)}"
+
+
+@pytest.mark.parametrize("uc", USE_CASES)
+def test_gebiedsdetail_met_afgeleide_indicatoren(uc):
+    """Afgeleide indicatoren hebben een uuid5; de API moet die accepteren (geen 500)."""
+    r = requests.get(f"{BASE_URL}/api/gebiedsmonitor/gebieden/{USE_CASES[uc]['data']['focus']}", timeout=TIMEOUT)
+    assert r.status_code == 200, f"{uc}: {r.status_code} {r.text[:200]}"

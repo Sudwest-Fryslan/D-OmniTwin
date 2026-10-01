@@ -13,7 +13,8 @@ Gebruik:
     python scripts/ai/genereer_embeddings.py --alleen-goedgekeurd  # alleen status goedgekeurd_mens
     python scripts/ai/genereer_embeddings.py --opnieuw             # ook bestaande embeddings herberekenen
 
-Exitcode 1 als het model niet geladen kan worden (geen netwerk, package ontbreekt).
+Exitcode 1 als het model niet geladen kan worden (niet in de image, offline, package ontbreekt).
+Model en revisie: services/embedding_model.py (#118).
 docker-entrypoint.sh vangt dat af: db-init geeft dan een waarschuwing en gaat door.
 """
 import sys
@@ -26,22 +27,23 @@ project_root = Path(__file__).resolve().parent.parent.parent
 sys.path.append(str(project_root))
 
 from src.database import SessionLocal
-
-MODEL_NAAM = "all-MiniLM-L6-v2"
+from services import embedding_model
+from services.embedding_model import MODEL_NAAM
 
 
 def laad_model():
-    """Laadt het model, of geeft None met een waarschuwing als dat niet lukt."""
+    """Laadt het model (lokaal, gepinde revisie), of geeft None met een waarschuwing."""
     try:
-        from sentence_transformers import SentenceTransformer
+        import sentence_transformers  # noqa: F401
     except ImportError:
         print("⚠️ sentence-transformers niet geïnstalleerd; embeddings niet gegenereerd.")
         return None
+    bron = embedding_model.MODEL_PAD if embedding_model.lokaal_aanwezig() else "HuggingFace-cache/download"
+    print(f"⏳ Laden van model {embedding_model.MODEL_ID}@{embedding_model.MODEL_REVISIE[:8]} uit {bron}...")
     try:
-        print(f"⏳ Laden van sentence-transformers model ({MODEL_NAAM})...")
-        return SentenceTransformer(MODEL_NAAM)
+        return embedding_model.laad_model()
     except Exception as e:
-        print(f"⚠️ Model {MODEL_NAAM} niet te laden (geen netwerk of geen lokale kopie?): {e}")
+        print(f"⚠️ {e}")
         return None
 
 
