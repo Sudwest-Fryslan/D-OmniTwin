@@ -63,7 +63,9 @@ init_db() {
     if [ "$LOAD_SAMPLE" = "true" ] || [ "$LOAD_SAMPLE" = "1" ]; then
         echo "🌱 LOAD_SAMPLE_DATA is actief: Sample dataset (12 SWF buurten) inladen..."
         python /app/init_data/scripts/load_sample.py --stap alle
-        echo "✅ Sample dataset succesvol ingeladen."
+        # Use-casepakketten (usecases/<naam>/): inrichting en afgeleide indicatoren bovenop de sample
+        python /app/init_data/scripts/laad_usecase.py --alle
+        echo "✅ Sample dataset en use cases succesvol ingeladen."
     else
         echo "⚙️ LOAD_SAMPLE_DATA niet actief: Alleen stuurdata inladen..."
         python /app/init_data/scripts/load_sample.py --stap stuurdata

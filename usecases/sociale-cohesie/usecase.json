@@ -1,0 +1,61 @@
+{
+  "id": "TC-06-008",
+  "titel": "Zorgzwaarte en sociale cohesie",
+  "persona": {
+    "rol": "Wijkcoördinator / wijkcontactfunctionaris",
+    "vraag": "Ik ben wijkcoördinator in Bolsward-Zuidoost. Hoe staat het met eenzaamheid en vrijwilligerswerk in mijn wijk?",
+    "besluit": "Waar zetten we sociaal werk en buurthuisactiviteiten in?"
+  },
+  "data": {
+    "gebiedstype": "CBS Buurten",
+    "focus": "BU19000002",
+    "gebieden": {
+      "BU19000001": "Bolsward-Noord",
+      "BU19000002": "Bolsward-Zuidoost",
+      "BU19000004": "Bolsward-Noordoost"
+    },
+    "dataset": "init_data/sample",
+    "indicatoren": [
+      {
+        "naam": "Eenzaamheid",
+        "richting": "lager_is_beter"
+      },
+      {
+        "naam": "Vrijwilliger",
+        "richting": "hoger_is_beter"
+      },
+      {
+        "naam": "Mantelzorger",
+        "richting": "neutraal"
+      },
+      {
+        "naam": "Eenpersoonshuishoudens",
+        "richting": "neutraal"
+      }
+    ],
+    "ontbreekt_nog": [
+      "Verhuismobiliteit",
+      "Psychische klachten (RIVM)",
+      "Sociale samenhang (Leefbaarometer)"
+    ],
+    "afgeleid": [
+      {
+        "naam": "Eenpersoonshuishoudens (%)",
+        "teller": "Eenpersoonshuishoudens",
+        "noemer": "Huishoudens totaal",
+        "factor": 100,
+        "eenheid": "%",
+        "richting": "neutraal"
+      }
+    ]
+  },
+  "inrichting": {
+    "kompas_configuratie": "Volledig Kompas",
+    "chat_scenario": "wijkcontactfunctionaris"
+  },
+  "ai_zoekvraag": "eenzaamheid in de wijk",
+  "verwacht": {
+    "vraag_zoekwoord": "eenzaamheid",
+    "verwacht": "Bolsward-Zuidoost: eenzaamheid 48,3% (tussen Noord 55,0% en Noordoost 41,6%), vrijwilligers 27,6%."
+  }
+}
