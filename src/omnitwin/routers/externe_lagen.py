@@ -28,7 +28,10 @@ from pydantic import BaseModel, field_validator
 from typing import Optional
 from pathlib import Path
 import httpx
+import os
+import shutil
 import time
+import uuid
 import re
 import json
 import logging
@@ -640,34 +643,50 @@ def admin_upload_bestand(  # def: fiona en schrijven blokkeren, dus in de thread
         raise HTTPException(400, "Ongeldige bestandsnaam")
 
     filepath = DATA_UPLOAD_DIR / safe_name
+    # Geen stille overschrijving (#201): een kaartlaag kan naar dit bestand verwijzen
+    if filepath.exists():
+        raise HTTPException(409, f"Er staat al een bestand '{safe_name}'. Kies een andere naam of verwijder het eerst.")
 
-    # Maximale bestandsgrootte: 50MB
+    # In stukken naar een tijdelijk bestand schrijven, afbreken boven 50 MB (#201):
+    # niet het hele bestand in het geheugen
     MAX_SIZE = 50 * 1024 * 1024
-    contents = bestand.file.read()
-    if len(contents) > MAX_SIZE:
-        raise HTTPException(413, f"Bestand te groot (max {MAX_SIZE // (1024*1024)}MB)")
-
-    # Opslaan
     DATA_UPLOAD_DIR.mkdir(exist_ok=True)
-    filepath.write_bytes(contents)
-
-    # Valideer dat fiona het kan lezen
+    # Eigen tijdelijke map met de echte naam: GeoJSON ontleent de laagnaam aan de bestandsnaam
+    tijdelijke_map = DATA_UPLOAD_DIR / f".upload-{uuid.uuid4().hex}"
+    tijdelijke_map.mkdir()
+    tijdelijk = tijdelijke_map / safe_name
+    grootte = 0
     try:
-        layers = fiona.listlayers(str(filepath))
-        with fiona.open(str(filepath), layer=layers[0]) as src:
-            meta = {
-                "bestandsnaam": safe_name,
-                "grootte_kb": round(len(contents) / 1024, 1),
-                "layers": layers,
-                "features": len(src),
-                "crs": str(src.crs) if src.crs else None,
-                "geometry_type": src.schema.get("geometry", "onbekend"),
-            }
-    except Exception as e:
-        # Ongeldig bestand: verwijder weer
-        filepath.unlink(missing_ok=True)
-        logger.warning("Upload %s niet leesbaar als geo-bestand: %s", safe_name, e)
-        raise HTTPException(400, "Bestand kon niet geopend worden als geo-bestand (GPKG of GeoJSON).")
+        with tijdelijk.open("wb") as uit:
+            while blok := bestand.file.read(1024 * 1024):
+                grootte += len(blok)
+                if grootte > MAX_SIZE:
+                    raise HTTPException(413, f"Bestand te groot (max {MAX_SIZE // (1024*1024)}MB)")
+                uit.write(blok)
+
+        # Valideer dat fiona het kan lezen
+        try:
+            layers = fiona.listlayers(str(tijdelijk))
+            with fiona.open(str(tijdelijk), layer=layers[0]) as src:
+                meta = {
+                    "bestandsnaam": safe_name,
+                    "grootte_kb": round(grootte / 1024, 1),
+                    "layers": layers,
+                    "features": len(src),
+                    "crs": str(src.crs) if src.crs else None,
+                    "geometry_type": src.schema.get("geometry", "onbekend"),
+                }
+        except Exception as e:
+            logger.warning("Upload %s niet leesbaar als geo-bestand: %s", safe_name, e)
+            raise HTTPException(400, "Bestand kon niet geopend worden als geo-bestand (GPKG of GeoJSON).")
+
+        # os.link faalt als de naam intussen bestaat: ook dan niet overschrijven
+        try:
+            os.link(tijdelijk, filepath)
+        except FileExistsError:
+            raise HTTPException(409, f"Er staat al een bestand '{safe_name}'. Kies een andere naam of verwijder het eerst.")
+    finally:
+        shutil.rmtree(tijdelijke_map, ignore_errors=True)  # ook eventuele hulpbestanden van GDAL
 
     logger.info("Bestand geüpload: %s (%d features, %s)",
                 safe_name, meta["features"], meta["crs"])
