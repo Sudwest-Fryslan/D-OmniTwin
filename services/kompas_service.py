@@ -115,7 +115,9 @@ class KompasService:
         """
         # Check of gebied bestaat
         gebied_query = text("""
-            SELECT id, naam, gebiedstype_id, gemeente_code FROM gebieden WHERE id = :gebied_id LIMIT 1
+            SELECT id, naam, gebiedstype_id, gemeente_code,
+                   public.is_waterbuurt(naam, metadata) AS is_waterbuurt
+            FROM gebieden WHERE id = :gebied_id LIMIT 1
         """)
         gebied_row = self.db.execute(gebied_query, {"gebied_id": gebied_id}).fetchone()
         
@@ -185,8 +187,16 @@ class KompasService:
                 "ontologische_beschrijving": row.ontologische_beschrijving
             }
         
-        # Percentiel-drempels per indicator binnen de referentiegroep van dit gebied (#66)
-        bulk_thresholds = self._get_bulk_percentiles(gebied_row.gebiedstype_id, gebied_row.gemeente_code)
+        # Percentiel-drempels per indicator binnen de referentiegroep van dit gebied (#66).
+        # Een waterbuurt wordt niet met de referentiegroep vergeleken (#155): geen
+        # drempels, dus grijze kleuring, en een melding.
+        melding = None
+        if gebied_row.is_waterbuurt:
+            bulk_thresholds = {}
+            melding = ("Dit gebied is een waterbuurt. Waterbuurten worden niet vergeleken "
+                       "met de referentiegroep; de kleuring vervalt.")
+        else:
+            bulk_thresholds = self._get_bulk_percentiles(gebied_row.gebiedstype_id, gebied_row.gemeente_code)
         
         # Enrich hierarchie met waarden en kleuren
         enriched_tree = self._enrich_tree_with_values(
@@ -206,6 +216,8 @@ class KompasService:
             "config_naam": hierarchie_data["config_naam"],
             "hierarchie": enriched_tree,
             "coverage_percentage": round(coverage_pct, 1),
+            "is_waterbuurt": bool(gebied_row.is_waterbuurt),
+            "melding": melding,
             "laatste_update": datetime.now()
         }
         

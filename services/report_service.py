@@ -12,6 +12,7 @@ from typing import Dict, Any, List, Optional
 import json
 
 from services.zscore_referentie import (
+    MIN_N_STANDAARD,
     SQL_ZSCORE_GEBIEDEN,
     bereken_zscore,
     methodiek_beschrijving,
@@ -31,7 +32,8 @@ class ReportDataService:
         """
         # 1. Haal gebied metadata op (voor referentie kader)
         gebied_query = text("""
-            SELECT g.id, g.naam, g.gemeente_code, gt.id as gebiedstype_id, gt.naam as gebiedstype_naam, gem.naam as gemeente_naam
+            SELECT g.id, g.naam, g.gemeente_code, gt.id as gebiedstype_id, gt.naam as gebiedstype_naam, gem.naam as gemeente_naam,
+                   public.is_waterbuurt(g.naam, g.metadata) as is_waterbuurt
             FROM gebieden g
             JOIN gebiedstypes gt ON g.gebiedstype_id = gt.id
             LEFT JOIN gemeenten gem ON g.gemeente_code = gem.code
@@ -46,6 +48,30 @@ class ReportDataService:
         gemeente_code = gebied_dict.get('gemeente_code')
         gemeente_naam = gebied_dict.get('gemeente_naam')
         gebiedstype_id = gebied_dict.get('gebiedstype_id')
+        referentie_str = f"Gemeente {gemeente_naam}" if gemeente_naam else (f"Gemeente {gemeente_code}" if gemeente_code else f"Alle {gebied_dict['gebiedstype_naam']}(en)")
+        metadata = {
+            "gebied": gebied_dict['naam'],
+            "gebiedstype": gebied_dict['gebiedstype_naam'],
+            "referentie_kader": referentie_str
+        }
+
+        # Waterbuurt als doelgebied: geen Z-scores, net als multi-gebied, thema-analyse
+        # en deelgebied (#155). Eén definitie: is_waterbuurt() in 08_zscore_referentie.sql.
+        if gebied_dict.get('is_waterbuurt'):
+            return {
+                "gebied_id": gebied_id,
+                "referentie_groep": referentie_str,
+                "aantal_indicatoren": 0,
+                "metadata": metadata,
+                "significante_domeinen": {},
+                "totaal_uitschieters": 0,
+                "is_waterbuurt": True,
+                "meldingen": [
+                    "Dit gebied is een waterbuurt. Waterbuurten worden niet vergeleken met "
+                    "de referentiegroep; er zijn geen Z-scores."
+                ],
+                "methodiek": methodiek_beschrijving()
+            }
 
         # 2. Z-scores t.o.v. zelfde gebiedstype binnen zelfde gemeente, in hetzelfde jaar als de
         #    meest recente waarde van dit gebied (centrale referentie, jaarlogica zelfde_jaar, #66).
@@ -62,7 +88,9 @@ class ReportDataService:
                 zs.jaar as meetjaar,
                 zs.gemiddelde as referentie_gemiddelde,
                 -- Geen spreiding (n < 2 of sd = 0): z = 0, telt niet als uitschieter
-                COALESCE(zs.z_score, 0) as z_score
+                COALESCE(zs.z_score, 0) as z_score,
+                zs.n as referentie_n,
+                zs.referentie_terugval
             FROM {SQL_ZSCORE_GEBIEDEN} zs
             JOIN indicatoren i ON zs.indicator_uuid = i.uuid
             JOIN v_kompas_hierarchie vkh ON i.uuid = vkh.indicator_uuid AND vkh.config_id = 1
@@ -117,23 +145,33 @@ class ReportDataService:
                 "score_type": score_type,
                 "score_uitleg": score_uitleg,
                 "eenheid": ind['eenheid'] or "",
-                "impact": impact
+                "impact": impact,
+                "n_referentie": ind['referentie_n'],
+                "referentie_terugval": bool(ind['referentie_terugval'])
             })
 
-        referentie_str = f"Gemeente {gemeente_naam}" if gemeente_naam else (f"Gemeente {gemeente_code}" if gemeente_code else f"Alle {gebied_dict['gebiedstype_naam']}(en)")
+        # Minimum-n (#155): melding als de referentie is teruggevallen op de meest
+        # recente waarde per gebied (te weinig gebieden met een waarde in hetzelfde jaar)
+        meldingen = []
+        terugval = sorted({ind['indicator_naam'] for ind in indicators if ind.get('referentie_terugval')})
+        if terugval:
+            meldingen.append(
+                f"Bij {len(terugval)} indicator(en) hadden minder dan {MIN_N_STANDAARD} gebieden "
+                f"een waarde in hetzelfde jaar als dit gebied. Daar is vergeleken met de meest "
+                f"recente waarde per gebied: {', '.join(terugval)}."
+            )
 
         # 4. JSON Payload constructie
         payload = {
             "gebied_id": gebied_id,
             "referentie_groep": referentie_str,
             "aantal_indicatoren": len(indicators),
-            "metadata": {
-                "gebied": gebied_dict['naam'],
-                "gebiedstype": gebied_dict['gebiedstype_naam'],
-                "referentie_kader": referentie_str
-            },
+            "metadata": metadata,
             "significante_domeinen": domains_dict,
             "totaal_uitschieters": len(significante_indicatoren),
+            "is_waterbuurt": False,
+            "referentie_terugval_indicatoren": terugval,
+            "meldingen": meldingen,
             "methodiek": methodiek_beschrijving()
         }
         
@@ -317,7 +355,9 @@ class ReportDataService:
             "top_kansen": kansen[:3],
             "top_risicos": risicos[:3],
             "totaal_uitschieters": full_payload.get("totaal_uitschieters", 0),
-            "aantal_indicatoren": full_payload.get("aantal_indicatoren", 0)
+            "aantal_indicatoren": full_payload.get("aantal_indicatoren", 0),
+            "is_waterbuurt": full_payload.get("is_waterbuurt", False),
+            "meldingen": full_payload.get("meldingen", [])
         }
 
     # ─── Multi-Gebiedsdossier (Zones-analyse) ────────────────────────────────
@@ -381,7 +421,7 @@ class ReportDataService:
         water_filter_query = text("""
             SELECT g.id FROM gebieden g
             WHERE g.id = ANY(:gebied_ids)
-              AND COALESCE(g.metadata->>'water', 'NEE') != 'JA'
+              AND NOT public.is_waterbuurt(g.naam, g.metadata)
         """)
         water_result = self.db.execute(water_filter_query, {"gebied_ids": gebied_ids})
         gefilterde_ids = [str(r._mapping['id']) for r in water_result]
@@ -667,7 +707,7 @@ class ReportDataService:
             FROM gebieden g
             WHERE g.id = ANY(:gebied_ids)
               AND g.geom IS NOT NULL
-              AND COALESCE(g.metadata->>'water', 'NEE') != 'JA'
+              AND NOT public.is_waterbuurt(g.naam, g.metadata)
         """)
         geom_result = self.db.execute(geom_query, {"gebied_ids": gebied_ids})
 
@@ -737,7 +777,7 @@ class ReportDataService:
         water_filter_query = text("""
             SELECT g.id FROM gebieden g
             WHERE g.id = ANY(:gebied_ids)
-              AND COALESCE(g.metadata->>'water', 'NEE') != 'JA'
+              AND NOT public.is_waterbuurt(g.naam, g.metadata)
         """)
         water_result = self.db.execute(water_filter_query, {"gebied_ids": gebied_ids})
         gefilterde_ids = [str(r._mapping['id']) for r in water_result]
@@ -917,7 +957,7 @@ class ReportDataService:
             FROM gebieden g
             WHERE g.id = ANY(:gebied_ids)
               AND g.geom IS NOT NULL
-              AND COALESCE(g.metadata->>'water', 'NEE') != 'JA'
+              AND NOT public.is_waterbuurt(g.naam, g.metadata)
         """)
         geom_result = self.db.execute(geom_query, {"gebied_ids": gebied_ids})
 
@@ -985,7 +1025,7 @@ class ReportDataService:
         # 1. Bepaal geselecteerde buurten, filter waterbuurten en haal gemeente/type op
         gebieden_query = text("""
             SELECT g.id, g.naam, g.gemeente_code, g.gebiedstype_id,
-                   COALESCE(g.metadata->>'water', 'NEE') AS is_water
+                   public.is_waterbuurt(g.naam, g.metadata) AS is_water
             FROM gebieden g
             WHERE g.id = ANY(:gebied_ids)
         """)
@@ -995,9 +1035,9 @@ class ReportDataService:
 
         waterbuurten = [
             {"id": str(g['id']), "naam": str(g['naam'])}
-            for g in geb_rows if g.get('is_water') == 'JA'
+            for g in geb_rows if g.get('is_water')
         ]
-        actieve_buurten = [g for g in geb_rows if g.get('is_water') != 'JA']
+        actieve_buurten = [g for g in geb_rows if not g.get('is_water')]
 
         if not actieve_buurten:
             raise ValueError("Alle geselecteerde gebieden zijn water-buurten en worden conform projectstandaard uitgesloten van analyse.")
@@ -1386,7 +1426,7 @@ class ReportDataService:
             FROM gebieden g
             WHERE g.id = ANY(:gebied_ids)
               AND g.geom IS NOT NULL
-              AND COALESCE(g.metadata->>'water', 'NEE') != 'JA'
+              AND NOT public.is_waterbuurt(g.naam, g.metadata)
         """)
         geom_rows = [
             dict(r._mapping)

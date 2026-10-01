@@ -152,6 +152,8 @@ export interface ReportIndicator {
     score_uitleg: string;
     eenheid: string;
     impact: "bovengemiddeld positief" | "ondergemiddeld negatief" | "bovengemiddeld negatief" | "ondergemiddeld positief" | "neutraal";
+    n_referentie?: number;              // #155: aantal gebieden in de referentie
+    referentie_terugval?: boolean;      // #155: te weinig gebieden in hetzelfde jaar, vergeleken met recentste waarde per gebied
 }
 
 export interface ReportDataPayload {
@@ -164,6 +166,8 @@ export interface ReportDataPayload {
         referentie_kader: string;
     };
     significante_domeinen: Record<string, ReportIndicator[]>;
+    is_waterbuurt?: boolean;            // #155: waterbuurt → geen Z-scores
+    meldingen?: string[];               // #155: o.a. waterbuurt en referentie-terugval (minimum-n)
 }
 
 export interface LLMDebugInfo {
@@ -243,6 +247,8 @@ export interface ExecutivePayload {
     top_risicos: ReportIndicator[];
     totaal_uitschieters: number;
     aantal_indicatoren: number;
+    is_waterbuurt?: boolean;
+    meldingen?: string[];
 }
 
 // ─── Gebieden Zoek (voor GebiedSelector) ────────────────────────────────────

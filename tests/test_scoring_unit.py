@@ -18,7 +18,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 # Importeer direct de scoring class (geen DB-afhankelijkheden)
 from services.kompas_service import KompasScoringService
-from services.zscore_referentie import JAARLOGICA_STANDAARD, bereken_zscore, referentie_params
+from services.zscore_referentie import JAARLOGICA_STANDAARD, MIN_N_STANDAARD, bereken_zscore, referentie_params
 
 
 # ─── Fixtures ────────────────────────────────────────────────────────────────
@@ -181,6 +181,12 @@ class TestReferentieParams:
         assert p["zs_gemeente_code"] == "1900"
         assert p["zs_gebied_ids"] == ["BU19000002"]
         assert p["zs_indicator_uuids"] is None
+        assert p["zs_min_n"] == MIN_N_STANDAARD == 5
+
+    def test_minimum_n_instelbaar(self):
+        """#155: minimum-n bij zelfde_jaar; 0 = nooit terugvallen."""
+        p = referentie_params("afba67cb-6b38-4723-9c95-102a22d5b38a", min_n=0)
+        assert p["zs_min_n"] == 0
 
     def test_zonder_gemeente_is_alle_gemeenten(self):
         p = referentie_params("afba67cb-6b38-4723-9c95-102a22d5b38a")
