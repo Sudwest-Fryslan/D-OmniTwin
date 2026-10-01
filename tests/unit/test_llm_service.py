@@ -389,15 +389,14 @@ def test_admin_llmconfig_valideert_api_type():
 
 
 def test_admin_opslaan_zonder_v20_weigert_openai():
-    import asyncio
     admin = pytest.importorskip("omnitwin.routers.admin")
     db = FakeDB({"api_url": "http://x", "model_name": "m"})  # geen api_type-kolom
     cfg = admin.LLMConfig(api_url="http://x", model_name="m", api_type="openai")
     with pytest.raises(admin.HTTPException) as exc:
-        asyncio.run(admin.update_llm_config(cfg, db=db))
+        admin.update_llm_config(cfg, db=db)
     assert exc.value.status_code == 409
     ok = admin.LLMConfig(api_url="http://x", model_name="m", api_type="ollama")
-    assert asyncio.run(admin.update_llm_config(ok, db=db)) == ok
+    assert admin.update_llm_config(ok, db=db) == ok
 
 
 def _vrije_poort():

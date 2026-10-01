@@ -13,14 +13,15 @@ Config wordt uit log_config tabel geladen en gecached (refresh elke 60s).
 
 import asyncio
 import logging
+import queue
 import logging.handlers
 import time
-import os
 from pathlib import Path
 from typing import Optional, Dict, Any
 from datetime import datetime
 
 from sqlalchemy import text
+from omnitwin.config import instellingen
 from omnitwin.database import SessionLocal
 
 # =============================================================================
@@ -98,20 +99,24 @@ _config_cache = _ConfigCache()
 # Async Log Queue — non-blocking DB schrijver
 # =============================================================================
 class AsyncLogQueue:
-    """In-memory queue die batched naar PostgreSQL app_logs schrijft."""
+    """In-memory queue die batched naar PostgreSQL app_logs schrijft.
+
+    Thread-safe (queue.Queue): de meeste handlers draaien in de threadpool en
+    loggen van daaruit. Het schrijven naar de database gebeurt in een thread,
+    niet op de event loop (#68)."""
 
     MAX_QUEUE_SIZE = 10_000
     BATCH_SIZE = 50
     FLUSH_INTERVAL = 2.0  # seconden
 
     def __init__(self):
-        self._queue: asyncio.Queue = None
+        self._queue: queue.Queue = None
         self._task: asyncio.Task = None
         self._running = False
 
     async def start(self):
         """Start de background writer task."""
-        self._queue = asyncio.Queue(maxsize=self.MAX_QUEUE_SIZE)
+        self._queue = queue.Queue(maxsize=self.MAX_QUEUE_SIZE)
         self._running = True
         self._task = asyncio.create_task(self._writer_loop())
 
@@ -133,7 +138,7 @@ class AsyncLogQueue:
             return
         try:
             self._queue.put_nowait(entry)
-        except asyncio.QueueFull:
+        except queue.Full:
             import sys
             print(
                 "WARNING: Log queue vol — oudste entries worden overgeslagen",
@@ -153,15 +158,17 @@ class AsyncLogQueue:
                 pass
 
     async def _flush_batch(self):
-        """Schrijf alle items in de queue naar de database."""
+        """Schrijf alle items in de queue naar de database (in een thread)."""
         if self._queue is None or self._queue.empty():
             return
+        await asyncio.to_thread(self._flush_sync)
 
+    def _flush_sync(self):
         batch = []
-        while not self._queue.empty() and len(batch) < self.BATCH_SIZE * 10:
+        while len(batch) < self.BATCH_SIZE * 10:
             try:
                 batch.append(self._queue.get_nowait())
-            except asyncio.QueueEmpty:
+            except queue.Empty:
                 break
 
         if not batch:
@@ -341,7 +348,7 @@ class AppLogger:
 # =============================================================================
 async def init_logging():
     """Bootstrap logging stack. Aanroepen in FastAPI startup event."""
-    log_level = os.getenv("LOG_LEVEL", "INFO").upper()
+    log_level = instellingen().log_level
     _setup_python_logging(log_level)
     _config_cache.refresh()
     await _log_queue.start()

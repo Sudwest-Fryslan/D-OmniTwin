@@ -15,6 +15,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 from omnitwin.database import get_db
+from omnitwin.grenzen import beperk_llm
 from omnitwin.services.ai_search_service import AISearchService
 from omnitwin.services.llm_service import LLMService
 from omnitwin.services.gemeente_validatie import valideer_gemeente_acties
@@ -380,7 +381,8 @@ def beantwoord_datavraag_route(vraag: str, context: Dict[str, Any], db: Session)
 # Chat Endpoint
 # ============================================================================
 
-@router.post("", response_model=ChatResponse)
+# LLM_RATE_LIMIT per minuut per IP (#203)
+@router.post("", response_model=ChatResponse, dependencies=[Depends(beperk_llm)])
 def chat(
     request: ChatRequest,
     db: Session = Depends(get_db)
@@ -552,6 +554,6 @@ def chat(
 
 
 @router.get("/health")
-async def chat_health():
+def chat_health():
     """Health check voor de Chat API."""
     return {"status": "healthy", "service": "D-Omni Assistant Chat API"}

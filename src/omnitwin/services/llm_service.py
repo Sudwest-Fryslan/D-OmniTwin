@@ -3,16 +3,16 @@ import json
 from sqlalchemy.orm import Session
 from sqlalchemy import text
 from typing import Dict, Any, Optional
-import os
 import re
 from urllib.parse import urlsplit
 
+from omnitwin.config import instellingen
 from omnitwin.services.logging_service import AppLogger
 from omnitwin.services.gemeente_validatie import laad_gemeenten
 
 # Fallbacks instellen, maar in deze v8 schema wordt de API URL dynamisch uit de database gehaald
-DEFAULT_OLLAMA_HOST = os.getenv("OLLAMA_HOST", "http://localhost:11434")
-DEFAULT_OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "qwen3:30b-instruct")
+DEFAULT_OLLAMA_HOST = instellingen().ollama_host
+DEFAULT_OLLAMA_MODEL = instellingen().ollama_model
 
 # api_type in llm_config (migratie v20, ADR 0001):
 #   'ollama' = Ollama-eigen API (/api/generate), het oorspronkelijke gedrag
@@ -30,7 +30,7 @@ def denken_aan() -> bool:
     Standaard uit: de teksten zijn kort (chat ≤ 80 woorden) en hebben geen redeneerstap
     nodig, terwijl denken duizenden tokens en minuten kost (ADR 0001).
     """
-    return os.getenv("LLM_THINK", "false").strip().lower() in ("1", "true", "ja", "yes", "on")
+    return instellingen().llm_think
 
 
 def reasoning_effort() -> Optional[str]:
@@ -41,8 +41,7 @@ def reasoning_effort() -> Optional[str]:
     """
     if denken_aan():
         return None
-    waarde = os.getenv("LLM_REASONING_EFFORT", "none").strip()
-    return waarde or None
+    return instellingen().llm_reasoning_effort or None
 
 
 def veilige_host(api_url: str) -> str:
@@ -61,7 +60,7 @@ def openai_base_url(api_url: str) -> str:
 
 def openai_headers() -> Dict[str, str]:
     """Authorization-header uit LLM_API_KEY (alleen .env, nooit de database)."""
-    key = os.getenv("LLM_API_KEY", "").strip()
+    key = instellingen().llm_api_key
     return {"Authorization": f"Bearer {key}"} if key else {}
 
 

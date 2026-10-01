@@ -1,8 +1,10 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from omnitwin.database import get_db
+from omnitwin.fouten import GebruikersFout
 from omnitwin.services.data_controle_service import DataControleService
 from typing import List, Dict, Any
+from uuid import UUID
 from pydantic import BaseModel
 from omnitwin.services.deduplicatie_service import DeduplicatieService
 from omnitwin.routers.auth import vereis_admin
@@ -36,32 +38,28 @@ def run_all_checks(
     """
     Voert data lineage checks uit voor alle indicatoren die een bron_systeem_api hebben.
     """
-    try:
-        results = service.batch_run_all()
-        return results
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    return service.batch_run_all()
 
 @router.get("/check/{indicator_uuid}", response_model=Dict[str, Any])
 def check_single_indicator(
-    indicator_uuid: str,
+    indicator_uuid: UUID,
     service: DataControleService = Depends(get_service)
 ):
     """
     Voert een data check uit voor één specifieke indicator op basis van UUID.
     """
-    result = service.run_indicator_check(indicator_uuid)
+    result = service.run_indicator_check(str(indicator_uuid))
     if "error" in result:
         raise HTTPException(status_code=404, detail=result["error"])
     return result
 
 @router.get("/health")
-async def health_check():
+def health_check():
     """Simple health check for Data Controle API."""
     return {"status": "healthy", "service": "Data Controle API"}
 
 @router.post("/acties/herbereken-statistieken")
-async def actie_herbereken_statistieken(
+def actie_herbereken_statistieken(
     req: ActiesRequest,
     service: DataControleService = Depends(get_service)
 ):
@@ -72,7 +70,7 @@ async def actie_herbereken_statistieken(
     return result
 
 @router.post("/acties/genereer-ontologie")
-async def actie_genereer_ontologie(
+def actie_genereer_ontologie(
     req: ActiesRequest,
     service: DataControleService = Depends(get_service)
 ):
@@ -90,13 +88,10 @@ def get_dedup_kandidaten(
     service: DeduplicatieService = Depends(get_dedup_service)
 ):
     """Haalt potentiele dubbele indicatoren op (Sprint 21 Data Kwaliteit)"""
-    try:
-        return service.get_kandidaten()
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    return service.get_kandidaten()
 
 @router.post("/deduplicatie/merge", response_model=Dict[str, Any])
-async def merge_indicatoren(
+def merge_indicatoren(
     req: MergeRequest,
     service: DeduplicatieService = Depends(get_dedup_service)
 ):
@@ -105,18 +100,15 @@ async def merge_indicatoren(
         raise HTTPException(status_code=400, detail="Ongeldige actie")
     try:
         return service.merge_indicatoren(req.primary_uuid, req.duplicate_uuids, req.actie)
-    except Exception as e:
+    except GebruikersFout as e:
         raise HTTPException(status_code=400, detail=str(e))
 
 @router.post("/deduplicatie/uitzondering", response_model=Dict[str, Any])
-async def markeer_uitzondering(
+def markeer_uitzondering(
     req: UitzonderingRequest,
     service: DeduplicatieService = Depends(get_dedup_service)
 ):
     """Markeert een groep indicatoren als 'geen duplicaat' (worden uitgesloten bij toekomstige scans)"""
     if len(req.indicator_uuids) < 2:
         raise HTTPException(status_code=400, detail="Minimaal 2 UUIDs vereist")
-    try:
-        return service.markeer_uitzondering(req.indicator_uuids)
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    return service.markeer_uitzondering(req.indicator_uuids)

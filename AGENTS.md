@@ -125,12 +125,14 @@ Each API concern has a router in `src/omnitwin/routers/` (thin HTTP layer) and a
 - `llm_service.py` — Ollama integration (lazy-loaded, with graceful fallback)
 - `ai_search_service.py` — SentenceTransformer semantic search (lazy-loaded on first use)
 
+Conventies (#203): omgevingsvariabelen alleen via `omnitwin.config` (`instellingen()`), nooit los `os.getenv`; nieuwe variabele ook in `.env.example` en tabel 2.2 van de installatiegids. Geen `detail=str(e)`: onverwachte fouten gaan naar de centrale handler (`omnitwin/fouten.py`, 500 met correlatie-id), een melding voor de gebruiker is een `GebruikersFout`. Een route is `def`, tenzij hij iets `await`; synchroon werk daarin via `run_in_threadpool`. UUID-parameters typeren als `uuid.UUID` (422 bij ongeldige invoer).
+
 ### Z-Score Calculations
 Z-scores are computed dynamically per request, relative to a reference group defined by `gebiedstype` + `gemeente` (not globally). Eén bron: de SQL-functies in `db/schema/08_zscore_referentie.sql` (`zscore_referentie_stats`, `zscore_gebieden`, ...; migratie v21), met parameters en standaardwaarden in `src/omnitwin/services/zscore_referentie.py`. Waterbuurten (`gebieden.metadata->>'water' = 'JA'`) zitten nooit in de referentie; jaarlogica standaard `zelfde_jaar` (referentie = waarden in het jaar van de meest recente waarde van het doelgebied, zoals executive en Kompas werkten); alleen scenario `current`. Schrijf geen eigen referentie-CTE in `report_service.py` of `kompas_service.py`, gebruik deze functies. Methodiek: `docs/3-data-engineering/zscore_methodiek.md` (#66).
 
 ### Authentication
 Zie `src/omnitwin/routers/auth.py`.
-- **Beheeromgeving en web-UI:** sessie. Inloggen via `POST /api/admin/auth/login` (form-data; wachtwoorden bcrypt in `users`). Het cookie `session_token` is `HttpOnly`, `SameSite=lax` en `Secure` behalve bij `DEBUG=true`; het token staat gehasht (sha256) in `sessions` en verloopt na 12 uur. Het admin-panel gebruikt alleen dit cookie (`admin-panel/src/services/api.ts`), nooit een API-key.
+- **Beheeromgeving en web-UI:** sessie. Inloggen via `POST /api/admin/auth/login` (form-data; wachtwoorden bcrypt in `users`). Het cookie `session_token` is `HttpOnly`, `SameSite=lax` en `Secure` volgens `COOKIE_SECURE` (standaard `auto`: alleen bij HTTPS, ook via `X-Forwarded-Proto`); het token staat gehasht (sha256) in `sessions` en verloopt na 12 uur. Het admin-panel gebruikt alleen dit cookie (`admin-panel/src/services/api.ts`), nooit een API-key.
 - **Scripts:** header `X-Admin-Key` met de waarde van `ADMIN_API_KEY` uit `.env` (minimaal 32 tekens; leeg of een voorbeeldwaarde = uitgeschakeld). De tabel `api_keys` speelt geen rol bij de autorisatie.
 - **Autorisatie:** `vereis_admin` hangt op routerniveau aan alle beheerroutes (`/api/admin/*` behalve auth, `/api/visualisatie/admin/*`): zonder sessie of key `401`, zonder `is_admin` `403`. Publieke routes (kaart, Kompas, rapporten, chat) hebben dezelfde rechten als een anonieme bezoeker (#65); zie de installatiegids, Beveiliging.
 

@@ -5,12 +5,6 @@ from sqlalchemy import text
 from typing import List, Optional, Dict, Any
 from pydantic import BaseModel
 from omnitwin.database import get_db
-import os
-from dotenv import load_dotenv
-
-# Load environment variables
-load_dotenv()
-
 from omnitwin.routers.auth import vereis_admin
 
 # Alle routes in deze router vereisen een beheerder (#65)
@@ -20,7 +14,7 @@ router = APIRouter(prefix="/api/admin/dashboard", tags=["Admin Dashboard"], depe
 # Stats Endpoint
 # ============================================================================
 @router.get("/stats")
-async def get_dashboard_stats(
+def get_dashboard_stats(
     db: Session = Depends(get_db),
 ):
     """Get high-level dashboard statistics."""
@@ -74,7 +68,7 @@ async def get_dashboard_stats(
 # Quadrants Endpoint
 # ============================================================================
 @router.get("/quadrants")
-async def get_quadrant_coverage(
+def get_quadrant_coverage(
     config_id: int = 1,
     db: Session = Depends(get_db),
 ):
@@ -119,7 +113,7 @@ async def get_quadrant_coverage(
 # Detailed Indicators Endpoint
 # ============================================================================
 @router.get("/indicators")
-async def get_dashboard_indicators(
+def get_dashboard_indicators(
     search: Optional[str] = None,
     sort: str = "naam",
     direction: str = "asc",
@@ -260,7 +254,7 @@ async def get_dashboard_indicators(
 # Export Endpoint
 # ============================================================================
 @router.get("/export")
-async def export_dashboard_data(
+def export_dashboard_data(
     db: Session = Depends(get_db),
 ):
     """Export all dashboard data as CSV."""

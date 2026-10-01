@@ -39,6 +39,12 @@ ALTER ROLE authenticator LOGIN NOINHERIT NOSUPERUSER NOCREATEDB NOCREATEROLE NOR
 ALTER ROLE featureserv   LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION NOBYPASSRLS;
 GRANT web_anon TO authenticator;
 
+-- Grens per query (#203). PostgREST past de instelling van web_anon per verzoek toe
+-- ("impersonated role settings"); pg_featureserv logt direct in als featureserv.
+ALTER ROLE web_anon      SET statement_timeout = '10s';
+ALTER ROLE authenticator SET statement_timeout = '10s';
+ALTER ROLE featureserv   SET statement_timeout = '30s';
+
 -- ── Schema api: alleen views en functies voor PostgREST ─────────────────────
 CREATE SCHEMA IF NOT EXISTS api;
 REVOKE ALL ON SCHEMA api FROM PUBLIC;

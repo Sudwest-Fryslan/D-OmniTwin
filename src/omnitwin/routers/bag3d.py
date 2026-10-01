@@ -476,6 +476,6 @@ def get_3d_buildings(
 
 
 @router.get("/health")
-async def bag3d_health():
+def bag3d_health():
     """Health check voor 3D BAG service."""
     return {"status": "healthy", "service": "3D BAG Panden API (api.3dbag.nl)"}

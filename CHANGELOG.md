@@ -8,9 +8,24 @@ Eerdere wijzigingen, van vóór dit bestand, zijn terug te vinden in de git-hist
 
 ## [Unreleased]
 
+### Migreren
+
+- **`DEBUG` vervalt** ([#203](https://github.com/TLaan/D-OmniTwin/issues/203)). Een bestaande `DEBUG=` in `.env` doet niets meer en mag weg. Het inlogcookie krijgt `Secure` nu via `COOKIE_SECURE` (nieuw, standaard `auto`: alleen als de verbinding HTTPS is). Zonder HTTPS hoef je niets te doen. **Achter een eigen TLS-proxy die over HTTP naar de stack doorstuurt: zet `COOKIE_SECURE=true`** (voorheen `DEBUG=false`); `auto` ziet daar alleen HTTP.
+- **CORS:** alleen nog de adressen in `CORS_ORIGINS`. De ngrok-wildcard en de extra localhost-adressen bij `DEBUG=true` zijn weg; zet een ander adres dat de API met cookies aanroept expliciet in `CORS_ORIGINS`. De toegestane header is nu `X-Admin-Key` (wat de backend leest) in plaats van `X-API-Key`.
+- **Nieuw, optioneel:** `LLM_RATE_LIMIT` (verzoeken per minuut per IP-adres op chat en AI-teksten, standaard 60, `0` = uit).
+- **Foutmeldingen:** een interne fout geeft `500` met `{"detail": "...", "correlatie_id": "..."}` (en header `X-Correlatie-Id`) in plaats van de exceptietekst. Ongeldige UUID's geven `422`, een conflict bij opslaan in beheer `409` (was `400` met de databasemelding).
+
+### Beveiliging
+
+- Geen interne fouten meer naar buiten: centrale foutafhandeling met logging en correlatie-id; de `detail=str(e)`-meldingen (o.a. SQL in `/api/gebiedsmonitor/kaart_data/{id}`) zijn weg; ongeldige UUID's geven 422 ([#203](https://github.com/TLaan/D-OmniTwin/issues/203)).
+- Grenzen voor anonieme verzoeken: inloggen na 5 mislukte pogingen per IP + gebruikersnaam (of 20 per IP) in 15 minuten 429, met 1 s vertraging per mislukte poging en bcrypt ook bij een onbekende gebruiker; rate limit op `/api/chat` en de narrative-routes; PostgREST `PGRST_DB_MAX_ROWS=10000`; `statement_timeout` voor `web_anon`/`authenticator` (10 s), `featureserv` (30 s) en de backend (60 s) ([#203](https://github.com/TLaan/D-OmniTwin/issues/203)).
+- `COOKIE_SECURE` en `CORS_ORIGINS` los van elkaar in plaats van één `DEBUG`-vlag ([#203](https://github.com/TLaan/D-OmniTwin/issues/203)).
+
 ### Gewijzigd
 
 - Documentatie op orde: de installatiegids volgt `.env.example` en de code (één rij per variabele, geen `SECRET_KEY`, backup vóór het bijwerken, geüploade kaartlagen in de backup, upgrade-paragraaf, actuele beveiligingssectie); README en `AGENTS.md` actueel; `docs/STATE.md` gemarkeerd als historisch; dode links gerepareerd, met een linkcheck (`tools/check_links.py`) als unittest; `backups/` en `*.dump` in `.gitignore` ([#204](https://github.com/TLaan/D-OmniTwin/issues/204)).
+- Eén `src/omnitwin/config.py` voor alle omgevingsvariabelen van de backend, met dezelfde namen en standaardwaarden ([#130](https://github.com/TLaan/D-OmniTwin/issues/130)).
+- Route-handlers zonder `await` zijn `def` (threadpool) in plaats van `async def`: een trage query houdt andere verzoeken niet meer vast; de logqueue is thread-safe ([#68](https://github.com/TLaan/D-OmniTwin/issues/68)).
 
 ## [0.2.0] - 2026-10-01
 

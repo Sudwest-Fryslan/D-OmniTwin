@@ -21,9 +21,17 @@ from passlib.context import CryptContext
 from pydantic import BaseModel
 import hashlib
 import secrets
+import asyncio
 import datetime
-import os
+import math
 
+from fastapi.concurrency import run_in_threadpool
+
+from omnitwin.config import (
+    LOGIN_MAX_PER_GEBRUIKER, LOGIN_MAX_PER_IP, LOGIN_VENSTER_SECONDEN, LOGIN_VERTRAGING_SECONDEN,
+    instellingen,
+)
+from omnitwin.grenzen import Limiet, client_ip, te_veel
 from omnitwin.services.logging_service import AppLogger
 
 router = APIRouter(prefix="/api/admin/auth", tags=["Auth"])
@@ -81,8 +89,17 @@ def is_placeholder_key(key: str | None) -> bool:
 
 def geldige_admin_api_key() -> str | None:
     """ADMIN_API_KEY uit de omgeving, of None als die leeg of een placeholder is."""
-    key = os.getenv("ADMIN_API_KEY", "").strip()
+    key = instellingen().admin_api_key
     return None if is_placeholder_key(key) else key
+
+def cookie_secure(request: Request) -> bool:
+    """Krijgt het sessiecookie `Secure`? COOKIE_SECURE=true/false, of auto (standaard):
+    alleen als het verzoek via HTTPS binnenkomt, direct of via de proxy (X-Forwarded-Proto)."""
+    instelling = instellingen().cookie_secure
+    if instelling != "auto":
+        return instelling == "true"
+    proto = request.headers.get("x-forwarded-proto", "").split(",")[0].strip().lower()
+    return (proto or request.url.scheme) == "https"
 
 def ruim_verlopen_sessies_op(db: Session) -> None:
     db.execute(text("DELETE FROM sessions WHERE expires_at <= NOW()"))
@@ -129,29 +146,39 @@ check_auth_or_key = huidige_gebruiker
 # ============================================================================
 # Endpoints
 # ============================================================================
-@router.post("/login")
-async def login(
-    response: Response,
-    form_data: OAuth2PasswordRequestForm = Depends(),
-    db: Session = Depends(get_db)
-):
-    """OAuth2 compatible inlog actie -> Zorgt voor een HttpOnly session cookie."""
+def _dummy_hash() -> str:
+    """Hash om ook bij een onbekende gebruiker bcrypt te draaien: gelijke responstijd,
+    zodat gebruikersnamen niet via de timing te achterhalen zijn (#203)."""
+    global _DUMMY_HASH
+    if _DUMMY_HASH is None:
+        _DUMMY_HASH = get_password_hash(secrets.token_urlsafe(16))
+    return _DUMMY_HASH
 
-    # Check user in DB
+_DUMMY_HASH: str | None = None
+
+# Inlogpogingen (#203): mislukte pogingen per IP + gebruikersnaam en per IP
+_mislukt_per_gebruiker = Limiet(LOGIN_MAX_PER_GEBRUIKER, LOGIN_VENSTER_SECONDEN)
+_mislukt_per_ip = Limiet(LOGIN_MAX_PER_IP, LOGIN_VENSTER_SECONDEN)
+
+
+def _inloggen(db: Session, username: str, password: str):
+    """Controleer de inloggegevens en maak een sessie (synchroon: database en bcrypt).
+    Geeft (user, token) bij succes, anders None."""
     result = db.execute(text("""
         SELECT id, username, hashed_password, is_active
         FROM users
         WHERE username = :username
-    """), {"username": form_data.username})
+    """), {"username": username})
     user = result.fetchone()
 
     if not user or not user[3]: # Not active
-        AppLogger.warning(f"Login mislukt: gebruiker '{form_data.username}' niet gevonden of niet actief", category="AUTH")
-        raise HTTPException(status_code=401, detail="Onjuiste gebruikersnaam of wachtwoord")
+        verify_password(password, _dummy_hash())
+        AppLogger.warning(f"Login mislukt: gebruiker '{username}' niet gevonden of niet actief", category="AUTH")
+        return None
 
-    if not verify_password(form_data.password, user[2]): # Check hashed pass
-        AppLogger.warning(f"Login mislukt: onjuist wachtwoord voor '{form_data.username}'", category="AUTH")
-        raise HTTPException(status_code=401, detail="Onjuiste gebruikersnaam of wachtwoord")
+    if not verify_password(password, user[2]): # Check hashed pass
+        AppLogger.warning(f"Login mislukt: onjuist wachtwoord voor '{username}'", category="AUTH")
+        return None
 
     # Wachtwoord is goed: verlopen sessies opruimen en een nieuwe sessie maken
     ruim_verlopen_sessies_op(db)
@@ -164,6 +191,39 @@ async def login(
         VALUES (:token_hash, :user_id, :expires)
     """), {"token_hash": hash_token(token), "user_id": user[0], "expires": expires})
     db.commit()
+    return user, token
+
+
+@router.post("/login")
+async def login(
+    request: Request,
+    response: Response,
+    form_data: OAuth2PasswordRequestForm = Depends(),
+    db: Session = Depends(get_db)
+):
+    """OAuth2 compatible inlog actie -> Zorgt voor een HttpOnly session cookie.
+
+    Na LOGIN_MAX_PER_GEBRUIKER mislukte pogingen (per IP + gebruikersnaam) of
+    LOGIN_MAX_PER_IP (per IP) binnen het venster: 429 met Retry-After. Elke
+    mislukte poging wacht eerst even. De database en bcrypt draaien in de
+    threadpool; het wachten blokkeert de server niet (#203, #68).
+    """
+    ip = client_ip(request)
+    sleutel = f"{ip}|{form_data.username.strip().lower()}"
+    wacht = max(_mislukt_per_gebruiker.wachttijd(sleutel), _mislukt_per_ip.wachttijd(ip))
+    if wacht:
+        AppLogger.warning(f"Login geblokkeerd voor '{form_data.username}' vanaf {ip} ({wacht}s)", category="AUTH")
+        raise te_veel(wacht, f"Te veel mislukte inlogpogingen. Probeer het over {math.ceil(wacht / 60)} minuten opnieuw.")
+
+    resultaat = await run_in_threadpool(_inloggen, db, form_data.username, form_data.password)
+    if resultaat is None:
+        _mislukt_per_gebruiker.registreer(sleutel)
+        _mislukt_per_ip.registreer(ip)
+        await asyncio.sleep(LOGIN_VERTRAGING_SECONDEN)
+        raise HTTPException(status_code=401, detail="Onjuiste gebruikersnaam of wachtwoord")
+
+    user, token = resultaat
+    _mislukt_per_gebruiker.reset(sleutel)
 
     # HttpOnly Cookie zetten (voorkomt JavaScript XSS thef van token)
     response.set_cookie(
@@ -172,7 +232,7 @@ async def login(
         httponly=True,
         max_age=int(SESSIE_DUUR.total_seconds()),
         samesite="lax", # Goed voor zelfde domein protectie tegen CSRF
-        secure=os.getenv("DEBUG", "false").lower() != "true" # True on prod (HTTPS)
+        secure=cookie_secure(request),  # COOKIE_SECURE (auto: alleen via HTTPS)
     )
 
     AppLogger.info(f"Login geslaagd: gebruiker '{user[1]}'", category="AUTH", user_id=str(user[0]))
@@ -180,7 +240,7 @@ async def login(
     return {"message": "Succesvol ingelogd", "user": {"id": str(user[0]), "username": user[1]}}
 
 @router.post("/logout")
-async def logout(
+def logout(
     request: Request,
     response: Response,
     db: Session = Depends(get_db)
@@ -197,7 +257,7 @@ async def logout(
     return {"message": "Succesvol uitgelogd"}
 
 @router.get("/me", response_model=AuthStatus)
-async def get_current_user(
+def get_current_user(
     request: Request,
     db: Session = Depends(get_db)
 ):
@@ -216,7 +276,7 @@ class ChangePasswordRequest(BaseModel):
     new_password: str
 
 @router.post("/change-password")
-async def change_password(
+def change_password(
     data: ChangePasswordRequest,
     request: Request,
     db: Session = Depends(get_db)
