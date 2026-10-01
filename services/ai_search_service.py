@@ -22,9 +22,9 @@ class AISearchService:
         if _model is None:
             try:
                 from services.logging_service import AppLogger
-                AppLogger.info("Initialiseren van AISearch model (all-MiniLM-L6-v2)...", category="SERVER")
-                from sentence_transformers import SentenceTransformer
-                _model = SentenceTransformer('all-MiniLM-L6-v2')
+                from services.embedding_model import MODEL_ID, MODEL_REVISIE, laad_model
+                AppLogger.info(f"Initialiseren van AISearch model ({MODEL_ID}@{MODEL_REVISIE[:8]})...", category="SERVER")
+                _model = laad_model()
             except Exception as e:
                 logger.error(f"Fout bij laden van AI model: {e}")
 

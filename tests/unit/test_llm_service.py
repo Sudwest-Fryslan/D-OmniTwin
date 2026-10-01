@@ -77,6 +77,9 @@ class _Result:
     def fetchone(self):
         return self._row
 
+    def fetchall(self):
+        return [] if self._row is None else [self._row]
+
 
 class FakeDB:
     """Minimale Session: llm_config-rij en (lege) system_prompts."""
@@ -91,6 +94,9 @@ class FakeDB:
         if "llm_config" in sql:
             return _Result(self.config_row)
         return _Result(None)  # system_prompts: val terug op de standaardprompt
+
+    def rollback(self):
+        pass
 
     def commit(self):
         pass
@@ -205,10 +211,13 @@ def test_ollama_pad_stuurt_geen_api_key(fake_llm, monkeypatch):
     assert "authorization" not in headers
 
 
-def test_ollama_pad_foutmelding_ongewijzigd():
+def test_ollama_pad_foutmelding_zonder_interne_url():
+    """Geen interne URL of fouttekst in de response (#65); details staan in de log."""
     url = f"http://127.0.0.1:{_vrije_poort()}"
     res = service(url, "ollama")._call_llm("sys", "vraag", "test")
-    assert res["text"].startswith(f"Error contacting Ollama op {url}/api/generate")
+    assert res["text"] == "De AI-samenvatting is nu niet beschikbaar."
+    assert res["error"] is True
+    assert url not in res["text"]
 
 
 # ─── OpenAI-pad ─────────────────────────────────────────────────────────────
@@ -338,7 +347,7 @@ def test_openai_onverwacht_antwoord(fake_llm, body):
 
 def _models(db):
     admin = pytest.importorskip("routers.admin")
-    return admin.get_ollama_models(db=db, _=True)
+    return admin.get_ollama_models(db=db)
 
 
 def test_admin_models_ollama(fake_llm):
@@ -385,10 +394,10 @@ def test_admin_opslaan_zonder_v20_weigert_openai():
     db = FakeDB({"api_url": "http://x", "model_name": "m"})  # geen api_type-kolom
     cfg = admin.LLMConfig(api_url="http://x", model_name="m", api_type="openai")
     with pytest.raises(admin.HTTPException) as exc:
-        asyncio.run(admin.update_llm_config(cfg, db=db, _=True))
+        asyncio.run(admin.update_llm_config(cfg, db=db))
     assert exc.value.status_code == 409
     ok = admin.LLMConfig(api_url="http://x", model_name="m", api_type="ollama")
-    assert asyncio.run(admin.update_llm_config(ok, db=db, _=True)) == ok
+    assert asyncio.run(admin.update_llm_config(ok, db=db)) == ok
 
 
 def _vrije_poort():

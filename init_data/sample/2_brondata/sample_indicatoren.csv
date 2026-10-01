@@ -1,9 +1,4 @@
 gebied_id,indicator_uuid,indicator_naam,waarde,jaar,bron,kwaliteit,eenheid,categorie,interpretatie_logica,scenario_id
-BU19000001,356a2329-eadb-494f-a09d-906a3db264d4,0-15 jaar,370.0,2025,CBS_86165NED,,Aantal,,pos_is_pos,current
-BU19000001,026bcd11-ace5-4ec7-adbc-c06c324315cd,15-25 jaar,200.0,2025,CBS_86165NED,,Aantal,,pos_is_pos,current
-BU19000001,e6dd31a1-a056-4c07-a48c-1d4517269f1e,25-45 jaar,490.0,2025,CBS_86165NED,,Aantal,,pos_is_pos,current
-BU19000001,8225fa5c-efb8-4fd0-865b-a36ff0724a28,45-65 jaar,405.0,2025,CBS_86165NED,,Aantal,,pos_is_pos,current
-BU19000001,b0ee9877-3850-4529-b352-6ec673562ef8,65+ jaar,465.0,2025,CBS_86165NED,,Aantal,,pos_is_pos,current
 BU19000001,93564b76-b07a-4134-868e-10654650d064,Aantal bushaltes,1,2026,OpenStreetMap / Overpass API 2026,,aantal,,pos_is_pos,current
 BU19000001,233505e1-d22f-48b5-b67f-88ea73d12967,Aantal energielabels,726,2025,RVO EP-Online 2026-02,,aantal,Wonen,-/+,current
 BU19000001,a2ed3719-64a7-40da-bfc5-a43d3d292594,Aantal energielabels (definitief),309,2025,RVO EP-Online 2026-02,,aantal,Wonen,N/A,current
@@ -14,13 +9,8 @@ BU19000001,b69a88a0-efd4-4f8b-888a-97b653e1f13d,Aantal tramhaltes,0,2026,OpenStr
 BU19000001,696ca006-89a0-4e9f-aa5b-f68c724736d1,Aantal treinhaltes,0,2026,OpenStreetMap / Overpass API 2026,,aantal,,pos_is_pos,current
 BU19000001,c49c1563-2d85-4a2f-bdc9-02c340c4e510,Aantal veerboten,0,2026,OpenStreetMap / Overpass API 2026,,aantal,,pos_is_pos,current
 BU19000001,a5ed2ff5-f431-48e8-98d4-0c56686de109,Achterstand leerlingen,236.43,2025,a5ed2ff5-f431-48e8-98d4-0c56686de109_d_cbs_buurten.json,,score,,-/+,current
-BU19000001,869bec9c-9b9a-4425-9cd6-09cb4f7451ae,Afstand tot grote supermarkt,0.4,2025,CBS_86165NED,,km,,-/+,current
-BU19000001,1b28d9ef-f7ff-4609-9ef7-7ab8a9b6cba7,Afstand tot huisarts,1.6,2025,CBS_86165NED,,,,-/+,current
-BU19000001,76abbf47-6eb6-4c10-a4bf-ec0280435052,Afstand tot kinderdagverblijf,0.4,2025,CBS_86165NED,,km,,-/+,current
 BU19000001,bf4e5b8f-6b0a-4632-b9b4-8e29d025e68c,Afstand tot koele plek,246,2021,bf4e5b8f-6b0a-4632-b9b4-8e29d025e68c_d_cbs_buurten.json,,,,-/+,current
-BU19000001,ec95fe04-04fd-4bbb-bb9f-0f3f97861e5d,Afstand tot school,0.4,2025,CBS_86165NED,,km,,-/+,current
 BU19000001,b7090c23-7495-48c2-bfb3-cbfb7140386f,beschadiging auto's,15,2024,,,,,-/+,current
-BU19000001,f18b2c78-871b-48a7-b08f-fa743e589db8,Bevolkingsdichtheid,2908.0,2025,CBS_86165NED,,inw/km²,,pos_is_pos,current
 BU19000001,64470009-7467-4a34-8f3c-b44d896a5364,Bewegen,42.6,2024,Gezondheidsmonitor RIVM 2024,,,,pos_is_pos,current
 BU19000001,5d7ad356-aac8-4815-8da7-97dff60c7873,Bijeenkomstfunctie,6,2026,BAG,,aantal,Gebruik,pos_is_pos,current
 BU19000001,3241e6b8-0712-4653-a420-2f3274466f6b,Bouwjaar 1915-1945,3.0,2025,Kadaster BAG Fryslân 2026,,aantal,Bebouwing,pos_is_pos,current
@@ -31,50 +21,31 @@ BU19000001,29cfacae-021e-4fe5-819b-e9eb655837ae,Celfunctie,0,2026,BAG,,aantal,Ge
 BU19000001,81ccf247-0449-40e0-a99c-a67019f272e4,Definitief energielabel,0.591184096802074,2025,81ccf247-0449-40e0-a99c-a67019f272e4_d_cbs_buurten.json,,,,pos_is_pos,current
 BU19000001,3ca8572d-cc03-4fd9-9bc9-e1cd0fc0a627,diefstal fiets,0,2024,,,aantal,,-/+,current
 BU19000001,1e9bc2fe-d5bd-4306-9b6b-d443e22916cf,Diversiteit Functies (Simpson Index),0.3,2026,BAG,,index,,pos_is_pos,current
-BU19000001,257494f4-9e51-4a4a-a662-feabfe9758b0,Eenpersoonshuishoudens,425.0,2025,CBS_86165NED,,aantal,,pos_is_pos,current
 BU19000001,4661dcb9-b7c4-42f8-b7c5-a61c12568806,Eenzaamheid,55.0,2024,Gezondheidsmonitor RIVM 2024,,,,-/+,current
 BU19000001,b53e54d6-ff54-4be1-b539-f915fd253831,Energielabel coverage,31.5,2025,Berekend: EP-Online / BAG Fryslân,,%,Wonen,pos_is_pos,current
 BU19000001,d20c7b4d-d305-495b-b77c-07b8121614a7,Ervaren gezondheid,65.9,2024,Gezondheidsmonitor RIVM 2024,,%,Gezondheid,pos_is_pos,current
 BU19000001,22d02bf9-99ef-4357-b797-09a714690b11,Gemiddeld bouwjaar woningen (BAG),1971.0,2025,Kadaster BAG Fryslân 2026,,jaar,Wonen,pos_is_pos,current
 BU19000001,3c2d0ca0-3a6d-4f53-809f-f82fa9b9fd22,Gemiddeld energielabel,4.357605177993528,2025,RVO EP-Online 2026-02,,score (1.0 - 9.0),,pos_is_pos,current
-BU19000001,7d9339e3-ea2c-474b-802a-49c854849f73,Gemiddelde woonoppervlakte (BAG),108.0,2026,BAG,,m²,Wonen,pos_is_pos,current
-BU19000001,7053d6a5-2bcf-4254-b089-79852f12d9aa,Gemiddelde WOZ-waarde,224.0,2025,CBS_86165NED,,x 1 000 euro,,pos_is_pos,current
 BU19000001,a4f84d1c-3263-4229-ad95-615924cb7852,Gemiddeld Laagste Grondwaterstand,1.64,2022,a4f84d1c-3263-4229-ad95-615924cb7852_d_cbs_buurten.json,,,,pos_is_pos,current
+BU19000001,7d9339e3-ea2c-474b-802a-49c854849f73,Gemiddelde woonoppervlakte (BAG),108.0,2026,BAG,,m²,Wonen,pos_is_pos,current
 BU19000001,311a6449-b145-4678-b51e-ac4e342dd1bf,Gezondheid,10.9,2024,Gezondheidsmonitor RIVM 2024,,,,pos_is_pos,current
 BU19000001,3baca929-ccc3-48aa-b966-e6877d01cbe7,Gezondheidszorgfunctie,3,2026,BAG,,aantal,Gebruik,pos_is_pos,current
 BU19000001,0ed37b61-f13d-446b-b108-70bb09af98e0,Huisarts,1.6,2024,CBS_85984NED,,km,,pos_is_pos,current
 BU19000001,b2e606cc-1d58-4917-9dec-148d90c80742,Huishoudens (BAG woonfunctie),981.0,2025,Kadaster BAG Fryslân 2026,,aantal,Wonen,pos_is_pos,current
-BU19000001,ad3b0509-3c14-49f8-aa10-4b3b391a2d84,Huishoudens met kind,295.0,2025,CBS_86165NED,,aantal,,pos_is_pos,current
-BU19000001,3dd70913-391e-4d5f-a121-d17c8b466372,Huishoudens met laag inkomen,4.4,2023,Kerncijfers wijken en buurten 2023,,%,,-/+,current
-BU19000001,be1a9ac4-6330-47c9-93c6-c9008b5daf89,Huishoudens totaal,945.0,2025,CBS_86165NED,,aantal,,pos_is_pos,current
-BU19000001,428c1232-0213-491b-ad0c-56dcc82a8c59,Huishoudens zonder kind,225.0,2025,CBS_86165NED,,aantal,,pos_is_pos,current
 BU19000001,92137246-e0f1-493d-97a8-e4a5660a99fb,inbraak auto,1,2024,,,aantal,,-/+,current
 BU19000001,d90d2b4c-4bce-428c-834a-1cc8113958e4,inbraak woning,1,2024,,,aantal,,-/+,current
 BU19000001,28a7a580-dc3c-4105-9fb3-d9ef47792429,Industriefunctie,67,2026,BAG,,aantal,Gebruik,pos_is_pos,current
-BU19000001,9c035f53-75a5-43eb-8496-22c4c6f08d6b,Inkomen per inwoner,22.1,2023,Kerncijfers wijken en buurten 2023,,,,pos_is_pos,current
-BU19000001,31f70dff-c116-4267-bef0-d15b0ff4c020,Inwoners,1770.0,2023,Kerncijfers wijken en buurten 2023,,aantal,,pos_is_pos,current
 BU19000001,0212e8f8-053d-4287-b924-7bdc20c53bb2,Kantoorfunctie,12,2026,BAG,,aantal,Gebruik,pos_is_pos,current
-BU19000001,a0bbfd44-bacd-4434-bc8d-3a5204d65637,Koopwoningen,31.0,2025,CBS_86165NED,,percentage,,pos_is_pos,current
 BU19000001,a990c073-78e3-4490-a26e-1fa8ca6988f9,Logiesfunctie,0,2026,BAG,,aantal,Gebruik,pos_is_pos,current
 BU19000001,7b4a6b5f-7d6a-46ef-8a7d-7b3ee28a014c,Mantelzorger,13.6,2024,Gezondheidsmonitor RIVM 2024,,%,,pos_is_pos,current
 BU19000001,58fc72b6-881e-4917-83de-8099df3e3b0d,Moeite met rondkomen,19.1,2024,Gezondheidsmonitor RIVM 2024,,%,Gezondheid,-/+,current
-BU19000001,b07f74eb-5117-4705-802c-597ba830d016,Netto arbeidsparticipatie,64.0,2023,Kerncijfers wijken en buurten 2023,,%,,pos_is_pos,current
 BU19000001,0432fef2-83f2-4405-a457-08b89945ca86,Obesitas,23.6,2024,CBS_50150NED,,%,Gezondheid,-/+,current
 BU19000001,93048a96-d3cd-4d99-83b5-2b950e8d78a2,Onderwijsfunctie,4,2026,BAG,,aantal,Gebruik,pos_is_pos,current
-BU19000001,56f32b9a-bc45-4be1-9e1c-c2668c2e2a32,Opleidingsniveau hoog,250.0,2023,Kerncijfers wijken en buurten 2023,,aantal,,pos_is_pos,current
-BU19000001,c9719a07-57a5-48cf-8f93-b6f932aead51,Opleidingsniveau laag,360.0,2023,Kerncijfers wijken en buurten 2023,,aantal,,pos_is_pos,current
-BU19000001,1fa5df89-13e3-424f-9eba-9372cae42896,Opleidingsniveau middelbaar,630.0,2023,Kerncijfers wijken en buurten 2023,,aantal,,pos_is_pos,current
 BU19000001,97f53738-3439-4c28-8cac-046a52c65248,Oppervlak groen per inwoner,51.66,2025,97f53738-3439-4c28-8cac-046a52c65248_d_cbs_buurten.json,,,,pos_is_pos,current
 BU19000001,34e36ae1-4132-4555-a4fc-d16b039d467e,Overgewicht,57.5,2024,Gezondheidsmonitor RIVM 2024,,%,Gezondheid,-/+,current
 BU19000001,25405460-907c-4e63-acc4-4f9c949f7cac,Overige gebruiksfunctie,82,2026,BAG,,aantal,Gebruik,pos_is_pos,current
 BU19000001,1ed22149-7fed-4466-a3b8-dfd7ff28f5b5,Overmatig drinken,5.0,2024,Gezondheidsmonitor RIVM 2024,,%,,-/+,current
-BU19000001,aa5ce990-a43e-439a-9e98-69899321cf40,Participatiewet totaal,140.0,2023,Kerncijfers wijken en buurten 2023,,,,-/+,current
-BU19000001,2aadb30f-860f-4f70-916f-6df00e86e870,Particulier huurbezit,2.0,2025,CBS_86165NED,,,,pos_is_pos,current
-BU19000001,352dda4d-5de8-4f31-b85a-6d82f812ba7c,Percentage werknemers,87.0,2023,CBS_85618NED,,percentage,Gebruik,pos_is_pos,current
 BU19000001,4f53e98e-3309-4a3a-9ecc-732956f7c53a,Percentage woonfunctie (BAG),84.6,2026,BAG,,%,Wonen,pos_is_pos,current
-BU19000001,f8d0d890-3975-4183-9555-06d673c4657f,Percentage zelfstandigen,13.0,2023,CBS_85618NED,,percentage,Gebruik,pos_is_pos,current
-BU19000001,88192b70-faa9-4108-a473-302aa0f624a9,Personenauto's naar oppervlakte,1185.0,2025,CBS_86165NED,,per km²,,pos_is_pos,current
-BU19000001,461d542b-b8be-4510-9dd0-5ba554b818cb,Personenauto's per huishouden,0.8,2025,CBS_86165NED,,per huishouden,,pos_is_pos,current
 BU19000001,a4780646-844e-4221-b07a-b4f4ade25059,Roken,22.7,2024,Gezondheidsmonitor RIVM 2024,,,,-/+,current
 BU19000001,e2f618ca-0726-4c1f-8442-c1150578622e,Sportfunctie,5,2026,BAG,,aantal,Gebruik,pos_is_pos,current
 BU19000001,2d6bdaba-3832-40cc-acae-950883f1aa76,Verandering GLG nu t.o.v. 2050,-0.06,2022,2d6bdaba-3832-40cc-acae-950883f1aa76_d_cbs_buurten.json,,,,pos_is_pos,current
@@ -82,15 +53,8 @@ BU19000001,0bbd30e5-08f5-4499-b6ca-cdda990720dc,Verhouding oppervlakte water / v
 BU19000001,89b6274f-9372-4784-8ba3-924b6c7e4d7d,Verwerken hemelwater exc. schade,8.4,2022,89b6274f-9372-4784-8ba3-924b6c7e4d7d_d_cbs_buurten.json,,,,pos_is_pos,current
 BU19000001,9b168456-9219-4c3b-af16-636662a74155,Vrijwilliger,23.5,2024,Gezondheidsmonitor RIVM 2024,,,,pos_is_pos,current
 BU19000001,49d5687e-c062-40b5-84b9-7e4557b6cee0,Winkelfunctie,14,2026,BAG,,aantal,Gebruik,pos_is_pos,current
-BU19000001,6dd8b659-29c1-4396-a853-1abd7c6e0591,Woningcorporatie bezit,67.0,2025,CBS_86165NED,,%,,pos_is_pos,current
 BU19000001,89ad6843-0db9-4044-9508-307775d4f496,Woningen gebouwd vóór 1945 (BAG),1.0,2025,Kadaster BAG Fryslân 2026,,%,Wonen,pos_is_pos,current
-BU19000001,e3d59c6a-adf9-4bad-b842-98ce71760935,Woningvoorraad,941.0,2023,Kerncijfers wijken en buurten 2023,,aantal,,pos_is_pos,current
 BU19000001,b1011f4c-30b1-4088-bcf6-a67893d92c5f,Woonfunctie,960,2026,BAG,,aantal,Gebruik,pos_is_pos,current
-BU19000002,356a2329-eadb-494f-a09d-906a3db264d4,0-15 jaar,487.5,2025,DEMO: gemiddelde Bolsward-Noord en Bolsward-Noordoost,,Aantal,,pos_is_pos,current
-BU19000002,026bcd11-ace5-4ec7-adbc-c06c324315cd,15-25 jaar,357.5,2025,DEMO: gemiddelde Bolsward-Noord en Bolsward-Noordoost,,Aantal,,pos_is_pos,current
-BU19000002,e6dd31a1-a056-4c07-a48c-1d4517269f1e,25-45 jaar,590.0,2025,DEMO: gemiddelde Bolsward-Noord en Bolsward-Noordoost,,Aantal,,pos_is_pos,current
-BU19000002,8225fa5c-efb8-4fd0-865b-a36ff0724a28,45-65 jaar,757.5,2025,DEMO: gemiddelde Bolsward-Noord en Bolsward-Noordoost,,Aantal,,pos_is_pos,current
-BU19000002,b0ee9877-3850-4529-b352-6ec673562ef8,65+ jaar,680.0,2025,DEMO: gemiddelde Bolsward-Noord en Bolsward-Noordoost,,Aantal,,pos_is_pos,current
 BU19000002,93564b76-b07a-4134-868e-10654650d064,Aantal bushaltes,1.5,2026,DEMO: gemiddelde Bolsward-Noord en Bolsward-Noordoost,,aantal,,pos_is_pos,current
 BU19000002,233505e1-d22f-48b5-b67f-88ea73d12967,Aantal energielabels,792.0,2025,DEMO: gemiddelde Bolsward-Noord en Bolsward-Noordoost,,aantal,Wonen,-/+,current
 BU19000002,a2ed3719-64a7-40da-bfc5-a43d3d292594,Aantal energielabels (definitief),301.0,2025,DEMO: gemiddelde Bolsward-Noord en Bolsward-Noordoost,,aantal,Wonen,N/A,current
@@ -101,13 +65,8 @@ BU19000002,b69a88a0-efd4-4f8b-888a-97b653e1f13d,Aantal tramhaltes,0.0,2026,DEMO:
 BU19000002,696ca006-89a0-4e9f-aa5b-f68c724736d1,Aantal treinhaltes,0.0,2026,DEMO: gemiddelde Bolsward-Noord en Bolsward-Noordoost,,aantal,,pos_is_pos,current
 BU19000002,c49c1563-2d85-4a2f-bdc9-02c340c4e510,Aantal veerboten,0.0,2026,DEMO: gemiddelde Bolsward-Noord en Bolsward-Noordoost,,aantal,,pos_is_pos,current
 BU19000002,a5ed2ff5-f431-48e8-98d4-0c56686de109,Achterstand leerlingen,120.3,2025,DEMO: gemiddelde Bolsward-Noord en Bolsward-Noordoost,,score,,-/+,current
-BU19000002,869bec9c-9b9a-4425-9cd6-09cb4f7451ae,Afstand tot grote supermarkt,0.9,2025,DEMO: gemiddelde Bolsward-Noord en Bolsward-Noordoost,,km,,-/+,current
-BU19000002,1b28d9ef-f7ff-4609-9ef7-7ab8a9b6cba7,Afstand tot huisarts,1.6,2025,DEMO: gemiddelde Bolsward-Noord en Bolsward-Noordoost,,,,-/+,current
-BU19000002,76abbf47-6eb6-4c10-a4bf-ec0280435052,Afstand tot kinderdagverblijf,0.7,2025,DEMO: gemiddelde Bolsward-Noord en Bolsward-Noordoost,,km,,-/+,current
 BU19000002,bf4e5b8f-6b0a-4632-b9b4-8e29d025e68c,Afstand tot koele plek,226.0,2021,DEMO: gemiddelde Bolsward-Noord en Bolsward-Noordoost,,,,-/+,current
-BU19000002,ec95fe04-04fd-4bbb-bb9f-0f3f97861e5d,Afstand tot school,0.7,2025,DEMO: gemiddelde Bolsward-Noord en Bolsward-Noordoost,,km,,-/+,current
 BU19000002,b7090c23-7495-48c2-bfb3-cbfb7140386f,beschadiging auto's,13.5,2024,DEMO: gemiddelde Bolsward-Noord en Bolsward-Noordoost,,,,-/+,current
-BU19000002,f18b2c78-871b-48a7-b08f-fa743e589db8,Bevolkingsdichtheid,3144.0,2025,DEMO: gemiddelde Bolsward-Noord en Bolsward-Noordoost,,inw/km²,,pos_is_pos,current
 BU19000002,64470009-7467-4a34-8f3c-b44d896a5364,Bewegen,47.2,2024,DEMO: gemiddelde Bolsward-Noord en Bolsward-Noordoost,,,,pos_is_pos,current
 BU19000002,5d7ad356-aac8-4815-8da7-97dff60c7873,Bijeenkomstfunctie,5.5,2026,DEMO: gemiddelde Bolsward-Noord en Bolsward-Noordoost,,aantal,Gebruik,pos_is_pos,current
 BU19000002,3241e6b8-0712-4653-a420-2f3274466f6b,Bouwjaar 1915-1945,2.5,2025,DEMO: gemiddelde Bolsward-Noord en Bolsward-Noordoost,,aantal,Bebouwing,pos_is_pos,current
@@ -118,50 +77,31 @@ BU19000002,29cfacae-021e-4fe5-819b-e9eb655837ae,Celfunctie,0.5,2026,DEMO: gemidd
 BU19000002,81ccf247-0449-40e0-a99c-a67019f272e4,Definitief energielabel,0.5,2025,DEMO: gemiddelde Bolsward-Noord en Bolsward-Noordoost,,,,pos_is_pos,current
 BU19000002,3ca8572d-cc03-4fd9-9bc9-e1cd0fc0a627,diefstal fiets,1.0,2024,DEMO: gemiddelde Bolsward-Noord en Bolsward-Noordoost,,aantal,,-/+,current
 BU19000002,1e9bc2fe-d5bd-4306-9b6b-d443e22916cf,Diversiteit Functies (Simpson Index),0.2,2026,DEMO: gemiddelde Bolsward-Noord en Bolsward-Noordoost,,index,,pos_is_pos,current
-BU19000002,257494f4-9e51-4a4a-a662-feabfe9758b0,Eenpersoonshuishoudens,415.0,2025,DEMO: gemiddelde Bolsward-Noord en Bolsward-Noordoost,,aantal,,pos_is_pos,current
 BU19000002,4661dcb9-b7c4-42f8-b7c5-a61c12568806,Eenzaamheid,48.3,2024,DEMO: gemiddelde Bolsward-Noord en Bolsward-Noordoost,,,,-/+,current
 BU19000002,b53e54d6-ff54-4be1-b539-f915fd253831,Energielabel coverage,24.8,2025,DEMO: gemiddelde Bolsward-Noord en Bolsward-Noordoost,,%,Wonen,pos_is_pos,current
 BU19000002,d20c7b4d-d305-495b-b77c-07b8121614a7,Ervaren gezondheid,71.8,2024,DEMO: gemiddelde Bolsward-Noord en Bolsward-Noordoost,,%,Gezondheid,pos_is_pos,current
 BU19000002,22d02bf9-99ef-4357-b797-09a714690b11,Gemiddeld bouwjaar woningen (BAG),1977.5,2025,DEMO: gemiddelde Bolsward-Noord en Bolsward-Noordoost,,jaar,Wonen,pos_is_pos,current
 BU19000002,3c2d0ca0-3a6d-4f53-809f-f82fa9b9fd22,Gemiddeld energielabel,4.2,2025,DEMO: gemiddelde Bolsward-Noord en Bolsward-Noordoost,,score (1.0 - 9.0),,pos_is_pos,current
-BU19000002,7d9339e3-ea2c-474b-802a-49c854849f73,Gemiddelde woonoppervlakte (BAG),120.0,2026,DEMO: gemiddelde Bolsward-Noord en Bolsward-Noordoost,,m²,Wonen,pos_is_pos,current
-BU19000002,7053d6a5-2bcf-4254-b089-79852f12d9aa,Gemiddelde WOZ-waarde,279.0,2025,DEMO: gemiddelde Bolsward-Noord en Bolsward-Noordoost,,x 1 000 euro,,pos_is_pos,current
 BU19000002,a4f84d1c-3263-4229-ad95-615924cb7852,Gemiddeld Laagste Grondwaterstand,1.7,2022,DEMO: gemiddelde Bolsward-Noord en Bolsward-Noordoost,,,,pos_is_pos,current
+BU19000002,7d9339e3-ea2c-474b-802a-49c854849f73,Gemiddelde woonoppervlakte (BAG),120.0,2026,DEMO: gemiddelde Bolsward-Noord en Bolsward-Noordoost,,m²,Wonen,pos_is_pos,current
 BU19000002,311a6449-b145-4678-b51e-ac4e342dd1bf,Gezondheid,8.4,2024,DEMO: gemiddelde Bolsward-Noord en Bolsward-Noordoost,,,,pos_is_pos,current
 BU19000002,3baca929-ccc3-48aa-b966-e6877d01cbe7,Gezondheidszorgfunctie,3.0,2026,DEMO: gemiddelde Bolsward-Noord en Bolsward-Noordoost,,aantal,Gebruik,pos_is_pos,current
 BU19000002,0ed37b61-f13d-446b-b108-70bb09af98e0,Huisarts,1.6,2024,DEMO: gemiddelde Bolsward-Noord en Bolsward-Noordoost,,km,,pos_is_pos,current
 BU19000002,b2e606cc-1d58-4917-9dec-148d90c80742,Huishoudens (BAG woonfunctie),1303.0,2025,DEMO: gemiddelde Bolsward-Noord en Bolsward-Noordoost,,aantal,Wonen,pos_is_pos,current
-BU19000002,ad3b0509-3c14-49f8-aa10-4b3b391a2d84,Huishoudens met kind,455.0,2025,DEMO: gemiddelde Bolsward-Noord en Bolsward-Noordoost,,aantal,,pos_is_pos,current
-BU19000002,3dd70913-391e-4d5f-a121-d17c8b466372,Huishoudens met laag inkomen,3.0,2023,DEMO: gemiddelde Bolsward-Noord en Bolsward-Noordoost,,%,,-/+,current
-BU19000002,be1a9ac4-6330-47c9-93c6-c9008b5daf89,Huishoudens totaal,1245.0,2025,DEMO: gemiddelde Bolsward-Noord en Bolsward-Noordoost,,aantal,,pos_is_pos,current
-BU19000002,428c1232-0213-491b-ad0c-56dcc82a8c59,Huishoudens zonder kind,372.5,2025,DEMO: gemiddelde Bolsward-Noord en Bolsward-Noordoost,,aantal,,pos_is_pos,current
 BU19000002,92137246-e0f1-493d-97a8-e4a5660a99fb,inbraak auto,1.5,2024,DEMO: gemiddelde Bolsward-Noord en Bolsward-Noordoost,,aantal,,-/+,current
 BU19000002,d90d2b4c-4bce-428c-834a-1cc8113958e4,inbraak woning,2.0,2024,DEMO: gemiddelde Bolsward-Noord en Bolsward-Noordoost,,aantal,,-/+,current
 BU19000002,28a7a580-dc3c-4105-9fb3-d9ef47792429,Industriefunctie,51.0,2026,DEMO: gemiddelde Bolsward-Noord en Bolsward-Noordoost,,aantal,Gebruik,pos_is_pos,current
-BU19000002,9c035f53-75a5-43eb-8496-22c4c6f08d6b,Inkomen per inwoner,22.1,2023,DEMO: gemiddelde Bolsward-Noord en Bolsward-Noordoost,,,,pos_is_pos,current
-BU19000002,31f70dff-c116-4267-bef0-d15b0ff4c020,Inwoners,2862.5,2023,DEMO: gemiddelde Bolsward-Noord en Bolsward-Noordoost,,aantal,,pos_is_pos,current
 BU19000002,0212e8f8-053d-4287-b924-7bdc20c53bb2,Kantoorfunctie,8.0,2026,DEMO: gemiddelde Bolsward-Noord en Bolsward-Noordoost,,aantal,Gebruik,pos_is_pos,current
-BU19000002,a0bbfd44-bacd-4434-bc8d-3a5204d65637,Koopwoningen,53.0,2025,DEMO: gemiddelde Bolsward-Noord en Bolsward-Noordoost,,percentage,,pos_is_pos,current
 BU19000002,a990c073-78e3-4490-a26e-1fa8ca6988f9,Logiesfunctie,0.0,2026,DEMO: gemiddelde Bolsward-Noord en Bolsward-Noordoost,,aantal,Gebruik,pos_is_pos,current
 BU19000002,7b4a6b5f-7d6a-46ef-8a7d-7b3ee28a014c,Mantelzorger,14.3,2024,DEMO: gemiddelde Bolsward-Noord en Bolsward-Noordoost,,%,,pos_is_pos,current
 BU19000002,58fc72b6-881e-4917-83de-8099df3e3b0d,Moeite met rondkomen,14.1,2024,DEMO: gemiddelde Bolsward-Noord en Bolsward-Noordoost,,%,Gezondheid,-/+,current
-BU19000002,b07f74eb-5117-4705-802c-597ba830d016,Netto arbeidsparticipatie,67.5,2023,DEMO: gemiddelde Bolsward-Noord en Bolsward-Noordoost,,%,,pos_is_pos,current
 BU19000002,0432fef2-83f2-4405-a457-08b89945ca86,Obesitas,21.3,2024,DEMO: gemiddelde Bolsward-Noord en Bolsward-Noordoost,,%,Gezondheid,-/+,current
 BU19000002,93048a96-d3cd-4d99-83b5-2b950e8d78a2,Onderwijsfunctie,3.0,2026,DEMO: gemiddelde Bolsward-Noord en Bolsward-Noordoost,,aantal,Gebruik,pos_is_pos,current
-BU19000002,56f32b9a-bc45-4be1-9e1c-c2668c2e2a32,Opleidingsniveau hoog,515.0,2023,DEMO: gemiddelde Bolsward-Noord en Bolsward-Noordoost,,aantal,,pos_is_pos,current
-BU19000002,c9719a07-57a5-48cf-8f93-b6f932aead51,Opleidingsniveau laag,555.0,2023,DEMO: gemiddelde Bolsward-Noord en Bolsward-Noordoost,,aantal,,pos_is_pos,current
-BU19000002,1fa5df89-13e3-424f-9eba-9372cae42896,Opleidingsniveau middelbaar,990.0,2023,DEMO: gemiddelde Bolsward-Noord en Bolsward-Noordoost,,aantal,,pos_is_pos,current
 BU19000002,97f53738-3439-4c28-8cac-046a52c65248,Oppervlak groen per inwoner,54.0,2025,DEMO: gemiddelde Bolsward-Noord en Bolsward-Noordoost,,,,pos_is_pos,current
 BU19000002,34e36ae1-4132-4555-a4fc-d16b039d467e,Overgewicht,55.7,2024,DEMO: gemiddelde Bolsward-Noord en Bolsward-Noordoost,,%,Gezondheid,-/+,current
 BU19000002,25405460-907c-4e63-acc4-4f9c949f7cac,Overige gebruiksfunctie,67.0,2026,DEMO: gemiddelde Bolsward-Noord en Bolsward-Noordoost,,aantal,Gebruik,pos_is_pos,current
 BU19000002,1ed22149-7fed-4466-a3b8-dfd7ff28f5b5,Overmatig drinken,4.6,2024,DEMO: gemiddelde Bolsward-Noord en Bolsward-Noordoost,,%,,-/+,current
-BU19000002,aa5ce990-a43e-439a-9e98-69899321cf40,Participatiewet totaal,105.0,2023,DEMO: gemiddelde Bolsward-Noord en Bolsward-Noordoost,,,,-/+,current
-BU19000002,2aadb30f-860f-4f70-916f-6df00e86e870,Particulier huurbezit,1.5,2025,DEMO: gemiddelde Bolsward-Noord en Bolsward-Noordoost,,,,pos_is_pos,current
-BU19000002,352dda4d-5de8-4f31-b85a-6d82f812ba7c,Percentage werknemers,87.0,2023,DEMO: gemiddelde Bolsward-Noord en Bolsward-Noordoost,,percentage,Gebruik,pos_is_pos,current
 BU19000002,4f53e98e-3309-4a3a-9ecc-732956f7c53a,Percentage woonfunctie (BAG),89.5,2026,DEMO: gemiddelde Bolsward-Noord en Bolsward-Noordoost,,%,Wonen,pos_is_pos,current
-BU19000002,f8d0d890-3975-4183-9555-06d673c4657f,Percentage zelfstandigen,13.0,2023,DEMO: gemiddelde Bolsward-Noord en Bolsward-Noordoost,,percentage,Gebruik,pos_is_pos,current
-BU19000002,88192b70-faa9-4108-a473-302aa0f624a9,Personenauto's naar oppervlakte,1414.0,2025,DEMO: gemiddelde Bolsward-Noord en Bolsward-Noordoost,,per km²,,pos_is_pos,current
-BU19000002,461d542b-b8be-4510-9dd0-5ba554b818cb,Personenauto's per huishouden,1.0,2025,DEMO: gemiddelde Bolsward-Noord en Bolsward-Noordoost,,per huishouden,,pos_is_pos,current
 BU19000002,a4780646-844e-4221-b07a-b4f4ade25059,Roken,18.4,2024,DEMO: gemiddelde Bolsward-Noord en Bolsward-Noordoost,,,,-/+,current
 BU19000002,e2f618ca-0726-4c1f-8442-c1150578622e,Sportfunctie,3.0,2026,DEMO: gemiddelde Bolsward-Noord en Bolsward-Noordoost,,aantal,Gebruik,pos_is_pos,current
 BU19000002,2d6bdaba-3832-40cc-acae-950883f1aa76,Verandering GLG nu t.o.v. 2050,-0.1,2022,DEMO: gemiddelde Bolsward-Noord en Bolsward-Noordoost,,,,pos_is_pos,current
@@ -169,16 +109,8 @@ BU19000002,0bbd30e5-08f5-4499-b6ca-cdda990720dc,Verhouding oppervlakte water / v
 BU19000002,89b6274f-9372-4784-8ba3-924b6c7e4d7d,Verwerken hemelwater exc. schade,8.3,2022,DEMO: gemiddelde Bolsward-Noord en Bolsward-Noordoost,,,,pos_is_pos,current
 BU19000002,9b168456-9219-4c3b-af16-636662a74155,Vrijwilliger,27.6,2024,DEMO: gemiddelde Bolsward-Noord en Bolsward-Noordoost,,,,pos_is_pos,current
 BU19000002,49d5687e-c062-40b5-84b9-7e4557b6cee0,Winkelfunctie,7.5,2026,DEMO: gemiddelde Bolsward-Noord en Bolsward-Noordoost,,aantal,Gebruik,pos_is_pos,current
-BU19000002,6dd8b659-29c1-4396-a853-1abd7c6e0591,Woningcorporatie bezit,45.0,2025,DEMO: gemiddelde Bolsward-Noord en Bolsward-Noordoost,,%,,pos_is_pos,current
 BU19000002,89ad6843-0db9-4044-9508-307775d4f496,Woningen gebouwd vóór 1945 (BAG),1.1,2025,DEMO: gemiddelde Bolsward-Noord en Bolsward-Noordoost,,%,Wonen,pos_is_pos,current
-BU19000002,e3d59c6a-adf9-4bad-b842-98ce71760935,Woningvoorraad,1285.0,2023,DEMO: gemiddelde Bolsward-Noord en Bolsward-Noordoost,,aantal,,pos_is_pos,current
 BU19000002,b1011f4c-30b1-4088-bcf6-a67893d92c5f,Woonfunctie,1294.0,2026,DEMO: gemiddelde Bolsward-Noord en Bolsward-Noordoost,,aantal,Gebruik,pos_is_pos,current
-BU19000002,9c035f53-75a5-43eb-8496-22c4c6f08d6b,Inkomen per inwoner,30.9,2024,DEMO: gemiddelde Bolsward-Noord en Bolsward-Noordoost,,,,pos_is_pos,current
-BU19000004,356a2329-eadb-494f-a09d-906a3db264d4,0-15 jaar,605.0,2025,CBS_86165NED,,Aantal,,pos_is_pos,current
-BU19000004,026bcd11-ace5-4ec7-adbc-c06c324315cd,15-25 jaar,515.0,2025,CBS_86165NED,,Aantal,,pos_is_pos,current
-BU19000004,e6dd31a1-a056-4c07-a48c-1d4517269f1e,25-45 jaar,690.0,2025,CBS_86165NED,,Aantal,,pos_is_pos,current
-BU19000004,8225fa5c-efb8-4fd0-865b-a36ff0724a28,45-65 jaar,1110.0,2025,CBS_86165NED,,Aantal,,pos_is_pos,current
-BU19000004,b0ee9877-3850-4529-b352-6ec673562ef8,65+ jaar,895.0,2025,CBS_86165NED,,Aantal,,pos_is_pos,current
 BU19000004,93564b76-b07a-4134-868e-10654650d064,Aantal bushaltes,2,2026,OpenStreetMap / Overpass API 2026,,aantal,,pos_is_pos,current
 BU19000004,233505e1-d22f-48b5-b67f-88ea73d12967,Aantal energielabels,858,2025,RVO EP-Online 2026-02,,aantal,Wonen,-/+,current
 BU19000004,a2ed3719-64a7-40da-bfc5-a43d3d292594,Aantal energielabels (definitief),293,2025,RVO EP-Online 2026-02,,aantal,Wonen,N/A,current
@@ -189,13 +121,8 @@ BU19000004,b69a88a0-efd4-4f8b-888a-97b653e1f13d,Aantal tramhaltes,0,2026,OpenStr
 BU19000004,696ca006-89a0-4e9f-aa5b-f68c724736d1,Aantal treinhaltes,0,2026,OpenStreetMap / Overpass API 2026,,aantal,,pos_is_pos,current
 BU19000004,c49c1563-2d85-4a2f-bdc9-02c340c4e510,Aantal veerboten,0,2026,OpenStreetMap / Overpass API 2026,,aantal,,pos_is_pos,current
 BU19000004,a5ed2ff5-f431-48e8-98d4-0c56686de109,Achterstand leerlingen,4.2133333333,2025,a5ed2ff5-f431-48e8-98d4-0c56686de109_d_cbs_buurten.json,,score,,-/+,current
-BU19000004,869bec9c-9b9a-4425-9cd6-09cb4f7451ae,Afstand tot grote supermarkt,1.5,2025,CBS_86165NED,,km,,-/+,current
-BU19000004,1b28d9ef-f7ff-4609-9ef7-7ab8a9b6cba7,Afstand tot huisarts,1.6,2025,CBS_86165NED,,,,-/+,current
-BU19000004,76abbf47-6eb6-4c10-a4bf-ec0280435052,Afstand tot kinderdagverblijf,0.9,2025,CBS_86165NED,,km,,-/+,current
 BU19000004,bf4e5b8f-6b0a-4632-b9b4-8e29d025e68c,Afstand tot koele plek,206,2021,bf4e5b8f-6b0a-4632-b9b4-8e29d025e68c_d_cbs_buurten.json,,,,-/+,current
-BU19000004,ec95fe04-04fd-4bbb-bb9f-0f3f97861e5d,Afstand tot school,0.9,2025,CBS_86165NED,,km,,-/+,current
 BU19000004,b7090c23-7495-48c2-bfb3-cbfb7140386f,beschadiging auto's,12,2024,,,,,-/+,current
-BU19000004,f18b2c78-871b-48a7-b08f-fa743e589db8,Bevolkingsdichtheid,3380.0,2025,CBS_86165NED,,inw/km²,,pos_is_pos,current
 BU19000004,64470009-7467-4a34-8f3c-b44d896a5364,Bewegen,51.8,2024,Gezondheidsmonitor RIVM 2024,,,,pos_is_pos,current
 BU19000004,5d7ad356-aac8-4815-8da7-97dff60c7873,Bijeenkomstfunctie,5,2026,BAG,,aantal,Gebruik,pos_is_pos,current
 BU19000004,3241e6b8-0712-4653-a420-2f3274466f6b,Bouwjaar 1915-1945,2.0,2025,Kadaster BAG Fryslân 2026,,aantal,Bebouwing,pos_is_pos,current
@@ -206,50 +133,31 @@ BU19000004,29cfacae-021e-4fe5-819b-e9eb655837ae,Celfunctie,1,2026,BAG,,aantal,Ge
 BU19000004,81ccf247-0449-40e0-a99c-a67019f272e4,Definitief energielabel,0.474232773595831,2025,81ccf247-0449-40e0-a99c-a67019f272e4_d_cbs_buurten.json,,,,pos_is_pos,current
 BU19000004,3ca8572d-cc03-4fd9-9bc9-e1cd0fc0a627,diefstal fiets,2,2024,,,aantal,,-/+,current
 BU19000004,1e9bc2fe-d5bd-4306-9b6b-d443e22916cf,Diversiteit Functies (Simpson Index),0.12,2026,BAG,,index,,pos_is_pos,current
-BU19000004,257494f4-9e51-4a4a-a662-feabfe9758b0,Eenpersoonshuishoudens,405.0,2025,CBS_86165NED,,aantal,,pos_is_pos,current
 BU19000004,4661dcb9-b7c4-42f8-b7c5-a61c12568806,Eenzaamheid,41.6,2024,Gezondheidsmonitor RIVM 2024,,,,-/+,current
 BU19000004,b53e54d6-ff54-4be1-b539-f915fd253831,Energielabel coverage,18.0,2025,Berekend: EP-Online / BAG Fryslân,,%,Wonen,pos_is_pos,current
 BU19000004,d20c7b4d-d305-495b-b77c-07b8121614a7,Ervaren gezondheid,77.6,2024,Gezondheidsmonitor RIVM 2024,,%,Gezondheid,pos_is_pos,current
 BU19000004,22d02bf9-99ef-4357-b797-09a714690b11,Gemiddeld bouwjaar woningen (BAG),1984.0,2025,Kadaster BAG Fryslân 2026,,jaar,Wonen,pos_is_pos,current
 BU19000004,3c2d0ca0-3a6d-4f53-809f-f82fa9b9fd22,Gemiddeld energielabel,4.081911262798635,2025,RVO EP-Online 2026-02,,score (1.0 - 9.0),,pos_is_pos,current
-BU19000004,7d9339e3-ea2c-474b-802a-49c854849f73,Gemiddelde woonoppervlakte (BAG),132.0,2026,BAG,,m²,Wonen,pos_is_pos,current
-BU19000004,7053d6a5-2bcf-4254-b089-79852f12d9aa,Gemiddelde WOZ-waarde,334.0,2025,CBS_86165NED,,x 1 000 euro,,pos_is_pos,current
 BU19000004,a4f84d1c-3263-4229-ad95-615924cb7852,Gemiddeld Laagste Grondwaterstand,1.82,2022,a4f84d1c-3263-4229-ad95-615924cb7852_d_cbs_buurten.json,,,,pos_is_pos,current
+BU19000004,7d9339e3-ea2c-474b-802a-49c854849f73,Gemiddelde woonoppervlakte (BAG),132.0,2026,BAG,,m²,Wonen,pos_is_pos,current
 BU19000004,311a6449-b145-4678-b51e-ac4e342dd1bf,Gezondheid,6.0,2024,Gezondheidsmonitor RIVM 2024,,,,pos_is_pos,current
 BU19000004,3baca929-ccc3-48aa-b966-e6877d01cbe7,Gezondheidszorgfunctie,3,2026,BAG,,aantal,Gebruik,pos_is_pos,current
 BU19000004,0ed37b61-f13d-446b-b108-70bb09af98e0,Huisarts,1.6,2024,CBS_85984NED,,km,,pos_is_pos,current
 BU19000004,b2e606cc-1d58-4917-9dec-148d90c80742,Huishoudens (BAG woonfunctie),1625.0,2025,Kadaster BAG Fryslân 2026,,aantal,Wonen,pos_is_pos,current
-BU19000004,ad3b0509-3c14-49f8-aa10-4b3b391a2d84,Huishoudens met kind,615.0,2025,CBS_86165NED,,aantal,,pos_is_pos,current
-BU19000004,3dd70913-391e-4d5f-a121-d17c8b466372,Huishoudens met laag inkomen,1.6,2023,Kerncijfers wijken en buurten 2023,,%,,-/+,current
-BU19000004,be1a9ac4-6330-47c9-93c6-c9008b5daf89,Huishoudens totaal,1545.0,2025,CBS_86165NED,,aantal,,pos_is_pos,current
-BU19000004,428c1232-0213-491b-ad0c-56dcc82a8c59,Huishoudens zonder kind,520.0,2025,CBS_86165NED,,aantal,,pos_is_pos,current
 BU19000004,92137246-e0f1-493d-97a8-e4a5660a99fb,inbraak auto,2,2024,,,aantal,,-/+,current
 BU19000004,d90d2b4c-4bce-428c-834a-1cc8113958e4,inbraak woning,3,2024,,,aantal,,-/+,current
 BU19000004,28a7a580-dc3c-4105-9fb3-d9ef47792429,Industriefunctie,35,2026,BAG,,aantal,Gebruik,pos_is_pos,current
-BU19000004,9c035f53-75a5-43eb-8496-22c4c6f08d6b,Inkomen per inwoner,30.9,2024,CBS_85984NED,,,,pos_is_pos,current
-BU19000004,31f70dff-c116-4267-bef0-d15b0ff4c020,Inwoners,3955.0,2023,Kerncijfers wijken en buurten 2023,,aantal,,pos_is_pos,current
 BU19000004,0212e8f8-053d-4287-b924-7bdc20c53bb2,Kantoorfunctie,4,2026,BAG,,aantal,Gebruik,pos_is_pos,current
-BU19000004,a0bbfd44-bacd-4434-bc8d-3a5204d65637,Koopwoningen,75.0,2025,CBS_86165NED,,percentage,,pos_is_pos,current
 BU19000004,a990c073-78e3-4490-a26e-1fa8ca6988f9,Logiesfunctie,0,2026,BAG,,aantal,Gebruik,pos_is_pos,current
 BU19000004,7b4a6b5f-7d6a-46ef-8a7d-7b3ee28a014c,Mantelzorger,15.1,2024,Gezondheidsmonitor RIVM 2024,,%,,pos_is_pos,current
 BU19000004,58fc72b6-881e-4917-83de-8099df3e3b0d,Moeite met rondkomen,9.1,2024,Gezondheidsmonitor RIVM 2024,,%,Gezondheid,-/+,current
-BU19000004,b07f74eb-5117-4705-802c-597ba830d016,Netto arbeidsparticipatie,71.0,2023,Kerncijfers wijken en buurten 2023,,%,,pos_is_pos,current
 BU19000004,0432fef2-83f2-4405-a457-08b89945ca86,Obesitas,19.0,2024,CBS_50150NED,,%,Gezondheid,-/+,current
 BU19000004,93048a96-d3cd-4d99-83b5-2b950e8d78a2,Onderwijsfunctie,2,2026,BAG,,aantal,Gebruik,pos_is_pos,current
-BU19000004,56f32b9a-bc45-4be1-9e1c-c2668c2e2a32,Opleidingsniveau hoog,780.0,2023,Kerncijfers wijken en buurten 2023,,aantal,,pos_is_pos,current
-BU19000004,c9719a07-57a5-48cf-8f93-b6f932aead51,Opleidingsniveau laag,750.0,2023,Kerncijfers wijken en buurten 2023,,aantal,,pos_is_pos,current
-BU19000004,1fa5df89-13e3-424f-9eba-9372cae42896,Opleidingsniveau middelbaar,1350.0,2023,Kerncijfers wijken en buurten 2023,,aantal,,pos_is_pos,current
 BU19000004,97f53738-3439-4c28-8cac-046a52c65248,Oppervlak groen per inwoner,56.24,2025,97f53738-3439-4c28-8cac-046a52c65248_d_cbs_buurten.json,,,,pos_is_pos,current
 BU19000004,34e36ae1-4132-4555-a4fc-d16b039d467e,Overgewicht,53.9,2024,Gezondheidsmonitor RIVM 2024,,%,Gezondheid,-/+,current
 BU19000004,25405460-907c-4e63-acc4-4f9c949f7cac,Overige gebruiksfunctie,52,2026,BAG,,aantal,Gebruik,pos_is_pos,current
 BU19000004,1ed22149-7fed-4466-a3b8-dfd7ff28f5b5,Overmatig drinken,4.2,2024,Gezondheidsmonitor RIVM 2024,,%,,-/+,current
-BU19000004,aa5ce990-a43e-439a-9e98-69899321cf40,Participatiewet totaal,70.0,2023,Kerncijfers wijken en buurten 2023,,,,-/+,current
-BU19000004,2aadb30f-860f-4f70-916f-6df00e86e870,Particulier huurbezit,1.0,2025,CBS_86165NED,,,,pos_is_pos,current
-BU19000004,352dda4d-5de8-4f31-b85a-6d82f812ba7c,Percentage werknemers,87.0,2023,CBS_85618NED,,percentage,Gebruik,pos_is_pos,current
 BU19000004,4f53e98e-3309-4a3a-9ecc-732956f7c53a,Percentage woonfunctie (BAG),94.4,2026,BAG,,%,Wonen,pos_is_pos,current
-BU19000004,f8d0d890-3975-4183-9555-06d673c4657f,Percentage zelfstandigen,13.0,2023,CBS_85618NED,,percentage,Gebruik,pos_is_pos,current
-BU19000004,88192b70-faa9-4108-a473-302aa0f624a9,Personenauto's naar oppervlakte,1643.0,2025,CBS_86165NED,,per km²,,pos_is_pos,current
-BU19000004,461d542b-b8be-4510-9dd0-5ba554b818cb,Personenauto's per huishouden,1.2,2025,CBS_86165NED,,per huishouden,,pos_is_pos,current
 BU19000004,a4780646-844e-4221-b07a-b4f4ade25059,Roken,14.1,2024,Gezondheidsmonitor RIVM 2024,,,,-/+,current
 BU19000004,e2f618ca-0726-4c1f-8442-c1150578622e,Sportfunctie,1,2026,BAG,,aantal,Gebruik,pos_is_pos,current
 BU19000004,2d6bdaba-3832-40cc-acae-950883f1aa76,Verandering GLG nu t.o.v. 2050,-0.1,2022,2d6bdaba-3832-40cc-acae-950883f1aa76_d_cbs_buurten.json,,,,pos_is_pos,current
@@ -257,15 +165,8 @@ BU19000004,0bbd30e5-08f5-4499-b6ca-cdda990720dc,Verhouding oppervlakte water / v
 BU19000004,89b6274f-9372-4784-8ba3-924b6c7e4d7d,Verwerken hemelwater exc. schade,8.2,2022,89b6274f-9372-4784-8ba3-924b6c7e4d7d_d_cbs_buurten.json,,,,pos_is_pos,current
 BU19000004,9b168456-9219-4c3b-af16-636662a74155,Vrijwilliger,31.6,2024,Gezondheidsmonitor RIVM 2024,,,,pos_is_pos,current
 BU19000004,49d5687e-c062-40b5-84b9-7e4557b6cee0,Winkelfunctie,1,2026,BAG,,aantal,Gebruik,pos_is_pos,current
-BU19000004,6dd8b659-29c1-4396-a853-1abd7c6e0591,Woningcorporatie bezit,23.0,2025,CBS_86165NED,,%,,pos_is_pos,current
 BU19000004,89ad6843-0db9-4044-9508-307775d4f496,Woningen gebouwd vóór 1945 (BAG),1.2,2025,Kadaster BAG Fryslân 2026,,%,Wonen,pos_is_pos,current
-BU19000004,e3d59c6a-adf9-4bad-b842-98ce71760935,Woningvoorraad,1629.0,2023,Kerncijfers wijken en buurten 2023,,aantal,,pos_is_pos,current
 BU19000004,b1011f4c-30b1-4088-bcf6-a67893d92c5f,Woonfunctie,1628,2026,BAG,,aantal,Gebruik,pos_is_pos,current
-BU19000108,356a2329-eadb-494f-a09d-906a3db264d4,0-15 jaar,70.0,2025,CBS_86165NED,,Aantal,,pos_is_pos,current
-BU19000108,026bcd11-ace5-4ec7-adbc-c06c324315cd,15-25 jaar,65.0,2025,CBS_86165NED,,Aantal,,pos_is_pos,current
-BU19000108,e6dd31a1-a056-4c07-a48c-1d4517269f1e,25-45 jaar,100.0,2025,CBS_86165NED,,Aantal,,pos_is_pos,current
-BU19000108,8225fa5c-efb8-4fd0-865b-a36ff0724a28,45-65 jaar,165.0,2025,CBS_86165NED,,Aantal,,pos_is_pos,current
-BU19000108,b0ee9877-3850-4529-b352-6ec673562ef8,65+ jaar,165.0,2025,CBS_86165NED,,Aantal,,pos_is_pos,current
 BU19000108,93564b76-b07a-4134-868e-10654650d064,Aantal bushaltes,3,2026,OpenStreetMap / Overpass API 2026,,aantal,,pos_is_pos,current
 BU19000108,233505e1-d22f-48b5-b67f-88ea73d12967,Aantal energielabels,196,2025,RVO EP-Online 2026-02,,aantal,Wonen,-/+,current
 BU19000108,a2ed3719-64a7-40da-bfc5-a43d3d292594,Aantal energielabels (definitief),78,2025,RVO EP-Online 2026-02,,aantal,Wonen,N/A,current
@@ -276,13 +177,8 @@ BU19000108,b69a88a0-efd4-4f8b-888a-97b653e1f13d,Aantal tramhaltes,0,2026,OpenStr
 BU19000108,696ca006-89a0-4e9f-aa5b-f68c724736d1,Aantal treinhaltes,0,2026,OpenStreetMap / Overpass API 2026,,aantal,,pos_is_pos,current
 BU19000108,c49c1563-2d85-4a2f-bdc9-02c340c4e510,Aantal veerboten,0,2026,OpenStreetMap / Overpass API 2026,,aantal,,pos_is_pos,current
 BU19000108,a5ed2ff5-f431-48e8-98d4-0c56686de109,Achterstand leerlingen,0,2025,a5ed2ff5-f431-48e8-98d4-0c56686de109_d_cbs_buurten.json,,score,,-/+,current
-BU19000108,869bec9c-9b9a-4425-9cd6-09cb4f7451ae,Afstand tot grote supermarkt,0.4,2025,CBS_86165NED,,km,,-/+,current
-BU19000108,1b28d9ef-f7ff-4609-9ef7-7ab8a9b6cba7,Afstand tot huisarts,0.5,2025,CBS_86165NED,,,,-/+,current
-BU19000108,76abbf47-6eb6-4c10-a4bf-ec0280435052,Afstand tot kinderdagverblijf,0.4,2025,CBS_86165NED,,km,,-/+,current
 BU19000108,bf4e5b8f-6b0a-4632-b9b4-8e29d025e68c,Afstand tot koele plek,332,2021,bf4e5b8f-6b0a-4632-b9b4-8e29d025e68c_d_cbs_buurten.json,,,,-/+,current
-BU19000108,ec95fe04-04fd-4bbb-bb9f-0f3f97861e5d,Afstand tot school,0.4,2025,CBS_86165NED,,km,,-/+,current
 BU19000108,b7090c23-7495-48c2-bfb3-cbfb7140386f,beschadiging auto's,10,2024,,,,,-/+,current
-BU19000108,f18b2c78-871b-48a7-b08f-fa743e589db8,Bevolkingsdichtheid,2218.0,2025,CBS_86165NED,,inw/km²,,pos_is_pos,current
 BU19000108,64470009-7467-4a34-8f3c-b44d896a5364,Bewegen,57.3,2024,Gezondheidsmonitor RIVM 2024,,,,pos_is_pos,current
 BU19000108,5d7ad356-aac8-4815-8da7-97dff60c7873,Bijeenkomstfunctie,1,2026,BAG,,aantal,Gebruik,pos_is_pos,current
 BU19000108,3241e6b8-0712-4653-a420-2f3274466f6b,Bouwjaar 1915-1945,120.0,2025,Kadaster BAG Fryslân 2026,,aantal,Bebouwing,pos_is_pos,current
@@ -293,50 +189,31 @@ BU19000108,29cfacae-021e-4fe5-819b-e9eb655837ae,Celfunctie,0,2026,BAG,,aantal,Ge
 BU19000108,81ccf247-0449-40e0-a99c-a67019f272e4,Definitief energielabel,0.537142857142857,2025,81ccf247-0449-40e0-a99c-a67019f272e4_d_cbs_buurten.json,,,,pos_is_pos,current
 BU19000108,3ca8572d-cc03-4fd9-9bc9-e1cd0fc0a627,diefstal fiets,9,2024,,,aantal,,-/+,current
 BU19000108,1e9bc2fe-d5bd-4306-9b6b-d443e22916cf,Diversiteit Functies (Simpson Index),0.27,2026,BAG,,index,,pos_is_pos,current
-BU19000108,257494f4-9e51-4a4a-a662-feabfe9758b0,Eenpersoonshuishoudens,100.0,2025,CBS_86165NED,,aantal,,pos_is_pos,current
 BU19000108,4661dcb9-b7c4-42f8-b7c5-a61c12568806,Eenzaamheid,38.6,2024,Gezondheidsmonitor RIVM 2024,,,,-/+,current
 BU19000108,b53e54d6-ff54-4be1-b539-f915fd253831,Energielabel coverage,26.9,2025,Berekend: EP-Online / BAG Fryslân,,%,Wonen,pos_is_pos,current
 BU19000108,d20c7b4d-d305-495b-b77c-07b8121614a7,Ervaren gezondheid,77.7,2024,Gezondheidsmonitor RIVM 2024,,%,Gezondheid,pos_is_pos,current
 BU19000108,22d02bf9-99ef-4357-b797-09a714690b11,Gemiddeld bouwjaar woningen (BAG),1953.0,2025,Kadaster BAG Fryslân 2026,,jaar,Wonen,pos_is_pos,current
 BU19000108,3c2d0ca0-3a6d-4f53-809f-f82fa9b9fd22,Gemiddeld energielabel,4.711538461538462,2025,RVO EP-Online 2026-02,,score (1.0 - 9.0),,pos_is_pos,current
-BU19000108,7d9339e3-ea2c-474b-802a-49c854849f73,Gemiddelde woonoppervlakte (BAG),135.0,2026,BAG,,m²,Wonen,pos_is_pos,current
-BU19000108,7053d6a5-2bcf-4254-b089-79852f12d9aa,Gemiddelde WOZ-waarde,365.0,2025,CBS_86165NED,,x 1 000 euro,,pos_is_pos,current
 BU19000108,a4f84d1c-3263-4229-ad95-615924cb7852,Gemiddeld Laagste Grondwaterstand,1.87,2022,a4f84d1c-3263-4229-ad95-615924cb7852_d_cbs_buurten.json,,,,pos_is_pos,current
+BU19000108,7d9339e3-ea2c-474b-802a-49c854849f73,Gemiddelde woonoppervlakte (BAG),135.0,2026,BAG,,m²,Wonen,pos_is_pos,current
 BU19000108,311a6449-b145-4678-b51e-ac4e342dd1bf,Gezondheid,4.5,2024,Gezondheidsmonitor RIVM 2024,,,,pos_is_pos,current
 BU19000108,3baca929-ccc3-48aa-b966-e6877d01cbe7,Gezondheidszorgfunctie,0,2026,BAG,,aantal,Gebruik,pos_is_pos,current
 BU19000108,0ed37b61-f13d-446b-b108-70bb09af98e0,Huisarts,0.5,2024,CBS_85984NED,,km,,pos_is_pos,current
 BU19000108,b2e606cc-1d58-4917-9dec-148d90c80742,Huishoudens (BAG woonfunctie),290.0,2025,Kadaster BAG Fryslân 2026,,aantal,Wonen,pos_is_pos,current
-BU19000108,ad3b0509-3c14-49f8-aa10-4b3b391a2d84,Huishoudens met kind,75.0,2025,CBS_86165NED,,aantal,,pos_is_pos,current
-BU19000108,3dd70913-391e-4d5f-a121-d17c8b466372,Huishoudens met laag inkomen,2.2,2023,Kerncijfers wijken en buurten 2023,,%,,-/+,current
-BU19000108,be1a9ac4-6330-47c9-93c6-c9008b5daf89,Huishoudens totaal,280.0,2025,CBS_86165NED,,aantal,,pos_is_pos,current
-BU19000108,428c1232-0213-491b-ad0c-56dcc82a8c59,Huishoudens zonder kind,100.0,2025,CBS_86165NED,,aantal,,pos_is_pos,current
 BU19000108,92137246-e0f1-493d-97a8-e4a5660a99fb,inbraak auto,0,2024,,,aantal,,-/+,current
 BU19000108,d90d2b4c-4bce-428c-834a-1cc8113958e4,inbraak woning,2,2024,,,aantal,,-/+,current
 BU19000108,28a7a580-dc3c-4105-9fb3-d9ef47792429,Industriefunctie,18,2026,BAG,,aantal,Gebruik,pos_is_pos,current
-BU19000108,9c035f53-75a5-43eb-8496-22c4c6f08d6b,Inkomen per inwoner,36.7,2023,Kerncijfers wijken en buurten 2023,,,,pos_is_pos,current
-BU19000108,31f70dff-c116-4267-bef0-d15b0ff4c020,Inwoners,580.0,2023,Kerncijfers wijken en buurten 2023,,aantal,,pos_is_pos,current
 BU19000108,0212e8f8-053d-4287-b924-7bdc20c53bb2,Kantoorfunctie,5,2026,BAG,,aantal,Gebruik,pos_is_pos,current
-BU19000108,a0bbfd44-bacd-4434-bc8d-3a5204d65637,Koopwoningen,76.0,2025,CBS_86165NED,,percentage,,pos_is_pos,current
 BU19000108,a990c073-78e3-4490-a26e-1fa8ca6988f9,Logiesfunctie,0,2026,BAG,,aantal,Gebruik,pos_is_pos,current
 BU19000108,7b4a6b5f-7d6a-46ef-8a7d-7b3ee28a014c,Mantelzorger,15.4,2024,Gezondheidsmonitor RIVM 2024,,%,,pos_is_pos,current
 BU19000108,58fc72b6-881e-4917-83de-8099df3e3b0d,Moeite met rondkomen,8.1,2024,Gezondheidsmonitor RIVM 2024,,%,Gezondheid,-/+,current
-BU19000108,b07f74eb-5117-4705-802c-597ba830d016,Netto arbeidsparticipatie,69.0,2023,Kerncijfers wijken en buurten 2023,,%,,pos_is_pos,current
 BU19000108,0432fef2-83f2-4405-a457-08b89945ca86,Obesitas,18.3,2024,CBS_50150NED,,%,Gezondheid,-/+,current
 BU19000108,93048a96-d3cd-4d99-83b5-2b950e8d78a2,Onderwijsfunctie,0,2026,BAG,,aantal,Gebruik,pos_is_pos,current
-BU19000108,56f32b9a-bc45-4be1-9e1c-c2668c2e2a32,Opleidingsniveau hoog,210.0,2023,Kerncijfers wijken en buurten 2023,,aantal,,pos_is_pos,current
-BU19000108,c9719a07-57a5-48cf-8f93-b6f932aead51,Opleidingsniveau laag,110.0,2023,Kerncijfers wijken en buurten 2023,,aantal,,pos_is_pos,current
-BU19000108,1fa5df89-13e3-424f-9eba-9372cae42896,Opleidingsniveau middelbaar,120.0,2023,Kerncijfers wijken en buurten 2023,,aantal,,pos_is_pos,current
 BU19000108,97f53738-3439-4c28-8cac-046a52c65248,Oppervlak groen per inwoner,146.32,2025,97f53738-3439-4c28-8cac-046a52c65248_d_cbs_buurten.json,,,,pos_is_pos,current
 BU19000108,34e36ae1-4132-4555-a4fc-d16b039d467e,Overgewicht,46.2,2024,Gezondheidsmonitor RIVM 2024,,%,Gezondheid,-/+,current
 BU19000108,25405460-907c-4e63-acc4-4f9c949f7cac,Overige gebruiksfunctie,18,2026,BAG,,aantal,Gebruik,pos_is_pos,current
 BU19000108,1ed22149-7fed-4466-a3b8-dfd7ff28f5b5,Overmatig drinken,6.5,2024,Gezondheidsmonitor RIVM 2024,,%,,-/+,current
-BU19000108,aa5ce990-a43e-439a-9e98-69899321cf40,Participatiewet totaal,10.0,2023,Kerncijfers wijken en buurten 2023,,,,-/+,current
-BU19000108,2aadb30f-860f-4f70-916f-6df00e86e870,Particulier huurbezit,17.0,2025,CBS_86165NED,,,,pos_is_pos,current
-BU19000108,352dda4d-5de8-4f31-b85a-6d82f812ba7c,Percentage werknemers,81.0,2023,CBS_85618NED,,percentage,Gebruik,pos_is_pos,current
 BU19000108,4f53e98e-3309-4a3a-9ecc-732956f7c53a,Percentage woonfunctie (BAG),86.3,2026,BAG,,%,Wonen,pos_is_pos,current
-BU19000108,f8d0d890-3975-4183-9555-06d673c4657f,Percentage zelfstandigen,19.0,2023,CBS_85618NED,,percentage,Gebruik,pos_is_pos,current
-BU19000108,88192b70-faa9-4108-a473-302aa0f624a9,Personenauto's naar oppervlakte,1219.0,2025,CBS_86165NED,,per km²,,pos_is_pos,current
-BU19000108,461d542b-b8be-4510-9dd0-5ba554b818cb,Personenauto's per huishouden,1.1,2025,CBS_86165NED,,per huishouden,,pos_is_pos,current
 BU19000108,a4780646-844e-4221-b07a-b4f4ade25059,Roken,12.6,2024,Gezondheidsmonitor RIVM 2024,,,,-/+,current
 BU19000108,e2f618ca-0726-4c1f-8442-c1150578622e,Sportfunctie,0,2026,BAG,,aantal,Gebruik,pos_is_pos,current
 BU19000108,2d6bdaba-3832-40cc-acae-950883f1aa76,Verandering GLG nu t.o.v. 2050,-0.11,2022,2d6bdaba-3832-40cc-acae-950883f1aa76_d_cbs_buurten.json,,,,pos_is_pos,current
@@ -344,15 +221,8 @@ BU19000108,0bbd30e5-08f5-4499-b6ca-cdda990720dc,Verhouding oppervlakte water / v
 BU19000108,89b6274f-9372-4784-8ba3-924b6c7e4d7d,Verwerken hemelwater exc. schade,10.1,2022,89b6274f-9372-4784-8ba3-924b6c7e4d7d_d_cbs_buurten.json,,,,pos_is_pos,current
 BU19000108,9b168456-9219-4c3b-af16-636662a74155,Vrijwilliger,30.7,2024,Gezondheidsmonitor RIVM 2024,,,,pos_is_pos,current
 BU19000108,49d5687e-c062-40b5-84b9-7e4557b6cee0,Winkelfunctie,9,2026,BAG,,aantal,Gebruik,pos_is_pos,current
-BU19000108,6dd8b659-29c1-4396-a853-1abd7c6e0591,Woningcorporatie bezit,8.0,2025,CBS_86165NED,,%,,pos_is_pos,current
 BU19000108,89ad6843-0db9-4044-9508-307775d4f496,Woningen gebouwd vóór 1945 (BAG),48.3,2025,Kadaster BAG Fryslân 2026,,%,Wonen,pos_is_pos,current
-BU19000108,e3d59c6a-adf9-4bad-b842-98ce71760935,Woningvoorraad,279.0,2023,Kerncijfers wijken en buurten 2023,,aantal,,pos_is_pos,current
 BU19000108,b1011f4c-30b1-4088-bcf6-a67893d92c5f,Woonfunctie,290,2026,BAG,,aantal,Gebruik,pos_is_pos,current
-BU19000200,356a2329-eadb-494f-a09d-906a3db264d4,0-15 jaar,625.0,2025,CBS_86165NED,,Aantal,,pos_is_pos,current
-BU19000200,026bcd11-ace5-4ec7-adbc-c06c324315cd,15-25 jaar,470.0,2025,CBS_86165NED,,Aantal,,pos_is_pos,current
-BU19000200,e6dd31a1-a056-4c07-a48c-1d4517269f1e,25-45 jaar,835.0,2025,CBS_86165NED,,Aantal,,pos_is_pos,current
-BU19000200,8225fa5c-efb8-4fd0-865b-a36ff0724a28,45-65 jaar,1140.0,2025,CBS_86165NED,,Aantal,,pos_is_pos,current
-BU19000200,b0ee9877-3850-4529-b352-6ec673562ef8,65+ jaar,1225.0,2025,CBS_86165NED,,Aantal,,pos_is_pos,current
 BU19000200,93564b76-b07a-4134-868e-10654650d064,Aantal bushaltes,5,2026,OpenStreetMap / Overpass API 2026,,aantal,,pos_is_pos,current
 BU19000200,233505e1-d22f-48b5-b67f-88ea73d12967,Aantal energielabels,1129,2025,RVO EP-Online 2026-02,,aantal,Wonen,-/+,current
 BU19000200,a2ed3719-64a7-40da-bfc5-a43d3d292594,Aantal energielabels (definitief),689,2025,RVO EP-Online 2026-02,,aantal,Wonen,N/A,current
@@ -363,13 +233,8 @@ BU19000200,b69a88a0-efd4-4f8b-888a-97b653e1f13d,Aantal tramhaltes,0,2026,OpenStr
 BU19000200,696ca006-89a0-4e9f-aa5b-f68c724736d1,Aantal treinhaltes,0,2026,OpenStreetMap / Overpass API 2026,,aantal,,pos_is_pos,current
 BU19000200,c49c1563-2d85-4a2f-bdc9-02c340c4e510,Aantal veerboten,0,2026,OpenStreetMap / Overpass API 2026,,aantal,,pos_is_pos,current
 BU19000200,a5ed2ff5-f431-48e8-98d4-0c56686de109,Achterstand leerlingen,0,2025,a5ed2ff5-f431-48e8-98d4-0c56686de109_d_cbs_buurten.json,,score,,-/+,current
-BU19000200,869bec9c-9b9a-4425-9cd6-09cb4f7451ae,Afstand tot grote supermarkt,0.8,2025,CBS_86165NED,,km,,-/+,current
-BU19000200,1b28d9ef-f7ff-4609-9ef7-7ab8a9b6cba7,Afstand tot huisarts,0.7,2025,CBS_86165NED,,,,-/+,current
-BU19000200,76abbf47-6eb6-4c10-a4bf-ec0280435052,Afstand tot kinderdagverblijf,0.9,2025,CBS_86165NED,,km,,-/+,current
 BU19000200,bf4e5b8f-6b0a-4632-b9b4-8e29d025e68c,Afstand tot koele plek,272,2021,bf4e5b8f-6b0a-4632-b9b4-8e29d025e68c_d_cbs_buurten.json,,,,-/+,current
-BU19000200,ec95fe04-04fd-4bbb-bb9f-0f3f97861e5d,Afstand tot school,0.6,2025,CBS_86165NED,,km,,-/+,current
 BU19000200,b7090c23-7495-48c2-bfb3-cbfb7140386f,beschadiging auto's,14,2024,,,,,-/+,current
-BU19000200,f18b2c78-871b-48a7-b08f-fa743e589db8,Bevolkingsdichtheid,1765.0,2025,CBS_86165NED,,inw/km²,,pos_is_pos,current
 BU19000200,64470009-7467-4a34-8f3c-b44d896a5364,Bewegen,49.8,2024,Gezondheidsmonitor RIVM 2024,,,,pos_is_pos,current
 BU19000200,5d7ad356-aac8-4815-8da7-97dff60c7873,Bijeenkomstfunctie,34,2026,BAG,,aantal,Gebruik,pos_is_pos,current
 BU19000200,3241e6b8-0712-4653-a420-2f3274466f6b,Bouwjaar 1915-1945,205.0,2025,Kadaster BAG Fryslân 2026,,aantal,Bebouwing,pos_is_pos,current
@@ -380,50 +245,31 @@ BU19000200,29cfacae-021e-4fe5-819b-e9eb655837ae,Celfunctie,0,2026,BAG,,aantal,Ge
 BU19000200,81ccf247-0449-40e0-a99c-a67019f272e4,Definitief energielabel,0.300573300573301,2025,81ccf247-0449-40e0-a99c-a67019f272e4_d_cbs_buurten.json,,,,pos_is_pos,current
 BU19000200,3ca8572d-cc03-4fd9-9bc9-e1cd0fc0a627,diefstal fiets,6,2024,,,aantal,,-/+,current
 BU19000200,1e9bc2fe-d5bd-4306-9b6b-d443e22916cf,Diversiteit Functies (Simpson Index),0.3,2026,BAG,,index,,pos_is_pos,current
-BU19000200,257494f4-9e51-4a4a-a662-feabfe9758b0,Eenpersoonshuishoudens,785.0,2025,CBS_86165NED,,aantal,,pos_is_pos,current
 BU19000200,4661dcb9-b7c4-42f8-b7c5-a61c12568806,Eenzaamheid,44.9,2024,Gezondheidsmonitor RIVM 2024,,,,-/+,current
 BU19000200,b53e54d6-ff54-4be1-b539-f915fd253831,Energielabel coverage,33.0,2025,Berekend: EP-Online / BAG Fryslân,,%,Wonen,pos_is_pos,current
 BU19000200,d20c7b4d-d305-495b-b77c-07b8121614a7,Ervaren gezondheid,74.6,2024,Gezondheidsmonitor RIVM 2024,,%,Gezondheid,pos_is_pos,current
 BU19000200,22d02bf9-99ef-4357-b797-09a714690b11,Gemiddeld bouwjaar woningen (BAG),1965.0,2025,Kadaster BAG Fryslân 2026,,jaar,Wonen,pos_is_pos,current
 BU19000200,3c2d0ca0-3a6d-4f53-809f-f82fa9b9fd22,Gemiddeld energielabel,4.828737300435414,2025,RVO EP-Online 2026-02,,score (1.0 - 9.0),,pos_is_pos,current
-BU19000200,7d9339e3-ea2c-474b-802a-49c854849f73,Gemiddelde woonoppervlakte (BAG),135.0,2026,BAG,,m²,Wonen,pos_is_pos,current
-BU19000200,7053d6a5-2bcf-4254-b089-79852f12d9aa,Gemiddelde WOZ-waarde,308.0,2025,CBS_86165NED,,x 1 000 euro,,pos_is_pos,current
 BU19000200,a4f84d1c-3263-4229-ad95-615924cb7852,Gemiddeld Laagste Grondwaterstand,1.75,2022,a4f84d1c-3263-4229-ad95-615924cb7852_d_cbs_buurten.json,,,,pos_is_pos,current
+BU19000200,7d9339e3-ea2c-474b-802a-49c854849f73,Gemiddelde woonoppervlakte (BAG),135.0,2026,BAG,,m²,Wonen,pos_is_pos,current
 BU19000200,311a6449-b145-4678-b51e-ac4e342dd1bf,Gezondheid,6.7,2024,Gezondheidsmonitor RIVM 2024,,,,pos_is_pos,current
 BU19000200,3baca929-ccc3-48aa-b966-e6877d01cbe7,Gezondheidszorgfunctie,8,2026,BAG,,aantal,Gebruik,pos_is_pos,current
 BU19000200,0ed37b61-f13d-446b-b108-70bb09af98e0,Huisarts,0.7,2024,CBS_85984NED,,km,,pos_is_pos,current
 BU19000200,b2e606cc-1d58-4917-9dec-148d90c80742,Huishoudens (BAG woonfunctie),2091.0,2025,Kadaster BAG Fryslân 2026,,aantal,Wonen,pos_is_pos,current
-BU19000200,ad3b0509-3c14-49f8-aa10-4b3b391a2d84,Huishoudens met kind,570.0,2025,CBS_86165NED,,aantal,,pos_is_pos,current
-BU19000200,3dd70913-391e-4d5f-a121-d17c8b466372,Huishoudens met laag inkomen,3.8,2023,Kerncijfers wijken en buurten 2023,,%,,-/+,current
-BU19000200,be1a9ac4-6330-47c9-93c6-c9008b5daf89,Huishoudens totaal,2025.0,2025,CBS_86165NED,,aantal,,pos_is_pos,current
-BU19000200,428c1232-0213-491b-ad0c-56dcc82a8c59,Huishoudens zonder kind,665.0,2025,CBS_86165NED,,aantal,,pos_is_pos,current
 BU19000200,92137246-e0f1-493d-97a8-e4a5660a99fb,inbraak auto,3,2024,,,aantal,,-/+,current
 BU19000200,d90d2b4c-4bce-428c-834a-1cc8113958e4,inbraak woning,4,2024,,,aantal,,-/+,current
 BU19000200,28a7a580-dc3c-4105-9fb3-d9ef47792429,Industriefunctie,179,2026,BAG,,aantal,Gebruik,pos_is_pos,current
-BU19000200,9c035f53-75a5-43eb-8496-22c4c6f08d6b,Inkomen per inwoner,30.3,2024,CBS_85984NED,,,,pos_is_pos,current
-BU19000200,31f70dff-c116-4267-bef0-d15b0ff4c020,Inwoners,4210.0,2023,Kerncijfers wijken en buurten 2023,,aantal,,pos_is_pos,current
 BU19000200,0212e8f8-053d-4287-b924-7bdc20c53bb2,Kantoorfunctie,24,2026,BAG,,aantal,Gebruik,pos_is_pos,current
-BU19000200,a0bbfd44-bacd-4434-bc8d-3a5204d65637,Koopwoningen,65.0,2025,CBS_86165NED,,percentage,,pos_is_pos,current
 BU19000200,a990c073-78e3-4490-a26e-1fa8ca6988f9,Logiesfunctie,14,2026,BAG,,aantal,Gebruik,pos_is_pos,current
 BU19000200,7b4a6b5f-7d6a-46ef-8a7d-7b3ee28a014c,Mantelzorger,14.2,2024,Gezondheidsmonitor RIVM 2024,,%,,pos_is_pos,current
 BU19000200,58fc72b6-881e-4917-83de-8099df3e3b0d,Moeite met rondkomen,11.8,2024,Gezondheidsmonitor RIVM 2024,,%,Gezondheid,-/+,current
-BU19000200,b07f74eb-5117-4705-802c-597ba830d016,Netto arbeidsparticipatie,69.0,2023,Kerncijfers wijken en buurten 2023,,%,,pos_is_pos,current
 BU19000200,0432fef2-83f2-4405-a457-08b89945ca86,Obesitas,18.6,2024,CBS_50150NED,,%,Gezondheid,-/+,current
 BU19000200,93048a96-d3cd-4d99-83b5-2b950e8d78a2,Onderwijsfunctie,7,2026,BAG,,aantal,Gebruik,pos_is_pos,current
-BU19000200,56f32b9a-bc45-4be1-9e1c-c2668c2e2a32,Opleidingsniveau hoog,770.0,2023,Kerncijfers wijken en buurten 2023,,aantal,,pos_is_pos,current
-BU19000200,c9719a07-57a5-48cf-8f93-b6f932aead51,Opleidingsniveau laag,790.0,2023,Kerncijfers wijken en buurten 2023,,aantal,,pos_is_pos,current
-BU19000200,1fa5df89-13e3-424f-9eba-9372cae42896,Opleidingsniveau middelbaar,1420.0,2023,Kerncijfers wijken en buurten 2023,,aantal,,pos_is_pos,current
 BU19000200,97f53738-3439-4c28-8cac-046a52c65248,Oppervlak groen per inwoner,81.66,2025,97f53738-3439-4c28-8cac-046a52c65248_d_cbs_buurten.json,,,,pos_is_pos,current
 BU19000200,34e36ae1-4132-4555-a4fc-d16b039d467e,Overgewicht,52.8,2024,Gezondheidsmonitor RIVM 2024,,%,Gezondheid,-/+,current
 BU19000200,25405460-907c-4e63-acc4-4f9c949f7cac,Overige gebruiksfunctie,67,2026,BAG,,aantal,Gebruik,pos_is_pos,current
 BU19000200,1ed22149-7fed-4466-a3b8-dfd7ff28f5b5,Overmatig drinken,5.9,2024,Gezondheidsmonitor RIVM 2024,,%,,-/+,current
-BU19000200,aa5ce990-a43e-439a-9e98-69899321cf40,Participatiewet totaal,90.0,2023,Kerncijfers wijken en buurten 2023,,,,-/+,current
-BU19000200,2aadb30f-860f-4f70-916f-6df00e86e870,Particulier huurbezit,6.0,2025,CBS_86165NED,,,,pos_is_pos,current
-BU19000200,352dda4d-5de8-4f31-b85a-6d82f812ba7c,Percentage werknemers,80.0,2023,CBS_85618NED,,percentage,Gebruik,pos_is_pos,current
 BU19000200,4f53e98e-3309-4a3a-9ecc-732956f7c53a,Percentage woonfunctie (BAG),86.9,2026,BAG,,%,Wonen,pos_is_pos,current
-BU19000200,f8d0d890-3975-4183-9555-06d673c4657f,Percentage zelfstandigen,20.0,2023,CBS_85618NED,,percentage,Gebruik,pos_is_pos,current
-BU19000200,88192b70-faa9-4108-a473-302aa0f624a9,Personenauto's naar oppervlakte,871.0,2025,CBS_86165NED,,per km²,,pos_is_pos,current
-BU19000200,461d542b-b8be-4510-9dd0-5ba554b818cb,Personenauto's per huishouden,1.0,2025,CBS_86165NED,,per huishouden,,pos_is_pos,current
 BU19000200,a4780646-844e-4221-b07a-b4f4ade25059,Roken,16.4,2024,Gezondheidsmonitor RIVM 2024,,,,-/+,current
 BU19000200,e2f618ca-0726-4c1f-8442-c1150578622e,Sportfunctie,4,2026,BAG,,aantal,Gebruik,pos_is_pos,current
 BU19000200,2d6bdaba-3832-40cc-acae-950883f1aa76,Verandering GLG nu t.o.v. 2050,-0.13,2022,2d6bdaba-3832-40cc-acae-950883f1aa76_d_cbs_buurten.json,,,,pos_is_pos,current
@@ -431,15 +277,8 @@ BU19000200,0bbd30e5-08f5-4499-b6ca-cdda990720dc,Verhouding oppervlakte water / v
 BU19000200,89b6274f-9372-4784-8ba3-924b6c7e4d7d,Verwerken hemelwater exc. schade,9.7,2022,89b6274f-9372-4784-8ba3-924b6c7e4d7d_d_cbs_buurten.json,,,,pos_is_pos,current
 BU19000200,9b168456-9219-4c3b-af16-636662a74155,Vrijwilliger,36.6,2024,Gezondheidsmonitor RIVM 2024,,,,pos_is_pos,current
 BU19000200,49d5687e-c062-40b5-84b9-7e4557b6cee0,Winkelfunctie,73,2026,BAG,,aantal,Gebruik,pos_is_pos,current
-BU19000200,6dd8b659-29c1-4396-a853-1abd7c6e0591,Woningcorporatie bezit,29.0,2025,CBS_86165NED,,%,,pos_is_pos,current
 BU19000200,89ad6843-0db9-4044-9508-307775d4f496,Woningen gebouwd vóór 1945 (BAG),23.6,2025,Kadaster BAG Fryslân 2026,,%,Wonen,pos_is_pos,current
-BU19000200,e3d59c6a-adf9-4bad-b842-98ce71760935,Woningvoorraad,2082.0,2023,Kerncijfers wijken en buurten 2023,,aantal,,pos_is_pos,current
 BU19000200,b1011f4c-30b1-4088-bcf6-a67893d92c5f,Woonfunctie,2069,2026,BAG,,aantal,Gebruik,pos_is_pos,current
-BU19000202,356a2329-eadb-494f-a09d-906a3db264d4,0-15 jaar,95.0,2025,CBS_86165NED,,Aantal,,pos_is_pos,current
-BU19000202,026bcd11-ace5-4ec7-adbc-c06c324315cd,15-25 jaar,90.0,2025,CBS_86165NED,,Aantal,,pos_is_pos,current
-BU19000202,e6dd31a1-a056-4c07-a48c-1d4517269f1e,25-45 jaar,150.0,2025,CBS_86165NED,,Aantal,,pos_is_pos,current
-BU19000202,8225fa5c-efb8-4fd0-865b-a36ff0724a28,45-65 jaar,230.0,2025,CBS_86165NED,,Aantal,,pos_is_pos,current
-BU19000202,b0ee9877-3850-4529-b352-6ec673562ef8,65+ jaar,225.0,2025,CBS_86165NED,,Aantal,,pos_is_pos,current
 BU19000202,93564b76-b07a-4134-868e-10654650d064,Aantal bushaltes,1,2026,OpenStreetMap / Overpass API 2026,,aantal,,pos_is_pos,current
 BU19000202,233505e1-d22f-48b5-b67f-88ea73d12967,Aantal energielabels,208,2025,RVO EP-Online 2026-02,,aantal,Wonen,-/+,current
 BU19000202,a2ed3719-64a7-40da-bfc5-a43d3d292594,Aantal energielabels (definitief),53,2025,RVO EP-Online 2026-02,,aantal,Wonen,N/A,current
@@ -450,13 +289,8 @@ BU19000202,b69a88a0-efd4-4f8b-888a-97b653e1f13d,Aantal tramhaltes,0,2026,OpenStr
 BU19000202,696ca006-89a0-4e9f-aa5b-f68c724736d1,Aantal treinhaltes,0,2026,OpenStreetMap / Overpass API 2026,,aantal,,pos_is_pos,current
 BU19000202,c49c1563-2d85-4a2f-bdc9-02c340c4e510,Aantal veerboten,0,2026,OpenStreetMap / Overpass API 2026,,aantal,,pos_is_pos,current
 BU19000202,a5ed2ff5-f431-48e8-98d4-0c56686de109,Achterstand leerlingen,12.68,2025,a5ed2ff5-f431-48e8-98d4-0c56686de109_d_cbs_buurten.json,,score,,-/+,current
-BU19000202,869bec9c-9b9a-4425-9cd6-09cb4f7451ae,Afstand tot grote supermarkt,0.5,2025,CBS_86165NED,,km,,-/+,current
-BU19000202,1b28d9ef-f7ff-4609-9ef7-7ab8a9b6cba7,Afstand tot huisarts,6.5,2025,CBS_86165NED,,,,-/+,current
-BU19000202,76abbf47-6eb6-4c10-a4bf-ec0280435052,Afstand tot kinderdagverblijf,0.6,2025,CBS_86165NED,,km,,-/+,current
 BU19000202,bf4e5b8f-6b0a-4632-b9b4-8e29d025e68c,Afstand tot koele plek,200,2021,bf4e5b8f-6b0a-4632-b9b4-8e29d025e68c_d_cbs_buurten.json,,,,-/+,current
-BU19000202,ec95fe04-04fd-4bbb-bb9f-0f3f97861e5d,Afstand tot school,0.6,2025,CBS_86165NED,,km,,-/+,current
 BU19000202,b7090c23-7495-48c2-bfb3-cbfb7140386f,beschadiging auto's,2,2024,,,,,-/+,current
-BU19000202,f18b2c78-871b-48a7-b08f-fa743e589db8,Bevolkingsdichtheid,1901.0,2025,CBS_86165NED,,inw/km²,,pos_is_pos,current
 BU19000202,64470009-7467-4a34-8f3c-b44d896a5364,Bewegen,44.4,2024,Gezondheidsmonitor RIVM 2024,,,,pos_is_pos,current
 BU19000202,5d7ad356-aac8-4815-8da7-97dff60c7873,Bijeenkomstfunctie,16,2026,BAG,,aantal,Gebruik,pos_is_pos,current
 BU19000202,3241e6b8-0712-4653-a420-2f3274466f6b,Bouwjaar 1915-1945,44.0,2025,Kadaster BAG Fryslân 2026,,aantal,Bebouwing,pos_is_pos,current
@@ -467,50 +301,31 @@ BU19000202,29cfacae-021e-4fe5-819b-e9eb655837ae,Celfunctie,0,2026,BAG,,aantal,Ge
 BU19000202,81ccf247-0449-40e0-a99c-a67019f272e4,Definitief energielabel,0.407331975560082,2025,81ccf247-0449-40e0-a99c-a67019f272e4_d_cbs_buurten.json,,,,pos_is_pos,current
 BU19000202,3ca8572d-cc03-4fd9-9bc9-e1cd0fc0a627,diefstal fiets,1,2024,,,aantal,,-/+,current
 BU19000202,1e9bc2fe-d5bd-4306-9b6b-d443e22916cf,Diversiteit Functies (Simpson Index),0.38,2026,BAG,,index,,pos_is_pos,current
-BU19000202,257494f4-9e51-4a4a-a662-feabfe9758b0,Eenpersoonshuishoudens,170.0,2025,CBS_86165NED,,aantal,,pos_is_pos,current
 BU19000202,4661dcb9-b7c4-42f8-b7c5-a61c12568806,Eenzaamheid,48.1,2024,Gezondheidsmonitor RIVM 2024,,,,-/+,current
 BU19000202,b53e54d6-ff54-4be1-b539-f915fd253831,Energielabel coverage,13.6,2025,Berekend: EP-Online / BAG Fryslân,,%,Wonen,pos_is_pos,current
 BU19000202,d20c7b4d-d305-495b-b77c-07b8121614a7,Ervaren gezondheid,71.4,2024,Gezondheidsmonitor RIVM 2024,,%,Gezondheid,pos_is_pos,current
 BU19000202,22d02bf9-99ef-4357-b797-09a714690b11,Gemiddeld bouwjaar woningen (BAG),1947.0,2025,Kadaster BAG Fryslân 2026,,jaar,Wonen,pos_is_pos,current
 BU19000202,3c2d0ca0-3a6d-4f53-809f-f82fa9b9fd22,Gemiddeld energielabel,5.179245283018868,2025,RVO EP-Online 2026-02,,score (1.0 - 9.0),,pos_is_pos,current
-BU19000202,7d9339e3-ea2c-474b-802a-49c854849f73,Gemiddelde woonoppervlakte (BAG),124.0,2026,BAG,,m²,Wonen,pos_is_pos,current
-BU19000202,7053d6a5-2bcf-4254-b089-79852f12d9aa,Gemiddelde WOZ-waarde,281.0,2025,CBS_86165NED,,x 1 000 euro,,pos_is_pos,current
 BU19000202,a4f84d1c-3263-4229-ad95-615924cb7852,Gemiddeld Laagste Grondwaterstand,1.58,2022,a4f84d1c-3263-4229-ad95-615924cb7852_d_cbs_buurten.json,,,,pos_is_pos,current
+BU19000202,7d9339e3-ea2c-474b-802a-49c854849f73,Gemiddelde woonoppervlakte (BAG),124.0,2026,BAG,,m²,Wonen,pos_is_pos,current
 BU19000202,311a6449-b145-4678-b51e-ac4e342dd1bf,Gezondheid,7.6,2024,Gezondheidsmonitor RIVM 2024,,,,pos_is_pos,current
 BU19000202,3baca929-ccc3-48aa-b966-e6877d01cbe7,Gezondheidszorgfunctie,1,2026,BAG,,aantal,Gebruik,pos_is_pos,current
 BU19000202,0ed37b61-f13d-446b-b108-70bb09af98e0,Huisarts,6.5,2024,CBS_85984NED,,km,,pos_is_pos,current
 BU19000202,b2e606cc-1d58-4917-9dec-148d90c80742,Huishoudens (BAG woonfunctie),391.0,2025,Kadaster BAG Fryslân 2026,,aantal,Wonen,pos_is_pos,current
-BU19000202,ad3b0509-3c14-49f8-aa10-4b3b391a2d84,Huishoudens met kind,105.0,2025,CBS_86165NED,,aantal,,pos_is_pos,current
-BU19000202,3dd70913-391e-4d5f-a121-d17c8b466372,Huishoudens met laag inkomen,4.7,2023,Kerncijfers wijken en buurten 2023,,%,,-/+,current
-BU19000202,be1a9ac4-6330-47c9-93c6-c9008b5daf89,Huishoudens totaal,400.0,2025,CBS_86165NED,,aantal,,pos_is_pos,current
-BU19000202,428c1232-0213-491b-ad0c-56dcc82a8c59,Huishoudens zonder kind,125.0,2025,CBS_86165NED,,aantal,,pos_is_pos,current
 BU19000202,92137246-e0f1-493d-97a8-e4a5660a99fb,inbraak auto,0,2024,,,aantal,,-/+,current
 BU19000202,d90d2b4c-4bce-428c-834a-1cc8113958e4,inbraak woning,0,2024,,,aantal,,-/+,current
 BU19000202,28a7a580-dc3c-4105-9fb3-d9ef47792429,Industriefunctie,38,2026,BAG,,aantal,Gebruik,pos_is_pos,current
-BU19000202,9c035f53-75a5-43eb-8496-22c4c6f08d6b,Inkomen per inwoner,26.7,2023,Kerncijfers wijken en buurten 2023,,,,pos_is_pos,current
-BU19000202,31f70dff-c116-4267-bef0-d15b0ff4c020,Inwoners,770.0,2023,Kerncijfers wijken en buurten 2023,,aantal,,pos_is_pos,current
 BU19000202,0212e8f8-053d-4287-b924-7bdc20c53bb2,Kantoorfunctie,4,2026,BAG,,aantal,Gebruik,pos_is_pos,current
-BU19000202,a0bbfd44-bacd-4434-bc8d-3a5204d65637,Koopwoningen,66.0,2025,CBS_86165NED,,percentage,,pos_is_pos,current
 BU19000202,a990c073-78e3-4490-a26e-1fa8ca6988f9,Logiesfunctie,24,2026,BAG,,aantal,Gebruik,pos_is_pos,current
 BU19000202,7b4a6b5f-7d6a-46ef-8a7d-7b3ee28a014c,Mantelzorger,14.3,2024,Gezondheidsmonitor RIVM 2024,,%,,pos_is_pos,current
 BU19000202,58fc72b6-881e-4917-83de-8099df3e3b0d,Moeite met rondkomen,13.6,2024,Gezondheidsmonitor RIVM 2024,,%,Gezondheid,-/+,current
-BU19000202,b07f74eb-5117-4705-802c-597ba830d016,Netto arbeidsparticipatie,64.0,2023,Kerncijfers wijken en buurten 2023,,%,,pos_is_pos,current
 BU19000202,0432fef2-83f2-4405-a457-08b89945ca86,Obesitas,23.1,2024,CBS_50150NED,,%,Gezondheid,-/+,current
 BU19000202,93048a96-d3cd-4d99-83b5-2b950e8d78a2,Onderwijsfunctie,1,2026,BAG,,aantal,Gebruik,pos_is_pos,current
-BU19000202,56f32b9a-bc45-4be1-9e1c-c2668c2e2a32,Opleidingsniveau hoog,130.0,2023,Kerncijfers wijken en buurten 2023,,aantal,,pos_is_pos,current
-BU19000202,c9719a07-57a5-48cf-8f93-b6f932aead51,Opleidingsniveau laag,180.0,2023,Kerncijfers wijken en buurten 2023,,aantal,,pos_is_pos,current
-BU19000202,1fa5df89-13e3-424f-9eba-9372cae42896,Opleidingsniveau middelbaar,240.0,2023,Kerncijfers wijken en buurten 2023,,aantal,,pos_is_pos,current
 BU19000202,97f53738-3439-4c28-8cac-046a52c65248,Oppervlak groen per inwoner,62.98,2025,97f53738-3439-4c28-8cac-046a52c65248_d_cbs_buurten.json,,,,pos_is_pos,current
 BU19000202,34e36ae1-4132-4555-a4fc-d16b039d467e,Overgewicht,54.6,2024,Gezondheidsmonitor RIVM 2024,,%,Gezondheid,-/+,current
 BU19000202,25405460-907c-4e63-acc4-4f9c949f7cac,Overige gebruiksfunctie,8,2026,BAG,,aantal,Gebruik,pos_is_pos,current
 BU19000202,1ed22149-7fed-4466-a3b8-dfd7ff28f5b5,Overmatig drinken,6.3,2024,Gezondheidsmonitor RIVM 2024,,%,,-/+,current
-BU19000202,aa5ce990-a43e-439a-9e98-69899321cf40,Participatiewet totaal,20.0,2023,Kerncijfers wijken en buurten 2023,,,,-/+,current
-BU19000202,2aadb30f-860f-4f70-916f-6df00e86e870,Particulier huurbezit,10.0,2025,CBS_86165NED,,,,pos_is_pos,current
-BU19000202,352dda4d-5de8-4f31-b85a-6d82f812ba7c,Percentage werknemers,71.0,2023,CBS_85618NED,,percentage,Gebruik,pos_is_pos,current
 BU19000202,4f53e98e-3309-4a3a-9ecc-732956f7c53a,Percentage woonfunctie (BAG),82.1,2026,BAG,,%,Wonen,pos_is_pos,current
-BU19000202,f8d0d890-3975-4183-9555-06d673c4657f,Percentage zelfstandigen,29.0,2023,CBS_85618NED,,percentage,Gebruik,pos_is_pos,current
-BU19000202,88192b70-faa9-4108-a473-302aa0f624a9,Personenauto's naar oppervlakte,1041.0,2025,CBS_86165NED,,per km²,,pos_is_pos,current
-BU19000202,461d542b-b8be-4510-9dd0-5ba554b818cb,Personenauto's per huishouden,1.1,2025,CBS_86165NED,,per huishouden,,pos_is_pos,current
 BU19000202,a4780646-844e-4221-b07a-b4f4ade25059,Roken,16.8,2024,Gezondheidsmonitor RIVM 2024,,,,-/+,current
 BU19000202,e2f618ca-0726-4c1f-8442-c1150578622e,Sportfunctie,3,2026,BAG,,aantal,Gebruik,pos_is_pos,current
 BU19000202,2d6bdaba-3832-40cc-acae-950883f1aa76,Verandering GLG nu t.o.v. 2050,-0.05,2022,2d6bdaba-3832-40cc-acae-950883f1aa76_d_cbs_buurten.json,,,,pos_is_pos,current
@@ -518,15 +333,8 @@ BU19000202,0bbd30e5-08f5-4499-b6ca-cdda990720dc,Verhouding oppervlakte water / v
 BU19000202,89b6274f-9372-4784-8ba3-924b6c7e4d7d,Verwerken hemelwater exc. schade,14.1,2022,89b6274f-9372-4784-8ba3-924b6c7e4d7d_d_cbs_buurten.json,,,,pos_is_pos,current
 BU19000202,9b168456-9219-4c3b-af16-636662a74155,Vrijwilliger,33.6,2024,Gezondheidsmonitor RIVM 2024,,,,pos_is_pos,current
 BU19000202,49d5687e-c062-40b5-84b9-7e4557b6cee0,Winkelfunctie,17,2026,BAG,,aantal,Gebruik,pos_is_pos,current
-BU19000202,6dd8b659-29c1-4396-a853-1abd7c6e0591,Woningcorporatie bezit,23.0,2025,CBS_86165NED,,%,,pos_is_pos,current
 BU19000202,89ad6843-0db9-4044-9508-307775d4f496,Woningen gebouwd vóór 1945 (BAG),37.6,2025,Kadaster BAG Fryslân 2026,,%,Wonen,pos_is_pos,current
-BU19000202,e3d59c6a-adf9-4bad-b842-98ce71760935,Woningvoorraad,397.0,2023,Kerncijfers wijken en buurten 2023,,aantal,,pos_is_pos,current
 BU19000202,b1011f4c-30b1-4088-bcf6-a67893d92c5f,Woonfunctie,398,2026,BAG,,aantal,Gebruik,pos_is_pos,current
-BU19000300,356a2329-eadb-494f-a09d-906a3db264d4,0-15 jaar,405.0,2025,CBS_86165NED,,Aantal,,pos_is_pos,current
-BU19000300,026bcd11-ace5-4ec7-adbc-c06c324315cd,15-25 jaar,235.0,2025,CBS_86165NED,,Aantal,,pos_is_pos,current
-BU19000300,e6dd31a1-a056-4c07-a48c-1d4517269f1e,25-45 jaar,490.0,2025,CBS_86165NED,,Aantal,,pos_is_pos,current
-BU19000300,8225fa5c-efb8-4fd0-865b-a36ff0724a28,45-65 jaar,660.0,2025,CBS_86165NED,,Aantal,,pos_is_pos,current
-BU19000300,b0ee9877-3850-4529-b352-6ec673562ef8,65+ jaar,815.0,2025,CBS_86165NED,,Aantal,,pos_is_pos,current
 BU19000300,93564b76-b07a-4134-868e-10654650d064,Aantal bushaltes,2,2026,OpenStreetMap / Overpass API 2026,,aantal,,pos_is_pos,current
 BU19000300,233505e1-d22f-48b5-b67f-88ea73d12967,Aantal energielabels,760,2025,RVO EP-Online 2026-02,,aantal,Wonen,-/+,current
 BU19000300,a2ed3719-64a7-40da-bfc5-a43d3d292594,Aantal energielabels (definitief),305,2025,RVO EP-Online 2026-02,,aantal,Wonen,N/A,current
@@ -537,13 +345,8 @@ BU19000300,b69a88a0-efd4-4f8b-888a-97b653e1f13d,Aantal tramhaltes,0,2026,OpenStr
 BU19000300,696ca006-89a0-4e9f-aa5b-f68c724736d1,Aantal treinhaltes,0,2026,OpenStreetMap / Overpass API 2026,,aantal,,pos_is_pos,current
 BU19000300,c49c1563-2d85-4a2f-bdc9-02c340c4e510,Aantal veerboten,0,2026,OpenStreetMap / Overpass API 2026,,aantal,,pos_is_pos,current
 BU19000300,a5ed2ff5-f431-48e8-98d4-0c56686de109,Achterstand leerlingen,22.56,2025,a5ed2ff5-f431-48e8-98d4-0c56686de109_d_cbs_buurten.json,,score,,-/+,current
-BU19000300,869bec9c-9b9a-4425-9cd6-09cb4f7451ae,Afstand tot grote supermarkt,0.6,2025,CBS_86165NED,,km,,-/+,current
-BU19000300,1b28d9ef-f7ff-4609-9ef7-7ab8a9b6cba7,Afstand tot huisarts,0.7,2025,CBS_86165NED,,,,-/+,current
-BU19000300,76abbf47-6eb6-4c10-a4bf-ec0280435052,Afstand tot kinderdagverblijf,0.7,2025,CBS_86165NED,,km,,-/+,current
 BU19000300,bf4e5b8f-6b0a-4632-b9b4-8e29d025e68c,Afstand tot koele plek,230,2021,bf4e5b8f-6b0a-4632-b9b4-8e29d025e68c_d_cbs_buurten.json,,,,-/+,current
-BU19000300,ec95fe04-04fd-4bbb-bb9f-0f3f97861e5d,Afstand tot school,0.6,2025,CBS_86165NED,,km,,-/+,current
 BU19000300,b7090c23-7495-48c2-bfb3-cbfb7140386f,beschadiging auto's,9,2024,,,,,-/+,current
-BU19000300,f18b2c78-871b-48a7-b08f-fa743e589db8,Bevolkingsdichtheid,881.0,2025,CBS_86165NED,,inw/km²,,pos_is_pos,current
 BU19000300,64470009-7467-4a34-8f3c-b44d896a5364,Bewegen,48.4,2024,Gezondheidsmonitor RIVM 2024,,,,pos_is_pos,current
 BU19000300,5d7ad356-aac8-4815-8da7-97dff60c7873,Bijeenkomstfunctie,23,2026,BAG,,aantal,Gebruik,pos_is_pos,current
 BU19000300,3241e6b8-0712-4653-a420-2f3274466f6b,Bouwjaar 1915-1945,143.0,2025,Kadaster BAG Fryslân 2026,,aantal,Bebouwing,pos_is_pos,current
@@ -554,50 +357,31 @@ BU19000300,29cfacae-021e-4fe5-819b-e9eb655837ae,Celfunctie,0,2026,BAG,,aantal,Ge
 BU19000300,81ccf247-0449-40e0-a99c-a67019f272e4,Definitief energielabel,0.478052126200274,2025,81ccf247-0449-40e0-a99c-a67019f272e4_d_cbs_buurten.json,,,,pos_is_pos,current
 BU19000300,3ca8572d-cc03-4fd9-9bc9-e1cd0fc0a627,diefstal fiets,1,2024,,,aantal,,-/+,current
 BU19000300,1e9bc2fe-d5bd-4306-9b6b-d443e22916cf,Diversiteit Functies (Simpson Index),0.29,2026,BAG,,index,,pos_is_pos,current
-BU19000300,257494f4-9e51-4a4a-a662-feabfe9758b0,Eenpersoonshuishoudens,430.0,2025,CBS_86165NED,,aantal,,pos_is_pos,current
 BU19000300,4661dcb9-b7c4-42f8-b7c5-a61c12568806,Eenzaamheid,44.1,2024,Gezondheidsmonitor RIVM 2024,,,,-/+,current
 BU19000300,b53e54d6-ff54-4be1-b539-f915fd253831,Energielabel coverage,24.0,2025,Berekend: EP-Online / BAG Fryslân,,%,Wonen,pos_is_pos,current
 BU19000300,d20c7b4d-d305-495b-b77c-07b8121614a7,Ervaren gezondheid,74.1,2024,Gezondheidsmonitor RIVM 2024,,%,Gezondheid,pos_is_pos,current
 BU19000300,22d02bf9-99ef-4357-b797-09a714690b11,Gemiddeld bouwjaar woningen (BAG),1973.0,2025,Kadaster BAG Fryslân 2026,,jaar,Wonen,pos_is_pos,current
 BU19000300,3c2d0ca0-3a6d-4f53-809f-f82fa9b9fd22,Gemiddeld energielabel,4.552459016393443,2025,RVO EP-Online 2026-02,,score (1.0 - 9.0),,pos_is_pos,current
-BU19000300,7d9339e3-ea2c-474b-802a-49c854849f73,Gemiddelde woonoppervlakte (BAG),145.0,2026,BAG,,m²,Wonen,pos_is_pos,current
-BU19000300,7053d6a5-2bcf-4254-b089-79852f12d9aa,Gemiddelde WOZ-waarde,326.0,2025,CBS_86165NED,,x 1 000 euro,,pos_is_pos,current
 BU19000300,a4f84d1c-3263-4229-ad95-615924cb7852,Gemiddeld Laagste Grondwaterstand,2.71,2022,a4f84d1c-3263-4229-ad95-615924cb7852_d_cbs_buurten.json,,,,pos_is_pos,current
+BU19000300,7d9339e3-ea2c-474b-802a-49c854849f73,Gemiddelde woonoppervlakte (BAG),145.0,2026,BAG,,m²,Wonen,pos_is_pos,current
 BU19000300,311a6449-b145-4678-b51e-ac4e342dd1bf,Gezondheid,6.0,2024,Gezondheidsmonitor RIVM 2024,,,,pos_is_pos,current
 BU19000300,3baca929-ccc3-48aa-b966-e6877d01cbe7,Gezondheidszorgfunctie,47,2026,BAG,,aantal,Gebruik,pos_is_pos,current
 BU19000300,0ed37b61-f13d-446b-b108-70bb09af98e0,Huisarts,0.8,2024,CBS_85984NED,,km,,pos_is_pos,current
 BU19000300,b2e606cc-1d58-4917-9dec-148d90c80742,Huishoudens (BAG woonfunctie),1269.0,2025,Kadaster BAG Fryslân 2026,,aantal,Wonen,pos_is_pos,current
-BU19000300,ad3b0509-3c14-49f8-aa10-4b3b391a2d84,Huishoudens met kind,350.0,2025,CBS_86165NED,,aantal,,pos_is_pos,current
-BU19000300,3dd70913-391e-4d5f-a121-d17c8b466372,Huishoudens met laag inkomen,2.4,2023,Kerncijfers wijken en buurten 2023,,%,,-/+,current
-BU19000300,be1a9ac4-6330-47c9-93c6-c9008b5daf89,Huishoudens totaal,1210.0,2025,CBS_86165NED,,aantal,,pos_is_pos,current
-BU19000300,428c1232-0213-491b-ad0c-56dcc82a8c59,Huishoudens zonder kind,430.0,2025,CBS_86165NED,,aantal,,pos_is_pos,current
 BU19000300,92137246-e0f1-493d-97a8-e4a5660a99fb,inbraak auto,0,2024,,,aantal,,-/+,current
 BU19000300,d90d2b4c-4bce-428c-834a-1cc8113958e4,inbraak woning,3,2024,,,aantal,,-/+,current
 BU19000300,28a7a580-dc3c-4105-9fb3-d9ef47792429,Industriefunctie,86,2026,BAG,,aantal,Gebruik,pos_is_pos,current
-BU19000300,9c035f53-75a5-43eb-8496-22c4c6f08d6b,Inkomen per inwoner,28.9,2024,CBS_85984NED,,,,pos_is_pos,current
-BU19000300,31f70dff-c116-4267-bef0-d15b0ff4c020,Inwoners,2580.0,2023,Kerncijfers wijken en buurten 2023,,aantal,,pos_is_pos,current
 BU19000300,0212e8f8-053d-4287-b924-7bdc20c53bb2,Kantoorfunctie,17,2026,BAG,,aantal,Gebruik,pos_is_pos,current
-BU19000300,a0bbfd44-bacd-4434-bc8d-3a5204d65637,Koopwoningen,66.0,2025,CBS_86165NED,,percentage,,pos_is_pos,current
 BU19000300,a990c073-78e3-4490-a26e-1fa8ca6988f9,Logiesfunctie,5,2026,BAG,,aantal,Gebruik,pos_is_pos,current
 BU19000300,7b4a6b5f-7d6a-46ef-8a7d-7b3ee28a014c,Mantelzorger,14.8,2024,Gezondheidsmonitor RIVM 2024,,%,,pos_is_pos,current
 BU19000300,58fc72b6-881e-4917-83de-8099df3e3b0d,Moeite met rondkomen,11.8,2024,Gezondheidsmonitor RIVM 2024,,%,Gezondheid,-/+,current
-BU19000300,b07f74eb-5117-4705-802c-597ba830d016,Netto arbeidsparticipatie,66.0,2023,Kerncijfers wijken en buurten 2023,,%,,pos_is_pos,current
 BU19000300,0432fef2-83f2-4405-a457-08b89945ca86,Obesitas,19.4,2024,CBS_50150NED,,%,Gezondheid,-/+,current
 BU19000300,93048a96-d3cd-4d99-83b5-2b950e8d78a2,Onderwijsfunctie,2,2026,BAG,,aantal,Gebruik,pos_is_pos,current
-BU19000300,56f32b9a-bc45-4be1-9e1c-c2668c2e2a32,Opleidingsniveau hoog,330.0,2023,Kerncijfers wijken en buurten 2023,,aantal,,pos_is_pos,current
-BU19000300,c9719a07-57a5-48cf-8f93-b6f932aead51,Opleidingsniveau laag,550.0,2023,Kerncijfers wijken en buurten 2023,,aantal,,pos_is_pos,current
-BU19000300,1fa5df89-13e3-424f-9eba-9372cae42896,Opleidingsniveau middelbaar,900.0,2023,Kerncijfers wijken en buurten 2023,,aantal,,pos_is_pos,current
 BU19000300,97f53738-3439-4c28-8cac-046a52c65248,Oppervlak groen per inwoner,100.3,2025,97f53738-3439-4c28-8cac-046a52c65248_d_cbs_buurten.json,,,,pos_is_pos,current
 BU19000300,34e36ae1-4132-4555-a4fc-d16b039d467e,Overgewicht,53.8,2024,Gezondheidsmonitor RIVM 2024,,%,Gezondheid,-/+,current
 BU19000300,25405460-907c-4e63-acc4-4f9c949f7cac,Overige gebruiksfunctie,32,2026,BAG,,aantal,Gebruik,pos_is_pos,current
 BU19000300,1ed22149-7fed-4466-a3b8-dfd7ff28f5b5,Overmatig drinken,6.0,2024,Gezondheidsmonitor RIVM 2024,,%,,-/+,current
-BU19000300,aa5ce990-a43e-439a-9e98-69899321cf40,Participatiewet totaal,50.0,2023,Kerncijfers wijken en buurten 2023,,,,-/+,current
-BU19000300,2aadb30f-860f-4f70-916f-6df00e86e870,Particulier huurbezit,7.0,2025,CBS_86165NED,,,,pos_is_pos,current
-BU19000300,352dda4d-5de8-4f31-b85a-6d82f812ba7c,Percentage werknemers,77.0,2023,CBS_85618NED,,percentage,Gebruik,pos_is_pos,current
 BU19000300,4f53e98e-3309-4a3a-9ecc-732956f7c53a,Percentage woonfunctie (BAG),90.0,2026,BAG,,%,Wonen,pos_is_pos,current
-BU19000300,f8d0d890-3975-4183-9555-06d673c4657f,Percentage zelfstandigen,23.0,2023,CBS_85618NED,,percentage,Gebruik,pos_is_pos,current
-BU19000300,88192b70-faa9-4108-a473-302aa0f624a9,Personenauto's naar oppervlakte,482.0,2025,CBS_86165NED,,per km²,,pos_is_pos,current
-BU19000300,461d542b-b8be-4510-9dd0-5ba554b818cb,Personenauto's per huishouden,1.2,2025,CBS_86165NED,,per huishouden,,pos_is_pos,current
 BU19000300,a4780646-844e-4221-b07a-b4f4ade25059,Roken,15.2,2024,Gezondheidsmonitor RIVM 2024,,,,-/+,current
 BU19000300,e2f618ca-0726-4c1f-8442-c1150578622e,Sportfunctie,4,2026,BAG,,aantal,Gebruik,pos_is_pos,current
 BU19000300,2d6bdaba-3832-40cc-acae-950883f1aa76,Verandering GLG nu t.o.v. 2050,-0.08,2022,2d6bdaba-3832-40cc-acae-950883f1aa76_d_cbs_buurten.json,,,,pos_is_pos,current
@@ -605,15 +389,8 @@ BU19000300,0bbd30e5-08f5-4499-b6ca-cdda990720dc,Verhouding oppervlakte water / v
 BU19000300,89b6274f-9372-4784-8ba3-924b6c7e4d7d,Verwerken hemelwater exc. schade,13.5,2022,89b6274f-9372-4784-8ba3-924b6c7e4d7d_d_cbs_buurten.json,,,,pos_is_pos,current
 BU19000300,9b168456-9219-4c3b-af16-636662a74155,Vrijwilliger,33.5,2024,Gezondheidsmonitor RIVM 2024,,,,pos_is_pos,current
 BU19000300,49d5687e-c062-40b5-84b9-7e4557b6cee0,Winkelfunctie,30,2026,BAG,,aantal,Gebruik,pos_is_pos,current
-BU19000300,6dd8b659-29c1-4396-a853-1abd7c6e0591,Woningcorporatie bezit,28.0,2025,CBS_86165NED,,%,,pos_is_pos,current
 BU19000300,89ad6843-0db9-4044-9508-307775d4f496,Woningen gebouwd vóór 1945 (BAG),15.4,2025,Kadaster BAG Fryslân 2026,,%,Wonen,pos_is_pos,current
-BU19000300,e3d59c6a-adf9-4bad-b842-98ce71760935,Woningvoorraad,1229.0,2023,Kerncijfers wijken en buurten 2023,,aantal,,pos_is_pos,current
 BU19000300,b1011f4c-30b1-4088-bcf6-a67893d92c5f,Woonfunctie,1272,2026,BAG,,aantal,Gebruik,pos_is_pos,current
-BU19000301,356a2329-eadb-494f-a09d-906a3db264d4,0-15 jaar,55.0,2025,CBS_86165NED,,Aantal,,pos_is_pos,current
-BU19000301,026bcd11-ace5-4ec7-adbc-c06c324315cd,15-25 jaar,40.0,2025,CBS_86165NED,,Aantal,,pos_is_pos,current
-BU19000301,e6dd31a1-a056-4c07-a48c-1d4517269f1e,25-45 jaar,65.0,2025,CBS_86165NED,,Aantal,,pos_is_pos,current
-BU19000301,8225fa5c-efb8-4fd0-865b-a36ff0724a28,45-65 jaar,105.0,2025,CBS_86165NED,,Aantal,,pos_is_pos,current
-BU19000301,b0ee9877-3850-4529-b352-6ec673562ef8,65+ jaar,70.0,2025,CBS_86165NED,,Aantal,,pos_is_pos,current
 BU19000301,93564b76-b07a-4134-868e-10654650d064,Aantal bushaltes,1,2026,OpenStreetMap / Overpass API 2026,,aantal,,pos_is_pos,current
 BU19000301,233505e1-d22f-48b5-b67f-88ea73d12967,Aantal energielabels,33,2025,RVO EP-Online 2026-02,,aantal,Wonen,-/+,current
 BU19000301,a2ed3719-64a7-40da-bfc5-a43d3d292594,Aantal energielabels (definitief),19,2025,RVO EP-Online 2026-02,,aantal,Wonen,N/A,current
@@ -624,13 +401,8 @@ BU19000301,b69a88a0-efd4-4f8b-888a-97b653e1f13d,Aantal tramhaltes,0,2026,OpenStr
 BU19000301,696ca006-89a0-4e9f-aa5b-f68c724736d1,Aantal treinhaltes,0,2026,OpenStreetMap / Overpass API 2026,,aantal,,pos_is_pos,current
 BU19000301,c49c1563-2d85-4a2f-bdc9-02c340c4e510,Aantal veerboten,1,2026,OpenStreetMap / Overpass API 2026,,aantal,,pos_is_pos,current
 BU19000301,a5ed2ff5-f431-48e8-98d4-0c56686de109,Achterstand leerlingen,0,2025,a5ed2ff5-f431-48e8-98d4-0c56686de109_d_cbs_buurten.json,,score,,-/+,current
-BU19000301,869bec9c-9b9a-4425-9cd6-09cb4f7451ae,Afstand tot grote supermarkt,5.3,2025,CBS_86165NED,,km,,-/+,current
-BU19000301,1b28d9ef-f7ff-4609-9ef7-7ab8a9b6cba7,Afstand tot huisarts,4.9,2025,CBS_86165NED,,,,-/+,current
-BU19000301,76abbf47-6eb6-4c10-a4bf-ec0280435052,Afstand tot kinderdagverblijf,5.0,2025,CBS_86165NED,,km,,-/+,current
 BU19000301,bf4e5b8f-6b0a-4632-b9b4-8e29d025e68c,Afstand tot koele plek,336,2021,bf4e5b8f-6b0a-4632-b9b4-8e29d025e68c_d_cbs_buurten.json,,,,-/+,current
-BU19000301,ec95fe04-04fd-4bbb-bb9f-0f3f97861e5d,Afstand tot school,5.0,2025,CBS_86165NED,,km,,-/+,current
 BU19000301,b7090c23-7495-48c2-bfb3-cbfb7140386f,beschadiging auto's,0,2024,,,,,-/+,current
-BU19000301,f18b2c78-871b-48a7-b08f-fa743e589db8,Bevolkingsdichtheid,19.0,2025,CBS_86165NED,,inw/km²,,pos_is_pos,current
 BU19000301,64470009-7467-4a34-8f3c-b44d896a5364,Bewegen,52.2,2024,Gezondheidsmonitor RIVM 2024,,,,pos_is_pos,current
 BU19000301,5d7ad356-aac8-4815-8da7-97dff60c7873,Bijeenkomstfunctie,5,2026,BAG,,aantal,Gebruik,pos_is_pos,current
 BU19000301,3241e6b8-0712-4653-a420-2f3274466f6b,Bouwjaar 1915-1945,25.0,2025,Kadaster BAG Fryslân 2026,,aantal,Bebouwing,pos_is_pos,current
@@ -641,50 +413,31 @@ BU19000301,29cfacae-021e-4fe5-819b-e9eb655837ae,Celfunctie,0,2026,BAG,,aantal,Ge
 BU19000301,81ccf247-0449-40e0-a99c-a67019f272e4,Definitief energielabel,0.154761904761905,2025,81ccf247-0449-40e0-a99c-a67019f272e4_d_cbs_buurten.json,,,,pos_is_pos,current
 BU19000301,3ca8572d-cc03-4fd9-9bc9-e1cd0fc0a627,diefstal fiets,0,2024,,,aantal,,-/+,current
 BU19000301,1e9bc2fe-d5bd-4306-9b6b-d443e22916cf,Diversiteit Functies (Simpson Index),0.45,2026,BAG,,index,,pos_is_pos,current
-BU19000301,257494f4-9e51-4a4a-a662-feabfe9758b0,Eenpersoonshuishoudens,20.0,2025,CBS_86165NED,,aantal,,pos_is_pos,current
 BU19000301,4661dcb9-b7c4-42f8-b7c5-a61c12568806,Eenzaamheid,33.8,2024,Gezondheidsmonitor RIVM 2024,,,,-/+,current
 BU19000301,b53e54d6-ff54-4be1-b539-f915fd253831,Energielabel coverage,13.2,2025,Berekend: EP-Online / BAG Fryslân,,%,Wonen,pos_is_pos,current
 BU19000301,d20c7b4d-d305-495b-b77c-07b8121614a7,Ervaren gezondheid,83.7,2024,Gezondheidsmonitor RIVM 2024,,%,Gezondheid,pos_is_pos,current
 BU19000301,22d02bf9-99ef-4357-b797-09a714690b11,Gemiddeld bouwjaar woningen (BAG),1944.0,2025,Kadaster BAG Fryslân 2026,,jaar,Wonen,pos_is_pos,current
 BU19000301,3c2d0ca0-3a6d-4f53-809f-f82fa9b9fd22,Gemiddeld energielabel,4.578947368421052,2025,RVO EP-Online 2026-02,,score (1.0 - 9.0),,pos_is_pos,current
-BU19000301,7d9339e3-ea2c-474b-802a-49c854849f73,Gemiddelde woonoppervlakte (BAG),401.0,2026,BAG,,m²,Wonen,pos_is_pos,current
-BU19000301,7053d6a5-2bcf-4254-b089-79852f12d9aa,Gemiddelde WOZ-waarde,427.0,2025,CBS_86165NED,,x 1 000 euro,,pos_is_pos,current
 BU19000301,a4f84d1c-3263-4229-ad95-615924cb7852,Gemiddeld Laagste Grondwaterstand,1.13,2022,a4f84d1c-3263-4229-ad95-615924cb7852_d_cbs_buurten.json,,,,pos_is_pos,current
+BU19000301,7d9339e3-ea2c-474b-802a-49c854849f73,Gemiddelde woonoppervlakte (BAG),401.0,2026,BAG,,m²,Wonen,pos_is_pos,current
 BU19000301,311a6449-b145-4678-b51e-ac4e342dd1bf,Gezondheid,4.3,2024,Gezondheidsmonitor RIVM 2024,,,,pos_is_pos,current
 BU19000301,3baca929-ccc3-48aa-b966-e6877d01cbe7,Gezondheidszorgfunctie,0,2026,BAG,,aantal,Gebruik,pos_is_pos,current
 BU19000301,0ed37b61-f13d-446b-b108-70bb09af98e0,Huisarts,5.0,2024,CBS_85984NED,,km,,pos_is_pos,current
 BU19000301,b2e606cc-1d58-4917-9dec-148d90c80742,Huishoudens (BAG woonfunctie),144.0,2025,Kadaster BAG Fryslân 2026,,aantal,Wonen,pos_is_pos,current
-BU19000301,ad3b0509-3c14-49f8-aa10-4b3b391a2d84,Huishoudens met kind,50.0,2025,CBS_86165NED,,aantal,,pos_is_pos,current
-BU19000301,3dd70913-391e-4d5f-a121-d17c8b466372,Huishoudens met laag inkomen,2.5,2023,Kerncijfers wijken en buurten 2023,,%,,-/+,current
-BU19000301,be1a9ac4-6330-47c9-93c6-c9008b5daf89,Huishoudens totaal,120.0,2025,CBS_86165NED,,aantal,,pos_is_pos,current
-BU19000301,428c1232-0213-491b-ad0c-56dcc82a8c59,Huishoudens zonder kind,45.0,2025,CBS_86165NED,,aantal,,pos_is_pos,current
 BU19000301,92137246-e0f1-493d-97a8-e4a5660a99fb,inbraak auto,0,2024,,,aantal,,-/+,current
 BU19000301,d90d2b4c-4bce-428c-834a-1cc8113958e4,inbraak woning,0,2024,,,aantal,,-/+,current
 BU19000301,28a7a580-dc3c-4105-9fb3-d9ef47792429,Industriefunctie,44,2026,BAG,,aantal,Gebruik,pos_is_pos,current
-BU19000301,9c035f53-75a5-43eb-8496-22c4c6f08d6b,Inkomen per inwoner,35.3,2023,Kerncijfers wijken en buurten 2023,,,,pos_is_pos,current
-BU19000301,31f70dff-c116-4267-bef0-d15b0ff4c020,Inwoners,330.0,2023,Kerncijfers wijken en buurten 2023,,aantal,,pos_is_pos,current
 BU19000301,0212e8f8-053d-4287-b924-7bdc20c53bb2,Kantoorfunctie,2,2026,BAG,,aantal,Gebruik,pos_is_pos,current
-BU19000301,a0bbfd44-bacd-4434-bc8d-3a5204d65637,Koopwoningen,82.0,2025,CBS_86165NED,,percentage,,pos_is_pos,current
 BU19000301,a990c073-78e3-4490-a26e-1fa8ca6988f9,Logiesfunctie,1,2026,BAG,,aantal,Gebruik,pos_is_pos,current
 BU19000301,7b4a6b5f-7d6a-46ef-8a7d-7b3ee28a014c,Mantelzorger,14.4,2024,Gezondheidsmonitor RIVM 2024,,%,,pos_is_pos,current
 BU19000301,58fc72b6-881e-4917-83de-8099df3e3b0d,Moeite met rondkomen,8.3,2024,Gezondheidsmonitor RIVM 2024,,%,Gezondheid,-/+,current
-BU19000301,b07f74eb-5117-4705-802c-597ba830d016,Netto arbeidsparticipatie,85.0,2023,Kerncijfers wijken en buurten 2023,,%,,pos_is_pos,current
 BU19000301,0432fef2-83f2-4405-a457-08b89945ca86,Obesitas,20.9,2024,CBS_50150NED,,%,Gezondheid,-/+,current
 BU19000301,93048a96-d3cd-4d99-83b5-2b950e8d78a2,Onderwijsfunctie,1,2026,BAG,,aantal,Gebruik,pos_is_pos,current
-BU19000301,56f32b9a-bc45-4be1-9e1c-c2668c2e2a32,Opleidingsniveau hoog,50.0,2023,Kerncijfers wijken en buurten 2023,,aantal,,pos_is_pos,current
-BU19000301,c9719a07-57a5-48cf-8f93-b6f932aead51,Opleidingsniveau laag,40.0,2023,Kerncijfers wijken en buurten 2023,,aantal,,pos_is_pos,current
-BU19000301,1fa5df89-13e3-424f-9eba-9372cae42896,Opleidingsniveau middelbaar,160.0,2023,Kerncijfers wijken en buurten 2023,,aantal,,pos_is_pos,current
 BU19000301,97f53738-3439-4c28-8cac-046a52c65248,Oppervlak groen per inwoner,541.26,2025,97f53738-3439-4c28-8cac-046a52c65248_d_cbs_buurten.json,,,,pos_is_pos,current
 BU19000301,34e36ae1-4132-4555-a4fc-d16b039d467e,Overgewicht,46.6,2024,Gezondheidsmonitor RIVM 2024,,%,Gezondheid,-/+,current
 BU19000301,25405460-907c-4e63-acc4-4f9c949f7cac,Overige gebruiksfunctie,5,2026,BAG,,aantal,Gebruik,pos_is_pos,current
 BU19000301,1ed22149-7fed-4466-a3b8-dfd7ff28f5b5,Overmatig drinken,3.1,2024,Gezondheidsmonitor RIVM 2024,,%,,-/+,current
-BU19000301,aa5ce990-a43e-439a-9e98-69899321cf40,Participatiewet totaal,0.0,2023,Kerncijfers wijken en buurten 2023,,,,-/+,current
-BU19000301,2aadb30f-860f-4f70-916f-6df00e86e870,Particulier huurbezit,16.0,2025,CBS_86165NED,,,,pos_is_pos,current
-BU19000301,352dda4d-5de8-4f31-b85a-6d82f812ba7c,Percentage werknemers,48.0,2023,CBS_85618NED,,percentage,Gebruik,pos_is_pos,current
 BU19000301,4f53e98e-3309-4a3a-9ecc-732956f7c53a,Percentage woonfunctie (BAG),90.5,2026,BAG,,%,Wonen,pos_is_pos,current
-BU19000301,f8d0d890-3975-4183-9555-06d673c4657f,Percentage zelfstandigen,52.0,2023,CBS_85618NED,,percentage,Gebruik,pos_is_pos,current
-BU19000301,88192b70-faa9-4108-a473-302aa0f624a9,Personenauto's naar oppervlakte,10.0,2025,CBS_86165NED,,per km²,,pos_is_pos,current
-BU19000301,461d542b-b8be-4510-9dd0-5ba554b818cb,Personenauto's per huishouden,1.4,2025,CBS_86165NED,,per huishouden,,pos_is_pos,current
 BU19000301,a4780646-844e-4221-b07a-b4f4ade25059,Roken,13.7,2024,Gezondheidsmonitor RIVM 2024,,,,-/+,current
 BU19000301,e2f618ca-0726-4c1f-8442-c1150578622e,Sportfunctie,1,2026,BAG,,aantal,Gebruik,pos_is_pos,current
 BU19000301,2d6bdaba-3832-40cc-acae-950883f1aa76,Verandering GLG nu t.o.v. 2050,-0.16,2022,2d6bdaba-3832-40cc-acae-950883f1aa76_d_cbs_buurten.json,,,,pos_is_pos,current
@@ -692,15 +445,8 @@ BU19000301,0bbd30e5-08f5-4499-b6ca-cdda990720dc,Verhouding oppervlakte water / v
 BU19000301,89b6274f-9372-4784-8ba3-924b6c7e4d7d,Verwerken hemelwater exc. schade,4.2,2022,89b6274f-9372-4784-8ba3-924b6c7e4d7d_d_cbs_buurten.json,,,,pos_is_pos,current
 BU19000301,9b168456-9219-4c3b-af16-636662a74155,Vrijwilliger,42.3,2024,Gezondheidsmonitor RIVM 2024,,,,pos_is_pos,current
 BU19000301,49d5687e-c062-40b5-84b9-7e4557b6cee0,Winkelfunctie,0,2026,BAG,,aantal,Gebruik,pos_is_pos,current
-BU19000301,6dd8b659-29c1-4396-a853-1abd7c6e0591,Woningcorporatie bezit,3.0,2025,CBS_86165NED,,%,,pos_is_pos,current
 BU19000301,89ad6843-0db9-4044-9508-307775d4f496,Woningen gebouwd vóór 1945 (BAG),49.3,2025,Kadaster BAG Fryslân 2026,,%,Wonen,pos_is_pos,current
-BU19000301,e3d59c6a-adf9-4bad-b842-98ce71760935,Woningvoorraad,146.0,2023,Kerncijfers wijken en buurten 2023,,aantal,,pos_is_pos,current
 BU19000301,b1011f4c-30b1-4088-bcf6-a67893d92c5f,Woonfunctie,143,2026,BAG,,aantal,Gebruik,pos_is_pos,current
-BU19000400,356a2329-eadb-494f-a09d-906a3db264d4,0-15 jaar,50.0,2025,CBS_86165NED,,Aantal,,pos_is_pos,current
-BU19000400,026bcd11-ace5-4ec7-adbc-c06c324315cd,15-25 jaar,55.0,2025,CBS_86165NED,,Aantal,,pos_is_pos,current
-BU19000400,e6dd31a1-a056-4c07-a48c-1d4517269f1e,25-45 jaar,80.0,2025,CBS_86165NED,,Aantal,,pos_is_pos,current
-BU19000400,8225fa5c-efb8-4fd0-865b-a36ff0724a28,45-65 jaar,165.0,2025,CBS_86165NED,,Aantal,,pos_is_pos,current
-BU19000400,b0ee9877-3850-4529-b352-6ec673562ef8,65+ jaar,120.0,2025,CBS_86165NED,,Aantal,,pos_is_pos,current
 BU19000400,93564b76-b07a-4134-868e-10654650d064,Aantal bushaltes,1,2026,OpenStreetMap / Overpass API 2026,,aantal,,pos_is_pos,current
 BU19000400,233505e1-d22f-48b5-b67f-88ea73d12967,Aantal energielabels,122,2025,RVO EP-Online 2026-02,,aantal,Wonen,-/+,current
 BU19000400,a2ed3719-64a7-40da-bfc5-a43d3d292594,Aantal energielabels (definitief),40,2025,RVO EP-Online 2026-02,,aantal,Wonen,N/A,current
@@ -711,13 +457,8 @@ BU19000400,b69a88a0-efd4-4f8b-888a-97b653e1f13d,Aantal tramhaltes,0,2026,OpenStr
 BU19000400,696ca006-89a0-4e9f-aa5b-f68c724736d1,Aantal treinhaltes,0,2026,OpenStreetMap / Overpass API 2026,,aantal,,pos_is_pos,current
 BU19000400,c49c1563-2d85-4a2f-bdc9-02c340c4e510,Aantal veerboten,0,2026,OpenStreetMap / Overpass API 2026,,aantal,,pos_is_pos,current
 BU19000400,a5ed2ff5-f431-48e8-98d4-0c56686de109,Achterstand leerlingen,0,2025,a5ed2ff5-f431-48e8-98d4-0c56686de109_d_cbs_buurten.json,,score,,-/+,current
-BU19000400,869bec9c-9b9a-4425-9cd6-09cb4f7451ae,Afstand tot grote supermarkt,1.7,2025,CBS_86165NED,,km,,-/+,current
-BU19000400,1b28d9ef-f7ff-4609-9ef7-7ab8a9b6cba7,Afstand tot huisarts,2.3,2025,CBS_86165NED,,,,-/+,current
-BU19000400,76abbf47-6eb6-4c10-a4bf-ec0280435052,Afstand tot kinderdagverblijf,2.0,2025,CBS_86165NED,,km,,-/+,current
 BU19000400,bf4e5b8f-6b0a-4632-b9b4-8e29d025e68c,Afstand tot koele plek,222,2021,bf4e5b8f-6b0a-4632-b9b4-8e29d025e68c_d_cbs_buurten.json,,,,-/+,current
-BU19000400,ec95fe04-04fd-4bbb-bb9f-0f3f97861e5d,Afstand tot school,0.5,2025,CBS_86165NED,,km,,-/+,current
 BU19000400,b7090c23-7495-48c2-bfb3-cbfb7140386f,beschadiging auto's,0,2024,,,,,-/+,current
-BU19000400,f18b2c78-871b-48a7-b08f-fa743e589db8,Bevolkingsdichtheid,453.0,2025,CBS_86165NED,,inw/km²,,pos_is_pos,current
 BU19000400,64470009-7467-4a34-8f3c-b44d896a5364,Bewegen,46.6,2024,Gezondheidsmonitor RIVM 2024,,,,pos_is_pos,current
 BU19000400,5d7ad356-aac8-4815-8da7-97dff60c7873,Bijeenkomstfunctie,5,2026,BAG,,aantal,Gebruik,pos_is_pos,current
 BU19000400,3241e6b8-0712-4653-a420-2f3274466f6b,Bouwjaar 1915-1945,60.0,2025,Kadaster BAG Fryslân 2026,,aantal,Bebouwing,pos_is_pos,current
@@ -728,50 +469,31 @@ BU19000400,29cfacae-021e-4fe5-819b-e9eb655837ae,Celfunctie,0,2026,BAG,,aantal,Ge
 BU19000400,81ccf247-0449-40e0-a99c-a67019f272e4,Definitief energielabel,0.428044280442804,2025,81ccf247-0449-40e0-a99c-a67019f272e4_d_cbs_buurten.json,,,,pos_is_pos,current
 BU19000400,3ca8572d-cc03-4fd9-9bc9-e1cd0fc0a627,diefstal fiets,0,2024,,,aantal,,-/+,current
 BU19000400,1e9bc2fe-d5bd-4306-9b6b-d443e22916cf,Diversiteit Functies (Simpson Index),0.36,2026,BAG,,index,,pos_is_pos,current
-BU19000400,257494f4-9e51-4a4a-a662-feabfe9758b0,Eenpersoonshuishoudens,65.0,2025,CBS_86165NED,,aantal,,pos_is_pos,current
 BU19000400,4661dcb9-b7c4-42f8-b7c5-a61c12568806,Eenzaamheid,42.7,2024,Gezondheidsmonitor RIVM 2024,,,,-/+,current
 BU19000400,b53e54d6-ff54-4be1-b539-f915fd253831,Energielabel coverage,18.0,2025,Berekend: EP-Online / BAG Fryslân,,%,Wonen,pos_is_pos,current
 BU19000400,d20c7b4d-d305-495b-b77c-07b8121614a7,Ervaren gezondheid,75.1,2024,Gezondheidsmonitor RIVM 2024,,%,Gezondheid,pos_is_pos,current
 BU19000400,22d02bf9-99ef-4357-b797-09a714690b11,Gemiddeld bouwjaar woningen (BAG),1952.0,2025,Kadaster BAG Fryslân 2026,,jaar,Wonen,pos_is_pos,current
 BU19000400,3c2d0ca0-3a6d-4f53-809f-f82fa9b9fd22,Gemiddeld energielabel,5.6,2025,RVO EP-Online 2026-02,,score (1.0 - 9.0),,pos_is_pos,current
-BU19000400,7d9339e3-ea2c-474b-802a-49c854849f73,Gemiddelde woonoppervlakte (BAG),158.0,2026,BAG,,m²,Wonen,pos_is_pos,current
-BU19000400,7053d6a5-2bcf-4254-b089-79852f12d9aa,Gemiddelde WOZ-waarde,318.0,2025,CBS_86165NED,,x 1 000 euro,,pos_is_pos,current
 BU19000400,a4f84d1c-3263-4229-ad95-615924cb7852,Gemiddeld Laagste Grondwaterstand,2.85,2022,a4f84d1c-3263-4229-ad95-615924cb7852_d_cbs_buurten.json,,,,pos_is_pos,current
+BU19000400,7d9339e3-ea2c-474b-802a-49c854849f73,Gemiddelde woonoppervlakte (BAG),158.0,2026,BAG,,m²,Wonen,pos_is_pos,current
 BU19000400,311a6449-b145-4678-b51e-ac4e342dd1bf,Gezondheid,6.3,2024,Gezondheidsmonitor RIVM 2024,,,,pos_is_pos,current
 BU19000400,3baca929-ccc3-48aa-b966-e6877d01cbe7,Gezondheidszorgfunctie,0,2026,BAG,,aantal,Gebruik,pos_is_pos,current
 BU19000400,0ed37b61-f13d-446b-b108-70bb09af98e0,Huisarts,2.3,2024,CBS_85984NED,,km,,pos_is_pos,current
 BU19000400,b2e606cc-1d58-4917-9dec-148d90c80742,Huishoudens (BAG woonfunctie),222.0,2025,Kadaster BAG Fryslân 2026,,aantal,Wonen,pos_is_pos,current
-BU19000400,ad3b0509-3c14-49f8-aa10-4b3b391a2d84,Huishoudens met kind,65.0,2025,CBS_86165NED,,aantal,,pos_is_pos,current
-BU19000400,3dd70913-391e-4d5f-a121-d17c8b466372,Huishoudens met laag inkomen,3.5,2023,Kerncijfers wijken en buurten 2023,,%,,-/+,current
-BU19000400,be1a9ac4-6330-47c9-93c6-c9008b5daf89,Huishoudens totaal,210.0,2025,CBS_86165NED,,aantal,,pos_is_pos,current
-BU19000400,428c1232-0213-491b-ad0c-56dcc82a8c59,Huishoudens zonder kind,80.0,2025,CBS_86165NED,,aantal,,pos_is_pos,current
 BU19000400,92137246-e0f1-493d-97a8-e4a5660a99fb,inbraak auto,0,2024,,,aantal,,-/+,current
 BU19000400,d90d2b4c-4bce-428c-834a-1cc8113958e4,inbraak woning,0,2024,,,aantal,,-/+,current
 BU19000400,28a7a580-dc3c-4105-9fb3-d9ef47792429,Industriefunctie,9,2026,BAG,,aantal,Gebruik,pos_is_pos,current
-BU19000400,9c035f53-75a5-43eb-8496-22c4c6f08d6b,Inkomen per inwoner,29.6,2023,Kerncijfers wijken en buurten 2023,,,,pos_is_pos,current
-BU19000400,31f70dff-c116-4267-bef0-d15b0ff4c020,Inwoners,510.0,2023,Kerncijfers wijken en buurten 2023,,aantal,,pos_is_pos,current
 BU19000400,0212e8f8-053d-4287-b924-7bdc20c53bb2,Kantoorfunctie,0,2026,BAG,,aantal,Gebruik,pos_is_pos,current
-BU19000400,a0bbfd44-bacd-4434-bc8d-3a5204d65637,Koopwoningen,81.0,2025,CBS_86165NED,,percentage,,pos_is_pos,current
 BU19000400,a990c073-78e3-4490-a26e-1fa8ca6988f9,Logiesfunctie,35,2026,BAG,,aantal,Gebruik,pos_is_pos,current
 BU19000400,7b4a6b5f-7d6a-46ef-8a7d-7b3ee28a014c,Mantelzorger,16.5,2024,Gezondheidsmonitor RIVM 2024,,%,,pos_is_pos,current
 BU19000400,58fc72b6-881e-4917-83de-8099df3e3b0d,Moeite met rondkomen,12.3,2024,Gezondheidsmonitor RIVM 2024,,%,Gezondheid,-/+,current
-BU19000400,b07f74eb-5117-4705-802c-597ba830d016,Netto arbeidsparticipatie,68.0,2023,Kerncijfers wijken en buurten 2023,,%,,pos_is_pos,current
 BU19000400,0432fef2-83f2-4405-a457-08b89945ca86,Obesitas,23.9,2024,CBS_50150NED,,%,Gezondheid,-/+,current
 BU19000400,93048a96-d3cd-4d99-83b5-2b950e8d78a2,Onderwijsfunctie,1,2026,BAG,,aantal,Gebruik,pos_is_pos,current
-BU19000400,56f32b9a-bc45-4be1-9e1c-c2668c2e2a32,Opleidingsniveau hoog,90.0,2023,Kerncijfers wijken en buurten 2023,,aantal,,pos_is_pos,current
-BU19000400,c9719a07-57a5-48cf-8f93-b6f932aead51,Opleidingsniveau laag,120.0,2023,Kerncijfers wijken en buurten 2023,,aantal,,pos_is_pos,current
-BU19000400,1fa5df89-13e3-424f-9eba-9372cae42896,Opleidingsniveau middelbaar,170.0,2023,Kerncijfers wijken en buurten 2023,,aantal,,pos_is_pos,current
 BU19000400,97f53738-3439-4c28-8cac-046a52c65248,Oppervlak groen per inwoner,131.35,2025,97f53738-3439-4c28-8cac-046a52c65248_d_cbs_buurten.json,,,,pos_is_pos,current
 BU19000400,34e36ae1-4132-4555-a4fc-d16b039d467e,Overgewicht,51.5,2024,Gezondheidsmonitor RIVM 2024,,%,Gezondheid,-/+,current
 BU19000400,25405460-907c-4e63-acc4-4f9c949f7cac,Overige gebruiksfunctie,6,2026,BAG,,aantal,Gebruik,pos_is_pos,current
 BU19000400,1ed22149-7fed-4466-a3b8-dfd7ff28f5b5,Overmatig drinken,6.1,2024,Gezondheidsmonitor RIVM 2024,,%,,-/+,current
-BU19000400,aa5ce990-a43e-439a-9e98-69899321cf40,Participatiewet totaal,10.0,2023,Kerncijfers wijken en buurten 2023,,,,-/+,current
-BU19000400,2aadb30f-860f-4f70-916f-6df00e86e870,Particulier huurbezit,3.0,2025,CBS_86165NED,,,,pos_is_pos,current
-BU19000400,352dda4d-5de8-4f31-b85a-6d82f812ba7c,Percentage werknemers,69.0,2023,CBS_85618NED,,percentage,Gebruik,pos_is_pos,current
 BU19000400,4f53e98e-3309-4a3a-9ecc-732956f7c53a,Percentage woonfunctie (BAG),80.9,2026,BAG,,%,Wonen,pos_is_pos,current
-BU19000400,f8d0d890-3975-4183-9555-06d673c4657f,Percentage zelfstandigen,31.0,2023,CBS_85618NED,,percentage,Gebruik,pos_is_pos,current
-BU19000400,88192b70-faa9-4108-a473-302aa0f624a9,Personenauto's naar oppervlakte,280.0,2025,CBS_86165NED,,per km²,,pos_is_pos,current
-BU19000400,461d542b-b8be-4510-9dd0-5ba554b818cb,Personenauto's per huishouden,1.3,2025,CBS_86165NED,,per huishouden,,pos_is_pos,current
 BU19000400,a4780646-844e-4221-b07a-b4f4ade25059,Roken,15.4,2024,Gezondheidsmonitor RIVM 2024,,,,-/+,current
 BU19000400,e2f618ca-0726-4c1f-8442-c1150578622e,Sportfunctie,1,2026,BAG,,aantal,Gebruik,pos_is_pos,current
 BU19000400,2d6bdaba-3832-40cc-acae-950883f1aa76,Verandering GLG nu t.o.v. 2050,-0.02,2022,2d6bdaba-3832-40cc-acae-950883f1aa76_d_cbs_buurten.json,,,,pos_is_pos,current
@@ -779,15 +501,8 @@ BU19000400,0bbd30e5-08f5-4499-b6ca-cdda990720dc,Verhouding oppervlakte water / v
 BU19000400,89b6274f-9372-4784-8ba3-924b6c7e4d7d,Verwerken hemelwater exc. schade,8.6,2022,89b6274f-9372-4784-8ba3-924b6c7e4d7d_d_cbs_buurten.json,,,,pos_is_pos,current
 BU19000400,9b168456-9219-4c3b-af16-636662a74155,Vrijwilliger,39.7,2024,Gezondheidsmonitor RIVM 2024,,,,pos_is_pos,current
 BU19000400,49d5687e-c062-40b5-84b9-7e4557b6cee0,Winkelfunctie,2,2026,BAG,,aantal,Gebruik,pos_is_pos,current
-BU19000400,6dd8b659-29c1-4396-a853-1abd7c6e0591,Woningcorporatie bezit,16.0,2025,CBS_86165NED,,%,,pos_is_pos,current
 BU19000400,89ad6843-0db9-4044-9508-307775d4f496,Woningen gebouwd vóór 1945 (BAG),40.1,2025,Kadaster BAG Fryslân 2026,,%,Wonen,pos_is_pos,current
-BU19000400,e3d59c6a-adf9-4bad-b842-98ce71760935,Woningvoorraad,218.0,2023,Kerncijfers wijken en buurten 2023,,aantal,,pos_is_pos,current
 BU19000400,b1011f4c-30b1-4088-bcf6-a67893d92c5f,Woonfunctie,216,2026,BAG,,aantal,Gebruik,pos_is_pos,current
-BU19000401,356a2329-eadb-494f-a09d-906a3db264d4,0-15 jaar,105.0,2025,CBS_86165NED,,Aantal,,pos_is_pos,current
-BU19000401,026bcd11-ace5-4ec7-adbc-c06c324315cd,15-25 jaar,70.0,2025,CBS_86165NED,,Aantal,,pos_is_pos,current
-BU19000401,e6dd31a1-a056-4c07-a48c-1d4517269f1e,25-45 jaar,120.0,2025,CBS_86165NED,,Aantal,,pos_is_pos,current
-BU19000401,8225fa5c-efb8-4fd0-865b-a36ff0724a28,45-65 jaar,225.0,2025,CBS_86165NED,,Aantal,,pos_is_pos,current
-BU19000401,b0ee9877-3850-4529-b352-6ec673562ef8,65+ jaar,185.0,2025,CBS_86165NED,,Aantal,,pos_is_pos,current
 BU19000401,93564b76-b07a-4134-868e-10654650d064,Aantal bushaltes,3,2026,OpenStreetMap / Overpass API 2026,,aantal,,pos_is_pos,current
 BU19000401,233505e1-d22f-48b5-b67f-88ea73d12967,Aantal energielabels,193,2025,RVO EP-Online 2026-02,,aantal,Wonen,-/+,current
 BU19000401,a2ed3719-64a7-40da-bfc5-a43d3d292594,Aantal energielabels (definitief),59,2025,RVO EP-Online 2026-02,,aantal,Wonen,N/A,current
@@ -798,13 +513,8 @@ BU19000401,b69a88a0-efd4-4f8b-888a-97b653e1f13d,Aantal tramhaltes,0,2026,OpenStr
 BU19000401,696ca006-89a0-4e9f-aa5b-f68c724736d1,Aantal treinhaltes,0,2026,OpenStreetMap / Overpass API 2026,,aantal,,pos_is_pos,current
 BU19000401,c49c1563-2d85-4a2f-bdc9-02c340c4e510,Aantal veerboten,0,2026,OpenStreetMap / Overpass API 2026,,aantal,,pos_is_pos,current
 BU19000401,a5ed2ff5-f431-48e8-98d4-0c56686de109,Achterstand leerlingen,0,2025,a5ed2ff5-f431-48e8-98d4-0c56686de109_d_cbs_buurten.json,,score,,-/+,current
-BU19000401,869bec9c-9b9a-4425-9cd6-09cb4f7451ae,Afstand tot grote supermarkt,4.4,2025,CBS_86165NED,,km,,-/+,current
-BU19000401,1b28d9ef-f7ff-4609-9ef7-7ab8a9b6cba7,Afstand tot huisarts,0.9,2025,CBS_86165NED,,,,-/+,current
-BU19000401,76abbf47-6eb6-4c10-a4bf-ec0280435052,Afstand tot kinderdagverblijf,0.8,2025,CBS_86165NED,,km,,-/+,current
 BU19000401,bf4e5b8f-6b0a-4632-b9b4-8e29d025e68c,Afstand tot koele plek,242,2021,bf4e5b8f-6b0a-4632-b9b4-8e29d025e68c_d_cbs_buurten.json,,,,-/+,current
-BU19000401,ec95fe04-04fd-4bbb-bb9f-0f3f97861e5d,Afstand tot school,0.8,2025,CBS_86165NED,,km,,-/+,current
 BU19000401,b7090c23-7495-48c2-bfb3-cbfb7140386f,beschadiging auto's,1,2024,,,,,-/+,current
-BU19000401,f18b2c78-871b-48a7-b08f-fa743e589db8,Bevolkingsdichtheid,143.0,2025,CBS_86165NED,,inw/km²,,pos_is_pos,current
 BU19000401,64470009-7467-4a34-8f3c-b44d896a5364,Bewegen,48.1,2024,Gezondheidsmonitor RIVM 2024,,,,pos_is_pos,current
 BU19000401,5d7ad356-aac8-4815-8da7-97dff60c7873,Bijeenkomstfunctie,7,2026,BAG,,aantal,Gebruik,pos_is_pos,current
 BU19000401,3241e6b8-0712-4653-a420-2f3274466f6b,Bouwjaar 1915-1945,75.0,2025,Kadaster BAG Fryslân 2026,,aantal,Bebouwing,pos_is_pos,current
@@ -815,50 +525,31 @@ BU19000401,29cfacae-021e-4fe5-819b-e9eb655837ae,Celfunctie,0,2026,BAG,,aantal,Ge
 BU19000401,81ccf247-0449-40e0-a99c-a67019f272e4,Definitief energielabel,0.394859813084112,2025,81ccf247-0449-40e0-a99c-a67019f272e4_d_cbs_buurten.json,,,,pos_is_pos,current
 BU19000401,3ca8572d-cc03-4fd9-9bc9-e1cd0fc0a627,diefstal fiets,0,2024,,,aantal,,-/+,current
 BU19000401,1e9bc2fe-d5bd-4306-9b6b-d443e22916cf,Diversiteit Functies (Simpson Index),0.32,2026,BAG,,index,,pos_is_pos,current
-BU19000401,257494f4-9e51-4a4a-a662-feabfe9758b0,Eenpersoonshuishoudens,120.0,2025,CBS_86165NED,,aantal,,pos_is_pos,current
 BU19000401,4661dcb9-b7c4-42f8-b7c5-a61c12568806,Eenzaamheid,44.6,2024,Gezondheidsmonitor RIVM 2024,,,,-/+,current
 BU19000401,b53e54d6-ff54-4be1-b539-f915fd253831,Energielabel coverage,17.0,2025,Berekend: EP-Online / BAG Fryslân,,%,Wonen,pos_is_pos,current
 BU19000401,d20c7b4d-d305-495b-b77c-07b8121614a7,Ervaren gezondheid,73.2,2024,Gezondheidsmonitor RIVM 2024,,%,Gezondheid,pos_is_pos,current
 BU19000401,22d02bf9-99ef-4357-b797-09a714690b11,Gemiddeld bouwjaar woningen (BAG),1948.0,2025,Kadaster BAG Fryslân 2026,,jaar,Wonen,pos_is_pos,current
 BU19000401,3c2d0ca0-3a6d-4f53-809f-f82fa9b9fd22,Gemiddeld energielabel,5.3474576271186445,2025,RVO EP-Online 2026-02,,score (1.0 - 9.0),,pos_is_pos,current
-BU19000401,7d9339e3-ea2c-474b-802a-49c854849f73,Gemiddelde woonoppervlakte (BAG),182.0,2026,BAG,,m²,Wonen,pos_is_pos,current
-BU19000401,7053d6a5-2bcf-4254-b089-79852f12d9aa,Gemiddelde WOZ-waarde,327.0,2025,CBS_86165NED,,x 1 000 euro,,pos_is_pos,current
 BU19000401,a4f84d1c-3263-4229-ad95-615924cb7852,Gemiddeld Laagste Grondwaterstand,1.63,2022,a4f84d1c-3263-4229-ad95-615924cb7852_d_cbs_buurten.json,,,,pos_is_pos,current
+BU19000401,7d9339e3-ea2c-474b-802a-49c854849f73,Gemiddelde woonoppervlakte (BAG),182.0,2026,BAG,,m²,Wonen,pos_is_pos,current
 BU19000401,311a6449-b145-4678-b51e-ac4e342dd1bf,Gezondheid,6.5,2024,Gezondheidsmonitor RIVM 2024,,,,pos_is_pos,current
 BU19000401,3baca929-ccc3-48aa-b966-e6877d01cbe7,Gezondheidszorgfunctie,2,2026,BAG,,aantal,Gebruik,pos_is_pos,current
 BU19000401,0ed37b61-f13d-446b-b108-70bb09af98e0,Huisarts,0.8,2024,CBS_85984NED,,km,,pos_is_pos,current
 BU19000401,b2e606cc-1d58-4917-9dec-148d90c80742,Huishoudens (BAG woonfunctie),347.0,2025,Kadaster BAG Fryslân 2026,,aantal,Wonen,pos_is_pos,current
-BU19000401,ad3b0509-3c14-49f8-aa10-4b3b391a2d84,Huishoudens met kind,90.0,2025,CBS_86165NED,,aantal,,pos_is_pos,current
-BU19000401,3dd70913-391e-4d5f-a121-d17c8b466372,Huishoudens met laag inkomen,5.1,2023,Kerncijfers wijken en buurten 2023,,%,,-/+,current
-BU19000401,be1a9ac4-6330-47c9-93c6-c9008b5daf89,Huishoudens totaal,330.0,2025,CBS_86165NED,,aantal,,pos_is_pos,current
-BU19000401,428c1232-0213-491b-ad0c-56dcc82a8c59,Huishoudens zonder kind,115.0,2025,CBS_86165NED,,aantal,,pos_is_pos,current
 BU19000401,92137246-e0f1-493d-97a8-e4a5660a99fb,inbraak auto,0,2024,,,aantal,,-/+,current
 BU19000401,d90d2b4c-4bce-428c-834a-1cc8113958e4,inbraak woning,0,2024,,,aantal,,-/+,current
 BU19000401,28a7a580-dc3c-4105-9fb3-d9ef47792429,Industriefunctie,27,2026,BAG,,aantal,Gebruik,pos_is_pos,current
-BU19000401,9c035f53-75a5-43eb-8496-22c4c6f08d6b,Inkomen per inwoner,27.3,2023,Kerncijfers wijken en buurten 2023,,,,pos_is_pos,current
-BU19000401,31f70dff-c116-4267-bef0-d15b0ff4c020,Inwoners,700.0,2023,Kerncijfers wijken en buurten 2023,,aantal,,pos_is_pos,current
 BU19000401,0212e8f8-053d-4287-b924-7bdc20c53bb2,Kantoorfunctie,3,2026,BAG,,aantal,Gebruik,pos_is_pos,current
-BU19000401,a0bbfd44-bacd-4434-bc8d-3a5204d65637,Koopwoningen,74.0,2025,CBS_86165NED,,percentage,,pos_is_pos,current
 BU19000401,a990c073-78e3-4490-a26e-1fa8ca6988f9,Logiesfunctie,27,2026,BAG,,aantal,Gebruik,pos_is_pos,current
 BU19000401,7b4a6b5f-7d6a-46ef-8a7d-7b3ee28a014c,Mantelzorger,15.7,2024,Gezondheidsmonitor RIVM 2024,,%,,pos_is_pos,current
 BU19000401,58fc72b6-881e-4917-83de-8099df3e3b0d,Moeite met rondkomen,13.0,2024,Gezondheidsmonitor RIVM 2024,,%,Gezondheid,-/+,current
-BU19000401,b07f74eb-5117-4705-802c-597ba830d016,Netto arbeidsparticipatie,73.0,2023,Kerncijfers wijken en buurten 2023,,%,,pos_is_pos,current
 BU19000401,0432fef2-83f2-4405-a457-08b89945ca86,Obesitas,20.8,2024,CBS_50150NED,,%,Gezondheid,-/+,current
 BU19000401,93048a96-d3cd-4d99-83b5-2b950e8d78a2,Onderwijsfunctie,4,2026,BAG,,aantal,Gebruik,pos_is_pos,current
-BU19000401,56f32b9a-bc45-4be1-9e1c-c2668c2e2a32,Opleidingsniveau hoog,110.0,2023,Kerncijfers wijken en buurten 2023,,aantal,,pos_is_pos,current
-BU19000401,c9719a07-57a5-48cf-8f93-b6f932aead51,Opleidingsniveau laag,120.0,2023,Kerncijfers wijken en buurten 2023,,aantal,,pos_is_pos,current
-BU19000401,1fa5df89-13e3-424f-9eba-9372cae42896,Opleidingsniveau middelbaar,290.0,2023,Kerncijfers wijken en buurten 2023,,aantal,,pos_is_pos,current
 BU19000401,97f53738-3439-4c28-8cac-046a52c65248,Oppervlak groen per inwoner,124.02,2025,97f53738-3439-4c28-8cac-046a52c65248_d_cbs_buurten.json,,,,pos_is_pos,current
 BU19000401,34e36ae1-4132-4555-a4fc-d16b039d467e,Overgewicht,53.5,2024,Gezondheidsmonitor RIVM 2024,,%,Gezondheid,-/+,current
 BU19000401,25405460-907c-4e63-acc4-4f9c949f7cac,Overige gebruiksfunctie,8,2026,BAG,,aantal,Gebruik,pos_is_pos,current
 BU19000401,1ed22149-7fed-4466-a3b8-dfd7ff28f5b5,Overmatig drinken,7.1,2024,Gezondheidsmonitor RIVM 2024,,%,,-/+,current
-BU19000401,aa5ce990-a43e-439a-9e98-69899321cf40,Participatiewet totaal,20.0,2023,Kerncijfers wijken en buurten 2023,,,,-/+,current
-BU19000401,2aadb30f-860f-4f70-916f-6df00e86e870,Particulier huurbezit,7.0,2025,CBS_86165NED,,,,pos_is_pos,current
-BU19000401,352dda4d-5de8-4f31-b85a-6d82f812ba7c,Percentage werknemers,70.0,2023,CBS_85618NED,,percentage,Gebruik,pos_is_pos,current
 BU19000401,4f53e98e-3309-4a3a-9ecc-732956f7c53a,Percentage woonfunctie (BAG),87.4,2026,BAG,,%,Wonen,pos_is_pos,current
-BU19000401,f8d0d890-3975-4183-9555-06d673c4657f,Percentage zelfstandigen,30.0,2023,CBS_85618NED,,percentage,Gebruik,pos_is_pos,current
-BU19000401,88192b70-faa9-4108-a473-302aa0f624a9,Personenauto's naar oppervlakte,83.0,2025,CBS_86165NED,,per km²,,pos_is_pos,current
-BU19000401,461d542b-b8be-4510-9dd0-5ba554b818cb,Personenauto's per huishouden,1.2,2025,CBS_86165NED,,per huishouden,,pos_is_pos,current
 BU19000401,a4780646-844e-4221-b07a-b4f4ade25059,Roken,15.5,2024,Gezondheidsmonitor RIVM 2024,,,,-/+,current
 BU19000401,e2f618ca-0726-4c1f-8442-c1150578622e,Sportfunctie,2,2026,BAG,,aantal,Gebruik,pos_is_pos,current
 BU19000401,2d6bdaba-3832-40cc-acae-950883f1aa76,Verandering GLG nu t.o.v. 2050,-0.09,2022,2d6bdaba-3832-40cc-acae-950883f1aa76_d_cbs_buurten.json,,,,pos_is_pos,current
@@ -866,15 +557,8 @@ BU19000401,0bbd30e5-08f5-4499-b6ca-cdda990720dc,Verhouding oppervlakte water / v
 BU19000401,89b6274f-9372-4784-8ba3-924b6c7e4d7d,Verwerken hemelwater exc. schade,11.2,2022,89b6274f-9372-4784-8ba3-924b6c7e4d7d_d_cbs_buurten.json,,,,pos_is_pos,current
 BU19000401,9b168456-9219-4c3b-af16-636662a74155,Vrijwilliger,39.4,2024,Gezondheidsmonitor RIVM 2024,,,,pos_is_pos,current
 BU19000401,49d5687e-c062-40b5-84b9-7e4557b6cee0,Winkelfunctie,1,2026,BAG,,aantal,Gebruik,pos_is_pos,current
-BU19000401,6dd8b659-29c1-4396-a853-1abd7c6e0591,Woningcorporatie bezit,16.0,2025,CBS_86165NED,,%,,pos_is_pos,current
 BU19000401,89ad6843-0db9-4044-9508-307775d4f496,Woningen gebouwd vóór 1945 (BAG),41.5,2025,Kadaster BAG Fryslân 2026,,%,Wonen,pos_is_pos,current
-BU19000401,e3d59c6a-adf9-4bad-b842-98ce71760935,Woningvoorraad,360.0,2023,Kerncijfers wijken en buurten 2023,,aantal,,pos_is_pos,current
 BU19000401,b1011f4c-30b1-4088-bcf6-a67893d92c5f,Woonfunctie,361,2026,BAG,,aantal,Gebruik,pos_is_pos,current
-BU19001200,356a2329-eadb-494f-a09d-906a3db264d4,0-15 jaar,190.0,2025,CBS_86165NED,,Aantal,,pos_is_pos,current
-BU19001200,026bcd11-ace5-4ec7-adbc-c06c324315cd,15-25 jaar,145.0,2025,CBS_86165NED,,Aantal,,pos_is_pos,current
-BU19001200,e6dd31a1-a056-4c07-a48c-1d4517269f1e,25-45 jaar,260.0,2025,CBS_86165NED,,Aantal,,pos_is_pos,current
-BU19001200,8225fa5c-efb8-4fd0-865b-a36ff0724a28,45-65 jaar,420.0,2025,CBS_86165NED,,Aantal,,pos_is_pos,current
-BU19001200,b0ee9877-3850-4529-b352-6ec673562ef8,65+ jaar,330.0,2025,CBS_86165NED,,Aantal,,pos_is_pos,current
 BU19001200,93564b76-b07a-4134-868e-10654650d064,Aantal bushaltes,4,2026,OpenStreetMap / Overpass API 2026,,aantal,,pos_is_pos,current
 BU19001200,233505e1-d22f-48b5-b67f-88ea73d12967,Aantal energielabels,333,2025,RVO EP-Online 2026-02,,aantal,Wonen,-/+,current
 BU19001200,a2ed3719-64a7-40da-bfc5-a43d3d292594,Aantal energielabels (definitief),141,2025,RVO EP-Online 2026-02,,aantal,Wonen,N/A,current
@@ -885,13 +569,8 @@ BU19001200,b69a88a0-efd4-4f8b-888a-97b653e1f13d,Aantal tramhaltes,0,2026,OpenStr
 BU19001200,696ca006-89a0-4e9f-aa5b-f68c724736d1,Aantal treinhaltes,0,2026,OpenStreetMap / Overpass API 2026,,aantal,,pos_is_pos,current
 BU19001200,c49c1563-2d85-4a2f-bdc9-02c340c4e510,Aantal veerboten,0,2026,OpenStreetMap / Overpass API 2026,,aantal,,pos_is_pos,current
 BU19001200,a5ed2ff5-f431-48e8-98d4-0c56686de109,Achterstand leerlingen,0,2025,a5ed2ff5-f431-48e8-98d4-0c56686de109_d_cbs_buurten.json,,score,,-/+,current
-BU19001200,869bec9c-9b9a-4425-9cd6-09cb4f7451ae,Afstand tot grote supermarkt,0.4,2025,CBS_86165NED,,km,,-/+,current
-BU19001200,1b28d9ef-f7ff-4609-9ef7-7ab8a9b6cba7,Afstand tot huisarts,7.4,2025,CBS_86165NED,,,,-/+,current
-BU19001200,76abbf47-6eb6-4c10-a4bf-ec0280435052,Afstand tot kinderdagverblijf,0.5,2025,CBS_86165NED,,km,,-/+,current
 BU19001200,bf4e5b8f-6b0a-4632-b9b4-8e29d025e68c,Afstand tot koele plek,230,2021,bf4e5b8f-6b0a-4632-b9b4-8e29d025e68c_d_cbs_buurten.json,,,,-/+,current
-BU19001200,ec95fe04-04fd-4bbb-bb9f-0f3f97861e5d,Afstand tot school,0.5,2025,CBS_86165NED,,km,,-/+,current
 BU19001200,b7090c23-7495-48c2-bfb3-cbfb7140386f,beschadiging auto's,2,2024,,,,,-/+,current
-BU19001200,f18b2c78-871b-48a7-b08f-fa743e589db8,Bevolkingsdichtheid,1186.0,2025,CBS_86165NED,,inw/km²,,pos_is_pos,current
 BU19001200,64470009-7467-4a34-8f3c-b44d896a5364,Bewegen,49.3,2024,Gezondheidsmonitor RIVM 2024,,,,pos_is_pos,current
 BU19001200,5d7ad356-aac8-4815-8da7-97dff60c7873,Bijeenkomstfunctie,14,2026,BAG,,aantal,Gebruik,pos_is_pos,current
 BU19001200,3241e6b8-0712-4653-a420-2f3274466f6b,Bouwjaar 1915-1945,85.0,2025,Kadaster BAG Fryslân 2026,,aantal,Bebouwing,pos_is_pos,current
@@ -902,50 +581,31 @@ BU19001200,29cfacae-021e-4fe5-819b-e9eb655837ae,Celfunctie,0,2026,BAG,,aantal,Ge
 BU19001200,81ccf247-0449-40e0-a99c-a67019f272e4,Definitief energielabel,0.412451361867704,2025,81ccf247-0449-40e0-a99c-a67019f272e4_d_cbs_buurten.json,,,,pos_is_pos,current
 BU19001200,3ca8572d-cc03-4fd9-9bc9-e1cd0fc0a627,diefstal fiets,0,2024,,,aantal,,-/+,current
 BU19001200,1e9bc2fe-d5bd-4306-9b6b-d443e22916cf,Diversiteit Functies (Simpson Index),0.29,2026,BAG,,index,,pos_is_pos,current
-BU19001200,257494f4-9e51-4a4a-a662-feabfe9758b0,Eenpersoonshuishoudens,210.0,2025,CBS_86165NED,,aantal,,pos_is_pos,current
 BU19001200,4661dcb9-b7c4-42f8-b7c5-a61c12568806,Eenzaamheid,39.5,2024,Gezondheidsmonitor RIVM 2024,,,,-/+,current
 BU19001200,b53e54d6-ff54-4be1-b539-f915fd253831,Energielabel coverage,21.1,2025,Berekend: EP-Online / BAG Fryslân,,%,Wonen,pos_is_pos,current
 BU19001200,d20c7b4d-d305-495b-b77c-07b8121614a7,Ervaren gezondheid,76.4,2024,Gezondheidsmonitor RIVM 2024,,%,Gezondheid,pos_is_pos,current
 BU19001200,22d02bf9-99ef-4357-b797-09a714690b11,Gemiddeld bouwjaar woningen (BAG),1947.0,2025,Kadaster BAG Fryslân 2026,,jaar,Wonen,pos_is_pos,current
 BU19001200,3c2d0ca0-3a6d-4f53-809f-f82fa9b9fd22,Gemiddeld energielabel,4.773049645390071,2025,RVO EP-Online 2026-02,,score (1.0 - 9.0),,pos_is_pos,current
-BU19001200,7d9339e3-ea2c-474b-802a-49c854849f73,Gemiddelde woonoppervlakte (BAG),150.0,2026,BAG,,m²,Wonen,pos_is_pos,current
-BU19001200,7053d6a5-2bcf-4254-b089-79852f12d9aa,Gemiddelde WOZ-waarde,351.0,2025,CBS_86165NED,,x 1 000 euro,,pos_is_pos,current
 BU19001200,a4f84d1c-3263-4229-ad95-615924cb7852,Gemiddeld Laagste Grondwaterstand,1.3,2022,a4f84d1c-3263-4229-ad95-615924cb7852_d_cbs_buurten.json,,,,pos_is_pos,current
+BU19001200,7d9339e3-ea2c-474b-802a-49c854849f73,Gemiddelde woonoppervlakte (BAG),150.0,2026,BAG,,m²,Wonen,pos_is_pos,current
 BU19001200,311a6449-b145-4678-b51e-ac4e342dd1bf,Gezondheid,5.6,2024,Gezondheidsmonitor RIVM 2024,,,,pos_is_pos,current
 BU19001200,3baca929-ccc3-48aa-b966-e6877d01cbe7,Gezondheidszorgfunctie,2,2026,BAG,,aantal,Gebruik,pos_is_pos,current
 BU19001200,0ed37b61-f13d-446b-b108-70bb09af98e0,Huisarts,7.4,2024,CBS_85984NED,,km,,pos_is_pos,current
 BU19001200,b2e606cc-1d58-4917-9dec-148d90c80742,Huishoudens (BAG woonfunctie),667.0,2025,Kadaster BAG Fryslân 2026,,aantal,Wonen,pos_is_pos,current
-BU19001200,ad3b0509-3c14-49f8-aa10-4b3b391a2d84,Huishoudens met kind,190.0,2025,CBS_86165NED,,aantal,,pos_is_pos,current
-BU19001200,3dd70913-391e-4d5f-a121-d17c8b466372,Huishoudens met laag inkomen,2.3,2023,Kerncijfers wijken en buurten 2023,,%,,-/+,current
-BU19001200,be1a9ac4-6330-47c9-93c6-c9008b5daf89,Huishoudens totaal,620.0,2025,CBS_86165NED,,aantal,,pos_is_pos,current
-BU19001200,428c1232-0213-491b-ad0c-56dcc82a8c59,Huishoudens zonder kind,220.0,2025,CBS_86165NED,,aantal,,pos_is_pos,current
 BU19001200,92137246-e0f1-493d-97a8-e4a5660a99fb,inbraak auto,1,2024,,,aantal,,-/+,current
 BU19001200,d90d2b4c-4bce-428c-834a-1cc8113958e4,inbraak woning,0,2024,,,aantal,,-/+,current
 BU19001200,28a7a580-dc3c-4105-9fb3-d9ef47792429,Industriefunctie,50,2026,BAG,,aantal,Gebruik,pos_is_pos,current
-BU19001200,9c035f53-75a5-43eb-8496-22c4c6f08d6b,Inkomen per inwoner,30.3,2023,Kerncijfers wijken en buurten 2023,,,,pos_is_pos,current
-BU19001200,31f70dff-c116-4267-bef0-d15b0ff4c020,Inwoners,1380.0,2023,Kerncijfers wijken en buurten 2023,,aantal,,pos_is_pos,current
 BU19001200,0212e8f8-053d-4287-b924-7bdc20c53bb2,Kantoorfunctie,8,2026,BAG,,aantal,Gebruik,pos_is_pos,current
-BU19001200,a0bbfd44-bacd-4434-bc8d-3a5204d65637,Koopwoningen,77.0,2025,CBS_86165NED,,percentage,,pos_is_pos,current
 BU19001200,a990c073-78e3-4490-a26e-1fa8ca6988f9,Logiesfunctie,17,2026,BAG,,aantal,Gebruik,pos_is_pos,current
 BU19001200,7b4a6b5f-7d6a-46ef-8a7d-7b3ee28a014c,Mantelzorger,15.4,2024,Gezondheidsmonitor RIVM 2024,,%,,pos_is_pos,current
 BU19001200,58fc72b6-881e-4917-83de-8099df3e3b0d,Moeite met rondkomen,10.3,2024,Gezondheidsmonitor RIVM 2024,,%,Gezondheid,-/+,current
-BU19001200,b07f74eb-5117-4705-802c-597ba830d016,Netto arbeidsparticipatie,74.0,2023,Kerncijfers wijken en buurten 2023,,%,,pos_is_pos,current
 BU19001200,0432fef2-83f2-4405-a457-08b89945ca86,Obesitas,19.4,2024,CBS_50150NED,,%,Gezondheid,-/+,current
 BU19001200,93048a96-d3cd-4d99-83b5-2b950e8d78a2,Onderwijsfunctie,2,2026,BAG,,aantal,Gebruik,pos_is_pos,current
-BU19001200,56f32b9a-bc45-4be1-9e1c-c2668c2e2a32,Opleidingsniveau hoog,280.0,2023,Kerncijfers wijken en buurten 2023,,aantal,,pos_is_pos,current
-BU19001200,c9719a07-57a5-48cf-8f93-b6f932aead51,Opleidingsniveau laag,230.0,2023,Kerncijfers wijken en buurten 2023,,aantal,,pos_is_pos,current
-BU19001200,1fa5df89-13e3-424f-9eba-9372cae42896,Opleidingsniveau middelbaar,540.0,2023,Kerncijfers wijken en buurten 2023,,aantal,,pos_is_pos,current
 BU19001200,97f53738-3439-4c28-8cac-046a52c65248,Oppervlak groen per inwoner,209.3,2025,97f53738-3439-4c28-8cac-046a52c65248_d_cbs_buurten.json,,,,pos_is_pos,current
 BU19001200,34e36ae1-4132-4555-a4fc-d16b039d467e,Overgewicht,51.9,2024,Gezondheidsmonitor RIVM 2024,,%,Gezondheid,-/+,current
 BU19001200,25405460-907c-4e63-acc4-4f9c949f7cac,Overige gebruiksfunctie,16,2026,BAG,,aantal,Gebruik,pos_is_pos,current
 BU19001200,1ed22149-7fed-4466-a3b8-dfd7ff28f5b5,Overmatig drinken,6.5,2024,Gezondheidsmonitor RIVM 2024,,%,,-/+,current
-BU19001200,aa5ce990-a43e-439a-9e98-69899321cf40,Participatiewet totaal,30.0,2023,Kerncijfers wijken en buurten 2023,,,,-/+,current
-BU19001200,2aadb30f-860f-4f70-916f-6df00e86e870,Particulier huurbezit,9.0,2025,CBS_86165NED,,,,pos_is_pos,current
-BU19001200,352dda4d-5de8-4f31-b85a-6d82f812ba7c,Percentage werknemers,76.0,2023,CBS_85618NED,,percentage,Gebruik,pos_is_pos,current
 BU19001200,4f53e98e-3309-4a3a-9ecc-732956f7c53a,Percentage woonfunctie (BAG),87.3,2026,BAG,,%,Wonen,pos_is_pos,current
-BU19001200,f8d0d890-3975-4183-9555-06d673c4657f,Percentage zelfstandigen,24.0,2023,CBS_85618NED,,percentage,Gebruik,pos_is_pos,current
-BU19001200,88192b70-faa9-4108-a473-302aa0f624a9,Personenauto's naar oppervlakte,718.0,2025,CBS_86165NED,,per km²,,pos_is_pos,current
-BU19001200,461d542b-b8be-4510-9dd0-5ba554b818cb,Personenauto's per huishouden,1.3,2025,CBS_86165NED,,per huishouden,,pos_is_pos,current
 BU19001200,a4780646-844e-4221-b07a-b4f4ade25059,Roken,15.2,2024,Gezondheidsmonitor RIVM 2024,,,,-/+,current
 BU19001200,e2f618ca-0726-4c1f-8442-c1150578622e,Sportfunctie,4,2026,BAG,,aantal,Gebruik,pos_is_pos,current
 BU19001200,2d6bdaba-3832-40cc-acae-950883f1aa76,Verandering GLG nu t.o.v. 2050,-0.17,2022,2d6bdaba-3832-40cc-acae-950883f1aa76_d_cbs_buurten.json,,,,pos_is_pos,current
@@ -953,15 +613,8 @@ BU19001200,0bbd30e5-08f5-4499-b6ca-cdda990720dc,Verhouding oppervlakte water / v
 BU19001200,89b6274f-9372-4784-8ba3-924b6c7e4d7d,Verwerken hemelwater exc. schade,8.6,2022,89b6274f-9372-4784-8ba3-924b6c7e4d7d_d_cbs_buurten.json,,,,pos_is_pos,current
 BU19001200,9b168456-9219-4c3b-af16-636662a74155,Vrijwilliger,37.7,2024,Gezondheidsmonitor RIVM 2024,,,,pos_is_pos,current
 BU19001200,49d5687e-c062-40b5-84b9-7e4557b6cee0,Winkelfunctie,12,2026,BAG,,aantal,Gebruik,pos_is_pos,current
-BU19001200,6dd8b659-29c1-4396-a853-1abd7c6e0591,Woningcorporatie bezit,14.0,2025,CBS_86165NED,,%,,pos_is_pos,current
 BU19001200,89ad6843-0db9-4044-9508-307775d4f496,Woningen gebouwd vóór 1945 (BAG),32.4,2025,Kadaster BAG Fryslân 2026,,%,Wonen,pos_is_pos,current
-BU19001200,e3d59c6a-adf9-4bad-b842-98ce71760935,Woningvoorraad,633.0,2023,Kerncijfers wijken en buurten 2023,,aantal,,pos_is_pos,current
 BU19001200,b1011f4c-30b1-4088-bcf6-a67893d92c5f,Woonfunctie,651,2026,BAG,,aantal,Gebruik,pos_is_pos,current
-BU19001300,356a2329-eadb-494f-a09d-906a3db264d4,0-15 jaar,260.0,2025,CBS_86165NED,,Aantal,,pos_is_pos,current
-BU19001300,026bcd11-ace5-4ec7-adbc-c06c324315cd,15-25 jaar,170.0,2025,CBS_86165NED,,Aantal,,pos_is_pos,current
-BU19001300,e6dd31a1-a056-4c07-a48c-1d4517269f1e,25-45 jaar,330.0,2025,CBS_86165NED,,Aantal,,pos_is_pos,current
-BU19001300,8225fa5c-efb8-4fd0-865b-a36ff0724a28,45-65 jaar,400.0,2025,CBS_86165NED,,Aantal,,pos_is_pos,current
-BU19001300,b0ee9877-3850-4529-b352-6ec673562ef8,65+ jaar,480.0,2025,CBS_86165NED,,Aantal,,pos_is_pos,current
 BU19001300,93564b76-b07a-4134-868e-10654650d064,Aantal bushaltes,1,2026,OpenStreetMap / Overpass API 2026,,aantal,,pos_is_pos,current
 BU19001300,233505e1-d22f-48b5-b67f-88ea73d12967,Aantal energielabels,515,2025,RVO EP-Online 2026-02,,aantal,Wonen,-/+,current
 BU19001300,a2ed3719-64a7-40da-bfc5-a43d3d292594,Aantal energielabels (definitief),290,2025,RVO EP-Online 2026-02,,aantal,Wonen,N/A,current
@@ -972,13 +625,8 @@ BU19001300,b69a88a0-efd4-4f8b-888a-97b653e1f13d,Aantal tramhaltes,0,2026,OpenStr
 BU19001300,696ca006-89a0-4e9f-aa5b-f68c724736d1,Aantal treinhaltes,0,2026,OpenStreetMap / Overpass API 2026,,aantal,,pos_is_pos,current
 BU19001300,c49c1563-2d85-4a2f-bdc9-02c340c4e510,Aantal veerboten,0,2026,OpenStreetMap / Overpass API 2026,,aantal,,pos_is_pos,current
 BU19001300,a5ed2ff5-f431-48e8-98d4-0c56686de109,Achterstand leerlingen,0,2025,a5ed2ff5-f431-48e8-98d4-0c56686de109_d_cbs_buurten.json,,score,,-/+,current
-BU19001300,869bec9c-9b9a-4425-9cd6-09cb4f7451ae,Afstand tot grote supermarkt,0.5,2025,CBS_86165NED,,km,,-/+,current
-BU19001300,1b28d9ef-f7ff-4609-9ef7-7ab8a9b6cba7,Afstand tot huisarts,0.6,2025,CBS_86165NED,,,,-/+,current
-BU19001300,76abbf47-6eb6-4c10-a4bf-ec0280435052,Afstand tot kinderdagverblijf,0.3,2025,CBS_86165NED,,km,,-/+,current
 BU19001300,bf4e5b8f-6b0a-4632-b9b4-8e29d025e68c,Afstand tot koele plek,206,2021,bf4e5b8f-6b0a-4632-b9b4-8e29d025e68c_d_cbs_buurten.json,,,,-/+,current
-BU19001300,ec95fe04-04fd-4bbb-bb9f-0f3f97861e5d,Afstand tot school,0.4,2025,CBS_86165NED,,km,,-/+,current
 BU19001300,b7090c23-7495-48c2-bfb3-cbfb7140386f,beschadiging auto's,6,2024,,,,,-/+,current
-BU19001300,f18b2c78-871b-48a7-b08f-fa743e589db8,Bevolkingsdichtheid,1159.0,2025,CBS_86165NED,,inw/km²,,pos_is_pos,current
 BU19001300,64470009-7467-4a34-8f3c-b44d896a5364,Bewegen,45.9,2024,Gezondheidsmonitor RIVM 2024,,,,pos_is_pos,current
 BU19001300,5d7ad356-aac8-4815-8da7-97dff60c7873,Bijeenkomstfunctie,14,2026,BAG,,aantal,Gebruik,pos_is_pos,current
 BU19001300,3241e6b8-0712-4653-a420-2f3274466f6b,Bouwjaar 1915-1945,133.0,2025,Kadaster BAG Fryslân 2026,,aantal,Bebouwing,pos_is_pos,current
@@ -989,50 +637,31 @@ BU19001300,29cfacae-021e-4fe5-819b-e9eb655837ae,Celfunctie,0,2026,BAG,,aantal,Ge
 BU19001300,81ccf247-0449-40e0-a99c-a67019f272e4,Definitief energielabel,0.462025316455696,2025,81ccf247-0449-40e0-a99c-a67019f272e4_d_cbs_buurten.json,,,,pos_is_pos,current
 BU19001300,3ca8572d-cc03-4fd9-9bc9-e1cd0fc0a627,diefstal fiets,0,2024,,,aantal,,-/+,current
 BU19001300,1e9bc2fe-d5bd-4306-9b6b-d443e22916cf,Diversiteit Functies (Simpson Index),0.32,2026,BAG,,index,,pos_is_pos,current
-BU19001300,257494f4-9e51-4a4a-a662-feabfe9758b0,Eenpersoonshuishoudens,280.0,2025,CBS_86165NED,,aantal,,pos_is_pos,current
 BU19001300,4661dcb9-b7c4-42f8-b7c5-a61c12568806,Eenzaamheid,45.7,2024,Gezondheidsmonitor RIVM 2024,,,,-/+,current
 BU19001300,b53e54d6-ff54-4be1-b539-f915fd253831,Energielabel coverage,36.3,2025,Berekend: EP-Online / BAG Fryslân,,%,Wonen,pos_is_pos,current
 BU19001300,d20c7b4d-d305-495b-b77c-07b8121614a7,Ervaren gezondheid,73.5,2024,Gezondheidsmonitor RIVM 2024,,%,Gezondheid,pos_is_pos,current
 BU19001300,22d02bf9-99ef-4357-b797-09a714690b11,Gemiddeld bouwjaar woningen (BAG),1962.0,2025,Kadaster BAG Fryslân 2026,,jaar,Wonen,pos_is_pos,current
 BU19001300,3c2d0ca0-3a6d-4f53-809f-f82fa9b9fd22,Gemiddeld energielabel,4.062068965517241,2025,RVO EP-Online 2026-02,,score (1.0 - 9.0),,pos_is_pos,current
-BU19001300,7d9339e3-ea2c-474b-802a-49c854849f73,Gemiddelde woonoppervlakte (BAG),132.0,2026,BAG,,m²,Wonen,pos_is_pos,current
-BU19001300,7053d6a5-2bcf-4254-b089-79852f12d9aa,Gemiddelde WOZ-waarde,263.0,2025,CBS_86165NED,,x 1 000 euro,,pos_is_pos,current
 BU19001300,a4f84d1c-3263-4229-ad95-615924cb7852,Gemiddeld Laagste Grondwaterstand,1.82,2022,a4f84d1c-3263-4229-ad95-615924cb7852_d_cbs_buurten.json,,,,pos_is_pos,current
+BU19001300,7d9339e3-ea2c-474b-802a-49c854849f73,Gemiddelde woonoppervlakte (BAG),132.0,2026,BAG,,m²,Wonen,pos_is_pos,current
 BU19001300,311a6449-b145-4678-b51e-ac4e342dd1bf,Gezondheid,6.8,2024,Gezondheidsmonitor RIVM 2024,,,,pos_is_pos,current
 BU19001300,3baca929-ccc3-48aa-b966-e6877d01cbe7,Gezondheidszorgfunctie,7,2026,BAG,,aantal,Gebruik,pos_is_pos,current
 BU19001300,0ed37b61-f13d-446b-b108-70bb09af98e0,Huisarts,0.6,2024,CBS_85984NED,,km,,pos_is_pos,current
 BU19001300,b2e606cc-1d58-4917-9dec-148d90c80742,Huishoudens (BAG woonfunctie),798.0,2025,Kadaster BAG Fryslân 2026,,aantal,Wonen,pos_is_pos,current
-BU19001300,ad3b0509-3c14-49f8-aa10-4b3b391a2d84,Huishoudens met kind,235.0,2025,CBS_86165NED,,aantal,,pos_is_pos,current
-BU19001300,3dd70913-391e-4d5f-a121-d17c8b466372,Huishoudens met laag inkomen,1.8,2023,Kerncijfers wijken en buurten 2023,,%,,-/+,current
-BU19001300,be1a9ac4-6330-47c9-93c6-c9008b5daf89,Huishoudens totaal,745.0,2025,CBS_86165NED,,aantal,,pos_is_pos,current
-BU19001300,428c1232-0213-491b-ad0c-56dcc82a8c59,Huishoudens zonder kind,235.0,2025,CBS_86165NED,,aantal,,pos_is_pos,current
 BU19001300,92137246-e0f1-493d-97a8-e4a5660a99fb,inbraak auto,1,2024,,,aantal,,-/+,current
 BU19001300,d90d2b4c-4bce-428c-834a-1cc8113958e4,inbraak woning,1,2024,,,aantal,,-/+,current
 BU19001300,28a7a580-dc3c-4105-9fb3-d9ef47792429,Industriefunctie,38,2026,BAG,,aantal,Gebruik,pos_is_pos,current
-BU19001300,9c035f53-75a5-43eb-8496-22c4c6f08d6b,Inkomen per inwoner,27.9,2023,Kerncijfers wijken en buurten 2023,,,,pos_is_pos,current
-BU19001300,31f70dff-c116-4267-bef0-d15b0ff4c020,Inwoners,1600.0,2023,Kerncijfers wijken en buurten 2023,,aantal,,pos_is_pos,current
 BU19001300,0212e8f8-053d-4287-b924-7bdc20c53bb2,Kantoorfunctie,7,2026,BAG,,aantal,Gebruik,pos_is_pos,current
-BU19001300,a0bbfd44-bacd-4434-bc8d-3a5204d65637,Koopwoningen,67.0,2025,CBS_86165NED,,percentage,,pos_is_pos,current
 BU19001300,a990c073-78e3-4490-a26e-1fa8ca6988f9,Logiesfunctie,70,2026,BAG,,aantal,Gebruik,pos_is_pos,current
 BU19001300,7b4a6b5f-7d6a-46ef-8a7d-7b3ee28a014c,Mantelzorger,14.0,2024,Gezondheidsmonitor RIVM 2024,,%,,pos_is_pos,current
 BU19001300,58fc72b6-881e-4917-83de-8099df3e3b0d,Moeite met rondkomen,11.8,2024,Gezondheidsmonitor RIVM 2024,,%,Gezondheid,-/+,current
-BU19001300,b07f74eb-5117-4705-802c-597ba830d016,Netto arbeidsparticipatie,70.0,2023,Kerncijfers wijken en buurten 2023,,%,,pos_is_pos,current
 BU19001300,0432fef2-83f2-4405-a457-08b89945ca86,Obesitas,22.2,2024,CBS_50150NED,,%,Gezondheid,-/+,current
 BU19001300,93048a96-d3cd-4d99-83b5-2b950e8d78a2,Onderwijsfunctie,3,2026,BAG,,aantal,Gebruik,pos_is_pos,current
-BU19001300,56f32b9a-bc45-4be1-9e1c-c2668c2e2a32,Opleidingsniveau hoog,250.0,2023,Kerncijfers wijken en buurten 2023,,aantal,,pos_is_pos,current
-BU19001300,c9719a07-57a5-48cf-8f93-b6f932aead51,Opleidingsniveau laag,310.0,2023,Kerncijfers wijken en buurten 2023,,aantal,,pos_is_pos,current
-BU19001300,1fa5df89-13e3-424f-9eba-9372cae42896,Opleidingsniveau middelbaar,590.0,2023,Kerncijfers wijken en buurten 2023,,aantal,,pos_is_pos,current
 BU19001300,97f53738-3439-4c28-8cac-046a52c65248,Oppervlak groen per inwoner,82.24,2025,97f53738-3439-4c28-8cac-046a52c65248_d_cbs_buurten.json,,,,pos_is_pos,current
 BU19001300,34e36ae1-4132-4555-a4fc-d16b039d467e,Overgewicht,57.3,2024,Gezondheidsmonitor RIVM 2024,,%,Gezondheid,-/+,current
 BU19001300,25405460-907c-4e63-acc4-4f9c949f7cac,Overige gebruiksfunctie,13,2026,BAG,,aantal,Gebruik,pos_is_pos,current
 BU19001300,1ed22149-7fed-4466-a3b8-dfd7ff28f5b5,Overmatig drinken,5.4,2024,Gezondheidsmonitor RIVM 2024,,%,,-/+,current
-BU19001300,aa5ce990-a43e-439a-9e98-69899321cf40,Participatiewet totaal,30.0,2023,Kerncijfers wijken en buurten 2023,,,,-/+,current
-BU19001300,2aadb30f-860f-4f70-916f-6df00e86e870,Particulier huurbezit,5.0,2025,CBS_86165NED,,,,pos_is_pos,current
-BU19001300,352dda4d-5de8-4f31-b85a-6d82f812ba7c,Percentage werknemers,84.0,2023,CBS_85618NED,,percentage,Gebruik,pos_is_pos,current
 BU19001300,4f53e98e-3309-4a3a-9ecc-732956f7c53a,Percentage woonfunctie (BAG),85.0,2026,BAG,,%,Wonen,pos_is_pos,current
-BU19001300,f8d0d890-3975-4183-9555-06d673c4657f,Percentage zelfstandigen,16.0,2023,CBS_85618NED,,percentage,Gebruik,pos_is_pos,current
-BU19001300,88192b70-faa9-4108-a473-302aa0f624a9,Personenauto's naar oppervlakte,658.0,2025,CBS_86165NED,,per km²,,pos_is_pos,current
-BU19001300,461d542b-b8be-4510-9dd0-5ba554b818cb,Personenauto's per huishouden,1.2,2025,CBS_86165NED,,per huishouden,,pos_is_pos,current
 BU19001300,a4780646-844e-4221-b07a-b4f4ade25059,Roken,16.4,2024,Gezondheidsmonitor RIVM 2024,,,,-/+,current
 BU19001300,e2f618ca-0726-4c1f-8442-c1150578622e,Sportfunctie,6,2026,BAG,,aantal,Gebruik,pos_is_pos,current
 BU19001300,2d6bdaba-3832-40cc-acae-950883f1aa76,Verandering GLG nu t.o.v. 2050,-0.06,2022,2d6bdaba-3832-40cc-acae-950883f1aa76_d_cbs_buurten.json,,,,pos_is_pos,current
@@ -1040,15 +669,8 @@ BU19001300,0bbd30e5-08f5-4499-b6ca-cdda990720dc,Verhouding oppervlakte water / v
 BU19001300,89b6274f-9372-4784-8ba3-924b6c7e4d7d,Verwerken hemelwater exc. schade,9.8,2022,89b6274f-9372-4784-8ba3-924b6c7e4d7d_d_cbs_buurten.json,,,,pos_is_pos,current
 BU19001300,9b168456-9219-4c3b-af16-636662a74155,Vrijwilliger,33.8,2024,Gezondheidsmonitor RIVM 2024,,,,pos_is_pos,current
 BU19001300,49d5687e-c062-40b5-84b9-7e4557b6cee0,Winkelfunctie,13,2026,BAG,,aantal,Gebruik,pos_is_pos,current
-BU19001300,6dd8b659-29c1-4396-a853-1abd7c6e0591,Woningcorporatie bezit,28.0,2025,CBS_86165NED,,%,,pos_is_pos,current
 BU19001300,89ad6843-0db9-4044-9508-307775d4f496,Woningen gebouwd vóór 1945 (BAG),27.3,2025,Kadaster BAG Fryslân 2026,,%,Wonen,pos_is_pos,current
-BU19001300,e3d59c6a-adf9-4bad-b842-98ce71760935,Woningvoorraad,791.0,2023,Kerncijfers wijken en buurten 2023,,aantal,,pos_is_pos,current
 BU19001300,b1011f4c-30b1-4088-bcf6-a67893d92c5f,Woonfunctie,789,2026,BAG,,aantal,Gebruik,pos_is_pos,current
-BU19002017,356a2329-eadb-494f-a09d-906a3db264d4,0-15 jaar,50.0,2025,CBS_86165NED,,Aantal,,pos_is_pos,current
-BU19002017,026bcd11-ace5-4ec7-adbc-c06c324315cd,15-25 jaar,45.0,2025,CBS_86165NED,,Aantal,,pos_is_pos,current
-BU19002017,e6dd31a1-a056-4c07-a48c-1d4517269f1e,25-45 jaar,65.0,2025,CBS_86165NED,,Aantal,,pos_is_pos,current
-BU19002017,8225fa5c-efb8-4fd0-865b-a36ff0724a28,45-65 jaar,90.0,2025,CBS_86165NED,,Aantal,,pos_is_pos,current
-BU19002017,b0ee9877-3850-4529-b352-6ec673562ef8,65+ jaar,75.0,2025,CBS_86165NED,,Aantal,,pos_is_pos,current
 BU19002017,93564b76-b07a-4134-868e-10654650d064,Aantal bushaltes,1,2026,OpenStreetMap / Overpass API 2026,,aantal,,pos_is_pos,current
 BU19002017,233505e1-d22f-48b5-b67f-88ea73d12967,Aantal energielabels,63,2025,RVO EP-Online 2026-02,,aantal,Wonen,-/+,current
 BU19002017,a2ed3719-64a7-40da-bfc5-a43d3d292594,Aantal energielabels (definitief),26,2025,RVO EP-Online 2026-02,,aantal,Wonen,N/A,current
@@ -1059,13 +681,8 @@ BU19002017,b69a88a0-efd4-4f8b-888a-97b653e1f13d,Aantal tramhaltes,0,2026,OpenStr
 BU19002017,696ca006-89a0-4e9f-aa5b-f68c724736d1,Aantal treinhaltes,0,2026,OpenStreetMap / Overpass API 2026,,aantal,,pos_is_pos,current
 BU19002017,c49c1563-2d85-4a2f-bdc9-02c340c4e510,Aantal veerboten,0,2026,OpenStreetMap / Overpass API 2026,,aantal,,pos_is_pos,current
 BU19002017,a5ed2ff5-f431-48e8-98d4-0c56686de109,Achterstand leerlingen,0,2025,a5ed2ff5-f431-48e8-98d4-0c56686de109_d_cbs_buurten.json,,score,,-/+,current
-BU19002017,869bec9c-9b9a-4425-9cd6-09cb4f7451ae,Afstand tot grote supermarkt,4.6,2025,CBS_86165NED,,km,,-/+,current
-BU19002017,1b28d9ef-f7ff-4609-9ef7-7ab8a9b6cba7,Afstand tot huisarts,0.3,2025,CBS_86165NED,,,,-/+,current
-BU19002017,76abbf47-6eb6-4c10-a4bf-ec0280435052,Afstand tot kinderdagverblijf,0.3,2025,CBS_86165NED,,km,,-/+,current
 BU19002017,bf4e5b8f-6b0a-4632-b9b4-8e29d025e68c,Afstand tot koele plek,254,2021,bf4e5b8f-6b0a-4632-b9b4-8e29d025e68c_d_cbs_buurten.json,,,,-/+,current
-BU19002017,ec95fe04-04fd-4bbb-bb9f-0f3f97861e5d,Afstand tot school,0.3,2025,CBS_86165NED,,km,,-/+,current
 BU19002017,b7090c23-7495-48c2-bfb3-cbfb7140386f,beschadiging auto's,1,2024,,,,,-/+,current
-BU19002017,f18b2c78-871b-48a7-b08f-fa743e589db8,Bevolkingsdichtheid,397.0,2025,CBS_86165NED,,inw/km²,,pos_is_pos,current
 BU19002017,64470009-7467-4a34-8f3c-b44d896a5364,Bewegen,48.5,2024,Gezondheidsmonitor RIVM 2024,,,,pos_is_pos,current
 BU19002017,5d7ad356-aac8-4815-8da7-97dff60c7873,Bijeenkomstfunctie,5,2026,BAG,,aantal,Gebruik,pos_is_pos,current
 BU19002017,3241e6b8-0712-4653-a420-2f3274466f6b,Bouwjaar 1915-1945,21.0,2025,Kadaster BAG Fryslân 2026,,aantal,Bebouwing,pos_is_pos,current
@@ -1076,50 +693,31 @@ BU19002017,29cfacae-021e-4fe5-819b-e9eb655837ae,Celfunctie,0,2026,BAG,,aantal,Ge
 BU19002017,81ccf247-0449-40e0-a99c-a67019f272e4,Definitief energielabel,0.371794871794872,2025,81ccf247-0449-40e0-a99c-a67019f272e4_d_cbs_buurten.json,,,,pos_is_pos,current
 BU19002017,3ca8572d-cc03-4fd9-9bc9-e1cd0fc0a627,diefstal fiets,0,2024,,,aantal,,-/+,current
 BU19002017,1e9bc2fe-d5bd-4306-9b6b-d443e22916cf,Diversiteit Functies (Simpson Index),0.32,2026,BAG,,index,,pos_is_pos,current
-BU19002017,257494f4-9e51-4a4a-a662-feabfe9758b0,Eenpersoonshuishoudens,30.0,2025,CBS_86165NED,,aantal,,pos_is_pos,current
 BU19002017,4661dcb9-b7c4-42f8-b7c5-a61c12568806,Eenzaamheid,38.1,2024,Gezondheidsmonitor RIVM 2024,,,,-/+,current
 BU19002017,b53e54d6-ff54-4be1-b539-f915fd253831,Energielabel coverage,18.4,2025,Berekend: EP-Online / BAG Fryslân,,%,Wonen,pos_is_pos,current
 BU19002017,d20c7b4d-d305-495b-b77c-07b8121614a7,Ervaren gezondheid,78.2,2024,Gezondheidsmonitor RIVM 2024,,%,Gezondheid,pos_is_pos,current
 BU19002017,22d02bf9-99ef-4357-b797-09a714690b11,Gemiddeld bouwjaar woningen (BAG),1932.0,2025,Kadaster BAG Fryslân 2026,,jaar,Wonen,pos_is_pos,current
 BU19002017,3c2d0ca0-3a6d-4f53-809f-f82fa9b9fd22,Gemiddeld energielabel,5.596153846153846,2025,RVO EP-Online 2026-02,,score (1.0 - 9.0),,pos_is_pos,current
-BU19002017,7d9339e3-ea2c-474b-802a-49c854849f73,Gemiddelde woonoppervlakte (BAG),189.0,2026,BAG,,m²,Wonen,pos_is_pos,current
-BU19002017,7053d6a5-2bcf-4254-b089-79852f12d9aa,Gemiddelde WOZ-waarde,345.0,2025,CBS_86165NED,,x 1 000 euro,,pos_is_pos,current
 BU19002017,a4f84d1c-3263-4229-ad95-615924cb7852,Gemiddeld Laagste Grondwaterstand,1.8,2022,a4f84d1c-3263-4229-ad95-615924cb7852_d_cbs_buurten.json,,,,pos_is_pos,current
+BU19002017,7d9339e3-ea2c-474b-802a-49c854849f73,Gemiddelde woonoppervlakte (BAG),189.0,2026,BAG,,m²,Wonen,pos_is_pos,current
 BU19002017,311a6449-b145-4678-b51e-ac4e342dd1bf,Gezondheid,5.7,2024,Gezondheidsmonitor RIVM 2024,,,,pos_is_pos,current
 BU19002017,3baca929-ccc3-48aa-b966-e6877d01cbe7,Gezondheidszorgfunctie,1,2026,BAG,,aantal,Gebruik,pos_is_pos,current
 BU19002017,0ed37b61-f13d-446b-b108-70bb09af98e0,Huisarts,0.3,2024,CBS_85984NED,,km,,pos_is_pos,current
 BU19002017,b2e606cc-1d58-4917-9dec-148d90c80742,Huishoudens (BAG woonfunctie),141.0,2025,Kadaster BAG Fryslân 2026,,aantal,Wonen,pos_is_pos,current
-BU19002017,ad3b0509-3c14-49f8-aa10-4b3b391a2d84,Huishoudens met kind,50.0,2025,CBS_86165NED,,aantal,,pos_is_pos,current
-BU19002017,3dd70913-391e-4d5f-a121-d17c8b466372,Huishoudens met laag inkomen,1.5,2023,Kerncijfers wijken en buurten 2023,,%,,-/+,current
-BU19002017,be1a9ac4-6330-47c9-93c6-c9008b5daf89,Huishoudens totaal,130.0,2025,CBS_86165NED,,aantal,,pos_is_pos,current
-BU19002017,428c1232-0213-491b-ad0c-56dcc82a8c59,Huishoudens zonder kind,50.0,2025,CBS_86165NED,,aantal,,pos_is_pos,current
 BU19002017,92137246-e0f1-493d-97a8-e4a5660a99fb,inbraak auto,0,2024,,,aantal,,-/+,current
 BU19002017,d90d2b4c-4bce-428c-834a-1cc8113958e4,inbraak woning,0,2024,,,aantal,,-/+,current
 BU19002017,28a7a580-dc3c-4105-9fb3-d9ef47792429,Industriefunctie,13,2026,BAG,,aantal,Gebruik,pos_is_pos,current
-BU19002017,9c035f53-75a5-43eb-8496-22c4c6f08d6b,Inkomen per inwoner,31.4,2023,Kerncijfers wijken en buurten 2023,,,,pos_is_pos,current
-BU19002017,31f70dff-c116-4267-bef0-d15b0ff4c020,Inwoners,335.0,2023,Kerncijfers wijken en buurten 2023,,aantal,,pos_is_pos,current
 BU19002017,0212e8f8-053d-4287-b924-7bdc20c53bb2,Kantoorfunctie,4,2026,BAG,,aantal,Gebruik,pos_is_pos,current
-BU19002017,a0bbfd44-bacd-4434-bc8d-3a5204d65637,Koopwoningen,82.0,2025,CBS_86165NED,,percentage,,pos_is_pos,current
 BU19002017,a990c073-78e3-4490-a26e-1fa8ca6988f9,Logiesfunctie,0,2026,BAG,,aantal,Gebruik,pos_is_pos,current
 BU19002017,7b4a6b5f-7d6a-46ef-8a7d-7b3ee28a014c,Mantelzorger,14.8,2024,Gezondheidsmonitor RIVM 2024,,%,,pos_is_pos,current
 BU19002017,58fc72b6-881e-4917-83de-8099df3e3b0d,Moeite met rondkomen,9.8,2024,Gezondheidsmonitor RIVM 2024,,%,Gezondheid,-/+,current
-BU19002017,b07f74eb-5117-4705-802c-597ba830d016,Netto arbeidsparticipatie,74.0,2023,Kerncijfers wijken en buurten 2023,,%,,pos_is_pos,current
 BU19002017,0432fef2-83f2-4405-a457-08b89945ca86,Obesitas,20.8,2024,CBS_50150NED,,%,Gezondheid,-/+,current
 BU19002017,93048a96-d3cd-4d99-83b5-2b950e8d78a2,Onderwijsfunctie,2,2026,BAG,,aantal,Gebruik,pos_is_pos,current
-BU19002017,56f32b9a-bc45-4be1-9e1c-c2668c2e2a32,Opleidingsniveau hoog,70.0,2023,Kerncijfers wijken en buurten 2023,,aantal,,pos_is_pos,current
-BU19002017,c9719a07-57a5-48cf-8f93-b6f932aead51,Opleidingsniveau laag,60.0,2023,Kerncijfers wijken en buurten 2023,,aantal,,pos_is_pos,current
-BU19002017,1fa5df89-13e3-424f-9eba-9372cae42896,Opleidingsniveau middelbaar,120.0,2023,Kerncijfers wijken en buurten 2023,,aantal,,pos_is_pos,current
 BU19002017,97f53738-3439-4c28-8cac-046a52c65248,Oppervlak groen per inwoner,116.22,2025,97f53738-3439-4c28-8cac-046a52c65248_d_cbs_buurten.json,,,,pos_is_pos,current
 BU19002017,34e36ae1-4132-4555-a4fc-d16b039d467e,Overgewicht,52.4,2024,Gezondheidsmonitor RIVM 2024,,%,Gezondheid,-/+,current
 BU19002017,25405460-907c-4e63-acc4-4f9c949f7cac,Overige gebruiksfunctie,4,2026,BAG,,aantal,Gebruik,pos_is_pos,current
 BU19002017,1ed22149-7fed-4466-a3b8-dfd7ff28f5b5,Overmatig drinken,6.1,2024,Gezondheidsmonitor RIVM 2024,,%,,-/+,current
-BU19002017,aa5ce990-a43e-439a-9e98-69899321cf40,Participatiewet totaal,0.0,2023,Kerncijfers wijken en buurten 2023,,,,-/+,current
-BU19002017,2aadb30f-860f-4f70-916f-6df00e86e870,Particulier huurbezit,4.0,2025,CBS_86165NED,,,,pos_is_pos,current
-BU19002017,352dda4d-5de8-4f31-b85a-6d82f812ba7c,Percentage werknemers,78.0,2023,CBS_85618NED,,percentage,Gebruik,pos_is_pos,current
 BU19002017,4f53e98e-3309-4a3a-9ecc-732956f7c53a,Percentage woonfunctie (BAG),90.2,2026,BAG,,%,Wonen,pos_is_pos,current
-BU19002017,f8d0d890-3975-4183-9555-06d673c4657f,Percentage zelfstandigen,22.0,2023,CBS_85618NED,,percentage,Gebruik,pos_is_pos,current
-BU19002017,88192b70-faa9-4108-a473-302aa0f624a9,Personenauto's naar oppervlakte,251.0,2025,CBS_86165NED,,per km²,,pos_is_pos,current
-BU19002017,461d542b-b8be-4510-9dd0-5ba554b818cb,Personenauto's per huishouden,1.5,2025,CBS_86165NED,,per huishouden,,pos_is_pos,current
 BU19002017,a4780646-844e-4221-b07a-b4f4ade25059,Roken,14.7,2024,Gezondheidsmonitor RIVM 2024,,,,-/+,current
 BU19002017,e2f618ca-0726-4c1f-8442-c1150578622e,Sportfunctie,0,2026,BAG,,aantal,Gebruik,pos_is_pos,current
 BU19002017,2d6bdaba-3832-40cc-acae-950883f1aa76,Verandering GLG nu t.o.v. 2050,-0.14,2022,2d6bdaba-3832-40cc-acae-950883f1aa76_d_cbs_buurten.json,,,,pos_is_pos,current
@@ -1127,7 +725,5 @@ BU19002017,0bbd30e5-08f5-4499-b6ca-cdda990720dc,Verhouding oppervlakte water / v
 BU19002017,89b6274f-9372-4784-8ba3-924b6c7e4d7d,Verwerken hemelwater exc. schade,9,2022,89b6274f-9372-4784-8ba3-924b6c7e4d7d_d_cbs_buurten.json,,,,pos_is_pos,current
 BU19002017,9b168456-9219-4c3b-af16-636662a74155,Vrijwilliger,40.4,2024,Gezondheidsmonitor RIVM 2024,,,,pos_is_pos,current
 BU19002017,49d5687e-c062-40b5-84b9-7e4557b6cee0,Winkelfunctie,1,2026,BAG,,aantal,Gebruik,pos_is_pos,current
-BU19002017,6dd8b659-29c1-4396-a853-1abd7c6e0591,Woningcorporatie bezit,14.0,2025,CBS_86165NED,,%,,pos_is_pos,current
 BU19002017,89ad6843-0db9-4044-9508-307775d4f496,Woningen gebouwd vóór 1945 (BAG),52.5,2025,Kadaster BAG Fryslân 2026,,%,Wonen,pos_is_pos,current
-BU19002017,e3d59c6a-adf9-4bad-b842-98ce71760935,Woningvoorraad,139.0,2023,Kerncijfers wijken en buurten 2023,,aantal,,pos_is_pos,current
 BU19002017,b1011f4c-30b1-4088-bcf6-a67893d92c5f,Woonfunctie,138,2026,BAG,,aantal,Gebruik,pos_is_pos,current

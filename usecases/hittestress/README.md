@@ -15,7 +15,7 @@ Een use case is een **bundel**: data + inrichting + stappen. Alle drie staan hie
 ## 1. Data
 
 - **Dataset:** `init_data/sample`, gebiedstype CBS Buurten
-- **Gebieden:** Bolsward-Noord (BU19000001), Bolsward-Zuidoost (BU19000002), Bolsward-Noordoost (BU19000004). Focus: Bolsward-Zuidoost (demodata).
+- **Gebieden:** Bolsward-Noord (BU19000001), Bolsward-Zuidoost (BU19000002), Bolsward-Noordoost (BU19000004). Focus: Bolsward-Zuidoost (CBS Kerncijfers echt, 2019-2026; overige indicatoren demodata).
 
 | Indicator | Richting | Bron |
 |---|---|---|
@@ -75,6 +75,7 @@ Deze vier indicatoren zijn ook voor Bolsward-Zuidoost **echt**. De overige indic
 | 3 | Klik op **Bolsward-Zuidoost** | Selectiebalk met de buurtnaam | ✅ |
 | 4 | Open het **Kompas** (Klimaat Kompas) | Zonnediagram voor Bolsward-Zuidoost, dekking 100% | ✅ (Volledig Kompas) |
 | 5 | Stel de vraag aan de **D-Omni Assistent** | Antwoord noemt de relevante indicatoren en buurten. Verwacht: Bolsward-Noord ligt het verst van een koele plek (246 m) en heeft het sterkste hitte-eiland effect (0,47 °C). Bolsward-Noordoost ligt het dichtst bij een koele plek (206 m), maar heeft de minste boomkroon (6,8%). Relatief de meeste 65- en 80-plussers: Bolsward-Zuidoost (29,5% en 10,2%, CBS 2026). | ❌ Herhaalt de vraag; 'Gemeente: Bolsward' doet zichtbaar niets; geen indicatoren (#139) |
+| 5 | Stel de vraag aan de **D-Omni Assistent** | Antwoord noemt de relevante indicatoren en buurten. Verwacht: Bolsward-Noord ligt het verst van een koele plek (246 m), Bolsward-Noordoost het dichtst bij (206 m). Relatief de meeste 65-plussers: Bolsward-Zuidoost (29,5%, CBS 2026; Noord 24,1%, Noordoost 24,2%). | ❌ Herhaalt de vraag; 'Gemeente: Bolsward' doet zichtbaar niets; geen indicatoren (#139) |
 | 6 | **Rapport → Gebiedsdossier** voor Bolsward-Zuidoost | Dossier met AI-samenvatting, label "AI-gegenereerd" | ✅ (eerdere ronde, ~2 min met lokaal model) |
 
 ## Resultaat

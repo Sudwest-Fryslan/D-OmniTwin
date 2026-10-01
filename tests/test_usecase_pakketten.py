@@ -23,8 +23,12 @@ def bron_gebieden():
 
 
 def bron_indicatoren():
+    """Indicatoren uit de bronbibliotheek (sample) én uit het CBS-recept (init_data/cbs):
+    CBS-waarden worden bij het laden gedownload en staan niet in de sample."""
     with open(BRON / "sample_indicatoren.csv", encoding="utf-8") as f:
-        return {r["indicator_naam"] for r in csv.DictReader(f)}
+        namen = {r["indicator_naam"] for r in csv.DictReader(f)}
+    pkg = json.loads((ROOT / "init_data" / "cbs" / "datapackage.json").read_text(encoding="utf-8"))
+    return namen | set(pkg["indicatoren"])
 
 
 def pakket_rijen(pad):

@@ -8,7 +8,8 @@ Alle data hoort bij een use case. Een use case (usecases/<naam>/) laadt:
    gekozen uit de bronbibliotheek init_data/sample/2_brondata
 2. inrichting: richting van de indicatoren (hoger/lager is beter)
 3. afgeleide indicatoren: percentages berekend uit bestaande brondata
-   (bijvoorbeeld 65+ jaar ÷ Inwoners), voor alle gebieden in de database
+   (bijvoorbeeld 65+ jaar ÷ Inwoners), voor alle gebieden in de database,
+   per jaar met teller en noemer uit hetzelfde jaar
 4. extra brondata: usecases/<naam>/data/waarden.csv, zelfde formaat als
    init_data/sample/2_brondata/sample_indicatoren.csv (optioneel)
 
@@ -42,9 +43,12 @@ USECASES_DIR = ROOT / "usecases"
 NAMESPACE = uuid.UUID("6f1d3c2a-0b7e-4c8e-9a51-d0a1b2c3e4f5")
 
 RICHTING = {
-    # richting -> (interpretatie_logica, score_type); zie report_service en color_scale_service
+    # richting -> (interpretatie_logica, score_type); zie report_service en color_scale_service.
+    # Neutraal: score_type blijft '+/+' (kaartkleur), interpretatie_logica 'neutraal' zegt
+    # dat er geen oordeel bij hoort (de chat zegt dan niet 'beter' of 'slechter', #149).
     "hoger_is_beter": ("pos_is_pos", "+/+"),
     "lager_is_beter": ("-/+", "+/-"),
+    "neutraal": ("neutraal", "+/+"),
 }
 
 
@@ -61,7 +65,7 @@ def pakketten(namen, alle):
 def zet_richting(cur, indicatoren):
     for ind in indicatoren:
         if ind["richting"] not in RICHTING:
-            continue  # neutraal: niet aanpassen
+            continue  # onbekende richting: test_usecase_pakketten vangt dit af
         logica, score_type = RICHTING[ind["richting"]]
         cur.execute(
             "UPDATE indicatoren SET interpretatie_logica = %s, score_type = %s, updated_at = CURRENT_TIMESTAMP "
@@ -70,6 +74,13 @@ def zet_richting(cur, indicatoren):
         )
         if cur.rowcount == 0:
             print(f"   ⚠️ indicator niet gevonden: {ind['naam']}")
+        if ind.get("eenheid"):
+            # Eenheid aanvullen waar de bron die niet meegaf (chat: '246 m', '48,3%', #149)
+            cur.execute(
+                "UPDATE indicatoren SET eenheid = %s, updated_at = CURRENT_TIMESTAMP "
+                "WHERE naam = %s AND COALESCE(eenheid, '') = ''",
+                (ind["eenheid"], ind["naam"]),
+            )
 
 
 def maak_afgeleid(cur, afg, bron_uc):
@@ -87,24 +98,20 @@ def maak_afgeleid(cur, afg, bron_uc):
         (ind_uuid, afg["naam"], code, afg.get("eenheid", "%"), afg.get("categorie"), logica,
          f"Afgeleid: {afg['teller']} ÷ {afg['noemer']} (use case {bron_uc})", score_type),
     )
-    # Waarde per gebied en jaar van de teller. De noemer komt uit dezelfde of de
-    # dichtstbijzijnde jaargang (bronnen hebben verschillende jaargangen, #119);
-    # bij een afwijkend jaar staat dat in de bron.
+    # Waarde per gebied en jaar: teller en noemer uit hetzelfde jaar en scenario (#159).
+    # Zonder noemer in dat jaar geen waarde; jaren mengen geeft schijnbare trends.
     cur.execute(
         """
         INSERT INTO gebied_data (gebied_id, indicator_uuid, waarde, jaar, bron, kwaliteit, scenario_id)
         SELECT t.gebied_id, %s, ROUND((t.waarde / n.waarde * %s)::numeric, 1), t.jaar,
-               'Afgeleid uit ' || COALESCE(t.bron, '?') || ' en ' || COALESCE(n.bron, '?')
-                   || CASE WHEN n.jaar <> t.jaar THEN ' (noemer ' || n.jaar || ')' ELSE '' END,
+               CASE WHEN t.bron IS NOT DISTINCT FROM n.bron THEN 'Afgeleid uit ' || COALESCE(t.bron, '?')
+                    ELSE 'Afgeleid uit ' || COALESCE(t.bron, '?') || ' en ' || COALESCE(n.bron, '?') END,
                NULL, t.scenario_id
         FROM gebied_data t
         JOIN indicatoren it ON it.uuid = t.indicator_uuid AND it.naam = %s
-        CROSS JOIN LATERAL (
-            SELECT d.waarde, d.jaar, d.bron FROM gebied_data d
-            JOIN indicatoren inn ON inn.uuid = d.indicator_uuid AND inn.naam = %s
-            WHERE d.gebied_id = t.gebied_id AND d.scenario_id IS NOT DISTINCT FROM t.scenario_id AND d.waarde > 0
-            ORDER BY abs(d.jaar - t.jaar), d.jaar DESC LIMIT 1
-        ) n
+        JOIN gebied_data n ON n.gebied_id = t.gebied_id AND n.jaar = t.jaar
+            AND n.scenario_id IS NOT DISTINCT FROM t.scenario_id AND n.waarde > 0
+        JOIN indicatoren inn ON inn.uuid = n.indicator_uuid AND inn.naam = %s
         ON CONFLICT (gebied_id, indicator_uuid, jaar, scenario_id) DO UPDATE SET
             waarde = EXCLUDED.waarde, bron = EXCLUDED.bron, updated_at = CURRENT_TIMESTAMP
         """,
