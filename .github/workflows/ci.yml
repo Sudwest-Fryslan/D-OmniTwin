@@ -64,7 +64,27 @@ jobs:
         with:
           context: .
           push: false
+          # In de lokale Docker laden, voor de groottecontrole hieronder
+          load: true
           tags: d-omnitwin:ci-check
           # Cache layers tussen runs om build-tijd te verkorten
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+      # Bewaking imagegrootte (#157): faalt als de uitgepakte image groter wordt dan
+      # de grens. Was 3,2 GiB; na multi-stage en het afsplitsen van ETL-pakketten
+      # 1,6 GiB, waarvan PyTorch CPU 0,6 GiB. Gemeten als som van de lagen uit
+      # docker history: gelijk voor de klassieke en de containerd-image-store.
+      # Verhoog de grens alleen met een reden (en werk docs/9-beheer/installatie.md bij).
+      - name: Check image size
+        env:
+          MAX_MB: "1900"
+        run: |
+          mb=$(docker history --human=false --format '{{.Size}}' d-omnitwin:ci-check | awk '{s+=$1} END {print int(s/1024/1024)}')
+          echo "Imagegrootte (uitgepakt): ${mb} MiB (grens ${MAX_MB} MiB)"
+          echo "### Imagegrootte (uitgepakt): ${mb} MiB (grens ${MAX_MB} MiB)" >> "$GITHUB_STEP_SUMMARY"
+          if [ "$mb" -gt "$MAX_MB" ]; then
+            echo "::error::Image is ${mb} MiB, groter dan ${MAX_MB} MiB. Zie issue #157."
+            docker history --format '{{.Size}}  {{.CreatedBy}}' d-omnitwin:ci-check | cut -c1-150
+            exit 1
+          fi
