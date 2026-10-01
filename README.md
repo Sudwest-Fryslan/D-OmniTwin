@@ -43,7 +43,7 @@ docker compose up -d --build
 
 Open daarna **http://localhost**. Alles loopt via Traefik op poort 80; de backend (poort 8000) is binnen Docker niet direct bereikbaar. Dit start de ontwikkelmodus; voor een installatie bij je organisatie volg je de **[installatiegids](./docs/9-beheer/installatie.md)** (vereisten, `.env`, backup, bijwerken, beveiliging).
 
-- Bij de eerste start maakt de eenmalige service `db-init` het databaseschema aan en laadt een **sample dataset van 12 buurten in Súdwest-Fryslân** (`LOAD_SAMPLE_DATA=true` in `.env`). Zet dit op `false` voor een lege database met alleen stuurdata.
+- Bij de eerste start maakt de eenmalige service `db-init` het databaseschema aan en laadt de **use cases** in [`usecases/`](./usecases/README.md) (`LOAD_SAMPLE_DATA=true`, de standaard): 13 buurten in Súdwest-Fryslân, elk met data, inrichting en teststappen. Met `false` krijg je het product zonder data (indicatoren, Kompas, stuurdata), klaar voor eigen data.
 - **Beheeromgeving:** http://localhost/admin. Inloggen met `ADMIN_USER` (standaard `admin`) en het `ADMIN_PASSWORD` uit `.env`. Laat je `ADMIN_PASSWORD` leeg, dan wordt eenmalig een wachtwoord gegenereerd en in de log getoond: `docker compose logs db-init`. Laat `DEBUG=true` staan zolang je zonder HTTPS draait; anders wordt het inlogcookie alleen via HTTPS verstuurd en lukt inloggen niet.
 - **API-documentatie:** http://localhost/docs.
 

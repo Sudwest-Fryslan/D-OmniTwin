@@ -42,7 +42,7 @@ D-OmniTwin is a digital twin platform for Dutch municipalities, visualizing neig
 ```bash
 docker compose up -d --build   # dev: laadt ook docker-compose.override.yml (bind-mount, DB op 5433, Traefik-dashboard 8081)
 ```
-Installatie voor beheerders (`COMPOSE_FILE=docker-compose.yml` in `.env`, alleen poort 80 / `OMNITWIN_HTTP_PORT`): zie **`docs/9-beheer/installatie.md`** — de enige actuele installatiegids. Bij de eerste start richt de eenmalige service `db-init` (`docker-entrypoint.sh init`) een lege database in: schema, views, migraties v18/v19, stuurdata, sample (`LOAD_SAMPLE_DATA`) en admin-gebruiker. Een bestaande database (tabel `gebieden` aanwezig) laat hij ongemoeid; schemamigraties op bestaande databases zijn handmatig (#54).
+Installatie voor beheerders (`COMPOSE_FILE=docker-compose.yml` in `.env`, alleen poort 80 / `OMNITWIN_HTTP_PORT`): zie **`docs/9-beheer/installatie.md`** — de enige actuele installatiegids. Bij de eerste start richt de eenmalige service `db-init` (`docker-entrypoint.sh init`) een lege database in: schema, views, migraties v18/v19, stuurdata en definities (`load_sample.py --stap definities`), de use cases (`usecases/`, `laad_usecase.py --alle`, alleen bij `LOAD_SAMPLE_DATA=true`) en admin-gebruiker. Alle demodata hoort bij een use case: data + inrichting + stappen. Een bestaande database (tabel `gebieden` aanwezig) laat hij ongemoeid; schemamigraties op bestaande databases zijn handmatig (#54).
 
 ### Backend
 ```bash

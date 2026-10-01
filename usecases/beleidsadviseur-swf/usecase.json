@@ -1,0 +1,61 @@
+{
+  "id": "TC-06-001",
+  "titel": "Beleidsadviseur verkent kernen in Súdwest-Fryslân (IJsselmeerkust)",
+  "persona": {
+    "rol": "Beleidsadviseur leefbaarheid / ruimtelijke ordening",
+    "vraag": "Ik ben beleidsadviseur",
+    "besluit": "Onderbouwing voor de gebiedsagenda: hoe staan de kernen aan de IJsselmeerkust ervoor op bereikbaarheid, wonen en sociaal?"
+  },
+  "data": {
+    "gebiedstype": "CBS Buurten",
+    "focus": "BU19000200",
+    "gebieden": {
+      "BU19000202": "Hindeloopen",
+      "BU19000200": "Workum",
+      "BU19000300": "Koudum",
+      "BU19000401": "Warns",
+      "BU19000400": "Hemelum",
+      "BU19001300": "Witmarsum",
+      "BU19000301": "Heidenschap",
+      "BU19002017": "Boazum",
+      "BU19000108": "Bomenbuurt",
+      "BU19001200": "Woudsend"
+    },
+    "dataset": "init_data/sample",
+    "indicatoren": [
+      {
+        "naam": "Aantal OV-haltes (totaal)",
+        "richting": "hoger_is_beter"
+      },
+      {
+        "naam": "Afstand tot huisarts",
+        "richting": "lager_is_beter"
+      },
+      {
+        "naam": "Afstand tot grote supermarkt",
+        "richting": "lager_is_beter"
+      },
+      {
+        "naam": "Woningvoorraad",
+        "richting": "neutraal"
+      },
+      {
+        "naam": "Participatiewet totaal",
+        "richting": "lager_is_beter"
+      }
+    ],
+    "ontbreekt_nog": [
+      "Makkum (genoemd in TC-06-001, niet in de bronbibliotheek)",
+      "Reistijd OV naar voorzieningen"
+    ]
+  },
+  "inrichting": {
+    "kompas_configuratie": "Volledig Kompas",
+    "chat_scenario": "beleidsadviseur"
+  },
+  "ai_zoekvraag": "afstand tot de huisarts en het OV",
+  "verwacht": {
+    "vraag_zoekwoord": "beleidsadviseur",
+    "verwacht": "Het chatscenario Beleidsadviseur zet buurten, de gemeente Súdwest-Fryslân en het Kompas klaar."
+  }
+}

@@ -59,15 +59,18 @@ init_db() {
     done
     echo "✅ Database schema succesvol aangemaakt."
 
+    # Altijd: het product zonder data (stuurdata, indicatordefinities, Kompas)
+    python /app/init_data/scripts/load_sample.py --stap definities
+    echo "✅ Stuurdata en definities ingeladen."
+
+    # Data komt uit de use cases (usecases/<naam>/): gebieden, waarden en inrichting per use case
     LOAD_SAMPLE="${LOAD_SAMPLE_DATA:-true}"
     if [ "$LOAD_SAMPLE" = "true" ] || [ "$LOAD_SAMPLE" = "1" ]; then
-        echo "🌱 LOAD_SAMPLE_DATA is actief: Sample dataset (12 SWF buurten) inladen..."
-        python /app/init_data/scripts/load_sample.py --stap alle
-        echo "✅ Sample dataset succesvol ingeladen."
+        echo "🌱 LOAD_SAMPLE_DATA is actief: alle use cases inladen..."
+        python /app/init_data/scripts/laad_usecase.py --alle
+        echo "✅ Use cases ingeladen."
     else
-        echo "⚙️ LOAD_SAMPLE_DATA niet actief: Alleen stuurdata inladen..."
-        python /app/init_data/scripts/load_sample.py --stap stuurdata
-        echo "✅ Stuurdata ingeladen."
+        echo "⚙️ LOAD_SAMPLE_DATA niet actief: geen data, alleen het product."
     fi
 
     # Admin gebruiker initialiseren
