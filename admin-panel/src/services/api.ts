@@ -29,7 +29,7 @@ const api = axios.create({
 
 // Add admin key to all requests
 api.interceptors.request.use((config) => {
-    const adminKey = localStorage.getItem('adminKey') || process.env.REACT_APP_ADMIN_KEY;
+    const adminKey = localStorage.getItem('adminKey') || import.meta.env.VITE_ADMIN_KEY;
     if (adminKey) {
         config.headers['X-Admin-Key'] = adminKey;
     }
@@ -152,7 +152,7 @@ const vizApi = axios.create({
 
 // Add admin key to viz requests
 vizApi.interceptors.request.use((config) => {
-    const adminKey = localStorage.getItem('adminKey') || process.env.REACT_APP_ADMIN_KEY;
+    const adminKey = localStorage.getItem('adminKey') || import.meta.env.VITE_ADMIN_KEY;
     if (adminKey) {
         config.headers['X-Admin-Key'] = adminKey;
     }

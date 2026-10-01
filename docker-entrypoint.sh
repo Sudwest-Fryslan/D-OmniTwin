@@ -54,20 +54,23 @@ init_db() {
     # SQL-functies die pg_featureserv publiceert onder /api/geo/functions (schema postgisftw)
     psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -v ON_ERROR_STOP=1 -f /app/init_data/schema/07_postgisftw_functions.sql >/dev/null
     # Migraties die (nog) niet in schema_latest.sql zitten; idempotent. Structureel: migratiebeheer (#54)
-    for m in schema_v18_trigram.sql schema_v19_deduplicatie_uitzonderingen.sql; do
+    for m in schema_v18_trigram.sql schema_v19_deduplicatie_uitzonderingen.sql schema_v20_llm_api_type.sql; do
         psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -v ON_ERROR_STOP=1 -f "/app/migrations/$m" >/dev/null
     done
     echo "✅ Database schema succesvol aangemaakt."
 
+    # Altijd: het product zonder data (stuurdata, indicatordefinities, Kompas)
+    python /app/init_data/scripts/load_sample.py --stap definities
+    echo "✅ Stuurdata en definities ingeladen."
+
+    # Data komt uit de use cases (usecases/<naam>/): gebieden, waarden en inrichting per use case
     LOAD_SAMPLE="${LOAD_SAMPLE_DATA:-true}"
     if [ "$LOAD_SAMPLE" = "true" ] || [ "$LOAD_SAMPLE" = "1" ]; then
-        echo "🌱 LOAD_SAMPLE_DATA is actief: Sample dataset (12 SWF buurten) inladen..."
-        python /app/init_data/scripts/load_sample.py --stap alle
-        echo "✅ Sample dataset succesvol ingeladen."
+        echo "🌱 LOAD_SAMPLE_DATA is actief: alle use cases inladen..."
+        python /app/init_data/scripts/laad_usecase.py --alle
+        echo "✅ Use cases ingeladen."
     else
-        echo "⚙️ LOAD_SAMPLE_DATA niet actief: Alleen stuurdata inladen..."
-        python /app/init_data/scripts/load_sample.py --stap stuurdata
-        echo "✅ Stuurdata ingeladen."
+        echo "⚙️ LOAD_SAMPLE_DATA niet actief: geen data, alleen het product."
     fi
 
     # Admin gebruiker initialiseren

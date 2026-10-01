@@ -97,11 +97,13 @@ def export_stuurdata(conn):
             "SELECT id, naam, code, beschrijving, bron, niveau, created_at, updated_at FROM gebiedstypes ORDER BY naam",
         ),
         (
-            "2. Gemeenten (Súdwest-Fryslân)",
+            "2. Gemeenten (alle 18 Friese gemeenten, CBS-indeling 2024; nodig voor seed_fryslan.py)",
             "gemeenten",
             "code",
             "code, naam, provincie, is_eiland, created_at, updated_at",
-            "SELECT code, naam, provincie, is_eiland, created_at, updated_at FROM gemeenten WHERE code = '1900'",
+            "SELECT code, naam, provincie, is_eiland, created_at, updated_at FROM gemeenten "
+            "WHERE code IN ('0059','0060','0072','0074','0080','0085','0086','0088','0090',"
+            "'0093','0096','0098','0737','1891','1900','1940','1949','1970') ORDER BY code",
         ),
         (
             "3. Kompas Configuraties",

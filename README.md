@@ -37,13 +37,13 @@ Vereist: [Docker](https://www.docker.com/) met Docker Compose. Ollama is optione
 ```bash
 git clone https://github.com/TLaan/D-OmniTwin.git && cd D-OmniTwin
 cp .env.example .env
-# Vul in .env minimaal in: DATABASE_PASSWORD, SECRET_KEY en ADMIN_PASSWORD
+# Vul in .env alleen DATABASE_PASSWORD in (en bij voorkeur ADMIN_PASSWORD)
 docker compose up -d --build
 ```
 
-Open daarna **http://localhost**. Alles loopt via Traefik op poort 80; de backend (poort 8000) is binnen Docker niet direct bereikbaar. Dit start de ontwikkelmodus; voor een installatie bij je organisatie volg je de **[installatiegids](./docs/9-beheer/installatie.md)** (vereisten, `.env`, backup, bijwerken, beveiliging).
+Open daarna **http://localhost**. Alles loopt via Traefik op poort 80; de backend (poort 8000) is binnen Docker niet direct bereikbaar. Dit start de installatiemodus (`COMPOSE_FILE` in `.env`); voor alle details van een installatie bij je organisatie volg je de **[installatiegids](./docs/9-beheer/installatie.md)** (vereisten, `.env`, backup, bijwerken, beveiliging).
 
-- Bij de eerste start maakt de eenmalige service `db-init` het databaseschema aan en laadt een **sample dataset van 12 buurten in Súdwest-Fryslân** (`LOAD_SAMPLE_DATA=true` in `.env`). Zet dit op `false` voor een lege database met alleen stuurdata.
+- Bij de eerste start maakt de eenmalige service `db-init` het databaseschema aan en laadt de **use cases** in [`usecases/`](./usecases/README.md) (`LOAD_SAMPLE_DATA=true`, de standaard): 13 buurten in Súdwest-Fryslân, elk met data, inrichting en teststappen. Met `false` krijg je het product zonder data (indicatoren, Kompas, stuurdata), klaar voor eigen data.
 - **Beheeromgeving:** http://localhost/admin. Inloggen met `ADMIN_USER` (standaard `admin`) en het `ADMIN_PASSWORD` uit `.env`. Laat je `ADMIN_PASSWORD` leeg, dan wordt eenmalig een wachtwoord gegenereerd en in de log getoond: `docker compose logs db-init`. Laat `DEBUG=true` staan zolang je zonder HTTPS draait; anders wordt het inlogcookie alleen via HTTPS verstuurd en lukt inloggen niet.
 - **API-documentatie:** http://localhost/docs.
 
@@ -66,7 +66,10 @@ Schermafbeeldingen van een verse installatie met de sample dataset (`docker comp
 ![Chat: de D-Omni Assistent met het scenario Beleidsadviseur](docs/images/chat-beleidsadviseur.jpg)
 *D-Omni Assistent: het scenario "Beleidsadviseur" zet kaart en Kompas klaar.*
 
-> Bolsward-Zuidoost bevat in de sample **demodata** (zie `init_data/sample/README.md`). De getallen in de kop ("1,721 gebieden | 226 indicatoren") zijn nog hardcoded (#79).
+![Beheerscherm: dashboard met datadekking per Kompas-kwadrant](docs/images/beheer-dashboard.jpg)
+*Beheerscherm (`/admin`): indicatoren, datakwaliteit, AI-configuratie en rapportage.*
+
+> Bolsward-Zuidoost bevat in de sample **demodata** (zie `init_data/sample/README.md`). De screenshots maak je opnieuw met [`scripts/docs/maak_screenshots.py`](scripts/docs/maak_screenshots.py).
 
 ## 🤝 Innovatie & Samenwerking
 
@@ -102,7 +105,7 @@ Vier use cases worden gevalideerd in pilots bij drie gemeenten. Resultaat: open 
 | **Main Backend** | FastAPI (Hybride logic) | 8000 | `/` en `/api/*` | ✅ Production Ready |
 | **Data API** | PostgREST | 3000 | `/api/data` | ✅ Operationeel |
 | **Geo API** | pg_featureserv | 9000 | `/api/geo` | ✅ Operationeel |
-| **Admin Panel** | React + TypeScript | via backend (dev server: 3001) | `/admin` | ✅ MVP Ready |
+| **Admin Panel** | React + TypeScript | via backend (dev server: 3000) | `/admin` | ✅ MVP Ready |
 | **Database** | PostgreSQL + PostGIS + pgvector | 5432 | niet via Traefik; op de host: 5433 | ✅ Operationeel |
 
 > Met Docker Compose is alleen Traefik (poort 80, dashboard op 8081) en de database (5433) op de host bereikbaar. De interne poorten gelden binnen het Docker-netwerk of bij lokaal draaien zonder Docker.
@@ -251,13 +254,34 @@ D-OmniTwin bevat een ingebouwde AI-assistent die werkt als een **"alternatieve m
 ```bash
 # Ollama starten (vereist)
 ollama serve
-ollama pull qwen3:30b  # of een kleiner model indien gewenst
+ollama pull qwen3:30b-instruct  # of kleiner: qwen3:4b-instruct
 
 # Configureerbaar via Admin Panel → LLM Config
 # OF via environment variabelen (fallback):
 OLLAMA_HOST=http://localhost:11434
-OLLAMA_MODEL=qwen3:30b
+# Model kiezen in Beheer → AI Configuratie
 ```
+
+**Andere LLM-servers (OpenAI-compatibel).** In Admin → AI Configuratie kies je het API-type
+([ADR 0001](./docs/2-architectuur/adr/0001-llm-koppeling-openai-standaard.md)):
+
+- `Ollama` (standaard): de eigen Ollama-API, zoals hierboven.
+- `OpenAI-compatibel`: `/v1/chat/completions` van Ollama (`http://host.docker.internal:11434`),
+  vLLM, LM Studio of een aanbieder. Een API-sleutel zet je als `LLM_API_KEY` in `.env`, nooit in de database.
+
+Bestaande databases hebben eerst migratie `migrations/schema_v20_llm_api_type.sql` nodig om `OpenAI-compatibel` op te slaan;
+zonder migratie blijft alles werken als `Ollama`.
+
+**Optionele LiteLLM-gateway** (centrale sleutels, logging, terugval naar een ander model):
+
+```bash
+# .env: LITELLM_MASTER_KEY=sk-... en LLM_API_KEY=<zelfde waarde>
+docker compose --profile llm-gateway up -d
+# Admin → AI Configuratie: OpenAI-compatibel, URL http://llm-gateway:4000, model d-omnitwin-default
+```
+
+De gateway stuurt standaard door naar `OLLAMA_HOST`/`OLLAMA_MODEL`; fallbacks staan als voorbeeld in
+`deploy/litellm/config.yaml`. De gateway heeft geen poort op de host.
 
 ---
 
@@ -322,7 +346,7 @@ source .venv/bin/activate && python run_dev.py
 - 🗺️ **Geo API (pg_featureserv):** http://localhost/api/geo
 
 **Toegang met de lokale dev server (optie B)** — alleen FastAPI, zonder PostgREST en pg_featureserv:
-- 🌐 **App:** http://localhost:8000 · 📚 **API Docs:** http://localhost:8000/docs · 🔐 **Admin Panel:** http://localhost:8000/admin (of via dev server: `cd admin-panel && npm start` → http://localhost:3001)
+- 🌐 **App:** http://localhost:8000 · 📚 **API Docs:** http://localhost:8000/docs · 🔐 **Admin Panel:** http://localhost:8000/admin (of via dev server: `cd admin-panel && npm start` → http://localhost:3000/admin/)
 
 > [!TIP]
 > **Waarom `run_dev.py`?** Slimmer dan standaard uvicorn: lazy loading van AI-modellen (30% snellere start) en optimized reload die `node_modules` uitsluit.

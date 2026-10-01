@@ -21,7 +21,7 @@ SQLAlchemy>=2.0.0
 GeoAlchemy2>=0.14.0
 
 # --- Geo / Data ---
-geopandas>=0.14.0
+geopandas>=1.1.4
 shapely>=2.0.0
 pyproj>=3.4.0
 pyogrio>=0.7.0
@@ -35,10 +35,10 @@ tqdm>=4.65.0
 
 # --- Visualization ---
 matplotlib>=3.7.0
-pydeck>=0.8.0
+pydeck>=0.9.3
 
 # --- HTTP ---
-requests>=2.28.0
+requests>=2.34.2
 
 # --- Pydantic ---
 pydantic>=2.0.0
@@ -48,10 +48,10 @@ passlib[bcrypt]>=1.7.0
 bcrypt==4.0.1  # passlib 1.7.x incompatibel met bcrypt 4.1+ (verwijderd __about__)
 
 # --- Utilities ---
-python-dateutil>=2.8.0
+python-dateutil>=2.9.0.post0
 
 # --- AI Functies ---
-sentence-transformers>=2.0.0   # AI embeddings (zwaar, ~2GB)
+sentence-transformers>=6.1.0   # AI embeddings (zwaar, ~2GB)
 
 # --- Optioneel (niet nodig voor basis functionaliteit) ---
 # playwright>=1.40.0             # Browser testing
