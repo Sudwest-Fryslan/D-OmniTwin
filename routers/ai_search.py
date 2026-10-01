@@ -30,5 +30,7 @@ def search_kompas(
 
 @router.get("/health")
 async def health_check():
-    """Simple health check for AI Search API."""
-    return {"status": "healthy", "service": "AI Search API"}
+    """Health check voor AI-zoeken, met de status van het embeddingmodel (#118)."""
+    from services import embedding_model
+    return {"status": "healthy", "service": "AI Search API",
+            "embedding_model": embedding_model.status()}

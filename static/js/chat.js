@@ -93,80 +93,107 @@ class ChatPanel {
         const loading = document.getElementById('chat-loading');
         if (loading) loading.remove();
 
-        const block = document.createElement('div');
-        block.className = 'chat-message chat-message-assistant';
-        
-        let html = `<div class="chat-message-bubble assistant">`;
-        
+        // Alles via de DOM-API (textContent/dataset): API-data komt nooit als HTML binnen (#149)
+        const el = (tag, className, text) => {
+            const node = document.createElement(tag);
+            if (className) node.className = className;
+            if (text !== undefined && text !== null) node.textContent = text;
+            return node;
+        };
+
+        const block = el('div', 'chat-message chat-message-assistant');
+        const bubble = el('div', 'chat-message-bubble assistant');
+        block.appendChild(bubble);
+
         // Track E: Bronlabel (governance)
         const mode = response.debug?.mode || 'unknown';
-        const isLLM = mode === 'intelligent_dispatcher' || mode === 'legacy_fallback';
-        const isRuleBased = mode === 'deterministic_onboarding';
+        const isDatavraag = mode === 'datavraag';
+        // Datavraag: alleen 'AI-gegenereerd' als het taalmodel de tekst schreef; anders vaste tekst uit de cijfers
+        const isLLM = mode === 'intelligent_dispatcher' || mode === 'legacy_fallback'
+            || (isDatavraag && response.debug?.llm_gebruikt === true);
+        const isRuleBased = mode === 'deterministic_onboarding' || (isDatavraag && !isLLM);
         const sourceLabel = isRuleBased ? '📐 Rule-based' : isLLM ? '🤖 AI-gegenereerd' : '';
         const sourceClass = isRuleBased ? 'source-rule' : 'source-ai';
 
         if (sourceLabel) {
-            html += `<span class="chat-source-badge ${sourceClass}">${sourceLabel}</span>`;
+            bubble.appendChild(el('span', `chat-source-badge ${sourceClass}`, sourceLabel));
         }
 
         // Narrative tekst
         if (response.narrative) {
-            html += `<p class="chat-narrative">${this._escapeHtml(response.narrative)}</p>`;
+            bubble.appendChild(el('p', 'chat-narrative', response.narrative));
+        }
+
+        // #149: bronregel bij een datavraag (indicator, jaar, bron)
+        if (Array.isArray(response.bronnen) && response.bronnen.length > 0) {
+            const regel = response.bronnen
+                .map(b => `${b.indicator} (${(b.jaren || []).join(', ') || 'jaar onbekend'}): ${b.bron}`)
+                .join(' · ');
+            bubble.appendChild(el('p', 'chat-bronregel', `Bron: ${regel}`));
         }
 
         // Track E: Disclaimer bij LLM-responses
         if (isLLM) {
-            html += `<p class="chat-disclaimer">⚠️ Dit antwoord is AI-gegenereerd. Controleer belangrijke gegevens altijd via de originele bron.</p>`;
+            bubble.appendChild(el('p', 'chat-disclaimer',
+                '⚠️ Dit antwoord is AI-gegenereerd. Controleer belangrijke gegevens altijd via de originele bron.'));
         }
 
         // Actie-knoppen
         if (response.acties && response.acties.length > 0) {
-            html += `<div class="chat-acties">`;
+            const acties = el('div', 'chat-acties');
             for (const actie of response.acties) {
-                html += `<button class="chat-actie-btn" 
-                    data-type="${actie.type}" 
-                    data-uuid="${actie.indicator_uuid || ''}"
-                    data-gemeente-code="${actie.gemeente_code || ''}"
-                    data-gebiedstype-id="${actie.gebiedstype_id || ''}"
-                    data-config-id="${actie.config_id || ''}"
-                    data-filters='${JSON.stringify(actie.filters || {})}'
-                    data-thema="${actie.thema || ''}"
-                    data-rol-code="${actie.rol_code || ''}"
-                    title="${this._escapeHtml(actie.label)}"
-                >${actie.label}</button>`;
+                const btn = el('button', 'chat-actie-btn', actie.label || '');
+                btn.type = 'button';
+                btn.title = actie.label || '';
+                btn.dataset.type = actie.type || '';
+                btn.dataset.uuid = actie.indicator_uuid || '';
+                btn.dataset.gemeenteCode = actie.gemeente_code || '';
+                btn.dataset.gebiedstypeId = actie.gebiedstype_id || '';
+                btn.dataset.configId = actie.config_id || '';
+                btn.dataset.filters = JSON.stringify(actie.filters || {});
+                btn.dataset.thema = actie.thema || '';
+                btn.dataset.rolCode = actie.rol_code || '';
+                btn.dataset.gebiedIds = Array.isArray(actie.gebied_ids) ? actie.gebied_ids.join(',') : '';
+                btn.addEventListener('click', () => this._handleActie(btn));
+                acties.appendChild(btn);
             }
-            html += `</div>`;
+            bubble.appendChild(acties);
         }
 
         // Gevonden indicatoren (scrollbare lijst)
         if (response.indicatoren && response.indicatoren.length > 0) {
-            html += `<div class="chat-indicatoren-lijst">`;
-            html += `<span class="chat-indicatoren-label">${response.indicatoren.length} indicatoren gevonden</span>`;
+            const lijst = el('div', 'chat-indicatoren-lijst');
+            lijst.appendChild(el('span', 'chat-indicatoren-label', `${response.indicatoren.length} indicatoren gevonden`));
             for (const ind of response.indicatoren) {
-                const pct = Math.round(ind.relevantie * 100);
-                html += `<div class="chat-indicator-item" role="button" tabindex="0" data-uuid="${ind.uuid}" title="Klik om op kaart te tonen">
-                    <span class="chat-ind-naam">${this._escapeHtml(ind.naam)}</span>
-                    <span class="chat-ind-score">${pct}%</span>
-                </div>`;
+                const item = el('div', 'chat-indicator-item');
+                item.setAttribute('role', 'button');
+                item.tabIndex = 0;
+                item.dataset.uuid = ind.uuid || '';
+                item.title = 'Klik om op kaart te tonen';
+                item.appendChild(el('span', 'chat-ind-naam', ind.naam || ''));
+                item.appendChild(el('span', 'chat-ind-score', `${Math.round((ind.relevantie || 0) * 100)}%`));
+                item.addEventListener('click', () => this._handleIndicatorClick(item));
+                lijst.appendChild(item);
             }
-            html += `</div>`;
+            bubble.appendChild(lijst);
         }
-
-        html += `</div>`;
-        block.innerHTML = html;
-        
-        // Event listeners voor actie-knoppen
-        block.querySelectorAll('.chat-actie-btn').forEach(btn => {
-            btn.addEventListener('click', () => this._handleActie(btn));
-        });
-
-        // Event listeners voor indicator items
-        block.querySelectorAll('.chat-indicator-item').forEach(item => {
-            item.addEventListener('click', () => this._handleIndicatorClick(item));
-        });
 
         this.messagesEl.appendChild(block);
         this._scrollToBottom();
+
+        // #149: de kaart beweegt mee met een antwoord op een datavraag (zonder klik);
+        // de knoppen blijven staan om terug te gaan of verder te klikken.
+        const ka = response.kaart_actie;
+        if (ka && Array.isArray(ka.gebied_ids) && ka.gebied_ids.length > 0 && window.EventBus) {
+            window.EventBus.emit('CHAT_GEBIEDEN_TONEN', {
+                ids: ka.gebied_ids,
+                uuid: ka.indicator_uuid || null,
+                name: ka.indicator || '',
+                gebiedstypeId: ka.gebiedstype_id || null,
+                gemeenteCode: ka.gemeente_code || null,
+                zoom: true
+            });
+        }
     }
 
     /**
@@ -238,6 +265,7 @@ class ChatPanel {
         const type = btn.dataset.type;
         const uuid = btn.dataset.uuid;
         const thema = btn.dataset.thema;
+        const gebiedIds = (btn.dataset.gebiedIds || '').split(',').filter(Boolean);
 
         console.log(`🎯 Chat actie: ${type}`, { 
             uuid, 
@@ -255,7 +283,16 @@ class ChatPanel {
 
         switch (type) {
             case 'TOON_OP_KAART':
-                if (uuid && window.EventBus) {
+                if (gebiedIds.length > 0 && window.EventBus) {
+                    // #149: indicator tonen én de gebieden uit het antwoord selecteren
+                    window.EventBus.emit('CHAT_GEBIEDEN_TONEN', {
+                        ids: gebiedIds,
+                        gebiedstypeId: btn.dataset.gebiedstypeId || null, gemeenteCode: btn.dataset.gemeenteCode || null,
+                        uuid: uuid || null,
+                        zoom: true,
+                        name: originalText.replace(/^[🗺📋📄\s]+/, '').replace(/^Toon( op kaart)?: /, '')
+                    });
+                } else if (uuid && window.EventBus) {
                     window.EventBus.emit('INDICATOR_SELECTED', {
                         uuid: uuid,
                         name: originalText.replace(/^[🗺📋📄\s]+/, '').replace('Toon: ', '')
@@ -274,9 +311,10 @@ class ChatPanel {
 
             case 'MAAK_RAPPORT': {
                 // Gebruik geselecteerde gebieden van de kaart indien beschikbaar
-                const geselecteerd = window.state?.selectedGebiedIds
-                    ? [...window.state.selectedGebiedIds]
-                    : [];
+                // #149: gebieden uit het antwoord gaan voor de kaartselectie
+                const geselecteerd = gebiedIds.length > 0
+                    ? gebiedIds
+                    : (window.state?.selectedGebiedIds ? [...window.state.selectedGebiedIds] : []);
 
                 if (geselecteerd.length === 0) {
                     // Geen selectie: open lege benchmark pagina
@@ -323,7 +361,12 @@ class ChatPanel {
                 break;
                 
             case 'OPEN_KOMPAS':
-                if (window.EventBus) {
+                if (gebiedIds.length > 0 && window.EventBus) {
+                    // #149: eerst de gebieden uit het antwoord selecteren, dan het Kompas daarvoor openen
+                    window.EventBus.emit('CHAT_GEBIEDEN_TONEN', {
+                        ids: gebiedIds, gebiedstypeId: btn.dataset.gebiedstypeId || null, gemeenteCode: btn.dataset.gemeenteCode || null, openKompas: true
+                    });
+                } else if (window.EventBus) {
                     window.EventBus.emit('KOMPAS_OPEN_REQUESTED');
                 }
                 break;
@@ -445,9 +488,8 @@ class ChatPanel {
     }
 
     _escapeHtml(text) {
-        const div = document.createElement('div');
-        div.textContent = text;
-        return div.innerHTML;
+        // Centrale escaping (static/js/core/escape.js); ook aanhalingstekens voor attributen
+        return escapeHtml(text);
     }
 
     /**
@@ -463,7 +505,7 @@ class ChatPanel {
         }
 
         // Check of er al een info-card zit (voorkom duplicaten)
-        const existing = btn.parentElement?.querySelector(`.chat-info-card[data-title="${titel}"]`);
+        const existing = btn.parentElement?.querySelector(`.chat-info-card[data-title="${CSS.escape(titel)}"]`);
         if (existing) return;
 
         // Maak de info-card

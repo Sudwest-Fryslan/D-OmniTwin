@@ -45,6 +45,7 @@ Bevat RIVM-indicatorwaarden (Gezondheidsmonitor, via CBS dataderden) voor de Fri
 | **Bron** | RIVM Gezondheidsmonitor via dataderden.cbs.nl |
 | **Licentie** | [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) |
 | **Peiljaar** | 2012, 2016, 2020, 2022, 2024 |
+| **Peiljaar** | Kerncijfers: 2021 (tabel 85039NED; in de CSV gelabeld als 2023, zie #119). RIVM: 2012, 2016, 2020, 2022, 2024. Geometrie: 2024. Zie `docs/3-data-engineering/jaargangen.md`. |
 
 **Verplichte bronvermelding bij hergebruik:**
 

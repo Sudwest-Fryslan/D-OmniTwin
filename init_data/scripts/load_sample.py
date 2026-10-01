@@ -48,6 +48,11 @@ KOMPAS_CSV = ROOT / "init_data" / "kompas" / "kompas_hierarchie.csv"
 
 CBS_BUURT_TYPE_ID = "afba67cb-6b38-4723-9c95-102a22d5b38a"
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from jaargang_controle import (  # noqa: E402
+    controleer_jaargangen, geometrie_codes, geometrie_jaar_sample, rapporteer,
+)
+
 
 def get_db_connection():
     """Database connectie via environment variabelen."""
@@ -114,6 +119,12 @@ def import_buurten(conn):
     features = data.get("features", [])
     print(f"   📂 {len(features)} buurten gevonden in GeoJSON")
 
+    # Geometrie-jaargang vastleggen in gebieden.metadata (#119)
+    geo_jaar = geometrie_jaar_sample()
+    geo_meta = json.dumps({"geometrie_jaar": geo_jaar, "geometrie_bron": "CBS Wijk- en buurtkaart"}
+                          if geo_jaar else {})
+    print(f"   🗓️  Geometrie-jaargang: {geo_jaar or 'onbekend'}")
+
     cur = conn.cursor()
     inserted = 0
     errors = 0
@@ -136,14 +147,15 @@ def import_buurten(conn):
         try:
             cur.execute("SAVEPOINT sp_buurt")
             cur.execute("""
-                INSERT INTO gebieden (id, gebiedstype_id, naam, gemeente_code, geom, provincienaam, actief)
+                INSERT INTO gebieden (id, gebiedstype_id, naam, gemeente_code, geom, provincienaam, actief, metadata)
                 VALUES (
                     %s, %s, %s, %s,
                     CASE WHEN %s IS NOT NULL
                          THEN ST_Multi(ST_Transform(ST_SetSRID(ST_GeomFromGeoJSON(%s), 4326), 28992))
                          ELSE NULL END,
                     %s,
-                    TRUE
+                    TRUE,
+                    %s::jsonb
                 )
                 ON CONFLICT (id) DO UPDATE SET
                     naam = EXCLUDED.naam,
@@ -152,8 +164,9 @@ def import_buurten(conn):
                     geom = EXCLUDED.geom,
                     provincienaam = EXCLUDED.provincienaam,
                     actief = TRUE,
+                    metadata = COALESCE(gebieden.metadata, '{}'::jsonb) || EXCLUDED.metadata,
                     updated_at = CURRENT_TIMESTAMP;
-            """, (bu_id, type_id, naam, gm_code, geom_str, geom_str, prov))
+            """, (bu_id, type_id, naam, gm_code, geom_str, geom_str, prov, geo_meta))
             cur.execute("RELEASE SAVEPOINT sp_buurt")
             inserted += 1
         except Exception as e:
@@ -371,6 +384,12 @@ def import_waarden(conn):
     if not INDICATOREN_CSV.exists():
         print(f"❌ CSV niet gevonden: {INDICATOREN_CSV}")
         return False
+
+    # Jaargangcontrole tegen de geometrie (#119): alleen waarschuwingen
+    geo_jaar = geometrie_jaar_sample()
+    with open(INDICATOREN_CSV, "r", encoding="utf-8") as f:
+        controle = controleer_jaargangen(csv.DictReader(f), geometrie_codes(BUURTEN_GEOJSON), geo_jaar)
+    rapporteer(*controle, geo_jaar)
 
     cur = conn.cursor()
 

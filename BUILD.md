@@ -62,10 +62,7 @@ LOG_LEVEL=INFO
 ```
 
 ### 3b. Frontend Configuration (admin-panel/.env)
-Voor de Admin Panel dev server (Vite) kan optioneel een `.env` file in `admin-panel/.env`; API-calls gaan via de proxy naar poort 8000:
-```bash
-VITE_ADMIN_KEY=your_admin_key_here  # Optioneel; must match ADMIN_API_KEY in backend .env
-```
+De Admin Panel dev server (Vite) heeft geen `.env` nodig; API-calls gaan via de proxy naar poort 8000. Inloggen gaat met de sessie-cookie (een gebruiker met `is_admin`). Zet nooit secrets in `VITE_*`-variabelen: Vite bakt die in de bundle.
 
 ### 4. Database Setup & Initiatie Data
 
@@ -219,15 +216,7 @@ De frontend met deck.gl 3D visualisatie wordt toegevoegd aan `templates/index.ht
 - ✅ **Mobile Responsive:** Bottom sheet design voor mobile devices
 
 ### Nieuwe Dependencies
-De volgende externe libraries zijn toegevoegd (via CDN):
-```html
-<!-- MapLibre GL JS (voor basemap rendering; vervangt Mapbox GL JS) -->
-<link href="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.css" rel="stylesheet">
-<script src="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.js"></script>
-
-<!-- deck.gl v9 (bestaand) -->
-<script src="https://unpkg.com/deck.gl@^9.0.0/dist.min.js"></script>
-```
+MapLibre GL JS 3.6.2, deck.gl 9.4.0, D3.js 7.9.0, Chart.js 4.5.1 en het lettertype Inter worden zelf gehost in `static/vendor/` (#117), niet via een CDN. Versies, licenties en bijwerken: zie `static/vendor/README.md`.
 
 ### Static Assets
 - **Lucide Icons:** 12 SVG vectoren in `static/images/`. Deze worden *inline* gebruikt in HTML voor dynamische styling (currentColor support voor theming).
@@ -269,7 +258,7 @@ Om de afhankelijkheid van externe CDN's te verwijderen en de Content Security Po
 - **Locatie assets:** `static/swagger-ui/`
 - **Configuratie:** `main.py` (custom `/docs` endpoint)
 - **CSP:** `script-src` en `style-src` staan lokale assets toe voor Swagger. 
-    - *Note:* Externe CDNs (`unpkg.com`, `jsdelivr.net`, `d3js.org`) blijven toegestaan voor de frontend functionaliteit (kaarten, grafieken), maar zijn niet meer nodig voor de API docs.
+    - *Note:* Sinds #117 staan ook de frontend-bibliotheken lokaal (`static/vendor/`); de CSP staat geen CDN- of font-domeinen meer toe.
 
 **Command om assets te updaten:**
 ```bash

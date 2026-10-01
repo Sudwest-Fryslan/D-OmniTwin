@@ -83,7 +83,9 @@
     {
       "name": "sample-buurten",
       "title": "Buurtgeometrieën (13 CBS-buurten Súdwest-Fryslân)",
-      "description": "GeoJSON FeatureCollection, CRS WGS84 (urn:ogc:def:crs:OGC:1.3:CRS84 / EPSG:4326). Properties: id (CBS-buurtcode), naam, gemeente_code, gebiedstype_id, provincienaam. De buurtcode in 'id' is de sleutel waar sample_indicatoren.csv/gebied_id naar verwijst (niet als foreignKey uit te drukken omdat GeoJSON geen tabel-resource is).",
+      "description": "GeoJSON FeatureCollection, CRS WGS84 (urn:ogc:def:crs:OGC:1.3:CRS84 / EPSG:4326). Properties: id (CBS-buurtcode), naam, gemeente_code, gebiedstype_id, provincienaam. De buurtcode in 'id' is de sleutel waar sample_indicatoren.csv/gebied_id naar verwijst (niet als foreignKey uit te drukken omdat GeoJSON geen tabel-resource is). Buurtindeling en grenzen: CBS Wijk- en buurtkaart 2024 (zie 'geometrie_jaar'). Indicatorwaarden komen uit 2021-2026; zie docs/3-data-engineering/jaargangen.md (#119).",
+      "geometrie_jaar": 2024,
+      "geometrie_bron": "CBS Wijk- en buurtkaart 2024 (CBS_BUURTEN2024, via ETL/import_geografie_2024.py; Bolsward-Zuidoost uit PDOK gebiedsindelingen 2024)",
       "path": "2_brondata/sample_buurten.geojson",
       "type": "file",
       "format": "geojson",

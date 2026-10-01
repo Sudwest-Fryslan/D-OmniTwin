@@ -18,6 +18,7 @@
     "indicatoren": [
       {
         "naam": "Afstand tot koele plek",
+        "eenheid": "m",
         "richting": "lager_is_beter"
       },
       {

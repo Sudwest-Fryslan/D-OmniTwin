@@ -15,4 +15,4 @@ React 19 + TypeScript, gebouwd met [Vite](https://vite.dev/). FastAPI serveert d
 
 ## Omgevingsvariabelen
 
-Optioneel in `admin-panel/.env`: `VITE_ADMIN_KEY` als fallback voor de `X-Admin-Key`-header. Vite bakt deze waarde in de bundle; gebruik hem dus niet voor een build die gecommit wordt.
+Geen. De beheeromgeving werkt alleen met de sessie-cookie: log in als gebruiker met `is_admin`. De `X-Admin-Key`-header is voor scripts. Zet nooit secrets in `VITE_*`-variabelen: Vite bakt die in de bundle.

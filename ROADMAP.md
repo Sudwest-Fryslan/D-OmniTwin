@@ -91,7 +91,7 @@
 - [ ] **Fase 1 - Security Audit (🔴 BLOCKER):** Git-history cleanen van alle `.env` en hardcoded secrets, `.env.example` uitbrengen.
 - [ ] **Fase 2 - Technische Decoupling:** ETL scripts abstract maken, AI optioneel maken (feature flag), Docker Compose opzet.
 - [ ] **Fase 3 - Documentatie Overhaul:** Herpositioneren README, methodiek in `METHODOLOGY.md` uitschrijven, `CONTRIBUTING.md` toevoegen.
-- [ ] **Fase 4 - Publicatie Launch:** Plaatsing op public host (GitHub/GitLab), `publiccode.yml` aanmaken en release v1.0.0-beta taggen.
+- [ ] **Fase 4 - Publicatie Launch:** Plaatsing op public host (GitHub/GitLab), `publiccode.yml` aanmaken en release v0.1.0 taggen.
 
 **Tijd:** ~30-40 uur  
 **Priority:** 🔴 HIGH (Voorwaarde voor adoptie & subsidie)
