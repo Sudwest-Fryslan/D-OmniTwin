@@ -11,6 +11,14 @@ from sqlalchemy import text
 from typing import Dict, Any, List, Optional
 import json
 
+from services.zscore_referentie import (
+    MIN_N_STANDAARD,
+    SQL_ZSCORE_GEBIEDEN,
+    bereken_zscore,
+    methodiek_beschrijving,
+    referentie_params,
+)
+
 class ReportDataService:
     """Service class voor Rapportage data aggregatie & pre-processing"""
     
@@ -24,7 +32,8 @@ class ReportDataService:
         """
         # 1. Haal gebied metadata op (voor referentie kader)
         gebied_query = text("""
-            SELECT g.id, g.naam, g.gemeente_code, gt.id as gebiedstype_id, gt.naam as gebiedstype_naam, gem.naam as gemeente_naam
+            SELECT g.id, g.naam, g.gemeente_code, gt.id as gebiedstype_id, gt.naam as gebiedstype_naam, gem.naam as gemeente_naam,
+                   public.is_waterbuurt(g.naam, g.metadata) as is_waterbuurt
             FROM gebieden g
             JOIN gebiedstypes gt ON g.gebiedstype_id = gt.id
             LEFT JOIN gemeenten gem ON g.gemeente_code = gem.code
@@ -39,60 +48,56 @@ class ReportDataService:
         gemeente_code = gebied_dict.get('gemeente_code')
         gemeente_naam = gebied_dict.get('gemeente_naam')
         gebiedstype_id = gebied_dict.get('gebiedstype_id')
+        referentie_str = f"Gemeente {gemeente_naam}" if gemeente_naam else (f"Gemeente {gemeente_code}" if gemeente_code else f"Alle {gebied_dict['gebiedstype_naam']}(en)")
+        metadata = {
+            "gebied": gebied_dict['naam'],
+            "gebiedstype": gebied_dict['gebiedstype_naam'],
+            "referentie_kader": referentie_str
+        }
 
-        # 2. Bereken statistieken (Z-scores) t.o.v. zelfde gebiedstype binnen zelfde gemeente
-        # Als er geen gemeente_code is (bijv. landelijk niveau), berekenen we t.o.v. alle gebieden van dat type.
-        z_score_query = text("""
-            WITH target_data AS (
-                -- Haal per indicator het meest recente datapunt op voor DIT actuele gebied
-                SELECT indicator_uuid, waarde, jaar
-                FROM (
-                    SELECT indicator_uuid, waarde, jaar,
-                           ROW_NUMBER() OVER(PARTITION BY indicator_uuid ORDER BY jaar DESC) as rn
-                    FROM gebied_data
-                    WHERE gebied_id = :gebied_id
-                ) t
-                WHERE rn = 1
-            ),
-            referentie_stats AS (
-                -- Bereken gemiddelde en standaarddeviatie voor the referentie groep,
-                -- maar ALLEEN voor exact hetzelfde jaar als het actuele datapunt van het target gebied.
-                SELECT 
-                    gd.indicator_uuid,
-                    AVG(gd.waarde) as avg_waarde,
-                    STDDEV_SAMP(gd.waarde) as std_waarde
-                FROM gebied_data gd
-                JOIN gebieden g ON gd.gebied_id = g.id
-                JOIN target_data td ON gd.indicator_uuid = td.indicator_uuid AND gd.jaar = td.jaar
-                WHERE g.gebiedstype_id = :gebiedstype_id
-                """ + (" AND g.gemeente_code = :gemeente_code" if gemeente_code else "") + """
-                GROUP BY gd.indicator_uuid
-            )
-            SELECT 
+        # Waterbuurt als doelgebied: geen Z-scores, net als multi-gebied, thema-analyse
+        # en deelgebied (#155). Eén definitie: is_waterbuurt() in 08_zscore_referentie.sql.
+        if gebied_dict.get('is_waterbuurt'):
+            return {
+                "gebied_id": gebied_id,
+                "referentie_groep": referentie_str,
+                "aantal_indicatoren": 0,
+                "metadata": metadata,
+                "significante_domeinen": {},
+                "totaal_uitschieters": 0,
+                "is_waterbuurt": True,
+                "meldingen": [
+                    "Dit gebied is een waterbuurt. Waterbuurten worden niet vergeleken met "
+                    "de referentiegroep; er zijn geen Z-scores."
+                ],
+                "methodiek": methodiek_beschrijving()
+            }
+
+        # 2. Z-scores t.o.v. zelfde gebiedstype binnen zelfde gemeente, in hetzelfde jaar als de
+        #    meest recente waarde van dit gebied (centrale referentie, jaarlogica zelfde_jaar, #66).
+        # Zonder gemeente_code (bijv. landelijk niveau) t.o.v. alle gebieden van dat type.
+        z_score_query = text(f"""
+            SELECT
                 i.naam as indicator_naam,
                 i.omschrijving,
                 -- We halen de hoofdtitel (het kwadrant) op via de hiërarchie configuratie
                 COALESCE(vkh.titel_naam, i.categorie, 'Overig') as kwadrant,
                 i.eenheid,
                 COALESCE(i.score_type, '+/+') as score_type,
-                td.waarde as gebied_waarde,
-                td.jaar as meetjaar,
-                rs.avg_waarde as referentie_gemiddelde,
-                -- Voorkom division by zero, null std_waarde gebeurt bij N=1
-                CASE 
-                    WHEN rs.std_waarde > 0 THEN (td.waarde - rs.avg_waarde) / rs.std_waarde 
-                    ELSE 0 
-                END as z_score
-            FROM target_data td
-            JOIN indicatoren i ON td.indicator_uuid = i.uuid
-            JOIN referentie_stats rs ON td.indicator_uuid = rs.indicator_uuid
+                zs.waarde as gebied_waarde,
+                zs.jaar as meetjaar,
+                zs.gemiddelde as referentie_gemiddelde,
+                -- Geen spreiding (n < 2 of sd = 0): z = 0, telt niet als uitschieter
+                COALESCE(zs.z_score, 0) as z_score,
+                zs.n as referentie_n,
+                zs.referentie_terugval
+            FROM {SQL_ZSCORE_GEBIEDEN} zs
+            JOIN indicatoren i ON zs.indicator_uuid = i.uuid
             JOIN v_kompas_hierarchie vkh ON i.uuid = vkh.indicator_uuid AND vkh.config_id = 1
         """)
-        
-        params = {"gebied_id": gebied_id, "gebiedstype_id": gebiedstype_id}
-        if gemeente_code:
-            params["gemeente_code"] = gemeente_code
-            
+
+        params = referentie_params(gebiedstype_id, gemeente_code or None, gebied_ids=[gebied_id])
+
         result = self.db.execute(z_score_query, params)
         indicators = [dict(row._mapping) for row in result]
 
@@ -140,23 +145,34 @@ class ReportDataService:
                 "score_type": score_type,
                 "score_uitleg": score_uitleg,
                 "eenheid": ind['eenheid'] or "",
-                "impact": impact
+                "impact": impact,
+                "n_referentie": ind['referentie_n'],
+                "referentie_terugval": bool(ind['referentie_terugval'])
             })
 
-        referentie_str = f"Gemeente {gemeente_naam}" if gemeente_naam else (f"Gemeente {gemeente_code}" if gemeente_code else f"Alle {gebied_dict['gebiedstype_naam']}(en)")
+        # Minimum-n (#155): melding als de referentie is teruggevallen op de meest
+        # recente waarde per gebied (te weinig gebieden met een waarde in hetzelfde jaar)
+        meldingen = []
+        terugval = sorted({ind['indicator_naam'] for ind in indicators if ind.get('referentie_terugval')})
+        if terugval:
+            meldingen.append(
+                f"Bij {len(terugval)} indicator(en) hadden minder dan {MIN_N_STANDAARD} gebieden "
+                f"een waarde in hetzelfde jaar als dit gebied. Daar is vergeleken met de meest "
+                f"recente waarde per gebied: {', '.join(terugval)}."
+            )
 
         # 4. JSON Payload constructie
         payload = {
             "gebied_id": gebied_id,
             "referentie_groep": referentie_str,
             "aantal_indicatoren": len(indicators),
-            "metadata": {
-                "gebied": gebied_dict['naam'],
-                "gebiedstype": gebied_dict['gebiedstype_naam'],
-                "referentie_kader": referentie_str
-            },
+            "metadata": metadata,
             "significante_domeinen": domains_dict,
-            "totaal_uitschieters": len(significante_indicatoren)
+            "totaal_uitschieters": len(significante_indicatoren),
+            "is_waterbuurt": False,
+            "referentie_terugval_indicatoren": terugval,
+            "meldingen": meldingen,
+            "methodiek": methodiek_beschrijving()
         }
         
         return payload
@@ -206,6 +222,8 @@ class ReportDataService:
                        ROW_NUMBER() OVER(PARTITION BY indicator_uuid ORDER BY jaar DESC) as rn
                 FROM gebied_data
                 WHERE gebied_id = :gebied_id_a
+                  AND COALESCE(scenario_id, 'current') = 'current'
+                  AND jaar IS NOT NULL
             ) gd
             JOIN indicatoren i ON gd.indicator_uuid = i.uuid
             LEFT JOIN v_kompas_hierarchie vkh ON i.uuid = vkh.indicator_uuid AND vkh.config_id = 1
@@ -235,47 +253,30 @@ class ReportDataService:
             referentie_label = f"{len(gebieden_b)} gebied{'en' if len(gebieden_b) > 1 else ''}"
 
         elif mode == 'gemeente':
-            # Gemiddelde van alle buurten in een gemeente
+            # Gemiddelde van alle buurten in een gemeente (centrale referentie, #66)
             gemeente_naam_query = text("SELECT naam FROM gemeenten WHERE code = :code")
             gem_naam = self.db.execute(gemeente_naam_query, {"code": referentie_gemeente}).fetchone()
             gemeente_label = gem_naam[0] if gem_naam else referentie_gemeente
 
-            ref_query = text("""
-                SELECT gd.indicator_uuid, AVG(gd.waarde) as ref_waarde, COUNT(DISTINCT gd.gebied_id) as n
-                FROM (
-                    SELECT gd2.indicator_uuid, gd2.waarde, gd2.gebied_id,
-                           ROW_NUMBER() OVER(PARTITION BY gd2.indicator_uuid, gd2.gebied_id ORDER BY gd2.jaar DESC) as rn
-                    FROM gebied_data gd2
-                    JOIN gebieden g ON gd2.gebied_id = g.id
-                    WHERE g.gemeente_code = :gemeente_code
-                      AND g.gebiedstype_id = :gebiedstype_id
-                ) gd
-                WHERE gd.rn = 1
-                GROUP BY gd.indicator_uuid
+            # Referentie in hetzelfde jaar als de waarde van gebied A (jaarlogica zelfde_jaar)
+            ref_query = text(f"""
+                SELECT zs.indicator_uuid, zs.gemiddelde as ref_waarde, zs.n
+                FROM {SQL_ZSCORE_GEBIEDEN} zs
             """)
-            ref_result = self.db.execute(ref_query, {
-                "gemeente_code": referentie_gemeente,
-                "gebiedstype_id": gebied_a_dict['gebiedstype_id']
-            })
+            ref_result = self.db.execute(ref_query, referentie_params(
+                gebied_a_dict['gebiedstype_id'], referentie_gemeente, gebied_ids=[gebied_id_a]
+            ))
             referentie_label = f"⌀ Gemeente {gemeente_label}"
 
         elif mode == 'fryslan':
-            # Gemiddelde van ALLE buurten (geheel Fryslân)
-            ref_query = text("""
-                SELECT gd.indicator_uuid, AVG(gd.waarde) as ref_waarde, COUNT(DISTINCT gd.gebied_id) as n
-                FROM (
-                    SELECT gd2.indicator_uuid, gd2.waarde, gd2.gebied_id,
-                           ROW_NUMBER() OVER(PARTITION BY gd2.indicator_uuid, gd2.gebied_id ORDER BY gd2.jaar DESC) as rn
-                    FROM gebied_data gd2
-                    JOIN gebieden g ON gd2.gebied_id = g.id
-                    WHERE g.gebiedstype_id = :gebiedstype_id
-                ) gd
-                WHERE gd.rn = 1
-                GROUP BY gd.indicator_uuid
+            # Gemiddelde van ALLE buurten (geheel Fryslân; centrale referentie zonder gemeente, #66)
+            ref_query = text(f"""
+                SELECT zs.indicator_uuid, zs.gemiddelde as ref_waarde, zs.n
+                FROM {SQL_ZSCORE_GEBIEDEN} zs
             """)
-            ref_result = self.db.execute(ref_query, {
-                "gebiedstype_id": gebied_a_dict['gebiedstype_id']
-            })
+            ref_result = self.db.execute(ref_query, referentie_params(
+                gebied_a_dict['gebiedstype_id'], None, gebied_ids=[gebied_id_a]
+            ))
             referentie_label = "⌀ Provincie Fryslân"
 
         else:
@@ -354,7 +355,9 @@ class ReportDataService:
             "top_kansen": kansen[:3],
             "top_risicos": risicos[:3],
             "totaal_uitschieters": full_payload.get("totaal_uitschieters", 0),
-            "aantal_indicatoren": full_payload.get("aantal_indicatoren", 0)
+            "aantal_indicatoren": full_payload.get("aantal_indicatoren", 0),
+            "is_waterbuurt": full_payload.get("is_waterbuurt", False),
+            "meldingen": full_payload.get("meldingen", [])
         }
 
     # ─── Multi-Gebiedsdossier (Zones-analyse) ────────────────────────────────
@@ -414,27 +417,23 @@ class ReportDataService:
             raise ValueError(f"Gebied {gebied_ids[0]} niet gevonden.")
         gebiedstype_id = str(gt_row._mapping['gebiedstype_id'])
 
-        # 2. Bouw referentie-filter
-        referentie_filter = "g2.gebiedstype_id = :gebiedstype_id"
-        params: Dict[str, Any] = {
-            "gebied_ids": gebied_ids,
-            "gebiedstype_id": gebiedstype_id
-        }
-        if referentie == 'gemeente':
-            referentie_filter += " AND g2.gemeente_code = :gemeente_code"
-            params["gemeente_code"] = gemeente_code
-
         # 2b. Filter water-buurten uit de selectie
         water_filter_query = text("""
             SELECT g.id FROM gebieden g
             WHERE g.id = ANY(:gebied_ids)
-              AND COALESCE(g.metadata->>'water', 'NEE') != 'JA'
+              AND NOT public.is_waterbuurt(g.naam, g.metadata)
         """)
         water_result = self.db.execute(water_filter_query, {"gebied_ids": gebied_ids})
         gefilterde_ids = [str(r._mapping['id']) for r in water_result]
         if not gefilterde_ids:
             raise ValueError("Alle geselecteerde gebieden zijn water-buurten.")
-        params["gebied_ids"] = gefilterde_ids
+
+        # 2. Referentiegroep: gebiedstype (+ gemeente bij referentie 'gemeente'), #66
+        params: Dict[str, Any] = referentie_params(
+            gebiedstype_id,
+            gemeente_code if referentie == 'gemeente' else None,
+            gebied_ids=gefilterde_ids,
+        )
 
         # 2c. Optioneel thema-filter
         thema_filter_clause = ""
@@ -445,34 +444,16 @@ class ReportDataService:
         # 3. Bereken z-scores voor ALLE buurten × ALLE indicatoren
         #    Top 3 per buurt via ROW_NUMBER i.p.v. DISTINCT ON
         z_score_query = text(f"""
-            WITH target_data AS (
-                -- Meest recente waarde per buurt per indicator
-                SELECT indicator_uuid, gebied_id, waarde, jaar
-                FROM (
-                    SELECT indicator_uuid, gebied_id, waarde, jaar,
-                           ROW_NUMBER() OVER(PARTITION BY gebied_id, indicator_uuid ORDER BY jaar DESC) AS rn
-                    FROM gebied_data
-                    WHERE gebied_id = ANY(:gebied_ids)
-                ) sub
-                WHERE rn = 1
-            ),
-            referentie_stats AS (
-                -- Referentiestatistieken (gem + std + min + max per indicator)
-                SELECT gd2.indicator_uuid,
-                       AVG(gd2.waarde)         AS avg_waarde,
-                       STDDEV_SAMP(gd2.waarde) AS std_waarde,
-                       MIN(gd2.waarde)         AS min_waarde,
-                       MAX(gd2.waarde)         AS max_waarde
-                FROM (
-                    SELECT gd3.indicator_uuid, gd3.waarde, gd3.gebied_id,
-                           ROW_NUMBER() OVER(PARTITION BY gd3.indicator_uuid, gd3.gebied_id ORDER BY gd3.jaar DESC) AS rn
-                    FROM gebied_data gd3
-                    JOIN gebieden g2 ON gd3.gebied_id = g2.id
-                    WHERE {referentie_filter}
-                ) gd2
-                WHERE gd2.rn = 1
-                GROUP BY gd2.indicator_uuid
-                HAVING STDDEV_SAMP(gd2.waarde) > 0
+            WITH zscores AS (
+                -- Centrale referentie (#66): zscore_gebieden, waterbuurten uitgesloten
+                SELECT zs.gebied_id, zs.indicator_uuid, zs.waarde, zs.jaar,
+                       zs.gemiddelde        AS avg_waarde,
+                       zs.standaarddeviatie AS std_waarde,
+                       zs.min_waarde, zs.max_waarde,
+                       zs.n                 AS n_ref_buurten,
+                       zs.z_score
+                FROM {SQL_ZSCORE_GEBIEDEN} zs
+                WHERE zs.z_score IS NOT NULL
             ),
             alle_zscores AS (
                 SELECT
@@ -484,17 +465,16 @@ class ReportDataService:
                     COALESCE(vkh.titel_naam, i.categorie, 'Overig') AS thema,
                     COALESCE(i.score_type, '+/+')   AS score_type,
                     td.waarde,
-                    rs.avg_waarde,
-                    rs.std_waarde,
-                    rs.min_waarde,
-                    rs.max_waarde,
-                    (td.waarde - rs.avg_waarde) / rs.std_waarde AS z_score
-                FROM target_data td
+                    td.avg_waarde,
+                    td.std_waarde,
+                    td.min_waarde,
+                    td.max_waarde,
+                    td.z_score AS z_score
+                FROM zscores td
                 JOIN gebieden g        ON td.gebied_id = g.id
                 JOIN indicatoren i     ON td.indicator_uuid = i.uuid
                 JOIN v_kompas_hierarchie vkh
                                        ON i.uuid = vkh.indicator_uuid AND vkh.config_id = 1
-                JOIN referentie_stats rs ON td.indicator_uuid = rs.indicator_uuid
             ),
             gefilterde_zscores AS (
                 -- Optioneel thema-filter
@@ -577,41 +557,28 @@ class ReportDataService:
             thema_agg_filter = f"AND COALESCE(vkh.titel_naam, i.categorie, 'Overig') = :thema_filter"
 
         thema_query = text(f"""
-            WITH target_data AS (
-                SELECT indicator_uuid, gebied_id, waarde, jaar
-                FROM (
-                    SELECT indicator_uuid, gebied_id, waarde, jaar,
-                           ROW_NUMBER() OVER(PARTITION BY gebied_id, indicator_uuid ORDER BY jaar DESC) AS rn
-                    FROM gebied_data
-                    WHERE gebied_id = ANY(:gebied_ids)
-                ) sub WHERE rn = 1
-            ),
-            referentie_stats AS (
-                SELECT gd2.indicator_uuid,
-                       AVG(gd2.waarde) AS avg_waarde,
-                       STDDEV_SAMP(gd2.waarde) AS std_waarde
-                FROM (
-                    SELECT gd3.indicator_uuid, gd3.waarde, gd3.gebied_id,
-                           ROW_NUMBER() OVER(PARTITION BY gd3.indicator_uuid, gd3.gebied_id ORDER BY gd3.jaar DESC) AS rn
-                    FROM gebied_data gd3
-                    JOIN gebieden g2 ON gd3.gebied_id = g2.id
-                    WHERE {referentie_filter}
-                ) gd2 WHERE gd2.rn = 1
-                GROUP BY gd2.indicator_uuid
-                HAVING STDDEV_SAMP(gd2.waarde) > 0
+            WITH zscores AS (
+                -- Centrale referentie (#66): zscore_gebieden, waterbuurten uitgesloten
+                SELECT zs.gebied_id, zs.indicator_uuid, zs.waarde, zs.jaar,
+                       zs.gemiddelde        AS avg_waarde,
+                       zs.standaarddeviatie AS std_waarde,
+                       zs.min_waarde, zs.max_waarde,
+                       zs.n                 AS n_ref_buurten,
+                       zs.z_score
+                FROM {SQL_ZSCORE_GEBIEDEN} zs
+                WHERE zs.z_score IS NOT NULL
             )
             SELECT
                 COALESCE(vkh.titel_naam, i.categorie, 'Overig') AS thema,
-                AVG((td.waarde - rs.avg_waarde) / rs.std_waarde) AS gem_zscore,
-                COUNT(*) FILTER (WHERE ABS((td.waarde - rs.avg_waarde) / rs.std_waarde) >= 1.0) AS n_uitschieters,
+                AVG(td.z_score) AS gem_zscore,
+                COUNT(*) FILTER (WHERE ABS(td.z_score) >= 1.0) AS n_uitschieters,
                 COUNT(*) AS n_datapunten
-            FROM target_data td
+            FROM zscores td
             JOIN indicatoren i ON td.indicator_uuid = i.uuid
             JOIN v_kompas_hierarchie vkh ON i.uuid = vkh.indicator_uuid AND vkh.config_id = 1
-            JOIN referentie_stats rs ON td.indicator_uuid = rs.indicator_uuid
             WHERE 1=1 {thema_agg_filter}
             GROUP BY COALESCE(vkh.titel_naam, i.categorie, 'Overig')
-            ORDER BY ABS(AVG((td.waarde - rs.avg_waarde) / rs.std_waarde)) DESC
+            ORDER BY ABS(AVG(td.z_score)) DESC
         """)
 
         thema_result = self.db.execute(thema_query, params)
@@ -740,7 +707,7 @@ class ReportDataService:
             FROM gebieden g
             WHERE g.id = ANY(:gebied_ids)
               AND g.geom IS NOT NULL
-              AND COALESCE(g.metadata->>'water', 'NEE') != 'JA'
+              AND NOT public.is_waterbuurt(g.naam, g.metadata)
         """)
         geom_result = self.db.execute(geom_query, {"gebied_ids": gebied_ids})
 
@@ -806,27 +773,23 @@ class ReportDataService:
             raise ValueError(f"Gebied {gebied_ids[0]} niet gevonden.")
         gebiedstype_id = str(gt_row._mapping['gebiedstype_id'])
 
-        # 2. Bouw referentie-filter
-        referentie_filter = "g2.gebiedstype_id = :gebiedstype_id"
-        params: Dict[str, Any] = {
-            "gebied_ids": gebied_ids,
-            "gebiedstype_id": gebiedstype_id
-        }
-        if referentie == 'gemeente':
-            referentie_filter += " AND g2.gemeente_code = :gemeente_code"
-            params["gemeente_code"] = gemeente_code
-
         # 2b. Filter water-buurten uit
         water_filter_query = text("""
             SELECT g.id FROM gebieden g
             WHERE g.id = ANY(:gebied_ids)
-              AND COALESCE(g.metadata->>'water', 'NEE') != 'JA'
+              AND NOT public.is_waterbuurt(g.naam, g.metadata)
         """)
         water_result = self.db.execute(water_filter_query, {"gebied_ids": gebied_ids})
         gefilterde_ids = [str(r._mapping['id']) for r in water_result]
         if not gefilterde_ids:
             raise ValueError("Alle geselecteerde gebieden zijn water-buurten.")
-        params["gebied_ids"] = gefilterde_ids
+
+        # 2. Referentiegroep: gebiedstype (+ gemeente bij referentie 'gemeente'), #66
+        params: Dict[str, Any] = referentie_params(
+            gebiedstype_id,
+            gemeente_code if referentie == 'gemeente' else None,
+            gebied_ids=gefilterde_ids,
+        )
 
         # 2c. Bouw thema filter clause
         filters = []
@@ -844,32 +807,16 @@ class ReportDataService:
 
         # 3. Bereken z-scores
         z_score_query = text(f"""
-            WITH target_data AS (
-                SELECT indicator_uuid, gebied_id, waarde, jaar
-                FROM (
-                    SELECT indicator_uuid, gebied_id, waarde, jaar,
-                           ROW_NUMBER() OVER(PARTITION BY gebied_id, indicator_uuid ORDER BY jaar DESC) AS rn
-                    FROM gebied_data
-                    WHERE gebied_id = ANY(:gebied_ids)
-                ) sub
-                WHERE rn = 1
-            ),
-            referentie_stats AS (
-                SELECT gd2.indicator_uuid,
-                       AVG(gd2.waarde)         AS avg_waarde,
-                       STDDEV_SAMP(gd2.waarde) AS std_waarde,
-                       MIN(gd2.waarde)         AS min_waarde,
-                       MAX(gd2.waarde)         AS max_waarde
-                FROM (
-                    SELECT gd3.indicator_uuid, gd3.waarde, gd3.gebied_id,
-                           ROW_NUMBER() OVER(PARTITION BY gd3.indicator_uuid, gd3.gebied_id ORDER BY gd3.jaar DESC) AS rn
-                    FROM gebied_data gd3
-                    JOIN gebieden g2 ON gd3.gebied_id = g2.id
-                    WHERE {referentie_filter}
-                ) gd2
-                WHERE gd2.rn = 1
-                GROUP BY gd2.indicator_uuid
-                HAVING STDDEV_SAMP(gd2.waarde) > 0
+            WITH zscores AS (
+                -- Centrale referentie (#66): zscore_gebieden, waterbuurten uitgesloten
+                SELECT zs.gebied_id, zs.indicator_uuid, zs.waarde, zs.jaar,
+                       zs.gemiddelde        AS avg_waarde,
+                       zs.standaarddeviatie AS std_waarde,
+                       zs.min_waarde, zs.max_waarde,
+                       zs.n                 AS n_ref_buurten,
+                       zs.z_score
+                FROM {SQL_ZSCORE_GEBIEDEN} zs
+                WHERE zs.z_score IS NOT NULL
             ),
             alle_zscores AS (
                 SELECT
@@ -882,17 +829,16 @@ class ReportDataService:
                     vkh.onderdeel_naam              AS onderdeel_naam,
                     COALESCE(i.score_type, '+/+')   AS score_type,
                     td.waarde,
-                    rs.avg_waarde,
-                    rs.std_waarde,
-                    rs.min_waarde,
-                    rs.max_waarde,
-                    (td.waarde - rs.avg_waarde) / rs.std_waarde AS z_score
-                FROM target_data td
+                    td.avg_waarde,
+                    td.std_waarde,
+                    td.min_waarde,
+                    td.max_waarde,
+                    td.z_score AS z_score
+                FROM zscores td
                 JOIN gebieden g        ON td.gebied_id = g.id
                 JOIN indicatoren i     ON td.indicator_uuid = i.uuid
                 JOIN v_kompas_hierarchie vkh
                                        ON i.uuid = vkh.indicator_uuid AND vkh.config_id = 1
-                JOIN referentie_stats rs ON td.indicator_uuid = rs.indicator_uuid
             ),
             gefilterde_zscores AS (
                 SELECT * FROM alle_zscores
@@ -1011,7 +957,7 @@ class ReportDataService:
             FROM gebieden g
             WHERE g.id = ANY(:gebied_ids)
               AND g.geom IS NOT NULL
-              AND COALESCE(g.metadata->>'water', 'NEE') != 'JA'
+              AND NOT public.is_waterbuurt(g.naam, g.metadata)
         """)
         geom_result = self.db.execute(geom_query, {"gebied_ids": gebied_ids})
 
@@ -1079,7 +1025,7 @@ class ReportDataService:
         # 1. Bepaal geselecteerde buurten, filter waterbuurten en haal gemeente/type op
         gebieden_query = text("""
             SELECT g.id, g.naam, g.gemeente_code, g.gebiedstype_id,
-                   COALESCE(g.metadata->>'water', 'NEE') AS is_water
+                   public.is_waterbuurt(g.naam, g.metadata) AS is_water
             FROM gebieden g
             WHERE g.id = ANY(:gebied_ids)
         """)
@@ -1089,9 +1035,9 @@ class ReportDataService:
 
         waterbuurten = [
             {"id": str(g['id']), "naam": str(g['naam'])}
-            for g in geb_rows if g.get('is_water') == 'JA'
+            for g in geb_rows if g.get('is_water')
         ]
-        actieve_buurten = [g for g in geb_rows if g.get('is_water') != 'JA']
+        actieve_buurten = [g for g in geb_rows if not g.get('is_water')]
 
         if not actieve_buurten:
             raise ValueError("Alle geselecteerde gebieden zijn water-buurten en worden conform projectstandaard uitgesloten van analyse.")
@@ -1108,20 +1054,18 @@ class ReportDataService:
         ).fetchone()
         gemeente_naam = gem_row[0] if gem_row else gemeente_code
 
-        # 2. Bouw referentie-filter
+        # 2. Referentiegroep: gebiedstype (+ gemeente bij referentie 'gemeente'), #66
         if referentie == 'gemeente':
-            referentie_filter = "g2.gebiedstype_id = :gebiedstype_id AND g2.gemeente_code = :gemeente_code"
             referentie_label = f"⌀ Gemeente {gemeente_naam}"
         else:
-            referentie_filter = "g2.gebiedstype_id = :gebiedstype_id"
             referentie_label = "⌀ Provincie Fryslân"
 
         actieve_ids = [str(b['id']) for b in actieve_buurten]
-        params: Dict[str, Any] = {
-            "gebied_ids": actieve_ids,
-            "gebiedstype_id": gebiedstype_id,
-            "gemeente_code": gemeente_code
-        }
+        params: Dict[str, Any] = referentie_params(
+            gebiedstype_id,
+            gemeente_code if referentie == 'gemeente' else None,
+            gebied_ids=actieve_ids,
+        )
 
         # 3. Inwoneraantallen ophalen voor gewogen aggregatie
         inwoners_query = text("""
@@ -1185,34 +1129,16 @@ class ReportDataService:
 
         # 4. Target data en referentiestatistieken ophalen
         query = text(f"""
-            WITH target_data AS (
-                SELECT indicator_uuid, gebied_id, waarde, jaar
-                FROM (
-                    SELECT indicator_uuid, gebied_id, waarde, jaar,
-                           ROW_NUMBER() OVER(PARTITION BY gebied_id, indicator_uuid ORDER BY jaar DESC) AS rn
-                    FROM gebied_data
-                    WHERE gebied_id = ANY(:gebied_ids)
-                ) sub
-                WHERE rn = 1
-            ),
-            referentie_stats AS (
-                SELECT gd2.indicator_uuid,
-                       AVG(gd2.waarde)         AS avg_waarde,
-                       STDDEV_SAMP(gd2.waarde) AS std_waarde,
-                       MIN(gd2.waarde)         AS min_waarde,
-                       MAX(gd2.waarde)         AS max_waarde,
-                       COUNT(DISTINCT gd2.gebied_id) AS n_ref_buurten
-                FROM (
-                    SELECT gd3.indicator_uuid, gd3.waarde, gd3.gebied_id,
-                           ROW_NUMBER() OVER(PARTITION BY gd3.indicator_uuid, gd3.gebied_id ORDER BY gd3.jaar DESC) AS rn
-                    FROM gebied_data gd3
-                    JOIN gebieden g2 ON gd3.gebied_id = g2.id
-                    WHERE {referentie_filter}
-                      AND COALESCE(g2.metadata->>'water', 'NEE') != 'JA'
-                ) gd2
-                WHERE gd2.rn = 1
-                GROUP BY gd2.indicator_uuid
-                HAVING STDDEV_SAMP(gd2.waarde) > 0
+            WITH zscores AS (
+                -- Centrale referentie (#66): zscore_gebieden, waterbuurten uitgesloten
+                SELECT zs.gebied_id, zs.indicator_uuid, zs.waarde, zs.jaar,
+                       zs.gemiddelde        AS avg_waarde,
+                       zs.standaarddeviatie AS std_waarde,
+                       zs.min_waarde, zs.max_waarde,
+                       zs.n                 AS n_ref_buurten,
+                       zs.z_score
+                FROM {SQL_ZSCORE_GEBIEDEN} zs
+                WHERE zs.z_score IS NOT NULL
             )
             SELECT
                 td.indicator_uuid,
@@ -1220,11 +1146,12 @@ class ReportDataService:
                 g.naam                          AS buurt_naam,
                 td.waarde,
                 td.jaar,
-                rs.avg_waarde,
-                rs.std_waarde,
-                rs.min_waarde,
-                rs.max_waarde,
-                rs.n_ref_buurten,
+                td.avg_waarde,
+                td.std_waarde,
+                td.min_waarde,
+                td.max_waarde,
+                td.n_ref_buurten,
+                td.z_score,
                 i.naam                          AS indicator_naam,
                 i.eenheid                       AS eenheid,
                 COALESCE(i.score_type, '+/+')   AS score_type,
@@ -1235,12 +1162,11 @@ class ReportDataService:
                 vkh.titel_kleur                 AS kwadrant_kleur,
                 vkh.thema_naam                  AS thema_naam,
                 vkh.onderdeel_naam              AS onderdeel_naam
-            FROM target_data td
+            FROM zscores td
             JOIN gebieden g        ON td.gebied_id = g.id
             JOIN indicatoren i     ON td.indicator_uuid = i.uuid
             JOIN v_kompas_hierarchie vkh
                                    ON i.uuid = vkh.indicator_uuid AND vkh.config_id = 1
-            JOIN referentie_stats rs ON td.indicator_uuid = rs.indicator_uuid
             WHERE i.naam != 'Inwoners'
             ORDER BY vkh.titel_naam, vkh.thema_naam, i.naam
         """)
@@ -1266,8 +1192,13 @@ class ReportDataService:
             kw_kleur = first_pt['kwadrant_kleur'] or '#3B82F6'
             th_naam = first_pt['thema_naam'] or 'Overig'
 
-            avg_waarde = float(first_pt['avg_waarde'])
-            std_waarde = float(first_pt['std_waarde'])
+            # Referentie voor het gewogen gemiddelde: die van het meest recente meetjaar
+            # onder de buurten. ⚠️ Bij jaarlogica zelfde_jaar kunnen buurten met een ouder
+            # meetjaar een andere referentie hebben; hun buurt-Z gebruikt hun eigen jaar.
+            ref_pt = max(pts, key=lambda p: p['jaar'])
+            avg_waarde = float(ref_pt['avg_waarde'])
+            std_waarde = float(ref_pt['std_waarde'])
+            n_ref = int(ref_pt['n_ref_buurten'])
 
             w_sum = 0.0
             sum_val_w = 0.0
@@ -1283,8 +1214,8 @@ class ReportDataService:
                     sum_val_w += val * gew
                     w_sum += gew
 
-                # Buurt-zscore en afwijking t.o.v. referentie
-                b_z = (val - avg_waarde) / std_waarde if std_waarde > 0 else 0.0
+                # Buurt-zscore (uit zscore_gebieden) en afwijking t.o.v. referentie
+                b_z = float(pt['z_score'])
                 b_diff = val - avg_waarde
                 b_diff_pct = (b_diff / avg_waarde * 100.0) if avg_waarde != 0 else 0.0
 
@@ -1303,7 +1234,8 @@ class ReportDataService:
                 continue
 
             gewogen_waarde = sum_val_w / w_sum
-            z_score = (gewogen_waarde - avg_waarde) / std_waarde if std_waarde > 0 else 0.0
+            # Z-score van het gewogen gemiddelde: zelfde formule als SQL zscore()
+            z_score = bereken_zscore(gewogen_waarde, avg_waarde, std_waarde, n_ref) or 0.0
             z_abs = abs(z_score)
             verschil = gewogen_waarde - avg_waarde
             verschil_pct = (verschil / avg_waarde * 100.0) if avg_waarde != 0 else 0.0
@@ -1324,8 +1256,8 @@ class ReportDataService:
                 "gewogen_waarde": round(gewogen_waarde, 2),
                 "ref_gemiddelde": round(avg_waarde, 2),
                 "ref_std": round(std_waarde, 2),
-                "ref_min": round(float(first_pt['min_waarde']), 2),
-                "ref_max": round(float(first_pt['max_waarde']), 2),
+                "ref_min": round(float(ref_pt['min_waarde']), 2),
+                "ref_max": round(float(ref_pt['max_waarde']), 2),
                 "z_score": round(z_score, 2),
                 "z_score_abs": round(z_abs, 2),
                 "verschil": round(verschil, 2),
@@ -1427,6 +1359,7 @@ class ReportDataService:
             "nul_inwoners_buurten": nul_inwoners_buurten,
             "totaal_inwoners_gebied": round(totaal_inwoners),
             "z_score_formule": "Z = (W - μ_ref) / σ_ref",
+            "z_score_referentie": methodiek_beschrijving(),
             "statistisch_effect": "Het gewogen stadsgemiddelde (W) vlakt extreme pieken en dalen van individuele buurten uit. Hierdoor wijkt de Z-score van de stad structureel minder sterk af dan die van de meest extreme buurten. Dit is statistisch correct (de centrale limietstelling) en geen rekenfout.",
             "scoringtype_disclaimer": "De scoringstypen (+/+, +/-, -/-, -/+) en de resulterende duiding naar aandachtspunt of kans zijn onderdeel van het Kompas-model en nog onderhevig aan methodologische validatie."
         }
@@ -1493,7 +1426,7 @@ class ReportDataService:
             FROM gebieden g
             WHERE g.id = ANY(:gebied_ids)
               AND g.geom IS NOT NULL
-              AND COALESCE(g.metadata->>'water', 'NEE') != 'JA'
+              AND NOT public.is_waterbuurt(g.naam, g.metadata)
         """)
         geom_rows = [
             dict(r._mapping)
