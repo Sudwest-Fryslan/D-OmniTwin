@@ -54,12 +54,12 @@ def check_single_indicator(
     return result
 
 @router.get("/health")
-async def health_check():
+def health_check():
     """Simple health check for Data Controle API."""
     return {"status": "healthy", "service": "Data Controle API"}
 
 @router.post("/acties/herbereken-statistieken")
-async def actie_herbereken_statistieken(
+def actie_herbereken_statistieken(
     req: ActiesRequest,
     service: DataControleService = Depends(get_service)
 ):
@@ -70,7 +70,7 @@ async def actie_herbereken_statistieken(
     return result
 
 @router.post("/acties/genereer-ontologie")
-async def actie_genereer_ontologie(
+def actie_genereer_ontologie(
     req: ActiesRequest,
     service: DataControleService = Depends(get_service)
 ):
@@ -91,7 +91,7 @@ def get_dedup_kandidaten(
     return service.get_kandidaten()
 
 @router.post("/deduplicatie/merge", response_model=Dict[str, Any])
-async def merge_indicatoren(
+def merge_indicatoren(
     req: MergeRequest,
     service: DeduplicatieService = Depends(get_dedup_service)
 ):
@@ -104,7 +104,7 @@ async def merge_indicatoren(
         raise HTTPException(status_code=400, detail=str(e))
 
 @router.post("/deduplicatie/uitzondering", response_model=Dict[str, Any])
-async def markeer_uitzondering(
+def markeer_uitzondering(
     req: UitzonderingRequest,
     service: DeduplicatieService = Depends(get_dedup_service)
 ):

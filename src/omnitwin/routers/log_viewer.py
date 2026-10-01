@@ -43,7 +43,7 @@ class LogConfigUpdate(BaseModel):
 # GET /api/admin/logs — Gefilterd + gepagineerd
 # ============================================================================
 @router.get("/logs")
-async def get_logs(
+def get_logs(
     request: Request,
     page: int = Query(1, ge=1),
     per_page: int = Query(50, ge=10, le=200),
@@ -138,7 +138,7 @@ async def get_logs(
 # GET /api/admin/logs/stats — Statistieken
 # ============================================================================
 @router.get("/logs/stats")
-async def get_log_stats(
+def get_log_stats(
     request: Request,
     db: Session = Depends(get_db),
     auth: dict = Depends(vereis_admin),
@@ -239,7 +239,7 @@ async def get_log_stats(
 # GET /api/admin/log-config — Configuratie ophalen
 # ============================================================================
 @router.get("/log-config")
-async def get_log_config(
+def get_log_config(
     request: Request,
     db: Session = Depends(get_db),
     auth: dict = Depends(vereis_admin),
@@ -266,7 +266,7 @@ async def get_log_config(
 # PUT /api/admin/log-config/{category} — Configuratie bijwerken
 # ============================================================================
 @router.put("/log-config/{category}")
-async def update_log_config(
+def update_log_config(
     category: str,
     data: LogConfigUpdate,
     request: Request,

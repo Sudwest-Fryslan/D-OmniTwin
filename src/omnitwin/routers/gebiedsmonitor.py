@@ -47,7 +47,7 @@ def get_service(db: Session = Depends(get_db)) -> GebiedsmonitorService:
 # ============================================================================
 
 @router.get("/gebiedstypes", response_model=GebiedstypesListResponse)
-async def get_gebiedstypes(
+def get_gebiedstypes(
     service: GebiedsmonitorService = Depends(get_service)
 ):
     """
@@ -61,7 +61,7 @@ async def get_gebiedstypes(
 
 
 @router.get("/gebieden", response_model=GebiedenListResponse)
-async def get_gebieden(
+def get_gebieden(
     gebiedstype_id: Optional[str] = Query(None, description="Filter op gebiedstype UUID"),
     limit: int = Query(50, ge=1, le=500, description="Aantal resultaten"),
     offset: int = Query(0, ge=0, description="Paginatie offset"),
@@ -87,7 +87,7 @@ async def get_gebieden(
 
 
 @router.get("/gebieden/{gebied_id}", response_model=GebiedDetailResponse)
-async def get_gebied_detail(
+def get_gebied_detail(
     gebied_id: str,
     service: GebiedsmonitorService = Depends(get_service)
 ):
@@ -116,7 +116,7 @@ async def get_gebied_detail(
 
 
 @router.get("/indicatoren", response_model=IndicatorenListResponse)
-async def get_indicatoren(
+def get_indicatoren(
     gebiedstype_id: Optional[str] = Query(
         None, 
         description="Filter indicatoren die data hebben voor dit gebiedstype"
@@ -140,7 +140,7 @@ async def get_indicatoren(
 
 
 @router.get("/kaart_data/{gebiedstype_id}", response_model=Dict[str, Any])
-async def get_kaart_attributes(
+def get_kaart_attributes(
     gebiedstype_id: UUID,  # ongeldige UUID: 422 (#203)
     indicator_uuid: Optional[UUID] = Query(
         None, 
@@ -180,7 +180,7 @@ async def get_kaart_attributes(
 # ============================================================================
 
 @router.get("/health")
-async def health_check():
+def health_check():
     """
     Simple health check endpoint voor Gebiedsmonitor API.
     """

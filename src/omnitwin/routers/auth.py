@@ -240,7 +240,7 @@ async def login(
     return {"message": "Succesvol ingelogd", "user": {"id": str(user[0]), "username": user[1]}}
 
 @router.post("/logout")
-async def logout(
+def logout(
     request: Request,
     response: Response,
     db: Session = Depends(get_db)
@@ -257,7 +257,7 @@ async def logout(
     return {"message": "Succesvol uitgelogd"}
 
 @router.get("/me", response_model=AuthStatus)
-async def get_current_user(
+def get_current_user(
     request: Request,
     db: Session = Depends(get_db)
 ):
@@ -276,7 +276,7 @@ class ChangePasswordRequest(BaseModel):
     new_password: str
 
 @router.post("/change-password")
-async def change_password(
+def change_password(
     data: ChangePasswordRequest,
     request: Request,
     db: Session = Depends(get_db)

@@ -25,7 +25,7 @@ def search_kompas(
     return service.search_indicators(q, limit=limit)
 
 @router.get("/health")
-async def health_check():
+def health_check():
     """Health check voor AI-zoeken, met de status van het embeddingmodel (#118)."""
     from omnitwin.services import embedding_model
     return {"status": "healthy", "service": "AI Search API",

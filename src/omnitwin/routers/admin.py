@@ -92,7 +92,7 @@ def _lees_llm_config(db: Session) -> Optional[dict]:
     return {"api_url": row["api_url"], "model_name": row["model_name"], "api_type": row.get("api_type") or "ollama"}
 
 @router.get("/llm/config", response_model=LLMConfig)
-async def get_llm_config(
+def get_llm_config(
     db: Session = Depends(get_db),
 ):
     """Get active LLM Config."""
@@ -102,7 +102,7 @@ async def get_llm_config(
     return config
 
 @router.put("/llm/config", response_model=LLMConfig)
-async def update_llm_config(
+def update_llm_config(
     config: LLMConfig,
     db: Session = Depends(get_db),
 ):
@@ -167,7 +167,7 @@ def get_ollama_models(
         return {"models": [config["model_name"] if config else "qwen3:30b"], "error": melding}
 
 @router.get("/prompts", response_model=List[SystemPrompt])
-async def get_system_prompts(
+def get_system_prompts(
     db: Session = Depends(get_db),
 ):
     """Get all system prompts."""
@@ -183,7 +183,7 @@ async def get_system_prompts(
     ]
 
 @router.put("/prompts/{naam}", response_model=SystemPrompt)
-async def update_system_prompt(
+def update_system_prompt(
     naam: str,
     data: SystemPromptUpdate,
     db: Session = Depends(get_db),
@@ -221,7 +221,7 @@ async def update_system_prompt(
 # Hierarchy Endpoints
 # ============================================================================
 @router.get("/score-types", response_model=List[ScoreType])
-async def get_score_types(
+def get_score_types(
     db: Session = Depends(get_db),
 ):
     """Get all valid score types with descriptions."""
@@ -240,7 +240,7 @@ async def get_score_types(
 # Color Schema Endpoints
 # ============================================================================
 @router.get("/color-schemas", response_model=List[ColorSchema])
-async def get_color_schemas(
+def get_color_schemas(
     db: Session = Depends(get_db),
 ):
     """Get all available color schemas."""
@@ -262,7 +262,7 @@ async def get_color_schemas(
     ]
 
 @router.post("/color-schemas", response_model=ColorSchema)
-async def create_color_schema(
+def create_color_schema(
     data: ColorSchemaCreate,
     db: Session = Depends(get_db),
 ):
@@ -287,7 +287,7 @@ async def create_color_schema(
 # Indicator Endpoints
 # ============================================================================
 @router.get("/indicatoren")
-async def get_indicatoren(
+def get_indicatoren(
     search: Optional[str] = None,
     score_type: Optional[str] = None,
     ontologie_status: Optional[str] = None,
@@ -376,7 +376,7 @@ async def get_indicatoren(
     }
 
 @router.get("/indicatoren/{uuid}")
-async def get_indicator(
+def get_indicator(
     uuid: UUID,  # ongeldige UUID: 422 (#203)
     db: Session = Depends(get_db),
 ):
@@ -441,7 +441,7 @@ async def get_indicator(
     }
 
 @router.put("/indicatoren/{uuid}")
-async def update_indicator(
+def update_indicator(
     uuid: UUID,
     data: IndicatorUpdate,
     db: Session = Depends(get_db),
@@ -486,10 +486,10 @@ async def update_indicator(
         raise HTTPException(404, f"Indicator {uuid} not found")
     
     # Return updated indicator
-    return await get_indicator(uuid, db)
+    return get_indicator(uuid, db)
 
 @router.patch("/indicatoren/{uuid}/valideer")
-async def valideer_indicator_ontologie(
+def valideer_indicator_ontologie(
     uuid: UUID,
     data: OntologieValidatie,
     db: Session = Depends(get_db),
@@ -529,10 +529,10 @@ async def valideer_indicator_ontologie(
     db.commit()
     
     # Return updated indicator
-    return await get_indicator(uuid, db)
+    return get_indicator(uuid, db)
 
 @router.get("/ontologie/status")
-async def get_ontologie_validatiestatus(
+def get_ontologie_validatiestatus(
     db: Session = Depends(get_db),
 ):
     """
@@ -557,7 +557,7 @@ async def get_ontologie_validatiestatus(
 # Hierarchy Endpoints
 # ============================================================================
 @router.get("/hierarchie/tree")
-async def get_hierarchy_tree(
+def get_hierarchy_tree(
     config_id: int = 1,
     db: Session = Depends(get_db),
 ):
@@ -626,7 +626,7 @@ async def get_hierarchy_tree(
 # Health Check
 # ============================================================================
 @router.get("/health")
-async def admin_health(
+def admin_health(
     db: Session = Depends(get_db),
 ):
     """Admin API health check."""

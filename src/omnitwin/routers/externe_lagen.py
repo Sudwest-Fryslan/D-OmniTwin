@@ -21,6 +21,7 @@ Endpoints (admin):
 """
 
 from fastapi import APIRouter, Depends, HTTPException, Request, UploadFile, File
+from fastapi.concurrency import run_in_threadpool
 from sqlalchemy.orm import Session
 from sqlalchemy import text
 from pydantic import BaseModel, field_validator
@@ -276,7 +277,7 @@ async def _fetch_wfs(row) -> dict:
 
     # Transformeer naar WGS84 als srsname = EPSG:28992
     if (row.srsname or "EPSG:28992") == "EPSG:28992":
-        geojson = _transform_rd_to_wgs84(geojson)
+        geojson = await run_in_threadpool(_transform_rd_to_wgs84, geojson)  # CPU-werk buiten de event loop
 
     return geojson
 
@@ -286,7 +287,7 @@ async def _fetch_wfs(row) -> dict:
 # ============================================================================
 
 @router.get("/api/externe-lagen")
-async def get_actieve_lagen(db: Session = Depends(get_db)):
+def get_actieve_lagen(db: Session = Depends(get_db)):
     """
     Haal alle actieve externe kaartlagen op (voor frontend toggle-rendering).
     Geen authenticatie nodig — alleen actieve lagen, geen connectie-details.
@@ -323,13 +324,14 @@ async def get_laag_features(laag_id: int, db: Session = Depends(get_db)):
     WFS proxy: haal features op voor een externe laag.
     Response wordt 24u gecached per laag_id.
     """
-    # Laag ophalen (alleen actieve)
-    row = db.execute(text("""
+    # Laag ophalen (alleen actieve). Synchrone database en fiona in de threadpool,
+    # zodat ze de event loop niet blokkeren (#68); de WFS-aanroep is async.
+    row = await run_in_threadpool(lambda: db.execute(text("""
         SELECT id, naam, bron_type, url, typename, srsname, versie,
                filter_type, filter_waarde
         FROM externe_kaartlagen
         WHERE id = :id AND actief = true
-    """), {"id": laag_id}).fetchone()
+    """), {"id": laag_id}).fetchone())
 
     if not row:
         raise HTTPException(404, f"Kaartlaag {laag_id} niet gevonden of niet actief")
@@ -342,7 +344,7 @@ async def get_laag_features(laag_id: int, db: Session = Depends(get_db)):
 
     # Routing op bron_type
     if row.bron_type == "lokaal":
-        geojson = _load_local_file(row.url, row.typename)
+        geojson = await run_in_threadpool(_load_local_file, row.url, row.typename)
     elif row.bron_type == "WFS":
         geojson = await _fetch_wfs(row)
     else:
@@ -370,7 +372,7 @@ async def get_laag_features(laag_id: int, db: Session = Depends(get_db)):
 
 
 @router.post("/api/externe-lagen/{laag_id}/buurten")
-async def get_buurten_voor_feature(
+def get_buurten_voor_feature(
     laag_id: int,
     body: BuurtenRequest,
     db: Session = Depends(get_db)
@@ -428,7 +430,7 @@ async def get_buurten_voor_feature(
 # ============================================================================
 
 @admin_router.get("")
-async def admin_get_alle_lagen(
+def admin_get_alle_lagen(
     db: Session = Depends(get_db),
 ):
     """Alle externe kaartlagen ophalen (inclusief inactieve) voor admin beheer."""
@@ -471,7 +473,7 @@ async def admin_get_alle_lagen(
 
 
 @admin_router.post("")
-async def admin_create_laag(
+def admin_create_laag(
     data: ExterneKaartlaagCreate,
     db: Session = Depends(get_db),
 ):
@@ -515,7 +517,7 @@ async def admin_create_laag(
 
 
 @admin_router.put("/{laag_id}")
-async def admin_update_laag(
+def admin_update_laag(
     laag_id: int,
     data: ExterneKaartlaagUpdate,
     db: Session = Depends(get_db),
@@ -559,7 +561,7 @@ async def admin_update_laag(
 
 
 @admin_router.delete("/{laag_id}")
-async def admin_delete_laag(
+def admin_delete_laag(
     laag_id: int,
     db: Session = Depends(get_db),
 ):
@@ -585,7 +587,7 @@ async def admin_delete_laag(
 # ============================================================================
 
 @admin_router.get("/lokale-bestanden")
-async def admin_lokale_bestanden(
+def admin_lokale_bestanden(
 ):
     """Lijst beschikbare bestanden in data-upload/ met metadata."""
     import fiona
@@ -620,7 +622,7 @@ async def admin_lokale_bestanden(
 
 
 @admin_router.post("/upload")
-async def admin_upload_bestand(
+def admin_upload_bestand(  # def: fiona en schrijven blokkeren, dus in de threadpool (#68)
     bestand: UploadFile = File(...),
 ):
     """Upload een GPKG of GeoJSON bestand naar data-upload/."""
@@ -641,7 +643,7 @@ async def admin_upload_bestand(
 
     # Maximale bestandsgrootte: 50MB
     MAX_SIZE = 50 * 1024 * 1024
-    contents = await bestand.read()
+    contents = bestand.file.read()
     if len(contents) > MAX_SIZE:
         raise HTTPException(413, f"Bestand te groot (max {MAX_SIZE // (1024*1024)}MB)")
 

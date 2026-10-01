@@ -554,6 +554,6 @@ def chat(
 
 
 @router.get("/health")
-async def chat_health():
+def chat_health():
     """Health check voor de Chat API."""
     return {"status": "healthy", "service": "D-Omni Assistant Chat API"}
