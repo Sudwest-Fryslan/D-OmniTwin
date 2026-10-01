@@ -140,6 +140,6 @@ Dit vormt de directe brug tussen de testcase-bevindingen, de FRLDS-visie en de t
 
 ## 7. Gerelateerde documenten
 
-- [NM-001 Gap-analyse IJsselmeerkust](../../7-projectmanagement/testcases/nulmetingen/NM-001_ijsselmeerkust-gap-analyse.md)
-- [Fryslân Data Space Visiedocument](./architecture/fryslan_data_space_d_omni_twin_visiedocument.md)
-- [FRLDS Herijkt Visiedocument](./architecture/frlds_in_dataspace_landschap_herijkt_visiedocument.md)
+- [NM-001 Gap-analyse IJsselmeerkust](../../testcases/nulmetingen/NM-001_ijsselmeerkust-gap-analyse.md)
+- [Fryslân Data Space Visiedocument](../architecture/fryslan_data_space_d_omni_twin_visiedocument.md)
+- [FRLDS Herijkt Visiedocument](../architecture/frlds_in_dataspace_landschap_herijkt_visiedocument.md)

@@ -1,12 +1,12 @@
 # INDEX.md — D-OmniTwin Documentatie Router
 > **Rol:** Navigatielaag voor documentatie | Router voor agents | Overzicht van alle kennisdomeinen
 > **Beheer:** Updaten bij nieuwe mappen of structurele wijzigingen
-> **Lees eerst:** `STATE.md` (huidige systeemstatus) → dan pas dit bestand
+> **Lees eerst:** [`CHANGELOG.md`](../CHANGELOG.md) (wat er per versie veranderd is) en de [issues](https://github.com/TLaan/D-OmniTwin/issues) (wat openstaat). `STATE.md` is een historische momentopname tot 0.1.0.
 
 ---
 
 ## 🧭 Gebruik (voor agents)
-1. Start met `STATE.md` om de actuele situatie te begrijpen
+1. Start met `CHANGELOG.md` en de open issues om de actuele situatie te begrijpen
 2. Gebruik dit INDEX.md om het relevante domein te selecteren
 3. Beperk analyse tot de geïdentificeerde mappen — geen volledige scan
 
@@ -47,7 +47,6 @@
 | **Releasebeleid** | [`/docs/9-beheer/releasebeleid.md`](./9-beheer/releasebeleid.md) | Semantic Versioning, één bron `VERSION`, release-branches en tags, CHANGELOG, checklist voor een release, patches, ondersteunde versies (#27) | project-manager, devops-infra |
 | **Fryslân Data Space & D-OmniTwin** | [`/docs/2-architectuur/architecture/fryslan_data_space_d_omni_twin_visiedocument.md`](./2-architectuur/architecture/fryslan_data_space_d_omni_twin_visiedocument.md) | Federatieve datalaag (FRLDS / iSHARE / FRL1000) als soevereine backend voor D-OmniTwin | data-architect-engineer, innovation-lab, samenwerking-adoptie |
 | **D-OmniTwin in het Dataspace Landschap (Herijkt)** | [`/docs/2-architectuur/architecture/frlds_in_dataspace_landschap_herijkt_visiedocument.md`](./2-architectuur/architecture/frlds_in_dataspace_landschap_herijkt_visiedocument.md) | Herijkte visie: D-OmniTwin als dataspace-agnostische interactielaag (FRLDS, FDS en overige dataspaces) | data-architect-engineer, innovation-lab, samenwerking-adoptie |
-| **Open Source Model & Verdienstrategie** | [`/docs/1-visie-concept/juridisch/samenvatting_open_source_model_verdienstrategie_overheid.md`](./1-visie-concept/juridisch/samenvatting_open_source_model_verdienstrategie_overheid.md) | Herpositionering: Open methodiek + referentie-applicatie (hybride verdienmodel, EUPL licentie) | project-manager, samenwerking-adoptie |
 | **Subsidie- & Adoptieplan 2026** | [`/docs/8-communicatie/communicatieplan_subsidie_2026.md`](./8-communicatie/communicatieplan_subsidie_2026.md) | Publieke positionering, subsidietrajecten (SIA RAAK) en adoptiestrategie voor dataspace-ecosysteem | project-manager, samenwerking-adoptie, technisch-communicatie |
 | **Aanvraag Innovatiebudget 2026** | [`/docs/1-visie-concept/innovatie/aanvraag_innovatiebudget_digitale_overheid_2026_d_omni_twin.md`](./1-visie-concept/innovatie/aanvraag_innovatiebudget_digitale_overheid_2026_d_omni_twin.md) | Innovatiebudget aanvraag: D-OmniTwin als federatieve voorziening / dataspace interactielaag | project-manager, innovation-lab |
 
@@ -59,28 +58,16 @@
 |---------|------|
 | `README.md` | Versie, quickstart, overzicht |
 | `LICENSE` & `LICENSE-DOCS` | EUPL 1.2 (Code) & CC BY 4.0 (Methodiek) |
-| `BRAINDUMP.md` | Ideeën, visie, experimentele concepten |
+| `CHANGELOG.md` | Wijzigingen per versie, met migratie-instructies |
 | `docs/archief/` | Archief: `BUILD.md`, `GETTING_STARTED.md`, `ROADMAP.md`, `TODO.md`, `BUGFIX.md` (verouderd; taken en bugs staan in de GitHub-issues) |
 
 ---
 
 ## 🔑 Navigatieregels
 
-- **STATE.md is leidend** bij conflicten tussen documenten
+- Bij conflicten tussen documenten geldt de code; voor installatie en beheer de [installatiegids](./9-beheer/installatie.md)
 - **INDEX.md bepaalt** waar agents zoeken — geen aannames buiten docs
 - **Gaps = expliciet benoemen**, niet invullen met aannames
 - Bij **structurele wijzigingen**: dit bestand updaten vóór andere acties
 
 ---
-
-## 📋 Actieve Sprint Plannen
-
-| Sprint | Document | Status |
-|--------|----------|--------|
-| **Sprint 18** | [`docs/7-projectmanagement/archief/sprint-18-plan_ijsselmeerkust-besluitinstrument.md`](./7-projectmanagement/archief/sprint-18-plan_ijsselmeerkust-besluitinstrument.md) | 🚀 In uitvoering (Track B ✅, Track F toegevoegd) |
-| **Sprint 19** | [`docs/7-projectmanagement/archief/sprint-19-plan_data-naar-inzicht.md`](./7-projectmanagement/archief/sprint-19-plan_data-naar-inzicht.md) | 📌 Gepland (na Sprint 18) |
-| **Sprint 17** | [`docs/5-secops/logging/sprint-17-logging-spec.md`](./5-secops/logging/sprint-17-logging-spec.md) | ✅ Afgerond |
-
----
-
-*Laatste update: zie STATE.md → `laatste_update` veld*

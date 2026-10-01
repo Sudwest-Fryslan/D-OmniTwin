@@ -8,12 +8,18 @@ Eerdere wijzigingen, van vóór dit bestand, zijn terug te vinden in de git-hist
 
 ## [Unreleased]
 
+### Gewijzigd
+
+- Documentatie op orde: de installatiegids volgt `.env.example` en de code (één rij per variabele, geen `SECRET_KEY`, backup vóór het bijwerken, geüploade kaartlagen in de backup, upgrade-paragraaf, actuele beveiligingssectie); README en `AGENTS.md` actueel; `docs/STATE.md` gemarkeerd als historisch; dode links gerepareerd, met een linkcheck (`tools/check_links.py`) als unittest; `backups/` en `*.dump` in `.gitignore` ([#204](https://github.com/TLaan/D-OmniTwin/issues/204)).
+
 ## [0.2.0] - 2026-10-01
 
 Herstructurering en opschoning, zonder andere werking van de applicatie ([#182](https://github.com/TLaan/D-OmniTwin/issues/182), fases 1–3). Daarmee is de code klaar om open te zetten en te publiceren.
 
 ### Migreren vanaf 0.1.x
 
+- **Eerst een backup:** maak vóór `git pull` een backup van de database (zie [Backup](docs/9-beheer/installatie.md#backup)). *(Aangevuld na de release, [#204](https://github.com/TLaan/D-OmniTwin/issues/204).)*
+- **Geüploade kaartlagen:** bestanden die via beheer > externe lagen zijn geüpload, staan in deze versie in de backend-container en zijn na `docker compose up -d --build` weg (de rij in `externe_kaartlagen` blijft staan). Kopieer ze vóór de update naar buiten de container met `docker compose cp backend:/app/data-upload ./data-upload-backup` en zet ze na de update terug met `docker compose cp ./data-upload-backup/. backend:/app/data-upload`. *(Aangevuld na de release, [#204](https://github.com/TLaan/D-OmniTwin/issues/204).)*
 - **Backend-module:** de app heet nu `omnitwin.main:app` (was `main:app`). Eigen startcommando's, scripts of overrides die `main:app` of `from services…`/`from routers…` gebruiken, moeten naar `omnitwin.…`. Buiten Docker: `pip install -e . --no-deps` of `PYTHONPATH=src`.
 - **Paden:** het databaseschema staat in `db/schema/`, de migraties in `db/migraties/` en de stuurdata in `db/stuurdata/`. De mappen `init_data/schema/` en `migrations/` bestaan niet meer.
 - **Migraties:** een migratierunner (`python -m omnitwin.migraties`, met `--status`) houdt in de tabel `schema_migraties` bij wat is toegepast. Bij de eerste start na de upgrade maakt hij die tabel aan en past hij V018–V022 (idempotent) opnieuw toe en registreert ze. Daarna draait elke migratie **één keer per database**, niet meer bij elke start. Een wijziging aan een bestaand SQL-bestand vraagt dus een nieuwe migratie; de runner waarschuwt bij een gewijzigde checksum. De rollen en het schema `api` (`R__api_rollen.sql`) worden nog wel bij elke start bijgewerkt.

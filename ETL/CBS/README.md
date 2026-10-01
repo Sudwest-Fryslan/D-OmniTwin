@@ -82,6 +82,11 @@ bash fetch_all.sh
 
 Zie [USAGE.md](USAGE.md) voor complete handleiding.
 
+## 📁 Oorspronkelijke opzet
+
+De structuur hieronder beschrijft de oorspronkelijke opzet; niet alle bestanden staan (nog) in deze map.
+
+```
 │   ├── CBS_API_V4.py          # Hoofdscript voor CBS data ophalen
 │   ├── 1_Downloading_CBS.ipynb
 │   └── CBS_DATA/              # Downloaded datasets (299 bestanden)
@@ -157,11 +162,9 @@ Zie [TODO.md](TODO.md) voor de volledige development roadmap.
 
 ## 📚 Documentatie
 
-- **[CBS Scripts vergelijking](docs/CBS%20Scripts%20vergelijking.md)** - Uitgebreide technische vergelijking
-- **[Implementation Plan](implementation_plan.md)** - Gedetailleerd implementatieplan (in artifacts)
+- **[USAGE](USAGE.md)** - Handleiding
 - **[TODO](TODO.md)** - Development roadmap
-- **[BUGFIX](BUGFIX.md)** - Known issues
-- **[BRAINDUMP](BRAINDUMP.md)** - Ideeën en notities
+- **[BUILD](BUILD.md)** - Build en setup
 
 ## 🛠️ Tech Stack
 
