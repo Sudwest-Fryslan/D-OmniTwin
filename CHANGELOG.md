@@ -31,7 +31,6 @@ Herstructurering en opschoning, zonder andere werking van de applicatie ([#182](
 
 ### Opgelost
 
-- E2E-tests wachten op toestand in plaats van op tijd; minder wisselvallig op CI-runners zonder GPU ([#194](https://github.com/TLaan/D-OmniTwin/issues/194)).
 - CHANGELOG-links naar het gearchiveerde `BUILD.md`.
 
 ## [0.1.0] - 2026-10-01
