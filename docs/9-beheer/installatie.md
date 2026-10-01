@@ -269,6 +269,34 @@ De chat en de samenvattingen gebruiken een lokaal taalmodel via [Ollama](https:/
 3. Laat in `.env` `OLLAMA_HOST` op de standaard staan (`http://host.docker.internal:11434`), of zet het adres van je Ollama-server.
 4. Zet in de beheeromgeving onder **AI Configuratie** de API-URL op `http://host.docker.internal:11434` en kies het model. **Dit is nodig:** de stuurdata zet hier `http://localhost:11434`, en deze instelling gaat vóór `OLLAMA_HOST`. Vanuit de container wijst `localhost` naar de container zelf.
 
+### Andere aanbieders via de LiteLLM-gateway
+
+De optionele gateway (compose-profiel `llm-gateway`, [ADR 0001](../2-architectuur/adr/0001-llm-koppeling-openai-standaard.md)) kent vaste aliassen ([`deploy/litellm/config.yaml`](../../deploy/litellm/config.yaml)):
+
+| Alias | Model | Sleutel in `.env` |
+|---|---|---|
+| `d-omnitwin-default`, `d-omnitwin-ollama` | lokaal Ollama (`OLLAMA_MODEL`) | — |
+| `d-omnitwin-claude` | Anthropic `claude-haiku-4-5` | `ANTHROPIC_API_KEY` |
+| `d-omnitwin-openai` | OpenAI `gpt-4o-mini` | `OPENAI_API_KEY` |
+| `d-omnitwin-gemini` | Google `gemini-3.8-flash` | `GEMINI_API_KEY` |
+
+1. Zet in `.env` `LITELLM_MASTER_KEY=sk-…` en `LLM_API_KEY=<zelfde waarde>`, plus de sleutel(s) van de aanbieder. Sleutels staan **alleen in `.env`**, nooit in de database, in `config.yaml` of in git. Een lege sleutel betekent: aanbieder niet beschikbaar.
+2. Start met de gateway: `docker compose --profile llm-gateway up -d`.
+3. Kies de aanbieder (voegt een rij toe aan `llm_config`; de app gebruikt de nieuwste):
+
+   ```bash
+   docker compose exec backend python scripts/llm/kies_provider.py beschikbaar   # wat kan er
+   docker compose exec backend python scripts/llm/kies_provider.py gemini        # ollama|claude|openai|gemini|direct-ollama
+   docker compose exec backend python scripts/llm/kies_provider.py status        # wat is actief
+   ```
+
+   Het script weigert een aanbieder zonder sleutel of als de gateway de alias niet kent. `direct-ollama` gaat buiten de gateway om (`OLLAMA_HOST`/`OLLAMA_MODEL`).
+4. Vergelijken: `python scripts/llm/vergelijk_providers.py --base-url http://localhost` draait vaste scenario's (chat en rapport voor Bolsward-Zuidoost en Workum) per beschikbare aanbieder en schrijft een rapport in `docs/testcases/llm-vergelijking/`. Daarna staat de oorspronkelijke configuratie weer actief.
+
+**Let op (AVG, IAMA):** met `claude`, `openai` of `gemini` verlaten vragen, kaartcontext en indicatorwaarden de organisatie en gaan naar een externe aanbieder. Doe dat alleen met de sample dataset of na een afweging (verwerkersovereenkomst, IAMA/DPIA). Lokaal Ollama houdt alles binnen.
+
+Een gratis Gemini-sleutel (met lage limieten) maak je aan op [aistudio.google.com/apikey](https://aistudio.google.com/apikey).
+
 ---
 
 ## 8. Problemen oplossen

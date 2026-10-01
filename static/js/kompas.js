@@ -2447,6 +2447,13 @@ document.addEventListener('DOMContentLoaded', async function () {
                 const win = document.getElementById('kompas-window');
                 if (win) win.style.display = 'block';
             }
+            // Zelfde gedrag als de knop 'Open Kompas': toon de huidige kaartselectie
+            const ids = window.state?.selectedGebiedIds ? [...window.state.selectedGebiedIds] : [];
+            const configId = kompasViz.currentConfigId;
+            if (ids.length > 0 && configId) {
+                if (ids.length === 1) kompasViz.loadGebiedData(configId, ids[0]);
+                else kompasViz.loadMultiGebiedData(configId, ids);
+            }
         });
 
         console.log('🧭 Kompas subscribed to EventBus chat sync events');
