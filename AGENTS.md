@@ -33,7 +33,7 @@ D-OmniTwin is a digital twin platform for Dutch municipalities, visualizing neig
 - **Data API:** PostgREST on port 3000 (`/api/data/*`)
 - **Geo API:** pg_featureserv on port 9000 (`/api/geo/*`)
 - **Main Frontend:** Vanilla JS + MapLibre GL + Deck.gl (no build step, served from `/static/`)
-- **Admin Panel:** React 19 + TypeScript SPA in `/admin-panel/` (port 3001 in dev, built to `/static/admin-panel/`)
+- **Admin Panel:** React 19 + TypeScript SPA in `/admin-panel/`, gebouwd met Vite (port 3000 in dev, built to `/static/admin-panel/`)
 - **Database:** PostgreSQL 14+ with PostGIS, pgvector, and pg_trgm extensions
 
 ## Commands
@@ -61,9 +61,10 @@ python -m pytest tests/test_zscore.py   # single test file
 ```bash
 cd admin-panel
 npm install
-npm start        # dev server on port 3001
-npm run build    # production build (deploy via .agents/workflows/build-admin-panel.md)
-npm test         # run tests
+npm start        # Vite dev server on port 3000 (proxy /api -> :8000)
+npm run build:static  # production build + kopie naar static/admin-panel (commit die map mee)
+npm run typecheck     # tsc --noEmit
+npm test         # Vitest (eenmalig)
 ```
 
 ### Database initialisatie — Fryslân-dataset zonder Docker (verouderd)
@@ -72,7 +73,7 @@ python init_data/scripts/download_buurten_fryslan.py
 python init_data/scripts/download_indicatoren_fryslan.py
 bash init_data/scripts/init_database.sh   # master initiatie-script, zie init_data/README.md
 ```
-Alleen voor een PostgreSQL zonder Docker (`GETTING_STARTED.md`). Werkt niet tegen de Docker-stack: `init_database.sh` verwacht een `.env` in de container en laadt het schema opnieuw, en `seed_fryslan.py` faalt grotendeels op de database van `db-init` (tabel `gemeenten` bevat alleen 1900). Eén initialisatieroute volgt in #69.
+Alleen voor een PostgreSQL zonder Docker (`GETTING_STARTED.md`). Werkt niet tegen de Docker-stack: `init_database.sh` verwacht een `.env` in de container en laadt het schema opnieuw. In Docker laad je de Fryslân-data na `db-init` met `docker compose exec backend python init_data/scripts/seed_fryslan.py --stap alle` (idempotent, exitcode 1 bij fouten; zie `docs/9-beheer/installatie.md`).
 
 ### ETL — doorlopend nieuwe databronnen/gemeenten toevoegen (ná de initiële setup)
 ```bash
@@ -91,7 +92,7 @@ Copy `.env.example` to `.env` and fill in (details: `docs/9-beheer/installatie.m
 - `ADMIN_USER` / `ADMIN_PASSWORD` — eerste beheeraccount; leeg = gegenereerd, eenmalig in `docker compose logs db-init`
 - `OLLAMA_*` — for local LLM (optional; Qwen model)
 
-For the admin panel, create `admin-panel/.env` with `REACT_APP_API_URL` and `REACT_APP_ADMIN_KEY`.
+For the admin panel dev server, optionally create `admin-panel/.env` with `VITE_ADMIN_KEY` (fallback voor `X-Admin-Key`; wordt in de bundle ingebakken, dus niet voor productiebuilds).
 
 ## Architecture
 

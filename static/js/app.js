@@ -1432,6 +1432,10 @@ function geojsonGeomToWkt(geometry) {
 function displayOnMap(geojson) {
     const { GeoJsonLayer } = deck;
 
+    // Bronvermelding 3DBAG (CC BY 4.0) alleen tonen als de panden zichtbaar zijn
+    const bron3dbag = document.getElementById('bronvermelding-3dbag');
+    if (bron3dbag) bron3dbag.hidden = !(state.show3DBuildings && state.bag3dData);
+
     if (!geojson.features || geojson.features.length === 0) {
         // Prevent blocking alert on re-renders/clicks if data is unexpectedly empty
         console.warn('⚠️ displayOnMap called with empty/invalid data');

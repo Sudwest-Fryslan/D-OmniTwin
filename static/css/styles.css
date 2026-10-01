@@ -1091,6 +1091,27 @@ body {
   position: relative;
 }
 
+/* Bronvermelding kaart en data (licentie-eis, zie NOTICE.md) */
+.kaart-bronvermelding {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  z-index: 5;
+  max-width: 100%;
+  padding: 2px 6px;
+  font-size: 0.7rem;
+  line-height: 1.4;
+  color: var(--text-secondary);
+  background: var(--bg-primary);
+  opacity: 0.9;
+  border-top-left-radius: 4px;
+}
+
+.kaart-bronvermelding a {
+  color: inherit;
+  text-decoration: underline;
+}
+
 /* Loading Overlay */
 .loading-overlay {
   position: absolute;
