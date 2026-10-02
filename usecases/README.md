@@ -70,6 +70,8 @@ python -m omnitwin.usecases test swf-definities             # installeren + cont
 
 **Demo-use cases:** een verse installatie laadt het product zonder data (stuurdata, indicatordefinities in `db/stuurdata/indicatoren.csv`, Kompas); de data komt uit de use cases. Een demo-use case hangt af van `cbs-gebiedsindelingen`, `cbs-kerncijfers`, `rivm-gezondheidsmonitor` en/of `sample-bronbibliotheek`, en `hittestress` heeft eigen datasets (RIVM WCS). `tests/test_usecase_pakketten.py` bewaakt dat elke indicator van een demo-use case door een dataset van een afhankelijkheid wordt geleverd, dat de sample alleen nog bevat wat niet open is of geen adapter heeft, en dat demodata gemarkeerd is; `tests/integration/test_usecases.py` toetst ze tegen een draaiende stack.
 
+**Compatibiliteitsingang (#237):** `swf-adapter-fme` staat op `actief`: dezelfde FME-push (1 definities-aanroep, 57 waarde-aanroepen) gaat via `/api/laden/v1/compat/swf-monitor/...` naar D-OmniTwin en is bij herhaling idempotent. Zonder de gebiedsindelingen welstandsgebieden en buurten bebouwde komgrens (`swf-gebiedsindelingen`) geven 9 van de 57 aanroepen terecht `422 gebied-onbekend`; de controles houden daar rekening mee.
+
 ## Index
 
 Gegenereerd met `python -m omnitwin.usecases index`; een unittest faalt als hij niet actueel is.
@@ -77,6 +79,7 @@ Gegenereerd met `python -m omnitwin.usecases index`; een unittest faalt als hij 
 <!-- usecase-index:start -->
 | Use case | ID | Titel | Gebruiker | Status | Versie | Afhankelijk van |
 |---|---|---|---|---|---|---|
+| [assistent-kwaliteit](./assistent-kwaliteit/README.md) | TC-06-009 | D-Omni Assistent vindt de juiste indicator en beantwoordt datavragen | beleidsadviseur of inwoner die de assistent gebruikt | ontwerp | 0.1.0 | – |
 | [beleidsadviseur-swf](./beleidsadviseur-swf/README.md) | TC-06-001 | Beleidsadviseur verkent kernen in Súdwest-Fryslân (IJsselmeerkust) | Beleidsadviseur leefbaarheid / ruimtelijke ordening | actief | 0.2.0 | cbs-gebiedsindelingen, cbs-kerncijfers, sample-bronbibliotheek |
 | [brede-welvaart](./brede-welvaart/README.md) | TC-06-007 | Brede welvaart en functiemenging | Strateeg / economische zaken | actief | 0.2.0 | cbs-gebiedsindelingen, cbs-kerncijfers, rivm-gezondheidsmonitor, sample-bronbibliotheek |
 | [cbs-gebiedsindelingen](./cbs-gebiedsindelingen/README.md) | TC-07-001 | CBS-gebiedsindelingen (buurten, wijken, gemeenten) via de laad-API | beheerder D-OmniTwin | actief | 0.1.0 | – |
@@ -87,7 +90,7 @@ Gegenereerd met `python -m omnitwin.usecases index`; een unittest faalt als hij 
 | [rivm-gezondheidsmonitor](./rivm-gezondheidsmonitor/README.md) | TC-07-021 | RIVM Gezondheidsmonitor per buurt via de laad-API | beheerder D-OmniTwin | actief | 0.1.0 | cbs-gebiedsindelingen |
 | [sample-bronbibliotheek](./sample-bronbibliotheek/README.md) | TC-07-023 | Sample: wat nog niet open is of nog geen adapter heeft (gemarkeerd) | beheerder D-OmniTwin | actief | 0.1.0 | cbs-gebiedsindelingen |
 | [sociale-cohesie](./sociale-cohesie/README.md) | TC-06-008 | Zorgzwaarte en sociale cohesie | Wijkcoördinator / wijkcontactfunctionaris | actief | 0.2.0 | cbs-gebiedsindelingen, cbs-kerncijfers, rivm-gezondheidsmonitor |
-| [swf-adapter-fme](./swf-adapter-fme/README.md) | TC-07-009 | SWF-adapter: dezelfde FME-push naar D-OmniTwin | data-engineer DWH (SWF) | ontwerp | 0.1.0 | swf-definities |
+| [swf-adapter-fme](./swf-adapter-fme/README.md) | TC-07-009 | SWF-adapter: dezelfde FME-push naar D-OmniTwin | data-engineer DWH (SWF) | actief | 0.1.0 | swf-definities, cbs-gebiedsindelingen |
 | [swf-basismonitor-waarden](./swf-basismonitor-waarden/README.md) | TC-07-006 | SWF-basismonitor: waarden per indicator × gebiedstype | data-engineer DWH (SWF) | ontwerp | 0.1.0 | swf-definities, swf-gebiedsindelingen, cbs-gebiedsindelingen |
 | [swf-definities](./swf-definities/README.md) | TC-07-003 | SWF-definities: indicatoren, gebiedstypen en relaties | data-engineer DWH (SWF) | actief | 0.1.0 | – |
 | [swf-gebiedsindelingen](./swf-gebiedsindelingen/README.md) | TC-07-004 | SWF-gebiedsindelingen als GeoPackage-leveringen | functioneel beheerder SWF / GIS-specialist | ontwerp | 0.1.0 | swf-definities, cbs-gebiedsindelingen |

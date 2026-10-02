@@ -16,13 +16,15 @@ Dit bestand bevat de vermeldingen van de belangrijkste bibliotheken en framework
 - **pg_featureserv**: [Apache License 2.0](https://github.com/CrunchyData/pg_featureserv/blob/master/LICENSE.md)
 
 ## 🎨 Frontend (JavaScript/React)
-MapLibre GL JS, deck.gl, D3.js, Chart.js en Inter worden zelf gehost in `static/vendor/`, met het licentiebestand per pakket; zie `static/vendor/README.md`.
+MapLibre GL JS, deck.gl, D3.js, Chart.js, Inter, Montserrat en Source Sans 3 worden zelf gehost in `static/vendor/`, met het licentiebestand per pakket; zie `static/vendor/README.md`.
 
 - **MapLibre GL JS**: [BSD 3-Clause License](https://github.com/maplibre/maplibre-gl-js/blob/main/LICENSE.txt)
 - **Deck.gl**: [MIT License](https://github.com/visgl/deck.gl/blob/master/LICENSE)
 - **D3.js**: [ISC License](https://github.com/d3/d3/blob/main/LICENSE)
 - **Chart.js**: [MIT License](https://github.com/chartjs/Chart.js/blob/master/LICENSE.md)
 - **Inter** (lettertype, via Fontsource): [SIL Open Font License 1.1](https://github.com/rsms/inter/blob/master/LICENSE.txt)
+- **Montserrat** (lettertype van het SWF-thema, via Fontsource): Copyright 2011 The Montserrat Project Authors, [SIL Open Font License 1.1](https://github.com/JulietaUla/Montserrat/blob/master/OFL.txt)
+- **Source Sans 3** (lettertype van het SWF-thema, via Fontsource): Google Inc. en Adobe, [SIL Open Font License 1.1](https://github.com/adobe-fonts/source-sans/blob/release/LICENSE.md)
 - **Tailwind CSS** (gegenereerde CSS in `static/css/colors/`): [MIT License](https://github.com/tailwindlabs/tailwindcss/blob/main/LICENSE)
 - **React**: [MIT License](https://github.com/facebook/react/blob/main/LICENSE)
 - **TypeScript**: [Apache License 2.0](https://github.com/microsoft/TypeScript/blob/main/LICENSE.txt)

@@ -212,15 +212,15 @@ export const reportAPI = {
     getExecutive: (gebiedId: string) => reportApiClient.get<import('../types').ExecutivePayload>(`/executive/${gebiedId}`),
 
     // Sjabloon D: Multi-Gebiedsdossier
-    getMultiGebied: (payload: { gebied_ids: string[]; referentie: string; gemeente_code: string; deelgebied_naam?: string; thema?: string }) =>
+    getMultiGebied: (payload: { gebied_ids: string[]; referentie: string; gemeente_code?: string; deelgebied_naam?: string; thema?: string }) =>
         reportApiClient.post<any>('/multi-gebied', payload),
-    getMultiGebiedGeoJSON: (payload: { gebied_ids: string[]; referentie: string; gemeente_code: string; thema?: string }) =>
+    getMultiGebiedGeoJSON: (payload: { gebied_ids: string[]; referentie: string; gemeente_code?: string; thema?: string }) =>
         reportApiClient.post<any>('/multi-gebied/geojson', payload),
 
     // Sjabloon E: Thema-Analyse
-    getThemaAnalyse: (payload: { gebied_ids: string[]; referentie: string; gemeente_code: string; deelgebied_naam?: string; categorie?: string; thema_naam?: string; onderdeel_naam?: string }) =>
+    getThemaAnalyse: (payload: { gebied_ids: string[]; referentie: string; gemeente_code?: string; deelgebied_naam?: string; categorie?: string; thema_naam?: string; onderdeel_naam?: string }) =>
         reportApiClient.post<any>('/thema-analyse', payload),
-    getThemaAnalyseGeoJSON: (payload: { gebied_ids: string[]; referentie: string; gemeente_code: string; categorie?: string; thema_naam?: string; onderdeel_naam?: string }) =>
+    getThemaAnalyseGeoJSON: (payload: { gebied_ids: string[]; referentie: string; gemeente_code?: string; categorie?: string; thema_naam?: string; onderdeel_naam?: string }) =>
         reportApiClient.post<any>('/thema-analyse/geojson', payload),
 
     // Sjabloon F: Woonplaats- & Deelgebiedsanalyse
@@ -243,6 +243,23 @@ const publicApi = axios.create({
     baseURL: '/api',
     headers: { 'Content-Type': 'application/json' },
 });
+
+// De eigen organisatie van deze instantie (#231): naam, gemeentecode(s), logo's, contact
+export interface Organisatie {
+    code: string;
+    naam: string;
+    korte_naam: string | null;
+    oin: string | null;
+    gemeente_codes: string[];
+    standaard_gemeente_code: string | null;
+    benchmark_provincie: string | null;
+    contact_email: string | null;
+    logos: { pad: string; naam: string | null; rol: string }[];
+}
+
+export const organisatieAPI = {
+    get: () => publicApi.get<Organisatie>('/organisatie'),
+};
 
 // Gemeenten en gebieden via PostgREST (/api/data), zoals de hoofdapp.
 // Response wordt omgezet naar de eerdere vorm { gemeenten|gebieden, totaal }.

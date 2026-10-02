@@ -34,13 +34,17 @@ Het deel na `compat/swf-monitor` is gelijk aan het huidige pad. Een FME-workspac
 | `GET …/indicator/setup` | export van de actuele versie in het SWF-formaat | `swf-monitor-definities` | – |
 | `GET …/indicator_waarde[/{id}]` | export van de gepubliceerde waarden: `indicator_id`, `gebiedstype_id`, `gebieds_id`, `jaar`, `waarde` | `swf-monitor-waarden` | – |
 
-**Response.** `200` met `status`, `leveringId`, `versie` en `aantallen` als de levering binnen 120 s gepubliceerd is. `422` (Problem Details met fouten per regel) als hij is afgekeurd: de HttpCaller zet dat op `<Rejected>` en de run stopt, zoals nu bij een HTTP-fout. `202` als de time-out verstrijkt; de levering loopt dan door en is te volgen via `Location`. Met de huidige omvang (gemiddeld ±760, maximaal ±5.900 regels per aanroep) komt dat niet voor.
+**Response.** `200` met `status`, `leveringId`, `versie` en `aantallen` als de levering binnen 120 s gepubliceerd is (met `?alleenValideren=true`: `gevalideerd`, niets gepubliceerd). `422` (Problem Details met fouten per regel) als hij is afgekeurd: de HttpCaller zet dat op `<Rejected>` en de run stopt, zoals nu bij een HTTP-fout. `202` als de time-out verstrijkt; de levering loopt dan door en is te volgen via `Location`. Met de huidige omvang (gemiddeld ±760, maximaal ±5.900 regels per aanroep) komt dat niet voor. `400` als de body geen JSON in het SWF-formaat is, `404` als de dataset niet geregistreerd is met deze adapter. De body is altijd JSON, ook als FME geen `Content-Type` meestuurt.
+
+**Rate-limit.** Een FME-run doet ±57 aanroepen achter elkaar, zonder retry. De compatibiliteitsingang heeft daarom een eigen limiet: `LADEN_COMPAT_RATE_LIMIT` per minuut per token (standaard 120), los van de 10 van de gewone leveringen.
 
 **Herhalen is veilig.** Dezelfde body nog een keer sturen geeft geen nieuwe versie (sha256). Wie retry in de HttpCaller aanzet, kan ook een header `Idempotency-Key` meesturen.
 
-**Back-up.** De `GET`-varianten geven terug wat D-OmniTwin heeft gepubliceerd. Het letterlijk geleverde bestand is daarnaast op te halen via `GET /api/laden/v1/datasets/swf-monitor-definities/versies/actueel/bestand`.
+**Back-up.** De `GET`-varianten geven terug wat D-OmniTwin heeft gepubliceerd: de definities uit de set die de dataset het laatst publiceerde (met de actuele velden; status `A` die als `O` is geleverd, komt terug als `O`), de waarden met `gebieds_id` zonder de `code_prefix` (welstand `WS728` → `728`) en `jaar` (bij een peildatum het jaar daarvan). Het letterlijk geleverde bestand is daarnaast op te halen via `GET /api/laden/v1/datasets/swf-monitor-definities/versies/actueel/bestand`.
 
 ## Wat SWF in FME wijzigt
+
+Stap voor stap, met testen via `alleenValideren`: [FME omzetten naar D-OmniTwin](../fme-omzetten.md).
 
 | Parameter | Wijziging |
 |---|---|

@@ -195,6 +195,14 @@ init_db() {
     db_psql -c "NOTIFY pgrst, 'reload schema';" >/dev/null 2>&1 || true
 }
 
+# De eigen organisatie van deze instantie (#231, ADR 0007): naam, gemeentecode(s), logo's,
+# contact. Bij elke start, ook bij een bestaande database, maar alleen als de tabel
+# organisatie nog leeg is: een eigen inrichting wordt nooit overschreven.
+seed_organisatie() {
+    db_psql -v ON_ERROR_STOP=1 -q -f /app/db/stuurdata/organisatie.sql >/dev/null
+    echo "✅ Organisatie: $(db_waarde "SELECT naam FROM public.organisatie")"
+}
+
 # Rollen en schema api voor PostgREST en pg_featureserv (#57). Draait bij elke start, ook bij
 # een bestaande database: zonder deze rollen kunnen PostgREST en pg_featureserv niet verbinden.
 # Idempotent. De LOGIN-rollen authenticator (PostgREST) en featureserv (pg_featureserv) krijgen
@@ -250,6 +258,7 @@ wait_for_db
 if [ "$1" = "init" ]; then
     INIT_HOE=""
     init_db
+    seed_organisatie
     setup_api_rollen
     # Pas hier is de eerste initialisatie geslaagd; embeddings zijn optioneel (zie hierboven)
     if [ -n "$INIT_HOE" ]; then

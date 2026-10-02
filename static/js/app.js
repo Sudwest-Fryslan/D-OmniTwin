@@ -590,7 +590,7 @@ const FRIESE_GEMEENTEN = [
     { code: '0059', naam: 'Achtkarspelen', is_eiland: false },
     { code: '0060', naam: 'Ameland', is_eiland: true },
     { code: '1891', naam: 'Dantumadiel', is_eiland: false },
-    { code: '1921', naam: 'De Fryske Marren', is_eiland: false },
+    { code: '1940', naam: 'De Fryske Marren', is_eiland: false },
     { code: '0072', naam: 'Harlingen', is_eiland: false },
     { code: '0074', naam: 'Heerenveen', is_eiland: false },
     { code: '0080', naam: 'Leeuwarden', is_eiland: false },
@@ -598,7 +598,7 @@ const FRIESE_GEMEENTEN = [
     { code: '0085', naam: 'Ooststellingwerf', is_eiland: false },
     { code: '0086', naam: 'Opsterland', is_eiland: false },
     { code: '0088', naam: 'Schiermonnikoog', is_eiland: true },
-    { code: '0140', naam: 'Smallingerland', is_eiland: false },
+    { code: '0090', naam: 'Smallingerland', is_eiland: false },
     { code: '1900', naam: 'Súdwest-Fryslân', is_eiland: false },
     { code: '0093', naam: 'Terschelling', is_eiland: true },
     { code: '0737', naam: 'Tytsjerksteradiel', is_eiland: false },
@@ -2608,14 +2608,15 @@ function openRapportTypeModal(gebiedId, baseUrl) {
     document.getElementById('rapport-modal-deelgebied-single')?.addEventListener('click', () => {
         const ids = Array.from(state.selectedGebiedIds).length > 0 ? Array.from(state.selectedGebiedIds) : [gebiedId];
         const naam = encodeURIComponent(state.selectedDeelgebiedNaam);
-        const gemeente = state.gemeenteCode || '1900';
+        // Zonder gekozen gemeente kiest de backend die van de eigen organisatie (#231)
+        const gemeente = state.gemeenteCode ? `&gemeente=${encodeURIComponent(state.gemeenteCode)}` : '';
         let extraParams = '';
         if (state.selectedGroepen && state.selectedGroepen.length > 0 && state.selectedLaagId) {
             extraParams += `&laag_id=${state.selectedLaagId}`;
             const woonplaatsen = state.selectedGroepen.map(g => encodeURIComponent(g.naam)).join(',');
             extraParams += `&woonplaatsen=${woonplaatsen}`;
         }
-        window.open(`${baseUrl}/admin/rapport/deelgebied?gebieden=${ids.join(',')}&naam=${naam}&gemeente=${gemeente}${extraParams}`, '_blank');
+        window.open(`${baseUrl}/admin/rapport/deelgebied?gebieden=${ids.join(',')}&naam=${naam}${gemeente}${extraParams}`, '_blank');
         sluit();
     });
     document.getElementById('rapport-modal-dossier').addEventListener('click', () => {
@@ -2710,14 +2711,15 @@ function openMultiSelectRapportModal(ids, baseUrl) {
     document.getElementById('rapport-modal-deelgebied').addEventListener('click', () => {
         const gebiedenParam = ids.join(',');
         const naam = encodeURIComponent(deelgebiedNaam);
-        const gemeente = state.gemeenteCode || '1900';
+        // Zonder gekozen gemeente kiest de backend die van de eigen organisatie (#231)
+        const gemeente = state.gemeenteCode ? `&gemeente=${encodeURIComponent(state.gemeenteCode)}` : '';
         let extraParams = '';
         if (state.selectedGroepen && state.selectedGroepen.length > 0 && state.selectedLaagId) {
             extraParams += `&laag_id=${state.selectedLaagId}`;
             const woonplaatsen = state.selectedGroepen.map(g => encodeURIComponent(g.naam)).join(',');
             extraParams += `&woonplaatsen=${woonplaatsen}`;
         }
-        window.open(`${baseUrl}/admin/rapport/deelgebied?gebieden=${gebiedenParam}&naam=${naam}&gemeente=${gemeente}${extraParams}`, '_blank');
+        window.open(`${baseUrl}/admin/rapport/deelgebied?gebieden=${gebiedenParam}&naam=${naam}${gemeente}${extraParams}`, '_blank');
         sluit();
     });
     document.getElementById('rapport-modal-benchmark').addEventListener('click', () => {
@@ -4122,7 +4124,8 @@ async function fetchKompasHierarchie() {
     if (kompasHierarchie) return kompasHierarchie;
 
     try {
-        const resp = await fetch('/api/kompas/1/hierarchie');
+        // Standaard-kompasconfiguratie van deze instantie, geen vaste ID (#231)
+        const resp = await fetch('/api/kompas/standaard/hierarchie');
         if (!resp.ok) return null;
         const data = await resp.json();
 

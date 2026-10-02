@@ -100,6 +100,15 @@ services:
       - "traefik.http.routers.laden-leveren.rule=PathPrefix(`/api/laden/v1`) && Method(`POST`)"
       - "traefik.http.routers.laden-leveren.middlewares=laden-tempo,laden-body,security-headers@file"
       - "traefik.http.routers.laden-leveren.service=backend"
+      # Compatibiliteitsingang SWF-monitor (#205 stap 9): FME pusht ±57 aanroepen achter elkaar, zonder
+      # retry. Eigen limiet LADEN_COMPAT_RATE_LIMIT per minuut per token (langere regel: gaat voor).
+      - "traefik.http.routers.laden-compat.rule=PathPrefix(`/api/laden/v1/compat/`) && Method(`POST`)"
+      - "traefik.http.routers.laden-compat.middlewares=laden-compat-tempo,laden-body,security-headers@file"
+      - "traefik.http.routers.laden-compat.service=backend"
+      - "traefik.http.middlewares.laden-compat-tempo.ratelimit.average=${LADEN_COMPAT_RATE_LIMIT:-120}"
+      - "traefik.http.middlewares.laden-compat-tempo.ratelimit.burst=${LADEN_COMPAT_RATE_LIMIT:-120}"
+      - "traefik.http.middlewares.laden-compat-tempo.ratelimit.period=1m"
+      - "traefik.http.middlewares.laden-compat-tempo.ratelimit.sourcecriterion.requestheadername=Authorization"
       - "traefik.http.middlewares.laden-body.buffering.maxRequestBodyBytes=209715200"
       - "traefik.http.middlewares.laden-body.buffering.memRequestBodyBytes=2097152"
       - "traefik.http.middlewares.laden-tempo.ratelimit.average=${LADEN_RATE_LIMIT:-10}"

@@ -105,7 +105,8 @@ export const ThemaAnalysePage: React.FC = () => {
 
     const gebiedIds = searchParams.get('gebieden')?.split(',').filter(Boolean) || [];
     const deelgebiedNaam = searchParams.get('naam') || `${gebiedIds.length} buurten`;
-    const gemeenteCode = searchParams.get('gemeente') || '1900';
+    // Zonder gemeente in de URL kiest de backend die van de eigen organisatie (#231)
+    const gemeenteCode = searchParams.get('gemeente') || undefined;
     const laagId = searchParams.get('laag_id');
     const woonplaatsenParam = searchParams.get('woonplaatsen') || '';
     const woonplaatsen = useMemo(() => {

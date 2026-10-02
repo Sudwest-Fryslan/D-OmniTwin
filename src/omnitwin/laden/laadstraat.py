@@ -215,6 +215,9 @@ def _verwerk_profiel(ctx: Context, bron, profiel: str, aantallen: dict) -> str:
             slot_waarnemingen(cur)
             resultaat = pwrn.publiceer(cur, ctx)
         elif profiel == "definities":
+            cur.execute("SELECT DISTINCT CAST(uuid AS text) AS uuid FROM laden.staging_indicatoren "
+                        "WHERE levering_id = %(lv)s", {"lv": ctx.levering_id})
+            ctx.extra["herbereken_embeddings"] = [r["uuid"] for r in cur.fetchall()]
             resultaat = pdef.publiceer(cur, ctx)
         elif profiel == "gebiedsindeling":
             resultaat = pgeo.publiceer_gebiedsindeling(cur, ctx)
@@ -227,12 +230,34 @@ def _verwerk_profiel(ctx: Context, bron, profiel: str, aantallen: dict) -> str:
     if profiel == "kaartlaag":
         pgeo.kaartlaag_klaar(ctx, geslaagd=True)
         ctx.extra.pop("kaartlaag_klaar", None)
+    if ctx.extra.get("herbereken_embeddings"):
+        _herbereken_embeddings(ctx.extra.pop("herbereken_embeddings"))
     try:
         with transactie() as cur:
             opslag.ruim_op(cur)
     except Exception:  # bewaartermijn is geen reden om de levering te laten mislukken
         logger.exception("Opruimen volgens de bewaartermijn mislukt")
     return "gepubliceerd"
+
+
+def _herbereken_embeddings(indicator_uuids: list[str]) -> None:
+    """Na een geslaagde publicatie van definities: embeddings van nieuwe of gewijzigde
+    indicatoren bijwerken, zodat de assistent ze vindt (#233). Geen reden om de levering
+    te laten mislukken: bij een fout (bijv. model niet beschikbaar) alleen loggen; db-init
+    berekent ontbrekende embeddings later alsnog."""
+    try:
+        from omnitwin.database import SessionLocal
+        from omnitwin.services.indicator_embeddings import herbereken_embeddings
+        db = SessionLocal()
+        try:
+            r = herbereken_embeddings(db, indicator_uuids)
+            logger.info("Embeddings na levering: %s berekend, %s ongewijzigd",
+                        r.get("berekend"), r.get("ongewijzigd"))
+        finally:
+            db.close()
+    except Exception:
+        logger.exception("Embeddings herberekenen na levering mislukt (%d indicatoren)",
+                         len(indicator_uuids))
 
 
 def nieuw_id() -> str:

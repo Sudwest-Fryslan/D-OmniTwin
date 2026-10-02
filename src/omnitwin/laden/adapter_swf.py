@@ -7,7 +7,8 @@ de compatibiliteitspaden (`/compat/swf-monitor/...`, stap 9 van #205) gebruiken 
 functies.
 
 - waarden (array van SwfWaarde) → regels van profiel waarnemingen;
-- definities (SwfDefinities) → resources indicatoren, gebiedstypen en relaties van profiel definities.
+- definities (SwfDefinities) → resources indicatoren, gebiedstypen en relaties van profiel definities;
+- terug: de gepubliceerde stand van een dataset → SwfDefinities of een array van SwfWaardeTerug.
 
 De vertaling controleert alleen wat het pushformaat anders doet (begingeldigheid → jaar of
 peildatum, code_prefix op gebieds_id); de rest gaat daarna door de gewone validatie.
@@ -78,3 +79,48 @@ def definities_naar_resources(data: dict) -> dict[str, list[dict]]:
     relaties = [{"indicator_uuid": r.get("indicator_id"), "gebiedstype_id": r.get("gebiedstype_id")}
                 for r in data.get("relaties", [])]
     return {"indicatoren": indicatoren, "gebiedstypen": gebiedstypen, "relaties": relaties}
+
+
+# ── terug in het SWF-formaat (leesvarianten van de compatibiliteitsingang) ────
+
+DATUMTIJD = "YYYY-MM-DD HH24:MI"
+
+
+def definities_terug(cur, dataset_id: str) -> dict:
+    """De set die de dataset als laatste publiceerde (laden.dataset_objecten), met de actuele velden."""
+    p = {"ds": dataset_id, "f": DATUMTIJD}
+    cur.execute("""SELECT i.uuid::text AS id, i.naam, i.omschrijving, i.status,
+                          to_char(i.begingeldigheid, %(f)s) AS begingeldigheid,
+                          to_char(i.eindgeldigheid, %(f)s) AS eindgeldigheid
+                   FROM public.indicatoren i
+                   JOIN laden.dataset_objecten o ON o.dataset_id = %(ds)s AND o.soort = 'indicator'
+                                                AND o.sleutel = i.uuid::text
+                   ORDER BY i.naam, i.uuid""", p)
+    indicatoren = [dict(r) for r in cur.fetchall()]
+    cur.execute("""SELECT t.id::text AS id, t.naam, t.metadata->>'wfs' AS wfs, t.metadata->>'typenames' AS typenames,
+                          t.metadata->>'sleutel' AS sleutel, t.metadata->>'label' AS label, t.actief
+                   FROM public.gebiedstypes t
+                   JOIN laden.dataset_objecten o ON o.dataset_id = %(ds)s AND o.soort = 'gebiedstype'
+                                                AND o.sleutel = t.id::text
+                   ORDER BY t.naam, t.id""", p)
+    gebiedstypen = [dict(r) for r in cur.fetchall()]
+    cur.execute("""SELECT split_part(sleutel, '|', 1) AS indicator_id, split_part(sleutel, '|', 2) AS gebiedstype_id
+                   FROM laden.dataset_objecten WHERE dataset_id = %(ds)s AND soort = 'relatie'
+                   ORDER BY 1, 2""", p)
+    return {"indicatoren": indicatoren, "gebiedstypen": gebiedstypen, "relaties": [dict(r) for r in cur.fetchall()]}
+
+
+def waarden_terug(cur, dataset_id: str, indicator_id: str | None = None) -> list[dict]:
+    """De gepubliceerde waarden van de dataset (zonder de onderdrukte), gebieds_id zonder code_prefix."""
+    cur.execute("""SELECT w.indicator_uuid::text AS indicator_id, w.gebiedstype_id::text AS gebiedstype_id,
+                          CASE WHEN coalesce(t.metadata->>'code_prefix', '') <> ''
+                                AND starts_with(w.gebied_id, t.metadata->>'code_prefix')
+                               THEN substr(w.gebied_id, length(t.metadata->>'code_prefix') + 1)
+                               ELSE w.gebied_id END AS gebieds_id,
+                          coalesce(w.jaar, extract(year FROM w.datum)::int) AS jaar, w.waarde::float8 AS waarde
+                   FROM laden.waarnemingen w
+                   LEFT JOIN public.gebiedstypes t ON t.id = w.gebiedstype_id
+                   WHERE w.dataset_id = %(ds)s AND (%(ind)s::uuid IS NULL OR w.indicator_uuid = %(ind)s::uuid)
+                   ORDER BY w.indicator_uuid, w.gebiedstype_id, w.gebied_id, w.jaar, w.datum""",
+                {"ds": dataset_id, "ind": indicator_id})
+    return [dict(r) for r in cur.fetchall()]

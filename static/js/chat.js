@@ -132,6 +132,11 @@ class ChatPanel {
             bubble.appendChild(el('p', 'chat-bronregel', `Bron: ${regel}`));
         }
 
+        // #233: melding over de zekerheid (geen of alleen matige treffers)
+        if (response.melding) {
+            bubble.appendChild(el('p', 'chat-melding', response.melding));
+        }
+
         // Track E: Disclaimer bij LLM-responses
         if (isLLM) {
             bubble.appendChild(el('p', 'chat-disclaimer',
@@ -163,7 +168,11 @@ class ChatPanel {
         // Gevonden indicatoren (scrollbare lijst)
         if (response.indicatoren && response.indicatoren.length > 0) {
             const lijst = el('div', 'chat-indicatoren-lijst');
-            lijst.appendChild(el('span', 'chat-indicatoren-label', `${response.indicatoren.length} indicatoren gevonden`));
+            // #233: bij een datavraag zijn dit de indicatoren onder het antwoord, anders zoekresultaten
+            const n = response.indicatoren.length;
+            const kop = isDatavraag ? `Onderbouwing: ${n === 1 ? '1 indicator' : `${n} indicatoren`}`
+                : `${n === 1 ? '1 indicator' : `${n} indicatoren`} gevonden`;
+            lijst.appendChild(el('span', 'chat-indicatoren-label', kop));
             for (const ind of response.indicatoren) {
                 const item = el('div', 'chat-indicator-item');
                 item.setAttribute('role', 'button');
@@ -171,7 +180,12 @@ class ChatPanel {
                 item.dataset.uuid = ind.uuid || '';
                 item.title = 'Klik om op kaart te tonen';
                 item.appendChild(el('span', 'chat-ind-naam', ind.naam || ''));
-                item.appendChild(el('span', 'chat-ind-score', `${Math.round((ind.relevantie || 0) * 100)}%`));
+                // #233: relevantie als woord, geen percentage (dat lijkt een datawaarde, zoals '80 jaar of ouder 53%')
+                if (ind.relevantie_label) {
+                    const label = el('span', 'chat-ind-score', ind.relevantie_label);
+                    label.title = 'Hoe goed deze indicator bij je vraag past';
+                    item.appendChild(label);
+                }
                 item.addEventListener('click', () => this._handleIndicatorClick(item));
                 lijst.appendChild(item);
             }
@@ -472,6 +486,7 @@ class ChatPanel {
     _getKaartContext() {
         // Haal huidige kaart-staat op als context voor de LLM
         const context = {};
+        // #233: 'bij mij in de buurt' = de geselecteerde buurt op de kaart
         if (window.state?.selectedGebiedId) {
             context.huidig_gebied_id = window.state.selectedGebiedId;
         }

@@ -15,6 +15,9 @@ Rechten (Keycloak, `omnitwin.oidc`):
   (`Accept: application/ld+json`) mag anoniem en toont dan alleen datasets met
   `dct:accessRights` PUBLIC;
 - `/openapi.json` en `/profielen`: anoniem.
+- compatibiliteitsingang SWF-monitor (`/compat/swf-monitor/monitor_api/...`): leveren met
+  `dataset:swf-monitor-definities:laden` of `dataset:swf-monitor-waarden:laden` (of `datasets:laden`),
+  lezen ook met `beheerder`.
 
 Elke response heeft `API-Version` (middleware in `registreer`), fouten zijn Problem Details.
 """
@@ -39,7 +42,7 @@ from fastapi.responses import FileResponse, JSONResponse, Response
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from omnitwin.config import instellingen
-from omnitwin.laden import opslag, verwerker
+from omnitwin.laden import adapter_swf, opslag, verwerker
 from omnitwin.laden.catalogus import catalogus, is_publiek
 from omnitwin.laden.db import transactie
 from omnitwin.laden.lezen import kale_mediatype
@@ -423,8 +426,9 @@ def _afgekeurd_probleem(r: dict, fouten: list[dict], versie: int | None) -> JSON
 
 
 async def _ontvang(request: Request, mediatype: str) -> tuple[opslag.Ontvangen, str, str, dict | None]:
-    """(ontvangen bestand, mediatype, bestandsnaam, dcat). Streamt naar schijf; 413 boven de limiet."""
-    ct = kale_mediatype(request.headers.get("content-type"))
+    """(ontvangen bestand, mediatype, bestandsnaam, dcat). Streamt naar schijf; 413 boven de limiet.
+    mediatype: het (kale) mediatype van de body; de compatibiliteitsingang zet altijd JSON."""
+    ct = mediatype
     if ct == "multipart/form-data":
         form = await request.form()
         try:
@@ -468,20 +472,18 @@ async def _ontvang(request: Request, mediatype: str) -> tuple[opslag.Ontvangen, 
     return schrijver.klaar(), ct, opslag.veilige_bestandsnaam(None, ct), None
 
 
-@router.post("/datasets/{dataset_id}/leveringen")
-async def lever_dataset(dataset_id: str, request: Request,
-                        principal: Principal = Depends(vereis_rol(*LEVEREN))):
-    q = request.query_params
-    if q.get("modus", "vervangen") != "vervangen":
-        raise Probleem(400, "ongeldig-verzoek", "Alleen modus vervangen wordt ondersteund (v1).")
-    alleen_valideren = _bool(q.get("alleenValideren"), "alleenValideren")
-    wacht = _bool(q.get("wacht"), "wacht")
+def _sleutel(request: Request) -> str | None:
     sleutel = request.headers.get("idempotency-key")
     if sleutel is not None and not (0 < len(sleutel) <= 255):
         raise Probleem(400, "ongeldig-verzoek", "Idempotency-Key moet 1 tot 255 tekens zijn.")
-    ds = await run_in_threadpool(_db_dataset_rij, dataset_id)
+    return sleutel
+
+
+async def _neem_aan(request: Request, ds: dict, principal: Principal, alleen_valideren: bool,
+                    ct: str, controle=None) -> tuple[dict, bool]:
+    """Body ontvangen, bewaren en als levering registreren: (levering, nieuw). controle(pad): extra
+    inhoudscontrole op het ontvangen bestand (compatibiliteitsingang)."""
     toegestaan = PROFIELEN[ds["profiel"]]["mediatypes"]
-    ct = kale_mediatype(request.headers.get("content-type"))
     if ct != "multipart/form-data" and ct not in toegestaan:
         raise Probleem(415, "mediatype-past-niet", f"{ct or 'geen Content-Type'} past niet bij profiel {ds['profiel']} "
                        f"(toegestaan: {', '.join(toegestaan)}).")
@@ -493,32 +495,61 @@ async def lever_dataset(dataset_id: str, request: Request,
         digest = request.headers.get("content-digest")
         if digest and not _digest_klopt(digest, ontvangen.sha256):
             raise Probleem(400, "ongeldig-verzoek", "Content-Digest komt niet overeen met de body.")
-        r, nieuw = await run_in_threadpool(_db_nieuwe_levering, dataset_id, ontvangen, mt, naam, sleutel,
+        if controle:
+            await run_in_threadpool(controle, ontvangen.pad)
+        r, nieuw = await run_in_threadpool(_db_nieuwe_levering, ds["id"], ontvangen, mt, naam, _sleutel(request),
                                            alleen_valideren, principal.client_id, dcat)
     finally:
         opslag.verwijder_tijdelijk(ontvangen)
+    if nieuw:
+        verwerker.bied_aan(str(r["id"]))
+        logger.info("Levering %s op %s ontvangen (%s, %d bytes, client %s)", r["id"], ds["id"], mt, r["grootte"],
+                    principal.client_id)
+    return r, nieuw
+
+
+async def _wacht_op(r: dict, seconden: int | None = None) -> tuple[dict, list[dict]]:
+    """Wacht tot de levering een eindstatus heeft, hooguit `seconden` (standaard LADEN_WACHT_SECONDEN)."""
+    eind = asyncio.get_running_loop().time() + (seconden or instellingen().laden_wacht_seconden)
+    fouten: list[dict] = []
+    while asyncio.get_running_loop().time() < eind:
+        await asyncio.sleep(0.5)
+        r, fouten = await run_in_threadpool(_db_levering, str(r["id"]))
+        if r["status"] in EINDSTATUS:
+            break
+    return r, fouten
+
+
+def _mislukt_probleem(r: dict, fouten: list[dict]) -> JSONResponse:
+    loc = f"{PREFIX}/leveringen/{r['id']}"
+    return JSONResponse(probleem(500, "serverfout", "Technische fout bij het verwerken; niets gepubliceerd. "
+                                 "Opnieuw leveren mag.", instance=loc, levering=loc, fouten=fouten),
+                        status_code=500, media_type=MEDIATYPE, headers={"Location": loc})
+
+
+@router.post("/datasets/{dataset_id}/leveringen")
+async def lever_dataset(dataset_id: str, request: Request,
+                        principal: Principal = Depends(vereis_rol(*LEVEREN))):
+    q = request.query_params
+    if q.get("modus", "vervangen") != "vervangen":
+        raise Probleem(400, "ongeldig-verzoek", "Alleen modus vervangen wordt ondersteund (v1).")
+    alleen_valideren = _bool(q.get("alleenValideren"), "alleenValideren")
+    wacht = _bool(q.get("wacht"), "wacht")
+    _sleutel(request)
+    ds = await run_in_threadpool(_db_dataset_rij, dataset_id)
+    r, nieuw = await _neem_aan(request, ds, principal, alleen_valideren,
+                               kale_mediatype(request.headers.get("content-type")))
     if not nieuw:
         r, fouten = await run_in_threadpool(_db_levering, str(r["id"]))
         return _levering_response(r, fouten, 200)
-    verwerker.bied_aan(str(r["id"]))
-    logger.info("Levering %s op %s ontvangen (%s, %d bytes, client %s)", r["id"], dataset_id, mt, r["grootte"],
-                principal.client_id)
     if wacht:
-        eind = asyncio.get_running_loop().time() + instellingen().laden_wacht_seconden
-        while asyncio.get_running_loop().time() < eind:
-            await asyncio.sleep(0.5)
-            r, fouten = await run_in_threadpool(_db_levering, str(r["id"]))
-            if r["status"] in EINDSTATUS:
-                break
+        r, fouten = await _wacht_op(r)
         if r["status"] in ("gepubliceerd", "gevalideerd"):
             return _levering_response(r, fouten, 201)
         if r["status"] == "afgekeurd":
             return _afgekeurd_probleem(r, fouten, ds["huidige_versie"])
         if r["status"] == "mislukt":
-            loc = f"{PREFIX}/leveringen/{r['id']}"
-            return JSONResponse(probleem(500, "serverfout", "Technische fout bij het verwerken; niets gepubliceerd. "
-                                         "Opnieuw leveren mag.", instance=loc, levering=loc, fouten=fouten),
-                                status_code=500, media_type=MEDIATYPE, headers={"Location": loc})
+            return _mislukt_probleem(r, fouten)
     return _levering_response(r, [], 202)
 
 
@@ -610,6 +641,114 @@ def haal_levering(levering_id: uuid.UUID, principal: Principal | None = Depends(
     if not r or not (mag_lezen(principal, r["dataset_id"]) or (principal.client_id and principal.client_id == r["client_id"])):
         raise Probleem(404, "niet-gevonden", "Levering bestaat niet.")
     return _levering_response(r, fouten, 200)
+
+
+# ── routes: compatibiliteitsingang SWF-monitor (adapter swf-monitor-v1) ─────
+# Spiegel van de push- en leespaden van de huidige SWF-gebiedsmonitor, zodat de FME-workspaces
+# alleen basis-URL, tokenendpoint en client wijzigen (docs/api/laden/profielen/swf-monitor-v1.md).
+# Een POST is een levering `vervangen` met `wacht=true` op een vaste dataset; herhalen met
+# dezelfde body geeft geen nieuwe versie (sha256, laadstraat).
+
+COMPAT = "/compat/swf-monitor/monitor_api"
+SWF_DEFINITIES = "swf-monitor-definities"
+SWF_WAARDEN = "swf-monitor-waarden"
+COMPAT_WACHT_SECONDEN = 120  # specificatie; FME pollt niet
+
+
+def _compat_dataset(dataset_id: str, profiel_: str) -> dict:
+    with transactie() as cur:
+        ds = _haal_dataset(cur, dataset_id)
+    if not ds or ds["profiel"] != profiel_ or (ds["laadprofiel"] or {}).get("adapter") != adapter_swf.ADAPTER:
+        raise Probleem(404, "niet-gevonden", f"Dataset {dataset_id} is niet geregistreerd met profiel {profiel_} en "
+                       f"adapter {adapter_swf.ADAPTER}; vraag de beheerder hem te registreren.")
+    return dict(ds)
+
+
+def _compat_vorm(is_vorm, wat: str):
+    def controle(pad: Path) -> None:
+        try:
+            data = json.loads(Path(pad).read_bytes().decode("utf-8-sig"))
+        except (ValueError, UnicodeDecodeError):
+            raise Probleem(400, "ongeldig-verzoek", "De body is geen geldige JSON (UTF-8).")
+        if not is_vorm(data):
+            raise Probleem(400, "ongeldig-verzoek", f"De body is geen {wat} in het formaat van de SWF-monitor.")
+    return controle
+
+
+def _compat_resultaat(r: dict, status: int) -> JSONResponse:
+    uit = {"status": r["status"], "leveringId": str(r["id"]), "versie": r["versie"]}
+    headers = {"Location": f"{PREFIX}/leveringen/{r['id']}"}
+    if r["status"] in LOOPT:
+        headers["Retry-After"] = str(RETRY_AFTER)
+    else:
+        uit["aantallen"] = r["aantallen"] or {}
+    return JSONResponse(uit, status_code=status, headers=headers)
+
+
+async def _compat_inlezen(request: Request, principal: Principal, dataset_id: str, profiel_: str, controle):
+    alleen_valideren = _bool(request.query_params.get("alleenValideren"), "alleenValideren")
+    _sleutel(request)
+    ds = await run_in_threadpool(_compat_dataset, dataset_id, profiel_)
+    # Het oude formaat is altijd JSON; FME zet niet overal een Content-Type
+    r, nieuw = await _neem_aan(request, ds, principal, alleen_valideren, "application/json", controle)
+    wacht = max(COMPAT_WACHT_SECONDEN, instellingen().laden_wacht_seconden)
+    r, fouten = await (_wacht_op(r, wacht) if nieuw else run_in_threadpool(_db_levering, str(r["id"])))
+    if r["status"] in ("gepubliceerd", "gevalideerd"):
+        return _compat_resultaat(r, 200)
+    if r["status"] == "afgekeurd":
+        return _afgekeurd_probleem(r, fouten, ds["huidige_versie"])
+    if r["status"] == "mislukt":
+        return _mislukt_probleem(r, fouten)
+    return _compat_resultaat(r, 202)
+
+
+@router.post(f"{COMPAT}/indicator/setup/inlezen")
+async def swf_definities_inlezen(request: Request, principal: Principal = Depends(
+        vereis_rol(f"dataset:{SWF_DEFINITIES}:laden", "datasets:laden"))):
+    vorm = _compat_vorm(adapter_swf.is_definities, "definities-snapshot (indicatoren, gebiedstypen, relaties)")
+    return await _compat_inlezen(request, principal, SWF_DEFINITIES, "definities", vorm)
+
+
+@router.post(f"{COMPAT}/indicator_waarde/inlezen")
+async def swf_waarden_inlezen(request: Request, principal: Principal = Depends(
+        vereis_rol(f"dataset:{SWF_WAARDEN}:laden", "datasets:laden"))):
+    return await _compat_inlezen(request, principal, SWF_WAARDEN, "waarnemingen",
+                                 _compat_vorm(adapter_swf.is_waarden, "niet-lege array van waarden"))
+
+
+def _db_definities_terug() -> dict:
+    with transactie() as cur:
+        ds = _haal_dataset(cur, SWF_DEFINITIES)
+        if not ds or not ds["huidige_versie"]:
+            raise Probleem(404, "niet-gevonden", f"Dataset {SWF_DEFINITIES} heeft nog geen gepubliceerde versie.")
+        return adapter_swf.definities_terug(cur, SWF_DEFINITIES)
+
+
+def _db_waarden_terug(indicator_id: str | None) -> list[dict]:
+    with transactie() as cur:
+        if indicator_id:
+            cur.execute("SELECT 1 FROM public.indicatoren WHERE uuid = %s", (indicator_id,))
+            if not cur.fetchone():
+                raise Probleem(404, "niet-gevonden", f"Indicator {indicator_id} bestaat niet.")
+        return adapter_swf.waarden_terug(cur, SWF_WAARDEN, indicator_id)
+
+
+@router.get(f"{COMPAT}/indicator/setup")
+async def swf_definities_lezen(principal: Principal = Depends(
+        vereis_rol(f"dataset:{SWF_DEFINITIES}:laden", "datasets:laden", "beheerder"))):
+    return await run_in_threadpool(_db_definities_terug)
+
+
+@router.get(f"{COMPAT}/indicator_waarde")
+async def swf_waarden_lezen(principal: Principal = Depends(
+        vereis_rol(f"dataset:{SWF_WAARDEN}:laden", "datasets:laden", "beheerder"))):
+    return JSONResponse(await run_in_threadpool(_db_waarden_terug, None))
+
+
+@router.get(f"{COMPAT}/indicator_waarde/{{indicator_id}}")
+async def swf_waarden_indicator_lezen(indicator_id: uuid.UUID, principal: Principal = Depends(
+        vereis_rol(f"dataset:{SWF_WAARDEN}:laden", "datasets:laden", "beheerder"))):
+    return JSONResponse(await run_in_threadpool(_db_waarden_terug, str(indicator_id)))
 
 
 # ── koppeling met de app: API-Version, Problem Details, verwerker ────────────
