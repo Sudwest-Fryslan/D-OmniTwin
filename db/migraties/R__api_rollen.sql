@@ -98,6 +98,13 @@ CREATE VIEW api.vw_gebied_indicator_actueel AS
 SELECT gebied_id, indicator_uuid, waarde, jaar, datum, bron
 FROM public.vw_gebied_indicator_actueel;
 
+-- Waarden per gebied, indicator en jaar (use cases via /api/data/v1, laad-API #205).
+-- Zonder n: waarden onder de n-drempel staan hier nooit (laad-API), n zelf is niet nodig.
+DROP VIEW IF EXISTS api.gebied_data;
+CREATE VIEW api.gebied_data AS
+SELECT gebied_id, indicator_uuid, jaar, datum, scenario_id, waarde, kwaliteit, bron, n_status
+FROM public.gebied_data;
+
 -- Indicatorenlijst met aantallen (frontend: indicatorkeuze, /rpc/get_indicatoren_stats).
 -- SECURITY DEFINER met vaste search_path: web_anon heeft geen rechten in public nodig.
 CREATE OR REPLACE FUNCTION api.get_indicatoren_stats(p_gebiedstype_id uuid DEFAULT NULL)
@@ -129,7 +136,8 @@ GRANT SELECT ON
     api.gebieden,
     api.externe_kaartlagen,
     api.indicatoren,
-    api.vw_gebied_indicator_actueel
+    api.vw_gebied_indicator_actueel,
+    api.gebied_data
 TO web_anon;
 GRANT EXECUTE ON FUNCTION api.get_indicatoren_stats(uuid) TO web_anon;
 

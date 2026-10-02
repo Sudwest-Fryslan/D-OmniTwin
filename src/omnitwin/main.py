@@ -191,6 +191,10 @@ app.include_router(externe_lagen.admin_router)
 from omnitwin.routers import oidc_ik
 app.include_router(oidc_ik.router)  # GET /api/oidc/ik: token controleren (#205)
 
+# Laad-API /api/laden/v1 (#205): eigen spec, API-Version, Problem Details, achtergrondverwerking
+from omnitwin.routers import laden as laden_api
+laden_api.registreer(app)
+
 @app.on_event("startup")
 async def startup_event():
     """Startup checks and logging."""

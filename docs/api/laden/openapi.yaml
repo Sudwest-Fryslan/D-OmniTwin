@@ -5,8 +5,8 @@ info:
   description: |
     Datasets registreren en leveringen laden in D-OmniTwin.
 
-    **Status: ontwerp.** Deze specificatie beschrijft het doel voor 0.3.0. Er is nog geen
-    implementatie. Besluiten: ADR 0004 (vullen via registratie en leveringen) en ADR 0005
+    **Status: in opbouw (0.3.0).** Geïmplementeerd in `src/omnitwin/routers/laden.py` en
+    `src/omnitwin/laden/`, behalve de compatibiliteitspaden (`/compat/swf-monitor/...`). Besluiten: ADR 0004 (vullen via registratie en leveringen) en ADR 0005
     (gescheiden API's per doel). Zie `docs/api/laden/README.md`.
 
     Model in het kort:
@@ -147,7 +147,11 @@ paths:
       tags: [Datasets]
       operationId: lijstDatasets
       summary: Geregistreerde datasets
-      description: Alle datasets met `beheerder` of `datasets:laden`; anders alleen de datasets waarvoor de client een rol `dataset:{datasetId}:laden` heeft.
+      description: |
+        Alle datasets met `beheerder` of `datasets:laden`; anders alleen de datasets waarvoor de client een rol `dataset:{datasetId}:laden` heeft.
+
+        Met `Accept: application/ld+json` dezelfde datasets als DCAT-catalogus (`dcat:Catalog`, JSON-LD, DCAT-AP-NL),
+        zonder paginering. Die weergave mag ook zonder token; dan alleen de datasets met `dct:accessRights` PUBLIC.
       parameters:
         - name: profiel
           in: query
@@ -158,7 +162,7 @@ paths:
         - $ref: "#/components/parameters/PaginaGrootte"
       responses:
         "200":
-          description: Pagina met datasets.
+          description: Pagina met datasets, of de DCAT-catalogus (JSON-LD).
           headers:
             API-Version:
               $ref: "#/components/headers/ApiVersion"
@@ -166,6 +170,9 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/DatasetPagina"
+            application/ld+json:
+              schema:
+                $ref: "#/components/schemas/DcatCatalogus"
         "401":
           $ref: "#/components/responses/NietGeauthenticeerd"
         "403":
@@ -1356,6 +1363,32 @@ components:
             $ref: "#/components/schemas/Dataset"
         _links:
           $ref: "#/components/schemas/PaginaLinks"
+
+    DcatCatalogus:
+      type: object
+      description: |
+        DCAT-catalogus (JSON-LD) met per dataset de beschrijving uit de registratie, aangevuld met
+        `@id`, `dct:identifier`, `dct:conformsTo` (het profiel) en na een publicatie `dct:modified`
+        en `dcat:distribution`.
+      required: ["@context", "@type", "dcat:dataset"]
+      properties:
+        "@context":
+          type: object
+        "@id":
+          type: string
+          format: uri
+        "@type":
+          type: string
+          enum: ["dcat:Catalog"]
+        "dct:title":
+          type: string
+        "dct:description":
+          type: string
+        "dcat:dataset":
+          type: array
+          items:
+            type: object
+            description: Beschrijving (DcatDataset) met `dct:conformsTo` als lijst (profiel, plus wat de registratie noemde).
 
     LeveringStatus:
       type: string
