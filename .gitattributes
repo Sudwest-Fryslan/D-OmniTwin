@@ -4,3 +4,7 @@
 # Zelf-gehoste bibliotheken (#117): byte-voor-byte gelijk aan de npm-tarball houden,
 # anders klopt de SRI-hash in de templates niet meer. Geen regeleinde-conversie.
 static/vendor/** -text
+
+# Admin-panel: Vite neemt index.html ongewijzigd over in de build (static/admin-panel,
+# gecommit). Altijd LF, zodat een build op Windows gelijk is aan die in de CI (#202).
+admin-panel/index.html text eol=lf

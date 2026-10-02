@@ -10,6 +10,7 @@ Eerdere wijzigingen, van vóór dit bestand, zijn terug te vinden in de git-hist
 
 ### Migreren
 
+- **Geüploade kaartlagen** staan vanaf nu in het volume `uploads` ([#201](https://github.com/TLaan/D-OmniTwin/issues/201)). Bestanden die vóór 0.2.1 zijn geüpload, staan nog in de oude container: kopieer ze vóór de update met `docker compose cp backend:/app/data-upload ./data-upload-backup` en daarna terug naar het volume.
 - **`DEBUG` vervalt** ([#203](https://github.com/TLaan/D-OmniTwin/issues/203)). Een bestaande `DEBUG=` in `.env` doet niets meer en mag weg. Het inlogcookie krijgt `Secure` nu via `COOKIE_SECURE` (nieuw, standaard `auto`: alleen als de verbinding HTTPS is). Zonder HTTPS hoef je niets te doen. **Achter een eigen TLS-proxy die over HTTP naar de stack doorstuurt: zet `COOKIE_SECURE=true`** (voorheen `DEBUG=false`); `auto` ziet daar alleen HTTP.
 - **CORS:** alleen nog de adressen in `CORS_ORIGINS`. De ngrok-wildcard en de extra localhost-adressen bij `DEBUG=true` zijn weg; zet een ander adres dat de API met cookies aanroept expliciet in `CORS_ORIGINS`. De toegestane header is nu `X-Admin-Key` (wat de backend leest) in plaats van `X-API-Key`.
 - **Nieuw, optioneel:** `LLM_RATE_LIMIT` (verzoeken per minuut per IP-adres op chat en AI-teksten, standaard 60, `0` = uit).
@@ -26,6 +27,11 @@ Eerdere wijzigingen, van vóór dit bestand, zijn terug te vinden in de git-hist
 - Documentatie op orde: de installatiegids volgt `.env.example` en de code (één rij per variabele, geen `SECRET_KEY`, backup vóór het bijwerken, geüploade kaartlagen in de backup, upgrade-paragraaf, actuele beveiligingssectie); README en `AGENTS.md` actueel; `docs/STATE.md` gemarkeerd als historisch; dode links gerepareerd, met een linkcheck (`tools/check_links.py`) als unittest; `backups/` en `*.dump` in `.gitignore` ([#204](https://github.com/TLaan/D-OmniTwin/issues/204)).
 - Eén `src/omnitwin/config.py` voor alle omgevingsvariabelen van de backend, met dezelfde namen en standaardwaarden ([#130](https://github.com/TLaan/D-OmniTwin/issues/130)).
 - Route-handlers zonder `await` zijn `def` (threadpool) in plaats van `async def`: een trage query houdt andere verzoeken niet meer vast; de logqueue is thread-safe ([#68](https://github.com/TLaan/D-OmniTwin/issues/68)).
+
+### Opgelost
+
+- Installatie robuust: een half mislukte eerste init geeft een foutmelding met herstelinstructie in plaats van een lege stack (tabel `installatie_status`; bestaande installaties worden herkend, geen actie nodig); een mislukte admin-aanmaak stopt de init en er staat geen API-key meer in de log; een andere `DATABASE_USER` werkt (schema zonder vaste eigenaar); de upload van kaartlagen schrijft in stukken, is begrensd op 50 MB en overschrijft niet ([#201](https://github.com/TLaan/D-OmniTwin/issues/201)).
+- CI draait ook op `release/**` (push en PR), heeft een job voor het admin-panel (typecheck, lint, test, build en een controle dat `static/admin-panel` bij de broncode hoort) en `concurrency`/`permissions`. Tests die nooit draaiden, draaien weer (`test_escape_html`, `test_jaargangen_sample`, deelgebiedsrapport als integratietest) of zijn weg (debugscript `test_zscore.py`); een test zonder marker laat de collectie falen; verouderde xfail #139 weg. De migratierunner neemt een advisory lock tegen gelijktijdige runs, `--status` is alleen-lezen en toont ingelezen bestanden (V021 → `08_zscore_referentie.sql`, gedocumenteerd in `db/README.md`) ([#202](https://github.com/TLaan/D-OmniTwin/issues/202)).
 
 ## [0.2.0] - 2026-10-01
 
