@@ -36,3 +36,5 @@ Wat wordt makkelijker, wat moeilijker, wat moet er nog gebeuren.
 | Nr | Titel | Status |
 |----|-------|--------|
 | [0001](0001-llm-koppeling-openai-standaard.md) | LLM-koppeling via de OpenAI Chat Completions-standaard, naast Ollama | voorgesteld |
+| [0004](0004-een-ingang-voor-vullen.md) | D-OmniTwin vullen via één laad-API: dataset-registratie en leveringen | voorgesteld |
+| [0005](0005-gescheiden-apis-per-doel.md) | Gescheiden API's per doel volgens de NL GOV API Design Rules | voorgesteld |

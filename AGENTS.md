@@ -74,6 +74,14 @@ npm run lint     # ESLint
 # CI (job Admin-panel): npm ci, typecheck, lint, test, build:static, en faalt als static/admin-panel daarna afwijkt
 ```
 
+### API-specificaties
+Elke API heeft een eigen spec in `docs/api/<naam>/openapi.yaml` (OAS 3.0.3), de bron voor de implementatie (ADR 0005, `docs/2-architectuur/api-landschap.md`). Een wijziging aan een API begint met de spec. Lint met de Logius-ruleset (NL GOV API Design Rules 2.1, `docs/api/.spectral.yaml`); 0 errors vereist, bewuste waarschuwingen staan in de README van de API. Nog niet in de CI (geen Actions-minuten, #200); wel lokaal draaien bij elke wijziging.
+```bash
+MSYS_NO_PATHCONV=1 docker run --rm -v "$PWD:/w" -w /w stoplight/spectral:6 lint -r docs/api/.spectral.yaml docs/api/laden/openapi.yaml
+# zonder Docker: npx -y @stoplight/spectral-cli@6 lint -r docs/api/.spectral.yaml docs/api/laden/openapi.yaml
+npx -y @redocly/cli@1 lint --extends minimal docs/api/laden/openapi.yaml   # OpenAPI-validatie, ook voorbeelden tegen schema's
+```
+
 ### Database initialisatie — Fryslân-dataset zonder Docker (verouderd)
 ```bash
 python init_data/scripts/download_buurten_fryslan.py

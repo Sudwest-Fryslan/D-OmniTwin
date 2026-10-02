@@ -1,0 +1,18 @@
+{
+  "@context": {
+    "dcat": "http://www.w3.org/ns/dcat#",
+    "dct": "http://purl.org/dc/terms/",
+    "xsd": "http://www.w3.org/2001/XMLSchema#"
+  },
+  "@type": "dcat:Dataset",
+  "dct:title": "Voorbeeldindicatoren per buurt",
+  "dct:description": "Fictieve waarden, alleen bedoeld als voorbeeld van een levering.",
+  "dct:publisher": { "@id": "https://identifier.overheid.nl/tooi/id/gemeente/gm1900" },
+  "dct:accessRights": { "@id": "http://publications.europa.eu/resource/authority/access-right/PUBLIC" },
+  "dct:license": { "@id": "http://creativecommons.org/publicdomain/zero/1.0/deed.nl" },
+  "dct:temporal": {
+    "@type": "dct:PeriodOfTime",
+    "dcat:startDate": { "@value": "2025-01-01", "@type": "xsd:date" },
+    "dcat:endDate": { "@value": "2025-12-31", "@type": "xsd:date" }
+  }
+}
