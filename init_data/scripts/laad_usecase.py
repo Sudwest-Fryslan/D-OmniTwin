@@ -13,6 +13,11 @@ Alle data hoort bij een use case. Een use case (usecases/<naam>/) laadt:
 4. extra brondata: usecases/<naam>/data/waarden.csv, zelfde formaat als
    init_data/sample/2_brondata/sample_indicatoren.csv (optioneel)
 
+Een demopakket met `datasets` (de data komt via de laad-API uit open bronnen, #236) krijgt
+hier alleen zijn inrichting: `--inrichting <naam>` zet de richting (en eenheid) van de
+indicatoren en maakt de afgeleide indicatoren. De uitvoerder (`python -m omnitwin.usecases
+installeer`) roept dat aan na de laad-API.
+
 Vereist: het product zonder data, geladen met
     python init_data/scripts/load_sample.py --stap definities
 
@@ -28,6 +33,7 @@ wordt overgeslagen. Use cases met `datasets` laden via de laad-API
 Gebruik:
     python init_data/scripts/laad_usecase.py hittestress [sociale-cohesie ...]
     python init_data/scripts/laad_usecase.py --alle
+    python init_data/scripts/laad_usecase.py --inrichting hittestress [...]
     python init_data/scripts/laad_usecase.py --lijst | --boom <naam> | --index
 """
 
@@ -72,9 +78,9 @@ def pakketten(namen, alle, map_=USECASES_DIR):
     for naam, reden in overgeslagen.items():
         print(f"⏭️  {naam}: overgeslagen ({reden})")
     for naam in orde:
-        if ucs[naam].get("datasets"):
+        if "datasets" in ucs[naam]:
             print(f"⏭️  {naam}: laadt via de laad-API (python -m omnitwin.usecases), niet via dit script")
-    return [n for n in orde if not ucs[n].get("datasets")]
+    return [n for n in orde if "datasets" not in ucs[n]]
 
 
 def zet_richting(cur, indicatoren):
@@ -202,9 +208,15 @@ def laad(conn, naam):
         finally:
             load_sample.INDICATOREN_CSV = bron_csv
 
+    inrichting(conn, naam, uc)
+
+
+def inrichting(conn, naam, uc=None):
+    """Richting en eenheid van de indicatoren, en de afgeleide indicatoren. Geen data."""
+    uc = uc or json.loads((USECASES_DIR / naam / "usecase.json").read_text(encoding="utf-8"))
     cur = conn.cursor()
-    zet_richting(cur, uc["data"]["indicatoren"])
-    for afg in uc["data"].get("afgeleid", []):
+    zet_richting(cur, (uc.get("data") or {}).get("indicatoren", []))
+    for afg in (uc.get("data") or {}).get("afgeleid", []):
         maak_afgeleid(cur, afg, naam)
     conn.commit()
 
@@ -213,6 +225,8 @@ def main():
     parser = argparse.ArgumentParser(description="Laad use-casepakketten (usecases/<naam>/)")
     parser.add_argument("namen", nargs="*", help="naam van de map onder usecases/")
     parser.add_argument("--alle", action="store_true", help="alle use cases laden")
+    parser.add_argument("--inrichting", action="store_true",
+                        help="alleen de inrichting (richting, eenheid, afgeleide indicatoren), geen data")
     parser.add_argument("--lijst", action="store_true", help="use cases tonen (zie python -m omnitwin.usecases lijst)")
     parser.add_argument("--boom", metavar="NAAM", help="afhankelijkheden als boom")
     parser.add_argument("--index", action="store_true", help="index in usecases/README.md bijwerken")
@@ -224,8 +238,13 @@ def main():
 
     conn = load_sample.get_db_connection()
     try:
-        for naam in pakketten(args.namen, args.alle):
-            laad(conn, naam)
+        if args.inrichting:
+            for naam in args.namen:
+                print(f"\n🧭 {naam}: inrichting")
+                inrichting(conn, naam)
+        else:
+            for naam in pakketten(args.namen, args.alle):
+                laad(conn, naam)
     finally:
         conn.close()
     print("\n✅ Use cases geladen.")

@@ -195,14 +195,25 @@ De uitvoerder valideert elke levering tegen het profiel (Table Schema met fricti
 
 ### 6.5 Varianten
 
-`varianten` is een object `{naam: {"sla_over": [stap-id, …]}}`. Een variant maakt dezelfde levering, maar slaat de bewerkingen met die `id` over, bijvoorbeeld `met-fouten` om een afkeuring te toetsen (controle `afkeuring`). Elke id in `sla_over` MOET bestaan in `bewerkingen`.
+`varianten` is een object `{naam: {…}}`. Een variant heeft deze velden (alle optioneel):
+
+| Veld | Type | Betekenis |
+|---|---|---|
+| `omschrijving` | string | voor mensen |
+| `sla_over` | array van stap-id's | de bewerkingen met die `id` niet uitvoeren, bijvoorbeeld `met-fouten` om een afkeuring te toetsen (controle `afkeuring`). Elke id MOET bestaan in de bewerkingen van de variant |
+| `bron` | object | een andere bron (een `bron`-blok, zie 7.2), bijvoorbeeld de echte interne bron naast demodata |
+| `bewerkingen` | array | de bewerkingen bij die bron (in plaats van die van de dataset) |
+| `beschrijving` | object | DCAT-velden die bij deze variant anders zijn (bijv. `dct:type`, `dct:description`, `dct:accessRights`); gaan mee in `dcat.jsonld` van de levering en in de registratie |
+| `als_beschikbaar` | boolean | zonder `--variant` gebruikt de uitvoerder eerst deze variant; is zijn bron hier niet beschikbaar (variabele niet gezet, bestand weg), dan de standaardbron |
+
+**Demodata als plaatsvervanger voor een interne bron** (https://github.com/TLaan/D-OmniTwin/issues/236): de standaardbron is de demodata (bijv. `lokaal-bestand` onder `${REPO}`), met in de beschrijving `dct:type` `demodata`, een `dct:description` die zegt dat het een plaatsvervanger is en voor welke interne bron (functionele naam, ook in `prov:wasDerivedFrom`), en per waarde een `bron` die met `DEMODATA` begint (zo ziet de gebruiker het in de API en de viewer). Een variant `intern` met `als_beschikbaar: true` noemt de echte interne bron (bijv. `swf-dump` onder `SWF_DUMP_DIR`); die data komt nooit in de repository.
 
 ## 7. Bronnen en adapters
 
 ### 7.1 Regels
 
 1. **Openbare internetbronnen** (CBS, PDOK, BAG, RIVM, Klimaateffectatlas) MOETEN NIET in de repository staan. De use case beschrijft de bron; de adapter downloadt hem bij `controleer`, `installeer` en `test`, met een cache in `$DATA_CACHE`.
-2. Downloads MOETEN via https gaan, naar een domein uit de allowlist `TOEGESTANE_DOMEINEN` in `omnitwin.bronadapters` (nu `opendata.cbs.nl`, `datasets.cbs.nl`, `www.cbs.nl`, `service.pdok.nl`, `api.pdok.nl`, `data.rivm.nl`, `www.klimaateffectatlas.nl`, `klimaateffectatlas.nl`). Een installatie MAG domeinen toevoegen met `OMNITWIN_BRON_DOMEINEN` (kommagescheiden). Een nieuw domein in de standaardlijst gaat via een PR.
+2. Downloads MOETEN via https gaan, naar een domein uit de allowlist `TOEGESTANE_DOMEINEN` in `omnitwin.bronadapters` (nu `opendata.cbs.nl`, `datasets.cbs.nl`, `www.cbs.nl`, `dataderden.cbs.nl`, `service.pdok.nl`, `api.pdok.nl`, `data.rivm.nl`, `www.klimaateffectatlas.nl`, `klimaateffectatlas.nl`). Een installatie MAG domeinen toevoegen met `OMNITWIN_BRON_DOMEINEN` (kommagescheiden). Een nieuw domein in de standaardlijst gaat via een PR.
 3. Bij een download van een vast bestand is `sha256` AANBEVOLEN; klopt de checksum niet, dan faalt de dataset.
 4. **Interne bronnen** (exports, dumps van de bronhouder) MOETEN via een omgevingsvariabele uit de allowlist `TOEGESTANE_MAPPEN` lopen: `SWF_DUMP_DIR`, `SWF_DOCS_DIR`, `SWF_GEO_DIR`, `SWF_DB_DUMP`, `DATA_CACHE`, en `REPO` (de repository zelf). Een pad MOET de vorm `${VAR}/…` hebben en MOET NIET buiten die map wijzen (`..`, symlinks).
 5. Ontbreekt een bron (variabele niet gezet, bestand weg, geen netwerk), dan is de dataset *overgeslagen*, geen fout.
@@ -221,6 +232,8 @@ Elke `bron` heeft `adapter` en MAG `omschrijving` (voor mensen) en `tabel` (naam
 | `download` | één bestand via https | **`url`** (https), `sha256` (64 hex), `formaat` (`gpkg` \| `geojson` \| `csv` \| `json`), `laag`, `crs` (EPSG-code als het bestand hem niet noemt; standaard 4326) |
 | `lokaal-bestand` | een bestand onder een toegestane map | **`pad`** (`${VAR}/…`), `formaat`, `laag`, `crs` |
 | `usecase-bestand` | een statisch `.json`- of `.csv`-bestand in de use case | **`pad`** (relatief, zonder `..`) |
+| `cbs-statline` | een StatLine-tabel (CBS, of RIVM en Politie via `dataderden.cbs.nl`), uitgepakt: één record per regio, periode, dimensiewaarden en kolom, met `gebied_code`, `jaar`, `periode`, `kolom`, `waarde` en de gefilterde dimensies | **`url`** (`https://<host>/ODataFeed/odata/<tabel>`), **`kolommen`** (Topic-keys), `regio` (regio-dimensie, standaard `WijkenEnBuurten`), `gemeenten` of `gebieden`, `regio_prefix` (`BU` \| `WK` \| `GM`, standaard `BU`), `filter` ({dimensie: key of [keys]}), `jaren` |
+| `wcs-zonaal` | gemiddelde van een WCS-raster (OGC WCS 2.0.1, GeoTIFF in EPSG:28992) per gebied, over de cellen met het middelpunt in het gebied; record `gebied_code`, `waarde`, `cellen` | **`url`** (https), **`coverage`**, **`gebieden`** ({**`bron`**, `bewerkingen`, `sleutel`}: de gebieden als bron-blok, `sleutel` standaard `code`), `celgrootte` (m, standaard 10), `nodata` (standaard -9999), `nodata_als` (nodata telt als deze waarde), `decimalen`, `max_cellen` |
 
 Elke adapter levert tabellen met records; een geometrie staat altijd in EPSG:28992.
 
@@ -662,4 +675,5 @@ Een bewijsverslag `bewijs/bewijs.json` (ingekort):
 
 | Versie | Datum | Wijziging |
 |---|---|---|
+| 1.0 | 2026-10-02 | Aanvulling (voorstel, https://github.com/TLaan/D-OmniTwin/issues/236; formeel een minor, 1.0 is nog niet vastgesteld): adapters `cbs-statline` en `wcs-zonaal`, domein `dataderden.cbs.nl`, varianten met `bron`, `bewerkingen`, `beschrijving` en `als_beschikbaar` (demodata als plaatsvervanger voor een interne bron) (`hittestress/maak_data.py` wordt in de volgende PR de kernadapter `wcs-zonaal`). Alle bestaande manifesten blijven geldig. |
 | 1.0 | 2026-10-02 | Eerste versie (https://github.com/TLaan/D-OmniTwin/issues/227). Vastgelegd wat sinds #219 gold (manifest, datasets, bronadapters, bewerkingen, afhankelijkheden, controles, uitvoerder). Nieuw: veld `specificatie` (verplicht), `naam` en `versie` verplicht, `actoren` en `bewijs.stappen` (gereserveerd), `veroudering`, patroon voor `rechten`, status `verouderd` in plaats van `vervallen`, geen onbekende velden meer in manifest, `datasets[]` en `controles[]`, schema `bewijs.schema.json`. Schema's verhuisd van `usecases/` naar `docs/specificaties/usecase/1.0/`. |

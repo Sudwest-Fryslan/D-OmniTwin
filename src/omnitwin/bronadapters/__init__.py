@@ -9,6 +9,8 @@ hieronder voert dat uit. Een nieuwe soort bron = een nieuwe adapter hier, via ee
 |---|---|---|
 | `swf-dump` | export van de huidige SWF-gebiedsmonitor (definities of waarden) | `export` |
 | `cbs-odata` | CBS Kerncijfers wijken en buurten (recept `init_data/cbs/datapackage.json`) | `gemeenten`, `jaren` |
+| `cbs-statline` | elke StatLine-tabel (CBS, RIVM en Politie via dataderden.cbs.nl), uitgepakt per kolom (`statline.py`) | `url`, `kolommen`, `gemeenten`/`gebieden`, `filter`, `jaren` |
+| `wcs-zonaal` | gemiddelde van een WCS-raster per gebied (bijv. RIVM Atlas Natuurlijk Kapitaal, `raster.py`) | `url`, `coverage`, `gebieden`, `nodata_als` |
 | `wfs` | WFS 2.0 (bijv. PDOK), GeoJSON in EPSG:28992 | `url`, `laag`, `bbox`, `filter` |
 | `download` | een bestand via https (gpkg, geojson, csv, json) | `url`, `sha256`, `formaat`, `laag`, `crs` |
 | `lokaal-bestand` | een bestand onder een toegestane map (`${SWF_DOCS_DIR}/...`) | `pad`, `formaat`, `laag`, `crs` |
@@ -35,7 +37,7 @@ from urllib.parse import urlparse
 ROOT = Path(__file__).resolve().parents[3]
 TOEGESTANE_MAPPEN = ("SWF_DUMP_DIR", "SWF_DOCS_DIR", "SWF_GEO_DIR", "SWF_DB_DUMP", "DATA_CACHE", "REPO")
 TOEGESTANE_DOMEINEN = (
-    "opendata.cbs.nl", "datasets.cbs.nl", "www.cbs.nl",
+    "opendata.cbs.nl", "datasets.cbs.nl", "www.cbs.nl", "dataderden.cbs.nl",
     "service.pdok.nl", "api.pdok.nl",
     "data.rivm.nl",
     "www.klimaateffectatlas.nl", "klimaateffectatlas.nl",
@@ -200,16 +202,37 @@ def cbs_odata(bron, ctx):
     gemeenten = [str(g).zfill(4) for g in bron.get("gemeenten") or []]
     codes = sorted(c for c in cbs.geometrie_codes() if not gemeenten or c[2:6] in gemeenten)
     try:
-        rijen = cbs.rijen_voor(codes, log=lambda *a, **k: None)
+        if not gemeenten:
+            # Heel Fryslân: één download per jaargang (filter op gemeente) in plaats van per 40 buurten
+            pad = cbs.cache_pad()
+            if not pad.exists():
+                cbs.schrijf_csv(pad, cbs.download(None, log=lambda *a, **k: None)[0])
+            rijen = cbs.lees_csv(pad)
+        else:
+            rijen = cbs.rijen_voor(codes, log=lambda *a, **k: None)
+    except SystemExit as e:  # de downloader stopt bij een tabel die niet klopt (Period, kolommen)
+        raise GeenBron(f"CBS-tabel klopt niet met het recept: {e}")
     except Exception as e:  # netwerk, CBS onbereikbaar
         raise GeenBron(f"CBS OData niet bereikbaar: {type(e).__name__}: {e}")
     jaren = {int(j) for j in bron.get("jaren") or []}
     return {bron.get("tabel", "waarnemingen"): [dict(r) for r in rijen if not jaren or int(r["jaar"]) in jaren]}
 
 
+def cbs_statline(bron, ctx):
+    from omnitwin.bronadapters.statline import cbs_statline as uitvoeren
+    return uitvoeren(bron, ctx)
+
+
+def wcs_zonaal(bron, ctx):
+    from omnitwin.bronadapters.raster import wcs_zonaal as uitvoeren
+    return uitvoeren(bron, ctx)
+
+
 ADAPTERS = {
     "swf-dump": swf_dump,
     "cbs-odata": cbs_odata,
+    "cbs-statline": cbs_statline,
+    "wcs-zonaal": wcs_zonaal,
     "wfs": wfs,
     "download": download,
     "lokaal-bestand": lokaal_bestand,

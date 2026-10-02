@@ -14,7 +14,7 @@ schema's in `docs/specificaties/usecase/<versie>/`.
     python -m omnitwin.usecases boom <naam>
     python -m omnitwin.usecases index [--controleer]
     python -m omnitwin.usecases controleer <naam> [--uit MAP] [--variant NAAM]
-    python -m omnitwin.usecases installeer <naam> [...] | --alle
+    python -m omnitwin.usecases installeer <naam> [...] | --alle [--inproces]
     python -m omnitwin.usecases test <naam>
     python -m omnitwin.usecases bewijs <naam>
 
@@ -28,8 +28,14 @@ Ontbreekt een bron, dan is die dataset 'overgeslagen', geen fout.
 met een token van een machineclient (client credentials: `OMNITWIN_CLIENT_ID`,
 `OMNITWIN_CLIENT_SECRET`; tokenendpoint `OMNITWIN_TOKEN_URL` of via discovery van realm
 `KEYCLOAK_REALM`, standaard omnitwin). Zolang `/api/laden/v1/openapi.json` er niet is, melden
-ze dat. Demopakketten zonder `datasets` installeert `installeer` via
-`init_data/scripts/laad_usecase.py`, zodat er één ingang is.
+ze dat. Met `--inproces` (eerste installatie, `db-init`) gebruikt `installeer` dezelfde laadstraat
+zonder HTTP en zonder token (`omnitwin.laden.inproces`). Demopakketten zonder `datasets` installeert
+`installeer` via `init_data/scripts/laad_usecase.py`, zodat er één ingang is; de inrichting van een
+demopakket met `datasets` (richting van de indicatoren uit `data.indicatoren`) ook.
+
+Varianten (`varianten` in `datasets/<id>.json`): `sla_over` (stappen overslaan), `bron` en
+`bewerkingen` (een andere bron, bijv. de echte interne bron naast demodata) en `als_beschikbaar`
+(zonder `--variant` eerst deze variant; is zijn bron hier niet beschikbaar, dan de standaardbron).
 """
 
 import argparse
@@ -288,11 +294,15 @@ def dataset_fouten(uc, ds, spec=None):
         fouten += [f"{pad}: registratie: {f}" for f in valideer_registratie(registratie_voor_api(d), spec)]
     fouten += _bron_fouten(d.get("bron"), f"{pad}.bron")
     fouten += _stappen_fouten(d.get("bewerkingen"), pad)
-    ids = {s.get("id") for s in d.get("bewerkingen", [])}
     for vnaam, v in (d.get("varianten") or {}).items():
-        onbekend = set(v.get("sla_over", [])) - ids
+        stappen = v.get("bewerkingen", d.get("bewerkingen", []))
+        onbekend = set(v.get("sla_over", [])) - {s.get("id") for s in stappen}
         if onbekend:
             fouten.append(f"{pad}.varianten.{vnaam}: onbekende stappen {sorted(onbekend)}")
+        if "bron" in v:
+            fouten += _bron_fouten(v["bron"], f"{pad}.varianten.{vnaam}.bron")
+        if "bewerkingen" in v:
+            fouten += _stappen_fouten(v["bewerkingen"], f"{pad}.varianten.{vnaam}")
     return fouten
 
 
@@ -319,20 +329,44 @@ def schema_paden(uc, dataset):
     return {k: Path(uc["_map"]) / v for k, v in (dataset["levering"].get("schema") or {}).items()} or None
 
 
+def met_variant(d, variant):
+    """De dataset zoals de variant hem levert: andere bron, bewerkingen en beschrijving (DCAT) als de
+    variant die noemt. Geeft (dataset, sla_over)."""
+    if not variant:
+        return d, []
+    v = (d.get("varianten") or {}).get(variant)
+    if v is None:
+        raise UseCaseFout(f"{d['id']}: onbekende variant {variant!r}")
+    d = {**d, "bron": v.get("bron", d["bron"]), "bewerkingen": v.get("bewerkingen", d.get("bewerkingen", []))}
+    if v.get("beschrijving"):
+        d["beschrijving"] = {**(d.get("beschrijving") or {}), **v["beschrijving"]}
+    return d, v.get("sla_over", [])
+
+
 def maak_levering(uc, ds, uit, variant=None, bron_env=None):
     """Bron ophalen, bewerken en als levering schrijven. Geeft (paden, rapport van de bewerkingen).
-    Gooit omnitwin.bronadapters.GeenBron (LookupError) als een bron hier niet beschikbaar is."""
+    Zonder variant: eerst een variant met `als_beschikbaar` (bijv. de echte interne bron), anders de
+    standaardbron. Gooit omnitwin.bronadapters.GeenBron (LookupError) als de bron hier niet beschikbaar is."""
     from omnitwin.bronadapters import haal
     from omnitwin.bronadapters.bewerkingen import voer_uit
     from omnitwin.bronadapters.schrijvers import schrijf
-    d = lees_dataset(uc, ds)
+    basis = lees_dataset(uc, ds)
     ctx = {"bronnen": bron_env if bron_env is not None else bronnen(), "usecase_map": uc["_map"]}
-    sla_over = ((d.get("varianten") or {}).get(variant) or {}).get("sla_over", []) if variant else []
-    tabellen = haal(d["bron"], ctx)
-    gelezen = {t: len(r) for t, r in tabellen.items()}
-    tabellen, rapport = voer_uit(tabellen, d.get("bewerkingen", []), ctx, sla_over)
-    paden = schrijf(tabellen, d, uit, schema_paden(uc, d))
-    return paden, {"gelezen": gelezen, "geschreven": {t: len(r) for t, r in tabellen.items()}, "bewerkingen": rapport}
+    pogingen = [variant] if variant else [n for n, v in (basis.get("varianten") or {}).items()
+                                           if v.get("als_beschikbaar")] + [None]
+    for i, naam in enumerate(pogingen):
+        d, sla_over = met_variant(basis, naam)
+        try:
+            tabellen = haal(d["bron"], ctx)
+        except LookupError:
+            if i == len(pogingen) - 1:
+                raise
+            continue  # variant niet beschikbaar: volgende (uiteindelijk de standaardbron)
+        gelezen = {t: len(r) for t, r in tabellen.items()}
+        tabellen, rapport = voer_uit(tabellen, d.get("bewerkingen", []), ctx, sla_over)
+        paden = schrijf(tabellen, d, uit, schema_paden(uc, d))
+        return paden, {"gelezen": gelezen, "geschreven": {t: len(r) for t, r in tabellen.items()},
+                       "bewerkingen": rapport, "variant": naam}
 
 
 def controleer(naam, uit=None, ucs=None, variant=None, bron_env=None):
@@ -534,18 +568,27 @@ def bestanden_van(paden):
     return uit
 
 
-def oude_route(namen):
-    """Demopakketten zonder `datasets`: via laad_usecase.py (directe databasevulling)."""
+def oude_route(namen, alleen_inrichting=False):
+    """Demopakketten zonder `datasets`: via laad_usecase.py (directe databasevulling). Met
+    alleen_inrichting: alleen de richting van de indicatoren (de data komt via de laad-API)."""
     if namen:
-        subprocess.run([sys.executable, str(ROOT / "init_data" / "scripts" / "laad_usecase.py"), *namen], check=True)
+        extra = ["--inrichting"] if alleen_inrichting else []
+        subprocess.run([sys.executable, str(ROOT / "init_data" / "scripts" / "laad_usecase.py"), *extra, *namen],
+                       check=True)
+
+
+def heeft_inrichting(uc):
+    """Demopakket met indicatoren in `data.indicatoren` waarvan de richting gezet moet worden."""
+    return bool((uc.get("data") or {}).get("indicatoren"))
 
 
 def installeer_dataset(api, uc, ds, uit, variant=None):
-    """Registreren (route laden/compat), levering maken en leveren. Geeft de status per bestand."""
+    """Levering maken, registreren (route laden/compat) en leveren. Geeft de status per bestand.
+    Eerst de levering: is de bron hier niet beschikbaar, dan wordt er ook niets geregistreerd."""
     route = ds.get("route", "laden")
+    paden, rapport = maak_levering(uc, ds, Path(uit) / ds["id"], variant)
     if route in ("laden", "compat"):
-        api.registreer(registratie_voor_api(lees_dataset(uc, ds)))
-    paden, _ = maak_levering(uc, ds, Path(uit) / ds["id"], variant)
+        api.registreer(registratie_voor_api(met_variant(lees_dataset(uc, ds), rapport.get("variant"))[0]))
     if route == "beheer":
         return [api.beheer(f"{ds['beheerpad']}/{ds['id']}", p) for p in bestanden_van(paden)]
     return [api.lever(ds["id"], p, route) for p in bestanden_van(paden)]
@@ -557,30 +600,57 @@ def _kort(res):
     return ", ".join(str(lv.get("status", lv.get("http"))) for lv in res)
 
 
-def installeer(namen, alle=False, ucs=None, api=None, uit=None, ook_ontwerp=False):
-    """Use cases met afhankelijkheden installeren: demopakketten via laad_usecase.py, use cases met
-    `datasets` via de laad-API. Zonder laad-API: een melding, geen fout. ook_ontwerp: ook use cases
-    met status ontwerp (voor `test`, de acceptatietest van wat nog gebouwd wordt)."""
+def mislukt(resultaat):
+    """Datasets die fout gingen of afgekeurd werden (niet: overgeslagen omdat de bron hier ontbreekt)."""
+    uit = []
+    for n, per_ds in (resultaat or {}).items():
+        for ds, res in (per_ds if isinstance(per_ds, dict) else {}).items():
+            if (isinstance(res, str) and res.startswith("fout")) or (
+                    isinstance(res, list) and any(lv.get("status") != "overgeslagen" and (
+                        lv.get("status") in ("afgekeurd", "mislukt") or (lv.get("http") or 0) >= 400) for lv in res)):
+                uit.append(f"{n}/{ds}")
+    return uit
+
+
+def installeer(namen, alle=False, ucs=None, api=None, uit=None, ook_ontwerp=False, inproces=False):
+    """Use cases met afhankelijkheden installeren, in volgorde: demopakketten zonder `datasets` via
+    laad_usecase.py, use cases met `datasets` via de laad-API, daarna de inrichting van de demopakketten
+    met `datasets`. Zonder laad-API: een melding, geen fout. ook_ontwerp: ook use cases met status
+    ontwerp (voor `test`). inproces: de laadstraat zonder HTTP (eerste installatie, db-init).
+    Een bron die hier niet beschikbaar is (geen netwerk, geen SWF_DUMP_DIR): 'overgeslagen', geen fout."""
     ucs = ucs or lees_usecases()
     orde, overgeslagen = (volgorde(namen, ucs), {}) if ook_ontwerp else plan(namen, ucs, alle)
     for n, reden in overgeslagen.items():
         print(f"⏭️  {n}: overgeslagen ({reden})")
-    oude_route([n for n in orde if not ucs[n].get("datasets")])
+    oude_route([n for n in orde if "datasets" not in ucs[n]])
     nieuw = [n for n in orde if ucs[n].get("datasets")]
-    if nieuw and not laad_api_beschikbaar():
+    if nieuw and api is None and not inproces and not laad_api_beschikbaar():
         print(f"⏸️  laad-API nog niet beschikbaar ({basis_url()}{LAAD_API}/openapi.json); niet geïnstalleerd: {', '.join(nieuw)}")
         return {n: "laad-API nog niet beschikbaar" for n in nieuw}
-    api = api or (LaadApi() if nieuw else None)
+    if api is None and nieuw:
+        if inproces:
+            from omnitwin.laden.inproces import InprocesLaadApi
+            api = InprocesLaadApi()
+        else:
+            api = LaadApi()
     uit = Path(uit or tempfile.mkdtemp(prefix="usecases-"))
     resultaat = {}
     for n in nieuw:
         resultaat[n] = {}
         for ds in ucs[n]["datasets"]:
+            begin = time.time()
             try:
                 resultaat[n][ds["id"]] = installeer_dataset(api, ucs[n], ds, uit / n)
             except LookupError as e:
                 resultaat[n][ds["id"]] = f"overgeslagen: {e}"
-            print(f"📦 {n} / {ds['id']}: {_kort(resultaat[n][ds['id']])}")
+            except Exception as e:  # één dataset mag de rest niet tegenhouden (eerste installatie)
+                resultaat[n][ds["id"]] = f"fout: {type(e).__name__}: {e}"
+            print(f"📦 {n} / {ds['id']}: {_kort(resultaat[n][ds['id']])} ({time.time() - begin:.0f} s)", flush=True)
+    try:
+        oude_route([n for n in orde if "datasets" in ucs[n] and heeft_inrichting(ucs[n])], alleen_inrichting=True)
+    except subprocess.CalledProcessError:  # bijv. installeren op afstand, zonder databasetoegang
+        print("⚠️  inrichting (richting van de indicatoren) niet gezet: laad_usecase.py --inrichting faalde "
+              "(geen databasetoegang?); de data is wel geladen")
     return resultaat
 
 
@@ -692,6 +762,8 @@ def main(argv=None):
     ins = sub.add_parser("installeer", help="use case(s) met afhankelijkheden installeren (laad-API of laad_usecase.py)")
     ins.add_argument("namen", nargs="*")
     ins.add_argument("--alle", action="store_true")
+    ins.add_argument("--inproces", action="store_true",
+                     help="laadstraat zonder HTTP en token (eerste installatie in db-init; vereist databasetoegang)")
     t = sub.add_parser("test", help="installeren en de controles tegen de API uitvoeren")
     t.add_argument("naam")
     bw = sub.add_parser("bewijs", help="bewijs maken (nog niet in de uitvoerder)")
@@ -719,7 +791,10 @@ def main(argv=None):
         elif a.cmd == "installeer":
             if not a.namen and not a.alle:
                 p.error("geef een of meer namen, of --alle")
-            installeer(a.namen, a.alle, ucs)
+            fout = mislukt(installeer(a.namen, a.alle, ucs, inproces=a.inproces))
+            if fout:
+                print(f"❌ niet geladen: {', '.join(fout)}")
+                return 1
         elif a.cmd == "test":
             uit = test(a.naam, ucs)
             return 0 if uit is None or all(c["resultaat"] != "fout" for c in uit) else 1
