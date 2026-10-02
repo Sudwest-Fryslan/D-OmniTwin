@@ -8,14 +8,16 @@ Een use case is altijd een **bundel van drie dingen**:
 
 **Werkafspraak:** elke nieuwe functionaliteit krijgt een use case. De use case werkt out of the box (verse installatie, ook zonder AI-sleutel) en wordt automatisch getest. Eerst de use case definiëren (vraag, data, controles), dan bouwen tot hij slaagt. Zie [CONTRIBUTING.md](../CONTRIBUTING.md#use-case-bij-elke-nieuwe-functionaliteit) en [ADR 0003](../docs/2-architectuur/adr/README.md).
 
+**Leidend is de [D-OmniTwin Use Case Specificatie 1.0](../docs/specificaties/usecase/README.md)** ([ADR 0006](../docs/2-architectuur/adr/0006-usecase-als-declaratieve-app.md)): normatief, met de schema's in [`docs/specificaties/usecase/1.0/`](../docs/specificaties/usecase/1.0/usecase.schema.json). Deze README is het overzicht en de index; bij verschil geldt de specificatie.
+
 ## Een use case is een pakket, zonder code
 
 Het manifest (`usecase.json`) is bewust app-achtig: naam, versie, afhankelijkheden, rechten, datasets en controles. **Een use case bevat geen code of uitvoerbare bestanden**, alleen beschrijvingen. Anders wordt een use case (ook een van buiten) een aanvalsvector. Waar data vandaan komt en hoe hij wordt bewerkt, staat declaratief in de use case; de kern voert het uit met een vaste set **bronadapters** en **bewerkingen** (`src/omnitwin/bronadapters/`). Een nieuwe soort bron is een nieuwe kernadapter, via een PR met tests. Het vervolg (use cases als installeerbare apps, uit een catalogus) krijgt een eigen issue.
 
 ```
 usecases/<naam>/
-├── usecase.json          ← manifest: naam (= map), versie, titel, vraag, gebruiker, status,
-│                           afhankelijk_van, rechten, datasets[], controles[]
+├── usecase.json          ← manifest: specificatie, naam (= map), versie, titel, vraag, gebruiker, status,
+│                           afhankelijk_van, actoren, rechten, datasets[], controles[], bewijs
 ├── README.md             ← vraag, gebruiker, stappen, acceptatiecriteria, bewijs, bekende afwijkingen
 ├── datasets/<id>.json    ← per dataset: registratie (DCAT `beschrijving` + `laadprofiel`) en
 │                           `bron`, `bewerkingen`, `levering`, `varianten`
@@ -23,7 +25,7 @@ usecases/<naam>/
 └── bewijs/               ← gevuld door de uitvoerder (screenshots, bewijs.json); niet in git, behalve README.md
 ```
 
-- Schema's: [`usecase.schema.json`](usecase.schema.json) (manifest) en [`dataset.schema.json`](dataset.schema.json) (dataset met het `bron`-blok per adapter). De registratie zelf volgt `DatasetRegistratie` in de [laad-API](../docs/api/laden/openapi.yaml).
+- Schema's: [`usecase.schema.json`](../docs/specificaties/usecase/1.0/usecase.schema.json) (manifest), [`dataset.schema.json`](../docs/specificaties/usecase/1.0/dataset.schema.json) (dataset met het `bron`-blok per adapter) en [`bewijs.schema.json`](../docs/specificaties/usecase/1.0/bewijs.schema.json) (bewijsverslag). De registratie zelf volgt `DatasetRegistratie` in de [laad-API](../docs/api/laden/openapi.yaml).
 - Toegestaan in de map: `.json`, `.md`, `.csv`; in `bewijs/` ook afbeeldingen. De uitvoerder en `tests/test_usecases_uitvoerder.py` keuren andere bestanden af. Uitzondering, uit te faseren naar een kernadapter: `hittestress/maak_data.py`.
 - De demopakketten van vóór 0.3.0 (hieronder zonder status) gebruiken nog de kleinere vorm (`id`, `titel`, `persona`, `data`, `inrichting`, `ai_zoekvraag`, `verwacht`) met `data/waarden.csv`, en laden via `init_data/scripts/laad_usecase.py`.
 

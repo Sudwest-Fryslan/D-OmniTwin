@@ -201,7 +201,7 @@ def fixture_usecases(tmp_path):
     reg["bron"] = {"adapter": "usecase-bestand", "pad": "definities.json"}
     (map_ / "datasets" / "swf-monitor-definities.json").write_text(json.dumps(reg), encoding="utf-8")
     (map_ / "usecase.json").write_text(json.dumps({
-        "naam": "voorbeeld-adapter", "versie": "0.1.0", "titel": "Voorbeeld", "vraag": "?", "gebruiker": "test",
+        "specificatie": "1.0", "naam": "voorbeeld-adapter", "versie": "0.1.0", "titel": "Voorbeeld", "vraag": "?", "gebruiker": "test",
         "status": "ontwerp", "afhankelijk_van": [], "rechten": [],
         "datasets": [{"id": "swf-monitor-definities", "route": "compat", "registratie": "datasets/swf-monitor-definities.json"}],
         "controles": [{"type": "aantal", "dataset": "swf-monitor-definities", "resource": "indicatoren", "gelijk": 1},
