@@ -6,7 +6,7 @@
   "titel": "CBS Kerncijfers wijken en buurten via de laad-API",
   "vraag": "Ik wil de CBS Kerncijfers van alle jaargangen sinds 2019 per buurt in D-OmniTwin, als één dataset die elk jaar met één levering wordt bijgewerkt.",
   "gebruiker": "beheerder D-OmniTwin",
-  "status": "ontwerp",
+  "status": "actief",
   "afhankelijk_van": [
     "cbs-gebiedsindelingen"
   ],
