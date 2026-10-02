@@ -1,8 +1,8 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://github.com/TLaan/D-OmniTwin/blob/main/usecases/dataset.schema.json",
-  "title": "Dataset van een use case (usecases/<naam>/datasets/<id>.json)",
-  "description": "De registratie voor POST /api/laden/v1/datasets (id, bronId, beschrijving, laadprofiel; schema DatasetRegistratie in docs/api/laden/openapi.yaml) plus, alleen voor de uitvoerder: bron (welke bronadapter), bewerkingen (declaratief, geen code), levering (bestandsformaat) en varianten. De uitvoerder stuurt bron, bewerkingen, levering en varianten niet mee naar de API.",
+  "$id": "https://raw.githubusercontent.com/TLaan/D-OmniTwin/main/docs/specificaties/usecase/1.0/dataset.schema.json",
+  "title": "D-OmniTwin Use Case Specificatie 1.0: dataset (usecases/<naam>/datasets/<id>.json)",
+  "description": "Normatief schema; betekenis in docs/specificaties/usecase/README.md. De registratie voor POST /api/laden/v1/datasets (id, bronId, beschrijving, laadprofiel; schema DatasetRegistratie in docs/api/laden/openapi.yaml) plus, alleen voor de uitvoerder: bron (welke bronadapter), bewerkingen (declaratief, geen code), levering (bestandsformaat) en varianten. De uitvoerder stuurt bron, bewerkingen, levering en varianten niet mee naar de API.",
   "type": "object",
   "required": [
     "id",
@@ -257,7 +257,7 @@
       "items": {
         "type": "object"
       },
-      "description": "Declaratieve bewerkingen; zie src/omnitwin/bronadapters/bewerkingen.py."
+      "description": "Declaratieve bewerkingen uit een vaste lijst, elk een object met precies één bewerkingssleutel plus optioneel id en tabel; zie de specificatie en src/omnitwin/bronadapters/bewerkingen.py."
     },
     "levering": {
       "type": "object",

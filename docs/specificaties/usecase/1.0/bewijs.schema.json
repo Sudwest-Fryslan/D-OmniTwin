@@ -1,0 +1,177 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/TLaan/D-OmniTwin/main/docs/specificaties/usecase/1.0/bewijs.schema.json",
+  "title": "D-OmniTwin Use Case Specificatie 1.0: bewijsverslag (usecases/<naam>/bewijs/bewijs.json)",
+  "description": "Normatief schema van het bewijsverslag dat de uitvoerder maakt (python -m omnitwin.usecases bewijs <naam>); betekenis in docs/specificaties/usecase/README.md. Gereserveerd: de uitvoerder maakt dit verslag nog niet (#225). Geen hostnamen, tokens, wachtwoorden of persoonsgegevens.",
+  "type": "object",
+  "required": [
+    "specificatie",
+    "naam",
+    "versie",
+    "omnitwin_versie",
+    "datum",
+    "geslaagd",
+    "controles",
+    "stappen"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "specificatie": {
+      "type": "string",
+      "enum": [
+        "1.0"
+      ],
+      "description": "Versie van de Use Case Specificatie waarmee het verslag is gemaakt."
+    },
+    "naam": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+      "description": "Naam van de use case."
+    },
+    "versie": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+([-+][0-9A-Za-z.-]+)?$",
+      "description": "Versie van de use case."
+    },
+    "omnitwin_versie": {
+      "type": "string",
+      "description": "Versie van D-OmniTwin waartegen het bewijs is gemaakt (VERSION, of /health)."
+    },
+    "datum": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Moment van het maken, ISO 8601 met tijdzone."
+    },
+    "omgeving": {
+      "type": "string",
+      "enum": [
+        "lokaal",
+        "test",
+        "acceptatie"
+      ],
+      "description": "Soort omgeving; nooit een hostnaam."
+    },
+    "ai_aanbieder": {
+      "type": "string",
+      "description": "Naam van de AI-aanbieder of 'geen' (terugval zonder AI-sleutel)."
+    },
+    "geslaagd": {
+      "type": "boolean",
+      "description": "true als geen controle en geen stap het resultaat fout heeft."
+    },
+    "controles": {
+      "type": "array",
+      "description": "Resultaat per controle uit het manifest, in dezelfde volgorde.",
+      "items": {
+        "type": "object",
+        "required": [
+          "type",
+          "resultaat"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "type": {
+            "type": "string",
+            "description": "Type van de controle."
+          },
+          "omschrijving": {
+            "type": "string",
+            "description": "Omschrijving uit het manifest."
+          },
+          "resultaat": {
+            "type": "string",
+            "enum": [
+              "ok",
+              "fout",
+              "overgeslagen"
+            ],
+            "description": "Uitkomst van de controle."
+          },
+          "melding": {
+            "type": "string",
+            "description": "Bij fout of overgeslagen: waarom."
+          }
+        }
+      }
+    },
+    "stappen": {
+      "type": "array",
+      "maxItems": 4,
+      "description": "Resultaat per bewijsstap uit het manifest, in dezelfde volgorde.",
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "resultaat",
+          "afbeelding"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+            "description": "Id van de stap."
+          },
+          "resultaat": {
+            "type": "string",
+            "enum": [
+              "ok",
+              "fout"
+            ],
+            "description": "fout als een tekst uit bevat niet zichtbaar was of de pagina niet laadde."
+          },
+          "afbeelding": {
+            "type": "string",
+            "pattern": "^[a-z0-9]+(-[a-z0-9]+)*\\.webp$",
+            "description": "Bestandsnaam in bewijs/: <id>.webp."
+          },
+          "antwoord": {
+            "type": "string",
+            "description": "actie chat: het antwoord van de assistent."
+          },
+          "antwoordtijd_s": {
+            "type": "number",
+            "description": "Tijd tot het scherm klaar was, in seconden."
+          },
+          "console_fouten": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Foutmeldingen uit de browserconsole."
+          }
+        }
+      }
+    },
+    "leveringen": {
+      "type": "array",
+      "description": "Per dataset de laatste levering van de laad-API.",
+      "items": {
+        "type": "object",
+        "required": [
+          "dataset",
+          "status"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "dataset": {
+            "type": "string",
+            "description": "Id van de dataset."
+          },
+          "status": {
+            "type": "string",
+            "description": "Status van de levering volgens de laad-API (bijv. gepubliceerd)."
+          },
+          "datasetversie": {
+            "type": "integer",
+            "description": "Versie van de dataset na de levering."
+          },
+          "aantallen": {
+            "type": "object",
+            "description": "Aantallen uit de leveringsstatus (bijv. gepubliceerd, afgewezen)."
+          }
+        }
+      }
+    }
+  }
+}
