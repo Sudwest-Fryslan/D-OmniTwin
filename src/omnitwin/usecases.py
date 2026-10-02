@@ -12,6 +12,8 @@ bronadapters (`omnitwin.bronadapters`) en de laad-API-validatie (`omnitwin.laden
     python -m omnitwin.usecases boom <naam>
     python -m omnitwin.usecases index [--controleer]
     python -m omnitwin.usecases controleer <naam> [--uit MAP] [--variant NAAM]
+    python -m omnitwin.usecases installeer <naam> [...] | --alle
+    python -m omnitwin.usecases test <naam>
     python -m omnitwin.usecases bewijs <naam>
 
 `controleer` werkt zonder draaiende stack: manifest, bestanden in de map, afhankelijkheden,
@@ -19,14 +21,23 @@ registraties, en de levering(en) maken en valideren tegen het profiel. Bronnen k
 de omgeving: `SWF_DUMP_DIR`, `SWF_DOCS_DIR`, `SWF_GEO_DIR`, `SWF_DB_DUMP`, `DATA_CACHE`
 (standaard ./data-cache), en open bronnen via https (allowlist in `omnitwin.bronadapters`).
 Ontbreekt een bron, dan is die dataset 'overgeslagen', geen fout.
+
+`installeer` en `test` gebruiken de laad-API (`OMNITWIN_BASE_URL`, standaard http://localhost)
+met een token van een machineclient (client credentials: `OMNITWIN_CLIENT_ID`,
+`OMNITWIN_CLIENT_SECRET`; tokenendpoint `OMNITWIN_TOKEN_URL` of via discovery van realm
+`KEYCLOAK_REALM`, standaard omnitwin). Zolang `/api/laden/v1/openapi.json` er niet is, melden
+ze dat. Demopakketten zonder `datasets` installeert `installeer` via
+`init_data/scripts/laad_usecase.py`, zodat er één ingang is.
 """
 
 import argparse
 import json
 import os
 import re
+import subprocess
 import sys
 import tempfile
+import time
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -408,6 +419,224 @@ def controle_lokaal(c, r):
     return uit
 
 
+# ------------------------------------------------------------------ installeren en testen (laad-API)
+
+LAAD_API = "/api/laden/v1"
+MEDIATYPE = {".zip": "application/zip", ".gpkg": "application/geopackage+sqlite3", ".csv": "text/csv",
+             ".json": "application/json"}
+
+
+def basis_url():
+    return os.environ.get("OMNITWIN_BASE_URL", "http://localhost").rstrip("/")
+
+
+def laad_api_beschikbaar(basis=None):
+    """True als de laad-API zijn specificatie serveert (GET /api/laden/v1/openapi.json → 200)."""
+    import requests
+    try:
+        return requests.get(f"{basis or basis_url()}{LAAD_API}/openapi.json", timeout=10).status_code == 200
+    except requests.RequestException:
+        return False
+
+
+def token(basis=None):
+    """Token voor de machineclient (client credentials) uit OMNITWIN_CLIENT_ID/OMNITWIN_CLIENT_SECRET."""
+    import requests
+    cid, geheim = os.environ.get("OMNITWIN_CLIENT_ID"), os.environ.get("OMNITWIN_CLIENT_SECRET")
+    if not cid or not geheim:
+        raise UseCaseFout("OMNITWIN_CLIENT_ID en OMNITWIN_CLIENT_SECRET (machineclient) zijn niet gezet")
+    url = os.environ.get("OMNITWIN_TOKEN_URL")
+    if not url:
+        realm = os.environ.get("KEYCLOAK_REALM", "omnitwin")
+        disc = requests.get(f"{basis or basis_url()}/auth/realms/{realm}/.well-known/openid-configuration", timeout=30)
+        disc.raise_for_status()
+        url = disc.json()["token_endpoint"]
+    r = requests.post(url, data={"grant_type": "client_credentials"}, auth=(cid, geheim), timeout=30)
+    r.raise_for_status()
+    return r.json()["access_token"]
+
+
+class LaadApi:
+    """Dunne client voor /api/laden/v1, de compat-ingang en de beheer-API."""
+
+    def __init__(self, basis=None, tok=None):
+        import requests
+        self.basis, self.s = basis or basis_url(), requests.Session()
+        self.s.headers["Authorization"] = f"Bearer {tok or token(self.basis)}"
+
+    @staticmethod
+    def _json(r):
+        try:
+            return {"http": r.status_code, **(r.json() if r.content else {})}
+        except ValueError:
+            return {"http": r.status_code, "tekst": r.text[:500]}
+
+    def registreer(self, registratie):
+        url = f"{self.basis}{LAAD_API}/datasets"
+        bestaat = self.s.get(f"{url}/{registratie['id']}", timeout=30).status_code == 200
+        r = (self.s.put(f"{url}/{registratie['id']}", json=registratie, timeout=30) if bestaat
+             else self.s.post(url, json=registratie, timeout=30))
+        r.raise_for_status()
+        return r.json()
+
+    def lever(self, ds_id, pad, route="laden", alleen_valideren=False):
+        import hashlib
+        pad = Path(pad)
+        inhoud = pad.read_bytes()
+        headers = {"Content-Type": MEDIATYPE[pad.suffix],
+                   "Idempotency-Key": f"{ds_id}-{hashlib.sha256(inhoud).hexdigest()[:16]}"}
+        if route == "compat":
+            soort = "indicator/setup" if pad.name == "definities.json" else "indicator_waarde"
+            r = self.s.post(f"{self.basis}{LAAD_API}/compat/swf-monitor/monitor_api/{soort}/inlezen",
+                            data=inhoud, headers=headers, timeout=180)
+        else:
+            r = self.s.post(f"{self.basis}{LAAD_API}/datasets/{ds_id}/leveringen", data=inhoud, headers=headers,
+                            params={"wacht": "true", "alleenValideren": str(alleen_valideren).lower()}, timeout=180)
+        if r.status_code == 202 and r.headers.get("Location"):
+            return self.volg(r.headers["Location"])
+        return self._json(r)
+
+    def volg(self, locatie, maximaal=600):
+        eind = time.time() + maximaal
+        while time.time() < eind:
+            r = self.s.get(locatie if locatie.startswith("http") else f"{self.basis}{locatie}", timeout=30)
+            r.raise_for_status()
+            if r.json().get("status") not in ("ontvangen", "bezig"):
+                return self._json(r)
+            time.sleep(int(r.headers.get("Retry-After", 5)))
+        raise UseCaseFout(f"levering {locatie} niet klaar binnen {maximaal} s")
+
+    def beheer(self, pad_api, bestand):
+        r = self.s.put(f"{self.basis}{pad_api}", data=Path(bestand).read_bytes(),
+                       headers={"Content-Type": MEDIATYPE[Path(bestand).suffix]}, timeout=60)
+        return self._json(r)
+
+
+def bestanden_van(paden):
+    """Leveringsbestanden: een map (swf-json waarden) wordt de JSON-bestanden erin."""
+    uit = []
+    for p in paden:
+        uit += sorted(Path(p).glob("*.json")) if Path(p).is_dir() else [Path(p)]
+    return uit
+
+
+def oude_route(namen):
+    """Demopakketten zonder `datasets`: via laad_usecase.py (directe databasevulling)."""
+    if namen:
+        subprocess.run([sys.executable, str(ROOT / "init_data" / "scripts" / "laad_usecase.py"), *namen], check=True)
+
+
+def installeer_dataset(api, uc, ds, uit, variant=None):
+    """Registreren (route laden/compat), levering maken en leveren. Geeft de status per bestand."""
+    route = ds.get("route", "laden")
+    if route in ("laden", "compat"):
+        api.registreer(registratie_voor_api(lees_dataset(uc, ds)))
+    paden, _ = maak_levering(uc, ds, Path(uit) / ds["id"], variant)
+    if route == "beheer":
+        return [api.beheer(f"{ds['beheerpad']}/{ds['id']}", p) for p in bestanden_van(paden)]
+    return [api.lever(ds["id"], p, route) for p in bestanden_van(paden)]
+
+
+def _kort(res):
+    if isinstance(res, str):
+        return res
+    return ", ".join(str(lv.get("status", lv.get("http"))) for lv in res)
+
+
+def installeer(namen, alle=False, ucs=None, api=None, uit=None, ook_ontwerp=False):
+    """Use cases met afhankelijkheden installeren: demopakketten via laad_usecase.py, use cases met
+    `datasets` via de laad-API. Zonder laad-API: een melding, geen fout. ook_ontwerp: ook use cases
+    met status ontwerp (voor `test`, de acceptatietest van wat nog gebouwd wordt)."""
+    ucs = ucs or lees_usecases()
+    orde, overgeslagen = (volgorde(namen, ucs), {}) if ook_ontwerp else plan(namen, ucs, alle)
+    for n, reden in overgeslagen.items():
+        print(f"⏭️  {n}: overgeslagen ({reden})")
+    oude_route([n for n in orde if not ucs[n].get("datasets")])
+    nieuw = [n for n in orde if ucs[n].get("datasets")]
+    if nieuw and not laad_api_beschikbaar():
+        print(f"⏸️  laad-API nog niet beschikbaar ({basis_url()}{LAAD_API}/openapi.json); niet geïnstalleerd: {', '.join(nieuw)}")
+        return {n: "laad-API nog niet beschikbaar" for n in nieuw}
+    api = api or (LaadApi() if nieuw else None)
+    uit = Path(uit or tempfile.mkdtemp(prefix="usecases-"))
+    resultaat = {}
+    for n in nieuw:
+        resultaat[n] = {}
+        for ds in ucs[n]["datasets"]:
+            try:
+                resultaat[n][ds["id"]] = installeer_dataset(api, ucs[n], ds, uit / n)
+            except LookupError as e:
+                resultaat[n][ds["id"]] = f"overgeslagen: {e}"
+            print(f"📦 {n} / {ds['id']}: {_kort(resultaat[n][ds['id']])}")
+    return resultaat
+
+
+def controle_api(c, api, uc):
+    """Een controle uit het manifest tegen een draaiende installatie. None = geslaagd, anders de melding."""
+    import requests
+    t = c["type"]
+    if t == "api":
+        headers = {} if c.get("anoniem") else dict(api.s.headers)
+        r = requests.get(f"{api.basis}{c['pad']}", headers=headers, timeout=60)
+        if r.status_code != c.get("status", 200):
+            return f"HTTP {r.status_code}, verwacht {c.get('status', 200)}"
+        if c.get("minimaal_aantal") is not None and r.status_code == 200:
+            data = r.json()
+            n = len(data.get("features", data.get("datasets", data.get("indicatoren", [])))) if isinstance(data, dict) else len(data)
+            if n < c["minimaal_aantal"]:
+                return f"{n} resultaten, verwacht ≥ {c['minimaal_aantal']}"
+        return None
+    if t == "aantal":
+        if c.get("resource"):
+            return None  # per resource alleen lokaal (controleer); de API telt de hele levering
+        r = api.s.get(f"{api.basis}{LAAD_API}/datasets/{c['dataset']}", timeout=30)
+        r.raise_for_status()
+        laatste = (r.json().get("laatsteLevering") or {}).get("id")
+        lv = api.s.get(f"{api.basis}{LAAD_API}/leveringen/{laatste}", timeout=30).json()
+        return _vergelijk((lv.get("aantallen") or {}).get("gepubliceerd", 0), c)
+    if t in ("afkeuring", "idempotent"):
+        ds = next(d for d in uc["datasets"] if d["id"] == c["dataset"])
+        route = ds.get("route", "laden")
+        paden, _ = maak_levering(uc, ds, Path(tempfile.mkdtemp()), c.get("variant"))
+        bestanden = bestanden_van(paden)
+        if t == "afkeuring":
+            lv, codes = {}, set()
+            for p in bestanden:
+                lv = api.lever(c["dataset"], p, route, alleen_valideren=route == "laden")
+                codes = {f.get("code") for f in lv.get("fouten", [])}
+                if lv.get("http") == 422 and c["code"] in codes:
+                    return None
+            return f"geen levering afgekeurd met {c['code']} (laatste: HTTP {lv.get('http')}, codes {sorted(x for x in codes if x)})"
+        een, twee = (api.lever(c["dataset"], bestanden[0], route) for _ in range(2))
+        if een.get("versie") != twee.get("versie"):
+            return f"tweede levering gaf versie {twee.get('versie')}, eerste {een.get('versie')}"
+        return None
+    if t in ("chat", "viewer"):
+        return f"overgeslagen: {t}-controles nog niet in de uitvoerder (handmatig, met screenshot in bewijs/)"
+    if t == "bewerking":
+        return None  # lokaal gecontroleerd (controleer)
+    return f"onbekend controletype {t}"
+
+
+def test(naam, ucs=None, api=None):
+    """Installeer de use case (met afhankelijkheden) en voer de controles uit tegen de API.
+    None als de laad-API (nog) niet beschikbaar is."""
+    ucs = ucs or lees_usecases()
+    if "datasets" in ucs[naam] and not laad_api_beschikbaar():
+        print(f"⏸️  laad-API nog niet beschikbaar; {naam} niet getest")
+        return None
+    installeer([naam], ucs=ucs, api=api, ook_ontwerp=True)
+    api = api or LaadApi()
+    uit = []
+    for c in ucs[naam].get("controles", []):
+        melding = controle_api(c, api, ucs[naam])
+        resultaat = "ok" if melding is None else ("overgeslagen" if str(melding).startswith("overgeslagen") else "fout")
+        uit.append({"controle": c, "resultaat": resultaat, "melding": melding})
+        teken = {"ok": "✅", "overgeslagen": "⏭️ ", "fout": "❌"}[resultaat]
+        wat = c.get("omschrijving", c.get("pad", c.get("dataset", c.get("stap", ""))))
+        print(f"{teken} {c['type']}: {wat} {melding or ''}".rstrip())
+    return uit
+
+
 # ------------------------------------------------------------------ CLI
 
 def _print_controle(r):
@@ -446,6 +675,11 @@ def main(argv=None):
     c.add_argument("naam")
     c.add_argument("--uit", help="map voor de leveringen (standaard een tijdelijke map)")
     c.add_argument("--variant", help="variant van de leveringen (zie varianten in datasets/<id>.json)")
+    ins = sub.add_parser("installeer", help="use case(s) met afhankelijkheden installeren (laad-API of laad_usecase.py)")
+    ins.add_argument("namen", nargs="*")
+    ins.add_argument("--alle", action="store_true")
+    t = sub.add_parser("test", help="installeren en de controles tegen de API uitvoeren")
+    t.add_argument("naam")
     bw = sub.add_parser("bewijs", help="bewijs maken (nog niet in de uitvoerder)")
     bw.add_argument("naam")
     a = p.parse_args(argv)
@@ -468,6 +702,13 @@ def main(argv=None):
             r = controleer(a.naam, a.uit, ucs, a.variant)
             _print_controle(r)
             return 0 if r["geldig"] else 1
+        elif a.cmd == "installeer":
+            if not a.namen and not a.alle:
+                p.error("geef een of meer namen, of --alle")
+            installeer(a.namen, a.alle, ucs)
+        elif a.cmd == "test":
+            uit = test(a.naam, ucs)
+            return 0 if uit is None or all(c["resultaat"] != "fout" for c in uit) else 1
         elif a.cmd == "bewijs":
             print("Nog niet in de uitvoerder (vervolg). Bewijs (screenshots, bewijs.json) maken: "
                   f"scripts/docs/maak_usecase_bewijs.py; uitvoer in usecases/{a.naam}/bewijs/ (niet in git).")

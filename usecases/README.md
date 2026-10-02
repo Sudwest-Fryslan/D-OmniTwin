@@ -54,9 +54,13 @@ python -m omnitwin.usecases lijst                  # naam, versie, status, titel
 python -m omnitwin.usecases boom swf-gebiedsmonitor
 python -m omnitwin.usecases index                  # de tabel hieronder bijwerken
 python -m omnitwin.usecases controleer swf-definities [--variant status-a] [--uit /tmp/levering]
+python -m omnitwin.usecases installeer swf-gebiedsmonitor   # met afhankelijkheden; --alle voor alles
+python -m omnitwin.usecases test swf-definities             # installeren + controles tegen de API
 ```
 
-`controleer` werkt nu al, zonder draaiende stack: manifest tegen het schema, bestanden in de map, afhankelijkheden, registraties tegen de laad-API-specificatie, en de levering(en) maken uit de bron en valideren tegen het profiel (Table Schema met frictionless, GeoPackage met fiona). Ontbreekt een bron, dan is die dataset *overgeslagen*. `installeer` en `test` (registreren, leveren en de controles tegen de API) komen in een volgende stap, zodra de laad-API er is.
+`controleer` werkt nu al, zonder draaiende stack: manifest tegen het schema, bestanden in de map, afhankelijkheden, registraties tegen de laad-API-specificatie, en de levering(en) maken uit de bron en valideren tegen het profiel (Table Schema met frictionless, GeoPackage met fiona). Ontbreekt een bron, dan is die dataset *overgeslagen*.
+
+`installeer` en `test` registreren, leveren en controleren tegen een draaiende installatie: `OMNITWIN_BASE_URL` en een machineclient met client credentials (`OMNITWIN_CLIENT_ID`, `OMNITWIN_CLIENT_SECRET`). Zolang de laad-API er niet is (`/api/laden/v1/openapi.json`), melden ze dat. Demopakketten zonder `datasets` installeert `installeer` via `laad_usecase.py`, zodat er één ingang is. De acceptatietests per use case (`tests/integration/test_usecase_<naam>.py`) doen hetzelfde en slaan zichzelf over zolang de laad-API, een bron of de machineclient ontbreekt.
 
 De demopakketten laden zoals altijd: `python init_data/scripts/laad_usecase.py <naam> [...]` of `--alle` (ook bij een verse installatie met `LOAD_SAMPLE_DATA=true`). Dat script gebruikt dezelfde volgorde en slaat use cases met `datasets` over.
 
