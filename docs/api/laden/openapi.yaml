@@ -1,0 +1,1970 @@
+openapi: 3.0.3
+info:
+  title: D-OmniTwin Laad-API
+  version: 1.0.0-concept
+  description: |
+    Datasets registreren en leveringen laden in D-OmniTwin.
+
+    **Status: ontwerp.** Deze specificatie beschrijft het doel voor 0.3.0. Er is nog geen
+    implementatie. Besluiten: ADR 0004 (vullen via registratie en leveringen) en ADR 0005
+    (gescheiden API's per doel). Zie `docs/api/laden/README.md`.
+
+    Model in het kort:
+
+    1. **Registreren** (`POST /datasets`): wat is de dataset (DCAT-AP-NL/GeoDCAT-AP, JSON-LD)
+       en hoe wordt hij geladen (het laadprofiel: profiel, sleutel, n-drempel, vervangbereik).
+    2. **Leveren** (`POST /datasets/{datasetId}/leveringen`): een volledige snapshot als
+       GeoPackage, Data Package-zip, CSV of JSON. D-OmniTwin bewaart het bestand ongewijzigd
+       (met sha256), valideert, laadt in staging en publiceert in één transactie als nieuwe
+       versie. Bij een fout blijft de vorige versie actief.
+    3. **Volgen** (`GET /leveringen/{leveringId}`): status, aantallen, versie en fouten per regel.
+
+    Alleen modus `vervangen` in v1. Conventies: NL GOV REST API Design Rules 2.1, foutmeldingen
+    als Problem Details (RFC 9457), elke response heeft de header `API-Version`.
+
+    Rechten komen uit Keycloak (OIDC, realm `omnitwin`, issuer `https://{host}/auth/realms/omnitwin`).
+    De "scopes" in deze specificatie zijn rollen, geen OAuth-scopes:
+
+    - client-rollen op de resource-client `omnitwin-api` (in het token onder
+      `resource_access.omnitwin-api.roles`): `datasets:laden` (alle datasets) en
+      `dataset:{datasetId}:laden` (één dataset);
+    - de realm-rol `beheerder` (onder `realm_access.roles`): registreren en alles lezen.
+
+    Het token moet `omnitwin-api` in `aud` hebben.
+  contact:
+    name: Beheerteam D-OmniTwin (Súdwest-Fryslân, Geo-groep)
+    email: geo-groep@sudwestfryslan.nl
+    url: https://github.com/TLaan/D-OmniTwin
+  license:
+    name: EUPL-1.2
+    url: https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
+servers:
+  - url: https://{host}/api/laden/v1
+    description: Installatie van D-OmniTwin. Elke organisatie draait een eigen installatie.
+    variables:
+      host:
+        default: omnitwin.example.nl
+        description: Hostnaam van de installatie.
+tags:
+  - name: Datasets
+    description: Registratie van datasets (DCAT-AP-NL met laadprofiel).
+  - name: Leveringen
+    description: Leveringen aanbieden en volgen.
+  - name: Profielen
+    description: De contracten waaraan een levering moet voldoen.
+  - name: Compatibiliteit SWF-monitor
+    description: |
+      Tijdelijke ingang die de huidige push-API van de SWF-gebiedsmonitor spiegelt (adapter
+      `swf-monitor-v1`). Een bestaande FME-workspace wijzigt alleen de basis-URL en de client.
+      Elke aanroep wordt intern een gewone levering op dataset `swf-monitor-definities` of
+      `swf-monitor-waarden`. Vervalt in v2; nieuwe koppelingen gebruiken `/datasets/.../leveringen`.
+  - name: Specificatie
+    description: Deze OpenAPI-specificatie.
+security:
+  - oauth2:
+      - beheerder
+  - oauth2:
+      - datasets:laden
+  - oauth2:
+      - dataset:{datasetId}:laden
+paths:
+  /openapi.json:
+    get:
+      tags: [Specificatie]
+      operationId: haalSpecificatie
+      summary: Deze specificatie als JSON
+      description: Deze OpenAPI-specificatie, zonder authenticatie en met CORS open (NL GOV ADR /core/publish-openapi).
+      security: []
+      responses:
+        "200":
+          description: De OpenAPI-specificatie.
+          headers:
+            API-Version:
+              $ref: "#/components/headers/ApiVersion"
+            access-control-allow-origin:
+              description: Altijd `*` (NL GOV ADR /core/publish-openapi).
+              schema:
+                type: string
+                example: "*"
+          content:
+            application/json:
+              schema:
+                type: object
+
+  /profielen:
+    get:
+      tags: [Profielen]
+      operationId: lijstProfielen
+      summary: Beschikbare profielen
+      description: Profielen (contracten) waarin een dataset geleverd kan worden.
+      security: []
+      responses:
+        "200":
+          description: Lijst van profielen.
+          headers:
+            API-Version:
+              $ref: "#/components/headers/ApiVersion"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  profielen:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Profiel"
+        "500":
+          $ref: "#/components/responses/ServerFout"
+
+  /profielen/{profielId}:
+    get:
+      tags: [Profielen]
+      operationId: haalProfiel
+      summary: Eén profiel met zijn Table Schema('s)
+      description: Het profiel met zijn Table Schema('s), mediatypes en adapters. Zie ook `docs/api/laden/profielen/`.
+      security: []
+      parameters:
+        - name: profielId
+          in: path
+          required: true
+          schema:
+            $ref: "#/components/schemas/ProfielCode"
+      responses:
+        "200":
+          description: Het profiel.
+          headers:
+            API-Version:
+              $ref: "#/components/headers/ApiVersion"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Profiel"
+        "404":
+          $ref: "#/components/responses/NietGevonden"
+
+  /datasets:
+    get:
+      tags: [Datasets]
+      operationId: lijstDatasets
+      summary: Geregistreerde datasets
+      description: Alle datasets met `beheerder` of `datasets:laden`; anders alleen de datasets waarvoor de client een rol `dataset:{datasetId}:laden` heeft.
+      parameters:
+        - name: profiel
+          in: query
+          required: false
+          schema:
+            $ref: "#/components/schemas/ProfielCode"
+        - $ref: "#/components/parameters/Pagina"
+        - $ref: "#/components/parameters/PaginaGrootte"
+      responses:
+        "200":
+          description: Pagina met datasets.
+          headers:
+            API-Version:
+              $ref: "#/components/headers/ApiVersion"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DatasetPagina"
+        "401":
+          $ref: "#/components/responses/NietGeauthenticeerd"
+        "403":
+          $ref: "#/components/responses/GeenToegang"
+    post:
+      tags: [Datasets]
+      operationId: registreerDataset
+      summary: Dataset registreren
+      description: |
+        Legt vast wat de dataset is (`beschrijving`, DCAT-AP-NL/GeoDCAT-AP als JSON-LD) en hoe hij
+        geladen wordt (`laadprofiel`). DCAT beschrijft de dataset, niet het laden: laadinstructies
+        staan alleen in `laadprofiel`. Na registratie maakt de beheerder in Keycloak de client-rol
+        `dataset:{datasetId}:laden` op `omnitwin-api` aan en kent die toe aan de leverende client.
+      security:
+        - oauth2:
+            - beheerder
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DatasetRegistratie"
+            examples:
+              waarnemingen:
+                $ref: "#/components/examples/RegistratieWaarnemingen"
+              kaartlaag:
+                $ref: "#/components/examples/RegistratieKaartlaag"
+      responses:
+        "201":
+          description: Geregistreerd.
+          headers:
+            API-Version:
+              $ref: "#/components/headers/ApiVersion"
+            Location:
+              $ref: "#/components/headers/Location"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Dataset"
+        "400":
+          $ref: "#/components/responses/OngeldigVerzoek"
+        "401":
+          $ref: "#/components/responses/NietGeauthenticeerd"
+        "403":
+          $ref: "#/components/responses/GeenToegang"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "422":
+          $ref: "#/components/responses/NietVerwerkbaar"
+
+  /datasets/{datasetId}:
+    parameters:
+      - $ref: "#/components/parameters/DatasetId"
+    get:
+      tags: [Datasets]
+      operationId: haalDataset
+      summary: Dataset met actuele versie en laatste levering
+      description: Registratie (beschrijving en laadprofiel), het nummer van de actuele versie en de laatste levering.
+      security:
+        - oauth2:
+            - beheerder
+        - oauth2:
+            - datasets:laden
+        - oauth2:
+            - dataset:{datasetId}:laden
+      responses:
+        "200":
+          description: De dataset.
+          headers:
+            API-Version:
+              $ref: "#/components/headers/ApiVersion"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Dataset"
+        "401":
+          $ref: "#/components/responses/NietGeauthenticeerd"
+        "403":
+          $ref: "#/components/responses/GeenToegang"
+        "404":
+          $ref: "#/components/responses/NietGevonden"
+    put:
+      tags: [Datasets]
+      operationId: vervangDataset
+      summary: Registratie vervangen
+      description: |
+        Vervangt beschrijving en laadprofiel. Het profiel (`laadprofiel.profiel`) en de
+        sleutelvelden zijn na de eerste geslaagde levering niet meer te wijzigen (409);
+        registreer dan een nieuwe dataset.
+      security:
+        - oauth2:
+            - beheerder
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DatasetRegistratie"
+      responses:
+        "200":
+          description: Vervangen.
+          headers:
+            API-Version:
+              $ref: "#/components/headers/ApiVersion"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Dataset"
+        "400":
+          $ref: "#/components/responses/OngeldigVerzoek"
+        "401":
+          $ref: "#/components/responses/NietGeauthenticeerd"
+        "403":
+          $ref: "#/components/responses/GeenToegang"
+        "404":
+          $ref: "#/components/responses/NietGevonden"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "422":
+          $ref: "#/components/responses/NietVerwerkbaar"
+    patch:
+      tags: [Datasets]
+      operationId: wijzigDataset
+      summary: Beschrijving deels wijzigen
+      description: JSON Merge Patch (RFC 7396). Zelfde beperkingen als PUT.
+      security:
+        - oauth2:
+            - beheerder
+      requestBody:
+        required: true
+        content:
+          application/merge-patch+json:
+            schema:
+              type: object
+            example:
+              beschrijving:
+                dct:description: Waarden van de basismonitor, jaarlijks ververst.
+      responses:
+        "200":
+          description: Gewijzigd.
+          headers:
+            API-Version:
+              $ref: "#/components/headers/ApiVersion"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Dataset"
+        "400":
+          $ref: "#/components/responses/OngeldigVerzoek"
+        "401":
+          $ref: "#/components/responses/NietGeauthenticeerd"
+        "403":
+          $ref: "#/components/responses/GeenToegang"
+        "404":
+          $ref: "#/components/responses/NietGevonden"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "415":
+          $ref: "#/components/responses/MediatypeNietOndersteund"
+
+  /datasets/{datasetId}/leveringen:
+    parameters:
+      - $ref: "#/components/parameters/DatasetId"
+    post:
+      tags: [Leveringen]
+      operationId: leverDataset
+      summary: Levering aanbieden (volledige snapshot)
+      description: |
+        Biedt een volledige snapshot van de dataset aan. Verwerking:
+
+        1. **ruw bewaren**: het bestand ongewijzigd opslaan met sha256;
+        2. **valideren**: pakket/GeoPackage geldig, schema volgens profiel, CRS, codes bestaan,
+           dubbele sleutels, plausibel aantal regels, n-drempel;
+        3. **staging**: laden in een stagingtabel;
+        4. **publiceren**: in één transactie de vorige inhoud binnen het vervangbereik
+           vervangen; dit wordt een nieuwe versie.
+
+        Bij een fout wordt niets gepubliceerd en blijft de vorige versie actief.
+
+        Standaard asynchroon: `202` met `Location` naar de levering. Met `wacht=true` wacht de
+        server tot de levering klaar is of de time-out (standaard 60 s) verstrijkt: dan `201`
+        (gepubliceerd of gevalideerd), `422` (afgekeurd) of, bij time-out, alsnog `202`.
+
+        **Idempotentie:** stuur `Idempotency-Key` mee (aanbevolen: `{datasetId}-{peilmoment}`).
+        Dezelfde sleutel met dezelfde inhoud binnen 7 dagen geeft de bestaande levering terug
+        (`200`), zonder tweede publicatie. Dezelfde sleutel met andere inhoud geeft `422`.
+        Zonder sleutel geldt de sha256 van het bestand: een bestand dat gelijk is aan de
+        actuele versie wordt geregistreerd maar levert geen nieuwe versie op.
+
+        Leveringen op één dataset worden na elkaar verwerkt.
+      security:
+        - oauth2:
+            - datasets:laden
+        - oauth2:
+            - dataset:{datasetId}:laden
+      parameters:
+        - name: modus
+          in: query
+          required: false
+          description: Laadmodus. In v1 alleen `vervangen`.
+          schema:
+            type: string
+            enum: [vervangen]
+            default: vervangen
+        - name: alleenValideren
+          in: query
+          required: false
+          description: Alleen valideren, niet publiceren. Eindstatus `gevalideerd` of `afgekeurd`.
+          schema:
+            type: boolean
+            default: false
+        - name: wacht
+          in: query
+          required: false
+          description: Synchroon wachten op het resultaat, tot de time-out van de installatie.
+          schema:
+            type: boolean
+            default: false
+        - $ref: "#/components/parameters/IdempotencyKey"
+        - name: Content-Digest
+          in: header
+          required: false
+          description: Optioneel, RFC 9530. Afwijking van de berekende sha256 geeft `400`.
+          schema:
+            type: string
+            example: "sha-256=:X48E9qOokqqrvdts8nOJRJN3OWDUoyWxBf7kbu9DBPE=:"
+      requestBody:
+        required: true
+        description: |
+          Eén bestand. Welke vorm past, hangt af van het profiel van de dataset:
+
+          | Mediatype | Wat | Profielen |
+          |---|---|---|
+          | `application/geopackage+sqlite3` | GeoPackage 1.4 (.gpkg) | alle |
+          | `application/zip` | Frictionless Data Package: `datapackage.json` met CSV- of GeoPackage-resources, optioneel `dcat.jsonld` | alle |
+          | `text/csv` | één tabel volgens het Table Schema (UTF-8, komma, kopregel) | waarnemingen |
+          | `application/json` | array van regels volgens het Table Schema, of het formaat van de adapter | waarnemingen, definities |
+          | `multipart/form-data` | deel `bestand` (een van de vormen hierboven) en optioneel deel `dcat` (JSON-LD) | alle |
+
+          Een meegeleverde `dcat.jsonld` werkt na een geslaagde publicatie de beschrijving van de
+          dataset bij (bijv. `dct:temporal`); `dct:modified` en de distributie zet D-OmniTwin zelf.
+        content:
+          application/geopackage+sqlite3:
+            schema:
+              type: string
+              format: binary
+          application/zip:
+            schema:
+              type: string
+              format: binary
+          text/csv:
+            schema:
+              type: string
+            example: |
+              gebied_code,gebiedstype,indicator_uuid,jaar,peildatum,scenario,waarde,n,kwaliteit,bron
+              BU19000002,CBS_BUURT,00000000-0000-4000-8000-000000000001,2025,,current,12.34,148,definitief,Enquête leefbaarheid 2025
+              BU19000003,CBS_BUURT,00000000-0000-4000-8000-000000000001,2025,,current,9.80,7,definitief,Enquête leefbaarheid 2025
+          application/json:
+            schema:
+              oneOf:
+                - type: array
+                  items:
+                    $ref: "#/components/schemas/Waarneming"
+                - type: array
+                  items:
+                    $ref: "#/components/schemas/SwfWaarde"
+                - $ref: "#/components/schemas/SwfDefinities"
+            examples:
+              waarnemingen:
+                $ref: "#/components/examples/WaarnemingenJson"
+              swfWaarden:
+                $ref: "#/components/examples/SwfWaarden"
+          multipart/form-data:
+            schema:
+              type: object
+              required: [bestand]
+              properties:
+                bestand:
+                  type: string
+                  format: binary
+                  description: Het leveringsbestand.
+                dcat:
+                  type: string
+                  format: binary
+                  description: Optioneel `dcat.jsonld` (DCAT-AP-NL/GeoDCAT-AP).
+            encoding:
+              bestand:
+                contentType: application/geopackage+sqlite3, application/zip, text/csv, application/json
+              dcat:
+                contentType: application/ld+json
+      responses:
+        "200":
+          description: Herhaalde aanroep met dezelfde `Idempotency-Key`; de bestaande levering.
+          headers:
+            API-Version:
+              $ref: "#/components/headers/ApiVersion"
+            Location:
+              $ref: "#/components/headers/Location"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Levering"
+        "201":
+          description: Met `wacht=true`, klaar binnen de time-out (status `gepubliceerd` of `gevalideerd`).
+          headers:
+            API-Version:
+              $ref: "#/components/headers/ApiVersion"
+            Location:
+              $ref: "#/components/headers/Location"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Levering"
+              examples:
+                gepubliceerd:
+                  $ref: "#/components/examples/LeveringGepubliceerd"
+        "202":
+          description: Ontvangen; verwerking loopt. Volg de levering via `Location`.
+          headers:
+            API-Version:
+              $ref: "#/components/headers/ApiVersion"
+            Location:
+              $ref: "#/components/headers/Location"
+            Retry-After:
+              $ref: "#/components/headers/RetryAfter"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Levering"
+              examples:
+                ontvangen:
+                  $ref: "#/components/examples/LeveringOntvangen"
+        "400":
+          $ref: "#/components/responses/OngeldigVerzoek"
+        "401":
+          $ref: "#/components/responses/NietGeauthenticeerd"
+        "403":
+          $ref: "#/components/responses/GeenToegang"
+        "404":
+          $ref: "#/components/responses/NietGevonden"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "413":
+          $ref: "#/components/responses/TeGroot"
+        "415":
+          $ref: "#/components/responses/MediatypeNietOndersteund"
+        "422":
+          description: |
+            Afgekeurd (met `wacht=true`), of `Idempotency-Key` hergebruikt met andere inhoud.
+            Bij afkeuring bevat het probleem de link naar de levering en de fouten per regel.
+          headers:
+            API-Version:
+              $ref: "#/components/headers/ApiVersion"
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Probleem"
+              examples:
+                afgekeurd:
+                  $ref: "#/components/examples/ProbleemAfgekeurd"
+        "429":
+          $ref: "#/components/responses/TeVeelVerzoeken"
+        "503":
+          $ref: "#/components/responses/NietBeschikbaar"
+    get:
+      tags: [Leveringen]
+      operationId: lijstLeveringen
+      summary: Leveringshistorie van een dataset
+      description: Alle leveringen op deze dataset, ook afgekeurde en alleen-valideren, nieuwste eerst.
+      security:
+        - oauth2:
+            - beheerder
+        - oauth2:
+            - datasets:laden
+        - oauth2:
+            - dataset:{datasetId}:laden
+      parameters:
+        - name: status
+          in: query
+          required: false
+          schema:
+            $ref: "#/components/schemas/LeveringStatus"
+        - name: sinds
+          in: query
+          required: false
+          description: Alleen leveringen ontvangen op of na dit moment (RFC 3339).
+          schema:
+            type: string
+            format: date-time
+        - $ref: "#/components/parameters/Pagina"
+        - $ref: "#/components/parameters/PaginaGrootte"
+      responses:
+        "200":
+          description: Pagina met leveringen, nieuwste eerst, zonder de foutenlijst.
+          headers:
+            API-Version:
+              $ref: "#/components/headers/ApiVersion"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LeveringPagina"
+        "401":
+          $ref: "#/components/responses/NietGeauthenticeerd"
+        "403":
+          $ref: "#/components/responses/GeenToegang"
+        "404":
+          $ref: "#/components/responses/NietGevonden"
+
+  /datasets/{datasetId}/versies:
+    parameters:
+      - $ref: "#/components/parameters/DatasetId"
+    get:
+      tags: [Datasets]
+      operationId: lijstVersies
+      summary: Gepubliceerde versies van een dataset
+      description: Elke geslaagde publicatie is een versie. De vorige versies blijven als bestand bewaard volgens de bewaartermijn van de installatie.
+      security:
+        - oauth2:
+            - beheerder
+        - oauth2:
+            - datasets:laden
+        - oauth2:
+            - dataset:{datasetId}:laden
+      parameters:
+        - $ref: "#/components/parameters/Pagina"
+        - $ref: "#/components/parameters/PaginaGrootte"
+      responses:
+        "200":
+          description: Pagina met versies, nieuwste eerst.
+          headers:
+            API-Version:
+              $ref: "#/components/headers/ApiVersion"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VersiePagina"
+        "401":
+          $ref: "#/components/responses/NietGeauthenticeerd"
+        "403":
+          $ref: "#/components/responses/GeenToegang"
+        "404":
+          $ref: "#/components/responses/NietGevonden"
+
+  /datasets/{datasetId}/versies/{versie}/bestand:
+    parameters:
+      - $ref: "#/components/parameters/DatasetId"
+      - name: versie
+        in: path
+        required: true
+        description: Versienummer, of `actueel`.
+        schema:
+          type: string
+          pattern: "^([1-9][0-9]*|actueel)$"
+    get:
+      tags: [Datasets]
+      operationId: haalVersieBestand
+      summary: Het geleverde bestand van een versie (export, back-up)
+      description: |
+        Geeft het ruw bewaarde bestand van de levering die deze versie werd, byte voor byte, met
+        het oorspronkelijke mediatype. Dit is de tegenhanger van het lezen-voor-back-up in de
+        huidige SWF-monitor. Bij een vervangbereik kleiner dan de hele dataset bestaat een versie
+        uit meerdere leveringen; dan volgt `409` en gebruik je `/versies` en per levering de link
+        `bestand`.
+      security:
+        - oauth2:
+            - beheerder
+        - oauth2:
+            - datasets:laden
+        - oauth2:
+            - dataset:{datasetId}:laden
+      responses:
+        "200":
+          description: Het bestand.
+          headers:
+            API-Version:
+              $ref: "#/components/headers/ApiVersion"
+            Content-Digest:
+              description: sha-256 van het bestand (RFC 9530).
+              schema:
+                type: string
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+        "401":
+          $ref: "#/components/responses/NietGeauthenticeerd"
+        "403":
+          $ref: "#/components/responses/GeenToegang"
+        "404":
+          $ref: "#/components/responses/NietGevonden"
+        "409":
+          $ref: "#/components/responses/Conflict"
+
+  /leveringen/{leveringId}:
+    parameters:
+      - name: leveringId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    get:
+      tags: [Leveringen]
+      operationId: haalLevering
+      summary: Status van een levering
+      description: |
+        Status, aantallen, versie, sha256 en de eerste 1000 fouten als Problem Details. Vast veld
+        `status`, zodat een ETL-tool (FME) eenvoudig kan pollen. Zolang de levering loopt, staat
+        er een `Retry-After` in de response.
+      security:
+        - oauth2:
+            - beheerder
+        - oauth2:
+            - datasets:laden
+        - oauth2:
+            - dataset:{datasetId}:laden
+      responses:
+        "200":
+          description: De levering.
+          headers:
+            API-Version:
+              $ref: "#/components/headers/ApiVersion"
+            Retry-After:
+              $ref: "#/components/headers/RetryAfter"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Levering"
+              examples:
+                gepubliceerd:
+                  $ref: "#/components/examples/LeveringGepubliceerd"
+                afgekeurd:
+                  $ref: "#/components/examples/LeveringAfgekeurd"
+        "401":
+          $ref: "#/components/responses/NietGeauthenticeerd"
+        "403":
+          $ref: "#/components/responses/GeenToegang"
+        "404":
+          $ref: "#/components/responses/NietGevonden"
+
+  /compat/swf-monitor/monitor_api/indicator/setup/inlezen:
+    post:
+      tags: [Compatibiliteit SWF-monitor]
+      operationId: swfDefinitiesInlezen
+      summary: Definities inlezen (huidig SWF-formaat)
+      description: |
+        Spiegel van `POST /monitor_api/indicator/setup/inlezen`. Body: het huidige
+        definities-snapshot (indicatoren, gebiedstypen, relaties). Wordt een levering
+        `vervangen` op dataset `swf-monitor-definities`, profiel `definities`, adapter
+        `swf-monitor-v1`. Altijd synchroon (time-out 120 s). Zie
+        `docs/api/laden/profielen/swf-monitor-v1.md` voor de mapping.
+      security:
+        - oauth2:
+            - dataset:swf-monitor-definities:laden
+        - oauth2:
+            - datasets:laden
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SwfDefinities"
+            examples:
+              definities:
+                $ref: "#/components/examples/SwfDefinities"
+      responses:
+        "200":
+          description: Gepubliceerd.
+          headers:
+            API-Version:
+              $ref: "#/components/headers/ApiVersion"
+            Location:
+              $ref: "#/components/headers/Location"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SwfInleesResultaat"
+        "202":
+          description: Time-out verstreken; de levering loopt nog. Volg `Location`.
+          headers:
+            API-Version:
+              $ref: "#/components/headers/ApiVersion"
+            Location:
+              $ref: "#/components/headers/Location"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SwfInleesResultaat"
+        "400":
+          $ref: "#/components/responses/OngeldigVerzoek"
+        "401":
+          $ref: "#/components/responses/NietGeauthenticeerd"
+        "403":
+          $ref: "#/components/responses/GeenToegang"
+        "413":
+          $ref: "#/components/responses/TeGroot"
+        "422":
+          $ref: "#/components/responses/NietVerwerkbaar"
+        "429":
+          $ref: "#/components/responses/TeVeelVerzoeken"
+
+  /compat/swf-monitor/monitor_api/indicator/setup:
+    get:
+      tags: [Compatibiliteit SWF-monitor]
+      operationId: swfDefinitiesLezen
+      summary: Definities terug (back-up, huidig SWF-formaat)
+      description: |
+        Spiegel van `GET /monitor_api/indicator/setup`: de actuele versie van
+        `swf-monitor-definities` in hetzelfde formaat als het inlezen.
+      security:
+        - oauth2:
+            - dataset:swf-monitor-definities:laden
+        - oauth2:
+            - datasets:laden
+        - oauth2:
+            - beheerder
+      responses:
+        "200":
+          description: De definities.
+          headers:
+            API-Version:
+              $ref: "#/components/headers/ApiVersion"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SwfDefinities"
+        "401":
+          $ref: "#/components/responses/NietGeauthenticeerd"
+        "403":
+          $ref: "#/components/responses/GeenToegang"
+        "404":
+          $ref: "#/components/responses/NietGevonden"
+
+  /compat/swf-monitor/monitor_api/indicator_waarde/inlezen:
+    post:
+      tags: [Compatibiliteit SWF-monitor]
+      operationId: swfWaardenInlezen
+      summary: Waarden inlezen (huidig SWF-formaat)
+      description: |
+        Spiegel van `POST /monitor_api/indicator_waarde/inlezen`. Body: array van waarden, zoals
+        nu één indicator × gebiedstype per aanroep. Wordt een levering `vervangen` op dataset
+        `swf-monitor-waarden` (profiel `waarnemingen`, adapter `swf-monitor-v1`) met vervangbereik
+        indicator × gebiedstype: alleen de combinaties in de body worden vervangen. Altijd
+        synchroon (time-out 120 s).
+      security:
+        - oauth2:
+            - dataset:swf-monitor-waarden:laden
+        - oauth2:
+            - datasets:laden
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: "#/components/schemas/SwfWaarde"
+            examples:
+              waarden:
+                $ref: "#/components/examples/SwfWaarden"
+      responses:
+        "200":
+          description: Gepubliceerd.
+          headers:
+            API-Version:
+              $ref: "#/components/headers/ApiVersion"
+            Location:
+              $ref: "#/components/headers/Location"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SwfInleesResultaat"
+              examples:
+                resultaat:
+                  $ref: "#/components/examples/SwfInleesResultaat"
+        "202":
+          description: Time-out verstreken; de levering loopt nog. Volg `Location`.
+          headers:
+            API-Version:
+              $ref: "#/components/headers/ApiVersion"
+            Location:
+              $ref: "#/components/headers/Location"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SwfInleesResultaat"
+        "400":
+          $ref: "#/components/responses/OngeldigVerzoek"
+        "401":
+          $ref: "#/components/responses/NietGeauthenticeerd"
+        "403":
+          $ref: "#/components/responses/GeenToegang"
+        "413":
+          $ref: "#/components/responses/TeGroot"
+        "422":
+          $ref: "#/components/responses/NietVerwerkbaar"
+        "429":
+          $ref: "#/components/responses/TeVeelVerzoeken"
+
+  /compat/swf-monitor/monitor_api/indicator_waarde:
+    get:
+      tags: [Compatibiliteit SWF-monitor]
+      operationId: swfWaardenLezen
+      summary: Alle waarden terug (huidig SWF-formaat)
+      description: |
+        Spiegel van `GET /monitor_api/indicator_waarde`: de actuele versie van
+        `swf-monitor-waarden` als `indicator_id`, `gebiedstype_id`, `gebieds_id`, `jaar`, `waarde`.
+        Waarden die D-OmniTwin onderdrukt heeft, staan er niet in.
+      security:
+        - oauth2:
+            - dataset:swf-monitor-waarden:laden
+        - oauth2:
+            - datasets:laden
+        - oauth2:
+            - beheerder
+      responses:
+        "200":
+          description: De waarden.
+          headers:
+            API-Version:
+              $ref: "#/components/headers/ApiVersion"
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/SwfWaardeTerug"
+        "401":
+          $ref: "#/components/responses/NietGeauthenticeerd"
+        "403":
+          $ref: "#/components/responses/GeenToegang"
+
+  /compat/swf-monitor/monitor_api/indicator_waarde/{indicator_id}:
+    get:
+      tags: [Compatibiliteit SWF-monitor]
+      operationId: swfWaardenIndicatorLezen
+      summary: Waarden van één indicator terug (huidig SWF-formaat)
+      description: Spiegel van `GET /monitor_api/indicator_waarde/{indicator_id}`.
+      security:
+        - oauth2:
+            - dataset:swf-monitor-waarden:laden
+        - oauth2:
+            - datasets:laden
+        - oauth2:
+            - beheerder
+      parameters:
+        - name: indicator_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: De waarden van deze indicator.
+          headers:
+            API-Version:
+              $ref: "#/components/headers/ApiVersion"
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/SwfWaardeTerug"
+        "401":
+          $ref: "#/components/responses/NietGeauthenticeerd"
+        "403":
+          $ref: "#/components/responses/GeenToegang"
+        "404":
+          $ref: "#/components/responses/NietGevonden"
+
+components:
+  securitySchemes:
+    oauth2:
+      type: oauth2
+      description: |
+        Keycloak (OpenID Connect), realm `omnitwin` onder `/auth`. De URL's hieronder gaan uit van
+        de voorbeeldhost; de echte staan in `/auth/realms/omnitwin/.well-known/openid-configuration`.
+
+        - **Machines** (ETL, FME): grant `client_credentials` met een eigen confidential client
+          per afnemer (voorbeeld: `etl-voorbeeld`). Clientauthenticatie nu `client_secret_post` of
+          `client_secret_basic` (FME); `private_key_jwt` (NL GOV OAuth-profiel) volgt en wordt dan
+          de voorkeur. Token 5 minuten geldig, zonder refresh-token.
+        - **Mensen** (beheer-UI): authorization code met PKCE (S256) via de public client
+          `omnitwin-web`.
+
+        `aud` moet `omnitwin-api` bevatten. Client-rollen van `omnitwin-api` staan in
+        `resource_access`, realm-rollen (`beheerder`, `lezer`) in `realm_access`.
+      flows:
+        clientCredentials:
+          tokenUrl: https://omnitwin.example.nl/auth/realms/omnitwin/protocol/openid-connect/token
+          scopes:
+            datasets:laden: Client-rol op omnitwin-api. Leveren aan, en lezen van, alle datasets.
+            dataset:{datasetId}:laden: Client-rol op omnitwin-api, één per dataset (bijv. `dataset:voorbeeld:laden`). Leveren aan, en lezen van, die dataset.
+            dataset:swf-monitor-definities:laden: Datasetrol voor de compatibiliteitsingang (definities).
+            dataset:swf-monitor-waarden:laden: Datasetrol voor de compatibiliteitsingang (waarden).
+            beheerder: Realm-rol. Datasets registreren en wijzigen, alles lezen.
+        authorizationCode:
+          authorizationUrl: https://omnitwin.example.nl/auth/realms/omnitwin/protocol/openid-connect/auth
+          tokenUrl: https://omnitwin.example.nl/auth/realms/omnitwin/protocol/openid-connect/token
+          scopes:
+            beheerder: Realm-rol. Datasets registreren en wijzigen, alles lezen.
+
+  headers:
+    ApiVersion:
+      description: Volledige versie van deze API (NL GOV ADR /core/version-header).
+      schema:
+        type: string
+        example: 1.0.0
+    Location:
+      description: URI van de aangemaakte of gevolgde resource.
+      schema:
+        type: string
+        format: uri-reference
+        example: /api/laden/v1/leveringen/7c1d2c4e-5b0a-4f7e-9a51-2f7f1d0c9e11
+    RetryAfter:
+      description: Aantal seconden waarna opnieuw vragen zin heeft.
+      schema:
+        type: integer
+        example: 5
+
+  parameters:
+    DatasetId:
+      name: datasetId
+      in: path
+      required: true
+      description: Stabiele, door de registrerende partij gekozen code (kebab-case).
+      schema:
+        $ref: "#/components/schemas/DatasetId"
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: false
+      description: |
+        Unieke sleutel per bedoelde levering (IETF draft-ietf-httpapi-idempotency-key-header).
+        Aanbevolen vorm: `{datasetId}-{peilmoment}`, bijv. `swf-monitor-waarden-2025-12`.
+        Bewaard voor 7 dagen.
+      schema:
+        type: string
+        maxLength: 255
+    Pagina:
+      name: pagina
+      in: query
+      required: false
+      schema:
+        type: integer
+        minimum: 1
+        default: 1
+    PaginaGrootte:
+      name: paginaGrootte
+      in: query
+      required: false
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 20
+
+  responses:
+    OngeldigVerzoek:
+      description: Ongeldig verzoek (syntax, parameter, Content-Digest).
+      headers:
+        API-Version:
+          $ref: "#/components/headers/ApiVersion"
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Probleem"
+    NietGeauthenticeerd:
+      description: Geen of ongeldig token.
+      headers:
+        API-Version:
+          $ref: "#/components/headers/ApiVersion"
+        WWW-Authenticate:
+          schema:
+            type: string
+            example: Bearer error="invalid_token"
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Probleem"
+    GeenToegang:
+      description: Token geldig, maar zonder de benodigde rol.
+      headers:
+        API-Version:
+          $ref: "#/components/headers/ApiVersion"
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Probleem"
+    NietGevonden:
+      description: Resource bestaat niet (of de client mag niet weten dat hij bestaat).
+      headers:
+        API-Version:
+          $ref: "#/components/headers/ApiVersion"
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Probleem"
+    Conflict:
+      description: |
+        Conflict met de huidige toestand: dataset bestaat al, profiel wijzigen na publicatie, of
+        een levering met dezelfde `Idempotency-Key` is nog in behandeling.
+      headers:
+        API-Version:
+          $ref: "#/components/headers/ApiVersion"
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Probleem"
+    TeGroot:
+      description: Body groter dan de limiet van de installatie (standaard 200 MB; JSON 20 MB).
+      headers:
+        API-Version:
+          $ref: "#/components/headers/ApiVersion"
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Probleem"
+    MediatypeNietOndersteund:
+      description: Mediatype past niet bij het profiel van de dataset.
+      headers:
+        API-Version:
+          $ref: "#/components/headers/ApiVersion"
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Probleem"
+    NietVerwerkbaar:
+      description: Inhoudelijk ongeldig (schema, profiel, validatie).
+      headers:
+        API-Version:
+          $ref: "#/components/headers/ApiVersion"
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Probleem"
+          examples:
+            afgekeurd:
+              $ref: "#/components/examples/ProbleemAfgekeurd"
+    TeVeelVerzoeken:
+      description: Rate-limit bereikt (standaard 10 leveringen per minuut per client).
+      headers:
+        API-Version:
+          $ref: "#/components/headers/ApiVersion"
+        Retry-After:
+          $ref: "#/components/headers/RetryAfter"
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Probleem"
+    NietBeschikbaar:
+      description: Tijdelijk niet beschikbaar (onderhoud, opslag vol).
+      headers:
+        API-Version:
+          $ref: "#/components/headers/ApiVersion"
+        Retry-After:
+          $ref: "#/components/headers/RetryAfter"
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Probleem"
+    ServerFout:
+      description: Onverwachte fout. Details alleen in de serverlog, onder de correlatie-id.
+      headers:
+        API-Version:
+          $ref: "#/components/headers/ApiVersion"
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Probleem"
+
+  schemas:
+    DatasetId:
+      type: string
+      pattern: "^[a-z0-9]+(-[a-z0-9]+)*$"
+      minLength: 3
+      maxLength: 63
+      example: swf-monitor-waarden
+
+    ProfielCode:
+      type: string
+      enum: [waarnemingen, definities, gebiedsindeling, kaartlaag]
+      description: |
+        - `waarnemingen`: indicatorwaarden per gebied en moment (naar `gebied_data`);
+        - `definities`: indicatoren, gebiedstypen en hun relaties;
+        - `gebiedsindeling`: gebieden met geometrie van één gebiedstype (naar `gebieden`);
+        - `kaartlaag`: willekeurige features voor de kaart (eigen tabel, via OGC API Features).
+
+    DcatDataset:
+      type: object
+      description: |
+        Beschrijving volgens DCAT-AP-NL 3 (DCAT 3), voor geodata GeoDCAT-AP 3. JSON-LD;
+        onbekende eigenschappen blijven bewaard. `dct:modified` en `dcat:distribution` zet
+        D-OmniTwin zelf na een geslaagde publicatie.
+      required: ["@type", "dct:title", "dct:description", "dct:publisher", "dct:accessRights"]
+      properties:
+        "@context":
+          oneOf:
+            - type: string
+            - type: object
+        "@type":
+          type: string
+          enum: ["dcat:Dataset"]
+        "dct:title":
+          type: string
+        "dct:description":
+          type: string
+        "dct:publisher":
+          type: string
+          format: uri
+          description: URI van de organisatie (bijv. TOOI-URI).
+        "dct:accessRights":
+          type: string
+          format: uri
+          description: EU-toegangsrechten (PUBLIC, RESTRICTED, NON_PUBLIC).
+        "dct:license":
+          type: string
+          format: uri
+        "dcat:theme":
+          type: array
+          items:
+            type: string
+            format: uri
+        "dct:spatial":
+          type: string
+          format: uri
+        "dct:temporal":
+          type: object
+        "dcat:contactPoint":
+          type: object
+        "dct:conformsTo":
+          type: string
+          format: uri
+          description: Ingevuld door D-OmniTwin met de URI van het profiel.
+      additionalProperties: true
+
+    Laadprofiel:
+      type: object
+      description: Hoe een levering op deze dataset gevalideerd en geladen wordt. Niet in DCAT.
+      required: [profiel]
+      properties:
+        profiel:
+          $ref: "#/components/schemas/ProfielCode"
+        adapter:
+          type: string
+          enum: [swf-monitor-v1]
+          nullable: true
+          description: Optioneel invoerformaat dat naar het profiel wordt vertaald.
+        schema:
+          type: object
+          description: |
+            Frictionless Table Schema. Weglaten = het standaardschema van het profiel. Een eigen
+            schema mag velden toevoegen (komen in `metadata`), niet weglaten of hernoemen.
+        sleutelvelden:
+          type: array
+          items:
+            type: string
+          description: Velden die samen uniek zijn binnen een levering. Standaard uit het profiel.
+        toegestaneModi:
+          type: array
+          items:
+            type: string
+            enum: [vervangen]
+          default: [vervangen]
+        vervangBereik:
+          type: array
+          items:
+            type: string
+          default: []
+          description: |
+            Waarbinnen `vervangen` geldt. Leeg = de hele dataset (volledige snapshot). Met velden,
+            bijv. `[indicator_uuid, gebiedstype]`, vervangt een levering alleen de combinaties van
+            die velden die erin voorkomen.
+          example: [indicator_uuid, gebiedstype]
+        minimumN:
+          type: integer
+          minimum: 0
+          default: 10
+          description: n-drempel (profiel `waarnemingen`). 0 = geen drempel.
+        bijNOnderDrempel:
+          type: string
+          enum: [onderdrukken, afkeuren]
+          default: onderdrukken
+          description: Onderdrukken = waarde niet publiceren en uit staging verwijderen; telt niet als fout.
+        bijOntbrekendeN:
+          type: string
+          enum: [bron-onderdrukt, afkeuren]
+          default: afkeuren
+          description: |
+            `bron-onderdrukt`: n mag ontbreken; de bron verklaart de drempel zelf te hebben
+            toegepast. De waarde krijgt de vlag `n_status = bron-onderdrukt`.
+        doel:
+          type: object
+          description: Profiel `gebiedsindeling`/`kaartlaag`.
+          properties:
+            gebiedstypeId:
+              type: string
+              format: uuid
+              description: Gebiedstype dat de gebiedsindeling vult.
+            featureTabel:
+              type: string
+              description: Naam van de featuretabel in de GeoPackage.
+            sleutelveld:
+              type: string
+            labelveld:
+              type: string
+            codePrefix:
+              type: string
+              description: Prefix voor codes die niet landelijk uniek zijn (bijv. `WS` voor welstandsgebieden).
+        plausibiliteit:
+          type: object
+          properties:
+            minRegels:
+              type: integer
+              minimum: 0
+            maxDalingProcent:
+              type: integer
+              minimum: 0
+              maximum: 100
+              description: Afkeuren als het aantal regels meer dan dit percentage daalt t.o.v. de actuele versie.
+
+    DatasetRegistratie:
+      type: object
+      required: [id, beschrijving, laadprofiel]
+      properties:
+        id:
+          $ref: "#/components/schemas/DatasetId"
+        bronId:
+          type: string
+          description: Optioneel de bron (dataproduct, ADR 0002) waartoe de dataset hoort.
+          example: swf-monitor
+        beschrijving:
+          $ref: "#/components/schemas/DcatDataset"
+        laadprofiel:
+          $ref: "#/components/schemas/Laadprofiel"
+
+    Dataset:
+      allOf:
+        - $ref: "#/components/schemas/DatasetRegistratie"
+        - type: object
+          properties:
+            actueleVersie:
+              type: integer
+              nullable: true
+            laatsteLevering:
+              $ref: "#/components/schemas/LeveringKort"
+            aangemaaktOp:
+              type: string
+              format: date-time
+            gewijzigdOp:
+              type: string
+              format: date-time
+            _links:
+              $ref: "#/components/schemas/DatasetLinks"
+
+    DatasetLinks:
+      type: object
+      properties:
+        self:
+          $ref: "#/components/schemas/Link"
+        leveringen:
+          $ref: "#/components/schemas/Link"
+        versies:
+          $ref: "#/components/schemas/Link"
+        profiel:
+          $ref: "#/components/schemas/Link"
+
+    DatasetPagina:
+      type: object
+      properties:
+        datasets:
+          type: array
+          items:
+            $ref: "#/components/schemas/Dataset"
+        _links:
+          $ref: "#/components/schemas/PaginaLinks"
+
+    LeveringStatus:
+      type: string
+      enum: [ontvangen, bezig, gevalideerd, gepubliceerd, afgekeurd, mislukt]
+      description: |
+        - `ontvangen`: bewaard, wacht op verwerking;
+        - `bezig`: valideren of publiceren;
+        - `gevalideerd`: geldig, niet gepubliceerd (`alleenValideren=true`) — eindstatus;
+        - `gepubliceerd`: nieuwe versie actief — eindstatus;
+        - `afgekeurd`: inhoudelijke fouten, niets gepubliceerd — eindstatus;
+        - `mislukt`: technische fout, niets gepubliceerd; opnieuw leveren mag — eindstatus.
+
+    Aantallen:
+      type: object
+      properties:
+        gelezen:
+          type: integer
+        geldig:
+          type: integer
+        fout:
+          type: integer
+        onderdrukt:
+          type: integer
+          description: Niet gepubliceerd vanwege n < minimumN (geen fout).
+        bronOnderdrukt:
+          type: integer
+          description: Gepubliceerd zonder n, met vlag `bron-onderdrukt`.
+        gepubliceerd:
+          type: integer
+        vervangen:
+          type: integer
+          description: Regels van de vorige versie binnen het vervangbereik die zijn vervangen.
+
+    LeveringKort:
+      type: object
+      required: [id, datasetId, status]
+      properties:
+        id:
+          type: string
+          format: uuid
+        datasetId:
+          $ref: "#/components/schemas/DatasetId"
+        status:
+          $ref: "#/components/schemas/LeveringStatus"
+        modus:
+          type: string
+          enum: [vervangen]
+        alleenValideren:
+          type: boolean
+        versie:
+          type: integer
+          nullable: true
+          description: De versie die deze levering werd (alleen bij `gepubliceerd`).
+        ontvangenOp:
+          type: string
+          format: date-time
+        afgerondOp:
+          type: string
+          format: date-time
+          nullable: true
+
+    Levering:
+      allOf:
+        - $ref: "#/components/schemas/LeveringKort"
+        - type: object
+          properties:
+            idempotencyKey:
+              type: string
+              nullable: true
+            sha256:
+              type: string
+              pattern: "^[a-f0-9]{64}$"
+            mediatype:
+              type: string
+              example: application/zip
+            grootte:
+              type: integer
+              description: Grootte in bytes.
+            client:
+              type: string
+              description: Keycloak-client (`azp`) die leverde.
+            aantallen:
+              $ref: "#/components/schemas/Aantallen"
+            fouten:
+              type: array
+              maxItems: 1000
+              items:
+                $ref: "#/components/schemas/Probleem"
+            foutenAfgekapt:
+              type: boolean
+              description: Er zijn meer dan 1000 fouten; alleen de eerste 1000 staan hier.
+            _links:
+              $ref: "#/components/schemas/LeveringLinks"
+
+    LeveringLinks:
+      type: object
+      properties:
+        self:
+          $ref: "#/components/schemas/Link"
+        dataset:
+          $ref: "#/components/schemas/Link"
+        bestand:
+          $ref: "#/components/schemas/Link"
+
+    LeveringPagina:
+      type: object
+      properties:
+        leveringen:
+          type: array
+          items:
+            $ref: "#/components/schemas/LeveringKort"
+        _links:
+          $ref: "#/components/schemas/PaginaLinks"
+
+    Versie:
+      type: object
+      properties:
+        versie:
+          type: integer
+        actueel:
+          type: boolean
+        leveringIds:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: Leveringen waaruit deze versie bestaat (één bij een volledige snapshot).
+        gepubliceerdOp:
+          type: string
+          format: date-time
+        aantalRegels:
+          type: integer
+        sha256:
+          type: string
+          nullable: true
+          description: sha256 van het bestand als de versie uit één levering bestaat.
+        _links:
+          type: object
+          properties:
+            bestand:
+              $ref: "#/components/schemas/Link"
+
+    VersiePagina:
+      type: object
+      properties:
+        versies:
+          type: array
+          items:
+            $ref: "#/components/schemas/Versie"
+        _links:
+          $ref: "#/components/schemas/PaginaLinks"
+
+    Profiel:
+      type: object
+      properties:
+        id:
+          $ref: "#/components/schemas/ProfielCode"
+        titel:
+          type: string
+        uri:
+          type: string
+          format: uri
+          description: Waarde voor `dct:conformsTo`.
+        mediatypes:
+          type: array
+          items:
+            type: string
+        tableSchemas:
+          type: object
+          additionalProperties:
+            type: object
+          description: Table Schema per resource (bijv. `waarnemingen`, of `indicatoren`/`gebiedstypen`/`relaties`).
+        adapters:
+          type: array
+          items:
+            type: string
+
+    Link:
+      type: object
+      required: [href]
+      properties:
+        href:
+          type: string
+          format: uri-reference
+
+    PaginaLinks:
+      type: object
+      properties:
+        self:
+          $ref: "#/components/schemas/Link"
+        next:
+          $ref: "#/components/schemas/Link"
+        prev:
+          $ref: "#/components/schemas/Link"
+
+    Probleem:
+      type: object
+      description: |
+        Problem Details (RFC 9457). Een fout in een regel heeft de extensies `resource`, `regel`
+        en `veld`. Een afgekeurde levering geeft één probleem met de lijst `fouten`. De waarde
+        uit de regel wordt niet herhaald.
+      properties:
+        type:
+          type: string
+          format: uri-reference
+          example: https://github.com/TLaan/D-OmniTwin/blob/main/docs/api/laden/README.md#probleemtypen
+        title:
+          type: string
+        status:
+          type: integer
+        detail:
+          type: string
+        instance:
+          type: string
+          format: uri-reference
+        code:
+          type: string
+          description: Korte, stabiele code van het probleemtype.
+          example: n-onder-drempel
+        correlatieId:
+          type: string
+        resource:
+          type: string
+          description: Resource in het pakket (Data Package-resource of GeoPackage-tabel).
+        regel:
+          type: integer
+          description: Regelnummer in de resource (1 = eerste dataregel na de kop).
+        veld:
+          type: string
+        levering:
+          type: string
+          format: uri-reference
+        fouten:
+          type: array
+          items:
+            $ref: "#/components/schemas/Probleem"
+
+    Waarneming:
+      type: object
+      description: Eén regel van profiel `waarnemingen` (zie `profielen/waarnemingen.schema.json`).
+      required: [gebied_code, indicator_uuid, waarde]
+      properties:
+        gebied_code:
+          type: string
+        gebiedstype:
+          type: string
+        indicator_uuid:
+          type: string
+          format: uuid
+        jaar:
+          type: integer
+        peildatum:
+          type: string
+          format: date
+        scenario:
+          type: string
+          default: current
+        waarde:
+          type: number
+        n:
+          type: integer
+          minimum: 0
+        kwaliteit:
+          type: string
+          enum: [definitief, voorlopig, geschat]
+        bron:
+          type: string
+        opmerking:
+          type: string
+
+    SwfDefinities:
+      type: object
+      description: Huidig definities-snapshot van de SWF-monitor (adapter `swf-monitor-v1`).
+      required: [indicatoren, gebiedstypen, relaties]
+      properties:
+        indicatoren:
+          type: array
+          items:
+            $ref: "#/components/schemas/SwfIndicator"
+        gebiedstypen:
+          type: array
+          items:
+            $ref: "#/components/schemas/SwfGebiedstype"
+        relaties:
+          type: array
+          items:
+            $ref: "#/components/schemas/SwfRelatie"
+
+    SwfIndicator:
+      type: object
+      required: [id, naam]
+      properties:
+        id:
+          type: string
+          format: uuid
+        naam:
+          type: string
+        omschrijving:
+          type: string
+          nullable: true
+        status:
+          type: string
+          maxLength: 1
+        begingeldigheid:
+          type: string
+          nullable: true
+          description: "`JJJJ-MM-DD HH:MM`"
+        eindgeldigheid:
+          type: string
+          nullable: true
+
+    SwfGebiedstype:
+      type: object
+      required: [id, naam]
+      properties:
+        id:
+          type: string
+          format: uuid
+        naam:
+          type: string
+        wfs:
+          type: string
+          nullable: true
+        typenames:
+          type: string
+          nullable: true
+        sleutel:
+          type: string
+          nullable: true
+        label:
+          type: string
+          nullable: true
+        actief:
+          type: boolean
+
+    SwfRelatie:
+      type: object
+      required: [indicator_id, gebiedstype_id]
+      properties:
+        indicator_id:
+          type: string
+          format: uuid
+        gebiedstype_id:
+          type: string
+          format: uuid
+
+    SwfWaarde:
+      type: object
+      description: Huidig waardeformaat van de SWF-monitor (adapter `swf-monitor-v1`).
+      required: [indicator_id, gebiedstype_id, gebieds_id, waarde, begingeldigheid]
+      properties:
+        indicator_id:
+          type: string
+          format: uuid
+        gebiedstype_id:
+          type: string
+          format: uuid
+        gebieds_id:
+          type: string
+        waarde:
+          type: number
+        begingeldigheid:
+          type: string
+          format: date
+        eindgeldigheid:
+          type: string
+          format: date
+          nullable: true
+        n:
+          type: integer
+          minimum: 0
+          description: Nieuw en optioneel. Zonder n geldt `bron-onderdrukt`.
+
+    SwfWaardeTerug:
+      type: object
+      properties:
+        indicator_id:
+          type: string
+          format: uuid
+        gebiedstype_id:
+          type: string
+          format: uuid
+        gebieds_id:
+          type: string
+        jaar:
+          type: integer
+        waarde:
+          type: number
+
+    SwfInleesResultaat:
+      type: object
+      description: Antwoord van de compatibiliteitsingang; FME hoeft alleen de HTTP-status te controleren.
+      properties:
+        status:
+          $ref: "#/components/schemas/LeveringStatus"
+        leveringId:
+          type: string
+          format: uuid
+        versie:
+          type: integer
+          nullable: true
+        aantallen:
+          $ref: "#/components/schemas/Aantallen"
+
+  examples:
+    RegistratieWaarnemingen:
+      summary: SWF-monitorwaarden, n mag ontbreken (bron-onderdrukt)
+      value:
+        id: swf-monitor-waarden
+        bronId: swf-monitor
+        beschrijving:
+          "@context": https://data.overheid.nl/dcat-ap-nl/context.jsonld
+          "@type": dcat:Dataset
+          dct:title: Basismonitor Súdwest-Fryslân — indicatorwaarden
+          dct:description: Waarden van de indicatoren van de basismonitor per buurt en welstandsgebied, per jaar.
+          dct:publisher: https://identifier.overheid.nl/tooi/id/gemeente/gm1900
+          dct:accessRights: http://publications.europa.eu/resource/authority/access-right/RESTRICTED
+          dct:license: http://standaarden.overheid.nl/owms/terms/licentieonbekend
+          dcat:theme:
+            - http://standaarden.overheid.nl/owms/terms/Sociale_zekerheid
+        laadprofiel:
+          profiel: waarnemingen
+          adapter: swf-monitor-v1
+          vervangBereik: [indicator_uuid, gebiedstype]
+          minimumN: 10
+          bijNOnderDrempel: onderdrukken
+          bijOntbrekendeN: bron-onderdrukt
+    RegistratieKaartlaag:
+      summary: Kaartlaag als GeoPackage in RD
+      value:
+        id: hittekaart-gevoelstemperatuur
+        beschrijving:
+          "@type": dcat:Dataset
+          dct:title: Gevoelstemperatuur op een hete dag
+          dct:description: Rasterafgeleide vlakken gevoelstemperatuur, Súdwest-Fryslân.
+          dct:publisher: https://identifier.overheid.nl/tooi/id/gemeente/gm1900
+          dct:accessRights: http://publications.europa.eu/resource/authority/access-right/PUBLIC
+          dct:license: http://creativecommons.org/publicdomain/zero/1.0/deed.nl
+        laadprofiel:
+          profiel: kaartlaag
+          doel:
+            featureTabel: gevoelstemperatuur
+            sleutelveld: id
+            labelveld: klasse
+          plausibiliteit:
+            minRegels: 1
+    WaarnemingenJson:
+      summary: Waarnemingen als JSON-array
+      value:
+        - gebied_code: BU19000002
+          gebiedstype: CBS_BUURT
+          indicator_uuid: 00000000-0000-4000-8000-000000000001
+          jaar: 2025
+          waarde: 12.34
+          n: 148
+          kwaliteit: definitief
+    SwfWaarden:
+      summary: Huidig SWF-waardeformaat (één indicator × gebiedstype)
+      value:
+        - indicator_id: 00000000-0000-4000-8000-000000000001
+          gebiedstype_id: 00000000-0000-4000-8000-0000000000a1
+          gebieds_id: BU19000002
+          waarde: 12.34
+          begingeldigheid: "2025-01-01"
+          eindgeldigheid: null
+    SwfDefinities:
+      summary: Huidig SWF-definitieformaat
+      value:
+        indicatoren:
+          - id: 00000000-0000-4000-8000-000000000001
+            naam: Voorbeeldindicator
+            omschrijving: Percentage inwoners dat ... (bron, definitie)
+            status: O
+            begingeldigheid: "2024-11-20 00:00"
+            eindgeldigheid: null
+        gebiedstypen:
+          - id: 00000000-0000-4000-8000-0000000000a1
+            naam: CBS buurten
+            wfs: https://geo.example.nl/wfs
+            typenames: voorbeeld:cbs_buurten
+            sleutel: buurt_code
+            label: buurt_naam
+            actief: true
+        relaties:
+          - indicator_id: 00000000-0000-4000-8000-000000000001
+            gebiedstype_id: 00000000-0000-4000-8000-0000000000a1
+    SwfInleesResultaat:
+      summary: Geslaagd
+      value:
+        status: gepubliceerd
+        leveringId: 7c1d2c4e-5b0a-4f7e-9a51-2f7f1d0c9e11
+        versie: 14
+        aantallen:
+          gelezen: 157
+          geldig: 157
+          fout: 0
+          onderdrukt: 0
+          bronOnderdrukt: 157
+          gepubliceerd: 157
+          vervangen: 155
+    LeveringOntvangen:
+      summary: Ontvangen, verwerking loopt
+      value:
+        id: 7c1d2c4e-5b0a-4f7e-9a51-2f7f1d0c9e11
+        datasetId: swf-monitor-waarden
+        status: ontvangen
+        modus: vervangen
+        alleenValideren: false
+        versie: null
+        ontvangenOp: "2026-10-02T09:12:03Z"
+        afgerondOp: null
+        idempotencyKey: swf-monitor-waarden-2025-12
+        sha256: 9f2c4b1d0a7e6f5c3b2a1908d7e6f5c4b3a29180f7e6d5c4b3a2918070f6e5d4
+        mediatype: application/zip
+        grootte: 1843221
+        client: etl-swf
+        _links:
+          self:
+            href: /api/laden/v1/leveringen/7c1d2c4e-5b0a-4f7e-9a51-2f7f1d0c9e11
+          dataset:
+            href: /api/laden/v1/datasets/swf-monitor-waarden
+    LeveringGepubliceerd:
+      summary: Gepubliceerd als versie 14
+      value:
+        id: 7c1d2c4e-5b0a-4f7e-9a51-2f7f1d0c9e11
+        datasetId: swf-monitor-waarden
+        status: gepubliceerd
+        modus: vervangen
+        alleenValideren: false
+        versie: 14
+        ontvangenOp: "2026-10-02T09:12:03Z"
+        afgerondOp: "2026-10-02T09:12:09Z"
+        sha256: 9f2c4b1d0a7e6f5c3b2a1908d7e6f5c4b3a29180f7e6d5c4b3a2918070f6e5d4
+        mediatype: application/zip
+        grootte: 1843221
+        client: etl-swf
+        aantallen:
+          gelezen: 43101
+          geldig: 43101
+          fout: 0
+          onderdrukt: 38
+          bronOnderdrukt: 0
+          gepubliceerd: 43063
+          vervangen: 42977
+        fouten: []
+        foutenAfgekapt: false
+        _links:
+          self:
+            href: /api/laden/v1/leveringen/7c1d2c4e-5b0a-4f7e-9a51-2f7f1d0c9e11
+          dataset:
+            href: /api/laden/v1/datasets/swf-monitor-waarden
+          bestand:
+            href: /api/laden/v1/datasets/swf-monitor-waarden/versies/14/bestand
+    LeveringAfgekeurd:
+      summary: Afgekeurd, met fouten per regel
+      value:
+        id: 3a0f4e2b-1c9d-4b8a-8e7f-6d5c4b3a2918
+        datasetId: swf-monitor-waarden
+        status: afgekeurd
+        modus: vervangen
+        alleenValideren: false
+        versie: null
+        ontvangenOp: "2026-10-02T10:01:00Z"
+        afgerondOp: "2026-10-02T10:01:02Z"
+        sha256: 1b2c3d4e5f60718293a4b5c6d7e8f9011b2c3d4e5f60718293a4b5c6d7e8f901
+        mediatype: text/csv
+        grootte: 52011
+        client: etl-swf
+        aantallen:
+          gelezen: 912
+          geldig: 909
+          fout: 3
+          onderdrukt: 0
+          bronOnderdrukt: 0
+          gepubliceerd: 0
+          vervangen: 0
+        fouten:
+          - type: https://github.com/TLaan/D-OmniTwin/blob/main/docs/api/laden/README.md#gebied-onbekend
+            code: gebied-onbekend
+            title: Gebied bestaat niet
+            detail: gebied_code komt niet voor in gebiedstype CBS_BUURT.
+            resource: waarnemingen
+            regel: 17
+            veld: gebied_code
+          - type: https://github.com/TLaan/D-OmniTwin/blob/main/docs/api/laden/README.md#jaar-ongeldig
+            code: jaar-ongeldig
+            title: Jaar buiten bereik
+            detail: jaar moet tussen 1900 en 2100 liggen.
+            resource: waarnemingen
+            regel: 233
+            veld: jaar
+          - type: https://github.com/TLaan/D-OmniTwin/blob/main/docs/api/laden/README.md#dubbele-sleutel
+            code: dubbele-sleutel
+            title: Dubbele sleutel
+            detail: Regel 412 heeft dezelfde sleutel als regel 87.
+            resource: waarnemingen
+            regel: 412
+        foutenAfgekapt: false
+        _links:
+          self:
+            href: /api/laden/v1/leveringen/3a0f4e2b-1c9d-4b8a-8e7f-6d5c4b3a2918
+          dataset:
+            href: /api/laden/v1/datasets/swf-monitor-waarden
+    ProbleemAfgekeurd:
+      summary: Foutrapport (synchroon afgekeurd)
+      value:
+        type: https://github.com/TLaan/D-OmniTwin/blob/main/docs/api/laden/README.md#levering-afgekeurd
+        code: levering-afgekeurd
+        title: Levering afgekeurd
+        status: 422
+        detail: 3 regels voldoen niet aan profiel waarnemingen. Er is niets gepubliceerd; versie 13 blijft actief.
+        instance: /api/laden/v1/leveringen/3a0f4e2b-1c9d-4b8a-8e7f-6d5c4b3a2918
+        levering: /api/laden/v1/leveringen/3a0f4e2b-1c9d-4b8a-8e7f-6d5c4b3a2918
+        fouten:
+          - type: https://github.com/TLaan/D-OmniTwin/blob/main/docs/api/laden/README.md#gebied-onbekend
+            code: gebied-onbekend
+            title: Gebied bestaat niet
+            resource: waarnemingen
+            regel: 17
+            veld: gebied_code

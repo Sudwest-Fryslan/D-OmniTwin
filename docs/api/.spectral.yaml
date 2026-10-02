@@ -1,0 +1,5 @@
+# Spectral-configuratie voor de API-specificaties van D-OmniTwin.
+# Logius-ruleset voor de NL GOV REST API Design Rules 2.1 (ADR 2.1.0).
+# Gebruik: zie AGENTS.md (Commands, API-specificaties).
+extends:
+  - https://static.developer.overheid.nl/adr/2.1/ruleset.yaml

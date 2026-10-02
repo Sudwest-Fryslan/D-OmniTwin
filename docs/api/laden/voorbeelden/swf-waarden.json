@@ -1,0 +1,18 @@
+[
+  {
+    "indicator_id": "00000000-0000-4000-8000-000000000001",
+    "gebiedstype_id": "00000000-0000-4000-8000-0000000000a1",
+    "gebieds_id": "BU19000002",
+    "waarde": 12.34,
+    "begingeldigheid": "2025-01-01",
+    "eindgeldigheid": null
+  },
+  {
+    "indicator_id": "00000000-0000-4000-8000-000000000001",
+    "gebiedstype_id": "00000000-0000-4000-8000-0000000000a1",
+    "gebieds_id": "BU19000003",
+    "waarde": 9.8,
+    "begingeldigheid": "2025-01-01",
+    "eindgeldigheid": null
+  }
+]

@@ -1,16 +1,16 @@
 # Architectuur: D-OmniTwin vullen
 
-Hoe data in D-OmniTwin komt: componenten, gegevensstromen, API-indeling en autorisatie. Besluit: [ADR 0004](adr/0004-een-ingang-voor-vullen.md). Bouwt voort op [ADR 0002](adr/0002-databronnen-als-dataproduct.md) (databronnen als dataproduct).
+Hoe data in D-OmniTwin komt: registratie, leveringen, laadstraat, autorisatie en de vier vulroutes. Besluiten: [ADR 0004](adr/0004-een-ingang-voor-vullen.md) (vullen via registratie en leveringen) en [ADR 0005](adr/0005-gescheiden-apis-per-doel.md) (gescheiden API's per doel). Bouwt voort op ADR 0002, databronnen als dataproduct ([PR #184](https://github.com/TLaan/D-OmniTwin/pull/184)). Specificatie: [laad-API](../api/laden/README.md). Plaats tussen de andere API's: [API-landschap](api-landschap.md).
 
-Status: voorgesteld, doelbeeld voor 0.3.0 en verder. Wat er nu (0.2.0) staat, staat in [Huidige stand](#8-huidige-stand-020).
+Status: voorgesteld, doelbeeld voor 0.3.0 en verder. Wat er nu staat: [§ 8](#8-huidige-stand-021).
 
 ## 1. In het kort
 
-- Vier routes vullen D-OmniTwin: **push** door een externe ETL, **interne ETL** (bron als dataproduct), **virtualisatie** met cache en **federatie**.
-- Alle routes gebruiken **één datacontract** (de *waarneming*) en, waar data wordt opgeslagen, **één ingang**: `POST /api/v1/bronnen/{bron}/leveringen`.
-- Een levering gaat door **staging → validatie → publicatie** in PostgreSQL (schema `ingest`) en wordt vastgelegd in `etl_runs` en `data_lineage`.
-- **Keycloak** regelt identiteit: client credentials voor machines (rol per bron), authorization code + PKCE voor mensen.
-- **Traefik** routeert en begrenst; FastAPI, PostgREST en pg_featureserv leveren de API's.
+- D-OmniTwin accepteert **datasets als pakket**, niet losse records. Een ETL levert een volledige snapshot; D-OmniTwin valideert en publiceert hem in één keer als nieuwe **versie**.
+- **Registratie** (wat is de dataset: DCAT-AP-NL/GeoDCAT-AP, plus een laadprofiel) is gescheiden van **levering** (GeoPackage of Data Package-zip, CSV of JSON) en **laden**.
+- Eén ingang: de laad-API, `/api/laden/v1`. Elke dataset heeft een **profiel**: `waarnemingen`, `definities`, `gebiedsindeling` of `kaartlaag`. Een adapter (`swf-monitor-v1`) vertaalt de huidige SWF-push.
+- Laadstraat: **ruw bewaren → valideren → staging → atomisch publiceren**. Bij een fout blijft de vorige versie actief.
+- **Keycloak** regelt identiteit: client credentials voor machines (rol per dataset), code + PKCE voor mensen. **Traefik** routeert en begrenst.
 
 ## 2. Context
 
@@ -21,22 +21,22 @@ flowchart TB
     U2["Medewerker / beheerder<br/>(ingelogd)"]
   end
   subgraph Bronhouders
-    B1["SWF-DWH<br/>Oracle → FME/Python"]
+    B1["Datawarehouse bronhouder<br/>→ FME / Python"]
     B2["Open data<br/>CBS · RIVM · PDOK · BAG"]
-    B3["Andere D-OmniTwin /<br/>dataspace (FRLDS)"]
+    B3["Andere D-OmniTwin /<br/>dataspace"]
   end
-  KC["Keycloak<br/>(realm per installatie, bijv. SWF)"]
+  KC["Keycloak<br/>(realm per installatie)"]
   DOT["D-OmniTwin"]
   EXT["Afnemers<br/>(API-register, GIS, andere gemeenten)"]
 
   U1 -- "viewer, rapporten" --> DOT
   U2 -- "login (OIDC code + PKCE)" --> KC
-  U2 -- "viewer, beheer" --> DOT
-  B1 -- "push: leveringen<br/>(client credentials)" --> DOT
+  U2 -- "viewer, beheer, registraties" --> DOT
+  B1 -- "route 1: leveringen<br/>/api/laden/v1 (client credentials)" --> DOT
   B1 -. token .-> KC
-  DOT -- "interne ETL / virtualisatie<br/>(ophalen)" --> B2
-  DOT <-- "federatie<br/>(FSC/DSP)" --> B3
-  EXT -- "lezen: /api/v1, /api/data, /api/geo" --> DOT
+  DOT -- "route 2 en 3: ophalen" --> B2
+  DOT <-- "route 4: federatie<br/>(FSC/DSP)" --> B3
+  EXT -- "lezen: /api/data/v1, /api/geo/v1,<br/>/api/catalogus/v1" --> DOT
 ```
 
 ## 3. Containers
@@ -46,219 +46,186 @@ flowchart LR
   subgraph Internet
     C["Clients<br/>browser · ETL · GIS"]
   end
-  KC["Keycloak<br/>/auth of extern"]
+  KC["Keycloak"]
   subgraph Stack["D-OmniTwin (docker compose)"]
-    T["Traefik<br/>routering · headers · body-limit · rate-limit"]
-    F["FastAPI (backend)<br/>/api/v1: lezen, beheer, bronnen/leveringen<br/>BFF-login · JWT-validatie · /api/docs"]
-    J["ETL-jobs<br/>bronnen/&lt;naam&gt;/etl<br/>(in-process of container)"]
-    PR["PostgREST<br/>/api/data · rol web_anon"]
-    FS["pg_featureserv<br/>/api/geo · rol featureserv"]
-    OP["oauth2-proxy<br/>(later, forwardAuth beperkte geo)"]
+    T["Traefik<br/>router per API · headers · body-limit · rate-limit"]
+    F["FastAPI<br/>/api/laden/v1 · /api/beheer/v1 · ...<br/>JWT-validatie · portaal /api"]
+    J["ETL-jobs<br/>bronnen/&lt;naam&gt;/etl"]
+    V[("volume<br/>ruwe leveringen")]
+    PR["PostgREST<br/>/api/data/v1"]
+    FS["pg_featureserv<br/>/api/geo/v1"]
     subgraph PG["PostgreSQL + PostGIS"]
-      ING["schema ingest<br/>leveringen · regels<br/>valideer() · publiceer()"]
-      GOLD["Gold: gebied_data · indicatoren · gebieden"]
-      REG["etl_bronnen · etl_runs · data_lineage"]
+      LA["schema laden<br/>datasets · leveringen · versies<br/>staging · valideer() · publiceer()"]
+      GOLD["gebied_data · indicatoren<br/>gebieden · laag.*"]
       API["schema api (views)"]
     end
   end
   C --> T
-  T -- "/ , /beheer, /auth, /api/v1, /api/docs" --> F
-  T -- "/api/data" --> PR
-  T -- "/api/geo" --> FS
-  T -. "/api/geo-beperkt" .-> OP -.-> FS
-  F -- "JWKS / OIDC" --> KC
-  F -- "rol ingest_schrijver:<br/>COPY + EXECUTE ingest.*" --> ING
-  J -- "lever() = zelfde functies" --> ING
-  ING -- "publiceer (1 transactie)" --> GOLD
-  ING --> REG
-  F -- "lezen" --> GOLD
-  PR --> API
-  API --> GOLD
+  T -- "/api/laden/v1, /api/beheer/v1, ..." --> F
+  T -- "/api/data/v1" --> PR
+  T -- "/api/geo/v1" --> FS
+  F -- "JWKS" --> KC
+  F -- "bestand (stream)" --> V
+  F -- "rol laden_schrijver:<br/>COPY + EXECUTE laden.*" --> LA
+  J -- "zelfde laadstraat" --> LA
+  LA -- "publiceer (1 transactie)" --> GOLD
+  PR --> API --> GOLD
   FS --> GOLD
 ```
 
-| Container | Verantwoordelijkheid voor vullen | Eigen code |
+| Container | Rol bij vullen | Eigen code |
 |---|---|---|
-| Traefik | TLS (of achter een TLS-proxy), padroutering, security-headers, `buffering.maxRequestBodyBytes` en `rateLimit` op de ingang; later FSC-inway ervoor | config |
-| Keycloak | identiteit, clients, rollen `bron:{bron}:leveren`, `beheer`; tokens | realm-config |
-| FastAPI | ingang (`/api/v1/bronnen/…`): token valideren, rol per bron, bestand streamen naar staging, status en foutrapport; BFF-login voor mensen; docs-portaal | dun |
-| ETL-jobs | interne ETL en virtualisatie; leveren via `lever()` | per bron (ADR 0002) |
-| PostgreSQL `ingest` | staging, validatie, n-drempel, atomische publicatie, lineage | SQL-functies |
-| PostgREST | anoniem lezen van `api`-views; later ingelogd lezen (JWT + RLS) | geen |
-| pg_featureserv | OGC API Features (lezen); kent geen auth | geen |
+| Traefik | TLS (of achter de proxy van de organisatie), router per API, `buffering.maxRequestBodyBytes` en `rateLimit` op `/api/laden/v1` | config |
+| Keycloak | realm `omnitwin`: clients `omnitwin-web`, `omnitwin-api`, machineclients; rollen `dataset:{id}:laden`, `datasets:laden`, `beheerder`, `lezer`; tokens | realm-config |
+| FastAPI | laad-API: token en rol controleren, bestand naar het volume streamen (sha256), laadstraat starten, status | dun |
+| Volume `leveringen` | ruwe bestanden, onveranderlijk, met bewaartermijn | – |
+| PostgreSQL `laden` | registraties, leveringen, versies, staging, validatie, n-drempel, atomische publicatie | SQL-functies |
+| ETL-jobs | interne ETL en virtualisatie, leveren via dezelfde laadstraat | per bron (ADR 0002) |
+| PostgREST, pg_featureserv | lezen van gepubliceerde data | geen |
 
 ## 4. Gegevensstromen
 
-### 4.1 Het contract: de waarneming
+### 4.1 Registratie
 
-| Veld | Type | Verplicht |
-|---|---|---|
-| `gebied_code` | tekst (`gebieden.id`) | ja |
-| `gebiedstype` | code | nee |
-| `indicator_uuid` | uuid | ja |
-| `jaar` / `peildatum` | geheel getal / datum | één van beide |
-| `scenario` | tekst, standaard `current` | nee |
-| `waarde` | decimaal | ja |
-| `n` | geheel getal | volgens bron-contract |
-| `kwaliteit` | `definitief` / `voorlopig` / `geschat` | nee |
-| `opmerking` | tekst | nee |
+Eén keer per dataset, en bij een wijziging van de beschrijving. Een beheerder (realm-rol `beheerder`) doet `POST /api/laden/v1/datasets` met:
 
-De bron volgt uit de URL en het token. Schema: Frictionless Table Schema; bron-contract: ODCS (`bronnen/<naam>/contract.yaml`) met o.a. toegestane indicatoren, gebiedstypen, `minimum_n` en vervangmodus.
+- `beschrijving`: DCAT-AP-NL/GeoDCAT-AP als JSON-LD (titel, beschrijving, uitgever, toegang, licentie, thema, dekking);
+- `laadprofiel`: profiel, eventueel adapter, sleutelvelden, vervangbereik, `minimumN`, `bijNOnderDrempel`, `bijOntbrekendeN`, plausibiliteit, en voor geodata de featuretabel en het sleutel- en labelveld.
 
-### 4.2 Push-levering (route 1)
+Daarna maakt de beheerder in Keycloak de client-rol `dataset:{datasetId}:laden` op `omnitwin-api` aan en kent die toe aan de leverende client. Profielen: [`docs/api/laden/profielen/`](../api/laden/profielen/README.md).
+
+### 4.2 Levering (route 1)
 
 ```mermaid
 sequenceDiagram
   autonumber
-  participant E as Externe ETL (SWF: FME)
+  participant E as ETL (bijv. FME)
   participant K as Keycloak
   participant T as Traefik
-  participant F as FastAPI /api/v1
-  participant S as PostgreSQL ingest
-  participant G as gebied_data
-  participant L as etl_runs / data_lineage
+  participant F as Laad-API (FastAPI)
+  participant V as Volume
+  participant S as PostgreSQL laden
+  participant G as gebied_data / gebieden / laag.*
 
-  E->>K: POST /token (grant_type=client_credentials,<br/>client_assertion = private_key_jwt)
-  K-->>E: access_token (aud=d-omnitwin-api,<br/>roles: bron:swf-monitor:leveren, exp 5 min)
-  E->>T: POST /api/v1/bronnen/swf-monitor/leveringen<br/>Authorization: Bearer … · Idempotency-Key · text/csv
+  E->>K: POST /token (client_credentials,<br/>client_secret_post; later private_key_jwt)
+  K-->>E: access_token (aud=omnitwin-api,<br/>rol dataset:swf-monitor-waarden:laden, 5 min)
+  E->>T: POST /api/laden/v1/datasets/swf-monitor-waarden/leveringen<br/>Bearer · Idempotency-Key · application/zip
   T->>T: body-limit, rate-limit
   T->>F: doorsturen
-  F->>F: JWT valideren (JWKS, iss, aud, exp)<br/>rol bron:swf-monitor:leveren?
+  F->>F: JWT (JWKS, iss, aud, exp), rol voor deze dataset?
   alt geen of verkeerde rol
     F-->>E: 401 / 403 problem+json
   end
-  F->>S: ingest.start_levering(bron, client, hash, modus, proef)
-  alt zelfde Idempotency-Key of hash
-    S-->>F: bestaande levering
-    F-->>E: 200 + status bestaande levering
+  F->>S: zelfde Idempotency-Key of sha256 al bekend?
+  alt herhaling
+    F-->>E: 200 + bestaande levering
   end
-  F->>S: COPY ingest.regels (stream)
-  F-->>E: 202 Accepted · Location: …/leveringen/{id}
-  F->>S: ingest.valideer(id)
-  S->>S: typen, gebied bestaat, indicator in contract,<br/>bereik, dubbele sleutels, n ≥ minimum_n (anders onderdrukt)
+  F->>V: bestand streamen, sha256 berekenen (ruw bewaren)
+  F->>S: levering registreren (ontvangen)
+  F-->>E: 202 Accepted · Location: /api/laden/v1/leveringen/{id}
+  F->>S: valideer(id): pakket, schema volgens profiel, CRS,<br/>codes, dubbele sleutels, plausibiliteit, n-drempel
+  S->>S: staging vullen (COPY; GeoPackage via fiona)
   alt fouten
-    S->>L: etl_runs: afgekeurd + aantallen
-  else geldig en niet proef
-    S->>G: publiceer(id): per plak (bron×indicator×jaar×scenario)<br/>vervangen in 1 transactie, levering_id gezet
-    S->>L: etl_runs: gepubliceerd · data_lineage per plak
-    S->>S: staging-regels opschonen (n < drempel weg)
+    S->>S: status afgekeurd, fouten per regel, vorige versie blijft
+  else geldig en niet alleenValideren
+    S->>G: publiceer(id): vervangbereik vervangen in 1 transactie,<br/>levering_id gezet, n < drempel niet gepubliceerd
+    S->>S: nieuwe versie, staging opschonen, catalogus bijwerken
   end
-  E->>F: GET …/leveringen/{id}
-  F-->>E: status, aantallen, links (fouten)
-  opt afgekeurd
-    E->>F: GET …/leveringen/{id}/fouten
-    F-->>E: fouten per regel (problem details)
+  loop tot status klaar (of direct met wacht=true)
+    E->>F: GET /api/laden/v1/leveringen/{id}
+    F-->>E: status, aantallen, versie, sha256, fouten
   end
 ```
 
-### 4.3 De andere routes
+Met `wacht=true` blijft de verbinding open tot de levering klaar is (of tot de time-out): dan `201` of `422` in plaats van `202`. Dat is voor FME het eenvoudigst, omdat pollen daar omslachtig is.
 
-| Route | Stroom | Verschil met push |
-|---|---|---|
-| 2 Interne ETL | job → `omnitwin.ingest.lever(bron, pakket)` → zelfde `ingest`-functies | geen HTTP (in-process) of HTTP met eigen service-account (`d-omnitwin-etl`) |
-| 3 Virtualisatie | TTL verlopen → query op de bron (DuckDB, `ogr_fdw`) → resultaat als levering | de "ETL" is een query; viewer-lagen buiten berekeningen alleen on-demand met TTL-cache, zonder publicatie |
-| 4 Federatie | vraag → orchestrator (FastAPI) → `GET /api/v1/waarden` bij de andere installatie (FSC/DSP) → antwoord in hetzelfde contract | geen opslag in `gebied_data`, tenzij de ODRL-policy een cache toestaat; niet voor Z-score-berekeningen |
-
-### 4.4 Statussen van een levering
+### 4.3 Statussen
 
 ```mermaid
 stateDiagram-v2
   [*] --> ontvangen
-  ontvangen --> afgekeurd: fouten
-  ontvangen --> gevalideerd: geldig
-  gevalideerd --> gepubliceerd: niet proef / POST …/publicatie
-  gevalideerd --> [*]: proef
-  gepubliceerd --> ingetrokken: DELETE (later)
+  ontvangen --> bezig
+  bezig --> afgekeurd: inhoudelijke fouten
+  bezig --> mislukt: technische fout
+  bezig --> gevalideerd: alleenValideren
+  bezig --> gepubliceerd: geldig
+  gevalideerd --> [*]
+  gepubliceerd --> [*]
   afgekeurd --> [*]
+  mislukt --> [*]
 ```
 
-## 5. API-indeling, URL's en autorisatie
+### 4.4 De vier vulroutes
 
-| Pad | Methoden | Wat | Auth | Component |
-|---|---|---|---|---|
-| `/` | GET | viewer | anoniem; ingelogd via BFF-cookie | FastAPI |
-| `/beheer/` | GET | beheer-UI (nu `/admin/`) | BFF-sessie, rol `beheer` | FastAPI |
-| `/auth/login`, `/auth/callback`, `/auth/logout` | GET/POST | OIDC code + PKCE (BFF) | – | FastAPI ↔ Keycloak |
-| `/api/v1/gebieden`, `/indicatoren`, `/kompas/…`, `/rapporten/…` | GET (POST voor complexe queries) | publiek lezen | anoniem of ingelogd | FastAPI |
-| `/api/v1/chat`, `/api/v1/rapporten/…/samenvatting` | POST/GET | LLM-functies | anoniem met rate-limit (#203) | FastAPI |
-| `/api/v1/waarden` | GET | waarden in het waarneming-contract (federatie, later) | anoniem voor open bronnen; token voor beperkte | FastAPI |
-| `/api/v1/bronnen`, `/api/v1/bronnen/{bron}` | GET | catalogus (JSON, JSON-LD DCAT-AP-NL) | anoniem (open bronnen) | FastAPI |
-| `/api/v1/bronnen/{bron}/contract` | GET | ODCS + Table Schema | open of `bron:{bron}:leveren` | FastAPI |
-| `/api/v1/bronnen/{bron}/leveringen` | POST, GET | levering aanbieden, lijst | `bron:{bron}:leveren` (client credentials) | FastAPI |
-| `/api/v1/bronnen/{bron}/leveringen/{id}` (`/fouten`, `/publicatie`) | GET, POST | status, foutrapport, proef publiceren | `bron:{bron}:leveren` | FastAPI |
-| `/api/v1/beheer/…` | alle | beheer-API (nu `/api/admin/…`) | rol `beheer` | FastAPI |
-| `/api/v1/openapi.json` | GET | spec met `securitySchemes` | anoniem, CORS open | FastAPI |
-| `/api/docs` | GET | portaal: Swagger UI met keuze D-OmniTwin v1 / Data / Geo | anoniem | FastAPI (statisch) |
-| `/api/data/…` | GET | PostgREST, schema `api` | anoniem `web_anon`; later JWT + RLS | PostgREST |
-| `/api/geo/…` | GET | OGC API Features (open collecties) | anoniem | pg_featureserv |
-| `/api/geo-beperkt/…` (later) | GET | beperkte geo-lagen | forwardAuth (oauth2-proxy, Keycloak) | Traefik + pg_featureserv |
-| `/health`, `/.well-known/security.txt` | GET | beheer, RFC 9116 | anoniem | FastAPI |
-
-Conventies (NL GOV API Design Rules): major-versie in het pad, header `API-Version`, OpenAPI op `<basis>/openapi.json`, Nederlandse meervoudige namen in kebab-case, Problem Details voor fouten, geen trailing slash, oude paden één release als alias met `Deprecation`/`Sunset`.
-
-### 5.1 Traefik-routering (schets)
-
-| Router | Regel | Middleware | Service |
+| Route | Stroom | Ingang | Verschil met push |
 |---|---|---|---|
-| `ingest` | `PathRegexp(^/api/v1/bronnen/[^/]+/leveringen)` | `security-headers`, `ingest-limieten` (body 200 MB, rate-limit per client-IP) | backend |
-| `postgrest` | `PathPrefix(/api/data)` | `security-headers`, strip `/api/data` | postgrest |
-| `pg_featureserv` | `PathPrefix(/api/geo)` | `security-headers` | pg_featureserv |
-| `backend` | `PathPrefix(/)` (laagste prioriteit) | `security-headers` | backend |
+| **1 Push** | ETL bij de bronhouder → `POST …/leveringen` | HTTP, client credentials, rol per dataset | – |
+| **2 Interne ETL** | job in D-OmniTwin (`bronnen/<naam>/etl`) → zelfde laadstraat | in-process (dezelfde functie als de router) of HTTP met een eigen machineclient (zoals `etl-voorbeeld`) | geen netwerk nodig; dezelfde validatie, versies en herkomst |
+| **3 Virtualisatie** | TTL verlopen → query op de bron (DuckDB, `ogr_fdw`) → resultaat als levering | als route 2 | de "ETL" is een query; alleen viewer-lagen buiten berekeningen worden zonder kopie on-demand gecachet |
+| **4 Federatie** | vraag → orchestrator → `data`/`geo`-API van de andere installatie (FSC/DSP) → antwoord in hetzelfde profiel | geen levering; catalogus in DCAT-AP-NL | geen opslag, tenzij de policy een cache toestaat (dan: een levering via route 2) |
 
-### 5.2 Rollen en rechten
+### 4.5 SWF-monitor
+
+De huidige SWF-push (definities-snapshot, daarna waarden per indicator × gebiedstype) loopt via de adapter [`swf-monitor-v1`](../api/laden/profielen/swf-monitor-v1.md). D-OmniTwin spiegelt de huidige paden onder `/api/laden/v1/compat/swf-monitor/…`, synchroon, zodat FME alleen de basis-URL en de client wijzigt. Intern zijn het gewone leveringen op `swf-monitor-definities` en `swf-monitor-waarden`. De `GET`-varianten (back-up) geven de actuele versie terug in het SWF-formaat. Ontbrekende `n` krijgt de vlag `bron-onderdrukt`. Daarna kan SWF overstappen op één Data Package per run in plaats van ±57 losse aanroepen.
+
+## 5. Autorisatie
 
 | Wie | Keycloak | Mag | Databaserol |
 |---|---|---|---|
-| Bezoeker | – | publiek lezen | `web_anon` (PostgREST), backend-leesrol |
-| Medewerker | gebruiker, rol `lezen-beperkt` | ook beperkte lagen/indicatoren | later `web_ingelogd` (PostgREST JWT) |
-| Beheerder | gebruiker, rol `beheer` | configuratie, bronnen, leveringen inzien/intrekken | backend-beheerrol |
-| Externe ETL | confidential client, service account, rol `bron:{bron}:leveren` | leveren aan die bron, eigen leveringen inzien | `ingest_schrijver` (alleen `EXECUTE ingest.*`) |
-| Interne ETL | service account `d-omnitwin-etl`, rollen per bron | idem | idem |
-| Federatiepartner | client (via FSC-contract) | `GET /api/v1/waarden` voor afgesproken bronnen | backend-leesrol |
+| Bezoeker | – | publiek lezen (`data`, `geo`, `analyse`) | `web_anon`, backend-leesrol |
+| Medewerker | gebruiker, realm-rol `lezer` | ook beperkte datasets en lagen | later `web_ingelogd` (PostgREST-JWT) |
+| Beheerder | gebruiker, realm-rol `beheerder` | registraties, leveringen inzien, beheer-API | backend-beheerrol |
+| Externe ETL | machineclient, client-rol `dataset:{datasetId}:laden` | leveren aan die dataset, eigen leveringen inzien | `laden_schrijver` (alleen `EXECUTE laden.*`) |
+| Interne ETL | eigen machineclient, rollen per dataset of `datasets:laden` | idem | idem |
+| Federatiepartner | client via FSC-contract | lezen van afgesproken datasets | backend-leesrol |
+
+Paden en rollen per operatie: [`openapi.yaml`](../api/laden/openapi.yaml). Clients en realm: [API-landschap § 4](api-landschap.md#4-autorisatie-keycloak).
 
 ## 6. Relatie met ADR 0002 (databronnen als dataproduct)
 
-| ADR 0002 | Invulling in deze architectuur |
+| ADR 0002 | Invulling |
 |---|---|
-| Bron = dataproduct met `bron.json`, `contract.yaml`, `etl/`, `schema.sql`, `tests/` | `contract.yaml` (ODCS) is de validatiebasis van de ingang; `bron.json` (DCAT-AP-NL) voedt `/api/v1/bronnen`; `etl/` levert via `lever()` |
-| "Een bron levert waarden in de vorm van `gebied_data`" | precies gemaakt als het waarneming-contract; levering = eenheid van publicatie |
-| Governance op de bron (toegang, doelbinding, minimale aantallen, autorisatie) | `minimum_n` en toegang uit het contract worden afgedwongen in `ingest.valideer`; autorisatie = Keycloak-rol `bron:{bron}:leveren` |
-| Register `etl_bronnen`, runs `etl_runs`, herkomst `data_lineage` (#20) | ingevuld; `data_lineage` per plak, `gebied_data.levering_id` per waarde |
-| Drie vormen: in-process, container, extern/dataspace | in-process en container gebruiken dezelfde ingang (route 2), extern = push (route 1) of federatie (route 4) |
-| Catalogus exporteerbaar (JSON-LD) | `GET /api/v1/bronnen` met `Accept: application/ld+json` |
-| Eigen schema per bron (`bron_<naam>`, #137) | blijft mogelijk voor bron-specifieke tabellen; de Gold-publicatie loopt altijd via `ingest` |
+| Bron = dataproduct met `bron.json`, `contract.yaml`, `etl/`, `schema.sql`, `tests/` | een bron levert één of meer datasets; `bron.json` (DCAT) wordt de `beschrijving` van de registratie, `contract.yaml` het laadprofiel; `etl/` levert via de laadstraat |
+| "Een bron levert waarden in de vorm van `gebied_data`" | profiel `waarnemingen`; daarnaast `definities`, `gebiedsindeling`, `kaartlaag` |
+| Governance op de bron (toegang, doelbinding, minimale aantallen) | `dct:accessRights` in de beschrijving; `minimumN` in het laadprofiel; rol per dataset in Keycloak |
+| Register `etl_bronnen`, runs `etl_runs`, herkomst `data_lineage` (#20) | `laden.datasets`, `laden.leveringen`, `laden.versies`; `gebied_data.levering_id` per waarde |
+| Catalogus exporteerbaar (JSON-LD) | de registraties, via de catalogus-API |
 
-Verschil met ADR 0002: daar is de bron vooral een pakket dat D-OmniTwin zelf draait. Hier kan de bron ook **buiten** D-OmniTwin draaien (bij de bronhouder) en levert ze via dezelfde ingang; het contract en de catalogus blijven in D-OmniTwin.
-
-## 7. Datamodel (wijzigingen)
+## 7. Datamodel (schets)
 
 ```mermaid
 erDiagram
-  etl_bronnen ||--o{ ingest_leveringen : ontvangt
-  ingest_leveringen ||--o{ ingest_regels : bevat
-  ingest_leveringen ||--|| etl_runs : registreert
-  etl_runs ||--o{ data_lineage : "per plak"
-  ingest_leveringen ||--o{ gebied_data : publiceert
+  datasets ||--o{ leveringen : ontvangt
+  datasets ||--o{ versies : heeft
+  versies }o--o{ leveringen : "bestaat uit"
+  leveringen ||--o{ fouten : heeft
+  leveringen ||--o{ gebied_data : publiceert
   indicatoren ||--o{ gebied_data : "RESTRICT"
   gebieden ||--o{ gebied_data : ""
-  etl_bronnen {
-    text code PK
-    text naam
-    text vorm "intern|push|virtueel|extern"
-    text toegang "open|beperkt|intern"
-    jsonb contract
-    interval ttl
+  datasets {
+    text id PK
+    text bron_id
+    jsonb beschrijving "DCAT JSON-LD"
+    jsonb laadprofiel
+    int actuele_versie
   }
-  ingest_leveringen {
+  leveringen {
     uuid id PK
-    text bron FK
+    text dataset_id FK
     text status
-    text client
-    text sha256
+    text client "azp"
     text idempotency_key
-    text modus
-    bool proef
+    text sha256
+    text mediatype
+    text pad "op het volume"
+    bool alleen_valideren
     jsonb aantallen
+  }
+  versies {
+    text dataset_id PK
+    int versie PK
+    timestamptz gepubliceerd_op
+    int aantal_regels
   }
   gebied_data {
     bigint id PK
@@ -269,39 +236,30 @@ erDiagram
     timestamp datum
     text scenario_id
     int n "nieuw"
+    text n_status "nieuw"
     uuid levering_id "nieuw"
-  }
-  data_lineage {
-    bigint id PK
-    int etl_run_id FK
-    text bron FK
-    uuid indicator_uuid
-    int jaar
-    text scenario_id
-    int rijen
   }
 ```
 
-Plus: unieke sleutel `(gebied_id, indicator_uuid, jaar, scenario_id)` en `(…, datum, scenario_id)`; de sleutel `unq_gebied_indicator_jaar` zonder scenario vervalt.
+Verder: unieke sleutel `(gebied_id, indicator_uuid, jaar, scenario_id)` en `(…, datum, scenario_id)`; de sleutel `unq_gebied_indicator_jaar` zonder scenario vervalt; `gebiedstypes` krijgt `actief` en `metadata`; kaartlagen krijgen een tabel per dataset in schema `laag`.
 
-## 8. Huidige stand (0.2.0)
+## 8. Huidige stand (0.2.1)
 
-- Geen ingang voor waarden: scripts schrijven als database-eigenaar direct in `gebied_data` (`scripts/import_metingen.py`, `init_data/scripts/laad_usecase.py`).
-- Upload alleen voor kaartbestanden (`POST /api/admin/externe-lagen/upload`, naar de containermap `data-upload/`).
-- Machine-auth: één gedeelde `X-Admin-Key` met volledige beheerrechten; `api_keys` ongebruikt.
-- API zonder versie (`/api/gebiedsmonitor`, `/api/admin`, …); Swagger UI op `/docs`, spec op `/openapi.json` zonder `securitySchemes`; drie losse specs.
-- PostgREST en pg_featureserv alleen anoniem lezen; geen JWT.
-- `etl_bronnen`, `etl_runs`, `data_lineage` nog niet aanwezig.
+- Geen ingang voor data: scripts schrijven als database-eigenaar direct in `gebied_data` (`scripts/import_metingen.py`, `init_data/scripts/laad_usecase.py`).
+- Upload alleen voor kaartbestanden in het beheer (`POST /api/admin/externe-lagen/upload`).
+- Machine-auth: één gedeelde `X-Admin-Key` met volledige beheerrechten.
+- Eén FastAPI-spec in de root (`/docs`, `/openapi.json`), zonder versie en `securitySchemes`; PostgREST en pg_featureserv los daarvan.
+- Geen registratie, versies of herkomst per levering.
 
-Details en bewijs: RFC "D-OmniTwin vullen", hoofdstuk 2.
+Details en bewijs: [RFC D-OmniTwin vullen, § 2](rfc-vullen-van-d-omnitwin.md#2-huidige-stand).
 
 ## 9. Kwaliteitseisen
 
 | Eis | Hoe |
 |---|---|
-| Veiligheid | geen DB-credentials buiten de stack; rol per bron; korte tokens; `private_key_jwt`; eigen databaserol voor de ingang |
-| Privacy | n-drempel bij de ingang; staging opschonen; aggregaten toetsen |
-| Herleidbaarheid | `levering_id` per waarde; runs en lineage per plak; client in de registratie |
-| Betrouwbaarheid | atomische publicatie per plak; idempotent; proef-modus |
-| Prestaties | streamen naar `COPY`; set-based validatie; limieten in Traefik |
-| Herbruikbaarheid | open standaarden (Data Package, ODCS, DCAT-AP-NL, NL GOV ADR/OAuth, FSC/DSP); geen SWF-specifieke code in de kern |
+| Veiligheid | geen database-credentials buiten de stack; rol per dataset; korte tokens; `private_key_jwt` waar mogelijk; eigen databaserol voor de laad-API; limieten in Traefik |
+| Privacy | n-drempel bij de ingang; staging opschonen; aggregaten toetsen; geen persoonsgegevens in leveringen |
+| Herleidbaarheid | ruw bestand met sha256; `levering_id` per waarde; versies en historie per dataset; client in de levering |
+| Betrouwbaarheid | atomische publicatie; vorige versie blijft bij een fout; idempotent; `alleenValideren` |
+| Prestaties | streamen naar schijf en `COPY`; set-based validatie; asynchroon met `wacht=true` als optie |
+| Herbruikbaarheid | open standaarden (DCAT-AP-NL, GeoDCAT-AP, Frictionless, GeoPackage, NL GOV ADR/OAuth, RFC 9457); geen SWF-specifieke code in de kern (alleen een adapter) |
