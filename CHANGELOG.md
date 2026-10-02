@@ -8,6 +8,10 @@ Eerdere wijzigingen, van vóór dit bestand, zijn terug te vinden in de git-hist
 
 ## [Unreleased]
 
+## [0.2.1] - 2026-10-02
+
+Eerste onderhoudsrelease op 0.2: het fundament robuuster, veiliger en beter gedocumenteerd, na een review van 0.2.0 (verse installatie, upgrade, tests, code). Lees bij een upgrade de paragraaf **Migreren**.
+
 ### Migreren
 
 - **Geüploade kaartlagen** staan vanaf nu in het volume `uploads` ([#201](https://github.com/TLaan/D-OmniTwin/issues/201)). Bestanden die vóór 0.2.1 zijn geüpload, staan nog in de oude container: kopieer ze vóór de update met `docker compose cp backend:/app/data-upload ./data-upload-backup` en daarna terug naar het volume.
@@ -30,6 +34,7 @@ Eerdere wijzigingen, van vóór dit bestand, zijn terug te vinden in de git-hist
 
 ### Opgelost
 
+- E2E-tests klikken pas als de browser weer vlot tekent en controleren of de klik aankwam, met één nieuwe poging: in CI (software-WebGL) bevroor het compileren van shaders de browser soms seconden lang ([#194](https://github.com/TLaan/D-OmniTwin/issues/194)).
 - Installatie robuust: een half mislukte eerste init geeft een foutmelding met herstelinstructie in plaats van een lege stack (tabel `installatie_status`; bestaande installaties worden herkend, geen actie nodig); een mislukte admin-aanmaak stopt de init en er staat geen API-key meer in de log; een andere `DATABASE_USER` werkt (schema zonder vaste eigenaar); de upload van kaartlagen schrijft in stukken, is begrensd op 50 MB en overschrijft niet ([#201](https://github.com/TLaan/D-OmniTwin/issues/201)).
 - CI draait ook op `release/**` (push en PR), heeft een job voor het admin-panel (typecheck, lint, test, build en een controle dat `static/admin-panel` bij de broncode hoort) en `concurrency`/`permissions`. Tests die nooit draaiden, draaien weer (`test_escape_html`, `test_jaargangen_sample`, deelgebiedsrapport als integratietest) of zijn weg (debugscript `test_zscore.py`); een test zonder marker laat de collectie falen; verouderde xfail #139 weg. De migratierunner neemt een advisory lock tegen gelijktijdige runs, `--status` is alleen-lezen en toont ingelezen bestanden (V021 → `08_zscore_referentie.sql`, gedocumenteerd in `db/README.md`) ([#202](https://github.com/TLaan/D-OmniTwin/issues/202)).
 
@@ -149,6 +154,7 @@ Eerste release; deze sectie vat de ontwikkeling sinds het begin samen, details s
 - De backend-container draait als niet-root gebruiker ([#78](https://github.com/TLaan/D-OmniTwin/pull/78)).
 - Beheeromgeving gebouwd zonder sourcemaps ([#81](https://github.com/TLaan/D-OmniTwin/pull/81)).
 
-[Unreleased]: https://github.com/TLaan/D-OmniTwin/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/TLaan/D-OmniTwin/compare/v0.2.1...HEAD
+[0.2.1]: https://github.com/TLaan/D-OmniTwin/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/TLaan/D-OmniTwin/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/TLaan/D-OmniTwin/releases/tag/v0.1.0
