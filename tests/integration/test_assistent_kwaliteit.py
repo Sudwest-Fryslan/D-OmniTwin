@@ -81,7 +81,7 @@ def test_vraag_van_eduard_met_geselecteerde_buurt():
     assert r.status_code == 200
     a = r.json()
     assert a["intent"] == "DATAVRAAG"
-    assert [i["naam"] for i in a["indicatoren"]] == ["65+ jaar (%)"]
+    assert [i["naam"] for i in a["indicatoren"]] == ["65+ jaar (%)", "80 jaar of ouder (%)"]
     assert all(i["relevantie_label"] in ("sterk", "matig") for i in a["indicatoren"])
     eigen = [g for g in a["gegevens"] if g["gebied_id"] == "BU19000002"]
     assert eigen and eigen[0]["jaar"] and a["bronnen"][0]["bron"].startswith("CBS")

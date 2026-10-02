@@ -202,8 +202,8 @@ def test_ai_treffer_telt_alleen_boven_drempel():
 
 
 def test_indicatoren_via_synoniem():
-    """#233: 'bejaard' staat in db/stuurdata/synoniemen.json bij ouderen → 65+ jaar (%)."""
-    assert indicatoren("hoeveel % is bejaard bij mij in de buurt?") == ["65+ jaar (%)"]
+    """#233: 'bejaard' staat in db/stuurdata/synoniemen.json bij bejaarden → 65+ jaar (%)."""
+    assert indicatoren("hoeveel % is bejaard bij mij in de buurt?") == ["65+ jaar (%)"]  # 80+ niet in de testlijst
     assert indicatoren("Hoe ver is de dokter in Workum?") == ["Afstand tot huisarts"]
 
 

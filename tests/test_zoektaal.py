@@ -36,12 +36,13 @@ def namen(rangen):
 
 def test_bejaard_is_een_synoniem_van_ouderen():
     [t] = z.herken_begrippen("hoeveel % is bejaard bij mij in de buurt?", BEGRIPPEN)
-    assert t.begrip.label == "ouderen" and t.woorden == ["bejaard"]
+    assert t.begrip.label == "bejaarden" and t.woorden == ["bejaard"]
 
 
 def test_label_past_op_langere_woordvorm():
     """'bejaard' (5+ letters) past ook op 'bejaarden'; korte labels alleen op het hele woord."""
-    assert [t.begrip.label for t in z.herken_begrippen("veel bejaarden", BEGRIPPEN)] == ["ouderen"]
+    assert [t.begrip.label for t in z.herken_begrippen("veel bejaarden", BEGRIPPEN)] == ["bejaarden"]
+    assert [t.begrip.label for t in z.herken_begrippen("veel seniorencomplexen", BEGRIPPEN)] == ["ouderen"]
     assert z.herken_begrippen("armband", BEGRIPPEN) == []  # 'arm' is te kort voor een voorvoegsel
 
 
@@ -64,12 +65,12 @@ def test_begrippen_in_volgorde_van_de_vraag():
 # ── Rangschikken en afkappen ─────────────────────────────────────────────────
 
 def test_vraag_van_eduard_geeft_ouderen_en_niet_groen():
-    """De vraag uit #233: eerst 65+ jaar (%), geen groen, bouwjaren of hemelwater."""
+    """De vraag uit #233: eerst 65+ jaar (%) en 80 jaar of ouder (%), geen groen, bouwjaren of hemelwater."""
     gelijkenis = {i["uuid"]: 0.5 for i in INDICATOREN}  # betekenis zegt niets: alleen het begrip telt
     rangen = z.rangschik("hoeveel % is bejaard bij mij in de buurt?", INDICATOREN, gelijkenis, BEGRIPPEN, 0.5, 0.6)
-    assert namen(rangen)[:2] == ["65+ jaar (%)", "65+ jaar"]
+    assert namen(rangen)[:3] == ["65+ jaar (%)", "80 jaar of ouder (%)", "65+ jaar"]
     assert not {"Oppervlak groen per inwoner", "Bouwjaar voor 1915", "Verwerken hemelwater exc. schade"} & set(namen(rangen))
-    assert rangen[0].redenen == ["begrip: ouderen"]
+    assert rangen[0].redenen == ["begrip: bejaarden"]
 
 
 def test_betekenis_zonder_trefwoord_is_hoogstens_matig():

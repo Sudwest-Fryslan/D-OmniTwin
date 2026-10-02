@@ -177,6 +177,6 @@ def test_vraag_van_eduard_toont_relevantie_als_woord(page):
     assert data["intent"] == "DATAVRAAG", data
     bericht = page.locator(".chat-message-assistant").last
     expect(bericht.locator(".chat-narrative")).to_contain_text("Bolsward-Zuidoost: ")
-    expect(bericht.locator(".chat-indicatoren-label")).to_have_text("Onderbouwing: 1 indicator")
-    expect(bericht.locator(".chat-ind-naam")).to_have_text(["65+ jaar (%)"])
-    expect(bericht.locator(".chat-ind-score")).to_have_text(["sterk"])
+    expect(bericht.locator(".chat-indicatoren-label")).to_have_text("Onderbouwing: 2 indicatoren")
+    expect(bericht.locator(".chat-ind-naam")).to_have_text(["65+ jaar (%)", "80 jaar of ouder (%)"])
+    expect(bericht.locator(".chat-ind-score")).to_have_text(["sterk", "sterk"])

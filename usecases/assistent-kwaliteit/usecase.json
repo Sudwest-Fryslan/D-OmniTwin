@@ -13,12 +13,12 @@
   "controles": [
     {
       "type": "api",
-      "pad": "/api/ai/kompas/search?q=bejaard&limit=3",
+      "pad": "/api/ai/kompas/search?q=senioren&limit=3",
       "anoniem": true,
       "minimaal_aantal": 1,
       "uuid": "4a221658-f750-50b9-90eb-6d50154c52db",
       "verwacht": "65+ jaar (%) bovenaan, relevantie sterk",
-      "omschrijving": "synoniem: bejaard → 65+ jaar (%)"
+      "omschrijving": "synoniem: senioren → 65+ jaar (%)"
     },
     {
       "type": "api",
@@ -82,7 +82,7 @@
     {
       "type": "viewer",
       "stap": "Bolsward-Zuidoost selecteren op de kaart en in de chat vragen: hoeveel % is bejaard bij mij in de buurt?",
-      "verwacht": "antwoord met het percentage 65-plussers voor Bolsward-Zuidoost, bron en jaar; onder het antwoord 'Onderbouwing: 1 indicator' met relevantie als woord (sterk), geen percentage",
+      "verwacht": "antwoord met het percentage 65-plussers en 80-plussers voor Bolsward-Zuidoost, bron en jaar; onder het antwoord 'Onderbouwing: 2 indicatoren' met relevantie als woord (sterk), geen percentage",
       "gebied": "BU19000002"
     }
   ],
