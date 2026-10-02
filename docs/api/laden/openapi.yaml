@@ -6,7 +6,7 @@ info:
     Datasets registreren en leveringen laden in D-OmniTwin.
 
     **Status: in opbouw (0.3.0).** Geïmplementeerd in `src/omnitwin/routers/laden.py` en
-    `src/omnitwin/laden/`, behalve de compatibiliteitspaden (`/compat/swf-monitor/...`). Besluiten: ADR 0004 (vullen via registratie en leveringen) en ADR 0005
+    `src/omnitwin/laden/`, inclusief de compatibiliteitspaden (`/compat/swf-monitor/...`). Besluiten: ADR 0004 (vullen via registratie en leveringen) en ADR 0005
     (gescheiden API's per doel). Zie `docs/api/laden/README.md`.
 
     Model in het kort:
@@ -725,12 +725,21 @@ paths:
         `vervangen` op dataset `swf-monitor-definities`, profiel `definities`, adapter
         `swf-monitor-v1`. Altijd synchroon (time-out 120 s). Zie
         `docs/api/laden/profielen/swf-monitor-v1.md` voor de mapping.
+        Dezelfde body nog een keer: `200` met dezelfde versie (`aantallen.ongewijzigd`), geen
+        nieuwe publicatie. Afgekeurd: `422` met de fouten per regel (FME: `<Rejected>`).
       security:
         - oauth2:
             - dataset:swf-monitor-definities:laden
         - oauth2:
             - datasets:laden
       parameters:
+        - name: alleenValideren
+          in: query
+          required: false
+          description: Alleen valideren, niet publiceren (om een omgezette workspace te testen). Antwoord `200` met status `gevalideerd`, of `422`.
+          schema:
+            type: boolean
+            default: false
         - $ref: "#/components/parameters/IdempotencyKey"
       requestBody:
         required: true
@@ -760,6 +769,8 @@ paths:
               $ref: "#/components/headers/ApiVersion"
             Location:
               $ref: "#/components/headers/Location"
+            Retry-After:
+              $ref: "#/components/headers/RetryAfter"
           content:
             application/json:
               schema:
@@ -770,6 +781,17 @@ paths:
           $ref: "#/components/responses/NietGeauthenticeerd"
         "403":
           $ref: "#/components/responses/GeenToegang"
+        "404":
+          description: Dataset niet geregistreerd met deze adapter (vraag de beheerder).
+          headers:
+            API-Version:
+              $ref: "#/components/headers/ApiVersion"
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Probleem"
+        "409":
+          $ref: "#/components/responses/Conflict"
         "413":
           $ref: "#/components/responses/TeGroot"
         "422":
@@ -820,12 +842,22 @@ paths:
         `swf-monitor-waarden` (profiel `waarnemingen`, adapter `swf-monitor-v1`) met vervangbereik
         indicator × gebiedstype: alleen de combinaties in de body worden vervangen. Altijd
         synchroon (time-out 120 s).
+        Dezelfde body nog een keer: `200` met dezelfde versie (`aantallen.ongewijzigd`), geen
+        nieuwe publicatie. Afgekeurd: `422` met de fouten per regel; de vorige stand van die
+        combinaties blijft staan.
       security:
         - oauth2:
             - dataset:swf-monitor-waarden:laden
         - oauth2:
             - datasets:laden
       parameters:
+        - name: alleenValideren
+          in: query
+          required: false
+          description: Alleen valideren, niet publiceren (om een omgezette workspace te testen). Antwoord `200` met status `gevalideerd`, of `422`.
+          schema:
+            type: boolean
+            default: false
         - $ref: "#/components/parameters/IdempotencyKey"
       requestBody:
         required: true
@@ -860,6 +892,8 @@ paths:
               $ref: "#/components/headers/ApiVersion"
             Location:
               $ref: "#/components/headers/Location"
+            Retry-After:
+              $ref: "#/components/headers/RetryAfter"
           content:
             application/json:
               schema:
@@ -870,6 +904,17 @@ paths:
           $ref: "#/components/responses/NietGeauthenticeerd"
         "403":
           $ref: "#/components/responses/GeenToegang"
+        "404":
+          description: Dataset niet geregistreerd met deze adapter (vraag de beheerder).
+          headers:
+            API-Version:
+              $ref: "#/components/headers/ApiVersion"
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Probleem"
+        "409":
+          $ref: "#/components/responses/Conflict"
         "413":
           $ref: "#/components/responses/TeGroot"
         "422":
@@ -885,6 +930,7 @@ paths:
       description: |
         Spiegel van `GET /monitor_api/indicator_waarde`: de actuele versie van
         `swf-monitor-waarden` als `indicator_id`, `gebiedstype_id`, `gebieds_id`, `jaar`, `waarde`.
+        `gebieds_id` zonder de `code_prefix` van het gebiedstype (zoals geleverd).
         Waarden die D-OmniTwin onderdrukt heeft, staan er niet in.
       security:
         - oauth2:

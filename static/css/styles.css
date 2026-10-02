@@ -182,59 +182,63 @@
 
 /* Update panel-bg variable as well for consistency if needed, but request was specifically for "Kompas venster" */
 /* CSS Variables - Theme System */
+/* Thema per organisatie (#89): de variabelen hieronder lezen NL Design System-basistokens (--basis-*)
+   en componenttokens (--d-omnitwin-*) uit static/css/themes/<thema>.css. De fallback is de huidige
+   standaardwaarde, gelijk aan themes/d-omnitwin.css: zonder themabestand verandert er niets.
+   Datakleuren (Z-score, kaart, Kompas) lopen niet via het thema. Zie docs/4-ux-design/thema-s.md. */
 :root {
   /* ======== Master Palette — Light Mode (Sprint 8E) ======== */
-  --bg-primary: #f1f5f9;
-  --bg-secondary: #ffffff;
-  --text-primary: #1e293b;
-  --text-secondary: #64748b;
-  --border-color: #e2e8f0;
+  --bg-primary: var(--basis-color-default-bg-document, #f1f5f9);
+  --bg-secondary: var(--basis-color-default-bg-default, #ffffff);
+  --text-primary: var(--basis-color-default-color-document, #1e293b);
+  --text-secondary: var(--basis-color-default-color-subtle, #64748b);
+  --border-color: var(--basis-color-default-border-subtle, #e2e8f0);
   --panel-bg: rgba(255, 255, 255, 0.4);
   --panel-border: rgba(30, 41, 59, 0.2);
   --shadow-color: rgba(0, 0, 0, 0.15);
 
   /* Header — Trust Blue → Nature Green gradient */
-  --header-bg-start: #1e3a8a;
-  --header-bg-end: #15803d;
-  --header-text: #ffffff;
+  --header-bg-start: var(--d-omnitwin-header-background-color-start, #1e3a8a);
+  --header-bg-end: var(--d-omnitwin-header-background-color-end, #15803d);
+  --header-text: var(--d-omnitwin-header-color, #ffffff);
 
   /* Brand Colors — Triple Threat */
-  --primary-color: #1e3a8a;
+  --primary-color: var(--basis-color-accent-1-color-default, #1e3a8a);
   /* Trust Blue Light — navigatie, links, systeemaccent */
-  --primary-dark: #1e40af;
+  --primary-dark: var(--basis-color-accent-1-color-hover, #1e40af);
   --secondary-color: #4A5568;
   /* Neutral — geen branding, rustig grijsblauw */
 
-  --action-color: #1e3a8a;
+  --action-color: var(--basis-color-action-1-color-default, #1e3a8a);
   /* Trust Blue — Universal CTA (was groen/rood) */
-  --action-dark: #1e40af;
-  --accent-color: #c59d00;
+  --action-dark: var(--basis-color-action-1-color-hover, #1e40af);
+  --accent-color: var(--basis-color-accent-2-bg-default, #c59d00);
   /* Geo Gold Light — π-node, selecties, highlights */
-  --accent-text: #856a00;
+  --accent-text: var(--basis-color-accent-2-color-default, #856a00);
   /* Geo Gold voor tekst en iconen: 5,17:1 op wit, 4,72:1 op #f1f5f9 (WCAG 1.4.3) */
 
   /* Semantische kleuren */
-  --color-danger: #b91c1c;
+  --color-danger: var(--basis-color-negative-color-default, #b91c1c);
   /* Rood — UITSLUITEND errors/kritiek */
-  --color-success: #15803d;
+  --color-success: var(--basis-color-positive-color-default, #15803d);
   /* Nature Green Light — status OK */
-  --color-warning: #C2410C;
+  --color-warning: var(--basis-color-warning-color-default, #C2410C);
   /* Oranje — data-alerts; 5,18:1 op wit (was #DD6B20, 3,39:1) */
-  --brand-nature: #15803d;
+  --brand-nature: var(--basis-color-accent-3-color-default, #15803d);
   /* Nature Green Light — milieu, duurzaamheid */
-  --brand-accent: #c59d00;
+  --brand-accent: var(--basis-color-accent-2-bg-default, #c59d00);
   /* Geo Gold Light */
 
   /* Border Radius */
-  --border-radius: 12px;
-  --border-radius-sm: 8px;
+  --border-radius: var(--basis-border-radius-lg, 12px);
+  --border-radius-sm: var(--basis-border-radius-md, 8px);
 
   /* Spacing */
-  --spacing-xs: 0.25rem;
-  --spacing-sm: 0.5rem;
-  --spacing-md: 1rem;
-  --spacing-lg: 1.5rem;
-  --spacing-xl: 2rem;
+  --spacing-xs: var(--basis-space-block-xs, 0.25rem);
+  --spacing-sm: var(--basis-space-block-sm, 0.5rem);
+  --spacing-md: var(--basis-space-block-md, 1rem);
+  --spacing-lg: var(--basis-space-block-lg, 1.5rem);
+  --spacing-xl: var(--basis-space-block-xl, 2rem);
 
   /* Transitions */
   --transition-fast: 150ms ease;
@@ -242,12 +246,12 @@
   --transition-slow: 500ms ease;
 
   /* Toegankelijkheid (WCAG 2.4.7) — focusrand */
-  --focus-ring: #1e3a8a;
+  --focus-ring: var(--basis-focus-outline-color, #1e3a8a);
 
   /* Vlakken met witte tekst (knoppen, chatbubbel); in donker thema donkerder */
-  --primary-fill: var(--primary-color);
-  --action-fill: var(--action-color);
-  --action-fill-dark: var(--action-dark);
+  --primary-fill: var(--basis-color-accent-1-bg-default, var(--primary-color));
+  --action-fill: var(--basis-color-action-1-bg-default, var(--action-color));
+  --action-fill-dark: var(--basis-color-action-1-bg-hover, var(--action-dark));
 
   /* Layout */
   --tab-bar-width: 70px;
@@ -272,7 +276,7 @@
 }
 
 body {
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+  font-family: var(--basis-text-font-family-default, 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif);
   background: var(--bg-primary);
   color: var(--text-primary);
   line-height: 1.6;
@@ -282,6 +286,16 @@ body {
   display: flex;
   flex-direction: column;
   height: 100vh;
+}
+
+/* Koppen: lettertype uit het thema (NLDS basis.heading.font-family); standaard gelijk aan de tekst */
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--basis-heading-font-family, inherit);
 }
 
 /* ============================================================================
@@ -435,51 +449,51 @@ body {
 
 [data-theme="dark"] {
   /* ======== Master Palette — Dark Mode (Sprint 8E) ======== */
-  --bg-primary: #0f172a;
-  --bg-secondary: #1e293b;
-  --text-primary: #f1f5f9;
-  --text-secondary: #94a3b8;
+  --bg-primary: var(--basis-color-default-bg-document, #0f172a);
+  --bg-secondary: var(--basis-color-default-bg-default, #1e293b);
+  --text-primary: var(--basis-color-default-color-document, #f1f5f9);
+  --text-secondary: var(--basis-color-default-color-subtle, #94a3b8);
   /* Glassmorphism — tokens already defined in :root above */
-  --border-color: #334155;
+  --border-color: var(--basis-color-default-border-subtle, #334155);
   --panel-bg: rgba(30, 41, 59, 0.4);
   --panel-border: rgba(241, 245, 249, 0.2);
   --shadow-color: rgba(0, 0, 0, 0.5);
 
   /* Header — Trust Blue Dark → Nature Green Dark (Hue-Consistent!) */
-  --header-bg-start: #3b82f6;
-  --header-bg-end: #22c55e;
-  --header-text: #f1f5f9;
+  --header-bg-start: var(--d-omnitwin-header-background-color-start, #3b82f6);
+  --header-bg-end: var(--d-omnitwin-header-background-color-end, #22c55e);
+  --header-text: var(--d-omnitwin-header-color, #f1f5f9);
 
   /* Brand Colors — zelfde hue, hogere luminance */
-  --primary-color: #3b82f6;
+  --primary-color: var(--basis-color-accent-1-color-default, #3b82f6);
   /* Trust Blue Dark */
-  --primary-dark: #2563eb;
+  --primary-dark: var(--basis-color-accent-1-color-hover, #2563eb);
   --secondary-color: #718096;
   /* Neutral Dark — consistent met Light */
 
-  --action-color: #3b82f6;
+  --action-color: var(--basis-color-action-1-color-default, #3b82f6);
   /* Trust Blue Dark — Universal CTA */
-  --action-dark: #2563eb;
-  --accent-color: #eab308;
+  --action-dark: var(--basis-color-action-1-color-hover, #2563eb);
+  --accent-color: var(--basis-color-accent-2-bg-default, #eab308);
   /* Geo Gold Dark */
-  --accent-text: #eab308;
+  --accent-text: var(--basis-color-accent-2-color-default, #eab308);
   /* 9,31:1 op #0f172a */
 
   /* Semantische kleuren */
-  --color-danger: #ef4444;
-  --color-success: #22c55e;
-  --color-warning: #f97316;
-  --brand-nature: #22c55e;
+  --color-danger: var(--basis-color-negative-color-default, #ef4444);
+  --color-success: var(--basis-color-positive-color-default, #22c55e);
+  --color-warning: var(--basis-color-warning-color-default, #f97316);
+  --brand-nature: var(--basis-color-accent-3-color-default, #22c55e);
   /* Nature Green Dark */
-  --brand-accent: #eab308;
+  --brand-accent: var(--basis-color-accent-2-bg-default, #eab308);
   /* Geo Gold Dark */
 
-  --focus-ring: #93c5fd;
+  --focus-ring: var(--basis-focus-outline-color, #93c5fd);
 
   /* Wit op #3b82f6 is 3,68:1; wit op #2563eb 5,17:1 en op #1d4ed8 6,70:1 */
-  --primary-fill: #2563eb;
-  --action-fill: #2563eb;
-  --action-fill-dark: #1d4ed8;
+  --primary-fill: var(--basis-color-accent-1-bg-default, #2563eb);
+  --action-fill: var(--basis-color-action-1-bg-default, #2563eb);
+  --action-fill-dark: var(--basis-color-action-1-bg-hover, #1d4ed8);
 }
 
 /* Update Panel style for structure */

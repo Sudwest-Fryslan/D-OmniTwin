@@ -2341,7 +2341,7 @@ class KompasVisualization {
                 <div class="search-result-item" role="button" tabindex="0" data-uuid="${escapeHtml(res.uuid)}">
                     <div class="result-category">${escapeHtml(res.categorie || 'Indicator')}</div>
                     <div class="result-name">${escapeHtml(res.naam)}</div>
-                    <div class="result-score">Relevantie: ${Math.round(res.score * 100)}%</div>
+                    ${res.relevantie ? `<div class="result-score">Relevantie: ${escapeHtml(res.relevantie)}</div>` : ''}
                 </div>
             `).join('');
 

@@ -163,3 +163,20 @@ def test_datavraag_in_de_chat(page, uc):
     )
     geselecteerd = page.evaluate("() => [...window.state.selectedGebiedIds].sort()")
     assert geselecteerd == sorted(toon["gebied_ids"])
+
+
+def test_vraag_van_eduard_toont_relevantie_als_woord(page):
+    """#233: 'hoeveel % is bejaard bij mij in de buurt?' met Bolsward-Zuidoost als eigen buurt:
+    het cijfer voor die buurt, de indicator als onderbouwing en relevantie als woord, geen percentage."""
+    page.locator("#chat-toggle-btn").click()
+    with page.expect_response(lambda r: r.url.endswith("/api/chat") and r.request.method == "POST",
+                              timeout=LLM_TIMEOUT_MS) as resp:
+        page.evaluate("() => window.chatPanel.sendVraag('hoeveel % is bejaard bij mij in de buurt?',"
+                      " {huidig_gebied_id: 'BU19000002', geen_llm: true})")
+    data = resp.value.json()
+    assert data["intent"] == "DATAVRAAG", data
+    bericht = page.locator(".chat-message-assistant").last
+    expect(bericht.locator(".chat-narrative")).to_contain_text("Bolsward-Zuidoost: ")
+    expect(bericht.locator(".chat-indicatoren-label")).to_have_text("Onderbouwing: 2 indicatoren")
+    expect(bericht.locator(".chat-ind-naam")).to_have_text(["65+ jaar (%)", "80 jaar of ouder (%)"])
+    expect(bericht.locator(".chat-ind-score")).to_have_text(["sterk", "sterk"])

@@ -73,7 +73,7 @@ De tabel volgt de volgorde van `.env.example`. Optionele regels staan daar als c
 | `OIDC_AUDIENCE`, `OIDC_INTERN_URL`, `OIDC_JWKS_URL` | Optioneel, bij `OIDC_ISSUER`. `OIDC_AUDIENCE`: vereiste `aud`, standaard `omnitwin-api`. `OIDC_INTERN_URL`: adres waarop de backend de issuer intern bereikt voor discovery en sleutels; `docker-compose.yml` zet standaard `http://keycloak:8080/auth/realms/omnitwin`. Bij een externe identity provider: `OIDC_INTERN_URL=` (leeg). `OIDC_JWKS_URL`: alleen als de provider geen discovery heeft. |
 | `OMNITWIN_BRON_DOMEINEN` | Optioneel. Extra domeinen (kommagescheiden) waarvan de bronadapters van de use cases via https mogen downloaden, naast de vaste lijst (CBS, PDOK, RIVM, Klimaateffectatlas). Zie [use cases](../../usecases/README.md#bronnen). |
 | `OMNITWIN_BASE_URL`, `OMNITWIN_CLIENT_ID`, `OMNITWIN_CLIENT_SECRET`, `OMNITWIN_TOKEN_URL`, `KEYCLOAK_REALM` | Optioneel, alleen voor `python -m omnitwin.usecases installeer` en `test`: het adres van de installatie (standaard `http://localhost`) en een machineclient (client credentials, zie [Keycloak](#keycloak-optioneel)). Het tokenendpoint komt standaard uit de discovery van realm `KEYCLOAK_REALM` (standaard `omnitwin`). |
-| `LEVERINGEN_DIR`, `LADEN_MAX_MB`, `LADEN_RATE_LIMIT`, `LADEN_WACHT_SECONDEN` | Optioneel, laad-API ([docs/api/laden](../api/laden/README.md)): map voor de ruwe leveringen (standaard het volume `leveringen` op `/leveringen`), bodylimiet (standaard 200 MB, JSON een tiende), leveringen per minuut per client (standaard 10) en de time-out van `wacht=true` (standaard 60 s). |
+| `LEVERINGEN_DIR`, `LADEN_MAX_MB`, `LADEN_RATE_LIMIT`, `LADEN_COMPAT_RATE_LIMIT`, `LADEN_WACHT_SECONDEN` | Optioneel, laad-API ([docs/api/laden](../api/laden/README.md)): map voor de ruwe leveringen (standaard het volume `leveringen` op `/leveringen`), bodylimiet (standaard 200 MB, JSON een tiende), leveringen per minuut per client (standaard 10; op de compatibiliteitsingang voor de SWF-monitor 120) en de time-out van `wacht=true` (standaard 60 s). |
 | `LADEN_BEWAAR_VERSIES`, `LADEN_BEWAAR_DAGEN`, `LADEN_BEWAAR_AFGEKEURD_DAGEN` | Optioneel. Bewaartermijn van de ruwe leveringen: altijd de laatste 10 versies per dataset, oudere tot 365 dagen, afgekeurde en alleen-gevalideerde leveringen 30 dagen. |
 | `LADEN_VOORRANG` | Optioneel. Datasets (kommagescheiden, hoogste eerst) die voorgaan als twee datasets een waarde voor hetzelfde gebied, dezelfde indicator en hetzelfde jaar leveren. Standaard `swf-monitor-waarden` (aanname A6, #222). De andere waarde blijft bewaard in `laden.waarnemingen`. |
 | `OLLAMA_HOST`, `OLLAMA_MODEL`, `LLM_THINK`, `LLM_REASONING_EFFORT` | Optioneel, lokale AI. Zie [LLM](#7-llm-optioneel). |
@@ -99,7 +99,7 @@ De eerste keer duurt dit lang (10 tot 30 minuten, afhankelijk van de verbinding)
 
    Daarna werkt hij altijd de databaserollen en het schema `api` voor PostgREST en pg_featureserv bij (`db/migraties/R__api_rollen.sql`, zie [Beveiliging](#beveiliging)). Dat raakt geen data. Bij een nieuwe installatie legt hij dan in de tabel `installatie_status` vast dat de installatie voltooid is.
 
-   Tot slot maakt hij, ook bij een bestaande database, de embeddings voor AI-zoeken en de chat aan (`scripts/ai/genereer_embeddings.py`), voor alle actieve indicatoren zonder embedding, ook concepten. Het model daarvoor (`all-MiniLM-L6-v2`) zit al in de image; zie [Embeddingmodel](#embeddingmodel-offline). Lukt dit niet, dan staat er een waarschuwing in de log en gaat de installatie gewoon door; AI-zoeken en de chat vinden dan geen indicatoren.
+   Tot slot maakt hij, ook bij een bestaande database, de embeddings voor AI-zoeken en de chat aan (`scripts/ai/genereer_embeddings.py`), voor alle actieve indicatoren zonder embedding of waarvan de tekst, de synoniemen of het model veranderd is, ook concepten. Het model daarvoor (`multilingual-e5-small`) zit al in de image; zie [Embeddingmodel](#embeddingmodel-offline). Lukt dit niet, dan staat er een waarschuwing in de log en gaat de installatie gewoon door; AI-zoeken en de chat vinden dan geen indicatoren.
 3. `backend` (FastAPI), `postgrest` en `pg_featureserv` starten, `traefik` stuurt het verkeer door. Stopt `db-init` met een fout, dan starten deze drie niet.
 
 Controleer:
@@ -249,9 +249,9 @@ docker compose exec -T postgres sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB
 
 ### Embeddingmodel (offline)
 
-AI-zoeken en de chat gebruiken het model [`sentence-transformers/all-MiniLM-L6-v2`](https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2) (licentie Apache-2.0). Het model en de revisie (een commit-hash van HuggingFace) staan op één plek: `src/omnitwin/services/embedding_model.py`.
+AI-zoeken en de chat gebruiken het meertalige model [`intfloat/multilingual-e5-small`](https://huggingface.co/intfloat/multilingual-e5-small) (licentie MIT, 384 dimensies; tot #233 het Engelstalige `all-MiniLM-L6-v2`). Het model en de revisie (een commit-hash van HuggingFace) staan op één plek: `src/omnitwin/services/embedding_model.py`. Hoe zoeken werkt (begrippen en synoniemen uit `db/stuurdata/synoniemen.json`, woorden uit de naam en betekenis) staat in `src/omnitwin/services/zoektaal.py`; de kwaliteit meet je met `python scripts/ai/evalueer_assistent.py --url http://localhost` (zie [use case assistent-kwaliteit](../../usecases/assistent-kwaliteit/README.md)).
 
-- `docker compose build` downloadt die revisie naar `/opt/models/all-MiniLM-L6-v2` in de image. Dat maakt de image circa 90 MB groter (91,8 MB; totaal ± 1,7 GB uitgepakt). Alleen bij het bouwen is HuggingFace nodig.
+- `docker compose build` downloadt die revisie naar `/opt/models/multilingual-e5-small` in de image en slaat de gewichten op als float16 (225 MB in plaats van 450 MB; bij het laden weer float32, zonder meetbaar verschil). Het model maakt de image circa 250 MB groot (totaal ± 1,8 GB uitgepakt, grens in CI 1900 MiB). Alleen bij het bouwen is HuggingFace nodig.
 - Backend en `db-init` draaien met `HF_HUB_OFFLINE=1`, `TRANSFORMERS_OFFLINE=1` en `HF_HUB_DISABLE_TELEMETRY=1`: geen download en geen telemetrie, ook niet bij een nieuwe container. AI-zoeken werkt zonder internet.
 - Het model staat buiten `/app`, dus ook in ontwikkelmodus (bind-mount van de repo over `/app`) blijft het zichtbaar.
 - Controleren: `/api/ai/health` toont onder `embedding_model` de revisie, `lokaal` en `offline`.
@@ -260,9 +260,11 @@ Model bijwerken naar een nieuwere revisie:
 
 1. Zoek de commit-hash op `https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/commits/main` en zet die in `MODEL_REVISIE` in `src/omnitwin/services/embedding_model.py`.
 2. Bouw opnieuw: `docker compose up -d --build`.
-3. Bereken de embeddings opnieuw, want vectoren van verschillende revisies passen niet bij elkaar: `docker compose exec backend python scripts/ai/genereer_embeddings.py --opnieuw`.
+3. De embeddings worden bij de volgende `db-init` vanzelf opnieuw berekend: per indicator staat in `indicator_embeddings.tekst_hash` een hash van model, revisie en tekst (migratie V028). Meteen: `docker compose exec backend python scripts/ai/genereer_embeddings.py`.
 
-Een ander model met een andere dimensie (niet 384) vraagt ook een schemawijziging van `indicator_embeddings`.
+Een ander model met een andere dimensie (niet 384) vraagt ook een schemawijziging van `indicator_embeddings`. Een ander model vraagt ook nieuwe waarden voor `GELIJKENIS_MARGE_ONDER/BOVEN` en de voorvoegsels in `embedding_model.py`: meet met de evaluatie.
+
+**Na een levering met nieuwe of gewijzigde indicatoren** (laad-API, profiel `definities`): roep `herbereken_embeddings(db, indicator_uuids)` uit `src/omnitwin/services/indicator_embeddings.py` aan na de commit van de publicatie. Die berekent alleen wat nieuw of gewijzigd is, laadt het model alleen als er iets te doen is, en commit zelf. Zonder die aanroep vindt de assistent de nieuwe indicatoren pas na de volgende `db-init` op betekenis (op naam en synoniemen wel meteen).
 
 ---
 
@@ -329,6 +331,26 @@ docker compose up -d
 ```
 
 `-v` verwijdert alle volumes van dit project: de database (`pgdata`), de geüploade kaartlagen (`uploads`) en de download-cache (`bron-cache`). `db-init` richt de database daarna opnieuw in.
+
+### Eigen organisatie
+
+Elke organisatie draait een eigen instantie (ADR 0007). Wie die instantie beheert, staat als data in de tabel `organisatie`: naam, korte naam, OIN (optioneel), CBS-gemeentecode(s) van het eigen gebied, standaard-benchmarkprovincie, contactadres, de logo's in de footer en het thema (huisstijl: `static/css/themes/<thema>.css`, alleen `a-z`, `0-9` en `-`; standaard `d-omnitwin`). Standaard staat daar Súdwest-Fryslân. Lezen: `GET /api/organisatie`.
+
+De eerste gemeentecode is de standaard-referentie in de rapporten ("⌀ Gemeente ...") en bepaalt welke buurten bij een omgevingsvisie-deelgebied horen.
+
+- **Nieuwe installatie:** pas vóór de eerste start `db/stuurdata/organisatie.sql` aan. `db-init` laadt het bestand alleen als de tabel nog leeg is. Met een kant-en-klare image (zonder eigen build): mount je eigen bestand in `db-init` op `/app/db/stuurdata/organisatie.sql`, of gebruik de SQL hieronder.
+- **Bestaande installatie:** wijzig de rij met SQL (`docker compose exec postgres psql -U <DATABASE_USER> -d <DATABASE_NAME>`), bijvoorbeeld:
+
+  ```sql
+  UPDATE organisatie SET
+      code = 'lwd', naam = 'Gemeente Leeuwarden', korte_naam = 'Leeuwarden',
+      gemeente_codes = ARRAY['0080'], contact_email = 'info@example.nl',
+      logos = '[{"pad": "/static/images/mijn-logo.png", "naam": "Gemeente Leeuwarden", "rol": "eigen"}]';
+  ```
+
+  Een eigen logobestand zet je onder `static/images/` (of mount je, zoals bij het beeldmerk hieronder). Herlaad de pagina; een herstart is niet nodig.
+
+Nog niet uit deze instelling: de benchmarkmodus `fryslan`, de welkomsttekst en de startpositie van de kaart (zie [#231](https://github.com/TLaan/D-OmniTwin/issues/231)).
 
 ### Eigen logo
 

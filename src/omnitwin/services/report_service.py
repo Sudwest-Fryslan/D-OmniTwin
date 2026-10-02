@@ -12,6 +12,7 @@ from typing import Dict, Any, List, Optional
 import json
 
 from omnitwin.fouten import GebruikersFout
+from omnitwin.services.organisatie import eigen_gemeente_code
 
 from omnitwin.services.zscore_referentie import (
     MIN_N_STANDAARD,
@@ -388,7 +389,7 @@ class ReportDataService:
         self,
         gebied_ids: List[str],
         referentie: str = 'gemeente',
-        gemeente_code: str = '1900',
+        gemeente_code: Optional[str] = None,
         deelgebied_naam: str = None,
         thema: str = None
     ) -> Dict[str, Any]:
@@ -399,10 +400,11 @@ class ReportDataService:
         Args:
             gebied_ids: Lijst van CBS buurt-IDs (bijv. 44 buurten)
             referentie: 'gemeente' of 'fryslan'
-            gemeente_code: Gemeentecode voor referentie (default SWF = '1900')
+            gemeente_code: Gemeentecode voor referentie (standaard: die van de eigen organisatie, #231)
             deelgebied_naam: Optioneel label voor rapportheader
             thema: Optioneel thema-filter (bijv. 'Kwaliteit van Leven')
         """
+        gemeente_code = gemeente_code or eigen_gemeente_code(self.db)
         if not gebied_ids:
             raise GebruikersFout("Minimaal 1 gebied_id is vereist.")
 
@@ -681,7 +683,7 @@ class ReportDataService:
         self,
         gebied_ids: List[str],
         referentie: str = 'gemeente',
-        gemeente_code: str = '1900',
+        gemeente_code: Optional[str] = None,
         thema: str = None
     ) -> Dict[str, Any]:
         """
@@ -749,7 +751,7 @@ class ReportDataService:
         self,
         gebied_ids: List[str],
         referentie: str = 'gemeente',
-        gemeente_code: str = '1900',
+        gemeente_code: Optional[str] = None,
         deelgebied_naam: str = None,
         categorie: str = None,
         thema_naam: str = None,
@@ -759,6 +761,7 @@ class ReportDataService:
         Thema-Analyse: Berekent alle indicatoren binnen de hiërarchie-selectie
         en groepeert deze per buurt.
         """
+        gemeente_code = gemeente_code or eigen_gemeente_code(self.db)
         if not gebied_ids:
             raise GebruikersFout("Minimaal 1 gebied_id is vereist.")
 
@@ -932,7 +935,7 @@ class ReportDataService:
         self,
         gebied_ids: List[str],
         referentie: str = 'gemeente',
-        gemeente_code: str = '1900',
+        gemeente_code: Optional[str] = None,
         categorie: str = None,
         thema_naam: str = None,
         onderdeel_naam: str = None
@@ -1047,7 +1050,8 @@ class ReportDataService:
         first_buurt = actieve_buurten[0]
         gebiedstype_id = str(first_buurt['gebiedstype_id'])
         if not gemeente_code:
-            gemeente_code = str(first_buurt.get('gemeente_code') or '1900')
+            gemeente_code = first_buurt.get('gemeente_code') or eigen_gemeente_code(self.db)
+            gemeente_code = str(gemeente_code) if gemeente_code else None
 
         # Gemeente naam ophalen voor duiding
         gem_row = self.db.execute(

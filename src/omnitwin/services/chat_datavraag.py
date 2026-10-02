@@ -7,8 +7,10 @@ de gebruiker wil een getal of een rangorde, geen knop. De route:
 1. herkennen: patroon in de vraag ("welke buurt", "hoe staat het met", "vergelijk", "top 3", ...);
 2. gebieden: namen uit de vraag (buurt, woonplaats → buurten, gemeente) of de kaartcontext;
    één gebied krijgt zijn buren (zelfde woonplaats of gemeente) als referentie erbij;
-3. indicatoren: woorden uit de indicatornamen, een kleine begrippenlijst ("energiearmoede",
-   "65-plussers") en AI-zoeken (embeddings) per deelvraag, alleen bij een sterke treffer;
+3. indicatoren: woorden uit de indicatornamen, de begrippen en synoniemen uit
+   db/stuurdata/synoniemen.json ("energiearmoede", "bejaard" → 65+ jaar (%)) en AI-zoeken
+   per deelvraag, alleen bij een sterke treffer (services/zoektaal.py, #233);
+   "mijn buurt" / "bij mij" / "hier" zonder geselecteerde buurt: eerst vragen welke buurt;
 4. cijfers: de meest recente waarde per gebied en indicator, met eenheid, bron, jaar,
    richting (hoger/lager is beter) en rangorde binnen de groep;
 5. antwoord: het taalmodel krijgt alleen die cijfers. Staat er in het antwoord een getal dat
@@ -20,33 +22,23 @@ zonder database of model te testen (tests/test_chat_datavraag.py).
 
 import json
 import re
-import unicodedata
 from dataclasses import dataclass, field
 from typing import Any, Callable, Dict, Iterable, List, Optional, Sequence, Tuple
 
 from sqlalchemy import text
 
+from omnitwin.services import zoektaal
 from omnitwin.services.grounding import ongegronde_getallen
 
 MAX_INDICATOREN = 4
 MAX_GEBIEDEN_IN_FEITEN = 12   # langere lijsten: top en staart
 MAX_ALLE_GEBIEDEN = 30        # zonder plaats in de vraag: alle gebieden, als het er niet meer zijn
 MAX_REFERENTIE = 25
-AI_DREMPEL = 0.7              # AI-zoeken (all-MiniLM-L6-v2) geeft veel ruis tussen 0,4 en 0,6
+AI_DREMPEL = 0.7              # score van AI-zoeken (services/zoektaal.py); 'sterk' begint bij 0,6
 
 # ── Normaliseren ─────────────────────────────────────────────────────────────
 
-
-def normaliseer(tekst: str) -> str:
-    """Kleine letters, zonder accenten; alles behalve letters en cijfers wordt een spatie."""
-    tekst = unicodedata.normalize("NFKD", tekst or "")
-    tekst = "".join(c for c in tekst if not unicodedata.combining(c)).lower()
-    return " ".join(re.sub(r"[^a-z0-9]+", " ", tekst).split())
-
-
-def _bevat(tekst_norm: str, frase_norm: str) -> bool:
-    """Komt de frase als hele woorden voor in de (genormaliseerde) tekst?"""
-    return bool(frase_norm) and f" {frase_norm} " in f" {tekst_norm} "
+normaliseer = zoektaal.normaliseer
 
 
 # ── 1. Datavraag herkennen ───────────────────────────────────────────────────
@@ -68,6 +60,15 @@ _DATAVRAAG_PATRONEN = [
 # Expliciete navigatie of uitleg: nooit een datavraag
 _NAVIGATIE = (r"^(toon|open|ga naar|selecteer|kleur|zoom)\b|^laat\b.*\bzien\b|\bop de kaart\b|"
               r"\bwelke indicatoren\b|\bwat kan\b|\bwat kun\b|\brapport\b|\bhandleiding\b|^help\b")
+
+
+_EIGEN_BUURT = (r"\bmijn (buurt|wijk|dorp|straat|omgeving|woonplaats)\b|\bbij mij\b|\bonze (buurt|wijk)\b|"
+                r"\bwaar ik woon\b|\bhier\b")
+
+
+def vraagt_eigen_buurt(vraag: str) -> bool:
+    """'bij mij in de buurt', 'in mijn wijk', 'hier': de gebruiker bedoelt zijn eigen buurt."""
+    return bool(re.search(_EIGEN_BUURT, normaliseer(vraag)))
 
 
 def is_navigatie(vraag: str) -> bool:
@@ -242,62 +243,11 @@ def resterende_tekst(vraag: str, gebiedsnamen: Iterable[str]) -> str:
 
 # ── 3. Indicatoren herkennen ─────────────────────────────────────────────────
 
-# Woorden die in indicatornamen niets onderscheiden
-_STOPWOORDEN = {
-    "de", "het", "een", "van", "tot", "met", "per", "en", "in", "op", "voor", "naar", "uit",
-    "aantal", "totaal", "gemiddeld", "gemiddelde", "percentage", "index", "bag", "cbs", "exc",
-    "t", "o", "v", "nu", "jaar", "wat", "hoe", "waar", "welke", "is", "zijn", "er", "ik", "mijn",
-    "wil", "weten", "staat", "ligt", "wonen", "buurt", "buurten", "wijk", "wijken", "meeste",
-    "minste", "hoogste", "laagste", "relatief",
-}
-
-# Begrippenlijst: woorden in de vraag → indicatornamen (alleen namen die bestaan tellen).
-# 'specifiek' gaat voor 'thema' als het maximum aantal indicatoren bereikt is.
-BEGRIPPEN: List[Tuple[str, str, List[str]]] = [
-    # (frase, soort, indicatoren)
-    ("65 plussers", "specifiek", ["65+ jaar (%)", "65+ jaar"]),
-    ("65 plusser", "specifiek", ["65+ jaar (%)", "65+ jaar"]),
-    ("65plussers", "specifiek", ["65+ jaar (%)", "65+ jaar"]),
-    ("65 jaar en ouder", "specifiek", ["65+ jaar (%)", "65+ jaar"]),
-    ("ouderen", "specifiek", ["65+ jaar (%)", "65+ jaar"]),
-    ("senioren", "specifiek", ["65+ jaar (%)", "65+ jaar"]),
-    ("lage inkomens", "specifiek", ["Huishoudens met laag inkomen"]),
-    ("lage inkomen", "specifiek", ["Huishoudens met laag inkomen"]),
-    ("laag inkomen", "specifiek", ["Huishoudens met laag inkomen"]),
-    ("koele plek", "specifiek", ["Afstand tot koele plek"]),
-    ("koele plekken", "specifiek", ["Afstand tot koele plek"]),
-    ("vrijwilligerswerk", "specifiek", ["Vrijwilliger"]),
-    ("vrijwilligers", "specifiek", ["Vrijwilliger"]),
-    ("mantelzorg", "specifiek", ["Mantelzorger"]),
-    ("alleenstaanden", "specifiek", ["Eenpersoonshuishoudens (%)", "Eenpersoonshuishoudens"]),
-    ("arbeidsparticipatie", "specifiek", ["Netto arbeidsparticipatie"]),
-    ("groen", "specifiek", ["Oppervlak groen per inwoner"]),
-    ("groener", "specifiek", ["Oppervlak groen per inwoner"]),
-    ("gezond", "specifiek", ["Ervaren gezondheid"]),
-    ("veilig", "thema", ["inbraak woning", "diefstal fiets", "inbraak auto"]),
-    ("veiligheid", "thema", ["inbraak woning", "diefstal fiets", "inbraak auto"]),
-    ("energiearmoede", "thema", ["Gemiddeld energielabel", "Huishoudens met laag inkomen", "Moeite met rondkomen"]),
-    ("armoede", "thema", ["Huishoudens met laag inkomen", "Moeite met rondkomen"]),
-    ("brede welvaart", "thema", ["Inkomen per inwoner", "Netto arbeidsparticipatie", "Ervaren gezondheid",
-                                 "Diversiteit Functies (Simpson Index)"]),
-    ("hittestress", "thema", ["Afstand tot koele plek", "Oppervlak groen per inwoner"]),
-    ("hitte", "thema", ["Afstand tot koele plek", "Oppervlak groen per inwoner"]),
-    ("sociale cohesie", "thema", ["Eenzaamheid", "Vrijwilliger", "Mantelzorger"]),
-]
-
+# Woorden, begrippen en synoniemen: services/zoektaal.py en db/stuurdata/synoniemen.json (#233)
+_STOPWOORDEN = zoektaal.STOPWOORDEN
 _PRIORITEIT = {"specifiek": 0, "lexicaal": 1, "ai": 2, "thema": 3}
-
-
-def _tokens(tekst: str) -> List[str]:
-    return [t for t in normaliseer(tekst).split() if t not in _STOPWOORDEN and not t.isdigit()]
-
-
-def _token_past(vraagwoord: str, naamwoord: str) -> bool:
-    """'vrijwilligerswerk' past bij 'vrijwilliger', 'energielabels' bij 'energielabel'."""
-    if vraagwoord == naamwoord:
-        return True
-    kort, lang = sorted((vraagwoord, naamwoord), key=len)
-    return len(kort) >= 5 and lang.startswith(kort)
+_tokens = zoektaal.tokens
+_token_past = zoektaal.token_past
 
 
 @dataclass
@@ -315,18 +265,21 @@ def herken_indicatoren(
     indicatoren: Sequence[Dict[str, Any]],
     ai_treffers: Sequence[Dict[str, Any]] = (),
     max_aantal: int = MAX_INDICATOREN,
+    begrippen: Optional[Sequence[zoektaal.Begrip]] = None,
 ) -> List[IndicatorTreffer]:
     """
     Kies de indicatoren bij de vraag.
 
     indicatoren: [{uuid, naam}] (actief, met data)
     ai_treffers: resultaten van AI-zoeken [{uuid, naam, score}]; alleen score >= AI_DREMPEL telt.
+    begrippen:   uit db/stuurdata/synoniemen.json (standaard); 'specifiek' gaat voor 'thema'
+                 als het maximum aantal indicatoren bereikt is.
 
     Een treffer waarvan alle vraagwoorden al gedekt zijn door een eerdere treffer valt af
     (dus niet zowel 'Gemiddeld energielabel' als 'Aantal energielabels' bij 'energielabels').
     Bestaat zowel 'X' als 'X (%)', dan blijft alleen het percentage.
     """
-    per_naam = {i["naam"]: i for i in indicatoren}
+    per_naam = {zoektaal.naam_sleutel(i["naam"]): i for i in indicatoren}
     per_uuid = {str(i["uuid"]): i for i in indicatoren}
     v_norm = normaliseer(vraag)
     vraagwoorden = _tokens(vraag)
@@ -343,13 +296,12 @@ def herken_indicatoren(
             oud.woorden |= set(woorden)
             oud.begrip = begrip
 
-    # Begrippenlijst
-    for frase, soort, namen in BEGRIPPEN:
-        if _bevat(v_norm, normaliseer(frase)):
-            woorden = set(normaliseer(frase).split())
-            for n in namen:
-                if n in per_naam:
-                    voeg_toe(per_naam[n], soort, 1.0, woorden)
+    # Begrippen en synoniemen (langere labels eerst; hun woorden zijn daarna op)
+    begrippen = zoektaal.laad_begrippen() if begrippen is None else begrippen
+    for t in zoektaal.herken_begrippen(vraag, begrippen):
+        for n in t.begrip.indicatoren:
+            if zoektaal.naam_sleutel(n) in per_naam:
+                voeg_toe(per_naam[zoektaal.naam_sleutel(n)], t.begrip.soort, 1.0, set(t.woorden))
 
     # Woorden uit de indicatornaam
     for ind in indicatoren:
@@ -578,12 +530,25 @@ def samenvatting(f: Dict[str, Any]) -> str:
     return " ".join(zinnen)
 
 
+def eigen_waarde(f: Dict[str, Any]) -> Optional[str]:
+    """Bij precies één gevraagd gebied (met buren als referentie): 'Bolsward-Zuidoost: 29,5% (2026).'"""
+    gevraagd = [w for w in f["waarden"] if w.get("gevraagd")]
+    if len(gevraagd) != 1 or len(f["waarden"]) < 2:
+        return None
+    w = gevraagd[0]
+    jaar = f" ({w['jaar']})" if w.get("jaar") else ""
+    return f"{w['gebied']}: {_waarde_tekst(w, f['eenheid'])}{jaar}."
+
+
 def vaste_tekst(feiten: Sequence[Dict[str, Any]]) -> str:
-    """Antwoord zonder taalmodel, alleen uit de feiten (terugval, of zonder LLM-koppeling)."""
+    """Antwoord zonder taalmodel, alleen uit de feiten (terugval, of zonder LLM-koppeling).
+    Eén gevraagd gebied: eerst de waarde van dat gebied, dan ter vergelijking de buren."""
     zinnen = []
     for f in feiten:
         jaren = ", ".join(str(j) for j in f["jaren"])
-        zinnen.append(f"{f['indicator']} ({f['bron']}" + (f", {jaren}" if jaren else "") + "): " + samenvatting(f))
+        kop = f"{f['indicator']} ({f['bron']}" + (f", {jaren}" if jaren else "") + "): "
+        eigen = eigen_waarde(f)
+        zinnen.append(kop + (f"{eigen} Ter vergelijking: {samenvatting(f)}" if eigen else samenvatting(f)))
     if any(w["demo"] for f in feiten for w in f["waarden"]):
         demo = sorted({w["gebied"] for f in feiten for w in f["waarden"] if w["demo"]})
         zinnen.append(f"Let op: de waarden van {', '.join(demo)} zijn demodata.")
@@ -752,8 +717,11 @@ def beantwoord_datavraag(
     herkenning = herken_gebieden(vraag, gebieden, gemeenten, context.get("huidig_gebied_id"), voorkeur)
     per_id = {g["id"]: g for g in gebieden}
 
+    # 'bij mij in de buurt' zonder geselecteerde buurt: niet alle buurten, maar vragen welke (#233)
+    eigen_buurt = vraagt_eigen_buurt(vraag) and not herkenning.gevraagd
+
     # Geen gebied in vraag of kaart: alle gebieden van het voorkeurstype, als dat er weinig zijn
-    if not herkenning.gevraagd:
+    if not herkenning.gevraagd and not eigen_buurt:
         van_type = [g["id"] for g in gebieden if g["gebiedstype_id"] == voorkeur]
         if 0 < len(van_type) <= MAX_ALLE_GEBIEDEN:
             herkenning.gevraagd = van_type
@@ -775,7 +743,7 @@ def beantwoord_datavraag(
     treffers = herken_indicatoren(onderwerp, indicatoren, ai_treffers)
 
     gebied_herkend = herkenning.bron in ("vraag", "kaart")
-    if not expliciet and not (gebied_herkend and treffers):
+    if not expliciet and not ((gebied_herkend or eigen_buurt) and treffers):
         return None  # geen datapatroon, of geen gebied plus indicator: de gewone chat neemt het over
     if not treffers and not gebied_herkend:
         return None  # geen onderwerp en geen gebied: de gewone chat neemt het over
@@ -791,6 +759,11 @@ def beantwoord_datavraag(
             "vraag past. Ik verzin geen getallen. Probeer een ander woord, of zoek in de lijst met indicatoren.")}
 
     if not herkenning.gevraagd:
+        namen = ", ".join(t.naam for t in treffers)
+        if eigen_buurt:
+            return {**basis, "narrative": (
+                f"Welke buurt is jouw buurt? Selecteer hem op de kaart (klik erop) en stel de vraag opnieuw, "
+                f"of noem de naam, bijvoorbeeld '... in Bolsward-Zuidoost'. Ik zoek dan in: {namen}.")}
         return {**basis, "narrative": (
             "Voor welk gebied wil je dit weten? Noem een buurt, woonplaats of gemeente, "
             "of selecteer een gebied op de kaart.")}

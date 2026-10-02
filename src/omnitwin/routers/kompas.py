@@ -64,6 +64,22 @@ def get_configuraties(db: Session = Depends(get_db)):
     }
 
 
+# Vóór /{config_id}/hierarchie: anders matcht "standaard" daar en geeft het een 422.
+@router.get("/standaard/hierarchie", response_model=HierarchieResponse)
+def get_standaard_hierarchie(db: Session = Depends(get_db)):
+    """
+    Hiërarchie van de standaard-kompasconfiguratie van deze instantie
+    (`kompas_configuraties.is_standaard`), zonder een vaste ID aan te nemen (#231).
+    Zelfde antwoord als `/api/kompas/{config_id}/hierarchie` met de standaard-ID.
+    """
+    service = KompasService(db)
+    config_id = service.get_standaard_config_id()
+    result = service.get_hierarchie(config_id)
+    if not result:
+        raise HTTPException(status_code=404, detail="Geen actieve standaard-kompasconfiguratie")
+    return result
+
+
 @router.get("/{config_id}/hierarchie", response_model=HierarchieResponse)
 def get_hierarchie(
     config_id: int,
