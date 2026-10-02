@@ -194,10 +194,28 @@ def test_geen_indicator_bij_onbekend_onderwerp():
 
 
 def test_ai_treffer_telt_alleen_boven_drempel():
+    # 'medische post' staat niet in de synoniemen: alleen AI-zoeken kan hem vinden
     ai = [{"uuid": "u-Afstand tot huisarts", "naam": "Afstand tot huisarts", "score": 0.55}]
-    assert indicatoren("Hoe ver is de dokter in Workum?", ai_treffers=ai) == []
+    assert indicatoren("Hoe ver is de medische post in Workum?", ai_treffers=ai) == []
     ai[0]["score"] = 0.82
-    assert indicatoren("Hoe ver is de dokter in Workum?", ai_treffers=ai) == ["Afstand tot huisarts"]
+    assert indicatoren("Hoe ver is de medische post in Workum?", ai_treffers=ai) == ["Afstand tot huisarts"]
+
+
+def test_indicatoren_via_synoniem():
+    """#233: 'bejaard' staat in db/stuurdata/synoniemen.json bij ouderen → 65+ jaar (%)."""
+    assert indicatoren("hoeveel % is bejaard bij mij in de buurt?") == ["65+ jaar (%)"]
+    assert indicatoren("Hoe ver is de dokter in Workum?") == ["Afstand tot huisarts"]
+
+
+@pytest.mark.parametrize("vraag,verwacht", [
+    ("hoeveel % is bejaard bij mij in de buurt?", True),
+    ("hoe gezond zijn de mensen in mijn wijk", True),
+    ("hoe staat het met eenzaamheid hier", True),
+    ("hoeveel ouderen wonen er in Workum", False),
+    ("Welke indicatoren zeggen iets over eenzaamheid bij ouderen in de buurt?", False),
+])
+def test_vraagt_eigen_buurt(vraag, verwacht):
+    assert dv.vraagt_eigen_buurt(vraag) is verwacht
 
 
 # ── Richting en feiten ───────────────────────────────────────────────────────
@@ -383,6 +401,48 @@ def test_route_gebied_plus_indicator_zonder_patroon_is_datavraag(nep_route):
 
 def test_route_navigatie_blijft_navigatie(nep_route):
     assert route("Toon de koele plek in Bolsward-Zuidoost op de kaart", "x") is None
+
+
+OUDEREN = ind("65+ jaar (%)", eenheid="%", bron="CBS Kerncijfers wijken en buurten 2026 (86358NED)", score_type="+/+",
+               interpretatie_logica="neutraal")
+OUDEREN_WAARDEN = [
+    {"gebied_id": "BU19000001", "indicator_uuid": OUDEREN["uuid"], "waarde": 24.1, "jaar": 2026, "bron": "CBS"},
+    {"gebied_id": "BU19000002", "indicator_uuid": OUDEREN["uuid"], "waarde": 29.5, "jaar": 2026, "bron": "CBS"},
+    {"gebied_id": "BU19000004", "indicator_uuid": OUDEREN["uuid"], "waarde": 18.0, "jaar": 2026, "bron": "CBS"},
+]
+
+
+@pytest.fixture
+def nep_ouderen(nep_route, monkeypatch):
+    monkeypatch.setattr(dv, "laad_indicatoren", lambda db: [KOEL, OUDEREN])
+    monkeypatch.setattr(dv, "laad_waarden", lambda db, u, ids: [w for w in WAARDEN + OUDEREN_WAARDEN
+                                                               if w["gebied_id"] in ids and w["indicator_uuid"] in u])
+
+
+def test_vraag_van_eduard_met_geselecteerde_buurt(nep_ouderen):
+    """#233: 'hoeveel % is bejaard bij mij in de buurt?' met Bolsward-Zuidoost geselecteerd:
+    een getal voor die buurt, met bron en jaar, en de buren ter vergelijking."""
+    r = dv.beantwoord_datavraag("hoeveel % is bejaard bij mij in de buurt?",
+                                {"huidig_gebied_id": "BU19000002", "geen_llm": True}, NepDB(), lambda t: [],
+                                lambda s, u: pytest.fail("geen model"))
+    assert [t.naam for t in r["indicatoren"]] == ["65+ jaar (%)"]
+    assert r["gebieden_bron"] == "kaart" and r["gebied_ids"][0] == "BU19000002"
+    assert r["narrative"].startswith("65+ jaar (%) (CBS Kerncijfers wijken en buurten 2026 (86358NED), 2026): "
+                                     "Bolsward-Zuidoost: 29,5% (2026). Ter vergelijking:")
+    assert dv.controleer_getallen(r["narrative"], r["feiten"]) == []
+
+
+def test_vraag_van_eduard_zonder_selectie_vraagt_welke_buurt(nep_ouderen):
+    """Zonder geselecteerde buurt: niet alle buurten, maar vragen welke buurt; wel de indicator."""
+    r = route("hoeveel % is bejaard bij mij in de buurt?", "mag niet gebruikt worden")
+    assert r["feiten"] == [] and r["gebied_ids"] == []
+    assert "Welke buurt is jouw buurt?" in r["narrative"] and "65+ jaar (%)" in r["narrative"]
+    assert [t.naam for t in r["indicatoren"]] == ["65+ jaar (%)"]
+
+
+def test_eigen_buurt_zonder_vraagpatroon_is_datavraag(nep_ouderen):
+    r = route("ouderen bij mij in de buurt", "x")
+    assert r is not None and "Welke buurt" in r["narrative"]
 
 
 def test_route_geeft_gebiedstype_en_gemeente_voor_de_kaart(nep_route):

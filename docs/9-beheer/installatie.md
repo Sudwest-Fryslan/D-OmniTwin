@@ -96,7 +96,7 @@ De eerste keer duurt dit lang (10 tot 30 minuten, afhankelijk van de verbinding)
 
    Daarna werkt hij altijd de databaserollen en het schema `api` voor PostgREST en pg_featureserv bij (`db/migraties/R__api_rollen.sql`, zie [Beveiliging](#beveiliging)). Dat raakt geen data. Bij een nieuwe installatie legt hij dan in de tabel `installatie_status` vast dat de installatie voltooid is.
 
-   Tot slot maakt hij, ook bij een bestaande database, de embeddings voor AI-zoeken en de chat aan (`scripts/ai/genereer_embeddings.py`), voor alle actieve indicatoren zonder embedding, ook concepten. Het model daarvoor (`all-MiniLM-L6-v2`) zit al in de image; zie [Embeddingmodel](#embeddingmodel-offline). Lukt dit niet, dan staat er een waarschuwing in de log en gaat de installatie gewoon door; AI-zoeken en de chat vinden dan geen indicatoren.
+   Tot slot maakt hij, ook bij een bestaande database, de embeddings voor AI-zoeken en de chat aan (`scripts/ai/genereer_embeddings.py`), voor alle actieve indicatoren zonder embedding of waarvan de tekst, de synoniemen of het model veranderd is, ook concepten. Het model daarvoor (`multilingual-e5-small`) zit al in de image; zie [Embeddingmodel](#embeddingmodel-offline). Lukt dit niet, dan staat er een waarschuwing in de log en gaat de installatie gewoon door; AI-zoeken en de chat vinden dan geen indicatoren.
 3. `backend` (FastAPI), `postgrest` en `pg_featureserv` starten, `traefik` stuurt het verkeer door. Stopt `db-init` met een fout, dan starten deze drie niet.
 
 Controleer:
@@ -246,9 +246,9 @@ docker compose exec -T postgres sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB
 
 ### Embeddingmodel (offline)
 
-AI-zoeken en de chat gebruiken het model [`sentence-transformers/all-MiniLM-L6-v2`](https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2) (licentie Apache-2.0). Het model en de revisie (een commit-hash van HuggingFace) staan op één plek: `src/omnitwin/services/embedding_model.py`.
+AI-zoeken en de chat gebruiken het meertalige model [`intfloat/multilingual-e5-small`](https://huggingface.co/intfloat/multilingual-e5-small) (licentie MIT, 384 dimensies; tot #233 het Engelstalige `all-MiniLM-L6-v2`). Het model en de revisie (een commit-hash van HuggingFace) staan op één plek: `src/omnitwin/services/embedding_model.py`. Hoe zoeken werkt (begrippen en synoniemen uit `db/stuurdata/synoniemen.json`, woorden uit de naam en betekenis) staat in `src/omnitwin/services/zoektaal.py`; de kwaliteit meet je met `python scripts/ai/evalueer_assistent.py --url http://localhost` (zie [use case assistent-kwaliteit](../../usecases/assistent-kwaliteit/README.md)).
 
-- `docker compose build` downloadt die revisie naar `/opt/models/all-MiniLM-L6-v2` in de image. Dat maakt de image circa 90 MB groter (91,8 MB; totaal ± 1,7 GB uitgepakt). Alleen bij het bouwen is HuggingFace nodig.
+- `docker compose build` downloadt die revisie naar `/opt/models/multilingual-e5-small` in de image en slaat de gewichten op als float16 (225 MB in plaats van 450 MB; bij het laden weer float32, zonder meetbaar verschil). Het model maakt de image circa 250 MB groot (totaal ± 1,8 GB uitgepakt, grens in CI 1900 MiB). Alleen bij het bouwen is HuggingFace nodig.
 - Backend en `db-init` draaien met `HF_HUB_OFFLINE=1`, `TRANSFORMERS_OFFLINE=1` en `HF_HUB_DISABLE_TELEMETRY=1`: geen download en geen telemetrie, ook niet bij een nieuwe container. AI-zoeken werkt zonder internet.
 - Het model staat buiten `/app`, dus ook in ontwikkelmodus (bind-mount van de repo over `/app`) blijft het zichtbaar.
 - Controleren: `/api/ai/health` toont onder `embedding_model` de revisie, `lokaal` en `offline`.
@@ -257,9 +257,11 @@ Model bijwerken naar een nieuwere revisie:
 
 1. Zoek de commit-hash op `https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/commits/main` en zet die in `MODEL_REVISIE` in `src/omnitwin/services/embedding_model.py`.
 2. Bouw opnieuw: `docker compose up -d --build`.
-3. Bereken de embeddings opnieuw, want vectoren van verschillende revisies passen niet bij elkaar: `docker compose exec backend python scripts/ai/genereer_embeddings.py --opnieuw`.
+3. De embeddings worden bij de volgende `db-init` vanzelf opnieuw berekend: per indicator staat in `indicator_embeddings.tekst_hash` een hash van model, revisie en tekst (migratie V035). Meteen: `docker compose exec backend python scripts/ai/genereer_embeddings.py`.
 
-Een ander model met een andere dimensie (niet 384) vraagt ook een schemawijziging van `indicator_embeddings`.
+Een ander model met een andere dimensie (niet 384) vraagt ook een schemawijziging van `indicator_embeddings`. Een ander model vraagt ook nieuwe waarden voor `GELIJKENIS_MARGE_ONDER/BOVEN` en de voorvoegsels in `embedding_model.py`: meet met de evaluatie.
+
+**Na een levering met nieuwe of gewijzigde indicatoren** (laad-API, profiel `definities`): roep `herbereken_embeddings(db, indicator_uuids)` uit `src/omnitwin/services/indicator_embeddings.py` aan na de commit van de publicatie. Die berekent alleen wat nieuw of gewijzigd is, laadt het model alleen als er iets te doen is, en commit zelf. Zonder die aanroep vindt de assistent de nieuwe indicatoren pas na de volgende `db-init` op betekenis (op naam en synoniemen wel meteen).
 
 ---
 

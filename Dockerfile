@@ -36,10 +36,10 @@ RUN pip install --require-hashes \
     && find "$T/bin" -type f ! -name torch_shm_manager -delete \
     && pip uninstall -y pip setuptools
 
-# Embeddingmodel voor AI-zoeken (#118): gepinde revisie (circa 90 MB).
+# Embeddingmodel voor AI-zoeken (#118, #233): gepinde revisie, gewichten als float16 (circa 250 MB).
 # Model en revisie staan in src/omnitwin/services/embedding_model.py; los gekopieerd zodat deze
 # laag alleen opnieuw draait als dat bestand verandert.
-ENV EMBEDDING_MODEL_PAD=/opt/models/all-MiniLM-L6-v2 \
+ENV EMBEDDING_MODEL_PAD=/opt/models/multilingual-e5-small \
     HF_HUB_DISABLE_TELEMETRY=1
 COPY src/omnitwin/services/embedding_model.py /tmp/embedding_model.py
 RUN python /tmp/embedding_model.py \
@@ -62,7 +62,7 @@ COPY --from=bouw /opt/models /opt/models
 # PYTHONPATH: het pakket omnitwin staat in /app/src (#182); ook bij de bind-mount in dev.
 ENV PATH=/opt/venv/bin:$PATH \
     PYTHONPATH=/app/src \
-    EMBEDDING_MODEL_PAD=/opt/models/all-MiniLM-L6-v2 \
+    EMBEDDING_MODEL_PAD=/opt/models/multilingual-e5-small \
     HF_HUB_DISABLE_TELEMETRY=1 \
     HF_HUB_OFFLINE=1 \
     TRANSFORMERS_OFFLINE=1

@@ -5,7 +5,7 @@ POST /api/chat — Intent-based chat endpoint met Command Dispatch JSON
 Architectuur:
 0. Datavraag ("welke buurt ligt het verst van een koele plek") → cijfers uit de database,
    het taalmodel formuleert alleen met die cijfers (services/chat_datavraag.py, #149)
-1. Gebruikersvraag → AISearchService (semantisch zoeken in indicatoren)
+1. Gebruikersvraag → AISearchService (begrippen, naam en betekenis; services/zoektaal.py, #233)
 2. Intent Classificatie (rule-based)
 3. LLM Narrative (korte toelichting, max 80 woorden)
 4. Command Dispatch JSON response (acties + indicatoren)
@@ -60,7 +60,8 @@ class IndicatorResultaat(BaseModel):
     categorie: Optional[str] = None
     eenheid: Optional[str] = None
     score_type: Optional[str] = None
-    relevantie: float  # 0-1 cosine similarity score
+    relevantie: float  # 0-1 rangschikkingsscore (services/zoektaal.py); geen datawaarde, niet als % tonen
+    relevantie_label: Optional[str] = None  # 'sterk' of 'matig' (#233): dit toont de UI
 
 class BronRegel(BaseModel):
     indicator: str
@@ -90,6 +91,8 @@ class ChatResponse(BaseModel):
     gegevens: Optional[List[Gegeven]] = None
     # #149: de kaart beweegt mee na een datavraag (gebiedstype, indicator, selectie, inzoomen)
     kaart_actie: Optional[Dict[str, Any]] = None
+    # #233: korte melding over de zekerheid van de gevonden indicatoren (bijv. 'geen goede treffer')
+    melding: Optional[str] = None
     debug: Optional[Dict[str, Any]] = None
 
 # ============================================================================
@@ -343,7 +346,8 @@ def beantwoord_datavraag_route(vraag: str, context: Dict[str, Any], db: Session)
     bronnen = [BronRegel(indicator=f["indicator"], bron=f["bron"], jaren=[j for j in f["jaren"] if j])
                for f in feiten]
     indicatoren_out = [
-        IndicatorResultaat(uuid=t.uuid, naam=t.naam, relevantie=round(min(t.score, 1.0), 4))
+        IndicatorResultaat(uuid=t.uuid, naam=t.naam, relevantie=round(min(t.score, 1.0), 4),
+                           relevantie_label="sterk" if t.soort in ("specifiek", "lexicaal") or t.score >= 0.6 else "matig")
         for t in resultaat["indicatoren"]
     ]
     AppLogger.info(
@@ -444,19 +448,21 @@ def chat(
     # Stap 1: Semantisch zoeken naar relevante indicatoren
     # ------------------------------------------------
     search_service = AISearchService(db)
-    search_results = search_service.search_indicators(vraag, limit=8)
+    search_results = search_service.search_indicators(vraag, limit=5)
     
     # Check op foutmeldingen (bijv. AI model niet geladen)
     if search_results and "error" in search_results[0]:
         AppLogger.error(f"Fout bij zoeken indicatoren: {search_results[0]['error']}", category="LLM_CHAT")
         raise HTTPException(status_code=503, detail="AI zoekfunctionaliteit tijdelijk niet beschikbaar.")
         
-    # Filter op minimale relevantie (score > 0.25)
-    relevant_results = [r for r in search_results if r.get("score", 0) > 0.25]
-    
+    # AI-zoeken kapt zelf af (#233): alleen resultaten dicht bij de beste, liever 2 goede dan 8 matige
+    relevant_results = search_results
     if not relevant_results:
-        # Fallback: gebruik alle resultaten maar meld lage relevantie
-        relevant_results = search_results[:5]
+        melding = "Ik vind geen indicator die goed bij deze vraag past. Probeer een ander woord."
+    elif all(r.get("relevantie") != "sterk" for r in relevant_results):
+        melding = "Geen sterke treffer: controleer of deze indicatoren zijn wat je zoekt."
+    else:
+        melding = None
     
     # ------------------------------------------------
     # Stap 2 & 3: Intelligent Intent & Action Dispatching (LLM-driven)
@@ -539,7 +545,8 @@ def chat(
             categorie=r.get("categorie"),
             eenheid=r.get("eenheid"),
             score_type=r.get("score_type"),
-            relevantie=r.get("score", 0)
+            relevantie=r.get("score", 0),
+            relevantie_label=r.get("relevantie"),
         )
         for r in relevant_results
     ]
@@ -549,6 +556,7 @@ def chat(
         narrative=narrative,
         acties=acties,
         indicatoren=indicatoren_out,
+        melding=melding,
         debug=debug_info
     )
 
