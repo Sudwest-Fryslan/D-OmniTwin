@@ -12,7 +12,11 @@ VALUES ('afba67cb-6b38-4723-9c95-102a22d5b38a', 'CBS Buurten', 'CBS_BUURT', 'Buu
 ON CONFLICT (id) DO NOTHING;
 
 INSERT INTO public.gebiedstypes (id, naam, code, beschrijving, bron, niveau, created_at, updated_at)
-VALUES ('d210c084-506b-48b4-87c9-b7d4bf422553', 'Custom Gebied Type', 'CUSTOM', 'Nog te specificeren gebiedstype', 'Gemeente', 'Overig', '2026-01-17 00:16:01.343807', '2026-01-17 00:16:01.343807')
+VALUES ('d210c084-506b-48b4-87c9-b7d4bf422553', 'CBS buurten bebouwde komgrens', 'CBS_BUURT_BBK', 'CBS-buurten gesplitst in een deel binnen en buiten de bebouwde kom (SWF-monitor; aanname A5, #222)', 'Gemeente', 'Buurtdeel bebouwde kom', '2026-01-17 00:16:01.343807', '2026-01-17 00:16:01.343807')
+ON CONFLICT (id) DO NOTHING;
+
+INSERT INTO public.gebiedstypes (id, naam, code, beschrijving, bron, niveau, created_at, updated_at)
+VALUES ('0fdd1ab2-0963-471d-a47a-d7e080461a30', 'CBS wijken', 'CBS_WIJK', 'Wijkindelingen volgens het Centraal Bureau voor de Statistiek', 'CBS', 'Wijk', '2026-10-02 00:00:00', '2026-10-02 00:00:00')
 ON CONFLICT (id) DO NOTHING;
 
 INSERT INTO public.gebiedstypes (id, naam, code, beschrijving, bron, niveau, created_at, updated_at)

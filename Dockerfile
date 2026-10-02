@@ -76,10 +76,11 @@ COPY . .
 # alleen de mappen waarin de app schrijft zijn van de app-gebruiker.
 # UID 1000 komt meestal overeen met de ontwikkelaar op Linux (bind-mount in dev).
 # /data-cache: cache voor gedownloade open data (volume bron-cache); een nieuw volume neemt de eigenaar over.
+# /leveringen: ruwe leveringen van de laad-API (volume leveringen, #205).
 RUN chmod +x /app/docker-entrypoint.sh \
     && useradd --create-home --uid 1000 app \
-    && mkdir -p logs exports data-upload /data-cache \
-    && chown app:app logs exports data-upload /data-cache
+    && mkdir -p logs exports data-upload /data-cache /leveringen \
+    && chown app:app logs exports data-upload /data-cache /leveringen
 USER app
 
 # Expose port

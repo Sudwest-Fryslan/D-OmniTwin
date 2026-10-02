@@ -73,6 +73,9 @@ De tabel volgt de volgorde van `.env.example`. Optionele regels staan daar als c
 | `OIDC_AUDIENCE`, `OIDC_INTERN_URL`, `OIDC_JWKS_URL` | Optioneel, bij `OIDC_ISSUER`. `OIDC_AUDIENCE`: vereiste `aud`, standaard `omnitwin-api`. `OIDC_INTERN_URL`: adres waarop de backend de issuer intern bereikt voor discovery en sleutels; `docker-compose.yml` zet standaard `http://keycloak:8080/auth/realms/omnitwin`. Bij een externe identity provider: `OIDC_INTERN_URL=` (leeg). `OIDC_JWKS_URL`: alleen als de provider geen discovery heeft. |
 | `OMNITWIN_BRON_DOMEINEN` | Optioneel. Extra domeinen (kommagescheiden) waarvan de bronadapters van de use cases via https mogen downloaden, naast de vaste lijst (CBS, PDOK, RIVM, Klimaateffectatlas). Zie [use cases](../../usecases/README.md#bronnen). |
 | `OMNITWIN_BASE_URL`, `OMNITWIN_CLIENT_ID`, `OMNITWIN_CLIENT_SECRET`, `OMNITWIN_TOKEN_URL`, `KEYCLOAK_REALM` | Optioneel, alleen voor `python -m omnitwin.usecases installeer` en `test`: het adres van de installatie (standaard `http://localhost`) en een machineclient (client credentials, zie [Keycloak](#keycloak-optioneel)). Het tokenendpoint komt standaard uit de discovery van realm `KEYCLOAK_REALM` (standaard `omnitwin`). |
+| `LEVERINGEN_DIR`, `LADEN_MAX_MB`, `LADEN_RATE_LIMIT`, `LADEN_WACHT_SECONDEN` | Optioneel, laad-API ([docs/api/laden](../api/laden/README.md)): map voor de ruwe leveringen (standaard het volume `leveringen` op `/leveringen`), bodylimiet (standaard 200 MB, JSON een tiende), leveringen per minuut per client (standaard 10) en de time-out van `wacht=true` (standaard 60 s). |
+| `LADEN_BEWAAR_VERSIES`, `LADEN_BEWAAR_DAGEN`, `LADEN_BEWAAR_AFGEKEURD_DAGEN` | Optioneel. Bewaartermijn van de ruwe leveringen: altijd de laatste 10 versies per dataset, oudere tot 365 dagen, afgekeurde en alleen-gevalideerde leveringen 30 dagen. |
+| `LADEN_VOORRANG` | Optioneel. Datasets (kommagescheiden, hoogste eerst) die voorgaan als twee datasets een waarde voor hetzelfde gebied, dezelfde indicator en hetzelfde jaar leveren. Standaard `swf-monitor-waarden` (aanname A6, #222). De andere waarde blijft bewaard in `laden.waarnemingen`. |
 | `OLLAMA_HOST`, `OLLAMA_MODEL`, `LLM_THINK`, `LLM_REASONING_EFFORT` | Optioneel, lokale AI. Zie [LLM](#7-llm-optioneel). |
 | `LITELLM_MASTER_KEY`, `LLM_API_KEY`, `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `GEMINI_API_KEY` | Optioneel, alleen met de LiteLLM-gateway. Zie [Andere aanbieders](#andere-aanbieders-via-de-litellm-gateway). |
 | `DATABASE_NAME`, `DATABASE_USER` | Optioneel, standaard `omnitwin_db` en `omnitwin_user`. Wijzig ze alleen vóór de eerste start. |
@@ -257,7 +260,7 @@ Model bijwerken naar een nieuwere revisie:
 
 1. Zoek de commit-hash op `https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/commits/main` en zet die in `MODEL_REVISIE` in `src/omnitwin/services/embedding_model.py`.
 2. Bouw opnieuw: `docker compose up -d --build`.
-3. De embeddings worden bij de volgende `db-init` vanzelf opnieuw berekend: per indicator staat in `indicator_embeddings.tekst_hash` een hash van model, revisie en tekst (migratie V035). Meteen: `docker compose exec backend python scripts/ai/genereer_embeddings.py`.
+3. De embeddings worden bij de volgende `db-init` vanzelf opnieuw berekend: per indicator staat in `indicator_embeddings.tekst_hash` een hash van model, revisie en tekst (migratie V028). Meteen: `docker compose exec backend python scripts/ai/genereer_embeddings.py`.
 
 Een ander model met een andere dimensie (niet 384) vraagt ook een schemawijziging van `indicator_embeddings`. Een ander model vraagt ook nieuwe waarden voor `GELIJKENIS_MARGE_ONDER/BOVEN` en de voorvoegsels in `embedding_model.py`: meet met de evaluatie.
 
@@ -328,6 +331,26 @@ docker compose up -d
 ```
 
 `-v` verwijdert alle volumes van dit project: de database (`pgdata`), de geüploade kaartlagen (`uploads`) en de download-cache (`bron-cache`). `db-init` richt de database daarna opnieuw in.
+
+### Eigen organisatie
+
+Elke organisatie draait een eigen instantie (ADR 0007). Wie die instantie beheert, staat als data in de tabel `organisatie`: naam, korte naam, OIN (optioneel), CBS-gemeentecode(s) van het eigen gebied, standaard-benchmarkprovincie, contactadres, de logo's in de footer en het thema (huisstijl: `static/css/themes/<thema>.css`, alleen `a-z`, `0-9` en `-`; standaard `d-omnitwin`). Standaard staat daar Súdwest-Fryslân. Lezen: `GET /api/organisatie`.
+
+De eerste gemeentecode is de standaard-referentie in de rapporten ("⌀ Gemeente ...") en bepaalt welke buurten bij een omgevingsvisie-deelgebied horen.
+
+- **Nieuwe installatie:** pas vóór de eerste start `db/stuurdata/organisatie.sql` aan. `db-init` laadt het bestand alleen als de tabel nog leeg is. Met een kant-en-klare image (zonder eigen build): mount je eigen bestand in `db-init` op `/app/db/stuurdata/organisatie.sql`, of gebruik de SQL hieronder.
+- **Bestaande installatie:** wijzig de rij met SQL (`docker compose exec postgres psql -U <DATABASE_USER> -d <DATABASE_NAME>`), bijvoorbeeld:
+
+  ```sql
+  UPDATE organisatie SET
+      code = 'lwd', naam = 'Gemeente Leeuwarden', korte_naam = 'Leeuwarden',
+      gemeente_codes = ARRAY['0080'], contact_email = 'info@example.nl',
+      logos = '[{"pad": "/static/images/mijn-logo.png", "naam": "Gemeente Leeuwarden", "rol": "eigen"}]';
+  ```
+
+  Een eigen logobestand zet je onder `static/images/` (of mount je, zoals bij het beeldmerk hieronder). Herlaad de pagina; een herstart is niet nodig.
+
+Nog niet uit deze instelling: de benchmarkmodus `fryslan`, de welkomsttekst en de startpositie van de kaart (zie [#231](https://github.com/TLaan/D-OmniTwin/issues/231)).
 
 ### Eigen logo
 

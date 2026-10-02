@@ -5,7 +5,7 @@ Per actieve indicator wordt één tekst geëmbed (services/zoektaal.py, indicato
 naam, kompaspad (titel / thema / onderdeel uit Kompas-configuratie 1), eenheid, de synoniemen
 uit db/stuurdata/synoniemen.json en de beste beschrijving (ontologische_beschrijving >
 beschrijving_ai > omschrijving). In indicator_embeddings staat naast de vector de tekst_hash
-(SHA-256 van model, revisie en tekst, migratie V035). Een embedding wordt (opnieuw) berekend
+(SHA-256 van model, revisie en tekst, migratie V028). Een embedding wordt (opnieuw) berekend
 als hij ontbreekt of als de hash afwijkt: nieuw model, nieuwe synoniemen, gewijzigde naam.
 
 Gebruik:

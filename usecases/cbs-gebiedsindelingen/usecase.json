@@ -6,7 +6,7 @@
   "titel": "CBS-gebiedsindelingen (buurten, wijken, gemeenten) via de laad-API",
   "vraag": "Ik wil de CBS-buurten, -wijken en -gemeenten van Fryslân in D-OmniTwin, met dezelfde codes als het CBS, zodat elke andere use case er waarden aan kan hangen.",
   "gebruiker": "beheerder D-OmniTwin",
-  "status": "ontwerp",
+  "status": "actief",
   "afhankelijk_van": [],
   "rechten": [
     "realm-rol beheerder (registreren)",
