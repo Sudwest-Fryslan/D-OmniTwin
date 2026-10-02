@@ -1251,6 +1251,14 @@ components:
           minimum: 0
           default: 10
           description: n-drempel (profiel `waarnemingen`). 0 = geen drempel.
+        minimumNPerIndicator:
+          type: object
+          description: Afwijkende n-drempel per indicator (indicator-UUID → drempel); overschrijft `minimumN`.
+          additionalProperties:
+            type: integer
+            minimum: 0
+          example:
+            7b4a6b5f-7d6a-46ef-8a7d-7b3ee28a014c: 25
         bijNOnderDrempel:
           type: string
           enum: [onderdrukken, afkeuren]

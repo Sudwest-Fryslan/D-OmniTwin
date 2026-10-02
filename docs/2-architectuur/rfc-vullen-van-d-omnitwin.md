@@ -327,7 +327,7 @@ In volgorde; elk een eigen issue en PR.
 
 | # | Vraag | Voorstel |
 |---|---|---|
-| 1 | **n-drempel:** bij de ingang of bij de weergave? Per dataset of per indicator? Secundaire onderdrukking? | Bij de ingang, per dataset (`minimumN`, standaard 10); per indicator later als dat nodig blijkt; aggregaten ook toetsen |
+| 1 | **n-drempel:** bij de ingang of bij de weergave? Per dataset of per indicator? Secundaire onderdrukking? | **Besloten (02-10):** bij de ingang, per dataset (`minimumN`, standaard 10), met afwijking per indicator (`minimumNPerIndicator`). Secundaire onderdrukking: nog open |
 | 2 | **SWF-push:** adapter of FME aanpassen? | Adapter `swf-monitor-v1` met compatibiliteitspaden; daarna één Data Package per run |
 | 3 | **Eerste vulling:** de dump via de laad-API? | Ja, via de adapter: dan is de ingang meteen getest |
 | 4 | **Peildatum of jaar** | Beide; `JJJJ-01-01` uit de SWF-push wordt `jaar` |
@@ -339,4 +339,6 @@ In volgorde; elk een eigen issue en PR.
 | 10 | **Contracten van niet-open bronnen** (enquêtes, leefstijlsegmenten): in de publieke repo? | Profielen en sjablonen in de repo; registraties staan in de database van de installatie, niet in git |
 | 11 | **Indicatordefinities:** via de push of via beheer? | Via een eigen dataset met profiel `definities` (de SWF-snapshot); onbekende UUID's in waarden worden afgekeurd |
 | 12 | **Status `A`** in de SWF-definities | Betekenis navragen; tot dan afkeuren |
-| 13 | **Bewaartermijn ruwe leveringen** | Standaard laatste 10 versies en afgekeurde 30 dagen; instelbaar |
+| 13 | **Bewaartermijn ruwe leveringen** | **Besloten (02-10):** altijd de laatste 10 versies, oudere tot 1 jaar, afgekeurde 30 dagen; instelbaar |
+
+| 14 | **Catalogus** als eigen API of weergave? | **Besloten (02-10):** eerst JSON-LD-weergave van `laden/datasets`; `catalogus/v1` pas bij een tweede bron van metadata |

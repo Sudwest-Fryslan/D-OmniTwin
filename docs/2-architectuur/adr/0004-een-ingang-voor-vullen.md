@@ -83,9 +83,12 @@ Eisen:
   - ruwe leveringen vragen opslag en een bewaartermijn.
 - **Migraties:** schema `laden` (datasets, leveringen, versies, staging); `gebied_data` krijgt `n`, `n_status` en `levering_id`; de unieke sleutel zonder scenario verdwijnt; `ON DELETE CASCADE` naar `indicatoren` wordt `RESTRICT`; `gebiedstypes` krijgt `actief` en `metadata`; volume voor ruwe leveringen.
 - **Uitvoering:** implementatieplan in de RFC "D-OmniTwin vullen" § 8 en in #205.
+- **Besloten (Eduard, 02-10-2026):**
+  - **n-drempel per dataset** (`minimumN` in het laadprofiel, standaard 10), met een afwijking per indicator (`minimumNPerIndicator`); controle bij de ingang;
+  - **bewaartermijn ruwe leveringen:** altijd de laatste 10 versies per dataset, oudere versies tot 1 jaar, afgekeurde leveringen 30 dagen; instelbaar;
+  - **catalogus** eerst als JSON-LD-weergave (`Accept: application/ld+json`) van `laden/datasets`; een eigen API `catalogus/v1` pas als er een tweede bron van metadata is.
 - **Open:**
-  - n-drempel per dataset of per indicator, en de regel voor aggregaten;
+  - de regel voor aggregaten (secundaire onderdrukking);
   - betekenis van indicatorstatus `A` in de SWF-definities;
   - de SWF-IdP (Entra) koppelen aan realm `omnitwin` (de huidige koppeling loopt in december af);
-  - rollen per dataset of ook per gemeente (#34);
-  - bewaartermijn van ruwe leveringen.
+  - rollen per dataset of ook per gemeente (#34).

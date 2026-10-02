@@ -93,7 +93,7 @@ Fouten zijn Problem Details (RFC 9457, `application/problem+json`). `code` is st
 - Body maximaal 200 MB (JSON 20 MB), 10 leveringen per minuut per client (Traefik `buffering` en `rateLimit`, instelbaar per installatie). Het bestand wordt naar schijf gestreamd, niet in het geheugen gelezen.
 - Alleen HTTPS buiten de container (NL GOV ADR, module Transport Security); TLS en HSTS bij Traefik of de proxy van de organisatie.
 - Geen gevoelige gegevens in de URI: identificatie en rechten in het token, inhoud in de body.
-- Ruwe leveringen staan op een eigen volume, niet in de container; bewaartermijn instelbaar (standaard: de laatste 10 versies per dataset en alle afgekeurde leveringen 30 dagen).
+- Ruwe leveringen staan op een eigen volume, niet in de container; bewaartermijn instelbaar (standaard: altijd de laatste 10 versies per dataset, oudere versies tot 1 jaar, afgekeurde leveringen 30 dagen).
 - Het token heeft `aud` = `omnitwin-api`; FastAPI controleert handtekening (JWKS), `iss`, `aud`, `exp` en de rol per dataset.
 
 ## Linten
