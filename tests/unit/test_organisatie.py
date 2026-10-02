@@ -274,7 +274,7 @@ def test_geen_vaste_gemeentecode_in_runtimecode():
 
 def test_seed_en_migratie_passen_bij_elkaar():
     """De seed vult precies kolommen die de migratie aanmaakt, en bevat de SWF-gegevens."""
-    migratie = (ROOT / "db/migraties/V030__organisatie.sql").read_text(encoding="utf-8")
+    migratie = (ROOT / "db/migraties/V027__organisatie.sql").read_text(encoding="utf-8")
     seed = (ROOT / "db/stuurdata/organisatie.sql").read_text(encoding="utf-8")
     tabel = migratie[migratie.index("CREATE TABLE IF NOT EXISTS public.organisatie"):]
     tabel = tabel[:tabel.index(");")]

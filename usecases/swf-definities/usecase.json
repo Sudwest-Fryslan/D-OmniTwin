@@ -1,11 +1,12 @@
 {
+  "specificatie": "1.0",
   "naam": "swf-definities",
   "id": "TC-07-003",
   "versie": "0.1.0",
   "titel": "SWF-definities: indicatoren, gebiedstypen en relaties",
   "vraag": "Ik wil alle 228 indicatordefinities van de huidige monitor met dezelfde UUID's in D-OmniTwin, met de 11 gebiedstypen en op welk gebiedstype elke indicator waarden heeft.",
   "gebruiker": "data-engineer DWH (SWF)",
-  "status": "ontwerp",
+  "status": "actief",
   "afhankelijk_van": [],
   "rechten": [
     "realm-rol beheerder (registreren)",

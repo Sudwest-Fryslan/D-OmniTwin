@@ -7,5 +7,5 @@
 CREATE SCHEMA IF NOT EXISTS postgisftw;
 
 -- postgisftw.buurten_in_deelgebied (#68) staat sinds #231 in
--- db/migraties/V030__organisatie.sql: de functie filtert op de gemeentecodes van de
+-- db/migraties/V027__organisatie.sql: de functie filtert op de gemeentecodes van de
 -- eigen organisatie (tabel organisatie), en die tabel bestaat pas na de migraties.

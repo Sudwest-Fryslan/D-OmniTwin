@@ -193,6 +193,10 @@ app.include_router(oidc_ik.router)  # GET /api/oidc/ik: token controleren (#205)
 from omnitwin.routers import organisatie
 app.include_router(organisatie.router)  # GET /api/organisatie: eigen organisatie (#231)
 
+# Laad-API /api/laden/v1 (#205): eigen spec, API-Version, Problem Details, achtergrondverwerking
+from omnitwin.routers import laden as laden_api
+laden_api.registreer(app)
+
 @app.on_event("startup")
 async def startup_event():
     """Startup checks and logging."""

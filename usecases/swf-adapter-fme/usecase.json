@@ -1,4 +1,5 @@
 {
+  "specificatie": "1.0",
   "naam": "swf-adapter-fme",
   "id": "TC-07-009",
   "versie": "0.1.0",

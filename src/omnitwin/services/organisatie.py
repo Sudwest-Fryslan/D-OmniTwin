@@ -69,7 +69,7 @@ def _als_dict(rij) -> Dict[str, Any]:
 def lees_organisatie(db: Session) -> Optional[Dict[str, Any]]:
     """De organisatie van deze instantie, of None als die (nog) niet is ingericht.
 
-    Een database zonder de tabel (migratie V030 nog niet toegepast) geeft ook None.
+    Een database zonder de tabel (migratie V027 nog niet toegepast) geeft ook None.
     """
     try:
         rij = db.execute(_SQL).fetchone()
