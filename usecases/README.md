@@ -79,6 +79,7 @@ Gegenereerd met `python -m omnitwin.usecases index`; een unittest faalt als hij 
 <!-- usecase-index:start -->
 | Use case | ID | Titel | Gebruiker | Status | Versie | Afhankelijk van |
 |---|---|---|---|---|---|---|
+| [assistent-kwaliteit](./assistent-kwaliteit/README.md) | TC-06-009 | D-Omni Assistent vindt de juiste indicator en beantwoordt datavragen | beleidsadviseur of inwoner die de assistent gebruikt | ontwerp | 0.1.0 | – |
 | [beleidsadviseur-swf](./beleidsadviseur-swf/README.md) | TC-06-001 | Beleidsadviseur verkent kernen in Súdwest-Fryslân (IJsselmeerkust) | Beleidsadviseur leefbaarheid / ruimtelijke ordening | – | 0.1.0 | cbs-kerncijfers (opt.) |
 | [brede-welvaart](./brede-welvaart/README.md) | TC-06-007 | Brede welvaart en functiemenging | Strateeg / economische zaken | – | 0.1.0 | cbs-kerncijfers (opt.) |
 | [cbs-gebiedsindelingen](./cbs-gebiedsindelingen/README.md) | TC-07-001 | CBS-gebiedsindelingen (buurten, wijken, gemeenten) via de laad-API | beheerder D-OmniTwin | actief | 0.1.0 | – |

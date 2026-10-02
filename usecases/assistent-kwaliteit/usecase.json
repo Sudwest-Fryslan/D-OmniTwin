@@ -1,0 +1,95 @@
+{
+  "specificatie": "1.0",
+  "naam": "assistent-kwaliteit",
+  "id": "TC-06-009",
+  "versie": "0.1.0",
+  "titel": "D-Omni Assistent vindt de juiste indicator en beantwoordt datavragen",
+  "vraag": "Als ik in gewone taal vraag 'hoeveel % is bejaard bij mij in de buurt?', krijg ik dan het cijfer voor mijn buurt met bron en jaar, en bij een zoekvraag alleen indicatoren die er echt bij passen?",
+  "gebruiker": "beleidsadviseur of inwoner die de assistent gebruikt",
+  "status": "ontwerp",
+  "afhankelijk_van": [],
+  "rechten": [],
+  "datasets": [],
+  "controles": [
+    {
+      "type": "api",
+      "pad": "/api/ai/kompas/search?q=senioren&limit=3",
+      "anoniem": true,
+      "minimaal_aantal": 1,
+      "uuid": "4a221658-f750-50b9-90eb-6d50154c52db",
+      "verwacht": "65+ jaar (%) bovenaan, relevantie sterk",
+      "omschrijving": "synoniem: senioren → 65+ jaar (%)"
+    },
+    {
+      "type": "api",
+      "pad": "/api/ai/kompas/search?q=minima&limit=3",
+      "anoniem": true,
+      "minimaal_aantal": 1,
+      "uuid": "3dd70913-391e-4d5f-a121-d17c8b466372",
+      "verwacht": "Huishoudens met laag inkomen bovenaan",
+      "omschrijving": "spreektaal: minima → Huishoudens met laag inkomen"
+    },
+    {
+      "type": "api",
+      "pad": "/api/ai/kompas/search?q=wateroverlast&limit=3",
+      "anoniem": true,
+      "minimaal_aantal": 1,
+      "uuid": "89b6274f-9372-4784-8ba3-924b6c7e4d7d",
+      "verwacht": "Verwerken hemelwater exc. schade bovenaan",
+      "omschrijving": "wateroverlast → Verwerken hemelwater"
+    },
+    {
+      "type": "api",
+      "pad": "/api/ai/kompas/search?q=huizenprijzen&limit=3",
+      "anoniem": true,
+      "minimaal_aantal": 1,
+      "uuid": "7053d6a5-2bcf-4254-b089-79852f12d9aa",
+      "verwacht": "Gemiddelde WOZ-waarde bovenaan",
+      "omschrijving": "huizenprijzen → Gemiddelde WOZ-waarde"
+    },
+    {
+      "type": "api",
+      "pad": "/api/ai/kompas/search?q=eenzaam&limit=3",
+      "anoniem": true,
+      "minimaal_aantal": 1,
+      "uuid": "4661dcb9-b7c4-42f8-b7c5-a61c12568806",
+      "verwacht": "Eenzaamheid bovenaan",
+      "omschrijving": "eenzaam → Eenzaamheid"
+    },
+    {
+      "type": "api",
+      "pad": "/api/ai/kompas/search?q=fietsendiefstal&limit=3",
+      "anoniem": true,
+      "minimaal_aantal": 1,
+      "uuid": "3ca8572d-cc03-4fd9-9bc9-e1cd0fc0a627",
+      "verwacht": "diefstal fiets bovenaan",
+      "omschrijving": "fietsendiefstal → diefstal fiets"
+    },
+    {
+      "type": "chat",
+      "vraag": "hoeveel % is bejaard in Bolsward-Zuidoost?",
+      "bevat": ["65+ jaar (%)", "Bolsward-Zuidoost:", "CBS Kerncijfers"],
+      "gebied": "BU19000002",
+      "uuid": "4a221658-f750-50b9-90eb-6d50154c52db",
+      "omschrijving": "datavraag: het cijfer voor de buurt, met bron en jaar"
+    },
+    {
+      "type": "chat",
+      "vraag": "hoeveel % is bejaard bij mij in de buurt?",
+      "bevat": ["Welke buurt is jouw buurt?", "65+ jaar (%)"],
+      "omschrijving": "'mijn buurt' zonder geselecteerde buurt: de assistent vraagt welke buurt"
+    },
+    {
+      "type": "viewer",
+      "stap": "Bolsward-Zuidoost selecteren op de kaart en in de chat vragen: hoeveel % is bejaard bij mij in de buurt?",
+      "verwacht": "antwoord met het percentage 65-plussers en 80-plussers voor Bolsward-Zuidoost, bron en jaar; onder het antwoord 'Onderbouwing: 2 indicatoren' met relevantie als woord (sterk), geen percentage",
+      "gebied": "BU19000002"
+    }
+  ],
+  "bekende_afwijkingen": [
+    "De UUID's en de evaluatieset (tests/data/assistent_evaluatie.json) gaan uit van een stack met sample-data (LOAD_SAMPLE_DATA=true): CBS Kerncijfers en de demopakketten.",
+    "chat-controles voert de uitvoerder nog niet uit (gereserveerd); tests/integration/test_assistent_kwaliteit.py draait ze, net als de volledige evaluatie met drempels voor precision@3, recall@3, MRR en routering.",
+    "Bij een api-controle is uuid de indicator die bovenaan hoort; de uitvoerder controleert alleen status en aantal, tests/integration/test_assistent_kwaliteit.py ook de uuid.",
+    "Synoniemen staan in db/stuurdata/synoniemen.json; een vraag met een woord dat daar niet in staat en ook niet op de naam lijkt, hangt af van het embeddingmodel (holdout-vragen in de evaluatieset)."
+  ]
+}
