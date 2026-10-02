@@ -188,6 +188,8 @@ app.include_router(bag3d.router)
 app.include_router(log_viewer.router)
 app.include_router(externe_lagen.router)
 app.include_router(externe_lagen.admin_router)
+from omnitwin.routers import oidc_ik
+app.include_router(oidc_ik.router)  # GET /api/oidc/ik: token controleren (#205)
 
 @app.on_event("startup")
 async def startup_event():
