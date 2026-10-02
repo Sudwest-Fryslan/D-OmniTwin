@@ -56,9 +56,8 @@ def probleem(r, status, code=None):
 
 @pytest.fixture(scope="module")
 def s():
-    sessie = requests.Session()
-    sessie.headers["Authorization"] = f"Bearer {uc.token(BASIS)}"
-    return sessie
+    """Sessie met token; wacht bij 429 (rate-limit van Traefik, LADEN_RATE_LIMIT) volgens Retry-After."""
+    return uc.LaadApi(BASIS).s
 
 
 @pytest.fixture(scope="module")

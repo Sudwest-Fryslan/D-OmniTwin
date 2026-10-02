@@ -84,8 +84,9 @@ def controleer(bron: Bron, ctx: Context, prefixen: dict[str, str]) -> tuple[list
     lid = ctx.levering_id
     for i, ruw in enumerate(regels, start=1):
         r, rfouten = tabel.rij(ruw, i)
-        for f in rfouten:
-            fouten.voeg(f)
+        for f in rfouten:  # jaar of peildatum buiten bereik of ongeldig: jaar-ongeldig (README, probleemtypen)
+            fouten.voeg(Fout("jaar-ongeldig", f.melding, f.resource, f.regel, f.veld)
+                        if f.code == "schema-ongeldig" and f.veld in ("jaar", "peildatum") else f)
         if (r.get("jaar") is None) == (r.get("peildatum") is None) and (resource, i) not in al_fout:
             fouten.voeg(Fout("jaar-ongeldig", "precies één van jaar en peildatum moet gevuld zijn", resource, i, "jaar"))
         scenario = r.get("scenario") or "current"
@@ -134,33 +135,33 @@ def stage(cur, staging: list[tuple]) -> None:
 
 DB_CONTROLES = [
     ("gebiedstype-onbekend", "gebiedstype",
-     """SELECT s.regel FROM laden.staging_waarnemingen s
+     """SELECT s.regel, count(*) OVER () AS totaal FROM laden.staging_waarnemingen s
         WHERE s.levering_id = %(lv)s AND s.gebiedstype IS NOT NULL
           AND NOT EXISTS (SELECT 1 FROM public.gebiedstypes t
                           WHERE t.id::text = lower(s.gebiedstype) OR t.code = s.gebiedstype)
         ORDER BY s.regel LIMIT 1000""",
      "gebiedstype bestaat niet"),
     ("gebied-onbekend", "gebied_code",
-     """SELECT s.regel FROM laden.staging_waarnemingen s
+     """SELECT s.regel, count(*) OVER () AS totaal FROM laden.staging_waarnemingen s
         WHERE s.levering_id = %(lv)s
           AND NOT EXISTS (SELECT 1 FROM public.gebieden g WHERE g.id = s.gebied_code)
         ORDER BY s.regel LIMIT 1000""",
      "gebied_code komt niet voor in D-OmniTwin"),
     ("gebied-onbekend", "gebied_code",
-     """SELECT s.regel, t.code AS gt FROM laden.staging_waarnemingen s
+     """SELECT s.regel, t.code AS gt, count(*) OVER () AS totaal FROM laden.staging_waarnemingen s
         JOIN public.gebieden g ON g.id = s.gebied_code
         JOIN public.gebiedstypes t ON t.id::text = lower(s.gebiedstype) OR t.code = s.gebiedstype
         WHERE s.levering_id = %(lv)s AND g.gebiedstype_id <> t.id
         ORDER BY s.regel LIMIT 1000""",
      "gebied_code komt niet voor in gebiedstype {gt}"),
     ("indicator-onbekend", "indicator_uuid",
-     """SELECT s.regel FROM laden.staging_waarnemingen s
+     """SELECT s.regel, count(*) OVER () AS totaal FROM laden.staging_waarnemingen s
         WHERE s.levering_id = %(lv)s
           AND NOT EXISTS (SELECT 1 FROM public.indicatoren i WHERE i.uuid = s.indicator_uuid)
         ORDER BY s.regel LIMIT 1000""",
      "indicator bestaat niet"),
     ("indicator-onbekend", "indicator_uuid",
-     """SELECT s.regel FROM laden.staging_waarnemingen s
+     """SELECT s.regel, count(*) OVER () AS totaal FROM laden.staging_waarnemingen s
         JOIN public.gebieden g ON g.id = s.gebied_code
         WHERE s.levering_id = %(lv)s
           AND EXISTS (SELECT 1 FROM public.indicator_gebiedstype_relaties r WHERE r.indicator_uuid = s.indicator_uuid)
@@ -169,7 +170,7 @@ DB_CONTROLES = [
         ORDER BY s.regel LIMIT 1000""",
      "indicator is niet gekoppeld aan het gebiedstype van het gebied"),
     ("waarde-buiten-bereik", "waarde",
-     """SELECT s.regel FROM laden.staging_waarnemingen s
+     """SELECT s.regel, count(*) OVER () AS totaal FROM laden.staging_waarnemingen s
         JOIN public.indicatoren i ON i.uuid = s.indicator_uuid
         WHERE s.levering_id = %(lv)s
           AND ((i.min_waarde IS NOT NULL AND s.waarde < i.min_waarde)

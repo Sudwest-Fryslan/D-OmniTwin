@@ -20,6 +20,7 @@ class Fouten:
         self.lijst: list[Fout] = []
         self.totaal = 0
         self.regels: set[tuple[str | None, int]] = set()
+        self.niet_opgesomd = 0  # foute regels die een SQL-controle telde maar niet opsomde (boven de limiet)
 
     def voeg(self, f: Fout) -> None:
         self.totaal += 1
@@ -37,7 +38,7 @@ class Fouten:
 
     @property
     def foute_regels(self) -> int:
-        return len(self.regels)
+        return len(self.regels) + self.niet_opgesomd
 
 
 class Afkeuring(Exception):
@@ -104,10 +105,15 @@ def copy(cur, tabel: str, kolommen: list[str], rijen) -> int:
 
 def sql_fouten(cur, fouten: Fouten, sql: str, params: dict, code: str, resource: str, veld: str | None,
                melding: str) -> int:
-    """Voer een query uit die (regel) teruggeeft voor elke foute regel; voeg ze als fout toe. Geeft het aantal."""
+    """Voer een query uit die (regel, totaal = count(*) OVER ()) teruggeeft voor elke foute regel, met een
+    LIMIT; voeg ze als fout toe en tel de rest mee. Geeft het aantal foute regels."""
     cur.execute(sql, params)
-    n = 0
+    n, totaal = 0, 0
     for r in cur.fetchall():
         n += 1
+        totaal = r.get("totaal") or n
         fouten.voeg(Fout(code, melding.format(**r), resource, r["regel"], veld))
-    return n
+    if totaal > n:  # de query somt hooguit LIMIT regels op; count(*) OVER () telt ze allemaal
+        fouten.totaal += totaal - n
+        fouten.niet_opgesomd += totaal - n
+    return totaal

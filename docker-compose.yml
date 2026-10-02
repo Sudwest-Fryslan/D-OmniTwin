@@ -176,6 +176,13 @@ services:
       - "traefik.enable=true"
       - "traefik.http.routers.pg_featureserv.rule=PathPrefix(`/api/geo`)"
       - "traefik.http.routers.pg_featureserv.middlewares=security-headers@file"
+      - "traefik.http.routers.pg_featureserv.service=pg_featureserv"
+      # Geo-API met versie (ADR 0005): /api/geo/v1/... → /api/geo/... (de links in de antwoorden blijven /api/geo)
+      - "traefik.http.routers.pg_featureserv-v1.rule=PathPrefix(`/api/geo/v1`)"
+      - "traefik.http.middlewares.pg_featureserv-v1.replacepathregex.regex=^/api/geo/v1(/.*)?$$"
+      - "traefik.http.middlewares.pg_featureserv-v1.replacepathregex.replacement=/api/geo$$1"
+      - "traefik.http.routers.pg_featureserv-v1.middlewares=pg_featureserv-v1,security-headers@file"
+      - "traefik.http.routers.pg_featureserv-v1.service=pg_featureserv"
       - "traefik.http.services.pg_featureserv.loadbalancer.server.port=9000"
     depends_on:
       # Na db-init, zodat pg_featureserv de views bij het starten ziet

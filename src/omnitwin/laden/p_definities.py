@@ -112,13 +112,13 @@ def stage(cur, ctx: Context, uit: dict) -> None:
 def db_controles(cur, ctx: Context, fouten: Fouten) -> None:
     p = {"lv": ctx.levering_id, "ds": ctx.dataset_id}
     sql_fouten(cur, fouten, """
-        SELECT s.regel FROM laden.staging_gebiedstypen s
+        SELECT s.regel, count(*) OVER () AS totaal FROM laden.staging_gebiedstypen s
         WHERE s.levering_id = %(lv)s AND s.code IS NOT NULL
           AND EXISTS (SELECT 1 FROM public.gebiedstypes t WHERE t.code = s.code AND t.id <> s.id)
         ORDER BY s.regel LIMIT 1000""", p, "dubbele-sleutel", "gebiedstypen", "code",
         "code is al in gebruik bij een ander gebiedstype")
     sql_fouten(cur, fouten, """
-        SELECT s.regel FROM laden.staging_indicatoren s
+        SELECT s.regel, count(*) OVER () AS totaal FROM laden.staging_indicatoren s
         WHERE s.levering_id = %(lv)s AND s.code IS NOT NULL
           AND EXISTS (SELECT 1 FROM public.indicatoren i WHERE i.code = s.code AND i.uuid <> s.uuid)
         ORDER BY s.regel LIMIT 1000""", p, "dubbele-sleutel", "indicatoren", "code",
