@@ -1,0 +1,74 @@
+{
+  "id": "swf-laag-afstand-tot-koelte",
+  "bronId": "swf-kaartlagen",
+  "beschrijving": {
+    "@context": "https://data.overheid.nl/dcat-ap-nl/context.jsonld",
+    "@type": "dcat:Dataset",
+    "dct:title": "Afstand tot koelte",
+    "dct:description": "Afstand tot een koele plek (klassen), Súdwest-Fryslân (groep Klimaatmonitor › Hittestress).",
+    "dct:publisher": "https://identifier.overheid.nl/tooi/id/gemeente/gm1900",
+    "dct:accessRights": "http://publications.europa.eu/resource/authority/access-right/RESTRICTED",
+    "dct:license": "http://standaarden.overheid.nl/owms/terms/licentieonbekend",
+    "dct:spatial": "https://identifier.overheid.nl/tooi/id/gemeente/gm1900",
+    "dct:source": "Gemeente Súdwest-Fryslân, klimaatbewerking (Klimaateffectatlas-methode)",
+    "dcat:theme": [
+      "http://standaarden.overheid.nl/owms/terms/Ruimtelijke_ordening"
+    ],
+    "dcat:keyword": [
+      "kaartlaag",
+      "Súdwest-Fryslân"
+    ],
+    "dct:conformsTo": "http://www.opengis.net/def/crs/EPSG/0/28992",
+    "dcat:contactPoint": {
+      "@type": "vcard:Organization",
+      "vcard:fn": "Functioneel beheer gebiedsmonitor, gemeente Súdwest-Fryslân"
+    }
+  },
+  "laadprofiel": {
+    "profiel": "kaartlaag",
+    "doel": {
+      "featureTabel": "swf_laag_afstand_tot_koelte",
+      "sleutelveld": "nr",
+      "labelveld": "legenda"
+    },
+    "plausibiliteit": {
+      "minRegels": 40000
+    }
+  },
+  "bron": {
+    "adapter": "lokaal-bestand",
+    "pad": "${SWF_DOCS_DIR}/Demo/Demo data/Klimaatmonitoring demolagen/AfstandTotKoelte_SWF.geojson",
+    "omschrijving": "SWF-bewerking (projectmap); open alternatief alleen als viewer (Klimaateffectatlas)"
+  },
+  "bewerkingen": [
+    {
+      "snake_case": true
+    },
+    {
+      "behoud": [
+        "objectid",
+        "gridcode",
+        "legenda",
+        "bu_code",
+        "bu_naam",
+        "wk_code",
+        "wk_naam",
+        "creation_year"
+      ]
+    },
+    {
+      "multipolygon": true
+    },
+    {
+      "nummer": {
+        "naar": "nr"
+      },
+      "omschrijving": "objectid is in de bron niet uniek; volgnummer als sleutel"
+    }
+  ],
+  "levering": {
+    "formaat": "geopackage",
+    "bestand": "swf-laag-afstand-tot-koelte.gpkg",
+    "geometrie": "MultiPolygon"
+  }
+}

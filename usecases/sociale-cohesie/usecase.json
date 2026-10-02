@@ -1,5 +1,7 @@
 {
+  "naam": "sociale-cohesie",
   "id": "TC-06-008",
+  "versie": "0.1.0",
   "titel": "Zorgzwaarte en sociale cohesie",
   "persona": {
     "rol": "Wijkcoördinator / wijkcontactfunctionaris",
@@ -59,5 +61,12 @@
   "verwacht": {
     "vraag_zoekwoord": "eenzaamheid",
     "verwacht": "Bolsward-Zuidoost: eenzaamheid 48,3% (tussen Noord 55,0% en Noordoost 41,6%), vrijwilligers 27,6%."
-  }
+  },
+  "afhankelijk_van": [
+    {
+      "naam": "cbs-kerncijfers",
+      "versie": ">=0.1.0",
+      "optioneel": true
+    }
+  ]
 }

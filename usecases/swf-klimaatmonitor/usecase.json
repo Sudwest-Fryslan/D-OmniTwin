@@ -1,0 +1,81 @@
+{
+  "naam": "swf-klimaatmonitor",
+  "id": "TC-07-007",
+  "versie": "0.1.0",
+  "titel": "SWF-klimaatmonitor: welstand × buurt met labels A–E",
+  "vraag": "Welk label (A–E) heeft een welstandsgebied in Bolsward voor hittestress, droogte en hemelwateroverlast, en welke indicator trekt het omlaag?",
+  "gebruiker": "adviseur klimaatadaptatie",
+  "status": "ontwerp",
+  "afhankelijk_van": [
+    "swf-definities",
+    "swf-gebiedsindelingen",
+    "swf-kompasprofiel"
+  ],
+  "rechten": [
+    "realm-rol beheerder (registreren)",
+    "dataset:swf-monitor-waarden:laden",
+    "realm-rol lezer (de Klimaatmonitor is intern)"
+  ],
+  "datasets": [
+    {
+      "id": "swf-monitor-waarden",
+      "route": "laden",
+      "registratie": "datasets/swf-monitor-waarden.json",
+      "profiel": "waarnemingen",
+      "rol": "dataset:swf-monitor-waarden:laden",
+      "client": "etl-swf",
+      "prioriteit": "Must",
+      "bron": "export van de huidige monitor ($SWF_DUMP_DIR)",
+      "verwacht": {
+        "regels": 7686,
+        "indicatoren": 7,
+        "gebieden": 755,
+        "jaren": "2020–2025",
+        "codes": "WS1–WS758"
+      }
+    }
+  ],
+  "controles": [
+    {
+      "type": "aantal",
+      "dataset": "swf-monitor-waarden",
+      "gelijk": 7686
+    },
+    {
+      "type": "bewerking",
+      "dataset": "swf-monitor-waarden",
+      "reden": "jaar-ongeldig",
+      "gelijk": 0
+    },
+    {
+      "type": "afkeuring",
+      "dataset": "swf-monitor-waarden",
+      "variant": "zonder-namespace",
+      "code": "gebied-onbekend"
+    },
+    {
+      "type": "api",
+      "pad": "/api/data/v1/gebied_data?gebied_id=like.WS*&indicator_uuid=eq.bf4e5b8f-6b0a-4632-b9b4-8e29d025e68c&select=gebied_id&limit=1",
+      "minimaal_aantal": 1,
+      "uuid": "bf4e5b8f-6b0a-4632-b9b4-8e29d025e68c",
+      "omschrijving": "Afstand tot koele plek op welstand × buurt"
+    },
+    {
+      "type": "api",
+      "pad": "/api/data/v1/gebied_data?gebied_id=like.WS*&select=gebied_id&limit=1",
+      "anoniem": true,
+      "minimaal_aantal": 0,
+      "omschrijving": "anoniem: geen klimaatwaarden zichtbaar zolang de dataset RESTRICTED is (vergt RLS)"
+    },
+    {
+      "type": "viewer",
+      "stap": "Kompas 'SWF Klimaat', welstand × buurt in Bolsward kiezen",
+      "verwacht": "per thema en indicator een label A–E en de indicator die het laagst scoort"
+    }
+  ],
+  "bekende_afwijkingen": [
+    "Labels A–E: de drempels zijn onbekend (gat-analyse, vraag 5). Tot ze er zijn, toont D-OmniTwin de percentielklasse.",
+    "Dezelfde dataset als swf-basismonitor-waarden (swf-monitor-waarden); vervangBereik indicator × gebiedstype houdt de twee leveringen uit elkaar. De registratie moet in beide use cases gelijk zijn (unittest).",
+    "Gevoelstemperatuur en Afstand tot koele plek zijn SWF-bewerkingen; de open Klimaateffectatlas heeft voor Fryslân geen download (zie hittestress)."
+  ]
+}

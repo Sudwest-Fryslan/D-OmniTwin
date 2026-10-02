@@ -1,0 +1,62 @@
+{
+  "naam": "cbs-kerncijfers",
+  "id": "TC-07-002",
+  "versie": "0.1.0",
+  "titel": "CBS Kerncijfers wijken en buurten via de laad-API",
+  "vraag": "Ik wil de CBS Kerncijfers van alle jaargangen sinds 2019 per buurt in D-OmniTwin, als één dataset die elk jaar met één levering wordt bijgewerkt.",
+  "gebruiker": "beheerder D-OmniTwin",
+  "status": "ontwerp",
+  "afhankelijk_van": [
+    "cbs-gebiedsindelingen"
+  ],
+  "rechten": [
+    "realm-rol beheerder (registreren)",
+    "dataset:cbs-kerncijfers:laden"
+  ],
+  "datasets": [
+    {
+      "id": "cbs-kerncijfers",
+      "route": "laden",
+      "registratie": "datasets/cbs-kerncijfers.json",
+      "profiel": "waarnemingen",
+      "rol": "dataset:cbs-kerncijfers:laden",
+      "client": "etl-cbs",
+      "prioriteit": "Must",
+      "bron": "CBS OData, Kerncijfers wijken en buurten 2019–2026 (open, CC BY 4.0)",
+      "verwacht": {
+        "regels": "186.756 (heel Fryslân, 8 jaargangen; gelijk aan controle.rijen_totaal in init_data/cbs/datapackage.json)",
+        "n": "leeg: CBS onderdrukt zelf (bron-onderdrukt)"
+      }
+    }
+  ],
+  "controles": [
+    {
+      "type": "aantal",
+      "dataset": "cbs-kerncijfers",
+      "minimaal": 180000,
+      "omschrijving": "alle jaargangen voor heel Fryslân (nu 186.756)"
+    },
+    {
+      "type": "api",
+      "pad": "/api/data/v1/gebied_data?gebied_id=eq.BU19000002&indicator_uuid=eq.31f70dff-c116-4267-bef0-d15b0ff4c020&select=jaar,waarde",
+      "anoniem": true,
+      "minimaal_aantal": 8,
+      "uuid": "31f70dff-c116-4267-bef0-d15b0ff4c020",
+      "gebied": "BU19000002",
+      "omschrijving": "Inwoners van Bolsward-Zuidoost voor 2019–2026"
+    },
+    {
+      "type": "idempotent",
+      "dataset": "cbs-kerncijfers"
+    },
+    {
+      "type": "viewer",
+      "stap": "Kompas openen voor Bolsward-Zuidoost, indicator Inwoners",
+      "verwacht": "trendlijn 2019–2026"
+    }
+  ],
+  "bekende_afwijkingen": [
+    "n ontbreekt: de CBS-tabellen hebben geen aantallen per waarde; minimumN 0 en bron-onderdrukt (CBS onderdrukt zelf).",
+    "Overlap met swf-basismonitor-waarden: 5 indicator-UUID's (2.598 waarden vanaf 2019) zitten in beide; zie de README van swf-basismonitor-waarden."
+  ]
+}

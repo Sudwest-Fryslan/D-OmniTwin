@@ -1,5 +1,7 @@
 {
+  "naam": "hittestress",
   "id": "TC-06-006",
+  "versie": "0.1.0",
   "titel": "Klimaatadaptatie: hittestress en kwetsbaarheid",
   "persona": {
     "rol": "Stedenbouwkundige / GGD",
@@ -77,5 +79,12 @@
   "verwacht": {
     "vraag_zoekwoord": "koele plek",
     "verwacht": "Bolsward-Noord ligt het verst van een koele plek (246 m), Bolsward-Noordoost het dichtst bij (206 m). Relatief de meeste 65-plussers: Bolsward-Zuidoost (29,5%)."
-  }
+  },
+  "afhankelijk_van": [
+    {
+      "naam": "cbs-kerncijfers",
+      "versie": ">=0.1.0",
+      "optioneel": true
+    }
+  ]
 }

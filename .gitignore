@@ -27,6 +27,9 @@ data/
 !init_data/
 # Brondata van een use case (usecases/<naam>/data/waarden.csv) ook
 !usecases/*/data/
+# Bewijs van een use case (screenshots, controle.json): artefact, niet in git (ADR 0003); alleen de README
+usecases/*/bewijs/*
+!usecases/*/bewijs/README.md
 
 # Exports (gegenereerde rapporten, JSON exports, Excel)
 exports/

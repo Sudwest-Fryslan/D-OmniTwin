@@ -19,9 +19,16 @@ Vereist: het product zonder data, geladen met
 Idempotent: opnieuw laden overschrijft dezelfde rijen. Pakketten zijn te
 combineren; --alle laadt ze allemaal.
 
+Volgorde en afhankelijkheden (`afhankelijk_van` in usecase.json) komen uit de
+use-case-uitvoerder (omnitwin.usecases): eerst de afhankelijkheden, elke use case
+één keer; een use case met status 'ontwerp' en wat er (niet-optioneel) van afhangt,
+wordt overgeslagen. Use cases met `datasets` laden via de laad-API
+(python -m omnitwin.usecases), niet via dit script.
+
 Gebruik:
     python init_data/scripts/laad_usecase.py hittestress [sociale-cohesie ...]
     python init_data/scripts/laad_usecase.py --alle
+    python init_data/scripts/laad_usecase.py --lijst | --boom <naam> | --index
 """
 
 import argparse
@@ -35,7 +42,9 @@ import uuid
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src"))
 import load_sample  # noqa: E402  (databaseverbinding en CSV-import hergebruiken)
+from omnitwin import usecases as uitvoerder  # noqa: E402  (volgorde, afhankelijkheden, status)
 
 ROOT = Path(__file__).resolve().parent.parent.parent
 USECASES_DIR = ROOT / "usecases"
@@ -52,14 +61,20 @@ RICHTING = {
 }
 
 
-def pakketten(namen, alle):
-    beschikbaar = sorted(p.parent.name for p in USECASES_DIR.glob("*/usecase.json"))
-    if alle:
-        return beschikbaar
-    onbekend = [n for n in namen if n not in beschikbaar]
-    if onbekend:
-        sys.exit(f"❌ Onbekende use case(s): {onbekend}. Beschikbaar: {beschikbaar}")
-    return namen
+def pakketten(namen, alle, map_=USECASES_DIR):
+    """Te laden demopakketten in volgorde (afhankelijkheden eerst). Overgeslagen: status 'ontwerp'
+    (en wat ervan afhangt) en use cases met `datasets` (die laden via de laad-API)."""
+    ucs = uitvoerder.lees_usecases(map_)
+    try:
+        orde, overgeslagen = uitvoerder.plan(namen, ucs, alle)
+    except uitvoerder.UseCaseFout as e:
+        sys.exit(f"❌ {e}. Beschikbaar: {sorted(ucs)}")
+    for naam, reden in overgeslagen.items():
+        print(f"⏭️  {naam}: overgeslagen ({reden})")
+    for naam in orde:
+        if ucs[naam].get("datasets"):
+            print(f"⏭️  {naam}: laadt via de laad-API (python -m omnitwin.usecases), niet via dit script")
+    return [n for n in orde if not ucs[n].get("datasets")]
 
 
 def zet_richting(cur, indicatoren):
@@ -198,7 +213,12 @@ def main():
     parser = argparse.ArgumentParser(description="Laad use-casepakketten (usecases/<naam>/)")
     parser.add_argument("namen", nargs="*", help="naam van de map onder usecases/")
     parser.add_argument("--alle", action="store_true", help="alle use cases laden")
+    parser.add_argument("--lijst", action="store_true", help="use cases tonen (zie python -m omnitwin.usecases lijst)")
+    parser.add_argument("--boom", metavar="NAAM", help="afhankelijkheden als boom")
+    parser.add_argument("--index", action="store_true", help="index in usecases/README.md bijwerken")
     args = parser.parse_args()
+    if args.lijst or args.boom or args.index:
+        sys.exit(uitvoerder.main(["lijst"] if args.lijst else ["boom", args.boom] if args.boom else ["index"]))
     if not args.namen and not args.alle:
         parser.error("geef een of meer namen, of --alle")
 

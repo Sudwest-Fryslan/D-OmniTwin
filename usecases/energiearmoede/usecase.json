@@ -1,5 +1,7 @@
 {
+  "naam": "energiearmoede",
   "id": "TC-06-005",
+  "versie": "0.1.0",
   "titel": "Energietransitie en energiearmoede",
   "persona": {
     "rol": "Beleidsmaker energietransitie",
@@ -47,5 +49,12 @@
   "verwacht": {
     "vraag_zoekwoord": "rondkomen",
     "verwacht": "Bolsward-Noord: hoogste moeite met rondkomen (19,1%) en meeste lage inkomens (4,4%, CBS 2023)"
-  }
+  },
+  "afhankelijk_van": [
+    {
+      "naam": "cbs-kerncijfers",
+      "versie": ">=0.1.0",
+      "optioneel": true
+    }
+  ]
 }

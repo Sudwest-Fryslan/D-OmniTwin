@@ -1,5 +1,7 @@
 {
+  "naam": "brede-welvaart",
   "id": "TC-06-007",
+  "versie": "0.1.0",
   "titel": "Brede welvaart en functiemenging",
   "persona": {
     "rol": "Strateeg / economische zaken",
@@ -49,5 +51,12 @@
   "verwacht": {
     "vraag_zoekwoord": "inkomen",
     "verwacht": "Inkomen per inwoner: Bolsward-Zuidoost 26,9 duizend euro (CBS 2023), tussen Noord (22,1; 2023) en Noordoost (30,9; 2024). Netto arbeidsparticipatie 2024: Noord 66%, Zuidoost 71%, Noordoost 73%."
-  }
+  },
+  "afhankelijk_van": [
+    {
+      "naam": "cbs-kerncijfers",
+      "versie": ">=0.1.0",
+      "optioneel": true
+    }
+  ]
 }

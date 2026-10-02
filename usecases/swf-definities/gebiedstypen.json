@@ -1,0 +1,79 @@
+[
+  {
+    "id": "afba67cb-6b38-4723-9c95-102a22d5b38a",
+    "code": "CBS_BUURT",
+    "niveau": "Buurt",
+    "gebiedsindeling_dataset": "cbs-gebied-buurten",
+    "code_prefix": ""
+  },
+  {
+    "id": "d210c084-506b-48b4-87c9-b7d4bf422553",
+    "code": "CBS_BUURT_BBK",
+    "niveau": "Buurtdeel bebouwde kom",
+    "gebiedsindeling_dataset": "swf-gebied-buurt-bebouwde-kom",
+    "code_prefix": ""
+  },
+  {
+    "id": "0fdd1ab2-0963-471d-a47a-d7e080461a30",
+    "code": "CBS_WIJK",
+    "niveau": "Wijk",
+    "gebiedsindeling_dataset": "cbs-gebied-wijken",
+    "code_prefix": ""
+  },
+  {
+    "id": "1e6b3c18-cec2-42f1-8e71-7a3da8504057",
+    "code": "CBS_GEMEENTE",
+    "niveau": "Gemeente",
+    "gebiedsindeling_dataset": "",
+    "code_prefix": ""
+  },
+  {
+    "id": "e1de90ae-8b31-4dc4-8d3e-132062d4bd12",
+    "code": "CBS_PROVINCIE",
+    "niveau": "Provincie",
+    "gebiedsindeling_dataset": "",
+    "code_prefix": ""
+  },
+  {
+    "id": "c2760b82-13e2-4a12-bd7c-2d6ab1fbdb49",
+    "code": "BAG_WOONPLAATS",
+    "niveau": "Woonplaats",
+    "gebiedsindeling_dataset": "swf-gebied-woonplaats",
+    "code_prefix": "WP"
+  },
+  {
+    "id": "e9255451-7476-4413-a712-e920cd2e90a8",
+    "code": "POSTCODE_SWF",
+    "niveau": "Postcode",
+    "gebiedsindeling_dataset": "swf-gebied-postcode",
+    "code_prefix": "PC"
+  },
+  {
+    "id": "92915ac7-fec3-49ac-a0fb-ddb9b8c92317",
+    "code": "SWF_BEBOUWDE_KOM",
+    "niveau": "Kern",
+    "gebiedsindeling_dataset": "swf-gebied-bebouwde-kom",
+    "code_prefix": "BK"
+  },
+  {
+    "id": "f9e2bd26-6c46-4383-981c-48c97dadc9d6",
+    "code": "SWF_GEMEENTE_2018",
+    "niveau": "Gemeente",
+    "gebiedsindeling_dataset": "",
+    "code_prefix": ""
+  },
+  {
+    "id": "82525652-f64d-4db4-9f05-fbf7f6c642c9",
+    "code": "SWF_GEMEENTE_ZONDER_LITTENS",
+    "niveau": "Gemeente",
+    "gebiedsindeling_dataset": "",
+    "code_prefix": ""
+  },
+  {
+    "id": "29fc9f28-89d9-488b-bf68-2ed176187b21",
+    "code": "WELSTAND",
+    "niveau": "Welstand per buurt",
+    "gebiedsindeling_dataset": "swf-gebied-welstand-buurt",
+    "code_prefix": "WS"
+  }
+]

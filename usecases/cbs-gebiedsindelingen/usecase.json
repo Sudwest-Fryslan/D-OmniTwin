@@ -1,0 +1,100 @@
+{
+  "naam": "cbs-gebiedsindelingen",
+  "id": "TC-07-001",
+  "versie": "0.1.0",
+  "titel": "CBS-gebiedsindelingen (buurten, wijken, gemeenten) via de laad-API",
+  "vraag": "Ik wil de CBS-buurten, -wijken en -gemeenten van Fryslân in D-OmniTwin, met dezelfde codes als het CBS, zodat elke andere use case er waarden aan kan hangen.",
+  "gebruiker": "beheerder D-OmniTwin",
+  "status": "ontwerp",
+  "afhankelijk_van": [],
+  "rechten": [
+    "realm-rol beheerder (registreren)",
+    "dataset:cbs-gebied-buurten:laden",
+    "dataset:cbs-gebied-wijken:laden",
+    "dataset:cbs-gebied-gemeenten:laden"
+  ],
+  "datasets": [
+    {
+      "id": "cbs-gebied-buurten",
+      "route": "laden",
+      "registratie": "datasets/cbs-gebied-buurten.json",
+      "profiel": "gebiedsindeling",
+      "rol": "dataset:cbs-gebied-buurten:laden",
+      "client": "etl-cbs",
+      "prioriteit": "Must",
+      "bron": "PDOK CBS-gebiedsindelingen 2024 (open, CC BY 4.0)",
+      "verwacht": {
+        "features": 931,
+        "codes": "BU + 8 cijfers, uniek; 155 in Súdwest-Fryslân"
+      }
+    },
+    {
+      "id": "cbs-gebied-wijken",
+      "route": "laden",
+      "registratie": "datasets/cbs-gebied-wijken.json",
+      "profiel": "gebiedsindeling",
+      "rol": "dataset:cbs-gebied-wijken:laden",
+      "client": "etl-cbs",
+      "prioriteit": "Should",
+      "bron": "PDOK CBS-gebiedsindelingen 2024 (open, CC BY 4.0)",
+      "verwacht": {
+        "features": 246
+      }
+    },
+    {
+      "id": "cbs-gebied-gemeenten",
+      "route": "laden",
+      "registratie": "datasets/cbs-gebied-gemeenten.json",
+      "profiel": "gebiedsindeling",
+      "rol": "dataset:cbs-gebied-gemeenten:laden",
+      "client": "etl-cbs",
+      "prioriteit": "Must",
+      "bron": "PDOK CBS-gebiedsindelingen 2024 (open, CC BY 4.0)",
+      "verwacht": {
+        "features": 18
+      }
+    }
+  ],
+  "controles": [
+    {
+      "type": "aantal",
+      "dataset": "cbs-gebied-gemeenten",
+      "gelijk": 18,
+      "omschrijving": "18 Friese gemeenten (indeling 2024)"
+    },
+    {
+      "type": "aantal",
+      "dataset": "cbs-gebied-buurten",
+      "omschrijving": "alle buurten in Fryslân (CBS 2024)",
+      "gelijk": 931
+    },
+    {
+      "type": "aantal",
+      "dataset": "cbs-gebied-wijken",
+      "gelijk": 246
+    },
+    {
+      "type": "api",
+      "pad": "/api/data/v1/gebieden?id=eq.BU19000002&select=id,naam,gebiedstype_id",
+      "anoniem": true,
+      "minimaal_aantal": 1,
+      "gebied": "BU19000002",
+      "omschrijving": "Bolsward-Zuidoost bestaat, als CBS-buurt"
+    },
+    {
+      "type": "api",
+      "pad": "/api/geo/v1/collections",
+      "anoniem": true,
+      "omschrijving": "de gebieden staan in de geo-API"
+    },
+    {
+      "type": "idempotent",
+      "dataset": "cbs-gebied-gemeenten",
+      "omschrijving": "dezelfde levering twee keer = één versie"
+    }
+  ],
+  "bekende_afwijkingen": [
+    "Gebiedstype 'CBS wijken' (0fdd1ab2) bestaat nu alleen via de SWF-definities (swf-definities); voor andere gemeenten moet het in de stuurdata.",
+    "De SWF-gebiedstypen 'CBS gemeentegrenzen' (1e6b3c18) en 'CBS provinciegrenzen' (e1de90ae) dubbelen 'Gemeente' en 'Provincie' van D-OmniTwin; deze use case vult alleen 'Gemeente'. Besluit nodig: alias of samenvoegen."
+  ]
+}

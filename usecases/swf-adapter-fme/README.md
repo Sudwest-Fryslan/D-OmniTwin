@@ -1,0 +1,102 @@
+# TC-07-009 — SWF-adapter: dezelfde FME-push naar D-OmniTwin
+
+**Status:** ontwerp (de laad-API is nog niet gebouwd; deze use case is de specificatie en straks de acceptatietest)
+**Versie:** 0.1.0 · **Afhankelijk van:** [swf-definities](../swf-definities/README.md)
+**Manifest:** [`usecase.json`](usecase.json) · **Controleren:** `python -m omnitwin.usecases controleer swf-adapter-fme`
+
+## Vraag
+
+- **Gebruiker:** data-engineer DWH (SWF)
+- **Vraag:** "Kan SWF de bestaande FME-workspaces laten leveren aan D-OmniTwin door alleen de basis-URL en de client te wijzigen, en is een herhaalde push veilig?"
+- **Rechten:** `dataset:swf-monitor-definities:laden`, `dataset:swf-monitor-waarden:laden`
+
+De bestaande FME-workspaces leveren aan D-OmniTwin door alleen het tokenendpoint, de client en de basis-URL te wijzigen (adapter [`swf-monitor-v1`](../../docs/api/laden/profielen/swf-monitor-v1.md)). Deze use case maakt dezelfde bodies als FME nu stuurt: één definities-JSON (drie arrays) en één JSON-array per indicator × gebiedstype (57 bestanden), en post ze op de compatibiliteitsingang.
+
+| In FME | Wordt |
+|---|---|
+| `BEARER_AUTH_URL` | tokenendpoint van realm `omnitwin` (`/auth/realms/omnitwin/protocol/openid-connect/token`) |
+| `BEARER_CREDENTIALS` | `client_id=etl-swf&client_secret=…&grant_type=client_credentials` (secret in een versleutelde FME Flow-parameter) |
+| `KOMPAS_ENDPOINT_URL` | `https://<installatie>/api/laden/v1/compat/swf-monitor/monitor_api/indicator_waarde/inlezen` |
+| URL definities (vast in de HttpCaller) | `https://<installatie>/api/laden/v1/compat/swf-monitor/monitor_api/indicator/setup/inlezen` |
+
+Keycloak: machineclient `etl-swf` (alleen client credentials) met de client-rollen `dataset:swf-monitor-definities:laden` en `dataset:swf-monitor-waarden:laden` op `omnitwin-api`, en de audience-mapper zoals bij `etl-voorbeeld` ([installatie](../../docs/9-beheer/installatie.md)).
+
+**Met een database-dump van de monitor** (`$SWF_DB_DUMP`, als tweede bron naast de export): een vergelijking van wat de monitor nu teruggeeft (GET) met wat D-OmniTwin teruggeeft.
+
+## Data
+
+| Dataset | Route | Profiel | Formaat | Bron | Toegang | Licentie | Rol |
+|---|---|---|---|---|---|---|---|
+| [`swf-monitor-definities`](datasets/swf-monitor-definities.json) | compat | definities | swf-json | export van de huidige monitor ($SWF_DUMP_DIR), in het pushformaat | open | onbekend (navragen) | `dataset:swf-monitor-definities:laden` |
+| [`swf-monitor-waarden`](datasets/swf-monitor-waarden.json) | compat | waarnemingen | swf-json | export van de huidige monitor ($SWF_DUMP_DIR), in het pushformaat | beperkt (inloggen) | onbekend (navragen) | `dataset:swf-monitor-waarden:laden` |
+
+Verwacht:
+
+- `swf-monitor-definities`: aanroepen 1; http 200
+- `swf-monitor-waarden`: aanroepen 57; regels 43097; http 200 per aanroep
+
+### Lokaal gecontroleerd
+
+`python -m omnitwin.usecases controleer swf-adapter-fme` op 02-10-2026 (export van februari 2026, open bronnen van die dag). Alleen aantallen, geen meetwaarden.
+
+| Dataset | Bron → levering | Resultaat |
+|---|---|---|
+| swf-monitor-definities | definities.json: 228/11/263 | geldig (SwfDefinities) |
+| variant ruw | status A ongewijzigd | ongeldig: onbekende status {'A': 10} (zoals bedoeld) |
+| swf-monitor-waarden | 57 bestanden, 43.097 waarden (152 jaar 0 en 4 onbekende buurt weggelaten) | alle geldig (SwfWaarde) |
+
+## Stappen
+
+1. Levering(en) maken en lokaal controleren tegen het profiel (zonder API):
+   ```bash
+   python -m omnitwin.usecases controleer swf-adapter-fme --uit /tmp/swf-adapter-fme
+   ```
+2. Token halen (client credentials; tokenendpoint uit `/.well-known/openid-configuration` van realm `omnitwin`):
+   ```bash
+   TOKEN=$(curl -s -u "$CLIENT_ID:$CLIENT_SECRET" -d grant_type=client_credentials \
+     https://omnitwin.example.nl/auth/realms/omnitwin/protocol/openid-connect/token | jq -r .access_token)
+   API=https://omnitwin.example.nl/api/laden/v1
+   ```
+3. Registreren (eenmalig, realm-rol `beheerder`; de uitvoerder stuurt alleen `id`, `bronId`, `beschrijving` en `laadprofiel`):
+   ```bash
+   jq '{id, bronId, beschrijving, laadprofiel}' datasets/swf-monitor-definities.json | \
+     curl -s -X POST "$API/datasets" -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" -d @-
+   ```
+   Daarna in Keycloak de client-rol `dataset:swf-monitor-definities:laden` op `omnitwin-api` aanmaken en toekennen aan de machineclient `etl-swf`.
+4. Leveren (de route van FME):
+   ```bash
+   curl -s -X POST "$API/compat/swf-monitor/monitor_api/indicator/setup/inlezen" -H "Authorization: Bearer $TOKEN" \
+     -H "Content-Type: application/json" --data-binary @/tmp/swf-adapter-fme/swf-monitor-definities/definities.json
+   for f in /tmp/swf-adapter-fme/swf-monitor-waarden/waarden/*.json; do
+     curl -s -o /dev/null -w "%{http_code} $f\n" -X POST "$API/compat/swf-monitor/monitor_api/indicator_waarde/inlezen" \
+       -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" --data-binary @"$f"
+   done
+   ```
+5. Status volgen: `curl -s "$API/leveringen/<id>" -H "Authorization: Bearer $TOKEN" | jq '{status, versie, aantallen}'`.
+6. Controleren in de API en de viewer (zie Acceptatiecriteria). Overige datasets van deze use case op dezelfde manier.
+
+## Acceptatiecriteria
+
+| # | Type | Wat | Verwacht |
+|---|---|---|---|
+| 1 | aantal | `swf-monitor-definities`, resource `indicatoren` | gelijk 228 |
+| 2 | aantal | `swf-monitor-waarden` — 43.253 − 152 (jaar 0) − 4 (onbekende buurten) | gelijk 43097 |
+| 3 | afkeuring | `swf-monitor-definities`, variant `ruw` — de huidige push met status A: 422, FME zet hem op Rejected; niets gepubliceerd | 422, fout `schema-ongeldig`, niets gepubliceerd |
+| 4 | afkeuring | `swf-monitor-waarden`, variant `met-fouten` | 422, fout `jaar-ongeldig`, niets gepubliceerd |
+| 5 | idempotent | `swf-monitor-definities` twee keer leveren — dezelfde body nog een keer: geen nieuwe versie (sha256) | zelfde versie, geen tweede publicatie |
+| 6 | idempotent | `swf-monitor-waarden` twee keer leveren | zelfde versie, geen tweede publicatie |
+| 7 | api | `GET /api/laden/v1/compat/swf-monitor/monitor_api/indicator/setup` (met token) — back-up terug in het SWF-formaat (GET), met 228 indicatoren | HTTP 200 |
+| 8 | api | `GET /api/laden/v1/compat/swf-monitor/monitor_api/indicator_waarde/bf4e5b8f-6b0a-4632-b9b4-8e29d025e68c` (met token) — waarden van één indicator terug | HTTP 200, ≥ 1 resultaten |
+
+`aantal` en `bewerking` controleert `controleer` nu al op de lokaal gemaakte levering; de andere vragen de laad-API en een draaiende installatie.
+
+## Bewijs
+
+In [`bewijs/`](bewijs/README.md), gemaakt door de uitvoerder (niet in git): `controle.json` (uitvoer van `controleer`), per levering de status-JSON van de laad-API (`levering-<dataset>.json`: status, versie, aantallen, fouten), en screenshots van de viewer-controles.
+
+## Bekende afwijkingen
+
+- Status A: de push zoals hij nu is, wordt afgekeurd (profiel definities kent A niet). SWF zet A om in de SQL, of D-OmniTwin legt de betekenis van A vast.
+- Jaar 0 en de 2 onbekende buurtcodes moeten in de DWH weg; anders wordt die ene aanroep (indicator × gebiedstype) afgekeurd en blijft de vorige versie van die combinatie staan.
+- De response gaat van 'niets' naar JSON met status, leveringId en versie; FME hoeft alleen de HTTP-status te controleren.
+- Tokenendpoint, client-id en secret: per installatie, nooit als standaardwaarde in de workspace (analyse: het huidige secret staat in platte tekst en moet geroteerd worden).
