@@ -36,6 +36,7 @@ def test_api_organisatie_geeft_swf():
     assert org["standaard_gemeente_code"] == "1900"
     assert org["benchmark_provincie"] == "Fryslân"
     assert org["contact_email"] == "geo-groep@sudwestfryslan.nl"
+    assert org["thema"] == "swf"
     assert [(l["pad"], l["naam"]) for l in org["logos"]] == SWF_LOGOS
 
 

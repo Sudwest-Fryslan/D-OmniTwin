@@ -20,6 +20,7 @@ CREATE TABLE IF NOT EXISTS public.organisatie (
     benchmark_provincie    text,
     contact_email          text,
     logos                  jsonb       NOT NULL DEFAULT '[]'::jsonb CHECK (jsonb_typeof(logos) = 'array'),
+    thema                  text        NOT NULL DEFAULT 'd-omnitwin' CHECK (thema ~ '^[a-z0-9-]+$'),
     bijgewerkt_op          timestamptz NOT NULL DEFAULT now()
 );
 
@@ -31,6 +32,7 @@ COMMENT ON COLUMN public.organisatie.oin IS 'Organisatie-identificatienummer (20
 COMMENT ON COLUMN public.organisatie.gemeente_codes IS 'CBS-gemeentecodes (4 cijfers) van het eigen gebied; de eerste is de standaard-referentie in rapporten.';
 COMMENT ON COLUMN public.organisatie.benchmark_provincie IS 'Standaard-benchmarkgebied: naam van de provincie zoals in gemeenten.provincie (bijv. Fryslân).';
 COMMENT ON COLUMN public.organisatie.contact_email IS 'Functioneel contactadres van de organisatie voor deze instantie.';
+COMMENT ON COLUMN public.organisatie.thema IS 'Huisstijl (NLDS-thema): static/css/themes/<thema>.css als dat bestaat; alleen [a-z0-9-].';
 COMMENT ON COLUMN public.organisatie.logos IS 'Logo''s in de footer, op volgorde: [{"pad": "/static/images/...", "naam": "...", "rol": "eigen"|"partner"}].';
 
 -- CBS-buurten die een omgevingsvisie-deelgebied snijden (#68), alleen buurten van

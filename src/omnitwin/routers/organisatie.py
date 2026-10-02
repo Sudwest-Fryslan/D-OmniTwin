@@ -35,6 +35,7 @@ class Organisatie(BaseModel):
     standaard_gemeente_code: Optional[str] = None
     benchmark_provincie: Optional[str] = None
     contact_email: Optional[str] = None
+    thema: str = "d-omnitwin"  # huisstijl (NLDS-thema), static/css/themes/<thema>.css
     logos: List[Logo]
 
 

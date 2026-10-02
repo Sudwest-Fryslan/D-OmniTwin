@@ -13,9 +13,10 @@
 --                        standaard-referentie in rapporten en de deelgebiedsfunctie
 --   benchmark_provincie  standaard-benchmarkgebied (provincienaam zoals in gemeenten.provincie)
 --   logos                footer, op volgorde; rol "eigen" of "partner"
+--   thema                huisstijl (NLDS-thema): static/css/themes/<thema>.css; standaard d-omnitwin
 --
 INSERT INTO public.organisatie
-    (id, code, naam, korte_naam, oin, gemeente_codes, benchmark_provincie, contact_email, logos)
+    (id, code, naam, korte_naam, oin, gemeente_codes, benchmark_provincie, contact_email, thema, logos)
 VALUES (
     true,
     'swf',
@@ -25,6 +26,7 @@ VALUES (
     ARRAY['1900'],
     'Fryslân',
     'geo-groep@sudwestfryslan.nl',
+    'swf',
     '[
         {"pad": "/static/images/SWF-logo.png", "naam": "Gemeente Súdwest-Fryslân", "rol": "eigen"},
         {"pad": "/static/images/Logo_Tytsjerksteradiel.png", "naam": "Gemeente Tytsjerksteradiel", "rol": "partner"},

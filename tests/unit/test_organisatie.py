@@ -32,6 +32,7 @@ SWF = {
     "gemeente_codes": ["1900"],
     "benchmark_provincie": "Fryslân",
     "contact_email": "geo-groep@sudwestfryslan.nl",
+    "thema": "swf",
     "logos": [
         {"pad": "/static/images/SWF-logo.png", "naam": "Gemeente Súdwest-Fryslân", "rol": "eigen"},
         {"pad": "/static/images/Logo_Tytsjerksteradiel.png", "naam": "Gemeente Tytsjerksteradiel", "rol": "partner"},
@@ -95,6 +96,36 @@ def test_logos_zonder_pad_worden_overgeslagen():
     assert org["standaard_gemeente_code"] is None
 
 
+# ── thema (huisstijl) ───────────────────────────────────────────────────────
+
+@pytest.mark.parametrize("invoer,verwacht", [
+    ("swf", "swf"), ("d-omnitwin", "d-omnitwin"), ("gemeente-0080", "gemeente-0080"),
+    (None, "d-omnitwin"), ("", "d-omnitwin"), ("../geheim", "d-omnitwin"),
+    ("SWF", "d-omnitwin"), ("swf.css", "d-omnitwin"), ("a/b", "d-omnitwin"), ("x" + chr(10), "d-omnitwin"),
+])
+def test_veilig_thema(invoer, verwacht):
+    assert org_service.veilig_thema(invoer) == verwacht
+
+
+def test_thema_css_alleen_als_bestand_bestaat(tmp_path):
+    (tmp_path / "swf.css").write_text(":root{}", encoding="utf-8")
+    assert org_service.thema_css({"thema": "swf"}, tmp_path) == "/static/css/themes/swf.css"
+    assert org_service.thema_css({"thema": "lwd"}, tmp_path) is None
+    assert org_service.thema_css({"thema": "../swf"}, tmp_path) is None  # valt terug op d-omnitwin, bestaat niet
+    (tmp_path / "d-omnitwin.css").write_text(":root{}", encoding="utf-8")
+    assert org_service.thema_css(None, tmp_path) == "/static/css/themes/d-omnitwin.css"
+    assert org_service.thema_css({"thema": "../swf"}, tmp_path) == "/static/css/themes/d-omnitwin.css"
+
+
+def test_template_laadt_themabestand_na_basis_css():
+    env = Environment(loader=FileSystemLoader(str(ROOT / "templates")), autoescape=True)
+    html = env.get_template("index.html").render(request=None, organisatie=None, app_version="t",
+                                                   thema_css="/static/css/themes/swf.css")
+    assert html.index('href="/static/css/styles.css"') < html.index('href="/static/css/themes/swf.css"')
+    zonder = env.get_template("index.html").render(request=None, organisatie=None, app_version="t", thema_css=None)
+    assert "/static/css/themes/" not in zonder
+
+
 # ── GET /api/organisatie ────────────────────────────────────────────────────
 
 def _client(router, db):
@@ -113,6 +144,7 @@ def test_endpoint_organisatie():
     assert body["code"] == "swf"
     assert body["standaard_gemeente_code"] == "1900"
     assert body["contact_email"] == "geo-groep@sudwestfryslan.nl"
+    assert body["thema"] == "swf"
     assert len(body["logos"]) == 4
 
     assert _client(organisatie.router, _NepDb(None)).get("/api/organisatie").status_code == 404

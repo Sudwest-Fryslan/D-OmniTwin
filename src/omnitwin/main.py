@@ -231,8 +231,10 @@ async def shutdown_event():
 @app.get("/", response_class=HTMLResponse)
 def root(request: Request, db: Session = Depends(get_db)):
     """Serve the frontend application. Footer-logo's uit de organisatie-instelling (#231)."""
-    from omnitwin.services.organisatie import lees_organisatie
-    return templates.TemplateResponse("index.html", {"request": request, "organisatie": lees_organisatie(db)})
+    from omnitwin.services.organisatie import lees_organisatie, thema_css
+    organisatie = lees_organisatie(db)
+    return templates.TemplateResponse("index.html", {
+        "request": request, "organisatie": organisatie, "thema_css": thema_css(organisatie)})
 
 # ============================================================================
 # React SPA Support for Admin Panel
