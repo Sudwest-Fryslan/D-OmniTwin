@@ -189,6 +189,10 @@ app.include_router(log_viewer.router)
 app.include_router(externe_lagen.router)
 app.include_router(externe_lagen.admin_router)
 
+# Laad-API /api/laden/v1 (#205): eigen spec, API-Version, Problem Details, achtergrondverwerking
+from omnitwin.routers import laden as laden_api
+laden_api.registreer(app)
+
 @app.on_event("startup")
 async def startup_event():
     """Startup checks and logging."""
