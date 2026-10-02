@@ -17,6 +17,8 @@ Relevante externe actoren:
 - Niets aanpassen aan projectbestanden zonder issue en PR (zie GitHub-workflow hieronder).
 - In sync blijven met de actuele stand: `CHANGELOG.md` (per versie, `[Unreleased]` voor wat er op `main` staat) en de GitHub-issues. `docs/STATE.md` is een historische momentopname (tot 0.1.0) en niet leidend.
 - Geen koppelingen introduceren die losse deployment van D-OmniTwin moeilijker maken.
+- **Geen multi-tenancy** (ADR 0007, `docs/2-architectuur/mesh-van-instanties.md`): één instantie per organisatie, met eigen database en Keycloak. Geen `tenant_id`/`organisatie_id`, geen RLS of rollen per organisatie, geen gemeente-filter als scheiding. Samenwerken = uitwisselen tussen instanties (mesh).
+- **Alles wat een instantie inricht, is uitwisselbaar als data** (use cases, registraties, profielen, rollen, contacten, contracten), via de portabiliteitspoort. Dus: geen organisatie, gemeentecode, provincie, logo of contact hardcoded in code; UUID/URI in plaats van seriële ID's naar buiten; geheimen nooit in een exporteerbaar item.
 - Architectuurkeuzes toetsen aan het doelbeeld: dataspace-platform, bron blijft bron, begrijpbaarheid boven complexiteit.
 - D-OmniTwin positioneren als **methodiek + referentie-implementatie**, niet als product of platform — dit bepaalt adoptie buiten SWF.
 - Spanningsveld bewaken: "federatie later, architectonisch voorbereid" versus lopende FRLDS-specifieke sprints — geen FRLDS-afhankelijkheden inbouwen die een dataspace-agnostische opzet blokkeren.
