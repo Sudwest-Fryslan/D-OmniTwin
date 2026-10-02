@@ -8,6 +8,10 @@ Eerdere wijzigingen, van vóór dit bestand, zijn terug te vinden in de git-hist
 
 ## [Unreleased]
 
+### Toegevoegd
+
+- Beschrijving van de huidige gebiedsmonitor van SWF als vertrekpunt voor 0.3.0: functies, gegevens en gegevensstroom, indicatorenlijst met UUID's, methodiek en gat-analyse met de eisen voor de laad-API ([#195](https://github.com/TLaan/D-OmniTwin/issues/195)).
+
 ## [0.2.1] - 2026-10-02
 
 Eerste onderhoudsrelease op 0.2: het fundament robuuster, veiliger en beter gedocumenteerd, na een review van 0.2.0 (verse installatie, upgrade, tests, code). Lees bij een upgrade de paragraaf **Migreren**.
