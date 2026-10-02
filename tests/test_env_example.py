@@ -19,7 +19,7 @@ pytestmark = pytest.mark.unit
 ROOT = Path(__file__).resolve().parents[1]
 
 # Variabelen die Docker Compose zelf leest, of die alleen binnen containers bestaan.
-COMPOSE_EIGEN = {"COMPOSE_FILE", "COMPOSE_PROJECT_NAME"}
+COMPOSE_EIGEN = {"COMPOSE_FILE", "COMPOSE_PROJECT_NAME", "COMPOSE_PROFILES"}
 NIET_VOOR_GEBRUIKER = {
     "POSTGRES_USER", "POSTGRES_DB", "POSTGRES_PASSWORD", "PYTHONDONTWRITEBYTECODE",
     # Gezet in de Dockerfile voor het offline embeddingmodel (#118), geen gebruikersinstelling
