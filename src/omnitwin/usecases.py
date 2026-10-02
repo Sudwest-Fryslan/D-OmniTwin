@@ -2,11 +2,13 @@
 Use-case-uitvoerder
 ===================
 Eén ingang voor alle use cases (`usecases/<naam>/`). Een use case is een pakket met een
-manifest (`usecase.json`, schema `usecases/usecase.schema.json`), zoals een app: naam,
+manifest (`usecase.json`), zoals een app: naam,
 versie, afhankelijkheden, rechten, datasets en controles. **Een use case bevat geen code:**
 waar de data vandaan komt en hoe hij wordt bewerkt, staat declaratief in
-`datasets/<id>.json` (schema `usecases/dataset.schema.json`); de kern voert dat uit met de
+`datasets/<id>.json`; de kern voert dat uit met de
 bronadapters (`omnitwin.bronadapters`) en de laad-API-validatie (`omnitwin.laden`).
+Leidend is de Use Case Specificatie (`docs/specificaties/usecase/README.md`) met de
+schema's in `docs/specificaties/usecase/<versie>/`.
 
     python -m omnitwin.usecases lijst
     python -m omnitwin.usecases boom <naam>
@@ -42,8 +44,9 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 USECASES_DIR = ROOT / "usecases"
-SCHEMA = USECASES_DIR / "usecase.schema.json"
-DATASET_SCHEMA = USECASES_DIR / "dataset.schema.json"
+SPECIFICATIE = ROOT / "docs" / "specificaties" / "usecase" / "1.0"  # normatieve schema's (één bron)
+SCHEMA = SPECIFICATIE / "usecase.schema.json"
+DATASET_SCHEMA = SPECIFICATIE / "dataset.schema.json"
 README = USECASES_DIR / "README.md"
 INDEX_START, INDEX_EINDE = "<!-- usecase-index:start -->", "<!-- usecase-index:end -->"
 VOLLEDIG = ("naam", "versie", "titel", "vraag", "gebruiker", "status", "afhankelijk_van", "rechten", "datasets", "controles")
