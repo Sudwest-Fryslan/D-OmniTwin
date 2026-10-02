@@ -8,6 +8,14 @@ Eerdere wijzigingen, van vóór dit bestand, zijn terug te vinden in de git-hist
 
 ## [Unreleased]
 
+### Toegevoegd
+
+- Keycloak als optionele identity provider: compose-profiel `keycloak`, achter Traefik op `/auth`, eigen database `keycloak` in dezelfde PostgreSQL, realm `omnitwin` met een client voor inloggen (code + PKCE), een resource-client met rollen per dataset en een voorbeeld-machineclient (client credentials). Nieuwe, optionele variabelen `COMPOSE_PROFILES`, `KEYCLOAK_ADMIN_PASSWORD`, `KEYCLOAK_DB_PASSWORD` en `KEYCLOAK_HOSTNAME`. De app gebruikt het nog niet ([#214](https://github.com/TLaan/D-OmniTwin/issues/214)).
+
+### Gewijzigd
+
+- Traefik: de security-headers hangen per router in plaats van op het entrypoint, zodat Keycloak eigen CSP- en frame-regels kan hebben. Een eigen compose-bestand met een extra Traefik-router moet nu zelf `security-headers@file` als middleware zetten ([#214](https://github.com/TLaan/D-OmniTwin/issues/214)).
+
 ## [0.2.1] - 2026-10-02
 
 Eerste onderhoudsrelease op 0.2: het fundament robuuster, veiliger en beter gedocumenteerd, na een review van 0.2.0 (verse installatie, upgrade, tests, code). Lees bij een upgrade de paragraaf **Migreren**.
