@@ -87,6 +87,10 @@ Fouten zijn Problem Details (RFC 9457, `application/problem+json`). `code` is st
 | <a id="idempotency-key-hergebruikt"></a>`idempotency-key-hergebruikt` | 422 | dezelfde `Idempotency-Key` met andere inhoud |
 | <a id="levering-loopt"></a>`levering-loopt` | 409 | levering met dezelfde `Idempotency-Key` is nog in behandeling |
 | <a id="profiel-vast"></a>`profiel-vast` | 409 | profiel of sleutel wijzigen na de eerste publicatie |
+| <a id="niet-geauthenticeerd"></a>`niet-geauthenticeerd` | 401 | geen, verlopen of ongeldig token (handtekening, `iss`, `aud`, algoritme); met `WWW-Authenticate: Bearer` |
+| <a id="geen-toegang"></a>`geen-toegang` | 403 | token geldig, maar zonder een van de benodigde rollen |
+| <a id="oidc-niet-geconfigureerd"></a>`oidc-niet-geconfigureerd` | 503 | `OIDC_ISSUER` is niet ingesteld in deze installatie |
+| <a id="oidc-niet-bereikbaar"></a>`oidc-niet-bereikbaar` | 503 | de sleutels (JWKS) van de identity provider zijn niet op te halen |
 
 ## Limieten en beveiliging
 

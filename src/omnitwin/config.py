@@ -16,6 +16,16 @@ Nieuw in 0.2.1 (#203), los van `DEBUG` (dat is vervallen):
 - LLM_RATE_LIMIT   maximaal aantal verzoeken per minuut per IP-adres op de
                    LLM-routes (chat, narratives); 0 = geen limiet.
 
+OIDC (#205, tokens controleren in de nieuwe API's, zie omnitwin/oidc.py):
+- OIDC_ISSUER      issuer zoals in de tokens (bijv. http://localhost/auth/realms/omnitwin);
+                   leeg = OIDC uit (routes met vereis_rol geven 503).
+- OIDC_AUDIENCE    vereiste `aud`, standaard omnitwin-api; ook de client in resource_access
+                   waarvan de client-rollen meetellen.
+- OIDC_JWKS_URL    optioneel; standaard via discovery (.well-known/openid-configuration).
+- OIDC_INTERN_URL  optioneel; intern adres van de issuer (achter Traefik:
+                   http://keycloak:8080/auth/realms/omnitwin). Discovery en JWKS komen dan
+                   daarvandaan; `iss` wordt nog steeds tegen OIDC_ISSUER gecontroleerd.
+
 Gebruik `os.getenv("<NAAM>", ...)` letterlijk: tests/test_env_example.py zoekt
 daarop om te controleren dat elke variabele in .env.example staat.
 
@@ -83,6 +93,11 @@ class Instellingen:
     llm_think: bool
     llm_reasoning_effort: str
     llm_api_key: str
+    # OIDC (#205)
+    oidc_issuer: str            # leeg = uit
+    oidc_audience: str
+    oidc_jwks_url: str          # leeg = via discovery
+    oidc_intern_url: str        # leeg = discovery via de issuer zelf
 
     @property
     def database_url(self) -> str:
@@ -121,4 +136,8 @@ def instellingen() -> Instellingen:
         llm_think=_bool(os.getenv("LLM_THINK", "false")),
         llm_reasoning_effort=os.getenv("LLM_REASONING_EFFORT", "none").strip(),
         llm_api_key=os.getenv("LLM_API_KEY", "").strip(),
+        oidc_issuer=os.getenv("OIDC_ISSUER", "").strip().rstrip("/"),
+        oidc_audience=os.getenv("OIDC_AUDIENCE", "omnitwin-api").strip() or "omnitwin-api",
+        oidc_jwks_url=os.getenv("OIDC_JWKS_URL", "").strip(),
+        oidc_intern_url=os.getenv("OIDC_INTERN_URL", "").strip().rstrip("/"),
     )

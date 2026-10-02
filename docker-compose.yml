@@ -91,6 +91,10 @@ services:
     environment:
       - DATABASE_HOST=postgres
       - DATABASE_PORT=5432
+      # Tokens controleren (#205): alleen als OIDC_ISSUER in .env staat (profiel keycloak).
+      # Sleutels en discovery haalt de backend intern bij Keycloak op; de issuer in de tokens
+      # is het publieke adres. Externe identity provider: OIDC_INTERN_URL= (leeg) in .env.
+      - OIDC_INTERN_URL=${OIDC_INTERN_URL-http://keycloak:8080/auth/realms/omnitwin}
     volumes:
       # Geüploade kaartlagen (beheer > externe lagen, #201): in een volume, zodat ze een
       # update (docker compose up -d --build) overleven. Een nieuw volume krijgt de
