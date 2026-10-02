@@ -957,10 +957,10 @@
   <!-- Footer -->
   <footer class="footer">
     <div class="footer-logos">
-      <img src="/static/images/SWF-logo.png" alt="Gemeente Súdwest-Fryslân" class="footer-logo" title="Gemeente Súdwest-Fryslân">
-      <img src="/static/images/Logo_Tytsjerksteradiel.png" alt="Gemeente Tytsjerksteradiel" class="footer-logo" title="Gemeente Tytsjerksteradiel">
-      <img src="/static/images/LOGO-GEMEENTE-LEEUWARDEN.png" alt="Gemeente Leeuwarden" class="footer-logo" title="Gemeente Leeuwarden">
-      <img src="/static/images/DF-LOGO-1-1000x1000-TBG.png" alt="Datafryslân" class="footer-logo" title="Datafryslân">
+      {# Logo's van de eigen organisatie en partners: instellingsdata (tabel organisatie, #231) #}
+      {% for logo in (organisatie.logos if organisatie else []) %}
+      <img src="{{ logo.pad }}" alt="{{ logo.naam or '' }}" class="footer-logo" title="{{ logo.naam or '' }}">
+      {% endfor %}
     </div>
     <div class="footer-content">
       <p>D-OmniTwin &copy; 2026 | Data: <span id="footer-gebieden-count">…</span> gebieden | Versie {{ app_version }} | Basemap: PDOK BRT</p>

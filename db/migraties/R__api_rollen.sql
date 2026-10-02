@@ -152,7 +152,7 @@ BEGIN
         GRANT USAGE ON SCHEMA postgisftw TO featureserv;
     END IF;
     IF to_regprocedure('postgisftw.buurten_in_deelgebied(integer, double precision)') IS NOT NULL THEN
-        -- Leest gebieden en deelgebieden met de rechten van de eigenaar (zie 07_postgisftw_functions.sql)
+        -- Leest gebieden en deelgebieden met de rechten van de eigenaar (zie V030__organisatie.sql)
         ALTER FUNCTION postgisftw.buurten_in_deelgebied(integer, double precision)
             SECURITY DEFINER SET search_path = public, pg_temp;
         REVOKE ALL ON FUNCTION postgisftw.buurten_in_deelgebied(integer, double precision) FROM PUBLIC;

@@ -5,15 +5,17 @@ db/
 ├── schema/          # schema voor een lege database (db-init)
 │   ├── schema_latest.sql              # tabellen, views, functies (baseline)
 │   ├── 06_pg_featureserv_views.sql    # views voor pg_featureserv (kaart)
-│   ├── 07_postgisftw_functions.sql    # functies onder /api/geo/functions
+│   ├── 07_postgisftw_functions.sql    # schema postgisftw (functies staan in de migraties, V030)
 │   ├── 08_zscore_referentie.sql       # Z-score-referentie en waterbuurt; geladen door V021
 │   └── 05_indicator_stats.sql         # get_indicatoren_stats (zit ook in schema_latest.sql)
 ├── migraties/
 │   ├── V018__trigram.sql … V022__auth_hardening.sql   # door de runner, één keer per database
+│   ├── V030__organisatie.sql          # tabel organisatie en postgisftw.buurten_in_deelgebied (#231)
 │   ├── R__api_rollen.sql              # rollen en schema api: bij elke start van db-init
 │   └── baseline/                      # oude migraties, zitten al in schema_latest.sql; niet uitgevoerd
 └── stuurdata/
     ├── stuurdata_seed.sql             # configuratie, scenario's, profielen, kleuren, prompts
+    ├── organisatie.sql                # de eigen organisatie van deze instantie (#231), bij elke db-init als de tabel leeg is
     ├── kompas_hierarchie.csv          # Kompas-indeling
     ├── indicatoren_seed.json          # indicatordefinities
     └── config_seed_fixed.sql          # alleen voor init_data/scripts/init_database.sh (zonder Docker)

@@ -327,6 +327,26 @@ docker compose up -d
 
 `-v` verwijdert alle volumes van dit project: de database (`pgdata`), de geüploade kaartlagen (`uploads`) en de download-cache (`bron-cache`). `db-init` richt de database daarna opnieuw in.
 
+### Eigen organisatie
+
+Elke organisatie draait een eigen instantie (ADR 0007). Wie die instantie beheert, staat als data in de tabel `organisatie`: naam, korte naam, OIN (optioneel), CBS-gemeentecode(s) van het eigen gebied, standaard-benchmarkprovincie, contactadres en de logo's in de footer. Standaard staat daar Súdwest-Fryslân. Lezen: `GET /api/organisatie`.
+
+De eerste gemeentecode is de standaard-referentie in de rapporten ("⌀ Gemeente ...") en bepaalt welke buurten bij een omgevingsvisie-deelgebied horen.
+
+- **Nieuwe installatie:** pas vóór de eerste start `db/stuurdata/organisatie.sql` aan. `db-init` laadt het bestand alleen als de tabel nog leeg is. Met een kant-en-klare image (zonder eigen build): mount je eigen bestand in `db-init` op `/app/db/stuurdata/organisatie.sql`, of gebruik de SQL hieronder.
+- **Bestaande installatie:** wijzig de rij met SQL (`docker compose exec postgres psql -U <DATABASE_USER> -d <DATABASE_NAME>`), bijvoorbeeld:
+
+  ```sql
+  UPDATE organisatie SET
+      code = 'lwd', naam = 'Gemeente Leeuwarden', korte_naam = 'Leeuwarden',
+      gemeente_codes = ARRAY['0080'], contact_email = 'info@example.nl',
+      logos = '[{"pad": "/static/images/mijn-logo.png", "naam": "Gemeente Leeuwarden", "rol": "eigen"}]';
+  ```
+
+  Een eigen logobestand zet je onder `static/images/` (of mount je, zoals bij het beeldmerk hieronder). Herlaad de pagina; een herstart is niet nodig.
+
+Nog niet uit deze instelling: de benchmarkmodus `fryslan`, de welkomsttekst en de startpositie van de kaart (zie [#231](https://github.com/TLaan/D-OmniTwin/issues/231)).
+
 ### Eigen logo
 
 Het logo linksboven, het favicon en het logo in het beheerscherm en de rapporten komen uit één bestand: `static/images/beeldmerk.svg`. Standaard staat daar een neutraal, tijdelijk D-OmniTwin-beeldmerk (#83). Er is geen instelling in `.env` voor nodig.
