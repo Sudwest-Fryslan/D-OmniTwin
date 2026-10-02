@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { reportAPI } from '../services/api';
+import { organisatieAPI, reportAPI } from '../services/api';
+import type { Organisatie } from '../services/api';
 import { X, Layers, RefreshCw, Download, ArrowUpDown, Map, BarChart2, List, ChevronRight, ChevronDown } from 'lucide-react';
 import * as d3 from 'd3';
 
@@ -113,7 +114,15 @@ export const MultiGebiedPage: React.FC = () => {
 
     const gebiedIds = searchParams.get('gebieden')?.split(',').filter(Boolean) || [];
     const deelgebiedNaam = searchParams.get('naam') || `${gebiedIds.length} buurten`;
-    const gemeenteCode = searchParams.get('gemeente') || '1900';
+    // Zonder gemeente in de URL kiest de backend die van de eigen organisatie (#231)
+    const gemeenteCode = searchParams.get('gemeente') || undefined;
+    const [organisatie, setOrganisatie] = useState<Organisatie | null>(null);
+    useEffect(() => {
+        organisatieAPI.get().then(res => setOrganisatie(res.data)).catch(() => setOrganisatie(null));
+    }, []);
+    // Label van de gemeentereferentie: korte naam van de eigen organisatie (bijv. SWF)
+    const gemeenteLabel = (!gemeenteCode || gemeenteCode === organisatie?.standaard_gemeente_code)
+        ? (organisatie?.korte_naam ?? '') : '';
     // Sprint 18 Track C: Woonplaats params
     const laagId = searchParams.get('laag_id');
     const woonplaatsen = searchParams.get('woonplaatsen')?.split(',').map(decodeURIComponent).filter(Boolean) || [];
@@ -452,7 +461,7 @@ export const MultiGebiedPage: React.FC = () => {
                 <span style={{ fontWeight: 600, fontSize: '0.9rem' }}>Referentiekader:</span>
                 <div style={{ display: 'flex', gap: '0' }}>
                     {([
-                        { key: 'gemeente' as const, label: '⌀ Gemeente SWF' },
+                        { key: 'gemeente' as const, label: `⌀ Gemeente ${gemeenteLabel}`.trim() },
                         { key: 'fryslan' as const, label: '⌀ Provincie Fryslân' },
                     ]).map(tab => (
                         <button
