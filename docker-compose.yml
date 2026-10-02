@@ -27,9 +27,10 @@ services:
       - "--providers.docker.constraints=Label(`com.docker.compose.project`,`${COMPOSE_PROJECT_NAME:-d-omnitwin}`)"
       - "--providers.docker.network=${COMPOSE_PROJECT_NAME:-d-omnitwin}_default"
       - "--entrypoints.web.address=:80"
-      # Security-headers (CSP, nosniff, ...) op alle routes; zie deploy/traefik/dynamic.yml
+      # Headers-middlewares (CSP, nosniff, ...) uit deploy/traefik/dynamic.yml. Elke router
+      # zet er zelf één (security-headers@file, of keycloak-headers@file voor /auth);
+      # tests/test_traefik_routers.py controleert dat
       - "--providers.file.filename=/etc/traefik/dynamic.yml"
-      - "--entrypoints.web.http.middlewares=security-headers@file"
     environment:
       - DOCKER_API_VERSION=1.44
     ports:
@@ -83,6 +84,7 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.backend.rule=PathPrefix(`/`)"
+      - "traefik.http.routers.backend.middlewares=security-headers@file"
       - "traefik.http.services.backend.loadbalancer.server.port=8000"
     env_file:
       - .env
@@ -125,7 +127,7 @@ services:
       - "traefik.enable=true"
       - "traefik.http.routers.postgrest.rule=PathPrefix(`/api/data`)"
       - "traefik.http.middlewares.postgrest-strip.stripprefix.prefixes=/api/data"
-      - "traefik.http.routers.postgrest.middlewares=postgrest-strip"
+      - "traefik.http.routers.postgrest.middlewares=postgrest-strip,security-headers@file"
       - "traefik.http.services.postgrest.loadbalancer.server.port=3000"
     depends_on:
       db-init:
@@ -145,6 +147,7 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.pg_featureserv.rule=PathPrefix(`/api/geo`)"
+      - "traefik.http.routers.pg_featureserv.middlewares=security-headers@file"
       - "traefik.http.services.pg_featureserv.loadbalancer.server.port=9000"
     depends_on:
       # Na db-init, zodat pg_featureserv de views bij het starten ziet
@@ -178,6 +181,74 @@ services:
       retries: 5
       start_period: 60s
     restart: unless-stopped
+
+  keycloak-db-init:
+    # Optioneel (#214): alleen met het profiel keycloak. Maakt in dezelfde PostgreSQL de
+    # database keycloak en de rol keycloak aan (wachtwoord KEYCLOAK_DB_PASSWORD) en stopt.
+    # Idempotent; zet bij elke start het wachtwoord opnieuw. Zie docker-entrypoint.sh.
+    # Backend-image (psql); die bouwen db-init en backend. Zelf niet bouwen of pullen:
+    # een derde build van dezelfde image botst met die van db-init.
+    image: ${COMPOSE_PROJECT_NAME:-d-omnitwin}-backend
+    pull_policy: never
+    profiles: ["keycloak"]
+    command: ["keycloak-db"]
+    env_file:
+      - .env
+    environment:
+      - DATABASE_HOST=postgres
+      - DATABASE_PORT=5432
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: "no"
+
+  keycloak:
+    # Optionele identity provider (#214): alleen met `--profile keycloak` (of
+    # COMPOSE_PROFILES=keycloak in .env). Inloggen via OIDC voor mensen, client
+    # credentials voor machines (ETL). Bereikbaar via Traefik op /auth; health en
+    # metrics alleen intern op poort 9000. Bij de eerste start importeert hij de
+    # realm uit deploy/keycloak/realm-omnitwin.json (een bestaande realm blijft staan).
+    # Zie docs/9-beheer/installatie.md, "Keycloak (optioneel)".
+    image: quay.io/keycloak/keycloak:26.8.0
+    profiles: ["keycloak"]
+    command: ["start", "--import-realm"]
+    environment:
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://postgres:5432/keycloak
+      KC_DB_USERNAME: keycloak
+      KC_DB_PASSWORD: ${KEYCLOAK_DB_PASSWORD:-}
+      # Alleen HTTP, achter Traefik; Traefik zet X-Forwarded-*
+      KC_HTTP_ENABLED: "true"
+      KC_HTTP_RELATIVE_PATH: /auth
+      KC_PROXY_HEADERS: xforwarded
+      # Hostnaam (bijv. omnitwin.example.nl) of volledige URL (https://omnitwin.example.nl/auth)
+      # waarop gebruikers Keycloak bereiken; de tokens krijgen deze issuer
+      KC_HOSTNAME: ${KEYCLOAK_HOSTNAME:-localhost}
+      KC_HEALTH_ENABLED: "true"
+      KC_METRICS_ENABLED: "true"
+      # Tijdelijke beheerder in realm master, alleen bij de eerste start aangemaakt
+      KC_BOOTSTRAP_ADMIN_USERNAME: admin
+      KC_BOOTSTRAP_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:-}
+    volumes:
+      - "./deploy/keycloak/realm-omnitwin.json:/opt/keycloak/data/import/realm-omnitwin.json:ro"
+      - "./deploy/keycloak/client-secret.sh:/opt/keycloak/omnitwin/client-secret.sh:ro"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.keycloak.rule=PathPrefix(`/auth`)"
+      # Eigen headers: Keycloak zet zelf CSP en X-Frame-Options (zie dynamic.yml)
+      - "traefik.http.routers.keycloak.middlewares=keycloak-headers@file"
+      - "traefik.http.services.keycloak.loadbalancer.server.port=8080"
+    healthcheck:
+      # De image heeft geen curl; bash met /dev/tcp naar de managementpoort
+      test: ["CMD-SHELL", "exec 3<>/dev/tcp/localhost/9000 && printf 'GET /auth/health/ready HTTP/1.1\\r\\nHost: localhost\\r\\nConnection: close\\r\\n\\r\\n' >&3 && head -n 1 <&3 | grep -q ' 200 '"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 60s
+    restart: unless-stopped
+    depends_on:
+      keycloak-db-init:
+        condition: service_completed_successfully
 
 volumes:
   pgdata:
