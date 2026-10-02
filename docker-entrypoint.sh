@@ -6,6 +6,8 @@ set -e
 #
 #   docker-entrypoint.sh init         eenmalige database-initialisatie, daarna stoppen
 #                                     (de db-init-service in docker-compose.yml)
+#   docker-entrypoint.sh keycloak-db  database en rol voor Keycloak aanmaken, daarna stoppen
+#                                     (de keycloak-db-init-service, profiel keycloak, #214)
 #   docker-entrypoint.sh <commando>   wacht op de database en start <commando>
 #                                     (standaard uvicorn, zie CMD in het Dockerfile)
 #
@@ -212,6 +214,28 @@ generate_embeddings() {
     python /app/scripts/ai/genereer_embeddings.py || echo "⚠️ Embeddings niet gegenereerd: AI-zoeken en de chat vinden geen indicatoren. Later opnieuw: docker compose run --rm db-init (of python scripts/ai/genereer_embeddings.py)."
 }
 
+# Database en rol voor Keycloak (#214, compose-profiel keycloak). Zelfde PostgreSQL-server,
+# eigen database `keycloak` met eigen rol `keycloak` (eigenaar); andere rollen kunnen er niet
+# bij. Idempotent: zet het wachtwoord bij elke start opnieuw op KEYCLOAK_DB_PASSWORD.
+setup_keycloak_db() {
+    local kc_pass="${KEYCLOAK_DB_PASSWORD:-}"
+    if [ -z "$kc_pass" ]; then
+        echo "❌ KEYCLOAK_DB_PASSWORD is leeg. Zet het in .env (openssl rand -hex 24) en start opnieuw." >&2
+        exit 1
+    fi
+    echo "🔐 Database en rol voor Keycloak bijwerken..."
+    db_psql -v ON_ERROR_STOP=1 -q -v pw="$kc_pass" >/dev/null <<'SQL'
+SET client_min_messages = warning;
+SELECT 'CREATE ROLE keycloak LOGIN' WHERE NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'keycloak')
+\gexec
+ALTER ROLE keycloak WITH LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE PASSWORD :'pw';
+SELECT 'CREATE DATABASE keycloak OWNER keycloak' WHERE NOT EXISTS (SELECT 1 FROM pg_database WHERE datname = 'keycloak')
+\gexec
+REVOKE ALL ON DATABASE keycloak FROM PUBLIC;
+SQL
+    echo "✅ Database keycloak en rol keycloak zijn bijgewerkt."
+}
+
 echo "============================================================"
 echo "🌍 D-OmniTwin — Container Startup"
 echo "============================================================"
@@ -229,6 +253,11 @@ if [ "$1" = "init" ]; then
     fi
     generate_embeddings
     echo "✅ Initialisatie klaar."
+    exit 0
+fi
+
+if [ "$1" = "keycloak-db" ]; then
+    setup_keycloak_db
     exit 0
 fi
 
