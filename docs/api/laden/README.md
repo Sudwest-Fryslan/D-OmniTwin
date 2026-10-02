@@ -1,6 +1,6 @@
 # Laad-API (`/api/laden/v1`)
 
-Datasets registreren en leveringen laden in D-OmniTwin. **Status: in opbouw** (versie `1.0.0-concept`): gebouwd in 0.3.0 (#228), behalve de compatibiliteitspaden voor de SWF-monitor (stap 9 van #205). Zie [Implementatie](#implementatie-030). Specificatie: [openapi.yaml](openapi.yaml). Besluiten: [ADR 0004](../../2-architectuur/adr/0004-een-ingang-voor-vullen.md) (vullen via registratie en leveringen) en [ADR 0005](../../2-architectuur/adr/0005-gescheiden-apis-per-doel.md) (gescheiden API's per doel). Plaats in het geheel: [API-landschap](../../2-architectuur/api-landschap.md).
+Datasets registreren en leveringen laden in D-OmniTwin. **Status: in opbouw** (versie `1.0.0-concept`): gebouwd in 0.3.0 (#228), met de compatibiliteitspaden voor de SWF-monitor (stap 9 van #205, #237). Zie [Implementatie](#implementatie-030). Specificatie: [openapi.yaml](openapi.yaml). Besluiten: [ADR 0004](../../2-architectuur/adr/0004-een-ingang-voor-vullen.md) (vullen via registratie en leveringen) en [ADR 0005](../../2-architectuur/adr/0005-gescheiden-apis-per-doel.md) (gescheiden API's per doel). Plaats in het geheel: [API-landschap](../../2-architectuur/api-landschap.md).
 
 ## In het kort
 
@@ -13,7 +13,7 @@ Datasets registreren en leveringen laden in D-OmniTwin. **Status: in opbouw** (v
 
 Een levering gaat door **ruw bewaren → valideren → staging → atomisch publiceren**. Elke geslaagde levering is een nieuwe **versie**; bij een fout blijft de vorige versie actief. Alleen modus `vervangen` in v1.
 
-Profielen (contracten): [profielen/](profielen/README.md). Adapter voor de huidige SWF-push: [swf-monitor-v1](profielen/swf-monitor-v1.md).
+Profielen (contracten): [profielen/](profielen/README.md). Adapter voor de huidige SWF-push: [swf-monitor-v1](profielen/swf-monitor-v1.md); FME-workspaces omzetten: [handleiding](fme-omzetten.md).
 
 ## Voorbeelden
 
@@ -103,7 +103,7 @@ Fouten zijn Problem Details (RFC 9457, `application/problem+json`). `code` is st
 
 ## Limieten en beveiliging
 
-- Body maximaal 200 MB (JSON 20 MB), 10 leveringen per minuut per client (Traefik `buffering` en `rateLimit`, instelbaar per installatie). Het bestand wordt naar schijf gestreamd, niet in het geheugen gelezen.
+- Body maximaal 200 MB (JSON 20 MB), 10 leveringen per minuut per client, 120 op de compatibiliteitsingang (Traefik `buffering` en `rateLimit`, instelbaar per installatie). Het bestand wordt naar schijf gestreamd, niet in het geheugen gelezen.
 - Alleen HTTPS buiten de container (NL GOV ADR, module Transport Security); TLS en HSTS bij Traefik of de proxy van de organisatie.
 - Geen gevoelige gegevens in de URI: identificatie en rechten in het token, inhoud in de body.
 - Ruwe leveringen staan op een eigen volume, niet in de container; bewaartermijn instelbaar (standaard: altijd de laatste 10 versies per dataset, oudere versies tot 1 jaar, afgekeurde leveringen 30 dagen).
@@ -121,8 +121,9 @@ Code: `src/omnitwin/routers/laden.py` (HTTP) en `src/omnitwin/laden/` (laadstraa
 - **Indicatorstatus.** Alleen `C`, `O` en `B`; een andere code (bijv. `A`) is `schema-ongeldig` (de use case `swf-definities` zet `A` om naar `O`, aanname A2).
 - **Kaartlaag (pre-release).** Na validatie wordt de GeoPackage de lokale kaartlaag `data-upload/laden/<datasetId>.gpkg` (volume `uploads`) met één rij in `externe_kaartlagen` (bron `lokaal`), zoals een upload in het beheer; zichtbaar alleen bij `dct:accessRights` PUBLIC. De eigen tabel in schema `laag` met OGC API Features ([kaartlaag.md](profielen/kaartlaag.md)) volgt.
 - **Bewaartermijn.** De ruwe bestanden staan in het volume `leveringen`. Na elke publicatie verwijdert de laadstraat wat buiten de termijn valt: altijd de laatste 10 versies per dataset, oudere tot 365 dagen, afgekeurde en alleen-gevalideerde leveringen 30 dagen (`LADEN_BEWAAR_*`). De registratie van de levering blijft.
-- **Limieten.** Traefik: 200 MB per body, 10 leveringen (POST) per minuut per token (`LADEN_RATE_LIMIT`). Backend: `LADEN_MAX_MB` (JSON een tiende), `wacht=true` tot `LADEN_WACHT_SECONDEN`.
-- **Niet gebouwd:** de compatibiliteitspaden (`/compat/swf-monitor/...`, stap 9), Data Package-resources in andere formaten dan CSV en GeoPackage.
+- **Limieten.** Traefik: 200 MB per body, 10 leveringen (POST) per minuut per token (`LADEN_RATE_LIMIT`); op `/compat/` 120 (`LADEN_COMPAT_RATE_LIMIT`), omdat een FME-run ±57 aanroepen achter elkaar doet zonder retry. Backend: `LADEN_MAX_MB` (JSON een tiende), `wacht=true` tot `LADEN_WACHT_SECONDEN`.
+- **Compatibiliteitsingang SWF-monitor** (`/compat/swf-monitor/monitor_api/...`, #237). Een POST is een levering `vervangen` met `wacht=true` (minstens 120 s) op `swf-monitor-definities` of `swf-monitor-waarden`, die geregistreerd moeten zijn met adapter `swf-monitor-v1` (anders `404`). De body is altijd JSON, ook zonder `Content-Type`; een body die niet in het SWF-formaat is, geeft `400`. Antwoord `200` met `status`, `leveringId`, `versie` en `aantallen`, `422` (Problem Details) bij afkeuring, `202` na de time-out. `alleenValideren=true` werkt ook hier. De GET-varianten lezen de gepubliceerde stand terug: de definities uit de set die de dataset het laatst publiceerde, de waarden uit `laden.waarnemingen` met `gebieds_id` zonder `code_prefix`. Handleiding: [fme-omzetten.md](fme-omzetten.md).
+- **Niet gebouwd:** Data Package-resources in andere formaten dan CSV en GeoPackage.
 
 ## Linten
 

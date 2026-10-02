@@ -6,9 +6,10 @@
   "titel": "SWF-adapter: dezelfde FME-push naar D-OmniTwin",
   "vraag": "Kan SWF de bestaande FME-workspaces laten leveren aan D-OmniTwin door alleen de basis-URL en de client te wijzigen, en is een herhaalde push veilig?",
   "gebruiker": "data-engineer DWH (SWF)",
-  "status": "ontwerp",
+  "status": "actief",
   "afhankelijk_van": [
-    "swf-definities"
+    "swf-definities",
+    "cbs-gebiedsindelingen"
   ],
   "rechten": [
     "dataset:swf-monitor-definities:laden",
@@ -41,7 +42,8 @@
       "verwacht": {
         "aanroepen": 57,
         "regels": 43097,
-        "http": "200 per aanroep"
+        "http": "200 per aanroep; 422 (gebied-onbekend) voor de 9 aanroepen op welstandsgebieden en buurten bebouwde komgrens zolang die gebiedsindelingen ontbreken",
+        "gepubliceerd": 33041
       }
     }
   ],
@@ -55,8 +57,9 @@
     {
       "type": "aantal",
       "dataset": "swf-monitor-waarden",
+      "resource": "waarden",
       "gelijk": 43097,
-      "omschrijving": "43.253 − 152 (jaar 0) − 4 (onbekende buurten)"
+      "omschrijving": "geleverd in 57 aanroepen: 43.253 − 152 (jaar 0) − 4 (onbekende buurten)"
     },
     {
       "type": "afkeuring",
@@ -92,12 +95,20 @@
       "minimaal_aantal": 1,
       "uuid": "bf4e5b8f-6b0a-4632-b9b4-8e29d025e68c",
       "omschrijving": "waarden van één indicator terug"
+    },
+    {
+      "type": "api",
+      "pad": "/api/laden/v1/compat/swf-monitor/monitor_api/indicator_waarde",
+      "minimaal_aantal": 33041,
+      "omschrijving": "gepubliceerd en terug in het SWF-formaat: minstens de 33.041 waarden op CBS-buurten; 43.097 als ook de welstandsgebieden en buurten bebouwde komgrens er zijn (swf-gebiedsindelingen)"
     }
   ],
   "bekende_afwijkingen": [
     "Status A: de push zoals hij nu is, wordt afgekeurd (profiel definities kent A niet). SWF zet A om in de SQL, of D-OmniTwin legt de betekenis van A vast.",
     "Jaar 0 en de 2 onbekende buurtcodes moeten in de DWH weg; anders wordt die ene aanroep (indicator × gebiedstype) afgekeurd en blijft de vorige versie van die combinatie staan.",
+    "Welstandsgebieden (7 aanroepen, 7.686 waarden) en buurten bebouwde komgrens (2 aanroepen, 2.370 waarden): 422 gebied-onbekend tot de gebiedsindelingen er zijn (use case swf-gebiedsindelingen, SWF_GEO_DIR). Dan komt swf-gebiedsindelingen in afhankelijk_van en geeft de api-controle op indicator_waarde 43.097.",
     "De response gaat van 'niets' naar JSON met status, leveringId en versie; FME hoeft alleen de HTTP-status te controleren.",
-    "Tokenendpoint, client-id en secret: per installatie, nooit als standaardwaarde in de workspace (analyse: het huidige secret staat in platte tekst en moet geroteerd worden)."
+    "Tokenendpoint, client-id en secret: per installatie, nooit als standaardwaarde in de workspace (analyse: het huidige secret staat in platte tekst en moet geroteerd worden).",
+    "Rate-limit: de compatibiliteitsingang heeft een eigen limiet (LADEN_COMPAT_RATE_LIMIT, standaard 120 per minuut per token); met de gewone 10 per minuut zou de 11e aanroep van een FME-run een 429 krijgen en de run stoppen (FME heeft geen retry aan)."
   ]
 }
