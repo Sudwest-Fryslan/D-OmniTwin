@@ -85,13 +85,33 @@ services:
       - "traefik.enable=true"
       - "traefik.http.routers.backend.rule=PathPrefix(`/`)"
       - "traefik.http.routers.backend.middlewares=security-headers@file"
+      - "traefik.http.routers.backend.service=backend"
       - "traefik.http.services.backend.loadbalancer.server.port=8000"
+      # Laad-API (#205): eigen router (later eigen container, zelfde URL). Body maximaal 200 MB
+      # (buffering, boven 2 MB op schijf); leveren (POST) maximaal LADEN_RATE_LIMIT per minuut
+      # per token. Lezen (status pollen) valt niet onder die limiet. Zie docs/api/laden/README.md.
+      - "traefik.http.routers.laden.rule=PathPrefix(`/api/laden/v1`)"
+      - "traefik.http.routers.laden.middlewares=laden-body,security-headers@file"
+      - "traefik.http.routers.laden.service=backend"
+      - "traefik.http.routers.laden-leveren.rule=PathPrefix(`/api/laden/v1`) && Method(`POST`)"
+      - "traefik.http.routers.laden-leveren.middlewares=laden-tempo,laden-body,security-headers@file"
+      - "traefik.http.routers.laden-leveren.service=backend"
+      - "traefik.http.middlewares.laden-body.buffering.maxRequestBodyBytes=209715200"
+      - "traefik.http.middlewares.laden-body.buffering.memRequestBodyBytes=2097152"
+      - "traefik.http.middlewares.laden-tempo.ratelimit.average=${LADEN_RATE_LIMIT:-10}"
+      - "traefik.http.middlewares.laden-tempo.ratelimit.burst=${LADEN_RATE_LIMIT:-10}"
+      - "traefik.http.middlewares.laden-tempo.ratelimit.period=1m"
+      - "traefik.http.middlewares.laden-tempo.ratelimit.sourcecriterion.requestheadername=Authorization"
     env_file:
       - .env
     environment:
       - DATABASE_HOST=postgres
       - DATABASE_PORT=5432
+      - LEVERINGEN_DIR=/leveringen
     volumes:
+      # Ruwe leveringen van de laad-API (#205): onveranderlijk, <dataset>/<levering>/<bestand>,
+      # met bewaartermijn (LADEN_BEWAAR_*). Backup: zie db/README.md.
+      - leveringen:/leveringen
       # Geüploade kaartlagen (beheer > externe lagen, #201): in een volume, zodat ze een
       # update (docker compose up -d --build) overleven. Een nieuw volume krijgt de
       # meegeleverde bestanden uit de image. Backup: zie db/README.md.
@@ -128,6 +148,14 @@ services:
       - "traefik.http.routers.postgrest.rule=PathPrefix(`/api/data`)"
       - "traefik.http.middlewares.postgrest-strip.stripprefix.prefixes=/api/data"
       - "traefik.http.routers.postgrest.middlewares=postgrest-strip,security-headers@file"
+      - "traefik.http.routers.postgrest.service=postgrest"
+      # Data-API met versie (ADR 0005, docs/2-architectuur/api-landschap.md): /api/data/v1 → PostgREST.
+      # PostgREST valideert (nog) geen tokens; een meegestuurde Authorization-header gaat er niet heen.
+      - "traefik.http.routers.postgrest-v1.rule=PathPrefix(`/api/data/v1`)"
+      - "traefik.http.middlewares.postgrest-v1-strip.stripprefix.prefixes=/api/data/v1"
+      - "traefik.http.middlewares.postgrest-anoniem.headers.customrequestheaders.Authorization="
+      - "traefik.http.routers.postgrest-v1.middlewares=postgrest-v1-strip,postgrest-anoniem,security-headers@file"
+      - "traefik.http.routers.postgrest-v1.service=postgrest"
       - "traefik.http.services.postgrest.loadbalancer.server.port=3000"
     depends_on:
       db-init:
@@ -254,3 +282,4 @@ volumes:
   pgdata:
   bron-cache:
   uploads:
+  leveringen:

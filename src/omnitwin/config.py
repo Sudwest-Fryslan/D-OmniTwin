@@ -16,6 +16,14 @@ Nieuw in 0.2.1 (#203), los van `DEBUG` (dat is vervallen):
 - LLM_RATE_LIMIT   maximaal aantal verzoeken per minuut per IP-adres op de
                    LLM-routes (chat, narratives); 0 = geen limiet.
 
+Laad-API (/api/laden/v1, #205), zie omnitwin.laden:
+- LEVERINGEN_DIR   map voor de ruwe leveringen (volume `leveringen`), onveranderlijk
+- LADEN_MAX_MB     bodylimiet van een levering (JSON: een tiende, minimaal 1 MB)
+- LADEN_WACHT_SECONDEN   time-out van `wacht=true`
+- LADEN_BEWAAR_VERSIES, LADEN_BEWAAR_DAGEN, LADEN_BEWAAR_AFGEKEURD_DAGEN   bewaartermijn
+- LADEN_VOORRANG   datasets (kommagescheiden, hoogste eerst) die voorgaan bij dezelfde
+                   sleutel in gebied_data; aanname A6 (#222): de SWF-bron gaat voor
+
 Gebruik `os.getenv("<NAAM>", ...)` letterlijk: tests/test_env_example.py zoekt
 daarop om te controleren dat elke variabele in .env.example staat.
 
@@ -83,6 +91,14 @@ class Instellingen:
     llm_think: bool
     llm_reasoning_effort: str
     llm_api_key: str
+    # Laad-API (#205)
+    leveringen_dir: Path
+    laden_max_bytes: int
+    laden_wacht_seconden: int
+    laden_bewaar_versies: int
+    laden_bewaar_dagen: int
+    laden_bewaar_afgekeurd_dagen: int
+    laden_voorrang: tuple[str, ...]
 
     @property
     def database_url(self) -> str:
@@ -121,4 +137,12 @@ def instellingen() -> Instellingen:
         llm_think=_bool(os.getenv("LLM_THINK", "false")),
         llm_reasoning_effort=os.getenv("LLM_REASONING_EFFORT", "none").strip(),
         llm_api_key=os.getenv("LLM_API_KEY", "").strip(),
+        leveringen_dir=Path(os.getenv("LEVERINGEN_DIR", "") or PROJECT_ROOT / "leveringen"),
+        laden_max_bytes=max(1, _int(os.getenv("LADEN_MAX_MB", "200"), 200)) * 1024 * 1024,
+        laden_wacht_seconden=max(1, _int(os.getenv("LADEN_WACHT_SECONDEN", "60"), 60)),
+        laden_bewaar_versies=max(1, _int(os.getenv("LADEN_BEWAAR_VERSIES", "10"), 10)),
+        laden_bewaar_dagen=max(1, _int(os.getenv("LADEN_BEWAAR_DAGEN", "365"), 365)),
+        laden_bewaar_afgekeurd_dagen=max(1, _int(os.getenv("LADEN_BEWAAR_AFGEKEURD_DAGEN", "30"), 30)),
+        laden_voorrang=tuple(d.strip() for d in os.getenv("LADEN_VOORRANG", "swf-monitor-waarden").split(",")
+                             if d.strip()),
     )
