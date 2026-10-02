@@ -28,12 +28,13 @@ Direct en nuchter, kern eerst, geen omhaal. Lever wat gevraagd wordt, niet meer 
 
 D-OmniTwin is a digital twin platform for Dutch municipalities, visualizing neighborhood-level indicators (Kompas: 235 metrics across 12 thematic quadrants) on interactive maps. Built for Súdwest-Fryslân, it combines geospatial data, AI-powered chat, and multi-area comparative reporting.
 
-- **API Gateway:** Traefik on port 80 (Reverse proxy)
+- **API Gateway:** Traefik on port 80 (Reverse proxy). Security-headers per router (`traefik.http.routers.<naam>.middlewares=security-headers@file`, niet op het entrypoint); een nieuwe router zonder headers-middleware laat `tests/test_traefik_routers.py` falen
 - **Main Backend:** FastAPI (Python 3.10+) on port 8000
 - **Data API:** PostgREST on port 3000 (`/api/data/*`). Alleen-lezen: publiceert alleen schema `api` (views/functies), rol `web_anon` via `authenticator` (#57). Nieuw object voor de frontend: view/functie + `GRANT` in `db/migraties/R__api_rollen.sql`, nooit `users`/`sessions`/`api_keys`/`llm_config`/`system_prompts`/logs. Schrijven gaat via FastAPI met auth
 - **Geo API:** pg_featureserv on port 9000 (`/api/geo/*`), als alleen-lezen rol `featureserv` (alleen `vw_gebieden_features`, `omgevingsvisie_deelgebieden`, `postgisftw.*`)
 - **Main Frontend:** Vanilla JS + MapLibre GL + Deck.gl (no build step, served from `/static/`)
 - **Admin Panel:** React 19 + TypeScript SPA in `/admin-panel/`, gebouwd met Vite (port 3000 in dev, built to `/static/admin-panel/`)
+- **Identity provider (optioneel):** Keycloak, compose-profiel `keycloak` (#214), achter Traefik op `/auth`, eigen database `keycloak` in dezelfde PostgreSQL (aangemaakt door `keycloak-db-init`, `docker-entrypoint.sh keycloak-db`). Realm-import bij de eerste start uit `deploy/keycloak/realm-omnitwin.json` (realm `omnitwin`, clients `omnitwin-web`, `omnitwin-api`, `etl-voorbeeld`); secret opvragen met `deploy/keycloak/client-secret.sh`. Headers-middleware `keycloak-headers` (Keycloak zet zelf CSP en frame-regels). De app valideert nog geen tokens
 - **Database:** PostgreSQL 15 (image `postgis/postgis:15-3.5`, zie `db.Dockerfile`) with PostGIS, pgvector, and pg_trgm extensions
 
 ## Commands
@@ -144,6 +145,7 @@ Z-scores are computed dynamically per request, relative to a reference group def
 ### Authentication
 Zie `src/omnitwin/routers/auth.py`.
 - **Beheeromgeving en web-UI:** sessie. Inloggen via `POST /api/admin/auth/login` (form-data; wachtwoorden bcrypt in `users`). Het cookie `session_token` is `HttpOnly`, `SameSite=lax` en `Secure` volgens `COOKIE_SECURE` (standaard `auto`: alleen bij HTTPS, ook via `X-Forwarded-Proto`); het token staat gehasht (sha256) in `sessions` en verloopt na 12 uur. Het admin-panel gebruikt alleen dit cookie (`admin-panel/src/services/api.ts`), nooit een API-key.
+- **Keycloak (0.3.0, in opbouw):** de infrastructuur staat er (profiel `keycloak`, zie Project Overview); JWT-validatie in FastAPI, rollen (`beheerder`, `lezer`, client-rollen `dataset:<id>:laden` op `omnitwin-api`) naar rechten en UI-login volgen.
 - **Scripts:** header `X-Admin-Key` met de waarde van `ADMIN_API_KEY` uit `.env` (minimaal 32 tekens; leeg of een voorbeeldwaarde = uitgeschakeld). De tabel `api_keys` speelt geen rol bij de autorisatie.
 - **Autorisatie:** `vereis_admin` hangt op routerniveau aan alle beheerroutes (`/api/admin/*` behalve auth, `/api/visualisatie/admin/*`): zonder sessie of key `401`, zonder `is_admin` `403`. Publieke routes (kaart, Kompas, rapporten, chat) hebben dezelfde rechten als een anonieme bezoeker (#65); zie de installatiegids, Beveiliging.
 

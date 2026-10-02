@@ -50,6 +50,7 @@
 | **D-OmniTwin in het Dataspace Landschap (Herijkt)** | [`/docs/2-architectuur/architecture/frlds_in_dataspace_landschap_herijkt_visiedocument.md`](./2-architectuur/architecture/frlds_in_dataspace_landschap_herijkt_visiedocument.md) | Herijkte visie: D-OmniTwin als dataspace-agnostische interactielaag (FRLDS, FDS en overige dataspaces) | data-architect-engineer, innovation-lab, samenwerking-adoptie |
 | **Subsidie- & Adoptieplan 2026** | [`/docs/8-communicatie/communicatieplan_subsidie_2026.md`](./8-communicatie/communicatieplan_subsidie_2026.md) | Publieke positionering, subsidietrajecten (SIA RAAK) en adoptiestrategie voor dataspace-ecosysteem | project-manager, samenwerking-adoptie, technisch-communicatie |
 | **Aanvraag Innovatiebudget 2026** | [`/docs/1-visie-concept/innovatie/aanvraag_innovatiebudget_digitale_overheid_2026_d_omni_twin.md`](./1-visie-concept/innovatie/aanvraag_innovatiebudget_digitale_overheid_2026_d_omni_twin.md) | Innovatiebudget aanvraag: D-OmniTwin als federatieve voorziening / dataspace interactielaag | project-manager, innovation-lab |
+| **Huidige gebiedsmonitor SWF (vertrekpunt 0.3.0)** | [`/docs/1-visie-concept/huidige-gebiedsmonitor/`](./1-visie-concept/huidige-gebiedsmonitor/README.md) | Beschrijving van de monitor die 0.3.0 vervangt: functies, datamodel en gegevensstroom, indicatoren met UUID, methodiek (percentielklassen, labels A–E, n<10) en gat-analyse met eisen voor de laad-API (#195, #205) | project-manager, data-architect-engineer, backend-db |
 
 ---
 

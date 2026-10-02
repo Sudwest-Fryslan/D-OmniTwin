@@ -66,6 +66,9 @@ De tabel volgt de volgorde van `.env.example`. Optionele regels staan daar als c
 | `CORS_ORIGINS` | Optioneel. Alleen nodig als andere websites de API aanroepen: een kommagescheiden lijst met volledige adressen, geen wildcards. De app zelf draait op hetzelfde adres. |
 | `COOKIE_SECURE` | Optioneel, standaard `auto`: het inlogcookie krijgt `Secure` (alleen via HTTPS) als de verbinding HTTPS is. Achter een eigen TLS-proxy die over HTTP naar de stack doorstuurt: `true` (zie [HTTPS aanzetten](#https-aanzetten)). |
 | `LLM_RATE_LIMIT` | Optioneel, standaard `60`: zoveel verzoeken per minuut per IP-adres op de chat en de AI-teksten; daarboven `429`. `0` = geen limiet. |
+| `COMPOSE_PROFILES` | Optioneel. `keycloak` start Keycloak mee (zie [Keycloak](#keycloak-optioneel)). |
+| `KEYCLOAK_ADMIN_PASSWORD`, `KEYCLOAK_DB_PASSWORD` | Alleen met Keycloak, dan verplicht: wachtwoord van de tijdelijke beheerder `admin` in de admin-console, en van de databaserol `keycloak`. Genereer ze met `openssl rand -hex 24`. |
+| `KEYCLOAK_HOSTNAME` | Alleen met Keycloak. Hostnaam (`omnitwin.example.nl`) of volledige URL (`https://omnitwin.example.nl/auth`) waarop gebruikers Keycloak bereiken; standaard `localhost`. Bepaalt de issuer van de tokens. |
 | `OLLAMA_HOST`, `OLLAMA_MODEL`, `LLM_THINK`, `LLM_REASONING_EFFORT` | Optioneel, lokale AI. Zie [LLM](#7-llm-optioneel). |
 | `LITELLM_MASTER_KEY`, `LLM_API_KEY`, `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `GEMINI_API_KEY` | Optioneel, alleen met de LiteLLM-gateway. Zie [Andere aanbieders](#andere-aanbieders-via-de-litellm-gateway). |
 | `DATABASE_NAME`, `DATABASE_USER` | Optioneel, standaard `omnitwin_db` en `omnitwin_user`. Wijzig ze alleen vóór de eerste start. |
@@ -131,6 +134,7 @@ Met de standaardpoort 80 (anders `http://<host>:<OMNITWIN_HTTP_PORT>/...`):
 | `http://<host>/api/geo/` | pg_featureserv: OGC API Features, bijvoorbeeld `/api/geo/collections` |
 | `http://<host>/health` | Healthcheck van de backend |
 | `http://<host>/.well-known/security.txt` | Meldpunt voor kwetsbaarheden (zie [Beveiliging](#securitytxt)) |
+| `http://<host>/auth/` | Keycloak, alleen met het profiel `keycloak` (zie [Keycloak](#keycloak-optioneel)) |
 
 Alleen Traefik publiceert een poort. De database en de afzonderlijke services zijn van buiten Docker niet bereikbaar.
 
@@ -350,6 +354,66 @@ Aandachtspunten:
 - Het logo wordt getoond op 36 tot 56 pixels hoog; een (bijna) vierkant logo werkt het best.
 - Het PWA-pictogram van het beheerscherm (`static/admin-panel/favicon.ico`, `logo192.png`, `logo512.png`) is een rasterversie van het standaardbeeldmerk. Moderne browsers tonen het SVG-bestand; vervang deze PNG/ICO-bestanden alleen als je ook dat pictogram wilt aanpassen.
 
+
+### Keycloak (optioneel)
+
+Keycloak is de identity provider voor 0.3.0: inloggen via OIDC voor mensen, en client credentials voor machines, zoals een ETL die data aanlevert (#214, #205). Het zit in de stack als compose-profiel `keycloak`; zonder dat profiel start de stack zoals altijd. **De app gebruikt Keycloak nog niet:** de beheeromgeving werkt nog met het eigen inloggen. Tokens controleren in de backend en inloggen in de UI komen in een volgende versie.
+
+**Opzet**
+
+- Image `quay.io/keycloak/keycloak` (vaste versie in `docker-compose.yml`), in productiemodus (`start`) achter Traefik op **`/auth`**. Alleen HTTP binnen het Docker-netwerk. Health en metrics staan op de interne poort 9000 en zijn van buiten niet bereikbaar. In [ontwikkelmodus](#3-ontwikkelmodus) draait hij als `start-dev`.
+- Database: in dezelfde PostgreSQL een eigen database `keycloak` met een eigen rol `keycloak`. De eenmalige service `keycloak-db-init` maakt die aan (alleen met het profiel). Andere rollen kunnen er niet bij.
+- Bij de eerste start importeert Keycloak de realm **`omnitwin`** uit [`deploy/keycloak/realm-omnitwin.json`](../../deploy/keycloak/realm-omnitwin.json). Een bestaande realm laat hij staan; wijzigingen daarna doe je in de admin-console. Een andere realmnaam: pas `realm` in het bestand aan vóór de eerste start.
+
+| In de realm | Wat |
+|---|---|
+| client `omnitwin-web` | Inloggen van mensen (kaart en beheer): public client, authorization code + PKCE (S256). De redirect-URI's staan op `http://localhost/*`; zet ze op je eigen adres in de admin-console (Clients > omnitwin-web). |
+| client `omnitwin-api` | Staat voor de API van D-OmniTwin: draagt de rollen voor het laden van data en is de audience (`aud`) van de tokens. Zelf geen inlogflow. |
+| client `etl-voorbeeld` | Voorbeeld-machineclient: alleen client credentials, rol `dataset:voorbeeld:laden`. Keycloak genereert het secret bij de import; het staat niet in de repo. |
+| realm-rollen `beheerder`, `lezer` | Voor mensen. Elke nieuwe gebruiker krijgt `lezer`. |
+| client-rollen op `omnitwin-api` | `datasets:laden` (alle datasets) en per dataset `dataset:<id>:laden`. |
+| instellingen | Access token 5 minuten, geen implicit of password grant, brute-force-detectie aan (na 5 mislukte pogingen oplopend wachten), geen zelfregistratie, wachtwoorden minimaal 12 tekens. |
+
+**Aanzetten**
+
+1. Zet in `.env` (zie [2.2](#22-env-aanmaken)) `COMPOSE_PROFILES=keycloak`, `KEYCLOAK_ADMIN_PASSWORD` en `KEYCLOAK_DB_PASSWORD` (beide met `openssl rand -hex 24`). Buiten je eigen machine ook `KEYCLOAK_HOSTNAME`: de hostnaam waaronder gebruikers de stack bereiken. Achter HTTPS (manier A of B in [HTTPS aanzetten](#https-aanzetten)) de volledige URL: `KEYCLOAK_HOSTNAME=https://omnitwin.example.nl/auth`.
+2. `docker compose up -d`. `docker compose ps -a` toont `keycloak` als *healthy* (na ongeveer een halve minuut) en `keycloak-db-init` als `Exited (0)`.
+3. Controle: `http://<host>/auth/realms/omnitwin/.well-known/openid-configuration` geeft JSON.
+
+**Eerste login op de admin-console.** Ga naar `http://<host>/auth/admin/` en log in als `admin` met `KEYCLOAK_ADMIN_PASSWORD`. Dat is een tijdelijke beheerder in realm `master`. Maak een eigen beheerder aan (realm `master` > Users, rol `admin`) en verwijder daarna de tijdelijke. Gebruikers voor D-OmniTwin maak je aan in realm `omnitwin` (Users); een beheerder krijgt de rol `beheerder`.
+
+**Machineclient voor een ETL.** Per ETL of aanleverende partij een eigen client, niet één gedeelde:
+
+1. Realm `omnitwin` > Clients > Create client: OpenID Connect, client-id bijvoorbeeld `etl-<bron>`.
+2. *Client authentication* aan, alleen *Service accounts roles* aangevinkt (geen standard flow, geen direct access grants).
+3. Tab *Service accounts roles* > Assign role > filter op clients: `omnitwin-api` > `dataset:<id>:laden`. Een nieuwe datasetrol maak je bij Clients > omnitwin-api > Roles.
+4. Tab *Client scopes* > `etl-<bron>-dedicated` > Configure a new mapper > *Audience*, included client audience `omnitwin-api` (zoals bij `etl-voorbeeld`).
+
+Secret opvragen (met `--nieuw` erachter: eerst een nieuw secret maken), met de tijdelijke beheerder:
+
+```bash
+docker compose exec keycloak bash /opt/keycloak/omnitwin/client-secret.sh etl-voorbeeld
+```
+
+Heb je de tijdelijke beheerder al verwijderd, zet dan `-e KC_BEHEERDER=<naam>` na `exec` (het wachtwoord wordt gevraagd), of kijk in de admin-console bij Clients > `<client>` > Credentials. Geef het secret via een veilig kanaal door, nooit per mail of in git. De ETL haalt er zo een token mee op (5 minuten geldig):
+
+```bash
+curl -s -u etl-voorbeeld:<secret> -d grant_type=client_credentials \
+  http://<host>/auth/realms/omnitwin/protocol/openid-connect/token
+```
+
+**Entra ID of een andere identity provider koppelen.** Realm `omnitwin` > Identity providers > *Microsoft* (Entra ID) of *OpenID Connect v1.0*. Vul de client-id, het secret en (bij OIDC) de discovery-URL van de andere partij in. Registreer bij die partij de *Redirect URI* die Keycloak toont (`https://<host>/auth/realms/omnitwin/broker/<alias>/endpoint`). Rollen ken je per gebruiker toe, of leid je af uit een groep of claim met een *mapper* op de identity provider. Op de inlogpagina verschijnt dan een knop.
+
+**Backup.** De Keycloak-gegevens (realm, gebruikers, clients en secrets) staan in de database `keycloak`, niet in de dump uit [Backup](#backup). Maak er een eigen dump van:
+
+```bash
+docker compose exec postgres sh -c 'pg_dump -U "$POSTGRES_USER" -d keycloak -Fc -f /tmp/keycloak.dump'
+docker compose cp postgres:/tmp/keycloak.dump backups/keycloak-$(date +%F).dump
+docker compose exec postgres sh -c 'rm /tmp/keycloak.dump'
+```
+
+**Openstellen.** Naast de [checklist](#checklist-vóór-openstelling): de admin-console (`/auth/admin`) hoeft niet van buiten bereikbaar te zijn; scherm hem bij voorkeur af in de proxy ervoor. Achter een TLS-proxy die over HTTP doorstuurt (manier A) ziet Keycloak alleen HTTP; zet `KEYCLOAK_HOSTNAME` daarom op de volledige `https://`-URL.
+
 ---
 
 ## 7. LLM (optioneel)
@@ -486,7 +550,7 @@ en draai `docker compose up -d`. HTTP gaat dan met een redirect naar HTTPS, en H
 
 ### Security-headers
 
-Traefik zet op **alle** routes (de app, `/api/data`, `/api/geo`, `/health`) deze headers, vastgelegd in [`deploy/traefik/dynamic.yml`](../../deploy/traefik/dynamic.yml):
+Traefik zet op **alle** routes (de app, `/api/data`, `/api/geo`, `/health`) deze headers, vastgelegd in [`deploy/traefik/dynamic.yml`](../../deploy/traefik/dynamic.yml) (middleware `security-headers`, per router):
 
 | Header | Waarde |
 |--------|--------|
@@ -498,6 +562,8 @@ Traefik zet op **alle** routes (de app, `/api/data`, `/api/geo`, `/health`) deze
 | `Strict-Transport-Security` | `max-age=31536000`, alleen op HTTPS via Traefik (manier B) |
 
 De CSP staat nog `'unsafe-inline'` toe: de frontend gebruikt inline scripts, `onclick=`-attributen en inline stijlen. Dat weghalen is een aparte klus in de frontend.
+
+Keycloak (`/auth`, profiel `keycloak`) krijgt de middleware `keycloak-headers`: dezelfde headers, maar zonder CSP, `X-Frame-Options` en `Referrer-Policy`. Die zet Keycloak zelf (per realm: Realm settings > Security defenses), met `frame-ancestors 'self'` in plaats van `'none'`: de admin-console en de sessiecontrole gebruiken iframes op hetzelfde adres. Elke Traefik-router heeft een van beide middlewares; `tests/test_traefik_routers.py` controleert dat.
 
 Voeg je een kaartlaag of bibliotheek toe die rechtstreeks een andere server aanroept, dan blokkeert de browser die. Neem de host dan op in `dynamic.yml` en draai `docker compose restart traefik`. Externe WFS-lagen lopen via de backend (`/api/externe-lagen/...`) en hebben dit niet nodig.
 
