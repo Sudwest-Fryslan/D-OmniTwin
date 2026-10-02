@@ -190,6 +190,8 @@ app.include_router(externe_lagen.router)
 app.include_router(externe_lagen.admin_router)
 from omnitwin.routers import oidc_ik
 app.include_router(oidc_ik.router)  # GET /api/oidc/ik: token controleren (#205)
+from omnitwin.routers import organisatie
+app.include_router(organisatie.router)  # GET /api/organisatie: eigen organisatie (#231)
 
 # Laad-API /api/laden/v1 (#205): eigen spec, API-Version, Problem Details, achtergrondverwerking
 from omnitwin.routers import laden as laden_api
@@ -231,9 +233,12 @@ async def shutdown_event():
     await shutdown_logging()
 
 @app.get("/", response_class=HTMLResponse)
-async def root(request: Request):
-    """Serve the frontend application."""
-    return templates.TemplateResponse("index.html", {"request": request})
+def root(request: Request, db: Session = Depends(get_db)):
+    """Serve the frontend application. Footer-logo's uit de organisatie-instelling (#231)."""
+    from omnitwin.services.organisatie import lees_organisatie, thema_css
+    organisatie = lees_organisatie(db)
+    return templates.TemplateResponse("index.html", {
+        "request": request, "organisatie": organisatie, "thema_css": thema_css(organisatie)})
 
 # ============================================================================
 # React SPA Support for Admin Panel

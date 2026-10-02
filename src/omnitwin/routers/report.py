@@ -57,7 +57,7 @@ class MultiGebiedRequest(BaseModel):
     """Request model voor Multi-Gebiedsdossier endpoints."""
     gebied_ids: List[str] = Field(..., min_length=1, max_length=200, description="CBS buurt-IDs")
     referentie: str = Field('gemeente', description="'gemeente' of 'fryslan'")
-    gemeente_code: str = Field('1900', description="Gemeente code (default: SWF)")
+    gemeente_code: Optional[str] = Field(None, description="Gemeentecode voor de referentie (standaard: die van de eigen organisatie, GET /api/organisatie)")
     deelgebied_naam: Optional[str] = Field(None, description="Label voor de rapportheader")
     thema: Optional[str] = Field(None, description="Thema filter (bijv. 'Kwaliteit van Leven')")
 
@@ -65,7 +65,7 @@ class ThemaAnalyseRequest(BaseModel):
     """Request model voor Thema-Analyse rapport."""
     gebied_ids: List[str] = Field(..., min_length=1, max_length=200)
     referentie: str = Field('gemeente')
-    gemeente_code: str = Field('1900')
+    gemeente_code: Optional[str] = Field(None, description="Gemeentecode voor de referentie (standaard: die van de eigen organisatie, GET /api/organisatie)")
     deelgebied_naam: Optional[str] = Field(None)
     categorie: Optional[str] = Field(None, description="Niveau 0: bijv. 'Kwaliteit fysieke leefomgeving'")
     thema_naam: Optional[str] = Field(None, description="Niveau 1: bijv. 'Verkeer'")
