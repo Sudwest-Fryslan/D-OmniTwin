@@ -178,7 +178,7 @@ Ontwikkelen zonder Docker (Python venv, `run_dev.py`, admin-panel met `npm start
 
 Wat nog niet open is of nog geen adapter heeft (BAG, EP-Online, OpenStreetMap, interne indicatoren), komt uit [`init_data/sample/`](../../init_data/sample/README.md) via de use case `sample-bronbibliotheek`. Demodata is gemarkeerd: de bron van de waarde begint met `DEMODATA`. Zie [demodata naar open data](../3-data-engineering/demodata-naar-open-data.md).
 
-De downloads worden bewaard in het volume `bron-cache`; daarna werkt het ook offline. Gemeten op een verse installatie (02-10-2026, met netwerk, lege cache): `db-init` circa 4 minuten, waarvan het meeste de CBS Kerncijfers (188.606 waarden).
+De downloads worden bewaard in het volume `bron-cache`; daarna werkt het ook offline. Gemeten op een verse installatie (02-10-2026, met netwerk, lege cache): `db-init` 88 seconden, waarvan 44 voor de CBS Kerncijfers (188.606 waarden); de hele stack 102 seconden (images al gebouwd).
 
 **Zonder internet** bij de eerste start wordt een bron overgeslagen met een melding (geen kapotte installatie); zonder buurten keurt de laadstraat de waarden van de andere use cases af. Later opnieuw, met netwerk:
 
