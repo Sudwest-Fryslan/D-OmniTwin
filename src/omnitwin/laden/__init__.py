@@ -1,6 +1,7 @@
-"""Laad-API (/api/laden/v1): validatie van registraties en leveringen.
+"""Laad-API (/api/laden/v1, #205, #228): registraties, leveringen en de laadstraat.
 
-De API zelf is nog niet gebouwd (specificatie: docs/api/laden/openapi.yaml). Deze
-modules doen nu al lokaal wat de API bij registreren en valideren doet; de use-case-
-uitvoerder (omnitwin.usecases controleer) gebruikt ze.
+- `registratie`, `levering`: lokale validatie (ook gebruikt door `python -m omnitwin.usecases controleer`);
+- `lezen`, `tabelschema`, `p_waarnemingen`, `p_definities`, `p_geo`, `adapter_swf`: valideren per profiel;
+- `laadstraat`, `db`, `opslag`, `verwerker`: ontvangen, staging, publiceren, versies, bewaartermijn;
+- `catalogus`, `profielen`, `problemen`: weergaven en Problem Details voor de router (`omnitwin.routers.laden`).
 """

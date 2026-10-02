@@ -260,6 +260,7 @@ services:
     volumes:
       - "./deploy/keycloak/realm-omnitwin.json:/opt/keycloak/data/import/realm-omnitwin.json:ro"
       - "./deploy/keycloak/client-secret.sh:/opt/keycloak/omnitwin/client-secret.sh:ro"
+      - "./deploy/keycloak/machineclient.sh:/opt/keycloak/omnitwin/machineclient.sh:ro"
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.keycloak.rule=PathPrefix(`/auth`)"

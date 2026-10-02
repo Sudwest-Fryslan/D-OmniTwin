@@ -63,3 +63,14 @@ Bestanden die via beheer > externe lagen zijn geüpload staan in het volume `upl
 docker compose cp backend:/app/data-upload ./backup-data-upload      # backup
 docker compose cp ./backup-data-upload/. backend:/app/data-upload    # terugzetten
 ```
+
+## Laad-API: schema `laden` en het volume `leveringen` (#228)
+
+Migratie V024 maakt het schema `laden` (registraties, leveringen, versies, fouten, staging, de gepubliceerde waarnemingen per dataset) en de rol `laden_schrijver`. De laadstraat (`src/omnitwin/laden/`) schrijft alleen als die rol (`SET LOCAL ROLE`): in `laden` en in `gebied_data`, `gebieden`, `gebiedstypes`, `indicatoren`, `indicator_gebiedstype_relaties` en `externe_kaartlagen`. `gebied_data.levering_id` wijst naar de levering die de waarde publiceerde (leeg: geladen buiten de laad-API).
+
+De ruwe leveringen staan in het volume `leveringen` (in de container `/leveringen`), ongewijzigd en alleen-lezen, met de bewaartermijn uit `LADEN_BEWAAR_*`. Neem het mee in de backup, samen met de database:
+
+```bash
+docker compose cp backend:/leveringen ./backup-leveringen      # backup
+docker compose cp ./backup-leveringen/. backend:/leveringen    # terugzetten
+```

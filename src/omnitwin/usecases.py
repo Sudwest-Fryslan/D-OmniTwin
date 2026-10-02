@@ -463,6 +463,17 @@ class LaadApi:
         import requests
         self.basis, self.s = basis or basis_url(), requests.Session()
         self.s.headers["Authorization"] = f"Bearer {tok or token(self.basis)}"
+        self.s.hooks["response"].append(self._bij_429)
+
+    def _bij_429(self, r, *args, **kwargs):
+        """Rate-limit van de laad-API (Traefik, 429): wachten volgens Retry-After en opnieuw (hooguit 10 keer)."""
+        poging = getattr(r.request, "_poging", 0)
+        if r.status_code != 429 or poging >= 10:
+            return r
+        time.sleep(min(int(r.headers.get("Retry-After", "6") or 6), 60))
+        nieuw = r.request.copy()
+        nieuw._poging = poging + 1
+        return self.s.send(nieuw, timeout=kwargs.get("timeout"))
 
     @staticmethod
     def _json(r):
