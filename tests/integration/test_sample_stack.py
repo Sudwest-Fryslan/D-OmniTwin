@@ -200,6 +200,7 @@ API_WHITELIST = [
     "externe_kaartlagen",
     "indicatoren",
     "vw_gebied_indicator_actueel",
+    "gebied_data",  # laad-API (#228): waarden per jaar, zonder n
     "rpc/get_indicatoren_stats",
 ]
 
@@ -306,3 +307,15 @@ def test_rollen_geen_rechten_op_tabellen(db, rol, tabel):
     for recht in ("SELECT", "INSERT", "UPDATE", "DELETE"):
         heeft = scalar(db, "SELECT has_table_privilege(%s, %s, %s)", (rol, f"public.{tabel}", recht))
         assert not heeft, f"{rol} heeft {recht} op {tabel}"
+
+
+def test_data_en_geo_met_versie():
+    """/api/data/v1 en /api/geo/v1 (ADR 0005, #228) wijzen naar dezelfde API's als /api/data en /api/geo."""
+    r = requests.get(f"{BASE_URL}/api/data/v1/gebieden", params={"limit": 1}, timeout=TIMEOUT)
+    assert r.status_code == 200 and isinstance(r.json(), list)
+    # Een meegestuurd token gaat niet naar PostgREST (dat valideert nog geen tokens)
+    r = requests.get(f"{BASE_URL}/api/data/v1/gebieden", params={"limit": 1}, timeout=TIMEOUT,
+                     headers={"Authorization": "Bearer niet-gecontroleerd"})
+    assert r.status_code == 200
+    r = requests.get(f"{BASE_URL}/api/geo/v1/collections", timeout=TIMEOUT)
+    assert r.status_code == 200

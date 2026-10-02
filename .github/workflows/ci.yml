@@ -164,7 +164,7 @@ jobs:
             -e DATABASE_HOST=postgres -e DATABASE_PORT=5432 \
             -e OMNITWIN_BASE_URL=http://traefik \
             -e PYTHONDONTWRITEBYTECODE=1 \
-            python:3.11-slim sh -c "pip install -q --root-user-action=ignore pytest requests psycopg2-binary python-dotenv sqlalchemy bcrypt \
+            python:3.11-slim sh -c "pip install -q --root-user-action=ignore pytest requests psycopg2-binary python-dotenv sqlalchemy bcrypt pyyaml \
               && pytest -p no:cacheprovider -m integration tests/integration"
 
       - name: Draai browser-e2e-tests (Playwright, docs/testcases)
