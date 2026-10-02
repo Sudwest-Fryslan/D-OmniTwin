@@ -2,7 +2,7 @@
 .custom-select-container {
     position: relative;
     width: 100%;
-    font-family: 'Inter', sans-serif;
+    font-family: var(--basis-text-font-family-default, 'Inter', sans-serif);
 }
 
 .custom-select-trigger {
