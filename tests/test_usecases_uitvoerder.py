@@ -123,7 +123,8 @@ def test_demopakketten_blijven_laden():
     orde, _ = uc.plan([], ALLE, alle=True)
     oud = [n for n in orde if "datasets" not in ALLE[n]]
     assert oud == sorted(n for n, u in ALLE.items() if "datasets" not in u and u.get("status") != "ontwerp")
-    assert not [n for n in orde if "datasets" in ALLE[n]], "laad-API-use cases met status ontwerp horen overgeslagen"
+    assert all(ALLE[n].get("status") == "actief" for n in orde if "datasets" in ALLE[n]), \
+        "laad-API-use cases met status ontwerp horen overgeslagen"
 
 
 @pytest.mark.parametrize("naam", sorted(MET_DATASETS))
@@ -254,4 +255,6 @@ def test_laad_usecase_slaat_laad_api_use_cases_over(capsys):
     import laad_usecase
     namen = laad_usecase.pakketten([], True)
     assert namen == sorted(n for n, u in ALLE.items() if "datasets" not in u)
-    assert "swf-definities: overgeslagen (status ontwerp)" in capsys.readouterr().out
+    uit = capsys.readouterr().out
+    assert "swf-basismonitor-waarden: overgeslagen (status ontwerp)" in uit
+    assert "swf-definities: laadt via de laad-API" in uit  # actief, niet via dit script (#229)

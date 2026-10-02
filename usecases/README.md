@@ -66,6 +66,8 @@ python -m omnitwin.usecases test swf-definities             # installeren + cont
 
 De demopakketten laden zoals altijd: `python init_data/scripts/laad_usecase.py <naam> [...]` of `--alle` (ook bij een verse installatie met `LOAD_SAMPLE_DATA=true`). Dat script gebruikt dezelfde volgorde en slaat use cases met `datasets` over.
 
+**Actief via de laad-API (0.3.0, #229):** `cbs-gebiedsindelingen`, `cbs-kerncijfers` en `swf-definities` zijn getest tegen een verse stack met Keycloak en staan op `actief`. Een verse installatie laadt ze niet vanzelf: `db-init` draait alleen `laad_usecase.py --alle`, en dat slaat use cases met `datasets` over (de demodata blijft dus gelijk). Installeren gaat met `python -m omnitwin.usecases installeer <naam>` (of `--alle`) en een machineclient met de realm-rol `beheerder` en de client-rol `datasets:laden` (aanmaken: `docker compose exec keycloak bash /opt/keycloak/omnitwin/machineclient.sh <client> beheerder datasets:laden`). `swf-basismonitor-waarden` blijft `ontwerp` tot de gebiedsindeling *buurten bebouwde komgrens* er is (`SWF_GEO_DIR`, use case `swf-gebiedsindelingen`): zonder die gebieden keurt de laad-API de 2.370 waarden op dat gebiedstype terecht af (`gebied-onbekend`).
+
 **Demopakketten:** een verse installatie laadt het product zonder data (stuurdata, indicatordefinities, Kompas); de data komt uit de use cases. Een pakket laadt zijn gebieden uit de bronbibliotheek `init_data/sample/2_brondata`, zet de richting van de kernindicatoren, berekent afgeleide indicatoren en laadt extra brondata uit `data/waarden.csv`. `tests/test_usecase_pakketten.py` bewaakt dat elk gebied in de bronbibliotheek bij minstens één pakket hoort; `tests/integration/test_usecases.py` toetst ze tegen een draaiende stack.
 
 ## Index
@@ -77,14 +79,14 @@ Gegenereerd met `python -m omnitwin.usecases index`; een unittest faalt als hij 
 |---|---|---|---|---|---|---|
 | [beleidsadviseur-swf](./beleidsadviseur-swf/README.md) | TC-06-001 | Beleidsadviseur verkent kernen in Súdwest-Fryslân (IJsselmeerkust) | Beleidsadviseur leefbaarheid / ruimtelijke ordening | – | 0.1.0 | cbs-kerncijfers (opt.) |
 | [brede-welvaart](./brede-welvaart/README.md) | TC-06-007 | Brede welvaart en functiemenging | Strateeg / economische zaken | – | 0.1.0 | cbs-kerncijfers (opt.) |
-| [cbs-gebiedsindelingen](./cbs-gebiedsindelingen/README.md) | TC-07-001 | CBS-gebiedsindelingen (buurten, wijken, gemeenten) via de laad-API | beheerder D-OmniTwin | ontwerp | 0.1.0 | – |
-| [cbs-kerncijfers](./cbs-kerncijfers/README.md) | TC-07-002 | CBS Kerncijfers wijken en buurten via de laad-API | beheerder D-OmniTwin | ontwerp | 0.1.0 | cbs-gebiedsindelingen |
+| [cbs-gebiedsindelingen](./cbs-gebiedsindelingen/README.md) | TC-07-001 | CBS-gebiedsindelingen (buurten, wijken, gemeenten) via de laad-API | beheerder D-OmniTwin | actief | 0.1.0 | – |
+| [cbs-kerncijfers](./cbs-kerncijfers/README.md) | TC-07-002 | CBS Kerncijfers wijken en buurten via de laad-API | beheerder D-OmniTwin | actief | 0.1.0 | cbs-gebiedsindelingen |
 | [energiearmoede](./energiearmoede/README.md) | TC-06-005 | Energietransitie en energiearmoede | Beleidsmaker energietransitie | – | 0.1.0 | cbs-kerncijfers (opt.) |
 | [hittestress](./hittestress/README.md) | TC-06-006 | Klimaatadaptatie: hittestress en kwetsbaarheid | Stedenbouwkundige / GGD | – | 0.1.0 | cbs-kerncijfers (opt.) |
 | [sociale-cohesie](./sociale-cohesie/README.md) | TC-06-008 | Zorgzwaarte en sociale cohesie | Wijkcoördinator / wijkcontactfunctionaris | – | 0.1.0 | cbs-kerncijfers (opt.) |
 | [swf-adapter-fme](./swf-adapter-fme/README.md) | TC-07-009 | SWF-adapter: dezelfde FME-push naar D-OmniTwin | data-engineer DWH (SWF) | ontwerp | 0.1.0 | swf-definities |
 | [swf-basismonitor-waarden](./swf-basismonitor-waarden/README.md) | TC-07-006 | SWF-basismonitor: waarden per indicator × gebiedstype | data-engineer DWH (SWF) | ontwerp | 0.1.0 | swf-definities, swf-gebiedsindelingen, cbs-gebiedsindelingen |
-| [swf-definities](./swf-definities/README.md) | TC-07-003 | SWF-definities: indicatoren, gebiedstypen en relaties | data-engineer DWH (SWF) | ontwerp | 0.1.0 | – |
+| [swf-definities](./swf-definities/README.md) | TC-07-003 | SWF-definities: indicatoren, gebiedstypen en relaties | data-engineer DWH (SWF) | actief | 0.1.0 | – |
 | [swf-gebiedsindelingen](./swf-gebiedsindelingen/README.md) | TC-07-004 | SWF-gebiedsindelingen als GeoPackage-leveringen | functioneel beheerder SWF / GIS-specialist | ontwerp | 0.1.0 | swf-definities, cbs-gebiedsindelingen |
 | [swf-gebiedsmonitor](./swf-gebiedsmonitor/README.md) | TC-07-010 | D-OmniTwin vervangt de huidige SWF-gebiedsmonitor (acceptatie) | kernteam gebiedsagenda en functioneel beheerder SWF | ontwerp | 0.1.0 | swf-definities, swf-gebiedsindelingen, swf-kompasprofiel, swf-basismonitor-waarden, swf-klimaatmonitor, swf-kaartlagen, swf-adapter-fme |
 | [swf-kaartlagen](./swf-kaartlagen/README.md) | TC-07-008 | SWF-kaartlagen: klimaat, deelgebieden, projecten en overige lagen | medewerker team of vakgroep (SWF) | ontwerp | 0.1.0 | swf-gebiedsindelingen |
