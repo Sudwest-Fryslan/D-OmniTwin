@@ -108,6 +108,10 @@ services:
       - DATABASE_HOST=postgres
       - DATABASE_PORT=5432
       - LEVERINGEN_DIR=/leveringen
+      # Tokens controleren (#205): alleen als OIDC_ISSUER in .env staat (profiel keycloak).
+      # Sleutels en discovery haalt de backend intern bij Keycloak op; de issuer in de tokens
+      # is het publieke adres. Externe identity provider: OIDC_INTERN_URL= (leeg) in .env.
+      - OIDC_INTERN_URL=${OIDC_INTERN_URL-http://keycloak:8080/auth/realms/omnitwin}
     volumes:
       # Ruwe leveringen van de laad-API (#205): onveranderlijk, <dataset>/<levering>/<bestand>,
       # met bewaartermijn (LADEN_BEWAAR_*). Backup: zie db/README.md.

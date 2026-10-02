@@ -89,6 +89,9 @@ def registreer_foutafhandeling(app: FastAPI) -> None:
     (422 van FastAPI) blijven de standaardafhandeling houden."""
     from sqlalchemy.exc import DataError, IntegrityError
 
+    from omnitwin import oidc
+
+    oidc.registreer(app)  # 401/403/503 van de OIDC-dependencies als Problem Details (#205)
     app.add_exception_handler(DataError, _ongeldige_waarde)
     app.add_exception_handler(IntegrityError, _conflict)
     app.add_exception_handler(Exception, _interne_fout)

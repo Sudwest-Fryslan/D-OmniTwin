@@ -23,6 +23,15 @@ Laad-API (/api/laden/v1, #205), zie omnitwin.laden:
 - LADEN_BEWAAR_VERSIES, LADEN_BEWAAR_DAGEN, LADEN_BEWAAR_AFGEKEURD_DAGEN   bewaartermijn
 - LADEN_VOORRANG   datasets (kommagescheiden, hoogste eerst) die voorgaan bij dezelfde
                    sleutel in gebied_data; aanname A6 (#222): de SWF-bron gaat voor
+OIDC (#205, tokens controleren in de nieuwe API's, zie omnitwin/oidc.py):
+- OIDC_ISSUER      issuer zoals in de tokens (bijv. http://localhost/auth/realms/omnitwin);
+                   leeg = OIDC uit (routes met vereis_rol geven 503).
+- OIDC_AUDIENCE    vereiste `aud`, standaard omnitwin-api; ook de client in resource_access
+                   waarvan de client-rollen meetellen.
+- OIDC_JWKS_URL    optioneel; standaard via discovery (.well-known/openid-configuration).
+- OIDC_INTERN_URL  optioneel; intern adres van de issuer (achter Traefik:
+                   http://keycloak:8080/auth/realms/omnitwin). Discovery en JWKS komen dan
+                   daarvandaan; `iss` wordt nog steeds tegen OIDC_ISSUER gecontroleerd.
 
 Gebruik `os.getenv("<NAAM>", ...)` letterlijk: tests/test_env_example.py zoekt
 daarop om te controleren dat elke variabele in .env.example staat.
@@ -99,6 +108,11 @@ class Instellingen:
     laden_bewaar_dagen: int
     laden_bewaar_afgekeurd_dagen: int
     laden_voorrang: tuple[str, ...]
+    # OIDC (#205)
+    oidc_issuer: str            # leeg = uit
+    oidc_audience: str
+    oidc_jwks_url: str          # leeg = via discovery
+    oidc_intern_url: str        # leeg = discovery via de issuer zelf
 
     @property
     def database_url(self) -> str:
@@ -145,4 +159,8 @@ def instellingen() -> Instellingen:
         laden_bewaar_afgekeurd_dagen=max(1, _int(os.getenv("LADEN_BEWAAR_AFGEKEURD_DAGEN", "30"), 30)),
         laden_voorrang=tuple(d.strip() for d in os.getenv("LADEN_VOORRANG", "swf-monitor-waarden").split(",")
                              if d.strip()),
+        oidc_issuer=os.getenv("OIDC_ISSUER", "").strip().rstrip("/"),
+        oidc_audience=os.getenv("OIDC_AUDIENCE", "omnitwin-api").strip() or "omnitwin-api",
+        oidc_jwks_url=os.getenv("OIDC_JWKS_URL", "").strip(),
+        oidc_intern_url=os.getenv("OIDC_INTERN_URL", "").strip().rstrip("/"),
     )

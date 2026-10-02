@@ -93,11 +93,13 @@ Fouten zijn Problem Details (RFC 9457, `application/problem+json`). `code` is st
 | <a id="dataset-bestaat"></a>`dataset-bestaat` | 409 | registreren van een `id` die al bestaat (gebruik PUT of PATCH) |
 | <a id="ongeldig-verzoek"></a>`ongeldig-verzoek` | 400 | parameter, JSON of `Content-Digest` klopt niet |
 | <a id="niet-gevonden"></a>`niet-gevonden` | 404 | dataset, levering, versie of bestand bestaat niet (of is niet zichtbaar voor deze client) |
-| <a id="niet-geauthenticeerd"></a>`niet-geauthenticeerd` | 401 | geen of ongeldig token |
-| <a id="geen-toegang"></a>`geen-toegang` | 403 | token zonder de benodigde rol |
 | <a id="te-groot"></a>`te-groot` | 413 | body boven de limiet |
 | <a id="te-veel-verzoeken"></a>`te-veel-verzoeken` | 429 | rate-limit bereikt |
 | <a id="serverfout"></a>`serverfout` | 500, of `mislukt` | technische fout; details alleen in de serverlog onder de correlatie-id |
+| <a id="niet-geauthenticeerd"></a>`niet-geauthenticeerd` | 401 | geen, verlopen of ongeldig token (handtekening, `iss`, `aud`, algoritme); met `WWW-Authenticate: Bearer` |
+| <a id="geen-toegang"></a>`geen-toegang` | 403 | token geldig, maar zonder een van de benodigde rollen |
+| <a id="oidc-niet-geconfigureerd"></a>`oidc-niet-geconfigureerd` | 503 | `OIDC_ISSUER` is niet ingesteld in deze installatie |
+| <a id="oidc-niet-bereikbaar"></a>`oidc-niet-bereikbaar` | 503 | de sleutels (JWKS) van de identity provider zijn niet op te halen |
 
 ## Limieten en beveiliging
 
