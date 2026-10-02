@@ -28,6 +28,7 @@ pydantic>=2.0.0
 # --- Auth ---
 passlib[bcrypt]>=1.7.0
 bcrypt==4.0.1
+PyJWT[crypto]>=2.15.1   # OIDC: access tokens van Keycloak controleren (omnitwin/oidc.py, #205)
 
 # --- Utilities ---
 python-dateutil>=2.9.0.post0
