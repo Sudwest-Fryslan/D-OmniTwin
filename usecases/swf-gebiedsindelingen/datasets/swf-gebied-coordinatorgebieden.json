@@ -1,0 +1,74 @@
+{
+  "id": "swf-gebied-coordinatorgebieden",
+  "bronId": "swf-monitor",
+  "beschrijving": {
+    "@context": "https://data.overheid.nl/dcat-ap-nl/context.jsonld",
+    "@type": "dcat:Dataset",
+    "dct:title": "Dorps- en wijkcoördinatorgebieden, Súdwest-Fryslân",
+    "dct:description": "Werkgebieden van de dorps- en wijkcoördinatoren (procesgebieden). D-OmniTwin zet er CO voor.",
+    "dct:publisher": "https://identifier.overheid.nl/tooi/id/gemeente/gm1900",
+    "dct:accessRights": "http://publications.europa.eu/resource/authority/access-right/RESTRICTED",
+    "dct:license": "http://standaarden.overheid.nl/owms/terms/licentieonbekend",
+    "dct:spatial": "https://identifier.overheid.nl/tooi/id/gemeente/gm1900",
+    "dct:source": "Gemeente Súdwest-Fryslân, projectmap gebiedsmonitor",
+    "dcat:theme": [
+      "http://standaarden.overheid.nl/owms/terms/Ruimtelijke_ordening"
+    ],
+    "dcat:keyword": [
+      "gebiedsindeling",
+      "Súdwest-Fryslân"
+    ],
+    "dct:conformsTo": "http://www.opengis.net/def/crs/EPSG/0/28992",
+    "dcat:contactPoint": {
+      "@type": "vcard:Organization",
+      "vcard:fn": "Functioneel beheer gebiedsmonitor, gemeente Súdwest-Fryslân"
+    }
+  },
+  "laadprofiel": {
+    "profiel": "gebiedsindeling",
+    "doel": {
+      "gebiedstypeId": "cbbbb563-e23f-59e2-a157-1ddfe55f32d0",
+      "featureTabel": "gebieden",
+      "sleutelveld": "code",
+      "labelveld": "naam",
+      "codePrefix": "CO"
+    },
+    "plausibiliteit": {
+      "minRegels": 140,
+      "maxDalingProcent": 10
+    }
+  },
+  "bron": {
+    "adapter": "lokaal-bestand",
+    "pad": "${SWF_DOCS_DIR}/Demo/Demo data/Kaarten/Demo_gebiedsdata.gpkg",
+    "laag": "Dorps_Wijkcoordinatorgebieden",
+    "omschrijving": "GeoPackage uit de projectmap van de gebiedsmonitor (Demo/Demo data/Kaarten)"
+  },
+  "bewerkingen": [
+    {
+      "hernoem": {
+        "fid": "code",
+        "PLAATS_WIJK": "naam"
+      }
+    },
+    {
+      "tekst": [
+        "code"
+      ]
+    },
+    {
+      "behoud": [
+        "code",
+        "naam"
+      ]
+    },
+    {
+      "multipolygon": true
+    }
+  ],
+  "levering": {
+    "formaat": "geopackage",
+    "bestand": "swf-gebied-coordinatorgebieden.gpkg",
+    "geometrie": "MultiPolygon"
+  }
+}

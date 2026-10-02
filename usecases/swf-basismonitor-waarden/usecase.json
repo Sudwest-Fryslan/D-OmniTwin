@@ -1,0 +1,99 @@
+{
+  "naam": "swf-basismonitor-waarden",
+  "id": "TC-07-006",
+  "versie": "0.1.0",
+  "titel": "SWF-basismonitor: waarden per indicator × gebiedstype",
+  "vraag": "Ik wil alle waarden van de Basis monitor (CBS-buurten en buurtdelen binnen/buiten de kom) in één levering in D-OmniTwin, zonder de fouten uit de huidige export, en met de n<10-afspraak vastgelegd.",
+  "gebruiker": "data-engineer DWH (SWF)",
+  "status": "ontwerp",
+  "afhankelijk_van": [
+    "swf-definities",
+    "swf-gebiedsindelingen",
+    "cbs-gebiedsindelingen"
+  ],
+  "rechten": [
+    "realm-rol beheerder (registreren)",
+    "dataset:swf-monitor-waarden:laden"
+  ],
+  "datasets": [
+    {
+      "id": "swf-monitor-waarden",
+      "route": "laden",
+      "registratie": "datasets/swf-monitor-waarden.json",
+      "profiel": "waarnemingen",
+      "rol": "dataset:swf-monitor-waarden:laden",
+      "client": "etl-swf",
+      "prioriteit": "Must",
+      "bron": "export van de huidige monitor ($SWF_DUMP_DIR)",
+      "verwacht": {
+        "gelezen_basis": 35567,
+        "jaar_0": 152,
+        "gebied_onbekend": 4,
+        "regels": 35411,
+        "combinaties": "±41 indicator × gebiedstype",
+        "jaren": "2012–2025",
+        "n": "leeg → bron-onderdrukt"
+      }
+    }
+  ],
+  "controles": [
+    {
+      "type": "aantal",
+      "dataset": "swf-monitor-waarden",
+      "gelijk": 35411
+    },
+    {
+      "type": "bewerking",
+      "dataset": "swf-monitor-waarden",
+      "reden": "jaar-ongeldig",
+      "gelijk": 152
+    },
+    {
+      "type": "bewerking",
+      "dataset": "swf-monitor-waarden",
+      "reden": "gebied-onbekend",
+      "gelijk": 4
+    },
+    {
+      "type": "afkeuring",
+      "dataset": "swf-monitor-waarden",
+      "variant": "met-fouten",
+      "code": "jaar-ongeldig",
+      "omschrijving": "met jaar 0 wordt de hele levering afgekeurd; vorige versie blijft actief"
+    },
+    {
+      "type": "afkeuring",
+      "dataset": "swf-monitor-waarden",
+      "variant": "met-fouten",
+      "code": "gebied-onbekend"
+    },
+    {
+      "type": "api",
+      "pad": "/api/data/v1/gebied_data?gebied_id=eq.BU19000002&indicator_uuid=eq.461d542b-b8be-4510-9dd0-5ba554b818cb&select=jaar,waarde",
+      "minimaal_aantal": 1,
+      "uuid": "461d542b-b8be-4510-9dd0-5ba554b818cb",
+      "gebied": "BU19000002",
+      "omschrijving": "Personenauto's per huishouden voor Bolsward-Zuidoost"
+    },
+    {
+      "type": "api",
+      "pad": "/api/laden/v1/datasets/swf-monitor-waarden",
+      "omschrijving": "laatste levering gepubliceerd, aantallen.bronOnderdrukt = aantallen.gepubliceerd"
+    },
+    {
+      "type": "idempotent",
+      "dataset": "swf-monitor-waarden"
+    },
+    {
+      "type": "viewer",
+      "stap": "Kompas 'SWF Basis', Bolsward-Zuidoost",
+      "verwacht": "de 41 indicatoren met waarden zijn gekleurd, de rest grijs"
+    }
+  ],
+  "bekende_afwijkingen": [
+    "Jaar 0 (152 waarden van één indicator) en 2 buurtcodes zonder CBS-buurt (4 waarden) laat de ETL weg; de variant met-fouten toont dat de laad-API ze afkeurt.",
+    "n ontbreekt in de export: alle waarden krijgen de vlag bron-onderdrukt (de DWH laat n<10 weg). Met n in de datamart kan de vlag weg.",
+    "Overlap met cbs-kerncijfers: 5 indicatoren in de SWF-export hebben dezelfde UUID als het CBS-recept (2.598 waarden vanaf 2019). gebied_data heeft één waarde per gebied × indicator × jaar × scenario; twee datasets op dezelfde sleutel vragen een regel (bron per waarde, of één dataset leidend).",
+    "Float-ruis tot 16 decimalen gaat ongewijzigd mee."
+  ]
+}

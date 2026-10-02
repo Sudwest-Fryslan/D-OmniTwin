@@ -8,7 +8,7 @@
       "name": "gebied_code",
       "type": "string",
       "title": "Gebiedscode",
-      "description": "Code van het gebied: CBS-code (BU..., WK..., GM...) of een eigen code met prefix (bijv. WS0728 voor een welstandsgebied). Moet bestaan in D-OmniTwin (tabel gebieden).",
+      "description": "Code van het gebied: CBS-code (BU..., WK..., GM...) of een eigen code met prefix (bijv. WS728 voor welstand-id 728). Moet bestaan in D-OmniTwin (tabel gebieden).",
       "constraints": { "required": true, "maxLength": 100 }
     },
     {

@@ -31,7 +31,7 @@ Een use case is een **bundel**: data + inrichting + stappen. Alle drie staan hie
 
 ### Extra brondata (gedownload bij het laden)
 
-Deze data staat **niet in git**: wat bij een open bron te downloaden is, downloaden we. `maak_data.py` draait bij het laden van de use case (`laad_usecase.py`) en schrijft naar de cache `$DATA_CACHE/usecases/hittestress/waarden.csv` (in Docker het volume `bron-cache`). Zonder internet en zonder cache: een waarschuwing, en deze vier indicatoren ontbreken.
+Deze data staat **niet in git**: wat bij een open bron te downloaden is, downloaden we. **Uit te faseren:** `maak_data.py` is code in een use case; use cases worden declaratief (zie [use cases](../README.md#een-use-case-is-een-pakket-zonder-code)). De download gaat naar een kernadapter in `src/omnitwin/bronadapters/` (RIVM-WCS en CBS) en dit script verdwijnt. `maak_data.py` draait bij het laden van de use case (`laad_usecase.py`) en schrijft naar de cache `$DATA_CACHE/usecases/hittestress/waarden.csv` (in Docker het volume `bron-cache`). Zonder internet en zonder cache: een waarschuwing, en deze vier indicatoren ontbreken.
 
 Echte open data, opgehaald met [`maak_data.py`](./maak_data.py). Reproduceerbaar: `python usecases/hittestress/maak_data.py` (vereist numpy, Pillow, shapely, pyproj). De CSV staat in git, dus laden werkt offline.
 

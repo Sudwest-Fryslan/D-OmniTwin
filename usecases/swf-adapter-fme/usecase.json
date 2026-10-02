@@ -1,0 +1,102 @@
+{
+  "naam": "swf-adapter-fme",
+  "id": "TC-07-009",
+  "versie": "0.1.0",
+  "titel": "SWF-adapter: dezelfde FME-push naar D-OmniTwin",
+  "vraag": "Kan SWF de bestaande FME-workspaces laten leveren aan D-OmniTwin door alleen de basis-URL en de client te wijzigen, en is een herhaalde push veilig?",
+  "gebruiker": "data-engineer DWH (SWF)",
+  "status": "ontwerp",
+  "afhankelijk_van": [
+    "swf-definities"
+  ],
+  "rechten": [
+    "dataset:swf-monitor-definities:laden",
+    "dataset:swf-monitor-waarden:laden"
+  ],
+  "datasets": [
+    {
+      "id": "swf-monitor-definities",
+      "route": "compat",
+      "registratie": "datasets/swf-monitor-definities.json",
+      "profiel": "definities",
+      "rol": "dataset:swf-monitor-definities:laden",
+      "client": "etl-swf",
+      "prioriteit": "Must",
+      "bron": "export van de huidige monitor ($SWF_DUMP_DIR), in het pushformaat",
+      "verwacht": {
+        "aanroepen": 1,
+        "http": 200
+      }
+    },
+    {
+      "id": "swf-monitor-waarden",
+      "route": "compat",
+      "registratie": "datasets/swf-monitor-waarden.json",
+      "profiel": "waarnemingen",
+      "rol": "dataset:swf-monitor-waarden:laden",
+      "client": "etl-swf",
+      "prioriteit": "Must",
+      "bron": "export van de huidige monitor ($SWF_DUMP_DIR), in het pushformaat",
+      "verwacht": {
+        "aanroepen": 57,
+        "regels": 43097,
+        "http": "200 per aanroep"
+      }
+    }
+  ],
+  "controles": [
+    {
+      "type": "aantal",
+      "dataset": "swf-monitor-definities",
+      "resource": "indicatoren",
+      "gelijk": 228
+    },
+    {
+      "type": "aantal",
+      "dataset": "swf-monitor-waarden",
+      "gelijk": 43097,
+      "omschrijving": "43.253 − 152 (jaar 0) − 4 (onbekende buurten)"
+    },
+    {
+      "type": "afkeuring",
+      "dataset": "swf-monitor-definities",
+      "variant": "ruw",
+      "code": "schema-ongeldig",
+      "omschrijving": "de huidige push met status A: 422, FME zet hem op Rejected; niets gepubliceerd"
+    },
+    {
+      "type": "afkeuring",
+      "dataset": "swf-monitor-waarden",
+      "variant": "met-fouten",
+      "code": "jaar-ongeldig"
+    },
+    {
+      "type": "idempotent",
+      "dataset": "swf-monitor-definities",
+      "omschrijving": "dezelfde body nog een keer: geen nieuwe versie (sha256)"
+    },
+    {
+      "type": "idempotent",
+      "dataset": "swf-monitor-waarden"
+    },
+    {
+      "type": "api",
+      "pad": "/api/laden/v1/compat/swf-monitor/monitor_api/indicator/setup",
+      "minimaal_aantal": 0,
+      "omschrijving": "back-up terug in het SWF-formaat (GET), met 228 indicatoren"
+    },
+    {
+      "type": "api",
+      "pad": "/api/laden/v1/compat/swf-monitor/monitor_api/indicator_waarde/bf4e5b8f-6b0a-4632-b9b4-8e29d025e68c",
+      "minimaal_aantal": 1,
+      "uuid": "bf4e5b8f-6b0a-4632-b9b4-8e29d025e68c",
+      "omschrijving": "waarden van één indicator terug"
+    }
+  ],
+  "bekende_afwijkingen": [
+    "Status A: de push zoals hij nu is, wordt afgekeurd (profiel definities kent A niet). SWF zet A om in de SQL, of D-OmniTwin legt de betekenis van A vast.",
+    "Jaar 0 en de 2 onbekende buurtcodes moeten in de DWH weg; anders wordt die ene aanroep (indicator × gebiedstype) afgekeurd en blijft de vorige versie van die combinatie staan.",
+    "De response gaat van 'niets' naar JSON met status, leveringId en versie; FME hoeft alleen de HTTP-status te controleren.",
+    "Tokenendpoint, client-id en secret: per installatie, nooit als standaardwaarde in de workspace (analyse: het huidige secret staat in platte tekst en moet geroteerd worden)."
+  ]
+}

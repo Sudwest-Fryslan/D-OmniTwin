@@ -13,7 +13,10 @@ pytestmark = pytest.mark.unit
 
 ROOT = Path(__file__).resolve().parents[1]
 BRON = ROOT / "init_data" / "sample" / "2_brondata"
-PAKKETTEN = sorted((ROOT / "usecases").glob("*/usecase.json"))
+# Demopakketten (laad_usecase.py); use cases met `datasets` laden via de laad-API en
+# worden getoetst door tests/test_usecases_uitvoerder.py
+PAKKETTEN = sorted(p for p in (ROOT / "usecases").glob("*/usecase.json")
+                   if "datasets" not in json.loads(p.read_text(encoding="utf-8")))
 RICHTINGEN = {"hoger_is_beter", "lager_is_beter", "neutraal"}
 
 

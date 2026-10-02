@@ -1,0 +1,201 @@
+{
+  "naam": "swf-kaartlagen",
+  "id": "TC-07-008",
+  "versie": "0.1.0",
+  "titel": "SWF-kaartlagen: klimaat, deelgebieden, projecten en overige lagen",
+  "vraag": "Ik wil de kaartlagen van de huidige monitor (klimaatlagen, deelgebieden, coördinatorgebieden, grootgrondbezit, 'Wat speelt er?') in D-OmniTwin, met dezelfde zichtbaarheid: open lagen voor iedereen, interne lagen alleen na inloggen.",
+  "gebruiker": "medewerker team of vakgroep (SWF)",
+  "status": "ontwerp",
+  "afhankelijk_van": [
+    "swf-gebiedsindelingen"
+  ],
+  "rechten": [
+    "realm-rol beheerder (registreren)",
+    "realm-rol lezer (interne lagen zien)",
+    "dataset:swf-laag-deelgebieden:laden",
+    "dataset:swf-laag-coordinatorgebieden:laden",
+    "dataset:swf-laag-afstand-tot-koelte:laden",
+    "dataset:swf-laag-risico-paalrot:laden",
+    "dataset:swf-laag-projecten-vlak:laden",
+    "dataset:swf-laag-projecten-punt:laden",
+    "dataset:swf-laag-projecten-lijn:laden",
+    "dataset:swf-laag-grootgrondbezit:laden"
+  ],
+  "datasets": [
+    {
+      "id": "swf-laag-deelgebieden",
+      "route": "laden",
+      "registratie": "datasets/swf-laag-deelgebieden.json",
+      "profiel": "kaartlaag",
+      "rol": "dataset:swf-laag-deelgebieden:laden",
+      "client": "etl-swf",
+      "prioriteit": "Should",
+      "bron": "repo (data-upload/)",
+      "verwacht": {
+        "features": 6,
+        "toegang": "PUBLIC"
+      }
+    },
+    {
+      "id": "swf-laag-coordinatorgebieden",
+      "route": "laden",
+      "registratie": "datasets/swf-laag-coordinatorgebieden.json",
+      "profiel": "kaartlaag",
+      "rol": "dataset:swf-laag-coordinatorgebieden:laden",
+      "client": "etl-swf",
+      "prioriteit": "Should",
+      "bron": "SWF projectmap ($SWF_DOCS_DIR)",
+      "verwacht": {
+        "features": 146,
+        "toegang": "RESTRICTED",
+        "weggelaten": "1 geometrie zonder vlak (geometrie-geen-vlak)"
+      }
+    },
+    {
+      "id": "swf-laag-afstand-tot-koelte",
+      "route": "laden",
+      "registratie": "datasets/swf-laag-afstand-tot-koelte.json",
+      "profiel": "kaartlaag",
+      "rol": "dataset:swf-laag-afstand-tot-koelte:laden",
+      "client": "etl-swf",
+      "prioriteit": "Must",
+      "bron": "SWF-bewerking ($SWF_DOCS_DIR)",
+      "verwacht": {
+        "features": "41.778 (41.956 in de bron, 178 zonder geometrie)",
+        "toegang": "RESTRICTED (open vraag 13)"
+      }
+    },
+    {
+      "id": "swf-laag-risico-paalrot",
+      "route": "laden",
+      "registratie": "datasets/swf-laag-risico-paalrot.json",
+      "profiel": "kaartlaag",
+      "rol": "dataset:swf-laag-risico-paalrot:laden",
+      "client": "etl-swf",
+      "prioriteit": "Must",
+      "bron": "SWF-bewerking ($SWF_DOCS_DIR)",
+      "verwacht": {
+        "features": 289
+      }
+    },
+    {
+      "id": "swf-laag-projecten-vlak",
+      "route": "laden",
+      "registratie": "datasets/swf-laag-projecten-vlak.json",
+      "profiel": "kaartlaag",
+      "rol": "dataset:swf-laag-projecten-vlak:laden",
+      "client": "etl-swf",
+      "prioriteit": "Should",
+      "bron": "GeoVisia-export ($SWF_DOCS_DIR)",
+      "verwacht": {
+        "features": 148,
+        "persoonsvelden": 0
+      }
+    },
+    {
+      "id": "swf-laag-projecten-punt",
+      "route": "laden",
+      "registratie": "datasets/swf-laag-projecten-punt.json",
+      "profiel": "kaartlaag",
+      "rol": "dataset:swf-laag-projecten-punt:laden",
+      "client": "etl-swf",
+      "prioriteit": "Should",
+      "bron": "GeoVisia-export ($SWF_DOCS_DIR)",
+      "verwacht": {
+        "features": 15
+      }
+    },
+    {
+      "id": "swf-laag-projecten-lijn",
+      "route": "laden",
+      "registratie": "datasets/swf-laag-projecten-lijn.json",
+      "profiel": "kaartlaag",
+      "rol": "dataset:swf-laag-projecten-lijn:laden",
+      "client": "etl-swf",
+      "prioriteit": "Should",
+      "bron": "GeoVisia-export ($SWF_DOCS_DIR)",
+      "verwacht": {
+        "features": 1
+      }
+    },
+    {
+      "id": "swf-laag-grootgrondbezit",
+      "route": "laden",
+      "registratie": "datasets/swf-laag-grootgrondbezit.json",
+      "profiel": "kaartlaag",
+      "rol": "dataset:swf-laag-grootgrondbezit:laden",
+      "client": "etl-swf",
+      "prioriteit": "Should",
+      "bron": "SWF-intern: export GeoServer ($SWF_GEO_DIR)"
+    }
+  ],
+  "controles": [
+    {
+      "type": "aantal",
+      "dataset": "swf-laag-deelgebieden",
+      "gelijk": 6
+    },
+    {
+      "type": "aantal",
+      "dataset": "swf-laag-coordinatorgebieden",
+      "gelijk": 146,
+      "omschrijving": "147 in de bron; 1 geometrie zonder vlak valt af"
+    },
+    {
+      "type": "aantal",
+      "dataset": "swf-laag-risico-paalrot",
+      "gelijk": 289
+    },
+    {
+      "type": "aantal",
+      "dataset": "swf-laag-afstand-tot-koelte",
+      "gelijk": 41778
+    },
+    {
+      "type": "aantal",
+      "dataset": "swf-laag-projecten-vlak",
+      "gelijk": 148
+    },
+    {
+      "type": "aantal",
+      "dataset": "swf-laag-projecten-punt",
+      "gelijk": 15
+    },
+    {
+      "type": "aantal",
+      "dataset": "swf-laag-projecten-lijn",
+      "gelijk": 1
+    },
+    {
+      "type": "api",
+      "pad": "/api/geo/v1/collections/laag.swf_laag_deelgebieden/items?limit=1",
+      "anoniem": true,
+      "minimaal_aantal": 1,
+      "omschrijving": "open laag: anoniem zichtbaar"
+    },
+    {
+      "type": "api",
+      "pad": "/api/geo/v1/collections/laag.swf_laag_projecten_vlak/items?limit=1",
+      "anoniem": true,
+      "status": 401,
+      "omschrijving": "interne laag: anoniem 401, ook bij een directe aanroep"
+    },
+    {
+      "type": "viewer",
+      "stap": "inloggen als medewerker, laaggroep 'Wat speelt er allemaal?' aanzetten",
+      "verwacht": "projecten zichtbaar, pop-up zonder namen, e-mail of telefoon"
+    },
+    {
+      "type": "viewer",
+      "stap": "zonder inloggen de lagenlijst openen",
+      "verwacht": "alleen open lagen (deelgebieden, PDOK-lagen)"
+    }
+  ],
+  "bekende_afwijkingen": [
+    "Rasterlagen gaan niet via de laad-API (profiel kaartlaag is vector): waterdiepte bij intense neerslag (Klimaateffectatlas, open WMS), maaiveldhoogte AHN4 (PDOK, open), schaduwkaart en heatmaps wateroverlast blijven externe lagen.",
+    "Profiel kaartlaag heeft één geometrietype per tabel: de GeoVisia-projecten worden drie datasets (vlak, punt, lijn). Overweeg meer tabellen per kaartlaag in profiel v2.",
+    "Toegang: dct:accessRights PUBLIC/RESTRICTED in de registratie; de beveiligde geo-route (forwardAuth) en de rol voor interne lagen bestaan nog niet. Welke lagen intern zijn, is open vraag 13.",
+    "GeoVisia bevat persoonsvelden (projectleider, e-mail, telefoon, aangemaakt/gewijzigd door): de levering neemt alleen een vaste lijst velden over. Vrije tekst (projectomschrijving) kan nog namen bevatten: DPIA-toets.",
+    "Grootgrondbezit (BRK-afgeleid) en de klimaatbewerkingen: herkomst en licentie navragen; grootgrondbezit alleen zonder natuurlijke personen."
+  ]
+}

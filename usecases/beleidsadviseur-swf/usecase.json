@@ -1,5 +1,7 @@
 {
+  "naam": "beleidsadviseur-swf",
   "id": "TC-06-001",
+  "versie": "0.1.0",
   "titel": "Beleidsadviseur verkent kernen in Súdwest-Fryslân (IJsselmeerkust)",
   "persona": {
     "rol": "Beleidsadviseur leefbaarheid / ruimtelijke ordening",
@@ -57,5 +59,12 @@
   "verwacht": {
     "vraag_zoekwoord": "beleidsadviseur",
     "verwacht": "Het chatscenario Beleidsadviseur zet buurten, de gemeente Súdwest-Fryslân en het Kompas klaar."
-  }
+  },
+  "afhankelijk_van": [
+    {
+      "naam": "cbs-kerncijfers",
+      "versie": ">=0.1.0",
+      "optioneel": true
+    }
+  ]
 }

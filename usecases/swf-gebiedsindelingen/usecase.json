@@ -1,0 +1,180 @@
+{
+  "naam": "swf-gebiedsindelingen",
+  "id": "TC-07-004",
+  "versie": "0.1.0",
+  "titel": "SWF-gebiedsindelingen als GeoPackage-leveringen",
+  "vraag": "Ik wil de gebiedsindelingen van de monitor (welstand × buurt, buurtdelen binnen/buiten de kom, woonplaatsen, postcodes, bebouwde kom, deelgebieden, coördinatorgebieden) als gebieden met geometrie in D-OmniTwin, in plaats van live uit de WFS.",
+  "gebruiker": "functioneel beheerder SWF / GIS-specialist",
+  "status": "ontwerp",
+  "afhankelijk_van": [
+    "swf-definities",
+    "cbs-gebiedsindelingen"
+  ],
+  "rechten": [
+    "realm-rol beheerder (registreren)",
+    "dataset:swf-gebied-welstand-buurt:laden",
+    "dataset:swf-gebied-buurt-bebouwde-kom:laden",
+    "dataset:swf-gebied-woonplaats:laden",
+    "dataset:swf-gebied-postcode:laden",
+    "dataset:swf-gebied-bebouwde-kom:laden",
+    "dataset:swf-gebied-deelgebieden:laden",
+    "dataset:swf-gebied-coordinatorgebieden:laden"
+  ],
+  "datasets": [
+    {
+      "id": "swf-gebied-welstand-buurt",
+      "route": "laden",
+      "registratie": "datasets/swf-gebied-welstand-buurt.json",
+      "profiel": "gebiedsindeling",
+      "rol": "dataset:swf-gebied-welstand-buurt:laden",
+      "client": "etl-swf",
+      "prioriteit": "Must",
+      "bron": "SWF-intern: export GeoServer ($SWF_GEO_DIR)",
+      "verwacht": {
+        "features": "±758 (755 met waarden)",
+        "codes": "1–758 → WS1–WS758"
+      }
+    },
+    {
+      "id": "swf-gebied-buurt-bebouwde-kom",
+      "route": "laden",
+      "registratie": "datasets/swf-gebied-buurt-bebouwde-kom.json",
+      "profiel": "gebiedsindeling",
+      "rol": "dataset:swf-gebied-buurt-bebouwde-kom:laden",
+      "client": "etl-swf",
+      "prioriteit": "Must",
+      "bron": "CBS-buurten (PDOK, open) × bebouwde kom (SWF-intern, $SWF_GEO_DIR)",
+      "verwacht": {
+        "features": "±273 (alle met waarden)",
+        "codes": "BU1900xxxx_BBKJ / _BBKN"
+      }
+    },
+    {
+      "id": "swf-gebied-woonplaats",
+      "route": "laden",
+      "registratie": "datasets/swf-gebied-woonplaats.json",
+      "profiel": "gebiedsindeling",
+      "rol": "dataset:swf-gebied-woonplaats:laden",
+      "client": "etl-swf",
+      "prioriteit": "Should",
+      "bron": "BAG woonplaatsen via PDOK (open, CC0)",
+      "verwacht": {
+        "features": "82 woonplaatsen (BAG, oktober 2026)"
+      }
+    },
+    {
+      "id": "swf-gebied-postcode",
+      "route": "laden",
+      "registratie": "datasets/swf-gebied-postcode.json",
+      "profiel": "gebiedsindeling",
+      "rol": "dataset:swf-gebied-postcode:laden",
+      "client": "etl-swf",
+      "prioriteit": "Could",
+      "bron": "CBS Postcode-4 2023 via PDOK (open, CC BY 4.0)",
+      "verwacht": {
+        "features": "97 PC4-gebieden (CBS 2023)"
+      }
+    },
+    {
+      "id": "swf-gebied-bebouwde-kom",
+      "route": "laden",
+      "registratie": "datasets/swf-gebied-bebouwde-kom.json",
+      "profiel": "gebiedsindeling",
+      "rol": "dataset:swf-gebied-bebouwde-kom:laden",
+      "client": "etl-swf",
+      "prioriteit": "Could",
+      "bron": "SWF-intern: export GeoServer ($SWF_GEO_DIR)"
+    },
+    {
+      "id": "swf-gebied-deelgebieden",
+      "route": "laden",
+      "registratie": "datasets/swf-gebied-deelgebieden.json",
+      "profiel": "gebiedsindeling",
+      "rol": "dataset:swf-gebied-deelgebieden:laden",
+      "client": "etl-swf",
+      "prioriteit": "Should",
+      "bron": "repo: data-upload/Deelgebieden_omgevingsvisie.gpkg",
+      "verwacht": {
+        "features": 6
+      }
+    },
+    {
+      "id": "swf-gebied-coordinatorgebieden",
+      "route": "laden",
+      "registratie": "datasets/swf-gebied-coordinatorgebieden.json",
+      "profiel": "gebiedsindeling",
+      "rol": "dataset:swf-gebied-coordinatorgebieden:laden",
+      "client": "etl-swf",
+      "prioriteit": "Should",
+      "bron": "SWF-intern: projectmap ($SWF_DOCS_DIR)",
+      "verwacht": {
+        "features": 146,
+        "weggelaten": "1 geometrie zonder vlak (geometrie-geen-vlak)"
+      }
+    }
+  ],
+  "controles": [
+    {
+      "type": "aantal",
+      "dataset": "swf-gebied-deelgebieden",
+      "gelijk": 6
+    },
+    {
+      "type": "aantal",
+      "dataset": "swf-gebied-coordinatorgebieden",
+      "gelijk": 146,
+      "omschrijving": "147 in de bron; 1 geometrie zonder vlak valt af"
+    },
+    {
+      "type": "aantal",
+      "dataset": "swf-gebied-woonplaats",
+      "minimaal": 80
+    },
+    {
+      "type": "aantal",
+      "dataset": "swf-gebied-postcode",
+      "gelijk": 97
+    },
+    {
+      "type": "aantal",
+      "dataset": "swf-gebied-welstand-buurt",
+      "minimaal": 755,
+      "omschrijving": "alle welstand-id's met waarden"
+    },
+    {
+      "type": "aantal",
+      "dataset": "swf-gebied-buurt-bebouwde-kom",
+      "minimaal": 273,
+      "omschrijving": "alle buurtdelen met waarden"
+    },
+    {
+      "type": "api",
+      "pad": "/api/data/v1/gebieden?id=eq.WS728&select=id,gebiedstype_id",
+      "anoniem": false,
+      "minimaal_aantal": 1,
+      "omschrijving": "welstand-id 728 heet in D-OmniTwin WS728 (namespace)"
+    },
+    {
+      "type": "api",
+      "pad": "/api/data/v1/gebieden?gebiedstype_id=eq.e7ebeee1-fe68-5731-a112-ee82f5a37f1b&select=id",
+      "anoniem": true,
+      "minimaal_aantal": 6
+    },
+    {
+      "type": "viewer",
+      "stap": "gebiedsindeling 'Welstand per buurt' kiezen en inzoomen op Bolsward",
+      "verwacht": "vlakken per welstandsgebied × buurt, alleen na inloggen"
+    },
+    {
+      "type": "idempotent",
+      "dataset": "swf-gebied-deelgebieden"
+    }
+  ],
+  "bekende_afwijkingen": [
+    "Niet geleverd (geen waarden, inactief, en de codes botsen met de bestaande gebiedstypen Gemeente/Provincie): CBS gemeentegrenzen (1e6b3c18), CBS provinciegrenzen (e1de90ae), SWF gemeentegrens 1 januari 2018 (f9e2bd26), SWF gemeentegrens zonder littens (82525652).",
+    "Welstand × buurt, bebouwde kom en de kom voor de buurtdelen staan alleen in de GeoServer van SWF: nodig is een export als GeoPackage ($SWF_GEO_DIR) of de database-dump ($SWF_DB_DUMP). Zonder die bron worden deze datasets overgeslagen.",
+    "Welke bebouwde kom de monitor voor _BBKJ/_BBKN gebruikt, is niet bekend (Wegenverkeerswet, Wet natuurbescherming of BAG-woonplaats).",
+    "De gebiedstypen 'Deelgebieden Omgevingsvisie' en 'Dorps- en wijkcoördinatorgebieden' zijn nieuw (uuid5); ze zitten niet in de SWF-definities en moeten in de stuurdata van D-OmniTwin.",
+    "Postcode: het open CBS-PC4 vervangt 'ESRI postcode SWF' (licentie); PC6 alleen als SWF dat wil."
+  ]
+}

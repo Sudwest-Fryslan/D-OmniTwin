@@ -1,0 +1,72 @@
+{
+  "id": "swf-gebied-bebouwde-kom",
+  "bronId": "swf-monitor",
+  "beschrijving": {
+    "@context": "https://data.overheid.nl/dcat-ap-nl/context.jsonld",
+    "@type": "dcat:Dataset",
+    "dct:title": "Bebouwde kom Wet natuurbescherming, Súdwest-Fryslân",
+    "dct:description": "Door de gemeente vastgestelde bebouwde kom voor de Wet natuurbescherming (houtopstanden). D-OmniTwin zet er BK voor.",
+    "dct:publisher": "https://identifier.overheid.nl/tooi/id/gemeente/gm1900",
+    "dct:accessRights": "http://publications.europa.eu/resource/authority/access-right/RESTRICTED",
+    "dct:license": "http://standaarden.overheid.nl/owms/terms/licentieonbekend",
+    "dct:spatial": "https://identifier.overheid.nl/tooi/id/gemeente/gm1900",
+    "dct:source": "GeoServer Súdwest-Fryslân",
+    "dcat:theme": [
+      "http://standaarden.overheid.nl/owms/terms/Ruimtelijke_ordening"
+    ],
+    "dcat:keyword": [
+      "gebiedsindeling",
+      "Súdwest-Fryslân"
+    ],
+    "dct:conformsTo": "http://www.opengis.net/def/crs/EPSG/0/28992",
+    "dcat:contactPoint": {
+      "@type": "vcard:Organization",
+      "vcard:fn": "Functioneel beheer gebiedsmonitor, gemeente Súdwest-Fryslân"
+    }
+  },
+  "laadprofiel": {
+    "profiel": "gebiedsindeling",
+    "doel": {
+      "gebiedstypeId": "92915ac7-fec3-49ac-a0fb-ddb9b8c92317",
+      "featureTabel": "gebieden",
+      "sleutelveld": "code",
+      "labelveld": "naam",
+      "codePrefix": "BK"
+    },
+    "plausibiliteit": {
+      "minRegels": 1,
+      "maxDalingProcent": 10
+    }
+  },
+  "bron": {
+    "adapter": "lokaal-bestand",
+    "pad": "${SWF_GEO_DIR}/bebouwde_kom_wnb.gpkg",
+    "omschrijving": "export uit de GeoServer van SWF"
+  },
+  "bewerkingen": [
+    {
+      "hernoem": {
+        "id": "code"
+      }
+    },
+    {
+      "tekst": [
+        "code"
+      ]
+    },
+    {
+      "behoud": [
+        "code",
+        "naam"
+      ]
+    },
+    {
+      "multipolygon": true
+    }
+  ],
+  "levering": {
+    "formaat": "geopackage",
+    "bestand": "swf-gebied-bebouwde-kom.gpkg",
+    "geometrie": "MultiPolygon"
+  }
+}

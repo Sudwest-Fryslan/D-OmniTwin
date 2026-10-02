@@ -1,0 +1,52 @@
+[
+  {
+    "indicator_uuid": "f6eafa70-9383-4de6-bd2a-e47309843437",
+    "indicator_naam": "Waterdiepte op straat",
+    "thema": "Hemelwateroverlast"
+  },
+  {
+    "indicator_uuid": "89b6274f-9372-4784-8ba3-924b6c7e4d7d",
+    "indicator_naam": "Waterdiepte tegen gevel",
+    "thema": "Hemelwateroverlast"
+  },
+  {
+    "indicator_uuid": "0bbd30e5-08f5-4499-b6ca-cdda990720dc",
+    "indicator_naam": "Aandeel water t.o.v. verhard",
+    "thema": "Hemelwateroverlast"
+  },
+  {
+    "indicator_uuid": "fdb4c11b-60ca-4ea1-86b8-6855a83344ee",
+    "indicator_naam": "Gevoelstemperatuur",
+    "thema": "Hittestress"
+  },
+  {
+    "indicator_uuid": "bf4e5b8f-6b0a-4632-b9b4-8e29d025e68c",
+    "indicator_naam": "Afstand tot koele plek",
+    "thema": "Hittestress"
+  },
+  {
+    "indicator_uuid": "66ee35d7-8046-470a-8e99-efce744cb97d",
+    "indicator_naam": "Aandeel bladerdek per buurt",
+    "thema": "Hittestress"
+  },
+  {
+    "indicator_uuid": "97f53738-3439-4c28-8cac-046a52c65248",
+    "indicator_naam": "Oppervlak groen per inwoner",
+    "thema": "Hittestress"
+  },
+  {
+    "indicator_uuid": "2d6bdaba-3832-40cc-acae-950883f1aa76",
+    "indicator_naam": "Trend GLG naar 2050",
+    "thema": "Droogte"
+  },
+  {
+    "indicator_uuid": "b334ce1d-3420-4863-9c10-af8f238dfd6c",
+    "indicator_naam": "GLG - kleiweide",
+    "thema": "Droogte"
+  },
+  {
+    "indicator_uuid": "8a921563-e6e3-45e4-a8e3-5c890c619956",
+    "indicator_naam": "GLG - veenweide",
+    "thema": "Droogte"
+  }
+]

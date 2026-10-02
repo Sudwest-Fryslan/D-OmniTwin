@@ -1,0 +1,103 @@
+{
+  "id": "swf-monitor-waarden",
+  "bronId": "swf-monitor",
+  "beschrijving": {
+    "@context": "https://data.overheid.nl/dcat-ap-nl/context.jsonld",
+    "@type": "dcat:Dataset",
+    "dct:title": "Basismonitor Súdwest-Fryslân — indicatorwaarden",
+    "dct:description": "Waarden van de indicatoren van de gebiedsmonitor per CBS-buurt, buurtdeel binnen/buiten de bebouwde kom en welstandsgebied × buurt, per jaar. Waarden op minder dan 10 waarnemingen laat de bron weg.",
+    "dct:publisher": "https://identifier.overheid.nl/tooi/id/gemeente/gm1900",
+    "dct:accessRights": "http://publications.europa.eu/resource/authority/access-right/RESTRICTED",
+    "dct:license": "http://standaarden.overheid.nl/owms/terms/licentieonbekend",
+    "dct:spatial": "https://identifier.overheid.nl/tooi/id/gemeente/gm1900",
+    "dct:source": "Datamart DMART_BASISMONITOR, gemeente Súdwest-Fryslân (export van de huidige gebiedsmonitor)",
+    "dcat:theme": [
+      "http://standaarden.overheid.nl/owms/terms/Sociale_zekerheid"
+    ],
+    "dcat:keyword": [
+      "gebiedsmonitor",
+      "indicatoren",
+      "Súdwest-Fryslân"
+    ],
+    "dcat:contactPoint": {
+      "@type": "vcard:Organization",
+      "vcard:fn": "Functioneel beheer gebiedsmonitor, gemeente Súdwest-Fryslân"
+    }
+  },
+  "laadprofiel": {
+    "profiel": "waarnemingen",
+    "adapter": "swf-monitor-v1",
+    "vervangBereik": [
+      "indicator_uuid",
+      "gebiedstype"
+    ],
+    "minimumN": 10,
+    "bijNOnderDrempel": "onderdrukken",
+    "bijOntbrekendeN": "bron-onderdrukt",
+    "plausibiliteit": {
+      "maxDalingProcent": 20
+    }
+  },
+  "bron": {
+    "adapter": "swf-dump",
+    "export": "waarden",
+    "omschrijving": "${SWF_DUMP_DIR}/output/api_data_dump.json (GET …/monitor_api/indicator_waarde); later ook ${SWF_DB_DUMP}"
+  },
+  "bewerkingen": [
+    {
+      "filter": {
+        "veld": "gebiedstype_id",
+        "in": [
+          "afba67cb-6b38-4723-9c95-102a22d5b38a",
+          "d210c084-506b-48b4-87c9-b7d4bf422553"
+        ]
+      },
+      "omschrijving": "Basis monitor: CBS-buurten en buurtdelen bebouwde kom"
+    },
+    {
+      "id": "jaar-0",
+      "afwijzen": {
+        "veld": "jaar",
+        "gelijk": 0,
+        "reden": "jaar-ongeldig"
+      }
+    },
+    {
+      "id": "onbekende-buurten",
+      "afwijzen": {
+        "veld": "gebieds_id",
+        "in": [
+          "BU19009997",
+          "BU19009998"
+        ],
+        "reden": "gebied-onbekend"
+      },
+      "omschrijving": "buurtcodes die niet in de CBS-buurtindeling voorkomen"
+    },
+    {
+      "hernoem": {
+        "indicator_id": "indicator_uuid",
+        "gebiedstype_id": "gebiedstype",
+        "gebieds_id": "gebied_code"
+      }
+    },
+    {
+      "tekst": [
+        "gebied_code"
+      ]
+    }
+  ],
+  "levering": {
+    "formaat": "datapackage",
+    "bestand": "swf-monitor-waarden-basis.zip"
+  },
+  "varianten": {
+    "met-fouten": {
+      "omschrijving": "jaar 0 en onbekende buurtcodes laten staan: de laad-API hoort af te keuren",
+      "sla_over": [
+        "jaar-0",
+        "onbekende-buurten"
+      ]
+    }
+  }
+}

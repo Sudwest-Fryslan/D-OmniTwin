@@ -33,6 +33,8 @@ def laad_usecases():
     uit = {}
     for f in sorted((ROOT / "usecases").glob("*/usecase.json")):
         u = json.loads(f.read_text(encoding="utf-8"))
+        if "datasets" in u:  # use case via de laad-API (status ontwerp), geen demopakket
+            continue
         uit[f"{u['id']} {f.parent.name}"] = u
     return uit
 
