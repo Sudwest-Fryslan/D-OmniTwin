@@ -91,4 +91,4 @@ Eisen:
   - de regel voor aggregaten (secundaire onderdrukking);
   - betekenis van indicatorstatus `A` in de SWF-definities;
   - de SWF-IdP (Entra) koppelen aan realm `omnitwin` (de huidige koppeling loopt in december af);
-  - rollen per dataset of ook per gemeente (#34).
+  - rollen per dataset of ook per gemeente (#34). Richting: geen rollen per gemeente binnen één instantie; elke organisatie heeft een eigen instantie (ADR 0007).
