@@ -25,6 +25,8 @@ import pytest
 playwright = pytest.importorskip("playwright.sync_api")
 expect = playwright.expect
 
+from e2e_helpers import TRAAG_MS, klik_chatactie, wacht_op_kaart_in_rust  # noqa: E402
+
 pytestmark = pytest.mark.e2e
 
 BASE_URL = os.environ.get("OMNITWIN_BASE_URL", "http://localhost").rstrip("/")
@@ -128,9 +130,11 @@ def test_datavraag_in_de_chat(page, uc):
         timeout=60_000,
     )
     expect(page.locator("#selection-badge")).to_be_visible()
-    # Inzoom-animatie: met software-rendering kan die langer duren dan 1 s
-    page.wait_for_function("() => (window.state.currentViewState?.zoom || 0) >= 11", timeout=20_000)
-    page.wait_for_timeout(500)
+    # Inzoom-animatie: de camera beweegt alleen op animatieframes. In CI (software-WebGL)
+    # blokkeert shadercompilatie na het laden van een laag de renderer soms tientallen
+    # seconden; daarom de wachttijd voor trage stappen (TRAAG_MS) en een vast pollinterval (#194)
+    page.wait_for_function("() => (window.state.currentViewState?.zoom || 0) >= 11", polling=100, timeout=TRAAG_MS)
+    wacht_op_kaart_in_rust(page)
     camera = page.evaluate("""(ids) => {
         const set = new Set(ids); let x0 = 180, x1 = -180, y0 = 90, y1 = -90;
         const walk = a => { if (typeof a[0] === 'number') { x0 = Math.min(x0, a[0]); x1 = Math.max(x1, a[0]);
@@ -147,7 +151,9 @@ def test_datavraag_in_de_chat(page, uc):
     # Toon op kaart: gebieden geselecteerd en indicator op de kaart
     toon = next(a for a in data["acties"] if a["type"] == "TOON_OP_KAART")
     with page.expect_response(lambda r: "/api/gebiedsmonitor/kaart_data/" in r.url and r.ok, timeout=60_000):
-        bericht.locator(".chat-actie-btn", has_text="Toon op kaart").first.click()
+        # Niet direct klikken: na het meebewegen van de kaart kan de renderer in CI (software-
+        # WebGL) even geen frames tekenen, en dan hangt Playwrights stabiliteitscheck (#194)
+        klik_chatactie(page, bericht.locator(".chat-actie-btn", has_text="Toon op kaart").first, "Toon op kaart")
     page.wait_for_function(
         "([uuid, n]) => window.state.currentIndicator === uuid && window.state.selectedGebiedIds.size === n",
         arg=[toon["indicator_uuid"], len(toon["gebied_ids"])],
