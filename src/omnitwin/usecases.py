@@ -60,7 +60,7 @@ VOLLEDIG = ("naam", "versie", "titel", "vraag", "gebruiker", "status", "afhankel
 TOEGESTAAN = {".json", ".md", ".csv"}
 TOEGESTAAN_BEWIJS = {".json", ".md", ".png", ".jpg", ".jpeg", ".webp"}
 # Bestaande code in use cases, uit te faseren naar een kernadapter (niet nieuw toevoegen).
-UIT_TE_FASEREN = {"hittestress/maak_data.py"}
+UIT_TE_FASEREN = set()
 # Sleutels in datasets/<id>.json die niet naar POST /api/laden/v1/datasets gaan
 NIET_REGISTREREN = ("bron", "bewerkingen", "levering", "varianten", "$schema")
 

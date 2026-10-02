@@ -2,8 +2,48 @@
   "specificatie": "1.0",
   "naam": "brede-welvaart",
   "id": "TC-06-007",
-  "versie": "0.1.0",
+  "versie": "0.2.0",
   "titel": "Brede welvaart en functiemenging",
+  "vraag": "Hoe staat het met de brede welvaart in Bolsward-Zuidoost vergeleken met de rest van Bolsward?",
+  "gebruiker": "Strateeg / economische zaken",
+  "status": "actief",
+  "afhankelijk_van": [
+    "cbs-gebiedsindelingen",
+    "cbs-kerncijfers",
+    "rivm-gezondheidsmonitor",
+    "sample-bronbibliotheek"
+  ],
+  "rechten": [],
+  "datasets": [],
+  "controles": [
+    {
+      "type": "api",
+      "pad": "/api/data/v1/gebied_data?gebied_id=eq.BU19000002&indicator_uuid=eq.9c035f53-75a5-43eb-8496-22c4c6f08d6b&select=jaar,waarde,bron",
+      "anoniem": true,
+      "minimaal_aantal": 3,
+      "uuid": "9c035f53-75a5-43eb-8496-22c4c6f08d6b",
+      "gebied": "BU19000002",
+      "omschrijving": "Inkomen per inwoner Bolsward-Zuidoost (CBS)"
+    },
+    {
+      "type": "api",
+      "pad": "/api/data/v1/gebied_data?gebied_id=eq.BU19000002&indicator_uuid=eq.d20c7b4d-d305-495b-b77c-07b8121614a7&select=jaar,waarde,bron",
+      "anoniem": true,
+      "minimaal_aantal": 1,
+      "uuid": "d20c7b4d-d305-495b-b77c-07b8121614a7",
+      "gebied": "BU19000002",
+      "omschrijving": "Ervaren gezondheid Bolsward-Zuidoost (RIVM, echt; was demodata)"
+    },
+    {
+      "type": "api",
+      "pad": "/api/data/v1/gebied_data?gebied_id=eq.BU19000001&indicator_uuid=eq.1e9bc2fe-d5bd-4306-9b6b-d443e22916cf&select=jaar,waarde,bron",
+      "anoniem": true,
+      "minimaal_aantal": 1,
+      "uuid": "1e9bc2fe-d5bd-4306-9b6b-d443e22916cf",
+      "gebied": "BU19000001",
+      "omschrijving": "Diversiteit functies Bolsward-Noord (BAG, sample)"
+    }
+  ],
   "persona": {
     "rol": "Strateeg / economische zaken",
     "vraag": "Hoe staat het met de brede welvaart in Bolsward-Zuidoost vergeleken met de rest van Bolsward?",
@@ -17,7 +57,7 @@
       "BU19000002": "Bolsward-Zuidoost",
       "BU19000004": "Bolsward-Noordoost"
     },
-    "dataset": "init_data/sample",
+    "dataset": "laad-API: de datasets van de afhankelijkheden (open bronnen; demodata gemarkeerd)",
     "indicatoren": [
       {
         "naam": "Inkomen per inwoner",
@@ -40,8 +80,8 @@
     "ontbreekt_nog": [
       "Woontevredenheid / Leefbaarometer",
       "Veiligheidsbeleving",
-      "Trend over meerdere jaargangen",
-      "Opleidingsniveau in %"
+      "Opleidingsniveau in %",
+      "Functiemenging (BAG): open, adapter volgt; nu uit sample-bronbibliotheek (Bolsward-Zuidoost DEMODATA)"
     ]
   },
   "inrichting": {
@@ -51,13 +91,6 @@
   "ai_zoekvraag": "inkomen en werk in de buurt",
   "verwacht": {
     "vraag_zoekwoord": "inkomen",
-    "verwacht": "Inkomen per inwoner: Bolsward-Zuidoost 26,9 duizend euro (CBS 2023), tussen Noord (22,1; 2023) en Noordoost (30,9; 2024). Netto arbeidsparticipatie 2024: Noord 66%, Zuidoost 71%, Noordoost 73%."
-  },
-  "afhankelijk_van": [
-    {
-      "naam": "cbs-kerncijfers",
-      "versie": ">=0.1.0",
-      "optioneel": true
-    }
-  ]
+    "verwacht": "Inkomen per inwoner: Bolsward-Zuidoost 26,9 duizend euro (CBS 2023), tussen Noord (22,1; 2023) en Noordoost (30,9; 2024). Netto arbeidsparticipatie 2024: Noord 66%, Zuidoost 71%, Noordoost 73%. Goed ervaren gezondheid 2024 (RIVM): Noord 65,9%, Zuidoost 72,7%, Noordoost 77,6%."
+  }
 }

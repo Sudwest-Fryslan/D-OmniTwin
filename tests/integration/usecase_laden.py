@@ -34,11 +34,31 @@ def benodigde_bronnen(naam, ucs):
     return nodig
 
 
+def beheer_api_ontbreekt(naam, ucs):
+    """Een use case met status ontwerp die de (nog niet gebouwde) beheer-API nodig heeft: melding,
+    anders None. Zodra de beheer-API er is (geen 404), draait de acceptatietest gewoon."""
+    import requests
+    for n in uc.volgorde([naam], ucs):
+        for ds in ucs[n].get("datasets", []):
+            if ds.get("route") != "beheer" or ucs[n].get("status") != "ontwerp":
+                continue
+            try:
+                status = requests.get(f"{uc.basis_url()}{ds['beheerpad']}", timeout=10).status_code
+            except requests.RequestException:
+                status = None
+            if status in (404, None):
+                return f"beheer-API ontbreekt nog ({ds['beheerpad']}); use case {n} heeft status ontwerp"
+    return None
+
+
 def vereisten(naam):
     """Slaat de module over als de laad-API, een bron of de machineclient ontbreekt."""
     ucs = uc.lees_usecases()
     if not uc.laad_api_beschikbaar():
         pytest.skip(f"laad-API nog niet beschikbaar ({uc.basis_url()}{uc.LAAD_API}/openapi.json)", allow_module_level=True)
+    ontbreekt_api = beheer_api_ontbreekt(naam, ucs)
+    if ontbreekt_api:
+        pytest.skip(ontbreekt_api, allow_module_level=True)
     ontbreekt = sorted(v for v in benodigde_bronnen(naam, ucs) if not os.environ.get(v))
     if ontbreekt:
         pytest.skip(f"bron ontbreekt: {', '.join(ontbreekt)}", allow_module_level=True)

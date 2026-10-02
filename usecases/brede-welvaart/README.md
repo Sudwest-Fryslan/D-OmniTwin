@@ -14,20 +14,19 @@ Een use case is een **bundel**: data + inrichting + stappen. Alle drie staan hie
 
 ## 1. Data
 
-- **Dataset:** `init_data/sample`, gebiedstype CBS Buurten
-- **Gebieden:** Bolsward-Noord (BU19000001), Bolsward-Zuidoost (BU19000002), Bolsward-Noordoost (BU19000004). Focus: Bolsward-Zuidoost (CBS Kerncijfers echt, 2019-2026; overige indicatoren demodata).
+- **Data:** via de laad-API uit de datasets van de afhankelijkheden (`cbs-gebiedsindelingen`, `cbs-kerncijfers`, `rivm-gezondheidsmonitor`, `sample-bronbibliotheek`), gebiedstype CBS Buurten. Open data wordt bij de installatie gedownload; wat nog niet open is of nog geen adapter heeft, komt uit `sample-bronbibliotheek` en is gemarkeerd (`DEMODATA` in de bron van de waarde). Zie [demodata naar open data](../../docs/3-data-engineering/demodata-naar-open-data.md).
+- **Gebieden:** Bolsward-Noord (BU19000001), Bolsward-Zuidoost (BU19000002), Bolsward-Noordoost (BU19000004). Focus: Bolsward-Zuidoost.
 
-| Indicator | Richting |
-|---|---|
-| Inkomen per inwoner | hoger is beter |
-| Netto arbeidsparticipatie | hoger is beter |
-| Diversiteit Functies (Simpson Index) | hoger is beter |
-| Ervaren gezondheid | hoger is beter |
+| Indicator | Richting | Bron |
+|---|---|---|
+| Inkomen per inwoner | hoger is beter | CBS Kerncijfers (`cbs-kerncijfers`) |
+| Netto arbeidsparticipatie | hoger is beter | CBS Kerncijfers (`cbs-kerncijfers`) |
+| Diversiteit Functies (Simpson Index) | hoger is beter | Kadaster BAG, per buurt berekend (sample; adapter volgt; Bolsward-Zuidoost DEMODATA) |
+| Ervaren gezondheid | hoger is beter | RIVM Gezondheidsmonitor (`rivm-gezondheidsmonitor`) |
 
-**Afgeleid bij het laden** (zie `usecase.json` → `afgeleid`) en **ontbreekt nog** (#138):
+**Ontbreekt nog** (#138):
 - Woontevredenheid / Leefbaarometer
 - Veiligheidsbeleving
-- Trend over meerdere jaargangen
 - Opleidingsniveau in %
 
 ## 2. Inrichting
@@ -42,12 +41,12 @@ Een use case is een **bundel**: data + inrichting + stappen. Alle drie staan hie
 
 | # | Actie | Verwacht | Resultaat 01-10 |
 |---|---|---|---|
-| 0 | Laad het pakket: `python init_data/scripts/laad_usecase.py <naam>` (db-init doet dit automatisch bij `LOAD_SAMPLE_DATA=true`) | Richting en afgeleide indicatoren staan in de database | ✅ |
+| 0 | Installeer: `python -m omnitwin.usecases installeer brede-welvaart` (db-init doet dit automatisch bij `LOAD_SAMPLE_DATA=true`, met de laadstraat in-process) | De datasets van de afhankelijkheden zijn gepubliceerd; daarna zet `laad_usecase.py --inrichting` de richting | ✅ (verse stack, 02-10) |
 | 1 | Open de app, kies **Kaart Configuratie → CBS Buurten** | 13 buurten op de kaart | ✅ |
 | 2 | Kies indicator **Inkomen per inwoner**, zoom in op Bolsward | Buurten gekleurd; **rood = slechter**, legenda met eenheid | ✅ Richting klopt (alle indicatoren hoger = beter) |
 | 3 | Klik op **Bolsward-Zuidoost** | Selectiebalk met de buurtnaam | ✅ |
 | 4 | Open het **Kompas** (Volledig Kompas) | Zonnediagram voor Bolsward-Zuidoost, dekking 100% | ✅ (Volledig Kompas) |
-| 5 | Stel de vraag aan de **D-Omni Assistent** | Antwoord noemt de relevante indicatoren en buurten. Verwacht: Inkomen per inwoner: Bolsward-Zuidoost 26,9 duizend euro (CBS 2023), tussen Noord (22,1; 2023) en Noordoost (30,9; 2024). Netto arbeidsparticipatie 2024: Noord 66%, Zuidoost 71%, Noordoost 73%. | ⚠️ Herhaalt de vraag; stelt 'Toon: Welstandsgebieden' voor (niet relevant); scenario Beleidsadviseur wordt niet herkend zonder het woord 'beleidsadviseur' |
+| 5 | Stel de vraag aan de **D-Omni Assistent** | Antwoord noemt de relevante indicatoren en buurten. Verwacht: Inkomen per inwoner: Bolsward-Zuidoost 26,9 duizend euro (CBS 2023), tussen Noord (22,1; 2023) en Noordoost (30,9; 2024). Netto arbeidsparticipatie 2024: Noord 66%, Zuidoost 71%, Noordoost 73%. Goed ervaren gezondheid 2024 (RIVM): Noord 65,9%, Zuidoost 72,7%, Noordoost 77,6%. | ⚠️ Herhaalt de vraag; stelt 'Toon: Welstandsgebieden' voor (niet relevant); scenario Beleidsadviseur wordt niet herkend zonder het woord 'beleidsadviseur' |
 | 6 | **Rapport → Gebiedsdossier** voor Bolsward-Zuidoost | Dossier met AI-samenvatting, label "AI-gegenereerd" | ✅ (eerdere ronde, ~2 min met lokaal model) |
 
 ## Resultaat

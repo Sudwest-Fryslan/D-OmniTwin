@@ -40,7 +40,7 @@ def laad_usecases():
     uit = {}
     for f in sorted((ROOT / "usecases").glob("*/usecase.json")):
         u = json.loads(f.read_text(encoding="utf-8"))
-        if "datasets" in u:  # use case via de laad-API (status ontwerp), geen demopakket
+        if "persona" not in u:  # alleen de demo-use cases (TC-06-*) hebben persona en verwachting
             continue
         if is_datavraag(u["persona"]["vraag"]):
             uit[f"{u['id']} {f.parent.name}"] = u
@@ -181,7 +181,10 @@ def test_tc_06_004_hoe_groen(geen_llm):
     assert "Bolsward-Zuidoost" in groen and {"Bolsward-Noord", "Bolsward-Noordoost"} <= set(groen), groen
     assert "Bolsward-Zuidoost" in a["narrative"]
     ka = a["kaart_actie"]
-    assert ka["indicator_uuid"] and ka["gebied_ids"][0] == "BU19000002" and len(ka["gebied_ids"]) == 3
+    # De buurten van de wijk Bolsward (BU190000..); met alle CBS-buurten (#236) zijn dat er meer dan drie
+    assert ka["indicator_uuid"] and ka["gebied_ids"][0] == "BU19000002"
+    assert {"BU19000001", "BU19000004"} <= set(ka["gebied_ids"]), ka
+    assert all(g.startswith("BU190000") for g in ka["gebied_ids"]), ka
     ongegrond = ongegronde_getallen(a["narrative"], bron(a) | {"vraag": GROEN_VRAAG})
     assert not ongegrond, grounding_melding("TC-06-004", a["narrative"], bron(a), ongegrond)
 

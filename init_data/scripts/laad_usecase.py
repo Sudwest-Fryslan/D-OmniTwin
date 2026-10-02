@@ -39,9 +39,7 @@ Gebruik:
 
 import argparse
 import csv
-import importlib.util
 import json
-import os
 import sys
 import tempfile
 import uuid
@@ -170,24 +168,9 @@ def laad_gebieden(conn, gebied_ids):
 
 
 def extra_brondata(naam, uc):
-    """Pad naar de extra brondata van een use case: de cache van zijn downloadscript
-    (extra_data.script), of de gecommitte data/waarden.csv. Downloadfout: waarschuwing, None."""
-    script = (uc["data"].get("extra_data") or {}).get("script")
-    if not script:
-        return USECASES_DIR / naam / "data" / "waarden.csv"
-    cache = Path(os.environ.get("DATA_CACHE", ROOT / "data-cache")) / "usecases" / naam / "waarden.csv"
-    if cache.exists():
-        print(f"   💾 extra brondata uit cache: {cache}")
-        return cache
-    print(f"   🌐 extra brondata downloaden ({script})")
-    try:
-        spec = importlib.util.spec_from_file_location(f"maak_data_{naam.replace('-', '_')}", USECASES_DIR / naam / script)
-        mod = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(mod)
-        return mod.main(cache)
-    except Exception as e:  # geen netwerk, bron onbereikbaar, cache niet schrijfbaar
-        print(f"   ⚠️  extra brondata van {naam} niet opgehaald ({type(e).__name__}: {e}); de use case is onvolledig")
-        return None
+    """Pad naar de extra brondata van een use case: de gecommitte data/waarden.csv (niet-downloadbare
+    data). Downloadbare data komt via een dataset met een bronadapter (laad-API), niet hier."""
+    return USECASES_DIR / naam / "data" / "waarden.csv"
 
 
 def laad(conn, naam):

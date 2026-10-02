@@ -1,0 +1,58 @@
+{
+  "specificatie": "1.0",
+  "naam": "rivm-gezondheidsmonitor",
+  "id": "TC-07-021",
+  "versie": "0.1.0",
+  "titel": "RIVM Gezondheidsmonitor per buurt via de laad-API",
+  "vraag": "Ik wil de gezondheidscijfers per buurt (ervaren gezondheid, eenzaamheid, mantelzorg, vrijwilligerswerk, moeite met rondkomen, leefstijl) uit de Gezondheidsmonitor in D-OmniTwin, met de trend sinds 2012.",
+  "gebruiker": "beheerder D-OmniTwin",
+  "status": "actief",
+  "afhankelijk_van": [
+    "cbs-gebiedsindelingen"
+  ],
+  "rechten": [
+    "realm-rol beheerder (registreren)",
+    "dataset:rivm-gezondheid-buurten:laden"
+  ],
+  "datasets": [
+    {
+      "id": "rivm-gezondheid-buurten",
+      "route": "laden",
+      "registratie": "datasets/rivm-gezondheid-buurten.json",
+      "profiel": "waarnemingen",
+      "rol": "dataset:rivm-gezondheid-buurten:laden",
+      "client": "etl-open-data",
+      "prioriteit": "Must",
+      "bron": "RIVM StatLine 50150NED via dataderden.cbs.nl (open, CC BY 4.0)",
+      "verwacht": {
+        "regels": "37.056 (11 indicatoren, buurten in Fryslân, peiljaren 2012-2024)",
+        "kwaliteit": "geschat (modelberekening RIVM)"
+      }
+    }
+  ],
+  "controles": [
+    {
+      "type": "aantal",
+      "dataset": "rivm-gezondheid-buurten",
+      "minimaal": 35000,
+      "omschrijving": "11 indicatoren voor de buurten in Fryslân, 5 peiljaren (nu 37.056)"
+    },
+    {
+      "type": "api",
+      "pad": "/api/data/v1/gebied_data?gebied_id=eq.BU19000002&indicator_uuid=eq.4661dcb9-b7c4-42f8-b7c5-a61c12568806&select=jaar,waarde,bron",
+      "anoniem": true,
+      "minimaal_aantal": 5,
+      "uuid": "4661dcb9-b7c4-42f8-b7c5-a61c12568806",
+      "gebied": "BU19000002",
+      "omschrijving": "Eenzaamheid in Bolsward-Zuidoost, peiljaren 2012-2024 (2024: 46,5%)"
+    },
+    {
+      "type": "idempotent",
+      "dataset": "rivm-gezondheid-buurten"
+    }
+  ],
+  "bekende_afwijkingen": [
+    "Indicator 'Gezondheid' is in de bron 'Hoog risico angststoornis of depressie' (naam uit de vroegere sample); de richting staat als hoger is beter, dat klopt niet (vervolg: definitie corrigeren).",
+    "2012 en 2016 hebben minder buurten (kleine buurten onderdrukt of niet berekend)."
+  ]
+}

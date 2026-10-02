@@ -71,8 +71,12 @@ services:
       - DATABASE_PORT=5432
       # Gedownloade open data (CBS e.d.) wordt hier gecachet; staat niet in git (init_data/cbs)
       - DATA_CACHE=/data-cache
+      # De use cases laden bij de eerste installatie in-process via de laadstraat (#236): de
+      # ruwe leveringen komen in hetzelfde volume als bij de laad-API van de backend
+      - LEVERINGEN_DIR=/leveringen
     volumes:
       - bron-cache:/data-cache
+      - leveringen:/leveringen
     depends_on:
       postgres:
         condition: service_healthy
