@@ -247,6 +247,22 @@ def _vind_klikpunt(page: Page, gebied_id: str):
             zoom_kaart(page, 400)
 
 
+def wacht_op_camera_in_rust(page: Page, timeout: float = TRAAG_MS / 1000):
+    """Camera (viewState) gelijk over twee rondes van vlotte frames: een fly-to is klaar. Een klik
+    tijdens een cameratransitie onderbreekt die en selecteert niets."""
+    eind = time.monotonic() + timeout
+    vorige, gelijk = None, 0
+    while time.monotonic() < eind:
+        wacht_op_frames(page)
+        nu = page.evaluate("() => { const v = window.state.currentViewState || {};"
+                           " return [v.longitude, v.latitude, v.zoom, v.pitch, v.bearing]; }")
+        gelijk = gelijk + 1 if nu == vorige else 0
+        if gelijk >= 2:
+            return
+        vorige = nu
+        page.wait_for_timeout(300)
+
+
 def klik_buurt_op_kaart(page: Page, gebied_id: str, shift: bool = False):
     """Echte muisklik op het kaartcanvas binnen de buurt (optioneel met Shift).
 
@@ -257,7 +273,14 @@ def klik_buurt_op_kaart(page: Page, gebied_id: str, shift: bool = False):
     dat wordt als waarschuwing gelogd."""
     voor = sorted(selectie(page))
     for poging in range(3):
+        # Met alle CBS-buurten (#236) tekent software-WebGL trager: pas klikken als de camera stilstaat
+        wacht_op_camera_in_rust(page)
         punt = _vind_klikpunt(page, gebied_id)
+        # Eerst erheen bewegen en de hover-hertekening afwachten: deck.gl herkent een klik alleen als
+        # pointerdown en pointerup kort na elkaar verwerkt worden; een zware hertekening ertussen
+        # (software-WebGL, alle CBS-buurten sinds #236) maakt er anders geen klik van.
+        page.mouse.move(punt["x"], punt["y"])
+        wacht_op_frames(page)
         if shift:
             page.keyboard.down("Shift")
         try:
@@ -268,7 +291,7 @@ def klik_buurt_op_kaart(page: Page, gebied_id: str, shift: bool = False):
         try:
             page.wait_for_function(
                 "(voor) => JSON.stringify([...window.state.selectedGebiedIds].sort()) !== JSON.stringify(voor)",
-                arg=voor, timeout=4_000,
+                arg=voor, timeout=10_000,
             )
             return
         except Exception:
