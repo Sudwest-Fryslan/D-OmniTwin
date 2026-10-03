@@ -44,6 +44,40 @@
       "omschrijving": "Diversiteit functies Bolsward-Noord (BAG, sample)"
     }
   ],
+  "bewijs": {
+    "stappen": [
+      {
+        "id": "kaart",
+        "actie": "kaart",
+        "gebied": "BU19000002",
+        "indicator": "9c035f53-75a5-43eb-8496-22c4c6f08d6b",
+        "omschrijving": "Inkomen per inwoner in Bolsward (CBS), Bolsward-Zuidoost geselecteerd",
+        "bevat": [
+          "Bolsward-Zuidoost"
+        ]
+      },
+      {
+        "id": "kompas",
+        "actie": "kompas",
+        "gebied": "BU19000002",
+        "indicator": "9c035f53-75a5-43eb-8496-22c4c6f08d6b",
+        "profiel": "Volledig Kompas",
+        "omschrijving": "Kompas voor Bolsward-Zuidoost: brede welvaart in thema's",
+        "bevat": [
+          "Bolsward-Zuidoost"
+        ]
+      },
+      {
+        "id": "chat",
+        "actie": "chat",
+        "vraag": "Hoe staat het met de brede welvaart in Bolsward-Zuidoost vergeleken met de rest van Bolsward?",
+        "omschrijving": "Datavraag over de brede welvaart, beantwoord met de cijfers per buurt",
+        "bevat": [
+          "Bolsward-Zuidoost"
+        ]
+      }
+    ]
+  },
   "persona": {
     "rol": "Strateeg / economische zaken",
     "vraag": "Hoe staat het met de brede welvaart in Bolsward-Zuidoost vergeleken met de rest van Bolsward?",

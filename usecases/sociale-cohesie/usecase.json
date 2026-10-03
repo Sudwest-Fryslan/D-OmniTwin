@@ -52,6 +52,37 @@
       "omschrijving": "Eenpersoonshuishoudens (%) Bolsward-Zuidoost (CBS)"
     }
   ],
+  "bewijs": {
+    "stappen": [
+      {
+        "id": "kaart",
+        "actie": "kaart",
+        "gebied": "BU19000002",
+        "indicator": "4661dcb9-b7c4-42f8-b7c5-a61c12568806",
+        "omschrijving": "Eenzaamheid per buurt in Bolsward (RIVM Gezondheidsmonitor)",
+        "bevat": [
+          "Bolsward-Zuidoost"
+        ]
+      },
+      {
+        "id": "chat",
+        "actie": "chat",
+        "vraag": "Ik ben wijkcoördinator in Bolsward-Zuidoost. Hoe staat het met eenzaamheid en vrijwilligerswerk in mijn wijk?",
+        "omschrijving": "Datavraag van de wijkcoördinator over eenzaamheid en vrijwilligerswerk"
+      },
+      {
+        "id": "kompas",
+        "actie": "kompas",
+        "gebied": "BU19000002",
+        "indicator": "4661dcb9-b7c4-42f8-b7c5-a61c12568806",
+        "profiel": "Volledig Kompas",
+        "omschrijving": "Kompas voor Bolsward-Zuidoost",
+        "bevat": [
+          "Bolsward-Zuidoost"
+        ]
+      }
+    ]
+  },
   "persona": {
     "rol": "Wijkcoördinator / wijkcontactfunctionaris",
     "vraag": "Ik ben wijkcoördinator in Bolsward-Zuidoost. Hoe staat het met eenzaamheid en vrijwilligerswerk in mijn wijk?",

@@ -169,6 +169,25 @@
       "omschrijving": "een lezer mag niet registreren (403)"
     }
   ],
+  "bewijs": {
+    "stappen": [
+      {
+        "id": "kaart",
+        "actie": "kaart",
+        "gebied": "GM1900",
+        "omschrijving": "De CBS-buurten van Súdwest-Fryslân op de kaart (gemeentefilter)"
+      },
+      {
+        "id": "levering",
+        "actie": "levering",
+        "dataset": "cbs-gebied-buurten",
+        "omschrijving": "Leveringsstatus van de CBS-buurten (laad-API)",
+        "bevat": [
+          "gepubliceerd"
+        ]
+      }
+    ]
+  },
   "bekende_afwijkingen": [
     "Gebiedstype 'CBS wijken' (0fdd1ab2) bestaat nu alleen via de SWF-definities (swf-definities); voor andere gemeenten moet het in de stuurdata.",
     "De SWF-gebiedstypen 'CBS gemeentegrenzen' (1e6b3c18) en 'CBS provinciegrenzen' (e1de90ae) dubbelen 'Gemeente' en 'Provincie' van D-OmniTwin; deze use case vult alleen 'Gemeente'. Besluit nodig: alias of samenvoegen."

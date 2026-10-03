@@ -34,6 +34,37 @@
       "omschrijving": "OV-haltes Workum (OpenStreetMap, sample)"
     }
   ],
+  "bewijs": {
+    "stappen": [
+      {
+        "id": "chat",
+        "actie": "chat",
+        "vraag": "Ik ben beleidsadviseur",
+        "omschrijving": "Scenario Beleidsadviseur: de D-Omni Assistent zet kaart en Kompas klaar"
+      },
+      {
+        "id": "kaart",
+        "actie": "kaart",
+        "gebied": "BU19000200",
+        "indicator": "1b28d9ef-f7ff-4609-9ef7-7ab8a9b6cba7",
+        "omschrijving": "Afstand tot huisarts in de kernen aan de IJsselmeerkust, Workum geselecteerd",
+        "bevat": [
+          "Workum"
+        ]
+      },
+      {
+        "id": "kompas",
+        "actie": "kompas",
+        "gebied": "BU19000200",
+        "indicator": "1b28d9ef-f7ff-4609-9ef7-7ab8a9b6cba7",
+        "profiel": "Volledig Kompas",
+        "omschrijving": "Kompas voor Workum: alle indicatoren in thema's",
+        "bevat": [
+          "Workum"
+        ]
+      }
+    ]
+  },
   "persona": {
     "rol": "Beleidsadviseur leefbaarheid / ruimtelijke ordening",
     "vraag": "Ik ben beleidsadviseur",
