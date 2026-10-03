@@ -9,6 +9,8 @@ from sqlalchemy import text
 from datetime import datetime
 import json
 
+from omnitwin.services import percentielklasse as pk
+from omnitwin.services.color_scale_service import ColorScaleService
 from omnitwin.services.zscore_referentie import (
     CBS_BUURT_CODE,
     SCENARIO_STANDAARD,
@@ -17,6 +19,9 @@ from omnitwin.services.zscore_referentie import (
     SQL_ZSCORE_GEBIEDEN,
     referentie_params,
 )
+
+
+GEEN_DATA_KLEUR = "#94A3B8"  # zelfde grijs als elders in het Kompas
 
 
 class KompasService:
@@ -34,9 +39,12 @@ class KompasService:
         """
         query = text("""
             SELECT 
-                id, naam, beschrijving, is_standaard, is_actief, icoon,
-                aantal_themas, aantal_onderdelen, aantal_indicatoren, aantal_scoring_regels
-            FROM v_kompas_config_stats
+                s.id, s.naam, s.beschrijving, s.is_standaard, s.is_actief, s.icoon,
+                s.aantal_themas, s.aantal_onderdelen, s.aantal_indicatoren, s.aantal_scoring_regels,
+                kc.classificatie
+            FROM v_kompas_config_stats s
+            JOIN kompas_configuraties kc ON kc.id = s.id
+            ORDER BY s.is_standaard DESC, s.naam
         """)
         
         result = self.db.execute(query)
@@ -53,6 +61,14 @@ class KompasService:
         result = self.db.execute(query).fetchone()
         return result[0] if result else 1
     
+    def get_classificatie(self, config_id: int) -> str:
+        """Classificatie van een kompasprofiel (#255): zscore (standaard) of percentiel_8."""
+        row = self.db.execute(
+            text("SELECT classificatie FROM kompas_configuraties WHERE id = :config_id"),
+            {"config_id": config_id},
+        ).fetchone()
+        return pk.normaliseer_classificatie(row[0] if row else None)
+
     def get_hierarchie(self, config_id: int) -> Dict[str, Any]:
         """
         Build complete hiërarchie tree voor D3.js sunburst
@@ -209,11 +225,21 @@ class KompasService:
         total_indicators = hierarchie_data["total_indicators"]
         coverage_pct = (len(data_map) / total_indicators * 100) if total_indicators > 0 else 0
         
+        # #255: percentielklassen per indicator en geaggregeerd per onderdeel/thema/kwadrant
+        classificatie = self.get_classificatie(config_id)
+        klassen_legenda = None
+        if classificatie == "percentiel_8":
+            enriched_tree, klassen_legenda = self._percentielklassen_in_boom(
+                config_id, [gebied_id], enriched_tree
+            )
+
         return {
             "gebied_id": gebied_id,
             "gebied_naam": gebied_row.naam,
             "config_id": config_id,
             "config_naam": hierarchie_data["config_naam"],
+            "classificatie": classificatie,
+            "klassen_legenda": klassen_legenda,
             "hierarchie": enriched_tree,
             "coverage_percentage": round(coverage_pct, 1),
             "is_waterbuurt": bool(gebied_row.is_waterbuurt),
@@ -221,6 +247,87 @@ class KompasService:
             "laatste_update": datetime.now()
         }
         
+    # ── Percentielklasse (#255) ─────────────────────────────────────────────
+
+    def get_selectie_kompas(self, config_id: int, gebied_ids: List[str]) -> Optional[Dict[str, Any]]:
+        """
+        Percentielklassen over een selectie van gebieden (#255): per indicator en per
+        onderdeel/thema/kwadrant één klasse, met dezelfde aggregatieregel als voor één
+        gebied (gewogen gemiddelde over alle gebied x indicator-paren). Alleen voor
+        profielen met classificatie percentiel_8; anders zonder klassen.
+        """
+        hierarchie_data = self.get_hierarchie(config_id)
+        if not hierarchie_data:
+            return None
+        classificatie = self.get_classificatie(config_id)
+        boom = hierarchie_data["hierarchie"]
+        legenda = None
+        if classificatie == "percentiel_8":
+            boom, legenda = self._percentielklassen_in_boom(config_id, gebied_ids, boom)
+        return {
+            "config_id": config_id,
+            "classificatie": classificatie,
+            "gebied_ids": list(gebied_ids),
+            "klassen_legenda": legenda,
+            "hierarchie": boom,
+        }
+
+    def _percentielklassen(self, config_id: int, gebied_ids: List[str]):
+        """
+        Per indicator de (klasse, gewicht)-paren over de gebieden, en per indicator
+        het aantal gebieden waarvan de waarde onderdrukt is (n onder de drempel).
+        Gewicht = aantal gebieden met data in de referentiegroep. Een waterbuurt
+        krijgt geen klasse (#155).
+        """
+        rows = self.db.execute(text("""
+            SELECT g.id AS gebied_id, g.gebiedstype_id, g.gemeente_code,
+                   public.is_waterbuurt(g.naam, g.metadata) AS is_waterbuurt,
+                   i.uuid::text AS indicator_uuid, gd.waarde, gd.jaar,
+                   COALESCE(sr.score_type, i.score_type) AS score_type, sr.inverse
+            FROM gebieden g
+            CROSS JOIN (SELECT DISTINCT indicator_uuid FROM kompas_indicator_mapping
+                        WHERE config_id = :config_id) kim
+            JOIN indicatoren i ON i.uuid = kim.indicator_uuid AND i.is_actief = true
+            LEFT JOIN LATERAL (
+                SELECT waarde, jaar FROM gebied_data
+                WHERE indicator_uuid = i.uuid AND gebied_id = g.id
+                  AND COALESCE(scenario_id, 'current') = :scenario_id AND jaar IS NOT NULL
+                ORDER BY jaar DESC LIMIT 1
+            ) gd ON true
+            LEFT JOIN kompas_indicator_scoring_regels sr
+                ON sr.indicator_uuid = i.uuid AND sr.config_id = :config_id
+            WHERE g.id = ANY(CAST(:gebied_ids AS varchar[]))
+        """), {"config_id": config_id, "gebied_ids": list(gebied_ids),
+               "scenario_id": SCENARIO_STANDAARD}).fetchall()
+
+        met_waarde = [r for r in rows if r.waarde is not None and not r.is_waterbuurt]
+        uuids = sorted({r.indicator_uuid for r in met_waarde})
+        onderdrukt = pk.onderdrukte_waarden(self.db, gebied_ids, uuids)
+        referentie: Dict = {}
+        for gt in {r.gebiedstype_id for r in met_waarde}:
+            gemeenten = {r.gemeente_code for r in met_waarde if r.gebiedstype_id == gt}
+            for (gm, u), waarden in pk.referentie_waarden(self.db, gt, gemeenten, uuids).items():
+                referentie[(gt, gm, u)] = waarden
+
+        paren: Dict[str, List] = {}
+        n_onderdrukt: Dict[str, int] = {}
+        for r in met_waarde:
+            if (r.gebied_id, r.indicator_uuid, r.jaar) in onderdrukt:
+                n_onderdrukt[r.indicator_uuid] = n_onderdrukt.get(r.indicator_uuid, 0) + 1
+                continue
+            ref = referentie.get((r.gebiedstype_id, r.gemeente_code, r.indicator_uuid), [])
+            k = pk.klasse(float(r.waarde), ref, pk.hoger_is_beter(r.score_type, r.inverse))
+            paren.setdefault(r.indicator_uuid, []).append((k, len(ref)))
+        return paren, n_onderdrukt
+
+    def _percentielklassen_in_boom(self, config_id: int, gebied_ids: List[str], boom: Dict):
+        """Zet klasse, klasse_kleur (en bij indicatoren color) in de boom; geeft (boom, legenda)."""
+        paren, n_onderdrukt = self._percentielklassen(config_id, gebied_ids)
+        color_service = ColorScaleService(self.db)
+        kleuren = pk.palet(color_service)
+        neutraal = pk.palet(color_service, neutraal=True)
+        return pk.annoteer_boom(boom, paren, n_onderdrukt, kleuren, GEEN_DATA_KLEUR, neutraal), pk.legenda(kleuren)
+
     def _get_bulk_percentiles(self, gebiedstype_id, gemeente_code: Optional[str] = None) -> Dict[str, List[float]]:
         """
         Bereken 12.5% stap thresholds voor alle indicatoren, over dezelfde
