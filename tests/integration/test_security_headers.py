@@ -38,8 +38,9 @@ def _verwacht(pad):
 
 @pytest.fixture(scope="module", params=ROUTES)
 def response(request):
-    r = requests.get(f"{BASE_URL}{request.param}", headers={"Accept": "text/html"}, timeout=TIMEOUT,
-                     allow_redirects=False)
+    # Alleen de pagina als browser opvragen (redirect naar de login); PostgREST kent geen text/html (406)
+    kop = {"Accept": "text/html"} if request.param == "/" else {}
+    r = requests.get(f"{BASE_URL}{request.param}", headers=kop, timeout=TIMEOUT, allow_redirects=False)
     assert r.status_code == _verwacht(request.param), f"{request.param}: HTTP {r.status_code}"
     return r
 

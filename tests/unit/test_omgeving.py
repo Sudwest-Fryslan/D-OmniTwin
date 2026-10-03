@@ -93,10 +93,10 @@ def test_entrypoint_controleert_voor_de_init_en_zet_demo_admin():
 
 
 def test_compose_keycloak_demo_service():
-    tekst = (ROOT / "docker-compose.yml").read_text(encoding="utf-8")
-    blok = tekst[tekst.index("  keycloak-demo:"):tekst.index("\n  keycloak:\n    # Optionele")]
-    assert 'command: ["keycloak-demo"]' in blok and 'profiles: ["keycloak"]' in blok
-    assert "condition: service_healthy" in blok
+    import yaml
+    dienst = yaml.safe_load((ROOT / "docker-compose.yml").read_text(encoding="utf-8"))["services"]["keycloak-demo"]
+    assert dienst["command"] == ["keycloak-demo"] and dienst["profiles"] == ["keycloak"]
+    assert dienst["depends_on"]["keycloak"]["condition"] == "service_healthy"
 
 
 # ---------------------------------------------------------------- Keycloak (nagebootst)
