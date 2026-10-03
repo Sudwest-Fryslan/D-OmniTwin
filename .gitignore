@@ -64,8 +64,12 @@ BRAINDUMP.md
 Thumbs.db
 
 # Docs: interne projectmappen (niet openbaar)
-docs/4-ux-design/
-docs/5-secops/
+docs/4-ux-design/*
+docs/5-secops/*
+# Wel publiek: thema's, toegankelijkheid en de privacy-quickscan (#89, #257)
+!docs/4-ux-design/thema-s.md
+!docs/4-ux-design/toegankelijkheid.md
+!docs/5-secops/privacy-quickscan.md
 docs/6-ai-parallel-track/
 docs/7-projectmanagement/
 docs/10-testen/

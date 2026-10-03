@@ -180,6 +180,7 @@ Scripts in `ETL/` en `scripts/` zijn standalone, geen deel van de web-API. CBS, 
 - `docs/STATE.md` — historische momentopname van de systeemstatus tot 0.1.0; niet leidend
 - `docs/INDEX.md` — documentation router by domain
 - `docs/9-beheer/installatie.md` — **de** installatiegids (Docker), ook voor beheerders
+- `docs/9-beheer/beheerhandleiding.md` — beheer in productie (#257): back-up en herstel (`scripts/beheer/backup.sh`, `restore.sh`, `hersteltest.sh`), bijwerken en terugrollen, Keycloak, leveringen, incidenten, acceptatie naast productie. Privacy: `docs/5-secops/privacy-quickscan.md`; toegankelijkheid: `docs/4-ux-design/toegankelijkheid.md` (beide uitgezonderd in `.gitignore`)
 - `docs/archief/` — verouderde logboeken en gidsen: `GETTING_STARTED.md` (installatie zonder Docker), `BUILD.md` (sprint changelog), `ROADMAP.md`, `TODO.md`, `BUGFIX.md`. Niet meer bijhouden; taken en bugs staan in de GitHub-issues
 - `GOVERNANCE.md` — rollen en besluitvorming (concept, #183)
 

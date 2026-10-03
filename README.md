@@ -146,6 +146,9 @@ Bijdragen: [CONTRIBUTING.md](./CONTRIBUTING.md) en de [gedragscode](./CODE_OF_CO
 | Document | Waarover |
 |----------|----------|
 | [docs/9-beheer/installatie.md](./docs/9-beheer/installatie.md) | Installatie en beheer (Docker): de installatiegids |
+| [docs/9-beheer/beheerhandleiding.md](./docs/9-beheer/beheerhandleiding.md) | Beheer in productie: back-up en herstel, bijwerken, Keycloak, leveringen, incidenten, acceptatie |
+| [docs/5-secops/privacy-quickscan.md](./docs/5-secops/privacy-quickscan.md) | Privacy-quickscan: persoonsgegevens, bewaartermijnen, AI |
+| [docs/4-ux-design/toegankelijkheid.md](./docs/4-ux-design/toegankelijkheid.md) | Toegankelijkheid: status en conceptverklaring |
 | [CHANGELOG.md](./CHANGELOG.md) | Wijzigingen per versie, met migratie-instructies |
 | [CONTRIBUTING.md](./CONTRIBUTING.md) | Bijdragen: van issue tot merge |
 | [AGENTS.md](./AGENTS.md) | Projectfeiten en werkafspraken voor ontwikkelaars en AI-agents |

@@ -4,6 +4,8 @@ Dit is de installatiegids voor beheerders. Andere installatiedocumenten in deze 
 
 De gids gaat uit van een Linux-server of een werkplek met Docker. Alle commando's draai je in de map van de repository.
 
+Na de installatie: de [beheerhandleiding](beheerhandleiding.md) (back-up en herstel met scripts, bijwerken en terugrollen, Keycloak-beheer, leveringen, incidenten, acceptatie naast productie), de [privacy-quickscan](../5-secops/privacy-quickscan.md) en de [toegankelijkheidsstatus](../4-ux-design/toegankelijkheid.md).
+
 **Status:** D-OmniTwin is een pre-release. Lees [Beveiliging](#beveiliging) voordat je de installatie buiten je eigen netwerk bereikbaar maakt.
 
 ---
@@ -300,6 +302,8 @@ docker compose down        # containers verwijderen; de volumes (database, uploa
 ```
 
 ### Backup
+
+Voor productie: gebruik `sh scripts/beheer/backup.sh` en `restore.sh` (met Keycloak, de volumes, controlesommen en bewaartermijn), zie de [beheerhandleiding](beheerhandleiding.md#2-back-up-en-herstel). Hieronder de losse commando's.
 
 De data staat in twee Docker-volumes: `pgdata` (de database) en `uploads` (geüploade kaartlagen, in de container `/app/data-upload`). Het volume `bron-cache` hoeft niet mee: dat is opnieuw te downloaden.
 
