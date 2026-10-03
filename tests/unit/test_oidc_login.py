@@ -60,7 +60,8 @@ def stil(monkeypatch):
 
 @pytest.fixture
 def oidc_aan(monkeypatch, stil):
-    for naam in ("OIDC_AUDIENCE", "OIDC_JWKS_URL", "LOKAAL_INLOGGEN", "OIDC_CLIENT_ID", "ADMIN_API_KEY"):
+    for naam in ("OIDC_AUDIENCE", "OIDC_JWKS_URL", "LOKAAL_INLOGGEN", "OIDC_CLIENT_ID", "ADMIN_API_KEY",
+                 "OMNITWIN_OMGEVING"):
         monkeypatch.delenv(naam, raising=False)
     monkeypatch.setenv("OIDC_ISSUER", ISSUER)
     monkeypatch.setenv("OIDC_INTERN_URL", INTERN)
@@ -82,7 +83,7 @@ def oidc_aan(monkeypatch, stil):
 
 @pytest.fixture
 def oidc_uit(monkeypatch, stil):
-    for naam in ("OIDC_ISSUER", "LOKAAL_INLOGGEN", "ADMIN_API_KEY"):
+    for naam in ("OIDC_ISSUER", "LOKAAL_INLOGGEN", "ADMIN_API_KEY", "OMNITWIN_OMGEVING"):
         monkeypatch.setenv(naam, "")
 
 
@@ -120,14 +121,14 @@ def test_config_met_oidc(oidc_aan):
     assert r.json() == {
         "oidc": True, "lokaal": False, "noodtoegang": False,
         "gebruikersbeheer_url": "http://localhost/auth/admin/omnitwin/console/",
-        "account_url": ISSUER + "/account",
+        "account_url": ISSUER + "/account", "demo": False,
     }
 
 
 def test_config_zonder_oidc(oidc_uit):
     r = _client().get("/api/admin/auth/config")
     assert r.json() == {"oidc": False, "lokaal": True, "noodtoegang": False,
-                        "gebruikersbeheer_url": None, "account_url": None}
+                        "gebruikersbeheer_url": None, "account_url": None, "demo": False}
 
 
 # ------------------------------------------------------------------ beheerroutes met een bearer-token

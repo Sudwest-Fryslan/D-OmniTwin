@@ -84,6 +84,27 @@ describe('App', () => {
     expect(screen.getByRole('button', { name: 'Uitloggen' })).toBeInTheDocument();
   });
 
+  it('demo-omgeving: demobalk, ook op de inlogpagina (#245)', async () => {
+    metConfig({ ...KEYCLOAK, demo: true });
+    vi.spyOn(authAPI, 'getMe').mockResolvedValue({ data: { authenticated: false, user: null } } as never);
+    window.history.pushState({}, '', '/admin/login');
+
+    render(<App />);
+
+    expect(await screen.findByText(/Demo-omgeving — standaardwachtwoorden, niet voor productie/)).toBeInTheDocument();
+  });
+
+  it('geen demobalk buiten de demo-omgeving', async () => {
+    metConfig(KEYCLOAK);
+    vi.spyOn(authAPI, 'getMe').mockResolvedValue({ data: { authenticated: false, user: null } } as never);
+    window.history.pushState({}, '', '/admin/login');
+
+    render(<App />);
+
+    await screen.findByRole('link', { name: /Inloggen met Keycloak/ });
+    expect(screen.queryByText(/Demo-omgeving/)).not.toBeInTheDocument();
+  });
+
   it('beheerder via Keycloak: link naar gebruikers en rollen in Keycloak', async () => {
     metConfig(KEYCLOAK);
     vi.spyOn(authAPI, 'getMe').mockResolvedValue({

@@ -8,6 +8,8 @@ set -e
 #                                     (de db-init-service in docker-compose.yml)
 #   docker-entrypoint.sh keycloak-db  database en rol voor Keycloak aanmaken, daarna stoppen
 #                                     (de keycloak-db-init-service, profiel keycloak, #214)
+#   docker-entrypoint.sh keycloak-demo  demo-accounts in Keycloak zetten of opruimen, daarna stoppen
+#                                     (de keycloak-demo-service, profiel keycloak, #245)
 #   docker-entrypoint.sh <commando>   wacht op de database en start <commando>
 #                                     (standaard uvicorn, zie CMD in het Dockerfile)
 #
@@ -127,6 +129,7 @@ init_db() {
             echo "✅ Bestaande database gevonden (installatie voltooid). Initialisatie overgeslagen."
             echo "⚙️ Migraties controleren..."
             run_migrations
+            demo_admin_bestaand
             return
             ;;
         oud-compleet)
@@ -176,6 +179,7 @@ init_db() {
 
     # Admin gebruiker initialiseren
     export ADMIN_USER="${ADMIN_USER:-admin}"
+    demo_admin_wachtwoord
     # Geen standaardwachtwoord: zonder (ingevuld) ADMIN_PASSWORD eenmalig een willekeurig wachtwoord genereren
     case "${ADMIN_PASSWORD:-}" in
         ""|"<"*">")
@@ -193,6 +197,31 @@ init_db() {
 
     # PostgREST schema cache herladen via NOTIFY
     db_psql -c "NOTIFY pgrst, 'reload schema';" >/dev/null 2>&1 || true
+}
+
+# Soort omgeving (#245): OMNITWIN_OMGEVING=productie (standaard), test of demo. In productie
+# weigert db-init een bekend zwak ADMIN_PASSWORD of KEYCLOAK_ADMIN_PASSWORD (zie src/omnitwin/omgeving.py).
+controleer_omgeving() {
+    echo "🔎 Omgeving en wachtwoorden controleren..."
+    python -m omnitwin.omgeving controleer
+}
+
+# Demo (#245): zonder ADMIN_PASSWORD krijgt de lokale beheerder het publieke demowachtwoord `admin`.
+demo_admin_wachtwoord() {
+    if [ "$(echo "${OMNITWIN_OMGEVING:-}" | tr '[:upper:]' '[:lower:]' | tr -d '[:space:]')" = "demo" ]         && [ -z "${ADMIN_PASSWORD:-}" ]; then
+        export ADMIN_PASSWORD=admin
+        echo "⚠️ Demo-omgeving: lokale beheerder '$ADMIN_USER' met het demowachtwoord 'admin' (niet voor productie)."
+    fi
+}
+
+# Demo bij een bestaande database: de lokale beheerder aanmaken als hij ontbreekt (idempotent;
+# een bestaand account en zijn wachtwoord blijven ongemoeid).
+demo_admin_bestaand() {
+    if [ "$(echo "${OMNITWIN_OMGEVING:-}" | tr '[:upper:]' '[:lower:]' | tr -d '[:space:]')" = "demo" ]; then
+        export ADMIN_USER="${ADMIN_USER:-admin}"
+        demo_admin_wachtwoord
+        python /app/init_data/scripts/create_admin.py >/dev/null
+    fi
 }
 
 # De eigen organisatie van deze instantie (#231, ADR 0007): naam, gemeentecode(s), logo's,
@@ -257,6 +286,7 @@ wait_for_db
 
 if [ "$1" = "init" ]; then
     INIT_HOE=""
+    controleer_omgeving
     init_db
     seed_organisatie
     setup_api_rollen
@@ -273,6 +303,11 @@ fi
 if [ "$1" = "keycloak-db" ]; then
     setup_keycloak_db
     exit 0
+fi
+
+if [ "$1" = "keycloak-demo" ]; then
+    python -m omnitwin.omgeving keycloak
+    exit $?
 fi
 
 echo "🚀 Start applicatie: $@"

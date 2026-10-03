@@ -147,10 +147,17 @@ def publieke_basis(request: Request) -> str:
 
 
 def veilig_terug(terug: str | None) -> str:
-    """Alleen een pad binnen de beheeromgeving (geen open redirect)."""
+    """Alleen de viewer (`/`) of een pad binnen de beheeromgeving (geen open redirect)."""
+    if terug == "/":
+        return terug
     if terug and re.fullmatch(r"/admin(/[A-Za-z0-9._~\-/]*)?", terug) and "//" not in terug:
         return terug
     return "/admin/dashboard"
+
+
+def is_viewer(terug: str) -> bool:
+    """Terug naar de viewer (#266) in plaats van naar de beheeromgeving?"""
+    return terug == "/"
 
 
 def gebruikersbeheer_url() -> str | None:
@@ -261,7 +268,8 @@ def rond_af(db: Session, code: str, state: str, cookie: str | None, sessie_hash:
 # ---------------------------------------------------------------------------
 def _als_gebruiker(onderwerp: str, gebruikersnaam: str | None, rollen) -> dict:
     return {"user_id": onderwerp, "username": gebruikersnaam or onderwerp,
-            "is_admin": BEHEERROL in set(rollen or ()), "type": "oidc", "onderwerp": onderwerp}
+            "is_admin": BEHEERROL in set(rollen or ()), "type": "oidc", "onderwerp": onderwerp,
+            "rollen": sorted(rollen or ())}
 
 
 def gebruiker(db: Session, token_hash: str) -> dict | None:

@@ -41,4 +41,4 @@ Bij het interne verkeer naar Keycloak stuurt de backend `X-Forwarded-Proto/Host/
 - Gebruikers, wachtwoorden, MFA en koppeling met een eigen IdP (Entra ID, later eHerkenning) regel je in Keycloak; D-OmniTwin hoeft daar niets voor te bouwen.
 - De backend houdt per ingelogde gebruiker een sessierij met een refresh token: die tabel hoort bij de backup en is gevoelig (zelfde database als `sessions`).
 - De redirect-URI van `omnitwin-web` moet het adres van de installatie bevatten. De realmexport vult `OMNITWIN_BASE_URL/*` in bij de import; een bestaande realm pas je in de admin-console aan.
-- Nog niet: inloggen in de kaartapplicatie (viewer) met `lezer` voor niet-openbare lagen; vervolg op https://github.com/TLaan/D-OmniTwin/issues/251.
+- Inloggen in de kaartapplicatie (viewer), optioneel de hele viewer achter de login: [ADR 0009](0009-viewer-achter-login-forwardauth.md). Nog niet: niet-openbare lagen alleen voor `lezer` (https://github.com/TLaan/D-OmniTwin/issues/254).

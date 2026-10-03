@@ -305,7 +305,7 @@ const OptionalLayout: React.FC<{ children: React.ReactNode }> = ({ children }) =
 // KleurschemasPage is now imported from ./pages/KleurschemasPage
 
 function App() {
-  const { isAuthenticated, setAuthenticated, setAuthConfig } = useAdminStore();
+  const { isAuthenticated, setAuthenticated, setAuthConfig, authConfig } = useAdminStore();
   const [isInitializing, setIsInitializing] = React.useState(true);
 
   React.useEffect(() => {
@@ -339,6 +339,11 @@ function App() {
 
   return (
     <QueryClientProvider client={queryClient}>
+      {authConfig.demo && (
+        <div className="demo-balk hide-on-print" role="status">
+          Demo-omgeving — standaardwachtwoorden, niet voor productie
+        </div>
+      )}
       <BrowserRouter basename="/admin">
         <Routes>
           <Route

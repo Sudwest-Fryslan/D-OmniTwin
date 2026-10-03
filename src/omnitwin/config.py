@@ -47,6 +47,14 @@ Inloggen in de beheeromgeving via OIDC (#251, ADR 0008, zie omnitwin/oidc_login.
 - LOKAAL_INLOGGEN  true = noodtoegang: lokale accounts (tabel users) mogen ook inloggen als
                    OIDC_ISSUER gezet is. Standaard uit zodra OIDC aan staat; zonder OIDC werkt
                    lokaal inloggen altijd.
+Toegang tot de viewer (#266, ADR 0009, zie omnitwin/viewer_toegang.py):
+- VIEWER_TOEGANG   open (standaard) | inloggen. Bij `inloggen` alleen met een sessie met realm-rol
+                   lezer of beheerder: de pagina, de API's van de backend en (via Traefik
+                   forwardAuth) /api/data en /api/geo. Een onbekende waarde telt als `inloggen`.
+Soort omgeving (#245, zie omnitwin/omgeving.py):
+- OMNITWIN_OMGEVING  productie (standaard) | test | demo. Alleen bij `demo` standaardaccounts
+                   (admin/admin, gebruiker/gebruiker) en de demobalk; bij `productie` weigert db-init
+                   een zwak ADMIN_PASSWORD of KEYCLOAK_ADMIN_PASSWORD. Onbekend telt als productie.
 
 Gebruik `os.getenv("<NAAM>", ...)` letterlijk: tests/test_env_example.py zoekt
 daarop om te controleren dat elke variabele in .env.example staat.
@@ -140,6 +148,17 @@ class Instellingen:
     oidc_intern_url: str        # leeg = discovery via de issuer zelf
     oidc_client_id: str         # inloggen van mensen (#251)
     lokaal_inloggen: bool       # LOKAAL_INLOGGEN: noodtoegang naast OIDC
+    viewer_toegang: str         # 'open' of 'inloggen' (#266)
+    omgeving: str               # 'productie', 'test' of 'demo' (#245)
+
+    @property
+    def viewer_dicht(self) -> bool:
+        """Viewer en data-API's alleen met een sessie (VIEWER_TOEGANG=inloggen)."""
+        return self.viewer_toegang != "open"
+
+    @property
+    def demo(self) -> bool:
+        return self.omgeving == "demo"
 
     @property
     def lokaal_inloggen_aan(self) -> bool:
@@ -166,6 +185,22 @@ def _cookie_secure(waarde: str) -> str:
     if waarde in ("0", "false", "nee", "no", "off"):
         return "false"
     return "auto"
+
+
+VIEWER_TOEGANG_WAARDEN = ("open", "inloggen")
+OMGEVINGEN = ("productie", "test", "demo")
+
+
+def _viewer_toegang(waarde: str) -> str:
+    """open of inloggen; leeg = open, al het andere (ook een tikfout) = inloggen: dicht bij twijfel."""
+    waarde = waarde.strip().lower()
+    return "open" if waarde in ("", "open") else "inloggen"
+
+
+def _omgeving(waarde: str) -> str:
+    """productie, test of demo; leeg of onbekend = productie (de strengste)."""
+    waarde = waarde.strip().lower()
+    return waarde if waarde in OMGEVINGEN else "productie"
 
 
 def instellingen() -> Instellingen:
@@ -205,4 +240,6 @@ def instellingen() -> Instellingen:
         oidc_intern_url=os.getenv("OIDC_INTERN_URL", "").strip().rstrip("/"),
         oidc_client_id=os.getenv("OIDC_CLIENT_ID", "omnitwin-web").strip() or "omnitwin-web",
         lokaal_inloggen=_bool(os.getenv("LOKAAL_INLOGGEN", "false")),
+        viewer_toegang=_viewer_toegang(os.getenv("VIEWER_TOEGANG", "open")),
+        omgeving=_omgeving(os.getenv("OMNITWIN_OMGEVING", "productie")),
     )

@@ -4,7 +4,7 @@ import type { AuthConfig, AuthUser } from '../services/api';
 
 // Zonder antwoord van /api/admin/auth/config: lokaal inloggen, zoals vóór Keycloak
 export const STANDAARD_AUTH_CONFIG: AuthConfig = {
-    oidc: false, lokaal: true, noodtoegang: false, gebruikersbeheer_url: null, account_url: null,
+    oidc: false, lokaal: true, noodtoegang: false, gebruikersbeheer_url: null, account_url: null, demo: false,
 };
 
 interface AdminStore {

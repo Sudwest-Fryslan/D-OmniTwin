@@ -150,7 +150,8 @@ def huidige_gebruiker(request: Request, db: Session = Depends(get_db)) -> dict:
     if ins.oidc_issuer and autorisatie[:7].lower() == "bearer ":
         p = oidc.controleer_token(autorisatie[7:].strip())
         return {"user_id": p.onderwerp, "username": p.gebruikersnaam or p.client_id or p.onderwerp,
-                "is_admin": oidc_login.BEHEERROL in p.rollen, "type": "bearer", "onderwerp": p.onderwerp}
+                "is_admin": oidc_login.BEHEERROL in p.rollen, "type": "bearer", "onderwerp": p.onderwerp,
+                "rollen": sorted(p.rollen)}
 
     api_key_header = request.headers.get("X-Admin-Key")
     admin_api_key = geldige_admin_api_key()
@@ -282,10 +283,12 @@ async def login(
 def logout(
     request: Request,
     response: Response,
+    terug: str | None = None,
     db: Session = Depends(get_db)
 ):
     """Uitloggen: sessie en cookie weg. Bij een OIDC-sessie ook `uitlog_url`: daar logt de
-    browser uit bij Keycloak (RP-initiated logout), die daarna terugstuurt naar de inlogpagina."""
+    browser uit bij Keycloak (RP-initiated logout), die daarna terugstuurt naar de inlogpagina,
+    of met `?terug=/` naar de viewer (#266)."""
     session_token = request.cookies.get("session_token")
     uitlog_url = None
     if session_token:
@@ -293,8 +296,9 @@ def logout(
                    {"token_hash": hash_token(session_token)})
         db.commit()
         if instellingen().oidc_issuer:
+            na = "/" if terug == "/" else "/admin/login"
             uitlog_url = oidc_login.uitloggen(db, hash_token(session_token),
-                                              oidc_login.publieke_basis(request) + "/admin/login")
+                                              oidc_login.publieke_basis(request) + na)
 
     response.delete_cookie("session_token", httponly=True, samesite="lax")
     AppLogger.info("Gebruiker uitgelogd", category="AUTH")
@@ -377,6 +381,7 @@ class AuthConfig(BaseModel):
     noodtoegang: bool                  # lokaal naast OIDC: waarschuwing tonen
     gebruikersbeheer_url: str | None   # admin-console van Keycloak (gebruikers en rollen)
     account_url: str | None            # accountconsole van Keycloak (eigen wachtwoord)
+    demo: bool = False                 # OMNITWIN_OMGEVING=demo: demobalk tonen (#245)
 
 
 @router.get("/config", response_model=AuthConfig)
@@ -387,6 +392,7 @@ def auth_config() -> AuthConfig:
         oidc=bool(i.oidc_issuer), lokaal=i.lokaal_inloggen_aan, noodtoegang=i.noodtoegang,
         gebruikersbeheer_url=oidc_login.gebruikersbeheer_url() if i.oidc_issuer else None,
         account_url=oidc_login.account_url() if i.oidc_issuer else None,
+        demo=i.demo,
     )
 
 
@@ -432,7 +438,12 @@ def oidc_callback(request: Request, code: str | None = None, state: str | None =
             # Audit: sub en preferred_username, nooit e-mail of tokens
             AppLogger.info(f"Login geslaagd via OIDC: '{principal.gebruikersnaam}' sub={principal.onderwerp} "
                            f"beheerder={'ja' if beheerder else 'nee'}", category="AUTH")
-            antwoord = RedirectResponse(terug if beheerder else "/admin/login", status_code=303)
+            # Viewer (#266): altijd terug naar de kaart; die toont zelf "geen toegang" zonder rol.
+            # Beheeromgeving: zonder rol beheerder naar de inlogpagina (meldt dat de rechten ontbreken).
+            if oidc_login.is_viewer(terug):
+                antwoord = RedirectResponse(terug, status_code=303)
+            else:
+                antwoord = RedirectResponse(terug if beheerder else "/admin/login", status_code=303)
             antwoord.set_cookie(key="session_token", value=sessie, httponly=True,
                                 max_age=int(oidc_login.SESSIE_MAX.total_seconds()),
                                 samesite="lax", secure=cookie_secure(request))
