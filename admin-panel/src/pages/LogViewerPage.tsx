@@ -505,9 +505,8 @@ export const LogViewerPage: React.FC = () => {
               <div style={{ flex: 1, fontSize: '0.85rem', color: 'var(--color-text-secondary)', lineHeight: 1.6 }}>
                 <p>Automatische cleanup draait dagelijks:</p>
                 <ul style={{ paddingLeft: '1.25rem', marginTop: '0.5rem' }}>
-                  <li><strong>DEBUG</strong> logs → verwijderd na 7 dagen</li>
-                  <li><strong>INFO</strong> logs → verwijderd na 30 dagen</li>
-                  <li><strong>WARNING / ERROR / CRITICAL</strong> → permanent bewaard</li>
+                  <li><strong>Alle niveaus</strong> → verwijderd na <code>LOG_BEWAAR_DAGEN</code> (standaard 30 dagen; DEBUG na 7)</li>
+                  <li><strong>IP-adressen</strong> → ingekort na <code>LOG_IP_BEWAAR_DAGEN</code> (standaard 7 dagen)</li>
                 </ul>
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-sm)', alignItems: 'flex-end' }}>
