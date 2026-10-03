@@ -16,6 +16,15 @@ Nieuw in 0.2.1 (#203), los van `DEBUG` (dat is vervallen):
 - LLM_RATE_LIMIT   maximaal aantal verzoeken per minuut per IP-adres op de
                    LLM-routes (chat, narratives); 0 = geen limiet.
 
+Privacy (#264):
+- LOG_BEWAAR_DAGEN     logregels in app_logs (alle niveaus) ouder dan dit worden verwijderd;
+                       DEBUG na hoogstens 7 dagen. Standaard 30.
+- LOG_IP_BEWAAR_DAGEN  daarna wordt het IP-adres in app_logs ingekort (IPv4 /24, IPv6 /48).
+                       Standaard 7.
+- TRUSTED_PROXIES      kommagescheiden adressen/netwerken (CIDR) waarvan X-Forwarded-For
+                       vertrouwd wordt (Traefik). Standaard loopback en de privé-reeksen
+                       (Docker-netwerken); leeg = nooit. Zie omnitwin.grenzen.client_ip.
+
 Laad-API (/api/laden/v1, #205), zie omnitwin.laden:
 - LEVERINGEN_DIR   map voor de ruwe leveringen (volume `leveringen`), onveranderlijk
 - LADEN_MAX_MB     bodylimiet van een levering (JSON: een tiende, minimaal 1 MB)
@@ -72,6 +81,12 @@ STATEMENT_TIMEOUT_MS = 60_000
 # CORS: headers die een andere origin mag meesturen. X-Admin-Key is de header die
 # routers/auth.py leest (scripts); de beheeromgeving gebruikt het sessiecookie.
 CORS_ALLOW_HEADERS = ("Content-Type", "Authorization", "X-Admin-Key")
+# Vertrouwde proxy's (#264): loopback en de privé-reeksen. Traefik zit op het Docker-netwerk
+# van de stack; dat subnet kiest Docker zelf (172.16.0.0/12 of 192.168.0.0/16, soms 10.0.0.0/8).
+# De backend heeft in docker-compose.yml geen hostpoort, dus alleen Traefik en andere containers
+# van de stack bereiken hem. Zonder Docker (run_dev.py) op een netwerk met clients: zet
+# TRUSTED_PROXIES op het adres van de eigen proxy, of leeg.
+STANDAARD_TRUSTED_PROXIES = "127.0.0.0/8,::1/128,10.0.0.0/8,172.16.0.0/12,192.168.0.0/16,fc00::/7"
 
 
 def _bool(waarde: str) -> bool:
@@ -100,6 +115,10 @@ class Instellingen:
     llm_rate_limit: int         # verzoeken per minuut per IP; 0 = uit
     admin_api_key: str
     log_level: str
+    # Privacy (#264)
+    log_bewaar_dagen: int
+    log_ip_bewaar_dagen: int
+    trusted_proxies: str        # ruwe lijst; geparsed in omnitwin.grenzen
     # LLM
     ollama_host: str
     ollama_model: str
@@ -164,6 +183,9 @@ def instellingen() -> Instellingen:
         llm_rate_limit=max(0, _int(os.getenv("LLM_RATE_LIMIT", "60"), 60)),
         admin_api_key=os.getenv("ADMIN_API_KEY", "").strip(),
         log_level=os.getenv("LOG_LEVEL", "INFO").upper(),
+        log_bewaar_dagen=max(1, _int(os.getenv("LOG_BEWAAR_DAGEN", "30"), 30)),
+        log_ip_bewaar_dagen=max(0, _int(os.getenv("LOG_IP_BEWAAR_DAGEN", "7"), 7)),
+        trusted_proxies=os.getenv("TRUSTED_PROXIES", STANDAARD_TRUSTED_PROXIES),
         ollama_host=os.getenv("OLLAMA_HOST", "http://localhost:11434"),
         ollama_model=os.getenv("OLLAMA_MODEL", "qwen3:30b-instruct"),
         llm_think=_bool(os.getenv("LLM_THINK", "false")),

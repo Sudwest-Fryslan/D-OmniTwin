@@ -26,6 +26,13 @@ except ImportError:  # pragma: no cover
 ROOT = Path(__file__).resolve().parent.parent
 THEMA_MAP = ROOT / "static" / "css" / "themes"
 STYLES = ROOT / "static" / "css" / "styles.css"
+# Alles van de viewer dat thema-tokens kan lezen (het beheerscherm heeft eigen opmaak)
+VIEWER_BESTANDEN = [
+    *sorted((ROOT / "static" / "css").glob("*.css")),
+    *sorted((ROOT / "static" / "js").rglob("*.js")),
+    *sorted((ROOT / "templates").glob("*.html")),
+    *sorted((ROOT / "static" / "images").glob("*.svg")),
+]
 
 sys.path.insert(0, str(ROOT / "src"))
 from omnitwin.thema import (  # noqa: E402
@@ -60,6 +67,12 @@ PAREN = [
     ("d-omnitwin-header-color", "d-omnitwin-header-background-color-start", TEKST, "kopbalktekst (begin verloop)"),
     ("d-omnitwin-header-color", "d-omnitwin-header-background-color-end", TEKST, "kopbalktekst (eind verloop)"),
     ("basis-color-accent-2-bg-default", "basis-color-default-bg-default", UI, "accentvlak/selectie op paneel"),
+    # Componenttokens (#89)
+    ("d-omnitwin-tab-active-color", "d-omnitwin-tab-active-background-color", UI, "icoon op actieve tab"),
+    ("d-omnitwin-welcome-button-color", "d-omnitwin-welcome-button-background-color", TEKST, "tekst op welkomstknop"),
+    ("d-omnitwin-welcome-accent-color", "basis-color-default-bg-default", TEKST, "welkomstaccent op paneel"),
+    ("d-omnitwin-tooltip-color", "d-omnitwin-tooltip-background-color", TEKST, "tooltiptekst"),
+    ("d-omnitwin-selection-badge-color", "d-omnitwin-selection-badge-background-color", TEKST, "tekst op selectiebadge"),
     ("basis-focus-outline-color", "basis-color-default-bg-document", UI, "focusrand op pagina"),
     ("basis-focus-outline-color", "basis-color-default-bg-default", UI, "focusrand op paneel"),
     # Alleen als het thema ze definieert:
@@ -249,6 +262,86 @@ class TestThemabestanden(unittest.TestCase):
                 with self.subTest(thema=naam, url=url):
                     self.assertNotRegex(url, r"^(https?:)?//")
                     self.assertTrue((THEMA_MAP / url).resolve().is_file(), url)
+
+
+def gebruikte_componenttokens():
+    """{token: {bestand: heeft_terugval}} voor elke var(--d-omnitwin-...) in de viewer."""
+    uit = {}
+    for pad in VIEWER_BESTANDEN:
+        tekst = pad.read_text(encoding="utf-8")
+        bestand = pad.relative_to(ROOT).as_posix()
+        for naam, teken in re.findall(r"var\(--(d-omnitwin-[a-z0-9-]+)\s*([,)])", tekst):
+            per_bestand = uit.setdefault(naam, {})
+            # één gebruik zonder terugval in een bestand is genoeg om het als 'zonder' te tellen
+            per_bestand[bestand] = per_bestand.get(bestand, True) and teken == ","
+    return uit
+
+
+class TestComponenttokens(unittest.TestCase):
+    """Elk --d-omnitwin-token dat de viewer leest, staat in elk thema (licht en donker), en andersom."""
+
+    def test_tokens_zonder_terugval_staan_in_elk_thema(self):
+        # Zonder terugvalwaarde wordt de eigenschap ongeldig als het thema het token mist
+        gebruikt = gebruikte_componenttokens()
+        for naam in beschikbare_themas(THEMA_MAP):
+            for modus in ("licht", "donker"):
+                waarden = tokens(naam, modus)
+                for token, bestanden in gebruikt.items():
+                    zonder = [b for b, terugval in bestanden.items() if not terugval]
+                    if not zonder:
+                        continue
+                    with self.subTest(thema=naam, modus=modus, token=token):
+                        self.assertIn(token, waarden, f"--{token} (zonder terugval in {', '.join(zonder)}) ontbreekt")
+
+    def test_alle_gebruikte_tokens_staan_in_elk_thema(self):
+        # Met terugval werkt de app wel, maar dan geldt het eigen thema stilletjes niet
+        gebruikt = gebruikte_componenttokens()
+        self.assertGreater(len(gebruikt), 10)
+        for naam in beschikbare_themas(THEMA_MAP):
+            for modus in ("licht", "donker"):
+                waarden = tokens(naam, modus)
+                for token in gebruikt:
+                    with self.subTest(thema=naam, modus=modus, token=token):
+                        self.assertIn(token, waarden)
+
+    def test_thema_zet_geen_onbekende_componenttokens(self):
+        # Tikfout in een thema: het token wordt nergens gelezen
+        gebruikt = gebruikte_componenttokens()
+        for naam in beschikbare_themas(THEMA_MAP):
+            for modus in ("licht", "donker"):
+                for token in tokens(naam, modus):
+                    if token.startswith("d-omnitwin-"):
+                        with self.subTest(thema=naam, modus=modus, token=token):
+                            self.assertIn(token, gebruikt, f"{naam}: --{token} wordt nergens in de viewer gelezen")
+
+
+class TestKeycloakInlogthema(unittest.TestCase):
+    """Inlogpagina van Keycloak (deploy/keycloak/themes): per viewerthema een inlogthema in dezelfde kleuren."""
+
+    KC = ROOT / "deploy" / "keycloak"
+
+    def test_elk_thema_heeft_een_inlogthema(self):
+        for naam in beschikbare_themas(THEMA_MAP):
+            with self.subTest(thema=naam):
+                props = (self.KC / "themes" / naam / "login" / "theme.properties").read_text(encoding="utf-8")
+                self.assertIn("parent=keycloak.v2", props)
+                self.assertTrue((self.KC / "themes" / naam / "login" / "resources" / "css" / "omnitwin.css").is_file())
+
+    def test_realm_kiest_een_bestaand_inlogthema(self):
+        import json
+
+        realm = json.loads((self.KC / "realm-omnitwin.json").read_text(encoding="utf-8"))
+        self.assertIn(realm.get("loginTheme"), beschikbare_themas(THEMA_MAP))
+
+    def test_knopkleur_gelijk_aan_thema(self):
+        for naam in beschikbare_themas(THEMA_MAP):
+            css = COMMENTAAR.sub(" ", (self.KC / "themes" / naam / "login" / "resources" / "css" / "omnitwin.css").read_text(encoding="utf-8"))
+            licht = declaraties(BLOK_LICHT.search(css).group(1))
+            with self.subTest(thema=naam):
+                self.assertEqual(
+                    licht["pf-v5-global--primary-color--100"].lower(),
+                    los_op(tokens(naam, "licht"), "basis-color-action-1-bg-default").lower(),
+                )
 
 
 class TestGeenRegressieStandaardthema(unittest.TestCase):
