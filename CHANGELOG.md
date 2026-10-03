@@ -42,6 +42,10 @@ Eerdere wijzigingen, van vóór dit bestand, zijn terug te vinden in de git-hist
 - Use cases `cbs-gebiedsindelingen`, `cbs-kerncijfers` en `swf-definities` op status `actief`: ze installeren en slagen via de laad-API (`python -m omnitwin.usecases installeer|test`, machineclient met `beheerder` en `datasets:laden`). Een verse installatie laadt ze niet vanzelf; `laad_usecase.py --alle` laadt nog steeds alleen de demopakketten. `swf-basismonitor-waarden` blijft `ontwerp` tot de gebiedsindeling buurten bebouwde komgrens er is ([#229](https://github.com/TLaan/D-OmniTwin/issues/229)).
 - Traefik: de security-headers hangen per router in plaats van op het entrypoint, zodat Keycloak eigen CSP- en frame-regels kan hebben. Een eigen compose-bestand met een extra Traefik-router moet nu zelf `security-headers@file` als middleware zetten ([#214](https://github.com/TLaan/D-OmniTwin/issues/214)).
 
+### Opgelost
+
+- Kaart: bij minder unieke waarden dan kleurklassen (bijv. 3 buurten bij 7 klassen) kregen alle gebieden dezelfde kleur. Nu krijgt elke unieke waarde een eigen klasse, verdeeld over de hele kleurenschaal; gelijke waarden krijgen dezelfde kleur. Bij één unieke waarde: een neutrale middenkleur en een melding in de legenda ([#161](https://github.com/TLaan/D-OmniTwin/issues/161)).
+- `vw_gebied_indicator_actueel` (ook `/api/data/vw_gebied_indicator_actueel`) toont alleen gerealiseerde waarden (scenario `current`, NULL telt als `current`) en sorteert op jaar met `NULLS LAST`: een projectie of een rij zonder jaar telt niet meer als actueel. Migratie `V030__actueel_zonder_scenario.sql`. De kaart met een gekozen jaar filtert ook op scenario `current` ([#159](https://github.com/TLaan/D-OmniTwin/issues/159)).
 ### Beveiliging
 
 - Privacy van de logs ([#264](https://github.com/TLaan/D-OmniTwin/issues/264), uit de privacy-quickscan in [#262](https://github.com/TLaan/D-OmniTwin/pull/262)):

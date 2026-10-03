@@ -70,6 +70,7 @@ class GebiedsmonitorService:
                         FROM gebied_data 
                         WHERE indicator_uuid = CAST(:indicator_uuid AS uuid) 
                         AND jaar = :jaar
+                        AND COALESCE(scenario_id, 'current') = 'current'
                     ) i ON g.id = i.gebied_id
                     LEFT JOIN indicatoren ind ON ind.uuid = CAST(:indicator_uuid AS uuid)
                 """
@@ -158,7 +159,13 @@ class GebiedsmonitorService:
                 "indicator_naam": rows[0]["indicator_naam"] if rows and indicator_uuid else None,
                 "indicator_code": rows[0]["indicator_code"] if rows and indicator_uuid else None,
                 "eenheid": rows[0]["eenheid"] if rows and indicator_uuid else None,
-                "score_type": rows[0]["score_type"] if rows and indicator_uuid else None
+                "score_type": rows[0]["score_type"] if rows and indicator_uuid else None,
+                # #161: bij één unieke waarde is er geen spreiding om te kleuren
+                "aantal_unieke_waarden": len(set(all_values)),
+                "legenda_melding": (
+                    "Alle gebieden hebben dezelfde waarde: geen kleurverschil."
+                    if len(set(all_values)) == 1 and len(all_values) > 1 else None
+                ),
             },
             "data": data_dict
         }

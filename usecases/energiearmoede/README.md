@@ -53,8 +53,6 @@ Een use case is een **bundel**: data + inrichting + stappen. Alle drie staan hie
 
 - **Data:** de indicatoren zijn aanwezig en gevuld voor de drie Bolsward-buurten.
 - **Inrichting:** het pakket zet de richting goed en voegt afgeleide percentages toe. Een eigen Kompas-profiel en chatscenario per use case ontbreken nog (#138).
-- **Chat zet een verkeerde gemeente:** 'Gemeente: Bolsward' filtert op code 0080 (Leeuwarden). Dat filter blijft bewaard, en daarna blijft de kaart leeg (#140).
-- **AI-assistent:** de chat herkent wat je wilt doen en biedt knoppen aan, maar **beantwoordt geen datavraag**. Na een verse installatie stelt hij geen indicatoren voor (#139).
 
 ## Bewijs
 
