@@ -4,7 +4,7 @@ import { useAdminStore } from '../hooks/useAdminStore';
 import { authAPI } from '../services/api';
 
 export const AccountPage: React.FC = () => {
-    const { user } = useAdminStore();
+    const { user, authConfig } = useAdminStore();
     const [oldPassword, setOldPassword] = useState('');
     const [newPassword, setNewPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
@@ -64,6 +64,15 @@ export const AccountPage: React.FC = () => {
                     </span>
                 </div>
 
+                {user?.bron === 'oidc' ? (
+                    // Ingelogd via Keycloak (#251): wachtwoord en sessies beheer je daar
+                    <p>
+                        Je bent ingelogd via Keycloak. Je wachtwoord wijzig je in{' '}
+                        {authConfig.account_url
+                            ? <a href={authConfig.account_url} target="_blank" rel="noopener noreferrer">je Keycloak-account</a>
+                            : 'Keycloak'}.
+                    </p>
+                ) : (<>
                 <h3 style={{ fontSize: '1rem', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                     <Lock size={18} /> Wachtwoord Wijzigen
                 </h3>
@@ -129,6 +138,7 @@ export const AccountPage: React.FC = () => {
                         )}
                     </button>
                 </form>
+                </>)}
             </div>
         </div>
     );

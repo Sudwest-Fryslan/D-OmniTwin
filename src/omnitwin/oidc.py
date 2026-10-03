@@ -65,6 +65,7 @@ class Principal:
     client_id: str | None     # azp / client_id
     rollen: frozenset[str]    # realm-rollen + client-rollen van omnitwin-api (resource_access['omnitwin-api'].roles)
     token_id: str | None      # jti
+    gebruikersnaam: str | None = None  # preferred_username (mensen); voor de auditlog, nooit e-mail
 
 
 # ---------------------------------------------------------------------------
@@ -319,6 +320,7 @@ def controleer_token(token: str, cfg: _Config | None = None) -> Principal:
         client_id=str(client_id) if client_id else None,
         rollen=_rollen(claims, cfg.audience),
         token_id=str(claims["jti"]) if claims.get("jti") else None,
+        gebruikersnaam=str(claims["preferred_username"]) if claims.get("preferred_username") else None,
     )
 
 

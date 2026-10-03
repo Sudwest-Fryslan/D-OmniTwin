@@ -46,6 +46,22 @@
     --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
     --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.3);
     --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.4);
+
+    /* Organisatiethema (#89, #251): NL Design System-tokens uit static/css/themes/<thema>.css,
+       geladen door src/thema.ts. Het beheerscherm is donker (data-theme="dark" in index.html).
+       Alleen merk, kop, primaire knop en lettertype; tabellen, kaarten en grafieken volgen het
+       thema nog niet. Kop en knoppen gebruiken de actie-tokens (vlak + inverse tekst), niet
+       --d-omnitwin-header-*: de donkere kopkleuren van het standaardthema (#3b82f6 -> #22c55e met
+       #f1f5f9) halen WCAG AA niet voor de kleine tekst in de zijbalk. Terugval: #2563eb/#1d4ed8
+       met wit (5,2:1 en 6,7:1). */
+    --merk-bg: var(--basis-color-action-1-bg-default, #2563eb);
+    --merk-bg-hover: var(--basis-color-action-1-bg-hover, #1d4ed8);
+    --merk-tekst: var(--basis-color-action-1-inverse-color-default, #ffffff);
+    --kop-start: var(--merk-bg);
+    --kop-eind: var(--merk-bg-hover);
+    --kop-tekst: var(--merk-tekst);
+    --lettertype: var(--basis-text-font-family-default, 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif);
+    --lettertype-kop: var(--basis-heading-font-family, var(--lettertype));
 }
 
 * {
@@ -55,7 +71,7 @@
 }
 
 body {
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-family: var(--lettertype);
     background: var(--color-background);
     color: var(--color-text-primary);
     line-height: 1.5;
@@ -79,21 +95,23 @@ body {
 .sidebar-header {
     padding: var(--spacing-lg);
     border-bottom: 1px solid var(--color-border);
-    background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-secondary) 100%);
+    background: linear-gradient(135deg, var(--kop-start) 0%, var(--kop-eind) 100%);
     display: flex;
     align-items: center;
     gap: 0.75rem;
 }
 
 .sidebar-header h1 {
+    font-family: var(--lettertype-kop);
     font-size: 1.25rem;
     font-weight: 600;
-    color: white;
+    color: var(--kop-tekst);
 }
 
 .sidebar-header p {
     font-size: 0.75rem;
-    color: rgba(255, 255, 255, 0.8);
+    color: var(--kop-tekst);
+    opacity: 0.9;
     margin-top: 0.25rem;
 }
 
@@ -120,8 +138,8 @@ body {
 }
 
 .nav-item.active {
-    background: var(--color-primary);
-    color: white;
+    background: var(--merk-bg);
+    color: var(--merk-tekst);
 }
 
 /* Main Content */
@@ -188,12 +206,12 @@ body {
 }
 
 .btn-primary {
-    background: var(--color-primary);
-    color: white;
+    background: var(--merk-bg);
+    color: var(--merk-tekst);
 }
 
 .btn-primary:hover {
-    filter: brightness(1.1);
+    background: var(--merk-bg-hover);
 }
 
 .btn-secondary {
@@ -322,6 +340,7 @@ body {
     width: 100%;
     max-width: 400px;
     padding: var(--spacing-xl);
+    border-top: 4px solid var(--kop-start);
 }
 
 .login-logo {
@@ -335,11 +354,52 @@ body {
 }
 
 .login-logo h1 {
+    font-family: var(--lettertype-kop);
     font-size: 1.5rem;
-    background: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+    color: var(--color-text-primary);
+}
+
+/* Inloggen (#251): Keycloak, lokale accounts als noodtoegang */
+.login-melding {
+    font-size: 0.875rem;
+    padding: 0.75rem;
+    border-radius: var(--radius-md);
+    margin-bottom: 1rem;
+    border: 1px solid var(--color-border);
+    background: var(--color-surface-light);
+    color: var(--color-text-primary);
+}
+
+.login-melding-fout {
+    border-color: var(--color-error);
+}
+
+.login-melding-waarschuwing {
+    border-color: var(--color-warning);
+}
+
+.login-scheiding {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin: 1.5rem 0 1rem;
+    font-size: 0.75rem;
+    color: var(--color-text-secondary);
+}
+
+.login-scheiding::before,
+.login-scheiding::after {
+    content: "";
+    flex: 1;
+    border-top: 1px solid var(--color-border);
+}
+
+.noodtoegang-balk {
+    padding: 0.5rem 1rem;
+    background: var(--color-surface-light);
+    border-bottom: 2px solid var(--color-warning);
+    color: var(--color-text-primary);
+    font-size: 0.875rem;
 }
 
 /* Stats grid */
