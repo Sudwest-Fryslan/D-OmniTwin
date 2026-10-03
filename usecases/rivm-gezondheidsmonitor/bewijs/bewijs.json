@@ -1,10 +1,9 @@
 {
   "specificatie": "1.0",
   "naam": "rivm-gezondheidsmonitor",
-  "versie": "0.1.0",
-  "omnitwin_versie": "0.2.1",
-  "datum": "2026-10-03T09:45:15+02:00",
-  "omgeving": "lokaal",
+  "versie": "0.2.0",
+  "omnitwin_versie": "0.3.0-rc.1",
+  "datum": "2026-10-03T22:05:16+02:00",
   "geslaagd": true,
   "controles": [
     {
@@ -21,6 +20,42 @@
       "type": "idempotent",
       "resultaat": "overgeslagen",
       "melding": "maakt een levering uit de bron: python -m omnitwin.usecases test rivm-gezondheidsmonitor"
+    },
+    {
+      "type": "recht",
+      "omschrijving": "de beheerder mag datasets registreren",
+      "resultaat": "overgeslagen",
+      "melding": "overgeslagen: rechtencontrole vraagt testaccounts (test --testaccounts)"
+    },
+    {
+      "type": "recht",
+      "omschrijving": "etl-open-data mag zijn eigen dataset leveren",
+      "resultaat": "overgeslagen",
+      "melding": "overgeslagen: rechtencontrole vraagt testaccounts (test --testaccounts)"
+    },
+    {
+      "type": "recht",
+      "omschrijving": "etl-open-data mag een andere dataset niet leveren (403)",
+      "resultaat": "overgeslagen",
+      "melding": "overgeslagen: rechtencontrole vraagt testaccounts (test --testaccounts)"
+    },
+    {
+      "type": "recht",
+      "omschrijving": "etl-open-data mag niet registreren (403)",
+      "resultaat": "overgeslagen",
+      "melding": "overgeslagen: rechtencontrole vraagt testaccounts (test --testaccounts)"
+    },
+    {
+      "type": "recht",
+      "omschrijving": "een lezer mag niet laden (403)",
+      "resultaat": "overgeslagen",
+      "melding": "overgeslagen: rechtencontrole vraagt testaccounts (test --testaccounts)"
+    },
+    {
+      "type": "recht",
+      "omschrijving": "een lezer mag niet registreren (403)",
+      "resultaat": "overgeslagen",
+      "melding": "overgeslagen: rechtencontrole vraagt testaccounts (test --testaccounts)"
     }
   ],
   "stappen": [
@@ -28,7 +63,7 @@
       "id": "kaart",
       "resultaat": "ok",
       "afbeelding": "kaart.webp",
-      "antwoordtijd_s": 37.0,
+      "antwoordtijd_s": 14.3,
       "console_fouten": []
     },
     {

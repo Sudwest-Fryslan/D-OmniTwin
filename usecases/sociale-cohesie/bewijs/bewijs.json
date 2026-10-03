@@ -2,9 +2,8 @@
   "specificatie": "1.0",
   "naam": "sociale-cohesie",
   "versie": "0.2.0",
-  "omnitwin_versie": "0.2.1",
-  "datum": "2026-10-03T09:38:09+02:00",
-  "omgeving": "lokaal",
+  "omnitwin_versie": "0.3.0-rc.1",
+  "datum": "2026-10-03T22:07:28+02:00",
   "ai_aanbieder": "geen",
   "geslaagd": true,
   "controles": [
@@ -34,7 +33,7 @@
       "id": "kaart",
       "resultaat": "ok",
       "afbeelding": "kaart.webp",
-      "antwoordtijd_s": 77.8,
+      "antwoordtijd_s": 30.9,
       "console_fouten": []
     },
     {
@@ -42,14 +41,14 @@
       "resultaat": "ok",
       "afbeelding": "chat.webp",
       "antwoord": "Eenzaamheid (RIVM, GGD en CBS: Gezondheid per wijk en buurt (StatLine 50150NED), 2024): Bolsward-Zuidoost: 46,5% (2024). Ter vergelijking: Hoogste waarde: Bolsward-Noord (55%); laagste: Bolsward-Noordoost (41,6%). Daartussen: Bolsward-Zuidoost (46,5%). Lager is beter: Bolsward-Noordoost scoort het gunstigst, Bolsward-Noord het ongunstigst. Vrijwilliger (RIVM, GGD en CBS: Gezondheid per wijk en buurt (StatLine 50150NED), 2024): Bolsward-Zuidoost: 29% (2024). Ter vergelijking: Hoogste waarde: Bolsward-Noordoost (31,6%); laagste: Bolsward-Noord (23,5%). Daartussen: Bolsward-Zuidoost (29%). Hoger is beter: Bolsward-Noordoost scoort het gunstigst.",
-      "antwoordtijd_s": 22.0,
+      "antwoordtijd_s": 6.7,
       "console_fouten": []
     },
     {
       "id": "kompas",
       "resultaat": "ok",
       "afbeelding": "kompas.webp",
-      "antwoordtijd_s": 65.1,
+      "antwoordtijd_s": 33.9,
       "console_fouten": []
     }
   ]

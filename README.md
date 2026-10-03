@@ -2,7 +2,7 @@
 
 > Digitale spiegel van de fysieke leefomgeving: indicatoren op buurtniveau op een kaart, in een Kompas en in rapporten. Open source (EUPL 1.2).
 
-**Status:** pre-release, versie 0.2 (het actuele nummer staat in [`VERSION`](./VERSION), de wijzigingen in de [CHANGELOG](./CHANGELOG.md)). Lees vóór gebruik buiten je eigen netwerk de paragraaf [Beveiliging](./docs/9-beheer/installatie.md#beveiliging) van de installatiegids.
+**Status:** pre-release, versie 0.3.0-rc.1 (het actuele nummer staat in [`VERSION`](./VERSION), de wijzigingen in de [CHANGELOG](./CHANGELOG.md)). Lees vóór gebruik buiten je eigen netwerk de paragraaf [Beveiliging](./docs/9-beheer/installatie.md#beveiliging) van de installatiegids.
 
 [![Licentie: EUPL 1.2](https://img.shields.io/badge/Licentie-EUPL_1.2-blue)](./LICENSE) [![Docs: CC BY 4.0](https://img.shields.io/badge/Docs-CC_BY_4.0-green)](./LICENSE-DOCS)
 
@@ -20,7 +20,7 @@ Gemeenten en provincies werken aan opgaven als energietransitie, klimaatadaptati
 
 D-OmniTwin is bedoeld als **open methodiek met referentie-implementatie**, niet als product of SaaS-dienst. De architectuur is voorbereid op dataspaces (data blijft bij de bron), zoals de Fryslân Data Space (FRLDS).
 
-De repository bevat vijf **use cases** (energiearmoede, hittestress, brede welvaart, sociale cohesie, beleidsadviseur) met data voor 13 buurten in Súdwest-Fryslân, en de CBS-buurten en RIVM-indicatoren voor heel Fryslân. Testbuurt is Bolsward-Zuidoost (BU19000002); een deel van de waarden is demodata.
+De repository bevat **use cases** als installeerbare pakketten: vijf vragen van gebruikers (energiearmoede, hittestress, brede welvaart, sociale cohesie, beleidsadviseur) en de bronnen eronder. Bij de eerste start laden ze **open data** voor heel Fryslân: CBS-kerncijfers 2019–2026 en gebiedsindelingen, de RIVM-gezondheidsmonitor, RIVM-hitte en -boomkroon en politiecijfers. Wat (nog) niet open is, staat als gemarkeerde demodata in de bron. Testbuurt is Bolsward-Zuidoost (BU19000002). Zie de galerij [Use cases in beeld](#use-cases-in-beeld) en [`usecases/`](./usecases/README.md).
 
 ---
 
