@@ -40,3 +40,4 @@ Wat wordt makkelijker, wat moeilijker, wat moet er nog gebeuren.
 | [0005](0005-gescheiden-apis-per-doel.md) | Gescheiden API's per doel volgens de NL GOV API Design Rules | voorgesteld |
 | [0006](0006-usecase-als-declaratieve-app.md) | Use case als declaratieve app met eigen specificatie | voorgesteld |
 | [0007](0007-geen-multi-tenancy-mesh-van-instanties.md) | Geen multi-tenancy: autonome D-OmniTwin-instanties in een mesh | voorgesteld |
+| [0008](0008-inloggen-beheer-via-keycloak-bff.md) | Inloggen in de beheeromgeving via Keycloak, met de backend als BFF | voorgesteld |

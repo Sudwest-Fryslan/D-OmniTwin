@@ -38,7 +38,7 @@ docker compose up -d --build
 Open daarna **http://localhost**. Alles loopt via Traefik op poort 80.
 
 - Bij de eerste start richt de eenmalige service `db-init` de database in en laadt de use cases uit [`usecases/`](./usecases/README.md) (`LOAD_SAMPLE_DATA=true`, de standaard). Met `false` krijg je het product zonder data.
-- **Beheeromgeving:** http://localhost/admin/. Inloggen met `ADMIN_USER` (standaard `admin`) en `ADMIN_PASSWORD`. Laat je `ADMIN_PASSWORD` leeg, dan staat een eenmalig gegenereerd wachtwoord in `docker compose logs db-init`.
+- **Beheeromgeving:** http://localhost/admin/. Inloggen met `ADMIN_USER` (standaard `admin`) en `ADMIN_PASSWORD`. Laat je `ADMIN_PASSWORD` leeg, dan staat een eenmalig gegenereerd wachtwoord in `docker compose logs db-init`. Met Keycloak aan (`OIDC_ISSUER`) log je in via Keycloak en beheer je gebruikers en rollen daar; zie de [installatiegids](docs/9-beheer/installatie.md#keycloak-optioneel).
 - **API-documentatie:** http://localhost/docs.
 
 Voor een installatie bij je organisatie (vereisten, `.env`, backup, bijwerken, HTTPS, beveiliging) volg je de **[installatiegids](./docs/9-beheer/installatie.md)**. Volledige Fryslân-data laden: [installatiegids, Data](./docs/9-beheer/installatie.md#4-data).

@@ -38,6 +38,16 @@
         "description": "Beheer van D-OmniTwin (beheeromgeving, alle beheerroutes)"
       },
       {
+        "name": "gebruikersbeheerder",
+        "description": "Gebruikers en groepen beheren in de Keycloak-console (geen clients of realm-instellingen). Bewust apart van beheerder (minste rechten).",
+        "composite": true,
+        "composites": {
+          "client": {
+            "realm-management": ["manage-users", "view-users", "query-users", "query-groups", "view-realm"]
+          }
+        }
+      },
+      {
         "name": "lezer",
         "description": "Ingelogde gebruiker: ziet ook lagen en data die niet openbaar zijn"
       },
@@ -99,7 +109,8 @@
       "redirectUris": [
         "http://localhost/*",
         "http://localhost:8000/*",
-        "http://localhost:8080/*"
+        "http://localhost:8080/*",
+        "${OMNITWIN_BASE_URL}/*"
       ],
       "webOrigins": ["+"],
       "attributes": {

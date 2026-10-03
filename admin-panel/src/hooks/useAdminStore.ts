@@ -1,12 +1,20 @@
 import { create } from 'zustand';
 import type { Indicator, ColorSchema, HierarchyNode, ScoreType } from '../types';
+import type { AuthConfig, AuthUser } from '../services/api';
+
+// Zonder antwoord van /api/admin/auth/config: lokaal inloggen, zoals vóór Keycloak
+export const STANDAARD_AUTH_CONFIG: AuthConfig = {
+    oidc: false, lokaal: true, noodtoegang: false, gebruikersbeheer_url: null, account_url: null,
+};
 
 interface AdminStore {
     // Auth
     isAuthenticated: boolean;
-    user: { id: string; username: string; is_admin: boolean } | null;
-    setAuthenticated: (status: boolean, user?: { id: string; username: string; is_admin: boolean }) => void;
+    user: AuthUser | null;
+    setAuthenticated: (status: boolean, user?: AuthUser) => void;
     logout: () => void;
+    authConfig: AuthConfig;
+    setAuthConfig: (config: AuthConfig) => void;
 
     // Data
     selectedIndicator: Indicator | null;
@@ -36,6 +44,8 @@ export const useAdminStore = create<AdminStore>((set) => ({
     user: null,
     setAuthenticated: (status, user) => set({ isAuthenticated: status, user: user || null }),
     logout: () => set({ isAuthenticated: false, user: null }),
+    authConfig: STANDAARD_AUTH_CONFIG,
+    setAuthConfig: (authConfig) => set({ authConfig }),
 
     // Data
     selectedIndicator: null,

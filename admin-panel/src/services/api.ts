@@ -169,10 +169,27 @@ const authApiClient = axios.create({
     withCredentials: true,
 });
 
+// Welke manieren van inloggen staan aan (#251): Keycloak (OIDC) en/of lokale accounts
+export interface AuthConfig {
+    oidc: boolean;
+    lokaal: boolean;
+    noodtoegang: boolean;
+    gebruikersbeheer_url: string | null;
+    account_url: string | null;
+}
+
+export type AuthUser = { id: string; username: string; is_admin: boolean; bron?: string };
+
+// Inloggen via Keycloak: de backend doet de OIDC-flow en zet het sessiecookie (BFF, ADR 0008)
+export const oidcInlogUrl = (terug = '/admin/dashboard') =>
+    `/api/admin/auth/oidc/login?terug=${encodeURIComponent(terug)}`;
+
 export const authAPI = {
+    getConfig: () => authApiClient.get<AuthConfig>('/config'),
     login: (formData: URLSearchParams) => authApiClient.post<{ message: string; user: { id: string; username: string } }>('/login', formData, { headers: { 'Content-Type': 'application/x-www-form-urlencoded' } }),
-    logout: () => authApiClient.post<{ message: string }>('/logout'),
-    getMe: () => authApiClient.get<{ authenticated: boolean; user: { id: string; username: string; is_admin: boolean } | null }>('/me'),
+    // uitlog_url: bij een Keycloak-sessie daarheen, zodat ook Keycloak uitlogt
+    logout: () => authApiClient.post<{ message: string; uitlog_url?: string | null }>('/logout'),
+    getMe: () => authApiClient.get<{ authenticated: boolean; user: AuthUser | null }>('/me'),
     changePassword: (data: { old_password: string; new_password: string }) => authApiClient.post<{ message: string }>('/change-password', data),
 };
 
