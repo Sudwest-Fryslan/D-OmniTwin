@@ -85,3 +85,13 @@ def test_lager_is_beter_draait_de_schaal_om():
     ramp, k = kleuren(service(score_type="+/-"), [1.0, 2.0])
     assert ramp == list(reversed(ramp_normaal))
     assert k == [ramp[0], ramp[-1]]
+
+
+def test_legenda_klassen_bij_werkelijke_waarde():
+    # #255: per gebruikte kleur het bereik van de waarden, oplopend
+    svc = service()
+    waarden = [0.37, 0.47, 0.42, 0.42]
+    ramp, breaks, _ = svc.compute_colors_for_data(waarden, "x")
+    klassen = svc.legenda_klassen(waarden, ramp, breaks)
+    assert [(k["van"], k["tot"], k["aantal"]) for k in klassen] == [(0.37, 0.37, 1), (0.42, 0.42, 2), (0.47, 0.47, 1)]
+    assert [k["kleur"] for k in klassen] == [ramp[0], ramp[len(ramp) // 2], ramp[-1]]

@@ -1,0 +1,69 @@
+/* Kaartmodus en klassenlegenda (#255). Alleen bestaande variabelen: geen eigen
+   UI-kleuren; de klassekleuren zelf komen uit de API (color_schemas). */
+
+.kaart-modus {
+  display: flex;
+  gap: 4px;
+  margin: 4px 0 10px;
+  padding: 3px;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+}
+
+.kaart-modus label {
+  flex: 1;
+  position: relative;
+  text-align: center;
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+  padding: 4px 6px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.kaart-modus input {
+  position: absolute;
+  opacity: 0;
+  inset: 0;
+  margin: 0;
+  cursor: pointer;
+}
+
+.kaart-modus label:has(input:checked) {
+  background: var(--action-color);
+  color: var(--bg-secondary);
+  font-weight: 600;
+}
+
+.kaart-modus label:has(input:focus-visible) {
+  outline: 2px solid var(--action-color);
+  outline-offset: 2px;
+}
+
+.legenda-klassen {
+  list-style: none;
+  margin: 8px 0 0;
+  padding: 0;
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+}
+
+.legenda-klassen li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 2px 0;
+}
+
+.legenda-klassen .legenda-klasse-kleur {
+  flex: none;
+  width: 18px;
+  height: 12px;
+  border-radius: 3px;
+  border: 1px solid var(--border-color);
+}
+
+.legenda-klassen .legenda-klasse-aantal {
+  margin-left: auto;
+  opacity: 0.8;
+}

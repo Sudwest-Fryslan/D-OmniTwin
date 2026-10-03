@@ -30,6 +30,7 @@ class KompasConfiguratieStats(KompasConfiguratieBase):
     aantal_onderdelen: int
     aantal_indicatoren: int
     aantal_scoring_regels: int
+    classificatie: str = "zscore"       # #255: zscore (standaard) of percentiel_8
 
 
 class KompasConfiguratiesResponse(BaseModel):
@@ -60,6 +61,11 @@ class KompasNode(BaseModel):
     score_type: Optional[str] = None    # Voor debug/tooltip info
     beschrijving: Optional[str] = None  # Tooltip tekst
     ontologische_beschrijving: Optional[str] = None # Uitgebreide contextuele duiding
+    # #255, classificatie percentiel_8: klasse 1-8 (8 = gunstigst), ook geaggregeerd op
+    # onderdeel, thema en kwadrant; klasse_status 'onderdrukt' bij n onder de drempel
+    klasse: Optional[int] = None
+    klasse_kleur: Optional[str] = None
+    klasse_status: Optional[str] = None
 
 
 class HierarchieResponse(BaseModel):
@@ -86,6 +92,8 @@ class GebiedKompasResponse(BaseModel):
     coverage_percentage: float          # % indicatoren met data
     is_waterbuurt: bool = False         # #155: waterbuurt → geen vergelijking met de referentie
     melding: Optional[str] = None       # #155: toelichting, bijvoorbeeld bij een waterbuurt
+    classificatie: str = "zscore"       # #255: zscore (standaard) of percentiel_8
+    klassen_legenda: Optional[List[Dict[str, Any]]] = None  # #255: klasse, label, kleur
     laatste_update: datetime = Field(default_factory=datetime.now)
 
 

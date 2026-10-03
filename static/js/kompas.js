@@ -333,7 +333,10 @@ class KompasVisualization {
             document.getElementById('kompas-info').innerHTML =
                 `<p class="help-text"><strong>${escapeHtml(data.gebied_naam)}</strong><br>` +
                 `Configuratie: ${escapeHtml(data.config_naam)}<br>` +
-                `Indicatordekking: ${escapeHtml(data.coverage_percentage)}%</p>`;
+                `Indicatordekking: ${escapeHtml(data.coverage_percentage)}%` +
+                (data.classificatie === 'percentiel_8'
+                    ? '<br><span class="kompas-classificatie">Kleur: percentielklasse (8 × 12,5%)</span>' : '') +
+                `</p>`;
 
             // Render sunburst with data
             this.renderSunburst(data.hierarchie);
@@ -406,6 +409,16 @@ class KompasVisualization {
             // Recursively average the hierarchie values
             this._mergeHierarchies(merged.hierarchie, results.map(r => r.hierarchie));
 
+            // #255: bij percentielklassen de klassen over de hele selectie uit de backend
+            if (results[0].classificatie === 'percentiel_8') {
+                const qs = gebiedIds.map(id => `gebied_id=${encodeURIComponent(id)}`).join('&');
+                const sel = await fetch(`/api/kompas/${configId}/selectie?${qs}`).then(r => {
+                    if (!r.ok) throw new Error(`HTTP ${r.status} selectie`);
+                    return r.json();
+                });
+                this._neemKlassenOver(merged.hierarchie, sel.hierarchie);
+            }
+
             // Build area names list
             const namen = results.map(r => r.gebied_naam);
             const namenTekst = namen.length <= 3
@@ -431,7 +444,10 @@ class KompasVisualization {
             document.getElementById('kompas-info').innerHTML =
                 `<p class="help-text"><strong><img src="/static/images/chart-bar.svg" alt="" style="width:16px; height:16px; vertical-align: -2px; filter: brightness(0) invert(1); margin-right: 4px;">${escapeHtml(namenTekst)}</strong><br>` +
                 `Gemiddelde van ${gebiedIds.length} gebieden<br>` +
-                `Indicatordekking: ${escapeHtml(avgCoverage)}%</p>`;
+                `Indicatordekking: ${escapeHtml(avgCoverage)}%` +
+                (results[0].classificatie === 'percentiel_8'
+                    ? '<br><span class="kompas-classificatie">Kleur: percentielklasse over de selectie (8 × 12,5%)</span>' : '') +
+                `</p>`;
 
             // Render sunburst with merged data
             this.renderSunburst(merged.hierarchie);
@@ -527,6 +543,19 @@ class KompasVisualization {
             console.log(`🔍 Zoom hersteld naar: ${currentNode.data.name}`);
             this._zoomFn(null, currentNode);
         }
+    }
+
+    _neemKlassenOver(target, bron) {
+        /**
+         * #255: klasse, klasse_kleur en klasse_status van de selectie overnemen
+         * (zelfde profiel, dus dezelfde boom in dezelfde volgorde).
+         */
+        if (!target || !bron) return;
+        target.klasse = bron.klasse ?? null;
+        target.klasse_kleur = bron.klasse_kleur ?? null;
+        target.klasse_status = bron.klasse_status ?? null;
+        if (target.type === 'indicator' && bron.color) target.color = bron.color;
+        (target.children || []).forEach((kind, i) => this._neemKlassenOver(kind, bron.children?.[i]));
     }
 
     _mergeHierarchies(target, sources) {
@@ -941,6 +970,12 @@ class KompasVisualization {
          * 2. Parent nodes: aggregate from children
          * 3. Fallback: gray
          */
+        // #255: percentielklasse (profiel percentiel_8): de backend kleurt elke node,
+        // ook onderdeel, thema en kwadrant (gewogen klasse-aggregatie)
+        if (d.data.klasse_kleur) {
+            return d.data.klasse_kleur;
+        }
+
         // Leaf node with data color from backend
         if (!d.children && d.data.color) {
             return d.data.color;
