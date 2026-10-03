@@ -12,6 +12,7 @@ from typing import Optional, List, Dict, Any
 import numpy as np
 
 
+from omnitwin.services import percentielklasse as pk
 from omnitwin.services.kompas_service import KompasScoringService
 
 class GebiedsmonitorService:
@@ -33,11 +34,17 @@ class GebiedsmonitorService:
         indicator_uuid: Optional[str] = None,
         show_all: bool = False,
         gemeente_code: Optional[str] = None,
-        jaar: Optional[int] = None
+        jaar: Optional[int] = None,
+        modus: str = "waarde",
     ) -> Dict[str, Any]:
         """
         Haal attribuut data op voor kaartvisualisatie (ZONDER geometry).
         Ontworpen voor de Hybride "Lego" architectuur.
+
+        modus (#255): 'waarde' = kleur naar de werkelijke waarde (classificatie uit
+        color_schemas), met klassen voor de legenda; 'percentiel' = percentielklasse 1-8
+        binnen de referentiegroep (gebiedstype + gemeente, zelfde jaar), polariteit
+        toegepast, kleurenblindvriendelijk palet.
         """
         from omnitwin.services.color_scale_service import ColorScaleService
         from omnitwin.services.logging_service import AppLogger
@@ -50,6 +57,8 @@ class GebiedsmonitorService:
                 g.id, 
                 g.naam, 
                 g.gebiedstype_id,
+                g.gemeente_code,
+                public.is_waterbuurt(g.naam, g.metadata) AS is_waterbuurt,
                 i.waarde as indicator_waarde,
                 i.jaar,
                 i.bron,
@@ -115,21 +124,39 @@ class GebiedsmonitorService:
         breaks = []
         nodata_color = "#94A3B8"  # Default grey
         
+        klassen_legenda = []
+        percentiel = modus == "percentiel" and bool(indicator_uuid)
+        klasse_per_gebied: Dict[str, Dict[str, Any]] = {}
+
         if indicator_uuid and len(all_values) > 0:
             color_ramp, breaks, nodata_color = color_service.compute_colors_for_data(
                 all_values, indicator_uuid
             )
-        
+            if percentiel:
+                color_ramp, klasse_per_gebied = self._percentielklassen_kaart(
+                    rows, gebiedstype_id, indicator_uuid, jaar, color_service
+                )
+                klassen_legenda = pk.legenda(color_ramp)
+                for k in klassen_legenda:
+                    k["aantal"] = sum(1 for v in klasse_per_gebied.values() if v["klasse"] == k["klasse"])
+            else:
+                klassen_legenda = color_service.legenda_klassen(all_values, color_ramp, breaks)
+
         data_dict = {}
         for row in rows:
             color = nodata_color
+            klasse = klasse_per_gebied.get(str(row["id"]), {})
             if row["indicator_waarde"] is not None and len(color_ramp) > 0:
-                color = color_service.get_color_for_value(
-                    float(row["indicator_waarde"]), color_ramp, breaks, nodata_color
-                )
+                if percentiel:
+                    k = klasse.get("klasse")
+                    color = color_ramp[k - 1] if k else nodata_color
+                else:
+                    color = color_service.get_color_for_value(
+                        float(row["indicator_waarde"]), color_ramp, breaks, nodata_color
+                    )
             elif indicator_uuid and not show_all:
-                continue 
-                
+                continue
+
             data_dict[str(row["id"])] = {
                 "indicator_waarde": float(row["indicator_waarde"]) if row["indicator_waarde"] is not None else None,
                 "color": color,
@@ -137,7 +164,10 @@ class GebiedsmonitorService:
                 "jaar": row["jaar"],
                 "bron": row["bron"]
             }
-            
+            if percentiel:
+                data_dict[str(row["id"])]["klasse"] = klasse.get("klasse")
+                data_dict[str(row["id"])]["klasse_status"] = klasse.get("status")
+
         features_with_data = sum(1 for props in data_dict.values() if props["heeft_data"])
 
         count_query = "SELECT COUNT(*) FROM gebieden WHERE gebiedstype_id = CAST(:gebiedstype_id AS uuid)"
@@ -162,6 +192,10 @@ class GebiedsmonitorService:
                 "score_type": rows[0]["score_type"] if rows and indicator_uuid else None,
                 # #161: bij één unieke waarde is er geen spreiding om te kleuren
                 "aantal_unieke_waarden": len(set(all_values)),
+                # #255: kaartmodus en klassen voor de legenda (waarde: bereik per kleur;
+                # percentiel: klasse 1-8 met label en aantal gebieden)
+                "modus": "percentiel" if percentiel else "waarde",
+                "klassen": klassen_legenda,
                 "legenda_melding": (
                     "Alle gebieden hebben dezelfde waarde: geen kleurverschil."
                     if len(set(all_values)) == 1 and len(all_values) > 1 else None
@@ -169,6 +203,36 @@ class GebiedsmonitorService:
             },
             "data": data_dict
         }
+
+    def _percentielklassen_kaart(self, rows, gebiedstype_id, indicator_uuid, jaar, color_service):
+        """
+        Percentielklasse per gebied op de kaart (#255). Elk gebied wordt vergeleken met
+        de referentiegroep van zijn eigen gemeente (zelfde gebiedstype en jaar). Een
+        waterbuurt of een waarde met n onder de drempel krijgt geen klasse.
+        Geeft (8 kleuren, {gebied_id: {"klasse", "status"}}).
+        """
+        kleuren = pk.palet(color_service)
+        met_waarde = [r for r in rows if r["indicator_waarde"] is not None]
+        if not met_waarde:
+            return kleuren, {}
+        score_type = met_waarde[0]["score_type"]
+        hoger_beter = pk.hoger_is_beter(score_type)
+        referentie = pk.referentie_waarden(
+            self.db, gebiedstype_id, {r["gemeente_code"] for r in met_waarde}, [indicator_uuid], jaar=jaar
+        )
+        onderdrukt = pk.onderdrukte_waarden(self.db, [str(r["id"]) for r in met_waarde], [indicator_uuid])
+        uit: Dict[str, Dict[str, Any]] = {}
+        for r in met_waarde:
+            gid = str(r["id"])
+            if r["is_waterbuurt"]:
+                uit[gid] = {"klasse": None, "status": "waterbuurt"}
+            elif (gid, str(indicator_uuid), r["jaar"]) in onderdrukt:
+                uit[gid] = {"klasse": None, "status": "onderdrukt"}
+            else:
+                ref = referentie.get((r["gemeente_code"], str(indicator_uuid)), [])
+                k = pk.klasse(float(r["indicator_waarde"]), ref, hoger_beter)
+                uit[gid] = {"klasse": k, "status": None if k else "geen_referentie"}
+        return kleuren, uit
 
     
     def get_gebiedstypes(self) -> List[Dict[str, Any]]:

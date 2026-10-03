@@ -158,6 +158,11 @@ def get_kaart_attributes(
         None,
         description="Optioneel: Specifiek jaar"
     ),
+    modus: str = Query(
+        "waarde",
+        pattern="^(waarde|percentiel)$",
+        description="waarde = kleur naar de werkelijke waarde; percentiel = percentielklasse 1-8 binnen de referentiegroep (#255)"
+    ),
     service: GebiedsmonitorService = Depends(get_service)
 ):
     """
@@ -171,7 +176,8 @@ def get_kaart_attributes(
         indicator_uuid=str(indicator_uuid) if indicator_uuid else None,
         show_all=show_all,
         gemeente_code=gemeente_code,
-        jaar=jaar
+        jaar=jaar,
+        modus=modus,
     )
 
 

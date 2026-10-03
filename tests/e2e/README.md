@@ -9,6 +9,7 @@ sample dataset. Elke test verwijst in naam en docstring naar zijn TC-id
 | Bestand | Testcases |
 |---|---|
 | `test_kaartmodule.py` | TC-01-001, TC-01-002, TC-01-003 (+ kaart-export) |
+| `test_kaartmodus.py` | TC-01-004 (kaartmodus percentielklasse / werkelijke waarde / uit, #255) |
 | `test_kompas_detail.py` | TC-02-001, TC-02-002 |
 | `test_integratie_e2e.py` | TC-06-001, TC-06-004 |
 | `test_integratie_e2e.py` | TC-06-001 |
