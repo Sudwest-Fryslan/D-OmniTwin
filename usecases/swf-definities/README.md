@@ -1,7 +1,7 @@
 # TC-07-003 — SWF-definities: indicatoren, gebiedstypen en relaties
 
 **Status:** ontwerp (de laad-API is nog niet gebouwd; deze use case is de specificatie en straks de acceptatietest)
-**Versie:** 0.1.0 · **Afhankelijk van:** –
+**Versie:** 0.2.0 · **Afhankelijk van:** –
 **Manifest:** [`usecase.json`](usecase.json) · **Controleren:** `python -m omnitwin.usecases controleer swf-definities`
 
 ## Vraag

@@ -1,7 +1,7 @@
 # TC-07-007 — SWF-klimaatmonitor: welstand × buurt met labels A–E
 
 **Status:** ontwerp (de laad-API is nog niet gebouwd; deze use case is de specificatie en straks de acceptatietest)
-**Versie:** 0.1.0 · **Afhankelijk van:** [swf-definities](../swf-definities/README.md), [swf-gebiedsindelingen](../swf-gebiedsindelingen/README.md), [swf-kompasprofiel](../swf-kompasprofiel/README.md)
+**Versie:** 0.2.0 · **Afhankelijk van:** [swf-definities](../swf-definities/README.md), [swf-gebiedsindelingen](../swf-gebiedsindelingen/README.md), [swf-kompasprofiel](../swf-kompasprofiel/README.md)
 **Manifest:** [`usecase.json`](usecase.json) · **Controleren:** `python -m omnitwin.usecases controleer swf-klimaatmonitor`
 
 ## Vraag

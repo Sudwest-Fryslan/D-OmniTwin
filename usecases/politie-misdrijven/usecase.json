@@ -2,7 +2,7 @@
   "specificatie": "1.0",
   "naam": "politie-misdrijven",
   "id": "TC-07-022",
-  "versie": "0.1.0",
+  "versie": "0.2.0",
   "titel": "Politie: geregistreerde misdrijven per buurt via de laad-API",
   "vraag": "Ik wil het aantal woninginbraken, fietsdiefstallen, diefstallen uit auto's en vernielingen per buurt sinds 2019 in D-OmniTwin.",
   "gebruiker": "beheerder D-OmniTwin",
@@ -10,9 +10,36 @@
   "afhankelijk_van": [
     "cbs-gebiedsindelingen"
   ],
+  "actoren": [
+    {
+      "naam": "beheerder",
+      "soort": "gebruiker",
+      "rollen": [
+        "beheerder"
+      ],
+      "omschrijving": "beheerder van D-OmniTwin: registreert de datasets"
+    },
+    {
+      "naam": "etl-open-data",
+      "soort": "machineclient",
+      "rollen": [
+        "dataset:politie-misdrijven-buurten:laden"
+      ],
+      "omschrijving": "ETL voor open bronnen: levert alleen de eigen datasets"
+    },
+    {
+      "naam": "lezer",
+      "soort": "gebruiker",
+      "rollen": [
+        "lezer"
+      ],
+      "omschrijving": "ingelogde medewerker: ziet ook wat niet openbaar is, laadt niets"
+    }
+  ],
   "rechten": [
     "realm-rol beheerder (registreren)",
-    "dataset:politie-misdrijven-buurten:laden"
+    "dataset:politie-misdrijven-buurten:laden",
+    "realm-rol lezer"
   ],
   "datasets": [
     {
@@ -55,7 +82,53 @@
     },
     {
       "type": "idempotent",
-      "dataset": "politie-misdrijven-buurten"
+      "dataset": "politie-misdrijven-buurten",
+      "actor": "etl-open-data"
+    },
+    {
+      "type": "recht",
+      "actor": "beheerder",
+      "actie": "registreren",
+      "toegestaan": true,
+      "omschrijving": "de beheerder mag datasets registreren"
+    },
+    {
+      "type": "recht",
+      "actor": "etl-open-data",
+      "actie": "leveren",
+      "dataset": "politie-misdrijven-buurten",
+      "toegestaan": true,
+      "omschrijving": "etl-open-data mag zijn eigen dataset leveren"
+    },
+    {
+      "type": "recht",
+      "actor": "etl-open-data",
+      "actie": "leveren",
+      "dataset": "cbs-kerncijfers",
+      "toegestaan": false,
+      "omschrijving": "etl-open-data mag een andere dataset niet leveren (403)"
+    },
+    {
+      "type": "recht",
+      "actor": "etl-open-data",
+      "actie": "registreren",
+      "toegestaan": false,
+      "omschrijving": "etl-open-data mag niet registreren (403)"
+    },
+    {
+      "type": "recht",
+      "actor": "lezer",
+      "actie": "leveren",
+      "dataset": "politie-misdrijven-buurten",
+      "toegestaan": false,
+      "omschrijving": "een lezer mag niet laden (403)"
+    },
+    {
+      "type": "recht",
+      "actor": "lezer",
+      "actie": "registreren",
+      "toegestaan": false,
+      "omschrijving": "een lezer mag niet registreren (403)"
     }
   ],
   "bekende_afwijkingen": [

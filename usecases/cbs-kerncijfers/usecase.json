@@ -2,7 +2,7 @@
   "specificatie": "1.0",
   "naam": "cbs-kerncijfers",
   "id": "TC-07-002",
-  "versie": "0.1.0",
+  "versie": "0.2.0",
   "titel": "CBS Kerncijfers wijken en buurten via de laad-API",
   "vraag": "Ik wil de CBS Kerncijfers van alle jaargangen sinds 2019 per buurt in D-OmniTwin, als één dataset die elk jaar met één levering wordt bijgewerkt.",
   "gebruiker": "beheerder D-OmniTwin",
@@ -10,9 +10,36 @@
   "afhankelijk_van": [
     "cbs-gebiedsindelingen"
   ],
+  "actoren": [
+    {
+      "naam": "beheerder",
+      "soort": "gebruiker",
+      "rollen": [
+        "beheerder"
+      ],
+      "omschrijving": "beheerder van D-OmniTwin: registreert de datasets"
+    },
+    {
+      "naam": "etl-cbs",
+      "soort": "machineclient",
+      "rollen": [
+        "dataset:cbs-kerncijfers:laden"
+      ],
+      "omschrijving": "ETL voor de CBS-bronnen: levert alleen de eigen datasets"
+    },
+    {
+      "naam": "lezer",
+      "soort": "gebruiker",
+      "rollen": [
+        "lezer"
+      ],
+      "omschrijving": "ingelogde medewerker: ziet ook wat niet openbaar is, laadt niets"
+    }
+  ],
   "rechten": [
     "realm-rol beheerder (registreren)",
-    "dataset:cbs-kerncijfers:laden"
+    "dataset:cbs-kerncijfers:laden",
+    "realm-rol lezer"
   ],
   "datasets": [
     {
@@ -48,12 +75,58 @@
     },
     {
       "type": "idempotent",
-      "dataset": "cbs-kerncijfers"
+      "dataset": "cbs-kerncijfers",
+      "actor": "etl-cbs"
     },
     {
       "type": "viewer",
       "stap": "Kompas openen voor Bolsward-Zuidoost, indicator Inwoners",
       "verwacht": "trendlijn 2019–2026"
+    },
+    {
+      "type": "recht",
+      "actor": "beheerder",
+      "actie": "registreren",
+      "toegestaan": true,
+      "omschrijving": "de beheerder mag datasets registreren"
+    },
+    {
+      "type": "recht",
+      "actor": "etl-cbs",
+      "actie": "leveren",
+      "dataset": "cbs-kerncijfers",
+      "toegestaan": true,
+      "omschrijving": "etl-cbs mag zijn eigen dataset leveren"
+    },
+    {
+      "type": "recht",
+      "actor": "etl-cbs",
+      "actie": "leveren",
+      "dataset": "cbs-gebied-buurten",
+      "toegestaan": false,
+      "omschrijving": "etl-cbs mag een andere dataset niet leveren (403)"
+    },
+    {
+      "type": "recht",
+      "actor": "etl-cbs",
+      "actie": "registreren",
+      "toegestaan": false,
+      "omschrijving": "etl-cbs mag niet registreren (403)"
+    },
+    {
+      "type": "recht",
+      "actor": "lezer",
+      "actie": "leveren",
+      "dataset": "cbs-kerncijfers",
+      "toegestaan": false,
+      "omschrijving": "een lezer mag niet laden (403)"
+    },
+    {
+      "type": "recht",
+      "actor": "lezer",
+      "actie": "registreren",
+      "toegestaan": false,
+      "omschrijving": "een lezer mag niet registreren (403)"
     }
   ],
   "bekende_afwijkingen": [

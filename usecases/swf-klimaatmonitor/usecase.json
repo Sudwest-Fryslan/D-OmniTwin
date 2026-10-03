@@ -2,7 +2,7 @@
   "specificatie": "1.0",
   "naam": "swf-klimaatmonitor",
   "id": "TC-07-007",
-  "versie": "0.1.0",
+  "versie": "0.2.0",
   "titel": "SWF-klimaatmonitor: welstand × buurt met labels A–E",
   "vraag": "Welk label (A–E) heeft een welstandsgebied in Bolsward voor hittestress, droogte en hemelwateroverlast, en welke indicator trekt het omlaag?",
   "gebruiker": "adviseur klimaatadaptatie",
@@ -11,6 +11,32 @@
     "swf-definities",
     "swf-gebiedsindelingen",
     "swf-kompasprofiel"
+  ],
+  "actoren": [
+    {
+      "naam": "beheerder",
+      "soort": "gebruiker",
+      "rollen": [
+        "beheerder"
+      ],
+      "omschrijving": "beheerder van D-OmniTwin: registreert de datasets"
+    },
+    {
+      "naam": "etl-swf",
+      "soort": "machineclient",
+      "rollen": [
+        "dataset:swf-monitor-waarden:laden"
+      ],
+      "omschrijving": "ETL van SWF (bijv. FME): levert alleen de eigen datasets"
+    },
+    {
+      "naam": "lezer",
+      "soort": "gebruiker",
+      "rollen": [
+        "lezer"
+      ],
+      "omschrijving": "ingelogde medewerker: ziet ook wat niet openbaar is, laadt niets"
+    }
   ],
   "rechten": [
     "realm-rol beheerder (registreren)",
@@ -52,7 +78,8 @@
       "type": "afkeuring",
       "dataset": "swf-monitor-waarden",
       "variant": "zonder-namespace",
-      "code": "gebied-onbekend"
+      "code": "gebied-onbekend",
+      "actor": "etl-swf"
     },
     {
       "type": "api",
@@ -72,6 +99,51 @@
       "type": "viewer",
       "stap": "Kompas 'SWF Klimaat', welstand × buurt in Bolsward kiezen",
       "verwacht": "per thema en indicator een label A–E en de indicator die het laagst scoort"
+    },
+    {
+      "type": "recht",
+      "actor": "beheerder",
+      "actie": "registreren",
+      "toegestaan": true,
+      "omschrijving": "de beheerder mag datasets registreren"
+    },
+    {
+      "type": "recht",
+      "actor": "etl-swf",
+      "actie": "leveren",
+      "dataset": "swf-monitor-waarden",
+      "toegestaan": true,
+      "omschrijving": "etl-swf mag zijn eigen dataset leveren"
+    },
+    {
+      "type": "recht",
+      "actor": "etl-swf",
+      "actie": "leveren",
+      "dataset": "cbs-kerncijfers",
+      "toegestaan": false,
+      "omschrijving": "etl-swf mag een andere dataset niet leveren (403)"
+    },
+    {
+      "type": "recht",
+      "actor": "etl-swf",
+      "actie": "registreren",
+      "toegestaan": false,
+      "omschrijving": "etl-swf mag niet registreren (403)"
+    },
+    {
+      "type": "recht",
+      "actor": "lezer",
+      "actie": "leveren",
+      "dataset": "swf-monitor-waarden",
+      "toegestaan": false,
+      "omschrijving": "een lezer mag niet laden (403)"
+    },
+    {
+      "type": "recht",
+      "actor": "lezer",
+      "actie": "registreren",
+      "toegestaan": false,
+      "omschrijving": "een lezer mag niet registreren (403)"
     }
   ],
   "bekende_afwijkingen": [

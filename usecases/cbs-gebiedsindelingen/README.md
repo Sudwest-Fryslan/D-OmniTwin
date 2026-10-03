@@ -1,7 +1,7 @@
 # TC-07-001 — CBS-gebiedsindelingen (buurten, wijken, gemeenten) via de laad-API
 
 **Status:** ontwerp (de laad-API is nog niet gebouwd; deze use case is de specificatie en straks de acceptatietest)
-**Versie:** 0.1.0 · **Afhankelijk van:** –
+**Versie:** 0.2.0 · **Afhankelijk van:** –
 **Manifest:** [`usecase.json`](usecase.json) · **Controleren:** `python -m omnitwin.usecases controleer cbs-gebiedsindelingen`
 
 ## Vraag

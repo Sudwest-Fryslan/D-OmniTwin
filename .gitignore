@@ -13,6 +13,8 @@ pip-delete-this-directory.txt
 # Configuration
 config.ini
 .env
+# Wachtwoorden en secrets van use-case-testaccounts (#223): alleen lokaal
+.usecase-accounts.json
 
 # Agents (intern AI-werkgeheugen, niet voor repository)
 .agents/

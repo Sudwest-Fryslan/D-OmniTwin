@@ -2,13 +2,46 @@
   "specificatie": "1.0",
   "naam": "swf-kaartlagen",
   "id": "TC-07-008",
-  "versie": "0.1.0",
+  "versie": "0.2.0",
   "titel": "SWF-kaartlagen: klimaat, deelgebieden, projecten en overige lagen",
   "vraag": "Ik wil de kaartlagen van de huidige monitor (klimaatlagen, deelgebieden, coördinatorgebieden, grootgrondbezit, 'Wat speelt er?') in D-OmniTwin, met dezelfde zichtbaarheid: open lagen voor iedereen, interne lagen alleen na inloggen.",
   "gebruiker": "medewerker team of vakgroep (SWF)",
   "status": "ontwerp",
   "afhankelijk_van": [
     "swf-gebiedsindelingen"
+  ],
+  "actoren": [
+    {
+      "naam": "beheerder",
+      "soort": "gebruiker",
+      "rollen": [
+        "beheerder"
+      ],
+      "omschrijving": "beheerder van D-OmniTwin: registreert de datasets"
+    },
+    {
+      "naam": "etl-swf",
+      "soort": "machineclient",
+      "rollen": [
+        "dataset:swf-laag-deelgebieden:laden",
+        "dataset:swf-laag-coordinatorgebieden:laden",
+        "dataset:swf-laag-afstand-tot-koelte:laden",
+        "dataset:swf-laag-risico-paalrot:laden",
+        "dataset:swf-laag-projecten-vlak:laden",
+        "dataset:swf-laag-projecten-punt:laden",
+        "dataset:swf-laag-projecten-lijn:laden",
+        "dataset:swf-laag-grootgrondbezit:laden"
+      ],
+      "omschrijving": "ETL van SWF (bijv. FME): levert alleen de eigen datasets"
+    },
+    {
+      "naam": "lezer",
+      "soort": "gebruiker",
+      "rollen": [
+        "lezer"
+      ],
+      "omschrijving": "ingelogde medewerker: ziet ook wat niet openbaar is, laadt niets"
+    }
   ],
   "rechten": [
     "realm-rol beheerder (registreren)",
@@ -190,6 +223,51 @@
       "type": "viewer",
       "stap": "zonder inloggen de lagenlijst openen",
       "verwacht": "alleen open lagen (deelgebieden, PDOK-lagen)"
+    },
+    {
+      "type": "recht",
+      "actor": "beheerder",
+      "actie": "registreren",
+      "toegestaan": true,
+      "omschrijving": "de beheerder mag datasets registreren"
+    },
+    {
+      "type": "recht",
+      "actor": "etl-swf",
+      "actie": "leveren",
+      "dataset": "swf-laag-deelgebieden",
+      "toegestaan": true,
+      "omschrijving": "etl-swf mag zijn eigen dataset leveren"
+    },
+    {
+      "type": "recht",
+      "actor": "etl-swf",
+      "actie": "leveren",
+      "dataset": "cbs-kerncijfers",
+      "toegestaan": false,
+      "omschrijving": "etl-swf mag een andere dataset niet leveren (403)"
+    },
+    {
+      "type": "recht",
+      "actor": "etl-swf",
+      "actie": "registreren",
+      "toegestaan": false,
+      "omschrijving": "etl-swf mag niet registreren (403)"
+    },
+    {
+      "type": "recht",
+      "actor": "lezer",
+      "actie": "leveren",
+      "dataset": "swf-laag-deelgebieden",
+      "toegestaan": false,
+      "omschrijving": "een lezer mag niet laden (403)"
+    },
+    {
+      "type": "recht",
+      "actor": "lezer",
+      "actie": "registreren",
+      "toegestaan": false,
+      "omschrijving": "een lezer mag niet registreren (403)"
     }
   ],
   "bekende_afwijkingen": [
