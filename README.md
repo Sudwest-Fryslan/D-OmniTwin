@@ -38,7 +38,7 @@ docker compose up -d --build
 Open daarna **http://localhost**. Alles loopt via Traefik op poort 80.
 
 - Bij de eerste start richt de eenmalige service `db-init` de database in en laadt de use cases uit [`usecases/`](./usecases/README.md) (`LOAD_SAMPLE_DATA=true`, de standaard). Met `false` krijg je het product zonder data.
-- **Beheeromgeving:** http://localhost/admin/. Inloggen met `ADMIN_USER` (standaard `admin`) en `ADMIN_PASSWORD`. Laat je `ADMIN_PASSWORD` leeg, dan staat een eenmalig gegenereerd wachtwoord in `docker compose logs db-init`.
+- **Beheeromgeving:** http://localhost/admin/. Inloggen met `ADMIN_USER` (standaard `admin`) en `ADMIN_PASSWORD`. Laat je `ADMIN_PASSWORD` leeg, dan staat een eenmalig gegenereerd wachtwoord in `docker compose logs db-init`. Met Keycloak aan (`OIDC_ISSUER`) log je in via Keycloak en beheer je gebruikers en rollen daar; zie de [installatiegids](docs/9-beheer/installatie.md#keycloak-optioneel).
 - **API-documentatie:** http://localhost/docs.
 
 Voor een installatie bij je organisatie (vereisten, `.env`, backup, bijwerken, HTTPS, beveiliging) volg je de **[installatiegids](./docs/9-beheer/installatie.md)**. Data laden (use cases, laad-API): [installatiegids, Data](./docs/9-beheer/installatie.md#4-data).
@@ -165,6 +165,9 @@ Bijdragen: [CONTRIBUTING.md](./CONTRIBUTING.md) en de [gedragscode](./CODE_OF_CO
 | Document | Waarover |
 |----------|----------|
 | [docs/9-beheer/installatie.md](./docs/9-beheer/installatie.md) | Installatie en beheer (Docker): de installatiegids |
+| [docs/9-beheer/beheerhandleiding.md](./docs/9-beheer/beheerhandleiding.md) | Beheer in productie: back-up en herstel, bijwerken, Keycloak, leveringen, incidenten, acceptatie |
+| [docs/5-secops/privacy-quickscan.md](./docs/5-secops/privacy-quickscan.md) | Privacy-quickscan: persoonsgegevens, bewaartermijnen, AI |
+| [docs/4-ux-design/toegankelijkheid.md](./docs/4-ux-design/toegankelijkheid.md) | Toegankelijkheid: status en conceptverklaring |
 | [CHANGELOG.md](./CHANGELOG.md) | Wijzigingen per versie, met migratie-instructies |
 | [CONTRIBUTING.md](./CONTRIBUTING.md) | Bijdragen: van issue tot merge |
 | [AGENTS.md](./AGENTS.md) | Projectfeiten en werkafspraken voor ontwikkelaars en AI-agents |

@@ -110,7 +110,7 @@ Copy `.env.example` to `.env` and fill in (details: `docs/9-beheer/installatie.m
 - `ADMIN_USER` / `ADMIN_PASSWORD` — eerste beheeraccount; leeg = gegenereerd, eenmalig in `docker compose logs db-init`
 - `OLLAMA_*` — for local LLM (optional; Qwen model)
 
-The admin panel authenticates only with the session cookie (log in as a user with `is_admin`). Never put secrets in `VITE_*` variables: Vite bakes them into the bundle.
+The admin panel authenticates only with the session cookie (local user with `is_admin`, or via Keycloak with realm role `beheerder`; the backend does the OIDC flow). Never put secrets in `VITE_*` variables: Vite bakes them into the bundle.
 
 ## Architecture
 
@@ -148,11 +148,11 @@ Z-scores are computed dynamically per request, relative to a reference group def
 ### Authentication
 Zie `src/omnitwin/routers/auth.py`.
 - **Beheeromgeving en web-UI:** sessie. Inloggen via `POST /api/admin/auth/login` (form-data; wachtwoorden bcrypt in `users`). Het cookie `session_token` is `HttpOnly`, `SameSite=lax` en `Secure` volgens `COOKIE_SECURE` (standaard `auto`: alleen bij HTTPS, ook via `X-Forwarded-Proto`); het token staat gehasht (sha256) in `sessions` en verloopt na 12 uur. Het admin-panel gebruikt alleen dit cookie (`admin-panel/src/services/api.ts`), nooit een API-key.
-- **Keycloak (0.3.0, in opbouw):** de infrastructuur staat er (profiel `keycloak`, zie Project Overview); UI-login volgt.
+- **Keycloak in de beheeromgeving (#251, ADR 0008):** met `OIDC_ISSUER` gezet logt de beheer-UI in via Keycloak; de backend is de OIDC-client (BFF, `src/omnitwin/oidc_login.py`, routes `/api/admin/auth/oidc/login` en `/oidc/callback`, `GET /api/admin/auth/config`). Sessie in tabel `oidc_sessies` (V029) achter hetzelfde cookie `session_token`; ververst met het refresh token, RP-initiated logout. Realm-rol `beheerder` = `is_admin`. Lokale accounts dan alleen met `LOKAAL_INLOGGEN=true` (noodtoegang); zonder `OIDC_ISSUER` lokaal zoals altijd. Geen eigen gebruikersbeheer bouwen: dat is Keycloak. Log alleen `sub`/`preferred_username`. Viewer-login (lezer) volgt.
 - **Nieuwe API's (laad-API en verder): altijd `vereis_rol` uit `src/omnitwin/oidc.py`** (#205), bijv. `principal: Principal = Depends(vereis_rol("dataset:{dataset_id}:laden", "datasets:laden"))`; `{dataset_id}` komt uit de path-parameter. Verder `vereis_principal` (alleen geldig token) en `principal_optioneel` (Principal of `None`). Controle: handtekening via de JWKS van de issuer (gecachet, ververst bij onbekende `kid`), `iss` = `OIDC_ISSUER`, `aud` bevat `OIDC_AUDIENCE` (`omnitwin-api`), `exp`/`nbf` met 30 s speling, alleen asymmetrische algoritmes. Rollen = realm-rollen + client-rollen van `omnitwin-api`. Fouten als Problem Details: `401` (met `WWW-Authenticate: Bearer`), `403` zonder rol, `503` als `OIDC_ISSUER` leeg is of de sleutels niet op te halen zijn. Achter Traefik haalt de backend discovery en sleutels via `OIDC_INTERN_URL` (`http://keycloak:8080/auth/realms/omnitwin`). Nooit tokens of claims met persoonsgegevens loggen; bij een weigering alleen `client_id`/`jti`. Testendpoint: `GET /api/oidc/ik` (client en rollen). Gebruik op nieuwe routes geen sessie of `X-Admin-Key`.
-- **Oude beheerroutes** (`/api/admin/*`, `/api/visualisatie/admin/*`) blijven op sessie/`X-Admin-Key` (`vereis_admin`, hieronder) tot de migratie naar Keycloak.
+- **Oude beheerroutes** (`/api/admin/*`, `/api/visualisatie/admin/*`) houden `vereis_admin` (hieronder): sessie (lokaal of OIDC), bearer-token met rol `beheerder`, of `X-Admin-Key`.
 - **Scripts:** header `X-Admin-Key` met de waarde van `ADMIN_API_KEY` uit `.env` (minimaal 32 tekens; leeg of een voorbeeldwaarde = uitgeschakeld). De tabel `api_keys` speelt geen rol bij de autorisatie.
-- **Autorisatie:** `vereis_admin` hangt op routerniveau aan alle beheerroutes (`/api/admin/*` behalve auth, `/api/visualisatie/admin/*`): zonder sessie of key `401`, zonder `is_admin` `403`. Publieke routes (kaart, Kompas, rapporten, chat) hebben dezelfde rechten als een anonieme bezoeker (#65); zie de installatiegids, Beveiliging.
+- **Autorisatie:** `vereis_admin` hangt op routerniveau aan alle beheerroutes (`/api/admin/*` behalve auth, `/api/visualisatie/admin/*`): zonder sessie, token of key `401`, zonder `is_admin` of rol `beheerder` `403`. Publieke routes (kaart, Kompas, rapporten, chat) hebben dezelfde rechten als een anonieme bezoeker (#65); zie de installatiegids, Beveiliging.
 
 ### LLM / AI
 - **Chat intent classification is rule-based** (deterministic), not LLM-driven. LLM (Ollama/Qwen, local) is used only for narrative summaries (capped at ~80 words). LLM-config en system-prompts staan in databasetabellen (`llm_config`, `system_prompts`), niet hardcoded.
@@ -180,6 +180,7 @@ Scripts in `ETL/` en `scripts/` zijn standalone, geen deel van de web-API. CBS, 
 - `docs/STATE.md` — historische momentopname van de systeemstatus tot 0.1.0; niet leidend
 - `docs/INDEX.md` — documentation router by domain
 - `docs/9-beheer/installatie.md` — **de** installatiegids (Docker), ook voor beheerders
+- `docs/9-beheer/beheerhandleiding.md` — beheer in productie (#257): back-up en herstel (`scripts/beheer/backup.sh`, `restore.sh`, `hersteltest.sh`), bijwerken en terugrollen, Keycloak, leveringen, incidenten, acceptatie naast productie. Privacy: `docs/5-secops/privacy-quickscan.md`; toegankelijkheid: `docs/4-ux-design/toegankelijkheid.md` (beide uitgezonderd in `.gitignore`)
 - `docs/archief/` — verouderde logboeken en gidsen: `GETTING_STARTED.md` (installatie zonder Docker), `BUILD.md` (sprint changelog), `ROADMAP.md`, `TODO.md`, `BUGFIX.md`. Niet meer bijhouden; taken en bugs staan in de GitHub-issues
 - `GOVERNANCE.md`, `SUPPORT.md`, `PARTICIPANTS.md` — governance volgens het OpenWebconcept (#183): eigenaar en beheerder SWF, review bij voorkeur door een andere partij, onderhoud minimaal tot en met 31-08-2027; deelnemers zonder persoonsnamen
 

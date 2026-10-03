@@ -4,6 +4,8 @@ Dit is de installatiegids voor beheerders. Andere installatiedocumenten in deze 
 
 De gids gaat uit van een Linux-server of een werkplek met Docker. Alle commando's draai je in de map van de repository.
 
+Na de installatie: de [beheerhandleiding](beheerhandleiding.md) (back-up en herstel met scripts, bijwerken en terugrollen, Keycloak-beheer, leveringen, incidenten, acceptatie naast productie), de [privacy-quickscan](../5-secops/privacy-quickscan.md) en de [toegankelijkheidsstatus](../4-ux-design/toegankelijkheid.md).
+
 **Status:** D-OmniTwin is een pre-release. Lees [Beveiliging](#beveiliging) voordat je de installatie buiten je eigen netwerk bereikbaar maakt.
 
 ---
@@ -70,9 +72,10 @@ De tabel volgt de volgorde van `.env.example`. Optionele regels staan daar als c
 | `KEYCLOAK_ADMIN_PASSWORD`, `KEYCLOAK_DB_PASSWORD` | Alleen met Keycloak, dan verplicht: wachtwoord van de tijdelijke beheerder `admin` in de admin-console, en van de databaserol `keycloak`. Genereer ze met `openssl rand -hex 24`. |
 | `KEYCLOAK_HOSTNAME` | Alleen met Keycloak. Hostnaam (`omnitwin.example.nl`) of volledige URL (`https://omnitwin.example.nl/auth`) waarop gebruikers Keycloak bereiken; standaard `localhost`. Bepaalt de issuer van de tokens. |
 | `OIDC_ISSUER` | Alleen met Keycloak (of een andere OIDC-provider). De issuer zoals die in de tokens staat: het publieke adres van Keycloak + `/realms/omnitwin`, bijvoorbeeld `http://localhost/auth/realms/omnitwin` of `https://omnitwin.example.nl/auth/realms/omnitwin`. Zet je het, dan controleert de backend tokens op de nieuwe API's (laad-API); leeg = uit, die API's geven dan `503`. Zie [Keycloak](#keycloak-optioneel). |
+| `OIDC_CLIENT_ID`, `LOKAAL_INLOGGEN` | Optioneel, bij `OIDC_ISSUER`: inloggen in de beheeromgeving via Keycloak. `OIDC_CLIENT_ID`: de client waarmee mensen inloggen, standaard `omnitwin-web`. `LOKAAL_INLOGGEN=true`: noodtoegang, de lokale accounts (`ADMIN_USER`) mogen dan ook inloggen; standaard uit zodra `OIDC_ISSUER` gezet is. Zie [Keycloak](#keycloak-optioneel), *Inloggen in de beheeromgeving*. |
 | `OIDC_AUDIENCE`, `OIDC_INTERN_URL`, `OIDC_JWKS_URL` | Optioneel, bij `OIDC_ISSUER`. `OIDC_AUDIENCE`: vereiste `aud`, standaard `omnitwin-api`. `OIDC_INTERN_URL`: adres waarop de backend de issuer intern bereikt voor discovery en sleutels; `docker-compose.yml` zet standaard `http://keycloak:8080/auth/realms/omnitwin`. Bij een externe identity provider: `OIDC_INTERN_URL=` (leeg). `OIDC_JWKS_URL`: alleen als de provider geen discovery heeft. |
 | `OMNITWIN_BRON_DOMEINEN` | Optioneel. Extra domeinen (kommagescheiden) waarvan de bronadapters van de use cases via https mogen downloaden, naast de vaste lijst (CBS, PDOK, RIVM, Klimaateffectatlas). Zie [use cases](../../usecases/README.md#bronnen). |
-| `OMNITWIN_BASE_URL`, `OMNITWIN_CLIENT_ID`, `OMNITWIN_CLIENT_SECRET`, `OMNITWIN_TOKEN_URL`, `KEYCLOAK_REALM` | Optioneel, alleen voor `python -m omnitwin.usecases installeer` en `test`: het adres van de installatie (standaard `http://localhost`) en een machineclient (client credentials, zie [Keycloak](#keycloak-optioneel)). Het tokenendpoint komt standaard uit de discovery van realm `KEYCLOAK_REALM` (standaard `omnitwin`). |
+| `OMNITWIN_BASE_URL`, `OMNITWIN_CLIENT_ID`, `OMNITWIN_CLIENT_SECRET`, `OMNITWIN_TOKEN_URL`, `KEYCLOAK_REALM` | Optioneel. `OMNITWIN_BASE_URL` is het adres van de installatie (standaard `http://localhost`); met Keycloak neemt de realmimport het op als redirect-URI van `omnitwin-web`. De rest alleen voor `python -m omnitwin.usecases installeer` en `test`: een machineclient (client credentials, zie [Keycloak](#keycloak-optioneel)). Het tokenendpoint komt standaard uit de discovery van realm `KEYCLOAK_REALM` (standaard `omnitwin`). |
 | `BEWIJS_TIMEOUT_MS`, `BEWIJS_CHAT_TIMEOUT_MS` | Optioneel, alleen voor `python -m omnitwin.usecases bewijs` (screenshots met Playwright, bij een release): wachttijd per scherm (standaard 90000) en voor een chatantwoord (standaard 300000), in milliseconden. |
 | `OMNITWIN_TESTACCOUNTS`, `OMNITWIN_OMGEVING`, `KEYCLOAK_ADMIN_CLIENT_ID`, `KEYCLOAK_ADMIN_CLIENT_SECRET`, `KEYCLOAK_ADMIN`, `KEYCLOAK_URL`, `OMNITWIN_TESTACCOUNTS_UUR`, `OMNITWIN_TESTACCOUNTS_BESTAND` | Optioneel, alleen voor `--testaccounts` van de uitvoerder in test en dev (zie [Keycloak](#keycloak-optioneel), *Testaccounts*). Niet in een productie-`.env`. |
 | `LEVERINGEN_DIR`, `LADEN_MAX_MB`, `LADEN_RATE_LIMIT`, `LADEN_COMPAT_RATE_LIMIT`, `LADEN_WACHT_SECONDEN` | Optioneel, laad-API ([docs/api/laden](../api/laden/README.md)): map voor de ruwe leveringen (standaard het volume `leveringen` op `/leveringen`), bodylimiet (standaard 200 MB, JSON een tiende), leveringen per minuut per client (standaard 10; op de compatibiliteitsingang voor de SWF-monitor 120) en de time-out van `wacht=true` (standaard 60 s). |
@@ -113,6 +116,8 @@ docker compose ps -a
 Goed is: `postgres` en `backend` staan op `Up ... (healthy)`, `traefik`, `postgrest` en `pg_featureserv` op `Up`, en `db-init` op `Exited (0)`. De backend heeft tot een minuut nodig om *healthy* te worden.
 
 ### 2.4 Eerste keer inloggen
+
+Staat [Keycloak](#keycloak-optioneel) aan (met `OIDC_ISSUER`), dan log je in via Keycloak met een gebruiker uit realm `omnitwin`; zie daar. Het lokale account hieronder werkt dan alleen als noodtoegang.
 
 Heb je `ADMIN_PASSWORD` ingevuld, dan log je in met `ADMIN_USER` (standaard `admin`) en dat wachtwoord.
 
@@ -280,6 +285,8 @@ docker compose down        # containers verwijderen; de volumes (database, uploa
 
 ### Backup
 
+Voor productie: gebruik `sh scripts/beheer/backup.sh` en `restore.sh` (met Keycloak, de volumes, controlesommen en bewaartermijn), zie de [beheerhandleiding](beheerhandleiding.md#2-back-up-en-herstel). Hieronder de losse commando's.
+
 De data staat in twee Docker-volumes: `pgdata` (de database) en `uploads` (geüploade kaartlagen, in de container `/app/data-upload`). Het volume `bron-cache` hoeft niet mee: dat is opnieuw te downloaden.
 
 ```bash
@@ -346,6 +353,8 @@ Nog niet uit deze instelling: de benchmarkmodus `fryslan`, de welkomsttekst en d
 
 Het logo linksboven, het favicon en het logo in het beheerscherm en de rapporten komen uit één bestand: `static/images/beeldmerk.svg`. Standaard staat daar een neutraal, tijdelijk D-OmniTwin-beeldmerk (#83). Er is geen instelling in `.env` voor nodig.
 
+Linksboven krijgt het beeldmerk de kleuren van het thema: de tokens `--d-omnitwin-beeldmerk-vlak`, `--d-omnitwin-beeldmerk-lijn` en `--d-omnitwin-beeldmerk-kern` (in het SWF-thema wit met SWF-rood). Het favicon, het beheerscherm en de rapporten tonen de vaste kleuren uit het bestand. Een eigen SVG-logo zet zijn inhoud in een groep `<g id="beeldmerk">…</g>`, anders blijft de plek linksboven leeg; gebruikt je logo de tokens niet, dan houdt het zijn eigen kleuren.
+
 Eigen logo gebruiken:
 
 - **Vervangen:** zet je eigen bestand op `static/images/beeldmerk.svg` en bouw opnieuw (`docker compose up -d --build`).
@@ -376,7 +385,7 @@ Aandachtspunten:
 
 ### Keycloak (optioneel)
 
-Keycloak is de identity provider voor 0.3.0: inloggen via OIDC voor mensen, en client credentials voor machines, zoals een ETL die data aanlevert (#214, #205). Het zit in de stack als compose-profiel `keycloak`; zonder dat profiel start de stack zoals altijd. De backend controleert tokens op de nieuwe API's (laad-API) zodra `OIDC_ISSUER` is ingevuld (zie hieronder). **De beheeromgeving gebruikt Keycloak nog niet:** die werkt nog met het eigen inloggen; inloggen in de UI komt in een volgende versie.
+Keycloak is de identity provider voor 0.3.0: inloggen via OIDC voor mensen, en client credentials voor machines, zoals een ETL die data aanlevert (#214, #205). Het zit in de stack als compose-profiel `keycloak`; zonder dat profiel start de stack zoals altijd. De backend controleert tokens op de nieuwe API's (laad-API) zodra `OIDC_ISSUER` is ingevuld (zie hieronder). Met `OIDC_ISSUER` log je ook in de beheeromgeving in via Keycloak, en beheer je gebruikers en rollen in Keycloak (zie *Inloggen in de beheeromgeving*). De kaartapplicatie heeft nog geen inloggen.
 
 **Opzet**
 
@@ -386,10 +395,10 @@ Keycloak is de identity provider voor 0.3.0: inloggen via OIDC voor mensen, en c
 
 | In de realm | Wat |
 |---|---|
-| client `omnitwin-web` | Inloggen van mensen (kaart en beheer): public client, authorization code + PKCE (S256). De redirect-URI's staan op `http://localhost/*`; zet ze op je eigen adres in de admin-console (Clients > omnitwin-web). |
+| client `omnitwin-web` | Inloggen van mensen (kaart en beheer): public client, authorization code + PKCE (S256). Redirect-URI's: `http://localhost/*` en `OMNITWIN_BASE_URL/*` (het adres van de installatie, zie [2.2](#22-env-aanmaken)), bij de import ingevuld. Ander adres na de eerste start: aanpassen in de admin-console (Clients > omnitwin-web > *Valid redirect URIs*, ook *Valid post logout redirect URIs*). |
 | client `omnitwin-api` | Staat voor de API van D-OmniTwin: draagt de rollen voor het laden van data en is de audience (`aud`) van de tokens. Zelf geen inlogflow. |
 | client `etl-voorbeeld` | Voorbeeld-machineclient: alleen client credentials, rol `dataset:voorbeeld:laden`. Keycloak genereert het secret bij de import; het staat niet in de repo. |
-| realm-rollen `beheerder`, `lezer` | Voor mensen. Elke nieuwe gebruiker krijgt `lezer`. |
+| realm-rollen `beheerder`, `gebruikersbeheerder`, `lezer` | Voor mensen. `beheerder` geeft beheerrechten in de beheeromgeving en op de beheer-API's. `gebruikersbeheerder` geeft gebruikersbeheer in de Keycloak-console (gebruikers en groepen, geen clients of realm-instellingen); bewust een aparte rol, zodat je dat recht los toekent. Elke nieuwe gebruiker krijgt `lezer` (geen beheer). De koppeling rol → rechten staat in de realmexport, dus is als data uitwisselbaar tussen instanties. |
 | client-rollen op `omnitwin-api` | `datasets:laden` (alle datasets) en per dataset `dataset:<id>:laden`. |
 | instellingen | Access token 5 minuten, geen implicit of password grant (behalve de tijdelijke loginclient van testaccounts, zie onder), brute-force-detectie aan (na 5 mislukte pogingen oplopend wachten), geen zelfregistratie, wachtwoorden minimaal 12 tekens. |
 
@@ -399,6 +408,22 @@ Keycloak is de identity provider voor 0.3.0: inloggen via OIDC voor mensen, en c
 2. `docker compose up -d`. `docker compose ps -a` toont `keycloak` als *healthy* (na ongeveer een halve minuut) en `keycloak-db-init` als `Exited (0)`.
 3. Controle: `http://<host>/auth/realms/omnitwin/.well-known/openid-configuration` geeft JSON.
 4. Tokens laten controleren door de backend: zet `OIDC_ISSUER` op de waarde van `issuer` uit die JSON zoals je hem van buiten opvraagt, bijvoorbeeld `http://localhost/auth/realms/omnitwin` (met een andere poort dan 80: `http://localhost:<poort>/auth/realms/omnitwin`; achter HTTPS: `https://omnitwin.example.nl/auth/realms/omnitwin`), en herstart met `docker compose up -d`. De backend haalt de sleutels intern op (`http://keycloak:8080/auth/...`) en controleert handtekening, `iss`, `aud` (`omnitwin-api`), `exp` en de rol. Controle met een token van een machineclient (zie hieronder): `curl -H "Authorization: Bearer <token>" http://<host>/api/oidc/ik` geeft de client en de rollen.
+
+**Inloggen in de beheeromgeving** (#251, [ADR 0008](../2-architectuur/adr/0008-inloggen-beheer-via-keycloak-bff.md)). Met `OIDC_ISSUER` gezet toont `http://<host>/admin/login` de knop **Inloggen met Keycloak**. Je logt in op het formulier van Keycloak en komt terug in de beheeromgeving. Wat je mag, komt uit de realm-rol:
+
+- `beheerder`: alle beheerpagina's en beheer-API's;
+- alleen `lezer`: ingelogd, maar geen beheer; de inlogpagina meldt dat de rol ontbreekt;
+- intrekken werkt binnen enkele minuten: de backend ververst de sessie bij Keycloak elke 5 minuten (levensduur van het access token); een uitgeschakelde gebruiker of beëindigde sessie is dan uitgelogd. Na 30 minuten zonder activiteit of 12 uur in totaal moet je opnieuw inloggen.
+
+Uitloggen beëindigt ook de sessie bij Keycloak. Wie ingelogd is via Keycloak, wijzigt zijn wachtwoord in Keycloak (menu rechtsboven: *Mijn account*), niet in de beheeromgeving. Een script kan de beheer-API's ook met een token aanroepen: `Authorization: Bearer <token>` van een gebruiker of machineclient met de rol `beheerder` (naast de bestaande `X-Admin-Key`).
+
+De browser krijgt geen token: de backend doet het inloggen bij Keycloak en zet een sessiecookie (`HttpOnly`), net als bij het lokale inloggen. In de log staan bij inloggen en weigeren alleen `sub` en de gebruikersnaam, nooit e-mail of tokens; zet de categorie `AUTH` in de Log Viewer op `INFO` als je ook geslaagde logins wilt bewaren (standaard alleen waarschuwingen).
+
+**Gebruikers en rollen beheren** doe je in de admin-console van Keycloak, niet in D-OmniTwin; in de beheeromgeving staat de link *Gebruikers en rollen beheren* in het menu rechtsboven (`http://<host>/auth/admin/omnitwin/console/`). Een gebruiker aanmaken: realm `omnitwin` > Users > *Create new user*, daarna tab *Credentials* > *Set password* en tab *Role mapping* > *Assign role* > `beheerder`. Die link opent de console van realm `omnitwin`; daar log je in met een gebruiker uit die realm met de realm-rol `gebruikersbeheerder` (samengesteld uit `realm-management` > `manage-users`, `view-users`, `query-users`, `query-groups` en `view-realm`). De rol `beheerder` geeft die rechten niet: wie gebruikers mag beheren, ken je bewust toe (minste rechten). Een bestaande realm (van vóór deze versie) heeft de rol nog niet: maak hem aan onder Realm roles > *Create role* > `gebruikersbeheerder`, zet *Composite* aan en voeg de vijf client-rollen van `realm-management` toe. De beheerder van Keycloak zelf (realm `master`, zie hieronder) gebruikt `http://<host>/auth/admin/`.
+
+**Noodtoegang.** Met Keycloak aan staan de lokale accounts (`ADMIN_USER`, tabel `users`) uit. Werkt Keycloak niet, zet dan tijdelijk `LOKAAL_INLOGGEN=true` in `.env` en `docker compose up -d`. De inlogpagina toont dan ook het formulier met gebruikersnaam en wachtwoord, met een waarschuwing; de log meldt het bij de start en bij elke lokale login. Zet het daarna weer uit. Zonder Keycloak (geen `OIDC_ISSUER`) werkt het lokale inloggen zoals altijd.
+
+**Bestaande installatie.** De realm wordt alleen bij de eerste start geïmporteerd. Draaide Keycloak al vóór deze versie, controleer dan bij Clients > omnitwin-web of je eigen adres in *Valid redirect URIs* en *Valid post logout redirect URIs* staat (bijvoorbeeld `https://omnitwin.example.nl/*`). Zet vóór het aanzetten van `OIDC_ISSUER` minstens één gebruiker met de rol `beheerder` klaar, anders kan niemand meer beheren (behalve via noodtoegang).
 
 **Eerste login op de admin-console.** Ga naar `http://<host>/auth/admin/` en log in als `admin` met `KEYCLOAK_ADMIN_PASSWORD`. Dat is een tijdelijke beheerder in realm `master`. Maak een eigen beheerder aan (realm `master` > Users, rol `admin`) en verwijder daarna de tijdelijke. Gebruikers voor D-OmniTwin maak je aan in realm `omnitwin` (Users); een beheerder krijgt de rol `beheerder`.
 
@@ -526,7 +551,7 @@ Verder nog open: de CSP staat `'unsafe-inline'` toe (zie [Security-headers](#sec
 
 ### Wie mag wat
 
-- **Beheerroutes** (`/api/admin/*` behalve inloggen, en `/api/visualisatie/admin/*`) vereisen een ingelogde gebruiker met `is_admin`, of een geldige `X-Admin-Key`. Zonder login: `401`; ingelogd zonder beheerrechten: `403`.
+- **Beheerroutes** (`/api/admin/*` behalve inloggen, en `/api/visualisatie/admin/*`) vereisen een ingelogde beheerder (lokaal: `is_admin`; via Keycloak: realm-rol `beheerder`), een bearer-token van Keycloak met de rol `beheerder`, of een geldige `X-Admin-Key`. Zonder login of token: `401`; zonder beheerrechten: `403`.
 - Nieuwe gebruikers zijn standaard **geen** beheerder (`users.is_admin` standaard `false`). Het account uit `ADMIN_USER` is wel beheerder.
 - Sessies staan gehasht in de database en verlopen na 12 uur; verlopen sessies worden bij het inloggen opgeruimd.
 
@@ -544,7 +569,7 @@ Verder nog open: de CSP staat `'unsafe-inline'` toe (zie [Security-headers](#sec
 | `/api/3dbag/*` | 3D-panden |
 | `/api/geo/*` | pg_featureserv (kaartgeometrie), alleen-lezen |
 | `/api/data/*` | PostgREST, alleen-lezen views in schema `api` (zie hieronder) |
-| `/api/admin/auth/login`, `/logout`, `/me` | Inloggen en sessiestatus |
+| `/api/admin/auth/login`, `/logout`, `/me`, `/config`, `/oidc/login`, `/oidc/callback` | Inloggen (lokaal en via Keycloak) en sessiestatus |
 | `/health`, `/api`, `/docs`, `/openapi.json` | Status en API-documentatie |
 
 **Principe:** rapporten hebben dezelfde rechten als een anonieme bezoeker van de kaartapplicatie (besluit #65). Een rapport toont dus niet meer dan de publieke app: geen beheervelden (notities, wie iets beoordeelde of goedkeurde), geen inactieve indicatoren, geen logs of configuratie. De technische details van AI-teksten (`debug_info`: systeemprompts en model) krijgt alleen een ingelogde beheerder.

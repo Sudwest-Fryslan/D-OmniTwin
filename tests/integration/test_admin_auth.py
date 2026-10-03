@@ -28,7 +28,8 @@ BASE_URL = os.environ.get("OMNITWIN_BASE_URL", "http://localhost").rstrip("/")
 TIMEOUT = 30
 DUMMY_UUID = "00000000-0000-0000-0000-000000000000"
 
-PUBLIEKE_ADMIN_ROUTES = {"/api/admin/auth/login", "/api/admin/auth/logout", "/api/admin/auth/me"}
+PUBLIEKE_ADMIN_ROUTES = {"/api/admin/auth/login", "/api/admin/auth/logout", "/api/admin/auth/me",
+                         "/api/admin/auth/config", "/api/admin/auth/oidc/login", "/api/admin/auth/oidc/callback"}
 # Elke ingelogde gebruiker (ook zonder is_admin) mag zijn eigen wachtwoord wijzigen
 EIGEN_ACCOUNT_ROUTES = {"/api/admin/auth/change-password"}
 # Moeten in elk geval beveiligd zijn (stonden zonder auth vóór #65)
@@ -102,6 +103,8 @@ def login(username, password):
     s = requests.Session()
     r = s.post(f"{BASE_URL}/api/admin/auth/login",
                data={"username": username, "password": password}, timeout=TIMEOUT)
+    if r.status_code == 403 and "Lokaal inloggen staat uit" in r.text:
+        pytest.skip("lokaal inloggen staat uit (Keycloak aan, #251); zie test_beheer_keycloak.py")
     assert r.status_code == 200, r.text[:300]
     assert s.cookies.get("session_token")
     return s
