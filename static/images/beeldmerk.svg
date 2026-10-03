@@ -13,10 +13,17 @@
   Kleuren: het donkere vlak (#0f172a) en de blauwe en groene lijn (#3b82f6, #22c55e)
   komen uit de bestaande kleurvariabelen. Het vlak houdt het merk leesbaar op licht
   en donker thema en op de header met kleurverloop (contrast minstens 5:1).
+
+  In de header volgt het beeldmerk het thema (#249): de header tekent dit bestand via
+  <use href="beeldmerk.svg#beeldmerk">, en de thema-tokens d-omnitwin-beeldmerk-vlak, -lijn en -kern
+  uit het thema vervangen de kleuren. Los gebruikt (favicon, beheerscherm, rapporten) gelden
+  de terugvalwaarden hieronder. Een eigen logo zet daarom zijn inhoud in <g id="beeldmerk">.
 -->
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-labelledby="beeldmerk-titel">
   <title id="beeldmerk-titel">D-OmniTwin</title>
-  <rect width="64" height="64" rx="14" fill="#0f172a"/>
-  <path d="M17 14h12a18 18 0 0 1 0 36H17z" fill="none" stroke="#3b82f6" stroke-width="5" stroke-linejoin="round"/>
-  <path d="M25 23h4a9 9 0 0 1 0 18h-4z" fill="#22c55e"/>
+  <g id="beeldmerk">
+  <rect width="64" height="64" rx="14" style="fill: var(--d-omnitwin-beeldmerk-vlak, #0f172a)"/>
+  <path d="M17 14h12a18 18 0 0 1 0 36H17z" fill="none" style="stroke: var(--d-omnitwin-beeldmerk-lijn, #3b82f6)" stroke-width="5" stroke-linejoin="round"/>
+  <path d="M25 23h4a9 9 0 0 1 0 18h-4z" style="fill: var(--d-omnitwin-beeldmerk-kern, #22c55e)"/>
+  </g>
 </svg>
