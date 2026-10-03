@@ -248,3 +248,124 @@ def test_levering_validatie_datapackage(tmp_path):
     (r,) = valideer_levering(ds, pad)
     assert not r["geldig"] and r["aantallen"]["waarnemingen"] == 2
     assert any("veld jaar" in f for f in r["fouten"])
+
+
+# ---------------------------------------------------------------- cbs-statline (#236)
+
+def test_statline_filter_regio_dimensies_en_jaren():
+    from omnitwin.bronadapters.statline import odata_filter
+    bron = {"gemeenten": ["1900"], "regio_prefix": ["BU", "WK"], "filter": {"SoortMisdrijf": ["1.1.1"], "Marges": "MW00000"},
+            "jaren": [2024]}
+    f = odata_filter(bron, {"SoortMisdrijf": {"1.1.1": "1.1.1 "}})
+    assert "startswith(WijkenEnBuurten,'BU1900') or startswith(WijkenEnBuurten,'WK1900')" in f
+    assert "(SoortMisdrijf eq '1.1.1 ')" in f, "de echte key met opvulspatie"
+    assert "(Marges eq 'MW00000')" in f and "(Perioden eq '2024JJ00')" in f
+    assert odata_filter({"gebieden": ["BU1'; x"]}, {}) == "(WijkenEnBuurten eq 'BU1''; x')", "quote ge-escaped"
+
+
+def test_statline_records_uitgepakt_per_kolom():
+    from omnitwin.bronadapters.statline import records
+    rijen = [{"WijkenEnBuurten": "BU19000002", "Perioden": "2024JJ00", "Leeftijd": "20300 ", "A_1": 46.5, "B_2": None},
+             {"WijkenEnBuurten": "BU19000002", "Perioden": "2024KW01", "Leeftijd": "20300", "A_1": 1}]
+    uit = records(rijen, {"kolommen": ["A_1", "B_2"], "filter": {"Leeftijd": "20300"}})
+    assert uit == [{"gebied_code": "BU19000002", "jaar": 2024, "periode": "2024JJ00", "Leeftijd": "20300",
+                    "kolom": "A_1", "waarde": 46.5}], "lege waarde en geen-jaarperiode vallen weg"
+
+
+class _Antwoord:
+    def __init__(self, data):
+        self.data = data
+
+    def raise_for_status(self):
+        pass
+
+    def json(self):
+        return self.data
+
+
+def test_statline_pagineert_en_cachet(tmp_path, monkeypatch):
+    requests = pytest.importorskip("requests")
+    url = "https://dataderden.cbs.nl/ODataFeed/odata/47018NED"
+    gevraagd = []
+
+    def get(self, u, params=None, headers=None, timeout=None):
+        gevraagd.append((u, params))
+        if u.endswith("/SoortMisdrijf"):
+            return _Antwoord({"value": [{"Key": "1.1.1 "}, {"Key": "2.2.1 "}]})
+        if "skip" in u:
+            return _Antwoord({"value": [{"WijkenEnBuurten": "BU19000002", "Perioden": "2025JJ00", "SoortMisdrijf": "1.1.1 ", "M_1": 3}]})
+        return _Antwoord({"value": [{"WijkenEnBuurten": "BU19000002", "Perioden": "2024JJ00", "SoortMisdrijf": "1.1.1 ", "M_1": 2}],
+                          "odata.nextLink": f"{url}/TypedDataSet?$skip=10000"})
+    monkeypatch.setattr(requests.Session, "get", get)
+    bron = {"adapter": "cbs-statline", "url": url, "gemeenten": ["1900"], "filter": {"SoortMisdrijf": ["1.1.1"]},
+            "kolommen": ["M_1"]}
+    ctx = {"bronnen": {"DATA_CACHE": str(tmp_path)}}
+    tab = ba.haal(bron, ctx)
+    assert [(r["jaar"], r["SoortMisdrijf"], r["waarde"]) for r in tab["waarnemingen"]] == [(2024, "1.1.1", 2), (2025, "1.1.1", 3)]
+    assert "SoortMisdrijf eq '1.1.1 '" in gevraagd[1][1]["$filter"]
+    n = len(gevraagd)
+    assert ba.haal(bron, ctx) == tab and len(gevraagd) == n, "tweede keer uit de cache"
+
+
+def test_statline_weigert_onbekende_key_en_verkeerde_url(tmp_path, monkeypatch):
+    requests = pytest.importorskip("requests")
+    monkeypatch.setattr(requests.Session, "get", lambda self, u, **kw: _Antwoord({"value": [{"Key": "1.1.1 "}]}))
+    ctx = {"bronnen": {"DATA_CACHE": str(tmp_path)}}
+    with pytest.raises(ba.BronFout, match="kent"):
+        ba.haal({"adapter": "cbs-statline", "url": "https://dataderden.cbs.nl/ODataFeed/odata/47018NED",
+                 "filter": {"SoortMisdrijf": "9.9.9"}, "kolommen": ["M_1"]}, ctx)
+    with pytest.raises(ba.BronFout, match="ODataFeed"):
+        ba.haal({"adapter": "cbs-statline", "url": "https://opendata.cbs.nl/ODataApi/odata/85984NED", "kolommen": ["x"]}, ctx)
+    with pytest.raises(ba.BronFout, match="niet toegestaan"):
+        ba.haal({"adapter": "cbs-statline", "url": "https://voorbeeld.org/ODataFeed/odata/1", "kolommen": ["x"]}, ctx)
+
+
+def test_statline_geen_netwerk_is_geen_bron(tmp_path, monkeypatch):
+    requests = pytest.importorskip("requests")
+
+    def kapot(self, u, **kw):
+        raise requests.ConnectionError("geen netwerk")
+    monkeypatch.setattr(requests.Session, "get", kapot)
+    with pytest.raises(ba.GeenBron):
+        ba.haal({"adapter": "cbs-statline", "url": "https://dataderden.cbs.nl/ODataFeed/odata/50150NED",
+                 "kolommen": ["Eenzaam_25"]}, {"bronnen": {"DATA_CACHE": str(tmp_path)}})
+
+
+# ---------------------------------------------------------------- wcs-zonaal (#236)
+
+def test_zonaal_gemiddelde_per_gebied_met_nodata():
+    np = pytest.importorskip("numpy")
+    pytest.importorskip("shapely")
+    from shapely.geometry import box
+
+    from omnitwin.bronadapters.raster import uitsnede, zonaal
+    a = np.array([[1.0, 2.0, -9999.0], [3.0, 4.0, 5.0]])  # 3 x 2 cellen van 10 m, linksboven (0, 20)
+    transform = (0.0, 10.0, 20.0, -10.0)
+    polys = {"links": box(0, 0, 20, 20), "rechts": box(20, 0, 30, 20), "buiten": box(100, 100, 110, 110)}
+    assert zonaal(a, transform, polys) == {"links": (2.5, 4), "rechts": (5.0, 1)}
+    assert zonaal(a, transform, polys, nodata_als=0)["rechts"] == (2.5, 2), "nodata telt als 0"
+    assert uitsnede((101, 99, 119, 121), 10) == (80, 70, 140, 150)
+
+
+def test_geotiff_georeferentie_uit_tiepoint_en_schaal():
+    np = pytest.importorskip("numpy")
+    PIL = pytest.importorskip("PIL.Image")
+    from PIL import TiffImagePlugin
+
+    from omnitwin.bronadapters.raster import geotiff
+    im = PIL.fromarray(np.array([[1.5, 2.5]], dtype="float32"))
+    info = TiffImagePlugin.ImageFileDirectory_v2()
+    info[33550] = (10.0, 10.0, 0.0)
+    info[33922] = (0.0, 0.0, 0.0, 155000.0, 463000.0, 0.0)
+    buf = io.BytesIO()
+    im.save(buf, format="TIFF", tiffinfo=info)
+    a, transform = geotiff(buf.getvalue())
+    assert a.tolist() == [[1.5, 2.5]] and transform == (155000.0, 10.0, 463000.0, -10.0)
+
+
+def test_wcs_zonaal_controleert_bron_zonder_netwerk(tmp_path):
+    with pytest.raises(ba.BronFout, match="niet toegestaan"):
+        ba.haal({"adapter": "wcs-zonaal", "url": "https://voorbeeld.org/wcs", "coverage": "x",
+                 "gebieden": {"bron": {"adapter": "usecase-bestand", "pad": "g.json"}}}, {})
+    with pytest.raises(ba.BronFout, match="gebieden.bron"):
+        ba.haal({"adapter": "wcs-zonaal", "url": "https://data.rivm.nl/geo/ank/wcs", "coverage": "x"}, {})

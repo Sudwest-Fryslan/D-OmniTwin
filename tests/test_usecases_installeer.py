@@ -69,14 +69,14 @@ def test_zonder_laad_api_een_melding(fixture_usecases, monkeypatch, capsys):
 
 def test_ontwerp_wordt_bij_installeren_overgeslagen(fixture_usecases, monkeypatch, capsys):
     monkeypatch.setattr(uc, "laad_api_beschikbaar", lambda basis=None: True)
-    monkeypatch.setattr(uc, "oude_route", lambda namen: None)
+    monkeypatch.setattr(uc, "oude_route", lambda namen, **kw: None)
     assert uc.installeer(["voorbeeld"], ucs=fixture_usecases, api=NepApi()) == {}
     assert "voorbeeld: overgeslagen (status ontwerp)" in capsys.readouterr().out
 
 
 def test_installeren_registreert_en_levert_via_compat(fixture_usecases, monkeypatch, tmp_path):
     monkeypatch.setattr(uc, "laad_api_beschikbaar", lambda basis=None: True)
-    monkeypatch.setattr(uc, "oude_route", lambda namen: None)
+    monkeypatch.setattr(uc, "oude_route", lambda namen, **kw: None)
     api = NepApi()
     res = uc.installeer(["voorbeeld"], ucs=fixture_usecases, api=api, uit=tmp_path, ook_ontwerp=True)
     assert res["voorbeeld"]["swf-monitor-definities"][0]["status"] == "gepubliceerd"
@@ -87,7 +87,7 @@ def test_installeren_registreert_en_levert_via_compat(fixture_usecases, monkeypa
 
 def test_test_voert_controles_uit(fixture_usecases, monkeypatch):
     monkeypatch.setattr(uc, "laad_api_beschikbaar", lambda basis=None: True)
-    monkeypatch.setattr(uc, "oude_route", lambda namen: None)
+    monkeypatch.setattr(uc, "oude_route", lambda namen, **kw: None)
     uit = uc.test("voorbeeld", ucs=fixture_usecases, api=NepApi())
     assert uit[0]["resultaat"] == "overgeslagen" and "viewer" in uit[0]["melding"]
 
@@ -108,3 +108,72 @@ def test_token_vraagt_machineclient(monkeypatch):
 
 def test_laad_api_niet_bereikbaar():
     assert uc.laad_api_beschikbaar("http://127.0.0.1:9") is False
+
+
+def _variant_usecase(tmp_path, met_intern):
+    """Use case met demodata als standaardbron en een variant 'intern' met als_beschikbaar (#236)."""
+    root = tmp_path / "usecases"
+    map_ = root / "demo"
+    (map_ / "datasets").mkdir(parents=True)
+    rij = "gebied_code,indicator_uuid,jaar,waarde,bron\nBU19000002,00000000-0000-4000-8000-000000000001,2024,{w},{b}\n"
+    (map_ / "demo.csv").write_text(rij.format(w=1, b="DEMODATA"), encoding="utf-8")
+    intern = tmp_path / "intern"
+    intern.mkdir()
+    if met_intern:
+        (intern / "echt.csv").write_text(rij.format(w=42, b="intern"), encoding="utf-8")
+    ds = {"id": "demo-waarden", "beschrijving": {"dct:title": "Demo", "dct:type": "demodata"},
+          "laadprofiel": {"profiel": "waarnemingen"},
+          "bron": {"adapter": "usecase-bestand", "pad": "demo.csv"},
+          "bewerkingen": [{"getal": ["jaar", "waarde"]}],
+          "levering": {"formaat": "datapackage", "bestand": "demo.zip"},
+          "varianten": {"intern": {"als_beschikbaar": True,
+                                   "bron": {"adapter": "lokaal-bestand", "pad": "${SWF_DUMP_DIR}/echt.csv"},
+                                   "beschrijving": {"dct:type": "brondata"}}}}
+    (map_ / "datasets" / "demo-waarden.json").write_text(json.dumps(ds), encoding="utf-8")
+    (map_ / "usecase.json").write_text(json.dumps({
+        "naam": "demo", "versie": "0.1.0", "titel": "Demo", "datasets": [
+            {"id": "demo-waarden", "route": "laden", "registratie": "datasets/demo-waarden.json"}]}), encoding="utf-8")
+    return uc.lees_usecases(root)["demo"], {"SWF_DUMP_DIR": str(intern)}
+
+
+@pytest.mark.parametrize("met_intern,waarde,variant,soort", [(True, "42", "intern", "brondata"),
+                                                              (False, "1", None, "demodata")])
+def test_variant_als_beschikbaar_anders_de_standaardbron(tmp_path, met_intern, waarde, variant, soort):
+    import zipfile
+    u, env = _variant_usecase(tmp_path, met_intern)
+    paden, rapport = uc.maak_levering(u, u["datasets"][0], tmp_path / "uit", bron_env=env)
+    assert rapport["variant"] == variant
+    with zipfile.ZipFile(paden[0]) as z:
+        import csv
+        assert next(csv.DictReader(z.read("waarnemingen.csv").decode().splitlines()))["waarde"] == waarde
+        assert json.loads(z.read("dcat.jsonld"))["dct:type"] == soort
+
+
+def test_variant_bron_en_stappen_worden_gecontroleerd(tmp_path):
+    u, _ = _variant_usecase(tmp_path, False)
+    d = uc.lees_dataset(u, u["datasets"][0])
+    d["varianten"]["intern"]["bron"] = {"adapter": "lokaal-bestand", "pad": "/etc/passwd"}
+    (u["_map"] / "datasets" / "demo-waarden.json").write_text(json.dumps(d), encoding="utf-8")
+    fouten = uc.dataset_fouten(u, u["datasets"][0])
+    assert any("varianten.intern.bron" in f for f in fouten)
+
+
+def test_inrichting_van_demo_met_datasets_na_de_laad_api(tmp_path, monkeypatch):
+    """Een demopakket met `datasets` (ook leeg) krijgt na de laad-API alleen zijn inrichting."""
+    root = tmp_path / "usecases"
+    (root / "demo").mkdir(parents=True)
+    (root / "demo" / "usecase.json").write_text(json.dumps({
+        "naam": "demo", "versie": "0.1.0", "titel": "Demo", "datasets": [],
+        "data": {"indicatoren": [{"naam": "X", "richting": "neutraal"}]}}), encoding="utf-8")
+    aanroepen = []
+    monkeypatch.setattr(uc, "oude_route", lambda namen, alleen_inrichting=False: aanroepen.append((namen, alleen_inrichting)))
+    uc.installeer(["demo"], ucs=uc.lees_usecases(root), api=NepApi())
+    assert aanroepen == [([], False), (["demo"], True)]
+
+
+def test_mislukt_telt_fouten_en_afkeuringen_niet_overgeslagen():
+    res = {"a": {"x": "overgeslagen: geen netwerk", "y": [{"status": "gepubliceerd", "http": 201}]},
+           "b": {"z": "fout: RuntimeError: kapot", "w": [{"status": "afgekeurd", "http": 422}],
+                 "v": [{"status": "overgeslagen", "http": 501}]},
+           "c": "laad-API nog niet beschikbaar"}
+    assert uc.mislukt(res) == ["b/z", "b/w"]
