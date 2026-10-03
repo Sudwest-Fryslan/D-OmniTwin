@@ -71,7 +71,7 @@ Verwacht:
 ## Bewijs
 
 <!-- bewijs:start -->
-*Gemaakt op 03-10-2026 met D-OmniTwin 0.2.1 (use case 0.1.0); geslaagd. Verslag: [`bewijs/bewijs.json`](bewijs/bewijs.json). Opnieuw maken (bij een release): `python -m omnitwin.usecases bewijs cbs-kerncijfers`.*
+*Gemaakt op 03-10-2026 met D-OmniTwin 0.3.0-rc.1 (use case 0.2.0); geslaagd. Verslag: [`bewijs/bewijs.json`](bewijs/bewijs.json). Opnieuw maken (bij een release): `python -m omnitwin.usecases bewijs cbs-kerncijfers`.*
 
 ![80 jaar of ouder (%) per buurt in Bolsward (CBS Kerncijfers 2026)](bewijs/kaart.webp)
 *80 jaar of ouder (%) per buurt in Bolsward (CBS Kerncijfers 2026)*

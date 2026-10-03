@@ -2,9 +2,8 @@
   "specificatie": "1.0",
   "naam": "brede-welvaart",
   "versie": "0.2.0",
-  "omnitwin_versie": "0.2.1",
-  "datum": "2026-10-03T09:32:35+02:00",
-  "omgeving": "lokaal",
+  "omnitwin_versie": "0.3.0-rc.1",
+  "datum": "2026-10-03T21:59:31+02:00",
   "ai_aanbieder": "geen",
   "geslaagd": true,
   "controles": [
@@ -29,14 +28,14 @@
       "id": "kaart",
       "resultaat": "ok",
       "afbeelding": "kaart.webp",
-      "antwoordtijd_s": 69.7,
+      "antwoordtijd_s": 36.7,
       "console_fouten": []
     },
     {
       "id": "kompas",
       "resultaat": "ok",
       "afbeelding": "kompas.webp",
-      "antwoordtijd_s": 62.9,
+      "antwoordtijd_s": 37.2,
       "console_fouten": []
     },
     {
@@ -44,7 +43,7 @@
       "resultaat": "ok",
       "afbeelding": "chat.webp",
       "antwoord": "Netto arbeidsparticipatie (CBS Kerncijfers wijken en buurten, 2024): Hoogste waarde: Bolsward-Zuidwest (77%); laagste: Bolsward-Noord (66%). Daartussen: Bolsward-Noordoost (73%) en Bolsward-Zuidoost (71%). Hoger is beter: Bolsward-Zuidwest scoort het gunstigst. Ervaren gezondheid (RIVM, GGD en CBS: Gezondheid per wijk en buurt (StatLine 50150NED), 2024): Hoogste waarde: Bolsward-Noordoost (77,6%); laagste: Bolsward-Noord (65,9%). Daartussen: Bolsward-Zuidwest (73,4%) en Bolsward-Zuidoost (72,7%). Hoger is beter: Bolsward-Noordoost scoort het gunstigst. Inkomen per inwoner (CBS Kerncijfers wijken en buurten, 2023, 2024): Hoogste waarde: Bolsward-Noordoost (30,9 duizend euro); laagste: Bolsward-Noord (22,1 duizend euro). Daartussen: Bolsward-Zuidwest (29,7 duizend euro) en Bolsward-Zuidoost (26,9 duizend euro). Hoger is beter: Bolsward-Noordoost scoort het gunstigst. Diversiteit Functies (Simpson Index) (Kadaster BAG (berekend per buurt), 2026): Hoogste waarde: Bolsward-Noord (0,3); laagste: Bolsward-Noordoost (0,12). Daartussen: Bolsward-Zuidoost (0,2). Hoger is beter: Bolsward-Noord scoort het gunstigst. Let op: de waarden van Bolsward-Zuidoost zijn demodata.",
-      "antwoordtijd_s": 9.6,
+      "antwoordtijd_s": 7.5,
       "console_fouten": []
     }
   ]

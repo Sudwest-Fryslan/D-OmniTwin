@@ -2,9 +2,8 @@
   "specificatie": "1.0",
   "naam": "beleidsadviseur-swf",
   "versie": "0.2.0",
-  "omnitwin_versie": "0.2.1",
-  "datum": "2026-10-03T09:29:22+02:00",
-  "omgeving": "lokaal",
+  "omnitwin_versie": "0.3.0-rc.1",
+  "datum": "2026-10-03T21:57:49+02:00",
   "ai_aanbieder": "geen",
   "geslaagd": true,
   "controles": [
@@ -25,21 +24,24 @@
       "resultaat": "ok",
       "afbeelding": "chat.webp",
       "antwoord": "Je hebt gekozen voor het perspectief van Beleidsadviseur. Voor deze demonstratie kijken we naar de IJsselmeerkust (Súdwest-Fryslân). Ik heb de relevante data voor je klaargezet. Wat wil je als eerste doen?",
-      "antwoordtijd_s": 10.4,
+      "antwoordtijd_s": 15.8,
       "console_fouten": []
     },
     {
       "id": "kaart",
       "resultaat": "ok",
       "afbeelding": "kaart.webp",
-      "antwoordtijd_s": 54.4,
-      "console_fouten": []
+      "antwoordtijd_s": 19.5,
+      "console_fouten": [
+        "❌ Fout bij laden kaart data: Error: Geo HTTP 500\n    at loadKaartData (/static/js/app.js?v=7:947:31)\n    at async /static/js/app.js?v=7:3389:17",
+        "Fout bij laden van kaart data: Geo HTTP 500"
+      ]
     },
     {
       "id": "kompas",
       "resultaat": "ok",
       "afbeelding": "kompas.webp",
-      "antwoordtijd_s": 66.2,
+      "antwoordtijd_s": 38.3,
       "console_fouten": []
     }
   ]
