@@ -1,3 +1,6 @@
 # Bewijs
 
-Gevuld door de use-case-uitvoerder, **niet in git** (`.gitignore`): `controle.json` (`python -m omnitwin.usecases controleer <naam>`), de status-JSON per levering van de laad-API, en screenshots van de viewer-controles. Per release als asset bij de GitHub-release (ADR 0003).
+Gemaakt door de use-case-uitvoerder: `python -m omnitwin.usecases bewijs <naam>` voert de stappen uit `bewijs.stappen` in `usecase.json` uit tegen een draaiende installatie (Use Case Specificatie, [sectie 12](../../../docs/specificaties/usecase/README.md#12-bewijs); https://github.com/TLaan/D-OmniTwin/issues/225).
+
+- **In git** (compact): per stap een screenshot `<id>.webp` (1440 × 860, ≤ 150 KB, hooguit 4) en het verslag `bewijs.json`. Alleen bij een release opnieuw gemaakt; dezelfde bestandsnamen worden overschreven, zodat de links in de README's stabiel blijven.
+- **Niet in git** (volledig): de originele schermen in `volledig/` en andere uitvoer (zoals `controle.json`). Die gaan als zip bij de GitHub-release (`bewijs --alle --zip bewijs-<versie>.zip`).
