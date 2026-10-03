@@ -54,3 +54,18 @@ Een use case is een **bundel**: data + inrichting + stappen. Alle drie staan hie
 
 - **Data:** de indicatoren zijn aanwezig en gevuld voor de drie Bolsward-buurten.
 - **Inrichting:** het pakket zet de richting goed en voegt afgeleide percentages toe. Een eigen Kompas-profiel en chatscenario per use case ontbreken nog (#138).
+
+## Bewijs
+
+<!-- bewijs:start -->
+*Gemaakt op 03-10-2026 met D-OmniTwin 0.2.1 (use case 0.2.0); geslaagd. Verslag: [`bewijs/bewijs.json`](bewijs/bewijs.json). Opnieuw maken (bij een release): `python -m omnitwin.usecases bewijs sociale-cohesie`.*
+
+![Eenzaamheid per buurt in Bolsward (RIVM Gezondheidsmonitor)](bewijs/kaart.webp)
+*Eenzaamheid per buurt in Bolsward (RIVM Gezondheidsmonitor)*
+
+![Datavraag van de wijkcoördinator over eenzaamheid en vrijwilligerswerk](bewijs/chat.webp)
+*Datavraag van de wijkcoördinator over eenzaamheid en vrijwilligerswerk*
+
+![Kompas voor Bolsward-Zuidoost](bewijs/kompas.webp)
+*Kompas voor Bolsward-Zuidoost*
+<!-- bewijs:end -->

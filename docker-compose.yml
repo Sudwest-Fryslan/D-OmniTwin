@@ -281,6 +281,9 @@ services:
       # Tijdelijke beheerder in realm master, alleen bij de eerste start aangemaakt
       KC_BOOTSTRAP_ADMIN_USERNAME: admin
       KC_BOOTSTRAP_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:-}
+      # Adres van de installatie zoals gebruikers het zien (#251): de realm-import neemt het op
+      # als redirect-URI van client omnitwin-web ("${OMNITWIN_BASE_URL}/*" in de realmexport)
+      OMNITWIN_BASE_URL: ${OMNITWIN_BASE_URL:-http://localhost}
     volumes:
       - "./deploy/keycloak/realm-omnitwin.json:/opt/keycloak/data/import/realm-omnitwin.json:ro"
       - "./deploy/keycloak/client-secret.sh:/opt/keycloak/omnitwin/client-secret.sh:ro"

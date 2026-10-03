@@ -13,6 +13,7 @@ sample dataset. Elke test verwijst in naam en docstring naar zijn TC-id
 | `test_integratie_e2e.py` | TC-06-001, TC-06-004 |
 | `test_integratie_e2e.py` | TC-06-001 |
 | `test_toegankelijkheid.py` | Toegankelijkheid (#67): focus in dialogen, `prefers-reduced-motion` |
+| `test_beheer_keycloak_login.py` | Inloggen in de beheeromgeving via het formulier van Keycloak en uitloggen (#251). Alleen met Keycloak aan en `OMNITWIN_TESTACCOUNTS=1` + `KEYCLOAK_ADMIN_PASSWORD` (`--env-file .env`); `OMNITWIN_BASE_URL` moet dan het publieke adres zijn (de host uit `OIDC_ISSUER`), niet `http://traefik` |
 
 Uitkomsten:
 

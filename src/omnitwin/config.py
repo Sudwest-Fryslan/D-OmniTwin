@@ -32,6 +32,12 @@ OIDC (#205, tokens controleren in de nieuwe API's, zie omnitwin/oidc.py):
 - OIDC_INTERN_URL  optioneel; intern adres van de issuer (achter Traefik:
                    http://keycloak:8080/auth/realms/omnitwin). Discovery en JWKS komen dan
                    daarvandaan; `iss` wordt nog steeds tegen OIDC_ISSUER gecontroleerd.
+Inloggen in de beheeromgeving via OIDC (#251, ADR 0008, zie omnitwin/oidc_login.py):
+- OIDC_CLIENT_ID   client waarmee mensen inloggen (authorization code + PKCE), standaard
+                   omnitwin-web.
+- LOKAAL_INLOGGEN  true = noodtoegang: lokale accounts (tabel users) mogen ook inloggen als
+                   OIDC_ISSUER gezet is. Standaard uit zodra OIDC aan staat; zonder OIDC werkt
+                   lokaal inloggen altijd.
 
 Gebruik `os.getenv("<NAAM>", ...)` letterlijk: tests/test_env_example.py zoekt
 daarop om te controleren dat elke variabele in .env.example staat.
@@ -113,6 +119,18 @@ class Instellingen:
     oidc_audience: str
     oidc_jwks_url: str          # leeg = via discovery
     oidc_intern_url: str        # leeg = discovery via de issuer zelf
+    oidc_client_id: str         # inloggen van mensen (#251)
+    lokaal_inloggen: bool       # LOKAAL_INLOGGEN: noodtoegang naast OIDC
+
+    @property
+    def lokaal_inloggen_aan(self) -> bool:
+        """Mogen lokale accounts inloggen? Zonder OIDC altijd; met OIDC alleen als noodtoegang."""
+        return not self.oidc_issuer or self.lokaal_inloggen
+
+    @property
+    def noodtoegang(self) -> bool:
+        """OIDC aan én lokaal inloggen aan: waarschuwen in log en UI."""
+        return bool(self.oidc_issuer) and self.lokaal_inloggen
 
     @property
     def database_url(self) -> str:
@@ -163,4 +181,6 @@ def instellingen() -> Instellingen:
         oidc_audience=os.getenv("OIDC_AUDIENCE", "omnitwin-api").strip() or "omnitwin-api",
         oidc_jwks_url=os.getenv("OIDC_JWKS_URL", "").strip(),
         oidc_intern_url=os.getenv("OIDC_INTERN_URL", "").strip().rstrip("/"),
+        oidc_client_id=os.getenv("OIDC_CLIENT_ID", "omnitwin-web").strip() or "omnitwin-web",
+        lokaal_inloggen=_bool(os.getenv("LOKAAL_INLOGGEN", "false")),
     )

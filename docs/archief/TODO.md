@@ -179,7 +179,7 @@
 
 **Doel:** Het systeem voorzien van betrouwbare e-mail alerts bij kritieke fouten (`ERROR` of `CRITICAL`) via een flexibele SMTP configuratie.
 **Aanleiding:** Issue #10 (voorheen een blocker). Doorgeschoven naar ná Sprint 19.
-**Spec:** [`docs/5-secops/logging/plan_email_alerts_smtp.md`](../5-secops/logging/plan_email_alerts_smtp.md)
+**Spec:** `docs/5-secops/logging/plan_email_alerts_smtp.md` (intern werkdocument, uit de repository gehaald in [#61](https://github.com/TLaan/D-OmniTwin/issues/61))
 
 ---
 

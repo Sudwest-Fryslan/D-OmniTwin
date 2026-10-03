@@ -1,18 +1,27 @@
 """
 Authentication Router for Beheerscherm
-Handles local session-based authentication (HttpOnly cookies) and API keys.
+Handles session-based authentication (HttpOnly cookies), OIDC bearer tokens and API keys.
+
+Inloggen (#251, ADR 0008):
+- Met OIDC (OIDC_ISSUER gezet): via Keycloak, `GET /api/admin/auth/oidc/login` en
+  `/oidc/callback` (backend-for-frontend, zie omnitwin/oidc_login.py). Beheerrechten =
+  realm-rol `beheerder`. Lokale accounts alleen als noodtoegang (LOKAAL_INLOGGEN=true).
+- Zonder OIDC: lokale accounts (tabel `users`, bcrypt), `POST /api/admin/auth/login`.
+- `GET /api/admin/auth/config` vertelt de beheer-UI welke manier aan staat.
 
 Autorisatie (#65):
-- `huidige_gebruiker`: ingelogde gebruiker (sessie-cookie) of script met een
-  geldige `X-Admin-Key`; anders 401.
-- `vereis_admin`: als hierboven, en de gebruiker moet `is_admin` hebben;
-  anders 403. Hangt op routerniveau aan alle beheer-routers.
+- `huidige_gebruiker`: ingelogde gebruiker (sessie-cookie, lokaal of OIDC), een
+  `Authorization: Bearer`-token van de OIDC-provider, of een script met een geldige
+  `X-Admin-Key`; anders 401.
+- `vereis_admin`: als hierboven, en de gebruiker moet beheerder zijn (`is_admin`, of
+  realm-rol `beheerder`); anders 403. Hangt op routerniveau aan alle beheer-routers.
 
-Sessietokens staan gehasht (sha256) in `sessions.token_hash`; het cookie
-bevat het ruwe token.
+Sessietokens staan gehasht (sha256) in `sessions.token_hash` (lokaal) en
+`oidc_sessies.token_hash` (OIDC); het cookie bevat het ruwe token.
 """
 
 from fastapi import APIRouter, Depends, HTTPException, Request, Response
+from fastapi.responses import RedirectResponse
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 from sqlalchemy import text
@@ -20,6 +29,7 @@ from omnitwin.database import get_db
 from passlib.context import CryptContext
 from pydantic import BaseModel
 import hashlib
+import httpx
 import secrets
 import asyncio
 import datetime
@@ -31,6 +41,7 @@ from omnitwin.config import (
     LOGIN_MAX_PER_GEBRUIKER, LOGIN_MAX_PER_IP, LOGIN_VENSTER_SECONDEN, LOGIN_VERTRAGING_SECONDEN,
     instellingen,
 )
+from omnitwin import oidc, oidc_login
 from omnitwin.grenzen import Limiet, client_ip, te_veel
 from omnitwin.services.logging_service import AppLogger
 
@@ -56,6 +67,7 @@ class UserResponse(BaseModel):
     id: str
     username: str
     is_admin: bool
+    bron: str = "lokaal"   # lokaal, oidc, bearer of api_key
 
 class AuthStatus(BaseModel):
     authenticated: bool
@@ -107,22 +119,38 @@ def ruim_verlopen_sessies_op(db: Session) -> None:
 def huidige_gebruiker(request: Request, db: Session = Depends(get_db)) -> dict:
     """
     Wie doet dit verzoek?
-    1. Een geldige sessie-cookie (Web UI).
-    2. Anders een geldige X-Admin-Key header (scripts/ETL). Een lege of
+    1. Een geldige sessie-cookie (Web UI): een OIDC-sessie, of een lokale sessie
+       als lokaal inloggen aan staat (zonder OIDC, of LOKAAL_INLOGGEN=true).
+    2. Een `Authorization: Bearer`-token van de OIDC-provider (alleen als OIDC aan
+       staat). Een ongeldig token geeft 401 (Problem Details).
+    3. Anders een geldige X-Admin-Key header (scripts/ETL). Een lege of
        placeholder-key in .env schakelt deze route uit.
-    Geen van beide -> 401.
+    Geen van alle -> 401.
     """
+    ins = instellingen()
     session_token = request.cookies.get("session_token")
     if session_token:
-        user = db.execute(text("""
-            SELECT u.id, u.username, u.is_admin
-            FROM sessions s
-            JOIN users u ON s.user_id = u.id
-            WHERE s.token_hash = :token_hash AND s.expires_at > NOW()
-            AND u.is_active = true
-        """), {"token_hash": hash_token(session_token)}).fetchone()
-        if user:
-            return {"user_id": user[0], "username": user[1], "is_admin": bool(user[2]), "type": "session"}
+        token_hash = hash_token(session_token)
+        if ins.oidc_issuer:
+            gebruiker = oidc_login.gebruiker(db, token_hash)
+            if gebruiker:
+                return gebruiker
+        if ins.lokaal_inloggen_aan:
+            user = db.execute(text("""
+                SELECT u.id, u.username, u.is_admin
+                FROM sessions s
+                JOIN users u ON s.user_id = u.id
+                WHERE s.token_hash = :token_hash AND s.expires_at > NOW()
+                AND u.is_active = true
+            """), {"token_hash": token_hash}).fetchone()
+            if user:
+                return {"user_id": user[0], "username": user[1], "is_admin": bool(user[2]), "type": "session"}
+
+    autorisatie = request.headers.get("authorization", "")
+    if ins.oidc_issuer and autorisatie[:7].lower() == "bearer ":
+        p = oidc.controleer_token(autorisatie[7:].strip())
+        return {"user_id": p.onderwerp, "username": p.gebruikersnaam or p.client_id or p.onderwerp,
+                "is_admin": oidc_login.BEHEERROL in p.rollen, "type": "bearer", "onderwerp": p.onderwerp}
 
     api_key_header = request.headers.get("X-Admin-Key")
     admin_api_key = geldige_admin_api_key()
@@ -136,6 +164,9 @@ def vereis_admin(request: Request, db: Session = Depends(get_db)) -> dict:
     """Dependency voor alle beheer-routes: ingelogd (401) én beheerder (403)."""
     gebruiker = huidige_gebruiker(request, db)
     if not gebruiker.get("is_admin"):
+        if gebruiker.get("type") in ("oidc", "bearer"):
+            AppLogger.warning(f"Geen beheerrechten (rol {oidc_login.BEHEERROL} ontbreekt): "
+                              f"'{gebruiker['username']}' sub={gebruiker['onderwerp']}", category="AUTH")
         raise HTTPException(status_code=403, detail="Alleen voor beheerders.")
     return gebruiker
 
@@ -208,6 +239,8 @@ async def login(
     mislukte poging wacht eerst even. De database en bcrypt draaien in de
     threadpool; het wachten blokkeert de server niet (#203, #68).
     """
+    if not instellingen().lokaal_inloggen_aan:
+        raise HTTPException(status_code=403, detail="Lokaal inloggen staat uit; log in via Keycloak.")
     ip = client_ip(request)
     sleutel = f"{ip}|{form_data.username.strip().lower()}"
     wacht = max(_mislukt_per_gebruiker.wachttijd(sleutel), _mislukt_per_ip.wachttijd(ip))
@@ -235,7 +268,11 @@ async def login(
         secure=cookie_secure(request),  # COOKIE_SECURE (auto: alleen via HTTPS)
     )
 
-    AppLogger.info(f"Login geslaagd: gebruiker '{user[1]}'", category="AUTH", user_id=str(user[0]))
+    if instellingen().noodtoegang:
+        AppLogger.warning(f"Noodtoegang: lokaal ingelogd als '{user[1]}' terwijl Keycloak aan staat "
+                          "(LOKAAL_INLOGGEN=true)", category="AUTH", user_id=str(user[0]))
+    else:
+        AppLogger.info(f"Login geslaagd: gebruiker '{user[1]}'", category="AUTH", user_id=str(user[0]))
 
     return {"message": "Succesvol ingelogd", "user": {"id": str(user[0]), "username": user[1]}}
 
@@ -245,16 +282,21 @@ def logout(
     response: Response,
     db: Session = Depends(get_db)
 ):
-    """Logs the user out (deletes session and cookie)."""
+    """Uitloggen: sessie en cookie weg. Bij een OIDC-sessie ook `uitlog_url`: daar logt de
+    browser uit bij Keycloak (RP-initiated logout), die daarna terugstuurt naar de inlogpagina."""
     session_token = request.cookies.get("session_token")
+    uitlog_url = None
     if session_token:
         db.execute(text("DELETE FROM sessions WHERE token_hash = :token_hash"),
                    {"token_hash": hash_token(session_token)})
         db.commit()
+        if instellingen().oidc_issuer:
+            uitlog_url = oidc_login.uitloggen(db, hash_token(session_token),
+                                              oidc_login.publieke_basis(request) + "/admin/login")
 
     response.delete_cookie("session_token", httponly=True, samesite="lax")
     AppLogger.info("Gebruiker uitgelogd", category="AUTH")
-    return {"message": "Succesvol uitgelogd"}
+    return {"message": "Succesvol uitgelogd", "uitlog_url": uitlog_url}
 
 @router.get("/me", response_model=AuthStatus)
 def get_current_user(
@@ -266,9 +308,11 @@ def get_current_user(
         user_info = huidige_gebruiker(request, db)
         return AuthStatus(
             authenticated=True,
-            user=UserResponse(id=str(user_info["user_id"]), username=user_info["username"], is_admin=user_info["is_admin"])
+            user=UserResponse(id=str(user_info["user_id"]), username=user_info["username"],
+                              is_admin=user_info["is_admin"],
+                              bron="lokaal" if user_info["type"] == "session" else user_info["type"])
         )
-    except HTTPException:
+    except (HTTPException, oidc.AuthProbleem):
         return AuthStatus(authenticated=False, user=None)
 
 class ChangePasswordRequest(BaseModel):
@@ -288,6 +332,8 @@ def change_password(
     # Scripts using API key header cannot change passwords via this route
     if user_info.get("type") == "api_key":
         raise HTTPException(status_code=403, detail="API Keys kunnen geen wachtwoorden wijzigen. Log in via de UI.")
+    if user_info.get("type") != "session":
+        raise HTTPException(status_code=403, detail="Je wachtwoord wijzig je in Keycloak (accountconsole).")
 
     user_id = user_info["user_id"]
 
@@ -318,3 +364,75 @@ def change_password(
     db.commit()
     AppLogger.info(f"Wachtwoord gewijzigd voor user_id={user_id}", category="AUTH", user_id=str(user_id))
     return {"message": "Wachtwoord succesvol gewijzigd"}
+
+
+# ============================================================================
+# Inloggen via OIDC (Keycloak), #251
+# ============================================================================
+class AuthConfig(BaseModel):
+    oidc: bool                         # knop "Inloggen met Keycloak"
+    lokaal: bool                       # formulier met gebruikersnaam en wachtwoord
+    noodtoegang: bool                  # lokaal naast OIDC: waarschuwing tonen
+    gebruikersbeheer_url: str | None   # admin-console van Keycloak (gebruikers en rollen)
+    account_url: str | None            # accountconsole van Keycloak (eigen wachtwoord)
+
+
+@router.get("/config", response_model=AuthConfig)
+def auth_config() -> AuthConfig:
+    """Welke manieren van inloggen staan aan? Openbaar: de inlogpagina heeft het nodig."""
+    i = instellingen()
+    return AuthConfig(
+        oidc=bool(i.oidc_issuer), lokaal=i.lokaal_inloggen_aan, noodtoegang=i.noodtoegang,
+        gebruikersbeheer_url=oidc_login.gebruikersbeheer_url() if i.oidc_issuer else None,
+        account_url=oidc_login.account_url() if i.oidc_issuer else None,
+    )
+
+
+def _naar_inlogpagina(fout: str) -> RedirectResponse:
+    return RedirectResponse(f"/admin/login?fout={fout}", status_code=303)
+
+
+@router.get("/oidc/login")
+def oidc_inloggen(request: Request, terug: str | None = None):
+    """Start het inloggen bij Keycloak (authorization code + PKCE); daarna /oidc/callback."""
+    if not instellingen().oidc_issuer:
+        return _naar_inlogpagina("oidc-uit")
+    try:
+        adres, cookie = oidc_login.start(request, terug)
+    except (oidc_login.InlogFout, ValueError, httpx.HTTPError) as e:
+        AppLogger.error(f"Inloggen via OIDC niet te starten: {type(e).__name__}", category="AUTH")
+        return _naar_inlogpagina("provider-onbereikbaar")
+    antwoord = RedirectResponse(adres, status_code=303)
+    antwoord.set_cookie(oidc_login.INLOG_COOKIE, cookie, max_age=oidc_login.INLOG_DUUR, httponly=True,
+                        samesite="lax", secure=cookie_secure(request), path=oidc_login.INLOG_PAD)
+    return antwoord
+
+
+@router.get("/oidc/callback")
+def oidc_callback(request: Request, code: str | None = None, state: str | None = None,
+                  error: str | None = None, db: Session = Depends(get_db)):
+    """Terugkomst van Keycloak: code inwisselen, sessie maken, door naar de beheeromgeving.
+    Zonder rol beheerder terug naar de inlogpagina; die meldt dat de rechten ontbreken."""
+    if error or not code or not state:
+        fout = "geweigerd" if error == "access_denied" else "onvolledig"
+        AppLogger.warning(f"Inloggen via OIDC afgebroken ({fout})", category="AUTH")
+        antwoord = _naar_inlogpagina(fout)
+    else:
+        sessie = create_session_token()
+        try:
+            principal, terug = oidc_login.rond_af(db, code, state, request.cookies.get(oidc_login.INLOG_COOKIE),
+                                                  hash_token(sessie))
+        except oidc_login.InlogFout as e:
+            AppLogger.warning(f"Inloggen via OIDC mislukt ({e.code})", category="AUTH")
+            antwoord = _naar_inlogpagina(e.code)
+        else:
+            beheerder = oidc_login.BEHEERROL in principal.rollen
+            # Audit: sub en preferred_username, nooit e-mail of tokens
+            AppLogger.info(f"Login geslaagd via OIDC: '{principal.gebruikersnaam}' sub={principal.onderwerp} "
+                           f"beheerder={'ja' if beheerder else 'nee'}", category="AUTH")
+            antwoord = RedirectResponse(terug if beheerder else "/admin/login", status_code=303)
+            antwoord.set_cookie(key="session_token", value=sessie, httponly=True,
+                                max_age=int(oidc_login.SESSIE_MAX.total_seconds()),
+                                samesite="lax", secure=cookie_secure(request))
+    antwoord.delete_cookie(oidc_login.INLOG_COOKIE, path=oidc_login.INLOG_PAD, httponly=True, samesite="lax")
+    return antwoord
