@@ -331,10 +331,17 @@ h6 {
   height: 44px;
   width: 44px;
   flex-shrink: 0;
+  /* Op één lijn met de knoppen van de tab-bar eronder (left 10px, 50px breed):
+     midden van het beeldmerk op 10 + 25 = 35px vanaf de rand */
+  margin-left: calc(35px - 22px - var(--spacing-xl));
   max-width: 160px;
   object-fit: contain;
   margin-right: var(--spacing-lg);
   filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+}
+
+@media (max-width: 768px) {
+  .header-logo { margin-left: 0; }
 }
 
 /* ... existing header content ... */
