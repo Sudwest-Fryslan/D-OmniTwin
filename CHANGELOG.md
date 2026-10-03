@@ -33,6 +33,7 @@ Eerdere wijzigingen, van vóór dit bestand, zijn terug te vinden in de git-hist
 
 ### Gewijzigd
 
+- Het favicon (viewer, beheerscherm, API-documentatie, handleiding) heeft de kleuren van het organisatiethema: `GET /api/organisatie/beeldmerk.svg` levert het beeldmerk met de themakleuren als vaste waarden ([#249](https://github.com/TLaan/D-OmniTwin/issues/249)).
 - Installatiegids, §4 Data: beschrijft alleen nog de use cases (`python -m omnitwin.usecases`) en de laad-API; de verwijzingen naar `seed_fryslan.py` en het ETL-framework als vulroute zijn weg ([#69](https://github.com/TLaan/D-OmniTwin/issues/69)).
 - Statische bestanden krijgen een cachebeleid: bestanden met versie of hash in het pad (vendor, Vite-assets) een jaar `immutable`, de rest `no-cache` (opnieuw valideren met ETag). Na een upgrade toont de browser meteen het nieuwe thema en beeldmerk ([#246](https://github.com/TLaan/D-OmniTwin/issues/246)).
 - Het beeldmerk linksboven volgt het organisatiethema via de tokens `--d-omnitwin-beeldmerk-*`; in het SWF-thema wit met SWF-rood ([#249](https://github.com/TLaan/D-OmniTwin/issues/249)). Een eigen SVG-logo zet zijn inhoud in `<g id="beeldmerk">`.
