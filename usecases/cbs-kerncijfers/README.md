@@ -70,7 +70,18 @@ Verwacht:
 
 ## Bewijs
 
-In [`bewijs/`](bewijs/README.md), gemaakt door de uitvoerder (niet in git): `controle.json` (uitvoer van `controleer`), per levering de status-JSON van de laad-API (`levering-<dataset>.json`: status, versie, aantallen, fouten), en screenshots van de viewer-controles.
+<!-- bewijs:start -->
+*Gemaakt op 03-10-2026 met D-OmniTwin 0.2.1 (use case 0.1.0); geslaagd. Verslag: [`bewijs/bewijs.json`](bewijs/bewijs.json). Opnieuw maken (bij een release): `python -m omnitwin.usecases bewijs cbs-kerncijfers`.*
+
+![80 jaar of ouder (%) per buurt in Bolsward (CBS Kerncijfers 2026)](bewijs/kaart.webp)
+*80 jaar of ouder (%) per buurt in Bolsward (CBS Kerncijfers 2026)*
+
+![Datavraag beantwoord uit de CBS Kerncijfers](bewijs/chat.webp)
+*Datavraag beantwoord uit de CBS Kerncijfers*
+
+![Leveringsstatus van de CBS Kerncijfers (laad-API)](bewijs/levering.webp)
+*Leveringsstatus van de CBS Kerncijfers (laad-API)*
+<!-- bewijs:end -->
 
 ## Bekende afwijkingen
 
