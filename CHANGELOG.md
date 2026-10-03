@@ -34,7 +34,7 @@ Eerdere wijzigingen, van vóór dit bestand, zijn terug te vinden in de git-hist
 ### Opgelost
 
 - Kaart: bij minder unieke waarden dan kleurklassen (bijv. 3 buurten bij 7 klassen) kregen alle gebieden dezelfde kleur. Nu krijgt elke unieke waarde een eigen klasse, verdeeld over de hele kleurenschaal; gelijke waarden krijgen dezelfde kleur. Bij één unieke waarde: een neutrale middenkleur en een melding in de legenda ([#161](https://github.com/TLaan/D-OmniTwin/issues/161)).
-- `vw_gebied_indicator_actueel` (ook `/api/data/vw_gebied_indicator_actueel`) toont alleen gerealiseerde waarden (scenario `current`, NULL telt als `current`) en sorteert op jaar met `NULLS LAST`: een projectie of een rij zonder jaar telt niet meer als actueel. Migratie `V029__actueel_zonder_scenario.sql`. De kaart met een gekozen jaar filtert ook op scenario `current` ([#159](https://github.com/TLaan/D-OmniTwin/issues/159)).
+- `vw_gebied_indicator_actueel` (ook `/api/data/vw_gebied_indicator_actueel`) toont alleen gerealiseerde waarden (scenario `current`, NULL telt als `current`) en sorteert op jaar met `NULLS LAST`: een projectie of een rij zonder jaar telt niet meer als actueel. Migratie `V030__actueel_zonder_scenario.sql`. De kaart met een gekozen jaar filtert ook op scenario `current` ([#159](https://github.com/TLaan/D-OmniTwin/issues/159)).
 
 ## [0.2.1] - 2026-10-02
 

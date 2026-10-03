@@ -1,5 +1,5 @@
 """
-Integratietests voor vw_gebied_indicator_actueel (#159, migratie V029).
+Integratietests voor vw_gebied_indicator_actueel (#159, migratie V030).
 
 Draait tegen een draaiende stack met de sample dataset (zie
 test_sample_stack.py). Elke test voegt rijen toe in een eigen transactie en
@@ -64,10 +64,10 @@ def lees_actueel(cur, uuid):
     return rijen[0]
 
 
-def test_v029_toegepast(conn):
+def test_v030_toegepast(conn):
     with conn.cursor() as cur:
-        cur.execute("SELECT 1 FROM schema_migraties WHERE versie = 29")
-        assert cur.fetchone(), "migratie V029 is niet toegepast"
+        cur.execute("SELECT 1 FROM schema_migraties WHERE versie = 30")
+        assert cur.fetchone(), "migratie V030 is niet toegepast"
     conn.rollback()
 
 
