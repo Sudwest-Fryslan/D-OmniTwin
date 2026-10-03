@@ -26,7 +26,7 @@ def test_beeldmerk_heeft_groep_voor_use_en_tokens():
 
 def test_header_tekent_beeldmerk_via_use():
     html = (ROOT / "templates" / "index.html").read_text(encoding="utf-8")
-    assert '<use href="/static/images/beeldmerk.svg#beeldmerk">' in html
+    assert '<use href="/static/images/beeldmerk.svg?v={{ app_version }}#beeldmerk">' in html
 
 
 @pytest.mark.parametrize("thema", ["d-omnitwin", "swf"])
