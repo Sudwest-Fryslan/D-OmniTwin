@@ -30,6 +30,39 @@ def veilig_thema(thema: Optional[str]) -> str:
     return thema if isinstance(thema, str) and _THEMA.fullmatch(thema) else STANDAARD_THEMA
 
 
+BEELDMERK = THEMA_MAP.parents[1] / "images" / "beeldmerk.svg"
+_BEELDMERK_TOKEN = re.compile(r"var\(--d-omnitwin-beeldmerk-(vlak|lijn|kern),\s*(#[0-9A-Fa-f]{3,8})\)")
+_KLEUR = re.compile(r"^#[0-9A-Fa-f]{3,8}$")
+
+
+def beeldmerk_kleuren(thema: str, themamap: Path = THEMA_MAP) -> Dict[str, str]:
+    """Kleuren --d-omnitwin-beeldmerk-{vlak,lijn,kern} uit het eerste (lichte) :root-blok van het thema."""
+    pad = themamap / f"{veilig_thema(thema)}.css"
+    if not pad.is_file():
+        return {}
+    css = pad.read_text(encoding="utf-8")
+    start = css.find(":root")
+    blok = css[start:css.find("}", start)] if start >= 0 else ""
+    kleuren = {}
+    for deel in ("vlak", "lijn", "kern"):
+        m = re.search(rf"--d-omnitwin-beeldmerk-{deel}:\s*([^;]+);", blok)
+        if m and _KLEUR.match(m.group(1).strip()):
+            kleuren[deel] = m.group(1).strip()
+    return kleuren
+
+
+def beeldmerk_svg(org: Optional[Dict[str, Any]], svg: Path = BEELDMERK, themamap: Path = THEMA_MAP) -> str:
+    """Het beeldmerk met de themakleuren als vaste waarden, voor favicons (#249).
+
+    Een favicon kan geen CSS-variabelen van de pagina lezen; daarom vervangen we de
+    terugvalwaarden in ``var(--d-omnitwin-beeldmerk-*, #...)`` door de kleuren van het thema.
+    Een eigen logo zonder die tokens komt ongewijzigd terug."""
+    kleuren = beeldmerk_kleuren(veilig_thema(org.get("thema") if org else None), themamap)
+    tekst = svg.read_text(encoding="utf-8")
+    return _BEELDMERK_TOKEN.sub(
+        lambda m: f"var(--d-omnitwin-beeldmerk-{m.group(1)}, {kleuren.get(m.group(1), m.group(2))})", tekst)
+
+
 def thema_css(org: Optional[Dict[str, Any]], themamap: Path = THEMA_MAP) -> Optional[str]:
     """URL van static/css/themes/<thema>.css als dat bestand bestaat, anders None."""
     thema = veilig_thema(org.get("thema") if org else None)
