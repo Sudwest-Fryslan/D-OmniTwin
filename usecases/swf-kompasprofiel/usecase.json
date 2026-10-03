@@ -2,7 +2,7 @@
   "specificatie": "1.0",
   "naam": "swf-kompasprofiel",
   "id": "TC-07-005",
-  "versie": "0.1.0",
+  "versie": "0.2.0",
   "titel": "SWF-kompasprofielen Basis (4/12/33) en Klimaat",
   "vraag": "Ik wil de sunburst van de huidige monitor terugzien in D-OmniTwin: dezelfde 4 kwadranten, 12 thema's en 33 onderdelen met dezelfde indicatoren, en de Klimaatmonitor met zijn 3 thema's en 10 indicatoren.",
   "gebruiker": "functioneel beheerder SWF",
@@ -10,8 +10,27 @@
   "afhankelijk_van": [
     "swf-definities"
   ],
+  "actoren": [
+    {
+      "naam": "beheer-swf",
+      "soort": "machineclient",
+      "rollen": [
+        "beheerder"
+      ],
+      "omschrijving": "machineclient van SWF voor de beheer-API (kompasprofielen)"
+    },
+    {
+      "naam": "lezer",
+      "soort": "gebruiker",
+      "rollen": [
+        "lezer"
+      ],
+      "omschrijving": "ingelogde medewerker: ziet ook wat niet openbaar is, laadt niets"
+    }
+  ],
   "rechten": [
-    "realm-rol beheerder (beheer-API, machineclient of beheer-UI)"
+    "realm-rol beheerder (beheer-API, machineclient of beheer-UI)",
+    "realm-rol lezer"
   ],
   "datasets": [
     {

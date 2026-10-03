@@ -14,8 +14,9 @@ schema's in `docs/specificaties/usecase/<versie>/`.
     python -m omnitwin.usecases boom <naam>
     python -m omnitwin.usecases index [--controleer]
     python -m omnitwin.usecases controleer <naam> [--uit MAP] [--variant NAAM]
-    python -m omnitwin.usecases installeer <naam> [...] | --alle [--inproces]
-    python -m omnitwin.usecases test <naam>
+    python -m omnitwin.usecases installeer <naam> [...] | --alle [--inproces | --testaccounts]
+    python -m omnitwin.usecases test <naam> [--testaccounts]
+    python -m omnitwin.usecases opruimen <naam> [...]
     python -m omnitwin.usecases bewijs <naam>
 
 `controleer` werkt zonder draaiende stack: manifest, bestanden in de map, afhankelijkheden,
@@ -32,6 +33,12 @@ ze dat. Met `--inproces` (eerste installatie, `db-init`) gebruikt `installeer` d
 zonder HTTP en zonder token (`omnitwin.laden.inproces`). Demopakketten zonder `datasets` installeert
 `installeer` via `init_data/scripts/laad_usecase.py`, zodat er één ingang is; de inrichting van een
 demopakket met `datasets` (richting van de indicatoren uit `data.indicatoren`) ook.
+
+Testaccounts (#223, alleen test en dev): met `--testaccounts` maakt de uitvoerder de `actoren` van de
+use case (en zijn afhankelijkheden) aan in Keycloak als `uc-<usecase>-<actor>` en installeert en
+controleert als die actoren: registreren als beheerder, leveren als de client van de dataset;
+controles met `actor` en de rechtencontroles (`type: recht`) draaien als die actor. Zie
+`omnitwin.testaccounts`. `opruimen <naam>` verwijdert ze weer.
 
 Varianten (`varianten` in `datasets/<id>.json`): `sla_over` (stappen overslaan), `bron` en
 `bewerkingen` (een andere bron, bijv. de echte interne bron naast demodata) en `als_beschikbaar`
@@ -315,9 +322,18 @@ def valideer_manifest(uc, naam=None):
     if uc.get("_map"):
         fouten += bestandsfouten(uc["_map"], naam)
     ids = [ds.get("id") for ds in uc.get("datasets", [])]
+    actoren = [a.get("naam") for a in uc.get("actoren", [])]
+    for dubbel in sorted({a for a in actoren if actoren.count(a) > 1}):
+        fouten.append(f"actoren: naam {dubbel} komt meer dan eens voor")
     for c in uc.get("controles", []):
-        if c.get("dataset") and c["dataset"] not in ids:
+        # Een rechtencontrole mag juist een dataset van een ander noemen (403 op een andere dataset)
+        if c.get("dataset") and c["dataset"] not in ids and c["type"] != "recht":
             fouten.append(f"controle {c['type']}: dataset {c['dataset']} niet in datasets")
+        if c.get("actor") and c["actor"] not in actoren:
+            fouten.append(f"controle {c['type']}: actor {c['actor']} niet in actoren")
+        if c["type"] == "recht":
+            nodig = ("actor", "actie", "toegestaan") + (("dataset",) if c.get("actie") != "registreren" else ())
+            fouten += [f"controle recht: veld {v} ontbreekt" for v in nodig if v not in c]
     return fouten
 
 
@@ -476,19 +492,25 @@ def laad_api_beschikbaar(basis=None):
         return False
 
 
-def token(basis=None):
-    """Token voor de machineclient (client credentials) uit OMNITWIN_CLIENT_ID/OMNITWIN_CLIENT_SECRET."""
+def token_url(basis=None):
+    """Tokenendpoint: OMNITWIN_TOKEN_URL, of via discovery van realm KEYCLOAK_REALM (standaard omnitwin)."""
     import requests
-    cid, geheim = os.environ.get("OMNITWIN_CLIENT_ID"), os.environ.get("OMNITWIN_CLIENT_SECRET")
-    if not cid or not geheim:
-        raise UseCaseFout("OMNITWIN_CLIENT_ID en OMNITWIN_CLIENT_SECRET (machineclient) zijn niet gezet")
     url = os.environ.get("OMNITWIN_TOKEN_URL")
     if not url:
         realm = os.environ.get("KEYCLOAK_REALM", "omnitwin")
         disc = requests.get(f"{basis or basis_url()}/auth/realms/{realm}/.well-known/openid-configuration", timeout=30)
         disc.raise_for_status()
         url = disc.json()["token_endpoint"]
-    r = requests.post(url, data={"grant_type": "client_credentials"}, auth=(cid, geheim), timeout=30)
+    return url
+
+
+def token(basis=None):
+    """Token voor de machineclient (client credentials) uit OMNITWIN_CLIENT_ID/OMNITWIN_CLIENT_SECRET."""
+    import requests
+    cid, geheim = os.environ.get("OMNITWIN_CLIENT_ID"), os.environ.get("OMNITWIN_CLIENT_SECRET")
+    if not cid or not geheim:
+        raise UseCaseFout("OMNITWIN_CLIENT_ID en OMNITWIN_CLIENT_SECRET (machineclient) zijn niet gezet")
+    r = requests.post(token_url(basis), data={"grant_type": "client_credentials"}, auth=(cid, geheim), timeout=30)
     r.raise_for_status()
     return r.json()["access_token"]
 
@@ -496,14 +518,24 @@ def token(basis=None):
 class LaadApi:
     """Dunne client voor /api/laden/v1, de compat-ingang en de beheer-API."""
 
-    def __init__(self, basis=None, tok=None):
+    def __init__(self, basis=None, tok=None, tokenbron=None):
+        """tokenbron: functie die een (nieuw) token geeft; standaard de machineclient uit de omgeving.
+        Bij 401 haalt de client eenmaal een nieuw token (access tokens leven 5 minuten)."""
         import requests
         self.basis, self.s = basis or basis_url(), requests.Session()
-        self.s.headers["Authorization"] = f"Bearer {tok or token(self.basis)}"
+        self.tokenbron = tokenbron or (None if tok else (lambda: token(self.basis)))
+        self.s.headers["Authorization"] = f"Bearer {tok or self.tokenbron()}"
         self.s.hooks["response"].append(self._bij_429)
 
     def _bij_429(self, r, *args, **kwargs):
-        """Rate-limit van de laad-API (Traefik, 429): wachten volgens Retry-After en opnieuw (hooguit 10 keer)."""
+        """Rate-limit van de laad-API (Traefik, 429): wachten volgens Retry-After en opnieuw (hooguit 10 keer).
+        Bij 401 met een tokenbron: eenmaal een nieuw token en opnieuw."""
+        if r.status_code == 401 and self.tokenbron and not getattr(r.request, "_ververst", False):
+            self.s.headers["Authorization"] = f"Bearer {self.tokenbron()}"
+            nieuw = r.request.copy()
+            nieuw.headers["Authorization"] = self.s.headers["Authorization"]
+            nieuw._ververst = True
+            return self.s.send(nieuw, timeout=kwargs.get("timeout"))
         poging = getattr(r.request, "_poging", 0)
         if r.status_code != 429 or poging >= 10:
             return r
@@ -560,6 +592,99 @@ class LaadApi:
         return self._json(r)
 
 
+class ActorApi:
+    """De laad-API met de testaccounts van één use case (#223): registreren als de actor met de realm-rol
+    beheerder, leveren als de `client` van de dataset (of de actor met `dataset:<id>:laden` of
+    `datasets:laden`), de beheer-route als de client of de beheerder. Ontbreekt zo'n actor, dan de
+    machineclient uit de omgeving (OMNITWIN_CLIENT_ID/SECRET)."""
+
+    def __init__(self, uc, accounts=None, basis=None, maak_api=None):
+        """accounts: {loginclient, actoren} zoals in .usecase-accounts.json."""
+        self.uc, self.basis = uc, basis or basis_url()
+        self.accounts = (accounts or {}).get("actoren", {})
+        self.loginclient = (accounts or {}).get("loginclient")
+        self._maak_api = maak_api or (lambda tokenbron=None: LaadApi(self.basis, tokenbron=tokenbron))
+        self._apis = {}
+
+    def actor(self, naam):
+        if naam not in self._apis:
+            acc = self.accounts.get(naam)
+            if acc is None:
+                raise UseCaseFout(f"{self.uc.get('naam')}: actor {naam!r} heeft geen testaccount "
+                                  "(niet in actoren, of zonder --testaccounts)")
+            from omnitwin import testaccounts
+            url = token_url(self.basis)
+            self._apis[naam] = self._maak_api(tokenbron=lambda: testaccounts.token(acc, self.loginclient, url))
+        return self._apis[naam]
+
+    def _terugval(self, wat):
+        if "" not in self._apis:
+            try:
+                self._apis[""] = self._maak_api()
+            except UseCaseFout as e:
+                raise UseCaseFout(f"{self.uc.get('naam')}: geen actor voor {wat}, en {e}") from None
+        return self._apis[""]
+
+    def _met_rol(self, rollen, wat):
+        for a in self.uc.get("actoren", []):
+            if a["naam"] in self.accounts and set(a["rollen"]) & set(rollen):
+                return self.actor(a["naam"])
+        return self._terugval(wat)
+
+    def beheerder(self):
+        return self._met_rol(("beheerder",), "registreren (realm-rol beheerder)")
+
+    def leverancier(self, ds_id):
+        ds = next((d for d in self.uc.get("datasets", []) if d["id"] == ds_id), {})
+        if ds.get("client") in self.accounts:
+            return self.actor(ds["client"])
+        rollen = (f"dataset:{ds_id}:laden", "datasets:laden") + (("beheerder",) if ds.get("route") == "beheer" else ())
+        return self._met_rol(rollen, f"leveren van {ds_id}")
+
+    def registreer(self, registratie):
+        return self.beheerder().registreer(registratie)
+
+    def lever(self, ds_id, pad, route="laden", alleen_valideren=False):
+        return self.leverancier(ds_id).lever(ds_id, pad, route, alleen_valideren)
+
+    def beheer(self, pad_api, bestand):
+        return self.leverancier(pad_api.rstrip("/").rsplit("/", 1)[-1]).beheer(pad_api, bestand)
+
+    @property
+    def s(self):
+        """Sessie voor de lezende controles (aantal, api): die van de beheerder."""
+        return self.beheerder().s
+
+
+def maak_actor_apis(namen, ucs, beheer=None):
+    """Testaccounts voor de use cases (met hun afhankelijkheden) die actoren declareren, en per use case
+    een ActorApi. Weigert buiten test en dev (omnitwin.testaccounts.toegestaan)."""
+    from omnitwin import testaccounts
+    apis = {}
+    try:
+        testaccounts.toegestaan()
+        for n in volgorde(namen, ucs):
+            accounts = {}
+            if ucs[n].get("actoren"):
+                actoren = testaccounts.maak(n, ucs[n], beheer)
+                accounts = {"loginclient": testaccounts.loginclient(n), "actoren": actoren}
+                print(f"👤 {n}: testaccounts {', '.join(a['id'] for a in actoren.values())} "
+                      f"(geheimen in {testaccounts.bestand().name}, niet in git)", flush=True)
+            apis[n] = ActorApi(ucs[n], accounts)
+    except testaccounts.TestaccountFout as e:
+        raise UseCaseFout(str(e)) from None
+    return apis
+
+
+def opruimen(namen, ucs, beheer=None):
+    """Testaccounts van de use cases (met hun afhankelijkheden) verwijderen. Geeft {naam: [accounts]}."""
+    from omnitwin import testaccounts
+    try:
+        return {n: testaccounts.opruimen(n, beheer) for n in volgorde(namen, ucs) if ucs[n].get("actoren")}
+    except testaccounts.TestaccountFout as e:
+        raise UseCaseFout(str(e)) from None
+
+
 def bestanden_van(paden):
     """Leveringsbestanden: een map (swf-json waarden) wordt de JSON-bestanden erin."""
     uit = []
@@ -612,22 +737,23 @@ def mislukt(resultaat):
     return uit
 
 
-def installeer(namen, alle=False, ucs=None, api=None, uit=None, ook_ontwerp=False, inproces=False):
+def installeer(namen, alle=False, ucs=None, api=None, uit=None, ook_ontwerp=False, inproces=False, apis=None):
     """Use cases met afhankelijkheden installeren, in volgorde: demopakketten zonder `datasets` via
     laad_usecase.py, use cases met `datasets` via de laad-API, daarna de inrichting van de demopakketten
     met `datasets`. Zonder laad-API: een melding, geen fout. ook_ontwerp: ook use cases met status
     ontwerp (voor `test`). inproces: de laadstraat zonder HTTP (eerste installatie, db-init).
-    Een bron die hier niet beschikbaar is (geen netwerk, geen SWF_DUMP_DIR): 'overgeslagen', geen fout."""
+    Een bron die hier niet beschikbaar is (geen netwerk, geen SWF_DUMP_DIR): 'overgeslagen', geen fout.
+    apis: {naam: api} per use case (testaccounts, zie maak_actor_apis); anders api voor alles."""
     ucs = ucs or lees_usecases()
     orde, overgeslagen = (volgorde(namen, ucs), {}) if ook_ontwerp else plan(namen, ucs, alle)
     for n, reden in overgeslagen.items():
         print(f"⏭️  {n}: overgeslagen ({reden})")
     oude_route([n for n in orde if "datasets" not in ucs[n]])
     nieuw = [n for n in orde if ucs[n].get("datasets")]
-    if nieuw and api is None and not inproces and not laad_api_beschikbaar():
+    if nieuw and api is None and apis is None and not inproces and not laad_api_beschikbaar():
         print(f"⏸️  laad-API nog niet beschikbaar ({basis_url()}{LAAD_API}/openapi.json); niet geïnstalleerd: {', '.join(nieuw)}")
         return {n: "laad-API nog niet beschikbaar" for n in nieuw}
-    if api is None and nieuw:
+    if api is None and apis is None and nieuw:
         if inproces:
             from omnitwin.laden.inproces import InprocesLaadApi
             api = InprocesLaadApi()
@@ -640,7 +766,7 @@ def installeer(namen, alle=False, ucs=None, api=None, uit=None, ook_ontwerp=Fals
         for ds in ucs[n]["datasets"]:
             begin = time.time()
             try:
-                resultaat[n][ds["id"]] = installeer_dataset(api, ucs[n], ds, uit / n)
+                resultaat[n][ds["id"]] = installeer_dataset((apis or {}).get(n, api), ucs[n], ds, uit / n)
             except LookupError as e:
                 resultaat[n][ds["id"]] = f"overgeslagen: {e}"
             except Exception as e:  # één dataset mag de rest niet tegenhouden (eerste installatie)
@@ -654,10 +780,43 @@ def installeer(namen, alle=False, ucs=None, api=None, uit=None, ook_ontwerp=Fals
     return resultaat
 
 
+COMPAT_SOORT = {"swf-monitor-definities": "indicator/setup", "swf-monitor-waarden": "indicator_waarde"}
+
+
+def controle_recht(c, api, uc):
+    """Rechtencontrole (#223): mag `actor` de `actie` op `dataset`? Het verzoek wordt direct na de
+    rolcontrole afgewezen (ongeldige parameter of body), dus er verandert niets. Toegestaan = geen 401/403."""
+    if not isinstance(api, ActorApi):
+        return "overgeslagen: rechtencontrole vraagt testaccounts (test --testaccounts)"
+    a = api.actor(c["actor"])
+    ds_id, actie = c.get("dataset"), c["actie"]
+    if actie == "registreren":
+        r = a.s.post(f"{a.basis}{LAAD_API}/datasets", json=[], timeout=30)
+    elif actie == "lezen":
+        r = a.s.get(f"{a.basis}{LAAD_API}/datasets/{ds_id}", timeout=30)
+    else:
+        route = next((d.get("route") for d in uc.get("datasets", []) if d["id"] == ds_id), "laden")
+        url = (f"{a.basis}{LAAD_API}/compat/swf-monitor/monitor_api/{COMPAT_SOORT[ds_id]}/inlezen"
+               if route == "compat" and ds_id in COMPAT_SOORT else f"{a.basis}{LAAD_API}/datasets/{ds_id}/leveringen")
+        r = a.s.post(url, params={"alleenValideren": "rechtencontrole"}, data=b"",
+                     headers={"Content-Type": "application/json"}, timeout=30)
+    if r.status_code == 401:
+        return f"HTTP 401: token van {c['actor']} geweigerd"
+    if (r.status_code != 403) != c["toegestaan"]:
+        return f"HTTP {r.status_code}, verwacht {'toegestaan' if c['toegestaan'] else '403'}"
+    return None
+
+
 def controle_api(c, api, uc):
-    """Een controle uit het manifest tegen een draaiende installatie. None = geslaagd, anders de melding."""
+    """Een controle uit het manifest tegen een draaiende installatie. None = geslaagd, anders de melding.
+    Met testaccounts (ActorApi) voert `actor` de controle uit; zonder testaccounts wordt `actor`
+    genegeerd (de machineclient uit de omgeving) en zijn rechtencontroles overgeslagen."""
     import requests
     t = c["type"]
+    if t == "recht":
+        return controle_recht(c, api, uc)
+    if c.get("actor") and isinstance(api, ActorApi):
+        api = api.actor(c["actor"])
     if t == "api":
         headers = {} if c.get("anoniem") else dict(api.s.headers)
         r = requests.get(f"{api.basis}{c['pad']}", headers=headers, timeout=60)
@@ -701,18 +860,24 @@ def controle_api(c, api, uc):
     return f"onbekend controletype {t}"
 
 
-def test(naam, ucs=None, api=None):
+def test(naam, ucs=None, api=None, testaccounts=False, apis=None):
     """Installeer de use case (met afhankelijkheden) en voer de controles uit tegen de API.
-    None als de laad-API (nog) niet beschikbaar is."""
+    None als de laad-API (nog) niet beschikbaar is. testaccounts: eerst de actoren als testaccounts
+    aanmaken (alleen test/dev); installeren en controleren gebeurt dan als die actoren."""
     ucs = ucs or lees_usecases()
-    if "datasets" in ucs[naam] and not laad_api_beschikbaar():
+    if ("datasets" in ucs[naam] or testaccounts) and not laad_api_beschikbaar():
         print(f"⏸️  laad-API nog niet beschikbaar; {naam} niet getest")
         return None
-    installeer([naam], ucs=ucs, api=api, ook_ontwerp=True)
-    api = api or LaadApi()
+    if testaccounts and apis is None:
+        apis = maak_actor_apis([naam], ucs)
+    installeer([naam], ucs=ucs, api=api, ook_ontwerp=True, apis=apis)
+    api = (apis or {}).get(naam) or api or LaadApi()
     uit = []
     for c in ucs[naam].get("controles", []):
-        melding = controle_api(c, api, ucs[naam])
+        try:
+            melding = controle_api(c, api, ucs[naam])
+        except LookupError as e:  # bron hier niet beschikbaar (afkeuring/idempotent maken een levering)
+            melding = f"overgeslagen: {e}"
         resultaat = "ok" if melding is None else ("overgeslagen" if str(melding).startswith("overgeslagen") else "fout")
         uit.append({"controle": c, "resultaat": resultaat, "melding": melding})
         teken = {"ok": "✅", "overgeslagen": "⏭️ ", "fout": "❌"}[resultaat]
@@ -748,6 +913,7 @@ def _print_controle(r):
 
 
 def main(argv=None):
+    from omnitwin.testaccounts import TestaccountFout
     p = argparse.ArgumentParser(prog="python -m omnitwin.usecases", description="Use-case-uitvoerder")
     sub = p.add_subparsers(dest="cmd", required=True)
     sub.add_parser("lijst", help="naam, versie, status, titel en afhankelijkheden")
@@ -764,8 +930,14 @@ def main(argv=None):
     ins.add_argument("--alle", action="store_true")
     ins.add_argument("--inproces", action="store_true",
                      help="laadstraat zonder HTTP en token (eerste installatie in db-init; vereist databasetoegang)")
+    TA = ("actoren als tijdelijke testaccounts in Keycloak (alleen test/dev: OMNITWIN_TESTACCOUNTS=1, "
+          "niet OMNITWIN_OMGEVING=productie); geheimen in .usecase-accounts.json")
+    ins.add_argument("--testaccounts", action="store_true", help=TA)
     t = sub.add_parser("test", help="installeren en de controles tegen de API uitvoeren")
     t.add_argument("naam")
+    t.add_argument("--testaccounts", action="store_true", help=TA + "; ook de rechtencontroles")
+    op = sub.add_parser("opruimen", help="testaccounts van de use case(s) en hun afhankelijkheden verwijderen")
+    op.add_argument("namen", nargs="+")
     bw = sub.add_parser("bewijs", help="bewijs maken (nog niet in de uitvoerder)")
     bw.add_argument("naam")
     a = p.parse_args(argv)
@@ -791,17 +963,28 @@ def main(argv=None):
         elif a.cmd == "installeer":
             if not a.namen and not a.alle:
                 p.error("geef een of meer namen, of --alle")
-            fout = mislukt(installeer(a.namen, a.alle, ucs, inproces=a.inproces))
+            apis = None
+            if a.testaccounts:
+                if a.inproces:
+                    p.error("--testaccounts gaat via de laad-API, niet met --inproces")
+                if not laad_api_beschikbaar():
+                    print(f"⏸️  laad-API nog niet beschikbaar ({basis_url()}{LAAD_API}/openapi.json); geen testaccounts")
+                    return 0
+                apis = maak_actor_apis(sorted(ucs) if a.alle else a.namen, ucs)
+            fout = mislukt(installeer(a.namen, a.alle, ucs, inproces=a.inproces, apis=apis))
             if fout:
                 print(f"❌ niet geladen: {', '.join(fout)}")
                 return 1
         elif a.cmd == "test":
-            uit = test(a.naam, ucs)
+            uit = test(a.naam, ucs, testaccounts=a.testaccounts)
             return 0 if uit is None or all(c["resultaat"] != "fout" for c in uit) else 1
+        elif a.cmd == "opruimen":
+            for n, weg in opruimen(a.namen, ucs).items():
+                print(f"🧹 {n}: {', '.join(weg) if weg else 'geen testaccounts'}")
         elif a.cmd == "bewijs":
             print("Nog niet in de uitvoerder (vervolg). Bewijs (screenshots, bewijs.json) maken: "
                   f"scripts/docs/maak_usecase_bewijs.py; uitvoer in usecases/{a.naam}/bewijs/ (niet in git).")
-    except UseCaseFout as e:
+    except (UseCaseFout, TestaccountFout) as e:
         print(f"❌ {e}")
         return 2
     return 0

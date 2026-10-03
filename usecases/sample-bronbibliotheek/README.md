@@ -1,6 +1,6 @@
 # TC-07-023 — Sample: wat nog niet open is of nog geen adapter heeft (gemarkeerd)
 
-**Status:** actief · **Versie:** 0.1.0 · **Afhankelijk van:** [cbs-gebiedsindelingen](../cbs-gebiedsindelingen/README.md)
+**Status:** actief · **Versie:** 0.2.0 · **Afhankelijk van:** [cbs-gebiedsindelingen](../cbs-gebiedsindelingen/README.md)
 **Manifest:** [`usecase.json`](usecase.json) · **Controleren:** `python -m omnitwin.usecases controleer sample-bronbibliotheek`
 
 ## Vraag

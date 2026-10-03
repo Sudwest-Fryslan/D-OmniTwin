@@ -2,7 +2,7 @@
   "specificatie": "1.0",
   "naam": "hittestress",
   "id": "TC-06-006",
-  "versie": "0.2.0",
+  "versie": "0.3.0",
   "titel": "Klimaatadaptatie: hittestress en kwetsbaarheid",
   "vraag": "Ik werk aan hittestress in Bolsward. Welke buurt ligt het verst van een koele plek, en waar wonen relatief de meeste 65-plussers?",
   "gebruiker": "Stedenbouwkundige / GGD",
@@ -13,10 +13,38 @@
     "rivm-gezondheidsmonitor",
     "sample-bronbibliotheek"
   ],
+  "actoren": [
+    {
+      "naam": "beheerder",
+      "soort": "gebruiker",
+      "rollen": [
+        "beheerder"
+      ],
+      "omschrijving": "beheerder van D-OmniTwin: registreert de datasets"
+    },
+    {
+      "naam": "etl-open-data",
+      "soort": "machineclient",
+      "rollen": [
+        "dataset:rivm-boomkroon-buurten:laden",
+        "dataset:rivm-hitte-eiland-buurten:laden"
+      ],
+      "omschrijving": "ETL voor open bronnen: levert alleen de eigen datasets"
+    },
+    {
+      "naam": "lezer",
+      "soort": "gebruiker",
+      "rollen": [
+        "lezer"
+      ],
+      "omschrijving": "ingelogde medewerker: ziet ook wat niet openbaar is, laadt niets"
+    }
+  ],
   "rechten": [
     "realm-rol beheerder (registreren)",
     "dataset:rivm-boomkroon-buurten:laden",
-    "dataset:rivm-hitte-eiland-buurten:laden"
+    "dataset:rivm-hitte-eiland-buurten:laden",
+    "realm-rol lezer"
   ],
   "datasets": [
     {
@@ -97,7 +125,53 @@
     },
     {
       "type": "idempotent",
-      "dataset": "rivm-boomkroon-buurten"
+      "dataset": "rivm-boomkroon-buurten",
+      "actor": "etl-open-data"
+    },
+    {
+      "type": "recht",
+      "actor": "beheerder",
+      "actie": "registreren",
+      "toegestaan": true,
+      "omschrijving": "de beheerder mag datasets registreren"
+    },
+    {
+      "type": "recht",
+      "actor": "etl-open-data",
+      "actie": "leveren",
+      "dataset": "rivm-boomkroon-buurten",
+      "toegestaan": true,
+      "omschrijving": "etl-open-data mag zijn eigen dataset leveren"
+    },
+    {
+      "type": "recht",
+      "actor": "etl-open-data",
+      "actie": "leveren",
+      "dataset": "cbs-kerncijfers",
+      "toegestaan": false,
+      "omschrijving": "etl-open-data mag een andere dataset niet leveren (403)"
+    },
+    {
+      "type": "recht",
+      "actor": "etl-open-data",
+      "actie": "registreren",
+      "toegestaan": false,
+      "omschrijving": "etl-open-data mag niet registreren (403)"
+    },
+    {
+      "type": "recht",
+      "actor": "lezer",
+      "actie": "leveren",
+      "dataset": "rivm-boomkroon-buurten",
+      "toegestaan": false,
+      "omschrijving": "een lezer mag niet laden (403)"
+    },
+    {
+      "type": "recht",
+      "actor": "lezer",
+      "actie": "registreren",
+      "toegestaan": false,
+      "omschrijving": "een lezer mag niet registreren (403)"
     }
   ],
   "bekende_afwijkingen": [

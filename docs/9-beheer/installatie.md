@@ -73,6 +73,7 @@ De tabel volgt de volgorde van `.env.example`. Optionele regels staan daar als c
 | `OIDC_AUDIENCE`, `OIDC_INTERN_URL`, `OIDC_JWKS_URL` | Optioneel, bij `OIDC_ISSUER`. `OIDC_AUDIENCE`: vereiste `aud`, standaard `omnitwin-api`. `OIDC_INTERN_URL`: adres waarop de backend de issuer intern bereikt voor discovery en sleutels; `docker-compose.yml` zet standaard `http://keycloak:8080/auth/realms/omnitwin`. Bij een externe identity provider: `OIDC_INTERN_URL=` (leeg). `OIDC_JWKS_URL`: alleen als de provider geen discovery heeft. |
 | `OMNITWIN_BRON_DOMEINEN` | Optioneel. Extra domeinen (kommagescheiden) waarvan de bronadapters van de use cases via https mogen downloaden, naast de vaste lijst (CBS, PDOK, RIVM, Klimaateffectatlas). Zie [use cases](../../usecases/README.md#bronnen). |
 | `OMNITWIN_BASE_URL`, `OMNITWIN_CLIENT_ID`, `OMNITWIN_CLIENT_SECRET`, `OMNITWIN_TOKEN_URL`, `KEYCLOAK_REALM` | Optioneel, alleen voor `python -m omnitwin.usecases installeer` en `test`: het adres van de installatie (standaard `http://localhost`) en een machineclient (client credentials, zie [Keycloak](#keycloak-optioneel)). Het tokenendpoint komt standaard uit de discovery van realm `KEYCLOAK_REALM` (standaard `omnitwin`). |
+| `OMNITWIN_TESTACCOUNTS`, `OMNITWIN_OMGEVING`, `KEYCLOAK_ADMIN_CLIENT_ID`, `KEYCLOAK_ADMIN_CLIENT_SECRET`, `KEYCLOAK_ADMIN`, `KEYCLOAK_URL`, `OMNITWIN_TESTACCOUNTS_UUR`, `OMNITWIN_TESTACCOUNTS_BESTAND` | Optioneel, alleen voor `--testaccounts` van de uitvoerder in test en dev (zie [Keycloak](#keycloak-optioneel), *Testaccounts*). Niet in een productie-`.env`. |
 | `LEVERINGEN_DIR`, `LADEN_MAX_MB`, `LADEN_RATE_LIMIT`, `LADEN_COMPAT_RATE_LIMIT`, `LADEN_WACHT_SECONDEN` | Optioneel, laad-API ([docs/api/laden](../api/laden/README.md)): map voor de ruwe leveringen (standaard het volume `leveringen` op `/leveringen`), bodylimiet (standaard 200 MB, JSON een tiende), leveringen per minuut per client (standaard 10; op de compatibiliteitsingang voor de SWF-monitor 120) en de time-out van `wacht=true` (standaard 60 s). |
 | `LADEN_BEWAAR_VERSIES`, `LADEN_BEWAAR_DAGEN`, `LADEN_BEWAAR_AFGEKEURD_DAGEN` | Optioneel. Bewaartermijn van de ruwe leveringen: altijd de laatste 10 versies per dataset, oudere tot 365 dagen, afgekeurde en alleen-gevalideerde leveringen 30 dagen. |
 | `LADEN_VOORRANG` | Optioneel. Datasets (kommagescheiden, hoogste eerst) die voorgaan als twee datasets een waarde voor hetzelfde gebied, dezelfde indicator en hetzelfde jaar leveren. Standaard `swf-monitor-waarden` (aanname A6, #222). De andere waarde blijft bewaard in `laden.waarnemingen`. |
@@ -413,7 +414,7 @@ Keycloak is de identity provider voor 0.3.0: inloggen via OIDC voor mensen, en c
 | client `etl-voorbeeld` | Voorbeeld-machineclient: alleen client credentials, rol `dataset:voorbeeld:laden`. Keycloak genereert het secret bij de import; het staat niet in de repo. |
 | realm-rollen `beheerder`, `lezer` | Voor mensen. Elke nieuwe gebruiker krijgt `lezer`. |
 | client-rollen op `omnitwin-api` | `datasets:laden` (alle datasets) en per dataset `dataset:<id>:laden`. |
-| instellingen | Access token 5 minuten, geen implicit of password grant, brute-force-detectie aan (na 5 mislukte pogingen oplopend wachten), geen zelfregistratie, wachtwoorden minimaal 12 tekens. |
+| instellingen | Access token 5 minuten, geen implicit of password grant (behalve de tijdelijke loginclient van testaccounts, zie onder), brute-force-detectie aan (na 5 mislukte pogingen oplopend wachten), geen zelfregistratie, wachtwoorden minimaal 12 tekens. |
 
 **Aanzetten**
 
@@ -443,6 +444,23 @@ Heb je de tijdelijke beheerder al verwijderd, zet dan `-e KC_BEHEERDER=<naam>` n
 curl -s -u etl-voorbeeld:<secret> -d grant_type=client_credentials \
   http://<host>/auth/realms/omnitwin/protocol/openid-connect/token
 ```
+
+**Rollen voor een use case.** Een use case noemt in `actoren` welke gebruikers en machineclients hij nodig heeft, met hun rollen (zie [Use cases](../../usecases/README.md#actoren-en-testaccounts)), nooit wachtwoorden. In productie maak je die accounts zelf aan zoals hierboven en wijs je de rollen toe; de use case laat alleen zien welke nodig zijn.
+
+**Testaccounts (alleen test en dev).** De use-case-uitvoerder kan de actoren van een use case tijdelijk aanmaken in realm `omnitwin` en daarmee installeren en de rechten controleren (https://github.com/TLaan/D-OmniTwin/issues/223):
+
+```bash
+export OMNITWIN_TESTACCOUNTS=1                    # expliciete toestemming; geweigerd bij OMNITWIN_OMGEVING=productie
+export OMNITWIN_BASE_URL=http://localhost         # of het adres van de teststack
+export KEYCLOAK_ADMIN_PASSWORD=...                # uit .env, niet tonen of loggen
+python -m omnitwin.usecases test swf-definities --testaccounts
+python -m omnitwin.usecases opruimen swf-definities
+```
+
+- Accounts heten `uc-<usecase>-<actor>` (gebruiker of machineclient), plus per use case een loginclient `uc-<usecase>--login` met alleen de wachtwoordgrant, zodat de uitvoerder tokens van de testgebruikers kan halen. Dat is de enige plek met een password grant, en alleen zolang de testaccounts bestaan. De clients hebben de attributen `omnitwin.usecase` en `omnitwin.testaccount.tot` (standaard 24 uur, `OMNITWIN_TESTACCOUNTS_UUR`); `opruimen` verwijdert alles met het prefix en het kenmerk van de use case.
+- Wachtwoorden en secrets zijn willekeurig en staan alleen in `.usecase-accounts.json` in de map waar je de uitvoerder draait (in `.gitignore`, alleen leesbaar voor jou; ander pad: `OMNITWIN_TESTACCOUNTS_BESTAND`). De uitvoerder logt ze niet.
+- Toegang tot de admin-API: standaard de tijdelijke beheerder `admin` uit realm `master` (`KEYCLOAK_ADMIN_PASSWORD`, eventueel `KEYCLOAK_ADMIN` voor een andere naam). Is die weg, maak dan in realm `omnitwin` een machineclient met *Service accounts roles* `realm-management` > `manage-users`, `manage-clients`, `view-realm`, `view-clients` en `query-users`, en geef `KEYCLOAK_ADMIN_CLIENT_ID` en `KEYCLOAK_ADMIN_CLIENT_SECRET` mee. Keycloak zelf: `KEYCLOAK_URL` (standaard `OMNITWIN_BASE_URL` + `/auth`).
+- Zonder `OMNITWIN_TESTACCOUNTS=1`, of met `OMNITWIN_OMGEVING=productie`, weigert de uitvoerder (exitcode 2) en maakt hij niets aan.
 
 **Entra ID of een andere identity provider koppelen.** Realm `omnitwin` > Identity providers > *Microsoft* (Entra ID) of *OpenID Connect v1.0*. Vul de client-id, het secret en (bij OIDC) de discovery-URL van de andere partij in. Registreer bij die partij de *Redirect URI* die Keycloak toont (`https://<host>/auth/realms/omnitwin/broker/<alias>/endpoint`). Rollen ken je per gebruiker toe, of leid je af uit een groep of claim met een *mapper* op de identity provider. Op de inlogpagina verschijnt dan een knop.
 

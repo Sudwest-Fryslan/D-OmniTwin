@@ -170,5 +170,6 @@ def test_voorbeelden_zijn_geldig():
     (verslag,) = voorbeelden("bewijs")
     assert valideer(verslag, bs, bs) == []
     volledig = manifesten[1]
-    assert {c["dataset"] for c in volledig["controles"] if "dataset" in c} <= {d["id"] for d in volledig["datasets"]}
+    assert {c["dataset"] for c in volledig["controles"] if "dataset" in c and c["type"] != "recht"}         <= {d["id"] for d in volledig["datasets"]}
+    assert {c["actor"] for c in volledig["controles"] if "actor" in c} <= {a["naam"] for a in volledig["actoren"]}
     assert {c.get("variant") for c in volledig["controles"] if c.get("variant")} <= set(dataset["varianten"])
