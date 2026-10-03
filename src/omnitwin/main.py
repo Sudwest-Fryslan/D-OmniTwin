@@ -291,7 +291,7 @@ async def custom_swagger_ui_html():
         oauth2_redirect_url=app.swagger_ui_oauth2_redirect_url,
         swagger_js_url="/static/swagger-ui/swagger-ui-bundle.js",
         swagger_css_url="/static/swagger-ui/swagger-ui.css",
-        swagger_favicon_url="/static/admin-panel/favicon.ico",  # lokaal i.p.v. fastapi.tiangolo.com (CSP)
+        swagger_favicon_url="/api/organisatie/beeldmerk.svg",  # lokaal i.p.v. fastapi.tiangolo.com (CSP)
     )
 
 @app.get("/api")
