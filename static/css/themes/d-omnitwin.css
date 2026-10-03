@@ -74,6 +74,11 @@
   --d-omnitwin-header-background-color-start: var(--basis-color-accent-1-bg-default);
   --d-omnitwin-header-background-color-end: #15803d;
   --d-omnitwin-header-color: #ffffff;
+
+  /* Beeldmerk (#249): de eigen D-OmniTwin-kleuren (gelijk aan de terugval in beeldmerk.svg) */
+  --d-omnitwin-beeldmerk-vlak: #0f172a;
+  --d-omnitwin-beeldmerk-lijn: #3b82f6;
+  --d-omnitwin-beeldmerk-kern: #22c55e;
 }
 
 /* ---------- Donker ---------- */
