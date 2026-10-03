@@ -457,10 +457,11 @@ function initDeckGL() {
             if (object) {
                 const props = object.properties;
                 const tooltipStyle = {
-                    backgroundColor: 'rgba(15, 23, 42, 0.95)',
-                    color: 'white',
+                    backgroundColor: 'color-mix(in srgb, var(--tooltip-bg) 95%, transparent)',
+                    color: 'var(--tooltip-text)',
+                    fontFamily: 'inherit',
                     padding: '12px',
-                    borderRadius: '8px',
+                    borderRadius: 'var(--border-radius-sm)',
                     fontSize: '13px',
                     boxShadow: '0 4px 12px rgba(0,0,0,0.3)'
                 };
@@ -470,7 +471,7 @@ function initDeckGL() {
                     const featureNaam = props.woonplaats || props.naam || props.name || props.Naam || props.Deelgebied || props.deelgebied || 'Onbekend';
                     return {
                         html: `
-                <div style="font-family: Inter, sans-serif;">
+                <div>
                   <strong>\u{1F310} ${escapeHtml(featureNaam)}</strong><br/>
                   <small style="opacity:0.5;">Klik om buurten te selecteren</small>
                 </div>
@@ -483,7 +484,7 @@ function initDeckGL() {
                 if (layer?.id === 'omgevingsvisie-layer') {
                     return {
                         html: `
-                <div style="font-family: Inter, sans-serif;">
+                <div>
                   <strong>🗺️ ${escapeHtml(props.deelgebied)}</strong><br/>
                   <small style="opacity:0.7;">${escapeHtml(props.naam)}</small><br/>
                   Oppervlakte: <strong>${escapeHtml(props.oppervlakte_km2)} km²</strong><br/>
@@ -508,7 +509,7 @@ function initDeckGL() {
 
                     return {
                         html: `
-                <div style="font-family: Inter, sans-serif;">
+                <div>
                   <strong>🏠 Pand</strong><br/>
                   <small style="opacity:0.6;">${escapeHtml(bagId)}</small><br/>
                   Bouwjaar: <strong>${escapeHtml(bouwjaar)}</strong><br/>
@@ -531,7 +532,7 @@ function initDeckGL() {
 
                 return {
                     html: `
-            <div style="font-family: Inter, sans-serif;">
+            <div>
               <strong>${escapeHtml(props.naam)}</strong><br/>
               ${props.indicator_naam ? `${escapeHtml(props.indicator_naam)}: ` : ''}<strong>${escapeHtml(indicatorValue)}</strong>${herkomst}
             </div>
@@ -2282,7 +2283,7 @@ function populateIndicatorSelect(indicatoren) {
         // Disable options without data
         if (coverage === 0) {
             option.disabled = true;
-            option.style.color = '#94a3b8'; // Muted color
+            option.style.color = 'var(--text-secondary)';
         }
 
         select.appendChild(option);
@@ -2421,8 +2422,8 @@ async function displayMultiGebiedComparison(lastClickedData) {
 
         // Header
         let html = `
-        <div style="margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid var(--color-border, rgba(255,255,255,0.1));">
-            <strong style="font-size: 1rem;"><img src="/static/images/chart-bar.svg" alt="" style="width:18px; height:18px; vertical-align:-3px; filter: brightness(0) invert(1); margin-right: 4px;">Vergelijking: ${ids.length} gebieden</strong>
+        <div style="margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid var(--border-color);">
+            <strong style="font-size: 1rem;"><img src="/static/images/chart-bar.svg" alt="" class="thema-icoon" style="width:18px; height:18px; vertical-align:-3px; margin-right: 4px;">Vergelijking: ${ids.length} gebieden</strong>
             <div style="font-size: 0.8rem; opacity: 0.7; margin-top: 4px;">
                 ${escapeHtml(allData.map(d => d.gebied.naam).join(' · '))}
             </div>
@@ -2465,7 +2466,7 @@ async function displayMultiGebiedComparison(lastClickedData) {
 
                 html += `
                 <div style="margin-bottom: 14px;">
-                    <div style="font-size: 0.8rem; font-weight: 600; margin-bottom: 4px; color: var(--color-text-primary, #e2e8f0);">
+                    <div style="font-size: 0.8rem; font-weight: 600; margin-bottom: 4px; color: var(--text-primary);">
                         ${escapeHtml(ind.naam)} <span style="opacity:0.5; font-weight:400;">(${escapeHtml(ind.eenheid)})</span>
                     </div>`;
 
@@ -2480,7 +2481,7 @@ async function displayMultiGebiedComparison(lastClickedData) {
                         <span style="width: 80px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; opacity: 0.8;" title="${escapeHtml(w.gebiedNaam)}">
                             ${escapeHtml(w.gebiedNaam.length > 12 ? w.gebiedNaam.slice(0, 11) + '…' : w.gebiedNaam)}
                         </span>
-                        <div style="flex: 1; height: 16px; background: rgba(255,255,255,0.05); border-radius: 4px; overflow: hidden;">
+                        <div style="flex: 1; height: 16px; background: var(--tint); border-radius: 4px; overflow: hidden;">
                             <div style="width: ${pct}%; height: 100%; background: ${color}; border-radius: 4px; transition: width 0.3s;"></div>
                         </div>
                         <span style="width: 55px; text-align: right; font-weight: 500; font-variant-numeric: tabular-nums;">
@@ -2537,69 +2538,38 @@ function toonRapportDialoog(modal) {
 function openRapportTypeModal(gebiedId, baseUrl) {
     const modal = document.createElement('div');
     modal.id = 'rapport-type-modal';
-    modal.style.cssText = `
-        position: fixed; inset: 0; z-index: 9999;
-        background: rgba(0,0,0,0.6); display: flex;
-        align-items: center; justify-content: center;
-    `;
+    modal.className = 'rapport-dialoog-overlay';
     modal.innerHTML = `
-        <div style="
-            background: var(--color-surface, #1e2535);
-            border: 1px solid var(--color-border, rgba(255,255,255,0.1));
-            border-radius: 12px; padding: 1.5rem; width: 340px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
-        ">
-            <h3 id="rapport-modal-titel" style="margin:0 0 0.5rem; font-size:1rem;">Kies Rapport Type</h3>
-            <p style="margin:0 0 1.25rem; font-size:0.85rem; opacity:0.6;">
+        <div class="rapport-dialoog">
+            <h3 id="rapport-modal-titel">Kies Rapport Type</h3>
+            <p class="rapport-dialoog-intro">
                 Welk rapport wil je genereren?
             </p>
-            <div style="display:flex; flex-direction:column; gap:0.75rem;">
+            <div class="rapport-keuzes">
                 ${state.selectedDeelgebiedNaam ? `
-                <button id="rapport-modal-deelgebied-single" style="
-                    padding: 0.75rem 1rem; border-radius: 8px; border: none;
-                    background: var(--action-fill, #2563eb); color: white;
-                    font-size:0.95rem; font-weight:600; cursor:pointer; text-align:left;
-                    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
-                ">🏘️ Woonplaatsanalyse (${escapeHtml(state.selectedDeelgebiedNaam)})<br>
-                    <span style="font-weight:400; font-size:0.8rem; opacity:0.9;">
+                <button id="rapport-modal-deelgebied-single" class="rapport-keuze rapport-keuze--primair">🏘️ Woonplaatsanalyse (${escapeHtml(state.selectedDeelgebiedNaam)})<br>
+                    <span>
                         Gewogen stadsbrede analyse per thema
                     </span>
                 </button>
                 ` : ''}
-                <button id="rapport-modal-dossier" style="
-                    padding: 0.75rem 1rem; border-radius: 8px; border: none;
-                    background: ${state.selectedDeelgebiedNaam ? 'var(--color-bg-alt, #2d3748)' : 'var(--action-fill, #2563eb)'}; color: white;
-                    font-size:0.95rem; font-weight:600; cursor:pointer; text-align:left;
-                    border: ${state.selectedDeelgebiedNaam ? '1px solid var(--color-border, rgba(255,255,255,0.15))' : 'none'};
-                ">📄 Gebiedsdossier<br>
-                    <span style="font-weight:400; font-size:0.8rem; opacity:0.8;">
+                <button id="rapport-modal-dossier" class="rapport-keuze${state.selectedDeelgebiedNaam ? '' : ' rapport-keuze--primair'}">📄 Gebiedsdossier<br>
+                    <span>
                         Volledige analyse van dit gebied
                     </span>
                 </button>
-                <button id="rapport-modal-thema" style="
-                    padding: 0.75rem 1rem; border-radius: 8px; border: none;
-                    background: #8b5cf6; color: white;
-                    font-size:0.95rem; font-weight:600; cursor:pointer; text-align:left;
-                ">📊 Thema-Analyse<br>
-                    <span style="font-weight:400; font-size:0.8rem; opacity:0.8;">
+                <button id="rapport-modal-thema" class="rapport-keuze">📊 Thema-Analyse<br>
+                    <span>
                         Diepgaande analyse per Kompas thema
                     </span>
                 </button>
-                <button id="rapport-modal-benchmark" style="
-                    padding: 0.75rem 1rem; border-radius: 8px; border: none;
-                    background: var(--color-bg-alt, #2d3748); color: white;
-                    font-size:0.95rem; font-weight:600; cursor:pointer; text-align:left;
-                    border: 1px solid var(--color-border, rgba(255,255,255,0.15));
-                ">⚖️ Benchmark Vergelijker<br>
-                    <span style="font-weight:400; font-size:0.8rem; opacity:0.8;">
+                <button id="rapport-modal-benchmark" class="rapport-keuze">⚖️ Benchmark Vergelijker<br>
+                    <span>
                         Vergelijk met andere gebieden of Fryslân
                     </span>
                 </button>
             </div>
-            <button id="rapport-modal-sluiten" style="
-                margin-top:1rem; background:none; border:none; color:inherit;
-                opacity:0.5; cursor:pointer; font-size:0.85rem; width:100%; text-align:center;
-            ">Annuleren</button>
+            <button id="rapport-modal-sluiten" class="rapport-dialoog-annuleer">Annuleren</button>
         </div>
     `;
 
@@ -2641,68 +2611,36 @@ function openMultiSelectRapportModal(ids, baseUrl) {
     const deelgebiedNaam = state.selectedDeelgebiedNaam || `${ids.length} buurten`;
     const modal = document.createElement('div');
     modal.id = 'rapport-type-modal';
-    modal.style.cssText = `
-        position: fixed; inset: 0; z-index: 9999;
-        background: rgba(0,0,0,0.6); display: flex;
-        align-items: center; justify-content: center;
-    `;
+    modal.className = 'rapport-dialoog-overlay';
     modal.innerHTML = `
-        <div style="
-            background: var(--color-surface, #1e2535);
-            border: 1px solid var(--color-border, rgba(255,255,255,0.1));
-            border-radius: 12px; padding: 1.5rem; width: 380px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
-        ">
-            <h3 id="rapport-modal-titel" style="margin:0 0 0.5rem; font-size:1rem;">Kies Rapport Type</h3>
-            <p style="margin:0 0 1.25rem; font-size:0.85rem; opacity:0.6;">
+        <div class="rapport-dialoog rapport-dialoog--breed">
+            <h3 id="rapport-modal-titel">Kies Rapport Type</h3>
+            <p class="rapport-dialoog-intro">
                 ${ids.length} gebieden geselecteerd ${state.selectedDeelgebiedNaam ? `(${escapeHtml(state.selectedDeelgebiedNaam)})` : ''}
             </p>
-            <div style="display:flex; flex-direction:column; gap:0.75rem;">
-                <button id="rapport-modal-deelgebied" style="
-                    padding: 0.75rem 1rem; border-radius: 8px; border: none;
-                    background: var(--action-fill, #2563eb); color: white;
-                    font-size:0.95rem; font-weight:600; cursor:pointer; text-align:left;
-                    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
-                ">🏘️ Woonplaats- & Deelgebiedsanalyse<br>
-                    <span style="font-weight:400; font-size:0.8rem; opacity:0.9;">
+            <div class="rapport-keuzes">
+                <button id="rapport-modal-deelgebied" class="rapport-keuze rapport-keuze--primair">🏘️ Woonplaats- & Deelgebiedsanalyse<br>
+                    <span>
                         Gewogen stadsanalyse per thema met Top 10
                     </span>
                 </button>
-                <button id="rapport-modal-multi-gebied" style="
-                    padding: 0.75rem 1rem; border-radius: 8px; border: none;
-                    background: var(--color-bg-alt, #2d3748); color: white;
-                    font-size:0.95rem; font-weight:600; cursor:pointer; text-align:left;
-                    border: 1px solid var(--color-border, rgba(255,255,255,0.15));
-                ">🗺️ Multi-Gebiedsdossier<br>
-                    <span style="font-weight:400; font-size:0.8rem; opacity:0.8;">
+                <button id="rapport-modal-multi-gebied" class="rapport-keuze">🗺️ Multi-Gebiedsdossier<br>
+                    <span>
                         Z-score analyse met kaart en ranking
                     </span>
                 </button>
-                <button id="rapport-modal-thema-analyse" style="
-                    padding: 0.75rem 1rem; border-radius: 8px; border: none;
-                    background: var(--color-bg-alt, #2d3748); color: white;
-                    font-size:0.95rem; font-weight:600; cursor:pointer; text-align:left;
-                    border: 1px solid var(--color-border, rgba(255,255,255,0.15));
-                ">📊 Thema-Analyse<br>
-                    <span style="font-weight:400; font-size:0.8rem; opacity:0.8;">
+                <button id="rapport-modal-thema-analyse" class="rapport-keuze">📊 Thema-Analyse<br>
+                    <span>
                         Alle indicatoren per thema/onderdeel
                     </span>
                 </button>
-                <button id="rapport-modal-benchmark" style="
-                    padding: 0.75rem 1rem; border-radius: 8px; border: none;
-                    background: var(--color-bg-alt, #2d3748); color: white;
-                    font-size:0.95rem; font-weight:600; cursor:pointer; text-align:left;
-                    border: 1px solid var(--color-border, rgba(255,255,255,0.15));
-                ">⚖️ Benchmark Vergelijker<br>
-                    <span style="font-weight:400; font-size:0.8rem; opacity:0.8;">
+                <button id="rapport-modal-benchmark" class="rapport-keuze">⚖️ Benchmark Vergelijker<br>
+                    <span>
                         Vergelijk gebieden onderling met delta-tabel
                     </span>
                 </button>
             </div>
-            <button id="rapport-modal-sluiten-multi" style="
-                margin-top:1rem; background:none; border:none; color:inherit;
-                opacity:0.5; cursor:pointer; font-size:0.85rem; width:100%; text-align:center;
-            ">Annuleren</button>
+            <button id="rapport-modal-sluiten-multi" class="rapport-dialoog-annuleer">Annuleren</button>
         </div>
     `;
 

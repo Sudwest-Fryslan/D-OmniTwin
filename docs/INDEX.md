@@ -19,12 +19,12 @@
 | **Visie & Concept** | `/docs/1-visie-concept/` | Projectfilosofie, doelstellingen, gebruikersscenario's | project-manager, technisch-communicatie |
 | **Architectuur** | `/docs/2-architectuur/` | Technische architectuur, API-design, component-diagram, **Dataspace integratie** | backend-db, data-architect-engineer, innovation-lab |
 | **Data Engineering** | `/docs/3-data-engineering/` | ETL-pipelines, CBS/RIVM data, scores, indicatoren, Z-score-methodiek ([`zscore_methodiek.md`](./3-data-engineering/zscore_methodiek.md)) | data-architect-engineer, data-gis |
-| **UX & Design** | `/docs/4-ux-design/` | UI-patronen, "Classic Premium UI", design-system, thema per organisatie met NL Design System-tokens ([`thema-s.md`](./4-ux-design/thema-s.md)), gebruikerservaringen (`gebruikerservaringen/`) | frontend-viz, web-carto-design |
+| **UX & Design** | `/docs/4-ux-design/` | UI-patronen, "Classic Premium UI", design-system, thema per organisatie met NL Design System-tokens ([`9-beheer/thema-s.md`](./9-beheer/thema-s.md)), gebruikerservaringen (`gebruikerservaringen/`) | frontend-viz, web-carto-design |
 | **SecOps** | `/docs/5-secops/` | Security-beleid, deployment, toegangsbeheer | env-setup, backend-db |
 | **AI Parallel Track** | `/docs/6-ai-parallel-track/` | LLM-integratie, ontologie, AI-chat, prompting | innovation-lab, technisch-communicatie |
 | **Projectmanagement** | `/docs/7-projectmanagement/` | Sprints, voortgang, besluiten, archief | project-manager |
 | **Communicatie** | `/docs/8-communicatie/` | Stakeholdercommunicatie, rapportages, presentaties | technisch-communicatie |
-| **Beheer & Applicatie** | `/docs/9-beheer/` | Handleidingen, workflows en applicatiebeheer | project-manager, backend-db |
+| **Beheer & Applicatie** | `/docs/9-beheer/` | Handleidingen, workflows en applicatiebeheer; eigen huisstijl ([`thema-s.md`](./9-beheer/thema-s.md)) | project-manager, backend-db |
 | **Testcases & Scenario's** | [`/docs/testcases/`](./testcases/) | Functionele scenario's, E2E-toetsen (TC-06-*), nulmetingen (NM-001) | project-manager, backend-db |
 
 ---
