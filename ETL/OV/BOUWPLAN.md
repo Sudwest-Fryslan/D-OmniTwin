@@ -363,7 +363,7 @@ Stappen in het script:
 
 ### Fase 4a — Indicator seed (`ETL/OV/seed_ov_indicatoren.json`)
 
-Dit bestand wordt toegevoegd en geladen via het bestaande `etl_03_seed_indicatoren.py` script.
+Dit bestand wordt toegevoegd en geladen via het toenmalige `etl_03_seed_indicatoren.py` (inmiddels verwijderd, #69; nu `db/stuurdata/indicatoren.csv`).
 
 ```json
 [
@@ -410,7 +410,7 @@ Dit bestand wordt toegevoegd en geladen via het bestaande `etl_03_seed_indicator
 ]
 ```
 
-**Laden:** `python ETL/local/etl_03_seed_indicatoren.py --bestand ETL/OV/seed_ov_indicatoren.json`
+**Laden:** de OV-indicatoren staan inmiddels in `db/stuurdata/indicatoren.csv` en worden door `db-init` geladen. (Het hier oorspronkelijk gebruikte `ETL/local/etl_03_seed_indicatoren.py` is verwijderd, #69.)
 
 ### Fase 4b — Kompas-koppeling (toevoegen aan `init_data/kompas/kompas_hierarchie.csv`)
 
@@ -426,7 +426,7 @@ Kwaliteit fysieke leefomgeving,Verkeer,Bereikbaarheid en parkeren,Aantal tramhal
 Kwaliteit fysieke leefomgeving,Verkeer,Bereikbaarheid en parkeren,Aantal veerboten,J,OpenStreetMap,Aantal veerboten
 ```
 
-**Laden:** `python ETL/local/etl_05_import_kompas.py` (herbouwt de Kompas-hiërarchie volledig)
+**Laden:** de Kompas-koppeling staat in `db/stuurdata/kompas_hierarchie.csv` en wordt door `db-init` geladen. (Het hier oorspronkelijk gebruikte `ETL/local/etl_05_import_kompas.py` is verwijderd, #69.)
 
 ### Fase 5 — gebied_data INSERT (correct patroon)
 
@@ -547,12 +547,9 @@ ORDER BY c.ov_type, c.naam;
 # Stap 1: Schema aanmaken
 psql $DATABASE_URL -f ETL/OV/migrations/schema_v14_ov_haltes.sql
 
-# Stap 2: Indicatoren seeden
-cd ETL/local
-python etl_03_seed_indicatoren.py --bestand ../OV/seed_ov_indicatoren.json
-
-# Stap 3: Kompas-hiërarchie bijwerken (voeg 5 rijen toe aan CSV, daarna herbouwen)
-python etl_05_import_kompas.py
+# Stap 2 en 3 (indicatoren seeden, Kompas-hiërarchie bijwerken): vervallen.
+# De OV-indicatoren en de Kompas-koppeling staan in db/stuurdata/ en worden door
+# db-init geladen; ETL/local/ is verwijderd (#69).
 
 # Stap 4: ETL uitvoeren
 cd /mnt/f/VSCode_Projects/D-OmniTwin

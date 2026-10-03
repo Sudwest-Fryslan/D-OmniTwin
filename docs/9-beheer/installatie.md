@@ -168,60 +168,38 @@ Ontwikkelen zonder Docker (Python venv, `run_dev.py`, admin-panel met `npm start
 
 ## 4. Data
 
-### Sample dataset (standaard)
+Alle data komt binnen via een **use case**: een map in [`usecases/`](../../usecases/README.md) met de datasets (bron, bewerkingen, beschrijving), de inrichting en de controles. De laadstraat valideert, versioneert en publiceert de data, met DCAT-metadata. Dezelfde laadstraat zit achter de [laad-API](../api/laden/README.md).
 
-`db-init` laadt bij de eerste start altijd het product zonder data: stuurdata (scenario's, profielen, prompts), de indicatordefinities (`db/stuurdata/indicatoren.csv` en het CBS-recept) en de Kompas-indeling. Met `LOAD_SAMPLE_DATA=true` laadt het daarna alle actieve **use cases** uit [`usecases/`](../../usecases/README.md), via de laadstraat in-process (`python -m omnitwin.usecases installeer --alle --inproces`: dezelfde validatie, versies en DCAT als de laad-API, zonder HTTP en token). Sinds https://github.com/TLaan/D-OmniTwin/issues/236 is dat open data, gedownload bij de bron:
+### Bij de eerste start
+
+`db-init` laadt bij de eerste start altijd het product zonder data: stuurdata (scenario's, profielen, prompts), de indicatordefinities en de Kompas-indeling. Met `LOAD_SAMPLE_DATA=true` (standaard) installeert hij daarna alle actieve use cases in-process (`python -m omnitwin.usecases installeer --alle --inproces`, zonder HTTP en token). Dat is open data, gedownload bij de bron (https://github.com/TLaan/D-OmniTwin/issues/236):
 
 - de **CBS-buurten, -wijken en -gemeenten** van Fryslân (PDOK, `cbs-gebiedsindelingen`);
-- de **CBS Kerncijfers 2019-2026** voor heel Fryslân (`cbs-kerncijfers`). Zo toont het Kompas-detail met de tijdslider meerdere jaren. Zie [`docs/3-data-engineering/cbs_kerncijfers.md`](../3-data-engineering/cbs_kerncijfers.md);
+- de **CBS Kerncijfers 2019-2026** voor heel Fryslân (`cbs-kerncijfers`, zie [`cbs_kerncijfers.md`](../3-data-engineering/cbs_kerncijfers.md));
 - de **RIVM Gezondheidsmonitor** 2012-2024 (`rivm-gezondheidsmonitor`) en de **Politie**-cijfers 2019-2025 (`politie-misdrijven`), voor heel Fryslân;
-- de **RIVM-kaarten** (boomkroonbedekking, hitte-eiland) voor de testbuurten (`hittestress`, adapter `wcs-zonaal`).
+- de **RIVM-kaarten** (boomkroonbedekking, hitte-eiland) voor de testbuurten (`hittestress`).
 
-Wat nog niet open is of nog geen adapter heeft (BAG, EP-Online, OpenStreetMap, interne indicatoren), komt uit [`init_data/sample/`](../../init_data/sample/README.md) via de use case `sample-bronbibliotheek`. Demodata is gemarkeerd: de bron van de waarde begint met `DEMODATA`. Zie [demodata naar open data](../3-data-engineering/demodata-naar-open-data.md).
+Wat nog niet open is of nog geen adapter heeft (BAG, EP-Online, OpenStreetMap, interne indicatoren), komt uit [`init_data/sample/`](../../init_data/sample/README.md) via de use case `sample-bronbibliotheek`. Die waarden zijn gemarkeerd: de bron begint met `DEMODATA` (zie [demodata naar open data](../3-data-engineering/demodata-naar-open-data.md)). Niet gebruiken voor beleid.
 
-De downloads worden bewaard in het volume `bron-cache`; daarna werkt het ook offline. Gemeten op een verse installatie (02-10-2026, met netwerk, lege cache): `db-init` 80 seconden, waarvan 37 voor de CBS Kerncijfers (188.606 waarden); de hele stack 93 seconden (images al gebouwd).
+De downloads staan daarna in het volume `bron-cache`; opnieuw installeren werkt dan ook offline. Gemeten op een verse installatie (02-10-2026, lege cache): `db-init` 80 seconden, waarvan 37 voor de CBS Kerncijfers. Zonder internet slaat `db-init` een bron over met een melding; de installatie blijft werken.
 
-**Zonder internet** bij de eerste start wordt een bron overgeslagen met een melding (geen kapotte installatie); zonder buurten keurt de laadstraat de waarden van de andere use cases af. Later opnieuw, met netwerk:
+### Use cases installeren of bijwerken
 
-```bash
-docker compose run --rm db-init python -m omnitwin.usecases installeer --alle --inproces
-```
-
-Eén use case installeren op een draaiende installatie gaat via de laad-API met een machineclient: `python -m omnitwin.usecases installeer hittestress` (zie [use cases](../../usecases/README.md#uitvoeren)).
-
-De sample is bedoeld om de installatie te testen en te demonstreren, niet voor beleid.
-
-### Volledige Fryslân-data
-
-De repository bevat voor heel Fryslân de CBS-buurten (indeling 2024) en de RIVM-indicatoren (`init_data/fryslan/`, zie [`init_data/README.md`](../../init_data/README.md)), en de CBS Kerncijfers 2019-2026 (`init_data/cbs/`). `db-init` laadt die niet vanzelf. Laad ze na de eerste start, als `db-init` klaar is, met een expliciete stap:
+Op de server, in-process (zelfde validatie als de laad-API):
 
 ```bash
-docker compose run --rm db-init python init_data/scripts/seed_fryslan.py --stap alle
+docker compose run --rm db-init python -m omnitwin.usecases lijst                              # wat is er
+docker compose run --rm db-init python -m omnitwin.usecases installeer --alle --inproces       # alles (opnieuw)
+docker compose run --rm db-init python -m omnitwin.usecases installeer cbs-kerncijfers --inproces
 ```
 
-`docker compose exec backend python init_data/scripts/seed_fryslan.py --stap alle` werkt ook. Alleen de CBS-reeksen opnieuw laden, via de laadstraat: `docker compose run --rm db-init python -m omnitwin.usecases installeer cbs-kerncijfers --inproces` (uit de cache; zonder cache met netwerk).
+Opnieuw installeren is veilig: een ongewijzigde levering wordt herkend, een gewijzigde wordt een nieuwe versie. Via de laad-API van een draaiende installatie, met een machineclient: `python -m omnitwin.usecases installeer hittestress` (zie [use cases, Uitvoeren](../../usecases/README.md#uitvoeren)).
 
-Dit duurt ongeveer 20 seconden (gemeten: 16 s, waarvan 13 s voor de CBS-reeksen). Het werkt met en zonder sample (`LOAD_SAMPLE_DATA`); de sample-buurten worden dan overschreven door dezelfde buurten uit de Fryslân-data. Verwachte aantallen in de database na sample + Fryslân:
+### Eigen data aanleveren
 
-| Tabel | Aantal |
-|-------|--------|
-| `gemeenten` | 18 (alle Friese gemeenten) |
-| `gebieden` | 931 buurten |
-| `indicatoren` | 246 (238 uit `indicatoren_seed.json`; namen die de sample al heeft worden aangevuld, niet gedupliceerd) |
-| `kompas_indicator_mapping` | 185 |
-| `gebied_data` | ± 208.700 (179.749 CBS Kerncijfers 2019-2026 voor 931 buurten, 28.235 RIVM-metingen, plus de use cases) |
+Een eigen bron (bijvoorbeeld een export uit FME of een eigen database) levert aan via de [laad-API](../api/laden/README.md): een machineclient in Keycloak met de rol `dataset:<id>:laden` (zie [Keycloak](#keycloak-optioneel)), daarna leveren en de status volgen. Een nieuwe soort data begint met een use case volgens de [Use Case Specificatie](../specificaties/usecase/README.md); zie ook [CONTRIBUTING.md](../../CONTRIBUTING.md).
 
-- Het script eindigt met een samenvatting per stap (aantal ok en fouten) en geeft exitcode 1 als een stap mislukt of meer dan 1% fouten heeft (`--max-fouten-pct`).
-- Opnieuw draaien is veilig: bestaande rijen worden bijgewerkt, er ontstaan geen duplicaten. `load_sample.py` blijft daarna ook werken.
-- De CSV bevat ook wijk-, gemeente- en landelijke rijen en buurten buiten Fryslân. Die worden overgeslagen ("gebieden niet in database"); dat is geen fout.
-- Het script maakt geen gebruikers of API-keys aan.
-- Bekend gat: de 61 buurten van Smallingerland (0090) hebben geen indicatorwaarden. De CSV gebruikt voor Smallingerland de buurtcodes van vóór de indeling 2024.
-
-Losse stappen: `--stap buurten|indicatoren|kompas|waarden`. `init_database.sh` is alleen voor een PostgreSQL zonder Docker.
-
-### Eigen gemeente of andere bronnen
-
-Via het ETL-framework in `ETL/`; zie [`ETL/ETL_DOCUMENTATION.md`](../../ETL/ETL_DOCUMENTATION.md). Dit is nog gericht op ontwikkelaars.
+De oude routes `init_data/scripts/seed_fryslan.py` en het ETL-framework in `ETL/` zijn niet meer de weg om een installatie te vullen (https://github.com/TLaan/D-OmniTwin/issues/69). `ETL/` bevat nog bronscripts voor ontwikkelaars.
 
 ---
 

@@ -100,7 +100,7 @@ python ETL/run_etl.py -ds <dataset_id> -gm <gemeentecode>   # extract + import v
 ```
 Dit framework is **niet** voor de initiële bootstrap (dat is `init_data/`, hierboven) maar voor het uitbreiden met extra gemeenten of databronnen daarna. Zie `ETL/ETL_DOCUMENTATION.md` en `docs/archief/GETTING_STARTED.md` ("Eigen gemeente of regio toevoegen").
 
-> **Let op:** `ETL/local/` bevat een ouder/parallel pipeline-pad (`etl_01..06`, `run_pipeline.py`) dat niet in `docs/archief/GETTING_STARTED.md` staat en vermoedelijk legacy is. Niet gebruiken als startpunt zonder eerst te verifiëren of het nog actief onderhouden wordt.
+Het oude pipeline-pad `ETL/local/` (`etl_01..06`, met `DROP SCHEMA public CASCADE`) en `ETL/Utils/db_init.py` zijn verwijderd (#69). Nieuwe data hoort in een use case en gaat via de laad-API (`docs/api/laden/README.md`).
 
 ## Environment Setup
 
@@ -181,7 +181,7 @@ Scripts in `ETL/` en `scripts/` zijn standalone, geen deel van de web-API. CBS, 
 - `docs/INDEX.md` — documentation router by domain
 - `docs/9-beheer/installatie.md` — **de** installatiegids (Docker), ook voor beheerders
 - `docs/archief/` — verouderde logboeken en gidsen: `GETTING_STARTED.md` (installatie zonder Docker), `BUILD.md` (sprint changelog), `ROADMAP.md`, `TODO.md`, `BUGFIX.md`. Niet meer bijhouden; taken en bugs staan in de GitHub-issues
-- `GOVERNANCE.md` — rollen en besluitvorming (concept, #183)
+- `GOVERNANCE.md`, `SUPPORT.md`, `PARTICIPANTS.md` — governance volgens het OpenWebconcept (#183): eigenaar en beheerder SWF, review bij voorkeur door een andere partij, onderhoud minimaal tot en met 31-08-2027; deelnemers zonder persoonsnamen
 
 ## Projectmanagement
 De stand van zaken staat in de GitHub-issues en in `CHANGELOG.md`. Elke PR met een merkbare wijziging zet een regel onder `[Unreleased]` (zie `docs/9-beheer/releasebeleid.md`). `docs/STATE.md` wordt niet meer bijgewerkt.

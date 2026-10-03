@@ -41,7 +41,7 @@ Open daarna **http://localhost**. Alles loopt via Traefik op poort 80.
 - **Beheeromgeving:** http://localhost/admin/. Inloggen met `ADMIN_USER` (standaard `admin`) en `ADMIN_PASSWORD`. Laat je `ADMIN_PASSWORD` leeg, dan staat een eenmalig gegenereerd wachtwoord in `docker compose logs db-init`.
 - **API-documentatie:** http://localhost/docs.
 
-Voor een installatie bij je organisatie (vereisten, `.env`, backup, bijwerken, HTTPS, beveiliging) volg je de **[installatiegids](./docs/9-beheer/installatie.md)**. Volledige Fryslân-data laden: [installatiegids, Data](./docs/9-beheer/installatie.md#4-data).
+Voor een installatie bij je organisatie (vereisten, `.env`, backup, bijwerken, HTTPS, beveiliging) volg je de **[installatiegids](./docs/9-beheer/installatie.md)**. Data laden (use cases, laad-API): [installatiegids, Data](./docs/9-beheer/installatie.md#4-data).
 
 ---
 
@@ -149,7 +149,9 @@ Bijdragen: [CONTRIBUTING.md](./CONTRIBUTING.md) en de [gedragscode](./CODE_OF_CO
 | [CHANGELOG.md](./CHANGELOG.md) | Wijzigingen per versie, met migratie-instructies |
 | [CONTRIBUTING.md](./CONTRIBUTING.md) | Bijdragen: van issue tot merge |
 | [AGENTS.md](./AGENTS.md) | Projectfeiten en werkafspraken voor ontwikkelaars en AI-agents |
-| [GOVERNANCE.md](./GOVERNANCE.md) | Rollen en besluitvorming (concept) |
+| [GOVERNANCE.md](./GOVERNANCE.md) | Rollen en besluitvorming, volgens het OpenWebconcept |
+| [SUPPORT.md](./SUPPORT.md) | Onderhoudstermijn en waar je terechtkunt |
+| [PARTICIPANTS.md](./PARTICIPANTS.md) | Deelnemende organisaties |
 | [SECURITY.md](./SECURITY.md) | Kwetsbaarheden privé melden |
 | [CODE_OF_CONDUCT.md](./CODE_OF_CONDUCT.md) | Gedragscode (Contributor Covenant 2.1) |
 | [publiccode.yml](./publiccode.yml) | Metadata voor codebase-registers |
