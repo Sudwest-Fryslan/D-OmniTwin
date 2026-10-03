@@ -66,7 +66,7 @@ Gemeten op een verse installatie op 02-10-2026. Boomkroon en hitte-eiland wijken
 | 0 | Installeer: `python -m omnitwin.usecases installeer hittestress` (db-init doet dit automatisch bij `LOAD_SAMPLE_DATA=true`, met de laadstraat in-process) | De datasets zijn gepubliceerd, de richting is gezet; `python -m omnitwin.usecases test hittestress` is groen | ✅ (verse stack, 02-10) |
 | 1 | Open de app, kies **Kaart Configuratie → CBS Buurten** | 13 buurten op de kaart | ✅ |
 | 2 | Kies indicator **Afstand tot koele plek**, zoom in op Bolsward | Buurten gekleurd; **rood = slechter**, legenda met eenheid | ✅ Richting klopt: gecorrigeerd in de definities (#120) |
-| 2b | Kies indicator **Stedelijk hitte-eiland effect** | 3 buurten met data; legenda 0,37 – 0,47 °C, groen = laag | ⚠️ Legenda klopt, maar de drie buurten krijgen dezelfde kleur: bij minder waarden dan kleurklassen (3 < 7) maakt `color_scale_service` geen klassen |
+| 2b | Kies indicator **Stedelijk hitte-eiland effect** | Buurten met data krijgen elk een kleur naar hun waarde, ook bij weinig gebieden; legenda in °C, groen = laag | ✅ 03-10: [#161](https://github.com/TLaan/D-OmniTwin/issues/161) opgelost; bij minder unieke waarden dan kleurklassen krijgt elke waarde een eigen klasse |
 | 3 | Klik op **Bolsward-Zuidoost** | Selectiebalk met de buurtnaam | ✅ |
 | 4 | Open het **Kompas** (Klimaat Kompas) | Zonnediagram voor Bolsward-Zuidoost, dekking 100% | ✅ (Volledig Kompas) |
 | 5 | Stel de vraag aan de **D-Omni Assistent** | Antwoord noemt de relevante indicatoren en buurten. Verwacht: relatief de meeste 65-plussers in Bolsward-Zuidoost (29,5%, CBS 2026). Afstand tot een koele plek (DEMODATA, de assistent meldt dat): Bolsward-Noord het verst (246 m), Bolsward-Noordoost het dichtst bij (206 m). | ✅ zonder taalmodel (vaste tekst, `tests/integration/test_chat_datavragen.py`); met model zie #139 |
@@ -76,10 +76,7 @@ Gemeten op een verse installatie op 02-10-2026. Boomkroon en hitte-eiland wijken
 
 - **Data:** de indicatoren zijn aanwezig en gevuld voor de drie Bolsward-buurten. Vier ervan komen uit echte open data (CBS 2026, RIVM 2022), ook voor Bolsward-Zuidoost.
 - **Uitkomst met echte data:** relatief de meeste 65- en 80-plussers wonen in Bolsward-Zuidoost (29,5% en 10,2%). Die buurt heeft ook de meeste boomkroon (13,1%). Bolsward-Noord heeft het sterkste hitte-eiland effect (0,47 °C) en ligt het verst van een koele plek.
-- **Kaartkleur:** een indicator met waarden voor maar 3 buurten krijgt één kleur, omdat er minder waarden dan kleurklassen zijn. De legenda klopt wel.
 - **Inrichting:** het pakket zet de richting goed en voegt afgeleide percentages toe. Een eigen Kompas-profiel en chatscenario per use case ontbreken nog (#138).
-- **Chat zet een verkeerde gemeente:** 'Gemeente: Bolsward' filtert op code 0080 (Leeuwarden). Dat filter blijft bewaard, en daarna blijft de kaart leeg (#140).
-- **AI-assistent:** de chat herkent wat je wilt doen en biedt knoppen aan, maar **beantwoordt geen datavraag**. Na een verse installatie stelt hij geen indicatoren voor (#139).
 
 ## Bewijs
 

@@ -5,7 +5,7 @@ De naam komt uit de organisatiegegevens van de instantie (inrichting = data, ADR
 in een URL in de template. Daarom alleen kleine letters, cijfers en koppeltekens; elke andere
 waarde, of een naam zonder bestand, valt terug op het standaardthema.
 
-Uitleg: docs/4-ux-design/thema-s.md.
+Uitleg: docs/9-beheer/thema-s.md.
 """
 
 from __future__ import annotations

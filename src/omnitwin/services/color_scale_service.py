@@ -161,7 +161,9 @@ class ColorScaleService:
         
         unique_breaks = sorted(list(set(breaks)))
         if not unique_breaks:
-            return color_ramp[0]
+            # Geen spreiding (één unieke waarde): neutrale middenkleur, niet het uiterste
+            # van de schaal (#161)
+            return color_ramp[len(color_ramp) // 2]
             
         bin_index = 0
         for threshold in unique_breaks:
@@ -277,9 +279,14 @@ class ColorScaleService:
         if should_reverse:
             color_ramp = list(reversed(color_ramp))
         
-        # Compute breaks based on classification method
-        if len(values) < num_classes:
-            breaks = []
+        # Compute breaks based on classification method.
+        # Minder unieke waarden dan klassen (#161): één klasse per unieke waarde. Gelijke
+        # waarden krijgen zo dezelfde kleur; get_color_for_value verdeelt de klassen over
+        # de hele kleurenschaal (2 waarden: de uitersten, 3: uitersten en midden).
+        # Eén unieke waarde: geen breaks, neutrale middenkleur.
+        unieke = sorted(set(values))
+        if len(unieke) <= num_classes:
+            breaks = unieke[:-1]
         elif classificatie == "quantile":
             breaks = self.classify_quantile(values, num_classes)
         elif classificatie == "equal_interval":

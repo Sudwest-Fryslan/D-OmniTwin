@@ -11,6 +11,7 @@ services:
       - "--providers.docker.constraints=Label(`com.docker.compose.project`,`${COMPOSE_PROJECT_NAME:-d-omnitwin}`)"
       - "--providers.docker.network=${COMPOSE_PROJECT_NAME:-d-omnitwin}_default"
       - "--entrypoints.web.address=:80"
+      - "--entrypoints.web.forwardedheaders.trustedips=${TRAEFIK_TRUSTED_IPS:-127.0.0.1/32}"
       # Headers-middlewares per router; zie docker-compose.yml en deploy/traefik/dynamic.yml
       - "--providers.file.filename=/etc/traefik/dynamic.yml"
     ports:

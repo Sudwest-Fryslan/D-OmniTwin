@@ -25,7 +25,7 @@ Het is één variabel lettertype voor gewicht 100–900; de oude Google Fonts-li
 `montserrat@5.3.0/montserrat.css` en `source-sans-3@5.3.0/source-sans-3.css` zijn op dezelfde manier gemaakt,
 met `font-family: 'Montserrat'` en `'Source Sans 3'`. Source Sans 3 is de open vervanger van Calluna Sans
 (Adobe Typekit, licentie) uit de huisstijl van Súdwest-Fryslân. Alleen een thema dat ze nodig heeft, laadt ze (#89);
-zie `docs/4-ux-design/thema-s.md`.
+zie `docs/9-beheer/thema-s.md`.
 
 Bronkaartbestanden (`*.map`) zijn niet meegenomen. Alleen de browser-devtools vragen erom; die geven dan een 404.
 
