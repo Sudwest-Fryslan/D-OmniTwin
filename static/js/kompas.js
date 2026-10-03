@@ -5,6 +5,15 @@
  * Uses D3.js v7 partition layout with zoom capabilities
  */
 
+/**
+ * Kleur uit het thema (#89) voor Chart.js, dat geen CSS-variabelen kent.
+ * Leest de berekende waarde van een variabele uit styles.css, bv. '--text-secondary'.
+ */
+function themaKleur(naam, terugval) {
+    const waarde = getComputedStyle(document.documentElement).getPropertyValue(naam).trim();
+    return waarde || terugval;
+}
+
 class KompasVisualization {
     constructor(containerId) {
         this.containerId = containerId;
@@ -686,8 +695,8 @@ class KompasVisualization {
         // Center visual circle
         this.g.append('circle')
             .attr('r', radius * 0.2)
-            .attr('fill', 'rgba(255, 255, 255, 0.05)')
-            .attr('stroke', 'rgba(255, 255, 255, 0.2)')
+            .style('fill', 'var(--tint-subtle)')
+            .style('stroke', 'var(--panel-border)')
             .attr('stroke-width', 2)
             .attr('pointer-events', 'none');
 
@@ -700,7 +709,6 @@ class KompasVisualization {
             .style('font-weight', '600')
             .style('font-size', '12px')
             .style('pointer-events', 'none')
-            .style('text-shadow', '0 1px 2px rgba(0,0,0,0.5)')
             .text(''); // Empty by default per user request
 
         const self = this;
@@ -1224,28 +1232,30 @@ class KompasVisualization {
             .style('text-align', 'center')
             .style('pointer-events', 'auto')
             .style('z-index', '10')
-            .style('background', 'rgba(15, 23, 42, 0.95)')
+            .style('background', 'color-mix(in srgb, var(--tooltip-bg) 95%, transparent)')
+            .style('color', 'var(--tooltip-text)')
             .style('backdrop-filter', 'blur(8px)')
             .style('padding', '20px')
             .style('border-radius', '16px')
-            .style('border', '1px solid rgba(255, 255, 255, 0.1)')
+            .style('border', '1px solid color-mix(in srgb, var(--tooltip-text) 12%, transparent)')
             .style('box-shadow', '0 10px 25px -5px rgba(0, 0, 0, 0.5)')
             .style('min-width', '320px');
 
         // Content Header
         let html = `
             <div class="kompas-selected-indicator" style="position: relative;">
-                <button class="btn-kompas-close" id="btn-kompas-close" title="Sluiten" aria-label="Sluiten" style="position: absolute; top: -10px; right: -10px; background: none; border: none; color: #fff; cursor: pointer;">
+                <button class="btn-kompas-close" id="btn-kompas-close" title="Sluiten" aria-label="Sluiten" style="position: absolute; top: -10px; right: -10px; background: none; border: none; color: inherit; cursor: pointer;">
                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
                 </button>
-                <h4 style="margin: 0 0 10px; color: #fff; font-size: 1.1rem;">${escapeHtml(d.data.name)}</h4>
+                <h4 style="margin: 0 0 10px; color: inherit; font-size: 1.1rem;">${escapeHtml(d.data.name)}</h4>
         `;
 
         if (d.data.value !== null) {
             const eenheidText = d.data.eenheid ? ` ${escapeHtml(d.data.eenheid)}` : '';
-            html += `<div class="value" style="font-size: 1.5rem; font-weight: 700; color: ${escapeHtml(d.data.color || '#fff')}; margin-bottom: 15px; display:flex; align-items:center; justify-content:center;">${d.data.value.toFixed(2)} <span style="font-size: 0.8em; font-weight: 400; opacity: 0.8; margin-left:4px;">${eenheidText}</span></div>`;
+            const swatch = d.data.color ? `<span aria-hidden="true" style="width: 14px; height: 14px; border-radius: 3px; margin-right: 8px; background: ${escapeHtml(d.data.color)};"></span>` : '';
+            html += `<div class="value" style="font-size: 1.5rem; font-weight: 700; color: inherit; margin-bottom: 15px; display:flex; align-items:center; justify-content:center;">${swatch}${d.data.value.toFixed(2)} <span style="font-size: 0.8em; font-weight: 400; opacity: 0.8; margin-left:4px;">${eenheidText}</span></div>`;
         } else {
-            html += `<div class="value no-data" style="color: #94A3B8; margin-bottom: 15px;">Geen recente data</div>`;
+            html += `<div class="value no-data" style="color: inherit; opacity: 0.75; margin-bottom: 15px;">Geen recente data</div>`;
         }
 
         // Placeholder for Chart
@@ -1253,7 +1263,7 @@ class KompasVisualization {
 
         html += `
                 <div class="actions" style="display: flex; gap: 10px; justify-content: center;">
-                    <button class="btn-kompas-action" id="btn-toon-kaart" style="display: flex; align-items: center; gap: 6px; padding: 8px 16px; background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 8px; color: #fff; cursor: pointer; transition: all 0.2s;">
+                    <button class="btn-kompas-action" id="btn-toon-kaart" style="display: flex; align-items: center; gap: 6px; padding: 8px 16px; background: color-mix(in srgb, var(--tooltip-text) 10%, transparent); border: 1px solid color-mix(in srgb, var(--tooltip-text) 25%, transparent); border-radius: var(--border-radius-sm); color: inherit; cursor: pointer; transition: all 0.2s;">
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg>
                         Toon op kaart
                     </button>
@@ -1269,7 +1279,7 @@ class KompasVisualization {
             if (historyData && historyData.history && historyData.history.length > 1) {
                 this.renderHistoryChart(historyData.history);
             } else {
-                d3.select('#kompas-history-chart').html('<p style="font-size: 0.8rem; color: #64748B; padding-top: 40px;">Onvoldoende data voor trend</p>');
+                d3.select('#kompas-history-chart').html('<p style="font-size: 0.8rem; opacity: 0.75; padding-top: 40px;">Onvoldoende data voor trend</p>');
             }
         }
 
@@ -1832,30 +1842,30 @@ class KompasVisualization {
 
         const container = document.createElement('div');
         container.id = 'kompas-top-buurten';
-        container.style.cssText = 'margin-top: 15px; border-top: 1px solid rgba(255,255,255,0.1); padding: 15px; background: rgba(0,0,0,0.15); border-radius: 6px;';
+        container.style.cssText = 'margin-top: 15px; border-top: 1px solid var(--panel-border); padding: 15px; background: var(--tint-subtle); border-radius: 6px;';
 
         const eenheid = data.eenheid || '';
         const contextNaam = data.context_naam || 'Alle gemeenten';
         
         let html = `<div style="font-size: 0.8rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px; display: flex; align-items: center; justify-content: space-between;">
-            <div>Top Uitschieters: <span style="color: var(--text-color);">${escapeHtml(contextNaam)}</span></div>
-            <div title="Deze afwijkingen worden berekend middels de z-score methodiek (het verschil ten opzichte van het gemiddelde)." style="cursor: help; width: 16px; height: 16px; border-radius: 50%; border: 1.5px solid var(--text-secondary); display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: bold; font-family: monospace; color: var(--text-secondary); opacity: 0.8; transition: all 0.2s ease;" onmouseover="this.style.opacity='1'; this.style.color='var(--action-color, #48BB78)'; this.style.borderColor='var(--action-color, #48BB78)'" onmouseout="this.style.opacity='0.8'; this.style.color='var(--text-secondary)'; this.style.borderColor='var(--text-secondary)'">i</div>
+            <div>Top Uitschieters: <span style="color: var(--text-primary);">${escapeHtml(contextNaam)}</span></div>
+            <div title="Deze afwijkingen worden berekend middels de z-score methodiek (het verschil ten opzichte van het gemiddelde)." style="cursor: help; width: 16px; height: 16px; border-radius: 50%; border: 1.5px solid var(--text-secondary); display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: bold; font-family: monospace; color: var(--text-secondary); opacity: 0.8; transition: all 0.2s ease;" onmouseover="this.style.opacity='1'; this.style.color='var(--action-color)'; this.style.borderColor='var(--action-color)'" onmouseout="this.style.opacity='0.8'; this.style.color='var(--text-secondary)'; this.style.borderColor='var(--text-secondary)'">i</div>
         </div>`;
 
         // Top positief (↑)
         if (data.top_positief?.length) {
-            html += `<div style="margin-bottom: 8px;"><div style="font-size: 0.72rem; color: var(--action-color, #48BB78); font-weight: 600; margin-bottom: 4px;">↑ Hoogste waarden</div>`;
+            html += `<div style="margin-bottom: 8px;"><div style="font-size: 0.72rem; color: var(--action-color); font-weight: 600; margin-bottom: 4px;">↑ Hoogste waarden</div>`;
             data.top_positief.forEach((b, i) => {
-                html += this._topBuurtRow(b, i + 1, eenheid, 'var(--action-color, #48BB78)');
+                html += this._topBuurtRow(b, i + 1, eenheid, 'var(--action-color)');
             });
             html += `</div>`;
         }
 
         // Top negatief (↓)
         if (data.top_negatief?.length) {
-            html += `<div><div style="font-size: 0.72rem; color: var(--secondary-color, #F56565); font-weight: 600; margin-bottom: 4px;">↓ Laagste waarden</div>`;
+            html += `<div><div style="font-size: 0.72rem; color: var(--secondary-color); font-weight: 600; margin-bottom: 4px;">↓ Laagste waarden</div>`;
             data.top_negatief.forEach((b, i) => {
-                html += this._topBuurtRow(b, i + 1, eenheid, 'var(--secondary-color, #F56565)');
+                html += this._topBuurtRow(b, i + 1, eenheid, 'var(--secondary-color)');
             });
             html += `</div>`;
         }
@@ -1893,11 +1903,11 @@ class KompasVisualization {
     _topBuurtRow(buurt, rank, eenheid, accentColor) {
         return `
             <div data-buurt-id="${escapeHtml(buurt.buurt_id)}" role="button" tabindex="0" style="display: flex; align-items: center; justify-content: space-between; padding: 3px 6px; margin: 2px 0; border-radius: 4px; cursor: pointer; font-size: 0.78rem; transition: background 0.15s;" 
-                 onmouseover="this.style.background='rgba(255,255,255,0.08)'" 
+                 onmouseover="this.style.background='var(--tint)'" 
                  onmouseout="this.style.background='transparent'"
                  title="Klik om naar ${escapeHtml(buurt.buurt_naam)} te vliegen">
                 <span style="color: var(--text-secondary); width: 18px;">${rank}.</span>
-                <span style="flex: 1; color: var(--text-color); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${escapeHtml(buurt.buurt_naam)}</span>
+                <span style="flex: 1; color: var(--text-primary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${escapeHtml(buurt.buurt_naam)}</span>
                 <span style="font-family: monospace; margin-left: 8px; color: var(--text-secondary);">${escapeHtml(buurt.waarde)} ${escapeHtml(eenheid)}</span>
                 <span style="font-family: monospace; font-weight: 600; margin-left: 8px; min-width: 50px; text-align: right; color: ${accentColor};">${buurt.z_score > 0 ? '+' : ''}${escapeHtml(buurt.z_score)}</span>
             </div>`;
@@ -2013,7 +2023,7 @@ class KompasVisualization {
                 // Create note element if it doesn't exist
                 const note = document.createElement('div');
                 note.className = 'chart-overflow-note';
-                note.style.cssText = 'font-size: 0.75rem; color: #94a3b8; text-align: center; padding-top: 4px;';
+                note.style.cssText = 'font-size: 0.75rem; color: var(--text-secondary); text-align: center; padding-top: 4px;';
                 note.textContent = `+${remaining} meer gebieden (gem: ${remainAvg.toFixed(2)} ${eenheid})`;
                 ctx.parentElement?.appendChild(note);
             }
@@ -2043,10 +2053,10 @@ class KompasVisualization {
                 plugins: {
                     legend: { display: false },
                     tooltip: {
-                        backgroundColor: 'rgba(15, 23, 42, 0.9)',
-                        titleColor: '#fff',
-                        bodyColor: '#fff',
-                        borderColor: 'rgba(255,255,255,0.1)',
+                        backgroundColor: themaKleur('--tooltip-bg', '#0f172a'),
+                        titleColor: themaKleur('--tooltip-text', '#ffffff'),
+                        bodyColor: themaKleur('--tooltip-text', '#ffffff'),
+                        borderColor: themaKleur('--border-color', '#334155'),
                         borderWidth: 1,
                         callbacks: {
                             label: (ctx) => `${ctx.parsed.x?.toFixed(2) ?? '-'} ${eenheid}`
@@ -2055,12 +2065,12 @@ class KompasVisualization {
                 },
                 scales: {
                     x: {
-                        grid: { color: 'rgba(255,255,255,0.05)', drawBorder: false },
-                        ticks: { color: '#94a3b8' }
+                        grid: { color: themaKleur('--border-color', '#334155'), drawBorder: false },
+                        ticks: { color: themaKleur('--text-secondary', '#94a3b8') }
                     },
                     y: {
                         grid: { display: false, drawBorder: false },
-                        ticks: { color: '#e2e8f0', font: { size: 11 } }
+                        ticks: { color: themaKleur('--text-primary', '#e2e8f0'), font: { size: 11 } }
                     }
                 }
             }
@@ -2145,11 +2155,11 @@ class KompasVisualization {
             </div>
             <table style="width: 100%; border-collapse: collapse; font-size: 0.82rem;">
                 <thead>
-                    <tr style="border-bottom: 1px solid rgba(255,255,255,0.15);">`;
+                    <tr style="border-bottom: 1px solid var(--panel-border);">`;
 
         // Kolomkoppen: per groep + referentie
         for (const groep of groepen) {
-            html += `<th style="padding: 6px 8px; text-align: center; font-weight: 600; color: var(--text-color);">${escapeHtml(groep.naam)}</th>`;
+            html += `<th style="padding: 6px 8px; text-align: center; font-weight: 600; color: var(--text-primary);">${escapeHtml(groep.naam)}</th>`;
         }
         if (referentie) {
             html += `<th style="padding: 6px 8px; text-align: center; font-weight: 500; color: var(--text-secondary); font-style: italic;">${escapeHtml(refNaam)}</th>`;
@@ -2169,15 +2179,15 @@ class KompasVisualization {
                     const diff = waarde - refWaarde;
                     const pct = refWaarde !== 0 ? ((diff / Math.abs(refWaarde)) * 100).toFixed(0) : 0;
                     if (diff > 0) {
-                        afwijkingHtml = `<div style="font-size: 0.7rem; color: #f87171;">↑ +${pct}%</div>`;
+                        afwijkingHtml = `<div style="font-size: 0.7rem; color: var(--color-danger);">↑ +${pct}%</div>`;
                     } else if (diff < 0) {
-                        afwijkingHtml = `<div style="font-size: 0.7rem; color: #34d399;">↓ ${pct}%</div>`;
+                        afwijkingHtml = `<div style="font-size: 0.7rem; color: var(--color-success);">↓ ${pct}%</div>`;
                     } else {
                         afwijkingHtml = `<div style="font-size: 0.7rem; color: var(--text-secondary);">= 0%</div>`;
                     }
                 }
                 html += `<td style="padding: 8px; text-align: center;">
-                    <div style="font-weight: 600; color: var(--text-color);">${waarde.toFixed(1)}</div>
+                    <div style="font-weight: 600; color: var(--text-primary);">${waarde.toFixed(1)}</div>
                     <div style="font-size: 0.65rem; color: var(--text-secondary);">${escapeHtml(eenheid)}</div>
                     ${afwijkingHtml}
                 </td>`;
@@ -2187,7 +2197,7 @@ class KompasVisualization {
         // Referentiekolom
         if (referentie) {
             if (refWaarde != null) {
-                html += `<td style="padding: 8px; text-align: center; background: rgba(255,255,255,0.03);">
+                html += `<td style="padding: 8px; text-align: center; background: var(--tint-subtle);">
                     <div style="font-weight: 500; color: var(--text-secondary);">${refWaarde.toFixed(1)}</div>
                     <div style="font-size: 0.65rem; color: var(--text-secondary);">${escapeHtml(eenheid)}</div>
                 </td>`;
@@ -2234,7 +2244,7 @@ class KompasVisualization {
                     })(),
                     borderWidth: 2,
                     pointRadius: 3,
-                    pointBackgroundColor: '#fff',
+                    pointBackgroundColor: themaKleur('--bg-secondary', '#ffffff'),
                     pointBorderColor: chartColor,
                     fill: true,
                     tension: 0.3
@@ -2259,21 +2269,21 @@ class KompasVisualization {
                     tooltip: {
                         mode: 'index',
                         intersect: false,
-                        backgroundColor: 'rgba(15, 23, 42, 0.9)',
-                        titleColor: '#fff',
-                        bodyColor: '#fff',
-                        borderColor: 'rgba(255,255,255,0.1)',
+                        backgroundColor: themaKleur('--tooltip-bg', '#0f172a'),
+                        titleColor: themaKleur('--tooltip-text', '#ffffff'),
+                        bodyColor: themaKleur('--tooltip-text', '#ffffff'),
+                        borderColor: themaKleur('--border-color', '#334155'),
                         borderWidth: 1
                     }
                 },
                 scales: {
                     x: {
                         grid: { display: false, drawBorder: false },
-                        ticks: { color: '#94a3b8' }
+                        ticks: { color: themaKleur('--text-secondary', '#94a3b8') }
                     },
                     y: {
-                        grid: { color: 'rgba(255,255,255,0.05)', drawBorder: false },
-                        ticks: { color: '#94a3b8' }
+                        grid: { color: themaKleur('--border-color', '#334155'), drawBorder: false },
+                        ticks: { color: themaKleur('--text-secondary', '#94a3b8') }
                     }
                 }
             }

@@ -1,0 +1,50 @@
+/*
+ * Keycloak-inlogpagina, thema d-omnitwin (#89). Kleuren gelijk aan static/css/themes/d-omnitwin.css:
+ * PatternFly-variabelen van keycloak.v2 krijgen de waarden van de NL Design System-tokens.
+ * Lettertype Inter uit de viewer (zelfde host via Traefik); zonder viewer valt het terug op het systeemfont.
+ */
+@import url("/static/vendor/inter@5.3.0/inter.css");
+
+:root {
+  --pf-v5-global--FontFamily--text: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+  --pf-v5-global--FontFamily--heading: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+  /* basis-color-action-1-bg-default / -bg-hover */
+  --pf-v5-global--primary-color--100: #1e3a8a;
+  --pf-v5-global--primary-color--200: #1e40af;
+  /* basis-color-accent-1-color-default / -hover */
+  --pf-v5-global--link--Color: #1e3a8a;
+  --pf-v5-global--link--Color--hover: #1e40af;
+  /* basis-focus-outline-color */
+  --pf-v5-global--active-color--100: #1e3a8a;
+  /* rand boven het formulier (keycloak.v2) */
+  --keycloak-card-top-color: #1e3a8a;
+  /* basis-border-radius-md */
+  --pf-v5-global--BorderRadius--sm: 8px;
+}
+
+/* Achtergrond: het verloop van de kopbalk (d-omnitwin-header-background-color-start/-end) */
+.pf-v5-c-login {
+  background: linear-gradient(135deg, #1e3a8a 0%, #15803d 100%);
+}
+
+/* Realmnaam boven het formulier: kopbalktekst (d-omnitwin-header-color) */
+#kc-header-wrapper,
+.pf-v5-c-login__header {
+  color: #ffffff;
+}
+
+/* Donker (keycloak.v2 zet pf-v5-theme-dark bij de systeeminstelling donker) */
+.pf-v5-theme-dark {
+  /* PatternFly gebruikt in donker primary-color--300 voor de primaire knop */
+  --pf-v5-global--primary-color--300: #2563eb;
+  --keycloak-card-top-color: #2563eb;
+  --pf-v5-global--primary-color--100: #2563eb;
+  --pf-v5-global--primary-color--200: #1d4ed8;
+  --pf-v5-global--link--Color: #93c5fd;
+  --pf-v5-global--link--Color--hover: #bfdbfe;
+  --pf-v5-global--active-color--100: #93c5fd;
+}
+
+.pf-v5-theme-dark .pf-v5-c-login {
+  background: linear-gradient(135deg, #0f172a 0%, #14532d 100%);
+}

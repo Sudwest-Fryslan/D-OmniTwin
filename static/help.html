@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="nl">
+<html lang="nl" data-theme="dark">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,21 +8,25 @@
   <style>
     @import url('/static/vendor/inter@5.3.0/inter.css'); /* zelf gehost, #117 */
 
+    /* Kleuren uit het organisatiethema (#89, donkere variant: data-theme="dark"); het themabestand
+       wordt onderaan geladen. Zonder thema gelden de terugvalwaarden. */
     :root {
-      --bg: #0f172a;
-      --surface: #1e293b;
+      --bg: var(--basis-color-default-bg-document, #0f172a);
+      --surface: var(--basis-color-default-bg-default, #1e293b);
       --border: rgba(255,255,255,0.08);
-      --text: #e2e8f0;
-      --text-muted: #94a3b8;
-      --accent: #3b82f6;
-      --accent-glow: rgba(59,130,246,0.15);
-      --gold: #c59d00;
+      --text: var(--basis-color-default-color-document, #e2e8f0);
+      --text-muted: var(--basis-color-default-color-subtle, #94a3b8);
+      --accent: var(--basis-color-accent-1-color-default, #3b82f6);
+      --accent-glow: color-mix(in srgb, var(--accent) 15%, transparent);
+      --gold: var(--basis-color-accent-2-color-default, #c59d00);
     }
+
+    h1, h2, h3 { font-family: var(--basis-heading-font-family, inherit); }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
-      font-family: 'Inter', -apple-system, sans-serif;
+      font-family: var(--basis-text-font-family-default, 'Inter', -apple-system, sans-serif);
       background: var(--bg);
       color: var(--text);
       line-height: 1.7;
@@ -45,7 +49,7 @@
     .help-header h1 {
       font-size: 2rem;
       font-weight: 700;
-      background: linear-gradient(135deg, var(--accent), #818cf8);
+      background: linear-gradient(135deg, var(--accent), color-mix(in srgb, var(--accent) 60%, #ffffff));
       -webkit-background-clip: text;
       background-clip: text;
       -webkit-text-fill-color: transparent;
@@ -127,8 +131,8 @@
 
     /* Tips */
     .tip-box {
-      background: rgba(197, 157, 0, 0.08);
-      border: 1px solid rgba(197, 157, 0, 0.2);
+      background: color-mix(in srgb, var(--gold) 8%, transparent);
+      border: 1px solid color-mix(in srgb, var(--gold) 20%, transparent);
       border-left: 3px solid var(--gold);
       border-radius: 8px;
       padding: 1rem 1.25rem;
@@ -193,6 +197,17 @@
       flex-shrink: 0;
     }
   </style>
+  <script>
+    // Themabestand van de organisatie, zoals de viewer (#89); deze pagina is statisch
+    fetch('/api/organisatie').then(r => r.ok ? r.json() : null).then(o => {
+      const thema = o && o.thema;
+      if (!thema || !/^[a-z0-9]+(-[a-z0-9]+)*$/.test(thema)) return;
+      const link = document.createElement('link');
+      link.rel = 'stylesheet';
+      link.href = `/static/css/themes/${thema}.css`;
+      document.head.appendChild(link);
+    }).catch(() => {});
+  </script>
 </head>
 <body>
   <div class="container">
