@@ -1,6 +1,7 @@
 {
   "realm": "omnitwin",
   "displayName": "D-OmniTwin",
+  "loginTheme": "swf",
   "enabled": true,
   "sslRequired": "external",
   "registrationAllowed": false,

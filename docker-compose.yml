@@ -285,6 +285,8 @@ services:
       - "./deploy/keycloak/realm-omnitwin.json:/opt/keycloak/data/import/realm-omnitwin.json:ro"
       - "./deploy/keycloak/client-secret.sh:/opt/keycloak/omnitwin/client-secret.sh:ro"
       - "./deploy/keycloak/machineclient.sh:/opt/keycloak/omnitwin/machineclient.sh:ro"
+      # Inlogthema's in de huisstijl (#89): d-omnitwin en swf; keuze via loginTheme in de realm
+      - "./deploy/keycloak/themes:/opt/keycloak/themes:ro"
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.keycloak.rule=PathPrefix(`/auth`)"

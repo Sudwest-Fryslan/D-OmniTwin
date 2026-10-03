@@ -10,7 +10,7 @@
  * zonder themabestand ziet de app er hetzelfde uit (bewaakt door tests/test_thema.py).
  * Datakleuren (Z-score, kaart, Kompas) horen NIET in een thema; die komen uit color_schemas.
  *
- * Eigen thema maken: kopieer dit bestand, zie docs/4-ux-design/thema-s.md.
+ * Eigen thema maken: kopieer dit bestand, zie docs/9-beheer/thema-s.md.
  * Opmaak: drie blokken (licht, donker, donker via de systeeminstelling), één token per regel,
  * alleen kleuren als #rrggbb. De contrasttest leest dit bestand.
  */
@@ -70,6 +70,18 @@
   --basis-border-radius-md: 8px;
   --basis-border-radius-lg: 12px;
 
+  /* Componenttokens D-OmniTwin (#89): actieve tab, welkomstscherm, tooltips, selectiebadge.
+     Zie docs/9-beheer/thema-s.md voor waar ze gebruikt worden. */
+  --d-omnitwin-tab-active-background-color: #c59d00;
+  --d-omnitwin-tab-active-color: #0f172a;
+  --d-omnitwin-welcome-button-background-color: #c59d00;
+  --d-omnitwin-welcome-button-color: #0f172a;
+  --d-omnitwin-welcome-accent-color: #856a00;
+  --d-omnitwin-tooltip-background-color: #0f172a;
+  --d-omnitwin-tooltip-color: #ffffff;
+  --d-omnitwin-selection-badge-background-color: #047857;
+  --d-omnitwin-selection-badge-color: #ffffff;
+
   /* Componenttokens D-OmniTwin: kopbalk (verloop) */
   --d-omnitwin-header-background-color-start: var(--basis-color-accent-1-bg-default);
   --d-omnitwin-header-background-color-end: #15803d;
@@ -107,6 +119,16 @@
   --basis-color-warning-color-default: #f97316;
 
   --basis-focus-outline-color: #93c5fd;
+
+  --d-omnitwin-tab-active-background-color: #eab308;
+  --d-omnitwin-tab-active-color: #0f172a;
+  --d-omnitwin-welcome-button-background-color: #eab308;
+  --d-omnitwin-welcome-button-color: #0f172a;
+  --d-omnitwin-welcome-accent-color: #eab308;
+  --d-omnitwin-tooltip-background-color: #f1f5f9;
+  --d-omnitwin-tooltip-color: #0f172a;
+  --d-omnitwin-selection-badge-background-color: #047857;
+  --d-omnitwin-selection-badge-color: #ffffff;
 
   --d-omnitwin-header-background-color-start: #3b82f6;
   --d-omnitwin-header-background-color-end: #22c55e;
@@ -148,6 +170,16 @@
     --basis-color-warning-color-default: #f97316;
 
     --basis-focus-outline-color: #93c5fd;
+
+    --d-omnitwin-tab-active-background-color: #eab308;
+    --d-omnitwin-tab-active-color: #0f172a;
+    --d-omnitwin-welcome-button-background-color: #eab308;
+    --d-omnitwin-welcome-button-color: #0f172a;
+    --d-omnitwin-welcome-accent-color: #eab308;
+    --d-omnitwin-tooltip-background-color: #f1f5f9;
+    --d-omnitwin-tooltip-color: #0f172a;
+    --d-omnitwin-selection-badge-background-color: #047857;
+    --d-omnitwin-selection-badge-color: #ffffff;
 
     --d-omnitwin-header-background-color-start: #3b82f6;
     --d-omnitwin-header-background-color-end: #22c55e;

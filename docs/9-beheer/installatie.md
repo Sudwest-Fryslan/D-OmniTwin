@@ -345,7 +345,7 @@ docker compose up -d
 
 ### Eigen organisatie
 
-Elke organisatie draait een eigen instantie (ADR 0007). Wie die instantie beheert, staat als data in de tabel `organisatie`: naam, korte naam, OIN (optioneel), CBS-gemeentecode(s) van het eigen gebied, standaard-benchmarkprovincie, contactadres, de logo's in de footer en het thema (huisstijl: `static/css/themes/<thema>.css`, alleen `a-z`, `0-9` en `-`; standaard `d-omnitwin`). Standaard staat daar Súdwest-Fryslân. Lezen: `GET /api/organisatie`.
+Elke organisatie draait een eigen instantie (ADR 0007). Wie die instantie beheert, staat als data in de tabel `organisatie`: naam, korte naam, OIN (optioneel), CBS-gemeentecode(s) van het eigen gebied, standaard-benchmarkprovincie, contactadres, de logo's in de footer en het thema (huisstijl: `static/css/themes/<thema>.css`, alleen `a-z`, `0-9` en `-`; standaard `d-omnitwin`). Standaard staat daar Súdwest-Fryslân. Lezen: `GET /api/organisatie`. Een eigen thema maken en welke tokens erin horen: [Thema's](thema-s.md).
 
 De eerste gemeentecode is de standaard-referentie in de rapporten ("⌀ Gemeente ...") en bepaalt welke buurten bij een omgevingsvisie-deelgebied horen.
 
@@ -412,6 +412,7 @@ Keycloak is de identity provider voor 0.3.0: inloggen via OIDC voor mensen, en c
 | client `etl-voorbeeld` | Voorbeeld-machineclient: alleen client credentials, rol `dataset:voorbeeld:laden`. Keycloak genereert het secret bij de import; het staat niet in de repo. |
 | realm-rollen `beheerder`, `lezer` | Voor mensen. Elke nieuwe gebruiker krijgt `lezer`. |
 | client-rollen op `omnitwin-api` | `datasets:laden` (alle datasets) en per dataset `dataset:<id>:laden`. |
+| inlogpagina | `loginTheme` `swf`: de huisstijl van het organisatiethema (`deploy/keycloak/themes/`, zie [Thema's](thema-s.md#inlogpagina-keycloak)). |
 | instellingen | Access token 5 minuten, geen implicit of password grant (behalve de tijdelijke loginclient van testaccounts, zie onder), brute-force-detectie aan (na 5 mislukte pogingen oplopend wachten), geen zelfregistratie, wachtwoorden minimaal 12 tekens. |
 
 **Aanzetten**
