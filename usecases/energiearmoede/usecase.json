@@ -53,6 +53,37 @@
       "omschrijving": "Gemiddeld energielabel Bolsward-Noord (EP-Online, sample)"
     }
   ],
+  "bewijs": {
+    "stappen": [
+      {
+        "id": "kaart",
+        "actie": "kaart",
+        "gebied": "BU19000002",
+        "indicator": "3dd70913-391e-4d5f-a121-d17c8b466372",
+        "omschrijving": "Huishoudens met een laag inkomen in Bolsward (CBS)",
+        "bevat": [
+          "Bolsward-Zuidoost"
+        ]
+      },
+      {
+        "id": "chat",
+        "actie": "chat",
+        "vraag": "Waar in Bolsward is het risico op energiearmoede het grootst? Ik wil weten waar slechte energielabels samengaan met lage inkomens.",
+        "omschrijving": "Datavraag: waar is het risico op energiearmoede het grootst?"
+      },
+      {
+        "id": "kompas",
+        "actie": "kompas",
+        "gebied": "BU19000002",
+        "indicator": "3dd70913-391e-4d5f-a121-d17c8b466372",
+        "profiel": "Volledig Kompas",
+        "omschrijving": "Kompas voor Bolsward-Zuidoost",
+        "bevat": [
+          "Bolsward-Zuidoost"
+        ]
+      }
+    ]
+  },
   "persona": {
     "rol": "Beleidsmaker energietransitie",
     "vraag": "Waar in Bolsward is het risico op energiearmoede het grootst? Ik wil weten waar slechte energielabels samengaan met lage inkomens.",
