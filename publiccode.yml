@@ -7,6 +7,10 @@
 # - softwareVersion: gelijk aan het bestand VERSION (Semantic Versioning, zie
 #   docs/9-beheer/releasebeleid.md); een unittest controleert dat.
 # - releaseDate: datum van de release (YYYY-MM-DD), gelijk aan de CHANGELOG-sectie.
+# - maintenance: beheerder en onderhoudstermijn volgens de OWC-afspraken (GOVERNANCE.md,
+#   SUPPORT.md, #183). publiccode.yml heeft voor type internal geen veld voor de
+#   einddatum; die staat daarom in SUPPORT.md en in de longDescription. Bij het einde
+#   van het onderhoud: type none, een jaar vooraf aangekondigd.
 
 publiccodeYmlVersion: "0"
 
@@ -76,6 +80,10 @@ description:
       samen met de gemeenten Leeuwarden en Tytsjerksteradiel en Coöperatie
       DataFryslân, met steun van het Innovatiebudget Digitale Overheid 2026.
 
+      Beheerder en eigenaar is Gemeente Súdwest-Fryslân, volgens de afspraken
+      van het OpenWebconcept. Onderhoudsgarantie: een jaar na elke release;
+      het einde wordt minimaal een jaar vooraf aangekondigd (SUPPORT.md).
+
       De applicatie draait met Docker Compose (FastAPI, PostgreSQL/PostGIS,
       PostgREST, pg_featureserv en Traefik). Een sample dataset van 12 buurten
       wordt bij de eerste start automatisch geladen.
@@ -113,6 +121,11 @@ description:
       Tytsjerksteradiel and the DataFryslân cooperative, funded by the Dutch
       Innovation Budget for Digital Government 2026.
 
+      Owner and maintainer is the Municipality of Súdwest-Fryslân, following
+      the OpenWebconcept agreements. Maintenance guarantee: one year after each
+      release; the end of maintenance is announced at least one year in advance
+      (SUPPORT.md).
+
       The user interface is in Dutch.
     features:
       - D-Omni Kompas with indicators in 12 themes
@@ -126,6 +139,7 @@ legal:
   license: EUPL-1.2
   mainCopyrightOwner: Gemeente Súdwest-Fryslân
 
+# Beheerder (OWC): de gemeente. Termijn: zie SUPPORT.md
 maintenance:
   type: internal
   contacts:

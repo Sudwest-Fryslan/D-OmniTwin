@@ -38,7 +38,7 @@ class NepKeycloak:
 
     def __init__(self, admin_wachtwoord="geheim-admin"):
         self.admin_wachtwoord = admin_wachtwoord
-        self.realmrollen = {"beheerder", "lezer", "default-roles-omnitwin"}
+        self.realmrollen = {"beheerder", "gebruikersbeheerder", "lezer", "default-roles-omnitwin"}
         self.clients = {}            # id -> representatie
         self.clientrollen = {}       # client-id -> {naam}
         self.users = {}              # id -> representatie (met _wachtwoord, _rollen)
