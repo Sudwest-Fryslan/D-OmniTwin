@@ -212,7 +212,9 @@ async def login(
     sleutel = f"{ip}|{form_data.username.strip().lower()}"
     wacht = max(_mislukt_per_gebruiker.wachttijd(sleutel), _mislukt_per_ip.wachttijd(ip))
     if wacht:
-        AppLogger.warning(f"Login geblokkeerd voor '{form_data.username}' vanaf {ip} ({wacht}s)", category="AUTH")
+        # IP in het veld ip_address (wordt na LOG_IP_BEWAAR_DAGEN ingekort), niet in de tekst (#264)
+        AppLogger.warning(f"Login geblokkeerd voor '{form_data.username}' ({wacht}s)", category="AUTH",
+                          ip_address=ip)
         raise te_veel(wacht, f"Te veel mislukte inlogpogingen. Probeer het over {math.ceil(wacht / 60)} minuten opnieuw.")
 
     resultaat = await run_in_threadpool(_inloggen, db, form_data.username, form_data.password)

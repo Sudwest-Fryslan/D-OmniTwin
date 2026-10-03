@@ -10,10 +10,14 @@ Beperkingen: de tellers staan in het geheugen van één proces. Met meerdere
 uvicorn-workers telt elke worker apart (de grens wordt dan workers × limiet),
 en een herstart zet ze op nul. Voor deze schaal is dat goed genoeg.
 
-IP-adres: achter Traefik is het directe adres dat van Traefik. Dan geldt het
-laatste adres in X-Forwarded-For (dat zet de dichtstbijzijnde proxy; eerdere
-adressen kan de client zelf meesturen). De header wordt alleen vertrouwd als het
-verzoek van een privé- of loopback-adres komt (Docker-netwerk, eigen proxy).
+IP-adres (#264): `client_ip` is de enige plek waar het adres van de bezoeker
+bepaald wordt; de rate limiting en de logmiddleware gebruiken allebei deze functie.
+Achter Traefik is het directe adres (de peer) dat van Traefik. X-Forwarded-For wordt
+alleen gelezen als de peer in TRUSTED_PROXIES staat (standaard loopback en de
+privé-reeksen, zie omnitwin.config). Dan geldt het meest rechtse adres in de keten
+dat níet vertrouwd is: dat heeft de buitenste vertrouwde proxy gezien. Alles links
+daarvan kan de client zelf meesturen. Anders, of als de header ontbreekt of onzin
+bevat, geldt het peer-adres.
 """
 
 from __future__ import annotations
@@ -23,7 +27,8 @@ import math
 import threading
 import time
 from collections import deque
-from typing import Callable, Deque, Dict
+from functools import lru_cache
+from typing import Callable, Deque, Dict, Optional, Tuple, Union
 
 from fastapi import HTTPException, Request
 
@@ -88,23 +93,65 @@ class Limiet:
             self._tijden.pop(sleutel, None)
 
 
-def _privé(adres: str) -> bool:
+_Netwerk = Union[ipaddress.IPv4Network, ipaddress.IPv6Network]
+
+
+@lru_cache(maxsize=8)
+def vertrouwde_proxies(lijst: str) -> Tuple[_Netwerk, ...]:
+    """TRUSTED_PROXIES als netwerken. Ongeldige onderdelen worden overgeslagen."""
+    netwerken = []
+    for deel in lijst.split(","):
+        deel = deel.strip()
+        if not deel:
+            continue
+        try:
+            netwerken.append(ipaddress.ip_network(deel, strict=False))
+        except ValueError:
+            continue
+    return tuple(netwerken)
+
+
+def _als_ip(adres: str) -> Optional[Union[ipaddress.IPv4Address, ipaddress.IPv6Address]]:
     try:
-        ip = ipaddress.ip_address(adres)
+        ip = ipaddress.ip_address(adres.strip())
     except ValueError:
-        return adres in ("testclient", "localhost")
-    return ip.is_private or ip.is_loopback
+        return None
+    # IPv4 in IPv6 (::ffff:1.2.3.4) als IPv4 behandelen
+    if isinstance(ip, ipaddress.IPv6Address) and ip.ipv4_mapped:
+        return ip.ipv4_mapped
+    return ip
+
+
+def _vertrouwd(ip, netwerken: Tuple[_Netwerk, ...]) -> bool:
+    return ip is not None and any(ip.version == n.version and ip in n for n in netwerken)
+
+
+def bepaal_client_ip(peer: str, forwarded_for: list[str], trusted_proxies: str) -> str:
+    """Kern van `client_ip`, los van het verzoek (testbaar).
+
+    peer: het directe adres van de TCP-verbinding. forwarded_for: alle
+    X-Forwarded-For-headers, in volgorde. trusted_proxies: de ruwe TRUSTED_PROXIES.
+    """
+    netwerken = vertrouwde_proxies(trusted_proxies)
+    if not _vertrouwd(_als_ip(peer), netwerken):
+        return peer
+    hops = [h.strip() for header in forwarded_for for h in header.split(",")]
+    hops = [h for h in hops if h]
+    for hop in reversed(hops):
+        ip = _als_ip(hop)
+        if ip is None:
+            return peer          # onleesbare waarde: niet raden
+        if not _vertrouwd(ip, netwerken):
+            return str(ip)
+    # Alleen vertrouwde adressen (of geen header): het verste adres in de keten
+    return str(_als_ip(hops[0])) if hops else peer
 
 
 def client_ip(request: Request) -> str:
     """IP-adres van de bezoeker (zie de modulebeschrijving)."""
-    direct = request.client.host if request.client else "onbekend"
-    doorgestuurd = request.headers.get("x-forwarded-for")
-    if doorgestuurd and _privé(direct):
-        laatste = doorgestuurd.split(",")[-1].strip()
-        if laatste:
-            return laatste
-    return direct
+    peer = request.client.host if request.client else "onbekend"
+    return bepaal_client_ip(peer, request.headers.getlist("x-forwarded-for"),
+                            instellingen().trusted_proxies)
 
 
 def te_veel(wachttijd: int, melding: str) -> HTTPException:

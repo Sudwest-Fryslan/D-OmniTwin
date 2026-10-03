@@ -13,6 +13,7 @@ import os
 import time
 
 from omnitwin.services.logging_service import AppLogger, init_logging, shutdown_logging
+from omnitwin.grenzen import client_ip
 from omnitwin.services.log_cleanup_service import start_cleanup_scheduler, stop_cleanup_scheduler
 
 # Import routers
@@ -107,7 +108,7 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
         except Exception:
             # Onverwachte crash: log als ERROR, laat exception door
             elapsed_ms = int((time.time() - start) * 1000)
-            ip = request.headers.get("x-forwarded-for", request.client.host if request.client else "unknown")
+            ip = client_ip(request)  # X-Forwarded-For alleen van TRUSTED_PROXIES (#264)
             AppLogger.error(
                 f"{request.method} {path} → 500 ({elapsed_ms}ms)",
                 category="API",
@@ -119,7 +120,7 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
         
         elapsed_ms = int((time.time() - start) * 1000)
         status = response.status_code
-        ip = request.headers.get("x-forwarded-for", request.client.host if request.client else "unknown")
+        ip = client_ip(request)  # X-Forwarded-For alleen van TRUSTED_PROXIES (#264)
         
         # Bepaal log niveau op basis van status code
         if status >= 500:

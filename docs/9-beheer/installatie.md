@@ -66,6 +66,9 @@ De tabel volgt de volgorde van `.env.example`. Optionele regels staan daar als c
 | `CORS_ORIGINS` | Optioneel. Alleen nodig als andere websites de API aanroepen: een kommagescheiden lijst met volledige adressen, geen wildcards. De app zelf draait op hetzelfde adres. |
 | `COOKIE_SECURE` | Optioneel, standaard `auto`: het inlogcookie krijgt `Secure` (alleen via HTTPS) als de verbinding HTTPS is. Achter een eigen TLS-proxy die over HTTP naar de stack doorstuurt: `true` (zie [HTTPS aanzetten](#https-aanzetten)). |
 | `LLM_RATE_LIMIT` | Optioneel, standaard `60`: zoveel verzoeken per minuut per IP-adres op de chat en de AI-teksten; daarboven `429`. `0` = geen limiet. |
+| `LOG_BEWAAR_DAGEN`, `LOG_IP_BEWAAR_DAGEN` | Optioneel, standaard `30` en `7`: logregels in de database (alle niveaus) worden na 30 dagen verwijderd, DEBUG na 7; IP-adressen daarin worden na 7 dagen ingekort (IPv4 laatste octet `0`, IPv6 `/48`). Zie [Status en logs](#status-en-logs). |
+| `TRUSTED_PROXIES` | Optioneel. Adressen of netwerken (CIDR, kommagescheiden) waarvan de backend `X-Forwarded-For` overneemt. Standaard loopback en de privé-reeksen: Traefik op het Docker-netwerk. Van andere adressen geldt het directe adres. Leeg = nooit. Laat staan, tenzij je de backend zonder Docker draait op een netwerk met gebruikers: zet dan het adres van je proxy of leeg. |
+| `TRAEFIK_TRUSTED_IPS` | Optioneel, alleen achter een eigen TLS-proxy of WAF (manier A in [HTTPS aanzetten](#https-aanzetten)): het adres daarvan (CIDR, kommagescheiden). Traefik neemt dan diens `X-Forwarded-For` over; anders ziet de app voor iedereen het adres van de proxy, ook de rate limiting. |
 | `COMPOSE_PROFILES` | Optioneel. `keycloak` start Keycloak mee (zie [Keycloak](#keycloak-optioneel)). |
 | `KEYCLOAK_ADMIN_PASSWORD`, `KEYCLOAK_DB_PASSWORD` | Alleen met Keycloak, dan verplicht: wachtwoord van de tijdelijke beheerder `admin` in de admin-console, en van de databaserol `keycloak`. Genereer ze met `openssl rand -hex 24`. |
 | `KEYCLOAK_HOSTNAME` | Alleen met Keycloak. Hostnaam (`omnitwin.example.nl`) of volledige URL (`https://omnitwin.example.nl/auth`) waarop gebruikers Keycloak bereiken; standaard `localhost`. Bepaalt de issuer van de tokens. |
@@ -289,7 +292,13 @@ docker compose logs -f backend          # of: db-init, postgres, postgrest, pg_f
 docker compose logs --tail 100 backend
 ```
 
-De backend schrijft ook naar de databasetabel voor logs; die zijn in te zien via de beheeromgeving.
+De backend schrijft ook naar de databasetabel voor logs (`app_logs`); die zijn in te zien via de beheeromgeving.
+
+Bewaartermijnen (#264):
+
+- **Database-logs:** alle niveaus worden na `LOG_BEWAAR_DAGEN` (standaard 30) verwijderd, DEBUG na 7 dagen. In waarschuwingen staan IP-adressen (elk verzoek met status 4xx) en gebruikersnamen (geblokkeerde logins); het IP-adres wordt na `LOG_IP_BEWAAR_DAGEN` (standaard 7) ingekort. De opruimtaak draait 5 minuten na de start van de backend en daarna elke 24 uur; in de beheeromgeving (Logs > Nu uitvoeren) kan het meteen.
+- **Containerlogs** (`docker compose logs`): per container hoogstens 3 bestanden van 10 MB (`x-logging` in `docker-compose.yml`). Daarin staan geen IP-adressen van bezoekers.
+- **Het IP-adres** komt van Traefik (`X-Forwarded-For`) en wordt alleen vertrouwd als het verzoek van een vertrouwde proxy komt (`TRUSTED_PROXIES`; achter een eigen TLS-proxy ook `TRAEFIK_TRUSTED_IPS`). Een bezoeker kan het dus niet zelf invullen.
 
 ### Stoppen en starten
 
@@ -594,7 +603,7 @@ Kwetsbaarheden melden: zie [`SECURITY.md`](../../SECURITY.md).
 
 HTTPS en HSTS zijn verplicht volgens de [Forum Standaardisatie](https://www.forumstandaardisatie.nl/open-standaarden/verplicht). Kies één manier:
 
-**A. Achter de TLS-proxy van je organisatie (aanbevolen).** De proxy of WAF handelt het certificaat af en stuurt door naar `http://<host>:<OMNITWIN_HTTP_PORT>`. Laat de stack zoals hij is en zet `COOKIE_SECURE=true` (Traefik ziet alleen HTTP, dus `auto` herkent de HTTPS-verbinding niet). De proxy moet zelf HSTS sturen (`Strict-Transport-Security: max-age=31536000`) en HTTP doorsturen naar HTTPS; Traefik ziet alleen HTTP en zet die header dan niet.
+**A. Achter de TLS-proxy van je organisatie (aanbevolen).** De proxy of WAF handelt het certificaat af en stuurt door naar `http://<host>:<OMNITWIN_HTTP_PORT>`. Laat de stack zoals hij is en zet `COOKIE_SECURE=true` (Traefik ziet alleen HTTP, dus `auto` herkent de HTTPS-verbinding niet). De proxy moet zelf HSTS sturen (`Strict-Transport-Security: max-age=31536000`) en HTTP doorsturen naar HTTPS; Traefik ziet alleen HTTP en zet die header dan niet. Zet ook `TRAEFIK_TRUSTED_IPS` op het adres van de proxy (bijv. `10.1.2.3/32`), zodat de logs en de rate limiting het adres van de bezoeker zien en niet dat van de proxy.
 
 **B. Traefik zelf met Let's Encrypt.** Voor een server die direct bereikbaar is, met een DNS-naam en poort 80 en 443 open. Gebruik het voorbeeld [`deploy/traefik/tls.example.yml`](../../deploy/traefik/tls.example.yml). Zet in `.env`:
 
