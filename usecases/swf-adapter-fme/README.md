@@ -1,7 +1,7 @@
 # TC-07-009 — SWF-adapter: dezelfde FME-push naar D-OmniTwin
 
 **Status:** actief (acceptatietest groen tegen een verse stack, 02-10-2026; #237)
-**Versie:** 0.1.0 · **Afhankelijk van:** [swf-definities](../swf-definities/README.md), [cbs-gebiedsindelingen](../cbs-gebiedsindelingen/README.md)
+**Versie:** 0.2.0 · **Afhankelijk van:** [swf-definities](../swf-definities/README.md), [cbs-gebiedsindelingen](../cbs-gebiedsindelingen/README.md)
 **Manifest:** [`usecase.json`](usecase.json) · **Controleren:** `python -m omnitwin.usecases controleer swf-adapter-fme`
 
 ## Vraag

@@ -1,7 +1,7 @@
 # TC-07-008 — SWF-kaartlagen: klimaat, deelgebieden, projecten en overige lagen
 
 **Status:** ontwerp (de laad-API is nog niet gebouwd; deze use case is de specificatie en straks de acceptatietest)
-**Versie:** 0.1.0 · **Afhankelijk van:** [swf-gebiedsindelingen](../swf-gebiedsindelingen/README.md)
+**Versie:** 0.2.0 · **Afhankelijk van:** [swf-gebiedsindelingen](../swf-gebiedsindelingen/README.md)
 **Manifest:** [`usecase.json`](usecase.json) · **Controleren:** `python -m omnitwin.usecases controleer swf-kaartlagen`
 
 ## Vraag

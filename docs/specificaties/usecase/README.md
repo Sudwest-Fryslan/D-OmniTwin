@@ -121,7 +121,7 @@ Het manifest `usecase.json` is een JSON-object (UTF-8) dat MOET voldoen aan [`1.
 | `status` | `ontwerp` \| `actief` \| `verouderd` | volledige vorm | levenscyclus (zie 13) |
 | `veroudering` | object | bij `verouderd` | `sinds`, `verwijderen_na`, `vervangen_door`, `reden` (zie 13) |
 | `afhankelijk_van` | array | volledige vorm | andere use cases die eerst geïnstalleerd moeten zijn (zie 9) |
-| `actoren` | array van actor | nee (*gereserveerd*, #223) | gebruikers en machineclients met rollen (zie 10) |
+| `actoren` | array van actor | nee | gebruikers en machineclients met rollen (zie 10) |
 | `rechten` | array van string | volledige vorm | Keycloak-rollen die de use case nodig heeft (zie 10) |
 | `datasets` | array van dataset | volledige vorm | datasets die de use case registreert en levert (zie 6) |
 | `controles` | array van controle | volledige vorm | toetsbare controles (zie 11) |
@@ -290,7 +290,7 @@ Regels voor de uitvoerder:
 
 ## 10. Actoren en rechten
 
-### 10.1 Actoren (gereserveerd, #223)
+### 10.1 Actoren
 
 `actoren` declareert wie de use case gebruikt: mensen en machines, met hun rollen. Een use case MOET NIET wachtwoorden, client secrets, tokens of andere geheimen bevatten.
 
@@ -301,12 +301,17 @@ Regels voor de uitvoerder:
 | `rollen` | array van string | **ja** | Keycloak-rollen: realm-rol (`beheerder`, `lezer`) of client-rol op `omnitwin-api` (`dataset:<id>:laden`, `datasets:laden`) |
 | `omschrijving` | string | nee | wie of wat de actor is |
 
-Testaccounts (uitvoering in #223):
+Een rol zonder `:` is een realm-rol en MOET in de realm bestaan; een rol met `:` is een client-rol op `omnitwin-api`. De `naam` van een actor MOET uniek zijn binnen de use case. AANBEVOLEN: `client` in `datasets[]` is de naam van de machineclient-actor die de dataset levert, en die actor heeft alleen `dataset:<id>:laden` voor zijn eigen datasets.
 
-- de uitvoerder MAG actoren als testaccount aanmaken, **alleen in test en dev**: met `installeer --testaccounts`, alleen als `OMNITWIN_TESTACCOUNTS=1` en niet `OMNITWIN_OMGEVING=productie`;
-- naam `uc-<usecase>-<actor>`, met een kenmerk voor de levensduur;
-- wachtwoorden en secrets worden willekeurig gegenereerd en staan alleen lokaal (`.usecase-accounts.json`, in `.gitignore`) of in de omgeving van de testrun; ze MOETEN NIET gelogd of gecommit worden;
-- `opruimen <naam>` verwijdert de testaccounts op prefix;
+Testaccounts (https://github.com/TLaan/D-OmniTwin/issues/223):
+
+- de uitvoerder MAG actoren als testaccount aanmaken, **alleen in test en dev**: met `installeer --testaccounts` of `test --testaccounts`, alleen als `OMNITWIN_TESTACCOUNTS=1` en niet `OMNITWIN_OMGEVING=productie`; anders weigert hij (exitcode 2);
+- hij doet dat voor de use case en zijn afhankelijkheden, via de admin-API van Keycloak in de realm van de installatie; bestaande testaccounts van dezelfde use case worden eerst verwijderd;
+- naam `uc-<usecase>-<actor>`: een gebruiker met een wachtwoord, of een machineclient (client credentials) met een secret; voor de tokens van de gebruikers één public client `uc-<usecase>--login` met alleen de wachtwoordgrant;
+- kenmerk: de clients hebben de attributen `omnitwin.usecase` en `omnitwin.testaccount.tot` (levensduur, standaard 24 uur); de gebruikers heten `Testaccount <usecase>`;
+- wachtwoorden en secrets worden willekeurig gegenereerd en staan alleen lokaal (`.usecase-accounts.json`, in `.gitignore`); ze MOETEN NIET gelogd of gecommit worden;
+- met testaccounts registreert de uitvoerder als de actor met de realm-rol `beheerder`, levert hij als de `client` van de dataset (of de actor met de rol van de dataset), en voert hij controles met `actor` uit als die actor; ontbreekt een passende actor, dan de machineclient uit de omgeving;
+- `opruimen <naam>` verwijdert de testaccounts van de use case en zijn afhankelijkheden: alleen accounts met het prefix `uc-<usecase>-` én het kenmerk van die use case;
 - in productie wijst een beheerder de rollen toe in Keycloak; de use case laat alleen zien welke nodig zijn.
 
 ### 10.2 Rechten
@@ -321,7 +326,7 @@ In 1.0 is `rechten` documentatie: de uitvoerder en D-OmniTwin dwingen het niet a
 
 ## 11. Controles
 
-Een controle is een toetsbare bewering. Elke controle heeft `type` en MAG `omschrijving` (wat hij aantoont) en `actor` (*gereserveerd*, #223: wie hem uitvoert; nu altijd de machineclient uit de omgeving) hebben. Een controle met `dataset` MOET verwijzen naar een `id` in `datasets[]`.
+Een controle is een toetsbare bewering. Elke controle heeft `type` en MAG `omschrijving` (wat hij aantoont) en `actor` hebben. `actor` MOET een `naam` uit `actoren` zijn: met testaccounts voert die actor de controle uit, zonder testaccounts de machineclient uit de omgeving. Een controle met `dataset` MOET verwijzen naar een `id` in `datasets[]`, behalve bij `recht`.
 
 ### 11.1 Typen
 
@@ -334,6 +339,7 @@ Een controle is een toetsbare bewering. Elke controle heeft `type` en MAG `omsch
 | `idempotent` | `dataset` | alleen tegen een installatie | dezelfde levering twee keer: dezelfde datasetversie |
 | `chat` | `vraag`, `bevat` | alleen tegen een installatie | de assistent beantwoordt `vraag`; het antwoord bevat elke tekst uit `bevat`; *gereserveerd*: nu overgeslagen, aangetoond via bewijs |
 | `viewer` | `stap`, `verwacht`, `bevat`?, `gebied`?, `uuid`? | alleen tegen een installatie | de gebruiker doet `stap` en ziet `verwacht`; *gereserveerd*: nu handmatig, aangetoond via bewijs |
+| `recht` | `actor`, `actie`, `dataset` (niet bij `registreren`), `toegestaan` | alleen tegen een installatie | alleen met testaccounts, anders overgeslagen: de actor doet `actie` (`registreren`: `POST /api/laden/v1/datasets`; `leveren`: een levering aan `dataset`, route `laden` of `compat`; `lezen`: `GET /api/laden/v1/datasets/{dataset}`) met een ongeldige parameter of body, zodat er niets verandert; geslaagd als het antwoord 403 is bij `toegestaan: false`, en geen 401 of 403 bij `toegestaan: true`. `dataset` MAG een dataset van een andere use case zijn (de ETL-client krijgt 403 op een andere dataset) |
 
 `pad` MOET een pad op de installatie zijn (begint met `/`), zonder host. `gelijk`, `minimaal` en `maximaal` MOGEN gecombineerd worden; alle opgegeven grenzen moeten kloppen. `uuid` (indicator) en `gebied` (gebiedscode, bijv. `BU19000002`) zijn context voor de lezer en voor bewijs. `verwacht` is een vrije beschrijving of waarde. Bij `afkeuring` en `idempotent` is `variant` de naam uit `varianten` van het datasetbestand.
 
@@ -345,7 +351,7 @@ Elke controle heeft één resultaat: `ok`, `fout`, `overgeslagen` (bron of funct
 - Een use case is **geslaagd** als `test` tegen een verse installatie geen controle met resultaat `fout` geeft.
 - Een use case is **aangetoond** als hij geslaagd is en het bewijs (12) bij de huidige release hoort.
 
-Een use case met status `actief` MOET geldig zijn (unittest), MOET geslaagd zijn bij elke release, en daarbij MOET elke controle van type `aantal`, `bewerking`, `api`, `afkeuring` en `idempotent` het resultaat `ok` hebben. `chat`- en `viewer`-controles MOGEN `overgeslagen` zijn zolang de uitvoerder ze niet uitvoert, mits het bewijs ze laat zien.
+Een use case met status `actief` MOET geldig zijn (unittest), MOET geslaagd zijn bij elke release, en daarbij MOET elke controle van type `aantal`, `bewerking`, `api`, `afkeuring` en `idempotent` het resultaat `ok` hebben, en met `--testaccounts` ook elke controle van type `recht`. `chat`- en `viewer`-controles MOGEN `overgeslagen` zijn zolang de uitvoerder ze niet uitvoert, mits het bewijs ze laat zien.
 
 ## 12. Bewijs
 
@@ -452,11 +458,11 @@ De uitvoerder is `python -m omnitwin.usecases <commando>`. Elke uitvoerder van d
 | `boom <naam>` | afhankelijkheden als boom, met versie, status en `(optioneel)` | nee | 0; 2 bij cyclus of onbekende naam |
 | `index [--controleer]` | de index in `usecases/README.md` bijwerken, of alleen vergelijken | nee | 0; 1 als hij niet actueel is (`--controleer`) |
 | `controleer <naam> [--uit MAP] [--variant NAAM]` | manifest, bestanden, afhankelijkheden, registraties; leveringen maken uit de bron en valideren tegen het profiel; lokale controles; schrijft `controle.json` in de uitvoermap | bronnen wel, installatie niet | 0 als geldig; 1 als niet geldig; 2 bij een fout in de afhankelijkheden |
-| `installeer <naam> … \| --alle` | in topologische volgorde: verouderde vorm via `laad_usecase.py`; volledige vorm via de laad-API: registreren (route `laden`/`compat`: `POST`, of `PUT` als hij bestaat), levering maken, aanbieden met `Idempotency-Key` `<dataset>-<sha256[:16]>`; route `beheer`: `PUT <beheerpad>/<id>` | ja | 0, ook als de laad-API er (nog) niet is (met melding); 2 bij een fout in de afhankelijkheden |
-| `test <naam>` | `installeer` (ook bij status `ontwerp`) en dan de controles tegen de installatie | ja | 0 als geen controle `fout` is of de laad-API er nog niet is; 1 anders |
+| `installeer <naam> … \| --alle [--testaccounts]` | met `--testaccounts` eerst de actoren als testaccounts (10.1); in topologische volgorde: verouderde vorm via `laad_usecase.py`; volledige vorm via de laad-API: registreren (route `laden`/`compat`: `POST`, of `PUT` als hij bestaat), levering maken, aanbieden met `Idempotency-Key` `<dataset>-<sha256[:16]>`; route `beheer`: `PUT <beheerpad>/<id>` | ja | 0, ook als de laad-API er (nog) niet is (met melding); 2 bij een fout in de afhankelijkheden |
+| `test <naam> [--testaccounts]` | `installeer` (ook bij status `ontwerp`) en dan de controles tegen de installatie; met `--testaccounts` als de actoren (10.1), met de rechtencontroles | ja | 0 als geen controle `fout` is of de laad-API er nog niet is; 1 anders |
 | `bewijs <naam> … \| --alle [--zip PAD] [--zonder-volledig]` | bewijsstappen uitvoeren met Playwright, screenshots en `bewijs.json` schrijven, README's en galerij bijwerken (12); `--alle`: actieve use cases met `bewijs.stappen` | ja (en een browser: Playwright-image) | 0 als elke gemaakte use case geslaagd is; 1 anders |
 | `galerij [--controleer]` | de galerij in `README.md` en de screenshots in de README's van de use cases bijwerken, of alleen vergelijken (12.3) | nee | 0; 1 als ze niet actueel zijn (`--controleer`) |
-| `opruimen <naam>` | testaccounts van de use case verwijderen (10.1) | ja | *gereserveerd* (#223): nog niet beschikbaar |
+| `opruimen <naam> …` | testaccounts van de use case en zijn afhankelijkheden verwijderen (10.1); mag ook buiten test en dev | ja | 0; 2 bij een fout |
 
 Omgeving:
 
@@ -467,7 +473,10 @@ Omgeving:
 | `OMNITWIN_TOKEN_URL`, `KEYCLOAK_REALM` | tokenendpoint, of discovery van de realm (standaard `omnitwin`) |
 | `SWF_DUMP_DIR`, `SWF_DOCS_DIR`, `SWF_GEO_DIR`, `SWF_DB_DUMP`, `DATA_CACHE` | interne bronnen en de downloadcache (zie 7) |
 | `OMNITWIN_BRON_DOMEINEN` | extra downloaddomeinen |
-| `OMNITWIN_TESTACCOUNTS`, `OMNITWIN_OMGEVING` | testaccounts toestaan of weigeren (*gereserveerd*, #223) |
+| `OMNITWIN_TESTACCOUNTS`, `OMNITWIN_OMGEVING` | testaccounts alleen met `OMNITWIN_TESTACCOUNTS=1` en niet `OMNITWIN_OMGEVING=productie` (10.1) |
+| `KEYCLOAK_ADMIN_CLIENT_ID`, `KEYCLOAK_ADMIN_CLIENT_SECRET` | toegang tot de admin-API voor testaccounts: service account in de realm met de `realm-management`-rollen `manage-users`, `manage-clients`, `view-realm`, `view-clients` en `query-users` |
+| `KEYCLOAK_ADMIN`, `KEYCLOAK_ADMIN_PASSWORD` | anders: de (tijdelijke) beheerder van realm `master` (standaard `admin`) |
+| `KEYCLOAK_URL`, `OMNITWIN_TESTACCOUNTS_UUR`, `OMNITWIN_TESTACCOUNTS_BESTAND` | adres van Keycloak (standaard `OMNITWIN_BASE_URL` + `/auth`), levensduur (uren, standaard 24) en bestand met de geheimen (standaard `.usecase-accounts.json`) |
 
 Verder MOET een uitvoerder:
 
@@ -600,6 +609,8 @@ De voorbeelden zijn geldig volgens de schema's; de unittest `tests/test_usecase_
     {"type": "api", "pad": "/api/laden/v1/datasets/cbs-gebied-gemeenten", "anoniem": true, "status": 401, "omschrijving": "zonder token geen toegang"},
     {"type": "afkeuring", "dataset": "cbs-gebied-gemeenten", "variant": "zonder-codes", "code": "schema-ongeldig", "actor": "etl-cbs"},
     {"type": "idempotent", "dataset": "cbs-gebied-gemeenten", "actor": "etl-cbs"},
+    {"type": "recht", "actor": "etl-cbs", "actie": "leveren", "dataset": "cbs-kerncijfers", "toegestaan": false, "omschrijving": "alleen de eigen dataset (403)"},
+    {"type": "recht", "actor": "lezer", "actie": "registreren", "toegestaan": false},
     {"type": "chat", "vraag": "Hoeveel gemeenten heeft Fryslân?", "bevat": ["18"]},
     {"type": "viewer", "stap": "kaart, gebiedstype Gemeente", "verwacht": "18 gemeenten zichtbaar", "gebied": "GM1900"}
   ],
@@ -687,6 +698,7 @@ Een bewijsverslag `bewijs/bewijs.json` (ingekort):
 
 | Versie | Datum | Wijziging |
 |---|---|---|
+| 1.0 | 2026-10-03 | Aanvulling (https://github.com/TLaan/D-OmniTwin/issues/223; formeel een minor, 1.0 is nog niet vastgesteld): `actoren` en `actor` bij controles niet meer gereserveerd; testaccounts in test en dev (`installeer`/`test --testaccounts`, `opruimen`); controletype `recht` met `actie` en `toegestaan`. Alle bestaande manifesten blijven geldig. |
 | 1.0 | 2026-10-03 | Aanvulling (https://github.com/TLaan/D-OmniTwin/issues/225): `bewijs.stappen` en het bewijsverslag zijn niet meer gereserveerd; de uitvoerder voert ze uit (12.1, 12.2), met de galerij in de root-README en het commando `galerij` (12.3, 14). `indicator` mag ook bij `kompas`. Het compacte bewijs staat in git. Alle bestaande manifesten blijven geldig. |
 | 1.0 | 2026-10-02 | Aanvulling (voorstel, https://github.com/TLaan/D-OmniTwin/issues/236; formeel een minor, 1.0 is nog niet vastgesteld): adapters `cbs-statline` en `wcs-zonaal`, domein `dataderden.cbs.nl`, varianten met `bron`, `bewerkingen`, `beschrijving` en `als_beschikbaar` (demodata als plaatsvervanger voor een interne bron), geen uitzondering meer voor code in een use case. Alle bestaande manifesten blijven geldig. |
 | 1.0 | 2026-10-02 | Eerste versie (https://github.com/TLaan/D-OmniTwin/issues/227). Vastgelegd wat sinds #219 gold (manifest, datasets, bronadapters, bewerkingen, afhankelijkheden, controles, uitvoerder). Nieuw: veld `specificatie` (verplicht), `naam` en `versie` verplicht, `actoren` en `bewijs.stappen` (gereserveerd), `veroudering`, patroon voor `rechten`, status `verouderd` in plaats van `vervallen`, geen onbekende velden meer in manifest, `datasets[]` en `controles[]`, schema `bewijs.schema.json`. Schema's verhuisd van `usecases/` naar `docs/specificaties/usecase/1.0/`. |

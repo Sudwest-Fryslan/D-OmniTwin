@@ -2,7 +2,7 @@
   "specificatie": "1.0",
   "naam": "swf-gebiedsindelingen",
   "id": "TC-07-004",
-  "versie": "0.1.0",
+  "versie": "0.2.0",
   "titel": "SWF-gebiedsindelingen als GeoPackage-leveringen",
   "vraag": "Ik wil de gebiedsindelingen van de monitor (welstand × buurt, buurtdelen binnen/buiten de kom, woonplaatsen, postcodes, bebouwde kom, deelgebieden, coördinatorgebieden) als gebieden met geometrie in D-OmniTwin, in plaats van live uit de WFS.",
   "gebruiker": "functioneel beheerder SWF / GIS-specialist",
@@ -10,6 +10,38 @@
   "afhankelijk_van": [
     "swf-definities",
     "cbs-gebiedsindelingen"
+  ],
+  "actoren": [
+    {
+      "naam": "beheerder",
+      "soort": "gebruiker",
+      "rollen": [
+        "beheerder"
+      ],
+      "omschrijving": "beheerder van D-OmniTwin: registreert de datasets"
+    },
+    {
+      "naam": "etl-swf",
+      "soort": "machineclient",
+      "rollen": [
+        "dataset:swf-gebied-welstand-buurt:laden",
+        "dataset:swf-gebied-buurt-bebouwde-kom:laden",
+        "dataset:swf-gebied-woonplaats:laden",
+        "dataset:swf-gebied-postcode:laden",
+        "dataset:swf-gebied-bebouwde-kom:laden",
+        "dataset:swf-gebied-deelgebieden:laden",
+        "dataset:swf-gebied-coordinatorgebieden:laden"
+      ],
+      "omschrijving": "ETL van SWF (bijv. FME): levert alleen de eigen datasets"
+    },
+    {
+      "naam": "lezer",
+      "soort": "gebruiker",
+      "rollen": [
+        "lezer"
+      ],
+      "omschrijving": "ingelogde medewerker: ziet ook wat niet openbaar is, laadt niets"
+    }
   ],
   "rechten": [
     "realm-rol beheerder (registreren)",
@@ -19,7 +51,8 @@
     "dataset:swf-gebied-postcode:laden",
     "dataset:swf-gebied-bebouwde-kom:laden",
     "dataset:swf-gebied-deelgebieden:laden",
-    "dataset:swf-gebied-coordinatorgebieden:laden"
+    "dataset:swf-gebied-coordinatorgebieden:laden",
+    "realm-rol lezer"
   ],
   "datasets": [
     {
@@ -168,7 +201,53 @@
     },
     {
       "type": "idempotent",
-      "dataset": "swf-gebied-deelgebieden"
+      "dataset": "swf-gebied-deelgebieden",
+      "actor": "etl-swf"
+    },
+    {
+      "type": "recht",
+      "actor": "beheerder",
+      "actie": "registreren",
+      "toegestaan": true,
+      "omschrijving": "de beheerder mag datasets registreren"
+    },
+    {
+      "type": "recht",
+      "actor": "etl-swf",
+      "actie": "leveren",
+      "dataset": "swf-gebied-welstand-buurt",
+      "toegestaan": true,
+      "omschrijving": "etl-swf mag zijn eigen dataset leveren"
+    },
+    {
+      "type": "recht",
+      "actor": "etl-swf",
+      "actie": "leveren",
+      "dataset": "cbs-kerncijfers",
+      "toegestaan": false,
+      "omschrijving": "etl-swf mag een andere dataset niet leveren (403)"
+    },
+    {
+      "type": "recht",
+      "actor": "etl-swf",
+      "actie": "registreren",
+      "toegestaan": false,
+      "omschrijving": "etl-swf mag niet registreren (403)"
+    },
+    {
+      "type": "recht",
+      "actor": "lezer",
+      "actie": "leveren",
+      "dataset": "swf-gebied-welstand-buurt",
+      "toegestaan": false,
+      "omschrijving": "een lezer mag niet laden (403)"
+    },
+    {
+      "type": "recht",
+      "actor": "lezer",
+      "actie": "registreren",
+      "toegestaan": false,
+      "omschrijving": "een lezer mag niet registreren (403)"
     }
   ],
   "bekende_afwijkingen": [

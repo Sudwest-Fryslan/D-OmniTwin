@@ -2,17 +2,46 @@
   "specificatie": "1.0",
   "naam": "cbs-gebiedsindelingen",
   "id": "TC-07-001",
-  "versie": "0.1.0",
+  "versie": "0.2.0",
   "titel": "CBS-gebiedsindelingen (buurten, wijken, gemeenten) via de laad-API",
   "vraag": "Ik wil de CBS-buurten, -wijken en -gemeenten van Fryslân in D-OmniTwin, met dezelfde codes als het CBS, zodat elke andere use case er waarden aan kan hangen.",
   "gebruiker": "beheerder D-OmniTwin",
   "status": "actief",
   "afhankelijk_van": [],
+  "actoren": [
+    {
+      "naam": "beheerder",
+      "soort": "gebruiker",
+      "rollen": [
+        "beheerder"
+      ],
+      "omschrijving": "beheerder van D-OmniTwin: registreert de datasets"
+    },
+    {
+      "naam": "etl-cbs",
+      "soort": "machineclient",
+      "rollen": [
+        "dataset:cbs-gebied-buurten:laden",
+        "dataset:cbs-gebied-wijken:laden",
+        "dataset:cbs-gebied-gemeenten:laden"
+      ],
+      "omschrijving": "ETL voor de CBS-bronnen: levert alleen de eigen datasets"
+    },
+    {
+      "naam": "lezer",
+      "soort": "gebruiker",
+      "rollen": [
+        "lezer"
+      ],
+      "omschrijving": "ingelogde medewerker: ziet ook wat niet openbaar is, laadt niets"
+    }
+  ],
   "rechten": [
     "realm-rol beheerder (registreren)",
     "dataset:cbs-gebied-buurten:laden",
     "dataset:cbs-gebied-wijken:laden",
-    "dataset:cbs-gebied-gemeenten:laden"
+    "dataset:cbs-gebied-gemeenten:laden",
+    "realm-rol lezer"
   ],
   "datasets": [
     {
@@ -91,7 +120,53 @@
     {
       "type": "idempotent",
       "dataset": "cbs-gebied-gemeenten",
-      "omschrijving": "dezelfde levering twee keer = één versie"
+      "omschrijving": "dezelfde levering twee keer = één versie",
+      "actor": "etl-cbs"
+    },
+    {
+      "type": "recht",
+      "actor": "beheerder",
+      "actie": "registreren",
+      "toegestaan": true,
+      "omschrijving": "de beheerder mag datasets registreren"
+    },
+    {
+      "type": "recht",
+      "actor": "etl-cbs",
+      "actie": "leveren",
+      "dataset": "cbs-gebied-buurten",
+      "toegestaan": true,
+      "omschrijving": "etl-cbs mag zijn eigen dataset leveren"
+    },
+    {
+      "type": "recht",
+      "actor": "etl-cbs",
+      "actie": "leveren",
+      "dataset": "cbs-kerncijfers",
+      "toegestaan": false,
+      "omschrijving": "etl-cbs mag een andere dataset niet leveren (403)"
+    },
+    {
+      "type": "recht",
+      "actor": "etl-cbs",
+      "actie": "registreren",
+      "toegestaan": false,
+      "omschrijving": "etl-cbs mag niet registreren (403)"
+    },
+    {
+      "type": "recht",
+      "actor": "lezer",
+      "actie": "leveren",
+      "dataset": "cbs-gebied-buurten",
+      "toegestaan": false,
+      "omschrijving": "een lezer mag niet laden (403)"
+    },
+    {
+      "type": "recht",
+      "actor": "lezer",
+      "actie": "registreren",
+      "toegestaan": false,
+      "omschrijving": "een lezer mag niet registreren (403)"
     }
   ],
   "bewijs": {

@@ -2,7 +2,7 @@
   "specificatie": "1.0",
   "naam": "swf-adapter-fme",
   "id": "TC-07-009",
-  "versie": "0.1.0",
+  "versie": "0.2.0",
   "titel": "SWF-adapter: dezelfde FME-push naar D-OmniTwin",
   "vraag": "Kan SWF de bestaande FME-workspaces laten leveren aan D-OmniTwin door alleen de basis-URL en de client te wijzigen, en is een herhaalde push veilig?",
   "gebruiker": "data-engineer DWH (SWF)",
@@ -11,9 +11,37 @@
     "swf-definities",
     "cbs-gebiedsindelingen"
   ],
+  "actoren": [
+    {
+      "naam": "beheerder",
+      "soort": "gebruiker",
+      "rollen": [
+        "beheerder"
+      ],
+      "omschrijving": "beheerder van D-OmniTwin: registreert de datasets"
+    },
+    {
+      "naam": "etl-swf",
+      "soort": "machineclient",
+      "rollen": [
+        "dataset:swf-monitor-definities:laden",
+        "dataset:swf-monitor-waarden:laden"
+      ],
+      "omschrijving": "ETL van SWF (bijv. FME): levert alleen de eigen datasets"
+    },
+    {
+      "naam": "lezer",
+      "soort": "gebruiker",
+      "rollen": [
+        "lezer"
+      ],
+      "omschrijving": "ingelogde medewerker: ziet ook wat niet openbaar is, laadt niets"
+    }
+  ],
   "rechten": [
     "dataset:swf-monitor-definities:laden",
-    "dataset:swf-monitor-waarden:laden"
+    "dataset:swf-monitor-waarden:laden",
+    "realm-rol lezer"
   ],
   "datasets": [
     {
@@ -66,22 +94,26 @@
       "dataset": "swf-monitor-definities",
       "variant": "ruw",
       "code": "schema-ongeldig",
-      "omschrijving": "de huidige push met status A: 422, FME zet hem op Rejected; niets gepubliceerd"
+      "omschrijving": "de huidige push met status A: 422, FME zet hem op Rejected; niets gepubliceerd",
+      "actor": "etl-swf"
     },
     {
       "type": "afkeuring",
       "dataset": "swf-monitor-waarden",
       "variant": "met-fouten",
-      "code": "jaar-ongeldig"
+      "code": "jaar-ongeldig",
+      "actor": "etl-swf"
     },
     {
       "type": "idempotent",
       "dataset": "swf-monitor-definities",
-      "omschrijving": "dezelfde body nog een keer: geen nieuwe versie (sha256)"
+      "omschrijving": "dezelfde body nog een keer: geen nieuwe versie (sha256)",
+      "actor": "etl-swf"
     },
     {
       "type": "idempotent",
-      "dataset": "swf-monitor-waarden"
+      "dataset": "swf-monitor-waarden",
+      "actor": "etl-swf"
     },
     {
       "type": "api",
@@ -101,6 +133,51 @@
       "pad": "/api/laden/v1/compat/swf-monitor/monitor_api/indicator_waarde",
       "minimaal_aantal": 33041,
       "omschrijving": "gepubliceerd en terug in het SWF-formaat: minstens de 33.041 waarden op CBS-buurten; 43.097 als ook de welstandsgebieden en buurten bebouwde komgrens er zijn (swf-gebiedsindelingen)"
+    },
+    {
+      "type": "recht",
+      "actor": "beheerder",
+      "actie": "registreren",
+      "toegestaan": true,
+      "omschrijving": "de beheerder mag datasets registreren"
+    },
+    {
+      "type": "recht",
+      "actor": "etl-swf",
+      "actie": "leveren",
+      "dataset": "swf-monitor-definities",
+      "toegestaan": true,
+      "omschrijving": "etl-swf mag zijn eigen dataset leveren"
+    },
+    {
+      "type": "recht",
+      "actor": "etl-swf",
+      "actie": "leveren",
+      "dataset": "cbs-kerncijfers",
+      "toegestaan": false,
+      "omschrijving": "etl-swf mag een andere dataset niet leveren (403)"
+    },
+    {
+      "type": "recht",
+      "actor": "etl-swf",
+      "actie": "registreren",
+      "toegestaan": false,
+      "omschrijving": "etl-swf mag niet registreren (403)"
+    },
+    {
+      "type": "recht",
+      "actor": "lezer",
+      "actie": "leveren",
+      "dataset": "swf-monitor-definities",
+      "toegestaan": false,
+      "omschrijving": "een lezer mag niet laden (403)"
+    },
+    {
+      "type": "recht",
+      "actor": "lezer",
+      "actie": "registreren",
+      "toegestaan": false,
+      "omschrijving": "een lezer mag niet registreren (403)"
     }
   ],
   "bewijs": {
