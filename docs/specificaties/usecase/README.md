@@ -125,7 +125,7 @@ Het manifest `usecase.json` is een JSON-object (UTF-8) dat MOET voldoen aan [`1.
 | `rechten` | array van string | volledige vorm | Keycloak-rollen die de use case nodig heeft (zie 10) |
 | `datasets` | array van dataset | volledige vorm | datasets die de use case registreert en levert (zie 6) |
 | `controles` | array van controle | volledige vorm | toetsbare controles (zie 11) |
-| `bewijs` | object | nee (*gereserveerd*, #225) | `stappen` voor de screenshots (zie 12) |
+| `bewijs` | object | nee; AANBEVOLEN bij `actief` | `stappen` voor de screenshots (zie 12) |
 | `bekende_afwijkingen` | array van string | nee | bekende verschillen met de verwachting of de bron, met reden |
 | `persona` | object | verouderde vorm | rol, vraag en besluit van de gebruiker |
 | `data` | object | verouderde vorm | gebiedstype, focusgebied, gebieden, indicatoren met richting |
@@ -351,7 +351,7 @@ Een use case met status `actief` MOET geldig zijn (unittest), MOET geslaagd zijn
 
 Bewijs laat zien dat de use case werkt en wat je krijgt als je hem installeert. Besluiten: https://github.com/TLaan/D-OmniTwin/issues/225.
 
-### 12.1 Bewijsstappen in het manifest (gereserveerd, #225)
+### 12.1 Bewijsstappen in het manifest
 
 `bewijs.stappen` is een lijst van **2 tot 4** stappen; elke stap levert één scherm `bewijs/<id>.webp`. Stappen zijn declaratief: een vaste actie met parameters, geen selectors of scripts.
 
@@ -363,7 +363,7 @@ Bewijs laat zien dat de use case werkt en wat je krijgt als je hem installeert. 
 | `actor` | string | nee | actor die ingelogd is; zonder actor anoniem |
 | `pad` | string, begint met `/` | bij `open`, `beheer` | pagina op de installatie, zonder host |
 | `gebied` | string | nee | gebiedscode die geselecteerd wordt (`kaart`, `kompas`) |
-| `indicator` | string | nee | indicator-UUID of -naam op de kaart (`kaart`) |
+| `indicator` | string | nee | indicator-UUID of -naam op de kaart (`kaart`, `kompas`) |
 | `profiel` | string | nee | Kompas-profiel (`kompas`) |
 | `vraag` | string | bij `chat` | vraag aan de assistent |
 | `dataset` | string | bij `levering` | dataset waarvan de leveringsstatus wordt getoond |
@@ -371,9 +371,18 @@ Bewijs laat zien dat de use case werkt en wat je krijgt als je hem installeert. 
 
 Acties: `open` (pagina openen), `kaart` (viewer met gebied en indicator), `kompas` (Kompas voor een gebied, eventueel een profiel), `chat` (vraag stellen en antwoord tonen), `levering` (status van de laatste levering in beheer), `beheer` (een beheerpagina openen).
 
+Zo voert de referentie-uitvoerder ([`src/omnitwin/usecase_bewijs.py`](../../../src/omnitwin/usecase_bewijs.py)) ze uit, met Playwright in een eigen browsercontext per stap (viewport 1440 × 860, licht thema, zonder animaties):
+
+- `kaart`: gebiedstype CBS Buurten, het gemeentefilter van `gebied` (BU19000002 → Súdwest-Fryslân), de indicator op de kaart en het gebied geselecteerd, via hetzelfde codepad als 'Toon op kaart' in de chat. In beeld: de wijk van een buurt, of de hele gemeente bij een gemeentecode. Het gemeentefilter houdt de kaart klein genoeg voor software-WebGL.
+- `kompas`: als `kaart`, dan het Kompas voor het gebied (met `profiel` de Kompas-configuratie met die naam); het venster staat rechts, de kaart links.
+- `chat`: de vraag via het invoerveld; zonder taalmodel antwoordt de assistent met de datavraag-route of een scenario. Het antwoord komt in het verslag.
+- `levering`: dataset en laatste levering van de laad-API, als statuspagina; daarvoor is een machineclient met leesrecht nodig (`OMNITWIN_CLIENT_ID`, `OMNITWIN_CLIENT_SECRET`).
+- `beheer`: inloggen met `ADMIN_USER`/`ADMIN_PASSWORD` tot de testaccounts er zijn (#223).
+- Een stap is `fout` als de pagina niet laadt, gebied, indicator of dataset niet gevonden wordt, of een tekst uit `bevat` niet zichtbaar is; het scherm wordt dan toch bewaard.
+
 ### 12.2 Bewijsverslag `bewijs/bewijs.json`
 
-De uitvoerder (`bewijs <naam>`, *gereserveerd*) schrijft een verslag dat MOET voldoen aan [`1.0/bewijs.schema.json`](1.0/bewijs.schema.json):
+De uitvoerder (`bewijs <naam>`) schrijft een verslag dat MOET voldoen aan [`1.0/bewijs.schema.json`](1.0/bewijs.schema.json):
 
 | Veld | Type | Verplicht | Betekenis |
 |---|---|---|---|
@@ -391,6 +400,8 @@ De uitvoerder (`bewijs <naam>`, *gereserveerd*) schrijft een verslag dat MOET vo
 
 Het verslag MOET NIET hostnamen, tokens, wachtwoorden of persoonsgegevens bevatten.
 
+Controles in het verslag: `api` en `aantal` voert `bewijs` uit tegen de installatie (`aantal` en `api` zonder `anoniem` alleen met een machineclient, anders `overgeslagen`); `idempotent` en `afkeuring` maken een levering uit de bron en horen bij `test` (hier `overgeslagen`); `chat` en `viewer` zijn `overgeslagen` en worden met de schermen aangetoond. Een use case waarvan een dataset nog geen levering heeft (bron hier niet beschikbaar, bijv. zonder `SWF_DUMP_DIR`), slaat `bewijs` over; het bestaande bewijs blijft dan staan.
+
 ### 12.3 Afbeeldingen, git en release
 
 - Afbeeldingen MOETEN WebP zijn, met een vaste viewport (1440 × 860), **≤ 150 KB** per afbeelding, **maximaal 4** per use case: alleen de belangrijkste schermen.
@@ -400,7 +411,7 @@ Het verslag MOET NIET hostnamen, tokens, wachtwoorden of persoonsgegevens bevatt
 - Een unittest bewaakt de maximale grootte en het maximale aantal afbeeldingen per use case.
 - Screenshots van de SWF-use cases MOGEN in de repository en de galerij: de data is openbaar.
 
-*Uitvoering in #225:* tot dan sluit `.gitignore` `bewijs/*` (behalve `README.md`) nog uit en maakt `scripts/docs/maak_usecase_bewijs.py` het bewijs voor de demopakketten.
+Uitvoering: de uitvoerder comprimeert elk scherm tot WebP ≤ 150 KB (eerst lagere kwaliteit, pas daarna kleiner), bewaart het origineel in `bewijs/volledig/` (niet in git) en maakt met `--zip PAD` de zip voor de release. Daarna werkt hij de README's bij: in de README van de use case het blok tussen `<!-- bewijs:start -->` en `<!-- bewijs:end -->` (onder `## Bewijs`), in de root-`README.md` de galerij tussen `<!-- usecase-galerij:start -->` en `<!-- usecase-galerij:end -->`, met per actieve use case met bewijs het eerste scherm, de titel, de vraag en een link. Alleen bijwerken zonder nieuwe schermen: `galerij`. `.gitignore` laat van `bewijs/` alleen `*.webp`, `bewijs.json` en `README.md` toe.
 
 ## 13. Levenscyclus en status
 
@@ -443,7 +454,8 @@ De uitvoerder is `python -m omnitwin.usecases <commando>`. Elke uitvoerder van d
 | `controleer <naam> [--uit MAP] [--variant NAAM]` | manifest, bestanden, afhankelijkheden, registraties; leveringen maken uit de bron en valideren tegen het profiel; lokale controles; schrijft `controle.json` in de uitvoermap | bronnen wel, installatie niet | 0 als geldig; 1 als niet geldig; 2 bij een fout in de afhankelijkheden |
 | `installeer <naam> … \| --alle` | in topologische volgorde: verouderde vorm via `laad_usecase.py`; volledige vorm via de laad-API: registreren (route `laden`/`compat`: `POST`, of `PUT` als hij bestaat), levering maken, aanbieden met `Idempotency-Key` `<dataset>-<sha256[:16]>`; route `beheer`: `PUT <beheerpad>/<id>` | ja | 0, ook als de laad-API er (nog) niet is (met melding); 2 bij een fout in de afhankelijkheden |
 | `test <naam>` | `installeer` (ook bij status `ontwerp`) en dan de controles tegen de installatie | ja | 0 als geen controle `fout` is of de laad-API er nog niet is; 1 anders |
-| `bewijs <naam>` | bewijsstappen uitvoeren, screenshots en `bewijs.json` schrijven (12) | ja | *gereserveerd* (#225): nu een melding, 0 |
+| `bewijs <naam> … \| --alle [--zip PAD] [--zonder-volledig]` | bewijsstappen uitvoeren met Playwright, screenshots en `bewijs.json` schrijven, README's en galerij bijwerken (12); `--alle`: actieve use cases met `bewijs.stappen` | ja (en een browser: Playwright-image) | 0 als elke gemaakte use case geslaagd is; 1 anders |
+| `galerij [--controleer]` | de galerij in `README.md` en de screenshots in de README's van de use cases bijwerken, of alleen vergelijken (12.3) | nee | 0; 1 als ze niet actueel zijn (`--controleer`) |
 | `opruimen <naam>` | testaccounts van de use case verwijderen (10.1) | ja | *gereserveerd* (#223): nog niet beschikbaar |
 
 Omgeving:
@@ -675,5 +687,6 @@ Een bewijsverslag `bewijs/bewijs.json` (ingekort):
 
 | Versie | Datum | Wijziging |
 |---|---|---|
+| 1.0 | 2026-10-03 | Aanvulling (https://github.com/TLaan/D-OmniTwin/issues/225): `bewijs.stappen` en het bewijsverslag zijn niet meer gereserveerd; de uitvoerder voert ze uit (12.1, 12.2), met de galerij in de root-README en het commando `galerij` (12.3, 14). `indicator` mag ook bij `kompas`. Het compacte bewijs staat in git. Alle bestaande manifesten blijven geldig. |
 | 1.0 | 2026-10-02 | Aanvulling (voorstel, https://github.com/TLaan/D-OmniTwin/issues/236; formeel een minor, 1.0 is nog niet vastgesteld): adapters `cbs-statline` en `wcs-zonaal`, domein `dataderden.cbs.nl`, varianten met `bron`, `bewerkingen`, `beschrijving` en `als_beschikbaar` (demodata als plaatsvervanger voor een interne bron), geen uitzondering meer voor code in een use case. Alle bestaande manifesten blijven geldig. |
 | 1.0 | 2026-10-02 | Eerste versie (https://github.com/TLaan/D-OmniTwin/issues/227). Vastgelegd wat sinds #219 gold (manifest, datasets, bronadapters, bewerkingen, afhankelijkheden, controles, uitvoerder). Nieuw: veld `specificatie` (verplicht), `naam` en `versie` verplicht, `actoren` en `bewijs.stappen` (gereserveerd), `veroudering`, patroon voor `rechten`, status `verouderd` in plaats van `vervallen`, geen onbekende velden meer in manifest, `datasets[]` en `controles[]`, schema `bewijs.schema.json`. Schema's verhuisd van `usecases/` naar `docs/specificaties/usecase/1.0/`. |
