@@ -874,7 +874,10 @@ def test(naam, ucs=None, api=None, testaccounts=False, apis=None):
     api = (apis or {}).get(naam) or api or LaadApi()
     uit = []
     for c in ucs[naam].get("controles", []):
-        melding = controle_api(c, api, ucs[naam])
+        try:
+            melding = controle_api(c, api, ucs[naam])
+        except LookupError as e:  # bron hier niet beschikbaar (afkeuring/idempotent maken een levering)
+            melding = f"overgeslagen: {e}"
         resultaat = "ok" if melding is None else ("overgeslagen" if str(melding).startswith("overgeslagen") else "fout")
         uit.append({"controle": c, "resultaat": resultaat, "melding": melding})
         teken = {"ok": "✅", "overgeslagen": "⏭️ ", "fout": "❌"}[resultaat]
