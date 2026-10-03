@@ -56,6 +56,38 @@
       "verwacht": "trendlijn 2019–2026"
     }
   ],
+  "bewijs": {
+    "stappen": [
+      {
+        "id": "kaart",
+        "actie": "kaart",
+        "gebied": "BU19000002",
+        "indicator": "d48622cd-454d-5312-9a7b-4d3c269b81a8",
+        "omschrijving": "80 jaar of ouder (%) per buurt in Bolsward (CBS Kerncijfers 2026)",
+        "bevat": [
+          "Bolsward-Zuidoost"
+        ]
+      },
+      {
+        "id": "chat",
+        "actie": "chat",
+        "vraag": "Hoeveel inwoners heeft Bolsward-Zuidoost?",
+        "omschrijving": "Datavraag beantwoord uit de CBS Kerncijfers",
+        "bevat": [
+          "Bolsward-Zuidoost"
+        ]
+      },
+      {
+        "id": "levering",
+        "actie": "levering",
+        "dataset": "cbs-kerncijfers",
+        "omschrijving": "Leveringsstatus van de CBS Kerncijfers (laad-API)",
+        "bevat": [
+          "gepubliceerd"
+        ]
+      }
+    ]
+  },
   "bekende_afwijkingen": [
     "n ontbreekt: de CBS-tabellen hebben geen aantallen per waarde; minimumN 0 en bron-onderdrukt (CBS onderdrukt zelf).",
     "Overlap met swf-basismonitor-waarden: 5 indicator-UUID's (2.598 waarden vanaf 2019) zitten in beide; zie de README van swf-basismonitor-waarden."

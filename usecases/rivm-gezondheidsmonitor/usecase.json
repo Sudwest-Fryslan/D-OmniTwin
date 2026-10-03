@@ -51,6 +51,26 @@
       "dataset": "rivm-gezondheid-buurten"
     }
   ],
+  "bewijs": {
+    "stappen": [
+      {
+        "id": "kaart",
+        "actie": "kaart",
+        "gebied": "GM1900",
+        "indicator": "d20c7b4d-d305-495b-b77c-07b8121614a7",
+        "omschrijving": "Ervaren gezondheid per buurt in Súdwest-Fryslân (RIVM Gezondheidsmonitor)"
+      },
+      {
+        "id": "levering",
+        "actie": "levering",
+        "dataset": "rivm-gezondheid-buurten",
+        "omschrijving": "Leveringsstatus van de Gezondheidsmonitor per buurt (laad-API)",
+        "bevat": [
+          "gepubliceerd"
+        ]
+      }
+    ]
+  },
   "bekende_afwijkingen": [
     "Indicator 'Gezondheid' is in de bron 'Hoog risico angststoornis of depressie' (naam uit de vroegere sample); de richting staat als hoger is beter, dat klopt niet (vervolg: definitie corrigeren).",
     "2012 en 2016 hebben minder buurten (kleine buurten onderdrukt of niet berekend)."

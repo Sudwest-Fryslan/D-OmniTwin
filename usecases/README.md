@@ -22,7 +22,7 @@ usecases/<naam>/
 ├── datasets/<id>.json    ← per dataset: registratie (DCAT `beschrijving` + `laadprofiel`) en
 │                           `bron`, `bewerkingen`, `levering`, `varianten`
 ├── *.json / *.csv        ← optioneel: kleine statische mapping- of sjabloonbestanden
-└── bewijs/               ← gevuld door de uitvoerder (screenshots, bewijs.json); niet in git, behalve README.md
+└── bewijs/               ← gevuld door de uitvoerder; in git alleen <stap>.webp, bewijs.json en README.md
 ```
 
 - Schema's: [`usecase.schema.json`](../docs/specificaties/usecase/1.0/usecase.schema.json) (manifest), [`dataset.schema.json`](../docs/specificaties/usecase/1.0/dataset.schema.json) (dataset met het `bron`-blok per adapter) en [`bewijs.schema.json`](../docs/specificaties/usecase/1.0/bewijs.schema.json) (bewijsverslag). De registratie zelf volgt `DatasetRegistratie` in de [laad-API](../docs/api/laden/openapi.yaml).
@@ -58,7 +58,11 @@ python -m omnitwin.usecases index                  # de tabel hieronder bijwerke
 python -m omnitwin.usecases controleer swf-definities [--variant status-a] [--uit /tmp/levering]
 python -m omnitwin.usecases installeer swf-gebiedsmonitor   # met afhankelijkheden; --alle voor alles
 python -m omnitwin.usecases test swf-definities             # installeren + controles tegen de API
+python -m omnitwin.usecases bewijs hittestress              # screenshots + bewijs.json (Playwright); --alle bij een release
+python -m omnitwin.usecases galerij                         # galerij in README.md en schermen in de README's bijwerken
 ```
+
+`bewijs` voert de `bewijs.stappen` uit het manifest uit in een browser (Playwright, tegen `OMNITWIN_BASE_URL`), en schrijft per stap een WebP-screenshot (≤ 150 KB) en `bewijs/bewijs.json`. Daarna toont de README van de use case de schermen en staat de use case in de galerij van de [root-README](../README.md#use-cases-in-beeld). Alleen bij een release opnieuw maken ([releasebeleid](../docs/9-beheer/releasebeleid.md)); het docker-commando staat in [`src/omnitwin/usecase_bewijs.py`](../src/omnitwin/usecase_bewijs.py), de regels in de [specificatie, sectie 12](../docs/specificaties/usecase/README.md#12-bewijs).
 
 `controleer` werkt nu al, zonder draaiende stack: manifest tegen het schema, bestanden in de map, afhankelijkheden, registraties tegen de laad-API-specificatie, en de levering(en) maken uit de bron en valideren tegen het profiel (Table Schema met frictionless, GeoPackage met fiona). Ontbreekt een bron, dan is die dataset *overgeslagen*.
 

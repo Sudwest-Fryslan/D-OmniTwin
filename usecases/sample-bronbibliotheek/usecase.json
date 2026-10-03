@@ -71,6 +71,29 @@
       "dataset": "sample-intern-demodata"
     }
   ],
+  "bewijs": {
+    "stappen": [
+      {
+        "id": "kaart",
+        "actie": "kaart",
+        "gebied": "BU19000002",
+        "indicator": "bf4e5b8f-6b0a-4632-b9b4-8e29d025e68c",
+        "omschrijving": "Afstand tot koele plek (DEMODATA, plaatsvervanger voor de interne bron)",
+        "bevat": [
+          "Bolsward-Zuidoost"
+        ]
+      },
+      {
+        "id": "levering",
+        "actie": "levering",
+        "dataset": "sample-intern-demodata",
+        "omschrijving": "Leveringsstatus van de demodata (laad-API, dct:type demodata)",
+        "bevat": [
+          "gepubliceerd"
+        ]
+      }
+    ]
+  },
   "bekende_afwijkingen": [
     "De open bronnen BAG (21 indicatoren), EP-Online (6, API-sleutel nodig) en OpenStreetMap (5) hebben nog geen kernadapter; de waarden komen uit de vroegere sample (13 buurten).",
     "De demodata van de interne indicatoren zijn de waarden uit de vroegere sample (herkomst: uploads in de SWF-gebiedsmonitor, niet herleidbaar; Bolsward-Zuidoost synthetisch)."

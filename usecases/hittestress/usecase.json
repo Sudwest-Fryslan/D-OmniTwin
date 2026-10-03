@@ -100,6 +100,46 @@
       "dataset": "rivm-boomkroon-buurten"
     }
   ],
+  "bewijs": {
+    "stappen": [
+      {
+        "id": "kaart",
+        "actie": "kaart",
+        "gebied": "BU19000002",
+        "indicator": "e4d53c01-ef30-56a3-9fc6-29e192462066",
+        "omschrijving": "Boomkroonbedekking per buurt in Bolsward (RIVM, 2022)",
+        "bevat": [
+          "Bolsward-Zuidoost"
+        ]
+      },
+      {
+        "id": "chat",
+        "actie": "chat",
+        "vraag": "Ik werk aan hittestress in Bolsward. Welke buurt ligt het verst van een koele plek, en waar wonen relatief de meeste 65-plussers?",
+        "omschrijving": "Datavraag over hittestress: afstand tot een koele plek en 65-plussers"
+      },
+      {
+        "id": "kompas",
+        "actie": "kompas",
+        "gebied": "BU19000002",
+        "indicator": "e4d53c01-ef30-56a3-9fc6-29e192462066",
+        "profiel": "Volledig Kompas",
+        "omschrijving": "Kompas voor Bolsward-Zuidoost",
+        "bevat": [
+          "Bolsward-Zuidoost"
+        ]
+      },
+      {
+        "id": "levering",
+        "actie": "levering",
+        "dataset": "rivm-boomkroon-buurten",
+        "omschrijving": "Leveringsstatus van de eigen dataset boomkroon (laad-API)",
+        "bevat": [
+          "gepubliceerd"
+        ]
+      }
+    ]
+  },
   "bekende_afwijkingen": [
     "Afstand tot koele plek, Oppervlak groen per inwoner en Verhouding water/verharding zijn DEMODATA (interne bron, sample-bronbibliotheek)."
   ],
