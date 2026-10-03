@@ -24,6 +24,8 @@ OMNITWIN_BASE_URL moet het adres zijn waarop Keycloak ook de issuer zet (OIDC_IS
 import html
 import os
 import re
+from http.cookiejar import DefaultCookiePolicy
+from urllib.parse import urlsplit
 
 import pytest
 import requests
@@ -49,6 +51,16 @@ if os.environ.get("OMNITWIN_TESTACCOUNTS") != "1" or os.environ.get("OMNITWIN_OM
     pytest.skip("testaccounts niet toegestaan (OMNITWIN_TESTACCOUNTS=1, niet in productie)", allow_module_level=True)
 if not (os.environ.get("KEYCLOAK_ADMIN_PASSWORD") or os.environ.get("KEYCLOAK_ADMIN_CLIENT_SECRET")):
     pytest.skip("geen toegang tot de admin-API van Keycloak", allow_module_level=True)
+
+
+@pytest.fixture(autouse=True, scope="module")
+def _secure_cookies_op_localhost():
+    """Keycloak zet zijn cookies met `Secure`. Een browser stuurt die ook naar http://localhost (een
+    'potentially trustworthy origin'); requests niet. Op localhost doet de test het als een browser."""
+    with pytest.MonkeyPatch.context() as mp:
+        if urlsplit(BASE_URL).hostname in ("localhost", "127.0.0.1"):
+            mp.setattr(DefaultCookiePolicy, "return_ok_secure", lambda self, cookie, request: True)
+        yield
 
 
 @pytest.fixture(scope="module")

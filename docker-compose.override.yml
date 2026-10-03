@@ -35,6 +35,10 @@ services:
     volumes:
       - .:/app        # entrypoint van de host
 
+  keycloak-demo:
+    volumes:
+      - .:/app        # code van de host
+
   keycloak:
     # Alleen met het profiel keycloak. Dev-modus: geen hostname-controle, caches lokaal.
     # Bereikbaar via Traefik op http://localhost/auth

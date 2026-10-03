@@ -25,12 +25,22 @@ BASE_URL = os.environ.get("OMNITWIN_BASE_URL", "http://localhost").rstrip("/")
 TIMEOUT = 30
 
 ROUTES = ["/", "/api/data/", "/api/geo/", "/health"]
+# Viewer achter de login (#266): dan ook de headers op de weigering (302 voor de pagina, 401 voor de
+# API's, ook via forwardAuth van Traefik). Geef dezelfde VIEWER_TOEGANG mee als de stack heeft.
+DICHT = os.environ.get("VIEWER_TOEGANG", "open").strip().lower() not in ("", "open")
+
+
+def _verwacht(pad):
+    if not DICHT or pad == "/health":
+        return 200
+    return 302 if pad == "/" else 401
 
 
 @pytest.fixture(scope="module", params=ROUTES)
 def response(request):
-    r = requests.get(f"{BASE_URL}{request.param}", timeout=TIMEOUT)
-    assert r.status_code == 200, f"{request.param}: HTTP {r.status_code}"
+    r = requests.get(f"{BASE_URL}{request.param}", headers={"Accept": "text/html"}, timeout=TIMEOUT,
+                     allow_redirects=False)
+    assert r.status_code == _verwacht(request.param), f"{request.param}: HTTP {r.status_code}"
     return r
 
 

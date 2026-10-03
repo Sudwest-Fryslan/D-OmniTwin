@@ -41,6 +41,41 @@ Open daarna **http://localhost**. Alles loopt via Traefik op poort 80.
 - **Beheeromgeving:** http://localhost/admin/. Inloggen met `ADMIN_USER` (standaard `admin`) en `ADMIN_PASSWORD`. Laat je `ADMIN_PASSWORD` leeg, dan staat een eenmalig gegenereerd wachtwoord in `docker compose logs db-init`. Met Keycloak aan (`OIDC_ISSUER`) log je in via Keycloak en beheer je gebruikers en rollen daar; zie de [installatiegids](docs/9-beheer/installatie.md#keycloak-optioneel).
 - **API-documentatie:** http://localhost/docs.
 
+### Demo proberen (met inloggen)
+
+Wil je zien hoe inloggen werkt, met kant-en-klare accounts? Start een **demo-omgeving** met Keycloak. Alleen op je eigen machine: de wachtwoorden zijn publiek.
+
+```bash
+git clone https://github.com/TLaan/D-OmniTwin.git && cd D-OmniTwin
+cat > .env <<EOF
+DATABASE_PASSWORD=$(openssl rand -hex 24)
+COMPOSE_FILE=docker-compose.yml
+OMNITWIN_OMGEVING=demo
+COMPOSE_PROFILES=keycloak
+KEYCLOAK_ADMIN_PASSWORD=$(openssl rand -hex 24)
+KEYCLOAK_DB_PASSWORD=$(openssl rand -hex 24)
+OIDC_ISSUER=http://localhost/auth/realms/omnitwin
+EOF
+docker compose up -d --build
+```
+
+| Wat | Adres | Hoe |
+|-----|-------|-----|
+| Kaart (viewer) | http://localhost/ | Open voor iedereen. Rechtsboven *Inloggen* (optioneel). |
+| Beheeromgeving | http://localhost/admin/ | Knop **Inloggen met Keycloak**, dan `admin` / `admin`. |
+| Gebruikers en rollen | http://localhost/auth/admin/omnitwin/console/ | `admin` / `admin` (ook via het menu rechtsboven in de beheeromgeving). |
+
+Accounts, **alleen bij `OMNITWIN_OMGEVING=demo`**:
+
+| Gebruiker | Wachtwoord | Rollen | Mag |
+|-----------|------------|--------|-----|
+| `admin` | `admin` | `beheerder`, `gebruikersbeheerder` | beheeromgeving, gebruikers beheren in Keycloak, kaart |
+| `gebruiker` | `gebruiker` | `lezer` | kaart (ook als die dichtstaat), geen beheer |
+
+**Kaart dichtzetten** (alleen na inloggen, zoals de huidige SWF-monitor): zet `VIEWER_TOEGANG=inloggen` in `.env` en draai `docker compose up -d`. Dan stuurt http://localhost/ je naar het inlogformulier van Keycloak, en zijn ook de data-API's (`/api/...`, `/api/data`, `/api/geo`) dicht zonder inloggen. Log in als `gebruiker` / `gebruiker` en je ziet de kaart.
+
+In de kaart en de beheeromgeving staat een gele balk *Demo-omgeving — standaardwachtwoorden, niet voor productie*. Zonder `OMNITWIN_OMGEVING` (standaard `productie`) bestaan deze accounts niet, en weigert de installatie een zwak `ADMIN_PASSWORD` zoals `admin`. Meer: [installatiegids, Demo, test of productie](./docs/9-beheer/installatie.md#26-demo-test-of-productie) en [Toegang tot de viewer](./docs/9-beheer/installatie.md#toegang-tot-de-viewer-open-of-dicht).
+
 Voor een installatie bij je organisatie (vereisten, `.env`, backup, bijwerken, HTTPS, beveiliging) volg je de **[installatiegids](./docs/9-beheer/installatie.md)**. Volledige Fryslân-data laden: [installatiegids, Data](./docs/9-beheer/installatie.md#4-data).
 
 ---

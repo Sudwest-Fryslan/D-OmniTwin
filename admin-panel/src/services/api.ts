@@ -176,6 +176,7 @@ export interface AuthConfig {
     noodtoegang: boolean;
     gebruikersbeheer_url: string | null;
     account_url: string | null;
+    demo?: boolean;   // OMNITWIN_OMGEVING=demo: demobalk (#245)
 }
 
 export type AuthUser = { id: string; username: string; is_admin: boolean; bron?: string };

@@ -57,6 +57,8 @@ De tabel volgt de volgorde van `.env.example`. Optionele regels staan daar als c
 | `DATABASE_PASSWORD` | **Verplicht.** Het gegenereerde wachtwoord. Wijzig het niet meer na de eerste start: het geldt alleen bij het aanmaken van de database. |
 | `ADMIN_PASSWORD` | Aanbevolen. Wachtwoord van het eerste beheeraccount. Leeg: er wordt eenmalig een wachtwoord gegenereerd (zie [2.4](#24-eerste-keer-inloggen)). |
 | `COMPOSE_FILE` | Staat op `docker-compose.yml`: alleen de installatie-instellingen. Laat staan. Ontwikkelaars halen de regel weg (zie [Ontwikkelmodus](#3-ontwikkelmodus)). Extra compose-bestanden voeg je hier toe, gescheiden door `:` (Windows: `;`), zie [Eigen logo](#eigen-logo) en [HTTPS aanzetten](#https-aanzetten). |
+| `OMNITWIN_OMGEVING` | Optioneel, standaard `productie`. `demo`: standaardaccounts met bekende wachtwoorden en een demobalk, alleen om te proberen; `test`: zoals productie, maar zwakke wachtwoorden geven alleen een waarschuwing. Bij `productie` weigert de installatie een zwak `ADMIN_PASSWORD` of `KEYCLOAK_ADMIN_PASSWORD`. Zie [2.6](#26-demo-test-of-productie). |
+| `VIEWER_TOEGANG` | Optioneel, standaard `open`: de kaart en de data-API's zijn openbaar. `inloggen`: alleen na inloggen via Keycloak met de rol `lezer` of `beheerder`. Zie [Toegang tot de viewer](#toegang-tot-de-viewer-open-of-dicht). |
 | `OMNITWIN_HTTP_PORT` | Optioneel. Poort op de host, standaard `80`. |
 | `LOAD_SAMPLE_DATA` | Optioneel, standaard `true`: de use cases laden bij de eerste start. `false`: alleen het product zonder data. Zie [Data](#4-data). |
 | `LOG_LEVEL` | Optioneel, standaard `INFO`. |
@@ -74,7 +76,7 @@ De tabel volgt de volgorde van `.env.example`. Optionele regels staan daar als c
 | `OIDC_AUDIENCE`, `OIDC_INTERN_URL`, `OIDC_JWKS_URL` | Optioneel, bij `OIDC_ISSUER`. `OIDC_AUDIENCE`: vereiste `aud`, standaard `omnitwin-api`. `OIDC_INTERN_URL`: adres waarop de backend de issuer intern bereikt voor discovery en sleutels; `docker-compose.yml` zet standaard `http://keycloak:8080/auth/realms/omnitwin`. Bij een externe identity provider: `OIDC_INTERN_URL=` (leeg). `OIDC_JWKS_URL`: alleen als de provider geen discovery heeft. |
 | `OMNITWIN_BRON_DOMEINEN` | Optioneel. Extra domeinen (kommagescheiden) waarvan de bronadapters van de use cases via https mogen downloaden, naast de vaste lijst (CBS, PDOK, RIVM, Klimaateffectatlas). Zie [use cases](../../usecases/README.md#bronnen). |
 | `OMNITWIN_BASE_URL`, `OMNITWIN_CLIENT_ID`, `OMNITWIN_CLIENT_SECRET`, `OMNITWIN_TOKEN_URL`, `KEYCLOAK_REALM` | Optioneel. `OMNITWIN_BASE_URL` is het adres van de installatie (standaard `http://localhost`); met Keycloak neemt de realmimport het op als redirect-URI van `omnitwin-web`. De rest alleen voor `python -m omnitwin.usecases installeer` en `test`: een machineclient (client credentials, zie [Keycloak](#keycloak-optioneel)). Het tokenendpoint komt standaard uit de discovery van realm `KEYCLOAK_REALM` (standaard `omnitwin`). |
-| `OMNITWIN_TESTACCOUNTS`, `OMNITWIN_OMGEVING`, `KEYCLOAK_ADMIN_CLIENT_ID`, `KEYCLOAK_ADMIN_CLIENT_SECRET`, `KEYCLOAK_ADMIN`, `KEYCLOAK_URL`, `OMNITWIN_TESTACCOUNTS_UUR`, `OMNITWIN_TESTACCOUNTS_BESTAND` | Optioneel, alleen voor `--testaccounts` van de uitvoerder in test en dev (zie [Keycloak](#keycloak-optioneel), *Testaccounts*). Niet in een productie-`.env`. |
+| `OMNITWIN_TESTACCOUNTS`, `KEYCLOAK_ADMIN_CLIENT_ID`, `KEYCLOAK_ADMIN_CLIENT_SECRET`, `KEYCLOAK_ADMIN`, `KEYCLOAK_URL`, `OMNITWIN_TESTACCOUNTS_UUR`, `OMNITWIN_TESTACCOUNTS_BESTAND` | Optioneel, alleen voor `--testaccounts` van de uitvoerder in test en dev (zie [Keycloak](#keycloak-optioneel), *Testaccounts*); de uitvoerder weigert bij `OMNITWIN_OMGEVING=productie`. Niet in een productie-`.env`. |
 | `LEVERINGEN_DIR`, `LADEN_MAX_MB`, `LADEN_RATE_LIMIT`, `LADEN_COMPAT_RATE_LIMIT`, `LADEN_WACHT_SECONDEN` | Optioneel, laad-API ([docs/api/laden](../api/laden/README.md)): map voor de ruwe leveringen (standaard het volume `leveringen` op `/leveringen`), bodylimiet (standaard 200 MB, JSON een tiende), leveringen per minuut per client (standaard 10; op de compatibiliteitsingang voor de SWF-monitor 120) en de time-out van `wacht=true` (standaard 60 s). |
 | `LADEN_BEWAAR_VERSIES`, `LADEN_BEWAAR_DAGEN`, `LADEN_BEWAAR_AFGEKEURD_DAGEN` | Optioneel. Bewaartermijn van de ruwe leveringen: altijd de laatste 10 versies per dataset, oudere tot 365 dagen, afgekeurde en alleen-gevalideerde leveringen 30 dagen. |
 | `LADEN_VOORRANG` | Optioneel. Datasets (kommagescheiden, hoogste eerst) die voorgaan als twee datasets een waarde voor hetzelfde gebied, dezelfde indicator en hetzelfde jaar leveren. Standaard `swf-monitor-waarden` (aanname A6, #222). De andere waarde blijft bewaard in `laden.waarnemingen`. |
@@ -114,6 +116,8 @@ Goed is: `postgres` en `backend` staan op `Up ... (healthy)`, `traefik`, `postgr
 
 ### 2.4 Eerste keer inloggen
 
+Demo-omgeving (`OMNITWIN_OMGEVING=demo`, zie [2.6](#26-demo-test-of-productie)): log in met `admin`/`admin`.
+
 Staat [Keycloak](#keycloak-optioneel) aan (met `OIDC_ISSUER`), dan log je in via Keycloak met een gebruiker uit realm `omnitwin`; zie daar. Het lokale account hieronder werkt dan alleen als noodtoegang.
 
 Heb je `ADMIN_PASSWORD` ingevuld, dan log je in met `ADMIN_USER` (standaard `admin`) en dat wachtwoord.
@@ -148,6 +152,30 @@ Met de standaardpoort 80 (anders `http://<host>:<OMNITWIN_HTTP_PORT>/...`):
 | `http://<host>/auth/` | Keycloak, alleen met het profiel `keycloak` (zie [Keycloak](#keycloak-optioneel)) |
 
 Alleen Traefik publiceert een poort. De database en de afzonderlijke services zijn van buiten Docker niet bereikbaar.
+
+### 2.6 Demo, test of productie
+
+`OMNITWIN_OMGEVING` in `.env` zegt wat voor installatie dit is (#245):
+
+| Waarde | Accounts | Wachtwoorden |
+|--------|----------|--------------|
+| `productie` (standaard) | Geen standaardaccounts. Lokaal alleen `ADMIN_USER` met `ADMIN_PASSWORD` (of een gegenereerd wachtwoord). | `db-init` weigert te starten met een bekend zwak `ADMIN_PASSWORD` of `KEYCLOAK_ADMIN_PASSWORD` (zoals `admin`, `wachtwoord`, `welkom`, gelijk aan de gebruikersnaam of korter dan 8 tekens); de stack start dan niet. |
+| `test` | Geen standaardaccounts. | Zwak geeft alleen een waarschuwing in de log van `db-init`. |
+| `demo` | Standaardaccounts met bekende wachtwoorden (hieronder) en een gele balk *Demo-omgeving — standaardwachtwoorden, niet voor productie* in de kaart en de beheeromgeving. | Versoepeld beleid in Keycloak (minimaal 5 tekens). |
+
+Accounts bij `demo`:
+
+| Account | Waar | Rollen |
+|---------|------|--------|
+| `admin` / `admin` | Keycloak (realm `omnitwin`) | `beheerder` (beheeromgeving) en `gebruikersbeheerder` (gebruikers beheren in de Keycloak-console) |
+| `gebruiker` / `gebruiker` | Keycloak (realm `omnitwin`) | `lezer` (kaart, ook als die dicht staat; geen beheer) |
+| `admin` / `admin` | Lokaal (zonder Keycloak, of als noodtoegang) | beheerder; alleen als `ADMIN_PASSWORD` leeg is |
+
+De Keycloak-accounts zet de eenmalige service `keycloak-demo` (profiel `keycloak`) na elke start van Keycloak: bestaan ze niet, dan maakt hij ze aan; bestaan ze wel, dan zet hij wachtwoord en rollen terug. Een eigen gebruiker `admin` of `gebruiker` die je zelf hebt aangemaakt, raakt hij niet aan (de demo-accounts herkent hij aan de voornaam `Demo`). Zet je de omgeving daarna op `test` of `productie` en start je opnieuw (`docker compose up -d`), dan verwijdert hij de demo-accounts en zet hij het wachtwoordbeleid terug op dat uit de realmexport. Hij gebruikt de tijdelijke beheerder van Keycloak (`KEYCLOAK_ADMIN_PASSWORD`). Controle: `docker compose logs keycloak-demo`.
+
+Bij een bestaande database maakt `db-init` in demo de lokale `admin` aan als die ontbreekt; een bestaand account houdt zijn wachtwoord.
+
+Een demo hoort niet op een netwerk dat anderen kunnen bereiken: iedereen kent de wachtwoorden.
 
 ---
 
@@ -400,7 +428,7 @@ Aandachtspunten:
 
 ### Keycloak (optioneel)
 
-Keycloak is de identity provider voor 0.3.0: inloggen via OIDC voor mensen, en client credentials voor machines, zoals een ETL die data aanlevert (#214, #205). Het zit in de stack als compose-profiel `keycloak`; zonder dat profiel start de stack zoals altijd. De backend controleert tokens op de nieuwe API's (laad-API) zodra `OIDC_ISSUER` is ingevuld (zie hieronder). Met `OIDC_ISSUER` log je ook in de beheeromgeving in via Keycloak, en beheer je gebruikers en rollen in Keycloak (zie *Inloggen in de beheeromgeving*). De kaartapplicatie heeft nog geen inloggen.
+Keycloak is de identity provider voor 0.3.0: inloggen via OIDC voor mensen, en client credentials voor machines, zoals een ETL die data aanlevert (#214, #205). Het zit in de stack als compose-profiel `keycloak`; zonder dat profiel start de stack zoals altijd. De backend controleert tokens op de nieuwe API's (laad-API) zodra `OIDC_ISSUER` is ingevuld (zie hieronder). Met `OIDC_ISSUER` log je ook in de beheeromgeving in via Keycloak, en beheer je gebruikers en rollen in Keycloak (zie *Inloggen in de beheeromgeving*). In de kaartapplicatie kun je dan ook inloggen, en desgewenst de hele kaart achter de login zetten (zie [Toegang tot de viewer](#toegang-tot-de-viewer-open-of-dicht)).
 
 **Opzet**
 
@@ -415,7 +443,7 @@ Keycloak is de identity provider voor 0.3.0: inloggen via OIDC voor mensen, en c
 | client `etl-voorbeeld` | Voorbeeld-machineclient: alleen client credentials, rol `dataset:voorbeeld:laden`. Keycloak genereert het secret bij de import; het staat niet in de repo. |
 | realm-rollen `beheerder`, `gebruikersbeheerder`, `lezer` | Voor mensen. `beheerder` geeft beheerrechten in de beheeromgeving en op de beheer-API's. `gebruikersbeheerder` geeft gebruikersbeheer in de Keycloak-console (gebruikers en groepen, geen clients of realm-instellingen); bewust een aparte rol, zodat je dat recht los toekent. Elke nieuwe gebruiker krijgt `lezer` (geen beheer). De koppeling rol → rechten staat in de realmexport, dus is als data uitwisselbaar tussen instanties. |
 | client-rollen op `omnitwin-api` | `datasets:laden` (alle datasets) en per dataset `dataset:<id>:laden`. |
-| instellingen | Access token 5 minuten, geen implicit of password grant (behalve de tijdelijke loginclient van testaccounts, zie onder), brute-force-detectie aan (na 5 mislukte pogingen oplopend wachten), geen zelfregistratie, wachtwoorden minimaal 12 tekens. |
+| instellingen | Access token 5 minuten, geen implicit of password grant (behalve de tijdelijke loginclient van testaccounts, zie onder), brute-force-detectie aan (na 5 mislukte pogingen oplopend wachten), geen zelfregistratie, wachtwoorden minimaal 12 tekens (in een [demo-omgeving](#26-demo-test-of-productie) 5). |
 
 **Aanzetten**
 
@@ -490,6 +518,25 @@ docker compose exec postgres sh -c 'rm /tmp/keycloak.dump'
 ```
 
 **Openstellen.** Naast de [checklist](#checklist-vóór-openstelling): de admin-console (`/auth/admin`) hoeft niet van buiten bereikbaar te zijn; scherm hem bij voorkeur af in de proxy ervoor. Achter een TLS-proxy die over HTTP doorstuurt (manier A) ziet Keycloak alleen HTTP; zet `KEYCLOAK_HOSTNAME` daarom op de volledige `https://`-URL.
+
+### Toegang tot de viewer (open of dicht)
+
+Standaard (`VIEWER_TOEGANG=open`) is de kaart op `http://<host>/` voor iedereen open (#266, [ADR 0009](../2-architectuur/adr/0009-viewer-achter-login-forwardauth.md)). Staat [Keycloak](#keycloak-optioneel) aan (met `OIDC_ISSUER`), dan staat rechtsboven in de kaart **Inloggen**; ingelogd zie je je gebruikersnaam en **Uitloggen**.
+
+**Viewer dichtzetten**, zoals de huidige SWF-monitor: zet in `.env`
+
+```bash
+VIEWER_TOEGANG=inloggen
+```
+
+en `docker compose up -d`. Daarna:
+
+- `http://<host>/` stuurt je door naar het inlogformulier van Keycloak en daarna terug naar de kaart;
+- toegang alleen met de realm-rol `lezer` of `beheerder` (elke nieuwe Keycloak-gebruiker krijgt `lezer`); ingelogd zonder die rol: pagina *Geen toegang* met uitloggen;
+- ook de data-API's zijn dicht: de API's van de backend (`/api/gebiedsmonitor`, `/api/kompas`, `/api/chat`, `/api/report`, ...), `/api/data` (PostgREST), `/api/geo` (pg_featureserv) en `/docs`. Zonder sessie geven ze `401`, zonder rol `403`. Scripts kunnen met een bearer-token met de rol `lezer` of `beheerder`, of met `X-Admin-Key`;
+- open blijven: `/health`, het inloggen zelf, de beheeromgeving (vraagt zelf om inloggen), de laad-API (eigen tokens), `/api/organisatie` (naam en thema voor de inlogpagina) en `/static/` (code en opmaak, geen data).
+
+Zonder Keycloak (geen `OIDC_ISSUER`) kan bij `inloggen` alleen een lokale beheerder de kaart zien (inloggen via `/admin/login`); gebruik dan Keycloak. `/api/data` en `/api/geo` lopen via een controle in Traefik (forwardAuth naar de backend, `deploy/traefik/dynamic.yml`); die staat altijd aan en laat bij `open` alles door.
 
 ---
 
@@ -570,7 +617,7 @@ Verder nog open: de CSP staat `'unsafe-inline'` toe (zie [Security-headers](#sec
 - Nieuwe gebruikers zijn standaard **geen** beheerder (`users.is_admin` standaard `false`). Het account uit `ADMIN_USER` is wel beheerder.
 - Sessies staan gehasht in de database en verlopen na 12 uur; verlopen sessies worden bij het inloggen opgeruimd.
 
-**Publiek, zonder inloggen**, zijn:
+**Publiek, zonder inloggen**, zijn (bij `VIEWER_TOEGANG=open`, de standaard; met `inloggen` zijn de kaart en alle data-API's alleen toegankelijk met de rol `lezer` of `beheerder`, zie [Toegang tot de viewer](#toegang-tot-de-viewer-open-of-dicht)):
 
 | Route | Wat |
 |-------|-----|
@@ -654,4 +701,6 @@ Voeg je een kaartlaag of bibliotheek toe die rechtstreeks een andere server aanr
 - `LLM_RATE_LIMIT` passend bij je LLM-aanbieder; bij meerdere backends of een externe aanbieder ook een limiet in de proxy op inloggen (`/api/admin/auth/login`) en de AI-routes (`/api/chat`, `/api/report/*narrative*`).
 - Het domein heeft DNSSEC en is via IPv6 bereikbaar (ook verplichte standaarden). Dat regel je bij je DNS- en hostingbeheer, niet in de stack.
 - `security.txt` verwijst naar het juiste meldpunt.
+- `OMNITWIN_OMGEVING` staat op `productie` (of ontbreekt): geen demo-accounts met bekende wachtwoorden.
+- Moet de data niet openbaar zijn: `VIEWER_TOEGANG=inloggen` (zie [Toegang tot de viewer](#toegang-tot-de-viewer-open-of-dicht)).
 - Er is een backup (database en uploads) en een geteste restore.

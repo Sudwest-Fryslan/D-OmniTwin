@@ -41,3 +41,4 @@ Wat wordt makkelijker, wat moeilijker, wat moet er nog gebeuren.
 | [0006](0006-usecase-als-declaratieve-app.md) | Use case als declaratieve app met eigen specificatie | voorgesteld |
 | [0007](0007-geen-multi-tenancy-mesh-van-instanties.md) | Geen multi-tenancy: autonome D-OmniTwin-instanties in een mesh | voorgesteld |
 | [0008](0008-inloggen-beheer-via-keycloak-bff.md) | Inloggen in de beheeromgeving via Keycloak, met de backend als BFF | voorgesteld |
+| [0009](0009-viewer-achter-login-forwardauth.md) | Viewer optioneel achter Keycloak-login, data-API's via Traefik forwardAuth | voorgesteld |

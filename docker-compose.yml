@@ -162,16 +162,18 @@ services:
       PGRST_SERVER_PROXY_URI: http://localhost/api/data
     labels:
       - "traefik.enable=true"
+      # Toegang (#266, ADR 0009): viewer-toegang@file (forwardAuth naar de backend) vóór het strippen,
+      # zodat de backend het oorspronkelijke verzoek met cookie en Authorization-header ziet
       - "traefik.http.routers.postgrest.rule=PathPrefix(`/api/data`)"
       - "traefik.http.middlewares.postgrest-strip.stripprefix.prefixes=/api/data"
-      - "traefik.http.routers.postgrest.middlewares=postgrest-strip,security-headers@file"
+      - "traefik.http.routers.postgrest.middlewares=security-headers@file,viewer-toegang@file,postgrest-strip"
       - "traefik.http.routers.postgrest.service=postgrest"
       # Data-API met versie (ADR 0005, docs/2-architectuur/api-landschap.md): /api/data/v1 → PostgREST.
       # PostgREST valideert (nog) geen tokens; een meegestuurde Authorization-header gaat er niet heen.
       - "traefik.http.routers.postgrest-v1.rule=PathPrefix(`/api/data/v1`)"
       - "traefik.http.middlewares.postgrest-v1-strip.stripprefix.prefixes=/api/data/v1"
       - "traefik.http.middlewares.postgrest-anoniem.headers.customrequestheaders.Authorization="
-      - "traefik.http.routers.postgrest-v1.middlewares=postgrest-v1-strip,postgrest-anoniem,security-headers@file"
+      - "traefik.http.routers.postgrest-v1.middlewares=security-headers@file,viewer-toegang@file,postgrest-v1-strip,postgrest-anoniem"
       - "traefik.http.routers.postgrest-v1.service=postgrest"
       - "traefik.http.services.postgrest.loadbalancer.server.port=3000"
     depends_on:
@@ -192,13 +194,13 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.pg_featureserv.rule=PathPrefix(`/api/geo`)"
-      - "traefik.http.routers.pg_featureserv.middlewares=security-headers@file"
+      - "traefik.http.routers.pg_featureserv.middlewares=security-headers@file,viewer-toegang@file"
       - "traefik.http.routers.pg_featureserv.service=pg_featureserv"
       # Geo-API met versie (ADR 0005): /api/geo/v1/... → /api/geo/... (de links in de antwoorden blijven /api/geo)
       - "traefik.http.routers.pg_featureserv-v1.rule=PathPrefix(`/api/geo/v1`)"
       - "traefik.http.middlewares.pg_featureserv-v1.replacepathregex.regex=^/api/geo/v1(/.*)?$$"
       - "traefik.http.middlewares.pg_featureserv-v1.replacepathregex.replacement=/api/geo$$1"
-      - "traefik.http.routers.pg_featureserv-v1.middlewares=pg_featureserv-v1,security-headers@file"
+      - "traefik.http.routers.pg_featureserv-v1.middlewares=security-headers@file,viewer-toegang@file,pg_featureserv-v1"
       - "traefik.http.routers.pg_featureserv-v1.service=pg_featureserv"
       - "traefik.http.services.pg_featureserv.loadbalancer.server.port=9000"
     depends_on:
@@ -251,6 +253,27 @@ services:
       - DATABASE_PORT=5432
     depends_on:
       postgres:
+        condition: service_healthy
+    restart: "no"
+
+  keycloak-demo:
+    # Demo-accounts (#245), alleen met het profiel keycloak. Na elke start van Keycloak eenmalig:
+    # bij OMNITWIN_OMGEVING=demo de accounts admin/admin (beheerder, gebruikersbeheerder) en
+    # gebruiker/gebruiker (lezer) zetten met een versoepeld wachtwoordbeleid; anders demo-accounts
+    # verwijderen en het beleid terugzetten. Idempotent; via de admin-API met KEYCLOAK_ADMIN_PASSWORD.
+    # Zie src/omnitwin/omgeving.py. Niets wacht op deze service.
+    image: ${COMPOSE_PROJECT_NAME:-d-omnitwin}-backend
+    pull_policy: never
+    profiles: ["keycloak"]
+    command: ["keycloak-demo"]
+    env_file:
+      - .env
+    environment:
+      - DATABASE_HOST=postgres
+      - DATABASE_PORT=5432
+      - KEYCLOAK_URL=http://keycloak:8080/auth
+    depends_on:
+      keycloak:
         condition: service_healthy
     restart: "no"
 

@@ -91,7 +91,8 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
     """
     
     # Paden die niet gelogd worden
-    _SKIP_PREFIXES = ("/static/", "/health")
+    # /api/viewer/toegang: forwardAuth van Traefik bij elk verzoek naar /api/data en /api/geo (#266)
+    _SKIP_PREFIXES = ("/static/", "/health", "/api/viewer/toegang")
     
     async def dispatch(self, request: Request, call_next):
         path = request.url.path
@@ -139,6 +140,11 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
         
         return response
 
+
+# Toegang tot de viewer (#266, ADR 0009): bij VIEWER_TOEGANG=inloggen alleen met rol lezer of
+# beheerder. Binnenste middleware, zodat redirects en 401's ook de headers en de log krijgen.
+from omnitwin import viewer_toegang
+app.add_middleware(viewer_toegang.ViewerToegangMiddleware)
 
 # Add security headers middleware FIRST
 app.add_middleware(SecurityHeadersMiddleware)
@@ -193,6 +199,10 @@ app.include_router(oidc_ik.router)  # GET /api/oidc/ik: token controleren (#205)
 from omnitwin.routers import organisatie
 app.include_router(organisatie.router)  # GET /api/organisatie: eigen organisatie (#231)
 
+# forwardAuth van Traefik voor /api/data en /api/geo (#266): 204 = door, anders 401/403
+app.add_api_route(viewer_toegang.CONTROLE_PAD, viewer_toegang.controleer, methods=["GET", "HEAD"],
+                  include_in_schema=False)
+
 # Laad-API /api/laden/v1 (#205): eigen spec, API-Version, Problem Details, achtergrondverwerking
 from omnitwin.routers import laden as laden_api
 laden_api.registreer(app)
@@ -229,6 +239,18 @@ async def startup_event():
     elif instellingen().oidc_issuer:
         AppLogger.info("Inloggen in de beheeromgeving via Keycloak; lokaal inloggen staat uit", category="AUTH")
 
+    # Viewer (#266) en soort omgeving (#245)
+    ins = instellingen()
+    if ins.viewer_dicht:
+        AppLogger.info("Viewer alleen na inloggen (VIEWER_TOEGANG=inloggen, of een onbekende waarde)",
+                       category="AUTH")
+        if not ins.oidc_issuer:
+            AppLogger.warning("VIEWER_TOEGANG=inloggen zonder Keycloak (OIDC_ISSUER leeg): alleen een lokale "
+                              "beheerder heeft toegang tot de viewer", category="AUTH")
+    if ins.demo:
+        AppLogger.warning("Demo-omgeving (OMNITWIN_OMGEVING=demo): standaardaccounts met bekende wachtwoorden. "
+                          "Niet voor productie.", category="AUTH")
+
     # Start dagelijkse log cleanup
     start_cleanup_scheduler()
 
@@ -241,11 +263,26 @@ async def shutdown_event():
 
 @app.get("/", response_class=HTMLResponse)
 def root(request: Request, db: Session = Depends(get_db)):
-    """Serve the frontend application. Footer-logo's uit de organisatie-instelling (#231)."""
+    """Serve the frontend application. Footer-logo's uit de organisatie-instelling (#231).
+    In de kop: inloggen/uitloggen en de gebruikersnaam als Keycloak aan staat (#266), en de
+    demobalk bij OMNITWIN_OMGEVING=demo (#245)."""
     from omnitwin.services.organisatie import lees_organisatie, thema_css
     organisatie = lees_organisatie(db)
+    ins = instellingen()
+    gebruiker = getattr(request.state, "viewer_gebruiker", None)
+    if gebruiker is None and request.cookies.get("session_token"):
+        try:
+            gebruiker = viewer_toegang.gebruiker_van(request)
+        except Exception:  # provider onbereikbaar: de kaart toont dan gewoon de inlogknop
+            gebruiker = None
+    account = {
+        "oidc": bool(ins.oidc_issuer),
+        "naam": (gebruiker or {}).get("username") if gebruiker and gebruiker.get("type") != "api_key" else None,
+        "inloggen": viewer_toegang.login_adres("/"),
+    }
     return templates.TemplateResponse("index.html", {
-        "request": request, "organisatie": organisatie, "thema_css": thema_css(organisatie)})
+        "request": request, "organisatie": organisatie, "thema_css": thema_css(organisatie),
+        "account": account, "demo": ins.demo})
 
 # ============================================================================
 # React SPA Support for Admin Panel
