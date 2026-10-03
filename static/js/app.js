@@ -2177,7 +2177,10 @@ function updateLegenda(geojson) {
         container.parentElement.appendChild(hintsContainer);
     }
     if (hintsContainer) {
+        // #161: geen spreiding in de waarden (alle gebieden dezelfde waarde)
+        const melding = geojson.metadata.legenda_melding;
         hintsContainer.innerHTML = `
+            ${melding ? `<div class="legenda-melding" role="note">${escapeHtml(melding)}</div>` : ''}
             <div class="legenda-selectie-hint">
                 <span class="legenda-selectie-sample"></span>
                 <span>Geselecteerd gebied</span>

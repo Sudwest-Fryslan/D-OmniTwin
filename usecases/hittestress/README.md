@@ -76,7 +76,4 @@ Gemeten op een verse installatie op 02-10-2026. Boomkroon en hitte-eiland wijken
 
 - **Data:** de indicatoren zijn aanwezig en gevuld voor de drie Bolsward-buurten. Vier ervan komen uit echte open data (CBS 2026, RIVM 2022), ook voor Bolsward-Zuidoost.
 - **Uitkomst met echte data:** relatief de meeste 65- en 80-plussers wonen in Bolsward-Zuidoost (29,5% en 10,2%). Die buurt heeft ook de meeste boomkroon (13,1%). Bolsward-Noord heeft het sterkste hitte-eiland effect (0,47 °C) en ligt het verst van een koele plek.
-- **Kaartkleur:** een indicator met waarden voor maar 3 buurten krijgt één kleur, omdat er minder waarden dan kleurklassen zijn. De legenda klopt wel.
 - **Inrichting:** het pakket zet de richting goed en voegt afgeleide percentages toe. Een eigen Kompas-profiel en chatscenario per use case ontbreken nog (#138).
-- **Chat zet een verkeerde gemeente:** 'Gemeente: Bolsward' filtert op code 0080 (Leeuwarden). Dat filter blijft bewaard, en daarna blijft de kaart leeg (#140).
-- **AI-assistent:** de chat herkent wat je wilt doen en biedt knoppen aan, maar **beantwoordt geen datavraag**. Na een verse installatie stelt hij geen indicatoren voor (#139).
