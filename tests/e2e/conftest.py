@@ -40,6 +40,19 @@ try {
 } catch (e) {}
 """
 
+# Gemeentefilter Súdwest-Fryslân bij de eerste paginalading (#236). Een verse installatie heeft
+# alle CBS-buurten van Fryslân (931); in de container zonder GPU (SwiftShader) kost picking bij
+# pointerdown dan meer dan de tap-drempel van deck.gl (250 ms) en wordt een echte klik geen klik.
+# Met het filter staan er 155 buurten op de kaart, met alle testbuurten van de demo-use cases.
+_TESTGEMEENTE = """
+try {
+  if (!sessionStorage.getItem('e2e-testgemeente')) {
+    sessionStorage.setItem('e2e-testgemeente', '1');
+    localStorage.setItem('omnitwin-gemeente', '1900');
+  }
+} catch (e) {}
+"""
+
 # Consolemeldingen die niets zeggen over de applicatie zelf (externe basiskaart).
 _CONSOLE_RUIS = [
     re.compile(r"Failed to load resource", re.I),
@@ -77,6 +90,7 @@ def _open(browser, request, skip_onboarding, reduced_motion=None):
     context = browser.new_context(viewport={"width": 1600, "height": 1000}, locale="nl-NL", **opties)
     if skip_onboarding:
         context.add_init_script(_SKIP_ONBOARDING)
+        context.add_init_script(_TESTGEMEENTE)
     page = context.new_page()
     page.set_default_timeout(20_000)
 

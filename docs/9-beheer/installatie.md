@@ -169,14 +169,24 @@ Ontwikkelen zonder Docker (Python venv, `run_dev.py`, admin-panel met `npm start
 
 ### Sample dataset (standaard)
 
-`db-init` laadt bij de eerste start altijd het product zonder data: stuurdata (scenario's, profielen, prompts), de indicatordefinities en de Kompas-indeling. Met `LOAD_SAMPLE_DATA=true` laadt het daarna de **use cases** uit [`usecases/`](../../usecases/README.md). Elke use case brengt zijn eigen gebieden en waarden mee, gekozen uit de bronbibliotheek [`init_data/sample/`](../../init_data/sample/README.md), plus de inrichting en de teststappen. Een deel van de waarden is demodata. Eén use case laden: `docker compose exec backend python init_data/scripts/laad_usecase.py hittestress`.
+`db-init` laadt bij de eerste start altijd het product zonder data: stuurdata (scenario's, profielen, prompts), de indicatordefinities (`db/stuurdata/indicatoren.csv` en het CBS-recept) en de Kompas-indeling. Met `LOAD_SAMPLE_DATA=true` laadt het daarna alle actieve **use cases** uit [`usecases/`](../../usecases/README.md), via de laadstraat in-process (`python -m omnitwin.usecases installeer --alle --inproces`: dezelfde validatie, versies en DCAT als de laad-API, zonder HTTP en token). Sinds https://github.com/TLaan/D-OmniTwin/issues/236 is dat open data, gedownload bij de bron:
 
-Twee onderdelen staan niet in git en worden bij de eerste start gedownload en bewaard in het volume `bron-cache`; daarna werkt het ook offline:
+- de **CBS-buurten, -wijken en -gemeenten** van Fryslân (PDOK, `cbs-gebiedsindelingen`);
+- de **CBS Kerncijfers 2019-2026** voor heel Fryslân (`cbs-kerncijfers`). Zo toont het Kompas-detail met de tijdslider meerdere jaren. Zie [`docs/3-data-engineering/cbs_kerncijfers.md`](../3-data-engineering/cbs_kerncijfers.md);
+- de **RIVM Gezondheidsmonitor** 2012-2024 (`rivm-gezondheidsmonitor`) en de **Politie**-cijfers 2019-2025 (`politie-misdrijven`), voor heel Fryslân;
+- de **RIVM-kaarten** (boomkroonbedekking, hitte-eiland) voor de testbuurten (`hittestress`, adapter `wcs-zonaal`).
 
-- de **CBS Kerncijfers 2019-2026** voor de gebieden die dan in de database staan (`init_data/scripts/laad_cbs.py`). Zo toont het Kompas-detail met de tijdslider meerdere jaren, bijvoorbeeld voor Inwoners in Bolsward-Noord. Zie [`docs/3-data-engineering/cbs_kerncijfers.md`](../3-data-engineering/cbs_kerncijfers.md);
-- de RIVM-kaarten (boomkroonbedekking, hitte-eiland) van de use case hittestress (`usecases/hittestress/maak_data.py`, via de WCS van data.rivm.nl).
+Wat nog niet open is of nog geen adapter heeft (BAG, EP-Online, OpenStreetMap, interne indicatoren), komt uit [`init_data/sample/`](../../init_data/sample/README.md) via de use case `sample-bronbibliotheek`. Demodata is gemarkeerd: de bron van de waarde begint met `DEMODATA`. Zie [demodata naar open data](../3-data-engineering/demodata-naar-open-data.md).
 
-Zonder internet bij de eerste start ontbreken die reeksen; de rest werkt wel.
+De downloads worden bewaard in het volume `bron-cache`; daarna werkt het ook offline. Gemeten op een verse installatie (02-10-2026, met netwerk, lege cache): `db-init` 80 seconden, waarvan 37 voor de CBS Kerncijfers (188.606 waarden); de hele stack 93 seconden (images al gebouwd).
+
+**Zonder internet** bij de eerste start wordt een bron overgeslagen met een melding (geen kapotte installatie); zonder buurten keurt de laadstraat de waarden van de andere use cases af. Later opnieuw, met netwerk:
+
+```bash
+docker compose run --rm db-init python -m omnitwin.usecases installeer --alle --inproces
+```
+
+Eén use case installeren op een draaiende installatie gaat via de laad-API met een machineclient: `python -m omnitwin.usecases installeer hittestress` (zie [use cases](../../usecases/README.md#uitvoeren)).
 
 De sample is bedoeld om de installatie te testen en te demonstreren, niet voor beleid.
 
@@ -188,7 +198,7 @@ De repository bevat voor heel Fryslân de CBS-buurten (indeling 2024) en de RIVM
 docker compose run --rm db-init python init_data/scripts/seed_fryslan.py --stap alle
 ```
 
-`docker compose exec backend python init_data/scripts/seed_fryslan.py --stap alle` werkt ook. Alleen de CBS-reeksen opnieuw laden, voor alle gebieden in de database: `docker compose run --rm db-init python init_data/scripts/laad_cbs.py`. Er is geen netwerk nodig.
+`docker compose exec backend python init_data/scripts/seed_fryslan.py --stap alle` werkt ook. Alleen de CBS-reeksen opnieuw laden, via de laadstraat: `docker compose run --rm db-init python -m omnitwin.usecases installeer cbs-kerncijfers --inproces` (uit de cache; zonder cache met netwerk).
 
 Dit duurt ongeveer 20 seconden (gemeten: 16 s, waarvan 13 s voor de CBS-reeksen). Het werkt met en zonder sample (`LOAD_SAMPLE_DATA`); de sample-buurten worden dan overschreven door dezelfde buurten uit de Fryslân-data. Verwachte aantallen in de database na sample + Fryslân:
 

@@ -278,6 +278,22 @@ def test_minimum_n_terugval_met_vlag(conn, gebiedstype_id):
     """Terugval precies waar minder dan MIN_N gebieden een waarde in het jaar van het
     doelgebied hebben; de referentie is dan de meest recente waarde per gebied."""
     with conn.cursor() as cur:
+        # Zelfvoorzienend (data-onafhankelijk): maak voor één indicator in deze transactie het
+        # terugvalgeval door in het jaar van het doelgebied alle waarden van andere buurten
+        # in de gemeente weg te halen behalve twee; rollback na afloop.
+        cur.execute(
+            """SELECT gd.indicator_uuid, max(gd.jaar) FROM gebied_data gd
+               WHERE gd.gebied_id = %s AND gd.scenario_id = 'current'
+               GROUP BY gd.indicator_uuid ORDER BY gd.indicator_uuid LIMIT 1""",
+            (GEBIED,),
+        )
+        terugval_uuid, terugval_jaar = cur.fetchone()
+        cur.execute(
+            """DELETE FROM gebied_data gd USING gebieden g
+               WHERE g.id = gd.gebied_id AND g.gemeente_code = %s AND gd.indicator_uuid = %s
+                 AND gd.jaar = %s AND gd.scenario_id = 'current' AND gd.gebied_id NOT IN (%s, %s)""",
+            (GEMEENTE, terugval_uuid, terugval_jaar, GEBIED, GEBIED_2),
+        )
         cur.execute(
             f"""SELECT zs.indicator_uuid, zs.referentie_terugval, zs.gemiddelde, zs.n,
                        {ZELFDE_JAAR_N} AS n_jaar,
@@ -296,8 +312,7 @@ def test_minimum_n_terugval_met_vlag(conn, gebiedstype_id):
             assert float(gem) == pytest.approx(float(gem_recent))
         else:
             assert n == n_jaar
-    # De sample heeft dit geval: "Inkomen per inwoner" heeft 2024 voor 4 buurten
-    assert any(r[1] for r in rows), "geen terugval in de sample; test dekt het geval niet"
+    assert any(r[1] for r in rows), "terugvalgeval niet ontstaan; test dekt het geval niet"
 
 
 def test_minimum_n_parameter(conn, gebiedstype_id):

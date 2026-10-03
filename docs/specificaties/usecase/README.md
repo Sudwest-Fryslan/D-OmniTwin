@@ -97,7 +97,7 @@ Regels:
 
 1. De mapnaam MOET gelijk zijn aan `naam` in het manifest en MOET voldoen aan `^[a-z0-9]+(-[a-z0-9]+)*$`.
 2. **Allowlist van bestandstypen.** Buiten `bewijs/` MOGEN alleen `.json`, `.md` en `.csv` staan. In `bewijs/` MOGEN alleen `.json`, `.md`, `.webp`, `.png`, `.jpg` en `.jpeg` staan; nieuwe afbeeldingen MOETEN WebP zijn. Elk ander bestand (ook zonder extensie) is een fout. De uitvoerder (`bestandsfouten`) en de unittest `tests/test_usecases_uitvoerder.py` dwingen dit af.
-3. Een use case MOET NIET code of uitvoerbare bestanden bevatten: geen scripts, geen notebooks, geen SQL, geen expressies in JSON. **Uitzondering, in uitfasering:** `usecases/hittestress/maak_data.py`. Die wordt vervangen door een kernadapter; er MOGEN geen nieuwe uitzonderingen bijkomen.
+3. Een use case MOET NIET code of uitvoerbare bestanden bevatten: geen scripts, geen notebooks, geen SQL, geen expressies in JSON. Er zijn geen uitzonderingen (de laatste, `hittestress/maak_data.py`, is sinds https://github.com/TLaan/D-OmniTwin/issues/236 de kernadapter `wcs-zonaal`).
 4. Statische bestanden MOETEN klein zijn (richtlijn: samen ≤ 1 MB) en MOETEN NIET openbare brondata bevatten die ook te downloaden is (zie 7).
 5. De README van de use case MOET de vraag, de gebruiker, de stappen, de acceptatiecriteria en de bronnen beschrijven, en AANBEVOLEN de screenshots uit `bewijs/` tonen.
 6. Na elke nieuwe of gewijzigde use case MOET de index in [`usecases/README.md`](../../../usecases/README.md#index) bijgewerkt zijn (`python -m omnitwin.usecases index`).
@@ -675,5 +675,5 @@ Een bewijsverslag `bewijs/bewijs.json` (ingekort):
 
 | Versie | Datum | Wijziging |
 |---|---|---|
-| 1.0 | 2026-10-02 | Aanvulling (voorstel, https://github.com/TLaan/D-OmniTwin/issues/236; formeel een minor, 1.0 is nog niet vastgesteld): adapters `cbs-statline` en `wcs-zonaal`, domein `dataderden.cbs.nl`, varianten met `bron`, `bewerkingen`, `beschrijving` en `als_beschikbaar` (demodata als plaatsvervanger voor een interne bron) (`hittestress/maak_data.py` wordt in de volgende PR de kernadapter `wcs-zonaal`). Alle bestaande manifesten blijven geldig. |
+| 1.0 | 2026-10-02 | Aanvulling (voorstel, https://github.com/TLaan/D-OmniTwin/issues/236; formeel een minor, 1.0 is nog niet vastgesteld): adapters `cbs-statline` en `wcs-zonaal`, domein `dataderden.cbs.nl`, varianten met `bron`, `bewerkingen`, `beschrijving` en `als_beschikbaar` (demodata als plaatsvervanger voor een interne bron), geen uitzondering meer voor code in een use case. Alle bestaande manifesten blijven geldig. |
 | 1.0 | 2026-10-02 | Eerste versie (https://github.com/TLaan/D-OmniTwin/issues/227). Vastgelegd wat sinds #219 gold (manifest, datasets, bronadapters, bewerkingen, afhankelijkheden, controles, uitvoerder). Nieuw: veld `specificatie` (verplicht), `naam` en `versie` verplicht, `actoren` en `bewijs.stappen` (gereserveerd), `veroudering`, patroon voor `rechten`, status `verouderd` in plaats van `vervallen`, geen onbekende velden meer in manifest, `datasets[]` en `controles[]`, schema `bewijs.schema.json`. Schema's verhuisd van `usecases/` naar `docs/specificaties/usecase/1.0/`. |

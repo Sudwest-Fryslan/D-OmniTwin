@@ -159,12 +159,17 @@ init_db() {
     # Data komt uit de use cases (usecases/<naam>/): gebieden, waarden en inrichting per use case
     LOAD_SAMPLE="${LOAD_SAMPLE_DATA:-true}"
     if [ "$LOAD_SAMPLE" = "true" ] || [ "$LOAD_SAMPLE" = "1" ]; then
-        echo "🌱 LOAD_SAMPLE_DATA is actief: alle use cases inladen..."
-        python /app/init_data/scripts/laad_usecase.py --alle
-        # CBS Kerncijfers 2019-nu (alle jaargangen, voor trends) voor de gebieden die nu in de
-        # database staan; gedownload bij CBS met cache in $DATA_CACHE (volume bron-cache). Heel Fryslân: seed_fryslan.py
-        python /app/init_data/scripts/laad_cbs.py
-        echo "✅ Use cases ingeladen."
+        echo "🌱 LOAD_SAMPLE_DATA is actief: alle use cases inladen via de laadstraat..."
+        # Open data (CBS, PDOK, RIVM, Politie) wordt gedownload met cache in $DATA_CACHE (volume
+        # bron-cache) en in-process via de laadstraat geladen (zelfde validatie en versies als de
+        # laad-API, zonder HTTP en token, #236). Een bron die niet bereikbaar is, wordt overgeslagen
+        # met een melding; de installatie gaat door. Later opnieuw (met netwerk):
+        #   docker compose run --rm db-init python -m omnitwin.usecases installeer --alle --inproces
+        if python -m omnitwin.usecases installeer --alle --inproces; then
+            echo "✅ Use cases ingeladen."
+        else
+            echo "⚠️ Niet alle use cases zijn ingeladen (zie hierboven); de installatie gaat door zonder die data."
+        fi
     else
         echo "⚙️ LOAD_SAMPLE_DATA niet actief: geen data, alleen het product."
     fi

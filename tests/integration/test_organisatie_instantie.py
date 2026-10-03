@@ -59,7 +59,9 @@ def test_kompas_standaard_is_configuratie_1():
 
 def _buurt_ids(n=3):
     r = requests.get(f"{BASE_URL}/api/data/gebieden",
-                     params={"select": "id,gemeente_code", "id": "like.BU*", "limit": str(n)},
+                     # Buurten van de eigen gemeente; sinds #236 staan alle Friese buurten in een verse installatie
+                     params={"select": "id,gemeente_code", "id": "like.BU*", "gemeente_code": "eq.1900",
+                             "limit": str(n)},
                      timeout=TIMEOUT)
     assert r.status_code == 200, r.text
     rijen = r.json()

@@ -71,7 +71,7 @@ def buurten():
     """Buurten zoals de frontend ze ophaalt: via pg_featureserv."""
     r = requests.get(
         f"{BASE_URL}/api/geo/collections/public.vw_gebieden_features/items",
-        params={"limit": 1000, "properties": "id,naam,gebiedstype_id"},
+        params={"limit": 5000, "properties": "id,naam,gebiedstype_id"},
         timeout=TIMEOUT,
     )
     r.raise_for_status()
@@ -86,11 +86,15 @@ def test_app_laadt():
     assert "D-OmniTwin" in r.text
 
 
-# ── 2. Kaart toont de 12 SWF-buurten ─────────────────────────────────────────
+# ── 2. Kaart toont de CBS-buurten, met de testbuurten ────────────────────────
 
 def test_kaart_toont_sample_buurten(buurten):
+    """Sinds #236 laadt een verse installatie alle CBS-buurten van Fryslân (use case
+    cbs-gebiedsindelingen); de 13 testbuurten van de demo-use cases zitten erbij."""
     namen = {f["properties"]["naam"] for f in buurten}
-    assert namen == sample_buurt_namen()
+    assert sample_buurt_namen() <= namen, sorted(sample_buurt_namen() - namen)
+    cbs_buurt = "afba67cb-6b38-4723-9c95-102a22d5b38a"
+    assert sum(f["properties"]["gebiedstype_id"] == cbs_buurt for f in buurten) >= 900
 
 
 def test_buurten_hebben_geometrie(buurten):

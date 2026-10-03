@@ -61,8 +61,10 @@ def test_trending_vijf_jaar_of_meer():
             cur.execute("""SELECT COUNT(*) FROM (SELECT indicator_uuid FROM gebied_data WHERE jaar IS NOT NULL
                            GROUP BY indicator_uuid HAVING COUNT(DISTINCT jaar) >= 5) s""")
             assert cur.fetchone()[0] > 0
-            cur.execute("SELECT metadata->>'bron_tabel' FROM gebied_data WHERE gebied_id = %s "
+            # Via de laadstraat (#236): de dataset staat in metadata, de CBS-tabel in de bron
+            cur.execute("SELECT metadata->>'dataset', bron FROM gebied_data WHERE gebied_id = %s "
                         "AND indicator_uuid = %s AND jaar = 2024", (BOLSWARD_NOORD, INWONERS))
-            assert cur.fetchone()[0] == "85984NED"
+            dataset, bron = cur.fetchone()
+            assert dataset == "cbs-kerncijfers" and "85984NED" in bron
     finally:
         conn.close()

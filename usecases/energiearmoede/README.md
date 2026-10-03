@@ -14,17 +14,17 @@ Een use case is een **bundel**: data + inrichting + stappen. Alle drie staan hie
 
 ## 1. Data
 
-- **Dataset:** `init_data/sample`, gebiedstype CBS Buurten
-- **Gebieden:** Bolsward-Noord (BU19000001), Bolsward-Zuidoost (BU19000002), Bolsward-Noordoost (BU19000004). Focus: Bolsward-Zuidoost (CBS Kerncijfers echt, 2019-2026; overige indicatoren demodata).
+- **Data:** via de laad-API uit de datasets van de afhankelijkheden (`cbs-gebiedsindelingen`, `cbs-kerncijfers`, `rivm-gezondheidsmonitor`, `sample-bronbibliotheek`), gebiedstype CBS Buurten. Open data wordt bij de installatie gedownload; wat nog niet open is of nog geen adapter heeft, komt uit `sample-bronbibliotheek` en is gemarkeerd (`DEMODATA` in de bron van de waarde). Zie [demodata naar open data](../../docs/3-data-engineering/demodata-naar-open-data.md).
+- **Gebieden:** Bolsward-Noord (BU19000001), Bolsward-Zuidoost (BU19000002), Bolsward-Noordoost (BU19000004). Focus: Bolsward-Zuidoost.
 
-| Indicator | Richting |
-|---|---|
-| Gemiddeld energielabel | hoger is beter |
-| Woningen gebouwd vóór 1945 (BAG) | neutraal |
-| Huishoudens met laag inkomen | lager is beter |
-| Moeite met rondkomen | lager is beter |
+| Indicator | Richting | Bron |
+|---|---|---|
+| Gemiddeld energielabel | lager is beter | RVO EP-Online, per buurt berekend (sample; adapter volgt; Bolsward-Zuidoost DEMODATA) |
+| Woningen gebouwd vóór 1945 (BAG) | neutraal | Kadaster BAG, per buurt berekend (sample; adapter volgt; Bolsward-Zuidoost DEMODATA) |
+| Huishoudens met laag inkomen | lager is beter | CBS Kerncijfers (`cbs-kerncijfers`, tot 2023) |
+| Moeite met rondkomen | lager is beter | RIVM Gezondheidsmonitor 2012-2024 (`rivm-gezondheidsmonitor`) |
 
-**Afgeleid bij het laden** (zie `usecase.json` → `afgeleid`) en **ontbreekt nog** (#138):
+**Ontbreekt nog** (#138):
 - % woningen met label E/F/G
 - Gemiddeld gasverbruik
 - Energiequote (energiearmoede TNO/CBS)
@@ -41,12 +41,12 @@ Een use case is een **bundel**: data + inrichting + stappen. Alle drie staan hie
 
 | # | Actie | Verwacht | Resultaat 01-10 |
 |---|---|---|---|
-| 0 | Laad het pakket: `python init_data/scripts/laad_usecase.py <naam>` (db-init doet dit automatisch bij `LOAD_SAMPLE_DATA=true`) | Richting en afgeleide indicatoren staan in de database | ✅ |
+| 0 | Installeer: `python -m omnitwin.usecases installeer energiearmoede` (db-init doet dit automatisch bij `LOAD_SAMPLE_DATA=true`, met de laadstraat in-process) | De datasets van de afhankelijkheden zijn gepubliceerd; daarna zet `laad_usecase.py --inrichting` de richting | ✅ (verse stack, 02-10) |
 | 1 | Open de app, kies **Kaart Configuratie → CBS Buurten** | 13 buurten op de kaart | ✅ |
 | 2 | Kies indicator **Gemiddeld energielabel**, zoom in op Bolsward | Buurten gekleurd; **rood = slechter**, legenda met eenheid | ✅ Richting klopt: gecorrigeerd in de definities (#120) |
 | 3 | Klik op **Bolsward-Zuidoost** | Selectiebalk met de buurtnaam | ✅ |
 | 4 | Open het **Kompas** (— (nog geen eigen profiel)) | Zonnediagram voor Bolsward-Zuidoost, dekking 100% | ✅ (Volledig Kompas) |
-| 5 | Stel de vraag aan de **D-Omni Assistent** | Antwoord noemt de relevante indicatoren en buurten. Verwacht: Bolsward-Noord: hoogste moeite met rondkomen (19,1%) en meeste lage inkomens (4,4%, CBS 2023) | ❌ Herhaalt de vraag; acties 'Gemeente: Bolsward' (Bolsward is geen gemeente), 'Toon: Buurten', 'Rapport'; geen indicatoren (#139) |
+| 5 | Stel de vraag aan de **D-Omni Assistent** | Antwoord noemt de relevante indicatoren en buurten. Verwacht: Bolsward-Noord: hoogste moeite met rondkomen (19,1%, RIVM 2024) en meeste lage inkomens (4,4%, CBS 2023); Bolsward-Zuidoost 12,9% en 3,1% | ❌ Herhaalt de vraag; acties 'Gemeente: Bolsward' (Bolsward is geen gemeente), 'Toon: Buurten', 'Rapport'; geen indicatoren (#139) |
 | 6 | **Rapport → Gebiedsdossier** voor Bolsward-Zuidoost | Dossier met AI-samenvatting, label "AI-gegenereerd" | ✅ (eerdere ronde, ~2 min met lokaal model) |
 
 ## Resultaat

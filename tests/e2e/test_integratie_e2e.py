@@ -18,7 +18,7 @@ import pytest
 from playwright.sync_api import expect
 
 from e2e_helpers import (
-    AANTAL_SAMPLE_BUURTEN, BOLSWARD_ZUIDOOST, KOUDUM, WORKUM,
+    BOLSWARD_ZUIDOOST, KOUDUM, WORKUM, aantal_kaartgebieden,
     klik_buurt_op_kaart, klik_chatactie, kompas_namen, laad_buurtenkaart, open_indicator_in_kompas, open_kompas,
     open_paneel, selecteer_buurt_via_app, verplaats_kompasvenster_rechts, wacht_op_kaartdata, wacht_op_selectie, wacht_op_zonnediagram, TRAAG_MS,
 )
@@ -51,11 +51,11 @@ def test_tc_06_001_beleidsadviseur_ijsselmeerkust(app_page_fresh, tmp_path: Path
 
     # 2. Scenario-acties: buurten tonen, gemeente Súdwest-Fryslân, Kompas openen
     _chat_actie(page, r"Toon: Buurten")
-    wacht_op_kaartdata(page, AANTAL_SAMPLE_BUURTEN)
+    wacht_op_kaartdata(page)
     _chat_actie(page, r"Gemeente: Súdwest-Fryslân")
     expect(page.locator("#gemeente-info")).to_contain_text("Súdwest-Fryslân")
     page.wait_for_function("() => window.state.currentGemeenteCode === '1900'")
-    wacht_op_kaartdata(page, AANTAL_SAMPLE_BUURTEN)
+    wacht_op_kaartdata(page)
     _chat_actie(page, r"Open het D-Omni Kompas")
     expect(page.locator("#kompas-window")).to_be_visible()
 
@@ -113,6 +113,7 @@ def test_tc_06_001_fase5_export_bronvermelding(app_page, tmp_path: Path):
         timeout=TRAAG_MS,
     )
     page.get_by_role("button", name="Kompasvenster sluiten").click()
+    op_kaart = aantal_kaartgebieden(page)
 
     open_paneel(page, "Exporteren")
     csv_knop = page.locator("#export-csv-btn")
@@ -122,7 +123,7 @@ def test_tc_06_001_fase5_export_bronvermelding(app_page, tmp_path: Path):
     pad = tmp_path / "export.csv"
     dl.value.save_as(pad)
     rijen = list(csv.DictReader(io.StringIO(pad.read_text(encoding="utf-8"))))
-    assert len(rijen) == AANTAL_SAMPLE_BUURTEN
+    assert len(rijen) == op_kaart >= 13, (len(rijen), op_kaart)  # elke buurt op de kaart, met de testbuurten
     assert {"naam", "indicator_waarde", "bron", "jaar"} <= set(rijen[0]), rijen[0].keys()
     workum = next(r for r in rijen if r["naam"] == "Workum")
     assert "Kerncijfers" in workum["bron"] and re.fullmatch(r"(19|20)\d{2}", workum["jaar"])

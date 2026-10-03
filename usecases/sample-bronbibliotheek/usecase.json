@@ -1,0 +1,78 @@
+{
+  "specificatie": "1.0",
+  "naam": "sample-bronbibliotheek",
+  "id": "TC-07-023",
+  "versie": "0.1.0",
+  "titel": "Sample: wat nog niet open is of nog geen adapter heeft (gemarkeerd)",
+  "vraag": "Ik wil de demo's laten werken met de indicatoren waarvoor nog geen open bron met adapter is, zonder dat iemand demodata voor echte cijfers aanziet; met de echte interne bron als die er lokaal is.",
+  "gebruiker": "beheerder D-OmniTwin",
+  "status": "actief",
+  "afhankelijk_van": [
+    "cbs-gebiedsindelingen"
+  ],
+  "rechten": [
+    "realm-rol beheerder (registreren)",
+    "dataset:sample-open-zonder-adapter:laden",
+    "dataset:sample-intern-demodata:laden"
+  ],
+  "datasets": [
+    {
+      "id": "sample-open-zonder-adapter",
+      "route": "laden",
+      "registratie": "datasets/sample-open-zonder-adapter.json",
+      "profiel": "waarnemingen",
+      "rol": "dataset:sample-open-zonder-adapter:laden",
+      "client": "etl-open-data",
+      "prioriteit": "Should",
+      "bron": "init_data/sample: BAG, EP-Online en OpenStreetMap, per buurt berekend (adapter volgt)",
+      "verwacht": {
+        "regels": "416 (32 indicatoren x 13 buurten)",
+        "demodata": "Bolsward-Zuidoost (BU19000002): gemiddelde van de buren, gemarkeerd in de bron"
+      }
+    },
+    {
+      "id": "sample-intern-demodata",
+      "route": "laden",
+      "registratie": "datasets/sample-intern-demodata.json",
+      "profiel": "waarnemingen",
+      "rol": "dataset:sample-intern-demodata:laden",
+      "client": "etl-open-data",
+      "prioriteit": "Should",
+      "bron": "DEMODATA als plaatsvervanger voor de interne bron SWF-gebiedsmonitor; variant intern met SWF_DUMP_DIR",
+      "verwacht": {
+        "regels": "104 (8 indicatoren x 13 buurten)",
+        "dct:type": "demodata"
+      }
+    }
+  ],
+  "controles": [
+    {
+      "type": "aantal",
+      "dataset": "sample-open-zonder-adapter",
+      "gelijk": 416
+    },
+    {
+      "type": "aantal",
+      "dataset": "sample-intern-demodata",
+      "gelijk": 104,
+      "omschrijving": "demodata (zonder SWF_DUMP_DIR)"
+    },
+    {
+      "type": "api",
+      "pad": "/api/data/v1/gebied_data?gebied_id=eq.BU19000002&indicator_uuid=eq.bf4e5b8f-6b0a-4632-b9b4-8e29d025e68c&bron=like.DEMODATA*&select=jaar,waarde,bron",
+      "anoniem": true,
+      "minimaal_aantal": 1,
+      "uuid": "bf4e5b8f-6b0a-4632-b9b4-8e29d025e68c",
+      "gebied": "BU19000002",
+      "omschrijving": "demodata is als demodata herkenbaar in de bron van de waarde"
+    },
+    {
+      "type": "idempotent",
+      "dataset": "sample-intern-demodata"
+    }
+  ],
+  "bekende_afwijkingen": [
+    "De open bronnen BAG (21 indicatoren), EP-Online (6, API-sleutel nodig) en OpenStreetMap (5) hebben nog geen kernadapter; de waarden komen uit de vroegere sample (13 buurten).",
+    "De demodata van de interne indicatoren zijn de waarden uit de vroegere sample (herkomst: uploads in de SWF-gebiedsmonitor, niet herleidbaar; Bolsward-Zuidoost synthetisch)."
+  ]
+}

@@ -17,12 +17,15 @@ from playwright.sync_api import TimeoutError as PlaywrightTimeoutError
 # Wachttijd voor trage stappen (kaartdata, Kompas). CI-runners zonder GPU: E2E_TIMEOUT_MS hoger zetten.
 TRAAG_MS = int(os.environ.get("E2E_TIMEOUT_MS", "30000"))
 
-# Buurten uit de sample dataset (init_data/sample/2_brondata/sample_buurten.geojson)
+# Testbuurten van de demo-use cases (usecases/*/usecase.json, data.gebieden). Sinds #236 laadt een
+# verse installatie alle CBS-buurten van Fryslân; de tests vergelijken daarom niet met een vast aantal,
+# maar eisen dat deze buurten erbij zijn.
 BOLSWARD_ZUIDOOST = "BU19000002"
 WORKUM = "BU19000200"
 HINDELOOPEN = "BU19000202"
 KOUDUM = "BU19000300"
-AANTAL_SAMPLE_BUURTEN = 13
+TESTBUURTEN = ["BU19000001", "BU19000002", "BU19000004", "BU19000108", "BU19000200", "BU19000202", "BU19000300",
+               "BU19000301", "BU19000400", "BU19000401", "BU19001200", "BU19001300", "BU19002017"]
 
 
 # ── Wachten op toestand (#194) ───────────────────────────────────────────────
@@ -140,13 +143,20 @@ def laad_buurtenkaart(page: Page):
     wacht_op_kaartdata(page)
 
 
-def wacht_op_kaartdata(page: Page, aantal: int = AANTAL_SAMPLE_BUURTEN):
+def wacht_op_kaartdata(page: Page, gebied_ids=tuple(TESTBUURTEN)):
+    """Kaartdata geladen en getekend, met (minstens) deze buurten erin."""
     page.wait_for_function(
-        "(n) => window.state.currentData && window.state.currentData.features.length === n"
-        " && window.state.deckgl.props.layers.some(l => l.id.startsWith('gebieden-layer-'))",
-        arg=aantal,
+        "(ids) => { const d = window.state.currentData; if (!d) return false;"
+        " const op = new Set(d.features.map(f => f.id || f.properties.id));"
+        " return ids.every(i => op.has(i))"
+        " && window.state.deckgl.props.layers.some(l => l.id.startsWith('gebieden-layer-')); }",
+        arg=list(gebied_ids),
         timeout=TRAAG_MS,
     )
+
+
+def aantal_kaartgebieden(page: Page) -> int:
+    return page.evaluate("() => window.state.currentData.features.length")
 
 
 def selectie(page: Page) -> list:
@@ -237,6 +247,22 @@ def _vind_klikpunt(page: Page, gebied_id: str):
             zoom_kaart(page, 400)
 
 
+def wacht_op_camera_in_rust(page: Page, timeout: float = TRAAG_MS / 1000):
+    """Camera (viewState) gelijk over twee rondes van vlotte frames: een fly-to is klaar. Een klik
+    tijdens een cameratransitie onderbreekt die en selecteert niets."""
+    eind = time.monotonic() + timeout
+    vorige, gelijk = None, 0
+    while time.monotonic() < eind:
+        wacht_op_frames(page)
+        nu = page.evaluate("() => { const v = window.state.currentViewState || {};"
+                           " return [v.longitude, v.latitude, v.zoom, v.pitch, v.bearing]; }")
+        gelijk = gelijk + 1 if nu == vorige else 0
+        if gelijk >= 2:
+            return
+        vorige = nu
+        page.wait_for_timeout(300)
+
+
 def klik_buurt_op_kaart(page: Page, gebied_id: str, shift: bool = False):
     """Echte muisklik op het kaartcanvas binnen de buurt (optioneel met Shift).
 
@@ -247,7 +273,14 @@ def klik_buurt_op_kaart(page: Page, gebied_id: str, shift: bool = False):
     dat wordt als waarschuwing gelogd."""
     voor = sorted(selectie(page))
     for poging in range(3):
+        # Met alle CBS-buurten (#236) tekent software-WebGL trager: pas klikken als de camera stilstaat
+        wacht_op_camera_in_rust(page)
         punt = _vind_klikpunt(page, gebied_id)
+        # Eerst erheen bewegen en de hover-hertekening afwachten: deck.gl herkent een klik alleen als
+        # pointerdown en pointerup kort na elkaar verwerkt worden; een zware hertekening ertussen
+        # (software-WebGL, alle CBS-buurten sinds #236) maakt er anders geen klik van.
+        page.mouse.move(punt["x"], punt["y"])
+        wacht_op_frames(page)
         if shift:
             page.keyboard.down("Shift")
         try:
@@ -258,7 +291,7 @@ def klik_buurt_op_kaart(page: Page, gebied_id: str, shift: bool = False):
         try:
             page.wait_for_function(
                 "(voor) => JSON.stringify([...window.state.selectedGebiedIds].sort()) !== JSON.stringify(voor)",
-                arg=voor, timeout=4_000,
+                arg=voor, timeout=10_000,
             )
             return
         except Exception:

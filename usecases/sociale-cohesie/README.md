@@ -14,18 +14,18 @@ Een use case is een **bundel**: data + inrichting + stappen. Alle drie staan hie
 
 ## 1. Data
 
-- **Dataset:** `init_data/sample`, gebiedstype CBS Buurten
-- **Gebieden:** Bolsward-Noord (BU19000001), Bolsward-Zuidoost (BU19000002), Bolsward-Noordoost (BU19000004). Focus: Bolsward-Zuidoost (CBS Kerncijfers echt, 2019-2026; overige indicatoren demodata).
+- **Data:** via de laad-API uit de datasets van de afhankelijkheden (`cbs-gebiedsindelingen`, `cbs-kerncijfers`, `rivm-gezondheidsmonitor`), gebiedstype CBS Buurten. Open data wordt bij de installatie gedownload; wat nog niet open is of nog geen adapter heeft, komt uit `sample-bronbibliotheek` en is gemarkeerd (`DEMODATA` in de bron van de waarde). Zie [demodata naar open data](../../docs/3-data-engineering/demodata-naar-open-data.md). Deze use case draait volledig op open data.
+- **Gebieden:** Bolsward-Noord (BU19000001), Bolsward-Zuidoost (BU19000002), Bolsward-Noordoost (BU19000004). Focus: Bolsward-Zuidoost.
 
-| Indicator | Richting |
-|---|---|
-| Eenzaamheid | lager is beter |
-| Vrijwilliger | hoger is beter |
-| Mantelzorger | neutraal |
-| Eenpersoonshuishoudens | neutraal |
+| Indicator | Richting | Bron |
+|---|---|---|
+| Eenzaamheid | lager is beter | RIVM Gezondheidsmonitor 2012-2024 (`rivm-gezondheidsmonitor`) |
+| Vrijwilliger | hoger is beter | idem |
+| Mantelzorger | neutraal | idem |
+| Eenpersoonshuishoudens | neutraal | CBS Kerncijfers (`cbs-kerncijfers`) |
+| Eenpersoonshuishoudens (%) | neutraal | CBS Kerncijfers, afgeleid in het recept (zelfde jaar) |
 
-**Afgeleid bij het laden** (zie `usecase.json` → `afgeleid`) en **ontbreekt nog** (#138):
-- % eenpersoonshuishoudens
+**Ontbreekt nog** (#138):
 - Verhuismobiliteit
 - Psychische klachten (RIVM)
 - Sociale samenhang (Leefbaarometer)
@@ -42,12 +42,12 @@ Een use case is een **bundel**: data + inrichting + stappen. Alle drie staan hie
 
 | # | Actie | Verwacht | Resultaat 01-10 |
 |---|---|---|---|
-| 0 | Laad het pakket: `python init_data/scripts/laad_usecase.py <naam>` (db-init doet dit automatisch bij `LOAD_SAMPLE_DATA=true`) | Richting en afgeleide indicatoren staan in de database | ✅ |
+| 0 | Installeer: `python -m omnitwin.usecases installeer sociale-cohesie` (db-init doet dit automatisch bij `LOAD_SAMPLE_DATA=true`, met de laadstraat in-process) | De datasets van de afhankelijkheden zijn gepubliceerd; daarna zet `laad_usecase.py --inrichting` de richting | ✅ (verse stack, 02-10) |
 | 1 | Open de app, kies **Kaart Configuratie → CBS Buurten** | 13 buurten op de kaart | ✅ |
 | 2 | Kies indicator **Eenzaamheid**, zoom in op Bolsward | Buurten gekleurd; **rood = slechter**, legenda met eenheid | ✅ Richting klopt: gecorrigeerd in de definities (#120) |
 | 3 | Klik op **Bolsward-Zuidoost** | Selectiebalk met de buurtnaam | ✅ |
 | 4 | Open het **Kompas** (Volledig Kompas) | Zonnediagram voor Bolsward-Zuidoost, dekking 100% | ✅ (Volledig Kompas) |
-| 5 | Stel de vraag aan de **D-Omni Assistent** | Antwoord noemt de relevante indicatoren en buurten. Verwacht: Bolsward-Zuidoost: eenzaamheid 48,3% (tussen Noord 55,0% en Noordoost 41,6%), vrijwilligers 27,6%. | ⚠️ Actie 'Toon: Bolsward-Zuidoost' klopt; scenario 'wijkcontactfunctionaris' wordt niet herkend bij 'wijkcoördinator'; geen indicatoren (#139) |
+| 5 | Stel de vraag aan de **D-Omni Assistent** | Antwoord noemt de relevante indicatoren en buurten. Verwacht: Bolsward-Zuidoost: eenzaamheid 46,5% (RIVM 2024; tussen Noord 55,0% en Noordoost 41,6%), vrijwilligers 29,0%. | ⚠️ Actie 'Toon: Bolsward-Zuidoost' klopt; scenario 'wijkcontactfunctionaris' wordt niet herkend bij 'wijkcoördinator'; geen indicatoren (#139) |
 | 6 | **Rapport → Gebiedsdossier** voor Bolsward-Zuidoost | Dossier met AI-samenvatting, label "AI-gegenereerd" | ✅ (eerdere ronde, ~2 min met lokaal model) |
 
 ## Resultaat

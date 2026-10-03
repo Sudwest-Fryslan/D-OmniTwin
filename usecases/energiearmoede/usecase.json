@@ -2,8 +2,57 @@
   "specificatie": "1.0",
   "naam": "energiearmoede",
   "id": "TC-06-005",
-  "versie": "0.1.0",
+  "versie": "0.2.0",
   "titel": "Energietransitie en energiearmoede",
+  "vraag": "Waar in Bolsward is het risico op energiearmoede het grootst? Ik wil weten waar slechte energielabels samengaan met lage inkomens.",
+  "gebruiker": "Beleidsmaker energietransitie",
+  "status": "actief",
+  "afhankelijk_van": [
+    "cbs-gebiedsindelingen",
+    "cbs-kerncijfers",
+    "rivm-gezondheidsmonitor",
+    "sample-bronbibliotheek"
+  ],
+  "rechten": [],
+  "datasets": [],
+  "controles": [
+    {
+      "type": "api",
+      "pad": "/api/data/v1/gebied_data?gebied_id=eq.BU19000001&indicator_uuid=eq.58fc72b6-881e-4917-83de-8099df3e3b0d&select=jaar,waarde,bron",
+      "anoniem": true,
+      "minimaal_aantal": 1,
+      "uuid": "58fc72b6-881e-4917-83de-8099df3e3b0d",
+      "gebied": "BU19000001",
+      "omschrijving": "Moeite met rondkomen Bolsward-Noord (RIVM)"
+    },
+    {
+      "type": "api",
+      "pad": "/api/data/v1/gebied_data?gebied_id=eq.BU19000002&indicator_uuid=eq.58fc72b6-881e-4917-83de-8099df3e3b0d&select=jaar,waarde,bron",
+      "anoniem": true,
+      "minimaal_aantal": 1,
+      "uuid": "58fc72b6-881e-4917-83de-8099df3e3b0d",
+      "gebied": "BU19000002",
+      "omschrijving": "Moeite met rondkomen Bolsward-Zuidoost (RIVM, echt; was demodata)"
+    },
+    {
+      "type": "api",
+      "pad": "/api/data/v1/gebied_data?gebied_id=eq.BU19000002&indicator_uuid=eq.3dd70913-391e-4d5f-a121-d17c8b466372&select=jaar,waarde,bron",
+      "anoniem": true,
+      "minimaal_aantal": 1,
+      "uuid": "3dd70913-391e-4d5f-a121-d17c8b466372",
+      "gebied": "BU19000002",
+      "omschrijving": "Huishoudens met laag inkomen Bolsward-Zuidoost (CBS)"
+    },
+    {
+      "type": "api",
+      "pad": "/api/data/v1/gebied_data?gebied_id=eq.BU19000001&indicator_uuid=eq.3c2d0ca0-3a6d-4f53-809f-f82fa9b9fd22&select=jaar,waarde,bron",
+      "anoniem": true,
+      "minimaal_aantal": 1,
+      "uuid": "3c2d0ca0-3a6d-4f53-809f-f82fa9b9fd22",
+      "gebied": "BU19000001",
+      "omschrijving": "Gemiddeld energielabel Bolsward-Noord (EP-Online, sample)"
+    }
+  ],
   "persona": {
     "rol": "Beleidsmaker energietransitie",
     "vraag": "Waar in Bolsward is het risico op energiearmoede het grootst? Ik wil weten waar slechte energielabels samengaan met lage inkomens.",
@@ -17,7 +66,7 @@
       "BU19000002": "Bolsward-Zuidoost",
       "BU19000004": "Bolsward-Noordoost"
     },
-    "dataset": "init_data/sample",
+    "dataset": "laad-API: de datasets van de afhankelijkheden (open bronnen; demodata gemarkeerd)",
     "indicatoren": [
       {
         "naam": "Gemiddeld energielabel",
@@ -39,7 +88,8 @@
     "ontbreekt_nog": [
       "% woningen met label E/F/G",
       "Gemiddeld gasverbruik",
-      "Energiequote (energiearmoede TNO/CBS)"
+      "Energiequote (energiearmoede TNO/CBS)",
+      "Energielabels en bouwjaren: open (EP-Online, BAG), adapter volgt; nu uit sample-bronbibliotheek (Bolsward-Zuidoost DEMODATA)"
     ]
   },
   "inrichting": {
@@ -49,13 +99,6 @@
   "ai_zoekvraag": "energielabel woningen en lage inkomens",
   "verwacht": {
     "vraag_zoekwoord": "rondkomen",
-    "verwacht": "Bolsward-Noord: hoogste moeite met rondkomen (19,1%) en meeste lage inkomens (4,4%, CBS 2023)"
-  },
-  "afhankelijk_van": [
-    {
-      "naam": "cbs-kerncijfers",
-      "versie": ">=0.1.0",
-      "optioneel": true
-    }
-  ]
+    "verwacht": "Bolsward-Noord: hoogste moeite met rondkomen (19,1%, RIVM 2024) en meeste lage inkomens (4,4%, CBS 2023); Bolsward-Zuidoost 12,9% en 3,1%, Bolsward-Noordoost 9,1% en 1,6%."
+  }
 }

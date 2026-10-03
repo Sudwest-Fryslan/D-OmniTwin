@@ -45,7 +45,7 @@
   ],
   "bronvermelding": "Centraal Bureau voor de Statistiek (CBS), Kerncijfers wijken en buurten 2019-2026. CC BY 4.0.",
   "geometrie_jaar": 2024,
-  "gecontroleerd": "2026-10-01",
+  "gecontroleerd": "2026-10-02",
   "tabellen": {
     "2019": {
       "tabel": "84583NED",
@@ -233,6 +233,16 @@
           "k_65JaarTot80Jaar_12",
           "k_80JaarOfOuder_13"
         ]
+      },
+      "afgeleid": null
+    },
+    "80 jaar of ouder": {
+      "uuid": "debc6665-b839-54dc-bd7e-4f9a749e2883",
+      "jaren": [
+        2026
+      ],
+      "kolommen": {
+        "2026": "k_80JaarOfOuder_13"
       },
       "afgeleid": null
     },
@@ -843,11 +853,24 @@
         "factor": 100,
         "eenheid": "%"
       }
+    },
+    "80 jaar of ouder (%)": {
+      "uuid": "d48622cd-454d-5312-9a7b-4d3c269b81a8",
+      "jaren": [
+        2026
+      ],
+      "kolommen": null,
+      "afgeleid": {
+        "teller": "80 jaar of ouder",
+        "noemer": "Inwoners",
+        "factor": 100,
+        "eenheid": "%"
+      }
     }
   },
   "controle": {
     "toelichting": "Omvang van een volledige download (heel Fryslân), om een nieuwe download mee te vergelijken.",
-    "rijen_totaal": 186756,
+    "rijen_totaal": 188606,
     "rijen_per_jaar": {
       "2019": 25551,
       "2020": 25585,
@@ -856,7 +879,7 @@
       "2023": 24781,
       "2024": 25355,
       "2025": 22200,
-      "2026": 12050
+      "2026": 13900
     }
   },
   "codecontrole": {
@@ -895,7 +918,7 @@
       "2023": 925,
       "2024": 0,
       "2025": 68,
-      "2026": 54
+      "2026": 59
     },
     "weggevallen_codes": {
       "2019": {

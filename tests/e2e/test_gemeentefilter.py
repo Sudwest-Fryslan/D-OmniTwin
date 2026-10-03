@@ -50,9 +50,31 @@ def browser():
         b.close()
 
 
-def _open_met_filter(browser, code):
+def _maak_leeg(route):
+    """Kaartdata (geo en attributen) voor deze gemeente leeg teruggeven, zoals bij een gemeente zonder gebieden."""
+    r = route.fetch()
+    try:
+        data = r.json()
+    except ValueError:
+        route.fulfill(response=r)
+        return
+    if isinstance(data, dict):
+        for k in ("features", "data"):
+            if isinstance(data.get(k), list):
+                data[k] = []
+    elif isinstance(data, list):
+        data = []
+    route.fulfill(response=r, json=data)
+
+
+def _open_met_filter(browser, code, zonder_gebieden=False):
     context = browser.new_context(viewport={"width": 1600, "height": 1000}, locale="nl-NL")
     context.add_init_script(f"({_INIT})('{code}')")
+    if zonder_gebieden:
+        # Sinds #236 heeft elke Friese gemeente buurten (open data); een gemeente zonder gebieden
+        # simuleren we door de kaartdata met dit filter leeg te maken. Getest wordt de uitleg en
+        # het wissen in de frontend (#140), niet de data.
+        context.route(re.compile(rf".*gemeente_code={code}.*"), _maak_leeg)
     page = context.new_page()
     page.set_default_timeout(20_000)
     page.goto(f"{BASE_URL}/", wait_until="domcontentloaded")
@@ -84,7 +106,7 @@ def _aantal_gebieden(page) -> int:
 
 
 def test_filter_zonder_gebieden_toont_melding_en_wissen_herstelt_kaart(browser):
-    context, page = _open_met_filter(browser, "0080")  # Leeuwarden: geen buurten in de sample
+    context, page = _open_met_filter(browser, "0080", zonder_gebieden=True)  # Leeuwarden, kaartdata leeg gemaakt
     try:
         chip = page.locator("#gemeente-filter-chip")
         expect(chip).to_be_visible()

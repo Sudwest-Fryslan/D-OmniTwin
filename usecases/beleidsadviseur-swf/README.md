@@ -14,11 +14,11 @@ Een bundel van data, inrichting en stappen. Dit pakket bevat de tien sample-buur
 
 ## 1. Data
 
-**Gebieden:** Hindeloopen, Workum, Koudum, Warns, Hemelum, Witmarsum, Heidenschap, Boazum, Bomenbuurt, Woudsend. Alle indicatorwaarden komen uit de bronbibliotheek (`init_data/sample/2_brondata`).
+**Gebieden:** Hindeloopen, Workum, Koudum, Warns, Hemelum, Witmarsum, Heidenschap, Boazum, Bomenbuurt, Woudsend. De waarden komen via de laad-API uit `cbs-kerncijfers` (afstand tot huisarts en grote supermarkt, woningvoorraad, Participatiewet) en `sample-bronbibliotheek` (OV-haltes, OpenStreetMap; adapter volgt). Zie [demodata naar open data](../../docs/3-data-engineering/demodata-naar-open-data.md).
 
 **Kernindicatoren:** OV-haltes, afstand tot huisarts en grote supermarkt, woningvoorraad, Participatiewet (zie [`usecase.json`](./usecase.json)).
 
-**Ontbreekt nog:** Makkum (staat in TC-06-001, maar niet in de bronbibliotheek), reistijd OV.
+**Ontbreekt nog:** Makkum (staat in TC-06-001, maar niet in de testbuurten), reistijd OV.
 
 ## 2. Inrichting
 

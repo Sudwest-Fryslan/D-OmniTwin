@@ -1,34 +1,23 @@
 # Datakwaliteit sample_indicatoren.csv
 
-Stand bij het opstellen van `datapackage.json` (#60), herkomst bijgewerkt na #159 (CBS Kerncijfers worden sindsdien gedownload en staan niet meer in de sample: nu 728 regels). De overige tellingen gelden voor de stand van #60. De data was toen ongewijzigd; het Table Schema is hierop afgestemd (`bron`, `kwaliteit`, `eenheid` en `categorie` zijn niet verplicht). Totaal: 1.132 regels, 87 indicatoren, 13 buurten.
+Stand na https://github.com/TLaan/D-OmniTwin/issues/236: de sample bevat alleen nog wat niet open is of nog geen adapter heeft. 520 regels, 40 indicatoren, 13 buurten. De vorige telling (#60: 1.132 regels, 87 indicatoren; na #159: 728 regels, 56 indicatoren) staat in de git-geschiedenis.
 
 ## Herkomst (`bron`)
 
-| Bevinding | Regels |
-|---|---:|
-| Lege `bron` | 48 |
-| Uploadbestandsnaam als bron (`<uuid>_d_cbs_buurten.json`, 8 bestanden) — onbekend, te herleiden | 96 |
-| `DEMO: gemiddelde Bolsward-Noord en Bolsward-Noordoost` (BU19000002; CBS Kerncijfers sinds #159 echt) | 56 |
-| Vrije tekst zonder tabel-ID (`Kerncijfers wijken en buurten 2023`, eigenlijk 2021) | 0 (vervangen, #159) |
-| `CBS Kerncijfers wijken en buurten <jaar> (<tabel>)`, 2019-2026 | 0 (gedownload bij het laden) |
-| CBS-tabelcode (`CBS_85984NED` 12, indicator Huisarts; `CBS_50150NED` 12) | 24 |
-| Overige benoemde bron (BAG 168 + 84, RIVM 120, RVO EP-Online 60 + 12 berekend, OpenStreetMap 60) | 504 |
+| Bron | Regels | Status |
+|---|---:|---|
+| `BAG` | 168 | open (Kadaster BAG), per buurt berekend; adapter volgt |
+| `Kadaster BAG Fryslân 2026` | 84 | idem |
+| `RVO EP-Online 2026-02` | 60 | open met API-sleutel; adapter volgt |
+| `Berekend: EP-Online / BAG Fryslân` | 12 | idem (dekking = labels ÷ woningen) |
+| `OpenStreetMap / Overpass API 2026` | 60 | open (ODbL); adapter volgt |
+| `DEMODATA: plaatsvervanger voor de interne bron SWF-gebiedsmonitor, …` | 104 | demodata (8 interne indicatoren, alle 13 buurten) |
+| `DEMODATA: gemiddelde van Bolsward-Noord en Bolsward-Noordoost, …` | 32 | demodata (BU19000002 bij BAG, EP-Online en OpenStreetMap) |
+
+Opgehelderd in #236: de 48 regels zonder bron waren Politie-cijfers (StatLine 47018NED, nu use case `politie-misdrijven`); de 96 regels met een uploadbestandsnaam als bron (`<uuid>_d_cbs_buurten.json`, de uuid is de indicator) zijn interne indicatoren van de SWF-gebiedsmonitor, nu als demodata gemarkeerd.
 
 ## Overige kolommen
 
-| Bevinding | Regels |
-|---|---:|
-| `kwaliteit` leeg | 1.132 (alle) |
-| `eenheid` leeg | 222 |
-| `eenheid` niet genormaliseerd (`aantal`/`Aantal`, `%`/`percentage`) | 15 varianten |
-| `categorie` leeg | 729 |
-
-## `interpretatie_logica`
-
-| Waarde | Regels |
-|---|---:|
-| `pos_is_pos` | 1.080 |
-| `N/A` | 39 |
-| `-/+` | 13 |
-
-Twee notaties door elkaar (`pos_is_pos` versus `-/+`), plus `N/A`. Normaliseren hoort bij de volgende stap van #60 (metadata één keer per indicator).
+- `kwaliteit` is overal leeg.
+- `eenheid` en `categorie` zijn niet overal gevuld en niet genormaliseerd; de definities (met eenheid) staan in `db/stuurdata/indicatoren.csv`.
+- `interpretatie_logica`: `pos_is_pos`, `-/+` en `N/A` door elkaar (#60).
