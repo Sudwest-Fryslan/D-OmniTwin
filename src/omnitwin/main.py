@@ -222,6 +222,13 @@ async def startup_event():
     if geldige_admin_api_key() is None:
         AppLogger.warning("ADMIN_API_KEY is leeg of een voorbeeldwaarde: X-Admin-Key is uitgeschakeld", category="AUTH")
 
+    # Inloggen (#251): met OIDC alleen via Keycloak, lokale accounts alleen als noodtoegang
+    if instellingen().noodtoegang:
+        AppLogger.warning("Noodtoegang aan: lokale accounts kunnen inloggen naast Keycloak (LOKAAL_INLOGGEN=true). "
+                          "Zet dit na gebruik weer uit.", category="AUTH")
+    elif instellingen().oidc_issuer:
+        AppLogger.info("Inloggen in de beheeromgeving via Keycloak; lokaal inloggen staat uit", category="AUTH")
+
     # Start dagelijkse log cleanup
     start_cleanup_scheduler()
 

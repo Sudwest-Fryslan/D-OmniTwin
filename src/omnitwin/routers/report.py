@@ -18,13 +18,14 @@ from omnitwin.fouten import GebruikersFout
 from omnitwin.grenzen import beperk_llm
 from omnitwin.services.report_service import ReportDataService
 from omnitwin.services.llm_service import LLMService
+from omnitwin.oidc import AuthProbleem
 from omnitwin.routers.auth import huidige_gebruiker
 
 
 def _is_beheerder(request: Request, db: Session) -> bool:
     try:
         return bool(huidige_gebruiker(request, db).get("is_admin"))
-    except HTTPException:
+    except (HTTPException, AuthProbleem):  # niet ingelogd, of ongeldig bearer-token
         return False
 
 
