@@ -371,6 +371,8 @@ Nog niet uit deze instelling: de benchmarkmodus `fryslan`, de welkomsttekst en d
 
 Het logo linksboven, het favicon en het logo in het beheerscherm en de rapporten komen uit één bestand: `static/images/beeldmerk.svg`. Standaard staat daar een neutraal, tijdelijk D-OmniTwin-beeldmerk (#83). Er is geen instelling in `.env` voor nodig.
 
+Linksboven krijgt het beeldmerk de kleuren van het thema: de tokens `--d-omnitwin-beeldmerk-vlak`, `--d-omnitwin-beeldmerk-lijn` en `--d-omnitwin-beeldmerk-kern` (in het SWF-thema wit met SWF-rood). Het favicon, het beheerscherm en de rapporten tonen de vaste kleuren uit het bestand. Een eigen SVG-logo zet zijn inhoud in een groep `<g id="beeldmerk">…</g>`, anders blijft de plek linksboven leeg; gebruikt je logo de tokens niet, dan houdt het zijn eigen kleuren.
+
 Eigen logo gebruiken:
 
 - **Vervangen:** zet je eigen bestand op `static/images/beeldmerk.svg` en bouw opnieuw (`docker compose up -d --build`).
