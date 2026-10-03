@@ -16,8 +16,19 @@
 #
 # Poort: Traefik luistert op de host op ${OMNITWIN_HTTP_PORT:-80}.
 name: "d-omnitwin"
+
+# Containerlogs begrensd (#264): per container hoogstens 3 bestanden van 10 MB.
+# De backend-logs bevatten geen IP-adressen; die staan alleen in app_logs (zie
+# LOG_BEWAAR_DAGEN en LOG_IP_BEWAAR_DAGEN in .env.example).
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "3"
+
 services:
   traefik:
+    logging: *logging
     image: traefik:v3.7.13
     command:
       - "--providers.docker=true"
@@ -27,6 +38,9 @@ services:
       - "--providers.docker.constraints=Label(`com.docker.compose.project`,`${COMPOSE_PROJECT_NAME:-d-omnitwin}`)"
       - "--providers.docker.network=${COMPOSE_PROJECT_NAME:-d-omnitwin}_default"
       - "--entrypoints.web.address=:80"
+      # X-Forwarded-For alleen overnemen van een eigen TLS-proxy/WAF voor de stack (#264);
+      # van ieder ander vervangt Traefik de header door het echte adres
+      - "--entrypoints.web.forwardedheaders.trustedips=${TRAEFIK_TRUSTED_IPS:-127.0.0.1/32}"
       # Headers-middlewares (CSP, nosniff, ...) uit deploy/traefik/dynamic.yml. Elke router
       # zet er zelf één (security-headers@file, of keycloak-headers@file voor /auth);
       # tests/test_traefik_routers.py controleert dat
@@ -41,6 +55,7 @@ services:
     restart: unless-stopped
 
   postgres:
+    logging: *logging
     build:
       context: .
       dockerfile: db.Dockerfile
@@ -59,6 +74,7 @@ services:
     restart: unless-stopped
 
   db-init:
+    logging: *logging
     # Eenmalige initialisatie met de backend-image; stopt na afloop (exit 0).
     # Zelfde image als backend (#157): één keer bouwen, geen tweede kopie.
     image: ${COMPOSE_PROJECT_NAME:-d-omnitwin}-backend
@@ -83,6 +99,7 @@ services:
     restart: "no"
 
   backend:
+    logging: *logging
     image: ${COMPOSE_PROJECT_NAME:-d-omnitwin}-backend
     build: .
     labels:
@@ -149,6 +166,7 @@ services:
         condition: service_completed_successfully
 
   postgrest:
+    logging: *logging
     image: postgrest/postgrest:v16.4
     # Eigen rollen (#57): verbindt als authenticator, voert verzoeken uit als web_anon en
     # ziet alleen schema api (views en functies). Rollen en wachtwoord: db-init
@@ -182,6 +200,7 @@ services:
     restart: unless-stopped
 
   pg_featureserv:
+    logging: *logging
     # Geen semver-tags op Docker Hub; datumtag van de huidige release
     image: pramsey/pg_featureserv:20250917
     # Alleen-lezen rol featureserv (#57): ziet alleen vw_gebieden_features,
@@ -210,6 +229,7 @@ services:
     restart: unless-stopped
 
   llm-gateway:
+    logging: *logging
     # Optionele LiteLLM-gateway (ADR 0001): alleen met `--profile llm-gateway`.
     # Alleen intern bereikbaar (geen hostpoort); de backend gebruikt
     # http://llm-gateway:4000 met llm_config.api_type=openai.
@@ -237,6 +257,7 @@ services:
     restart: unless-stopped
 
   keycloak-db-init:
+    logging: *logging
     # Optioneel (#214): alleen met het profiel keycloak. Maakt in dezelfde PostgreSQL de
     # database keycloak en de rol keycloak aan (wachtwoord KEYCLOAK_DB_PASSWORD) en stopt.
     # Idempotent; zet bij elke start het wachtwoord opnieuw. Zie docker-entrypoint.sh.
@@ -278,6 +299,7 @@ services:
     restart: "no"
 
   keycloak:
+    logging: *logging
     # Optionele identity provider (#214): alleen met `--profile keycloak` (of
     # COMPOSE_PROFILES=keycloak in .env). Inloggen via OIDC voor mensen, client
     # credentials voor machines (ETL). Bereikbaar via Traefik op /auth; health en
