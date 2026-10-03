@@ -55,3 +55,18 @@ Een use case is een **bundel**: data + inrichting + stappen. Alle drie staan hie
 - **Inrichting:** het pakket zet de richting goed en voegt afgeleide percentages toe. Een eigen Kompas-profiel en chatscenario per use case ontbreken nog (#138).
 - **Chat zet een verkeerde gemeente:** 'Gemeente: Bolsward' filtert op code 0080 (Leeuwarden). Dat filter blijft bewaard, en daarna blijft de kaart leeg (#140).
 - **AI-assistent:** de chat herkent wat je wilt doen en biedt knoppen aan, maar **beantwoordt geen datavraag**. Na een verse installatie stelt hij geen indicatoren voor (#139).
+
+## Bewijs
+
+<!-- bewijs:start -->
+*Gemaakt op 03-10-2026 met D-OmniTwin 0.2.1 (use case 0.2.0); geslaagd. Verslag: [`bewijs/bewijs.json`](bewijs/bewijs.json). Opnieuw maken (bij een release): `python -m omnitwin.usecases bewijs brede-welvaart`.*
+
+![Inkomen per inwoner in Bolsward (CBS), Bolsward-Zuidoost geselecteerd](bewijs/kaart.webp)
+*Inkomen per inwoner in Bolsward (CBS), Bolsward-Zuidoost geselecteerd*
+
+![Kompas voor Bolsward-Zuidoost: brede welvaart in thema's](bewijs/kompas.webp)
+*Kompas voor Bolsward-Zuidoost: brede welvaart in thema's*
+
+![Datavraag over de brede welvaart, beantwoord met de cijfers per buurt](bewijs/chat.webp)
+*Datavraag over de brede welvaart, beantwoord met de cijfers per buurt*
+<!-- bewijs:end -->

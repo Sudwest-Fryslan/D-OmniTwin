@@ -424,7 +424,7 @@
         "stappen"
       ],
       "additionalProperties": false,
-      "description": "Hoe het bewijs gemaakt wordt. Gereserveerd: de uitvoerder voert de stappen nog niet uit (#225).",
+      "description": "Hoe het bewijs gemaakt wordt: python -m omnitwin.usecases bewijs <naam> voert de stappen uit (#225).",
       "properties": {
         "stappen": {
           "type": "array",
@@ -481,7 +481,7 @@
         },
         "indicator": {
           "type": "string",
-          "description": "actie kaart: indicator-UUID of -naam die de kaart toont."
+          "description": "actie kaart/kompas: indicator-UUID of -naam die de kaart toont."
         },
         "profiel": {
           "type": "string",
