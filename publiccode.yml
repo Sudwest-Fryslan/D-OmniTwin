@@ -81,7 +81,7 @@ description:
       DataFryslân, met steun van het Innovatiebudget Digitale Overheid 2026.
 
       Beheerder en eigenaar is Gemeente Súdwest-Fryslân, volgens de afspraken
-      van het OpenWebconcept. Onderhoud ten minste tot en met 31 augustus 2027;
+      van het OpenWebconcept. Onderhoudsgarantie: een jaar na elke release;
       het einde wordt minimaal een jaar vooraf aangekondigd (SUPPORT.md).
 
       De applicatie draait met Docker Compose (FastAPI, PostgreSQL/PostGIS,
@@ -122,8 +122,8 @@ description:
       Innovation Budget for Digital Government 2026.
 
       Owner and maintainer is the Municipality of Súdwest-Fryslân, following
-      the OpenWebconcept agreements. Maintained at least until 31 August 2027;
-      the end of maintenance is announced at least one year in advance
+      the OpenWebconcept agreements. Maintenance guarantee: one year after each
+      release; the end of maintenance is announced at least one year in advance
       (SUPPORT.md).
 
       The user interface is in Dutch.

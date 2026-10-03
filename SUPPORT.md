@@ -5,7 +5,7 @@ Wat je van het onderhoud van D-OmniTwin mag verwachten, en waar je terechtkunt. 
 ## Onderhoudstermijn
 
 - **Beheerder:** Gemeente Súdwest-Fryslân (zie `maintenance` in [publiccode.yml](./publiccode.yml)).
-- **Termijn:** de beheerder onderhoudt D-OmniTwin **ten minste tot en met 31 augustus 2027** (einde van het Innovatiebudget Digitale Overheid 2026), en daarna tot een jaar na de aankondiging van het einde.
+- **Onderhoudsgarantie:** **één jaar**. De beheerder onderhoudt elke uitgebrachte versie ten minste een jaar na de release (fouten en beveiligingsupdates op de laatste releasetak).
 - **Einde van het onderhoud** wordt minimaal **een jaar vooraf** aangekondigd: in deze repository (README en een issue), in de CHANGELOG en in `publiccode.yml` (`maintenance.type: none`).
 
 ## Wat je mag verwachten
@@ -25,11 +25,10 @@ Wat je van het onderhoud van D-OmniTwin mag verwachten, en waar je terechtkunt. 
 
 - **Issues:** [github.com/TLaan/D-OmniTwin/issues](https://github.com/TLaan/D-OmniTwin/issues), voor fouten, vragen en wensen.
 - **Beveiliging:** [SECURITY.md](./SECURITY.md).
-- **Community:** het Slack-kanaal van het OpenWebconcept (besluit [#183](https://github.com/TLaan/D-OmniTwin/issues/183)). Of het kanaal er al is en of issues en pull requests ernaar doorgestuurd worden, staat nog open.
 - **Contact met de beheerder:** het functionele adres in `maintenance.contacts` van [publiccode.yml](./publiccode.yml).
 
 ---
 
 ## English summary
 
-Súdwest-Fryslân maintains D-OmniTwin **at least until 31 August 2027** (end of the innovation grant), and in any case until one year after the end of maintenance has been announced. The end of maintenance is announced at least one year in advance (README, an issue, the CHANGELOG and `publiccode.yml`). Bugs and change requests: GitHub issues; security issues: [SECURITY.md](./SECURITY.md). Only the latest release branch receives fixes. Running and supporting your own installation is up to your organisation.
+Maintenance guarantee: **one year**. Súdwest-Fryslân maintains each released version for at least one year after its release. The end of maintenance is announced at least one year in advance (README, an issue, the CHANGELOG and `publiccode.yml`). Bugs and change requests: GitHub issues; security issues: [SECURITY.md](./SECURITY.md). Only the latest release branch receives fixes. Running and supporting your own installation is up to your organisation.
