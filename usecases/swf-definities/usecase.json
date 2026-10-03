@@ -167,6 +167,25 @@
       "omschrijving": "een lezer mag niet registreren (403)"
     }
   ],
+  "bewijs": {
+    "stappen": [
+      {
+        "id": "levering",
+        "actie": "levering",
+        "dataset": "swf-monitor-definities",
+        "omschrijving": "Leveringsstatus van de SWF-definities (laad-API)",
+        "bevat": [
+          "gepubliceerd"
+        ]
+      },
+      {
+        "id": "profiel",
+        "actie": "open",
+        "pad": "/api/laden/v1/profielen/definities",
+        "omschrijving": "Het laadprofiel definities waartegen de levering gevalideerd wordt"
+      }
+    ]
+  },
   "bekende_afwijkingen": [
     "Status A (10 klimaatindicatoren) wordt O; de betekenis van A is een open vraag (gat-analyse, vraag 3).",
     "UUID d210c084: in de stuurdata van D-OmniTwin 'Custom Gebied Type' (code CUSTOM, nergens gebruikt); in de monitor 'CBS buurten bebouwde komgrens' met 2.370 waarden. De levering zet naam en code (CBS_BUURT_BBK); de stuurdata moet mee (migratie).",

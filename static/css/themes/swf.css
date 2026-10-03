@@ -11,7 +11,7 @@
  *
  * Tokennamen: basis-tokens van NL Design System (https://github.com/nl-design-system/themes),
  * plus componenttokens --d-omnitwin-*. Datakleuren (Z-score, kaart, Kompas) horen niet in een thema.
- * Uitleg en eigen thema maken: docs/4-ux-design/thema-s.md.
+ * Uitleg en eigen thema maken: docs/9-beheer/thema-s.md.
  */
 @import url("../../vendor/montserrat@5.3.0/montserrat.css");
 @import url("../../vendor/source-sans-3@5.3.0/source-sans-3.css");
@@ -79,10 +79,27 @@
   --basis-border-radius-md: 4px;
   --basis-border-radius-lg: 8px;
 
+  /* Componenttokens D-OmniTwin (#89). Actieve tab en welkomstknop in SWF-rood (zoals de site),
+     selectiebadge in SWF-blauw (donker, voor witte tekst), tooltips neutraal donker */
+  --d-omnitwin-tab-active-background-color: #bf0042;
+  --d-omnitwin-tab-active-color: #ffffff;
+  --d-omnitwin-welcome-button-background-color: #bf0042;
+  --d-omnitwin-welcome-button-color: #ffffff;
+  --d-omnitwin-welcome-accent-color: #bf0042;
+  --d-omnitwin-tooltip-background-color: #1e1e1e;
+  --d-omnitwin-tooltip-color: #ffffff;
+  --d-omnitwin-selection-badge-background-color: #00759c;
+  --d-omnitwin-selection-badge-color: #ffffff;
+
   /* Componenttokens D-OmniTwin: kopbalk (verloop SWF-rood) */
   --d-omnitwin-header-background-color-start: #bf0042;
   --d-omnitwin-header-background-color-end: #8c0030;
   --d-omnitwin-header-color: #ffffff;
+
+  /* Beeldmerk (#249): wit vlak met SWF-rood, leesbaar op de rode kopbalk (licht en donker) */
+  --d-omnitwin-beeldmerk-vlak: #ffffff;
+  --d-omnitwin-beeldmerk-lijn: #bf0042;
+  --d-omnitwin-beeldmerk-kern: #8c0030;
 }
 
 /* ---------- Donker ---------- */
@@ -124,6 +141,16 @@
 
   --basis-focus-outline-color: #ffffff;
 
+  --d-omnitwin-tab-active-background-color: #bf0042;
+  --d-omnitwin-tab-active-color: #ffffff;
+  --d-omnitwin-welcome-button-background-color: #bf0042;
+  --d-omnitwin-welcome-button-color: #ffffff;
+  --d-omnitwin-welcome-accent-color: #ff5c8a;
+  --d-omnitwin-tooltip-background-color: #fafafa;
+  --d-omnitwin-tooltip-color: #1e1e1e;
+  --d-omnitwin-selection-badge-background-color: #00759c;
+  --d-omnitwin-selection-badge-color: #ffffff;
+
   --d-omnitwin-header-background-color-start: #8c0030;
   --d-omnitwin-header-background-color-end: #5c0020;
   --d-omnitwin-header-color: #ffffff;
@@ -154,7 +181,6 @@
     --basis-color-accent-3-bg-default: #91c60f;
     --basis-color-accent-3-color-default: #91c60f;
     --basis-color-accent-3-inverse-color-default: #1e1e1e;
-  --basis-color-accent-3-inverse-color-default: #1e1e1e;
 
     --basis-color-highlight-bg-default: #ff00e3;
     --basis-color-highlight-color-default: #ff66ee;
@@ -171,6 +197,16 @@
     --basis-color-warning-color-default: #fb923c;
 
     --basis-focus-outline-color: #ffffff;
+
+    --d-omnitwin-tab-active-background-color: #bf0042;
+    --d-omnitwin-tab-active-color: #ffffff;
+    --d-omnitwin-welcome-button-background-color: #bf0042;
+    --d-omnitwin-welcome-button-color: #ffffff;
+    --d-omnitwin-welcome-accent-color: #ff5c8a;
+    --d-omnitwin-tooltip-background-color: #fafafa;
+    --d-omnitwin-tooltip-color: #1e1e1e;
+    --d-omnitwin-selection-badge-background-color: #00759c;
+    --d-omnitwin-selection-badge-color: #ffffff;
 
     --d-omnitwin-header-background-color-start: #8c0030;
     --d-omnitwin-header-background-color-end: #5c0020;

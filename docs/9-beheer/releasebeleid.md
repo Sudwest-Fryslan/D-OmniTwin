@@ -67,7 +67,8 @@ Voorbeeld voor `0.2.0`.
 2. **Release-PR naar `main`** (branch `chore/release-0.2.0`):
    - `VERSION`, `publiccode.yml` (`softwareVersion` en `releaseDate`) en `admin-panel/package.json` (plus `package-lock.json`, via `npm version 0.2.0 --no-git-tag-version` in `admin-panel/`) op `0.2.0`;
    - in `CHANGELOG.md`: `## [Unreleased]` wordt `## [0.2.0] - JJJJ-MM-DD`, nieuwe lege `## [Unreleased]` erboven, vergelijkingslinks onderaan bijwerken;
-   - `pytest -m unit` lokaal groen (incl. de versietest).
+   - `pytest -m unit` lokaal groen (incl. de versietest);
+   - **bewijs opnieuw maken** (https://github.com/TLaan/D-OmniTwin/issues/225): verse installatie van deze branch met open data (`docker compose down -v`, `LOAD_SAMPLE_DATA=true`, profiel `keycloak` en een machineclient met `datasets:laden` voor de leveringsstatus), dan `python -m omnitwin.usecases bewijs --alle --zip bewijs-0.2.0.zip` in de Playwright-image (commando in [`src/omnitwin/usecase_bewijs.py`](../../src/omnitwin/usecase_bewijs.py)). Bekijk de schermen, en commit `usecases/*/bewijs/*.webp`, `usecases/*/bewijs/bewijs.json` en de bijgewerkte README's (galerij in `README.md`, screenshots per use case). `python -m omnitwin.usecases galerij --controleer` en de unittests bewaken grootte (≤ 150 KB), aantal (≤ 4 per use case) en actualiteit.
 3. **Mergen** na review.
 4. **Release-branch en tag** vanaf de merge-commit op `main`:
    ```bash
@@ -75,7 +76,7 @@ Voorbeeld voor `0.2.0`.
    git tag -a v0.2.0 -m "D-OmniTwin 0.2.0"
    git push origin release/0.2 v0.2.0
    ```
-5. **GitHub-release** bij de tag, met de CHANGELOG-sectie als tekst. Grote databestanden die niet in git horen, gaan als release-asset mee (op code.overheid.nl staat LFS uit).
+5. **GitHub-release** bij de tag, met de CHANGELOG-sectie als tekst. Grote databestanden die niet in git horen, gaan als release-asset mee (op code.overheid.nl staat LFS uit). Ook het **volledige bewijs** (`bewijs-0.2.0.zip` uit stap 2: originele schermen in PNG en de verslagen) gaat als asset mee: `gh release upload v0.2.0 bewijs-0.2.0.zip`.
 6. **Controle:** een verse installatie volgens de [installatiegids](installatie.md) vanaf de tag werkt, en `/health` toont `0.2.0`.
 
 ## Patches

@@ -76,7 +76,7 @@ Accounts, **alleen bij `OMNITWIN_OMGEVING=demo`**:
 
 In de kaart en de beheeromgeving staat een gele balk *Demo-omgeving — standaardwachtwoorden, niet voor productie*. Zonder `OMNITWIN_OMGEVING` (standaard `productie`) bestaan deze accounts niet, en weigert de installatie een zwak `ADMIN_PASSWORD` zoals `admin`. Meer: [installatiegids, Demo, test of productie](./docs/9-beheer/installatie.md#26-demo-test-of-productie) en [Toegang tot de viewer](./docs/9-beheer/installatie.md#toegang-tot-de-viewer-open-of-dicht).
 
-Voor een installatie bij je organisatie (vereisten, `.env`, backup, bijwerken, HTTPS, beveiliging) volg je de **[installatiegids](./docs/9-beheer/installatie.md)**. Volledige Fryslân-data laden: [installatiegids, Data](./docs/9-beheer/installatie.md#4-data).
+Voor een installatie bij je organisatie (vereisten, `.env`, backup, bijwerken, HTTPS, beveiliging) volg je de **[installatiegids](./docs/9-beheer/installatie.md)**. Data laden (use cases, laad-API): [installatiegids, Data](./docs/9-beheer/installatie.md#4-data).
 
 ---
 
@@ -97,6 +97,25 @@ Schermafbeeldingen van een verse installatie met de use cases, ingezoomd op Bols
 *Beheerscherm (`/admin`): indicatoren, datakwaliteit, AI-configuratie en rapportage.*
 
 De screenshots maak je opnieuw met [`scripts/docs/maak_screenshots.py`](scripts/docs/maak_screenshots.py).
+
+### Use cases in beeld
+
+Per use case het bewijs dat hij werkt: schermen van een verse installatie met open data, gemaakt door de use-case-uitvoerder bij elke release (`python -m omnitwin.usecases bewijs --alle`, zie de [Use Case Specificatie, Bewijs](docs/specificaties/usecase/README.md#12-bewijs)). Klik op een use case voor alle schermen.
+
+<!-- usecase-galerij:start -->
+| | Use case |
+|---|---|
+| <a href="usecases/beleidsadviseur-swf/README.md"><img src="usecases/beleidsadviseur-swf/bewijs/chat.webp" width="320" alt="Scenario Beleidsadviseur: de D-Omni Assistent zet kaart en Kompas klaar"></a> | **[Beleidsadviseur verkent kernen in Súdwest-Fryslân (IJsselmeerkust)](usecases/beleidsadviseur-swf/README.md)**<br>Ik ben beleidsadviseur |
+| <a href="usecases/brede-welvaart/README.md"><img src="usecases/brede-welvaart/bewijs/kaart.webp" width="320" alt="Inkomen per inwoner in Bolsward (CBS), Bolsward-Zuidoost geselecteerd"></a> | **[Brede welvaart en functiemenging](usecases/brede-welvaart/README.md)**<br>Hoe staat het met de brede welvaart in Bolsward-Zuidoost vergeleken met de rest van Bolsward? |
+| <a href="usecases/cbs-gebiedsindelingen/README.md"><img src="usecases/cbs-gebiedsindelingen/bewijs/kaart.webp" width="320" alt="De CBS-buurten van Súdwest-Fryslân op de kaart (gemeentefilter)"></a> | **[CBS-gebiedsindelingen (buurten, wijken, gemeenten) via de laad-API](usecases/cbs-gebiedsindelingen/README.md)**<br>Ik wil de CBS-buurten, -wijken en -gemeenten van Fryslân in D-OmniTwin, met dezelfde codes als het CBS, zodat elke andere use case er waarden aan kan hangen. |
+| <a href="usecases/cbs-kerncijfers/README.md"><img src="usecases/cbs-kerncijfers/bewijs/kaart.webp" width="320" alt="80 jaar of ouder (%) per buurt in Bolsward (CBS Kerncijfers 2026)"></a> | **[CBS Kerncijfers wijken en buurten via de laad-API](usecases/cbs-kerncijfers/README.md)**<br>Ik wil de CBS Kerncijfers van alle jaargangen sinds 2019 per buurt in D-OmniTwin, als één dataset die elk jaar met één levering wordt bijgewerkt. |
+| <a href="usecases/energiearmoede/README.md"><img src="usecases/energiearmoede/bewijs/kaart.webp" width="320" alt="Huishoudens met een laag inkomen in Bolsward (CBS)"></a> | **[Energietransitie en energiearmoede](usecases/energiearmoede/README.md)**<br>Waar in Bolsward is het risico op energiearmoede het grootst? Ik wil weten waar slechte energielabels samengaan met lage inkomens. |
+| <a href="usecases/hittestress/README.md"><img src="usecases/hittestress/bewijs/kaart.webp" width="320" alt="Boomkroonbedekking per buurt in Bolsward (RIVM, 2022)"></a> | **[Klimaatadaptatie: hittestress en kwetsbaarheid](usecases/hittestress/README.md)**<br>Ik werk aan hittestress in Bolsward. Welke buurt ligt het verst van een koele plek, en waar wonen relatief de meeste 65-plussers? |
+| <a href="usecases/politie-misdrijven/README.md"><img src="usecases/politie-misdrijven/bewijs/kaart.webp" width="320" alt="Woninginbraken per buurt in Súdwest-Fryslân (Politie)"></a> | **[Politie: geregistreerde misdrijven per buurt via de laad-API](usecases/politie-misdrijven/README.md)**<br>Ik wil het aantal woninginbraken, fietsdiefstallen, diefstallen uit auto's en vernielingen per buurt sinds 2019 in D-OmniTwin. |
+| <a href="usecases/rivm-gezondheidsmonitor/README.md"><img src="usecases/rivm-gezondheidsmonitor/bewijs/kaart.webp" width="320" alt="Ervaren gezondheid per buurt in Súdwest-Fryslân (RIVM Gezondheidsmonitor)"></a> | **[RIVM Gezondheidsmonitor per buurt via de laad-API](usecases/rivm-gezondheidsmonitor/README.md)**<br>Ik wil de gezondheidscijfers per buurt (ervaren gezondheid, eenzaamheid, mantelzorg, vrijwilligerswerk, moeite met rondkomen, leefstijl) uit de Gezondheidsmonitor in D-OmniTwin, met de trend sinds 2012. |
+| <a href="usecases/sample-bronbibliotheek/README.md"><img src="usecases/sample-bronbibliotheek/bewijs/kaart.webp" width="320" alt="Afstand tot koele plek (DEMODATA, plaatsvervanger voor de interne bron)"></a> | **[Sample: wat nog niet open is of nog geen adapter heeft (gemarkeerd)](usecases/sample-bronbibliotheek/README.md)**<br>Ik wil de demo's laten werken met de indicatoren waarvoor nog geen open bron met adapter is, zonder dat iemand demodata voor echte cijfers aanziet; met de echte interne bron als die er lokaal is. |
+| <a href="usecases/sociale-cohesie/README.md"><img src="usecases/sociale-cohesie/bewijs/kaart.webp" width="320" alt="Eenzaamheid per buurt in Bolsward (RIVM Gezondheidsmonitor)"></a> | **[Zorgzwaarte en sociale cohesie](usecases/sociale-cohesie/README.md)**<br>Ik ben wijkcoördinator in Bolsward-Zuidoost. Hoe staat het met eenzaamheid en vrijwilligerswerk in mijn wijk? |
+<!-- usecase-galerij:end -->
 
 ---
 
@@ -181,10 +200,15 @@ Bijdragen: [CONTRIBUTING.md](./CONTRIBUTING.md) en de [gedragscode](./CODE_OF_CO
 | Document | Waarover |
 |----------|----------|
 | [docs/9-beheer/installatie.md](./docs/9-beheer/installatie.md) | Installatie en beheer (Docker): de installatiegids |
+| [docs/9-beheer/beheerhandleiding.md](./docs/9-beheer/beheerhandleiding.md) | Beheer in productie: back-up en herstel, bijwerken, Keycloak, leveringen, incidenten, acceptatie |
+| [docs/5-secops/privacy-quickscan.md](./docs/5-secops/privacy-quickscan.md) | Privacy-quickscan: persoonsgegevens, bewaartermijnen, AI |
+| [docs/4-ux-design/toegankelijkheid.md](./docs/4-ux-design/toegankelijkheid.md) | Toegankelijkheid: status en conceptverklaring |
 | [CHANGELOG.md](./CHANGELOG.md) | Wijzigingen per versie, met migratie-instructies |
 | [CONTRIBUTING.md](./CONTRIBUTING.md) | Bijdragen: van issue tot merge |
 | [AGENTS.md](./AGENTS.md) | Projectfeiten en werkafspraken voor ontwikkelaars en AI-agents |
-| [GOVERNANCE.md](./GOVERNANCE.md) | Rollen en besluitvorming (concept) |
+| [GOVERNANCE.md](./GOVERNANCE.md) | Rollen en besluitvorming, volgens het OpenWebconcept |
+| [SUPPORT.md](./SUPPORT.md) | Onderhoudstermijn en waar je terechtkunt |
+| [PARTICIPANTS.md](./PARTICIPANTS.md) | Deelnemende organisaties |
 | [SECURITY.md](./SECURITY.md) | Kwetsbaarheden privé melden |
 | [CODE_OF_CONDUCT.md](./CODE_OF_CONDUCT.md) | Gedragscode (Contributor Covenant 2.1) |
 | [publiccode.yml](./publiccode.yml) | Metadata voor codebase-registers |

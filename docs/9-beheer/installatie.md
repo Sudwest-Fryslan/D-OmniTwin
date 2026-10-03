@@ -4,6 +4,8 @@ Dit is de installatiegids voor beheerders. Andere installatiedocumenten in deze 
 
 De gids gaat uit van een Linux-server of een werkplek met Docker. Alle commando's draai je in de map van de repository.
 
+Na de installatie: de [beheerhandleiding](beheerhandleiding.md) (back-up en herstel met scripts, bijwerken en terugrollen, Keycloak-beheer, leveringen, incidenten, acceptatie naast productie), de [privacy-quickscan](../5-secops/privacy-quickscan.md) en de [toegankelijkheidsstatus](../4-ux-design/toegankelijkheid.md).
+
 **Status:** D-OmniTwin is een pre-release. Lees [Beveiliging](#beveiliging) voordat je de installatie buiten je eigen netwerk bereikbaar maakt.
 
 ---
@@ -76,6 +78,7 @@ De tabel volgt de volgorde van `.env.example`. Optionele regels staan daar als c
 | `OIDC_AUDIENCE`, `OIDC_INTERN_URL`, `OIDC_JWKS_URL` | Optioneel, bij `OIDC_ISSUER`. `OIDC_AUDIENCE`: vereiste `aud`, standaard `omnitwin-api`. `OIDC_INTERN_URL`: adres waarop de backend de issuer intern bereikt voor discovery en sleutels; `docker-compose.yml` zet standaard `http://keycloak:8080/auth/realms/omnitwin`. Bij een externe identity provider: `OIDC_INTERN_URL=` (leeg). `OIDC_JWKS_URL`: alleen als de provider geen discovery heeft. |
 | `OMNITWIN_BRON_DOMEINEN` | Optioneel. Extra domeinen (kommagescheiden) waarvan de bronadapters van de use cases via https mogen downloaden, naast de vaste lijst (CBS, PDOK, RIVM, Klimaateffectatlas). Zie [use cases](../../usecases/README.md#bronnen). |
 | `OMNITWIN_BASE_URL`, `OMNITWIN_CLIENT_ID`, `OMNITWIN_CLIENT_SECRET`, `OMNITWIN_TOKEN_URL`, `KEYCLOAK_REALM` | Optioneel. `OMNITWIN_BASE_URL` is het adres van de installatie (standaard `http://localhost`); met Keycloak neemt de realmimport het op als redirect-URI van `omnitwin-web`. De rest alleen voor `python -m omnitwin.usecases installeer` en `test`: een machineclient (client credentials, zie [Keycloak](#keycloak-optioneel)). Het tokenendpoint komt standaard uit de discovery van realm `KEYCLOAK_REALM` (standaard `omnitwin`). |
+| `BEWIJS_TIMEOUT_MS`, `BEWIJS_CHAT_TIMEOUT_MS` | Optioneel, alleen voor `python -m omnitwin.usecases bewijs` (screenshots met Playwright, bij een release): wachttijd per scherm (standaard 90000) en voor een chatantwoord (standaard 300000), in milliseconden. |
 | `OMNITWIN_TESTACCOUNTS`, `KEYCLOAK_ADMIN_CLIENT_ID`, `KEYCLOAK_ADMIN_CLIENT_SECRET`, `KEYCLOAK_ADMIN`, `KEYCLOAK_URL`, `OMNITWIN_TESTACCOUNTS_UUR`, `OMNITWIN_TESTACCOUNTS_BESTAND` | Optioneel, alleen voor `--testaccounts` van de uitvoerder in test en dev (zie [Keycloak](#keycloak-optioneel), *Testaccounts*); de uitvoerder weigert bij `OMNITWIN_OMGEVING=productie`. Niet in een productie-`.env`. |
 | `LEVERINGEN_DIR`, `LADEN_MAX_MB`, `LADEN_RATE_LIMIT`, `LADEN_COMPAT_RATE_LIMIT`, `LADEN_WACHT_SECONDEN` | Optioneel, laad-API ([docs/api/laden](../api/laden/README.md)): map voor de ruwe leveringen (standaard het volume `leveringen` op `/leveringen`), bodylimiet (standaard 200 MB, JSON een tiende), leveringen per minuut per client (standaard 10; op de compatibiliteitsingang voor de SWF-monitor 120) en de time-out van `wacht=true` (standaard 60 s). |
 | `LADEN_BEWAAR_VERSIES`, `LADEN_BEWAAR_DAGEN`, `LADEN_BEWAAR_AFGEKEURD_DAGEN` | Optioneel. Bewaartermijn van de ruwe leveringen: altijd de laatste 10 versies per dataset, oudere tot 365 dagen, afgekeurde en alleen-gevalideerde leveringen 30 dagen. |
@@ -199,60 +202,38 @@ Ontwikkelen zonder Docker (Python venv, `run_dev.py`, admin-panel met `npm start
 
 ## 4. Data
 
-### Sample dataset (standaard)
+Alle data komt binnen via een **use case**: een map in [`usecases/`](../../usecases/README.md) met de datasets (bron, bewerkingen, beschrijving), de inrichting en de controles. De laadstraat valideert, versioneert en publiceert de data, met DCAT-metadata. Dezelfde laadstraat zit achter de [laad-API](../api/laden/README.md).
 
-`db-init` laadt bij de eerste start altijd het product zonder data: stuurdata (scenario's, profielen, prompts), de indicatordefinities (`db/stuurdata/indicatoren.csv` en het CBS-recept) en de Kompas-indeling. Met `LOAD_SAMPLE_DATA=true` laadt het daarna alle actieve **use cases** uit [`usecases/`](../../usecases/README.md), via de laadstraat in-process (`python -m omnitwin.usecases installeer --alle --inproces`: dezelfde validatie, versies en DCAT als de laad-API, zonder HTTP en token). Sinds https://github.com/TLaan/D-OmniTwin/issues/236 is dat open data, gedownload bij de bron:
+### Bij de eerste start
+
+`db-init` laadt bij de eerste start altijd het product zonder data: stuurdata (scenario's, profielen, prompts), de indicatordefinities en de Kompas-indeling. Met `LOAD_SAMPLE_DATA=true` (standaard) installeert hij daarna alle actieve use cases in-process (`python -m omnitwin.usecases installeer --alle --inproces`, zonder HTTP en token). Dat is open data, gedownload bij de bron (https://github.com/TLaan/D-OmniTwin/issues/236):
 
 - de **CBS-buurten, -wijken en -gemeenten** van Fryslân (PDOK, `cbs-gebiedsindelingen`);
-- de **CBS Kerncijfers 2019-2026** voor heel Fryslân (`cbs-kerncijfers`). Zo toont het Kompas-detail met de tijdslider meerdere jaren. Zie [`docs/3-data-engineering/cbs_kerncijfers.md`](../3-data-engineering/cbs_kerncijfers.md);
+- de **CBS Kerncijfers 2019-2026** voor heel Fryslân (`cbs-kerncijfers`, zie [`cbs_kerncijfers.md`](../3-data-engineering/cbs_kerncijfers.md));
 - de **RIVM Gezondheidsmonitor** 2012-2024 (`rivm-gezondheidsmonitor`) en de **Politie**-cijfers 2019-2025 (`politie-misdrijven`), voor heel Fryslân;
-- de **RIVM-kaarten** (boomkroonbedekking, hitte-eiland) voor de testbuurten (`hittestress`, adapter `wcs-zonaal`).
+- de **RIVM-kaarten** (boomkroonbedekking, hitte-eiland) voor de testbuurten (`hittestress`).
 
-Wat nog niet open is of nog geen adapter heeft (BAG, EP-Online, OpenStreetMap, interne indicatoren), komt uit [`init_data/sample/`](../../init_data/sample/README.md) via de use case `sample-bronbibliotheek`. Demodata is gemarkeerd: de bron van de waarde begint met `DEMODATA`. Zie [demodata naar open data](../3-data-engineering/demodata-naar-open-data.md).
+Wat nog niet open is of nog geen adapter heeft (BAG, EP-Online, OpenStreetMap, interne indicatoren), komt uit [`init_data/sample/`](../../init_data/sample/README.md) via de use case `sample-bronbibliotheek`. Die waarden zijn gemarkeerd: de bron begint met `DEMODATA` (zie [demodata naar open data](../3-data-engineering/demodata-naar-open-data.md)). Niet gebruiken voor beleid.
 
-De downloads worden bewaard in het volume `bron-cache`; daarna werkt het ook offline. Gemeten op een verse installatie (02-10-2026, met netwerk, lege cache): `db-init` 80 seconden, waarvan 37 voor de CBS Kerncijfers (188.606 waarden); de hele stack 93 seconden (images al gebouwd).
+De downloads staan daarna in het volume `bron-cache`; opnieuw installeren werkt dan ook offline. Gemeten op een verse installatie (02-10-2026, lege cache): `db-init` 80 seconden, waarvan 37 voor de CBS Kerncijfers. Zonder internet slaat `db-init` een bron over met een melding; de installatie blijft werken.
 
-**Zonder internet** bij de eerste start wordt een bron overgeslagen met een melding (geen kapotte installatie); zonder buurten keurt de laadstraat de waarden van de andere use cases af. Later opnieuw, met netwerk:
+### Use cases installeren of bijwerken
 
-```bash
-docker compose run --rm db-init python -m omnitwin.usecases installeer --alle --inproces
-```
-
-Eén use case installeren op een draaiende installatie gaat via de laad-API met een machineclient: `python -m omnitwin.usecases installeer hittestress` (zie [use cases](../../usecases/README.md#uitvoeren)).
-
-De sample is bedoeld om de installatie te testen en te demonstreren, niet voor beleid.
-
-### Volledige Fryslân-data
-
-De repository bevat voor heel Fryslân de CBS-buurten (indeling 2024) en de RIVM-indicatoren (`init_data/fryslan/`, zie [`init_data/README.md`](../../init_data/README.md)), en de CBS Kerncijfers 2019-2026 (`init_data/cbs/`). `db-init` laadt die niet vanzelf. Laad ze na de eerste start, als `db-init` klaar is, met een expliciete stap:
+Op de server, in-process (zelfde validatie als de laad-API):
 
 ```bash
-docker compose run --rm db-init python init_data/scripts/seed_fryslan.py --stap alle
+docker compose run --rm db-init python -m omnitwin.usecases lijst                              # wat is er
+docker compose run --rm db-init python -m omnitwin.usecases installeer --alle --inproces       # alles (opnieuw)
+docker compose run --rm db-init python -m omnitwin.usecases installeer cbs-kerncijfers --inproces
 ```
 
-`docker compose exec backend python init_data/scripts/seed_fryslan.py --stap alle` werkt ook. Alleen de CBS-reeksen opnieuw laden, via de laadstraat: `docker compose run --rm db-init python -m omnitwin.usecases installeer cbs-kerncijfers --inproces` (uit de cache; zonder cache met netwerk).
+Opnieuw installeren is veilig: een ongewijzigde levering wordt herkend, een gewijzigde wordt een nieuwe versie. Via de laad-API van een draaiende installatie, met een machineclient: `python -m omnitwin.usecases installeer hittestress` (zie [use cases, Uitvoeren](../../usecases/README.md#uitvoeren)).
 
-Dit duurt ongeveer 20 seconden (gemeten: 16 s, waarvan 13 s voor de CBS-reeksen). Het werkt met en zonder sample (`LOAD_SAMPLE_DATA`); de sample-buurten worden dan overschreven door dezelfde buurten uit de Fryslân-data. Verwachte aantallen in de database na sample + Fryslân:
+### Eigen data aanleveren
 
-| Tabel | Aantal |
-|-------|--------|
-| `gemeenten` | 18 (alle Friese gemeenten) |
-| `gebieden` | 931 buurten |
-| `indicatoren` | 246 (238 uit `indicatoren_seed.json`; namen die de sample al heeft worden aangevuld, niet gedupliceerd) |
-| `kompas_indicator_mapping` | 185 |
-| `gebied_data` | ± 208.700 (179.749 CBS Kerncijfers 2019-2026 voor 931 buurten, 28.235 RIVM-metingen, plus de use cases) |
+Een eigen bron (bijvoorbeeld een export uit FME of een eigen database) levert aan via de [laad-API](../api/laden/README.md): een machineclient in Keycloak met de rol `dataset:<id>:laden` (zie [Keycloak](#keycloak-optioneel)), daarna leveren en de status volgen. Een nieuwe soort data begint met een use case volgens de [Use Case Specificatie](../specificaties/usecase/README.md); zie ook [CONTRIBUTING.md](../../CONTRIBUTING.md).
 
-- Het script eindigt met een samenvatting per stap (aantal ok en fouten) en geeft exitcode 1 als een stap mislukt of meer dan 1% fouten heeft (`--max-fouten-pct`).
-- Opnieuw draaien is veilig: bestaande rijen worden bijgewerkt, er ontstaan geen duplicaten. `load_sample.py` blijft daarna ook werken.
-- De CSV bevat ook wijk-, gemeente- en landelijke rijen en buurten buiten Fryslân. Die worden overgeslagen ("gebieden niet in database"); dat is geen fout.
-- Het script maakt geen gebruikers of API-keys aan.
-- Bekend gat: de 61 buurten van Smallingerland (0090) hebben geen indicatorwaarden. De CSV gebruikt voor Smallingerland de buurtcodes van vóór de indeling 2024.
-
-Losse stappen: `--stap buurten|indicatoren|kompas|waarden`. `init_database.sh` is alleen voor een PostgreSQL zonder Docker.
-
-### Eigen gemeente of andere bronnen
-
-Via het ETL-framework in `ETL/`; zie [`ETL/ETL_DOCUMENTATION.md`](../../ETL/ETL_DOCUMENTATION.md). Dit is nog gericht op ontwikkelaars.
+De oude routes `init_data/scripts/seed_fryslan.py` en het ETL-framework in `ETL/` zijn niet meer de weg om een installatie te vullen (https://github.com/TLaan/D-OmniTwin/issues/69). `ETL/` bevat nog bronscripts voor ontwikkelaars.
 
 ---
 
@@ -332,6 +313,8 @@ docker compose down        # containers verwijderen; de volumes (database, uploa
 
 ### Backup
 
+Voor productie: gebruik `sh scripts/beheer/backup.sh` en `restore.sh` (met Keycloak, de volumes, controlesommen en bewaartermijn), zie de [beheerhandleiding](beheerhandleiding.md#2-back-up-en-herstel). Hieronder de losse commando's.
+
 De data staat in twee Docker-volumes: `pgdata` (de database) en `uploads` (geüploade kaartlagen, in de container `/app/data-upload`). Het volume `bron-cache` hoeft niet mee: dat is opnieuw te downloaden.
 
 ```bash
@@ -376,7 +359,7 @@ docker compose up -d
 
 ### Eigen organisatie
 
-Elke organisatie draait een eigen instantie (ADR 0007). Wie die instantie beheert, staat als data in de tabel `organisatie`: naam, korte naam, OIN (optioneel), CBS-gemeentecode(s) van het eigen gebied, standaard-benchmarkprovincie, contactadres, de logo's in de footer en het thema (huisstijl: `static/css/themes/<thema>.css`, alleen `a-z`, `0-9` en `-`; standaard `d-omnitwin`). Standaard staat daar Súdwest-Fryslân. Lezen: `GET /api/organisatie`.
+Elke organisatie draait een eigen instantie (ADR 0007). Wie die instantie beheert, staat als data in de tabel `organisatie`: naam, korte naam, OIN (optioneel), CBS-gemeentecode(s) van het eigen gebied, standaard-benchmarkprovincie, contactadres, de logo's in de footer en het thema (huisstijl: `static/css/themes/<thema>.css`, alleen `a-z`, `0-9` en `-`; standaard `d-omnitwin`). Standaard staat daar Súdwest-Fryslân. Lezen: `GET /api/organisatie`. Een eigen thema maken en welke tokens erin horen: [Thema's](thema-s.md).
 
 De eerste gemeentecode is de standaard-referentie in de rapporten ("⌀ Gemeente ...") en bepaalt welke buurten bij een omgevingsvisie-deelgebied horen.
 
@@ -397,6 +380,8 @@ Nog niet uit deze instelling: de benchmarkmodus `fryslan`, de welkomsttekst en d
 ### Eigen logo
 
 Het logo linksboven, het favicon en het logo in het beheerscherm en de rapporten komen uit één bestand: `static/images/beeldmerk.svg`. Standaard staat daar een neutraal, tijdelijk D-OmniTwin-beeldmerk (#83). Er is geen instelling in `.env` voor nodig.
+
+Linksboven krijgt het beeldmerk de kleuren van het thema: de tokens `--d-omnitwin-beeldmerk-vlak`, `--d-omnitwin-beeldmerk-lijn` en `--d-omnitwin-beeldmerk-kern` (in het SWF-thema wit met SWF-rood). Het favicon, het beheerscherm en de rapporten tonen de vaste kleuren uit het bestand. Een eigen SVG-logo zet zijn inhoud in een groep `<g id="beeldmerk">…</g>`, anders blijft de plek linksboven leeg; gebruikt je logo de tokens niet, dan houdt het zijn eigen kleuren.
 
 Eigen logo gebruiken:
 
@@ -443,6 +428,7 @@ Keycloak is de identity provider voor 0.3.0: inloggen via OIDC voor mensen, en c
 | client `etl-voorbeeld` | Voorbeeld-machineclient: alleen client credentials, rol `dataset:voorbeeld:laden`. Keycloak genereert het secret bij de import; het staat niet in de repo. |
 | realm-rollen `beheerder`, `gebruikersbeheerder`, `lezer` | Voor mensen. `beheerder` geeft beheerrechten in de beheeromgeving en op de beheer-API's. `gebruikersbeheerder` geeft gebruikersbeheer in de Keycloak-console (gebruikers en groepen, geen clients of realm-instellingen); bewust een aparte rol, zodat je dat recht los toekent. Elke nieuwe gebruiker krijgt `lezer` (geen beheer). De koppeling rol → rechten staat in de realmexport, dus is als data uitwisselbaar tussen instanties. |
 | client-rollen op `omnitwin-api` | `datasets:laden` (alle datasets) en per dataset `dataset:<id>:laden`. |
+| inlogpagina | `loginTheme` `swf`: de huisstijl van het organisatiethema (`deploy/keycloak/themes/`, zie [Thema's](thema-s.md#inlogpagina-keycloak)). |
 | instellingen | Access token 5 minuten, geen implicit of password grant (behalve de tijdelijke loginclient van testaccounts, zie onder), brute-force-detectie aan (na 5 mislukte pogingen oplopend wachten), geen zelfregistratie, wachtwoorden minimaal 12 tekens (in een [demo-omgeving](#26-demo-test-of-productie) 5). |
 
 **Aanzetten**

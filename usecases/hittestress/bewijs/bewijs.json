@@ -1,0 +1,108 @@
+{
+  "specificatie": "1.0",
+  "naam": "hittestress",
+  "versie": "0.2.0",
+  "omnitwin_versie": "0.2.1",
+  "datum": "2026-10-03T09:43:34+02:00",
+  "omgeving": "lokaal",
+  "ai_aanbieder": "geen",
+  "geslaagd": true,
+  "controles": [
+    {
+      "type": "aantal",
+      "omschrijving": "13 testbuurten",
+      "resultaat": "ok"
+    },
+    {
+      "type": "aantal",
+      "omschrijving": "13 testbuurten",
+      "resultaat": "ok"
+    },
+    {
+      "type": "api",
+      "omschrijving": "Boomkroonbedekking Bolsward-Zuidoost (RIVM WCS)",
+      "resultaat": "ok"
+    },
+    {
+      "type": "api",
+      "omschrijving": "Stedelijk hitte-eiland effect Bolsward-Zuidoost (RIVM WCS)",
+      "resultaat": "ok"
+    },
+    {
+      "type": "api",
+      "omschrijving": "80 jaar of ouder (%) Bolsward-Zuidoost (CBS 2026)",
+      "resultaat": "ok"
+    },
+    {
+      "type": "api",
+      "omschrijving": "Ervaren gezondheid Bolsward-Zuidoost (RIVM)",
+      "resultaat": "ok"
+    },
+    {
+      "type": "idempotent",
+      "resultaat": "overgeslagen",
+      "melding": "maakt een levering uit de bron: python -m omnitwin.usecases test hittestress"
+    }
+  ],
+  "stappen": [
+    {
+      "id": "kaart",
+      "resultaat": "ok",
+      "afbeelding": "kaart.webp",
+      "antwoordtijd_s": 23.5,
+      "console_fouten": []
+    },
+    {
+      "id": "chat",
+      "resultaat": "ok",
+      "afbeelding": "chat.webp",
+      "antwoord": "Afstand tot koele plek (SWF-gebiedsmonitor (interne bron), 2021): Hoogste waarde: Bolsward-Noord (246 m); laagste: Bolsward-Noordoost (206 m). Daartussen: Bolsward-Zuidoost (226 m). Lager is beter: Bolsward-Noordoost scoort het gunstigst, Bolsward-Noord het ongunstigst. Stedelijk hitte-eiland effect (RIVM Atlas Natuurlijk Kapitaal (WCS), 2022): Hoogste waarde: Bolsward-Noord (0,47 °C); laagste: Bolsward-Noordoost (0,38 °C). Daartussen: Bolsward-Zuidoost (0,41 °C). Lager is beter: Bolsward-Noordoost scoort het gunstigst, Bolsward-Noord het ongunstigst. 65+ jaar (%) (CBS Kerncijfers wijken en buurten, 2026): Hoogste waarde: Bolsward-Zuidoost (29,5%); laagste: Bolsward-Noord (24,1%). Daartussen: Bolsward-Zuidwest (25%) en Bolsward-Noordoost (24,2%). Boomkroonbedekking (RIVM Atlas Natuurlijk Kapitaal (WCS), 2022): Hoogste waarde: Bolsward-Zuidoost (13,1%); laagste: Bolsward-Noordoost (6,7%). Daartussen: Bolsward-Noord (7,4%). Hoger is beter: Bolsward-Zuidoost scoort het gunstigst. Let op: de waarden van Bolsward-Noord, Bolsward-Noordoost, Bolsward-Zuidoost zijn demodata.",
+      "antwoordtijd_s": 8.8,
+      "console_fouten": []
+    },
+    {
+      "id": "kompas",
+      "resultaat": "ok",
+      "afbeelding": "kompas.webp",
+      "antwoordtijd_s": 53.9,
+      "console_fouten": []
+    },
+    {
+      "id": "levering",
+      "resultaat": "ok",
+      "afbeelding": "levering.webp",
+      "antwoordtijd_s": 0.4,
+      "console_fouten": []
+    }
+  ],
+  "leveringen": [
+    {
+      "dataset": "rivm-boomkroon-buurten",
+      "status": "gepubliceerd",
+      "datasetversie": 1,
+      "aantallen": {
+        "fout": 0,
+        "geldig": 13,
+        "gelezen": 13,
+        "vervangen": 0,
+        "onderdrukt": 0,
+        "gepubliceerd": 13,
+        "bronOnderdrukt": 13
+      }
+    },
+    {
+      "dataset": "rivm-hitte-eiland-buurten",
+      "status": "gepubliceerd",
+      "datasetversie": 1,
+      "aantallen": {
+        "fout": 0,
+        "geldig": 13,
+        "gelezen": 13,
+        "vervangen": 0,
+        "onderdrukt": 0,
+        "gepubliceerd": 13,
+        "bronOnderdrukt": 13
+      }
+    }
+  ]
+}

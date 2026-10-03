@@ -108,7 +108,7 @@
   height: 200px;
   width: 100%;
   position: relative;
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--tint-subtle);
   border-radius: var(--border-radius-sm);
   padding: var(--spacing-sm);
   border: 1px solid var(--panel-border);
@@ -164,7 +164,7 @@
 
 /* Light Mode Override for darker background/opacity */
 :root:not([data-theme="dark"]) .floating-window {
-  background: rgba(255, 255, 255, 0.95);
+  background: color-mix(in srgb, var(--bg-secondary) 95%, transparent);
   /* Even higher opacity for readability */
   /* Higher Opacity for Light Mode */
   border: 1px solid rgba(0, 0, 0, 0.1);
@@ -173,7 +173,7 @@
 
 /* Dark Mode Override */
 [data-theme="dark"] .floating-window {
-  background: rgba(15, 23, 42, 0.9);
+  background: color-mix(in srgb, var(--bg-primary) 90%, transparent);
   /* Higher opacity for chart contrast */
   /* Dark & distinct */
   border: 1px solid rgba(255, 255, 255, 0.1);
@@ -185,7 +185,7 @@
 /* Thema per organisatie (#89): de variabelen hieronder lezen NL Design System-basistokens (--basis-*)
    en componenttokens (--d-omnitwin-*) uit static/css/themes/<thema>.css. De fallback is de huidige
    standaardwaarde, gelijk aan themes/d-omnitwin.css: zonder themabestand verandert er niets.
-   Datakleuren (Z-score, kaart, Kompas) lopen niet via het thema. Zie docs/4-ux-design/thema-s.md. */
+   Datakleuren (Z-score, kaart, Kompas) lopen niet via het thema. Zie docs/9-beheer/thema-s.md. */
 :root {
   /* ======== Master Palette — Light Mode (Sprint 8E) ======== */
   --bg-primary: var(--basis-color-default-bg-document, #f1f5f9);
@@ -193,9 +193,16 @@
   --text-primary: var(--basis-color-default-color-document, #1e293b);
   --text-secondary: var(--basis-color-default-color-subtle, #64748b);
   --border-color: var(--basis-color-default-border-subtle, #e2e8f0);
-  --panel-bg: rgba(255, 255, 255, 0.4);
-  --panel-border: rgba(30, 41, 59, 0.2);
+  /* Glas-vlakken en randen afgeleid van de themakleuren (licht en donker) */
+  --panel-bg: color-mix(in srgb, var(--bg-secondary) 40%, transparent);
+  --panel-border: color-mix(in srgb, var(--text-primary) 20%, transparent);
   --shadow-color: rgba(0, 0, 0, 0.15);
+  /* Neutrale tint voor hover en subtiele vlakken: tekstkleur met lage dekking, werkt in licht én donker */
+  --tint-subtle: color-mix(in srgb, var(--text-primary) 4%, transparent);
+  --tint: color-mix(in srgb, var(--text-primary) 8%, transparent);
+  --tint-strong: color-mix(in srgb, var(--text-primary) 14%, transparent);
+  --text-muted: var(--text-secondary);
+  --text-dark: var(--text-primary);
 
   /* Header — Trust Blue → Nature Green gradient */
   --header-bg-start: var(--d-omnitwin-header-background-color-start, #1e3a8a);
@@ -206,8 +213,8 @@
   --primary-color: var(--basis-color-accent-1-color-default, #1e3a8a);
   /* Trust Blue Light — navigatie, links, systeemaccent */
   --primary-dark: var(--basis-color-accent-1-color-hover, #1e40af);
-  --secondary-color: #4A5568;
-  /* Neutral — geen branding, rustig grijsblauw */
+  --secondary-color: var(--text-secondary);
+  /* Neutraal — geen branding (was een vaste grijsblauwe kleur) */
 
   --action-color: var(--basis-color-action-1-color-default, #1e3a8a);
   /* Trust Blue — Universal CTA (was groen/rood) */
@@ -252,18 +259,29 @@
   --primary-fill: var(--basis-color-accent-1-bg-default, var(--primary-color));
   --action-fill: var(--basis-color-action-1-bg-default, var(--action-color));
   --action-fill-dark: var(--basis-color-action-1-bg-hover, var(--action-dark));
+  /* Tekst op die vlakken */
+  --on-primary-fill: var(--basis-color-accent-1-inverse-color-default, #ffffff);
+  --on-action-fill: var(--basis-color-action-1-inverse-color-default, #ffffff);
+
+  /* Componenttokens (#89): actieve tab, welkomstscherm, tooltips, selectiebadge */
+  --tab-active-bg: var(--d-omnitwin-tab-active-background-color, #c59d00);
+  --tab-active-text: var(--d-omnitwin-tab-active-color, #0f172a);
+  --welcome-btn-bg: var(--d-omnitwin-welcome-button-background-color, #c59d00);
+  --welcome-btn-text: var(--d-omnitwin-welcome-button-color, #0f172a);
+  --welcome-accent: var(--d-omnitwin-welcome-accent-color, #856a00);
+  --tooltip-bg: var(--d-omnitwin-tooltip-background-color, #0f172a);
+  --tooltip-text: var(--d-omnitwin-tooltip-color, #ffffff);
+  --selection-badge-bg: var(--d-omnitwin-selection-badge-background-color, #047857);
+  --selection-badge-text: var(--d-omnitwin-selection-badge-color, #ffffff);
+
+  /* Kaartselectie: hoort bij de kaart (zelfde goud als de selectierand in app.js), niet bij het thema */
+  --map-selection-color: #eab308;
 
   /* Layout */
   --tab-bar-width: 70px;
   --panel-width: 360px;
 }
 
-[data-theme="dark"] {
-  /* ... */
-  --panel-bg: rgba(15, 23, 42, 0.45);
-  /* Changed back to 0.45 for glass effect */
-  /* ... */
-}
 
 /* ============================================================================
    Global Styles
@@ -298,6 +316,14 @@ h6 {
   font-family: var(--basis-heading-font-family, inherit);
 }
 
+/* Knoppen en invoervelden nemen standaard het systeemfont; hier het lettertype van het thema */
+button,
+input,
+select,
+textarea {
+  font-family: inherit;
+}
+
 /* ============================================================================
    Header
    ============================================================================ */
@@ -325,14 +351,23 @@ h6 {
 }
 
 /* Beeldmerk (#83): static/images/beeldmerk.svg, per installatie te vervangen.
-   Geen kleurfilter: een eigen logo houdt zijn eigen kleuren. */
+   Geen kleurfilter; de kleuren komen uit de thema-tokens --d-omnitwin-beeldmerk-* (#249),
+   een eigen logo zonder die tokens houdt zijn eigen kleuren. */
 .header-logo {
   height: 44px;
-  width: auto;
+  width: 44px;
+  flex-shrink: 0;
+  /* Op één lijn met de knoppen van de tab-bar eronder (left 10px, 50px breed):
+     midden van het beeldmerk op 10 + 25 = 35px vanaf de rand */
+  margin-left: calc(35px - 22px - var(--spacing-xl));
   max-width: 160px;
   object-fit: contain;
   margin-right: var(--spacing-lg);
   filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+}
+
+@media (max-width: 768px) {
+  .header-logo { margin-left: 0; }
 }
 
 /* ... existing header content ... */
@@ -379,7 +414,7 @@ h6 {
   font-size: 0.875rem;
   font-weight: 600;
   /* Slightly bolder for readability */
-  color: #ffffff;
+  color: var(--header-text);
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
   /* Text shadow for contrast */
 }
@@ -481,8 +516,6 @@ h6 {
   --text-secondary: var(--basis-color-default-color-subtle, #94a3b8);
   /* Glassmorphism — tokens already defined in :root above */
   --border-color: var(--basis-color-default-border-subtle, #334155);
-  --panel-bg: rgba(30, 41, 59, 0.4);
-  --panel-border: rgba(241, 245, 249, 0.2);
   --shadow-color: rgba(0, 0, 0, 0.5);
 
   /* Header — Trust Blue Dark → Nature Green Dark (Hue-Consistent!) */
@@ -494,8 +527,6 @@ h6 {
   --primary-color: var(--basis-color-accent-1-color-default, #3b82f6);
   /* Trust Blue Dark */
   --primary-dark: var(--basis-color-accent-1-color-hover, #2563eb);
-  --secondary-color: #718096;
-  /* Neutral Dark — consistent met Light */
 
   --action-color: var(--basis-color-action-1-color-default, #3b82f6);
   /* Trust Blue Dark — Universal CTA */
@@ -520,6 +551,16 @@ h6 {
   --primary-fill: var(--basis-color-accent-1-bg-default, #2563eb);
   --action-fill: var(--basis-color-action-1-bg-default, #2563eb);
   --action-fill-dark: var(--basis-color-action-1-bg-hover, #1d4ed8);
+
+  --tab-active-bg: var(--d-omnitwin-tab-active-background-color, #eab308);
+  --tab-active-text: var(--d-omnitwin-tab-active-color, #0f172a);
+  --welcome-btn-bg: var(--d-omnitwin-welcome-button-background-color, #eab308);
+  --welcome-btn-text: var(--d-omnitwin-welcome-button-color, #0f172a);
+  --welcome-accent: var(--d-omnitwin-welcome-accent-color, #eab308);
+  --tooltip-bg: var(--d-omnitwin-tooltip-background-color, #f1f5f9);
+  --tooltip-text: var(--d-omnitwin-tooltip-color, #0f172a);
+  --selection-badge-bg: var(--d-omnitwin-selection-badge-background-color, #047857);
+  --selection-badge-text: var(--d-omnitwin-selection-badge-color, #ffffff);
 }
 
 /* Update Panel style for structure */
@@ -590,7 +631,7 @@ h6 {
   display: flex;
   align-items: center;
   justify-content: center;
-  color: white;
+  color: var(--text-primary);
   font-size: 1.25rem;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
@@ -602,10 +643,9 @@ h6 {
 }
 
 .tab-button.active {
-  background: var(--accent-color);
-  /* GREEN only when active! */
+  background: var(--tab-active-bg);
   border-color: transparent;
-  color: white;
+  color: var(--tab-active-text);
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
 }
 
@@ -637,11 +677,11 @@ h6 {
   background: var(--bg-primary);
 }
 
-/* Active button is always green with white text */
+/* Actieve knop: kleuren uit het thema (--d-omnitwin-tab-active-*) */
 .tab-button.active {
-  background: var(--accent-color);
+  background: var(--tab-active-bg);
   border-color: transparent;
-  color: white;
+  color: var(--tab-active-text);
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
 }
 
@@ -784,7 +824,7 @@ h6 {
   width: 100%;
   padding: 0.5rem 0.75rem;
   border-radius: var(--border-radius-sm);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border: 1px solid var(--panel-border);
   background: var(--panel-bg);
   /* Glassmorphism */
   color: var(--text-primary);
@@ -809,8 +849,7 @@ h6 {
 
 .form-control:focus {
   border-color: var(--primary-color);
-  box-shadow: 0 0 0 2px rgba(30, 58, 138, 0.2);
-  /* Trust Blue focus ring */
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--primary-color) 20%, transparent);
 }
 
 .form-control:disabled {
@@ -839,7 +878,7 @@ h6 {
 }
 
 .checkbox-label:hover {
-  background: rgba(37, 99, 235, 0.05);
+  background: color-mix(in srgb, var(--primary-color) 5%, transparent);
 }
 
 /* Visueel verborgen maar wel bereikbaar met het toetsenbord (was display:none) */
@@ -885,7 +924,7 @@ h6 {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  color: white;
+  color: var(--on-primary-fill);
   font-size: 0.8rem;
   line-height: 1;
   font-weight: bold;
@@ -908,12 +947,12 @@ h6 {
 }
 
 #externe-lagen-list::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.25);
+  background: color-mix(in srgb, var(--text-primary) 25%, transparent);
   border-radius: 2px;
 }
 
 #externe-lagen-list::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.4);
+  background: color-mix(in srgb, var(--text-primary) 40%, transparent);
 }
 
 .externe-laag-item {
@@ -964,7 +1003,7 @@ h6 {
 
 .layer-info-btn:hover {
   color: var(--primary-color);
-  background: rgba(37, 99, 235, 0.1);
+  background: color-mix(in srgb, var(--primary-color) 10%, transparent);
 }
 
 .layer-desc {
@@ -1029,7 +1068,7 @@ h6 {
 
 .slider::-webkit-slider-thumb:hover {
   transform: scale(1.2);
-  box-shadow: 0 4px 8px rgba(37, 99, 235, 0.4);
+  box-shadow: 0 4px 8px color-mix(in srgb, var(--primary-color) 40%, transparent);
 }
 
 .slider::-moz-range-thumb {
@@ -1072,8 +1111,7 @@ h6 {
 
 .btn-primary {
   background: linear-gradient(135deg, var(--action-fill), var(--action-fill-dark));
-  color: white;
-  /* Verify contrast in Light Mode */
+  color: var(--on-action-fill);
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
   box-shadow: var(--shadow-md);
   border: 1px solid rgba(0, 0, 0, 0.05);
@@ -1081,7 +1119,7 @@ h6 {
 
 .btn-primary:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(37, 99, 235, 0.3);
+  box-shadow: 0 8px 20px color-mix(in srgb, var(--action-fill) 30%, transparent);
 }
 
 .btn-primary:active {
@@ -1102,7 +1140,7 @@ h6 {
 
 .btn-secondary:hover {
   background: var(--primary-fill);
-  color: white;
+  color: var(--on-primary-fill);
 }
 
 .btn-secondary:disabled {
@@ -1689,8 +1727,8 @@ h6 {
 .kompas-tooltip {
   position: absolute;
   pointer-events: none;
-  background: rgba(15, 23, 42, 0.95);
-  color: white;
+  background: color-mix(in srgb, var(--tooltip-bg) 95%, transparent);
+  color: var(--tooltip-text);
   padding: 0.75rem 1rem;
   border-radius: var(--border-radius-sm);
   font-size: 0.875rem;
@@ -1703,18 +1741,16 @@ h6 {
 .kompas-tooltip strong {
   display: block;
   margin-bottom: 0.25rem;
-  color: var(--accent-color);
 }
 
 .kompas-tooltip .tooltip-value {
   font-size: 1.125rem;
   font-weight: 600;
-  color: white;
 }
 
 .kompas-tooltip .tooltip-path {
   font-size: 0.75rem;
-  color: var(--text-secondary);
+  color: inherit;
   margin-top: 0.5rem;
   opacity: 0.8;
 }
@@ -1743,18 +1779,18 @@ h6 {
 }
 
 .kompas-info .coverage.low {
-  background: rgba(239, 68, 68, 0.1);
-  color: #EF4444;
+  background: color-mix(in srgb, var(--color-danger) 10%, transparent);
+  color: var(--color-danger);
 }
 
 .kompas-info .coverage.medium {
-  background: rgba(251, 191, 36, 0.1);
-  color: #F59E0B;
+  background: color-mix(in srgb, var(--color-warning) 10%, transparent);
+  color: var(--color-warning);
 }
 
 .kompas-info .coverage.high {
-  background: rgba(34, 197, 94, 0.1);
-  color: #22C55E;
+  background: color-mix(in srgb, var(--color-success) 10%, transparent);
+  color: var(--color-success);
 }
 
 .kompas-info strong {
@@ -1783,7 +1819,7 @@ h6 {
 
 .kompas-actions button:hover:not(:disabled) {
   background: var(--primary-fill);
-  color: white;
+  color: var(--on-primary-fill);
   border-color: var(--primary-color);
   transform: translateY(-2px);
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
@@ -1836,7 +1872,7 @@ h6 {
   align-items: center;
   justify-content: center;
   gap: 8px;
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--tint-subtle);
   border: 1px solid var(--panel-border);
   color: var(--text-primary);
   padding: 8px 16px;
@@ -1847,7 +1883,7 @@ h6 {
 }
 
 .kompas-viz-btn:hover {
-  background: rgba(255, 255, 255, 0.1);
+  background: var(--tint);
   border-color: var(--accent-color);
   transform: translateY(-1px);
 }
@@ -1856,19 +1892,6 @@ h6 {
   opacity: 0.8;
 }
 
-/* Dark Mode Adjustments */
-[data-theme="dark"] .kompas-tooltip {
-  background: rgba(241, 245, 249, 0.95);
-  color: var(--text-primary);
-}
-
-[data-theme="dark"] .kompas-tooltip strong {
-  color: var(--primary-color);
-}
-
-[data-theme="dark"] .kompas-tooltip .tooltip-value {
-  color: var(--text-primary);
-}
 
 /* ============================================================================
    Floating Draggable Window (Kompas)
@@ -1910,7 +1933,7 @@ h6 {
   align-items: center;
   padding: 0.75rem 1rem;
   background: linear-gradient(135deg, var(--header-bg-start), var(--header-bg-end));
-  color: white;
+  color: var(--header-text);
   cursor: grab;
   user-select: none;
   flex-shrink: 0;
@@ -1941,7 +1964,7 @@ h6 {
   border: none;
   border-radius: 50%;
   background: rgba(255, 255, 255, 0.2);
-  color: white;
+  color: var(--header-text);
   font-size: 0.875rem;
   font-weight: 600;
   cursor: pointer;
@@ -1957,7 +1980,7 @@ h6 {
 }
 
 .btn-close:hover {
-  background: #ef4444 !important;
+  background: var(--color-danger) !important;
 }
 
 /* Window Content */
@@ -2061,7 +2084,7 @@ h6 {
 .kompas-action-overlay {
   position: relative;
   /* For absolute positioning of close button */
-  background: rgba(255, 255, 255, 0.95);
+  background: color-mix(in srgb, var(--bg-secondary) 95%, transparent);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   padding: 1.5rem;
@@ -2102,8 +2125,8 @@ h6 {
 }
 
 [data-theme="dark"] .btn-kompas-close:hover {
-  background: rgba(255, 255, 255, 0.1);
-  color: white;
+  background: var(--tint);
+  color: var(--text-primary);
 }
 
 @keyframes popIn {
@@ -2119,7 +2142,7 @@ h6 {
 }
 
 [data-theme="dark"] .kompas-action-overlay {
-  background: rgba(15, 23, 42, 0.95);
+  background: color-mix(in srgb, var(--bg-primary) 95%, transparent);
   border-color: rgba(255, 255, 255, 0.1);
 }
 
@@ -2158,7 +2181,7 @@ h6 {
 
 .btn-kompas-action {
   background: linear-gradient(135deg, var(--primary-fill), var(--primary-dark));
-  color: white;
+  color: var(--on-primary-fill);
   border: none;
   padding: 0.6rem 1.2rem;
   border-radius: 20px;
@@ -2169,13 +2192,13 @@ h6 {
   align-items: center;
   gap: 0.5rem;
   transition: all 0.2s ease;
-  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.3);
+  box-shadow: 0 2px 8px color-mix(in srgb, var(--primary-fill) 30%, transparent);
   margin-top: 0.5rem;
 }
 
 .btn-kompas-action:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.4);
+  box-shadow: 0 4px 12px color-mix(in srgb, var(--primary-fill) 40%, transparent);
 }
 
 .btn-kompas-action svg {
@@ -2188,7 +2211,7 @@ h6 {
   padding: 12px 20px;
   border-bottom: 1px solid var(--panel-border);
   position: relative;
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--tint-subtle);
   z-index: 10;
 }
 
@@ -2209,7 +2232,7 @@ h6 {
 #kompas-ai-search {
   width: 100%;
   padding: 10px 12px 10px 40px;
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--tint-subtle);
   border: 1px solid var(--panel-border);
   border-radius: 20px;
   color: var(--text-primary);
@@ -2218,9 +2241,9 @@ h6 {
 }
 
 #kompas-ai-search:focus {
-  background: rgba(255, 255, 255, 0.1);
+  background: var(--tint);
   border-color: var(--accent-color);
-  box-shadow: 0 0 0 2px rgba(197, 157, 0, 0.2);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent-color) 20%, transparent);
 }
 
 /* AI Search Results Dropdown */
@@ -2234,7 +2257,7 @@ h6 {
   -webkit-backdrop-filter: blur(20px);
   border: 1px solid var(--panel-border);
   border-top: none;
-  border-radius: 0 0 12px 12px;
+  border-radius: 0 0 var(--border-radius) var(--border-radius);
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
   max-height: 250px;
   overflow-y: auto;
@@ -2257,7 +2280,7 @@ h6 {
 .search-result-item {
   padding: 10px 15px;
   cursor: pointer;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  border-bottom: 1px solid var(--tint-subtle);
   transition: background 0.2s ease;
   display: flex;
   flex-direction: column;
@@ -2265,7 +2288,7 @@ h6 {
 }
 
 .search-result-item:hover {
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--tint);
 }
 
 .search-result-item:last-child {
@@ -2357,7 +2380,7 @@ h6 {
 
 .chat-close-btn:hover {
   color: var(--text-primary);
-  background: rgba(255, 255, 255, 0.1);
+  background: var(--tint);
 }
 
 /* --- Chat Messages Area --- */
@@ -2401,7 +2424,7 @@ h6 {
 .chat-message-bubble {
   max-width: 92%;
   padding: 0.75rem 1rem;
-  border-radius: 12px;
+  border-radius: var(--border-radius);
   font-size: 0.875rem;
   line-height: 1.5;
   word-wrap: break-word;
@@ -2409,12 +2432,12 @@ h6 {
 
 .chat-message-bubble.user {
   background: linear-gradient(135deg, var(--action-fill), var(--action-fill-dark));
-  color: white;
+  color: var(--on-action-fill);
   border-bottom-right-radius: 4px;
 }
 
 .chat-message-bubble.assistant {
-  background: rgba(255, 255, 255, 0.06);
+  background: var(--tint-subtle);
   border: 1px solid var(--panel-border);
   color: var(--text-primary);
   border-bottom-left-radius: 4px;
@@ -2422,7 +2445,7 @@ h6 {
 
 .chat-message-bubble.assistant.error {
   border-color: var(--color-danger);
-  background: rgba(239, 68, 68, 0.08);
+  background: color-mix(in srgb, var(--color-danger) 8%, transparent);
 }
 
 .chat-narrative {
@@ -2443,9 +2466,9 @@ h6 {
   width: 100%;
   text-align: left;
   padding: 0.5rem 0.75rem;
-  border-radius: 8px;
+  border-radius: var(--border-radius-sm);
   border: 1px solid var(--panel-border);
-  background: rgba(255, 255, 255, 0.04);
+  background: var(--tint-subtle);
   color: var(--text-primary);
   font-size: 0.8rem;
   font-weight: 500;
@@ -2454,7 +2477,7 @@ h6 {
 }
 
 .chat-actie-btn:hover {
-  background: rgba(59, 130, 246, 0.12);
+  background: color-mix(in srgb, var(--action-color) 12%, transparent);
   border-color: var(--action-color);
   color: var(--action-color);
   transform: translateX(4px);
@@ -2470,8 +2493,8 @@ h6 {
 .chat-info-card {
   margin-top: 6px;
   padding: 0.65rem 0.85rem;
-  border-radius: 8px;
-  background: rgba(49, 130, 206, 0.08);
+  border-radius: var(--border-radius-sm);
+  background: color-mix(in srgb, var(--action-color) 8%, transparent);
   border-left: 3px solid var(--action-color);
   font-size: 0.8rem;
   line-height: 1.55;
@@ -2501,7 +2524,7 @@ h6 {
   margin-top: 0.75rem;
   max-height: 180px;
   overflow-y: auto;
-  border-radius: 8px;
+  border-radius: var(--border-radius-sm);
   border: 1px solid var(--panel-border);
 }
 
@@ -2521,7 +2544,7 @@ h6 {
   padding: 0.45rem 0.75rem;
   cursor: pointer;
   transition: all var(--transition-fast);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  border-bottom: 1px solid var(--tint-subtle);
 }
 
 .chat-indicator-item:last-child {
@@ -2529,11 +2552,11 @@ h6 {
 }
 
 .chat-indicator-item:hover {
-  background: rgba(59, 130, 246, 0.08);
+  background: color-mix(in srgb, var(--action-color) 8%, transparent);
 }
 
 .chat-indicator-item.active {
-  background: rgba(59, 130, 246, 0.15);
+  background: color-mix(in srgb, var(--action-color) 15%, transparent);
   border-left: 3px solid var(--action-color);
 }
 
@@ -2551,7 +2574,7 @@ h6 {
   font-size: 0.7rem;
   font-weight: 600;
   color: var(--action-color);
-  background: rgba(59, 130, 246, 0.1);
+  background: color-mix(in srgb, var(--action-color) 10%, transparent);
   padding: 2px 6px;
   border-radius: 10px;
   flex-shrink: 0;
@@ -2573,7 +2596,7 @@ h6 {
   padding: 0.6rem 0.875rem;
   border-radius: 20px;
   border: 1px solid var(--panel-border);
-  background: rgba(255, 255, 255, 0.06);
+  background: var(--tint-subtle);
   color: var(--text-primary);
   font-family: inherit;
   font-size: 0.85rem;
@@ -2587,7 +2610,7 @@ h6 {
 
 .chat-input:focus {
   border-color: var(--action-color);
-  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.15);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--action-color) 15%, transparent);
 }
 
 .chat-send-btn {
@@ -2596,7 +2619,7 @@ h6 {
   border-radius: 50%;
   border: none;
   background: linear-gradient(135deg, var(--action-fill), var(--action-fill-dark));
-  color: white;
+  color: var(--on-action-fill);
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -2607,7 +2630,7 @@ h6 {
 
 .chat-send-btn:hover:not(:disabled) {
   transform: scale(1.08);
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+  box-shadow: 0 4px 12px color-mix(in srgb, var(--action-fill) 30%, transparent);
 }
 
 .chat-send-btn:disabled {
@@ -2647,23 +2670,13 @@ h6 {
 
 /* --- Chat Tab Button Accent --- */
 .chat-tab-button.active {
-  background: var(--action-color) !important;
+  background: var(--action-fill) !important;
   border-color: transparent !important;
-}
-
-.chat-tab-button.active img {
-  filter: brightness(0) invert(1) !important;
+  color: var(--on-action-fill);
 }
 
 /* --- Light Mode fixes --- */
-:root:not([data-theme="dark"]) .chat-message-bubble.assistant {
-  background: rgba(0, 0, 0, 0.03);
-  border-color: rgba(0, 0, 0, 0.08);
-}
 
-:root:not([data-theme="dark"]) .chat-input {
-  background: rgba(0, 0, 0, 0.03);
-}
 
 :root:not([data-theme="dark"]) .chat-input-bar {
   background: rgba(0, 0, 0, 0.03);
@@ -2715,8 +2728,8 @@ h6 {
 .welcome-modal {
   position: relative;
   width: min(520px, 92vw);
-  background: var(--panel-bg, rgba(15, 23, 42, 0.97));
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: color-mix(in srgb, var(--bg-secondary) 97%, transparent);
+  border: 1px solid var(--tint);
   border-radius: 20px;
   padding: 2.5rem 2rem 2rem;
   box-shadow:
@@ -2738,7 +2751,7 @@ h6 {
   right: -60px;
   width: 280px;
   height: 280px;
-  background: radial-gradient(circle, rgba(234, 179, 8, 0.12) 0%, transparent 70%);
+  background: radial-gradient(circle, color-mix(in srgb, var(--welcome-accent) 12%, transparent) 0%, transparent 70%);
   pointer-events: none;
 }
 
@@ -2760,21 +2773,20 @@ h6 {
   font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--accent-text);
-  opacity: 0.9;
+  color: var(--welcome-accent);
 }
 
 .welcome-title {
   font-size: 1.6rem;
   font-weight: 700;
-  color: var(--text-primary, #f1f5f9);
+  color: var(--text-primary);
   line-height: 1.2;
   margin: 0 0 0.4rem;
 }
 
 .welcome-subtitle {
   font-size: 0.9rem;
-  color: var(--text-secondary, #94a3b8);
+  color: var(--text-secondary);
   margin: 0;
   line-height: 1.5;
 }
@@ -2792,14 +2804,14 @@ h6 {
   align-items: flex-start;
   gap: 0.875rem;
   padding: 0.75rem;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.07);
+  background: var(--tint-subtle);
+  border: 1px solid var(--tint);
   border-radius: 10px;
   transition: background 0.2s;
 }
 
 .welcome-step:hover {
-  background: rgba(255, 255, 255, 0.07);
+  background: var(--tint);
 }
 
 .welcome-step-icon {
@@ -2809,9 +2821,9 @@ h6 {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(234, 179, 8, 0.1);
-  border-radius: 8px;
-  color: var(--accent-text);
+  background: color-mix(in srgb, var(--welcome-accent) 10%, transparent);
+  border-radius: var(--border-radius-sm);
+  color: var(--welcome-accent);
 }
 
 .welcome-step-text {
@@ -2823,12 +2835,12 @@ h6 {
 .welcome-step-text strong {
   font-size: 0.875rem;
   font-weight: 600;
-  color: var(--text-primary, #f1f5f9);
+  color: var(--text-primary);
 }
 
 .welcome-step-text span {
   font-size: 0.8rem;
-  color: var(--text-secondary, #94a3b8);
+  color: var(--text-secondary);
   line-height: 1.4;
 }
 
@@ -2845,7 +2857,7 @@ h6 {
   align-items: center;
   gap: 0.5rem;
   padding: 0.6rem 1.1rem;
-  border-radius: 8px;
+  border-radius: var(--border-radius-sm);
   font-size: 0.875rem;
   font-weight: 600;
   cursor: pointer;
@@ -2856,38 +2868,38 @@ h6 {
 }
 
 .welcome-btn-primary {
-  background: var(--accent-color, #eab308);
-  color: #0f172a;
-  border-color: var(--accent-color, #eab308);
+  background: var(--welcome-btn-bg);
+  color: var(--welcome-btn-text);
+  border-color: var(--welcome-btn-bg);
 }
 
 .welcome-btn-primary:hover {
   filter: brightness(1.1);
   transform: translateY(-1px);
-  box-shadow: 0 4px 14px rgba(234, 179, 8, 0.35);
+  box-shadow: 0 4px 14px color-mix(in srgb, var(--welcome-btn-bg) 35%, transparent);
 }
 
 .welcome-btn-secondary {
-  background: rgba(255, 255, 255, 0.08);
-  color: var(--text-primary, #f1f5f9);
-  border-color: rgba(255, 255, 255, 0.15);
+  background: var(--tint);
+  color: var(--text-primary);
+  border-color: var(--tint-strong);
 }
 
 .welcome-btn-secondary:hover {
-  background: rgba(255, 255, 255, 0.14);
-  border-color: rgba(255, 255, 255, 0.25);
+  background: var(--tint-strong);
+  border-color: color-mix(in srgb, var(--text-primary) 25%, transparent);
   transform: translateY(-1px);
 }
 
 .welcome-btn-ghost {
   background: transparent;
-  color: var(--text-secondary, #94a3b8);
-  border-color: rgba(255, 255, 255, 0.1);
+  color: var(--text-secondary);
+  border-color: var(--tint);
 }
 
 .welcome-btn-ghost:hover {
-  color: var(--text-primary, #f1f5f9);
-  border-color: rgba(255, 255, 255, 0.2);
+  color: var(--text-primary);
+  border-color: color-mix(in srgb, var(--text-primary) 20%, transparent);
 }
 
 /* --- A1: Skip link --- */
@@ -2898,31 +2910,18 @@ h6 {
   border: none;
   padding: 0.4rem 0 0;
   font-size: 0.78rem;
-  color: var(--text-secondary, #94a3b8);
+  color: var(--text-secondary);
   cursor: pointer;
   text-align: center;
   transition: color 0.2s;
 }
 
 .welcome-skip:hover {
-  color: var(--text-primary, #f1f5f9);
+  color: var(--text-primary);
   text-decoration: underline;
 }
 
-/* Light mode aanpassingen */
-:root:not([data-theme="dark"]) .welcome-modal {
-  background: rgba(255, 255, 255, 0.97);
-  border-color: rgba(0, 0, 0, 0.08);
-}
-
-:root:not([data-theme="dark"]) .welcome-step {
-  background: rgba(0, 0, 0, 0.03);
-  border-color: rgba(0, 0, 0, 0.06);
-}
-
-:root:not([data-theme="dark"]) .welcome-step:hover {
-  background: rgba(0, 0, 0, 0.06);
-}
+/* Licht en donker: de tints hierboven volgen de tekstkleur van het thema */
 
 /* --- A2: Contextuele Tooltip --- */
 .contextual-tooltip {
@@ -2954,8 +2953,8 @@ h6 {
   align-items: center;
   gap: 0.75rem;
   padding: 0.75rem 1rem;
-  background: rgba(234, 179, 8, 0.12);
-  border: 1px solid rgba(234, 179, 8, 0.3);
+  background: color-mix(in srgb, var(--accent-color) 12%, var(--bg-secondary));
+  border: 1px solid color-mix(in srgb, var(--accent-color) 30%, transparent);
   border-radius: 10px;
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
@@ -2964,7 +2963,7 @@ h6 {
 
 #contextual-tooltip-text {
   font-size: 0.85rem;
-  color: var(--text-primary, #f1f5f9);
+  color: var(--text-primary);
   line-height: 1.45;
   flex: 1;
 }
@@ -2973,7 +2972,7 @@ h6 {
   flex-shrink: 0;
   background: none;
   border: none;
-  color: var(--text-secondary, #94a3b8);
+  color: var(--text-secondary);
   font-size: 1rem;
   cursor: pointer;
   padding: 0 0.2rem;
@@ -2982,7 +2981,7 @@ h6 {
 }
 
 .contextual-tooltip-close:hover {
-  color: var(--text-primary, #f1f5f9);
+  color: var(--text-primary);
 }
 
 /* --- Error Toast (Sprint 11B — upgrade van alert()) --- */
@@ -2996,15 +2995,15 @@ h6 {
   gap: 0.6rem;
   padding: 0.7rem 1rem;
   max-width: min(420px, 90vw);
-  background: rgba(220, 38, 38, 0.12);
-  border: 1px solid rgba(220, 38, 38, 0.35);
+  background: color-mix(in srgb, var(--color-danger) 12%, var(--bg-secondary));
+  border: 1px solid color-mix(in srgb, var(--color-danger) 35%, transparent);
   border-radius: 10px;
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
   animation: tooltipSlideIn 0.3s ease;
   font-size: 0.85rem;
-  color: var(--text-primary, #f1f5f9);
+  color: var(--text-primary);
 }
 
 .error-toast.fade-out {
@@ -3024,7 +3023,7 @@ h6 {
 .error-toast-close {
   background: none;
   border: none;
-  color: var(--text-secondary, #94a3b8);
+  color: var(--text-secondary);
   cursor: pointer;
   font-size: 0.95rem;
   padding: 0 0.2rem;
@@ -3033,7 +3032,7 @@ h6 {
 }
 
 .error-toast-close:hover {
-  color: var(--text-primary, #f1f5f9);
+  color: var(--text-primary);
 }
 
 
@@ -3105,9 +3104,9 @@ h6 {
   align-items: center;
   gap: 0.5rem;
   padding: 0.5rem 0.75rem;
-  background: rgba(234, 179, 8, 0.08);
-  border: 1px solid rgba(234, 179, 8, 0.2);
-  border-radius: 8px;
+  background: color-mix(in srgb, var(--accent-color) 8%, transparent);
+  border: 1px solid color-mix(in srgb, var(--accent-color) 20%, transparent);
+  border-radius: var(--border-radius-sm);
   margin-bottom: 0.75rem;
   animation: fadeInPanel 0.3s ease;
 }
@@ -3198,7 +3197,7 @@ h6 {
 
 .indicator-search-clear:hover {
   color: var(--text-primary);
-  background: rgba(255,255,255,0.1);
+  background: var(--tint);
 }
 
 /* --- C2: Accordion container --- */
@@ -3206,8 +3205,8 @@ h6 {
   max-height: 320px;
   overflow-y: auto;
   overflow-x: hidden;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 8px;
+  border: 1px solid var(--tint);
+  border-radius: var(--border-radius-sm);
   margin-bottom: 0.5rem;
 }
 
@@ -3233,7 +3232,7 @@ h6 {
 
 /* --- C2: Thema-groep header --- */
 .accordion-group {
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  border-bottom: 1px solid var(--tint-subtle);
 }
 
 .accordion-group:last-child {
@@ -3245,7 +3244,7 @@ h6 {
   align-items: center;
   gap: 0.5rem;
   padding: 0.55rem 0.7rem;
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--tint-subtle);
   cursor: pointer;
   user-select: none;
   transition: background 0.15s;
@@ -3255,7 +3254,7 @@ h6 {
 }
 
 .accordion-header:hover {
-  background: rgba(255, 255, 255, 0.07);
+  background: var(--tint);
 }
 
 .accordion-chevron {
@@ -3314,12 +3313,12 @@ h6 {
 }
 
 .indicator-item:hover {
-  background: rgba(234, 179, 8, 0.06);
+  background: color-mix(in srgb, var(--accent-color) 6%, transparent);
   color: var(--text-primary);
 }
 
 .indicator-item.active {
-  background: rgba(234, 179, 8, 0.1);
+  background: color-mix(in srgb, var(--accent-color) 10%, transparent);
   color: var(--accent-text);
   border-left-color: var(--accent-color);
   font-weight: 600;
@@ -3347,24 +3346,12 @@ h6 {
 /* --- C: Zoekresultaat highlight --- */
 .indicator-item mark,
 .accordion-header mark {
-  background: rgba(234, 179, 8, 0.25);
+  background: color-mix(in srgb, var(--accent-color) 25%, transparent);
   color: inherit;
   border-radius: 2px;
   padding: 0 1px;
 }
 
-/* --- C: Light mode aanpassingen --- */
-:root:not([data-theme="dark"]) .accordion-header {
-  background: rgba(0, 0, 0, 0.02);
-}
-
-:root:not([data-theme="dark"]) .accordion-header:hover {
-  background: rgba(0, 0, 0, 0.05);
-}
-
-:root:not([data-theme="dark"]) .indicator-accordion {
-  border-color: rgba(0, 0, 0, 0.08);
-}
 
 
 /* ============================================================================
@@ -3386,8 +3373,8 @@ h6 {
   margin-top: 0.75rem;
   padding: 0.4rem 0.6rem;
   border-radius: 6px;
-  background: rgba(234, 179, 8, 0.06);
-  border: 1px solid rgba(234, 179, 8, 0.15);
+  background: color-mix(in srgb, var(--map-selection-color) 6%, transparent);
+  border: 1px solid color-mix(in srgb, var(--map-selection-color) 15%, transparent);
   font-size: 0.78rem;
   color: var(--text-secondary);
 }
@@ -3395,9 +3382,9 @@ h6 {
 .legenda-selectie-sample {
   width: 20px;
   height: 12px;
-  border: 2.5px solid #eab308;
+  border: 2.5px solid var(--map-selection-color);
   border-radius: 3px;
-  background: rgba(234, 179, 8, 0.08);
+  background: color-mix(in srgb, var(--map-selection-color) 8%, transparent);
   flex-shrink: 0;
 }
 
@@ -3434,7 +3421,7 @@ h6 {
 }
 
 [data-theme="dark"] .help-text {
-  color: rgba(255, 255, 255, 0.5);
+  color: var(--text-secondary);
 }
 
 
@@ -3454,15 +3441,15 @@ h6 {
 }
 
 .chat-source-badge.source-rule {
-  background: rgba(16, 185, 129, 0.12);
-  color: #10b981;
-  border: 1px solid rgba(16, 185, 129, 0.2);
+  background: color-mix(in srgb, var(--color-success) 12%, transparent);
+  color: var(--color-success);
+  border: 1px solid color-mix(in srgb, var(--color-success) 25%, transparent);
 }
 
 .chat-source-badge.source-ai {
-  background: rgba(234, 179, 8, 0.1);
-  color: #eab308;
-  border: 1px solid rgba(234, 179, 8, 0.2);
+  background: color-mix(in srgb, var(--accent-color) 10%, transparent);
+  color: var(--accent-text);
+  border: 1px solid color-mix(in srgb, var(--accent-color) 25%, transparent);
 }
 
 /* --- E2: Disclaimer bij LLM-responses --- */
@@ -3473,7 +3460,7 @@ h6 {
   font-style: italic;
   margin: 0.5rem 0 0.25rem 0;
   padding: 0.35rem 0.5rem;
-  border-left: 2px solid rgba(234, 179, 8, 0.3);
+  border-left: 2px solid color-mix(in srgb, var(--accent-color) 40%, transparent);
   line-height: 1.4;
 }
 
@@ -3516,7 +3503,7 @@ h6 {
 
 /* In de gekleurde header is een lichte focusrand beter zichtbaar */
 .header :focus-visible {
-  outline-color: #ffffff;
+  outline-color: var(--header-text);
 }
 
 /* Selectiebadge onder in beeld (#79): naam als label, losse knoppen voor
@@ -3533,8 +3520,8 @@ h6 {
   max-width: calc(100vw - 32px);
   padding: 6px 6px 6px 16px;
   border-radius: 24px;
-  background: linear-gradient(135deg, #10b981, #059669);
-  color: #ffffff;
+  background: var(--selection-badge-bg);
+  color: var(--selection-badge-text);
   font-size: 14px;
   font-weight: 600;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
@@ -3546,7 +3533,7 @@ h6 {
   gap: 8px;
   min-width: 0;
   padding-right: 10px;
-  border-right: 1px solid rgba(255, 255, 255, 0.4);
+  border-right: 1px solid color-mix(in srgb, var(--selection-badge-text) 40%, transparent);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -3566,10 +3553,10 @@ h6 {
   gap: 6px;
   flex-shrink: 0;
   padding: 5px 12px;
-  border: 1px solid rgba(255, 255, 255, 0.35);
+  border: 1px solid color-mix(in srgb, var(--selection-badge-text) 35%, transparent);
   border-radius: 16px;
-  background: rgba(255, 255, 255, 0.15);
-  color: #ffffff;
+  background: color-mix(in srgb, var(--selection-badge-text) 15%, transparent);
+  color: inherit;
   font: inherit;
   font-size: 12px;
   cursor: pointer;
@@ -3581,12 +3568,14 @@ h6 {
 }
 
 .selection-badge-btn:hover {
-  background: rgba(255, 255, 255, 0.28);
+  background: color-mix(in srgb, var(--selection-badge-text) 28%, transparent);
 }
 
+/* Ingedrukt: omgekeerde kleuren, dus altijd leesbaar */
 .selection-badge-btn[aria-pressed="true"] {
-  background: rgba(234, 179, 8, 0.9);
-  border-color: rgba(255, 255, 255, 0.6);
+  background: var(--selection-badge-text);
+  color: var(--selection-badge-bg);
+  border-color: var(--selection-badge-text);
 }
 
 .selection-badge-clear {
@@ -3599,7 +3588,110 @@ h6 {
 }
 
 .selection-badge :focus-visible {
-  outline-color: #ffffff;
+  outline-color: var(--selection-badge-text);
+}
+
+/* Keuzedialoog voor rapporten (app.js: openRapportTypeModal en openMultiSelectRapportModal).
+   Kleuren uit het thema; eerder vaste donkere kleuren via niet-bestaande variabelen (#89). */
+.rapport-dialoog-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.6);
+}
+
+.rapport-dialoog {
+  width: 340px;
+  max-width: 92vw;
+  padding: 1.5rem;
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+
+.rapport-dialoog--breed {
+  width: 380px;
+}
+
+.rapport-dialoog h3 {
+  margin: 0 0 0.5rem;
+  font-size: 1rem;
+}
+
+.rapport-dialoog-intro {
+  margin: 0 0 1.25rem;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.rapport-keuzes {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.rapport-keuze {
+  padding: 0.75rem 1rem;
+  border-radius: var(--border-radius-sm);
+  border: 1px solid var(--border-color);
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-size: 0.95rem;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color var(--transition-fast), background var(--transition-fast);
+}
+
+.rapport-keuze:hover {
+  border-color: var(--primary-color);
+}
+
+.rapport-keuze span {
+  font-weight: 400;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+.rapport-keuze--primair {
+  background: var(--action-fill);
+  color: var(--on-action-fill);
+  border-color: transparent;
+  box-shadow: 0 2px 8px color-mix(in srgb, var(--action-fill) 30%, transparent);
+}
+
+.rapport-keuze--primair:hover {
+  background: var(--action-fill-dark);
+  border-color: transparent;
+}
+
+.rapport-keuze--primair span {
+  color: inherit;
+}
+
+.rapport-dialoog-annuleer {
+  width: 100%;
+  margin-top: 1rem;
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  text-align: center;
+  cursor: pointer;
+}
+
+.rapport-dialoog-annuleer:hover {
+  color: var(--text-primary);
+}
+
+/* Lijnicoon (stroke=currentColor) als <img>: zwart in licht, wit in donker */
+[data-theme="dark"] .thema-icoon {
+  filter: brightness(0) invert(1);
 }
 
 /* Visueel verborgen, wel beschikbaar voor schermlezers */

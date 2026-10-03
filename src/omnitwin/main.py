@@ -1,7 +1,6 @@
 from fastapi import FastAPI, Depends, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.base import BaseHTTPMiddleware
-from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import HTMLResponse
 from fastapi.openapi.docs import get_swagger_ui_html # Local Swagger UI
@@ -9,6 +8,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import event, text
 from omnitwin.config import CORS_ALLOW_HEADERS, STATEMENT_TIMEOUT_MS, instellingen
 from omnitwin.database import get_db, engine
+from omnitwin.statisch import StatischeBestanden, cache_control
 import os
 import time
 
@@ -168,7 +168,7 @@ app.add_middleware(
 )
 
 # Mount static files
-app.mount("/static", StaticFiles(directory="static"), name="static")
+app.mount("/static", StatischeBestanden(directory="static"), name="static")
 
 # Setup templates
 templates = Jinja2Templates(directory="templates")
@@ -282,7 +282,8 @@ def root(request: Request, db: Session = Depends(get_db)):
     }
     return templates.TemplateResponse("index.html", {
         "request": request, "organisatie": organisatie, "thema_css": thema_css(organisatie),
-        "account": account, "demo": ins.demo})
+        "account": account, "demo": ins.demo},
+        headers={"Cache-Control": "no-cache"})
 
 # ============================================================================
 # React SPA Support for Admin Panel
@@ -295,7 +296,7 @@ async def serve_admin_spa(request: Request, catchall: str):
     root_asset_path = os.path.join("static", "admin-panel", catchall)
     if catchall and "." in catchall and os.path.exists(root_asset_path):
         from fastapi.responses import FileResponse
-        return FileResponse(root_asset_path)
+        return FileResponse(root_asset_path, headers={"Cache-Control": cache_control(f"admin-panel/{catchall}")})
     if catchall.startswith("assets/"):
         # Ontbrekend build-asset: 404 i.p.v. index.html (zoals eerder /admin/static/)
         return HTMLResponse(content="Not Found", status_code=404)
@@ -304,7 +305,7 @@ async def serve_admin_spa(request: Request, catchall: str):
     index_path = os.path.join("static", "admin-panel", "index.html")
     if os.path.exists(index_path):
         with open(index_path) as f:
-            return HTMLResponse(content=f.read())
+            return HTMLResponse(content=f.read(), headers={"Cache-Control": "no-cache"})
     # Development fallback
     return HTMLResponse(content="<h1>Admin Panel Niet Gebouwd</h1><p>Draai `npm run build` in de admin-panel map.</p>", status_code=404)
 
