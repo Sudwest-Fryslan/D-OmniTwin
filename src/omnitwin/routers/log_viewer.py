@@ -22,7 +22,7 @@ from sqlalchemy import text
 from omnitwin.database import get_db
 from omnitwin.routers.auth import vereis_admin
 from omnitwin.services.logging_service import AppLogger, _config_cache
-from omnitwin.services.log_cleanup_service import run_cleanup_now
+from omnitwin.services.log_cleanup_service import run_cleanup_now, samenvatting
 from pydantic import BaseModel
 from typing import Optional, List, Dict, Any
 from fastapi import Request
@@ -321,17 +321,16 @@ async def trigger_cleanup(
     auth: dict = Depends(vereis_admin),
 ):
     """Voer log cleanup direct uit (admin only). Handige trigger voor testing."""
-    deleted = await run_cleanup_now()
-    total = sum(deleted.values())
+    resultaat = await run_cleanup_now()
+    melding = samenvatting(resultaat)
 
     AppLogger.info(
-        f"Handmatige log cleanup: {total} records verwijderd "
-        f"(DEBUG={deleted.get('DEBUG', 0)}, INFO={deleted.get('INFO', 0)})",
+        f"Handmatige log cleanup: {melding}",
         category="ADMIN",
         user_id=auth.get("username"),
     )
 
     return {
-        "message": f"{total} log records verwijderd",
-        "deleted": deleted,
+        "message": melding,
+        "deleted": resultaat,
     }

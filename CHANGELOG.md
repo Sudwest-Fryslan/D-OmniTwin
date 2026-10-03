@@ -42,6 +42,14 @@ Eerdere wijzigingen, van vóór dit bestand, zijn terug te vinden in de git-hist
 - Use cases `cbs-gebiedsindelingen`, `cbs-kerncijfers` en `swf-definities` op status `actief`: ze installeren en slagen via de laad-API (`python -m omnitwin.usecases installeer|test`, machineclient met `beheerder` en `datasets:laden`). Een verse installatie laadt ze niet vanzelf; `laad_usecase.py --alle` laadt nog steeds alleen de demopakketten. `swf-basismonitor-waarden` blijft `ontwerp` tot de gebiedsindeling buurten bebouwde komgrens er is ([#229](https://github.com/TLaan/D-OmniTwin/issues/229)).
 - Traefik: de security-headers hangen per router in plaats van op het entrypoint, zodat Keycloak eigen CSP- en frame-regels kan hebben. Een eigen compose-bestand met een extra Traefik-router moet nu zelf `security-headers@file` als middleware zetten ([#214](https://github.com/TLaan/D-OmniTwin/issues/214)).
 
+### Beveiliging
+
+- Privacy van de logs ([#264](https://github.com/TLaan/D-OmniTwin/issues/264), uit de privacy-quickscan in [#262](https://github.com/TLaan/D-OmniTwin/pull/262)):
+  - **Bewaartermijn:** de dagelijkse opruimtaak verwijdert logregels in `app_logs` van alle niveaus na `LOG_BEWAAR_DAGEN` (standaard 30, DEBUG na 7). Tot nu toe bleven WARNING, ERROR en CRITICAL permanent staan, met IP-adres en gebruikersnaam; bovendien liep de opruimtaak nooit (een `async`-functie in `asyncio.to_thread`) en gaf "Nu uitvoeren" in de beheeromgeving een fout. De taak draait nu ook 5 minuten na de start, niet pas na 24 uur.
+  - **IP-adressen** in `app_logs` worden na `LOG_IP_BEWAAR_DAGEN` (standaard 7) ingekort: IPv4 laatste octet `0`, IPv6 `/48`; onleesbare waarden (zoals een oude, ongefilterde `X-Forwarded-For`-lijst) worden leeggemaakt. Een geblokkeerde login zet het IP-adres niet meer in de logtekst.
+  - **X-Forwarded-For** wordt alleen overgenomen als het verzoek van een vertrouwde proxy komt (`TRUSTED_PROXIES`, standaard loopback en de privé-reeksen: Traefik op het Docker-netwerk), en dan het meest rechtse niet-vertrouwde adres. De logmiddleware nam de header eerder ongefilterd over; nu gebruiken logging en rate limiting dezelfde functie (`omnitwin.grenzen.client_ip`). Achter een eigen TLS-proxy: `TRAEFIK_TRUSTED_IPS` (Traefik `forwardedHeaders.trustedIPs`).
+  - **Containerlogs** begrensd: `json-file`, 3 × 10 MB per container.
+  - Nieuwe, optionele variabelen `LOG_BEWAAR_DAGEN`, `LOG_IP_BEWAAR_DAGEN`, `TRUSTED_PROXIES` en `TRAEFIK_TRUSTED_IPS`. Geen migratie.
 ### Verwijderd
 
 - `ETL/local/` (oud pipeline-pad met `DROP SCHEMA public CASCADE`) en `ETL/Utils/db_init.py` (verwees naar een niet-bestaande `config.ini`). Verwijzingen in de documentatie bijgewerkt ([#69](https://github.com/TLaan/D-OmniTwin/issues/69)).
