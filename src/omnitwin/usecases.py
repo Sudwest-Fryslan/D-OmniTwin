@@ -17,7 +17,8 @@ schema's in `docs/specificaties/usecase/<versie>/`.
     python -m omnitwin.usecases installeer <naam> [...] | --alle [--inproces | --testaccounts]
     python -m omnitwin.usecases test <naam> [--testaccounts]
     python -m omnitwin.usecases opruimen <naam> [...]
-    python -m omnitwin.usecases bewijs <naam>
+    python -m omnitwin.usecases bewijs <naam> [...] | --alle [--zip PAD]
+    python -m omnitwin.usecases galerij [--controleer]
 
 `controleer` werkt zonder draaiende stack: manifest, bestanden in de map, afhankelijkheden,
 registraties, en de levering(en) maken en valideren tegen het profiel. Bronnen komen uit
@@ -43,6 +44,10 @@ controles met `actor` en de rechtencontroles (`type: recht`) draaien als die act
 Varianten (`varianten` in `datasets/<id>.json`): `sla_over` (stappen overslaan), `bron` en
 `bewerkingen` (een andere bron, bijv. de echte interne bron naast demodata) en `als_beschikbaar`
 (zonder `--variant` eerst deze variant; is zijn bron hier niet beschikbaar, dan de standaardbron).
+
+`bewijs` voert de bewijsstappen uit met Playwright en schrijft screenshots en `bewijs.json`;
+`galerij` werkt de galerij in de root-README en de screenshots in de README's van de use cases bij
+(zie `omnitwin.usecase_bewijs`, #225).
 """
 
 import argparse
@@ -63,7 +68,8 @@ DATASET_SCHEMA = SPECIFICATIE / "dataset.schema.json"
 README = USECASES_DIR / "README.md"
 INDEX_START, INDEX_EINDE = "<!-- usecase-index:start -->", "<!-- usecase-index:end -->"
 VOLLEDIG = ("naam", "versie", "titel", "vraag", "gebruiker", "status", "afhankelijk_van", "rechten", "datasets", "controles")
-# Een use case is declaratief: alleen deze bestanden. bewijs/ wordt gevuld door de uitvoerder (niet in git).
+# Een use case is declaratief: alleen deze bestanden. bewijs/ wordt gevuld door de uitvoerder
+# (in git alleen bewijs/*.webp, bewijs/bewijs.json en bewijs/README.md; #225).
 TOEGESTAAN = {".json", ".md", ".csv"}
 TOEGESTAAN_BEWIJS = {".json", ".md", ".png", ".jpg", ".jpeg", ".webp"}
 # Bestaande code in use cases, uit te faseren naar een kernadapter (niet nieuw toevoegen).
@@ -912,6 +918,34 @@ def _print_controle(r):
     print(f"{'✅ geldig' if r['geldig'] else '❌ niet geldig'}; uitvoer: {r['uitvoer']}")
 
 
+def bewijs_cli(a, ucs, p):
+    """`bewijs`: stappen uitvoeren tegen OMNITWIN_BASE_URL, daarna de galerij bijwerken. Exit 1 als een
+    use case niet geslaagd is."""
+    from omnitwin import usecase_bewijs
+    if not a.namen and not a.alle:
+        p.error("geef een of meer namen, of --alle")
+    onbekend = [n for n in a.namen if n not in ucs]
+    if onbekend:
+        raise UseCaseFout(f"onbekende use case: {', '.join(onbekend)}")
+    namen = a.namen or [n for n, uc in sorted(ucs.items())
+                        if uc.get("status") == "actief" and usecase_bewijs.stappen(uc)]
+    tok = None
+    if os.environ.get("OMNITWIN_CLIENT_ID"):
+        tok = token  # functie: tokens verlopen tijdens een lange run
+    else:
+        print("⚠️  geen machineclient (OMNITWIN_CLIENT_ID/OMNITWIN_CLIENT_SECRET): geen leveringsstatus en "
+              "geen controles van type aantal")
+    res = usecase_bewijs.maak(namen, ucs, basis_url(), tok, volledig=not a.zonder_volledig)
+    usecase_bewijs.werk_galerij_bij(ucs)
+    if a.zip:
+        print(f"📦 volledig bewijs: {usecase_bewijs.zip_volledig(Path(a.zip), namen)}")
+    mislukt_ = [n for n, v in res.items() if isinstance(v, dict) and not v["geslaagd"]]
+    if mislukt_:
+        print(f"❌ niet geslaagd: {', '.join(mislukt_)}")
+        return 1
+    return 0
+
+
 def main(argv=None):
     from omnitwin.testaccounts import TestaccountFout
     p = argparse.ArgumentParser(prog="python -m omnitwin.usecases", description="Use-case-uitvoerder")
@@ -938,8 +972,13 @@ def main(argv=None):
     t.add_argument("--testaccounts", action="store_true", help=TA + "; ook de rechtencontroles")
     op = sub.add_parser("opruimen", help="testaccounts van de use case(s) en hun afhankelijkheden verwijderen")
     op.add_argument("namen", nargs="+")
-    bw = sub.add_parser("bewijs", help="bewijs maken (nog niet in de uitvoerder)")
-    bw.add_argument("naam")
+    bw = sub.add_parser("bewijs", help="bewijsstappen uitvoeren: screenshots en bewijs.json (Playwright, #225)")
+    bw.add_argument("namen", nargs="*")
+    bw.add_argument("--alle", action="store_true", help="alle actieve use cases met bewijs.stappen")
+    bw.add_argument("--zonder-volledig", action="store_true", help="geen originelen in bewijs/volledig/")
+    bw.add_argument("--zip", help="daarna het volledige bewijs als zip (voor de GitHub-release)")
+    g = sub.add_parser("galerij", help="galerij in README.md en screenshots in de README's van de use cases bijwerken")
+    g.add_argument("--controleer", action="store_true", help="alleen controleren (exit 1 als hij niet actueel is)")
     a = p.parse_args(argv)
     if hasattr(sys.stdout, "reconfigure"):
         sys.stdout.reconfigure(errors="replace")  # Windows-console zonder UTF-8
@@ -982,8 +1021,13 @@ def main(argv=None):
             for n, weg in opruimen(a.namen, ucs).items():
                 print(f"🧹 {n}: {', '.join(weg) if weg else 'geen testaccounts'}")
         elif a.cmd == "bewijs":
-            print("Nog niet in de uitvoerder (vervolg). Bewijs (screenshots, bewijs.json) maken: "
-                  f"scripts/docs/maak_usecase_bewijs.py; uitvoer in usecases/{a.naam}/bewijs/ (niet in git).")
+            return bewijs_cli(a, ucs, p)
+        elif a.cmd == "galerij":
+            from omnitwin import usecase_bewijs
+            actueel = usecase_bewijs.werk_galerij_bij(ucs, controleer=a.controleer)
+            print(("galerij actueel" if a.controleer else "galerij bijgewerkt") if actueel
+                  else "galerij niet actueel: python -m omnitwin.usecases galerij")
+            return 0 if actueel else 1
     except (UseCaseFout, TestaccountFout) as e:
         print(f"❌ {e}")
         return 2

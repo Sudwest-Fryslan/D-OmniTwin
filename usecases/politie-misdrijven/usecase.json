@@ -131,6 +131,26 @@
       "omschrijving": "een lezer mag niet registreren (403)"
     }
   ],
+  "bewijs": {
+    "stappen": [
+      {
+        "id": "kaart",
+        "actie": "kaart",
+        "gebied": "GM1900",
+        "indicator": "d90d2b4c-4bce-428c-834a-1cc8113958e4",
+        "omschrijving": "Woninginbraken per buurt in Súdwest-Fryslân (Politie)"
+      },
+      {
+        "id": "levering",
+        "actie": "levering",
+        "dataset": "politie-misdrijven-buurten",
+        "omschrijving": "Leveringsstatus van de misdrijven per buurt (laad-API)",
+        "bevat": [
+          "gepubliceerd"
+        ]
+      }
+    ]
+  },
   "bekende_afwijkingen": [
     "Indicator \"beschadiging auto's\" (naam uit de vroegere sample) is in de bron 'Vernieling cq. zaakbeschadiging' (2.2.1), niet alleen auto's; 'inbraak auto' is 'Diefstal uit/vanaf motorvoertuigen' (1.2.1).",
     "Buurten die na een herindeling een nieuwe code kregen, hebben alleen waarden vanaf het jaar van de nieuwe indeling."

@@ -49,7 +49,7 @@ De CSV bevat heel Nederland (ook wijken, gemeenten en `NL00`). Alleen de Friese 
 |---|---|---|
 | `init_data/sample/2_brondata/sample_buurten.geojson` | **2024** | `ETL/import_geografie_2024.py` (`CBS_BUURTEN2024.gpkg`); Bolsward-Zuidoost uit PDOK gebiedsindelingen 2024 |
 | `init_data/fryslan/buurten_fryslan.geojson` | **2024** | `download_buurten_fryslan.py`, PDOK `gebiedsindelingen/2024`, gegeneraliseerd |
-| `ETL/local/etl_02_import_geometrie.py` | **2023** | PDOK `wijkenbuurten2023`. Wijkt af van de rest |
+| ~~`ETL/local/etl_02_import_geometrie.py`~~ | 2023 | PDOK `wijkenbuurten2023`. Verwijderd in [#69](https://github.com/TLaan/D-OmniTwin/issues/69) |
 
 Vastgelegd in deze PR:
 - `datapackage.json`, resource `sample-buurten`: `"geometrie_jaar": 2024` en `geometrie_bron`.
@@ -110,7 +110,7 @@ python init_data/scripts/jaargang_controle.py --fryslan  # 31 onbekende codes (S
 ## 6. Vervolgvoorstellen (niet in deze PR)
 
 1. **Kerncijfers opnieuw ophalen uit de tabel van 2024** (`85984NED`), passend bij de geometrie van 2024. De kolomnamen (`…_N`) verschillen per tabel; de mapping in `download_indicatoren_fryslan.py` moet mee. Daarna de sample opnieuw genereren. Dit lost Smallingerland en het 2021-label in één keer op.
-2. **Eén configuratiebron** voor tabel-ID's en geometriejaar, gebruikt door de downloadscripts, `etl_02_import_geometrie.py` (nu 2023) en de controle. Voorstel uit #119.
+2. **Eén configuratiebron** voor tabel-ID's en geometriejaar, gebruikt door de downloadscripts en de controle. Voorstel uit #119.
 3. **Drempel in de controle**: falen als meer dan x % van de regels geen buurt vindt. Nu alleen een waarschuwing.
 4. **Peiljaar in de Z-score** (#66): waarde en referentie altijd uit hetzelfde jaar, zoals het gebiedsdossier al doet. Daarna Kompas en kaart op die functie zetten.
 5. **Afgeleide indicatoren alleen uit hetzelfde jaar** (PR #141), of anders expliciet markeren en uitsluiten van de Z-score.

@@ -95,6 +95,11 @@
   --d-omnitwin-header-background-color-start: #bf0042;
   --d-omnitwin-header-background-color-end: #8c0030;
   --d-omnitwin-header-color: #ffffff;
+
+  /* Beeldmerk (#249): wit vlak met SWF-rood, leesbaar op de rode kopbalk (licht en donker) */
+  --d-omnitwin-beeldmerk-vlak: #ffffff;
+  --d-omnitwin-beeldmerk-lijn: #bf0042;
+  --d-omnitwin-beeldmerk-kern: #8c0030;
 }
 
 /* ---------- Donker ---------- */

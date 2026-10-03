@@ -180,6 +180,28 @@
       "omschrijving": "een lezer mag niet registreren (403)"
     }
   ],
+  "bewijs": {
+    "stappen": [
+      {
+        "id": "definities",
+        "actie": "levering",
+        "dataset": "swf-monitor-definities",
+        "omschrijving": "Definities via de compat-ingang (FME-push): leveringsstatus",
+        "bevat": [
+          "gepubliceerd"
+        ]
+      },
+      {
+        "id": "waarden",
+        "actie": "levering",
+        "dataset": "swf-monitor-waarden",
+        "omschrijving": "Waarden via de compat-ingang (FME-push): leveringsstatus",
+        "bevat": [
+          "gepubliceerd"
+        ]
+      }
+    ]
+  },
   "bekende_afwijkingen": [
     "Status A: de push zoals hij nu is, wordt afgekeurd (profiel definities kent A niet). SWF zet A om in de SQL, of D-OmniTwin legt de betekenis van A vast.",
     "Jaar 0 en de 2 onbekende buurtcodes moeten in de DWH weg; anders wordt die ene aanroep (indicator × gebiedstype) afgekeurd en blijft de vorige versie van die combinatie staan.",
