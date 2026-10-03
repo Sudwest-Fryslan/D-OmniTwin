@@ -1,0 +1,72 @@
+{
+  "specificatie": "1.0",
+  "naam": "cbs-kerncijfers",
+  "versie": "0.1.0",
+  "omnitwin_versie": "0.2.1",
+  "datum": "2026-10-03T09:40:44+02:00",
+  "omgeving": "lokaal",
+  "ai_aanbieder": "geen",
+  "geslaagd": true,
+  "controles": [
+    {
+      "type": "aantal",
+      "omschrijving": "alle jaargangen voor heel Fryslân (nu 186.756)",
+      "resultaat": "ok"
+    },
+    {
+      "type": "api",
+      "omschrijving": "Inwoners van Bolsward-Zuidoost voor 2019–2026",
+      "resultaat": "ok"
+    },
+    {
+      "type": "idempotent",
+      "resultaat": "overgeslagen",
+      "melding": "maakt een levering uit de bron: python -m omnitwin.usecases test cbs-kerncijfers"
+    },
+    {
+      "type": "viewer",
+      "resultaat": "overgeslagen",
+      "melding": "viewer-controles nog niet in de uitvoerder; zie de screenshots"
+    }
+  ],
+  "stappen": [
+    {
+      "id": "kaart",
+      "resultaat": "ok",
+      "afbeelding": "kaart.webp",
+      "antwoordtijd_s": 48.2,
+      "console_fouten": []
+    },
+    {
+      "id": "chat",
+      "resultaat": "ok",
+      "afbeelding": "chat.webp",
+      "antwoord": "Inwoners (CBS Kerncijfers wijken en buurten, 2026): Bolsward-Zuidoost: 2205 (2026). Ter vergelijking: Hoogste waarde: Bolsward-Noordoost (3785); laagste: Bolsward-Zuidwest (380). Daartussen: Bolsward-Zuidoost (2205). Hoger is beter: Bolsward-Noordoost scoort het gunstigst.",
+      "antwoordtijd_s": 8.4,
+      "console_fouten": []
+    },
+    {
+      "id": "levering",
+      "resultaat": "ok",
+      "afbeelding": "levering.webp",
+      "antwoordtijd_s": 0.4,
+      "console_fouten": []
+    }
+  ],
+  "leveringen": [
+    {
+      "dataset": "cbs-kerncijfers",
+      "status": "gepubliceerd",
+      "datasetversie": 1,
+      "aantallen": {
+        "fout": 0,
+        "geldig": 188606,
+        "gelezen": 188606,
+        "vervangen": 0,
+        "onderdrukt": 0,
+        "gepubliceerd": 188606,
+        "bronOnderdrukt": 188606
+      }
+    }
+  ]
+}

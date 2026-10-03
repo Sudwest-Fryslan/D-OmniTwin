@@ -45,7 +45,15 @@ Verwacht: 26.068 regels (4 soorten, buurten in Fryslân, 2019-2025), 140 afgewez
 
 ## Bewijs
 
-In [`bewijs/`](bewijs/README.md), gemaakt door de uitvoerder (niet in git).
+<!-- bewijs:start -->
+*Gemaakt op 03-10-2026 met D-OmniTwin 0.2.1 (use case 0.1.0); geslaagd. Verslag: [`bewijs/bewijs.json`](bewijs/bewijs.json). Opnieuw maken (bij een release): `python -m omnitwin.usecases bewijs politie-misdrijven`.*
+
+![Woninginbraken per buurt in Súdwest-Fryslân (Politie)](bewijs/kaart.webp)
+*Woninginbraken per buurt in Súdwest-Fryslân (Politie)*
+
+![Leveringsstatus van de misdrijven per buurt (laad-API)](bewijs/levering.webp)
+*Leveringsstatus van de misdrijven per buurt (laad-API)*
+<!-- bewijs:end -->
 
 ## Bekende afwijkingen
 

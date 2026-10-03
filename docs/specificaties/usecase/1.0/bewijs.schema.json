@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://raw.githubusercontent.com/TLaan/D-OmniTwin/main/docs/specificaties/usecase/1.0/bewijs.schema.json",
   "title": "D-OmniTwin Use Case Specificatie 1.0: bewijsverslag (usecases/<naam>/bewijs/bewijs.json)",
-  "description": "Normatief schema van het bewijsverslag dat de uitvoerder maakt (python -m omnitwin.usecases bewijs <naam>); betekenis in docs/specificaties/usecase/README.md. Gereserveerd: de uitvoerder maakt dit verslag nog niet (#225). Geen hostnamen, tokens, wachtwoorden of persoonsgegevens.",
+  "description": "Normatief schema van het bewijsverslag dat de uitvoerder maakt (python -m omnitwin.usecases bewijs <naam>); betekenis in docs/specificaties/usecase/README.md. Geen hostnamen, tokens, wachtwoorden of persoonsgegevens.",
   "type": "object",
   "required": [
     "specificatie",
