@@ -396,10 +396,10 @@ def get_indicator(
             i.ontologie_status,
             i.ontologische_beschrijving,
             i.beschrijving_ai,
-            i.gevalideerd_door::text,
+            COALESCE(i.gevalideerd_door::text, i.gevalideerd_door_sub),
             i.gevalideerd_op,
             i.embedding_versie,
-            u.username as gevalideerd_door_naam,
+            COALESCE(u.username, i.gevalideerd_door_gebruikersnaam) as gevalideerd_door_naam,
             i.is_actief,
             i.vervangen_door_id,
             i.bron_systeem_api,
@@ -504,8 +504,10 @@ def valideer_indicator_ontologie(
     if data.ontologie_status not in valid_statuses:
         raise HTTPException(400, f"Ongeldige ontologie_status. Keuze uit: {valid_statuses}")
     
-    # Gebruiker uit de sessie; bij een script (X-Admin-Key) blijft dit leeg
+    # Gebruiker uit de sessie; bij een script (X-Admin-Key) blijft dit leeg. Een Keycloak-gebruiker
+    # (OIDC-sessie of bearer-token) staat er met sub en preferred_username (#251)
     user_id = str(gebruiker["user_id"]) if gebruiker.get("type") == "session" else None
+    oidc_gebruiker = gebruiker.get("type") in ("oidc", "bearer")
     
     # Update indicator
     result = db.execute(text("""
@@ -513,6 +515,8 @@ def valideer_indicator_ontologie(
             ontologische_beschrijving = :beschrijving,
             ontologie_status = :status,
             gevalideerd_door = :user_id,
+            gevalideerd_door_sub = :sub,
+            gevalideerd_door_gebruikersnaam = :gebruikersnaam,
             gevalideerd_op = NOW()
         WHERE uuid = :uuid
         RETURNING uuid::text
@@ -520,6 +524,8 @@ def valideer_indicator_ontologie(
         "beschrijving": data.ontologische_beschrijving,
         "status": data.ontologie_status,
         "user_id": user_id,
+        "sub": gebruiker.get("onderwerp") if oidc_gebruiker else None,
+        "gebruikersnaam": gebruiker.get("username") if oidc_gebruiker else None,
         "uuid": str(uuid)
     })
     

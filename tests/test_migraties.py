@@ -316,7 +316,7 @@ def test_psql_slot_zonder_verbinding_is_een_fout(monkeypatch):
 def test_migraties_in_de_repository():
     """db/migraties: geldige namen, oplopend, en includes die bestaan."""
     gevonden = mig.zoek_migraties()
-    assert [m.versie for m in gevonden] == [18, 19, 20, 21, 22, 24, 25, 26, 27, 28, 30, 31]  # V023 bestaat niet (#205); V029 komt uit PR #261
+    assert [m.versie for m in gevonden] == [18, 19, 20, 21, 22, 24, 25, 26, 27, 28, 29, 30, 31]  # V023 bestaat niet (#205)
     for m in gevonden:
         for inc in mig.INCLUDE.findall(m.pad.read_text(encoding="utf-8")):
             assert (m.pad.parent / inc).is_file(), f"{m.pad.name}: include {inc} bestaat niet"

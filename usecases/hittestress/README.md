@@ -77,3 +77,21 @@ Gemeten op een verse installatie op 02-10-2026. Boomkroon en hitte-eiland wijken
 - **Data:** de indicatoren zijn aanwezig en gevuld voor de drie Bolsward-buurten. Vier ervan komen uit echte open data (CBS 2026, RIVM 2022), ook voor Bolsward-Zuidoost.
 - **Uitkomst met echte data:** relatief de meeste 65- en 80-plussers wonen in Bolsward-Zuidoost (29,5% en 10,2%). Die buurt heeft ook de meeste boomkroon (13,1%). Bolsward-Noord heeft het sterkste hitte-eiland effect (0,47 °C) en ligt het verst van een koele plek.
 - **Inrichting:** het pakket zet de richting goed en voegt afgeleide percentages toe. Een eigen Kompas-profiel en chatscenario per use case ontbreken nog (#138).
+
+## Bewijs
+
+<!-- bewijs:start -->
+*Gemaakt op 03-10-2026 met D-OmniTwin 0.2.1 (use case 0.2.0); geslaagd. Verslag: [`bewijs/bewijs.json`](bewijs/bewijs.json). Opnieuw maken (bij een release): `python -m omnitwin.usecases bewijs hittestress`.*
+
+![Boomkroonbedekking per buurt in Bolsward (RIVM, 2022)](bewijs/kaart.webp)
+*Boomkroonbedekking per buurt in Bolsward (RIVM, 2022)*
+
+![Datavraag over hittestress: afstand tot een koele plek en 65-plussers](bewijs/chat.webp)
+*Datavraag over hittestress: afstand tot een koele plek en 65-plussers*
+
+![Kompas voor Bolsward-Zuidoost](bewijs/kompas.webp)
+*Kompas voor Bolsward-Zuidoost*
+
+![Leveringsstatus van de eigen dataset boomkroon (laad-API)](bewijs/levering.webp)
+*Leveringsstatus van de eigen dataset boomkroon (laad-API)*
+<!-- bewijs:end -->
