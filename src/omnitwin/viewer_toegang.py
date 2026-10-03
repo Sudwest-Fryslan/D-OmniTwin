@@ -40,7 +40,8 @@ CONTROLE_PAD = "/api/viewer/toegang"     # forwardAuth van Traefik
 LOGIN_PAD = oidc_login.INLOG_PAD + "/login"
 
 # Altijd open, ook bij VIEWER_TOEGANG=inloggen. Prefixen; "/" alleen exact.
-OPEN_EXACT = frozenset({"/health", "/favicon.ico", CONTROLE_PAD, "/api/organisatie"})
+OPEN_EXACT = frozenset({"/health", "/favicon.ico", CONTROLE_PAD, "/api/organisatie",
+                        "/api/organisatie/beeldmerk.svg"})
 OPEN_PREFIX = (
     "/static/",              # code, stijl, afbeeldingen (geen data)
     "/.well-known/",
