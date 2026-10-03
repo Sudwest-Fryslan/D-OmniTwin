@@ -11,6 +11,22 @@
 const API_BASE = '/api/gebiedsmonitor';
 
 // Application State
+// #255: kaartmodus per bezoeker onthouden (alleen gemak; zonder opslag: 'waarde')
+const KAART_MODI = ['waarde', 'percentiel', 'uit'];
+function leesKaartModus() {
+    try {
+        const m = localStorage.getItem('omnitwin-kaartmodus');
+        return KAART_MODI.includes(m) ? m : 'waarde';
+    } catch (e) {
+        return 'waarde';
+    }
+}
+
+/** Queryparameter voor /kaart_data: alleen de percentielmodus vraagt iets anders van de backend. */
+function kaartModusParam() {
+    return state.kaartModus === 'percentiel' ? '&modus=percentiel' : '';
+}
+
 const state = {
     currentGebiedstype: null,
     currentIndicator: null,
@@ -20,6 +36,8 @@ const state = {
     enable3D: false, // CHANGED: Default OFF
     heightScale: 10,
     showAll: false,
+    // #255: kaartkleuring 'waarde' (werkelijke waarde), 'percentiel' (klasse 1-8) of 'uit'
+    kaartModus: leesKaartModus(),
     activePanelId: null,
     mapboxToken: window.MAPBOX_TOKEN || null,
     mapboxStyle: window.MAPBOX_STYLE || 'mapbox://styles/mapbox/light-v10',
@@ -528,12 +546,18 @@ function initDeckGL() {
                 const herkomst = heeftWaarde
                     ? `<br/><small class="tooltip-herkomst" style="opacity:0.75;">Jaar ${escapeHtml(props.jaar || 'onbekend')} · Bron: ${escapeHtml(props.bron || 'onbekend')}</small>`
                     : '';
+                // #255: percentielklasse in de tooltip (alleen in die kaartmodus)
+                const klasseTekst = state.kaartModus === 'percentiel' && heeftWaarde
+                    ? (props.klasse
+                        ? `<br/><small class="tooltip-klasse">Percentielklasse ${escapeHtml(props.klasse)} van 8</small>`
+                        : `<br/><small class="tooltip-klasse">Geen percentielklasse (${escapeHtml(props.klasse_status || 'geen referentie')})</small>`)
+                    : '';
 
                 return {
                     html: `
             <div style="font-family: Inter, sans-serif;">
               <strong>${escapeHtml(props.naam)}</strong><br/>
-              ${props.indicator_naam ? `${escapeHtml(props.indicator_naam)}: ` : ''}<strong>${escapeHtml(indicatorValue)}</strong>${herkomst}
+              ${props.indicator_naam ? `${escapeHtml(props.indicator_naam)}: ` : ''}<strong>${escapeHtml(indicatorValue)}</strong>${herkomst}${klasseTekst}
             </div>
           `,
                     style: tooltipStyle
@@ -908,7 +932,7 @@ async function loadKaartData() {
         // 2. Fetch Attributes via FastAPI (Hybride)
         let attrUrl = `/api/gebiedsmonitor/kaart_data/${state.currentGebiedstype}?show_all=${state.showAll}`;
         if (state.currentIndicator) {
-            attrUrl += `&indicator_uuid=${state.currentIndicator}`;
+            attrUrl += `&indicator_uuid=${state.currentIndicator}${kaartModusParam()}`;
         }
         if (state.currentGemeenteCode) {
             attrUrl += `&gemeente_code=${state.currentGemeenteCode}`;
@@ -1546,7 +1570,8 @@ function displayOnMap(geojson) {
             // Track D: Geselecteerde buurten behouden hun indicator-kleur
             // (gouden outline vervangt de oude gold fill-override)
             const value = d.properties.indicator_waarde;
-            if (value === null || value === undefined) {
+            // #255: kaartmodus 'uit' kleurt als zonder data; de indicator blijft gekozen
+            if (value === null || value === undefined || state.kaartModus === 'uit') {
                 // Determine "No Data" color based on theme
                 const r = state.currentTheme === 'dark' ? 200 : 80;
                 const g = state.currentTheme === 'dark' ? 200 : 80;
@@ -1707,7 +1732,7 @@ function displayOnMap(geojson) {
 
         // Performance - CRITICAL FIX: Force re-render on state changes
         updateTriggers: {
-            getFillColor: [minValue, maxValue, state.enable3D, state.currentTheme],
+            getFillColor: [minValue, maxValue, state.enable3D, state.currentTheme, state.kaartModus],
             getLineColor: [state.currentTheme, Array.from(state.selectedGebiedIds).join(',')],
             getLineWidth: [Array.from(state.selectedGebiedIds).join(',')],
             getElevation: [state.enable3D, state.heightScale, minValue, maxValue],
@@ -2054,6 +2079,68 @@ function getColorRGB(value, min, max) {
 // Legenda Generator (NEW)
 // ============================================================================
 
+/**
+ * #255: klassen in de legenda. Percentiel: klasse 1-8 met label; werkelijke waarde: het
+ * bereik van de gebieden per kleur. Met klassen vervangt de lijst het kleurverloop.
+ * Modus 'uit': geen kleuren, wel een melding.
+ */
+function renderLegendaKlassen(metadata) {
+    document.querySelectorAll('input[name="kaart-modus"]').forEach(r => {
+        r.checked = r.value === state.kaartModus;
+    });
+    const lijst = document.getElementById('legenda-klassen');
+    if (!lijst) return;
+    const uit = state.kaartModus === 'uit';
+    const klassen = (!uit && Array.isArray(metadata?.klassen)) ? metadata.klassen : [];
+    const uitTekst = document.getElementById('legenda-modus-uit');
+    // via display: .help-text zet display en zou het hidden-attribuut overrulen
+    if (uitTekst) uitTekst.style.display = uit ? '' : 'none';
+    const verloop = !uit && klassen.length === 0;
+    const svg = document.getElementById('color-gradient-bar');
+    const labels = document.querySelector('#color-scale-container .legenda-labels');
+    if (svg) svg.style.display = verloop ? '' : 'none';
+    if (labels) labels.style.display = verloop ? '' : 'none';
+
+    const eenheid = metadata?.eenheid ? ` ${metadata.eenheid}` : '';
+    lijst.dataset.modus = uit ? 'uit' : (metadata?.modus || 'waarde');
+    lijst.innerHTML = klassen.map(k => {
+        const label = metadata.modus === 'percentiel'
+            ? k.label
+            : (k.van === k.tot
+                ? `${formatNumber(k.van)}${eenheid}`
+                : `${formatNumber(k.van)} – ${formatNumber(k.tot)}${eenheid}`);
+        const aantal = k.aantal !== undefined
+            ? `<span class="legenda-klasse-aantal" title="aantal gebieden">${escapeHtml(k.aantal)}</span>`
+            : '';
+        return `<li data-klasse="${escapeHtml(k.klasse ?? '')}">`
+            + `<span class="legenda-klasse-kleur" style="background:${escapeHtml(k.kleur)}"></span>`
+            + `<span>${escapeHtml(label)}</span>${aantal}</li>`;
+    }).join('');
+}
+
+/**
+ * #255: kaartmodus wisselen. 'uit' (en terug naar de geladen data) tekent alleen opnieuw;
+ * een andere modus haalt de kaartdata opnieuw op.
+ */
+async function setKaartModus(modus) {
+    if (!KAART_MODI.includes(modus) || modus === state.kaartModus) return;
+    const vorige = state.kaartModus;
+    state.kaartModus = modus;
+    try { localStorage.setItem('omnitwin-kaartmodus', modus); } catch (e) { /* geen opslag */ }
+    if (!state.currentIndicator || !state.currentData) {
+        renderLegendaKlassen(state.currentData?.metadata);
+        return;
+    }
+    const geladen = state.currentData.metadata?.modus || 'waarde';
+    if (modus === 'uit' || (vorige === 'uit' && geladen === modus)) {
+        displayOnMap(state.currentData);
+        updateLegenda(state.currentData);
+    } else {
+        await loadKaartData();
+    }
+}
+window.setKaartModus = setKaartModus;
+
 function updateLegenda(geojson) {
     /**
      * Unified Legend Update Function
@@ -2160,6 +2247,9 @@ function updateLegenda(geojson) {
             <rect width="100%" height="100%" fill="url(#color-gradient)" />
         `;
     }
+
+    // #255: kaartmodus en klassen (percentielklasse of bereik per kleur)
+    renderLegendaKlassen(geojson.metadata);
 
     // Update coverage bar
     const total = geojson.metadata.total_features || 0;
@@ -3017,6 +3107,14 @@ function setupEventListeners() {
         updateButtonState();
     });
 
+    // #255: kaartmodus (percentielklasse / werkelijke waarde / uit)
+    document.querySelectorAll('input[name="kaart-modus"]').forEach(radio => {
+        radio.checked = radio.value === state.kaartModus;
+        radio.addEventListener('change', (e) => {
+            if (e.target.checked) setKaartModus(e.target.value);
+        });
+    });
+
     // Indicator selection
     document.getElementById('indicator-select').addEventListener('change', (e) => {
         const selectedId = e.target.value;
@@ -3206,7 +3304,7 @@ function setupEventListeners() {
             if (state.currentGebiedstype && state.currentIndicator === data.uuid) {
                 // We keep the map view but update the data for the specific year
                 try {
-                    let attrUrl = `/api/gebiedsmonitor/kaart_data/${state.currentGebiedstype}?show_all=${state.showAll}&indicator_uuid=${state.currentIndicator}&jaar=${data.jaar}`;
+                    let attrUrl = `/api/gebiedsmonitor/kaart_data/${state.currentGebiedstype}?show_all=${state.showAll}&indicator_uuid=${state.currentIndicator}&jaar=${data.jaar}${kaartModusParam()}`;
                     if (state.currentGemeenteCode) {
                         attrUrl += `&gemeente_code=${state.currentGemeenteCode}`;
                     }

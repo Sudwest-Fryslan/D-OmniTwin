@@ -4,6 +4,7 @@ Visualisatie Color Service
 Genereert kleuren op basis van database color schemas en classification methods.
 """
 
+import json
 from typing import List, Tuple, Optional, Dict, Any
 import numpy as np
 from sqlalchemy.orm import Session
@@ -182,6 +183,38 @@ class ColorScaleService:
         
         return color_ramp[color_index]
     
+    def schema_kleuren(self, naam: str) -> Optional[Dict[str, str]]:
+        """Kleuren (min/mid/max) van een actief schema in color_schemas, op naam."""
+        try:
+            row = self.db.execute(
+                text("SELECT colors FROM color_schemas WHERE naam = :naam AND is_actief = true LIMIT 1"),
+                {"naam": naam},
+            ).fetchone()
+        except Exception as e:
+            from omnitwin.services.logging_service import AppLogger
+            AppLogger.error(f"schema_kleuren failed: {e}", category="KAART")
+            return None
+        if not row or not row[0]:
+            return None
+        kleuren = row[0] if isinstance(row[0], dict) else json.loads(row[0])
+        return kleuren if all(k in kleuren for k in ("min", "mid", "max")) else None
+
+    def legenda_klassen(
+        self, values: List[float], color_ramp: List[str], breaks: List[float]
+    ) -> List[Dict[str, Any]]:
+        """
+        Klassen voor de legenda bij de werkelijke waarde (#255): per gebruikte kleur
+        het bereik (kleinste en grootste waarde) van de gebieden met die kleur, oplopend.
+        Alleen klassen die voorkomen; zo klopt de legenda ook bij weinig gebieden (#161).
+        """
+        per_kleur: Dict[str, List[float]] = {}
+        for v in values:
+            if v is None:
+                continue
+            per_kleur.setdefault(self.get_color_for_value(v, color_ramp, breaks), []).append(v)
+        klassen = [{"van": min(vs), "tot": max(vs), "kleur": k, "aantal": len(vs)} for k, vs in per_kleur.items()]
+        return sorted(klassen, key=lambda k: k["van"])
+
     def get_visualization_config(self, indicator_uuid: str) -> Optional[Dict[str, Any]]:
         """
         Haal visualisatie configuratie op voor indicator.

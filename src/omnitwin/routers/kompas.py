@@ -153,6 +153,27 @@ def get_gebied_kompas(
     return result
 
 
+@router.get("/{config_id}/selectie")
+def get_selectie_kompas(
+    config_id: int,
+    gebied_id: List[str] = Query(..., min_length=1, max_length=500,
+                                 description="Gebied-ID's van de selectie (herhaal de parameter)"),
+    db: Session = Depends(get_db)
+):
+    """
+    Percentielklassen over een selectie van gebieden (#255).
+
+    Alleen bij een kompasprofiel met classificatie `percentiel_8`: elke node (indicator,
+    onderdeel, thema, kwadrant) krijgt `klasse` (1-8, 8 = gunstigst) en `klasse_kleur`,
+    volgens dezelfde aggregatieregel als voor één gebied. Bij `zscore` zonder klassen.
+    """
+    service = KompasService(db)
+    result = service.get_selectie_kompas(config_id, gebied_id)
+    if not result:
+        raise HTTPException(status_code=404, detail=f"Kompas configuratie {config_id} niet gevonden of niet actief")
+    return result
+
+
 @router.get("/{config_id}/indicator/{indicator_uuid}", response_model=IndicatorPathResponse)
 def get_indicator_path(
     config_id: int,
