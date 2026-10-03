@@ -22,6 +22,8 @@ config.ini
 
 # Data (volledige uitsluiting, bevat grote datasets)
 data/
+# Testdata (o.a. de evaluatieset van de assistent, #233) WEL in git
+!tests/data/
 
 # init_data staat WEL in git (publieke starter dataset)
 !init_data/
