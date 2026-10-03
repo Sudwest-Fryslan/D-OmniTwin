@@ -337,8 +337,7 @@ def get_indicator_uuid(cur, code: str) -> str:
     if not row:
         raise ValueError(
             f"Indicator '{code}' niet gevonden in indicatoren tabel.\n"
-            f"  Seed eerst: python ETL/local/etl_03_seed_indicatoren.py "
-            f"--bestand ETL/OV/seed_ov_indicatoren.json"
+            f"  De OV-indicatoren staan in db/stuurdata/indicatoren.csv en worden door db-init geladen."
         )
     return str(row[0])
 
