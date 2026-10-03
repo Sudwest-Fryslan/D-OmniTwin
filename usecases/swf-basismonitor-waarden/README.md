@@ -1,7 +1,7 @@
 # TC-07-006 — SWF-basismonitor: waarden per indicator × gebiedstype
 
 **Status:** ontwerp (de laad-API is nog niet gebouwd; deze use case is de specificatie en straks de acceptatietest)
-**Versie:** 0.1.0 · **Afhankelijk van:** [swf-definities](../swf-definities/README.md), [swf-gebiedsindelingen](../swf-gebiedsindelingen/README.md), [cbs-gebiedsindelingen](../cbs-gebiedsindelingen/README.md)
+**Versie:** 0.2.0 · **Afhankelijk van:** [swf-definities](../swf-definities/README.md), [swf-gebiedsindelingen](../swf-gebiedsindelingen/README.md), [cbs-gebiedsindelingen](../cbs-gebiedsindelingen/README.md)
 **Manifest:** [`usecase.json`](usecase.json) · **Controleren:** `python -m omnitwin.usecases controleer swf-basismonitor-waarden`
 
 ## Vraag

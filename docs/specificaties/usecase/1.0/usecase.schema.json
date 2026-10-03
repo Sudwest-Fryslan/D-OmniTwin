@@ -134,7 +134,7 @@
       "items": {
         "$ref": "#/$defs/actor"
       },
-      "description": "Gebruikers en machineclients met hun rollen, zonder wachtwoorden of secrets. Gereserveerd: de uitvoerder maakt er nog geen testaccounts van (#223)."
+      "description": "Gebruikers en machineclients met hun rollen, zonder wachtwoorden of secrets. In test en dev maakt de uitvoerder ze met --testaccounts aan als uc-<usecase>-<naam> (#223)."
     },
     "rechten": {
       "type": "array",
@@ -278,7 +278,8 @@
             "afkeuring",
             "idempotent",
             "chat",
-            "viewer"
+            "viewer",
+            "recht"
           ],
           "description": "Soort controle; semantiek per type in de specificatie."
         },
@@ -288,7 +289,7 @@
         },
         "dataset": {
           "type": "string",
-          "description": "Id van een dataset uit datasets[] van deze use case."
+          "description": "Id van een dataset uit datasets[] van deze use case (bij type recht mag het een andere dataset zijn)."
         },
         "resource": {
           "type": "string",
@@ -360,10 +361,23 @@
           "type": "string",
           "description": "type viewer: wat de gebruiker doet."
         },
+        "actie": {
+          "type": "string",
+          "enum": [
+            "registreren",
+            "leveren",
+            "lezen"
+          ],
+          "description": "type recht: registreren (POST /api/laden/v1/datasets), leveren (levering aan dataset) of lezen (GET de datasetregistratie)."
+        },
+        "toegestaan": {
+          "type": "boolean",
+          "description": "type recht: true als de actor de actie mag, false als hij 403 moet krijgen."
+        },
         "actor": {
           "type": "string",
           "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
-          "description": "Naam van de actor die de controle uitvoert. Gereserveerd: de uitvoerder gebruikt nog één machineclient (#223)."
+          "description": "Naam van een actor uit actoren die de controle uitvoert (met --testaccounts); zonder testaccounts de machineclient uit de omgeving."
         }
       },
       "additionalProperties": false

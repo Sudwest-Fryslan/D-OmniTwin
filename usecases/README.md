@@ -58,11 +58,33 @@ python -m omnitwin.usecases index                  # de tabel hieronder bijwerke
 python -m omnitwin.usecases controleer swf-definities [--variant status-a] [--uit /tmp/levering]
 python -m omnitwin.usecases installeer swf-gebiedsmonitor   # met afhankelijkheden; --alle voor alles
 python -m omnitwin.usecases test swf-definities             # installeren + controles tegen de API
+python -m omnitwin.usecases test swf-definities --testaccounts   # als de actoren, met rechtencontroles (test/dev)
+python -m omnitwin.usecases opruimen swf-definities         # testaccounts weer weg
 ```
 
 `controleer` werkt nu al, zonder draaiende stack: manifest tegen het schema, bestanden in de map, afhankelijkheden, registraties tegen de laad-API-specificatie, en de levering(en) maken uit de bron en valideren tegen het profiel (Table Schema met frictionless, GeoPackage met fiona). Ontbreekt een bron, dan is die dataset *overgeslagen*.
 
 `installeer` en `test` registreren, leveren en controleren tegen een draaiende installatie: `OMNITWIN_BASE_URL` en een machineclient met client credentials (`OMNITWIN_CLIENT_ID`, `OMNITWIN_CLIENT_SECRET`). Zolang de laad-API er niet is (`/api/laden/v1/openapi.json`), melden ze dat. Demopakketten zonder `datasets` installeert `installeer` via `laad_usecase.py`, zodat er één ingang is. De acceptatietests per use case (`tests/integration/test_usecase_<naam>.py`) doen hetzelfde en slaan zichzelf over zolang de laad-API, een bron of de machineclient ontbreekt.
+
+### Actoren en testaccounts
+
+Een use case noemt in `actoren` wie hem gebruikt, met de Keycloak-rollen, en **nooit wachtwoorden of secrets** (de use cases staan in een publieke repo). Gebruikelijk zijn een `beheerder` (gebruiker, realm-rol `beheerder`: registreert de datasets), één machineclient per leverende partij met alleen `dataset:<id>:laden` voor zijn eigen datasets (de `client` van de dataset, bijv. `etl-swf`, `etl-cbs`), en een `lezer` (gebruiker, realm-rol `lezer`).
+
+```json
+"actoren": [
+  {"naam": "beheerder", "soort": "gebruiker", "rollen": ["beheerder"]},
+  {"naam": "etl-swf", "soort": "machineclient", "rollen": ["dataset:swf-monitor-definities:laden"]},
+  {"naam": "lezer", "soort": "gebruiker", "rollen": ["lezer"]}
+]
+```
+
+In productie maakt een beheerder die accounts aan in Keycloak en wijst hij de rollen toe; de use case laat zien welke nodig zijn. In **test en dev** maakt de uitvoerder ze zelf aan met `--testaccounts` (alleen met `OMNITWIN_TESTACCOUNTS=1`, geweigerd bij `OMNITWIN_OMGEVING=productie`): `uc-<usecase>-<actor>` in realm `omnitwin`, met willekeurige wachtwoorden en secrets in `.usecase-accounts.json` (in `.gitignore`, nooit in de log). De uitvoerder registreert dan als de beheerder, levert als de client van de dataset en voert controles met `actor` uit als die actor. Rechten controleer je declaratief met `type: recht`:
+
+```json
+{"type": "recht", "actor": "etl-swf", "actie": "leveren", "dataset": "cbs-kerncijfers", "toegestaan": false}
+```
+
+Geslaagd als de laad-API 403 geeft (`toegestaan: false`), of juist geen 401/403 (`toegestaan: true`). Het verzoek heeft een ongeldige parameter of body, dus er verandert niets. Zonder `--testaccounts` zijn rechtencontroles *overgeslagen*. `opruimen <naam>` verwijdert de testaccounts van de use case en zijn afhankelijkheden. Toegang tot de admin-API van Keycloak en de overige variabelen: [installatiegids, Keycloak](../docs/9-beheer/installatie.md#keycloak-optioneel); de regels: [specificatie, 10.1](../docs/specificaties/usecase/README.md#101-actoren).
 
 **Verse installatie** (`LOAD_SAMPLE_DATA=true`): `db-init` draait `python -m omnitwin.usecases installeer --alle --inproces`: alle actieve use cases, met de laadstraat in-process (zelfde validatie, versies en DCAT als de laad-API, zonder HTTP en token; backend en Keycloak draaien dan nog niet). Open data wordt gedownload met cache in `$DATA_CACHE` (volume `bron-cache`); een bron die niet bereikbaar is, wordt overgeslagen met een melding en de installatie gaat door. Wat (nog) niet open is of nog geen adapter heeft, komt uit `sample-bronbibliotheek`, gemarkeerd (demodata: `dct:type` `demodata` en `DEMODATA` in de bron van elke waarde). Zie [demodata naar open data](../docs/3-data-engineering/demodata-naar-open-data.md).
 
@@ -82,22 +104,22 @@ Gegenereerd met `python -m omnitwin.usecases index`; een unittest faalt als hij 
 | [assistent-kwaliteit](./assistent-kwaliteit/README.md) | TC-06-009 | D-Omni Assistent vindt de juiste indicator en beantwoordt datavragen | beleidsadviseur of inwoner die de assistent gebruikt | ontwerp | 0.1.0 | – |
 | [beleidsadviseur-swf](./beleidsadviseur-swf/README.md) | TC-06-001 | Beleidsadviseur verkent kernen in Súdwest-Fryslân (IJsselmeerkust) | Beleidsadviseur leefbaarheid / ruimtelijke ordening | actief | 0.2.0 | cbs-gebiedsindelingen, cbs-kerncijfers, sample-bronbibliotheek |
 | [brede-welvaart](./brede-welvaart/README.md) | TC-06-007 | Brede welvaart en functiemenging | Strateeg / economische zaken | actief | 0.2.0 | cbs-gebiedsindelingen, cbs-kerncijfers, rivm-gezondheidsmonitor, sample-bronbibliotheek |
-| [cbs-gebiedsindelingen](./cbs-gebiedsindelingen/README.md) | TC-07-001 | CBS-gebiedsindelingen (buurten, wijken, gemeenten) via de laad-API | beheerder D-OmniTwin | actief | 0.1.0 | – |
-| [cbs-kerncijfers](./cbs-kerncijfers/README.md) | TC-07-002 | CBS Kerncijfers wijken en buurten via de laad-API | beheerder D-OmniTwin | actief | 0.1.0 | cbs-gebiedsindelingen |
+| [cbs-gebiedsindelingen](./cbs-gebiedsindelingen/README.md) | TC-07-001 | CBS-gebiedsindelingen (buurten, wijken, gemeenten) via de laad-API | beheerder D-OmniTwin | actief | 0.2.0 | – |
+| [cbs-kerncijfers](./cbs-kerncijfers/README.md) | TC-07-002 | CBS Kerncijfers wijken en buurten via de laad-API | beheerder D-OmniTwin | actief | 0.2.0 | cbs-gebiedsindelingen |
 | [energiearmoede](./energiearmoede/README.md) | TC-06-005 | Energietransitie en energiearmoede | Beleidsmaker energietransitie | actief | 0.2.0 | cbs-gebiedsindelingen, cbs-kerncijfers, rivm-gezondheidsmonitor, sample-bronbibliotheek |
-| [hittestress](./hittestress/README.md) | TC-06-006 | Klimaatadaptatie: hittestress en kwetsbaarheid | Stedenbouwkundige / GGD | actief | 0.2.0 | cbs-gebiedsindelingen, cbs-kerncijfers, rivm-gezondheidsmonitor, sample-bronbibliotheek |
-| [politie-misdrijven](./politie-misdrijven/README.md) | TC-07-022 | Politie: geregistreerde misdrijven per buurt via de laad-API | beheerder D-OmniTwin | actief | 0.1.0 | cbs-gebiedsindelingen |
-| [rivm-gezondheidsmonitor](./rivm-gezondheidsmonitor/README.md) | TC-07-021 | RIVM Gezondheidsmonitor per buurt via de laad-API | beheerder D-OmniTwin | actief | 0.1.0 | cbs-gebiedsindelingen |
-| [sample-bronbibliotheek](./sample-bronbibliotheek/README.md) | TC-07-023 | Sample: wat nog niet open is of nog geen adapter heeft (gemarkeerd) | beheerder D-OmniTwin | actief | 0.1.0 | cbs-gebiedsindelingen |
+| [hittestress](./hittestress/README.md) | TC-06-006 | Klimaatadaptatie: hittestress en kwetsbaarheid | Stedenbouwkundige / GGD | actief | 0.3.0 | cbs-gebiedsindelingen, cbs-kerncijfers, rivm-gezondheidsmonitor, sample-bronbibliotheek |
+| [politie-misdrijven](./politie-misdrijven/README.md) | TC-07-022 | Politie: geregistreerde misdrijven per buurt via de laad-API | beheerder D-OmniTwin | actief | 0.2.0 | cbs-gebiedsindelingen |
+| [rivm-gezondheidsmonitor](./rivm-gezondheidsmonitor/README.md) | TC-07-021 | RIVM Gezondheidsmonitor per buurt via de laad-API | beheerder D-OmniTwin | actief | 0.2.0 | cbs-gebiedsindelingen |
+| [sample-bronbibliotheek](./sample-bronbibliotheek/README.md) | TC-07-023 | Sample: wat nog niet open is of nog geen adapter heeft (gemarkeerd) | beheerder D-OmniTwin | actief | 0.2.0 | cbs-gebiedsindelingen |
 | [sociale-cohesie](./sociale-cohesie/README.md) | TC-06-008 | Zorgzwaarte en sociale cohesie | Wijkcoördinator / wijkcontactfunctionaris | actief | 0.2.0 | cbs-gebiedsindelingen, cbs-kerncijfers, rivm-gezondheidsmonitor |
-| [swf-adapter-fme](./swf-adapter-fme/README.md) | TC-07-009 | SWF-adapter: dezelfde FME-push naar D-OmniTwin | data-engineer DWH (SWF) | actief | 0.1.0 | swf-definities, cbs-gebiedsindelingen |
-| [swf-basismonitor-waarden](./swf-basismonitor-waarden/README.md) | TC-07-006 | SWF-basismonitor: waarden per indicator × gebiedstype | data-engineer DWH (SWF) | ontwerp | 0.1.0 | swf-definities, swf-gebiedsindelingen, cbs-gebiedsindelingen |
-| [swf-definities](./swf-definities/README.md) | TC-07-003 | SWF-definities: indicatoren, gebiedstypen en relaties | data-engineer DWH (SWF) | actief | 0.1.0 | – |
-| [swf-gebiedsindelingen](./swf-gebiedsindelingen/README.md) | TC-07-004 | SWF-gebiedsindelingen als GeoPackage-leveringen | functioneel beheerder SWF / GIS-specialist | ontwerp | 0.1.0 | swf-definities, cbs-gebiedsindelingen |
-| [swf-gebiedsmonitor](./swf-gebiedsmonitor/README.md) | TC-07-010 | D-OmniTwin vervangt de huidige SWF-gebiedsmonitor (acceptatie) | kernteam gebiedsagenda en functioneel beheerder SWF | ontwerp | 0.1.0 | swf-definities, swf-gebiedsindelingen, swf-kompasprofiel, swf-basismonitor-waarden, swf-klimaatmonitor, swf-kaartlagen, swf-adapter-fme |
-| [swf-kaartlagen](./swf-kaartlagen/README.md) | TC-07-008 | SWF-kaartlagen: klimaat, deelgebieden, projecten en overige lagen | medewerker team of vakgroep (SWF) | ontwerp | 0.1.0 | swf-gebiedsindelingen |
-| [swf-klimaatmonitor](./swf-klimaatmonitor/README.md) | TC-07-007 | SWF-klimaatmonitor: welstand × buurt met labels A–E | adviseur klimaatadaptatie | ontwerp | 0.1.0 | swf-definities, swf-gebiedsindelingen, swf-kompasprofiel |
-| [swf-kompasprofiel](./swf-kompasprofiel/README.md) | TC-07-005 | SWF-kompasprofielen Basis (4/12/33) en Klimaat | functioneel beheerder SWF | ontwerp | 0.1.0 | swf-definities |
+| [swf-adapter-fme](./swf-adapter-fme/README.md) | TC-07-009 | SWF-adapter: dezelfde FME-push naar D-OmniTwin | data-engineer DWH (SWF) | actief | 0.2.0 | swf-definities, cbs-gebiedsindelingen |
+| [swf-basismonitor-waarden](./swf-basismonitor-waarden/README.md) | TC-07-006 | SWF-basismonitor: waarden per indicator × gebiedstype | data-engineer DWH (SWF) | ontwerp | 0.2.0 | swf-definities, swf-gebiedsindelingen, cbs-gebiedsindelingen |
+| [swf-definities](./swf-definities/README.md) | TC-07-003 | SWF-definities: indicatoren, gebiedstypen en relaties | data-engineer DWH (SWF) | actief | 0.2.0 | – |
+| [swf-gebiedsindelingen](./swf-gebiedsindelingen/README.md) | TC-07-004 | SWF-gebiedsindelingen als GeoPackage-leveringen | functioneel beheerder SWF / GIS-specialist | ontwerp | 0.2.0 | swf-definities, cbs-gebiedsindelingen |
+| [swf-gebiedsmonitor](./swf-gebiedsmonitor/README.md) | TC-07-010 | D-OmniTwin vervangt de huidige SWF-gebiedsmonitor (acceptatie) | kernteam gebiedsagenda en functioneel beheerder SWF | ontwerp | 0.2.0 | swf-definities, swf-gebiedsindelingen, swf-kompasprofiel, swf-basismonitor-waarden, swf-klimaatmonitor, swf-kaartlagen, swf-adapter-fme |
+| [swf-kaartlagen](./swf-kaartlagen/README.md) | TC-07-008 | SWF-kaartlagen: klimaat, deelgebieden, projecten en overige lagen | medewerker team of vakgroep (SWF) | ontwerp | 0.2.0 | swf-gebiedsindelingen |
+| [swf-klimaatmonitor](./swf-klimaatmonitor/README.md) | TC-07-007 | SWF-klimaatmonitor: welstand × buurt met labels A–E | adviseur klimaatadaptatie | ontwerp | 0.2.0 | swf-definities, swf-gebiedsindelingen, swf-kompasprofiel |
+| [swf-kompasprofiel](./swf-kompasprofiel/README.md) | TC-07-005 | SWF-kompasprofielen Basis (4/12/33) en Klimaat | functioneel beheerder SWF | ontwerp | 0.2.0 | swf-definities |
 <!-- usecase-index:end -->
 
 De vijf demopakketten komen uit de innovatieaanvraag Digitale Overheid 2026 en zijn nagespeeld op Bolsward, met focus op Bolsward-Zuidoost (status per pakket in zijn README). De `cbs-*`- en `swf-*`-use cases zijn de specificatie en straks de acceptatietests van de laad-API (0.3.0); `swf-gebiedsmonitor` is de acceptatietest voor "D-OmniTwin vervangt de huidige gebiedsmonitor".

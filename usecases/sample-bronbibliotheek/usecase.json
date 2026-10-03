@@ -2,7 +2,7 @@
   "specificatie": "1.0",
   "naam": "sample-bronbibliotheek",
   "id": "TC-07-023",
-  "versie": "0.1.0",
+  "versie": "0.2.0",
   "titel": "Sample: wat nog niet open is of nog geen adapter heeft (gemarkeerd)",
   "vraag": "Ik wil de demo's laten werken met de indicatoren waarvoor nog geen open bron met adapter is, zonder dat iemand demodata voor echte cijfers aanziet; met de echte interne bron als die er lokaal is.",
   "gebruiker": "beheerder D-OmniTwin",
@@ -10,10 +10,38 @@
   "afhankelijk_van": [
     "cbs-gebiedsindelingen"
   ],
+  "actoren": [
+    {
+      "naam": "beheerder",
+      "soort": "gebruiker",
+      "rollen": [
+        "beheerder"
+      ],
+      "omschrijving": "beheerder van D-OmniTwin: registreert de datasets"
+    },
+    {
+      "naam": "etl-open-data",
+      "soort": "machineclient",
+      "rollen": [
+        "dataset:sample-open-zonder-adapter:laden",
+        "dataset:sample-intern-demodata:laden"
+      ],
+      "omschrijving": "ETL voor open bronnen: levert alleen de eigen datasets"
+    },
+    {
+      "naam": "lezer",
+      "soort": "gebruiker",
+      "rollen": [
+        "lezer"
+      ],
+      "omschrijving": "ingelogde medewerker: ziet ook wat niet openbaar is, laadt niets"
+    }
+  ],
   "rechten": [
     "realm-rol beheerder (registreren)",
     "dataset:sample-open-zonder-adapter:laden",
-    "dataset:sample-intern-demodata:laden"
+    "dataset:sample-intern-demodata:laden",
+    "realm-rol lezer"
   ],
   "datasets": [
     {
@@ -68,7 +96,53 @@
     },
     {
       "type": "idempotent",
-      "dataset": "sample-intern-demodata"
+      "dataset": "sample-intern-demodata",
+      "actor": "etl-open-data"
+    },
+    {
+      "type": "recht",
+      "actor": "beheerder",
+      "actie": "registreren",
+      "toegestaan": true,
+      "omschrijving": "de beheerder mag datasets registreren"
+    },
+    {
+      "type": "recht",
+      "actor": "etl-open-data",
+      "actie": "leveren",
+      "dataset": "sample-open-zonder-adapter",
+      "toegestaan": true,
+      "omschrijving": "etl-open-data mag zijn eigen dataset leveren"
+    },
+    {
+      "type": "recht",
+      "actor": "etl-open-data",
+      "actie": "leveren",
+      "dataset": "cbs-kerncijfers",
+      "toegestaan": false,
+      "omschrijving": "etl-open-data mag een andere dataset niet leveren (403)"
+    },
+    {
+      "type": "recht",
+      "actor": "etl-open-data",
+      "actie": "registreren",
+      "toegestaan": false,
+      "omschrijving": "etl-open-data mag niet registreren (403)"
+    },
+    {
+      "type": "recht",
+      "actor": "lezer",
+      "actie": "leveren",
+      "dataset": "sample-open-zonder-adapter",
+      "toegestaan": false,
+      "omschrijving": "een lezer mag niet laden (403)"
+    },
+    {
+      "type": "recht",
+      "actor": "lezer",
+      "actie": "registreren",
+      "toegestaan": false,
+      "omschrijving": "een lezer mag niet registreren (403)"
     }
   ],
   "bekende_afwijkingen": [
