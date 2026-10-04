@@ -8,7 +8,9 @@ Per use case met een datavraag (usecases/*/usecase.json, persona.vraag):
 - het antwoord noemt de verwachte buurten (alleen gecontroleerd met E2E_LLM=1, want
   de vaste tekst zonder model noemt ze altijd).
 
-Zelfstandig (eigen browser-fixture). Draaien in de Playwright-container, zie tests/e2e/README.md:
+Eigen pagina-fixture, met de gedeelde browser uit conftest.py (een tweede sync_playwright naast
+die van de sessie faalt met "Sync API inside the asyncio loop"). Draaien in de
+Playwright-container, zie tests/e2e/README.md:
 
     OMNITWIN_BASE_URL=http://traefik pytest -m e2e tests/e2e/test_chat_datavragen.py
 
@@ -25,7 +27,10 @@ import pytest
 playwright = pytest.importorskip("playwright.sync_api")
 expect = playwright.expect
 
-from e2e_helpers import TRAAG_MS, klik_chatactie, wacht_op_kaart_in_rust  # noqa: E402
+from e2e_helpers import (  # noqa: E402
+    PAGINA_TIMEOUT_MS, geschaald, klik_chatactie, stel_wachttijden_in, traag_ms, wacht_op_kaart_in_rust,
+    zonder_basiskaarttegels,
+)
 
 pytestmark = pytest.mark.e2e
 
@@ -68,28 +73,19 @@ _INIT = """
 """
 
 
-@pytest.fixture(scope="module")
-def browser():
-    with playwright.sync_playwright() as p:
-        b = p.chromium.launch(
-            headless=os.environ.get("E2E_HEADED") != "1",
-            args=["--use-angle=swiftshader", "--enable-unsafe-swiftshader", "--ignore-gpu-blocklist"],
-        )
-        yield b
-        b.close()
-
-
 @pytest.fixture
 def page(browser):
     context = browser.new_context(viewport={"width": 1600, "height": 1000}, locale="nl-NL")
     context.add_init_script(f"({_INIT})()")
+    zonder_basiskaarttegels(context)
     pg = context.new_page()
-    pg.set_default_timeout(20_000)
-    pg.goto(f"{BASE_URL}/", wait_until="domcontentloaded")
+    pg.set_default_timeout(geschaald(PAGINA_TIMEOUT_MS))
+    pg.goto(f"{BASE_URL}/", wait_until="domcontentloaded", timeout=geschaald(60_000))
+    stel_wachttijden_in(pg)  # wachttijden schalen met de renderer (#212)
     pg.wait_for_function(
         "() => window.state && window.state.deckgl && window.chatPanel"
         " && document.querySelectorAll('#gebiedstype-select option').length > 1",
-        timeout=60_000,
+        polling=100, timeout=geschaald(60_000),
     )
     yield pg
     context.close()
@@ -129,13 +125,15 @@ def test_datavraag_in_de_chat(page, uc):
     page.wait_for_function(
         "([uuid, n]) => window.state.currentIndicator === uuid && window.state.selectedGebiedIds.size === n",
         arg=[ka["indicator_uuid"], len(ka["gebied_ids"])],
-        timeout=60_000,
+        polling=100, timeout=geschaald(60_000),
     )
-    expect(page.locator("#selection-badge")).to_be_visible()
+    # De badge volgt pas na het laden en tekenen van de kaartdata; in de eerste test van de sessie
+    # met de eerste shadercompilatie (onder --cpus=2 ruim een minuut): TRAAG_MS (#212)
+    expect(page.locator("#selection-badge")).to_be_visible(timeout=traag_ms())
     # Inzoom-animatie: de camera beweegt alleen op animatieframes. In CI (software-WebGL)
     # blokkeert shadercompilatie na het laden van een laag de renderer soms tientallen
-    # seconden; daarom de wachttijd voor trage stappen (TRAAG_MS) en een vast pollinterval (#194)
-    page.wait_for_function("() => (window.state.currentViewState?.zoom || 0) >= 11", polling=100, timeout=TRAAG_MS)
+    # seconden; daarom de wachttijd voor trage stappen (TRAAG_MS, geschaald) en een vast pollinterval (#194)
+    page.wait_for_function("() => (window.state.currentViewState?.zoom || 0) >= 11", polling=100, timeout=traag_ms())
     wacht_op_kaart_in_rust(page)
     camera = page.evaluate("""(ids) => {
         const set = new Set(ids); let x0 = 180, x1 = -180, y0 = 90, y1 = -90;
@@ -152,14 +150,14 @@ def test_datavraag_in_de_chat(page, uc):
 
     # Toon op kaart: gebieden geselecteerd en indicator op de kaart
     toon = next(a for a in data["acties"] if a["type"] == "TOON_OP_KAART")
-    with page.expect_response(lambda r: "/api/gebiedsmonitor/kaart_data/" in r.url and r.ok, timeout=60_000):
+    with page.expect_response(lambda r: "/api/gebiedsmonitor/kaart_data/" in r.url and r.ok, timeout=geschaald(60_000)):
         # Niet direct klikken: na het meebewegen van de kaart kan de renderer in CI (software-
         # WebGL) even geen frames tekenen, en dan hangt Playwrights stabiliteitscheck (#194)
         klik_chatactie(page, bericht.locator(".chat-actie-btn", has_text="Toon op kaart").first, "Toon op kaart")
     page.wait_for_function(
         "([uuid, n]) => window.state.currentIndicator === uuid && window.state.selectedGebiedIds.size === n",
         arg=[toon["indicator_uuid"], len(toon["gebied_ids"])],
-        timeout=30_000,
+        polling=100, timeout=geschaald(30_000),
     )
     geselecteerd = page.evaluate("() => [...window.state.selectedGebiedIds].sort()")
     assert geselecteerd == sorted(toon["gebied_ids"])
