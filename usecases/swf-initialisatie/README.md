@@ -1,105 +1,99 @@
-# TC-07-025 — SWF-initialisatie: eerste vulling uit de lokale D-OmniTwin-database
+# TC-07-025 — SWF-initialisatie: vulling uit een dump van de lokale D-OmniTwin-database
 
-**Status:** ontwerp (de export bestaat nog niet; zie *Open vraag*)
-**Versie:** 0.1.0 · **Afhankelijk van:** [swf-definities](../swf-definities/README.md), [cbs-gebiedsindelingen](../cbs-gebiedsindelingen/README.md), [swf-gebiedsindelingen](../swf-gebiedsindelingen/README.md)
-**Manifest:** [`usecase.json`](usecase.json) · **Controleren:** `python -m omnitwin.usecases controleer swf-initialisatie`
+**Status:** actief (zonder `SWF_EXPORT_DIR` overgeslagen, geen fout)
+**Versie:** 0.3.0 · **Afhankelijk van:** [swf-definities](../swf-definities/README.md), [cbs-gebiedsindelingen](../cbs-gebiedsindelingen/README.md), [swf-gebiedsindelingen](../swf-gebiedsindelingen/README.md)
+**Manifest:** [`usecase.json`](usecase.json) · **Controleren:** `SWF_EXPORT_DIR=… python -m omnitwin.usecases controleer swf-initialisatie`
 
 ## Vraag
 
 - **Gebruiker:** projectleider en functioneel beheerder SWF
-- **Vraag:** "Ik wil de SWF-installatie de eerste keer vullen met de rijkere data uit mijn lokale D-OmniTwin-database, via de laad-API en herhaalbaar, zonder open data of demodata mee te kopiëren."
+- **Vraag:** "Ik wil de SWF-installatie vullen met de rijkere data uit mijn lokale D-OmniTwin-database, via de laad-API en herhaalbaar, zonder open data of demodata mee te kopiëren."
 - **Rechten:** `realm-rol beheerder (registreren)`, `dataset:swf-init-indicatoren:laden`, `dataset:swf-init-waarnemingen:laden`
 
-Aanname A1 van https://github.com/TLaan/D-OmniTwin/issues/222: de eerste vulling bij SWF komt niet alleen uit de export van de huidige gebiedsmonitor (februari 2026), maar uit de lokale D-OmniTwin-database van de projectleider, die rijker is. De export van de monitor blijft de bron om van te leren (Kompas-hiërarchie, labels, laagrechten) en de route voor de doorlopende levering ([swf-adapter-fme](../swf-adapter-fme/README.md)).
+Aanname A1 van https://github.com/TLaan/D-OmniTwin/issues/222: de eerste vulling bij SWF komt uit de lokale D-OmniTwin-database van de projectleider. Die komt als dump (`pg_dump -Fc`, niet in git) en wordt **niet** teruggezet. Besluit van de projectleiding (04-10-2026): de data is openbaar, en wat niet online te downloaden is, staat als bestand bij de use case waar het hoort.
 
-Deze use case beschrijft die eerste vulling als gewone leveringen via de laad-API, zodat hij herhaalbaar en herleidbaar is (versies, herkomst, n-vlag) en niets buiten de laadstraat om in de database komt.
+## Waar de data uit de dump terechtkomt
 
-| Wat | Hoe |
-|---|---|
-| Indicatordefinities die alleen lokaal bestaan | dataset `swf-init-indicatoren` (profiel definities, alleen de resource `indicatoren`) |
-| Indicatorwaarden | dataset `swf-init-waarnemingen` (profiel waarnemingen, vervangbereik indicator × gebiedstype) |
-| SWF-definities, gebiedstypen, relaties | uit [swf-definities](../swf-definities/README.md) (afhankelijkheid), niet opnieuw |
-| Gebiedsindelingen | uit [cbs-gebiedsindelingen](../cbs-gebiedsindelingen/README.md) en [swf-gebiedsindelingen](../swf-gebiedsindelingen/README.md); eigen indelingen uit de lokale database volgen per gebiedstype als dataset met profiel gebiedsindeling (GeoPackage) |
-| Open data (CBS-kerncijfers e.d.) | niet uit de export: de adapter van [cbs-kerncijfers](../cbs-kerncijfers/README.md) downloadt zelf (geen afhankelijkheid: de volgorde maakt niet uit, de voorrang bij overlap beslist) |
-| Demodata | niet uit de export: blijft in de eigen use cases, gemarkeerd `DEMODATA` (#236) |
-
-**Bron.** De export staat onder `SWF_EXPORT_DIR` (allowlist van de uitvoerder, nooit in git). Zonder die variabele slaat `controleer` de datasets over; dat is geen fout. Verwachte bestanden:
-
-| Bestand | Uit de lokale database | Kolommen |
+| Uit de lokale database | Waar | Hoe |
 |---|---|---|
-| `gebied_data.csv` | tabel `gebied_data` | `gebied_id`, `indicator_uuid`, `jaar`, `peildatum`, `scenario_id`, `waarde`, `n`, `kwaliteit`, `bron` (precies één van `jaar` en `peildatum`) |
-| `indicatoren.csv` | tabel `indicatoren` | `uuid`, `naam`, `code`, `omschrijving`, `eenheid`, `score_type`, `min_waarde`, `max_waarde`, `status`, `begingeldigheid`, `eindgeldigheid`, `bron` |
+| Welstandsgebieden × buurt (756 vlakken) | [swf-gebiedsindelingen](../swf-gebiedsindelingen/README.md), `swf-gebied-welstand-buurt` | bestand in git (`data/welstandsgebieden.gpkg`, 4,9 MB) |
+| Volledig Kompas (247 plekken, 241 indicatoren) | [swf-kompasprofiel](../swf-kompasprofiel/README.md), `swf-kompas-volledig` | bestand in git (63 kB), beheerroute |
+| Externe kaartlagen (8 WFS/WMS) | [swf-kaartlagen](../swf-kaartlagen/README.md), `swf-laag-extern` | bestand in git (5 kB), beheerroute |
+| Kadaster BAG/BAG (30.228), RVO EP-Online en berekend (5.248), OpenStreetMap (2.475) | **deze use case**, `swf-init-waarnemingen` | via `SWF_EXPORT_DIR` (niet in git): online te halen, maar nog geen adapter |
+| Waarden uit de SWF-gebiedsmonitor (10.365) | deze use case | via `SWF_EXPORT_DIR`; een deelverzameling van de monitorexport ([swf-basismonitor-waarden](../swf-basismonitor-waarden/README.md), [swf-klimaatmonitor](../swf-klimaatmonitor/README.md): 43.253 waarden), dus geen bestand in git |
+| Definities die nog nergens vandaan komen (1: *Beperking*) | deze use case, `swf-init-indicatoren` | via `SWF_EXPORT_DIR` |
+| CBS, Kerncijfers 2023, RIVM (200.240) | niet | open data: [cbs-kerncijfers](../cbs-kerncijfers/README.md) en [rivm-gezondheidsmonitor](../rivm-gezondheidsmonitor/README.md) downloaden zelf |
+| Waarden zonder bron (4.931), op provincies (5), buiten Fryslân (263.524), demodata (0) | niet | niet herleidbaar of buiten de installatie |
+| Kompas: extra onderdelen, tags, scoringsregels; lokale laag *Omgevingsvisie SWF*; system prompts, chat-scenario's, kleurschema's | niet | nog geen route, of een eigen route (stuurdata, swf-kaartlagen) |
 
-Voorbeeld van de export (met `psql` op de lokale database; alleen wat niet open is):
+**Keuze BAG, EP-Online en OpenStreetMap.** Die zijn online te halen, dus niet in git. Er is nog geen adapter (BAG en OpenStreetMap: per buurt berekend; EP-Online: API-sleutel). Tot die er is, gaan ze mee via deze use case uit een export (`SWF_EXPORT_DIR`), zodat de SWF-installatie ze nu al heeft voor heel Fryslân (de sample heeft ze voor 13 buurten). Vervolg: een adapter per bron, dan vervalt dat deel van deze use case.
 
-```sql
-\copy (SELECT gebied_id, indicator_uuid, jaar, CASE WHEN jaar IS NULL THEN datum::date END AS peildatum,
-              coalesce(scenario_id, 'current') AS scenario_id, waarde, n, kwaliteit, bron
-       FROM gebied_data
-       WHERE coalesce(bron, '') NOT LIKE 'DEMODATA%') TO 'gebied_data.csv' CSV HEADER
-\copy (SELECT uuid, naam, code, omschrijving, eenheid, score_type, min_waarde, max_waarde, status,
-              begingeldigheid, eindgeldigheid, bron
-       FROM indicatoren
-       WHERE uuid NOT IN (/* UUID's uit swf-definities en de stuurdata */)) TO 'indicatoren.csv' CSV HEADER
-```
-
-**Transformaties** (declaratief in `datasets/*.json`):
-
-| Export | Levering | Regel |
-|---|---|---|
-| `bron` begint met `DEMODATA` | weggelaten (`demodata`) | demodata hoort bij de demo-use cases |
-| `bron` begint met `CBS` | weggelaten (`open-data`) | open data downloadt de adapter; voorlopig herkend aan de bronvermelding |
-| `gebied_id`, `scenario_id` | `gebied_code`, `scenario` | hernoemen |
-| geen `n` | `n` leeg | `bijOntbrekendeN: bron-onderdrukt`; de drempel blijft in de ETL (aanname A7) |
-| status `A` | `O` | zoals in swf-definities (aanname A2) |
-
-**Overlap met andere bronnen** (aanname A6). Een waarde uit de initialisatie en een uit `cbs-kerncijfers` of `swf-monitor-waarden` op dezelfde sleutel (gebied × indicator × jaar of peildatum × scenario): de nieuwste bronpeildatum wint, bij een gelijke bronpeildatum de laatst aangeleverde levering. De bronpeildatum is `dct:modified` uit de `dcat.jsonld` van de levering, anders de datum van ontvangst. De andere waarde blijft zichtbaar als `andere_bronnen` (zie [voorrang bij overlap](../../docs/api/laden/README.md#voorrang-bij-overlap)). Zonder `dct:modified` wint de initialisatie dus van wat eerder geleverd is, en verliest hij van elke latere levering; dat is bedoeld.
-
-**Toegang.** Beide datasets zijn `RESTRICTED` (intern): alles wat in de huidige monitor grijs of uit staat, is intern (aanname B3, https://github.com/TLaan/D-OmniTwin/pull/274). Openbaar maken is een wijziging van `dct:accessRights` per dataset.
-
-**Na de initialisatie** de client `etl-initialisatie` intrekken. Doorlopende leveringen gaan via de FME-route ([swf-adapter-fme](../swf-adapter-fme/README.md)) en de open-data-use cases.
-
-## Open vraag aan de projectleider
-
-Welke tabellen en indicatoren lever je uit je lokale database: een CSV-export zoals hierboven, of liever een `pg_dump` van een paar tabellen (`indicatoren`, `gebied_data`, eventueel `gebieden` en `gebiedstypes` met eigen indelingen)? En welke indicatoren zijn alleen lokaal (niet in de monitor, niet open)? Dan maken we bron, bewerkingen en controles passend en zetten we de use case op `actief`.
+Deze use case is daarmee het dunne pad "vul aan uit een nieuwe dump". Zonder `SWF_EXPORT_DIR` doet hij niets; de bestanden in git (welstand, Kompas, kaartlagen) laden hun eigen use cases.
 
 ## Data
 
 | Dataset | Route | Profiel | Formaat | Bron | Toegang | Licentie | Rol |
 |---|---|---|---|---|---|---|---|
-| [`swf-init-indicatoren`](datasets/swf-init-indicatoren.json) | laden | definities | datapackage | export van de lokale D-OmniTwin-database ($SWF_EXPORT_DIR/indicatoren.csv) | beperkt (inloggen) | onbekend (navragen) | `dataset:swf-init-indicatoren:laden` |
-| [`swf-init-waarnemingen`](datasets/swf-init-waarnemingen.json) | laden | waarnemingen | datapackage | export van de lokale D-OmniTwin-database ($SWF_EXPORT_DIR/gebied_data.csv) | beperkt (inloggen) | onbekend (navragen) | `dataset:swf-init-waarnemingen:laden` |
+| [`swf-init-indicatoren`](datasets/swf-init-indicatoren.json) | laden | definities | datapackage | `$SWF_EXPORT_DIR/indicatoren.csv` | open | onbekend (navragen) | `dataset:swf-init-indicatoren:laden` |
+| [`swf-init-waarnemingen`](datasets/swf-init-waarnemingen.json) | laden | waarnemingen | datapackage | `$SWF_EXPORT_DIR/gebied_data.csv` | open | per bron: BAG (Kadaster, CC0), RVO EP-Online (te bevestigen), OpenStreetMap (ODbL, © OpenStreetMap-bijdragers), SWF-gebiedsmonitor (gemeente) | `dataset:swf-init-waarnemingen:laden` |
+
+Herkomst: de lokale D-OmniTwin-database van de projectleider (dump van 04-10-2026), openbaar volgens besluit van de projectleiding.
+
+**Bewerkingen** (declaratief, geteld per reden). Het exportscript laat open data, waarden zonder bron en provincies al weg; de use case houdt dezelfde regels als controle (aantal 0, ook met `--alles`):
+
+| Export | Levering | Regel |
+|---|---|---|
+| `bron` begint met `CBS`, `Kerncijfers wijken en buurten` of `Gezondheidsmonitor RIVM` | weggelaten (`open-data`) | open data downloadt de eigen use case |
+| `bron` leeg | weggelaten (`bron-onbekend`) | niet herleidbaar |
+| buurtcode niet in de CBS-buurten 2024 binnen Fryslân (zelfde bron als `cbs-gebied-buurten`, `koppel` + `binnen`) | weggelaten (`gebied-onbekend`, 1.587) | anders keurt de laad-API de hele levering af |
+| welstand-id `728` | `WS728` | `code_prefix` van het gebiedstype welstand |
+| geen `n` | `n` leeg | `bron-onderdrukt`; de drempel blijft in de ETL (A7) |
+| status `A` | `O` | A = Actueel (A2); de lokale database kent geen `A` |
+
+**Overlap** (A6): de nieuwste bronpeildatum wint; zonder `dct:modified` is dat de datum van ontvangst. De initialisatie wint dus van eerdere leveringen (bijv. `sample-open-zonder-adapter`, ook de DEMODATA van Bolsward-Zuidoost) en verliest van latere. De andere waarde staat in `andere_bronnen`.
 
 ## Stappen
 
-1. Export maken op de lokale database (zie hierboven) en de map als `SWF_EXPORT_DIR` zetten.
-2. Leveringen maken en lokaal controleren tegen het profiel (zonder API):
+Alles op de server van de installatie, in de map met `docker-compose.yml`. De dump bevat ook data die niet meegaat: buiten de repo houden en na afloop opruimen.
+
+1. **Dump herstellen** in een tijdelijke database (zelfde image als de installatie):
    ```bash
-   SWF_EXPORT_DIR=/pad/naar/export python -m omnitwin.usecases controleer swf-initialisatie --uit /tmp/swf-initialisatie
+   docker run -d --name swfdump -e POSTGRES_USER=omnitwin_user -e POSTGRES_DB=swfbron \
+     -e POSTGRES_PASSWORD="$(openssl rand -hex 16)" d-omnitwin-postgres
+   docker cp omnitwin_swf_data.dump swfdump:/tmp/swf.dump
+   docker exec swfdump pg_restore -U omnitwin_user -d swfbron --no-owner --no-privileges /tmp/swf.dump
    ```
-3. Machineclient voor de eerste vulling (eenmalig): `docker compose exec keycloak bash /opt/keycloak/omnitwin/machineclient.sh etl-initialisatie dataset:swf-init-indicatoren:laden dataset:swf-init-waarnemingen:laden`; registreren doet de beheerder.
-4. Installeren met de afhankelijkheden (eerst definities en gebiedsindelingen, dan de initialisatie):
+2. **Export maken** met [`scripts/beheer/swf_export.py`](../../scripts/beheer/swf_export.py) in de backend-image (psycopg2, fiona), naast de tijdelijke database. `--uit` is de map voor deze use case; `--repo` werkt ook de bestanden in git bij (welstand, Kompas, kaartlagen; daarna een PR):
    ```bash
-   SWF_EXPORT_DIR=/pad/naar/export python -m omnitwin.usecases installeer swf-initialisatie
+   docker run --rm --network container:swfdump -e PGHOST=localhost -e PGUSER=omnitwin_user -e PGDATABASE=swfbron \
+     -v "$PWD:/app" -v "$SWF_DUMP_DIR:/monitor:ro" -v /pad/naar/swf-export:/uit \
+     --entrypoint python d-omnitwin-backend /app/scripts/beheer/swf_export.py --uit /uit [--repo] \
+     --dump-datum 2026-10-04 --monitor-definities /monitor/output/api_backup_dump.json
    ```
-5. Controleren in de API en de viewer (zie Acceptatiecriteria); daarna de client intrekken.
+   Uitvoer: `gebied_data.csv` (49.903 regels, 6,6 MB), `indicatoren.csv`, `export.json` (aantallen, controlesommen).
+3. **Lokaal controleren**: `SWF_EXPORT_DIR=/pad/naar/swf-export python -m omnitwin.usecases controleer swf-initialisatie`. Wijken de aantallen af (andere dump), pas ze dan aan in `usecase.json` en hier.
+4. **Installeren**, in-process; `swf-definities` heeft `SWF_DUMP_DIR` nodig:
+   ```bash
+   docker compose run --rm -v /pad/naar/swf-export:/swf-export:ro -v "$SWF_DUMP_DIR:/swf-dump:ro" \
+     -e SWF_EXPORT_DIR=/swf-export -e SWF_DUMP_DIR=/swf-dump \
+     db-init python -m omnitwin.usecases installeer swf-initialisatie --inproces
+   ```
+   Of via HTTP met de eenmalige machineclient `etl-initialisatie` (`dataset:swf-init-indicatoren:laden`, `dataset:swf-init-waarnemingen:laden`).
+5. **Opruimen:** `docker rm -f swfdump`, dump en export verwijderen, de client `etl-initialisatie` intrekken.
 
 ## Acceptatiecriteria
 
 | # | Type | Wat | Verwacht |
 |---|---|---|---|
-| 1 | aantal | `swf-init-indicatoren`, resource `indicatoren` — de export bevat indicatordefinities | minimaal 1 |
-| 2 | aantal | `swf-init-indicatoren`, resource `relaties` — relaties komen uit swf-definities | gelijk 0 |
-| 3 | aantal | `swf-init-waarnemingen` — waarden die niet uit een open bron komen | minimaal 1 |
-| 4 | bewerking | `swf-init-indicatoren`: reden `status: A → O` — de lokale database kent geen status A | maximaal 0 |
-| 5 | api | `GET /api/data/v1/gebied_data?gebied_id=eq.BU19000002&select=indicator_uuid,bron,andere_bronnen&limit=1` — waarden op Bolsward-Zuidoost, met de tweede bron bij overlap | HTTP 200, ≥ 1 resultaten |
-| 6 | idempotent | `swf-init-waarnemingen` twee keer leveren | zelfde versie, geen tweede publicatie |
-| 7 | recht | `beheerder` registreert | toegestaan |
-| 8 | recht | `etl-initialisatie` levert `swf-init-waarnemingen` | toegestaan |
-| 9 | recht | `etl-initialisatie` levert `swf-monitor-waarden` | 403 |
-| 10 | recht | `lezer` levert `swf-init-waarnemingen` | 403 |
-
-`aantal` en `bewerking` controleert `controleer` op de lokaal gemaakte levering (alleen met `SWF_EXPORT_DIR`; anders overgeslagen); de andere vragen de laad-API en een draaiende installatie.
+| 1 | aantal | `swf-init-indicatoren`, resource `indicatoren` | gelijk 1 |
+| 2 | aantal | `swf-init-indicatoren`, resource `relaties` | gelijk 0 |
+| 3 | bewerking | `swf-init-indicatoren`: `status: A → O` | gelijk 0 |
+| 4 | aantal | `swf-init-waarnemingen` | gelijk 48.316 |
+| 5–9 | bewerking | `swf-init-waarnemingen`: `open-data`, `bron-onbekend`, `gebiedstype-provincie`, `demodata` 0; `gebied-onbekend` 1.587 | zoals genoemd |
+| 10 | api | `GET /api/data/v1/gebied_data?gebied_id=eq.BU19000002&select=indicator_uuid,bron,andere_bronnen` | ≥ 1 resultaat |
+| 11 | idempotent | `swf-init-waarnemingen` twee keer leveren | zelfde versie |
+| 12 | viewer | *Aantal energielabels* op de kaart, Bolsward | waarden voor alle buurten |
+| 13–17 | recht | beheerder registreert; `etl-initialisatie` levert alleen de eigen datasets en registreert niet; `lezer` levert niet | toegestaan / 403 |
 
 ## Bewijs
 
@@ -109,8 +103,9 @@ Welke tabellen en indicatoren lever je uit je lokale database: een CSV-export zo
 
 ## Bekende afwijkingen
 
-- Ontwerp: de export bestaat nog niet. Open vraag aan de projectleider: welke tabellen en indicatoren levert hij (CSV-export volgens deze README, of liever een `pg_dump` van een paar tabellen)? Daarna worden bron, bewerkingen en controles passend gemaakt.
-- Open data (CBS) en demodata worden herkend aan de bronvermelding (`bron` begint met `CBS` of `DEMODATA`). Dat is voorlopig; liever levert de export alleen wat niet open is.
-- Gebiedsindelingen komen uit cbs-gebiedsindelingen en swf-gebiedsindelingen. Levert de lokale database eigen indelingen, dan komt er per gebiedstype een dataset met profiel gebiedsindeling (GeoPackage onder `SWF_EXPORT_DIR`).
-- Zonder `n` in de lokale database: vlag bron-onderdrukt, de drempel blijft in de ETL (aanname A7).
-- De bronpeildatum van de export is de datum van ontvangst, tenzij `dcat.jsonld` een `dct:modified` meekrijgt; bij overlap met een nieuwere CBS- of monitorlevering wint die (aanname A6).
+- De aantallen gelden voor de dump van 04-10-2026; een nieuwe export: eerst `controleer`, dan de aantallen bijwerken.
+- BAG, EP-Online en OpenStreetMap staan niet in git (online te halen) en hebben nog geen adapter: zonder `SWF_EXPORT_DIR` heeft een installatie ze alleen voor de 13 testbuurten (sample). Vervolg: adapters.
+- Open data op wijk- en gemeenteniveau en *Huisarts* (45.239 waarden in de dump) laden de open-data-use cases nog niet; vervolg: cbs-kerncijfers en rivm-gezondheidsmonitor uitbreiden.
+- Definities die al uit swf-definities of de stuurdata komen, worden niet overschreven; de lokale database wijkt af bij 100 omschrijvingen, 40 eenheden, 19 score_types, 8 statussen en 7 namen. Keuze bij de projectleider.
+- De publicatie van de waarden duurt ±5,5 minuut, vrijwel geheel in `laden.herbouw_gebied_data()` (voorrang, A6).
+- De bron van de monitorwaarden is de bestandsnaam van de push (`<uuid>_d_cbs_buurten.json`), zoals in de lokale database.

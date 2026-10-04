@@ -2,11 +2,11 @@
   "specificatie": "1.0",
   "naam": "swf-gebiedsindelingen",
   "id": "TC-07-004",
-  "versie": "0.2.0",
+  "versie": "0.3.0",
   "titel": "SWF-gebiedsindelingen als GeoPackage-leveringen",
   "vraag": "Ik wil de gebiedsindelingen van de monitor (welstand × buurt, buurtdelen binnen/buiten de kom, woonplaatsen, postcodes, bebouwde kom, deelgebieden, coördinatorgebieden) als gebieden met geometrie in D-OmniTwin, in plaats van live uit de WFS.",
   "gebruiker": "functioneel beheerder SWF / GIS-specialist",
-  "status": "ontwerp",
+  "status": "actief",
   "afhankelijk_van": [
     "swf-definities",
     "cbs-gebiedsindelingen"
@@ -63,9 +63,9 @@
       "rol": "dataset:swf-gebied-welstand-buurt:laden",
       "client": "etl-swf",
       "prioriteit": "Must",
-      "bron": "SWF-intern: export GeoServer ($SWF_GEO_DIR)",
+      "bron": "repo: usecases/swf-gebiedsindelingen/data/welstandsgebieden.gpkg (uit de lokale database); variant geoserver: $SWF_GEO_DIR",
       "verwacht": {
-        "features": "±758 (755 met waarden)",
+        "features": 756,
         "codes": "1–758 → WS1–WS758"
       }
     },
@@ -255,6 +255,29 @@
     "Welstand × buurt, bebouwde kom en de kom voor de buurtdelen staan alleen in de GeoServer van SWF: nodig is een export als GeoPackage ($SWF_GEO_DIR) of de database-dump ($SWF_DB_DUMP). Zonder die bron worden deze datasets overgeslagen.",
     "Welke bebouwde kom de monitor voor _BBKJ/_BBKN gebruikt, is niet bekend (Wegenverkeerswet, Wet natuurbescherming of BAG-woonplaats).",
     "De gebiedstypen 'Deelgebieden Omgevingsvisie' en 'Dorps- en wijkcoördinatorgebieden' zijn nieuw (uuid5); ze zitten niet in de SWF-definities en moeten in de stuurdata van D-OmniTwin.",
-    "Postcode: het open CBS-PC4 vervangt 'ESRI postcode SWF' (licentie); PC6 alleen als SWF dat wil."
-  ]
+    "Postcode: het open CBS-PC4 vervangt 'ESRI postcode SWF' (licentie); PC6 alleen als SWF dat wil.",
+    "De welstandsgebieden × buurt komen uit de lokale D-OmniTwin-database van de projectleider (data/, 756 vlakken). Is de GeoServer-export er (SWF_GEO_DIR), dan levert de variant geoserver die (B1)."
+  ],
+  "bewijs": {
+    "stappen": [
+      {
+        "id": "levering",
+        "actie": "levering",
+        "dataset": "swf-gebied-welstand-buurt",
+        "omschrijving": "Leveringsstatus van de welstandsgebieden × buurt (laad-API)",
+        "bevat": [
+          "gepubliceerd"
+        ]
+      },
+      {
+        "id": "welstand",
+        "actie": "open",
+        "pad": "/api/data/v1/gebieden?id=eq.WS728&select=id,naam,gebiedstype_id",
+        "omschrijving": "Welstand × buurt 728 heet in D-OmniTwin WS728",
+        "bevat": [
+          "WS728"
+        ]
+      }
+    ]
+  }
 }

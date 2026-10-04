@@ -2,11 +2,11 @@
   "specificatie": "1.0",
   "naam": "swf-kompasprofiel",
   "id": "TC-07-005",
-  "versie": "0.2.0",
+  "versie": "0.3.0",
   "titel": "SWF-kompasprofielen Basis (4/12/33) en Klimaat",
   "vraag": "Ik wil de sunburst van de huidige monitor terugzien in D-OmniTwin: dezelfde 4 kwadranten, 12 thema's en 33 onderdelen met dezelfde indicatoren, en de Klimaatmonitor met zijn 3 thema's en 10 indicatoren.",
   "gebruiker": "functioneel beheerder SWF",
-  "status": "ontwerp",
+  "status": "actief",
   "afhankelijk_van": [
     "swf-definities"
   ],
@@ -66,6 +66,24 @@
         "regels": 10,
         "themas": 3
       }
+    },
+    {
+      "id": "swf-kompas-volledig",
+      "route": "beheer",
+      "registratie": "datasets/swf-kompas-volledig.json",
+      "profiel": "kompasprofiel",
+      "beheerpad": "/api/beheer/v1/kompasprofielen",
+      "rol": "realm-rol beheerder",
+      "client": "beheer-swf",
+      "prioriteit": "Must",
+      "bron": "repo: usecases/swf-kompasprofiel/data/kompasprofiel_volledig_kompas.json (uit de lokale database)",
+      "verwacht": {
+        "regels": 247,
+        "unieke_indicatoren": 241,
+        "kwadranten": 4,
+        "themas": 12,
+        "onderdelen": 33
+      }
     }
   ],
   "controles": [
@@ -100,6 +118,20 @@
       "gelijk": 10
     },
     {
+      "type": "aantal",
+      "dataset": "swf-kompas-volledig",
+      "resource": "kompasprofiel",
+      "gelijk": 247,
+      "omschrijving": "247 plekken (241 unieke indicatoren) in het Volledig Kompas uit de lokale database"
+    },
+    {
+      "type": "bewerking",
+      "dataset": "swf-kompas-volledig",
+      "reden": "indicator_uuid: c4e1b3bb-e4ce-4cd0-bd52-219f4a9f5df3 → f6eafa70-9383-4de6-bd2a-e47309843437",
+      "gelijk": 1,
+      "omschrijving": "de vervallen Waterdiepte op straat wordt de aangehouden UUID (A4)"
+    },
+    {
       "type": "api",
       "pad": "/api/beheer/v1/kompasprofielen",
       "minimaal_aantal": 2,
@@ -119,6 +151,31 @@
   "bekende_afwijkingen": [
     "Route beheer, geen dataset: het kompasprofiel is inrichting (ADR 0003), geen brondata; het staat niet in de push van de DWH (eis E17) en wordt ook nu in een beheeromgeving gemaakt. De beheer-API (/api/beheer/v1) heeft hiervoor nog geen endpoint; voorstel: PUT /api/beheer/v1/kompasprofielen/{profiel} met dit Data Package.",
     "De voortgangslijst is de beste bron van de hiërarchie zolang er geen database-dump van de monitor is; met $SWF_DB_DUMP komt de monitorconfiguratie zelf (inclusief volgorde en de 215 van de live sunburst).",
-    "Drempels voor de labels A–E zijn onbekend (gat-analyse, vraag 5); classificatie 'label' zonder drempels."
-  ]
+    "Drempels voor de labels A–E zijn onbekend (gat-analyse, vraag 5); classificatie 'label' zonder drempels.",
+    "Kompas en externe kaartlagen gaan via de beheerroute; die bestaat nu alleen in-process (installeer --inproces, ook in db-init). Een indicator die (nog) niet bestaat, wordt overgeslagen en geteld; zonder swf-definities (SWF_DUMP_DIR) mist het Volledig Kompas dus de monitorindicatoren.",
+    "Extra onderdelen (22), extra tags (53) en scoringsregels (16) uit de lokale database hebben nog geen route."
+  ],
+  "bewijs": {
+    "stappen": [
+      {
+        "id": "kompas",
+        "actie": "kompas",
+        "gebied": "BU19000002",
+        "profiel": "Volledig Kompas",
+        "omschrijving": "Volledig Kompas voor Bolsward-Zuidoost, ingericht zoals in de lokale database van de projectleider",
+        "bevat": [
+          "Bolsward-Zuidoost"
+        ]
+      },
+      {
+        "id": "profielen",
+        "actie": "open",
+        "pad": "/api/kompas/configuraties",
+        "omschrijving": "De Kompasprofielen met hun aantallen indicatoren",
+        "bevat": [
+          "Volledig Kompas"
+        ]
+      }
+    ]
+  }
 }

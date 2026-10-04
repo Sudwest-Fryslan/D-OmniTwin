@@ -1,0 +1,72 @@
+{
+  "id": "swf-laag-extern",
+  "bronId": "swf-kaartlagen",
+  "beschrijving": {
+    "@context": "https://data.overheid.nl/dcat-ap-nl/context.jsonld",
+    "@type": "dcat:Dataset",
+    "dct:title": "Externe kaartlagen (WFS/WMS) van de gebiedsmonitor",
+    "dct:description": "Definities van externe kaartlagen (WFS/WMS-diensten van PDOK e.d.) zoals de projectleider ze in de lokale D-OmniTwin-database heeft ingericht (B1: eerste opzet). De gegevens zelf komen van de dienst, met de licentie van die dienst. Toegang per laag (B3): GeoVisia en projecten 'in plan' intern, de rest openbaar.",
+    "dct:publisher": "https://identifier.overheid.nl/tooi/id/gemeente/gm1900",
+    "dct:accessRights": "http://publications.europa.eu/resource/authority/access-right/PUBLIC",
+    "dct:license": "http://standaarden.overheid.nl/owms/terms/licentieonbekend",
+    "dct:spatial": "https://identifier.overheid.nl/tooi/id/gemeente/gm1900",
+    "dct:source": "Lokale D-OmniTwin-database van de projectleider SWF (dump van 04-10-2026); openbaar volgens besluit van de projectleiding (04-10-2026, https://github.com/TLaan/D-OmniTwin/issues/222)",
+    "dcat:theme": [
+      "http://standaarden.overheid.nl/owms/terms/Ruimtelijke_ordening"
+    ],
+    "dcat:keyword": [
+      "kaartlaag",
+      "Súdwest-Fryslân"
+    ],
+    "dcat:contactPoint": {
+      "@type": "vcard:Organization",
+      "vcard:fn": "Functioneel beheer gebiedsmonitor, gemeente Súdwest-Fryslân"
+    }
+  },
+  "bron": {
+    "adapter": "lokaal-bestand",
+    "pad": "${REPO}/usecases/swf-kaartlagen/data/externe_kaartlagen.json",
+    "formaat": "json",
+    "tabel": "externe_kaartlagen",
+    "omschrijving": "data/externe_kaartlagen.json, gemaakt met scripts/beheer/swf_export.py --repo"
+  },
+  "bewerkingen": [
+    {
+      "id": "lokale-laag",
+      "afwijzen": {
+        "veld": "bron_type",
+        "gelijk": "lokaal",
+        "reden": "lokale-laag"
+      },
+      "omschrijving": "een lokale laag verwijst naar een bestand in de oude installatie; die komt via de laad-API (bijv. swf-kaartlagen: swf-laag-deelgebieden)"
+    },
+    {
+      "behoud": [
+        "naam",
+        "beschrijving",
+        "laag_type",
+        "bron_type",
+        "url",
+        "typename",
+        "srsname",
+        "versie",
+        "filter_type",
+        "filter_waarde",
+        "koppel_veld",
+        "kleur_lijn",
+        "kleur_fill",
+        "opacity",
+        "actief",
+        "volgorde",
+        "toegang"
+      ]
+    }
+  ],
+  "levering": {
+    "formaat": "datapackage",
+    "bestand": "swf-laag-extern.zip",
+    "schema": {
+      "externe_kaartlagen": "externe-kaartlagen.schema.json"
+    }
+  }
+}

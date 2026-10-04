@@ -1,0 +1,2230 @@
+{
+ "omschrijving": "Complete overzicht van alle indicatoren over alle thema's. Geeft een 360° beeld van de leefomgeving.",
+ "profiel": "Volledig Kompas",
+ "classificatie": "zscore",
+ "indicatoren": [
+  {
+   "kwadrant": "Kwaliteit fysieke leefomgeving",
+   "thema": "Verkeer",
+   "onderdeel": "veiligheid en overlast",
+   "indicator_uuid": "55ba59c5-19fe-4de3-97f2-97422b4b4f3b",
+   "indicator_naam": "Verkeersongevallen",
+   "weging": 1.0,
+   "is_actueel": false
+  },
+  {
+   "kwadrant": "Kwaliteit fysieke leefomgeving",
+   "thema": "Verkeer",
+   "onderdeel": "veiligheid en overlast",
+   "indicator_uuid": "4e5dc6ef-4cec-4879-93df-e6a41fa34af6",
+   "indicator_naam": "Verkeersveiligheid",
+   "weging": 1.0,
+   "is_actueel": false
+  },
+  {
+   "kwadrant": "Kwaliteit fysieke leefomgeving",
+   "thema": "Verkeer",
+   "onderdeel": "veiligheid en overlast",
+   "indicator_uuid": "8ce45dd7-e60d-4356-814e-4e9fe519bf07",
+   "indicator_naam": "Overlast gestalde fietsen",
+   "weging": 1.0,
+   "is_actueel": false
+  },
+  {
+   "kwadrant": "Kwaliteit fysieke leefomgeving",
+   "thema": "Verkeer",
+   "onderdeel": "veiligheid en overlast",
+   "indicator_uuid": "b0e5ad11-8f42-4733-8e1a-0e5407e6c5fb",
+   "indicator_naam": "Overlast autoverkeer",
+   "weging": 1.0,
+   "is_actueel": false
+  },
+  {
+   "kwadrant": "Kwaliteit fysieke leefomgeving",
+   "thema": "Verkeer",
+   "onderdeel": "Bereikbaarheid en parkeren",
+   "indicator_uuid": "a6e0c52d-c214-4f66-9548-3ee43dd06826",
+   "indicator_naam": "Parkeerdruk",
+   "weging": 1.0,
+   "is_actueel": false
+  },
+  {
+   "kwadrant": "Kwaliteit fysieke leefomgeving",
+   "thema": "Verkeer",
+   "onderdeel": "Bereikbaarheid en parkeren",
+   "indicator_uuid": "9d54fe9e-3b54-48e6-ad11-18437cc49dc0",
+   "indicator_naam": "Afstand treinknooppunt",
+   "weging": 1.0,
+   "is_actueel": true
+  },
+  {
+   "kwadrant": "Kwaliteit fysieke leefomgeving",
+   "thema": "Verkeer",
+   "onderdeel": "Bereikbaarheid en parkeren",
+   "indicator_uuid": "c4185251-746b-4a19-b3a4-819ef65081c0",
+   "indicator_naam": "Afstand treinstation",
+   "weging": 1.0,
+   "is_actueel": true
+  },
+  {
+   "kwadrant": "Kwaliteit fysieke leefomgeving",
+   "thema": "Verkeer",
+   "onderdeel": "Bereikbaarheid en parkeren",
+   "indicator_uuid": "1043837d-ce3f-486e-b611-c6940067d6c8",
+   "indicator_naam": "Openbaar vervoer",
+   "weging": 1.0,
+   "is_actueel": false
+  },
+  {
+   "kwadrant": "Kwaliteit fysieke leefomgeving",
+   "thema": "Verkeer",
+   "onderdeel": "Bereikbaarheid en parkeren",
+   "indicator_uuid": "042564f9-3a45-4901-8f14-417622f8b4a0",
+   "indicator_naam": "Bereikbaarheid",
+   "weging": 1.0,
+   "is_actueel": false
+  },
+  {
+   "kwadrant": "Kwaliteit fysieke leefomgeving",
+   "thema": "Verkeer",
+   "onderdeel": "Bereikbaarheid en parkeren",
+   "indicator_uuid": "461d542b-b8be-4510-9dd0-5ba554b818cb",
+   "indicator_naam": "Personenauto's per huishouden",
+   "weging": 1.0,
+   "is_actueel": true
+  },
+  {
+   "kwadrant": "Kwaliteit fysieke leefomgeving",
+   "thema": "Verkeer",
+   "onderdeel": "Bereikbaarheid en parkeren",
+   "indicator_uuid": "88192b70-faa9-4108-a473-302aa0f624a9",
+   "indicator_naam": "Personenauto's naar oppervlakte",
+   "weging": 1.0,
+   "is_actueel": true
+  },
+  {
+   "kwadrant": "Kwaliteit fysieke leefomgeving",
+   "thema": "Verkeer",
+   "onderdeel": "Bereikbaarheid en parkeren",
+   "indicator_uuid": "a63f5c54-bcea-4ef9-8914-36c17668e1b4",
+   "indicator_naam": "Aantal OV-haltes (totaal)",
+   "weging": 1.0,
+   "is_actueel": true
+  },
+  {
+   "kwadrant": "Kwaliteit fysieke leefomgeving",
+   "thema": "Verkeer",
+   "onderdeel": "Bereikbaarheid en parkeren",
+   "indicator_uuid": "93564b76-b07a-4134-868e-10654650d064",
+   "indicator_naam": "Aantal bushaltes",
+   "weging": 1.0,
+   "is_actueel": true
+  },
+  {
+   "kwadrant": "Kwaliteit fysieke leefomgeving",
+   "thema": "Verkeer",
+   "onderdeel": "Bereikbaarheid en parkeren",
+   "indicator_uuid": "696ca006-89a0-4e9f-aa5b-f68c724736d1",
+   "indicator_naam": "Aantal treinhaltes",
+   "weging": 1.0,
+   "is_actueel": true
+  },
+  {
+   "kwadrant": "Kwaliteit fysieke leefomgeving",
+   "thema": "Verkeer",
+   "onderdeel": "Bereikbaarheid en parkeren",
+   "indicator_uuid": "b69a88a0-efd4-4f8b-888a-97b653e1f13d",
+   "indicator_naam": "Aantal tramhaltes",
+   "weging": 1.0,
+   "is_actueel": true
+  },
+  {
+   "kwadrant": "Kwaliteit fysieke leefomgeving",
+   "thema": "Verkeer",
+   "onderdeel": "Bereikbaarheid en parkeren",
+   "indicator_uuid": "c49c1563-2d85-4a2f-bdc9-02c340c4e510",
+   "indicator_naam": "Aantal veerboten",
+   "weging": 1.0,
+   "is_actueel": true
+  },
+  {
+   "kwadrant": "Kwaliteit fysieke leefomgeving",
+   "thema": "Openbare ruimte",
+   "onderdeel": "Klimaat",
+   "indicator_uuid": "ba212eab-e5a3-4511-80a7-a7709523818c",
+   "indicator_naam": "Afvoer water",
+   "weging": 1.0,
+   "is_actueel": false
+  },
+  {
+   "kwadrant": "Kwaliteit fysieke leefomgeving",
+   "thema": "Openbare ruimte",
+   "onderdeel": "Klimaat",
+   "indicator_uuid": "5e457881-a811-4317-9d49-94288e912fb0",
+   "indicator_naam": "Maatregelen inwoners",
+   "weging": 1.0,
+   "is_actueel": false
+  },
+  {
+   "kwadrant": "Kwaliteit fysieke leefomgeving",
+   "thema": "Openbare ruimte",
+   "onderdeel": "Klimaat",
+   "indicator_uuid": "90c18e2b-c164-4a59-83fe-367e64fceec2",
+   "indicator_naam": "Overlast weer",
+   "weging": 1.0,
+   "is_actueel": false
+  },
+  {
+   "kwadrant": "Kwaliteit fysieke leefomgeving",
+   "thema": "Openbare ruimte",
+   "onderdeel": "Klimaat",
+   "indicator_uuid": "bf4e5b8f-6b0a-4632-b9b4-8e29d025e68c",
+   "indicator_naam": "Afstand tot koele plek",
+   "weging": 1.0,
+   "is_actueel": true
+  },
+  {
+   "kwadrant": "Kwaliteit fysieke leefomgeving",
+   "thema": "Openbare ruimte",
+   "onderdeel": "Klimaat",
+   "indicator_uuid": "1d52806b-55fe-4328-a09e-f3a2e38e3f7c",
+   "indicator_naam": "Oppervlakte water",
+   "weging": 1.0,
+   "is_actueel": false
+  },
+  {
+   "kwadrant": "Kwaliteit fysieke leefomgeving",
+   "thema": "Openbare ruimte",
+   "onderdeel": "Klimaat",
+   "indicator_uuid": "0b069c82-c6a6-4918-a87b-f49dca3d93e1",
+   "indicator_naam": "Oppervlakte vegetatie (NDVI)",
+   "weging": 1.0,
+   "is_actueel": false
+  },
+  {
+   "kwadrant": "Kwaliteit fysieke leefomgeving",
+   "thema": "Openbare ruimte",
+   "onderdeel": "Klimaat",
+   "indicator_uuid": "dcb66a35-5711-477f-a89f-ea72c5be80a9",
+   "indicator_naam": "Oppervlakte groen (openbare ruimte)",
+   "weging": 1.0,
+   "is_actueel": false
+  },
+  {
+   "kwadrant": "Kwaliteit fysieke leefomgeving",
+   "thema": "Openbare ruimte",
+   "onderdeel": "Klimaat",
+   "indicator_uuid": "eafba4fe-c2e0-452d-acaf-f6707388feee",
+   "indicator_naam": "Vegetatie op daken",
+   "weging": 1.0,
+   "is_actueel": false
+  },
+  {
+   "kwadrant": "Kwaliteit fysieke leefomgeving",
+   "thema": "Openbare ruimte",
+   "onderdeel": "Klimaat",
+   "indicator_uuid": "a4f84d1c-3263-4229-ad95-615924cb7852",
+   "indicator_naam": "Gemiddeld Laagste Grondwaterstand",
+   "weging": 1.0,
+   "is_actueel": true
+  },
+  {
+   "kwadrant": "Kwaliteit fysieke leefomgeving",
+   "thema": "Openbare ruimte",
+   "onderdeel": "Klimaat",
+   "indicator_uuid": "2d6bdaba-3832-40cc-acae-950883f1aa76",
+   "indicator_naam": "Verandering GLG nu t.o.v. 2050",
+   "weging": 1.0,
+   "is_actueel": true
+  },
+  {
+   "kwadrant": "Kwaliteit fysieke leefomgeving",
+   "thema": "Openbare ruimte",
+   "onderdeel": "Klimaat",
+   "indicator_uuid": "c4e1b3bb-e4ce-4cd0-bd52-219f4a9f5df3",
+   "indicator_naam": "Waterdiepte op straat",
+   "weging": 1.0,
+   "is_actueel": true
+  },
+  {
+   "kwadrant": "Kwaliteit fysieke leefomgeving",
+   "thema": "Openbare ruimte",
+   "onderdeel": "Klimaat",
+   "indicator_uuid": "fdb4c11b-60ca-4ea1-86b8-6855a83344ee",
+   "indicator_naam": "Gevoelstemperatuur",
+   "weging": 1.0,
+   "is_actueel": true
+  },
+  {
+   "kwadrant": "Kwaliteit fysieke leefomgeving",
+   "thema": "Openbare ruimte",
+   "onderdeel": "Klimaat",
+   "indicator_uuid": "97f53738-3439-4c28-8cac-046a52c65248",
+   "indicator_naam": "Oppervlak groen per inwoner",
+   "weging": 1.0,
+   "is_actueel": true
+  },
+  {
+   "kwadrant": "Kwaliteit fysieke leefomgeving",
+   "thema": "Openbare ruimte",
+   "onderdeel": "Klimaat",
+   "indicator_uuid": "0bbd30e5-08f5-4499-b6ca-cdda990720dc",
+   "indicator_naam": "Verhouding oppervlakte water / verharding",
+   "weging": 1.0,
+   "is_actueel": true
+  },
+  {
+   "kwadrant": "Kwaliteit fysieke leefomgeving",
+   "thema": "Openbare ruimte",
+   "onderdeel": "Klimaat",
+   "indicator_uuid": "89b6274f-9372-4784-8ba3-924b6c7e4d7d",
+   "indicator_naam": "Verwerken hemelwater exc. schade",
+   "weging": 1.0,
+   "is_actueel": true
+  },
+  {
+   "kwadrant": "Kwaliteit fysieke leefomgeving",
+   "thema": "Openbare ruimte",
+   "onderdeel": "Inrichting",
+   "indicator_uuid": "18ee5ec3-d8de-4100-9e49-ba60e9a95f80",
+   "indicator_naam": "Groen",
+   "weging": 1.0,
+   "is_actueel": false
+  },
+  {
+   "kwadrant": "Kwaliteit fysieke leefomgeving",
+   "thema": "Openbare ruimte",
+   "onderdeel": "Inrichting",
+   "indicator_uuid": "282cb12e-b46a-4ace-abbf-cf3eb907189f",
+   "indicator_naam": "Straatmeubilair",
+   "weging": 1.0,
+   "is_actueel": true
+  },
+  {
+   "kwadrant": "Kwaliteit fysieke leefomgeving",
+   "thema": "Openbare ruimte",
+   "onderdeel": "Inrichting",
+   "indicator_uuid": "eac0ea06-1a07-4aa2-abfa-41fc9b7bb53d",
+   "indicator_naam": "Sport- en spelplekken",
+   "weging": 1.0,
+   "is_actueel": true
+  },
+  {
+   "kwadrant": "Kwaliteit fysieke leefomgeving",
+   "thema": "Openbare ruimte",
+   "onderdeel": "Inrichting",
+   "indicator_uuid": "a677997b-8d50-4608-8d8b-97b9ca5d8e23",
+   "indicator_naam": "Speelplekken kinderen",
+   "weging": 1.0,
+   "is_actueel": true
+  },
+  {
+   "kwadrant": "Kwaliteit fysieke leefomgeving",
+   "thema": "Openbare ruimte",
+   "onderdeel": "Verloedering",
+   "indicator_uuid": "13fa6584-2935-4209-bbe3-da04706d4c3e",
+   "indicator_naam": "Vernielingen",
+   "weging": 1.0,
+   "is_actueel": false
+  },
+  {
+   "kwadrant": "Kwaliteit fysieke leefomgeving",
+   "thema": "Openbare ruimte",
+   "onderdeel": "Verloedering",
+   "indicator_uuid": "4a4e9cb6-ef0d-4b29-9d26-bc19eda0339e",
+   "indicator_naam": "Bekladdingen",
+   "weging": 1.0,
+   "is_actueel": false
+  },
+  {
+   "kwadrant": "Kwaliteit fysieke leefomgeving",
+   "thema": "Openbare ruimte",
+   "onderdeel": "Verloedering",
+   "indicator_uuid": "5c75d4a3-3ace-4c95-a051-7040defecefa",
+   "indicator_naam": "Hondenpoep",
+   "weging": 1.0,
+   "is_actueel": false
+  },
+  {
+   "kwadrant": "Kwaliteit fysieke leefomgeving",
+   "thema": "Openbare ruimte",
+   "onderdeel": "Verloedering",
+   "indicator_uuid": "055d550f-2af8-44cd-87c5-13afdf9aa38f",
+   "indicator_naam": "Rommel",
+   "weging": 1.0,
+   "is_actueel": false
+  },
+  {
+   "kwadrant": "Kwaliteit fysieke leefomgeving",
+   "thema": "Openbare ruimte",
+   "onderdeel": "Onderhoud",
+   "indicator_uuid": "365e6c71-e729-44fa-a8b3-13d084815c63",
+   "indicator_naam": "Schoonhouden",
+   "weging": 1.0,
+   "is_actueel": false
+  },
+  {
+   "kwadrant": "Kwaliteit fysieke leefomgeving",
+   "thema": "Openbare ruimte",
+   "onderdeel": "Onderhoud",
+   "indicator_uuid": "18ee5ec3-d8de-4100-9e49-ba60e9a95f80",
+   "indicator_naam": "Groen",
+   "weging": 1.0,
+   "is_actueel": true
+  },
+  {
+   "kwadrant": "Kwaliteit fysieke leefomgeving",
+   "thema": "Openbare ruimte",
+   "onderdeel": "Onderhoud",
+   "indicator_uuid": "282cb12e-b46a-4ace-abbf-cf3eb907189f",
+   "indicator_naam": "Straatmeubilair",
+   "weging": 1.0,
+   "is_actueel": true
+  },
+  {
+   "kwadrant": "Kwaliteit fysieke leefomgeving",
+   "thema": "Openbare ruimte",
+   "onderdeel": "Onderhoud",
+   "indicator_uuid": "694bc048-dffe-4c5d-b362-b037c3de9e98",
+   "indicator_naam": "Wegen",
+   "weging": 1.0,
+   "is_actueel": true
+  },
+  {
+   "kwadrant": "Kwaliteit fysieke leefomgeving",
+   "thema": "Openbare ruimte",
+   "onderdeel": "Onderhoud",
+   "indicator_uuid": "0261bbb5-65ba-4106-b58c-b3ca6e05c8f0",
+   "indicator_naam": "Fietspaden",
+   "weging": 1.0,
+   "is_actueel": true
+  },
+  {
+   "kwadrant": "Kwaliteit fysieke leefomgeving",
+   "thema": "Openbare ruimte",
+   "onderdeel": "Onderhoud",
+   "indicator_uuid": "2298a045-ac31-4154-9fe2-08dbe131d83e",
+   "indicator_naam": "Trottoirs",
+   "weging": 1.0,
+   "is_actueel": true
+  },
+  {
+   "kwadrant": "Kwaliteit fysieke leefomgeving",
+   "thema": "Wonen",
+   "onderdeel": "Functionele kwaliteit",
+   "indicator_uuid": "0365aba9-4555-44c9-86a4-3d532d2e5433",
+   "indicator_naam": "Incourante eensgezins",
+   "weging": 1.0,
+   "is_actueel": false
+  },
+  {
+   "kwadrant": "Kwaliteit fysieke leefomgeving",
+   "thema": "Wonen",
+   "onderdeel": "Functionele kwaliteit",
+   "indicator_uuid": "499ff5ac-9c79-4d3d-ae47-40b505582e52",
+   "indicator_naam": "Sfeer",
+   "weging": 1.0,
+   "is_actueel": false
+  },
+  {
+   "kwadrant": "Kwaliteit fysieke leefomgeving",
+   "thema": "Wonen",
+   "onderdeel": "Functionele kwaliteit",
+   "indicator_uuid": "c140f420-0263-4f30-b899-bb96458c569d",
+   "indicator_naam": "Geschikte leefsituatie",
+   "weging": 1.0,
+   "is_actueel": false
+  },
+  {
+   "kwadrant": "Kwaliteit fysieke leefomgeving",
+   "thema": "Wonen",
+   "onderdeel": "Functionele kwaliteit",
+   "indicator_uuid": "63c022a2-0832-4de8-8cf2-81942d4ae39b",
+   "indicator_naam": "Omvang",
+   "weging": 1.0,
+   "is_actueel": false
+  },
+  {
+   "kwadrant": "Kwaliteit fysieke leefomgeving",
+   "thema": "Wonen",
+   "onderdeel": "Functionele kwaliteit",
+   "indicator_uuid": "c7378440-b10a-49c5-a1cd-6ed9e6954f51",
+   "indicator_naam": "Indeling",
+   "weging": 1.0,
+   "is_actueel": false
+  },
+  {
+   "kwadrant": "Kwaliteit fysieke leefomgeving",
+   "thema": "Wonen",
+   "onderdeel": "Functionele kwaliteit",
+   "indicator_uuid": "b2e606cc-1d58-4917-9dec-148d90c80742",
+   "indicator_naam": "Huishoudens (BAG woonfunctie)",
+   "weging": 1.0,
+   "is_actueel": true
+  },
+  {
+   "kwadrant": "Kwaliteit fysieke leefomgeving",
+   "thema": "Wonen",
+   "onderdeel": "Functionele kwaliteit",
+   "indicator_uuid": "7d9339e3-ea2c-474b-802a-49c854849f73",
+   "indicator_naam": "Gemiddelde woonoppervlakte (BAG)",
+   "weging": 1.0,
+   "is_actueel": true
+  },
+  {
+   "kwadrant": "Kwaliteit fysieke leefomgeving",
+   "thema": "Wonen",
+   "onderdeel": "Beschikbaar betaalbaar",
+   "indicator_uuid": "e5a1cf06-6119-4a75-a78b-793ac63da9c4",
+   "indicator_naam": "Verhuiswens",
+   "weging": 1.0,
+   "is_actueel": false
+  },
+  {
+   "kwadrant": "Kwaliteit fysieke leefomgeving",
+   "thema": "Wonen",
+   "onderdeel": "Beschikbaar betaalbaar",
+   "indicator_uuid": "5c86f538-76fe-454e-a858-297c5d29e9fd",
+   "indicator_naam": "prijs-kwaliteit",
+   "weging": 1.0,
+   "is_actueel": false
+  },
+  {
+   "kwadrant": "Kwaliteit fysieke leefomgeving",
+   "thema": "Wonen",
+   "onderdeel": "Beschikbaar betaalbaar",
+   "indicator_uuid": "7053d6a5-2bcf-4254-b089-79852f12d9aa",
+   "indicator_naam": "Gemiddelde WOZ-waarde",
+   "weging": 1.0,
+   "is_actueel": true
+  },
+  {
+   "kwadrant": "Kwaliteit fysieke leefomgeving",
+   "thema": "Wonen",
+   "onderdeel": "Technische kwaliteit",
+   "indicator_uuid": "81ccf247-0449-40e0-a99c-a67019f272e4",
+   "indicator_naam": "Definitief energielabel",
+   "weging": 1.0,
+   "is_actueel": true
+  },
+  {
+   "kwadrant": "Kwaliteit fysieke leefomgeving",
+   "thema": "Wonen",
+   "onderdeel": "Technische kwaliteit",
+   "indicator_uuid": "3c2d0ca0-3a6d-4f53-809f-f82fa9b9fd22",
+   "indicator_naam": "Gemiddeld energielabel",
+   "weging": 1.0,
+   "is_actueel": true
+  },
+  {
+   "kwadrant": "Kwaliteit fysieke leefomgeving",
+   "thema": "Wonen",
+   "onderdeel": "Technische kwaliteit",
+   "indicator_uuid": "cc1715ea-156f-403c-9841-f06d9dd6ab05",
+   "indicator_naam": "Onderhoud woningen buurt",
+   "weging": 1.0,
+   "is_actueel": false
+  },
+  {
+   "kwadrant": "Kwaliteit fysieke leefomgeving",
+   "thema": "Wonen",
+   "onderdeel": "Technische kwaliteit",
+   "indicator_uuid": "2aa4c162-29c3-4313-8a42-0deea6ef0d68",
+   "indicator_naam": "Ventilatie",
+   "weging": 1.0,
+   "is_actueel": false
+  },
+  {
+   "kwadrant": "Kwaliteit fysieke leefomgeving",
+   "thema": "Wonen",
+   "onderdeel": "Technische kwaliteit",
+   "indicator_uuid": "bafc1045-8674-486b-9100-647b397443df",
+   "indicator_naam": "Warmte isolatie",
+   "weging": 1.0,
+   "is_actueel": false
+  },
+  {
+   "kwadrant": "Kwaliteit fysieke leefomgeving",
+   "thema": "Wonen",
+   "onderdeel": "Technische kwaliteit",
+   "indicator_uuid": "ea01bdeb-14a2-42b7-9234-51a24d72c24c",
+   "indicator_naam": "Geluidsisolatie",
+   "weging": 1.0,
+   "is_actueel": false
+  },
+  {
+   "kwadrant": "Kwaliteit fysieke leefomgeving",
+   "thema": "Wonen",
+   "onderdeel": "Technische kwaliteit",
+   "indicator_uuid": "a2ed3719-64a7-40da-bfc5-a43d3d292594",
+   "indicator_naam": "Aantal energielabels (definitief)",
+   "weging": 10.0,
+   "is_actueel": true
+  },
+  {
+   "kwadrant": "Kwaliteit fysieke leefomgeving",
+   "thema": "Wonen",
+   "onderdeel": "Technische kwaliteit",
+   "indicator_uuid": "b53e54d6-ff54-4be1-b539-f915fd253831",
+   "indicator_naam": "Energielabel coverage",
+   "weging": 10.0,
+   "is_actueel": true
+  },
+  {
+   "kwadrant": "Kwaliteit fysieke leefomgeving",
+   "thema": "Wonen",
+   "onderdeel": "Technische kwaliteit",
+   "indicator_uuid": "3e24d6a5-60ee-4a07-b898-a1b89b18568c",
+   "indicator_naam": "Aantal energielabels (totaal)",
+   "weging": 1.0,
+   "is_actueel": true
+  },
+  {
+   "kwadrant": "Kwaliteit fysieke leefomgeving",
+   "thema": "Wonen",
+   "onderdeel": "Technische kwaliteit",
+   "indicator_uuid": "233505e1-d22f-48b5-b67f-88ea73d12967",
+   "indicator_naam": "Aantal energielabels",
+   "weging": 1.0,
+   "is_actueel": true
+  },
+  {
+   "kwadrant": "Kwaliteit fysieke leefomgeving",
+   "thema": "Wonen",
+   "onderdeel": "Technische kwaliteit",
+   "indicator_uuid": "3e4f5a3e-8cb3-4bd1-a1ed-ea7e4e4ed091",
+   "indicator_naam": "Aantal energielabels (voorlopig)",
+   "weging": 1.0,
+   "is_actueel": true
+  },
+  {
+   "kwadrant": "Kwaliteit van leven",
+   "thema": "Rondkomen",
+   "onderdeel": "Werk",
+   "indicator_uuid": "05960c54-67c3-4760-8d8e-035d7bc4748e",
+   "indicator_naam": "Werkloze jongeren",
+   "weging": 1.0,
+   "is_actueel": false
+  },
+  {
+   "kwadrant": "Kwaliteit van leven",
+   "thema": "Rondkomen",
+   "onderdeel": "Werk",
+   "indicator_uuid": "d7c79eb2-b8a2-4949-91c5-caf7fefb89ba",
+   "indicator_naam": "Werkloos totaal",
+   "weging": 1.0,
+   "is_actueel": false
+  },
+  {
+   "kwadrant": "Kwaliteit van leven",
+   "thema": "Rondkomen",
+   "onderdeel": "Werk",
+   "indicator_uuid": "33f4a3b1-8fc7-4cc1-9628-b6967b6742da",
+   "indicator_naam": "Werkzamen deeltd 0,3+",
+   "weging": 1.0,
+   "is_actueel": false
+  },
+  {
+   "kwadrant": "Kwaliteit van leven",
+   "thema": "Rondkomen",
+   "onderdeel": "Werk",
+   "indicator_uuid": "7fd17589-46b6-460a-a1f6-ef421517ccb3",
+   "indicator_naam": "werkzamen",
+   "weging": 1.0,
+   "is_actueel": false
+  },
+  {
+   "kwadrant": "Kwaliteit van leven",
+   "thema": "Rondkomen",
+   "onderdeel": "Werk",
+   "indicator_uuid": "352dda4d-5de8-4f31-b85a-6d82f812ba7c",
+   "indicator_naam": "Percentage werknemers",
+   "weging": 1.0,
+   "is_actueel": true
+  },
+  {
+   "kwadrant": "Kwaliteit van leven",
+   "thema": "Rondkomen",
+   "onderdeel": "Werk",
+   "indicator_uuid": "f8d0d890-3975-4183-9555-06d673c4657f",
+   "indicator_naam": "Percentage zelfstandigen",
+   "weging": 1.0,
+   "is_actueel": true
+  },
+  {
+   "kwadrant": "Kwaliteit van leven",
+   "thema": "Rondkomen",
+   "onderdeel": "Armoede",
+   "indicator_uuid": "1f5e5ca4-2491-4e64-a587-33181d1635aa",
+   "indicator_naam": "Minima personen",
+   "weging": 1.0,
+   "is_actueel": false
+  },
+  {
+   "kwadrant": "Kwaliteit van leven",
+   "thema": "Rondkomen",
+   "onderdeel": "Armoede",
+   "indicator_uuid": "e6026bbf-0e0d-4c2c-870d-29810b248bcf",
+   "indicator_naam": "Minima huishouden",
+   "weging": 1.0,
+   "is_actueel": false
+  },
+  {
+   "kwadrant": "Kwaliteit van leven",
+   "thema": "Rondkomen",
+   "onderdeel": "Armoede",
+   "indicator_uuid": "6dbbd65f-492b-4a80-b6c0-acdef412f0b1",
+   "indicator_naam": "Minima kinderen",
+   "weging": 1.0,
+   "is_actueel": false
+  },
+  {
+   "kwadrant": "Kwaliteit van leven",
+   "thema": "Rondkomen",
+   "onderdeel": "Armoede",
+   "indicator_uuid": "2e6a3139-e3a8-4565-9172-a2e9ff9347c7",
+   "indicator_naam": "Minima huish met kinderen",
+   "weging": 1.0,
+   "is_actueel": false
+  },
+  {
+   "kwadrant": "Kwaliteit van leven",
+   "thema": "Rondkomen",
+   "onderdeel": "Armoede",
+   "indicator_uuid": "aa5ce990-a43e-439a-9e98-69899321cf40",
+   "indicator_naam": "Participatiewet totaal",
+   "weging": 1.0,
+   "is_actueel": false
+  },
+  {
+   "kwadrant": "Kwaliteit van leven",
+   "thema": "Rondkomen",
+   "onderdeel": "Armoede",
+   "indicator_uuid": "1d7c7beb-45b2-406d-ab0a-3580e28e782f",
+   "indicator_naam": "Participatiewet 5+ jaar",
+   "weging": 1.0,
+   "is_actueel": false
+  },
+  {
+   "kwadrant": "Kwaliteit van leven",
+   "thema": "Rondkomen",
+   "onderdeel": "Armoede",
+   "indicator_uuid": "c26a0cc2-c7bf-4860-8cfa-cea5e0b6436f",
+   "indicator_naam": "Financiële buffer",
+   "weging": 1.0,
+   "is_actueel": false
+  },
+  {
+   "kwadrant": "Kwaliteit van leven",
+   "thema": "Rondkomen",
+   "onderdeel": "Armoede",
+   "indicator_uuid": "58fc72b6-881e-4917-83de-8099df3e3b0d",
+   "indicator_naam": "Moeite met rondkomen",
+   "weging": 1.0,
+   "is_actueel": true
+  },
+  {
+   "kwadrant": "Kwaliteit van leven",
+   "thema": "Rondkomen",
+   "onderdeel": "Armoede",
+   "indicator_uuid": "c8a449b6-70d9-4f67-9bf3-834863e31d75",
+   "indicator_naam": "Verwachting inkomen",
+   "weging": 1.0,
+   "is_actueel": false
+  },
+  {
+   "kwadrant": "Kwaliteit van leven",
+   "thema": "Rondkomen",
+   "onderdeel": "Armoede",
+   "indicator_uuid": "3dd70913-391e-4d5f-a121-d17c8b466372",
+   "indicator_naam": "Huishoudens met laag inkomen",
+   "weging": 1.0,
+   "is_actueel": true
+  },
+  {
+   "kwadrant": "Kwaliteit van leven",
+   "thema": "Opgroeien",
+   "onderdeel": "Onderwijs",
+   "indicator_uuid": "a5ed2ff5-f431-48e8-98d4-0c56686de109",
+   "indicator_naam": "Achterstand leerlingen",
+   "weging": 1.0,
+   "is_actueel": true
+  },
+  {
+   "kwadrant": "Kwaliteit van leven",
+   "thema": "Opgroeien",
+   "onderdeel": "Onderwijs",
+   "indicator_uuid": "45ecade6-6417-4bba-8d71-1d576e6a1b08",
+   "indicator_naam": "Niveau VO",
+   "weging": 1.0,
+   "is_actueel": false
+  },
+  {
+   "kwadrant": "Kwaliteit van leven",
+   "thema": "Opgroeien",
+   "onderdeel": "Onderwijs",
+   "indicator_uuid": "5209531d-0766-4576-be94-47cf9d14b481",
+   "indicator_naam": "Opleiding jonge volwassenen",
+   "weging": 1.0,
+   "is_actueel": false
+  },
+  {
+   "kwadrant": "Kwaliteit van leven",
+   "thema": "Gezondheid",
+   "onderdeel": "Eigenkracht",
+   "indicator_uuid": "86c91137-c719-4a26-b48c-aab85f6bd0f1",
+   "indicator_naam": "Hulp",
+   "weging": 1.0,
+   "is_actueel": false
+  },
+  {
+   "kwadrant": "Kwaliteit van leven",
+   "thema": "Gezondheid",
+   "onderdeel": "Eigenkracht",
+   "indicator_uuid": "3dee52f6-edfb-4fe9-9abe-f222315d954f",
+   "indicator_naam": "Beperkte functionaliteit",
+   "weging": 1.0,
+   "is_actueel": true
+  },
+  {
+   "kwadrant": "Kwaliteit van leven",
+   "thema": "Gezondheid",
+   "onderdeel": "Eigenkracht",
+   "indicator_uuid": "3c09922b-98ac-448c-8384-d7b8b10f15a7",
+   "indicator_naam": "Belemmerd",
+   "weging": 1.0,
+   "is_actueel": false
+  },
+  {
+   "kwadrant": "Kwaliteit van leven",
+   "thema": "Gezondheid",
+   "onderdeel": "Eigenkracht",
+   "indicator_uuid": "68190acc-0018-4c00-8617-b30b5e315c5c",
+   "indicator_naam": "Zelfregie",
+   "weging": 1.0,
+   "is_actueel": false
+  },
+  {
+   "kwadrant": "Kwaliteit van leven",
+   "thema": "Gezondheid",
+   "onderdeel": "Eigenkracht",
+   "indicator_uuid": "54f1c5c9-c7d3-486e-abca-4f4681276def",
+   "indicator_naam": "Grip op leven",
+   "weging": 1.0,
+   "is_actueel": false
+  },
+  {
+   "kwadrant": "Kwaliteit van leven",
+   "thema": "Gezondheid",
+   "onderdeel": "Eigenkracht",
+   "indicator_uuid": "2eed6515-267b-4552-85cd-2bf7489c62fd",
+   "indicator_naam": "Draad oppakken",
+   "weging": 1.0,
+   "is_actueel": false
+  },
+  {
+   "kwadrant": "Kwaliteit van leven",
+   "thema": "Gezondheid",
+   "onderdeel": "Eigenkracht",
+   "indicator_uuid": "324f1ce6-1684-444a-ab0e-2ee5bab6138c",
+   "indicator_naam": "Hulp organiseren",
+   "weging": 1.0,
+   "is_actueel": false
+  },
+  {
+   "kwadrant": "Kwaliteit van leven",
+   "thema": "Gezondheid",
+   "onderdeel": "Functioneren",
+   "indicator_uuid": "babc4c46-d1c1-444c-af11-2bc1154af66d",
+   "indicator_naam": "Chronische aandoening, 2 of meer",
+   "weging": 1.0,
+   "is_actueel": false
+  },
+  {
+   "kwadrant": "Kwaliteit van leven",
+   "thema": "Gezondheid",
+   "onderdeel": "Functioneren",
+   "indicator_uuid": "95cfcccd-8bf1-4b72-8ebe-03a09aaf529b",
+   "indicator_naam": "Beperking zicht",
+   "weging": 1.0,
+   "is_actueel": false
+  },
+  {
+   "kwadrant": "Kwaliteit van leven",
+   "thema": "Gezondheid",
+   "onderdeel": "Functioneren",
+   "indicator_uuid": "6784d8c0-5439-4be4-9a83-8a926a4a1484",
+   "indicator_naam": "Beperking gehoord",
+   "weging": 1.0,
+   "is_actueel": false
+  },
+  {
+   "kwadrant": "Kwaliteit van leven",
+   "thema": "Gezondheid",
+   "onderdeel": "Functioneren",
+   "indicator_uuid": "311a6449-b145-4678-b51e-ac4e342dd1bf",
+   "indicator_naam": "Gezondheid",
+   "weging": 1.0,
+   "is_actueel": false
+  },
+  {
+   "kwadrant": "Kwaliteit van leven",
+   "thema": "Gezondheid",
+   "onderdeel": "Functioneren",
+   "indicator_uuid": "336d70fd-8895-4036-aecb-ef16dbb17b98",
+   "indicator_naam": "Tevreden leven",
+   "weging": 1.0,
+   "is_actueel": false
+  },
+  {
+   "kwadrant": "Kwaliteit van leven",
+   "thema": "Gezondheid",
+   "onderdeel": "Functioneren",
+   "indicator_uuid": "aeb8a326-9b6b-4072-a6e4-f194b6250683",
+   "indicator_naam": "Geluk",
+   "weging": 1.0,
+   "is_actueel": false
+  },
+  {
+   "kwadrant": "Kwaliteit van leven",
+   "thema": "Gezondheid",
+   "onderdeel": "Functioneren",
+   "indicator_uuid": "acfc43a5-c625-4680-88f5-67d0433fbe43",
+   "indicator_naam": "Verwachting leven",
+   "weging": 1.0,
+   "is_actueel": false
+  },
+  {
+   "kwadrant": "Kwaliteit van leven",
+   "thema": "Gezondheid",
+   "onderdeel": "Functioneren",
+   "indicator_uuid": "69616648-298a-493e-8264-57b5756e6fb7",
+   "indicator_naam": "Beperking",
+   "weging": 1.0,
+   "is_actueel": true
+  },
+  {
+   "kwadrant": "Kwaliteit van leven",
+   "thema": "Gezondheid",
+   "onderdeel": "Functioneren",
+   "indicator_uuid": "d20c7b4d-d305-495b-b77c-07b8121614a7",
+   "indicator_naam": "Ervaren gezondheid",
+   "weging": 1.0,
+   "is_actueel": true
+  },
+  {
+   "kwadrant": "Kwaliteit van leven",
+   "thema": "Gezondheid",
+   "onderdeel": "Leefstijl",
+   "indicator_uuid": "a4780646-844e-4221-b07a-b4f4ade25059",
+   "indicator_naam": "Roken",
+   "weging": 1.0,
+   "is_actueel": true
+  },
+  {
+   "kwadrant": "Kwaliteit van leven",
+   "thema": "Gezondheid",
+   "onderdeel": "Leefstijl",
+   "indicator_uuid": "1ed22149-7fed-4466-a3b8-dfd7ff28f5b5",
+   "indicator_naam": "Overmatig drinken",
+   "weging": 1.0,
+   "is_actueel": true
+  },
+  {
+   "kwadrant": "Kwaliteit van leven",
+   "thema": "Gezondheid",
+   "onderdeel": "Leefstijl",
+   "indicator_uuid": "c7534c64-b1ad-4100-ba3e-58d8d8fae9d2",
+   "indicator_naam": "Alcohol",
+   "weging": 1.0,
+   "is_actueel": true
+  },
+  {
+   "kwadrant": "Kwaliteit van leven",
+   "thema": "Gezondheid",
+   "onderdeel": "Leefstijl",
+   "indicator_uuid": "34e36ae1-4132-4555-a4fc-d16b039d467e",
+   "indicator_naam": "Overgewicht",
+   "weging": 1.0,
+   "is_actueel": true
+  },
+  {
+   "kwadrant": "Kwaliteit van leven",
+   "thema": "Gezondheid",
+   "onderdeel": "Leefstijl",
+   "indicator_uuid": "64470009-7467-4a34-8f3c-b44d896a5364",
+   "indicator_naam": "Bewegen",
+   "weging": 1.0,
+   "is_actueel": true
+  },
+  {
+   "kwadrant": "Kwaliteit van leven",
+   "thema": "Gezondheid",
+   "onderdeel": "Leefstijl",
+   "indicator_uuid": "0432fef2-83f2-4405-a457-08b89945ca86",
+   "indicator_naam": "Obesitas",
+   "weging": 1.0,
+   "is_actueel": true
+  },
+  {
+   "kwadrant": "Kwaliteit van leven",
+   "thema": "Meedoen",
+   "onderdeel": "Deelname",
+   "indicator_uuid": "f3b4cd73-904a-4ac6-b83e-d675d63493ed",
+   "indicator_naam": "Levensbeschouwing",
+   "weging": 1.0,
+   "is_actueel": false
+  },
+  {
+   "kwadrant": "Kwaliteit van leven",
+   "thema": "Meedoen",
+   "onderdeel": "Deelname",
+   "indicator_uuid": "c2f0cb97-0fbc-4638-ab46-2265c61f4962",
+   "indicator_naam": "Wijkgebouw",
+   "weging": 1.0,
+   "is_actueel": false
+  },
+  {
+   "kwadrant": "Kwaliteit van leven",
+   "thema": "Meedoen",
+   "onderdeel": "Deelname",
+   "indicator_uuid": "5825a9b3-7de6-41ad-80e5-d201288fc065",
+   "indicator_naam": "Uitgaan",
+   "weging": 1.0,
+   "is_actueel": false
+  },
+  {
+   "kwadrant": "Kwaliteit van leven",
+   "thema": "Meedoen",
+   "onderdeel": "Deelname",
+   "indicator_uuid": "04b8badd-50d3-4ce3-b88e-3de9ec3537da",
+   "indicator_naam": "Evenement",
+   "weging": 1.0,
+   "is_actueel": false
+  },
+  {
+   "kwadrant": "Kwaliteit van leven",
+   "thema": "Meedoen",
+   "onderdeel": "Deelname",
+   "indicator_uuid": "a3377f8a-5daf-4bc7-8ae8-626f05001885",
+   "indicator_naam": "Voorstelling museum",
+   "weging": 1.0,
+   "is_actueel": false
+  },
+  {
+   "kwadrant": "Kwaliteit van leven",
+   "thema": "Meedoen",
+   "onderdeel": "Deelname",
+   "indicator_uuid": "71ecc0e5-582e-4ff0-a4ad-0c671f275c04",
+   "indicator_naam": "Hobby's",
+   "weging": 1.0,
+   "is_actueel": false
+  },
+  {
+   "kwadrant": "Kwaliteit van leven",
+   "thema": "Meedoen",
+   "onderdeel": "Deelname",
+   "indicator_uuid": "40bc78fc-9e8a-48ba-9530-38454d6ea2bd",
+   "indicator_naam": "Lid sport",
+   "weging": 1.0,
+   "is_actueel": false
+  },
+  {
+   "kwadrant": "Kwaliteit van leven",
+   "thema": "Meedoen",
+   "onderdeel": "Deelname",
+   "indicator_uuid": "3773b795-25ea-4039-bd65-9baad76a1009",
+   "indicator_naam": "Sporten",
+   "weging": 1.0,
+   "is_actueel": false
+  },
+  {
+   "kwadrant": "Kwaliteit van leven",
+   "thema": "Meedoen",
+   "onderdeel": "Netwerk",
+   "indicator_uuid": "2a027507-324e-4245-bc89-63a0e764ce84",
+   "indicator_naam": "Familie",
+   "weging": 1.0,
+   "is_actueel": false
+  },
+  {
+   "kwadrant": "Kwaliteit van leven",
+   "thema": "Meedoen",
+   "onderdeel": "Netwerk",
+   "indicator_uuid": "8a7e7b11-19d5-495d-bbf3-f7d51eef0cec",
+   "indicator_naam": "Vrienden",
+   "weging": 1.0,
+   "is_actueel": false
+  },
+  {
+   "kwadrant": "Kwaliteit van leven",
+   "thema": "Meedoen",
+   "onderdeel": "Netwerk",
+   "indicator_uuid": "fd7e846f-568a-4bb5-ba98-8f042ce37425",
+   "indicator_naam": "Buren",
+   "weging": 1.0,
+   "is_actueel": false
+  },
+  {
+   "kwadrant": "Kwaliteit van leven",
+   "thema": "Meedoen",
+   "onderdeel": "Netwerk",
+   "indicator_uuid": "2b83af90-b647-45f9-a80d-9524df4516c5",
+   "indicator_naam": "Buurtgenoten",
+   "weging": 1.0,
+   "is_actueel": false
+  },
+  {
+   "kwadrant": "Kwaliteit van leven",
+   "thema": "Meedoen",
+   "onderdeel": "Netwerk",
+   "indicator_uuid": "31f70dff-c116-4267-bef0-d15b0ff4c020",
+   "indicator_naam": "Inwoners",
+   "weging": 1.0,
+   "is_actueel": false
+  },
+  {
+   "kwadrant": "Kwaliteit van leven",
+   "thema": "Meedoen",
+   "onderdeel": "Netwerk",
+   "indicator_uuid": "c24bfe4e-a657-4026-9ce1-e301c6fb5ac1",
+   "indicator_naam": "Internet",
+   "weging": 1.0,
+   "is_actueel": false
+  },
+  {
+   "kwadrant": "Kwaliteit van leven",
+   "thema": "Meedoen",
+   "onderdeel": "Netwerk",
+   "indicator_uuid": "802c39dd-3ec1-4b19-b617-9fb8c3f929c4",
+   "indicator_naam": "Voldoende",
+   "weging": 1.0,
+   "is_actueel": false
+  },
+  {
+   "kwadrant": "Kwaliteit van leven",
+   "thema": "Meedoen",
+   "onderdeel": "Netwerk",
+   "indicator_uuid": "4661dcb9-b7c4-42f8-b7c5-a61c12568806",
+   "indicator_naam": "Eenzaamheid",
+   "weging": 1.0,
+   "is_actueel": true
+  },
+  {
+   "kwadrant": "Kwaliteit van leven",
+   "thema": "Meedoen",
+   "onderdeel": "Netwerk",
+   "indicator_uuid": "22815a97-e5f9-4b16-bfbf-70a0e0298746",
+   "indicator_naam": "Meedoen",
+   "weging": 1.0,
+   "is_actueel": false
+  },
+  {
+   "kwadrant": "Kwaliteit sociale leefomgeving",
+   "thema": "Voorzieningen",
+   "onderdeel": "Sociaal culturele",
+   "indicator_uuid": "cf630c8c-d152-4455-bca5-b3f1fe48dab0",
+   "indicator_naam": "Zwembad",
+   "weging": 1.0,
+   "is_actueel": false
+  },
+  {
+   "kwadrant": "Kwaliteit sociale leefomgeving",
+   "thema": "Voorzieningen",
+   "onderdeel": "Sociaal culturele",
+   "indicator_uuid": "c70a2b96-510c-434f-ba69-2c575eb9b669",
+   "indicator_naam": "Bibliotheek",
+   "weging": 1.0,
+   "is_actueel": true
+  },
+  {
+   "kwadrant": "Kwaliteit sociale leefomgeving",
+   "thema": "Voorzieningen",
+   "onderdeel": "Sociaal culturele",
+   "indicator_uuid": "1bec5763-5216-484d-95fe-474a4296a341",
+   "indicator_naam": "Restaurant",
+   "weging": 1.0,
+   "is_actueel": true
+  },
+  {
+   "kwadrant": "Kwaliteit sociale leefomgeving",
+   "thema": "Voorzieningen",
+   "onderdeel": "Sociaal culturele",
+   "indicator_uuid": "3d5f1d64-0e67-493c-8213-b20f07fd699f",
+   "indicator_naam": "Cafetaria",
+   "weging": 1.0,
+   "is_actueel": false
+  },
+  {
+   "kwadrant": "Kwaliteit sociale leefomgeving",
+   "thema": "Voorzieningen",
+   "onderdeel": "Sociaal culturele",
+   "indicator_uuid": "f2d04e1e-404e-49b6-a5fc-8c600aef782b",
+   "indicator_naam": "Café",
+   "weging": 1.0,
+   "is_actueel": true
+  },
+  {
+   "kwadrant": "Kwaliteit sociale leefomgeving",
+   "thema": "Voorzieningen",
+   "onderdeel": "Sociaal culturele",
+   "indicator_uuid": "4bfb21eb-0dfe-4e53-97b8-700bb88c9587",
+   "indicator_naam": "Buitensport",
+   "weging": 1.0,
+   "is_actueel": false
+  },
+  {
+   "kwadrant": "Kwaliteit sociale leefomgeving",
+   "thema": "Voorzieningen",
+   "onderdeel": "Sociaal culturele",
+   "indicator_uuid": "d3e66467-9425-48be-92bf-e6cf27cc15d6",
+   "indicator_naam": "Binnensport",
+   "weging": 1.0,
+   "is_actueel": false
+  },
+  {
+   "kwadrant": "Kwaliteit sociale leefomgeving",
+   "thema": "Voorzieningen",
+   "onderdeel": "Sociaal culturele",
+   "indicator_uuid": "2d11e901-25f1-4045-b75f-004cc7e4b4ec",
+   "indicator_naam": "Ontmoeting",
+   "weging": 1.0,
+   "is_actueel": false
+  },
+  {
+   "kwadrant": "Kwaliteit sociale leefomgeving",
+   "thema": "Voorzieningen",
+   "onderdeel": "Maatschappelijke",
+   "indicator_uuid": "e4eb972b-219d-4ae8-8b7d-b9fa1613cc77",
+   "indicator_naam": "Overige levensmiddelen",
+   "weging": 1.0,
+   "is_actueel": false
+  },
+  {
+   "kwadrant": "Kwaliteit sociale leefomgeving",
+   "thema": "Voorzieningen",
+   "onderdeel": "Maatschappelijke",
+   "indicator_uuid": "0ed37b61-f13d-446b-b108-70bb09af98e0",
+   "indicator_naam": "Huisarts",
+   "weging": 1.0,
+   "is_actueel": true
+  },
+  {
+   "kwadrant": "Kwaliteit sociale leefomgeving",
+   "thema": "Voorzieningen",
+   "onderdeel": "Maatschappelijke",
+   "indicator_uuid": "162f1888-66d9-428e-bcf5-6af5a3aa4ada",
+   "indicator_naam": "Apotheek",
+   "weging": 1.0,
+   "is_actueel": true
+  },
+  {
+   "kwadrant": "Kwaliteit sociale leefomgeving",
+   "thema": "Voorzieningen",
+   "onderdeel": "Maatschappelijke",
+   "indicator_uuid": "3d913daa-d2e2-4ab2-bf2e-61c5ef2ab0de",
+   "indicator_naam": "Basisschool",
+   "weging": 1.0,
+   "is_actueel": false
+  },
+  {
+   "kwadrant": "Kwaliteit sociale leefomgeving",
+   "thema": "Voorzieningen",
+   "onderdeel": "Maatschappelijke",
+   "indicator_uuid": "6b252d60-caca-4651-91de-5a6e982ea634",
+   "indicator_naam": "Middelbare school",
+   "weging": 1.0,
+   "is_actueel": false
+  },
+  {
+   "kwadrant": "Kwaliteit sociale leefomgeving",
+   "thema": "Voorzieningen",
+   "onderdeel": "Maatschappelijke",
+   "indicator_uuid": "8cb1b47c-1474-4eba-8a1e-f4e63f374c86",
+   "indicator_naam": "Kinderdagverblijf",
+   "weging": 1.0,
+   "is_actueel": true
+  },
+  {
+   "kwadrant": "Kwaliteit sociale leefomgeving",
+   "thema": "Voorzieningen",
+   "onderdeel": "Maatschappelijke",
+   "indicator_uuid": "fe677e77-6d01-4642-90a4-f9453f9eb462",
+   "indicator_naam": "BSO",
+   "weging": 1.0,
+   "is_actueel": false
+  },
+  {
+   "kwadrant": "Kwaliteit sociale leefomgeving",
+   "thema": "Voorzieningen",
+   "onderdeel": "Maatschappelijke",
+   "indicator_uuid": "a9752cb7-7404-4c46-9f45-49697f8d7d36",
+   "indicator_naam": "Boodschappen",
+   "weging": 1.0,
+   "is_actueel": false
+  },
+  {
+   "kwadrant": "Kwaliteit sociale leefomgeving",
+   "thema": "Voorzieningen",
+   "onderdeel": "Maatschappelijke",
+   "indicator_uuid": "399faf44-3858-4477-8949-99e1e65f734b",
+   "indicator_naam": "Ondersteuning",
+   "weging": 1.0,
+   "is_actueel": false
+  },
+  {
+   "kwadrant": "Kwaliteit sociale leefomgeving",
+   "thema": "Voorzieningen",
+   "onderdeel": "Maatschappelijke",
+   "indicator_uuid": "dc666cf8-b0ee-4fc7-8cbd-ee5d7666b7d3",
+   "indicator_naam": "Medische zorg",
+   "weging": 1.0,
+   "is_actueel": false
+  },
+  {
+   "kwadrant": "Kwaliteit sociale leefomgeving",
+   "thema": "Voorzieningen",
+   "onderdeel": "Maatschappelijke",
+   "indicator_uuid": "6ecbc704-ce1d-49ea-8914-48b3a723d9fc",
+   "indicator_naam": "Basisscholen",
+   "weging": 1.0,
+   "is_actueel": false
+  },
+  {
+   "kwadrant": "Kwaliteit sociale leefomgeving",
+   "thema": "Voorzieningen",
+   "onderdeel": "Maatschappelijke",
+   "indicator_uuid": "869bec9c-9b9a-4425-9cd6-09cb4f7451ae",
+   "indicator_naam": "Afstand tot grote supermarkt",
+   "weging": 1.0,
+   "is_actueel": true
+  },
+  {
+   "kwadrant": "Kwaliteit sociale leefomgeving",
+   "thema": "Voorzieningen",
+   "onderdeel": "Maatschappelijke",
+   "indicator_uuid": "76abbf47-6eb6-4c10-a4bf-ec0280435052",
+   "indicator_naam": "Afstand tot kinderdagverblijf",
+   "weging": 1.0,
+   "is_actueel": true
+  },
+  {
+   "kwadrant": "Kwaliteit sociale leefomgeving",
+   "thema": "Voorzieningen",
+   "onderdeel": "Maatschappelijke",
+   "indicator_uuid": "ec95fe04-04fd-4bbb-bb9f-0f3f97861e5d",
+   "indicator_naam": "Afstand tot school",
+   "weging": 1.0,
+   "is_actueel": true
+  },
+  {
+   "kwadrant": "Kwaliteit sociale leefomgeving",
+   "thema": "Mienskip",
+   "onderdeel": "Actief betrokken",
+   "indicator_uuid": "ffb5832e-d8ec-4f21-be63-4ee591348932",
+   "indicator_naam": "Buren geholpen",
+   "weging": 1.0,
+   "is_actueel": false
+  },
+  {
+   "kwadrant": "Kwaliteit sociale leefomgeving",
+   "thema": "Mienskip",
+   "onderdeel": "Actief betrokken",
+   "indicator_uuid": "9b168456-9219-4c3b-af16-636662a74155",
+   "indicator_naam": "Vrijwilliger",
+   "weging": 1.0,
+   "is_actueel": true
+  },
+  {
+   "kwadrant": "Kwaliteit sociale leefomgeving",
+   "thema": "Mienskip",
+   "onderdeel": "Actief betrokken",
+   "indicator_uuid": "7b4a6b5f-7d6a-46ef-8a7d-7b3ee28a014c",
+   "indicator_naam": "Mantelzorger",
+   "weging": 1.0,
+   "is_actueel": true
+  },
+  {
+   "kwadrant": "Kwaliteit sociale leefomgeving",
+   "thema": "Mienskip",
+   "onderdeel": "Actief betrokken",
+   "indicator_uuid": "5bdffb43-4e09-4fcc-8cf7-ab8fa0b48442",
+   "indicator_naam": "Actief buurt",
+   "weging": 1.0,
+   "is_actueel": false
+  },
+  {
+   "kwadrant": "Kwaliteit sociale leefomgeving",
+   "thema": "Mienskip",
+   "onderdeel": "Actief betrokken",
+   "indicator_uuid": "9ff62049-cabe-449b-937b-9bb5993eda6f",
+   "indicator_naam": "Vertrouwen in gemeente",
+   "weging": 1.0,
+   "is_actueel": false
+  },
+  {
+   "kwadrant": "Kwaliteit sociale leefomgeving",
+   "thema": "Mienskip",
+   "onderdeel": "Sociale samenhang",
+   "indicator_uuid": "4f87a602-7f53-4090-a0b4-bd2608b284aa",
+   "indicator_naam": "10+ jaar woning",
+   "weging": 1.0,
+   "is_actueel": false
+  },
+  {
+   "kwadrant": "Kwaliteit sociale leefomgeving",
+   "thema": "Mienskip",
+   "onderdeel": "Sociale samenhang",
+   "indicator_uuid": "57881985-6961-4dc8-8d85-0130e871f842",
+   "indicator_naam": "10+ jaar buurt",
+   "weging": 1.0,
+   "is_actueel": false
+  },
+  {
+   "kwadrant": "Kwaliteit sociale leefomgeving",
+   "thema": "Mienskip",
+   "onderdeel": "Sociale samenhang",
+   "indicator_uuid": "ccf475b4-d2cd-4934-a607-aeb54d982115",
+   "indicator_naam": "Verhuisd binnen buurt",
+   "weging": 1.0,
+   "is_actueel": false
+  },
+  {
+   "kwadrant": "Kwaliteit sociale leefomgeving",
+   "thema": "Mienskip",
+   "onderdeel": "Sociale samenhang",
+   "indicator_uuid": "8c917dd9-1cdd-436f-a396-7107ac4e39a5",
+   "indicator_naam": "Gehecht",
+   "weging": 1.0,
+   "is_actueel": false
+  },
+  {
+   "kwadrant": "Kwaliteit sociale leefomgeving",
+   "thema": "Mienskip",
+   "onderdeel": "Sociale samenhang",
+   "indicator_uuid": "5b55a528-6495-4acb-b2e2-4b8cf58d7b9b",
+   "indicator_naam": "Elkaar kennen",
+   "weging": 1.0,
+   "is_actueel": false
+  },
+  {
+   "kwadrant": "Kwaliteit sociale leefomgeving",
+   "thema": "Mienskip",
+   "onderdeel": "Sociale samenhang",
+   "indicator_uuid": "3a5eb073-170f-45a2-b07d-65f1c7d77a30",
+   "indicator_naam": "Thuis voelen",
+   "weging": 1.0,
+   "is_actueel": false
+  },
+  {
+   "kwadrant": "Kwaliteit sociale leefomgeving",
+   "thema": "Mienskip",
+   "onderdeel": "Sociale samenhang",
+   "indicator_uuid": "fb9f9529-dc8f-401e-b0e5-e7a5f4ef3ad5",
+   "indicator_naam": "Saamhorigheid",
+   "weging": 1.0,
+   "is_actueel": false
+  },
+  {
+   "kwadrant": "Kwaliteit sociale leefomgeving",
+   "thema": "Mienskip",
+   "onderdeel": "Omgang integratie",
+   "indicator_uuid": "10c6d4df-44ef-4eb8-b4ab-8987012b7b16",
+   "indicator_naam": "Discriminatie",
+   "weging": 1.0,
+   "is_actueel": false
+  },
+  {
+   "kwadrant": "Kwaliteit sociale leefomgeving",
+   "thema": "Mienskip",
+   "onderdeel": "Omgang integratie",
+   "indicator_uuid": "dd76185d-5e66-4dd9-aeab-82ce845cb14f",
+   "indicator_naam": "Etnische groepen",
+   "weging": 1.0,
+   "is_actueel": false
+  },
+  {
+   "kwadrant": "Kwaliteit sociale leefomgeving",
+   "thema": "Mienskip",
+   "onderdeel": "Omgang integratie",
+   "indicator_uuid": "52ec4615-dd5c-47d4-a898-44d2aa9edfe8",
+   "indicator_naam": "Jong en oud",
+   "weging": 1.0,
+   "is_actueel": false
+  },
+  {
+   "kwadrant": "Kwaliteit sociale leefomgeving",
+   "thema": "Mienskip",
+   "onderdeel": "Omgang integratie",
+   "indicator_uuid": "2b83af90-b647-45f9-a80d-9524df4516c5",
+   "indicator_naam": "Buurtgenoten",
+   "weging": 1.0,
+   "is_actueel": false
+  },
+  {
+   "kwadrant": "Kwaliteit sociale leefomgeving",
+   "thema": "Veilgheid",
+   "onderdeel": "Vermogensdelicten",
+   "indicator_uuid": "9c3224e6-7b1a-4284-a658-52eca918c750",
+   "indicator_naam": "slachtoffer inbraak",
+   "weging": 1.0,
+   "is_actueel": false
+  },
+  {
+   "kwadrant": "Kwaliteit sociale leefomgeving",
+   "thema": "Veilgheid",
+   "onderdeel": "Vermogensdelicten",
+   "indicator_uuid": "d90d2b4c-4bce-428c-834a-1cc8113958e4",
+   "indicator_naam": "inbraak woning",
+   "weging": 1.0,
+   "is_actueel": false
+  },
+  {
+   "kwadrant": "Kwaliteit sociale leefomgeving",
+   "thema": "Veilgheid",
+   "onderdeel": "Vermogensdelicten",
+   "indicator_uuid": "92137246-e0f1-493d-97a8-e4a5660a99fb",
+   "indicator_naam": "inbraak auto",
+   "weging": 1.0,
+   "is_actueel": true
+  },
+  {
+   "kwadrant": "Kwaliteit sociale leefomgeving",
+   "thema": "Veilgheid",
+   "onderdeel": "Vermogensdelicten",
+   "indicator_uuid": "3ca8572d-cc03-4fd9-9bc9-e1cd0fc0a627",
+   "indicator_naam": "diefstal fiets",
+   "weging": 1.0,
+   "is_actueel": true
+  },
+  {
+   "kwadrant": "Kwaliteit sociale leefomgeving",
+   "thema": "Veilgheid",
+   "onderdeel": "Vermogensdelicten",
+   "indicator_uuid": "b7090c23-7495-48c2-bfb3-cbfb7140386f",
+   "indicator_naam": "beschadiging auto's",
+   "weging": 1.0,
+   "is_actueel": false
+  },
+  {
+   "kwadrant": "Kwaliteit sociale leefomgeving",
+   "thema": "Veilgheid",
+   "onderdeel": "Overlast",
+   "indicator_uuid": "ee076c87-95e8-4f5a-a753-e31fc05a0eb8",
+   "indicator_naam": "wonen",
+   "weging": 1.0,
+   "is_actueel": true
+  },
+  {
+   "kwadrant": "Kwaliteit sociale leefomgeving",
+   "thema": "Veilgheid",
+   "onderdeel": "Overlast",
+   "indicator_uuid": "b8f453e4-522a-4c9d-b4d8-1f0b25594bb9",
+   "indicator_naam": "woonomgeving",
+   "weging": 1.0,
+   "is_actueel": false
+  },
+  {
+   "kwadrant": "Kwaliteit sociale leefomgeving",
+   "thema": "Veilgheid",
+   "onderdeel": "Overlast",
+   "indicator_uuid": "3bbd1382-eaae-4e2c-ae48-caa40c112340",
+   "indicator_naam": "jongeren",
+   "weging": 1.0,
+   "is_actueel": true
+  },
+  {
+   "kwadrant": "Kwaliteit sociale leefomgeving",
+   "thema": "Veilgheid",
+   "onderdeel": "Overlast",
+   "indicator_uuid": "3fa946ce-b007-4748-9fab-c838c7ccb9dc",
+   "indicator_naam": "omwonenden",
+   "weging": 1.0,
+   "is_actueel": false
+  },
+  {
+   "kwadrant": "Kwaliteit sociale leefomgeving",
+   "thema": "Veilgheid",
+   "onderdeel": "Overlast",
+   "indicator_uuid": "b558af0f-fa63-4735-a27c-79d12813ee1e",
+   "indicator_naam": "geluid",
+   "weging": 1.0,
+   "is_actueel": true
+  },
+  {
+   "kwadrant": "Kwaliteit sociale leefomgeving",
+   "thema": "Veilgheid",
+   "onderdeel": "Overlast",
+   "indicator_uuid": "7524a0df-fc76-4755-a855-cbcb368a43be",
+   "indicator_naam": "dronken personen",
+   "weging": 1.0,
+   "is_actueel": true
+  },
+  {
+   "kwadrant": "Kwaliteit sociale leefomgeving",
+   "thema": "Veilgheid",
+   "onderdeel": "Overlast",
+   "indicator_uuid": "48edd30f-ef82-4820-8e80-7eb8daf82963",
+   "indicator_naam": "drugs",
+   "weging": 1.0,
+   "is_actueel": true
+  },
+  {
+   "kwadrant": "Kwaliteit sociale leefomgeving",
+   "thema": "Veilgheid",
+   "onderdeel": "Dreiging en geweld",
+   "indicator_uuid": "784f5a85-7dcc-43fe-89a1-df4df500e34a",
+   "indicator_naam": "Geweld",
+   "weging": 1.0,
+   "is_actueel": false
+  },
+  {
+   "kwadrant": "Kwaliteit sociale leefomgeving",
+   "thema": "Veilgheid",
+   "onderdeel": "Dreiging en geweld",
+   "indicator_uuid": "b6c4e4fd-2ec9-4427-92b6-b28b64c125ab",
+   "indicator_naam": "idee geweldsdelicten",
+   "weging": 1.0,
+   "is_actueel": false
+  },
+  {
+   "kwadrant": "Kwaliteit sociale leefomgeving",
+   "thema": "Veilgheid",
+   "onderdeel": "Dreiging en geweld",
+   "indicator_uuid": "379cd3a8-409e-499d-beac-02682fd13bcf",
+   "indicator_naam": "idee bedreiging",
+   "weging": 1.0,
+   "is_actueel": false
+  },
+  {
+   "kwadrant": "Kwaliteit sociale leefomgeving",
+   "thema": "Veilgheid",
+   "onderdeel": "Dreiging en geweld",
+   "indicator_uuid": "6f354ae4-db0a-4645-bec6-8218b4ab572d",
+   "indicator_naam": "idee lastigvallen",
+   "weging": 1.0,
+   "is_actueel": false
+  },
+  {
+   "kwadrant": "Kwaliteit sociale leefomgeving",
+   "thema": "Veilgheid",
+   "onderdeel": "Dreiging en geweld",
+   "indicator_uuid": "6d56f7bc-aaf6-441e-a423-f19b3a825a79",
+   "indicator_naam": "gevoel onveilig",
+   "weging": 1.0,
+   "is_actueel": false
+  },
+  {
+   "kwadrant": "Samenstelling",
+   "thema": "Bebouwing",
+   "onderdeel": "Gebruik omgeving",
+   "indicator_uuid": "b1011f4c-30b1-4088-bcf6-a67893d92c5f",
+   "indicator_naam": "Woonfunctie",
+   "weging": 10.0,
+   "is_actueel": true
+  },
+  {
+   "kwadrant": "Samenstelling",
+   "thema": "Bebouwing",
+   "onderdeel": "Gebruik omgeving",
+   "indicator_uuid": "5d7ad356-aac8-4815-8da7-97dff60c7873",
+   "indicator_naam": "Bijeenkomstfunctie",
+   "weging": 10.0,
+   "is_actueel": true
+  },
+  {
+   "kwadrant": "Samenstelling",
+   "thema": "Bebouwing",
+   "onderdeel": "Gebruik omgeving",
+   "indicator_uuid": "29cfacae-021e-4fe5-819b-e9eb655837ae",
+   "indicator_naam": "Celfunctie",
+   "weging": 10.0,
+   "is_actueel": true
+  },
+  {
+   "kwadrant": "Samenstelling",
+   "thema": "Bebouwing",
+   "onderdeel": "Gebruik omgeving",
+   "indicator_uuid": "3baca929-ccc3-48aa-b966-e6877d01cbe7",
+   "indicator_naam": "Gezondheidszorgfunctie",
+   "weging": 10.0,
+   "is_actueel": true
+  },
+  {
+   "kwadrant": "Samenstelling",
+   "thema": "Bebouwing",
+   "onderdeel": "Gebruik omgeving",
+   "indicator_uuid": "28a7a580-dc3c-4105-9fb3-d9ef47792429",
+   "indicator_naam": "Industriefunctie",
+   "weging": 10.0,
+   "is_actueel": true
+  },
+  {
+   "kwadrant": "Samenstelling",
+   "thema": "Bebouwing",
+   "onderdeel": "Gebruik omgeving",
+   "indicator_uuid": "0212e8f8-053d-4287-b924-7bdc20c53bb2",
+   "indicator_naam": "Kantoorfunctie",
+   "weging": 10.0,
+   "is_actueel": true
+  },
+  {
+   "kwadrant": "Samenstelling",
+   "thema": "Bebouwing",
+   "onderdeel": "Gebruik omgeving",
+   "indicator_uuid": "a990c073-78e3-4490-a26e-1fa8ca6988f9",
+   "indicator_naam": "Logiesfunctie",
+   "weging": 10.0,
+   "is_actueel": true
+  },
+  {
+   "kwadrant": "Samenstelling",
+   "thema": "Bebouwing",
+   "onderdeel": "Gebruik omgeving",
+   "indicator_uuid": "93048a96-d3cd-4d99-83b5-2b950e8d78a2",
+   "indicator_naam": "Onderwijsfunctie",
+   "weging": 10.0,
+   "is_actueel": true
+  },
+  {
+   "kwadrant": "Samenstelling",
+   "thema": "Bebouwing",
+   "onderdeel": "Gebruik omgeving",
+   "indicator_uuid": "e2f618ca-0726-4c1f-8442-c1150578622e",
+   "indicator_naam": "Sportfunctie",
+   "weging": 10.0,
+   "is_actueel": true
+  },
+  {
+   "kwadrant": "Samenstelling",
+   "thema": "Bebouwing",
+   "onderdeel": "Gebruik omgeving",
+   "indicator_uuid": "49d5687e-c062-40b5-84b9-7e4557b6cee0",
+   "indicator_naam": "Winkelfunctie",
+   "weging": 10.0,
+   "is_actueel": true
+  },
+  {
+   "kwadrant": "Samenstelling",
+   "thema": "Bebouwing",
+   "onderdeel": "Gebruik omgeving",
+   "indicator_uuid": "25405460-907c-4e63-acc4-4f9c949f7cac",
+   "indicator_naam": "Overige gebruiksfunctie",
+   "weging": 10.0,
+   "is_actueel": true
+  },
+  {
+   "kwadrant": "Samenstelling",
+   "thema": "Bebouwing",
+   "onderdeel": "Gebruik omgeving",
+   "indicator_uuid": "1e9bc2fe-d5bd-4306-9b6b-d443e22916cf",
+   "indicator_naam": "Diversiteit Functies (Simpson Index)",
+   "weging": 1.0,
+   "is_actueel": true
+  },
+  {
+   "kwadrant": "Samenstelling",
+   "thema": "Bebouwing",
+   "onderdeel": "Gebruik omgeving",
+   "indicator_uuid": "4f53e98e-3309-4a3a-9ecc-732956f7c53a",
+   "indicator_naam": "Percentage woonfunctie (BAG)",
+   "weging": 1.0,
+   "is_actueel": true
+  },
+  {
+   "kwadrant": "Samenstelling",
+   "thema": "Bebouwing",
+   "onderdeel": "Bouwperiode",
+   "indicator_uuid": "3dfcad9b-fad4-47d3-b701-8de88c198d13",
+   "indicator_naam": "Bouwjaar voor 1915",
+   "weging": 25.0,
+   "is_actueel": true
+  },
+  {
+   "kwadrant": "Samenstelling",
+   "thema": "Bebouwing",
+   "onderdeel": "Bouwperiode",
+   "indicator_uuid": "3241e6b8-0712-4653-a420-2f3274466f6b",
+   "indicator_naam": "Bouwjaar 1915-1945",
+   "weging": 25.0,
+   "is_actueel": true
+  },
+  {
+   "kwadrant": "Samenstelling",
+   "thema": "Bebouwing",
+   "onderdeel": "Bouwperiode",
+   "indicator_uuid": "8ef35d23-4060-4e32-a19f-670682afd7c3",
+   "indicator_naam": "Bouwjaar 1945-1984",
+   "weging": 25.0,
+   "is_actueel": true
+  },
+  {
+   "kwadrant": "Samenstelling",
+   "thema": "Bebouwing",
+   "onderdeel": "Bouwperiode",
+   "indicator_uuid": "b5990263-4ccf-4ab3-b9cf-f7415262cc03",
+   "indicator_naam": "Bouwjaar vanaf 1985",
+   "weging": 25.0,
+   "is_actueel": true
+  },
+  {
+   "kwadrant": "Samenstelling",
+   "thema": "Bebouwing",
+   "onderdeel": "Bouwperiode",
+   "indicator_uuid": "22d02bf9-99ef-4357-b797-09a714690b11",
+   "indicator_naam": "Gemiddeld bouwjaar woningen (BAG)",
+   "weging": 1.0,
+   "is_actueel": true
+  },
+  {
+   "kwadrant": "Samenstelling",
+   "thema": "Bebouwing",
+   "onderdeel": "Bouwperiode",
+   "indicator_uuid": "89ad6843-0db9-4044-9508-307775d4f496",
+   "indicator_naam": "Woningen gebouwd vóór 1945 (BAG)",
+   "weging": 1.0,
+   "is_actueel": true
+  },
+  {
+   "kwadrant": "Samenstelling",
+   "thema": "Bebouwing",
+   "onderdeel": "Woningtypen",
+   "indicator_uuid": "d491081f-a96d-4724-9caf-d155196a7941",
+   "indicator_naam": "rijtjes",
+   "weging": 1.0,
+   "is_actueel": false
+  },
+  {
+   "kwadrant": "Samenstelling",
+   "thema": "Bebouwing",
+   "onderdeel": "Woningtypen",
+   "indicator_uuid": "755deaa9-74ec-4aac-914d-10be2ea2eeea",
+   "indicator_naam": "2-onder-1-kap",
+   "weging": 1.0,
+   "is_actueel": false
+  },
+  {
+   "kwadrant": "Samenstelling",
+   "thema": "Bebouwing",
+   "onderdeel": "Woningtypen",
+   "indicator_uuid": "2b4a45b8-3756-4e24-851b-5c32a760125e",
+   "indicator_naam": "vrijstaand",
+   "weging": 1.0,
+   "is_actueel": false
+  },
+  {
+   "kwadrant": "Samenstelling",
+   "thema": "Bebouwing",
+   "onderdeel": "Woningtypen",
+   "indicator_uuid": "c2174b21-1e54-4566-a93a-b39cfe7ceca0",
+   "indicator_naam": "beneden boven",
+   "weging": 1.0,
+   "is_actueel": false
+  },
+  {
+   "kwadrant": "Samenstelling",
+   "thema": "Bebouwing",
+   "onderdeel": "Woningtypen",
+   "indicator_uuid": "9bcd5fcc-312d-49df-b01e-7bd350e70188",
+   "indicator_naam": "appartementen",
+   "weging": 1.0,
+   "is_actueel": false
+  },
+  {
+   "kwadrant": "Samenstelling",
+   "thema": "Bebouwing",
+   "onderdeel": "Woningtypen",
+   "indicator_uuid": "e555fa98-c258-4df0-9c72-0ee5d96649c9",
+   "indicator_naam": "studio's kamers",
+   "weging": 1.0,
+   "is_actueel": false
+  },
+  {
+   "kwadrant": "Samenstelling",
+   "thema": "Bebouwing",
+   "onderdeel": "Eigendom",
+   "indicator_uuid": "26e41525-ef0d-4e00-9f09-834c773b1d1f",
+   "indicator_naam": "wozwaarde woning",
+   "weging": 1.0,
+   "is_actueel": false
+  },
+  {
+   "kwadrant": "Samenstelling",
+   "thema": "Bebouwing",
+   "onderdeel": "Eigendom",
+   "indicator_uuid": "846f7c36-5391-4b74-a901-a84622b6cba0",
+   "indicator_naam": "wozwaard m2",
+   "weging": 1.0,
+   "is_actueel": false
+  },
+  {
+   "kwadrant": "Samenstelling",
+   "thema": "Bebouwing",
+   "onderdeel": "Eigendom",
+   "indicator_uuid": "ae0f05fd-0587-4de4-a742-d306ca4a0f8a",
+   "indicator_naam": "particulier",
+   "weging": 1.0,
+   "is_actueel": true
+  },
+  {
+   "kwadrant": "Samenstelling",
+   "thema": "Bebouwing",
+   "onderdeel": "Eigendom",
+   "indicator_uuid": "a5d925dc-13ea-4dc9-8e06-e60947c9b6ec",
+   "indicator_naam": "cooperatief",
+   "weging": 1.0,
+   "is_actueel": true
+  },
+  {
+   "kwadrant": "Samenstelling",
+   "thema": "Bebouwing",
+   "onderdeel": "Eigendom",
+   "indicator_uuid": "8c57c048-ccb2-4ea4-b80f-d5ca44c9c183",
+   "indicator_naam": "koop",
+   "weging": 1.0,
+   "is_actueel": true
+  },
+  {
+   "kwadrant": "Samenstelling",
+   "thema": "Bebouwing",
+   "onderdeel": "Eigendom",
+   "indicator_uuid": "a0bbfd44-bacd-4434-bc8d-3a5204d65637",
+   "indicator_naam": "Koopwoningen",
+   "weging": 1.0,
+   "is_actueel": true
+  },
+  {
+   "kwadrant": "Samenstelling",
+   "thema": "Bebouwing",
+   "onderdeel": "Eigendom",
+   "indicator_uuid": "6dd8b659-29c1-4396-a853-1abd7c6e0591",
+   "indicator_naam": "Woningcorporatie bezit",
+   "weging": 1.0,
+   "is_actueel": true
+  },
+  {
+   "kwadrant": "Samenstelling",
+   "thema": "Bebouwing",
+   "onderdeel": "Eigendom",
+   "indicator_uuid": "2aadb30f-860f-4f70-916f-6df00e86e870",
+   "indicator_naam": "Particulier huurbezit",
+   "weging": 1.0,
+   "is_actueel": true
+  },
+  {
+   "kwadrant": "Samenstelling",
+   "thema": "Bevolking",
+   "onderdeel": "Cultuur",
+   "indicator_uuid": "fd94a542-850c-4377-91d5-395c0c50489a",
+   "indicator_naam": "herkomst",
+   "weging": 1.0,
+   "is_actueel": false
+  },
+  {
+   "kwadrant": "Samenstelling",
+   "thema": "Bevolking",
+   "onderdeel": "Cultuur",
+   "indicator_uuid": "e22a0d3f-9171-4f75-9d35-13d652bf58c7",
+   "indicator_naam": "leefstijl",
+   "weging": 1.0,
+   "is_actueel": false
+  },
+  {
+   "kwadrant": "Samenstelling",
+   "thema": "Bevolking",
+   "onderdeel": "Cultuur",
+   "indicator_uuid": "050b8793-7b5e-458f-b92a-8c954b90caaa",
+   "indicator_naam": "Gemakgeoriënteerden",
+   "weging": 1.0,
+   "is_actueel": false
+  },
+  {
+   "kwadrant": "Samenstelling",
+   "thema": "Bevolking",
+   "onderdeel": "Cultuur",
+   "indicator_uuid": "f84116fa-448c-4f36-a555-e81539db58a1",
+   "indicator_naam": "Postmoderne hedonisten",
+   "weging": 1.0,
+   "is_actueel": false
+  },
+  {
+   "kwadrant": "Samenstelling",
+   "thema": "Bevolking",
+   "onderdeel": "Cultuur",
+   "indicator_uuid": "466d90ee-7fc7-440b-8660-b8c2d532978b",
+   "indicator_naam": "Kosmopolieten",
+   "weging": 1.0,
+   "is_actueel": false
+  },
+  {
+   "kwadrant": "Samenstelling",
+   "thema": "Bevolking",
+   "onderdeel": "Cultuur",
+   "indicator_uuid": "e69d4d1f-68a1-418e-bc68-6c4e80b8fa90",
+   "indicator_naam": "Traditionele burgerij",
+   "weging": 1.0,
+   "is_actueel": false
+  },
+  {
+   "kwadrant": "Samenstelling",
+   "thema": "Bevolking",
+   "onderdeel": "Cultuur",
+   "indicator_uuid": "e55cf4e8-4bc3-4f09-a159-455f6596a091",
+   "indicator_naam": "Nieuw conservatieven",
+   "weging": 1.0,
+   "is_actueel": false
+  },
+  {
+   "kwadrant": "Samenstelling",
+   "thema": "Bevolking",
+   "onderdeel": "Cultuur",
+   "indicator_uuid": "bcd57865-1f7e-406b-aa19-7f4523f4d29b",
+   "indicator_naam": "Post-materialisten",
+   "weging": 1.0,
+   "is_actueel": false
+  },
+  {
+   "kwadrant": "Samenstelling",
+   "thema": "Bevolking",
+   "onderdeel": "Cultuur",
+   "indicator_uuid": "1df7cd09-733e-4c5b-a0e1-f0bd28af7661",
+   "indicator_naam": "Opwaarts mobielen",
+   "weging": 1.0,
+   "is_actueel": false
+  },
+  {
+   "kwadrant": "Samenstelling",
+   "thema": "Bevolking",
+   "onderdeel": "Cultuur",
+   "indicator_uuid": "4c5d8397-abf9-4b98-a9c3-f7bee795f4c1",
+   "indicator_naam": "Moderne burgerij",
+   "weging": 1.0,
+   "is_actueel": false
+  },
+  {
+   "kwadrant": "Samenstelling",
+   "thema": "Bevolking",
+   "onderdeel": "Leeftijd",
+   "indicator_uuid": "356a2329-eadb-494f-a09d-906a3db264d4",
+   "indicator_naam": "0-15 jaar",
+   "weging": 1.0,
+   "is_actueel": false
+  },
+  {
+   "kwadrant": "Samenstelling",
+   "thema": "Bevolking",
+   "onderdeel": "Leeftijd",
+   "indicator_uuid": "026bcd11-ace5-4ec7-adbc-c06c324315cd",
+   "indicator_naam": "15-25 jaar",
+   "weging": 1.0,
+   "is_actueel": false
+  },
+  {
+   "kwadrant": "Samenstelling",
+   "thema": "Bevolking",
+   "onderdeel": "Leeftijd",
+   "indicator_uuid": "e6dd31a1-a056-4c07-a48c-1d4517269f1e",
+   "indicator_naam": "25-45 jaar",
+   "weging": 1.0,
+   "is_actueel": false
+  },
+  {
+   "kwadrant": "Samenstelling",
+   "thema": "Bevolking",
+   "onderdeel": "Leeftijd",
+   "indicator_uuid": "8225fa5c-efb8-4fd0-865b-a36ff0724a28",
+   "indicator_naam": "45-65 jaar",
+   "weging": 1.0,
+   "is_actueel": false
+  },
+  {
+   "kwadrant": "Samenstelling",
+   "thema": "Bevolking",
+   "onderdeel": "Leeftijd",
+   "indicator_uuid": "b0ee9877-3850-4529-b352-6ec673562ef8",
+   "indicator_naam": "65+ jaar",
+   "weging": 1.0,
+   "is_actueel": false
+  },
+  {
+   "kwadrant": "Samenstelling",
+   "thema": "Bevolking",
+   "onderdeel": "Huishoudens",
+   "indicator_uuid": "6b5fc16f-5d4f-4058-8d72-536f742d04ce",
+   "indicator_naam": "tm 27 jaar",
+   "weging": 1.0,
+   "is_actueel": false
+  },
+  {
+   "kwadrant": "Samenstelling",
+   "thema": "Bevolking",
+   "onderdeel": "Huishoudens",
+   "indicator_uuid": "3bbd1382-eaae-4e2c-ae48-caa40c112340",
+   "indicator_naam": "jongeren",
+   "weging": 1.0,
+   "is_actueel": false
+  },
+  {
+   "kwadrant": "Samenstelling",
+   "thema": "Bevolking",
+   "onderdeel": "Huishoudens",
+   "indicator_uuid": "027ad58c-8344-4a26-8bcd-8fe4d6d18214",
+   "indicator_naam": "niet-westers",
+   "weging": 1.0,
+   "is_actueel": true
+  },
+  {
+   "kwadrant": "Samenstelling",
+   "thema": "Bevolking",
+   "onderdeel": "Huishoudens",
+   "indicator_uuid": "994ca4cf-b36d-4d75-9d04-15ed593ed74c",
+   "indicator_naam": "kind gescheid. Ouders",
+   "weging": 1.0,
+   "is_actueel": false
+  },
+  {
+   "kwadrant": "Samenstelling",
+   "thema": "Bevolking",
+   "onderdeel": "Huishoudens",
+   "indicator_uuid": "19a6ed7d-950f-4cd3-84a9-715a872cb68d",
+   "indicator_naam": "één ouder gezin",
+   "weging": 1.0,
+   "is_actueel": false
+  },
+  {
+   "kwadrant": "Samenstelling",
+   "thema": "Bevolking",
+   "onderdeel": "Huishoudens",
+   "indicator_uuid": "be1a9ac4-6330-47c9-93c6-c9008b5daf89",
+   "indicator_naam": "Huishoudens totaal",
+   "weging": 1.0,
+   "is_actueel": true
+  },
+  {
+   "kwadrant": "Samenstelling",
+   "thema": "Bevolking",
+   "onderdeel": "Huishoudens",
+   "indicator_uuid": "428c1232-0213-491b-ad0c-56dcc82a8c59",
+   "indicator_naam": "Huishoudens zonder kind",
+   "weging": 1.0,
+   "is_actueel": true
+  },
+  {
+   "kwadrant": "Samenstelling",
+   "thema": "Bevolking",
+   "onderdeel": "Huishoudens",
+   "indicator_uuid": "ad3b0509-3c14-49f8-aa10-4b3b391a2d84",
+   "indicator_naam": "Huishoudens met kind",
+   "weging": 1.0,
+   "is_actueel": true
+  },
+  {
+   "kwadrant": "Samenstelling",
+   "thema": "Bevolking",
+   "onderdeel": "Huishoudens",
+   "indicator_uuid": "f18b2c78-871b-48a7-b08f-fa743e589db8",
+   "indicator_naam": "Bevolkingsdichtheid",
+   "weging": 1.0,
+   "is_actueel": true
+  },
+  {
+   "kwadrant": "Samenstelling",
+   "thema": "Bevolking",
+   "onderdeel": "Huishoudens",
+   "indicator_uuid": "257494f4-9e51-4a4a-a662-feabfe9758b0",
+   "indicator_naam": "Eenpersoonshuishoudens",
+   "weging": 1.0,
+   "is_actueel": true
+  },
+  {
+   "kwadrant": "Samenstelling",
+   "thema": "Bevolking",
+   "onderdeel": "Huishoudens",
+   "indicator_uuid": "b0ee9877-3850-4529-b352-6ec673562ef8",
+   "indicator_naam": "65+ jaar",
+   "weging": 1.0,
+   "is_actueel": false
+  },
+  {
+   "kwadrant": "Samenstelling",
+   "thema": "Bevolking",
+   "onderdeel": "Sociaal economische status",
+   "indicator_uuid": "442c39e7-3610-493f-a7ad-ef8e960d30fd",
+   "indicator_naam": "koopkracht",
+   "weging": 1.0,
+   "is_actueel": false
+  },
+  {
+   "kwadrant": "Samenstelling",
+   "thema": "Bevolking",
+   "onderdeel": "Sociaal economische status",
+   "indicator_uuid": "4a24357e-dbe1-4376-8644-53a5f9e1910b",
+   "indicator_naam": "huishouden jaar",
+   "weging": 1.0,
+   "is_actueel": true
+  },
+  {
+   "kwadrant": "Samenstelling",
+   "thema": "Bevolking",
+   "onderdeel": "Sociaal economische status",
+   "indicator_uuid": "56f32b9a-bc45-4be1-9e1c-c2668c2e2a32",
+   "indicator_naam": "Opleidingsniveau hoog",
+   "weging": 1.0,
+   "is_actueel": true
+  },
+  {
+   "kwadrant": "Samenstelling",
+   "thema": "Bevolking",
+   "onderdeel": "Sociaal economische status",
+   "indicator_uuid": "1fa5df89-13e3-424f-9eba-9372cae42896",
+   "indicator_naam": "Opleidingsniveau middelbaar",
+   "weging": 1.0,
+   "is_actueel": true
+  },
+  {
+   "kwadrant": "Samenstelling",
+   "thema": "Bevolking",
+   "onderdeel": "Sociaal economische status",
+   "indicator_uuid": "c9719a07-57a5-48cf-8f93-b6f932aead51",
+   "indicator_naam": "Opleidingsniveau laag",
+   "weging": 1.0,
+   "is_actueel": true
+  },
+  {
+   "kwadrant": "Samenstelling",
+   "thema": "Bevolking",
+   "onderdeel": "Sociaal economische status",
+   "indicator_uuid": "bbb97c70-3b6d-4302-b8a2-6a07a2e2c087",
+   "indicator_naam": "zzp'ers",
+   "weging": 1.0,
+   "is_actueel": true
+  },
+  {
+   "kwadrant": "Samenstelling",
+   "thema": "Bevolking",
+   "onderdeel": "Sociaal economische status",
+   "indicator_uuid": "7fd17589-46b6-460a-a1f6-ef421517ccb3",
+   "indicator_naam": "werkzamen",
+   "weging": 1.0,
+   "is_actueel": true
+  },
+  {
+   "kwadrant": "Samenstelling",
+   "thema": "Bevolking",
+   "onderdeel": "Sociaal economische status",
+   "indicator_uuid": "082ebe48-ee30-49f4-9106-e9e1074938d4",
+   "indicator_naam": "potentiële",
+   "weging": 1.0,
+   "is_actueel": false
+  },
+  {
+   "kwadrant": "Samenstelling",
+   "thema": "Bevolking",
+   "onderdeel": "Sociaal economische status",
+   "indicator_uuid": "9c035f53-75a5-43eb-8496-22c4c6f08d6b",
+   "indicator_naam": "Inkomen per inwoner",
+   "weging": 1.0,
+   "is_actueel": true
+  }
+ ]
+}

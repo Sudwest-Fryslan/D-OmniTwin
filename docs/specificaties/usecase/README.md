@@ -70,7 +70,7 @@ De woorden **MOET**, **MOET NIET**, **MAG**, **AANBEVOLEN** en **NIET AANBEVOLEN
 | **dataset** | een gegevensverzameling die de use case via de laad-API registreert en levert; beschreven in `datasets/<id>.json` |
 | **registratie** | het deel van `datasets/<id>.json` dat naar `POST /api/laden/v1/datasets` gaat: DCAT-beschrijving plus laadprofiel |
 | **levering** | één volledige snapshot van een dataset, gemaakt door de uitvoerder uit de bron (GeoPackage, Data Package of `swf-json`) |
-| **profiel** | het contract van een levering in de laad-API: `waarnemingen`, `definities`, `gebiedsindeling`, `kaartlaag` (en `kompasprofiel` via beheer) |
+| **profiel** | het contract van een levering in de laad-API: `waarnemingen`, `definities`, `gebiedsindeling`, `kaartlaag` (en `kompasprofiel` en `externe-kaartlagen` via beheer) |
 | **bron** | waar de data vandaan komt: een openbare internetbron, een interne export of een statisch bestand in de use case |
 | **bronadapter** | code in de kern die één soort bron leest (`src/omnitwin/bronadapters/`) |
 | **bewerking** | een stap uit een vaste lijst die records omzet (hernoemen, filteren, koppelen, …), zonder expressies |
@@ -96,7 +96,7 @@ usecases/<naam>/
 Regels:
 
 1. De mapnaam MOET gelijk zijn aan `naam` in het manifest en MOET voldoen aan `^[a-z0-9]+(-[a-z0-9]+)*$`.
-2. **Allowlist van bestandstypen.** Buiten `bewijs/` MOGEN alleen `.json`, `.md` en `.csv` staan. In `bewijs/` MOGEN alleen `.json`, `.md`, `.webp`, `.png`, `.jpg` en `.jpeg` staan; nieuwe afbeeldingen MOETEN WebP zijn. Elk ander bestand (ook zonder extensie) is een fout. De uitvoerder (`bestandsfouten`) en de unittest `tests/test_usecases_uitvoerder.py` dwingen dit af.
+2. **Allowlist van bestandstypen.** Buiten `bewijs/` MOGEN alleen `.json`, `.md` en `.csv` staan; in `data/` ook `.gpkg` (geometrie die niet online te downloaden is, met `herkomst.json` ernaast). In `bewijs/` MOGEN alleen `.json`, `.md`, `.webp`, `.png`, `.jpg` en `.jpeg` staan; nieuwe afbeeldingen MOETEN WebP zijn. Elk ander bestand (ook zonder extensie) is een fout. De uitvoerder (`bestandsfouten`) en de unittest `tests/test_usecases_uitvoerder.py` dwingen dit af.
 3. Een use case MOET NIET code of uitvoerbare bestanden bevatten: geen scripts, geen notebooks, geen SQL, geen expressies in JSON. Er zijn geen uitzonderingen (de laatste, `hittestress/maak_data.py`, is sinds https://github.com/TLaan/D-OmniTwin/issues/236 de kernadapter `wcs-zonaal`).
 4. Statische bestanden MOETEN klein zijn (richtlijn: samen ≤ 1 MB) en MOETEN NIET openbare brondata bevatten die ook te downloaden is (zie 7).
 5. De README van de use case MOET de vraag, de gebruiker, de stappen, de acceptatiecriteria en de bronnen beschrijven, en AANBEVOLEN de screenshots uit `bewijs/` tonen.
@@ -150,7 +150,7 @@ Een dataset staat op twee plekken: een verwijzing in het manifest (`datasets[]`)
 | `id` | string, `^[a-z0-9]+(-[a-z0-9]+)*$`, 3–63 tekens | **ja** | `datasetId` in de laad-API; gelijk aan `id` in `datasets/<id>.json` |
 | `route` | `laden` \| `compat` \| `beheer` | **ja** | `laden`: `POST /api/laden/v1/datasets/{id}/leveringen`; `compat`: de compat-ingang van adapter `swf-monitor-v1`; `beheer`: `/api/beheer/v1` (inrichting, geen dataset in de laad-API) |
 | `registratie` | string, `^datasets/[a-z0-9-]+\.json$` | **ja** | pad naar het datasetbestand |
-| `profiel` | `waarnemingen` \| `definities` \| `gebiedsindeling` \| `kaartlaag` \| `kompasprofiel` | nee | profiel van de levering; `kompasprofiel` alleen met route `beheer` |
+| `profiel` | `waarnemingen` \| `definities` \| `gebiedsindeling` \| `kaartlaag` \| `kompasprofiel` \| `externe-kaartlagen` | nee | profiel van de levering; `kompasprofiel` en `externe-kaartlagen` alleen met route `beheer` (in-process: `omnitwin.laden.beheer`) |
 | `beheerpad` | string | bij route `beheer` | pad in `/api/beheer/v1`; de uitvoerder doet `PUT <beheerpad>/<id>` |
 | `rol` | string | nee | Keycloak-rol van de leverende client, bijv. `dataset:<id>:laden` |
 | `client` | string | nee | functionele naam van de leverende machineclient (AANBEVOLEN: de `naam` van een actor) |
@@ -253,7 +253,7 @@ Elke adapter levert tabellen met records; een geometrie staat altijd in EPSG:289
 | `kopieer` | `{van, naar}` | waarde kopiëren |
 | `tekst`, `getal` | `[veld]` | type omzetten |
 | `waarde_map` | `{veld, map, naar?, standaard?}` | waarde vertalen via een tabel |
-| `koppel` | `{sleutel, bron, op, velden, tabel?, verplicht?, reden?, normaliseer?}` | velden overnemen uit een andere bron |
+| `koppel` | `{sleutel, bron, op, velden, tabel?, verplicht?, reden?, normaliseer?, bewerkingen?}` | velden overnemen uit een andere bron; `bewerkingen` eerst op die bron (bijv. `binnen`) |
 | `afwijzen` | voorwaarde + `reden` | regels die voldoen eruit, geteld onder de reden |
 | `filter` | voorwaarde | alleen regels die voldoen |
 | `jaar_uit_datum` | `{veld, jaar?, peildatum?}` | `JJJJ-01-01` → jaar; ongeldig → afgewezen (`jaar-ongeldig`) |

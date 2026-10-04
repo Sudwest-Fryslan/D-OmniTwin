@@ -235,6 +235,26 @@ Opnieuw installeren is veilig: een ongewijzigde levering wordt herkend, een gewi
 
 Een eigen bron (bijvoorbeeld een export uit FME of een eigen database) levert aan via de [laad-API](../api/laden/README.md): een machineclient in Keycloak met de rol `dataset:<id>:laden` (zie [Keycloak](#keycloak-optioneel)), daarna leveren en de status volgen. Een nieuwe soort data begint met een use case volgens de [Use Case Specificatie](../specificaties/usecase/README.md); zie ook [CONTRIBUTING.md](../../CONTRIBUTING.md).
 
+### Eerste SWF-vulling
+
+Bij SWF komt de eerste vulling uit de lokale D-OmniTwin-database van de projectleider (https://github.com/TLaan/D-OmniTwin/issues/222, A1; openbaar volgens besluit van de projectleiding). Wat daarvan niet online te downloaden is, staat als bestand in git bij de use case waar het hoort en laadt dus vanzelf bij de eerste start (`LOAD_SAMPLE_DATA=true`):
+
+- welstandsgebieden × buurt: [`swf-gebiedsindelingen`](../../usecases/swf-gebiedsindelingen/README.md);
+- het Volledig Kompas zoals de projectleider het inrichtte: [`swf-kompasprofiel`](../../usecases/swf-kompasprofiel/README.md);
+- de externe kaartlagen (WFS/WMS): [`swf-kaartlagen`](../../usecases/swf-kaartlagen/README.md).
+
+Het Kompas en de kaartlagen gaan via de beheerroute, die nu alleen in-process bestaat (`installeer --inproces`, zoals `db-init`). Met de export van de huidige monitor (`SWF_DUMP_DIR`) komen daar de SWF-definities bij, en daarmee de monitorindicatoren in het Kompas.
+
+Wat online te halen is maar nog geen adapter heeft (BAG, RVO EP-Online, OpenStreetMap), komt eenmalig uit de dump via [`swf-initialisatie`](../../usecases/swf-initialisatie/README.md): dump herstellen in een tijdelijke container, [`scripts/beheer/swf_export.py --uit`](../../scripts/beheer/swf_export.py) en
+
+```bash
+docker compose run --rm -v <export>:/swf-export:ro -v <monitorexport>:/swf-dump:ro \
+  -e SWF_EXPORT_DIR=/swf-export -e SWF_DUMP_DIR=/swf-dump \
+  db-init python -m omnitwin.usecases installeer swf-initialisatie --inproces
+```
+
+De precieze stappen staan in de [README van swf-initialisatie](../../usecases/swf-initialisatie/README.md#stappen). Een nieuwere dump: hetzelfde script met `--repo` werkt de bestanden in git bij (via een PR). Open data gaat nooit mee (die downloadt de eigen use case), demodata ook niet.
+
 De oude routes `init_data/scripts/seed_fryslan.py` en het ETL-framework in `ETL/` zijn niet meer de weg om een installatie te vullen (https://github.com/TLaan/D-OmniTwin/issues/69). `ETL/` bevat nog bronscripts voor ontwikkelaars.
 
 ---

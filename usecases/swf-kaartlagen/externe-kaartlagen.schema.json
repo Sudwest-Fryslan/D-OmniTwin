@@ -1,0 +1,125 @@
+{
+  "$schema": "https://datapackage.org/profiles/2.0/tableschema.json",
+  "name": "externe_kaartlagen",
+  "title": "Externe kaartlagen (beheer): definitie van een WFS-, WMS- of GeoJSON-laag",
+  "description": "Eén regel = één externe kaartlaag zoals in het beheerscherm (Beheer › Externe lagen; doel: externe_kaartlagen). toegang: openbaar of intern (aanname B3 van https://github.com/TLaan/D-OmniTwin/issues/222); intern gaat naar de kolom toegang van de toegang per laag (https://github.com/TLaan/D-OmniTwin/pull/274); zonder die kolom wordt een interne laag niet actief gezet.",
+  "fields": [
+    {
+      "name": "naam",
+      "type": "string",
+      "constraints": {
+        "required": true,
+        "maxLength": 100
+      }
+    },
+    {
+      "name": "beschrijving",
+      "type": "string"
+    },
+    {
+      "name": "laag_type",
+      "type": "string",
+      "constraints": {
+        "enum": [
+          "selectie",
+          "data_koppel"
+        ]
+      }
+    },
+    {
+      "name": "bron_type",
+      "type": "string",
+      "constraints": {
+        "required": true,
+        "enum": [
+          "WFS",
+          "WMS",
+          "GeoJSON"
+        ]
+      }
+    },
+    {
+      "name": "url",
+      "type": "string",
+      "constraints": {
+        "required": true,
+        "pattern": "^https://.*"
+      }
+    },
+    {
+      "name": "typename",
+      "type": "string"
+    },
+    {
+      "name": "srsname",
+      "type": "string"
+    },
+    {
+      "name": "versie",
+      "type": "string"
+    },
+    {
+      "name": "filter_type",
+      "type": "string",
+      "constraints": {
+        "enum": [
+          "bbox",
+          "provincie",
+          "alles"
+        ]
+      }
+    },
+    {
+      "name": "filter_waarde",
+      "type": "string"
+    },
+    {
+      "name": "koppel_veld",
+      "type": "string"
+    },
+    {
+      "name": "kleur_lijn",
+      "type": "string",
+      "constraints": {
+        "pattern": "^#[0-9A-Fa-f]{6}$"
+      }
+    },
+    {
+      "name": "kleur_fill",
+      "type": "string",
+      "constraints": {
+        "pattern": "^#[0-9A-Fa-f]{6}$"
+      }
+    },
+    {
+      "name": "opacity",
+      "type": "number",
+      "constraints": {
+        "minimum": 0,
+        "maximum": 1
+      }
+    },
+    {
+      "name": "actief",
+      "type": "boolean"
+    },
+    {
+      "name": "volgorde",
+      "type": "integer"
+    },
+    {
+      "name": "toegang",
+      "type": "string",
+      "constraints": {
+        "required": true,
+        "enum": [
+          "openbaar",
+          "intern"
+        ]
+      }
+    }
+  ],
+  "missingValues": [
+    ""
+  ]
+}

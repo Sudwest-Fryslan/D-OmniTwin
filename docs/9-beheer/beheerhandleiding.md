@@ -168,6 +168,8 @@ Controleer na elke geplande levering (bijvoorbeeld de maandelijkse ETL) of er ee
 
 Use cases installeren of opnieuw laden: [Data](installatie.md#4-data).
 
+**Eerste SWF-vulling**: welstand × buurt, het Volledig Kompas en de externe kaartlagen laden vanzelf uit de use cases (bestanden in git); BAG, EP-Online en OpenStreetMap eenmalig via `swf-initialisatie`, zie [Eerste SWF-vulling](installatie.md#eerste-swf-vulling). Controleer daarna `swf-gebied-welstand-buurt` en `swf-init-waarnemingen` *gepubliceerd* (query hierboven), het Kompas en de externe lagen in het beheerscherm. Ruim de tijdelijke database (`docker rm -f swfdump`), de dump en de export daarna op.
+
 ---
 
 ## 6. Certificaten en HTTPS

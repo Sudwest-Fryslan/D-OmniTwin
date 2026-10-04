@@ -1,7 +1,7 @@
 # TC-07-004 — SWF-gebiedsindelingen als GeoPackage-leveringen
 
-**Status:** ontwerp (de laad-API is nog niet gebouwd; deze use case is de specificatie en straks de acceptatietest)
-**Versie:** 0.2.0 · **Afhankelijk van:** [swf-definities](../swf-definities/README.md), [cbs-gebiedsindelingen](../cbs-gebiedsindelingen/README.md)
+**Status:** actief (datasets waarvan de bron hier ontbreekt, worden overgeslagen)
+**Versie:** 0.3.0 · **Afhankelijk van:** [swf-definities](../swf-definities/README.md), [cbs-gebiedsindelingen](../cbs-gebiedsindelingen/README.md)
 **Manifest:** [`usecase.json`](usecase.json) · **Controleren:** `python -m omnitwin.usecases controleer swf-gebiedsindelingen`
 
 ## Vraag
@@ -20,7 +20,7 @@ De monitor haalt gebieden live uit de WFS van de GeoServer van SWF. D-OmniTwin s
 
 | Dataset | Route | Profiel | Formaat | Bron | Toegang | Licentie | Rol |
 |---|---|---|---|---|---|---|---|
-| [`swf-gebied-welstand-buurt`](datasets/swf-gebied-welstand-buurt.json) | laden | gebiedsindeling | geopackage | SWF-intern: export GeoServer ($SWF_GEO_DIR) | beperkt (inloggen) | onbekend (navragen) | `dataset:swf-gebied-welstand-buurt:laden` |
+| [`swf-gebied-welstand-buurt`](datasets/swf-gebied-welstand-buurt.json) | laden | gebiedsindeling | geopackage | repo: [`data/welstandsgebieden.gpkg`](data/) (lokale D-OmniTwin-database); variant `geoserver`: $SWF_GEO_DIR | open | onbekend (navragen) | `dataset:swf-gebied-welstand-buurt:laden` |
 | [`swf-gebied-buurt-bebouwde-kom`](datasets/swf-gebied-buurt-bebouwde-kom.json) | laden | gebiedsindeling | geopackage | CBS-buurten (PDOK, open) × bebouwde kom (SWF-intern, $SWF_GEO_DIR) | beperkt (inloggen) | onbekend (navragen) | `dataset:swf-gebied-buurt-bebouwde-kom:laden` |
 | [`swf-gebied-woonplaats`](datasets/swf-gebied-woonplaats.json) | laden | gebiedsindeling | geopackage | BAG woonplaatsen via PDOK (open, CC0) | open | CC0 | `dataset:swf-gebied-woonplaats:laden` |
 | [`swf-gebied-postcode`](datasets/swf-gebied-postcode.json) | laden | gebiedsindeling | geopackage | CBS Postcode-4 2023 via PDOK (open, CC BY 4.0) | open | CC BY 4.0 | `dataset:swf-gebied-postcode:laden` |
@@ -30,7 +30,9 @@ De monitor haalt gebieden live uit de WFS van de GeoServer van SWF. D-OmniTwin s
 
 Verwacht:
 
-- `swf-gebied-welstand-buurt`: features ±758 (755 met waarden); codes 1–758 → WS1–WS758
+- `swf-gebied-welstand-buurt`: 756 features (4,9 MB, verliesvrij, zonder ruimtelijke index); codes 1–758 → WS1–WS758
+
+**Welstand × buurt uit de repo.** Herkomst: de lokale D-OmniTwin-database van de projectleider (dump van 04-10-2026), openbaar volgens besluit van de projectleiding (https://github.com/TLaan/D-OmniTwin/issues/222). Het bestand staat in [`data/`](data/) met `herkomst.json` (aantallen, controlesom); vervangen bij een nieuwere dump met [`scripts/beheer/swf_export.py --repo`](../../scripts/beheer/swf_export.py) en een PR. Is de export uit de GeoServer van SWF er (`SWF_GEO_DIR`), dan gebruikt de uitvoerder die (variant `geoserver`, B1). Er is één dataset voor dit gebiedstype.
 - `swf-gebied-buurt-bebouwde-kom`: features ±273 (alle met waarden); codes BU1900xxxx_BBKJ / _BBKN
 - `swf-gebied-woonplaats`: features 82 woonplaatsen (BAG, oktober 2026)
 - `swf-gebied-postcode`: features 97 PC4-gebieden (CBS 2023)
@@ -47,7 +49,7 @@ Verwacht:
 | swf-gebied-postcode | 336 → 97 | geldig |
 | swf-gebied-deelgebieden | 6 | geldig |
 | swf-gebied-coordinatorgebieden | 147 → 146 (1 geometrie zonder vlak) | geldig |
-| swf-gebied-welstand-buurt | – | overgeslagen: SWF_GEO_DIR niet gezet |
+| swf-gebied-welstand-buurt | 756 | uit de repo (data/) |
 | swf-gebied-buurt-bebouwde-kom | – | overgeslagen: SWF_GEO_DIR niet gezet |
 | swf-gebied-bebouwde-kom | – | overgeslagen: SWF_GEO_DIR niet gezet |
 
@@ -97,7 +99,9 @@ Verwacht:
 
 ## Bewijs
 
-In [`bewijs/`](bewijs/README.md), gemaakt door de uitvoerder (niet in git): `controle.json` (uitvoer van `controleer`), per levering de status-JSON van de laad-API (`levering-<dataset>.json`: status, versie, aantallen, fouten), en screenshots van de viewer-controles.
+<!-- bewijs:start -->
+*Nog geen bewijs. Maken tegen een draaiende installatie: `python -m omnitwin.usecases bewijs swf-gebiedsindelingen`.*
+<!-- bewijs:end -->
 
 ## Bekende afwijkingen
 

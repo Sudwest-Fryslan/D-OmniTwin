@@ -5,12 +5,12 @@
     "@context": "https://data.overheid.nl/dcat-ap-nl/context.jsonld",
     "@type": "dcat:Dataset",
     "dct:title": "SWF-initialisatie — indicatorwaarden uit de lokale D-OmniTwin-database",
-    "dct:description": "Eerste vulling van de SWF-installatie: indicatorwaarden uit een export van de lokale D-OmniTwin-database van de projectleider (rijker dan de export van de huidige gebiedsmonitor). Alleen wat niet uit een open bron komt (open data downloadt de adapter van de eigen use case) en geen demodata. Bij overlap met een andere dataset wint de nieuwste bronpeildatum (aanname A6).",
+    "dct:description": "Eerste vulling van de SWF-installatie: indicatorwaarden uit een export van de lokale D-OmniTwin-database van de projectleider (rijker dan de export van de huidige gebiedsmonitor), voor Fryslân en de welstandsgebieden. Mee: waarden uit de SWF-gebiedsmonitor (pushbestanden per indicator × gebiedstype) en open data waarvoor D-OmniTwin nog geen adapter heeft (Kadaster BAG, RVO EP-Online, OpenStreetMap, per buurt berekend). Niet mee: open data die een eigen use case downloadt (CBS-tabellen, RIVM-gezondheidsmonitor, Kerncijfers wijken en buurten), waarden zonder bron, waarden op gebieden die de installatie niet kent, en demodata. Bij overlap met een andere dataset wint de nieuwste bronpeildatum (aanname A6).",
     "dct:publisher": "https://identifier.overheid.nl/tooi/id/gemeente/gm1900",
-    "dct:accessRights": "http://publications.europa.eu/resource/authority/access-right/RESTRICTED",
+    "dct:accessRights": "http://publications.europa.eu/resource/authority/access-right/PUBLIC",
     "dct:license": "http://standaarden.overheid.nl/owms/terms/licentieonbekend",
     "dct:spatial": "https://identifier.overheid.nl/tooi/id/gemeente/gm1900",
-    "dct:source": "Export van de lokale D-OmniTwin-database (tabel gebied_data), via SWF_EXPORT_DIR",
+    "dct:source": "Lokale D-OmniTwin-database van de projectleider SWF (dump van 04-10-2026); openbaar volgens besluit van de projectleiding (04-10-2026, https://github.com/TLaan/D-OmniTwin/issues/222), via SWF_EXPORT_DIR",
     "dcat:theme": [
       "http://standaarden.overheid.nl/owms/terms/Bestuur"
     ],
@@ -43,7 +43,7 @@
     "pad": "${SWF_EXPORT_DIR}/gebied_data.csv",
     "formaat": "csv",
     "tabel": "waarnemingen",
-    "omschrijving": "CSV uit de lokale database (export-query in de README); nooit in git"
+    "omschrijving": "gebied_data.csv van scripts/beheer/swf_export.py (Fryslân + welstandsgebieden, zonder DEMODATA); nooit in git"
   },
   "bewerkingen": [
     {
@@ -53,16 +53,140 @@
         "begint_met": "DEMODATA",
         "reden": "demodata"
       },
-      "omschrijving": "demodata komt uit de eigen (demo)use cases, niet uit de initialisatie (#236)"
+      "omschrijving": "demodata komt uit de eigen (demo)use cases, niet uit de initialisatie (#236); de export laat hem al weg"
     },
     {
-      "id": "open-data",
+      "id": "open-data-cbs",
       "afwijzen": {
         "veld": "bron",
         "begint_met": "CBS",
         "reden": "open-data"
       },
-      "omschrijving": "open data (CBS) downloadt de adapter van cbs-kerncijfers zelf; voorlopig herkend aan de bronvermelding (open vraag)"
+      "omschrijving": "CBS StatLine (Kerncijfers, nabijheid, 50150NED): downloaden cbs-kerncijfers en rivm-gezondheidsmonitor zelf"
+    },
+    {
+      "id": "open-data-rivm",
+      "afwijzen": {
+        "veld": "bron",
+        "begint_met": "Gezondheidsmonitor RIVM",
+        "reden": "open-data"
+      },
+      "omschrijving": "RIVM Gezondheidsmonitor: downloadt rivm-gezondheidsmonitor zelf"
+    },
+    {
+      "id": "open-data-kerncijfers",
+      "afwijzen": {
+        "veld": "bron",
+        "begint_met": "Kerncijfers wijken en buurten",
+        "reden": "open-data"
+      },
+      "omschrijving": "CBS Kerncijfers wijken en buurten: downloadt cbs-kerncijfers zelf"
+    },
+    {
+      "id": "bron-onbekend",
+      "afwijzen": {
+        "veld": "bron",
+        "leeg": true,
+        "reden": "bron-onbekend"
+      },
+      "omschrijving": "zonder bron niet herleidbaar (in deze export: politiecijfers, die politie-misdrijven open downloadt)"
+    },
+    {
+      "id": "provincie",
+      "afwijzen": {
+        "veld": "gebiedstype_id",
+        "gelijk": "22401c4c-8272-4895-a0a2-a8d48a0b4c36",
+        "reden": "gebiedstype-provincie"
+      },
+      "omschrijving": "de installatie kent geen provincies als gebied"
+    },
+    {
+      "id": "buurt-2024",
+      "koppel": {
+        "sleutel": "gebied_id",
+        "bron": {
+          "adapter": "wfs",
+          "url": "https://service.pdok.nl/cbs/gebiedsindelingen/2024/wfs/v1_0",
+          "laag": "gebiedsindelingen:buurt_gegeneraliseerd",
+          "bbox": [
+            110000,
+            525000,
+            240000,
+            625000
+          ],
+          "omschrijving": "CBS-buurten 2024 (PDOK), dezelfde bron als cbs-gebied-buurten"
+        },
+        "op": "statcode",
+        "velden": {
+          "statcode": "_buurt"
+        },
+        "bewerkingen": [
+          {
+            "binnen": {
+              "bron": {
+                "adapter": "wfs",
+                "url": "https://service.pdok.nl/cbs/gebiedsindelingen/2024/wfs/v1_0",
+                "laag": "gebiedsindelingen:provincie_gegeneraliseerd",
+                "bbox": [
+                  110000,
+                  525000,
+                  240000,
+                  625000
+                ],
+                "omschrijving": "CBS-provinciegrens 2024 (PDOK)"
+              },
+              "bewerkingen": [
+                {
+                  "filter": {
+                    "veld": "statcode",
+                    "gelijk": "PV21"
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "omschrijving": "bestaat de buurtcode in de CBS-indeling 2024 die cbs-gebiedsindelingen laadt (binnen Fryslân)?"
+    },
+    {
+      "id": "welstand",
+      "waarde_map": {
+        "veld": "gebiedstype_id",
+        "map": {
+          "29fc9f28-89d9-488b-bf68-2ed176187b21": "WS"
+        },
+        "naar": "_welstand",
+        "standaard": ""
+      },
+      "omschrijving": "welstandsgebieden komen uit swf-init-welstandsgebieden (zelfde export)"
+    },
+    {
+      "sjabloon": {
+        "naar": "_gebied",
+        "sjabloon": "{_buurt}{_welstand}"
+      }
+    },
+    {
+      "id": "gebied-onbekend",
+      "afwijzen": {
+        "veld": "_gebied",
+        "leeg": true,
+        "reden": "gebied-onbekend"
+      },
+      "omschrijving": "codes van een andere CBS-indeling: geen gebied in de installatie (anders keurt de laad-API de hele levering af)"
+    },
+    {
+      "id": "welstand-prefix",
+      "prefix": {
+        "veld": "gebied_id",
+        "prefix": "WS",
+        "als": {
+          "veld": "gebiedstype_id",
+          "gelijk": "29fc9f28-89d9-488b-bf68-2ed176187b21"
+        }
+      },
+      "omschrijving": "welstand-id 728 heet in D-OmniTwin WS728 (code_prefix van het gebiedstype)"
     },
     {
       "hernoem": {

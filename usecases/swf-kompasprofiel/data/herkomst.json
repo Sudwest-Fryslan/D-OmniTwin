@@ -1,0 +1,26 @@
+{
+ "bron": "lokale D-OmniTwin-database van de projectleider SWF (dump)",
+ "dump_datum": "2026-10-04",
+ "toegang": "openbaar (besluit projectleiding 04-10-2026, https://github.com/TLaan/D-OmniTwin/issues/222)",
+ "gemaakt_met": "scripts/beheer/swf_export.py --repo",
+ "inhoud": {
+  "bestanden": {
+   "kompasprofiel_volledig_kompas.json": {
+    "profiel": "Volledig Kompas",
+    "indicatoren": 247,
+    "unieke_indicatoren": 241
+   }
+  },
+  "lege_profielen": [
+   "Klimaat Kompas"
+  ],
+  "niet_geexporteerd": {
+   "kompas_extra_onderdelen": 22,
+   "kompas_indicator_extra_tags": 53,
+   "kompas_indicator_scoring_regels": 16
+  }
+ },
+ "bestanden": {
+  "kompasprofiel_volledig_kompas.json": "d2629e0ef89936c5d5bfc1d6d5e7376c1e06fcb6fd2e9ea2bbf020de35147696"
+ }
+}

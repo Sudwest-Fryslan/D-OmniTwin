@@ -1,0 +1,69 @@
+{
+  "id": "swf-kompas-volledig",
+  "beschrijving": {
+    "@context": "https://data.overheid.nl/dcat-ap-nl/context.jsonld",
+    "@type": "dcat:Dataset",
+    "dct:title": "Kompasprofiel Volledig Kompas (SWF)",
+    "dct:description": "De plek van de indicatoren in het Volledig Kompas (kwadrant › thema › onderdeel, met weging en actueel) zoals de projectleider het in de lokale D-OmniTwin-database heeft ingericht: 247 plekken, 241 indicatoren. Vult het profiel aan: wat er al is, blijft staan.",
+    "dct:publisher": "https://identifier.overheid.nl/tooi/id/gemeente/gm1900",
+    "dct:accessRights": "http://publications.europa.eu/resource/authority/access-right/PUBLIC",
+    "dct:license": "http://standaarden.overheid.nl/owms/terms/licentieonbekend",
+    "dct:spatial": "https://identifier.overheid.nl/tooi/id/gemeente/gm1900",
+    "dct:source": "Lokale D-OmniTwin-database van de projectleider SWF (dump van 04-10-2026); openbaar volgens besluit van de projectleiding (04-10-2026, https://github.com/TLaan/D-OmniTwin/issues/222)",
+    "dcat:theme": [
+      "http://standaarden.overheid.nl/owms/terms/Bestuur"
+    ],
+    "dcat:keyword": [
+      "kompas",
+      "gebiedsmonitor"
+    ],
+    "dcat:contactPoint": {
+      "@type": "vcard:Organization",
+      "vcard:fn": "Functioneel beheer gebiedsmonitor, gemeente Súdwest-Fryslân"
+    }
+  },
+  "bron": {
+    "adapter": "lokaal-bestand",
+    "pad": "${REPO}/usecases/swf-kompasprofiel/data/kompasprofiel_volledig_kompas.json",
+    "formaat": "json",
+    "omschrijving": "data/kompasprofiel_volledig_kompas.json (formaat van db/stuurdata/kompasprofiel_*.json), gemaakt met scripts/beheer/swf_export.py --repo"
+  },
+  "bewerkingen": [
+    {
+      "constant": {
+        "profiel": "Volledig Kompas",
+        "gebiedstype_id": "afba67cb-6b38-4723-9c95-102a22d5b38a"
+      }
+    },
+    {
+      "id": "a4-dubbele-uuid",
+      "waarde_map": {
+        "veld": "indicator_uuid",
+        "map": {
+          "c4e1b3bb-e4ce-4cd0-bd52-219f4a9f5df3": "f6eafa70-9383-4de6-bd2a-e47309843437"
+        }
+      },
+      "omschrijving": "Waterdiepte op straat: de vervallen UUID (status B) wordt de aangehouden UUID (A4, #222)"
+    },
+    {
+      "behoud": [
+        "profiel",
+        "gebiedstype_id",
+        "kwadrant",
+        "thema",
+        "onderdeel",
+        "indicator_uuid",
+        "indicator_naam",
+        "weging",
+        "is_actueel"
+      ]
+    }
+  ],
+  "levering": {
+    "formaat": "datapackage",
+    "bestand": "swf-kompas-volledig.zip",
+    "schema": {
+      "kompasprofiel": "kompasprofiel.schema.json"
+    }
+  }
+}

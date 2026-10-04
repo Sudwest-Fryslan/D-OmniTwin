@@ -6,7 +6,7 @@
   "titel": "SWF-kaartlagen: klimaat, deelgebieden, projecten en overige lagen",
   "vraag": "Ik wil de kaartlagen van de huidige monitor (klimaatlagen, deelgebieden, coördinatorgebieden, grootgrondbezit, 'Wat speelt er?') in D-OmniTwin, met dezelfde zichtbaarheid: open lagen voor iedereen, interne lagen alleen na inloggen.",
   "gebruiker": "medewerker team of vakgroep (SWF)",
-  "status": "ontwerp",
+  "status": "actief",
   "afhankelijk_van": [
     "swf-gebiedsindelingen"
   ],
@@ -56,6 +56,22 @@
     "dataset:swf-laag-grootgrondbezit:laden"
   ],
   "datasets": [
+    {
+      "id": "swf-laag-extern",
+      "route": "beheer",
+      "registratie": "datasets/swf-laag-extern.json",
+      "profiel": "externe-kaartlagen",
+      "beheerpad": "/api/beheer/v1/externe-kaartlagen",
+      "rol": "realm-rol beheerder",
+      "client": "beheerder",
+      "prioriteit": "Should",
+      "bron": "repo: usecases/swf-kaartlagen/data/externe_kaartlagen.json (uit de lokale database)",
+      "verwacht": {
+        "lagen": 8,
+        "toegang": "openbaar (geen GeoVisia-laag in de lokale database)"
+      },
+      "toegang": "openbaar"
+    },
     {
       "id": "swf-laag-deelgebieden",
       "route": "laden",
@@ -172,6 +188,20 @@
   "controles": [
     {
       "type": "aantal",
+      "dataset": "swf-laag-extern",
+      "resource": "externe_kaartlagen",
+      "gelijk": 8,
+      "omschrijving": "de externe WFS/WMS-lagen uit de lokale database"
+    },
+    {
+      "type": "bewerking",
+      "dataset": "swf-laag-extern",
+      "reden": "lokale-laag",
+      "gelijk": 0,
+      "omschrijving": "lokale lagen komen via de laad-API (profiel kaartlaag), niet als definitie"
+    },
+    {
+      "type": "aantal",
       "dataset": "swf-laag-deelgebieden",
       "gelijk": 6
     },
@@ -281,6 +311,29 @@
     "Profiel kaartlaag heeft één geometrietype per tabel: de GeoVisia-projecten worden drie datasets (vlak, punt, lijn). Overweeg meer tabellen per kaartlaag in profiel v2.",
     "Toegang: dct:accessRights PUBLIC (openbaar) of RESTRICTED (intern, alleen met de rol lezer of beheerder; #254, ADR 0010). Welke lagen intern zijn, is open vraag 13; aanname (https://github.com/TLaan/D-OmniTwin/issues/222, B3): wat in de huidige monitor grijs of uit staat, is intern.",
     "GeoVisia bevat persoonsvelden (projectleider, e-mail, telefoon, aangemaakt/gewijzigd door): de levering neemt alleen een vaste lijst velden over. Vrije tekst (projectomschrijving) kan nog namen bevatten: DPIA-toets.",
-    "Grootgrondbezit (BRK-afgeleid) en de klimaatbewerkingen: herkomst en licentie navragen; grootgrondbezit alleen zonder natuurlijke personen."
-  ]
+    "Grootgrondbezit (BRK-afgeleid) en de klimaatbewerkingen: herkomst en licentie navragen; grootgrondbezit alleen zonder natuurlijke personen.",
+    "Externe kaartlagen (swf-laag-extern) gaan via de beheerroute, nu alleen in-process (installeer --inproces). Aanvullen, nooit overschrijven: een laag met dezelfde naam blijft. Een interne laag gaat naar de kolom toegang (#274); zonder die kolom wordt hij niet actief gezet."
+  ],
+  "bewijs": {
+    "stappen": [
+      {
+        "id": "lagen",
+        "actie": "open",
+        "pad": "/api/externe-lagen",
+        "omschrijving": "Openbare kaartlagen: de externe lagen en de deelgebieden; GeoVisia niet (intern, B3)",
+        "bevat": [
+          "Natura 2000"
+        ]
+      },
+      {
+        "id": "levering",
+        "actie": "levering",
+        "dataset": "swf-laag-deelgebieden",
+        "omschrijving": "Leveringsstatus van de deelgebieden (laad-API)",
+        "bevat": [
+          "gepubliceerd"
+        ]
+      }
+    ]
+  }
 }

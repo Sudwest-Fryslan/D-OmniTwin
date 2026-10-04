@@ -2,11 +2,11 @@
   "specificatie": "1.0",
   "naam": "swf-initialisatie",
   "id": "TC-07-025",
-  "versie": "0.1.0",
-  "titel": "SWF-initialisatie: eerste vulling uit de lokale D-OmniTwin-database",
-  "vraag": "Ik wil de SWF-installatie de eerste keer vullen met de rijkere data uit mijn lokale D-OmniTwin-database, via de laad-API en herhaalbaar, zonder open data of demodata mee te kopiëren.",
+  "versie": "0.3.0",
+  "titel": "SWF-initialisatie: vulling uit een dump van de lokale D-OmniTwin-database",
+  "vraag": "Ik wil de SWF-installatie vullen met de rijkere data uit mijn lokale D-OmniTwin-database, via de laad-API en herhaalbaar, zonder open data of demodata mee te kopiëren.",
   "gebruiker": "projectleider en functioneel beheerder SWF",
-  "status": "ontwerp",
+  "status": "actief",
   "afhankelijk_van": [
     {
       "naam": "swf-definities",
@@ -18,7 +18,7 @@
     },
     {
       "naam": "swf-gebiedsindelingen",
-      "versie": ">=0.1.0"
+      "versie": ">=0.3.0"
     }
   ],
   "actoren": [
@@ -65,9 +65,10 @@
       "prioriteit": "Must",
       "bron": "export van de lokale D-OmniTwin-database ($SWF_EXPORT_DIR/indicatoren.csv)",
       "verwacht": {
-        "indicatoren": "open vraag: welke indicatoren de projectleider levert",
+        "indicatoren": 1,
         "gebiedstypen": 0,
-        "relaties": 0
+        "relaties": 0,
+        "toelichting": "243 van de 244 gebruikte definities komen al uit swf-definities of de stuurdata; alleen 'Beperking' (CBS 85952NED, in het Kompas) niet"
       }
     },
     {
@@ -80,9 +81,14 @@
       "prioriteit": "Must",
       "bron": "export van de lokale D-OmniTwin-database ($SWF_EXPORT_DIR/gebied_data.csv)",
       "verwacht": {
-        "regels": "open vraag: welke tabellen en indicatoren",
-        "demodata": "weggelaten",
-        "open_data": "weggelaten (de adapter downloadt)",
+        "gelezen": 49903,
+        "regels": 48316,
+        "gebied_onbekend": 1587,
+        "open_data": 0,
+        "bron_onbekend": 0,
+        "gebiedstype_provincie": 0,
+        "demodata": 0,
+        "mee": "Kadaster BAG en BAG 30.228, RVO EP-Online en berekend 5.248, OpenStreetMap 2.475, SWF-gebiedsmonitor 10.365",
         "n": "leeg → bron-onderdrukt"
       }
     }
@@ -92,8 +98,8 @@
       "type": "aantal",
       "dataset": "swf-init-indicatoren",
       "resource": "indicatoren",
-      "minimaal": 1,
-      "omschrijving": "de export bevat indicatordefinities"
+      "gelijk": 1,
+      "omschrijving": "alleen de definitie die nog nergens anders vandaan komt (Beperking, in het Kompas)"
     },
     {
       "type": "aantal",
@@ -103,24 +109,59 @@
       "omschrijving": "relaties komen uit swf-definities, niet uit de initialisatie"
     },
     {
-      "type": "aantal",
-      "dataset": "swf-init-waarnemingen",
-      "minimaal": 1,
-      "omschrijving": "de export bevat waarden die niet uit een open bron komen"
-    },
-    {
       "type": "bewerking",
       "dataset": "swf-init-indicatoren",
       "reden": "status: A → O",
-      "maximaal": 0,
-      "omschrijving": "de lokale database kent geen status A (anders: dezelfde omzetting als swf-definities)"
+      "gelijk": 0,
+      "omschrijving": "de lokale database kent geen status A (A2: A = Actueel → O; O blijft O)"
+    },
+    {
+      "type": "aantal",
+      "dataset": "swf-init-waarnemingen",
+      "gelijk": 48316,
+      "omschrijving": "waarden uit de monitor en open data zonder adapter (BAG, EP-Online, OpenStreetMap)"
+    },
+    {
+      "type": "bewerking",
+      "dataset": "swf-init-waarnemingen",
+      "reden": "open-data",
+      "gelijk": 0,
+      "omschrijving": "het exportscript laat dit al weg (zonder --alles); deze regel controleert dat"
+    },
+    {
+      "type": "bewerking",
+      "dataset": "swf-init-waarnemingen",
+      "reden": "bron-onbekend",
+      "gelijk": 0,
+      "omschrijving": "het exportscript laat dit al weg (zonder --alles); deze regel controleert dat"
+    },
+    {
+      "type": "bewerking",
+      "dataset": "swf-init-waarnemingen",
+      "reden": "gebied-onbekend",
+      "gelijk": 1587,
+      "omschrijving": "buurtcodes buiten de CBS-indeling 2024 van Fryslân"
+    },
+    {
+      "type": "bewerking",
+      "dataset": "swf-init-waarnemingen",
+      "reden": "gebiedstype-provincie",
+      "gelijk": 0,
+      "omschrijving": "het exportscript laat dit al weg (zonder --alles); deze regel controleert dat"
+    },
+    {
+      "type": "bewerking",
+      "dataset": "swf-init-waarnemingen",
+      "reden": "demodata",
+      "gelijk": 0,
+      "omschrijving": "de export bevat geen demodata"
     },
     {
       "type": "api",
-      "pad": "/api/data/v1/gebied_data?gebied_id=eq.BU19000002&select=indicator_uuid,bron,andere_bronnen&limit=1",
+      "pad": "/api/data/v1/gebied_data?gebied_id=eq.BU19000002&select=indicator_uuid,bron,andere_bronnen",
       "minimaal_aantal": 1,
       "gebied": "BU19000002",
-      "omschrijving": "waarden op Bolsward-Zuidoost; bij overlap met CBS of de monitor wint de nieuwste bronpeildatum en staat de andere in andere_bronnen (A6)"
+      "omschrijving": "waarden op Bolsward-Zuidoost; bij overlap met een andere bron wint de nieuwste bronpeildatum en staat de andere in andere_bronnen (A6)"
     },
     {
       "type": "idempotent",
@@ -152,18 +193,55 @@
     },
     {
       "type": "recht",
+      "actor": "etl-initialisatie",
+      "actie": "registreren",
+      "toegestaan": false,
+      "omschrijving": "de initialisatieclient mag niet registreren (403)"
+    },
+    {
+      "type": "recht",
       "actor": "lezer",
       "actie": "leveren",
       "dataset": "swf-init-waarnemingen",
       "toegestaan": false,
       "omschrijving": "een lezer mag niet laden (403)"
+    },
+    {
+      "type": "viewer",
+      "stap": "indicator 'Aantal energielabels' op de kaart, Bolsward",
+      "verwacht": "waarden voor alle buurten van Bolsward uit RVO EP-Online (niet alleen de 13 testbuurten)"
     }
   ],
+  "bewijs": {
+    "stappen": [
+      {
+        "id": "kaart",
+        "actie": "kaart",
+        "gebied": "BU19000002",
+        "indicator": "233505e1-d22f-48b5-b67f-88ea73d12967",
+        "omschrijving": "Aantal energielabels per buurt in Bolsward (RVO EP-Online, uit de initialisatie)",
+        "bevat": [
+          "Bolsward-Zuidoost"
+        ]
+      },
+      {
+        "id": "levering",
+        "actie": "levering",
+        "dataset": "swf-init-waarnemingen",
+        "omschrijving": "Leveringsstatus van de initialisatiewaarden (laad-API)",
+        "bevat": [
+          "gepubliceerd"
+        ]
+      }
+    ]
+  },
   "bekende_afwijkingen": [
-    "Ontwerp: de export bestaat nog niet. Open vraag aan de projectleider: welke tabellen en indicatoren levert hij (CSV-export volgens de README, of liever een pg_dump van een paar tabellen)? Daarna worden bron, bewerkingen en controles passend gemaakt.",
-    "Open data (CBS) en demodata worden herkend aan de bronvermelding (bron begint met CBS of DEMODATA). Dat is voorlopig; liever levert de export alleen wat niet open is.",
-    "Gebiedsindelingen komen uit cbs-gebiedsindelingen en swf-gebiedsindelingen. Levert de lokale database eigen indelingen, dan komt er per gebiedstype een dataset met profiel gebiedsindeling (GeoPackage onder SWF_EXPORT_DIR).",
-    "Zonder n in de lokale database: vlag bron-onderdrukt, de drempel blijft in de ETL (aanname A7).",
-    "De bronpeildatum van de export is de datum van ontvangst, tenzij dcat.jsonld een dct:modified meekrijgt; bij overlap met een nieuwere CBS- of monitorlevering wint die (aanname A6)."
+    "Welstand × buurt, het Volledig Kompas en de externe kaartlagen uit de dump staan als bestand in git bij swf-gebiedsindelingen, swf-kompasprofiel en swf-kaartlagen; deze use case laadt alleen wat via SWF_EXPORT_DIR komt.",
+    "De aantallen gelden voor de dump van 04-10-2026; een nieuwe export: eerst controleer, dan de aantallen bijwerken.",
+    "BAG, EP-Online en OpenStreetMap staan niet in git (online te halen) en hebben nog geen adapter: zonder SWF_EXPORT_DIR heeft een installatie ze alleen voor de 13 testbuurten (sample). Vervolg: adapters.",
+    "Open data op wijk- en gemeenteniveau en 'Huisarts' (45.239 waarden in de dump) laden de open-data-use cases nog niet; vervolg: cbs-kerncijfers en rivm-gezondheidsmonitor uitbreiden.",
+    "Definities die al uit swf-definities of de stuurdata komen, worden niet overschreven (de lokale database wijkt af bij 100 omschrijvingen, 40 eenheden, 19 score_types, 8 statussen, 7 namen).",
+    "De publicatie van de waarden duurt ±5,5 minuut, vrijwel geheel in laden.herbouw_gebied_data() (voorrang, A6).",
+    "Zonder n in de lokale database: vlag bron-onderdrukt, de drempel blijft in de ETL (aanname A7)."
   ]
 }
