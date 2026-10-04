@@ -61,6 +61,7 @@ Eerdere wijzigingen, van vóór dit bestand, zijn terug te vinden in de git-hist
 
 ### Gewijzigd
 
+- Kop van de viewer: geen aparte knop *Inloggen* meer naast *Beheer*. Niet ingelogd leidt *Beheer* naar het inloggen; ingelogd staan je naam en *Uitloggen* erbij. Staat de viewer dicht (`VIEWER_TOEGANG=inloggen`), dan kom je pas binnen na het inloggen.
 - Kaart: een klik op een buurt ging verloren op pc's zonder grafische kaart (software-WebGL, virtuele werkplekken): de klikherkenning van deck.gl wacht nu 1000 ms in plaats van 250 ms ([#279](https://github.com/TLaan/D-OmniTwin/issues/279)).
 - Kompas: de vergelijkingsgrafiek van een multi-selectie bleef verborgen na een indicator met één datapunt ([#280](https://github.com/TLaan/D-OmniTwin/issues/280)).
 - **Let op bij bijwerken:** `OMNITWIN_OMGEVING` is standaard `productie`, en dan weigert `db-init` een bekend zwak `ADMIN_PASSWORD` of `KEYCLOAK_ADMIN_PASSWORD` (zoals `admin`, `wachtwoord`, gelijk aan de gebruikersnaam of korter dan 8 tekens); de stack start dan niet. Kies een sterk wachtwoord, of zet `OMNITWIN_OMGEVING=test` ([#245](https://github.com/TLaan/D-OmniTwin/issues/245)).

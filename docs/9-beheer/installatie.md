@@ -529,7 +529,7 @@ docker compose exec postgres sh -c 'rm /tmp/keycloak.dump'
 
 ### Toegang tot de viewer (open of dicht)
 
-Standaard (`VIEWER_TOEGANG=open`) is de kaart op `http://<host>/` voor iedereen open (#266, [ADR 0009](../2-architectuur/adr/0009-viewer-achter-login-forwardauth.md)). Staat [Keycloak](#keycloak-optioneel) aan (met `OIDC_ISSUER`), dan staat rechtsboven in de kaart **Inloggen**; ingelogd zie je je gebruikersnaam en **Uitloggen**.
+Standaard (`VIEWER_TOEGANG=open`) is de kaart op `http://<host>/` voor iedereen open (#266, [ADR 0009](../2-architectuur/adr/0009-viewer-achter-login-forwardauth.md)). Staat [Keycloak](#keycloak-optioneel) aan (met `OIDC_ISSUER`), dan leidt **Beheer** rechtsboven in de kaart naar het inloggen; ingelogd zie je je gebruikersnaam en **Uitloggen**. Er is geen aparte inlogknop.
 
 **Viewer dichtzetten**, zoals de huidige SWF-monitor: zet in `.env`
 
