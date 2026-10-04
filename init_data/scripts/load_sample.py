@@ -6,7 +6,7 @@ Laadt de minimale, zelfstandige sample dataset (12 SWF buurten) in de database.
 Bedoeld voor snelle start, tests en demonstraties zonder externe data-downloads.
 
 Gebruik:
-    python init_data/scripts/load_sample.py [--stap alle|definities|stuurdata|buurten|indicatoren|kompas|waarden]
+    python init_data/scripts/load_sample.py [--stap alle|definities|stuurdata|buurten|indicatoren|kompas|waarden|drempels]
 
     'definities' laadt het product zonder data (stuurdata, indicatordefinities, Kompas).
     De data (gebieden en waarden) komt uit de use cases: init_data/scripts/laad_usecase.py.
@@ -45,6 +45,9 @@ BUURTEN_GEOJSON = SAMPLE_DIR / "2_brondata" / "sample_buurten.geojson"
 INDICATOREN_CSV = SAMPLE_DIR / "2_brondata" / "sample_indicatoren.csv"
 STANDAARD_INDICATOREN_CSV = INDICATOREN_CSV
 KOMPAS_CSV = ROOT / "db" / "stuurdata" / "kompas_hierarchie.csv"
+# Vulling van andere Kompasprofielen (bijv. Klimaat Kompas, #256): db/stuurdata/kompasprofiel_*.json
+KOMPASPROFIELEN = sorted((ROOT / "db" / "stuurdata").glob("kompasprofiel_*.json"))
+DREMPELBESTANDEN = sorted((ROOT / "db" / "stuurdata").glob("indicator_labels_*.json"))
 # Indicatordefinities van de use cases (geen waarden): uuid, naam, eenheid, categorie, richting, herkomst (#236)
 DEFINITIES_CSV = ROOT / "db" / "stuurdata" / "indicatoren.csv"
 
@@ -398,6 +401,98 @@ def import_kompas(conn):
     return True
 
 
+def import_drempels(conn, bestanden=None):
+    """
+    Drempels voor de labels A–E (#256, #222 A3) uit db/stuurdata/indicator_labels_*.json in
+    indicator_labels. Alleen voor indicatoren die bestaan (de SWF-klimaatindicatoren komen uit de
+    use case swf-definities); de rest wordt overgeslagen en later opnieuw geprobeerd. Upsert per
+    indicator × label; een label dat niet meer in het bestand staat, wordt verwijderd. Idempotent.
+    """
+    bestanden = DREMPELBESTANDEN if bestanden is None else bestanden
+    cur = conn.cursor()
+    geladen, overgeslagen = 0, 0
+    for pad in bestanden:
+        data = json.loads(Path(pad).read_text(encoding="utf-8"))
+        for ind in data["indicatoren"]:
+            cur.execute("SELECT 1 FROM indicatoren WHERE uuid = %s", (ind["indicator_uuid"],))
+            if not cur.fetchone():
+                overgeslagen += 1
+                continue
+            labels = [lab[0] for lab in ind["labels"]]
+            cur.execute("DELETE FROM indicator_labels WHERE indicator_uuid = %s AND NOT (label = ANY(%s))",
+                        (ind["indicator_uuid"], labels))
+            for label, onder, boven in ind["labels"]:
+                cur.execute(
+                    "INSERT INTO indicator_labels (indicator_uuid, label, ondergrens, bovengrens, bron, opmerking)"
+                    " VALUES (%s, %s, %s, %s, %s, %s)"
+                    " ON CONFLICT (indicator_uuid, label) DO UPDATE SET ondergrens = EXCLUDED.ondergrens,"
+                    " bovengrens = EXCLUDED.bovengrens, bron = EXCLUDED.bron, opmerking = EXCLUDED.opmerking,"
+                    " bijgewerkt = now()",
+                    (ind["indicator_uuid"], label, onder, boven, data.get("bron"), ind.get("opmerking")))
+            geladen += 1
+    conn.commit()
+    print(f"   ✅ Drempels labels A–E: {geladen} indicatoren geladen, {overgeslagen} (nog) niet aanwezig.")
+    return True
+
+
+def import_kompasprofielen(conn, bestanden=None):
+    """
+    Andere Kompasprofielen vullen uit db/stuurdata/kompasprofiel_*.json (#256): profiel (naam),
+    classificatie en indicatoren (kwadrant, thema, onderdeel, indicator_uuid). Alleen als het
+    profiel bestaat en nog geen indicatoren heeft: een eigen inrichting wordt nooit overschreven.
+    Een indicator die (nog) niet bestaat, wordt overgeslagen. Idempotent.
+    """
+    bestanden = KOMPASPROFIELEN if bestanden is None else bestanden
+    cur = conn.cursor()
+    for pad in bestanden:
+        profiel = json.loads(Path(pad).read_text(encoding="utf-8"))
+        cur.execute("SELECT id FROM kompas_configuraties WHERE naam = %s", (profiel["profiel"],))
+        row = cur.fetchone()
+        if not row:
+            print(f"   ℹ️  Kompasprofiel '{profiel['profiel']}' bestaat niet, sla {Path(pad).name} over.")
+            continue
+        config_id = row[0]
+        cur.execute("SELECT count(*) FROM kompas_indicator_mapping WHERE config_id = %s", (config_id,))
+        if cur.fetchone()[0] > 0:
+            print(f"   ℹ️  Kompasprofiel '{profiel['profiel']}' is al ingericht, niet overschreven.")
+            continue
+        gekoppeld, overgeslagen = 0, []
+        for volgorde, ind in enumerate(profiel["indicatoren"]):
+            cur.execute("SELECT 1 FROM indicatoren WHERE uuid = %s", (ind["indicator_uuid"],))
+            if not cur.fetchone():
+                overgeslagen.append(ind.get("indicator_naam") or ind["indicator_uuid"])
+                continue
+            ids = []
+            for tabel, ouder_kolom, ouder, naam in (
+                ("kompas_titels", "config_id", config_id, ind["kwadrant"]),
+                ("kompas_themas", "titel_id", None, ind["thema"]),
+                ("kompas_onderdelen", "thema_id", None, ind.get("onderdeel") or "(Algemeen)"),
+            ):
+                ouder = ouder if ouder is not None else ids[-1]
+                cur.execute(f"SELECT id FROM {tabel} WHERE naam = %s AND {ouder_kolom} = %s", (naam, ouder))
+                r = cur.fetchone()
+                if not r:
+                    cur.execute(f"INSERT INTO {tabel} (naam, {ouder_kolom}, volgorde) VALUES (%s, %s, %s) RETURNING id",
+                                (naam, ouder, volgorde))
+                    r = cur.fetchone()
+                ids.append(r[0])
+            cur.execute("""
+                INSERT INTO kompas_indicator_mapping (config_id, indicator_uuid, onderdeel_id, is_actueel)
+                VALUES (%s, %s, %s, TRUE)
+                ON CONFLICT (config_id, indicator_uuid, onderdeel_id) DO NOTHING
+            """, (config_id, ind["indicator_uuid"], ids[-1]))
+            gekoppeld += 1
+        if gekoppeld and profiel.get("classificatie"):
+            cur.execute("UPDATE kompas_configuraties SET classificatie = %s WHERE id = %s",
+                        (profiel["classificatie"], config_id))
+        conn.commit()
+        print(f"   ✅ Kompasprofiel '{profiel['profiel']}': {gekoppeld} indicatoren gekoppeld"
+              + (f", classificatie {profiel['classificatie']}" if gekoppeld and profiel.get("classificatie") else "")
+              + (f"; overgeslagen (bestaat niet): {', '.join(overgeslagen)}" if overgeslagen else ""))
+    cur.close()
+    return True
+
+
 # ─────────────────────────────────────────────────────────
 # STAP 5: Indicatorwaarden importeren
 # ─────────────────────────────────────────────────────────
@@ -514,7 +609,7 @@ def main():
     )
     parser.add_argument(
         "--stap",
-        choices=["alle", "definities", "stuurdata", "buurten", "indicatoren", "kompas", "waarden"],
+        choices=["alle", "definities", "stuurdata", "buurten", "indicatoren", "kompas", "waarden", "drempels"],
         default="alle",
         help="Welke stap uitvoeren (default: alle). 'definities' = stuurdata, indicatoren en Kompas, "
              "zonder gebieden en waarden; die komen uit de use cases (laad_usecase.py)"
@@ -551,6 +646,12 @@ def main():
 
         if stap in ("alle", "definities", "kompas") and success:
             if not import_kompas(conn):
+                success = False
+            elif not import_kompasprofielen(conn):
+                success = False
+
+        if stap in ("alle", "definities", "kompas", "drempels") and success:
+            if not import_drempels(conn):
                 success = False
 
         if stap in ("alle", "waarden") and success:

@@ -173,6 +173,8 @@ init_db() {
         else
             echo "⚠️ Niet alle use cases zijn ingeladen (zie hierboven); de installatie gaat door zonder die data."
         fi
+        # Drempels labels A–E (#256) na de use cases: de SWF-klimaatindicatoren bestaan pas na swf-definities
+        python /app/init_data/scripts/load_sample.py --stap drempels || echo "⚠️ Drempels niet geladen; labels A–E rekenen voorlopig met kwintielen."
     else
         echo "⚙️ LOAD_SAMPLE_DATA niet actief: geen data, alleen het product."
     fi

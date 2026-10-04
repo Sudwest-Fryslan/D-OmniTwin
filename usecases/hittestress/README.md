@@ -55,7 +55,7 @@ Gemeten op een verse installatie op 02-10-2026. Boomkroon en hitte-eiland wijken
 
 | Onderdeel | Waarde |
 |---|---|
-| Kompas-profiel | Klimaat Kompas |
+| Kompas-profiel | Klimaat Kompas: op een verse installatie gevuld met de klimaatindicatoren hierboven (thema's hittestress, hemelwateroverlast, droogte) en labels A–E, voorlopig op kwintielen ([#256](https://github.com/TLaan/D-OmniTwin/issues/256), [labels_methodiek.md](../../docs/3-data-engineering/labels_methodiek.md)) |
 | Chatscenario | — (nog geen eigen scenario) |
 | Polariteit | volgens de kolom *Richting* hierboven |
 

@@ -1,0 +1,297 @@
+{
+  "bron": "Monitoring KA SWF, dialoog 2 (16-04-2025), blad Final shortlist; voorstel, nog door SWF te bevestigen (#222 A3)",
+  "toelichting": "Drempels per indicator voor de labels A (robuust) t/m E (ontwrichting) van de Klimaatmonitor. ondergrens inclusief, bovengrens exclusief, null = open. Geladen door init_data/scripts/load_sample.py --stap drempels (alleen voor indicatoren die bestaan). Methodiek: docs/3-data-engineering/labels_methodiek.md",
+  "indicatoren": [
+    {
+      "indicator_uuid": "b334ce1d-3420-4863-9c10-af8f238dfd6c",
+      "indicator_naam": "GLG - kleiweide",
+      "eenheid": "cm-mv",
+      "labels": [
+        [
+          "A",
+          null,
+          70
+        ],
+        [
+          "B",
+          70,
+          100
+        ],
+        [
+          "C",
+          100,
+          120
+        ],
+        [
+          "D",
+          120,
+          150
+        ],
+        [
+          "E",
+          150,
+          null
+        ]
+      ]
+    },
+    {
+      "indicator_uuid": "8a921563-e6e3-45e4-a8e3-5c890c619956",
+      "indicator_naam": "GLG - veenweide",
+      "eenheid": "cm-mv",
+      "labels": [
+        [
+          "A",
+          null,
+          50
+        ],
+        [
+          "B",
+          50,
+          80
+        ],
+        [
+          "C",
+          80,
+          100
+        ],
+        [
+          "D",
+          100,
+          120
+        ],
+        [
+          "E",
+          120,
+          null
+        ]
+      ]
+    },
+    {
+      "indicator_uuid": "2d6bdaba-3832-40cc-acae-950883f1aa76",
+      "indicator_naam": "Trend GLG naar 2050",
+      "eenheid": "cm",
+      "opmerking": "Aanname: verhoging positief, verlaging negatief",
+      "labels": [
+        [
+          "A",
+          50,
+          null
+        ],
+        [
+          "B",
+          0,
+          50
+        ],
+        [
+          "C",
+          -50,
+          0
+        ],
+        [
+          "D",
+          -100,
+          -50
+        ],
+        [
+          "E",
+          null,
+          -100
+        ]
+      ]
+    },
+    {
+      "indicator_uuid": "0bbd30e5-08f5-4499-b6ca-cdda990720dc",
+      "indicator_naam": "Aandeel water t.o.v. verhard",
+      "eenheid": "%",
+      "labels": [
+        [
+          "A",
+          10,
+          null
+        ],
+        [
+          "B",
+          8,
+          10
+        ],
+        [
+          "C",
+          6,
+          8
+        ],
+        [
+          "D",
+          4,
+          6
+        ],
+        [
+          "E",
+          null,
+          4
+        ]
+      ]
+    },
+    {
+      "indicator_uuid": "f6eafa70-9383-4de6-bd2a-e47309843437",
+      "indicator_naam": "Waterdiepte op straat",
+      "eenheid": "cm",
+      "labels": [
+        [
+          "A",
+          null,
+          5
+        ],
+        [
+          "B",
+          5,
+          10
+        ],
+        [
+          "C",
+          10,
+          20
+        ],
+        [
+          "D",
+          20,
+          30
+        ],
+        [
+          "E",
+          30,
+          null
+        ]
+      ]
+    },
+    {
+      "indicator_uuid": "89b6274f-9372-4784-8ba3-924b6c7e4d7d",
+      "indicator_naam": "Waterdiepte tegen gevel",
+      "eenheid": "cm",
+      "opmerking": "Gat 20-25 cm zoals in de bron: waarden daar krijgen geen label",
+      "labels": [
+        [
+          "A",
+          null,
+          5
+        ],
+        [
+          "B",
+          5,
+          10
+        ],
+        [
+          "C",
+          10,
+          15
+        ],
+        [
+          "D",
+          15,
+          20
+        ],
+        [
+          "E",
+          25,
+          null
+        ]
+      ]
+    },
+    {
+      "indicator_uuid": "66ee35d7-8046-470a-8e99-efce744cb97d",
+      "indicator_naam": "Aandeel bladerdek per buurt",
+      "eenheid": "%",
+      "labels": [
+        [
+          "A",
+          30,
+          null
+        ],
+        [
+          "B",
+          25,
+          30
+        ],
+        [
+          "C",
+          20,
+          25
+        ],
+        [
+          "D",
+          15,
+          20
+        ],
+        [
+          "E",
+          null,
+          15
+        ]
+      ]
+    },
+    {
+      "indicator_uuid": "bf4e5b8f-6b0a-4632-b9b4-8e29d025e68c",
+      "indicator_naam": "Afstand tot koele plek",
+      "eenheid": "m",
+      "labels": [
+        [
+          "A",
+          null,
+          200
+        ],
+        [
+          "B",
+          200,
+          300
+        ],
+        [
+          "C",
+          300,
+          400
+        ],
+        [
+          "D",
+          400,
+          500
+        ],
+        [
+          "E",
+          500,
+          null
+        ]
+      ]
+    },
+    {
+      "indicator_uuid": "fdb4c11b-60ca-4ea1-86b8-6855a83344ee",
+      "indicator_naam": "Gevoelstemperatuur",
+      "eenheid": "°C",
+      "opmerking": "A = comfortabel (18-23 °C); onder 18 °C geen label",
+      "labels": [
+        [
+          "A",
+          18,
+          23
+        ],
+        [
+          "B",
+          23,
+          29
+        ],
+        [
+          "C",
+          29,
+          35
+        ],
+        [
+          "D",
+          35,
+          41
+        ],
+        [
+          "E",
+          41,
+          null
+        ]
+      ]
+    }
+  ]
+}
