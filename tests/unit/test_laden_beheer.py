@@ -18,7 +18,8 @@ pytestmark = pytest.mark.unit
 class NepCursor:
     """Genoeg SQL voor beheer.kompasprofielen en beheer.externe_kaartlagen (psycopg2-stijl, tuples)."""
 
-    def __init__(self, indicatoren=(), profielen=(), lagen=()):
+    def __init__(self, indicatoren=(), profielen=(), lagen=(), toegang_kolom=False):
+        self.toegang_kolom = toegang_kolom
         self.indicatoren = set(indicatoren)
         self.tabellen = {"kompas_configuraties": {n: i for i, n in enumerate(profielen, start=1)},
                          "kompas_titels": {}, "kompas_themas": {}, "kompas_onderdelen": {}}
@@ -47,6 +48,8 @@ class NepCursor:
             sleutel = (p[0], p[1], p[2])
             self.rowcount = 0 if sleutel in self.mapping else 1
             self.mapping.add(sleutel)
+        elif sql.startswith("SELECT 1 FROM information_schema.columns"):
+            self._rij = (1,) if self.toegang_kolom else None
         elif sql.startswith("SELECT 1 FROM public.externe_kaartlagen"):
             self._rij = (1,) if p[0] in self.lagen else None
         elif sql.startswith("INSERT INTO public.externe_kaartlagen"):
@@ -119,6 +122,17 @@ def test_externe_kaartlagen_toevoegen_bestaand_blijft_intern_niet_actief(tmp_pat
     assert cur.lagen["Natura 2000"]["actief"] is True and cur.lagen["Natura 2000"]["opacity"] == 0.3
     assert cur.lagen["GeoVisia Project Locaties"]["actief"] is False
     assert "toegang" not in cur.lagen["Natura 2000"]
+
+
+def test_externe_kaartlagen_met_toegang_per_laag(tmp_path):
+    """Met de kolom toegang (#254) blijft een interne laag actief en wordt hij intern."""
+    pytest.importorskip("fastapi")
+    cur = NepCursor(toegang_kolom=True)
+    regels = [dict(LAAG, naam="GeoVisia Project Locaties", toegang="intern")]
+    uit = beheer.externe_kaartlagen(cur, beheer.lees_resource(pakket(tmp_path, regels)))
+    assert uit["intern"] == ["GeoVisia Project Locaties"] and uit["internNietActief"] == []
+    assert cur.lagen["GeoVisia Project Locaties"]["toegang"] == "intern"
+    assert cur.lagen["GeoVisia Project Locaties"]["actief"] is True
 
 
 def test_voer_uit_onbekende_soort_is_overgeslagen(tmp_path):

@@ -14,7 +14,7 @@ blijft zoals het is; herhalen is idempotent.
 | Soort (`beheerpad`) | Doel | Per regel |
 |---|---|---|
 | `kompasprofielen` | kompas_configuraties, kompas_titels, kompas_themas, kompas_onderdelen, kompas_indicator_mapping | profiel, kwadrant, thema, onderdeel, indicator_uuid, weging, is_actueel; een onbekende indicator wordt overgeslagen en geteld |
-| `externe-kaartlagen` | externe_kaartlagen | de velden van het beheerscherm (ExterneKaartlaagCreate) plus `toegang`; `intern` wordt (tot de toegang per laag er is, #254) niet actief gezet |
+| `externe-kaartlagen` | externe_kaartlagen | de velden van het beheerscherm (ExterneKaartlaagCreate) plus `toegang`; `intern` gaat naar de kolom `toegang` (#254), of wordt zonder die kolom niet actief gezet |
 """
 
 from __future__ import annotations
@@ -88,7 +88,11 @@ def kompasprofielen(cur, regels: list[dict]) -> dict:
 def externe_kaartlagen(cur, regels: list[dict]) -> dict:
     """Externe kaartlagen (WFS/WMS/GeoJSON) toevoegen; een laag met dezelfde naam blijft ongewijzigd."""
     from omnitwin.routers.externe_lagen import ExterneKaartlaagCreate
-    uit = {"regels": len(regels), "toegevoegd": [], "alAanwezig": [], "internNietActief": []}
+    uit = {"regels": len(regels), "toegevoegd": [], "alAanwezig": [], "intern": [], "internNietActief": []}
+    # Met de toegang per laag (#254, kolom toegang) wordt een interne laag intern; daarvoor: niet actief
+    cur.execute("SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' "
+                "AND table_name = 'externe_kaartlagen' AND column_name = 'toegang'")
+    met_toegang = cur.fetchone() is not None
     for r in regels:
         toegang = (r.pop("toegang", None) or "openbaar").strip().lower()
         velden = {k: v for k, v in r.items() if v is not None}
@@ -99,9 +103,13 @@ def externe_kaartlagen(cur, regels: list[dict]) -> dict:
         if "actief" in velden:
             velden["actief"] = _bool(velden["actief"])
         laag = ExterneKaartlaagCreate(**velden).model_dump()
-        if toegang == "intern" and laag["actief"]:
-            laag["actief"] = False  # tot de toegang per laag (#254): intern = niet openbaar zichtbaar
-            uit["internNietActief"].append(laag["naam"])
+        if toegang == "intern":
+            uit["intern"].append(laag["naam"])
+            if met_toegang:
+                laag["toegang"] = "intern"
+            elif laag["actief"]:
+                laag["actief"] = False  # zonder toegang per laag: intern = niet openbaar zichtbaar
+                uit["internNietActief"].append(laag["naam"])
         cur.execute("SELECT 1 FROM public.externe_kaartlagen WHERE naam = %s", (laag["naam"],))
         if cur.fetchone():
             uit["alAanwezig"].append(laag["naam"])
