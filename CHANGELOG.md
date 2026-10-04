@@ -46,6 +46,7 @@ Eerdere wijzigingen, van vóór dit bestand, zijn terug te vinden in de git-hist
 
 ### Gewijzigd
 
+- Kompas: de vergelijkingsgrafiek van een multi-selectie bleef verborgen na een indicator met één datapunt ([#280](https://github.com/TLaan/D-OmniTwin/issues/280)).
 - **Let op bij bijwerken:** `OMNITWIN_OMGEVING` is standaard `productie`, en dan weigert `db-init` een bekend zwak `ADMIN_PASSWORD` of `KEYCLOAK_ADMIN_PASSWORD` (zoals `admin`, `wachtwoord`, gelijk aan de gebruikersnaam of korter dan 8 tekens); de stack start dan niet. Kies een sterk wachtwoord, of zet `OMNITWIN_OMGEVING=test` ([#245](https://github.com/TLaan/D-OmniTwin/issues/245)).
 - `/api/data` en `/api/geo` lopen via een controle in Traefik (forwardAuth naar de backend); bij `VIEWER_TOEGANG=open` laat die alles door, maar zonder draaiende backend werken ze niet meer ([#266](https://github.com/TLaan/D-OmniTwin/issues/266)).
 - Het favicon (viewer, beheerscherm, API-documentatie, handleiding) heeft de kleuren van het organisatiethema: `GET /api/organisatie/beeldmerk.svg` levert het beeldmerk met de themakleuren als vaste waarden ([#249](https://github.com/TLaan/D-OmniTwin/issues/249)).
