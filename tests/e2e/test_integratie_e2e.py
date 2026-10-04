@@ -20,7 +20,7 @@ from playwright.sync_api import expect
 from e2e_helpers import (
     BOLSWARD_ZUIDOOST, KOUDUM, WORKUM, aantal_kaartgebieden,
     klik_buurt_op_kaart, klik_chatactie, kompas_namen, laad_buurtenkaart, open_indicator_in_kompas, open_kompas,
-    open_paneel, selecteer_buurt_via_app, verplaats_kompasvenster_rechts, wacht_op_kaartdata, wacht_op_selectie, wacht_op_zonnediagram, TRAAG_MS,
+    open_paneel, selecteer_buurt_via_app, verplaats_kompasvenster_rechts, wacht_op_kaartdata, wacht_op_selectie, wacht_op_zonnediagram, geschaald, traag_ms,
 )
 
 
@@ -63,17 +63,18 @@ def test_tc_06_001_beleidsadviseur_ijsselmeerkust(app_page_fresh, tmp_path: Path
     page.get_by_role("button", name="Assistent sluiten").click()
     verplaats_kompasvenster_rechts(page)
 
-    # 3. Selecteer de eerste kern op de kaart (echte klik) → Kompas laadt het gebied
-    klik_buurt_op_kaart(page, WORKUM)
+    # 3. Selecteer de eerste kern op de kaart (echte klik) → Kompas laadt het gebied. Scenariotest:
+    # de kaartklik zelf toetst TC-01-001; lukt die hier niet, dan als laatste redmiddel pick + onClick
+    klik_buurt_op_kaart(page, WORKUM, terugval=True)
     wacht_op_selectie(page, [WORKUM])
     expect(page.locator("#selection-badge")).to_contain_text("Workum")
-    expect(page.locator("#kompas-info")).to_contain_text("Workum", timeout=TRAAG_MS)
+    expect(page.locator("#kompas-info")).to_contain_text("Workum", timeout=traag_ms())
     wacht_op_zonnediagram(page)
 
     # 6/9. Vergelijkingskern toevoegen → Kompas toont het gemiddelde (benchmark)
     selecteer_buurt_via_app(page, KOUDUM, shift=True)
     wacht_op_selectie(page, [WORKUM, KOUDUM])
-    expect(page.locator("#kompas-info")).to_contain_text("Gemiddelde van 2 gebieden", timeout=TRAAG_MS)
+    expect(page.locator("#kompas-info")).to_contain_text("Gemiddelde van 2 gebieden", timeout=traag_ms())
     expect(page.locator("#kompas-info")).to_contain_text("Workum, Koudum")
     wacht_op_zonnediagram(page)
 
@@ -92,7 +93,7 @@ def test_tc_06_001_beleidsadviseur_ijsselmeerkust(app_page_fresh, tmp_path: Path
     page.wait_for_function(
         "() => window.state.currentData && window.state.currentData.metadata"
         " && window.state.currentData.metadata.indicator_naam === 'Participatiewet totaal'",
-        timeout=TRAAG_MS,
+        timeout=traag_ms(),
     )
 
     assert page.console_fouten == [], "\n".join(page.console_fouten)
@@ -110,7 +111,7 @@ def test_tc_06_001_fase5_export_bronvermelding(app_page, tmp_path: Path):
     page.wait_for_function(
         "() => window.state.currentData && window.state.currentData.metadata"
         " && window.state.currentData.metadata.indicator_naam === 'Participatiewet totaal'",
-        timeout=TRAAG_MS,
+        timeout=traag_ms(),
     )
     page.get_by_role("button", name="Kompasvenster sluiten").click()
     op_kaart = aantal_kaartgebieden(page)
@@ -146,7 +147,7 @@ def test_chatactie_open_kompas_laadt_selectie(app_page):
     _chat_actie(page, r"Open het D-Omni Kompas")
 
     expect(page.locator("#kompas-window")).to_be_visible()
-    expect(page.locator("#kompas-info")).to_contain_text("Gemiddelde van 2 gebieden", timeout=TRAAG_MS)
+    expect(page.locator("#kompas-info")).to_contain_text("Gemiddelde van 2 gebieden", timeout=traag_ms())
     expect(page.locator("#kompas-info")).to_contain_text("Workum, Koudum")
     wacht_op_zonnediagram(page)
     assert page.console_fouten == [], "\n".join(page.console_fouten)
@@ -192,7 +193,7 @@ _LLM_FOUTEN = ("Error contacting", "LLM-server", "Generatie mislukt", "Fout bij"
 
 def _selecteer_bolsward_zuidoost(page):
     laad_buurtenkaart(page)
-    klik_buurt_op_kaart(page, BOLSWARD_ZUIDOOST)
+    klik_buurt_op_kaart(page, BOLSWARD_ZUIDOOST, terugval=True)  # scenariotest, zie TC-06-001 stap 3
     wacht_op_selectie(page, [BOLSWARD_ZUIDOOST])
     expect(page.locator("#selection-badge")).to_contain_text("Bolsward-Zuidoost")
 
@@ -268,7 +269,7 @@ def test_tc_06_004bc_beleidsadviseur_kompas(app_page):
     # 7-8. Kompas openen vanuit de chat → venster met het geselecteerde gebied
     _chat_actie(page, r"Open het D-Omni Kompas")
     expect(page.locator("#kompas-window")).to_be_visible()
-    expect(page.locator("#kompas-info")).to_contain_text("Bolsward-Zuidoost", timeout=30_000)
+    expect(page.locator("#kompas-info")).to_contain_text("Bolsward-Zuidoost", timeout=geschaald(30_000))
     expect(page.locator("#kompas-info")).to_contain_text("Indicatordekking: 100%")
     wacht_op_zonnediagram(page)
 
