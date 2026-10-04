@@ -96,7 +96,7 @@ def test_anoniem_lijsten_zonder_intern(laag_id):
     assert U_INTERN not in requests.get(f"{BASE_URL}/api/kompas/standaard/hierarchie", timeout=TIMEOUT).text
 
 
-@pytest.mark.parametrize("naam", ["kaart_direct", "visualisatie_direct", "laag_direct"])
+@pytest.mark.parametrize("naam", ["kaart_direct", "visualisatie_direct", "paneel_direct", "paneel_csv_direct", "laag_direct"])
 def test_anoniem_directe_aanroep_401(laag_id, naam):
     r = requests.get(f"{BASE_URL}{paden(laag_id)[naam]}", timeout=TIMEOUT)
     assert r.status_code == 401, (naam, r.status_code, r.text[:200])
@@ -134,7 +134,7 @@ def _alles_zichtbaar(s, laag_id):
     for naam in ("indicator_postgrest", "waarden_postgrest", "actueel_postgrest", "laag_postgrest"):
         r = s.get(f"{BASE_URL}{p[naam]}", timeout=TIMEOUT)
         assert r.status_code == 200 and r.json(), (naam, r.status_code, r.text[:200])
-    for naam in ("kaart_direct", "visualisatie_direct", "laag_direct"):
+    for naam in ("kaart_direct", "visualisatie_direct", "paneel_direct", "paneel_csv_direct", "laag_direct"):
         r = s.get(f"{BASE_URL}{p[naam]}", timeout=TIMEOUT)
         assert r.status_code == 200, (naam, r.status_code, r.text[:200])
     assert s.get(f"{BASE_URL}{p['indicator_postgrest']}", timeout=TIMEOUT).json()[0]["toegang"] == "intern"
