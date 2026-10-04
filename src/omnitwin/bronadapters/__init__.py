@@ -35,7 +35,7 @@ from pathlib import Path
 from urllib.parse import urlparse
 
 ROOT = Path(__file__).resolve().parents[3]
-TOEGESTANE_MAPPEN = ("SWF_DUMP_DIR", "SWF_DOCS_DIR", "SWF_GEO_DIR", "SWF_DB_DUMP", "DATA_CACHE", "REPO")
+TOEGESTANE_MAPPEN = ("SWF_DUMP_DIR", "SWF_DOCS_DIR", "SWF_GEO_DIR", "SWF_DB_DUMP", "SWF_EXPORT_DIR", "DATA_CACHE", "REPO")
 TOEGESTANE_DOMEINEN = (
     "opendata.cbs.nl", "datasets.cbs.nl", "www.cbs.nl", "dataderden.cbs.nl",
     "service.pdok.nl", "api.pdok.nl",
