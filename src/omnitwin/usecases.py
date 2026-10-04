@@ -22,7 +22,7 @@ schema's in `docs/specificaties/usecase/<versie>/`.
 
 `controleer` werkt zonder draaiende stack: manifest, bestanden in de map, afhankelijkheden,
 registraties, en de levering(en) maken en valideren tegen het profiel. Bronnen komen uit
-de omgeving: `SWF_DUMP_DIR`, `SWF_DOCS_DIR`, `SWF_GEO_DIR`, `SWF_DB_DUMP`, `DATA_CACHE`
+de omgeving: `SWF_DUMP_DIR`, `SWF_DOCS_DIR`, `SWF_GEO_DIR`, `SWF_DB_DUMP`, `SWF_EXPORT_DIR`, `DATA_CACHE`
 (standaard ./data-cache), en open bronnen via https (allowlist in `omnitwin.bronadapters`).
 Ontbreekt een bron, dan is die dataset 'overgeslagen', geen fout.
 
@@ -344,7 +344,8 @@ def valideer_manifest(uc, naam=None):
 
 
 def bronnen():
-    return {k: os.environ.get(k) for k in ("SWF_DUMP_DIR", "SWF_DOCS_DIR", "SWF_GEO_DIR", "SWF_DB_DUMP", "DATA_CACHE")}
+    return {k: os.environ.get(k) for k in ("SWF_DUMP_DIR", "SWF_DOCS_DIR", "SWF_GEO_DIR", "SWF_DB_DUMP", "SWF_EXPORT_DIR",
+                                        "DATA_CACHE")}
 
 
 def schema_paden(uc, dataset):

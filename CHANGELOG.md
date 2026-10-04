@@ -8,6 +8,16 @@ Eerdere wijzigingen, van vóór dit bestand, zijn terug te vinden in de git-hist
 
 ## [Unreleased]
 
+### Toegevoegd
+
+- Use case `swf-initialisatie` (status `ontwerp`): de eerste SWF-vulling uit een export van de lokale D-OmniTwin-database van de projectleider, via de laad-API (datasets `swf-init-indicatoren` en `swf-init-waarnemingen`, intern), zonder open data of demodata; nieuwe map `SWF_EXPORT_DIR` in de allowlist van de uitvoerder. Open vraag welke tabellen geleverd worden (aanname A1, [#222](https://github.com/TLaan/D-OmniTwin/issues/222)).
+- Bewerking `ontdubbel` in de Use Case Specificatie 1.0: dubbele namen met een andere UUID, met een voorkeurslijst als data ([#222](https://github.com/TLaan/D-OmniTwin/issues/222)).
+
+### Gewijzigd
+
+- **Voorrang bij overlap** in de laad-API (aanname A6, [#222](https://github.com/TLaan/D-OmniTwin/issues/222), ADR 0004 aangevuld): leveren twee datasets een waarde voor dezelfde sleutel (gebied × indicator × jaar of peildatum × scenario), dan wint de nieuwste bronpeildatum (`dct:modified`, anders `dct:issued` uit de `dcat.jsonld` van de levering, anders de datum van ontvangst), bij gelijke bronpeildatum de laatst aangeleverde levering. De andere waarde blijft beschikbaar: in `laden.waarnemingen` en als `andere_bronnen` bij de waarde (`/api/data/v1/gebied_data`). Een levering toont `aantallen.bronpeildatum` en `bronpeildatumUit`; een bronpeildatum in de toekomst wordt afgekeurd. Migratie `V036__voorrang_bronpeildatum.sql` beslist bestaande overlap één keer opnieuw. **Vervallen:** `LADEN_VOORRANG` (een vaste voorkeursdataset); haal hem uit `.env` als je hem had gezet.
+- `swf-definities` 0.3.0 en `swf-adapter-fme` 0.3.0: van een dubbele indicatornaam blijft de UUID uit de voorkeurslijst (*Waterdiepte op straat* `f6eafa70…`, *Werkzamen* `7fd17589…`); de andere krijgt status `B` en "(vervallen)" achter de naam (aanname A4). Status `A` → `O` met de notitie dat `A` volgens de projectleider *actueel* betekent, tot de DWH-beheerder het bevestigt (aanname A2) ([#222](https://github.com/TLaan/D-OmniTwin/issues/222)).
+
 ## [0.3.0-rc.1] - 2026-10-03
 
 **Pre-release.** De eerste versie die de huidige SWF-gebiedsmonitor kan opvolgen en aan andere partijen kan worden aangeboden: inloggen via Keycloak (beheer, en optioneel de viewer), een laad-API voor leveringen, use cases als apps met bewijs, open data in plaats van demodata, percentielklassen en kaartmodi, een thema per organisatie en de basis voor productie (back-up en herstel, beheerhandleiding, privacy). Een aantal punten gaat uit van **aannames** tot [#222](https://github.com/TLaan/D-OmniTwin/issues/222) beantwoord is: vulling met de export van februari 2026, de percentielmethodiek, nog geen klimaatlabels A–E en nog geen rechten per laag. Vergelijking met de huidige monitor: [#259](https://github.com/TLaan/D-OmniTwin/issues/259). Lees bij een upgrade de paragraaf **Migreren**.

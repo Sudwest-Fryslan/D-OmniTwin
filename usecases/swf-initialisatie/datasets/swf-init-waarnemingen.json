@@ -1,0 +1,103 @@
+{
+  "id": "swf-init-waarnemingen",
+  "bronId": "swf-initialisatie",
+  "beschrijving": {
+    "@context": "https://data.overheid.nl/dcat-ap-nl/context.jsonld",
+    "@type": "dcat:Dataset",
+    "dct:title": "SWF-initialisatie — indicatorwaarden uit de lokale D-OmniTwin-database",
+    "dct:description": "Eerste vulling van de SWF-installatie: indicatorwaarden uit een export van de lokale D-OmniTwin-database van de projectleider (rijker dan de export van de huidige gebiedsmonitor). Alleen wat niet uit een open bron komt (open data downloadt de adapter van de eigen use case) en geen demodata. Bij overlap met een andere dataset wint de nieuwste bronpeildatum (aanname A6).",
+    "dct:publisher": "https://identifier.overheid.nl/tooi/id/gemeente/gm1900",
+    "dct:accessRights": "http://publications.europa.eu/resource/authority/access-right/RESTRICTED",
+    "dct:license": "http://standaarden.overheid.nl/owms/terms/licentieonbekend",
+    "dct:spatial": "https://identifier.overheid.nl/tooi/id/gemeente/gm1900",
+    "dct:source": "Export van de lokale D-OmniTwin-database (tabel gebied_data), via SWF_EXPORT_DIR",
+    "dcat:theme": [
+      "http://standaarden.overheid.nl/owms/terms/Bestuur"
+    ],
+    "dcat:keyword": [
+      "gebiedsmonitor",
+      "initialisatie",
+      "Súdwest-Fryslân"
+    ],
+    "dcat:contactPoint": {
+      "@type": "vcard:Organization",
+      "vcard:fn": "Functioneel beheer gebiedsmonitor, gemeente Súdwest-Fryslân"
+    },
+    "prov:wasDerivedFrom": "Lokale D-OmniTwin-database (tabel gebied_data)"
+  },
+  "laadprofiel": {
+    "profiel": "waarnemingen",
+    "vervangBereik": [
+      "indicator_uuid",
+      "gebiedstype"
+    ],
+    "minimumN": 10,
+    "bijNOnderDrempel": "onderdrukken",
+    "bijOntbrekendeN": "bron-onderdrukt",
+    "plausibiliteit": {
+      "maxDalingProcent": 20
+    }
+  },
+  "bron": {
+    "adapter": "lokaal-bestand",
+    "pad": "${SWF_EXPORT_DIR}/gebied_data.csv",
+    "formaat": "csv",
+    "tabel": "waarnemingen",
+    "omschrijving": "CSV uit de lokale database (export-query in de README); nooit in git"
+  },
+  "bewerkingen": [
+    {
+      "id": "demodata",
+      "afwijzen": {
+        "veld": "bron",
+        "begint_met": "DEMODATA",
+        "reden": "demodata"
+      },
+      "omschrijving": "demodata komt uit de eigen (demo)use cases, niet uit de initialisatie (#236)"
+    },
+    {
+      "id": "open-data",
+      "afwijzen": {
+        "veld": "bron",
+        "begint_met": "CBS",
+        "reden": "open-data"
+      },
+      "omschrijving": "open data (CBS) downloadt de adapter van cbs-kerncijfers zelf; voorlopig herkend aan de bronvermelding (open vraag)"
+    },
+    {
+      "hernoem": {
+        "gebied_id": "gebied_code",
+        "scenario_id": "scenario"
+      }
+    },
+    {
+      "tekst": [
+        "gebied_code"
+      ]
+    },
+    {
+      "getal": [
+        "jaar",
+        "waarde",
+        "n"
+      ]
+    },
+    {
+      "behoud": [
+        "gebied_code",
+        "indicator_uuid",
+        "jaar",
+        "peildatum",
+        "scenario",
+        "waarde",
+        "n",
+        "kwaliteit",
+        "bron"
+      ]
+    }
+  ],
+  "levering": {
+    "formaat": "datapackage",
+    "bestand": "swf-init-waarnemingen.zip"
+  }
+}
