@@ -35,10 +35,13 @@ import {
   Activity,
   Users,
   ExternalLink,
-  Building2
+  Building2,
+  Moon,
+  Sun
 } from 'lucide-react';
 import { authAPI } from './services/api';
 import Beeldmerk from './components/Beeldmerk';
+import { huidigeModus, kiesModus } from './thema';
 import './styles/admin.css';
 
 const queryClient = new QueryClient();
@@ -48,6 +51,13 @@ const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user, logout: storeLogout, authConfig } = useAdminStore();
   // Ingelogd via Keycloak: wachtwoord en gebruikers beheer je daar (#251)
   const viaKeycloak = user?.bron === 'oidc';
+  // Lichte of donkere weergave (#284): standaard volgens het thema, eigen keuze onthouden
+  const [, setModus] = React.useState(huidigeModus);
+  const wisselModus = () => {
+    const nieuw = huidigeModus() === 'licht' ? 'donker' : 'licht';
+    kiesModus(nieuw);
+    setModus(nieuw);
+  };
   const [dropdownOpen, setDropdownOpen] = React.useState(false);
   // Gebiedsdossier = /rapport of /rapport/<gebied_id>, niet de andere rapporten onder /rapport/
   const { pathname } = useLocation();
@@ -267,6 +277,11 @@ const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                     <Users size={16} /> Gebruikers en rollen beheren <ExternalLink size={14} aria-label="opent in nieuw venster" />
                   </a>
                 )}
+                <button type="button" onClick={wisselModus} style={{ ...menuStijl, background: 'none', border: 'none',
+                  borderBottom: '1px solid var(--color-border)', width: '100%', textAlign: 'left', cursor: 'pointer' }}>
+                  {huidigeModus() === 'licht' ? <Moon size={16} /> : <Sun size={16} />}
+                  {huidigeModus() === 'licht' ? 'Donkere weergave' : 'Lichte weergave'}
+                </button>
                 <button
                   onClick={() => { setDropdownOpen(false); handleLogout(); }}
                   style={{

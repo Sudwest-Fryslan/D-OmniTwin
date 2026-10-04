@@ -30,6 +30,13 @@ const THEMAS: ThemaInfo[] = [
             donker: { '--d-omnitwin-header-background-color-start': '#8c0030', '--d-omnitwin-header-background-color-end': '#5c0020', '--basis-color-action-1-bg-default': '#bf0042' },
         },
     },
+    {
+        naam: 'legacy', titel: 'Klassiek groen-blauw', wcag_aa: false,
+        kleuren: {
+            licht: { '--d-omnitwin-header-background-color-start': '#1e3a8a', '--d-omnitwin-header-background-color-end': '#15803d', '--basis-color-action-1-bg-default': '#1e3a8a' },
+            donker: { '--d-omnitwin-header-background-color-start': '#3b82f6', '--d-omnitwin-header-background-color-end': '#22c55e', '--basis-color-action-1-bg-default': '#2563eb' },
+        },
+    },
 ];
 
 const ok = <T,>(data: T) => Promise.resolve({ data } as never);
@@ -75,6 +82,18 @@ describe('OrganisatiePage', () => {
         expect(zet.mock.calls[0][0]).toMatchObject({ thema: 'd-omnitwin', code: 'swf', gemeente_codes: ['0737'] });
         expect(zet.mock.calls[0][0]).not.toHaveProperty('standaard_gemeente_code');
         expect(await screen.findByRole('status')).toHaveTextContent(/Opgeslagen/);
+    });
+
+    it('waarschuwt bij een thema dat WCAG 2.1 AA niet haalt (#284)', async () => {
+        const user = userEvent.setup();
+        render(<OrganisatiePage />);
+        await screen.findByLabelText('Naam');
+        expect(screen.queryByTestId('wcag-waarschuwing')).toBeNull();
+        expect(screen.getByRole('radio', { name: /legacy/ }).closest('label')).toHaveTextContent('niet WCAG AA');
+        await user.click(screen.getByRole('radio', { name: /legacy/ }));
+        expect(screen.getByTestId('wcag-waarschuwing')).toHaveTextContent('niet geschikt als standaard voor een overheidsorganisatie');
+        await user.click(screen.getByRole('radio', { name: /swf/ }));
+        expect(screen.queryByTestId('wcag-waarschuwing')).toBeNull();
     });
 
     it('logo\'s: volgorde, toevoegen uit bestaande bestanden en verwijderen', async () => {

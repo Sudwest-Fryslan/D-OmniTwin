@@ -6,7 +6,9 @@ Controleert de themabestanden in static/css/themes/:
   (datakleuren horen niet in een thema);
 - het standaardthema d-omnitwin is gelijk aan de fallbacks in styles.css (geen visuele regressie);
 - contrast volgens WCAG 2.1 AA: 4,5:1 voor tekst (1.4.3), 3:1 voor UI-onderdelen en focus (1.4.11);
-- de themanaam: alleen [a-z0-9-], anders het standaardthema.
+- de themanaam: alleen [a-z0-9-], anders het standaardthema;
+- de regel "@wcag-aa: ja|nee" in de kop van elk thema klopt met de contrasten; een thema met "nee"
+  (d-omnitwin, legacy) is nooit de standaard voor een organisatie; swf haalt voor tekst AAA (7:1) (#284).
 
 Los draaien met een overzicht van alle contrasten: python tests/test_thema.py --rapport
 """
@@ -26,13 +28,16 @@ except ImportError:  # pragma: no cover
 ROOT = Path(__file__).resolve().parent.parent
 THEMA_MAP = ROOT / "static" / "css" / "themes"
 STYLES = ROOT / "static" / "css" / "styles.css"
-# Alles van de viewer dat thema-tokens kan lezen (het beheerscherm heeft eigen opmaak)
+# Alles van de viewer en het beheerscherm (bron, geen build) dat thema-tokens kan lezen
 VIEWER_BESTANDEN = [
     *sorted((ROOT / "static" / "css").glob("*.css")),
     *sorted((ROOT / "static" / "js").rglob("*.js")),
     *sorted((ROOT / "templates").glob("*.html")),
     *sorted((ROOT / "static" / "images").glob("*.svg")),
+    *sorted(p for p in (ROOT / "admin-panel" / "src").rglob("*.*")
+            if p.suffix in (".css", ".ts", ".tsx") and ".test." not in p.name),
 ]
+ADMIN_CSS = ROOT / "admin-panel" / "src" / "styles" / "admin.css"
 
 sys.path.insert(0, str(ROOT / "src"))
 from omnitwin.thema import (  # noqa: E402
@@ -43,6 +48,7 @@ from omnitwin.thema import (  # noqa: E402
 )
 
 TEKST, UI = 4.5, 3.0
+AAA = 7.0
 
 # (voorgrond, achtergrond, minimum, omschrijving). Tokens zonder --basis-/--d-omnitwin- voorvoegsel.
 PAREN = [
@@ -73,6 +79,10 @@ PAREN = [
     ("d-omnitwin-welcome-accent-color", "basis-color-default-bg-default", TEKST, "welkomstaccent op paneel"),
     ("d-omnitwin-tooltip-color", "d-omnitwin-tooltip-background-color", TEKST, "tooltiptekst"),
     ("d-omnitwin-selection-badge-color", "d-omnitwin-selection-badge-background-color", TEKST, "tekst op selectiebadge"),
+    ("d-omnitwin-tab-active-border-color", "basis-color-default-bg-default", UI, "rand actieve tab op paneel"),
+    ("d-omnitwin-beheer-kop-color", "d-omnitwin-beheer-kop-background-color-start", TEKST, "beheerscherm: koptekst (begin)"),
+    ("d-omnitwin-beheer-kop-color", "d-omnitwin-beheer-kop-background-color-end", TEKST, "beheerscherm: koptekst (eind)"),
+    ("d-omnitwin-beheer-nav-active-color", "d-omnitwin-beheer-nav-active-background-color", TEKST, "beheerscherm: actief menu-item"),
     ("basis-focus-outline-color", "basis-color-default-bg-document", UI, "focusrand op pagina"),
     ("basis-focus-outline-color", "basis-color-default-bg-default", UI, "focusrand op paneel"),
     # Alleen als het thema ze definieert:
@@ -88,17 +98,38 @@ OPTIONEEL = {
 
 # Bekende tekorten in de huidige standaarduitstraling. Het thema d-omnitwin neemt de bestaande kleuren
 # één op één over (geen visuele regressie); aanpassen hoort bij de toegankelijkheidsronde (#67).
+# legacy (#284) is v0.1.0 zo exact mogelijk: dezelfde tekorten, plus wit op goud (actieve tab) en wit op
+# groen (selectiebadge) zoals toen. Beide thema's hebben "@wcag-aa: nee" in de kop.
+# Alleen thema's met "@wcag-aa: nee" mogen hier staan; swf (en elk thema met "ja") nooit.
 # Een paar dat hier staat maar wél voldoet, laat de test falen: dan moet het van de lijst af.
-BEKENDE_TEKORTEN = {
-    ("d-omnitwin", "licht", "basis-color-default-color-subtle", "basis-color-default-bg-document"),
-    ("d-omnitwin", "licht", "basis-color-accent-2-bg-default", "basis-color-default-bg-default"),
-    ("d-omnitwin", "donker", "basis-color-accent-1-color-default", "basis-color-default-bg-default"),
-    ("d-omnitwin", "donker", "basis-color-accent-1-color-hover", "basis-color-default-bg-default"),
-    ("d-omnitwin", "donker", "basis-color-action-1-color-default", "basis-color-default-bg-default"),
-    ("d-omnitwin", "donker", "basis-color-negative-color-default", "basis-color-default-bg-default"),
-    ("d-omnitwin", "donker", "d-omnitwin-header-color", "d-omnitwin-header-background-color-start"),
-    ("d-omnitwin", "donker", "d-omnitwin-header-color", "d-omnitwin-header-background-color-end"),
+_TEKORTEN_V010 = {
+    ("licht", "basis-color-default-color-subtle", "basis-color-default-bg-document"),
+    ("licht", "basis-color-accent-2-bg-default", "basis-color-default-bg-default"),
+    # De rand van de actieve tab is (zonder eigen rand) het gouden vlak zelf: hetzelfde tekort als hierboven
+    ("licht", "d-omnitwin-tab-active-border-color", "basis-color-default-bg-default"),
+    ("donker", "basis-color-accent-1-color-default", "basis-color-default-bg-default"),
+    ("donker", "basis-color-accent-1-color-hover", "basis-color-default-bg-default"),
+    ("donker", "basis-color-action-1-color-default", "basis-color-default-bg-default"),
+    ("donker", "basis-color-negative-color-default", "basis-color-default-bg-default"),
+    ("donker", "d-omnitwin-header-color", "d-omnitwin-header-background-color-start"),
+    ("donker", "d-omnitwin-header-color", "d-omnitwin-header-background-color-end"),
 }
+BEKENDE_TEKORTEN = {
+    *{("d-omnitwin", *t) for t in _TEKORTEN_V010},
+    *{("legacy", *t) for t in _TEKORTEN_V010},
+    *{("legacy", modus, voor, achter) for modus in ("licht", "donker") for voor, achter in (
+        ("d-omnitwin-tab-active-color", "d-omnitwin-tab-active-background-color"),
+        ("d-omnitwin-selection-badge-color", "d-omnitwin-selection-badge-background-color"),
+    )},
+}
+
+# swf (#284): elk tekstpaar haalt AAA (7:1), behalve deze (wel AA). Reden erbij.
+SWF_ALLEEN_AA = {
+    # SWF-roze #ff00e3 is te licht voor witte en te donker voor AAA met donkere tekst; de app leest
+    # de highlight-tokens nog niet. Met zwart zou het 6,36:1 worden, ook geen AAA.
+    "basis-color-highlight-inverse-color-default",
+}
+WCAG_REGEL = re.compile(r"@wcag-aa:\s*(ja|nee)(?![a-z])")
 
 COMMENTAAR = re.compile(r"/\*.*?\*/", re.S)
 DECLARATIE = re.compile(r"--([a-z0-9-]+)\s*:\s*([^;]+);")
@@ -122,6 +153,14 @@ def lees_thema(naam):
         gevonden = patroon.findall(tekst)
         blokken[sleutel] = [declaraties(b) for b in gevonden]
     return tekst, blokken
+
+
+def wcag_status(naam):
+    """"ja", "nee" of None: de regel "@wcag-aa: ..." in het kopcommentaar van het thema."""
+    tekst = (THEMA_MAP / f"{naam}.css").read_text(encoding="utf-8")
+    kop = tekst[: tekst.find("*/")] if tekst.lstrip().startswith("/*") else ""
+    m = WCAG_REGEL.search(kop)
+    return m.group(1) if m else None
 
 
 def tokens(naam, modus):
@@ -357,6 +396,16 @@ class TestGeenRegressieStandaardthema(unittest.TestCase):
                         f"--{token}: thema {los_op(waarden, token)!r}, styles.css {fallback!r}",
                     )
 
+    def test_d_omnitwin_gelijk_aan_fallbacks_in_beheerscherm(self):
+        """De --d-omnitwin-*-tokens in admin.css (#284): het standaardthema verandert het beheerscherm niet."""
+        tekst = COMMENTAAR.sub(" ", ADMIN_CSS.read_text(encoding="utf-8"))
+        gevonden = re.findall(r"var\(--(d-omnitwin-[a-z0-9-]+),\s*([^)]+)\)", tekst)
+        self.assertGreaterEqual(len(gevonden), 5)
+        donker = tokens(STANDAARD_THEMA, "donker")  # het beheerscherm is altijd donker
+        for token, terugval in gevonden:
+            with self.subTest(token=token):
+                self.assertTrue(gelijk(los_op(donker, token), terugval), f"--{token}: {los_op(donker, token)} != {terugval}")
+
     def test_lettertypen_standaard_gelijk(self):
         tekst = STYLES.read_text(encoding="utf-8")
         m = re.search(r"font-family:\s*var\(--basis-text-font-family-default,\s*([^;]+)\);", tekst)
@@ -382,6 +431,90 @@ class TestContrast(unittest.TestCase):
 
     def test_swf_heeft_geen_tekorten(self):
         self.assertFalse([t for t in BEKENDE_TEKORTEN if t[0] == "swf"])
+
+    def test_swf_tekst_aaa(self):
+        """swf (#284): tekst 7:1 (AAA), op de gedocumenteerde uitzonderingen na; UI en focus 3:1 (AA)."""
+        for modus in ("licht", "donker"):
+            for voor, achter, kv, ka, ratio, minimum, omschrijving in contrasten("swf", modus):
+                if minimum != TEKST or voor in SWF_ALLEEN_AA:
+                    continue
+                with self.subTest(modus=modus, paar=omschrijving):
+                    self.assertGreaterEqual(round(ratio, 2), AAA, f"{omschrijving}: {kv} op {ka} = {ratio:.2f}:1 < 7:1")
+
+    def test_swf_actieve_tab_niet_alleen_kleur(self):
+        """WCAG 1.4.1: de actieve tab heeft een dikkere rand dan gewone tabs (2px), niet alleen een andere kleur."""
+        breedte = tokens("swf", "licht")["d-omnitwin-tab-active-border-width"]
+        self.assertGreater(float(breedte.removesuffix("px")), 2)
+
+
+class TestWcagStatus(unittest.TestCase):
+    """"@wcag-aa: ja|nee" in de kop van elk thema (#284): klopt met de contrasten en staat in het beheerscherm."""
+
+    def test_elk_thema_heeft_de_regel(self):
+        for naam in beschikbare_themas(THEMA_MAP):
+            with self.subTest(thema=naam):
+                self.assertIn(wcag_status(naam), ("ja", "nee"))
+
+    def test_regel_klopt_met_contrasten(self):
+        for naam in beschikbare_themas(THEMA_MAP):
+            tekorten = [
+                (modus, voor, achter)
+                for modus in ("licht", "donker")
+                for voor, achter, _, _, ratio, minimum, _ in contrasten(naam, modus)
+                if round(ratio, 2) < minimum
+            ]
+            with self.subTest(thema=naam):
+                if wcag_status(naam) == "ja":
+                    self.assertEqual(tekorten, [], f"{naam} zegt '@wcag-aa: ja' maar haalt AA niet")
+                    self.assertFalse([t for t in BEKENDE_TEKORTEN if t[0] == naam])
+                else:
+                    self.assertTrue(tekorten, f"{naam} haalt AA: zet '@wcag-aa: ja' in de kop")
+
+    def test_legacy_en_swf(self):
+        self.assertEqual(wcag_status("legacy"), "nee")
+        self.assertEqual(wcag_status("swf"), "ja")
+
+
+    def test_beheermodus(self):
+        """Standaardweergave van het beheerscherm (#284): swf licht zoals de site, de rest donker zoals het was."""
+        for naam in beschikbare_themas(THEMA_MAP):
+            with self.subTest(thema=naam):
+                self.assertIn(tokens(naam, "licht")["d-omnitwin-beheer-modus"], ("licht", "donker"))
+        self.assertEqual(tokens("swf", "licht")["d-omnitwin-beheer-modus"], "licht")
+        self.assertEqual(tokens("d-omnitwin", "licht")["d-omnitwin-beheer-modus"], "donker")
+        self.assertEqual(tokens("legacy", "licht")["d-omnitwin-beheer-modus"], "donker")
+
+
+class TestLegacyNooitStandaard(unittest.TestCase):
+    """legacy (#284) haalt WCAG AA niet: nooit de standaard, niet in de code en niet in de vulling."""
+
+    def test_niet_de_standaard_in_code(self):
+        self.assertNotEqual(STANDAARD_THEMA, "legacy")
+        service = (ROOT / "src" / "omnitwin" / "services" / "organisatie.py").read_text(encoding="utf-8")
+        self.assertRegex(service, r'STANDAARD_THEMA = "d-omnitwin"')
+
+    def test_niet_in_organisatie_vulling(self):
+        sql = (ROOT / "db" / "stuurdata" / "organisatie.sql").read_text(encoding="utf-8")
+        sql = re.sub(r"--[^\n]*", " ", sql)
+        self.assertNotIn("'legacy'", sql)
+
+    def test_niet_het_inlogthema_van_de_realm(self):
+        import json
+
+        realm = json.loads((ROOT / "deploy" / "keycloak" / "realm-omnitwin.json").read_text(encoding="utf-8"))
+        self.assertNotEqual(realm.get("loginTheme"), "legacy")
+        self.assertEqual(wcag_status(realm.get("loginTheme")), "ja", "de realm kiest standaard een WCAG-AA-thema")
+
+    def test_legacy_is_v010(self):
+        """Kopbalk en knoppen zoals static/css/styles.css in v0.1.0."""
+        licht, donker = tokens("legacy", "licht"), tokens("legacy", "donker")
+        self.assertEqual(los_op(licht, "d-omnitwin-header-background-color-start"), "#1e3a8a")
+        self.assertEqual(licht["d-omnitwin-header-background-color-end"], "#15803d")
+        self.assertEqual(donker["d-omnitwin-header-background-color-start"], "#3b82f6")
+        self.assertEqual(donker["d-omnitwin-header-background-color-end"], "#22c55e")
+        self.assertEqual(licht["basis-color-action-1-bg-default"], "#1e3a8a")
+        self.assertEqual(licht["d-omnitwin-tab-active-color"], "#ffffff")
+        self.assertEqual(licht["d-omnitwin-header-accent-width"], "0px")
 
     def test_contrastberekening(self):
         self.assertAlmostEqual(contrast("#000000", "#ffffff"), 21.0, places=2)
@@ -421,10 +554,12 @@ def rapport():
     regels = []
     for naam in beschikbare_themas(THEMA_MAP):
         for modus in ("licht", "donker"):
-            regels.append(f"\n### {naam} — {modus}\n\n| Paar | Voorgrond | Achtergrond | Contrast | Eis | |\n|---|---|---|---|---|---|")
+            regels.append(f"\n### {naam} — {modus} (@wcag-aa: {wcag_status(naam)})\n\n| Paar | Voorgrond | Achtergrond | Contrast | Eis | |\n|---|---|---|---|---|---|")
             for voor, achter, kv, ka, ratio, minimum, omschrijving in contrasten(naam, modus):
                 bekend = (naam, modus, voor, achter) in BEKENDE_TEKORTEN
                 teken = "ok" if round(ratio, 2) >= minimum else ("bekend tekort (#67)" if bekend else "FOUT")
+                if teken == "ok" and minimum == TEKST and round(ratio, 2) >= AAA:
+                    teken = "ok (AAA)"
                 regels.append(f"| {omschrijving} | `{kv}` | `{ka}` | {ratio:.2f}:1 | {minimum}:1 | {teken} |")
     return "\n".join(regels)
 
