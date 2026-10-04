@@ -127,7 +127,9 @@ def test_datavraag_in_de_chat(page, uc):
         arg=[ka["indicator_uuid"], len(ka["gebied_ids"])],
         polling=100, timeout=geschaald(60_000),
     )
-    expect(page.locator("#selection-badge")).to_be_visible()
+    # De badge volgt pas na het laden en tekenen van de kaartdata; in de eerste test van de sessie
+    # met de eerste shadercompilatie (onder --cpus=2 ruim een minuut): TRAAG_MS (#212)
+    expect(page.locator("#selection-badge")).to_be_visible(timeout=traag_ms())
     # Inzoom-animatie: de camera beweegt alleen op animatieframes. In CI (software-WebGL)
     # blokkeert shadercompilatie na het laden van een laag de renderer soms tientallen
     # seconden; daarom de wachttijd voor trage stappen (TRAAG_MS, geschaald) en een vast pollinterval (#194)
