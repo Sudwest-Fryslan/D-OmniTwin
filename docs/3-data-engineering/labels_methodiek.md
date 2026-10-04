@@ -53,6 +53,10 @@ Kleurenblindvriendelijk, hetzelfde schema als de percentielklasse (`color_schema
 
 ## Drempels laden
 
+**Klimaatmonitor SWF:** de drempels uit *Monitoring KA SWF, dialoog 2* (16-04-2025, blad *Final shortlist*) staan in [`db/stuurdata/indicator_labels_klimaatmonitor_swf.json`](../../db/stuurdata/indicator_labels_klimaatmonitor_swf.json): 9 van de 10 indicatoren (*Oppervlak groen per inwoner* heeft geen drempel en blijft op kwintielen). Ze worden geladen met `python init_data/scripts/load_sample.py --stap drempels`, bij de installatie na de use cases (de SWF-klimaatindicatoren komen uit `swf-definities`). Het is nog een **voorstel**: bevestiging door SWF staat open in [#222](https://github.com/TLaan/D-OmniTwin/issues/222) (A3). Bijzonderheden: *Waterdiepte tegen gevel* heeft een gat tussen 20 en 25 cm (geen label), bij *Gevoelstemperatuur* is A de middenband 18–23 °C (comfortabel), en bij *Trend GLG* is aangenomen dat een verhoging positief is.
+
+Een eigen bestand `db/stuurdata/indicator_labels_<naam>.json` met dezelfde opbouw wordt ook geladen. Met de hand kan het ook in SQL:
+
 Tabel `indicator_labels` (één rij per indicator × label):
 
 | Kolom | Betekenis |

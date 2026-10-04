@@ -6,7 +6,7 @@ Laadt de minimale, zelfstandige sample dataset (12 SWF buurten) in de database.
 Bedoeld voor snelle start, tests en demonstraties zonder externe data-downloads.
 
 Gebruik:
-    python init_data/scripts/load_sample.py [--stap alle|definities|stuurdata|buurten|indicatoren|kompas|waarden]
+    python init_data/scripts/load_sample.py [--stap alle|definities|stuurdata|buurten|indicatoren|kompas|waarden|drempels]
 
     'definities' laadt het product zonder data (stuurdata, indicatordefinities, Kompas).
     De data (gebieden en waarden) komt uit de use cases: init_data/scripts/laad_usecase.py.
@@ -47,6 +47,7 @@ STANDAARD_INDICATOREN_CSV = INDICATOREN_CSV
 KOMPAS_CSV = ROOT / "db" / "stuurdata" / "kompas_hierarchie.csv"
 # Vulling van andere Kompasprofielen (bijv. Klimaat Kompas, #256): db/stuurdata/kompasprofiel_*.json
 KOMPASPROFIELEN = sorted((ROOT / "db" / "stuurdata").glob("kompasprofiel_*.json"))
+DREMPELBESTANDEN = sorted((ROOT / "db" / "stuurdata").glob("indicator_labels_*.json"))
 # Indicatordefinities van de use cases (geen waarden): uuid, naam, eenheid, categorie, richting, herkomst (#236)
 DEFINITIES_CSV = ROOT / "db" / "stuurdata" / "indicatoren.csv"
 
@@ -400,6 +401,40 @@ def import_kompas(conn):
     return True
 
 
+def import_drempels(conn, bestanden=None):
+    """
+    Drempels voor de labels A–E (#256, #222 A3) uit db/stuurdata/indicator_labels_*.json in
+    indicator_labels. Alleen voor indicatoren die bestaan (de SWF-klimaatindicatoren komen uit de
+    use case swf-definities); de rest wordt overgeslagen en later opnieuw geprobeerd. Upsert per
+    indicator × label; een label dat niet meer in het bestand staat, wordt verwijderd. Idempotent.
+    """
+    bestanden = DREMPELBESTANDEN if bestanden is None else bestanden
+    cur = conn.cursor()
+    geladen, overgeslagen = 0, 0
+    for pad in bestanden:
+        data = json.loads(Path(pad).read_text(encoding="utf-8"))
+        for ind in data["indicatoren"]:
+            cur.execute("SELECT 1 FROM indicatoren WHERE uuid = %s", (ind["indicator_uuid"],))
+            if not cur.fetchone():
+                overgeslagen += 1
+                continue
+            labels = [lab[0] for lab in ind["labels"]]
+            cur.execute("DELETE FROM indicator_labels WHERE indicator_uuid = %s AND NOT (label = ANY(%s))",
+                        (ind["indicator_uuid"], labels))
+            for label, onder, boven in ind["labels"]:
+                cur.execute(
+                    "INSERT INTO indicator_labels (indicator_uuid, label, ondergrens, bovengrens, bron, opmerking)"
+                    " VALUES (%s, %s, %s, %s, %s, %s)"
+                    " ON CONFLICT (indicator_uuid, label) DO UPDATE SET ondergrens = EXCLUDED.ondergrens,"
+                    " bovengrens = EXCLUDED.bovengrens, bron = EXCLUDED.bron, opmerking = EXCLUDED.opmerking,"
+                    " bijgewerkt = now()",
+                    (ind["indicator_uuid"], label, onder, boven, data.get("bron"), ind.get("opmerking")))
+            geladen += 1
+    conn.commit()
+    print(f"   ✅ Drempels labels A–E: {geladen} indicatoren geladen, {overgeslagen} (nog) niet aanwezig.")
+    return True
+
+
 def import_kompasprofielen(conn, bestanden=None):
     """
     Andere Kompasprofielen vullen uit db/stuurdata/kompasprofiel_*.json (#256): profiel (naam),
@@ -574,7 +609,7 @@ def main():
     )
     parser.add_argument(
         "--stap",
-        choices=["alle", "definities", "stuurdata", "buurten", "indicatoren", "kompas", "waarden"],
+        choices=["alle", "definities", "stuurdata", "buurten", "indicatoren", "kompas", "waarden", "drempels"],
         default="alle",
         help="Welke stap uitvoeren (default: alle). 'definities' = stuurdata, indicatoren en Kompas, "
              "zonder gebieden en waarden; die komen uit de use cases (laad_usecase.py)"
@@ -613,6 +648,10 @@ def main():
             if not import_kompas(conn):
                 success = False
             elif not import_kompasprofielen(conn):
+                success = False
+
+        if stap in ("alle", "definities", "kompas", "drempels") and success:
+            if not import_drempels(conn):
                 success = False
 
         if stap in ("alle", "waarden") and success:
