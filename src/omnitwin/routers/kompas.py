@@ -166,7 +166,8 @@ def get_selectie_kompas(
 
     Alleen bij een kompasprofiel met classificatie `percentiel_8`: elke node (indicator,
     onderdeel, thema, kwadrant) krijgt `klasse` (1-8, 8 = gunstigst) en `klasse_kleur`,
-    volgens dezelfde aggregatieregel als voor één gebied. Bij `zscore` zonder klassen.
+    volgens dezelfde aggregatieregel als voor één gebied. Bij `label_ae` (#256) labels A-E
+    (`label`, `klasse` = labelscore 5 = A .. 1 = E), met dezelfde regel. Bij `zscore` zonder klassen.
     """
     service = KompasService(db)
     result = service.get_selectie_kompas(config_id, gebied_id)

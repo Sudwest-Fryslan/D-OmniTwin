@@ -60,7 +60,6 @@ class Context:
     """Wat een profiel nodig heeft om een levering te verwerken."""
     levering: dict
     dataset: dict
-    voorrang: tuple[str, ...] = ()
     max_bytes: int = 200 * 1024 * 1024
     extra: dict = field(default_factory=dict)
 

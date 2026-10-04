@@ -136,8 +136,7 @@ def verwerk(levering_id: str) -> str | None:
     if not geclaimd:
         return None
     lv, ds = geclaimd
-    ctx = Context(levering=lv, dataset=ds, voorrang=instellingen().laden_voorrang,
-                  max_bytes=instellingen().laden_max_bytes)
+    ctx = Context(levering=lv, dataset=ds, max_bytes=instellingen().laden_max_bytes)
     lid, aantallen, bron = str(lv["id"]), {}, None
     try:
         profiel = ds["profiel"]

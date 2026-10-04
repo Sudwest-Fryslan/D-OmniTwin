@@ -115,7 +115,7 @@ Code: `src/omnitwin/routers/laden.py` (HTTP) en `src/omnitwin/laden/` (laadstraa
 
 - **Rechten.** Registreren en wijzigen: realm-rol `beheerder`. Leveren: `dataset:{datasetId}:laden` of `datasets:laden`. Lezen van een dataset, zijn leveringen en versies: `beheerder`, `datasets:laden` of `dataset:{datasetId}:laden`; een levering (`GET /leveringen/{id}`) mag daarnaast de client lezen die hem leverde, anders `404`. `GET /datasets` met token toont de datasets waarop de client rechten heeft. `/openapi.json`, `/profielen` en de catalogusweergave (`Accept: application/ld+json`, alleen PUBLIC-datasets zonder token) zijn anoniem.
 - **Verwerking.** Op de achtergrond in een threadpool in de backend (geen extra infrastructuur); per dataset na elkaar (advisory lock), ook met meerdere backend-processen. Na een herstart pakt de backend leveringen op `ontvangen` weer op; een levering die langer dan een uur op `bezig` staat, wordt `mislukt`. Bij veel of grote leveringen: een aparte worker-container (vervolg).
-- **Publiceren.** Staging, controles in SQL, publicatie, nieuwe versie en status in één transactie. Waarnemingen gaan per dataset naar `laden.waarnemingen`; `gebied_data` wordt voor de geraakte sleutels opnieuw opgebouwd. Leveren twee datasets een waarde voor dezelfde sleutel (gebied, indicator, jaar of peildatum, scenario), dan gaat de dataset uit `LADEN_VOORRANG` voor (standaard `swf-monitor-waarden`, aanname A6 van #222), anders de laatst gepubliceerde; de andere waarde blijft in `laden.waarnemingen` (`aantallen.nietZichtbaarDoorVoorrang`).
+- **Publiceren.** Staging, controles in SQL, publicatie, nieuwe versie en status in één transactie. Waarnemingen gaan per dataset naar `laden.waarnemingen`; `gebied_data` wordt voor de geraakte sleutels opnieuw opgebouwd. Leveren twee datasets een waarde voor dezelfde sleutel, dan geldt de [voorrang bij overlap](#voorrang-bij-overlap).
 - **Gelijk bestand.** Een levering met dezelfde sha256 als een levering in de actieve versie wordt `gepubliceerd` zonder nieuwe versie (`aantallen.ongewijzigd`).
 - **Indicator en gebiedstype.** Een indicator met relaties in `indicator_gebiedstype_relaties` mag alleen waarden hebben op die gebiedstypen; een indicator zonder relaties (bijv. de CBS-indicatoren) op elk gebiedstype (aanname).
 - **Indicatorstatus.** Alleen `C`, `O` en `B`; een andere code (bijv. `A`) is `schema-ongeldig` (de use case `swf-definities` zet `A` om naar `O`, aanname A2).
@@ -124,6 +124,32 @@ Code: `src/omnitwin/routers/laden.py` (HTTP) en `src/omnitwin/laden/` (laadstraa
 - **Limieten.** Traefik: 200 MB per body, 10 leveringen (POST) per minuut per token (`LADEN_RATE_LIMIT`); op `/compat/` 120 (`LADEN_COMPAT_RATE_LIMIT`), omdat een FME-run ±57 aanroepen achter elkaar doet zonder retry. Backend: `LADEN_MAX_MB` (JSON een tiende), `wacht=true` tot `LADEN_WACHT_SECONDEN`.
 - **Compatibiliteitsingang SWF-monitor** (`/compat/swf-monitor/monitor_api/...`, #237). Een POST is een levering `vervangen` met `wacht=true` (minstens 120 s) op `swf-monitor-definities` of `swf-monitor-waarden`, die geregistreerd moeten zijn met adapter `swf-monitor-v1` (anders `404`). De body is altijd JSON, ook zonder `Content-Type`; een body die niet in het SWF-formaat is, geeft `400`. Antwoord `200` met `status`, `leveringId`, `versie` en `aantallen`, `422` (Problem Details) bij afkeuring, `202` na de time-out. `alleenValideren=true` werkt ook hier. De GET-varianten lezen de gepubliceerde stand terug: de definities uit de set die de dataset het laatst publiceerde, de waarden uit `laden.waarnemingen` met `gebieds_id` zonder `code_prefix`. Handleiding: [fme-omzetten.md](fme-omzetten.md).
 - **Niet gebouwd:** Data Package-resources in andere formaten dan CSV en GeoPackage.
+
+## Voorrang bij overlap
+
+Aanname A6 van https://github.com/TLaan/D-OmniTwin/issues/222, vastgelegd in [ADR 0004](../../2-architectuur/adr/0004-een-ingang-voor-vullen.md) (aanvulling 2026-10-04), gebouwd in migratie `V036__voorrang_bronpeildatum.sql`.
+
+Leveren twee datasets (bronnen) een waarde voor dezelfde **sleutel**, gebied × indicator × jaar of peildatum × scenario, dan komt er één in de samengevoegde stand (`gebied_data`, de kaart, Kompas, rapporten en `/api/data/v1/gebied_data`):
+
+1. de waarde met de **nieuwste bronpeildatum**;
+2. bij een gelijke bronpeildatum: die uit de **laatst aangeleverde levering** (`ontvangenOp`);
+3. alleen als ook dat gelijk is: de laatst gepubliceerde, dan de dataset-id (alfabetisch), zodat de uitkomst altijd vastligt.
+
+**Bronpeildatum** = de stand van de bron van de levering, niet het jaar of de peildatum van de waarde (die zit in de sleutel en is binnen één sleutel dus gelijk). De laadstraat neemt, in deze volgorde:
+
+| Bron | Wanneer |
+|---|---|
+| `dct:modified` uit de meegeleverde `dcat.jsonld` (in de zip of het multipart-deel `dcat`) | de bron zegt wanneer hij zijn gegevens het laatst bijwerkte (bijv. een herziene CBS-tabel) |
+| `dct:issued` uit dezelfde `dcat.jsonld` | alleen een uitgiftedatum |
+| de datum van ontvangst van de levering (UTC) | geen van beide; de levering zelf is dan de aanmaakdatum |
+
+`begingeldigheid` van een indicator telt niet mee: binnen één sleutel is de indicator gelijk. Een bronpeildatum die geen datum is (ISO 8601, ook `{"@value": …}`) of na morgen ligt, keurt de levering af met `schema-ongeldig` (resource `dcat`); een datum in de toekomst zou anders elke overlap winnen. Per regel een eigen bronpeildatum kan (nog) niet: lever een bron met een andere stand als eigen dataset.
+
+De levering toont wat gebruikt is: `aantallen.bronpeildatum` en `aantallen.bronpeildatumUit` (`dct:modified`, `dct:issued` of `ontvangst`), en `aantallen.nietZichtbaarDoorVoorrang` als waarden van deze levering niet voorgaan.
+
+**De andere waarde blijft beschikbaar.** Alle gepubliceerde waarden blijven per dataset in `laden.waarnemingen` (met `bronpeildatum`), dus ook in de versies van de laad-API. In de samengevoegde stand staan ze bij de winnende waarde in `metadata.andere_bronnen`, nieuwste eerst, met `dataset`, `waarde`, `bron`, `bronpeildatum`, `n_status` en `levering_id`; via de data-API als kolom `andere_bronnen` (`/api/data/v1/gebied_data?select=waarde,bron,andere_bronnen`). Een waarde uit een niet-openbare dataset (`dct:accessRights` niet PUBLIC) staat daar alleen als de winnende dataset zelf ook niet openbaar is. Het indicatorpaneel toont `andere_bronnen` nog niet.
+
+Een nieuwe levering beslist alleen de sleutels opnieuw die ze raakt. Bij het bijwerken naar V036 beslist de migratie de bestaande overlap één keer opnieuw; bestaande waarden krijgen de datum van ontvangst van hun levering als bronpeildatum. De oude instelling `LADEN_VOORRANG` (een vaste voorkeursdataset) vervalt.
 
 ## Linten
 

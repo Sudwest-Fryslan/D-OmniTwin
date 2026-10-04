@@ -35,6 +35,7 @@ leeg (true/false), begint_met, niet_begint_met, kleiner_dan, groter_dan.
 | `geometrietype` | [type] | alleen deze geometrietypen (bijv. Point, Polygon) |
 | `binnen` | {bron, bewerkingen?} | alleen features waarvan een binnenpunt in de (vereniging van de) andere bron ligt |
 | `splits_op` | {bron, bewerkingen?, veld, binnen, buiten} | feature opdelen in het deel binnen en buiten een andere bron, met nieuwe code via een sjabloon |
+| `ontdubbel` | {veld, sleutel, houd, zet?, achtervoegsel?, normaliseer?, reden?} | records met dezelfde `veld` (bijv. naam) maar een andere `sleutel` (bijv. uuid): de sleutel uit `houd` ({veldwaarde: sleutel of begin daarvan}) blijft ongewijzigd, de andere krijgen `zet` en `achtervoegsel` achter `veld`, geteld onder `reden` (standaard `dubbel`); een dubbele zonder (vindbare) voorkeur blijft ongewijzigd en telt onder `<reden>-zonder-voorkeur` |
 """
 
 import datetime as dt
@@ -44,7 +45,7 @@ from collections import Counter
 BEWERKINGEN = (
     "hernoem", "behoud", "verwijder", "constant", "kopieer", "tekst", "getal", "waarde_map", "koppel",
     "afwijzen", "filter", "jaar_uit_datum", "jaar_naar_datum", "iso_datumtijd", "prefix", "sjabloon", "deel",
-    "snake_case", "multipolygon", "geometrietype", "binnen", "splits_op", "nummer",
+    "snake_case", "multipolygon", "geometrietype", "binnen", "splits_op", "nummer", "ontdubbel",
 )
 TOETSEN = ("gelijk", "niet_gelijk", "in", "niet_in", "leeg", "begint_met", "niet_begint_met", "kleiner_dan", "groter_dan")
 
@@ -246,7 +247,38 @@ def _stap(naam, p, rijen, rapport, ctx):
                 if not deel.is_empty and deel.area > 0:
                     uit.append({**r, p["veld"]: _sjabloon(sjabloon, r), "geometry": deel})
         return uit
+    if naam == "ontdubbel":
+        return _ontdubbel(p, rijen, rapport)
     raise BewerkingFout(f"onbekende bewerking {naam!r}; bekend: {', '.join(BEWERKINGEN)}")
+
+
+def _ontdubbel(p, rijen, rapport):
+    """Dubbele `veld`-waarden met een andere `sleutel`: alleen de voorkeur uit `houd` blijft zoals hij is."""
+    norm = (lambda w: " ".join(str(w).split()).casefold()) if p.get("normaliseer") else str
+    reden = p.get("reden", "dubbel")
+    houd = {norm(k): str(v) for k, v in (p.get("houd") or {}).items()}
+    groepen = {}
+    for i, r in enumerate(rijen):
+        if not _leeg(r.get(p["veld"])):
+            groepen.setdefault(norm(r[p["veld"]]), []).append(i)
+    vervallen = set()
+    for naam, idx in groepen.items():
+        sleutels = {str(rijen[i].get(p["sleutel"])) for i in idx}
+        if len(sleutels) < 2:
+            continue
+        voorkeur = houd.get(naam)
+        blijft = [i for i in idx if voorkeur and str(rijen[i].get(p["sleutel"])).startswith(voorkeur)]
+        if len({str(rijen[i].get(p["sleutel"])) for i in blijft}) != 1:
+            rapport[f"{reden}-zonder-voorkeur"] += len(idx)
+            continue
+        vervallen |= {i for i in idx if i not in blijft}
+    uit = []
+    for i, r in enumerate(rijen):
+        if i in vervallen:
+            r = {**r, **(p.get("zet") or {}), p["veld"]: f"{r[p['veld']]}{p.get('achtervoegsel', '')}"}
+            rapport[reden] += 1
+        uit.append(r)
+    return uit
 
 
 def naam_van(stap):

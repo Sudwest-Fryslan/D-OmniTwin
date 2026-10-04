@@ -124,9 +124,11 @@ ORDER BY gd.gebied_id, gd.indicator_uuid, gd.jaar DESC NULLS LAST, gd.datum DESC
 
 -- Waarden per gebied, indicator en jaar (use cases via /api/data/v1, laad-API #205).
 -- Zonder n: waarden onder de n-drempel staan hier nooit (laad-API), n zelf is niet nodig.
+-- andere_bronnen: waarden van andere datasets op dezelfde sleutel die niet voorgingen (V036, A6 van #222).
 DROP VIEW IF EXISTS api.gebied_data;
 CREATE VIEW api.gebied_data AS
-SELECT gebied_id, indicator_uuid, jaar, datum, scenario_id, waarde, kwaliteit, bron, n_status, toegang
+SELECT gebied_id, indicator_uuid, jaar, datum, scenario_id, waarde, kwaliteit, bron, n_status, toegang,
+       metadata->'andere_bronnen' AS andere_bronnen
 FROM public.gebied_data
 WHERE toegang = 'openbaar' OR public.verzoek_mag_intern();
 

@@ -63,13 +63,14 @@ PLAN_[beschrijvende-naam-kebab-case].md
 | [TC-01-001](./01-kaartmodule/TC-01-001_gebieds-selectie.md) | Enkelvoudige gebiedsselectie via kaart | ❓ |
 | [TC-01-002](./01-kaartmodule/TC-01-002_meervoudige-selectie.md) | Meervoudige selectie (klik + polygoon) | ❓ |
 | [TC-01-003](./01-kaartmodule/TC-01-003_alternatieve-gebiedslagen.md) | Alternatieve gebiedslagen (omgevingsvisie ✅, BAG ❓, woonbeleid ❓) | ✅/❓ |
-| [TC-01-004](./01-kaartmodule/TC-01-004_kaartmodus.md) | Kaartmodus: percentielklasse, werkelijke waarde, uit (#255) | ✅ |
+| [TC-01-004](./01-kaartmodule/TC-01-004_kaartmodus.md) | Kaartmodus: percentielklasse, label A–E, werkelijke waarde, uit (#255, #256) | ✅ |
 
 ### Kompas Detail (02)
 | ID | Naam | Status |
 |----|------|--------|
 | [TC-02-001](./02-kompas-detail/TC-02-001_wonen-indicatoren.md) | Wonen — indicatoren & benchmark | ⚠️ |
 | [TC-02-002](./02-kompas-detail/TC-02-002_sociaal-domein.md) | Sociaal domein — rondkomen | ⚠️ |
+| [TC-02-003](./02-kompas-detail/TC-02-003_klimaat-labels.md) | Klimaat Kompas met labels A–E (#256) | ✅ |
 
 ### Rapportage (04)
 | Document | Naam | Status |
@@ -113,6 +114,8 @@ Status: **geautomatiseerd** = alle stappen · **gedeeltelijk** = een deel van de
 | TC-01-003 B | `test_tc_01_003b_bag_woonplaatsen` | geautomatiseerd (vereist PDOK, anders skip) |
 | TC-01-003 C | `test_tc_01_003c_woonbeleid` | handmatig (skip: dataset nog niet beschikbaar) |
 | TC-01-004 | `test_tc_01_004_kaartmodus` (`test_kaartmodus.py`) | geautomatiseerd |
+| TC-01-004 stap 5 | `test_tc_01_004_label_ae` (`test_kaartmodus.py`) | geautomatiseerd |
+| TC-02-003 | `test_tc_02_003_klimaat_kompas_labels` (`test_kaartmodus.py`) | geautomatiseerd |
 | TC-02-001 stap 1-3 | `test_tc_02_001_wonen_indicatoren` | gedeeltelijk: energielabel i.p.v. betaalbaarheid (niet in sample) |
 | TC-02-001 stap 4 | `test_tc_02_001_uitleg_zscore` | handmatig (subjectief) |
 | TC-02-001 stap 5 | `test_tc_02_001_benchmark_twee_gebieden` | geautomatiseerd |
