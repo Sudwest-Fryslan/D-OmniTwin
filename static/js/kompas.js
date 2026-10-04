@@ -2051,6 +2051,15 @@ class KompasVisualization {
         const ctx = document.getElementById('kompas-trend-chart');
         if (!ctx) return;
 
+        // Een eerdere indicator met één datapunt verbergt de grafiek; voor de vergelijking weer tonen (#280)
+        const chartWrapper = document.getElementById('chart-container-wrapper');
+        if (chartWrapper) chartWrapper.style.display = 'block';
+        const fallback = document.getElementById('chart-fallback-message');
+        if (fallback) fallback.style.display = 'none';
+        ctx.style.display = 'block';
+        const tijdschuif = document.getElementById('timeslider-container');
+        if (tijdschuif) tijdschuif.style.display = 'none';
+
         this.destroyChart();
 
         if (typeof Chart === 'undefined') {

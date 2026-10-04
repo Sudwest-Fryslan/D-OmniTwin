@@ -434,6 +434,23 @@ function togglePanel(panelId) {
 // deck.gl Setup with MapLibre
 // ============================================================================
 
+/**
+ * Klikherkenning ruimer (#279). deck.gl maakt van pointerdown en pointerup alleen een klik als
+ * beide binnen 250 ms *verwerkt* worden; bij pointerdown doet deck.gl eerst synchroon een pick.
+ * Zonder GPU (software-WebGL, VDI) of onder belasting duurt die pick 0,2-1,6 s en ging de klik
+ * van de gebruiker verloren. Met 1000 ms blijft een klik een klik; slepen herkent deck.gl aan de
+ * beweging, niet aan de tijd.
+ */
+const KLIK_TIJD_MS = 1000;
+function ruimeKlikherkenning(deck) {
+    try {
+        const herkenner = deck?.eventManager?.manager?.get?.('click');
+        if (herkenner && (herkenner.options?.time || 0) < KLIK_TIJD_MS) herkenner.set({ time: KLIK_TIJD_MS });
+    } catch (e) {
+        console.warn('Klikherkenning niet aangepast:', e);
+    }
+}
+
 function initDeckGL() {
     const { DeckGL, MapView } = deck;
 
@@ -472,6 +489,7 @@ function initDeckGL() {
             blendFunc: [770, 771] // gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA (standard blending)
         },
         onAfterRender: checkPerformance, // Monitor FPS
+        onLoad: () => ruimeKlikherkenning(state.deckgl), // #279: klik niet kwijt op trage pc's
         getTooltip: ({ object, layer }) => {
             if (object) {
                 const props = object.properties;
