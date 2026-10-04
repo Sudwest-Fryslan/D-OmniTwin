@@ -308,6 +308,12 @@ def dataset_fouten(uc, ds, spec=None):
         fouten.append(f"{pad}: id {d.get('id')!r} is niet {ds['id']!r}")
     if ds.get("route") in ("laden", "compat"):
         fouten += [f"{pad}: registratie: {f}" for f in valideer_registratie(registratie_voor_api(d), spec)]
+    if ds.get("toegang"):
+        # Toegang per laag (#254): het manifest toont hem, dct:accessRights in de registratie bepaalt hem
+        from omnitwin.laden.catalogus import toegang_van
+        echt = toegang_van(d.get("beschrijving") or {})
+        if echt != ds["toegang"]:
+            fouten.append(f"{pad}: toegang {ds['toegang']!r} in het manifest, maar dct:accessRights geeft {echt!r}")
     fouten += _bron_fouten(d.get("bron"), f"{pad}.bron")
     fouten += _stappen_fouten(d.get("bewerkingen"), pad)
     for vnaam, v in (d.get("varianten") or {}).items():
@@ -341,7 +347,8 @@ def valideer_manifest(uc, naam=None):
         if c.get("actor") and c["actor"] not in actoren:
             fouten.append(f"controle {c['type']}: actor {c['actor']} niet in actoren")
         if c["type"] == "recht":
-            nodig = ("actor", "actie", "toegestaan") + (("dataset",) if c.get("actie") != "registreren" else ())
+            extra = {"registreren": (), "bekijken": ("pad",)}.get(c.get("actie"), ("dataset",))
+            nodig = ("actor", "actie", "toegestaan") + extra
             fouten += [f"controle recht: veld {v} ontbreekt" for v in nodig if v not in c]
     return fouten
 
@@ -804,6 +811,12 @@ def controle_recht(c, api, uc):
         r = a.s.post(f"{a.basis}{LAAD_API}/datasets", json=[], timeout=30)
     elif actie == "lezen":
         r = a.s.get(f"{a.basis}{LAAD_API}/datasets/{ds_id}", timeout=30)
+    elif actie == "bekijken":
+        # Toegang per laag (#254): gepubliceerde data lezen zoals de viewer, met het token van de actor
+        r = a.s.get(f"{a.basis}{c['pad']}", timeout=60)
+        if (r.status_code not in (401, 403)) != c["toegestaan"]:
+            return f"HTTP {r.status_code}, verwacht {'toegestaan' if c['toegestaan'] else '401 of 403'}"
+        return None
     else:
         route = next((d.get("route") for d in uc.get("datasets", []) if d["id"] == ds_id), "laden")
         url = (f"{a.basis}{LAAD_API}/compat/swf-monitor/monitor_api/{COMPAT_SOORT[ds_id]}/inlezen"
@@ -832,11 +845,14 @@ def controle_api(c, api, uc):
         r = requests.get(f"{api.basis}{c['pad']}", headers=headers, timeout=60)
         if r.status_code != c.get("status", 200):
             return f"HTTP {r.status_code}, verwacht {c.get('status', 200)}"
-        if c.get("minimaal_aantal") is not None and r.status_code == 200:
+        grenzen = (c.get("minimaal_aantal"), c.get("maximaal_aantal"))
+        if grenzen != (None, None) and r.status_code == 200:
             data = r.json()
             n = len(data.get("features", data.get("datasets", data.get("indicatoren", [])))) if isinstance(data, dict) else len(data)
-            if n < c["minimaal_aantal"]:
+            if c.get("minimaal_aantal") is not None and n < c["minimaal_aantal"]:
                 return f"{n} resultaten, verwacht ≥ {c['minimaal_aantal']}"
+            if c.get("maximaal_aantal") is not None and n > c["maximaal_aantal"]:
+                return f"{n} resultaten, verwacht ≤ {c['maximaal_aantal']}"
         return None
     if t == "aantal":
         if c.get("resource"):

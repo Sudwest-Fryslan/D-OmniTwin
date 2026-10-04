@@ -1,0 +1,40 @@
+{
+  "id": "demo-intern-definitie",
+  "bronId": "demo-intern",
+  "beschrijving": {
+    "@context": "https://data.overheid.nl/dcat-ap-nl/context.jsonld",
+    "@type": "dcat:Dataset",
+    "dct:title": "DEMODATA: definitie van een interne voorbeeldindicator",
+    "dct:description": "Eén indicator uit een denkbeeldige interne bron, om toegang per laag te tonen (#254). Niet openbaar (dct:accessRights RESTRICTED): alleen zichtbaar na inloggen met de rol lezer of beheerder. Geen echte gegevens.",
+    "dct:publisher": "https://github.com/TLaan/D-OmniTwin",
+    "dct:accessRights": "http://publications.europa.eu/resource/authority/access-right/RESTRICTED",
+    "dct:license": "http://standaarden.overheid.nl/owms/terms/licentieonbekend",
+    "dct:spatial": "https://identifier.overheid.nl/tooi/id/provincie/pv21",
+    "dct:source": "usecases/rechten-per-laag/intern-definitie.json (demodata)",
+    "dcat:theme": [
+      "http://standaarden.overheid.nl/owms/terms/Bestuur"
+    ],
+    "dcat:keyword": [
+      "demodata",
+      "toegang",
+      "intern"
+    ],
+    "dcat:contactPoint": {
+      "@type": "vcard:Organization",
+      "vcard:fn": "Functioneel beheer D-OmniTwin"
+    },
+    "dct:type": "demodata"
+  },
+  "laadprofiel": {
+    "profiel": "definities"
+  },
+  "bron": {
+    "adapter": "usecase-bestand",
+    "pad": "intern-definitie.json",
+    "omschrijving": "DEMODATA in de use case: indicatoren, geen gebiedstypen of relaties"
+  },
+  "levering": {
+    "formaat": "datapackage",
+    "bestand": "demo-intern-definitie.zip"
+  }
+}

@@ -1,0 +1,51 @@
+{
+  "id": "demo-intern-waarden",
+  "bronId": "demo-intern",
+  "beschrijving": {
+    "@context": "https://data.overheid.nl/dcat-ap-nl/context.jsonld",
+    "@type": "dcat:Dataset",
+    "dct:title": "DEMODATA: waarden van de interne voorbeeldindicator, 13 buurten",
+    "dct:description": "Waarden van de interne voorbeeldindicator per CBS-buurt (de 13 buurten van de sample). Niet openbaar: anoniem niet te zien, ook niet via PostgREST of een directe aanroep. Geen echte gegevens.",
+    "dct:publisher": "https://github.com/TLaan/D-OmniTwin",
+    "dct:accessRights": "http://publications.europa.eu/resource/authority/access-right/RESTRICTED",
+    "dct:license": "http://standaarden.overheid.nl/owms/terms/licentieonbekend",
+    "dct:spatial": "https://identifier.overheid.nl/tooi/id/provincie/pv21",
+    "dct:source": "usecases/rechten-per-laag/intern-waarden.csv (demodata)",
+    "dcat:theme": [
+      "http://standaarden.overheid.nl/owms/terms/Bestuur"
+    ],
+    "dcat:keyword": [
+      "demodata",
+      "toegang",
+      "intern"
+    ],
+    "dcat:contactPoint": {
+      "@type": "vcard:Organization",
+      "vcard:fn": "Functioneel beheer D-OmniTwin"
+    },
+    "dct:type": "demodata"
+  },
+  "laadprofiel": {
+    "profiel": "waarnemingen",
+    "vervangBereik": [],
+    "minimumN": 0,
+    "bijOntbrekendeN": "bron-onderdrukt"
+  },
+  "bron": {
+    "adapter": "usecase-bestand",
+    "pad": "intern-waarden.csv",
+    "omschrijving": "DEMODATA in de use case"
+  },
+  "bewerkingen": [
+    {
+      "getal": [
+        "jaar",
+        "waarde"
+      ]
+    }
+  ],
+  "levering": {
+    "formaat": "datapackage",
+    "bestand": "demo-intern-waarden.zip"
+  }
+}

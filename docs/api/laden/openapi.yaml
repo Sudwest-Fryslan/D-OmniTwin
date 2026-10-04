@@ -1244,7 +1244,10 @@ components:
         "dct:accessRights":
           type: string
           format: uri
-          description: EU-toegangsrechten (PUBLIC, RESTRICTED, NON_PUBLIC).
+          description: |
+            EU-toegangsrechten (PUBLIC, RESTRICTED, NON_PUBLIC). Bepaalt de toegang van wat de dataset
+            publiceert (#254): PUBLIC = openbaar, anders intern (alleen met de rol `lezer` of `beheerder`
+            zichtbaar in de viewer, PostgREST, pg_featureserv en de kaartlaag-proxy).
         "dct:license":
           type: string
           format: uri
@@ -1382,6 +1385,14 @@ components:
             actueleVersie:
               type: integer
               nullable: true
+            toegang:
+              type: string
+              enum: [openbaar, intern]
+              readOnly: true
+              description: |
+                Afgeleid van `beschrijving.dct:accessRights` (#254): `openbaar` bij PUBLIC, anders `intern`.
+                Wat de dataset publiceert (indicatoren, waarden, kaartlaag) is dan alleen zichtbaar met de
+                rol `lezer` of `beheerder`. Niet zelf zetten; wijzig `dct:accessRights`.
             laatsteLevering:
               $ref: "#/components/schemas/LeveringKort"
             aangemaaktOp:

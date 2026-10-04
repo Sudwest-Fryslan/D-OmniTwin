@@ -35,4 +35,4 @@ De viewer (`/`) en de data-API's zijn openbaar. Sommige installaties willen alle
 
 - Bij `open` kost elk verzoek naar `/api/data` en `/api/geo` één interne aanroep naar de backend (zonder database). Staat de backend niet, dan werken die API's ook niet: dicht bij twijfel.
 - Bij `inloggen` doet elk verzoek een sessie-opzoeking in de database (`oidc_sessies` of `sessions`).
-- Rechten per laag (alleen `lezer` ziet niet-openbare lagen) vallen hier buiten; dat is https://github.com/TLaan/D-OmniTwin/issues/254.
+- Rechten per laag (alleen `lezer` ziet niet-openbare lagen) vallen hier buiten; die staan in [ADR 0010](0010-toegang-per-laag-en-bron.md) (https://github.com/TLaan/D-OmniTwin/issues/254). Het forwardAuth-antwoord zet daarvoor ook de header `X-Omnitwin-Toegang`.

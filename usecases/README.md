@@ -26,7 +26,7 @@ usecases/<naam>/
 ```
 
 - Schema's: [`usecase.schema.json`](../docs/specificaties/usecase/1.0/usecase.schema.json) (manifest), [`dataset.schema.json`](../docs/specificaties/usecase/1.0/dataset.schema.json) (dataset met het `bron`-blok per adapter) en [`bewijs.schema.json`](../docs/specificaties/usecase/1.0/bewijs.schema.json) (bewijsverslag). De registratie zelf volgt `DatasetRegistratie` in de [laad-API](../docs/api/laden/openapi.yaml).
-- Toegestaan in de map: `.json`, `.md`, `.csv`; in `data/` ook `.gpkg`; in `bewijs/` ook afbeeldingen. De uitvoerder en `tests/test_usecases_uitvoerder.py` keuren andere bestanden af, zonder uitzonderingen.
+- Toegestaan in de map: `.json`, `.md`, `.csv`; in `bewijs/` ook afbeeldingen. De uitvoerder en `tests/test_usecases_uitvoerder.py` keuren andere bestanden af, zonder uitzonderingen.
 - De demo-use cases (TC-06-*) hebben naast de volledige vorm nog de velden van de verouderde vorm (`persona`, `data`, `inrichting`, `ai_zoekvraag`, `verwacht`): daaruit komt hun inrichting (richting van de indicatoren, via `laad_usecase.py --inrichting`) en de verwachting voor de chat. Hun data komt via de laad-API uit de datasets van hun afhankelijkheden (https://github.com/TLaan/D-OmniTwin/issues/236).
 
 ### Bronnen
@@ -114,6 +114,7 @@ Gegenereerd met `python -m omnitwin.usecases index`; een unittest faalt als hij 
 | [energiearmoede](./energiearmoede/README.md) | TC-06-005 | Energietransitie en energiearmoede | Beleidsmaker energietransitie | actief | 0.2.0 | cbs-gebiedsindelingen, cbs-kerncijfers, rivm-gezondheidsmonitor, sample-bronbibliotheek |
 | [hittestress](./hittestress/README.md) | TC-06-006 | Klimaatadaptatie: hittestress en kwetsbaarheid | Stedenbouwkundige / GGD | actief | 0.3.0 | cbs-gebiedsindelingen, cbs-kerncijfers, rivm-gezondheidsmonitor, sample-bronbibliotheek |
 | [politie-misdrijven](./politie-misdrijven/README.md) | TC-07-022 | Politie: geregistreerde misdrijven per buurt via de laad-API | beheerder D-OmniTwin | actief | 0.2.0 | cbs-gebiedsindelingen |
+| [rechten-per-laag](./rechten-per-laag/README.md) | TC-07-024 | Rechten per laag: interne lagen en indicatoren alleen na inloggen | beheerder D-OmniTwin | actief | 0.1.0 | cbs-gebiedsindelingen |
 | [rivm-gezondheidsmonitor](./rivm-gezondheidsmonitor/README.md) | TC-07-021 | RIVM Gezondheidsmonitor per buurt via de laad-API | beheerder D-OmniTwin | actief | 0.2.0 | cbs-gebiedsindelingen |
 | [sample-bronbibliotheek](./sample-bronbibliotheek/README.md) | TC-07-023 | Sample: wat nog niet open is of nog geen adapter heeft (gemarkeerd) | beheerder D-OmniTwin | actief | 0.2.0 | cbs-gebiedsindelingen |
 | [sociale-cohesie](./sociale-cohesie/README.md) | TC-06-008 | Zorgzwaarte en sociale cohesie | Wijkcoördinator / wijkcontactfunctionaris | actief | 0.2.0 | cbs-gebiedsindelingen, cbs-kerncijfers, rivm-gezondheidsmonitor |

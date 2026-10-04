@@ -36,6 +36,11 @@ def _zet_statement_timeout(dbapi_connection, _record):
         cursor.execute(f"SET statement_timeout = {int(STATEMENT_TIMEOUT_MS)}")
     dbapi_connection.commit()  # anders draait de rollback bij teruggave aan de pool de SET terug
 
+# Toegang per laag en bron (#254, ADR 0010): een anoniem verzoek leest als databaserol
+# omnitwin_openbaar (row level security: alleen openbaar). Alleen in de webapp, zoals hierboven.
+from omnitwin import toegang as _toegang
+_toegang.registreer(engine)
+
 # Centrale foutafhandeling (#203): details in de log, naar buiten een generieke
 # melding met correlatie-id; ongeldige invoer in de database → 422, conflict → 409
 from omnitwin.fouten import registreer_foutafhandeling

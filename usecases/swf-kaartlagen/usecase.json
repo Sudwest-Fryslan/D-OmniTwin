@@ -76,13 +76,13 @@
       "route": "laden",
       "registratie": "datasets/swf-laag-deelgebieden.json",
       "profiel": "kaartlaag",
+      "toegang": "openbaar",
       "rol": "dataset:swf-laag-deelgebieden:laden",
       "client": "etl-swf",
       "prioriteit": "Should",
       "bron": "repo (data-upload/)",
       "verwacht": {
-        "features": 6,
-        "toegang": "PUBLIC"
+        "features": 6
       }
     },
     {
@@ -90,13 +90,13 @@
       "route": "laden",
       "registratie": "datasets/swf-laag-coordinatorgebieden.json",
       "profiel": "kaartlaag",
+      "toegang": "intern",
       "rol": "dataset:swf-laag-coordinatorgebieden:laden",
       "client": "etl-swf",
       "prioriteit": "Should",
       "bron": "SWF projectmap ($SWF_DOCS_DIR)",
       "verwacht": {
         "features": 146,
-        "toegang": "RESTRICTED",
         "weggelaten": "1 geometrie zonder vlak (geometrie-geen-vlak)"
       }
     },
@@ -105,13 +105,14 @@
       "route": "laden",
       "registratie": "datasets/swf-laag-afstand-tot-koelte.json",
       "profiel": "kaartlaag",
+      "toegang": "intern",
       "rol": "dataset:swf-laag-afstand-tot-koelte:laden",
       "client": "etl-swf",
       "prioriteit": "Must",
       "bron": "SWF-bewerking ($SWF_DOCS_DIR)",
       "verwacht": {
         "features": "41.778 (41.956 in de bron, 178 zonder geometrie)",
-        "toegang": "RESTRICTED (open vraag 13)"
+        "toegang_opmerking": "welke lagen intern zijn, is open vraag 13"
       }
     },
     {
@@ -119,6 +120,7 @@
       "route": "laden",
       "registratie": "datasets/swf-laag-risico-paalrot.json",
       "profiel": "kaartlaag",
+      "toegang": "intern",
       "rol": "dataset:swf-laag-risico-paalrot:laden",
       "client": "etl-swf",
       "prioriteit": "Must",
@@ -132,6 +134,7 @@
       "route": "laden",
       "registratie": "datasets/swf-laag-projecten-vlak.json",
       "profiel": "kaartlaag",
+      "toegang": "intern",
       "rol": "dataset:swf-laag-projecten-vlak:laden",
       "client": "etl-swf",
       "prioriteit": "Should",
@@ -146,6 +149,7 @@
       "route": "laden",
       "registratie": "datasets/swf-laag-projecten-punt.json",
       "profiel": "kaartlaag",
+      "toegang": "intern",
       "rol": "dataset:swf-laag-projecten-punt:laden",
       "client": "etl-swf",
       "prioriteit": "Should",
@@ -159,6 +163,7 @@
       "route": "laden",
       "registratie": "datasets/swf-laag-projecten-lijn.json",
       "profiel": "kaartlaag",
+      "toegang": "intern",
       "rol": "dataset:swf-laag-projecten-lijn:laden",
       "client": "etl-swf",
       "prioriteit": "Should",
@@ -172,6 +177,7 @@
       "route": "laden",
       "registratie": "datasets/swf-laag-grootgrondbezit.json",
       "profiel": "kaartlaag",
+      "toegang": "intern",
       "rol": "dataset:swf-laag-grootgrondbezit:laden",
       "client": "etl-swf",
       "prioriteit": "Should",
@@ -302,7 +308,7 @@
   "bekende_afwijkingen": [
     "Rasterlagen gaan niet via de laad-API (profiel kaartlaag is vector): waterdiepte bij intense neerslag (Klimaateffectatlas, open WMS), maaiveldhoogte AHN4 (PDOK, open), schaduwkaart en heatmaps wateroverlast blijven externe lagen.",
     "Profiel kaartlaag heeft één geometrietype per tabel: de GeoVisia-projecten worden drie datasets (vlak, punt, lijn). Overweeg meer tabellen per kaartlaag in profiel v2.",
-    "Toegang: dct:accessRights PUBLIC/RESTRICTED in de registratie; de beveiligde geo-route (forwardAuth) en de rol voor interne lagen bestaan nog niet. Welke lagen intern zijn, is open vraag 13.",
+    "Toegang: dct:accessRights PUBLIC (openbaar) of RESTRICTED (intern, alleen met de rol lezer of beheerder; #254, ADR 0010). Welke lagen intern zijn, is open vraag 13; aanname (https://github.com/TLaan/D-OmniTwin/issues/222, B3): wat in de huidige monitor grijs of uit staat, is intern.",
     "GeoVisia bevat persoonsvelden (projectleider, e-mail, telefoon, aangemaakt/gewijzigd door): de levering neemt alleen een vaste lijst velden over. Vrije tekst (projectomschrijving) kan nog namen bevatten: DPIA-toets.",
     "Grootgrondbezit (BRK-afgeleid) en de klimaatbewerkingen: herkomst en licentie navragen; grootgrondbezit alleen zonder natuurlijke personen.",
     "Externe kaartlagen (swf-laag-extern) gaan via de beheerroute, nu alleen in-process (installeer --inproces). Aanvullen, nooit overschrijven: een laag met dezelfde naam blijft. Een interne laag gaat naar de kolom toegang (#274); zonder die kolom wordt hij niet actief gezet."

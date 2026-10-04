@@ -12,7 +12,7 @@ Features voor de kaart zonder vaste structuur: panden met een kenmerk, klimaatla
 | `sleutelveld` | ja | attribuut met een unieke sleutel per feature |
 | `labelveld` | nee | attribuut voor de pop-up of legenda |
 
-`beschrijving` volgt GeoDCAT-AP (bijv. `dct:spatial`, `dcat:spatialResolutionInMeters`, `dct:conformsTo` met het CRS). Toegang `dct:accessRights` bepaalt of de collectie anoniem zichtbaar is (alleen `PUBLIC`); beperkte lagen wachten op de beveiligde geo-route.
+`beschrijving` volgt GeoDCAT-AP (bijv. `dct:spatial`, `dcat:spatialResolutionInMeters`, `dct:conformsTo` met het CRS). Toegang `dct:accessRights` bepaalt of de laag anoniem zichtbaar is (alleen `PUBLIC`); een andere waarde maakt hem intern: alleen met de rol `lezer` of `beheerder`, ook de collectie `laag.<featureTabel>` in pg_featureserv (forwardAuth, [ADR 0010](../../../2-architectuur/adr/0010-toegang-per-laag-en-bron.md)).
 
 ## Levering
 
