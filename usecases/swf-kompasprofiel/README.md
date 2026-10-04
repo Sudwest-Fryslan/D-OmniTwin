@@ -77,7 +77,9 @@ Verwacht:
 
 ## Bewijs
 
-In [`bewijs/`](bewijs/README.md), gemaakt door de uitvoerder (niet in git): `controle.json` (uitvoer van `controleer`), per levering de status-JSON van de laad-API (`levering-<dataset>.json`: status, versie, aantallen, fouten), en screenshots van de viewer-controles.
+<!-- bewijs:start -->
+*Nog geen bewijs. Maken tegen een draaiende installatie: `python -m omnitwin.usecases bewijs swf-kompasprofiel`.*
+<!-- bewijs:end -->
 
 ## Bekende afwijkingen
 
