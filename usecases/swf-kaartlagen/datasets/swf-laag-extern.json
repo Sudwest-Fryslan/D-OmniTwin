@@ -1,16 +1,16 @@
 {
-  "id": "swf-init-kaartlagen",
-  "bronId": "swf-initialisatie",
+  "id": "swf-laag-extern",
+  "bronId": "swf-kaartlagen",
   "beschrijving": {
     "@context": "https://data.overheid.nl/dcat-ap-nl/context.jsonld",
     "@type": "dcat:Dataset",
-    "dct:title": "SWF-initialisatie — externe kaartlagen",
-    "dct:description": "Definities van de externe kaartlagen (WFS/WMS van PDOK e.d.) uit de lokale D-OmniTwin-database, als eerste opzet (aanname B1 van #222). Toegang volgens B3: GeoVisia en projecten 'in plan' intern, de rest openbaar. Lokale lagen (GeoPackage) komen via de laad-API (profiel kaartlaag), niet hier.",
+    "dct:title": "Externe kaartlagen (WFS/WMS) van de gebiedsmonitor",
+    "dct:description": "Definities van externe kaartlagen (WFS/WMS-diensten van PDOK e.d.) zoals de projectleider ze in de lokale D-OmniTwin-database heeft ingericht (B1: eerste opzet). De gegevens zelf komen van de dienst, met de licentie van die dienst. Toegang per laag (B3): GeoVisia en projecten 'in plan' intern, de rest openbaar.",
     "dct:publisher": "https://identifier.overheid.nl/tooi/id/gemeente/gm1900",
     "dct:accessRights": "http://publications.europa.eu/resource/authority/access-right/PUBLIC",
     "dct:license": "http://standaarden.overheid.nl/owms/terms/licentieonbekend",
     "dct:spatial": "https://identifier.overheid.nl/tooi/id/gemeente/gm1900",
-    "dct:source": "Export van de lokale D-OmniTwin-database (tabel externe_kaartlagen), via SWF_EXPORT_DIR",
+    "dct:source": "Lokale D-OmniTwin-database van de projectleider SWF (dump van 04-10-2026); openbaar volgens besluit van de projectleiding (04-10-2026, https://github.com/TLaan/D-OmniTwin/issues/222)",
     "dcat:theme": [
       "http://standaarden.overheid.nl/owms/terms/Ruimtelijke_ordening"
     ],
@@ -25,10 +25,10 @@
   },
   "bron": {
     "adapter": "lokaal-bestand",
-    "pad": "${SWF_EXPORT_DIR}/externe_kaartlagen.json",
+    "pad": "${REPO}/usecases/swf-kaartlagen/data/externe_kaartlagen.json",
     "formaat": "json",
     "tabel": "externe_kaartlagen",
-    "omschrijving": "externe_kaartlagen.json van scripts/beheer/swf_export.py; nooit in git"
+    "omschrijving": "data/externe_kaartlagen.json, gemaakt met scripts/beheer/swf_export.py --repo"
   },
   "bewerkingen": [
     {
@@ -64,7 +64,7 @@
   ],
   "levering": {
     "formaat": "datapackage",
-    "bestand": "swf-init-kaartlagen.zip",
+    "bestand": "swf-laag-extern.zip",
     "schema": {
       "externe_kaartlagen": "externe-kaartlagen.schema.json"
     }

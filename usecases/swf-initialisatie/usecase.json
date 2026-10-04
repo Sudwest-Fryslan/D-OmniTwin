@@ -2,9 +2,9 @@
   "specificatie": "1.0",
   "naam": "swf-initialisatie",
   "id": "TC-07-025",
-  "versie": "0.2.0",
-  "titel": "SWF-initialisatie: eerste vulling uit de lokale D-OmniTwin-database",
-  "vraag": "Ik wil de SWF-installatie de eerste keer vullen met de rijkere data uit mijn lokale D-OmniTwin-database, via de laad-API en herhaalbaar, zonder open data of demodata mee te kopiëren.",
+  "versie": "0.3.0",
+  "titel": "SWF-initialisatie: vulling uit een dump van de lokale D-OmniTwin-database",
+  "vraag": "Ik wil de SWF-installatie vullen met de rijkere data uit mijn lokale D-OmniTwin-database, via de laad-API en herhaalbaar, zonder open data of demodata mee te kopiëren.",
   "gebruiker": "projectleider en functioneel beheerder SWF",
   "status": "actief",
   "afhankelijk_van": [
@@ -15,6 +15,10 @@
     {
       "naam": "cbs-gebiedsindelingen",
       "versie": ">=0.1.0"
+    },
+    {
+      "naam": "swf-gebiedsindelingen",
+      "versie": ">=0.3.0"
     }
   ],
   "actoren": [
@@ -24,14 +28,13 @@
       "rollen": [
         "beheerder"
       ],
-      "omschrijving": "beheerder van D-OmniTwin: registreert de datasets en richt het Kompas en de externe kaartlagen in"
+      "omschrijving": "beheerder van D-OmniTwin: registreert de datasets"
     },
     {
       "naam": "etl-initialisatie",
       "soort": "machineclient",
       "rollen": [
         "dataset:swf-init-indicatoren:laden",
-        "dataset:swf-init-welstandsgebieden:laden",
         "dataset:swf-init-waarnemingen:laden"
       ],
       "omschrijving": "eenmalige client voor de eerste vulling; na de initialisatie intrekken"
@@ -46,9 +49,8 @@
     }
   ],
   "rechten": [
-    "realm-rol beheerder (registreren, inrichten)",
+    "realm-rol beheerder (registreren)",
     "dataset:swf-init-indicatoren:laden",
-    "dataset:swf-init-welstandsgebieden:laden",
     "dataset:swf-init-waarnemingen:laden",
     "realm-rol lezer"
   ],
@@ -70,20 +72,6 @@
       }
     },
     {
-      "id": "swf-init-welstandsgebieden",
-      "route": "laden",
-      "registratie": "datasets/swf-init-welstandsgebieden.json",
-      "profiel": "gebiedsindeling",
-      "rol": "dataset:swf-init-welstandsgebieden:laden",
-      "client": "etl-initialisatie",
-      "prioriteit": "Should",
-      "bron": "export van de lokale D-OmniTwin-database ($SWF_EXPORT_DIR/welstandsgebieden.gpkg)",
-      "verwacht": {
-        "features": 756,
-        "codes": "1–758 → WS1–WS758"
-      }
-    },
-    {
       "id": "swf-init-waarnemingen",
       "route": "laden",
       "registratie": "datasets/swf-init-waarnemingen.json",
@@ -93,48 +81,15 @@
       "prioriteit": "Must",
       "bron": "export van de lokale D-OmniTwin-database ($SWF_EXPORT_DIR/gebied_data.csv)",
       "verwacht": {
-        "gelezen": 255079,
+        "gelezen": 49903,
         "regels": 48316,
-        "open_data": 200240,
-        "bron_onbekend": 4931,
         "gebied_onbekend": 1587,
-        "gebiedstype_provincie": 5,
+        "open_data": 0,
+        "bron_onbekend": 0,
+        "gebiedstype_provincie": 0,
         "demodata": 0,
-        "mee": "SWF-gebiedsmonitor 10.365 (3.368 buurt, 6.997 welstand), Kadaster BAG en BAG 30.228, RVO EP-Online 4.352, berekend EP-Online/BAG 896, OpenStreetMap 2.475 (2.060 buurt, 415 welstand)",
+        "mee": "Kadaster BAG en BAG 30.228, RVO EP-Online en berekend 5.248, OpenStreetMap 2.475, SWF-gebiedsmonitor 10.365",
         "n": "leeg → bron-onderdrukt"
-      }
-    },
-    {
-      "id": "swf-init-kompas",
-      "route": "beheer",
-      "registratie": "datasets/swf-init-kompas.json",
-      "profiel": "kompasprofiel",
-      "beheerpad": "/api/beheer/v1/kompasprofielen",
-      "rol": "realm-rol beheerder",
-      "client": "beheerder",
-      "prioriteit": "Must",
-      "bron": "export van de lokale D-OmniTwin-database ($SWF_EXPORT_DIR/kompasprofiel_volledig_kompas.json)",
-      "verwacht": {
-        "regels": 247,
-        "unieke_indicatoren": 241,
-        "profiel": "Volledig Kompas",
-        "a4_uuid_vervangen": 1
-      }
-    },
-    {
-      "id": "swf-init-kaartlagen",
-      "route": "beheer",
-      "registratie": "datasets/swf-init-kaartlagen.json",
-      "profiel": "externe-kaartlagen",
-      "beheerpad": "/api/beheer/v1/externe-kaartlagen",
-      "rol": "realm-rol beheerder",
-      "client": "beheerder",
-      "prioriteit": "Should",
-      "bron": "export van de lokale D-OmniTwin-database ($SWF_EXPORT_DIR/externe_kaartlagen.json)",
-      "verwacht": {
-        "lagen": 8,
-        "lokale_laag": 1,
-        "intern": 0
       }
     }
   ],
@@ -162,12 +117,6 @@
     },
     {
       "type": "aantal",
-      "dataset": "swf-init-welstandsgebieden",
-      "gelijk": 756,
-      "omschrijving": "alle welstandsgebieden × buurt uit de lokale database"
-    },
-    {
-      "type": "aantal",
       "dataset": "swf-init-waarnemingen",
       "gelijk": 48316,
       "omschrijving": "waarden uit de monitor en open data zonder adapter (BAG, EP-Online, OpenStreetMap)"
@@ -176,14 +125,15 @@
       "type": "bewerking",
       "dataset": "swf-init-waarnemingen",
       "reden": "open-data",
-      "gelijk": 200240,
-      "omschrijving": "CBS, RIVM en Kerncijfers: downloaden de open-data-use cases zelf"
+      "gelijk": 0,
+      "omschrijving": "het exportscript laat dit al weg (zonder --alles); deze regel controleert dat"
     },
     {
       "type": "bewerking",
       "dataset": "swf-init-waarnemingen",
       "reden": "bron-onbekend",
-      "gelijk": 4931
+      "gelijk": 0,
+      "omschrijving": "het exportscript laat dit al weg (zonder --alles); deze regel controleert dat"
     },
     {
       "type": "bewerking",
@@ -196,7 +146,8 @@
       "type": "bewerking",
       "dataset": "swf-init-waarnemingen",
       "reden": "gebiedstype-provincie",
-      "gelijk": 5
+      "gelijk": 0,
+      "omschrijving": "het exportscript laat dit al weg (zonder --alles); deze regel controleert dat"
     },
     {
       "type": "bewerking",
@@ -206,33 +157,6 @@
       "omschrijving": "de export bevat geen demodata"
     },
     {
-      "type": "aantal",
-      "dataset": "swf-init-kompas",
-      "resource": "kompasprofiel",
-      "gelijk": 247,
-      "omschrijving": "247 plekken (241 unieke indicatoren) in het Volledig Kompas"
-    },
-    {
-      "type": "bewerking",
-      "dataset": "swf-init-kompas",
-      "reden": "indicator_uuid: c4e1b3bb-e4ce-4cd0-bd52-219f4a9f5df3 → f6eafa70-9383-4de6-bd2a-e47309843437",
-      "gelijk": 1,
-      "omschrijving": "de vervallen Waterdiepte op straat wordt de aangehouden UUID (A4)"
-    },
-    {
-      "type": "aantal",
-      "dataset": "swf-init-kaartlagen",
-      "resource": "externe_kaartlagen",
-      "gelijk": 8,
-      "omschrijving": "de externe WFS/WMS-lagen; de lokale laag niet"
-    },
-    {
-      "type": "bewerking",
-      "dataset": "swf-init-kaartlagen",
-      "reden": "lokale-laag",
-      "gelijk": 1
-    },
-    {
       "type": "api",
       "pad": "/api/data/v1/gebied_data?gebied_id=eq.BU19000002&select=indicator_uuid,bron,andere_bronnen",
       "minimaal_aantal": 1,
@@ -240,25 +164,9 @@
       "omschrijving": "waarden op Bolsward-Zuidoost; bij overlap met een andere bron wint de nieuwste bronpeildatum en staat de andere in andere_bronnen (A6)"
     },
     {
-      "type": "api",
-      "pad": "/api/data/v1/gebieden?id=eq.WS728&select=id,gebiedstype_id",
-      "minimaal_aantal": 1,
-      "omschrijving": "welstand-id 728 heet in D-OmniTwin WS728 (namespace)"
-    },
-    {
       "type": "idempotent",
       "dataset": "swf-init-waarnemingen",
       "actor": "etl-initialisatie"
-    },
-    {
-      "type": "viewer",
-      "stap": "Kompas 'Volledig Kompas' openen voor Bolsward-Zuidoost",
-      "verwacht": "4 kwadranten, 12 thema's; indicatoren uit de monitor en BAG/EP-Online/OpenStreetMap gekleurd"
-    },
-    {
-      "type": "viewer",
-      "stap": "gebiedsindeling 'SWF welstandsgebieden' kiezen, indicator 'Verhouding oppervlakte water / verharding'",
-      "verwacht": "vlakken per welstandsgebied × buurt met waarden (na inloggen)"
     },
     {
       "type": "recht",
@@ -297,20 +205,15 @@
       "dataset": "swf-init-waarnemingen",
       "toegestaan": false,
       "omschrijving": "een lezer mag niet laden (403)"
+    },
+    {
+      "type": "viewer",
+      "stap": "indicator 'Aantal energielabels' op de kaart, Bolsward",
+      "verwacht": "waarden voor alle buurten van Bolsward uit RVO EP-Online (niet alleen de 13 testbuurten)"
     }
   ],
   "bewijs": {
     "stappen": [
-      {
-        "id": "kompas",
-        "actie": "kompas",
-        "gebied": "BU19000002",
-        "profiel": "Volledig Kompas",
-        "omschrijving": "Volledig Kompas voor Bolsward-Zuidoost, aangevuld uit de lokale database (247 plekken)",
-        "bevat": [
-          "Bolsward-Zuidoost"
-        ]
-      },
       {
         "id": "kaart",
         "actie": "kaart",
@@ -333,15 +236,12 @@
     ]
   },
   "bekende_afwijkingen": [
-    "De aantallen in de controles gelden voor de dump van de lokale database van 04-10-2026. Een nieuwe export: eerst `controleer`, dan de aantallen hier en in de README bijwerken.",
-    "Open data gaat nooit mee, ook niet als de open-data-use cases hem (nog) niet laden: 45.239 waarden op wijk- en gemeenteniveau (CBS Kerncijfers, RIVM) en 'Huisarts' (CBS, ook op buurtniveau). Vervolg: cbs-kerncijfers en rivm-gezondheidsmonitor uitbreiden met wijken en gemeenten.",
-    "Waarden zonder bron (4.931) gaan niet mee: politiecijfers (die politie-misdrijven open downloadt) en 16 waarden 'slachtoffer inbraak' op provincie/gemeente die niet herleidbaar zijn.",
-    "Definities die al uit swf-definities of de stuurdata komen, worden niet overschreven. De lokale database wijkt bij 100 omschrijvingen, 40 eenheden, 19 score_types, 8 statussen en 7 namen af; die keuze ligt bij de projectleider (aparte levering van definities).",
-    "Kompas: alleen het Volledig Kompas heeft koppelingen in de lokale database; het Klimaat Kompas komt uit de stuurdata en swf-kompasprofiel. Extra onderdelen (22), extra tags (53) en scoringsregels (16) hebben nog geen route en gaan niet mee.",
-    "Kompas en externe kaartlagen gaan via de beheerroute, die alleen in-process bestaat (`installeer --inproces`). Over HTTP is er nog geen /api/beheer/v1; dan meldt `installeer` die twee als niet geladen.",
-    "GeoVisia staat niet in de externe kaartlagen van de lokale database. De GeoVisia-projecten komen uit swf-kaartlagen (RESTRICTED). Intern gaat naar de kolom toegang van de toegang per laag (https://github.com/TLaan/D-OmniTwin/pull/274); zonder die kolom: niet actief. Tot #274 laat de data-API ook de RESTRICTED waarden zonder inloggen zien.",
-    "swf-init-welstandsgebieden en swf-gebied-welstand-buurt (swf-gebiedsindelingen, ontwerp) leveren hetzelfde gebiedstype; wie het laatst levert, bepaalt de indeling. Kies er één zodra de GeoServer-export er is (B1).",
-    "De bronpeildatum van de initialisatie is de datum van ontvangst (geen dct:modified): bij overlap wint hij van eerdere leveringen (bijv. sample-open-zonder-adapter, ook de DEMODATA van Bolsward-Zuidoost) en verliest hij van elke latere (A6).",
+    "Welstand × buurt, het Volledig Kompas en de externe kaartlagen uit de dump staan als bestand in git bij swf-gebiedsindelingen, swf-kompasprofiel en swf-kaartlagen; deze use case laadt alleen wat via SWF_EXPORT_DIR komt.",
+    "De aantallen gelden voor de dump van 04-10-2026; een nieuwe export: eerst controleer, dan de aantallen bijwerken.",
+    "BAG, EP-Online en OpenStreetMap staan niet in git (online te halen) en hebben nog geen adapter: zonder SWF_EXPORT_DIR heeft een installatie ze alleen voor de 13 testbuurten (sample). Vervolg: adapters.",
+    "Open data op wijk- en gemeenteniveau en 'Huisarts' (45.239 waarden in de dump) laden de open-data-use cases nog niet; vervolg: cbs-kerncijfers en rivm-gezondheidsmonitor uitbreiden.",
+    "Definities die al uit swf-definities of de stuurdata komen, worden niet overschreven (de lokale database wijkt af bij 100 omschrijvingen, 40 eenheden, 19 score_types, 8 statussen, 7 namen).",
+    "De publicatie van de waarden duurt ±5,5 minuut, vrijwel geheel in laden.herbouw_gebied_data() (voorrang, A6).",
     "Zonder n in de lokale database: vlag bron-onderdrukt, de drempel blijft in de ETL (aanname A7)."
   ]
 }

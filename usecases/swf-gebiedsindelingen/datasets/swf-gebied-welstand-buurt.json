@@ -5,12 +5,12 @@
     "@context": "https://data.overheid.nl/dcat-ap-nl/context.jsonld",
     "@type": "dcat:Dataset",
     "dct:title": "Welstandsgebieden per CBS-buurt, Súdwest-Fryslân",
-    "dct:description": "Welstandsgebieden van Súdwest-Fryslân, opgeknipt per CBS-buurt: de gebiedsindeling van de Klimaatmonitor. Codes zijn volgnummers; D-OmniTwin zet er WS voor.",
+    "dct:description": "Welstandsgebieden van Súdwest-Fryslân, opgeknipt per CBS-buurt: de gebiedsindeling van de Klimaatmonitor (756 vlakken). Codes zijn volgnummers; D-OmniTwin zet er WS voor. Geometrie uit de lokale D-OmniTwin-database van de projectleider; niet online te downloaden, daarom als bestand in de use case.",
     "dct:publisher": "https://identifier.overheid.nl/tooi/id/gemeente/gm1900",
-    "dct:accessRights": "http://publications.europa.eu/resource/authority/access-right/RESTRICTED",
+    "dct:accessRights": "http://publications.europa.eu/resource/authority/access-right/PUBLIC",
     "dct:license": "http://standaarden.overheid.nl/owms/terms/licentieonbekend",
     "dct:spatial": "https://identifier.overheid.nl/tooi/id/gemeente/gm1900",
-    "dct:source": "GeoServer Súdwest-Fryslân, laag welstandsgebieden_buitengebied_per_buurt",
+    "dct:source": "Lokale D-OmniTwin-database van de projectleider SWF (dump van 04-10-2026); openbaar volgens besluit van de projectleiding (04-10-2026, https://github.com/TLaan/D-OmniTwin/issues/222)",
     "dcat:theme": [
       "http://standaarden.overheid.nl/owms/terms/Ruimtelijke_ordening"
     ],
@@ -40,14 +40,14 @@
   },
   "bron": {
     "adapter": "lokaal-bestand",
-    "pad": "${SWF_GEO_DIR}/welstandsgebieden_buitengebied_per_buurt.gpkg",
-    "omschrijving": "export van de WFS-laag welstandsgebieden_buitengebied_per_buurt uit de GeoServer van SWF; later ook ${SWF_DB_DUMP}"
+    "pad": "${REPO}/usecases/swf-gebiedsindelingen/data/welstandsgebieden.gpkg",
+    "laag": "welstandsgebieden",
+    "omschrijving": "data/welstandsgebieden.gpkg (EPSG:28992), gemaakt met scripts/beheer/swf_export.py --repo; herkomst en controlesom in data/herkomst.json"
   },
   "bewerkingen": [
     {
       "hernoem": {
-        "gebieds_id": "code",
-        "gebieds_naam": "naam"
+        "id": "code"
       }
     },
     {
@@ -58,7 +58,8 @@
     {
       "behoud": [
         "code",
-        "naam"
+        "naam",
+        "aanduiding"
       ]
     },
     {
@@ -69,5 +70,38 @@
     "formaat": "geopackage",
     "bestand": "swf-gebied-welstand-buurt.gpkg",
     "geometrie": "MultiPolygon"
+  },
+  "varianten": {
+    "geoserver": {
+      "als_beschikbaar": true,
+      "omschrijving": "de export uit de GeoServer van SWF (SWF_GEO_DIR), als die er is (B1)",
+      "bron": {
+        "adapter": "lokaal-bestand",
+        "pad": "${SWF_GEO_DIR}/welstandsgebieden_buitengebied_per_buurt.gpkg",
+        "omschrijving": "export van de WFS-laag welstandsgebieden_buitengebied_per_buurt uit de GeoServer van SWF; later ook ${SWF_DB_DUMP}"
+      },
+      "bewerkingen": [
+        {
+          "hernoem": {
+            "gebieds_id": "code",
+            "gebieds_naam": "naam"
+          }
+        },
+        {
+          "tekst": [
+            "code"
+          ]
+        },
+        {
+          "behoud": [
+            "code",
+            "naam"
+          ]
+        },
+        {
+          "multipolygon": true
+        }
+      ]
+    }
   }
 }

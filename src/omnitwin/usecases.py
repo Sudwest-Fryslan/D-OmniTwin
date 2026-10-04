@@ -72,6 +72,8 @@ VOLLEDIG = ("naam", "versie", "titel", "vraag", "gebruiker", "status", "afhankel
 # (in git alleen bewijs/*.webp, bewijs/bewijs.json en bewijs/README.md; #225).
 TOEGESTAAN = {".json", ".md", ".csv"}
 TOEGESTAAN_BEWIJS = {".json", ".md", ".png", ".jpg", ".jpeg", ".webp"}
+# In data/ ook een GeoPackage: geometrie die niet online te downloaden is (bijv. welstand × buurt, #222)
+TOEGESTAAN_DATA = TOEGESTAAN | {".gpkg"}
 # Bestaande code in use cases, uit te faseren naar een kernadapter (niet nieuw toevoegen).
 UIT_TE_FASEREN = set()
 # Sleutels in datasets/<id>.json die niet naar POST /api/laden/v1/datasets gaan
@@ -241,7 +243,8 @@ def bestandsfouten(map_, naam=None):
         rel = p.relative_to(map_).as_posix()
         if f"{naam}/{rel}" in UIT_TE_FASEREN:
             continue
-        toegestaan = TOEGESTAAN_BEWIJS if rel.startswith("bewijs/") else TOEGESTAAN
+        toegestaan = (TOEGESTAAN_BEWIJS if rel.startswith("bewijs/")
+                      else TOEGESTAAN_DATA if rel.startswith("data/") else TOEGESTAAN)
         if p.suffix.lower() not in toegestaan:
             fouten.append(f"{rel}: bestandstype {p.suffix or '(geen)'} niet toegestaan in een use case "
                           f"(alleen {', '.join(sorted(toegestaan))}); code hoort in de kern (omnitwin.bronadapters)")

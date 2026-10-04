@@ -63,6 +63,17 @@
           "label"
         ]
       }
+    },
+    {
+      "name": "weging",
+      "type": "number",
+      "constraints": {
+        "minimum": 0
+      }
+    },
+    {
+      "name": "is_actueel",
+      "type": "boolean"
     }
   ],
   "missingValues": [

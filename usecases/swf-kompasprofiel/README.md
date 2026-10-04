@@ -1,7 +1,7 @@
 # TC-07-005 — SWF-kompasprofielen Basis (4/12/33) en Klimaat
 
-**Status:** ontwerp (de laad-API is nog niet gebouwd; deze use case is de specificatie en straks de acceptatietest)
-**Versie:** 0.2.0 · **Afhankelijk van:** [swf-definities](../swf-definities/README.md)
+**Status:** actief (Kompas via de beheerroute in-process; datasets zonder bron hier worden overgeslagen)
+**Versie:** 0.3.0 · **Afhankelijk van:** [swf-definities](../swf-definities/README.md)
 **Manifest:** [`usecase.json`](usecase.json) · **Controleren:** `python -m omnitwin.usecases controleer swf-kompasprofiel`
 
 ## Vraag
@@ -22,6 +22,7 @@
 |---|---|---|---|---|---|---|---|
 | [`swf-kompas-basis`](datasets/swf-kompas-basis.json) | beheer | kompasprofiel | datapackage | voortgangslijst ($SWF_DUMP_DIR/data) + definities (swf-dump) | beperkt (inloggen) | onbekend (navragen) | `realm-rol beheerder` |
 | [`swf-kompas-klimaat`](datasets/swf-kompas-klimaat.json) | beheer | kompasprofiel | datapackage | mapping in de use case (klimaat-indicatoren.json) | beperkt (inloggen) | onbekend (navragen) | `realm-rol beheerder` |
+| [`swf-kompas-volledig`](datasets/swf-kompas-volledig.json) | beheer | kompasprofiel | datapackage | repo: [`data/kompasprofiel_volledig_kompas.json`](data/) (lokale D-OmniTwin-database) | open | onbekend (navragen) | `realm-rol beheerder` |
 
 Verwacht:
 
@@ -36,6 +37,10 @@ Verwacht:
 |---|---|---|
 | swf-kompas-basis | 229 regels → 219 (5 oude werktitels, 1 testregel, 4 zonder plek); 4 kwadranten, 12 thema's, 33 onderdelen, 211 unieke UUID's; alle gekoppeld | geldig |
 | swf-kompas-klimaat | 10 | geldig |
+
+**Volledig Kompas uit de repo** (`swf-kompas-volledig`, 63 kB): 247 plekken (241 indicatoren) in 4 kwadranten, 12 thema's en 33 onderdelen, met weging en actueel, zoals de projectleider het heeft ingericht. De beheerroute vult het profiel aan; wat er al is, blijft. Een indicator die (nog) niet bestaat, wordt overgeslagen en geteld (zonder swf-definities ontbreken de monitorindicatoren); de vervallen *Waterdiepte op straat* wordt de aangehouden UUID (A4). Herkomst: de lokale D-OmniTwin-database van de projectleider (dump van 04-10-2026), openbaar volgens besluit van de projectleiding (https://github.com/TLaan/D-OmniTwin/issues/222). Het bestand staat in [`data/`](data/) met `herkomst.json` (aantallen, controlesom); vervangen bij een nieuwere dump met [`scripts/beheer/swf_export.py --repo`](../../scripts/beheer/swf_export.py) en een PR. Extra onderdelen (22), extra tags (53) en scoringsregels (16) hebben nog geen route.
+
+**Beheerroute in-process.** `installeer --inproces` (ook `db-init`) voert de beheerroute uit met `omnitwin.laden.beheer`: profiel aanmaken als het niet bestaat (alleen als er een bekende indicator in zit, met de classificatie uit de levering), hiërarchie en koppelingen aanvullen. Over HTTP volgt `PUT /api/beheer/v1/kompasprofielen/{id}`.
 
 ## Stappen
 

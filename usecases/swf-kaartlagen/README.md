@@ -1,7 +1,7 @@
 # TC-07-008 — SWF-kaartlagen: klimaat, deelgebieden, projecten en overige lagen
 
-**Status:** ontwerp (de laad-API is nog niet gebouwd; deze use case is de specificatie en straks de acceptatietest)
-**Versie:** 0.2.0 · **Afhankelijk van:** [swf-gebiedsindelingen](../swf-gebiedsindelingen/README.md)
+**Status:** actief (lagen waarvan de bron hier ontbreekt, worden overgeslagen)
+**Versie:** 0.3.0 · **Afhankelijk van:** [swf-gebiedsindelingen](../swf-gebiedsindelingen/README.md)
 **Manifest:** [`usecase.json`](usecase.json) · **Controleren:** `python -m omnitwin.usecases controleer swf-kaartlagen`
 
 ## Vraag
@@ -32,6 +32,7 @@ De lagen van de huidige viewer, als datasets met profiel `kaartlaag` (eigen tabe
 
 | Dataset | Route | Profiel | Formaat | Bron | Toegang | Licentie | Rol |
 |---|---|---|---|---|---|---|---|
+| [`swf-laag-extern`](datasets/swf-laag-extern.json) | beheer | externe-kaartlagen | datapackage ([schema](externe-kaartlagen.schema.json)) | repo: [`data/externe_kaartlagen.json`](data/) (lokale D-OmniTwin-database) | open (per laag `toegang`) | volgt de dienst (PDOK) | `realm-rol beheerder` |
 | [`swf-laag-deelgebieden`](datasets/swf-laag-deelgebieden.json) | laden | kaartlaag | geopackage | repo (data-upload/) | open | onbekend (navragen) | `dataset:swf-laag-deelgebieden:laden` |
 | [`swf-laag-coordinatorgebieden`](datasets/swf-laag-coordinatorgebieden.json) | laden | kaartlaag | geopackage | SWF projectmap ($SWF_DOCS_DIR) | beperkt (inloggen) | onbekend (navragen) | `dataset:swf-laag-coordinatorgebieden:laden` |
 | [`swf-laag-afstand-tot-koelte`](datasets/swf-laag-afstand-tot-koelte.json) | laden | kaartlaag | geopackage | SWF-bewerking ($SWF_DOCS_DIR) | beperkt (inloggen) | onbekend (navragen) | `dataset:swf-laag-afstand-tot-koelte:laden` |
@@ -63,6 +64,8 @@ Verwacht:
 | swf-laag-risico-paalrot | 289 | geldig (sleutel: volgnummer) |
 | swf-laag-projecten-vlak / -punt / -lijn | 164 → 148 / 15 / 1 | geldig; alleen de vaste lijst velden, geen persoonsvelden |
 | swf-laag-grootgrondbezit | – | overgeslagen: SWF_GEO_DIR niet gezet |
+
+**Externe lagen uit de repo** (`swf-laag-extern`, 5 kB): 8 WFS/WMS-lagen (PDOK: BAG woonplaatsen, Natura 2000, RCE, BRT, BRO Bodemkaart, bodemdaling, fiets- en wandelnetwerken) zoals de projectleider ze heeft ingericht (B1: eerste opzet). De data komt van de dienst, met de licentie van die dienst. Per laag `toegang` (B3: GeoVisia en projecten 'in plan' intern; in de lokale database staat geen GeoVisia-laag, die komt uit `swf-laag-projecten-*`). De lokale laag *Omgevingsvisie SWF* gaat niet mee: die komt als `swf-laag-deelgebieden`. Via de beheerroute in-process: aanvullen, een laag met dezelfde naam blijft. Herkomst: de lokale D-OmniTwin-database van de projectleider (dump van 04-10-2026), openbaar volgens besluit van de projectleiding (https://github.com/TLaan/D-OmniTwin/issues/222). Het bestand staat in [`data/`](data/) met `herkomst.json` (aantallen, controlesom); vervangen bij een nieuwere dump met [`scripts/beheer/swf_export.py --repo`](../../scripts/beheer/swf_export.py) en een PR.
 
 ## Stappen
 

@@ -1,16 +1,15 @@
 {
-  "id": "swf-init-kompas",
-  "bronId": "swf-initialisatie",
+  "id": "swf-kompas-volledig",
   "beschrijving": {
     "@context": "https://data.overheid.nl/dcat-ap-nl/context.jsonld",
     "@type": "dcat:Dataset",
-    "dct:title": "SWF-initialisatie — Volledig Kompas",
-    "dct:description": "De plek van de indicatoren in het Volledig Kompas (kwadrant › thema › onderdeel, met weging en actueel) uit de lokale D-OmniTwin-database. Vult het profiel aan: wat er al is, blijft staan.",
+    "dct:title": "Kompasprofiel Volledig Kompas (SWF)",
+    "dct:description": "De plek van de indicatoren in het Volledig Kompas (kwadrant › thema › onderdeel, met weging en actueel) zoals de projectleider het in de lokale D-OmniTwin-database heeft ingericht: 247 plekken, 241 indicatoren. Vult het profiel aan: wat er al is, blijft staan.",
     "dct:publisher": "https://identifier.overheid.nl/tooi/id/gemeente/gm1900",
-    "dct:accessRights": "http://publications.europa.eu/resource/authority/access-right/RESTRICTED",
+    "dct:accessRights": "http://publications.europa.eu/resource/authority/access-right/PUBLIC",
     "dct:license": "http://standaarden.overheid.nl/owms/terms/licentieonbekend",
     "dct:spatial": "https://identifier.overheid.nl/tooi/id/gemeente/gm1900",
-    "dct:source": "Export van de lokale D-OmniTwin-database (tabellen kompas_*), via SWF_EXPORT_DIR",
+    "dct:source": "Lokale D-OmniTwin-database van de projectleider SWF (dump van 04-10-2026); openbaar volgens besluit van de projectleiding (04-10-2026, https://github.com/TLaan/D-OmniTwin/issues/222)",
     "dcat:theme": [
       "http://standaarden.overheid.nl/owms/terms/Bestuur"
     ],
@@ -25,9 +24,9 @@
   },
   "bron": {
     "adapter": "lokaal-bestand",
-    "pad": "${SWF_EXPORT_DIR}/kompasprofiel_volledig_kompas.json",
+    "pad": "${REPO}/usecases/swf-kompasprofiel/data/kompasprofiel_volledig_kompas.json",
     "formaat": "json",
-    "omschrijving": "kompasprofiel_volledig_kompas.json van scripts/beheer/swf_export.py (formaat van db/stuurdata/kompasprofiel_*.json); nooit in git"
+    "omschrijving": "data/kompasprofiel_volledig_kompas.json (formaat van db/stuurdata/kompasprofiel_*.json), gemaakt met scripts/beheer/swf_export.py --repo"
   },
   "bewerkingen": [
     {
@@ -44,7 +43,7 @@
           "c4e1b3bb-e4ce-4cd0-bd52-219f4a9f5df3": "f6eafa70-9383-4de6-bd2a-e47309843437"
         }
       },
-      "omschrijving": "Waterdiepte op straat: de vervallen UUID (status B) wordt de aangehouden UUID (aanname A4, https://github.com/TLaan/D-OmniTwin/issues/222)"
+      "omschrijving": "Waterdiepte op straat: de vervallen UUID (status B) wordt de aangehouden UUID (A4, #222)"
     },
     {
       "behoud": [
@@ -62,7 +61,7 @@
   ],
   "levering": {
     "formaat": "datapackage",
-    "bestand": "swf-init-kompas.zip",
+    "bestand": "swf-kompas-volledig.zip",
     "schema": {
       "kompasprofiel": "kompasprofiel.schema.json"
     }

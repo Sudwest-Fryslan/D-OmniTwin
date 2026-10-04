@@ -13,7 +13,7 @@ blijft zoals het is; herhalen is idempotent.
 
 | Soort (`beheerpad`) | Doel | Per regel |
 |---|---|---|
-| `kompasprofielen` | kompas_configuraties, kompas_titels, kompas_themas, kompas_onderdelen, kompas_indicator_mapping | profiel, kwadrant, thema, onderdeel, indicator_uuid, weging, is_actueel; een onbekende indicator wordt overgeslagen en geteld |
+| `kompasprofielen` | kompas_configuraties, kompas_titels, kompas_themas, kompas_onderdelen, kompas_indicator_mapping | profiel, kwadrant, thema, onderdeel, indicator_uuid, weging, is_actueel, classificatie (alleen bij een nieuw profiel); een onbekende indicator wordt overgeslagen en geteld, een profiel zonder bekende indicator niet aangemaakt |
 | `externe-kaartlagen` | externe_kaartlagen | de velden van het beheerscherm (ExterneKaartlaagCreate) plus `toegang`; `intern` gaat naar de kolom `toegang` (#254), of wordt zonder die kolom niet actief gezet |
 """
 
@@ -27,6 +27,9 @@ from contextlib import contextmanager
 from pathlib import Path
 
 WAAR = {"true", "t", "1", "ja", "j", "yes"}
+# classificatie in het Table Schema van de use case → kompas_configuraties.classificatie
+CLASSIFICATIE = {"label": "label_ae", "label_ae": "label_ae", "percentielklasse": "percentiel_8",
+                 "percentiel_8": "percentiel_8", "zscore": "zscore"}
 
 
 def lees_resource(pad) -> list[dict]:
@@ -52,20 +55,21 @@ def kompasprofielen(cur, regels: list[dict]) -> dict:
     profielen: dict[str, int] = {}
     for volgorde, r in enumerate(regels):
         naam = r["profiel"]
-        if naam not in profielen:
+        cur.execute("SELECT 1 FROM public.indicatoren WHERE uuid = %s", (r["indicator_uuid"],))
+        if cur.fetchone() is None:  # bijv. de SWF-definities zijn (nog) niet geladen
+            uit["indicatorOnbekend"].append(r["indicator_uuid"])
+            continue
+        if naam not in profielen:  # een profiel zonder bekende indicator wordt niet aangemaakt
             cur.execute("SELECT id FROM public.kompas_configuraties WHERE naam = %s", (naam,))
             rij = cur.fetchone()
             if rij is None:
-                cur.execute("INSERT INTO public.kompas_configuraties (naam, is_standaard, is_actief) "
-                            "VALUES (%s, false, true) RETURNING id", (naam,))
+                cur.execute("INSERT INTO public.kompas_configuraties (naam, is_standaard, is_actief, classificatie) "
+                            "VALUES (%s, false, true, %s) RETURNING id",
+                            (naam, CLASSIFICATIE.get(r.get("classificatie") or "", "zscore")))
                 rij = cur.fetchone()
                 uit["nieuweProfielen"].append(naam)
             profielen[naam] = rij[0]
         config_id = profielen[naam]
-        cur.execute("SELECT 1 FROM public.indicatoren WHERE uuid = %s", (r["indicator_uuid"],))
-        if cur.fetchone() is None:
-            uit["indicatorOnbekend"].append(r["indicator_uuid"])
-            continue
         ouder = config_id
         for tabel, ouder_kolom, waarde in (("kompas_titels", "config_id", r["kwadrant"]),
                                            ("kompas_themas", "titel_id", r["thema"]),

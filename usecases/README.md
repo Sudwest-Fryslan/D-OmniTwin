@@ -26,7 +26,7 @@ usecases/<naam>/
 ```
 
 - Schema's: [`usecase.schema.json`](../docs/specificaties/usecase/1.0/usecase.schema.json) (manifest), [`dataset.schema.json`](../docs/specificaties/usecase/1.0/dataset.schema.json) (dataset met het `bron`-blok per adapter) en [`bewijs.schema.json`](../docs/specificaties/usecase/1.0/bewijs.schema.json) (bewijsverslag). De registratie zelf volgt `DatasetRegistratie` in de [laad-API](../docs/api/laden/openapi.yaml).
-- Toegestaan in de map: `.json`, `.md`, `.csv`; in `bewijs/` ook afbeeldingen. De uitvoerder en `tests/test_usecases_uitvoerder.py` keuren andere bestanden af, zonder uitzonderingen.
+- Toegestaan in de map: `.json`, `.md`, `.csv`; in `data/` ook `.gpkg`; in `bewijs/` ook afbeeldingen. De uitvoerder en `tests/test_usecases_uitvoerder.py` keuren andere bestanden af, zonder uitzonderingen.
 - De demo-use cases (TC-06-*) hebben naast de volledige vorm nog de velden van de verouderde vorm (`persona`, `data`, `inrichting`, `ai_zoekvraag`, `verwacht`): daaruit komt hun inrichting (richting van de indicatoren, via `laad_usecase.py --inrichting`) en de verwachting voor de chat. Hun data komt via de laad-API uit de datasets van hun afhankelijkheden (https://github.com/TLaan/D-OmniTwin/issues/236).
 
 ### Bronnen
@@ -120,12 +120,12 @@ Gegenereerd met `python -m omnitwin.usecases index`; een unittest faalt als hij 
 | [swf-adapter-fme](./swf-adapter-fme/README.md) | TC-07-009 | SWF-adapter: dezelfde FME-push naar D-OmniTwin | data-engineer DWH (SWF) | actief | 0.3.0 | swf-definities, cbs-gebiedsindelingen |
 | [swf-basismonitor-waarden](./swf-basismonitor-waarden/README.md) | TC-07-006 | SWF-basismonitor: waarden per indicator × gebiedstype | data-engineer DWH (SWF) | ontwerp | 0.2.0 | swf-definities, swf-gebiedsindelingen, cbs-gebiedsindelingen |
 | [swf-definities](./swf-definities/README.md) | TC-07-003 | SWF-definities: indicatoren, gebiedstypen en relaties | data-engineer DWH (SWF) | actief | 0.3.0 | – |
-| [swf-gebiedsindelingen](./swf-gebiedsindelingen/README.md) | TC-07-004 | SWF-gebiedsindelingen als GeoPackage-leveringen | functioneel beheerder SWF / GIS-specialist | ontwerp | 0.2.0 | swf-definities, cbs-gebiedsindelingen |
+| [swf-gebiedsindelingen](./swf-gebiedsindelingen/README.md) | TC-07-004 | SWF-gebiedsindelingen als GeoPackage-leveringen | functioneel beheerder SWF / GIS-specialist | actief | 0.3.0 | swf-definities, cbs-gebiedsindelingen |
 | [swf-gebiedsmonitor](./swf-gebiedsmonitor/README.md) | TC-07-010 | D-OmniTwin vervangt de huidige SWF-gebiedsmonitor (acceptatie) | kernteam gebiedsagenda en functioneel beheerder SWF | ontwerp | 0.3.0 | swf-definities, swf-gebiedsindelingen, swf-kompasprofiel, swf-basismonitor-waarden, swf-klimaatmonitor, swf-kaartlagen, swf-adapter-fme, swf-initialisatie |
-| [swf-initialisatie](./swf-initialisatie/README.md) | TC-07-025 | SWF-initialisatie: eerste vulling uit de lokale D-OmniTwin-database | projectleider en functioneel beheerder SWF | actief | 0.2.0 | swf-definities, cbs-gebiedsindelingen |
-| [swf-kaartlagen](./swf-kaartlagen/README.md) | TC-07-008 | SWF-kaartlagen: klimaat, deelgebieden, projecten en overige lagen | medewerker team of vakgroep (SWF) | ontwerp | 0.2.0 | swf-gebiedsindelingen |
+| [swf-initialisatie](./swf-initialisatie/README.md) | TC-07-025 | SWF-initialisatie: eerste vulling uit de lokale D-OmniTwin-database | projectleider en functioneel beheerder SWF | actief | 0.3.0 | swf-definities, cbs-gebiedsindelingen, swf-gebiedsindelingen |
+| [swf-kaartlagen](./swf-kaartlagen/README.md) | TC-07-008 | SWF-kaartlagen: klimaat, deelgebieden, projecten en overige lagen | medewerker team of vakgroep (SWF) | actief | 0.3.0 | swf-gebiedsindelingen |
 | [swf-klimaatmonitor](./swf-klimaatmonitor/README.md) | TC-07-007 | SWF-klimaatmonitor: welstand × buurt met labels A–E | adviseur klimaatadaptatie | ontwerp | 0.2.0 | swf-definities, swf-gebiedsindelingen, swf-kompasprofiel |
-| [swf-kompasprofiel](./swf-kompasprofiel/README.md) | TC-07-005 | SWF-kompasprofielen Basis (4/12/33) en Klimaat | functioneel beheerder SWF | ontwerp | 0.2.0 | swf-definities |
+| [swf-kompasprofiel](./swf-kompasprofiel/README.md) | TC-07-005 | SWF-kompasprofielen Basis (4/12/33) en Klimaat | functioneel beheerder SWF | actief | 0.3.0 | swf-definities |
 <!-- usecase-index:end -->
 
 De vijf demopakketten komen uit de innovatieaanvraag Digitale Overheid 2026 en zijn nagespeeld op Bolsward, met focus op Bolsward-Zuidoost (status per pakket in zijn README). De `cbs-*`- en `swf-*`-use cases zijn de specificatie en straks de acceptatietests van de laad-API (0.3.0); `swf-gebiedsmonitor` is de acceptatietest voor "D-OmniTwin vervangt de huidige gebiedsmonitor".

@@ -19,7 +19,7 @@ class NepCursor:
     """Genoeg SQL voor beheer.kompasprofielen en beheer.externe_kaartlagen (psycopg2-stijl, tuples)."""
 
     def __init__(self, indicatoren=(), profielen=(), lagen=(), toegang_kolom=False):
-        self.toegang_kolom = toegang_kolom
+        self.toegang_kolom, self.classificatie = toegang_kolom, {}
         self.indicatoren = set(indicatoren)
         self.tabellen = {"kompas_configuraties": {n: i for i, n in enumerate(profielen, start=1)},
                          "kompas_titels": {}, "kompas_themas": {}, "kompas_onderdelen": {}}
@@ -34,6 +34,7 @@ class NepCursor:
         elif sql.startswith("INSERT INTO public.kompas_configuraties"):
             t = self.tabellen["kompas_configuraties"]
             t[p[0]] = len(t) + 1
+            self.classificatie[p[0]] = p[1]
             self._rij = (t[p[0]],)
         elif sql.startswith("SELECT 1 FROM public.indicatoren"):
             self._rij = (1,) if p[0] in self.indicatoren else None
@@ -102,6 +103,20 @@ def test_kompasprofiel_maakt_een_onbekend_profiel_aan(tmp_path):
     cur = NepCursor(indicatoren={"u1"})
     uit = beheer.kompasprofielen(cur, [dict(KOMPAS[0], profiel="SWF Basis")])
     assert uit["nieuweProfielen"] == ["SWF Basis"] and uit["gekoppeld"] == 1
+
+
+def test_kompasprofiel_zonder_bekende_indicator_wordt_niet_aangemaakt():
+    """Zonder de SWF-definities bestaan de klimaatindicatoren niet: dan ook geen leeg profiel."""
+    cur = NepCursor()
+    uit = beheer.kompasprofielen(cur, [dict(KOMPAS[0], profiel="SWF Klimaat", classificatie="label")])
+    assert uit["nieuweProfielen"] == [] and uit["indicatorOnbekend"] == ["u1"]
+    assert "SWF Klimaat" not in cur.tabellen["kompas_configuraties"]
+
+
+def test_kompasprofiel_classificatie_bij_een_nieuw_profiel():
+    cur = NepCursor(indicatoren={"u1"})
+    beheer.kompasprofielen(cur, [dict(KOMPAS[0], profiel="SWF Klimaat", classificatie="label")])
+    assert cur.classificatie["SWF Klimaat"] == "label_ae"
 
 
 LAAG = {"naam": "Natura 2000", "beschrijving": "", "laag_type": "selectie", "bron_type": "WFS",
