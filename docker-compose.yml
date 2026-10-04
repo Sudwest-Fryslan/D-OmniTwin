@@ -93,6 +93,9 @@ services:
     volumes:
       - bron-cache:/data-cache
       - leveringen:/leveringen
+      # Kaartlagen die bij de installatie geladen worden (profiel kaartlaag) staan in data-upload/laden/;
+      # zonder dit volume verdwenen ze met de db-init-container (#254)
+      - uploads:/app/data-upload
     depends_on:
       postgres:
         condition: service_healthy

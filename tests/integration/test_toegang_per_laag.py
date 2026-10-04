@@ -76,7 +76,7 @@ def paden(laag_id):
         "kaart_direct": f"/api/gebiedsmonitor/kaart_data/{BUURTEN}?indicator_uuid={U_INTERN}",
         "visualisatie_direct": f"/api/visualisatie/config/{U_INTERN}",
         "paneel_direct": f"/api/gebiedsmonitor/indicatorpaneel?indicator_uuid={U_INTERN}&gebieden=false",
-        "paneel_csv_direct": f"/api/gebiedsmonitor/indicatorpaneel.csv?indicator_uuid={U_INTERN}",
+        "paneel_csv_direct": f"/api/gebiedsmonitor/indicatorpaneel.csv?indicator_uuid={U_INTERN}&gebiedstype_id={BUURTEN}",
         "laag_direct": f"/api/externe-lagen/{laag_id}/features",
     }
 

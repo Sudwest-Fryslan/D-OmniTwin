@@ -14,6 +14,7 @@ Eerdere wijzigingen, van vóór dit bestand, zijn terug te vinden in de git-hist
 
 ### Gewijzigd
 
+- Kaartlagen die bij de installatie via `db-init` geladen worden (profiel kaartlaag, bijv. `swf-kaartlagen`), verdwenen met de container: `db-init` krijgt nu ook het volume `uploads` op `/app/data-upload`.
 - Een kaartlaag uit de laad-API met `dct:accessRights` `RESTRICTED` staat niet meer uit, maar aan voor wie de rol `lezer` of `beheerder` heeft ([#254](https://github.com/TLaan/D-OmniTwin/issues/254)).
 - Testaccounts van use cases: een machineclient krijgt precies de rollen uit het manifest, zonder de standaardrol van de realm (die `lezer` bevat) ([#254](https://github.com/TLaan/D-OmniTwin/issues/254)).
 
