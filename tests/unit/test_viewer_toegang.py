@@ -221,8 +221,9 @@ def test_forwardauth_middleware_wijst_naar_controle_endpoint():
     assert f"http://backend:8000{viewer_toegang.CONTROLE_PAD}" in tekst
 
 
-def test_viewer_kop_heeft_inloggen_en_demobalk():
+def test_viewer_kop_heeft_beheer_uitloggen_en_demobalk():
     tekst = (ROOT / "templates/index.html").read_text(encoding="utf-8")
-    assert 'id="inloggen"' in tekst and 'id="uitloggen"' in tekst and "account.naam" in tekst
+    assert 'id="inloggen"' not in tekst  # één ingang: "Beheer" leidt naar het inloggen
+    assert 'id="admin-btn"' in tekst and 'id="uitloggen"' in tekst and "account.naam" in tekst
     assert "Demo-omgeving — standaardwachtwoorden, niet voor productie" in tekst
     assert "/static/js/viewer-account.js" in tekst

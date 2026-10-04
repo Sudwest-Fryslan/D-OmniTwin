@@ -90,9 +90,10 @@ def test_open_forwardauth_laat_door():
 
 
 @pytest.mark.skipif(DICHT or not CONFIG.get("oidc"), reason="alleen bij open met Keycloak")
-def test_open_kop_toont_inloggen():
+def test_open_kop_een_knop_beheer():
+    # Anoniem: geen aparte inlogknop; "Beheer" leidt naar het inloggen
     r = requests.get(f"{BASE_URL}/", timeout=TIMEOUT)
-    assert 'id="inloggen"' in r.text and "/api/admin/auth/oidc/login?terug=/" in r.text
+    assert 'id="inloggen"' not in r.text and 'id="uitloggen"' not in r.text and 'id="admin-btn"' in r.text
 
 
 # ------------------------------------------------------------------ inloggen
