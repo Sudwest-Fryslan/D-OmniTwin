@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>D-OmniTwin Merkidentiteit — Conceptverkenning</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0b1120;
+            color: #f1f5f9;
+        }
+
+        .code-font {
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .grid-glow {
+            background-image: radial-gradient(rgba(59, 130, 246, 0.15) 1px, transparent 1px);
+            background-size: 24px 24px;
+        }
+
+        .concept-card {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .concept-card:hover {
+            transform: translateY(-4px);
+            border-color: #3b82f6;
+            box-shadow: 0 20px 25px -5px rgba(15, 23, 42, 0.8), 0 8px 10px -6px rgba(59, 130, 246, 0.2);
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-slate-950 text-slate-100 pb-20 selection:bg-blue-600 selection:text-white">
+
+    <header class="border-b border-slate-800/80 bg-slate-900/60 backdrop-blur-md sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-6 py-4 flex flex-col md:flex-row justify-between items-center gap-4">
+            <div class="flex items-center gap-4">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-700 to-slate-900 border border-blue-500/30 flex items-center justify-center font-bold text-lg text-white shadow-inner">
+                    D
+                </div>
+                <div>
+                    <div class="flex items-center gap-2">
+                        <span class="text-[10px] font-bold tracking-widest uppercase px-2 py-0.5 rounded bg-blue-500/20 text-blue-400 border border-blue-500/30">Brand Strategy</span>
+                        <h1 class="text-lg font-bold text-white tracking-tight">D-OmniTwin — Merkevolutie</h1>
+                    </div>
+                    <p class="text-xs text-slate-400">Transitie van Persoonlijk Monogram (TL-π) naar Productmerk (D-OmniTwin)</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-3 text-xs font-medium text-slate-400">
+                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-800/80 border border-slate-700">
+                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                    Conceptuele Verkenning
+                </span>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-6 pt-10 space-y-12">
+
+        <section class="bg-gradient-to-br from-slate-900 via-slate-900/90 to-slate-950 border border-slate-800 rounded-3xl p-8 shadow-2xl relative overflow-hidden">
+            <div class="absolute right-0 top-0 w-96 h-96 bg-blue-600/10 rounded-full blur-3xl pointer-events-none"></div>
+            
+            <div class="max-w-3xl space-y-4">
+                <div class="inline-block text-[11px] font-mono uppercase tracking-widest text-amber-400 bg-amber-400/10 px-3 py-1 rounded-lg border border-amber-400/20">
+                    De Strategische Transformatie
+                </div>
+                <h2 class="text-2xl sm:text-3xl font-bold text-white tracking-tight">
+                    Van persoonlijke handtekening naar schaalbare software-identiteit
+                </h2>
+                <p class="text-sm sm:text-base text-slate-300 leading-relaxed">
+                    Een persoonlijk logo (<span class="text-blue-400 font-semibold">T + L = π</span>) is waardevol als persoonlijk keurmerk of auteursembleem, maar in een professioneel samenwerkingsverband vraagt software om een <strong>neutrale, krachtige productidentiteit</strong>.
+                </p>
+                <p class="text-sm text-slate-400 leading-relaxed">
+                    De uitdaging: we laten de letters <em>T</em> en <em>L</em> los, maar behouden de <strong>visuele rijkdom</strong> van het geodetische zegel (aardbol, coördinatenraster, kromming, horizon) en versmelten dit met de <strong>D</strong> van <em>Digital</em>, <em>Dimension</em> en <em>D-OmniTwin</em>.
+                </p>
+            </div>
+
+            <div class="mt-8 pt-8 border-t border-slate-800/80 grid md:grid-cols-3 gap-6 text-xs">
+                <div class="p-4 rounded-2xl bg-slate-800/40 border border-slate-700/50">
+                    <span class="text-red-400 font-bold uppercase tracking-wider block mb-2">1. Wat laten we los?</span>
+                    <ul class="text-slate-400 space-y-1.5 list-disc pl-4">
+                        <li>De letters <strong class="text-slate-200">T</strong> en <strong class="text-slate-200">L</strong> als fysieke poten</li>
+                        <li>De letterlijke claim op het <strong class="text-slate-200">$\pi$</strong> symbool (voorkomt verwarring met puur wiskundige tools)</li>
+                        <li>Persoonsgebonden signatuur in software-UI</li>
+                    </ul>
+                </div>
+
+                <div class="p-4 rounded-2xl bg-slate-800/40 border border-slate-700/50">
+                    <span class="text-emerald-400 font-bold uppercase tracking-wider block mb-2">2. Wat behouden we?</span>
+                    <ul class="text-slate-400 space-y-1.5 list-disc pl-4">
+                        <li>Het <strong class="text-slate-200">geodetische zegel</strong> (de cirkelvorm & bolprojectie)</li>
+                        <li>Het <strong class="text-slate-200">cartografische raster</strong> (lengte- en breedtegraden)</li>
+                        <li>De <strong class="text-slate-200">groene aardhorizon</strong> (Nature Green als levende laag)</li>
+                        <li>De <strong class="text-slate-200">"Triple Threat"</strong> kleuren (Blue, Green, Gold)</li>
+                    </ul>
+                </div>
+
+                <div class="p-4 rounded-2xl bg-slate-800/40 border border-slate-700/50">
+                    <span class="text-blue-400 font-bold uppercase tracking-wider block mb-2">3. Wat voegen we toe?</span>
+                    <ul class="text-slate-400 space-y-1.5 list-disc pl-4">
+                        <li>De letter <strong class="text-slate-200">D</strong> (Data, Digital, Dimension)</li>
+                        <li>De <strong class="text-slate-200">"Twin" metafoor</strong>: duplicatie, spiegeling en interactie (fysiek ↔ digitaal)</li>
+                        <li>De <strong class="text-slate-200">Omni-gedachte</strong>: 360 graden, allesomvattende geosfeer</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <section class="space-y-6">
+            <div class="flex justify-between items-end">
+                <div>
+                    <h3 class="text-xs font-bold uppercase tracking-widest text-slate-400">Uitgangsmateriaal</h3>
+                    <h2 class="text-xl font-bold text-white mt-1">De Twee Bronbestanden</h2>
+                </div>
+                <span class="text-xs text-slate-500 font-mono">TL-logo_v1.png + beeldmerk.svg</span>
+            </div>
+
+            <div class="grid md:grid-cols-2 gap-6">
+                <!-- Source 1 -->
+                <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 flex flex-col items-center justify-between">
+                    <div class="text-center mb-4">
+                        <span class="text-xs font-semibold text-blue-400 uppercase tracking-wider">Bron A — TL Geodetisch Zegel</span>
+                        <p class="text-[11px] text-slate-400 mt-1">Hoge GEO-waarde, cartografisch grid, horizonboog, mathematische diepte.</p>
+                    </div>
+                    
+                    <div class="w-48 h-48 rounded-full bg-slate-950 border border-slate-800 relative flex items-center justify-center overflow-hidden my-4 shadow-inner">
+                        <!-- Grid Background -->
+                        <svg class="absolute inset-0 w-full h-full opacity-30" viewBox="0 0 100 100">
+                            <line x1="25" y1="0" x2="25" y2="100" stroke="#94a3b8" stroke-width="0.5"/>
+                            <line x1="50" y1="0" x2="50" y2="100" stroke="#94a3b8" stroke-width="0.5"/>
+                            <line x1="75" y1="0" x2="75" y2="100" stroke="#94a3b8" stroke-width="0.5"/>
+                            <line x1="0" y1="25" x2="100" y2="25" stroke="#94a3b8" stroke-width="0.5"/>
+                            <line x1="0" y1="50" x2="100" y2="50" stroke="#94a3b8" stroke-width="0.5"/>
+                            <line x1="0" y1="75" x2="100" y2="75" stroke="#94a3b8" stroke-width="0.5"/>
+                            <circle cx="50" cy="50" r="48" fill="none" stroke="#94a3b8" stroke-width="0.8"/>
+                        </svg>
+                        <!-- Green Horizon -->
+                        <path d="M 5 66 Q 50 48 95 66" fill="none" stroke="#15803d" stroke-width="2.5" class="relative z-10" />
+                        <!-- TL Pi representation -->
+                        <div class="relative z-20 flex flex-col items-center">
+                            <div class="w-28 h-5 bg-[#1e293b] rounded-sm mb-1.5" style="border-radius: 2px 2px 6px 6px;"></div>
+                            <div class="flex gap-4">
+                                <div class="w-7 h-16 bg-[#1e293b] rounded-sm"></div>
+                                <div class="w-7 h-16 bg-[#1e293b] rounded-sm relative">
+                                    <div class="absolute bottom-0 right-0 w-11 h-4 bg-[#1e293b] rounded-sm"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="text-[11px] text-slate-500 font-mono text-center">
+                        Elementen: Cirkel, Grid, Horizonboog, Zwaarte van stammen
+                    </div>
+                </div>
+
+                <!-- Source 2 -->
+                <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 flex flex-col items-center justify-between">
+                    <div class="text-center mb-4">
+                        <span class="text-xs font-semibold text-emerald-400 uppercase tracking-wider">Bron B — D-OmniTwin Beeldmerk</span>
+                        <p class="text-[11px] text-slate-400 mt-1">Moderne app-icoon squircle, krachtige D-vorm, tweekleurige blauw/groen relatie.</p>
+                    </div>
+
+                    <div class="w-48 h-48 rounded-[36px] bg-[#0b1220] border border-slate-800 flex items-center justify-center my-4 shadow-xl relative">
+                        <svg class="w-24 h-24" viewBox="0 0 100 100" fill="none">
+                            <!-- Blue Outline D -->
+                            <path d="M 28 20 L 52 20 C 72 20 82 32 82 50 C 82 68 72 80 52 80 L 28 80 Z" 
+                                  stroke="#3b82f6" stroke-width="10" stroke-linejoin="round" stroke-linecap="round"/>
+                            <!-- Green Inner Core -->
+                            <path d="M 44 34 L 52 34 C 62 34 68 41 68 50 C 68 59 62 66 52 66 L 44 66 Z" 
+                                  fill="#22c55e" />
+                        </svg>
+                    </div>
+
+                    <div class="text-[11px] text-slate-500 font-mono text-center">
+                        Elementen: D-Spine + D-Arc, Groene Kern (Data-zaad/Milieu), Squircle container
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="space-y-6">
+            <div class="border-b border-slate-800 pb-4">
+                <span class="text-xs font-bold uppercase tracking-widest text-blue-400">Synthese & Verkenning</span>
+                <h2 class="text-2xl font-bold text-white mt-1">4 Conceptrichtingen: De D in Geodetische Context</h2>
+                <p class="text-sm text-slate-400 mt-1">Hoe we de D laten samensmelten met de sterke elementen van het oude logo zonder T en L.</p>
+            </div>
+
+            <div class="grid md:grid-cols-2 gap-8">
+
+                <!-- CONCEPT 1 -->
+                <div class="concept-card bg-slate-900/90 border border-slate-800 rounded-3xl p-6 flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center justify-between mb-4">
+                            <span class="text-xs font-mono px-2.5 py-1 rounded-md bg-blue-500/20 text-blue-300 font-bold border border-blue-500/30">Concept 01</span>
+                            <span class="text-[11px] text-slate-400">Favoriet voor Continuïteit</span>
+                        </div>
+                        <h3 class="text-lg font-bold text-white mb-2">Het Geodetische D-Zegel (Geodetic D)</h3>
+                        <p class="text-xs text-slate-300 leading-relaxed mb-6">
+                            We behouden de <strong>complete ronde zegel-structuur</strong> (het bolrooster en de groene horizonlijn), maar vervangen de TL-poten door een monumentale, strakke <strong>D</strong>. De rechte stam van de D fungeert als de centrale meridiaan (nullijn), terwijl de boog van de D harmonieert met de buitencirkel.
+                        </p>
+                    </div>
+
+                    <!-- SVG Preview 1 -->
+                    <div class="bg-slate-950 rounded-2xl p-6 border border-slate-800/80 flex items-center justify-center my-2">
+                        <svg class="w-48 h-48" viewBox="0 0 120 120">
+                            <!-- Background Grid -->
+                            <circle cx="60" cy="60" r="54" fill="#0f172a" stroke="#334155" stroke-width="1.2"/>
+                            <line x1="30" y1="10" x2="30" y2="110" stroke="#1e293b" stroke-width="1"/>
+                            <line x1="60" y1="6" x2="60" y2="114" stroke="#1e293b" stroke-width="1"/>
+                            <line x1="90" y1="10" x2="90" y2="110" stroke="#1e293b" stroke-width="1"/>
+                            <line x1="10" y1="35" x2="110" y2="35" stroke="#1e293b" stroke-width="1"/>
+                            <line x1="10" y1="85" x2="110" y2="85" stroke="#1e293b" stroke-width="1"/>
+
+                            <!-- Green Horizon Arc -->
+                            <path d="M 12 76 Q 60 52 108 76" fill="none" stroke="#15803d" stroke-width="3" stroke-linecap="round"/>
+
+                            <!-- Main D Construction -->
+                            <!-- Spine (Physical Pillar) -->
+                            <rect x="36" y="30" width="13" height="60" rx="3" fill="#1e3a8a"/>
+                            <!-- Curved Arc (Digital Dome) -->
+                            <path d="M 44 30 L 68 30 C 86 30 96 42 96 60 C 96 78 86 90 68 90 L 44 90 Z" 
+                                  fill="none" stroke="#3b82f6" stroke-width="13" stroke-linejoin="round" stroke-linecap="round"/>
+
+                            <!-- Geo Gold Node on Horizon Intersection -->
+                            <circle cx="60" cy="58" r="4.5" fill="#eab308" stroke="#0f172a" stroke-width="2"/>
+                        </svg>
+                    </div>
+
+                    <div class="mt-4 pt-4 border-t border-slate-800 text-[11px] text-slate-400 space-y-1">
+                        <div><strong class="text-slate-300">Kracht:</strong> Behoudt 100% de herkenbaarheid van het zegel; nul verlies aan wetenschappelijke autoriteit.</div>
+                        <div><strong class="text-slate-300">Semantiek:</strong> De D omarmt letterlijk de aarde en de data-node.</div>
+                    </div>
+                </div>
+
+                <!-- CONCEPT 2 -->
+                <div class="concept-card bg-slate-900/90 border border-slate-800 rounded-3xl p-6 flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center justify-between mb-4">
+                            <span class="text-xs font-mono px-2.5 py-1 rounded-md bg-emerald-500/20 text-emerald-300 font-bold border border-emerald-500/30">Concept 02</span>
+                            <span class="text-[11px] text-slate-400">Twin Duality</span>
+                        </div>
+                        <h3 class="text-lg font-bold text-white mb-2">De "Twin" D: Pilaar & Boog (Fysiek & Digitaal)</h3>
+                        <p class="text-xs text-slate-300 leading-relaxed mb-6">
+                            Het oude logo had twee poten (oorspronkelijk T en L). Wat als we die twee poten herdefiniëren als de <strong>Twin</strong>? De linker verticale poot representeert de <em>fysieke realiteit</em> (de aarde), de rechter gebogen helft representeert de <em>digitale tweeling</em>. Samen vormen ze een dynamische <strong>D</strong>.
+                        </p>
+                    </div>
+
+                    <!-- SVG Preview 2 -->
+                    <div class="bg-slate-950 rounded-2xl p-6 border border-slate-800/80 flex items-center justify-center my-2">
+                        <svg class="w-48 h-48" viewBox="0 0 120 120">
+                            <!-- Background Grid -->
+                            <circle cx="60" cy="60" r="54" fill="#0f172a" stroke="#1e293b" stroke-width="1"/>
+                            
+                            <!-- Green Horizon Arc -->
+                            <path d="M 16 75 Q 60 55 104 75" fill="none" stroke="#22c55e" stroke-width="2.5" stroke-dasharray="3 3"/>
+
+                            <!-- Left Pillar: Physical World (Solid Trust Blue) -->
+                            <rect x="34" y="32" width="12" height="56" rx="4" fill="#1e3a8a"/>
+
+                            <!-- Right Element: Digital Twin Arc (Vibrant Blue + Green Gap) -->
+                            <path d="M 54 32 C 78 32 94 44 94 60 C 94 76 78 88 54 88" 
+                                  fill="none" stroke="#3b82f6" stroke-width="12" stroke-linecap="round"/>
+
+                            <!-- Geo Gold Datapoint connecting Physical & Digital -->
+                            <line x1="46" y1="60" x2="62" y2="60" stroke="#eab308" stroke-width="3" stroke-dasharray="2 2"/>
+                            <circle cx="62" cy="60" r="4.5" fill="#eab308" />
+                        </svg>
+                    </div>
+
+                    <div class="mt-4 pt-4 border-t border-slate-800 text-[11px] text-slate-400 space-y-1">
+                        <div><strong class="text-slate-300">Kracht:</strong> Vertelt direct het verhaal van een <em>Digital Twin</em>: twee entiteiten die communiceren.</div>
+                        <div><strong class="text-slate-300">Semantiek:</strong> Brug tussen fysieke data en digitaal model.</div>
+                    </div>
+                </div>
+
+                <!-- CONCEPT 3 -->
+                <div class="concept-card bg-slate-900/90 border border-slate-800 rounded-3xl p-6 flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center justify-between mb-4">
+                            <span class="text-xs font-mono px-2.5 py-1 rounded-md bg-amber-500/20 text-amber-300 font-bold border border-amber-500/30">Concept 03</span>
+                            <span class="text-[11px] text-slate-400">Dome & Hemisphere</span>
+                        </div>
+                        <h3 class="text-lg font-bold text-white mb-2">De Hemisfeer-D (Omni-Sphere)</h3>
+                        <p class="text-xs text-slate-300 leading-relaxed mb-6">
+                            In cartografie is een halve bol (hemisfeer) precies een <strong>D</strong> die op zijn kant ligt, of een D in profiel. Hier wordt de boog van de D letterlijk de aardkoepel ("Omni" = allesomvattend). De binnenruimte bevat de groene natuurkern, exact zoals in het huidige `beeldmerk.svg`.
+                        </p>
+                    </div>
+
+                    <!-- SVG Preview 3 -->
+                    <div class="bg-slate-950 rounded-2xl p-6 border border-slate-800/80 flex items-center justify-center my-2">
+                        <svg class="w-48 h-48" viewBox="0 0 120 120">
+                            <!-- Outer Sphere Ring -->
+                            <circle cx="60" cy="60" r="52" fill="#0f172a" stroke="#334155" stroke-width="1.5"/>
+                            
+                            <!-- Meridian arcs -->
+                            <ellipse cx="60" cy="60" rx="30" ry="52" fill="none" stroke="#1e293b" stroke-width="1"/>
+                            
+                            <!-- Green Horizon / Equator Base -->
+                            <path d="M 12 72 Q 60 56 108 72" fill="none" stroke="#15803d" stroke-width="2.5"/>
+
+                            <!-- Integrated D & Core -->
+                            <!-- Blue Outer D Shape -->
+                            <path d="M 38 28 L 58 28 C 76 28 88 42 88 60 C 88 78 76 92 58 92 L 38 92 Z" 
+                                  stroke="#3b82f6" stroke-width="10" stroke-linejoin="round" fill="none"/>
+                            
+                            <!-- Inner Green Organic Kernel (from beeldmerk.svg) -->
+                            <path d="M 48 42 L 56 42 C 66 42 74 50 74 60 C 74 70 66 78 56 78 L 48 78 Z" 
+                                  fill="#22c55e" opacity="0.9"/>
+                                  
+                            <!-- Gold Focus Node -->
+                            <circle cx="58" cy="28" r="3.5" fill="#eab308"/>
+                        </svg>
+                    </div>
+
+                    <div class="mt-4 pt-4 border-t border-slate-800 text-[11px] text-slate-400 space-y-1">
+                        <div><strong class="text-slate-300">Kracht:</strong> 1-op-1 integratie van het bestaande app-icoon met het geodetische universum.</div>
+                        <div><strong class="text-slate-300">Semantiek:</strong> Data (blauw) beschermt en visualiseert de leefomgeving (groen).</div>
+                    </div>
+                </div>
+
+                <!-- CONCEPT 4 -->
+                <div class="concept-card bg-slate-900/90 border border-slate-800 rounded-3xl p-6 flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center justify-between mb-4">
+                            <span class="text-xs font-mono px-2.5 py-1 rounded-md bg-purple-500/20 text-purple-300 font-bold border border-purple-500/30">Concept 04</span>
+                            <span class="text-[11px] text-slate-400">Moderne App Squircle</span>
+                        </div>
+                        <h3 class="text-lg font-bold text-white mb-2">Het Squircle Geosysteem (Tech & GIS)</h3>
+                        <p class="text-xs text-slate-300 leading-relaxed mb-6">
+                            We nemen de vormfactor van `beeldmerk.svg` (de afgeronde zwarte tegel) als drager, maar brengen daarbinnen het verfijnde cartografische grid en de horizonlijn van het oude zegel aan. De strakke <strong>D</strong> snijdt door de horizon heen. Dit maakt het logo extreem schaalbaar van favicon tot splash screen.
+                        </p>
+                    </div>
+
+                    <!-- SVG Preview 4 -->
+                    <div class="bg-slate-950 rounded-2xl p-6 border border-slate-800/80 flex items-center justify-center my-2">
+                        <svg class="w-48 h-48" viewBox="0 0 120 120">
+                            <!-- Squircle Container -->
+                            <rect x="12" y="12" width="96" height="96" rx="26" fill="#0b1329" stroke="#1e293b" stroke-width="2"/>
+                            
+                            <!-- Internal subtle grid -->
+                            <line x1="36" y1="12" x2="36" y2="108" stroke="#1e293b" stroke-width="0.8"/>
+                            <line x1="60" y1="12" x2="60" y2="108" stroke="#1e293b" stroke-width="0.8"/>
+                            <line x1="84" y1="12" x2="84" y2="108" stroke="#1e293b" stroke-width="0.8"/>
+                            <line x1="12" y1="60" x2="108" y2="60" stroke="#1e293b" stroke-width="0.8"/>
+
+                            <!-- Green Arc passing through squircle -->
+                            <path d="M 14 74 Q 60 52 106 74" fill="none" stroke="#22c55e" stroke-width="2.5"/>
+
+                            <!-- Tech D -->
+                            <path d="M 40 32 L 58 32 C 74 32 84 44 84 60 C 84 76 74 88 58 88 L 40 88 Z" 
+                                  stroke="#3b82f6" stroke-width="9" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+                            
+                            <!-- Inner indicator shape -->
+                            <path d="M 52 44 L 58 44 C 67 44 72 51 72 60 C 72 69 67 76 58 76 L 52 76 Z" 
+                                  fill="#15803d"/>
+
+                            <!-- Gold Accent GPS Coordinate dot -->
+                            <circle cx="84" cy="60" r="3.5" fill="#eab308"/>
+                        </svg>
+                    </div>
+
+                    <div class="mt-4 pt-4 border-t border-slate-800 text-[11px] text-slate-400 space-y-1">
+                        <div><strong class="text-slate-300">Kracht:</strong> Klaar voor app-stores, browser tabbladen en moderne interfaces.</div>
+                        <div><strong class="text-slate-300">Semantiek:</strong> Digitale container die de fysieke aarde ordent en representeert.</div>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+        <section class="bg-slate-900 border border-slate-800 rounded-3xl p-8">
+            <h3 class="text-lg font-bold text-white mb-6 flex items-center gap-2">
+                <svg class="w-5 h-5 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+                Vergelijkende Keuzematrix
+            </h3>
+
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-xs">
+                    <thead>
+                        <tr class="border-b border-slate-800 text-slate-400 uppercase tracking-wider font-semibold">
+                            <th class="py-3 px-4">Concept</th>
+                            <th class="py-3 px-4">Herkenbaarheid Oude Stijl</th>
+                            <th class="py-3 px-4">Geschiktheid als Software Brand</th>
+                            <th class="py-3 px-4">Integratie "Triple Threat"</th>
+                            <th class="py-3 px-4">Advies</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-800 text-slate-300">
+                        <tr>
+                            <td class="py-3.5 px-4 font-bold text-blue-400">01. Geodetisch D-Zegel</td>
+                            <td class="py-3.5 px-4 text-emerald-400 font-semibold">Zeer hoog (95%)</td>
+                            <td class="py-3.5 px-4">Hoog (Instituut / Wetenschap)</td>
+                            <td class="py-3.5 px-4">Volledig (Blue, Green & Gold node)</td>
+                            <td class="py-3.5 px-4 text-slate-300 font-medium">Beste keuze als je de gevestigde 'academische' zegel-look wilt behouden.</td>
+                        </tr>
+                        <tr>
+                            <td class="py-3.5 px-4 font-bold text-emerald-400">02. Twin Duality (Pilaar + Boog)</td>
+                            <td class="py-3.5 px-4">Gemiddeld (65%)</td>
+                            <td class="py-3.5 px-4 text-emerald-400 font-semibold">Zeer hoog (Vertelt het Digital Twin verhaal)</td>
+                            <td class="py-3.5 px-4">Volledig (Goud verbindt de twee helften)</td>
+                            <td class="py-3.5 px-4 text-slate-300 font-medium">Conceptueel de diepste betekenis voor software met de naam "Twin".</td>
+                        </tr>
+                        <tr>
+                            <td class="py-3.5 px-4 font-bold text-amber-400">03. Hemisfeer-D (Omni)</td>
+                            <td class="py-3.5 px-4">Hoog (80%)</td>
+                            <td class="py-3.5 px-4">Hoog (Past direct bij `beeldmerk.svg`)</td>
+                            <td class="py-3.5 px-4">Volledig (Groene natuurkern binnenin)</td>
+                            <td class="py-3.5 px-4 text-slate-300 font-medium">Zeer natuurlijke overgang vanaf je huidige app-icoon.</td>
+                        </tr>
+                        <tr>
+                            <td class="py-3.5 px-4 font-bold text-purple-400">04. Squircle Geosysteem</td>
+                            <td class="py-3.5 px-4">Gemiddeld (70%)</td>
+                            <td class="py-3.5 px-4 text-emerald-400 font-semibold">Uitstekend (Modern SaaS / Web app)</td>
+                            <td class="py-3.5 px-4">Volledig (Optimaal voor UI-headers)</td>
+                            <td class="py-3.5 px-4 text-slate-300 font-medium">Praktisch het makkelijkst te implementeren in Sprint 8E.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <section class="bg-gradient-to-r from-blue-900/30 to-slate-900 border border-blue-500/20 rounded-3xl p-8 flex flex-col md:flex-row justify-between items-center gap-6">
+            <div class="space-y-2 max-w-2xl">
+                <h3 class="text-lg font-bold text-white">Mijn Strategische Aanbeveling vóór definitieve uitwerking</h3>
+                <p class="text-xs text-slate-300 leading-relaxed">
+                    Kies voor <strong>Concept 01 (Het Geodetische D-Zegel)</strong> als primair zegel voor rapporten en officiële publicaties, én combineer dit met <strong>Concept 03/04</strong> als het compacte app-icoon in de navigatiebalk. 
+                </p>
+                <p class="text-xs text-slate-400">
+                    Zo blijft het historische werk aan het geodetische raster en de horizonlijn 100% behouden, terwijl de app direct loskomt van persoonlijke initialen en een volwaardig Digital Twin platform wordt.
+                </p>
+            </div>
+            <div class="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
+                <button onclick="window.scrollTo({top: 0, behavior: 'smooth'})" class="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs uppercase tracking-wider transition-colors shadow-lg shadow-blue-600/30">
+                    Verken Concepten
+                </button>
+            </div>
+        </section>
+
+    </main>
+
+</body>
+</html>
