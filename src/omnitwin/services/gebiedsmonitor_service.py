@@ -12,6 +12,7 @@ from typing import Optional, List, Dict, Any
 import numpy as np
 
 
+from omnitwin.services import labelklasse as lk
 from omnitwin.services import percentielklasse as pk
 from omnitwin.services.kompas_service import KompasScoringService
 
@@ -44,7 +45,8 @@ class GebiedsmonitorService:
         modus (#255): 'waarde' = kleur naar de werkelijke waarde (classificatie uit
         color_schemas), met klassen voor de legenda; 'percentiel' = percentielklasse 1-8
         binnen de referentiegroep (gebiedstype + gemeente, zelfde jaar), polariteit
-        toegepast, kleurenblindvriendelijk palet.
+        toegepast, kleurenblindvriendelijk palet; 'label' (#256) = label A-E per gebied
+        (drempels uit indicator_labels, anders voorlopig kwintielen in dezelfde referentiegroep).
         """
         from omnitwin.services.color_scale_service import ColorScaleService
         from omnitwin.services.logging_service import AppLogger
@@ -125,14 +127,23 @@ class GebiedsmonitorService:
         nodata_color = "#94A3B8"  # Default grey
         
         klassen_legenda = []
-        percentiel = modus == "percentiel" and bool(indicator_uuid)
+        labels = modus == "label" and bool(indicator_uuid)
+        percentiel = (modus == "percentiel" or labels) and bool(indicator_uuid)
         klasse_per_gebied: Dict[str, Dict[str, Any]] = {}
+        label_bron = None
 
         if indicator_uuid and len(all_values) > 0:
             color_ramp, breaks, nodata_color = color_service.compute_colors_for_data(
                 all_values, indicator_uuid
             )
-            if percentiel:
+            if labels:
+                color_ramp, klasse_per_gebied, label_bron = self._percentielklassen_kaart(
+                    rows, gebiedstype_id, indicator_uuid, jaar, color_service, labels=True
+                )
+                klassen_legenda = lk.legenda(color_ramp, voorlopig=label_bron != lk.BRON_DREMPELS)
+                for k in klassen_legenda:
+                    k["aantal"] = sum(1 for v in klasse_per_gebied.values() if v["klasse"] == k["klasse"])
+            elif percentiel:
                 color_ramp, klasse_per_gebied = self._percentielklassen_kaart(
                     rows, gebiedstype_id, indicator_uuid, jaar, color_service
                 )
@@ -167,6 +178,8 @@ class GebiedsmonitorService:
             if percentiel:
                 data_dict[str(row["id"])]["klasse"] = klasse.get("klasse")
                 data_dict[str(row["id"])]["klasse_status"] = klasse.get("status")
+            if labels:
+                data_dict[str(row["id"])]["label"] = lk.score_naar_label(klasse.get("klasse"))
 
         features_with_data = sum(1 for props in data_dict.values() if props["heeft_data"])
 
@@ -194,27 +207,35 @@ class GebiedsmonitorService:
                 "aantal_unieke_waarden": len(set(all_values)),
                 # #255: kaartmodus en klassen voor de legenda (waarde: bereik per kleur;
                 # percentiel: klasse 1-8 met label en aantal gebieden)
-                "modus": "percentiel" if percentiel else "waarde",
+                "modus": "label" if labels else ("percentiel" if percentiel else "waarde"),
                 "klassen": klassen_legenda,
+                # #256: 'drempels' (indicator_labels) of 'kwintiel' (voorlopig)
+                "label_bron": label_bron,
                 "legenda_melding": (
                     "Alle gebieden hebben dezelfde waarde: geen kleurverschil."
-                    if len(set(all_values)) == 1 and len(all_values) > 1 else None
+                    if len(set(all_values)) == 1 and len(all_values) > 1
+                    else (lk.MELDING_VOORLOPIG if labels and label_bron != lk.BRON_DREMPELS else None)
                 ),
             },
             "data": data_dict
         }
 
-    def _percentielklassen_kaart(self, rows, gebiedstype_id, indicator_uuid, jaar, color_service):
+    def _percentielklassen_kaart(self, rows, gebiedstype_id, indicator_uuid, jaar, color_service, labels=False):
         """
         Percentielklasse per gebied op de kaart (#255). Elk gebied wordt vergeleken met
         de referentiegroep van zijn eigen gemeente (zelfde gebiedstype en jaar). Een
         waterbuurt of een waarde met n onder de drempel krijgt geen klasse.
         Geeft (8 kleuren, {gebied_id: {"klasse", "status"}}).
+
+        labels (#256): labelscore 1..5 (5 = A) uit de drempels in indicator_labels of,
+        zonder drempels, kwintielen. Geeft dan (5 kleuren, {...}, bron).
         """
-        kleuren = pk.palet(color_service)
+        kleuren = lk.palet(color_service) if labels else pk.palet(color_service)
+        drempels = lk.drempels_uit_db(self.db, [indicator_uuid]).get(str(indicator_uuid)) if labels else None
+        bron = lk.BRON_DREMPELS if drempels else lk.BRON_KWINTIEL
         met_waarde = [r for r in rows if r["indicator_waarde"] is not None]
         if not met_waarde:
-            return kleuren, {}
+            return (kleuren, {}, bron) if labels else (kleuren, {})
         score_type = met_waarde[0]["score_type"]
         hoger_beter = pk.hoger_is_beter(score_type)
         referentie = pk.referentie_waarden(
@@ -230,9 +251,14 @@ class GebiedsmonitorService:
                 uit[gid] = {"klasse": None, "status": "onderdrukt"}
             else:
                 ref = referentie.get((r["gemeente_code"], str(indicator_uuid)), [])
-                k = pk.klasse(float(r["indicator_waarde"]), ref, hoger_beter)
-                uit[gid] = {"klasse": k, "status": None if k else "geen_referentie"}
-        return kleuren, uit
+                if labels:
+                    k = lk.label_score(float(r["indicator_waarde"]), ref, hoger_beter, drempels)[0]
+                    status = "buiten_drempels" if drempels else "geen_referentie"
+                else:
+                    k = pk.klasse(float(r["indicator_waarde"]), ref, hoger_beter)
+                    status = "geen_referentie"
+                uit[gid] = {"klasse": k, "status": None if k else status}
+        return (kleuren, uit, bron) if labels else (kleuren, uit)
 
     
     def get_gebiedstypes(self) -> List[Dict[str, Any]]:

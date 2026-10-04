@@ -4,7 +4,7 @@ Stand 02-10-2026. Hoe de huidige monitor waarden vergelijkt en kleurt, en hoe da
 
 **Kern:** SWF koos bewust voor **percentielklassen van 12,5%** in plaats van Z-scores, met een **gewogen klasse-aggregatie** naar thema, en voor indicatoren met een norm voor **labels A–E**. Waarden op minder dan 10 waarnemingen worden **in de ETL weggelaten**. Advies: maak de classificatie per kompasprofiel instelbaar (percentielklasse, Z-score, label), op één referentiefunctie.
 
-**Stand 03-10-2026:** advies 1 (deels: `zscore` en `percentiel_8`, nog geen `label`), 2 (deels: rangorde over de referentiegroep; de klassengrenzen staan nog in code, niet in stuurdata), 3 en 7 zijn ingevoerd in [#255](https://github.com/TLaan/D-OmniTwin/issues/255), met een aanname over de rekenwijze tot [#222](https://github.com/TLaan/D-OmniTwin/issues/222) antwoord geeft. Zie [percentielklasse_methodiek.md](../../3-data-engineering/percentielklasse_methodiek.md).
+**Stand 03-10-2026:** advies 1 (deels: `zscore` en `percentiel_8`, nog geen `label`), 2 (deels: rangorde over de referentiegroep; de klassengrenzen staan nog in code, niet in stuurdata), 3 en 7 zijn ingevoerd in [#255](https://github.com/TLaan/D-OmniTwin/issues/255), met een aanname over de rekenwijze tot [#222](https://github.com/TLaan/D-OmniTwin/issues/222) antwoord geeft. Zie [percentielklasse_methodiek.md](../../3-data-engineering/percentielklasse_methodiek.md). Sinds [#256](https://github.com/TLaan/D-OmniTwin/issues/256) ook `label_ae` (labels A–E, advies 1 en 5): drempels per indicator als data in tabel `indicator_labels`, zonder drempels voorlopig kwintielen; themalabel met dezelfde gewogen aggregatie. Zie [labels_methodiek.md](../../3-data-engineering/labels_methodiek.md).
 
 ## De huidige monitor
 

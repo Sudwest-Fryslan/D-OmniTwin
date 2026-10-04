@@ -1,0 +1,13 @@
+{
+  "omschrijving": "Vulling van het Kompasprofiel 'Klimaat Kompas' op een verse installatie (#256): de klimaatindicatoren die D-OmniTwin uit open data of de use cases heeft (hittestress, sample-bronbibliotheek), ingedeeld naar de thema's van de Klimaatmonitor (hittestress, hemelwateroverlast, droogte). Geladen door init_data/scripts/load_sample.py (stap definities of kompas), alleen als het profiel nog leeg is: een eigen inrichting wordt nooit overschreven. Indicatoren die (nog) niet bestaan, worden overgeslagen. De overige klimaatindicatoren van SWF (gevoelstemperatuur, waterdiepte, GLG klei-/veenweide, bladerdek) komen met de use case swf-kompasprofiel.",
+  "profiel": "Klimaat Kompas",
+  "classificatie": "label_ae",
+  "indicatoren": [
+    {"kwadrant": "Klimaat", "thema": "Hittestress", "onderdeel": "Hitte", "indicator_uuid": "dacb8005-ecc2-5014-a5c2-a07c119b43ae", "indicator_naam": "Stedelijk hitte-eiland effect"},
+    {"kwadrant": "Klimaat", "thema": "Hittestress", "onderdeel": "Koelte en groen", "indicator_uuid": "bf4e5b8f-6b0a-4632-b9b4-8e29d025e68c", "indicator_naam": "Afstand tot koele plek"},
+    {"kwadrant": "Klimaat", "thema": "Hittestress", "onderdeel": "Koelte en groen", "indicator_uuid": "e4d53c01-ef30-56a3-9fc6-29e192462066", "indicator_naam": "Boomkroonbedekking"},
+    {"kwadrant": "Klimaat", "thema": "Hittestress", "onderdeel": "Koelte en groen", "indicator_uuid": "97f53738-3439-4c28-8cac-046a52c65248", "indicator_naam": "Oppervlak groen per inwoner"},
+    {"kwadrant": "Klimaat", "thema": "Hemelwateroverlast", "onderdeel": "Water en verharding", "indicator_uuid": "0bbd30e5-08f5-4499-b6ca-cdda990720dc", "indicator_naam": "Verhouding oppervlakte water / verharding"},
+    {"kwadrant": "Klimaat", "thema": "Droogte", "onderdeel": "Grondwater", "indicator_uuid": "2d6bdaba-3832-40cc-acae-950883f1aa76", "indicator_naam": "Verandering GLG nu t.o.v. 2050"}
+  ]
+}
