@@ -1,20 +1,19 @@
 /*
- * Thema "legacy" — de rustige groen-blauwe uitstraling van D-OmniTwin v0.1.0, vastgezet als eigen thema (#284).
- * Kies het in het beheerscherm (Organisatie > Thema) voor wie de oude stijl wil; de waarden veranderen niet
- * mee met het standaardthema d-omnitwin. Afgeleid van d-omnitwin (#89).
+ * Thema "legacy" — Klassiek groen-blauw (v0.1.0), de oorspronkelijke uitstraling van D-OmniTwin (#284).
  *
- * Tokennamen volgen de basis-tokens van NL Design System (https://nldesignsystem.nl,
- * https://github.com/nl-design-system/themes, pakket basis-design-tokens): basis.color.accent-1.bg-default
- * wordt --basis-color-accent-1-bg-default. Daarnaast een paar componenttokens van D-OmniTwin zelf
- * (--d-omnitwin-*), die naar basis-tokens verwijzen.
+ * @wcag-aa: nee
+ * Voldoet NIET aan WCAG 2.1 AA: tien contrastparen te laag (de acht van d-omnitwin, plus wit op goud
+ * in de actieve tab en wit op groen in de selectiebadge, zoals in v0.1.0). Daarom nooit de standaard
+ * en niet geschikt als standaard voor een overheidsorganisatie; het beheerscherm waarschuwt bij de keuze.
+ * Uitzonderingen in tests/test_thema.py (BEKENDE_TEKORTEN), zie
+ * https://github.com/TLaan/D-OmniTwin/issues/67 en https://github.com/TLaan/D-OmniTwin/issues/284.
  *
- * De variabelen in static/css/styles.css lezen deze tokens, met precies deze waarden als fallback:
- * zonder themabestand ziet de app er hetzelfde uit (bewaakt door tests/test_thema.py).
- * Datakleuren (Z-score, kaart, Kompas) horen NIET in een thema; die komen uit color_schemas.
+ * Kleuren zoals static/css/styles.css in v0.1.0: kopbalk #1e3a8a -> #15803d (donker #3b82f6 -> #22c55e),
+ * knoppen Trust Blue, Geo Gold voor selectie en actieve tab. Bewust bevroren: verandert niet mee met
+ * d-omnitwin. De tokens die v0.1.0 nog niet kende (beeldmerk, beheerscherm) zijn die van d-omnitwin.
  *
- * Eigen thema maken: kopieer dit bestand, zie docs/9-beheer/thema-s.md.
- * Opmaak: drie blokken (licht, donker, donker via de systeeminstelling), één token per regel,
- * alleen kleuren als #rrggbb. De contrasttest leest dit bestand.
+ * Tokennamen: basis-tokens van NL Design System (https://github.com/nl-design-system/themes) plus
+ * componenttokens --d-omnitwin-*. Uitleg: docs/9-beheer/thema-s.md.
  */
 
 /* ---------- Licht ---------- */
@@ -75,24 +74,36 @@
   /* Componenttokens D-OmniTwin (#89): actieve tab, welkomstscherm, tooltips, selectiebadge.
      Zie docs/9-beheer/thema-s.md voor waar ze gebruikt worden. */
   --d-omnitwin-tab-active-background-color: #c59d00;
-  --d-omnitwin-tab-active-color: #0f172a;
+  --d-omnitwin-tab-active-color: #ffffff;
+  --d-omnitwin-tab-active-border-color: #c59d00;
+  --d-omnitwin-tab-active-border-width: 2px;
   --d-omnitwin-welcome-button-background-color: #c59d00;
   --d-omnitwin-welcome-button-color: #0f172a;
   --d-omnitwin-welcome-accent-color: #856a00;
   --d-omnitwin-tooltip-background-color: #0f172a;
   --d-omnitwin-tooltip-color: #ffffff;
-  --d-omnitwin-selection-badge-background-color: #047857;
+  --d-omnitwin-selection-badge-background-color: #10b981;
   --d-omnitwin-selection-badge-color: #ffffff;
 
   /* Componenttokens D-OmniTwin: kopbalk (verloop) */
   --d-omnitwin-header-background-color-start: var(--basis-color-accent-1-bg-default);
   --d-omnitwin-header-background-color-end: #15803d;
   --d-omnitwin-header-color: #ffffff;
+  /* Accentlijn onder kopbalk en vensterkoppen (#284): niet in het standaardthema */
+  --d-omnitwin-header-accent-color: #15803d;
+  --d-omnitwin-header-accent-width: 0px;
 
   /* Beeldmerk (#249): de eigen D-OmniTwin-kleuren (gelijk aan de terugval in beeldmerk.svg) */
   --d-omnitwin-beeldmerk-vlak: #0f172a;
   --d-omnitwin-beeldmerk-lijn: #3b82f6;
   --d-omnitwin-beeldmerk-kern: #22c55e;
+
+  /* Beheerscherm (#284; altijd donker): kop en actief menu-item, gelijk aan de terugval in admin.css */
+  --d-omnitwin-beheer-kop-background-color-start: #2563eb;
+  --d-omnitwin-beheer-kop-background-color-end: #1d4ed8;
+  --d-omnitwin-beheer-kop-color: #ffffff;
+  --d-omnitwin-beheer-nav-active-background-color: #2563eb;
+  --d-omnitwin-beheer-nav-active-color: #ffffff;
 }
 
 /* ---------- Donker ---------- */
@@ -128,18 +139,20 @@
   --basis-focus-outline-color: #93c5fd;
 
   --d-omnitwin-tab-active-background-color: #eab308;
-  --d-omnitwin-tab-active-color: #0f172a;
+  --d-omnitwin-tab-active-color: #ffffff;
+  --d-omnitwin-tab-active-border-color: #eab308;
   --d-omnitwin-welcome-button-background-color: #eab308;
   --d-omnitwin-welcome-button-color: #0f172a;
   --d-omnitwin-welcome-accent-color: #eab308;
   --d-omnitwin-tooltip-background-color: #f1f5f9;
   --d-omnitwin-tooltip-color: #0f172a;
-  --d-omnitwin-selection-badge-background-color: #047857;
+  --d-omnitwin-selection-badge-background-color: #10b981;
   --d-omnitwin-selection-badge-color: #ffffff;
 
   --d-omnitwin-header-background-color-start: #3b82f6;
   --d-omnitwin-header-background-color-end: #22c55e;
   --d-omnitwin-header-color: #f1f5f9;
+  --d-omnitwin-header-accent-color: #22c55e;
 }
 
 /* ---------- Donker via de systeeminstelling ----------
@@ -179,17 +192,19 @@
     --basis-focus-outline-color: #93c5fd;
 
     --d-omnitwin-tab-active-background-color: #eab308;
-    --d-omnitwin-tab-active-color: #0f172a;
+    --d-omnitwin-tab-active-color: #ffffff;
+    --d-omnitwin-tab-active-border-color: #eab308;
     --d-omnitwin-welcome-button-background-color: #eab308;
     --d-omnitwin-welcome-button-color: #0f172a;
     --d-omnitwin-welcome-accent-color: #eab308;
     --d-omnitwin-tooltip-background-color: #f1f5f9;
     --d-omnitwin-tooltip-color: #0f172a;
-    --d-omnitwin-selection-badge-background-color: #047857;
+    --d-omnitwin-selection-badge-background-color: #10b981;
     --d-omnitwin-selection-badge-color: #ffffff;
 
     --d-omnitwin-header-background-color-start: #3b82f6;
     --d-omnitwin-header-background-color-end: #22c55e;
     --d-omnitwin-header-color: #f1f5f9;
+    --d-omnitwin-header-accent-color: #22c55e;
   }
 }

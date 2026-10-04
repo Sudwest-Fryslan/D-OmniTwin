@@ -295,6 +295,8 @@ export interface OrganisatieInvoer {
 export interface ThemaInfo {
     naam: string;
     titel: string;
+    /** WCAG 2.1 AA volgens het kopcommentaar van het thema (#284); null/ontbrekend = onbekend */
+    wcag_aa?: boolean | null;
     kleuren: { licht: Record<string, string>; donker: Record<string, string> };
 }
 

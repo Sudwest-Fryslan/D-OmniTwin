@@ -208,6 +208,9 @@
   --header-bg-start: var(--d-omnitwin-header-background-color-start, #1e3a8a);
   --header-bg-end: var(--d-omnitwin-header-background-color-end, #15803d);
   --header-text: var(--d-omnitwin-header-color, #ffffff);
+  /* Accentlijn onder kopbalk en vensterkoppen (#284); standaard 0px, dus geen lijn */
+  --header-accent: var(--d-omnitwin-header-accent-color, #15803d);
+  --header-accent-width: var(--d-omnitwin-header-accent-width, 0px);
 
   /* Brand Colors — Triple Threat */
   --primary-color: var(--basis-color-accent-1-color-default, #1e3a8a);
@@ -266,6 +269,9 @@
   /* Componenttokens (#89): actieve tab, welkomstscherm, tooltips, selectiebadge */
   --tab-active-bg: var(--d-omnitwin-tab-active-background-color, #c59d00);
   --tab-active-text: var(--d-omnitwin-tab-active-color, #0f172a);
+  /* Rand van de actieve tab (#284): standaard gelijk aan het vlak en even dik als gewone tabs */
+  --tab-active-border: var(--d-omnitwin-tab-active-border-color, #c59d00);
+  --tab-active-border-width: var(--d-omnitwin-tab-active-border-width, 2px);
   --welcome-btn-bg: var(--d-omnitwin-welcome-button-background-color, #c59d00);
   --welcome-btn-text: var(--d-omnitwin-welcome-button-color, #0f172a);
   --welcome-accent: var(--d-omnitwin-welcome-accent-color, #856a00);
@@ -337,7 +343,8 @@ textarea {
   color: var(--header-text);
   padding: 0.4rem var(--spacing-xl);
   /* Reduced padding to crop height */
-  box-shadow: 0 4px 12px var(--shadow-color);
+  /* Accentlijn onderaan (#284) als inset-schaduw: geen verschuiving van de lay-out */
+  box-shadow: inset 0 calc(-1 * var(--header-accent-width)) 0 var(--header-accent), 0 4px 12px var(--shadow-color);
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -522,6 +529,7 @@ textarea {
   --header-bg-start: var(--d-omnitwin-header-background-color-start, #3b82f6);
   --header-bg-end: var(--d-omnitwin-header-background-color-end, #22c55e);
   --header-text: var(--d-omnitwin-header-color, #f1f5f9);
+  --header-accent: var(--d-omnitwin-header-accent-color, #22c55e);
 
   /* Brand Colors — zelfde hue, hogere luminance */
   --primary-color: var(--basis-color-accent-1-color-default, #3b82f6);
@@ -554,6 +562,7 @@ textarea {
 
   --tab-active-bg: var(--d-omnitwin-tab-active-background-color, #eab308);
   --tab-active-text: var(--d-omnitwin-tab-active-color, #0f172a);
+  --tab-active-border: var(--d-omnitwin-tab-active-border-color, #eab308);
   --welcome-btn-bg: var(--d-omnitwin-welcome-button-background-color, #eab308);
   --welcome-btn-text: var(--d-omnitwin-welcome-button-color, #0f172a);
   --welcome-accent: var(--d-omnitwin-welcome-accent-color, #eab308);
@@ -644,7 +653,7 @@ textarea {
 
 .tab-button.active {
   background: var(--tab-active-bg);
-  border-color: transparent;
+  border: var(--tab-active-border-width) solid var(--tab-active-border);
   color: var(--tab-active-text);
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
 }
@@ -680,7 +689,7 @@ textarea {
 /* Actieve knop: kleuren uit het thema (--d-omnitwin-tab-active-*) */
 .tab-button.active {
   background: var(--tab-active-bg);
-  border-color: transparent;
+  border: var(--tab-active-border-width) solid var(--tab-active-border);
   color: var(--tab-active-text);
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
 }
@@ -1933,6 +1942,7 @@ textarea {
   align-items: center;
   padding: 0.75rem 1rem;
   background: linear-gradient(135deg, var(--header-bg-start), var(--header-bg-end));
+  box-shadow: inset 0 calc(-1 * var(--header-accent-width)) 0 var(--header-accent);
   color: var(--header-text);
   cursor: grab;
   user-select: none;

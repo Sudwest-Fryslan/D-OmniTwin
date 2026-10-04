@@ -1,5 +1,7 @@
 /*
- * Keycloak-inlogpagina, thema d-omnitwin (#89). Kleuren gelijk aan static/css/themes/d-omnitwin.css:
+ * Keycloak-inlogpagina, thema legacy (#284): de klassieke groen-blauwe uitstraling (v0.1.0), kleuren
+ * gelijk aan static/css/themes/legacy.css. v0.1.0 had nog geen inlogpagina; dit is die van d-omnitwin.
+ * Het viewerthema legacy haalt WCAG 2.1 AA niet en is nooit de standaard (zie docs/9-beheer/thema-s.md).
  * PatternFly-variabelen van keycloak.v2 krijgen de waarden van de NL Design System-tokens.
  * Lettertype Inter uit de viewer (zelfde host via Traefik); zonder viewer valt het terug op het systeemfont.
  */

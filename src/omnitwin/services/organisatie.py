@@ -80,6 +80,8 @@ _DONKER = '[data-theme="dark"]'
 _TOKEN = re.compile(r"(--(?:basis|d-omnitwin)-[a-z0-9-]+):\s*([^;]+);")
 _VAR = re.compile(r"^var\(\s*(--[a-z0-9-]+)\s*(?:,\s*(.+))?\)$")
 # Kopcommentaar: Thema "swf" — Gemeente Súdwest-Fryslân, als ... -> "Gemeente Súdwest-Fryslân"
+# Kopcommentaar: "@wcag-aa: ja" of "@wcag-aa: nee" (#284); tests/test_thema.py houdt het eerlijk
+_WCAG_AA = re.compile(r"@wcag-aa:\s*(ja|nee)(?![a-z])")
 _TITEL = re.compile(r'Thema\s+"[a-z0-9-]+"\s+[—-]+\s*([^,.\n(]+?)(?:\s+als NL Design System|[,.\n(])')
 
 
@@ -113,15 +115,21 @@ def thema_bestaat(naam: object, themamap: Path = THEMA_MAP) -> bool:
 
 
 def thema_info(naam: str, themamap: Path = THEMA_MAP) -> Dict[str, Any]:
-    """Naam, titel (uit het kopcommentaar) en kleurtokens van een thema, licht en donker.
+    """Naam, titel, WCAG-status (uit het kopcommentaar) en kleurtokens van een thema, licht en donker.
+
+    ``wcag_aa``: True/False volgens de regel ``@wcag-aa: ja|nee`` in het kopcommentaar, None als die
+    ontbreekt (onbekend; een eigen thema zonder die regel is niet getoetst).
 
     Licht = het eerste ``:root``-blok, donker = ``[data-theme="dark"]`` aangevuld met licht
     (zoals de cascade in de browser: wat donker niet zet, komt uit :root)."""
     css = (themamap / f"{naam}.css").read_text(encoding="utf-8")
     m = _TITEL.search(css[:600])
+    kop = css[:css.find("*/")] if css.lstrip().startswith("/*") else ""
+    wcag = _WCAG_AA.search(kop)
     licht = dict(_TOKEN.findall(_blok(css, ":root")))
     donker = {**licht, **dict(_TOKEN.findall(_blok(css, _DONKER)))}
     return {"naam": naam, "titel": m.group(1).strip() if m else naam,
+            "wcag_aa": (wcag.group(1) == "ja") if wcag else None,
             "kleuren": {"licht": _kleuren(licht), "donker": _kleuren(donker)}}
 
 

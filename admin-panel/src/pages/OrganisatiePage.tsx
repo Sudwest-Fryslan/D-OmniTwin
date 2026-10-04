@@ -39,6 +39,18 @@ const leeg = (s: string) => (s.trim() === '' ? null : s);
 
 // ── Voorbeeld van een thema: kopbalk, knop, link en beeldmerk met de tokens van dat thema ──
 
+// De breedte van de accentlijn (--d-omnitwin-header-accent-width) is geen kleur en staat dus niet in
+// `kleuren`. Het voorbeeld toont de lijn (4px) als de accentkleur afwijkt van het eind van het
+// kopbalkverloop; het standaardthema zet daar dezelfde kleur met breedte 0px.
+const accentBreedte = (thema: ThemaInfo) => {
+    const k = thema.kleuren.licht;
+    const kleur = k['--d-omnitwin-header-accent-color'];
+    return kleur && kleur !== k['--d-omnitwin-header-background-color-end'] ? '4px' : '0px';
+};
+
+/** Waarschuwing bij een thema dat WCAG 2.1 AA niet haalt (#284). */
+export const WCAG_WAARSCHUWING = 'Voldoet niet aan WCAG 2.1 AA; niet geschikt als standaard voor een overheidsorganisatie.';
+
 export const ThemaVoorbeeld: React.FC<{ thema: ThemaInfo; modus: 'licht' | 'donker'; naam: string }> = ({ thema, modus, naam }) => {
     const k = thema.kleuren[modus];
     // Alle tokens als CSS-variabelen op de container: het beeldmerk (<use>) erft ze ook
@@ -53,6 +65,8 @@ export const ThemaVoorbeeld: React.FC<{ thema: ThemaInfo; modus: 'licht' | 'donk
                 data-testid={`voorbeeld-${modus}-kopbalk`}
                 style={{
                     background: `linear-gradient(135deg, ${t('--d-omnitwin-header-background-color-start', '#1e3a8a')} 0%, ${t('--d-omnitwin-header-background-color-end', '#15803d')} 100%)`,
+                    // Accentlijn onder de kopbalk (#284)
+                    boxShadow: `inset 0 -${accentBreedte(thema)} 0 ${t('--d-omnitwin-header-accent-color', 'transparent')}`,
                     color: t('--d-omnitwin-header-color', '#ffffff'),
                     display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 0.75rem',
                 }}
@@ -83,10 +97,11 @@ export const ThemaVoorbeeld: React.FC<{ thema: ThemaInfo; modus: 'licht' | 'donk
                                 padding: '0.3rem 0.7rem', borderRadius: 4, fontSize: '0.8rem', fontWeight: 500,
                             }}
                         >Knop</span>
-                        <span style={{
+                        <span data-testid={`voorbeeld-${modus}-tab`} style={{
                             background: t('--d-omnitwin-tab-active-background-color', '#c59d00'),
                             color: t('--d-omnitwin-tab-active-color', '#0f172a'),
-                            padding: '0.3rem 0.5rem', borderRadius: 4, fontSize: '0.75rem',
+                            border: `2px solid ${t('--d-omnitwin-tab-active-border-color', t('--d-omnitwin-tab-active-background-color', '#c59d00'))}`,
+                            padding: '0.2rem 0.45rem', borderRadius: 4, fontSize: '0.75rem',
                         }}>Actieve tab</span>
                     </span>
                 </div>
@@ -245,9 +260,21 @@ export const OrganisatiePage: React.FC = () => {
                                 ))}
                             </span>
                             <span><strong>{t.naam}</strong> — {t.titel}</span>
+                            {t.wcag_aa === false && (
+                                <span className="badge" title={WCAG_WAARSCHUWING}
+                                    style={{ marginLeft: '0.4rem', fontSize: '0.7rem', color: 'var(--color-warning)', border: '1px solid currentColor', borderRadius: 4, padding: '0 0.3rem' }}>
+                                    niet WCAG AA
+                                </span>
+                            )}
                         </label>
                     ))}
                 </fieldset>
+                {gekozenThema?.wcag_aa === false && (
+                    <p role="alert" data-testid="wcag-waarschuwing"
+                        style={{ color: 'var(--color-warning)', fontWeight: 600, marginBottom: 'var(--spacing-md)' }}>
+                        Thema {gekozenThema.naam}: {WCAG_WAARSCHUWING}
+                    </p>
+                )}
                 {gekozenThema ? (
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 'var(--spacing-md)' }}>
                         <ThemaVoorbeeld thema={gekozenThema} modus="licht" naam={form.korte_naam || form.naam} />
