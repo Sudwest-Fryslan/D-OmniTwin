@@ -276,3 +276,18 @@ def test_swf_kaartlagen_toegang_gezet():
     assert toegang["swf-laag-deelgebieden"] == "openbaar"
     assert toegang["swf-laag-coordinatorgebieden"] == "intern"
     assert all(t in ("openbaar", "intern") for t in toegang.values())
+
+
+def test_controleer_telt_ook_zonder_frictionless(tmp_path, monkeypatch):
+    """Zonder frictionless is een Data Package niet gecontroleerd, maar de aantal-controle telt de regels wel
+    (geen valse fout 0 ≠ 8; swf-kaartlagen, swf-laag-extern uit de repo)."""
+    from omnitwin.laden import levering
+
+    def ontbreekt(*a, **k):
+        raise levering.OntbrekendPakket("frictionless ontbreekt")
+
+    monkeypatch.setattr(levering, "valideer_levering", ontbreekt)
+    r = uc.controleer("swf-kaartlagen", tmp_path, bron_env={})
+    c = next(c for c in r["controles"] if c["controle"].get("dataset") == "swf-laag-extern"
+             and c["controle"]["type"] == "aantal")
+    assert c["resultaat"] == "ok" and c["waarde"] == 8

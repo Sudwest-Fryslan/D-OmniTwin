@@ -437,7 +437,9 @@ def controleer(naam, uit=None, ucs=None, variant=None, bron_env=None):
             try:
                 d["leveringen"] += valideer_levering(registratie_voor_api(dataset), p, schema_paden(uc, dataset))
             except OntbrekendPakket as e:
-                d["leveringen"].append({"bestand": p.name, "geldig": None, "aantallen": {}, "fouten": [str(e)]})
+                # Niet gecontroleerd (bijv. frictionless ontbreekt), maar wel geteld: anders geeft elke
+                # aantal-controle 0 en daarmee een valse fout
+                d["leveringen"].append({"bestand": p.name, "geldig": None, "aantallen": tel_regels(p), "fouten": [str(e)]})
         if any(lv["geldig"] is False for lv in d["leveringen"]):
             d["status"] = "fout"
     for c in uc.get("controles", []):
@@ -447,6 +449,21 @@ def controleer(naam, uit=None, ucs=None, variant=None, bron_env=None):
     r["uitvoer"] = str(uit)
     (uit / "controle.json").write_text(json.dumps(r, ensure_ascii=False, indent=2, default=str), encoding="utf-8")
     return r
+
+
+def tel_regels(pad):
+    """Regels per resource in een Data Package-zip, zonder validatie ({} voor andere bestanden)."""
+    import csv
+    import io
+    import zipfile
+    if Path(pad).suffix != ".zip":
+        return {}
+    uit = {}
+    with zipfile.ZipFile(pad) as z:
+        for r in json.loads(z.read("datapackage.json")).get("resources", []):
+            tekst = z.read(r["path"]).decode("utf-8-sig")
+            uit[r["name"]] = sum(1 for _ in csv.DictReader(io.StringIO(tekst)))
+    return uit
 
 
 def _aantal(d, resource):
