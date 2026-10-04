@@ -1,19 +1,30 @@
 # D-OmniTwin CI Pipeline
 #
-# Triggert op elke PR naar main en bij directe pushes op main.
-# Stap 1 (Bouwen) en Stap 3/unit (Testen) uit Issue #28.
+# Draait bij een push op main of een release-branch (release/<x.y>, zie
+# docs/9-beheer/releasebeleid.md) en bij elke PR daarnaartoe (#202). Een push op
+# een feature-branch draait niets; de PR wel, dus niets draait dubbel.
 #
-# Volgende stappen die hier nog NIET in zitten (aparte PRs):
-#   - integration-tests (vereist testcontainers + PostgreSQL/PostGIS)
-#   - Dockerhub push (vereist semver tagging via Issue #27)
+# Jobs: unittests, Docker-build, integratie- en e2e-tests tegen een verse
+# compose-stack (#62), admin-panel (typecheck, lint, test, build; #202) en
+# validatie van publiccode.yml (#56).
+#
+# Nog niet: Docker Hub push (semver-tags, #27).
 
 name: CI
 
 on:
   push:
-    branches: [main]
+    branches: [main, "release/**"]
   pull_request:
-    branches: [main]
+    branches: [main, "release/**"]
+
+permissions:
+  contents: read
+
+# Een nieuwe push op dezelfde PR stopt de vorige run; runs op main/release lopen altijd af.
+concurrency:
+  group: ci-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   # ──────────────────────────────────────────────
@@ -39,6 +50,11 @@ jobs:
 
       - name: Install CI dependencies
         run: pip install -r requirements-ci.txt
+
+      # Controleert de pakketdefinitie (pyproject.toml, src-layout); pytest vindt
+      # src/omnitwin ook zonder installatie (pythonpath in pyproject.toml)
+      - name: Installeer pakket omnitwin
+        run: pip install -e . --no-deps
 
       - name: Run unit tests
         run: pytest -m unit -v --tb=short
@@ -88,3 +104,162 @@ jobs:
             docker history --format '{{.Size}}  {{.CreatedBy}}' d-omnitwin:ci-check | cut -c1-150
             exit 1
           fi
+
+  # ──────────────────────────────────────────────
+  # Job 3: Integratietests — verse stack met sample dataset (Issue #62)
+  # Start docker-compose.yml (zonder dev-override) met lege volumes, wacht tot
+  # alles healthy is en draait pytest -m integration in een wegwerpcontainer op
+  # het compose-netwerk. Een startfout van de backend laat deze job falen.
+  # ──────────────────────────────────────────────
+  integration:
+    name: Integratietests (verse stack)
+    runs-on: ubuntu-latest
+    needs: unit-tests
+    timeout-minutes: 60
+    env:
+      COMPOSE_PROJECT_NAME: omnitwin-ci
+      OMNITWIN_HTTP_PORT: "8080"
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Maak .env met wegwerpwaarden
+        run: |
+          cp .env.example .env
+          set_env() {
+            # Vervang (ook uitgecommentarieerde) KEY=... of voeg toe
+            if grep -Eq "^#? ?$1=" .env; then
+              sed -i -E "s|^#? ?$1=.*|$1=$2|" .env
+            else
+              echo "$1=$2" >> .env
+            fi
+          }
+          set_env COMPOSE_FILE docker-compose.yml
+          set_env DATABASE_PASSWORD "$(openssl rand -hex 16)"
+          set_env DATABASE_SSLMODE prefer
+          set_env ADMIN_API_KEY "$(openssl rand -hex 32)"
+          set_env ADMIN_PASSWORD "$(openssl rand -hex 16)"
+          set_env LOAD_SAMPLE_DATA true
+          grep -E '^(COMPOSE_FILE|LOAD_SAMPLE_DATA|DATABASE_(HOST|PORT|NAME|USER|SSLMODE))=' .env
+
+      - name: Start stack (build + wachten op healthchecks)
+        run: docker compose up -d --build --wait --wait-timeout 600
+
+      - name: Wacht tot Traefik de backend routeert
+        run: |
+          for _ in $(seq 1 30); do
+            if curl -fsS "http://localhost:${OMNITWIN_HTTP_PORT}/health" > /dev/null; then
+              echo "backend bereikbaar via Traefik"; exit 0
+            fi
+            sleep 2
+          done
+          echo "backend niet bereikbaar via Traefik" >&2; exit 1
+
+      - name: Draai integratietests
+        run: |
+          docker run --rm --network "${COMPOSE_PROJECT_NAME}_default" \
+            -v "$PWD":/app -w /app \
+            --env-file .env \
+            -e DATABASE_HOST=postgres -e DATABASE_PORT=5432 \
+            -e OMNITWIN_BASE_URL=http://traefik \
+            -e PYTHONDONTWRITEBYTECODE=1 \
+            python:3.11-slim sh -c "pip install -q --root-user-action=ignore pytest requests psycopg2-binary python-dotenv sqlalchemy bcrypt pyyaml \
+              && pytest -p no:cacheprovider -m integration tests/integration"
+
+      - name: Draai browser-e2e-tests (Playwright, docs/testcases)
+        run: |
+          # Opwarmen: eerste verzoeken (modellen laden, caches vullen) niet in de eerste test laten vallen
+          for pad in / /health /api/data/gebiedstypes "/api/ai/kompas/search?q=groen"; do
+            curl -s -o /dev/null --max-time 120 "http://localhost:${OMNITWIN_HTTP_PORT:-80}$pad" || true
+          done
+          docker run --rm --network "${COMPOSE_PROJECT_NAME}_default" \
+            -v "$PWD":/work -w /work \
+            -e OMNITWIN_BASE_URL=http://traefik \
+            -e PYTHONDONTWRITEBYTECODE=1 \
+            -e E2E_EXPECT_TIMEOUT_MS=45000 \
+            -e E2E_TIMEOUT_MS=90000 \
+            mcr.microsoft.com/playwright/python:v1.63.0-noble sh -c "pip install -q --root-user-action=ignore -r tests/e2e/requirements.txt \
+              && pytest -p no:cacheprovider -m e2e tests/e2e -rs"
+
+      - name: Bewaar e2e-screenshots bij falen
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-artifacts
+          path: tests/e2e/artifacts/
+          if-no-files-found: ignore
+
+      - name: Toon status en logs bij falen
+        if: failure()
+        run: |
+          docker compose ps -a
+          docker compose logs --no-color --timestamps
+
+      - name: Stack opruimen
+        if: always()
+        run: docker compose down -v --remove-orphans
+
+  # ──────────────────────────────────────────────
+  # Job 4: admin-panel (React/Vite) — typecheck, lint, test en build (#202)
+  # De build staat gecommit in static/admin-panel (FastAPI serveert die onder
+  # /admin/). Na build:static mag daar niets veranderd zijn: anders is de
+  # gecommitte build niet van deze broncode.
+  # ──────────────────────────────────────────────
+  admin-panel:
+    name: Admin-panel (typecheck, lint, test, build)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: admin-panel
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: admin-panel/package-lock.json
+
+      - name: Installeer afhankelijkheden
+        run: npm ci --no-audit --no-fund
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Test
+        run: npm test
+
+      - name: Build naar static/admin-panel
+        run: npm run build:static
+
+      - name: Gecommitte build is actueel
+        run: |
+          wijzigingen=$(git status --porcelain -- ../static/admin-panel)
+          if [ -n "$wijzigingen" ]; then
+            echo "$wijzigingen"
+            echo "::error::static/admin-panel wijkt af van de build. Draai in admin-panel 'npm run build:static' en commit static/admin-panel."
+            exit 1
+          fi
+          echo "static/admin-panel komt overeen met de build"
+
+  # ──────────────────────────────────────────────
+  # Job 5: publiccode.yml valideren met de officiële parser (Issue #56)
+  # ──────────────────────────────────────────────
+  publiccode:
+    name: publiccode.yml valideren
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Valideer publiccode.yml
+        run: docker run --rm -v "$PWD":/data italia/publiccode-parser-go:v5.4.3 -no-network /data/publiccode.yml

@@ -1,0 +1,98 @@
+{
+  "id": "swf-gebied-buurt-bebouwde-kom",
+  "bronId": "swf-monitor",
+  "beschrijving": {
+    "@context": "https://data.overheid.nl/dcat-ap-nl/context.jsonld",
+    "@type": "dcat:Dataset",
+    "dct:title": "CBS-buurten binnen en buiten de bebouwde kom, Súdwest-Fryslân",
+    "dct:description": "Elke CBS-buurt van Súdwest-Fryslân in een deel binnen (code _BBKJ) en buiten (code _BBKN) de bebouwde kom. Afgeleid: CBS-buurten (PDOK) gesneden met de bebouwde kom van SWF.",
+    "dct:publisher": "https://identifier.overheid.nl/tooi/id/gemeente/gm1900",
+    "dct:accessRights": "http://publications.europa.eu/resource/authority/access-right/RESTRICTED",
+    "dct:license": "http://standaarden.overheid.nl/owms/terms/licentieonbekend",
+    "dct:spatial": "https://identifier.overheid.nl/tooi/id/gemeente/gm1900",
+    "dct:source": "https://service.pdok.nl/cbs/gebiedsindelingen/2024/wfs/v1_0",
+    "dcat:theme": [
+      "http://standaarden.overheid.nl/owms/terms/Ruimtelijke_ordening"
+    ],
+    "dcat:keyword": [
+      "gebiedsindeling",
+      "Súdwest-Fryslân"
+    ],
+    "dct:conformsTo": "http://www.opengis.net/def/crs/EPSG/0/28992",
+    "dcat:contactPoint": {
+      "@type": "vcard:Organization",
+      "vcard:fn": "Functioneel beheer gebiedsmonitor, gemeente Súdwest-Fryslân"
+    }
+  },
+  "laadprofiel": {
+    "profiel": "gebiedsindeling",
+    "doel": {
+      "gebiedstypeId": "d210c084-506b-48b4-87c9-b7d4bf422553",
+      "featureTabel": "gebieden",
+      "sleutelveld": "code",
+      "labelveld": "naam"
+    },
+    "plausibiliteit": {
+      "minRegels": 250,
+      "maxDalingProcent": 10
+    }
+  },
+  "bron": {
+    "adapter": "wfs",
+    "url": "https://service.pdok.nl/cbs/gebiedsindelingen/2024/wfs/v1_0",
+    "laag": "gebiedsindelingen:buurt_gegeneraliseerd",
+    "bbox": [
+      140000,
+      535000,
+      195000,
+      590000
+    ],
+    "omschrijving": "CBS-buurten 2024 via PDOK (CC BY 4.0)"
+  },
+  "bewerkingen": [
+    {
+      "filter": {
+        "veld": "statcode",
+        "begint_met": "BU1900"
+      }
+    },
+    {
+      "hernoem": {
+        "statcode": "code_buurt",
+        "statnaam": "naam_buurt"
+      }
+    },
+    {
+      "splits_op": {
+        "bron": {
+          "adapter": "lokaal-bestand",
+          "pad": "${SWF_GEO_DIR}/bebouwde_kom.gpkg",
+          "omschrijving": "bebouwde kom zoals de monitor die gebruikt (export GeoServer SWF; welke kom is een open vraag)"
+        },
+        "veld": "code",
+        "binnen": "{code_buurt}_BBKJ",
+        "buiten": "{code_buurt}_BBKN"
+      }
+    },
+    {
+      "sjabloon": {
+        "naar": "naam",
+        "sjabloon": "{naam_buurt} ({code})"
+      }
+    },
+    {
+      "behoud": [
+        "code",
+        "naam"
+      ]
+    },
+    {
+      "multipolygon": true
+    }
+  ],
+  "levering": {
+    "formaat": "geopackage",
+    "bestand": "swf-gebied-buurt-bebouwde-kom.gpkg",
+    "geometrie": "MultiPolygon"
+  }
+}

@@ -18,17 +18,10 @@ Na dit proces heb je een gevulde database met **alle buurten in de provincie Fry
 
 ## 📁 Inhoud
 
+Schema, migraties en stuurdata (Kompas-indeling, indicatordefinities) staan sinds 0.2.0 in [`db/`](../db/README.md).
+
 ```
 init_data/
-├── schema/
-│   └── schema_latest.sql              # Volledig database schema (tabellen, views, triggers)
-│
-├── kompas/
-│   └── kompas_hierarchie.csv          # D-Omni Kompas structuur (titels → thema's → onderdelen → indicatoren)
-│
-├── indicatoren/
-│   └── indicatoren_seed.json          # Metadata van 235 indicatoren (incl. Kompas-hiërarchie)
-│
 ├── fryslan/
 │   ├── README.md                      # Bronvermelding en licentie-informatie
 │   ├── buurten_fryslan.geojson        # CBS buurten 2024 — provincie Fryslân (931 buurten, WGS84)
@@ -51,7 +44,7 @@ init_data/
 
 ## 🚀 Gebruik
 
-Zie [`GETTING_STARTED.md`](../GETTING_STARTED.md) in de projectroot voor de volledige stap-voor-stap gids.
+Zie [`docs/archief/GETTING_STARTED.md`](../docs/archief/GETTING_STARTED.md) voor de volledige stap-voor-stap gids (verouderd; Docker: [installatiegids](../docs/9-beheer/installatie.md)).
 
 **Snel starten (na database aanmaken):**
 

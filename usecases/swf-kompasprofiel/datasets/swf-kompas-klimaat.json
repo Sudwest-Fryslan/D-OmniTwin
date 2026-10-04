@@ -1,0 +1,58 @@
+{
+  "id": "swf-kompas-klimaat",
+  "beschrijving": {
+    "@context": "https://data.overheid.nl/dcat-ap-nl/context.jsonld",
+    "@type": "dcat:Dataset",
+    "dct:title": "Kompasprofiel SWF Klimaat",
+    "dct:description": "De Klimaatmonitor: 3 thema's (hemelwateroverlast, hittestress, droogte) met 10 indicatoren, op welstandsgebieden × buurt, met labels A–E.",
+    "dct:publisher": "https://identifier.overheid.nl/tooi/id/gemeente/gm1900",
+    "dct:accessRights": "http://publications.europa.eu/resource/authority/access-right/RESTRICTED",
+    "dct:license": "http://standaarden.overheid.nl/owms/terms/licentieonbekend",
+    "dct:spatial": "https://identifier.overheid.nl/tooi/id/gemeente/gm1900",
+    "dct:source": "Voortgangslijst basismonitor (data-team SWF) en definities DMART_BASISMONITOR",
+    "dcat:theme": [
+      "http://standaarden.overheid.nl/owms/terms/Bestuur"
+    ],
+    "dcat:keyword": [
+      "kompas",
+      "gebiedsmonitor"
+    ],
+    "dcat:contactPoint": {
+      "@type": "vcard:Organization",
+      "vcard:fn": "Functioneel beheer gebiedsmonitor, gemeente Súdwest-Fryslân"
+    }
+  },
+  "bron": {
+    "adapter": "usecase-bestand",
+    "pad": "klimaat-indicatoren.json",
+    "omschrijving": "de 10 klimaatindicatoren (docs/1-visie-concept/huidige-gebiedsmonitor/indicatoren.md)"
+  },
+  "bewerkingen": [
+    {
+      "constant": {
+        "profiel": "SWF Klimaat",
+        "gebiedstype_id": "29fc9f28-89d9-488b-bf68-2ed176187b21",
+        "kwadrant": "Klimaat",
+        "classificatie": "label"
+      }
+    },
+    {
+      "behoud": [
+        "profiel",
+        "gebiedstype_id",
+        "kwadrant",
+        "thema",
+        "indicator_uuid",
+        "indicator_naam",
+        "classificatie"
+      ]
+    }
+  ],
+  "levering": {
+    "formaat": "datapackage",
+    "bestand": "swf-kompas-klimaat.zip",
+    "schema": {
+      "kompasprofiel": "kompasprofiel.schema.json"
+    }
+  }
+}

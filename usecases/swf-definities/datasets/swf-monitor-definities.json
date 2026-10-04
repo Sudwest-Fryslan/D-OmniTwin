@@ -1,0 +1,102 @@
+{
+  "id": "swf-monitor-definities",
+  "bronId": "swf-monitor",
+  "beschrijving": {
+    "@context": "https://data.overheid.nl/dcat-ap-nl/context.jsonld",
+    "@type": "dcat:Dataset",
+    "dct:title": "Basismonitor Súdwest-Fryslân — definities",
+    "dct:description": "Indicatoren, gebiedstypen en hun relaties van de gebiedsmonitor van Súdwest-Fryslân: altijd de volledige set uit de datamart DMART_BASISMONITOR.",
+    "dct:publisher": "https://identifier.overheid.nl/tooi/id/gemeente/gm1900",
+    "dct:accessRights": "http://publications.europa.eu/resource/authority/access-right/PUBLIC",
+    "dct:license": "http://standaarden.overheid.nl/owms/terms/licentieonbekend",
+    "dct:spatial": "https://identifier.overheid.nl/tooi/id/gemeente/gm1900",
+    "dct:source": "Datamart DMART_BASISMONITOR, gemeente Súdwest-Fryslân (export van de huidige gebiedsmonitor)",
+    "dcat:theme": [
+      "http://standaarden.overheid.nl/owms/terms/Bestuur"
+    ],
+    "dcat:keyword": [
+      "gebiedsmonitor",
+      "indicatoren",
+      "Súdwest-Fryslân"
+    ],
+    "dcat:contactPoint": {
+      "@type": "vcard:Organization",
+      "vcard:fn": "Functioneel beheer gebiedsmonitor, gemeente Súdwest-Fryslân"
+    }
+  },
+  "laadprofiel": {
+    "profiel": "definities",
+    "adapter": "swf-monitor-v1",
+    "plausibiliteit": {
+      "maxDalingProcent": 10
+    }
+  },
+  "bron": {
+    "adapter": "swf-dump",
+    "export": "definities",
+    "omschrijving": "${SWF_DUMP_DIR}/output/api_backup_dump.json (GET …/monitor_api/indicator/setup); later ook ${SWF_DB_DUMP}"
+  },
+  "bewerkingen": [
+    {
+      "tabel": "indicatoren",
+      "hernoem": {
+        "id": "uuid"
+      }
+    },
+    {
+      "tabel": "indicatoren",
+      "id": "status-a",
+      "waarde_map": {
+        "veld": "status",
+        "map": {
+          "A": "O"
+        }
+      },
+      "omschrijving": "D-OmniTwin kent C/O/B; A = Klimaatmonitor (betekenis open). De klimaatset staat in swf-kompasprofiel."
+    },
+    {
+      "tabel": "indicatoren",
+      "iso_datumtijd": [
+        "begingeldigheid",
+        "eindgeldigheid"
+      ]
+    },
+    {
+      "tabel": "gebiedstypen",
+      "koppel": {
+        "sleutel": "id",
+        "op": "id",
+        "bron": {
+          "adapter": "usecase-bestand",
+          "pad": "gebiedstypen.json"
+        },
+        "velden": {
+          "code": "code",
+          "niveau": "niveau",
+          "gebiedsindeling_dataset": "gebiedsindeling_dataset",
+          "code_prefix": "code_prefix"
+        },
+        "verplicht": true,
+        "reden": "gebiedstype-zonder-mapping"
+      }
+    },
+    {
+      "tabel": "relaties",
+      "hernoem": {
+        "indicator_id": "indicator_uuid"
+      }
+    }
+  ],
+  "levering": {
+    "formaat": "datapackage",
+    "bestand": "swf-monitor-definities.zip"
+  },
+  "varianten": {
+    "status-a": {
+      "omschrijving": "status A ongewijzigd, zoals de DWH hem levert: de laad-API hoort de levering af te keuren (schema-ongeldig)",
+      "sla_over": [
+        "status-a"
+      ]
+    }
+  }
+}

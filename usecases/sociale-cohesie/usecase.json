@@ -1,6 +1,88 @@
 {
+  "specificatie": "1.0",
+  "naam": "sociale-cohesie",
   "id": "TC-06-008",
+  "versie": "0.2.0",
   "titel": "Zorgzwaarte en sociale cohesie",
+  "vraag": "Ik ben wijkcoördinator in Bolsward-Zuidoost. Hoe staat het met eenzaamheid en vrijwilligerswerk in mijn wijk?",
+  "gebruiker": "Wijkcoördinator / wijkcontactfunctionaris",
+  "status": "actief",
+  "afhankelijk_van": [
+    "cbs-gebiedsindelingen",
+    "cbs-kerncijfers",
+    "rivm-gezondheidsmonitor"
+  ],
+  "rechten": [],
+  "datasets": [],
+  "controles": [
+    {
+      "type": "api",
+      "pad": "/api/data/v1/gebied_data?gebied_id=eq.BU19000002&indicator_uuid=eq.4661dcb9-b7c4-42f8-b7c5-a61c12568806&select=jaar,waarde,bron",
+      "anoniem": true,
+      "minimaal_aantal": 1,
+      "uuid": "4661dcb9-b7c4-42f8-b7c5-a61c12568806",
+      "gebied": "BU19000002",
+      "omschrijving": "Eenzaamheid Bolsward-Zuidoost (RIVM, echt; was demodata)"
+    },
+    {
+      "type": "api",
+      "pad": "/api/data/v1/gebied_data?gebied_id=eq.BU19000002&indicator_uuid=eq.9b168456-9219-4c3b-af16-636662a74155&select=jaar,waarde,bron",
+      "anoniem": true,
+      "minimaal_aantal": 1,
+      "uuid": "9b168456-9219-4c3b-af16-636662a74155",
+      "gebied": "BU19000002",
+      "omschrijving": "Vrijwilligerswerk Bolsward-Zuidoost (RIVM)"
+    },
+    {
+      "type": "api",
+      "pad": "/api/data/v1/gebied_data?gebied_id=eq.BU19000002&indicator_uuid=eq.7b4a6b5f-7d6a-46ef-8a7d-7b3ee28a014c&select=jaar,waarde,bron",
+      "anoniem": true,
+      "minimaal_aantal": 1,
+      "uuid": "7b4a6b5f-7d6a-46ef-8a7d-7b3ee28a014c",
+      "gebied": "BU19000002",
+      "omschrijving": "Mantelzorgers Bolsward-Zuidoost (RIVM)"
+    },
+    {
+      "type": "api",
+      "pad": "/api/data/v1/gebied_data?gebied_id=eq.BU19000002&indicator_uuid=eq.bbc993d8-52a4-5ff2-824c-3a843598c624&select=jaar,waarde,bron",
+      "anoniem": true,
+      "minimaal_aantal": 3,
+      "uuid": "bbc993d8-52a4-5ff2-824c-3a843598c624",
+      "gebied": "BU19000002",
+      "omschrijving": "Eenpersoonshuishoudens (%) Bolsward-Zuidoost (CBS)"
+    }
+  ],
+  "bewijs": {
+    "stappen": [
+      {
+        "id": "kaart",
+        "actie": "kaart",
+        "gebied": "BU19000002",
+        "indicator": "4661dcb9-b7c4-42f8-b7c5-a61c12568806",
+        "omschrijving": "Eenzaamheid per buurt in Bolsward (RIVM Gezondheidsmonitor)",
+        "bevat": [
+          "Bolsward-Zuidoost"
+        ]
+      },
+      {
+        "id": "chat",
+        "actie": "chat",
+        "vraag": "Ik ben wijkcoördinator in Bolsward-Zuidoost. Hoe staat het met eenzaamheid en vrijwilligerswerk in mijn wijk?",
+        "omschrijving": "Datavraag van de wijkcoördinator over eenzaamheid en vrijwilligerswerk"
+      },
+      {
+        "id": "kompas",
+        "actie": "kompas",
+        "gebied": "BU19000002",
+        "indicator": "4661dcb9-b7c4-42f8-b7c5-a61c12568806",
+        "profiel": "Volledig Kompas",
+        "omschrijving": "Kompas voor Bolsward-Zuidoost",
+        "bevat": [
+          "Bolsward-Zuidoost"
+        ]
+      }
+    ]
+  },
   "persona": {
     "rol": "Wijkcoördinator / wijkcontactfunctionaris",
     "vraag": "Ik ben wijkcoördinator in Bolsward-Zuidoost. Hoe staat het met eenzaamheid en vrijwilligerswerk in mijn wijk?",
@@ -14,7 +96,7 @@
       "BU19000002": "Bolsward-Zuidoost",
       "BU19000004": "Bolsward-Noordoost"
     },
-    "dataset": "init_data/sample",
+    "dataset": "laad-API: de datasets van de afhankelijkheden (open bronnen; demodata gemarkeerd)",
     "indicatoren": [
       {
         "naam": "Eenzaamheid",
@@ -33,22 +115,17 @@
       {
         "naam": "Eenpersoonshuishoudens",
         "richting": "neutraal"
+      },
+      {
+        "naam": "Eenpersoonshuishoudens (%)",
+        "eenheid": "%",
+        "richting": "neutraal"
       }
     ],
     "ontbreekt_nog": [
       "Verhuismobiliteit",
       "Psychische klachten (RIVM)",
       "Sociale samenhang (Leefbaarometer)"
-    ],
-    "afgeleid": [
-      {
-        "naam": "Eenpersoonshuishoudens (%)",
-        "teller": "Eenpersoonshuishoudens",
-        "noemer": "Huishoudens totaal",
-        "factor": 100,
-        "eenheid": "%",
-        "richting": "neutraal"
-      }
     ]
   },
   "inrichting": {
@@ -58,6 +135,6 @@
   "ai_zoekvraag": "eenzaamheid in de wijk",
   "verwacht": {
     "vraag_zoekwoord": "eenzaamheid",
-    "verwacht": "Bolsward-Zuidoost: eenzaamheid 48,3% (tussen Noord 55,0% en Noordoost 41,6%), vrijwilligers 27,6%."
+    "verwacht": "Bolsward-Zuidoost: eenzaamheid 46,5% (RIVM 2024; tussen Noord 55,0% en Noordoost 41,6%), vrijwilligers 29,0%."
   }
 }

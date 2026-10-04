@@ -1,6 +1,222 @@
 {
+  "specificatie": "1.0",
+  "naam": "hittestress",
   "id": "TC-06-006",
+  "versie": "0.3.0",
   "titel": "Klimaatadaptatie: hittestress en kwetsbaarheid",
+  "vraag": "Ik werk aan hittestress in Bolsward. Welke buurt ligt het verst van een koele plek, en waar wonen relatief de meeste 65-plussers?",
+  "gebruiker": "Stedenbouwkundige / GGD",
+  "status": "actief",
+  "afhankelijk_van": [
+    "cbs-gebiedsindelingen",
+    "cbs-kerncijfers",
+    "rivm-gezondheidsmonitor",
+    "sample-bronbibliotheek"
+  ],
+  "actoren": [
+    {
+      "naam": "beheerder",
+      "soort": "gebruiker",
+      "rollen": [
+        "beheerder"
+      ],
+      "omschrijving": "beheerder van D-OmniTwin: registreert de datasets"
+    },
+    {
+      "naam": "etl-open-data",
+      "soort": "machineclient",
+      "rollen": [
+        "dataset:rivm-boomkroon-buurten:laden",
+        "dataset:rivm-hitte-eiland-buurten:laden"
+      ],
+      "omschrijving": "ETL voor open bronnen: levert alleen de eigen datasets"
+    },
+    {
+      "naam": "lezer",
+      "soort": "gebruiker",
+      "rollen": [
+        "lezer"
+      ],
+      "omschrijving": "ingelogde medewerker: ziet ook wat niet openbaar is, laadt niets"
+    }
+  ],
+  "rechten": [
+    "realm-rol beheerder (registreren)",
+    "dataset:rivm-boomkroon-buurten:laden",
+    "dataset:rivm-hitte-eiland-buurten:laden",
+    "realm-rol lezer"
+  ],
+  "datasets": [
+    {
+      "id": "rivm-boomkroon-buurten",
+      "route": "laden",
+      "registratie": "datasets/rivm-boomkroon-buurten.json",
+      "profiel": "waarnemingen",
+      "rol": "dataset:rivm-boomkroon-buurten:laden",
+      "client": "etl-open-data",
+      "prioriteit": "Must",
+      "bron": "RIVM Atlas Natuurlijk Kapitaal, Bomenkaart 2022 (WCS, Public Domain Mark 1.0)",
+      "verwacht": {
+        "regels": "13 (testbuurten)"
+      }
+    },
+    {
+      "id": "rivm-hitte-eiland-buurten",
+      "route": "laden",
+      "registratie": "datasets/rivm-hitte-eiland-buurten.json",
+      "profiel": "waarnemingen",
+      "rol": "dataset:rivm-hitte-eiland-buurten:laden",
+      "client": "etl-open-data",
+      "prioriteit": "Must",
+      "bron": "RIVM Atlas Natuurlijk Kapitaal, Stedelijk hitte-eiland effect v2 (WCS, Public Domain Mark 1.0)",
+      "verwacht": {
+        "regels": "13 (testbuurten)"
+      }
+    }
+  ],
+  "controles": [
+    {
+      "type": "aantal",
+      "dataset": "rivm-boomkroon-buurten",
+      "gelijk": 13,
+      "omschrijving": "13 testbuurten"
+    },
+    {
+      "type": "aantal",
+      "dataset": "rivm-hitte-eiland-buurten",
+      "gelijk": 13,
+      "omschrijving": "13 testbuurten"
+    },
+    {
+      "type": "api",
+      "pad": "/api/data/v1/gebied_data?gebied_id=eq.BU19000002&indicator_uuid=eq.e4d53c01-ef30-56a3-9fc6-29e192462066&select=jaar,waarde,bron",
+      "anoniem": true,
+      "minimaal_aantal": 1,
+      "uuid": "e4d53c01-ef30-56a3-9fc6-29e192462066",
+      "gebied": "BU19000002",
+      "omschrijving": "Boomkroonbedekking Bolsward-Zuidoost (RIVM WCS)"
+    },
+    {
+      "type": "api",
+      "pad": "/api/data/v1/gebied_data?gebied_id=eq.BU19000002&indicator_uuid=eq.dacb8005-ecc2-5014-a5c2-a07c119b43ae&select=jaar,waarde,bron",
+      "anoniem": true,
+      "minimaal_aantal": 1,
+      "uuid": "dacb8005-ecc2-5014-a5c2-a07c119b43ae",
+      "gebied": "BU19000002",
+      "omschrijving": "Stedelijk hitte-eiland effect Bolsward-Zuidoost (RIVM WCS)"
+    },
+    {
+      "type": "api",
+      "pad": "/api/data/v1/gebied_data?gebied_id=eq.BU19000002&indicator_uuid=eq.d48622cd-454d-5312-9a7b-4d3c269b81a8&select=jaar,waarde,bron",
+      "anoniem": true,
+      "minimaal_aantal": 1,
+      "uuid": "d48622cd-454d-5312-9a7b-4d3c269b81a8",
+      "gebied": "BU19000002",
+      "omschrijving": "80 jaar of ouder (%) Bolsward-Zuidoost (CBS 2026)"
+    },
+    {
+      "type": "api",
+      "pad": "/api/data/v1/gebied_data?gebied_id=eq.BU19000002&indicator_uuid=eq.d20c7b4d-d305-495b-b77c-07b8121614a7&select=jaar,waarde,bron",
+      "anoniem": true,
+      "minimaal_aantal": 1,
+      "uuid": "d20c7b4d-d305-495b-b77c-07b8121614a7",
+      "gebied": "BU19000002",
+      "omschrijving": "Ervaren gezondheid Bolsward-Zuidoost (RIVM)"
+    },
+    {
+      "type": "idempotent",
+      "dataset": "rivm-boomkroon-buurten",
+      "actor": "etl-open-data"
+    },
+    {
+      "type": "recht",
+      "actor": "beheerder",
+      "actie": "registreren",
+      "toegestaan": true,
+      "omschrijving": "de beheerder mag datasets registreren"
+    },
+    {
+      "type": "recht",
+      "actor": "etl-open-data",
+      "actie": "leveren",
+      "dataset": "rivm-boomkroon-buurten",
+      "toegestaan": true,
+      "omschrijving": "etl-open-data mag zijn eigen dataset leveren"
+    },
+    {
+      "type": "recht",
+      "actor": "etl-open-data",
+      "actie": "leveren",
+      "dataset": "cbs-kerncijfers",
+      "toegestaan": false,
+      "omschrijving": "etl-open-data mag een andere dataset niet leveren (403)"
+    },
+    {
+      "type": "recht",
+      "actor": "etl-open-data",
+      "actie": "registreren",
+      "toegestaan": false,
+      "omschrijving": "etl-open-data mag niet registreren (403)"
+    },
+    {
+      "type": "recht",
+      "actor": "lezer",
+      "actie": "leveren",
+      "dataset": "rivm-boomkroon-buurten",
+      "toegestaan": false,
+      "omschrijving": "een lezer mag niet laden (403)"
+    },
+    {
+      "type": "recht",
+      "actor": "lezer",
+      "actie": "registreren",
+      "toegestaan": false,
+      "omschrijving": "een lezer mag niet registreren (403)"
+    }
+  ],
+  "bewijs": {
+    "stappen": [
+      {
+        "id": "kaart",
+        "actie": "kaart",
+        "gebied": "BU19000002",
+        "indicator": "e4d53c01-ef30-56a3-9fc6-29e192462066",
+        "omschrijving": "Boomkroonbedekking per buurt in Bolsward (RIVM, 2022)",
+        "bevat": [
+          "Bolsward-Zuidoost"
+        ]
+      },
+      {
+        "id": "chat",
+        "actie": "chat",
+        "vraag": "Ik werk aan hittestress in Bolsward. Welke buurt ligt het verst van een koele plek, en waar wonen relatief de meeste 65-plussers?",
+        "omschrijving": "Datavraag over hittestress: afstand tot een koele plek en 65-plussers"
+      },
+      {
+        "id": "kompas",
+        "actie": "kompas",
+        "gebied": "BU19000002",
+        "indicator": "e4d53c01-ef30-56a3-9fc6-29e192462066",
+        "profiel": "Volledig Kompas",
+        "omschrijving": "Kompas voor Bolsward-Zuidoost",
+        "bevat": [
+          "Bolsward-Zuidoost"
+        ]
+      },
+      {
+        "id": "levering",
+        "actie": "levering",
+        "dataset": "rivm-boomkroon-buurten",
+        "omschrijving": "Leveringsstatus van de eigen dataset boomkroon (laad-API)",
+        "bevat": [
+          "gepubliceerd"
+        ]
+      }
+    ]
+  },
+  "bekende_afwijkingen": [
+    "Afstand tot koele plek, Oppervlak groen per inwoner en Verhouding water/verharding zijn DEMODATA (interne bron, sample-bronbibliotheek)."
+  ],
   "persona": {
     "rol": "Stedenbouwkundige / GGD",
     "vraag": "Ik werk aan hittestress in Bolsward. Welke buurt ligt het verst van een koele plek, en waar wonen relatief de meeste 65-plussers?",
@@ -14,7 +230,7 @@
       "BU19000002": "Bolsward-Zuidoost",
       "BU19000004": "Bolsward-Noordoost"
     },
-    "dataset": "init_data/sample",
+    "dataset": "laad-API: de datasets van de afhankelijkheden (open bronnen; demodata gemarkeerd)",
     "indicatoren": [
       {
         "naam": "Afstand tot koele plek",
@@ -54,19 +270,10 @@
         "richting": "lager_is_beter"
       }
     ],
-    "extra_data": {
-      "bestand": "niet in git: bij het laden gedownload naar $DATA_CACHE/usecases/hittestress/waarden.csv",
-      "script": "maak_data.py",
-      "bronnen": {
-        "65+ jaar (%)": "CBS Kerncijfers wijken en buurten 2026 (86358NED), peiljaar 2026, CC BY 4.0",
-        "80 jaar of ouder (%)": "CBS Kerncijfers wijken en buurten 2026 (86358NED), peiljaar 2026, CC BY 4.0",
-        "Boomkroonbedekking": "RIVM Atlas Natuurlijk Kapitaal, Bomenkaart 2022 (10 m), Public Domain Mark 1.0",
-        "Stedelijk hitte-eiland effect": "RIVM Atlas Natuurlijk Kapitaal, Stedelijk hitte-eiland effect v2 (2022, 10 m), Public Domain Mark 1.0"
-      }
-    },
     "ontbreekt_nog": [
       "% 75+: CBS publiceert per buurt alleen 65-80 en 80+ (Kerncijfers 2026); 80+ is opgenomen",
-      "Gevoelstemperatuur (Klimaateffectatlas): voor Fryslân geen open download of WCS, alleen via de atlas op te vragen; vervangen door het stedelijk hitte-eiland effect (RIVM)"
+      "Gevoelstemperatuur (Klimaateffectatlas): voor Fryslân geen open download of WCS; vervangen door het stedelijk hitte-eiland effect (RIVM)",
+      "Afstand tot koele plek, groen per inwoner en water/verharding: interne bron (SWF-gebiedsmonitor); nu DEMODATA uit sample-bronbibliotheek"
     ]
   },
   "inrichting": {
@@ -76,6 +283,6 @@
   "ai_zoekvraag": "afstand tot een koele plek bij hitte",
   "verwacht": {
     "vraag_zoekwoord": "koele plek",
-    "verwacht": "Bolsward-Noord ligt het verst van een koele plek (246 m), Bolsward-Noordoost het dichtst bij (206 m). Relatief de meeste 65-plussers: Bolsward-Zuidoost (29,5%)."
+    "verwacht": "Relatief de meeste 65-plussers: Bolsward-Zuidoost (29,5%, CBS 2026). Afstand tot een koele plek (DEMODATA, interne bron): Bolsward-Noord het verst (246 m), Bolsward-Noordoost het dichtst bij (206 m)."
   }
 }

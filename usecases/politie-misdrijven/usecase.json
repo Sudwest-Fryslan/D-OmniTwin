@@ -1,0 +1,158 @@
+{
+  "specificatie": "1.0",
+  "naam": "politie-misdrijven",
+  "id": "TC-07-022",
+  "versie": "0.2.0",
+  "titel": "Politie: geregistreerde misdrijven per buurt via de laad-API",
+  "vraag": "Ik wil het aantal woninginbraken, fietsdiefstallen, diefstallen uit auto's en vernielingen per buurt sinds 2019 in D-OmniTwin.",
+  "gebruiker": "beheerder D-OmniTwin",
+  "status": "actief",
+  "afhankelijk_van": [
+    "cbs-gebiedsindelingen"
+  ],
+  "actoren": [
+    {
+      "naam": "beheerder",
+      "soort": "gebruiker",
+      "rollen": [
+        "beheerder"
+      ],
+      "omschrijving": "beheerder van D-OmniTwin: registreert de datasets"
+    },
+    {
+      "naam": "etl-open-data",
+      "soort": "machineclient",
+      "rollen": [
+        "dataset:politie-misdrijven-buurten:laden"
+      ],
+      "omschrijving": "ETL voor open bronnen: levert alleen de eigen datasets"
+    },
+    {
+      "naam": "lezer",
+      "soort": "gebruiker",
+      "rollen": [
+        "lezer"
+      ],
+      "omschrijving": "ingelogde medewerker: ziet ook wat niet openbaar is, laadt niets"
+    }
+  ],
+  "rechten": [
+    "realm-rol beheerder (registreren)",
+    "dataset:politie-misdrijven-buurten:laden",
+    "realm-rol lezer"
+  ],
+  "datasets": [
+    {
+      "id": "politie-misdrijven-buurten",
+      "route": "laden",
+      "registratie": "datasets/politie-misdrijven-buurten.json",
+      "profiel": "waarnemingen",
+      "rol": "dataset:politie-misdrijven-buurten:laden",
+      "client": "etl-open-data",
+      "prioriteit": "Should",
+      "bron": "Politie StatLine 47018NED via dataderden.cbs.nl (open, CC BY 4.0)",
+      "verwacht": {
+        "regels": "26.068 (4 soorten misdrijf, buurten in Fryslân, 2019-2025)",
+        "afgewezen": "140 regels van buurten die niet in de CBS-indeling 2024 staan"
+      }
+    }
+  ],
+  "controles": [
+    {
+      "type": "aantal",
+      "dataset": "politie-misdrijven-buurten",
+      "minimaal": 25000,
+      "omschrijving": "4 soorten misdrijf, buurten in Fryslân, 2019-2025 (nu 26.068)"
+    },
+    {
+      "type": "bewerking",
+      "dataset": "politie-misdrijven-buurten",
+      "reden": "buurt-niet-in-indeling-2024",
+      "maximaal": 500,
+      "omschrijving": "buurtcodes van vóór de indeling 2024 vallen af (nu 140)"
+    },
+    {
+      "type": "api",
+      "pad": "/api/data/v1/gebied_data?gebied_id=eq.BU19000002&indicator_uuid=eq.d90d2b4c-4bce-428c-834a-1cc8113958e4&select=jaar,waarde,bron",
+      "anoniem": true,
+      "minimaal_aantal": 7,
+      "uuid": "d90d2b4c-4bce-428c-834a-1cc8113958e4",
+      "gebied": "BU19000002",
+      "omschrijving": "Woninginbraken in Bolsward-Zuidoost, 2019-2025"
+    },
+    {
+      "type": "idempotent",
+      "dataset": "politie-misdrijven-buurten",
+      "actor": "etl-open-data"
+    },
+    {
+      "type": "recht",
+      "actor": "beheerder",
+      "actie": "registreren",
+      "toegestaan": true,
+      "omschrijving": "de beheerder mag datasets registreren"
+    },
+    {
+      "type": "recht",
+      "actor": "etl-open-data",
+      "actie": "leveren",
+      "dataset": "politie-misdrijven-buurten",
+      "toegestaan": true,
+      "omschrijving": "etl-open-data mag zijn eigen dataset leveren"
+    },
+    {
+      "type": "recht",
+      "actor": "etl-open-data",
+      "actie": "leveren",
+      "dataset": "cbs-kerncijfers",
+      "toegestaan": false,
+      "omschrijving": "etl-open-data mag een andere dataset niet leveren (403)"
+    },
+    {
+      "type": "recht",
+      "actor": "etl-open-data",
+      "actie": "registreren",
+      "toegestaan": false,
+      "omschrijving": "etl-open-data mag niet registreren (403)"
+    },
+    {
+      "type": "recht",
+      "actor": "lezer",
+      "actie": "leveren",
+      "dataset": "politie-misdrijven-buurten",
+      "toegestaan": false,
+      "omschrijving": "een lezer mag niet laden (403)"
+    },
+    {
+      "type": "recht",
+      "actor": "lezer",
+      "actie": "registreren",
+      "toegestaan": false,
+      "omschrijving": "een lezer mag niet registreren (403)"
+    }
+  ],
+  "bewijs": {
+    "stappen": [
+      {
+        "id": "kaart",
+        "actie": "kaart",
+        "gebied": "GM1900",
+        "indicator": "d90d2b4c-4bce-428c-834a-1cc8113958e4",
+        "omschrijving": "Woninginbraken per buurt in Súdwest-Fryslân (Politie)"
+      },
+      {
+        "id": "levering",
+        "actie": "levering",
+        "dataset": "politie-misdrijven-buurten",
+        "omschrijving": "Leveringsstatus van de misdrijven per buurt (laad-API)",
+        "bevat": [
+          "gepubliceerd"
+        ]
+      }
+    ]
+  },
+  "bekende_afwijkingen": [
+    "Indicator \"beschadiging auto's\" (naam uit de vroegere sample) is in de bron 'Vernieling cq. zaakbeschadiging' (2.2.1), niet alleen auto's; 'inbraak auto' is 'Diefstal uit/vanaf motorvoertuigen' (1.2.1).",
+    "Buurten die na een herindeling een nieuwe code kregen, hebben alleen waarden vanaf het jaar van de nieuwe indeling."
+  ]
+}

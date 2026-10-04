@@ -33,6 +33,8 @@ def laad_usecases():
     uit = {}
     for f in sorted((ROOT / "usecases").glob("*/usecase.json")):
         u = json.loads(f.read_text(encoding="utf-8"))
+        if "persona" not in u:  # alleen de demo-use cases (TC-06-*) hebben persona en verwachting
+            continue
         uit[f"{u['id']} {f.parent.name}"] = u
     return uit
 
@@ -91,7 +93,6 @@ def test_richting_lager_is_beter(uc, indicatoren):
     assert not fout, f"{uc}: staat als 'hoger is beter': {fout}"
 
 
-@pytest.mark.xfail(reason="#139: na verse installatie geen embeddings", strict=False)
 @pytest.mark.parametrize("uc", USE_CASES)
 def test_ai_zoeken_vindt_indicator_bij_vraag(uc):
     resultaten = get("/api/ai/kompas/search", q=USE_CASES[uc]["ai_zoekvraag"])

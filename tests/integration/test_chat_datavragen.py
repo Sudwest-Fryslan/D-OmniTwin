@@ -27,7 +27,7 @@ from pathlib import Path
 import pytest
 import requests
 
-from services.chat_datavraag import is_datavraag
+from omnitwin.services.chat_datavraag import is_datavraag
 from tests.grounding import getallen_in_bron, getallen_in_tekst, grounding_melding, ongegronde_getallen
 
 BASE_URL = (os.environ.get("OMNITWIN_BASE_URL") or os.environ.get("LLM_TEST_BASE_URL")
@@ -40,6 +40,8 @@ def laad_usecases():
     uit = {}
     for f in sorted((ROOT / "usecases").glob("*/usecase.json")):
         u = json.loads(f.read_text(encoding="utf-8"))
+        if "persona" not in u:  # alleen de demo-use cases (TC-06-*) hebben persona en verwachting
+            continue
         if is_datavraag(u["persona"]["vraag"]):
             uit[f"{u['id']} {f.parent.name}"] = u
     return uit
@@ -179,7 +181,10 @@ def test_tc_06_004_hoe_groen(geen_llm):
     assert "Bolsward-Zuidoost" in groen and {"Bolsward-Noord", "Bolsward-Noordoost"} <= set(groen), groen
     assert "Bolsward-Zuidoost" in a["narrative"]
     ka = a["kaart_actie"]
-    assert ka["indicator_uuid"] and ka["gebied_ids"][0] == "BU19000002" and len(ka["gebied_ids"]) == 3
+    # De buurten van de wijk Bolsward (BU190000..); met alle CBS-buurten (#236) zijn dat er meer dan drie
+    assert ka["indicator_uuid"] and ka["gebied_ids"][0] == "BU19000002"
+    assert {"BU19000001", "BU19000004"} <= set(ka["gebied_ids"]), ka
+    assert all(g.startswith("BU190000") for g in ka["gebied_ids"]), ka
     ongegrond = ongegronde_getallen(a["narrative"], bron(a) | {"vraag": GROEN_VRAAG})
     assert not ongegrond, grounding_melding("TC-06-004", a["narrative"], bron(a), ongegrond)
 

@@ -6,7 +6,7 @@ Wat wordt getest:
 - Bin-index berekening op basis van percentiel-drempels
 - Inversie-logica voor verschillende score_types (+/+, +/-, -/-, positive_descending)
 - Fallback naar grijs bij ontbrekende of ongeldige drempelwaarden
-- Z-score formule als geïsoleerde berekening
+- Z-score formule (services.zscore_referentie.bereken_zscore) en referentieparameters
 - Normalize-helper op grenscondities
 """
 import sys
@@ -17,7 +17,8 @@ import pytest
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 # Importeer direct de scoring class (geen DB-afhankelijkheden)
-from services.kompas_service import KompasScoringService
+from omnitwin.services.kompas_service import KompasScoringService
+from omnitwin.services.zscore_referentie import JAARLOGICA_STANDAARD, MIN_N_STANDAARD, bereken_zscore, referentie_params
 
 
 # ─── Fixtures ────────────────────────────────────────────────────────────────
@@ -144,32 +145,61 @@ class TestScoreTypeInversion:
 @pytest.mark.unit
 class TestZScoreFormula:
     """
-    De z-score berekening zit in SQL, maar de formule is simpel genoeg om
-    als geïsoleerde Python berekening te testen. Dit dient als regressie-
-    bescherming voor de mathematica, los van de database.
+    De Z-score zit in SQL (zscore() in db/schema/08_zscore_referentie.sql).
+    Hier wordt de Python-tegenhanger getest die de services gebruiken voor
+    afgeleide waarden (gewogen deelgebiedsgemiddelde). Dat beide gelijk
+    rekenen, borgt tests/integration/test_zscore_referentie.py tegen de database.
     """
-
-    def _zscore(self, waarde: float, gemiddelde: float, std: float) -> float:
-        """Lokale replica van de SQL z-score formule."""
-        if std <= 0:
-            return 0.0
-        return (waarde - gemiddelde) / std
 
     def test_zscore_gemiddelde_is_nul(self):
         """Waarde gelijk aan gemiddelde → z-score = 0."""
-        assert self._zscore(10.0, 10.0, 2.0) == pytest.approx(0.0)
+        assert bereken_zscore(10.0, 10.0, 2.0, 5) == pytest.approx(0.0)
 
     def test_zscore_een_standaarddeviatie_boven_gemiddelde(self):
         """Waarde = gemiddelde + 1 std → z-score = 1.0."""
-        assert self._zscore(12.0, 10.0, 2.0) == pytest.approx(1.0)
+        assert bereken_zscore(12.0, 10.0, 2.0, 5) == pytest.approx(1.0)
 
     def test_zscore_negatief_bij_waarde_onder_gemiddelde(self):
         """Waarde onder gemiddelde → negatieve z-score."""
-        assert self._zscore(8.0, 10.0, 2.0) == pytest.approx(-1.0)
+        assert bereken_zscore(8.0, 10.0, 2.0, 5) == pytest.approx(-1.0)
 
-    def test_zscore_nul_bij_zero_std(self):
-        """Standaarddeviatie = 0 → z-score = 0 (geen deling door nul)."""
-        assert self._zscore(15.0, 10.0, 0.0) == pytest.approx(0.0)
+    def test_zscore_geen_waarde_bij_zero_std(self):
+        """Standaarddeviatie = 0 → geen Z-score (geen deling door nul)."""
+        assert bereken_zscore(15.0, 10.0, 0.0, 5) is None
+
+    def test_zscore_geen_waarde_bij_n_kleiner_dan_2(self):
+        """Eén gebied in de referentie → geen Z-score."""
+        assert bereken_zscore(15.0, 15.0, None, 1) is None
+
+
+@pytest.mark.unit
+class TestReferentieParams:
+    def test_standaardwaarden(self):
+        p = referentie_params("afba67cb-6b38-4723-9c95-102a22d5b38a", "1900", gebied_ids=["BU19000002"])
+        assert p["zs_jaarlogica"] == JAARLOGICA_STANDAARD == "zelfde_jaar"
+        assert p["zs_scenario_id"] == "current"
+        assert p["zs_gemeente_code"] == "1900"
+        assert p["zs_gebied_ids"] == ["BU19000002"]
+        assert p["zs_indicator_uuids"] is None
+        assert p["zs_min_n"] == MIN_N_STANDAARD == 5
+
+    def test_minimum_n_instelbaar(self):
+        """#155: minimum-n bij zelfde_jaar; 0 = nooit terugvallen."""
+        p = referentie_params("afba67cb-6b38-4723-9c95-102a22d5b38a", min_n=0)
+        assert p["zs_min_n"] == 0
+
+    def test_zonder_gemeente_is_alle_gemeenten(self):
+        p = referentie_params("afba67cb-6b38-4723-9c95-102a22d5b38a")
+        assert p["zs_gemeente_code"] is None
+        assert p["zs_gebied_ids"] is None
+
+    def test_alternatieve_jaarlogica(self):
+        p = referentie_params("afba67cb-6b38-4723-9c95-102a22d5b38a", jaarlogica="recentst_per_gebied")
+        assert p["zs_jaarlogica"] == "recentst_per_gebied"
+
+    def test_onbekende_jaarlogica_geeft_fout(self):
+        with pytest.raises(ValueError):
+            referentie_params("afba67cb-6b38-4723-9c95-102a22d5b38a", jaarlogica="alle_jaren")
 
 
 # ─── Normalize helper ────────────────────────────────────────────────────────

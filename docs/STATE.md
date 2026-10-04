@@ -1,7 +1,12 @@
-# STATE.md — D-OmniTwin Systeemstatus
-> **Rol:** Single Source of Truth voor de huidige systeemstatus
-> **Beheer:** Project-manager skill | Updaten na elke sprint, release of architectuurwijziging
-> **Prioriteit:** Dit bestand is LEIDEND bij conflicten met andere documentatie
+# STATE.md — D-OmniTwin Systeemstatus (historisch)
+
+> **Historisch document, niet leidend.** Dit is een momentopname van de systeemstatus tot en met de voorbereiding van release 0.1.0 (sprintperiode tot sprint 22). Het wordt niet meer bijgewerkt en klopt op een aantal punten niet meer: zo is PostgREST sinds 0.1.0 afgeschermd met eigen rollen (#57), staat de code sinds 0.2.0 in `src/omnitwin/` en `db/` (#182), en gebruikt de beheeromgeving alleen de sessie, geen API-key.
+>
+> De actuele stand staat in:
+> - [`CHANGELOG.md`](../CHANGELOG.md): wat er per versie veranderd is; `[Unreleased]` is wat er op `main` staat;
+> - [`VERSION`](../VERSION): het versienummer;
+> - de [GitHub-issues](https://github.com/TLaan/D-OmniTwin/issues): wat openstaat;
+> - de [installatiegids](9-beheer/installatie.md): installatie, beheer en beveiliging.
 
 ---
 
@@ -38,7 +43,7 @@
 | **Ontologie generatie** | 🟢 Actief | Fence & Source philosophy geïmplementeerd |
 | **Woonplaats- & Deelgebiedsanalyse rapport** | 🟢 Actief | Issue #44 / PR #45 gemerged naar main — Gewogen stadsanalyse per thema op basis van inwoneraantallen, Top 10 uitschieters (aandachtspunten en kansen), geharmoniseerde kwadranttelling (totaal + sterke uitschieters), buurt-drilldown, ontologie en methodologische verantwoording. D3 Z-score afwijkingskaart met flexbox indeling (~48% breedte) en paarse contour. Endpoint POST `/api/report/deelgebied` & `/admin/rapport/deelgebied`. |
 | **Multi-Gebiedsdossier rapport** | 🟢 Actief | Voltooid incl. bugfixes en colorblind-safe visualisatie |
-| **Initiatie Dataset (init_data/)** | 🟢 Compleet | 942 Friese buurten, **235 indicatoren** (gesaneerd + nieuw formaat), scripts + GETTING_STARTED.md |
+| **Initiatie Dataset (init_data/)** | 🟢 Compleet | 942 Friese buurten, **235 indicatoren** (gesaneerd + nieuw formaat), scripts + GETTING_STARTED.md (nu in `docs/archief/`) |
 | **Sample Dataset & Auto-init** | 🟢 Actief | Issue #52, #60 (PR #53, #80, #86) — 12 SWF-buurten, Bolsward-Zuidoost demodata, Frictionless datapakket (`datapackage.json`), container-entrypoint (`docker-entrypoint.sh init`). |
 | **Integratietestsuite** | 🟢 Actief | Issue #62 (PR #70) — `tests/integration/test_sample_stack.py` toetst verse stack, 6 tests groen, 2 xfailed (#54/#57). |
 | **Toegankelijkheid (WCAG 2.1 AA)** | 🟢 Actief | Issue #67 (PR #75) — Skiplink (`.skip-link`), toetsenbordfocus (`:focus-visible`), formulierenlabels en WCAG-contrast. |

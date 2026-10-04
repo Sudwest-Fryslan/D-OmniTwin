@@ -4,6 +4,7 @@ import { reportAPI } from '../services/api';
 import type { ReportDataPayload, ReportNarrativeResponse } from '../types';
 import { Download, RefreshCw, Printer, AlertCircle, TrendingUp, Info, Activity, ArrowLeft, Cpu, Database, Map as MapIcon, Compass, Terminal, ChevronDown, ChevronUp, X } from 'lucide-react';
 import { ExportPrintModal } from '../components/ExportPrintModal';
+import Beeldmerk from '../components/Beeldmerk';
 
 export const ReportPage: React.FC = () => {
     const { gebied_id } = useParams<{ gebied_id?: string }>();
@@ -131,7 +132,7 @@ export const ReportPage: React.FC = () => {
         return (
             <div className="page-container" style={{ maxWidth: '1400px', margin: '0 auto', padding: '2rem' }}>
                 <div className="page-header">
-                    <h1>D-OmniTwin Rapportage</h1>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}><Beeldmerk size={40} /><h1>D-OmniTwin Rapportage</h1></div>
                 </div>
                 <div className="card" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                     <Info size={20} className="text-primary" />
@@ -155,7 +156,7 @@ export const ReportPage: React.FC = () => {
                         >
                             <X size={16} /> Sluit rapport
                         </button>
-                        <h1>D-OmniTwin Rapportage</h1>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}><Beeldmerk size={40} /><h1>D-OmniTwin Rapportage</h1></div>
                         <p className="text-secondary">AI-gedreven analyse voor {selectedGebied}</p>
                     </div>
                     <div style={{ display: 'flex', gap: '1rem' }}>
@@ -261,6 +262,16 @@ export const ReportPage: React.FC = () => {
                             ❓ <strong>Z-score:</strong> Vergelijkt een indicator met het gemiddelde van de referentiegroep. Score 0 = gemiddeld &nbsp;·&nbsp; Score &gt;+1 = beduidend hoger &nbsp;·&nbsp; Score &lt;-1 = beduidend lager. De kolom <em>Impact</em> geeft aan of de afwijking positief of negatief is voor de leefbaarheid.
                         </div>
 
+                        {/* Meldingen over de referentie (#155): waterbuurt, terugval bij te kleine referentie */}
+                        {dataPayload?.meldingen && dataPayload.meldingen.length > 0 && (
+                            <div className="zscore-meldingen" style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-start', background: 'var(--color-bg-alt)', borderLeft: '3px solid var(--color-warning, #d97706)', borderRadius: '4px', padding: '0.6rem 1rem', marginBottom: '1rem', fontSize: '0.85rem', lineHeight: 1.5 }}>
+                                <AlertCircle size={16} style={{ flexShrink: 0, marginTop: '0.15rem' }} />
+                                <div>
+                                    {dataPayload.meldingen.map((m, i) => <p key={i} style={{ margin: 0 }}>{m}</p>)}
+                                </div>
+                            </div>
+                        )}
+
                         {dataLoading ? (
                             <p>Data laden...</p>
                         ) : dataError ? (
@@ -290,7 +301,12 @@ export const ReportPage: React.FC = () => {
                                                             )}
                                                         </td>
                                                         <td style={{ textAlign: 'left', fontWeight: 'bold' }}>{ind.waarde} <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', fontWeight: 'normal' }}>{ind.eenheid}</span></td>
-                                                        <td style={{ textAlign: 'left', color: 'var(--color-text-secondary)' }}>{ind.meetjaar}</td>
+                                                        <td style={{ textAlign: 'left', color: 'var(--color-text-secondary)' }}>
+                                                            {ind.meetjaar}
+                                                            {ind.referentie_terugval && (
+                                                                <span title="Te weinig gebieden met een waarde in dit jaar; vergeleken met de meest recente waarde per gebied" style={{ marginLeft: '0.25rem' }}>*</span>
+                                                            )}
+                                                        </td>
                                                         <td style={{ textAlign: 'right', fontWeight: 'bold', color: ind.impact.includes('positief') ? 'var(--color-success)' : ind.impact.includes('negatief') ? 'var(--color-danger)' : 'var(--color-text)' }}>
                                                             {ind.z_score > 0 ? '+' : ''}{ind.z_score}
                                                         </td>

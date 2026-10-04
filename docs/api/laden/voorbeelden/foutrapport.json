@@ -1,0 +1,38 @@
+{
+  "type": "https://github.com/TLaan/D-OmniTwin/blob/main/docs/api/laden/README.md#levering-afgekeurd",
+  "code": "levering-afgekeurd",
+  "title": "Levering afgekeurd",
+  "status": 422,
+  "detail": "3 regels voldoen niet aan profiel waarnemingen. Er is niets gepubliceerd; versie 13 blijft actief.",
+  "instance": "/api/laden/v1/leveringen/3a0f4e2b-1c9d-4b8a-8e7f-6d5c4b3a2918",
+  "levering": "/api/laden/v1/leveringen/3a0f4e2b-1c9d-4b8a-8e7f-6d5c4b3a2918",
+  "correlatieId": "b1f0c2d4e6a8",
+  "fouten": [
+    {
+      "type": "https://github.com/TLaan/D-OmniTwin/blob/main/docs/api/laden/README.md#gebied-onbekend",
+      "code": "gebied-onbekend",
+      "title": "Gebied bestaat niet",
+      "detail": "gebied_code komt niet voor in gebiedstype CBS_BUURT.",
+      "resource": "waarnemingen",
+      "regel": 17,
+      "veld": "gebied_code"
+    },
+    {
+      "type": "https://github.com/TLaan/D-OmniTwin/blob/main/docs/api/laden/README.md#jaar-ongeldig",
+      "code": "jaar-ongeldig",
+      "title": "Jaar buiten bereik",
+      "detail": "jaar moet tussen 1900 en 2100 liggen.",
+      "resource": "waarnemingen",
+      "regel": 233,
+      "veld": "jaar"
+    },
+    {
+      "type": "https://github.com/TLaan/D-OmniTwin/blob/main/docs/api/laden/README.md#dubbele-sleutel",
+      "code": "dubbele-sleutel",
+      "title": "Dubbele sleutel",
+      "detail": "Regel 412 heeft dezelfde sleutel als regel 87.",
+      "resource": "waarnemingen",
+      "regel": 412
+    }
+  ]
+}

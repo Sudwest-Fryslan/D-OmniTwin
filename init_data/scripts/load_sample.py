@@ -12,7 +12,7 @@ Gebruik:
     De data (gebieden en waarden) komt uit de use cases: init_data/scripts/laad_usecase.py.
 
 Vereisten:
-    Database schema geladen via: init_data/schema/schema_latest.sql
+    Database schema geladen via: db/schema/schema_latest.sql (db-init)
     .env geconfigureerd (DATABASE_HOST, DATABASE_PORT, etc.)
 """
 
@@ -40,11 +40,13 @@ except ImportError:
 ROOT = Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(Path(__file__).resolve().parent))  # download_cbs_kerncijfers
 SAMPLE_DIR = ROOT / "init_data" / "sample"
-STUURDATA_SQL = SAMPLE_DIR / "1_stuurdata" / "stuurdata_seed.sql"
+STUURDATA_SQL = ROOT / "db" / "stuurdata" / "stuurdata_seed.sql"
 BUURTEN_GEOJSON = SAMPLE_DIR / "2_brondata" / "sample_buurten.geojson"
 INDICATOREN_CSV = SAMPLE_DIR / "2_brondata" / "sample_indicatoren.csv"
 STANDAARD_INDICATOREN_CSV = INDICATOREN_CSV
-KOMPAS_CSV = ROOT / "init_data" / "kompas" / "kompas_hierarchie.csv"
+KOMPAS_CSV = ROOT / "db" / "stuurdata" / "kompas_hierarchie.csv"
+# Indicatordefinities van de use cases (geen waarden): uuid, naam, eenheid, categorie, richting, herkomst (#236)
+DEFINITIES_CSV = ROOT / "db" / "stuurdata" / "indicatoren.csv"
 
 CBS_BUURT_TYPE_ID = "afba67cb-6b38-4723-9c95-102a22d5b38a"
 
@@ -177,44 +179,66 @@ def import_buurten(conn):
 
     conn.commit()
     cur.close()
+    markeer_waterbuurten(conn)
 
     print(f"   ✅ {inserted} buurten geïmporteerd / bijgewerkt | {errors} fouten")
     return errors == 0
+
+
+def markeer_waterbuurten(conn):
+    """Watervlag in gebieden.metadata zetten voor gebieden die alleen op naam een
+    waterbuurt zijn (#155). Definitie: is_waterbuurt() in db/schema/08_zscore_referentie.sql."""
+    cur = conn.cursor()
+    try:
+        cur.execute("SELECT public.markeer_waterbuurten()")
+        n = cur.fetchone()[0]
+        conn.commit()
+        if n:
+            print(f"   💧 {n} waterbuurt(en) gemarkeerd op naam")
+    except Exception as e:
+        conn.rollback()
+        print(f"   ⚠️  Watervlag niet gezet ({e}); voer python -m omnitwin.migraties uit (V021)")
+    finally:
+        cur.close()
 
 
 # ─────────────────────────────────────────────────────────
 # STAP 3: Indicatoren importeren
 # ─────────────────────────────────────────────────────────
 def import_indicatoren(conn):
-    print("\n📊 STAP 3: Indicatoren importeren (metadata uit sample_indicatoren.csv)")
+    # Standaard: de definities uit de stuurdata (db/stuurdata/indicatoren.csv); de waarden komen uit
+    # open bronnen via de use cases. Een andere CSV (extra brondata van een use case): metadata daaruit.
+    standaard = INDICATOREN_CSV == STANDAARD_INDICATOREN_CSV
+    bron_csv = DEFINITIES_CSV if standaard else INDICATOREN_CSV
+    print(f"\n📊 STAP 3: Indicatoren importeren (definities uit {bron_csv.name})")
     print("-" * 50)
 
-    if not INDICATOREN_CSV.exists():
-        print(f"❌ CSV niet gevonden: {INDICATOREN_CSV}")
+    if not bron_csv.exists():
+        print(f"❌ CSV niet gevonden: {bron_csv}")
         return False
 
     unique_indicators = {}
-    with open(INDICATOREN_CSV, "r", encoding="utf-8") as f:
+    with open(bron_csv, "r", encoding="utf-8") as f:
         reader = csv.DictReader(f)
         for row in reader:
-            uuid = row.get("indicator_uuid", "").strip()
+            uuid = (row.get("uuid") or row.get("indicator_uuid") or "").strip()
             if not uuid:
                 continue
             if uuid not in unique_indicators:
                 unique_indicators[uuid] = {
                     "uuid": uuid,
-                    "naam": row.get("indicator_naam", "").strip(),
+                    "naam": (row.get("naam") or row.get("indicator_naam") or "").strip(),
                     "eenheid": row.get("eenheid", "").strip() or None,
                     "categorie": row.get("categorie", "").strip() or None,
                     "interpretatie_logica": row.get("interpretatie_logica", "").strip() or "pos_is_pos",
                     "bron": row.get("bron", "").strip() or None,
                 }
 
-    print(f"   📂 {len(unique_indicators)} unieke indicatoren gevonden in sample CSV")
+    print(f"   📂 {len(unique_indicators)} indicatoren in {bron_csv.name}")
 
-    # CBS Kerncijfers: de waarden worden gedownload (laad_cbs.py), de definities horen bij de
-    # stuurdata en komen uit het recept (download_cbs_kerncijfers.INDICATOREN), niet uit de sample.
-    if INDICATOREN_CSV == STANDAARD_INDICATOREN_CSV:
+    # CBS Kerncijfers: de waarden worden gedownload (use case cbs-kerncijfers), de definities horen bij
+    # de stuurdata en komen uit het recept (download_cbs_kerncijfers.INDICATOREN), niet uit de sample.
+    if standaard:
         import download_cbs_kerncijfers as cbs
         voor = len(unique_indicators)
         for naam, (ind_uuid, eenheid, logica, categorie) in cbs.INDICATOREN.items():

@@ -8,15 +8,27 @@
 # Opstartvolgorde: postgres (healthy) -> db-init (eenmalig, klaar) -> backend,
 # postgrest en pg_featureserv. db-init maakt bij een lege database het schema,
 # de pg_featureserv-views, de sample-/stuurdata en de admin-gebruiker aan; bij een
-# bestaande database slaat hij dat over. Daarna werkt hij altijd de rollen en het
+# bestaande database slaat hij dat over; een half mislukte eerste init geeft een
+# fout met herstelinstructie (#201). Daarna werkt hij altijd de rollen en het
 # schema api voor PostgREST en pg_featureserv bij (#57) en stopt. De backend
 # initialiseert zelf niets (zie docker-entrypoint.sh), dus meerdere
 # backend-replicas racen niet.
 #
 # Poort: Traefik luistert op de host op ${OMNITWIN_HTTP_PORT:-80}.
 name: "d-omnitwin"
+
+# Containerlogs begrensd (#264): per container hoogstens 3 bestanden van 10 MB.
+# De backend-logs bevatten geen IP-adressen; die staan alleen in app_logs (zie
+# LOG_BEWAAR_DAGEN en LOG_IP_BEWAAR_DAGEN in .env.example).
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "3"
+
 services:
   traefik:
+    logging: *logging
     image: traefik:v3.7.13
     command:
       - "--providers.docker=true"
@@ -26,9 +38,13 @@ services:
       - "--providers.docker.constraints=Label(`com.docker.compose.project`,`${COMPOSE_PROJECT_NAME:-d-omnitwin}`)"
       - "--providers.docker.network=${COMPOSE_PROJECT_NAME:-d-omnitwin}_default"
       - "--entrypoints.web.address=:80"
-      # Security-headers (CSP, nosniff, ...) op alle routes; zie deploy/traefik/dynamic.yml
+      # X-Forwarded-For alleen overnemen van een eigen TLS-proxy/WAF voor de stack (#264);
+      # van ieder ander vervangt Traefik de header door het echte adres
+      - "--entrypoints.web.forwardedheaders.trustedips=${TRAEFIK_TRUSTED_IPS:-127.0.0.1/32}"
+      # Headers-middlewares (CSP, nosniff, ...) uit deploy/traefik/dynamic.yml. Elke router
+      # zet er zelf één (security-headers@file, of keycloak-headers@file voor /auth);
+      # tests/test_traefik_routers.py controleert dat
       - "--providers.file.filename=/etc/traefik/dynamic.yml"
-      - "--entrypoints.web.http.middlewares=security-headers@file"
     environment:
       - DOCKER_API_VERSION=1.44
     ports:
@@ -39,6 +55,7 @@ services:
     restart: unless-stopped
 
   postgres:
+    logging: *logging
     build:
       context: .
       dockerfile: db.Dockerfile
@@ -57,6 +74,7 @@ services:
     restart: unless-stopped
 
   db-init:
+    logging: *logging
     # Eenmalige initialisatie met de backend-image; stopt na afloop (exit 0).
     # Zelfde image als backend (#157): één keer bouwen, geen tweede kopie.
     image: ${COMPOSE_PROJECT_NAME:-d-omnitwin}-backend
@@ -69,25 +87,69 @@ services:
       - DATABASE_PORT=5432
       # Gedownloade open data (CBS e.d.) wordt hier gecachet; staat niet in git (init_data/cbs)
       - DATA_CACHE=/data-cache
+      # De use cases laden bij de eerste installatie in-process via de laadstraat (#236): de
+      # ruwe leveringen komen in hetzelfde volume als bij de laad-API van de backend
+      - LEVERINGEN_DIR=/leveringen
     volumes:
       - bron-cache:/data-cache
+      - leveringen:/leveringen
     depends_on:
       postgres:
         condition: service_healthy
     restart: "no"
 
   backend:
+    logging: *logging
     image: ${COMPOSE_PROJECT_NAME:-d-omnitwin}-backend
     build: .
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.backend.rule=PathPrefix(`/`)"
+      - "traefik.http.routers.backend.middlewares=security-headers@file"
+      - "traefik.http.routers.backend.service=backend"
       - "traefik.http.services.backend.loadbalancer.server.port=8000"
+      # Laad-API (#205): eigen router (later eigen container, zelfde URL). Body maximaal 200 MB
+      # (buffering, boven 2 MB op schijf); leveren (POST) maximaal LADEN_RATE_LIMIT per minuut
+      # per token. Lezen (status pollen) valt niet onder die limiet. Zie docs/api/laden/README.md.
+      - "traefik.http.routers.laden.rule=PathPrefix(`/api/laden/v1`)"
+      - "traefik.http.routers.laden.middlewares=laden-body,security-headers@file"
+      - "traefik.http.routers.laden.service=backend"
+      - "traefik.http.routers.laden-leveren.rule=PathPrefix(`/api/laden/v1`) && Method(`POST`)"
+      - "traefik.http.routers.laden-leveren.middlewares=laden-tempo,laden-body,security-headers@file"
+      - "traefik.http.routers.laden-leveren.service=backend"
+      # Compatibiliteitsingang SWF-monitor (#205 stap 9): FME pusht ±57 aanroepen achter elkaar, zonder
+      # retry. Eigen limiet LADEN_COMPAT_RATE_LIMIT per minuut per token (langere regel: gaat voor).
+      - "traefik.http.routers.laden-compat.rule=PathPrefix(`/api/laden/v1/compat/`) && Method(`POST`)"
+      - "traefik.http.routers.laden-compat.middlewares=laden-compat-tempo,laden-body,security-headers@file"
+      - "traefik.http.routers.laden-compat.service=backend"
+      - "traefik.http.middlewares.laden-compat-tempo.ratelimit.average=${LADEN_COMPAT_RATE_LIMIT:-120}"
+      - "traefik.http.middlewares.laden-compat-tempo.ratelimit.burst=${LADEN_COMPAT_RATE_LIMIT:-120}"
+      - "traefik.http.middlewares.laden-compat-tempo.ratelimit.period=1m"
+      - "traefik.http.middlewares.laden-compat-tempo.ratelimit.sourcecriterion.requestheadername=Authorization"
+      - "traefik.http.middlewares.laden-body.buffering.maxRequestBodyBytes=209715200"
+      - "traefik.http.middlewares.laden-body.buffering.memRequestBodyBytes=2097152"
+      - "traefik.http.middlewares.laden-tempo.ratelimit.average=${LADEN_RATE_LIMIT:-10}"
+      - "traefik.http.middlewares.laden-tempo.ratelimit.burst=${LADEN_RATE_LIMIT:-10}"
+      - "traefik.http.middlewares.laden-tempo.ratelimit.period=1m"
+      - "traefik.http.middlewares.laden-tempo.ratelimit.sourcecriterion.requestheadername=Authorization"
     env_file:
       - .env
     environment:
       - DATABASE_HOST=postgres
       - DATABASE_PORT=5432
+      - LEVERINGEN_DIR=/leveringen
+      # Tokens controleren (#205): alleen als OIDC_ISSUER in .env staat (profiel keycloak).
+      # Sleutels en discovery haalt de backend intern bij Keycloak op; de issuer in de tokens
+      # is het publieke adres. Externe identity provider: OIDC_INTERN_URL= (leeg) in .env.
+      - OIDC_INTERN_URL=${OIDC_INTERN_URL-http://keycloak:8080/auth/realms/omnitwin}
+    volumes:
+      # Ruwe leveringen van de laad-API (#205): onveranderlijk, <dataset>/<levering>/<bestand>,
+      # met bewaartermijn (LADEN_BEWAAR_*). Backup: zie db/README.md.
+      - leveringen:/leveringen
+      # Geüploade kaartlagen (beheer > externe lagen, #201): in een volume, zodat ze een
+      # update (docker compose up -d --build) overleven. Een nieuw volume krijgt de
+      # meegeleverde bestanden uit de image. Backup: zie db/README.md.
+      - uploads:/app/data-upload
     extra_hosts:
       - "host.docker.internal:host-gateway"
     healthcheck:
@@ -104,20 +166,33 @@ services:
         condition: service_completed_successfully
 
   postgrest:
+    logging: *logging
     image: postgrest/postgrest:v16.4
     # Eigen rollen (#57): verbindt als authenticator, voert verzoeken uit als web_anon en
     # ziet alleen schema api (views en functies). Rollen en wachtwoord: db-init
-    # (docker-entrypoint.sh, migrations/schema_v23_api_rollen.sql).
+    # (docker-entrypoint.sh, db/migraties/R__api_rollen.sql).
     environment:
       PGRST_DB_URI: postgres://authenticator:${DATABASE_PASSWORD}@postgres:5432/${DATABASE_NAME:-omnitwin_db}
       PGRST_DB_SCHEMAS: api
       PGRST_DB_ANON_ROLE: web_anon
+      # Hoogstens zoveel rijen per antwoord (#203); de frontend vraagt minder op
+      PGRST_DB_MAX_ROWS: 10000
       PGRST_SERVER_PROXY_URI: http://localhost/api/data
     labels:
       - "traefik.enable=true"
+      # Toegang (#266, ADR 0009): viewer-toegang@file (forwardAuth naar de backend) vóór het strippen,
+      # zodat de backend het oorspronkelijke verzoek met cookie en Authorization-header ziet
       - "traefik.http.routers.postgrest.rule=PathPrefix(`/api/data`)"
       - "traefik.http.middlewares.postgrest-strip.stripprefix.prefixes=/api/data"
-      - "traefik.http.routers.postgrest.middlewares=postgrest-strip"
+      - "traefik.http.routers.postgrest.middlewares=security-headers@file,viewer-toegang@file,postgrest-strip"
+      - "traefik.http.routers.postgrest.service=postgrest"
+      # Data-API met versie (ADR 0005, docs/2-architectuur/api-landschap.md): /api/data/v1 → PostgREST.
+      # PostgREST valideert (nog) geen tokens; een meegestuurde Authorization-header gaat er niet heen.
+      - "traefik.http.routers.postgrest-v1.rule=PathPrefix(`/api/data/v1`)"
+      - "traefik.http.middlewares.postgrest-v1-strip.stripprefix.prefixes=/api/data/v1"
+      - "traefik.http.middlewares.postgrest-anoniem.headers.customrequestheaders.Authorization="
+      - "traefik.http.routers.postgrest-v1.middlewares=security-headers@file,viewer-toegang@file,postgrest-v1-strip,postgrest-anoniem"
+      - "traefik.http.routers.postgrest-v1.service=postgrest"
       - "traefik.http.services.postgrest.loadbalancer.server.port=3000"
     depends_on:
       db-init:
@@ -125,6 +200,7 @@ services:
     restart: unless-stopped
 
   pg_featureserv:
+    logging: *logging
     # Geen semver-tags op Docker Hub; datumtag van de huidige release
     image: pramsey/pg_featureserv:20250917
     # Alleen-lezen rol featureserv (#57): ziet alleen vw_gebieden_features,
@@ -137,6 +213,14 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.pg_featureserv.rule=PathPrefix(`/api/geo`)"
+      - "traefik.http.routers.pg_featureserv.middlewares=security-headers@file,viewer-toegang@file"
+      - "traefik.http.routers.pg_featureserv.service=pg_featureserv"
+      # Geo-API met versie (ADR 0005): /api/geo/v1/... → /api/geo/... (de links in de antwoorden blijven /api/geo)
+      - "traefik.http.routers.pg_featureserv-v1.rule=PathPrefix(`/api/geo/v1`)"
+      - "traefik.http.middlewares.pg_featureserv-v1.replacepathregex.regex=^/api/geo/v1(/.*)?$$"
+      - "traefik.http.middlewares.pg_featureserv-v1.replacepathregex.replacement=/api/geo$$1"
+      - "traefik.http.routers.pg_featureserv-v1.middlewares=security-headers@file,viewer-toegang@file,pg_featureserv-v1"
+      - "traefik.http.routers.pg_featureserv-v1.service=pg_featureserv"
       - "traefik.http.services.pg_featureserv.loadbalancer.server.port=9000"
     depends_on:
       # Na db-init, zodat pg_featureserv de views bij het starten ziet
@@ -145,6 +229,7 @@ services:
     restart: unless-stopped
 
   llm-gateway:
+    logging: *logging
     # Optionele LiteLLM-gateway (ADR 0001): alleen met `--profile llm-gateway`.
     # Alleen intern bereikbaar (geen hostpoort); de backend gebruikt
     # http://llm-gateway:4000 met llm_config.api_type=openai.
@@ -171,6 +256,106 @@ services:
       start_period: 60s
     restart: unless-stopped
 
+  keycloak-db-init:
+    logging: *logging
+    # Optioneel (#214): alleen met het profiel keycloak. Maakt in dezelfde PostgreSQL de
+    # database keycloak en de rol keycloak aan (wachtwoord KEYCLOAK_DB_PASSWORD) en stopt.
+    # Idempotent; zet bij elke start het wachtwoord opnieuw. Zie docker-entrypoint.sh.
+    # Backend-image (psql); die bouwen db-init en backend. Zelf niet bouwen of pullen:
+    # een derde build van dezelfde image botst met die van db-init.
+    image: ${COMPOSE_PROJECT_NAME:-d-omnitwin}-backend
+    pull_policy: never
+    profiles: ["keycloak"]
+    command: ["keycloak-db"]
+    env_file:
+      - .env
+    environment:
+      - DATABASE_HOST=postgres
+      - DATABASE_PORT=5432
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: "no"
+
+  keycloak-demo:
+    # Demo-accounts (#245), alleen met het profiel keycloak. Na elke start van Keycloak eenmalig:
+    # bij OMNITWIN_OMGEVING=demo de accounts admin/admin (beheerder, gebruikersbeheerder) en
+    # gebruiker/gebruiker (lezer) zetten met een versoepeld wachtwoordbeleid; anders demo-accounts
+    # verwijderen en het beleid terugzetten. Idempotent; via de admin-API met KEYCLOAK_ADMIN_PASSWORD.
+    # Zie src/omnitwin/omgeving.py. Niets wacht op deze service.
+    image: ${COMPOSE_PROJECT_NAME:-d-omnitwin}-backend
+    pull_policy: never
+    profiles: ["keycloak"]
+    command: ["keycloak-demo"]
+    logging: *logging
+    env_file:
+      - .env
+    environment:
+      - DATABASE_HOST=postgres
+      - DATABASE_PORT=5432
+      - KEYCLOAK_URL=http://keycloak:8080/auth
+    depends_on:
+      keycloak:
+        condition: service_healthy
+    restart: "no"
+
+  keycloak:
+    logging: *logging
+    # Optionele identity provider (#214): alleen met `--profile keycloak` (of
+    # COMPOSE_PROFILES=keycloak in .env). Inloggen via OIDC voor mensen, client
+    # credentials voor machines (ETL). Bereikbaar via Traefik op /auth; health en
+    # metrics alleen intern op poort 9000. Bij de eerste start importeert hij de
+    # realm uit deploy/keycloak/realm-omnitwin.json (een bestaande realm blijft staan).
+    # Zie docs/9-beheer/installatie.md, "Keycloak (optioneel)".
+    image: quay.io/keycloak/keycloak:26.8.0
+    profiles: ["keycloak"]
+    command: ["start", "--import-realm"]
+    environment:
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://postgres:5432/keycloak
+      KC_DB_USERNAME: keycloak
+      KC_DB_PASSWORD: ${KEYCLOAK_DB_PASSWORD:-}
+      # Alleen HTTP, achter Traefik; Traefik zet X-Forwarded-*
+      KC_HTTP_ENABLED: "true"
+      KC_HTTP_RELATIVE_PATH: /auth
+      KC_PROXY_HEADERS: xforwarded
+      # Hostnaam (bijv. omnitwin.example.nl) of volledige URL (https://omnitwin.example.nl/auth)
+      # waarop gebruikers Keycloak bereiken; de tokens krijgen deze issuer
+      KC_HOSTNAME: ${KEYCLOAK_HOSTNAME:-localhost}
+      KC_HEALTH_ENABLED: "true"
+      KC_METRICS_ENABLED: "true"
+      # Tijdelijke beheerder in realm master, alleen bij de eerste start aangemaakt
+      KC_BOOTSTRAP_ADMIN_USERNAME: admin
+      KC_BOOTSTRAP_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:-}
+      # Adres van de installatie zoals gebruikers het zien (#251): de realm-import neemt het op
+      # als redirect-URI van client omnitwin-web ("${OMNITWIN_BASE_URL}/*" in de realmexport)
+      OMNITWIN_BASE_URL: ${OMNITWIN_BASE_URL:-http://localhost}
+    volumes:
+      - "./deploy/keycloak/realm-omnitwin.json:/opt/keycloak/data/import/realm-omnitwin.json:ro"
+      - "./deploy/keycloak/client-secret.sh:/opt/keycloak/omnitwin/client-secret.sh:ro"
+      - "./deploy/keycloak/machineclient.sh:/opt/keycloak/omnitwin/machineclient.sh:ro"
+      # Inlogthema's in de huisstijl (#89): d-omnitwin en swf; keuze via loginTheme in de realm
+      - "./deploy/keycloak/themes:/opt/keycloak/themes:ro"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.keycloak.rule=PathPrefix(`/auth`)"
+      # Eigen headers: Keycloak zet zelf CSP en X-Frame-Options (zie dynamic.yml)
+      - "traefik.http.routers.keycloak.middlewares=keycloak-headers@file"
+      - "traefik.http.services.keycloak.loadbalancer.server.port=8080"
+    healthcheck:
+      # De image heeft geen curl; bash met /dev/tcp naar de managementpoort
+      test: ["CMD-SHELL", "exec 3<>/dev/tcp/localhost/9000 && printf 'GET /auth/health/ready HTTP/1.1\\r\\nHost: localhost\\r\\nConnection: close\\r\\n\\r\\n' >&3 && head -n 1 <&3 | grep -q ' 200 '"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 60s
+    restart: unless-stopped
+    depends_on:
+      keycloak-db-init:
+        condition: service_completed_successfully
+
 volumes:
   pgdata:
   bron-cache:
+  uploads:
+  leveringen:

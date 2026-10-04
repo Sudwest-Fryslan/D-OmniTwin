@@ -169,10 +169,28 @@ const authApiClient = axios.create({
     withCredentials: true,
 });
 
+// Welke manieren van inloggen staan aan (#251): Keycloak (OIDC) en/of lokale accounts
+export interface AuthConfig {
+    oidc: boolean;
+    lokaal: boolean;
+    noodtoegang: boolean;
+    gebruikersbeheer_url: string | null;
+    account_url: string | null;
+    demo?: boolean;   // OMNITWIN_OMGEVING=demo: demobalk (#245)
+}
+
+export type AuthUser = { id: string; username: string; is_admin: boolean; bron?: string };
+
+// Inloggen via Keycloak: de backend doet de OIDC-flow en zet het sessiecookie (BFF, ADR 0008)
+export const oidcInlogUrl = (terug = '/admin/dashboard') =>
+    `/api/admin/auth/oidc/login?terug=${encodeURIComponent(terug)}`;
+
 export const authAPI = {
+    getConfig: () => authApiClient.get<AuthConfig>('/config'),
     login: (formData: URLSearchParams) => authApiClient.post<{ message: string; user: { id: string; username: string } }>('/login', formData, { headers: { 'Content-Type': 'application/x-www-form-urlencoded' } }),
-    logout: () => authApiClient.post<{ message: string }>('/logout'),
-    getMe: () => authApiClient.get<{ authenticated: boolean; user: { id: string; username: string; is_admin: boolean } | null }>('/me'),
+    // uitlog_url: bij een Keycloak-sessie daarheen, zodat ook Keycloak uitlogt
+    logout: () => authApiClient.post<{ message: string; uitlog_url?: string | null }>('/logout'),
+    getMe: () => authApiClient.get<{ authenticated: boolean; user: AuthUser | null }>('/me'),
     changePassword: (data: { old_password: string; new_password: string }) => authApiClient.post<{ message: string }>('/change-password', data),
 };
 
@@ -212,15 +230,15 @@ export const reportAPI = {
     getExecutive: (gebiedId: string) => reportApiClient.get<import('../types').ExecutivePayload>(`/executive/${gebiedId}`),
 
     // Sjabloon D: Multi-Gebiedsdossier
-    getMultiGebied: (payload: { gebied_ids: string[]; referentie: string; gemeente_code: string; deelgebied_naam?: string; thema?: string }) =>
+    getMultiGebied: (payload: { gebied_ids: string[]; referentie: string; gemeente_code?: string; deelgebied_naam?: string; thema?: string }) =>
         reportApiClient.post<any>('/multi-gebied', payload),
-    getMultiGebiedGeoJSON: (payload: { gebied_ids: string[]; referentie: string; gemeente_code: string; thema?: string }) =>
+    getMultiGebiedGeoJSON: (payload: { gebied_ids: string[]; referentie: string; gemeente_code?: string; thema?: string }) =>
         reportApiClient.post<any>('/multi-gebied/geojson', payload),
 
     // Sjabloon E: Thema-Analyse
-    getThemaAnalyse: (payload: { gebied_ids: string[]; referentie: string; gemeente_code: string; deelgebied_naam?: string; categorie?: string; thema_naam?: string; onderdeel_naam?: string }) =>
+    getThemaAnalyse: (payload: { gebied_ids: string[]; referentie: string; gemeente_code?: string; deelgebied_naam?: string; categorie?: string; thema_naam?: string; onderdeel_naam?: string }) =>
         reportApiClient.post<any>('/thema-analyse', payload),
-    getThemaAnalyseGeoJSON: (payload: { gebied_ids: string[]; referentie: string; gemeente_code: string; categorie?: string; thema_naam?: string; onderdeel_naam?: string }) =>
+    getThemaAnalyseGeoJSON: (payload: { gebied_ids: string[]; referentie: string; gemeente_code?: string; categorie?: string; thema_naam?: string; onderdeel_naam?: string }) =>
         reportApiClient.post<any>('/thema-analyse/geojson', payload),
 
     // Sjabloon F: Woonplaats- & Deelgebiedsanalyse
@@ -243,6 +261,23 @@ const publicApi = axios.create({
     baseURL: '/api',
     headers: { 'Content-Type': 'application/json' },
 });
+
+// De eigen organisatie van deze instantie (#231): naam, gemeentecode(s), logo's, contact
+export interface Organisatie {
+    code: string;
+    naam: string;
+    korte_naam: string | null;
+    oin: string | null;
+    gemeente_codes: string[];
+    standaard_gemeente_code: string | null;
+    benchmark_provincie: string | null;
+    contact_email: string | null;
+    logos: { pad: string; naam: string | null; rol: string }[];
+}
+
+export const organisatieAPI = {
+    get: () => publicApi.get<Organisatie>('/organisatie'),
+};
 
 // Gemeenten en gebieden via PostgREST (/api/data), zoals de hoofdapp.
 // Response wordt omgezet naar de eerdere vorm { gemeenten|gebieden, totaal }.

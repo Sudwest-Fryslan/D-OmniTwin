@@ -10,8 +10,8 @@ current_dir = Path(__file__).resolve().parent
 project_root = current_dir.parent
 sys.path.append(str(project_root))
 
-from src.database import SessionLocal
-from services.kompas_service import KompasService
+from omnitwin.database import SessionLocal
+from omnitwin.services.kompas_service import KompasService
 
 def main():
     print("Starting Kompas Hierarchy Export...")

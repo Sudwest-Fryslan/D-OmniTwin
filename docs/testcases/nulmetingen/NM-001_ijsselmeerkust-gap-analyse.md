@@ -192,4 +192,4 @@ D-OmniTwin zit op het kantelpunt van:
 - [TC-02-001 Wonen indicatoren](../02-kompas-detail/TC-02-001_wonen-indicatoren.md)
 - [TC-02-002 Sociaal domein](../02-kompas-detail/TC-02-002_sociaal-domein.md)
 - [TC-06-001 E2E Beleidsadviseur](../06-integratie-e2e/TC-06-001_beleidsadviseur-ijsselmeerkust.md)
-- [Dataspace-mapping indicatoren](../../../2-architectuur/dataspace-mapping/dataspace_mapping_indicatoren_ijsselmeerkust.md)
+- [Dataspace-mapping indicatoren](../../2-architectuur/dataspace-mapping/dataspace_mapping_indicatoren_ijsselmeerkust.md)

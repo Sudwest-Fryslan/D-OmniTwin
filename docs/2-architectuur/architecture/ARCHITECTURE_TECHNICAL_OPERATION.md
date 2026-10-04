@@ -5,8 +5,6 @@ Dit document dient als de **fundamentele blauwdruk** (backbone) voor de technisc
 
 Doel: Inzicht geven in de complexiteit om spaghetti-code te voorkomen en toekomstige uitbreidingen te valideren.
 
-![Architecture Visualization](architecture_visual_v1.png)
-
 ---
 
 ## 1. High-Level Overzicht

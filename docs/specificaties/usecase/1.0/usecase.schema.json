@@ -1,0 +1,508 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/TLaan/D-OmniTwin/main/docs/specificaties/usecase/1.0/usecase.schema.json",
+  "title": "D-OmniTwin Use Case Specificatie 1.0: manifest (usecases/<naam>/usecase.json)",
+  "description": "Normatief schema van het manifest van een use case. De specificatie zelf (betekenis, regels, levenscyclus, uitvoerder) staat in docs/specificaties/usecase/README.md; bij strijd gaat de specificatie voor en wordt het schema gecorrigeerd. Een use case is een declaratieve app: naam (= mapnaam), versie, afhankelijkheden, actoren, rechten, datasets, controles en bewijs, zonder code. De velden persona, data, inrichting, ai_zoekvraag en verwacht zijn de verouderde vorm van de demopakketten van vóór 0.3.0 (toegestaan in 1.x, niet voor nieuwe use cases).",
+  "type": "object",
+  "required": [
+    "specificatie",
+    "naam",
+    "versie",
+    "titel"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "format": "uri",
+      "description": "Optioneel: de $id van dit schema, voor editors. De uitvoerder kijkt naar 'specificatie'."
+    },
+    "specificatie": {
+      "type": "string",
+      "enum": [
+        "1.0"
+      ],
+      "description": "Versie van de Use Case Specificatie (MAJOR.MINOR) waaraan het manifest voldoet. Een uitvoerder weigert een versie die hij niet kent."
+    },
+    "naam": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+      "description": "Gelijk aan de mapnaam onder usecases/; de identiteit van de use case. Verandert nooit: een andere naam is een andere use case."
+    },
+    "id": {
+      "type": "string",
+      "pattern": "^TC-[0-9]{2}-[0-9]{3}$",
+      "description": "Testcase-id (docs/testcases), uniek over alle use cases."
+    },
+    "versie": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+([-+][0-9A-Za-z.-]+)?$",
+      "description": "Semantische versie (SemVer 2.0.0) van de use case, start 0.1.0. Regels voor major, minor en patch: zie de specificatie."
+    },
+    "titel": {
+      "type": "string",
+      "minLength": 3,
+      "description": "Korte titel, zoals in de index en de galerij."
+    },
+    "vraag": {
+      "type": "string",
+      "description": "De vraag die de use case beantwoordt, in de woorden van de gebruiker."
+    },
+    "gebruiker": {
+      "type": "string",
+      "description": "Rol van de gebruiker (functioneel, geen persoon)."
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "ontwerp",
+        "actief",
+        "verouderd"
+      ],
+      "description": "Levenscyclus: ontwerp (de benodigde functie bestaat nog niet; installeer slaat hem en zijn niet-optionele afhankelijken over), actief, verouderd (verdwijnt na veroudering.verwijderen_na). Ontbreekt alleen bij de verouderde vorm."
+    },
+    "veroudering": {
+      "type": "object",
+      "required": [
+        "sinds",
+        "verwijderen_na"
+      ],
+      "additionalProperties": false,
+      "description": "Verplicht bij status verouderd: sinds wanneer, wanneer hij verdwijnt en wat ervoor in de plaats komt.",
+      "properties": {
+        "sinds": {
+          "type": "string",
+          "format": "date",
+          "description": "Datum waarop de use case verouderd is."
+        },
+        "verwijderen_na": {
+          "type": "string",
+          "format": "date",
+          "description": "Vroegste datum van verwijderen; minstens één minor-release van D-OmniTwin later."
+        },
+        "vervangen_door": {
+          "type": "string",
+          "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+          "description": "Naam van de opvolger, als die er is."
+        },
+        "reden": {
+          "type": "string",
+          "description": "Waarom de use case verouderd is."
+        }
+      }
+    },
+    "afhankelijk_van": {
+      "type": "array",
+      "description": "Use cases die eerst geïnstalleerd moeten zijn: een naam, of {naam, versie, optioneel}. Later ook extern: {naam, bron (absolute URL), versie (vaste tag)}; nu nog niet ondersteund.",
+      "items": {
+        "oneOf": [
+          {
+            "type": "string",
+            "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$"
+          },
+          {
+            "type": "object",
+            "required": [
+              "naam"
+            ],
+            "properties": {
+              "naam": {
+                "type": "string",
+                "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$"
+              },
+              "versie": {
+                "type": "string",
+                "description": "Versie-eis, bijv. >=0.1.0 of >=0.1.0,<1.0.0."
+              },
+              "optioneel": {
+                "type": "boolean",
+                "description": "Mag overgeslagen zijn (bijv. status ontwerp); de use case werkt dan via zijn eigen route."
+              },
+              "bron": {
+                "type": "string",
+                "format": "uri",
+                "description": "Extern (nog niet ondersteund): absolute URL van een git-repository of D-OmniTwin-installatie."
+              }
+            },
+            "additionalProperties": false
+          }
+        ]
+      }
+    },
+    "actoren": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/actor"
+      },
+      "description": "Gebruikers en machineclients met hun rollen, zonder wachtwoorden of secrets. In test en dev maakt de uitvoerder ze met --testaccounts aan als uc-<usecase>-<naam> (#223)."
+    },
+    "rechten": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^(dataset:[a-z0-9]+(-[a-z0-9]+)*:[a-z]+|datasets:[a-z]+|realm-rol [a-z][a-z0-9-]*)( \\(.+\\))?$"
+      },
+      "description": "Keycloak-rollen die de use case nodig heeft: client-rol dataset:<id>:laden of datasets:laden op omnitwin-api, of 'realm-rol <rol>'; optioneel een toelichting tussen haakjes. Documentatie, nog niet afgedwongen."
+    },
+    "datasets": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/dataset"
+      },
+      "description": "De datasets die de use case registreert en levert; elk met een datasets/<id>.json."
+    },
+    "controles": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/controle"
+      },
+      "description": "Toetsbare controles; semantiek per type in de specificatie."
+    },
+    "bewijs": {
+      "$ref": "#/$defs/bewijs"
+    },
+    "bekende_afwijkingen": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Bekende verschillen met de verwachting of de bron, met reden."
+    },
+    "persona": {
+      "type": "object",
+      "description": "Verouderde vorm (demopakketten van vóór 0.3.0, geladen via init_data/scripts/laad_usecase.py). Niet voor nieuwe use cases; vervalt in 2.0."
+    },
+    "data": {
+      "type": "object",
+      "description": "Verouderde vorm (demopakketten van vóór 0.3.0, geladen via init_data/scripts/laad_usecase.py). Niet voor nieuwe use cases; vervalt in 2.0."
+    },
+    "inrichting": {
+      "type": "object",
+      "description": "Verouderde vorm (demopakketten van vóór 0.3.0, geladen via init_data/scripts/laad_usecase.py). Niet voor nieuwe use cases; vervalt in 2.0."
+    },
+    "ai_zoekvraag": {
+      "type": "string",
+      "description": "Verouderde vorm (demopakketten van vóór 0.3.0, geladen via init_data/scripts/laad_usecase.py). Niet voor nieuwe use cases; vervalt in 2.0."
+    },
+    "verwacht": {
+      "type": "object",
+      "description": "Verouderde vorm (demopakketten van vóór 0.3.0, geladen via init_data/scripts/laad_usecase.py). Niet voor nieuwe use cases; vervalt in 2.0."
+    }
+  },
+  "$defs": {
+    "dataset": {
+      "type": "object",
+      "required": [
+        "id",
+        "route",
+        "registratie"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+          "minLength": 3,
+          "maxLength": 63,
+          "description": "datasetId in de laad-API"
+        },
+        "route": {
+          "type": "string",
+          "enum": [
+            "laden",
+            "compat",
+            "beheer"
+          ],
+          "description": "laden: POST /api/laden/v1/datasets/{id}/leveringen; compat: de spiegel van de SWF-push (adapter swf-monitor-v1); beheer: /api/beheer/v1 (inrichting, geen dataset)."
+        },
+        "registratie": {
+          "type": "string",
+          "pattern": "^datasets/[a-z0-9-]+\\.json$",
+          "description": "Pad naar datasets/<id>.json in de use case: registratie (beschrijving + laadprofiel) plus bron, bewerkingen en levering (dataset.schema.json)."
+        },
+        "profiel": {
+          "type": "string",
+          "enum": [
+            "waarnemingen",
+            "definities",
+            "gebiedsindeling",
+            "kaartlaag",
+            "kompasprofiel"
+          ],
+          "description": "Profiel van de laad-API (laadprofiel.profiel); kompasprofiel alleen via route beheer."
+        },
+        "beheerpad": {
+          "type": "string",
+          "description": "Alleen route beheer: het pad in /api/beheer/v1."
+        },
+        "rol": {
+          "type": "string",
+          "description": "Keycloak-rol van de leverende client, bijv. dataset:<id>:laden."
+        },
+        "client": {
+          "type": "string",
+          "description": "Functionele naam van de leverende machineclient (bij voorkeur de naam van een actor)."
+        },
+        "prioriteit": {
+          "type": "string",
+          "enum": [
+            "Must",
+            "Should",
+            "Could",
+            "uitgesteld"
+          ],
+          "description": "MoSCoW-prioriteit van de dataset binnen de use case."
+        },
+        "verwacht": {
+          "type": "object",
+          "description": "Verwachte aantallen en uitkomst van de levering."
+        },
+        "bron": {
+          "type": "string",
+          "description": "Korte omschrijving van de bron (de uitvoerbare beschrijving staat in datasets/<id>.json)."
+        }
+      },
+      "additionalProperties": false
+    },
+    "controle": {
+      "type": "object",
+      "required": [
+        "type"
+      ],
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": [
+            "aantal",
+            "bewerking",
+            "api",
+            "afkeuring",
+            "idempotent",
+            "chat",
+            "viewer",
+            "recht"
+          ],
+          "description": "Soort controle; semantiek per type in de specificatie."
+        },
+        "omschrijving": {
+          "type": "string",
+          "description": "Wat de controle aantoont, in gewone taal."
+        },
+        "dataset": {
+          "type": "string",
+          "description": "Id van een dataset uit datasets[] van deze use case (bij type recht mag het een andere dataset zijn)."
+        },
+        "resource": {
+          "type": "string",
+          "description": "type aantal: één resource of tabel in de levering (alleen lokaal getoetst)."
+        },
+        "gelijk": {
+          "type": "integer",
+          "description": "type aantal/bewerking: precies dit aantal."
+        },
+        "minimaal": {
+          "type": "integer",
+          "description": "type aantal/bewerking: minstens dit aantal."
+        },
+        "maximaal": {
+          "type": "integer",
+          "description": "type aantal/bewerking: hoogstens dit aantal."
+        },
+        "pad": {
+          "type": "string",
+          "description": "type api: pad op de installatie, bijv. /api/data/v1/..."
+        },
+        "anoniem": {
+          "type": "boolean",
+          "description": "type api: zonder token aanroepen."
+        },
+        "status": {
+          "type": "integer",
+          "description": "type api: verwachte HTTP-status (standaard 200)."
+        },
+        "minimaal_aantal": {
+          "type": "integer",
+          "description": "type api: minimaal aantal elementen in het antwoord."
+        },
+        "variant": {
+          "type": "string",
+          "description": "type afkeuring/idempotent: variant van maak_levering (bijv. met-fouten)."
+        },
+        "code": {
+          "type": "string",
+          "description": "type afkeuring: verwachte probleemcode (docs/api/laden/README.md#probleemtypen)."
+        },
+        "vraag": {
+          "type": "string",
+          "description": "type chat: de vraag aan de assistent."
+        },
+        "bevat": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "type chat/viewer: teksten die in het antwoord of op het scherm moeten staan."
+        },
+        "reden": {
+          "type": "string",
+          "description": "type bewerking: de reden in het bewerkingsrapport (bijv. jaar-ongeldig)."
+        },
+        "verwacht": {
+          "description": "type api/viewer: verwacht antwoord of gedrag (vrije beschrijving of waarden)."
+        },
+        "uuid": {
+          "type": "string",
+          "description": "Indicator-UUID waar de controle over gaat."
+        },
+        "gebied": {
+          "type": "string",
+          "description": "Gebiedscode waar de controle over gaat (bijv. BU19000002)."
+        },
+        "stap": {
+          "type": "string",
+          "description": "type viewer: wat de gebruiker doet."
+        },
+        "actie": {
+          "type": "string",
+          "enum": [
+            "registreren",
+            "leveren",
+            "lezen"
+          ],
+          "description": "type recht: registreren (POST /api/laden/v1/datasets), leveren (levering aan dataset) of lezen (GET de datasetregistratie)."
+        },
+        "toegestaan": {
+          "type": "boolean",
+          "description": "type recht: true als de actor de actie mag, false als hij 403 moet krijgen."
+        },
+        "actor": {
+          "type": "string",
+          "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+          "description": "Naam van een actor uit actoren die de controle uitvoert (met --testaccounts); zonder testaccounts de machineclient uit de omgeving."
+        }
+      },
+      "additionalProperties": false
+    },
+    "actor": {
+      "type": "object",
+      "required": [
+        "naam",
+        "soort",
+        "rollen"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "naam": {
+          "type": "string",
+          "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+          "description": "Functionele naam binnen de use case; een testaccount heet uc-<usecase>-<naam>."
+        },
+        "soort": {
+          "type": "string",
+          "enum": [
+            "gebruiker",
+            "machineclient"
+          ],
+          "description": "gebruiker (mens, inloggen) of machineclient (client credentials)."
+        },
+        "rollen": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^(dataset:[a-z0-9]+(-[a-z0-9]+)*:[a-z]+|datasets:[a-z]+|[a-z][a-z0-9-]*)$"
+          },
+          "description": "Keycloak-rollen: realm-rol (bijv. beheerder, lezer) of client-rol op omnitwin-api (dataset:<id>:laden, datasets:laden)."
+        },
+        "omschrijving": {
+          "type": "string",
+          "description": "Wie of wat de actor is."
+        }
+      }
+    },
+    "bewijs": {
+      "type": "object",
+      "required": [
+        "stappen"
+      ],
+      "additionalProperties": false,
+      "description": "Hoe het bewijs gemaakt wordt: python -m omnitwin.usecases bewijs <naam> voert de stappen uit (#225).",
+      "properties": {
+        "stappen": {
+          "type": "array",
+          "maxItems": 4,
+          "items": {
+            "$ref": "#/$defs/bewijsstap"
+          },
+          "description": "2 tot 4 schermen; elke stap levert één afbeelding bewijs/<id>.webp."
+        }
+      }
+    },
+    "bewijsstap": {
+      "type": "object",
+      "required": [
+        "id",
+        "actie"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+          "description": "Naam van de stap en van de afbeelding (bewijs/<id>.webp); stabiel tussen releases."
+        },
+        "actie": {
+          "type": "string",
+          "enum": [
+            "open",
+            "kaart",
+            "kompas",
+            "chat",
+            "levering",
+            "beheer"
+          ],
+          "description": "Vaste actie van de uitvoerder; geen selectors of scripts."
+        },
+        "omschrijving": {
+          "type": "string",
+          "description": "Wat het scherm laat zien (bijschrift in README en galerij)."
+        },
+        "actor": {
+          "type": "string",
+          "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+          "description": "Actor die ingelogd is; zonder actor anoniem."
+        },
+        "pad": {
+          "type": "string",
+          "pattern": "^/[^\\s]*$",
+          "description": "actie open/beheer: pad op de installatie, zonder host."
+        },
+        "gebied": {
+          "type": "string",
+          "description": "actie kaart/kompas: gebiedscode (bijv. BU19000002)."
+        },
+        "indicator": {
+          "type": "string",
+          "description": "actie kaart/kompas: indicator-UUID of -naam die de kaart toont."
+        },
+        "profiel": {
+          "type": "string",
+          "description": "actie kompas: naam van het Kompas-profiel."
+        },
+        "vraag": {
+          "type": "string",
+          "description": "actie chat: de vraag aan de assistent."
+        },
+        "dataset": {
+          "type": "string",
+          "description": "actie levering: id van een dataset uit datasets[]."
+        },
+        "bevat": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Teksten die zichtbaar moeten zijn; anders mislukt de stap."
+        }
+      }
+    }
+  }
+}

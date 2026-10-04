@@ -4,7 +4,7 @@
 
 > **Documenttype:** Technische Installatie- en Migratiehandleiding  
 > **Doelgroep:** Technisch Applicatiebeheerders, DevOps Engineers, ICT-Systeembeheerders & Implementatieconsultants  
-> **Status:** Actueel / Productie-gereed  
+> **Status:** aanvullend, niet bijgewerkt (zie de waarschuwing hierboven)  
 > **Licentie & Openheid:** EUPL 1.2 (Open Source Software) | CC BY 4.0 (Open Methodiek)
 
 ---
@@ -69,7 +69,7 @@ De D-OmniTwin stack draait als een geïsoleerd cluster van 5 microservices binne
 | Fase | Onderdeel | Verantwoordelijke | Locatie |
 |---|---|---|---|
 | **Fase 0** | [Release & Database Dump Voorbereiden](#fase-0--voorbereiding-op-de-bronomgeving) | Lead Developer / Beheerder | Ontwikkel-/Bronomgeving |
-| **Fase 1** | [Doelserver & Vereisten Controleren](#fase-1--server--omgevingscontrole-op-de-doelhost) | Systeembeheerder Doelorg. | Doelserver |
+| **Fase 1** | [Doelserver & Vereisten Controleren](#fase-1--server---omgevingscontrole-op-de-doelhost) | Systeembeheerder Doelorg. | Doelserver |
 | **Fase 2** | [Plaatsing & Omgevingsvariabelen (.env)](#fase-2--plaatsing--configuratie-op-de-doelhost) | DevOps / Consultant | Doelserver |
 | **Fase 3** | [Docker Stack Bouwen & Database Starten](#fase-3--docker-stack-bouwen--database-starten) | DevOps / Consultant | Doelserver |
 | **Fase 4** | [Database Vullen via Dumpbestand (Restore)](#fase-4--database-vullen-via-het-dumpbestand-restore) | DevOps / Database Beheerder | Doelserver |
@@ -225,56 +225,8 @@ mv /pad/naar/omnitwin_db_release.dump /opt/d-omnitwin/backups/
 ---
 
 ### Stap 2.2: Omgevingsvariabelen configureren (`.env`)
-Kopieer de template en genereer unieke, sterke geheimen voor de productieomgeving:
 
-```bash
-cp .env.example .env
-```
-
-Genereer sterke secrets:
-```bash
-# 1. Genereer een SECRET_KEY:
-openssl rand -base64 32
-
-# 2. Genereer een ADMIN_API_KEY:
-python3 -c "import secrets; print(secrets.token_hex(32))" 2>/dev/null || openssl rand -hex 32
-
-# 3. Genereer een sterk DATABASE_PASSWORD:
-openssl rand -base64 24
-```
-
-Pas `.env` aan met je favoriete editor (`nano .env` of `vim .env`):
-
-```ini
-# ─── Docker Compose ──────────────────────────────────────
-# Alleen de basis laden, niet de dev-override (bind-mount, open DB-poort, dashboard)
-COMPOSE_FILE=docker-compose.yml
-
-# ─── Database ────────────────────────────────────────────
-DATABASE_HOST=postgres
-DATABASE_PORT=5432
-DATABASE_NAME=omnitwin_db
-DATABASE_USER=omnitwin_user
-DATABASE_PASSWORD=<jouw-nieuw-gegenereerde-db-wachtwoord>
-DATABASE_SSLMODE=prefer
-
-# ─── API Security ─────────────────────────────────────────
-SECRET_KEY=<jouw-nieuw-gegenereerde-secret-key>
-CORS_ORIGINS=http://localhost,http://localhost:80,https://omnitwin.jouwgemeente.nl
-
-# ─── App Instellingen ─────────────────────────────────────
-DEBUG=false
-LOG_LEVEL=INFO
-
-# ─── Admin Panel ──────────────────────────────────────────
-ADMIN_API_KEY=<jouw-nieuw-gegenereerde-admin-api-key>
-ADMIN_USER=admin
-ADMIN_PASSWORD=<kies-een-sterk-initieel-admin-wachtwoord>
-
-# ─── Optionele Lokale AI ──────────────────────────────────
-OLLAMA_HOST=http://host.docker.internal:11434
-OLLAMA_MODEL=gemma4
-```
+Volg de installatiegids, [2.2 `.env` aanmaken](./installatie.md#22-env-aanmaken): `cp .env.example .env`, vul `DATABASE_PASSWORD` in (`openssl rand -hex 24`; alleen letters en cijfers, andere tekens breken de database-URL's) en bij voorkeur `ADMIN_PASSWORD`. Gebruik op de doelhost een nieuw wachtwoord: de restore hieronder werkt met `--no-owner`. Een `SECRET_KEY` is niet nodig; de code gebruikt die niet.
 
 ---
 
@@ -579,6 +531,6 @@ Voeg toe aan de crontab van de server (`crontab -e`):
 ## 9. 📞 Contact & Technische Ondersteuning
 
 Voor vragen over deze installatieprocedure, data-updates of architectuur-ondersteuning:
-* **Technisch Project Lead & Architect:** Thijs van der Laan ([t.vanderlaan@sudwestfryslan.nl](mailto:t.vanderlaan@sudwestfryslan.nl))
+* **Technisch Project Lead & Architect:** Taeke van der Laan, Geo-groep Gemeente Súdwest-Fryslân ([geo-groep@sudwestfryslan.nl](mailto:geo-groep@sudwestfryslan.nl))
 * **Documentatie & Architectuurnotities:** Zie [`docs/2-architectuur/architecture/systeemarchitectuur_en_implementatiegids_ict.md`](../2-architectuur/architecture/systeemarchitectuur_en_implementatiegids_ict.md)
 * **Kennisdatabase Router:** Zie [`docs/INDEX.md`](../INDEX.md)

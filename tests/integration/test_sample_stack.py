@@ -7,12 +7,16 @@ buurt, chat-scenario 'Beleidsadviseur', en idempotent laden van de sample.
 
 Reproduceerbaar draaien, onafhankelijk van de Python-omgeving op de host:
 
-    docker compose down -v && docker compose up -d --build
+    docker compose down -v && docker compose up -d --build --wait
     docker run --rm --network d-omnitwin_default -v "$PWD":/app -w /app \
         --env-file .env -e DATABASE_HOST=postgres -e DATABASE_PORT=5432 \
         -e OMNITWIN_BASE_URL=http://traefik \
         python:3.11-slim sh -c "pip install -q pytest requests psycopg2-binary python-dotenv \
         && pytest -m integration tests/integration"
+
+Het netwerk heet <projectnaam>_default: d-omnitwin_default, of bij een eigen
+COMPOSE_PROJECT_NAME die naam + _default. CI (.github/workflows/ci.yml, job
+integration) draait precies dit met COMPOSE_PROJECT_NAME=omnitwin-ci.
 
 Omgevingsvariabelen:
     OMNITWIN_BASE_URL   basis-URL via Traefik (standaard http://localhost)
@@ -67,7 +71,7 @@ def buurten():
     """Buurten zoals de frontend ze ophaalt: via pg_featureserv."""
     r = requests.get(
         f"{BASE_URL}/api/geo/collections/public.vw_gebieden_features/items",
-        params={"limit": 1000, "properties": "id,naam,gebiedstype_id"},
+        params={"limit": 5000, "properties": "id,naam,gebiedstype_id"},
         timeout=TIMEOUT,
     )
     r.raise_for_status()
@@ -82,11 +86,15 @@ def test_app_laadt():
     assert "D-OmniTwin" in r.text
 
 
-# ── 2. Kaart toont de 12 SWF-buurten ─────────────────────────────────────────
+# ── 2. Kaart toont de CBS-buurten, met de testbuurten ────────────────────────
 
 def test_kaart_toont_sample_buurten(buurten):
+    """Sinds #236 laadt een verse installatie alle CBS-buurten van Fryslân (use case
+    cbs-gebiedsindelingen); de 13 testbuurten van de demo-use cases zitten erbij."""
     namen = {f["properties"]["naam"] for f in buurten}
-    assert namen == sample_buurt_namen()
+    assert sample_buurt_namen() <= namen, sorted(sample_buurt_namen() - namen)
+    cbs_buurt = "afba67cb-6b38-4723-9c95-102a22d5b38a"
+    assert sum(f["properties"]["gebiedstype_id"] == cbs_buurt for f in buurten) >= 900
 
 
 def test_buurten_hebben_geometrie(buurten):
@@ -188,7 +196,7 @@ def test_schema_bevat_alle_migraties(db):
 # PostgREST ziet alleen schema api (views en functies) en draait anoniem als web_anon
 # (alleen lezen). pg_featureserv draait als featureserv (alleen de geo-views).
 
-# Wat de frontend, de admin en de tests via /api/data gebruiken; zie migrations/schema_v23_api_rollen.sql
+# Wat de frontend, de admin en de tests via /api/data gebruiken; zie db/migraties/R__api_rollen.sql
 API_WHITELIST = [
     "gemeenten",
     "gebiedstypes",
@@ -196,6 +204,7 @@ API_WHITELIST = [
     "externe_kaartlagen",
     "indicatoren",
     "vw_gebied_indicator_actueel",
+    "gebied_data",  # laad-API (#228): waarden per jaar, zonder n
     "rpc/get_indicatoren_stats",
 ]
 
@@ -302,3 +311,15 @@ def test_rollen_geen_rechten_op_tabellen(db, rol, tabel):
     for recht in ("SELECT", "INSERT", "UPDATE", "DELETE"):
         heeft = scalar(db, "SELECT has_table_privilege(%s, %s, %s)", (rol, f"public.{tabel}", recht))
         assert not heeft, f"{rol} heeft {recht} op {tabel}"
+
+
+def test_data_en_geo_met_versie():
+    """/api/data/v1 en /api/geo/v1 (ADR 0005, #228) wijzen naar dezelfde API's als /api/data en /api/geo."""
+    r = requests.get(f"{BASE_URL}/api/data/v1/gebieden", params={"limit": 1}, timeout=TIMEOUT)
+    assert r.status_code == 200 and isinstance(r.json(), list)
+    # Een meegestuurd token gaat niet naar PostgREST (dat valideert nog geen tokens)
+    r = requests.get(f"{BASE_URL}/api/data/v1/gebieden", params={"limit": 1}, timeout=TIMEOUT,
+                     headers={"Authorization": "Bearer niet-gecontroleerd"})
+    assert r.status_code == 200
+    r = requests.get(f"{BASE_URL}/api/geo/v1/collections", timeout=TIMEOUT)
+    assert r.status_code == 200

@@ -15,10 +15,17 @@ De `integrity`-hash van de tarball is bij het downloaden gecontroleerd.
 | `deck.gl@9.4.0/` | [`deck.gl@9.4.0`](https://registry.npmjs.org/deck.gl/-/deck.gl-9.4.0.tgz) | `dist.min.js` | MIT (`LICENSE`) | `templates/index.html` |
 | `chart.js@4.5.1/` | [`chart.js@4.5.1`](https://registry.npmjs.org/chart.js/-/chart.js-4.5.1.tgz) | `dist/chart.umd.min.js` | MIT (`LICENSE.md`) | `templates/index.html` |
 | `inter@5.3.0/` | [`@fontsource-variable/inter@5.3.0`](https://registry.npmjs.org/@fontsource-variable/inter/-/inter-5.3.0.tgz) (Google Fonts Inter v20) | `files/inter-latin-wght-normal.woff2`, `files/inter-latin-ext-wght-normal.woff2` | SIL OFL 1.1 (`LICENSE`) | `templates/index.html`, `static/help.html` |
+| `montserrat@5.3.0/` | [`@fontsource-variable/montserrat@5.3.0`](https://registry.npmjs.org/@fontsource-variable/montserrat/-/montserrat-5.3.0.tgz) (Google Fonts Montserrat v31) | `files/montserrat-latin-wght-normal.woff2`, `files/montserrat-latin-ext-wght-normal.woff2` | SIL OFL 1.1 (`LICENSE`) | `static/css/themes/swf.css` |
+| `source-sans-3@5.3.0/` | [`@fontsource-variable/source-sans-3@5.3.0`](https://registry.npmjs.org/@fontsource-variable/source-sans-3/-/source-sans-3-5.3.0.tgz) (Google Fonts Source Sans 3 v19) | `files/source-sans-3-latin-wght-normal.woff2`, `files/source-sans-3-latin-ext-wght-normal.woff2` | SIL OFL 1.1 (`LICENSE`) | `static/css/themes/swf.css` |
 
 `inter@5.3.0/inter.css` is eigen werk: de `@font-face`-regels uit `wght.css` van het pakket,
 alleen de subsets latin en latin-ext, met `font-family: 'Inter'`.
 Het is één variabel lettertype voor gewicht 100–900; de oude Google Fonts-link vroeg 400/500/600/700.
+
+`montserrat@5.3.0/montserrat.css` en `source-sans-3@5.3.0/source-sans-3.css` zijn op dezelfde manier gemaakt,
+met `font-family: 'Montserrat'` en `'Source Sans 3'`. Source Sans 3 is de open vervanger van Calluna Sans
+(Adobe Typekit, licentie) uit de huisstijl van Súdwest-Fryslân. Alleen een thema dat ze nodig heeft, laadt ze (#89);
+zie `docs/9-beheer/thema-s.md`.
 
 Bronkaartbestanden (`*.map`) zijn niet meegenomen. Alleen de browser-devtools vragen erom; die geven dan een 404.
 

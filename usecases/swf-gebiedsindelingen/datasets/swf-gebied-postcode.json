@@ -1,0 +1,110 @@
+{
+  "id": "swf-gebied-postcode",
+  "bronId": "swf-monitor",
+  "beschrijving": {
+    "@context": "https://data.overheid.nl/dcat-ap-nl/context.jsonld",
+    "@type": "dcat:Dataset",
+    "dct:title": "Postcodegebieden (PC4), Súdwest-Fryslân",
+    "dct:description": "Postcode-4-gebieden van het CBS (2023, PDOK) waarvan het binnenpunt in Súdwest-Fryslân ligt. Open alternatief voor 'ESRI postcode SWF' (licentie). D-OmniTwin zet er PC voor.",
+    "dct:publisher": "https://www.cbs.nl/",
+    "dct:accessRights": "http://publications.europa.eu/resource/authority/access-right/PUBLIC",
+    "dct:license": "http://creativecommons.org/licenses/by/4.0/",
+    "dct:spatial": "https://identifier.overheid.nl/tooi/id/gemeente/gm1900",
+    "dct:source": "https://service.pdok.nl/cbs/postcode4/2023/wfs/v1_0",
+    "dcat:theme": [
+      "http://standaarden.overheid.nl/owms/terms/Ruimtelijke_ordening"
+    ],
+    "dcat:keyword": [
+      "gebiedsindeling",
+      "Súdwest-Fryslân"
+    ],
+    "dct:conformsTo": "http://www.opengis.net/def/crs/EPSG/0/28992",
+    "dcat:contactPoint": {
+      "@type": "vcard:Organization",
+      "vcard:fn": "Functioneel beheer gebiedsmonitor, gemeente Súdwest-Fryslân"
+    }
+  },
+  "laadprofiel": {
+    "profiel": "gebiedsindeling",
+    "doel": {
+      "gebiedstypeId": "e9255451-7476-4413-a712-e920cd2e90a8",
+      "featureTabel": "gebieden",
+      "sleutelveld": "code",
+      "labelveld": "naam",
+      "codePrefix": "PC"
+    },
+    "plausibiliteit": {
+      "minRegels": 30,
+      "maxDalingProcent": 10
+    }
+  },
+  "bron": {
+    "adapter": "wfs",
+    "url": "https://service.pdok.nl/cbs/postcode4/2023/wfs/v1_0",
+    "laag": "postcode4:postcode4",
+    "bbox": [
+      140000,
+      535000,
+      195000,
+      590000
+    ],
+    "omschrijving": "CBS Postcode-4 2023 via PDOK (CC BY 4.0)"
+  },
+  "bewerkingen": [
+    {
+      "binnen": {
+        "bron": {
+          "adapter": "wfs",
+          "url": "https://service.pdok.nl/cbs/gebiedsindelingen/2024/wfs/v1_0",
+          "laag": "gebiedsindelingen:gemeente_gegeneraliseerd",
+          "bbox": [
+            140000,
+            535000,
+            195000,
+            590000
+          ],
+          "omschrijving": "CBS-gemeentegrens 2024 (PDOK)"
+        },
+        "bewerkingen": [
+          {
+            "filter": {
+              "veld": "statcode",
+              "gelijk": "GM1900"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "kopieer": {
+        "van": "postcode",
+        "naar": "code"
+      }
+    },
+    {
+      "tekst": [
+        "code"
+      ]
+    },
+    {
+      "sjabloon": {
+        "naar": "naam",
+        "sjabloon": "Postcode {code}"
+      }
+    },
+    {
+      "behoud": [
+        "code",
+        "naam"
+      ]
+    },
+    {
+      "multipolygon": true
+    }
+  ],
+  "levering": {
+    "formaat": "geopackage",
+    "bestand": "swf-gebied-postcode.gpkg",
+    "geometrie": "MultiPolygon"
+  }
+}

@@ -7,17 +7,116 @@ De app publiceert `window.state` (kaartstaat, deck.gl-instantie) en
 """
 
 import json
+import os
 import time
 import warnings
 
-from playwright.sync_api import Page, expect
+from playwright.sync_api import Locator, Page, expect
+from playwright.sync_api import TimeoutError as PlaywrightTimeoutError
 
-# Buurten uit de sample dataset (init_data/sample/2_brondata/sample_buurten.geojson)
+# Wachttijd voor trage stappen (kaartdata, Kompas). CI-runners zonder GPU: E2E_TIMEOUT_MS hoger zetten.
+TRAAG_MS = int(os.environ.get("E2E_TIMEOUT_MS", "30000"))
+
+# Testbuurten van de demo-use cases (usecases/*/usecase.json, data.gebieden). Sinds #236 laadt een
+# verse installatie alle CBS-buurten van Fryslân; de tests vergelijken daarom niet met een vast aantal,
+# maar eisen dat deze buurten erbij zijn.
 BOLSWARD_ZUIDOOST = "BU19000002"
 WORKUM = "BU19000200"
 HINDELOOPEN = "BU19000202"
 KOUDUM = "BU19000300"
-AANTAL_SAMPLE_BUURTEN = 13
+TESTBUURTEN = ["BU19000001", "BU19000002", "BU19000004", "BU19000108", "BU19000200", "BU19000202", "BU19000300",
+               "BU19000301", "BU19000400", "BU19000401", "BU19001200", "BU19001300", "BU19002017"]
+
+
+# ── Wachten op toestand (#194) ───────────────────────────────────────────────
+# In CI rendert de browser in software (SwiftShader). Het compileren van WebGL-shaders
+# (MapLibre en deck.gl, bij elke nieuwe laag of kaartstijl-laag) blokkeert dan de
+# hoofdthread seconden per shader; na het laden van de kaart komt er tot een minuut lang
+# soms maar eens per 5-20 s een animatieframe. Playwright toetst vóór een klik of het
+# element 'stabiel' is over opeenvolgende animatieframes en hangt in die periode zonder
+# verdere melding ("waiting for element to be visible, enabled and stable").
+# Wachten op de klok is daar wankel; wacht op een toestand. Let op: page.wait_for_function
+# pollt standaard per animatieframe; de helpers hieronder pollen op een vast interval.
+
+_POLL_MS = 100
+# Een frame binnen deze tijd na het vorige: de renderer loopt weer. Ruim boven een gewoon
+# (ook traag) frame, ruim onder de gaten van seconden tijdens shadercompilatie.
+_VLOT_MS = 1000
+
+
+def wacht_op_frames(page: Page, aantal: int = 3, timeout: int = TRAAG_MS):
+    """Wacht tot de renderer weer vlot tekent: `aantal` animatieframes achter elkaar, elk
+    binnen _VLOT_MS na het vorige (geen shadercompilatie of ander lang werk ertussen)."""
+    page.evaluate(
+        """([n, vlot]) => {
+            const t = window.__e2eFrames = {n: 0};
+            let vorige = performance.now();
+            const tel = (nu) => {
+                t.n = (nu - vorige < vlot) ? t.n + 1 : 0;
+                vorige = nu;
+                if (t.n < n) requestAnimationFrame(tel);
+            };
+            requestAnimationFrame(tel);
+        }""",
+        [aantal, _VLOT_MS],
+    )
+    page.wait_for_function(
+        "(n) => window.__e2eFrames && window.__e2eFrames.n >= n", arg=aantal, polling=_POLL_MS, timeout=timeout
+    )
+
+
+def klik(page: Page, knop: Locator):
+    """Locator.click, pas als de renderer weer vlot tekent (zie boven)."""
+    expect(knop).to_be_visible()
+    wacht_op_frames(page)
+    knop.click()
+
+
+def wacht_op_kaart_in_rust(page: Page, timeout: int = TRAAG_MS):
+    """Camera staat stil: de viewState verandert niet meer over twee getekende frames."""
+    eind = time.monotonic() + timeout / 1000
+    lees = "() => JSON.stringify(window.state.currentViewState)"
+    while True:
+        voor = page.evaluate(lees)
+        wacht_op_frames(page, timeout=max(1, int((eind - time.monotonic()) * 1000)))
+        if page.evaluate(lees) == voor:
+            return
+        if time.monotonic() > eind:
+            raise AssertionError("kaartcamera komt niet tot stilstand")
+
+
+def klik_en_bevestig(page: Page, knop: Locator, aangekomen_js: str, omschrijving: str, pogingen: int = 2):
+    """Klik op een knop zodra die zichtbaar en ingeschakeld is en de renderer weer frames
+    tekent, en toets daarna of de klik aankwam (`aangekomen_js` wordt waar). Kwam de klik
+    niet aan (klik-time-out of geen effect), dan nog één keer; dat wordt als waarschuwing
+    gelogd. Alleen geschikt voor knoppen waarvan een tweede klik geen kwaad kan of die na
+    een geslaagde klik niet meer klikbaar zijn."""
+    for poging in range(pogingen):
+        expect(knop).to_be_visible()
+        expect(knop).to_be_enabled()
+        wacht_op_frames(page)
+        try:
+            knop.click()
+        except PlaywrightTimeoutError:
+            if page.evaluate(aangekomen_js):
+                return  # klik kwam toch nog aan
+            if poging == pogingen - 1:
+                raise
+            warnings.warn(f"klik op {omschrijving} niet uitgevoerd (poging {poging + 1}), opnieuw")
+            continue
+        try:
+            page.wait_for_function(aangekomen_js, polling=_POLL_MS, timeout=10_000)
+            return
+        except PlaywrightTimeoutError:
+            warnings.warn(f"klik op {omschrijving} niet aangekomen (poging {poging + 1}), opnieuw")
+    raise AssertionError(f"klik op {omschrijving} komt niet aan")
+
+
+def klik_chatactie(page: Page, knop: Locator, omschrijving: str):
+    """Klik op een actieknop in de chat. Een geslaagde klik zet de klasse 'actie-activated'
+    (en pointer-events: none), dus een herhaalde klik kan alleen volgen op een gemiste."""
+    knop.evaluate("(el) => { window.__e2eKnop = el; }")
+    klik_en_bevestig(page, knop, "() => window.__e2eKnop.classList.contains('actie-activated')", omschrijving)
 
 
 # ── Kaart ────────────────────────────────────────────────────────────────────
@@ -26,7 +125,7 @@ def open_paneel(page: Page, aria_label: str):
     """Open een zijpaneel via de tabbalk (laat een al open paneel open)."""
     knop = page.get_by_role("button", name=aria_label, exact=True)
     if "active" not in (knop.get_attribute("class") or ""):
-        knop.click()
+        klik(page, knop)
     page.wait_for_function(
         "(label) => document.querySelector(`.tab-button[aria-label=\"${label}\"]`).classList.contains('active')",
         arg=aria_label,
@@ -38,19 +137,26 @@ def laad_buurtenkaart(page: Page):
     open_paneel(page, "Kaartconfiguratie")
     page.locator("#gebiedstype-select").select_option(label="CBS Buurten")
     knop = page.locator("#toon-kaart-btn")
-    expect(knop).to_be_enabled(timeout=30_000)  # pas na het laden van de indicatoren
+    expect(knop).to_be_enabled(timeout=TRAAG_MS)  # pas na het laden van de indicatoren
     with page.expect_response(lambda r: "/api/gebiedsmonitor/kaart_data/" in r.url and r.ok):
-        knop.click()
+        klik(page, knop)
     wacht_op_kaartdata(page)
 
 
-def wacht_op_kaartdata(page: Page, aantal: int = AANTAL_SAMPLE_BUURTEN):
+def wacht_op_kaartdata(page: Page, gebied_ids=tuple(TESTBUURTEN)):
+    """Kaartdata geladen en getekend, met (minstens) deze buurten erin."""
     page.wait_for_function(
-        "(n) => window.state.currentData && window.state.currentData.features.length === n"
-        " && window.state.deckgl.props.layers.some(l => l.id.startsWith('gebieden-layer-'))",
-        arg=aantal,
-        timeout=30_000,
+        "(ids) => { const d = window.state.currentData; if (!d) return false;"
+        " const op = new Set(d.features.map(f => f.id || f.properties.id));"
+        " return ids.every(i => op.has(i))"
+        " && window.state.deckgl.props.layers.some(l => l.id.startsWith('gebieden-layer-')); }",
+        arg=list(gebied_ids),
+        timeout=TRAAG_MS,
     )
+
+
+def aantal_kaartgebieden(page: Page) -> int:
+    return page.evaluate("() => window.state.currentData.features.length")
 
 
 def selectie(page: Page) -> list:
@@ -141,6 +247,22 @@ def _vind_klikpunt(page: Page, gebied_id: str):
             zoom_kaart(page, 400)
 
 
+def wacht_op_camera_in_rust(page: Page, timeout: float = TRAAG_MS / 1000):
+    """Camera (viewState) gelijk over twee rondes van vlotte frames: een fly-to is klaar. Een klik
+    tijdens een cameratransitie onderbreekt die en selecteert niets."""
+    eind = time.monotonic() + timeout
+    vorige, gelijk = None, 0
+    while time.monotonic() < eind:
+        wacht_op_frames(page)
+        nu = page.evaluate("() => { const v = window.state.currentViewState || {};"
+                           " return [v.longitude, v.latitude, v.zoom, v.pitch, v.bearing]; }")
+        gelijk = gelijk + 1 if nu == vorige else 0
+        if gelijk >= 2:
+            return
+        vorige = nu
+        page.wait_for_timeout(300)
+
+
 def klik_buurt_op_kaart(page: Page, gebied_id: str, shift: bool = False):
     """Echte muisklik op het kaartcanvas binnen de buurt (optioneel met Shift).
 
@@ -151,7 +273,14 @@ def klik_buurt_op_kaart(page: Page, gebied_id: str, shift: bool = False):
     dat wordt als waarschuwing gelogd."""
     voor = sorted(selectie(page))
     for poging in range(3):
+        # Met alle CBS-buurten (#236) tekent software-WebGL trager: pas klikken als de camera stilstaat
+        wacht_op_camera_in_rust(page)
         punt = _vind_klikpunt(page, gebied_id)
+        # Eerst erheen bewegen en de hover-hertekening afwachten: deck.gl herkent een klik alleen als
+        # pointerdown en pointerup kort na elkaar verwerkt worden; een zware hertekening ertussen
+        # (software-WebGL, alle CBS-buurten sinds #236) maakt er anders geen klik van.
+        page.mouse.move(punt["x"], punt["y"])
+        wacht_op_frames(page)
         if shift:
             page.keyboard.down("Shift")
         try:
@@ -162,7 +291,7 @@ def klik_buurt_op_kaart(page: Page, gebied_id: str, shift: bool = False):
         try:
             page.wait_for_function(
                 "(voor) => JSON.stringify([...window.state.selectedGebiedIds].sort()) !== JSON.stringify(voor)",
-                arg=voor, timeout=4_000,
+                arg=voor, timeout=10_000,
             )
             return
         except Exception:
@@ -198,9 +327,9 @@ def verplaats_kompasvenster_rechts(page: Page):
 def open_kompas(page: Page, verwacht_in_info: str):
     """Kompas-paneel → 'Open Kompas'; wacht tot het venster de selectie toont."""
     open_paneel(page, "D-Omni Kompas")
-    page.locator("#open-kompas-btn").click()
+    klik(page, page.locator("#open-kompas-btn"))
     expect(page.locator("#kompas-window")).to_be_visible()
-    expect(page.locator("#kompas-info")).to_contain_text(verwacht_in_info, timeout=30_000)
+    expect(page.locator("#kompas-info")).to_contain_text(verwacht_in_info, timeout=TRAAG_MS)
     wacht_op_zonnediagram(page)
 
 
@@ -211,11 +340,14 @@ def wacht_op_zonnediagram(page: Page):
 
 
 # Middelpunt (arc-centroid) van een segment in schermcoördinaten, alleen als het
-# segment zichtbaar is en daar ook bovenop ligt.
+# segment zichtbaar is, daar ook bovenop ligt en er geen d3-transitie (zoom) loopt.
 _SEGMENT_JS = """
 (naam) => {
   const kv = window.kompasViz;
-  const paths = [...document.querySelectorAll('#kompas-container path.kompas-arc-path')];
+  const container = document.getElementById('kompas-container');
+  // d3 zet __transition op elk element met een lopende of geplande transitie
+  if ([...container.querySelectorAll('*')].some(n => n.__transition)) return null;
+  const paths = [...container.querySelectorAll('path.kompas-arc-path')];
   const el = paths.find(p => p.__data__ && p.__data__.data.name === naam);
   if (!el) return null;
   const d = el.__data__;
@@ -231,18 +363,44 @@ _SEGMENT_JS = """
 """
 
 
-def klik_kompas_segment(page: Page, naam: str, timeout: float = 10.0):
-    """Echte muisklik op een segment van het zonnediagram (na afloop van zoomanimaties)."""
+def _segmentpunt(page: Page, naam: str, timeout: float):
+    """Klikpunt van een segment zodra het zonnediagram stilstaat: geen lopende transitie
+    en dezelfde positie na een reeks vlot getekende frames."""
     eind = time.monotonic() + timeout
     vorige = None
     while time.monotonic() < eind:
         punt = page.evaluate(_SEGMENT_JS, naam)
         if punt and vorige and abs(punt["x"] - vorige["x"]) < 0.5 and abs(punt["y"] - vorige["y"]) < 0.5:
-            page.mouse.click(punt["x"], punt["y"])
-            return
+            return punt
         vorige = punt
-        page.wait_for_timeout(300)
+        try:
+            wacht_op_frames(page, timeout=max(1, int((eind - time.monotonic()) * 1000)))
+        except PlaywrightTimeoutError:
+            break
     raise AssertionError(f"Kompas-segment '{naam}' niet klikbaar binnen {timeout}s")
+
+
+def klik_kompas_segment(page: Page, naam: str, timeout: float = TRAAG_MS / 1000):
+    """Echte muisklik op een segment van het zonnediagram (na afloop van zoomanimaties).
+
+    De klik is aangekomen als het Kompas dat segment als huidige knoop heeft (zowel bij
+    inzoomen op een thema als bij het openen van een indicator). Zo niet, dan opnieuw
+    (bijv. als een herteken van het diagram de klik onderschepte); als waarschuwing gelogd.
+    Er wordt na de klik niet op het einde van de zoomtransitie gewacht: tests die de
+    transitie zelf toetsen (reduced motion) moeten die nog kunnen zien.
+    De wachttijd is TRAAG_MS: het wachten omvat nu ook het wachten op de renderer."""
+    for poging in range(3):
+        punt = _segmentpunt(page, naam, timeout)
+        page.mouse.click(punt["x"], punt["y"])
+        try:
+            page.wait_for_function(
+                "(naam) => window.kompasViz.currentNode && window.kompasViz.currentNode.data.name === naam",
+                arg=naam, polling=_POLL_MS, timeout=5_000,
+            )
+            return
+        except PlaywrightTimeoutError:
+            warnings.warn(f"klik op Kompas-segment '{naam}' niet aangekomen (poging {poging + 1}), opnieuw")
+    raise AssertionError(f"klik op Kompas-segment '{naam}' komt niet aan")
 
 
 def kompas_namen(page: Page) -> list:

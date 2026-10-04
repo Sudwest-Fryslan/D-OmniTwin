@@ -1,7 +1,7 @@
 # D-OmniTwin — extra Python-pakketten voor ETL, analyses en beheerscripts
 #
 # Niet in de Docker-image (#157). Nodig voor ETL/, de onderhoudsscripts in scripts/
-# (bijvoorbeeld import_safety_data.py, run_bag_import.py), scripts/ai/normalisation.py
+# (bijvoorbeeld run_bag_import.py), scripts/ai/normalisation.py
 # en init_data/scripts/download_buurten_fryslan.py.
 #
 # Installeren in een eigen virtualenv (zie ETL/ETL_DOCUMENTATION.md):

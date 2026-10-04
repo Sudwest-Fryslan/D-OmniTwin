@@ -1,0 +1,168 @@
+{
+  "specificatie": "1.0",
+  "naam": "cbs-kerncijfers",
+  "id": "TC-07-002",
+  "versie": "0.2.0",
+  "titel": "CBS Kerncijfers wijken en buurten via de laad-API",
+  "vraag": "Ik wil de CBS Kerncijfers van alle jaargangen sinds 2019 per buurt in D-OmniTwin, als één dataset die elk jaar met één levering wordt bijgewerkt.",
+  "gebruiker": "beheerder D-OmniTwin",
+  "status": "actief",
+  "afhankelijk_van": [
+    "cbs-gebiedsindelingen"
+  ],
+  "actoren": [
+    {
+      "naam": "beheerder",
+      "soort": "gebruiker",
+      "rollen": [
+        "beheerder"
+      ],
+      "omschrijving": "beheerder van D-OmniTwin: registreert de datasets"
+    },
+    {
+      "naam": "etl-cbs",
+      "soort": "machineclient",
+      "rollen": [
+        "dataset:cbs-kerncijfers:laden"
+      ],
+      "omschrijving": "ETL voor de CBS-bronnen: levert alleen de eigen datasets"
+    },
+    {
+      "naam": "lezer",
+      "soort": "gebruiker",
+      "rollen": [
+        "lezer"
+      ],
+      "omschrijving": "ingelogde medewerker: ziet ook wat niet openbaar is, laadt niets"
+    }
+  ],
+  "rechten": [
+    "realm-rol beheerder (registreren)",
+    "dataset:cbs-kerncijfers:laden",
+    "realm-rol lezer"
+  ],
+  "datasets": [
+    {
+      "id": "cbs-kerncijfers",
+      "route": "laden",
+      "registratie": "datasets/cbs-kerncijfers.json",
+      "profiel": "waarnemingen",
+      "rol": "dataset:cbs-kerncijfers:laden",
+      "client": "etl-cbs",
+      "prioriteit": "Must",
+      "bron": "CBS OData, Kerncijfers wijken en buurten 2019–2026 (open, CC BY 4.0)",
+      "verwacht": {
+        "regels": "186.756 (heel Fryslân, 8 jaargangen; gelijk aan controle.rijen_totaal in init_data/cbs/datapackage.json)",
+        "n": "leeg: CBS onderdrukt zelf (bron-onderdrukt)"
+      }
+    }
+  ],
+  "controles": [
+    {
+      "type": "aantal",
+      "dataset": "cbs-kerncijfers",
+      "minimaal": 180000,
+      "omschrijving": "alle jaargangen voor heel Fryslân (nu 186.756)"
+    },
+    {
+      "type": "api",
+      "pad": "/api/data/v1/gebied_data?gebied_id=eq.BU19000002&indicator_uuid=eq.31f70dff-c116-4267-bef0-d15b0ff4c020&select=jaar,waarde",
+      "anoniem": true,
+      "minimaal_aantal": 8,
+      "uuid": "31f70dff-c116-4267-bef0-d15b0ff4c020",
+      "gebied": "BU19000002",
+      "omschrijving": "Inwoners van Bolsward-Zuidoost voor 2019–2026"
+    },
+    {
+      "type": "idempotent",
+      "dataset": "cbs-kerncijfers",
+      "actor": "etl-cbs"
+    },
+    {
+      "type": "viewer",
+      "stap": "Kompas openen voor Bolsward-Zuidoost, indicator Inwoners",
+      "verwacht": "trendlijn 2019–2026"
+    },
+    {
+      "type": "recht",
+      "actor": "beheerder",
+      "actie": "registreren",
+      "toegestaan": true,
+      "omschrijving": "de beheerder mag datasets registreren"
+    },
+    {
+      "type": "recht",
+      "actor": "etl-cbs",
+      "actie": "leveren",
+      "dataset": "cbs-kerncijfers",
+      "toegestaan": true,
+      "omschrijving": "etl-cbs mag zijn eigen dataset leveren"
+    },
+    {
+      "type": "recht",
+      "actor": "etl-cbs",
+      "actie": "leveren",
+      "dataset": "cbs-gebied-buurten",
+      "toegestaan": false,
+      "omschrijving": "etl-cbs mag een andere dataset niet leveren (403)"
+    },
+    {
+      "type": "recht",
+      "actor": "etl-cbs",
+      "actie": "registreren",
+      "toegestaan": false,
+      "omschrijving": "etl-cbs mag niet registreren (403)"
+    },
+    {
+      "type": "recht",
+      "actor": "lezer",
+      "actie": "leveren",
+      "dataset": "cbs-kerncijfers",
+      "toegestaan": false,
+      "omschrijving": "een lezer mag niet laden (403)"
+    },
+    {
+      "type": "recht",
+      "actor": "lezer",
+      "actie": "registreren",
+      "toegestaan": false,
+      "omschrijving": "een lezer mag niet registreren (403)"
+    }
+  ],
+  "bewijs": {
+    "stappen": [
+      {
+        "id": "kaart",
+        "actie": "kaart",
+        "gebied": "BU19000002",
+        "indicator": "d48622cd-454d-5312-9a7b-4d3c269b81a8",
+        "omschrijving": "80 jaar of ouder (%) per buurt in Bolsward (CBS Kerncijfers 2026)",
+        "bevat": [
+          "Bolsward-Zuidoost"
+        ]
+      },
+      {
+        "id": "chat",
+        "actie": "chat",
+        "vraag": "Hoeveel inwoners heeft Bolsward-Zuidoost?",
+        "omschrijving": "Datavraag beantwoord uit de CBS Kerncijfers",
+        "bevat": [
+          "Bolsward-Zuidoost"
+        ]
+      },
+      {
+        "id": "levering",
+        "actie": "levering",
+        "dataset": "cbs-kerncijfers",
+        "omschrijving": "Leveringsstatus van de CBS Kerncijfers (laad-API)",
+        "bevat": [
+          "gepubliceerd"
+        ]
+      }
+    ]
+  },
+  "bekende_afwijkingen": [
+    "n ontbreekt: de CBS-tabellen hebben geen aantallen per waarde; minimumN 0 en bron-onderdrukt (CBS onderdrukt zelf).",
+    "Overlap met swf-basismonitor-waarden: 5 indicator-UUID's (2.598 waarden vanaf 2019) zitten in beide; zie de README van swf-basismonitor-waarden."
+  ]
+}

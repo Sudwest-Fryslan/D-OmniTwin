@@ -36,12 +36,12 @@ RUN pip install --require-hashes \
     && find "$T/bin" -type f ! -name torch_shm_manager -delete \
     && pip uninstall -y pip setuptools
 
-# Embeddingmodel voor AI-zoeken (#118): gepinde revisie (circa 90 MB).
-# Model en revisie staan in services/embedding_model.py; los gekopieerd zodat deze
+# Embeddingmodel voor AI-zoeken (#118, #233): gepinde revisie, gewichten als float16 (circa 250 MB).
+# Model en revisie staan in src/omnitwin/services/embedding_model.py; los gekopieerd zodat deze
 # laag alleen opnieuw draait als dat bestand verandert.
-ENV EMBEDDING_MODEL_PAD=/opt/models/all-MiniLM-L6-v2 \
+ENV EMBEDDING_MODEL_PAD=/opt/models/multilingual-e5-small \
     HF_HUB_DISABLE_TELEMETRY=1
-COPY services/embedding_model.py /tmp/embedding_model.py
+COPY src/omnitwin/services/embedding_model.py /tmp/embedding_model.py
 RUN python /tmp/embedding_model.py \
     && rm -rf /root/.cache/huggingface "$EMBEDDING_MODEL_PAD/.cache"
 
@@ -58,9 +58,11 @@ COPY --from=bouw /opt/venv /opt/venv
 # Buiten /app, zodat de bind-mount van de repo in dev het model niet verbergt
 COPY --from=bouw /opt/models /opt/models
 
-# Vanaf hier geen HuggingFace-verkeer meer: backend en db-init draaien offline
+# Vanaf hier geen HuggingFace-verkeer meer: backend en db-init draaien offline.
+# PYTHONPATH: het pakket omnitwin staat in /app/src (#182); ook bij de bind-mount in dev.
 ENV PATH=/opt/venv/bin:$PATH \
-    EMBEDDING_MODEL_PAD=/opt/models/all-MiniLM-L6-v2 \
+    PYTHONPATH=/app/src \
+    EMBEDDING_MODEL_PAD=/opt/models/multilingual-e5-small \
     HF_HUB_DISABLE_TELEMETRY=1 \
     HF_HUB_OFFLINE=1 \
     TRANSFORMERS_OFFLINE=1
@@ -74,10 +76,11 @@ COPY . .
 # alleen de mappen waarin de app schrijft zijn van de app-gebruiker.
 # UID 1000 komt meestal overeen met de ontwikkelaar op Linux (bind-mount in dev).
 # /data-cache: cache voor gedownloade open data (volume bron-cache); een nieuw volume neemt de eigenaar over.
+# /leveringen: ruwe leveringen van de laad-API (volume leveringen, #205).
 RUN chmod +x /app/docker-entrypoint.sh \
     && useradd --create-home --uid 1000 app \
-    && mkdir -p logs exports data-upload /data-cache \
-    && chown app:app logs exports data-upload /data-cache
+    && mkdir -p logs exports data-upload /data-cache /leveringen \
+    && chown app:app logs exports data-upload /data-cache /leveringen
 USER app
 
 # Expose port
@@ -85,4 +88,4 @@ EXPOSE 8000
 
 # Start server via entrypoint
 ENTRYPOINT ["/app/docker-entrypoint.sh"]
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uvicorn", "omnitwin.main:app", "--host", "0.0.0.0", "--port", "8000"]

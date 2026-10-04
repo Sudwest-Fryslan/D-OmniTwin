@@ -31,16 +31,21 @@ import {
   ChevronDown,
   ScrollText,
   Globe,
-  Activity
+  Activity,
+  Users,
+  ExternalLink
 } from 'lucide-react';
 import { authAPI } from './services/api';
+import Beeldmerk from './components/Beeldmerk';
 import './styles/admin.css';
 
 const queryClient = new QueryClient();
 
 // Layout component for authenticated pages
 const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { user, logout: storeLogout } = useAdminStore();
+  const { user, logout: storeLogout, authConfig } = useAdminStore();
+  // Ingelogd via Keycloak: wachtwoord en gebruikers beheer je daar (#251)
+  const viaKeycloak = user?.bron === 'oidc';
   const [dropdownOpen, setDropdownOpen] = React.useState(false);
   // Gebiedsdossier = /rapport of /rapport/<gebied_id>, niet de andere rapporten onder /rapport/
   const { pathname } = useLocation();
@@ -48,11 +53,23 @@ const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 
   const handleLogout = async () => {
     try {
-      await authAPI.logout();
+      const res = await authAPI.logout();
+      // Keycloak-sessie: ook bij Keycloak uitloggen (RP-initiated logout), die stuurt terug naar /admin/login
+      if (res.data.uitlog_url) {
+        window.location.assign(res.data.uitlog_url);
+        return;
+      }
     } catch (e) {
       console.error(e);
     }
     storeLogout();
+  };
+
+  const menuStijl: React.CSSProperties = {
+    display: 'flex', alignItems: 'center', gap: '0.5rem',
+    padding: '0.75rem 1rem', color: 'var(--color-text-primary)',
+    textDecoration: 'none', borderBottom: '1px solid var(--color-border)',
+    fontSize: '0.875rem'
   };
 
   return (
@@ -60,8 +77,11 @@ const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
       {/* Sidebar */}
       <aside className="sidebar">
         <div className="sidebar-header">
-          <h1>D-OmniTwin</h1>
-          <p>Beheerscherm</p>
+          <Beeldmerk size={36} />
+          <div>
+            <h1>D-OmniTwin</h1>
+            <p>Beheerscherm</p>
+          </div>
         </div>
 
         <nav className="sidebar-nav">
@@ -165,6 +185,12 @@ const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 
       {/* Main Content */}
       <main className="main-content">
+        {authConfig.noodtoegang && user?.bron === 'lokaal' && (
+          <div className="noodtoegang-balk hide-on-print" role="status">
+            Noodtoegang: je bent ingelogd met een lokaal account terwijl Keycloak aan staat
+            (<code>LOKAAL_INLOGGEN=true</code>). Zet dit uit zodra Keycloak weer werkt.
+          </div>
+        )}
         <header className="header hide-on-print" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'relative', zIndex: 50 }}>
           <h2>
             <Routes>
@@ -202,8 +228,8 @@ const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                 position: 'relative'
               }}
             >
-              <div style={{ background: 'var(--color-primary)', borderRadius: '50%', width: '24px', height: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <User size={14} color="white" />
+              <div style={{ background: 'var(--merk-bg)', borderRadius: '50%', width: '24px', height: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <User size={14} color="var(--merk-tekst)" />
               </div>
               {user?.username || 'Beheerder'}
               <ChevronDown size={16} color="var(--color-text-muted)" />
@@ -213,21 +239,23 @@ const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
               <div id="gebruikersmenu" style={{
                 position: 'absolute', top: '100%', right: 0, marginTop: '0.5rem',
                 background: 'var(--color-surface)', border: '1px solid var(--color-border)',
-                borderRadius: 'var(--radius-md)', width: '200px',
+                borderRadius: 'var(--radius-md)', width: '280px',
                 boxShadow: 'var(--shadow-md)', zIndex: 100, overflow: 'hidden'
               }}>
-                <NavLink
-                  to="/account"
-                  onClick={() => setDropdownOpen(false)}
-                  style={{
-                    display: 'flex', alignItems: 'center', gap: '0.5rem',
-                    padding: '0.75rem 1rem', color: 'var(--color-text-primary)',
-                    textDecoration: 'none', borderBottom: '1px solid var(--color-border)',
-                    fontSize: '0.875rem'
-                  }}
-                >
-                  <User size={16} /> Profiel & Wachtwoord
-                </NavLink>
+                {viaKeycloak && authConfig.account_url ? (
+                  <a href={authConfig.account_url} target="_blank" rel="noopener noreferrer" style={menuStijl}>
+                    <User size={16} /> Mijn account (Keycloak) <ExternalLink size={14} aria-label="opent in nieuw venster" />
+                  </a>
+                ) : !viaKeycloak && (
+                  <NavLink to="/account" onClick={() => setDropdownOpen(false)} style={menuStijl}>
+                    <User size={16} /> Profiel & Wachtwoord
+                  </NavLink>
+                )}
+                {authConfig.gebruikersbeheer_url && (
+                  <a href={authConfig.gebruikersbeheer_url} target="_blank" rel="noopener noreferrer" style={menuStijl}>
+                    <Users size={16} /> Gebruikers en rollen beheren <ExternalLink size={14} aria-label="opent in nieuw venster" />
+                  </a>
+                )}
                 <button
                   onClick={() => { setDropdownOpen(false); handleLogout(); }}
                   style={{
@@ -277,11 +305,17 @@ const OptionalLayout: React.FC<{ children: React.ReactNode }> = ({ children }) =
 // KleurschemasPage is now imported from ./pages/KleurschemasPage
 
 function App() {
-  const { isAuthenticated, setAuthenticated } = useAdminStore();
+  const { isAuthenticated, setAuthenticated, setAuthConfig, authConfig } = useAdminStore();
   const [isInitializing, setIsInitializing] = React.useState(true);
 
   React.useEffect(() => {
     const checkAuthStatus = async () => {
+      // Welke manieren van inloggen aan staan (Keycloak, lokaal); zonder antwoord: lokaal
+      try {
+        setAuthConfig((await authAPI.getConfig()).data);
+      } catch {
+        // standaardconfiguratie blijft staan
+      }
       try {
         const res = await authAPI.getMe();
         // Alleen beheerders; de backend dwingt dit ook af (#65)
@@ -297,7 +331,7 @@ function App() {
       }
     };
     checkAuthStatus();
-  }, [setAuthenticated]);
+  }, [setAuthenticated, setAuthConfig]);
 
   if (isInitializing) {
     return <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', color: 'var(--color-text)' }}>Bezig met laden...</div>;
@@ -305,6 +339,11 @@ function App() {
 
   return (
     <QueryClientProvider client={queryClient}>
+      {authConfig.demo && (
+        <div className="demo-balk hide-on-print" role="status">
+          Demo-omgeving — standaardwachtwoorden, niet voor productie
+        </div>
+      )}
       <BrowserRouter basename="/admin">
         <Routes>
           <Route

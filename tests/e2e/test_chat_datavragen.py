@@ -25,6 +25,8 @@ import pytest
 playwright = pytest.importorskip("playwright.sync_api")
 expect = playwright.expect
 
+from e2e_helpers import TRAAG_MS, klik_chatactie, wacht_op_kaart_in_rust  # noqa: E402
+
 pytestmark = pytest.mark.e2e
 
 BASE_URL = os.environ.get("OMNITWIN_BASE_URL", "http://localhost").rstrip("/")
@@ -38,6 +40,8 @@ def laad_usecases():
     uit = {}
     for f in sorted((ROOT / "usecases").glob("*/usecase.json")):
         u = json.loads(f.read_text(encoding="utf-8"))
+        if "persona" not in u:  # alleen de demo-use cases (TC-06-*) hebben persona en verwachting
+            continue
         if DATAVRAAG.search(u["persona"]["vraag"]):
             uit[f"{u['id']} {f.parent.name}"] = u
     return uit
@@ -128,9 +132,11 @@ def test_datavraag_in_de_chat(page, uc):
         timeout=60_000,
     )
     expect(page.locator("#selection-badge")).to_be_visible()
-    # Inzoom-animatie: met software-rendering kan die langer duren dan 1 s
-    page.wait_for_function("() => (window.state.currentViewState?.zoom || 0) >= 11", timeout=20_000)
-    page.wait_for_timeout(500)
+    # Inzoom-animatie: de camera beweegt alleen op animatieframes. In CI (software-WebGL)
+    # blokkeert shadercompilatie na het laden van een laag de renderer soms tientallen
+    # seconden; daarom de wachttijd voor trage stappen (TRAAG_MS) en een vast pollinterval (#194)
+    page.wait_for_function("() => (window.state.currentViewState?.zoom || 0) >= 11", polling=100, timeout=TRAAG_MS)
+    wacht_op_kaart_in_rust(page)
     camera = page.evaluate("""(ids) => {
         const set = new Set(ids); let x0 = 180, x1 = -180, y0 = 90, y1 = -90;
         const walk = a => { if (typeof a[0] === 'number') { x0 = Math.min(x0, a[0]); x1 = Math.max(x1, a[0]);
@@ -147,7 +153,9 @@ def test_datavraag_in_de_chat(page, uc):
     # Toon op kaart: gebieden geselecteerd en indicator op de kaart
     toon = next(a for a in data["acties"] if a["type"] == "TOON_OP_KAART")
     with page.expect_response(lambda r: "/api/gebiedsmonitor/kaart_data/" in r.url and r.ok, timeout=60_000):
-        bericht.locator(".chat-actie-btn", has_text="Toon op kaart").first.click()
+        # Niet direct klikken: na het meebewegen van de kaart kan de renderer in CI (software-
+        # WebGL) even geen frames tekenen, en dan hangt Playwrights stabiliteitscheck (#194)
+        klik_chatactie(page, bericht.locator(".chat-actie-btn", has_text="Toon op kaart").first, "Toon op kaart")
     page.wait_for_function(
         "([uuid, n]) => window.state.currentIndicator === uuid && window.state.selectedGebiedIds.size === n",
         arg=[toon["indicator_uuid"], len(toon["gebied_ids"])],
@@ -155,3 +163,20 @@ def test_datavraag_in_de_chat(page, uc):
     )
     geselecteerd = page.evaluate("() => [...window.state.selectedGebiedIds].sort()")
     assert geselecteerd == sorted(toon["gebied_ids"])
+
+
+def test_vraag_van_eduard_toont_relevantie_als_woord(page):
+    """#233: 'hoeveel % is bejaard bij mij in de buurt?' met Bolsward-Zuidoost als eigen buurt:
+    het cijfer voor die buurt, de indicator als onderbouwing en relevantie als woord, geen percentage."""
+    page.locator("#chat-toggle-btn").click()
+    with page.expect_response(lambda r: r.url.endswith("/api/chat") and r.request.method == "POST",
+                              timeout=LLM_TIMEOUT_MS) as resp:
+        page.evaluate("() => window.chatPanel.sendVraag('hoeveel % is bejaard bij mij in de buurt?',"
+                      " {huidig_gebied_id: 'BU19000002', geen_llm: true})")
+    data = resp.value.json()
+    assert data["intent"] == "DATAVRAAG", data
+    bericht = page.locator(".chat-message-assistant").last
+    expect(bericht.locator(".chat-narrative")).to_contain_text("Bolsward-Zuidoost: ")
+    expect(bericht.locator(".chat-indicatoren-label")).to_have_text("Onderbouwing: 2 indicatoren")
+    expect(bericht.locator(".chat-ind-naam")).to_have_text(["65+ jaar (%)", "80 jaar of ouder (%)"])
+    expect(bericht.locator(".chat-ind-score")).to_have_text(["sterk", "sterk"])

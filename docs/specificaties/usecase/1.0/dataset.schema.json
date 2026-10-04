@@ -1,0 +1,487 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/TLaan/D-OmniTwin/main/docs/specificaties/usecase/1.0/dataset.schema.json",
+  "title": "D-OmniTwin Use Case Specificatie 1.0: dataset (usecases/<naam>/datasets/<id>.json)",
+  "description": "Normatief schema; betekenis in docs/specificaties/usecase/README.md. De registratie voor POST /api/laden/v1/datasets (id, bronId, beschrijving, laadprofiel; schema DatasetRegistratie in docs/api/laden/openapi.yaml) plus, alleen voor de uitvoerder: bron (welke bronadapter), bewerkingen (declaratief, geen code), levering (bestandsformaat) en varianten. De uitvoerder stuurt bron, bewerkingen, levering en varianten niet mee naar de API.",
+  "type": "object",
+  "required": [
+    "id",
+    "bron",
+    "levering"
+  ],
+  "properties": {
+    "$schema": {
+      "type": "string"
+    },
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+      "minLength": 3,
+      "maxLength": 63
+    },
+    "bronId": {
+      "type": "string"
+    },
+    "beschrijving": {
+      "type": "object",
+      "description": "DCAT-AP-NL 3 / GeoDCAT-AP 3 (JSON-LD). Herkomst in dct:source en dcat:accessURL, licentie in dct:license."
+    },
+    "laadprofiel": {
+      "type": "object",
+      "description": "Zie Laadprofiel in docs/api/laden/openapi.yaml."
+    },
+    "bron": {
+      "oneOf": [
+        {
+          "type": "object",
+          "required": [
+            "adapter",
+            "export"
+          ],
+          "properties": {
+            "adapter": {
+              "type": "string",
+              "enum": [
+                "swf-dump"
+              ]
+            },
+            "omschrijving": {
+              "type": "string"
+            },
+            "tabel": {
+              "type": "string"
+            },
+            "export": {
+              "type": "string",
+              "enum": [
+                "definities",
+                "waarden"
+              ]
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "adapter"
+          ],
+          "properties": {
+            "adapter": {
+              "type": "string",
+              "enum": [
+                "cbs-odata"
+              ]
+            },
+            "omschrijving": {
+              "type": "string"
+            },
+            "tabel": {
+              "type": "string"
+            },
+            "gemeenten": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "pattern": "^[0-9]{4}$"
+              }
+            },
+            "jaren": {
+              "type": "array",
+              "items": {
+                "type": "integer"
+              }
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "adapter",
+            "url",
+            "laag"
+          ],
+          "properties": {
+            "adapter": {
+              "type": "string",
+              "enum": [
+                "wfs"
+              ]
+            },
+            "omschrijving": {
+              "type": "string"
+            },
+            "tabel": {
+              "type": "string"
+            },
+            "url": {
+              "type": "string",
+              "format": "uri",
+              "pattern": "^https://"
+            },
+            "laag": {
+              "type": "string"
+            },
+            "bbox": {
+              "type": "array",
+              "items": {
+                "type": "number"
+              }
+            },
+            "pagina": {
+              "type": "integer"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "adapter",
+            "url"
+          ],
+          "properties": {
+            "adapter": {
+              "type": "string",
+              "enum": [
+                "download"
+              ]
+            },
+            "omschrijving": {
+              "type": "string"
+            },
+            "tabel": {
+              "type": "string"
+            },
+            "url": {
+              "type": "string",
+              "format": "uri",
+              "pattern": "^https://"
+            },
+            "sha256": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            },
+            "formaat": {
+              "type": "string",
+              "enum": [
+                "gpkg",
+                "geojson",
+                "csv",
+                "json"
+              ]
+            },
+            "laag": {
+              "type": "string"
+            },
+            "crs": {
+              "type": "integer",
+              "description": "EPSG-code als het bestand (GeoJSON) hem niet noemt; standaard 4326."
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "adapter",
+            "pad"
+          ],
+          "properties": {
+            "adapter": {
+              "type": "string",
+              "enum": [
+                "lokaal-bestand"
+              ]
+            },
+            "omschrijving": {
+              "type": "string"
+            },
+            "tabel": {
+              "type": "string"
+            },
+            "pad": {
+              "type": "string",
+              "pattern": "^\\$\\{(SWF_DUMP_DIR|SWF_DOCS_DIR|SWF_GEO_DIR|SWF_DB_DUMP|DATA_CACHE|REPO)\\}/"
+            },
+            "formaat": {
+              "type": "string",
+              "enum": [
+                "gpkg",
+                "geojson",
+                "csv",
+                "json"
+              ]
+            },
+            "laag": {
+              "type": "string"
+            },
+            "crs": {
+              "type": "integer",
+              "description": "EPSG-code als het bestand (GeoJSON) hem niet noemt; standaard 4326."
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "adapter",
+            "pad"
+          ],
+          "properties": {
+            "adapter": {
+              "type": "string",
+              "enum": [
+                "usecase-bestand"
+              ]
+            },
+            "omschrijving": {
+              "type": "string"
+            },
+            "tabel": {
+              "type": "string"
+            },
+            "pad": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9_./-]+\\.(json|csv)$"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "adapter",
+            "url",
+            "kolommen"
+          ],
+          "description": "Een StatLine-tabel (CBS, of RIVM en Politie via dataderden.cbs.nl), uitgepakt per kolom: één record per regio, periode, dimensiewaarden en kolom (src/omnitwin/bronadapters/statline.py).",
+          "properties": {
+            "adapter": {
+              "type": "string",
+              "enum": [
+                "cbs-statline"
+              ]
+            },
+            "omschrijving": {
+              "type": "string"
+            },
+            "tabel": {
+              "type": "string"
+            },
+            "url": {
+              "type": "string",
+              "format": "uri",
+              "pattern": "^https://[^/]+/ODataFeed/odata/[0-9A-Za-z]+/?$"
+            },
+            "kolommen": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "type": "string"
+              }
+            },
+            "regio": {
+              "type": "string"
+            },
+            "gemeenten": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "pattern": "^[0-9]{4}$"
+              }
+            },
+            "gebieden": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "regio_prefix": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "enum": [
+                  "BU",
+                  "WK",
+                  "GM"
+                ]
+              }
+            },
+            "filter": {
+              "type": "object",
+              "additionalProperties": {
+                "oneOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                ]
+              }
+            },
+            "jaren": {
+              "type": "array",
+              "items": {
+                "type": "integer"
+              }
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "adapter",
+            "url",
+            "coverage",
+            "gebieden"
+          ],
+          "description": "Gemiddelde van een WCS-raster (OGC WCS 2.0.1, GeoTIFF in EPSG:28992) per gebied; gebieden is zelf een bron-blok met bewerkingen (src/omnitwin/bronadapters/raster.py).",
+          "properties": {
+            "adapter": {
+              "type": "string",
+              "enum": [
+                "wcs-zonaal"
+              ]
+            },
+            "omschrijving": {
+              "type": "string"
+            },
+            "tabel": {
+              "type": "string"
+            },
+            "url": {
+              "type": "string",
+              "format": "uri",
+              "pattern": "^https://"
+            },
+            "coverage": {
+              "type": "string"
+            },
+            "gebieden": {
+              "type": "object",
+              "required": [
+                "bron"
+              ],
+              "properties": {
+                "bron": {
+                  "type": "object"
+                },
+                "bewerkingen": {
+                  "type": "array",
+                  "items": {
+                    "type": "object"
+                  }
+                },
+                "sleutel": {
+                  "type": "string"
+                }
+              },
+              "additionalProperties": false
+            },
+            "celgrootte": {
+              "type": "number"
+            },
+            "nodata": {
+              "type": "number"
+            },
+            "nodata_als": {
+              "type": "number"
+            },
+            "decimalen": {
+              "type": "integer"
+            },
+            "max_cellen": {
+              "type": "integer"
+            }
+          },
+          "additionalProperties": false
+        }
+      ]
+    },
+    "bewerkingen": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      },
+      "description": "Declaratieve bewerkingen uit een vaste lijst, elk een object met precies één bewerkingssleutel plus optioneel id en tabel; zie de specificatie en src/omnitwin/bronadapters/bewerkingen.py."
+    },
+    "levering": {
+      "type": "object",
+      "required": [
+        "formaat"
+      ],
+      "properties": {
+        "formaat": {
+          "type": "string",
+          "enum": [
+            "datapackage",
+            "geopackage",
+            "swf-json"
+          ]
+        },
+        "bestand": {
+          "type": "string"
+        },
+        "geometrie": {
+          "type": "string",
+          "enum": [
+            "Point",
+            "MultiPoint",
+            "LineString",
+            "MultiLineString",
+            "Polygon",
+            "MultiPolygon"
+          ]
+        },
+        "schema": {
+          "type": "object",
+          "description": "Eigen Table Schema per resource (pad in de use case), voor wat geen laad-API-profiel is (bijv. kompasprofiel)."
+        }
+      },
+      "additionalProperties": false
+    },
+    "varianten": {
+      "type": "object",
+      "description": "Varianten van de levering: sla_over = id's van bewerkingen die niet draaien (bijv. met-fouten voor een afkeuringstest); bron = een andere bron, met eventueel eigen bewerkingen (bijv. de echte interne bron naast demodata); als_beschikbaar = de uitvoerder gebruikt deze variant als zijn bron hier beschikbaar is, en anders de standaardbron.",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "omschrijving": {
+            "type": "string"
+          },
+          "sla_over": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "bron": {
+            "type": "object"
+          },
+          "bewerkingen": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "als_beschikbaar": {
+            "type": "boolean"
+          },
+          "beschrijving": {
+            "type": "object",
+            "description": "DCAT-velden die bij deze variant anders zijn (bijv. dct:type en dct:description bij de echte bron in plaats van demodata)."
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  }
+}

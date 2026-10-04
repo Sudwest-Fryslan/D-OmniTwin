@@ -5,15 +5,15 @@ from pathlib import Path
 from sqlalchemy.orm import Session
 from sqlalchemy import text
 
-# Voeg project root toe aan python path
+# Voeg src/ (pakket omnitwin) toe aan python path
 project_root = Path(__file__).resolve().parent.parent.parent
-sys.path.append(str(project_root))
+sys.path.append(str(project_root / "src"))
 
-from src.database import SessionLocal
-from services.llm_service import LLMService
+from omnitwin.database import SessionLocal
+from omnitwin.services.llm_service import LLMService
 import re
 
-from src.utils.ai_generator import generate_indicator_description
+from omnitwin.utils.ai_generator import generate_indicator_description
 
 def clean_ai_output(text: str) -> str:
     """Verwijdert ongewenste AI-artefacten zoals <think> blokken en markdown codeblokken."""

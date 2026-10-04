@@ -1,0 +1,64 @@
+{
+  "id": "swf-monitor-definities",
+  "bronId": "swf-monitor",
+  "beschrijving": {
+    "@context": "https://data.overheid.nl/dcat-ap-nl/context.jsonld",
+    "@type": "dcat:Dataset",
+    "dct:title": "Basismonitor Súdwest-Fryslân — definities",
+    "dct:description": "Indicatoren, gebiedstypen en hun relaties van de gebiedsmonitor van Súdwest-Fryslân: altijd de volledige set uit de datamart DMART_BASISMONITOR.",
+    "dct:publisher": "https://identifier.overheid.nl/tooi/id/gemeente/gm1900",
+    "dct:accessRights": "http://publications.europa.eu/resource/authority/access-right/PUBLIC",
+    "dct:license": "http://standaarden.overheid.nl/owms/terms/licentieonbekend",
+    "dct:spatial": "https://identifier.overheid.nl/tooi/id/gemeente/gm1900",
+    "dct:source": "Datamart DMART_BASISMONITOR, gemeente Súdwest-Fryslân (export van de huidige gebiedsmonitor)",
+    "dcat:theme": [
+      "http://standaarden.overheid.nl/owms/terms/Bestuur"
+    ],
+    "dcat:keyword": [
+      "gebiedsmonitor",
+      "indicatoren",
+      "Súdwest-Fryslân"
+    ],
+    "dcat:contactPoint": {
+      "@type": "vcard:Organization",
+      "vcard:fn": "Functioneel beheer gebiedsmonitor, gemeente Súdwest-Fryslân"
+    }
+  },
+  "laadprofiel": {
+    "profiel": "definities",
+    "adapter": "swf-monitor-v1",
+    "plausibiliteit": {
+      "maxDalingProcent": 10
+    }
+  },
+  "bron": {
+    "adapter": "swf-dump",
+    "export": "definities",
+    "omschrijving": "zoals de FME-workspace voor de definities hem uit de datamart maakt"
+  },
+  "bewerkingen": [
+    {
+      "tabel": "indicatoren",
+      "id": "status-a",
+      "waarde_map": {
+        "veld": "status",
+        "map": {
+          "A": "O"
+        }
+      },
+      "omschrijving": "zoals SWF het in de DWH-SQL zou doen zolang D-OmniTwin A niet kent"
+    }
+  ],
+  "levering": {
+    "formaat": "swf-json",
+    "bestand": "definities.json"
+  },
+  "varianten": {
+    "ruw": {
+      "omschrijving": "precies wat FME nu pusht (met status A): de laad-API hoort af te keuren",
+      "sla_over": [
+        "status-a"
+      ]
+    }
+  }
+}

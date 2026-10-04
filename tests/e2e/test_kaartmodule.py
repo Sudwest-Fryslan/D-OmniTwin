@@ -13,7 +13,7 @@ from playwright.sync_api import expect
 from e2e_helpers import (
     HINDELOOPEN, KOUDUM, WORKUM,
     klik_buurt_op_kaart, laad_buurtenkaart, open_kompas, open_paneel, selecteer_buurt_via_app,
-    selectie, selectie_overlay_aanwezig, wacht_op_selectie, zoom_kaart,
+    selectie, selectie_overlay_aanwezig, wacht_op_selectie, zoom_kaart, TRAAG_MS,
 )
 
 
@@ -151,7 +151,7 @@ def test_tc_01_003b_bag_woonplaatsen(app_page):
             [laag["id"], naam],
         )
         page.wait_for_function(
-            "(naam) => window.state.selectedGroepen.some(g => g.naam === naam)", arg=naam, timeout=30_000
+            "(naam) => window.state.selectedGroepen.some(g => g.naam === naam)", arg=naam, timeout=TRAAG_MS
         )
 
     groepen = page.evaluate("() => window.state.selectedGroepen")
@@ -248,7 +248,18 @@ def test_kaart_zoomt_in_op_geladen_gebieden(app_page):
     """#79: na het laden zoomt de kaart in op de gebieden (fitBounds via viewState),
     helemaal zichtbaar naast het geopende linkerpaneel."""
     page = app_page
-    start = page.evaluate("() => ({ ...window.state.currentViewState })")
+    # Eerst uitzoomen zoals een gebruiker: het beginbeeld is al Fryslân en sinds #236 staan alle
+    # CBS-buurten van Fryslân op de kaart, dus zonder uitzoomen valt er niets in te zoomen.
+    for _ in range(3):
+        zoom_kaart(page, 600)
+    start, stil = None, 0
+    for _ in range(40):  # camera in rust (zelfde zoom over 1,5 s)
+        nu = page.evaluate("() => ({ ...window.state.currentViewState })")
+        stil = stil + 1 if start and abs(nu["zoom"] - start["zoom"]) < 1e-6 else 0
+        start = nu
+        if stil >= 3:
+            break
+        page.wait_for_timeout(500)
     laad_buurtenkaart(page)
     page.wait_for_function(
         "(z) => window.state.currentViewState.zoom > z + 1", arg=start["zoom"], timeout=15_000

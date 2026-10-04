@@ -1,0 +1,17 @@
+{
+  "$schema": "https://datapackage.org/profiles/2.0/datapackage.json",
+  "name": "voorbeeld-waarnemingen",
+  "title": "Voorbeeldlevering profiel waarnemingen",
+  "description": "Fictieve waarden voor twee buurten. Zip deze map (datapackage.json, waarnemingen.csv en dcat.jsonld in de root) en lever het als application/zip.",
+  "version": "2025.12",
+  "resources": [
+    {
+      "name": "waarnemingen",
+      "path": "waarnemingen.csv",
+      "format": "csv",
+      "mediatype": "text/csv",
+      "encoding": "utf-8",
+      "schema": "https://raw.githubusercontent.com/TLaan/D-OmniTwin/main/docs/api/laden/profielen/waarnemingen.schema.json"
+    }
+  ]
+}

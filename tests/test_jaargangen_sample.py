@@ -9,12 +9,16 @@ import csv
 import sys
 from pathlib import Path
 
+import pytest
+
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "init_data" / "scripts"))
 
 from jaargang_controle import (  # noqa: E402
     controleer_jaargangen, format_jaren, geometrie_codes, geometrie_jaar_sample,
 )
+
+pytestmark = pytest.mark.unit
 
 SAMPLE = ROOT / "init_data" / "sample" / "2_brondata"
 

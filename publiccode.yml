@@ -6,15 +6,20 @@
 # - url: verandert bij de overdracht naar de SWF-organisatie (#30)
 # - softwareVersion: gelijk aan het bestand VERSION (Semantic Versioning, zie
 #   docs/9-beheer/releasebeleid.md); een unittest controleert dat.
-# - releaseDate: invullen bij het taggen van de release (YYYY-MM-DD).
-# - maintenance/contacts: e-mailadres nog te bevestigen.
+# - releaseDate: datum van de release (YYYY-MM-DD), gelijk aan de CHANGELOG-sectie.
+# - maintenance: beheerder en onderhoudstermijn volgens de OWC-afspraken (GOVERNANCE.md,
+#   SUPPORT.md, #183). publiccode.yml heeft voor type internal geen veld voor de
+#   einddatum; die staat daarom in SUPPORT.md en in de longDescription. Bij het einde
+#   van het onderhoud: type none, een jaar vooraf aangekondigd.
 
 publiccodeYmlVersion: "0"
 
 name: D-OmniTwin
 url: "https://github.com/TLaan/D-OmniTwin"
-softwareVersion: "0.1.0"
-# releaseDate: "<datum van de tag v0.1.0>"
+# Tijdelijk beeldmerk, zie #83
+logo: static/images/beeldmerk-woordmerk.svg
+softwareVersion: "0.3.0-rc.1"
+releaseDate: "2026-10-03"
 
 platforms:
   - web
@@ -75,6 +80,10 @@ description:
       samen met de gemeenten Leeuwarden en Tytsjerksteradiel en Coöperatie
       DataFryslân, met steun van het Innovatiebudget Digitale Overheid 2026.
 
+      Beheerder en eigenaar is Gemeente Súdwest-Fryslân, volgens de afspraken
+      van het OpenWebconcept. Onderhoudsgarantie: een jaar na elke release;
+      het einde wordt minimaal een jaar vooraf aangekondigd (SUPPORT.md).
+
       De applicatie draait met Docker Compose (FastAPI, PostgreSQL/PostGIS,
       PostgREST, pg_featureserv en Traefik). Een sample dataset van 12 buurten
       wordt bij de eerste start automatisch geladen.
@@ -112,6 +121,11 @@ description:
       Tytsjerksteradiel and the DataFryslân cooperative, funded by the Dutch
       Innovation Budget for Digital Government 2026.
 
+      Owner and maintainer is the Municipality of Súdwest-Fryslân, following
+      the OpenWebconcept agreements. Maintenance guarantee: one year after each
+      release; the end of maintenance is announced at least one year in advance
+      (SUPPORT.md).
+
       The user interface is in Dutch.
     features:
       - D-Omni Kompas with indicators in 12 themes
@@ -125,12 +139,12 @@ legal:
   license: EUPL-1.2
   mainCopyrightOwner: Gemeente Súdwest-Fryslân
 
+# Beheerder (OWC): de gemeente. Termijn: zie SUPPORT.md
 maintenance:
   type: internal
   contacts:
-    - name: Taeke van der Laan
-      # E-mailadres nog te bevestigen; hier invullen zodra bekend.
-      # email: "<e-mailadres Taeke, te bevestigen>"
+    - name: Geo-groep Gemeente Súdwest-Fryslân
+      email: "geo-groep@sudwestfryslan.nl"
       affiliation: Gemeente Súdwest-Fryslân
 
 localisation:

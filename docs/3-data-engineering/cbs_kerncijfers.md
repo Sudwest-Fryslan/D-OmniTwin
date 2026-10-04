@@ -36,7 +36,7 @@ Elk ID is bij elke download gecontroleerd via `TableInfos`: `Period` moet het pe
 Per waarde:
 - `jaar` = peiljaar van de tabel;
 - `bron` = `CBS Kerncijfers wijken en buurten <jaar> (<tabel>)`;
-- `gebied_data.metadata.bron_tabel` = het tabel-ID (gezet door `laad_cbs.py`).
+- via de laadstraat (use case `cbs-kerncijfers`): `gebied_data.metadata.dataset` = `cbs-kerncijfers`, het tabel-ID staat in de bron; `laad_cbs.py` (direct, alleen nog voor `seed_fryslan.py`) zet `metadata.bron_tabel`.
 
 CBS vult een tabel na publicatie nog aan, bijvoorbeeld met inkomen en arbeid. Recente jaren hebben daardoor nog niet alle variabelen; 2026 bevat vooral bevolking en huishoudens.
 
@@ -78,7 +78,7 @@ Smallingerland heeft per 2024 een nieuwe buurtindeling: de 61 buurten van Smalli
 
 | Wanneer | Wat | Hoe |
 |---------|-----|-----|
-| `db-init`, `LOAD_SAMPLE_DATA=true` | de reeksen voor de gebieden in de database (de 13 use-casebuurten) | `laad_usecase.py --alle`, daarna `laad_cbs.py` (download of cache) |
+| `db-init`, `LOAD_SAMPLE_DATA=true` | heel Fryslân, via de laadstraat (use case `cbs-kerncijfers`, #236) | `python -m omnitwin.usecases installeer --alle --inproces` (download of cache) |
 | expliciet, heel Fryslân | 931 buurten, alle jaren | `docker compose run --rm db-init python init_data/scripts/seed_fryslan.py --stap alle` (stap `cbs`) |
 | alleen de CBS-reeksen | voor alle of genoemde gebieden in de database | `docker compose run --rm db-init python init_data/scripts/laad_cbs.py [BU...]` |
 

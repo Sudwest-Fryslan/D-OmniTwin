@@ -1,6 +1,70 @@
 {
+  "specificatie": "1.0",
+  "naam": "beleidsadviseur-swf",
   "id": "TC-06-001",
+  "versie": "0.2.0",
   "titel": "Beleidsadviseur verkent kernen in Súdwest-Fryslân (IJsselmeerkust)",
+  "vraag": "Ik ben beleidsadviseur",
+  "gebruiker": "Beleidsadviseur leefbaarheid / ruimtelijke ordening",
+  "status": "actief",
+  "afhankelijk_van": [
+    "cbs-gebiedsindelingen",
+    "cbs-kerncijfers",
+    "sample-bronbibliotheek"
+  ],
+  "rechten": [],
+  "datasets": [],
+  "controles": [
+    {
+      "type": "api",
+      "pad": "/api/data/v1/gebied_data?gebied_id=eq.BU19000200&indicator_uuid=eq.1b28d9ef-f7ff-4609-9ef7-7ab8a9b6cba7&select=jaar,waarde,bron",
+      "anoniem": true,
+      "minimaal_aantal": 3,
+      "uuid": "1b28d9ef-f7ff-4609-9ef7-7ab8a9b6cba7",
+      "gebied": "BU19000200",
+      "omschrijving": "Afstand tot huisarts Workum (CBS)"
+    },
+    {
+      "type": "api",
+      "pad": "/api/data/v1/gebied_data?gebied_id=eq.BU19000200&indicator_uuid=eq.a63f5c54-bcea-4ef9-8914-36c17668e1b4&select=jaar,waarde,bron",
+      "anoniem": true,
+      "minimaal_aantal": 1,
+      "uuid": "a63f5c54-bcea-4ef9-8914-36c17668e1b4",
+      "gebied": "BU19000200",
+      "omschrijving": "OV-haltes Workum (OpenStreetMap, sample)"
+    }
+  ],
+  "bewijs": {
+    "stappen": [
+      {
+        "id": "chat",
+        "actie": "chat",
+        "vraag": "Ik ben beleidsadviseur",
+        "omschrijving": "Scenario Beleidsadviseur: de D-Omni Assistent zet kaart en Kompas klaar"
+      },
+      {
+        "id": "kaart",
+        "actie": "kaart",
+        "gebied": "BU19000200",
+        "indicator": "1b28d9ef-f7ff-4609-9ef7-7ab8a9b6cba7",
+        "omschrijving": "Afstand tot huisarts in de kernen aan de IJsselmeerkust, Workum geselecteerd",
+        "bevat": [
+          "Workum"
+        ]
+      },
+      {
+        "id": "kompas",
+        "actie": "kompas",
+        "gebied": "BU19000200",
+        "indicator": "1b28d9ef-f7ff-4609-9ef7-7ab8a9b6cba7",
+        "profiel": "Volledig Kompas",
+        "omschrijving": "Kompas voor Workum: alle indicatoren in thema's",
+        "bevat": [
+          "Workum"
+        ]
+      }
+    ]
+  },
   "persona": {
     "rol": "Beleidsadviseur leefbaarheid / ruimtelijke ordening",
     "vraag": "Ik ben beleidsadviseur",
@@ -21,7 +85,7 @@
       "BU19000108": "Bomenbuurt",
       "BU19001200": "Woudsend"
     },
-    "dataset": "init_data/sample",
+    "dataset": "laad-API: de datasets van de afhankelijkheden (open bronnen; demodata gemarkeerd)",
     "indicatoren": [
       {
         "naam": "Aantal OV-haltes (totaal)",
@@ -45,8 +109,9 @@
       }
     ],
     "ontbreekt_nog": [
-      "Makkum (genoemd in TC-06-001, niet in de bronbibliotheek)",
-      "Reistijd OV naar voorzieningen"
+      "Makkum (genoemd in TC-06-001, niet in de testbuurten)",
+      "Reistijd OV naar voorzieningen",
+      "OV-haltes: open (OpenStreetMap), adapter volgt; nu uit sample-bronbibliotheek"
     ]
   },
   "inrichting": {

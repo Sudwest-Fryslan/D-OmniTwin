@@ -16,13 +16,15 @@ Dit bestand bevat de vermeldingen van de belangrijkste bibliotheken en framework
 - **pg_featureserv**: [Apache License 2.0](https://github.com/CrunchyData/pg_featureserv/blob/master/LICENSE.md)
 
 ## 🎨 Frontend (JavaScript/React)
-MapLibre GL JS, deck.gl, D3.js, Chart.js en Inter worden zelf gehost in `static/vendor/`, met het licentiebestand per pakket; zie `static/vendor/README.md`.
+MapLibre GL JS, deck.gl, D3.js, Chart.js, Inter, Montserrat en Source Sans 3 worden zelf gehost in `static/vendor/`, met het licentiebestand per pakket; zie `static/vendor/README.md`.
 
 - **MapLibre GL JS**: [BSD 3-Clause License](https://github.com/maplibre/maplibre-gl-js/blob/main/LICENSE.txt)
 - **Deck.gl**: [MIT License](https://github.com/visgl/deck.gl/blob/master/LICENSE)
 - **D3.js**: [ISC License](https://github.com/d3/d3/blob/main/LICENSE)
 - **Chart.js**: [MIT License](https://github.com/chartjs/Chart.js/blob/master/LICENSE.md)
 - **Inter** (lettertype, via Fontsource): [SIL Open Font License 1.1](https://github.com/rsms/inter/blob/master/LICENSE.txt)
+- **Montserrat** (lettertype van het SWF-thema, via Fontsource): Copyright 2011 The Montserrat Project Authors, [SIL Open Font License 1.1](https://github.com/JulietaUla/Montserrat/blob/master/OFL.txt)
+- **Source Sans 3** (lettertype van het SWF-thema, via Fontsource): Google Inc. en Adobe, [SIL Open Font License 1.1](https://github.com/adobe-fonts/source-sans/blob/release/LICENSE.md)
 - **Tailwind CSS** (gegenereerde CSS in `static/css/colors/`): [MIT License](https://github.com/tailwindlabs/tailwindcss/blob/main/LICENSE)
 - **React**: [MIT License](https://github.com/facebook/react/blob/main/LICENSE)
 - **TypeScript**: [Apache License 2.0](https://github.com/microsoft/TypeScript/blob/main/LICENSE.txt)
@@ -32,8 +34,13 @@ MapLibre GL JS, deck.gl, D3.js, Chart.js en Inter worden zelf gehost in `static/
 - **Sentence-Transformers**: [Apache License 2.0](https://github.com/UKPLab/sentence-transformers/blob/master/LICENSE)
 
 ## 📊 Open data (use cases)
-- **CBS, Kerncijfers wijken en buurten 2026** (tabel 86358NED, `usecases/hittestress`): [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/deed.nl). Bron: Centraal Bureau voor de Statistiek, https://opendata.cbs.nl/ODataApi/odata/86358NED
-- **RIVM, Atlas Natuurlijk Kapitaal: Bomenkaart 2022 en Stedelijk hitte-eiland effect v2 (2022)** (`usecases/hittestress`): [Public Domain Mark 1.0](https://creativecommons.org/publicdomain/mark/1.0/deed.nl). Bron: RIVM, https://data.rivm.nl/geo/ank/wcs
+De use cases downloaden open data bij het laden (cache in `$DATA_CACHE`); de data staat niet in git. Per dataset staan bron en licentie ook in de DCAT-beschrijving (`dct:source`, `dct:license`) in `usecases/<naam>/datasets/<id>.json`, en per waarde in `bron`.
+
+- **CBS, Kerncijfers wijken en buurten 2019-2026** (`usecases/cbs-kerncijfers`, ook `80 jaar of ouder (%)` voor `usecases/hittestress`): [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/deed.nl). Bron: Centraal Bureau voor de Statistiek, https://opendata.cbs.nl/ODataApi/odata/86358NED (en de andere jaargangen).
+- **RIVM, GGD'en en CBS, Gezondheid per wijk en buurt 2012-2024** (StatLine 50150NED, `usecases/rivm-gezondheidsmonitor`): [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/deed.nl). Bron: Gezondheidsmonitor Volwassenen en Ouderen, GGD'en, CBS en RIVM, https://dataderden.cbs.nl/ODataFeed/odata/50150NED
+- **Politie, Geregistreerde misdrijven per wijk en buurt** (StatLine 47018NED, `usecases/politie-misdrijven`): [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/deed.nl). Bron: Politie, https://dataderden.cbs.nl/ODataFeed/odata/47018NED
+- **RIVM, Atlas Natuurlijk Kapitaal: Bomenkaart 2022 en Stedelijk hitte-eiland effect v2 (2022)** (`usecases/hittestress`, adapter `wcs-zonaal`): [Public Domain Mark 1.0](https://creativecommons.org/publicdomain/mark/1.0/deed.nl). Bron: RIVM, https://data.rivm.nl/geo/ank/wcs
+- **CBS Gebiedsindelingen 2024 via PDOK** (`usecases/cbs-gebiedsindelingen`): [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/deed.nl). Bron: CBS, via PDOK, https://service.pdok.nl/cbs/gebiedsindelingen/2024/wfs/v1_0
 ## 📊 Data
 - **CBS Kerncijfers wijken en buurten 2019-2026** (recept in `init_data/cbs/`; de data wordt bij het laden gedownload): Centraal Bureau voor de Statistiek (CBS), tabellen 84583NED, 84799NED, 85039NED, 85318NED, 85618NED, 85984NED, 86165NED en 86358NED via [opendata.cbs.nl](https://opendata.cbs.nl). [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). Bewerkt: alleen buurten in Fryslân, kolommen gemapt op D-OmniTwin-indicatoren, `65+ jaar (%)` afgeleid. Zie [`docs/3-data-engineering/cbs_kerncijfers.md`](docs/3-data-engineering/cbs_kerncijfers.md).
 - **CBS Gebiedsindelingen 2024** (`init_data/fryslan/buurten_fryslan.geojson`): CBS via PDOK. [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
@@ -49,7 +56,8 @@ De software valt onder EUPL 1.2. De data die D-OmniTwin meelevert (`init_data/`)
 | Kadaster BAG via PDOK | Indicatoren over gebouwen en adressen | [Public Domain Mark 1.0](https://creativecommons.org/publicdomain/mark/1.0/deed.nl) (geen auteursrecht; bronvermelding niet verplicht, wel gebruikelijk) | "Bron: Kadaster, BAG" | [PDOK OGC API BAG](https://api.pdok.nl/kadaster/bag/ogc/v2) (link `rel=license`) |
 | RIVM/GGD Gezondheidsmonitor Volwassenen en Ouderen (RIVM StatLine, o.a. 50150NED) | Gezondheidsindicatoren per buurt | [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/deed.nl) | "Bron: Gezondheidsmonitor Volwassenen en Ouderen, GGD'en, CBS en RIVM" (exacte tekst te bevestigen) | [data.overheid.nl, Gezondheid per wijk en buurt](https://data.overheid.nl/dataset/70128-gezondheid-per-wijk-en-buurt--2012-2016-2020-2022-2024--indeling-2024-) |
 | RVO EP-Online | Energielabels per buurt | **Te bevestigen.** data.overheid.nl vermeldt "Geen open licentie", toegang "Beperkt" (API-sleutel); de algemene open-datapagina van RVO zegt dat hergebruik mag | "Bron: RVO, EP-Online" | [data.overheid.nl, EP-Online webservice](https://data.overheid.nl/dataset/ep-online-webservice--geregistreerde-energielabels-), [rvo.nl open data](https://www.rvo.nl/onderwerpen/over-ons/auteursrecht/open-data) |
-| OpenStreetMap via Overpass API | OV-haltes per buurt (5 indicatoren, 60 regels in de sample) | [ODbL 1.0](https://opendatacommons.org/licenses/odbl/1-0/) | "© OpenStreetMap-bijdragers", met link naar [openstreetmap.org/copyright](https://www.openstreetmap.org/copyright) | [openstreetmap.org/copyright](https://www.openstreetmap.org/copyright/nl), [attributierichtlijn OSMF](https://osmfoundation.org/wiki/Licence/Attribution_Guidelines) |
+| Politie (StatLine 47018NED via dataderden.cbs.nl) | Geregistreerde misdrijven per buurt (4 indicatoren, use case `politie-misdrijven`) | [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/deed.nl) | "Bron: Politie" | [data.politie.nl](https://data.politie.nl/#/Politie/nl/) |
+| OpenStreetMap via Overpass API | OV-haltes per buurt (5 indicatoren, 65 regels in de sample) | [ODbL 1.0](https://opendatacommons.org/licenses/odbl/1-0/) | "© OpenStreetMap-bijdragers", met link naar [openstreetmap.org/copyright](https://www.openstreetmap.org/copyright) | [openstreetmap.org/copyright](https://www.openstreetmap.org/copyright/nl), [attributierichtlijn OSMF](https://osmfoundation.org/wiki/Licence/Attribution_Guidelines) |
 | 3DBAG (TU Delft 3D geoinformation en 3DGI) | 3D-panden, live opgehaald via api.3dbag.nl (niet opgeslagen in de repo) | [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) | "© 3DBAG by tudelft3d and 3DGI", met link naar de copyrightpagina | [docs.3dbag.nl/en/copyright](https://docs.3dbag.nl/en/copyright/) |
 | PDOK BRT-Achtergrondkaart (Kadaster) | Achtergrondkaart | [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/deed.nl) | "© Kadaster" | [PDOK OGC API BRT Achtergrondkaart](https://api.pdok.nl/kadaster/brt-achtergrondkaart/ogc/v1) (link `rel=license`) |
 
@@ -62,10 +70,10 @@ De software valt onder EUPL 1.2. De data die D-OmniTwin meelevert (`init_data/`)
 
 ### Aandachtspunten
 
-- **Demodata.** Buurt BU19000002 (Bolsward-Zuidoost) bevat in de sample geen echte cijfers maar demodata (bron "DEMO: ...", gemiddelde van Bolsward-Noord en Bolsward-Noordoost). Niet gebruiken voor analyse of beleid.
-- **Onbekende herkomst.** 48 regels in de sample hebben geen bron en 96 regels hebben een uploadbestandsnaam als bron (vermoedelijk CBS). Licentie te bevestigen; zie `init_data/sample/KWALITEIT.md` en #60.
+- **Demodata.** De sample (`init_data/sample/`, use case `sample-bronbibliotheek`) bevat alleen nog wat niet open is of nog geen adapter heeft. Demodata is gemarkeerd: de bron van elke waarde begint met `DEMODATA` en de dataset `sample-intern-demodata` heeft `dct:type` `demodata`. Het gaat om de 8 interne indicatoren (plaatsvervanger voor de SWF-gebiedsmonitor) en om Bolsward-Zuidoost (BU19000002) bij BAG, EP-Online en OpenStreetMap (gemiddelde van de buren). Niet gebruiken voor analyse of beleid. Zie `docs/3-data-engineering/demodata-naar-open-data.md`.
+- **Herkomst opgehelderd (#236).** De 48 regels zonder bron waren Politie-cijfers (47018NED) en de 96 regels met een uploadbestandsnaam als bron zijn interne indicatoren van de SWF-gebiedsmonitor; de Politie-cijfers komen nu uit de open bron, de interne indicatoren zijn als demodata gemarkeerd.
 - **BAG-licentie.** PDOK vermeldt voor de BAG de Public Domain Mark 1.0; `datapackage.json` noemt CC0 1.0. Praktisch gelijk (vrij te gebruiken), maar de vermelding is te bevestigen en gelijk te trekken.
-- **Tabel 50150NED** staat in `datapackage.json` als CBS-tabel, maar is een RIVM StatLine-tabel (Gezondheidsmonitor). Licentie is in beide gevallen CC BY 4.0.
+- **Tabel 50150NED** is een RIVM StatLine-tabel (Gezondheidsmonitor) op dataderden.cbs.nl; de use case `rivm-gezondheidsmonitor` haalt hem daar op. Licentie CC BY 4.0.
 
 ---
 

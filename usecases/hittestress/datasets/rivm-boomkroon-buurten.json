@@ -1,0 +1,121 @@
+{
+  "id": "rivm-boomkroon-buurten",
+  "bronId": "rivm-ank",
+  "beschrijving": {
+    "@context": "https://data.overheid.nl/dcat-ap-nl/context.jsonld",
+    "@type": "dcat:Dataset",
+    "dct:title": "Boomkroonbedekking per buurt (RIVM Bomenkaart 2022)",
+    "dct:description": "Percentage van het oppervlak met bomen hoger dan 2,5 m (RIVM Bomenkaart 2022, 10 x 10 m), gemiddeld per buurt over de cellen met het middelpunt in de buurt; cellen zonder bomen tellen als 0%. Voor de 13 testbuurten in Súdwest-Fryslân. Bron: RIVM, Atlas Natuurlijk Kapitaal; Public Domain Mark 1.0.",
+    "dct:publisher": "https://www.rivm.nl/",
+    "dct:accessRights": "http://publications.europa.eu/resource/authority/access-right/PUBLIC",
+    "dct:license": "https://creativecommons.org/publicdomain/mark/1.0/",
+    "dct:spatial": "https://identifier.overheid.nl/tooi/id/provincie/pv21",
+    "dct:source": "https://data.rivm.nl/geo/ank/wcs?service=WCS&version=2.0.1&request=DescribeCoverage&CoverageId=ank__rivm_20231221_bomenkaart_2022",
+    "dcat:landingPage": "https://www.atlasnatuurlijkkapitaal.nl/kaarten",
+    "dcat:theme": [
+      "http://standaarden.overheid.nl/owms/terms/Natuur_en_milieu"
+    ],
+    "dcat:keyword": [
+      "RIVM",
+      "Atlas Natuurlijk Kapitaal",
+      "hittestress",
+      "buurt"
+    ],
+    "dcat:contactPoint": {
+      "@type": "vcard:Organization",
+      "vcard:fn": "Functioneel beheer D-OmniTwin"
+    }
+  },
+  "laadprofiel": {
+    "profiel": "waarnemingen",
+    "vervangBereik": [],
+    "minimumN": 0,
+    "bijOntbrekendeN": "bron-onderdrukt",
+    "plausibiliteit": {
+      "maxDalingProcent": 20
+    }
+  },
+  "bron": {
+    "adapter": "wcs-zonaal",
+    "url": "https://data.rivm.nl/geo/ank/wcs",
+    "coverage": "ank__rivm_20231221_bomenkaart_2022",
+    "gebieden": {
+      "bron": {
+        "adapter": "wfs",
+        "url": "https://service.pdok.nl/cbs/gebiedsindelingen/2024/wfs/v1_0",
+        "laag": "gebiedsindelingen:buurt_gegeneraliseerd",
+        "bbox": [
+          110000,
+          525000,
+          240000,
+          625000
+        ],
+        "omschrijving": "CBS-buurten 2024 (PDOK), dezelfde download als cbs-gebied-buurten (cache)"
+      },
+      "bewerkingen": [
+        {
+          "filter": {
+            "veld": "statcode",
+            "in": [
+              "BU19000001",
+              "BU19000002",
+              "BU19000004",
+              "BU19000108",
+              "BU19000200",
+              "BU19000202",
+              "BU19000300",
+              "BU19000301",
+              "BU19000400",
+              "BU19000401",
+              "BU19001200",
+              "BU19001300",
+              "BU19002017"
+            ]
+          }
+        },
+        {
+          "hernoem": {
+            "statcode": "code"
+          }
+        }
+      ],
+      "sleutel": "code"
+    },
+    "celgrootte": 10,
+    "decimalen": 1,
+    "omschrijving": "RIVM Atlas Natuurlijk Kapitaal (WCS, 10 m), gemiddelde per buurt over de cellen met het middelpunt in de buurt",
+    "nodata_als": 0
+  },
+  "bewerkingen": [
+    {
+      "constant": {
+        "indicator_uuid": "e4d53c01-ef30-56a3-9fc6-29e192462066",
+        "jaar": 2022,
+        "gebiedstype": "afba67cb-6b38-4723-9c95-102a22d5b38a",
+        "kwaliteit": "definitief",
+        "bron": "RIVM Atlas Natuurlijk Kapitaal, Boomkroonbedekking (2022, 10 m)"
+      }
+    },
+    {
+      "getal": [
+        "jaar",
+        "waarde"
+      ]
+    },
+    {
+      "behoud": [
+        "gebied_code",
+        "gebiedstype",
+        "indicator_uuid",
+        "jaar",
+        "waarde",
+        "kwaliteit",
+        "bron"
+      ]
+    }
+  ],
+  "levering": {
+    "formaat": "datapackage",
+    "bestand": "rivm-boomkroon-buurten.zip"
+  }
+}

@@ -17,7 +17,7 @@ import sys
 
 # Project root toevoegen aan sys.path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-from src.database import engine
+from omnitwin.database import engine
 
 
 # ============================================================================

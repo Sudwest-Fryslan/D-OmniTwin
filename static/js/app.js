@@ -11,6 +11,22 @@
 const API_BASE = '/api/gebiedsmonitor';
 
 // Application State
+// #255: kaartmodus per bezoeker onthouden (alleen gemak; zonder opslag: 'waarde')
+const KAART_MODI = ['waarde', 'percentiel', 'uit'];
+function leesKaartModus() {
+    try {
+        const m = localStorage.getItem('omnitwin-kaartmodus');
+        return KAART_MODI.includes(m) ? m : 'waarde';
+    } catch (e) {
+        return 'waarde';
+    }
+}
+
+/** Queryparameter voor /kaart_data: alleen de percentielmodus vraagt iets anders van de backend. */
+function kaartModusParam() {
+    return state.kaartModus === 'percentiel' ? '&modus=percentiel' : '';
+}
+
 const state = {
     currentGebiedstype: null,
     currentIndicator: null,
@@ -20,6 +36,8 @@ const state = {
     enable3D: false, // CHANGED: Default OFF
     heightScale: 10,
     showAll: false,
+    // #255: kaartkleuring 'waarde' (werkelijke waarde), 'percentiel' (klasse 1-8) of 'uit'
+    kaartModus: leesKaartModus(),
     activePanelId: null,
     mapboxToken: window.MAPBOX_TOKEN || null,
     mapboxStyle: window.MAPBOX_STYLE || 'mapbox://styles/mapbox/light-v10',
@@ -457,10 +475,11 @@ function initDeckGL() {
             if (object) {
                 const props = object.properties;
                 const tooltipStyle = {
-                    backgroundColor: 'rgba(15, 23, 42, 0.95)',
-                    color: 'white',
+                    backgroundColor: 'color-mix(in srgb, var(--tooltip-bg) 95%, transparent)',
+                    color: 'var(--tooltip-text)',
+                    fontFamily: 'inherit',
                     padding: '12px',
-                    borderRadius: '8px',
+                    borderRadius: 'var(--border-radius-sm)',
                     fontSize: '13px',
                     boxShadow: '0 4px 12px rgba(0,0,0,0.3)'
                 };
@@ -470,7 +489,7 @@ function initDeckGL() {
                     const featureNaam = props.woonplaats || props.naam || props.name || props.Naam || props.Deelgebied || props.deelgebied || 'Onbekend';
                     return {
                         html: `
-                <div style="font-family: Inter, sans-serif;">
+                <div>
                   <strong>\u{1F310} ${escapeHtml(featureNaam)}</strong><br/>
                   <small style="opacity:0.5;">Klik om buurten te selecteren</small>
                 </div>
@@ -483,7 +502,7 @@ function initDeckGL() {
                 if (layer?.id === 'omgevingsvisie-layer') {
                     return {
                         html: `
-                <div style="font-family: Inter, sans-serif;">
+                <div>
                   <strong>🗺️ ${escapeHtml(props.deelgebied)}</strong><br/>
                   <small style="opacity:0.7;">${escapeHtml(props.naam)}</small><br/>
                   Oppervlakte: <strong>${escapeHtml(props.oppervlakte_km2)} km²</strong><br/>
@@ -508,7 +527,7 @@ function initDeckGL() {
 
                     return {
                         html: `
-                <div style="font-family: Inter, sans-serif;">
+                <div>
                   <strong>🏠 Pand</strong><br/>
                   <small style="opacity:0.6;">${escapeHtml(bagId)}</small><br/>
                   Bouwjaar: <strong>${escapeHtml(bouwjaar)}</strong><br/>
@@ -528,12 +547,18 @@ function initDeckGL() {
                 const herkomst = heeftWaarde
                     ? `<br/><small class="tooltip-herkomst" style="opacity:0.75;">Jaar ${escapeHtml(props.jaar || 'onbekend')} · Bron: ${escapeHtml(props.bron || 'onbekend')}</small>`
                     : '';
+                // #255: percentielklasse in de tooltip (alleen in die kaartmodus)
+                const klasseTekst = state.kaartModus === 'percentiel' && heeftWaarde
+                    ? (props.klasse
+                        ? `<br/><small class="tooltip-klasse">Percentielklasse ${escapeHtml(props.klasse)} van 8</small>`
+                        : `<br/><small class="tooltip-klasse">Geen percentielklasse (${escapeHtml(props.klasse_status || 'geen referentie')})</small>`)
+                    : '';
 
                 return {
                     html: `
-            <div style="font-family: Inter, sans-serif;">
+            <div>
               <strong>${escapeHtml(props.naam)}</strong><br/>
-              ${props.indicator_naam ? `${escapeHtml(props.indicator_naam)}: ` : ''}<strong>${escapeHtml(indicatorValue)}</strong>${herkomst}
+              ${props.indicator_naam ? `${escapeHtml(props.indicator_naam)}: ` : ''}<strong>${escapeHtml(indicatorValue)}</strong>${herkomst}${klasseTekst}
             </div>
           `,
                     style: tooltipStyle
@@ -590,7 +615,7 @@ const FRIESE_GEMEENTEN = [
     { code: '0059', naam: 'Achtkarspelen', is_eiland: false },
     { code: '0060', naam: 'Ameland', is_eiland: true },
     { code: '1891', naam: 'Dantumadiel', is_eiland: false },
-    { code: '1921', naam: 'De Fryske Marren', is_eiland: false },
+    { code: '1940', naam: 'De Fryske Marren', is_eiland: false },
     { code: '0072', naam: 'Harlingen', is_eiland: false },
     { code: '0074', naam: 'Heerenveen', is_eiland: false },
     { code: '0080', naam: 'Leeuwarden', is_eiland: false },
@@ -598,7 +623,7 @@ const FRIESE_GEMEENTEN = [
     { code: '0085', naam: 'Ooststellingwerf', is_eiland: false },
     { code: '0086', naam: 'Opsterland', is_eiland: false },
     { code: '0088', naam: 'Schiermonnikoog', is_eiland: true },
-    { code: '0140', naam: 'Smallingerland', is_eiland: false },
+    { code: '0090', naam: 'Smallingerland', is_eiland: false },
     { code: '1900', naam: 'Súdwest-Fryslân', is_eiland: false },
     { code: '0093', naam: 'Terschelling', is_eiland: true },
     { code: '0737', naam: 'Tytsjerksteradiel', is_eiland: false },
@@ -908,7 +933,7 @@ async function loadKaartData() {
         // 2. Fetch Attributes via FastAPI (Hybride)
         let attrUrl = `/api/gebiedsmonitor/kaart_data/${state.currentGebiedstype}?show_all=${state.showAll}`;
         if (state.currentIndicator) {
-            attrUrl += `&indicator_uuid=${state.currentIndicator}`;
+            attrUrl += `&indicator_uuid=${state.currentIndicator}${kaartModusParam()}`;
         }
         if (state.currentGemeenteCode) {
             attrUrl += `&gemeente_code=${state.currentGemeenteCode}`;
@@ -1546,7 +1571,8 @@ function displayOnMap(geojson) {
             // Track D: Geselecteerde buurten behouden hun indicator-kleur
             // (gouden outline vervangt de oude gold fill-override)
             const value = d.properties.indicator_waarde;
-            if (value === null || value === undefined) {
+            // #255: kaartmodus 'uit' kleurt als zonder data; de indicator blijft gekozen
+            if (value === null || value === undefined || state.kaartModus === 'uit') {
                 // Determine "No Data" color based on theme
                 const r = state.currentTheme === 'dark' ? 200 : 80;
                 const g = state.currentTheme === 'dark' ? 200 : 80;
@@ -1707,7 +1733,7 @@ function displayOnMap(geojson) {
 
         // Performance - CRITICAL FIX: Force re-render on state changes
         updateTriggers: {
-            getFillColor: [minValue, maxValue, state.enable3D, state.currentTheme],
+            getFillColor: [minValue, maxValue, state.enable3D, state.currentTheme, state.kaartModus],
             getLineColor: [state.currentTheme, Array.from(state.selectedGebiedIds).join(',')],
             getLineWidth: [Array.from(state.selectedGebiedIds).join(',')],
             getElevation: [state.enable3D, state.heightScale, minValue, maxValue],
@@ -2054,6 +2080,68 @@ function getColorRGB(value, min, max) {
 // Legenda Generator (NEW)
 // ============================================================================
 
+/**
+ * #255: klassen in de legenda. Percentiel: klasse 1-8 met label; werkelijke waarde: het
+ * bereik van de gebieden per kleur. Met klassen vervangt de lijst het kleurverloop.
+ * Modus 'uit': geen kleuren, wel een melding.
+ */
+function renderLegendaKlassen(metadata) {
+    document.querySelectorAll('input[name="kaart-modus"]').forEach(r => {
+        r.checked = r.value === state.kaartModus;
+    });
+    const lijst = document.getElementById('legenda-klassen');
+    if (!lijst) return;
+    const uit = state.kaartModus === 'uit';
+    const klassen = (!uit && Array.isArray(metadata?.klassen)) ? metadata.klassen : [];
+    const uitTekst = document.getElementById('legenda-modus-uit');
+    // via display: .help-text zet display en zou het hidden-attribuut overrulen
+    if (uitTekst) uitTekst.style.display = uit ? '' : 'none';
+    const verloop = !uit && klassen.length === 0;
+    const svg = document.getElementById('color-gradient-bar');
+    const labels = document.querySelector('#color-scale-container .legenda-labels');
+    if (svg) svg.style.display = verloop ? '' : 'none';
+    if (labels) labels.style.display = verloop ? '' : 'none';
+
+    const eenheid = metadata?.eenheid ? ` ${metadata.eenheid}` : '';
+    lijst.dataset.modus = uit ? 'uit' : (metadata?.modus || 'waarde');
+    lijst.innerHTML = klassen.map(k => {
+        const label = metadata.modus === 'percentiel'
+            ? k.label
+            : (k.van === k.tot
+                ? `${formatNumber(k.van)}${eenheid}`
+                : `${formatNumber(k.van)} – ${formatNumber(k.tot)}${eenheid}`);
+        const aantal = k.aantal !== undefined
+            ? `<span class="legenda-klasse-aantal" title="aantal gebieden">${escapeHtml(k.aantal)}</span>`
+            : '';
+        return `<li data-klasse="${escapeHtml(k.klasse ?? '')}">`
+            + `<span class="legenda-klasse-kleur" style="background:${escapeHtml(k.kleur)}"></span>`
+            + `<span>${escapeHtml(label)}</span>${aantal}</li>`;
+    }).join('');
+}
+
+/**
+ * #255: kaartmodus wisselen. 'uit' (en terug naar de geladen data) tekent alleen opnieuw;
+ * een andere modus haalt de kaartdata opnieuw op.
+ */
+async function setKaartModus(modus) {
+    if (!KAART_MODI.includes(modus) || modus === state.kaartModus) return;
+    const vorige = state.kaartModus;
+    state.kaartModus = modus;
+    try { localStorage.setItem('omnitwin-kaartmodus', modus); } catch (e) { /* geen opslag */ }
+    if (!state.currentIndicator || !state.currentData) {
+        renderLegendaKlassen(state.currentData?.metadata);
+        return;
+    }
+    const geladen = state.currentData.metadata?.modus || 'waarde';
+    if (modus === 'uit' || (vorige === 'uit' && geladen === modus)) {
+        displayOnMap(state.currentData);
+        updateLegenda(state.currentData);
+    } else {
+        await loadKaartData();
+    }
+}
+window.setKaartModus = setKaartModus;
+
 function updateLegenda(geojson) {
     /**
      * Unified Legend Update Function
@@ -2161,6 +2249,9 @@ function updateLegenda(geojson) {
         `;
     }
 
+    // #255: kaartmodus en klassen (percentielklasse of bereik per kleur)
+    renderLegendaKlassen(geojson.metadata);
+
     // Update coverage bar
     const total = geojson.metadata.total_features || 0;
     const withData = geojson.metadata.features_with_data || 0;
@@ -2177,7 +2268,10 @@ function updateLegenda(geojson) {
         container.parentElement.appendChild(hintsContainer);
     }
     if (hintsContainer) {
+        // #161: geen spreiding in de waarden (alle gebieden dezelfde waarde)
+        const melding = geojson.metadata.legenda_melding;
         hintsContainer.innerHTML = `
+            ${melding ? `<p class="legenda-melding help-text" role="note">${escapeHtml(melding)}</p>` : ''}
             <div class="legenda-selectie-hint">
                 <span class="legenda-selectie-sample"></span>
                 <span>Geselecteerd gebied</span>
@@ -2282,7 +2376,7 @@ function populateIndicatorSelect(indicatoren) {
         // Disable options without data
         if (coverage === 0) {
             option.disabled = true;
-            option.style.color = '#94a3b8'; // Muted color
+            option.style.color = 'var(--text-secondary)';
         }
 
         select.appendChild(option);
@@ -2421,8 +2515,8 @@ async function displayMultiGebiedComparison(lastClickedData) {
 
         // Header
         let html = `
-        <div style="margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid var(--color-border, rgba(255,255,255,0.1));">
-            <strong style="font-size: 1rem;"><img src="/static/images/chart-bar.svg" alt="" style="width:18px; height:18px; vertical-align:-3px; filter: brightness(0) invert(1); margin-right: 4px;">Vergelijking: ${ids.length} gebieden</strong>
+        <div style="margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid var(--border-color);">
+            <strong style="font-size: 1rem;"><img src="/static/images/chart-bar.svg" alt="" class="thema-icoon" style="width:18px; height:18px; vertical-align:-3px; margin-right: 4px;">Vergelijking: ${ids.length} gebieden</strong>
             <div style="font-size: 0.8rem; opacity: 0.7; margin-top: 4px;">
                 ${escapeHtml(allData.map(d => d.gebied.naam).join(' · '))}
             </div>
@@ -2465,7 +2559,7 @@ async function displayMultiGebiedComparison(lastClickedData) {
 
                 html += `
                 <div style="margin-bottom: 14px;">
-                    <div style="font-size: 0.8rem; font-weight: 600; margin-bottom: 4px; color: var(--color-text-primary, #e2e8f0);">
+                    <div style="font-size: 0.8rem; font-weight: 600; margin-bottom: 4px; color: var(--text-primary);">
                         ${escapeHtml(ind.naam)} <span style="opacity:0.5; font-weight:400;">(${escapeHtml(ind.eenheid)})</span>
                     </div>`;
 
@@ -2480,7 +2574,7 @@ async function displayMultiGebiedComparison(lastClickedData) {
                         <span style="width: 80px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; opacity: 0.8;" title="${escapeHtml(w.gebiedNaam)}">
                             ${escapeHtml(w.gebiedNaam.length > 12 ? w.gebiedNaam.slice(0, 11) + '…' : w.gebiedNaam)}
                         </span>
-                        <div style="flex: 1; height: 16px; background: rgba(255,255,255,0.05); border-radius: 4px; overflow: hidden;">
+                        <div style="flex: 1; height: 16px; background: var(--tint); border-radius: 4px; overflow: hidden;">
                             <div style="width: ${pct}%; height: 100%; background: ${color}; border-radius: 4px; transition: width 0.3s;"></div>
                         </div>
                         <span style="width: 55px; text-align: right; font-weight: 500; font-variant-numeric: tabular-nums;">
@@ -2537,69 +2631,38 @@ function toonRapportDialoog(modal) {
 function openRapportTypeModal(gebiedId, baseUrl) {
     const modal = document.createElement('div');
     modal.id = 'rapport-type-modal';
-    modal.style.cssText = `
-        position: fixed; inset: 0; z-index: 9999;
-        background: rgba(0,0,0,0.6); display: flex;
-        align-items: center; justify-content: center;
-    `;
+    modal.className = 'rapport-dialoog-overlay';
     modal.innerHTML = `
-        <div style="
-            background: var(--color-surface, #1e2535);
-            border: 1px solid var(--color-border, rgba(255,255,255,0.1));
-            border-radius: 12px; padding: 1.5rem; width: 340px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
-        ">
-            <h3 id="rapport-modal-titel" style="margin:0 0 0.5rem; font-size:1rem;">Kies Rapport Type</h3>
-            <p style="margin:0 0 1.25rem; font-size:0.85rem; opacity:0.6;">
+        <div class="rapport-dialoog">
+            <h3 id="rapport-modal-titel">Kies Rapport Type</h3>
+            <p class="rapport-dialoog-intro">
                 Welk rapport wil je genereren?
             </p>
-            <div style="display:flex; flex-direction:column; gap:0.75rem;">
+            <div class="rapport-keuzes">
                 ${state.selectedDeelgebiedNaam ? `
-                <button id="rapport-modal-deelgebied-single" style="
-                    padding: 0.75rem 1rem; border-radius: 8px; border: none;
-                    background: var(--action-fill, #2563eb); color: white;
-                    font-size:0.95rem; font-weight:600; cursor:pointer; text-align:left;
-                    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
-                ">🏘️ Woonplaatsanalyse (${escapeHtml(state.selectedDeelgebiedNaam)})<br>
-                    <span style="font-weight:400; font-size:0.8rem; opacity:0.9;">
+                <button id="rapport-modal-deelgebied-single" class="rapport-keuze rapport-keuze--primair">🏘️ Woonplaatsanalyse (${escapeHtml(state.selectedDeelgebiedNaam)})<br>
+                    <span>
                         Gewogen stadsbrede analyse per thema
                     </span>
                 </button>
                 ` : ''}
-                <button id="rapport-modal-dossier" style="
-                    padding: 0.75rem 1rem; border-radius: 8px; border: none;
-                    background: ${state.selectedDeelgebiedNaam ? 'var(--color-bg-alt, #2d3748)' : 'var(--action-fill, #2563eb)'}; color: white;
-                    font-size:0.95rem; font-weight:600; cursor:pointer; text-align:left;
-                    border: ${state.selectedDeelgebiedNaam ? '1px solid var(--color-border, rgba(255,255,255,0.15))' : 'none'};
-                ">📄 Gebiedsdossier<br>
-                    <span style="font-weight:400; font-size:0.8rem; opacity:0.8;">
+                <button id="rapport-modal-dossier" class="rapport-keuze${state.selectedDeelgebiedNaam ? '' : ' rapport-keuze--primair'}">📄 Gebiedsdossier<br>
+                    <span>
                         Volledige analyse van dit gebied
                     </span>
                 </button>
-                <button id="rapport-modal-thema" style="
-                    padding: 0.75rem 1rem; border-radius: 8px; border: none;
-                    background: #8b5cf6; color: white;
-                    font-size:0.95rem; font-weight:600; cursor:pointer; text-align:left;
-                ">📊 Thema-Analyse<br>
-                    <span style="font-weight:400; font-size:0.8rem; opacity:0.8;">
+                <button id="rapport-modal-thema" class="rapport-keuze">📊 Thema-Analyse<br>
+                    <span>
                         Diepgaande analyse per Kompas thema
                     </span>
                 </button>
-                <button id="rapport-modal-benchmark" style="
-                    padding: 0.75rem 1rem; border-radius: 8px; border: none;
-                    background: var(--color-bg-alt, #2d3748); color: white;
-                    font-size:0.95rem; font-weight:600; cursor:pointer; text-align:left;
-                    border: 1px solid var(--color-border, rgba(255,255,255,0.15));
-                ">⚖️ Benchmark Vergelijker<br>
-                    <span style="font-weight:400; font-size:0.8rem; opacity:0.8;">
+                <button id="rapport-modal-benchmark" class="rapport-keuze">⚖️ Benchmark Vergelijker<br>
+                    <span>
                         Vergelijk met andere gebieden of Fryslân
                     </span>
                 </button>
             </div>
-            <button id="rapport-modal-sluiten" style="
-                margin-top:1rem; background:none; border:none; color:inherit;
-                opacity:0.5; cursor:pointer; font-size:0.85rem; width:100%; text-align:center;
-            ">Annuleren</button>
+            <button id="rapport-modal-sluiten" class="rapport-dialoog-annuleer">Annuleren</button>
         </div>
     `;
 
@@ -2608,14 +2671,15 @@ function openRapportTypeModal(gebiedId, baseUrl) {
     document.getElementById('rapport-modal-deelgebied-single')?.addEventListener('click', () => {
         const ids = Array.from(state.selectedGebiedIds).length > 0 ? Array.from(state.selectedGebiedIds) : [gebiedId];
         const naam = encodeURIComponent(state.selectedDeelgebiedNaam);
-        const gemeente = state.gemeenteCode || '1900';
+        // Zonder gekozen gemeente kiest de backend die van de eigen organisatie (#231)
+        const gemeente = state.gemeenteCode ? `&gemeente=${encodeURIComponent(state.gemeenteCode)}` : '';
         let extraParams = '';
         if (state.selectedGroepen && state.selectedGroepen.length > 0 && state.selectedLaagId) {
             extraParams += `&laag_id=${state.selectedLaagId}`;
             const woonplaatsen = state.selectedGroepen.map(g => encodeURIComponent(g.naam)).join(',');
             extraParams += `&woonplaatsen=${woonplaatsen}`;
         }
-        window.open(`${baseUrl}/admin/rapport/deelgebied?gebieden=${ids.join(',')}&naam=${naam}&gemeente=${gemeente}${extraParams}`, '_blank');
+        window.open(`${baseUrl}/admin/rapport/deelgebied?gebieden=${ids.join(',')}&naam=${naam}${gemeente}${extraParams}`, '_blank');
         sluit();
     });
     document.getElementById('rapport-modal-dossier').addEventListener('click', () => {
@@ -2640,68 +2704,36 @@ function openMultiSelectRapportModal(ids, baseUrl) {
     const deelgebiedNaam = state.selectedDeelgebiedNaam || `${ids.length} buurten`;
     const modal = document.createElement('div');
     modal.id = 'rapport-type-modal';
-    modal.style.cssText = `
-        position: fixed; inset: 0; z-index: 9999;
-        background: rgba(0,0,0,0.6); display: flex;
-        align-items: center; justify-content: center;
-    `;
+    modal.className = 'rapport-dialoog-overlay';
     modal.innerHTML = `
-        <div style="
-            background: var(--color-surface, #1e2535);
-            border: 1px solid var(--color-border, rgba(255,255,255,0.1));
-            border-radius: 12px; padding: 1.5rem; width: 380px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
-        ">
-            <h3 id="rapport-modal-titel" style="margin:0 0 0.5rem; font-size:1rem;">Kies Rapport Type</h3>
-            <p style="margin:0 0 1.25rem; font-size:0.85rem; opacity:0.6;">
+        <div class="rapport-dialoog rapport-dialoog--breed">
+            <h3 id="rapport-modal-titel">Kies Rapport Type</h3>
+            <p class="rapport-dialoog-intro">
                 ${ids.length} gebieden geselecteerd ${state.selectedDeelgebiedNaam ? `(${escapeHtml(state.selectedDeelgebiedNaam)})` : ''}
             </p>
-            <div style="display:flex; flex-direction:column; gap:0.75rem;">
-                <button id="rapport-modal-deelgebied" style="
-                    padding: 0.75rem 1rem; border-radius: 8px; border: none;
-                    background: var(--action-fill, #2563eb); color: white;
-                    font-size:0.95rem; font-weight:600; cursor:pointer; text-align:left;
-                    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
-                ">🏘️ Woonplaats- & Deelgebiedsanalyse<br>
-                    <span style="font-weight:400; font-size:0.8rem; opacity:0.9;">
+            <div class="rapport-keuzes">
+                <button id="rapport-modal-deelgebied" class="rapport-keuze rapport-keuze--primair">🏘️ Woonplaats- & Deelgebiedsanalyse<br>
+                    <span>
                         Gewogen stadsanalyse per thema met Top 10
                     </span>
                 </button>
-                <button id="rapport-modal-multi-gebied" style="
-                    padding: 0.75rem 1rem; border-radius: 8px; border: none;
-                    background: var(--color-bg-alt, #2d3748); color: white;
-                    font-size:0.95rem; font-weight:600; cursor:pointer; text-align:left;
-                    border: 1px solid var(--color-border, rgba(255,255,255,0.15));
-                ">🗺️ Multi-Gebiedsdossier<br>
-                    <span style="font-weight:400; font-size:0.8rem; opacity:0.8;">
+                <button id="rapport-modal-multi-gebied" class="rapport-keuze">🗺️ Multi-Gebiedsdossier<br>
+                    <span>
                         Z-score analyse met kaart en ranking
                     </span>
                 </button>
-                <button id="rapport-modal-thema-analyse" style="
-                    padding: 0.75rem 1rem; border-radius: 8px; border: none;
-                    background: var(--color-bg-alt, #2d3748); color: white;
-                    font-size:0.95rem; font-weight:600; cursor:pointer; text-align:left;
-                    border: 1px solid var(--color-border, rgba(255,255,255,0.15));
-                ">📊 Thema-Analyse<br>
-                    <span style="font-weight:400; font-size:0.8rem; opacity:0.8;">
+                <button id="rapport-modal-thema-analyse" class="rapport-keuze">📊 Thema-Analyse<br>
+                    <span>
                         Alle indicatoren per thema/onderdeel
                     </span>
                 </button>
-                <button id="rapport-modal-benchmark" style="
-                    padding: 0.75rem 1rem; border-radius: 8px; border: none;
-                    background: var(--color-bg-alt, #2d3748); color: white;
-                    font-size:0.95rem; font-weight:600; cursor:pointer; text-align:left;
-                    border: 1px solid var(--color-border, rgba(255,255,255,0.15));
-                ">⚖️ Benchmark Vergelijker<br>
-                    <span style="font-weight:400; font-size:0.8rem; opacity:0.8;">
+                <button id="rapport-modal-benchmark" class="rapport-keuze">⚖️ Benchmark Vergelijker<br>
+                    <span>
                         Vergelijk gebieden onderling met delta-tabel
                     </span>
                 </button>
             </div>
-            <button id="rapport-modal-sluiten-multi" style="
-                margin-top:1rem; background:none; border:none; color:inherit;
-                opacity:0.5; cursor:pointer; font-size:0.85rem; width:100%; text-align:center;
-            ">Annuleren</button>
+            <button id="rapport-modal-sluiten-multi" class="rapport-dialoog-annuleer">Annuleren</button>
         </div>
     `;
 
@@ -2710,14 +2742,15 @@ function openMultiSelectRapportModal(ids, baseUrl) {
     document.getElementById('rapport-modal-deelgebied').addEventListener('click', () => {
         const gebiedenParam = ids.join(',');
         const naam = encodeURIComponent(deelgebiedNaam);
-        const gemeente = state.gemeenteCode || '1900';
+        // Zonder gekozen gemeente kiest de backend die van de eigen organisatie (#231)
+        const gemeente = state.gemeenteCode ? `&gemeente=${encodeURIComponent(state.gemeenteCode)}` : '';
         let extraParams = '';
         if (state.selectedGroepen && state.selectedGroepen.length > 0 && state.selectedLaagId) {
             extraParams += `&laag_id=${state.selectedLaagId}`;
             const woonplaatsen = state.selectedGroepen.map(g => encodeURIComponent(g.naam)).join(',');
             extraParams += `&woonplaatsen=${woonplaatsen}`;
         }
-        window.open(`${baseUrl}/admin/rapport/deelgebied?gebieden=${gebiedenParam}&naam=${naam}&gemeente=${gemeente}${extraParams}`, '_blank');
+        window.open(`${baseUrl}/admin/rapport/deelgebied?gebieden=${gebiedenParam}&naam=${naam}${gemeente}${extraParams}`, '_blank');
         sluit();
     });
     document.getElementById('rapport-modal-benchmark').addEventListener('click', () => {
@@ -3012,6 +3045,14 @@ function setupEventListeners() {
         updateButtonState();
     });
 
+    // #255: kaartmodus (percentielklasse / werkelijke waarde / uit)
+    document.querySelectorAll('input[name="kaart-modus"]').forEach(radio => {
+        radio.checked = radio.value === state.kaartModus;
+        radio.addEventListener('change', (e) => {
+            if (e.target.checked) setKaartModus(e.target.value);
+        });
+    });
+
     // Indicator selection
     document.getElementById('indicator-select').addEventListener('change', (e) => {
         const selectedId = e.target.value;
@@ -3201,7 +3242,7 @@ function setupEventListeners() {
             if (state.currentGebiedstype && state.currentIndicator === data.uuid) {
                 // We keep the map view but update the data for the specific year
                 try {
-                    let attrUrl = `/api/gebiedsmonitor/kaart_data/${state.currentGebiedstype}?show_all=${state.showAll}&indicator_uuid=${state.currentIndicator}&jaar=${data.jaar}`;
+                    let attrUrl = `/api/gebiedsmonitor/kaart_data/${state.currentGebiedstype}?show_all=${state.showAll}&indicator_uuid=${state.currentIndicator}&jaar=${data.jaar}${kaartModusParam()}`;
                     if (state.currentGemeenteCode) {
                         attrUrl += `&gemeente_code=${state.currentGemeenteCode}`;
                     }
@@ -4122,7 +4163,8 @@ async function fetchKompasHierarchie() {
     if (kompasHierarchie) return kompasHierarchie;
 
     try {
-        const resp = await fetch('/api/kompas/1/hierarchie');
+        // Standaard-kompasconfiguratie van deze instantie, geen vaste ID (#231)
+        const resp = await fetch('/api/kompas/standaard/hierarchie');
         if (!resp.ok) return null;
         const data = await resp.json();
 

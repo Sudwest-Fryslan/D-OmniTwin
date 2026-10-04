@@ -1,0 +1,215 @@
+/*
+ * Thema "swf" — Gemeente Súdwest-Fryslân, als NL Design System-tokens (#89).
+ *
+ * Kleuren uit de live CSS van sudwestfryslan.nl (rood #bf0042/#8c0030, blauw #009fd2, groen #91c60f,
+ * roze #ff00e3, tekst #1e1e1e); waar een huisstijlkleur WCAG 2.1 AA niet haalt, staat er een donkere
+ * of lichte variant naast. Voorstel en contrastwaarden: https://github.com/TLaan/D-OmniTwin/issues/89
+ * Nog niet afgestemd met SWF-communicatie; geen officieel NLDS-thema van SWF.
+ *
+ * Lettertypen: Montserrat (koppen, zoals de site) en Source Sans 3 (tekst) als open vervanger van
+ * Calluna Sans (Adobe Typekit, licentie). Beide zelf gehost in static/vendor (OFL 1.1), geen CDN.
+ *
+ * Tokennamen: basis-tokens van NL Design System (https://github.com/nl-design-system/themes),
+ * plus componenttokens --d-omnitwin-*. Datakleuren (Z-score, kaart, Kompas) horen niet in een thema.
+ * Uitleg en eigen thema maken: docs/9-beheer/thema-s.md.
+ */
+@import url("../../vendor/montserrat@5.3.0/montserrat.css");
+@import url("../../vendor/source-sans-3@5.3.0/source-sans-3.css");
+
+/* ---------- Licht ---------- */
+:root {
+  /* Neutraal: achtergrond, tekst, randen (sudwestfryslan.nl: tekst #1e1e1e, vlakken #fafafa/#eee) */
+  --basis-color-default-bg-document: #fafafa;
+  --basis-color-default-bg-default: #ffffff;
+  --basis-color-default-bg-subtle: #fafafa;
+  --basis-color-default-border-subtle: #eeeeee;
+  --basis-color-default-color-document: #1e1e1e;
+  --basis-color-default-color-subtle: #5e5e5e;
+
+  /* Accent 1: SWF-rood — links, actieve tab, vlakken met witte tekst */
+  --basis-color-accent-1-bg-default: #bf0042;
+  --basis-color-accent-1-bg-hover: #8c0030;
+  --basis-color-accent-1-color-default: #bf0042;
+  --basis-color-accent-1-color-hover: #8c0030;
+  --basis-color-accent-1-inverse-color-default: #ffffff;
+
+  /* Accent 2: SWF-blauw — selecties, highlights. #009fd2 alleen als vlak of rand;
+     als tekst #00759c (wit op #009fd2 is 3,05:1, te weinig voor tekst) */
+  --basis-color-accent-2-bg-default: #009fd2;
+  --basis-color-accent-2-color-default: #00759c;
+
+  /* Accent 3: SWF-groen. #91c60f alleen als vlak met donkere tekst; als tekst #4d6b00 */
+  --basis-color-accent-3-bg-default: #91c60f;
+  --basis-color-accent-3-color-default: #4d6b00;
+  --basis-color-accent-3-inverse-color-default: #1e1e1e;
+
+  /* Highlight: SWF-roze, spaarzaam. Op #ff00e3 alleen donkere tekst */
+  --basis-color-highlight-bg-default: #ff00e3;
+  --basis-color-highlight-color-default: #a3008f;
+  --basis-color-highlight-inverse-color-default: #1e1e1e;
+
+  /* Actie: primaire knoppen (SWF-rood) */
+  --basis-color-action-1-bg-default: #bf0042;
+  --basis-color-action-1-bg-hover: #8c0030;
+  --basis-color-action-1-color-default: #bf0042;
+  --basis-color-action-1-color-hover: #8c0030;
+  --basis-color-action-1-inverse-color-default: #ffffff;
+
+  /* Status */
+  --basis-color-negative-color-default: #b91c1c;
+  --basis-color-positive-color-default: #15803d;
+  --basis-color-warning-color-default: #c2410c;
+
+  /* Focus (WCAG 2.4.7) */
+  --basis-focus-outline-color: #1e1e1e;
+
+  /* Typografie: de site gebruikt 300 en 18 px; voor kaart- en dashboardtekst 400 en 16 px */
+  --basis-text-font-family-default: 'Source Sans 3', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+  --basis-heading-font-family: 'Montserrat', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+  --basis-text-font-weight-default: 400;
+  --basis-text-font-weight-bold: 600;
+  --basis-text-font-size-md: 1rem;
+
+  /* Ruimte en hoeken: zelfde ruimte als het standaardthema, iets strakkere hoeken */
+  --basis-space-block-xs: 0.25rem;
+  --basis-space-block-sm: 0.5rem;
+  --basis-space-block-md: 1rem;
+  --basis-space-block-lg: 1.5rem;
+  --basis-space-block-xl: 2rem;
+  --basis-border-radius-md: 4px;
+  --basis-border-radius-lg: 8px;
+
+  /* Componenttokens D-OmniTwin (#89). Actieve tab en welkomstknop in SWF-rood (zoals de site),
+     selectiebadge in SWF-blauw (donker, voor witte tekst), tooltips neutraal donker */
+  --d-omnitwin-tab-active-background-color: #bf0042;
+  --d-omnitwin-tab-active-color: #ffffff;
+  --d-omnitwin-welcome-button-background-color: #bf0042;
+  --d-omnitwin-welcome-button-color: #ffffff;
+  --d-omnitwin-welcome-accent-color: #bf0042;
+  --d-omnitwin-tooltip-background-color: #1e1e1e;
+  --d-omnitwin-tooltip-color: #ffffff;
+  --d-omnitwin-selection-badge-background-color: #00759c;
+  --d-omnitwin-selection-badge-color: #ffffff;
+
+  /* Componenttokens D-OmniTwin: kopbalk (verloop SWF-rood) */
+  --d-omnitwin-header-background-color-start: #bf0042;
+  --d-omnitwin-header-background-color-end: #8c0030;
+  --d-omnitwin-header-color: #ffffff;
+
+  /* Beeldmerk (#249): wit vlak met SWF-rood, leesbaar op de rode kopbalk (licht en donker) */
+  --d-omnitwin-beeldmerk-vlak: #ffffff;
+  --d-omnitwin-beeldmerk-lijn: #bf0042;
+  --d-omnitwin-beeldmerk-kern: #8c0030;
+}
+
+/* ---------- Donker ---------- */
+[data-theme="dark"] {
+  --basis-color-default-bg-document: #141414;
+  --basis-color-default-bg-default: #1e1e1e;
+  --basis-color-default-bg-subtle: #1e1e1e;
+  --basis-color-default-border-subtle: #3a3a3a;
+  --basis-color-default-color-document: #ffffff;
+  --basis-color-default-color-subtle: #b3b3b3;
+
+  /* #bf0042 als tekst op donker is 2,6:1; daarom een lichter rood. Vlakken blijven #bf0042 met witte tekst */
+  --basis-color-accent-1-bg-default: #bf0042;
+  --basis-color-accent-1-bg-hover: #8c0030;
+  --basis-color-accent-1-color-default: #ff5c8a;
+  --basis-color-accent-1-color-hover: #ff8fae;
+  --basis-color-accent-1-inverse-color-default: #ffffff;
+
+  --basis-color-accent-2-bg-default: #4cc3ea;
+  --basis-color-accent-2-color-default: #4cc3ea;
+
+  --basis-color-accent-3-bg-default: #91c60f;
+  --basis-color-accent-3-color-default: #91c60f;
+  --basis-color-accent-3-inverse-color-default: #1e1e1e;
+
+  --basis-color-highlight-bg-default: #ff00e3;
+  --basis-color-highlight-color-default: #ff66ee;
+  --basis-color-highlight-inverse-color-default: #1e1e1e;
+
+  --basis-color-action-1-bg-default: #bf0042;
+  --basis-color-action-1-bg-hover: #8c0030;
+  --basis-color-action-1-color-default: #ff5c8a;
+  --basis-color-action-1-color-hover: #ff8fae;
+  --basis-color-action-1-inverse-color-default: #ffffff;
+
+  --basis-color-negative-color-default: #f87171;
+  --basis-color-positive-color-default: #4ade80;
+  --basis-color-warning-color-default: #fb923c;
+
+  --basis-focus-outline-color: #ffffff;
+
+  --d-omnitwin-tab-active-background-color: #bf0042;
+  --d-omnitwin-tab-active-color: #ffffff;
+  --d-omnitwin-welcome-button-background-color: #bf0042;
+  --d-omnitwin-welcome-button-color: #ffffff;
+  --d-omnitwin-welcome-accent-color: #ff5c8a;
+  --d-omnitwin-tooltip-background-color: #fafafa;
+  --d-omnitwin-tooltip-color: #1e1e1e;
+  --d-omnitwin-selection-badge-background-color: #00759c;
+  --d-omnitwin-selection-badge-color: #ffffff;
+
+  --d-omnitwin-header-background-color-start: #8c0030;
+  --d-omnitwin-header-background-color-end: #5c0020;
+  --d-omnitwin-header-color: #ffffff;
+}
+
+/* ---------- Donker via de systeeminstelling ----------
+ * Alleen zolang de pagina nog geen data-theme heeft (voordat app.js draait). Zelfde waarden als hierboven.
+ */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) {
+    --basis-color-default-bg-document: #141414;
+    --basis-color-default-bg-default: #1e1e1e;
+    --basis-color-default-bg-subtle: #1e1e1e;
+    --basis-color-default-border-subtle: #3a3a3a;
+    --basis-color-default-color-document: #ffffff;
+    --basis-color-default-color-subtle: #b3b3b3;
+
+    /* #bf0042 als tekst op donker is 2,6:1; daarom een lichter rood. Vlakken blijven #bf0042 met witte tekst */
+    --basis-color-accent-1-bg-default: #bf0042;
+    --basis-color-accent-1-bg-hover: #8c0030;
+    --basis-color-accent-1-color-default: #ff5c8a;
+    --basis-color-accent-1-color-hover: #ff8fae;
+    --basis-color-accent-1-inverse-color-default: #ffffff;
+
+    --basis-color-accent-2-bg-default: #4cc3ea;
+    --basis-color-accent-2-color-default: #4cc3ea;
+
+    --basis-color-accent-3-bg-default: #91c60f;
+    --basis-color-accent-3-color-default: #91c60f;
+    --basis-color-accent-3-inverse-color-default: #1e1e1e;
+
+    --basis-color-highlight-bg-default: #ff00e3;
+    --basis-color-highlight-color-default: #ff66ee;
+    --basis-color-highlight-inverse-color-default: #1e1e1e;
+
+    --basis-color-action-1-bg-default: #bf0042;
+    --basis-color-action-1-bg-hover: #8c0030;
+    --basis-color-action-1-color-default: #ff5c8a;
+    --basis-color-action-1-color-hover: #ff8fae;
+    --basis-color-action-1-inverse-color-default: #ffffff;
+
+    --basis-color-negative-color-default: #f87171;
+    --basis-color-positive-color-default: #4ade80;
+    --basis-color-warning-color-default: #fb923c;
+
+    --basis-focus-outline-color: #ffffff;
+
+    --d-omnitwin-tab-active-background-color: #bf0042;
+    --d-omnitwin-tab-active-color: #ffffff;
+    --d-omnitwin-welcome-button-background-color: #bf0042;
+    --d-omnitwin-welcome-button-color: #ffffff;
+    --d-omnitwin-welcome-accent-color: #ff5c8a;
+    --d-omnitwin-tooltip-background-color: #fafafa;
+    --d-omnitwin-tooltip-color: #1e1e1e;
+    --d-omnitwin-selection-badge-background-color: #00759c;
+    --d-omnitwin-selection-badge-color: #ffffff;
+
+    --d-omnitwin-header-background-color-start: #8c0030;
+    --d-omnitwin-header-background-color-end: #5c0020;
+    --d-omnitwin-header-color: #ffffff;
+  }
+}

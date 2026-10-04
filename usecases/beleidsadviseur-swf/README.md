@@ -14,11 +14,11 @@ Een bundel van data, inrichting en stappen. Dit pakket bevat de tien sample-buur
 
 ## 1. Data
 
-**Gebieden:** Hindeloopen, Workum, Koudum, Warns, Hemelum, Witmarsum, Heidenschap, Boazum, Bomenbuurt, Woudsend. Alle indicatorwaarden komen uit de bronbibliotheek (`init_data/sample/2_brondata`).
+**Gebieden:** Hindeloopen, Workum, Koudum, Warns, Hemelum, Witmarsum, Heidenschap, Boazum, Bomenbuurt, Woudsend. De waarden komen via de laad-API uit `cbs-kerncijfers` (afstand tot huisarts en grote supermarkt, woningvoorraad, Participatiewet) en `sample-bronbibliotheek` (OV-haltes, OpenStreetMap; adapter volgt). Zie [demodata naar open data](../../docs/3-data-engineering/demodata-naar-open-data.md).
 
 **Kernindicatoren:** OV-haltes, afstand tot huisarts en grote supermarkt, woningvoorraad, Participatiewet (zie [`usecase.json`](./usecase.json)).
 
-**Ontbreekt nog:** Makkum (staat in TC-06-001, maar niet in de bronbibliotheek), reistijd OV.
+**Ontbreekt nog:** Makkum (staat in TC-06-001, maar niet in de testbuurten), reistijd OV.
 
 ## 2. Inrichting
 
@@ -30,3 +30,18 @@ Een bundel van data, inrichting en stappen. Dit pakket bevat de tien sample-buur
 ## 3. Stappen
 
 Zie [TC-06-001](../../docs/testcases/06-integratie-e2e/TC-06-001_beleidsadviseur-ijsselmeerkust.md). Workum en Koudum zijn aanwezig; voor Makkum geldt "ontbreekt nog".
+
+## Bewijs
+
+<!-- bewijs:start -->
+*Gemaakt op 03-10-2026 met D-OmniTwin 0.3.0-rc.1 (use case 0.2.0); geslaagd. Verslag: [`bewijs/bewijs.json`](bewijs/bewijs.json). Opnieuw maken (bij een release): `python -m omnitwin.usecases bewijs beleidsadviseur-swf`.*
+
+![Scenario Beleidsadviseur: de D-Omni Assistent zet kaart en Kompas klaar](bewijs/chat.webp)
+*Scenario Beleidsadviseur: de D-Omni Assistent zet kaart en Kompas klaar*
+
+![Afstand tot huisarts in de kernen aan de IJsselmeerkust, Workum geselecteerd](bewijs/kaart.webp)
+*Afstand tot huisarts in de kernen aan de IJsselmeerkust, Workum geselecteerd*
+
+![Kompas voor Workum: alle indicatoren in thema's](bewijs/kompas.webp)
+*Kompas voor Workum: alle indicatoren in thema's*
+<!-- bewijs:end -->

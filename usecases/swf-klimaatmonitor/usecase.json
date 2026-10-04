@@ -1,0 +1,154 @@
+{
+  "specificatie": "1.0",
+  "naam": "swf-klimaatmonitor",
+  "id": "TC-07-007",
+  "versie": "0.2.0",
+  "titel": "SWF-klimaatmonitor: welstand × buurt met labels A–E",
+  "vraag": "Welk label (A–E) heeft een welstandsgebied in Bolsward voor hittestress, droogte en hemelwateroverlast, en welke indicator trekt het omlaag?",
+  "gebruiker": "adviseur klimaatadaptatie",
+  "status": "ontwerp",
+  "afhankelijk_van": [
+    "swf-definities",
+    "swf-gebiedsindelingen",
+    "swf-kompasprofiel"
+  ],
+  "actoren": [
+    {
+      "naam": "beheerder",
+      "soort": "gebruiker",
+      "rollen": [
+        "beheerder"
+      ],
+      "omschrijving": "beheerder van D-OmniTwin: registreert de datasets"
+    },
+    {
+      "naam": "etl-swf",
+      "soort": "machineclient",
+      "rollen": [
+        "dataset:swf-monitor-waarden:laden"
+      ],
+      "omschrijving": "ETL van SWF (bijv. FME): levert alleen de eigen datasets"
+    },
+    {
+      "naam": "lezer",
+      "soort": "gebruiker",
+      "rollen": [
+        "lezer"
+      ],
+      "omschrijving": "ingelogde medewerker: ziet ook wat niet openbaar is, laadt niets"
+    }
+  ],
+  "rechten": [
+    "realm-rol beheerder (registreren)",
+    "dataset:swf-monitor-waarden:laden",
+    "realm-rol lezer (de Klimaatmonitor is intern)"
+  ],
+  "datasets": [
+    {
+      "id": "swf-monitor-waarden",
+      "route": "laden",
+      "registratie": "datasets/swf-monitor-waarden.json",
+      "profiel": "waarnemingen",
+      "rol": "dataset:swf-monitor-waarden:laden",
+      "client": "etl-swf",
+      "prioriteit": "Must",
+      "bron": "export van de huidige monitor ($SWF_DUMP_DIR)",
+      "verwacht": {
+        "regels": 7686,
+        "indicatoren": 7,
+        "gebieden": 755,
+        "jaren": "2020–2025",
+        "codes": "WS1–WS758"
+      }
+    }
+  ],
+  "controles": [
+    {
+      "type": "aantal",
+      "dataset": "swf-monitor-waarden",
+      "gelijk": 7686
+    },
+    {
+      "type": "bewerking",
+      "dataset": "swf-monitor-waarden",
+      "reden": "jaar-ongeldig",
+      "gelijk": 0
+    },
+    {
+      "type": "afkeuring",
+      "dataset": "swf-monitor-waarden",
+      "variant": "zonder-namespace",
+      "code": "gebied-onbekend",
+      "actor": "etl-swf"
+    },
+    {
+      "type": "api",
+      "pad": "/api/data/v1/gebied_data?gebied_id=like.WS*&indicator_uuid=eq.bf4e5b8f-6b0a-4632-b9b4-8e29d025e68c&select=gebied_id&limit=1",
+      "minimaal_aantal": 1,
+      "uuid": "bf4e5b8f-6b0a-4632-b9b4-8e29d025e68c",
+      "omschrijving": "Afstand tot koele plek op welstand × buurt"
+    },
+    {
+      "type": "api",
+      "pad": "/api/data/v1/gebied_data?gebied_id=like.WS*&select=gebied_id&limit=1",
+      "anoniem": true,
+      "minimaal_aantal": 0,
+      "omschrijving": "anoniem: geen klimaatwaarden zichtbaar zolang de dataset RESTRICTED is (vergt RLS)"
+    },
+    {
+      "type": "viewer",
+      "stap": "Kompas 'SWF Klimaat', welstand × buurt in Bolsward kiezen",
+      "verwacht": "per thema en indicator een label A–E en de indicator die het laagst scoort"
+    },
+    {
+      "type": "recht",
+      "actor": "beheerder",
+      "actie": "registreren",
+      "toegestaan": true,
+      "omschrijving": "de beheerder mag datasets registreren"
+    },
+    {
+      "type": "recht",
+      "actor": "etl-swf",
+      "actie": "leveren",
+      "dataset": "swf-monitor-waarden",
+      "toegestaan": true,
+      "omschrijving": "etl-swf mag zijn eigen dataset leveren"
+    },
+    {
+      "type": "recht",
+      "actor": "etl-swf",
+      "actie": "leveren",
+      "dataset": "cbs-kerncijfers",
+      "toegestaan": false,
+      "omschrijving": "etl-swf mag een andere dataset niet leveren (403)"
+    },
+    {
+      "type": "recht",
+      "actor": "etl-swf",
+      "actie": "registreren",
+      "toegestaan": false,
+      "omschrijving": "etl-swf mag niet registreren (403)"
+    },
+    {
+      "type": "recht",
+      "actor": "lezer",
+      "actie": "leveren",
+      "dataset": "swf-monitor-waarden",
+      "toegestaan": false,
+      "omschrijving": "een lezer mag niet laden (403)"
+    },
+    {
+      "type": "recht",
+      "actor": "lezer",
+      "actie": "registreren",
+      "toegestaan": false,
+      "omschrijving": "een lezer mag niet registreren (403)"
+    }
+  ],
+  "bekende_afwijkingen": [
+    "Labels A–E: de drempels zijn onbekend (gat-analyse, vraag 5). Tot ze er zijn, toont D-OmniTwin de percentielklasse.",
+    "Dezelfde dataset als swf-basismonitor-waarden (swf-monitor-waarden); vervangBereik indicator × gebiedstype houdt de twee leveringen uit elkaar. De registratie moet in beide use cases gelijk zijn (unittest).",
+    "Gevoelstemperatuur en Afstand tot koele plek zijn SWF-bewerkingen; de open Klimaateffectatlas heeft voor Fryslân geen download (zie hittestress)."
+  ]
+}

@@ -54,7 +54,7 @@ echo "────────────────────────�
 
 if ! PGPASSWORD="$DATABASE_PASSWORD" psql -h "$DB_HOST" -p "$DB_PORT" \
     -U "$DB_USER" -d "$DB_NAME" \
-    -f "$PROJECT_ROOT/init_data/schema/schema_latest.sql" 2>&1; then
+    -f "$PROJECT_ROOT/db/schema/schema_latest.sql" 2>&1; then
     echo "❌ Schema laden mislukt."
     echo "   Controleer of de database bestaat:"
     echo ""
@@ -70,7 +70,7 @@ echo "✅ Schema geladen"
 echo "Laden van AI/App configuratiedata..."
 if ! PGPASSWORD="$DATABASE_PASSWORD" psql -h "$DB_HOST" -p "$DB_PORT" \
     -U "$DB_USER" -d "$DB_NAME" \
-    -f "$PROJECT_ROOT/init_data/schema/config_seed_fixed.sql" 2>&1; then
+    -f "$PROJECT_ROOT/db/stuurdata/config_seed_fixed.sql" 2>&1; then
     echo "⚠️ Waarschuwing: Laden van configuratiedata (config_seed_fixed.sql) deels mislukt."
 else
     echo "✅ Configuratiedata geladen"

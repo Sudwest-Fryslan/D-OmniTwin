@@ -214,7 +214,7 @@ export const DeelgebiedPage: React.FC = () => {
         reportAPI.getMultiGebiedGeoJSON({
             gebied_ids: gebiedIds,
             referentie,
-            gemeente_code: gemeenteCode || '1900'
+            gemeente_code: gemeenteCode
         })
             .then(res => setGeoData(res.data))
             .catch(err => console.warn('Kaart GeoJSON kon niet worden geladen:', err))

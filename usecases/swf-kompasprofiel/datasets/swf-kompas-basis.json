@@ -1,0 +1,134 @@
+{
+  "id": "swf-kompas-basis",
+  "beschrijving": {
+    "@context": "https://data.overheid.nl/dcat-ap-nl/context.jsonld",
+    "@type": "dcat:Dataset",
+    "dct:title": "Kompasprofiel SWF Basis",
+    "dct:description": "De hiërarchie van de Basis monitor: 4 kwadranten, 12 thema's, 33 onderdelen en de indicatoren, op CBS-buurten, gekleurd naar percentielklasse.",
+    "dct:publisher": "https://identifier.overheid.nl/tooi/id/gemeente/gm1900",
+    "dct:accessRights": "http://publications.europa.eu/resource/authority/access-right/RESTRICTED",
+    "dct:license": "http://standaarden.overheid.nl/owms/terms/licentieonbekend",
+    "dct:spatial": "https://identifier.overheid.nl/tooi/id/gemeente/gm1900",
+    "dct:source": "Voortgangslijst basismonitor (data-team SWF) en definities DMART_BASISMONITOR",
+    "dcat:theme": [
+      "http://standaarden.overheid.nl/owms/terms/Bestuur"
+    ],
+    "dcat:keyword": [
+      "kompas",
+      "gebiedsmonitor"
+    ],
+    "dcat:contactPoint": {
+      "@type": "vcard:Organization",
+      "vcard:fn": "Functioneel beheer gebiedsmonitor, gemeente Súdwest-Fryslân"
+    }
+  },
+  "bron": {
+    "adapter": "lokaal-bestand",
+    "pad": "${SWF_DUMP_DIR}/data/basismonitor_testlijst_v2.csv",
+    "omschrijving": "voortgangslijst per indicator met kwadrant, thema, onderdeel en extra niveau (data-team SWF); later de monitorconfiguratie uit ${SWF_DB_DUMP}"
+  },
+  "bewerkingen": [
+    {
+      "hernoem": {
+        "Title": "kwadrant",
+        "Thema": "thema",
+        "Onderdeel": "onderdeel",
+        "Extra onderdeel": "extra_niveau",
+        "Indicator": "indicator_naam"
+      }
+    },
+    {
+      "filter": {
+        "veld": "indicator_naam",
+        "leeg": false
+      }
+    },
+    {
+      "tekst": [
+        "kwadrant",
+        "thema",
+        "onderdeel",
+        "extra_niveau",
+        "indicator_naam"
+      ]
+    },
+    {
+      "id": "werktitels",
+      "afwijzen": {
+        "veld": "indicator_naam",
+        "in": [
+          "Verandering GLG nu t.o.v. 2050",
+          "Verhouding oppervlakte water/verharding",
+          "Oppervlakte groen per inwoner",
+          "Aantal panden water tegen gevel",
+          "Oppervlakte verharding (openbare ruimte)"
+        ],
+        "reden": "oude-werktitel"
+      },
+      "omschrijving": "oudere werktitels van klimaatindicatoren die onder hun huidige naam ook in de lijst staan (indicatoren.md)"
+    },
+    {
+      "id": "testregel",
+      "afwijzen": {
+        "veld": "indicator_naam",
+        "in": [
+          "test4"
+        ],
+        "reden": "testregel"
+      }
+    },
+    {
+      "id": "zonder-plek",
+      "afwijzen": {
+        "veld": "kwadrant",
+        "leeg": true,
+        "reden": "zonder-plek-in-hierarchie"
+      },
+      "omschrijving": "regels in de voortgangslijst zonder kwadrant/thema/onderdeel"
+    },
+    {
+      "koppel": {
+        "sleutel": "indicator_naam",
+        "op": "naam",
+        "bron": {
+          "adapter": "swf-dump",
+          "export": "definities"
+        },
+        "tabel": "indicatoren",
+        "velden": {
+          "id": "indicator_uuid"
+        },
+        "verplicht": true,
+        "reden": "indicator-niet-in-definities",
+        "normaliseer": true
+      }
+    },
+    {
+      "constant": {
+        "profiel": "SWF Basis",
+        "gebiedstype_id": "afba67cb-6b38-4723-9c95-102a22d5b38a",
+        "classificatie": "percentielklasse"
+      }
+    },
+    {
+      "behoud": [
+        "profiel",
+        "gebiedstype_id",
+        "kwadrant",
+        "thema",
+        "onderdeel",
+        "extra_niveau",
+        "indicator_uuid",
+        "indicator_naam",
+        "classificatie"
+      ]
+    }
+  ],
+  "levering": {
+    "formaat": "datapackage",
+    "bestand": "swf-kompas-basis.zip",
+    "schema": {
+      "kompasprofiel": "kompasprofiel.schema.json"
+    }
+  }
+}

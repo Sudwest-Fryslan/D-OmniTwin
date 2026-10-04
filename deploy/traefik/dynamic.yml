@@ -1,11 +1,18 @@
 # D-OmniTwin — dynamische Traefik-configuratie (file provider)
 #
-# Wordt geladen door docker-compose.yml (--providers.file.filename) en via
-# --entrypoints.web.http.middlewares toegepast op ALLE routes: backend,
-# /api/data (PostgREST) en /api/geo (pg_featureserv). Een router hoeft er dus
-# niets voor te doen.
+# Wordt geladen door docker-compose.yml (--providers.file.filename). Elke router
+# zet zelf een van deze middlewares (label traefik.http.routers.<naam>.middlewares):
+#   security-headers   backend, /api/data (PostgREST) en /api/geo (pg_featureserv)
+#   keycloak-headers   /auth (Keycloak, compose-profiel keycloak, #214)
+# Daarnaast hebben de routers van /api/data (PostgREST) en /api/geo (pg_featureserv)
+#   viewer-toegang     forwardAuth naar de backend (#266, ADR 0009): bij VIEWER_TOEGANG=inloggen
+#                      alleen met een sessie of token met rol lezer of beheerder; bij open altijd door
+# Een nieuwe router zonder een van beide laat tests/test_traefik_routers.py falen.
+# Waarom per router en niet op het entrypoint: een middleware op het entrypoint
+# overschrijft de headers van elke router, en Keycloak heeft eigen CSP- en
+# frame-regels nodig (zie keycloak-headers).
 #
-# Deze headers zijn leidend. De FastAPI-middleware in main.py zet vergelijkbare
+# Deze headers zijn leidend. De FastAPI-middleware in src/omnitwin/main.py zet vergelijkbare
 # headers als terugval voor `python run_dev.py` zonder Traefik; Traefik
 # overschrijft ze.
 #
@@ -49,5 +56,29 @@ http:
         # Traefik zelf afhandelt (zie deploy/traefik/tls.example.yml). Op de
         # standaardinstallatie (HTTP) verschijnt hij dus niet. Staat er een
         # TLS-proxy van de organisatie vóór Traefik, dan zet die proxy HSTS.
+        stsSeconds: 31536000
+        stsIncludeSubdomains: false
+
+    # Toegang tot de data-API's (#266, ADR 0009). Traefik stuurt de headers van het verzoek (cookie,
+    # Authorization) naar de backend; 2xx = door, anders gaat het antwoord van de backend (401/403,
+    # Problem Details) naar de browser. De backend beslist op VIEWER_TOEGANG (open = altijd 204), zodat
+    # er maar één schakelaar is. `backend` is de servicenaam in het compose-netwerk van het project.
+    # Staat de backend niet, dan geven /api/data en /api/geo een fout: dicht bij twijfel.
+    viewer-toegang:
+      forwardAuth:
+        address: "http://backend:8000/api/viewer/toegang"
+
+    # Keycloak (/auth): zonder CSP, X-Frame-Options en Referrer-Policy. Die zet Keycloak
+    # zelf per realm (Realm settings > Security defenses), standaard
+    # "frame-src 'self'; frame-ancestors 'self'; object-src 'none'", SAMEORIGIN en
+    # no-referrer (strenger dan hierboven: geen code of state in de Referer).
+    # De admin-console en keycloak-js gebruiken iframes op hetzelfde adres
+    # (sessiecontrole); frame-ancestors 'none' en DENY uit security-headers breken die.
+    keycloak-headers:
+      headers:
+        contentTypeNosniff: true
+        customResponseHeaders:
+          X-XSS-Protection: "0"
+        permissionsPolicy: "camera=(), microphone=(), geolocation=(), payment=(), usb=()"
         stsSeconds: 31536000
         stsIncludeSubdomains: false

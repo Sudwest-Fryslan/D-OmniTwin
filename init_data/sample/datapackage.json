@@ -2,7 +2,7 @@
   "$schema": "https://datapackage.org/profiles/2.0/datapackage.json",
   "name": "d-omnitwin-sample-swf",
   "title": "D-OmniTwin sample dataset Súdwest-Fryslân (13 buurten)",
-  "description": "Compacte, zelfstandige sample dataset voor D-OmniTwin: 13 CBS-buurten van de gemeente Súdwest-Fryslân met 728 metingen, plus de stuurdata (configuratie, scenario's, profielen, prompts) als SQL-seed. Bedoeld voor demo, CI en lokale installaties; geladen met init_data/scripts/load_sample.py.\n\nDe CBS Kerncijfers wijken en buurten staan er niet in: die worden bij het laden gedownload (init_data/scripts/laad_cbs.py, recept in init_data/cbs, #159). Wat bij een open bron te downloaden is, staat niet in git.\n\nLet op: buurt BU19000002 (Bolsward-Zuidoost) bevat voor de overige indicatoren demodata (bron 'DEMO: ...'), geen echte cijfers.\n\nHerkomst per meting staat in de kolom 'bron' van sample_indicatoren.csv en is nog niet overal herleidbaar: 48 regels zonder bron, 96 regels met een uploadbestandsnaam als bron, 'kwaliteit' is overal leeg. Zie KWALITEIT.md voor de telling. Opvolging in issue #60; mapping naar DCAT-AP-NL in #63.",
+  "description": "Wat nog niet open is of nog geen adapter heeft, voor 13 CBS-buurten van de gemeente Súdwest-Fryslân: 40 indicatoren, 520 metingen (Kadaster BAG, RVO EP-Online en OpenStreetMap, per buurt berekend; en 8 interne indicatoren als demodata). Geladen via de laad-API door de use case sample-bronbibliotheek (usecases/sample-bronbibliotheek). Alles wat open en te downloaden is (CBS Kerncijfers, RIVM Gezondheidsmonitor, Politie, RIVM-rasters, buurtgrenzen) komt uit de use cases met een kernadapter en staat niet in git (#236). De indicatordefinities staan in db/stuurdata/indicatoren.csv (EUPL-1.2).\n\nDemodata is gemarkeerd: de kolom 'bron' begint met 'DEMODATA' bij alle waarden van de 8 interne indicatoren (plaatsvervanger voor de interne bron SWF-gebiedsmonitor) en bij Bolsward-Zuidoost (BU19000002) voor BAG, EP-Online en OpenStreetMap. Geen echte cijfers.\n\n'kwaliteit' is overal leeg. Zie KWALITEIT.md en docs/3-data-engineering/demodata-naar-open-data.md.",
   "version": "0.1.0",
   "keywords": ["D-OmniTwin", "Súdwest-Fryslân", "buurten", "indicatoren", "CBS", "sample"],
   "homepage": "https://github.com/TLaan/D-OmniTwin",
@@ -31,45 +31,26 @@
   ],
   "sources": [
     {
-      "title": "CBS Kerncijfers wijken en buurten 2019-2026 (84583NED, 84799NED, 85039NED, 85318NED, 85618NED, 85984NED, 86165NED, 86358NED; bron 'CBS Kerncijfers wijken en buurten <jaar> (<tabel>)', 2.933 regels; zie init_data/cbs/datapackage.json)",
-      "path": "https://opendata.cbs.nl/statline/#/CBS/nl/dataset/85984NED"
-    },
-    {
-      "title": "CBS StatLine 85984NED (bron 'CBS_85984NED', 12 regels, indicator Huisarts)",
-      "path": "https://opendata.cbs.nl/statline/#/CBS/nl/dataset/85984NED"
-    },
-    {
-      "title": "CBS StatLine 50150NED (bron 'CBS_50150NED', 12 regels)",
-      "path": "https://opendata.cbs.nl/statline/#/CBS/nl/dataset/50150NED"
-    },
-    {
       "title": "CBS Wijk- en buurtkaart (geometrie sample_buurten.geojson, via PDOK)",
       "path": "https://www.pdok.nl/introductie/-/article/cbs-wijken-en-buurten"
     },
     {
-      "title": "Kadaster BAG via PDOK (bron 'BAG' 168 regels, 'Kadaster BAG Fryslân 2026' 84 regels)",
+      "title": "Kadaster BAG via PDOK, per buurt berekend (bron 'BAG' 168 regels, 'Kadaster BAG Fryslân 2026' 84 regels; adapter volgt)",
       "path": "https://www.kadaster.nl/zakelijk/registraties/basisregistraties/bag"
     },
     {
-      "title": "RIVM/GGD Gezondheidsmonitor volwassenen en ouderen 2024 (bron 'Gezondheidsmonitor RIVM 2024', 120 regels)",
-      "path": "https://statline.rivm.nl"
-    },
-    {
-      "title": "RVO EP-Online energielabels (bron 'RVO EP-Online 2026-02' 60 regels, 'Berekend: EP-Online / BAG Fryslân' 12 regels)",
+      "title": "RVO EP-Online energielabels, per buurt berekend (bron 'RVO EP-Online 2026-02' 60 regels, 'Berekend: EP-Online / BAG Fryslân' 12 regels; adapter volgt)",
       "path": "https://www.ep-online.nl"
     },
     {
-      "title": "OpenStreetMap via Overpass API (bron 'OpenStreetMap / Overpass API 2026', 60 regels)",
+      "title": "OpenStreetMap via Overpass API (bron 'OpenStreetMap / Overpass API 2026', 60 regels; adapter volgt)",
       "path": "https://www.openstreetmap.org/copyright"
     },
     {
-      "title": "DEMO: gemiddelde van Bolsward-Noord en Bolsward-Noordoost (88 regels, BU19000002; geen echte cijfers)"
+      "title": "DEMODATA: plaatsvervanger voor de interne bron SWF-gebiedsmonitor (8 indicatoren, 104 regels; geen echte cijfers)"
     },
     {
-      "title": "Onbekend / te herleiden: uploadbestandsnaam '<uuid>_d_cbs_buurten.json' als bron (8 bestanden, 96 regels; vermoedelijk CBS wijken en buurten)"
-    },
-    {
-      "title": "Onbekend: lege bron (48 regels)"
+      "title": "DEMODATA: gemiddelde van Bolsward-Noord en Bolsward-Noordoost (32 regels, BU19000002; geen echte cijfers)"
     }
   ],
   "contributors": [
@@ -108,7 +89,7 @@
     {
       "name": "sample-indicatoren",
       "title": "Indicatoren en metingen per buurt",
-      "description": "Eén regel per meting (gebied, indicator, jaar, scenario). Indicator-metadata (naam, eenheid, categorie, interpretatie) wordt per regel herhaald. Herkomst per regel in kolom 'bron'; licentie volgt de bron (CBS/RIVM/overheid: CC BY 4.0, Kadaster BAG: CC0, OpenStreetMap: ODbL).",
+      "description": "Eén regel per meting (gebied, indicator, jaar, scenario). Indicator-metadata (naam, eenheid, categorie, interpretatie) wordt per regel herhaald. Herkomst per regel in kolom 'bron'; licentie volgt de bron (Kadaster BAG: CC0, RVO EP-Online: te bevestigen, OpenStreetMap: ODbL; demodata: geen).",
       "path": "2_brondata/sample_indicatoren.csv",
       "type": "table",
       "format": "csv",
@@ -168,7 +149,7 @@
           {
             "name": "bron",
             "title": "Bron",
-            "description": "Vrije tekst: CBS-tabelcode (CBS_<id>), bronnaam, 'DEMO: ...' of uploadbestandsnaam. Niet verplicht: 48 regels zijn leeg (zie KWALITEIT.md).",
+            "description": "Vrije tekst: bronnaam, of 'DEMODATA: ...' bij demodata (geen echte cijfers).",
             "type": "string"
           },
           {
@@ -204,23 +185,6 @@
         ],
         "primaryKey": ["gebied_id", "indicator_uuid", "jaar", "scenario_id"]
       }
-    },
-    {
-      "name": "stuurdata-seed",
-      "title": "Stuurdata-seed (configuratie)",
-      "description": "Idempotente SQL-seed (INSERT ... ON CONFLICT DO NOTHING) voor gebiedstypes, gemeenten, kompas_configuraties, visualisatie_profielen, color_schemas, chat_scenarios, system_prompts, llm_config, log_config en externe_kaartlagen. Onderdeel van de software.",
-      "path": "1_stuurdata/stuurdata_seed.sql",
-      "type": "file",
-      "format": "sql",
-      "mediatype": "application/sql",
-      "encoding": "utf-8",
-      "licenses": [
-        {
-          "name": "EUPL-1.2",
-          "path": "https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12",
-          "title": "European Union Public Licence 1.2"
-        }
-      ]
     }
   ]
 }

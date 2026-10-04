@@ -18,8 +18,9 @@ import pytest
 try:
     from playwright.sync_api import expect, sync_playwright
 
-    # Software-WebGL in de container is traag: ruimere standaardtimeout voor expect()
-    expect.set_options(timeout=15_000)
+    # Software-WebGL in de container is traag, op CI-runners zonder GPU nog trager:
+    # ruimere standaardtimeout voor expect(), instelbaar via E2E_EXPECT_TIMEOUT_MS.
+    expect.set_options(timeout=int(os.environ.get("E2E_EXPECT_TIMEOUT_MS", "15000")))
 except ImportError:  # CI-unit-job heeft geen Playwright: map dan niet verzamelen
     sync_playwright = None
     collect_ignore_glob = ["test_*.py"]
@@ -35,6 +36,19 @@ try {
   localStorage.setItem('omnitwin_welcomed', '1');
   for (const k of ['omnitwin_tt_indicator', 'omnitwin_tt_buurt', 'omnitwin_tt_kompas', 'omnitwin_tt_ai']) {
     localStorage.setItem(k, '1');
+  }
+} catch (e) {}
+"""
+
+# Gemeentefilter Súdwest-Fryslân bij de eerste paginalading (#236). Een verse installatie heeft
+# alle CBS-buurten van Fryslân (931); in de container zonder GPU (SwiftShader) kost picking bij
+# pointerdown dan meer dan de tap-drempel van deck.gl (250 ms) en wordt een echte klik geen klik.
+# Met het filter staan er 155 buurten op de kaart, met alle testbuurten van de demo-use cases.
+_TESTGEMEENTE = """
+try {
+  if (!sessionStorage.getItem('e2e-testgemeente')) {
+    sessionStorage.setItem('e2e-testgemeente', '1');
+    localStorage.setItem('omnitwin-gemeente', '1900');
   }
 } catch (e) {}
 """
@@ -76,6 +90,7 @@ def _open(browser, request, skip_onboarding, reduced_motion=None):
     context = browser.new_context(viewport={"width": 1600, "height": 1000}, locale="nl-NL", **opties)
     if skip_onboarding:
         context.add_init_script(_SKIP_ONBOARDING)
+        context.add_init_script(_TESTGEMEENTE)
     page = context.new_page()
     page.set_default_timeout(20_000)
 

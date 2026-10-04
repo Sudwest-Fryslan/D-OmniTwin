@@ -1,0 +1,4 @@
+gebied_code,gebiedstype,indicator_uuid,jaar,peildatum,scenario,waarde,n,kwaliteit,bron,opmerking
+BU19000002,CBS_BUURT,00000000-0000-4000-8000-000000000001,2025,,current,12.34,148,definitief,Voorbeeldenquête 2025,
+BU19000003,CBS_BUURT,00000000-0000-4000-8000-000000000001,2025,,current,9.8,7,definitief,Voorbeeldenquête 2025,wordt onderdrukt (n < 10)
+BU19000002,CBS_BUURT,00000000-0000-4000-8000-000000000002,,2025-07-01,current,0.41,312,voorlopig,,peildatum in plaats van jaar

@@ -11,8 +11,8 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 
 import pytest
 
-import services.llm_service as llm_mod
-from services.llm_service import LLMService, openai_base_url, strip_think, veilige_host
+import omnitwin.services.llm_service as llm_mod
+from omnitwin.services.llm_service import LLMService, openai_base_url, strip_think, veilige_host
 
 pytestmark = pytest.mark.unit
 
@@ -346,7 +346,7 @@ def test_openai_onverwacht_antwoord(fake_llm, body):
 # ─── Admin: modellen ophalen ────────────────────────────────────────────────
 
 def _models(db):
-    admin = pytest.importorskip("routers.admin")
+    admin = pytest.importorskip("omnitwin.routers.admin")
     return admin.get_ollama_models(db=db)
 
 
@@ -381,7 +381,7 @@ def test_admin_models_onbereikbaar_valt_terug_op_huidig_model():
 
 
 def test_admin_llmconfig_valideert_api_type():
-    admin = pytest.importorskip("routers.admin")
+    admin = pytest.importorskip("omnitwin.routers.admin")
     assert admin.LLMConfig(api_url="http://x", model_name="m").api_type == "ollama"
     assert admin.LLMConfig(api_url="http://x", model_name="m", api_type="openai").api_type == "openai"
     with pytest.raises(Exception):
@@ -389,15 +389,14 @@ def test_admin_llmconfig_valideert_api_type():
 
 
 def test_admin_opslaan_zonder_v20_weigert_openai():
-    import asyncio
-    admin = pytest.importorskip("routers.admin")
+    admin = pytest.importorskip("omnitwin.routers.admin")
     db = FakeDB({"api_url": "http://x", "model_name": "m"})  # geen api_type-kolom
     cfg = admin.LLMConfig(api_url="http://x", model_name="m", api_type="openai")
     with pytest.raises(admin.HTTPException) as exc:
-        asyncio.run(admin.update_llm_config(cfg, db=db))
+        admin.update_llm_config(cfg, db=db)
     assert exc.value.status_code == 409
     ok = admin.LLMConfig(api_url="http://x", model_name="m", api_type="ollama")
-    assert asyncio.run(admin.update_llm_config(ok, db=db)) == ok
+    assert admin.update_llm_config(ok, db=db) == ok
 
 
 def _vrije_poort():

@@ -9,7 +9,6 @@
 #        COMPOSE_FILE=docker-compose.yml:deploy/traefik/tls.example.yml
 #        OMNITWIN_DOMAIN=omnitwin.example.nl
 #        ACME_EMAIL=beheer@example.nl        (functioneel adres voor verloopmeldingen)
-#        DEBUG=false
 #      Op Windows is het scheidingsteken in COMPOSE_FILE een `;` in plaats van `:`.
 #      OMNITWIN_HTTP_PORT moet 80 blijven (of leeg).
 #   2. docker compose up -d
@@ -17,8 +16,9 @@
 # Wat dit doet:
 #   - entrypoint `websecure` op 443 met een certificaat van Let's Encrypt;
 #   - HTTP (80) stuurt door naar HTTPS;
-#   - de security-headers uit dynamic.yml gelden ook op 443, en daar komt HSTS
-#     (Strict-Transport-Security) automatisch bij.
+#   - de headers-middlewares uit dynamic.yml (per router, zie docker-compose.yml)
+#     gelden ook op 443, en daar komt HSTS (Strict-Transport-Security) automatisch bij.
+#   - met Keycloak (profiel keycloak): zet KEYCLOAK_HOSTNAME=https://<OMNITWIN_DOMAIN>/auth.
 #
 # Eigen certificaat in plaats van Let's Encrypt: laat de `certificatesresolvers`-
 # en `tls.certresolver`-regels weg, mount het certificaat en de sleutel in de
@@ -42,9 +42,8 @@ services:
       - "--entrypoints.web.address=:80"
       - "--entrypoints.web.http.redirections.entrypoint.to=websecure"
       - "--entrypoints.web.http.redirections.entrypoint.scheme=https"
-      # HTTPS met security-headers (incl. HSTS) op alle routes
+      # HTTPS; de headers (incl. HSTS) zet elke router zelf (docker-compose.yml)
       - "--entrypoints.websecure.address=:443"
-      - "--entrypoints.websecure.http.middlewares=security-headers@file"
       - "--entrypoints.websecure.http.tls=true"
       - "--entrypoints.websecure.http.tls.certresolver=le"
       - "--entrypoints.websecure.http.tls.domains[0].main=${OMNITWIN_DOMAIN:?zet OMNITWIN_DOMAIN in .env}"

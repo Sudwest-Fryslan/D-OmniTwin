@@ -1,0 +1,88 @@
+{
+  "$schema": "https://datapackage.org/profiles/2.0/tableschema.json",
+  "name": "waarnemingen",
+  "title": "Profiel waarnemingen (D-OmniTwin laad-API v1)",
+  "description": "Eén regel = één waarde van één indicator voor één gebied op één moment in één scenario. Precies één van jaar en peildatum is gevuld. De dataset (en daarmee de bron) volgt uit de URL van de levering, niet uit de regel.",
+  "fields": [
+    {
+      "name": "gebied_code",
+      "type": "string",
+      "title": "Gebiedscode",
+      "description": "Code van het gebied: CBS-code (BU..., WK..., GM...) of een eigen code met prefix (bijv. WS728 voor welstand-id 728). Moet bestaan in D-OmniTwin (tabel gebieden).",
+      "constraints": { "required": true, "maxLength": 100 }
+    },
+    {
+      "name": "gebiedstype",
+      "type": "string",
+      "title": "Gebiedstype",
+      "description": "Code (bijv. CBS_BUURT) of UUID van het gebiedstype. Optioneel; als gevuld, controleert D-OmniTwin of het gebied van dat type is.",
+      "constraints": { "maxLength": 50 }
+    },
+    {
+      "name": "indicator_uuid",
+      "type": "string",
+      "format": "uuid",
+      "title": "Indicator",
+      "description": "UUID van de indicator. Moet bestaan (profiel definities) en gekoppeld zijn aan het gebiedstype.",
+      "constraints": { "required": true }
+    },
+    {
+      "name": "jaar",
+      "type": "integer",
+      "title": "Jaar",
+      "description": "Peiljaar. Leeg als peildatum gevuld is.",
+      "constraints": { "minimum": 1900, "maximum": 2100 }
+    },
+    {
+      "name": "peildatum",
+      "type": "date",
+      "title": "Peildatum",
+      "description": "Peildatum (ISO 8601). Leeg als jaar gevuld is.",
+      "constraints": {}
+    },
+    {
+      "name": "scenario",
+      "type": "string",
+      "title": "Scenario",
+      "description": "Scenario-id; leeg = current.",
+      "constraints": { "maxLength": 50 }
+    },
+    {
+      "name": "waarde",
+      "type": "number",
+      "title": "Waarde",
+      "description": "De waarde, in de eenheid van de indicator; binnen min_waarde/max_waarde van de indicator als die gezet zijn.",
+      "constraints": { "required": true }
+    },
+    {
+      "name": "n",
+      "type": "integer",
+      "title": "Aantal waarnemingen",
+      "description": "Aantal waarnemingen of respondenten waarop de waarde rust. Bij n < minimumN van de dataset wordt de waarde niet gepubliceerd. Leeg alleen als de dataset bijOntbrekendeN = bron-onderdrukt heeft.",
+      "constraints": { "minimum": 0 }
+    },
+    {
+      "name": "kwaliteit",
+      "type": "string",
+      "title": "Kwaliteit",
+      "constraints": { "enum": ["definitief", "voorlopig", "geschat"] }
+    },
+    {
+      "name": "bron",
+      "type": "string",
+      "title": "Bronvermelding",
+      "description": "Bronvermelding van deze waarde als die afwijkt van de dataset (bijv. de enquête of tabel).",
+      "constraints": { "maxLength": 255 }
+    },
+    {
+      "name": "opmerking",
+      "type": "string",
+      "title": "Opmerking",
+      "constraints": { "maxLength": 500 }
+    }
+  ],
+  "missingValues": [""],
+  "uniqueKeys": [
+    ["gebied_code", "indicator_uuid", "jaar", "peildatum", "scenario"]
+  ]
+}

@@ -1,0 +1,124 @@
+{
+  "specificatie": "1.0",
+  "naam": "swf-gebiedsmonitor",
+  "id": "TC-07-010",
+  "versie": "0.2.0",
+  "titel": "D-OmniTwin vervangt de huidige SWF-gebiedsmonitor (acceptatie)",
+  "vraag": "Kan Súdwest-Fryslân met D-OmniTwin hetzelfde als met de huidige gebiedsmonitor: dezelfde indicatoren en gebieden, dezelfde sunburst en Klimaatmonitor, dezelfde lagen, gevuld vanuit de DWH?",
+  "gebruiker": "kernteam gebiedsagenda en functioneel beheerder SWF",
+  "status": "ontwerp",
+  "afhankelijk_van": [
+    {
+      "naam": "swf-definities",
+      "versie": ">=0.1.0"
+    },
+    {
+      "naam": "swf-gebiedsindelingen",
+      "versie": ">=0.1.0"
+    },
+    {
+      "naam": "swf-kompasprofiel",
+      "versie": ">=0.1.0"
+    },
+    {
+      "naam": "swf-basismonitor-waarden",
+      "versie": ">=0.1.0"
+    },
+    {
+      "naam": "swf-klimaatmonitor",
+      "versie": ">=0.1.0"
+    },
+    {
+      "naam": "swf-kaartlagen",
+      "versie": ">=0.1.0"
+    },
+    {
+      "naam": "swf-adapter-fme",
+      "versie": ">=0.1.0"
+    }
+  ],
+  "actoren": [
+    {
+      "naam": "beheerder",
+      "soort": "gebruiker",
+      "rollen": [
+        "beheerder"
+      ],
+      "omschrijving": "beheerder van D-OmniTwin"
+    },
+    {
+      "naam": "lezer",
+      "soort": "gebruiker",
+      "rollen": [
+        "lezer"
+      ],
+      "omschrijving": "ingelogde medewerker: ziet ook wat niet openbaar is, laadt niets"
+    }
+  ],
+  "rechten": [
+    "realm-rol beheerder",
+    "realm-rol lezer",
+    "dataset:swf-monitor-definities:laden",
+    "dataset:swf-monitor-waarden:laden"
+  ],
+  "datasets": [],
+  "controles": [
+    {
+      "type": "api",
+      "pad": "/api/data/v1/indicatoren?uuid=in.(97f53738-3439-4c28-8cac-046a52c65248,bf4e5b8f-6b0a-4632-b9b4-8e29d025e68c,461d542b-b8be-4510-9dd0-5ba554b818cb)&select=uuid",
+      "anoniem": true,
+      "minimaal_aantal": 3,
+      "omschrijving": "dezelfde UUID's als de monitor"
+    },
+    {
+      "type": "api",
+      "pad": "/api/data/v1/gebied_data?select=indicator_uuid&gebied_id=like.BU1900*&limit=1",
+      "minimaal_aantal": 1,
+      "omschrijving": "waarden op CBS-buurten van Súdwest-Fryslân"
+    },
+    {
+      "type": "api",
+      "pad": "/api/beheer/v1/kompasprofielen",
+      "minimaal_aantal": 2,
+      "omschrijving": "SWF Basis en SWF Klimaat"
+    },
+    {
+      "type": "api",
+      "pad": "/api/geo/v1/collections/laag.swf_laag_projecten_vlak/items?limit=1",
+      "anoniem": true,
+      "status": 401,
+      "omschrijving": "interne laag anoniem niet bereikbaar"
+    },
+    {
+      "type": "viewer",
+      "stap": "inloggen met het SWF-account (OIDC)",
+      "verwacht": "naam en rollen zichtbaar; interne lagen beschikbaar"
+    },
+    {
+      "type": "viewer",
+      "stap": "Basis monitor: Bolsward-Zuidoost aanklikken",
+      "verwacht": "sunburst 4/12/33 met dezelfde kleuren (percentielklasse) als de huidige monitor voor ≥ 10 gecontroleerde indicatoren"
+    },
+    {
+      "type": "viewer",
+      "stap": "Klimaatmonitor: een welstand × buurt in Bolsward",
+      "verwacht": "labels per thema en indicator"
+    },
+    {
+      "type": "viewer",
+      "stap": "indicator op de kaart: Afstand tot koele plek",
+      "verwacht": "percentielkaart en gelabelde werkelijke waarde, en uitzetten"
+    },
+    {
+      "type": "api",
+      "pad": "/api/laden/v1/compat/swf-monitor/monitor_api/indicator_waarde",
+      "minimaal_aantal": 43000,
+      "omschrijving": "de FME-route werkt: alle waarden terug in het SWF-formaat"
+    }
+  ],
+  "bekende_afwijkingen": [
+    "Deze use case heeft zelf geen datasets: hij neemt alle swf-* use cases mee en doet de eindcontroles.",
+    "Inloggen met rollen, percentielklasse en labels A–E, favorieten en de beveiligde geo-route zijn functies van 0.3.0 die nog gebouwd worden; de viewer-controles zijn handmatig tot de uitvoerder ze kan draaien.",
+    "Open vragen staan in docs/1-visie-concept/huidige-gebiedsmonitor/gat-analyse.md."
+  ]
+}

@@ -4,7 +4,7 @@
 
 Heb je een kwetsbaarheid gevonden in D-OmniTwin? Meld die dan **niet** via een openbaar issue, discussie of pull request, maar privé per e-mail:
 
-**Taeke van der Laan** (Gemeente Súdwest-Fryslân) — `<e-mailadres Taeke, te bevestigen>`
+**Geo-groep, Gemeente Súdwest-Fryslân** — [geo-groep@sudwestfryslan.nl](mailto:geo-groep@sudwestfryslan.nl)
 
 Vermeld in je melding:
 
@@ -29,16 +29,16 @@ We volgen hierbij de uitgangspunten van [Coordinated Vulnerability Disclosure](h
 
 Binnen scope is de code in deze repository:
 
-- de FastAPI-backend en API-routes (`main.py`, `routers/`, `services/`);
+- de FastAPI-backend en API-routes (`src/omnitwin/`: `main.py`, `routers/`, `services/`);
 - de gebruikersinterface en de beheeromgeving (`static/`, `templates/`, `admin-panel/`);
-- database-schema's, migraties en initialisatiescripts (`init_data/`, `migrations/`);
+- database-schema's, migraties en initialisatiescripts (`db/`, `init_data/`);
 - de Docker-configuratie (`Dockerfile`, `db.Dockerfile`, `docker-compose.yml`, `docker-entrypoint.sh`).
 
 Buiten scope:
 
 - kwetsbaarheden in afhankelijkheden van derden (zoals PostgreSQL, PostgREST, pg_featureserv, Traefik, Ollama) — meld die bij het betreffende project; laat het ons wel weten als D-OmniTwin ze op een onveilige manier gebruikt;
 - installaties van D-OmniTwin die door andere organisaties worden beheerd — meld die bij de beheerder van die installatie;
-- de lokale ontwikkelconfiguratie (zoals het Traefik-dashboard op poort 8081 en `DEBUG=true`), die niet bedoeld is voor productie.
+- de lokale ontwikkelconfiguratie (zoals het Traefik-dashboard op poort 8081), die niet bedoeld is voor productie.
 
 ## Ondersteunde versies
 
@@ -54,4 +54,4 @@ D-OmniTwin volgt [Semantic Versioning](https://semver.org/lang/nl/); de eerste r
 
 ## English summary
 
-Please **do not** report security vulnerabilities through public GitHub issues. Report them privately by e-mail to Taeke van der Laan (Municipality of Súdwest-Fryslân): `<e-mailadres Taeke, te bevestigen>`. Include the affected component, reproduction steps, the version or commit, and the expected impact. We aim to acknowledge reports within 5 working days (no guaranteed SLA) and follow coordinated vulnerability disclosure. Security fixes go to `main` and to the latest release branch only (see the release policy in `docs/9-beheer/releasebeleid.md`).
+Please **do not** report security vulnerabilities through public GitHub issues. Report them privately by e-mail to the Geo team of the Municipality of Súdwest-Fryslân: [geo-groep@sudwestfryslan.nl](mailto:geo-groep@sudwestfryslan.nl). Include the affected component, reproduction steps, the version or commit, and the expected impact. We aim to acknowledge reports within 5 working days (no guaranteed SLA) and follow coordinated vulnerability disclosure. Security fixes go to `main` and to the latest release branch only (see the release policy in `docs/9-beheer/releasebeleid.md`).

@@ -1,0 +1,75 @@
+{
+  "id": "cbs-kerncijfers",
+  "bronId": "cbs",
+  "beschrijving": {
+    "@context": "https://data.overheid.nl/dcat-ap-nl/context.jsonld",
+    "@type": "dcat:Dataset",
+    "dct:title": "CBS Kerncijfers wijken en buurten 2019–nu, buurten in Fryslân",
+    "dct:description": "Kerncijfers wijken en buurten van het CBS, alle jaargangen vanaf 2019, per buurt in Fryslân, gemapt op de indicatoren van D-OmniTwin (recept init_data/cbs/datapackage.json). Jaar = peiljaar van de CBS-tabel.",
+    "dct:publisher": "https://www.cbs.nl/",
+    "dct:accessRights": "http://publications.europa.eu/resource/authority/access-right/PUBLIC",
+    "dct:license": "http://creativecommons.org/licenses/by/4.0/",
+    "dct:spatial": "https://identifier.overheid.nl/tooi/id/gemeente/gm1900",
+    "dct:source": "https://opendata.cbs.nl/ODataApi/odata/",
+    "dcat:landingPage": "https://www.cbs.nl/nl-nl/reeksen/kerncijfers-wijken-en-buurten-2004-2025",
+    "dcat:theme": [
+      "http://standaarden.overheid.nl/owms/terms/Bevolking"
+    ],
+    "dcat:keyword": [
+      "CBS",
+      "kerncijfers",
+      "buurt"
+    ],
+    "dcat:contactPoint": {
+      "@type": "vcard:Organization",
+      "vcard:fn": "Functioneel beheer gebiedsmonitor, gemeente Súdwest-Fryslân"
+    }
+  },
+  "laadprofiel": {
+    "profiel": "waarnemingen",
+    "vervangBereik": [],
+    "minimumN": 0,
+    "bijOntbrekendeN": "bron-onderdrukt",
+    "plausibiliteit": {
+      "maxDalingProcent": 20
+    }
+  },
+  "bron": {
+    "adapter": "cbs-odata",
+    "omschrijving": "CBS OData (opendata.cbs.nl), tabellen per jaargang uit init_data/cbs/datapackage.json; cache in $DATA_CACHE/cbs"
+  },
+  "bewerkingen": [
+    {
+      "hernoem": {
+        "gebied_id": "gebied_code"
+      }
+    },
+    {
+      "constant": {
+        "gebiedstype": "afba67cb-6b38-4723-9c95-102a22d5b38a",
+        "kwaliteit": "definitief"
+      }
+    },
+    {
+      "getal": [
+        "jaar",
+        "waarde"
+      ]
+    },
+    {
+      "behoud": [
+        "gebied_code",
+        "gebiedstype",
+        "indicator_uuid",
+        "jaar",
+        "waarde",
+        "kwaliteit",
+        "bron"
+      ]
+    }
+  ],
+  "levering": {
+    "formaat": "datapackage",
+    "bestand": "cbs-kerncijfers.zip"
+  }
+}

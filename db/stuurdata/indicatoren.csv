@@ -1,0 +1,59 @@
+uuid,naam,eenheid,categorie,interpretatie_logica,bron
+93564b76-b07a-4134-868e-10654650d064,Aantal bushaltes,aantal,,pos_is_pos,"OpenStreetMap (Overpass API, berekend per buurt)"
+233505e1-d22f-48b5-b67f-88ea73d12967,Aantal energielabels,aantal,Wonen,-/+,RVO EP-Online energielabels (berekend per buurt)
+a2ed3719-64a7-40da-bfc5-a43d3d292594,Aantal energielabels (definitief),aantal,Wonen,N/A,RVO EP-Online energielabels (berekend per buurt)
+3e24d6a5-60ee-4a07-b898-a1b89b18568c,Aantal energielabels (totaal),aantal,Wonen,N/A,RVO EP-Online energielabels (berekend per buurt)
+3e4f5a3e-8cb3-4bd1-a1ed-ea7e4e4ed091,Aantal energielabels (voorlopig),aantal,Wonen,N/A,RVO EP-Online energielabels (berekend per buurt)
+a63f5c54-bcea-4ef9-8914-36c17668e1b4,Aantal OV-haltes (totaal),aantal,,pos_is_pos,"OpenStreetMap (Overpass API, berekend per buurt)"
+b69a88a0-efd4-4f8b-888a-97b653e1f13d,Aantal tramhaltes,aantal,,pos_is_pos,"OpenStreetMap (Overpass API, berekend per buurt)"
+696ca006-89a0-4e9f-aa5b-f68c724736d1,Aantal treinhaltes,aantal,,pos_is_pos,"OpenStreetMap (Overpass API, berekend per buurt)"
+c49c1563-2d85-4a2f-bdc9-02c340c4e510,Aantal veerboten,aantal,,pos_is_pos,"OpenStreetMap (Overpass API, berekend per buurt)"
+a5ed2ff5-f431-48e8-98d4-0c56686de109,Achterstand leerlingen,score,,-/+,SWF-gebiedsmonitor (interne bron)
+bf4e5b8f-6b0a-4632-b9b4-8e29d025e68c,Afstand tot koele plek,,,-/+,SWF-gebiedsmonitor (interne bron)
+b7090c23-7495-48c2-bfb3-cbfb7140386f,beschadiging auto's,aantal,,-/+,"Politie, Geregistreerde misdrijven per wijk en buurt (StatLine 47018NED)"
+64470009-7467-4a34-8f3c-b44d896a5364,Bewegen,%,,pos_is_pos,"RIVM, GGD en CBS: Gezondheid per wijk en buurt (StatLine 50150NED)"
+5d7ad356-aac8-4815-8da7-97dff60c7873,Bijeenkomstfunctie,aantal,Gebruik,pos_is_pos,Kadaster BAG (berekend per buurt)
+3241e6b8-0712-4653-a420-2f3274466f6b,Bouwjaar 1915-1945,aantal,Bebouwing,pos_is_pos,Kadaster BAG (berekend per buurt)
+8ef35d23-4060-4e32-a19f-670682afd7c3,Bouwjaar 1945-1984,aantal,Bebouwing,pos_is_pos,Kadaster BAG (berekend per buurt)
+b5990263-4ccf-4ab3-b9cf-f7415262cc03,Bouwjaar vanaf 1985,aantal,Bebouwing,pos_is_pos,Kadaster BAG (berekend per buurt)
+3dfcad9b-fad4-47d3-b701-8de88c198d13,Bouwjaar voor 1915,aantal,Bebouwing,pos_is_pos,Kadaster BAG (berekend per buurt)
+29cfacae-021e-4fe5-819b-e9eb655837ae,Celfunctie,aantal,Gebruik,pos_is_pos,Kadaster BAG (berekend per buurt)
+81ccf247-0449-40e0-a99c-a67019f272e4,Definitief energielabel,,,pos_is_pos,SWF-gebiedsmonitor (interne bron)
+3ca8572d-cc03-4fd9-9bc9-e1cd0fc0a627,diefstal fiets,aantal,,-/+,"Politie, Geregistreerde misdrijven per wijk en buurt (StatLine 47018NED)"
+1e9bc2fe-d5bd-4306-9b6b-d443e22916cf,Diversiteit Functies (Simpson Index),index,,pos_is_pos,Kadaster BAG (berekend per buurt)
+4661dcb9-b7c4-42f8-b7c5-a61c12568806,Eenzaamheid,%,,-/+,"RIVM, GGD en CBS: Gezondheid per wijk en buurt (StatLine 50150NED)"
+b53e54d6-ff54-4be1-b539-f915fd253831,Energielabel coverage,%,Wonen,pos_is_pos,RVO EP-Online energielabels (berekend per buurt)
+d20c7b4d-d305-495b-b77c-07b8121614a7,Ervaren gezondheid,%,Gezondheid,pos_is_pos,"RIVM, GGD en CBS: Gezondheid per wijk en buurt (StatLine 50150NED)"
+22d02bf9-99ef-4357-b797-09a714690b11,Gemiddeld bouwjaar woningen (BAG),jaar,Wonen,pos_is_pos,Kadaster BAG (berekend per buurt)
+3c2d0ca0-3a6d-4f53-809f-f82fa9b9fd22,Gemiddeld energielabel,score 1 (A+++++) - 9 (G),,-/+,RVO EP-Online energielabels (berekend per buurt)
+a4f84d1c-3263-4229-ad95-615924cb7852,Gemiddeld Laagste Grondwaterstand,,,pos_is_pos,SWF-gebiedsmonitor (interne bron)
+7d9339e3-ea2c-474b-802a-49c854849f73,Gemiddelde woonoppervlakte (BAG),m²,Wonen,pos_is_pos,Kadaster BAG (berekend per buurt)
+311a6449-b145-4678-b51e-ac4e342dd1bf,Gezondheid,%,,pos_is_pos,"RIVM, GGD en CBS: Gezondheid per wijk en buurt (StatLine 50150NED)"
+3baca929-ccc3-48aa-b966-e6877d01cbe7,Gezondheidszorgfunctie,aantal,Gebruik,pos_is_pos,Kadaster BAG (berekend per buurt)
+0ed37b61-f13d-446b-b108-70bb09af98e0,Huisarts,km,,pos_is_pos,CBS Kerncijfers wijken en buurten 2024 (85984NED)
+b2e606cc-1d58-4917-9dec-148d90c80742,Huishoudens (BAG woonfunctie),aantal,Wonen,pos_is_pos,Kadaster BAG (berekend per buurt)
+92137246-e0f1-493d-97a8-e4a5660a99fb,inbraak auto,aantal,,-/+,"Politie, Geregistreerde misdrijven per wijk en buurt (StatLine 47018NED)"
+d90d2b4c-4bce-428c-834a-1cc8113958e4,inbraak woning,aantal,,-/+,"Politie, Geregistreerde misdrijven per wijk en buurt (StatLine 47018NED)"
+28a7a580-dc3c-4105-9fb3-d9ef47792429,Industriefunctie,aantal,Gebruik,pos_is_pos,Kadaster BAG (berekend per buurt)
+0212e8f8-053d-4287-b924-7bdc20c53bb2,Kantoorfunctie,aantal,Gebruik,pos_is_pos,Kadaster BAG (berekend per buurt)
+a990c073-78e3-4490-a26e-1fa8ca6988f9,Logiesfunctie,aantal,Gebruik,pos_is_pos,Kadaster BAG (berekend per buurt)
+7b4a6b5f-7d6a-46ef-8a7d-7b3ee28a014c,Mantelzorger,%,,pos_is_pos,"RIVM, GGD en CBS: Gezondheid per wijk en buurt (StatLine 50150NED)"
+58fc72b6-881e-4917-83de-8099df3e3b0d,Moeite met rondkomen,%,Gezondheid,-/+,"RIVM, GGD en CBS: Gezondheid per wijk en buurt (StatLine 50150NED)"
+0432fef2-83f2-4405-a457-08b89945ca86,Obesitas,%,Gezondheid,-/+,"RIVM, GGD en CBS: Gezondheid per wijk en buurt (StatLine 50150NED)"
+93048a96-d3cd-4d99-83b5-2b950e8d78a2,Onderwijsfunctie,aantal,Gebruik,pos_is_pos,Kadaster BAG (berekend per buurt)
+97f53738-3439-4c28-8cac-046a52c65248,Oppervlak groen per inwoner,,,pos_is_pos,SWF-gebiedsmonitor (interne bron)
+34e36ae1-4132-4555-a4fc-d16b039d467e,Overgewicht,%,Gezondheid,-/+,"RIVM, GGD en CBS: Gezondheid per wijk en buurt (StatLine 50150NED)"
+25405460-907c-4e63-acc4-4f9c949f7cac,Overige gebruiksfunctie,aantal,Gebruik,pos_is_pos,Kadaster BAG (berekend per buurt)
+1ed22149-7fed-4466-a3b8-dfd7ff28f5b5,Overmatig drinken,%,,-/+,"RIVM, GGD en CBS: Gezondheid per wijk en buurt (StatLine 50150NED)"
+4f53e98e-3309-4a3a-9ecc-732956f7c53a,Percentage woonfunctie (BAG),%,Wonen,pos_is_pos,Kadaster BAG (berekend per buurt)
+a4780646-844e-4221-b07a-b4f4ade25059,Roken,%,,-/+,"RIVM, GGD en CBS: Gezondheid per wijk en buurt (StatLine 50150NED)"
+e2f618ca-0726-4c1f-8442-c1150578622e,Sportfunctie,aantal,Gebruik,pos_is_pos,Kadaster BAG (berekend per buurt)
+2d6bdaba-3832-40cc-acae-950883f1aa76,Verandering GLG nu t.o.v. 2050,,,pos_is_pos,SWF-gebiedsmonitor (interne bron)
+0bbd30e5-08f5-4499-b6ca-cdda990720dc,Verhouding oppervlakte water / verharding,,,pos_is_pos,SWF-gebiedsmonitor (interne bron)
+89b6274f-9372-4784-8ba3-924b6c7e4d7d,Verwerken hemelwater exc. schade,,,pos_is_pos,SWF-gebiedsmonitor (interne bron)
+9b168456-9219-4c3b-af16-636662a74155,Vrijwilliger,%,,pos_is_pos,"RIVM, GGD en CBS: Gezondheid per wijk en buurt (StatLine 50150NED)"
+49d5687e-c062-40b5-84b9-7e4557b6cee0,Winkelfunctie,aantal,Gebruik,pos_is_pos,Kadaster BAG (berekend per buurt)
+89ad6843-0db9-4044-9508-307775d4f496,Woningen gebouwd vóór 1945 (BAG),%,Wonen,pos_is_pos,Kadaster BAG (berekend per buurt)
+b1011f4c-30b1-4088-bcf6-a67893d92c5f,Woonfunctie,aantal,Gebruik,pos_is_pos,Kadaster BAG (berekend per buurt)
+e4d53c01-ef30-56a3-9fc6-29e192462066,Boomkroonbedekking,%,Klimaat,pos_is_pos,RIVM Atlas Natuurlijk Kapitaal (WCS)
+dacb8005-ecc2-5014-a5c2-a07c119b43ae,Stedelijk hitte-eiland effect,°C,Klimaat,-/+,RIVM Atlas Natuurlijk Kapitaal (WCS)

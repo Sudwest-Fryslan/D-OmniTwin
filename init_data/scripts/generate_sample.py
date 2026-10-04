@@ -6,7 +6,7 @@ Exporteert een compacte, zelfstandige sample dataset uit de actieve database
 voor Súdwest-Fryslân (12 buurten).
 
 Genereert:
-  1. init_data/sample/1_stuurdata/stuurdata_seed.sql
+  1. db/stuurdata/stuurdata_seed.sql
   2. init_data/sample/2_brondata/sample_buurten.geojson
   3. init_data/sample/2_brondata/sample_indicatoren.csv
 
@@ -31,7 +31,7 @@ import psycopg2
 
 ROOT = Path(__file__).resolve().parent.parent.parent
 SAMPLE_DIR = ROOT / "init_data" / "sample"
-STUURDATA_DIR = SAMPLE_DIR / "1_stuurdata"
+STUURDATA_DIR = ROOT / "db" / "stuurdata"
 BRONDATA_DIR = SAMPLE_DIR / "2_brondata"
 
 STUURDATA_DIR.mkdir(parents=True, exist_ok=True)

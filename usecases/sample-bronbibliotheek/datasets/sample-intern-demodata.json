@@ -1,0 +1,156 @@
+{
+  "id": "sample-intern-demodata",
+  "bronId": "sample",
+  "beschrijving": {
+    "@context": "https://data.overheid.nl/dcat-ap-nl/context.jsonld",
+    "@type": "dcat:Dataset",
+    "dct:title": "DEMODATA: plaatsvervanger voor interne klimaat- en onderwijsindicatoren SWF, 13 buurten",
+    "dct:description": "Demodata als plaatsvervanger voor de interne bron 'SWF-gebiedsmonitor' (klimaatmonitor en onderwijs: afstand tot koele plek, groen per inwoner, water/verharding, grondwaterstand, hemelwater, definitief energielabel, achterstand leerlingen), niet de echte waarden. Uit de vroegere sample (herkomst: uploads in de SWF-gebiedsmonitor, niet herleidbaar; Bolsward-Zuidoost synthetisch). Met SWF_DUMP_DIR laadt de variant 'intern' de echte waarden uit de export van de gebiedsmonitor; die komen nooit in git.",
+    "dct:publisher": "https://github.com/TLaan/D-OmniTwin",
+    "dct:accessRights": "http://publications.europa.eu/resource/authority/access-right/PUBLIC",
+    "dct:license": "http://standaarden.overheid.nl/owms/terms/licentieonbekend",
+    "dct:spatial": "https://identifier.overheid.nl/tooi/id/provincie/pv21",
+    "dct:source": "init_data/sample/2_brondata/sample_indicatoren.csv (demodata)",
+    "dcat:theme": [
+      "http://standaarden.overheid.nl/owms/terms/Natuur_en_milieu"
+    ],
+    "dcat:keyword": [
+      "demodata",
+      "sample",
+      "Súdwest-Fryslân"
+    ],
+    "dcat:contactPoint": {
+      "@type": "vcard:Organization",
+      "vcard:fn": "Functioneel beheer D-OmniTwin"
+    },
+    "dct:type": "demodata",
+    "prov:wasDerivedFrom": "SWF-gebiedsmonitor (interne bron): indicatorwaarden per CBS-buurt"
+  },
+  "laadprofiel": {
+    "profiel": "waarnemingen",
+    "vervangBereik": [],
+    "minimumN": 0,
+    "bijOntbrekendeN": "bron-onderdrukt",
+    "plausibiliteit": {
+      "maxDalingProcent": 20
+    }
+  },
+  "bron": {
+    "adapter": "lokaal-bestand",
+    "pad": "${REPO}/init_data/sample/2_brondata/sample_indicatoren.csv",
+    "formaat": "csv",
+    "omschrijving": "DEMODATA in de repo, plaatsvervanger voor de interne bron"
+  },
+  "bewerkingen": [
+    {
+      "filter": {
+        "veld": "indicator_uuid",
+        "in": [
+          "a5ed2ff5-f431-48e8-98d4-0c56686de109",
+          "bf4e5b8f-6b0a-4632-b9b4-8e29d025e68c",
+          "81ccf247-0449-40e0-a99c-a67019f272e4",
+          "a4f84d1c-3263-4229-ad95-615924cb7852",
+          "97f53738-3439-4c28-8cac-046a52c65248",
+          "2d6bdaba-3832-40cc-acae-950883f1aa76",
+          "0bbd30e5-08f5-4499-b6ca-cdda990720dc",
+          "89b6274f-9372-4784-8ba3-924b6c7e4d7d"
+        ]
+      }
+    },
+    {
+      "hernoem": {
+        "gebied_id": "gebied_code"
+      }
+    },
+    {
+      "constant": {
+        "gebiedstype": "afba67cb-6b38-4723-9c95-102a22d5b38a"
+      }
+    },
+    {
+      "getal": [
+        "jaar",
+        "waarde"
+      ]
+    },
+    {
+      "behoud": [
+        "gebied_code",
+        "gebiedstype",
+        "indicator_uuid",
+        "jaar",
+        "waarde",
+        "bron"
+      ]
+    }
+  ],
+  "levering": {
+    "formaat": "datapackage",
+    "bestand": "sample-intern-demodata.zip"
+  },
+  "varianten": {
+    "intern": {
+      "omschrijving": "de echte interne bron: export van de SWF-gebiedsmonitor (SWF_DUMP_DIR), alleen deze indicatoren op CBS-buurten; zonder SWF_DUMP_DIR de demodata",
+      "als_beschikbaar": true,
+      "bron": {
+        "adapter": "swf-dump",
+        "export": "waarden",
+        "omschrijving": "${SWF_DUMP_DIR}/output/api_data_dump.json (interne bron, nooit in git)"
+      },
+      "bewerkingen": [
+        {
+          "filter": {
+            "veld": "indicator_id",
+            "in": [
+              "a5ed2ff5-f431-48e8-98d4-0c56686de109",
+              "bf4e5b8f-6b0a-4632-b9b4-8e29d025e68c",
+              "81ccf247-0449-40e0-a99c-a67019f272e4",
+              "a4f84d1c-3263-4229-ad95-615924cb7852",
+              "97f53738-3439-4c28-8cac-046a52c65248",
+              "2d6bdaba-3832-40cc-acae-950883f1aa76",
+              "0bbd30e5-08f5-4499-b6ca-cdda990720dc",
+              "89b6274f-9372-4784-8ba3-924b6c7e4d7d"
+            ]
+          }
+        },
+        {
+          "filter": {
+            "veld": "gebiedstype_id",
+            "gelijk": "afba67cb-6b38-4723-9c95-102a22d5b38a"
+          }
+        },
+        {
+          "afwijzen": {
+            "veld": "jaar",
+            "gelijk": 0,
+            "reden": "jaar-ongeldig"
+          }
+        },
+        {
+          "hernoem": {
+            "indicator_id": "indicator_uuid",
+            "gebiedstype_id": "gebiedstype",
+            "gebieds_id": "gebied_code"
+          }
+        },
+        {
+          "tekst": [
+            "gebied_code"
+          ]
+        },
+        {
+          "constant": {
+            "bron": "SWF-gebiedsmonitor (interne bron)"
+          }
+        }
+      ],
+      "beschrijving": {
+        "dct:title": "Interne klimaat- en onderwijsindicatoren SWF (export gebiedsmonitor)",
+        "dct:description": "De echte waarden uit de export van de SWF-gebiedsmonitor (SWF_DUMP_DIR), alleen de indicatoren van deze dataset op CBS-buurten. Niet openbaar.",
+        "dct:type": "brondata",
+        "dct:accessRights": "http://publications.europa.eu/resource/authority/access-right/RESTRICTED",
+        "dct:source": "SWF-gebiedsmonitor (export, SWF_DUMP_DIR)"
+      }
+    }
+  }
+}

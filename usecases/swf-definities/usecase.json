@@ -1,0 +1,195 @@
+{
+  "specificatie": "1.0",
+  "naam": "swf-definities",
+  "id": "TC-07-003",
+  "versie": "0.2.0",
+  "titel": "SWF-definities: indicatoren, gebiedstypen en relaties",
+  "vraag": "Ik wil alle 228 indicatordefinities van de huidige monitor met dezelfde UUID's in D-OmniTwin, met de 11 gebiedstypen en op welk gebiedstype elke indicator waarden heeft.",
+  "gebruiker": "data-engineer DWH (SWF)",
+  "status": "actief",
+  "afhankelijk_van": [],
+  "actoren": [
+    {
+      "naam": "beheerder",
+      "soort": "gebruiker",
+      "rollen": [
+        "beheerder"
+      ],
+      "omschrijving": "beheerder van D-OmniTwin: registreert de datasets"
+    },
+    {
+      "naam": "etl-swf",
+      "soort": "machineclient",
+      "rollen": [
+        "dataset:swf-monitor-definities:laden"
+      ],
+      "omschrijving": "ETL van SWF (bijv. FME): levert alleen de eigen datasets"
+    },
+    {
+      "naam": "lezer",
+      "soort": "gebruiker",
+      "rollen": [
+        "lezer"
+      ],
+      "omschrijving": "ingelogde medewerker: ziet ook wat niet openbaar is, laadt niets"
+    }
+  ],
+  "rechten": [
+    "realm-rol beheerder (registreren)",
+    "dataset:swf-monitor-definities:laden",
+    "realm-rol lezer"
+  ],
+  "datasets": [
+    {
+      "id": "swf-monitor-definities",
+      "route": "laden",
+      "registratie": "datasets/swf-monitor-definities.json",
+      "profiel": "definities",
+      "rol": "dataset:swf-monitor-definities:laden",
+      "client": "etl-swf",
+      "prioriteit": "Must",
+      "bron": "export van de huidige monitor ($SWF_DUMP_DIR)",
+      "verwacht": {
+        "indicatoren": 228,
+        "gebiedstypen": 11,
+        "relaties": 263,
+        "status_A_naar_O": 10
+      }
+    }
+  ],
+  "controles": [
+    {
+      "type": "aantal",
+      "dataset": "swf-monitor-definities",
+      "resource": "indicatoren",
+      "gelijk": 228
+    },
+    {
+      "type": "aantal",
+      "dataset": "swf-monitor-definities",
+      "resource": "gebiedstypen",
+      "gelijk": 11
+    },
+    {
+      "type": "aantal",
+      "dataset": "swf-monitor-definities",
+      "resource": "relaties",
+      "gelijk": 263
+    },
+    {
+      "type": "bewerking",
+      "dataset": "swf-monitor-definities",
+      "reden": "status: A → O",
+      "gelijk": 10,
+      "omschrijving": "de 10 klimaatindicatoren"
+    },
+    {
+      "type": "bewerking",
+      "dataset": "swf-monitor-definities",
+      "reden": "gebiedstype-zonder-mapping",
+      "gelijk": 0
+    },
+    {
+      "type": "api",
+      "pad": "/api/data/v1/indicatoren?uuid=eq.97f53738-3439-4c28-8cac-046a52c65248&select=uuid,naam,status",
+      "anoniem": true,
+      "minimaal_aantal": 1,
+      "uuid": "97f53738-3439-4c28-8cac-046a52c65248",
+      "omschrijving": "Oppervlak groen per inwoner, zelfde UUID als in de monitor"
+    },
+    {
+      "type": "api",
+      "pad": "/api/data/v1/gebiedstypes?id=eq.d210c084-506b-48b4-87c9-b7d4bf422553&select=naam,code",
+      "anoniem": true,
+      "minimaal_aantal": 1,
+      "verwacht": {
+        "code": "CBS_BUURT_BBK",
+        "naam": "CBS buurten bebouwde komgrens"
+      },
+      "omschrijving": "UUID-conflict opgelost: d210c084 is 'CBS buurten bebouwde komgrens', niet meer 'Custom Gebied Type'"
+    },
+    {
+      "type": "afkeuring",
+      "dataset": "swf-monitor-definities",
+      "variant": "status-a",
+      "code": "schema-ongeldig",
+      "omschrijving": "onbekende status A wordt afgekeurd; vorige versie blijft actief",
+      "actor": "etl-swf"
+    },
+    {
+      "type": "idempotent",
+      "dataset": "swf-monitor-definities",
+      "actor": "etl-swf"
+    },
+    {
+      "type": "recht",
+      "actor": "beheerder",
+      "actie": "registreren",
+      "toegestaan": true,
+      "omschrijving": "de beheerder mag datasets registreren"
+    },
+    {
+      "type": "recht",
+      "actor": "etl-swf",
+      "actie": "leveren",
+      "dataset": "swf-monitor-definities",
+      "toegestaan": true,
+      "omschrijving": "etl-swf mag zijn eigen dataset leveren"
+    },
+    {
+      "type": "recht",
+      "actor": "etl-swf",
+      "actie": "leveren",
+      "dataset": "cbs-kerncijfers",
+      "toegestaan": false,
+      "omschrijving": "etl-swf mag een andere dataset niet leveren (403)"
+    },
+    {
+      "type": "recht",
+      "actor": "etl-swf",
+      "actie": "registreren",
+      "toegestaan": false,
+      "omschrijving": "etl-swf mag niet registreren (403)"
+    },
+    {
+      "type": "recht",
+      "actor": "lezer",
+      "actie": "leveren",
+      "dataset": "swf-monitor-definities",
+      "toegestaan": false,
+      "omschrijving": "een lezer mag niet laden (403)"
+    },
+    {
+      "type": "recht",
+      "actor": "lezer",
+      "actie": "registreren",
+      "toegestaan": false,
+      "omschrijving": "een lezer mag niet registreren (403)"
+    }
+  ],
+  "bewijs": {
+    "stappen": [
+      {
+        "id": "levering",
+        "actie": "levering",
+        "dataset": "swf-monitor-definities",
+        "omschrijving": "Leveringsstatus van de SWF-definities (laad-API)",
+        "bevat": [
+          "gepubliceerd"
+        ]
+      },
+      {
+        "id": "profiel",
+        "actie": "open",
+        "pad": "/api/laden/v1/profielen/definities",
+        "omschrijving": "Het laadprofiel definities waartegen de levering gevalideerd wordt"
+      }
+    ]
+  },
+  "bekende_afwijkingen": [
+    "Status A (10 klimaatindicatoren) wordt O; de betekenis van A is een open vraag (gat-analyse, vraag 3).",
+    "UUID d210c084: in de stuurdata van D-OmniTwin 'Custom Gebied Type' (code CUSTOM, nergens gebruikt); in de monitor 'CBS buurten bebouwde komgrens' met 2.370 waarden. De levering zet naam en code (CBS_BUURT_BBK); de stuurdata moet mee (migratie).",
+    "Eenheid, richting, bron en code per indicator zitten niet in de export; aanvullen via beheer of het gewone profiel definities.",
+    "Eén testdefinitie (status B) en één dubbele indicatornaam gaan mee zoals ze zijn."
+  ]
+}

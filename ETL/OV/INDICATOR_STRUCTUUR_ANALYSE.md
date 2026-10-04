@@ -138,8 +138,8 @@ Maar beschrijft **niet** hoe de indicator in de Kompas-hiërarchie wordt opgenom
 **Werkelijkheid:**  
 Een indicator is pas zichtbaar in het Kompas na twee stappen:
 
-1. **`indicatoren` seed** — maak de indicator aan in de `indicatoren` tabel via `etl_03_seed_indicatoren.py` of direct SQL
-2. **`kompas_indicator_mapping`** — koppel de indicator aan een `onderdeel_id` in de hiërarchie via de CSV (`etl_05_import_kompas.py`)
+1. **`indicatoren` seed** — maak de indicator aan in de `indicatoren` tabel via `db/stuurdata/indicatoren.csv` (geladen door `db-init`) of de laad-API, profiel `definities`
+2. **`kompas_indicator_mapping`** — koppel de indicator aan een `onderdeel_id` in de hiërarchie via `db/stuurdata/kompas_hierarchie.csv` (geladen door `db-init`)
 
 De OV-indicatoren moeten dus ook:
 - Aangemeld worden in `indicatoren_seed.json` (of apart JSON-bestand)

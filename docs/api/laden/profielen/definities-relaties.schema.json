@@ -1,0 +1,15 @@
+{
+  "$schema": "https://datapackage.org/profiles/2.0/tableschema.json",
+  "name": "relaties",
+  "title": "Profiel definities, resource relaties",
+  "description": "Op welke gebiedstypen een indicator waarden heeft (tabel indicator_gebiedstype_relaties). Volledige set per levering.",
+  "fields": [
+    { "name": "indicator_uuid", "type": "string", "format": "uuid", "constraints": { "required": true } },
+    { "name": "gebiedstype_id", "type": "string", "format": "uuid", "constraints": { "required": true } }
+  ],
+  "primaryKey": ["indicator_uuid", "gebiedstype_id"],
+  "foreignKeys": [
+    { "fields": ["indicator_uuid"], "reference": { "resource": "indicatoren", "fields": ["uuid"] } },
+    { "fields": ["gebiedstype_id"], "reference": { "resource": "gebiedstypen", "fields": ["id"] } }
+  ]
+}

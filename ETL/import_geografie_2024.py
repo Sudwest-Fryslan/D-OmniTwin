@@ -18,6 +18,7 @@ Vereisten:
 """
 
 import argparse
+import json
 import sys
 import os
 import time
@@ -313,17 +314,22 @@ def import_buurten():
                     inserted_wk += 1
                 seen_wijken.add(wk_code)
 
+            # Watervlag uit de CBS-kolom 'water' (JA/NEE), als die er is (#155)
+            water = str(row.get("water") or "").strip().upper()
+            metadata = json.dumps({"water": water} if water in ("JA", "NEE") else {})
+
             # Insert buurt
             cur.execute("""
-                INSERT INTO gebieden (id, gebiedstype_id, naam, geom, gemeente_code, provincienaam, actief)
-                VALUES (%s, %s, %s, ST_SetSRID(ST_GeomFromWKB(%s), 28992), %s, %s, true)
+                INSERT INTO gebieden (id, gebiedstype_id, naam, geom, gemeente_code, provincienaam, metadata, actief)
+                VALUES (%s, %s, %s, ST_SetSRID(ST_GeomFromWKB(%s), 28992), %s, %s, %s::jsonb, true)
                 ON CONFLICT (id) DO UPDATE SET
                     naam = EXCLUDED.naam,
                     geom = EXCLUDED.geom,
                     gemeente_code = EXCLUDED.gemeente_code,
                     provincienaam = EXCLUDED.provincienaam,
+                    metadata = COALESCE(gebieden.metadata, '{}'::jsonb) || EXCLUDED.metadata,
                     updated_at = CURRENT_TIMESTAMP;
-            """, (bu_id, buurt_type_id, bu_naam, geom_bytes, gm_code, prov_naam))
+            """, (bu_id, buurt_type_id, bu_naam, geom_bytes, gm_code, prov_naam, metadata))
 
             if cur.rowcount > 0:
                 inserted_bu += 1
@@ -335,6 +341,16 @@ def import_buurten():
 
     conn.commit()
     cur.close()
+    # Vangnet: gebieden zonder watervlag maar met een waternaam markeren (#155)
+    try:
+        with conn.cursor() as cur_w:
+            cur_w.execute("SELECT public.markeer_waterbuurten()")
+            n_water = cur_w.fetchone()[0]
+        conn.commit()
+        print(f"  💧 {n_water} waterbuurt(en) gemarkeerd op naam")
+    except Exception as e:
+        conn.rollback()
+        print(f"  ⚠️ Watervlag niet gezet ({e}); voer db/migraties/V021__zscore_referentie.sql uit")
     conn.close()
 
     t_total = time.time() - t0

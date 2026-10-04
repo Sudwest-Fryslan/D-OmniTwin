@@ -1,0 +1,119 @@
+{
+  "id": "sample-open-zonder-adapter",
+  "bronId": "sample",
+  "beschrijving": {
+    "@context": "https://data.overheid.nl/dcat-ap-nl/context.jsonld",
+    "@type": "dcat:Dataset",
+    "dct:title": "Sample: open bronnen zonder adapter (BAG, EP-Online, OpenStreetMap), 13 buurten Súdwest-Fryslân",
+    "dct:description": "Indicatoren die per buurt berekend zijn uit open bronnen waarvoor D-OmniTwin nog geen kernadapter heeft: Kadaster BAG (gebruiksfuncties, bouwjaren, woonoppervlakte; CC0), RVO EP-Online (energielabels; open data, API-sleutel nodig) en OpenStreetMap (OV-haltes; ODbL). Uit de vroegere sample (init_data/sample), voor 13 buurten. Voor Bolsward-Zuidoost (BU19000002) zijn het DEMODATA (gemiddelde van de buren), gemarkeerd in de bron van elke waarde. Vervalt zodra de adapters er zijn (zie docs/3-data-engineering/demodata-naar-open-data.md).",
+    "dct:publisher": "https://github.com/TLaan/D-OmniTwin",
+    "dct:accessRights": "http://publications.europa.eu/resource/authority/access-right/PUBLIC",
+    "dct:license": "http://creativecommons.org/licenses/by/4.0/",
+    "dct:spatial": "https://identifier.overheid.nl/tooi/id/provincie/pv21",
+    "dct:source": "init_data/sample/2_brondata/sample_indicatoren.csv (afgeleid uit Kadaster BAG, RVO EP-Online en OpenStreetMap)",
+    "dcat:theme": [
+      "http://standaarden.overheid.nl/owms/terms/Wonen"
+    ],
+    "dcat:keyword": [
+      "BAG",
+      "EP-Online",
+      "OpenStreetMap",
+      "sample"
+    ],
+    "dcat:contactPoint": {
+      "@type": "vcard:Organization",
+      "vcard:fn": "Functioneel beheer D-OmniTwin"
+    },
+    "prov:wasDerivedFrom": [
+      "https://www.kadaster.nl/zakelijk/registraties/basisregistraties/bag",
+      "https://www.ep-online.nl",
+      "https://www.openstreetmap.org/copyright"
+    ]
+  },
+  "laadprofiel": {
+    "profiel": "waarnemingen",
+    "vervangBereik": [],
+    "minimumN": 0,
+    "bijOntbrekendeN": "bron-onderdrukt",
+    "plausibiliteit": {
+      "maxDalingProcent": 20
+    }
+  },
+  "bron": {
+    "adapter": "lokaal-bestand",
+    "pad": "${REPO}/init_data/sample/2_brondata/sample_indicatoren.csv",
+    "formaat": "csv",
+    "omschrijving": "de sample in de repo (open bronnen, nog zonder adapter)"
+  },
+  "bewerkingen": [
+    {
+      "filter": {
+        "veld": "indicator_uuid",
+        "in": [
+          "5d7ad356-aac8-4815-8da7-97dff60c7873",
+          "3241e6b8-0712-4653-a420-2f3274466f6b",
+          "8ef35d23-4060-4e32-a19f-670682afd7c3",
+          "b5990263-4ccf-4ab3-b9cf-f7415262cc03",
+          "3dfcad9b-fad4-47d3-b701-8de88c198d13",
+          "29cfacae-021e-4fe5-819b-e9eb655837ae",
+          "1e9bc2fe-d5bd-4306-9b6b-d443e22916cf",
+          "22d02bf9-99ef-4357-b797-09a714690b11",
+          "7d9339e3-ea2c-474b-802a-49c854849f73",
+          "3baca929-ccc3-48aa-b966-e6877d01cbe7",
+          "b2e606cc-1d58-4917-9dec-148d90c80742",
+          "28a7a580-dc3c-4105-9fb3-d9ef47792429",
+          "0212e8f8-053d-4287-b924-7bdc20c53bb2",
+          "a990c073-78e3-4490-a26e-1fa8ca6988f9",
+          "93048a96-d3cd-4d99-83b5-2b950e8d78a2",
+          "25405460-907c-4e63-acc4-4f9c949f7cac",
+          "4f53e98e-3309-4a3a-9ecc-732956f7c53a",
+          "e2f618ca-0726-4c1f-8442-c1150578622e",
+          "49d5687e-c062-40b5-84b9-7e4557b6cee0",
+          "89ad6843-0db9-4044-9508-307775d4f496",
+          "b1011f4c-30b1-4088-bcf6-a67893d92c5f",
+          "233505e1-d22f-48b5-b67f-88ea73d12967",
+          "a2ed3719-64a7-40da-bfc5-a43d3d292594",
+          "3e24d6a5-60ee-4a07-b898-a1b89b18568c",
+          "3e4f5a3e-8cb3-4bd1-a1ed-ea7e4e4ed091",
+          "b53e54d6-ff54-4be1-b539-f915fd253831",
+          "3c2d0ca0-3a6d-4f53-809f-f82fa9b9fd22",
+          "93564b76-b07a-4134-868e-10654650d064",
+          "a63f5c54-bcea-4ef9-8914-36c17668e1b4",
+          "b69a88a0-efd4-4f8b-888a-97b653e1f13d",
+          "696ca006-89a0-4e9f-aa5b-f68c724736d1",
+          "c49c1563-2d85-4a2f-bdc9-02c340c4e510"
+        ]
+      }
+    },
+    {
+      "hernoem": {
+        "gebied_id": "gebied_code"
+      }
+    },
+    {
+      "constant": {
+        "gebiedstype": "afba67cb-6b38-4723-9c95-102a22d5b38a"
+      }
+    },
+    {
+      "getal": [
+        "jaar",
+        "waarde"
+      ]
+    },
+    {
+      "behoud": [
+        "gebied_code",
+        "gebiedstype",
+        "indicator_uuid",
+        "jaar",
+        "waarde",
+        "bron"
+      ]
+    }
+  ],
+  "levering": {
+    "formaat": "datapackage",
+    "bestand": "sample-open-zonder-adapter.zip"
+  }
+}

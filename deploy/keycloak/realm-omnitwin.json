@@ -1,0 +1,183 @@
+{
+  "realm": "omnitwin",
+  "displayName": "D-OmniTwin",
+  "loginTheme": "swf",
+  "enabled": true,
+  "sslRequired": "external",
+  "registrationAllowed": false,
+  "resetPasswordAllowed": false,
+  "rememberMe": false,
+  "editUsernameAllowed": false,
+  "loginWithEmailAllowed": true,
+  "duplicateEmailsAllowed": false,
+  "internationalizationEnabled": true,
+  "supportedLocales": ["nl", "en"],
+  "defaultLocale": "nl",
+  "passwordPolicy": "length(12) and notUsername and notEmail",
+  "bruteForceProtected": true,
+  "permanentLockout": false,
+  "failureFactor": 5,
+  "waitIncrementSeconds": 60,
+  "maxFailureWaitSeconds": 900,
+  "maxDeltaTimeSeconds": 43200,
+  "quickLoginCheckMilliSeconds": 1000,
+  "minimumQuickLoginWaitSeconds": 60,
+  "accessTokenLifespan": 300,
+  "accessTokenLifespanForImplicitFlow": 300,
+  "ssoSessionIdleTimeout": 1800,
+  "ssoSessionMaxLifespan": 43200,
+  "revokeRefreshToken": true,
+  "refreshTokenMaxReuse": 0,
+  "eventsEnabled": true,
+  "eventsExpiration": 2592000,
+  "adminEventsEnabled": true,
+  "adminEventsDetailsEnabled": false,
+  "roles": {
+    "realm": [
+      {
+        "name": "beheerder",
+        "description": "Beheer van D-OmniTwin (beheeromgeving, alle beheerroutes)"
+      },
+      {
+        "name": "gebruikersbeheerder",
+        "description": "Gebruikers en groepen beheren in de Keycloak-console (geen clients of realm-instellingen). Bewust apart van beheerder (minste rechten).",
+        "composite": true,
+        "composites": {
+          "client": {
+            "realm-management": ["manage-users", "view-users", "query-users", "query-groups", "view-realm"]
+          }
+        }
+      },
+      {
+        "name": "lezer",
+        "description": "Ingelogde gebruiker: ziet ook lagen en data die niet openbaar zijn"
+      },
+      {
+        "name": "default-roles-omnitwin",
+        "description": "Rollen die elke nieuwe gebruiker krijgt",
+        "composite": true,
+        "composites": {
+          "realm": ["lezer"]
+        }
+      }
+    ],
+    "client": {
+      "omnitwin-api": [
+        {
+          "name": "datasets:laden",
+          "description": "Mag elke dataset laden (bijv. de interne ETL)"
+        },
+        {
+          "name": "dataset:voorbeeld:laden",
+          "description": "Voorbeeld van een rol per dataset: mag alleen dataset 'voorbeeld' laden"
+        }
+      ]
+    }
+  },
+  "defaultRole": {
+    "name": "default-roles-omnitwin",
+    "description": "Rollen die elke nieuwe gebruiker krijgt",
+    "composite": true
+  },
+  "clients": [
+    {
+      "clientId": "omnitwin-api",
+      "name": "D-OmniTwin API (resource server)",
+      "description": "Staat voor de API van D-OmniTwin: draagt de client-rollen en is de audience (aud) van de tokens. Zelf geen inlogflow.",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": false,
+      "bearerOnly": false,
+      "standardFlowEnabled": false,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": false,
+      "frontchannelLogout": false
+    },
+    {
+      "clientId": "omnitwin-web",
+      "name": "D-OmniTwin (web en beheer)",
+      "description": "Inloggen van mensen in de kaartapplicatie en de beheeromgeving: authorization code + PKCE. Rechten via de realm-rollen beheerder en lezer.",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": true,
+      "standardFlowEnabled": true,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": false,
+      "frontchannelLogout": true,
+      "fullScopeAllowed": true,
+      "redirectUris": [
+        "http://localhost/*",
+        "http://localhost:8000/*",
+        "http://localhost:8080/*",
+        "${OMNITWIN_BASE_URL}/*"
+      ],
+      "webOrigins": ["+"],
+      "attributes": {
+        "pkce.code.challenge.method": "S256",
+        "post.logout.redirect.uris": "+",
+        "oauth2.device.authorization.grant.enabled": "false",
+        "oidc.ciba.grant.enabled": "false"
+      },
+      "protocolMappers": [
+        {
+          "name": "audience omnitwin-api",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-audience-mapper",
+          "consentRequired": false,
+          "config": {
+            "included.client.audience": "omnitwin-api",
+            "access.token.claim": "true",
+            "id.token.claim": "false",
+            "introspection.token.claim": "true"
+          }
+        }
+      ]
+    },
+    {
+      "clientId": "etl-voorbeeld",
+      "name": "Voorbeeld-ETL (machine)",
+      "description": "Voorbeeld van een machineclient voor een ETL: alleen client credentials, rol dataset:voorbeeld:laden. Het secret genereert Keycloak bij de import (opvragen: deploy/keycloak/client-secret.sh).",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": false,
+      "clientAuthenticatorType": "client-secret",
+      "standardFlowEnabled": false,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": true,
+      "frontchannelLogout": false,
+      "fullScopeAllowed": true,
+      "attributes": {
+        "client_credentials.use_refresh_token": "false",
+        "oauth2.device.authorization.grant.enabled": "false",
+        "oidc.ciba.grant.enabled": "false"
+      },
+      "protocolMappers": [
+        {
+          "name": "audience omnitwin-api",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-audience-mapper",
+          "consentRequired": false,
+          "config": {
+            "included.client.audience": "omnitwin-api",
+            "access.token.claim": "true",
+            "id.token.claim": "false",
+            "introspection.token.claim": "true"
+          }
+        }
+      ]
+    }
+  ],
+  "users": [
+    {
+      "username": "service-account-etl-voorbeeld",
+      "enabled": true,
+      "serviceAccountClientId": "etl-voorbeeld",
+      "clientRoles": {
+        "omnitwin-api": ["dataset:voorbeeld:laden"]
+      }
+    }
+  ]
+}

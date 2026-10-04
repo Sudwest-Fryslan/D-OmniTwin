@@ -67,14 +67,16 @@ FRIESE_GM_CODES = ["0059", "0060", "1891", "1940", "0072", "0074", "0080", "1970
                    "0086", "0088", "0090", "1900", "0093", "0737", "0096", "1949", "0098"]
 
 # Indicatoren van D-OmniTwin (namen en UUID's uit init_data/sample/2_brondata/sample_indicatoren.csv):
-# naam -> (uuid, eenheid, interpretatie_logica, categorie)
+# naam -> (uuid, eenheid, interpretatie_logica, categorie). Leeftijdsgroepen zijn neutraal: geen oordeel (#236).
 INDICATOREN = {
     "Inwoners": ("31f70dff-c116-4267-bef0-d15b0ff4c020", "aantal", "pos_is_pos", ""),
-    "0-15 jaar": ("356a2329-eadb-494f-a09d-906a3db264d4", "Aantal", "pos_is_pos", ""),
-    "15-25 jaar": ("026bcd11-ace5-4ec7-adbc-c06c324315cd", "Aantal", "pos_is_pos", ""),
-    "25-45 jaar": ("e6dd31a1-a056-4c07-a48c-1d4517269f1e", "Aantal", "pos_is_pos", ""),
-    "45-65 jaar": ("8225fa5c-efb8-4fd0-865b-a36ff0724a28", "Aantal", "pos_is_pos", ""),
-    "65+ jaar": ("b0ee9877-3850-4529-b352-6ec673562ef8", "Aantal", "pos_is_pos", ""),
+    "0-15 jaar": ("356a2329-eadb-494f-a09d-906a3db264d4", "Aantal", "neutraal", ""),
+    "15-25 jaar": ("026bcd11-ace5-4ec7-adbc-c06c324315cd", "Aantal", "neutraal", ""),
+    "25-45 jaar": ("e6dd31a1-a056-4c07-a48c-1d4517269f1e", "Aantal", "neutraal", ""),
+    "45-65 jaar": ("8225fa5c-efb8-4fd0-865b-a36ff0724a28", "Aantal", "neutraal", ""),
+    "65+ jaar": ("b0ee9877-3850-4529-b352-6ec673562ef8", "Aantal", "neutraal", ""),
+    # Nieuw in 2026 (k_80JaarOfOuder_13); hittestress gebruikt het percentage (#236)
+    "80 jaar of ouder": ("debc6665-b839-54dc-bd7e-4f9a749e2883", "aantal", "neutraal", ""),
     "Huishoudens totaal": ("be1a9ac4-6330-47c9-93c6-c9008b5daf89", "aantal", "pos_is_pos", ""),
     "Eenpersoonshuishoudens": ("257494f4-9e51-4a4a-a662-feabfe9758b0", "aantal", "pos_is_pos", ""),
     "Huishoudens zonder kind": ("428c1232-0213-491b-ad0c-56dcc82a8c59", "aantal", "pos_is_pos", ""),
@@ -106,12 +108,14 @@ INDICATOREN = {
 # zodat de use case en dit pakket dezelfde indicator vullen.
 _NAMESPACE_AFGELEID = uuid.UUID("6f1d3c2a-0b7e-4c8e-9a51-d0a1b2c3e4f5")
 AFGELEID = {
-    "65+ jaar (%)": {"teller": "65+ jaar", "noemer": "Inwoners", "factor": 100, "eenheid": "%"},
+    "65+ jaar (%)": {"teller": "65+ jaar", "noemer": "Inwoners", "factor": 100, "eenheid": "%", "logica": "neutraal"},
     "Eenpersoonshuishoudens (%)": {"teller": "Eenpersoonshuishoudens", "noemer": "Huishoudens totaal",
                                    "factor": 100, "eenheid": "%"},
+    "80 jaar of ouder (%)": {"teller": "80 jaar of ouder", "noemer": "Inwoners", "factor": 100, "eenheid": "%",
+                             "logica": "neutraal"},
 }
 for _naam, _a in AFGELEID.items():
-    INDICATOREN[_naam] = (str(uuid.uuid5(_NAMESPACE_AFGELEID, _naam)), _a["eenheid"], "pos_is_pos", "")
+    INDICATOREN[_naam] = (str(uuid.uuid5(_NAMESPACE_AFGELEID, _naam)), _a["eenheid"], _a.get("logica", "pos_is_pos"), "")
 
 
 def _reeks(stam, n2019, n2020, n2021, n2022, n2023, n2024, n2025, n2026):
@@ -131,6 +135,7 @@ MAPPING = {
     # 2026 splitst 65+ in 65-80 en 80+: som uit dezelfde tabel
     "65+ jaar": {**_reeks("k_65JaarOfOuder", 12, 12, 12, 12, 12, 12, 12, None),
                  2026: ("k_65JaarTot80Jaar_12", "k_80JaarOfOuder_13")},
+    "80 jaar of ouder": {2026: "k_80JaarOfOuder_13"},
     "Huishoudens totaal": _reeks("HuishoudensTotaal", 28, 28, 28, 28, 29, 29, 29, 30),
     "Eenpersoonshuishoudens": _reeks("Eenpersoonshuishoudens", 29, 29, 29, 29, 30, 30, 30, 31),
     "Huishoudens zonder kind": _reeks("HuishoudensZonderKinderen", 30, 30, 30, 30, 31, 31, 31, 32),
@@ -166,6 +171,7 @@ MAPPING = {
 # Jaren waarin CBS een variabele niet (meer) publiceert; de unittest eist dat MAPPING + dit = alle jaren.
 NIET_GEPUBLICEERD = {
     "Huishoudens met laag inkomen": {2024, 2025, 2026},  # vervallen in de Kerncijfers na 2023
+    "80 jaar of ouder": {2019, 2020, 2021, 2022, 2023, 2024, 2025},  # pas vanaf 2026 apart (daarvoor 65+)
 }
 
 VELDEN = ["gebied_id", "indicator_uuid", "indicator_naam", "waarde", "jaar", "bron", "kwaliteit",

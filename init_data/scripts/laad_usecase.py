@@ -13,29 +13,42 @@ Alle data hoort bij een use case. Een use case (usecases/<naam>/) laadt:
 4. extra brondata: usecases/<naam>/data/waarden.csv, zelfde formaat als
    init_data/sample/2_brondata/sample_indicatoren.csv (optioneel)
 
+Een demopakket met `datasets` (de data komt via de laad-API uit open bronnen, #236) krijgt
+hier alleen zijn inrichting: `--inrichting <naam>` zet de richting (en eenheid) van de
+indicatoren en maakt de afgeleide indicatoren. De uitvoerder (`python -m omnitwin.usecases
+installeer`) roept dat aan na de laad-API.
+
 Vereist: het product zonder data, geladen met
     python init_data/scripts/load_sample.py --stap definities
 
 Idempotent: opnieuw laden overschrijft dezelfde rijen. Pakketten zijn te
 combineren; --alle laadt ze allemaal.
 
+Volgorde en afhankelijkheden (`afhankelijk_van` in usecase.json) komen uit de
+use-case-uitvoerder (omnitwin.usecases): eerst de afhankelijkheden, elke use case
+één keer; een use case met status 'ontwerp' en wat er (niet-optioneel) van afhangt,
+wordt overgeslagen. Use cases met `datasets` laden via de laad-API
+(python -m omnitwin.usecases), niet via dit script.
+
 Gebruik:
     python init_data/scripts/laad_usecase.py hittestress [sociale-cohesie ...]
     python init_data/scripts/laad_usecase.py --alle
+    python init_data/scripts/laad_usecase.py --inrichting hittestress [...]
+    python init_data/scripts/laad_usecase.py --lijst | --boom <naam> | --index
 """
 
 import argparse
 import csv
-import importlib.util
 import json
-import os
 import sys
 import tempfile
 import uuid
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src"))
 import load_sample  # noqa: E402  (databaseverbinding en CSV-import hergebruiken)
+from omnitwin import usecases as uitvoerder  # noqa: E402  (volgorde, afhankelijkheden, status)
 
 ROOT = Path(__file__).resolve().parent.parent.parent
 USECASES_DIR = ROOT / "usecases"
@@ -52,14 +65,20 @@ RICHTING = {
 }
 
 
-def pakketten(namen, alle):
-    beschikbaar = sorted(p.parent.name for p in USECASES_DIR.glob("*/usecase.json"))
-    if alle:
-        return beschikbaar
-    onbekend = [n for n in namen if n not in beschikbaar]
-    if onbekend:
-        sys.exit(f"❌ Onbekende use case(s): {onbekend}. Beschikbaar: {beschikbaar}")
-    return namen
+def pakketten(namen, alle, map_=USECASES_DIR):
+    """Te laden demopakketten in volgorde (afhankelijkheden eerst). Overgeslagen: status 'ontwerp'
+    (en wat ervan afhangt) en use cases met `datasets` (die laden via de laad-API)."""
+    ucs = uitvoerder.lees_usecases(map_)
+    try:
+        orde, overgeslagen = uitvoerder.plan(namen, ucs, alle)
+    except uitvoerder.UseCaseFout as e:
+        sys.exit(f"❌ {e}. Beschikbaar: {sorted(ucs)}")
+    for naam, reden in overgeslagen.items():
+        print(f"⏭️  {naam}: overgeslagen ({reden})")
+    for naam in orde:
+        if "datasets" in ucs[naam]:
+            print(f"⏭️  {naam}: laadt via de laad-API (python -m omnitwin.usecases), niet via dit script")
+    return [n for n in orde if "datasets" not in ucs[n]]
 
 
 def zet_richting(cur, indicatoren):
@@ -149,24 +168,9 @@ def laad_gebieden(conn, gebied_ids):
 
 
 def extra_brondata(naam, uc):
-    """Pad naar de extra brondata van een use case: de cache van zijn downloadscript
-    (extra_data.script), of de gecommitte data/waarden.csv. Downloadfout: waarschuwing, None."""
-    script = (uc["data"].get("extra_data") or {}).get("script")
-    if not script:
-        return USECASES_DIR / naam / "data" / "waarden.csv"
-    cache = Path(os.environ.get("DATA_CACHE", ROOT / "data-cache")) / "usecases" / naam / "waarden.csv"
-    if cache.exists():
-        print(f"   💾 extra brondata uit cache: {cache}")
-        return cache
-    print(f"   🌐 extra brondata downloaden ({script})")
-    try:
-        spec = importlib.util.spec_from_file_location(f"maak_data_{naam.replace('-', '_')}", USECASES_DIR / naam / script)
-        mod = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(mod)
-        return mod.main(cache)
-    except Exception as e:  # geen netwerk, bron onbereikbaar, cache niet schrijfbaar
-        print(f"   ⚠️  extra brondata van {naam} niet opgehaald ({type(e).__name__}: {e}); de use case is onvolledig")
-        return None
+    """Pad naar de extra brondata van een use case: de gecommitte data/waarden.csv (niet-downloadbare
+    data). Downloadbare data komt via een dataset met een bronadapter (laad-API), niet hier."""
+    return USECASES_DIR / naam / "data" / "waarden.csv"
 
 
 def laad(conn, naam):
@@ -187,9 +191,15 @@ def laad(conn, naam):
         finally:
             load_sample.INDICATOREN_CSV = bron_csv
 
+    inrichting(conn, naam, uc)
+
+
+def inrichting(conn, naam, uc=None):
+    """Richting en eenheid van de indicatoren, en de afgeleide indicatoren. Geen data."""
+    uc = uc or json.loads((USECASES_DIR / naam / "usecase.json").read_text(encoding="utf-8"))
     cur = conn.cursor()
-    zet_richting(cur, uc["data"]["indicatoren"])
-    for afg in uc["data"].get("afgeleid", []):
+    zet_richting(cur, (uc.get("data") or {}).get("indicatoren", []))
+    for afg in (uc.get("data") or {}).get("afgeleid", []):
         maak_afgeleid(cur, afg, naam)
     conn.commit()
 
@@ -198,14 +208,26 @@ def main():
     parser = argparse.ArgumentParser(description="Laad use-casepakketten (usecases/<naam>/)")
     parser.add_argument("namen", nargs="*", help="naam van de map onder usecases/")
     parser.add_argument("--alle", action="store_true", help="alle use cases laden")
+    parser.add_argument("--inrichting", action="store_true",
+                        help="alleen de inrichting (richting, eenheid, afgeleide indicatoren), geen data")
+    parser.add_argument("--lijst", action="store_true", help="use cases tonen (zie python -m omnitwin.usecases lijst)")
+    parser.add_argument("--boom", metavar="NAAM", help="afhankelijkheden als boom")
+    parser.add_argument("--index", action="store_true", help="index in usecases/README.md bijwerken")
     args = parser.parse_args()
+    if args.lijst or args.boom or args.index:
+        sys.exit(uitvoerder.main(["lijst"] if args.lijst else ["boom", args.boom] if args.boom else ["index"]))
     if not args.namen and not args.alle:
         parser.error("geef een of meer namen, of --alle")
 
     conn = load_sample.get_db_connection()
     try:
-        for naam in pakketten(args.namen, args.alle):
-            laad(conn, naam)
+        if args.inrichting:
+            for naam in args.namen:
+                print(f"\n🧭 {naam}: inrichting")
+                inrichting(conn, naam)
+        else:
+            for naam in pakketten(args.namen, args.alle):
+                laad(conn, naam)
     finally:
         conn.close()
     print("\n✅ Use cases geladen.")

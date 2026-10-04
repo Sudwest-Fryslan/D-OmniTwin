@@ -1,0 +1,73 @@
+{
+  "id": "swf-gebied-deelgebieden",
+  "bronId": "swf-monitor",
+  "beschrijving": {
+    "@context": "https://data.overheid.nl/dcat-ap-nl/context.jsonld",
+    "@type": "dcat:Dataset",
+    "dct:title": "Deelgebieden Omgevingsvisie Súdwest-Fryslân",
+    "dct:description": "De 6 deelgebieden van de Omgevingsvisie (Bolsward, Sneek, IJsselmeergebied, Merengebied, Lege Gean, Greidhoeke): de kandidaat voor het IGW-gebied. D-OmniTwin zet er DG voor.",
+    "dct:publisher": "https://identifier.overheid.nl/tooi/id/gemeente/gm1900",
+    "dct:accessRights": "http://publications.europa.eu/resource/authority/access-right/PUBLIC",
+    "dct:license": "http://standaarden.overheid.nl/owms/terms/licentieonbekend",
+    "dct:spatial": "https://identifier.overheid.nl/tooi/id/gemeente/gm1900",
+    "dct:source": "Gemeente Súdwest-Fryslân, Omgevingsvisie",
+    "dcat:theme": [
+      "http://standaarden.overheid.nl/owms/terms/Ruimtelijke_ordening"
+    ],
+    "dcat:keyword": [
+      "gebiedsindeling",
+      "Súdwest-Fryslân"
+    ],
+    "dct:conformsTo": "http://www.opengis.net/def/crs/EPSG/0/28992",
+    "dcat:contactPoint": {
+      "@type": "vcard:Organization",
+      "vcard:fn": "Functioneel beheer gebiedsmonitor, gemeente Súdwest-Fryslân"
+    }
+  },
+  "laadprofiel": {
+    "profiel": "gebiedsindeling",
+    "doel": {
+      "gebiedstypeId": "e7ebeee1-fe68-5731-a112-ee82f5a37f1b",
+      "featureTabel": "gebieden",
+      "sleutelveld": "code",
+      "labelveld": "naam",
+      "codePrefix": "DG"
+    },
+    "plausibiliteit": {
+      "minRegels": 6,
+      "maxDalingProcent": 10
+    }
+  },
+  "bron": {
+    "adapter": "lokaal-bestand",
+    "pad": "${REPO}/data-upload/Deelgebieden_omgevingsvisie.gpkg",
+    "omschrijving": "in de repo (data-upload/), afkomstig van SWF"
+  },
+  "bewerkingen": [
+    {
+      "hernoem": {
+        "ID": "code",
+        "Deelgebied": "naam"
+      }
+    },
+    {
+      "tekst": [
+        "code"
+      ]
+    },
+    {
+      "behoud": [
+        "code",
+        "naam"
+      ]
+    },
+    {
+      "multipolygon": true
+    }
+  ],
+  "levering": {
+    "formaat": "geopackage",
+    "bestand": "swf-gebied-deelgebieden.gpkg",
+    "geometrie": "MultiPolygon"
+  }
+}

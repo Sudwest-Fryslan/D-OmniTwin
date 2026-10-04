@@ -1,7 +1,7 @@
 # TC-06-006 — Use case: Klimaatadaptatie: hittestress en kwetsbaarheid
 
 **Bron:** innovatieaanvraag Digitale Overheid 2026, use cases; `docs/8-communicatie/usecases/data-science_use-cases.md`
-**Status:** ⚠️ Nagespeeld op 2026-10-01: kaart en Kompas werken met het pakket; AI-assistent nog niet (zie Resultaat)
+**Status:** actief (https://github.com/TLaan/D-OmniTwin/issues/236: data via de laad-API uit open bronnen; drie indicatoren DEMODATA)
 **Automatische test:** `tests/integration/test_usecases.py` (leest [`usecase.json`](./usecase.json))
 
 Een use case is een **bundel**: data + inrichting + stappen. Alle drie staan hier; `usecase.json` is de machineleesbare versie.
@@ -14,47 +14,42 @@ Een use case is een **bundel**: data + inrichting + stappen. Alle drie staan hie
 
 ## 1. Data
 
-- **Dataset:** `init_data/sample`, gebiedstype CBS Buurten
-- **Gebieden:** Bolsward-Noord (BU19000001), Bolsward-Zuidoost (BU19000002), Bolsward-Noordoost (BU19000004). Focus: Bolsward-Zuidoost (CBS Kerncijfers echt, 2019-2026; overige indicatoren demodata).
+- **Data:** via de laad-API (https://github.com/TLaan/D-OmniTwin/issues/236). Afhankelijk van `cbs-gebiedsindelingen`, `cbs-kerncijfers`, `rivm-gezondheidsmonitor` en `sample-bronbibliotheek`; eigen datasets voor de RIVM-rasters. Gebiedstype CBS Buurten.
+- **Gebieden:** Bolsward-Noord (BU19000001), Bolsward-Zuidoost (BU19000002), Bolsward-Noordoost (BU19000004). Focus: Bolsward-Zuidoost. (De CBS-indeling 2024 heeft ook Bolsward-Zuidwest, BU19000003; die staat sinds #236 ook in D-OmniTwin.)
 
 | Indicator | Richting | Bron |
 |---|---|---|
-| Afstand tot koele plek | lager is beter | sample (bronbibliotheek) |
-| Oppervlak groen per inwoner | hoger is beter | sample |
-| 65+ jaar | neutraal | sample (aantal) |
-| Ervaren gezondheid | hoger is beter | sample |
-| Verhouding oppervlakte water / verharding | hoger is beter | sample |
-| 65+ jaar (%) | neutraal | CBS 2026, gedownload bij het laden |
-| 80 jaar of ouder (%) | neutraal | CBS 2026, gedownload bij het laden |
-| Boomkroonbedekking | hoger is beter | RIVM 2022, gedownload bij het laden |
-| Stedelijk hitte-eiland effect | lager is beter | RIVM 2022, gedownload bij het laden |
+| Afstand tot koele plek | lager is beter | **DEMODATA**, plaatsvervanger voor de interne bron SWF-gebiedsmonitor (`sample-bronbibliotheek`) |
+| Oppervlak groen per inwoner | hoger is beter | **DEMODATA**, idem |
+| Verhouding oppervlakte water / verharding | hoger is beter | **DEMODATA**, idem |
+| 65+ jaar | neutraal | CBS Kerncijfers 2019-2026 (`cbs-kerncijfers`) |
+| 65+ jaar (%) | neutraal | CBS Kerncijfers, afgeleid in het recept (zelfde jaar) |
+| 80 jaar of ouder (%) | neutraal | CBS Kerncijfers 2026 (`k_80JaarOfOuder_13` ÷ inwoners), `cbs-kerncijfers` |
+| Ervaren gezondheid | hoger is beter | RIVM Gezondheidsmonitor 2012-2024 (`rivm-gezondheidsmonitor`) |
+| Boomkroonbedekking | hoger is beter | RIVM Atlas Natuurlijk Kapitaal, Bomenkaart 2022 (dataset [`rivm-boomkroon-buurten`](datasets/rivm-boomkroon-buurten.json)) |
+| Stedelijk hitte-eiland effect | lager is beter | RIVM Atlas Natuurlijk Kapitaal, Stedelijk hitte-eiland effect v2 (dataset [`rivm-hitte-eiland-buurten`](datasets/rivm-hitte-eiland-buurten.json)) |
 
-### Extra brondata (gedownload bij het laden)
+### Eigen datasets (RIVM-rasters)
 
-Deze data staat **niet in git**: wat bij een open bron te downloaden is, downloaden we. `maak_data.py` draait bij het laden van de use case (`laad_usecase.py`) en schrijft naar de cache `$DATA_CACHE/usecases/hittestress/waarden.csv` (in Docker het volume `bron-cache`). Zonder internet en zonder cache: een waarschuwing, en deze vier indicatoren ontbreken.
+Kernadapter `wcs-zonaal` (vervangt het vroegere `maak_data.py`): per buurt een uitsnede van het raster via WCS 2.0.1 (`https://data.rivm.nl/geo/ank/wcs`, GeoTIFF in RD New) en het gemiddelde over de 10m-cellen met het middelpunt in de buurt. De buurtgrenzen komen van PDOK (CBS-gebiedsindeling 2024, dezelfde download als `cbs-gebiedsindelingen`). Voor de 13 testbuurten. Licentie: Public Domain Mark 1.0. De uuid per indicator is `uuid5` op de naam (namespace van `laad_usecase.py`).
 
-Echte open data, opgehaald met [`maak_data.py`](./maak_data.py). Reproduceerbaar: `python usecases/hittestress/maak_data.py` (vereist numpy, Pillow, shapely, pyproj). De CSV staat in git, dus laden werkt offline.
+| Dataset | Coverage | Jaar | Methode |
+|---|---|---|---|
+| `rivm-boomkroon-buurten` | `ank__rivm_20231221_bomenkaart_2022` (bomen > 2,5 m) | 2022 | gemiddelde; cel zonder bomen = 0% (`nodata_als: 0`) |
+| `rivm-hitte-eiland-buurten` | `ank__Stedelijk_hitte_eiland_effect_01062022_v2` | 2022 | gemiddelde; nodata telt niet mee |
 
-| Indicator | Eenheid | Bron | Jaar | Licentie | Methode |
+| Buurt | 65+ (%) | 80+ (%) | Boomkroon (%) | Hitte-eiland (°C) | Afstand koele plek (DEMODATA) |
 |---|---|---|---|---|---|
-| 65+ jaar (%) | % | CBS Kerncijfers wijken en buurten 2026, tabel [86358NED](https://opendata.cbs.nl/ODataApi/odata/86358NED) | 2026 (1 januari) | CC BY 4.0 | (65-80 jaar + 80+) ÷ inwoners |
-| 80 jaar of ouder (%) | % | idem | 2026 | CC BY 4.0 | 80+ ÷ inwoners |
-| Boomkroonbedekking | % | RIVM Atlas Natuurlijk Kapitaal, Bomenkaart 2022 (10 m, bomen > 2,5 m); WCS `ank__rivm_20231221_bomenkaart_2022` op `https://data.rivm.nl/geo/ank/wcs` | 2022 | Public Domain Mark 1.0 | gemiddelde over de 10m-cellen in de buurt; cel zonder bomen = 0% |
-| Stedelijk hitte-eiland effect | °C | RIVM Atlas Natuurlijk Kapitaal, Stedelijk hitte-eiland effect v2; WCS `ank__Stedelijk_hitte_eiland_effect_01062022_v2` | 2022 | Public Domain Mark 1.0 | gemiddelde over de 10m-cellen in de buurt |
+| Bolsward-Noord (BU19000001) | 24,1 | 9,5 | 7,4 | 0,47 | 246 m |
+| Bolsward-Zuidoost (BU19000002) | 29,5 | 10,2 | 13,1 | 0,41 | 226 m |
+| Bolsward-Noordoost (BU19000004) | 24,2 | 6,2 | 6,7 | 0,38 | 206 m |
 
-De buurtgrenzen komen uit `init_data/sample/2_brondata/sample_buurten.geojson`, omgezet naar RD New. De uuid per indicator is `uuid5` op de naam (namespace van `laad_usecase.py`). `65+ jaar (%)` was eerder afgeleid uit de sample (65+ 2025 ÷ inwoners 2023, voor Bolsward-Zuidoost uit demodata); nu komt hij rechtstreeks van het CBS.
-
-| Buurt | 65+ (%) | 80+ (%) | Boomkroon (%) | Hitte-eiland (°C) |
-|---|---|---|---|---|
-| Bolsward-Noord (BU19000001) | 24,1 | 9,5 | 7,6 | 0,47 |
-| Bolsward-Zuidoost (BU19000002) | 29,5 | 10,2 | 13,1 | 0,41 |
-| Bolsward-Noordoost (BU19000004) | 24,2 | 6,2 | 6,8 | 0,37 |
-
-Deze vier indicatoren zijn ook voor Bolsward-Zuidoost **echt**. De overige indicatoren van Bolsward-Zuidoost in de sample zijn nog demodata.
+Gemeten op een verse installatie op 02-10-2026. Boomkroon en hitte-eiland wijken 0,1-0,2 af van de vroegere `maak_data.py` (toen de buurtgrenzen uit de sample, nu de gegeneraliseerde grenzen van PDOK).
 
 **Ontbreekt nog** (#138):
 - **% 75+:** CBS publiceert per buurt alleen 65-80 en 80+ (Kerncijfers 2026). 80+ is opgenomen; dat is ook de groep die het kwetsbaarst is bij hitte.
 - **Gevoelstemperatuur (Klimaateffectatlas):** voor Fryslân niet als open download of WCS beschikbaar (op data.overheid.nl alleen van Zuid-Holland, Overijssel en Zeeland). Vervangen door het stedelijk hitte-eiland effect van het RIVM.
+- **Afstand tot koele plek, groen per inwoner, water/verharding:** interne bron; nu DEMODATA. Met `SWF_DUMP_DIR` laadt `sample-bronbibliotheek` de echte waarden (variant `intern`).
 
 ## 2. Inrichting
 
@@ -68,21 +63,35 @@ Deze vier indicatoren zijn ook voor Bolsward-Zuidoost **echt**. De overige indic
 
 | # | Actie | Verwacht | Resultaat 01-10 |
 |---|---|---|---|
-| 0 | Laad het pakket: `python init_data/scripts/laad_usecase.py hittestress` (db-init doet dit automatisch bij `LOAD_SAMPLE_DATA=true`) | Richting en de vier indicatoren uit `data/waarden.csv` staan in de database | ✅ (verse stack, 01-10) |
+| 0 | Installeer: `python -m omnitwin.usecases installeer hittestress` (db-init doet dit automatisch bij `LOAD_SAMPLE_DATA=true`, met de laadstraat in-process) | De datasets zijn gepubliceerd, de richting is gezet; `python -m omnitwin.usecases test hittestress` is groen | ✅ (verse stack, 02-10) |
 | 1 | Open de app, kies **Kaart Configuratie → CBS Buurten** | 13 buurten op de kaart | ✅ |
 | 2 | Kies indicator **Afstand tot koele plek**, zoom in op Bolsward | Buurten gekleurd; **rood = slechter**, legenda met eenheid | ✅ Richting klopt: gecorrigeerd in de definities (#120) |
-| 2b | Kies indicator **Stedelijk hitte-eiland effect** | 3 buurten met data; legenda 0,37 – 0,47 °C, groen = laag | ⚠️ Legenda klopt, maar de drie buurten krijgen dezelfde kleur: bij minder waarden dan kleurklassen (3 < 7) maakt `color_scale_service` geen klassen |
+| 2b | Kies indicator **Stedelijk hitte-eiland effect** | Buurten met data krijgen elk een kleur naar hun waarde, ook bij weinig gebieden; legenda in °C, groen = laag | ✅ 03-10: [#161](https://github.com/TLaan/D-OmniTwin/issues/161) opgelost; bij minder unieke waarden dan kleurklassen krijgt elke waarde een eigen klasse |
 | 3 | Klik op **Bolsward-Zuidoost** | Selectiebalk met de buurtnaam | ✅ |
 | 4 | Open het **Kompas** (Klimaat Kompas) | Zonnediagram voor Bolsward-Zuidoost, dekking 100% | ✅ (Volledig Kompas) |
-| 5 | Stel de vraag aan de **D-Omni Assistent** | Antwoord noemt de relevante indicatoren en buurten. Verwacht: Bolsward-Noord ligt het verst van een koele plek (246 m) en heeft het sterkste hitte-eiland effect (0,47 °C). Bolsward-Noordoost ligt het dichtst bij een koele plek (206 m), maar heeft de minste boomkroon (6,8%). Relatief de meeste 65- en 80-plussers: Bolsward-Zuidoost (29,5% en 10,2%, CBS 2026). | ❌ Herhaalt de vraag; 'Gemeente: Bolsward' doet zichtbaar niets; geen indicatoren (#139) |
-| 5 | Stel de vraag aan de **D-Omni Assistent** | Antwoord noemt de relevante indicatoren en buurten. Verwacht: Bolsward-Noord ligt het verst van een koele plek (246 m), Bolsward-Noordoost het dichtst bij (206 m). Relatief de meeste 65-plussers: Bolsward-Zuidoost (29,5%, CBS 2026; Noord 24,1%, Noordoost 24,2%). | ❌ Herhaalt de vraag; 'Gemeente: Bolsward' doet zichtbaar niets; geen indicatoren (#139) |
+| 5 | Stel de vraag aan de **D-Omni Assistent** | Antwoord noemt de relevante indicatoren en buurten. Verwacht: relatief de meeste 65-plussers in Bolsward-Zuidoost (29,5%, CBS 2026). Afstand tot een koele plek (DEMODATA, de assistent meldt dat): Bolsward-Noord het verst (246 m), Bolsward-Noordoost het dichtst bij (206 m). | ✅ zonder taalmodel (vaste tekst, `tests/integration/test_chat_datavragen.py`); met model zie #139 |
 | 6 | **Rapport → Gebiedsdossier** voor Bolsward-Zuidoost | Dossier met AI-samenvatting, label "AI-gegenereerd" | ✅ (eerdere ronde, ~2 min met lokaal model) |
 
 ## Resultaat
 
 - **Data:** de indicatoren zijn aanwezig en gevuld voor de drie Bolsward-buurten. Vier ervan komen uit echte open data (CBS 2026, RIVM 2022), ook voor Bolsward-Zuidoost.
 - **Uitkomst met echte data:** relatief de meeste 65- en 80-plussers wonen in Bolsward-Zuidoost (29,5% en 10,2%). Die buurt heeft ook de meeste boomkroon (13,1%). Bolsward-Noord heeft het sterkste hitte-eiland effect (0,47 °C) en ligt het verst van een koele plek.
-- **Kaartkleur:** een indicator met waarden voor maar 3 buurten krijgt één kleur, omdat er minder waarden dan kleurklassen zijn. De legenda klopt wel.
 - **Inrichting:** het pakket zet de richting goed en voegt afgeleide percentages toe. Een eigen Kompas-profiel en chatscenario per use case ontbreken nog (#138).
-- **Chat zet een verkeerde gemeente:** 'Gemeente: Bolsward' filtert op code 0080 (Leeuwarden). Dat filter blijft bewaard, en daarna blijft de kaart leeg (#140).
-- **AI-assistent:** de chat herkent wat je wilt doen en biedt knoppen aan, maar **beantwoordt geen datavraag**. Na een verse installatie stelt hij geen indicatoren voor (#139).
+
+## Bewijs
+
+<!-- bewijs:start -->
+*Gemaakt op 03-10-2026 met D-OmniTwin 0.3.0-rc.1 (use case 0.3.0); geslaagd. Verslag: [`bewijs/bewijs.json`](bewijs/bewijs.json). Opnieuw maken (bij een release): `python -m omnitwin.usecases bewijs hittestress`.*
+
+![Boomkroonbedekking per buurt in Bolsward (RIVM, 2022)](bewijs/kaart.webp)
+*Boomkroonbedekking per buurt in Bolsward (RIVM, 2022)*
+
+![Datavraag over hittestress: afstand tot een koele plek en 65-plussers](bewijs/chat.webp)
+*Datavraag over hittestress: afstand tot een koele plek en 65-plussers*
+
+![Kompas voor Bolsward-Zuidoost](bewijs/kompas.webp)
+*Kompas voor Bolsward-Zuidoost*
+
+![Leveringsstatus van de eigen dataset boomkroon (laad-API)](bewijs/levering.webp)
+*Leveringsstatus van de eigen dataset boomkroon (laad-API)*
+<!-- bewijs:end -->
