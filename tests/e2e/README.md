@@ -71,10 +71,21 @@ in `tests/e2e/artifacts/` (niet in git).
 - Wachten gebeurt op concrete toestand (`window.state`, `window.kompasViz`, elementen),
   niet op vaste pauzes.
 - Kaartklikken zijn echte muisklikken op het deck.gl-canvas: het klikpunt wordt berekend
-  met `viewport.project()` en gecontroleerd met `deck.pickObject()` en
-  `document.elementFromPoint()` (niet afgedekt door panelen). Ligt de buurt buiten beeld,
-  dan zoomt de test uit met het scrollwiel. Waar de klik zelf niet het onderwerp is,
-  selecteert de test via de `onClick`-handler van de gebiedenlaag (zelfde codepad).
+  met `viewport.project()` (punt-in-polygoon, zo ver mogelijk van de rand van de buurt,
+  niet afgedekt volgens `document.elementFromPoint()`) en één keer bevestigd met
+  `deck.pickObject()`. Ligt de buurt buiten beeld, dan zoomt de test uit met het scrollwiel.
+  Waar de klik zelf niet het onderwerp is, selecteert de test via de `onClick`-handler van
+  de gebiedenlaag (zelfde codepad).
+- Onder CPU-druk duurt de pick die deck.gl bij `pointerdown` doet langer dan de tapdrempel
+  van 250 ms, en dan maakt deck.gl van de muisklik geen klik (#212). De test meet dat per
+  klik en verruimt dan voor die pagina de tijdsdrempel van de click-herkenner, met een
+  waarschuwing in de pytest-uitvoer; de klik blijft een echte klik.
+- Wachttijden schalen met de gemeten traagheid van de renderer: bij het openen van elke
+  pagina meet de test een kleine vaste WebGL-taak (`meet_traagheid`, `geschaald()`); na de
+  run staat het overzicht onder "Traagheid renderer". Sneller dan in rust wordt niets.
+- De tegels van de PDOK-basiskaart worden in de tests leeg beantwoord (HTTP 204): ze kosten
+  onder software-WebGL veel rekentijd en geen test gaat erover. Tests die ze nodig hebben
+  krijgen de marker `basiskaart`; `E2E_BASISKAART=1` laadt ze altijd.
 - Het Kompas wordt bediend met echte klikken op het middelpunt van een segment van het
   zonnediagram.
 - Welkomstmodal en tips worden via `localStorage` overgeslagen, behalve in TC-06-001
