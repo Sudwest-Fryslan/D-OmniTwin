@@ -336,7 +336,7 @@ class KompasVisualization {
                 `Indicatordekking: ${escapeHtml(data.coverage_percentage)}%` +
                 (data.classificatie === 'percentiel_8'
                     ? '<br><span class="kompas-classificatie">Kleur: percentielklasse (8 × 12,5%)</span>' : '') +
-                `</p>`;
+                `</p>` + this._labelLegenda(data);
 
             // Render sunburst with data
             this.renderSunburst(data.hierarchie);
@@ -409,14 +409,16 @@ class KompasVisualization {
             // Recursively average the hierarchie values
             this._mergeHierarchies(merged.hierarchie, results.map(r => r.hierarchie));
 
-            // #255: bij percentielklassen de klassen over de hele selectie uit de backend
-            if (results[0].classificatie === 'percentiel_8') {
+            // #255/#256: bij percentielklassen en labels de klassen over de hele selectie uit de backend
+            let selectie = null;
+            if (['percentiel_8', 'label_ae'].includes(results[0].classificatie)) {
                 const qs = gebiedIds.map(id => `gebied_id=${encodeURIComponent(id)}`).join('&');
                 const sel = await fetch(`/api/kompas/${configId}/selectie?${qs}`).then(r => {
                     if (!r.ok) throw new Error(`HTTP ${r.status} selectie`);
                     return r.json();
                 });
                 this._neemKlassenOver(merged.hierarchie, sel.hierarchie);
+                selectie = sel;
             }
 
             // Build area names list
@@ -447,7 +449,7 @@ class KompasVisualization {
                 `Indicatordekking: ${escapeHtml(avgCoverage)}%` +
                 (results[0].classificatie === 'percentiel_8'
                     ? '<br><span class="kompas-classificatie">Kleur: percentielklasse over de selectie (8 × 12,5%)</span>' : '') +
-                `</p>`;
+                `</p>` + this._labelLegenda(selectie || results[0], true);
 
             // Render sunburst with merged data
             this.renderSunburst(merged.hierarchie);
@@ -545,6 +547,21 @@ class KompasVisualization {
         }
     }
 
+    _labelLegenda(data, selectie = false) {
+        /**
+         * #256: bij classificatie label_ae de labels A-E met kleur, en zolang er geen
+         * vastgestelde drempels zijn de melding 'voorlopige drempels (kwintielen)'.
+         */
+        if (!data || data.classificatie !== 'label_ae') return '';
+        const items = (data.klassen_legenda || []).map(k =>
+            `<li data-label="${escapeHtml(k.label)}"><span class="legenda-klasse-kleur" style="background:${escapeHtml(k.kleur)}"></span>`
+            + `<span>${escapeHtml(k.omschrijving || k.label)}</span></li>`).join('');
+        return `<p class="help-text kompas-classificatie">Kleur: label A–E${selectie ? ' over de selectie' : ''}</p>`
+            + `<ul class="legenda-klassen kompas-labels" aria-label="Labels">${items}</ul>`
+            + (data.label_melding
+                ? `<p class="help-text kompas-label-melding" role="note">${escapeHtml(data.label_melding)}</p>` : '');
+    }
+
     _neemKlassenOver(target, bron) {
         /**
          * #255: klasse, klasse_kleur en klasse_status van de selectie overnemen
@@ -554,6 +571,8 @@ class KompasVisualization {
         target.klasse = bron.klasse ?? null;
         target.klasse_kleur = bron.klasse_kleur ?? null;
         target.klasse_status = bron.klasse_status ?? null;
+        target.label = bron.label ?? null;            // #256
+        target.label_bron = bron.label_bron ?? null;
         if (target.type === 'indicator' && bron.color) target.color = bron.color;
         (target.children || []).forEach((kind, i) => this._neemKlassenOver(kind, bron.children?.[i]));
     }
@@ -919,7 +938,9 @@ class KompasVisualization {
             // For small angles, restrict width to avoid overlapping too much neighbors.
             const width = Math.min(radius * 0.9, Math.max(40, arcLength * 0.8));
 
-            const words = d.data.name.split(/\s+/).reverse();
+            // #256: bij label_ae het label voor de naam ('B · Hittestress')
+            const naam = d.data.label ? `${d.data.label} · ${d.data.name}` : d.data.name;
+            const words = naam.split(/\s+/).reverse();
             let word;
             let line = [];
             let lineNumber = 0;
@@ -1069,6 +1090,13 @@ class KompasVisualization {
         } else if (d.data.type === 'indicator') {
             // Indicator zonder data
             html += `<div class="tooltip-value" style="opacity: 0.6">Geen data</div>`;
+        }
+
+        // #256: label A-E (classificatie label_ae)
+        if (d.data.label) {
+            const voorlopig = d.data.type === 'indicator' ? d.data.label_bron !== 'drempels'
+                : !!this.currentData?.label_melding;
+            html += `<div class="tooltip-value">Label ${escapeHtml(d.data.label)}${voorlopig ? ' (voorlopig, kwintielen)' : ''}</div>`;
         }
 
         // Build path

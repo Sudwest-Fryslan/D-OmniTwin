@@ -1,7 +1,7 @@
 # TC-07-009 — SWF-adapter: dezelfde FME-push naar D-OmniTwin
 
 **Status:** actief (acceptatietest groen tegen een verse stack, 02-10-2026; #237)
-**Versie:** 0.2.0 · **Afhankelijk van:** [swf-definities](../swf-definities/README.md), [cbs-gebiedsindelingen](../cbs-gebiedsindelingen/README.md)
+**Versie:** 0.3.0 · **Afhankelijk van:** [swf-definities](../swf-definities/README.md), [cbs-gebiedsindelingen](../cbs-gebiedsindelingen/README.md)
 **Manifest:** [`usecase.json`](usecase.json) · **Controleren:** `python -m omnitwin.usecases controleer swf-adapter-fme`
 
 ## Vraag
@@ -20,6 +20,8 @@ De bestaande FME-workspaces leveren aan D-OmniTwin door alleen het tokenendpoint
 | URL definities (vast in de HttpCaller) | `https://<installatie>/api/laden/v1/compat/swf-monitor/monitor_api/indicator/setup/inlezen` |
 
 Keycloak: machineclient `etl-swf` (alleen client credentials) met de client-rollen `dataset:swf-monitor-definities:laden` en `dataset:swf-monitor-waarden:laden` op `omnitwin-api`, en de audience-mapper zoals bij `etl-voorbeeld` ([installatie](../../docs/9-beheer/installatie.md)). Handleiding voor de workspaces: [FME omzetten naar D-OmniTwin](../../docs/api/laden/fme-omzetten.md).
+
+**Wat SWF in de DWH-SQL moet doen zolang D-OmniTwin het niet kent** (bewerkingen in [`datasets/swf-monitor-definities.json`](datasets/swf-monitor-definities.json), dezelfde als in [swf-definities](../swf-definities/README.md)): status `A` → `O` (aanname A2) en per dubbele naam de UUID uit de voorkeurslijst aanhouden, de andere status `B` en "(vervallen)" achter de naam (aanname A4, https://github.com/TLaan/D-OmniTwin/issues/222). Variant `ruw` slaat beide over.
 
 **Met een database-dump van de monitor** (`$SWF_DB_DUMP`, als tweede bron naast de export): een vergelijking van wat de monitor nu teruggeeft (GET) met wat D-OmniTwin teruggeeft.
 

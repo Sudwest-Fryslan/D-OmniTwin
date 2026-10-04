@@ -203,7 +203,7 @@
             },
             "pad": {
               "type": "string",
-              "pattern": "^\\$\\{(SWF_DUMP_DIR|SWF_DOCS_DIR|SWF_GEO_DIR|SWF_DB_DUMP|DATA_CACHE|REPO)\\}/"
+              "pattern": "^\\$\\{(SWF_DUMP_DIR|SWF_DOCS_DIR|SWF_GEO_DIR|SWF_DB_DUMP|SWF_EXPORT_DIR|DATA_CACHE|REPO)\\}/"
             },
             "formaat": {
               "type": "string",

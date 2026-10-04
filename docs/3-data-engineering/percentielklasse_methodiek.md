@@ -14,14 +14,15 @@ De classificatie is data, per kompasprofiel:
 |---|---|
 | `zscore` (standaard) | de huidige weergave, ongewijzigd |
 | `percentiel_8` | elke indicator, elk onderdeel, thema en kwadrant krijgt een klasse 1–8 en de kleur van die klasse |
+| `label_ae` | label A–E per indicator en thema (#256), zie [labels_methodiek.md](./labels_methodiek.md) |
 
 ```sql
 UPDATE kompas_configuraties SET classificatie = 'percentiel_8' WHERE naam = 'Klimaat Kompas';
 ```
 
-Er is nog geen beheerscherm voor; de use case [`swf-kompasprofiel`](../../usecases/swf-kompasprofiel/README.md) noemt dezelfde keuze `percentielklasse`.
+Er is nog geen beheerscherm voor; de use case [`swf-kompasprofiel`](../../usecases/swf-kompasprofiel/README.md) noemt dezelfde keuzes `percentielklasse` en `label`.
 
-De **kaart** heeft een eigen keuze in de legenda, los van het profiel: *Percentielklasse*, *Werkelijke waarde* (standaard) of *Uit*. API: `GET /api/gebiedsmonitor/kaart_data/{gebiedstype_id}?indicator_uuid=…&modus=percentiel|waarde`.
+De **kaart** heeft een eigen keuze in de legenda, los van het profiel: *Percentielklasse*, *Label A–E* (#256), *Werkelijke waarde* (standaard) of *Uit*. API: `GET /api/gebiedsmonitor/kaart_data/{gebiedstype_id}?indicator_uuid=…&modus=percentiel|label|waarde`.
 
 ## Rekenwijze (aanname tot #222)
 

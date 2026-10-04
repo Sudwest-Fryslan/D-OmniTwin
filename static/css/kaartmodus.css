@@ -3,6 +3,7 @@
 
 .kaart-modus {
   display: flex;
+  flex-wrap: wrap; /* vier keuzes (#256) */
   gap: 4px;
   margin: 4px 0 10px;
   padding: 3px;

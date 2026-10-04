@@ -28,7 +28,8 @@ Aanname tot https://github.com/TLaan/D-OmniTwin/issues/222 antwoord geeft
 import math
 from typing import Dict, Iterable, List, Optional, Sequence, Tuple
 
-CLASSIFICATIES = ("zscore", "percentiel_8")
+# label_ae: labels A-E per indicator en thema (#256), zie services/labelklasse.py
+CLASSIFICATIES = ("zscore", "percentiel_8", "label_ae")
 CLASSIFICATIE_STANDAARD = "zscore"
 KLASSEN = 8
 # Onderdrukking bij kleine aantallen (SWF: 10). Waarden met een bekende n onder deze
@@ -84,12 +85,14 @@ def klasse(waarde: Optional[float], referentie: Sequence[float], hoger_beter: bo
     return klasse_uit_percentiel(percentiel(waarde, referentie), hoger_beter)
 
 
-def rond_klasse(x: float) -> int:
+def rond_klasse(x: float, klassen: int = KLASSEN) -> int:
     """Afronden naar de dichtstbijzijnde klasse, x,5 naar boven."""
-    return max(1, min(KLASSEN, math.floor(x + 0.5)))
+    return max(1, min(klassen, math.floor(x + 0.5)))
 
 
-def aggregeer(klassen_met_gewicht: Iterable[Tuple[Optional[int], Optional[float]]]) -> Optional[int]:
+def aggregeer(
+    klassen_met_gewicht: Iterable[Tuple[Optional[int], Optional[float]]], klassen: int = KLASSEN
+) -> Optional[int]:
     """
     Gewogen gemiddelde van klassen, afgerond naar een klasse. Paren zonder klasse of
     met gewicht <= 0 tellen niet mee. None als er niets overblijft.
@@ -102,7 +105,7 @@ def aggregeer(klassen_met_gewicht: Iterable[Tuple[Optional[int], Optional[float]
         gewicht += w
     if gewicht == 0:
         return None
-    return rond_klasse(som / gewicht)
+    return rond_klasse(som / gewicht, klassen)
 
 
 def klasse_label(k: int) -> str:
@@ -121,8 +124,9 @@ def klasse_label(k: int) -> str:
     return label
 
 
-def palet(color_service=None, neutraal: bool = False) -> List[str]:
-    """8 kleuren, klasse 1..8, uit color_schemas (kleurenblindvriendelijk; neutraal: blauw)."""
+def palet(color_service=None, neutraal: bool = False, klassen: int = KLASSEN) -> List[str]:
+    """Kleuren voor klasse 1..klassen (standaard 8), uit color_schemas
+    (kleurenblindvriendelijk; neutraal: blauw)."""
     from omnitwin.services.color_scale_service import ColorScaleService
 
     schema, fallback = (PALET_NEUTRAAL_SCHEMA, PALET_NEUTRAAL_FALLBACK) if neutraal else (PALET_SCHEMA, PALET_FALLBACK)
@@ -130,7 +134,7 @@ def palet(color_service=None, neutraal: bool = False) -> List[str]:
     if color_service is not None and color_service.db is not None:
         kleuren = color_service.schema_kleuren(schema)
     svc = color_service or ColorScaleService(db=None)
-    return svc.generate_color_ramp(kleuren or fallback, KLASSEN)
+    return svc.generate_color_ramp(kleuren or fallback, klassen)
 
 
 def legenda(kleuren: List[str]) -> List[Dict[str, object]]:
@@ -225,6 +229,7 @@ def annoteer_boom(
     kleuren: List[str],
     geen_data_kleur: str,
     kleuren_neutraal: Optional[List[str]] = None,
+    klassen: int = KLASSEN,
 ) -> Dict:
     """
     Zet de percentielklasse in een kompasboom (kopie). Indicator: klasse over zijn eigen
@@ -243,7 +248,7 @@ def annoteer_boom(
             kleuren = kleuren_neutraal or standaard_kleuren
         if node.get("type") == "indicator" and node.get("uuid"):
             eigen = list(paren.get(node["uuid"], []))
-            k = aggregeer(eigen)
+            k = aggregeer(eigen, klassen)
             node["klasse"] = k
             node["klasse_kleur"] = kleuren[k - 1] if k else None
             node["color"] = node["klasse_kleur"] or geen_data_kleur
@@ -257,7 +262,7 @@ def annoteer_boom(
                 kinderen.append(kind_node)
                 onder.extend(kind_paren)
             node["children"] = kinderen
-        k = aggregeer(onder)
+        k = aggregeer(onder, klassen)
         node["klasse"] = k
         node["klasse_kleur"] = kleuren[k - 1] if k else None
         return node, ([] if neutraal else onder)

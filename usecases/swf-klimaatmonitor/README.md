@@ -10,7 +10,7 @@
 - **Vraag:** "Welk label (A–E) heeft een welstandsgebied in Bolsward voor hittestress, droogte en hemelwateroverlast, en welke indicator trekt het omlaag?"
 - **Rechten:** `realm-rol beheerder (registreren)`, `dataset:swf-monitor-waarden:laden`, `realm-rol lezer (de Klimaatmonitor is intern)`
 
-De Klimaatmonitor draait op welstandsgebieden opgeknipt per CBS-buurt, met 3 thema's (hemelwateroverlast, hittestress, droogte) en 10 indicatoren (status A). Deze use case levert de waarden op welstand × buurt (7 indicatoren hebben er waarden) op dezelfde dataset als de Basis monitor, met vervangbereik indicator × gebiedstype. De labels A–E komen uit het kompasprofiel *SWF Klimaat* ([swf-kompasprofiel](../swf-kompasprofiel/README.md)); de drempels zijn nog onbekend.
+De Klimaatmonitor draait op welstandsgebieden opgeknipt per CBS-buurt, met 3 thema's (hemelwateroverlast, hittestress, droogte) en 10 indicatoren (status A). Deze use case levert de waarden op welstand × buurt (7 indicatoren hebben er waarden) op dezelfde dataset als de Basis monitor, met vervangbereik indicator × gebiedstype. De labels A–E komen uit het kompasprofiel *SWF Klimaat* ([swf-kompasprofiel](../swf-kompasprofiel/README.md)) met classificatie `label_ae` ([#256](https://github.com/TLaan/D-OmniTwin/issues/256)). De drempels laadt SWF als data in tabel `indicator_labels`; tot dan rekent D-OmniTwin met kwintielen en meldt het *voorlopige drempels* ([labels_methodiek.md](../../docs/3-data-engineering/labels_methodiek.md)).
 
 **Namespace:** welstand-id `728` wordt `WS728` (bewerking `prefix`), want `gebieden.id` is uniek over alle gebiedstypen. De variant `zonder-namespace` laat de prefix weg; de laad-API hoort die levering af te keuren (`gebied-onbekend`).
 
@@ -80,6 +80,6 @@ In [`bewijs/`](bewijs/README.md), gemaakt door de uitvoerder (niet in git): `con
 
 ## Bekende afwijkingen
 
-- Labels A–E: de drempels zijn onbekend (gat-analyse, vraag 5). Tot ze er zijn, toont D-OmniTwin de percentielklasse.
+- Labels A–E: classificatie label_ae (#256). De drempels van SWF staan nog niet in indicator_labels (#222, A3); tot ze geladen zijn, rekent D-OmniTwin met kwintielen en meldt het voorlopige drempels.
 - Dezelfde dataset als swf-basismonitor-waarden (swf-monitor-waarden); vervangBereik indicator × gebiedstype houdt de twee leveringen uit elkaar. De registratie moet in beide use cases gelijk zijn (unittest).
 - Gevoelstemperatuur en Afstand tot koele plek zijn SWF-bewerkingen; de open Klimaateffectatlas heeft voor Fryslân geen download (zie hittestress).
