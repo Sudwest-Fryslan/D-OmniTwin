@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>D-OmniTwin — 80s Retro & Transformer Mascotte Concepten</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            blue: '#1e3a8a',
+                            action: '#3b82f6',
+                            gold: '#eab308',
+                            goldDark: '#c59d00',
+                            nature: '#22c55e',
+                            natureDark: '#15803d',
+                            neonPink: '#ec4899',
+                            neonCyan: '#06b6d4',
+                            dark: '#070913',
+                            surface: '#0f172a'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700;800&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap');
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #070913;
+            color: #f1f5f9;
+        }
+
+        .font-retro {
+            font-family: 'Chakra Petch', sans-serif;
+        }
+
+        .font-mono-code {
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* 80s Synthwave Wireframe Grid */
+        .synthwave-grid {
+            background-image: 
+                linear-gradient(to right, rgba(59, 130, 246, 0.12) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(236, 72, 153, 0.10) 1px, transparent 1px);
+            background-size: 28px 28px;
+        }
+
+        .neon-glow-pink {
+            filter: drop-shadow(0 0 16px rgba(236, 72, 153, 0.45));
+        }
+
+        .neon-glow-blue {
+            filter: drop-shadow(0 0 16px rgba(59, 130, 246, 0.5));
+        }
+
+        .neon-glow-gold {
+            filter: drop-shadow(0 0 16px rgba(234, 179, 8, 0.5));
+        }
+
+        .neon-glow-green {
+            filter: drop-shadow(0 0 16px rgba(34, 197, 94, 0.45));
+        }
+
+        .concept-card {
+            transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+            background: linear-gradient(180deg, rgba(15, 23, 42, 0.9) 0%, rgba(10, 15, 30, 0.98) 100%);
+        }
+
+        .concept-card:hover {
+            transform: translateY(-6px);
+            border-color: rgba(96, 165, 250, 0.8);
+            box-shadow: 0 20px 35px -10px rgba(30, 58, 138, 0.6), 0 0 24px 2px rgba(236, 72, 153, 0.25);
+        }
+
+        @keyframes scanline {
+            0% { transform: translateY(-100%); }
+            100% { transform: translateY(1000%); }
+        }
+
+        .scanline-effect {
+            position: absolute;
+            top: 0; left: 0; right: 0; height: 10px;
+            background: linear-gradient(180deg, transparent, rgba(56, 189, 248, 0.25), transparent);
+            animation: scanline 8s linear infinite;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body class="min-h-screen synthwave-grid pb-24 selection:bg-pink-500 selection:text-white">
+
+    <!-- Sticky Header -->
+    <header class="border-b border-slate-800/90 bg-slate-950/85 backdrop-blur-md sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-6 py-4 flex flex-col md:flex-row justify-between items-center gap-4">
+            <div class="flex items-center gap-4">
+                <div class="w-11 h-11 rounded-xl bg-gradient-to-tr from-pink-600 via-indigo-600 to-cyan-500 p-0.5 shadow-lg shadow-pink-600/30">
+                    <div class="w-full h-full bg-slate-950 rounded-[10px] flex items-center justify-center font-retro font-extrabold text-xl text-transparent bg-clip-text bg-gradient-to-r from-pink-400 to-cyan-300">
+                        80s
+                    </div>
+                </div>
+                <div>
+                    <div class="flex items-center gap-2">
+                        <span class="text-[10px] font-bold font-retro tracking-widest uppercase px-2 py-0.5 rounded bg-pink-500/20 text-pink-400 border border-pink-500/30">
+                            Merkevolutie & Mascotte
+                        </span>
+                        <h1 class="text-lg font-bold text-white tracking-tight font-retro">D-OmniTwin — De Retro-Futuristische Richtingen</h1>
+                    </div>
+                    <p class="text-xs text-slate-400">Optimus Prime, 80s Speelgoedrobots & Synthwave Grids ontmoeten het Federatieve GIS-platform</p>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-3">
+                <span class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-900 border border-slate-700/80 text-xs font-mono-code text-cyan-400">
+                    <span class="w-2 h-2 rounded-full bg-cyan-400 animate-ping"></span>
+                    Autobots, Transform & Synchronize!
+                </span>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-6 pt-10 space-y-12">
+
+        <section class="relative rounded-3xl border border-slate-800 bg-gradient-to-r from-slate-950 via-slate-900 to-indigo-950/70 p-8 overflow-hidden shadow-2xl">
+            <div class="absolute -right-10 -bottom-10 w-96 h-96 bg-pink-600/10 rounded-full blur-3xl pointer-events-none"></div>
+            <div class="absolute right-40 -top-20 w-80 h-80 bg-blue-600/15 rounded-full blur-3xl pointer-events-none"></div>
+            <div class="scanline-effect"></div>
+
+            <div class="max-w-3xl space-y-3 relative z-10">
+                <div class="inline-block text-[11px] font-retro font-bold uppercase tracking-widest text-amber-400 bg-amber-400/10 px-3 py-1 rounded-lg border border-amber-400/25">
+                    De Kracht van Herkenbaarheid & Karakter
+                </div>
+                <h2 class="text-2xl sm:text-3xl font-extrabold text-white tracking-tight font-retro">
+                    Waarom een 80s Transformer-Mascotte 100% klopt voor D-OmniTwin
+                </h2>
+                <p class="text-sm text-slate-300 leading-relaxed">
+                    Samen met Eduar ontstond de vonk: <em>"Linux heeft Tux de pinguïn, Bassie & Adriaan hadden Robin de Robot, en Transformers transformeren tussen fysiek en digitaal."</em> 
+                    Hieronder vind je vier manieren waarop we de <strong>letter D</strong>, het <strong>geodetische bolrooster</strong>, de <strong>groene horizonlijn</strong> en de <strong>80s robot-esthetiek</strong> versmelten tot een levendig merk.
+                </p>
+            </div>
+
+            <!-- Kernpilaren Grid -->
+            <div class="mt-8 pt-6 border-t border-slate-800/80 grid sm:grid-cols-2 lg:grid-cols-4 gap-4 text-xs font-mono-code">
+                <div class="p-4 rounded-xl bg-slate-900/70 border border-slate-800">
+                    <span class="text-cyan-400 font-bold block mb-1">1. "More Than Meets The Eye"</span>
+                    <span class="text-slate-400">Fysieke aarde transformeert naar een levend digitaal datamodel.</span>
+                </div>
+                <div class="p-4 rounded-xl bg-slate-900/70 border border-slate-800">
+                    <span class="text-pink-400 font-bold block mb-1">2. Het "Combiner" Principe</span>
+                    <span class="text-slate-400">Autonome nodes (gemeenten) klikken samen tot één federatie.</span>
+                </div>
+                <div class="p-4 rounded-xl bg-slate-900/70 border border-slate-800">
+                    <span class="text-amber-400 font-bold block mb-1">3. 80s Grid = Cartografie</span>
+                    <span class="text-slate-400">Het neon wireframe grid is de historische oervorm van het GIS-hoogtemodel (DEM).</span>
+                </div>
+                <div class="p-4 rounded-xl bg-slate-900/70 border border-slate-800">
+                    <span class="text-emerald-400 font-bold block mb-1">4. Omnidirectional</span>
+                    <span class="text-slate-400">Antenne-oren en 360°-sensoren gericht op alle windstreken.</span>
+                </div>
+            </div>
+        </section>
+
+        <section class="space-y-6">
+            <div class="flex justify-between items-end border-b border-slate-800 pb-4">
+                <div>
+                    <span class="text-xs font-bold uppercase tracking-widest text-cyan-400 font-retro">Visuele Uitwerking</span>
+                    <h2 class="text-2xl font-bold text-white mt-1 font-retro">Vier Concepten in Beeld</h2>
+                </div>
+                <span class="text-xs text-slate-500 font-mono-code">Vectors &amp; Semantiek</span>
+            </div>
+
+            <div class="grid lg:grid-cols-2 gap-8">
+
+                <!-- CONCEPT 1: OMNI-PRIME -->
+                <div class="concept-card rounded-3xl border border-slate-800 p-6 flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center justify-between mb-3">
+                            <span class="text-xs font-retro font-bold px-3 py-1 rounded bg-blue-500/20 text-blue-300 border border-blue-500/30">
+                                Concept 01 — Mascotte &amp; Guardian
+                            </span>
+                            <span class="text-[11px] text-slate-400 font-mono-code">Optimus G1 DNA</span>
+                        </div>
+                        <h3 class="text-xl font-bold text-white font-retro">"Omni-Prime" — De Nobele Terra-Guardian</h3>
+                        <p class="text-xs text-slate-300 leading-relaxed mt-2 mb-4">
+                            Geïnspireerd op het nobele profiel van Optimus Prime. Zijn bepantsering vormt de omtrek van de letter <strong>D</strong>. De borstkas toont cockpitruiten waarin het geodetische hoogtemodel en de groene horizonlijn pulseren. De oren zijn 360°-radarsensoren.
+                        </p>
+                    </div>
+
+                    <!-- Visual SVG Container -->
+                    <div class="w-full bg-slate-950 rounded-2xl p-6 border border-slate-800/90 flex flex-col items-center justify-center my-3 relative overflow-hidden">
+                        <div class="absolute inset-0 opacity-15 pointer-events-none" style="background-image: linear-gradient(#3b82f6 1px, transparent 1px), linear-gradient(90deg, #3b82f6 1px, transparent 1px); background-size: 16px 16px;"></div>
+
+                        <svg class="w-60 h-60 relative z-10 neon-glow-blue" viewBox="0 0 200 200" fill="none">
+                            <!-- Outer Geodetic Shield Halo -->
+                            <circle cx="100" cy="100" r="92" stroke="#1e293b" stroke-width="1.5" stroke-dasharray="4 4"/>
+                            
+                            <!-- Green Horizon Arc behind shoulders -->
+                            <path d="M 18 135 Q 100 105 182 135" stroke="#15803d" stroke-width="3.5" stroke-linecap="round"/>
+
+                            <!-- Central Forehead Crest (Optimus fin) -->
+                            <path d="M 94 28 L 106 28 L 104 55 L 96 55 Z" fill="#3b82f6" stroke="#60a5fa" stroke-width="1.5"/>
+                            <polygon points="100,20 94,28 106,28" fill="#eab308"/>
+
+                            <!-- Antenna Ears (Omnidirectional Sensor Domes) -->
+                            <rect x="50" y="46" width="8" height="44" rx="3" fill="#1e3a8a" stroke="#60a5fa" stroke-width="1.5"/>
+                            <circle cx="54" cy="44" r="3.5" fill="#eab308"/>
+                            <rect x="142" y="46" width="8" height="44" rx="3" fill="#1e3a8a" stroke="#60a5fa" stroke-width="1.5"/>
+                            <circle cx="146" cy="44" r="3.5" fill="#eab308"/>
+
+                            <!-- Helmet Main Shell forming a robust D contour -->
+                            <path d="M 62 52 L 138 52 L 142 96 L 128 118 L 72 118 L 58 96 Z" fill="#0f172a" stroke="#3b82f6" stroke-width="3"/>
+
+                            <!-- Glowing Eyes / Friendly Visor -->
+                            <rect x="74" y="74" width="20" height="9" rx="2" fill="#38bdf8"/>
+                            <rect x="106" y="74" width="20" height="9" rx="2" fill="#38bdf8"/>
+
+                            <!-- Faceplate (Chiseled metal) -->
+                            <polygon points="84,89 116,89 112,114 88,114" fill="#1e293b" stroke="#64748b" stroke-width="1.5"/>
+                            <line x1="100" y1="91" x2="100" y2="112" stroke="#3b82f6" stroke-width="1.5"/>
+
+                            <!-- Chestplate Windows (Digital Twin viewports) -->
+                            <!-- Left Window (Physical Geo) -->
+                            <rect x="60" y="126" width="36" height="30" rx="3" fill="#091829" stroke="#3b82f6" stroke-width="2"/>
+                            <line x1="60" y1="141" x2="96" y2="141" stroke="#22c55e" stroke-width="2.5"/>
+                            <!-- Right Window (Digital Data) -->
+                            <rect x="104" y="126" width="36" height="30" rx="3" fill="#091829" stroke="#3b82f6" stroke-width="2"/>
+                            <circle cx="122" cy="141" r="4.5" fill="#eab308"/>
+
+                            <!-- Collar Plates forming a solid D foundation -->
+                            <path d="M 48 165 L 72 126 L 128 126 L 152 165 Z" fill="none" stroke="#334155" stroke-width="2"/>
+                            <!-- Geo Gold Center Core Matrix -->
+                            <circle cx="100" cy="126" r="5" fill="#eab308" stroke="#0f172a" stroke-width="1.5"/>
+                        </svg>
+
+                        <div class="flex flex-wrap justify-center gap-4 mt-3 text-[10px] font-mono-code text-slate-400">
+                            <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-blue-500"></span> Trust Blue Behuizing</span>
+                            <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-emerald-500"></span> Nature Green Horizon</span>
+                            <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-amber-400"></span> Geo Gold Sensoren</span>
+                        </div>
+                    </div>
+
+                    <div class="pt-3 border-t border-slate-800 text-[11px] text-slate-400 space-y-1">
+                        <div><strong class="text-white">Toepassing:</strong> Ideaal als software-ambassadeur, avatar bij release-notes en beursposters.</div>
+                        <div><strong class="text-white">Karakter:</strong> Beschermer van het leefmilieu, betrouwbaar en nobel.</div>
+                    </div>
+                </div>
+
+                <!-- CONCEPT 2: VECTOR-84 -->
+                <div class="concept-card rounded-3xl border border-slate-800 p-6 flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center justify-between mb-3">
+                            <span class="text-xs font-retro font-bold px-3 py-1 rounded bg-pink-500/20 text-pink-300 border border-pink-500/30">
+                                Concept 02 — Speels &amp; Synthwave
+                            </span>
+                            <span class="text-[11px] text-slate-400 font-mono-code">Robin + Tin Toy Robot</span>
+                        </div>
+                        <h3 class="text-xl font-bold text-white font-retro">"Vector-84" — De Geodetische Retro-Scout</h3>
+                        <p class="text-xs text-slate-300 leading-relaxed mt-2 mb-4">
+                            Directe knipoog naar 80s speelgoedrobots en Robin de Robot. Een aandoenlijk, doosvormig scoutje met een halfronde koepelkop (de hemisfeer) en ronde knipperogen. Hij zweeft boven een neon perspectiefraster met de ondergaande gestreepte 80s zon op de horizon.
+                        </p>
+                    </div>
+
+                    <!-- Visual SVG Container -->
+                    <div class="w-full bg-slate-950 rounded-2xl p-6 border border-slate-800/90 flex flex-col items-center justify-center my-3 relative overflow-hidden">
+                        
+                        <svg class="w-60 h-60 relative z-10 neon-glow-pink" viewBox="0 0 200 200" fill="none">
+                            <defs>
+                                <linearGradient id="retroSunGrad2" x1="0" y1="0" x2="0" y2="1">
+                                    <stop offset="0%" stop-color="#f59e0b" />
+                                    <stop offset="60%" stop-color="#ec4899" />
+                                    <stop offset="100%" stop-color="#7c3aed" />
+                                </linearGradient>
+                            </defs>
+
+                            <!-- 80s Perspective Grid Lines at Bottom -->
+                            <path d="M 10 185 L 190 185 M 25 170 L 175 170 M 45 158 L 155 158 M 65 148 L 135 148" stroke="#3b82f6" stroke-width="0.8" opacity="0.6"/>
+                            <line x1="100" y1="140" x2="10" y2="190" stroke="#ec4899" stroke-width="0.8" opacity="0.6"/>
+                            <line x1="100" y1="140" x2="50" y2="190" stroke="#ec4899" stroke-width="0.8" opacity="0.6"/>
+                            <line x1="100" y1="140" x2="80" y2="190" stroke="#ec4899" stroke-width="0.8" opacity="0.6"/>
+                            <line x1="100" y1="140" x2="100" y2="190" stroke="#ec4899" stroke-width="0.8" opacity="0.6"/>
+                            <line x1="100" y1="140" x2="120" y2="190" stroke="#ec4899" stroke-width="0.8" opacity="0.6"/>
+                            <line x1="100" y1="140" x2="150" y2="190" stroke="#ec4899" stroke-width="0.8" opacity="0.6"/>
+                            <line x1="100" y1="140" x2="190" y2="190" stroke="#ec4899" stroke-width="0.8" opacity="0.6"/>
+
+                            <!-- 80s Striped Sun (Horizon) -->
+                            <g>
+                                <circle cx="100" cy="95" r="46" fill="url(#retroSunGrad2)" opacity="0.85"/>
+                                <!-- Sun horizontal stripes / slices -->
+                                <line x1="56" y1="92" x2="144" y2="92" stroke="#070913" stroke-width="2.5"/>
+                                <line x1="58" y1="99" x2="142" y2="99" stroke="#070913" stroke-width="3"/>
+                                <line x1="62" y1="107" x2="138" y2="107" stroke="#070913" stroke-width="3.5"/>
+                                <line x1="68" y1="116" x2="132" y2="116" stroke="#070913" stroke-width="4"/>
+                                <line x1="78" y1="126" x2="122" y2="126" stroke="#070913" stroke-width="4.5"/>
+                            </g>
+
+                            <!-- Antenna on top with spinning dish -->
+                            <line x1="100" y1="42" x2="100" y2="28" stroke="#f1f5f9" stroke-width="2"/>
+                            <circle cx="100" cy="26" r="3.5" fill="#eab308"/>
+                            <ellipse cx="100" cy="30" rx="9" ry="3" stroke="#38bdf8" stroke-width="1.5" fill="none"/>
+
+                            <!-- Head: Hemisphere dome (The Geodetic dome) -->
+                            <path d="M 76 68 C 76 52 86 42 100 42 C 114 42 124 52 124 68 Z" fill="#0f172a" stroke="#f43f5e" stroke-width="2.5"/>
+                            
+                            <!-- Ear Knobs (Retro dials) -->
+                            <rect x="71" y="55" width="5" height="10" rx="1.5" fill="#eab308"/>
+                            <rect x="124" y="55" width="5" height="10" rx="1.5" fill="#eab308"/>
+
+                            <!-- Friendly Big Eyes (Robin de Robot knipoog) -->
+                            <circle cx="90" cy="58" r="6" fill="#38bdf8"/>
+                            <circle cx="91" cy="56" r="2" fill="#ffffff"/>
+                            <circle cx="110" cy="58" r="6" fill="#38bdf8"/>
+                            <circle cx="111" cy="56" r="2" fill="#ffffff"/>
+
+                            <!-- Smile / Speaker grill -->
+                            <line x1="94" y1="65" x2="106" y2="65" stroke="#f1f5f9" stroke-width="1.5" stroke-linecap="round"/>
+
+                            <!-- Chest Body (Square die-cast tin robot) -->
+                            <rect x="74" y="74" width="52" height="42" rx="6" fill="#1e293b" stroke="#3b82f6" stroke-width="2"/>
+
+                            <!-- Chest Screen / Dial: Showing the letter 'D' -->
+                            <rect x="82" y="80" width="36" height="22" rx="3" fill="#070913" stroke="#22c55e" stroke-width="1.5"/>
+                            <path d="M 94 85 L 100 85 C 104 85 107 88 107 91 C 107 94 104 97 100 97 L 94 97 Z" fill="#22c55e"/>
+
+                            <!-- Side Robot Arms with Pincers -->
+                            <path d="M 74 82 L 64 92 L 64 106" stroke="#94a3b8" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+                            <circle cx="64" cy="108" r="3" fill="#eab308"/>
+                            <path d="M 126 82 L 136 92 L 136 106" stroke="#94a3b8" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+                            <circle cx="136" cy="108" r="3" fill="#eab308"/>
+
+                            <!-- Hover / Thruster Glow underneath -->
+                            <ellipse cx="100" cy="120" rx="16" ry="4" fill="#38bdf8" opacity="0.8"/>
+                        </svg>
+
+                        <div class="flex flex-wrap justify-center gap-4 mt-3 text-[10px] font-mono-code text-slate-400">
+                            <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-pink-500"></span> Neon Magenta Horizon</span>
+                            <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-cyan-400"></span> Cyber Blue Sensor-ogen</span>
+                            <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-amber-400"></span> Geo Gold Antenne</span>
+                        </div>
+                    </div>
+
+                    <div class="pt-3 border-t border-slate-800 text-[11px] text-slate-400 space-y-1">
+                        <div><strong class="text-white">Toepassing:</strong> De ultieme laptopsticker, onboarding-compagnon en status-mascotte.</div>
+                        <div><strong class="text-white">Karakter:</strong> Ontwapenend, nieuwsgierig, brengt zware GIS-data met een glimlach.</div>
+                    </div>
+                </div>
+
+                <!-- CONCEPT 3: DE FEDERATIEVE COMBINER (TWIN-BOT) -->
+                <div class="concept-card rounded-3xl border border-slate-800 p-6 flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center justify-between mb-3">
+                            <span class="text-xs font-retro font-bold px-3 py-1 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                                Concept 03 — Federatief &amp; Modulair
+                            </span>
+                            <span class="text-[11px] text-slate-400 font-mono-code">Devastator / Superion Principe</span>
+                        </div>
+                        <h3 class="text-xl font-bold text-white font-retro">"Twin-Bot Combiner" — Fysiek &times; Digitaal</h3>
+                        <p class="text-xs text-slate-300 leading-relaxed mt-2 mb-4">
+                            Twee afzonderlijke robots — **Phy** (fysieke aarde/natuur, groen) en **Digi** (digitaal datamodel, blauw) — klikken autonoom in elkaar rond de gouden verbindingsmatrix. Samen vormen ze een gigantische transformerende **D**.
+                        </p>
+                    </div>
+
+                    <!-- Visual SVG Container -->
+                    <div class="w-full bg-slate-950 rounded-2xl p-6 border border-slate-800/90 flex flex-col items-center justify-center my-3 relative overflow-hidden">
+                        <svg class="w-60 h-60 relative z-10 neon-glow-green" viewBox="0 0 200 200" fill="none">
+                            <!-- Background Target / Geodetic Ring -->
+                            <circle cx="100" cy="100" r="88" stroke="#1e293b" stroke-width="1.5"/>
+                            <ellipse cx="100" cy="100" rx="35" ry="88" stroke="#1e293b" stroke-width="1" stroke-dasharray="3 3"/>
+                            
+                            <!-- Left Module: "PHY-BOT" (Physical/Green Pillar) -->
+                            <g class="transition-transform duration-300 hover:-translate-x-1 cursor-pointer">
+                                <!-- Left shoulder / block -->
+                                <path d="M 45 42 L 82 42 L 82 158 L 45 158 L 40 145 L 40 55 Z" fill="#064e3b" stroke="#22c55e" stroke-width="3" stroke-linejoin="bevel"/>
+                                <!-- Mechanical details on left bot -->
+                                <rect x="52" y="55" width="20" height="8" fill="#15803d"/>
+                                <rect x="52" y="70" width="20" height="24" rx="2" fill="#0f172a" stroke="#22c55e" stroke-width="1.5"/>
+                                <!-- Sensor eye of Phy-Bot -->
+                                <circle cx="62" cy="82" r="3.5" fill="#4ade80"/>
+                                <line x1="52" y1="105" x2="72" y2="105" stroke="#22c55e" stroke-width="2"/>
+                                <line x1="52" y1="112" x2="72" y2="112" stroke="#22c55e" stroke-width="2"/>
+                                <line x1="52" y1="119" x2="72" y2="119" stroke="#22c55e" stroke-width="2"/>
+                                <text x="48" y="145" fill="#4ade80" font-size="10" font-family="monospace" font-weight="bold">PHY</text>
+                            </g>
+
+                            <!-- Right Module: "DIGI-BOT" (Digital/Blue Arc forming the D) -->
+                            <g class="transition-transform duration-300 hover:translate-x-1 cursor-pointer">
+                                <!-- The Great Arc of the D -->
+                                <path d="M 88 42 L 125 42 C 158 42 168 65 168 100 C 168 135 158 158 125 158 L 88 158 L 102 140 C 130 140 142 124 142 100 C 142 76 130 60 102 60 Z" 
+                                      fill="#1e3a8a" stroke="#3b82f6" stroke-width="3" stroke-linejoin="bevel"/>
+                                
+                                <!-- Mechanical vents on Digi-Bot -->
+                                <line x1="120" y1="75" x2="135" y2="75" stroke="#60a5fa" stroke-width="2"/>
+                                <line x1="128" y1="85" x2="143" y2="85" stroke="#60a5fa" stroke-width="2"/>
+                                <line x1="130" y1="100" x2="148" y2="100" stroke="#38bdf8" stroke-width="2.5"/>
+                                <line x1="128" y1="115" x2="143" y2="115" stroke="#60a5fa" stroke-width="2"/>
+                                <line x1="120" y1="125" x2="135" y2="125" stroke="#60a5fa" stroke-width="2"/>
+                                <text x="110" y="145" fill="#60a5fa" font-size="10" font-family="monospace" font-weight="bold">DIGI</text>
+                            </g>
+
+                            <!-- The Locking Bridge: Gold Synergy Core (The Pi Node) -->
+                            <g>
+                                <rect x="76" y="88" width="18" height="24" rx="4" fill="#eab308" stroke="#070913" stroke-width="2"/>
+                                <circle cx="85" cy="100" r="5" fill="#ffffff" class="animate-ping"/>
+                                <circle cx="85" cy="100" r="4" fill="#fef08a"/>
+                                <!-- Energy bolts connecting both bots -->
+                                <line x1="68" y1="100" x2="76" y2="100" stroke="#eab308" stroke-width="3"/>
+                                <line x1="94" y1="100" x2="104" y2="100" stroke="#eab308" stroke-width="3"/>
+                            </g>
+
+                            <!-- Horizon Cut line linking through both -->
+                            <path d="M 22 135 Q 100 115 178 135" stroke="#22c55e" stroke-width="2" stroke-dasharray="3 3"/>
+                        </svg>
+
+                        <div class="flex flex-wrap justify-center gap-4 mt-3 text-[10px] font-mono-code text-slate-400">
+                            <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-emerald-500"></span> Phy-Node (Fysieke Aarde)</span>
+                            <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-blue-500"></span> Digi-Node (Datamodel)</span>
+                            <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-amber-400"></span> Docking Matrix</span>
+                        </div>
+                    </div>
+
+                    <div class="pt-3 border-t border-slate-800 text-[11px] text-slate-400 space-y-1">
+                        <div><strong class="text-white">Toepassing:</strong> Hét symbool om aan gemeenten en waterschappen uit te leggen wat "federatief" betekent.</div>
+                        <div><strong class="text-white">Verhaal:</strong> Niemand is ondergeschikt; je klikt je eigen module autonoom in het netwerk.</div>
+                    </div>
+                </div>
+
+                <!-- CONCEPT 4: HET AUTOBOT-STIJL D-EMBLEEM -->
+                <div class="concept-card rounded-3xl border border-slate-800 p-6 flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center justify-between mb-3">
+                            <span class="text-xs font-retro font-bold px-3 py-1 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                                Concept 04 — Strak Beeldmerk / Insigne
+                            </span>
+                            <span class="text-[11px] text-slate-400 font-mono-code">Faction Shield DNA</span>
+                        </div>
+                        <h3 class="text-xl font-bold text-white font-retro">Het "Omni-Shield" — Autobot-Insigne met Geodetisch DNA</h3>
+                        <p class="text-xs text-slate-300 leading-relaxed mt-2 mb-4">
+                            Als je géén poppetje als primair logo wilt, maar wel de onmiskenbare herkenbaarheid van het **Autobot-schild**. Een geometrisch geslepen insigne in de vorm van een **D**, waarin het geodetische vizier, de horizon en een robotgezicht samensmelten.
+                        </p>
+                    </div>
+
+                    <!-- Visual SVG Container -->
+                    <div class="w-full bg-slate-950 rounded-2xl p-6 border border-slate-800/90 flex flex-col items-center justify-center my-3 relative overflow-hidden">
+                        
+                        <svg class="w-60 h-60 relative z-10 neon-glow-gold" viewBox="0 0 200 200" fill="none">
+                            <!-- Outer Diamond / Crest border -->
+                            <polygon points="100,12 182,50 182,142 100,188 18,142 18,50" 
+                                     fill="#0b1329" stroke="#1e3a8a" stroke-width="2"/>
+
+                            <!-- Faceted Armor Plates forming the massive letter 'D' -->
+                            <!-- D Spine (Left Vertical Pillar with Chiseled Bevels) -->
+                            <polygon points="42,40 70,40 70,160 42,160 36,150 36,50" fill="#1e3a8a" stroke="#3b82f6" stroke-width="2.5"/>
+                            <polygon points="42,40 56,40 56,160 42,160" fill="#2563eb" opacity="0.6"/>
+
+                            <!-- D Outer Arc (Chiseled Transformer Cheekbones) -->
+                            <polygon points="76,40 128,40 162,75 162,125 128,160 76,160 92,142 120,142 144,118 144,82 120,58 92,58" 
+                                     fill="#1d4ed8" stroke="#60a5fa" stroke-width="2.5"/>
+
+                            <!-- Inner Core / Robot Visor Mask -->
+                            <!-- Eyes carved into the negative space -->
+                            <polygon points="98,82 114,82 118,92 98,92" fill="#eab308"/>
+                            <polygon points="124,82 140,82 140,92 120,92" fill="#eab308"/>
+
+                            <!-- Green Horizon Blade cutting horizontally through the shield -->
+                            <path d="M 22 106 Q 100 88 178 106" stroke="#22c55e" stroke-width="3.5" stroke-linecap="round"/>
+
+                            <!-- Forehead Geodetic Compass Star -->
+                            <circle cx="100" cy="40" r="5" fill="#eab308" stroke="#070913" stroke-width="1.5"/>
+                            <line x1="100" y1="28" x2="100" y2="52" stroke="#eab308" stroke-width="1.5"/>
+                            <line x1="88" y1="40" x2="112" y2="40" stroke="#eab308" stroke-width="1.5"/>
+                        </svg>
+
+                        <div class="flex flex-wrap justify-center gap-4 mt-3 text-[10px] font-mono-code text-slate-400">
+                            <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-blue-600"></span> Diecast Blauw</span>
+                            <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-emerald-500"></span> Horizon Blade</span>
+                            <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-amber-400"></span> Autobot Vizier</span>
+                        </div>
+                    </div>
+
+                    <div class="pt-3 border-t border-slate-800 text-[11px] text-slate-400 space-y-1">
+                        <div><strong class="text-white">Toepassing:</strong> Ideaal als primair software-icoon, favicon, zegel en metalen badge.</div>
+                        <div><strong class="text-white">Karakter:</strong> Stoer, autoritair, maar met die kenmerkende 80s speelgoed-hoekigheid.</div>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+        <section class="rounded-3xl border border-slate-800 bg-slate-900/70 p-8 space-y-6">
+            <h3 class="text-lg font-bold text-white font-retro flex items-center gap-2">
+                <span class="text-pink-500">❖</span>
+                De Vertaling: Van Speelgoed-DNA naar GIS-Software
+            </h3>
+
+            <div class="grid md:grid-cols-3 gap-6 text-xs leading-relaxed">
+                <div class="p-5 rounded-2xl bg-slate-950/70 border border-slate-800 space-y-2">
+                    <span class="text-cyan-400 font-bold uppercase font-retro block">Het 80s Grid = Digital Elevation Model</span>
+                    <p class="text-slate-400">
+                        In Synthwave-art zie je altijd het paars-blauwe perspectiefraster dat naar de horizon loopt. In cartografie is dat letterlijk een <strong>DEM (hoogteraster)</strong>. We transformeren een nostalgische pop-culture stijl direct naar de kern van jullie data.
+                    </p>
+                </div>
+                <div class="p-5 rounded-2xl bg-slate-950/70 border border-slate-800 space-y-2">
+                    <span class="text-pink-400 font-bold uppercase font-retro block">Transformatie = 2D naar 3D Extrusie</span>
+                    <p class="text-slate-400">
+                        Het iconische geluidje van Transformers ("Tsj-tsj-tsj-tjk") hoort bij verandering. In jullie app is dat de knop **"3D Extrusie"**: van een platte 2D GIS-kaart transformeert het beeld naar een levende, volumetrische stad.
+                    </p>
+                </div>
+                <div class="p-5 rounded-2xl bg-slate-950/70 border border-slate-800 space-y-2">
+                    <span class="text-amber-400 font-bold uppercase font-retro block">Robin de Robot = Betrouwbare Node</span>
+                    <p class="text-slate-400">
+                        Robin was de attente compagnon die luisterde en hielp. In een Digital Twin wil je dat de software aanvoelt als een wakkere assistent die de data voor de gemeente bewaakt, en geen koud spreadsheet-monster is.
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <section class="bg-gradient-to-r from-blue-950/40 via-purple-950/30 to-pink-950/30 border border-pink-500/20 rounded-3xl p-8 flex flex-col md:flex-row justify-between items-center gap-6">
+            <div class="space-y-2 max-w-2xl">
+                <span class="text-xs font-retro font-bold text-pink-400 uppercase tracking-widest">Aanbeveling voor de Tandem</span>
+                <h3 class="text-xl font-bold text-white font-retro">Het "Twee-Sporen" Model: Zegel + Mascotte</h3>
+                <p class="text-xs text-slate-300 leading-relaxed">
+                    Je hoeft niet te kiezen tussen serieus en speels! Kijk naar GitHub: zij hebben een strak logo (het silhouet van de kat) én een geliefde mascotte (Monalisa de Octocat) voor documentatie en stickers.
+                </p>
+                <p class="text-xs text-slate-400 leading-relaxed">
+                    <strong>Ons voorstel:</strong> Gebruik <strong>Concept 04 (Het Autobot Omni-Shield)</strong> als het strakke, officiële software-icoon in de header en admin-panel. En gebruik <strong>Concept 02 (Vector-84)</strong> of <strong>Concept 01 (Omni-Prime)</strong> als de levende mascotte in presentaties, release notes en laptopstickers voor de partners!
+                </p>
+            </div>
+
+            <div class="shrink-0 flex flex-col sm:flex-row gap-3">
+                <button onclick="window.scrollTo({top: 0, behavior: 'smooth'})" class="px-6 py-3 rounded-xl bg-gradient-to-r from-pink-600 to-blue-600 hover:from-pink-500 hover:to-blue-500 text-white font-retro font-bold text-xs uppercase tracking-wider transition-all shadow-lg shadow-pink-600/30">
+                    Bekijk Concepten Opnieuw ↑
+                </button>
+            </div>
+        </section>
+
+    </main>
+
+</body>
+</html>
