@@ -1,0 +1,132 @@
+/* Indicatorpaneel en favorieten (#258). Alleen thema-tokens (zie styles.css), geen vaste kleuren. */
+
+/* .help-text en .form-group zetten display; het attribuut hidden moet winnen */
+#panel-indicator [hidden],
+#mijn-favorieten[hidden],
+#mijn-favorieten [hidden] {
+  display: none !important;
+}
+
+.ip-beschrijving {
+  margin: 0 0 var(--spacing-sm);
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  line-height: 1.45;
+}
+
+.ip-meta {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: var(--spacing-xs) var(--spacing-sm);
+  margin: 0 0 var(--spacing-md);
+  font-size: 0.85rem;
+}
+
+.ip-meta dt {
+  color: var(--text-secondary);
+}
+
+.ip-meta dd {
+  margin: 0;
+  color: var(--text-primary);
+}
+
+.ip-bronnen-lijst {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ip-bronnen-lijst li + li {
+  margin-top: var(--spacing-xs);
+}
+
+.ip-grafiek {
+  position: relative;
+  min-height: 120px;
+  margin-bottom: var(--spacing-sm);
+}
+
+.ip-export .btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  text-decoration: none;
+}
+
+.ip-export .help-text {
+  display: block;
+  margin-top: var(--spacing-xs);
+}
+
+/* Mijn favorieten (paneel Info & Start) */
+.mijn-favorieten {
+  margin-bottom: var(--spacing-lg);
+  padding-bottom: var(--spacing-md);
+  border-bottom: 1px solid var(--panel-border);
+}
+
+.mijn-bewaar {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.mijn-bewaar .form-control {
+  width: 100%;
+  background-image: none;
+}
+
+#mijn-melding:empty {
+  display: none;
+}
+
+#mijn-melding.mijn-fout {
+  color: var(--color-danger);
+}
+
+.mijn-favorieten-lijst {
+  margin: var(--spacing-sm) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.mijn-favoriet {
+  display: flex;
+  align-items: stretch;
+  gap: var(--spacing-xs);
+  margin-bottom: var(--spacing-xs);
+}
+
+.mijn-favoriet button {
+  border: 1px solid var(--panel-border);
+  border-radius: var(--border-radius-sm);
+  background: var(--tint-subtle);
+  color: var(--text-primary);
+  font: inherit;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.mijn-favoriet-open {
+  flex: 1;
+  min-width: 0;
+  padding: 6px 10px;
+  text-align: left;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mijn-favoriet-weg {
+  padding: 6px 10px;
+  color: var(--text-secondary);
+}
+
+.mijn-favoriet button:hover {
+  background: var(--tint);
+}
+
+.mijn-favoriet-weg:hover {
+  color: var(--color-danger);
+}

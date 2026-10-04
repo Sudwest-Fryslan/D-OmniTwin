@@ -36,6 +36,8 @@ Wat wordt makkelijker, wat moeilijker, wat moet er nog gebeuren.
 | Nr | Titel | Status |
 |----|-------|--------|
 | [0001](0001-llm-koppeling-openai-standaard.md) | LLM-koppeling via de OpenAI Chat Completions-standaard, naast Ollama | voorgesteld |
+| [0002](0002-databronnen-als-dataproduct.md) | Databronnen als dataproduct: ontsluiten met contract, metadata, semantiek en voorwaarden | voorgesteld |
+| [0003](0003-use-cases-als-eenheid.md) | Use cases als eenheid van functionaliteit, test en demodata | voorgesteld |
 | [0004](0004-een-ingang-voor-vullen.md) | D-OmniTwin vullen via één laad-API: dataset-registratie en leveringen | voorgesteld |
 | [0005](0005-gescheiden-apis-per-doel.md) | Gescheiden API's per doel volgens de NL GOV API Design Rules | voorgesteld |
 | [0006](0006-usecase-als-declaratieve-app.md) | Use case als declaratieve app met eigen specificatie | voorgesteld |

@@ -82,19 +82,19 @@ Voor een installatie bij je organisatie (vereisten, `.env`, backup, bijwerken, H
 
 ## Zo ziet het eruit
 
-Schermafbeeldingen van een verse installatie met de use cases, ingezoomd op Bolsward.
+Schermafbeeldingen van versie 0.3.0-rc.1 met het SWF-thema en een volledige vulling (open data en de SWF-monitor), ingezoomd op Bolsward.
 
 ![Kaart: buurten in Bolsward gekleurd op een indicator, met PDOK-achtergrondkaart](docs/images/kaart-bolsward.jpg)
-*Kaart: buurten gekleurd op een indicator (hier "Afstand tot koele plek"), PDOK-achtergrondkaart.*
+*Kaart na de hittestress-vraag aan de assistent: buurten gekleurd op "Afstand tot koele plek", de vier Bolsward-buurten geselecteerd, PDOK-achtergrondkaart.*
 
-![Kompas: sunburst met de thema's voor buurt Bolsward-Zuidoost](docs/images/kompas-bolsward-zuidoost.jpg)
-*D-Omni Kompas voor Bolsward-Zuidoost: alle indicatoren in thema's, gekleurd ten opzichte van de referentiegroep.*
+![Kompas: sunburst met de thema's voor de vier Bolsward-buurten](docs/images/kompas-bolsward-zuidoost.jpg)
+*D-Omni Kompas voor de vier Bolsward-buurten uit de vraag (gemiddelde): alle indicatoren in thema's, gekleurd ten opzichte van de referentiegroep.*
 
 ![Chat: de D-Omni Assistent met het scenario Beleidsadviseur](docs/images/chat-beleidsadviseur.jpg)
 *D-Omni Assistent: het scenario "Beleidsadviseur" zet kaart en Kompas klaar.*
 
 ![Beheerscherm: dashboard met datadekking per Kompas-kwadrant](docs/images/beheer-dashboard.jpg)
-*Beheerscherm (`/admin`): indicatoren, datakwaliteit, AI-configuratie en rapportage.*
+*Beheerscherm (`/admin`, inloggen via Keycloak): indicatoren, datakwaliteit, AI-configuratie en rapportage.*
 
 De screenshots maak je opnieuw met [`scripts/docs/maak_screenshots.py`](scripts/docs/maak_screenshots.py).
 
