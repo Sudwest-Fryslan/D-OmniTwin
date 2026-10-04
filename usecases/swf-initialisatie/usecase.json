@@ -299,6 +299,39 @@
       "omschrijving": "een lezer mag niet laden (403)"
     }
   ],
+  "bewijs": {
+    "stappen": [
+      {
+        "id": "kompas",
+        "actie": "kompas",
+        "gebied": "BU19000002",
+        "profiel": "Volledig Kompas",
+        "omschrijving": "Volledig Kompas voor Bolsward-Zuidoost, aangevuld uit de lokale database (247 plekken)",
+        "bevat": [
+          "Bolsward-Zuidoost"
+        ]
+      },
+      {
+        "id": "kaart",
+        "actie": "kaart",
+        "gebied": "BU19000002",
+        "indicator": "233505e1-d22f-48b5-b67f-88ea73d12967",
+        "omschrijving": "Aantal energielabels per buurt in Bolsward (RVO EP-Online, uit de initialisatie)",
+        "bevat": [
+          "Bolsward-Zuidoost"
+        ]
+      },
+      {
+        "id": "levering",
+        "actie": "levering",
+        "dataset": "swf-init-waarnemingen",
+        "omschrijving": "Leveringsstatus van de initialisatiewaarden (laad-API)",
+        "bevat": [
+          "gepubliceerd"
+        ]
+      }
+    ]
+  },
   "bekende_afwijkingen": [
     "De aantallen in de controles gelden voor de dump van de lokale database van 04-10-2026. Een nieuwe export: eerst `controleer`, dan de aantallen hier en in de README bijwerken.",
     "Open data gaat nooit mee, ook niet als de open-data-use cases hem (nog) niet laden: 45.239 waarden op wijk- en gemeenteniveau (CBS Kerncijfers, RIVM) en 'Huisarts' (CBS, ook op buurtniveau). Vervolg: cbs-kerncijfers en rivm-gezondheidsmonitor uitbreiden met wijken en gemeenten.",
