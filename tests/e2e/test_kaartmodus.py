@@ -6,7 +6,7 @@ docs/testcases/01-kaartmodule/TC-01-004_kaartmodus.md
 
 from playwright.sync_api import expect
 
-from e2e_helpers import BOLSWARD_ZUIDOOST, TRAAG_MS, laad_buurtenkaart, open_paneel
+from e2e_helpers import BOLSWARD_ZUIDOOST, klik, laad_buurtenkaart, open_paneel, traag_ms
 
 INDICATOR = "Stedelijk hitte-eiland effect"  # use case hittestress
 
@@ -27,18 +27,19 @@ def kies_indicator(page, naam):
     page.wait_for_function(
         "() => window.state.currentData && window.state.currentData.metadata"
         " && window.state.currentData.metadata.indicator_naam",
-        timeout=TRAAG_MS,
+        timeout=traag_ms(),
     )
 
 
 def kies_modus(page, label, verwacht_verzoek=True, percentiel=False):
     knop = page.locator("#kaart-modus label", has_text=label)
+    # klik(): pas klikken als de renderer weer vlot tekent (na het hertekenen van de kaart, #212)
     if not verwacht_verzoek:
-        knop.click()
+        klik(page, knop)
         return
     with page.expect_response(lambda r: "/api/gebiedsmonitor/kaart_data/" in r.url and r.ok
                               and (("modus=percentiel" in r.url) == percentiel)):
-        knop.click()
+        klik(page, knop)
 
 
 def test_tc_01_004_kaartmodus(app_page):
