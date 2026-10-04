@@ -272,6 +272,10 @@ def rangschik(
         g = schaal_gelijkenis(gelijkenis.get(u), onder, boven)
         trefwoord = max(b, n)
         score = GEWICHT_TREFWOORD * trefwoord + GEWICHT_BETEKENIS * g
+        if b >= 1.0:
+            # Eerste indicator van een specifiek begrip (zelf vastgelegd in synoniemen.json): altijd
+            # 'sterk', ook als de embedding net minder uitspringt (bijv. na een andere Kompas-inrichting)
+            score = max(score, STERK)
         redenen = []
         if b:
             redenen.append(f"begrip: {begrip_label}")
