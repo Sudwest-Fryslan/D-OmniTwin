@@ -13,6 +13,8 @@ Relevante externe actoren:
 
 **Doelbeeld:** D-OmniTwin als gemeentelijk dataspace-platform — van visualisatietool naar regie-, betekenis- en ontsluitingslaag. Metadata, kwaliteit en semantiek zijn eersteklas onderdelen. AI werkt op beheerde informatie. Federatie komt later, maar de architectuur wordt er nu al op voorbereid (GGM, iSHARE, Common Ground, NORA).
 
+**Toegankelijkheid:** zoveel mogelijk WCAG 2.1 AA (DigiToegankelijk, wettelijk verplicht voor gemeenten; ADR 0011). Thema's worden getoetst (`tests/test_thema.py`); een thema dat AA niet haalt, wordt gemarkeerd en is nooit de standaard. Voor kaart en Kompas zijn er tekstalternatieven (indicatorpaneel, CSV, tooltips, assistent); informatie nooit alleen via kleur.
+
 ### Architectuur-guardrails
 - Niets aanpassen aan projectbestanden zonder issue en PR (zie GitHub-workflow hieronder).
 - In sync blijven met de actuele stand: `CHANGELOG.md` (per versie, `[Unreleased]` voor wat er op `main` staat) en de GitHub-issues. `docs/STATE.md` is een historische momentopname (tot 0.1.0) en niet leidend.

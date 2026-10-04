@@ -2,7 +2,7 @@
 
 > Digitale spiegel van de fysieke leefomgeving: indicatoren op buurtniveau op een kaart, in een Kompas en in rapporten. Open source (EUPL 1.2).
 
-**Status:** pre-release, versie 0.3.0-rc.1 (het actuele nummer staat in [`VERSION`](./VERSION), de wijzigingen in de [CHANGELOG](./CHANGELOG.md)). Lees vóór gebruik buiten je eigen netwerk de paragraaf [Beveiliging](./docs/9-beheer/installatie.md#beveiliging) van de installatiegids.
+**Status:** versie 0.3.0 (het actuele nummer staat in [`VERSION`](./VERSION), de wijzigingen in de [CHANGELOG](./CHANGELOG.md)). Lees vóór gebruik buiten je eigen netwerk de paragraaf [Beveiliging](./docs/9-beheer/installatie.md#beveiliging) van de installatiegids.
 
 [![Licentie: EUPL 1.2](https://img.shields.io/badge/Licentie-EUPL_1.2-blue)](./LICENSE) [![Docs: CC BY 4.0](https://img.shields.io/badge/Docs-CC_BY_4.0-green)](./LICENSE-DOCS)
 
@@ -82,7 +82,7 @@ Voor een installatie bij je organisatie (vereisten, `.env`, backup, bijwerken, H
 
 ## Zo ziet het eruit
 
-Schermafbeeldingen van versie 0.3.0-rc.1 met het SWF-thema en een volledige vulling (open data en de SWF-monitor), ingezoomd op Bolsward.
+Schermafbeeldingen van versie 0.3.0 met het SWF-thema (dagstand) op een verse installatie: open data en de SWF-gegevens die bij de use cases horen, ingezoomd op Bolsward.
 
 ![Kaart: buurten in Bolsward gekleurd op een indicator, met PDOK-achtergrondkaart](docs/images/kaart-bolsward.jpg)
 *Kaart na de hittestress-vraag aan de assistent: buurten gekleurd op "Afstand tot koele plek", de vier Bolsward-buurten geselecteerd, PDOK-achtergrondkaart.*
