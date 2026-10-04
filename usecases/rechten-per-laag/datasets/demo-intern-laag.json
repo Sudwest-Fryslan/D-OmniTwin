@@ -1,0 +1,61 @@
+{
+  "id": "demo-intern-laag",
+  "bronId": "demo-intern",
+  "beschrijving": {
+    "@context": "https://data.overheid.nl/dcat-ap-nl/context.jsonld",
+    "@type": "dcat:Dataset",
+    "dct:title": "DEMODATA: interne voorbeeldlaag (buurten)",
+    "dct:description": "Kaartlaag uit een denkbeeldige interne bron, om toegang per laag te tonen (#254): de 13 buurten van de sample als vlakken. Alleen zichtbaar na inloggen met de rol lezer of beheerder.",
+    "dct:publisher": "https://github.com/TLaan/D-OmniTwin",
+    "dct:accessRights": "http://publications.europa.eu/resource/authority/access-right/RESTRICTED",
+    "dct:license": "http://standaarden.overheid.nl/owms/terms/licentieonbekend",
+    "dct:spatial": "https://identifier.overheid.nl/tooi/id/provincie/pv21",
+    "dct:source": "init_data/sample/2_brondata/sample_buurten.geojson (demodata)",
+    "dcat:theme": [
+      "http://standaarden.overheid.nl/owms/terms/Ruimtelijke_ordening"
+    ],
+    "dcat:keyword": [
+      "demodata",
+      "toegang",
+      "intern"
+    ],
+    "dcat:contactPoint": {
+      "@type": "vcard:Organization",
+      "vcard:fn": "Functioneel beheer D-OmniTwin"
+    },
+    "dct:type": "demodata",
+    "dct:conformsTo": "http://www.opengis.net/def/crs/EPSG/0/28992"
+  },
+  "laadprofiel": {
+    "profiel": "kaartlaag",
+    "doel": {
+      "featureTabel": "demo_intern_laag",
+      "sleutelveld": "id",
+      "labelveld": "naam"
+    },
+    "plausibiliteit": {
+      "minRegels": 13
+    }
+  },
+  "bron": {
+    "adapter": "lokaal-bestand",
+    "pad": "${REPO}/init_data/sample/2_brondata/sample_buurten.geojson",
+    "omschrijving": "DEMODATA in de repo"
+  },
+  "bewerkingen": [
+    {
+      "behoud": [
+        "id",
+        "naam"
+      ]
+    },
+    {
+      "multipolygon": true
+    }
+  ],
+  "levering": {
+    "formaat": "geopackage",
+    "bestand": "demo-intern-laag.gpkg",
+    "geometrie": "MultiPolygon"
+  }
+}

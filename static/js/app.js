@@ -1227,6 +1227,19 @@ async function selectBuurtenFromDeelgebied(deelgebiedId, deelgebiedNaam) {
 // Externe Kaartlagen (Sprint 18 — PDOK WFS proxy)
 // ============================================================================
 
+// Label voor interne lagen en indicatoren (#254): die komen alleen na inloggen met de rol lezer of
+// beheerder in de lijsten (de API's filteren); het label laat zien dat ze niet openbaar zijn.
+const INTERN_TITEL = 'Intern: alleen zichtbaar na inloggen (rol lezer of beheerder)';
+const INTERN_LABEL_HTML = `<span class="label-intern" title="${INTERN_TITEL}">intern</span>`;
+
+function internLabel() {
+    const s = document.createElement('span');
+    s.className = 'label-intern';
+    s.title = INTERN_TITEL;
+    s.textContent = 'intern';
+    return s;
+}
+
 /**
  * Laadt actieve externe kaartlagen en rendert toggles in het kaartlagen-paneel.
  */
@@ -1275,6 +1288,8 @@ async function loadExterneKaartlagen() {
             label.appendChild(checkboxCustom);
             label.appendChild(colorDot);
             label.appendChild(labelText);
+            // Interne laag (#254): alleen na inloggen in de lijst; met een label
+            if (laag.toegang === 'intern') label.appendChild(internLabel());
             item.appendChild(label);
 
             // Inline beschrijving (verborgen, verschijnt bij klik op ℹ)
@@ -2419,6 +2434,7 @@ function populateIndicatorSelect(indicatoren) {
             ? `${ind.naam} (${coverage} gebieden)`
             : `${ind.naam} (geen data)`;
 
+        if (ind.toegang === 'intern') option.textContent += ' · intern';  // #254: alleen na inloggen
         option.dataset.coverage = coverage;
         option.dataset.eenheid = ind.eenheid || '';
 
@@ -4344,7 +4360,7 @@ async function buildIndicatorAccordion(indicatoren) {
                         data-uuid="${escapeHtml(ind.uuid)}" data-naam="${escapeHtml(ind.naam)}"
                         ${noData ? 'aria-disabled="true"' : 'role="button" tabindex="0"'}
                         ${noData ? '' : 'onclick="selectAccordionIndicator(this.dataset.uuid, this.dataset.naam)"'}>
-                <span class="indicator-item-name">${escapeHtml(ind.naam)}</span>
+                <span class="indicator-item-name">${escapeHtml(ind.naam)}</span>${ind.toegang === 'intern' ? INTERN_LABEL_HTML : ''}
                 <span class="indicator-item-coverage">${coverage > 0 ? coverage : '—'}</span>
             </div>`;
         });

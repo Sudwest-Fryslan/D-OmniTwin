@@ -223,6 +223,9 @@ def _verwerk_profiel(ctx: Context, bron, profiel: str, aantallen: dict) -> str:
         else:
             resultaat = pgeo.publiceer_kaartlaag(cur, ctx, data)
         aantallen.update(resultaat)
+        if profiel in ("waarnemingen", "definities"):
+            # Toegang van de geraakte indicatoren en hun waarden volgt de datasets (#254, V032)
+            cur.execute("SELECT public.herbereken_toegang_dataset(%s)", (ctx.dataset_id,))
         versie = _versie(cur, ctx, resultaat)
         _beschrijving_bij(cur, ctx, bron.dcat or ctx.levering.get("dcat"), versie)
         _rond_af(cur, lid, "gepubliceerd", _openbaar(aantallen), versie=versie)

@@ -11,7 +11,8 @@ via de admin-API:
   wachtwoordgrant), zodat de uitvoerder tokens van de testgebruikers kan halen;
 - rollen: zonder `:` een realm-rol (`beheerder`, `lezer`; moet bestaan), met `:` een client-rol op
   `omnitwin-api` (`dataset:<id>:laden`, `datasets:laden`; een ontbrekende wordt aangemaakt, zoals
-  deploy/keycloak/machineclient.sh);
+  deploy/keycloak/machineclient.sh); een machineclient krijgt precies die rollen, zonder de standaardrol
+  van de realm (`default-roles-<realm>`, met `lezer`), zodat toegang per laag (#254) te toetsen is;
 - kenmerk: de clients krijgen de attributen `omnitwin.usecase` en `omnitwin.testaccount.tot`
   (levensduur, `OMNITWIN_TESTACCOUNTS_UUR`, standaard 24); de gebruikers heten `Testaccount <usecase>`
   (voor- en achternaam), omdat Keycloak zonder aangepast gebruikersprofiel geen eigen attributen bewaart;
@@ -201,7 +202,16 @@ class KeycloakBeheer:
             "attributes": {"client_credentials.use_refresh_token": "false", **self._kenmerk(usecase, tot)}})
         sa = self._verzoek("GET", f"/clients/{cid}/service-account-user").json()
         self.ken_rollen_toe(sa["id"], rollen)
+        self._zonder_standaardrol(sa["id"])
         return cid
+
+    def _zonder_standaardrol(self, gebruiker_id):
+        """Een machineclient krijgt precies de rollen uit het manifest: de standaardrol van de realm
+        (default-roles-<realm>, met lezer) gaat van het service account af, zodat een ETL-client zonder
+        `lezer` geen interne data ziet (#254). Bestaat de rol niet, dan niets."""
+        r = self._verzoek("GET", f"/roles/default-roles-{self.realm}", verwacht=(200, 404))
+        if r.status_code == 200:
+            self._verzoek("DELETE", f"/users/{gebruiker_id}/role-mappings/realm", json=[r.json()])
 
     def maak_loginclient(self, naam, usecase, tot):
         """Public client met alleen de wachtwoordgrant: tokens voor de testgebruikers (alleen test/dev)."""
