@@ -155,14 +155,11 @@
       <p class="header-subtitle"><span id="header-gebieden-count">…</span> gebieden | <span id="header-indicatoren-count">…</span> indicatoren</p>
     </div>
     <div class="header-status">
-      {% if account and account.oidc %}
-      <!-- Inloggen via Keycloak (#266): de backend doet de OIDC-flow, de browser krijgt alleen een cookie -->
-      {% if account.naam %}
+      {% if account and account.oidc and account.naam %}
+      <!-- Ingelogd via Keycloak (#266): naam en uitloggen. Niet ingelogd: geen aparte inlogknop;
+           "Beheer" leidt naar het inloggen, en bij VIEWER_TOEGANG=inloggen kom je pas binnen na inloggen -->
       <span class="status-badge account-badge" id="account-naam" title="Ingelogd">{{ account.naam }}</span>
       <button type="button" id="uitloggen" class="status-badge admin-badge account-knop">Uitloggen</button>
-      {% else %}
-      <a href="{{ account.inloggen }}" id="inloggen" class="status-badge admin-badge account-knop">Inloggen</a>
-      {% endif %}
       {% endif %}
       <a href="#" id="admin-btn" class="status-badge admin-badge" title="Beheeromgeving openen" onclick="openAdmin(event)">
         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
