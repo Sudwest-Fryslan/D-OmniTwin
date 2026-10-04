@@ -36,7 +36,9 @@ TESTBUURTEN = ["BU19000001", "BU19000002", "BU19000004", "BU19000108", "BU190002
 # op de machine draait. Onder CPU-druk (andere containers, `docker run --cpus=2`) duurt
 # hetzelfde tekenwerk vele malen langer, en vaste wachttijden die in rust ruim zijn, lopen af.
 # Daarom meet elke testpagina bij het openen hoe lang een vaste kleine WebGL-taak duurt
-# (tekenen + readPixels, mediaan van 3) en schalen de wachttijden mee: geschaald(ms).
+# (tekenen + readPixels, mediaan van 5) en schalen de wachttijden mee: geschaald(ms).
+# Gemeten op een laptop met 8 cores (#212): vrij ±17 ms, --cpus=2 ±90 ms, --cpus=2 met
+# andere last 110-190 ms. Picks en kaartklikken vertragen in dezelfde orde (5-10x).
 
 _BENCH_JS = """
 () => {
@@ -56,14 +58,15 @@ _BENCH_JS = """
   const teken = () => { gl.drawArrays(gl.TRIANGLES, 0, N * 3); gl.readPixels(0, 0, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, px); };
   teken();  // shader compileren valt buiten de meting
   const tijden = [];
-  for (let i = 0; i < 3; i++) { const t0 = performance.now(); teken(); tijden.push(performance.now() - t0); }
+  for (let i = 0; i < 5; i++) { const t0 = performance.now(); teken(); tijden.push(performance.now() - t0); }
   const e = gl.getExtension('WEBGL_lose_context'); if (e) e.loseContext();
-  return tijden.sort((a, b) => a - b)[1];
+  return tijden.sort((a, b) => a - b)[2];
 }
 """
-# Duur van de taak hierboven op een machine zonder andere last (8 cores, Playwright-container
-# zonder CPU-grens). Overschrijfbaar met E2E_BENCH_REFERENTIE_MS.
-_BENCH_REFERENTIE_MS = float(os.environ.get("E2E_BENCH_REFERENTIE_MS", "40"))
+# Duur van de taak hierboven zonder andere last (Playwright-container zonder CPU-grens, 8 cores),
+# naar beneden afgerond: de factor wordt liever iets te groot dan te klein.
+# Overschrijfbaar met E2E_BENCH_REFERENTIE_MS.
+_BENCH_REFERENTIE_MS = float(os.environ.get("E2E_BENCH_REFERENTIE_MS", "15"))
 # Bovengrens: ook een vastgelopen test moet binnen redelijke tijd falen.
 _MAX_TRAAGHEID = float(os.environ.get("E2E_MAX_TRAAGHEID", "6"))
 _traagheid = 1.0

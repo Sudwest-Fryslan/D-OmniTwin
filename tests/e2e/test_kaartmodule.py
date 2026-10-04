@@ -12,7 +12,7 @@ from playwright.sync_api import expect
 
 from e2e_helpers import (
     HINDELOOPEN, KOUDUM, WORKUM,
-    klik_buurt_op_kaart, laad_buurtenkaart, open_kompas, open_paneel, selecteer_buurt_via_app,
+    klik, klik_buurt_op_kaart, laad_buurtenkaart, open_kompas, open_paneel, selecteer_buurt_via_app,
     selectie, selectie_overlay_aanwezig, wacht_op_selectie, zoom_kaart, geschaald, traag_ms,
 )
 
@@ -308,8 +308,8 @@ def test_selectiebadge_knoppen(app_page):
     b_naam, b_panden, b_wissen = (l.bounding_box() for l in (naam, panden, wissen))
     assert b_naam["x"] + b_naam["width"] <= b_panden["x"] <= b_panden["x"] + b_panden["width"] <= b_wissen["x"]
 
-    # Klik op de naam: selectie blijft, geen 3D-panden
-    naam.click()
+    # Klik op de naam: selectie blijft, geen 3D-panden (klik(): pas als de renderer vlot tekent, #212)
+    klik(page, naam)
     page.wait_for_timeout(500)
     assert selectie(page) == [WORKUM]
     assert page.evaluate("() => window.state.show3DBuildings") is False
