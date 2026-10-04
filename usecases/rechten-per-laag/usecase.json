@@ -1,0 +1,241 @@
+{
+  "specificatie": "1.0",
+  "naam": "rechten-per-laag",
+  "id": "TC-07-024",
+  "versie": "0.1.0",
+  "titel": "Rechten per laag: interne lagen en indicatoren alleen na inloggen",
+  "vraag": "Ik wil dat een laag of indicator uit een interne bron alleen zichtbaar is voor ingelogde medewerkers (rol lezer of beheerder), ook bij een directe aanroep van de API, en dat open data voor iedereen zichtbaar blijft.",
+  "gebruiker": "beheerder D-OmniTwin",
+  "status": "actief",
+  "afhankelijk_van": [
+    "cbs-gebiedsindelingen"
+  ],
+  "actoren": [
+    {
+      "naam": "beheerder",
+      "soort": "gebruiker",
+      "rollen": [
+        "beheerder"
+      ],
+      "omschrijving": "beheerder van D-OmniTwin: registreert de datasets"
+    },
+    {
+      "naam": "etl-intern",
+      "soort": "machineclient",
+      "rollen": [
+        "dataset:demo-intern-definitie:laden",
+        "dataset:demo-intern-waarden:laden",
+        "dataset:demo-intern-laag:laden"
+      ],
+      "omschrijving": "ETL van de interne bron: levert alleen de eigen datasets, ziet geen interne data"
+    },
+    {
+      "naam": "lezer",
+      "soort": "gebruiker",
+      "rollen": [
+        "lezer"
+      ],
+      "omschrijving": "ingelogde medewerker: ziet ook wat intern is, laadt niets"
+    }
+  ],
+  "rechten": [
+    "realm-rol beheerder (registreren)",
+    "dataset:demo-intern-definitie:laden",
+    "dataset:demo-intern-waarden:laden",
+    "dataset:demo-intern-laag:laden",
+    "realm-rol lezer (interne lagen en indicatoren zien)"
+  ],
+  "datasets": [
+    {
+      "id": "demo-intern-definitie",
+      "route": "laden",
+      "registratie": "datasets/demo-intern-definitie.json",
+      "profiel": "definities",
+      "toegang": "intern",
+      "rol": "dataset:demo-intern-definitie:laden",
+      "client": "etl-intern",
+      "prioriteit": "Must",
+      "bron": "DEMODATA in de use case (intern-definitie.json)",
+      "verwacht": {
+        "indicatoren": 1
+      }
+    },
+    {
+      "id": "demo-intern-waarden",
+      "route": "laden",
+      "registratie": "datasets/demo-intern-waarden.json",
+      "profiel": "waarnemingen",
+      "toegang": "intern",
+      "rol": "dataset:demo-intern-waarden:laden",
+      "client": "etl-intern",
+      "prioriteit": "Must",
+      "bron": "DEMODATA in de use case (intern-waarden.csv)",
+      "verwacht": {
+        "regels": 13
+      }
+    },
+    {
+      "id": "demo-intern-laag",
+      "route": "laden",
+      "registratie": "datasets/demo-intern-laag.json",
+      "profiel": "kaartlaag",
+      "toegang": "intern",
+      "rol": "dataset:demo-intern-laag:laden",
+      "client": "etl-intern",
+      "prioriteit": "Must",
+      "bron": "DEMODATA in de repo (init_data/sample, 13 buurten)",
+      "verwacht": {
+        "features": 13
+      }
+    }
+  ],
+  "controles": [
+    {
+      "type": "aantal",
+      "dataset": "demo-intern-definitie",
+      "resource": "indicatoren",
+      "gelijk": 1
+    },
+    {
+      "type": "aantal",
+      "dataset": "demo-intern-waarden",
+      "gelijk": 13
+    },
+    {
+      "type": "aantal",
+      "dataset": "demo-intern-laag",
+      "gelijk": 13
+    },
+    {
+      "type": "api",
+      "pad": "/api/data/v1/indicatoren?uuid=eq.e36c5cab-2e36-4be0-bd8f-ade7924975a6&select=uuid,naam,toegang",
+      "anoniem": true,
+      "maximaal_aantal": 0,
+      "uuid": "e36c5cab-2e36-4be0-bd8f-ade7924975a6",
+      "omschrijving": "anoniem: de interne indicator staat niet in de lijst (PostgREST)"
+    },
+    {
+      "type": "api",
+      "pad": "/api/data/v1/gebied_data?indicator_uuid=eq.e36c5cab-2e36-4be0-bd8f-ade7924975a6&select=gebied_id,waarde",
+      "anoniem": true,
+      "maximaal_aantal": 0,
+      "uuid": "e36c5cab-2e36-4be0-bd8f-ade7924975a6",
+      "omschrijving": "anoniem: geen waarden van de interne indicator (PostgREST)"
+    },
+    {
+      "type": "api",
+      "pad": "/api/gebiedsmonitor/kaart_data/afba67cb-6b38-4723-9c95-102a22d5b38a?indicator_uuid=e36c5cab-2e36-4be0-bd8f-ade7924975a6",
+      "anoniem": true,
+      "status": 401,
+      "uuid": "e36c5cab-2e36-4be0-bd8f-ade7924975a6",
+      "omschrijving": "anoniem: directe aanroep van de kaartdata van de interne indicator geeft 401"
+    },
+    {
+      "type": "api",
+      "pad": "/api/data/v1/externe_kaartlagen?naam=eq.DEMODATA%3A%20interne%20voorbeeldlaag%20%28buurten%29&select=id,naam,toegang",
+      "anoniem": true,
+      "maximaal_aantal": 0,
+      "omschrijving": "anoniem: de interne kaartlaag staat niet in de lagenlijst (PostgREST)"
+    },
+    {
+      "type": "api",
+      "pad": "/api/data/v1/gebied_data?indicator_uuid=eq.bf4e5b8f-6b0a-4632-b9b4-8e29d025e68c&select=waarde&limit=1",
+      "anoniem": true,
+      "minimaal_aantal": 1,
+      "uuid": "bf4e5b8f-6b0a-4632-b9b4-8e29d025e68c",
+      "omschrijving": "anoniem: openbare data blijft zichtbaar"
+    },
+    {
+      "type": "recht",
+      "actor": "lezer",
+      "actie": "bekijken",
+      "pad": "/api/gebiedsmonitor/kaart_data/afba67cb-6b38-4723-9c95-102a22d5b38a?indicator_uuid=e36c5cab-2e36-4be0-bd8f-ade7924975a6",
+      "toegestaan": true,
+      "omschrijving": "een lezer mag de interne indicator op de kaart zien"
+    },
+    {
+      "type": "recht",
+      "actor": "etl-intern",
+      "actie": "bekijken",
+      "pad": "/api/gebiedsmonitor/kaart_data/afba67cb-6b38-4723-9c95-102a22d5b38a?indicator_uuid=e36c5cab-2e36-4be0-bd8f-ade7924975a6",
+      "toegestaan": false,
+      "omschrijving": "een machineclient zonder rol lezer ziet de interne indicator niet (403)"
+    },
+    {
+      "type": "recht",
+      "actor": "beheerder",
+      "actie": "registreren",
+      "toegestaan": true,
+      "omschrijving": "de beheerder mag datasets registreren"
+    },
+    {
+      "type": "recht",
+      "actor": "etl-intern",
+      "actie": "leveren",
+      "dataset": "demo-intern-laag",
+      "toegestaan": true,
+      "omschrijving": "etl-intern mag zijn eigen dataset leveren"
+    },
+    {
+      "type": "recht",
+      "actor": "etl-intern",
+      "actie": "leveren",
+      "dataset": "cbs-kerncijfers",
+      "toegestaan": false,
+      "omschrijving": "etl-intern mag een andere dataset niet leveren (403)"
+    },
+    {
+      "type": "recht",
+      "actor": "lezer",
+      "actie": "leveren",
+      "dataset": "demo-intern-laag",
+      "toegestaan": false,
+      "omschrijving": "een lezer mag niet laden (403)"
+    },
+    {
+      "type": "viewer",
+      "stap": "zonder inloggen de lagenlijst en de indicatorkeuze openen",
+      "verwacht": "de interne voorbeeldlaag en -indicator staan er niet in; de open lagen en indicatoren wel"
+    },
+    {
+      "type": "viewer",
+      "stap": "inloggen als lezer, lagenlijst en indicatorkeuze openen",
+      "verwacht": "de interne voorbeeldlaag en -indicator staan erin, met het label intern"
+    }
+  ],
+  "bewijs": {
+    "stappen": [
+      {
+        "id": "lagen-anoniem",
+        "actie": "open",
+        "pad": "/api/data/v1/externe_kaartlagen?select=naam,toegang",
+        "omschrijving": "Zonder inloggen: de lagenlijst (PostgREST) heeft alleen openbare lagen",
+        "bevat": [
+          "openbaar"
+        ]
+      },
+      {
+        "id": "kaartdata-anoniem",
+        "actie": "open",
+        "pad": "/api/gebiedsmonitor/kaart_data/afba67cb-6b38-4723-9c95-102a22d5b38a?indicator_uuid=e36c5cab-2e36-4be0-bd8f-ade7924975a6",
+        "omschrijving": "Zonder inloggen: een directe aanroep van de interne indicator geeft 401",
+        "bevat": [
+          "niet-ingelogd"
+        ]
+      },
+      {
+        "id": "levering",
+        "actie": "levering",
+        "dataset": "demo-intern-laag",
+        "omschrijving": "De interne laag is gepubliceerd via de laad-API (dct:accessRights RESTRICTED)",
+        "bevat": [
+          "gepubliceerd"
+        ]
+      }
+    ]
+  },
+  "bekende_afwijkingen": [
+    "De aantallen in de indicatorenlijst (aantal_gebieden_met_data) tellen alle waarden van een openbare indicator, ook interne.",
+    "Een gebiedsindeling met dct:accessRights RESTRICTED krijgt toegang intern in de registratie, maar de gebieden zelf blijven zichtbaar (nog niet afgedwongen)."
+  ]
+}

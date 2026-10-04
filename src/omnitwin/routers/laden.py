@@ -43,7 +43,7 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from omnitwin.config import instellingen
 from omnitwin.laden import adapter_swf, opslag, verwerker
-from omnitwin.laden.catalogus import catalogus, is_publiek
+from omnitwin.laden.catalogus import catalogus, is_publiek, toegang_van
 from omnitwin.laden.db import transactie
 from omnitwin.laden.lezen import kale_mediatype
 from omnitwin.laden.problemen import HTTP_CODE, MEDIATYPE, Fout, Probleem, probleem
@@ -121,6 +121,7 @@ def dataset_uit(r: dict, laatste: dict | None) -> dict:
     if r.get("bron_id"):
         uit["bronId"] = r["bron_id"]
     uit.update({"beschrijving": r["beschrijving"], "laadprofiel": r["laadprofiel"], "actueleVersie": r["huidige_versie"],
+                "toegang": r.get("toegang") or toegang_van(r["beschrijving"]),
                 "aangemaaktOp": _iso(r["aangemaakt_op"]), "gewijzigdOp": _iso(r["gewijzigd_op"])})
     if laatste:
         uit["laatsteLevering"] = levering_kort(laatste)
@@ -221,7 +222,11 @@ def _db_vervang(dataset_id: str, reg: dict) -> dict:
                               gewijzigd_op = now() WHERE id = %s RETURNING *""",
                     (reg.get("bronId"), json.dumps(reg["beschrijving"], ensure_ascii=False),
                      json.dumps(reg["laadprofiel"], ensure_ascii=False), reg["laadprofiel"]["profiel"], dataset_id))
-        return dataset_uit(cur.fetchone(), _laatste_levering(cur, dataset_id))
+        nieuw = cur.fetchone()
+        if nieuw["toegang"] != ds.get("toegang"):
+            # Andere dct:accessRights: wat de dataset al publiceerde volgt (#254)
+            cur.execute("SELECT public.herbereken_toegang_dataset(%s)", (dataset_id,))
+        return dataset_uit(nieuw, _laatste_levering(cur, dataset_id))
 
 
 def _db_huidige_registratie(dataset_id: str) -> dict:

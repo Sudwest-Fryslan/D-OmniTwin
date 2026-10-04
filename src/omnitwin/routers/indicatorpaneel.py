@@ -17,6 +17,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import Response
 from sqlalchemy.orm import Session
 
+from omnitwin import toegang
 from omnitwin.database import get_db
 from omnitwin.fouten import GebruikersFout
 from omnitwin.services.indicatorpaneel_service import (
@@ -30,6 +31,7 @@ router = APIRouter(prefix="/api/gebiedsmonitor", tags=["Gebiedsmonitor"])
 
 
 def _paneel(db, indicator_uuid, gebied_ids, jaar, gebiedstype_id, gemeente_code, met_gebieden=True):
+    toegang.vereis_indicator(db, indicator_uuid)  # interne indicator zonder rol: 401/403 (#254)
     try:
         return IndicatorpaneelService(db).paneel(
             str(indicator_uuid), lees_gebied_ids(gebied_ids), jaar=jaar,

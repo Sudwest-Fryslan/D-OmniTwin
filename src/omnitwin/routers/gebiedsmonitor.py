@@ -16,6 +16,7 @@ from sqlalchemy.orm import Session
 from typing import Optional, Dict, Any
 from uuid import UUID
 
+from omnitwin import toegang
 from omnitwin.database import get_db
 from omnitwin.version import __version__
 from omnitwin.services.gebiedsmonitor_service import GebiedsmonitorService
@@ -165,7 +166,8 @@ def get_kaart_attributes(
                     "referentiegroep (#255); label = label A-E (drempels uit indicator_labels, anders "
                     "voorlopig kwintielen, #256)"
     ),
-    service: GebiedsmonitorService = Depends(get_service)
+    service: GebiedsmonitorService = Depends(get_service),
+    db: Session = Depends(get_db),
 ):
     """
     Haal attribuut-data en berekende kleuren op voor kaartvisualisatie (Hybride aanpak).
@@ -173,6 +175,7 @@ def get_kaart_attributes(
     kleuren, meetwaarden en overige attributen bevatten. (GEEN geometrie)
     """
     # Fouten gaan naar de centrale foutafhandeling: geen SQL of exceptietekst naar buiten (#203)
+    toegang.vereis_indicator(db, indicator_uuid)  # interne indicator zonder rol: 401/403 (#254)
     return service.get_kaart_attributes(
         gebiedstype_id=str(gebiedstype_id),
         indicator_uuid=str(indicator_uuid) if indicator_uuid else None,

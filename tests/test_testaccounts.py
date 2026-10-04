@@ -56,8 +56,9 @@ class NepKeycloak:
         cid = str(uuid.uuid4())
         self.clients[cid] = dict(rep, id=cid)
         if rep.get("serviceAccountsEnabled"):
+            # Zoals Keycloak: een service account krijgt de standaardrol van de realm
             self.users[f"sa-{cid}"] = {"id": f"sa-{cid}", "username": f"service-account-{rep['clientId']}",
-                                       "_client": cid, "_rollen": set()}
+                                       "_client": cid, "_rollen": {"default-roles-omnitwin"}}
         return cid
 
     # -- tokenendpoints
@@ -131,7 +132,11 @@ class NepKeycloak:
             self.users.pop(m.group(1), None)
             return Antwoord(204)
         if m := re.fullmatch(r"/users/([^/]+)/role-mappings/(realm|clients/[^/]+)", pad):
-            self.users[m.group(1)]["_rollen"] |= {r["name"] for r in json}
+            namen = {r["name"] for r in json}
+            if methode == "DELETE":
+                self.users[m.group(1)]["_rollen"] -= namen
+            else:
+                self.users[m.group(1)]["_rollen"] |= namen
             return Antwoord(204)
         return Antwoord(404)
 
@@ -518,3 +523,52 @@ def test_actoren_in_de_use_cases():
 def test_accountbestand_staat_in_gitignore():
     tekst = (Path(uc.ROOT) / ".gitignore").read_text(encoding="utf-8")
     assert ".usecase-accounts.json" in tekst.splitlines()
+
+
+# ------------------------------------------------------------------ toegang per laag (#254)
+
+def test_rechtencontrole_bekijken(accounts):
+    """recht bekijken: GET <pad> met het token van de actor; 401/403 = niet toegestaan."""
+    pad = "/api/gebiedsmonitor/kaart_data/gt?indicator_uuid=u"
+    statussen = {"uc-voorbeeld-lezer": {("GET", pad): 200}, "uc-voorbeeld-etl-x": {("GET", pad): 403}}
+    api, gemaakt = actor_api(UC, accounts, statussen)
+    goed = [{"type": "recht", "actor": "lezer", "actie": "bekijken", "pad": pad, "toegestaan": True},
+            {"type": "recht", "actor": "etl-x", "actie": "bekijken", "pad": pad, "toegestaan": False}]
+    for c in goed:
+        assert uc.controle_api(c, api, UC) is None, c
+    assert gemaakt["uc-voorbeeld-lezer"].s.verzoeken == [("GET", f"http://nep{pad}", None)]
+    fout = {"type": "recht", "actor": "etl-x", "actie": "bekijken", "pad": pad, "toegestaan": True}
+    assert uc.controle_api(fout, api, UC) == "HTTP 403, verwacht toegestaan"
+    fout = {"type": "recht", "actor": "lezer", "actie": "bekijken", "pad": pad, "toegestaan": False}
+    assert uc.controle_api(fout, api, UC) == "HTTP 200, verwacht 401 of 403"
+
+
+def test_manifest_recht_bekijken_vraagt_pad():
+    m = {"naam": "x", "actoren": UC["actoren"], "datasets": [], "controles": [
+        {"type": "recht", "actor": "lezer", "actie": "bekijken", "toegestaan": True},
+        {"type": "recht", "actor": "lezer", "actie": "bekijken", "pad": "/api/x", "toegestaan": True}]}
+    fouten = uc.valideer_manifest(m)
+    assert fouten.count("controle recht: veld pad ontbreekt") == 1
+    assert "controle recht: veld dataset ontbreekt" not in fouten
+
+
+def test_api_controle_maximaal_aantal(monkeypatch):
+    import requests
+
+    class R:
+        status_code = 200
+
+        def __init__(self, data):
+            self.data = data
+
+        def json(self):
+            return self.data
+    antwoorden = {"/leeg": [], "/een": [{"x": 1}]}
+    monkeypatch.setattr(requests, "get", lambda url, headers=None, timeout=None: R(antwoorden[url.split("nep")[1]]))
+    api = NepLaadApi("omgeving")
+    api.basis = "http://nep"
+    assert uc.controle_api({"type": "api", "pad": "/leeg", "anoniem": True, "maximaal_aantal": 0}, api, UC) is None
+    assert uc.controle_api({"type": "api", "pad": "/een", "anoniem": True, "maximaal_aantal": 0}, api, UC) \
+        == "1 resultaten, verwacht ≤ 0"
+    assert uc.controle_api({"type": "api", "pad": "/een", "anoniem": True, "minimaal_aantal": 1,
+                            "maximaal_aantal": 1}, api, UC) is None

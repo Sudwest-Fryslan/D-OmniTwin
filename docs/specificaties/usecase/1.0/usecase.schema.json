@@ -256,6 +256,14 @@
           "type": "object",
           "description": "Verwachte aantallen en uitkomst van de levering."
         },
+        "toegang": {
+          "type": "string",
+          "enum": [
+            "openbaar",
+            "intern"
+          ],
+          "description": "Wie ziet wat de dataset publiceert: openbaar (iedereen) of intern (alleen met de rol lezer of beheerder). MOET overeenkomen met dct:accessRights in het datasetbestand (PUBLIC = openbaar)."
+        },
         "bron": {
           "type": "string",
           "description": "Korte omschrijving van de bron (de uitvoerbare beschrijving staat in datasets/<id>.json)."
@@ -309,7 +317,7 @@
         },
         "pad": {
           "type": "string",
-          "description": "type api: pad op de installatie, bijv. /api/data/v1/..."
+          "description": "type api, en recht met actie bekijken: pad op de installatie, bijv. /api/data/v1/..."
         },
         "anoniem": {
           "type": "boolean",
@@ -322,6 +330,10 @@
         "minimaal_aantal": {
           "type": "integer",
           "description": "type api: minimaal aantal elementen in het antwoord."
+        },
+        "maximaal_aantal": {
+          "type": "integer",
+          "description": "type api: hoogstens zoveel elementen in het antwoord (0: niets te zien, bijv. anoniem op interne data)."
         },
         "variant": {
           "type": "string",
@@ -366,9 +378,10 @@
           "enum": [
             "registreren",
             "leveren",
-            "lezen"
+            "lezen",
+            "bekijken"
           ],
-          "description": "type recht: registreren (POST /api/laden/v1/datasets), leveren (levering aan dataset) of lezen (GET de datasetregistratie)."
+          "description": "type recht: registreren (POST /api/laden/v1/datasets), leveren (levering aan dataset), lezen (GET de datasetregistratie) of bekijken (GET pad: gepubliceerde data zoals de viewer die leest, toegang per laag)."
         },
         "toegestaan": {
           "type": "boolean",

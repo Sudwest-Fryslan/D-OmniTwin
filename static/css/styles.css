@@ -1000,6 +1000,17 @@ textarea {
   font-size: 0.85rem;
 }
 
+/* Interne laag of indicator (#254): alleen zichtbaar na inloggen */
+.label-intern {
+  flex-shrink: 0;
+  font-size: 0.7rem;
+  line-height: 1.4;
+  padding: 0 0.35rem;
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  color: var(--text-secondary);
+}
+
 .layer-info-btn {
   flex-shrink: 0;
   background: none;

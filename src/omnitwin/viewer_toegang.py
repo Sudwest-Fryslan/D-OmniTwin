@@ -20,6 +20,10 @@ afbeeldingen; geen data) en `/.well-known/`.
 Zonder sessie: een pagina (GET, Accept text/html) gaat naar het inloggen bij Keycloak (zonder
 Keycloak naar de inlogpagina van de beheeromgeving); een API-verzoek krijgt 401 (Problem Details).
 Ingelogd zonder rol: 403.
+
+Toegang per laag en bron (#254, ADR 0010, `omnitwin.toegang`): ook bij `open` bepaalt de middleware per
+verzoek of het interne data mag zien (zelfde rol lezer of beheerder), en zet het forwardAuth-antwoord de
+header `X-Omnitwin-Toegang` voor PostgREST; een interne collectie van pg_featureserv geeft anoniem 401.
 """
 
 from __future__ import annotations
@@ -32,7 +36,7 @@ from fastapi.concurrency import run_in_threadpool
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, Response
 from starlette.middleware.base import BaseHTTPMiddleware
 
-from omnitwin import oidc, oidc_login
+from omnitwin import oidc, oidc_login, toegang
 from omnitwin.config import instellingen
 
 ROLLEN = frozenset({"lezer", oidc_login.BEHEERROL})
@@ -145,28 +149,65 @@ def wil_html(request: Request) -> bool:
 
 
 class ViewerToegangMiddleware(BaseHTTPMiddleware):
-    """Bij VIEWER_TOEGANG=inloggen: alles via de backend behalve de open paden alleen met rol."""
+    """Bij VIEWER_TOEGANG=inloggen: alles via de backend behalve de open paden alleen met rol.
+    Altijd (#254): de stand voor toegang per laag (anoniem, zonder rol, met rol) in de contextvar van
+    `omnitwin.toegang`, vóór de eerste databaseverbinding van het verzoek."""
 
     async def dispatch(self, request: Request, call_next) -> Response:
-        if not instellingen().viewer_dicht or request.method == "OPTIONS" or is_open_pad(request.url.path):
+        pad = request.url.path
+        if request.method == "OPTIONS" or pad == CONTROLE_PAD or pad.startswith(("/static/", "/api/laden/")):
+            # statisch: geen data; forwardAuth: eigen beslissing; laad-API: eigen tokens en rollen
             return await call_next(request)
-        besluit = await run_in_threadpool(beoordeel, request)
-        if besluit.toegang:
-            request.state.viewer_gebruiker = besluit.gebruiker
+        token = toegang.zet(toegang.ANONIEM)
+        try:
+            if instellingen().viewer_dicht and not is_open_pad(pad):
+                besluit = await run_in_threadpool(beoordeel, request)
+                if besluit.toegang:
+                    request.state.viewer_gebruiker = besluit.gebruiker
+                    toegang.zet(toegang.MET_ROL)
+                    return await call_next(request)
+                if wil_html(request):
+                    if besluit.status == 401 and besluit.probleem is None:
+                        return RedirectResponse(login_adres("/"), status_code=302)
+                    if besluit.status == 403:
+                        return geen_toegang_pagina(besluit.gebruiker)
+                return _probleem(request, besluit)
+            if toegang.heeft_inloggegevens(request):
+                toegang.zet(await run_in_threadpool(_stand, request))
             return await call_next(request)
-        if wil_html(request):
-            if besluit.status == 401 and besluit.probleem is None:
-                return RedirectResponse(login_adres("/"), status_code=302)
-            if besluit.status == 403:
-                return geen_toegang_pagina(besluit.gebruiker)
-        return _probleem(request, besluit)
+        finally:
+            toegang.herstel(token)
+
+
+def _stand(request: Request) -> str:
+    """anoniem, zonder-rol of met-rol; een ongeldig token of storing telt als anoniem."""
+    try:
+        gebruiker = gebruiker_van(request)
+    except oidc.AuthProbleem:
+        return toegang.ANONIEM
+    if gebruiker is None:
+        return toegang.ANONIEM
+    return toegang.MET_ROL if heeft_rol(gebruiker) else toegang.ZONDER_ROL
 
 
 async def controleer(request: Request) -> Response:
-    """forwardAuth van Traefik voor /api/data en /api/geo: 204 = door, anders 401/403/503."""
-    if not instellingen().viewer_dicht:
-        return Response(status_code=204)
-    besluit = await run_in_threadpool(beoordeel, request)
-    if besluit.toegang:
-        return Response(status_code=204)
-    return _probleem(request, besluit)
+    """forwardAuth van Traefik voor /api/data en /api/geo: 204 = door, anders 401/403/503.
+
+    Bij 204 de header X-Omnitwin-Toegang (intern of openbaar) voor PostgREST (#254); Traefik zet hem op
+    het doorgestuurde verzoek en vervangt een meegestuurde (authResponseHeaders). Een interne collectie
+    van pg_featureserv (X-Forwarded-Uri) zonder rol: 401 of 403."""
+    if instellingen().viewer_dicht:
+        besluit = await run_in_threadpool(beoordeel, request)
+        if not besluit.toegang:
+            return _probleem(request, besluit)
+        stand = toegang.MET_ROL
+    elif toegang.heeft_inloggegevens(request):
+        stand = await run_in_threadpool(_stand, request)
+    else:
+        stand = toegang.ANONIEM
+    if stand != toegang.MET_ROL:
+        uri = request.headers.get("x-forwarded-uri", "")
+        if toegang.collectie_uit_uri(uri) and await run_in_threadpool(toegang.collectie_is_intern, uri):
+            return oidc.probleem_antwoord(request, toegang.weigering("kaartlaag", stand))
+    waarde = toegang.INTERN if stand == toegang.MET_ROL else toegang.OPENBAAR
+    return Response(status_code=204, headers={toegang.HEADER: waarde})
