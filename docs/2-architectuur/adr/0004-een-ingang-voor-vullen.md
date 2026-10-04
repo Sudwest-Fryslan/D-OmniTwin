@@ -1,7 +1,7 @@
 # 0004. D-OmniTwin vullen via één laad-API: dataset-registratie en leveringen
 
 - Status: voorgesteld
-- Datum: 2026-10-01, herzien 2026-10-02 (vóór vaststelling: van één waarneming-contract naar registratie + leveringen per dataset)
+- Datum: 2026-10-01, herzien 2026-10-02 (vóór vaststelling: van één waarneming-contract naar registratie + leveringen per dataset), aangevuld 2026-10-04 (voorrang bij overlap, zie onder)
 - Issue: #205 (0.3.0), #195, #182 fase 4; bouwt voort op ADR 0002 (PR #184); API-indeling in ADR 0005
 
 ## Context
@@ -89,6 +89,22 @@ Eisen:
   - **catalogus** eerst als JSON-LD-weergave (`Accept: application/ld+json`) van `laden/datasets`; een eigen API `catalogus/v1` pas als er een tweede bron van metadata is.
 - **Open:**
   - de regel voor aggregaten (secundaire onderdrukking);
-  - betekenis van indicatorstatus `A` in de SWF-definities;
+  - betekenis van indicatorstatus `A` in de SWF-definities. Volgens de projectleider `A` = actueel; tot de DWH-beheerder de codes bevestigt zet de use case `swf-definities` `A` om naar `O` (aanname A2, https://github.com/TLaan/D-OmniTwin/issues/222);
   - de SWF-IdP (Entra) koppelen aan realm `omnitwin` (de huidige koppeling loopt in december af);
   - rollen per dataset of ook per gemeente (#34). Richting: geen rollen per gemeente binnen één instantie; elke organisatie heeft een eigen instantie (ADR 0007).
+
+## Aanvulling 2026-10-04: voorrang bij overlap
+
+Aanname A6 van https://github.com/TLaan/D-OmniTwin/issues/222, na het antwoord van de projectleider: niet een vaste bron gaat voor (de eerste aanname: de SWF-bron boven de CBS-kerncijfers), maar de bron met de laatste peildatum of aanmaakdatum. Ook historische CBS-cijfers kunnen achteraf wijzigen.
+
+**Regel.** Leveren twee datasets een waarde voor dezelfde sleutel (gebied × indicator × jaar of peildatum × scenario), dan wint in de samengevoegde stand (`gebied_data`):
+
+1. de nieuwste **bronpeildatum**;
+2. bij een gelijke bronpeildatum de laatst aangeleverde levering;
+3. daarna de laatst gepubliceerde en de dataset-id, zodat de uitkomst altijd vastligt.
+
+**Bronpeildatum** = de stand van de bron van een levering: `dct:modified` uit de meegeleverde `dcat.jsonld`, anders `dct:issued`, anders de datum van ontvangst. Niet de peildatum of het jaar van de waarde (die zitten in de sleutel), en niet `begingeldigheid` (dezelfde indicator). Een ongeldige of toekomstige datum keurt de levering af. Per regel een eigen bronpeildatum is er (nog) niet; een bron met een andere stand is een eigen dataset.
+
+**Tweede bron.** De andere waarden blijven per dataset in `laden.waarnemingen` en in de versies; in `gebied_data.metadata.andere_bronnen` (data-API: kolom `andere_bronnen`) staan ze bij de winnende waarde, behalve een niet-openbare waarde bij een openbare winnaar.
+
+**Gevolgen.** Migratie `V036__voorrang_bronpeildatum.sql`: kolom `laden.waarnemingen.bronpeildatum`, functie `laden.herbouw_gebied_data()` (de regel staat op één plek, in PostgreSQL, zoals besluit 5), en de bestaande overlap één keer opnieuw beslist. De instelling `LADEN_VOORRANG` vervalt. Uitwerking: [docs/api/laden/README.md](../../api/laden/README.md#voorrang-bij-overlap).

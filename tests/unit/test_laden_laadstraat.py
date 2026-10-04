@@ -141,6 +141,67 @@ def test_waarnemingen_json_zonder_kop(tmp_path):
     assert not fouten and a["geldig"] == 1 and staging[0][7] == "current"
 
 
+# ── voorrang bij overlap: bronpeildatum (A6, #222) ──────────────────────────
+
+def test_bronpeildatum_volgorde_modified_issued_ontvangst():
+    import datetime as dt
+    ontvangen = dt.datetime(2026, 10, 3, 23, 30, tzinfo=dt.timezone(dt.timedelta(hours=-2)))  # 4 okt UTC
+    vandaag = dt.date(2026, 10, 4)
+    assert pwrn.bronpeildatum({"dct:modified": "2025-06-01", "dct:issued": "2024-01-01"}, ontvangen, vandaag) == (
+        dt.date(2025, 6, 1), "dct:modified")
+    assert pwrn.bronpeildatum({"dct:issued": {"@value": "2024-01-01", "@type": "xsd:date"}}, ontvangen, vandaag) == (
+        dt.date(2024, 1, 1), "dct:issued")
+    assert pwrn.bronpeildatum({"dct:modified": "2025-06-01T10:00:00Z"}, ontvangen, vandaag)[0] == dt.date(2025, 6, 1)
+    assert pwrn.bronpeildatum({"dct:modified": ""}, ontvangen, vandaag) == (dt.date(2026, 10, 4), "ontvangst")
+    assert pwrn.bronpeildatum(None, ontvangen, vandaag) == (dt.date(2026, 10, 4), "ontvangst")
+    assert pwrn.bronpeildatum(None, None, vandaag) == (vandaag, "ontvangst")
+
+
+@pytest.mark.parametrize("dcat", [{"dct:modified": "gisteren"}, {"dct:issued": 2025},
+                                  {"dct:modified": "2099-01-01"}])
+def test_bronpeildatum_ongeldig_of_in_de_toekomst_keurt_af(dcat):
+    import datetime as dt
+    with pytest.raises(Afkeuring) as e:
+        pwrn.bronpeildatum(dcat, None, dt.date(2026, 10, 4))
+    f = e.value.fouten.lijst[0]
+    assert f.code == "schema-ongeldig" and f.resource == "dcat"
+
+
+def test_controleer_legt_bronpeildatum_vast(tmp_path):
+    import datetime as dt
+    p = tmp_path / "l.zip"
+    with zipfile.ZipFile(p, "w") as z:
+        z.writestr("datapackage.json", json.dumps({"resources": [{"name": "waarnemingen", "path": "w.csv"}]}))
+        z.writestr("w.csv", f"{KOP}\nBU1,,{IND},2025,,,1,20,,,\n")
+        z.writestr("dcat.jsonld", json.dumps({"dct:modified": "2025-03-15"}))
+    c = ctx()
+    _, fouten, a = pwrn.controleer(lees(p, "application/zip", "waarnemingen", 10**6), c, {})
+    assert not fouten and a["bronpeildatum"] == "2025-03-15" and a["bronpeildatumUit"] == "dct:modified"
+    assert c.extra["bronpeildatum"] == dt.date(2025, 3, 15)
+    # zonder dcat: datum van ontvangst
+    c = ctx()
+    c.levering["ontvangen_op"] = dt.datetime(2026, 1, 2, 12, tzinfo=dt.timezone.utc)
+    _, _, a = pwrn.controleer(lees(csv_bestand(tmp_path, [f"BU1,,{IND},2025,,,1,20,,,"]), "text/csv",
+                                   "waarnemingen", 10**6), c, {})
+    assert (a["bronpeildatum"], a["bronpeildatumUit"]) == ("2026-01-02", "ontvangst")
+
+
+def test_voorrangsregel_staat_in_een_functie_in_v036():
+    """De regel staat op één plek (laden.herbouw_gebied_data, V036): nieuwste bronpeildatum, dan laatst
+    aangeleverd; de rest als andere_bronnen. Geen vaste voorkeursdataset meer (LADEN_VOORRANG)."""
+    from pathlib import Path
+    import re
+    root = Path(__file__).resolve().parents[2]
+    sql = (root / "db" / "migraties" / "V036__voorrang_bronpeildatum.sql").read_text(encoding="utf-8")
+    volgorde = re.search(r"ORDER BY (w\.bronpeildatum DESC, l\.ontvangen_op DESC, [^)]*)\)", sql)
+    assert volgorde and volgorde.group(1).split(",")[0] == "w.bronpeildatum DESC"
+    assert "'andere_bronnen'" in sql and "WHERE a.rang = 1" in sql
+    assert "laden.herbouw_gebied_data()" in (root / "src" / "omnitwin" / "laden" / "p_waarnemingen.py").read_text(
+        encoding="utf-8")
+    from omnitwin import config
+    assert "LADEN_VOORRANG" not in Path(config.__file__).read_text(encoding="utf-8")
+
+
 def test_vervangbereik_onbekend_veld():
     with pytest.raises(Afkeuring):
         pwrn._bereik_voorwaarde({"vervangBereik": ["waarde"]})

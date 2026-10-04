@@ -30,8 +30,6 @@ Laad-API (/api/laden/v1, #205), zie omnitwin.laden:
 - LADEN_MAX_MB     bodylimiet van een levering (JSON: een tiende, minimaal 1 MB)
 - LADEN_WACHT_SECONDEN   time-out van `wacht=true`
 - LADEN_BEWAAR_VERSIES, LADEN_BEWAAR_DAGEN, LADEN_BEWAAR_AFGEKEURD_DAGEN   bewaartermijn
-- LADEN_VOORRANG   datasets (kommagescheiden, hoogste eerst) die voorgaan bij dezelfde
-                   sleutel in gebied_data; aanname A6 (#222): de SWF-bron gaat voor
 OIDC (#205, tokens controleren in de nieuwe API's, zie omnitwin/oidc.py):
 - OIDC_ISSUER      issuer zoals in de tokens (bijv. http://localhost/auth/realms/omnitwin);
                    leeg = OIDC uit (routes met vereis_rol geven 503).
@@ -140,7 +138,6 @@ class Instellingen:
     laden_bewaar_versies: int
     laden_bewaar_dagen: int
     laden_bewaar_afgekeurd_dagen: int
-    laden_voorrang: tuple[str, ...]
     # OIDC (#205)
     oidc_issuer: str            # leeg = uit
     oidc_audience: str
@@ -232,8 +229,6 @@ def instellingen() -> Instellingen:
         laden_bewaar_versies=max(1, _int(os.getenv("LADEN_BEWAAR_VERSIES", "10"), 10)),
         laden_bewaar_dagen=max(1, _int(os.getenv("LADEN_BEWAAR_DAGEN", "365"), 365)),
         laden_bewaar_afgekeurd_dagen=max(1, _int(os.getenv("LADEN_BEWAAR_AFGEKEURD_DAGEN", "30"), 30)),
-        laden_voorrang=tuple(d.strip() for d in os.getenv("LADEN_VOORRANG", "swf-monitor-waarden").split(",")
-                             if d.strip()),
         oidc_issuer=os.getenv("OIDC_ISSUER", "").strip().rstrip("/"),
         oidc_audience=os.getenv("OIDC_AUDIENCE", "omnitwin-api").strip() or "omnitwin-api",
         oidc_jwks_url=os.getenv("OIDC_JWKS_URL", "").strip(),
