@@ -272,11 +272,53 @@ export interface Organisatie {
     standaard_gemeente_code: string | null;
     benchmark_provincie: string | null;
     contact_email: string | null;
-    logos: { pad: string; naam: string | null; rol: string }[];
+    thema: string;
+    logos: OrganisatieLogo[];
 }
+
+export interface OrganisatieLogo { pad: string; naam: string | null; rol: string }
+
+// Wat de beheerder instelt (PUT /api/organisatie, #253); de eerste gemeentecode is de standaard
+export interface OrganisatieInvoer {
+    code: string;
+    naam: string;
+    korte_naam: string | null;
+    oin: string | null;
+    gemeente_codes: string[];
+    benchmark_provincie: string | null;
+    contact_email: string | null;
+    thema: string;
+    logos: OrganisatieLogo[];
+}
+
+// Thema uit static/css/themes, met de kleurtokens (#hex) van het lichte en donkere blok
+export interface ThemaInfo {
+    naam: string;
+    titel: string;
+    kleuren: { licht: Record<string, string>; donker: Record<string, string> };
+}
+
+export interface OrganisatieExport {
+    formaat: 'd-omnitwin/organisatie';
+    versie: 1;
+    organisatie: OrganisatieInvoer;
+    [extra: string]: unknown;
+}
+
+// Lezen is publiek; instellen alleen voor beheerders (sessiecookie, vereis_admin)
+const organisatieBeheer = axios.create({
+    baseURL: '/api/organisatie',
+    withCredentials: true,
+    headers: { 'Content-Type': 'application/json' },
+});
 
 export const organisatieAPI = {
     get: () => publicApi.get<Organisatie>('/organisatie'),
+    zet: (data: OrganisatieInvoer) => organisatieBeheer.put<Organisatie>('', data),
+    themas: () => organisatieBeheer.get<ThemaInfo[]>('/themas'),
+    logos: () => organisatieBeheer.get<string[]>('/logos'),
+    exporteer: () => organisatieBeheer.get<OrganisatieExport>('/export'),
+    importeer: (data: unknown) => organisatieBeheer.post<Organisatie>('/import', data),
 };
 
 // Gemeenten en gebieden via PostgREST (/api/data), zoals de hoofdapp.

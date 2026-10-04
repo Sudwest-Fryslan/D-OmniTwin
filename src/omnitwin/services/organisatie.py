@@ -10,6 +10,7 @@ Regel: code die "de eigen gemeente" nodig heeft, vraagt die hier op
 """
 from __future__ import annotations
 
+import json
 import re
 from pathlib import Path
 from typing import Any, Dict, List, Optional
@@ -19,6 +20,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
 from omnitwin.services.logging_service import AppLogger
+from omnitwin.thema import beschikbare_themas, is_geldige_themanaam
 
 STANDAARD_THEMA = "d-omnitwin"
 _THEMA = re.compile(r"^[a-z0-9-]+$")
@@ -67,6 +69,136 @@ def thema_css(org: Optional[Dict[str, Any]], themamap: Path = THEMA_MAP) -> Opti
     """URL van static/css/themes/<thema>.css als dat bestand bestaat, anders None."""
     thema = veilig_thema(org.get("thema") if org else None)
     return f"/static/css/themes/{thema}.css" if (themamap / f"{thema}.css").is_file() else None
+
+
+# ── Instellen vanuit het beheerscherm (#253) ─────────────────────────────────
+
+AFBEELDINGEN = THEMA_MAP.parents[1] / "images"
+LOGO_PREFIX = "/static/images/"
+LOGO_EXTENSIES = {".png", ".jpg", ".jpeg", ".svg", ".webp", ".gif"}
+_DONKER = '[data-theme="dark"]'
+_TOKEN = re.compile(r"(--(?:basis|d-omnitwin)-[a-z0-9-]+):\s*([^;]+);")
+_VAR = re.compile(r"^var\(\s*(--[a-z0-9-]+)\s*(?:,\s*(.+))?\)$")
+# Kopcommentaar: Thema "swf" — Gemeente Súdwest-Fryslân, als ... -> "Gemeente Súdwest-Fryslân"
+_TITEL = re.compile(r'Thema\s+"[a-z0-9-]+"\s+[—-]+\s*([^,.\n(]+?)(?:\s+als NL Design System|[,.\n(])')
+
+
+def _blok(css: str, selector: str) -> str:
+    """De inhoud van het eerste blok met precies deze selector (zonder geneste blokken)."""
+    start = css.find(selector + " {")
+    if start < 0:
+        return ""
+    open_ = css.find("{", start)
+    return css[open_ + 1:css.find("}", open_)]
+
+
+def _kleuren(tokens: Dict[str, str]) -> Dict[str, str]:
+    """Alleen de tokens met een kleur (#hex), met ``var(--ander)`` opgelost binnen dezelfde set."""
+    def los_op(waarde: str, diepte: int = 0) -> Optional[str]:
+        waarde = waarde.strip()
+        if _KLEUR.match(waarde):
+            return waarde
+        m = _VAR.match(waarde)
+        if not m or diepte > 5:
+            return None
+        if m.group(1) in tokens:
+            return los_op(tokens[m.group(1)], diepte + 1)
+        return los_op(m.group(2), diepte + 1) if m.group(2) else None
+
+    return {naam: kleur for naam, waarde in tokens.items() if (kleur := los_op(waarde))}
+
+
+def thema_bestaat(naam: object, themamap: Path = THEMA_MAP) -> bool:
+    return is_geldige_themanaam(naam) and (themamap / f"{naam}.css").is_file()
+
+
+def thema_info(naam: str, themamap: Path = THEMA_MAP) -> Dict[str, Any]:
+    """Naam, titel (uit het kopcommentaar) en kleurtokens van een thema, licht en donker.
+
+    Licht = het eerste ``:root``-blok, donker = ``[data-theme="dark"]`` aangevuld met licht
+    (zoals de cascade in de browser: wat donker niet zet, komt uit :root)."""
+    css = (themamap / f"{naam}.css").read_text(encoding="utf-8")
+    m = _TITEL.search(css[:600])
+    licht = dict(_TOKEN.findall(_blok(css, ":root")))
+    donker = {**licht, **dict(_TOKEN.findall(_blok(css, _DONKER)))}
+    return {"naam": naam, "titel": m.group(1).strip() if m else naam,
+            "kleuren": {"licht": _kleuren(licht), "donker": _kleuren(donker)}}
+
+
+def themas(themamap: Path = THEMA_MAP) -> List[Dict[str, Any]]:
+    """Alle themabestanden in static/css/themes met titel en voorbeeldkleuren."""
+    return [thema_info(n, themamap) for n in beschikbare_themas(themamap)]
+
+
+def logo_bestand(pad: object, afbeeldingen: Path = AFBEELDINGEN) -> Optional[Path]:
+    """Het bestand achter een logopad, alleen als het een bestaande afbeelding onder
+    /static/images/ is (geen ``..``, geen andere map, geen uploads); anders None."""
+    if not isinstance(pad, str) or not pad.startswith(LOGO_PREFIX) or len(pad) > 300:
+        return None
+    rel = pad[len(LOGO_PREFIX):]
+    if not rel or "\\" in rel or any(d in ("", ".", "..") for d in rel.split("/")):
+        return None
+    bestand = (afbeeldingen / rel).resolve()
+    basis = afbeeldingen.resolve()
+    if basis not in bestand.parents or bestand.suffix.lower() not in LOGO_EXTENSIES or not bestand.is_file():
+        return None
+    return bestand
+
+
+def beschikbare_logos(afbeeldingen: Path = AFBEELDINGEN) -> List[str]:
+    """Paden (``/static/images/...``) van de afbeeldingen die als logo gekozen kunnen worden."""
+    return sorted(
+        LOGO_PREFIX + p.relative_to(afbeeldingen).as_posix()
+        for p in afbeeldingen.rglob("*")
+        if p.is_file() and p.suffix.lower() in LOGO_EXTENSIES
+    )
+
+
+_VELDEN = ("code", "naam", "korte_naam", "oin", "gemeente_codes", "benchmark_provincie",
+           "contact_email", "thema", "logos")
+
+
+def wijzigingen(oud: Optional[Dict[str, Any]], nieuw: Dict[str, Any]) -> Dict[str, Any]:
+    """Wat er verandert, voor de auditlog: {veld: {"oud": ..., "nieuw": ...}}.
+
+    Het contactadres alleen als "gewijzigd" (geen adressen in de log, #264)."""
+    oud = oud or {}
+    uit: Dict[str, Any] = {}
+    for veld in _VELDEN:
+        a, b = oud.get(veld), nieuw.get(veld)
+        if veld == "logos":
+            a = [l.get("pad") for l in (a or [])]
+            b = [l.get("pad") for l in (b or [])]
+            if a == b and [(l.get("naam"), l.get("rol")) for l in (oud.get("logos") or [])] !=                     [(l.get("naam"), l.get("rol")) for l in (nieuw.get("logos") or [])]:
+                uit[veld] = "namen of rollen gewijzigd"
+                continue
+        if a != b:
+            uit[veld] = "gewijzigd" if veld == "contact_email" else {"oud": a, "nieuw": b}
+    return uit
+
+
+_SCHRIJF = text("""
+    INSERT INTO public.organisatie
+        (id, code, naam, korte_naam, oin, gemeente_codes, benchmark_provincie, contact_email, thema, logos,
+         bijgewerkt_op)
+    VALUES (true, :code, :naam, :korte_naam, :oin, :gemeente_codes, :benchmark_provincie, :contact_email,
+            :thema, CAST(:logos AS jsonb), now())
+    ON CONFLICT (id) DO UPDATE SET
+        code = EXCLUDED.code, naam = EXCLUDED.naam, korte_naam = EXCLUDED.korte_naam, oin = EXCLUDED.oin,
+        gemeente_codes = EXCLUDED.gemeente_codes, benchmark_provincie = EXCLUDED.benchmark_provincie,
+        contact_email = EXCLUDED.contact_email, thema = EXCLUDED.thema, logos = EXCLUDED.logos,
+        bijgewerkt_op = now()
+""")
+
+
+def schrijf_organisatie(db: Session, org: Dict[str, Any]) -> None:
+    """Zet de (enige) rij van de organisatie; de invoer is al gevalideerd (router)."""
+    params = {veld: org.get(veld) for veld in _VELDEN}
+    params["gemeente_codes"] = list(org.get("gemeente_codes") or [])
+    params["logos"] = json.dumps([{"pad": l["pad"], "naam": l.get("naam"), "rol": l.get("rol", "partner")}
+                                  for l in org.get("logos") or []], ensure_ascii=False)
+    db.execute(_SCHRIJF, params)
+    db.commit()
 
 
 _SQL = text("""

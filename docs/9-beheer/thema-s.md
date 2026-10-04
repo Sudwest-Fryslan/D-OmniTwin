@@ -109,7 +109,7 @@ In de detailpopup van het Kompas staat de waarde in de tooltipkleur met de datak
    python tests/test_thema.py --rapport      # tabel met alle contrasten per thema en modus
    ```
 
-4. **Zet het thema aan** in de tabel `organisatie` (zie [Eigen organisatie](installatie.md#eigen-organisatie)):
+4. **Zet het thema aan**: in het beheerscherm onder **Organisatie** (zie [Thema kiezen in het beheerscherm](#thema-kiezen-in-het-beheerscherm)), of met SQL in de tabel `organisatie` (zie [Eigen organisatie](installatie.md#eigen-organisatie)):
 
    ```sql
    UPDATE organisatie SET thema = 'leeuwarden';
@@ -120,6 +120,24 @@ In de detailpopup van het Kompas staat de waarde in de tooltipkleur met de datak
 6. **Bekijk** het welkomstscherm, de kaart met een indicator en een selectie, de legenda, het Kompas (met tooltip en detailpaneel), de chat en de rapportkeuze, in licht en donker.
 7. **Teruggeven**: een thema dat de organisatie zelf goedkeurt, kan als pakket naar [`nl-design-system/themes`](https://github.com/nl-design-system/themes) (map `proprietary/<organisatie>-design-tokens`, tokens in JSON volgens de basis-tokens). De tokennamen zijn al dezelfde; alleen de vorm (JSON in plaats van CSS) verschilt. Dat past bij de governance via OpenWebconcept ([#183](https://github.com/TLaan/D-OmniTwin/issues/183)).
 
+## Thema kiezen in het beheerscherm
+
+Beheerscherm → **Organisatie** ([#253](https://github.com/TLaan/D-OmniTwin/issues/253), alleen voor de rol `beheerder`):
+
+- **Thema:** alle bestanden in `static/css/themes/`, met een voorbeeld van kopbalk, knop, link, actieve tab en beeldmerk in licht en donker. De kleuren komen uit de tokens van het thema zelf (`GET /api/organisatie/themas`: het lichte `:root`-blok en `[data-theme="dark"]`, `var(--…)` opgelost). Lettertypen ziet het voorbeeld niet.
+- **Opslaan** zet de kolom `thema` in de tabel `organisatie` (`PUT /api/organisatie`). Een naam zonder bestand geeft een foutmelding (422); er verandert dan niets. Viewer en beheerscherm tonen het nieuwe thema na een gewone herlaadactie: themabestanden en pagina's hebben `Cache-Control: no-cache` ([#246](https://github.com/TLaan/D-OmniTwin/issues/246)), en de viewer leest het thema bij elke paginalading uit de database. Geen herstart nodig.
+- Elke wijziging staat in de log (categorie `ADMIN`): wie (gebruikersnaam en `sub`) en welke velden, met oude en nieuwe waarde (het contactadres alleen als "gewijzigd").
+- Een nieuw thema maak je nog steeds als bestand (hierboven); uploaden kan niet.
+
+**De inlogpagina van Keycloak wisselt niet mee.** Het beheerscherm zet alleen het viewerthema; het inlogthema is `loginTheme` van de realm (zie hieronder). Zet dat apart, in de admin-console van Keycloak (*Realm settings* → *Themes* → *Login theme*) of met:
+
+```bash
+docker compose exec keycloak /opt/keycloak/bin/kcadm.sh config credentials --server http://localhost:8080/auth --realm master --user <KEYCLOAK_ADMIN>
+docker compose exec keycloak /opt/keycloak/bin/kcadm.sh update realms/omnitwin -s loginTheme=<thema>
+```
+
+Bewuste keuze: anders zou de backend blijvend beheerrechten op de realm nodig hebben (admin-API), en kon wie de backend overneemt ook Keycloak aanpassen. Die toegang hebben nu alleen de hulpmiddelen voor demo en test (`keycloak-demo`, testaccounts). Bovendien heeft niet elk viewerthema een inlogthema in `deploy/keycloak/themes/`.
+
 ## Inlogpagina (Keycloak)
 
 Met het compose-profiel `keycloak` ([installatie](installatie.md)) heeft de inlogpagina een eigen thema per organisatie in `deploy/keycloak/themes/<thema>/login/`:
@@ -127,7 +145,7 @@ Met het compose-profiel `keycloak` ([installatie](installatie.md)) heeft de inlo
 - `theme.properties`: `parent=keycloak.v2`, met één extra stylesheet. Geen eigen FreeMarker-templates: pagina's en teksten blijven die van Keycloak, dus een Keycloak-update breekt het thema niet.
 - `resources/css/omnitwin.css`: de PatternFly-variabelen van `keycloak.v2` met de waarden van de NLDS-tokens (knop en links `action-1`/`accent-1`, focus, hoeken, lettertypen) en het kopbalkverloop als achtergrond, in licht en donker (`.pf-v5-theme-dark`, volgt de systeeminstelling). De lettertypen komen van `/static/vendor/` van de viewer op dezelfde host; met een externe identity provider valt het terug op het systeemfont.
 - `docker-compose.yml` mount `deploy/keycloak/themes` op `/opt/keycloak/themes`.
-- Keuze per realm: `"loginTheme"` in `deploy/keycloak/realm-omnitwin.json` (standaard `swf`, zoals de organisatie in `db/stuurdata/organisatie.sql`). De realm wordt alleen bij de eerste start geïmporteerd; bij een bestaande realm: admin-console → *Realm settings* → *Themes* → *Login theme*, of `kcadm.sh update realms/omnitwin -s loginTheme=<thema>`.
+- Keuze per realm: `"loginTheme"` in `deploy/keycloak/realm-omnitwin.json` (standaard `swf`, zoals de organisatie in `db/stuurdata/organisatie.sql`). De realm wordt alleen bij de eerste start geïmporteerd; bij een bestaande realm: admin-console → *Realm settings* → *Themes* → *Login theme*, of `kcadm.sh update realms/omnitwin -s loginTheme=<thema>`. Een ander thema kiezen in het beheerscherm verandert dit niet (zie [Thema kiezen in het beheerscherm](#thema-kiezen-in-het-beheerscherm)).
 - Keycloak bewaart gecomprimeerde kopieën van thema-bestanden in de container. Na een wijziging aan een thema: `docker compose up -d --force-recreate keycloak` (een gewone herstart is niet genoeg).
 
 `tests/test_thema.py` controleert dat elk viewerthema een inlogthema heeft, dat de realm een bestaand thema kiest en dat de knopkleur gelijk is aan `--basis-color-action-1-bg-default`. Een logo op de inlogpagina zit er nog niet in (alleen de realmnaam); dat kan later met een afbeelding in `resources/img/` en een regel CSS.
