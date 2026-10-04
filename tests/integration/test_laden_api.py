@@ -226,7 +226,7 @@ def test_wijzigen_patch_en_put(s, dataset):
 
 
 def test_voorrang_laatst_gepubliceerd_bij_gelijke_voorrang(s, dataset, indicatoren):
-    """Twee datasets op dezelfde sleutel: zonder LADEN_VOORRANG wint de laatst gepubliceerde."""
+    """Twee datasets op dezelfde sleutel zonder dct:modified (bronpeildatum = ontvangst): laatst aangeleverd wint."""
     i1 = indicatoren[0]
     andere = f"test-laden-b-{RUN}"
     assert s.post(f"{API}/datasets", json=registratie(andere, minimumN=0), timeout=30).status_code == 201
@@ -234,6 +234,60 @@ def test_voorrang_laatst_gepubliceerd_bij_gelijke_voorrang(s, dataset, indicator
     assert waarde(i1) == [{"waarde": 99, "n_status": "gemeten"}]
     assert lever(s, dataset, csv([f"{GEBIED},,{i1},2099,,,13,50,,,"]), wacht=True).status_code == 201
     assert waarde(i1) == [{"waarde": 13, "n_status": "gemeten"}]
+
+
+def _lever_met_peildatum(s, ds, regel, peildatum=None):
+    files = {"bestand": ("w.csv", csv([regel]), "text/csv")}
+    if peildatum:
+        files["dcat"] = ("dcat.jsonld", json.dumps({"dct:modified": peildatum}), "application/ld+json")
+    return s.post(f"{API}/datasets/{ds}/leveringen", params={"wacht": "true"}, files=files, timeout=180)
+
+
+def _stand(ind, jaar):
+    r = requests.get(f"{BASIS}/api/data/v1/gebied_data?gebied_id=eq.{GEBIED}&indicator_uuid=eq.{ind}&jaar=eq.{jaar}"
+                     "&select=waarde,andere_bronnen", timeout=30)
+    assert r.status_code == 200, r.text[:300]
+    assert len(r.json()) == 1, r.json()
+    x = r.json()[0]
+    return x["waarde"], [(a["dataset"], a["waarde"], a["bronpeildatum"]) for a in (x["andere_bronnen"] or [])]
+
+
+def test_voorrang_nieuwste_bronpeildatum_dan_laatst_aangeleverd(s, indicatoren):
+    """A6 (#222): bij overlap wint de nieuwste bronpeildatum (dct:modified in dcat.jsonld), bij gelijke
+    bronpeildatum de laatst aangeleverde levering; de andere waarde blijft zichtbaar als andere_bronnen."""
+    i1, jaar = indicatoren[0], 2050 + int(RUN, 16) % 40  # eigen jaar per run: een herhaalde run op dezelfde stack botst niet
+    a, b, c = f"test-voorrang-a-{RUN}", f"test-voorrang-b-{RUN}", f"test-voorrang-c-{RUN}"
+    for ds in (a, b):
+        assert s.post(f"{API}/datasets", json=registratie(ds, minimumN=0), timeout=30).status_code == 201
+    intern = registratie(c, minimumN=0)
+    intern["beschrijving"]["dct:accessRights"] = "http://publications.europa.eu/resource/authority/access-right/NON_PUBLIC"
+    assert s.post(f"{API}/datasets", json=intern, timeout=30).status_code == 201
+    regel = f"{GEBIED},,{i1},{jaar},,,{{}},50,,,"
+
+    r = _lever_met_peildatum(s, a, regel.format(10), "2026-06-01")
+    assert r.status_code == 201, r.text[:500]
+    assert r.json()["aantallen"]["bronpeildatum"] == "2026-06-01"
+    assert r.json()["aantallen"]["bronpeildatumUit"] == "dct:modified"
+    # later aangeleverd, maar een oudere stand van de bron: a blijft staan, b is de tweede bron
+    r = _lever_met_peildatum(s, b, regel.format(20), "2025-01-01")
+    assert r.status_code == 201 and r.json()["aantallen"].get("nietZichtbaarDoorVoorrang") == 1, r.text[:500]
+    assert _stand(i1, jaar) == (10, [(b, 20, "2025-01-01")])
+    # gelijke bronpeildatum: de laatst aangeleverde levering wint
+    assert _lever_met_peildatum(s, b, regel.format(30), "2026-06-01").status_code == 201
+    assert _stand(i1, jaar) == (30, [(a, 10, "2026-06-01")])
+    # een niet-openbare dataset die verliest, staat niet in andere_bronnen van een openbare winnaar
+    assert _lever_met_peildatum(s, c, regel.format(99), "2000-01-01").status_code == 201
+    assert _stand(i1, jaar) == (30, [(a, 10, "2026-06-01")])
+    # zonder dcat: de datum van ontvangst (vandaag) is nieuwer dan 2026-06-01
+    r = _lever_met_peildatum(s, a, regel.format(40))
+    assert r.status_code == 201 and r.json()["aantallen"]["bronpeildatumUit"] == "ontvangst", r.text[:500]
+    assert _stand(i1, jaar) == (40, [(b, 30, "2026-06-01")])
+    # de verliezende waarde blijft in de eigen dataset: de versie van b telt hem nog
+    v = s.get(f"{API}/datasets/{b}/versies", timeout=30).json()["versies"][0]
+    assert v["actueel"] and v["aantalRegels"] == 1, v
+    # een bronpeildatum in de toekomst zou altijd winnen: afgekeurd
+    probleem(_lever_met_peildatum(s, b, regel.format(50), "2999-01-01"), 422, "levering-afgekeurd")
+    assert _stand(i1, jaar)[0] == 40
 
 
 def test_lijst_en_rechten(s, dataset):

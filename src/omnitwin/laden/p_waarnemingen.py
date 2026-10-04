@@ -14,11 +14,17 @@ Een indicator zonder relaties in `indicator_gebiedstype_relaties` mag op elk geb
 
 Publicatie (één transactie): de vorige inhoud van de dataset binnen het vervangbereik gaat uit
 `laden.waarnemingen`, de nieuwe regels (zonder de onderdrukte) gaan erin, en voor alle geraakte
-sleutels wordt `gebied_data` opnieuw opgebouwd uit `laden.waarnemingen`: per sleutel de waarde
-van de dataset met voorrang (`LADEN_VOORRANG`, aanname A6 van #222), anders de laatst gepubliceerde.
+sleutels wordt `gebied_data` opnieuw opgebouwd uit `laden.waarnemingen` met
+`laden.herbouw_gebied_data()` (V036). Voorrang bij overlap (aanname A6 van #222): per sleutel
+wint de waarde met de nieuwste bronpeildatum, bij een gelijke bronpeildatum die uit de laatst
+aangeleverde levering; de andere waarden staan als `andere_bronnen` in `gebied_data.metadata`.
+De bronpeildatum van een levering: `dct:modified` uit de meegeleverde `dcat.jsonld`, anders
+`dct:issued`, anders de datum van ontvangst (UTC). Zie `bronpeildatum()`.
 """
 
 from __future__ import annotations
+
+import datetime as dt
 
 from omnitwin.laden import adapter_swf
 from omnitwin.laden.basis import Afkeuring, Context, Fouten, afkeuren, copy, sql_fouten
@@ -43,10 +49,56 @@ def schema_en_extra(lp: dict) -> tuple[dict, dict]:
     return schema, extra
 
 
+BRONPEILDATUM_UIT = ("dct:modified", "dct:issued")
+
+
+def _datum(w) -> dt.date | None:
+    """Datum uit een JSON-LD-waarde: 'JJJJ-MM-DD', een datumtijd, of {'@value': ...}. Ongeldig: ValueError."""
+    if isinstance(w, dict):
+        w = w.get("@value")
+    if w is None or (isinstance(w, str) and not w.strip()):
+        return None
+    if not isinstance(w, str):
+        raise ValueError("geen tekst")
+    w = w.strip()
+    if len(w) > 10:
+        return dt.datetime.fromisoformat(w.replace("Z", "+00:00")).date()
+    return dt.date.fromisoformat(w)
+
+
+def bronpeildatum(dcat: dict | None, ontvangen_op: dt.datetime | None,
+                  vandaag: dt.date | None = None) -> tuple[dt.date, str]:
+    """(bronpeildatum, herkomst) van een levering, voor de voorrang bij overlap (A6, #222).
+
+    Eerst `dct:modified` uit de meegeleverde dcat.jsonld (de stand van de bron), dan `dct:issued`,
+    anders de datum van ontvangst (UTC; herkomst 'ontvangst'). Een datum die niet te lezen is of
+    na vandaag ligt, keurt de levering af: anders wint hij elke overlap."""
+    vandaag = vandaag or dt.datetime.now(dt.timezone.utc).date()
+    for sleutel in BRONPEILDATUM_UIT:
+        try:
+            d = _datum((dcat or {}).get(sleutel)) if isinstance(dcat, dict) else None
+        except ValueError:
+            raise afkeuren("schema-ongeldig", f"{sleutel} in dcat.jsonld is geen datum (ISO 8601)",
+                           resource="dcat", veld=sleutel)
+        if d is not None:
+            if d > vandaag + dt.timedelta(days=1):
+                raise afkeuren("schema-ongeldig", f"{sleutel} in dcat.jsonld ligt in de toekomst",
+                               resource="dcat", veld=sleutel)
+            return d, sleutel
+    if ontvangen_op is None:
+        return vandaag, "ontvangst"
+    if ontvangen_op.tzinfo is not None:
+        ontvangen_op = ontvangen_op.astimezone(dt.timezone.utc)
+    return ontvangen_op.date(), "ontvangst"
+
+
 def controleer(bron: Bron, ctx: Context, prefixen: dict[str, str]) -> tuple[list[tuple], Fouten, dict]:
     """(stagingregels, fouten, aantallen) van een levering."""
     lp = ctx.laadprofiel
     fouten, aantallen = Fouten(), {}
+    peil, herkomst = bronpeildatum(bron.dcat or ctx.levering.get("dcat"), ctx.levering.get("ontvangen_op"))
+    ctx.extra["bronpeildatum"] = peil
+    aantallen.update(bronpeildatum=peil.isoformat(), bronpeildatumUit=herkomst)
     schema, extra = schema_en_extra(lp)
     tabel = Tabel(schema, RESOURCE, extra)
     resource = RESOURCE
@@ -202,14 +254,10 @@ def _bereik_voorwaarde(lp: dict) -> str:
             f"FROM laden.staging_waarnemingen s WHERE s.levering_id = %(lv)s)")
 
 
-SLEUTEL_GELIJK = """{a}.gebied_id = {b}.gebied_id AND {a}.indicator_uuid = {b}.indicator_uuid
-    AND {a}.jaar IS NOT DISTINCT FROM {b}.jaar AND {a}.datum IS NOT DISTINCT FROM {b}.datum
-    AND coalesce({a}.scenario_id, 'current') = {b}.scenario_id"""
-
-
 def publiceer(cur, ctx: Context) -> dict:
     """Vervang de inhoud binnen het vervangbereik en bouw gebied_data op voor de geraakte sleutels."""
-    lp, p = ctx.laadprofiel, {"lv": ctx.levering_id, "ds": ctx.dataset_id, "voorrang": list(ctx.voorrang)}
+    lp = ctx.laadprofiel
+    p = {"lv": ctx.levering_id, "ds": ctx.dataset_id, "peil": ctx.extra.get("bronpeildatum")}
     cur.execute("""CREATE TEMP TABLE _weg (gebied_id varchar(100), indicator_uuid uuid, jaar integer,
                    datum timestamp, scenario_id varchar(50)) ON COMMIT DROP""")
     cur.execute(f"""WITH d AS (DELETE FROM laden.waarnemingen w WHERE w.dataset_id = %(ds)s{_bereik_voorwaarde(lp)}
@@ -217,15 +265,17 @@ def publiceer(cur, ctx: Context) -> dict:
                     INSERT INTO _weg SELECT * FROM d""", p)
     vervangen = cur.rowcount
     cur.execute("""INSERT INTO laden.waarnemingen (dataset_id, levering_id, gebied_id, gebiedstype_id, indicator_uuid,
-                       jaar, datum, scenario_id, waarde, n, n_status, kwaliteit, bron, opmerking, metadata)
+                       jaar, datum, scenario_id, waarde, n, n_status, kwaliteit, bron, opmerking, metadata,
+                       bronpeildatum)
                    SELECT %(ds)s, s.levering_id, s.gebied_code, s.gebiedstype_id, s.indicator_uuid, s.jaar, s.datum,
-                          s.scenario_id, s.waarde, s.n, s.n_status, s.kwaliteit, s.bron, s.opmerking, s.metadata
+                          s.scenario_id, s.waarde, s.n, s.n_status, s.kwaliteit, s.bron, s.opmerking, s.metadata,
+                          coalesce(%(peil)s::date, (now() AT TIME ZONE 'UTC')::date)
                    FROM laden.staging_waarnemingen s
                    WHERE s.levering_id = %(lv)s AND s.n_status <> 'onderdrukt'""", p)
     gepubliceerd = cur.rowcount
     plausibel(lp, gepubliceerd, vervangen)
 
-    # Geraakte sleutels: wat wegging en wat erbij kwam
+    # Geraakte sleutels: wat wegging en wat erbij kwam; gebied_data daarvoor opnieuw (voorrang, V036)
     cur.execute("""CREATE TEMP TABLE _sleutels ON COMMIT DROP AS
                    SELECT DISTINCT gebied_id, indicator_uuid, jaar, datum, scenario_id FROM (
                        SELECT gebied_id, indicator_uuid, jaar, datum, scenario_id FROM _weg
@@ -234,21 +284,7 @@ def publiceer(cur, ctx: Context) -> dict:
                        FROM laden.waarnemingen WHERE levering_id = %(lv)s) x""", p)
     cur.execute("CREATE INDEX ON _sleutels (gebied_id, indicator_uuid)")
     cur.execute("ANALYZE _sleutels")
-    cur.execute(f"DELETE FROM public.gebied_data g USING _sleutels k WHERE {SLEUTEL_GELIJK.format(a='g', b='k')}")
-    cur.execute(f"""INSERT INTO public.gebied_data (gebied_id, indicator_uuid, waarde, jaar, datum, scenario_id, bron,
-                        kwaliteit, metadata, n, n_status, levering_id)
-                    SELECT DISTINCT ON (w.gebied_id, w.indicator_uuid, w.jaar, w.datum, w.scenario_id)
-                           w.gebied_id, w.indicator_uuid, w.waarde, w.jaar, w.datum, w.scenario_id,
-                           coalesce(w.bron, left(d.beschrijving->>'dct:title', 255)), w.kwaliteit,
-                           jsonb_build_object('dataset', w.dataset_id) || coalesce(w.metadata, '{{}}'::jsonb),
-                           w.n, w.n_status, w.levering_id
-                    FROM laden.waarnemingen w
-                    JOIN _sleutels k ON {SLEUTEL_GELIJK.format(a='w', b='k')}
-                    JOIN laden.datasets d ON d.id = w.dataset_id
-                    ORDER BY w.gebied_id, w.indicator_uuid, w.jaar, w.datum, w.scenario_id,
-                             coalesce(array_position(%(voorrang)s::text[], w.dataset_id), 2147483647),
-                             w.gepubliceerd_op DESC
-                    ON CONFLICT DO NOTHING""", p)
+    cur.execute("SELECT laden.herbouw_gebied_data()")
     cur.execute("SELECT count(*) AS n FROM public.gebied_data WHERE levering_id = %(lv)s", p)
     zichtbaar = cur.fetchone()["n"]
     cur.execute("DELETE FROM laden.staging_waarnemingen WHERE levering_id = %(lv)s", p)

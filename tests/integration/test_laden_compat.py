@@ -5,7 +5,7 @@ Zelfde opzet als tests/integration/test_laden_api.py (machineclient met `beheerd
 `datasets:laden`). Het schrijvende deel draait alleen als `swf-monitor-waarden` nog niet
 geregistreerd is (verse stack): dan registreert de test hem zoals use case swf-adapter-fme en
 levert één waarde in jaar 2098 op een indicator die op CBS-buurten mag, zodat de demodata, een
-geladen monitor en de waarden van test_laden_api.py (jaar 2099; swf-monitor-waarden heeft voorrang)
+geladen monitor en de waarden van test_laden_api.py (jaar 2099)
 niet geraakt worden. Responses worden getoetst aan docs/api/laden/openapi.yaml.
 """
 

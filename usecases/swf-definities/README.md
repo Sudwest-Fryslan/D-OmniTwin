@@ -1,7 +1,7 @@
 # TC-07-003 — SWF-definities: indicatoren, gebiedstypen en relaties
 
 **Status:** ontwerp (de laad-API is nog niet gebouwd; deze use case is de specificatie en straks de acceptatietest)
-**Versie:** 0.2.0 · **Afhankelijk van:** –
+**Versie:** 0.3.0 · **Afhankelijk van:** –
 **Manifest:** [`usecase.json`](usecase.json) · **Controleren:** `python -m omnitwin.usecases controleer swf-definities`
 
 ## Vraag
@@ -13,6 +13,17 @@
 De eerste stap van de huidige stroom (eerst definities, dan waarden): de volledige set indicatoren, gebiedstypen en relaties uit de datamart, met dezelfde UUID's. Geleverd als Data Package-zip (drie CSV-resources) op de gewone ingang; de FME-route met hetzelfde formaat als nu staat in [swf-adapter-fme](../swf-adapter-fme/README.md). Beide leveren op dezelfde dataset `swf-monitor-definities`.
 
 **UUID-conflict `d210c084…`:** in de stuurdata van D-OmniTwin is dit "Custom Gebied Type" (code `CUSTOM`, nergens in de code gebruikt); in de monitor "CBS buurten bebouwde komgrens" met 2.370 waarden. De levering zet naam, code (`CBS_BUURT_BBK`) en niveau via een upsert op `id`; de monitor is de bronhouder van deze UUID. De stuurdata moet mee, zodat een verse installatie niet weer "Custom Gebied Type" zet.
+
+**Status A (aanname A2, https://github.com/TLaan/D-OmniTwin/issues/222).** D-OmniTwin kent `C` (concept), `O` (in gebruik) en `B` (beëindigd). De 10 klimaatindicatoren hebben in de export `A`; volgens de projectleider betekent dat *actueel*. Tot de DWH-beheerder de codes bevestigt (is `O` *operationeel* of *ontwikkeling*?) zet de bewerking `status-a` `A` om naar `O`, met die notitie in de bewerking. Een correctie is alleen een andere `map` in de bewerking.
+
+**Dubbele UUID's (aanname A4).** Twee namen hebben in de export twee UUID's. De bewerking `dubbele-naam` (`ontdubbel`) houdt per naam de UUID uit een vaste voorkeurslijst aan; de andere krijgt status `B` en de naam *"&lt;naam&gt; (vervallen)"*, zodat hij in lijsten niet meer met de goede te verwarren is. De lijst is data in [`datasets/swf-monitor-definities.json`](datasets/swf-monitor-definities.json); een dubbele naam die er niet in staat, blijft ongewijzigd en telt onder `dubbele-naam-zonder-voorkeur` (controle: 0).
+
+| Naam | Houd aan | Wordt `B`, "(vervallen)" | Waarom |
+|---|---|---|---|
+| Waterdiepte op straat | `f6eafa70-9383-4de6-bd2a-e47309843437` (status A → O) | `c4e1b3bb-e4ce-4cd0-bd52-219f4a9f5df3` (status C) | beide zonder waarden; `f6eafa70…` is live in de Klimaatmonitor |
+| Werkzamen | `7fd17589-46b6-460a-a1f6-ef421517ccb3` | `ca06d8ad-6430-4f4d-bb32-7b406d26ecc8` | alleen `7fd17589…` heeft waarden (CBS-buurten) |
+
+Een UUID wijzigen kan alleen aan de bronkant (DWH/FME), omdat de push en de profielen ernaar verwijzen; dat is een actie voor SWF-beheer. Daarna vervalt de regel in de voorkeurslijst.
 
 **Mapping gebiedstypen** (`gebiedstypen.json`, statisch): per gebiedstype een unieke code (`gebiedstypes.code` is uniek), het niveau, de dataset die de gebieden levert en een prefix voor codes die niet landelijk uniek zijn (welstand `WS`, woonplaats `WP`, postcode `PC`, bebouwde kom `BK`).
 
@@ -26,7 +37,7 @@ De eerste stap van de huidige stroom (eerst definities, dan waarden): de volledi
 
 Verwacht:
 
-- `swf-monitor-definities`: indicatoren 228; gebiedstypen 11; relaties 263; status A naar O 10
+- `swf-monitor-definities`: indicatoren 228; gebiedstypen 11; relaties 263; status A naar O 10; dubbele naam naar B 2
 
 ### Lokaal gecontroleerd
 
@@ -70,12 +81,16 @@ Verwacht:
 | 1 | aantal | `swf-monitor-definities`, resource `indicatoren` | gelijk 228 |
 | 2 | aantal | `swf-monitor-definities`, resource `gebiedstypen` | gelijk 11 |
 | 3 | aantal | `swf-monitor-definities`, resource `relaties` | gelijk 263 |
-| 4 | bewerking | `swf-monitor-definities`: regels met reden `status: A → O` — de 10 klimaatindicatoren | gelijk 10 |
-| 5 | bewerking | `swf-monitor-definities`: regels met reden `gebiedstype-zonder-mapping` | gelijk 0 |
-| 6 | api | `GET /api/data/v1/indicatoren?uuid=eq.97f53738-3439-4c28-8cac-046a52c65248&select=uuid,naam,status` (anoniem) — Oppervlak groen per inwoner, zelfde UUID als in de monitor | HTTP 200, ≥ 1 resultaten |
-| 7 | api | `GET /api/data/v1/gebiedstypes?id=eq.d210c084-506b-48b4-87c9-b7d4bf422553&select=naam,code` (anoniem) — UUID-conflict opgelost: d210c084 is 'CBS buurten bebouwde komgrens', niet meer 'Custom Gebied Type' | HTTP 200, ≥ 1 resultaten, code = CBS_BUURT_BBK, naam = CBS buurten bebouwde komgrens |
-| 8 | afkeuring | `swf-monitor-definities`, variant `status-a` — onbekende status A wordt afgekeurd; vorige versie blijft actief | 422, fout `schema-ongeldig`, niets gepubliceerd |
-| 9 | idempotent | `swf-monitor-definities` twee keer leveren | zelfde versie, geen tweede publicatie |
+| 4 | bewerking | `swf-monitor-definities`: regels met reden `status: A → O` — de 10 klimaatindicatoren (aanname A2: A = actueel, tot bevestiging → O) | gelijk 10 |
+| 5 | bewerking | `swf-monitor-definities`: regels met reden `dubbele-naam` — Waterdiepte op straat (`c4e1b3bb…`) en Werkzamen (`ca06d8ad…`) → status B, naam '… (vervallen)' | gelijk 2 |
+| 6 | bewerking | `swf-monitor-definities`: regels met reden `dubbele-naam-zonder-voorkeur` — elke dubbele naam staat in de voorkeurslijst | gelijk 0 |
+| 7 | bewerking | `swf-monitor-definities`: regels met reden `gebiedstype-zonder-mapping` | gelijk 0 |
+| 8 | api | `GET /api/data/v1/indicatoren?uuid=eq.97f53738-3439-4c28-8cac-046a52c65248&select=uuid,naam,status` (anoniem) — Oppervlak groen per inwoner, zelfde UUID als in de monitor | HTTP 200, ≥ 1 resultaten |
+| 9 | api | `GET /api/data/v1/gebiedstypes?id=eq.d210c084-506b-48b4-87c9-b7d4bf422553&select=naam,code` (anoniem) — UUID-conflict opgelost: d210c084 is 'CBS buurten bebouwde komgrens', niet meer 'Custom Gebied Type' | HTTP 200, ≥ 1 resultaten, code = CBS_BUURT_BBK, naam = CBS buurten bebouwde komgrens |
+| 10 | api | `GET /api/data/v1/indicatoren?uuid=eq.f6eafa70-9383-4de6-bd2a-e47309843437&select=uuid,naam,status` (anoniem) — de aangehouden Waterdiepte op straat houdt naam en krijgt O | HTTP 200, ≥ 1 resultaten, naam = Waterdiepte op straat, status = O |
+| 11 | api | `GET /api/data/v1/indicatoren?uuid=eq.c4e1b3bb-e4ce-4cd0-bd52-219f4a9f5df3&select=uuid,naam,status` (anoniem) — de dubbele is vervallen | HTTP 200, ≥ 1 resultaten, naam = Waterdiepte op straat (vervallen), status = B |
+| 12 | afkeuring | `swf-monitor-definities`, variant `status-a` — onbekende status A wordt afgekeurd; vorige versie blijft actief | 422, fout `schema-ongeldig`, niets gepubliceerd |
+| 13 | idempotent | `swf-monitor-definities` twee keer leveren | zelfde versie, geen tweede publicatie |
 
 `aantal` en `bewerking` controleert `controleer` nu al op de lokaal gemaakte levering; de andere vragen de laad-API en een draaiende installatie.
 
@@ -87,7 +102,7 @@ Verwacht:
 
 ## Bekende afwijkingen
 
-- Status A (10 klimaatindicatoren) wordt O; de betekenis van A is een open vraag (gat-analyse, vraag 3).
+- Status A (10 klimaatindicatoren) wordt O. Volgens de projectleider is A 'actueel'; of O 'operationeel' of 'ontwikkeling' is, vraagt hij na bij de DWH-beheerder (aanname A2, https://github.com/TLaan/D-OmniTwin/issues/222).
 - UUID d210c084: in de stuurdata van D-OmniTwin 'Custom Gebied Type' (code CUSTOM, nergens gebruikt); in de monitor 'CBS buurten bebouwde komgrens' met 2.370 waarden. De levering zet naam en code (CBS_BUURT_BBK); de stuurdata moet mee (migratie).
 - Eenheid, richting, bron en code per indicator zitten niet in de export; aanvullen via beheer of het gewone profiel definities.
-- Eén testdefinitie (status B) en één dubbele indicatornaam gaan mee zoals ze zijn.
+- Eén testdefinitie (status B) gaat mee zoals hij is. De twee dubbele namen: zie *Dubbele UUID's* hierboven (aanname A4).

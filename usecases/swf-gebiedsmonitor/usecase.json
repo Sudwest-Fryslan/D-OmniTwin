@@ -2,7 +2,7 @@
   "specificatie": "1.0",
   "naam": "swf-gebiedsmonitor",
   "id": "TC-07-010",
-  "versie": "0.2.0",
+  "versie": "0.3.0",
   "titel": "D-OmniTwin vervangt de huidige SWF-gebiedsmonitor (acceptatie)",
   "vraag": "Kan Súdwest-Fryslân met D-OmniTwin hetzelfde als met de huidige gebiedsmonitor: dezelfde indicatoren en gebieden, dezelfde sunburst en Klimaatmonitor, dezelfde lagen, gevuld vanuit de DWH?",
   "gebruiker": "kernteam gebiedsagenda en functioneel beheerder SWF",
@@ -34,6 +34,10 @@
     },
     {
       "naam": "swf-adapter-fme",
+      "versie": ">=0.1.0"
+    },
+    {
+      "naam": "swf-initialisatie",
       "versie": ">=0.1.0"
     }
   ],

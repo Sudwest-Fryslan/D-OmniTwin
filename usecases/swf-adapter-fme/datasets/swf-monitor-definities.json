@@ -47,6 +47,25 @@
         }
       },
       "omschrijving": "zoals SWF het in de DWH-SQL zou doen zolang D-OmniTwin A niet kent"
+    },
+    {
+      "tabel": "indicatoren",
+      "id": "dubbele-naam",
+      "ontdubbel": {
+        "veld": "naam",
+        "sleutel": "uuid",
+        "normaliseer": true,
+        "houd": {
+          "Waterdiepte op straat": "f6eafa70-9383-4de6-bd2a-e47309843437",
+          "Werkzamen": "7fd17589-46b6-460a-a1f6-ef421517ccb3"
+        },
+        "zet": {
+          "status": "B"
+        },
+        "achtervoegsel": " (vervallen)",
+        "reden": "dubbele-naam"
+      },
+      "omschrijving": "zoals SWF het in de DWH-SQL zou doen zolang de dubbele UUID's bestaan (aanname A4, https://github.com/TLaan/D-OmniTwin/issues/222)"
     }
   ],
   "levering": {
@@ -55,9 +74,10 @@
   },
   "varianten": {
     "ruw": {
-      "omschrijving": "precies wat FME nu pusht (met status A): de laad-API hoort af te keuren",
+      "omschrijving": "precies wat FME nu pusht (met status A en de dubbele namen): de laad-API hoort af te keuren",
       "sla_over": [
-        "status-a"
+        "status-a",
+        "dubbele-naam"
       ]
     }
   }
