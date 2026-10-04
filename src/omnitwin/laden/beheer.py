@@ -107,6 +107,10 @@ def externe_kaartlagen(cur, regels: list[dict]) -> dict:
         if "actief" in velden:
             velden["actief"] = _bool(velden["actief"])
         laag = ExterneKaartlaagCreate(**velden).model_dump()
+        if met_toegang:
+            laag["toegang"] = "intern" if toegang == "intern" else "openbaar"
+        else:
+            laag.pop("toegang", None)  # oudere database zonder toegang per laag (#254)
         if toegang == "intern":
             uit["intern"].append(laag["naam"])
             if met_toegang:

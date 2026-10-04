@@ -69,7 +69,8 @@
       "verwacht": {
         "lagen": 8,
         "toegang": "openbaar (geen GeoVisia-laag in de lokale database)"
-      }
+      },
+      "toegang": "openbaar"
     },
     {
       "id": "swf-laag-deelgebieden",
