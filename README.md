@@ -61,7 +61,7 @@ docker compose up -d --build
 
 | Wat | Adres | Hoe |
 |-----|-------|-----|
-| Kaart (viewer) | http://localhost/ | Open voor iedereen. Rechtsboven *Inloggen* (optioneel). |
+| Kaart (viewer) | http://localhost/ | Open voor iedereen. Rechtsboven *Beheer*: daar log je in. |
 | Beheeromgeving | http://localhost/admin/ | Knop **Inloggen met Keycloak**, dan `admin` / `admin`. |
 | Gebruikers en rollen | http://localhost/auth/admin/omnitwin/console/ | `admin` / `admin` (ook via het menu rechtsboven in de beheeromgeving). |
 

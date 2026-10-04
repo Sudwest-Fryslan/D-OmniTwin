@@ -1,0 +1,169 @@
+{
+  "specificatie": "1.0",
+  "naam": "swf-initialisatie",
+  "id": "TC-07-025",
+  "versie": "0.1.0",
+  "titel": "SWF-initialisatie: eerste vulling uit de lokale D-OmniTwin-database",
+  "vraag": "Ik wil de SWF-installatie de eerste keer vullen met de rijkere data uit mijn lokale D-OmniTwin-database, via de laad-API en herhaalbaar, zonder open data of demodata mee te kopiëren.",
+  "gebruiker": "projectleider en functioneel beheerder SWF",
+  "status": "ontwerp",
+  "afhankelijk_van": [
+    {
+      "naam": "swf-definities",
+      "versie": ">=0.3.0"
+    },
+    {
+      "naam": "cbs-gebiedsindelingen",
+      "versie": ">=0.1.0"
+    },
+    {
+      "naam": "swf-gebiedsindelingen",
+      "versie": ">=0.1.0"
+    }
+  ],
+  "actoren": [
+    {
+      "naam": "beheerder",
+      "soort": "gebruiker",
+      "rollen": [
+        "beheerder"
+      ],
+      "omschrijving": "beheerder van D-OmniTwin: registreert de datasets"
+    },
+    {
+      "naam": "etl-initialisatie",
+      "soort": "machineclient",
+      "rollen": [
+        "dataset:swf-init-indicatoren:laden",
+        "dataset:swf-init-waarnemingen:laden"
+      ],
+      "omschrijving": "eenmalige client voor de eerste vulling; na de initialisatie intrekken"
+    },
+    {
+      "naam": "lezer",
+      "soort": "gebruiker",
+      "rollen": [
+        "lezer"
+      ],
+      "omschrijving": "ingelogde medewerker: ziet ook wat niet openbaar is, laadt niets"
+    }
+  ],
+  "rechten": [
+    "realm-rol beheerder (registreren)",
+    "dataset:swf-init-indicatoren:laden",
+    "dataset:swf-init-waarnemingen:laden",
+    "realm-rol lezer"
+  ],
+  "datasets": [
+    {
+      "id": "swf-init-indicatoren",
+      "route": "laden",
+      "registratie": "datasets/swf-init-indicatoren.json",
+      "profiel": "definities",
+      "rol": "dataset:swf-init-indicatoren:laden",
+      "client": "etl-initialisatie",
+      "prioriteit": "Must",
+      "bron": "export van de lokale D-OmniTwin-database ($SWF_EXPORT_DIR/indicatoren.csv)",
+      "verwacht": {
+        "indicatoren": "open vraag: welke indicatoren de projectleider levert",
+        "gebiedstypen": 0,
+        "relaties": 0
+      }
+    },
+    {
+      "id": "swf-init-waarnemingen",
+      "route": "laden",
+      "registratie": "datasets/swf-init-waarnemingen.json",
+      "profiel": "waarnemingen",
+      "rol": "dataset:swf-init-waarnemingen:laden",
+      "client": "etl-initialisatie",
+      "prioriteit": "Must",
+      "bron": "export van de lokale D-OmniTwin-database ($SWF_EXPORT_DIR/gebied_data.csv)",
+      "verwacht": {
+        "regels": "open vraag: welke tabellen en indicatoren",
+        "demodata": "weggelaten",
+        "open_data": "weggelaten (de adapter downloadt)",
+        "n": "leeg → bron-onderdrukt"
+      }
+    }
+  ],
+  "controles": [
+    {
+      "type": "aantal",
+      "dataset": "swf-init-indicatoren",
+      "resource": "indicatoren",
+      "minimaal": 1,
+      "omschrijving": "de export bevat indicatordefinities"
+    },
+    {
+      "type": "aantal",
+      "dataset": "swf-init-indicatoren",
+      "resource": "relaties",
+      "gelijk": 0,
+      "omschrijving": "relaties komen uit swf-definities, niet uit de initialisatie"
+    },
+    {
+      "type": "aantal",
+      "dataset": "swf-init-waarnemingen",
+      "minimaal": 1,
+      "omschrijving": "de export bevat waarden die niet uit een open bron komen"
+    },
+    {
+      "type": "bewerking",
+      "dataset": "swf-init-indicatoren",
+      "reden": "status: A → O",
+      "maximaal": 0,
+      "omschrijving": "de lokale database kent geen status A (anders: dezelfde omzetting als swf-definities)"
+    },
+    {
+      "type": "api",
+      "pad": "/api/data/v1/gebied_data?gebied_id=eq.BU19000002&select=indicator_uuid,bron,andere_bronnen&limit=1",
+      "minimaal_aantal": 1,
+      "gebied": "BU19000002",
+      "omschrijving": "waarden op Bolsward-Zuidoost; bij overlap met CBS of de monitor wint de nieuwste bronpeildatum en staat de andere in andere_bronnen (A6)"
+    },
+    {
+      "type": "idempotent",
+      "dataset": "swf-init-waarnemingen",
+      "actor": "etl-initialisatie"
+    },
+    {
+      "type": "recht",
+      "actor": "beheerder",
+      "actie": "registreren",
+      "toegestaan": true,
+      "omschrijving": "de beheerder registreert de datasets"
+    },
+    {
+      "type": "recht",
+      "actor": "etl-initialisatie",
+      "actie": "leveren",
+      "dataset": "swf-init-waarnemingen",
+      "toegestaan": true,
+      "omschrijving": "de initialisatieclient mag de eigen dataset leveren"
+    },
+    {
+      "type": "recht",
+      "actor": "etl-initialisatie",
+      "actie": "leveren",
+      "dataset": "swf-monitor-waarden",
+      "toegestaan": false,
+      "omschrijving": "de initialisatieclient mag de doorlopende SWF-datasets niet leveren (403)"
+    },
+    {
+      "type": "recht",
+      "actor": "lezer",
+      "actie": "leveren",
+      "dataset": "swf-init-waarnemingen",
+      "toegestaan": false,
+      "omschrijving": "een lezer mag niet laden (403)"
+    }
+  ],
+  "bekende_afwijkingen": [
+    "Ontwerp: de export bestaat nog niet. Open vraag aan de projectleider: welke tabellen en indicatoren levert hij (CSV-export volgens de README, of liever een pg_dump van een paar tabellen)? Daarna worden bron, bewerkingen en controles passend gemaakt.",
+    "Open data (CBS) en demodata worden herkend aan de bronvermelding (bron begint met CBS of DEMODATA). Dat is voorlopig; liever levert de export alleen wat niet open is.",
+    "Gebiedsindelingen komen uit cbs-gebiedsindelingen en swf-gebiedsindelingen. Levert de lokale database eigen indelingen, dan komt er per gebiedstype een dataset met profiel gebiedsindeling (GeoPackage onder SWF_EXPORT_DIR).",
+    "Zonder n in de lokale database: vlag bron-onderdrukt, de drempel blijft in de ETL (aanname A7).",
+    "De bronpeildatum van de export is de datum van ontvangst, tenzij dcat.jsonld een dct:modified meekrijgt; bij overlap met een nieuwere CBS- of monitorlevering wint die (aanname A6)."
+  ]
+}

@@ -160,8 +160,10 @@ def get_kaart_attributes(
     ),
     modus: str = Query(
         "waarde",
-        pattern="^(waarde|percentiel)$",
-        description="waarde = kleur naar de werkelijke waarde; percentiel = percentielklasse 1-8 binnen de referentiegroep (#255)"
+        pattern="^(waarde|percentiel|label)$",
+        description="waarde = kleur naar de werkelijke waarde; percentiel = percentielklasse 1-8 binnen de "
+                    "referentiegroep (#255); label = label A-E (drempels uit indicator_labels, anders "
+                    "voorlopig kwintielen, #256)"
     ),
     service: GebiedsmonitorService = Depends(get_service)
 ):

@@ -414,6 +414,11 @@ paths:
 
           Een meegeleverde `dcat.jsonld` werkt na een geslaagde publicatie de beschrijving van de
           dataset bij (bijv. `dct:temporal`); `dct:modified` en de distributie zet D-OmniTwin zelf.
+          Profiel `waarnemingen`: `dct:modified` (anders `dct:issued`) uit `dcat.jsonld` is de
+          **bronpeildatum** van de levering, de stand van de bron; zonder die twee de datum van
+          ontvangst. Leveren twee datasets een waarde voor dezelfde sleutel, dan wint de nieuwste
+          bronpeildatum, bij gelijke bronpeildatum de laatst aangeleverde levering (zie de README).
+          Een bronpeildatum die geen datum is of in de toekomst ligt, keurt de levering af.
         content:
           application/geopackage+sqlite3:
             schema:
@@ -1467,6 +1472,19 @@ components:
         vervangen:
           type: integer
           description: Regels van de vorige versie binnen het vervangbereik die zijn vervangen.
+        bronpeildatum:
+          type: string
+          format: date
+          description: Profiel waarnemingen. Stand van de bron voor de voorrang bij overlap.
+        bronpeildatumUit:
+          type: string
+          enum: ["dct:modified", "dct:issued", ontvangst]
+          description: Waar de bronpeildatum vandaan komt (`dcat.jsonld` van de levering, of de datum van ontvangst).
+        nietZichtbaarDoorVoorrang:
+          type: integer
+          description: >-
+            Gepubliceerde waarden die niet in de samengevoegde stand staan, omdat een andere dataset
+            voor dezelfde sleutel een nieuwere bronpeildatum heeft (of een gelijke en later aangeleverd).
 
     LeveringKort:
       type: object

@@ -215,7 +215,7 @@ De uitvoerder valideert elke levering tegen het profiel (Table Schema met fricti
 1. **Openbare internetbronnen** (CBS, PDOK, BAG, RIVM, Klimaateffectatlas) MOETEN NIET in de repository staan. De use case beschrijft de bron; de adapter downloadt hem bij `controleer`, `installeer` en `test`, met een cache in `$DATA_CACHE`.
 2. Downloads MOETEN via https gaan, naar een domein uit de allowlist `TOEGESTANE_DOMEINEN` in `omnitwin.bronadapters` (nu `opendata.cbs.nl`, `datasets.cbs.nl`, `www.cbs.nl`, `dataderden.cbs.nl`, `service.pdok.nl`, `api.pdok.nl`, `data.rivm.nl`, `www.klimaateffectatlas.nl`, `klimaateffectatlas.nl`). Een installatie MAG domeinen toevoegen met `OMNITWIN_BRON_DOMEINEN` (kommagescheiden). Een nieuw domein in de standaardlijst gaat via een PR.
 3. Bij een download van een vast bestand is `sha256` AANBEVOLEN; klopt de checksum niet, dan faalt de dataset.
-4. **Interne bronnen** (exports, dumps van de bronhouder) MOETEN via een omgevingsvariabele uit de allowlist `TOEGESTANE_MAPPEN` lopen: `SWF_DUMP_DIR`, `SWF_DOCS_DIR`, `SWF_GEO_DIR`, `SWF_DB_DUMP`, `DATA_CACHE`, en `REPO` (de repository zelf). Een pad MOET de vorm `${VAR}/…` hebben en MOET NIET buiten die map wijzen (`..`, symlinks).
+4. **Interne bronnen** (exports, dumps van de bronhouder) MOETEN via een omgevingsvariabele uit de allowlist `TOEGESTANE_MAPPEN` lopen: `SWF_DUMP_DIR`, `SWF_DOCS_DIR`, `SWF_GEO_DIR`, `SWF_DB_DUMP`, `SWF_EXPORT_DIR` (export van een andere D-OmniTwin-installatie, bijv. de lokale database voor de eerste vulling), `DATA_CACHE`, en `REPO` (de repository zelf). Een pad MOET de vorm `${VAR}/…` hebben en MOET NIET buiten die map wijzen (`..`, symlinks).
 5. Ontbreekt een bron (variabele niet gezet, bestand weg, geen netwerk), dan is de dataset *overgeslagen*, geen fout.
 6. De herkomst MOET in de DCAT-beschrijving staan (zie 6.3).
 7. **Een nieuwe soort bron is een nieuwe kernadapter**: code in `src/omnitwin/bronadapters/`, via een PR met unittests, en een minor-versie van deze specificatie (nieuwe waarde voor `adapter` in het schema).
@@ -265,6 +265,7 @@ Elke adapter levert tabellen met records; een geometrie staat altijd in EPSG:289
 | `geometrietype` | `[type]` | alleen deze geometrietypen |
 | `binnen` | `{bron, bewerkingen?}` | alleen features binnen een andere bron |
 | `splits_op` | `{bron, bewerkingen?, veld, binnen, buiten}` | feature opdelen in binnen en buiten een andere bron |
+| `ontdubbel` | `{veld, sleutel, houd, zet?, achtervoegsel?, normaliseer?, reden?}` | dezelfde `veld` (bijv. naam) met een andere `sleutel` (bijv. uuid): de voorkeur uit `houd` (`{waarde: sleutel of begin daarvan}`) blijft, de andere krijgen `zet` en `achtervoegsel`; geteld onder `reden`, zonder voorkeur onder `<reden>-zonder-voorkeur` (ongewijzigd) |
 
 Een **voorwaarde** is `{"veld": …, <toets>: waarde}` met toets `gelijk`, `niet_gelijk`, `in`, `niet_in`, `leeg`, `begint_met`, `niet_begint_met`, `kleiner_dan` of `groter_dan`. Een geneste `bron` (in `koppel`, `binnen`, `splits_op`) volgt dezelfde regels als in 7. De precieze semantiek staat in de docstring van [`bewerkingen.py`](../../../src/omnitwin/bronadapters/bewerkingen.py). Een nieuwe bewerking gaat via een PR met tests en is een minor-wijziging van deze specificatie.
 
@@ -471,7 +472,7 @@ Omgeving:
 | `OMNITWIN_BASE_URL` | basis-URL van de installatie (standaard `http://localhost`) |
 | `OMNITWIN_CLIENT_ID`, `OMNITWIN_CLIENT_SECRET` | machineclient (client credentials) voor `installeer` en `test` |
 | `OMNITWIN_TOKEN_URL`, `KEYCLOAK_REALM` | tokenendpoint, of discovery van de realm (standaard `omnitwin`) |
-| `SWF_DUMP_DIR`, `SWF_DOCS_DIR`, `SWF_GEO_DIR`, `SWF_DB_DUMP`, `DATA_CACHE` | interne bronnen en de downloadcache (zie 7) |
+| `SWF_DUMP_DIR`, `SWF_DOCS_DIR`, `SWF_GEO_DIR`, `SWF_DB_DUMP`, `SWF_EXPORT_DIR`, `DATA_CACHE` | interne bronnen en de downloadcache (zie 7) |
 | `OMNITWIN_BRON_DOMEINEN` | extra downloaddomeinen |
 | `OMNITWIN_TESTACCOUNTS`, `OMNITWIN_OMGEVING` | testaccounts alleen met `OMNITWIN_TESTACCOUNTS=1` en niet `OMNITWIN_OMGEVING=productie` (10.1) |
 | `KEYCLOAK_ADMIN_CLIENT_ID`, `KEYCLOAK_ADMIN_CLIENT_SECRET` | toegang tot de admin-API voor testaccounts: service account in de realm met de `realm-management`-rollen `manage-users`, `manage-clients`, `view-realm`, `view-clients` en `query-users` |
@@ -698,6 +699,7 @@ Een bewijsverslag `bewijs/bewijs.json` (ingekort):
 
 | Versie | Datum | Wijziging |
 |---|---|---|
+| 1.0 | 2026-10-04 | Aanvulling (https://github.com/TLaan/D-OmniTwin/issues/222; formeel een minor, 1.0 is nog niet vastgesteld): bewerking `ontdubbel` (dubbele namen met een andere UUID, aanname A4) en map `SWF_EXPORT_DIR` in de allowlist (export van een andere D-OmniTwin-installatie, aanname A1). Alle bestaande manifesten blijven geldig. |
 | 1.0 | 2026-10-03 | Aanvulling (https://github.com/TLaan/D-OmniTwin/issues/223; formeel een minor, 1.0 is nog niet vastgesteld): `actoren` en `actor` bij controles niet meer gereserveerd; testaccounts in test en dev (`installeer`/`test --testaccounts`, `opruimen`); controletype `recht` met `actie` en `toegestaan`. Alle bestaande manifesten blijven geldig. |
 | 1.0 | 2026-10-03 | Aanvulling (https://github.com/TLaan/D-OmniTwin/issues/225): `bewijs.stappen` en het bewijsverslag zijn niet meer gereserveerd; de uitvoerder voert ze uit (12.1, 12.2), met de galerij in de root-README en het commando `galerij` (12.3, 14). `indicator` mag ook bij `kompas`. Het compacte bewijs staat in git. Alle bestaande manifesten blijven geldig. |
 | 1.0 | 2026-10-02 | Aanvulling (voorstel, https://github.com/TLaan/D-OmniTwin/issues/236; formeel een minor, 1.0 is nog niet vastgesteld): adapters `cbs-statline` en `wcs-zonaal`, domein `dataderden.cbs.nl`, varianten met `bron`, `bewerkingen`, `beschrijving` en `als_beschikbaar` (demodata als plaatsvervanger voor een interne bron), geen uitzondering meer voor code in een use case. Alle bestaande manifesten blijven geldig. |

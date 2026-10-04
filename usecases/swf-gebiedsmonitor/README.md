@@ -1,7 +1,7 @@
 # TC-07-010 — D-OmniTwin vervangt de huidige SWF-gebiedsmonitor (acceptatie)
 
 **Status:** ontwerp (de laad-API is nog niet gebouwd; deze use case is de specificatie en straks de acceptatietest)
-**Versie:** 0.2.0 · **Afhankelijk van:** [swf-definities](../swf-definities/README.md), [swf-gebiedsindelingen](../swf-gebiedsindelingen/README.md), [swf-kompasprofiel](../swf-kompasprofiel/README.md), [swf-basismonitor-waarden](../swf-basismonitor-waarden/README.md), [swf-klimaatmonitor](../swf-klimaatmonitor/README.md), [swf-kaartlagen](../swf-kaartlagen/README.md), [swf-adapter-fme](../swf-adapter-fme/README.md)
+**Versie:** 0.3.0 · **Afhankelijk van:** [swf-definities](../swf-definities/README.md), [swf-gebiedsindelingen](../swf-gebiedsindelingen/README.md), [swf-kompasprofiel](../swf-kompasprofiel/README.md), [swf-basismonitor-waarden](../swf-basismonitor-waarden/README.md), [swf-klimaatmonitor](../swf-klimaatmonitor/README.md), [swf-kaartlagen](../swf-kaartlagen/README.md), [swf-adapter-fme](../swf-adapter-fme/README.md), [swf-initialisatie](../swf-initialisatie/README.md)
 **Manifest:** [`usecase.json`](usecase.json) · **Controleren:** `python -m omnitwin.usecases controleer swf-gebiedsmonitor`
 
 ## Vraag

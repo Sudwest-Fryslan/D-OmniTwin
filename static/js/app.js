@@ -12,7 +12,8 @@ const API_BASE = '/api/gebiedsmonitor';
 
 // Application State
 // #255: kaartmodus per bezoeker onthouden (alleen gemak; zonder opslag: 'waarde')
-const KAART_MODI = ['waarde', 'percentiel', 'uit'];
+// #256: 'label' = labels A-E per gebied
+const KAART_MODI = ['waarde', 'percentiel', 'label', 'uit'];
 function leesKaartModus() {
     try {
         const m = localStorage.getItem('omnitwin-kaartmodus');
@@ -22,9 +23,9 @@ function leesKaartModus() {
     }
 }
 
-/** Queryparameter voor /kaart_data: alleen de percentielmodus vraagt iets anders van de backend. */
+/** Queryparameter voor /kaart_data: alleen percentiel en label vragen iets anders van de backend. */
 function kaartModusParam() {
-    return state.kaartModus === 'percentiel' ? '&modus=percentiel' : '';
+    return ['percentiel', 'label'].includes(state.kaartModus) ? `&modus=${state.kaartModus}` : '';
 }
 
 const state = {
@@ -433,6 +434,23 @@ function togglePanel(panelId) {
 // deck.gl Setup with MapLibre
 // ============================================================================
 
+/**
+ * Klikherkenning ruimer (#279). deck.gl maakt van pointerdown en pointerup alleen een klik als
+ * beide binnen 250 ms *verwerkt* worden; bij pointerdown doet deck.gl eerst synchroon een pick.
+ * Zonder GPU (software-WebGL, VDI) of onder belasting duurt die pick 0,2-1,6 s en ging de klik
+ * van de gebruiker verloren. Met 1000 ms blijft een klik een klik; slepen herkent deck.gl aan de
+ * beweging, niet aan de tijd.
+ */
+const KLIK_TIJD_MS = 1000;
+function ruimeKlikherkenning(deck) {
+    try {
+        const herkenner = deck?.eventManager?.manager?.get?.('click');
+        if (herkenner && (herkenner.options?.time || 0) < KLIK_TIJD_MS) herkenner.set({ time: KLIK_TIJD_MS });
+    } catch (e) {
+        console.warn('Klikherkenning niet aangepast:', e);
+    }
+}
+
 function initDeckGL() {
     const { DeckGL, MapView } = deck;
 
@@ -471,6 +489,7 @@ function initDeckGL() {
             blendFunc: [770, 771] // gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA (standard blending)
         },
         onAfterRender: checkPerformance, // Monitor FPS
+        onLoad: () => ruimeKlikherkenning(state.deckgl), // #279: klik niet kwijt op trage pc's
         getTooltip: ({ object, layer }) => {
             if (object) {
                 const props = object.properties;
@@ -552,7 +571,12 @@ function initDeckGL() {
                     ? (props.klasse
                         ? `<br/><small class="tooltip-klasse">Percentielklasse ${escapeHtml(props.klasse)} van 8</small>`
                         : `<br/><small class="tooltip-klasse">Geen percentielklasse (${escapeHtml(props.klasse_status || 'geen referentie')})</small>`)
-                    : '';
+                    : (state.kaartModus === 'label' && heeftWaarde
+                        // #256: label A-E in de tooltip
+                        ? (props.label
+                            ? `<br/><small class="tooltip-klasse">Label ${escapeHtml(props.label)}${state.currentData?.metadata?.label_bron === 'drempels' ? '' : ' (voorlopig, kwintielen)'}</small>`
+                            : `<br/><small class="tooltip-klasse">Geen label (${escapeHtml(props.klasse_status || 'geen referentie')})</small>`)
+                        : '');
 
                 return {
                     html: `
@@ -975,6 +999,8 @@ async function loadKaartData() {
         }
         updateGemeenteFilterChip(geojson.features ? geojson.features.length : null);
 updateLegenda(geojson);
+        // #258: indicatorpaneel bijwerken (actuele waarden)
+        window.EventBus?.emit('KAARTDATA_GELADEN', { jaar: null });
 
         const geojsonBtn = document.getElementById('export-geojson-btn');
         const csvBtn = document.getElementById('export-csv-btn');
@@ -1950,10 +1976,31 @@ function displayOnMap(geojson) {
 
     // Auto-zoom to data (Sprint 16: alleen bij initieel laden, niet bij selectie-re-renders)
     if (geojson.features.length > 0 && !state.initialDataLoaded) {
-        fitBounds(geojson);
+        // #258: bij de eerste kaart de laatste kaartpositie van de ingelogde gebruiker
+        if (state.herstelPositie) {
+            zetKaartPositie(state.herstelPositie);
+            state.herstelPositie = null;
+        } else {
+            fitBounds(geojson);
+        }
         state.initialDataLoaded = true;
     }
 }
+
+/** #258: camera naar een bewaarde kaartpositie ({longitude, latitude, zoom, pitch, bearing}). */
+function zetKaartPositie(positie) {
+    if (!state.deckgl || !positie) return;
+    state.currentViewState = {
+        ...state.currentViewState,
+        longitude: positie.longitude,
+        latitude: positie.latitude,
+        zoom: positie.zoom,
+        pitch: positie.pitch ?? state.currentViewState.pitch,
+        bearing: positie.bearing ?? state.currentViewState.bearing,
+    };
+    state.deckgl.setProps({ viewState: state.currentViewState });
+}
+window.zetKaartPositie = zetKaartPositie;
 
 function fitBounds(geojson) {
     // Bounding box over alle coördinaten (Polygon en MultiPolygon)
@@ -2107,6 +2154,8 @@ function renderLegendaKlassen(metadata) {
     lijst.innerHTML = klassen.map(k => {
         const label = metadata.modus === 'percentiel'
             ? k.label
+            : metadata.modus === 'label'
+            ? k.omschrijving  // #256: 'label A (gunstigst), kwintiel 80–100%'
             : (k.van === k.tot
                 ? `${formatNumber(k.van)}${eenheid}`
                 : `${formatNumber(k.van)} – ${formatNumber(k.tot)}${eenheid}`);
@@ -2887,6 +2936,8 @@ function updateSelectionUI() {
     } else if (badge) {
         badge.style.display = 'none';
     }
+    // #258: indicatorpaneel en favorieten volgen de selectie
+    window.EventBus?.emit('SELECTIE_GEWIJZIGD', { ids: [...state.selectedGebiedIds] });
 }
 
 /**
@@ -3270,6 +3321,7 @@ function setupEventListeners() {
 
                         displayOnMap(state.currentData);
                         updateLegenda(state.currentData);
+                        window.EventBus?.emit('KAARTDATA_GELADEN', { jaar: data.jaar }); // #258
                     }
                 } catch (error) {
                     console.error('❌ Fout bij laden historische kaart data:', error);

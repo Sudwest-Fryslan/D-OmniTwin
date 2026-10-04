@@ -1,0 +1,90 @@
+{
+  "id": "swf-init-indicatoren",
+  "bronId": "swf-initialisatie",
+  "beschrijving": {
+    "@context": "https://data.overheid.nl/dcat-ap-nl/context.jsonld",
+    "@type": "dcat:Dataset",
+    "dct:title": "SWF-initialisatie — indicatordefinities uit de lokale D-OmniTwin-database",
+    "dct:description": "Definities van de indicatoren uit de lokale D-OmniTwin-database die niet in de SWF-definities (swf-monitor-definities) of de stuurdata staan, zodat hun waarden geladen kunnen worden. Zelfde UUID's als lokaal. Alleen indicatoren; gebiedstypen en relaties komen uit swf-definities.",
+    "dct:publisher": "https://identifier.overheid.nl/tooi/id/gemeente/gm1900",
+    "dct:accessRights": "http://publications.europa.eu/resource/authority/access-right/RESTRICTED",
+    "dct:license": "http://standaarden.overheid.nl/owms/terms/licentieonbekend",
+    "dct:spatial": "https://identifier.overheid.nl/tooi/id/gemeente/gm1900",
+    "dct:source": "Export van de lokale D-OmniTwin-database (tabel indicatoren), via SWF_EXPORT_DIR",
+    "dcat:theme": [
+      "http://standaarden.overheid.nl/owms/terms/Bestuur"
+    ],
+    "dcat:keyword": [
+      "gebiedsmonitor",
+      "indicatoren",
+      "initialisatie",
+      "Súdwest-Fryslân"
+    ],
+    "dcat:contactPoint": {
+      "@type": "vcard:Organization",
+      "vcard:fn": "Functioneel beheer gebiedsmonitor, gemeente Súdwest-Fryslân"
+    },
+    "prov:wasDerivedFrom": "Lokale D-OmniTwin-database (tabel indicatoren)"
+  },
+  "laadprofiel": {
+    "profiel": "definities",
+    "plausibiliteit": {
+      "maxDalingProcent": 10
+    }
+  },
+  "bron": {
+    "adapter": "lokaal-bestand",
+    "pad": "${SWF_EXPORT_DIR}/indicatoren.csv",
+    "formaat": "csv",
+    "tabel": "indicatoren",
+    "omschrijving": "CSV uit de lokale database (export-query in de README); nooit in git"
+  },
+  "bewerkingen": [
+    {
+      "tabel": "indicatoren",
+      "id": "status-a",
+      "waarde_map": {
+        "veld": "status",
+        "map": {
+          "A": "O"
+        }
+      },
+      "omschrijving": "zoals in swf-definities (aanname A2, https://github.com/TLaan/D-OmniTwin/issues/222)"
+    },
+    {
+      "tabel": "indicatoren",
+      "iso_datumtijd": [
+        "begingeldigheid",
+        "eindgeldigheid"
+      ]
+    },
+    {
+      "tabel": "indicatoren",
+      "getal": [
+        "min_waarde",
+        "max_waarde"
+      ]
+    },
+    {
+      "tabel": "indicatoren",
+      "behoud": [
+        "uuid",
+        "naam",
+        "code",
+        "omschrijving",
+        "eenheid",
+        "score_type",
+        "min_waarde",
+        "max_waarde",
+        "status",
+        "begingeldigheid",
+        "eindgeldigheid",
+        "bron"
+      ]
+    }
+  ],
+  "levering": {
+    "formaat": "datapackage",
+    "bestand": "swf-init-indicatoren.zip"
+  }
+}

@@ -2,7 +2,7 @@
   "specificatie": "1.0",
   "naam": "swf-definities",
   "id": "TC-07-003",
-  "versie": "0.2.0",
+  "versie": "0.3.0",
   "titel": "SWF-definities: indicatoren, gebiedstypen en relaties",
   "vraag": "Ik wil alle 228 indicatordefinities van de huidige monitor met dezelfde UUID's in D-OmniTwin, met de 11 gebiedstypen en op welk gebiedstype elke indicator waarden heeft.",
   "gebruiker": "data-engineer DWH (SWF)",
@@ -53,7 +53,8 @@
         "indicatoren": 228,
         "gebiedstypen": 11,
         "relaties": 263,
-        "status_A_naar_O": 10
+        "status_A_naar_O": 10,
+        "dubbele_naam_naar_B": 2
       }
     }
   ],
@@ -81,7 +82,21 @@
       "dataset": "swf-monitor-definities",
       "reden": "status: A → O",
       "gelijk": 10,
-      "omschrijving": "de 10 klimaatindicatoren"
+      "omschrijving": "de 10 klimaatindicatoren (A2: A = Actueel → O, operationeel)"
+    },
+    {
+      "type": "bewerking",
+      "dataset": "swf-monitor-definities",
+      "reden": "dubbele-naam",
+      "gelijk": 2,
+      "omschrijving": "Waterdiepte op straat (c4e1b3bb…) en Werkzamen (ca06d8ad…) → status B, naam '… (vervallen)'"
+    },
+    {
+      "type": "bewerking",
+      "dataset": "swf-monitor-definities",
+      "reden": "dubbele-naam-zonder-voorkeur",
+      "gelijk": 0,
+      "omschrijving": "elke dubbele naam staat in de voorkeurslijst (bewerking dubbele-naam)"
     },
     {
       "type": "bewerking",
@@ -107,6 +122,30 @@
         "naam": "CBS buurten bebouwde komgrens"
       },
       "omschrijving": "UUID-conflict opgelost: d210c084 is 'CBS buurten bebouwde komgrens', niet meer 'Custom Gebied Type'"
+    },
+    {
+      "type": "api",
+      "pad": "/api/data/v1/indicatoren?uuid=eq.f6eafa70-9383-4de6-bd2a-e47309843437&select=uuid,naam,status",
+      "anoniem": true,
+      "minimaal_aantal": 1,
+      "uuid": "f6eafa70-9383-4de6-bd2a-e47309843437",
+      "verwacht": {
+        "naam": "Waterdiepte op straat",
+        "status": "O"
+      },
+      "omschrijving": "de aangehouden Waterdiepte op straat (live in de Klimaatmonitor) houdt naam en krijgt O (aanname A4, A2)"
+    },
+    {
+      "type": "api",
+      "pad": "/api/data/v1/indicatoren?uuid=eq.c4e1b3bb-e4ce-4cd0-bd52-219f4a9f5df3&select=uuid,naam,status",
+      "anoniem": true,
+      "minimaal_aantal": 1,
+      "uuid": "c4e1b3bb-e4ce-4cd0-bd52-219f4a9f5df3",
+      "verwacht": {
+        "naam": "Waterdiepte op straat (vervallen)",
+        "status": "B"
+      },
+      "omschrijving": "de dubbele Waterdiepte op straat is vervallen: status B en een onderscheidende naam (aanname A4)"
     },
     {
       "type": "afkeuring",
@@ -187,9 +226,9 @@
     ]
   },
   "bekende_afwijkingen": [
-    "Status A (10 klimaatindicatoren) wordt O; de betekenis van A is een open vraag (gat-analyse, vraag 3).",
+    "Status A (10 klimaatindicatoren) wordt O. In de monitor is A = Actueel, B = Buiten gebruik, C = Concept en O = Onderzoek (A2, geverifieerd, https://github.com/TLaan/D-OmniTwin/issues/222). Aanname: SWF-status O blijft O (zichtbaar), want die indicatoren staan live; een gevulde DATE_TO komt mee als eindgeldigheid.",
     "UUID d210c084: in de stuurdata van D-OmniTwin 'Custom Gebied Type' (code CUSTOM, nergens gebruikt); in de monitor 'CBS buurten bebouwde komgrens' met 2.370 waarden. De levering zet naam en code (CBS_BUURT_BBK); de stuurdata moet mee (migratie).",
     "Eenheid, richting, bron en code per indicator zitten niet in de export; aanvullen via beheer of het gewone profiel definities.",
-    "Eén testdefinitie (status B) en één dubbele indicatornaam gaan mee zoals ze zijn."
+    "Eén testdefinitie (status B) gaat mee zoals hij is. Twee namen hebben twee UUID's (aanname A4): Waterdiepte op straat houdt f6eafa70-9383-4de6-bd2a-e47309843437 (live in de Klimaatmonitor; beide zonder waarden), Werkzamen houdt 7fd17589-46b6-460a-a1f6-ef421517ccb3 (de enige met waarden). De andere krijgt status B en '(vervallen)' achter de naam; de voorkeurslijst staat als data in de bewerking dubbele-naam. De UUID wijzigen is een actie voor SWF-beheer (DWH/FME)."
   ]
 }

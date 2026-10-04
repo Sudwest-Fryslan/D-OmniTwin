@@ -162,6 +162,55 @@ def test_koppel_met_mapping_en_normaliseren(tmp_path):
     assert [r["uuid"] for r in rijen] == ["u1", "u2"] and rapport == {"niet-gevonden": 1}
 
 
+def test_ontdubbel_houdt_de_voorkeur_en_laat_de_rest_vervallen():
+    """A4 (#222): dubbele naam, andere UUID: de voorkeur blijft, de rest krijgt status B en '(vervallen)'."""
+    stap = {"ontdubbel": {"veld": "naam", "sleutel": "uuid", "normaliseer": True,
+                          "houd": {"Waterdiepte op straat": "f6eafa70", "Werkzamen": "7fd17589-46b6-460a-a1f6-ef421517ccb3"},
+                          "zet": {"status": "B"}, "achtervoegsel": " (vervallen)", "reden": "dubbele-naam"}}
+    rijen = [
+        {"uuid": "c4e1b3bb-e4ce-4cd0-bd52-219f4a9f5df3", "naam": "Waterdiepte op straat", "status": "C"},
+        {"uuid": "f6eafa70-9383-4de6-bd2a-e47309843437", "naam": "Waterdiepte op straat", "status": "O"},
+        {"uuid": "ca06d8ad-6430-4f4d-bb32-7b406d26ecc8", "naam": "werkzamen ", "status": "O"},
+        {"uuid": "7fd17589-46b6-460a-a1f6-ef421517ccb3", "naam": "Werkzamen", "status": "O"},
+        {"uuid": "u5", "naam": "Uniek", "status": "O"},
+        {"uuid": "u6", "naam": "Dubbel zonder voorkeur", "status": "O"},
+        {"uuid": "u7", "naam": "Dubbel zonder voorkeur", "status": "O"},
+    ]
+    uit, rapport = bewerk([stap], rijen)
+    assert [(r["naam"], r["status"]) for r in uit] == [
+        ("Waterdiepte op straat (vervallen)", "B"), ("Waterdiepte op straat", "O"),
+        ("werkzamen  (vervallen)", "B"), ("Werkzamen", "O"), ("Uniek", "O"),
+        ("Dubbel zonder voorkeur", "O"), ("Dubbel zonder voorkeur", "O")]
+    assert [r["uuid"] for r in uit] == [r["uuid"] for r in rijen], "UUID's blijven gelijk"
+    assert rapport == {"dubbele-naam": 2, "dubbele-naam-zonder-voorkeur": 2}
+
+
+def test_ontdubbel_voorkeur_die_niet_bestaat_of_niet_uniek_is():
+    stap = {"ontdubbel": {"veld": "naam", "sleutel": "uuid", "houd": {"A": "x"}, "zet": {"status": "B"}}}
+    rijen = [{"uuid": "a1", "naam": "A"}, {"uuid": "a2", "naam": "A"}, {"uuid": "a1", "naam": "a"}]
+    uit, rapport = bewerk([stap], rijen)
+    assert uit == rijen and rapport == {"dubbel-zonder-voorkeur": 2}  # zonder normaliseer is 'a' een andere naam
+    stap["ontdubbel"]["houd"] = {"A": "a"}  # begin past op a1 én a2: geen keuze
+    assert bewerk([stap], rijen)[1] == {"dubbel-zonder-voorkeur": 2}
+    stap["ontdubbel"]["houd"] = {"A": "a2"}
+    uit, rapport = bewerk([stap], rijen)
+    assert [r.get("status") for r in uit] == ["B", None, None] and uit[0]["naam"] == "A" and rapport == {"dubbel": 1}
+
+
+def test_ontdubbel_voorkeurslijst_swf_definities_is_volledig_en_gelijk():
+    """De voorkeurslijst is data in de use case (geen code); swf-definities en swf-adapter-fme houden dezelfde aan."""
+    from pathlib import Path
+    root = Path(__file__).resolve().parents[1]
+    lijsten = []
+    for uc in ("swf-definities", "swf-adapter-fme"):
+        d = json.loads((root / "usecases" / uc / "datasets" / "swf-monitor-definities.json").read_text(encoding="utf-8"))
+        stap = next(b for b in d["bewerkingen"] if b.get("id") == "dubbele-naam")
+        lijsten.append(stap["ontdubbel"]["houd"])
+        assert [b.get("id") for b in d["bewerkingen"]].index("status-a") < [b.get("id") for b in d["bewerkingen"]].index("dubbele-naam")
+    assert lijsten[0] == lijsten[1] == {"Waterdiepte op straat": "f6eafa70-9383-4de6-bd2a-e47309843437",
+                                        "Werkzamen": "7fd17589-46b6-460a-a1f6-ef421517ccb3"}
+
+
 def test_snake_case():
     assert snake("KL_PROJECTOMSCHRIJVING") == "kl_projectomschrijving"
     assert snake("Extra onderdeel") == "extra_onderdeel"

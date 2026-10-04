@@ -85,7 +85,6 @@ De tabel volgt de volgorde van `.env.example`. Optionele regels staan daar als c
 | `OMNITWIN_TESTACCOUNTS`, `KEYCLOAK_ADMIN_CLIENT_ID`, `KEYCLOAK_ADMIN_CLIENT_SECRET`, `KEYCLOAK_ADMIN`, `KEYCLOAK_URL`, `OMNITWIN_TESTACCOUNTS_UUR`, `OMNITWIN_TESTACCOUNTS_BESTAND` | Optioneel, alleen voor `--testaccounts` van de uitvoerder in test en dev (zie [Keycloak](#keycloak-optioneel), *Testaccounts*); de uitvoerder weigert bij `OMNITWIN_OMGEVING=productie`. Niet in een productie-`.env`. |
 | `LEVERINGEN_DIR`, `LADEN_MAX_MB`, `LADEN_RATE_LIMIT`, `LADEN_COMPAT_RATE_LIMIT`, `LADEN_WACHT_SECONDEN` | Optioneel, laad-API ([docs/api/laden](../api/laden/README.md)): map voor de ruwe leveringen (standaard het volume `leveringen` op `/leveringen`), bodylimiet (standaard 200 MB, JSON een tiende), leveringen per minuut per client (standaard 10; op de compatibiliteitsingang voor de SWF-monitor 120) en de time-out van `wacht=true` (standaard 60 s). |
 | `LADEN_BEWAAR_VERSIES`, `LADEN_BEWAAR_DAGEN`, `LADEN_BEWAAR_AFGEKEURD_DAGEN` | Optioneel. Bewaartermijn van de ruwe leveringen: altijd de laatste 10 versies per dataset, oudere tot 365 dagen, afgekeurde en alleen-gevalideerde leveringen 30 dagen. |
-| `LADEN_VOORRANG` | Optioneel. Datasets (kommagescheiden, hoogste eerst) die voorgaan als twee datasets een waarde voor hetzelfde gebied, dezelfde indicator en hetzelfde jaar leveren. Standaard `swf-monitor-waarden` (aanname A6, #222). De andere waarde blijft bewaard in `laden.waarnemingen`. |
 | `OLLAMA_HOST`, `OLLAMA_MODEL`, `LLM_THINK`, `LLM_REASONING_EFFORT` | Optioneel, lokale AI. Zie [LLM](#7-llm-optioneel). |
 | `LITELLM_MASTER_KEY`, `LLM_API_KEY`, `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `GEMINI_API_KEY` | Optioneel, alleen met de LiteLLM-gateway. Zie [Andere aanbieders](#andere-aanbieders-via-de-litellm-gateway). |
 | `DATABASE_NAME`, `DATABASE_USER` | Optioneel, standaard `omnitwin_db` en `omnitwin_user`. Wijzig ze alleen vóór de eerste start. |
@@ -518,7 +517,7 @@ docker compose exec postgres sh -c 'rm /tmp/keycloak.dump'
 
 ### Toegang tot de viewer (open of dicht)
 
-Standaard (`VIEWER_TOEGANG=open`) is de kaart op `http://<host>/` voor iedereen open (#266, [ADR 0009](../2-architectuur/adr/0009-viewer-achter-login-forwardauth.md)). Staat [Keycloak](#keycloak-optioneel) aan (met `OIDC_ISSUER`), dan staat rechtsboven in de kaart **Inloggen**; ingelogd zie je je gebruikersnaam en **Uitloggen**.
+Standaard (`VIEWER_TOEGANG=open`) is de kaart op `http://<host>/` voor iedereen open (#266, [ADR 0009](../2-architectuur/adr/0009-viewer-achter-login-forwardauth.md)). Staat [Keycloak](#keycloak-optioneel) aan (met `OIDC_ISSUER`), dan leidt **Beheer** rechtsboven in de kaart naar het inloggen; ingelogd zie je je gebruikersnaam en **Uitloggen**. Er is geen aparte inlogknop.
 
 **Viewer dichtzetten**, zoals de huidige SWF-monitor: zet in `.env`
 
