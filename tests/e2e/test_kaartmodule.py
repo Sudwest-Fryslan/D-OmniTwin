@@ -13,7 +13,7 @@ from playwright.sync_api import expect
 from e2e_helpers import (
     HINDELOOPEN, KOUDUM, WORKUM,
     klik_buurt_op_kaart, laad_buurtenkaart, open_kompas, open_paneel, selecteer_buurt_via_app,
-    selectie, selectie_overlay_aanwezig, wacht_op_selectie, zoom_kaart, TRAAG_MS,
+    selectie, selectie_overlay_aanwezig, wacht_op_selectie, zoom_kaart, geschaald, traag_ms,
 )
 
 
@@ -128,7 +128,7 @@ def test_tc_01_003b_bag_woonplaatsen(app_page):
     assert laag, "externe kaartlaag 'BAG Woonplaatsen' ontbreekt in de sample-stuurdata"
     toggle = page.locator(f"#toggle-externe-laag-{laag['id']}")
     with page.expect_response(lambda r: f"/api/externe-lagen/{laag['id']}/features" in r.url,
-                              timeout=120_000) as resp:
+                              timeout=geschaald(120_000)) as resp:
         page.locator(f"label:has(#toggle-externe-laag-{laag['id']})").click()
     if not resp.value.ok:
         pytest.skip(f"PDOK WFS niet bereikbaar vanuit de backend (HTTP {resp.value.status})")
@@ -151,7 +151,7 @@ def test_tc_01_003b_bag_woonplaatsen(app_page):
             [laag["id"], naam],
         )
         page.wait_for_function(
-            "(naam) => window.state.selectedGroepen.some(g => g.naam === naam)", arg=naam, timeout=TRAAG_MS
+            "(naam) => window.state.selectedGroepen.some(g => g.naam === naam)", arg=naam, timeout=traag_ms()
         )
 
     groepen = page.evaluate("() => window.state.selectedGroepen")
@@ -181,6 +181,7 @@ def test_tc_01_003c_woonbeleid():
 
 # ── Kaart-export (vervangt het oude script tests/test_canvas.py) ─────────────
 
+@pytest.mark.basiskaart
 def test_kaart_canvas_exporteerbaar(app_page, tmp_path):
     """Kaartcanvassen zijn niet 'tainted' (CORS van de basiskaart) en de screenshot-export
     levert een PNG op. Voorheen handmatig getoetst met tests/test_canvas.py."""
@@ -226,10 +227,10 @@ _BBOX_SCHERM_JS = """
 """
 
 
-def _camera_in_rust(page, timeout: float = 15.0):
+def _camera_in_rust(page, timeout: float = None):
     """Schermpositie van de gebieden zodra de camera stilstaat (fly-to klaar)."""
     # Software-WebGL kan frames honderden ms laten haperen: eis 1,5 s stilstand
-    eind = time.monotonic() + timeout
+    eind = time.monotonic() + (timeout or traag_ms() / 1000)
     vorige, stil = None, 0
     while time.monotonic() < eind:
         nu = page.evaluate(_BBOX_SCHERM_JS)
@@ -261,8 +262,10 @@ def test_kaart_zoomt_in_op_geladen_gebieden(app_page):
             break
         page.wait_for_timeout(500)
     laad_buurtenkaart(page)
+    # Na het laden van de laag: eerste tekenbeurt (shadercompilatie in software-WebGL) en de
+    # camera-animatie van 1 s. Onder CPU-druk kan dat tientallen seconden duren: TRAAG_MS (#212)
     page.wait_for_function(
-        "(z) => window.state.currentViewState.zoom > z + 1", arg=start["zoom"], timeout=15_000
+        "(z) => window.state.currentViewState.zoom > z + 1", arg=start["zoom"], polling=100, timeout=traag_ms()
     )
     b = _camera_in_rust(page)
 

@@ -6,7 +6,7 @@ docs/testcases/01-kaartmodule/TC-01-004_kaartmodus.md
 
 from playwright.sync_api import expect
 
-from e2e_helpers import BOLSWARD_ZUIDOOST, TRAAG_MS, laad_buurtenkaart, open_paneel
+from e2e_helpers import BOLSWARD_ZUIDOOST, laad_buurtenkaart, open_paneel, traag_ms
 
 INDICATOR = "Stedelijk hitte-eiland effect"  # use case hittestress
 
@@ -27,7 +27,7 @@ def kies_indicator(page, naam):
     page.wait_for_function(
         "() => window.state.currentData && window.state.currentData.metadata"
         " && window.state.currentData.metadata.indicator_naam",
-        timeout=TRAAG_MS,
+        timeout=traag_ms(),
     )
 
 
