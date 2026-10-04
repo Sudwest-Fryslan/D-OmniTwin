@@ -15,7 +15,7 @@ import pytest
 from playwright.sync_api import expect
 
 from e2e_helpers import (
-    KOUDUM, WORKUM,
+    KOUDUM, WORKUM, geschaald,
     kompas_namen, laad_buurtenkaart, open_indicator_in_kompas, open_kompas, selecteer_buurt_via_app,
     wacht_op_selectie, wacht_op_vergelijkingsgrafiek,
 )
@@ -77,7 +77,7 @@ def test_tc_02_001_historische_trend(app_page):
     page = app_page
     _kompas_voor(page, WORKUM)
     open_indicator_in_kompas(page, "Wonen", "Gemiddeld energielabel")
-    expect(page.locator("#timeslider-container")).to_be_visible(timeout=5_000)
+    expect(page.locator("#timeslider-container")).to_be_visible(timeout=geschaald(5_000))
 
 
 @pytest.mark.xfail(strict=True, reason="TC-02-001 stap 7 / NM-001: indicator starterswoningen ontbreekt")
@@ -120,7 +120,7 @@ def test_tc_02_002_trendlijn(app_page):
     page = app_page
     _kompas_voor(page, WORKUM)
     open_indicator_in_kompas(page, "Rondkomen", "Participatiewet totaal")
-    expect(page.locator("#timeslider-container")).to_be_visible(timeout=5_000)
+    expect(page.locator("#timeslider-container")).to_be_visible(timeout=geschaald(5_000))
 
 
 @pytest.mark.skip(reason="TC-02-002 stap 5: vroegsignalering/drempelwaarden bestaan nog niet; "
