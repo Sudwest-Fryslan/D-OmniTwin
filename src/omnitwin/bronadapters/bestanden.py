@@ -37,7 +37,11 @@ def lees_geo(pad, laag=None):
 
 def lees_geojson(pad, epsg=None):
     """GeoJSON zonder GDAL (alleen shapely). `epsg`: CRS van de coördinaten als het bestand het niet noemt."""
-    from shapely.geometry import shape
+    try:
+        from shapely.geometry import shape
+    except ImportError as e:  # slanke omgeving (CI): bron hier niet te lezen, overgeslagen
+        from omnitwin.bronadapters import GeenBron
+        raise GeenBron(f"shapely ontbreekt: {e}")
     data = json.loads(Path(pad).read_text(encoding="utf-8"))
     crs = ((data.get("crs") or {}).get("properties") or {}).get("name", "")
     bestand_epsg = int(crs.rsplit(":", 1)[-1]) if crs and crs.rsplit(":", 1)[-1].isdigit() else None
