@@ -1,0 +1,18 @@
+{
+  "indicatoren": [
+    {
+      "uuid": "e36c5cab-2e36-4be0-bd8f-ade7924975a6",
+      "naam": "DEMODATA: interne voorbeeldindicator",
+      "code": "DEMO_INTERN",
+      "omschrijving": "Demodata om toegang per laag te tonen (#254): een indicator uit een interne bron is alleen zichtbaar na inloggen met de rol lezer of beheerder. Geen echte waarden.",
+      "eenheid": "%",
+      "score_type": "+/+",
+      "min_waarde": 0,
+      "max_waarde": 100,
+      "status": "O",
+      "bron": "DEMODATA (D-OmniTwin, use case rechten-per-laag)"
+    }
+  ],
+  "gebiedstypen": [],
+  "relaties": []
+}

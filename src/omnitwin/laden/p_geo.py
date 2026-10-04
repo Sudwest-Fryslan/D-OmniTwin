@@ -14,9 +14,10 @@ verdwijnt en nog waarden heeft wordt inactief, zonder waarden wordt het verwijde
 
 kaartlaag (pre-release, gekozen en gedocumenteerd in docs/api/laden/README.md): de GeoPackage
 wordt na validatie de lokale kaartlaag `data-upload/laden/<dataset>.gpkg` (volume uploads) en
-één rij in externe_kaartlagen (bron_type 'lokaal'), zoals een upload in het beheer. Zichtbaar
-(actief) alleen bij `dct:accessRights` PUBLIC. De eigen tabel in schema `laag` met OGC API
-Features (profiel kaartlaag.md) volgt later.
+één rij in externe_kaartlagen (bron_type 'lokaal'), zoals een upload in het beheer. De laag staat
+aan; `toegang` volgt de dataset (`dct:accessRights` PUBLIC = openbaar, anders intern: alleen met de
+rol lezer of beheerder, #254). De eigen tabel in schema `laag` met OGC API Features (profiel
+kaartlaag.md) volgt later.
 """
 
 from __future__ import annotations
@@ -29,6 +30,7 @@ import shutil
 from pathlib import Path
 
 from omnitwin.laden.basis import Afkeuring, Context, Fouten, afkeuren
+from omnitwin.laden.catalogus import toegang_van
 from omnitwin.laden.lezen import Bron, gpkg_lagen
 from omnitwin.laden.p_waarnemingen import plausibel
 from omnitwin.laden.problemen import Fout
@@ -244,22 +246,22 @@ def publiceer_kaartlaag(cur, ctx: Context, data: dict) -> dict:
     besch = ctx.dataset["beschrijving"] or {}
     doel = ctx.laadprofiel["doel"]
     plausibel(ctx.laadprofiel, len(data["features"]), 0)
-    publiek = str(besch.get("dct:accessRights", "")).rstrip("/").endswith("/PUBLIC")
     rel = f"laden/{ctx.dataset_id}.gpkg"
     p = {"naam": str(besch.get("dct:title") or ctx.dataset_id)[:100], "beschrijving": besch.get("dct:description"),
-         "url": rel, "typename": data["tabel"], "actief": publiek, "id": ctx.dataset.get("kaartlaag_id"),
+         "url": rel, "typename": data["tabel"], "toegang": toegang_van(besch), "id": ctx.dataset.get("kaartlaag_id"),
          "ds": ctx.dataset_id}
     if p["id"]:
         cur.execute("""UPDATE public.externe_kaartlagen SET naam = %(naam)s, beschrijving = %(beschrijving)s,
                        bron_type = 'lokaal', url = %(url)s, typename = %(typename)s, srsname = 'EPSG:28992',
-                       filter_type = 'alles', actief = %(actief)s, updated_at = now() WHERE id = %(id)s RETURNING id""", p)
+                       filter_type = 'alles', actief = true, toegang = %(toegang)s, updated_at = now()
+                       WHERE id = %(id)s RETURNING id""", p)
         rij = cur.fetchone()
         p["id"] = rij["id"] if rij else None
     if not p["id"]:
         cur.execute("""INSERT INTO public.externe_kaartlagen (naam, beschrijving, laag_type, bron_type, url, typename,
-                           srsname, filter_type, actief)
+                           srsname, filter_type, actief, toegang)
                        VALUES (%(naam)s, %(beschrijving)s, 'selectie', 'lokaal', %(url)s, %(typename)s, 'EPSG:28992',
-                               'alles', %(actief)s) RETURNING id""", p)
+                               'alles', true, %(toegang)s) RETURNING id""", p)
         p["id"] = cur.fetchone()["id"]
         cur.execute("UPDATE laden.datasets SET kaartlaag_id = %(id)s WHERE id = %(ds)s", p)
     # Bestand naast het doel klaarzetten; pas na de commit omwisselen (os.replace is atomisch)

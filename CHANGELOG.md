@@ -8,6 +8,19 @@ Eerdere wijzigingen, van vóór dit bestand, zijn terug te vinden in de git-hist
 
 ## [Unreleased]
 
+### Toegevoegd
+
+- Toegang per laag en bron: `openbaar` of `intern`, als data per dataset en afgedwongen in de API's, niet alleen in de UI (ADR 0010). De bron is `dct:accessRights` in de registratie van de laad-API (`PUBLIC` = openbaar, anders intern; afgeleid veld `toegang` in `GET /api/laden/v1/datasets/{id}`). Daaruit volgt de toegang van de kaartlaag, de indicatoren en de waarden van de dataset (kolom `toegang` op `externe_kaartlagen`, `indicatoren` en `gebied_data`, migratie `V032__toegang_per_laag.sql`). Zonder inloggen met de rol `lezer` of `beheerder` staan interne lagen en indicatoren niet in de lijsten en geeft een directe aanroep `401` (ingelogd zonder rol `403`): de backend leest anonieme verzoeken als databaserol `omnitwin_openbaar` met row level security, PostgREST filtert in schema `api` op de header `X-Omnitwin-Toegang` die alleen de forwardAuth zet, en een interne collectie van pg_featureserv geeft `401`. Ingelogd staat er het label *intern* bij in de lagenlijst en de indicatorkeuze. Een eigen externe laag kan `intern` via de beheer-API. Use case `rechten-per-laag` (DEMODATA) laat het zien; Use Case Specificatie 1.0 aangevuld met `toegang` per dataset, `maximaal_aantal` bij `api` en de rechtencontrole `bekijken` ([#254](https://github.com/TLaan/D-OmniTwin/issues/254)).
+
+### Gewijzigd
+
+- Een kaartlaag uit de laad-API met `dct:accessRights` `RESTRICTED` staat niet meer uit, maar aan voor wie de rol `lezer` of `beheerder` heeft ([#254](https://github.com/TLaan/D-OmniTwin/issues/254)).
+- Testaccounts van use cases: een machineclient krijgt precies de rollen uit het manifest, zonder de standaardrol van de realm (die `lezer` bevat) ([#254](https://github.com/TLaan/D-OmniTwin/issues/254)).
+
+### Migreren
+
+- Migratie `V032__toegang_per_laag.sql` draait vanzelf bij de start (`db-init`). Alles blijft openbaar, behalve wat een geregistreerde dataset met `dct:accessRights` `RESTRICTED` of `NON_PUBLIC` publiceerde: dat is nu alleen zichtbaar met de rol `lezer` of `beheerder`. Controleer met `GET /api/laden/v1/datasets` (veld `toegang`) of dat klopt; wijzig zo nodig `dct:accessRights` met PATCH. Een eigen Traefik-configuratie: neem `authResponseHeaders: ["X-Omnitwin-Toegang"]` over in de middleware `viewer-toegang` (`deploy/traefik/dynamic.yml`). Keycloak geeft elke gebruiker en elk service account standaard `lezer`; haal die bij een ETL-client weg als hij geen interne data mag zien ([#254](https://github.com/TLaan/D-OmniTwin/issues/254)).
+
 ## [0.3.0-rc.1] - 2026-10-03
 
 **Pre-release.** De eerste versie die de huidige SWF-gebiedsmonitor kan opvolgen en aan andere partijen kan worden aangeboden: inloggen via Keycloak (beheer, en optioneel de viewer), een laad-API voor leveringen, use cases als apps met bewijs, open data in plaats van demodata, percentielklassen en kaartmodi, een thema per organisatie en de basis voor productie (back-up en herstel, beheerhandleiding, privacy). Een aantal punten gaat uit van **aannames** tot [#222](https://github.com/TLaan/D-OmniTwin/issues/222) beantwoord is: vulling met de export van februari 2026, de percentielmethodiek, nog geen klimaatlabels A–E en nog geen rechten per laag. Vergelijking met de huidige monitor: [#259](https://github.com/TLaan/D-OmniTwin/issues/259). Lees bij een upgrade de paragraaf **Migreren**.

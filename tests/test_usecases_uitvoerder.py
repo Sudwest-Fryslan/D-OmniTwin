@@ -258,3 +258,21 @@ def test_laad_usecase_slaat_laad_api_use_cases_over(capsys):
     uit = capsys.readouterr().out
     assert "swf-basismonitor-waarden: overgeslagen (status ontwerp)" in uit
     assert "swf-definities: laadt via de laad-API" in uit  # actief, niet via dit script (#229)
+
+
+def test_toegang_in_manifest_volgt_dct_access_rights():
+    """#254: `toegang` in datasets[] moet gelijk zijn aan wat dct:accessRights in de registratie zegt."""
+    u = MET_DATASETS["rechten-per-laag"]
+    ds = next(d for d in u["datasets"] if d["id"] == "demo-intern-laag")
+    assert ds["toegang"] == "intern" and not uc.dataset_fouten(u, ds, laad_openapi())
+    fouten = uc.dataset_fouten(u, {**ds, "toegang": "openbaar"}, laad_openapi())
+    assert any("toegang 'openbaar' in het manifest, maar dct:accessRights geeft 'intern'" in f for f in fouten)
+
+
+def test_swf_kaartlagen_toegang_gezet():
+    """De SWF-kaartlagen tonen hun toegang in het manifest (#254, #222 B3)."""
+    u = ALLE["swf-kaartlagen"]
+    toegang = {d["id"]: d.get("toegang") for d in u["datasets"]}
+    assert toegang["swf-laag-deelgebieden"] == "openbaar"
+    assert toegang["swf-laag-coordinatorgebieden"] == "intern"
+    assert all(t in ("openbaar", "intern") for t in toegang.values())

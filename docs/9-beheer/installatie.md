@@ -531,7 +531,19 @@ en `docker compose up -d`. Daarna:
 - ook de data-API's zijn dicht: de API's van de backend (`/api/gebiedsmonitor`, `/api/kompas`, `/api/chat`, `/api/report`, ...), `/api/data` (PostgREST), `/api/geo` (pg_featureserv) en `/docs`. Zonder sessie geven ze `401`, zonder rol `403`. Scripts kunnen met een bearer-token met de rol `lezer` of `beheerder`, of met `X-Admin-Key`;
 - open blijven: `/health`, het inloggen zelf, de beheeromgeving (vraagt zelf om inloggen), de laad-API (eigen tokens), `/api/organisatie` (naam en thema voor de inlogpagina) en `/static/` (code en opmaak, geen data).
 
-Zonder Keycloak (geen `OIDC_ISSUER`) kan bij `inloggen` alleen een lokale beheerder de kaart zien (inloggen via `/admin/login`); gebruik dan Keycloak. `/api/data` en `/api/geo` lopen via een controle in Traefik (forwardAuth naar de backend, `deploy/traefik/dynamic.yml`); die staat altijd aan en laat bij `open` alles door.
+Zonder Keycloak (geen `OIDC_ISSUER`) kan bij `inloggen` alleen een lokale beheerder de kaart zien (inloggen via `/admin/login`); gebruik dan Keycloak. `/api/data` en `/api/geo` lopen via een controle in Traefik (forwardAuth naar de backend, `deploy/traefik/dynamic.yml`); die staat altijd aan en laat bij `open` alles door (behalve interne lagen, hieronder).
+
+### Toegang per laag en bron (openbaar of intern)
+
+Ook bij een open viewer kan een deel van de data intern zijn: alleen zichtbaar na inloggen met de realm-rol `lezer` of `beheerder` (#254, [ADR 0010](../2-architectuur/adr/0010-toegang-per-laag-en-bron.md)). Wat intern is, staat als data bij de dataset, niet in een instelling:
+
+- **Via de laad-API** bepaalt `dct:accessRights` in de registratie het: `http://publications.europa.eu/resource/authority/access-right/PUBLIC` is openbaar, `RESTRICTED` (of `NON_PUBLIC`) is intern. Dat geldt voor de kaartlaag van de dataset, de indicatoren die hij definieert of waarvan hij alle waarden levert, en zijn waarden. `GET /api/laden/v1/datasets/{id}` toont het afgeleide veld `toegang`. Wijzig je `dct:accessRights` (PUT of PATCH), dan volgt wat de dataset al publiceerde direct.
+- **Een eigen externe laag** (beheer > externe lagen) is standaard openbaar; via de beheer-API zet je `"toegang": "intern"` (`PUT /api/admin/externe-lagen/{id}`).
+- Alles wat niet via de laad-API kwam (stuurdata, eerdere uploads, PDOK-lagen), is openbaar. Na het bijwerken naar deze versie (migratie V032) verandert er daarom niets, behalve voor datasets die al `RESTRICTED` waren: hun data is nu intern, en hun kaartlaag (die tot nu toe uit stond) staat aan voor ingelogden.
+
+Zonder inloggen staan interne lagen en indicatoren niet in de lijsten van de kaart, Kompas, rapporten en chat, en geeft een directe aanroep `401` (ingelogd zonder rol: `403`): de backend leest anonieme verzoeken als databaserol `omnitwin_openbaar`, met row level security op `indicatoren`, `gebied_data` en `externe_kaartlagen`. PostgREST filtert in de views van schema `api` op de header `X-Omnitwin-Toegang`, die alleen de forwardAuth zet (Traefik verwijdert een meegestuurde header). Ingelogd met `lezer` of `beheerder` zie je alles, met het label *intern* in de lagenlijst en de indicatorkeuze. De use case [`rechten-per-laag`](../../usecases/rechten-per-laag/README.md) laadt een interne voorbeeldlaag en -indicator (DEMODATA) om het te zien.
+
+Let op: Keycloak geeft elke nieuwe gebruiker én elk service account (machineclient) standaard de rol `lezer` (`default-roles-omnitwin`). Een ETL-client ziet dan ook interne data. Wil je dat niet, haal dan in de admin-console bij de client > *Service accounts roles* de rol `default-roles-omnitwin` weg.
 
 ---
 
@@ -626,6 +638,8 @@ Verder nog open: de CSP staat `'unsafe-inline'` toe (zie [Security-headers](#sec
 | `/api/3dbag/*` | 3D-panden |
 | `/api/geo/*` | pg_featureserv (kaartgeometrie), alleen-lezen |
 | `/api/data/*` | PostgREST, alleen-lezen views in schema `api` (zie hieronder) |
+
+Interne lagen, indicatoren en waarden (`toegang` intern) zijn op al deze routes alleen zichtbaar met de rol `lezer` of `beheerder`; zie [Toegang per laag en bron](#toegang-per-laag-en-bron-openbaar-of-intern).
 | `/api/admin/auth/login`, `/logout`, `/me`, `/config`, `/oidc/login`, `/oidc/callback` | Inloggen (lokaal en via Keycloak) en sessiestatus |
 | `/health`, `/api`, `/docs`, `/openapi.json` | Status en API-documentatie |
 
@@ -645,7 +659,7 @@ PostgREST (`/api/data`) en pg_featureserv (`/api/geo`) verbinden niet als databa
 | `web_anon` | PostgREST (anonieme verzoeken) | `NOLOGIN`; `USAGE` op schema `api`, `SELECT` op de views daarin, `EXECUTE` op `api.get_indicatoren_stats`. Geen schrijfrechten, geen rechten in `public` |
 | `featureserv` | pg_featureserv | alleen-lezen op `public.vw_gebieden_features`, `public.omgevingsvisie_deelgebieden` en de functies in `postgisftw` |
 
-PostgREST publiceert alleen schema `api`. Daarin staan alleen views en functies die de frontend en de beheeromgeving lezen: `gemeenten`, `gebiedstypes`, `gebieden` (zonder geometrie), `externe_kaartlagen`, `indicatoren` (zonder interne beheervelden), `vw_gebied_indicator_actueel` en `rpc/get_indicatoren_stats`. Applicatiedata zoals `users`, `sessions`, `api_keys`, `llm_config`, `system_prompts` en de logs is via `/api/data` niet bereikbaar, en schrijven kan anoniem niet. Een nieuw object publiceren: voeg een view of functie toe aan `db/migraties/R__api_rollen.sql` met de bijbehorende `GRANT` en draai `db-init` opnieuw (`docker compose up -d`).
+PostgREST publiceert alleen schema `api`. Daarin staan alleen views en functies die de frontend en de beheeromgeving lezen: `gemeenten`, `gebiedstypes`, `gebieden` (zonder geometrie), `externe_kaartlagen`, `indicatoren` (zonder interne beheervelden), `vw_gebied_indicator_actueel`, `gebied_data` en `rpc/get_indicatoren_stats`. De views met `toegang` tonen interne rijen alleen als de forwardAuth `X-Omnitwin-Toegang: intern` zette (#254); PostgREST en pg_featureserv mogen daarom niet buiten Traefik om bereikbaar zijn (de standaard-compose publiceert geen poort voor ze). Applicatiedata zoals `users`, `sessions`, `api_keys`, `llm_config`, `system_prompts` en de logs is via `/api/data` niet bereikbaar, en schrijven kan anoniem niet. Een nieuw object publiceren: voeg een view of functie toe aan `db/migraties/R__api_rollen.sql` met de bijbehorende `GRANT` en draai `db-init` opnieuw (`docker compose up -d`).
 
 **Wachtwoord:** `authenticator` en `featureserv` krijgen hetzelfde wachtwoord als `DATABASE_USER` (`DATABASE_PASSWORD`). Er is dus geen extra variabele in `.env`; `db-init` zet het wachtwoord bij elke start opnieuw. Wie de omgeving van de PostgREST- of pg_featureserv-container kan lezen, heeft daarmee ook het wachtwoord van de database-eigenaar. Een eigen wachtwoord per rol kan later, zonder de opzet te veranderen.
 
@@ -697,5 +711,5 @@ Voeg je een kaartlaag of bibliotheek toe die rechtstreeks een andere server aanr
 - Het domein heeft DNSSEC en is via IPv6 bereikbaar (ook verplichte standaarden). Dat regel je bij je DNS- en hostingbeheer, niet in de stack.
 - `security.txt` verwijst naar het juiste meldpunt.
 - `OMNITWIN_OMGEVING` staat op `productie` (of ontbreekt): geen demo-accounts met bekende wachtwoorden.
-- Moet de data niet openbaar zijn: `VIEWER_TOEGANG=inloggen` (zie [Toegang tot de viewer](#toegang-tot-de-viewer-open-of-dicht)).
+- Moet de data niet openbaar zijn: `VIEWER_TOEGANG=inloggen` (zie [Toegang tot de viewer](#toegang-tot-de-viewer-open-of-dicht)). Is alleen een deel intern: `dct:accessRights` `RESTRICTED` bij die datasets (zie [Toegang per laag en bron](#toegang-per-laag-en-bron-openbaar-of-intern)), en controleer zonder inloggen dat ze niet zichtbaar zijn.
 - Er is een backup (database en uploads) en een geteste restore.

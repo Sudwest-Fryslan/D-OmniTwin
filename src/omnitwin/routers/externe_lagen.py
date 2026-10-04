@@ -7,7 +7,7 @@ Bevat een WFS proxy met 24u cache en lokale GPKG/GeoJSON leesfunctie.
 Sprint 18 Track B — Extern Lagen Beheersysteem
 
 Endpoints (public):
-- GET  /api/externe-lagen              → Actieve lagen (voor frontend toggles)
+- GET  /api/externe-lagen              → Actieve lagen (voor frontend toggles); interne alleen met rol (#254)
 - GET  /api/externe-lagen/{id}/features → WFS proxy of lokaal bestand (GeoJSON, cached 24u)
 - POST /api/externe-lagen/{id}/buurten  → CBS-buurten via ST_Contains(centroid)
 
@@ -36,6 +36,7 @@ import re
 import json
 import logging
 
+from omnitwin import toegang
 from omnitwin.database import get_db
 from omnitwin.routers.auth import vereis_admin
 
@@ -77,6 +78,12 @@ CACHE_TTL_SEC = 86400  # 24 uur
 
 _VALID_HEX_RE = re.compile(r'^#[0-9A-Fa-f]{6}$')
 
+def _check_toegang(v: str) -> str:
+    if v not in ("openbaar", "intern"):
+        raise ValueError("toegang moet 'openbaar' of 'intern' zijn")
+    return v
+
+
 class ExterneKaartlaagCreate(BaseModel):
     naam: str
     beschrijving: Optional[str] = None
@@ -94,6 +101,12 @@ class ExterneKaartlaagCreate(BaseModel):
     opacity: float = 0.15
     actief: bool = True
     volgorde: int = 0
+    toegang: str = "openbaar"   # openbaar | intern (alleen met rol lezer of beheerder, #254)
+
+    @field_validator("toegang")
+    @classmethod
+    def check_toegang(cls, v: str) -> str:
+        return _check_toegang(v)
 
     @field_validator("laag_type")
     @classmethod
@@ -148,6 +161,12 @@ class ExterneKaartlaagUpdate(BaseModel):
     opacity: Optional[float] = None
     actief: Optional[bool] = None
     volgorde: Optional[int] = None
+    toegang: Optional[str] = None
+
+    @field_validator("toegang")
+    @classmethod
+    def check_toegang(cls, v: Optional[str]) -> Optional[str]:
+        return None if v is None else _check_toegang(v)
 
 
 class BuurtenRequest(BaseModel):
@@ -293,11 +312,12 @@ async def _fetch_wfs(row) -> dict:
 def get_actieve_lagen(db: Session = Depends(get_db)):
     """
     Haal alle actieve externe kaartlagen op (voor frontend toggle-rendering).
-    Geen authenticatie nodig — alleen actieve lagen, geen connectie-details.
+    Geen authenticatie nodig — alleen actieve lagen, geen connectie-details. Interne lagen alleen
+    met de rol lezer of beheerder (#254: row level security, zie omnitwin.toegang).
     """
     rows = db.execute(text("""
         SELECT id, naam, beschrijving, laag_type, bron_type,
-               kleur_lijn, kleur_fill, opacity, volgorde
+               kleur_lijn, kleur_fill, opacity, volgorde, toegang
         FROM externe_kaartlagen
         WHERE actief = true
         ORDER BY volgorde, naam
@@ -314,7 +334,8 @@ def get_actieve_lagen(db: Session = Depends(get_db)):
                 "kleur_lijn": r.kleur_lijn,
                 "kleur_fill": r.kleur_fill,
                 "opacity": r.opacity,
-                "volgorde": r.volgorde
+                "volgorde": r.volgorde,
+                "toegang": r.toegang
             } for r in rows
         ],
         "totaal": len(rows)
@@ -327,6 +348,8 @@ async def get_laag_features(laag_id: int, db: Session = Depends(get_db)):
     WFS proxy: haal features op voor een externe laag.
     Response wordt 24u gecached per laag_id.
     """
+    # Interne laag zonder rol: 401/403 (#254), vóór de cache
+    await run_in_threadpool(toegang.vereis_kaartlaag, db, laag_id)
     # Laag ophalen (alleen actieve). Synchrone database en fiona in de threadpool,
     # zodat ze de event loop niet blokkeren (#68); de WFS-aanroep is async.
     row = await run_in_threadpool(lambda: db.execute(text("""
@@ -388,7 +411,8 @@ def get_buurten_voor_feature(
     Body: { "wkt": "POLYGON((...))"}  — geometrie in EPSG:4326 (WGS84)
     Backend transformeert naar EPSG:28992 (RD) voor de spatial query.
     """
-    # Verifieer dat de laag bestaat en actief is
+    # Verifieer dat de laag bestaat en actief is (interne laag zonder rol: 401/403, #254)
+    toegang.vereis_kaartlaag(db, laag_id)
     laag = db.execute(text(
         "SELECT id, naam FROM externe_kaartlagen WHERE id = :id AND actief = true"
     ), {"id": laag_id}).fetchone()
@@ -441,7 +465,7 @@ def admin_get_alle_lagen(
         SELECT id, naam, beschrijving, laag_type, bron_type,
                url, typename, srsname, versie,
                filter_type, filter_waarde, koppel_veld,
-               kleur_lijn, kleur_fill, opacity, actief, volgorde,
+               kleur_lijn, kleur_fill, opacity, actief, volgorde, toegang,
                created_at, updated_at
         FROM externe_kaartlagen
         ORDER BY volgorde, naam
@@ -467,6 +491,7 @@ def admin_get_alle_lagen(
                 "opacity": r.opacity,
                 "actief": r.actief,
                 "volgorde": r.volgorde,
+                "toegang": r.toegang,
                 "created_at": r.created_at.isoformat() if r.created_at else None,
                 "updated_at": r.updated_at.isoformat() if r.updated_at else None,
             } for r in rows
@@ -485,11 +510,11 @@ def admin_create_laag(
         INSERT INTO externe_kaartlagen
             (naam, beschrijving, laag_type, bron_type, url, typename,
              srsname, versie, filter_type, filter_waarde, koppel_veld,
-             kleur_lijn, kleur_fill, opacity, actief, volgorde)
+             kleur_lijn, kleur_fill, opacity, actief, volgorde, toegang)
         VALUES
             (:naam, :beschrijving, :laag_type, :bron_type, :url, :typename,
              :srsname, :versie, :filter_type, :filter_waarde, :koppel_veld,
-             :kleur_lijn, :kleur_fill, :opacity, :actief, :volgorde)
+             :kleur_lijn, :kleur_fill, :opacity, :actief, :volgorde, :toegang)
         RETURNING id
     """), {
         "naam": data.naam,
@@ -508,6 +533,7 @@ def admin_create_laag(
         "opacity": data.opacity,
         "actief": data.actief,
         "volgorde": data.volgorde,
+        "toegang": data.toegang,
     })
     new_id = result.fetchone()[0]
     db.commit()
@@ -541,7 +567,7 @@ def admin_update_laag(
     allowed_fields = {
         "naam", "beschrijving", "laag_type", "bron_type", "url", "typename",
         "srsname", "versie", "filter_type", "filter_waarde", "koppel_veld",
-        "kleur_lijn", "kleur_fill", "opacity", "actief", "volgorde"
+        "kleur_lijn", "kleur_fill", "opacity", "actief", "volgorde", "toegang"
     }
     for field_name in allowed_fields:
         value = getattr(data, field_name, None)

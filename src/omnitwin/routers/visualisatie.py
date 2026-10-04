@@ -6,6 +6,7 @@ Based on: docs/visual/kaartkleuring_visualisatie_d_omn_itwin.md (v1.1)
 from fastapi import APIRouter, Depends, HTTPException, Header, Request
 from sqlalchemy.orm import Session
 from sqlalchemy import text
+from omnitwin import toegang
 from omnitwin.database import get_db
 from pydantic import BaseModel
 from typing import Optional, List
@@ -119,6 +120,7 @@ def get_indicator_viz_config(indicator_uuid: UUID, db: Session = Depends(get_db)
     Resolves: indicator → color_schema → palette config.
     Falls back to profile pattern matching if no direct schema assigned.
     """
+    toegang.vereis_indicator(db, indicator_uuid)  # interne indicator zonder rol: 401/403 (#254)
     # 1. Check if indicator has a direct color_schema assignment
     result = db.execute(text("""
         SELECT i.uuid, i.naam, i.score_type, i.color_schema_id,

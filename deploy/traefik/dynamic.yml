@@ -6,7 +6,8 @@
 #   keycloak-headers   /auth (Keycloak, compose-profiel keycloak, #214)
 # Daarnaast hebben de routers van /api/data (PostgREST) en /api/geo (pg_featureserv)
 #   viewer-toegang     forwardAuth naar de backend (#266, ADR 0009): bij VIEWER_TOEGANG=inloggen
-#                      alleen met een sessie of token met rol lezer of beheerder; bij open altijd door
+#                      alleen met een sessie of token met rol lezer of beheerder; bij open altijd door,
+#                      met de header X-Omnitwin-Toegang voor interne lagen (#254, ADR 0010)
 # Een nieuwe router zonder een van beide laat tests/test_traefik_routers.py falen.
 # Waarom per router en niet op het entrypoint: een middleware op het entrypoint
 # overschrijft de headers van elke router, en Keycloak heeft eigen CSP- en
@@ -64,9 +65,16 @@ http:
     # Problem Details) naar de browser. De backend beslist op VIEWER_TOEGANG (open = altijd 204), zodat
     # er maar één schakelaar is. `backend` is de servicenaam in het compose-netwerk van het project.
     # Staat de backend niet, dan geven /api/data en /api/geo een fout: dicht bij twijfel.
+    #
+    # Toegang per laag en bron (#254, ADR 0010): bij 204 zet de backend X-Omnitwin-Toegang (intern of
+    # openbaar). Traefik kopieert die naar het verzoek aan PostgREST en verwijdert een gelijknamige
+    # header van de client eerst, zodat een bezoeker zich niet zelf intern kan maken. De views in
+    # schema api filteren daarop (db/migraties/R__api_rollen.sql).
     viewer-toegang:
       forwardAuth:
         address: "http://backend:8000/api/viewer/toegang"
+        authResponseHeaders:
+          - "X-Omnitwin-Toegang"
 
     # Keycloak (/auth): zonder CSP, X-Frame-Options en Referrer-Policy. Die zet Keycloak
     # zelf per realm (Realm settings > Security defenses), standaard

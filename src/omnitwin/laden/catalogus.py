@@ -32,6 +32,12 @@ def is_publiek(beschrijving: dict) -> bool:
     return str(w or "").rstrip("/") == PUBLIEK
 
 
+def toegang_van(beschrijving: dict) -> str:
+    """openbaar (dct:accessRights PUBLIC) of intern (al het andere, ook ontbrekend), #254. Zelfde regel
+    als laden.toegang_uit_dcat in de database (V032)."""
+    return "openbaar" if is_publiek(beschrijving) else "intern"
+
+
 def distributie(dataset_id: str, versie: int, levering: dict) -> dict:
     return {
         "@type": "dcat:Distribution",

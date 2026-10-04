@@ -53,6 +53,22 @@ GRANT USAGE ON SCHEMA api TO web_anon;
 -- Opnieuw aanmaken (DROP + CREATE) zodat kolomwijzigingen ook bij een bestaande database
 -- doorkomen. Alles in één transactie: PostgREST ziet nooit een half schema.
 
+-- Toegang per laag en bron (#254, ADR 0010). De views hieronder zijn van de database-eigenaar en
+-- lezen de tabellen zonder row level security; ze filteren daarom zelf: `openbaar` voor iedereen,
+-- `intern` alleen als het verzoek de header X-Omnitwin-Toegang: intern heeft. Die header zet de
+-- backend in het forwardAuth-antwoord (viewer-toegang@file, deploy/traefik/dynamic.yml) bij een
+-- sessie of token met de rol lezer of beheerder; Traefik vervangt een meegestuurde header van de
+-- client (authResponseHeaders). PostgREST is alleen via Traefik bereikbaar.
+CREATE OR REPLACE FUNCTION public.verzoek_mag_intern()
+RETURNS boolean
+LANGUAGE sql
+STABLE
+AS $$
+    SELECT coalesce(nullif(current_setting('request.headers', true), '')::json->>'x-omnitwin-toegang', '') = 'intern'
+$$;
+COMMENT ON FUNCTION public.verzoek_mag_intern() IS
+    'PostgREST: mag dit verzoek interne data zien? (header X-Omnitwin-Toegang van de forwardAuth, #254)';
+
 -- Gemeenten (frontend: gemeentekeuze; admin: gemeentelijst)
 DROP VIEW IF EXISTS api.gemeenten;
 CREATE VIEW api.gemeenten AS
@@ -72,13 +88,14 @@ CREATE VIEW api.gebieden AS
 SELECT id, naam, gebiedstype_id, gemeente_code, provincienaam, actief, created_at, updated_at
 FROM public.gebieden;
 
--- Externe kaartlagen (frontend: kaartlagen-paneel)
+-- Externe kaartlagen (frontend: kaartlagen-paneel); intern alleen met X-Omnitwin-Toegang: intern
 DROP VIEW IF EXISTS api.externe_kaartlagen;
 CREATE VIEW api.externe_kaartlagen AS
 SELECT id, naam, beschrijving, laag_type, bron_type, url, typename, srsname, versie,
        filter_type, filter_waarde, koppel_veld, kleur_lijn, kleur_fill, opacity,
-       actief, volgorde, created_at, updated_at
-FROM public.externe_kaartlagen;
+       actief, volgorde, created_at, updated_at, toegang
+FROM public.externe_kaartlagen
+WHERE toegang = 'openbaar' OR public.verzoek_mag_intern();
 
 -- Indicatoren: beschrijvende metadata, zonder interne beheervelden
 -- (admin_notes, ontologie_beoordeeld_door, gevalideerd_door).
@@ -89,25 +106,36 @@ SELECT id, uuid, naam, code, omschrijving, eenheid, interpretatie_logica, score_
        min_waarde, max_waarde, waarde_type, bron, status, categorie,
        begingeldigheid, eindgeldigheid, color_schema_id,
        ontologische_beschrijving, ontologie_status, beschrijving_ai,
-       is_actief, vervangen_door_id, hoofd_indicator_id, created_at, updated_at
-FROM public.indicatoren;
+       is_actief, vervangen_door_id, hoofd_indicator_id, created_at, updated_at, toegang
+FROM public.indicatoren
+WHERE toegang = 'openbaar' OR public.verzoek_mag_intern();
 
--- Actuele waarde per gebied en indicator (tests: use cases, #138)
+-- Actuele waarde per gebied en indicator (tests: use cases, #138). Zelfde regel als
+-- public.vw_gebied_indicator_actueel (V030), maar over de waarden die dit verzoek mag zien (#254):
+-- anoniem de recentste openbare waarde.
 DROP VIEW IF EXISTS api.vw_gebied_indicator_actueel;
 CREATE VIEW api.vw_gebied_indicator_actueel AS
-SELECT gebied_id, indicator_uuid, waarde, jaar, datum, bron
-FROM public.vw_gebied_indicator_actueel;
+SELECT DISTINCT ON (gd.gebied_id, gd.indicator_uuid)
+       gd.gebied_id, gd.indicator_uuid, gd.waarde, gd.jaar, gd.datum, gd.bron
+FROM public.gebied_data gd
+WHERE COALESCE(gd.scenario_id, 'current') = 'current'
+  AND (gd.toegang = 'openbaar' OR public.verzoek_mag_intern())
+ORDER BY gd.gebied_id, gd.indicator_uuid, gd.jaar DESC NULLS LAST, gd.datum DESC NULLS LAST;
 
 -- Waarden per gebied, indicator en jaar (use cases via /api/data/v1, laad-API #205).
 -- Zonder n: waarden onder de n-drempel staan hier nooit (laad-API), n zelf is niet nodig.
 DROP VIEW IF EXISTS api.gebied_data;
 CREATE VIEW api.gebied_data AS
-SELECT gebied_id, indicator_uuid, jaar, datum, scenario_id, waarde, kwaliteit, bron, n_status
-FROM public.gebied_data;
+SELECT gebied_id, indicator_uuid, jaar, datum, scenario_id, waarde, kwaliteit, bron, n_status, toegang
+FROM public.gebied_data
+WHERE toegang = 'openbaar' OR public.verzoek_mag_intern();
 
 -- Indicatorenlijst met aantallen (frontend: indicatorkeuze, /rpc/get_indicatoren_stats).
 -- SECURITY DEFINER met vaste search_path: web_anon heeft geen rechten in public nodig.
-CREATE OR REPLACE FUNCTION api.get_indicatoren_stats(p_gebiedstype_id uuid DEFAULT NULL)
+-- Met toegang (#254); interne indicatoren alleen met X-Omnitwin-Toegang: intern. De aantallen
+-- tellen alle waarden van de indicator (ook interne van een openbare indicator).
+DROP FUNCTION IF EXISTS api.get_indicatoren_stats(uuid);
+CREATE FUNCTION api.get_indicatoren_stats(p_gebiedstype_id uuid DEFAULT NULL)
 RETURNS TABLE (
     uuid uuid,
     naam character varying,
@@ -117,14 +145,20 @@ RETURNS TABLE (
     categorie character varying,
     aantal_gebieden_met_data bigint,
     aantal_metingen bigint,
-    nieuwste_jaar integer
+    nieuwste_jaar integer,
+    toegang text
 )
 LANGUAGE sql
 STABLE
 SECURITY DEFINER
 SET search_path = public, pg_temp
 AS $$
-    SELECT * FROM public.get_indicatoren_stats(p_gebiedstype_id)
+    SELECT s.uuid, s.naam, s.code, s.omschrijving, s.eenheid, s.categorie, s.aantal_gebieden_met_data,
+           s.aantal_metingen, s.nieuwste_jaar, i.toegang
+    FROM public.get_indicatoren_stats(p_gebiedstype_id) WITH ORDINALITY AS s
+    JOIN public.indicatoren i ON i.uuid = s.uuid
+    WHERE i.toegang = 'openbaar' OR public.verzoek_mag_intern()
+    ORDER BY s.ordinality
 $$;
 
 -- Rechten in api: alleen lezen en de gewhiteliste functies
@@ -166,6 +200,38 @@ BEGIN
         REVOKE ALL ON FUNCTION postgisftw.buurten_in_deelgebied(integer, double precision) FROM PUBLIC;
         GRANT EXECUTE ON FUNCTION postgisftw.buurten_in_deelgebied(integer, double precision) TO featureserv;
     END IF;
+END
+$$;
+
+-- ── Views in public die interne data lezen: security_invoker (#254) ─────────
+-- Zo geldt de row level security op indicatoren, gebied_data en externe_kaartlagen (V032) ook als
+-- de backend een anoniem verzoek als omnitwin_openbaar uitvoert via een view. Elke run opnieuw, omdat
+-- een latere migratie een view opnieuw kan aanmaken (dan valt de optie weg). Alleen views die geen
+-- andere rol (web_anon, featureserv) rechtstreeks leest; die lezen via schema api (eigenaar).
+DO $$
+DECLARE
+    v record;
+BEGIN
+    IF to_regrole('omnitwin_openbaar') IS NULL THEN
+        RETURN;
+    END IF;
+    FOR v IN
+        WITH RECURSIVE afh(oid) AS (
+            SELECT c.oid FROM pg_class c
+            WHERE c.oid IN ('public.indicatoren'::regclass, 'public.gebied_data'::regclass,
+                            'public.externe_kaartlagen'::regclass)
+            UNION
+            SELECT r.ev_class FROM pg_depend d
+            JOIN pg_rewrite r ON r.oid = d.objid
+            JOIN afh ON afh.oid = d.refobjid
+            WHERE d.classid = 'pg_rewrite'::regclass AND r.ev_class <> d.refobjid
+        )
+        SELECT c.oid::regclass AS naam
+        FROM afh JOIN pg_class c ON c.oid = afh.oid JOIN pg_namespace n ON n.oid = c.relnamespace
+        WHERE c.relkind = 'v' AND n.nspname = 'public'
+    LOOP
+        EXECUTE format('ALTER VIEW %s SET (security_invoker = true)', v.naam);
+    END LOOP;
 END
 $$;
 

@@ -8,6 +8,7 @@ from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 from typing import List, Optional, Dict, Any
 from uuid import UUID
+from omnitwin import toegang
 from omnitwin.database import get_db
 from omnitwin.schemas.kompas import (
     KompasConfiguratiesResponse,
@@ -200,6 +201,7 @@ def get_indicator_path(
     updateBreadcrumb(path);
     ```
     """
+    toegang.vereis_indicator(db, indicator_uuid)  # interne indicator zonder rol: 401/403 (#254)
     service = KompasService(db)
     result = service.get_indicator_path(config_id, str(indicator_uuid))
     
@@ -222,6 +224,7 @@ def get_indicator_history(
     """
     Haal tijdreeks data op voor indicator/gebied combinatie (Line Chart)
     """
+    toegang.vereis_indicator(db, indicator_uuid)  # #254
     service = KompasService(db)
     result = service.get_indicator_history(config_id, gebied_id, str(indicator_uuid))
     
@@ -255,6 +258,7 @@ def get_top_buurten(
     - `top_positief`: Buurten met hoogste Z-score
     - `top_negatief`: Buurten met laagste Z-score
     """
+    toegang.vereis_indicator(db, indicator_uuid)  # #254
     service = KompasService(db)
     result = service.get_top_afwijkende_buurten(str(indicator_uuid), limit, gebied_id)
     
