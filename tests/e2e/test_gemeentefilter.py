@@ -5,8 +5,9 @@ Scenario uit de bug: de chat zette het filter op Leeuwarden (0080) terwijl de sa
 alleen buurten van Súdwest-Fryslân (1900) bevat. Het filter bleef in localStorage
 staan en de kaart bleef leeg, zonder uitleg.
 
-Zelfstandig: eigen browser-fixture, zodat de test ook draait zonder de gedeelde
-conftest uit de E2E-suite. Draaien: zie tests/e2e/README.md (Playwright-container), bijv.
+Gebruikt de gedeelde browser uit conftest.py (een tweede sync_playwright naast die van de
+sessie faalt met "Sync API inside the asyncio loop"), maar opent eigen pagina's.
+Draaien: zie tests/e2e/README.md (Playwright-container), bijv.
 
     OMNITWIN_BASE_URL=http://traefik pytest -m e2e tests/e2e/test_gemeentefilter.py
 """
@@ -18,6 +19,8 @@ import pytest
 
 playwright = pytest.importorskip("playwright.sync_api")
 expect = playwright.expect
+
+from e2e_helpers import PAGINA_TIMEOUT_MS, geschaald, stel_wachttijden_in, zonder_basiskaarttegels  # noqa: E402
 
 pytestmark = pytest.mark.e2e
 
@@ -37,17 +40,6 @@ _INIT = """
   } catch (e) {}
 }
 """
-
-
-@pytest.fixture(scope="module")
-def browser():
-    with playwright.sync_playwright() as p:
-        b = p.chromium.launch(
-            headless=os.environ.get("E2E_HEADED") != "1",
-            args=["--use-angle=swiftshader", "--enable-unsafe-swiftshader", "--ignore-gpu-blocklist"],
-        )
-        yield b
-        b.close()
 
 
 def _maak_leeg(route):
@@ -75,13 +67,15 @@ def _open_met_filter(browser, code, zonder_gebieden=False):
         # simuleren we door de kaartdata met dit filter leeg te maken. Getest wordt de uitleg en
         # het wissen in de frontend (#140), niet de data.
         context.route(re.compile(rf".*gemeente_code={code}.*"), _maak_leeg)
+    zonder_basiskaarttegels(context)
     page = context.new_page()
-    page.set_default_timeout(20_000)
-    page.goto(f"{BASE_URL}/", wait_until="domcontentloaded")
+    page.set_default_timeout(geschaald(PAGINA_TIMEOUT_MS))
+    page.goto(f"{BASE_URL}/", wait_until="domcontentloaded", timeout=geschaald(60_000))
+    stel_wachttijden_in(page)  # wachttijden schalen met de renderer (#212)
     page.wait_for_function(
         "() => window.state && window.state.deckgl"
         " && document.querySelectorAll('#gebiedstype-select option').length > 1",
-        timeout=60_000,
+        polling=100, timeout=geschaald(60_000),
     )
     return context, page
 
@@ -92,12 +86,12 @@ def _laad_buurten(page):
         knop.click()
     page.locator("#gebiedstype-select").select_option(label="CBS Buurten")
     toon = page.locator("#toon-kaart-btn")
-    expect(toon).to_be_enabled(timeout=30_000)
+    expect(toon).to_be_enabled(timeout=geschaald(30_000))
     with page.expect_response(lambda r: "/api/gebiedsmonitor/kaart_data/" in r.url and r.ok):
         toon.click()
     page.wait_for_function(
         "() => !!(window.state.currentData && Array.isArray(window.state.currentData.features))",
-        timeout=30_000,
+        polling=100, timeout=geschaald(30_000),
     )
 
 
@@ -120,15 +114,15 @@ def test_filter_zonder_gebieden_toont_melding_en_wissen_herstelt_kaart(browser):
             page.get_by_role("button", name="Gemeentefilter Leeuwarden wissen").click()
         page.wait_for_function(
             "() => window.state.currentData && window.state.currentData.features.length > 0",
-            timeout=30_000,
+            polling=100, timeout=geschaald(30_000),
         )
         expect(chip).to_be_hidden()
         assert page.evaluate("() => localStorage.getItem('omnitwin-gemeente')") == ""
         assert page.locator("#gemeente-input").input_value() == "Alle gemeenten"
 
         # Na herladen blijft het filter weg
-        page.reload(wait_until="domcontentloaded", timeout=60_000)
-        page.wait_for_function("() => window.state && window.state.deckgl", timeout=60_000)
+        page.reload(wait_until="domcontentloaded", timeout=geschaald(60_000))
+        page.wait_for_function("() => window.state && window.state.deckgl", polling=100, timeout=geschaald(60_000))
         expect(page.locator("#gemeente-filter-chip")).to_be_hidden()
     finally:
         context.close()

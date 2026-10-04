@@ -372,7 +372,9 @@ Elke organisatie draait een eigen instantie (ADR 0007). Wie die instantie beheer
 De eerste gemeentecode is de standaard-referentie in de rapporten ("⌀ Gemeente ...") en bepaalt welke buurten bij een omgevingsvisie-deelgebied horen.
 
 - **Nieuwe installatie:** pas vóór de eerste start `db/stuurdata/organisatie.sql` aan. `db-init` laadt het bestand alleen als de tabel nog leeg is. Met een kant-en-klare image (zonder eigen build): mount je eigen bestand in `db-init` op `/app/db/stuurdata/organisatie.sql`, of gebruik de SQL hieronder.
-- **Bestaande installatie:** wijzig de rij met SQL (`docker compose exec postgres psql -U <DATABASE_USER> -d <DATABASE_NAME>`), bijvoorbeeld:
+- **In het beheerscherm** (aanbevolen, [#253](https://github.com/TLaan/D-OmniTwin/issues/253)): **Organisatie** in het menu, alleen voor beheerders. Thema kiezen (met voorbeeld in licht en donker), naam, korte naam, code, contactadres, OIN, gemeenten van het eigen gebied (met de standaardgemeente), standaard-benchmarkprovincie en de footer-logo's (volgorde, toevoegen uit bestaande bestanden onder `static/images/`, verwijderen). Ongeldige invoer (een thema of logo dat niet bestaat, een ongeldig e-mailadres, een gemeentecode die geen vier cijfers is) wordt geweigerd. Na opslaan een gewone herlaadactie; geen herstart. Elke wijziging staat in de log (categorie `ADMIN`, met gebruikersnaam en `sub`). Het inlogthema van Keycloak wisselt niet mee: zie [Thema's](thema-s.md#thema-kiezen-in-het-beheerscherm).
+- **Overnemen van of naar een andere instantie:** **Exporteren (JSON)** geeft een bestand `organisatie-<code>.json` (`GET /api/organisatie/export`, zonder geheimen); **Importeren (JSON)** in de andere instantie zet het over (`POST /api/organisatie/import`), met dezelfde controles. Thema en logo's moeten daar ook als bestand bestaan, anders weigert de import. Of je een instelling overneemt, beslist de organisatie van die instantie (ADR 0007).
+- **Bestaande installatie, met SQL:** wijzig de rij met SQL (`docker compose exec postgres psql -U <DATABASE_USER> -d <DATABASE_NAME>`), bijvoorbeeld:
 
   ```sql
   UPDATE organisatie SET
