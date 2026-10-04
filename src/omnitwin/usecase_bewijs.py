@@ -70,6 +70,7 @@ try {
     localStorage.setItem(k, '1');
   }
   localStorage.setItem('omnitwin-gemeente', %s);
+  localStorage.setItem('omnitwin-theme', 'light');  // bewijs in de dagstand
 } catch (e) {}
 """
 

@@ -81,7 +81,7 @@ Gemeten op een verse installatie op 02-10-2026. Boomkroon en hitte-eiland wijken
 ## Bewijs
 
 <!-- bewijs:start -->
-*Gemaakt op 03-10-2026 met D-OmniTwin 0.3.0-rc.1 (use case 0.3.0); geslaagd. Verslag: [`bewijs/bewijs.json`](bewijs/bewijs.json). Opnieuw maken (bij een release): `python -m omnitwin.usecases bewijs hittestress`.*
+*Gemaakt op 04-10-2026 met D-OmniTwin 0.3.0 (use case 0.3.0); geslaagd. Verslag: [`bewijs/bewijs.json`](bewijs/bewijs.json). Opnieuw maken (bij een release): `python -m omnitwin.usecases bewijs hittestress`.*
 
 ![Boomkroonbedekking per buurt in Bolsward (RIVM, 2022)](bewijs/kaart.webp)
 *Boomkroonbedekking per buurt in Bolsward (RIVM, 2022)*
