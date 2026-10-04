@@ -272,10 +272,18 @@ def test_themalijst_uit_static():
     swf = next(t for t in lijst if t["naam"] == "swf")
     assert swf["titel"] == "Gemeente Súdwest-Fryslân"
     licht, donker = swf["kleuren"]["licht"], swf["kleuren"]["donker"]
-    assert licht["--basis-color-action-1-bg-default"] == "#bf0042"
-    assert licht["--d-omnitwin-header-background-color-start"] == "#bf0042"
-    assert donker["--d-omnitwin-header-background-color-start"] == "#8c0030"
-    assert licht["--d-omnitwin-beeldmerk-vlak"] == "#ffffff"
+    assert licht["--basis-color-action-1-bg-default"] == "#a8003b"
+    # Witte kopbalk met rode accentlijn, zoals sudwestfryslan.nl (#284)
+    assert licht["--d-omnitwin-header-background-color-start"] == "#ffffff"
+    assert donker["--d-omnitwin-header-background-color-start"] == "#262626"
+    assert licht["--d-omnitwin-header-accent-color"] == "#bf0042"
+    assert licht["--d-omnitwin-beeldmerk-vlak"] == "#bf0042"
+    # WCAG-status uit het kopcommentaar (#284)
+    assert swf["wcag_aa"] is True
+    legacy = next(t for t in lijst if t["naam"] == "legacy")
+    assert legacy["wcag_aa"] is False
+    assert legacy["titel"] == "Klassiek groen-blauw"
+    assert next(t for t in lijst if t["naam"] == "d-omnitwin")["wcag_aa"] is False
 
 
 def test_themakleuren_lossen_var_op_en_donker_valt_terug_op_licht(tmp_path):
@@ -299,6 +307,7 @@ def test_themakleuren_lossen_var_op_en_donker_valt_terug_op_licht(tmp_path):
     assert [t["naam"] for t in lijst] == ["proef"]
     t = lijst[0]
     assert t["titel"] == "Gemeente Proef"
+    assert t["wcag_aa"] is None  # geen "@wcag-aa:"-regel: onbekend
     assert t["kleuren"]["licht"] == {
         "--basis-color-accent-1-bg-default": "#123456",
         "--d-omnitwin-header-background-color-start": "#123456",

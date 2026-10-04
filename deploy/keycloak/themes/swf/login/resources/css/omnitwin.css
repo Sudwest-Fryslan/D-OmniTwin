@@ -1,8 +1,9 @@
 /*
- * Keycloak-inlogpagina, thema swf (Súdwest-Fryslân, #89). Kleuren gelijk aan static/css/themes/swf.css:
- * PatternFly-variabelen van keycloak.v2 krijgen de waarden van de NL Design System-tokens.
- * Lettertypen Montserrat en Source Sans 3 uit de viewer (zelfde host via Traefik); zonder viewer
- * valt het terug op het systeemfont.
+ * Keycloak-inlogpagina, thema swf (Súdwest-Fryslân, #89, rustiger in #284). Kleuren gelijk aan
+ * static/css/themes/swf.css: PatternFly-variabelen van keycloak.v2 krijgen de waarden van de
+ * NL Design System-tokens. Licht zoals sudwestfryslan.nl (achtergrond #fafafa, donker: antraciet),
+ * SWF-rood alleen voor de knop en de rand boven het formulier. Tekst en links AAA (7:1). Lettertypen Montserrat en Source Sans 3 uit de
+ * viewer (zelfde host via Traefik); zonder viewer valt het terug op het systeemfont.
  */
 @import url("/static/vendor/montserrat@5.3.0/montserrat.css");
 @import url("/static/vendor/source-sans-3@5.3.0/source-sans-3.css");
@@ -10,43 +11,48 @@
 :root {
   --pf-v5-global--FontFamily--text: 'Source Sans 3', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
   --pf-v5-global--FontFamily--heading: 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
-  /* basis-color-action-1-bg-default / -bg-hover: SWF-rood, wit erop 6,38:1 */
-  --pf-v5-global--primary-color--100: #bf0042;
+  /* basis-color-action-1-bg-default / -bg-hover: SWF-rood, wit erop 7,70:1 en 9,73:1 */
+  --pf-v5-global--primary-color--100: #a8003b;
   --pf-v5-global--primary-color--200: #8c0030;
-  /* basis-color-accent-1-color-default / -hover */
-  --pf-v5-global--link--Color: #bf0042;
-  --pf-v5-global--link--Color--hover: #8c0030;
+  /* basis-color-accent-1-color-default / -hover: SWF-donkerblauw, 7,68:1 op wit */
+  --pf-v5-global--link--Color: #005a78;
+  --pf-v5-global--link--Color--hover: #00445c;
   /* basis-focus-outline-color */
   --pf-v5-global--active-color--100: #1e1e1e;
-  /* rand boven het formulier (keycloak.v2) */
+  /* rand boven het formulier (keycloak.v2): de rode accentlijn (d-omnitwin-header-accent-color) */
   --keycloak-card-top-color: #bf0042;
   /* basis-border-radius-md */
   --pf-v5-global--BorderRadius--sm: 4px;
 }
 
-/* Achtergrond: het verloop van de kopbalk (d-omnitwin-header-background-color-start/-end) */
+/* Achtergrond: de pagina (basis-color-default-bg-document), licht zoals de site */
 .pf-v5-c-login {
-  background: linear-gradient(135deg, #bf0042 0%, #8c0030 100%);
+  background: #fafafa;
 }
 
-/* Realmnaam boven het formulier: kopbalktekst (d-omnitwin-header-color) */
-#kc-header-wrapper,
-.pf-v5-c-login__header {
-  color: #ffffff;
+/* Realmnaam boven het formulier: tekstkleur (basis-color-default-color-document), 15,97:1.
+   keycloak.v2 zet hier color: var(--pf-v5-global--Color--light-100) !important; daarom die variabele,
+   alleen op dit element */
+#kc-header-wrapper {
+  --pf-v5-global--Color--light-100: #1e1e1e;
 }
 
 /* Donker (keycloak.v2 zet pf-v5-theme-dark bij de systeeminstelling donker) */
 .pf-v5-theme-dark {
   /* PatternFly gebruikt in donker primary-color--300 voor de primaire knop */
-  --pf-v5-global--primary-color--300: #bf0042;
+  --pf-v5-global--primary-color--300: #a8003b;
   --keycloak-card-top-color: #bf0042;
-  --pf-v5-global--primary-color--100: #bf0042;
+  --pf-v5-global--primary-color--100: #a8003b;
   --pf-v5-global--primary-color--200: #8c0030;
-  --pf-v5-global--link--Color: #ff5c8a;
-  --pf-v5-global--link--Color--hover: #ff8fae;
+  --pf-v5-global--link--Color: #7fd3f0;
+  --pf-v5-global--link--Color--hover: #b3e5f7;
   --pf-v5-global--active-color--100: #ffffff;
 }
 
 .pf-v5-theme-dark .pf-v5-c-login {
-  background: linear-gradient(135deg, #8c0030 0%, #5c0020 100%);
+  background: linear-gradient(135deg, #262626 0%, #1a1a1a 100%);
+}
+
+.pf-v5-theme-dark #kc-header-wrapper {
+  --pf-v5-global--Color--light-100: #ffffff;
 }

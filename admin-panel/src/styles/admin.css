@@ -57,11 +57,45 @@
     --merk-bg: var(--basis-color-action-1-bg-default, #2563eb);
     --merk-bg-hover: var(--basis-color-action-1-bg-hover, #1d4ed8);
     --merk-tekst: var(--basis-color-action-1-inverse-color-default, #ffffff);
-    --kop-start: var(--merk-bg);
-    --kop-eind: var(--merk-bg-hover);
-    --kop-tekst: var(--merk-tekst);
+    /* Kop en actief menu-item (#284): eigen componenttokens, zodat een thema hier een rustige
+       neutrale kop kan zetten terwijl de primaire knop de actiekleur houdt. Terugval = merk. */
+    --kop-start: var(--d-omnitwin-beheer-kop-background-color-start, #2563eb);
+    --kop-eind: var(--d-omnitwin-beheer-kop-background-color-end, #1d4ed8);
+    --kop-tekst: var(--d-omnitwin-beheer-kop-color, #ffffff);
+    --nav-actief-bg: var(--d-omnitwin-beheer-nav-active-background-color, #2563eb);
+    --nav-actief-tekst: var(--d-omnitwin-beheer-nav-active-color, #ffffff);
+    /* Accentlijn zoals onder de kopbalk van de viewer; standaard 0px (geen lijn) */
+    --accentlijn: var(--d-omnitwin-header-accent-color, #22c55e);
+    --accentlijn-breedte: var(--d-omnitwin-header-accent-width, 0px);
     --lettertype: var(--basis-text-font-family-default, 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif);
     --lettertype-kop: var(--basis-heading-font-family, var(--lettertype));
+    /* Standaardweergave volgens het thema (#284): licht of donker; src/thema.ts zet data-theme */
+    --beheer-modus: var(--d-omnitwin-beheer-modus, donker);
+}
+
+/* Lichte weergave (#284): als het thema dat kiest (--d-omnitwin-beheer-modus: licht) of de gebruiker
+   (menu rechtsboven). Kleuren uit de lichte basistokens van het thema; terugval: het lichte palet van
+   de viewer. Randen en hover afgeleid van de tekstkleur, zodat ze bij elk thema passen. */
+:root[data-theme="light"] {
+    color-scheme: light;
+    --color-background: var(--basis-color-default-bg-document, #f1f5f9);
+    --color-surface: var(--basis-color-default-bg-default, #ffffff);
+    --color-surface-light: color-mix(in srgb, var(--color-text-primary) 6%, var(--color-surface));
+    --color-border: color-mix(in srgb, var(--color-text-primary) 22%, var(--color-surface));
+    --color-text-primary: var(--basis-color-default-color-document, #1e293b);
+    --color-text-secondary: var(--basis-color-default-color-subtle, #475569);
+    --color-text-muted: var(--basis-color-default-color-subtle, #475569);
+    --color-primary: var(--basis-color-accent-1-color-default, #1e3a8a);
+    --color-secondary: var(--basis-color-accent-3-color-default, #15803d);
+    --color-action: var(--basis-color-action-1-color-default, #1e3a8a);
+    --color-accent: var(--basis-color-accent-2-color-default, #856a00);
+    --color-success: var(--basis-color-positive-color-default, #15803d);
+    --color-warning: var(--basis-color-warning-color-default, #c2410c);
+    --color-error: var(--basis-color-negative-color-default, #b91c1c);
+    --color-danger: var(--basis-color-negative-color-default, #b91c1c);
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.08);
+    --shadow-md: 0 4px 8px rgba(0, 0, 0, 0.1);
+    --shadow-lg: 0 10px 20px rgba(0, 0, 0, 0.12);
 }
 
 * {
@@ -96,6 +130,7 @@ body {
     padding: var(--spacing-lg);
     border-bottom: 1px solid var(--color-border);
     background: linear-gradient(135deg, var(--kop-start) 0%, var(--kop-eind) 100%);
+    box-shadow: inset 0 calc(-1 * var(--accentlijn-breedte)) 0 var(--accentlijn);
     display: flex;
     align-items: center;
     gap: 0.75rem;
@@ -138,8 +173,9 @@ body {
 }
 
 .nav-item.active {
-    background: var(--merk-bg);
-    color: var(--merk-tekst);
+    background: var(--nav-actief-bg);
+    color: var(--nav-actief-tekst);
+    box-shadow: inset var(--accentlijn-breedte) 0 0 var(--accentlijn);
 }
 
 /* Main Content */

@@ -1,5 +1,7 @@
 # Thema's: eigen huisstijl via NL Design System-tokens
 
+> **Verouderd.** De actuele beschrijving, met de rustigere SWF-kleuren, het thema `legacy` en de WCAG-status per thema ([#284](https://github.com/TLaan/D-OmniTwin/issues/284)), staat in [`docs/9-beheer/thema-s.md`](../9-beheer/thema-s.md). De kleurwaarden hieronder zijn die van vóór #284.
+
 Elke organisatie draait een eigen D-OmniTwin-instantie ([ADR 0007](../2-architectuur/adr/0007-geen-multi-tenancy-mesh-van-instanties.md)). Kleuren, lettertypen, ruimte en hoeken komen uit een **thema**: één CSS-bestand met [NL Design System](https://nldesignsystem.nl)-tokens. Welk thema een instantie laadt, is inrichting (data), geen code. Issue: [#89](https://github.com/TLaan/D-OmniTwin/issues/89).
 
 ## Hoe het werkt

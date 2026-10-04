@@ -201,6 +201,8 @@ class OrganisatieExport(BaseModel):
 class Thema(BaseModel):
     naam: str
     titel: str
+    # WCAG 2.1 AA volgens het kopcommentaar van het thema ("@wcag-aa: ja|nee", #284); None = onbekend
+    wcag_aa: Optional[bool] = None
     kleuren: Dict[str, Dict[str, str]]  # {"licht": {token: "#hex"}, "donker": {...}}
 
 
