@@ -7,6 +7,9 @@ commando in de Playwright-container. Alle tests in deze map krijgen de `e2e`-mar
 Omgevingsvariabelen:
     OMNITWIN_BASE_URL   basis-URL via Traefik (standaard http://localhost)
     E2E_HEADED          "1" = browser zichtbaar (lokaal debuggen)
+    E2E_BASISKAART      "1" = tegels van de PDOK-basiskaart laden (standaard leeg, zie e2e_helpers)
+
+Wachttijden schalen met de gemeten traagheid van de renderer (#212, zie e2e_helpers).
 """
 
 import os
@@ -18,9 +21,15 @@ import pytest
 try:
     from playwright.sync_api import expect, sync_playwright
 
+    from e2e_helpers import (
+        EXPECT_TIMEOUT_MS, PAGINA_TIMEOUT_MS, geschaald, stel_wachttijden_in, traagheidsmetingen,
+        zonder_basiskaarttegels,
+    )
+
     # Software-WebGL in de container is traag, op CI-runners zonder GPU nog trager:
-    # ruimere standaardtimeout voor expect(), instelbaar via E2E_EXPECT_TIMEOUT_MS.
-    expect.set_options(timeout=int(os.environ.get("E2E_EXPECT_TIMEOUT_MS", "15000")))
+    # ruimere standaardtimeout voor expect(), instelbaar via E2E_EXPECT_TIMEOUT_MS; per pagina
+    # geschaald met de gemeten traagheid (stel_wachttijden_in).
+    expect.set_options(timeout=EXPECT_TIMEOUT_MS)
 except ImportError:  # CI-unit-job heeft geen Playwright: map dan niet verzamelen
     sync_playwright = None
     collect_ignore_glob = ["test_*.py"]
@@ -60,6 +69,21 @@ _CONSOLE_RUIS = [
 ]
 
 
+def pytest_configure(config):
+    config.addinivalue_line("markers", "basiskaart: test heeft de tegels van de PDOK-basiskaart nodig")
+
+
+def pytest_terminal_summary(terminalreporter):
+    if sync_playwright is None or not traagheidsmetingen:
+        return
+    ms = sorted(m for m, _ in traagheidsmetingen if m)
+    factoren = sorted(f for _, f in traagheidsmetingen)
+    if ms:
+        terminalreporter.write_line(
+            f"Traagheid renderer (#212): {len(ms)} metingen, taak {ms[0]:.0f}/{ms[len(ms) // 2]:.0f}/{ms[-1]:.0f} ms"
+            f" (min/mediaan/max), wachttijdfactor {factoren[0]:.1f}-{factoren[-1]:.1f}")
+
+
 def pytest_collection_modifyitems(config, items):
     for item in items:
         if Path(str(item.fspath)).parent == Path(__file__).resolve().parent:
@@ -88,11 +112,13 @@ def browser():
 def _open(browser, request, skip_onboarding, reduced_motion=None):
     opties = {"reduced_motion": reduced_motion} if reduced_motion else {}
     context = browser.new_context(viewport={"width": 1600, "height": 1000}, locale="nl-NL", **opties)
+    if request.node.get_closest_marker("basiskaart") is None:
+        zonder_basiskaarttegels(context)
     if skip_onboarding:
         context.add_init_script(_SKIP_ONBOARDING)
         context.add_init_script(_TESTGEMEENTE)
     page = context.new_page()
-    page.set_default_timeout(20_000)
+    page.set_default_timeout(geschaald(PAGINA_TIMEOUT_MS))
 
     fouten = []
     page.on("pageerror", lambda exc: fouten.append(f"pageerror: {exc}"))
@@ -104,12 +130,13 @@ def _open(browser, request, skip_onboarding, reduced_motion=None):
     )
     page.console_fouten = fouten
 
-    page.goto(f"{BASE_URL}/", wait_until="domcontentloaded")
+    page.goto(f"{BASE_URL}/", wait_until="domcontentloaded", timeout=geschaald(60_000))
+    stel_wachttijden_in(page)
     # Klaar = deck.gl geïnitialiseerd, gebiedstypes en Kompas-configuraties geladen
     page.wait_for_function(
         "() => window.state && window.state.deckgl && window.kompasViz && window.kompasViz.currentConfigId"
         " && document.querySelectorAll('#gebiedstype-select option').length > 1",
-        timeout=60_000,
+        polling=100, timeout=geschaald(60_000),
     )
 
     yield page

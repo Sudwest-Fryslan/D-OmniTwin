@@ -17,6 +17,7 @@ import { AccountPage } from './pages/AccountPage';
 import { LogViewerPage } from './pages/LogViewerPage';
 import { ExterneKaartlagenPage } from './pages/ExterneKaartlagenPage';
 import { DataKwaliteitPage } from './pages/DataKwaliteitPage';
+import { OrganisatiePage } from './pages/OrganisatiePage';
 import {
   LayoutDashboard,
   Database,
@@ -33,7 +34,8 @@ import {
   Globe,
   Activity,
   Users,
-  ExternalLink
+  ExternalLink,
+  Building2
 } from 'lucide-react';
 import { authAPI } from './services/api';
 import Beeldmerk from './components/Beeldmerk';
@@ -180,6 +182,14 @@ const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
             <Globe size={18} />
             Externe Lagen
           </NavLink>
+
+          <NavLink
+            to="/organisatie"
+            className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
+          >
+            <Building2 size={18} />
+            Organisatie
+          </NavLink>
         </nav>
       </aside>
 
@@ -204,6 +214,7 @@ const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
               <Route path="/llm" element={<>AI Configuratie</>} />
               <Route path="/logs" element={<>Log Viewer</>} />
               <Route path="/externe-lagen" element={<>Externe Kaartlagen</>} />
+              <Route path="/organisatie" element={<>Organisatie en thema</>} />
               <Route path="/account" element={<>Mijn Account</>} />
             </Routes>
           </h2>
@@ -412,6 +423,10 @@ function App() {
 
           <Route path="/externe-lagen" element={
             <ProtectedRoute><ExterneKaartlagenPage /></ProtectedRoute>
+          } />
+
+          <Route path="/organisatie" element={
+            <ProtectedRoute><OrganisatiePage /></ProtectedRoute>
           } />
 
           <Route path="*" element={<Navigate to="/dashboard" replace />} />
