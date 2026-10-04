@@ -1,0 +1,72 @@
+{
+  "id": "swf-init-kaartlagen",
+  "bronId": "swf-initialisatie",
+  "beschrijving": {
+    "@context": "https://data.overheid.nl/dcat-ap-nl/context.jsonld",
+    "@type": "dcat:Dataset",
+    "dct:title": "SWF-initialisatie — externe kaartlagen",
+    "dct:description": "Definities van de externe kaartlagen (WFS/WMS van PDOK e.d.) uit de lokale D-OmniTwin-database, als eerste opzet (aanname B1 van #222). Toegang volgens B3: GeoVisia en projecten 'in plan' intern, de rest openbaar. Lokale lagen (GeoPackage) komen via de laad-API (profiel kaartlaag), niet hier.",
+    "dct:publisher": "https://identifier.overheid.nl/tooi/id/gemeente/gm1900",
+    "dct:accessRights": "http://publications.europa.eu/resource/authority/access-right/PUBLIC",
+    "dct:license": "http://standaarden.overheid.nl/owms/terms/licentieonbekend",
+    "dct:spatial": "https://identifier.overheid.nl/tooi/id/gemeente/gm1900",
+    "dct:source": "Export van de lokale D-OmniTwin-database (tabel externe_kaartlagen), via SWF_EXPORT_DIR",
+    "dcat:theme": [
+      "http://standaarden.overheid.nl/owms/terms/Ruimtelijke_ordening"
+    ],
+    "dcat:keyword": [
+      "kaartlaag",
+      "Súdwest-Fryslân"
+    ],
+    "dcat:contactPoint": {
+      "@type": "vcard:Organization",
+      "vcard:fn": "Functioneel beheer gebiedsmonitor, gemeente Súdwest-Fryslân"
+    }
+  },
+  "bron": {
+    "adapter": "lokaal-bestand",
+    "pad": "${SWF_EXPORT_DIR}/externe_kaartlagen.json",
+    "formaat": "json",
+    "tabel": "externe_kaartlagen",
+    "omschrijving": "externe_kaartlagen.json van scripts/beheer/swf_export.py; nooit in git"
+  },
+  "bewerkingen": [
+    {
+      "id": "lokale-laag",
+      "afwijzen": {
+        "veld": "bron_type",
+        "gelijk": "lokaal",
+        "reden": "lokale-laag"
+      },
+      "omschrijving": "een lokale laag verwijst naar een bestand in de oude installatie; die komt via de laad-API (bijv. swf-kaartlagen: swf-laag-deelgebieden)"
+    },
+    {
+      "behoud": [
+        "naam",
+        "beschrijving",
+        "laag_type",
+        "bron_type",
+        "url",
+        "typename",
+        "srsname",
+        "versie",
+        "filter_type",
+        "filter_waarde",
+        "koppel_veld",
+        "kleur_lijn",
+        "kleur_fill",
+        "opacity",
+        "actief",
+        "volgorde",
+        "toegang"
+      ]
+    }
+  ],
+  "levering": {
+    "formaat": "datapackage",
+    "bestand": "swf-init-kaartlagen.zip",
+    "schema": {
+      "externe_kaartlagen": "externe-kaartlagen.schema.json"
+    }
+  }
+}

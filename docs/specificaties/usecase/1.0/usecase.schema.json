@@ -226,9 +226,10 @@
             "definities",
             "gebiedsindeling",
             "kaartlaag",
-            "kompasprofiel"
+            "kompasprofiel",
+            "externe-kaartlagen"
           ],
-          "description": "Profiel van de laad-API (laadprofiel.profiel); kompasprofiel alleen via route beheer."
+          "description": "Profiel van de laad-API (laadprofiel.profiel); kompasprofiel en externe-kaartlagen alleen via route beheer."
         },
         "beheerpad": {
           "type": "string",

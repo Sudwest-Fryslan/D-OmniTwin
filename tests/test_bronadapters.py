@@ -162,6 +162,17 @@ def test_koppel_met_mapping_en_normaliseren(tmp_path):
     assert [r["uuid"] for r in rijen] == ["u1", "u2"] and rapport == {"niet-gevonden": 1}
 
 
+def test_koppel_bewerkt_eerst_de_bron(tmp_path):
+    """swf-initialisatie: alleen codes die de installatie kent (bron eerst gefilterd, zoals `binnen`)."""
+    (tmp_path / "b.json").write_text(json.dumps([{"code": "BU1", "pv": "PV21"}, {"code": "BU2", "pv": "PV22"}]),
+                                     encoding="utf-8")
+    stap = {"koppel": {"sleutel": "gebied", "op": "code", "bron": {"adapter": "usecase-bestand", "pad": "b.json"},
+                       "bewerkingen": [{"filter": {"veld": "pv", "gelijk": "PV21"}}], "velden": {"code": "_bekend"}}}
+    rijen, rapport = bewerk([stap, {"afwijzen": {"veld": "_bekend", "leeg": True, "reden": "gebied-onbekend"}}],
+                            [{"gebied": "BU1"}, {"gebied": "BU2"}, {"gebied": "BU3"}], ctx={"usecase_map": tmp_path})
+    assert [r["gebied"] for r in rijen] == ["BU1"] and rapport == {"gebied-onbekend": 2}
+
+
 def test_ontdubbel_houdt_de_voorkeur_en_laat_de_rest_vervallen():
     """A4 (#222): dubbele naam, andere UUID: de voorkeur blijft, de rest krijgt status B en '(vervallen)'."""
     stap = {"ontdubbel": {"veld": "naam", "sleutel": "uuid", "normaliseer": True,

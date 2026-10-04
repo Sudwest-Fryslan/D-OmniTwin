@@ -5,7 +5,7 @@ Gedeelde opzet voor de acceptatietests van de use cases die via de laad-API lade
 Een test installeert de use case met zijn afhankelijkheden (python -m omnitwin.usecases)
 en voert de controles uit het manifest uit, elk als eigen test. Overgeslagen zolang:
 - de laad-API er niet is (GET /api/laden/v1/openapi.json geeft geen 200);
-- een benodigde bron ontbreekt (SWF_DUMP_DIR, SWF_DOCS_DIR, SWF_GEO_DIR);
+- een benodigde bron ontbreekt (SWF_DUMP_DIR, SWF_DOCS_DIR, SWF_GEO_DIR, SWF_EXPORT_DIR);
 - er geen machineclient is (OMNITWIN_CLIENT_ID en OMNITWIN_CLIENT_SECRET).
 
 Draaien tegen een stack met Keycloak en de laad-API:
@@ -20,7 +20,7 @@ import pytest
 
 from omnitwin import usecases as uc
 
-BRONVARIABELEN = ("SWF_DUMP_DIR", "SWF_DOCS_DIR", "SWF_GEO_DIR")
+BRONVARIABELEN = ("SWF_DUMP_DIR", "SWF_DOCS_DIR", "SWF_GEO_DIR", "SWF_EXPORT_DIR")
 
 
 def benodigde_bronnen(naam, ucs):

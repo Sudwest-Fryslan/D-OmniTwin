@@ -1,0 +1,70 @@
+{
+  "id": "swf-init-kompas",
+  "bronId": "swf-initialisatie",
+  "beschrijving": {
+    "@context": "https://data.overheid.nl/dcat-ap-nl/context.jsonld",
+    "@type": "dcat:Dataset",
+    "dct:title": "SWF-initialisatie — Volledig Kompas",
+    "dct:description": "De plek van de indicatoren in het Volledig Kompas (kwadrant › thema › onderdeel, met weging en actueel) uit de lokale D-OmniTwin-database. Vult het profiel aan: wat er al is, blijft staan.",
+    "dct:publisher": "https://identifier.overheid.nl/tooi/id/gemeente/gm1900",
+    "dct:accessRights": "http://publications.europa.eu/resource/authority/access-right/RESTRICTED",
+    "dct:license": "http://standaarden.overheid.nl/owms/terms/licentieonbekend",
+    "dct:spatial": "https://identifier.overheid.nl/tooi/id/gemeente/gm1900",
+    "dct:source": "Export van de lokale D-OmniTwin-database (tabellen kompas_*), via SWF_EXPORT_DIR",
+    "dcat:theme": [
+      "http://standaarden.overheid.nl/owms/terms/Bestuur"
+    ],
+    "dcat:keyword": [
+      "kompas",
+      "gebiedsmonitor"
+    ],
+    "dcat:contactPoint": {
+      "@type": "vcard:Organization",
+      "vcard:fn": "Functioneel beheer gebiedsmonitor, gemeente Súdwest-Fryslân"
+    }
+  },
+  "bron": {
+    "adapter": "lokaal-bestand",
+    "pad": "${SWF_EXPORT_DIR}/kompasprofiel_volledig_kompas.json",
+    "formaat": "json",
+    "omschrijving": "kompasprofiel_volledig_kompas.json van scripts/beheer/swf_export.py (formaat van db/stuurdata/kompasprofiel_*.json); nooit in git"
+  },
+  "bewerkingen": [
+    {
+      "constant": {
+        "profiel": "Volledig Kompas",
+        "gebiedstype_id": "afba67cb-6b38-4723-9c95-102a22d5b38a"
+      }
+    },
+    {
+      "id": "a4-dubbele-uuid",
+      "waarde_map": {
+        "veld": "indicator_uuid",
+        "map": {
+          "c4e1b3bb-e4ce-4cd0-bd52-219f4a9f5df3": "f6eafa70-9383-4de6-bd2a-e47309843437"
+        }
+      },
+      "omschrijving": "Waterdiepte op straat: de vervallen UUID (status B) wordt de aangehouden UUID (aanname A4, https://github.com/TLaan/D-OmniTwin/issues/222)"
+    },
+    {
+      "behoud": [
+        "profiel",
+        "gebiedstype_id",
+        "kwadrant",
+        "thema",
+        "onderdeel",
+        "indicator_uuid",
+        "indicator_naam",
+        "weging",
+        "is_actueel"
+      ]
+    }
+  ],
+  "levering": {
+    "formaat": "datapackage",
+    "bestand": "swf-init-kompas.zip",
+    "schema": {
+      "kompasprofiel": "kompasprofiel.schema.json"
+    }
+  }
+}

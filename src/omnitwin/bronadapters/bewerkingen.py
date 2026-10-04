@@ -20,7 +20,7 @@ leeg (true/false), begint_met, niet_begint_met, kleiner_dan, groter_dan.
 | `kopieer` | {van, naar} | waarde kopiëren |
 | `tekst` / `getal` | [veld] | type omzetten (getal: int als het kan, anders float; leeg blijft leeg) |
 | `waarde_map` | {veld, map, naar?, standaard?} | waarde vertalen via een tabel |
-| `koppel` | {sleutel, bron, op, velden, tabel?, verplicht?, reden?, normaliseer?} | velden overnemen uit een andere bron (bijv. een mappingbestand in de use case); normaliseer: spaties en hoofdletters negeren |
+| `koppel` | {sleutel, bron, op, velden, tabel?, verplicht?, reden?, normaliseer?, bewerkingen?} | velden overnemen uit een andere bron (bijv. een mappingbestand in de use case); normaliseer: spaties en hoofdletters negeren; bewerkingen: eerst op die bron (bijv. `binnen`) |
 | `afwijzen` | voorwaarde + reden | regels die voldoen eruit, geteld onder de reden |
 | `filter` | voorwaarde | alleen regels die voldoen |
 | `jaar_uit_datum` | {veld, jaar?, peildatum?} | `JJJJ-01-01` → jaar, andere datum → peildatum, ongeldig → afgewezen (jaar-ongeldig) |
@@ -145,6 +145,8 @@ def _stap(naam, p, rijen, rapport, ctx):
     if naam == "koppel":
         from omnitwin.bronadapters import haal
         tab = haal(p["bron"], ctx)
+        if p.get("bewerkingen"):  # de bron eerst bewerken, bijv. alleen de buurten binnen de provincie
+            tab, _ = voer_uit(tab, p["bewerkingen"], ctx)
         norm = (lambda w: " ".join(str(w).split()).casefold()) if p.get("normaliseer") else str
         opzoek = {}
         for rec in tab.get(p.get("tabel"), next(iter(tab.values()), [])) if tab else []:

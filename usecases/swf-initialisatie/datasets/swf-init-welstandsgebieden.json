@@ -1,0 +1,76 @@
+{
+  "id": "swf-init-welstandsgebieden",
+  "bronId": "swf-initialisatie",
+  "beschrijving": {
+    "@context": "https://data.overheid.nl/dcat-ap-nl/context.jsonld",
+    "@type": "dcat:Dataset",
+    "dct:title": "SWF-initialisatie — welstandsgebieden × buurt",
+    "dct:description": "Gebiedsindeling welstandsgebieden × buurt (de indeling van de Klimaatmonitor) uit de lokale D-OmniTwin-database, codes 1–758 → WS1–WS758. Eerste opzet (aanname B1 van #222: nice-to-have); levert swf-gebiedsindelingen later dezelfde indeling uit GeoServer, dan vervangt die deze.",
+    "dct:publisher": "https://identifier.overheid.nl/tooi/id/gemeente/gm1900",
+    "dct:accessRights": "http://publications.europa.eu/resource/authority/access-right/RESTRICTED",
+    "dct:license": "http://standaarden.overheid.nl/owms/terms/licentieonbekend",
+    "dct:spatial": "https://identifier.overheid.nl/tooi/id/gemeente/gm1900",
+    "dct:source": "Export van de lokale D-OmniTwin-database (tabel gebieden, gebiedstype welstand), via SWF_EXPORT_DIR",
+    "dcat:theme": [
+      "http://standaarden.overheid.nl/owms/terms/Ruimtelijke_ordening"
+    ],
+    "dcat:keyword": [
+      "gebiedsindeling",
+      "welstand",
+      "Súdwest-Fryslân"
+    ],
+    "dcat:contactPoint": {
+      "@type": "vcard:Organization",
+      "vcard:fn": "Functioneel beheer gebiedsmonitor, gemeente Súdwest-Fryslân"
+    },
+    "dct:conformsTo": "http://www.opengis.net/def/crs/EPSG/0/28992",
+    "prov:wasDerivedFrom": "Lokale D-OmniTwin-database (tabel gebieden)"
+  },
+  "laadprofiel": {
+    "profiel": "gebiedsindeling",
+    "doel": {
+      "gebiedstypeId": "29fc9f28-89d9-488b-bf68-2ed176187b21",
+      "featureTabel": "gebieden",
+      "sleutelveld": "code",
+      "labelveld": "naam",
+      "codePrefix": "WS"
+    },
+    "plausibiliteit": {
+      "minRegels": 750,
+      "maxDalingProcent": 10
+    }
+  },
+  "bron": {
+    "adapter": "lokaal-bestand",
+    "pad": "${SWF_EXPORT_DIR}/welstandsgebieden.gpkg",
+    "laag": "welstandsgebieden",
+    "omschrijving": "welstandsgebieden.gpkg van scripts/beheer/swf_export.py (EPSG:28992); nooit in git"
+  },
+  "bewerkingen": [
+    {
+      "hernoem": {
+        "id": "code"
+      }
+    },
+    {
+      "tekst": [
+        "code"
+      ]
+    },
+    {
+      "behoud": [
+        "code",
+        "naam",
+        "aanduiding"
+      ]
+    },
+    {
+      "multipolygon": true
+    }
+  ],
+  "levering": {
+    "formaat": "geopackage",
+    "bestand": "swf-init-welstandsgebieden.gpkg",
+    "geometrie": "MultiPolygon"
+  }
+}

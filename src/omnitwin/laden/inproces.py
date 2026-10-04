@@ -68,4 +68,7 @@ class InprocesLaadApi:
         return {"http": HTTP.get(lv["status"], 202), **r.levering_uit(lv, fouten)}
 
     def beheer(self, pad_api: str, bestand) -> dict:
-        return {"http": 501, "status": "overgeslagen", "melding": f"{pad_api}: beheer-API niet in-process"}
+        """Inrichting (Kompasprofielen, externe kaartlagen) via `omnitwin.laden.beheer`; andere soorten:
+        overgeslagen (501)."""
+        from omnitwin.laden import beheer
+        return beheer.voer_uit(pad_api, bestand)

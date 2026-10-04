@@ -235,6 +235,18 @@ Opnieuw installeren is veilig: een ongewijzigde levering wordt herkend, een gewi
 
 Een eigen bron (bijvoorbeeld een export uit FME of een eigen database) levert aan via de [laad-API](../api/laden/README.md): een machineclient in Keycloak met de rol `dataset:<id>:laden` (zie [Keycloak](#keycloak-optioneel)), daarna leveren en de status volgen. Een nieuwe soort data begint met een use case volgens de [Use Case Specificatie](../specificaties/usecase/README.md); zie ook [CONTRIBUTING.md](../../CONTRIBUTING.md).
 
+### Eerste SWF-vulling
+
+Bij SWF komt de eerste vulling uit een dump van de lokale D-OmniTwin-database van de projectleider (https://github.com/TLaan/D-OmniTwin/issues/222, A1). Die dump wordt **niet** teruggezet: [`scripts/beheer/swf_export.py`](../../scripts/beheer/swf_export.py) haalt er een export uit (`SWF_EXPORT_DIR`, buiten de repo), en de use case [`swf-initialisatie`](../../usecases/swf-initialisatie/README.md) laadt die via de laadstraat. Kort:
+
+1. dump herstellen in een tijdelijke container (`docker run … d-omnitwin-postgres`, `pg_restore`);
+2. export maken met `swf_export.py` in de backend-image;
+3. `SWF_EXPORT_DIR=… python -m omnitwin.usecases controleer swf-initialisatie` (aantallen per reden);
+4. `docker compose run --rm -v <export>:/swf-export:ro -v <monitorexport>:/swf-dump:ro -e SWF_EXPORT_DIR=/swf-export -e SWF_DUMP_DIR=/swf-dump db-init python -m omnitwin.usecases installeer swf-initialisatie --inproces`;
+5. tijdelijke container, dump en export opruimen.
+
+De precieze commando's, wat er wel en niet meegaat en de verwachte aantallen staan in de [README van de use case](../../usecases/swf-initialisatie/README.md#stappen). Open data gaat nooit mee (die downloadt de eigen use case), demodata ook niet.
+
 De oude routes `init_data/scripts/seed_fryslan.py` en het ETL-framework in `ETL/` zijn niet meer de weg om een installatie te vullen (https://github.com/TLaan/D-OmniTwin/issues/69). `ETL/` bevat nog bronscripts voor ontwikkelaars.
 
 ---
