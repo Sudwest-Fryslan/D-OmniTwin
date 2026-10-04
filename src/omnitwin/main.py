@@ -199,6 +199,9 @@ from omnitwin.routers import oidc_ik
 app.include_router(oidc_ik.router)  # GET /api/oidc/ik: token controleren (#205)
 from omnitwin.routers import organisatie
 app.include_router(organisatie.router)  # GET /api/organisatie: eigen organisatie (#231)
+from omnitwin.routers import indicatorpaneel, mijn
+app.include_router(indicatorpaneel.router)  # indicatorpaneel en CSV-export (#258)
+app.include_router(mijn.router)  # /api/mijn: favorieten en kaartpositie per gebruiker (#258)
 
 # forwardAuth van Traefik voor /api/data en /api/geo (#266): 204 = door, anders 401/403
 app.add_api_route(viewer_toegang.CONTROLE_PAD, viewer_toegang.controleer, methods=["GET", "HEAD"],

@@ -29,6 +29,7 @@ from sqlalchemy import text
 
 from omnitwin.config import instellingen
 from omnitwin.database import engine
+from omnitwin.services import gebruikersvoorkeuren
 
 logger = logging.getLogger(__name__)
 
@@ -129,6 +130,20 @@ async def _cleanup_loop() -> None:
             AppLogger.info(f"Log cleanup uitgevoerd: {samenvatting(resultaat)}", category="SERVER")
         except Exception as e:
             AppLogger.error(f"Log cleanup mislukt: {e}", category="SERVER")
+
+        # Voorkeuren en favorieten van gebruikers die een jaar niets deden (#258)
+        try:
+            n = await asyncio.to_thread(_ruim_voorkeuren_op)
+            if n:
+                AppLogger.info(f"Voorkeuren van {n} gebruiker(s) verwijderd (langer dan "
+                               f"{gebruikersvoorkeuren.BEWAAR_DAGEN} dagen niet gebruikt)", category="SERVER")
+        except Exception as e:
+            AppLogger.error(f"Opruimen voorkeuren mislukt: {type(e).__name__}", category="SERVER")
+
+
+def _ruim_voorkeuren_op() -> int:
+    with engine.connect() as conn:
+        return gebruikersvoorkeuren.ruim_op(conn)
 
 
 def start_cleanup_scheduler() -> None:
