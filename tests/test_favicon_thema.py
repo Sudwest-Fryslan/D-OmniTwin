@@ -8,12 +8,12 @@ pytestmark = pytest.mark.unit
 
 
 def test_swf_thema_geeft_swf_kleuren():
-    assert beeldmerk_kleuren("swf") == {"vlak": "#ffffff", "lijn": "#bf0042", "kern": "#8c0030"}
+    assert beeldmerk_kleuren("swf") == {"vlak": "#bf0042", "lijn": "#ffffff", "kern": "#ffffff"}
 
 
 def test_favicon_svg_bevat_themakleuren():
     svg = beeldmerk_svg({"thema": "swf"})
-    assert "var(--d-omnitwin-beeldmerk-lijn, #bf0042)" in svg
+    assert "var(--d-omnitwin-beeldmerk-vlak, #bf0042)" in svg
     assert "var(--d-omnitwin-beeldmerk-lijn, #3b82f6)" not in svg  # blauwe terugval vervangen
 
 

@@ -475,6 +475,16 @@ class TestWcagStatus(unittest.TestCase):
         self.assertEqual(wcag_status("swf"), "ja")
 
 
+    def test_beheermodus(self):
+        """Standaardweergave van het beheerscherm (#284): swf licht zoals de site, de rest donker zoals het was."""
+        for naam in beschikbare_themas(THEMA_MAP):
+            with self.subTest(thema=naam):
+                self.assertIn(tokens(naam, "licht")["d-omnitwin-beheer-modus"], ("licht", "donker"))
+        self.assertEqual(tokens("swf", "licht")["d-omnitwin-beheer-modus"], "licht")
+        self.assertEqual(tokens("d-omnitwin", "licht")["d-omnitwin-beheer-modus"], "donker")
+        self.assertEqual(tokens("legacy", "licht")["d-omnitwin-beheer-modus"], "donker")
+
+
 class TestLegacyNooitStandaard(unittest.TestCase):
     """legacy (#284) haalt WCAG AA niet: nooit de standaard, niet in de code en niet in de vulling."""
 

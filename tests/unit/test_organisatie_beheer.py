@@ -273,11 +273,11 @@ def test_themalijst_uit_static():
     assert swf["titel"] == "Gemeente Súdwest-Fryslân"
     licht, donker = swf["kleuren"]["licht"], swf["kleuren"]["donker"]
     assert licht["--basis-color-action-1-bg-default"] == "#a8003b"
-    # Rustige antraciet kopbalk met rode accentlijn (#284)
-    assert licht["--d-omnitwin-header-background-color-start"] == "#2b2b2b"
+    # Witte kopbalk met rode accentlijn, zoals sudwestfryslan.nl (#284)
+    assert licht["--d-omnitwin-header-background-color-start"] == "#ffffff"
     assert donker["--d-omnitwin-header-background-color-start"] == "#262626"
     assert licht["--d-omnitwin-header-accent-color"] == "#bf0042"
-    assert licht["--d-omnitwin-beeldmerk-vlak"] == "#ffffff"
+    assert licht["--d-omnitwin-beeldmerk-vlak"] == "#bf0042"
     # WCAG-status uit het kopcommentaar (#284)
     assert swf["wcag_aa"] is True
     legacy = next(t for t in lijst if t["naam"] == "legacy")

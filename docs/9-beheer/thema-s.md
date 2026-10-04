@@ -32,7 +32,7 @@ De SWF-kleuren komen uit de live CSS van sudwestfryslan.nl; de afwegingen staan 
 
 ### Wanneer welk thema
 
-- **`swf`** voor Súdwest-Fryslân, en als voorbeeld voor een andere overheidsorganisatie. Sinds [#284](https://github.com/TLaan/D-OmniTwin/issues/284) rustig: kopbalk en vensterkoppen (Kompas) antraciet met een rode accentlijn, SWF-rood alleen voor primaire knoppen, de actieve tab en accenten; links, vinkjes en schuifregelaars in SWF-donkerblauw; tooltips en selectiebadge neutraal. Alle tekst haalt AAA (7:1), behalve de roze highlight die de app nog niet gebruikt (AA).
+- **`swf`** voor Súdwest-Fryslân, en als voorbeeld voor een andere overheidsorganisatie. Sinds [#284](https://github.com/TLaan/D-OmniTwin/issues/284) zo dicht mogelijk bij de look en feel van [sudwestfryslan.nl](https://sudwestfryslan.nl/): licht en rustig, kopbalk en vensterkoppen (Kompas) wit met donkere tekst en een rode accentlijn (in donker antraciet), beeldmerk rood vlak met wit, SWF-rood alleen voor primaire knoppen, de actieve tab en accenten; links, vinkjes en schuifregelaars in SWF-donkerblauw; tooltips en selectiebadge neutraal donker. Het beheerscherm is licht (donker alleen als de gebruiker dat kiest), de inlogpagina ook. Alle tekst haalt AAA (7:1), behalve de roze highlight die de app nog niet gebruikt (AA).
 - **`legacy`** voor wie de groen-blauwe uitstraling van v0.1.0 wil (op verzoek van de projectleider). De kleuren zijn bewust die van v0.1.0 gebleven, ook waar ze WCAG 2.1 AA niet halen. Daarom is voor SWF het `swf`-thema bepaald en niet het oude groen-blauw. `legacy` is kiesbaar in het beheerscherm, met een waarschuwing, maar **nooit de standaard** (niet in de code, niet in `organisatie.sql`, niet als inlogthema van de realm; de test bewaakt dat). Een overheidsorganisatie moet aan WCAG 2.1 AA voldoen (Besluit digitale toegankelijkheid overheid); gebruik `legacy` dus alleen intern of ter vergelijking. Haalt `legacy` ooit AA (aangepaste kleuren, de test dwingt dan `@wcag-aa: ja` af), dan kan het ook bij SWF gekozen worden.
 - **`d-omnitwin`** is de terugval van de code (een instantie zonder thema of met een onbekende naam) en het uitgangspunt voor een eigen thema zonder eigen lettertype. Het haalt AA nog niet; dat hoort bij de toegankelijkheidsronde ([#67](https://github.com/TLaan/D-OmniTwin/issues/67)).
 
@@ -80,8 +80,9 @@ Alle `--d-omnitwin-*`-tokens. Elk thema zet ze allemaal, in licht en donker: `te
 
 | Token | Waar | Standaard licht / donker | SWF licht / donker |
 |---|---|---|---|
-| `--d-omnitwin-header-background-color-start` / `-end` | kopbalk en kop van het Kompas-venster (verloop) | `#1e3a8a`→`#15803d` / `#3b82f6`→`#22c55e` | `#2b2b2b`→`#1e1e1e` / `#262626`→`#1a1a1a` |
-| `--d-omnitwin-header-color` | tekst, iconen en focusrand in de kopbalk | `#ffffff` / `#f1f5f9` | `#ffffff` |
+| `--d-omnitwin-header-background-color-start` / `-end` | kopbalk en kop van het Kompas-venster (verloop) | `#1e3a8a`→`#15803d` / `#3b82f6`→`#22c55e` | `#ffffff` / `#262626`→`#1a1a1a` |
+| `--d-omnitwin-header-color` | tekst, iconen en focusrand in de kopbalk | `#ffffff` / `#f1f5f9` | `#1e1e1e` / `#ffffff` |
+| `--d-omnitwin-header-overlay-color` / `-strength` | tint van knoppen en badges in kopbalk en vensterkoppen (Beheer, Uitloggen, venster sluiten), [#284](https://github.com/TLaan/D-OmniTwin/issues/284) | `#ffffff`, `1` (de oorspronkelijke witte tinten) | `#1e1e1e`, `0.3` / `#ffffff`, `1` |
 | `--d-omnitwin-header-accent-color` / `-width` | accentlijn onder kopbalk en vensterkoppen, en links naast het actieve menu-item in het beheerscherm ([#284](https://github.com/TLaan/D-OmniTwin/issues/284)) | `0px` (geen lijn) | `#bf0042`, `4px` |
 | `--d-omnitwin-tab-active-background-color` | actieve knop in de tabbalk links | `#c59d00` / `#eab308` | `#fbeef2` / `#3a1621` |
 | `--d-omnitwin-tab-active-color` | icoon op de actieve tab | `#0f172a` | `#a8003b` / `#ffb3c6` |
@@ -93,10 +94,11 @@ Alle `--d-omnitwin-*`-tokens. Elk thema zet ze allemaal, in licht en donker: `te
 | `--d-omnitwin-tooltip-color` | tekst in die tooltips | `#ffffff` / `#0f172a` | `#ffffff` / `#1e1e1e` |
 | `--d-omnitwin-selection-badge-background-color` | selectiebadge onder in beeld ("Bolsward-Zuidoost · 3D-panden"); het icoon erin is altijd wit, dus een donker vlak | `#047857` | `#2b2b2b` / `#3d3d3d` |
 | `--d-omnitwin-selection-badge-color` | tekst op de selectiebadge | `#ffffff` | `#ffffff` |
-| `--d-omnitwin-beeldmerk-vlak` / `-lijn` / `-kern` | beeldmerk in kopbalk, beheerscherm en favicon (`/api/organisatie/beeldmerk.svg`), [#249](https://github.com/TLaan/D-OmniTwin/issues/249) | `#0f172a` / `#3b82f6` / `#22c55e` | `#ffffff` / `#bf0042` / `#8c0030` |
-| `--d-omnitwin-beheer-kop-background-color-start` / `-end` | kop van de zijbalk in het beheerscherm (altijd donker), [#284](https://github.com/TLaan/D-OmniTwin/issues/284) | `#2563eb`→`#1d4ed8` | `#2b2b2b`→`#1e1e1e` |
-| `--d-omnitwin-beheer-kop-color` | tekst in die kop | `#ffffff` | `#ffffff` |
-| `--d-omnitwin-beheer-nav-active-background-color` / `-color` | actief menu-item in het beheerscherm | `#2563eb` / `#ffffff` | `#3d3d3d` / `#ffffff` |
+| `--d-omnitwin-beeldmerk-vlak` / `-lijn` / `-kern` | beeldmerk in kopbalk, beheerscherm en favicon (`/api/organisatie/beeldmerk.svg`), [#249](https://github.com/TLaan/D-OmniTwin/issues/249) | `#0f172a` / `#3b82f6` / `#22c55e` | `#bf0042` / `#ffffff` / `#ffffff` |
+| `--d-omnitwin-beheer-modus` | standaardweergave van het beheerscherm: `licht` of `donker`; de gebruiker kan wisselen (menu rechtsboven, onthouden in de browser), [#284](https://github.com/TLaan/D-OmniTwin/issues/284) | `donker` | `licht` |
+| `--d-omnitwin-beheer-kop-background-color-start` / `-end` | kop van de zijbalk in het beheerscherm | `#2563eb`→`#1d4ed8` | `#ffffff` / `#262626`→`#1a1a1a` |
+| `--d-omnitwin-beheer-kop-color` | tekst in die kop | `#ffffff` | `#1e1e1e` / `#ffffff` |
+| `--d-omnitwin-beheer-nav-active-background-color` / `-color` | actief menu-item in het beheerscherm | `#2563eb` / `#ffffff` | `#fbeef2` / `#8c0030`, donker `#3a1621` / `#ffb3c6` |
 
 `legacy` heeft dezelfde componenttokens als het standaardthema, behalve twee waarden van v0.1.0: wit icoon op de gouden actieve tab (`--d-omnitwin-tab-active-color: #ffffff`) en de groene selectiebadge `#10b981`. Het beheerscherm leest naast de `--d-omnitwin-beheer-*`-tokens ook `--basis-color-action-1-*` (primaire knop) en de beeldmerk- en accentlijntokens; `tests/test_thema.py` zoekt de tokens ook in `admin-panel/src`.
 
@@ -160,7 +162,7 @@ Bewuste keuze: anders zou de backend blijvend beheerrechten op de realm nodig he
 Met het compose-profiel `keycloak` ([installatie](installatie.md)) heeft de inlogpagina een eigen thema per organisatie in `deploy/keycloak/themes/<thema>/login/`:
 
 - `theme.properties`: `parent=keycloak.v2`, met één extra stylesheet. Geen eigen FreeMarker-templates: pagina's en teksten blijven die van Keycloak, dus een Keycloak-update breekt het thema niet.
-- `resources/css/omnitwin.css`: de PatternFly-variabelen van `keycloak.v2` met de waarden van de NLDS-tokens (knop en links `action-1`/`accent-1`, focus, hoeken, lettertypen) en het kopbalkverloop als achtergrond, in licht en donker (`.pf-v5-theme-dark`, volgt de systeeminstelling). De lettertypen komen van `/static/vendor/` van de viewer op dezelfde host; met een externe identity provider valt het terug op het systeemfont.
+- `resources/css/omnitwin.css`: de PatternFly-variabelen van `keycloak.v2` met de waarden van de NLDS-tokens (knop en links `action-1`/`accent-1`, focus, hoeken, lettertypen) en het kopbalkverloop als achtergrond (bij `swf` de lichte pagina-achtergrond, zoals de site), in licht en donker (`.pf-v5-theme-dark`, volgt de systeeminstelling). De lettertypen komen van `/static/vendor/` van de viewer op dezelfde host; met een externe identity provider valt het terug op het systeemfont.
 - `docker-compose.yml` mount `deploy/keycloak/themes` op `/opt/keycloak/themes`.
 - Keuze per realm: `"loginTheme"` in `deploy/keycloak/realm-omnitwin.json` (standaard `swf`, zoals de organisatie in `db/stuurdata/organisatie.sql`). De realm wordt alleen bij de eerste start geïmporteerd; bij een bestaande realm: admin-console → *Realm settings* → *Themes* → *Login theme*, of `kcadm.sh update realms/omnitwin -s loginTheme=<thema>`. Een ander thema kiezen in het beheerscherm verandert dit niet (zie [Thema kiezen in het beheerscherm](#thema-kiezen-in-het-beheerscherm)).
 - Keycloak bewaart gecomprimeerde kopieën van thema-bestanden in de container. Na een wijziging aan een thema: `docker compose up -d --force-recreate keycloak` (een gewone herstart is niet genoeg).
@@ -181,7 +183,7 @@ Met het compose-profiel `keycloak` ([installatie](installatie.md)) heeft de inlo
 | rand actieve tab op paneel (3) | 2,56 / 7,63 | 2,56 / 7,63 | 7,70 / 7,77 |
 | tekst op selectiebadge (4,5) | 5,48 / 5,48 | 2,54 / 2,54 | 14,16 / 10,86 |
 | tooltiptekst (4,5) | 17,85 / 16,30 | 17,85 / 16,30 | 16,67 / 15,97 |
-| beheerscherm: actief menu-item (4,5) | 5,17 | 5,17 | 10,86 |
+| beheerscherm: actief menu-item (4,5) | 5,17 | 5,17 | 8,63 / 9,51 |
 | focusrand op paneel (3) | 10,36 / 8,11 | 10,36 / 8,11 | 16,67 / 16,67 |
 
 ### SWF: AAA voor tekst
@@ -192,7 +194,7 @@ Met het compose-profiel `keycloak` ([installatie](installatie.md)) heeft de inlo
 |---|---|---|
 | donkere tekst `#1e1e1e` op SWF-roze `#ff00e3` (`--basis-color-highlight-*`) | 5,05:1 | Het roze is te licht voor witte tekst en te donker voor 7:1 (ook zwart haalt maar 6,36:1). De app leest de highlight-tokens nog niet. |
 
-Daarnaast, niet als contrastpaar te toetsen: de actieve tab verschilt van een gewone tab door een **dikkere rand** (3px tegen 2px) en een gekleurd vlak, niet alleen door kleur (WCAG 1.4.1; de test controleert de randdikte). De focusrand is bijna zwart (licht) of wit (donker), in de kopbalk wit. `prefers-reduced-motion` wordt al gerespecteerd in `styles.css`; een aparte `prefers-contrast: more`-variant is er niet (het thema heeft al AAA-contrast).
+Daarnaast, niet als contrastpaar te toetsen: de actieve tab verschilt van een gewone tab door een **dikkere rand** (3px tegen 2px) en een gekleurd vlak, niet alleen door kleur (WCAG 1.4.1; de test controleert de randdikte). De focusrand is bijna zwart (licht) of wit (donker), in de kopbalk in de kopbalktekstkleur. `prefers-reduced-motion` wordt al gerespecteerd in `styles.css`; een aparte `prefers-contrast: more`-variant is er niet (het thema heeft al AAA-contrast).
 
 ## Bekende contrasttekorten (d-omnitwin en legacy)
 
@@ -215,7 +217,7 @@ Het SWF-thema heeft geen tekorten (`@wcag-aa: ja`; de test staat geen uitzonderi
 
 ## Nog niet via het thema
 
-- **Beheerscherm** (`admin-panel/`, React) en de **rapportpagina's** (`/admin/rapport/...`, onderdeel van het beheerscherm): het beheerscherm laadt het thema (`admin-panel/src/thema.ts`) en neemt kop, actief menu-item, primaire knop, beeldmerk, accentlijn en lettertype over; de rest (`--color-*`, slate/blauw, tabellen, grafieken) en de rapportpagina's hebben nog een eigen palet. Vervolg: de `--color-*`-variabelen naar de `--basis-*`-tokens laten wijzen, zoals in `styles.css`.
+- **Beheerscherm** (`admin-panel/`, React) en de **rapportpagina's** (`/admin/rapport/...`, onderdeel van het beheerscherm): het beheerscherm laadt het thema (`admin-panel/src/thema.ts`) en neemt kop, actief menu-item, primaire knop, beeldmerk, accentlijn en lettertype over. In de **lichte weergave** (`--d-omnitwin-beheer-modus: licht`, of de keuze van de gebruiker) komen achtergrond, vlakken, tekst, links en statuskleuren uit de lichte basistokens; de **donkere weergave** heeft nog het vaste slate-palet (`--color-*`). Nog vast, in beide weergaven: de kleuren per kwadrant op het dashboard (groen/oranje/blauw/rood, op wit niet overal 4,5:1), een deel van de inline kleuren in de pagina's en de rapportpagina's.
 - **API-documentatie** (`/docs`): de standaard Swagger UI, zelf gehost; niet in de huisstijl.
 - **Foutpagina's** van de backend (bv. 404 op een ontbrekend bestand): platte tekst, zonder opmaak.
 - **Statusmelding** "verbinding" (`.verbindingsmelding`): vaste amberkleuren voor een waarschuwing, met voldoende contrast in licht en donker.

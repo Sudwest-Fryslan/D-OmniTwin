@@ -95,6 +95,9 @@
   /* Accentlijn onder kopbalk en vensterkoppen (#284): niet in het standaardthema */
   --d-omnitwin-header-accent-color: #15803d;
   --d-omnitwin-header-accent-width: 0px;
+  /* Tinten van knoppen en badges in de kopbalk: wit, oorspronkelijke dekking (#284) */
+  --d-omnitwin-header-overlay-color: #ffffff;
+  --d-omnitwin-header-overlay-strength: 1;
 
   /* Beeldmerk (#249): de eigen D-OmniTwin-kleuren (gelijk aan de terugval in beeldmerk.svg) */
   --d-omnitwin-beeldmerk-vlak: #0f172a;
@@ -102,6 +105,7 @@
   --d-omnitwin-beeldmerk-kern: #22c55e;
 
   /* Beheerscherm (#284; altijd donker): kop en actief menu-item, gelijk aan de terugval in admin.css */
+  --d-omnitwin-beheer-modus: donker;
   --d-omnitwin-beheer-kop-background-color-start: #2563eb;
   --d-omnitwin-beheer-kop-background-color-end: #1d4ed8;
   --d-omnitwin-beheer-kop-color: #ffffff;

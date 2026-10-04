@@ -110,7 +110,7 @@ def test_beheerder_themas_en_logos(beheerder):
     assert themas.status_code == 200, themas.text[:300]
     namen = {t["naam"]: t for t in themas.json()}
     assert {"d-omnitwin", "swf"} <= set(namen)
-    assert namen["swf"]["kleuren"]["licht"]["--d-omnitwin-header-background-color-start"] == "#2b2b2b"
+    assert namen["swf"]["kleuren"]["licht"]["--d-omnitwin-header-background-color-start"] == "#ffffff"
     logos = requests.get(f"{ORG}/logos", headers=beheerder, timeout=TIMEOUT)
     assert logos.status_code == 200
     assert "/static/images/SWF-logo.png" in logos.json()

@@ -1,8 +1,8 @@
 /*
  * Keycloak-inlogpagina, thema swf (Súdwest-Fryslân, #89, rustiger in #284). Kleuren gelijk aan
  * static/css/themes/swf.css: PatternFly-variabelen van keycloak.v2 krijgen de waarden van de
- * NL Design System-tokens. Achtergrond antraciet zoals de kopbalk, SWF-rood alleen voor de knop en de
- * rand boven het formulier. Tekst en links AAA (7:1). Lettertypen Montserrat en Source Sans 3 uit de
+ * NL Design System-tokens. Licht zoals sudwestfryslan.nl (achtergrond #fafafa, donker: antraciet),
+ * SWF-rood alleen voor de knop en de rand boven het formulier. Tekst en links AAA (7:1). Lettertypen Montserrat en Source Sans 3 uit de
  * viewer (zelfde host via Traefik); zonder viewer valt het terug op het systeemfont.
  */
 @import url("/static/vendor/montserrat@5.3.0/montserrat.css");
@@ -25,15 +25,16 @@
   --pf-v5-global--BorderRadius--sm: 4px;
 }
 
-/* Achtergrond: het verloop van de kopbalk (d-omnitwin-header-background-color-start/-end) */
+/* Achtergrond: de pagina (basis-color-default-bg-document), licht zoals de site */
 .pf-v5-c-login {
-  background: linear-gradient(135deg, #2b2b2b 0%, #1e1e1e 100%);
+  background: #fafafa;
 }
 
-/* Realmnaam boven het formulier: kopbalktekst (d-omnitwin-header-color) */
-#kc-header-wrapper,
-.pf-v5-c-login__header {
-  color: #ffffff;
+/* Realmnaam boven het formulier: tekstkleur (basis-color-default-color-document), 15,97:1.
+   keycloak.v2 zet hier color: var(--pf-v5-global--Color--light-100) !important; daarom die variabele,
+   alleen op dit element */
+#kc-header-wrapper {
+  --pf-v5-global--Color--light-100: #1e1e1e;
 }
 
 /* Donker (keycloak.v2 zet pf-v5-theme-dark bij de systeeminstelling donker) */
@@ -50,4 +51,8 @@
 
 .pf-v5-theme-dark .pf-v5-c-login {
   background: linear-gradient(135deg, #262626 0%, #1a1a1a 100%);
+}
+
+.pf-v5-theme-dark #kc-header-wrapper {
+  --pf-v5-global--Color--light-100: #ffffff;
 }

@@ -211,6 +211,10 @@
   /* Accentlijn onder kopbalk en vensterkoppen (#284); standaard 0px, dus geen lijn */
   --header-accent: var(--d-omnitwin-header-accent-color, #15803d);
   --header-accent-width: var(--d-omnitwin-header-accent-width, 0px);
+  /* Tinten van knoppen en badges in kopbalk en vensterkoppen (#284): standaard wit, met de
+     oorspronkelijke dekking (sterkte 1). Een lichte kopbalk zet een donkere tint met lagere sterkte. */
+  --header-overlay: var(--d-omnitwin-header-overlay-color, #ffffff);
+  --header-overlay-sterkte: var(--d-omnitwin-header-overlay-strength, 1);
 
   /* Brand Colors — Triple Threat */
   --primary-color: var(--basis-color-accent-1-color-default, #1e3a8a);
@@ -413,7 +417,7 @@ textarea {
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
-  background: rgba(255, 255, 255, 0.45);
+  background: color-mix(in srgb, var(--header-overlay) calc(45% * var(--header-overlay-sterkte)), transparent);
   /* Increased opacity for better contrast */
   backdrop-filter: blur(10px);
   padding: 0.5rem 1rem;
@@ -468,13 +472,13 @@ textarea {
   text-decoration: none;
   cursor: pointer;
   transition: all 0.2s ease;
-  background: rgba(255, 255, 255, 0.2);
-  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: color-mix(in srgb, var(--header-overlay) calc(20% * var(--header-overlay-sterkte)), transparent);
+  border: 1px solid color-mix(in srgb, var(--header-overlay) calc(15% * var(--header-overlay-sterkte)), transparent);
 }
 
 .admin-badge:hover {
-  background: rgba(255, 255, 255, 0.35);
-  border-color: rgba(255, 255, 255, 0.3);
+  background: color-mix(in srgb, var(--header-overlay) calc(35% * var(--header-overlay-sterkte)), transparent);
+  border-color: color-mix(in srgb, var(--header-overlay) calc(30% * var(--header-overlay-sterkte)), transparent);
   transform: translateY(-1px);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 }
@@ -492,7 +496,7 @@ textarea {
   font: inherit;
   font-size: 0.875rem;
   font-weight: 600;
-  color: #ffffff;
+  color: var(--header-text);
 }
 
 .account-badge {
@@ -530,6 +534,7 @@ textarea {
   --header-bg-end: var(--d-omnitwin-header-background-color-end, #22c55e);
   --header-text: var(--d-omnitwin-header-color, #f1f5f9);
   --header-accent: var(--d-omnitwin-header-accent-color, #22c55e);
+  --header-overlay: var(--d-omnitwin-header-overlay-color, #ffffff);
 
   /* Brand Colors — zelfde hue, hogere luminance */
   --primary-color: var(--basis-color-accent-1-color-default, #3b82f6);
@@ -1973,7 +1978,7 @@ textarea {
   height: 28px;
   border: none;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.2);
+  background: color-mix(in srgb, var(--header-overlay) calc(20% * var(--header-overlay-sterkte)), transparent);
   color: var(--header-text);
   font-size: 0.875rem;
   font-weight: 600;
@@ -1985,7 +1990,7 @@ textarea {
 }
 
 .window-controls button:hover {
-  background: rgba(255, 255, 255, 0.35);
+  background: color-mix(in srgb, var(--header-overlay) calc(35% * var(--header-overlay-sterkte)), transparent);
   transform: scale(1.1);
 }
 
