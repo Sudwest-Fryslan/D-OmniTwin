@@ -4,6 +4,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- #258: favorieten en kaartpositie alleen voor een ingelogde gebruiker (static/js/mijn.js) -->
+  <meta name="omnitwin-ingelogd" content="{{ '1' if account and account.naam else '0' }}">
   <title>D-OmniTwin</title>
   <link rel="icon" href="/api/organisatie/beeldmerk.svg" type="image/svg+xml">
 
@@ -11,6 +13,7 @@
   <link rel="stylesheet" href="/static/css/styles.css">
   <link rel="stylesheet" href="/static/css/custom-dropdown.css">
   <link rel="stylesheet" href="/static/css/kaartmodus.css">
+  <link rel="stylesheet" href="/static/css/indicatorpaneel.css">
   {% if thema_css %}<link rel="stylesheet" href="{{ thema_css }}">{% endif %}
 
   <!-- Lettertype Inter, zelf gehost (#117) -->
@@ -252,6 +255,19 @@
           </svg>
         </span>
       </button>
+      <!-- #258: indicatorpaneel -->
+      <button class="tab-button" data-panel="indicator" title="Indicator" aria-label="Indicator">
+        <span class="tab-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+            class="lucide lucide-chart-bar">
+            <path d="M3 3v16a2 2 0 0 0 2 2h16" />
+            <path d="M7 16h8" />
+            <path d="M7 11h12" />
+            <path d="M7 6h3" />
+          </svg>
+        </span>
+      </button>
       <button class="tab-button" data-panel="layers" title="Kaartlagen" aria-label="Kaartlagen">
         <span class="tab-icon">
           <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
@@ -323,6 +339,20 @@
       <!-- Panel 0: Info & Start -->
       <div id="panel-info" class="panel-content">
         <div class="panel">
+          <!-- #258: favorieten van de ingelogde gebruiker (static/js/mijn.js) -->
+          <section id="mijn-favorieten" class="mijn-favorieten" aria-labelledby="mijn-favorieten-titel" hidden>
+            <h3 class="panel-title" id="mijn-favorieten-titel">Mijn favorieten</h3>
+            <div class="mijn-bewaar">
+              <label for="mijn-favoriet-naam" class="visually-hidden">Naam van de selectie</label>
+              <input type="text" id="mijn-favoriet-naam" class="form-control" maxlength="80"
+                placeholder="Naam van de selectie" autocomplete="off">
+              <button type="button" id="mijn-bewaar-selectie" class="btn btn-secondary" disabled>Bewaar selectie</button>
+            </div>
+            <p id="mijn-melding" class="help-text" role="status" aria-live="polite"></p>
+            <p id="mijn-favorieten-leeg" class="help-text">Nog geen favorieten. Selecteer gebieden op de kaart en bewaar de selectie met een naam.</p>
+            <ul id="mijn-favorieten-lijst" class="mijn-favorieten-lijst"></ul>
+          </section>
+
           <h3 class="panel-title">Welkom bij D-OmniTwin</h3>
           
           <div style="margin-bottom: 20px;">
@@ -575,6 +605,45 @@
                 </div>
                 <p id="coverage-text" class="help-text">0 van 0 gebieden (0%)</p>
               </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Indicatorpaneel (#258): static/js/indicatorpaneel.js -->
+      <div id="panel-indicator" class="panel-content">
+        <div class="panel">
+          <h3 class="panel-title">Indicator</h3>
+          <p id="indicatorpaneel-leeg" class="help-text">Kies een indicator voor de kaart om hier de gegevens te zien.</p>
+          <div id="indicatorpaneel-inhoud" class="indicatorpaneel" hidden>
+            <h4 id="ip-naam" class="subsection-title"></h4>
+            <p id="ip-beschrijving" class="ip-beschrijving"></p>
+            <dl class="ip-meta">
+              <dt>Eenheid</dt>
+              <dd id="ip-eenheid"></dd>
+              <dt>Bron</dt>
+              <dd id="ip-bronnen"></dd>
+              <dt>Gemeentegemiddelde</dt>
+              <dd id="ip-gemiddelde"></dd>
+            </dl>
+            <h4 class="subsection-title">Geselecteerde gebieden</h4>
+            <div id="ip-grafiek-wrap" class="ip-grafiek" hidden>
+              <canvas id="ip-grafiek" role="img" aria-label="Staafdiagram van de geselecteerde gebieden met het gemeentegemiddelde"></canvas>
+            </div>
+            <p id="ip-grafiek-leeg" class="help-text">Selecteer gebieden op de kaart voor een staafdiagram (Shift+klik voor meer gebieden).</p>
+            <p id="ip-onderdrukt" class="help-text" hidden></p>
+            <div class="form-group ip-export">
+              <a id="ip-csv" class="btn btn-secondary" href="#" download>
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                  class="lucide lucide-download" aria-hidden="true">
+                  <path d="M12 15V3" />
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                  <path d="m7 10 5 5 5-5" />
+                </svg>
+                CSV downloaden
+              </a>
+              <span id="ip-csv-uitleg" class="help-text"></span>
             </div>
           </div>
         </div>
@@ -1031,6 +1100,8 @@
   <script src="/static/js/kompas.js"></script>
   <script src="/static/js/chat.js"></script>
   <script src="/static/js/app.js?v=7"></script>
+  <script src="/static/js/indicatorpaneel.js"></script>
+  <script src="/static/js/mijn.js"></script>
 </body>
 
 </html>

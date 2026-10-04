@@ -981,6 +981,8 @@ async function loadKaartData() {
         }
         updateGemeenteFilterChip(geojson.features ? geojson.features.length : null);
 updateLegenda(geojson);
+        // #258: indicatorpaneel bijwerken (actuele waarden)
+        window.EventBus?.emit('KAARTDATA_GELADEN', { jaar: null });
 
         const geojsonBtn = document.getElementById('export-geojson-btn');
         const csvBtn = document.getElementById('export-csv-btn');
@@ -1956,10 +1958,31 @@ function displayOnMap(geojson) {
 
     // Auto-zoom to data (Sprint 16: alleen bij initieel laden, niet bij selectie-re-renders)
     if (geojson.features.length > 0 && !state.initialDataLoaded) {
-        fitBounds(geojson);
+        // #258: bij de eerste kaart de laatste kaartpositie van de ingelogde gebruiker
+        if (state.herstelPositie) {
+            zetKaartPositie(state.herstelPositie);
+            state.herstelPositie = null;
+        } else {
+            fitBounds(geojson);
+        }
         state.initialDataLoaded = true;
     }
 }
+
+/** #258: camera naar een bewaarde kaartpositie ({longitude, latitude, zoom, pitch, bearing}). */
+function zetKaartPositie(positie) {
+    if (!state.deckgl || !positie) return;
+    state.currentViewState = {
+        ...state.currentViewState,
+        longitude: positie.longitude,
+        latitude: positie.latitude,
+        zoom: positie.zoom,
+        pitch: positie.pitch ?? state.currentViewState.pitch,
+        bearing: positie.bearing ?? state.currentViewState.bearing,
+    };
+    state.deckgl.setProps({ viewState: state.currentViewState });
+}
+window.zetKaartPositie = zetKaartPositie;
 
 function fitBounds(geojson) {
     // Bounding box over alle coördinaten (Polygon en MultiPolygon)
@@ -2895,6 +2918,8 @@ function updateSelectionUI() {
     } else if (badge) {
         badge.style.display = 'none';
     }
+    // #258: indicatorpaneel en favorieten volgen de selectie
+    window.EventBus?.emit('SELECTIE_GEWIJZIGD', { ids: [...state.selectedGebiedIds] });
 }
 
 /**
@@ -3278,6 +3303,7 @@ function setupEventListeners() {
 
                         displayOnMap(state.currentData);
                         updateLegenda(state.currentData);
+                        window.EventBus?.emit('KAARTDATA_GELADEN', { jaar: data.jaar }); // #258
                     }
                 } catch (error) {
                     console.error('❌ Fout bij laden historische kaart data:', error);
