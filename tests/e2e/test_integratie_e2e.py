@@ -153,8 +153,6 @@ def test_chatactie_open_kompas_laadt_selectie(app_page):
     assert page.console_fouten == [], "\n".join(page.console_fouten)
 
 
-@pytest.mark.xfail(strict=True, reason="TC-06-001 fase 2: thema Verkeer heeft in de sample geen indicatoren "
-                                       "(bereikbaarheid/afstand OV ontbreekt)")
 def test_tc_06_001_fase2_verkeer_bereikbaarheid(app_page):
     """TC-06-001 stap 4-6: indicator bereikbaarheid/afstand OV vindbaar onder Verkeer."""
     page = app_page
