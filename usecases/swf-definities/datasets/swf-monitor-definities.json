@@ -52,7 +52,7 @@
           "A": "O"
         }
       },
-      "omschrijving": "Aanname A2 (https://github.com/TLaan/D-OmniTwin/issues/222): A = actueel volgens de projectleider; D-OmniTwin kent C/O/B, dus A → O (in gebruik) tot de DWH-beheerder de codes bevestigt (O = operationeel of ontwikkeling is nog open). De klimaatset staat in swf-kompasprofiel."
+      "omschrijving": "A2 (https://github.com/TLaan/D-OmniTwin/issues/222), geverifieerd in de beheerinterface van de monitor: A = Actueel, B = Buiten gebruik, C = Concept, O = Onderzoek. D-OmniTwin kent C (concept), O (operationeel) en B (beëindigd): A → O. Aanname: SWF-status O (Onderzoek) blijft O, want die indicatoren staan live in de monitor; bevestiging open. Een gevulde DATE_TO komt mee als eindgeldigheid. De klimaatset staat in swf-kompasprofiel."
     },
     {
       "tabel": "indicatoren",

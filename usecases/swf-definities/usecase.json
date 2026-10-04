@@ -82,7 +82,7 @@
       "dataset": "swf-monitor-definities",
       "reden": "status: A → O",
       "gelijk": 10,
-      "omschrijving": "de 10 klimaatindicatoren (aanname A2: A = actueel, tot bevestiging → O)"
+      "omschrijving": "de 10 klimaatindicatoren (A2: A = Actueel → O, operationeel)"
     },
     {
       "type": "bewerking",
@@ -226,7 +226,7 @@
     ]
   },
   "bekende_afwijkingen": [
-    "Status A (10 klimaatindicatoren) wordt O. Volgens de projectleider is A 'actueel'; of O 'operationeel' of 'ontwikkeling' is, vraagt hij na bij de DWH-beheerder (aanname A2, https://github.com/TLaan/D-OmniTwin/issues/222).",
+    "Status A (10 klimaatindicatoren) wordt O. In de monitor is A = Actueel, B = Buiten gebruik, C = Concept en O = Onderzoek (A2, geverifieerd, https://github.com/TLaan/D-OmniTwin/issues/222). Aanname: SWF-status O blijft O (zichtbaar), want die indicatoren staan live; een gevulde DATE_TO komt mee als eindgeldigheid.",
     "UUID d210c084: in de stuurdata van D-OmniTwin 'Custom Gebied Type' (code CUSTOM, nergens gebruikt); in de monitor 'CBS buurten bebouwde komgrens' met 2.370 waarden. De levering zet naam en code (CBS_BUURT_BBK); de stuurdata moet mee (migratie).",
     "Eenheid, richting, bron en code per indicator zitten niet in de export; aanvullen via beheer of het gewone profiel definities.",
     "Eén testdefinitie (status B) gaat mee zoals hij is. Twee namen hebben twee UUID's (aanname A4): Waterdiepte op straat houdt f6eafa70-9383-4de6-bd2a-e47309843437 (live in de Klimaatmonitor; beide zonder waarden), Werkzamen houdt 7fd17589-46b6-460a-a1f6-ef421517ccb3 (de enige met waarden). De andere krijgt status B en '(vervallen)' achter de naam; de voorkeurslijst staat als data in de bewerking dubbele-naam. De UUID wijzigen is een actie voor SWF-beheer (DWH/FME)."
