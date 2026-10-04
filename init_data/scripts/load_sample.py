@@ -45,6 +45,8 @@ BUURTEN_GEOJSON = SAMPLE_DIR / "2_brondata" / "sample_buurten.geojson"
 INDICATOREN_CSV = SAMPLE_DIR / "2_brondata" / "sample_indicatoren.csv"
 STANDAARD_INDICATOREN_CSV = INDICATOREN_CSV
 KOMPAS_CSV = ROOT / "db" / "stuurdata" / "kompas_hierarchie.csv"
+# Vulling van andere Kompasprofielen (bijv. Klimaat Kompas, #256): db/stuurdata/kompasprofiel_*.json
+KOMPASPROFIELEN = sorted((ROOT / "db" / "stuurdata").glob("kompasprofiel_*.json"))
 # Indicatordefinities van de use cases (geen waarden): uuid, naam, eenheid, categorie, richting, herkomst (#236)
 DEFINITIES_CSV = ROOT / "db" / "stuurdata" / "indicatoren.csv"
 
@@ -398,6 +400,64 @@ def import_kompas(conn):
     return True
 
 
+def import_kompasprofielen(conn, bestanden=None):
+    """
+    Andere Kompasprofielen vullen uit db/stuurdata/kompasprofiel_*.json (#256): profiel (naam),
+    classificatie en indicatoren (kwadrant, thema, onderdeel, indicator_uuid). Alleen als het
+    profiel bestaat en nog geen indicatoren heeft: een eigen inrichting wordt nooit overschreven.
+    Een indicator die (nog) niet bestaat, wordt overgeslagen. Idempotent.
+    """
+    bestanden = KOMPASPROFIELEN if bestanden is None else bestanden
+    cur = conn.cursor()
+    for pad in bestanden:
+        profiel = json.loads(Path(pad).read_text(encoding="utf-8"))
+        cur.execute("SELECT id FROM kompas_configuraties WHERE naam = %s", (profiel["profiel"],))
+        row = cur.fetchone()
+        if not row:
+            print(f"   ℹ️  Kompasprofiel '{profiel['profiel']}' bestaat niet, sla {Path(pad).name} over.")
+            continue
+        config_id = row[0]
+        cur.execute("SELECT count(*) FROM kompas_indicator_mapping WHERE config_id = %s", (config_id,))
+        if cur.fetchone()[0] > 0:
+            print(f"   ℹ️  Kompasprofiel '{profiel['profiel']}' is al ingericht, niet overschreven.")
+            continue
+        gekoppeld, overgeslagen = 0, []
+        for volgorde, ind in enumerate(profiel["indicatoren"]):
+            cur.execute("SELECT 1 FROM indicatoren WHERE uuid = %s", (ind["indicator_uuid"],))
+            if not cur.fetchone():
+                overgeslagen.append(ind.get("indicator_naam") or ind["indicator_uuid"])
+                continue
+            ids = []
+            for tabel, ouder_kolom, ouder, naam in (
+                ("kompas_titels", "config_id", config_id, ind["kwadrant"]),
+                ("kompas_themas", "titel_id", None, ind["thema"]),
+                ("kompas_onderdelen", "thema_id", None, ind.get("onderdeel") or "(Algemeen)"),
+            ):
+                ouder = ouder if ouder is not None else ids[-1]
+                cur.execute(f"SELECT id FROM {tabel} WHERE naam = %s AND {ouder_kolom} = %s", (naam, ouder))
+                r = cur.fetchone()
+                if not r:
+                    cur.execute(f"INSERT INTO {tabel} (naam, {ouder_kolom}, volgorde) VALUES (%s, %s, %s) RETURNING id",
+                                (naam, ouder, volgorde))
+                    r = cur.fetchone()
+                ids.append(r[0])
+            cur.execute("""
+                INSERT INTO kompas_indicator_mapping (config_id, indicator_uuid, onderdeel_id, is_actueel)
+                VALUES (%s, %s, %s, TRUE)
+                ON CONFLICT (config_id, indicator_uuid, onderdeel_id) DO NOTHING
+            """, (config_id, ind["indicator_uuid"], ids[-1]))
+            gekoppeld += 1
+        if gekoppeld and profiel.get("classificatie"):
+            cur.execute("UPDATE kompas_configuraties SET classificatie = %s WHERE id = %s",
+                        (profiel["classificatie"], config_id))
+        conn.commit()
+        print(f"   ✅ Kompasprofiel '{profiel['profiel']}': {gekoppeld} indicatoren gekoppeld"
+              + (f", classificatie {profiel['classificatie']}" if gekoppeld and profiel.get("classificatie") else "")
+              + (f"; overgeslagen (bestaat niet): {', '.join(overgeslagen)}" if overgeslagen else ""))
+    cur.close()
+    return True
+
+
 # ─────────────────────────────────────────────────────────
 # STAP 5: Indicatorwaarden importeren
 # ─────────────────────────────────────────────────────────
@@ -551,6 +611,8 @@ def main():
 
         if stap in ("alle", "definities", "kompas") and success:
             if not import_kompas(conn):
+                success = False
+            elif not import_kompasprofielen(conn):
                 success = False
 
         if stap in ("alle", "waarden") and success:

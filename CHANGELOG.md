@@ -8,6 +8,14 @@ Eerdere wijzigingen, van vóór dit bestand, zijn terug te vinden in de git-hist
 
 ## [Unreleased]
 
+### Toegevoegd
+
+- Labels A–E per indicator en thema voor de Klimaatmonitor: classificatie `label_ae` naast `zscore` en `percentiel_8` (`kompas_configuraties.classificatie`, migratie `V034__labels_ae.sql`). Elke indicator, elk onderdeel, thema en kwadrant krijgt een label A (gunstigst) t/m E met een kleurenblindvriendelijk palet (A blauw, E rood); het themalabel volgt dezelfde regel als de percentielklasse (gewogen gemiddelde van de indicatorscores, afgerond). Drempels per indicator zijn **data**: tabel `indicator_labels` (label, ondergrens, bovengrens, bron), zodat de drempels van SWF zonder code kunnen worden ingeladen. **Aanname** ([#222](https://github.com/TLaan/D-OmniTwin/issues/222), vraag A3): zonder drempels rekent D-OmniTwin met kwintielen (20%-klassen) binnen dezelfde referentiegroep als de percentielklasse, polariteit toegepast, n < 10 telt niet mee; legenda en Kompas melden dan "Voorlopige drempels (kwintielen)". Kaart: nieuwe modus *Label A–E* (`kaart_data?modus=label`). Het *Klimaat Kompas* is op een verse installatie niet meer leeg: `db/stuurdata/kompasprofiel_klimaat.json` vult het met de klimaatindicatoren uit open data en de use cases (hittestress, hemelwateroverlast, droogte) en zet het op `label_ae`, alleen als het profiel nog leeg is. Methodiek: `docs/3-data-engineering/labels_methodiek.md` ([#256](https://github.com/TLaan/D-OmniTwin/issues/256)).
+
+### Migreren
+
+- Migratie `V034__labels_ae.sql` draait vanzelf bij de start (`db-init`). Het Klimaat Kompas van een bestaande installatie vullen (alleen als het nog leeg is): `docker compose run --rm db-init python /app/init_data/scripts/load_sample.py --stap kompas`. Drempels laden: zie `docs/3-data-engineering/labels_methodiek.md`, *Drempels laden*.
+
 ## [0.3.0-rc.1] - 2026-10-03
 
 **Pre-release.** De eerste versie die de huidige SWF-gebiedsmonitor kan opvolgen en aan andere partijen kan worden aangeboden: inloggen via Keycloak (beheer, en optioneel de viewer), een laad-API voor leveringen, use cases als apps met bewijs, open data in plaats van demodata, percentielklassen en kaartmodi, een thema per organisatie en de basis voor productie (back-up en herstel, beheerhandleiding, privacy). Een aantal punten gaat uit van **aannames** tot [#222](https://github.com/TLaan/D-OmniTwin/issues/222) beantwoord is: vulling met de export van februari 2026, de percentielmethodiek, nog geen klimaatlabels A–E en nog geen rechten per laag. Vergelijking met de huidige monitor: [#259](https://github.com/TLaan/D-OmniTwin/issues/259). Lees bij een upgrade de paragraaf **Migreren**.

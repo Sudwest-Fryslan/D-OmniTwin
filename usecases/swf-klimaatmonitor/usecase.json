@@ -147,7 +147,7 @@
     }
   ],
   "bekende_afwijkingen": [
-    "Labels A–E: de drempels zijn onbekend (gat-analyse, vraag 5). Tot ze er zijn, toont D-OmniTwin de percentielklasse.",
+    "Labels A–E: classificatie label_ae (#256). De drempels van SWF staan nog niet in indicator_labels (#222, A3); tot ze geladen zijn, rekent D-OmniTwin met kwintielen en meldt het voorlopige drempels.",
     "Dezelfde dataset als swf-basismonitor-waarden (swf-monitor-waarden); vervangBereik indicator × gebiedstype houdt de twee leveringen uit elkaar. De registratie moet in beide use cases gelijk zijn (unittest).",
     "Gevoelstemperatuur en Afstand tot koele plek zijn SWF-bewerkingen; de open Klimaateffectatlas heeft voor Fryslân geen download (zie hittestress)."
   ]

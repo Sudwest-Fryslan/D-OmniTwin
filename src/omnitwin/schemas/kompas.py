@@ -30,7 +30,7 @@ class KompasConfiguratieStats(KompasConfiguratieBase):
     aantal_onderdelen: int
     aantal_indicatoren: int
     aantal_scoring_regels: int
-    classificatie: str = "zscore"       # #255: zscore (standaard) of percentiel_8
+    classificatie: str = "zscore"       # zscore (standaard), percentiel_8 (#255) of label_ae (#256)
 
 
 class KompasConfiguratiesResponse(BaseModel):
@@ -66,6 +66,10 @@ class KompasNode(BaseModel):
     klasse: Optional[int] = None
     klasse_kleur: Optional[str] = None
     klasse_status: Optional[str] = None
+    # #256, classificatie label_ae: label A (gunstigst) - E; klasse is dan de labelscore
+    # (5 = A, 1 = E). label_bron per indicator: 'drempels' (indicator_labels) of 'kwintiel' (voorlopig)
+    label: Optional[str] = None
+    label_bron: Optional[str] = None
 
 
 class HierarchieResponse(BaseModel):
@@ -92,8 +96,9 @@ class GebiedKompasResponse(BaseModel):
     coverage_percentage: float          # % indicatoren met data
     is_waterbuurt: bool = False         # #155: waterbuurt → geen vergelijking met de referentie
     melding: Optional[str] = None       # #155: toelichting, bijvoorbeeld bij een waterbuurt
-    classificatie: str = "zscore"       # #255: zscore (standaard) of percentiel_8
+    classificatie: str = "zscore"       # zscore (standaard), percentiel_8 (#255) of label_ae (#256)
     klassen_legenda: Optional[List[Dict[str, Any]]] = None  # #255: klasse, label, kleur
+    label_melding: Optional[str] = None  # #256: 'voorlopige drempels (kwintielen)' bij label_ae
     laatste_update: datetime = Field(default_factory=datetime.now)
 
 
