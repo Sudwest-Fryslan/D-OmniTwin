@@ -14,7 +14,7 @@ De eerste stap van de huidige stroom (eerst definities, dan waarden): de volledi
 
 **UUID-conflict `d210c084…`:** in de stuurdata van D-OmniTwin is dit "Custom Gebied Type" (code `CUSTOM`, nergens in de code gebruikt); in de monitor "CBS buurten bebouwde komgrens" met 2.370 waarden. De levering zet naam, code (`CBS_BUURT_BBK`) en niveau via een upsert op `id`; de monitor is de bronhouder van deze UUID. De stuurdata moet mee, zodat een verse installatie niet weer "Custom Gebied Type" zet.
 
-**Status A (aanname A2, https://github.com/TLaan/D-OmniTwin/issues/222).** D-OmniTwin kent `C` (concept), `O` (in gebruik) en `B` (beëindigd). De 10 klimaatindicatoren hebben in de export `A`; volgens de projectleider betekent dat *actueel*. Tot de DWH-beheerder de codes bevestigt (is `O` *operationeel* of *ontwikkeling*?) zet de bewerking `status-a` `A` om naar `O`, met die notitie in de bewerking. Een correctie is alleen een andere `map` in de bewerking.
+**Status A (aanname A2, https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/222).** D-OmniTwin kent `C` (concept), `O` (in gebruik) en `B` (beëindigd). De 10 klimaatindicatoren hebben in de export `A`; volgens de projectleider betekent dat *actueel*. Tot de DWH-beheerder de codes bevestigt (is `O` *operationeel* of *ontwikkeling*?) zet de bewerking `status-a` `A` om naar `O`, met die notitie in de bewerking. Een correctie is alleen een andere `map` in de bewerking.
 
 **Dubbele UUID's (aanname A4).** Twee namen hebben in de export twee UUID's. De bewerking `dubbele-naam` (`ontdubbel`) houdt per naam de UUID uit een vaste voorkeurslijst aan; de andere krijgt status `B` en de naam *"&lt;naam&gt; (vervallen)"*, zodat hij in lijsten niet meer met de goede te verwarren is. De lijst is data in [`datasets/swf-monitor-definities.json`](datasets/swf-monitor-definities.json); een dubbele naam die er niet in staat, blijft ongewijzigd en telt onder `dubbele-naam-zonder-voorkeur` (controle: 0).
 
@@ -102,7 +102,7 @@ Verwacht:
 
 ## Bekende afwijkingen
 
-- Status A (10 klimaatindicatoren) wordt O. Volgens de projectleider is A 'actueel'; of O 'operationeel' of 'ontwikkeling' is, vraagt hij na bij de DWH-beheerder (aanname A2, https://github.com/TLaan/D-OmniTwin/issues/222).
+- Status A (10 klimaatindicatoren) wordt O. Volgens de projectleider is A 'actueel'; of O 'operationeel' of 'ontwikkeling' is, vraagt hij na bij de DWH-beheerder (aanname A2, https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/222).
 - UUID d210c084: in de stuurdata van D-OmniTwin 'Custom Gebied Type' (code CUSTOM, nergens gebruikt); in de monitor 'CBS buurten bebouwde komgrens' met 2.370 waarden. De levering zet naam en code (CBS_BUURT_BBK); de stuurdata moet mee (migratie).
 - Eenheid, richting, bron en code per indicator zitten niet in de export; aanvullen via beheer of het gewone profiel definities.
 - Eén testdefinitie (status B) gaat mee zoals hij is. De twee dubbele namen: zie *Dubbele UUID's* hierboven (aanname A4).

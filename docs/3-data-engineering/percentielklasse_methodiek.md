@@ -1,6 +1,6 @@
 # Percentielklasse (8 × 12,5%): methodiek
 
-> **Status:** ingevoerd in [#255](https://github.com/TLaan/D-OmniTwin/issues/255) (oktober 2026). De rekenwijze is een **aanname** tot [#222](https://github.com/TLaan/D-OmniTwin/issues/222) antwoord geeft over hoe de huidige SWF-monitor precies rekent.
+> **Status:** ingevoerd in [#255](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/255) (oktober 2026). De rekenwijze is een **aanname** tot [#222](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/222) antwoord geeft over hoe de huidige SWF-monitor precies rekent.
 > **Code:** `src/omnitwin/services/percentielklasse.py` (berekening en aggregatie), `kompas_service.py` (Kompas), `gebiedsmonitor_service.py` (kaart). Instelling: kolom `kompas_configuraties.classificatie` (migratie `V031__kompas_classificatie.sql`).
 > **Tests:** `tests/unit/test_percentielklasse.py`, `tests/integration/test_percentielklasse_stack.py`, `tests/e2e/test_kaartmodus.py`.
 

@@ -2,7 +2,7 @@
 
 - Status: voorgesteld
 - Datum: 2026-10-02
-- Issue: https://github.com/TLaan/D-OmniTwin/issues/227; bouwt voort op ADR 0003 (https://github.com/TLaan/D-OmniTwin/pull/184), ADR 0004 en ADR 0005; raakt #218, #219, #223, #225
+- Issue: https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/227; bouwt voort op ADR 0003 (https://github.com/Sudwest-Fryslan/D-OmniTwin/pull/184), ADR 0004 en ADR 0005; raakt #218, #219, #223, #225
 
 ## Context
 

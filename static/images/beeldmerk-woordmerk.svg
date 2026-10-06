@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  Tijdelijk beeldmerk, zie #83 (https://github.com/TLaan/D-OmniTwin/issues/83).
+  Tijdelijk beeldmerk, zie #83 (https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/83).
   Beeldmerk plus woordmerk "D-OmniTwin", voor README, documentatie en publiccode.yml.
   In de app zelf staat alleen static/images/beeldmerk.svg; de naam staat daar als tekst.
   De tekstkleur volgt het licht of donker thema van de lezer (prefers-color-scheme).

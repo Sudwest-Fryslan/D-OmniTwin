@@ -1,6 +1,6 @@
 #!/bin/sh
 # Hersteltest: back-up maken, ALLES weggooien, herstellen en vergelijken
-# (https://github.com/TLaan/D-OmniTwin/issues/257).
+# (https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/257).
 #
 #   sh scripts/beheer/hersteltest.sh --wegwerp
 #

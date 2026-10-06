@@ -1,5 +1,5 @@
 """
-Bewijs per use case (Use Case Specificatie, sectie 12; https://github.com/TLaan/D-OmniTwin/issues/225)
+Bewijs per use case (Use Case Specificatie, sectie 12; https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/225)
 =====================================================================================================
 `python -m omnitwin.usecases bewijs <naam> | --alle` voert de declaratieve stappen uit
 `bewijs.stappen` van het manifest uit met Playwright tegen een draaiende installatie

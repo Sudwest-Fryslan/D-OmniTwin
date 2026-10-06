@@ -3,7 +3,7 @@
 **Documentstatus:** Geconsolideerde Architectuurblauwdruk & Definitief Werkpakket (v2.0)  
 **Datum:** 28 augustus 2026  
 **Auteurs:** AI Architecture Team & D-OmniTwin Core Team  
-**Relevante Repository:** `D-OmniTwin` (`TLaan/D-OmniTwin`)  
+**Relevante Repository:** `D-OmniTwin` (`Sudwest-Fryslan/D-OmniTwin`)  
 **Primaire Externe Bron:** [3DBAG Webservices Documentatie (TU Delft / 3DGI)](https://docs.3dbag.nl/nl/delivery/webservices/#3d-tiles)  
 **Gerelateerde Bestanden:** `bag3d.py`, `static/js/app.js`, `docs/STATE.md`
 

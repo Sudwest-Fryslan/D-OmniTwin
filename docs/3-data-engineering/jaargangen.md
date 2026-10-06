@@ -49,7 +49,7 @@ De CSV bevat heel Nederland (ook wijken, gemeenten en `NL00`). Alleen de Friese 
 |---|---|---|
 | `init_data/sample/2_brondata/sample_buurten.geojson` | **2024** | `ETL/import_geografie_2024.py` (`CBS_BUURTEN2024.gpkg`); Bolsward-Zuidoost uit PDOK gebiedsindelingen 2024 |
 | `init_data/fryslan/buurten_fryslan.geojson` | **2024** | `download_buurten_fryslan.py`, PDOK `gebiedsindelingen/2024`, gegeneraliseerd |
-| ~~`ETL/local/etl_02_import_geometrie.py`~~ | 2023 | PDOK `wijkenbuurten2023`. Verwijderd in [#69](https://github.com/TLaan/D-OmniTwin/issues/69) |
+| ~~`ETL/local/etl_02_import_geometrie.py`~~ | 2023 | PDOK `wijkenbuurten2023`. Verwijderd in [#69](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/69) |
 
 Vastgelegd in deze PR:
 - `datapackage.json`, resource `sample-buurten`: `"geometrie_jaar": 2024` en `geometrie_bron`.

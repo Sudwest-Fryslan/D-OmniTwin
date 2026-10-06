@@ -20,7 +20,7 @@ SPEC = ROOT / "docs" / "specificaties" / "usecase"
 VERSIE = "1.0"
 SCHEMAS = ("usecase.schema.json", "dataset.schema.json", "bewijs.schema.json")
 README = (SPEC / "README.md").read_text(encoding="utf-8")
-ID_BASIS = f"https://raw.githubusercontent.com/TLaan/D-OmniTwin/main/docs/specificaties/usecase/{VERSIE}/"
+ID_BASIS = f"https://raw.githubusercontent.com/Sudwest-Fryslan/D-OmniTwin/main/docs/specificaties/usecase/{VERSIE}/"
 
 
 def schema(naam):

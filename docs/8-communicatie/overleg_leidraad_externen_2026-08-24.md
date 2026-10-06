@@ -113,7 +113,7 @@
 - Data blijft bij de bron; D-OmniTwin stelt gerichte queries aan de juiste node in het ecosysteem.
 
 **Licentie:** EUPL 1.2 (code) | CC BY 4.0 (methodiek)
-**Repository:** [github.com/TLaan/D-OmniTwin](https://github.com/TLaan/D-OmniTwin)
+**Repository:** [github.com/Sudwest-Fryslan/D-OmniTwin](https://github.com/Sudwest-Fryslan/D-OmniTwin)
 
 ---
 

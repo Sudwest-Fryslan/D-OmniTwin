@@ -283,7 +283,7 @@ def herkomst(map_: Path, dump_datum: str | None, inhoud: dict) -> None:
     (map_ / "herkomst.json").write_text(json.dumps({
         "bron": "lokale D-OmniTwin-database van de projectleider SWF (dump)",
         "dump_datum": dump_datum,
-        "toegang": "openbaar (besluit projectleiding 04-10-2026, https://github.com/TLaan/D-OmniTwin/issues/222)",
+        "toegang": "openbaar (besluit projectleiding 04-10-2026, https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/222)",
         "gemaakt_met": "scripts/beheer/swf_export.py --repo",
         "inhoud": inhoud, "bestanden": bestanden}, ensure_ascii=False, indent=1, default=str) + "\n",
         encoding="utf-8")

@@ -8,7 +8,7 @@ De referentiegroep komt uit dezelfde SQL-functie als de Z-score
 (public.zscore_referentie_waarden, #66): gebiedstype + gemeente, zelfde jaar,
 zonder waterbuurten, alleen scenario 'current'.
 
-Aanname tot https://github.com/TLaan/D-OmniTwin/issues/222 antwoord geeft
+Aanname tot https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/222 antwoord geeft
 (methodiek: docs/3-data-engineering/percentielklasse_methodiek.md):
 
 - percentiel = middenrang: (aantal lager + de helft van het aantal gelijk) / n,

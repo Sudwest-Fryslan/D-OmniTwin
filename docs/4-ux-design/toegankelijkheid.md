@@ -1,6 +1,6 @@
 # Toegankelijkheid: status en conceptverklaring
 
-Overheidswebsites en -apps moeten voldoen aan **WCAG 2.1 niveau AA** (Besluit digitale toegankelijkheid overheid, [DigiToegankelijk](https://www.digitoegankelijk.nl)) en een toegankelijkheidsverklaring publiceren in het [register](https://www.toegankelijkheidsverklaring.nl). Dit document is de stand voor D-OmniTwin en het concept voor die verklaring. Issue: [#67](https://github.com/TLaan/D-OmniTwin/issues/67); productieklaar: [#257](https://github.com/TLaan/D-OmniTwin/issues/257).
+Overheidswebsites en -apps moeten voldoen aan **WCAG 2.1 niveau AA** (Besluit digitale toegankelijkheid overheid, [DigiToegankelijk](https://www.digitoegankelijk.nl)) en een toegankelijkheidsverklaring publiceren in het [register](https://www.toegankelijkheidsverklaring.nl). Dit document is de stand voor D-OmniTwin en het concept voor die verklaring. Issue: [#67](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/67); productieklaar: [#257](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/257).
 
 **Status (oktober 2026): voldoet gedeeltelijk.** Er is nog geen onderzoek door een onafhankelijke partij en nog geen volledige automatische meting (axe of pa11y). De verklaring is daarom op dit moment **status B of C** ("eerste maatregelen getroffen" / "voldoet gedeeltelijk") en kan pas naar A na een volledig onderzoek.
 
@@ -22,8 +22,8 @@ De verklaring hoort bij een **installatie** (de website op het adres van de orga
 | Zichtbare focus (`--focus-ring`), geen `outline: none` meer | `static/css/styles.css` |
 | Dialogen met `role="dialog"`, focus vasthouden, Escape sluit, focus terug | hoofdapp; getest in `tests/e2e/test_toegankelijkheid.py` |
 | `prefers-reduced-motion`: camera en Kompas zonder animatie | getest in `tests/e2e/test_toegankelijkheid.py` |
-| Labels en iconknoppen in de beheeromgeving, `lang="nl"` en titel in de build | `admin-panel/` ([#134](https://github.com/TLaan/D-OmniTwin/pull/134)) |
-| Contrast van het thema wordt getest; het SWF-thema heeft geen tekorten | `tests/test_thema.py` ([#89](https://github.com/TLaan/D-OmniTwin/issues/89)) |
+| Labels en iconknoppen in de beheeromgeving, `lang="nl"` en titel in de build | `admin-panel/` ([#134](https://github.com/Sudwest-Fryslan/D-OmniTwin/pull/134)) |
+| Contrast van het thema wordt getest; het SWF-thema heeft geen tekorten | `tests/test_thema.py` ([#89](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/89)) |
 | Kleurschema's voor data zijn kleurenblind-veilig (uitgangspunt) | tabel `color_schemas` |
 
 ## Bekende tekorten
@@ -36,16 +36,16 @@ De verklaring hoort bij een **installatie** (de website op het adres van de orga
 | Kompas (D3-zonnediagram) en grafieken: geen tekstalternatief met dezelfde informatie in tabelvorm | 1.1.1, 1.3.1 | Een tabelweergave is het voorstel. |
 | Klikbare elementen die geen knop zijn (`div`'s zonder toetsenbordbediening) | 2.1.1, 4.1.2 | Uit de statische toets van 30-09 (#67); niet nagelopen of alles is opgelost. |
 | Rapporten (HTML/print) en geëxporteerde PDF's niet getoetst | div. | |
-| Geen automatische meting in de CI | - | axe/pa11y tegen de draaiende stack staat open ([#62](https://github.com/TLaan/D-OmniTwin/issues/62)). |
+| Geen automatische meting in de CI | - | axe/pa11y tegen de draaiende stack staat open ([#62](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/62)). |
 | Geen onderzoek met gebruikers van hulpmiddelen (schermlezer, vergroting) | - | |
 
 ## Vervolg
 
-1. axe of pa11y in de lokale CI en daarna de GitHub-CI, per thema, met nul fouten op AA als eis ([#67](https://github.com/TLaan/D-OmniTwin/issues/67), [#62](https://github.com/TLaan/D-OmniTwin/issues/62)).
+1. axe of pa11y in de lokale CI en daarna de GitHub-CI, per thema, met nul fouten op AA als eis ([#67](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/67), [#62](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/62)).
 2. Contrast van `d-omnitwin.css` herstellen, of een toegankelijk standaardthema kiezen.
 3. Tekstalternatief (tabel) voor Kompas en grafieken; kaartselectie met het toetsenbord.
 4. Onderzoek volgens WCAG-EM door een onafhankelijke partij, vóór de eerste publieke productie-installatie; daarna de verklaring per installatie publiceren.
 
 ## Conceptverklaring (in te vullen per installatie)
 
-> **Toegankelijkheidsverklaring** — *[organisatie]* streeft ernaar *[adres van de installatie]* toegankelijk te maken volgens WCAG 2.1 niveau AA. De website voldoet gedeeltelijk. Bekende problemen: onvoldoende kleurcontrast in delen van de interface, de kaart is niet volledig met het toetsenbord te bedienen, informatie op de kaart wordt deels alleen met kleur getoond, en het Kompas en de grafieken hebben nog geen tekstalternatief. We werken aan oplossingen (zie de [openbare issues](https://github.com/TLaan/D-OmniTwin/issues/67)). Loopt u tegen een probleem aan? Neem contact op via *[contactgegevens]*. Deze verklaring is opgesteld op *[datum]* op basis van *[onderzoek]*.
+> **Toegankelijkheidsverklaring** — *[organisatie]* streeft ernaar *[adres van de installatie]* toegankelijk te maken volgens WCAG 2.1 niveau AA. De website voldoet gedeeltelijk. Bekende problemen: onvoldoende kleurcontrast in delen van de interface, de kaart is niet volledig met het toetsenbord te bedienen, informatie op de kaart wordt deels alleen met kleur getoond, en het Kompas en de grafieken hebben nog geen tekstalternatief. We werken aan oplossingen (zie de [openbare issues](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/67)). Loopt u tegen een probleem aan? Neem contact op via *[contactgegevens]*. Deze verklaring is opgesteld op *[datum]* op basis van *[onderzoek]*.

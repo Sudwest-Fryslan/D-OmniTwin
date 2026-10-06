@@ -203,7 +203,7 @@ De stand van zaken staat in de GitHub-issues en in `CHANGELOG.md`. Elke PR met e
 
 Elke wijziging gaat via GitHub Flow:
 
-1. Issue aanmaken op TLaan/D-OmniTwin
+1. Issue aanmaken op Sudwest-Fryslan/D-OmniTwin
 2. Branch aanmaken: `feature/<issue-nr>-<korte-naam>`
 3. Commits op die branch
 4. Pull Request naar `main` met `Closes #<nr>` in de beschrijving

@@ -1,5 +1,5 @@
 #!/bin/sh
-# Back-up van een D-OmniTwin-installatie (https://github.com/TLaan/D-OmniTwin/issues/257).
+# Back-up van een D-OmniTwin-installatie (https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/257).
 #
 #   sh scripts/beheer/backup.sh            # in de map van de installatie (naast .env)
 #

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from omnitwin.laden.tabelschema import laad_schema
 
-DOCS = "https://github.com/TLaan/D-OmniTwin/blob/main/docs/api/laden/profielen/"
+DOCS = "https://github.com/Sudwest-Fryslan/D-OmniTwin/blob/main/docs/api/laden/profielen/"
 GPKG, ZIP, CSV, JSON = "application/geopackage+sqlite3", "application/zip", "text/csv", "application/json"
 
 PROFIELEN = {

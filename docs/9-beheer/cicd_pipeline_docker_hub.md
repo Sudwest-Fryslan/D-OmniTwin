@@ -3,7 +3,7 @@
 > **Documenttype:** Implementatiegids & Architectuurnotitie  
 > **Doelgroep:** Ontwikkelaars, DevOps, Projectbeheerders  
 > **Status:** Concept — implementatie gepland (Issues #27 & #28)  
-> **Gerelateerde issues:** [#27 Semantic versioning](https://github.com/TLaan/D-OmniTwin/issues/27) · [#28 CI/CD-pipeline](https://github.com/TLaan/D-OmniTwin/issues/28) · [#22 Epic: SWF productie-gereedheid](https://github.com/TLaan/D-OmniTwin/issues/22)
+> **Gerelateerde issues:** [#27 Semantic versioning](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/27) · [#28 CI/CD-pipeline](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/28) · [#22 Epic: SWF productie-gereedheid](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/22)
 
 ---
 

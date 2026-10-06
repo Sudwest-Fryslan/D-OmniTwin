@@ -1,5 +1,5 @@
 #!/bin/sh
-# Herstel van een back-up van scripts/beheer/backup.sh (https://github.com/TLaan/D-OmniTwin/issues/257).
+# Herstel van een back-up van scripts/beheer/backup.sh (https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/257).
 #
 #   sh scripts/beheer/restore.sh backups/omnitwin-<project>-<stempel>
 #   sh scripts/beheer/restore.sh <map> --overschrijf     # ook als er al data staat (die gaat weg)

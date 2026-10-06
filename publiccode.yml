@@ -15,7 +15,7 @@
 publiccodeYmlVersion: "0"
 
 name: D-OmniTwin
-url: "https://github.com/TLaan/D-OmniTwin"
+url: "https://github.com/Sudwest-Fryslan/D-OmniTwin"
 # Tijdelijk beeldmerk, zie #83
 logo: static/images/beeldmerk-woordmerk.svg
 softwareVersion: "0.3.0"
@@ -87,7 +87,7 @@ description:
       De applicatie draait met Docker Compose (FastAPI, PostgreSQL/PostGIS,
       PostgREST, pg_featureserv en Traefik). Een sample dataset van 12 buurten
       wordt bij de eerste start automatisch geladen.
-    documentation: "https://github.com/TLaan/D-OmniTwin/blob/main/README.md"
+    documentation: "https://github.com/Sudwest-Fryslan/D-OmniTwin/blob/main/README.md"
     features:
       - D-Omni Kompas met indicatoren in 12 thema's
       - Interactieve kaart op buurtniveau

@@ -1,6 +1,6 @@
 # Datakwaliteit sample_indicatoren.csv
 
-Stand na https://github.com/TLaan/D-OmniTwin/issues/236: de sample bevat alleen nog wat niet open is of nog geen adapter heeft. 520 regels, 40 indicatoren, 13 buurten. De vorige telling (#60: 1.132 regels, 87 indicatoren; na #159: 728 regels, 56 indicatoren) staat in de git-geschiedenis.
+Stand na https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/236: de sample bevat alleen nog wat niet open is of nog geen adapter heeft. 520 regels, 40 indicatoren, 13 buurten. De vorige telling (#60: 1.132 regels, 87 indicatoren; na #159: 728 regels, 56 indicatoren) staat in de git-geschiedenis.
 
 ## Herkomst (`bron`)
 

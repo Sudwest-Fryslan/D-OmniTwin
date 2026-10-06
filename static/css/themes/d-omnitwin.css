@@ -3,7 +3,7 @@
  *
  * @wcag-aa: nee
  * Acht contrastparen halen WCAG 2.1 AA niet (BEKENDE_TEKORTEN in tests/test_thema.py,
- * https://github.com/TLaan/D-OmniTwin/issues/67). Voor een overheidsorganisatie: kies een thema dat AA haalt.
+ * https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/67). Voor een overheidsorganisatie: kies een thema dat AA haalt.
  *
  * Tokennamen volgen de basis-tokens van NL Design System (https://nldesignsystem.nl,
  * https://github.com/nl-design-system/themes, pakket basis-design-tokens): basis.color.accent-1.bg-default

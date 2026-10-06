@@ -10,7 +10,7 @@ Per indicator en gebied een label A (gunstigst) t/m E (ongunstigst):
 - met drempels in tabel `indicator_labels` (data, migratie V034): het label waarvan
   ondergrens <= waarde < bovengrens (een lege grens is open). De drempels bepalen zelf de
   richting; polariteit speelt dan geen rol. Een waarde buiten alle drempels krijgt geen label.
-- zonder drempels (voorlopig, aanname bij https://github.com/TLaan/D-OmniTwin/issues/222 A3):
+- zonder drempels (voorlopig, aanname bij https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/222 A3):
   kwintielen binnen dezelfde referentiegroep als percentiel_8 (gebiedstype + gemeente,
   zelfde jaar, zonder waterbuurten, n < 10 telt niet mee), middenrang-percentiel,
   polariteit toegepast. 0-20% = E, ..., 80-100% = A.

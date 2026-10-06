@@ -65,7 +65,7 @@
         "achtervoegsel": " (vervallen)",
         "reden": "dubbele-naam"
       },
-      "omschrijving": "zoals SWF het in de DWH-SQL zou doen zolang de dubbele UUID's bestaan (aanname A4, https://github.com/TLaan/D-OmniTwin/issues/222)"
+      "omschrijving": "zoals SWF het in de DWH-SQL zou doen zolang de dubbele UUID's bestaan (aanname A4, https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/222)"
     }
   ],
   "levering": {

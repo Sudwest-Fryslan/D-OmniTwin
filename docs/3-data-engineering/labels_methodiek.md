@@ -1,6 +1,6 @@
 # Labels A–E: methodiek
 
-> **Status:** ingevoerd in [#256](https://github.com/TLaan/D-OmniTwin/issues/256) (oktober 2026). Zonder vastgestelde drempels rekent D-OmniTwin met **voorlopige drempels (kwintielen)**: de aanname bij vraag A3 van [#222](https://github.com/TLaan/D-OmniTwin/issues/222). De drempels van SWF laad je als data, zonder code (zie [Drempels laden](#drempels-laden)).
+> **Status:** ingevoerd in [#256](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/256) (oktober 2026). Zonder vastgestelde drempels rekent D-OmniTwin met **voorlopige drempels (kwintielen)**: de aanname bij vraag A3 van [#222](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/222). De drempels van SWF laad je als data, zonder code (zie [Drempels laden](#drempels-laden)).
 > **Code:** `src/omnitwin/services/labelklasse.py` (label en themalabel), `kompas_service.py` (Kompas), `gebiedsmonitor_service.py` (kaart). Instelling: `kompas_configuraties.classificatie = 'label_ae'`; drempels: tabel `indicator_labels` (migratie `V034__labels_ae.sql`).
 > **Tests:** `tests/unit/test_labelklasse.py`, `tests/integration/test_labels_stack.py`, `tests/e2e/test_kaartmodus.py` (TC-01-004 en TC-02-003).
 
@@ -53,7 +53,7 @@ Kleurenblindvriendelijk, hetzelfde schema als de percentielklasse (`color_schema
 
 ## Drempels laden
 
-**Klimaatmonitor SWF:** de drempels uit *Monitoring KA SWF, dialoog 2* (16-04-2025, blad *Final shortlist*) staan in [`db/stuurdata/indicator_labels_klimaatmonitor_swf.json`](../../db/stuurdata/indicator_labels_klimaatmonitor_swf.json): 9 van de 10 indicatoren (*Oppervlak groen per inwoner* heeft geen drempel en blijft op kwintielen). Ze worden geladen met `python init_data/scripts/load_sample.py --stap drempels`, bij de installatie na de use cases (de SWF-klimaatindicatoren komen uit `swf-definities`). Het is nog een **voorstel**: bevestiging door SWF staat open in [#222](https://github.com/TLaan/D-OmniTwin/issues/222) (A3). Bijzonderheden: *Waterdiepte tegen gevel* heeft een gat tussen 20 en 25 cm (geen label), bij *Gevoelstemperatuur* is A de middenband 18–23 °C (comfortabel), en bij *Trend GLG* is aangenomen dat een verhoging positief is.
+**Klimaatmonitor SWF:** de drempels uit *Monitoring KA SWF, dialoog 2* (16-04-2025, blad *Final shortlist*) staan in [`db/stuurdata/indicator_labels_klimaatmonitor_swf.json`](../../db/stuurdata/indicator_labels_klimaatmonitor_swf.json): 9 van de 10 indicatoren (*Oppervlak groen per inwoner* heeft geen drempel en blijft op kwintielen). Ze worden geladen met `python init_data/scripts/load_sample.py --stap drempels`, bij de installatie na de use cases (de SWF-klimaatindicatoren komen uit `swf-definities`). Het is nog een **voorstel**: bevestiging door SWF staat open in [#222](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/222) (A3). Bijzonderheden: *Waterdiepte tegen gevel* heeft een gat tussen 20 en 25 cm (geen label), bij *Gevoelstemperatuur* is A de middenband 18–23 °C (comfortabel), en bij *Trend GLG* is aangenomen dat een verhoging positief is.
 
 Een eigen bestand `db/stuurdata/indicator_labels_<naam>.json` met dezelfde opbouw wordt ook geladen. Met de hand kan het ook in SQL:
 
@@ -82,6 +82,6 @@ Of uit een CSV: `\copy indicator_labels (indicator_uuid, label, ondergrens, bove
 
 ## Open (wacht op SWF)
 
-- **Drempels A3:** volgens Taeke ([#222, reactie](https://github.com/TLaan/D-OmniTwin/issues/222)) staan ze in het blad *Final shortlist* van de longlist klimaatindicatoren (16-04-2025): absolute klassen voor 9 van de 10 indicatoren, nog een voorstel uit een dialoogsessie. Na bevestiging door SWF laden in `indicator_labels`; dan vervalt de melding "voorlopig" voor die indicatoren.
+- **Drempels A3:** volgens Taeke ([#222, reactie](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/222)) staan ze in het blad *Final shortlist* van de longlist klimaatindicatoren (16-04-2025): absolute klassen voor 9 van de 10 indicatoren, nog een voorstel uit een dialoogsessie. Na bevestiging door SWF laden in `indicator_labels`; dan vervalt de melding "voorlopig" voor die indicatoren.
 - **Themalabel:** gemiddelde (zoals hier) of het slechtste label?
-- **Welstand × buurt:** de Klimaatmonitor draait op welstand × buurt; die geometrie wacht op [#222](https://github.com/TLaan/D-OmniTwin/issues/222) (B1). Tot dan op CBS-buurten.
+- **Welstand × buurt:** de Klimaatmonitor draait op welstand × buurt; die geometrie wacht op [#222](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/222) (B1). Tot dan op CBS-buurten.

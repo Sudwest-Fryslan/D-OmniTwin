@@ -1,7 +1,7 @@
 # TC-06-006 — Use case: Klimaatadaptatie: hittestress en kwetsbaarheid
 
 **Bron:** innovatieaanvraag Digitale Overheid 2026, use cases; `docs/8-communicatie/usecases/data-science_use-cases.md`
-**Status:** actief (https://github.com/TLaan/D-OmniTwin/issues/236: data via de laad-API uit open bronnen; drie indicatoren DEMODATA)
+**Status:** actief (https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/236: data via de laad-API uit open bronnen; drie indicatoren DEMODATA)
 **Automatische test:** `tests/integration/test_usecases.py` (leest [`usecase.json`](./usecase.json))
 
 Een use case is een **bundel**: data + inrichting + stappen. Alle drie staan hier; `usecase.json` is de machineleesbare versie.
@@ -14,7 +14,7 @@ Een use case is een **bundel**: data + inrichting + stappen. Alle drie staan hie
 
 ## 1. Data
 
-- **Data:** via de laad-API (https://github.com/TLaan/D-OmniTwin/issues/236). Afhankelijk van `cbs-gebiedsindelingen`, `cbs-kerncijfers`, `rivm-gezondheidsmonitor` en `sample-bronbibliotheek`; eigen datasets voor de RIVM-rasters. Gebiedstype CBS Buurten.
+- **Data:** via de laad-API (https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/236). Afhankelijk van `cbs-gebiedsindelingen`, `cbs-kerncijfers`, `rivm-gezondheidsmonitor` en `sample-bronbibliotheek`; eigen datasets voor de RIVM-rasters. Gebiedstype CBS Buurten.
 - **Gebieden:** Bolsward-Noord (BU19000001), Bolsward-Zuidoost (BU19000002), Bolsward-Noordoost (BU19000004). Focus: Bolsward-Zuidoost. (De CBS-indeling 2024 heeft ook Bolsward-Zuidwest, BU19000003; die staat sinds #236 ook in D-OmniTwin.)
 
 | Indicator | Richting | Bron |
@@ -55,7 +55,7 @@ Gemeten op een verse installatie op 02-10-2026. Boomkroon en hitte-eiland wijken
 
 | Onderdeel | Waarde |
 |---|---|
-| Kompas-profiel | Klimaat Kompas: op een verse installatie gevuld met de klimaatindicatoren hierboven (thema's hittestress, hemelwateroverlast, droogte) en labels A–E, voorlopig op kwintielen ([#256](https://github.com/TLaan/D-OmniTwin/issues/256), [labels_methodiek.md](../../docs/3-data-engineering/labels_methodiek.md)) |
+| Kompas-profiel | Klimaat Kompas: op een verse installatie gevuld met de klimaatindicatoren hierboven (thema's hittestress, hemelwateroverlast, droogte) en labels A–E, voorlopig op kwintielen ([#256](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/256), [labels_methodiek.md](../../docs/3-data-engineering/labels_methodiek.md)) |
 | Chatscenario | — (nog geen eigen scenario) |
 | Polariteit | volgens de kolom *Richting* hierboven |
 
@@ -66,7 +66,7 @@ Gemeten op een verse installatie op 02-10-2026. Boomkroon en hitte-eiland wijken
 | 0 | Installeer: `python -m omnitwin.usecases installeer hittestress` (db-init doet dit automatisch bij `LOAD_SAMPLE_DATA=true`, met de laadstraat in-process) | De datasets zijn gepubliceerd, de richting is gezet; `python -m omnitwin.usecases test hittestress` is groen | ✅ (verse stack, 02-10) |
 | 1 | Open de app, kies **Kaart Configuratie → CBS Buurten** | 13 buurten op de kaart | ✅ |
 | 2 | Kies indicator **Afstand tot koele plek**, zoom in op Bolsward | Buurten gekleurd; **rood = slechter**, legenda met eenheid | ✅ Richting klopt: gecorrigeerd in de definities (#120) |
-| 2b | Kies indicator **Stedelijk hitte-eiland effect** | Buurten met data krijgen elk een kleur naar hun waarde, ook bij weinig gebieden; legenda in °C, groen = laag | ✅ 03-10: [#161](https://github.com/TLaan/D-OmniTwin/issues/161) opgelost; bij minder unieke waarden dan kleurklassen krijgt elke waarde een eigen klasse |
+| 2b | Kies indicator **Stedelijk hitte-eiland effect** | Buurten met data krijgen elk een kleur naar hun waarde, ook bij weinig gebieden; legenda in °C, groen = laag | ✅ 03-10: [#161](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/161) opgelost; bij minder unieke waarden dan kleurklassen krijgt elke waarde een eigen klasse |
 | 3 | Klik op **Bolsward-Zuidoost** | Selectiebalk met de buurtnaam | ✅ |
 | 4 | Open het **Kompas** (Klimaat Kompas) | Zonnediagram voor Bolsward-Zuidoost, dekking 100% | ✅ (Volledig Kompas) |
 | 5 | Stel de vraag aan de **D-Omni Assistent** | Antwoord noemt de relevante indicatoren en buurten. Verwacht: relatief de meeste 65-plussers in Bolsward-Zuidoost (29,5%, CBS 2026). Afstand tot een koele plek (DEMODATA, de assistent meldt dat): Bolsward-Noord het verst (246 m), Bolsward-Noordoost het dichtst bij (206 m). | ✅ zonder taalmodel (vaste tekst, `tests/integration/test_chat_datavragen.py`); met model zie #139 |

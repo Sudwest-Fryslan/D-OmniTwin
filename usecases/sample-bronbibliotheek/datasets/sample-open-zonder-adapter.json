@@ -6,7 +6,7 @@
     "@type": "dcat:Dataset",
     "dct:title": "Sample: open bronnen zonder adapter (BAG, EP-Online, OpenStreetMap), 13 buurten Súdwest-Fryslân",
     "dct:description": "Indicatoren die per buurt berekend zijn uit open bronnen waarvoor D-OmniTwin nog geen kernadapter heeft: Kadaster BAG (gebruiksfuncties, bouwjaren, woonoppervlakte; CC0), RVO EP-Online (energielabels; open data, API-sleutel nodig) en OpenStreetMap (OV-haltes; ODbL). Uit de vroegere sample (init_data/sample), voor 13 buurten. Voor Bolsward-Zuidoost (BU19000002) zijn het DEMODATA (gemiddelde van de buren), gemarkeerd in de bron van elke waarde. Vervalt zodra de adapters er zijn (zie docs/3-data-engineering/demodata-naar-open-data.md).",
-    "dct:publisher": "https://github.com/TLaan/D-OmniTwin",
+    "dct:publisher": "https://github.com/Sudwest-Fryslan/D-OmniTwin",
     "dct:accessRights": "http://publications.europa.eu/resource/authority/access-right/PUBLIC",
     "dct:license": "http://creativecommons.org/licenses/by/4.0/",
     "dct:spatial": "https://identifier.overheid.nl/tooi/id/provincie/pv21",

@@ -1,6 +1,6 @@
 # Thema's: eigen huisstijl via NL Design System-tokens
 
-Elke organisatie draait een eigen D-OmniTwin-instantie ([ADR 0007](../2-architectuur/adr/0007-geen-multi-tenancy-mesh-van-instanties.md)). Kleuren, lettertypen, ruimte en hoeken komen uit een **thema**: één CSS-bestand met [NL Design System](https://nldesignsystem.nl)-tokens. Welk thema een instantie laadt, is inrichting (data in de tabel `organisatie`), geen code. Issue: [#89](https://github.com/TLaan/D-OmniTwin/issues/89).
+Elke organisatie draait een eigen D-OmniTwin-instantie ([ADR 0007](../2-architectuur/adr/0007-geen-multi-tenancy-mesh-van-instanties.md)). Kleuren, lettertypen, ruimte en hoeken komen uit een **thema**: één CSS-bestand met [NL Design System](https://nldesignsystem.nl)-tokens. Welk thema een instantie laadt, is inrichting (data in de tabel `organisatie`), geen code. Issue: [#89](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/89).
 
 ## Hoe het werkt
 
@@ -24,17 +24,17 @@ componenten (kopbalk, tabs, knoppen, panelen, chat, Kompas, tooltips, dialogen, 
 
 | Thema | Organisatie | WCAG 2.1 | Lettertypen | Bestand |
 |---|---|---|---|---|
-| `d-omnitwin` | standaard in de code (terugval), de huidige uitstraling | **niet AA** (9 paren, [#67](https://github.com/TLaan/D-OmniTwin/issues/67)) | Inter | [`static/css/themes/d-omnitwin.css`](../../static/css/themes/d-omnitwin.css) |
-| `legacy` | klassiek groen-blauw: de uitstraling van v0.1.0 ([#284](https://github.com/TLaan/D-OmniTwin/issues/284)) | **niet AA** (13 paren) | Inter | [`static/css/themes/legacy.css`](../../static/css/themes/legacy.css) |
+| `d-omnitwin` | standaard in de code (terugval), de huidige uitstraling | **niet AA** (9 paren, [#67](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/67)) | Inter | [`static/css/themes/d-omnitwin.css`](../../static/css/themes/d-omnitwin.css) |
+| `legacy` | klassiek groen-blauw: de uitstraling van v0.1.0 ([#284](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/284)) | **niet AA** (13 paren) | Inter | [`static/css/themes/legacy.css`](../../static/css/themes/legacy.css) |
 | `swf` | Gemeente Súdwest-Fryslân (voorstel, nog af te stemmen met SWF); standaard in `db/stuurdata/organisatie.sql` | **AA**, tekst AAA (7:1) | Montserrat (koppen), Source Sans 3 (tekst, open vervanger van Calluna Sans) | [`static/css/themes/swf.css`](../../static/css/themes/swf.css) |
 
-De SWF-kleuren komen uit de live CSS van sudwestfryslan.nl; de afwegingen staan in [#89](https://github.com/TLaan/D-OmniTwin/issues/89) en [#284](https://github.com/TLaan/D-OmniTwin/issues/284). Er is (nog) geen officieel NLDS-thema van SWF.
+De SWF-kleuren komen uit de live CSS van sudwestfryslan.nl; de afwegingen staan in [#89](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/89) en [#284](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/284). Er is (nog) geen officieel NLDS-thema van SWF.
 
 ### Wanneer welk thema
 
-- **`swf`** voor Súdwest-Fryslân, en als voorbeeld voor een andere overheidsorganisatie. Sinds [#284](https://github.com/TLaan/D-OmniTwin/issues/284) zo dicht mogelijk bij de look en feel van [sudwestfryslan.nl](https://sudwestfryslan.nl/): licht en rustig, kopbalk en vensterkoppen (Kompas) wit met donkere tekst en een rode accentlijn (in donker antraciet), beeldmerk rood vlak met wit, SWF-rood alleen voor primaire knoppen, de actieve tab en accenten; links, vinkjes en schuifregelaars in SWF-donkerblauw; tooltips en selectiebadge neutraal donker. Het beheerscherm is licht (donker alleen als de gebruiker dat kiest), de inlogpagina ook. Alle tekst haalt AAA (7:1), behalve de roze highlight die de app nog niet gebruikt (AA).
+- **`swf`** voor Súdwest-Fryslân, en als voorbeeld voor een andere overheidsorganisatie. Sinds [#284](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/284) zo dicht mogelijk bij de look en feel van [sudwestfryslan.nl](https://sudwestfryslan.nl/): licht en rustig, kopbalk en vensterkoppen (Kompas) wit met donkere tekst en een rode accentlijn (in donker antraciet), beeldmerk rood vlak met wit, SWF-rood alleen voor primaire knoppen, de actieve tab en accenten; links, vinkjes en schuifregelaars in SWF-donkerblauw; tooltips en selectiebadge neutraal donker. Het beheerscherm is licht (donker alleen als de gebruiker dat kiest), de inlogpagina ook. Alle tekst haalt AAA (7:1), behalve de roze highlight die de app nog niet gebruikt (AA).
 - **`legacy`** voor wie de groen-blauwe uitstraling van v0.1.0 wil (op verzoek van de projectleider). De kleuren zijn bewust die van v0.1.0 gebleven, ook waar ze WCAG 2.1 AA niet halen. Daarom is voor SWF het `swf`-thema bepaald en niet het oude groen-blauw. `legacy` is kiesbaar in het beheerscherm, met een waarschuwing, maar **nooit de standaard** (niet in de code, niet in `organisatie.sql`, niet als inlogthema van de realm; de test bewaakt dat). Een overheidsorganisatie moet aan WCAG 2.1 AA voldoen (Besluit digitale toegankelijkheid overheid); gebruik `legacy` dus alleen intern of ter vergelijking. Haalt `legacy` ooit AA (aangepaste kleuren, de test dwingt dan `@wcag-aa: ja` af), dan kan het ook bij SWF gekozen worden.
-- **`d-omnitwin`** is de terugval van de code (een instantie zonder thema of met een onbekende naam) en het uitgangspunt voor een eigen thema zonder eigen lettertype. Het haalt AA nog niet; dat hoort bij de toegankelijkheidsronde ([#67](https://github.com/TLaan/D-OmniTwin/issues/67)).
+- **`d-omnitwin`** is de terugval van de code (een instantie zonder thema of met een onbekende naam) en het uitgangspunt voor een eigen thema zonder eigen lettertype. Het haalt AA nog niet; dat hoort bij de toegankelijkheidsronde ([#67](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/67)).
 
 ### WCAG-status in het thema
 
@@ -82,11 +82,11 @@ Alle `--d-omnitwin-*`-tokens. Elk thema zet ze allemaal, in licht en donker: `te
 |---|---|---|---|
 | `--d-omnitwin-header-background-color-start` / `-end` | kopbalk en kop van het Kompas-venster (verloop) | `#1e3a8a`→`#15803d` / `#3b82f6`→`#22c55e` | `#ffffff` / `#262626`→`#1a1a1a` |
 | `--d-omnitwin-header-color` | tekst, iconen en focusrand in de kopbalk | `#ffffff` / `#f1f5f9` | `#1e1e1e` / `#ffffff` |
-| `--d-omnitwin-header-overlay-color` / `-strength` | tint van knoppen en badges in kopbalk en vensterkoppen (Beheer, Uitloggen, venster sluiten), [#284](https://github.com/TLaan/D-OmniTwin/issues/284) | `#ffffff`, `1` (de oorspronkelijke witte tinten) | `#1e1e1e`, `0.3` / `#ffffff`, `1` |
-| `--d-omnitwin-header-accent-color` / `-width` | accentlijn onder kopbalk en vensterkoppen, en links naast het actieve menu-item in het beheerscherm ([#284](https://github.com/TLaan/D-OmniTwin/issues/284)) | `0px` (geen lijn) | `#bf0042`, `4px` |
+| `--d-omnitwin-header-overlay-color` / `-strength` | tint van knoppen en badges in kopbalk en vensterkoppen (Beheer, Uitloggen, venster sluiten), [#284](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/284) | `#ffffff`, `1` (de oorspronkelijke witte tinten) | `#1e1e1e`, `0.3` / `#ffffff`, `1` |
+| `--d-omnitwin-header-accent-color` / `-width` | accentlijn onder kopbalk en vensterkoppen, en links naast het actieve menu-item in het beheerscherm ([#284](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/284)) | `0px` (geen lijn) | `#bf0042`, `4px` |
 | `--d-omnitwin-tab-active-background-color` | actieve knop in de tabbalk links | `#c59d00` / `#eab308` | `#fbeef2` / `#3a1621` |
 | `--d-omnitwin-tab-active-color` | icoon op de actieve tab | `#0f172a` | `#a8003b` / `#ffb3c6` |
-| `--d-omnitwin-tab-active-border-color` / `-width` | rand van de actieve tab ([#284](https://github.com/TLaan/D-OmniTwin/issues/284)); gewone tabs hebben 2px | gelijk aan het vlak, `2px` | `#a8003b` / `#ff8fae`, `3px` |
+| `--d-omnitwin-tab-active-border-color` / `-width` | rand van de actieve tab ([#284](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/284)); gewone tabs hebben 2px | gelijk aan het vlak, `2px` | `#a8003b` / `#ff8fae`, `3px` |
 | `--d-omnitwin-welcome-button-background-color` | knop "Kaart verkennen" op het welkomstscherm | `#c59d00` / `#eab308` | `#a8003b` |
 | `--d-omnitwin-welcome-button-color` | tekst op die knop | `#0f172a` | `#ffffff` |
 | `--d-omnitwin-welcome-accent-color` | productnaam, stap-iconen en gloed op het welkomstscherm | `#856a00` / `#eab308` | `#a8003b` / `#ffa3bc` |
@@ -94,8 +94,8 @@ Alle `--d-omnitwin-*`-tokens. Elk thema zet ze allemaal, in licht en donker: `te
 | `--d-omnitwin-tooltip-color` | tekst in die tooltips | `#ffffff` / `#0f172a` | `#ffffff` / `#1e1e1e` |
 | `--d-omnitwin-selection-badge-background-color` | selectiebadge onder in beeld ("Bolsward-Zuidoost · 3D-panden"); het icoon erin is altijd wit, dus een donker vlak | `#047857` | `#2b2b2b` / `#3d3d3d` |
 | `--d-omnitwin-selection-badge-color` | tekst op de selectiebadge | `#ffffff` | `#ffffff` |
-| `--d-omnitwin-beeldmerk-vlak` / `-lijn` / `-kern` | beeldmerk in kopbalk, beheerscherm en favicon (`/api/organisatie/beeldmerk.svg`), [#249](https://github.com/TLaan/D-OmniTwin/issues/249) | `#0f172a` / `#3b82f6` / `#22c55e` | `#bf0042` / `#ffffff` / `#ffffff` |
-| `--d-omnitwin-beheer-modus` | standaardweergave van het beheerscherm: `licht` of `donker`; de gebruiker kan wisselen (menu rechtsboven, onthouden in de browser), [#284](https://github.com/TLaan/D-OmniTwin/issues/284) | `donker` | `licht` |
+| `--d-omnitwin-beeldmerk-vlak` / `-lijn` / `-kern` | beeldmerk in kopbalk, beheerscherm en favicon (`/api/organisatie/beeldmerk.svg`), [#249](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/249) | `#0f172a` / `#3b82f6` / `#22c55e` | `#bf0042` / `#ffffff` / `#ffffff` |
+| `--d-omnitwin-beheer-modus` | standaardweergave van het beheerscherm: `licht` of `donker`; de gebruiker kan wisselen (menu rechtsboven, onthouden in de browser), [#284](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/284) | `donker` | `licht` |
 | `--d-omnitwin-beheer-kop-background-color-start` / `-end` | kop van de zijbalk in het beheerscherm | `#2563eb`→`#1d4ed8` | `#ffffff` / `#262626`→`#1a1a1a` |
 | `--d-omnitwin-beheer-kop-color` | tekst in die kop | `#ffffff` | `#1e1e1e` / `#ffffff` |
 | `--d-omnitwin-beheer-nav-active-background-color` / `-color` | actief menu-item in het beheerscherm | `#2563eb` / `#ffffff` | `#fbeef2` / `#8c0030`, donker `#3a1621` / `#ffb3c6` |
@@ -120,7 +120,7 @@ In de detailpopup van het Kompas staat de waarde in de tooltipkleur met de datak
 1. **Kopieer** `static/css/themes/swf.css` (met eigen lettertypen) of `d-omnitwin.css` (zonder) naar `static/css/themes/<naam>.css`. De naam bestaat alleen uit kleine letters, cijfers en koppeltekens (`[a-z0-9-]`), bijvoorbeeld `leeuwarden` of `tytsjerksteradiel`.
 2. **Pas de tokens aan** in alle drie de blokken (licht, donker, donker via systeeminstelling; de laatste twee zijn gelijk). Kleuren als `#rrggbb`. Zet alle componenttokens uit de tabel hierboven. Houd de opbouw aan: alleen `--basis-*` en `--d-omnitwin-*`, geen selectors voor componenten.
    - Een huisstijlkleur die als tekst of onder witte tekst te weinig contrast heeft, krijgt een donkere (licht thema) of lichte (donker thema) variant voor `color-default`; de originele kleur blijft voor `bg-default` als vlak of rand.
-   - Eigen lettertype: alleen open licenties (OFL e.d.), zelf gehost in `static/vendor/<pakket>@<versie>/` met het licentiebestand, en een regel in `NOTICE.md` en `static/vendor/README.md`. Laad het met `@import url("../../vendor/...")` bovenaan het thema. Geen Google Fonts, Typekit of andere CDN ([#117](https://github.com/TLaan/D-OmniTwin/issues/117)); de CSP staat dat ook niet toe.
+   - Eigen lettertype: alleen open licenties (OFL e.d.), zelf gehost in `static/vendor/<pakket>@<versie>/` met het licentiebestand, en een regel in `NOTICE.md` en `static/vendor/README.md`. Laad het met `@import url("../../vendor/...")` bovenaan het thema. Geen Google Fonts, Typekit of andere CDN ([#117](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/117)); de CSP staat dat ook niet toe.
 3. **Toets het contrast** (WCAG 2.1 AA: 4,5:1 voor tekst, 3:1 voor UI-onderdelen en focus) en zet in het kopcommentaar `@wcag-aa: ja` (of `nee`, als je bewust tekorten houdt; de test controleert dat het klopt):
 
    ```bash
@@ -137,14 +137,14 @@ In de detailpopup van het Kompas staat de waarde in de tooltipkleur met de datak
    Ververs de pagina; licht en donker wisselen met de knop in de kopbalk.
 5. **Inlogpagina** (alleen met Keycloak): maak ook `deploy/keycloak/themes/<naam>/` (zie hieronder).
 6. **Bekijk** het welkomstscherm, de kaart met een indicator en een selectie, de legenda, het Kompas (met tooltip en detailpaneel), de chat en de rapportkeuze, in licht en donker.
-7. **Teruggeven**: een thema dat de organisatie zelf goedkeurt, kan als pakket naar [`nl-design-system/themes`](https://github.com/nl-design-system/themes) (map `proprietary/<organisatie>-design-tokens`, tokens in JSON volgens de basis-tokens). De tokennamen zijn al dezelfde; alleen de vorm (JSON in plaats van CSS) verschilt. Dat past bij de governance via OpenWebconcept ([#183](https://github.com/TLaan/D-OmniTwin/issues/183)).
+7. **Teruggeven**: een thema dat de organisatie zelf goedkeurt, kan als pakket naar [`nl-design-system/themes`](https://github.com/nl-design-system/themes) (map `proprietary/<organisatie>-design-tokens`, tokens in JSON volgens de basis-tokens). De tokennamen zijn al dezelfde; alleen de vorm (JSON in plaats van CSS) verschilt. Dat past bij de governance via OpenWebconcept ([#183](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/183)).
 
 ## Thema kiezen in het beheerscherm
 
-Beheerscherm → **Organisatie** ([#253](https://github.com/TLaan/D-OmniTwin/issues/253), alleen voor de rol `beheerder`):
+Beheerscherm → **Organisatie** ([#253](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/253), alleen voor de rol `beheerder`):
 
 - **Thema:** alle bestanden in `static/css/themes/`, met een voorbeeld van kopbalk, knop, link, actieve tab en beeldmerk in licht en donker. De kleuren komen uit de tokens van het thema zelf (`GET /api/organisatie/themas`: het lichte `:root`-blok en `[data-theme="dark"]`, `var(--…)` opgelost). Lettertypen ziet het voorbeeld niet. Een thema dat WCAG 2.1 AA niet haalt (`@wcag-aa: nee`, nu `d-omnitwin` en `legacy`) krijgt het label *niet WCAG AA*; kies je het, dan staat er een waarschuwing boven het voorbeeld. Opslaan kan wel.
-- **Opslaan** zet de kolom `thema` in de tabel `organisatie` (`PUT /api/organisatie`). Een naam zonder bestand geeft een foutmelding (422); er verandert dan niets. Viewer en beheerscherm tonen het nieuwe thema na een gewone herlaadactie: themabestanden en pagina's hebben `Cache-Control: no-cache` ([#246](https://github.com/TLaan/D-OmniTwin/issues/246)), en de viewer leest het thema bij elke paginalading uit de database. Geen herstart nodig.
+- **Opslaan** zet de kolom `thema` in de tabel `organisatie` (`PUT /api/organisatie`). Een naam zonder bestand geeft een foutmelding (422); er verandert dan niets. Viewer en beheerscherm tonen het nieuwe thema na een gewone herlaadactie: themabestanden en pagina's hebben `Cache-Control: no-cache` ([#246](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/246)), en de viewer leest het thema bij elke paginalading uit de database. Geen herstart nodig.
 - Elke wijziging staat in de log (categorie `ADMIN`): wie (gebruikersnaam en `sub`) en welke velden, met oude en nieuwe waarde (het contactadres alleen als "gewijzigd").
 - Een nieuw thema maak je nog steeds als bestand (hierboven); uploaden kan niet.
 
@@ -198,7 +198,7 @@ Daarnaast, niet als contrastpaar te toetsen: de actieve tab verschilt van een ge
 
 ## Bekende contrasttekorten (d-omnitwin en legacy)
 
-`d-omnitwin.css` neemt de bestaande basiskleuren één op één over, zodat er visueel niets verandert. Negen paren halen WCAG AA daarin niet; ze staan als `BEKENDE_TEKORTEN` in `tests/test_thema.py` en horen bij de toegankelijkheidsronde ([#67](https://github.com/TLaan/D-OmniTwin/issues/67)):
+`d-omnitwin.css` neemt de bestaande basiskleuren één op één over, zodat er visueel niets verandert. Negen paren halen WCAG AA daarin niet; ze staan als `BEKENDE_TEKORTEN` in `tests/test_thema.py` en horen bij de toegankelijkheidsronde ([#67](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/67)):
 
 | Modus | Paar | Contrast |
 |---|---|---|
@@ -209,9 +209,9 @@ Daarnaast, niet als contrastpaar te toetsen: de actieve tab verschilt van een ge
 | donker | fouttekst `#ef4444` op paneel `#1e293b` | 3,89:1 |
 | donker | kopbalktekst `#f1f5f9` op `#3b82f6` / `#22c55e` | 3,36:1 / 2,08:1 |
 
-(De rand van de actieve tab is in het standaardthema het gouden vlak zelf; dat paar is sinds [#284](https://github.com/TLaan/D-OmniTwin/issues/284) apart getoetst, het tekort bestond al.)
+(De rand van de actieve tab is in het standaardthema het gouden vlak zelf; dat paar is sinds [#284](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/284) apart getoetst, het tekort bestond al.)
 
-`legacy` heeft dezelfde negen, plus vier van v0.1.0 die het standaardthema in [#89](https://github.com/TLaan/D-OmniTwin/issues/89) al had opgelost: wit icoon op de gouden actieve tab (2,56:1 licht, 1,92:1 donker; eis 3:1) en wit op de groene selectiebadge `#10b981` (2,54:1, licht en donker). Bewust niet gerepareerd: `legacy` is de oorspronkelijke uitstraling.
+`legacy` heeft dezelfde negen, plus vier van v0.1.0 die het standaardthema in [#89](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/89) al had opgelost: wit icoon op de gouden actieve tab (2,56:1 licht, 1,92:1 donker; eis 3:1) en wit op de groene selectiebadge `#10b981` (2,54:1, licht en donker). Bewust niet gerepareerd: `legacy` is de oorspronkelijke uitstraling.
 
 Het SWF-thema heeft geen tekorten (`@wcag-aa: ja`; de test staat geen uitzonderingen toe).
 
@@ -227,4 +227,4 @@ Het SWF-thema heeft geen tekorten (`@wcag-aa: ja`; de test staat geen uitzonderi
 
 - Het beheerscherm en de rapporten op dezelfde tokens (zie hierboven).
 - Componenten: knoppen, formuliervelden, dialogen en meldingen naar NLDS-componenten (CSS van de Utrecht-/Candidate-componenten, zelf gehost), die dezelfde basistokens lezen.
-- axe/pa11y in de CI per thema ([#62](https://github.com/TLaan/D-OmniTwin/issues/62)).
+- axe/pa11y in de CI per thema ([#62](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/62)).

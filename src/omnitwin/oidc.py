@@ -56,7 +56,7 @@ JWKS_TTL = 300               # seconden dat een opgehaalde JWKS geldig blijft
 JWKS_MIN_VERVERSING = 10     # minimaal aantal seconden tussen twee keer ophalen bij een onbekende kid
 HTTP_TIMEOUT = 5.0
 
-PROBLEEM_BASIS = "https://github.com/TLaan/D-OmniTwin/blob/main/docs/api/laden/README.md#"
+PROBLEEM_BASIS = "https://github.com/Sudwest-Fryslan/D-OmniTwin/blob/main/docs/api/laden/README.md#"
 
 
 @dataclass(frozen=True)

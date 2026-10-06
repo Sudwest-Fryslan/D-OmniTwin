@@ -4,7 +4,7 @@
 **Prioriteit:** Hoog
 **Status:** ✅ geautomatiseerd (`tests/e2e/test_kaartmodus.py`)
 **Aangemaakt:** 2026-10-03
-**Afgeleid van:** [#255](https://github.com/TLaan/D-OmniTwin/issues/255), [#256](https://github.com/TLaan/D-OmniTwin/issues/256) (stap 5), gat-analyse huidige gebiedsmonitor (#4, #5, #6)
+**Afgeleid van:** [#255](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/255), [#256](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/256) (stap 5), gat-analyse huidige gebiedsmonitor (#4, #5, #6)
 
 ---
 

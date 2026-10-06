@@ -1,7 +1,7 @@
 # TODO - D-OmniTwin Roadmap
 
 > **Eén bron van waarheid (Issue #24):**  
-> De actieve taken, sprintplanning en backlog worden beheerd via [GitHub Issues](https://github.com/TLaan/D-OmniTwin/issues) en [GitHub Milestones](https://github.com/TLaan/D-OmniTwin/milestones).  
+> De actieve taken, sprintplanning en backlog worden beheerd via [GitHub Issues](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues) en [GitHub Milestones](https://github.com/Sudwest-Fryslan/D-OmniTwin/milestones).  
 > Dit bestand dient als inhoudelijk historisch naslagwerk van sprint-uitwerkingen.
 
 **Laatste Update:** 25 september 2026 (Dag 100)  
@@ -27,7 +27,7 @@
 **Branch:** `feature/sprint-18-ijsselmeerkust`
 
 ### 🔧 Voorbereiding (voor eerste codesessie)
-- [x] **GitHub Issue aanmaken** op `github.com/TLaan/D-OmniTwin`
+- [x] **GitHub Issue aanmaken** op `github.com/Sudwest-Fryslan/D-OmniTwin`
     - Titel: `feat: IJsselmeerkust als Besluitinstrument (Sprint 18)`
     - Labels: `enhancement`, `ux`, `data`, `frontend`, `backend`, `sprint-18`
     - Link naar sprintplan + NM-001 + TC-06-001
@@ -179,7 +179,7 @@
 
 **Doel:** Het systeem voorzien van betrouwbare e-mail alerts bij kritieke fouten (`ERROR` of `CRITICAL`) via een flexibele SMTP configuratie.
 **Aanleiding:** Issue #10 (voorheen een blocker). Doorgeschoven naar ná Sprint 19.
-**Spec:** `docs/5-secops/logging/plan_email_alerts_smtp.md` (intern werkdocument, uit de repository gehaald in [#61](https://github.com/TLaan/D-OmniTwin/issues/61))
+**Spec:** `docs/5-secops/logging/plan_email_alerts_smtp.md` (intern werkdocument, uit de repository gehaald in [#61](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/61))
 
 ---
 
@@ -327,7 +327,7 @@
 
 
 ### 🔧 Voorbereiding (voor eerste codesessie)
-- [x] **GitHub Issue #9 aanmaken** op `github.com/TLaan/D-OmniTwin`
+- [x] **GitHub Issue #9 aanmaken** op `github.com/Sudwest-Fryslan/D-OmniTwin`
     - Titel: `feat: Configureerbare Logging Infrastructuur (Sprint 17)`
     - Labels: `enhancement`, `secops`, `backend`, `admin-panel`, `sprint-17`
     - Link naar `docs/5-secops/logging/sprint-17-logging-spec.md`
@@ -587,7 +587,7 @@ if (geojson.features.length > 0 && !state.initialDataLoaded) {
 **Geschatte effort:** ~13 uur (2–3 sessies)
 
 ### 🔧 Voorbereiding (voor eerste codesessie)
-- [x] **GitHub Issue aanmaken** op `github.com/TLaan/D-OmniTwin` *(Voltooid 2026-05-14 — Issue #7)*
+- [x] **GitHub Issue aanmaken** op `github.com/Sudwest-Fryslan/D-OmniTwin` *(Voltooid 2026-05-14 — Issue #7)*
     - Titel: `feat: UX-overhaul — Learnability, Feedback & Cognitive Load (Sprint 11B)`
     - Labels: `enhancement`, `ux`, `frontend`, `sprint-11`
     - Koppeling naar `PLAN_UX_OVERHAUL_SPRINT11B.md`

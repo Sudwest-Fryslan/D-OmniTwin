@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://raw.githubusercontent.com/TLaan/D-OmniTwin/main/docs/specificaties/usecase/1.0/dataset.schema.json",
+  "$id": "https://raw.githubusercontent.com/Sudwest-Fryslan/D-OmniTwin/main/docs/specificaties/usecase/1.0/dataset.schema.json",
   "title": "D-OmniTwin Use Case Specificatie 1.0: dataset (usecases/<naam>/datasets/<id>.json)",
   "description": "Normatief schema; betekenis in docs/specificaties/usecase/README.md. De registratie voor POST /api/laden/v1/datasets (id, bronId, beschrijving, laadprofiel; schema DatasetRegistratie in docs/api/laden/openapi.yaml) plus, alleen voor de uitvoerder: bron (welke bronadapter), bewerkingen (declaratief, geen code), levering (bestandsformaat) en varianten. De uitvoerder stuurt bron, bewerkingen, levering en varianten niet mee naar de API.",
   "type": "object",

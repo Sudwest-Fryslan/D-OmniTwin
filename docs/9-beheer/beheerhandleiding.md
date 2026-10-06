@@ -4,7 +4,7 @@ Voor wie een D-OmniTwin-installatie in productie beheert. De [installatiegids](i
 
 Alle commando's draai je in de map van de installatie (naast `.env`), in een POSIX-shell (Linux, macOS, Git Bash op Windows).
 
-Issue: [#257](https://github.com/TLaan/D-OmniTwin/issues/257). Privacy: [privacy-quickscan](../5-secops/privacy-quickscan.md). Toegankelijkheid: [status](../4-ux-design/toegankelijkheid.md).
+Issue: [#257](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/257). Privacy: [privacy-quickscan](../5-secops/privacy-quickscan.md). Toegankelijkheid: [status](../4-ux-design/toegankelijkheid.md).
 
 ---
 

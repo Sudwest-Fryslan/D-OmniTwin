@@ -2,7 +2,7 @@
   "$schema": "https://datapackage.org/profiles/2.0/tableschema.json",
   "name": "externe_kaartlagen",
   "title": "Externe kaartlagen (beheer): definitie van een WFS-, WMS- of GeoJSON-laag",
-  "description": "Eén regel = één externe kaartlaag zoals in het beheerscherm (Beheer › Externe lagen; doel: externe_kaartlagen). toegang: openbaar of intern (aanname B3 van https://github.com/TLaan/D-OmniTwin/issues/222); intern gaat naar de kolom toegang van de toegang per laag (https://github.com/TLaan/D-OmniTwin/pull/274); zonder die kolom wordt een interne laag niet actief gezet.",
+  "description": "Eén regel = één externe kaartlaag zoals in het beheerscherm (Beheer › Externe lagen; doel: externe_kaartlagen). toegang: openbaar of intern (aanname B3 van https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/222); intern gaat naar de kolom toegang van de toegang per laag (https://github.com/Sudwest-Fryslan/D-OmniTwin/pull/274); zonder die kolom wordt een interne laag niet actief gezet.",
   "fields": [
     {
       "name": "naam",

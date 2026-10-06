@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://raw.githubusercontent.com/TLaan/D-OmniTwin/main/docs/specificaties/usecase/1.0/usecase.schema.json",
+  "$id": "https://raw.githubusercontent.com/Sudwest-Fryslan/D-OmniTwin/main/docs/specificaties/usecase/1.0/usecase.schema.json",
   "title": "D-OmniTwin Use Case Specificatie 1.0: manifest (usecases/<naam>/usecase.json)",
   "description": "Normatief schema van het manifest van een use case. De specificatie zelf (betekenis, regels, levenscyclus, uitvoerder) staat in docs/specificaties/usecase/README.md; bij strijd gaat de specificatie voor en wordt het schema gecorrigeerd. Een use case is een declaratieve app: naam (= mapnaam), versie, afhankelijkheden, actoren, rechten, datasets, controles en bewijs, zonder code. De velden persona, data, inrichting, ai_zoekvraag en verwacht zijn de verouderde vorm van de demopakketten van vóór 0.3.0 (toegestaan in 1.x, niet voor nieuwe use cases).",
   "type": "object",

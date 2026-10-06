@@ -1,6 +1,6 @@
 # D-OmniTwin — Sample (wat nog niet open is of nog geen adapter heeft)
 
-Sinds https://github.com/TLaan/D-OmniTwin/issues/236 komt alles wat open en te downloaden is uit de use cases met een kernadapter: CBS Kerncijfers (`cbs-kerncijfers`), RIVM Gezondheidsmonitor (`rivm-gezondheidsmonitor`), Politie (`politie-misdrijven`), RIVM-rasters (`hittestress`) en de buurtgrenzen (`cbs-gebiedsindelingen`). Deze map bevat alleen nog wat **niet open** is, of **open maar nog zonder adapter**, voor 13 buurten in Súdwest-Fryslân. De use case [`sample-bronbibliotheek`](../../usecases/sample-bronbibliotheek/README.md) laadt het via de laad-API, gemarkeerd. De inventaris per indicator staat in [demodata naar open data](../../docs/3-data-engineering/demodata-naar-open-data.md).
+Sinds https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/236 komt alles wat open en te downloaden is uit de use cases met een kernadapter: CBS Kerncijfers (`cbs-kerncijfers`), RIVM Gezondheidsmonitor (`rivm-gezondheidsmonitor`), Politie (`politie-misdrijven`), RIVM-rasters (`hittestress`) en de buurtgrenzen (`cbs-gebiedsindelingen`). Deze map bevat alleen nog wat **niet open** is, of **open maar nog zonder adapter**, voor 13 buurten in Súdwest-Fryslân. De use case [`sample-bronbibliotheek`](../../usecases/sample-bronbibliotheek/README.md) laadt het via de laad-API, gemarkeerd. De inventaris per indicator staat in [demodata naar open data](../../docs/3-data-engineering/demodata-naar-open-data.md).
 
 ## Inhoud
 

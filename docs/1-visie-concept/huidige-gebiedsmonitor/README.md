@@ -1,6 +1,6 @@
 # De huidige gebiedsmonitor van Súdwest-Fryslân
 
-Stand 02-10-2026. Vertrekpunt voor D-OmniTwin 0.3.0 (epic [#195](https://github.com/TLaan/D-OmniTwin/issues/195)): de eerste versie die de huidige gebiedsmonitor van Súdwest-Fryslân (SWF) moet kunnen vervangen.
+Stand 02-10-2026. Vertrekpunt voor D-OmniTwin 0.3.0 (epic [#195](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/195)): de eerste versie die de huidige gebiedsmonitor van Súdwest-Fryslân (SWF) moet kunnen vervangen.
 
 **Kern:** de huidige monitor is een werkend prototype met twee monitors (Basis op CBS-buurten, Klimaat op welstandsgebieden × buurt), een sunburst van 4 kwadranten → 12 thema's → 33 onderdelen → ±215 indicatoren, gekleurd naar percentiel of label A–E. Hij wordt handmatig gevuld vanuit het DWH van SWF via FME. Van de 228 indicatordefinities hebben er 49 waarden. D-OmniTwin 0.3.0 moet **hetzelfde kunnen, en meer**: inloggen met rollen en laagrechten, dezelfde indicatoren (zelfde UUID's), dezelfde kleurmethodiek als keuze, en een laad-API die de huidige FME-stroom kan vervangen.
 
@@ -56,4 +56,4 @@ D-OmniTwin heeft al méér: trends over jaargangen, rapporten, AI-chat, 3D en op
 
 - Een analyse van de draaiende viewer (alleen kijkend, ingelogd), de projectdocumentatie van SWF, de FME-workspaces van de push en een export van de definities en waarden (februari 2026).
 - In deze map staan alleen afgeleide beschrijvingen: structuur, aantallen, indicatornamen, UUID's en methodiek. Geen meetwaarden, schermafdrukken met buurtwaarden, interne adressen of persoonsgegevens. Systemen hebben functionele namen, personen staan er als rol in.
-- Verwant: RFC voor het vullen van D-OmniTwin ([#205](https://github.com/TLaan/D-OmniTwin/issues/205)), bronnen als dataproduct ([#182](https://github.com/TLaan/D-OmniTwin/issues/182)), Z-score-methodiek ([#66](https://github.com/TLaan/D-OmniTwin/issues/66), [zscore_methodiek.md](../../3-data-engineering/zscore_methodiek.md)).
+- Verwant: RFC voor het vullen van D-OmniTwin ([#205](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/205)), bronnen als dataproduct ([#182](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/182)), Z-score-methodiek ([#66](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/66), [zscore_methodiek.md](../../3-data-engineering/zscore_methodiek.md)).

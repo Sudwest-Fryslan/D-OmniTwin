@@ -65,7 +65,7 @@ Wie mag mergen naar `main` is een keuze, geen vanzelfsprekendheid. Gangbare opti
 - Geen self-merge toegestaan
 - Minimaal aantal goedkeuringen, afhankelijk van het risico van de wijziging
 
-**Zonder deze afspraken vastgelegd in de repository-instellingen is de procedure vrijblijvend.** Dit besluit (en het inrichten van branch protection op `main`) vereist repository-adminrechten en staat nog open — zie [#29](https://github.com/TLaan/D-OmniTwin/issues/29).
+**Zonder deze afspraken vastgelegd in de repository-instellingen is de procedure vrijblijvend.** Dit besluit (en het inrichten van branch protection op `main`) vereist repository-adminrechten en staat nog open — zie [#29](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/29).
 
 ## Versies en releases
 

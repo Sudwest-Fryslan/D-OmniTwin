@@ -165,7 +165,7 @@ def _registratie_fouten(reg: dict) -> None:
     if fouten:
         raise Probleem(422, "registratie-ongeldig", f"De registratie voldoet niet aan DatasetRegistratie "
                        f"({len(fouten)} fouten).",
-                       fouten=[{"type": "https://github.com/TLaan/D-OmniTwin/blob/main/docs/api/laden/README.md#"
+                       fouten=[{"type": "https://github.com/Sudwest-Fryslan/D-OmniTwin/blob/main/docs/api/laden/README.md#"
                                         "schema-ongeldig", "code": "schema-ongeldig", "title": "Schema ongeldig",
                                 "detail": f} for f in fouten[:100]])
 

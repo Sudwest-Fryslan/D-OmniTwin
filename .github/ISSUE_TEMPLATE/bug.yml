@@ -6,7 +6,7 @@ body:
   - type: markdown
     attributes:
       value: |
-        Een beveiligingsprobleem? Meld dat **niet** hier, maar privé volgens [SECURITY.md](https://github.com/TLaan/D-OmniTwin/blob/main/SECURITY.md).
+        Een beveiligingsprobleem? Meld dat **niet** hier, maar privé volgens [SECURITY.md](https://github.com/Sudwest-Fryslan/D-OmniTwin/blob/main/SECURITY.md).
         Gebruik geen echte persoonsgegevens in je melding.
   - type: textarea
     id: beschrijving

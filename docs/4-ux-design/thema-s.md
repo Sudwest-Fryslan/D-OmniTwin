@@ -1,8 +1,8 @@
 # Thema's: eigen huisstijl via NL Design System-tokens
 
-> **Verouderd.** De actuele beschrijving, met de rustigere SWF-kleuren, het thema `legacy` en de WCAG-status per thema ([#284](https://github.com/TLaan/D-OmniTwin/issues/284)), staat in [`docs/9-beheer/thema-s.md`](../9-beheer/thema-s.md). De kleurwaarden hieronder zijn die van vóór #284.
+> **Verouderd.** De actuele beschrijving, met de rustigere SWF-kleuren, het thema `legacy` en de WCAG-status per thema ([#284](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/284)), staat in [`docs/9-beheer/thema-s.md`](../9-beheer/thema-s.md). De kleurwaarden hieronder zijn die van vóór #284.
 
-Elke organisatie draait een eigen D-OmniTwin-instantie ([ADR 0007](../2-architectuur/adr/0007-geen-multi-tenancy-mesh-van-instanties.md)). Kleuren, lettertypen, ruimte en hoeken komen uit een **thema**: één CSS-bestand met [NL Design System](https://nldesignsystem.nl)-tokens. Welk thema een instantie laadt, is inrichting (data), geen code. Issue: [#89](https://github.com/TLaan/D-OmniTwin/issues/89).
+Elke organisatie draait een eigen D-OmniTwin-instantie ([ADR 0007](../2-architectuur/adr/0007-geen-multi-tenancy-mesh-van-instanties.md)). Kleuren, lettertypen, ruimte en hoeken komen uit een **thema**: één CSS-bestand met [NL Design System](https://nldesignsystem.nl)-tokens. Welk thema een instantie laadt, is inrichting (data), geen code. Issue: [#89](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/89).
 
 ## Hoe het werkt
 
@@ -28,7 +28,7 @@ componenten (knoppen, panelen, tabs, kopbalk, focusrand)
 | `d-omnitwin` | standaard, de huidige uitstraling | Inter | [`static/css/themes/d-omnitwin.css`](../../static/css/themes/d-omnitwin.css) |
 | `swf` | Gemeente Súdwest-Fryslân (voorstel, nog af te stemmen met SWF) | Montserrat (koppen), Source Sans 3 (tekst, open vervanger van Calluna Sans) | [`static/css/themes/swf.css`](../../static/css/themes/swf.css) |
 
-De SWF-kleuren komen uit de live CSS van sudwestfryslan.nl; de afwegingen staan in [#89](https://github.com/TLaan/D-OmniTwin/issues/89). Er is (nog) geen officieel NLDS-thema van SWF.
+De SWF-kleuren komen uit de live CSS van sudwestfryslan.nl; de afwegingen staan in [#89](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/89). Er is (nog) geen officieel NLDS-thema van SWF.
 
 ## Tokenmapping
 
@@ -76,7 +76,7 @@ De kleuren van de **data** (Z-score-schaal, choropleten op de kaart, Kompas-sunb
 1. **Kopieer** `static/css/themes/swf.css` (met eigen lettertypen) of `d-omnitwin.css` (zonder) naar `static/css/themes/<naam>.css`. De naam bestaat alleen uit kleine letters, cijfers en koppeltekens (`[a-z0-9-]`), bijvoorbeeld `leeuwarden` of `tytsjerksteradiel`.
 2. **Pas de tokens aan** in alle drie de blokken (licht, donker, donker via systeeminstelling; de laatste twee zijn gelijk). Kleuren als `#rrggbb`. Houd de opbouw aan: alleen `--basis-*` en `--d-omnitwin-*`, geen selectors voor componenten.
    - Een huisstijlkleur die als tekst of onder witte tekst te weinig contrast heeft, krijgt een donkere (licht thema) of lichte (donker thema) variant voor `color-default`; de originele kleur blijft voor `bg-default` als vlak of rand.
-   - Eigen lettertype: alleen open licenties (OFL e.d.), zelf gehost in `static/vendor/<pakket>@<versie>/` met het licentiebestand, en een regel in `NOTICE.md` en `static/vendor/README.md`. Laad het met `@import url("../../vendor/...")` bovenaan het thema. Geen Google Fonts, Typekit of andere CDN ([#117](https://github.com/TLaan/D-OmniTwin/issues/117)); de CSP staat dat ook niet toe.
+   - Eigen lettertype: alleen open licenties (OFL e.d.), zelf gehost in `static/vendor/<pakket>@<versie>/` met het licentiebestand, en een regel in `NOTICE.md` en `static/vendor/README.md`. Laad het met `@import url("../../vendor/...")` bovenaan het thema. Geen Google Fonts, Typekit of andere CDN ([#117](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/117)); de CSP staat dat ook niet toe.
 3. **Toets het contrast** (WCAG 2.1 AA: 4,5:1 voor tekst, 3:1 voor UI-onderdelen en focus):
 
    ```bash
@@ -86,11 +86,11 @@ De kleuren van de **data** (Z-score-schaal, choropleten op de kaart, Kompas-sunb
 
 4. **Zet het thema aan**: veld `thema` in de organisatiegegevens van de instantie (bv. `"thema": "leeuwarden"`). Ververs de pagina; licht en donker wisselen met de knop in de kopbalk.
 5. **Bekijk** de hoofdpagina, het Kompas en een rapport in licht en donker.
-6. **Teruggeven**: een thema dat de organisatie zelf goedkeurt, kan als pakket naar [`nl-design-system/themes`](https://github.com/nl-design-system/themes) (map `proprietary/<organisatie>-design-tokens`, tokens in JSON volgens de basis-tokens). De tokennamen zijn al dezelfde; alleen de vorm (JSON in plaats van CSS) verschilt. Dat past bij de governance via OpenWebconcept ([#183](https://github.com/TLaan/D-OmniTwin/issues/183)).
+6. **Teruggeven**: een thema dat de organisatie zelf goedkeurt, kan als pakket naar [`nl-design-system/themes`](https://github.com/nl-design-system/themes) (map `proprietary/<organisatie>-design-tokens`, tokens in JSON volgens de basis-tokens). De tokennamen zijn al dezelfde; alleen de vorm (JSON in plaats van CSS) verschilt. Dat past bij de governance via OpenWebconcept ([#183](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/183)).
 
 ## Bekende contrasttekorten in het standaardthema
 
-`d-omnitwin.css` neemt de bestaande kleuren één op één over, zodat er visueel niets verandert. Zeven paren halen WCAG AA daarin niet; ze staan als `BEKENDE_TEKORTEN` in `tests/test_thema.py` en horen bij de toegankelijkheidsronde ([#67](https://github.com/TLaan/D-OmniTwin/issues/67)):
+`d-omnitwin.css` neemt de bestaande kleuren één op één over, zodat er visueel niets verandert. Zeven paren halen WCAG AA daarin niet; ze staan als `BEKENDE_TEKORTEN` in `tests/test_thema.py` en horen bij de toegankelijkheidsronde ([#67](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/67)):
 
 | Modus | Paar | Contrast |
 |---|---|---|
@@ -107,5 +107,5 @@ Het SWF-thema heeft geen tekorten.
 
 - Componenten: knoppen, formuliervelden, dialogen en meldingen naar NLDS-componenten (CSS van de Utrecht-/Candidate-componenten, zelf gehost), die dezelfde basistokens lezen.
 - De admin-UI (React) op dezelfde tokens.
-- Logo per organisatie samen met het thema ([#83](https://github.com/TLaan/D-OmniTwin/issues/83)).
-- axe/pa11y in de CI per thema ([#62](https://github.com/TLaan/D-OmniTwin/issues/62)).
+- Logo per organisatie samen met het thema ([#83](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/83)).
+- axe/pa11y in de CI per thema ([#62](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/62)).
