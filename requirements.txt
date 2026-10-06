@@ -26,7 +26,7 @@ SQLAlchemy>=2.0.0
 
 # --- Geo ---
 # fiona en pyproj brengen GDAL en PROJ mee in hun wheel; geen systeem-GDAL nodig
-shapely>=2.0.0          # routers/externe_lagen.py
+shapely>=2.1.2          # routers/externe_lagen.py
 pyproj>=3.4.0           # routers/bag3d.py
 fiona>=1.9.0            # routers/externe_lagen.py (GPKG/GeoJSON uit data-upload/)
 
