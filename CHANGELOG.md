@@ -8,6 +8,10 @@ Eerdere wijzigingen, van vóór dit bestand, zijn terug te vinden in de git-hist
 
 ## [Unreleased]
 
+### Gewijzigd
+
+- De repository staat op [Sudwest-Fryslan/D-OmniTwin](https://github.com/Sudwest-Fryslan/D-OmniTwin) ([#301](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/301)). Alle verwijzingen gaan daarheen, ook de `type`-URL's in foutmeldingen van de laad-API, de `$id` van de schema's van de Use Case Specificatie 1.0, `publiccode.yml` en `security.txt`. Wie een schema op `$id` ophaalt of vergelijkt, gebruikt de nieuwe URL. Voor samenwerking verwijst de README naar issues in plaats van Discussions.
+
 ## [0.3.0] - 2026-10-04
 
 D-OmniTwin kan de huidige SWF-gebiedsmonitor opvolgen en is aan andere partijen aan te bieden. Ten opzichte van 0.3.0-rc.1: **rechten per laag** (openbaar/intern, afgedwongen in de database en de API's), **klimaatlabels A–E** met de echte drempels van SWF, de **echte SWF-vulling** als data bij de use cases (welstandsgebieden, het volledige Kompas, externe kaartlagen), de aannames uit [#222](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/222) (voorrang bij overlap, ontdubbelen, statuscodes), organisatie en thema instellen in het beheerscherm, een **rustig SWF-thema** in de stijl van sudwestfryslan.nl (WCAG AAA voor tekst) naast het thema `legacy` (v0.1.0, niet WCAG), het indicatorpaneel met CSV-export en favorieten, en stabielere e2e-tests. Toegankelijkheid is vastgelegd als architectuurprincipe (ADR 0011). De bijgehouden stand van alle aannames staat in [#222](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/222), de vergelijking met de huidige monitor in [#259](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/259). Lees bij een upgrade de paragraaf **Migreren**.
