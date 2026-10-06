@@ -20,7 +20,7 @@
 | **Architectuur** | `/docs/2-architectuur/` | Technische architectuur, API-design, component-diagram, **Dataspace integratie** | backend-db, data-architect-engineer, innovation-lab |
 | **Data Engineering** | `/docs/3-data-engineering/` | ETL-pipelines, CBS/RIVM data, scores, indicatoren, Z-score-methodiek ([`zscore_methodiek.md`](./3-data-engineering/zscore_methodiek.md)), percentielklasse ([`percentielklasse_methodiek.md`](./3-data-engineering/percentielklasse_methodiek.md)), labels A–E ([`labels_methodiek.md`](./3-data-engineering/labels_methodiek.md)) | data-architect-engineer, data-gis |
 | **UX & Design** | `/docs/4-ux-design/` | UI-patronen, "Classic Premium UI", design-system, thema per organisatie met NL Design System-tokens ([`9-beheer/thema-s.md`](./9-beheer/thema-s.md)), gebruikerservaringen (`gebruikerservaringen/`) | frontend-viz, web-carto-design |
-| **SecOps** | `/docs/5-secops/` | Security-beleid, deployment, toegangsbeheer | env-setup, backend-db |
+| **SecOps & Compliance** | `/docs/5-secops/` | Security-beleid, privacy-quickscan, AI-compliance ([`analyse_eu_ai_act_d_omnitwin.md`](./5-secops/compliance/analyse_eu_ai_act_d_omnitwin.md)), toegangsbeheer | secops-identity, project-manager, backend-db |
 | **AI Parallel Track** | `/docs/6-ai-parallel-track/` | LLM-integratie, ontologie, AI-chat, prompting | innovation-lab, technisch-communicatie |
 | **Projectmanagement** | `/docs/7-projectmanagement/` | Sprints, voortgang, besluiten, archief | project-manager |
 | **Communicatie** | `/docs/8-communicatie/` | Stakeholdercommunicatie, rapportages, presentaties | technisch-communicatie |
