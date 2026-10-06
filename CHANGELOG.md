@@ -8,6 +8,10 @@ Eerdere wijzigingen, van vóór dit bestand, zijn terug te vinden in de git-hist
 
 ## [Unreleased]
 
+## [0.3.1] - 2026-10-06
+
+Patch na de verhuizing van de repository naar de organisatie van Súdwest-Fryslân, zonder andere werking van de applicatie.
+
 ### Gewijzigd
 
 - De repository staat op [Sudwest-Fryslan/D-OmniTwin](https://github.com/Sudwest-Fryslan/D-OmniTwin) ([#301](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/301)). Alle verwijzingen gaan daarheen, ook de `type`-URL's in foutmeldingen van de laad-API, de `$id` van de schema's van de Use Case Specificatie 1.0, `publiccode.yml` en `security.txt`. Wie een schema op `$id` ophaalt of vergelijkt, gebruikt de nieuwe URL. Voor samenwerking verwijst de README naar issues in plaats van Discussions.
@@ -258,7 +262,8 @@ Eerste release; deze sectie vat de ontwikkeling sinds het begin samen, details s
 - De backend-container draait als niet-root gebruiker ([#78](https://github.com/Sudwest-Fryslan/D-OmniTwin/pull/78)).
 - Beheeromgeving gebouwd zonder sourcemaps ([#81](https://github.com/Sudwest-Fryslan/D-OmniTwin/pull/81)).
 
-[Unreleased]: https://github.com/Sudwest-Fryslan/D-OmniTwin/compare/v0.3.0...HEAD
+[Unreleased]: https://github.com/Sudwest-Fryslan/D-OmniTwin/compare/v0.3.1...HEAD
+[0.3.1]: https://github.com/Sudwest-Fryslan/D-OmniTwin/compare/v0.3.0...v0.3.1
 [0.3.0]: https://github.com/Sudwest-Fryslan/D-OmniTwin/compare/v0.3.0-rc.1...v0.3.0
 [0.3.0-rc.1]: https://github.com/Sudwest-Fryslan/D-OmniTwin/compare/v0.2.1...v0.3.0-rc.1
 [0.2.1]: https://github.com/Sudwest-Fryslan/D-OmniTwin/compare/v0.2.0...v0.2.1
