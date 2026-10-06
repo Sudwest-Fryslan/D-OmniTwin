@@ -9,7 +9,7 @@
 - **Vraag:** "Ik wil dat een laag of indicator uit een interne bron alleen zichtbaar is voor ingelogde medewerkers (rol lezer of beheerder), ook bij een directe aanroep van de API, en dat open data voor iedereen zichtbaar blijft."
 - **Rechten:** `realm-rol beheerder (registreren)`, `dataset:demo-intern-definitie:laden`, `dataset:demo-intern-waarden:laden`, `dataset:demo-intern-laag:laden`, `realm-rol lezer` (interne lagen en indicatoren zien)
 
-Toont toegang per laag en bron (https://github.com/TLaan/D-OmniTwin/issues/254, [ADR 0010](../../docs/2-architectuur/adr/0010-toegang-per-laag-en-bron.md)). Toegang is data: `dct:accessRights` in de registratie van de dataset. `PUBLIC` is openbaar, `RESTRICTED` (of `NON_PUBLIC`) is intern. Wat een interne dataset publiceert (kaartlaag, indicator, waarden), zie je alleen met de realm-rol `lezer` of `beheerder`. Anoniem staat het niet in de lijsten, en een directe aanroep geeft 401 (ingelogd zonder rol: 403).
+Toont toegang per laag en bron (https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/254, [ADR 0010](../../docs/2-architectuur/adr/0010-toegang-per-laag-en-bron.md)). Toegang is data: `dct:accessRights` in de registratie van de dataset. `PUBLIC` is openbaar, `RESTRICTED` (of `NON_PUBLIC`) is intern. Wat een interne dataset publiceert (kaartlaag, indicator, waarden), zie je alleen met de realm-rol `lezer` of `beheerder`. Anoniem staat het niet in de lijsten, en een directe aanroep geeft 401 (ingelogd zonder rol: 403).
 
 ## Data
 

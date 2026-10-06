@@ -10,7 +10,7 @@
 - **Vraag:** "Ik wil de SWF-installatie vullen met de rijkere data uit mijn lokale D-OmniTwin-database, via de laad-API en herhaalbaar, zonder open data of demodata mee te kopiëren."
 - **Rechten:** `realm-rol beheerder (registreren)`, `dataset:swf-init-indicatoren:laden`, `dataset:swf-init-waarnemingen:laden`
 
-Aanname A1 van https://github.com/TLaan/D-OmniTwin/issues/222: de eerste vulling bij SWF komt uit de lokale D-OmniTwin-database van de projectleider. Die komt als dump (`pg_dump -Fc`, niet in git) en wordt **niet** teruggezet. Besluit van de projectleiding (04-10-2026): de data is openbaar, en wat niet online te downloaden is, staat als bestand bij de use case waar het hoort.
+Aanname A1 van https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/222: de eerste vulling bij SWF komt uit de lokale D-OmniTwin-database van de projectleider. Die komt als dump (`pg_dump -Fc`, niet in git) en wordt **niet** teruggezet. Besluit van de projectleiding (04-10-2026): de data is openbaar, en wat niet online te downloaden is, staat als bestand bij de use case waar het hoort.
 
 ## Waar de data uit de dump terechtkomt
 

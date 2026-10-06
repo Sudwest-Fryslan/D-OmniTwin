@@ -214,7 +214,7 @@ Zie [`ETL/ETL_DOCUMENTATION.md`](../../ETL/ETL_DOCUMENTATION.md) voor de volledi
 - 📖 **Architectuur:** [`docs/2-architectuur/`](../2-architectuur/) — technische opzet
 - 🗺️ **Roadmap:** [`ROADMAP.md`](ROADMAP.md) — geplande features
 - 🐛 **Bugs & fixes:** [`BUGFIX.md`](BUGFIX.md) — bekende issues
-- 💬 **Vragen of samenwerking?** Open een [GitHub Discussion](https://github.com/TLaan/D-OmniTwin/discussions) of mail [geo-groep@sudwestfryslan.nl](mailto:geo-groep@sudwestfryslan.nl)
+- 💬 **Vragen of samenwerking?** Open een [GitHub Discussion](https://github.com/Sudwest-Fryslan/D-OmniTwin/discussions) of mail [geo-groep@sudwestfryslan.nl](mailto:geo-groep@sudwestfryslan.nl)
 
 ---
 

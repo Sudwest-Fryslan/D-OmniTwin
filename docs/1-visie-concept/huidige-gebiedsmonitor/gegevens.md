@@ -200,4 +200,4 @@ flowchart LR
 | `waarde`, `begingeldigheid` | `gebied_data.waarde`, `jaar` (of `datum` bij een echte peildatum) | ja; jaar 0 afwijzen |
 | hiërarchie en monitors | `kompas_configuraties` → `kompas_titels` → `kompas_themas` → `kompas_onderdelen` → `kompas_indicator_mapping` | ja, structureel |
 | labels A–E | `kompas_indicator_scoring_regels` (`threshold_based`, `thresholds`) | ja, structureel; drempels onbekend |
-| `n` | – | ontbreekt in beide; voorgesteld in [#205](https://github.com/TLaan/D-OmniTwin/issues/205) |
+| `n` | – | ontbreekt in beide; voorgesteld in [#205](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/205) |

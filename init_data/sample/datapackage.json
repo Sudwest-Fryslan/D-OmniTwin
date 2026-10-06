@@ -5,7 +5,7 @@
   "description": "Wat nog niet open is of nog geen adapter heeft, voor 13 CBS-buurten van de gemeente Súdwest-Fryslân: 40 indicatoren, 520 metingen (Kadaster BAG, RVO EP-Online en OpenStreetMap, per buurt berekend; en 8 interne indicatoren als demodata). Geladen via de laad-API door de use case sample-bronbibliotheek (usecases/sample-bronbibliotheek). Alles wat open en te downloaden is (CBS Kerncijfers, RIVM Gezondheidsmonitor, Politie, RIVM-rasters, buurtgrenzen) komt uit de use cases met een kernadapter en staat niet in git (#236). De indicatordefinities staan in db/stuurdata/indicatoren.csv (EUPL-1.2).\n\nDemodata is gemarkeerd: de kolom 'bron' begint met 'DEMODATA' bij alle waarden van de 8 interne indicatoren (plaatsvervanger voor de interne bron SWF-gebiedsmonitor) en bij Bolsward-Zuidoost (BU19000002) voor BAG, EP-Online en OpenStreetMap. Geen echte cijfers.\n\n'kwaliteit' is overal leeg. Zie KWALITEIT.md en docs/3-data-engineering/demodata-naar-open-data.md.",
   "version": "0.1.0",
   "keywords": ["D-OmniTwin", "Súdwest-Fryslân", "buurten", "indicatoren", "CBS", "sample"],
-  "homepage": "https://github.com/TLaan/D-OmniTwin",
+  "homepage": "https://github.com/Sudwest-Fryslan/D-OmniTwin",
   "created": "2026-09-30T00:00:00Z",
   "licenses": [
     {

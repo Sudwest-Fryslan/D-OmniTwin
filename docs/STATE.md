@@ -5,7 +5,7 @@
 > De actuele stand staat in:
 > - [`CHANGELOG.md`](../CHANGELOG.md): wat er per versie veranderd is; `[Unreleased]` is wat er op `main` staat;
 > - [`VERSION`](../VERSION): het versienummer;
-> - de [GitHub-issues](https://github.com/TLaan/D-OmniTwin/issues): wat openstaat;
+> - de [GitHub-issues](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues): wat openstaat;
 > - de [installatiegids](9-beheer/installatie.md): installatie, beheer en beveiliging.
 
 ---

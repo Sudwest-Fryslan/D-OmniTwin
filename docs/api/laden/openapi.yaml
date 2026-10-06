@@ -34,7 +34,7 @@ info:
   contact:
     name: Beheerteam D-OmniTwin (Súdwest-Fryslân, Geo-groep)
     email: geo-groep@sudwestfryslan.nl
-    url: https://github.com/TLaan/D-OmniTwin
+    url: https://github.com/Sudwest-Fryslan/D-OmniTwin
   license:
     name: EUPL-1.2
     url: https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
@@ -1669,7 +1669,7 @@ components:
         type:
           type: string
           format: uri-reference
-          example: https://github.com/TLaan/D-OmniTwin/blob/main/docs/api/laden/README.md#probleemtypen
+          example: https://github.com/Sudwest-Fryslan/D-OmniTwin/blob/main/docs/api/laden/README.md#probleemtypen
         title:
           type: string
         status:
@@ -2041,21 +2041,21 @@ components:
           gepubliceerd: 0
           vervangen: 0
         fouten:
-          - type: https://github.com/TLaan/D-OmniTwin/blob/main/docs/api/laden/README.md#gebied-onbekend
+          - type: https://github.com/Sudwest-Fryslan/D-OmniTwin/blob/main/docs/api/laden/README.md#gebied-onbekend
             code: gebied-onbekend
             title: Gebied bestaat niet
             detail: gebied_code komt niet voor in gebiedstype CBS_BUURT.
             resource: waarnemingen
             regel: 17
             veld: gebied_code
-          - type: https://github.com/TLaan/D-OmniTwin/blob/main/docs/api/laden/README.md#jaar-ongeldig
+          - type: https://github.com/Sudwest-Fryslan/D-OmniTwin/blob/main/docs/api/laden/README.md#jaar-ongeldig
             code: jaar-ongeldig
             title: Jaar buiten bereik
             detail: jaar moet tussen 1900 en 2100 liggen.
             resource: waarnemingen
             regel: 233
             veld: jaar
-          - type: https://github.com/TLaan/D-OmniTwin/blob/main/docs/api/laden/README.md#dubbele-sleutel
+          - type: https://github.com/Sudwest-Fryslan/D-OmniTwin/blob/main/docs/api/laden/README.md#dubbele-sleutel
             code: dubbele-sleutel
             title: Dubbele sleutel
             detail: Regel 412 heeft dezelfde sleutel als regel 87.
@@ -2070,7 +2070,7 @@ components:
     ProbleemAfgekeurd:
       summary: Foutrapport (synchroon afgekeurd)
       value:
-        type: https://github.com/TLaan/D-OmniTwin/blob/main/docs/api/laden/README.md#levering-afgekeurd
+        type: https://github.com/Sudwest-Fryslan/D-OmniTwin/blob/main/docs/api/laden/README.md#levering-afgekeurd
         code: levering-afgekeurd
         title: Levering afgekeurd
         status: 422
@@ -2078,7 +2078,7 @@ components:
         instance: /api/laden/v1/leveringen/3a0f4e2b-1c9d-4b8a-8e7f-6d5c4b3a2918
         levering: /api/laden/v1/leveringen/3a0f4e2b-1c9d-4b8a-8e7f-6d5c4b3a2918
         fouten:
-          - type: https://github.com/TLaan/D-OmniTwin/blob/main/docs/api/laden/README.md#gebied-onbekend
+          - type: https://github.com/Sudwest-Fryslan/D-OmniTwin/blob/main/docs/api/laden/README.md#gebied-onbekend
             code: gebied-onbekend
             title: Gebied bestaat niet
             resource: waarnemingen

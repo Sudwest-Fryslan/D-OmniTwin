@@ -1,7 +1,7 @@
 # BUGFIX.md - D-OmniTwin
 
 > **Eén bron van waarheid (Issue #24):**  
-> Alle nieuwe bugs en tracking verlopen via [GitHub Issues](https://github.com/TLaan/D-OmniTwin/issues) met het label `bug`.  
+> Alle nieuwe bugs en tracking verlopen via [GitHub Issues](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues) met het label `bug`.  
 > Dit bestand dient als historisch logboek van opgeloste problemen. Voer geen eigen nummering meer in; koppel nieuwe bevindingen direct aan het bijbehorende `#<issue-nr>`.
 
 ---
@@ -11,7 +11,7 @@
 **Gerapporteerd:** 27-08-2026  
 **Status:** ✅ RESOLVED & VERIFIED (28-08-2026)  
 **Severity:** 🔴 HIGH (Functionaliteit 3D panden gaf 504/502 fouten)  
-**GitHub Issue:** [#39](https://github.com/TLaan/D-OmniTwin/issues/39) (Gesloten)
+**GitHub Issue:** [#39](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/39) (Gesloten)
 
 ### Probleem
 Bij het klikken op de knop "🏗️ 3D Panden" in de kaartweergave kregen gebruikers een foutmelding ("3D panden konden niet worden geladen: HTTP 504"). De backend probeerde data op te halen via de 2D WFS service van TU Delft (`data.3dbag.nl/api/BAG3D/wfs`), welke geen data meer retourneerde en na 15 seconden een timeout veroorzaakte.
@@ -39,7 +39,7 @@ Bij het klikken op de knop "🏗️ 3D Panden" in de kaartweergave kregen gebrui
 **Gerapporteerd:** 19-08-2026  
 **Status:** 🟡 OPEN  
 **Severity:** 🟡 MEDIUM (UX - Event-loop blokkade tussen tabbladen)  
-**GitHub Issue:** [#46](https://github.com/TLaan/D-OmniTwin/issues/46)
+**GitHub Issue:** [#46](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/46)
 
 ### Probleem
 Wanneer een rapportpagina (of analyse/admin-scherm) geopend staat in een apart browsertabblad en de gebruiker start een print-actie (het browser printscherm / `window.print()` dialoogvenster staat open), reageert de hoofdapplicatie in het oorspronkelijke tabblad nergens meer op. Knoppen, interacties en kaartbewegingen blokkeren totdat het printvenster in het andere tabblad wordt gesloten of voltooid.

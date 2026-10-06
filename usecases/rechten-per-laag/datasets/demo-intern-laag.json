@@ -6,7 +6,7 @@
     "@type": "dcat:Dataset",
     "dct:title": "DEMODATA: interne voorbeeldlaag (buurten)",
     "dct:description": "Kaartlaag uit een denkbeeldige interne bron, om toegang per laag te tonen (#254): de 13 buurten van de sample als vlakken. Alleen zichtbaar na inloggen met de rol lezer of beheerder.",
-    "dct:publisher": "https://github.com/TLaan/D-OmniTwin",
+    "dct:publisher": "https://github.com/Sudwest-Fryslan/D-OmniTwin",
     "dct:accessRights": "http://publications.europa.eu/resource/authority/access-right/RESTRICTED",
     "dct:license": "http://standaarden.overheid.nl/owms/terms/licentieonbekend",
     "dct:spatial": "https://identifier.overheid.nl/tooi/id/provincie/pv21",

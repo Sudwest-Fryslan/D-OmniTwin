@@ -6,7 +6,7 @@
  * in de actieve tab en wit op groen in de selectiebadge, zoals in v0.1.0). Daarom nooit de standaard
  * en niet geschikt als standaard voor een overheidsorganisatie; het beheerscherm waarschuwt bij de keuze.
  * Uitzonderingen in tests/test_thema.py (BEKENDE_TEKORTEN), zie
- * https://github.com/TLaan/D-OmniTwin/issues/67 en https://github.com/TLaan/D-OmniTwin/issues/284.
+ * https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/67 en https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/284.
  *
  * Kleuren zoals static/css/styles.css in v0.1.0: kopbalk #1e3a8a -> #15803d (donker #3b82f6 -> #22c55e),
  * knoppen Trust Blue, Geo Gold voor selectie en actieve tab. Bewust bevroren: verandert niet mee met

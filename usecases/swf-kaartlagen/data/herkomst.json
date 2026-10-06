@@ -1,7 +1,7 @@
 {
  "bron": "lokale D-OmniTwin-database van de projectleider SWF (dump)",
  "dump_datum": "2026-10-04",
- "toegang": "openbaar (besluit projectleiding 04-10-2026, https://github.com/TLaan/D-OmniTwin/issues/222)",
+ "toegang": "openbaar (besluit projectleiding 04-10-2026, https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/222)",
  "gemaakt_met": "scripts/beheer/swf_export.py --repo",
  "inhoud": {
   "lagen": 8,

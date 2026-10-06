@@ -39,7 +39,7 @@ docker compose version
 ### 2.1 Code ophalen
 
 ```bash
-git clone https://github.com/TLaan/D-OmniTwin.git
+git clone https://github.com/Sudwest-Fryslan/D-OmniTwin.git
 cd D-OmniTwin
 ```
 
@@ -208,7 +208,7 @@ Alle data komt binnen via een **use case**: een map in [`usecases/`](../../useca
 
 ### Bij de eerste start
 
-`db-init` laadt bij de eerste start altijd het product zonder data: stuurdata (scenario's, profielen, prompts), de indicatordefinities en de Kompas-indeling. Met `LOAD_SAMPLE_DATA=true` (standaard) installeert hij daarna alle actieve use cases in-process (`python -m omnitwin.usecases installeer --alle --inproces`, zonder HTTP en token). Dat is open data, gedownload bij de bron (https://github.com/TLaan/D-OmniTwin/issues/236):
+`db-init` laadt bij de eerste start altijd het product zonder data: stuurdata (scenario's, profielen, prompts), de indicatordefinities en de Kompas-indeling. Met `LOAD_SAMPLE_DATA=true` (standaard) installeert hij daarna alle actieve use cases in-process (`python -m omnitwin.usecases installeer --alle --inproces`, zonder HTTP en token). Dat is open data, gedownload bij de bron (https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/236):
 
 - de **CBS-buurten, -wijken en -gemeenten** van Fryslân (PDOK, `cbs-gebiedsindelingen`);
 - de **CBS Kerncijfers 2019-2026** voor heel Fryslân (`cbs-kerncijfers`, zie [`cbs_kerncijfers.md`](../3-data-engineering/cbs_kerncijfers.md));
@@ -237,7 +237,7 @@ Een eigen bron (bijvoorbeeld een export uit FME of een eigen database) levert aa
 
 ### Eerste SWF-vulling
 
-Bij SWF komt de eerste vulling uit de lokale D-OmniTwin-database van de projectleider (https://github.com/TLaan/D-OmniTwin/issues/222, A1; openbaar volgens besluit van de projectleiding). Wat daarvan niet online te downloaden is, staat als bestand in git bij de use case waar het hoort en laadt dus vanzelf bij de eerste start (`LOAD_SAMPLE_DATA=true`):
+Bij SWF komt de eerste vulling uit de lokale D-OmniTwin-database van de projectleider (https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/222, A1; openbaar volgens besluit van de projectleiding). Wat daarvan niet online te downloaden is, staat als bestand in git bij de use case waar het hoort en laadt dus vanzelf bij de eerste start (`LOAD_SAMPLE_DATA=true`):
 
 - welstandsgebieden × buurt: [`swf-gebiedsindelingen`](../../usecases/swf-gebiedsindelingen/README.md);
 - het Volledig Kompas zoals de projectleider het inrichtte: [`swf-kompasprofiel`](../../usecases/swf-kompasprofiel/README.md);
@@ -255,7 +255,7 @@ docker compose run --rm -v <export>:/swf-export:ro -v <monitorexport>:/swf-dump:
 
 De precieze stappen staan in de [README van swf-initialisatie](../../usecases/swf-initialisatie/README.md#stappen). Een nieuwere dump: hetzelfde script met `--repo` werkt de bestanden in git bij (via een PR). Open data gaat nooit mee (die downloadt de eigen use case), demodata ook niet.
 
-De oude routes `init_data/scripts/seed_fryslan.py` en het ETL-framework in `ETL/` zijn niet meer de weg om een installatie te vullen (https://github.com/TLaan/D-OmniTwin/issues/69). `ETL/` bevat nog bronscripts voor ontwikkelaars.
+De oude routes `init_data/scripts/seed_fryslan.py` en het ETL-framework in `ETL/` zijn niet meer de weg om een installatie te vullen (https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/69). `ETL/` bevat nog bronscripts voor ontwikkelaars.
 
 ---
 
@@ -392,7 +392,7 @@ Elke organisatie draait een eigen instantie (ADR 0007). Wie die instantie beheer
 De eerste gemeentecode is de standaard-referentie in de rapporten ("⌀ Gemeente ...") en bepaalt welke buurten bij een omgevingsvisie-deelgebied horen.
 
 - **Nieuwe installatie:** pas vóór de eerste start `db/stuurdata/organisatie.sql` aan. `db-init` laadt het bestand alleen als de tabel nog leeg is. Met een kant-en-klare image (zonder eigen build): mount je eigen bestand in `db-init` op `/app/db/stuurdata/organisatie.sql`, of gebruik de SQL hieronder.
-- **In het beheerscherm** (aanbevolen, [#253](https://github.com/TLaan/D-OmniTwin/issues/253)): **Organisatie** in het menu, alleen voor beheerders. Thema kiezen (met voorbeeld in licht en donker), naam, korte naam, code, contactadres, OIN, gemeenten van het eigen gebied (met de standaardgemeente), standaard-benchmarkprovincie en de footer-logo's (volgorde, toevoegen uit bestaande bestanden onder `static/images/`, verwijderen). Ongeldige invoer (een thema of logo dat niet bestaat, een ongeldig e-mailadres, een gemeentecode die geen vier cijfers is) wordt geweigerd. Na opslaan een gewone herlaadactie; geen herstart. Elke wijziging staat in de log (categorie `ADMIN`, met gebruikersnaam en `sub`). Het inlogthema van Keycloak wisselt niet mee: zie [Thema's](thema-s.md#thema-kiezen-in-het-beheerscherm).
+- **In het beheerscherm** (aanbevolen, [#253](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/253)): **Organisatie** in het menu, alleen voor beheerders. Thema kiezen (met voorbeeld in licht en donker), naam, korte naam, code, contactadres, OIN, gemeenten van het eigen gebied (met de standaardgemeente), standaard-benchmarkprovincie en de footer-logo's (volgorde, toevoegen uit bestaande bestanden onder `static/images/`, verwijderen). Ongeldige invoer (een thema of logo dat niet bestaat, een ongeldig e-mailadres, een gemeentecode die geen vier cijfers is) wordt geweigerd. Na opslaan een gewone herlaadactie; geen herstart. Elke wijziging staat in de log (categorie `ADMIN`, met gebruikersnaam en `sub`). Het inlogthema van Keycloak wisselt niet mee: zie [Thema's](thema-s.md#thema-kiezen-in-het-beheerscherm).
 - **Overnemen van of naar een andere instantie:** **Exporteren (JSON)** geeft een bestand `organisatie-<code>.json` (`GET /api/organisatie/export`, zonder geheimen); **Importeren (JSON)** in de andere instantie zet het over (`POST /api/organisatie/import`), met dezelfde controles. Thema en logo's moeten daar ook als bestand bestaan, anders weigert de import. Of je een instelling overneemt, beslist de organisatie van die instantie (ADR 0007).
 - **Bestaande installatie, met SQL:** wijzig de rij met SQL (`docker compose exec postgres psql -U <DATABASE_USER> -d <DATABASE_NAME>`), bijvoorbeeld:
 
@@ -405,7 +405,7 @@ De eerste gemeentecode is de standaard-referentie in de rapporten ("⌀ Gemeente
 
   Een eigen logobestand zet je onder `static/images/` (of mount je, zoals bij het beeldmerk hieronder). Herlaad de pagina; een herstart is niet nodig.
 
-Nog niet uit deze instelling: de benchmarkmodus `fryslan`, de welkomsttekst en de startpositie van de kaart (zie [#231](https://github.com/TLaan/D-OmniTwin/issues/231)).
+Nog niet uit deze instelling: de benchmarkmodus `fryslan`, de welkomsttekst en de startpositie van de kaart (zie [#231](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/231)).
 
 ### Eigen logo
 
@@ -508,7 +508,7 @@ curl -s -u etl-voorbeeld:<secret> -d grant_type=client_credentials \
 
 **Rollen voor een use case.** Een use case noemt in `actoren` welke gebruikers en machineclients hij nodig heeft, met hun rollen (zie [Use cases](../../usecases/README.md#actoren-en-testaccounts)), nooit wachtwoorden. In productie maak je die accounts zelf aan zoals hierboven en wijs je de rollen toe; de use case laat alleen zien welke nodig zijn.
 
-**Testaccounts (alleen test en dev).** De use-case-uitvoerder kan de actoren van een use case tijdelijk aanmaken in realm `omnitwin` en daarmee installeren en de rechten controleren (https://github.com/TLaan/D-OmniTwin/issues/223):
+**Testaccounts (alleen test en dev).** De use-case-uitvoerder kan de actoren van een use case tijdelijk aanmaken in realm `omnitwin` en daarmee installeren en de rechten controleren (https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/223):
 
 ```bash
 export OMNITWIN_TESTACCOUNTS=1                    # expliciete toestemming; geweigerd bij OMNITWIN_OMGEVING=productie

@@ -2,8 +2,8 @@
 
 - Status: voorgesteld
 - Datum: 2026-10-04
-- Issue: https://github.com/TLaan/D-OmniTwin/issues/254
-- Raakt: ADR 0004 (laad-API), ADR 0007 (geen multi-tenancy), ADR 0008 (inloggen via Keycloak, BFF), ADR 0009 (viewer achter login, forwardAuth), https://github.com/TLaan/D-OmniTwin/issues/222 (vraag B3)
+- Issue: https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/254
+- Raakt: ADR 0004 (laad-API), ADR 0007 (geen multi-tenancy), ADR 0008 (inloggen via Keycloak, BFF), ADR 0009 (viewer achter login, forwardAuth), https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/222 (vraag B3)
 
 ## Context
 

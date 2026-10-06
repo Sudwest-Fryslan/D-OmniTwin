@@ -4,7 +4,7 @@
 **Prioriteit:** Hoog
 **Status:** ✅ geautomatiseerd (`tests/e2e/test_kaartmodus.py`, `test_tc_02_003_klimaat_kompas_labels`)
 **Aangemaakt:** 2026-10-04
-**Afgeleid van:** [#256](https://github.com/TLaan/D-OmniTwin/issues/256), gat-analyse huidige gebiedsmonitor (Must #4)
+**Afgeleid van:** [#256](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/256), gat-analyse huidige gebiedsmonitor (Must #4)
 
 ---
 

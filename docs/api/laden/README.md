@@ -127,7 +127,7 @@ Code: `src/omnitwin/routers/laden.py` (HTTP) en `src/omnitwin/laden/` (laadstraa
 
 ## Voorrang bij overlap
 
-Aanname A6 van https://github.com/TLaan/D-OmniTwin/issues/222, vastgelegd in [ADR 0004](../../2-architectuur/adr/0004-een-ingang-voor-vullen.md) (aanvulling 2026-10-04), gebouwd in migratie `V036__voorrang_bronpeildatum.sql`.
+Aanname A6 van https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/222, vastgelegd in [ADR 0004](../../2-architectuur/adr/0004-een-ingang-voor-vullen.md) (aanvulling 2026-10-04), gebouwd in migratie `V036__voorrang_bronpeildatum.sql`.
 
 Leveren twee datasets (bronnen) een waarde voor dezelfde **sleutel**, gebied × indicator × jaar of peildatum × scenario, dan komt er één in de samengevoegde stand (`gebied_data`, de kaart, Kompas, rapporten en `/api/data/v1/gebied_data`):
 

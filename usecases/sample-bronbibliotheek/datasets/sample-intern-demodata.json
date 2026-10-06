@@ -6,7 +6,7 @@
     "@type": "dcat:Dataset",
     "dct:title": "DEMODATA: plaatsvervanger voor interne klimaat- en onderwijsindicatoren SWF, 13 buurten",
     "dct:description": "Demodata als plaatsvervanger voor de interne bron 'SWF-gebiedsmonitor' (klimaatmonitor en onderwijs: afstand tot koele plek, groen per inwoner, water/verharding, grondwaterstand, hemelwater, definitief energielabel, achterstand leerlingen), niet de echte waarden. Uit de vroegere sample (herkomst: uploads in de SWF-gebiedsmonitor, niet herleidbaar; Bolsward-Zuidoost synthetisch). Met SWF_DUMP_DIR laadt de variant 'intern' de echte waarden uit de export van de gebiedsmonitor; die komen nooit in git.",
-    "dct:publisher": "https://github.com/TLaan/D-OmniTwin",
+    "dct:publisher": "https://github.com/Sudwest-Fryslan/D-OmniTwin",
     "dct:accessRights": "http://publications.europa.eu/resource/authority/access-right/PUBLIC",
     "dct:license": "http://standaarden.overheid.nl/owms/terms/licentieonbekend",
     "dct:spatial": "https://identifier.overheid.nl/tooi/id/provincie/pv21",

@@ -89,13 +89,13 @@ Eisen:
   - **catalogus** eerst als JSON-LD-weergave (`Accept: application/ld+json`) van `laden/datasets`; een eigen API `catalogus/v1` pas als er een tweede bron van metadata is.
 - **Open:**
   - de regel voor aggregaten (secundaire onderdrukking);
-  - betekenis van indicatorstatus `A` in de SWF-definities. Volgens de projectleider `A` = actueel; tot de DWH-beheerder de codes bevestigt zet de use case `swf-definities` `A` om naar `O` (aanname A2, https://github.com/TLaan/D-OmniTwin/issues/222);
+  - betekenis van indicatorstatus `A` in de SWF-definities. Volgens de projectleider `A` = actueel; tot de DWH-beheerder de codes bevestigt zet de use case `swf-definities` `A` om naar `O` (aanname A2, https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/222);
   - de SWF-IdP (Entra) koppelen aan realm `omnitwin` (de huidige koppeling loopt in december af);
   - rollen per dataset of ook per gemeente (#34). Richting: geen rollen per gemeente binnen één instantie; elke organisatie heeft een eigen instantie (ADR 0007).
 
 ## Aanvulling 2026-10-04: voorrang bij overlap
 
-Aanname A6 van https://github.com/TLaan/D-OmniTwin/issues/222, na het antwoord van de projectleider: niet een vaste bron gaat voor (de eerste aanname: de SWF-bron boven de CBS-kerncijfers), maar de bron met de laatste peildatum of aanmaakdatum. Ook historische CBS-cijfers kunnen achteraf wijzigen.
+Aanname A6 van https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/222, na het antwoord van de projectleider: niet een vaste bron gaat voor (de eerste aanname: de SWF-bron boven de CBS-kerncijfers), maar de bron met de laatste peildatum of aanmaakdatum. Ook historische CBS-cijfers kunnen achteraf wijzigen.
 
 **Regel.** Leveren twee datasets een waarde voor dezelfde sleutel (gebied × indicator × jaar of peildatum × scenario), dan wint in de samengevoegde stand (`gebied_data`):
 

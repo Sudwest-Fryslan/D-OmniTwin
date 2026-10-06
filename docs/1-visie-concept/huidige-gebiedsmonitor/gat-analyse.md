@@ -1,6 +1,6 @@
 # Gat-analyse: van de huidige monitor naar D-OmniTwin 0.3.0
 
-Stand 02-10-2026. Wat D-OmniTwin 0.3.0 moet doen om de huidige gebiedsmonitor te vervangen ("hetzelfde én meer", epic [#195](https://github.com/TLaan/D-OmniTwin/issues/195)). Terug naar [het overzicht](./README.md).
+Stand 02-10-2026. Wat D-OmniTwin 0.3.0 moet doen om de huidige gebiedsmonitor te vervangen ("hetzelfde én meer", epic [#195](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/195)). Terug naar [het overzicht](./README.md).
 
 **Kern:** de grootste gaten zijn **identiteit** (OIDC, rollen, laagrechten), **vulling** (een laad-API die de FME-stroom van SWF vervangt, met dezelfde UUID's en n-onderdrukking), **methodiek** (percentielklasse en labels naast de Z-score) en **gebiedsindelingen** (welstand × buurt). De basisfunctionaliteit (kaart, Kompas, multi-selectie, trends, rapporten) heeft D-OmniTwin al.
 
@@ -31,7 +31,7 @@ MoSCoW voor 0.3.0: *Must* = nodig om te vervangen; *Should* = hoort erbij, mag l
 | 19 | Export (data, PDF) | nee | rapporten (PDF), open API's | CSV-export van het indicatorpaneel | **Should** |
 | 20 | Beheer: definities, kompasprofiel, koppeling indicator × gebiedsindeling | beheeromgeving bij de leverancier | beheer: indicatoren, Kompas, externe lagen | koppeling indicator × gebiedsindeling in beheer | **Should** |
 | 21 | Metadata per bron tonen (bron, jaargang, licentie) | beschrijving | ontologie en definities | in het indicatorpaneel | **Should** |
-| 22 | Huisstijl SWF | eigen | eigen thema | SWF-thema via ontwerpvariabelen ([#89](https://github.com/TLaan/D-OmniTwin/issues/89)) | **Should** |
+| 22 | Huisstijl SWF | eigen | eigen thema | SWF-thema via ontwerpvariabelen ([#89](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/89)) | **Should** |
 | 23 | Instellingen per gebruiker (laatste kaartpositie) | ja | nee | per gebruiker | **Could** |
 | 24 | Identify BAG-pand, markeringen | ja | 3D BAG, info | BAG-pandinfo bij een klik | **Could** |
 | 25 | Kerncijfers, top-5, stijgers en dalers, signalering | nee | deels (uitschieters in rapport) | buiten "gelijkwaardig" | **Could** |
@@ -40,7 +40,7 @@ MoSCoW voor 0.3.0: *Must* = nodig om te vervangen; *Should* = hoort erbij, mag l
 
 ## Eisen voor de laad-API
 
-Uitgewerkt in RFC [#205](https://github.com/TLaan/D-OmniTwin/issues/205) (model "Dataset Registry + Bulk Loader"). Wat volgt uit de huidige stroom ([gegevens.md](./gegevens.md#gegevensstroom)):
+Uitgewerkt in RFC [#205](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/205) (model "Dataset Registry + Bulk Loader"). Wat volgt uit de huidige stroom ([gegevens.md](./gegevens.md#gegevensstroom)):
 
 | # | Eis | Waarom (huidige stroom) |
 |---|---|---|

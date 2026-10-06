@@ -10,7 +10,7 @@
 - **Vraag:** "Kan Súdwest-Fryslân met D-OmniTwin hetzelfde als met de huidige gebiedsmonitor: dezelfde indicatoren en gebieden, dezelfde sunburst en Klimaatmonitor, dezelfde lagen, gevuld vanuit de DWH?"
 - **Rechten:** `realm-rol beheerder`, `realm-rol lezer`, `dataset:swf-monitor-definities:laden`, `dataset:swf-monitor-waarden:laden`
 
-De acceptatietest voor "D-OmniTwin vervangt de huidige gebiedsmonitor" (epic [#195](https://github.com/TLaan/D-OmniTwin/issues/195)). Deze use case heeft zelf geen datasets: via `afhankelijk_van` neemt hij alle `swf-*`-use cases mee, in de volgorde van de huidige stroom, en doet daarna de eindcontroles.
+De acceptatietest voor "D-OmniTwin vervangt de huidige gebiedsmonitor" (epic [#195](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/195)). Deze use case heeft zelf geen datasets: via `afhankelijk_van` neemt hij alle `swf-*`-use cases mee, in de volgorde van de huidige stroom, en doet daarna de eindcontroles.
 
 ```
 swf-definities → (cbs-gebiedsindelingen) → swf-gebiedsindelingen → swf-kompasprofiel

@@ -11,7 +11,7 @@ Organisaties die D-OmniTwin ontwikkelen, gebruiken of testen. We noemen organisa
 
 D-OmniTwin wordt gefinancierd uit het [Innovatiebudget Digitale Overheid 2026](https://www.digitaleoverheid.nl/innovatieproject/d-omnitwin/).
 
-**Meedoen?** Gebruik je D-OmniTwin, of wil je bijdragen als gemeente, andere overheid of leverancier: meld je via een [issue](https://github.com/TLaan/D-OmniTwin/issues) of via de beheerder. Een organisatie wordt hier opgenomen via een pull request, met akkoord van die organisatie.
+**Meedoen?** Gebruik je D-OmniTwin, of wil je bijdragen als gemeente, andere overheid of leverancier: meld je via een [issue](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues) of via de beheerder. Een organisatie wordt hier opgenomen via een pull request, met akkoord van die organisatie.
 
 ---
 

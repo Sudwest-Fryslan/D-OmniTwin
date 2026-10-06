@@ -23,7 +23,7 @@ Wat je van het onderhoud van D-OmniTwin mag verwachten, en waar je terechtkunt. 
 
 ## Kanalen
 
-- **Issues:** [github.com/TLaan/D-OmniTwin/issues](https://github.com/TLaan/D-OmniTwin/issues), voor fouten, vragen en wensen.
+- **Issues:** [github.com/Sudwest-Fryslan/D-OmniTwin/issues](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues), voor fouten, vragen en wensen.
 - **Beveiliging:** [SECURITY.md](./SECURITY.md).
 - **Contact met de beheerder:** het functionele adres in `maintenance.contacts` van [publiccode.yml](./publiccode.yml).
 

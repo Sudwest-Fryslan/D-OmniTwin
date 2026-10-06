@@ -29,7 +29,7 @@ De repository bevat **use cases** als installeerbare pakketten: vijf vragen van 
 Vereist: [Docker](https://www.docker.com/) met Docker Compose v2. Ollama is optioneel (alleen voor de AI-chat).
 
 ```bash
-git clone https://github.com/TLaan/D-OmniTwin.git && cd D-OmniTwin
+git clone https://github.com/Sudwest-Fryslan/D-OmniTwin.git && cd D-OmniTwin
 cp .env.example .env
 # Vul in .env DATABASE_PASSWORD in (openssl rand -hex 24) en bij voorkeur ADMIN_PASSWORD
 docker compose up -d --build
@@ -46,7 +46,7 @@ Open daarna **http://localhost**. Alles loopt via Traefik op poort 80.
 Wil je zien hoe inloggen werkt, met kant-en-klare accounts? Start een **demo-omgeving** met Keycloak. Alleen op je eigen machine: de wachtwoorden zijn publiek.
 
 ```bash
-git clone https://github.com/TLaan/D-OmniTwin.git && cd D-OmniTwin
+git clone https://github.com/Sudwest-Fryslan/D-OmniTwin.git && cd D-OmniTwin
 cat > .env <<EOF
 DATABASE_PASSWORD=$(openssl rand -hex 24)
 COMPOSE_FILE=docker-compose.yml
@@ -190,7 +190,7 @@ D-OmniTwin is gestart door Gemeente Súdwest-Fryslân en wordt doorontwikkeld me
 | Gemeente Tytsjerksteradiel | Pilotgemeente |
 | Coöperatie DataFryslân | Dataspace-partner (FRLDS, iSHARE) |
 
-Interesse in samenwerking of een pilot? Open een [discussie op GitHub](https://github.com/TLaan/D-OmniTwin/discussions) of mail naar [geo-groep@sudwestfryslan.nl](mailto:geo-groep@sudwestfryslan.nl). Zie ook het [communicatieplan](./docs/8-communicatie/communicatieplan_subsidie_2026.md).
+Interesse in samenwerking of een pilot? Maak een [issue op GitHub](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues) of mail naar [geo-groep@sudwestfryslan.nl](mailto:geo-groep@sudwestfryslan.nl). Zie ook het [communicatieplan](./docs/8-communicatie/communicatieplan_subsidie_2026.md).
 
 Bijdragen: [CONTRIBUTING.md](./CONTRIBUTING.md) en de [gedragscode](./CODE_OF_CONDUCT.md). Een kwetsbaarheid gevonden? Meld die privé volgens [SECURITY.md](./SECURITY.md), niet in een openbaar issue.
 
@@ -217,7 +217,7 @@ Bijdragen: [CONTRIBUTING.md](./CONTRIBUTING.md) en de [gedragscode](./CODE_OF_CO
 | [usecases/README.md](./usecases/README.md) | De use cases: data, inrichting en teststappen |
 | [init_data/README.md](./init_data/README.md) | Brondata (sample en Fryslân) |
 | [docs/INDEX.md](./docs/INDEX.md) | Overzicht van de documentatie per domein |
-| [docs/archief/](./docs/archief/) | Verouderde documenten (`BUILD.md`, `GETTING_STARTED.md`, `ROADMAP.md`, `TODO.md`, `BUGFIX.md`); taken en bugs staan in de [issues](https://github.com/TLaan/D-OmniTwin/issues) |
+| [docs/archief/](./docs/archief/) | Verouderde documenten (`BUILD.md`, `GETTING_STARTED.md`, `ROADMAP.md`, `TODO.md`, `BUGFIX.md`); taken en bugs staan in de [issues](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues) |
 
 ---
 

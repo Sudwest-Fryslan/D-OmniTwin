@@ -2,8 +2,8 @@
 
 - Status: voorgesteld
 - Datum: 2026-10-03
-- Issue: https://github.com/TLaan/D-OmniTwin/issues/266
-- Raakt: ADR 0008 (inloggen via Keycloak, backend als BFF), ADR 0005 (API's per doel), https://github.com/TLaan/D-OmniTwin/issues/254 (rechten per laag), https://github.com/TLaan/D-OmniTwin/issues/65 (wie mag wat)
+- Issue: https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/266
+- Raakt: ADR 0008 (inloggen via Keycloak, backend als BFF), ADR 0005 (API's per doel), https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/254 (rechten per laag), https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/65 (wie mag wat)
 
 ## Context
 
@@ -35,4 +35,4 @@ De viewer (`/`) en de data-API's zijn openbaar. Sommige installaties willen alle
 
 - Bij `open` kost elk verzoek naar `/api/data` en `/api/geo` één interne aanroep naar de backend (zonder database). Staat de backend niet, dan werken die API's ook niet: dicht bij twijfel.
 - Bij `inloggen` doet elk verzoek een sessie-opzoeking in de database (`oidc_sessies` of `sessions`).
-- Rechten per laag (alleen `lezer` ziet niet-openbare lagen) vallen hier buiten; die staan in [ADR 0010](0010-toegang-per-laag-en-bron.md) (https://github.com/TLaan/D-OmniTwin/issues/254). Het forwardAuth-antwoord zet daarvoor ook de header `X-Omnitwin-Toegang`.
+- Rechten per laag (alleen `lezer` ziet niet-openbare lagen) vallen hier buiten; die staan in [ADR 0010](0010-toegang-per-laag-en-bron.md) (https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/254). Het forwardAuth-antwoord zet daarvoor ook de header `X-Omnitwin-Toegang`.

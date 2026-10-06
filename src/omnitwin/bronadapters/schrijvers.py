@@ -18,7 +18,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[3]
 PROFIELEN = ROOT / "docs" / "api" / "laden" / "profielen"
-PROFIEL_URL = "https://raw.githubusercontent.com/TLaan/D-OmniTwin/main/docs/api/laden/profielen"
+PROFIEL_URL = "https://raw.githubusercontent.com/Sudwest-Fryslan/D-OmniTwin/main/docs/api/laden/profielen"
 RESOURCES = {
     "waarnemingen": {"waarnemingen": "waarnemingen"},
     "definities": {"indicatoren": "definities-indicatoren", "gebiedstypen": "definities-gebiedstypen",

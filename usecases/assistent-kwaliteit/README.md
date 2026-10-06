@@ -2,7 +2,7 @@
 
 **Status:** ontwerp (wordt actief zodra de uitvoerder chat-controles draait, #225; tot dan toetst tests/integration/test_assistent_kwaliteit.py alles) · **Versie:** 0.1.0 · **Afhankelijk van:** geen (stack met sample-data, `LOAD_SAMPLE_DATA=true`)
 **Manifest:** [`usecase.json`](usecase.json) · **Controleren:** `python -m omnitwin.usecases controleer assistent-kwaliteit`
-**Issue:** https://github.com/TLaan/D-OmniTwin/issues/233
+**Issue:** https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/233
 
 ## Vraag
 

@@ -2,8 +2,8 @@
 
 - Status: voorgesteld
 - Datum: 2026-10-03
-- Issue: https://github.com/TLaan/D-OmniTwin/issues/251
-- Raakt: ADR 0005 (API's per doel), ADR 0007 (eigen Keycloak per instantie), https://github.com/TLaan/D-OmniTwin/issues/65 (wie mag wat), https://github.com/TLaan/D-OmniTwin/issues/195 (0.3.0)
+- Issue: https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/251
+- Raakt: ADR 0005 (API's per doel), ADR 0007 (eigen Keycloak per instantie), https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/65 (wie mag wat), https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/195 (0.3.0)
 
 ## Context
 
@@ -41,4 +41,4 @@ Bij het interne verkeer naar Keycloak stuurt de backend `X-Forwarded-Proto/Host/
 - Gebruikers, wachtwoorden, MFA en koppeling met een eigen IdP (Entra ID, later eHerkenning) regel je in Keycloak; D-OmniTwin hoeft daar niets voor te bouwen.
 - De backend houdt per ingelogde gebruiker een sessierij met een refresh token: die tabel hoort bij de backup en is gevoelig (zelfde database als `sessions`).
 - De redirect-URI van `omnitwin-web` moet het adres van de installatie bevatten. De realmexport vult `OMNITWIN_BASE_URL/*` in bij de import; een bestaande realm pas je in de admin-console aan.
-- Inloggen in de kaartapplicatie (viewer), optioneel de hele viewer achter de login: [ADR 0009](0009-viewer-achter-login-forwardauth.md). Niet-openbare lagen alleen voor `lezer`: [ADR 0010](0010-toegang-per-laag-en-bron.md) (https://github.com/TLaan/D-OmniTwin/issues/254).
+- Inloggen in de kaartapplicatie (viewer), optioneel de hele viewer achter de login: [ADR 0009](0009-viewer-achter-login-forwardauth.md). Niet-openbare lagen alleen voor `lezer`: [ADR 0010](0010-toegang-per-laag-en-bron.md) (https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/254).

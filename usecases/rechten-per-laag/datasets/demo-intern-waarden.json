@@ -6,7 +6,7 @@
     "@type": "dcat:Dataset",
     "dct:title": "DEMODATA: waarden van de interne voorbeeldindicator, 13 buurten",
     "dct:description": "Waarden van de interne voorbeeldindicator per CBS-buurt (de 13 buurten van de sample). Niet openbaar: anoniem niet te zien, ook niet via PostgREST of een directe aanroep. Geen echte gegevens.",
-    "dct:publisher": "https://github.com/TLaan/D-OmniTwin",
+    "dct:publisher": "https://github.com/Sudwest-Fryslan/D-OmniTwin",
     "dct:accessRights": "http://publications.europa.eu/resource/authority/access-right/RESTRICTED",
     "dct:license": "http://standaarden.overheid.nl/owms/terms/licentieonbekend",
     "dct:spatial": "https://identifier.overheid.nl/tooi/id/provincie/pv21",

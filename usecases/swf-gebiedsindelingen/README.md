@@ -32,7 +32,7 @@ Verwacht:
 
 - `swf-gebied-welstand-buurt`: 756 features (4,9 MB, verliesvrij, zonder ruimtelijke index); codes 1–758 → WS1–WS758
 
-**Welstand × buurt uit de repo.** Herkomst: de lokale D-OmniTwin-database van de projectleider (dump van 04-10-2026), openbaar volgens besluit van de projectleiding (https://github.com/TLaan/D-OmniTwin/issues/222). Het bestand staat in [`data/`](data/) met `herkomst.json` (aantallen, controlesom); vervangen bij een nieuwere dump met [`scripts/beheer/swf_export.py --repo`](../../scripts/beheer/swf_export.py) en een PR. Is de export uit de GeoServer van SWF er (`SWF_GEO_DIR`), dan gebruikt de uitvoerder die (variant `geoserver`, B1). Er is één dataset voor dit gebiedstype.
+**Welstand × buurt uit de repo.** Herkomst: de lokale D-OmniTwin-database van de projectleider (dump van 04-10-2026), openbaar volgens besluit van de projectleiding (https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/222). Het bestand staat in [`data/`](data/) met `herkomst.json` (aantallen, controlesom); vervangen bij een nieuwere dump met [`scripts/beheer/swf_export.py --repo`](../../scripts/beheer/swf_export.py) en een PR. Is de export uit de GeoServer van SWF er (`SWF_GEO_DIR`), dan gebruikt de uitvoerder die (variant `geoserver`, B1). Er is één dataset voor dit gebiedstype.
 - `swf-gebied-buurt-bebouwde-kom`: features ±273 (alle met waarden); codes BU1900xxxx_BBKJ / _BBKN
 - `swf-gebied-woonplaats`: features 82 woonplaatsen (BAG, oktober 2026)
 - `swf-gebied-postcode`: features 97 PC4-gebieden (CBS 2023)

@@ -1,6 +1,6 @@
 # Demodata naar open data
 
-**Issue:** https://github.com/TLaan/D-OmniTwin/issues/236 · **RFC:** https://github.com/TLaan/D-OmniTwin/issues/182 ("de sample wordt overbodig")
+**Issue:** https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/236 · **RFC:** https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/182 ("de sample wordt overbodig")
 
 De demo-use cases (`hittestress`, `energiearmoede`, `brede-welvaart`, `sociale-cohesie`, `beleidsadviseur-swf`) haalden hun waarden uit `init_data/sample/2_brondata/sample_indicatoren.csv` en laadden die direct in de database. Een groot deel daarvan is open data die we bij de installatie kunnen downloaden. Dit document is de inventaris per indicator en beschrijft wat er nu open, intern of nog zonder adapter is.
 

@@ -52,7 +52,7 @@
           "A": "O"
         }
       },
-      "omschrijving": "A2 (https://github.com/TLaan/D-OmniTwin/issues/222), geverifieerd in de beheerinterface van de monitor: A = Actueel, B = Buiten gebruik, C = Concept, O = Onderzoek. D-OmniTwin kent C (concept), O (operationeel) en B (beëindigd): A → O. Aanname: SWF-status O (Onderzoek) blijft O, want die indicatoren staan live in de monitor; bevestiging open. Een gevulde DATE_TO komt mee als eindgeldigheid. De klimaatset staat in swf-kompasprofiel."
+      "omschrijving": "A2 (https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/222), geverifieerd in de beheerinterface van de monitor: A = Actueel, B = Buiten gebruik, C = Concept, O = Onderzoek. D-OmniTwin kent C (concept), O (operationeel) en B (beëindigd): A → O. Aanname: SWF-status O (Onderzoek) blijft O, want die indicatoren staan live in de monitor; bevestiging open. Een gevulde DATE_TO komt mee als eindgeldigheid. De klimaatset staat in swf-kompasprofiel."
     },
     {
       "tabel": "indicatoren",
@@ -71,7 +71,7 @@
         "achtervoegsel": " (vervallen)",
         "reden": "dubbele-naam"
       },
-      "omschrijving": "Aanname A4 (https://github.com/TLaan/D-OmniTwin/issues/222): twee UUID's met dezelfde naam. De voorkeur (de UUID die live is of waarden heeft) blijft; de andere krijgt status B en de naam '<naam> (vervallen)'. Een UUID wijzigen kan alleen SWF-beheer in DWH/FME."
+      "omschrijving": "Aanname A4 (https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/222): twee UUID's met dezelfde naam. De voorkeur (de UUID die live is of waarden heeft) blijft; de andere krijgt status B en de naam '<naam> (vervallen)'. Een UUID wijzigen kan alleen SWF-beheer in DWH/FME."
     },
     {
       "tabel": "indicatoren",

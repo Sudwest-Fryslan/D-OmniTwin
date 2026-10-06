@@ -4,7 +4,7 @@
 # en voeg Canonical toe met de URL van je installatie.
 # Expires: hooguit een jaar vooruit. Tijdig verlengen; tests/integration/
 # test_security_headers.py faalt binnen 30 dagen voor de vervaldatum.
-Contact: https://github.com/TLaan/D-OmniTwin/blob/main/SECURITY.md
+Contact: https://github.com/Sudwest-Fryslan/D-OmniTwin/blob/main/SECURITY.md
 Expires: 2027-09-30T22:00:00.000Z
 Preferred-Languages: nl, en
-Policy: https://github.com/TLaan/D-OmniTwin/blob/main/SECURITY.md
+Policy: https://github.com/Sudwest-Fryslan/D-OmniTwin/blob/main/SECURITY.md

@@ -1,6 +1,6 @@
 # Architectuur: D-OmniTwin vullen
 
-Hoe data in D-OmniTwin komt: registratie, leveringen, laadstraat, autorisatie en de vier vulroutes. Besluiten: [ADR 0004](adr/0004-een-ingang-voor-vullen.md) (vullen via registratie en leveringen) en [ADR 0005](adr/0005-gescheiden-apis-per-doel.md) (gescheiden API's per doel). Bouwt voort op ADR 0002, databronnen als dataproduct ([PR #184](https://github.com/TLaan/D-OmniTwin/pull/184)). Specificatie: [laad-API](../api/laden/README.md). Plaats tussen de andere API's: [API-landschap](api-landschap.md).
+Hoe data in D-OmniTwin komt: registratie, leveringen, laadstraat, autorisatie en de vier vulroutes. Besluiten: [ADR 0004](adr/0004-een-ingang-voor-vullen.md) (vullen via registratie en leveringen) en [ADR 0005](adr/0005-gescheiden-apis-per-doel.md) (gescheiden API's per doel). Bouwt voort op ADR 0002, databronnen als dataproduct ([PR #184](https://github.com/Sudwest-Fryslan/D-OmniTwin/pull/184)). Specificatie: [laad-API](../api/laden/README.md). Plaats tussen de andere API's: [API-landschap](api-landschap.md).
 
 Status: voorgesteld, doelbeeld voor 0.3.0 en verder. Wat er nu staat: [§ 8](#8-huidige-stand-021).
 

@@ -1,7 +1,7 @@
 # INDEX.md — D-OmniTwin Documentatie Router
 > **Rol:** Navigatielaag voor documentatie | Router voor agents | Overzicht van alle kennisdomeinen
 > **Beheer:** Updaten bij nieuwe mappen of structurele wijzigingen
-> **Lees eerst:** [`CHANGELOG.md`](../CHANGELOG.md) (wat er per versie veranderd is) en de [issues](https://github.com/TLaan/D-OmniTwin/issues) (wat openstaat). `STATE.md` is een historische momentopname tot 0.1.0.
+> **Lees eerst:** [`CHANGELOG.md`](../CHANGELOG.md) (wat er per versie veranderd is) en de [issues](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues) (wat openstaat). `STATE.md` is een historische momentopname tot 0.1.0.
 
 ---
 

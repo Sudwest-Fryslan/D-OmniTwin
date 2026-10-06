@@ -3,7 +3,7 @@
 - **Versie:** 1.0
 - **Status:** voorgesteld ([ADR 0006](../../2-architectuur/adr/0006-usecase-als-declaratieve-app.md)); wordt vastgesteld met die ADR
 - **Datum:** 2026-10-02
-- **Issue:** https://github.com/TLaan/D-OmniTwin/issues/227
+- **Issue:** https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/227
 - **Schema's (normatief):** [`1.0/usecase.schema.json`](1.0/usecase.schema.json) (manifest), [`1.0/dataset.schema.json`](1.0/dataset.schema.json) (dataset), [`1.0/bewijs.schema.json`](1.0/bewijs.schema.json) (bewijsverslag)
 - **Referentie-implementatie:** de uitvoerder `python -m omnitwin.usecases` ([`src/omnitwin/usecases.py`](../../../src/omnitwin/usecases.py)), met [`src/omnitwin/bronadapters/`](../../../src/omnitwin/bronadapters/__init__.py) en [`src/omnitwin/laden/`](../../../src/omnitwin/laden/registratie.py)
 
@@ -97,7 +97,7 @@ Regels:
 
 1. De mapnaam MOET gelijk zijn aan `naam` in het manifest en MOET voldoen aan `^[a-z0-9]+(-[a-z0-9]+)*$`.
 2. **Allowlist van bestandstypen.** Buiten `bewijs/` MOGEN alleen `.json`, `.md` en `.csv` staan; in `data/` ook `.gpkg` (geometrie die niet online te downloaden is, met `herkomst.json` ernaast). In `bewijs/` MOGEN alleen `.json`, `.md`, `.webp`, `.png`, `.jpg` en `.jpeg` staan; nieuwe afbeeldingen MOETEN WebP zijn. Elk ander bestand (ook zonder extensie) is een fout. De uitvoerder (`bestandsfouten`) en de unittest `tests/test_usecases_uitvoerder.py` dwingen dit af.
-3. Een use case MOET NIET code of uitvoerbare bestanden bevatten: geen scripts, geen notebooks, geen SQL, geen expressies in JSON. Er zijn geen uitzonderingen (de laatste, `hittestress/maak_data.py`, is sinds https://github.com/TLaan/D-OmniTwin/issues/236 de kernadapter `wcs-zonaal`).
+3. Een use case MOET NIET code of uitvoerbare bestanden bevatten: geen scripts, geen notebooks, geen SQL, geen expressies in JSON. Er zijn geen uitzonderingen (de laatste, `hittestress/maak_data.py`, is sinds https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/236 de kernadapter `wcs-zonaal`).
 4. Statische bestanden MOETEN klein zijn (richtlijn: samen ≤ 1 MB) en MOETEN NIET openbare brondata bevatten die ook te downloaden is (zie 7).
 5. De README van de use case MOET de vraag, de gebruiker, de stappen, de acceptatiecriteria en de bronnen beschrijven, en AANBEVOLEN de screenshots uit `bewijs/` tonen.
 6. Na elke nieuwe of gewijzigde use case MOET de index in [`usecases/README.md`](../../../usecases/README.md#index) bijgewerkt zijn (`python -m omnitwin.usecases index`).
@@ -157,7 +157,7 @@ Een dataset staat op twee plekken: een verwijzing in het manifest (`datasets[]`)
 | `prioriteit` | `Must` \| `Should` \| `Could` \| `uitgesteld` | nee | MoSCoW-prioriteit binnen de use case |
 | `bron` | string | nee | korte omschrijving van de bron, voor mensen; de uitvoerbare bron staat in het datasetbestand |
 | `verwacht` | object | nee | verwachte aantallen en uitkomst, voor mensen; toetsbaar maken met `controles` |
-| `toegang` | `openbaar` \| `intern` | nee | wie ziet wat de dataset publiceert (https://github.com/TLaan/D-OmniTwin/issues/254): `openbaar` iedereen, `intern` alleen met de realm-rol `lezer` of `beheerder`. MOET overeenkomen met `dct:accessRights` in het datasetbestand (PUBLIC = `openbaar`, anders `intern`); `controleer` geeft anders een fout. Zie 6.3 |
+| `toegang` | `openbaar` \| `intern` | nee | wie ziet wat de dataset publiceert (https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/254): `openbaar` iedereen, `intern` alleen met de realm-rol `lezer` of `beheerder`. MOET overeenkomen met `dct:accessRights` in het datasetbestand (PUBLIC = `openbaar`, anders `intern`); `controleer` geeft anders een fout. Zie 6.3 |
 
 Een dataset die in meer use cases voorkomt, MOET overal dezelfde registratie hebben (unittest `test_zelfde_dataset_zelfde_registratie`).
 
@@ -209,7 +209,7 @@ De uitvoerder valideert elke levering tegen het profiel (Table Schema met fricti
 | `beschrijving` | object | DCAT-velden die bij deze variant anders zijn (bijv. `dct:type`, `dct:description`, `dct:accessRights`); gaan mee in `dcat.jsonld` van de levering en in de registratie |
 | `als_beschikbaar` | boolean | zonder `--variant` gebruikt de uitvoerder eerst deze variant; is zijn bron hier niet beschikbaar (variabele niet gezet, bestand weg), dan de standaardbron |
 
-**Demodata als plaatsvervanger voor een interne bron** (https://github.com/TLaan/D-OmniTwin/issues/236): de standaardbron is de demodata (bijv. `lokaal-bestand` onder `${REPO}`), met in de beschrijving `dct:type` `demodata`, een `dct:description` die zegt dat het een plaatsvervanger is en voor welke interne bron (functionele naam, ook in `prov:wasDerivedFrom`), en per waarde een `bron` die met `DEMODATA` begint (zo ziet de gebruiker het in de API en de viewer). Een variant `intern` met `als_beschikbaar: true` noemt de echte interne bron (bijv. `swf-dump` onder `SWF_DUMP_DIR`); die data komt nooit in de repository.
+**Demodata als plaatsvervanger voor een interne bron** (https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/236): de standaardbron is de demodata (bijv. `lokaal-bestand` onder `${REPO}`), met in de beschrijving `dct:type` `demodata`, een `dct:description` die zegt dat het een plaatsvervanger is en voor welke interne bron (functionele naam, ook in `prov:wasDerivedFrom`), en per waarde een `bron` die met `DEMODATA` begint (zo ziet de gebruiker het in de API en de viewer). Een variant `intern` met `als_beschikbaar: true` noemt de echte interne bron (bijv. `swf-dump` onder `SWF_DUMP_DIR`); die data komt nooit in de repository.
 
 ## 7. Bronnen en adapters
 
@@ -307,7 +307,7 @@ Regels voor de uitvoerder:
 
 Een rol zonder `:` is een realm-rol en MOET in de realm bestaan; een rol met `:` is een client-rol op `omnitwin-api`. De `naam` van een actor MOET uniek zijn binnen de use case. AANBEVOLEN: `client` in `datasets[]` is de naam van de machineclient-actor die de dataset levert, en die actor heeft alleen `dataset:<id>:laden` voor zijn eigen datasets.
 
-Testaccounts (https://github.com/TLaan/D-OmniTwin/issues/223):
+Testaccounts (https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/223):
 
 - de uitvoerder MAG actoren als testaccount aanmaken, **alleen in test en dev**: met `installeer --testaccounts` of `test --testaccounts`, alleen als `OMNITWIN_TESTACCOUNTS=1` en niet `OMNITWIN_OMGEVING=productie`; anders weigert hij (exitcode 2);
 - hij doet dat voor de use case en zijn afhankelijkheden, via de admin-API van Keycloak in de realm van de installatie; bestaande testaccounts van dezelfde use case worden eerst verwijderd;
@@ -359,7 +359,7 @@ Een use case met status `actief` MOET geldig zijn (unittest), MOET geslaagd zijn
 
 ## 12. Bewijs
 
-Bewijs laat zien dat de use case werkt en wat je krijgt als je hem installeert. Besluiten: https://github.com/TLaan/D-OmniTwin/issues/225.
+Bewijs laat zien dat de use case werkt en wat je krijgt als je hem installeert. Besluiten: https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/225.
 
 ### 12.1 Bewijsstappen in het manifest
 
@@ -531,7 +531,7 @@ Zolang de versie `0.y.z` is, MAG alles veranderen (SemVer), maar ook dan MOET de
 
 De schema's zijn de normatieve, machineleesbare bron. Er is maar één exemplaar van elk schema in de repository; de uitvoerder en de tests lezen ze uit `docs/specificaties/usecase/1.0/`. De `$id` is een absolute, stabiele URL op de hoofdtak:
 
-`https://raw.githubusercontent.com/TLaan/D-OmniTwin/main/docs/specificaties/usecase/1.0/<schema>.schema.json`
+`https://raw.githubusercontent.com/Sudwest-Fryslan/D-OmniTwin/main/docs/specificaties/usecase/1.0/<schema>.schema.json`
 
 Die URL levert het schema zelf (JSON), zodat een editor of validator hem kan ophalen. Bij de **overdracht van de repository naar de SWF-organisatie** verhuizen de specificatie en de schema's mee; de `$id`'s worden dan in dezelfde PR naar de nieuwe organisatie gezet (redactionele wijziging). GitHub stuurt de oude URL door.
 
@@ -577,7 +577,7 @@ De voorbeelden zijn geldig volgens de schema's; de unittest `tests/test_usecase_
 <!-- voorbeeld: usecase -->
 ```json
 {
-  "$schema": "https://raw.githubusercontent.com/TLaan/D-OmniTwin/main/docs/specificaties/usecase/1.0/usecase.schema.json",
+  "$schema": "https://raw.githubusercontent.com/Sudwest-Fryslan/D-OmniTwin/main/docs/specificaties/usecase/1.0/usecase.schema.json",
   "specificatie": "1.0",
   "naam": "gemeenten-fryslan",
   "id": "TC-07-099",
@@ -702,9 +702,9 @@ Een bewijsverslag `bewijs/bewijs.json` (ingekort):
 
 | Versie | Datum | Wijziging |
 |---|---|---|
-| 1.0 | 2026-10-04 | Aanvulling (https://github.com/TLaan/D-OmniTwin/issues/254; formeel een minor, 1.0 is nog niet vastgesteld): `toegang` (`openbaar` \| `intern`) bij `datasets[]`, gelijk aan `dct:accessRights` (6.1, 6.3); `maximaal_aantal` bij controletype `api`; actie `bekijken` (met `pad`) bij controletype `recht`. Alle bestaande manifesten blijven geldig. |
-| 1.0 | 2026-10-04 | Aanvulling (https://github.com/TLaan/D-OmniTwin/issues/222; formeel een minor, 1.0 is nog niet vastgesteld): bewerking `ontdubbel` (dubbele namen met een andere UUID, aanname A4) en map `SWF_EXPORT_DIR` in de allowlist (export van een andere D-OmniTwin-installatie, aanname A1). Alle bestaande manifesten blijven geldig. |
-| 1.0 | 2026-10-03 | Aanvulling (https://github.com/TLaan/D-OmniTwin/issues/223; formeel een minor, 1.0 is nog niet vastgesteld): `actoren` en `actor` bij controles niet meer gereserveerd; testaccounts in test en dev (`installeer`/`test --testaccounts`, `opruimen`); controletype `recht` met `actie` en `toegestaan`. Alle bestaande manifesten blijven geldig. |
-| 1.0 | 2026-10-03 | Aanvulling (https://github.com/TLaan/D-OmniTwin/issues/225): `bewijs.stappen` en het bewijsverslag zijn niet meer gereserveerd; de uitvoerder voert ze uit (12.1, 12.2), met de galerij in de root-README en het commando `galerij` (12.3, 14). `indicator` mag ook bij `kompas`. Het compacte bewijs staat in git. Alle bestaande manifesten blijven geldig. |
-| 1.0 | 2026-10-02 | Aanvulling (voorstel, https://github.com/TLaan/D-OmniTwin/issues/236; formeel een minor, 1.0 is nog niet vastgesteld): adapters `cbs-statline` en `wcs-zonaal`, domein `dataderden.cbs.nl`, varianten met `bron`, `bewerkingen`, `beschrijving` en `als_beschikbaar` (demodata als plaatsvervanger voor een interne bron), geen uitzondering meer voor code in een use case. Alle bestaande manifesten blijven geldig. |
-| 1.0 | 2026-10-02 | Eerste versie (https://github.com/TLaan/D-OmniTwin/issues/227). Vastgelegd wat sinds #219 gold (manifest, datasets, bronadapters, bewerkingen, afhankelijkheden, controles, uitvoerder). Nieuw: veld `specificatie` (verplicht), `naam` en `versie` verplicht, `actoren` en `bewijs.stappen` (gereserveerd), `veroudering`, patroon voor `rechten`, status `verouderd` in plaats van `vervallen`, geen onbekende velden meer in manifest, `datasets[]` en `controles[]`, schema `bewijs.schema.json`. Schema's verhuisd van `usecases/` naar `docs/specificaties/usecase/1.0/`. |
+| 1.0 | 2026-10-04 | Aanvulling (https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/254; formeel een minor, 1.0 is nog niet vastgesteld): `toegang` (`openbaar` \| `intern`) bij `datasets[]`, gelijk aan `dct:accessRights` (6.1, 6.3); `maximaal_aantal` bij controletype `api`; actie `bekijken` (met `pad`) bij controletype `recht`. Alle bestaande manifesten blijven geldig. |
+| 1.0 | 2026-10-04 | Aanvulling (https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/222; formeel een minor, 1.0 is nog niet vastgesteld): bewerking `ontdubbel` (dubbele namen met een andere UUID, aanname A4) en map `SWF_EXPORT_DIR` in de allowlist (export van een andere D-OmniTwin-installatie, aanname A1). Alle bestaande manifesten blijven geldig. |
+| 1.0 | 2026-10-03 | Aanvulling (https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/223; formeel een minor, 1.0 is nog niet vastgesteld): `actoren` en `actor` bij controles niet meer gereserveerd; testaccounts in test en dev (`installeer`/`test --testaccounts`, `opruimen`); controletype `recht` met `actie` en `toegestaan`. Alle bestaande manifesten blijven geldig. |
+| 1.0 | 2026-10-03 | Aanvulling (https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/225): `bewijs.stappen` en het bewijsverslag zijn niet meer gereserveerd; de uitvoerder voert ze uit (12.1, 12.2), met de galerij in de root-README en het commando `galerij` (12.3, 14). `indicator` mag ook bij `kompas`. Het compacte bewijs staat in git. Alle bestaande manifesten blijven geldig. |
+| 1.0 | 2026-10-02 | Aanvulling (voorstel, https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/236; formeel een minor, 1.0 is nog niet vastgesteld): adapters `cbs-statline` en `wcs-zonaal`, domein `dataderden.cbs.nl`, varianten met `bron`, `bewerkingen`, `beschrijving` en `als_beschikbaar` (demodata als plaatsvervanger voor een interne bron), geen uitzondering meer voor code in een use case. Alle bestaande manifesten blijven geldig. |
+| 1.0 | 2026-10-02 | Eerste versie (https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/227). Vastgelegd wat sinds #219 gold (manifest, datasets, bronadapters, bewerkingen, afhankelijkheden, controles, uitvoerder). Nieuw: veld `specificatie` (verplicht), `naam` en `versie` verplicht, `actoren` en `bewijs.stappen` (gereserveerd), `veroudering`, patroon voor `rechten`, status `verouderd` in plaats van `vervallen`, geen onbekende velden meer in manifest, `datasets[]` en `controles[]`, schema `bewijs.schema.json`. Schema's verhuisd van `usecases/` naar `docs/specificaties/usecase/1.0/`. |

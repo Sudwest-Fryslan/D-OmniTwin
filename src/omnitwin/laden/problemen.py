@@ -10,7 +10,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-TYPE_BASIS = "https://github.com/TLaan/D-OmniTwin/blob/main/docs/api/laden/README.md#"
+TYPE_BASIS = "https://github.com/Sudwest-Fryslan/D-OmniTwin/blob/main/docs/api/laden/README.md#"
 MEDIATYPE = "application/problem+json"
 MAX_FOUTEN = 1000  # zoveel fouten bewaart en toont een levering (openapi: Levering.fouten maxItems)
 

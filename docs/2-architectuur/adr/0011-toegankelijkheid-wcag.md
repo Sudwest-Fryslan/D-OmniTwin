@@ -2,8 +2,8 @@
 
 - Status: voorgesteld
 - Datum: 2026-10-04
-- Issue: https://github.com/TLaan/D-OmniTwin/issues/67, https://github.com/TLaan/D-OmniTwin/issues/284
-- Raakt: thema's per organisatie (https://github.com/TLaan/D-OmniTwin/issues/89), `docs/4-ux-design/toegankelijkheid.md`, `docs/9-beheer/thema-s.md`
+- Issue: https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/67, https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/284
+- Raakt: thema's per organisatie (https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/89), `docs/4-ux-design/toegankelijkheid.md`, `docs/9-beheer/thema-s.md`
 
 ## Context
 
