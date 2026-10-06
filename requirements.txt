@@ -22,7 +22,7 @@ Jinja2>=3.1.0
 
 # --- Database ---
 psycopg2-binary>=2.9.13
-SQLAlchemy>=2.0.0
+SQLAlchemy>=2.0.54
 
 # --- Geo ---
 # fiona en pyproj brengen GDAL en PROJ mee in hun wheel; geen systeem-GDAL nodig
