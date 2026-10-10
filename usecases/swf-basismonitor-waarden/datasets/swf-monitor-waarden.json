@@ -41,7 +41,7 @@
   "bron": {
     "adapter": "swf-dump",
     "export": "waarden",
-    "omschrijving": "${SWF_DUMP_DIR}/output/api_data_dump.json (GET …/monitor_api/indicator_waarde); later ook ${SWF_DB_DUMP}"
+    "omschrijving": "${SWF_DUMP_DIR}/output/api_data_dump.json (GET …/monitor_api/indicator_waarde); met ${SWF_DB_DUMP} de variant monitor-database"
   },
   "bewerkingen": [
     {
@@ -97,6 +97,70 @@
       "sla_over": [
         "jaar-0",
         "onbekende-buurten"
+      ]
+    },
+    "monitor-database": {
+      "omschrijving": "de database-dump van de huidige monitor (#316): waarden.json van scripts/beheer/swf_monitor_dump.py in SWF_DB_DUMP, zelfde velden als de API-export. Heeft voorrang als SWF_DB_DUMP gezet is.",
+      "als_beschikbaar": true,
+      "bron": {
+        "adapter": "lokaal-bestand",
+        "pad": "${SWF_DB_DUMP}/waarden.json",
+        "formaat": "json",
+        "tabel": "waarden",
+        "omschrijving": "export van de database-dump van de monitor (scripts/beheer/swf_monitor_dump.py); nooit in git"
+      },
+      "bewerkingen": [
+        {
+          "filter": {
+            "veld": "gebiedstype_id",
+            "in": [
+              "afba67cb-6b38-4723-9c95-102a22d5b38a",
+              "d210c084-506b-48b4-87c9-b7d4bf422553"
+            ]
+          },
+          "omschrijving": "Basis monitor: CBS-buurten en buurtdelen bebouwde kom"
+        },
+        {
+          "id": "jaar-0",
+          "afwijzen": {
+            "veld": "jaar",
+            "gelijk": 0,
+            "reden": "jaar-ongeldig"
+          }
+        },
+        {
+          "id": "onbekende-buurten",
+          "afwijzen": {
+            "veld": "gebieds_id",
+            "in": [
+              "BU19009997",
+              "BU19009998"
+            ],
+            "reden": "gebied-onbekend"
+          },
+          "omschrijving": "buurtcodes die niet in de CBS-buurtindeling voorkomen"
+        },
+        {
+          "id": "oude-buurtcodes",
+          "afwijzen": {
+            "veld": "gebieds_id",
+            "niet_begint_met": "BU",
+            "reden": "buurtcode-oud"
+          },
+          "omschrijving": "de database-dump heeft voor 2011 en 2012 numerieke codes zonder BU (10, 8 en 6 cijfers: buurt, wijk en gemeente op het gebiedstype CBS-buurten); omzetten is een keuze van de beheerder (#316)"
+        },
+        {
+          "hernoem": {
+            "indicator_id": "indicator_uuid",
+            "gebiedstype_id": "gebiedstype",
+            "gebieds_id": "gebied_code"
+          }
+        },
+        {
+          "tekst": [
+            "gebied_code"
+          ]
+        }
       ]
     }
   }

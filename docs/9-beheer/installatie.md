@@ -258,6 +258,8 @@ docker compose run --rm -v <export>:/swf-export:ro -v <monitorexport>:/swf-dump:
 
 De precieze stappen staan in de [README van swf-initialisatie](../../usecases/swf-initialisatie/README.md#stappen). Een nieuwere dump: hetzelfde script met `--repo` werkt de bestanden in git bij (via een PR). Open data gaat nooit mee (die downloadt de eigen use case), demodata ook niet.
 
+**Uit de database van de huidige monitor** (https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/316): met een `pg_dump` van de monitor maakt [`scripts/beheer/swf_monitor_dump.py exporteer`](../../scripts/beheer/swf_monitor_dump.py) een export (geen database nodig). Zet die map als `SWF_DB_DUMP` bij `installeer`, naast of in plaats van `SWF_DUMP_DIR`: swf-definities, swf-basismonitor-waarden, swf-klimaatmonitor en swf-kompasprofiel nemen dan de stand van de monitor zelf (variant `monitor-database`). De laatste kaartposities van de gebruikers zet `laad-voorkeuren` over na een expliciete koppeling aan Keycloak; zie [swf-gebruikersvoorkeuren](../../usecases/swf-gebruikersvoorkeuren/README.md). De export bevat echte data: buiten de repo houden en na afloop opruimen.
+
 De oude routes `init_data/scripts/seed_fryslan.py` en het ETL-framework in `ETL/` zijn niet meer de weg om een installatie te vullen (https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/69). `ETL/` bevat nog bronscripts voor ontwikkelaars.
 
 ---

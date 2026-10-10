@@ -25,7 +25,7 @@
   "bron": {
     "adapter": "lokaal-bestand",
     "pad": "${SWF_DUMP_DIR}/data/basismonitor_testlijst_v2.csv",
-    "omschrijving": "voortgangslijst per indicator met kwadrant, thema, onderdeel en extra niveau (data-team SWF); later de monitorconfiguratie uit ${SWF_DB_DUMP}"
+    "omschrijving": "voortgangslijst per indicator met kwadrant, thema, onderdeel en extra niveau (data-team SWF); met ${SWF_DB_DUMP} de variant monitor-database"
   },
   "bewerkingen": [
     {
@@ -129,6 +129,81 @@
     "bestand": "swf-kompas-basis.zip",
     "schema": {
       "kompasprofiel": "kompasprofiel.schema.json"
+    }
+  },
+  "varianten": {
+    "monitor-database": {
+      "omschrijving": "de Basis monitor zoals hij nu in de monitor staat (#316): actieve configuratie uit de database-dump, met volgorde. Heeft voorrang als SWF_DB_DUMP gezet is.",
+      "als_beschikbaar": true,
+      "bron": {
+        "adapter": "lokaal-bestand",
+        "pad": "${SWF_DB_DUMP}/kompasprofiel_monitor.csv",
+        "formaat": "csv",
+        "omschrijving": "actieve monitorconfiguratie uit de database-dump (scripts/beheer/swf_monitor_dump.py); nooit in git"
+      },
+      "bewerkingen": [
+        {
+          "filter": {
+            "veld": "gebiedstype_id",
+            "gelijk": "afba67cb-6b38-4723-9c95-102a22d5b38a"
+          }
+        },
+        {
+          "hernoem": {
+            "niveau1": "kwadrant",
+            "niveau2": "thema",
+            "niveau3": "onderdeel",
+            "niveau4": "extra_niveau"
+          }
+        },
+        {
+          "id": "a4-waterdiepte",
+          "waarde_map": {
+            "veld": "indicator_uuid",
+            "map": {
+              "c4e1b3bb-e4ce-4cd0-bd52-219f4a9f5df3": "f6eafa70-9383-4de6-bd2a-e47309843437"
+            }
+          },
+          "omschrijving": "de actieve Klimaatmonitor gebruikt c4e1b3bb… (status C); A4 houdt f6eafa70… aan"
+        },
+        {
+          "id": "definitie",
+          "koppel": {
+            "sleutel": "indicator_uuid",
+            "op": "id",
+            "bron": {
+              "adapter": "lokaal-bestand",
+              "pad": "${SWF_DB_DUMP}/definities.json",
+              "formaat": "json"
+            },
+            "tabel": "indicatoren",
+            "velden": {
+              "naam": "_definitie"
+            },
+            "verplicht": true,
+            "reden": "indicator-niet-in-definities"
+          }
+        },
+        {
+          "constant": {
+            "profiel": "SWF Basis",
+            "classificatie": "percentielklasse"
+          }
+        },
+        {
+          "behoud": [
+            "profiel",
+            "gebiedstype_id",
+            "kwadrant",
+            "thema",
+            "onderdeel",
+            "extra_niveau",
+            "indicator_uuid",
+            "indicator_naam",
+            "classificatie"
+          ]
+        }
+      ]
     }
   }
 }

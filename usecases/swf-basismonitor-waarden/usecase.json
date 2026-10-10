@@ -2,7 +2,7 @@
   "specificatie": "1.0",
   "naam": "swf-basismonitor-waarden",
   "id": "TC-07-006",
-  "versie": "0.2.0",
+  "versie": "0.3.0",
   "titel": "SWF-basismonitor: waarden per indicator × gebiedstype",
   "vraag": "Ik wil alle waarden van de Basis monitor (CBS-buurten en buurtdelen binnen/buiten de kom) in één levering in D-OmniTwin, zonder de fouten uit de huidige export, en met de n<10-afspraak vastgelegd.",
   "gebruiker": "data-engineer DWH (SWF)",
@@ -52,7 +52,7 @@
       "rol": "dataset:swf-monitor-waarden:laden",
       "client": "etl-swf",
       "prioriteit": "Must",
-      "bron": "export van de huidige monitor ($SWF_DUMP_DIR)",
+      "bron": "export van de huidige monitor ($SWF_DUMP_DIR), of de database-dump van de monitor ($SWF_DB_DUMP, voorrang)",
       "verwacht": {
         "gelezen_basis": 35567,
         "jaar_0": 152,
@@ -60,7 +60,16 @@
         "regels": 35411,
         "combinaties": "±41 indicator × gebiedstype",
         "jaren": "2012–2025",
-        "n": "leeg → bron-onderdrukt"
+        "n": "leeg → bron-onderdrukt",
+        "database_dump_2026_10_09": {
+          "gelezen_basis": 73687,
+          "jaar_0": 152,
+          "gebied_onbekend": 4,
+          "buurtcode_oud": 795,
+          "regels": 72736,
+          "indicatoren": 61,
+          "jaren": "2011–2026"
+        }
       }
     }
   ],
@@ -68,7 +77,8 @@
     {
       "type": "aantal",
       "dataset": "swf-monitor-waarden",
-      "gelijk": 35411
+      "minimaal": 35411,
+      "omschrijving": "35.411 uit de export van februari 2026; 72.736 uit de database-dump van 09-10-2026"
     },
     {
       "type": "bewerking",
@@ -81,6 +91,13 @@
       "dataset": "swf-monitor-waarden",
       "reden": "gebied-onbekend",
       "gelijk": 4
+    },
+    {
+      "type": "bewerking",
+      "dataset": "swf-monitor-waarden",
+      "reden": "buurtcode-oud",
+      "maximaal": 795,
+      "omschrijving": "alleen in de database-dump: waarden van 2011 en 2012 op numerieke codes zonder BU (0 in de export)"
     },
     {
       "type": "afkeuring",
@@ -170,6 +187,8 @@
     "Jaar 0 (152 waarden van één indicator) en 2 buurtcodes zonder CBS-buurt (4 waarden) laat de ETL weg; de variant met-fouten toont dat de laad-API ze afkeurt.",
     "n ontbreekt in de export: alle waarden krijgen de vlag bron-onderdrukt (de DWH laat n<10 weg). Met n in de datamart kan de vlag weg.",
     "Overlap met cbs-kerncijfers: 5 indicatoren in de SWF-export hebben dezelfde UUID als het CBS-recept (2.598 waarden vanaf 2019). gebied_data heeft één waarde per gebied × indicator × jaar × scenario; twee datasets op dezelfde sleutel vragen een regel (bron per waarde, of één dataset leidend).",
-    "Float-ruis tot 16 decimalen gaat ongewijzigd mee."
+    "Float-ruis tot 16 decimalen gaat ongewijzigd mee.",
+    "Database-dump van de monitor (09-10-2026, variant monitor-database, #316): 73.687 waarden op CBS-buurten en buurtdelen bebouwde kom (februari: 35.567), 61 indicatoren met waarden (februari 49), jaren 2011–2026. Weggelaten: jaar 0 (152), BU19009997/98 (4) en 795 waarden uit 2011–2012 op numerieke codes zonder BU.",
+    "De numerieke codes (2011–2012) zijn '11' + buurtcode (10 cijfers, 113 codes), wijkcode (8 cijfers) of gemeentecode (6 cijfers) op het gebiedstype CBS-buurten. Omzetten naar BU-codes of weglaten is een keuze van de beheerder."
   ]
 }

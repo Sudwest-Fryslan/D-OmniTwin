@@ -7,6 +7,11 @@ Bedoeld voor snelle start, tests en demonstraties zonder externe data-downloads.
 
 Gebruik:
     python init_data/scripts/load_sample.py [--stap alle|definities|stuurdata|buurten|indicatoren|kompas|waarden|drempels]
+        [--drempels BESTAND ...]
+
+    '--drempels' laadt na de stuurdata extra drempelbestanden in hetzelfde formaat, bijv.
+    indicator_labels_monitor.json uit scripts/beheer/swf_monitor_dump.py (#316); die overschrijven de
+    drempels uit de stuurdata voor hun indicatoren.
 
     'definities' laadt het product zonder data (stuurdata, indicatordefinities, Kompas).
     De data (gebieden en waarden) komt uit de use cases: init_data/scripts/laad_usecase.py.
@@ -614,6 +619,11 @@ def main():
         help="Welke stap uitvoeren (default: alle). 'definities' = stuurdata, indicatoren en Kompas, "
              "zonder gebieden en waarden; die komen uit de use cases (laad_usecase.py)"
     )
+    parser.add_argument(
+        "--drempels", action="append", default=[], metavar="BESTAND",
+        help="extra drempelbestand (formaat db/stuurdata/indicator_labels_*.json), na de stuurdata geladen; "
+             "bijv. indicator_labels_monitor.json uit scripts/beheer/swf_monitor_dump.py"
+    )
     args = parser.parse_args()
 
     print("=" * 60)
@@ -651,7 +661,7 @@ def main():
                 success = False
 
         if stap in ("alle", "definities", "kompas", "drempels") and success:
-            if not import_drempels(conn):
+            if not import_drempels(conn, DREMPELBESTANDEN + [Path(b) for b in args.drempels]):
                 success = False
 
         if stap in ("alle", "waarden") and success:
