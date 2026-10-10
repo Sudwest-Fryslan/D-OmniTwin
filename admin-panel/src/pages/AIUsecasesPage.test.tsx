@@ -5,7 +5,7 @@ import { AIUsecasesPage } from './AIUsecasesPage';
 import { aiVrijgaveAPI } from '../services/api';
 import type { AIUsecase } from '../services/api';
 
-const basis = { stilgezet: false, status_door: null, status_op: null, verklaring_id: null, versie: null, geldig_tot: null,
+const basis = { stilgezet: false, status_door: null, status_op: null, stilgezet_reden: null, verklaring_id: null, versie: null, geldig_tot: null,
     bestandsnaam: null, grootte: null, sha256: null, geupload_door: null, geupload_op: null, verklaring_url: null };
 
 const USECASES: AIUsecase[] = [
@@ -13,7 +13,9 @@ const USECASES: AIUsecase[] = [
       verklaring_id: 'v1', versie: '0.4.0', geldig_tot: '2027-01-31', bestandsnaam: 'DPIA.pdf',
       geupload_door: 'fb-beheer', geupload_op: '2026-10-10T10:00:00Z', verklaring_url: '/api/ai/usecases/A/verklaring' },
     { ...basis, code: 'B', naam: 'Samenvatting/rapport', omschrijving: 'Rapport', open: false, reden: 'geen_verklaring' },
-    { ...basis, code: 'C', naam: 'Zoeken (semantisch)', omschrijving: 'Zoeken', open: false, reden: 'stilgezet', stilgezet: true },
+    { ...basis, code: 'C', naam: 'Zoeken (semantisch)', omschrijving: 'Zoeken', open: false, reden: 'stilgezet', stilgezet: true,
+      status_door: 'systeem', status_op: '2026-10-10T11:00:00Z', stilgezet_reden: 'Schrijven in het AI-logboek mislukt (OperationalError)',
+      verklaring_id: 'v3', versie: '1', geldig_tot: '2027-01-31' },
 ];
 
 const ok = <T,>(data: T) => Promise.resolve({ data } as never);
@@ -35,7 +37,9 @@ describe('AIUsecasesPage', () => {
         render(<AIUsecasesPage />);
         expect(await screen.findByTestId('status-A')).toHaveTextContent('Open');
         expect(screen.getByTestId('status-B')).toHaveTextContent('Dicht: geen verklaring');
-        expect(screen.getByTestId('status-C')).toHaveTextContent('noodstop');
+        expect(screen.getByTestId('status-C')).toHaveTextContent('Dicht: automatische noodstop');
+        expect(screen.getByTestId('automatisch-C')).toHaveTextContent('AI-logboek mislukt');
+        expect(screen.queryByTestId('automatisch-A')).toBeNull();
         const a = screen.getByTestId('usecase-A');
         expect(within(a).getByRole('link', { name: /DPIA.pdf/ })).toHaveAttribute('href', '/api/ai/usecases/A/verklaring');
         expect(within(a).getByText(/fb-beheer/)).toBeInTheDocument();

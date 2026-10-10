@@ -33,6 +33,7 @@ logger = logging.getLogger(__name__)
 
 A, B, C = "A", "B", "C"
 BUITEN = "X"  # geen vrijgegeven usecase: altijd dicht
+SYSTEEM = "systeem"  # 'door' bij een automatische noodstop
 USECASES = {A: "Assistent", B: "Samenvatting/rapport", C: "Zoeken (semantisch)"}
 
 OPEN, GEEN_VERKLARING, VERLOPEN, STILGEZET = "open", "geen_verklaring", "verlopen", "stilgezet"
@@ -65,7 +66,7 @@ def beoordeel(geldig_tot: Optional[date], stilgezet: bool, vandaag: date) -> Tup
 
 
 _STAND_SQL = """
-    SELECT u.code, u.naam, u.omschrijving, u.stilgezet, u.status_door, u.status_op,
+    SELECT u.code, u.naam, u.omschrijving, u.stilgezet, u.status_door, u.status_op, u.stilgezet_reden,
            v.id AS verklaring_id, v.versie, v.geldig_tot, v.bestandsnaam, v.grootte, v.sha256,
            v.geupload_door, v.geupload_op
     FROM public.ai_usecases u
@@ -171,8 +172,8 @@ def upload(db, usecase: str, versie: str, geldig_tot: date, bestandsnaam: Option
         VALUES (:code, :versie, :tot, :naam, :pdf, :grootte, :sha, :door) RETURNING id
     """), {"code": code, "versie": versie, "tot": geldig_tot, "naam": nette_bestandsnaam(bestandsnaam),
            "pdf": inhoud, "grootte": len(inhoud), "sha": sha, "door": door}).scalar()
-    db.execute(text("UPDATE public.ai_usecases SET stilgezet = false, status_door = :door, status_op = now() "
-                    "WHERE code = :code"), {"door": door, "code": code})
+    db.execute(text("UPDATE public.ai_usecases SET stilgezet = false, status_door = :door, status_op = now(), "
+                    "stilgezet_reden = NULL WHERE code = :code"), {"door": door, "code": code})
     db.execute(text("""
         INSERT INTO public.ai_vrijgave_log (usecase, actie, door, verklaring_id, versie, geldig_tot, toelichting)
         VALUES (:code, 'verklaring_geupload', :door, :vid, :versie, :tot, :t)
@@ -185,13 +186,49 @@ def upload(db, usecase: str, versie: str, geldig_tot: date, bestandsnaam: Option
 def zet_noodstop(db, usecase: str, aan: bool, door: str, toelichting: Optional[str] = None) -> None:
     """Noodstop aan (stilzetten) of uit (hervatten); hervatten opent alleen met een geldige verklaring."""
     code = _code(usecase)
-    db.execute(text("UPDATE public.ai_usecases SET stilgezet = :aan, status_door = :door, status_op = now() "
-                    "WHERE code = :code"), {"aan": aan, "door": door, "code": code})
+    toelichting = ai_logboek.afkappen(toelichting, 500)
+    db.execute(text("UPDATE public.ai_usecases SET stilgezet = :aan, status_door = :door, status_op = now(), "
+                    "stilgezet_reden = :reden WHERE code = :code"),
+               {"aan": aan, "door": door, "code": code, "reden": toelichting if aan else None})
     db.execute(text("INSERT INTO public.ai_vrijgave_log (usecase, actie, door, toelichting) "
                     "VALUES (:code, :actie, :door, :t)"),
                {"code": code, "actie": "noodstop" if aan else "hervat", "door": door,
-                "t": ai_logboek.afkappen(toelichting, 500)})
+                "t": toelichting})
     db.commit()
+
+
+def automatische_noodstop(reden: str) -> None:
+    """
+    Fail-closed (#307, #313): zet A, B en C stil met door = 'systeem' en de reden, in een eigen
+    transactie. Vastgelegd in ai_vrijgave_log (alleen voor usecases die nog niet stil stonden); lukt
+    dat niet (database onbereikbaar), dan in de applicatielog. Gaat niet vanzelf weer open.
+    """
+    reden = ai_logboek.afkappen(reden, 500) or "onbekend"
+    try:
+        from omnitwin.database import engine
+        with engine.begin() as conn:
+            codes = [r[0] for r in conn.execute(text("""
+                UPDATE public.ai_usecases
+                SET stilgezet = true, status_door = :door, status_op = now(), stilgezet_reden = :reden
+                WHERE NOT stilgezet RETURNING code
+            """), {"door": SYSTEEM, "reden": reden})]
+            for code in codes:
+                conn.execute(text("INSERT INTO public.ai_vrijgave_log (usecase, actie, door, toelichting) "
+                                  "VALUES (:code, 'noodstop', :door, :t)"),
+                             {"code": code, "door": SYSTEEM, "t": f"Automatische noodstop: {reden}"})
+        if codes:
+            _applicatielog(f"AI: automatische noodstop op {', '.join(codes)}: {reden}")
+    except Exception as e:  # noqa: BLE001 - de database is weg: dan staat AI al dicht (is_open faalt)
+        _applicatielog(f"AI: automatische noodstop kon niet worden vastgelegd ({type(e).__name__}); reden: {reden}")
+
+
+def _applicatielog(tekst: str) -> None:
+    logger.critical(tekst)
+    try:
+        from omnitwin.services.logging_service import AppLogger
+        AppLogger.critical(tekst, category="SERVER")
+    except Exception:  # noqa: BLE001
+        pass
 
 
 def registreer_verlopen(db, vandaag: Optional[date] = None) -> int:

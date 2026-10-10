@@ -365,6 +365,8 @@ export interface AIUsecase {
     stilgezet: boolean;
     status_door: string | null;
     status_op: string | null;
+    /** Toelichting bij de noodstop; bij een automatische noodstop (status_door 'systeem') de reden */
+    stilgezet_reden: string | null;
     verklaring_id: string | null;
     versie: string | null;
     geldig_tot: string | null;

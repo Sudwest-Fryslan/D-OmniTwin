@@ -13,7 +13,7 @@ class DeduplicatieService:
     def __init__(self, db: Session):
         self.db = db
 
-    def get_kandidaten(self) -> List[Dict[str, Any]]:
+    def get_kandidaten(self, zonder_ai: bool = False) -> List[Dict[str, Any]]:
         """
         Vindt potentiele duplicaten op basis van naam-gelijkenis (substring, pg_trgm)
         en semantische gelijkenis (pgvector).
@@ -22,7 +22,7 @@ class DeduplicatieService:
         oordeel van het taalmodel valt buiten de usecases en staat altijd uit: elke groep komt
         terug voor een oordeel van de beheerder.
         """
-        met_embedding = ai_vrijgave.poort(ai_vrijgave.C, "Deduplicatie: kandidaten",
+        met_embedding = not zonder_ai and ai_vrijgave.poort(ai_vrijgave.C, "Deduplicatie: kandidaten",
                                           taak="Kandidaten voor deduplicatie op betekenis")
         # We halen eerst alle actieve indicatoren op voor hun metadata, inclusief broodkruimels
         query_all = text("""
@@ -142,10 +142,11 @@ class DeduplicatieService:
 
         if met_embedding:
             from omnitwin.services import embedding_model
-            ai_logboek.schrijf(ai_vrijgave.C, "Deduplicatie: kandidaten", ai_logboek.UITGEVOERD,
-                               taak="Kandidaten voor deduplicatie op betekenis (opgeslagen embeddings)",
-                               model=embedding_model.MODEL_ID, modelversie=embedding_model.MODEL_REVISIE,
-                               resultaat=f"{len(candidates)} groepen")
+            if not ai_logboek.schrijf(ai_vrijgave.C, "Deduplicatie: kandidaten", ai_logboek.UITGEVOERD,
+                                      taak="Kandidaten voor deduplicatie op betekenis (opgeslagen embeddings)",
+                                      model=embedding_model.MODEL_ID, modelversie=embedding_model.MODEL_REVISIE,
+                                      resultaat=f"{len(candidates)} groepen"):
+                return self.get_kandidaten(zonder_ai=True)  # fail-closed: zonder embeddings
         return candidates
 
     def merge_indicatoren(self, primary_uuid: str, duplicate_uuids: List[str], actie: str) -> Dict[str, Any]:

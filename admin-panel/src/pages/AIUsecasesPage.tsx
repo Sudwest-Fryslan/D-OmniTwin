@@ -24,6 +24,10 @@ const ACTIE: Record<AIVrijgaveRegel['actie'], string> = {
     bewaartermijn: 'Bewaartermijn gewijzigd',
 };
 
+/** De applicatie zet A, B en C zelf stil als loggen mislukt of de hashketen niet klopt (#313). */
+export const SYSTEEM = 'systeem';
+export const isAutomatisch = (u: AIUsecase) => u.stilgezet && u.status_door === SYSTEEM;
+
 export const tijd = (w: string | null) => (w ? new Date(w).toLocaleString('nl-NL') : '–');
 export const datum = (w: string | null) => (w ? new Date(`${w}T00:00:00`).toLocaleDateString('nl-NL') : '–');
 
@@ -98,10 +102,16 @@ export const UsecaseKaart: React.FC<{ u: AIUsecase; bijgewerkt: (m: string) => v
             <div className="card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 'var(--spacing-md)', flexWrap: 'wrap' }}>
                 <h2 className="card-title" id={`ai-${u.code}-titel`}>{u.code} – {u.naam}</h2>
                 <span className={`badge ${u.open ? 'badge-positive' : 'badge-negative'}`} data-testid={`status-${u.code}`}>
-                    {REDEN[u.reden]}
+                    {u.reden === 'stilgezet' && isAutomatisch(u) ? 'Dicht: automatische noodstop' : REDEN[u.reden]}
                 </span>
             </div>
             <p className="text-secondary">{u.omschrijving}</p>
+            {isAutomatisch(u) && (
+                <div role="alert" className="login-melding login-melding-fout" data-testid={`automatisch-${u.code}`}>
+                    <strong>Automatische noodstop</strong> ({tijd(u.status_op)}): {u.stilgezet_reden ?? 'reden onbekend'}.
+                    {' '}Los de oorzaak op en zet de usecase daarna zelf weer aan met <em>Noodstop opheffen</em>.
+                </div>
+            )}
             <dl style={{ display: 'grid', gridTemplateColumns: 'max-content 1fr', gap: '0.25rem 1rem', margin: '1rem 0' }}>
                 <dt>Verklaring</dt>
                 <dd>
@@ -114,7 +124,11 @@ export const UsecaseKaart: React.FC<{ u: AIUsecase; bijgewerkt: (m: string) => v
                 <dt>Geüpload en actief gemaakt</dt>
                 <dd>{u.geupload_door ? `${u.geupload_door}, ${tijd(u.geupload_op)}` : '–'}</dd>
                 <dt>Noodstop</dt>
-                <dd>{u.stilgezet ? 'Aan' : 'Uit'}{u.status_door ? ` (laatst gewijzigd door ${u.status_door}, ${tijd(u.status_op)})` : ''}</dd>
+                <dd>
+                    {u.stilgezet ? (isAutomatisch(u) ? 'Aan (automatisch)' : 'Aan') : 'Uit'}
+                    {u.status_door ? ` (laatst gewijzigd door ${u.status_door}, ${tijd(u.status_op)})` : ''}
+                    {u.stilgezet && !isAutomatisch(u) && u.stilgezet_reden ? `: ${u.stilgezet_reden}` : ''}
+                </dd>
             </dl>
             <div style={{ display: 'flex', gap: 'var(--spacing-md)', flexWrap: 'wrap', alignItems: 'flex-end', justifyContent: 'space-between' }}>
                 <UploadFormulier code={u.code} klaar={bijgewerkt} fout={fout} />
@@ -291,7 +305,7 @@ export const AIUsecasesPage: React.FC = () => {
                             <tbody>
                                 {log.map(r => (
                                     <tr key={r.id}>
-                                        <td>{tijd(r.tijdstip)}</td><td>{r.usecase ?? '–'}</td><td>{ACTIE[r.actie] ?? r.actie}</td>
+                                        <td>{tijd(r.tijdstip)}</td><td>{r.usecase ?? '–'}</td><td>{r.actie === 'noodstop' && r.door === SYSTEEM ? 'Automatische noodstop' : (ACTIE[r.actie] ?? r.actie)}</td>
                                         <td>{r.door ?? 'automatisch'}</td><td>{r.versie ?? '–'}</td><td>{datum(r.geldig_tot)}</td><td>{r.toelichting}</td>
                                     </tr>
                                 ))}

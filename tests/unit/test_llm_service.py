@@ -114,7 +114,7 @@ def stille_logger(monkeypatch):
     monkeypatch.setattr(llm_mod, "AppLogger", Stil)
     # AI-vrijgave (#307) en AI-logboek (#313) zonder database: hier alle usecases open, logboek stil
     monkeypatch.setattr(llm_mod.ai_vrijgave, "is_open", lambda usecase: usecase in ("A", "B", "C"))
-    monkeypatch.setattr(llm_mod.ai_logboek, "schrijf", lambda *a, **k: None)
+    monkeypatch.setattr(llm_mod.ai_logboek, "schrijf", lambda *a, **k: True)
     for var in ("LLM_API_KEY", "LLM_THINK", "LLM_REASONING_EFFORT"):
         monkeypatch.delenv(var, raising=False)
 

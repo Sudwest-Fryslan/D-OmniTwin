@@ -55,7 +55,7 @@ class AISearchService:
         """), {"vector": vector, "model": embedding_model.MODEL_NAAM}).fetchall()
         return {r[0]: float(r[1]) for r in rows}
 
-    def search_indicators(self, query_text: str, limit: int = 5) -> List[Dict[str, Any]]:
+    def search_indicators(self, query_text: str, limit: int = 5, zonder_ai: bool = False) -> List[Dict[str, Any]]:
         """
         Zoekt de indicatoren die bij een vraag passen, de beste eerst.
 
@@ -63,11 +63,13 @@ class AISearchService:
         redenen (begrip, naam, betekenis). Alleen resultaten binnen MAX_AFSTAND van de beste;
         een lege lijst als niets goed genoeg past. Er wordt niet op ontologie_status gefilterd
         (#139); ontologie_status en gevalideerd staan erbij.
+
+        zonder_ai: alleen trefwoorden (ook na een mislukte logregel: fail-closed, #313).
         """
         from omnitwin.services import embedding_model
 
         gelijkenis: Dict[str, float] = {}
-        self.zonder_betekenis = not ai_vrijgave.poort(ai_vrijgave.C, self.functie, taak=query_text)
+        self.zonder_betekenis = zonder_ai or not ai_vrijgave.poort(ai_vrijgave.C, self.functie, taak=query_text)
         if not self.zonder_betekenis:
             self._ensure_model()
             if _model is None:
@@ -111,8 +113,10 @@ class AISearchService:
                 "relevantie": rang.relevantie,
                 "redenen": rang.redenen,
             })
-        if not self.zonder_betekenis:
-            ai_logboek.schrijf(ai_vrijgave.C, self.functie, ai_logboek.UITGEVOERD, taak=query_text,
-                               bronnen=[r["uuid"] for r in uit], model=embedding_model.MODEL_ID,
-                               modelversie=embedding_model.MODEL_REVISIE, resultaat=f"{len(uit)} resultaten")
+        if not self.zonder_betekenis and not ai_logboek.schrijf(
+                ai_vrijgave.C, self.functie, ai_logboek.UITGEVOERD, taak=query_text,
+                bronnen=[r["uuid"] for r in uit], model=embedding_model.MODEL_ID,
+                modelversie=embedding_model.MODEL_REVISIE, resultaat=f"{len(uit)} resultaten"):
+            # Fail-closed: niet gelogd = geen resultaat op betekenis, wel op trefwoorden
+            return self.search_indicators(query_text, limit, zonder_ai=True)
         return uit

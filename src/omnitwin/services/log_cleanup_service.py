@@ -140,7 +140,8 @@ async def _cleanup_loop() -> None:
         except Exception as e:
             AppLogger.error(f"Opruimen voorkeuren mislukt: {type(e).__name__}", category="SERVER")
 
-        # AI-logboek na de bewaartermijn (#313) en verlopen AI-verklaringen vastleggen (#307)
+        # AI-logboek: keten controleren en opschonen na de bewaartermijn (#313); verlopen
+        # AI-verklaringen vastleggen (#307)
         try:
             n = await asyncio.to_thread(_ai_onderhoud)
             if n:
@@ -155,6 +156,7 @@ def _ai_onderhoud() -> int:
     db = SessionLocal()
     try:
         ai_vrijgave.registreer_verlopen(db)
+        ai_logboek.controleer(db)  # klopt de hashketen niet: automatische noodstop (#313)
     finally:
         db.close()
     return ai_logboek.opschonen()

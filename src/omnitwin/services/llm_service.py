@@ -148,11 +148,15 @@ class LLMService:
         else:
             res = self._call_ollama(system_prompt, user_prompt, context_name, llm_config=llm_config)
         fout = bool(res.get("error"))
-        ai_logboek.schrijf(usecase, context_name, ai_logboek.FOUT if fout else ai_logboek.UITGEVOERD,
-                           taak=taak, bronnen=bronnen, model=llm_config.get("model_name"),
-                           modelversie=res.get("modelversie"),
-                           resultaat=None if fout else res.get("text"),
-                           foutmelding=res.get("text") if fout else None)
+        gelogd = ai_logboek.schrijf(usecase, context_name, ai_logboek.FOUT if fout else ai_logboek.UITGEVOERD,
+                                    taak=taak, bronnen=bronnen, model=llm_config.get("model_name"),
+                                    modelversie=res.get("modelversie"),
+                                    resultaat=None if fout else res.get("text"),
+                                    foutmelding=res.get("text") if fout else None)
+        if not gelogd and not fout:
+            # Fail-closed: niet gelogd = geen AI-resultaat (de noodstop staat dan al aan)
+            return {"text": ai_vrijgave.melding(usecase), "error": True, "geweigerd": True,
+                    "debug": {"context": context_name, "usecase": usecase, "log_mislukt": True}}
         return res
 
     def _call_ollama(self, system_prompt: str, user_prompt: str, context_name: str,

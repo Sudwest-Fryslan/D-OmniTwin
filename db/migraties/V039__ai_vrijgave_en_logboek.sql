@@ -20,6 +20,8 @@
 --                              regels mag verwijderen, en alleen ouder dan de bewaartermijn
 -- Een trigger weigert UPDATE, TRUNCATE en DELETE (behalve door de opschoner), ook voor de eigenaar
 -- en een superuser. Wie de trigger uitzet of omzeilt, breekt de hashketen: de controle ziet dat.
+-- Fail-closed: lukt schrijven in het logboek niet of klopt de keten niet, dan zet de applicatie
+-- A, B en C automatisch stil (door = 'systeem'); functioneel beheer zet ze zelf weer open.
 
 -- ── Rollen ───────────────────────────────────────────────────────────────────
 DO $$
@@ -54,8 +56,9 @@ CREATE TABLE IF NOT EXISTS public.ai_usecases (
     naam          text NOT NULL,
     omschrijving  text NOT NULL,
     stilgezet     boolean NOT NULL DEFAULT false,   -- noodstop door functioneel beheer
-    status_door   text,                             -- login die de noodstop het laatst omzette
-    status_op     timestamptz
+    status_door   text,                             -- login die de noodstop het laatst omzette; 'systeem' = automatisch
+    status_op     timestamptz,
+    stilgezet_reden text                            -- toelichting bij de noodstop (automatisch: de reden)
 );
 COMMENT ON TABLE public.ai_usecases IS
     'AI-usecases (#307): open alleen met een geldige verklaring (ai_verklaringen) en zonder noodstop';

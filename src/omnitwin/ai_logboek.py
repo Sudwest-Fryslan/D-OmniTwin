@@ -10,6 +10,9 @@ Opslag: tabel `ai_logboek` (migratie V039), alleen toevoegen. De backend schrijf
 (sha256 van de inhoud plus de hash van de vorige regel). `controleer_keten` rekent die keten na.
 Opschonen na de bewaartermijn (`ai_instellingen`, standaard 365 dagen) kan alleen via de functie
 `ai_logboek_opschonen()` (SECURITY DEFINER, rol `omnitwin_ai_log_opschoner`); dat komt zelf in het logboek.
+
+Fail-closed: mislukt het schrijven of klopt de keten niet, dan zet de applicatie A, B en C automatisch
+stil (`ai_vrijgave.automatische_noodstop`); functioneel beheer zet ze zelf weer open.
 """
 from __future__ import annotations
 
@@ -94,12 +97,22 @@ def _schrijf_rij(rij: Dict[str, Any]) -> None:
         conn.execute(_INSERT, rij)
 
 
-def schrijf(usecase: str, functie: str, status: str, **velden) -> None:
-    """Eén AI-actie in het logboek. Een fout bij het schrijven breekt de actie niet af (wel in de serverlog)."""
+def schrijf(usecase: str, functie: str, status: str, **velden) -> bool:
+    """
+    Eén AI-actie in het logboek; True als dat lukte.
+
+    Fail-closed: lukt het niet, dan gaat een automatische noodstop op A, B en C
+    (ai_vrijgave.automatische_noodstop) en geeft de aanroeper geen AI-resultaat terug, maar de
+    terugval zonder AI.
+    """
     try:
         _schrijf_rij(regel(usecase, functie, status, **velden))
-    except Exception as e:  # noqa: BLE001 - logboek mag de gebruiker niet blokkeren
+        return True
+    except Exception as e:  # noqa: BLE001 - elke fout: dicht
         logger.error("AI-logboek: schrijven mislukt (%s, %s, %s): %s", usecase, functie, status, type(e).__name__)
+        from omnitwin import ai_vrijgave
+        ai_vrijgave.automatische_noodstop(f"Schrijven in het AI-logboek mislukt ({type(e).__name__})")
+        return False
 
 
 # ── Hashketen ────────────────────────────────────────────────────────────────
@@ -143,8 +156,14 @@ _KOLOMMEN = """id, tijdstip, to_char(tijdstip AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"
 
 
 def controleer(db) -> Dict[str, Any]:
+    """Keten narekenen; klopt hij niet, dan een automatische noodstop op A, B en C (fail-closed)."""
     rijen = db.execute(text(f"SELECT {_KOLOMMEN} FROM public.ai_logboek ORDER BY id")).mappings()
-    return controleer_keten(dict(r) for r in rijen)
+    uit = controleer_keten(dict(r) for r in rijen)
+    if not uit["ok"]:
+        from omnitwin import ai_vrijgave
+        eerste = uit["fouten"][0]
+        ai_vrijgave.automatische_noodstop(f"Hashketen van het AI-logboek klopt niet (id {eerste['id']}: {eerste['reden']})")
+    return uit
 
 
 # ── Inzien, exporteren, opschonen ────────────────────────────────────────────

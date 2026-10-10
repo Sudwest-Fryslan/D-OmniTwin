@@ -4,6 +4,7 @@ noodstop, en geen aanroep van taalmodel of embeddingmodel in dichte toestand.
 
 Zonder database: een nep-sessie die de paar statements van omnitwin.ai_vrijgave nadoet.
 """
+import contextlib
 import re
 from datetime import date, timedelta
 from pathlib import Path
@@ -42,7 +43,8 @@ class NepDB:
 
     def __init__(self):
         self.usecases = {c: {"code": c, "naam": n, "omschrijving": n, "stilgezet": False,
-                             "status_door": None, "status_op": None} for c, n in ai_vrijgave.USECASES.items()}
+                             "status_door": None, "status_op": None, "stilgezet_reden": None}
+                         for c, n in ai_vrijgave.USECASES.items()}
         self.verklaringen, self.log, self.commits = [], [], 0
 
     def execute(self, sql, params=None):
@@ -51,12 +53,18 @@ class NepDB:
             vid = f"v{len(self.verklaringen) + 1}"
             self.verklaringen.append({**p, "id": vid, "volgorde": len(self.verklaringen)})
             return _Res(scalar=vid)
+        if q.startswith("UPDATE public.ai_usecases") and "WHERE NOT stilgezet" in q:
+            codes = [c for c, u in sorted(self.usecases.items()) if not u["stilgezet"]]
+            for c in codes:
+                self.usecases[c].update(stilgezet=True, status_door=p["door"], stilgezet_reden=p["reden"])
+            return _Res([(c,) for c in codes])
         if q.startswith("UPDATE public.ai_usecases"):
             self.usecases[p["code"]]["stilgezet"] = p.get("aan", False)
             self.usecases[p["code"]]["status_door"] = p["door"]
+            self.usecases[p["code"]]["stilgezet_reden"] = p.get("reden")
             return _Res()
         if q.startswith("INSERT INTO public.ai_vrijgave_log"):
-            actie = re.search(r"'(verklaring_geupload|verlopen)'", q)
+            actie = re.search(r"'(verklaring_geupload|verlopen|noodstop)'", q)
             self.log.append({**p, "actie": p.get("actie") or (actie.group(1) if actie else None)})
             return _Res()
         if q.startswith("SELECT 1 FROM public.ai_vrijgave_log"):
@@ -94,7 +102,7 @@ def db(monkeypatch):
 @pytest.fixture
 def logboek(monkeypatch):
     regels = []
-    monkeypatch.setattr(ai_logboek, "schrijf", lambda *a, **k: regels.append((a, k)))
+    monkeypatch.setattr(ai_logboek, "schrijf", lambda *a, **k: regels.append((a, k)) or True)
     return regels
 
 
@@ -333,3 +341,132 @@ def test_embeddingmodel_alleen_achter_de_poort():
         tekst = pad.read_text(encoding="utf-8", errors="ignore")
         assert "gedeeld_model(" not in tekst and "SentenceTransformer(" not in tekst, \
             f"{pad}: embeddingmodel buiten de AI-poort"
+
+
+# ── Fail-closed: logboek mislukt of keten klopt niet → automatische noodstop ─
+
+@pytest.fixture
+def nep_engine(db, monkeypatch):
+    import omnitwin.database as database
+
+    class _Engine:
+        def begin(self):
+            return contextlib.nullcontext(db)
+    monkeypatch.setattr(database, "engine", _Engine())
+    return db
+
+
+def _open_alles(db):
+    for c in "ABC":
+        ai_vrijgave.upload(db, c, "1", VANDAAG + timedelta(days=5), "v.pdf", PDF, "application/pdf", "fb")
+    assert all(ai_vrijgave.is_open(c) for c in "ABC")
+
+
+def test_automatische_noodstop_zet_alles_dicht_en_legt_vast(nep_engine):
+    db = nep_engine
+    _open_alles(db)
+    ai_vrijgave.automatische_noodstop("Schrijven in het AI-logboek mislukt (OperationalError)")
+    assert not any(ai_vrijgave.is_open(c) for c in "ABC")
+    standen = {s["code"]: s for s in ai_vrijgave.standen(db)}
+    assert all(s["status_door"] == "systeem" and "AI-logboek mislukt" in s["stilgezet_reden"] for s in standen.values())
+    auto = [r for r in db.log if r.get("door") == "systeem"]
+    assert [r["code"] for r in auto] == ["A", "B", "C"] and all(r["actie"] == "noodstop" for r in auto)
+    ai_vrijgave.automatische_noodstop("nog een keer")  # staat al stil: geen nieuwe regels
+    assert len([r for r in db.log if r.get("door") == "systeem"]) == 3
+
+
+def test_niet_vanzelf_weer_open_wel_door_beheer(nep_engine):
+    db = nep_engine
+    _open_alles(db)
+    ai_vrijgave.automatische_noodstop("keten klopt niet")
+    assert not ai_vrijgave.is_open("A")
+    ai_vrijgave.zet_noodstop(db, "A", False, "fb")
+    assert ai_vrijgave.is_open("A") and not ai_vrijgave.is_open("B")
+    assert {s["code"]: s for s in ai_vrijgave.standen(db)}["A"]["stilgezet_reden"] is None
+
+
+def test_automatische_noodstop_zonder_database_in_applicatielog(monkeypatch, caplog):
+    import omnitwin.database as database
+
+    class _Kapot:
+        def begin(self):
+            raise RuntimeError("database weg")
+    monkeypatch.setattr(database, "engine", _Kapot())
+    with caplog.at_level("CRITICAL", logger="omnitwin.ai_vrijgave"):
+        ai_vrijgave.automatische_noodstop("logboek mislukt")
+    assert "kon niet worden vastgelegd" in caplog.text and "logboek mislukt" in caplog.text
+
+
+def test_schrijven_mislukt_geeft_noodstop(monkeypatch):
+    stops = []
+    monkeypatch.setattr(ai_vrijgave, "automatische_noodstop", stops.append)
+    monkeypatch.setattr(ai_logboek, "_schrijf_rij", lambda rij: (_ for _ in ()).throw(RuntimeError("weg")))
+    assert ai_logboek.schrijf("A", "Chat", "uitgevoerd", taak="x") is False
+    assert stops and "AI-logboek mislukt" in stops[0]
+
+
+def test_keten_klopt_niet_geeft_noodstop(monkeypatch):
+    stops = []
+    monkeypatch.setattr(ai_vrijgave, "automatische_noodstop", stops.append)
+    monkeypatch.setattr(ai_logboek, "controleer_keten", lambda rijen: {"ok": False, "aantal": 2, "eerste_id": 1,
+                        "laatste_id": 2, "fouten": [{"id": 2, "reden": "hash past niet bij de inhoud"}]})
+
+    class _DB:
+        def execute(self, *a, **k):
+            return _Res([])
+    assert ai_logboek.controleer(_DB())["ok"] is False
+    assert stops and "id 2" in stops[0]
+
+
+def test_keten_klopt_geen_noodstop(monkeypatch):
+    monkeypatch.setattr(ai_vrijgave, "automatische_noodstop", lambda r: pytest.fail("geen noodstop"))
+
+    class _DB:
+        def execute(self, *a, **k):
+            return _Res([])
+    assert ai_logboek.controleer(_DB())["ok"] is True
+
+
+class _ConfigDB:
+    def execute(self, sql, params=None):
+        return _Res([{"api_url": "http://llm", "model_name": "m", "api_type": "ollama"}])
+
+
+def test_llm_resultaat_niet_gelogd_geeft_geen_ai_resultaat(db, monkeypatch):
+    import omnitwin.services.llm_service as llm_mod
+    _open_alles(db)
+    monkeypatch.setattr(ai_logboek, "schrijf", lambda *a, **k: False)
+    svc = llm_mod.LLMService(_ConfigDB())
+    monkeypatch.setattr(svc, "_call_ollama", lambda *a, **k: {"text": "AI-tekst", "error": False, "debug": {}})
+    res = svc._call_llm("sys", "vraag", "test", usecase="A")
+    assert res["geweigerd"] and res["text"] == ai_vrijgave.melding("A") and "AI-tekst" not in res["text"]
+
+
+def test_storing_taalmodel_sluit_niet(db, logboek, monkeypatch):
+    import omnitwin.services.llm_service as llm_mod
+    _open_alles(db)
+    monkeypatch.setattr(ai_vrijgave, "automatische_noodstop", lambda r: pytest.fail("storing taalmodel sluit niet"))
+    svc = llm_mod.LLMService(_ConfigDB())
+    monkeypatch.setattr(svc, "_call_ollama", lambda *a, **k: {"text": "niet beschikbaar", "error": True, "debug": {}})
+    res = svc._call_llm("sys", "vraag", "test", usecase="A")
+    assert res["error"] and not res.get("geweigerd")
+    assert logboek[-1][0] == ("A", "test", "fout")
+    assert ai_vrijgave.is_open("A")
+
+
+def test_zoeken_niet_gelogd_geeft_trefwoorden(db, monkeypatch):
+    from omnitwin.services import ai_search_service
+    _open_alles(db)
+
+    class _Model:
+        def encode(self, *a, **k):
+            import numpy
+            return numpy.zeros(3)
+    monkeypatch.setattr(ai_search_service, "_model", _Model())
+    monkeypatch.setattr(ai_search_service.AISearchService, "_gelijkenissen", lambda self, q: {"u-1": 0.99, "u-2": 0.1})
+    monkeypatch.setattr(ai_logboek, "schrijf", lambda *a, **k: False)
+    monkeypatch.setattr(ai_vrijgave, "poort", lambda *a, **k: True)
+    svc = ai_search_service.AISearchService(_ZoekDB())
+    uit = svc.search_indicators("energielabels")
+    assert svc.zonder_betekenis
+    assert all("betekenis" not in r["redenen"] for r in uit)
