@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { reportAPI, hierarchyAPI, aiAPI } from '../services/api';
+import { provincieNaam, useBenchmarkProvincie } from '../hooks/useBenchmarkProvincie';
 import { X, Layers, RefreshCw, Download, ArrowUpDown, Map, BarChart2, List, ChevronRight, ChevronDown } from 'lucide-react';
 import * as d3 from 'd3';
 import { DivergingBarChart } from '../components/charts/DivergingBarChart';
@@ -67,6 +68,7 @@ interface GeoJSONCollection {
 
 export const ThemaAnalysePage: React.FC = () => {
     const [searchParams] = useSearchParams();
+    const benchmarkProvincie = useBenchmarkProvincie();  // referentie 'provincie' (#324)
 
     // State
     const [referentie, setReferentie] = useState<'gemeente' | 'fryslan'>(
@@ -484,7 +486,7 @@ export const ThemaAnalysePage: React.FC = () => {
                         style={{ padding: '0.5rem', borderRadius: 'var(--radius-md)' }}
                     >
                         <option value="gemeente">Vergelijk met Gemeente</option>
-                        <option value="fryslan">Vergelijk met Fryslân</option>
+                        <option value="fryslan">Vergelijk met {provincieNaam(benchmarkProvincie)}</option>
                     </select>
                     <button className="btn btn-secondary" onClick={() => {
                         originalTitleRef.current = document.title;

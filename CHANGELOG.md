@@ -8,6 +8,10 @@ Eerdere wijzigingen, van vóór dit bestand, zijn terug te vinden in de git-hist
 
 ## [Unreleased]
 
+### Opgelost
+
+- Referentie "provincie" in Benchmark, Deelgebied, Multi-gebied en Thema-analyse volgt de instelling **benchmarkprovincie** van de organisatie, in plaats van alle gebieden in de database met de vaste tekst "⌀ Provincie Fryslân, ~965 buurten". Het label noemt de ingestelde provincie en het aantal gebieden uit de data (bijv. *⌀ Provincie Fryslân (965 gebieden)*); zonder instelling: alle gebieden. De gemeentelijst in de viewer filtert op dezelfde provincie en valt zonder API terug op de gemeenten van de organisatie, niet op een vaste lijst. Migratie `V041__zscore_referentie_provincie.sql` geeft de Z-score-referentiefuncties een optionele parameter `p_provincie` ([#324](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/324)).
+
 ### Toegevoegd
 
 - Elke release als image op Docker Hub: `sudwestfryslan/d-omnitwin` en `sudwestfryslan/d-omnitwin-db`, met tags `<versie>`, `<major>.<minor>` en `latest` ([#126](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/126)). Installeren zonder te bouwen met `docker-compose.images.yml` en `OMNITWIN_VERSIE`; zie de installatiegids.
