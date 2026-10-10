@@ -7,7 +7,7 @@
 #
 # PostgreSQL blijft 15: bestaande volumes werken zonder pg_upgrade. PostGIS gaat van 3.5 naar de
 # versie in PGDG (3.6); docker-entrypoint.sh (upgrade_postgis) werkt de extensie in de database bij.
-# Een nieuwe PostgreSQL-major is een eigen stap met dump/restore (#182).
+# Een nieuwe PostgreSQL-major is een eigen stap met dump/restore (nog niet gepland).
 FROM postgres:15-bookworm
 
 ENV POSTGIS_MAJOR=3
