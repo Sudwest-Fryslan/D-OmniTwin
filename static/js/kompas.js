@@ -2250,13 +2250,10 @@ class KompasVisualization {
                 if (refWaarde != null) {
                     const diff = waarde - refWaarde;
                     const pct = refWaarde !== 0 ? ((diff / Math.abs(refWaarde)) * 100).toFixed(0) : 0;
-                    if (diff > 0) {
-                        afwijkingHtml = `<div style="font-size: 0.7rem; color: var(--color-danger);">↑ +${pct}%</div>`;
-                    } else if (diff < 0) {
-                        afwijkingHtml = `<div style="font-size: 0.7rem; color: var(--color-success);">↓ ${pct}%</div>`;
-                    } else {
-                        afwijkingHtml = `<div style="font-size: 0.7rem; color: var(--text-secondary);">= 0%</div>`;
-                    }
+                    // Kleur volgt de polariteit van de indicator (#323)
+                    const { kleur, oordeel } = afwijkingDuiding(diff, meta?.richting);
+                    const teken = diff > 0 ? `↑ +${pct}%` : diff < 0 ? `↓ ${pct}%` : '= 0%';
+                    afwijkingHtml = `<div style="font-size: 0.7rem; color: var(${kleur});" title="${oordeel}">${teken}</div>`;
                 }
                 html += `<td style="padding: 8px; text-align: center;">
                     <div style="font-weight: 600; color: var(--text-primary);">${waarde.toFixed(1)}</div>

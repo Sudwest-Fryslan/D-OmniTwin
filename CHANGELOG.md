@@ -21,6 +21,9 @@ Eerdere wijzigingen, van vóór dit bestand, zijn terug te vinden in de git-hist
 
 - Controles van de swf-use cases die per bron verschillen, zijn `minimaal`/`maximaal` in plaats van `gelijk` (status A → O minimaal 10, waarden Basis minimaal 35.411, Kompas Basis minimaal 215), zodat dezelfde use case werkt met de export van februari en met de database-dump ([#316](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/316)).
 
+### Opgelost
+
+- Kompas-benchmark: de kleur van de afwijking ten opzichte van de referentie volgt de polariteit van de indicator (`score_type`/`inverse`). Een hoger inkomen is nu groen, meer werkloosheid rood; indicatoren in het neutrale kwadrant Samenstelling blijven grijs. `indicator_meta` in `POST /api/kompas/{config_id}/benchmark` heeft daarvoor het veld `richting` ([#323](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/323)).
 ### Gewijzigd
 
 - Database-image op een ondersteunde basis ([#191](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/191)): `postgres:15-bookworm` (Debian 12) met PostGIS en pgvector uit de reguliere PGDG-repository, in plaats van `postgis/postgis:15-3.5` op het end-of-life bullseye met pgvector uit het archief (#189). PostgreSQL blijft 15: bestaande volumes werken zonder `pg_upgrade`. PostGIS gaat van 3.5 naar 3.6; `db-init` werkt de extensies in een bestaande database bij (`postgis_extensions_upgrade()`). Een nieuwe installatie maakt geen `template_postgis` en geen `postgis_topology`/`postgis_tiger_geocoder` meer aan (D-OmniTwin gebruikt ze niet).
