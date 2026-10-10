@@ -231,9 +231,11 @@ def test_tc_06_004a_chat_ai_hoe_groen(app_page):
         pytest.skip(f"TC-06-004 stap 2-4: geen LLM-antwoord (debug.mode={mode!r}, "
                     f"narrative: {narrative[:120]!r}); LLM niet geconfigureerd of gaf geen geldige JSON")
 
-    # Herkomst zichtbaar: label + disclaimer
-    expect(bericht.locator(".chat-source-badge")).to_have_text(re.compile(r"AI-gegenereerd"))
-    expect(bericht.locator(".chat-disclaimer")).to_contain_text("Dit antwoord is AI-gegenereerd")
+    # Herkomst zichtbaar: label AI met de waarschuwing, verklaring en melden (#312)
+    label = bericht.locator('.ai-label[data-usecase="A"]')
+    expect(label).to_contain_text("onjuist of onvolledig")
+    expect(label.get_by_role("link", name=re.compile("Meer informatie"))).to_be_visible()
+    expect(label.get_by_role("link", name=re.compile("Melden"))).to_be_visible()
 
     # Kort Nederlands antwoord
     expect(bericht.locator(".chat-narrative")).to_have_text(narrative.strip())
@@ -259,7 +261,7 @@ def test_tc_06_004bc_beleidsadviseur_kompas(app_page):
     data, bericht = _vraag(page, "Ik ben beleidsadviseur")
     assert (data.get("debug") or {}).get("mode") == "deterministic_scenario", data.get("debug")
     expect(bericht.locator(".chat-narrative")).to_contain_text("IJsselmeerkust")
-    expect(bericht.locator(".chat-disclaimer")).to_have_count(0)
+    expect(bericht.locator(".ai-label")).to_have_count(0)
     knoppen = bericht.locator(".chat-actie-btn")
     expect(knoppen).to_have_count(3)
     for label in ("Toon: Buurten", "Gemeente: Súdwest-Fryslân", "Open het D-Omni Kompas"):

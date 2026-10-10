@@ -6,6 +6,7 @@ import * as d3 from 'd3';
 import { DivergingBarChart } from '../components/charts/DivergingBarChart';
 import type { HierarchyNode } from '../types';
 import { ExportPrintModal } from '../components/ExportPrintModal';
+import { AILabel } from '../components/AILabel';
 
 // ─── Types ─────────────────────────────────────────────────────────────────
 
@@ -629,6 +630,12 @@ export const ThemaAnalysePage: React.FC = () => {
                                         )}
                                     </div>
                                 ))}
+                                {aiSuggestions.some(s => s.ai) && (
+                                    <div style={{ padding: '0 1rem 0.75rem' }}>
+                                        <AILabel usecase="C" pagina="Beheer: thema-analyse, zoeken" vraag={aiQuery}
+                                            bronnen={aiSuggestions.filter(s => !s.error).map(s => s.naam)} />
+                                    </div>
+                                )}
                             </div>
                         )}
                     </div>

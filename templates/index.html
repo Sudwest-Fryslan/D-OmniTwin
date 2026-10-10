@@ -4,6 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="d-omnitwin-versie" content="{{ app_version }}"><!-- #312: versie in een melding -->
   <!-- #258: favorieten en kaartpositie alleen voor een ingelogde gebruiker (static/js/mijn.js) -->
   <meta name="omnitwin-ingelogd" content="{{ '1' if account and account.naam else '0' }}">
   <title>D-OmniTwin</title>
@@ -1092,6 +1093,8 @@
   <script src="/static/js/viewer-account.js"></script>
   <script src="/static/js/core/event-bus.js"></script>
   <script src="/static/js/core/escape.js"></script>
+  <script src="/static/js/core/melden.js"></script>
+  <script src="/static/js/core/ai-label.js"></script>
   <script src="/static/js/core/a11y.js"></script>
   <script src="/static/js/draggable-window.js"></script>
   <script src="/static/js/kompas.js"></script>

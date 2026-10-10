@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { reportAPI, gebiedenAPI } from '../services/api';
 import type { BenchmarkMode, BenchmarkPayload, BenchmarkNarrativeResponse, GebiedListItem } from '../types';
+import { AILabel } from '../components/AILabel';
 import { ArrowLeft, Cpu, RefreshCw, Plus, X, Scale, BarChart3, Terminal, ChevronDown, ChevronUp } from 'lucide-react';
 
 export const BenchmarkPage: React.FC = () => {
@@ -489,13 +490,18 @@ export const BenchmarkPage: React.FC = () => {
                                 <div style={{ padding: '2rem', textAlign: 'center' }}>
                                     <RefreshCw className="spin text-primary" size={24} />
                                     <p style={{ marginTop: '1rem' }}>Analyseren van de vergelijking...</p>
-                                    <small className="text-secondary">Ollama genereert een narrative (ca. 60 sec)</small>
+                                    <small className="text-secondary">Het ingestelde taalmodel maakt de analyse (kan een minuut duren).</small>
                                 </div>
                             ) : aiError ? (
                                 <div className="error-message">{aiError}</div>
                             ) : aiResponse ? (
                                 <div>
                                     <div style={{ fontSize: '1.05rem', lineHeight: 1.6 }}>{aiResponse.ai_narrative}</div>
+                                    {aiResponse.ai && (
+                                        <AILabel usecase="B" pagina="Beheer: benchmark"
+                                            resultaat={aiResponse.ai_narrative}
+                                            bronnen={[`${aiResponse.gebied_a?.naam ?? ''} t.o.v. ${aiResponse.referentie_label}`]} />
+                                    )}
                                     {aiResponse.debug_info && aiResponse.debug_info.length > 0 && (
                                         <div style={{ marginTop: '1.5rem', borderTop: '1px dotted var(--color-border)', paddingTop: '1rem' }}>
                                             <button className="btn btn-secondary btn-sm" onClick={() => setShowDebugLogs(!showDebugLogs)}

@@ -2,7 +2,8 @@
 E2E (#149): een datavraag per use case in de chat, in de browser.
 
 Per use case met een datavraag (usecases/*/usecase.json, persona.vraag):
-- het antwoord verschijnt met een bronlabel (AI-gegenereerd of Rule-based) en een bronregel;
+- het antwoord verschijnt met een bronlabel (label AI per gebruikte AI-usecase, #312, of 'Zonder taalmodel')
+  en een bronregel;
 - de knoppen Toon op kaart, Open Kompas en Rapport staan eronder;
 - 'Toon op kaart' selecteert de gebieden uit het antwoord en zet de indicator op de kaart;
 - het antwoord noemt de verwachte buurten (alleen gecontroleerd met E2E_LLM=1, want
@@ -105,9 +106,17 @@ def test_datavraag_in_de_chat(page, uc):
 
     bericht = page.locator(".chat-message-assistant").last
     expect(bericht.locator(".chat-narrative")).to_have_text(data["narrative"])
-    expect(bericht.locator(".chat-source-badge")).to_have_text(re.compile("AI-gegenereerd|Rule-based"))
     if data["debug"].get("llm_gebruikt"):
-        expect(bericht.locator(".chat-disclaimer")).to_be_visible()
+        expect(bericht.locator('.ai-label[data-usecase="A"]')).to_be_visible()
+    else:
+        expect(bericht.locator(".chat-source-badge")).to_have_text(re.compile("Zonder taalmodel"))
+    # #312: bij elke AI-usecase die meedeed het label AI, de verklaring en "Melden"
+    for code in data.get("ai_usecases", []):
+        label = bericht.locator(f'.ai-label[data-usecase="{code}"]')
+        expect(label).to_be_visible()
+        expect(label.get_by_role("link", name=re.compile("Meer informatie"))).to_have_attribute(
+            "href", f"/api/ai/usecases/{code}/verklaring")
+        expect(label.get_by_role("link", name=re.compile("Melden"))).to_have_attribute("href", re.compile(r"title="))
     expect(bericht.locator(".chat-bronregel")).to_contain_text("Bron:")
     for b in data["bronnen"]:
         expect(bericht.locator(".chat-bronregel")).to_contain_text(b["indicator"])

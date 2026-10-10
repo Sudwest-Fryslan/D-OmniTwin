@@ -97,6 +97,9 @@ class ChatResponse(BaseModel):
     kaart_actie: Optional[Dict[str, Any]] = None
     # #233: korte melding over de zekerheid van de gevonden indicatoren (bijv. 'geen goede treffer')
     melding: Optional[str] = None
+    # #312: welke AI-usecases aan dit antwoord bijdroegen ('A' taalmodel, 'C' zoeken op betekenis);
+    # de viewer toont dan het label AI met de verklaring en "Melden"
+    ai_usecases: List[str] = []
     debug: Optional[Dict[str, Any]] = None
 
 # ============================================================================
@@ -350,6 +353,8 @@ def beantwoord_datavraag_route(vraag: str, context: Dict[str, Any], db: Session)
     if resultaat is None:
         return None
     meldingen = [ai_vrijgave.melding(ai_vrijgave.A)] if geweigerd else []
+    ai_usecases = (["A"] if resultaat["llm_gebruikt"] else []) + (
+        ["C"] if zoeker.get("service") is not None and not zoeker["service"].zonder_betekenis else [])
 
     feiten = resultaat["feiten"]
     gegevens = [
@@ -387,6 +392,7 @@ def beantwoord_datavraag_route(vraag: str, context: Dict[str, Any], db: Session)
             "gebied_ids": resultaat["gebied_ids"],
         } if feiten and resultaat.get("gebied_ids") else None),
         melding=" ".join(meldingen) or None,
+        ai_usecases=ai_usecases,
         debug={
             "mode": "datavraag",
             "llm_gebruikt": resultaat["llm_gebruikt"],
@@ -495,6 +501,7 @@ def chat(
         context=context
     ) if a_open else None
 
+    a_gebruikt = False
     if not a_open:
         intent = classify_intent(vraag)
         acties = generate_acties(intent, relevant_results, vraag)
@@ -537,6 +544,7 @@ def chat(
             except Exception:
                 continue
                 
+        a_gebruikt = True
         debug_info = {
             "mode": "intelligent_dispatcher",
             "model": intelligent_response.get("debug", {}).get("model")
@@ -554,7 +562,8 @@ def chat(
                 intent=intent,
                 context=context
             )
-            narrative = llm_response.get("text", "") if not llm_response.get("error") else vaste_toelichting(relevant_results)
+            a_gebruikt = not llm_response.get("error")
+            narrative = llm_response.get("text", "") if a_gebruikt else vaste_toelichting(relevant_results)
         except Exception:
             narrative = vaste_toelichting(relevant_results)
 
@@ -583,6 +592,7 @@ def chat(
         acties=acties,
         indicatoren=indicatoren_out,
         melding=melding,
+        ai_usecases=(["A"] if a_gebruikt else []) + ([] if search_service.zonder_betekenis else ["C"]),
         debug=debug_info
     )
 

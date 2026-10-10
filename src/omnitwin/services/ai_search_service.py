@@ -112,6 +112,7 @@ class AISearchService:
                 "score": rang.score,
                 "relevantie": rang.relevantie,
                 "redenen": rang.redenen,
+                "ai": not self.zonder_betekenis,  # #312: het embeddingmodel deed mee (usecase C)
             })
         if not self.zonder_betekenis and not ai_logboek.schrijf(
                 ai_vrijgave.C, self.functie, ai_logboek.UITGEVOERD, taak=query_text,
