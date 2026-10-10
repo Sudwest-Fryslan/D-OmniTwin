@@ -4,6 +4,10 @@ AI-zoeken naar indicatoren (#233): begrippen, woorden uit de naam en betekenis (
 De rangschikking zelf staat in services/zoektaal.py (zonder database of model te testen); deze
 service haalt de indicatoren en de gelijkenissen uit de database (pgvector) en voegt de
 beschrijvende velden toe.
+
+AI-usecase C (#307): het embeddingmodel alleen als C is vrijgegeven. Dicht: alleen begrippen
+(db/stuurdata/synoniemen.json) en woorden uit de naam, zonder aanroep van het model; elke zoekactie
+(ook een geweigerde) komt in het AI-logboek (#313).
 """
 import logging
 from typing import Any, Dict, List
@@ -11,6 +15,7 @@ from typing import Any, Dict, List
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
+from omnitwin import ai_logboek, ai_vrijgave
 from omnitwin.services import zoektaal
 
 logger = logging.getLogger(__name__)
@@ -22,9 +27,10 @@ _model = None
 class AISearchService:
     """Service voor zoeken in de indicatoren met gewone taal."""
 
-    def __init__(self, db: Session):
+    def __init__(self, db: Session, functie: str = "Zoeken"):
         self.db = db
-        self._ensure_model()
+        self.functie = functie          # naam in het AI-logboek
+        self.zonder_betekenis = False   # True na een zoekactie met usecase C dicht
 
     def _ensure_model(self):
         global _model
@@ -58,11 +64,18 @@ class AISearchService:
         een lege lijst als niets goed genoeg past. Er wordt niet op ontologie_status gefilterd
         (#139); ontologie_status en gevalideerd staan erbij.
         """
-        if _model is None:
-            return [{"error": "AI model niet geladen"}]
         from omnitwin.services import embedding_model
 
-        gelijkenis = self._gelijkenissen(query_text)
+        gelijkenis: Dict[str, float] = {}
+        self.zonder_betekenis = not ai_vrijgave.poort(ai_vrijgave.C, self.functie, taak=query_text)
+        if not self.zonder_betekenis:
+            self._ensure_model()
+            if _model is None:
+                ai_logboek.schrijf(ai_vrijgave.C, self.functie, ai_logboek.FOUT, taak=query_text,
+                                   model=embedding_model.MODEL_ID, modelversie=embedding_model.MODEL_REVISIE,
+                                   foutmelding="Embeddingmodel niet geladen")
+                return [{"error": "AI model niet geladen"}]
+            gelijkenis = self._gelijkenissen(query_text)
         rows = self.db.execute(text("""
             SELECT DISTINCT ON (i.uuid)
                 CAST(i.uuid AS text), i.naam,
@@ -98,4 +111,8 @@ class AISearchService:
                 "relevantie": rang.relevantie,
                 "redenen": rang.redenen,
             })
+        if not self.zonder_betekenis:
+            ai_logboek.schrijf(ai_vrijgave.C, self.functie, ai_logboek.UITGEVOERD, taak=query_text,
+                               bronnen=[r["uuid"] for r in uit], model=embedding_model.MODEL_ID,
+                               modelversie=embedding_model.MODEL_REVISIE, resultaat=f"{len(uit)} resultaten")
         return uit

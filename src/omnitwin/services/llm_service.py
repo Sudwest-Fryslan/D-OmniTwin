@@ -6,6 +6,7 @@ from typing import Dict, Any, Optional
 import re
 from urllib.parse import urlsplit
 
+from omnitwin import ai_logboek, ai_vrijgave
 from omnitwin.config import instellingen
 from omnitwin.services.logging_service import AppLogger
 from omnitwin.services.gemeente_validatie import laad_gemeenten
@@ -91,6 +92,17 @@ def clean_model_output(model_output: str) -> str:
     return cleaned.strip()
 
 
+def _bron_ids(items) -> list:
+    """Indicator-id's uit een lijst indicatoren (voor het AI-logboek)."""
+    ids = []
+    for i in items or []:
+        if isinstance(i, dict):
+            w = i.get("uuid") or i.get("indicator_uuid") or i.get("id")
+            if w:
+                ids.append(str(w))
+    return ids
+
+
 class LLMService:
     """Service class voor LLM-interactie (Ollama of OpenAI-compatibel) en Prompt Management."""
 
@@ -117,12 +129,31 @@ class LLMService:
             return result[0]
         return fallback_prompt
 
-    def _call_llm(self, system_prompt: str, user_prompt: str, context_name: str) -> Dict[str, Any]:
-        """Roept de geconfigureerde LLM aan via het juiste API-type (zie ADR 0001)."""
+    def _call_llm(self, system_prompt: str, user_prompt: str, context_name: str, *, usecase: str,
+                  taak: Optional[str] = None, bronnen: Optional[list] = None) -> Dict[str, Any]:
+        """Roept de geconfigureerde LLM aan via het juiste API-type (zie ADR 0001).
+
+        Elke aanroep van het taalmodel gaat hierdoor: `usecase` (A, B, C of ai_vrijgave.BUITEN) is
+        verplicht. Is die usecase niet vrijgegeven (#307), dan geen aanroep maar een weigering
+        (error=True, geweigerd=True). Elke aanroep en weigering komt in het AI-logboek (#313):
+        taak (standaard de prompt, afgekapt), bronnen (indicator-id's), model en resultaat.
+        """
+        taak = user_prompt if taak is None else taak
+        if not ai_vrijgave.poort(usecase, context_name, taak=taak):
+            return {"text": ai_vrijgave.melding(usecase), "error": True, "geweigerd": True,
+                    "debug": {"context": context_name, "usecase": usecase, "geweigerd": True}}
         llm_config = self.get_llm_config()
         if llm_config.get("api_type") == "openai":
-            return self._call_openai(llm_config, system_prompt, user_prompt, context_name)
-        return self._call_ollama(system_prompt, user_prompt, context_name, llm_config=llm_config)
+            res = self._call_openai(llm_config, system_prompt, user_prompt, context_name)
+        else:
+            res = self._call_ollama(system_prompt, user_prompt, context_name, llm_config=llm_config)
+        fout = bool(res.get("error"))
+        ai_logboek.schrijf(usecase, context_name, ai_logboek.FOUT if fout else ai_logboek.UITGEVOERD,
+                           taak=taak, bronnen=bronnen, model=llm_config.get("model_name"),
+                           modelversie=res.get("modelversie"),
+                           resultaat=None if fout else res.get("text"),
+                           foutmelding=res.get("text") if fout else None)
+        return res
 
     def _call_ollama(self, system_prompt: str, user_prompt: str, context_name: str,
                      llm_config: Optional[Dict[str, str]] = None) -> Dict[str, Any]:
@@ -169,6 +200,8 @@ class LLMService:
                 "text": cleaned,
                 "debug": debug_info,
                 "error": False,
+                # wat de server zelf als model noemt (Ollama geeft geen digest in /api/generate)
+                "modelversie": result_json.get("model"),
             }
 
         except requests.exceptions.RequestException as e:
@@ -223,7 +256,9 @@ class LLMService:
         try:
             response = requests.post(url, json=payload, headers=openai_headers(), timeout=LLM_TIMEOUT)
             response.raise_for_status()
-            model_output = response.json()["choices"][0]["message"].get("content") or ""
+            antwoord = response.json()
+            model_output = antwoord["choices"][0]["message"].get("content") or ""
+            modelversie = antwoord.get("system_fingerprint") or antwoord.get("model")
         except requests.exceptions.HTTPError as e:
             status = e.response.status_code if e.response is not None else "?"
             if status in (401, 403):
@@ -244,7 +279,7 @@ class LLMService:
 
         cleaned = clean_model_output(strip_think(model_output))
         AppLogger.debug(f"[{context_name}] LLM RESPONSE — {cleaned[:500]}", category="LLM_CHAT")
-        return {"text": cleaned, "debug": debug_info, "error": False}
+        return {"text": cleaned, "debug": debug_info, "error": False, "modelversie": modelversie}
 
     def generate_domain_summary(self, domain_name: str, domain_data: list) -> Dict[str, Any]:
         """Genereert een samenvatting specifiek voor één kwadrant/domein."""
@@ -270,7 +305,8 @@ Strikte Kaders (Constraints):
         system_prompt = self.get_system_prompt("domain_summary", default_prompt)
         user_prompt = f"Analyseer dit specifieke kwadrant '{domain_name}' en retourneer een verhaal in natuurlijke tekst volgens je instructies:\n\n{json.dumps(domain_data, indent=2)}"
         
-        return self._call_llm(system_prompt, user_prompt, context_name=f"Domain: {domain_name}")
+        return self._call_llm(system_prompt, user_prompt, context_name=f"Domain: {domain_name}", usecase=ai_vrijgave.B,
+                              taak=f"Domeinsamenvatting '{domain_name}'", bronnen=_bron_ids(domain_data))
 
     def generate_overall_summary(self, domain_summaries: Dict[str, str], metadata: Dict[str, str]) -> Dict[str, Any]:
         """Combineert de kwadrant samenvattingen in één overkoepelende summary."""
@@ -295,7 +331,8 @@ Strikte Kaders (Constraints):
             
         user_prompt = f"Schrijf de overkoepelende samenvatting op basis van deze input:\n\n{input_text}"
         
-        return self._call_llm(system_prompt, user_prompt, context_name="Overall Summary")
+        return self._call_llm(system_prompt, user_prompt, context_name="Overall Summary", usecase=ai_vrijgave.B,
+                              taak=f"Totaalsamenvatting gebied {metadata.get('gebied', 'onbekend')}")
 
     def generate_benchmark_narrative(self, benchmark_data: dict) -> Dict[str, Any]:
         """Genereert een vergelijkende analyse voor de Benchmark Vergelijker (Sjabloon C)."""
@@ -328,7 +365,9 @@ Hier zijn de indicatoren met de grootste verschillen:
 
 Geef een bondige, vergelijkende analyse."""
 
-        return self._call_llm(system_prompt, user_prompt, context_name="Benchmark Vergelijking")
+        return self._call_llm(system_prompt, user_prompt, context_name="Benchmark Vergelijking", usecase=ai_vrijgave.B,
+                              taak=f"Benchmark '{benchmark_data['gebied_a']['naam']}' met '{benchmark_data['referentie_label']}'",
+                              bronnen=_bron_ids(top_delta))
 
     def generate_chat_narrative(self, vraag: str, indicatoren: list, intent: str, context: dict = None) -> Dict[str, Any]:
         """Genereert een korte narrative voor de D-Omni Assistant chat respons."""
@@ -375,7 +414,8 @@ Gevonden indicatoren:
 Schrijf een korte, behulpzame toelichting. 
 BELANGRIJK: Als het doel MAAK_RAPPORT is, noem dan GEEN indicatoren, maar bevestig alleen dat je het rapport opent."""
 
-        return self._call_llm(system_prompt, user_prompt, context_name="Chat Narrative")
+        return self._call_llm(system_prompt, user_prompt, context_name="Chat Narrative", usecase=ai_vrijgave.A,
+                              taak=vraag, bronnen=_bron_ids(indicatoren[:5]))
     def validate_duplicates(self, indicators: list) -> Dict[str, Any]:
         """
         Valideert een groep potentiële duplicaten.
@@ -408,7 +448,12 @@ Strikte Kaders:
             
         user_prompt = f"Beoordeel of de volgende indicatoren duplicaten zijn:\n\n{json.dumps(ind_context, ensure_ascii=False)}\n\nGeef je antwoord uitsluitend in JSON."
         
-        response = self._call_llm(system_prompt, user_prompt, context_name="Validate Duplicates")
+        # Valt niet onder AI-usecase A, B of C: de poort weigert dit altijd (#307)
+        response = self._call_llm(system_prompt, user_prompt, context_name="Validate Duplicates",
+                                  usecase=ai_vrijgave.BUITEN, taak="Duplicaten beoordelen",
+                                  bronnen=_bron_ids(indicators))
+        if response.get("geweigerd"):
+            return {"is_duplicaat": False, "ai_advies": response["text"]}
         
         if response and "text" in response:
             try:
@@ -470,7 +515,10 @@ Strikte Kaders:
         Retourneer UITSLUITEND de JSON:"""
         
         # Gebruik de gedeelde helper voor robuuste JSON cleaning
-        response = self._call_llm(system_prompt, user_prompt, context_name="Intent Dispatcher")
+        response = self._call_llm(system_prompt, user_prompt, context_name="Intent Dispatcher", usecase=ai_vrijgave.A,
+                                  taak=vraag, bronnen=_bron_ids(indicatoren[:10]))
+        if response.get("error"):
+            return None
         
         if response and "text" in response:
             try:

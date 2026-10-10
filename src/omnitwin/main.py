@@ -207,6 +207,9 @@ app.include_router(organisatie.router)  # GET /api/organisatie: eigen organisati
 from omnitwin.routers import indicatorpaneel, mijn
 app.include_router(indicatorpaneel.router)  # indicatorpaneel en CSV-export (#258)
 app.include_router(mijn.router)  # /api/mijn: favorieten en kaartpositie per gebruiker (#258)
+from omnitwin.routers import ai_vrijgave as ai_vrijgave_router
+app.include_router(ai_vrijgave_router.router)        # /api/ai/usecases: status en verklaring (#307)
+app.include_router(ai_vrijgave_router.admin_router)  # /api/admin/ai: vrijgave en AI-logboek (#307, #313)
 
 # forwardAuth van Traefik voor /api/data en /api/geo (#266): 204 = door, anders 401/403
 app.add_api_route(viewer_toegang.CONTROLE_PAD, viewer_toegang.controleer, methods=["GET", "HEAD"],

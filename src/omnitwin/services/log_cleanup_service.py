@@ -140,6 +140,25 @@ async def _cleanup_loop() -> None:
         except Exception as e:
             AppLogger.error(f"Opruimen voorkeuren mislukt: {type(e).__name__}", category="SERVER")
 
+        # AI-logboek na de bewaartermijn (#313) en verlopen AI-verklaringen vastleggen (#307)
+        try:
+            n = await asyncio.to_thread(_ai_onderhoud)
+            if n:
+                AppLogger.info(f"AI-logboek: {n} regel(s) ouder dan de bewaartermijn verwijderd", category="SERVER")
+        except Exception as e:
+            AppLogger.error(f"Opschonen AI-logboek mislukt: {type(e).__name__}", category="SERVER")
+
+
+def _ai_onderhoud() -> int:
+    from omnitwin import ai_logboek, ai_vrijgave
+    from omnitwin.database import SessionLocal
+    db = SessionLocal()
+    try:
+        ai_vrijgave.registreer_verlopen(db)
+    finally:
+        db.close()
+    return ai_logboek.opschonen()
+
 
 def _ruim_voorkeuren_op() -> int:
     with engine.connect() as conn:

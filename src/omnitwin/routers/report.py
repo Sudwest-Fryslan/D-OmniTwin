@@ -5,6 +5,8 @@ bezoeker in de app ziet (#65). Daarom:
 - AI-teksten kort gecachet, zodat herhaald opvragen niet steeds een
   LLM-aanroep start. Dit is geen rate-limit: andere gebieden starten nog
   steeds een aanroep.
+- AI-samenvattingen alleen met AI-usecase B open (#307); dicht: het rapport zonder
+  AI-tekst, met een melding op die plek (`ai_uit`).
 """
 import threading
 import time
@@ -13,6 +15,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 from typing import Dict, Any, Optional, List
+from omnitwin import ai_vrijgave
 from omnitwin.database import get_db
 from omnitwin.fouten import GebruikersFout
 from omnitwin.grenzen import beperk_llm
@@ -103,6 +106,10 @@ def generate_report_narrative(gebied_id: str, request: Request, db: Session = De
     Fase 2: Roept Ollama aan om een narrative (Executive Summary) te genereren
     op basis van de data uit Fase 1 per kwadrant.
     """
+    # AI-usecase B dicht (#307): geen taalmodel, ook niet uit de cache
+    if not ai_vrijgave.poort(ai_vrijgave.B, "Rapport: samenvatting", taak=f"Rapportsamenvatting gebied {gebied_id}"):
+        return {"gebied_id": gebied_id, "ai_summary": ai_vrijgave.melding(ai_vrijgave.B),
+                "domain_summaries": {}, "status": "ai_uit", "ai_uit": True}
     report_service = ReportDataService(db)
     llm_service = LLMService(db)
     beheerder = _is_beheerder(request, db)
@@ -194,6 +201,9 @@ def get_benchmark_narrative(
     AI narrative voor de benchmark vergelijking.
     Genereert een analyse van de belangrijkste delta's via Ollama.
     """
+    if not ai_vrijgave.poort(ai_vrijgave.B, "Rapport: benchmark", taak=f"Benchmarksamenvatting gebied {gebied_a}"):
+        return {"gebied_a": {"id": gebied_a, "naam": gebied_a}, "referentie_label": "",
+                "ai_narrative": ai_vrijgave.melding(ai_vrijgave.B), "status": "ai_uit", "ai_uit": True}
     report_service = ReportDataService(db)
     llm_service = LLMService(db)
     beheerder = _is_beheerder(request, db)

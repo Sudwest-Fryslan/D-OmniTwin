@@ -112,6 +112,9 @@ def stille_logger(monkeypatch):
         debug = info = warning = error = critical = _noop
 
     monkeypatch.setattr(llm_mod, "AppLogger", Stil)
+    # AI-vrijgave (#307) en AI-logboek (#313) zonder database: hier alle usecases open, logboek stil
+    monkeypatch.setattr(llm_mod.ai_vrijgave, "is_open", lambda usecase: usecase in ("A", "B", "C"))
+    monkeypatch.setattr(llm_mod.ai_logboek, "schrijf", lambda *a, **k: None)
     for var in ("LLM_API_KEY", "LLM_THINK", "LLM_REASONING_EFFORT"):
         monkeypatch.delenv(var, raising=False)
 
@@ -174,7 +177,7 @@ def test_config_zonder_rij_valt_terug_op_env():
 
 def test_ollama_pad_gebruikt_api_generate(fake_llm):
     fake_llm.set("/api/generate", {"response": "```json\n{\"summary\": \"Kort verhaal.\"}\n```"})
-    res = service(fake_llm.url, "ollama")._call_llm("sys", "vraag", "test")
+    res = service(fake_llm.url, "ollama")._call_llm("sys", "vraag", "test", usecase="A")
 
     method, path, _, body = fake_llm.requests[-1]
     assert (method, path) == ("POST", "/api/generate")
@@ -186,7 +189,7 @@ def test_ollama_pad_gebruikt_api_generate(fake_llm):
 def test_ollama_pad_denken_standaard_uit(fake_llm):
     """Qwen3 e.d. denken anders duizenden tokens vooraf (minuten per antwoord)."""
     fake_llm.set("/api/generate", {"response": "ok"})
-    service(fake_llm.url, "ollama")._call_llm("sys", "vraag", "test")
+    service(fake_llm.url, "ollama")._call_llm("sys", "vraag", "test", usecase="A")
     assert fake_llm.requests[-1][3]["think"] is False
 
 
@@ -194,19 +197,19 @@ def test_ollama_pad_denken_aan_laat_veld_weg(fake_llm, monkeypatch):
     """LLM_THINK=true: geen think-veld, het model beslist (think=true breekt niet-denkende modellen)."""
     monkeypatch.setenv("LLM_THINK", "true")
     fake_llm.set("/api/generate", {"response": "ok"})
-    service(fake_llm.url, "ollama")._call_llm("sys", "vraag", "test")
+    service(fake_llm.url, "ollama")._call_llm("sys", "vraag", "test", usecase="A")
     assert "think" not in fake_llm.requests[-1][3]
 
 
 def test_ollama_pad_haalt_leeg_denkblok_weg(fake_llm):
     fake_llm.set("/api/generate", {"response": "<think>\n\n</think>\n\nHet antwoord."})
-    assert service(fake_llm.url, "ollama")._call_llm("sys", "vraag", "test")["text"] == "Het antwoord."
+    assert service(fake_llm.url, "ollama")._call_llm("sys", "vraag", "test", usecase="A")["text"] == "Het antwoord."
 
 
 def test_ollama_pad_stuurt_geen_api_key(fake_llm, monkeypatch):
     monkeypatch.setenv("LLM_API_KEY", "sk-geheim")
     fake_llm.set("/api/generate", {"response": "ok"})
-    service(fake_llm.url, "ollama")._call_llm("sys", "vraag", "test")
+    service(fake_llm.url, "ollama")._call_llm("sys", "vraag", "test", usecase="A")
     headers = {k.lower(): v for k, v in fake_llm.requests[-1][2].items()}
     assert "authorization" not in headers
 
@@ -214,7 +217,7 @@ def test_ollama_pad_stuurt_geen_api_key(fake_llm, monkeypatch):
 def test_ollama_pad_foutmelding_zonder_interne_url():
     """Geen interne URL of fouttekst in de response (#65); details staan in de log."""
     url = f"http://127.0.0.1:{_vrije_poort()}"
-    res = service(url, "ollama")._call_llm("sys", "vraag", "test")
+    res = service(url, "ollama")._call_llm("sys", "vraag", "test", usecase="A")
     assert res["text"] == "De AI-samenvatting is nu niet beschikbaar."
     assert res["error"] is True
     assert url not in res["text"]
@@ -224,7 +227,7 @@ def test_ollama_pad_foutmelding_zonder_interne_url():
 
 def test_openai_pad_chat_completions(fake_llm):
     fake_llm.set("/v1/chat/completions", chat_antwoord("Dit is het antwoord."))
-    res = service(fake_llm.url, "openai", model="d-omnitwin-default")._call_llm("sys", "vraag", "test")
+    res = service(fake_llm.url, "openai", model="d-omnitwin-default")._call_llm("sys", "vraag", "test", usecase="A")
 
     method, path, headers, body = fake_llm.requests[-1]
     assert (method, path) == ("POST", "/v1/chat/completions")
@@ -241,7 +244,7 @@ def test_openai_pad_chat_completions(fake_llm):
 
 def test_openai_pad_denken_standaard_uit(fake_llm):
     fake_llm.set("/v1/chat/completions", chat_antwoord("ok"))
-    service(fake_llm.url, "openai")._call_llm("sys", "vraag", "test")
+    service(fake_llm.url, "openai")._call_llm("sys", "vraag", "test", usecase="A")
     body = fake_llm.requests[-1][3]
     assert body["reasoning_effort"] == "none"
     assert "think" not in body  # geen standaardveld in de OpenAI-API
@@ -249,21 +252,21 @@ def test_openai_pad_denken_standaard_uit(fake_llm):
 
 def test_openai_pad_qwen3_krijgt_no_think(fake_llm):
     fake_llm.set("/v1/chat/completions", chat_antwoord("ok"))
-    service(fake_llm.url, "openai", model="qwen3:4b")._call_llm("sys", "vraag", "test")
+    service(fake_llm.url, "openai", model="qwen3:4b")._call_llm("sys", "vraag", "test", usecase="A")
     assert fake_llm.requests[-1][3]["messages"][0] == {"role": "system", "content": "sys\n\n/no_think"}
 
 
 def test_openai_pad_reasoning_effort_leeg_laat_veld_weg(fake_llm, monkeypatch):
     monkeypatch.setenv("LLM_REASONING_EFFORT", "")
     fake_llm.set("/v1/chat/completions", chat_antwoord("ok"))
-    service(fake_llm.url, "openai")._call_llm("sys", "vraag", "test")
+    service(fake_llm.url, "openai")._call_llm("sys", "vraag", "test", usecase="A")
     assert "reasoning_effort" not in fake_llm.requests[-1][3]
 
 
 def test_openai_pad_denken_aan(fake_llm, monkeypatch):
     monkeypatch.setenv("LLM_THINK", "true")
     fake_llm.set("/v1/chat/completions", chat_antwoord("<think>lang</think>Antwoord"))
-    res = service(fake_llm.url, "openai", model="qwen3:4b")._call_llm("sys", "vraag", "test")
+    res = service(fake_llm.url, "openai", model="qwen3:4b")._call_llm("sys", "vraag", "test", usecase="A")
     body = fake_llm.requests[-1][3]
     assert "reasoning_effort" not in body
     assert body["messages"][0]["content"] == "sys"
@@ -272,20 +275,20 @@ def test_openai_pad_denken_aan(fake_llm, monkeypatch):
 
 def test_openai_pad_zonder_systeemprompt(fake_llm):
     fake_llm.set("/v1/chat/completions", chat_antwoord("ok"))
-    service(fake_llm.url, "openai")._call_llm("", "vraag", "test")
+    service(fake_llm.url, "openai")._call_llm("", "vraag", "test", usecase="A")
     assert fake_llm.requests[-1][3]["messages"] == [{"role": "user", "content": "vraag"}]
 
 
 def test_openai_pad_url_met_v1_niet_verdubbeld(fake_llm):
     fake_llm.set("/v1/chat/completions", chat_antwoord("ok"))
-    service(fake_llm.url + "/v1/", "openai")._call_llm("sys", "vraag", "test")
+    service(fake_llm.url + "/v1/", "openai")._call_llm("sys", "vraag", "test", usecase="A")
     assert fake_llm.requests[-1][1] == "/v1/chat/completions"
 
 
 def test_openai_pad_bearer_uit_env(fake_llm, monkeypatch):
     monkeypatch.setenv("LLM_API_KEY", "sk-test-123")
     fake_llm.set("/v1/chat/completions", chat_antwoord("ok"))
-    service(fake_llm.url, "openai")._call_llm("sys", "vraag", "test")
+    service(fake_llm.url, "openai")._call_llm("sys", "vraag", "test", usecase="A")
     headers = {k.lower(): v for k, v in fake_llm.requests[-1][2].items()}
     assert headers["authorization"] == "Bearer sk-test-123"
 
@@ -293,7 +296,7 @@ def test_openai_pad_bearer_uit_env(fake_llm, monkeypatch):
 def test_openai_pad_haalt_think_weg_en_pakt_json_uit(fake_llm):
     inhoud = "<think>\nEerst nadenken.\n</think>\n```json\n{\"summary\": \"Samenvatting.\"}\n```"
     fake_llm.set("/v1/chat/completions", chat_antwoord(inhoud))
-    res = service(fake_llm.url, "openai")._call_llm("sys", "vraag", "test")
+    res = service(fake_llm.url, "openai")._call_llm("sys", "vraag", "test", usecase="A")
     assert res["text"] == "Samenvatting."
 
 
@@ -309,7 +312,7 @@ def test_openai_pad_intent_json(fake_llm):
 
 def test_openai_pad_null_content(fake_llm):
     fake_llm.set("/v1/chat/completions", chat_antwoord(None))
-    assert service(fake_llm.url, "openai")._call_llm("sys", "vraag", "test")["text"] == ""
+    assert service(fake_llm.url, "openai")._call_llm("sys", "vraag", "test", usecase="A")["text"] == ""
 
 
 # ─── Foutafhandeling OpenAI-pad ─────────────────────────────────────────────
@@ -323,7 +326,7 @@ def test_openai_pad_null_content(fake_llm):
 def test_openai_http_fout_nette_melding(fake_llm, monkeypatch, status, fragment):
     monkeypatch.setenv("LLM_API_KEY", "sk-mag-niet-lekken")
     fake_llm.set("/v1/chat/completions", {"error": {"message": "intern detail"}}, status=status)
-    res = service(fake_llm.url, "openai")._call_llm("sys", "vraag", "test")
+    res = service(fake_llm.url, "openai")._call_llm("sys", "vraag", "test", usecase="A")
     assert fragment in res["text"]
     assert fake_llm.url in res["text"]
     assert "sk-mag-niet-lekken" not in res["text"]
@@ -332,14 +335,14 @@ def test_openai_http_fout_nette_melding(fake_llm, monkeypatch, status, fragment)
 
 def test_openai_onbereikbaar():
     url = f"http://127.0.0.1:{_vrije_poort()}"
-    res = service(url + "/v1", "openai")._call_llm("sys", "vraag", "test")
+    res = service(url + "/v1", "openai")._call_llm("sys", "vraag", "test", usecase="A")
     assert res["text"] == f"LLM-server niet bereikbaar op {url}"
 
 
 @pytest.mark.parametrize("body", ["geen json", {"choices": []}, {"iets": "anders"}])
 def test_openai_onverwacht_antwoord(fake_llm, body):
     fake_llm.set("/v1/chat/completions", body)
-    res = service(fake_llm.url, "openai")._call_llm("sys", "vraag", "test")
+    res = service(fake_llm.url, "openai")._call_llm("sys", "vraag", "test", usecase="A")
     assert res["text"] == f"Onverwacht antwoord van LLM-server op {fake_llm.url}"
 
 
