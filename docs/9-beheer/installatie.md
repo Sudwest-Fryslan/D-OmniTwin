@@ -59,6 +59,7 @@ De tabel volgt de volgorde van `.env.example`. Optionele regels staan daar als c
 | `DATABASE_PASSWORD` | **Verplicht.** Het gegenereerde wachtwoord. Wijzig het niet meer na de eerste start: het geldt alleen bij het aanmaken van de database. |
 | `ADMIN_PASSWORD` | Aanbevolen. Wachtwoord van het eerste beheeraccount. Leeg: er wordt eenmalig een wachtwoord gegenereerd (zie [2.4](#24-eerste-keer-inloggen)). |
 | `COMPOSE_FILE` | Staat op `docker-compose.yml`: alleen de installatie-instellingen. Laat staan. Ontwikkelaars halen de regel weg (zie [Ontwikkelmodus](#3-ontwikkelmodus)). Extra compose-bestanden voeg je hier toe, gescheiden door `:` (Windows: `;`), zie [Eigen logo](#eigen-logo) en [HTTPS aanzetten](#https-aanzetten). |
+| `OMNITWIN_VERSIE` | Optioneel, standaard `latest`. Alleen met `docker-compose.images.yml` in `COMPOSE_FILE`: welke versie van de images van Docker Hub (bijv. `0.4.0`). Zie [2.3](#23-starten). |
 | `OMNITWIN_OMGEVING` | Optioneel, standaard `productie`. `demo`: standaardaccounts met bekende wachtwoorden en een demobalk, alleen om te proberen; `test`: zoals productie, maar zwakke wachtwoorden geven alleen een waarschuwing. Bij `productie` weigert de installatie een zwak `ADMIN_PASSWORD` of `KEYCLOAK_ADMIN_PASSWORD`. Zie [2.6](#26-demo-test-of-productie). |
 | `VIEWER_TOEGANG` | Optioneel, standaard `open`: de kaart en de data-API's zijn openbaar. `inloggen`: alleen na inloggen via Keycloak met de rol `lezer` of `beheerder`. Zie [Toegang tot de viewer](#toegang-tot-de-viewer-open-of-dicht). |
 | `OMNITWIN_HTTP_PORT` | Optioneel. Poort op de host, standaard `80`. |
@@ -98,7 +99,9 @@ Bescherm het bestand: `chmod 600 .env`.
 docker compose up -d --build
 ```
 
-De eerste keer duurt dit lang (10 tot 30 minuten, afhankelijk van de verbinding): de backend-image installeert onder meer PyTorch en GDAL. Daarna starten de services in deze volgorde:
+De eerste keer duurt dit lang (10 tot 30 minuten, afhankelijk van de verbinding): de backend-image installeert onder meer PyTorch en GDAL.
+
+**Sneller: kant-en-klare images.** Elke release staat als image op Docker Hub: `sudwestfryslan/d-omnitwin` (backend) en `sudwestfryslan/d-omnitwin-db` (database). Zet in `.env` `COMPOSE_FILE=docker-compose.yml:docker-compose.images.yml` (op Windows met `;` in plaats van `:`) en eventueel `OMNITWIN_VERSIE=0.4.0` (standaard `latest`), en start met `docker compose pull && docker compose up -d`. Dan wordt er niets gebouwd. Daarna starten de services in deze volgorde:
 
 1. `postgres` (PostGIS met pgvector) wordt *healthy*.
 2. `db-init` draait één keer en stopt. Hij kijkt eerst in wat voor database hij terechtkomt:
