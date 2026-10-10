@@ -8,6 +8,10 @@ Eerdere wijzigingen, van vóór dit bestand, zijn terug te vinden in de git-hist
 
 ## [Unreleased]
 
+### Toegevoegd
+
+- Elke release als image op Docker Hub: `sudwestfryslan/d-omnitwin` en `sudwestfryslan/d-omnitwin-db`, met tags `<versie>`, `<major>.<minor>` en `latest` ([#126](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/126)). Installeren zonder te bouwen met `docker-compose.images.yml` en `OMNITWIN_VERSIE`; zie de installatiegids.
+
 ### Opgelost
 
 - Kompas-benchmark: de kleur van de afwijking ten opzichte van de referentie volgt de polariteit van de indicator (`score_type`/`inverse`). Een hoger inkomen is nu groen, meer werkloosheid rood; indicatoren in het neutrale kwadrant Samenstelling blijven grijs. `indicator_meta` in `POST /api/kompas/{config_id}/benchmark` heeft daarvoor het veld `richting` ([#323](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/323)).
