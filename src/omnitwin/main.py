@@ -289,8 +289,9 @@ def root(request: Request, db: Session = Depends(get_db)):
         "naam": (gebruiker or {}).get("username") if gebruiker and gebruiker.get("type") != "api_key" else None,
         "inloggen": viewer_toegang.login_adres("/"),
     }
-    return templates.TemplateResponse("index.html", {
-        "request": request, "organisatie": organisatie, "thema_css": thema_css(organisatie),
+    # Starlette 1.x: request als eerste argument (de oude vorm met "request" in de context bestaat niet meer, #172)
+    return templates.TemplateResponse(request, "index.html", {
+        "organisatie": organisatie, "thema_css": thema_css(organisatie),
         "account": account, "demo": ins.demo},
         headers={"Cache-Control": "no-cache"})
 
