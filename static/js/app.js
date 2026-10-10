@@ -633,28 +633,18 @@ function changeMapboxStyle(styleUrl) {
 
 // ---- Gemeente Selector (Multi-gemeente support) ----
 
-// Fallback lijst Friese gemeenten (voor als API niet beschikbaar is)
-const FRIESE_GEMEENTEN = [
-    { code: '', naam: 'Alle gemeenten', is_eiland: false },
-    { code: '0059', naam: 'Achtkarspelen', is_eiland: false },
-    { code: '0060', naam: 'Ameland', is_eiland: true },
-    { code: '1891', naam: 'Dantumadiel', is_eiland: false },
-    { code: '1940', naam: 'De Fryske Marren', is_eiland: false },
-    { code: '0072', naam: 'Harlingen', is_eiland: false },
-    { code: '0074', naam: 'Heerenveen', is_eiland: false },
-    { code: '0080', naam: 'Leeuwarden', is_eiland: false },
-    { code: '1970', naam: 'Noardeast-Fryslân', is_eiland: false },
-    { code: '0085', naam: 'Ooststellingwerf', is_eiland: false },
-    { code: '0086', naam: 'Opsterland', is_eiland: false },
-    { code: '0088', naam: 'Schiermonnikoog', is_eiland: true },
-    { code: '0090', naam: 'Smallingerland', is_eiland: false },
-    { code: '1900', naam: 'Súdwest-Fryslân', is_eiland: false },
-    { code: '0093', naam: 'Terschelling', is_eiland: true },
-    { code: '0737', naam: 'Tytsjerksteradiel', is_eiland: false },
-    { code: '0096', naam: 'Vlieland', is_eiland: true },
-    { code: '1949', naam: 'Waadhoeke', is_eiland: false },
-    { code: '0098', naam: 'Weststellingwerf', is_eiland: false }
-];
+// Provincie en eigen gemeenten komen uit de organisatie-instelling (#324):
+// benchmark_provincie filtert de lijst, gemeente_codes is de terugval als de API
+// met gemeenten niet beschikbaar is. Geen vaste provincie of gemeentelijst in de code.
+async function laadOrganisatieVoorGemeenten() {
+    try {
+        const response = await fetch('/api/organisatie');
+        if (response.ok) return await response.json();
+    } catch (error) {
+        console.warn('⚠️ Organisatie niet beschikbaar');
+    }
+    return null;
+}
 
 // Store loaded gemeenten for lookup
 let loadedGemeenten = [];
@@ -666,9 +656,12 @@ async function loadGemeenten() {
     const info = document.getElementById('gemeente-info');
 
     let gemeenten = [];
+    const organisatie = await laadOrganisatieVoorGemeenten();
+    const provincie = organisatie?.benchmark_provincie;
+    const provincieFilter = provincie ? `provincie=eq.${encodeURIComponent(provincie)}&` : '';
 
     try {
-        const response = await fetch('/api/data/gemeenten?provincie=eq.Frysl%C3%A2n&order=naam.asc');
+        const response = await fetch(`/api/data/gemeenten?${provincieFilter}order=naam.asc`);
         if (response.ok) {
             const data = await response.json();
             if (data && data.length > 0) {
@@ -681,8 +674,12 @@ async function loadGemeenten() {
     }
 
     if (gemeenten.length === 0) {
-        gemeenten = FRIESE_GEMEENTEN;
-        console.log('📋 Gebruik fallback gemeenten lijst');
+        // Terugval: de eigen gemeente(n) uit de organisatie-instelling
+        gemeenten = [
+            { code: '', naam: 'Alle gemeenten', is_eiland: false },
+            ...(organisatie?.gemeente_codes || []).map(code => ({ code, naam: code, is_eiland: false }))
+        ];
+        console.log('📋 Gebruik fallback gemeenten uit de organisatie-instelling');
     }
 
     loadedGemeenten = gemeenten;
@@ -717,8 +714,7 @@ async function loadGemeenten() {
 // ---- Actief gemeentefilter zichtbaar maken (#140) ----
 
 function gemeenteNaam(code) {
-    const gemeente = loadedGemeenten.find(g => g.code === code)
-        || FRIESE_GEMEENTEN.find(g => g.code === code);
+    const gemeente = loadedGemeenten.find(g => g.code === code);
     return gemeente ? gemeente.naam : `code ${code}`;
 }
 
@@ -2723,7 +2719,7 @@ function openRapportTypeModal(gebiedId, baseUrl) {
                 </button>
                 <button id="rapport-modal-benchmark" class="rapport-keuze">⚖️ Benchmark Vergelijker<br>
                     <span>
-                        Vergelijk met andere gebieden of Fryslân
+                        Vergelijk met andere gebieden, een gemeente of de provincie
                     </span>
                 </button>
             </div>
