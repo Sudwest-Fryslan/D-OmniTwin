@@ -54,6 +54,6 @@ D-OmniTwin heeft al méér: trends over jaargangen, rapporten, AI-chat, 3D en op
 
 ## Bronnen en afbakening
 
-- Een analyse van de draaiende viewer (alleen kijkend, ingelogd), de projectdocumentatie van SWF, de FME-workspaces van de push en een export van de definities en waarden (februari 2026).
+- Een analyse van de draaiende viewer (alleen kijkend, ingelogd), de projectdocumentatie van SWF, de FME-workspaces van de push en een export van de definities en waarden (februari 2026). Sinds 09-10-2026 ook een database-dump van de monitor (structuur en verschillen: [gegevens.md](./gegevens.md#database-dump-van-de-monitor-09-10-2026)); die staat niet in git.
 - In deze map staan alleen afgeleide beschrijvingen: structuur, aantallen, indicatornamen, UUID's en methodiek. Geen meetwaarden, schermafdrukken met buurtwaarden, interne adressen of persoonsgegevens. Systemen hebben functionele namen, personen staan er als rol in.
 - Verwant: RFC voor het vullen van D-OmniTwin ([#205](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/205)), bronnen als dataproduct ([#182](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/182)), Z-score-methodiek ([#66](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/66), [zscore_methodiek.md](../../3-data-engineering/zscore_methodiek.md)).

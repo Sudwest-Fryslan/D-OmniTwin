@@ -20,7 +20,7 @@ Aanname A1 van https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/222: de eers
 | Volledig Kompas (247 plekken, 241 indicatoren) | [swf-kompasprofiel](../swf-kompasprofiel/README.md), `swf-kompas-volledig` | bestand in git (63 kB), beheerroute |
 | Externe kaartlagen (8 WFS/WMS) | [swf-kaartlagen](../swf-kaartlagen/README.md), `swf-laag-extern` | bestand in git (5 kB), beheerroute |
 | Kadaster BAG/BAG (30.228), RVO EP-Online en berekend (5.248), OpenStreetMap (2.475) | **deze use case**, `swf-init-waarnemingen` | via `SWF_EXPORT_DIR` (niet in git): online te halen, maar nog geen adapter |
-| Waarden uit de SWF-gebiedsmonitor (10.365) | deze use case | via `SWF_EXPORT_DIR`; een deelverzameling van de monitorexport ([swf-basismonitor-waarden](../swf-basismonitor-waarden/README.md), [swf-klimaatmonitor](../swf-klimaatmonitor/README.md): 43.253 waarden), dus geen bestand in git |
+| Waarden uit de SWF-gebiedsmonitor (10.365) | deze use case | via `SWF_EXPORT_DIR`; een deelverzameling van de monitorexport ([swf-basismonitor-waarden](../swf-basismonitor-waarden/README.md), [swf-klimaatmonitor](../swf-klimaatmonitor/README.md): 43.253 waarden; uit de database-dump van de monitor via `SWF_DB_DUMP` alle 81.373, [#316](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/316)), dus geen bestand in git |
 | Definities die nog nergens vandaan komen (1: *Beperking*) | deze use case, `swf-init-indicatoren` | via `SWF_EXPORT_DIR` |
 | CBS, Kerncijfers 2023, RIVM (200.240) | niet | open data: [cbs-kerncijfers](../cbs-kerncijfers/README.md) en [rivm-gezondheidsmonitor](../rivm-gezondheidsmonitor/README.md) downloaden zelf |
 | Waarden zonder bron (4.931), op provincies (5), buiten Fryslân (263.524), demodata (0) | niet | niet herleidbaar of buiten de installatie |

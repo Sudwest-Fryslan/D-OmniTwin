@@ -2,7 +2,7 @@
   "specificatie": "1.0",
   "naam": "swf-kompasprofiel",
   "id": "TC-07-005",
-  "versie": "0.3.0",
+  "versie": "0.4.0",
   "titel": "SWF-kompasprofielen Basis (4/12/33) en Klimaat",
   "vraag": "Ik wil de sunburst van de huidige monitor terugzien in D-OmniTwin: dezelfde 4 kwadranten, 12 thema's en 33 onderdelen met dezelfde indicatoren, en de Klimaatmonitor met zijn 3 thema's en 10 indicatoren.",
   "gebruiker": "functioneel beheerder SWF",
@@ -42,14 +42,22 @@
       "rol": "realm-rol beheerder",
       "client": "beheer-swf",
       "prioriteit": "Must",
-      "bron": "voortgangslijst ($SWF_DUMP_DIR/data) + definities (swf-dump)",
+      "bron": "voortgangslijst ($SWF_DUMP_DIR/data) + definities (swf-dump), of de monitorconfiguratie ($SWF_DB_DUMP, voorrang)",
       "verwacht": {
         "regels": 219,
         "unieke_indicatoren": 211,
         "kwadranten": 4,
         "themas": 12,
         "onderdelen": 33,
-        "weggelaten": "5 oude werktitels, 1 testregel, 4 regels zonder plek"
+        "weggelaten": "5 oude werktitels, 1 testregel, 4 regels zonder plek",
+        "database_dump_2026_10_09": {
+          "regels": 215,
+          "unieke_indicatoren": 211,
+          "kwadranten": 4,
+          "themas": 12,
+          "onderdelen": 33,
+          "extra_niveaus": 22
+        }
       }
     },
     {
@@ -61,10 +69,14 @@
       "rol": "realm-rol beheerder",
       "client": "beheer-swf",
       "prioriteit": "Must",
-      "bron": "mapping in de use case (klimaat-indicatoren.json)",
+      "bron": "mapping in de use case (klimaat-indicatoren.json), of de monitorconfiguratie ($SWF_DB_DUMP, voorrang)",
       "verwacht": {
         "regels": 10,
-        "themas": 3
+        "themas": 3,
+        "database_dump_2026_10_09": {
+          "regels": 10,
+          "themas": 3
+        }
       }
     },
     {
@@ -90,27 +102,29 @@
     {
       "type": "aantal",
       "dataset": "swf-kompas-basis",
-      "gelijk": 219,
-      "omschrijving": "219 plekken (211 unieke indicatoren) in 4 kwadranten, 12 thema's en 33 onderdelen"
+      "omschrijving": "219 plekken uit de voortgangslijst, 215 uit de monitorconfiguratie (database-dump); 211 unieke indicatoren in 4 kwadranten, 12 thema's en 33 onderdelen",
+      "minimaal": 215
     },
     {
       "type": "bewerking",
       "dataset": "swf-kompas-basis",
       "reden": "indicator-niet-in-definities",
       "gelijk": 0,
-      "omschrijving": "elke indicator in de hiërarchie heeft een definitie (koppeling op naam, spaties en hoofdletters genegeerd)"
+      "omschrijving": "elke indicator in de hiërarchie heeft een definitie (voortgangslijst: koppeling op naam, spaties en hoofdletters genegeerd; monitorconfiguratie: op UUID)"
     },
     {
       "type": "bewerking",
       "dataset": "swf-kompas-basis",
       "reden": "oude-werktitel",
-      "gelijk": 5
+      "maximaal": 5,
+      "omschrijving": "5 oude werktitels in de voortgangslijst; 0 in de monitorconfiguratie"
     },
     {
       "type": "bewerking",
       "dataset": "swf-kompas-basis",
       "reden": "zonder-plek-in-hierarchie",
-      "gelijk": 4
+      "maximaal": 4,
+      "omschrijving": "4 regels zonder plek in de voortgangslijst; 0 in de monitorconfiguratie"
     },
     {
       "type": "aantal",
@@ -153,7 +167,9 @@
     "De voortgangslijst is de beste bron van de hiërarchie zolang er geen database-dump van de monitor is; met $SWF_DB_DUMP komt de monitorconfiguratie zelf (inclusief volgorde en de 215 van de live sunburst).",
     "Drempels voor de labels A–E zijn onbekend (gat-analyse, vraag 5); classificatie 'label' zonder drempels.",
     "Kompas en externe kaartlagen gaan via de beheerroute; die bestaat nu alleen in-process (installeer --inproces, ook in db-init). Een indicator die (nog) niet bestaat, wordt overgeslagen en geteld; zonder swf-definities (SWF_DUMP_DIR) mist het Volledig Kompas dus de monitorindicatoren.",
-    "Extra onderdelen (22), extra tags (53) en scoringsregels (16) uit de lokale database hebben nog geen route."
+    "Extra onderdelen (22), extra tags (53) en scoringsregels (16) uit de lokale database hebben nog geen route.",
+    "Met een database-dump van de monitor (SWF_DB_DUMP, variant monitor-database, #316) komen SWF Basis en SWF Klimaat uit de actieve monitorconfiguratie: 215 en 10 plekken, in de volgorde van de monitor. De 62 versies (46 Basis, 16 Klimaat) staan als archief in monitorconfiguraties.json; D-OmniTwin heeft geen versies van een Kompasprofiel.",
+    "Uit de monitorconfiguratie gaan ook mee: 'omkeren' als score_type in swf-definities, en 'labeling' (drempels A–E) als indicator_labels_monitor.json (laden is een keuze, zie swf-klimaatmonitor). 'weergave_type' is de classificatie (percentielklasse of label)."
   ],
   "bewijs": {
     "stappen": [

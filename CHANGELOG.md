@@ -11,6 +11,11 @@ Eerdere wijzigingen, van vóór dit bestand, zijn terug te vinden in de git-hist
 ### Toegevoegd
 
 - Elke release als image op Docker Hub: `sudwestfryslan/d-omnitwin` en `sudwestfryslan/d-omnitwin-db`, met tags `<versie>`, `<major>.<minor>` en `latest` ([#126](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/126)). Installeren zonder te bouwen met `docker-compose.images.yml` en `OMNITWIN_VERSIE`; zie de installatiegids.
+- **Database-dump van de huidige SWF-gebiedsmonitor als bron** ([#316](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/316), [#222](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/222)). Nieuw script `scripts/beheer/swf_monitor_dump.py`: `exporteer` leest een `pg_dump` van de monitor (custom format via `pg_restore -f -`, of platte SQL; geen database nodig) en schrijft de bestanden voor de use cases naar `SWF_DB_DUMP` (nooit in git). Met `SWF_DB_DUMP` gebruiken `swf-definities` 0.4.0, `swf-basismonitor-waarden` 0.3.0, `swf-klimaatmonitor` 0.3.0 en `swf-kompasprofiel` 0.4.0 de variant `monitor-database` (voorrang boven `SWF_DUMP_DIR`): de definities met `score_type` uit `omkeren`, alle waarden (81.373 in de dump van 09-10-2026, tegen 43.253 in de export van februari) en de geldige monitorconfiguraties als Kompasprofielen *SWF Basis* en *SWF Klimaat*. De drempels A–E uit de monitor komen in `indicator_labels_monitor.json`; laden is een keuze (`load_sample.py --stap drempels --drempels <bestand>`, nieuwe optie). Nieuwe use case `swf-gebruikersvoorkeuren` (TC-07-026, `ontwerp`): de laatste kaartpositie per gebruiker naar `gebruiker_voorkeuren`, met een expliciete koppeling oude gebruikersnaam → Keycloak-`sub` (`laad-voorkeuren`, aanvullen, nooit overschrijven); in git alleen fictieve voorbeelddata. Verschillen tussen dump en export: [gegevens.md](docs/1-visie-concept/huidige-gebiedsmonitor/gegevens.md#database-dump-van-de-monitor-09-10-2026).
+
+### Gewijzigd
+
+- Controles van de swf-use cases die per bron verschillen, zijn `minimaal`/`maximaal` in plaats van `gelijk` (status A → O minimaal 10, waarden Basis minimaal 35.411, Kompas Basis minimaal 215), zodat dezelfde use case werkt met de export van februari en met de database-dump ([#316](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/316)).
 
 ## [0.3.1] - 2026-10-06
 
