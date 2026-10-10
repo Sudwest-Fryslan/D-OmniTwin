@@ -699,7 +699,7 @@ def beantwoord_datavraag(
     Beantwoord een datavraag; None als het geen datavraag is (dan navigeert de chat zoals voorheen).
 
     zoek(tekst):          AI-zoeken, [{uuid, naam, score}]
-    vraag_llm(sys, usr):  {"text": ..., "debug": {...}}
+    vraag_llm(sys, usr, bronnen):  {"text": ..., "debug": {...}}; bronnen = indicator-uuid's (AI-logboek)
     """
     context = context or {}
     if is_navigatie(vraag):
@@ -793,7 +793,8 @@ def beantwoord_datavraag(
     tekst, model = "", None
     if not context.get("geen_llm"):
         try:
-            antwoord = vraag_llm(SYSTEEMPROMPT, gebruikersprompt(vraag, feiten, herkenning.herkend)) or {}
+            antwoord = vraag_llm(SYSTEEMPROMPT, gebruikersprompt(vraag, feiten, herkenning.herkend),
+                                 [f["indicator_uuid"] for f in feiten]) or {}
             # Foutvlag van LLMService (#65): de tekst is dan een foutmelding, geen antwoord
             tekst = "" if antwoord.get("error") else strip_denken(antwoord.get("text", ""))
             model = (antwoord.get("debug") or {}).get("model")

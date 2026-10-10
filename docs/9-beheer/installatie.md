@@ -575,7 +575,7 @@ Let op: Keycloak geeft elke nieuwe gebruiker én elk service account (machinecli
 
 ## 7. LLM (optioneel)
 
-De chat en de samenvattingen gebruiken een lokaal taalmodel via [Ollama](https://ollama.com). Zonder Ollama werken kaart, Kompas en rapportage gewoon.
+De chat en de samenvattingen kunnen een taalmodel gebruiken: lokaal via [Ollama](https://ollama.com), of een andere aanbieder via de gateway (hieronder). Zonder taalmodel werken kaart, Kompas en rapportage gewoon. AI staat pas aan als functioneel beheer de AI-usecase vrijgeeft met een verklaring; zie [AI-usecases vrijgeven](beheerhandleiding.md#9-ai-usecases-vrijgeven).
 
 1. Installeer Ollama op de host en haal een model op, bijvoorbeeld `ollama pull qwen3:30b-instruct` (groot; een kleiner model zoals `qwen3:4b-instruct` kan ook). Gebruik een *instruct*-variant: `qwen3:30b` zonder toevoeging is de 'thinking'-variant en is traag.
 2. Op Linux: laat Ollama op alle interfaces luisteren (`OLLAMA_HOST=0.0.0.0` in de service-omgeving van Ollama), anders kan de container er niet bij. Docker Desktop (Windows, macOS) regelt dit zelf.

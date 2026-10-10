@@ -355,7 +355,7 @@ def nep_route(monkeypatch):
 
 
 def route(vraag, antwoord):
-    return dv.beantwoord_datavraag(vraag, {}, NepDB(), lambda t: [], lambda s, u: {"text": antwoord})
+    return dv.beantwoord_datavraag(vraag, {}, NepDB(), lambda t: [], lambda s, u, *_: {"text": antwoord})
 
 
 def test_route_gebruikt_gegrond_antwoord(nep_route):
@@ -387,7 +387,7 @@ def test_route_geen_datavraag(nep_route):
 
 def test_route_zonder_llm_geeft_vaste_tekst(nep_route):
     r = dv.beantwoord_datavraag("Welke buurt in Bolsward ligt het verst van een koele plek?", {"geen_llm": True},
-                                NepDB(), lambda t: [], lambda s, u: pytest.fail("model mag niet gevraagd worden"))
+                                NepDB(), lambda t: [], lambda s, u, *_: pytest.fail("model mag niet gevraagd worden"))
     assert not r["llm_gebruikt"] and r["model"] is None
     assert "Bolsward-Noord (246 m)" in r["narrative"] and "Bolsward-Noordoost (206 m)" in r["narrative"]
 
@@ -424,7 +424,7 @@ def test_vraag_van_eduard_met_geselecteerde_buurt(nep_ouderen):
     een getal voor die buurt, met bron en jaar, en de buren ter vergelijking."""
     r = dv.beantwoord_datavraag("hoeveel % is bejaard bij mij in de buurt?",
                                 {"huidig_gebied_id": "BU19000002", "geen_llm": True}, NepDB(), lambda t: [],
-                                lambda s, u: pytest.fail("geen model"))
+                                lambda s, u, *_: pytest.fail("geen model"))
     assert [t.naam for t in r["indicatoren"]] == ["65+ jaar (%)"]
     assert r["gebieden_bron"] == "kaart" and r["gebied_ids"][0] == "BU19000002"
     assert r["narrative"].startswith("65+ jaar (%) (CBS Kerncijfers wijken en buurten 2026 (86358NED), 2026): "

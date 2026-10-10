@@ -352,6 +352,101 @@ export const gebiedenAPI = {
     },
 };
 
+// AI-usecases (#307) en AI-logboek (#313); beheer onder /api/admin/ai (vereis_admin)
+export type AIUsecaseCode = 'A' | 'B' | 'C';
+export type AIReden = 'open' | 'geen_verklaring' | 'verlopen' | 'stilgezet';
+
+export interface AIUsecase {
+    code: AIUsecaseCode;
+    naam: string;
+    omschrijving: string;
+    open: boolean;
+    reden: AIReden;
+    stilgezet: boolean;
+    status_door: string | null;
+    status_op: string | null;
+    /** Toelichting bij de noodstop; bij een automatische noodstop (status_door 'systeem') de reden */
+    stilgezet_reden: string | null;
+    verklaring_id: string | null;
+    versie: string | null;
+    geldig_tot: string | null;
+    bestandsnaam: string | null;
+    grootte: number | null;
+    sha256: string | null;
+    geupload_door: string | null;
+    geupload_op: string | null;
+    verklaring_url: string | null;
+}
+
+export interface AIVrijgaveRegel {
+    id: number;
+    tijdstip: string;
+    usecase: AIUsecaseCode | null;
+    actie: 'verklaring_geupload' | 'noodstop' | 'hervat' | 'verlopen' | 'bewaartermijn';
+    door: string | null;
+    versie: string | null;
+    geldig_tot: string | null;
+    toelichting: string | null;
+}
+
+export interface AILogRegel {
+    id: number;
+    tijdstip: string;
+    usecase: string;
+    functie: string;
+    status: 'uitgevoerd' | 'geweigerd' | 'fout' | 'opgeschoond';
+    taak: string | null;
+    bronnen: string[];
+    model: string | null;
+    modelversie: string | null;
+    app_versie: string | null;
+    resultaat: string | null;
+    foutmelding: string | null;
+    hash: string;
+}
+
+export interface AILogFilter {
+    usecase?: string;
+    status?: string;
+    van?: string;
+    tot?: string;
+}
+
+export interface AIKetencontrole {
+    ok: boolean;
+    aantal: number;
+    eerste_id: number | null;
+    laatste_id: number | null;
+    fouten: { id: number; reden: string }[];
+}
+
+const zonderLeeg = (f: AILogFilter) => Object.fromEntries(Object.entries(f).filter(([, w]) => w));
+
+export const aiVrijgaveAPI = {
+    usecases: () => api.get<AIUsecase[]>('/ai/usecases'),
+    upload: (code: AIUsecaseCode, bestand: File, versie: string, geldigTot: string) => {
+        const formData = new FormData();
+        formData.append('bestand', bestand);
+        formData.append('versie', versie);
+        formData.append('geldig_tot', geldigTot);
+        return api.post<{ verklaring_id: string; sha256: string }>(`/ai/usecases/${code}/verklaring`, formData, {
+            headers: { 'Content-Type': 'multipart/form-data' },
+        });
+    },
+    noodstop: (code: AIUsecaseCode) => api.post(`/ai/usecases/${code}/noodstop`, {}),
+    hervatten: (code: AIUsecaseCode) => api.post(`/ai/usecases/${code}/hervatten`, {}),
+    vrijgavelog: () => api.get<AIVrijgaveRegel[]>('/ai/vrijgavelog'),
+    logboek: (filter: AILogFilter, limit: number, offset: number) =>
+        api.get<{ totaal: number; regels: AILogRegel[] }>('/ai/logboek', { params: { ...zonderLeeg(filter), limit, offset } }),
+    exportUrl: (filter: AILogFilter) => {
+        const q = new URLSearchParams(zonderLeeg(filter) as Record<string, string>).toString();
+        return `/api/admin/ai/logboek/export${q ? `?${q}` : ''}`;
+    },
+    controle: () => api.get<AIKetencontrole>('/ai/logboek/controle'),
+    bewaartermijn: () => api.get<{ bewaartermijn_dagen: number; gewijzigd_door: string | null; gewijzigd_op: string | null }>('/ai/bewaartermijn'),
+    zetBewaartermijn: (dagen: number) => api.put('/ai/bewaartermijn', { bewaartermijn_dagen: dagen }),
+};
+
 export const aiAPI = {
     searchKompas: (q: string, limit: number = 5) =>
         publicApi.get<any[]>('/ai/kompas/search', { params: { q, limit } }),

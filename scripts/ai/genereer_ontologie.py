@@ -9,6 +9,7 @@ from sqlalchemy import text
 project_root = Path(__file__).resolve().parent.parent.parent
 sys.path.append(str(project_root / "src"))
 
+from omnitwin import ai_vrijgave
 from omnitwin.database import SessionLocal
 from omnitwin.services.llm_service import LLMService
 import re
@@ -57,6 +58,10 @@ GEBRUIK DE VOLGENDE STIJL:
 
 def process_indicators():
     """Main loop om indicatoren te verwerken."""
+    # Ontologie genereren valt niet onder AI-usecase A, B of C (#307): staat uit
+    if not ai_vrijgave.poort(ai_vrijgave.BUITEN, "Ontologie genereren", taak="Beschrijvingen van indicatoren genereren"):
+        print(ai_vrijgave.melding(ai_vrijgave.BUITEN))
+        sys.exit(1)
     db = SessionLocal()
     llm = LLMService(db)
     

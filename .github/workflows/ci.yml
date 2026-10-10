@@ -156,6 +156,17 @@ jobs:
           done
           echo "backend niet bereikbaar via Traefik" >&2; exit 1
 
+      - name: Geef AI-usecase C vrij met een testverklaring (#307)
+        run: |
+          # Zonder verklaring staat zoeken op betekenis uit; de tests meten de zoekkwaliteit mét C.
+          # A en B blijven dicht (de CI heeft geen taalmodel); tests/integration/test_ai_vrijgave_stack.py toetst de poort.
+          printf '%%PDF-1.4\n%% testverklaring CI\n%%%%EOF\n' > "$RUNNER_TEMP/verklaring.pdf"
+          KEY="$(grep -E '^ADMIN_API_KEY=' .env | cut -d= -f2-)"
+          curl -fsS -H "X-Admin-Key: $KEY" \
+            -F "bestand=@$RUNNER_TEMP/verklaring.pdf;type=application/pdf" \
+            -F versie=ci -F geldig_tot="$(date -d '+1 day' +%F)" \
+            "http://localhost:${OMNITWIN_HTTP_PORT}/api/admin/ai/usecases/C/verklaring"
+
       - name: Draai integratietests
         run: |
           docker run --rm --network "${COMPOSE_PROJECT_NAME}_default" \

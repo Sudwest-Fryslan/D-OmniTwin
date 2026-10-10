@@ -5,19 +5,25 @@ from collections import defaultdict
 import difflib
 import re
 
+from omnitwin import ai_logboek, ai_vrijgave
 from omnitwin.fouten import GebruikersFout
-from omnitwin.services.llm_service import LLMService
 from omnitwin.services.logging_service import AppLogger
 
 class DeduplicatieService:
     def __init__(self, db: Session):
         self.db = db
 
-    def get_kandidaten(self) -> List[Dict[str, Any]]:
+    def get_kandidaten(self, zonder_ai: bool = False) -> List[Dict[str, Any]]:
         """
         Vindt potentiele duplicaten op basis van naam-gelijkenis (substring, pg_trgm)
         en semantische gelijkenis (pgvector).
+
+        AI-vrijgave (#307): de embeddings (pgvector) tellen alleen mee met AI-usecase C open. Een
+        oordeel van het taalmodel valt buiten de usecases en staat altijd uit: elke groep komt
+        terug voor een oordeel van de beheerder.
         """
+        met_embedding = not zonder_ai and ai_vrijgave.poort(ai_vrijgave.C, "Deduplicatie: kandidaten",
+                                          taak="Kandidaten voor deduplicatie op betekenis")
         # We halen eerst alle actieve indicatoren op voor hun metadata, inclusief broodkruimels
         query_all = text("""
             SELECT i.uuid, i.naam, i.bron, i.categorie, i.omschrijving,
@@ -51,7 +57,7 @@ class DeduplicatieService:
             WHERE i1.is_actief = true AND i2.is_actief = true
               AND (
                 similarity(i1.naam::text, i2.naam::text) > 0.4
-                OR (e1.embedding <=> e2.embedding) < 0.3
+                OR (:met_embedding AND (e1.embedding <=> e2.embedding) < 0.3)
               )
               AND NOT EXISTS (
                 SELECT 1 FROM deduplicatie_uitzonderingen du
@@ -60,7 +66,7 @@ class DeduplicatieService:
               )
         """)
         
-        pairs = self.db.execute(query_pairs).fetchall()
+        pairs = self.db.execute(query_pairs, {"met_embedding": met_embedding}).fetchall()
         
         
         def clean_name(name):
@@ -80,7 +86,7 @@ class DeduplicatieService:
                 is_match = True
                 
             # 2. Vector check (via database)
-            if vec_dist is not None and vec_dist < 0.15:
+            if met_embedding and vec_dist is not None and vec_dist < 0.15:
                 is_match = True
                 
             # 3. Substring & Difflib check (via Python)
@@ -108,9 +114,10 @@ class DeduplicatieService:
         visited = set()
         candidates = []
         
-        # LLMService eenmalig instantiëren (voorkomt N+1 DB queries voor config)
-        llm = LLMService(self.db)
-        
+        # Oordeel door het taalmodel: buiten AI-usecase A/B/C, dus altijd dicht; de weigering komt in het logboek (#307)
+        ai_vrijgave.poort(ai_vrijgave.BUITEN, "Deduplicatie: oordeel taalmodel", taak="Duplicaten beoordelen")
+        advies = ai_vrijgave.melding(ai_vrijgave.BUITEN) + " Beoordeel de groep zelf."
+
         for node in adj.keys():
             if node not in visited:
                 # BFS
@@ -127,15 +134,19 @@ class DeduplicatieService:
                             queue.append(neighbor)
                 
                 if len(comp) > 1:
-                    eval_result = llm.validate_duplicates(comp)
-                    
-                    if eval_result.get("is_duplicaat"):
-                        candidates.append({
-                            "groep_id": str(comp[0]['uuid']),
-                            "ai_advies": eval_result.get("ai_advies", "Bevestigd door AI."),
-                            "indicatoren": comp
-                        })
-                    
+                    candidates.append({
+                        "groep_id": str(comp[0]['uuid']),
+                        "ai_advies": advies,
+                        "indicatoren": comp
+                    })
+
+        if met_embedding:
+            from omnitwin.services import embedding_model
+            if not ai_logboek.schrijf(ai_vrijgave.C, "Deduplicatie: kandidaten", ai_logboek.UITGEVOERD,
+                                      taak="Kandidaten voor deduplicatie op betekenis (opgeslagen embeddings)",
+                                      model=embedding_model.MODEL_ID, modelversie=embedding_model.MODEL_REVISIE,
+                                      resultaat=f"{len(candidates)} groepen"):
+                return self.get_kandidaten(zonder_ai=True)  # fail-closed: zonder embeddings
         return candidates
 
     def merge_indicatoren(self, primary_uuid: str, duplicate_uuids: List[str], actie: str) -> Dict[str, Any]:
