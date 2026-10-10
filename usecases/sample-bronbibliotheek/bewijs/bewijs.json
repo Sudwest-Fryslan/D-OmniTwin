@@ -2,8 +2,8 @@
   "specificatie": "1.0",
   "naam": "sample-bronbibliotheek",
   "versie": "0.2.0",
-  "omnitwin_versie": "0.3.0",
-  "datum": "2026-10-05T00:00:23+02:00",
+  "omnitwin_versie": "0.4.0",
+  "datum": "2026-10-10T19:51:49+02:00",
   "geslaagd": true,
   "controles": [
     {
@@ -67,14 +67,14 @@
       "id": "kaart",
       "resultaat": "ok",
       "afbeelding": "kaart.webp",
-      "antwoordtijd_s": 31.7,
+      "antwoordtijd_s": 74.1,
       "console_fouten": []
     },
     {
       "id": "levering",
       "resultaat": "ok",
       "afbeelding": "levering.webp",
-      "antwoordtijd_s": 0.3,
+      "antwoordtijd_s": 0.4,
       "console_fouten": []
     }
   ],
@@ -90,7 +90,7 @@
         "vervangen": 0,
         "onderdrukt": 0,
         "gepubliceerd": 416,
-        "bronpeildatum": "2026-10-04",
+        "bronpeildatum": "2026-10-10",
         "bronOnderdrukt": 416,
         "bronpeildatumUit": "ontvangst"
       }
@@ -106,7 +106,7 @@
         "vervangen": 0,
         "onderdrukt": 0,
         "gepubliceerd": 104,
-        "bronpeildatum": "2026-10-04",
+        "bronpeildatum": "2026-10-10",
         "bronOnderdrukt": 104,
         "bronpeildatumUit": "ontvangst"
       }
