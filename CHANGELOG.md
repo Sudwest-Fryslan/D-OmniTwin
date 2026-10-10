@@ -12,6 +12,14 @@ Eerdere wijzigingen, van vóór dit bestand, zijn terug te vinden in de git-hist
 
 - Elke release als image op Docker Hub: `sudwestfryslan/d-omnitwin` en `sudwestfryslan/d-omnitwin-db`, met tags `<versie>`, `<major>.<minor>` en `latest` ([#126](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/126)). Installeren zonder te bouwen met `docker-compose.images.yml` en `OMNITWIN_VERSIE`; zie de installatiegids.
 
+### Gewijzigd
+
+- Database-image op een ondersteunde basis ([#191](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/191)): `postgres:15-bookworm` (Debian 12) met PostGIS en pgvector uit de reguliere PGDG-repository, in plaats van `postgis/postgis:15-3.5` op het end-of-life bullseye met pgvector uit het archief (#189). PostgreSQL blijft 15: bestaande volumes werken zonder `pg_upgrade`. PostGIS gaat van 3.5 naar 3.6; `db-init` werkt de extensies in een bestaande database bij (`postgis_extensions_upgrade()`). Een nieuwe installatie maakt geen `template_postgis` en geen `postgis_topology`/`postgis_tiger_geocoder` meer aan (D-OmniTwin gebruikt ze niet).
+
+### Migreren
+
+- Bouw het database-image opnieuw (`docker compose build postgres`, of het nieuwe image van Docker Hub) en start `db-init`; die werkt PostGIS bij. Maak eerst een back-up.
+
 ## [0.3.1] - 2026-10-06
 
 Patch na de verhuizing van de repository naar de organisatie van Súdwest-Fryslân, zonder andere werking van de applicatie.
