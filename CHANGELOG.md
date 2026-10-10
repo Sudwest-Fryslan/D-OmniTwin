@@ -12,6 +12,10 @@ Eerdere wijzigingen, van vóór dit bestand, zijn terug te vinden in de git-hist
 
 - Elke release als image op Docker Hub: `sudwestfryslan/d-omnitwin` en `sudwestfryslan/d-omnitwin-db`, met tags `<versie>`, `<major>.<minor>` en `latest` ([#126](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/126)). Installeren zonder te bouwen met `docker-compose.images.yml` en `OMNITWIN_VERSIE`; zie de installatiegids.
 
+### Gewijzigd
+
+- Webframework bijgewerkt, in één keer ([#172](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/172)): FastAPI 0.115.12 → 0.143.0, Starlette 0.41.3 → 1.7.0, uvicorn 0.30.6 → 0.54.0 (`requirements.txt`, `requirements-ci.txt`, `requirements.lock`). De CORS-instelling werkt ongewijzigd met Starlette 1.x. Dependabot werkt deze drie voortaan samen bij (groep `webframework`) in plaats van ze over te slaan.
+
 ## [0.3.1] - 2026-10-06
 
 Patch na de verhuizing van de repository naar de organisatie van Súdwest-Fryslân, zonder andere werking van de applicatie.
