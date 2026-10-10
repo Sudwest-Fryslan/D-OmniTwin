@@ -8,6 +8,15 @@ Eerdere wijzigingen, van vóór dit bestand, zijn terug te vinden in de git-hist
 
 ## [Unreleased]
 
+### Toegevoegd
+
+- **Vrijgave van AI-usecases** ([#307](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/307)): A (Assistent), B (Samenvatting/rapport) en C (Zoeken op betekenis) staan standaard uit en gaan pas aan als functioneel beheer in de beheeromgeving (**AI-usecases**) een verklaring als PDF uploadt met versie en *geldig tot*. Na die datum gaan ze vanzelf uit; de noodstop zet ze direct uit. Wie (login) en wanneer staat bij de usecase en in een logboek. Dicht werkt de applicatie zonder AI: de chat regelgebaseerd, rapporten zonder AI-samenvatting, zoeken op begrippen en trefwoorden, telkens met een korte melding. Andere AI-functies (oordeel bij deduplicatie, ontologie genereren) staan altijd uit. Publiek: `GET /api/ai/usecases` en `GET /api/ai/usecases/{code}/verklaring` (PDF). Uitleg: [beheerhandleiding](docs/9-beheer/beheerhandleiding.md#9-ai-usecases-vrijgeven).
+- **AI-logboek** ([#313](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/313)): elke AI-actie, ook een geweigerde, met usecase, tijdstip, vraag of taak, bronnen, model, applicatieversie en resultaat, zonder gebruikersgegevens. Alleen-toevoegen met een hashketen; inzien, CSV-export en ketencontrole in de beheeromgeving. Opschonen na een instelbare bewaartermijn (standaard 365 dagen) via een aparte databaserol. Migratie `V039__ai_vrijgave_en_logboek.sql`.
+
+### Migreren
+
+- **Na de update staat alle AI uit**, ook als die eerder werkte. Upload per AI-usecase die je wilt gebruiken de verklaring van je eigen toetsing (beheeromgeving > AI-usecases).
+
 ## [0.3.1] - 2026-10-06
 
 Patch na de verhuizing van de repository naar de organisatie van Súdwest-Fryslân, zonder andere werking van de applicatie.

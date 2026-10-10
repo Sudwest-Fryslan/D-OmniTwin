@@ -223,5 +223,33 @@ Een eerste productie-installatie op basis van een volledig ingerichte acceptatie
 | **Gelekt secret** (`.env`, client-secret, beheerwachtwoord) | Meteen roteren: client-secret met `client-secret.sh <client> --nieuw`; `ADMIN_API_KEY`, `DATABASE_PASSWORD` (vraagt een `ALTER ROLE` in de database, daarna `docker compose up -d`), `KEYCLOAK_*` en sleutels van LLM-aanbieders in `.env` en bij de aanbieder. Daarna sessies beëindigen en de logs nalopen. |
 | **Kwetsbaarheid in D-OmniTwin** | Melden volgens [SECURITY.md](../../SECURITY.md), niet in een openbaar issue. |
 | **Datalek (persoonsgegevens)** | Volg de procedure van je organisatie (FG/privacy officer, melding aan de AP binnen 72 uur). Welke persoonsgegevens er zijn: [privacy-quickscan](../5-secops/privacy-quickscan.md). |
+| **AI doet iets wat niet mag** | Beheeromgeving > **AI-usecases** > *Noodstop* bij de usecase. Werkt direct, zonder herstart; de applicatie werkt dan zonder AI. Zie [AI-usecases vrijgeven](#9-ai-usecases-vrijgeven). |
 
 Leg elk incident vast (wat, wanneer, oorzaak, herstel) en maak een issue als de software beter kan.
+
+---
+
+## 9. AI-usecases vrijgeven
+
+AI staat in D-OmniTwin standaard **uit**, ook na een update van een bestaande installatie ([#307](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/307)). Er zijn drie AI-usecases:
+
+| Usecase | Wat | Dicht (zonder AI) |
+|---|---|---|
+| **A – Assistent** | Chat: intentie, toelichting en de formulering van antwoorden op datavragen, met een taalmodel | De chat werkt regelgebaseerd; een datavraag krijgt de cijfers in een vaste tekst. Melding: de AI-assistent staat uit. |
+| **B – Samenvatting/rapport** | Domein-, totaal- en benchmarksamenvattingen in rapporten, met een taalmodel | Het rapport zonder AI-samenvatting, met een melding op die plek. |
+| **C – Zoeken (semantisch)** | Zoeken op betekenis met het embeddingmodel: Kompas-zoeken, de betekenis in de chatrelevantie, kandidaten bij deduplicatie | Zoeken op begrippen, synoniemen (`db/stuurdata/synoniemen.json`) en woorden uit de naam. |
+
+Andere AI-functies (het oordeel van een taalmodel bij deduplicatie, `scripts/ai/genereer_ontologie.py`) vallen niet onder A, B of C en staan altijd uit. Het Kompas gebruikt geen AI.
+
+**Elke organisatie doorloopt haar eigen toetsing.** Een instantie hoort bij één organisatie (ADR 0007); de verklaring van een andere gemeente geldt niet voor de jouwe. Doorloop de toetsing van je eigen organisatie (bijvoorbeeld DPIA, IAMA of een besluit volgens het AI-beleid, met je AI Officer of FG), en kijk daarbij ook naar het taalmodel dat je in **AI Configuratie** kiest: lokaal (Ollama) of een externe aanbieder via de gateway.
+
+**Vrijgeven** (functioneel beheer, rol `beheerder`; geen technisch beheer nodig): beheeromgeving > **AI-usecases** > bij de usecase de verklaring als PDF (hoogstens 20 MB), de **versie** waarop de verklaring slaat en **geldig tot en met**. Na het uploaden staat de usecase aan. De applicatie legt vast met welke login en wanneer; dat staat bij de usecase en in het logboek *aan- en uitzetten*.
+
+- **Na geldig tot** gaat de usecase vanzelf uit. Upload op tijd een nieuwe verklaring.
+- **Noodstop**: zet de usecase direct uit. *Noodstop opheffen* zet hem weer aan, maar alleen met een geldige verklaring. Een nieuwe upload heft een noodstop ook op.
+- Er is geen omgevingsvariabele om AI aan te zetten.
+- Iedereen kan de status en de actuele verklaring opvragen: `GET /api/ai/usecases` en `GET /api/ai/usecases/{A|B|C}/verklaring` (PDF, voor "meer informatie" in de viewer).
+
+**AI-logboek** ([#313](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/313)): elke AI-actie, ook een geweigerde, met usecase, tijdstip, vraag of taak (afgekapt), gebruikte bronnen (indicator-id's), model en modelversie, applicatieversie en het resultaat of de fout. Zonder login, sessie of IP-adres. Inzien, filteren en exporteren als CSV in **AI-usecases** > *AI-logboek*. Het logboek is alleen-toevoegen (tabel `ai_logboek`, migratie V039): de backend schrijft als rol `omnitwin_ai_log` (alleen toevoegen en lezen) en een trigger weigert wijzigen en verwijderen, ook voor de eigenaar. Elke regel bevat een hash van de inhoud en de vorige regel; *Controleer keten* rekent die na. Na de **bewaartermijn** (standaard 365 dagen, in te stellen op dezelfde pagina, 30 tot 3650) verwijdert de dagelijkse opruimtaak oude regels via de functie `ai_logboek_opschonen` (rol `omnitwin_ai_log_opschoner`); het opschonen komt zelf in het logboek.
+
+Verklaringen en beide logboeken staan in de database en zitten dus in `database.dump` van de [back-up](#2-back-up-en-herstel).
