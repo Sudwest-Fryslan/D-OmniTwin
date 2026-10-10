@@ -16,7 +16,7 @@ Bron: het routeplan van de AI Officer (10-10-2026) en het AI-beleid van SWF (§6
 | **Menselijk toezicht**: functioneel beheer zet een usecase direct stil (noodstop) en weer aan; wie en wanneer staat erbij | Bewijs *vrijgave* (A stilgezet) en *logboek* (logboek aan- en uitzetten) | ✓ |
 | **Fail-closed**: mislukt het loggen of klopt de hashketen niet, dan automatisch dicht (door `systeem`, met reden); niet vanzelf weer open | `tests/unit/test_ai_vrijgave.py` (automatische noodstop); Beheer › AI-usecases toont "Automatische noodstop" met reden | ✓ |
 | **Fallback zonder AI**: dicht werkt de applicatie gewoon, met een korte melding | Bewijs *assistent*: A staat uit, het antwoord komt uit de cijfers met "De AI-assistent staat uit"; rapport zonder samenvatting en zoeken op trefwoorden: `tests/unit/test_ai_vrijgave.py` | ✓ |
-| **Transparantie**: elk AI-resultaat heeft het label AI, de waarschuwing dat het onjuist of onvolledig kan zijn, de bronnen en *Meer informatie* (de verklaring) | Bewijs *assistent* (label bij zoeken op betekenis, C) en *status* (`GET /api/ai/usecases`, publiek); de helppagina (AI herkennen); `GET /api/ai/usecases/{A,B,C}/verklaring` | ✓ |
+| **Transparantie**: elk AI-resultaat heeft het label AI, de waarschuwing dat het onjuist of onvolledig kan zijn, de bronnen en *Meer informatie* (de verklaring) | Bewijs *assistent* (label bij zoeken op betekenis, C; *Meer informatie* opent de uitlegpagina) en *uitleg* (pagina "AI in deze toepassing", ook via Info in de viewer: per functie aan of uit, verklaring met versie, geldig tot en PDF); `GET /api/ai/usecases` | ✓ |
 | **Melden**: bij elk AI-resultaat een melding, met usecase, soort (AI-fout of systeemfout) en het ingekorte resultaat; meldplek per instantie | Bewijs *assistent* (Melden); Beheer › Organisatie › Meldplek; `GET /api/organisatie` (`meld_url`) | ✓ |
 | **Logging en traceerbaarheid**: elke AI-actie, ook geweigerd, met usecase, vraag, bronnen, model, versie en resultaat; geen gebruiker, sessie of IP; alleen toevoegen; hashketen | Bewijs *logboek* (tabel en "Keten klopt"); CSV-export op dezelfde pagina; `tests/integration/test_ai_vrijgave_stack.py` (geen UPDATE/DELETE) | ✓ |
 | **Bewaartermijn**: per instantie, standaard 365 dagen; opschonen via een aparte databaserol en zelf gelogd | Beheer › AI-usecases › AI-logboek (bewaartermijn); `tests/unit/test_ai_logboek.py` | ✓ |
@@ -25,7 +25,7 @@ Bron: het routeplan van de AI Officer (10-10-2026) en het AI-beleid van SWF (§6
 
 Op een installatie met sample-data (`LOAD_SAMPLE_DATA=true`) en een beheerder:
 
-1. Beheeromgeving › **AI-usecases**: upload bij A, B en C `data/testverklaring.pdf`, versie (bijv. de versie van D-OmniTwin) en geldig tot. Of met een script (`ADMIN_API_KEY` uit `.env`):
+1. Beheeromgeving › **AI-usecases**: upload bij A, B en C `data/testverklaring.pdf`, versie (bijv. de versie van D-OmniTwin) en geldig tot; je login komt bij de usecase te staan. Of met een script (`ADMIN_API_KEY` uit `.env`; dan staat er "Systeem (API-sleutel)"):
 
    ```bash
    for uc in A B C; do
@@ -60,6 +60,6 @@ Zonder taalmodel is dit de toestand van het bewijs: B en C open, A stilgezet.
 ![AI-logboek: elke actie, ook geweigerd, zonder gebruikersgegevens; de hashketen klopt](bewijs/logboek.webp)
 *AI-logboek: elke actie, ook geweigerd, zonder gebruikersgegevens; de hashketen klopt*
 
-![Transparantie: iedereen kan per AI-usecase opvragen of hij open is, op welke verklaring (versie, geldig tot) hij rust en waar die staat; zonder logins](bewijs/status.webp)
-*Transparantie: iedereen kan per AI-usecase opvragen of hij open is, op welke verklaring (versie, geldig tot) hij rust en waar die staat; zonder logins*
+![Transparantie voor iedereen: 'AI in deze toepassing' met per functie aan of uit, wat hij doet, de verklaring (versie, geldig tot, PDF) en hoe je meldt](bewijs/uitleg.webp)
+*Transparantie voor iedereen: 'AI in deze toepassing' met per functie aan of uit, wat hij doet, de verklaring (versie, geldig tot, PDF) en hoe je meldt*
 <!-- bewijs:end -->

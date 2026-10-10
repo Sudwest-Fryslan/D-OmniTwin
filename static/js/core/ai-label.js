@@ -1,6 +1,6 @@
 /**
  * Label "AI" bij elk AI-resultaat (#312): wat het is, dat het onjuist of onvolledig kan zijn,
- * de bronnen (waar bekend), "Meer informatie" (de verklaring van de usecase, PDF, #307) en "Melden"
+ * de bronnen (waar bekend), "Meer informatie" (static/ai.html: status en verklaring, #307/#314) en "Melden"
  * (static/js/core/melden.js). Alleen DOM-API (textContent), geen HTML uit data.
  *
  *   const label = OmniAI.label({ usecase: 'A', vraag, resultaat, bronnen: ['65+ jaar (%)'], pagina: 'Assistent' });
@@ -44,11 +44,12 @@
         }
 
         const links = maak('p', 'ai-label__links');
+        // Uitleg per usecase met status, verklaring (PDF) en melden (static/ai.html, #314)
         const info = maak('a', 'ai-label__link', 'Meer informatie');
-        info.href = `/api/ai/usecases/${encodeURIComponent(code || '')}/verklaring`;
+        info.href = `/static/ai.html#usecase-${encodeURIComponent(code || '')}`;
         info.target = '_blank';
         info.rel = 'noopener';
-        info.setAttribute('aria-label', `Meer informatie: verklaring van AI-usecase ${code} (PDF, opent in een nieuw venster)`);
+        info.setAttribute('aria-label', `Meer informatie over AI-usecase ${code}: status en verklaring (opent in een nieuw venster)`);
         links.appendChild(info);
 
         const melding = { onderwerp: 'ai', usecase: code, vraag: o.vraag, resultaat: o.resultaat,

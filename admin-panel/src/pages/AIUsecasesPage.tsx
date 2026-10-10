@@ -28,6 +28,10 @@ const ACTIE: Record<AIVrijgaveRegel['actie'], string> = {
 export const SYSTEEM = 'systeem';
 export const isAutomatisch = (u: AIUsecase) => u.stilgezet && u.status_door === SYSTEEM;
 
+/** Wie een actie deed: een login, 'systeem' (automatisch) of de API-sleutel van een script. */
+export const door = (w: string | null | undefined) =>
+    !w ? '–' : w === 'API_SCRIPT' ? 'Systeem (API-sleutel)' : w === SYSTEEM ? 'Systeem (automatisch)' : w;
+
 export const tijd = (w: string | null) => (w ? new Date(w).toLocaleString('nl-NL') : '–');
 export const datum = (w: string | null) => (w ? new Date(`${w}T00:00:00`).toLocaleDateString('nl-NL') : '–');
 
@@ -122,11 +126,11 @@ export const UsecaseKaart: React.FC<{ u: AIUsecase; bijgewerkt: (m: string) => v
                 <dt>Versie</dt><dd>{u.versie ?? '–'}</dd>
                 <dt>Geldig tot en met</dt><dd>{datum(u.geldig_tot)}</dd>
                 <dt>Geüpload en actief gemaakt</dt>
-                <dd>{u.geupload_door ? `${u.geupload_door}, ${tijd(u.geupload_op)}` : '–'}</dd>
+                <dd>{u.geupload_door ? `${door(u.geupload_door)}, ${tijd(u.geupload_op)}` : '–'}</dd>
                 <dt>Noodstop</dt>
                 <dd>
                     {u.stilgezet ? (isAutomatisch(u) ? 'Aan (automatisch)' : 'Aan') : 'Uit'}
-                    {u.status_door ? ` (laatst gewijzigd door ${u.status_door}, ${tijd(u.status_op)})` : ''}
+                    {u.status_door ? ` (laatst gewijzigd door ${door(u.status_door)}, ${tijd(u.status_op)})` : ''}
                     {u.stilgezet && !isAutomatisch(u) && u.stilgezet_reden ? `: ${u.stilgezet_reden}` : ''}
                 </dd>
             </dl>
@@ -317,8 +321,8 @@ export const AIUsecasesPage: React.FC = () => {
                                             </span></td>
                                             <td>{u.versie ?? '–'}</td>
                                             <td>{datum(u.geldig_tot)}</td>
-                                            <td>{u.geupload_door ? `${u.geupload_door}, ${tijd(u.geupload_op)}` : '–'}</td>
-                                            <td>{u.stilgezet ? `Aan (${u.status_door ?? '?'}, ${tijd(u.status_op)})` : 'Uit'}</td>
+                                            <td>{u.geupload_door ? `${door(u.geupload_door)}, ${tijd(u.geupload_op)}` : '–'}</td>
+                                            <td>{u.stilgezet ? `Aan (${door(u.status_door)}, ${tijd(u.status_op)})` : 'Uit'}</td>
                                         </tr>
                                     ))}
                                 </tbody>
@@ -337,7 +341,7 @@ export const AIUsecasesPage: React.FC = () => {
                                 {log.map(r => (
                                     <tr key={r.id}>
                                         <td>{tijd(r.tijdstip)}</td><td>{r.usecase ?? '–'}</td><td>{r.actie === 'noodstop' && r.door === SYSTEEM ? 'Automatische noodstop' : (ACTIE[r.actie] ?? r.actie)}</td>
-                                        <td>{r.door ?? 'automatisch'}</td><td>{r.versie ?? '–'}</td><td>{datum(r.geldig_tot)}</td><td>{r.toelichting}</td>
+                                        <td>{r.door ? door(r.door) : 'Systeem (automatisch)'}</td><td>{r.versie ?? '–'}</td><td>{datum(r.geldig_tot)}</td><td>{r.toelichting}</td>
                                     </tr>
                                 ))}
                                 {log.length === 0 && <tr><td colSpan={7}>Nog niets vastgelegd.</td></tr>}

@@ -46,7 +46,7 @@ describe('AILabel', () => {
         expect(label).toHaveTextContent('AI');
         expect(label).toHaveTextContent('onjuist of onvolledig');
         expect(label).toHaveTextContent('Bronnen: 65+ jaar (%)');
-        expect(screen.getByRole('link', { name: /Meer informatie/ })).toHaveAttribute('href', '/api/ai/usecases/B/verklaring');
+        expect(screen.getByRole('link', { name: /Meer informatie/ })).toHaveAttribute('href', '/static/ai.html#usecase-B');
         await waitFor(() => expect(screen.getByRole('link', { name: /Melden/ }).getAttribute('href'))
             .toMatch(/^https:\/\/meld\.voorbeeld\.nl\/nieuw\?title=/));
     });

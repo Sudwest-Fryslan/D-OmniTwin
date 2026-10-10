@@ -44,8 +44,8 @@ export const AILabel: React.FC<AILabelProps> = ({ usecase, vraag, resultaat, bro
             </p>
             {bronnen && bronnen.length > 0 && <p style={{ margin: '0.3rem 0 0' }}>Bronnen: {bronnen.slice(0, 8).join(', ')}</p>}
             <p style={{ margin: '0.35rem 0 0', display: 'flex', gap: '1rem' }}>
-                <a href={`/api/ai/usecases/${usecase}/verklaring`} target="_blank" rel="noopener noreferrer"
-                    aria-label={`Meer informatie: verklaring van AI-usecase ${usecase} (PDF, opent in een nieuw venster)`}>
+                <a href={`/static/ai.html#usecase-${usecase}`} target="_blank" rel="noopener noreferrer"
+                    aria-label={`Meer informatie over AI-usecase ${usecase}: status en verklaring (opent in een nieuw venster)`}>
                     Meer informatie
                 </a>
                 <a href={meldUrl(melding, plek)} target="_blank" rel="noopener noreferrer"

@@ -115,7 +115,7 @@ def test_datavraag_in_de_chat(page, uc):
         label = bericht.locator(f'.ai-label[data-usecase="{code}"]')
         expect(label).to_be_visible()
         expect(label.get_by_role("link", name=re.compile("Meer informatie"))).to_have_attribute(
-            "href", f"/api/ai/usecases/{code}/verklaring")
+            "href", f"/static/ai.html#usecase-{code}")
         expect(label.get_by_role("link", name=re.compile("Melden"))).to_have_attribute("href", re.compile(r"title="))
     expect(bericht.locator(".chat-bronregel")).to_contain_text("Bron:")
     for b in data["bronnen"]:

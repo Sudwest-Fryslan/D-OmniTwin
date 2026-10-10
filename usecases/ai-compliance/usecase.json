@@ -67,17 +67,17 @@
         "bevat": ["AI-logboek", "Keten klopt"]
       },
       {
-        "id": "status",
+        "id": "uitleg",
         "actie": "open",
-        "pad": "/api/ai/usecases",
-        "omschrijving": "Transparantie: iedereen kan per AI-usecase opvragen of hij open is, op welke verklaring (versie, geldig tot) hij rust en waar die staat; zonder logins",
-        "bevat": ["stilgezet", "verklaring_url"]
+        "pad": "/static/ai.html",
+        "omschrijving": "Transparantie voor iedereen: 'AI in deze toepassing' met per functie aan of uit, wat hij doet, de verklaring (versie, geldig tot, PDF) en hoe je meldt",
+        "bevat": ["AI in deze toepassing", "Verklaring lezen (PDF)", "Uit: tijdelijk stilgezet"]
       }
     ]
   },
   "inrichting": {
     "testverklaring": "data/testverklaring.pdf (TESTVERKLARING - voorbeeld, geen echte toetsing)",
-    "vrijgave": "A, B en C vrijgegeven met de testverklaring; daarna A stilgezet met de noodstop",
+    "vrijgave": "A, B en C vrijgegeven met de testverklaring door een beheerder (ingelogd); daarna A stilgezet met de noodstop",
     "ai_aanbieder": "geen taalmodel nodig: A staat stil, B en C laten de vrijgave zien; zoeken op betekenis gebruikt het embeddingmodel in de image"
   },
   "bekende_afwijkingen": [

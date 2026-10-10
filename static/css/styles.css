@@ -2352,7 +2352,8 @@ textarea {
   top: 80px;
   bottom: 35px;
   width: 380px;
-  background: var(--panel-bg);
+  /* Bijna dekkend: een felle kaartlaag mag de tekst van de chat niet onleesbaar maken (#314) */
+  background: color-mix(in srgb, var(--bg-secondary) 96%, transparent);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   border-left: 1px solid var(--panel-border);
