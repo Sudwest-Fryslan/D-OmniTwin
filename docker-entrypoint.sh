@@ -46,12 +46,31 @@ wait_for_db() {
 # database zonder die tabel draaien alle migraties één keer opnieuw (ze zijn idempotent).
 # Baseline: wat in db/migraties/baseline/ staat, zit al in db/schema/schema_latest.sql.
 run_migrations() {
+    upgrade_postgis
     PGHOST="$DB_HOST" PGPORT="$DB_PORT" PGDATABASE="$DB_NAME" PGUSER="$DB_USER" python -m omnitwin.migraties
 }
 
 # psql met de gegevens uit .env; -X: geen psqlrc
 db_psql() {
     psql -X -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" "$@"
+}
+
+# PostGIS-extensies bijwerken als het database-image een nieuwere PostGIS heeft dan de database
+# (#191: van postgis/postgis:15-3.5 op bullseye naar PostGIS 3.6 uit PGDG op bookworm). Zelfde
+# PostgreSQL-major, dus het volume blijft; alleen de SQL-objecten van de extensie gaan mee.
+# Niets te doen = geen actie. Een fout stopt db-init niet (PostGIS 3.6 werkt ook met 3.5-objecten).
+upgrade_postgis() {
+    db_psql -v ON_ERROR_STOP=1 -q >/dev/null <<'SQL' || echo "⚠️  PostGIS-extensies niet bijgewerkt; draai handmatig: SELECT postgis_extensions_upgrade();"
+DO $$
+BEGIN
+    IF EXISTS (SELECT 1 FROM pg_extension e JOIN pg_available_extensions a ON a.name = e.extname
+               WHERE e.extname = 'postgis' AND e.extversion <> a.default_version) THEN
+        RAISE NOTICE 'PostGIS-extensies bijwerken';
+        PERFORM postgis_extensions_upgrade();
+    END IF;
+END
+$$;
+SQL
 }
 
 # Eén waarde opvragen (leeg bij een fout)
