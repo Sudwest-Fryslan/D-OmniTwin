@@ -180,6 +180,9 @@ export interface LLMDebugInfo {
 export interface ReportNarrativeResponse {
     gebied_id: string;
     ai_summary: string;
+    /** #312: gezet als de tekst door AI is gemaakt (usecase B); ai_uit = AI staat uit (#307) */
+    ai?: { usecase: 'B' } | null;
+    ai_uit?: boolean;
     domain_summaries?: Record<string, string>;
     debug_info?: LLMDebugInfo[];
     status: string;
@@ -236,6 +239,8 @@ export interface BenchmarkNarrativeResponse {
     gebied_a: { id: string; naam: string };
     referentie_label: string;
     ai_narrative: string;
+    ai?: { usecase: 'B' } | null;
+    ai_uit?: boolean;
     debug_info?: LLMDebugInfo[];
     status: string;
 }

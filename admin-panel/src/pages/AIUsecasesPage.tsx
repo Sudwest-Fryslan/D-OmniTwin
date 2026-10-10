@@ -28,6 +28,10 @@ const ACTIE: Record<AIVrijgaveRegel['actie'], string> = {
 export const SYSTEEM = 'systeem';
 export const isAutomatisch = (u: AIUsecase) => u.stilgezet && u.status_door === SYSTEEM;
 
+/** Wie een actie deed: een login, 'systeem' (automatisch) of de API-sleutel van een script. */
+export const door = (w: string | null | undefined) =>
+    !w ? '–' : w === 'API_SCRIPT' ? 'Systeem (API-sleutel)' : w === SYSTEEM ? 'Systeem (automatisch)' : w;
+
 export const tijd = (w: string | null) => (w ? new Date(w).toLocaleString('nl-NL') : '–');
 export const datum = (w: string | null) => (w ? new Date(`${w}T00:00:00`).toLocaleDateString('nl-NL') : '–');
 
@@ -122,11 +126,11 @@ export const UsecaseKaart: React.FC<{ u: AIUsecase; bijgewerkt: (m: string) => v
                 <dt>Versie</dt><dd>{u.versie ?? '–'}</dd>
                 <dt>Geldig tot en met</dt><dd>{datum(u.geldig_tot)}</dd>
                 <dt>Geüpload en actief gemaakt</dt>
-                <dd>{u.geupload_door ? `${u.geupload_door}, ${tijd(u.geupload_op)}` : '–'}</dd>
+                <dd>{u.geupload_door ? `${door(u.geupload_door)}, ${tijd(u.geupload_op)}` : '–'}</dd>
                 <dt>Noodstop</dt>
                 <dd>
                     {u.stilgezet ? (isAutomatisch(u) ? 'Aan (automatisch)' : 'Aan') : 'Uit'}
-                    {u.status_door ? ` (laatst gewijzigd door ${u.status_door}, ${tijd(u.status_op)})` : ''}
+                    {u.status_door ? ` (laatst gewijzigd door ${door(u.status_door)}, ${tijd(u.status_op)})` : ''}
                     {u.stilgezet && !isAutomatisch(u) && u.stilgezet_reden ? `: ${u.stilgezet_reden}` : ''}
                 </dd>
             </dl>
@@ -160,6 +164,8 @@ const AILogboek: React.FC = () => {
     useEffect(() => { laad(); }, [laad]);
     useEffect(() => {
         aiVrijgaveAPI.bewaartermijn().then(r => setDagen(r.data.bewaartermijn_dagen)).catch(() => undefined);
+        // De keten meteen narekenen bij het openen (klopt hij niet, dan zet de backend AI stil)
+        aiVrijgaveAPI.controle().then(r => setControle(r.data)).catch(() => undefined);
     }, []);
 
     const zetFilter = (veld: keyof AILogFilter, w: string) => { setOffset(0); setFilter(f => ({ ...f, [veld]: w })); };
@@ -179,7 +185,7 @@ const AILogboek: React.FC = () => {
     };
 
     return (
-        <section className="card" aria-labelledby="ai-logboek-titel">
+        <section className="card" id="ai-logboek" aria-labelledby="ai-logboek-titel">
             <div className="card-header"><h2 className="card-title" id="ai-logboek-titel">AI-logboek</h2></div>
             <p className="text-secondary">
                 Elke AI-actie, ook een geweigerde (usecase dicht). Zonder gebruikersgegevens: geen login, sessie of IP-adres.
@@ -274,6 +280,11 @@ export const AIUsecasesPage: React.FC = () => {
     }, []);
 
     useEffect(() => { laad(); }, [laad]);
+    // Directe link naar een onderdeel (bijv. /admin/ai-usecases#ai-logboek)
+    useEffect(() => {
+        const doel = window.location.hash.slice(1);
+        if (usecases && doel) document.getElementById(doel)?.scrollIntoView({ block: 'start' });
+    }, [usecases]);
 
     const bijgewerkt = (m: string) => { setFout(null); setMelding(m); laad(); };
     const mislukt = (m: string) => { setMelding(null); setFout(m); };
@@ -295,6 +306,30 @@ export const AIUsecasesPage: React.FC = () => {
             {melding && <div role="status" className="login-melding">{melding}</div>}
             {!usecases && !fout && <p>Bezig met laden...</p>}
             <div style={{ display: 'grid', gap: 'var(--spacing-lg, 1.5rem)' }}>
+                {usecases && (
+                    <section className="card" aria-labelledby="ai-overzicht-titel">
+                        <div className="card-header"><h2 className="card-title" id="ai-overzicht-titel">Overzicht</h2></div>
+                        <div style={{ overflowX: 'auto' }}>
+                            <table className="table" data-testid="ai-overzicht">
+                                <thead><tr><th>Usecase</th><th>Status</th><th>Versie verklaring</th><th>Geldig tot en met</th><th>Actief gemaakt door</th><th>Noodstop</th></tr></thead>
+                                <tbody>
+                                    {usecases.map(u => (
+                                        <tr key={u.code}>
+                                            <td>{u.code} – {u.naam}</td>
+                                            <td><span className={`badge ${u.open ? 'badge-positive' : 'badge-negative'}`}>
+                                                {u.reden === 'stilgezet' && isAutomatisch(u) ? 'Dicht: automatische noodstop' : REDEN[u.reden]}
+                                            </span></td>
+                                            <td>{u.versie ?? '–'}</td>
+                                            <td>{datum(u.geldig_tot)}</td>
+                                            <td>{u.geupload_door ? `${door(u.geupload_door)}, ${tijd(u.geupload_op)}` : '–'}</td>
+                                            <td>{u.stilgezet ? `Aan (${door(u.status_door)}, ${tijd(u.status_op)})` : 'Uit'}</td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    </section>
+                )}
                 {usecases?.map(u => <UsecaseKaart key={u.code} u={u} bijgewerkt={bijgewerkt} fout={mislukt} />)}
 
                 <section className="card" aria-labelledby="ai-vrijgavelog-titel">
@@ -306,7 +341,7 @@ export const AIUsecasesPage: React.FC = () => {
                                 {log.map(r => (
                                     <tr key={r.id}>
                                         <td>{tijd(r.tijdstip)}</td><td>{r.usecase ?? '–'}</td><td>{r.actie === 'noodstop' && r.door === SYSTEEM ? 'Automatische noodstop' : (ACTIE[r.actie] ?? r.actie)}</td>
-                                        <td>{r.door ?? 'automatisch'}</td><td>{r.versie ?? '–'}</td><td>{datum(r.geldig_tot)}</td><td>{r.toelichting}</td>
+                                        <td>{r.door ? door(r.door) : 'Systeem (automatisch)'}</td><td>{r.versie ?? '–'}</td><td>{datum(r.geldig_tot)}</td><td>{r.toelichting}</td>
                                     </tr>
                                 ))}
                                 {log.length === 0 && <tr><td colSpan={7}>Nog niets vastgelegd.</td></tr>}

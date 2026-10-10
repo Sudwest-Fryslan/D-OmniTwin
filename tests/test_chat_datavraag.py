@@ -448,3 +448,30 @@ def test_eigen_buurt_zonder_vraagpatroon_is_datavraag(nep_ouderen):
 def test_route_geeft_gebiedstype_en_gemeente_voor_de_kaart(nep_route):
     r = route("Welke buurt in Bolsward ligt het verst van een koele plek?", "Bolsward-Noord: 246 m.")
     assert r["gebiedstype_id"] == BUURT and r["gemeente_code"] == "1900"
+
+# ── 'Mijn buurt' (#233): multi-selectie en de aanname vooraf ─────────────────
+
+def test_multiselectie_telt_mee():
+    r = gebieden("hoeveel % is bejaard bij mij in de buurt?", huidig_gebied_id="BU19000001",
+                 geselecteerd=["BU19000001", "BU19000002", "ONBEKEND"])
+    assert r.gevraagd == ["BU19000001", "BU19000002"] and r.bron == "kaart"
+    assert dv.aanname_tekst(r).startswith(
+        "Ik ga uit van Bolsward-Noord en Bolsward-Zuidoost (geselecteerd op de kaart).")
+
+
+def test_gebied_in_de_vraag_gaat_voor_de_selectie_en_geeft_geen_aanname():
+    r = gebieden("hoeveel ouderen in Workum", geselecteerd=["BU19000001"])
+    assert r.gevraagd == ["BU19000200"] and dv.aanname_tekst(r) is None
+
+
+def test_aanname_bij_een_buurt_van_de_kaart():
+    r = gebieden("hoe staat het met eenzaamheid hier", huidig_gebied_id="BU19000004")
+    assert dv.aanname_tekst(r) == ("Ik ga uit van Bolsward-Noordoost (geselecteerd op de kaart). Een andere buurt? "
+                                   "Selecteer die op de kaart of noem de naam in je vraag.")
+
+
+@pytest.mark.parametrize("vraag", ["hoeveel ouderen wonen er bij ons in de wijk?", "zijn er veel bejaarden in deze buurt?",
+                                   "inkomen in onze straat", "waar wij wonen"])
+def test_eigen_buurt_varianten(vraag):
+    assert dv.vraagt_eigen_buurt(vraag)
+

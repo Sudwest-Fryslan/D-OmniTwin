@@ -2352,7 +2352,8 @@ textarea {
   top: 80px;
   bottom: 35px;
   width: 380px;
-  background: var(--panel-bg);
+  /* Bijna dekkend: een felle kaartlaag mag de tekst van de chat niet onleesbaar maken (#314) */
+  background: color-mix(in srgb, var(--bg-secondary) 96%, transparent);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   border-left: 1px solid var(--panel-border);
@@ -3487,6 +3488,69 @@ textarea {
   margin: 0.5rem 0 0.25rem 0;
   padding: 0.35rem 0.5rem;
   border-left: 2px solid color-mix(in srgb, var(--accent-color) 40%, transparent);
+  line-height: 1.4;
+}
+
+/* --- #312: label AI bij elk AI-resultaat (static/js/core/ai-label.js) --- */
+.ai-label {
+  font-size: 0.75rem;
+  line-height: 1.4;
+  color: var(--text-secondary);
+  margin: 0.5rem 0 0.25rem 0;
+  padding: 0.4rem 0.55rem;
+  border-left: 3px solid var(--accent-color);
+  background: color-mix(in srgb, var(--accent-color) 6%, transparent);
+  border-radius: 0 4px 4px 0;
+}
+
+.ai-label p {
+  margin: 0;
+}
+
+.ai-label__kop {
+  display: flex;
+  gap: 0.4rem;
+  align-items: flex-start;
+}
+
+.ai-label__badge {
+  flex: none;
+  font-weight: 700;
+  font-size: 0.68rem;
+  letter-spacing: 0.04em;
+  padding: 1px 6px;
+  border-radius: 4px;
+  color: var(--accent-text);
+  border: 1px solid var(--accent-color);
+  background: color-mix(in srgb, var(--accent-color) 12%, transparent);
+}
+
+.ai-label__bronnen {
+  margin-top: 0.25rem !important;
+}
+
+.ai-label__links {
+  display: flex;
+  gap: 0.9rem;
+  margin-top: 0.3rem !important;
+}
+
+.ai-label__link {
+  color: var(--accent-text);
+  text-decoration: underline;
+  font-weight: 600;
+}
+
+.ai-label__link:focus-visible {
+  outline: 2px solid var(--accent-color);
+  outline-offset: 2px;
+}
+
+/* --- #233: van welke buurt het antwoord uitgaat --- */
+.chat-aanname {
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+  margin: 0 0 0.35rem 0;
   line-height: 1.4;
 }
 

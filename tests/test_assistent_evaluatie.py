@@ -43,9 +43,26 @@ def test_evalueer_routeert_datavragen_naar_de_chat():
         {"vraag": "ouderen", "type": "zoek", "relevant": ["a"]},
         {"vraag": "hoeveel ouderen hier", "type": "datavraag", "relevant": ["a"]}]}
     chat = lambda v, g: {"intent": "DATAVRAAG", "indicatoren": [{"uuid": "a"}],  # noqa: E731
-                         "gegevens": [{"gebied_id": g}], "narrative": "x"}
+                         "gegevens": [{"gebied_id": x} for x in g], "narrative": "x"}
     res = ev.evalueer(testset, lambda v: ["a"], chat)
     assert [r["gerouteerd"] for r in res] == [None, True]
+
+
+def test_gerouteerd_mijn_buurt_selectie_en_aanname():
+    """#233: bij 'mijn buurt' met een (multi-)selectie zegt het antwoord van welke buurt(en) het uitgaat."""
+    v = {"vraag": "hoeveel % is bejaard bij mij in de buurt?", "type": "datavraag", "mijn_buurt": True}
+    namen = {"B1": "Noord", "B2": "Zuid"}
+    goed = {"intent": "DATAVRAAG", "gegevens": [{"gebied_id": "B1"}, {"gebied_id": "B2"}],
+            "aanname": "Ik ga uit van Noord en Zuid (geselecteerd op de kaart)."}
+    assert ev.gerouteerd(v, goed, ["B1", "B2"], namen)
+    assert not ev.gerouteerd(v, {**goed, "aanname": None}, ["B1", "B2"], namen)
+    assert not ev.gerouteerd(v, {**goed, "gegevens": [{"gebied_id": "B1"}]}, ["B1", "B2"], namen)
+
+
+def test_gerouteerd_zonder_selectie_vraagt_welke_buurt():
+    v = {"vraag": "hoeveel % is bejaard bij mij in de buurt?", "type": "datavraag", "route": "vraag_buurt"}
+    assert ev.gerouteerd(v, {"intent": "DATAVRAAG", "narrative": "Welke buurt is jouw buurt?"}, [])
+    assert not ev.gerouteerd(v, {"intent": "DATAVRAAG", "narrative": "65+: 20%", "gegevens": [{"gebied_id": "X"}]}, [])
 
 
 def test_testset_is_volledig():
@@ -53,7 +70,8 @@ def test_testset_is_volledig():
     vragen = t["vragen"]
     assert len(vragen) >= 40
     assert {"precision_at_k", "recall_at_k", "mrr", "routering"} <= set(t["drempels"])
-    assert len({v["vraag"] for v in vragen}) == len(vragen), "dubbele vraag"
+    sleutels = [(v["vraag"], tuple(v.get("selectie", ["standaard"]))) for v in vragen]
+    assert len(set(sleutels)) == len(vragen), "dubbele vraag (zelfde vraag en selectie)"
     assert sum(1 for v in vragen if v["type"] == "datavraag") >= 5
     assert sum(1 for v in vragen if v.get("holdout")) >= 10
     for v in vragen:

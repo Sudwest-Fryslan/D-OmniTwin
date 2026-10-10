@@ -72,8 +72,10 @@ VOLLEDIG = ("naam", "versie", "titel", "vraag", "gebruiker", "status", "afhankel
 # (in git alleen bewijs/*.webp, bewijs/bewijs.json en bewijs/README.md; #225).
 TOEGESTAAN = {".json", ".md", ".csv"}
 TOEGESTAAN_BEWIJS = {".json", ".md", ".png", ".jpg", ".jpeg", ".webp"}
-# In data/ ook een GeoPackage: geometrie die niet online te downloaden is (bijv. welstand × buurt, #222)
-TOEGESTAAN_DATA = TOEGESTAAN | {".gpkg"}
+# In data/ ook een GeoPackage: geometrie die niet online te downloaden is (bijv. welstand × buurt, #222),
+# en een kleine PDF als voorbeelddocument (bijv. een testverklaring voor de AI-vrijgave, #314)
+TOEGESTAAN_DATA = TOEGESTAAN | {".gpkg", ".pdf"}
+MAX_PDF_BYTES = 100 * 1024
 # Bestaande code in use cases, uit te faseren naar een kernadapter (niet nieuw toevoegen).
 UIT_TE_FASEREN = set()
 # Sleutels in datasets/<id>.json die niet naar POST /api/laden/v1/datasets gaan
@@ -248,6 +250,9 @@ def bestandsfouten(map_, naam=None):
         if p.suffix.lower() not in toegestaan:
             fouten.append(f"{rel}: bestandstype {p.suffix or '(geen)'} niet toegestaan in een use case "
                           f"(alleen {', '.join(sorted(toegestaan))}); code hoort in de kern (omnitwin.bronadapters)")
+        elif p.suffix.lower() == ".pdf" and (p.stat().st_size > MAX_PDF_BYTES or not p.read_bytes().startswith(b"%PDF")):
+            fouten.append(f"{rel}: een PDF in een use case is een klein voorbeelddocument (geldige PDF, "
+                          f"hoogstens {MAX_PDF_BYTES // 1024} KB)")
     return fouten
 
 

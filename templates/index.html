@@ -4,6 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="d-omnitwin-versie" content="{{ app_version }}"><!-- #312: versie in een melding -->
   <!-- #258: favorieten en kaartpositie alleen voor een ingelogde gebruiker (static/js/mijn.js) -->
   <meta name="omnitwin-ingelogd" content="{{ '1' if account and account.naam else '0' }}">
   <title>D-OmniTwin</title>
@@ -400,6 +401,7 @@
           <div style="background: color-mix(in srgb, var(--action-color) 10%, transparent); border: 1px solid color-mix(in srgb, var(--action-color) 20%, transparent); padding: 12px; border-radius: var(--border-radius-sm); font-size: 0.85rem; color: var(--text-secondary);">
             <p style="margin-bottom: 8px;">Klik op het <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: inline-block; vertical-align: middle; margin: 0 2px;"><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="8" y="8" width="8" height="8" rx="1"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="M2 12h2"/><path d="M20 12h2"/></svg> icoon linksonder om de AI assistent te openen.</p>
             <p>💡 Tip: Typ <strong>"Help"</strong> of <strong>"Wat kan jij?"</strong> in de chat voor uitleg over functionaliteiten.</p>
+            <p style="margin-top: 8px;"><a href="/static/ai.html" target="_blank" rel="noopener">AI in deze toepassing</a>: welke functies AI gebruiken, of ze aan staan, de verklaring en melden.</p>
           </div>
 
           <div style="margin-top: 30px;">
@@ -1092,6 +1094,8 @@
   <script src="/static/js/viewer-account.js"></script>
   <script src="/static/js/core/event-bus.js"></script>
   <script src="/static/js/core/escape.js"></script>
+  <script src="/static/js/core/melden.js"></script>
+  <script src="/static/js/core/ai-label.js"></script>
   <script src="/static/js/core/afwijking.js"></script>
   <script src="/static/js/core/a11y.js"></script>
   <script src="/static/js/draggable-window.js"></script>

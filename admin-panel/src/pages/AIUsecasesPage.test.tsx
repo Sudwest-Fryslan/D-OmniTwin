@@ -24,6 +24,7 @@ beforeEach(() => {
     vi.spyOn(aiVrijgaveAPI, 'usecases').mockImplementation(() => ok(USECASES));
     vi.spyOn(aiVrijgaveAPI, 'vrijgavelog').mockImplementation(() => ok([]));
     vi.spyOn(aiVrijgaveAPI, 'logboek').mockImplementation(() => ok({ totaal: 0, regels: [] }));
+    vi.spyOn(aiVrijgaveAPI, 'controle').mockImplementation(() => ok({ ok: true, aantal: 3, eerste_id: 1, laatste_id: 3, fouten: [] }));
     vi.spyOn(aiVrijgaveAPI, 'bewaartermijn').mockImplementation(() => ok({ bewaartermijn_dagen: 365, gewijzigd_door: null, gewijzigd_op: null }));
 });
 
@@ -43,6 +44,9 @@ describe('AIUsecasesPage', () => {
         const a = screen.getByTestId('usecase-A');
         expect(within(a).getByRole('link', { name: /DPIA.pdf/ })).toHaveAttribute('href', '/api/ai/usecases/A/verklaring');
         expect(within(a).getByText(/fb-beheer/)).toBeInTheDocument();
+        const overzicht = screen.getByTestId('ai-overzicht');
+        expect(within(overzicht).getByText('Dicht: automatische noodstop')).toBeInTheDocument();
+        expect(await screen.findByText(/Keten klopt: 3 regels/)).toBeInTheDocument();
     });
 
     it('noodstop en opheffen roepen de beheer-API aan', async () => {

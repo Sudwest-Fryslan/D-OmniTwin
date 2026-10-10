@@ -48,7 +48,7 @@ Criteria 7 en 8 toetst `tests/e2e/test_toegang_per_laag.py` in de browser; `test
 ## Bewijs
 
 <!-- bewijs:start -->
-*Gemaakt op 04-10-2026 met D-OmniTwin 0.3.0 (use case 0.1.0); geslaagd. Verslag: [`bewijs/bewijs.json`](bewijs/bewijs.json). Opnieuw maken (bij een release): `python -m omnitwin.usecases bewijs rechten-per-laag`.*
+*Gemaakt op 10-10-2026 met D-OmniTwin 0.4.0 (use case 0.1.0); geslaagd. Verslag: [`bewijs/bewijs.json`](bewijs/bewijs.json). Opnieuw maken (bij een release): `python -m omnitwin.usecases bewijs rechten-per-laag`.*
 
 ![Zonder inloggen: de lagenlijst (PostgREST) heeft alleen openbare lagen](bewijs/lagen-anoniem.webp)
 *Zonder inloggen: de lagenlijst (PostgREST) heeft alleen openbare lagen*

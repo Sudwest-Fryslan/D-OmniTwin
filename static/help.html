@@ -266,7 +266,7 @@
           <li><strong>CSV downloaden</strong>: de selectie (of zonder selectie alle gebieden op de kaart) met het gemeentegemiddelde, te openen in Excel (puntkomma, decimale komma).</li>
           <li><strong>Kleine aantallen</strong>: een waarde die op minder dan 10 waarnemingen rust, tonen we niet. In de grafiek ontbreekt de staaf; in de CSV is de waarde leeg met status <em>onderdrukt</em>.</li>
         </ul>
-        <p>Ingelogd? Bewaar een selectie onder <strong>Info &amp; Start → Mijn favorieten</strong> (of met <em>☆ Bewaar</em> in de selectiebalk) en haal hem later met één klik terug. De kaart opent dan ook weer waar je de vorige keer was. We bewaren daarvoor alleen een anonieme sleutel van je account, geen naam of e-mail; na een jaar zonder gebruik ruimen we het op.</p>
+        <p>Ingelogd? Bewaar een selectie onder <strong>Info &amp; Start → Mijn favorieten</strong> (of met <em>☆ Bewaar</em> in de selectiebalk) en haal hem later met één klik terug. De kaart opent dan ook weer waar je de vorige keer was. We bewaren daarvoor alleen de interne sleutel van je account (een pseudoniem dat bij jouw account hoort), geen naam of e-mail; na een jaar zonder gebruik ruimen we het op.</p>
       </div>
 
       <!-- Kompas -->
@@ -301,7 +301,7 @@
           </svg>
           Rapporten &amp; AI-Analyses
         </h2>
-        <p>Genereer automatische analyses op basis van de geselecteerde gebieden. De AI schrijft een samenvatting in mensentaal.</p>
+        <p>Genereer automatische analyses op basis van de geselecteerde gebieden. Als de organisatie AI heeft vrijgegeven, schrijft een taalmodel een samenvatting in mensentaal, met het label <strong>AI</strong>.</p>
         <ol class="steps">
           <li><strong>Eén gebied</strong> selecteren → klik op "Rapport" → Gebiedsdossier met AI-samenvatting.</li>
           <li><strong>Meerdere gebieden</strong> (<kbd>Shift</kbd>+klik) → automatisch Benchmark vergelijking.</li>
@@ -342,8 +342,11 @@
     </div>
 
     <div class="tip-box">
-      <strong>💡 Tip:</strong> De D-Omni Assistent werkt zonder internet — alle AI draait lokaal op de server.
-      Je vragen en data verlaten nooit de organisatie.
+      <strong>💡 AI herkennen:</strong> AI staat alleen aan als de organisatie die heeft vrijgegeven. Elk AI-resultaat
+      heeft het label <strong>AI</strong>: het kan onjuist of onvolledig zijn. Via <em>Meer informatie</em> lees je de
+      verklaring waarop het gebruik rust, via <em>Melden</em> meld je een fout. Zoeken op betekenis draait op de server
+      zelf. Of je vraag de organisatie verlaat, hangt af van het taalmodel dat de organisatie gebruikt: een model op de
+      eigen server, of een externe aanbieder. Elke AI-actie wordt vastgelegd in een logboek, zonder wie de vraag stelde.
     </div>
 
     <div class="help-footer">

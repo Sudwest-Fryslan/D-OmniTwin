@@ -167,6 +167,19 @@ def test_bestandscontrole_keurt_code_af(tmp_path):
     assert len(fouten) == 5 and all("niet toegestaan" in f for f in fouten)
 
 
+def test_kleine_pdf_in_data_mag(tmp_path):
+    """#314: een klein voorbeelddocument (bijv. de testverklaring van ai-compliance) mag in data/."""
+    map_ = tmp_path / "voorbeeld"
+    (map_ / "data").mkdir(parents=True)
+    (map_ / "data" / "verklaring.pdf").write_bytes(b"%PDF-1.4\n%%EOF\n")
+    assert uc.bestandsfouten(map_) == []
+    (map_ / "data" / "groot.pdf").write_bytes(b"%PDF-1.4\n" + b"0" * (uc.MAX_PDF_BYTES + 1))
+    (map_ / "data" / "nep.pdf").write_bytes(b"MZ geen pdf")
+    (map_ / "verklaring.pdf").write_bytes(b"%PDF-1.4\n")  # alleen in data/
+    fouten = uc.bestandsfouten(map_)
+    assert len(fouten) == 3, fouten
+
+
 def test_index_actueel():
     assert uc.werk_index_bij(controleer=True), "python -m omnitwin.usecases index"
 

@@ -274,6 +274,8 @@ export interface Organisatie {
     contact_email: string | null;
     thema: string;
     logos: OrganisatieLogo[];
+    /** Meldplek voor "Melden" (#312): https of mailto; zonder eigen instelling de standaard */
+    meld_url?: string | null;
 }
 
 export interface OrganisatieLogo { pad: string; naam: string | null; rol: string }
@@ -289,6 +291,7 @@ export interface OrganisatieInvoer {
     contact_email: string | null;
     thema: string;
     logos: OrganisatieLogo[];
+    meld_url?: string | null;
 }
 
 // Thema uit static/css/themes, met de kleurtokens (#hex) van het lichte en donkere blok

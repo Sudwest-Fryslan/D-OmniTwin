@@ -4,6 +4,7 @@ import { reportAPI } from '../services/api';
 import type { ReportDataPayload, ReportNarrativeResponse } from '../types';
 import { Download, RefreshCw, Printer, AlertCircle, TrendingUp, Info, Activity, ArrowLeft, Cpu, Database, Map as MapIcon, Compass, Terminal, ChevronDown, ChevronUp, X } from 'lucide-react';
 import { ExportPrintModal } from '../components/ExportPrintModal';
+import { AILabel } from '../components/AILabel';
 import Beeldmerk from '../components/Beeldmerk';
 
 export const ReportPage: React.FC = () => {
@@ -185,13 +186,13 @@ export const ReportPage: React.FC = () => {
                     {/* Executive Summary AI Vlak */}
                     <div className="card report-section executive-summary" style={{ borderLeft: '4px solid var(--color-primary)' }}>
                         <h2 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
-                            <Cpu size={20} className="text-primary" /> Executive Summary (Lokale AI)
+                            <Cpu size={20} className="text-primary" /> Executive Summary (AI-samenvatting)
                         </h2>
                         {aiLoading ? (
                             <div className="loading-state" style={{ padding: '2rem', textAlign: 'center' }}>
                                 <RefreshCw className="spin text-primary" size={24} />
                                 <p style={{ marginTop: '1rem' }}>Samenvoegen tot totaaloverzicht...</p>
-                                <small className="text-secondary">Bezig met genereren van kwadrant samenvattingen via lokale inferentie (ca. 60 sec).</small>
+                                <small className="text-secondary">Het ingestelde taalmodel maakt samenvattingen per kwadrant (kan een minuut duren).</small>
                             </div>
                         ) : aiError ? (
                             <div className="error-message">{aiError}</div>
@@ -200,6 +201,11 @@ export const ReportPage: React.FC = () => {
                                 <div style={{ fontSize: '1.1rem', lineHeight: 1.6, marginBottom: '2rem' }}>
                                     {aiResponse.ai_summary}
                                 </div>
+                                {aiResponse.ai && (
+                                    <AILabel usecase="B" pagina="Beheer: gebiedsdossier"
+                                        resultaat={aiResponse.ai_summary}
+                                        bronnen={[`gebied ${aiResponse.gebied_id}`, 'indicatoren in dit rapport']} />
+                                )}
 
                                 {aiResponse.domain_summaries && Object.keys(aiResponse.domain_summaries).length > 0 && (
                                     <div style={{ marginTop: '2rem', borderTop: '1px solid var(--color-border)', paddingTop: '1.5rem' }}>

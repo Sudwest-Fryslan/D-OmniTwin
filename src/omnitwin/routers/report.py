@@ -146,7 +146,8 @@ def generate_report_narrative(gebied_id: str, request: Request, db: Session = De
             "gebied_id": gebied_id,
             "ai_summary": overall_summary_text,
             "domain_summaries": domain_responses,
-            "status": "success"
+            "status": "success",
+            "ai": {"usecase": ai_vrijgave.B} if domain_summaries_text and not llm_fout else None,  # #312: label AI
         }
         if not llm_fout:
             _cache_put(cache_key, antwoord)
@@ -227,7 +228,8 @@ def get_benchmark_narrative(
             "gebied_a": benchmark_data["gebied_a"],
             "referentie_label": benchmark_data["referentie_label"],
             "ai_narrative": result["text"],
-            "status": "success"
+            "status": "success",
+            "ai": None if result.get("error") else {"usecase": ai_vrijgave.B},  # #312
         }
         if not result.get("error"):
             _cache_put(cache_key, antwoord)

@@ -92,7 +92,10 @@ class AISearchService:
         meta = {r[0]: r for r in rows}
         onder, boven = zoektaal.relatieve_grenzen(
             gelijkenis, embedding_model.GELIJKENIS_MARGE_ONDER, embedding_model.GELIJKENIS_MARGE_BOVEN)
-        rangen = zoektaal.rangschik(query_text, [{"uuid": u, "naam": r[1]} for u, r in meta.items()],
+        # tekst: kompaspad en beschrijving, voor woorden die niet in de naam staan (#233)
+        rangen = zoektaal.rangschik(query_text, [{"uuid": u, "naam": r[1],
+                                                  "tekst": " ".join(x for x in (r[3], r[4], r[5], r[2]) if x)}
+                                                 for u, r in meta.items()],
                                     gelijkenis, zoektaal.laad_begrippen(), onder, boven, limit=limit)
 
         uit = []
@@ -112,6 +115,7 @@ class AISearchService:
                 "score": rang.score,
                 "relevantie": rang.relevantie,
                 "redenen": rang.redenen,
+                "ai": not self.zonder_betekenis,  # #312: het embeddingmodel deed mee (usecase C)
             })
         if not self.zonder_betekenis and not ai_logboek.schrijf(
                 ai_vrijgave.C, self.functie, ai_logboek.UITGEVOERD, taak=query_text,
