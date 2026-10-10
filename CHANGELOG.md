@@ -8,6 +8,10 @@ Eerdere wijzigingen, van vóór dit bestand, zijn terug te vinden in de git-hist
 
 ## [Unreleased]
 
+### Opgelost
+
+- Kompas-benchmark: de kleur van de afwijking ten opzichte van de referentie volgt de polariteit van de indicator (`score_type`/`inverse`). Een hoger inkomen is nu groen, meer werkloosheid rood; indicatoren in het neutrale kwadrant Samenstelling blijven grijs. `indicator_meta` in `POST /api/kompas/{config_id}/benchmark` heeft daarvoor het veld `richting` ([#323](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/323)).
+
 ## [0.3.1] - 2026-10-06
 
 Patch na de verhuizing van de repository naar de organisatie van Súdwest-Fryslân, zonder andere werking van de applicatie.

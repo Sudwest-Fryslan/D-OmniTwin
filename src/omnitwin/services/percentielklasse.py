@@ -59,6 +59,15 @@ def hoger_is_beter(score_type: Optional[str], inverse: Optional[bool] = False) -
     return not (bool(inverse) or (score_type or "+/+") in _OMKEREN)
 
 
+def richting(score_type: Optional[str], inverse: Optional[bool] = False,
+             kwadrant: Optional[str] = None) -> str:
+    """'hoger_is_beter' | 'lager_is_beter' | 'neutraal' (kwadrant Samenstelling), voor de
+    kleur van een afwijking (bijv. de Kompas-benchmark, #323)."""
+    if is_neutraal_kwadrant(kwadrant):
+        return "neutraal"
+    return "hoger_is_beter" if hoger_is_beter(score_type, inverse) else "lager_is_beter"
+
+
 def is_onderdrukt(n: Optional[int], drempel: int = N_DREMPEL) -> bool:
     return n is not None and n < drempel
 
