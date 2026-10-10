@@ -1,0 +1,60 @@
+{
+  "specificatie": "1.0",
+  "naam": "swf-gebruikersvoorkeuren",
+  "id": "TC-07-026",
+  "versie": "0.1.0",
+  "titel": "SWF-gebruikersvoorkeuren: laatste kaartpositie uit de huidige monitor",
+  "vraag": "Als ik na de overstap voor het eerst inlog, wil ik de kaart terugzien waar ik in de oude gebiedsmonitor was gebleven, zonder dat mijn oude gebruikersnaam ergens bewaard blijft.",
+  "gebruiker": "medewerker die de huidige gebiedsmonitor gebruikt; functioneel beheerder SWF (overzetten)",
+  "status": "ontwerp",
+  "afhankelijk_van": [],
+  "actoren": [
+    {
+      "naam": "beheerder",
+      "soort": "gebruiker",
+      "rollen": [
+        "beheerder"
+      ],
+      "omschrijving": "functioneel beheerder: maakt de koppeling oude gebruikersnaam → Keycloak-gebruiker en zet de voorkeuren over"
+    },
+    {
+      "naam": "lezer",
+      "soort": "gebruiker",
+      "rollen": [
+        "lezer"
+      ],
+      "omschrijving": "ingelogde medewerker met overgezette voorkeuren"
+    }
+  ],
+  "rechten": [
+    "realm-rol beheerder (koppeling maken, script draaien op de server)",
+    "realm-rol lezer (eigen voorkeuren)"
+  ],
+  "datasets": [],
+  "controles": [
+    {
+      "type": "api",
+      "pad": "/api/mijn/instellingen",
+      "anoniem": true,
+      "status": 401,
+      "omschrijving": "voorkeuren zijn persoonlijk: anoniem niet te lezen (#258)"
+    },
+    {
+      "type": "viewer",
+      "stap": "inloggen als een gekoppelde gebruiker die D-OmniTwin nog niet gebruikte",
+      "verwacht": "de kaart opent op de laatste kaartpositie uit de oude monitor"
+    },
+    {
+      "type": "viewer",
+      "stap": "inloggen als een gebruiker zonder koppeling, of die D-OmniTwin al gebruikte",
+      "verwacht": "de eigen (of standaard) kaartpositie; de overzetting overschrijft niets"
+    }
+  ],
+  "bekende_afwijkingen": [
+    "Geen dataset: gebruikersvoorkeuren zijn persoonlijke gegevens en gaan niet via de laad-API of de portabiliteitspoort (V035). Het beheerscript scripts/beheer/swf_monitor_dump.py zet ze over: exporteer (met de koppeling) en laad-voorkeuren.",
+    "Alleen de laatste kaartpositie heeft een plek in D-OmniTwin (gebruiker_voorkeuren.kaartpositie). De gekozen monitor, het actieve paneel, of het paneel open stond en de basislaag hebben geen plek; ze staan in gebruikersvoorkeuren.json onder niet_overgenomen tot de beheerder beslist (#316).",
+    "De huidige monitor heeft geen favorieten in de database (user_properties kent 5 soorten sleutels, geen selecties).",
+    "Een oude gebruikersnaam wordt nooit geraden: alleen een gebruiker met een eigenaar (Keycloak-sub of lokaal:<id>) in gebruikers-mapping.csv gaat mee. Een e-mailadres wordt geweigerd.",
+    "In git staat alleen fictieve voorbeelddata (tests/data/swf_monitor_dump/, voorbeeld.gebruiker1..3)."
+  ]
+}
