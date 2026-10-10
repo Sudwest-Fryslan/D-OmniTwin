@@ -96,7 +96,7 @@ usecases/<naam>/
 Regels:
 
 1. De mapnaam MOET gelijk zijn aan `naam` in het manifest en MOET voldoen aan `^[a-z0-9]+(-[a-z0-9]+)*$`.
-2. **Allowlist van bestandstypen.** Buiten `bewijs/` MOGEN alleen `.json`, `.md` en `.csv` staan; in `data/` ook `.gpkg` (geometrie die niet online te downloaden is, met `herkomst.json` ernaast). In `bewijs/` MOGEN alleen `.json`, `.md`, `.webp`, `.png`, `.jpg` en `.jpeg` staan; nieuwe afbeeldingen MOETEN WebP zijn. Elk ander bestand (ook zonder extensie) is een fout. De uitvoerder (`bestandsfouten`) en de unittest `tests/test_usecases_uitvoerder.py` dwingen dit af.
+2. **Allowlist van bestandstypen.** Buiten `bewijs/` MOGEN alleen `.json`, `.md` en `.csv` staan; in `data/` ook `.gpkg` (geometrie die niet online te downloaden is, met `herkomst.json` ernaast) en `.pdf` (een klein voorbeelddocument, hoogstens 100 KB, bijv. een testverklaring voor de AI-vrijgave). In `bewijs/` MOGEN alleen `.json`, `.md`, `.webp`, `.png`, `.jpg` en `.jpeg` staan; nieuwe afbeeldingen MOETEN WebP zijn. Elk ander bestand (ook zonder extensie) is een fout. De uitvoerder (`bestandsfouten`) en de unittest `tests/test_usecases_uitvoerder.py` dwingen dit af.
 3. Een use case MOET NIET code of uitvoerbare bestanden bevatten: geen scripts, geen notebooks, geen SQL, geen expressies in JSON. Er zijn geen uitzonderingen (de laatste, `hittestress/maak_data.py`, is sinds https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/236 de kernadapter `wcs-zonaal`).
 4. Statische bestanden MOETEN klein zijn (richtlijn: samen ≤ 1 MB) en MOETEN NIET openbare brondata bevatten die ook te downloaden is (zie 7).
 5. De README van de use case MOET de vraag, de gebruiker, de stappen, de acceptatiecriteria en de bronnen beschrijven, en AANBEVOLEN de screenshots uit `bewijs/` tonen.
@@ -702,6 +702,7 @@ Een bewijsverslag `bewijs/bewijs.json` (ingekort):
 
 | Versie | Datum | Wijziging |
 |---|---|---|
+| 1.0 | 2026-10-10 | Aanvulling (https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/314; formeel een minor, 1.0 is nog niet vastgesteld): in `data/` mag ook een kleine PDF staan (≤ 100 KB), als voorbeelddocument zoals de testverklaring van `ai-compliance`. Alle bestaande manifesten blijven geldig. |
 | 1.0 | 2026-10-04 | Aanvulling (https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/254; formeel een minor, 1.0 is nog niet vastgesteld): `toegang` (`openbaar` \| `intern`) bij `datasets[]`, gelijk aan `dct:accessRights` (6.1, 6.3); `maximaal_aantal` bij controletype `api`; actie `bekijken` (met `pad`) bij controletype `recht`. Alle bestaande manifesten blijven geldig. |
 | 1.0 | 2026-10-04 | Aanvulling (https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/222; formeel een minor, 1.0 is nog niet vastgesteld): bewerking `ontdubbel` (dubbele namen met een andere UUID, aanname A4) en map `SWF_EXPORT_DIR` in de allowlist (export van een andere D-OmniTwin-installatie, aanname A1). Alle bestaande manifesten blijven geldig. |
 | 1.0 | 2026-10-03 | Aanvulling (https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/223; formeel een minor, 1.0 is nog niet vastgesteld): `actoren` en `actor` bij controles niet meer gereserveerd; testaccounts in test en dev (`installeer`/`test --testaccounts`, `opruimen`); controletype `recht` met `actie` en `toegestaan`. Alle bestaande manifesten blijven geldig. |

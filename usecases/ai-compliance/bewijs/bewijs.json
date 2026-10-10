@@ -1,0 +1,68 @@
+{
+  "specificatie": "1.0",
+  "naam": "ai-compliance",
+  "versie": "0.1.0",
+  "omnitwin_versie": "0.3.1",
+  "datum": "2026-10-10T18:00:04+02:00",
+  "ai_aanbieder": "geen",
+  "geslaagd": true,
+  "controles": [
+    {
+      "type": "api",
+      "omschrijving": "transparantie: de status per AI-usecase is publiek op te vragen",
+      "resultaat": "ok"
+    },
+    {
+      "type": "api",
+      "omschrijving": "melden: de meldplek is per instantie ingesteld (standaard een nieuw issue)",
+      "resultaat": "ok"
+    },
+    {
+      "type": "chat",
+      "omschrijving": "fallback: met usecase A dicht beantwoordt de assistent de datavraag zonder taalmodel, met een melding",
+      "resultaat": "overgeslagen",
+      "melding": "chat-controles nog niet in de uitvoerder; zie de screenshots"
+    },
+    {
+      "type": "viewer",
+      "resultaat": "overgeslagen",
+      "melding": "viewer-controles nog niet in de uitvoerder; zie de screenshots"
+    },
+    {
+      "type": "viewer",
+      "resultaat": "overgeslagen",
+      "melding": "viewer-controles nog niet in de uitvoerder; zie de screenshots"
+    }
+  ],
+  "stappen": [
+    {
+      "id": "vrijgave",
+      "resultaat": "ok",
+      "afbeelding": "vrijgave.webp",
+      "antwoordtijd_s": 3.8,
+      "console_fouten": []
+    },
+    {
+      "id": "assistent",
+      "resultaat": "ok",
+      "afbeelding": "assistent.webp",
+      "antwoord": "65+ jaar (%) (CBS Kerncijfers wijken en buurten, 2026): Bolsward-Zuidoost: 29,5% (2026). Ter vergelijking: Hoogste waarde: Bolsward-Zuidoost (29,5%); laagste: Bolsward-Noord (24,1%). 80 jaar of ouder (%) (CBS Kerncijfers wijken en buurten, 2026): Bolsward-Zuidoost: 10,2% (2026). Ter vergelijking: Hoogste waarde: Bolsward-Zuidoost (10,2%); laagste: Bolsward-Zuidwest (3,9%).",
+      "antwoordtijd_s": 25.0,
+      "console_fouten": []
+    },
+    {
+      "id": "logboek",
+      "resultaat": "ok",
+      "afbeelding": "logboek.webp",
+      "antwoordtijd_s": 3.8,
+      "console_fouten": []
+    },
+    {
+      "id": "status",
+      "resultaat": "ok",
+      "afbeelding": "status.webp",
+      "antwoordtijd_s": 2.0,
+      "console_fouten": []
+    }
+  ]
+}

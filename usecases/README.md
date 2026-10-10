@@ -106,6 +106,7 @@ Gegenereerd met `python -m omnitwin.usecases index`; een unittest faalt als hij 
 <!-- usecase-index:start -->
 | Use case | ID | Titel | Gebruiker | Status | Versie | Afhankelijk van |
 |---|---|---|---|---|---|---|
+| [ai-compliance](./ai-compliance/README.md) | – | AI volgens de afspraken: vrijgave, herkenbaar, gelogd en uit te zetten | functioneel beheerder, AI Officer of auditor | actief | 0.1.0 | cbs-gebiedsindelingen, cbs-kerncijfers |
 | [assistent-kwaliteit](./assistent-kwaliteit/README.md) | TC-06-009 | D-Omni Assistent vindt de juiste indicator en beantwoordt datavragen | beleidsadviseur of inwoner die de assistent gebruikt | ontwerp | 0.1.0 | – |
 | [beleidsadviseur-swf](./beleidsadviseur-swf/README.md) | TC-06-001 | Beleidsadviseur verkent kernen in Súdwest-Fryslân (IJsselmeerkust) | Beleidsadviseur leefbaarheid / ruimtelijke ordening | actief | 0.2.0 | cbs-gebiedsindelingen, cbs-kerncijfers, sample-bronbibliotheek |
 | [brede-welvaart](./brede-welvaart/README.md) | TC-06-007 | Brede welvaart en functiemenging | Strateeg / economische zaken | actief | 0.2.0 | cbs-gebiedsindelingen, cbs-kerncijfers, rivm-gezondheidsmonitor, sample-bronbibliotheek |

@@ -1,0 +1,48 @@
+%PDF-1.4
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [3 0 R] /Count 1 >>
+endobj
+3 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 5 0 R >> >> /Contents 4 0 R >>
+endobj
+4 0 obj
+<< /Length 890 >>
+stream
+BT
+/F1 20 Tf 1 0 0 1 56 780 Tm (TESTVERKLARING - voorbeeld, geen echte toetsing) Tj
+/F1 12 Tf 1 0 0 1 56 750 Tm () Tj
+/F1 12 Tf 1 0 0 1 56 728 Tm (Dit document hoort bij de use case ai-compliance van D-OmniTwin.) Tj
+/F1 12 Tf 1 0 0 1 56 706 Tm (Het laat zien hoe functioneel beheer een AI-usecase vrijgeeft \(#307\).) Tj
+/F1 12 Tf 1 0 0 1 56 684 Tm () Tj
+/F1 12 Tf 1 0 0 1 56 662 Tm (Dit is GEEN DPIA, IAMA of besluit. Er is geen toetsing gedaan.) Tj
+/F1 12 Tf 1 0 0 1 56 640 Tm (Gebruik dit bestand alleen in een test- of demo-omgeving.) Tj
+/F1 12 Tf 1 0 0 1 56 618 Tm () Tj
+/F1 12 Tf 1 0 0 1 56 596 Tm (Elke organisatie doorloopt haar eigen toetsing \(bijvoorbeeld DPIA, IAMA) Tj
+/F1 12 Tf 1 0 0 1 56 574 Tm (of een besluit volgens het AI-beleid, met de AI Officer of FG\) en uploadt) Tj
+/F1 12 Tf 1 0 0 1 56 552 Tm (daarna de eigen verklaring in de beheeromgeving \(AI-usecases\).) Tj
+ET
+endstream
+endobj
+5 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>
+endobj
+6 0 obj
+<< /Title (TESTVERKLARING - voorbeeld, geen echte toetsing) /Producer (D-OmniTwin use case ai-compliance) >>
+endobj
+xref
+0 7
+0000000000 65535 f 
+0000000009 00000 n 
+0000000058 00000 n 
+0000000115 00000 n 
+0000000241 00000 n 
+0000001182 00000 n 
+0000001279 00000 n 
+trailer
+<< /Size 7 /Root 1 0 R /Info 6 0 R >>
+startxref
+1403
+%%EOF

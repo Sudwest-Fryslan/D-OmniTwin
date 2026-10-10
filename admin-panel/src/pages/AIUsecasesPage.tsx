@@ -160,6 +160,8 @@ const AILogboek: React.FC = () => {
     useEffect(() => { laad(); }, [laad]);
     useEffect(() => {
         aiVrijgaveAPI.bewaartermijn().then(r => setDagen(r.data.bewaartermijn_dagen)).catch(() => undefined);
+        // De keten meteen narekenen bij het openen (klopt hij niet, dan zet de backend AI stil)
+        aiVrijgaveAPI.controle().then(r => setControle(r.data)).catch(() => undefined);
     }, []);
 
     const zetFilter = (veld: keyof AILogFilter, w: string) => { setOffset(0); setFilter(f => ({ ...f, [veld]: w })); };
@@ -179,7 +181,7 @@ const AILogboek: React.FC = () => {
     };
 
     return (
-        <section className="card" aria-labelledby="ai-logboek-titel">
+        <section className="card" id="ai-logboek" aria-labelledby="ai-logboek-titel">
             <div className="card-header"><h2 className="card-title" id="ai-logboek-titel">AI-logboek</h2></div>
             <p className="text-secondary">
                 Elke AI-actie, ook een geweigerde (usecase dicht). Zonder gebruikersgegevens: geen login, sessie of IP-adres.
@@ -274,6 +276,11 @@ export const AIUsecasesPage: React.FC = () => {
     }, []);
 
     useEffect(() => { laad(); }, [laad]);
+    // Directe link naar een onderdeel (bijv. /admin/ai-usecases#ai-logboek)
+    useEffect(() => {
+        const doel = window.location.hash.slice(1);
+        if (usecases && doel) document.getElementById(doel)?.scrollIntoView({ block: 'start' });
+    }, [usecases]);
 
     const bijgewerkt = (m: string) => { setFout(null); setMelding(m); laad(); };
     const mislukt = (m: string) => { setMelding(null); setFout(m); };
@@ -295,6 +302,30 @@ export const AIUsecasesPage: React.FC = () => {
             {melding && <div role="status" className="login-melding">{melding}</div>}
             {!usecases && !fout && <p>Bezig met laden...</p>}
             <div style={{ display: 'grid', gap: 'var(--spacing-lg, 1.5rem)' }}>
+                {usecases && (
+                    <section className="card" aria-labelledby="ai-overzicht-titel">
+                        <div className="card-header"><h2 className="card-title" id="ai-overzicht-titel">Overzicht</h2></div>
+                        <div style={{ overflowX: 'auto' }}>
+                            <table className="table" data-testid="ai-overzicht">
+                                <thead><tr><th>Usecase</th><th>Status</th><th>Versie verklaring</th><th>Geldig tot en met</th><th>Actief gemaakt door</th><th>Noodstop</th></tr></thead>
+                                <tbody>
+                                    {usecases.map(u => (
+                                        <tr key={u.code}>
+                                            <td>{u.code} – {u.naam}</td>
+                                            <td><span className={`badge ${u.open ? 'badge-positive' : 'badge-negative'}`}>
+                                                {u.reden === 'stilgezet' && isAutomatisch(u) ? 'Dicht: automatische noodstop' : REDEN[u.reden]}
+                                            </span></td>
+                                            <td>{u.versie ?? '–'}</td>
+                                            <td>{datum(u.geldig_tot)}</td>
+                                            <td>{u.geupload_door ? `${u.geupload_door}, ${tijd(u.geupload_op)}` : '–'}</td>
+                                            <td>{u.stilgezet ? `Aan (${u.status_door ?? '?'}, ${tijd(u.status_op)})` : 'Uit'}</td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    </section>
+                )}
                 {usecases?.map(u => <UsecaseKaart key={u.code} u={u} bijgewerkt={bijgewerkt} fout={mislukt} />)}
 
                 <section className="card" aria-labelledby="ai-vrijgavelog-titel">
