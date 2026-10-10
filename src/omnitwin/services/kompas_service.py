@@ -703,11 +703,16 @@ class KompasService:
         # 1. Haal alle indicator UUIDs op die in dit kompas zitten
         indicator_query = text("""
             SELECT 
-                i.uuid, i.naam, COALESCE(sr.eenheid, i.eenheid) as eenheid
+                i.uuid, i.naam, COALESCE(sr.eenheid, i.eenheid) as eenheid,
+                COALESCE(sr.score_type, i.score_type) AS score_type, sr.inverse,
+                kt.naam AS kwadrant
             FROM kompas_indicator_mapping kim
             JOIN indicatoren i ON kim.indicator_uuid = i.uuid
             LEFT JOIN kompas_indicator_scoring_regels sr 
                 ON i.uuid = sr.indicator_uuid AND sr.config_id = :config_id
+            LEFT JOIN kompas_onderdelen ko ON ko.id = kim.onderdeel_id
+            LEFT JOIN kompas_themas kth ON kth.id = ko.thema_id
+            LEFT JOIN kompas_titels kt ON kt.id = kth.titel_id
             WHERE kim.config_id = :config_id AND i.is_actief = true
         """)
         indicator_rows = self.db.execute(indicator_query, {"config_id": config_id}).fetchall()
@@ -723,7 +728,9 @@ class KompasService:
             indicator_uuids.append(uid)
             indicator_meta[uid] = {
                 "naam": row.naam,
-                "eenheid": row.eenheid or ""
+                "eenheid": row.eenheid or "",
+                # Polariteit voor de kleur van de afwijking (#323)
+                "richting": pk.richting(row.score_type, row.inverse, row.kwadrant),
             }
         
         # 2. Per groep: haal gemiddelde waarden op

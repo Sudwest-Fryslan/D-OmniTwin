@@ -8,6 +8,10 @@ Eerdere wijzigingen, van vóór dit bestand, zijn terug te vinden in de git-hist
 
 ## [Unreleased]
 
+### Opgelost
+
+- Referentie "provincie" in Benchmark, Deelgebied, Multi-gebied en Thema-analyse volgt de instelling **benchmarkprovincie** van de organisatie, in plaats van alle gebieden in de database met de vaste tekst "⌀ Provincie Fryslân, ~965 buurten". Het label noemt de ingestelde provincie en het aantal gebieden uit de data (bijv. *⌀ Provincie Fryslân (965 gebieden)*); zonder instelling: alle gebieden. De gemeentelijst in de viewer filtert op dezelfde provincie en valt zonder API terug op de gemeenten van de organisatie, niet op een vaste lijst. Migratie `V041__zscore_referentie_provincie.sql` geeft de Z-score-referentiefuncties een optionele parameter `p_provincie` ([#324](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/324)).
+
 ### Toegevoegd
 
 - **Vrijgave van AI-usecases** ([#307](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/307)): A (Assistent), B (Samenvatting/rapport) en C (Zoeken op betekenis) staan standaard uit en gaan pas aan als functioneel beheer in de beheeromgeving (**AI-usecases**) een verklaring als PDF uploadt met versie en *geldig tot*. Na die datum gaan ze vanzelf uit; de noodstop zet ze direct uit. Wie (login) en wanneer staat bij de usecase en in een logboek. Dicht werkt de applicatie zonder AI: de chat regelgebaseerd, rapporten zonder AI-samenvatting, zoeken op begrippen en trefwoorden, telkens met een korte melding. Andere AI-functies (oordeel bij deduplicatie, ontologie genereren) staan altijd uit. Publiek: `GET /api/ai/usecases` en `GET /api/ai/usecases/{code}/verklaring` (PDF). Uitleg: [beheerhandleiding](docs/9-beheer/beheerhandleiding.md#9-ai-usecases-vrijgeven).
@@ -22,6 +26,23 @@ Eerdere wijzigingen, van vóór dit bestand, zijn terug te vinden in de git-hist
 ### Migreren
 
 - **Na de update staat alle AI uit**, ook als die eerder werkte. Upload per AI-usecase die je wilt gebruiken de verklaring van je eigen toetsing (beheeromgeving > AI-usecases).
+- Elke release als image op Docker Hub: `sudwestfryslan/d-omnitwin` en `sudwestfryslan/d-omnitwin-db`, met tags `<versie>`, `<major>.<minor>` en `latest` ([#126](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/126)). Installeren zonder te bouwen met `docker-compose.images.yml` en `OMNITWIN_VERSIE`; zie de installatiegids.
+- **Database-dump van de huidige SWF-gebiedsmonitor als bron** ([#316](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/316), [#222](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/222)). Nieuw script `scripts/beheer/swf_monitor_dump.py`: `exporteer` leest een `pg_dump` van de monitor (custom format via `pg_restore -f -`, of platte SQL; geen database nodig) en schrijft de bestanden voor de use cases naar `SWF_DB_DUMP` (nooit in git). Met `SWF_DB_DUMP` gebruiken `swf-definities` 0.4.0, `swf-basismonitor-waarden` 0.3.0, `swf-klimaatmonitor` 0.3.0 en `swf-kompasprofiel` 0.4.0 de variant `monitor-database` (voorrang boven `SWF_DUMP_DIR`): de definities met `score_type` uit `omkeren`, alle waarden (81.373 in de dump van 09-10-2026, tegen 43.253 in de export van februari) en de geldige monitorconfiguraties als Kompasprofielen *SWF Basis* en *SWF Klimaat*. De drempels A–E uit de monitor komen in `indicator_labels_monitor.json`; laden is een keuze (`load_sample.py --stap drempels --drempels <bestand>`, nieuwe optie). Nieuwe use case `swf-gebruikersvoorkeuren` (TC-07-026, `ontwerp`): de laatste kaartpositie per gebruiker naar `gebruiker_voorkeuren`, met een expliciete koppeling oude gebruikersnaam → Keycloak-`sub` (`laad-voorkeuren`, aanvullen, nooit overschrijven); in git alleen fictieve voorbeelddata. Verschillen tussen dump en export: [gegevens.md](docs/1-visie-concept/huidige-gebiedsmonitor/gegevens.md#database-dump-van-de-monitor-09-10-2026).
+
+### Gewijzigd
+
+- Controles van de swf-use cases die per bron verschillen, zijn `minimaal`/`maximaal` in plaats van `gelijk` (status A → O minimaal 10, waarden Basis minimaal 35.411, Kompas Basis minimaal 215), zodat dezelfde use case werkt met de export van februari en met de database-dump ([#316](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/316)).
+
+### Opgelost
+
+- Kompas-benchmark: de kleur van de afwijking ten opzichte van de referentie volgt de polariteit van de indicator (`score_type`/`inverse`). Een hoger inkomen is nu groen, meer werkloosheid rood; indicatoren in het neutrale kwadrant Samenstelling blijven grijs. `indicator_meta` in `POST /api/kompas/{config_id}/benchmark` heeft daarvoor het veld `richting` ([#323](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/323)).
+### Gewijzigd
+
+- Database-image op een ondersteunde basis ([#191](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/191)): `postgres:15-bookworm` (Debian 12) met PostGIS en pgvector uit de reguliere PGDG-repository, in plaats van `postgis/postgis:15-3.5` op het end-of-life bullseye met pgvector uit het archief (#189). PostgreSQL blijft 15: bestaande volumes werken zonder `pg_upgrade`. PostGIS gaat van 3.5 naar 3.6; `db-init` werkt de extensies in een bestaande database bij (`postgis_extensions_upgrade()`). Een nieuwe installatie maakt geen `template_postgis` en geen `postgis_topology`/`postgis_tiger_geocoder` meer aan (D-OmniTwin gebruikt ze niet).
+
+### Migreren
+
+- Bouw het database-image opnieuw (`docker compose build postgres`, of het nieuwe image van Docker Hub) en start `db-init`; die werkt PostGIS bij. Maak eerst een back-up.
 
 ## [0.3.1] - 2026-10-06
 

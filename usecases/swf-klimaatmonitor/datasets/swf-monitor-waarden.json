@@ -41,7 +41,7 @@
   "bron": {
     "adapter": "swf-dump",
     "export": "waarden",
-    "omschrijving": "${SWF_DUMP_DIR}/output/api_data_dump.json (GET …/monitor_api/indicator_waarde); later ook ${SWF_DB_DUMP}"
+    "omschrijving": "${SWF_DUMP_DIR}/output/api_data_dump.json (GET …/monitor_api/indicator_waarde); met ${SWF_DB_DUMP} de variant monitor-database"
   },
   "bewerkingen": [
     {
@@ -90,6 +90,17 @@
       "sla_over": [
         "namespace"
       ]
+    },
+    "monitor-database": {
+      "omschrijving": "de database-dump van de huidige monitor (#316): waarden.json van scripts/beheer/swf_monitor_dump.py in SWF_DB_DUMP, zelfde velden en bewerkingen als de API-export. Heeft voorrang als SWF_DB_DUMP gezet is.",
+      "als_beschikbaar": true,
+      "bron": {
+        "adapter": "lokaal-bestand",
+        "pad": "${SWF_DB_DUMP}/waarden.json",
+        "formaat": "json",
+        "tabel": "waarden",
+        "omschrijving": "export van de database-dump van de monitor (scripts/beheer/swf_monitor_dump.py); nooit in git"
+      }
     }
   }
 }
