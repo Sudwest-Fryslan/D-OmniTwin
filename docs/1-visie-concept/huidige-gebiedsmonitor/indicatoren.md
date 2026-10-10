@@ -14,7 +14,7 @@ Stand 02-10-2026. De volledige indicatorenlijst van de Basis monitor en de Klima
 - **UUID en status:** uit de definities in de monitor (export februari 2026), gekoppeld op naam.
 - **Waarden in monitor:** of er in februari 2026 waarden waren, en op welk gebiedstype. Alleen ja/nee, geen waarden.
 - **UUID in D-OmniTwin:** de UUID komt ergens in deze repository voor (op `main`, 02-10-2026).
-- **Status:** O = operationeel, C = concept, A = Klimaatmonitor (betekenis navragen), B = beëindigd.
+- **Status** (zoals in de monitor, A2): A = Actueel, B = Buiten gebruik, C = Concept, O = Onderzoek. D-OmniTwin zet A om naar O.
 - Een indicator die onder meer onderdelen hangt (bijv. *Groen* bij Inrichting en bij Onderhoud), staat er meer keer in, met dezelfde UUID. Twee namen hebben twee UUID's (*Werkzamen*, *Waterdiepte op straat*); beide staan erbij.
 - Vijf oudere werktitels uit de voortgangslijst zonder eigen definitie zijn weggelaten; het zijn eerdere namen van klimaatindicatoren die hieronder wel staan (o.a. "Verandering GLG nu t.o.v. 2050" → *Trend GLG naar 2050*, "Verhouding oppervlakte water/verharding" → *Aandeel water t.o.v. verhard*). Eén testdefinitie is weggelaten.
 
@@ -328,3 +328,25 @@ De Klimaatmonitor draait op welstandsgebieden × buurt, met labels A–E (zie [m
 - **De klimaatset is herzien.** De indicatorenlijst in het DWH van november 2024 had op welstandsgebieden een andere set: overlast weer, vegetatie op daken, verkoeling, afvoer water, maatregelen inwoners, % groen, NDVI, % verharding en % water. Die staan nu onder *Openbare ruimte › Klimaat* in de Basis monitor. De actuele klimaatdefinities zijn die in de tabel hierboven.
 - **Normen in de documentatie** (Deltares-sjabloon en kaartlegenda's): hittestress vanaf 23 °C PET, extreem vanaf 41 °C PET; een koele plek binnen 300 m (minimaal 200 m²); afstand tot koelte in klassen 0–200, 200–300, 300–400, 400–500, 500+ m; waterdiepte bij intense neerslag in klassen 5–10, 10–15, 15–20, 20–30, >30 cm. Of de labels A–E hierop gebaseerd zijn, is niet bekend.
 - **Bronnen:** Klimaateffectatlas (gevoelstemperatuur, afstand tot koelte, paalrot), Wetterskip Fryslân (GLG en trend), BGT en BRK (aandelen groen, grijs en water), de stresstest wateroverlast van SWF (waterdiepte), AHN4 (maaiveld).
+
+## Wijzigingen in de database-dump van 09-10-2026
+
+Vergeleken met de export van februari 2026 ([#316](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/316)); de tabellen hierboven tonen nog de stand van februari.
+
+**Andere naam bij dezelfde UUID** (zelfde sleutel, andere betekenis; hoort niet, melden bij DWH-beheer):
+
+| UUID | Februari | Dump | Status feb. → dump |
+|---|---|---|---|
+| `a400ba17-…` | 0-3 jaar | 0-15 jaar | O → A |
+| `984dedc9-…` | 4-12 jaar | 15-25 jaar | O → A |
+| `fae46924-…` | 13-17 jaar | 25-45 jaar | O → A |
+| `940c6c03-…` | 65-79 jaar | 45-65 jaar | O → A |
+| `eb1764bf-…` | 80+ jaar | 65+ jaar | O → A |
+| `a4518bae-…` | 65+ jaar | 65+ jaar (huishouden) | O |
+| `c9719a07-…` | laag | Basisonderwijs, vmbo, mbo1 | O → A |
+| `1fa5df89-…` | middelhoog | Havo, vwo, mbo2-4 | O → A |
+| `56f32b9a-…` | hoog | Hbo, wo | O → A |
+
+**Andere status:** *diefstal fiets* (`3ca8572d-…`) en *inbraak auto* (`92137246-…`) O → A; hun voorgangers *diefstal fietsen* (`35cd7fcf-…`) en *inbraak auto's* (`fab534cc-…`) O → B. De testdefinitie (`9a695d52-…`) is B. Totaal A 20, O 200, C 5, B 3.
+
+**In de geldige monitorconfiguratie:** de Basis monitor heeft 215 plekken (211 unieke indicatoren) en de Klimaatmonitor 10; in beide staat *Waterdiepte op straat* met `c4e1b3bb…` (status C), niet met `f6eafa70…`.

@@ -2,7 +2,7 @@
   "specificatie": "1.0",
   "naam": "swf-definities",
   "id": "TC-07-003",
-  "versie": "0.3.0",
+  "versie": "0.4.0",
   "titel": "SWF-definities: indicatoren, gebiedstypen en relaties",
   "vraag": "Ik wil alle 228 indicatordefinities van de huidige monitor met dezelfde UUID's in D-OmniTwin, met de 11 gebiedstypen en op welk gebiedstype elke indicator waarden heeft.",
   "gebruiker": "data-engineer DWH (SWF)",
@@ -48,13 +48,18 @@
       "rol": "dataset:swf-monitor-definities:laden",
       "client": "etl-swf",
       "prioriteit": "Must",
-      "bron": "export van de huidige monitor ($SWF_DUMP_DIR)",
+      "bron": "export van de huidige monitor ($SWF_DUMP_DIR), of de database-dump van de monitor ($SWF_DB_DUMP, voorrang)",
       "verwacht": {
         "indicatoren": 228,
         "gebiedstypen": 11,
         "relaties": 263,
         "status_A_naar_O": 10,
-        "dubbele_naam_naar_B": 2
+        "dubbele_naam_naar_B": 2,
+        "database_dump_2026_10_09": {
+          "status_A_naar_O": 20,
+          "status_B": 3,
+          "score_type_uit_monitor": 53
+        }
       }
     }
   ],
@@ -81,8 +86,8 @@
       "type": "bewerking",
       "dataset": "swf-monitor-definities",
       "reden": "status: A → O",
-      "gelijk": 10,
-      "omschrijving": "de 10 klimaatindicatoren (A2: A = Actueel → O, operationeel)"
+      "omschrijving": "de 10 klimaatindicatoren in de export van februari 2026; in de database-dump van 09-10-2026 20 (ook 10 indicatoren voor leeftijd, opleiding en twee misdrijven). A2: A = Actueel → O",
+      "minimaal": 10
     },
     {
       "type": "bewerking",
@@ -229,6 +234,9 @@
     "Status A (10 klimaatindicatoren) wordt O. In de monitor is A = Actueel, B = Buiten gebruik, C = Concept en O = Onderzoek (A2, geverifieerd, https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/222). Aanname: SWF-status O blijft O (zichtbaar), want die indicatoren staan live; een gevulde DATE_TO komt mee als eindgeldigheid.",
     "UUID d210c084: in de stuurdata van D-OmniTwin 'Custom Gebied Type' (code CUSTOM, nergens gebruikt); in de monitor 'CBS buurten bebouwde komgrens' met 2.370 waarden. De levering zet naam en code (CBS_BUURT_BBK); de stuurdata moet mee (migratie).",
     "Eenheid, richting, bron en code per indicator zitten niet in de export; aanvullen via beheer of het gewone profiel definities.",
-    "Eén testdefinitie (status B) gaat mee zoals hij is. Twee namen hebben twee UUID's (aanname A4): Waterdiepte op straat houdt f6eafa70-9383-4de6-bd2a-e47309843437 (live in de Klimaatmonitor; beide zonder waarden), Werkzamen houdt 7fd17589-46b6-460a-a1f6-ef421517ccb3 (de enige met waarden). De andere krijgt status B en '(vervallen)' achter de naam; de voorkeurslijst staat als data in de bewerking dubbele-naam. De UUID wijzigen is een actie voor SWF-beheer (DWH/FME)."
+    "Eén testdefinitie (status B) gaat mee zoals hij is. Twee namen hebben twee UUID's (aanname A4): Waterdiepte op straat houdt f6eafa70-9383-4de6-bd2a-e47309843437 (live in de Klimaatmonitor; beide zonder waarden), Werkzamen houdt 7fd17589-46b6-460a-a1f6-ef421517ccb3 (de enige met waarden). De andere krijgt status B en '(vervallen)' achter de naam; de voorkeurslijst staat als data in de bewerking dubbele-naam. De UUID wijzigen is een actie voor SWF-beheer (DWH/FME).",
+    "Database-dump van de monitor (09-10-2026, variant monitor-database, #316): 228 indicatoren, 11 gebiedstypen en 263 relaties, zelfde UUID's; status A 20, O 200, C 5, B 3 (februari: A 10, O 212, C 5, B 1). 9 UUID's hebben een andere naam dan in februari (leeftijdsgroepen en opleidingsniveaus): zelfde sleutel, andere betekenis. De oude namen 'diefstal fietsen' en 'inbraak auto's' zijn B, hun opvolgers A.",
+    "In de actieve Klimaatmonitor van de dump staat Waterdiepte op straat met c4e1b3bb… (status C), niet met f6eafa70…; dat weerlegt de premisse van A4 ('f6eafa70 is live'). De voorkeurslijst blijft zoals besloten tot de beheerder anders beslist.",
+    "Met de database-dump zet de levering score_type voor 53 indicatoren uit 'omkeren' in de monitorconfiguratie (true = -/+, lager is beter). Dat overschrijft de richting uit de stuurdata waar die anders is."
   ]
 }

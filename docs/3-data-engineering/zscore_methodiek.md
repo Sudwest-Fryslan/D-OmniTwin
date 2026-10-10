@@ -12,7 +12,7 @@ D-OmniTwin vergelijkt de waarde van een gebied met een referentiegroep van verge
 
 | Keuze | Zo werkte het bij Taeke (vóór #66) | Zo is het nu | ⚠️ Afwijking of risico |
 |---|---|---|---|
-| Referentiegroep | Gebiedstype + gemeente van het doelgebied: executive, multi-gebied, thema-analyse, deelgebied (referentie `gemeente`), Kompas top-buurten (met `gebied_id`), Kompas-benchmark. Referentie `fryslan`: alleen gebiedstype. | Ongewijzigd, als parameter (`gemeente_code`, `NULL` = alle gemeenten). | `fryslan` betekent: alle gemeenten in de database, niet alleen Fryslân. |
+| Referentiegroep | Gebiedstype + gemeente van het doelgebied: executive, multi-gebied, thema-analyse, deelgebied (referentie `gemeente`), Kompas top-buurten (met `gebied_id`), Kompas-benchmark. Referentie `fryslan`: gebiedstype in de provincie `organisatie.benchmark_provincie` (#324). | Ongewijzigd, als parameter (`gemeente_code`, `NULL` = alle gemeenten; `provincie`, `NULL` = alle provincies). | Tot #324 betekende `fryslan`: alle gemeenten in de database, met een vast label "Provincie Fryslân". |
 | Jaarlogica | Executive: alleen gebieden met een waarde in **hetzelfde jaar** als de meest recente waarde van het doelgebied (expliciet in commentaar). Kompas top-buurten: het meest recente jaar van de indicator in de groep. Kompas-benchmark: het meest recente jaar over de hele database. Multi-gebied, thema-analyse, deelgebied, benchmark: de meest recente waarde per gebied, ongeacht het jaar. | Standaard `zelfde_jaar` (executive/Kompas), overal. `recentst_per_gebied` blijft beschikbaar als parameter. | Multi-gebied, thema-analyse, deelgebied en benchmark rekenen anders dan voorheen. Zie de waarschuwing onder Jaarlogica. |
 | Minimum-n bij `zelfde_jaar` (#155) | Geen minimum: executive en Kompas rekenden ook met 2 à 3 gebieden in hetzelfde jaar. | Minder dan 5 gebieden (`p_min_n`, `MIN_N_STANDAARD`) met een waarde in het jaar van het doelgebied: terugval op `recentst_per_gebied`, met `referentie_terugval = true`. Het gebiedsdossier meldt het. | Bij terugval worden waarden uit verschillende jaren vergeleken. Executive en Kompas rekenen in die gevallen anders dan voorheen. |
 | Waterbuurten | Alleen het deelgebied-rapport sloot ze uit de referentie. Executive, multi-gebied, thema-analyse, benchmark en Kompas telden ze mee. De kaartview gebruikte een ruimere definitie (ook op naam). | Eén definitie, `is_waterbuurt(naam, metadata)`: de vlag `metadata->>'water' = 'JA'`, met de naam als vangnet (#155). Altijd uitgesloten uit de referentie en de kaartview. | Uitkomsten veranderen waar waterbuurten waarden hebben. Het naamvangnet kan een gewone buurt raken waarvan de naam op water lijkt. |
@@ -46,7 +46,7 @@ Het gebied zelf telt mee in de referentiegroep als het erin valt (zelfde gebieds
 | Parameter | Standaard | Betekenis |
 |---|---|---|
 | gebiedstype | gebiedstype van het gebied (`gebieden.gebiedstype_id`) | alleen gebieden van hetzelfde type, bijvoorbeeld CBS-buurten |
-| gemeente | gemeente van het gebied | alleen gebieden in dezelfde gemeente. Referentie `fryslan` laat de gemeente weg: dan tellen alle gebieden van het gebiedstype in de database mee |
+| gemeente | gemeente van het gebied | alleen gebieden in dezelfde gemeente. Referentie `fryslan` laat de gemeente weg en neemt de provincie uit de instelling `benchmark_provincie` van de organisatie (`gemeenten.provincie`, #324); zonder die instelling tellen alle gebieden van het gebiedstype in de database mee. Het label noemt de provincie en het aantal gebieden |
 | waterbuurten | altijd uitgesloten | zie [Waterbuurt](#waterbuurt) |
 | scenario | `current` | alleen metingen, geen projecties. Een lege `scenario_id` telt als `current` |
 
@@ -136,7 +136,7 @@ markeer_waterbuurten()
 -- 'recentst_per_gebied' of de hulpwaarde 'alle_jaren'. Kolom referentie_terugval.
 zscore_referentie_waarden(gebiedstype_id, gemeente_code = NULL,
                           jaarlogica = 'zelfde_jaar', scenario_id = 'current',
-                          indicator_uuids = NULL, min_n = 5)
+                          indicator_uuids = NULL, min_n = 5, provincie = NULL)
 
 -- Gemiddelde, standaarddeviatie, n, min, max, min_jaar, max_jaar, referentie_terugval
 -- per indicator (zonder doelgebied)
@@ -148,7 +148,7 @@ zscore(waarde, gemiddelde, standaarddeviatie, n)
 -- Z-scores van gebieden; gebied_ids = NULL geeft de gebieden van de referentieset zelf.
 -- Kolommen o.a. z_score, n, referentie_terugval, is_waterbuurt
 zscore_gebieden(gebied_ids, gebiedstype_id, gemeente_code = NULL, jaarlogica = 'zelfde_jaar',
-                scenario_id = 'current', indicator_uuids = NULL, min_n = 5)
+                scenario_id = 'current', indicator_uuids = NULL, min_n = 5, provincie = NULL)
 ```
 
 Voorbeeld, Bolsward-Zuidoost ten opzichte van de CBS-buurten van Súdwest-Fryslân:

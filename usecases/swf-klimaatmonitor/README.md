@@ -1,7 +1,7 @@
 # TC-07-007 — SWF-klimaatmonitor: welstand × buurt met labels A–E
 
 **Status:** ontwerp (de laad-API is nog niet gebouwd; deze use case is de specificatie en straks de acceptatietest)
-**Versie:** 0.2.0 · **Afhankelijk van:** [swf-definities](../swf-definities/README.md), [swf-gebiedsindelingen](../swf-gebiedsindelingen/README.md), [swf-kompasprofiel](../swf-kompasprofiel/README.md)
+**Versie:** 0.3.0 · **Afhankelijk van:** [swf-definities](../swf-definities/README.md), [swf-gebiedsindelingen](../swf-gebiedsindelingen/README.md), [swf-kompasprofiel](../swf-kompasprofiel/README.md)
 **Manifest:** [`usecase.json`](usecase.json) · **Controleren:** `python -m omnitwin.usecases controleer swf-klimaatmonitor`
 
 ## Vraag
@@ -14,7 +14,9 @@ De Klimaatmonitor draait op welstandsgebieden opgeknipt per CBS-buurt, met 3 the
 
 **Namespace:** welstand-id `728` wordt `WS728` (bewerking `prefix`), want `gebieden.id` is uniek over alle gebiedstypen. De variant `zonder-namespace` laat de prefix weg; de laad-API hoort die levering af te keuren (`gebied-onbekend`).
 
-**Met een database-dump van de monitor** (`$SWF_DB_DUMP`, als tweede bron naast de export): de labels A–E en hun drempels als de monitor die opslaat.
+**Met de database-dump van de monitor** (`$SWF_DB_DUMP`, variant `monitor-database`, heeft voorrang; [#316](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/316)): dezelfde 7.686 waarden op welstand × buurt als de export. Exporteren: [`scripts/beheer/swf_monitor_dump.py`](../../scripts/beheer/swf_monitor_dump.py) `exporteer --dump public.monitor.dmp --uit <map>` (geen database nodig; `pg_restore` alleen om het custom format te lezen), daarna `SWF_DB_DUMP=<map>`. De map bevat echte data en komt nooit in git.
+
+**Drempels in de monitor.** De monitorconfiguratie bewaart per indicator `labeling` (A–E met van, tot, kleur en naam: *Robuust*, *Acceptabel*, *Risicovol*, *Onacceptabel*, *Ontwrichting*): voor 6 van de 10 klimaatindicatoren en in de Basis monitor ook voor *Waterdiepte tegen gevel*, *Aandeel bladerdek per buurt*, *Gemiddeld Laagste Grondwaterstand* en *Gemiddeld energielabel*. Het exportscript zet ze in `indicator_labels_monitor.json` (formaat van `db/stuurdata/indicator_labels_*.json`). Verschil met de stuurdata (vastgesteld, A3): *Aandeel water t.o.v. verhard* staat in de monitor als fractie (0,1) en in de stuurdata als procent (10); *Waterdiepte tegen gevel* heeft in de monitor geen gat tussen D en E (D 14,99–24,99); een open grens is in de monitor 0, 99, 999 of 9999. *Waterdiepte op straat* heeft in de monitor geen drempels. De stuurdata blijft de standaard; de drempels uit de monitor laden is een keuze: `python init_data/scripts/load_sample.py --stap drempels --drempels <map>/indicator_labels_monitor.json`.
 
 ## Data
 
@@ -33,6 +35,7 @@ Verwacht:
 | Dataset | Bron → levering | Resultaat |
 |---|---|---|
 | swf-monitor-waarden | 43.253 → 7.686 (welstand × buurt), codes WS1–WS758 | geldig |
+| *database-dump* (`SWF_DB_DUMP`, 10-10-2026, dump van 09-10-2026) | 81.373 → 7.686 (welstand × buurt) | geldig |
 
 ## Stappen
 
