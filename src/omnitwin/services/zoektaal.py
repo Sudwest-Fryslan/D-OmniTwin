@@ -40,6 +40,7 @@ MIN_SCORE = 0.25        # daaronder nooit tonen
 MAX_AFSTAND = 0.25      # alleen resultaten binnen deze afstand van de beste
 STERK = 0.6             # vanaf hier 'sterk'; daaronder 'matig'
 MAX_MATIG = 3           # zonder sterke treffer hoogstens zoveel resultaten
+TEKST_FACTOR = 0.55     # woord uit de vraag in het kompaspad of de beschrijving: zwakker dan de naam, nooit sterk
 
 # ── Normaliseren ─────────────────────────────────────────────────────────────
 
@@ -202,6 +203,22 @@ def schaal_gelijkenis(cos: Optional[float], onder: float, boven: float) -> float
     return max(0.0, min(1.0, (float(cos) - onder) / (boven - onder)))
 
 
+def tekst_score(vraagwoorden: Sequence[str], tekst: Optional[str]) -> Tuple[float, List[str]]:
+    """
+    Woorden uit de vraag (5+ letters) in de tekst rond de indicator: kompaspad en beschrijving
+    ('klimaatadaptatie' → onderdeel 'Klimaat'). Zwakker dan de naam: TEKST_FACTOR maal het deel
+    van die vraagwoorden dat raakt. Helpt vooral zonder embeddings (AI-usecase C dicht, #307/#233).
+    """
+    lang = [v for v in vraagwoorden if len(v) >= 5]
+    if not lang or not tekst:
+        return 0.0, []
+    tekstwoorden = {w for w in tokens(tekst) if len(w) >= 5}
+    geraakt = [v for v in lang if any(token_past(v, w) for w in tekstwoorden)]
+    if not geraakt:
+        return 0.0, []
+    return TEKST_FACTOR * len(geraakt) / len(lang), geraakt
+
+
 def naam_score(vraagwoorden: Sequence[str], naam: str) -> Tuple[float, List[str]]:
     """Deel van de naamwoorden dat in de vraag staat (minstens de helft en één woord van 5+ letters)."""
     naamwoorden = tokens(naam)
@@ -240,9 +257,11 @@ def rangschik(
     afkappen: bool = True,
 ) -> List[Rang]:
     """
-    indicatoren: [{uuid, naam}] (actief)
-    gelijkenis:  {uuid: cosinusgelijkenis met de vraag} (kan leeg zijn: dan alleen trefwoorden)
+    indicatoren: [{uuid, naam, tekst?}] (actief); tekst = kompaspad en beschrijving (optioneel)
+    gelijkenis:  {uuid: cosinusgelijkenis met de vraag} (kan leeg zijn: dan alleen trefwoorden, en
+                 telt het trefwoord voor de hele score, zodat ook dan 'sterk' kan; #233)
     """
+    zonder_betekenis = not gelijkenis
     per_naam: Dict[str, List[Dict[str, Any]]] = {}
     for i in indicatoren:
         per_naam.setdefault(naam_sleutel(i["naam"]), []).append(i)
@@ -269,9 +288,10 @@ def rangschik(
         u = str(ind["uuid"])
         b, begrip_label = begrip_score.get(u, (0.0, ""))
         n, geraakt = naam_score(vraagwoorden, ind["naam"])
+        t, in_tekst = (0.0, []) if (b or n) else tekst_score(vraagwoorden, ind.get("tekst"))
         g = schaal_gelijkenis(gelijkenis.get(u), onder, boven)
-        trefwoord = max(b, n)
-        score = GEWICHT_TREFWOORD * trefwoord + GEWICHT_BETEKENIS * g
+        trefwoord = max(b, n, t)
+        score = trefwoord if zonder_betekenis else GEWICHT_TREFWOORD * trefwoord + GEWICHT_BETEKENIS * g
         if b >= 1.0:
             # Eerste indicator van een specifiek begrip (zelf vastgelegd in synoniemen.json): altijd
             # 'sterk', ook als de embedding net minder uitspringt (bijv. na een andere Kompas-inrichting)
@@ -281,6 +301,8 @@ def rangschik(
             redenen.append(f"begrip: {begrip_label}")
         if n:
             redenen.append(f"naam: {', '.join(geraakt)}")
+        if t:
+            redenen.append(f"thema: {', '.join(in_tekst)}")
         if g >= 0.5:
             redenen.append("betekenis")
         uit.append(Rang(u, ind["naam"], round(score, 4), b, n, round(g, 4), redenen))

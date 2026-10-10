@@ -17,6 +17,7 @@ Eerdere wijzigingen, van vóór dit bestand, zijn terug te vinden in de git-hist
 ### Gewijzigd
 
 - Teksten over AI kloppen weer: geen "Lokale AI" of "Ollama" meer in het beheer (het taalmodel is instelbaar), en de helppagina zegt niet langer dat vragen nooit de organisatie verlaten (dat hangt af van het gekozen taalmodel). Favorieten bewaren een pseudonieme sleutel van het account, geen anonieme.
+- D-Omni Assistent, "mijn buurt" ([#233](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/233)): een antwoord zegt vooraf van welke buurt het uitgaat ("Ik ga uit van Bolsward-Zuidoost (geselecteerd op de kaart)"), een multi-selectie op de kaart telt mee, en "bij ons", "deze buurt" of "onze straat" gelden ook als eigen buurt. Zoeken zonder embeddings (AI-usecase C dicht) gebruikt ook woorden uit het Kompaspad en de beschrijving, en een trefwoord telt dan voor de hele score (ook *sterk*). Evaluatieset 1.1: multi-selectie, geen selectie, buurt in de vraag; meet met C open en dicht (`scripts/ai/evalueer_assistent.py`).
 
 ### Migreren
 

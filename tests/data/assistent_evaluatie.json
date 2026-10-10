@@ -1,6 +1,6 @@
 {
-  "$comment": "Evaluatieset D-Omni Assistent (#233): vragen zoals gebruikers ze stellen, met de indicatoren die een goed antwoord gebruikt. UUID's uit de verse stack met sample-data (init_data/sample, init_data/cbs). 'relevant': alle indicatoren die een goed antwoord mag noemen, de beste eerst; 'holdout': vragen die niet gebruikt zijn om synoniemen en drempels af te stemmen (controle op overfitting). 'type': 'zoek' (welke indicatoren zijn er) of 'datavraag' (een getal voor een gebied). Meten: python scripts/ai/evalueer_assistent.py --url http://localhost:8105",
-  "versie": "1.0",
+  "$comment": "Evaluatieset D-Omni Assistent (#233): vragen zoals gebruikers ze stellen, met de indicatoren die een goed antwoord gebruikt. UUID's uit de verse stack met sample-data (init_data/sample, init_data/cbs). 'relevant': alle indicatoren die een goed antwoord mag noemen, de beste eerst; 'holdout': vragen die niet gebruikt zijn om synoniemen en drempels af te stemmen (controle op overfitting). 'type': 'zoek' (welke indicatoren zijn er) of 'datavraag' (een getal voor een gebied). Bij een datavraag: 'selectie' = gebied-id's op de kaart ([] = niets geselecteerd; standaard 'gebied'), 'route': 'vraag_buurt' als de assistent moet vragen welke buurt, 'gebieden' = gebieden die een cijfer moeten krijgen; bij 'mijn_buurt' met een selectie zegt het antwoord van welke buurt het uitgaat ('aanname', #233). Meten: python scripts/ai/evalueer_assistent.py --url http://localhost:8105",
+  "versie": "1.1",
   "k": 3,
   "drempels": {
     "precision_at_k": 0.7,
@@ -9,8 +9,19 @@
     "routering": 0.9
   },
   "gebied": "BU19000002",
+  "gebiedsnamen": {"BU19000002": "Bolsward-Zuidoost", "BU19000003": "Bolsward-Zuidwest"},
   "vragen": [
     {"vraag": "hoeveel % is bejaard bij mij in de buurt?", "type": "datavraag", "mijn_buurt": true,
+     "relevant": ["4a221658-f750-50b9-90eb-6d50154c52db", "d48622cd-454d-5312-9a7b-4d3c269b81a8", "b0ee9877-3850-4529-b352-6ec673562ef8"]},
+    {"vraag": "hoeveel % is bejaard bij mij in de buurt?", "type": "datavraag", "mijn_buurt": true,
+     "selectie": ["BU19000002", "BU19000003"], "relevant": ["4a221658-f750-50b9-90eb-6d50154c52db", "d48622cd-454d-5312-9a7b-4d3c269b81a8", "b0ee9877-3850-4529-b352-6ec673562ef8"]},
+    {"vraag": "hoeveel % is bejaard bij mij in de buurt?", "type": "datavraag", "mijn_buurt": true,
+     "selectie": [], "route": "vraag_buurt", "relevant": ["4a221658-f750-50b9-90eb-6d50154c52db", "d48622cd-454d-5312-9a7b-4d3c269b81a8", "b0ee9877-3850-4529-b352-6ec673562ef8"]},
+    {"vraag": "hoeveel % is bejaard in Bolsward-Zuidoost?", "type": "datavraag", "selectie": [],
+     "gebieden": ["BU19000002"], "relevant": ["4a221658-f750-50b9-90eb-6d50154c52db", "d48622cd-454d-5312-9a7b-4d3c269b81a8", "b0ee9877-3850-4529-b352-6ec673562ef8"]},
+    {"vraag": "hoeveel ouderen wonen er bij ons in de wijk?", "type": "datavraag", "mijn_buurt": true, "holdout": true,
+     "relevant": ["4a221658-f750-50b9-90eb-6d50154c52db", "d48622cd-454d-5312-9a7b-4d3c269b81a8", "b0ee9877-3850-4529-b352-6ec673562ef8"]},
+    {"vraag": "zijn er veel bejaarden in deze buurt?", "type": "datavraag", "mijn_buurt": true, "holdout": true,
      "relevant": ["4a221658-f750-50b9-90eb-6d50154c52db", "d48622cd-454d-5312-9a7b-4d3c269b81a8", "b0ee9877-3850-4529-b352-6ec673562ef8"]},
     {"vraag": "ouderen", "type": "zoek",
      "relevant": ["4a221658-f750-50b9-90eb-6d50154c52db", "b0ee9877-3850-4529-b352-6ec673562ef8", "d48622cd-454d-5312-9a7b-4d3c269b81a8"]},

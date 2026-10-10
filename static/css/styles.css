@@ -3545,6 +3545,14 @@ textarea {
   outline-offset: 2px;
 }
 
+/* --- #233: van welke buurt het antwoord uitgaat --- */
+.chat-aanname {
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+  margin: 0 0 0.35rem 0;
+  line-height: 1.4;
+}
+
 /* --- #149: bronregel bij een antwoord op een datavraag --- */
 .chat-bronregel {
   font-size: 0.72rem;

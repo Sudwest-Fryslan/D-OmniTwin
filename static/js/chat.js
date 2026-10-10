@@ -116,6 +116,11 @@ class ChatPanel {
             bubble.appendChild(el('span', 'chat-source-badge source-rule', '📐 Zonder taalmodel'));
         }
 
+        // #233: van welke buurt het antwoord uitgaat (selectie op de kaart), vóór het antwoord
+        if (response.aanname) {
+            bubble.appendChild(el('p', 'chat-aanname', response.aanname));
+        }
+
         // Narrative tekst
         if (response.narrative) {
             bubble.appendChild(el('p', 'chat-narrative', response.narrative));
@@ -492,9 +497,12 @@ class ChatPanel {
     _getKaartContext() {
         // Haal huidige kaart-staat op als context voor de LLM
         const context = {};
-        // #233: 'bij mij in de buurt' = de geselecteerde buurt op de kaart
+        // #233: 'bij mij in de buurt' = de selectie op de kaart (ook een multi-selectie)
         if (window.state?.selectedGebiedId) {
             context.huidig_gebied_id = window.state.selectedGebiedId;
+        }
+        if (window.state?.selectedGebiedIds?.size > 0) {
+            context.geselecteerde_gebied_ids = [...window.state.selectedGebiedIds].slice(0, 50);
         }
         if (window.state?.currentIndicator) {
             context.huidige_indicator_uuid = window.state.currentIndicator;

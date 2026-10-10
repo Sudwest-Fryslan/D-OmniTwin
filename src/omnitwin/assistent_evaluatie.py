@@ -7,6 +7,10 @@ Per vraag:
 - type 'datavraag': POST /api/chat met de testbuurt als selectie; goed gerouteerd als het
   antwoord een datavraag is met een cijfer voor die buurt. De rangorde komt dan uit de
   indicatoren die de chat als onderbouwing teruggeeft.
+  'selectie' (lijst gebied-id's) vervangt de testbuurt: [] = niets geselecteerd, twee id's =
+  een multi-selectie (#233). 'route': 'vraag_buurt' = de assistent hoort te vragen welke buurt
+  (geen selectie, 'mijn buurt'). Bij 'mijn_buurt' met een selectie moet het antwoord ook zeggen
+  van welke buurt het uitgaat ('aanname' met de naam).
 
 Maten (k uit het bestand, standaard 3):
 - precision@k: deel van de getoonde top-k dat relevant is. Toont de assistent er minder dan k,
@@ -72,24 +76,43 @@ def onder_drempel(scores: Dict[str, float], drempels: Dict[str, float]) -> List[
     return [f"{m} {scores[m]:.3f} < {d}" for m, d in drempels.items() if scores.get(m, 0.0) < d]
 
 
+def gerouteerd(v: Dict[str, Any], antwoord: Dict[str, Any], selectie: Sequence[str],
+               namen: Optional[Dict[str, str]] = None) -> bool:
+    """Goed beantwoord? Zie de kop van dit bestand ('route', 'selectie', 'mijn_buurt')."""
+    if v.get("route") == "vraag_buurt":
+        return "welke buurt" in (antwoord.get("narrative") or "").lower() and not antwoord.get("gegevens")
+    if antwoord.get("intent") != "DATAVRAAG":
+        return False
+    met_cijfer = {g.get("gebied_id") for g in antwoord.get("gegevens") or []}
+    verwacht = list(v.get("gebieden") or selectie)
+    if not all(g in met_cijfer for g in verwacht):
+        return False
+    if v.get("mijn_buurt") and selectie:
+        aanname = antwoord.get("aanname") or ""
+        return all((namen or {}).get(g, g) in aanname for g in selectie)
+    return True
+
+
 def evalueer(testset: Dict[str, Any], zoek: Callable[[str], List[str]],
-             chat: Callable[[str, Optional[str]], Dict[str, Any]]) -> List[Dict[str, Any]]:
+             chat: Callable[..., Dict[str, Any]]) -> List[Dict[str, Any]]:
     """
-    zoek(vraag)          → uuids in de volgorde die de gebruiker ziet
-    chat(vraag, gebied)  → antwoord van /api/chat (dict)
+    zoek(vraag)               → uuids in de volgorde die de gebruiker ziet
+    chat(vraag, gebied_ids)   → antwoord van /api/chat (dict); gebied_ids = de selectie op de kaart
     """
     gebied = testset.get("gebied")
+    namen = testset.get("gebiedsnamen") or {}
     uit = []
     for v in testset["vragen"]:
         r = {"vraag": v["vraag"], "type": v["type"], "relevant": v["relevant"], "gerouteerd": None,
              "holdout": bool(v.get("holdout"))}
         if v["type"] == "datavraag":
-            antwoord = chat(v["vraag"], gebied)
+            selectie = v["selectie"] if "selectie" in v else ([gebied] if gebied else [])
+            antwoord = chat(v["vraag"], selectie)
             r["intent"] = antwoord.get("intent")
             r["gevonden"] = [i["uuid"] for i in antwoord.get("indicatoren") or []]
-            r["gerouteerd"] = (antwoord.get("intent") == "DATAVRAAG"
-                               and any(g.get("gebied_id") == gebied for g in antwoord.get("gegevens") or []))
+            r["gerouteerd"] = gerouteerd(v, antwoord, selectie, namen)
             r["narrative"] = antwoord.get("narrative", "")
+            r["aanname"] = antwoord.get("aanname")
         else:
             r["gevonden"] = zoek(v["vraag"])
         uit.append(r)
@@ -108,10 +131,14 @@ def http_zoek_en_chat(basis_url: str, timeout: int = 120):
         r.raise_for_status()
         return [x["uuid"] for x in r.json() if "uuid" in x]
 
-    def chat(vraag: str, gebied: Optional[str]) -> Dict[str, Any]:
-        context = {"geen_llm": True}
-        if gebied:
-            context["huidig_gebied_id"] = gebied
+    def chat(vraag: str, gebied_ids: Sequence[str] = ()) -> Dict[str, Any]:
+        context: Dict[str, Any] = {"geen_llm": True}
+        if isinstance(gebied_ids, str):
+            gebied_ids = [gebied_ids]
+        if gebied_ids:
+            # zoals static/js/chat.js: het eerste gebied plus de hele selectie
+            context["huidig_gebied_id"] = gebied_ids[0]
+            context["geselecteerde_gebied_ids"] = list(gebied_ids)
         r = s.post(f"{basis}/api/chat", json={"vraag": vraag, "context": context}, timeout=timeout)
         r.raise_for_status()
         return r.json()

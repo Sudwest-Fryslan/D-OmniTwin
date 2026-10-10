@@ -100,6 +100,8 @@ class ChatResponse(BaseModel):
     # #312: welke AI-usecases aan dit antwoord bijdroegen ('A' taalmodel, 'C' zoeken op betekenis);
     # de viewer toont dan het label AI met de verklaring en "Melden"
     ai_usecases: List[str] = []
+    # #233: van welk gebied het antwoord uitgaat, als dat niet in de vraag stond (selectie op de kaart)
+    aanname: Optional[str] = None
     debug: Optional[Dict[str, Any]] = None
 
 # ============================================================================
@@ -393,6 +395,7 @@ def beantwoord_datavraag_route(vraag: str, context: Dict[str, Any], db: Session)
         } if feiten and resultaat.get("gebied_ids") else None),
         melding=" ".join(meldingen) or None,
         ai_usecases=ai_usecases,
+        aanname=resultaat.get("aanname"),
         debug={
             "mode": "datavraag",
             "llm_gebruikt": resultaat["llm_gebruikt"],
