@@ -30,7 +30,8 @@ updates:
     ignore:
       - dependency-name: python
         update-types: ["version-update:semver-major", "version-update:semver-minor"]
-      - dependency-name: postgis/postgis
+      # db.Dockerfile (#191): PostgreSQL-major blijft 15 (bestaande volumes)
+      - dependency-name: postgres
         update-types: ["version-update:semver-major"]
 
   - package-ecosystem: docker-compose

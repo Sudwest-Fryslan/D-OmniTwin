@@ -115,6 +115,27 @@ def test_referentiefuncties_bestaan(conn):
     conn.rollback()
 
 
+def test_referentie_per_provincie(conn, gebiedstype_id):
+    """#324: p_provincie beperkt de referentiegroep tot gemeenten in die provincie."""
+    try:
+        with conn.cursor() as cur:
+            cur.execute("SELECT provincie FROM gemeenten WHERE code = %s", (GEMEENTE,))
+            provincie = cur.fetchone()[0]
+            sql = """SELECT indicator_uuid::text, n FROM zscore_referentie_stats(
+                         %s::uuid, NULL, p_min_n => 0, p_provincie => %s)"""
+            cur.execute(sql, (gebiedstype_id, provincie))
+            eigen = dict(cur.fetchall())
+            assert eigen, "geen referentie voor de eigen provincie"
+            cur.execute(sql, (gebiedstype_id, "Provincie-die-niet-bestaat"))
+            assert cur.fetchall() == []
+            cur.execute(
+                """SELECT count(*) FROM zscore_gebieden(ARRAY[%s]::varchar[], %s::uuid,
+                       p_provincie => %s)""", (GEBIED, gebiedstype_id, "Provincie-die-niet-bestaat"))
+            assert cur.fetchone()[0] == 0
+    finally:
+        conn.rollback()
+
+
 # ── Waterbuurten en scenario's ───────────────────────────────────────────────
 
 def test_waterbuurt_verandert_referentie_niet(conn, gebiedstype_id):

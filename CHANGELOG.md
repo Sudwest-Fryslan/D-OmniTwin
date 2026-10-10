@@ -8,6 +8,10 @@ Eerdere wijzigingen, van vóór dit bestand, zijn terug te vinden in de git-hist
 
 ## [Unreleased]
 
+### Opgelost
+
+- Referentie "provincie" in Benchmark, Deelgebied, Multi-gebied en Thema-analyse volgt de instelling **benchmarkprovincie** van de organisatie, in plaats van alle gebieden in de database met de vaste tekst "⌀ Provincie Fryslân, ~965 buurten". Het label noemt de ingestelde provincie en het aantal gebieden uit de data (bijv. *⌀ Provincie Fryslân (965 gebieden)*); zonder instelling: alle gebieden. De gemeentelijst in de viewer filtert op dezelfde provincie en valt zonder API terug op de gemeenten van de organisatie, niet op een vaste lijst. Migratie `V041__zscore_referentie_provincie.sql` geeft de Z-score-referentiefuncties een optionele parameter `p_provincie` ([#324](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/324)).
+
 ### Toegevoegd
 
 - Elke release als image op Docker Hub: `sudwestfryslan/d-omnitwin` en `sudwestfryslan/d-omnitwin-db`, met tags `<versie>`, `<major>.<minor>` en `latest` ([#126](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/126)). Installeren zonder te bouwen met `docker-compose.images.yml` en `OMNITWIN_VERSIE`; zie de installatiegids.
@@ -15,6 +19,11 @@ Eerdere wijzigingen, van vóór dit bestand, zijn terug te vinden in de git-hist
 ### Gewijzigd
 
 - Webframework bijgewerkt, in één keer ([#172](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/172)): FastAPI 0.115.12 → 0.143.0, Starlette 0.41.3 → 1.7.0, uvicorn 0.30.6 → 0.54.0 (`requirements.txt`, `requirements-ci.txt`, `requirements.lock`). De CORS-instelling werkt ongewijzigd met Starlette 1.x. Dependabot werkt deze drie voortaan samen bij (groep `webframework`) in plaats van ze over te slaan.
+- Database-image op een ondersteunde basis ([#191](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/191)): `postgres:15-bookworm` (Debian 12) met PostGIS en pgvector uit de reguliere PGDG-repository, in plaats van `postgis/postgis:15-3.5` op het end-of-life bullseye met pgvector uit het archief (#189). PostgreSQL blijft 15: bestaande volumes werken zonder `pg_upgrade`. PostGIS gaat van 3.5 naar 3.6; `db-init` werkt de extensies in een bestaande database bij (`postgis_extensions_upgrade()`). Een nieuwe installatie maakt geen `template_postgis` en geen `postgis_topology`/`postgis_tiger_geocoder` meer aan (D-OmniTwin gebruikt ze niet).
+
+### Migreren
+
+- Bouw het database-image opnieuw (`docker compose build postgres`, of het nieuwe image van Docker Hub) en start `db-init`; die werkt PostGIS bij. Maak eerst een back-up.
 
 ## [0.3.1] - 2026-10-06
 

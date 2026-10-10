@@ -40,7 +40,7 @@ D-OmniTwin is a digital twin platform for Dutch municipalities, visualizing neig
 - **Main Frontend:** Vanilla JS + MapLibre GL + Deck.gl (no build step, served from `/static/`)
 - **Admin Panel:** React 19 + TypeScript SPA in `/admin-panel/`, gebouwd met Vite (port 3000 in dev, built to `/static/admin-panel/`)
 - **Identity provider (optioneel):** Keycloak, compose-profiel `keycloak` (#214), achter Traefik op `/auth`, eigen database `keycloak` in dezelfde PostgreSQL (aangemaakt door `keycloak-db-init`, `docker-entrypoint.sh keycloak-db`). Realm-import bij de eerste start uit `deploy/keycloak/realm-omnitwin.json` (realm `omnitwin`, clients `omnitwin-web`, `omnitwin-api`, `etl-voorbeeld`); secret opvragen met `deploy/keycloak/client-secret.sh`. Headers-middleware `keycloak-headers` (Keycloak zet zelf CSP en frame-regels). De backend valideert tokens op de nieuwe API's als `OIDC_ISSUER` is gezet (`src/omnitwin/oidc.py`, zie Authentication)
-- **Database:** PostgreSQL 15 (image `postgis/postgis:15-3.5`, zie `db.Dockerfile`) with PostGIS, pgvector, and pg_trgm extensions
+- **Database:** PostgreSQL 15 (image `postgres:15-bookworm` met PostGIS en pgvector uit PGDG, zie `db.Dockerfile`, #191) with PostGIS, pgvector, and pg_trgm extensions
 
 ## Commands
 

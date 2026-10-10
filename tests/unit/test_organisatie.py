@@ -190,6 +190,90 @@ def test_rapport_vult_gemeente_uit_organisatie(monkeypatch):
     assert gezien["gemeente_code"] == "0080"
 
 
+class _Telling:
+    """Resultaat van de telling van de referentiegroep (scalar)."""
+
+    def __init__(self, n):
+        self.n = n
+
+    def scalar(self):
+        return self.n
+
+
+@pytest.mark.parametrize("methode", ["generate_multi_gebied_payload", "generate_thema_analyse_payload",
+                                     "generate_deelgebied_payload"])
+@pytest.mark.parametrize("provincie", ["Fryslân", "Groningen", None])
+def test_referentie_provincie_volgt_instelling(monkeypatch, methode, provincie):
+    """#324: referentie 'fryslan' filtert op organisatie.benchmark_provincie, niet op alle gebieden."""
+    from omnitwin.services import report_service
+
+    gezien = {}
+
+    def nep_referentie_params(gebiedstype_id, gemeente_code, **k):
+        gezien.update(gemeente_code=gemeente_code, provincie=k.get("provincie"))
+        raise RuntimeError("stop")
+
+    class Db:
+        def execute(self, sql, params=None):
+            q = str(sql)
+            if "FROM public.organisatie" in q:
+                return _NepDb(dict(SWF, benchmark_provincie=provincie))
+            if "SELECT COUNT(*) FROM gebieden" in q:
+                gezien["telling_provincie"] = params["provincie"]
+                return _Telling(965)
+            if "gebiedstype_id" in q and "LIMIT 1" in q:
+                return _NepDb({"gebiedstype_id": "t"})
+            if "FROM gemeenten" in q:
+                return _Lijst([("Súdwest-Fryslân",)])
+            return _Lijst([_Rij({"id": "BU1", "naam": "B", "gemeente_code": "1900", "gebiedstype_id": "t",
+                                 "is_water": False})])
+
+    monkeypatch.setattr(report_service, "referentie_params", nep_referentie_params)
+    with pytest.raises(RuntimeError, match="stop"):
+        getattr(report_service.ReportDataService(Db()), methode)(["BU1"], referentie="fryslan")
+    assert gezien["gemeente_code"] is None
+    assert gezien["provincie"] == provincie
+    assert gezien["telling_provincie"] == provincie
+
+
+class _Lijst(list):
+    def fetchall(self):
+        return list(self)
+
+    def fetchone(self):
+        return self[0] if self else None
+
+
+def test_provincie_referentie_label_uit_de_data():
+    from omnitwin.services.report_service import provincie_referentie_label
+
+    assert provincie_referentie_label("Fryslân", 965) == "⌀ Provincie Fryslân (965 gebieden)"
+    assert provincie_referentie_label("Groningen", 12) == "⌀ Provincie Groningen (12 gebieden)"
+    assert provincie_referentie_label(None, 40) == "⌀ Alle gebieden (40)"
+
+
+def test_referentie_params_provincie():
+    from omnitwin.services.zscore_referentie import (
+        SQL_REFERENTIE_STATS, SQL_REFERENTIE_WAARDEN, SQL_ZSCORE_GEBIEDEN, referentie_params,
+    )
+
+    assert referentie_params("t")["zs_provincie"] is None
+    assert referentie_params("t", provincie="Fryslân")["zs_provincie"] == "Fryslân"
+    for sql in (SQL_ZSCORE_GEBIEDEN, SQL_REFERENTIE_STATS, SQL_REFERENTIE_WAARDEN):
+        assert "CAST(:zs_provincie AS varchar)" in sql
+
+
+def test_geen_vaste_provincie_in_referentie():
+    """#324: geen vast label 'Provincie Fryslân' of vast provinciefilter in de code."""
+    bestanden = [ROOT / "src/omnitwin/services/report_service.py", ROOT / "static/js/app.js"] + [
+        ROOT / f"admin-panel/src/pages/{p}Page.tsx" for p in ("Benchmark", "Deelgebied", "MultiGebied", "ThemaAnalyse")]
+    for pad in bestanden:
+        tekst = pad.read_text(encoding="utf-8")
+        assert "Provincie Fryslân" not in tekst, pad
+        assert "provincie=eq.Frysl" not in tekst, pad
+        assert "~965" not in tekst, pad
+
+
 # ── footer ──────────────────────────────────────────────────────────────────
 
 def _footer(organisatie):
