@@ -8,6 +8,10 @@ Eerdere wijzigingen, van vóór dit bestand, zijn terug te vinden in de git-hist
 
 ## [Unreleased]
 
+### Gewijzigd
+
+- **Gemeenteselectie als toegankelijke, filterbare combobox** ([#308](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/308)): de verouderde HTML `<datalist>` in de kaartconfiguratie is vervangen door een volwaardige WAI-ARIA 1.2 combobox (`role="combobox"`, `role="listbox"`, `aria-activedescendant`). Typen filtert direct met diakrieten-insensitiviteit (`sud` vindt `Súdwest-Fryslân`). Volledig bedienbaar met toetsenbord (`ArrowDown`/`ArrowUp`, `Alt+ArrowDown/Up`, `Home`/`End`, `Enter`, `Escape`, `Tab`), schermlezer-ondersteuning via live-regio (`#gemeente-info` met `role="status"` en `aria-live="polite"`), dichte achtergrond voor gegarandeerd contrast (>4.5:1, WCAG 2.1 AA, ADR 0011) en één centrale synchronisatiefunctie (`zetGemeente()`) voor kaart, Kompas, filter-chip en EventBus.
+
 ## [0.4.0] - 2026-10-10
 
 AI op orde en images op Docker Hub. AI draait alleen nog na een **verklaring** per AI-usecase (assistent, samenvatting, zoeken op betekenis), is **herkenbaar** voor de gebruiker (label, bronnen, meer informatie, melden), wordt **gelogd** in een alleen-toevoegen logboek met hashketen en is **direct uit te zetten**; zonder AI blijft de applicatie werken. De nieuwe use case `ai-compliance` laat dat met bewijs zien. Elke release staat voortaan als image op Docker Hub, zodat installeren zonder bouwen kan. Verder: de database-dump van de huidige SWF-gebiedsmonitor als bron, de assistent zegt van welke buurt hij uitgaat, de referentie "provincie" volgt de instelling van de organisatie, de benchmarkkleur volgt de polariteit, en het database-image staat op een ondersteunde basis. Lees bij een upgrade de paragraaf **Migreren**: na de update staat alle AI uit.

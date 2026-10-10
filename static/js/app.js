@@ -647,12 +647,64 @@ async function laadOrganisatieVoorGemeenten() {
 }
 
 // Store loaded gemeenten for lookup
+// Store loaded gemeenten for lookup
 let loadedGemeenten = [];
+let comboboxController = null;
 
-async function loadGemeenten() {
-    const datalist = document.getElementById('gemeente-options');
+/**
+ * Diakrieten- en hoofdletterongevoelige tekstnormalisatie (WCAG/UX).
+ * Zoekt bijv. 'sud' en vindt 'Súdwest-Fryslân'.
+ */
+function normaliseerGemeenteTekst(str) {
+    if (!str) return '';
+    return str.normalize('NFD').replace(/\p{M}/gu, '').toLowerCase().trim();
+}
+
+/**
+ * Centrale functie voor het instellen van het gemeentefilter.
+ * Synchroniseert input, code, dropdown, filter-chip en kaartdata.
+ */
+function zetGemeente(code, naamOptioneel = null, herlaadKaart = true) {
     const input = document.getElementById('gemeente-input');
     const codeInput = document.getElementById('gemeente-code');
+    const info = document.getElementById('gemeente-info');
+
+    const cleanCode = code || '';
+    state.currentGemeenteCode = cleanCode;
+    try {
+        localStorage.setItem('omnitwin-gemeente', cleanCode);
+    } catch (e) { /* localStorage beveiliging */ }
+
+    const gemeente = loadedGemeenten.find(g => g.code === cleanCode);
+    const naam = gemeente ? gemeente.naam : (naamOptioneel || (cleanCode ? `code ${cleanCode}` : 'Alle gemeenten'));
+
+    if (input) input.value = naam;
+    if (codeInput) codeInput.value = cleanCode;
+    if (info) info.textContent = cleanCode ? `Geselecteerd: ${naam}` : 'Alle gemeenten';
+
+    updateGemeenteFilterChip();
+    if (comboboxController) {
+        comboboxController.syncVisualSelection(cleanCode);
+    }
+
+    if (herlaadKaart) {
+        console.log(`📍 Gemeente ingesteld: ${naam} (${cleanCode || 'alle'})`);
+        state.currentData = null;
+        clearGebiedSelection();
+        updateSelectionUI();
+
+        if (window.kompasViz && window.kompasViz.currentConfigId) {
+            window.kompasViz.currentGebiedId = null;
+            window.kompasViz.loadHierarchie(window.kompasViz.currentConfigId);
+        }
+
+        if (state.currentGebiedstype) {
+            loadKaartData();
+        }
+    }
+}
+
+async function loadGemeenten() {
     const info = document.getElementById('gemeente-info');
 
     let gemeenten = [];
@@ -684,31 +736,19 @@ async function loadGemeenten() {
 
     loadedGemeenten = gemeenten;
 
-    // Populate datalist
-    datalist.innerHTML = '';
-    gemeenten.forEach(gemeente => {
-        const option = document.createElement('option');
-        option.value = gemeente.naam;
-        option.dataset.code = gemeente.code;
-        datalist.appendChild(option);
-    });
+    // Initialiseer initiële waarde via zetGemeente (zonder kaart-reload bij init)
+    zetGemeente(state.currentGemeenteCode, null, false);
 
-    // Set initial value from state
-    const currentGemeente = gemeenten.find(g => g.code === state.currentGemeenteCode);
-    if (currentGemeente) {
-        input.value = currentGemeente.naam;
-        codeInput.value = currentGemeente.code;
-    } else if (state.currentGemeenteCode) {
-        // Opgeslagen code die niet in de lijst staat: niet verbergen (#140)
-        input.value = state.currentGemeenteCode;
-        codeInput.value = state.currentGemeenteCode;
-    } else {
-        input.value = 'Alle gemeenten';
-        codeInput.value = '';
+    const aantalEchteGemeenten = gemeenten.filter(g => g.code !== '').length;
+    if (info) {
+        info.textContent = state.currentGemeenteCode
+            ? `Geselecteerd: ${gemeenteNaam(state.currentGemeenteCode)}`
+            : `${aantalEchteGemeenten} gemeenten beschikbaar`;
     }
 
-    info.textContent = `${gemeenten.length - 1} gemeenten beschikbaar`;
-    updateGemeenteFilterChip();
+    if (comboboxController) {
+        comboboxController.updateOptions(loadedGemeenten);
+    }
 }
 
 // ---- Actief gemeentefilter zichtbaar maken (#140) ----
@@ -745,84 +785,271 @@ function updateGemeenteFilterChip(aantalGebieden = null) {
 
 /** Zet het gemeentefilter terug naar 'Alle gemeenten' en herlaadt de kaart. */
 function resetGemeenteFilter() {
-    const input = document.getElementById('gemeente-input');
-    const codeInput = document.getElementById('gemeente-code');
-    const info = document.getElementById('gemeente-info');
-
-    state.currentGemeenteCode = '';
-    if (codeInput) codeInput.value = '';
-    localStorage.setItem('omnitwin-gemeente', '');
-    if (input) input.value = 'Alle gemeenten';
-    if (info) info.textContent = 'Alle gemeenten';
-    updateGemeenteFilterChip();
-
-    state.currentData = null;
-    clearGebiedSelection();
-    updateSelectionUI();
-
-    if (window.kompasViz && window.kompasViz.currentConfigId) {
-        window.kompasViz.currentGebiedId = null;
-        window.kompasViz.loadHierarchie(window.kompasViz.currentConfigId);
-    }
-
-    // Herlaad kaart data zonder gemeente filter
-    if (state.currentGebiedstype) {
-        loadKaartData();
-    }
+    zetGemeente('', 'Alle gemeenten', true);
 }
 
 function setupGemeenteSelector() {
     const input = document.getElementById('gemeente-input');
-    const codeInput = document.getElementById('gemeente-code');
+    const listbox = document.getElementById('gemeente-listbox');
+    const toggleBtn = document.getElementById('gemeente-toggle-btn');
+    const wrapper = document.getElementById('gemeente-combobox-wrapper');
     const info = document.getElementById('gemeente-info');
 
-    if (!input) return;
+    if (!input || !listbox) return;
 
     const wisKnop = document.getElementById('gemeente-filter-wis');
     if (wisKnop) wisKnop.addEventListener('click', resetGemeenteFilter);
 
-    // Handle selection from datalist
-input.addEventListener('change', (e) => {
-        const inputValue = e.target.value;
-        const gemeente = loadedGemeenten.find(g => g.naam === inputValue);
+    let isOpen = false;
+    let activeIndex = -1;
+    let currentFiltered = [...loadedGemeenten];
 
-        if (gemeente) {
-            state.currentGemeenteCode = gemeente.code;
-            codeInput.value = gemeente.code;
-            localStorage.setItem('omnitwin-gemeente', gemeente.code);
+    function renderList(options, activeIdx = -1) {
+        listbox.innerHTML = '';
+        currentFiltered = options;
 
-            console.log(`📍 Gemeente: ${gemeente.naam} (${gemeente.code || 'alle'})`);
-            info.textContent = gemeente.code ? `Geselecteerd: ${gemeente.naam}` : 'Alle gemeenten';
-            updateGemeenteFilterChip();
-
-            state.currentData = null;
-            clearGebiedSelection();
-            updateSelectionUI();
-            
-            // Werk ook het Kompas paneel bij naar de gemeente of landelijk niveau
-            if (window.kompasViz && window.kompasViz.currentConfigId) {
-                if (gemeente.id) {
-                    window.kompasViz.loadGebiedData(window.kompasViz.currentConfigId, gemeente.id);
-                } else {
-                    // Geen ID (bijv. "Alle gemeenten")
-                    window.kompasViz.currentGebiedId = null;
-                    window.kompasViz.loadHierarchie(window.kompasViz.currentConfigId);
-                }
-            }
-
-            // Herlaad kaart data met nieuwe gemeente filter
-            if (state.currentGebiedstype) {
-                loadKaartData();
-            }
-        } else if (inputValue === '' || inputValue.toLowerCase() === 'alle') {
-            resetGemeenteFilter();
+        if (options.length === 0) {
+            const emptyLi = document.createElement('li');
+            emptyLi.id = 'gemeente-opt-empty';
+            emptyLi.className = 'combobox-option combobox-empty';
+            emptyLi.setAttribute('role', 'option');
+            emptyLi.setAttribute('aria-disabled', 'true');
+            emptyLi.textContent = 'Geen gemeenten gevonden';
+            listbox.appendChild(emptyLi);
+            if (info) info.textContent = 'Geen gemeenten gevonden';
+            input.removeAttribute('aria-activedescendant');
+            return;
         }
-});
 
-    // Select all text on focus for easy replacement
+        options.forEach((opt, idx) => {
+            const li = document.createElement('li');
+            li.id = `gemeente-opt-${idx}`;
+            li.className = 'combobox-option';
+            li.setAttribute('role', 'option');
+            li.dataset.code = opt.code;
+            li.dataset.naam = opt.naam;
+
+            const isSelected = opt.code === (state.currentGemeenteCode || '');
+            li.setAttribute('aria-selected', isSelected ? 'true' : 'false');
+
+            if (idx === activeIdx) {
+                li.classList.add('combobox-option-active');
+            }
+
+            li.textContent = opt.naam;
+            listbox.appendChild(li);
+        });
+
+        if (activeIdx >= 0 && activeIdx < options.length) {
+            input.setAttribute('aria-activedescendant', `gemeente-opt-${activeIdx}`);
+            scrollActiveIntoView(activeIdx);
+        } else {
+            input.removeAttribute('aria-activedescendant');
+        }
+    }
+
+    function scrollActiveIntoView(index) {
+        const item = document.getElementById(`gemeente-opt-${index}`);
+        if (!item) return;
+        const top = item.offsetTop;
+        const bottom = top + item.offsetHeight;
+        if (top < listbox.scrollTop) {
+            listbox.scrollTop = top;
+        } else if (bottom > listbox.scrollTop + listbox.clientHeight) {
+            listbox.scrollTop = bottom - listbox.clientHeight;
+        }
+    }
+
+    function openDropdown() {
+        if (isOpen) return;
+        isOpen = true;
+        listbox.hidden = false;
+        input.setAttribute('aria-expanded', 'true');
+        if (toggleBtn) toggleBtn.setAttribute('aria-expanded', 'true');
+
+        const val = input.value.trim();
+        const huidigeGemeente = loadedGemeenten.find(g => g.code === state.currentGemeenteCode);
+        const huidigeNaam = huidigeGemeente ? huidigeGemeente.naam : 'Alle gemeenten';
+
+        if (!val || val === huidigeNaam || val.toLowerCase() === 'alle') {
+            filterOptions('');
+        } else {
+            filterOptions(val);
+        }
+
+        const selectIdx = currentFiltered.findIndex(g => g.code === (state.currentGemeenteCode || ''));
+        setActiveIndex(selectIdx >= 0 ? selectIdx : 0);
+    }
+
+    function closeDropdown(herstelTekst = true) {
+        if (!isOpen) return;
+        isOpen = false;
+        listbox.hidden = true;
+        input.setAttribute('aria-expanded', 'false');
+        if (toggleBtn) toggleBtn.setAttribute('aria-expanded', 'false');
+        input.removeAttribute('aria-activedescendant');
+        activeIndex = -1;
+
+        if (herstelTekst) {
+            const naam = gemeenteNaam(state.currentGemeenteCode);
+            input.value = naam;
+        }
+    }
+
+    function filterOptions(query) {
+        const norm = normaliseerGemeenteTekst(query);
+        let gefilterd;
+
+        if (!norm || norm === 'alle') {
+            gefilterd = [...loadedGemeenten];
+        } else {
+            gefilterd = loadedGemeenten.filter(g => {
+                if (g.code === '') return false;
+                return normaliseerGemeenteTekst(g.naam).includes(norm);
+            });
+        }
+
+        activeIndex = gefilterd.length > 0 ? 0 : -1;
+        renderList(gefilterd, activeIndex);
+
+        if (info && norm && norm !== 'alle') {
+            info.textContent = `${gefilterd.length} ${gefilterd.length === 1 ? 'gemeente' : 'gemeenten'} gevonden`;
+        }
+    }
+
+    function setActiveIndex(idx) {
+        if (currentFiltered.length === 0) {
+            activeIndex = -1;
+            input.removeAttribute('aria-activedescendant');
+            return;
+        }
+        activeIndex = Math.max(0, Math.min(idx, currentFiltered.length - 1));
+        renderList(currentFiltered, activeIndex);
+    }
+
+    function selecteerOptie(optie) {
+        if (!optie) return;
+        zetGemeente(optie.code, optie.naam, true);
+        closeDropdown(false);
+    }
+
+    // Toggle button pointer events
+    if (toggleBtn) {
+        toggleBtn.addEventListener('pointerdown', (e) => {
+            e.preventDefault();
+        });
+        toggleBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            if (isOpen) {
+                closeDropdown(true);
+            } else {
+                input.focus();
+                openDropdown();
+            }
+        });
+    }
+
+    // Listbox pointer events
+    listbox.addEventListener('pointerdown', (e) => {
+        e.preventDefault();
+    });
+
+    listbox.addEventListener('click', (e) => {
+        const li = e.target.closest('li[role="option"]');
+        if (!li || li.classList.contains('combobox-empty')) return;
+        const code = li.dataset.code;
+        const naam = li.dataset.naam;
+        selecteerOptie({ code, naam });
+    });
+
+    // Input events
+    input.addEventListener('input', () => {
+        if (!isOpen) {
+            isOpen = true;
+            listbox.hidden = false;
+            input.setAttribute('aria-expanded', 'true');
+            if (toggleBtn) toggleBtn.setAttribute('aria-expanded', 'true');
+        }
+        filterOptions(input.value);
+    });
+
     input.addEventListener('focus', () => {
         input.select();
     });
+
+    input.addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            if (e.altKey) {
+                openDropdown();
+            } else if (!isOpen) {
+                openDropdown();
+            } else {
+                setActiveIndex(activeIndex + 1);
+            }
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            if (e.altKey) {
+                closeDropdown(true);
+            } else if (isOpen) {
+                setActiveIndex(activeIndex - 1);
+            }
+        } else if (e.key === 'Home') {
+            if (isOpen) {
+                e.preventDefault();
+                setActiveIndex(0);
+            }
+        } else if (e.key === 'End') {
+            if (isOpen) {
+                e.preventDefault();
+                setActiveIndex(currentFiltered.length - 1);
+            }
+        } else if (e.key === 'Enter') {
+            if (isOpen) {
+                e.preventDefault();
+                if (activeIndex >= 0 && currentFiltered[activeIndex]) {
+                    selecteerOptie(currentFiltered[activeIndex]);
+                } else if (currentFiltered.length === 1) {
+                    selecteerOptie(currentFiltered[0]);
+                } else {
+                    const norm = normaliseerGemeenteTekst(input.value);
+                    const exact = loadedGemeenten.find(g => normaliseerGemeenteTekst(g.naam) === norm);
+                    if (exact) {
+                        selecteerOptie(exact);
+                    }
+                }
+            }
+        } else if (e.key === 'Escape') {
+            if (isOpen) {
+                e.preventDefault();
+                e.stopPropagation();
+                closeDropdown(true);
+            }
+        } else if (e.key === 'Tab') {
+            if (isOpen) {
+                closeDropdown(true);
+            }
+        }
+    });
+
+    // Outside pointerdown sluit dropdown
+    document.addEventListener('pointerdown', (e) => {
+        if (isOpen && wrapper && !wrapper.contains(e.target)) {
+            closeDropdown(true);
+        }
+    });
+
+    comboboxController = {
+        updateOptions: (opts) => {
+            currentFiltered = [...opts];
+            if (isOpen) renderList(currentFiltered, activeIndex);
+        },
+        syncVisualSelection: (code) => {
+            if (isOpen) {
+                renderList(currentFiltered, activeIndex);
+            }
+        }
+    };
 }
 
 // ---- End Gemeente Selector ----
@@ -3344,34 +3571,8 @@ function setupEventListeners() {
         // Chat -> Map: Select Municipality (code-based lookup)
         window.EventBus.on('GEMEENTE_SELECTED', (data) => {
             console.log('📍 Chat sync: selecting gemeente', data.name, data.code);
-            const input = document.getElementById('gemeente-input');
-            const codeInput = document.getElementById('gemeente-code');
-            const info = document.getElementById('gemeente-info');
-            
-            if (!input || !codeInput) return;
-            
-            // Lookup gemeente by code in the loaded list
-            const gemeente = loadedGemeenten.find(g => g.code === data.code);
-            const naam = gemeente ? gemeente.naam : data.name;
-            const code = data.code;
-            
-            // Update UI
-            input.value = naam;
-            codeInput.value = code;
-            info.textContent = `Geselecteerd: ${naam}`;
-            
-            // Update state
-            state.currentGemeenteCode = code;
-            localStorage.setItem('omnitwin-gemeente', code);
-            updateGemeenteFilterChip();
-
-// Clear selection and reload map
-            state.currentData = null;
-            clearGebiedSelection();
-            updateSelectionUI();
-            if (state.currentGebiedstype) loadKaartData();
-            
-            console.log(`✅ Gemeente via chat: ${naam} (${code})`);
+            zetGemeente(data.code, data.name, true);
+            console.log(`✅ Gemeente via chat: ${data.name} (${data.code})`);
         });
 
         // Chat -> Map: Select Gebiedstype (direct state update)
@@ -3432,13 +3633,7 @@ function setupEventListeners() {
             }
             // Een gemeentefilter op een andere gemeente zou de gebieden verbergen
             if (data.gemeenteCode && state.currentGemeenteCode && state.currentGemeenteCode !== data.gemeenteCode) {
-                const gemeente = loadedGemeenten.find(g => g.code === data.gemeenteCode);
-                state.currentGemeenteCode = data.gemeenteCode;
-                try { localStorage.setItem('omnitwin-gemeente', data.gemeenteCode); } catch (e) { /* geen opslag */ }
-                const input = document.getElementById('gemeente-input');
-                const codeInput = document.getElementById('gemeente-code');
-                if (input && gemeente) input.value = gemeente.naam;
-                if (codeInput) codeInput.value = data.gemeenteCode;
+                zetGemeente(data.gemeenteCode, null, false);
                 state.currentData = null;
             }
 
