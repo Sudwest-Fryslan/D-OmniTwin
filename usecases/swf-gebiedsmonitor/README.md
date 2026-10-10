@@ -1,7 +1,7 @@
 # TC-07-010 — D-OmniTwin vervangt de huidige SWF-gebiedsmonitor (acceptatie)
 
 **Status:** ontwerp (de laad-API is nog niet gebouwd; deze use case is de specificatie en straks de acceptatietest)
-**Versie:** 0.3.0 · **Afhankelijk van:** [swf-definities](../swf-definities/README.md), [swf-gebiedsindelingen](../swf-gebiedsindelingen/README.md), [swf-kompasprofiel](../swf-kompasprofiel/README.md), [swf-basismonitor-waarden](../swf-basismonitor-waarden/README.md), [swf-klimaatmonitor](../swf-klimaatmonitor/README.md), [swf-kaartlagen](../swf-kaartlagen/README.md), [swf-adapter-fme](../swf-adapter-fme/README.md), [swf-initialisatie](../swf-initialisatie/README.md)
+**Versie:** 0.4.0 · **Afhankelijk van:** [swf-definities](../swf-definities/README.md), [swf-gebiedsindelingen](../swf-gebiedsindelingen/README.md), [swf-kompasprofiel](../swf-kompasprofiel/README.md), [swf-basismonitor-waarden](../swf-basismonitor-waarden/README.md), [swf-klimaatmonitor](../swf-klimaatmonitor/README.md), [swf-kaartlagen](../swf-kaartlagen/README.md), [swf-adapter-fme](../swf-adapter-fme/README.md), [swf-initialisatie](../swf-initialisatie/README.md), [swf-gebruikersvoorkeuren](../swf-gebruikersvoorkeuren/README.md) (optioneel)
 **Manifest:** [`usecase.json`](usecase.json) · **Controleren:** `python -m omnitwin.usecases controleer swf-gebiedsmonitor`
 
 ## Vraag
@@ -17,7 +17,11 @@ swf-definities → (cbs-gebiedsindelingen) → swf-gebiedsindelingen → swf-kom
   → swf-basismonitor-waarden → swf-klimaatmonitor → swf-kaartlagen → swf-adapter-fme
 ```
 
-`python -m omnitwin.usecases boom swf-gebiedsmonitor` toont de boom. Wat de huidige monitor kan en wat 0.3.0 moet doen: [huidige gebiedsmonitor](../../docs/1-visie-concept/huidige-gebiedsmonitor/README.md) en de [gat-analyse](../../docs/1-visie-concept/huidige-gebiedsmonitor/gat-analyse.md).
+`python -m omnitwin.usecases boom swf-gebiedsmonitor` toont de boom.
+
+**Alles uit de huidige monitor** ([#316](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/316)): met de export van de database-dump (`SWF_DB_DUMP`, [`scripts/beheer/swf_monitor_dump.py`](../../scripts/beheer/swf_monitor_dump.py)) leveren swf-definities, swf-basismonitor-waarden, swf-klimaatmonitor en swf-kompasprofiel de stand van de monitor zelf (definities, alle 81.373 waarden, de geldige monitorconfiguraties), en zet swf-gebruikersvoorkeuren de laatste kaartposities over. Wat in D-OmniTwin (nog) geen plek heeft: [gegevens.md](../../docs/1-visie-concept/huidige-gebiedsmonitor/gegevens.md#database-dump-van-de-monitor-09-10-2026).
+
+Getest op 10-10-2026 tegen een verse database (`db-init`, daarna `installeer --inproces` met `SWF_DB_DUMP`): swf-definities gepubliceerd (263 relaties, `score_type` voor 53 indicatoren, `d210c084…` = *CBS buurten bebouwde komgrens*), *SWF Basis* 215 en *SWF Klimaat* 10 plekken, swf-klimaatmonitor 7.686 waarden op 755 welstandsgebieden, drempels uit de monitor geladen met `--drempels`. swf-basismonitor-waarden blijft `ontwerp`: zonder de buurtdelen bebouwde kom (`SWF_GEO_DIR`) keurt de laad-API de levering af. Wat de huidige monitor kan en wat 0.3.0 moet doen: [huidige gebiedsmonitor](../../docs/1-visie-concept/huidige-gebiedsmonitor/README.md) en de [gat-analyse](../../docs/1-visie-concept/huidige-gebiedsmonitor/gat-analyse.md).
 
 
 ## Stappen

@@ -1,7 +1,7 @@
 # TC-07-005 — SWF-kompasprofielen Basis (4/12/33) en Klimaat
 
 **Status:** actief (Kompas via de beheerroute in-process; datasets zonder bron hier worden overgeslagen)
-**Versie:** 0.3.0 · **Afhankelijk van:** [swf-definities](../swf-definities/README.md)
+**Versie:** 0.4.0 · **Afhankelijk van:** [swf-definities](../swf-definities/README.md)
 **Manifest:** [`usecase.json`](usecase.json) · **Controleren:** `python -m omnitwin.usecases controleer swf-kompasprofiel`
 
 ## Vraag
@@ -14,7 +14,20 @@
 
 **Bron:** de voortgangslijst per indicator van het data-team van SWF (kwadrant, thema, onderdeel, extra niveau, naam), gekoppeld op naam aan de definities. Met een database-dump van de monitor (`$SWF_DB_DUMP`) komt de echte monitorconfiguratie, inclusief volgorde.
 
-**Met een database-dump van de monitor** (`$SWF_DB_DUMP`, als tweede bron naast de export): de monitorconfiguratie zelf (de 215 indicatoren van de live sunburst, volgorde en de twee monitors), in plaats van de voortgangslijst.
+**Met de database-dump van de monitor** (`$SWF_DB_DUMP`, variant `monitor-database`, heeft voorrang; [#316](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/316)): de monitorconfiguratie zelf, in plaats van de voortgangslijst. Exporteren: [`scripts/beheer/swf_monitor_dump.py`](../../scripts/beheer/swf_monitor_dump.py) `exporteer --dump public.monitor.dmp --uit <map>` (geen database nodig; `pg_restore` alleen om het custom format te lezen), daarna `SWF_DB_DUMP=<map>`. De map bevat echte data en komt nooit in git.
+
+De tabel `monitor` heeft 62 versies van 2 monitors (Basis 46, Klimaat 16); de geldige versie heeft geen eindgeldigheid. `configuratie` is een JSON-boom: `root` (naam, `gebiedstype_id`, `weergave_type`, `gebiedsindeling`) → `categorie` (tekst) → … → `indicator` (`indicator_id`, tekst, optioneel `omkeren` en `labeling`).
+
+| Monitorconfiguratie | D-OmniTwin |
+|---|---|
+| boom van de geldige versie: Basis 4 › 12 › 33 › 22 extra niveaus, 215 indicatoren (211 uniek); Klimaat 3 thema's, 10 indicatoren | kompasprofielen *SWF Basis* en *SWF Klimaat* (deze use case, `kompasprofiel_monitor.csv`) |
+| `weergave_type` `percentiel_waarden` / `labeling_waarden` | classificatie `percentielklasse` / `label` |
+| `omkeren` (53 indicatoren) | `score_type` van de indicator (swf-definities) |
+| `labeling` (10 indicatoren) | `indicator_labels` (keuze, zie [swf-klimaatmonitor](../swf-klimaatmonitor/README.md)) |
+| `kleur_id` (1 categorie) | geen; kleuren staan in `color_schemas` |
+| eerdere versies (60) | geen; archief `monitorconfiguraties.json` in de exportmap, zonder `vastgelegd_door` |
+
+In beide monitors staat *Waterdiepte op straat* met `c4e1b3bb…`; de bewerking `a4-waterdiepte` zet dat om naar `f6eafa70…` (A4).
 
 ## Data
 
@@ -37,6 +50,7 @@ Verwacht:
 |---|---|---|
 | swf-kompas-basis | 229 regels → 219 (5 oude werktitels, 1 testregel, 4 zonder plek); 4 kwadranten, 12 thema's, 33 onderdelen, 211 unieke UUID's; alle gekoppeld | geldig |
 | swf-kompas-klimaat | 10 | geldig |
+| *database-dump* (`SWF_DB_DUMP`, 10-10-2026, dump van 09-10-2026) | swf-kompas-basis: 225 → 215; swf-kompas-klimaat: 225 → 10; alle UUID's in de definities; `c4e1b3bb…` → `f6eafa70…` 1× per profiel | geldig |
 
 **Volledig Kompas uit de repo** (`swf-kompas-volledig`, 63 kB): 247 plekken (241 indicatoren) in 4 kwadranten, 12 thema's en 33 onderdelen, met weging en actueel, zoals de projectleider het heeft ingericht. De beheerroute vult het profiel aan; wat er al is, blijft. Een indicator die (nog) niet bestaat, wordt overgeslagen en geteld (zonder swf-definities ontbreken de monitorindicatoren); de vervallen *Waterdiepte op straat* wordt de aangehouden UUID (A4). Herkomst: de lokale D-OmniTwin-database van de projectleider (dump van 04-10-2026), openbaar volgens besluit van de projectleiding (https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/222). Het bestand staat in [`data/`](data/) met `herkomst.json` (aantallen, controlesom); vervangen bij een nieuwere dump met [`scripts/beheer/swf_export.py --repo`](../../scripts/beheer/swf_export.py) en een PR. Extra onderdelen (22), extra tags (53) en scoringsregels (16) hebben nog geen route.
 
@@ -64,10 +78,10 @@ Verwacht:
 
 | # | Type | Wat | Verwacht |
 |---|---|---|---|
-| 1 | aantal | `swf-kompas-basis` — 219 plekken (211 unieke indicatoren) in 4 kwadranten, 12 thema's en 33 onderdelen | gelijk 219 |
+| 1 | aantal | `swf-kompas-basis` — 219 plekken uit de voortgangslijst, 215 uit de monitorconfiguratie; 211 unieke indicatoren in 4 kwadranten, 12 thema's en 33 onderdelen | minimaal 215 |
 | 2 | bewerking | `swf-kompas-basis`: regels met reden `indicator-niet-in-definities` — elke indicator in de hiërarchie heeft een definitie (koppeling op naam, spaties en hoofdletters genegeerd) | gelijk 0 |
-| 3 | bewerking | `swf-kompas-basis`: regels met reden `oude-werktitel` | gelijk 5 |
-| 4 | bewerking | `swf-kompas-basis`: regels met reden `zonder-plek-in-hierarchie` | gelijk 4 |
+| 3 | bewerking | `swf-kompas-basis`: regels met reden `oude-werktitel` (voortgangslijst 5, monitorconfiguratie 0) | maximaal 5 |
+| 4 | bewerking | `swf-kompas-basis`: regels met reden `zonder-plek-in-hierarchie` (voortgangslijst 4, monitorconfiguratie 0) | maximaal 4 |
 | 5 | aantal | `swf-kompas-klimaat` | gelijk 10 |
 | 6 | api | `GET /api/beheer/v1/kompasprofielen` (met token) — SWF Basis en SWF Klimaat bestaan | HTTP 200, ≥ 2 resultaten |
 | 7 | viewer | Kompas 'SWF Basis' openen voor Bolsward-Zuidoost | 4 kwadranten, 12 thema's, 33 onderdelen; indicatoren zonder waarde grijs en benoemd |

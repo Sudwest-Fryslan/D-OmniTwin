@@ -2,7 +2,7 @@
   "specificatie": "1.0",
   "naam": "swf-gebiedsmonitor",
   "id": "TC-07-010",
-  "versie": "0.3.0",
+  "versie": "0.4.0",
   "titel": "D-OmniTwin vervangt de huidige SWF-gebiedsmonitor (acceptatie)",
   "vraag": "Kan Súdwest-Fryslân met D-OmniTwin hetzelfde als met de huidige gebiedsmonitor: dezelfde indicatoren en gebieden, dezelfde sunburst en Klimaatmonitor, dezelfde lagen, gevuld vanuit de DWH?",
   "gebruiker": "kernteam gebiedsagenda en functioneel beheerder SWF",
@@ -39,6 +39,11 @@
     {
       "naam": "swf-initialisatie",
       "versie": ">=0.1.0"
+    },
+    {
+      "naam": "swf-gebruikersvoorkeuren",
+      "versie": ">=0.1.0",
+      "optioneel": true
     }
   ],
   "actoren": [
@@ -123,6 +128,7 @@
   "bekende_afwijkingen": [
     "Deze use case heeft zelf geen datasets: hij neemt alle swf-* use cases mee en doet de eindcontroles.",
     "Inloggen met rollen, percentielklasse en labels A–E, favorieten en de beveiligde geo-route zijn functies van 0.3.0 die nog gebouwd worden; de viewer-controles zijn handmatig tot de uitvoerder ze kan draaien.",
-    "Open vragen staan in docs/1-visie-concept/huidige-gebiedsmonitor/gat-analyse.md."
+    "Open vragen staan in docs/1-visie-concept/huidige-gebiedsmonitor/gat-analyse.md.",
+    "Met de database-dump van de monitor (SWF_DB_DUMP, scripts/beheer/swf_monitor_dump.py, #316) komen definities, alle waarden, de monitorconfiguraties (Kompasprofielen, richting, drempels) en de gebruikersvoorkeuren over; wat geen plek heeft in D-OmniTwin, staat in docs/1-visie-concept/huidige-gebiedsmonitor/gegevens.md."
   ]
 }

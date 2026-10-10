@@ -35,7 +35,8 @@ SCENARIO_STANDAARD = "current"
 # 0 = nooit terugvallen.
 MIN_N_STANDAARD = 5
 
-# Referentiegroep: 'gemeente' = gebiedstype + gemeente (standaard), 'fryslan' = alleen gebiedstype
+# Referentiegroep: 'gemeente' = gebiedstype + gemeente (standaard), 'fryslan' = gebiedstype in de
+# provincie organisatie.benchmark_provincie (#324; zonder instelling: alle gebieden van dat type)
 REFERENTIE_STANDAARD = "gemeente"
 
 # Gebiedstype van CBS-buurten (gebiedstypes.code), voor routes zonder doelgebied
@@ -46,17 +47,20 @@ SQL_ZSCORE_GEBIEDEN = """public.zscore_gebieden(
     CAST(:zs_gebied_ids AS varchar[]), CAST(:zs_gebiedstype_id AS uuid),
     CAST(:zs_gemeente_code AS varchar), CAST(:zs_jaarlogica AS text),
     CAST(:zs_scenario_id AS varchar), CAST(:zs_indicator_uuids AS uuid[]),
-    CAST(:zs_min_n AS integer))"""
+    CAST(:zs_min_n AS integer),
+    CAST(:zs_provincie AS varchar))"""
 
 SQL_REFERENTIE_STATS = """public.zscore_referentie_stats(
     CAST(:zs_gebiedstype_id AS uuid), CAST(:zs_gemeente_code AS varchar),
     CAST(:zs_jaarlogica AS text), CAST(:zs_scenario_id AS varchar),
-    CAST(:zs_indicator_uuids AS uuid[]), CAST(:zs_min_n AS integer))"""
+    CAST(:zs_indicator_uuids AS uuid[]), CAST(:zs_min_n AS integer),
+    CAST(:zs_provincie AS varchar))"""
 
 SQL_REFERENTIE_WAARDEN = """public.zscore_referentie_waarden(
     CAST(:zs_gebiedstype_id AS uuid), CAST(:zs_gemeente_code AS varchar),
     CAST(:zs_jaarlogica AS text), CAST(:zs_scenario_id AS varchar),
-    CAST(:zs_indicator_uuids AS uuid[]), CAST(:zs_min_n AS integer))"""
+    CAST(:zs_indicator_uuids AS uuid[]), CAST(:zs_min_n AS integer),
+    CAST(:zs_provincie AS varchar))"""
 
 def referentie_params(
     gebiedstype_id: Any,
@@ -66,11 +70,13 @@ def referentie_params(
     jaarlogica: str = JAARLOGICA_STANDAARD,
     scenario_id: str = SCENARIO_STANDAARD,
     min_n: int = MIN_N_STANDAARD,
+    provincie: Optional[str] = None,
 ) -> Dict[str, Any]:
     """
     Bind-parameters voor de SQL-fragmenten hierboven.
 
     gemeente_code None = referentiegroep over alle gemeenten (alleen gebiedstype).
+    provincie: alleen gemeenten in die provincie (gemeenten.provincie, #324); None = alle.
     gebied_ids None (bij zscore_gebieden) = alle gebieden van de referentiegroep.
     """
     if jaarlogica not in JAARLOGICA_OPTIES:
@@ -83,6 +89,7 @@ def referentie_params(
         "zs_scenario_id": scenario_id,
         "zs_indicator_uuids": [str(u) for u in indicator_uuids] if indicator_uuids is not None else None,
         "zs_min_n": int(min_n),
+        "zs_provincie": provincie,
     }
 
 

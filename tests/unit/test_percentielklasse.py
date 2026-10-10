@@ -81,6 +81,18 @@ def test_hoger_is_beter(score_type, inverse, verwacht):
     assert pk.hoger_is_beter(score_type, inverse) is verwacht
 
 
+@pytest.mark.parametrize("score_type,inverse,kwadrant,verwacht", [
+    ("+/+", False, "Welzijn", "hoger_is_beter"),
+    ("+/-", False, "Welzijn", "lager_is_beter"),
+    ("+/+", True, None, "lager_is_beter"),
+    ("+/+", False, "Samenstelling", "neutraal"),
+    ("+/-", False, "Samenstelling bevolking", "neutraal"),
+])
+def test_richting_voor_benchmarkkleur(score_type, inverse, kwadrant, verwacht):
+    # #323: de Kompas-benchmark kleurt de afwijking op deze richting
+    assert pk.richting(score_type, inverse, kwadrant) == verwacht
+
+
 # ── Onderdrukking (n < 10) ───────────────────────────────────────────────────
 
 @pytest.mark.parametrize("n,verwacht", [(None, False), (0, True), (9, True), (10, False), (250, False)])

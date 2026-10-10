@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { organisatieAPI, reportAPI } from '../services/api';
 import type { Organisatie } from '../services/api';
+import { provincieNaam } from '../hooks/useBenchmarkProvincie';
 import { X, Layers, RefreshCw, Download, ArrowUpDown, Map, BarChart2, List, ChevronRight, ChevronDown } from 'lucide-react';
 import * as d3 from 'd3';
 
@@ -462,7 +463,7 @@ export const MultiGebiedPage: React.FC = () => {
                 <div style={{ display: 'flex', gap: '0' }}>
                     {([
                         { key: 'gemeente' as const, label: `⌀ Gemeente ${gemeenteLabel}`.trim() },
-                        { key: 'fryslan' as const, label: '⌀ Provincie Fryslân' },
+                        { key: 'fryslan' as const, label: `⌀ ${provincieNaam(organisatie?.benchmark_provincie)}` },
                     ]).map(tab => (
                         <button
                             key={tab.key}
