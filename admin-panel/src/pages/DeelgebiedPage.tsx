@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import * as d3 from 'd3';
 import { reportAPI } from '../services/api';
+import { provincieNaam, useBenchmarkProvincie } from '../hooks/useBenchmarkProvincie';
 import {
     ChevronDown,
     ChevronRight,
@@ -146,6 +147,7 @@ export const DeelgebiedPage: React.FC = () => {
     const deelgebiedNaamParam = searchParams.get('naam') || '';
     const initialRef = (searchParams.get('ref') as 'gemeente' | 'fryslan') || 'gemeente';
     const gemeenteCode = searchParams.get('gemeente') || undefined;
+    const benchmarkProvincie = useBenchmarkProvincie();  // referentie 'provincie' (#324)
 
     // State
     const [referentie, setReferentie] = useState<'gemeente' | 'fryslan'>(initialRef);
@@ -639,7 +641,7 @@ export const DeelgebiedPage: React.FC = () => {
                                     transition: 'all 0.15s ease'
                                 }}
                             >
-                                ⌀ Provincie Fryslân
+                                ⌀ {provincieNaam(benchmarkProvincie)}
                             </button>
                         </div>
 

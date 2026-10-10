@@ -2,11 +2,13 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { reportAPI, gebiedenAPI } from '../services/api';
 import type { BenchmarkMode, BenchmarkPayload, BenchmarkNarrativeResponse, GebiedListItem } from '../types';
+import { provincieNaam, useBenchmarkProvincie } from '../hooks/useBenchmarkProvincie';
 import { ArrowLeft, Cpu, RefreshCw, Plus, X, Scale, BarChart3, Terminal, ChevronDown, ChevronUp } from 'lucide-react';
 
 export const BenchmarkPage: React.FC = () => {
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
+    const benchmarkProvincie = useBenchmarkProvincie();  // referentie 'provincie' (#324)
 
     // ─── Selectie State ─────────────────────────────────────────────────────
     const [mode, setMode] = useState<BenchmarkMode>('gebieden');
@@ -296,7 +298,7 @@ export const BenchmarkPage: React.FC = () => {
                         <h1 style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                             <Scale size={24} /> Benchmark Vergelijker
                         </h1>
-                        <p className="text-secondary">Vergelijk een gebied met andere gebieden, een gemeente of geheel Fryslân</p>
+                        <p className="text-secondary">Vergelijk een gebied met andere gebieden, een gemeente of de provincie</p>
                     </div>
                     <div style={{ display: 'flex', gap: '1rem' }}>
                         {benchmarkData && (
@@ -338,7 +340,7 @@ export const BenchmarkPage: React.FC = () => {
                         {([
                             { key: 'gebieden', label: 'Specifieke Gebieden' },
                             { key: 'gemeente', label: 'Gemeente Gemiddelde' },
-                            { key: 'fryslan', label: 'Fryslân Gemiddelde' },
+                            { key: 'fryslan', label: `⌀ ${provincieNaam(benchmarkProvincie)}` },
                         ] as { key: BenchmarkMode; label: string }[]).map(tab => (
                             <button
                                 key={tab.key}
@@ -433,7 +435,9 @@ export const BenchmarkPage: React.FC = () => {
                         borderRadius: 'var(--radius-sm)', border: '1px solid var(--color-border)',
                         marginBottom: '1rem', fontSize: '0.9rem', color: 'var(--color-text-muted)'
                     }}>
-                        <strong>⌀ Provincie Fryslân</strong> — Vergelijkt Gebied A met het gemiddelde van alle ~965 buurten.
+                        <strong>⌀ {provincieNaam(benchmarkProvincie)}</strong> — Vergelijkt Gebied A met het gemiddelde van alle gebieden van hetzelfde type
+                        {benchmarkProvincie ? ` in de provincie ${benchmarkProvincie}` : ''} (instelling Organisatie → benchmarkprovincie).
+                        Het aantal gebieden staat na het laden in de kop.
                     </div>
                 )}
 
