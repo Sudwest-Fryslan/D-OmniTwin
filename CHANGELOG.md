@@ -16,6 +16,7 @@ Eerdere wijzigingen, van vóór dit bestand, zijn terug te vinden in de git-hist
 ### Migreren
 
 - **Na de update staat alle AI uit**, ook als die eerder werkte. Upload per AI-usecase die je wilt gebruiken de verklaring van je eigen toetsing (beheeromgeving > AI-usecases).
+- Elke release als image op Docker Hub: `sudwestfryslan/d-omnitwin` en `sudwestfryslan/d-omnitwin-db`, met tags `<versie>`, `<major>.<minor>` en `latest` ([#126](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/126)). Installeren zonder te bouwen met `docker-compose.images.yml` en `OMNITWIN_VERSIE`; zie de installatiegids.
 
 ## [0.3.1] - 2026-10-06
 
