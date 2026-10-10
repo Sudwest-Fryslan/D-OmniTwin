@@ -12,7 +12,7 @@ from typing import Dict, Any, List, Optional
 import json
 
 from omnitwin.fouten import GebruikersFout
-from omnitwin.services.organisatie import eigen_gemeente_code
+from omnitwin.services.organisatie import eigen_gemeente_code, lees_organisatie
 
 from omnitwin.services.zscore_referentie import (
     MIN_N_STANDAARD,
@@ -22,11 +22,36 @@ from omnitwin.services.zscore_referentie import (
     referentie_params,
 )
 
+def provincie_referentie_label(provincie: Optional[str], aantal: int) -> str:
+    """Label van de referentie 'provincie' (#324), met het aantal gebieden uit de data."""
+    if provincie:
+        return f"⌀ Provincie {provincie} ({aantal} gebieden)"
+    return f"⌀ Alle gebieden ({aantal})"
+
+
 class ReportDataService:
     """Service class voor Rapportage data aggregatie & pre-processing"""
     
     def __init__(self, db: Session):
         self.db = db
+
+    def _provincie_referentie(self, gebiedstype_id) -> tuple:
+        """
+        Referentie 'provincie' (modus 'fryslan', #324): de provincie uit de instelling
+        organisatie.benchmark_provincie, en het label met het aantal gebieden van dit
+        type in die provincie (zonder waterbuurten). Zonder instelling: alle gebieden.
+        Geeft (provincie of None, label).
+        """
+        provincie = (lees_organisatie(self.db) or {}).get("benchmark_provincie") or None
+        aantal = self.db.execute(text("""
+            SELECT COUNT(*) FROM gebieden g
+            WHERE g.gebiedstype_id = CAST(:gt AS uuid)
+              AND NOT public.is_waterbuurt(g.naam, g.metadata)
+              AND (CAST(:provincie AS varchar) IS NULL OR EXISTS (
+                    SELECT 1 FROM gemeenten gm
+                    WHERE gm.code = g.gemeente_code AND gm.provincie = CAST(:provincie AS varchar)))
+        """), {"gt": str(gebiedstype_id), "provincie": provincie}).scalar() or 0
+        return provincie, provincie_referentie_label(provincie, int(aantal))
 
     def generate_report_payload(self, gebied_id: str) -> Dict[str, Any]:
         """
@@ -272,15 +297,15 @@ class ReportDataService:
             referentie_label = f"⌀ Gemeente {gemeente_label}"
 
         elif mode == 'fryslan':
-            # Gemiddelde van ALLE buurten (geheel Fryslân; centrale referentie zonder gemeente, #66)
+            # Gemiddelde van de buurten in de benchmarkprovincie van de organisatie (#66, #324)
+            provincie, referentie_label = self._provincie_referentie(gebied_a_dict['gebiedstype_id'])
             ref_query = text(f"""
                 SELECT zs.indicator_uuid, zs.gemiddelde as ref_waarde, zs.n
                 FROM {SQL_ZSCORE_GEBIEDEN} zs
             """)
             ref_result = self.db.execute(ref_query, referentie_params(
-                gebied_a_dict['gebiedstype_id'], None, gebied_ids=[gebied_id_a]
+                gebied_a_dict['gebiedstype_id'], None, gebied_ids=[gebied_id_a], provincie=provincie
             ))
-            referentie_label = "⌀ Provincie Fryslân"
 
         else:
             raise GebruikersFout(f"Onbekende modus: {mode}")
@@ -432,11 +457,14 @@ class ReportDataService:
         if not gefilterde_ids:
             raise GebruikersFout("Alle geselecteerde gebieden zijn water-buurten.")
 
-        # 2. Referentiegroep: gebiedstype (+ gemeente bij referentie 'gemeente'), #66
+        # 2. Referentiegroep: gebiedstype (+ gemeente bij referentie 'gemeente'), #66;
+        #    anders de benchmarkprovincie van de organisatie (#324)
+        provincie, provincie_label = (None, None) if referentie == 'gemeente'             else self._provincie_referentie(gebiedstype_id)
         params: Dict[str, Any] = referentie_params(
             gebiedstype_id,
             gemeente_code if referentie == 'gemeente' else None,
             gebied_ids=gefilterde_ids,
+            provincie=provincie,
         )
 
         # 2c. Optioneel thema-filter
@@ -603,7 +631,7 @@ class ReportDataService:
             ).fetchone()
             referentie_label = f"⌀ Gemeente {gem_naam_row[0]}" if gem_naam_row else f"⌀ Gemeente {gemeente_code}"
         else:
-            referentie_label = "⌀ Provincie Fryslân"
+            referentie_label = provincie_label
 
         # 7. Data Lineage & Bronverantwoording
         used_indicator_uuids = list({
@@ -789,11 +817,14 @@ class ReportDataService:
         if not gefilterde_ids:
             raise GebruikersFout("Alle geselecteerde gebieden zijn water-buurten.")
 
-        # 2. Referentiegroep: gebiedstype (+ gemeente bij referentie 'gemeente'), #66
+        # 2. Referentiegroep: gebiedstype (+ gemeente bij referentie 'gemeente'), #66;
+        #    anders de benchmarkprovincie van de organisatie (#324)
+        provincie, provincie_label = (None, None) if referentie == 'gemeente'             else self._provincie_referentie(gebiedstype_id)
         params: Dict[str, Any] = referentie_params(
             gebiedstype_id,
             gemeente_code if referentie == 'gemeente' else None,
             gebied_ids=gefilterde_ids,
+            provincie=provincie,
         )
 
         # 2c. Bouw thema filter clause
@@ -911,7 +942,7 @@ class ReportDataService:
             ).fetchone()
             referentie_label = f"⌀ Gemeente {gem_naam_row[0]}" if gem_naam_row else f"⌀ Gemeente {gemeente_code}"
         else:
-            referentie_label = "⌀ Provincie Fryslân"
+            referentie_label = provincie_label
 
         # 6. Beschrijving
         filter_parts = []
@@ -1061,16 +1092,18 @@ class ReportDataService:
         gemeente_naam = gem_row[0] if gem_row else gemeente_code
 
         # 2. Referentiegroep: gebiedstype (+ gemeente bij referentie 'gemeente'), #66
+        provincie = None
         if referentie == 'gemeente':
             referentie_label = f"⌀ Gemeente {gemeente_naam}"
         else:
-            referentie_label = "⌀ Provincie Fryslân"
+            provincie, referentie_label = self._provincie_referentie(gebiedstype_id)
 
         actieve_ids = [str(b['id']) for b in actieve_buurten]
         params: Dict[str, Any] = referentie_params(
             gebiedstype_id,
             gemeente_code if referentie == 'gemeente' else None,
             gebied_ids=actieve_ids,
+            provincie=provincie,
         )
 
         # 3. Inwoneraantallen ophalen voor gewogen aggregatie

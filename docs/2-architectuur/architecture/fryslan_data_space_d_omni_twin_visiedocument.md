@@ -60,7 +60,7 @@ De ontologische beschrijvingen in de OmniTwin database (nu soms AI-gegenereerd) 
 Gemeenten zijn vaak huiverig om data in een centraal "dashboard" te laden. Doordat D-OmniTwin de infrastructuur van DataFryslân (een coöperatie en geregistreerde DGA-dataintermediair) gebruikt, verdwijnt deze juridische en politieke frictie.
 
 **Borging:**  
-Gemeenten weten dat hun data de bron niet verlaat en uitsluitend via Accession Agreements in D-OmniTwin getoond wordt. De inzet van het AI-model is bovendien afgedekt door de Data-ethyk Kommisje Fryslân (DKF) en getoetst via het IAMA.
+Gemeenten weten dat hun data de bron niet verlaat en uitsluitend via Accession Agreements in D-OmniTwin getoond wordt. De inzet van AI wordt per AI-usecase getoetst volgens het AI-beleid van de organisatie (bij SWF: aanmelding bij de AI Officer, IAMA/DPIA waar nodig) en gaat pas aan na een vastgelegde verklaring (zie https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/307).
 
 ---
 

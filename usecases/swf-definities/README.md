@@ -1,7 +1,7 @@
 # TC-07-003 — SWF-definities: indicatoren, gebiedstypen en relaties
 
-**Status:** ontwerp (de laad-API is nog niet gebouwd; deze use case is de specificatie en straks de acceptatietest)
-**Versie:** 0.3.0 · **Afhankelijk van:** –
+**Status:** actief (via de laad-API; zonder bron overgeslagen)
+**Versie:** 0.4.0 · **Afhankelijk van:** –
 **Manifest:** [`usecase.json`](usecase.json) · **Controleren:** `python -m omnitwin.usecases controleer swf-definities`
 
 ## Vraag
@@ -27,7 +27,19 @@ Een UUID wijzigen kan alleen aan de bronkant (DWH/FME), omdat de push en de prof
 
 **Mapping gebiedstypen** (`gebiedstypen.json`, statisch): per gebiedstype een unieke code (`gebiedstypes.code` is uniek), het niveau, de dataset die de gebieden levert en een prefix voor codes die niet landelijk uniek zijn (welstand `WS`, woonplaats `WP`, postcode `PC`, bebouwde kom `BK`).
 
-**Met een database-dump van de monitor** (`$SWF_DB_DUMP`, als tweede bron naast de export): de definities rechtstreeks uit de monitor-database, inclusief velden die de export mist (eenheid, richting, bron, code).
+**Met de database-dump van de monitor** (`$SWF_DB_DUMP`, variant `monitor-database`, heeft voorrang; [#316](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/316)): dezelfde drie tabellen uit de database van de monitor, plus `score_type` uit `omkeren` in de actieve monitorconfiguraties (`true` = `-/+`, lager is beter; `false` = `+/+`). Eenheid, bron en code staan ook in de database niet. Exporteren: [`scripts/beheer/swf_monitor_dump.py`](../../scripts/beheer/swf_monitor_dump.py) `exporteer --dump public.monitor.dmp --uit <map>` (geen database nodig; `pg_restore` alleen om het custom format te lezen), daarna `SWF_DB_DUMP=<map>`. De map bevat echte data en komt nooit in git.
+
+Vergelijking dump (09-10-2026) met de export (februari 2026), alleen structuur en aantallen:
+
+| | Export feb. 2026 | Database-dump 09-10-2026 |
+|---|---|---|
+| indicatoren / gebiedstypen / relaties | 228 / 11 / 263 | 228 / 11 / 263, dezelfde UUID's en namen van de gebiedstypen |
+| status A / O / C / B | 10 / 212 / 5 / 1 | 20 / 200 / 5 / 3 |
+| andere naam bij dezelfde UUID | – | 9: de leeftijdsgroepen (bijv. *0-3 jaar* → *0-15 jaar*) en opleidingsniveaus (*laag/middelhoog/hoog* → *Basisonderwijs, vmbo, mbo1* enz.) |
+| met eindgeldigheid | 9 | 9 (dezelfde, 14-01-2025) |
+| dubbele namen (A4) | 2 | 2 (dezelfde) |
+
+Nieuw met status A: de vijf leeftijdsgroepen, drie opleidingsniveaus, *diefstal fiets* en *inbraak auto*; hun voorgangers *diefstal fietsen* en *inbraak auto's* zijn B. In de actieve Klimaatmonitor én de Basis monitor van de dump staat *Waterdiepte op straat* met `c4e1b3bb…` (status C), niet met `f6eafa70…`: de premisse van A4 klopt niet meer (zie Bekende afwijkingen).
 
 ## Data
 
@@ -46,6 +58,7 @@ Verwacht:
 | Dataset | Bron → levering | Resultaat |
 |---|---|---|
 | swf-monitor-definities | 228 indicatoren, 11 gebiedstypen, 263 relaties; status A → O: 10 | geldig (Table Schema en foreign keys) |
+| *database-dump* (`SWF_DB_DUMP`, 10-10-2026, dump van 09-10-2026) | 228 indicatoren, 11 gebiedstypen, 263 relaties; status A → O: 20; dubbele naam: 2; score_type: 53 | geldig |
 
 ## Stappen
 
@@ -81,7 +94,7 @@ Verwacht:
 | 1 | aantal | `swf-monitor-definities`, resource `indicatoren` | gelijk 228 |
 | 2 | aantal | `swf-monitor-definities`, resource `gebiedstypen` | gelijk 11 |
 | 3 | aantal | `swf-monitor-definities`, resource `relaties` | gelijk 263 |
-| 4 | bewerking | `swf-monitor-definities`: regels met reden `status: A → O` — de 10 klimaatindicatoren (aanname A2: A = actueel, tot bevestiging → O) | gelijk 10 |
+| 4 | bewerking | `swf-monitor-definities`: regels met reden `status: A → O` — 10 in de export van februari, 20 in de database-dump (aanname A2: A = Actueel → O) | minimaal 10 |
 | 5 | bewerking | `swf-monitor-definities`: regels met reden `dubbele-naam` — Waterdiepte op straat (`c4e1b3bb…`) en Werkzamen (`ca06d8ad…`) → status B, naam '… (vervallen)' | gelijk 2 |
 | 6 | bewerking | `swf-monitor-definities`: regels met reden `dubbele-naam-zonder-voorkeur` — elke dubbele naam staat in de voorkeurslijst | gelijk 0 |
 | 7 | bewerking | `swf-monitor-definities`: regels met reden `gebiedstype-zonder-mapping` | gelijk 0 |
@@ -106,3 +119,6 @@ Verwacht:
 - UUID d210c084: in de stuurdata van D-OmniTwin 'Custom Gebied Type' (code CUSTOM, nergens gebruikt); in de monitor 'CBS buurten bebouwde komgrens' met 2.370 waarden. De levering zet naam en code (CBS_BUURT_BBK); de stuurdata moet mee (migratie).
 - Eenheid, richting, bron en code per indicator zitten niet in de export; aanvullen via beheer of het gewone profiel definities.
 - Eén testdefinitie (status B) gaat mee zoals hij is. De twee dubbele namen: zie *Dubbele UUID's* hierboven (aanname A4).
+- Database-dump: 9 UUID's hebben een andere naam dan in februari (zelfde sleutel, andere betekenis). Dat hoort niet; melden bij DWH-beheer (een nieuwe betekenis = een nieuwe UUID).
+- Database-dump: de actieve monitors gebruiken voor *Waterdiepte op straat* `c4e1b3bb…` (C), niet `f6eafa70…`. De voorkeurslijst (A4) blijft zoals besloten; swf-kompasprofiel zet `c4e1b3bb…` om naar `f6eafa70…`. Beslissing bij de beheerder.
+- Database-dump: `score_type` uit `omkeren` (53 indicatoren) overschrijft de richting uit de stuurdata waar die anders is.

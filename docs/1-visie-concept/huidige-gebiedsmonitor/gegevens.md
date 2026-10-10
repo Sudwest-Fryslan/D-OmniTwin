@@ -56,7 +56,7 @@ erDiagram
 | Percentiel en label | berekend door de monitor | percentielwaarde en labelwaarde per knoop | – |
 | Favoriet, instelling | gebruiker | selecties, kaartpositie, panelen | – |
 
-**Status:** D-OmniTwin kent C (concept), O (operationeel) en B (beëindigd). De 10 definities met status **A** zijn precies de 10 indicatoren van de Klimaatmonitor; wat A betekent, is een open vraag. Status B is één testdefinitie.
+**Status:** in de monitor A = Actueel, B = Buiten gebruik, C = Concept, O = Onderzoek (A2, [#222](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/222)); D-OmniTwin kent C (concept), O (operationeel) en B (beëindigd), dus A → O. In februari waren de 10 definities met status A precies de 10 indicatoren van de Klimaatmonitor en was B één testdefinitie; in de database-dump van 09-10-2026 zijn het er 20 en 3 (zie onderaan).
 
 **Twee soorten geldigheid:** de definitie heeft een begin- en eindgeldigheid (SCD in het DWH; 9 definities hebben een einddatum). Een waarde heeft een peildatum (nu altijd 1 januari van het jaar). D-OmniTwin moet die twee uit elkaar houden.
 
@@ -201,3 +201,49 @@ flowchart LR
 | hiërarchie en monitors | `kompas_configuraties` → `kompas_titels` → `kompas_themas` → `kompas_onderdelen` → `kompas_indicator_mapping` | ja, structureel |
 | labels A–E | `kompas_indicator_scoring_regels` (`threshold_based`, `thresholds`) | ja, structureel; drempels onbekend |
 | `n` | – | ontbreekt in beide; voorgesteld in [#205](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/205) |
+
+## Database-dump van de monitor (09-10-2026)
+
+Op 09-10-2026 kwam een `pg_dump` (custom format, PostgreSQL 16) van de database van de huidige monitor beschikbaar ([#222](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/222), [#316](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/316)). De dump staat niet in git; [`scripts/beheer/swf_monitor_dump.py`](../../../scripts/beheer/swf_monitor_dump.py) maakt er een export van voor de use cases (`SWF_DB_DUMP`). Hieronder alleen structuur en aantallen.
+
+| Tabel | Kolommen | Rijen | Wat |
+|---|---|---|---|
+| `indicator` | id, naam, omschrijving, status, begingeldigheid, eindgeldigheid | 228 | de definities (zelfde velden als de push) |
+| `gebiedstype` | id, naam, sleutel, wfs, label, actief, typenames | 11 | zelfde 11 als de export; 2 actief |
+| `indicator_gebiedstype` | indicator_id, gebiedstype_id | 263 | de relaties |
+| `indicator_waarde` | indicator_id, gebiedstype_id, gebieds_id, waarde, jaar | 81.373 | de waarden; geen `n`, geen peildatum |
+| `monitor` | id, naam, gebiedstype_id, configuratie (JSON), volgnummer, begin- en eindgeldigheid, vastgelegd_door | 62 | elke opgeslagen versie van de 2 monitors (Basis 46, Klimaat 16); de geldige heeft geen eindgeldigheid |
+| `user_properties` | username, key, value | 41 | instellingen van 9 gebruikers |
+
+**Verschil met de export van februari 2026:**
+
+- **Definities:** dezelfde 228 UUID's, 11 gebiedstypen en 263 relaties. Status A 20 (was 10), O 200 (212), C 5, B 3 (1). 9 UUID's hebben een andere naam (leeftijdsgroepen, opleidingsniveaus): dezelfde sleutel met een andere betekenis.
+- **Waarden:** 81.373 (was 43.253) van 61 indicatoren (49) in 69 combinaties indicator × gebiedstype (57), jaren 2011–2026. Alle 49 van februari zitten erin. Nieuw: leeftijdsgroepen, enkele misdrijven en overlast. Welstand × buurt en buurtdelen bebouwde kom zijn gelijk (7.686 en 2.370). Nog steeds 152 waarden met jaar 0 en 4 op BU19009997/98; daarnaast 795 waarden uit 2011–2012 op numerieke codes (`11` + buurt-, wijk- of gemeentecode) op het gebiedstype CBS-buurten.
+- **A6:** 5 indicatoren met dezelfde UUID als het CBS-recept, nu 3.614 waarden vanaf 2013.
+
+**Monitorconfiguratie** (`monitor.configuratie`): een JSON-boom `root` → `categorie` → … → `indicator`.
+
+| Knoop | Velden | D-OmniTwin |
+|---|---|---|
+| `root` | naam, gebiedstype_id, `weergave_type` (`percentiel_waarden` / `labeling_waarden`), gebiedsindeling | Kompasprofiel *SWF Basis* / *SWF Klimaat* met classificatie `percentielklasse` / `label` ([swf-kompasprofiel](../../../usecases/swf-kompasprofiel/README.md)) |
+| `categorie` | tekst, kinderen; 1× `kleur_id` | kwadrant, thema, onderdeel, extra niveau (Basis 4/12/33/22; Klimaat 3 thema's) |
+| `indicator` | indicator_id, tekst | kompas_indicator_mapping (Basis 215 plekken, 211 uniek; Klimaat 10) |
+| `indicator.omkeren` | true/false (53 indicatoren) | `indicatoren.score_type` (`-/+` / `+/+`, [swf-definities](../../../usecases/swf-definities/README.md)) |
+| `indicator.labeling` | A–E met van, tot, kleur, naam (10 indicatoren) | `indicator_labels` (keuze; [swf-klimaatmonitor](../../../usecases/swf-klimaatmonitor/README.md)) |
+| eerdere versies, `vastgelegd_door` | – | geen plek; versies als archief in de export, zonder wie ze vastlegde |
+
+In beide geldige monitors staat *Waterdiepte op straat* met `c4e1b3bb…` (status C), niet met `f6eafa70…` (A4).
+
+**Gebruikersinstellingen** (`user_properties`): vijf soorten sleutels, geen favorieten.
+
+| key | Vorm | D-OmniTwin |
+|---|---|---|
+| `last_map_coordinate` | `{center: [x, y], resolution}` in RD | `gebruiker_voorkeuren.kaartpositie` (V035), via [swf-gebruikersvoorkeuren](../../../usecases/swf-gebruikersvoorkeuren/README.md) |
+| `selected_node_id` | id van de gekozen monitor | geen plek |
+| `active_item` | actief paneel | geen plek |
+| `panel_visible` | paneel open of dicht | geen plek |
+| `visible_base_layer` | gekozen ondergrond | geen plek |
+
+De oude gebruikersnaam gaat nooit mee: de beheerder koppelt hem expliciet aan een Keycloak-`sub`. De favorieten die de viewer kent ([functies.md](./functies.md)), staan niet in deze dump (in een andere tabel of in de browser): navragen.
+
+**Wat nog geen plek heeft in D-OmniTwin:** de versiegeschiedenis van de monitors, de monitorkeuze, paneel en basislaag per gebruiker, de kleur van een categorie, en de favorieten (niet in de dump).
