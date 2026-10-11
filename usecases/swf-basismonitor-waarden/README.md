@@ -1,7 +1,7 @@
 # TC-07-006 — SWF-basismonitor: waarden per indicator × gebiedstype
 
 **Status:** ontwerp (de laad-API is nog niet gebouwd; deze use case is de specificatie en straks de acceptatietest)
-**Versie:** 0.3.0 · **Afhankelijk van:** [swf-definities](../swf-definities/README.md), [swf-gebiedsindelingen](../swf-gebiedsindelingen/README.md), [cbs-gebiedsindelingen](../cbs-gebiedsindelingen/README.md)
+**Versie:** 0.4.0 · **Afhankelijk van:** [swf-definities](../swf-definities/README.md), [swf-gebiedsindelingen](../swf-gebiedsindelingen/README.md), [cbs-gebiedsindelingen](../cbs-gebiedsindelingen/README.md)
 **Manifest:** [`usecase.json`](usecase.json) · **Controleren:** `python -m omnitwin.usecases controleer swf-basismonitor-waarden`
 
 ## Vraag
@@ -31,10 +31,10 @@ Alle waarden van de Basis monitor (CBS-buurten en buurtdelen binnen/buiten de be
 | indicatoren met waarden / combinaties indicator × gebiedstype | 49 / 57 | 61 / 69 |
 | jaren | 2012–2025 | 2011–2026 |
 | jaar 0 / BU19009997-98 | 152 / 4 | 152 / 4 |
-| codes zonder BU (2011–2012) | – | 795 waarden op 133 numerieke codes |
+| codes zonder BU (2011–2012) | – | 795 waarden op 133 numerieke codes; definitief weggelaten bij de export (#342) |
 | levering Basis (deze use case) | 35.411 | 72.736 |
 
-Nieuw met waarden: de vijf leeftijdsgroepen, *diefstal fiets*, *inbraak auto*, *inbraak woning*, *dronken personen*, *drugs*, *geluid* en *jongeren*; geen indicator die in februari waarden had, ontbreekt. De numerieke codes zijn `11` + buurtcode (10 cijfers), wijkcode (8) of gemeentecode (6), opgeslagen op het gebiedstype CBS-buurten; de bewerking `oude-buurtcodes` laat ze weg (reden `buurtcode-oud`).
+Nieuw met waarden: de vijf leeftijdsgroepen, *diefstal fiets*, *inbraak auto*, *inbraak woning*, *dronken personen*, *drugs*, *geluid* en *jongeren*; geen indicator die in februari waarden had, ontbreekt. De numerieke codes zijn `11` + buurtcode (10 cijfers), wijkcode (8) of gemeentecode (6), opgeslagen op het gebiedstype CBS-buurten; ze zijn legacy van vóór 2013 en worden definitief weggelaten (besluit [#342](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/342)): `swf_monitor_dump.py exporteer` neemt ze niet op in `waarden.json` (telling `legacy_2011_2012_weggelaten` in `export.json`). De bewerking `oude-buurtcodes` (reden `buurtcode-oud`) blijft als vangnet.
 
 ## Data
 
@@ -90,7 +90,7 @@ Verwacht:
 | 1 | aantal | `swf-monitor-waarden` — 35.411 uit de export, 72.736 uit de database-dump | minimaal 35411 |
 | 2 | bewerking | `swf-monitor-waarden`: regels met reden `jaar-ongeldig` | gelijk 152 |
 | 3 | bewerking | `swf-monitor-waarden`: regels met reden `gebied-onbekend` | gelijk 4 |
-| 3a | bewerking | `swf-monitor-waarden`: regels met reden `buurtcode-oud` — alleen in de database-dump | maximaal 795 |
+| 3a | bewerking | `swf-monitor-waarden`: regels met reden `buurtcode-oud` — vangnet; de export laat de legacy van 2011–2012 al weg (#342) | maximaal 795 |
 | 4 | afkeuring | `swf-monitor-waarden`, variant `met-fouten` — met jaar 0 wordt de hele levering afgekeurd; vorige versie blijft actief | 422, fout `jaar-ongeldig`, niets gepubliceerd |
 | 5 | afkeuring | `swf-monitor-waarden`, variant `met-fouten` | 422, fout `gebied-onbekend`, niets gepubliceerd |
 | 6 | api | `GET /api/data/v1/gebied_data?gebied_id=eq.BU19000002&indicator_uuid=eq.461d542b-b8be-4510-9dd0-5ba554b818cb&select=jaar,waarde` (met token) — Personenauto's per huishouden voor Bolsward-Zuidoost | HTTP 200, ≥ 1 resultaten |
@@ -110,5 +110,5 @@ In [`bewijs/`](bewijs/README.md), gemaakt door de uitvoerder (niet in git): `con
 - n ontbreekt in de export: alle waarden krijgen de vlag bron-onderdrukt (de DWH laat n<10 weg). Met n in de datamart kan de vlag weg.
 - Overlap met cbs-kerncijfers: 5 indicatoren in de SWF-export hebben dezelfde UUID als het CBS-recept (2.598 waarden vanaf 2019). gebied_data heeft één waarde per gebied × indicator × jaar × scenario; twee datasets op dezelfde sleutel vragen een regel (bron per waarde, of één dataset leidend).
 - Float-ruis tot 16 decimalen gaat ongewijzigd mee.
-- Database-dump: 795 waarden uit 2011–2012 op numerieke codes laat de use case weg. Omzetten naar BU-codes (alleen de 10-cijferige) of weglaten is een keuze van de beheerder.
+- Database-dump: 795 waarden uit 2011–2012 op numerieke codes (voorloop `11`) zijn legacy van vóór 2013 en worden definitief weggelaten, al bij de export (besluit https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/342).
 - Database-dump: overlap met het CBS-recept (A6) is 5 indicatoren met 3.614 waarden vanaf 2013 (export: 2.598 vanaf 2019); de nieuwste peildatum wint.

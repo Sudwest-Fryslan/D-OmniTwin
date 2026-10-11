@@ -5,7 +5,8 @@ Contract: `docs/api/laden/profielen/definities-*.schema.json`; adapter swf-monit
 `docs/api/laden/profielen/swf-monitor-v1.md`. Een levering is altijd de volledige set.
 
 - indicatoren: upsert op uuid. Een leeg veld laat de bestaande waarde staan (behalve
-  eindgeldigheid: die volgt de bron). Een indicator die deze dataset eerder leverde en nu
+  eindgeldigheid: die volgt de bron). Een andere naam bij dezelfde uuid volgt de bron, met een
+  waarschuwing in het log (hergebruikte UUID, #340). Een indicator die deze dataset eerder leverde en nu
   ontbreekt, krijgt eindgeldigheid = moment van publicatie (niet verwijderd: waarden blijven
   herleidbaar). Status alleen een bekende code (STATUSSEN); een onbekende code is schema-ongeldig.
 - gebiedstypen: upsert op id; code_prefix en gebiedsindeling_dataset (en bij de adapter wfs,
@@ -16,6 +17,8 @@ Contract: `docs/api/laden/profielen/definities-*.schema.json`; adapter swf-monit
 """
 
 from __future__ import annotations
+
+import logging
 
 from omnitwin.laden import adapter_swf
 from omnitwin.laden.basis import Afkeuring, Context, Fouten, afkeuren, copy, sql_fouten
@@ -28,6 +31,8 @@ PROFIEL = "definities"
 RESOURCES = {"indicatoren": "definities-indicatoren", "gebiedstypen": "definities-gebiedstypen",
              "relaties": "definities-relaties"}
 STATUSSEN = ("C", "O", "B")  # indicatoren.status: Concept, Operationeel, Beëindigd
+
+logger = logging.getLogger("omnitwin.laden.definities")
 
 
 def controleer(bron: Bron, ctx: Context) -> tuple[dict, Fouten, dict]:
@@ -154,6 +159,15 @@ def publiceer(cur, ctx: Context) -> dict:
             actief = EXCLUDED.actief,
             metadata = coalesce(t.metadata, '{}'::jsonb) || coalesce(EXCLUDED.metadata, '{}'::jsonb)""", p)
     n_gt = cur.rowcount
+    # Een bestaande UUID met een andere naam: de actuele naam volgen, wel waarschuwen (hergebruikte UUID, #340)
+    cur.execute("""
+        SELECT i.uuid, i.naam AS oud, s.naam AS nieuw FROM laden.staging_indicatoren s
+        JOIN public.indicatoren i ON i.uuid = s.uuid
+        WHERE s.levering_id = %(lv)s AND s.naam IS NOT NULL AND s.naam IS DISTINCT FROM i.naam""", p)
+    for r in cur.fetchall():
+        logger.warning("Indicator %s heeft een andere naam: '%s' wordt '%s' (dataset %s, levering %s); "
+                       "hergebruikte UUID? Controleer met de bronhouder.", r["uuid"], r["oud"], r["nieuw"],
+                       ctx.dataset_id, ctx.levering_id)
     cur.execute("""
         UPDATE public.indicatoren i SET
             naam = s.naam,

@@ -8,6 +8,12 @@ Eerdere wijzigingen, van vóór dit bestand, zijn terug te vinden in de git-hist
 
 ## [Unreleased]
 
+### Gewijzigd
+
+- **Statussen en Waterdiepte op straat uit de monitor** ([#341](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/341)): SWF-status O (Onderzoek) wordt C en is, net als C (Concept), alleen intern zichtbaar; A blijft O en openbaar. Een indicator met status C krijgt toegang `intern`, zijn waarden ook (migratie `V042__concept_indicator_intern.sql`). *Waterdiepte op straat* houdt `c4e1b3bb…` (zoals de geldige monitors) en is operationeel; `f6eafa70…` wordt B "(vervallen)". Bijgewerkt: `swf-definities` 0.5.0, `swf-adapter-fme` 0.4.0, `swf-kompasprofiel` 0.5.0 (`a4-waterdiepte` zet nu `f6eafa70…` om naar `c4e1b3bb…`) en de stuurdata-drempels. Nieuwe bewerking `zet` (vaste waarde in regels die aan een voorwaarde voldoen).
+- **Legacy 2011–2012 weg, drempels en polariteit** ([#342](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/342)): `scripts/beheer/swf_monitor_dump.py exporteer` laat de 795 waarden uit 2011–2012 op numerieke codes (voorloop `11`) definitief weg (`legacy_2011_2012_weggelaten` in `export.json`); `swf-basismonitor-waarden` 0.4.0. De stuurdata blijft leidend voor de drempels A–E, `omkeren` uit de monitor voor de polariteit (`swf-klimaatmonitor` 0.4.0, alleen documentatie).
+- Een bestaande indicator-UUID met een andere naam volgt de bron, met een waarschuwing in het log (hergebruikte UUID's, [#340](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/340)).
+
 ## [0.4.0] - 2026-10-10
 
 AI op orde en images op Docker Hub. AI draait alleen nog na een **verklaring** per AI-usecase (assistent, samenvatting, zoeken op betekenis), is **herkenbaar** voor de gebruiker (label, bronnen, meer informatie, melden), wordt **gelogd** in een alleen-toevoegen logboek met hashketen en is **direct uit te zetten**; zonder AI blijft de applicatie werken. De nieuwe use case `ai-compliance` laat dat met bewijs zien. Elke release staat voortaan als image op Docker Hub, zodat installeren zonder bouwen kan. Verder: de database-dump van de huidige SWF-gebiedsmonitor als bron, de assistent zegt van welke buurt hij uitgaat, de referentie "provincie" volgt de instelling van de organisatie, de benchmarkkleur volgt de polariteit, en het database-image staat op een ondersteunde basis. Lees bij een upgrade de paragraaf **Migreren**: na de update staat alle AI uit.

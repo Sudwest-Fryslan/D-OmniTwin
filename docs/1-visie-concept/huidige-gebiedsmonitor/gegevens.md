@@ -56,7 +56,7 @@ erDiagram
 | Percentiel en label | berekend door de monitor | percentielwaarde en labelwaarde per knoop | – |
 | Favoriet, instelling | gebruiker | selecties, kaartpositie, panelen | – |
 
-**Status:** in de monitor A = Actueel, B = Buiten gebruik, C = Concept, O = Onderzoek (A2, [#222](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/222)); D-OmniTwin kent C (concept), O (operationeel) en B (beëindigd), dus A → O. In februari waren de 10 definities met status A precies de 10 indicatoren van de Klimaatmonitor en was B één testdefinitie; in de database-dump van 09-10-2026 zijn het er 20 en 3 (zie onderaan).
+**Status:** in de monitor A = Actueel, B = Buiten gebruik, C = Concept, O = Onderzoek (A2, [#222](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/222)); D-OmniTwin kent C (concept), O (operationeel) en B (beëindigd), dus A → O (openbaar); O (Onderzoek) wordt C en is, net als C, alleen intern zichtbaar (besluit [#341](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/341)). In februari waren de 10 definities met status A precies de 10 indicatoren van de Klimaatmonitor en was B één testdefinitie; in de database-dump van 09-10-2026 zijn het er 20 en 3 (zie onderaan).
 
 **Twee soorten geldigheid:** de definitie heeft een begin- en eindgeldigheid (SCD in het DWH; 9 definities hebben een einddatum). Een waarde heeft een peildatum (nu altijd 1 januari van het jaar). D-OmniTwin moet die twee uit elkaar houden.
 
@@ -232,7 +232,7 @@ Op 09-10-2026 kwam een `pg_dump` (custom format, PostgreSQL 16) van de database 
 | `indicator.labeling` | A–E met van, tot, kleur, naam (10 indicatoren) | `indicator_labels` (keuze; [swf-klimaatmonitor](../../../usecases/swf-klimaatmonitor/README.md)) |
 | eerdere versies, `vastgelegd_door` | – | geen plek; versies als archief in de export, zonder wie ze vastlegde |
 
-In beide geldige monitors staat *Waterdiepte op straat* met `c4e1b3bb…` (status C), niet met `f6eafa70…` (A4).
+In beide geldige monitors staat *Waterdiepte op straat* met `c4e1b3bb…` (status C), niet met `f6eafa70…`. D-OmniTwin houdt daarom `c4e1b3bb…` aan, operationeel; `f6eafa70…` wordt B (besluit [#341](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/341)).
 
 **Gebruikersinstellingen** (`user_properties`): vijf soorten sleutels, geen favorieten.
 
