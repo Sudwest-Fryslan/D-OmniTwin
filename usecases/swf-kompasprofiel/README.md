@@ -1,7 +1,7 @@
 # TC-07-005 — SWF-kompasprofielen Basis (4/12/33) en Klimaat
 
 **Status:** actief (Kompas via de beheerroute in-process; datasets zonder bron hier worden overgeslagen)
-**Versie:** 0.4.0 · **Afhankelijk van:** [swf-definities](../swf-definities/README.md)
+**Versie:** 0.5.0 · **Afhankelijk van:** [swf-definities](../swf-definities/README.md)
 **Manifest:** [`usecase.json`](usecase.json) · **Controleren:** `python -m omnitwin.usecases controleer swf-kompasprofiel`
 
 ## Vraag
@@ -27,7 +27,7 @@ De tabel `monitor` heeft 62 versies van 2 monitors (Basis 46, Klimaat 16); de ge
 | `kleur_id` (1 categorie) | geen; kleuren staan in `color_schemas` |
 | eerdere versies (60) | geen; archief `monitorconfiguraties.json` in de exportmap, zonder `vastgelegd_door` |
 
-In beide monitors staat *Waterdiepte op straat* met `c4e1b3bb…`; de bewerking `a4-waterdiepte` zet dat om naar `f6eafa70…` (A4).
+In beide monitors staat *Waterdiepte op straat* met `c4e1b3bb…`; dat is ook de UUID die D-OmniTwin aanhoudt (besluit [#341](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/341)). De bewerking `a4-waterdiepte` zet een vervallen `f6eafa70…` om naar `c4e1b3bb…`.
 
 ## Data
 
@@ -50,9 +50,9 @@ Verwacht:
 |---|---|---|
 | swf-kompas-basis | 229 regels → 219 (5 oude werktitels, 1 testregel, 4 zonder plek); 4 kwadranten, 12 thema's, 33 onderdelen, 211 unieke UUID's; alle gekoppeld | geldig |
 | swf-kompas-klimaat | 10 | geldig |
-| *database-dump* (`SWF_DB_DUMP`, 10-10-2026, dump van 09-10-2026) | swf-kompas-basis: 225 → 215; swf-kompas-klimaat: 225 → 10; alle UUID's in de definities; `c4e1b3bb…` → `f6eafa70…` 1× per profiel | geldig |
+| *database-dump* (`SWF_DB_DUMP`, 10-10-2026, dump van 09-10-2026) | swf-kompas-basis: 225 → 215; swf-kompas-klimaat: 225 → 10; alle UUID's in de definities; `c4e1b3bb…` → `f6eafa70…` 1× per profiel (sinds #341 niet meer: `c4e1b3bb…` blijft) | geldig |
 
-**Volledig Kompas uit de repo** (`swf-kompas-volledig`, 63 kB): 247 plekken (241 indicatoren) in 4 kwadranten, 12 thema's en 33 onderdelen, met weging en actueel, zoals de projectleider het heeft ingericht. De beheerroute vult het profiel aan; wat er al is, blijft. Een indicator die (nog) niet bestaat, wordt overgeslagen en geteld (zonder swf-definities ontbreken de monitorindicatoren); de vervallen *Waterdiepte op straat* wordt de aangehouden UUID (A4). Herkomst: de lokale D-OmniTwin-database van de projectleider (dump van 04-10-2026), openbaar volgens besluit van de projectleiding (https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/222). Het bestand staat in [`data/`](data/) met `herkomst.json` (aantallen, controlesom); vervangen bij een nieuwere dump met [`scripts/beheer/swf_export.py --repo`](../../scripts/beheer/swf_export.py) en een PR. Extra onderdelen (22), extra tags (53) en scoringsregels (16) hebben nog geen route.
+**Volledig Kompas uit de repo** (`swf-kompas-volledig`, 63 kB): 247 plekken (241 indicatoren) in 4 kwadranten, 12 thema's en 33 onderdelen, met weging en actueel, zoals de projectleider het heeft ingericht. De beheerroute vult het profiel aan; wat er al is, blijft. Een indicator die (nog) niet bestaat, wordt overgeslagen en geteld (zonder swf-definities ontbreken de monitorindicatoren); *Waterdiepte op straat* staat er al met `c4e1b3bb…`, de aangehouden UUID (#341). Herkomst: de lokale D-OmniTwin-database van de projectleider (dump van 04-10-2026), openbaar volgens besluit van de projectleiding (https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/222). Het bestand staat in [`data/`](data/) met `herkomst.json` (aantallen, controlesom); vervangen bij een nieuwere dump met [`scripts/beheer/swf_export.py --repo`](../../scripts/beheer/swf_export.py) en een PR. Extra onderdelen (22), extra tags (53) en scoringsregels (16) hebben nog geen route.
 
 **Beheerroute in-process.** `installeer --inproces` (ook `db-init`) voert de beheerroute uit met `omnitwin.laden.beheer`: profiel aanmaken als het niet bestaat (alleen als er een bekende indicator in zit, met de classificatie uit de levering), hiërarchie en koppelingen aanvullen. Over HTTP volgt `PUT /api/beheer/v1/kompasprofielen/{id}`.
 

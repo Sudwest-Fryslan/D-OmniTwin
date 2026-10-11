@@ -2,7 +2,7 @@
   "specificatie": "1.0",
   "naam": "swf-klimaatmonitor",
   "id": "TC-07-007",
-  "versie": "0.3.0",
+  "versie": "0.4.0",
   "titel": "SWF-klimaatmonitor: welstand × buurt met labels A–E",
   "vraag": "Welk label (A–E) heeft een welstandsgebied in Bolsward voor hittestress, droogte en hemelwateroverlast, en welke indicator trekt het omlaag?",
   "gebruiker": "adviseur klimaatadaptatie",
@@ -147,7 +147,7 @@
     }
   ],
   "bekende_afwijkingen": [
-    "Labels A–E: classificatie label_ae (#256). De drempels van SWF komen uit db/stuurdata/indicator_labels_klimaatmonitor_swf.json (9 van de 10, vastgesteld volgens #222 A3). De monitorconfiguratie in de database-dump heeft drempels voor 6 van de 10 klimaatindicatoren plus GLG en Gemiddeld energielabel (indicator_labels_monitor.json uit scripts/beheer/swf_monitor_dump.py); laden is een keuze van de beheerder: load_sample.py --stap drempels --drempels <bestand>.",
+    "Labels A–E: classificatie label_ae (#256). De drempels van SWF komen uit db/stuurdata/indicator_labels_klimaatmonitor_swf.json (9 van de 10, vastgesteld volgens #222 A3). De monitorconfiguratie in de database-dump heeft drempels voor 6 van de 10 klimaatindicatoren plus GLG en Gemiddeld energielabel (indicator_labels_monitor.json uit scripts/beheer/swf_monitor_dump.py); de stuurdata is leidend (besluit https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/342); de drempels uit de monitor laden is een keuze van de beheerder: load_sample.py --stap drempels --drempels <bestand>. De polariteit volgt de monitor (omkeren).",
     "Dezelfde dataset als swf-basismonitor-waarden (swf-monitor-waarden); vervangBereik indicator × gebiedstype houdt de twee leveringen uit elkaar. De registratie moet in beide use cases gelijk zijn (unittest).",
     "Gevoelstemperatuur en Afstand tot koele plek zijn SWF-bewerkingen; de open Klimaateffectatlas heeft voor Fryslân geen download (zie hittestress).",
     "Database-dump van de monitor (09-10-2026): dezelfde 7.686 waarden op welstand × buurt (7 indicatoren, 755 gebieden, 2020–2025) als de export van februari."

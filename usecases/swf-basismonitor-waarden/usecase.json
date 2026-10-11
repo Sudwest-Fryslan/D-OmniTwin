@@ -2,7 +2,7 @@
   "specificatie": "1.0",
   "naam": "swf-basismonitor-waarden",
   "id": "TC-07-006",
-  "versie": "0.3.0",
+  "versie": "0.4.0",
   "titel": "SWF-basismonitor: waarden per indicator × gebiedstype",
   "vraag": "Ik wil alle waarden van de Basis monitor (CBS-buurten en buurtdelen binnen/buiten de kom) in één levering in D-OmniTwin, zonder de fouten uit de huidige export, en met de n<10-afspraak vastgelegd.",
   "gebruiker": "data-engineer DWH (SWF)",
@@ -97,7 +97,7 @@
       "dataset": "swf-monitor-waarden",
       "reden": "buurtcode-oud",
       "maximaal": 795,
-      "omschrijving": "alleen in de database-dump: waarden van 2011 en 2012 op numerieke codes zonder BU (0 in de export)"
+      "omschrijving": "vangnet: de export van de database-dump laat de 795 waarden uit 2011–2012 op numerieke codes al weg (#342)"
     },
     {
       "type": "afkeuring",
@@ -189,6 +189,6 @@
     "Overlap met cbs-kerncijfers: 5 indicatoren in de SWF-export hebben dezelfde UUID als het CBS-recept (2.598 waarden vanaf 2019). gebied_data heeft één waarde per gebied × indicator × jaar × scenario; twee datasets op dezelfde sleutel vragen een regel (bron per waarde, of één dataset leidend).",
     "Float-ruis tot 16 decimalen gaat ongewijzigd mee.",
     "Database-dump van de monitor (09-10-2026, variant monitor-database, #316): 73.687 waarden op CBS-buurten en buurtdelen bebouwde kom (februari: 35.567), 61 indicatoren met waarden (februari 49), jaren 2011–2026. Weggelaten: jaar 0 (152), BU19009997/98 (4) en 795 waarden uit 2011–2012 op numerieke codes zonder BU.",
-    "De numerieke codes (2011–2012) zijn '11' + buurtcode (10 cijfers, 113 codes), wijkcode (8 cijfers) of gemeentecode (6 cijfers) op het gebiedstype CBS-buurten. Omzetten naar BU-codes of weglaten is een keuze van de beheerder."
+    "De numerieke codes (2011–2012) zijn '11' + buurtcode (10 cijfers, 113 codes), wijkcode (8 cijfers) of gemeentecode (6 cijfers) op het gebiedstype CBS-buurten: legacy van vóór 2013, definitief weggelaten bij de export (besluit https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/342); de bewerking oude-buurtcodes blijft als vangnet."
   ]
 }

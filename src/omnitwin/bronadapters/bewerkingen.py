@@ -23,6 +23,7 @@ leeg (true/false), begint_met, niet_begint_met, kleiner_dan, groter_dan.
 | `koppel` | {sleutel, bron, op, velden, tabel?, verplicht?, reden?, normaliseer?, bewerkingen?} | velden overnemen uit een andere bron (bijv. een mappingbestand in de use case); normaliseer: spaties en hoofdletters negeren; bewerkingen: eerst op die bron (bijv. `binnen`) |
 | `afwijzen` | voorwaarde + reden | regels die voldoen eruit, geteld onder de reden |
 | `filter` | voorwaarde | alleen regels die voldoen |
+| `zet` | {als: voorwaarde, velden: {veld: waarde}, reden?} | velden een vaste waarde geven, alleen in regels die voldoen; geteld onder `reden` (standaard `gezet`) |
 | `jaar_uit_datum` | {veld, jaar?, peildatum?} | `JJJJ-01-01` → jaar, andere datum → peildatum, ongeldig → afgewezen (jaar-ongeldig) |
 | `jaar_naar_datum` | {veld, naar} | jaar → `JJJJ-01-01` |
 | `iso_datumtijd` | [veld] | `JJJJ-MM-DD HH:MM` → `JJJJ-MM-DDTHH:MM:SS` |
@@ -45,7 +46,7 @@ from collections import Counter
 BEWERKINGEN = (
     "hernoem", "behoud", "verwijder", "constant", "kopieer", "tekst", "getal", "waarde_map", "koppel",
     "afwijzen", "filter", "jaar_uit_datum", "jaar_naar_datum", "iso_datumtijd", "prefix", "sjabloon", "deel",
-    "snake_case", "multipolygon", "geometrietype", "binnen", "splits_op", "nummer", "ontdubbel",
+    "snake_case", "multipolygon", "geometrietype", "binnen", "splits_op", "nummer", "ontdubbel", "zet",
 )
 TOETSEN = ("gelijk", "niet_gelijk", "in", "niet_in", "leeg", "begint_met", "niet_begint_met", "kleiner_dan", "groter_dan")
 
@@ -170,6 +171,14 @@ def _stap(naam, p, rijen, rapport, ctx):
     if naam == "filter":
         uit = [r for r in rijen if voldoet(r, p)]
         rapport["gefilterd"] += len(rijen) - len(uit)
+        return uit
+    if naam == "zet":
+        uit = []
+        for r in rijen:
+            if voldoet(r, p["als"]):
+                r = {**r, **p["velden"]}
+                rapport[p.get("reden", "gezet")] += 1
+            uit.append(r)
         return uit
     if naam == "jaar_uit_datum":
         uit = []

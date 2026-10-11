@@ -269,6 +269,7 @@ Elke adapter levert tabellen met records; een geometrie staat altijd in EPSG:289
 | `binnen` | `{bron, bewerkingen?}` | alleen features binnen een andere bron |
 | `splits_op` | `{bron, bewerkingen?, veld, binnen, buiten}` | feature opdelen in binnen en buiten een andere bron |
 | `ontdubbel` | `{veld, sleutel, houd, zet?, achtervoegsel?, normaliseer?, reden?}` | dezelfde `veld` (bijv. naam) met een andere `sleutel` (bijv. uuid): de voorkeur uit `houd` (`{waarde: sleutel of begin daarvan}`) blijft, de andere krijgen `zet` en `achtervoegsel`; geteld onder `reden`, zonder voorkeur onder `<reden>-zonder-voorkeur` (ongewijzigd) |
+| `zet` | `{als, velden, reden?}` | velden een vaste waarde geven in de regels die aan de voorwaarde `als` voldoen (bijv. de status van één UUID), geteld onder `reden` (standaard `gezet`) |
 
 Een **voorwaarde** is `{"veld": …, <toets>: waarde}` met toets `gelijk`, `niet_gelijk`, `in`, `niet_in`, `leeg`, `begint_met`, `niet_begint_met`, `kleiner_dan` of `groter_dan`. Een geneste `bron` (in `koppel`, `binnen`, `splits_op`) volgt dezelfde regels als in 7. De precieze semantiek staat in de docstring van [`bewerkingen.py`](../../../src/omnitwin/bronadapters/bewerkingen.py). Een nieuwe bewerking gaat via een PR met tests en is een minor-wijziging van deze specificatie.
 
@@ -702,6 +703,7 @@ Een bewijsverslag `bewijs/bewijs.json` (ingekort):
 
 | Versie | Datum | Wijziging |
 |---|---|---|
+| 1.0 | 2026-10-11 | Aanvulling (https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/341; formeel een minor, 1.0 is nog niet vastgesteld): bewerking `zet` (vaste waarde in regels die aan een voorwaarde voldoen). |
 | 1.0 | 2026-10-10 | Aanvulling (https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/314; formeel een minor, 1.0 is nog niet vastgesteld): in `data/` mag ook een kleine PDF staan (≤ 100 KB), als voorbeelddocument zoals de testverklaring van `ai-compliance`. Alle bestaande manifesten blijven geldig. |
 | 1.0 | 2026-10-04 | Aanvulling (https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/254; formeel een minor, 1.0 is nog niet vastgesteld): `toegang` (`openbaar` \| `intern`) bij `datasets[]`, gelijk aan `dct:accessRights` (6.1, 6.3); `maximaal_aantal` bij controletype `api`; actie `bekijken` (met `pad`) bij controletype `recht`. Alle bestaande manifesten blijven geldig. |
 | 1.0 | 2026-10-04 | Aanvulling (https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/222; formeel een minor, 1.0 is nog niet vastgesteld): bewerking `ontdubbel` (dubbele namen met een andere UUID, aanname A4) en map `SWF_EXPORT_DIR` in de allowlist (export van een andere D-OmniTwin-installatie, aanname A1). Alle bestaande manifesten blijven geldig. |
