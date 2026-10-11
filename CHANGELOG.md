@@ -8,6 +8,14 @@ Eerdere wijzigingen, van vóór dit bestand, zijn terug te vinden in de git-hist
 
 ## [Unreleased]
 
+### Gewijzigd
+
+- **Applicatiedata in een eigen schema `app`** ([#137](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/137), stap 1): gebruikers, sessies, API-sleutels, OIDC-sessies, logs en logconfiguratie, LLM-configuratie, gebruikersvoorkeuren en -meldingen, deduplicatie-uitzonderingen en de AI-vrijgave en het AI-logboek staan niet meer in `public` maar in `app`. PostgREST en pg_featureserv hebben daar geen toegang; met `pg_dump -n app` is de geheime applicatiedata los te back-uppen. Stuurinformatie en brondata blijven voorlopig in `public` (vervolgstap). Uitleg: [db/README.md](db/README.md#schemas-137).
+
+### Migreren
+
+- Migratie `V047__schema_app.sql` draait vanzelf bij de start van `db-init`: de tabellen verhuizen met hun data (`ALTER TABLE … SET SCHEMA`), en de database krijgt `search_path` `"$user", public, app`. Eigen scripts of queries die `public.users` (of een andere app-tabel) met schema noemen, moeten naar `app.users` of zonder schema. Het AI-logboek en de hashketen lopen ongewijzigd door.
+
 ## [0.5.0-rc.1] - 2026-10-11
 
 **Pre-release.** Cijfers kloppen. De besluiten over de database-dump van de huidige SWF-gebiedsmonitor zijn verwerkt ([#341](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/341), [#342](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/342)): statussen, één Waterdiepte op straat en geen legacy-waarden van 2011–2012. Kleine aantallen worden overal hetzelfde onderdrukt, met één instelbare drempel ([#325](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/325)). Verder de gemeenteselectie als filterbare combobox ([#308](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/308)), het webframework bijgewerkt (FastAPI, Starlette, uvicorn; [#172](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/172)) en de overige afhankelijkheden. De herindeling van de database in schema's ([#137](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/137)) zit bewust nog niet in deze pre-release; die komt in 0.5.0 als hij aantoonbaar goed werkt. Lees bij een upgrade de paragraaf **Migreren**.
