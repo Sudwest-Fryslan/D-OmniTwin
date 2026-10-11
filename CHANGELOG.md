@@ -8,6 +8,14 @@ Eerdere wijzigingen, van vóór dit bestand, zijn terug te vinden in de git-hist
 
 ## [Unreleased]
 
+### Toegevoegd
+
+- **Terugmeldvoorziening voor gebruikers** ([#311](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/311)): laagdrempelige, privacy-vriendelijke feedbackloop in de viewer voor data, metadata, AI-antwoorden en technische storingen. D-OmniTwin fungeert als regielogboek (&quot;bron blijft bron&quot;); feedback wordt gesignaleerd en geregistreerd om door te sturen naar bronhouders.
+  - **Viewer:** centrale meldknop in het Info-paneel en contextuele meldknoppen (in het Kompas-rechterpaneel, de D-Omni Assistent-header, AI-labels en het indicatorpaneel) die openen in een toegankelijke native `<dialog>` modal (`showModal()`, focus-trapping, Escape-sluiting, WCAG 2.1 AA), aangesloten op `OmniMelden.zetKanaal()` ([#312](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/312)) met automatische terugval naar de externe meldplek.
+  - **Backend API:** `POST /api/meldingen` (publiek, in-memory IP rate-limit, honeypot veld) en beveiligde beheerendpoints `GET /api/admin/meldingen` en `PATCH /api/admin/meldingen/{id}` (`vereis_admin`).
+  - **Privacy by Design (AVG):** meldingen zijn standaard anoniem. Een optioneel e-mailadres voor wie terugkoppeling wenst, wordt conform AVG automatisch gewist (`NULL`) zodra een melding is afgehandeld of afgewezen. Meldingen worden 365 dagen na laatste wijziging opgeruimd via de dagelijkse scheduler.
+  - **Beheer:** nieuwe beheerpagina **Meldingen** in het Admin Panel met statusfilters (`nieuw`, `doorgestuurd_naar_bron`, `in_behandeling`, `afgehandeld`, `afgewezen`), categorieën en detailweergave met interne notities. Migratie `V045__gebruiker_meldingen.sql`.
+
 ## [0.5.0-rc.1] - 2026-10-11
 
 **Pre-release.** Cijfers kloppen. De besluiten over de database-dump van de huidige SWF-gebiedsmonitor zijn verwerkt ([#341](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/341), [#342](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/342)): statussen, één Waterdiepte op straat en geen legacy-waarden van 2011–2012. Kleine aantallen worden overal hetzelfde onderdrukt, met één instelbare drempel ([#325](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/325)). Verder de gemeenteselectie als filterbare combobox ([#308](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/308)), het webframework bijgewerkt (FastAPI, Starlette, uvicorn; [#172](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/172)) en de overige afhankelijkheden. De herindeling van de database in schema's ([#137](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/137)) zit bewust nog niet in deze pre-release; die komt in 0.5.0 als hij aantoonbaar goed werkt. Lees bij een upgrade de paragraaf **Migreren**.
