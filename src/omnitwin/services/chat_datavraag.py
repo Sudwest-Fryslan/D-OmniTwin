@@ -27,6 +27,7 @@ from typing import Any, Callable, Dict, Iterable, List, Optional, Sequence, Tupl
 
 from sqlalchemy import text
 
+from omnitwin.services import kleine_aantallen as ka
 from omnitwin.services import zoektaal
 from omnitwin.services.grounding import ongegronde_getallen
 
@@ -668,16 +669,21 @@ def laad_indicatoren(db) -> List[Dict[str, Any]]:
 
 
 def laad_waarden(db, indicator_uuids: Sequence[str], gebied_ids: Sequence[str]) -> List[Dict[str, Any]]:
-    """Meest recente waarde per gebied en indicator (scenario 'current')."""
+    """Meest recente waarde per gebied en indicator (scenario 'current').
+
+    Rust die waarde op te weinig waarnemingen (kleine aantallen, #325), dan valt hij weg."""
     if not indicator_uuids or not gebied_ids:
         return []
     rows = db.execute(text(
-        "SELECT DISTINCT ON (d.gebied_id, d.indicator_uuid) d.gebied_id, CAST(d.indicator_uuid AS text), "
-        "d.waarde, COALESCE(d.jaar, CAST(EXTRACT(YEAR FROM d.datum) AS integer)), d.bron "
+        "SELECT r.gebied_id, r.indicator_uuid, r.waarde, r.jaar, r.bron FROM ("
+        "SELECT DISTINCT ON (d.gebied_id, d.indicator_uuid) d.gebied_id, "
+        "CAST(d.indicator_uuid AS text) AS indicator_uuid, d.waarde, "
+        "COALESCE(d.jaar, CAST(EXTRACT(YEAR FROM d.datum) AS integer)) AS jaar, d.bron, d.n "
         "FROM gebied_data d "
         "WHERE CAST(d.indicator_uuid AS text) = ANY(:uuids) AND d.gebied_id = ANY(:ids) "
         "AND COALESCE(d.scenario_id, 'current') = 'current' "
         "ORDER BY d.gebied_id, d.indicator_uuid, d.jaar DESC NULLS LAST, d.datum DESC NULLS LAST"
+        ") r WHERE " + ka.niet_onderdrukt_sql("r")
     ), {"uuids": list(indicator_uuids), "ids": list(gebied_ids)}).fetchall()
     return [{"gebied_id": r[0], "indicator_uuid": r[1], "waarde": float(r[2]), "jaar": r[3], "bron": r[4]}
             for r in rows]

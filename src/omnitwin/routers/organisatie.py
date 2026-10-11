@@ -53,6 +53,7 @@ class Organisatie(BaseModel):
     thema: str = "d-omnitwin"  # huisstijl (NLDS-thema), static/css/themes/<thema>.css
     logos: List[Logo]
     meld_url: str = org_service.STANDAARD_MELD_URL  # waar "Melden" heen gaat (#312)
+    n_drempel: int = 10  # kleine aantallen (#325): minder waarnemingen = niet tonen
 
 
 # ── Invoer (PUT en import) ──────────────────────────────────────────────────
@@ -120,6 +121,8 @@ class OrganisatieInvoer(BaseModel):
     logos: List[LogoInvoer] = Field(default_factory=list, max_length=20)
     # Meldplek (#312): https-adres (nieuw issue, formulier) of mailto:; leeg of de standaard = standaard
     meld_url: Optional[str] = None
+    # Kleine aantallen (#325): een waarde met minder waarnemingen tonen we niet; leeg = 10
+    n_drempel: Optional[int] = Field(default=None, ge=1, le=1000)
 
     @field_validator("code")
     @classmethod

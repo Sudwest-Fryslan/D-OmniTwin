@@ -16,6 +16,7 @@ Methodiek: docs/3-data-engineering/zscore_methodiek.md
 from typing import Any, Dict, Optional
 
 from omnitwin.fouten import GebruikersFout
+from omnitwin.services import kleine_aantallen as ka
 
 # Standaardwaarden (gelijk aan de DEFAULTs van de SQL-functies)
 # 'zelfde_jaar': referentie = waarden in het jaar van de meest recente waarde van het
@@ -32,8 +33,9 @@ SCENARIO_STANDAARD = "current"
 # het doelgebied, dan valt de referentie terug op 'recentst_per_gebied' en geeft
 # zscore_gebieden referentie_terugval = true. Vijf is een pragmatische ondergrens: met
 # minder gebieden zegt een steekproef-sd weinig en bepaalt één gebied het gemiddelde.
-# 0 = nooit terugvallen.
-MIN_N_STANDAARD = 5
+# 0 = nooit terugvallen. Niet te verwarren met de n-drempel voor kleine aantallen
+# (waarnemingen per waarde, #325); beide staan in services/kleine_aantallen.py.
+MIN_N_STANDAARD = ka.MIN_GEBIEDEN_REFERENTIE
 
 # Referentiegroep: 'gemeente' = gebiedstype + gemeente (standaard), 'fryslan' = gebiedstype in de
 # provincie organisatie.benchmark_provincie (#324; zonder instelling: alle gebieden van dat type)
@@ -117,6 +119,10 @@ def methodiek_beschrijving(jaarlogica: str = JAARLOGICA_STANDAARD, scenario_id: 
             "is de referentie de meest recente waarde per gebied (referentie_terugval)"
         ),
         "scenario_id": scenario_id,
+        "kleine_aantallen": (
+            "een waarde die op minder waarnemingen rust dan de drempel (standaard 10) "
+            "telt niet mee in de referentie en krijgt geen Z-score"
+        ),
         "randgevallen": "geen Z-score bij n < 2 of sd = 0, of als het gebied een waterbuurt is",
         "documentatie": "docs/3-data-engineering/zscore_methodiek.md",
     }

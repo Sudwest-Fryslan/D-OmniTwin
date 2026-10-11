@@ -17,8 +17,9 @@ Aanname tot https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/222 antwoord ge
 - polariteit: bij "lager is beter" geldt 1 - percentiel. Klasse 8 is altijd de
   gunstigste 12,5%, klasse 1 de ongunstigste.
 - klasse = floor(percentiel x 8) + 1, begrensd op 1..8.
-- waarden met n onder N_DREMPEL tellen niet mee, niet in de referentie en niet
-  als doelwaarde (klasse None, status 'onderdrukt').
+- waarden met n onder de drempel voor kleine aantallen (services/kleine_aantallen.py,
+  instelbaar, standaard 10) tellen niet mee, niet in de referentie en niet als
+  doelwaarde (klasse None, status 'onderdrukt').
 - aggregatie (onderdeel, thema, kwadrant en multi-selectie): gewogen gemiddelde
   van de indicatorklassen eronder, gewicht = aantal gebieden met data in de
   referentiegroep van die indicator; daarna afronden naar de dichtstbijzijnde
@@ -28,14 +29,16 @@ Aanname tot https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/222 antwoord ge
 import math
 from typing import Dict, Iterable, List, Optional, Sequence, Tuple
 
+from omnitwin.services import kleine_aantallen as ka
+
 # label_ae: labels A-E per indicator en thema (#256), zie services/labelklasse.py
 CLASSIFICATIES = ("zscore", "percentiel_8", "label_ae")
 CLASSIFICATIE_STANDAARD = "zscore"
 KLASSEN = 8
-# Onderdrukking bij kleine aantallen (SWF: 10). Waarden met een bekende n onder deze
-# drempel tellen niet mee. De laad-API laat zulke waarden al weg (n-drempel per dataset);
-# dit vangt waarden die buiten de laad-API zijn geladen.
-N_DREMPEL = 10
+# Onderdrukking bij kleine aantallen: de standaard; de drempel van de instantie staat in
+# organisatie.n_drempel (kleine_aantallen.drempel). De laad-API laat zulke waarden al weg
+# (n-drempel per dataset); dit vangt waarden die buiten de laad-API zijn geladen.
+N_DREMPEL = ka.N_DREMPEL_STANDAARD
 
 # score_type/inverse die betekenen: hogere waarde = ongunstiger. Gelijk aan de
 # omkeerlogica van color_scale_service en KompasScoringService.
@@ -69,7 +72,7 @@ def richting(score_type: Optional[str], inverse: Optional[bool] = False,
 
 
 def is_onderdrukt(n: Optional[int], drempel: int = N_DREMPEL) -> bool:
-    return n is not None and n < drempel
+    return ka.is_onderdrukt(n, drempel)
 
 
 def percentiel(waarde: float, referentie: Sequence[float]) -> Optional[float]:
@@ -191,11 +194,12 @@ def referentie_waarden(
     gemeente_codes: Iterable[Optional[str]],
     indicator_uuids: Optional[Iterable[str]] = None,
     jaar: Optional[int] = None,
-    drempel: int = N_DREMPEL,
+    drempel: Optional[int] = None,
 ) -> Dict[Tuple[Optional[str], str], List[float]]:
     """
     Referentiewaarden per (gemeentecode, indicator_uuid). Zonder jaar: jaarlogica
     'zelfde_jaar' (zoals de Z-score); met jaar: alle waarden van dat jaar.
+    Zonder drempel: die van de instantie.
     """
     from sqlalchemy import text
 
@@ -207,6 +211,8 @@ def referentie_waarden(
     params = referentie_params(gebiedstype_id, indicator_uuids=list(indicator_uuids) if indicator_uuids else None)
     if jaar is not None:
         params["zs_jaarlogica"] = "alle_jaren"  # filter op het gekozen jaar hieronder
+    if drempel is None:
+        drempel = ka.drempel(db)
     params.update({"pk_gemeenten": gemeenten, "pk_jaar": jaar, "pk_drempel": int(drempel)})
     uit: Dict[Tuple[Optional[str], str], List[float]] = {}
     for r in db.execute(text(_SQL_REFERENTIE), params):
@@ -215,14 +221,17 @@ def referentie_waarden(
 
 
 def onderdrukte_waarden(
-    db, gebied_ids: Iterable[str], indicator_uuids: Optional[Iterable[str]] = None, drempel: int = N_DREMPEL
+    db, gebied_ids: Iterable[str], indicator_uuids: Optional[Iterable[str]] = None,
+    drempel: Optional[int] = None,
 ) -> set:
-    """{(gebied_id, indicator_uuid, jaar)} met n onder de drempel."""
+    """{(gebied_id, indicator_uuid, jaar)} met n onder de drempel (zonder drempel: die van de instantie)."""
     from sqlalchemy import text
 
     ids = list(gebied_ids)
     if not ids:
         return set()
+    if drempel is None:
+        drempel = ka.drempel(db)
     rows = db.execute(text(_SQL_ONDERDRUKT), {
         "pk_gebied_ids": ids,
         "pk_indicator_uuids": [str(u) for u in indicator_uuids] if indicator_uuids else None,

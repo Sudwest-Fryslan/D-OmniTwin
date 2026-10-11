@@ -21,6 +21,7 @@ export function alsInvoer(org: Organisatie): OrganisatieInvoer {
         thema: org.thema,
         logos: org.logos.map(l => ({ pad: l.pad, naam: l.naam, rol: l.rol })),
         meld_url: org.meld_url ?? null,
+        n_drempel: org.n_drempel ?? null,
     };
 }
 
@@ -321,6 +322,16 @@ export const OrganisatiePage: React.FC = () => {
                         <small id="org-meld-url-uitleg" className="text-secondary">
                             Waar een melding bij een AI-resultaat heen gaat: een nieuw issue (standaard bij D-OmniTwin),
                             een eigen formulier of een functioneel e-mailadres. Leeg = de standaard.
+                        </small>
+                    </div>
+                    <div className="form-group">
+                        <label className="form-label" htmlFor="org-n-drempel">Kleine aantallen: minimum aantal waarnemingen</label>
+                        <input id="org-n-drempel" type="number" className="form-input" min={1} max={1000} step={1}
+                            value={form.n_drempel ?? ''} aria-describedby="org-n-drempel-uitleg"
+                            onChange={e => zet({ n_drempel: e.target.value === '' ? null : Number(e.target.value) })} />
+                        <small id="org-n-drempel-uitleg" className="text-secondary">
+                            Een waarde die op minder waarnemingen rust, tonen we nergens en telt niet mee in de vergelijking.
+                            Leeg = 10.
                         </small>
                     </div>
                     <div className="form-group">

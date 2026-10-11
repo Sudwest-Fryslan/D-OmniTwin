@@ -162,7 +162,8 @@ class KompasService:
             FROM kompas_indicator_mapping kim
             JOIN indicatoren i ON kim.indicator_uuid = i.uuid
             LEFT JOIN LATERAL (
-                SELECT waarde, jaar 
+                -- kleine aantallen (#325): een waarde op te weinig waarnemingen telt als geen data
+                SELECT CASE WHEN is_kleine_aantallen(n) THEN NULL ELSE waarde END AS waarde, jaar
                 FROM gebied_data
                 WHERE indicator_uuid = i.uuid
                   AND gebied_id = :gebied_id
