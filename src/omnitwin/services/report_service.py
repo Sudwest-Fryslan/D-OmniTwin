@@ -246,7 +246,7 @@ class ReportDataService:
                    COALESCE(i.score_type, '+/+') as score_type,
                    COALESCE(vkh.titel_naam, i.categorie, 'Overig') as kwadrant
             FROM (
-                SELECT indicator_uuid, waarde, jaar,
+                SELECT indicator_uuid, waarde, jaar, n,
                        ROW_NUMBER() OVER(PARTITION BY indicator_uuid ORDER BY jaar DESC) as rn
                 FROM gebied_data
                 WHERE gebied_id = :gebied_id_a
@@ -255,7 +255,8 @@ class ReportDataService:
             ) gd
             JOIN indicatoren i ON gd.indicator_uuid = i.uuid
             LEFT JOIN v_kompas_hierarchie vkh ON i.uuid = vkh.indicator_uuid AND vkh.config_id = 1
-            WHERE gd.rn = 1 AND i.is_actief = true
+            -- kleine aantallen (#325): een waarde op te weinig waarnemingen niet tonen
+            WHERE gd.rn = 1 AND i.is_actief = true AND NOT is_kleine_aantallen(gd.n)
 """)
         resultaat_a = self.db.execute(waarden_a_query, {"gebied_id_a": gebied_id_a})
         indicatoren_a = {str(r._mapping['indicator_uuid']): dict(r._mapping) for r in resultaat_a}
@@ -269,12 +270,12 @@ class ReportDataService:
             ref_query = text("""
                 SELECT gd.indicator_uuid, AVG(gd.waarde) as ref_waarde, COUNT(DISTINCT gd.gebied_id) as n
                 FROM (
-                    SELECT indicator_uuid, waarde, gebied_id,
+                    SELECT indicator_uuid, waarde, gebied_id, n,
                            ROW_NUMBER() OVER(PARTITION BY indicator_uuid, gebied_id ORDER BY jaar DESC) as rn
                     FROM gebied_data
                     WHERE gebied_id = ANY(:gebieden_b)
                 ) gd
-                WHERE gd.rn = 1
+                WHERE gd.rn = 1 AND NOT is_kleine_aantallen(gd.n)
                 GROUP BY gd.indicator_uuid
             """)
             ref_result = self.db.execute(ref_query, {"gebieden_b": gebieden_b})

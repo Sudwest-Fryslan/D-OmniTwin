@@ -29,7 +29,7 @@ De **kaart** heeft een eigen keuze in de legenda, los van het profiel: *Percenti
 | Stap | Regel |
 |---|---|
 | Referentiegroep | Dezelfde als de Z-score: gebiedstype + gemeente van het gebied, zonder waterbuurten, alleen scenario `current`, jaarlogica `zelfde_jaar` (met de terugval bij minder dan 5 gebieden). Eén SQL-functie: `zscore_referentie_waarden`. Op de kaart met een gekozen jaar: alle gebieden met een waarde in dat jaar. |
-| Kleine aantallen | Een waarde met een bekende `n` onder **10** telt niet mee: niet in de referentie en niet als waarde van het gebied (status `onderdrukt`, grijs). De laad-API laat zulke waarden al weg; dit vangt waarden die buiten de laad-API zijn geladen. |
+| Kleine aantallen | Een waarde met een bekende `n` onder de drempel (**10**, instelbaar in `organisatie.n_drempel`, #325) telt niet mee: niet in de referentie en niet als waarde van het gebied (status `onderdrukt`, grijs). De laad-API laat zulke waarden al weg; dit vangt waarden die buiten de laad-API zijn geladen. |
 | Percentiel | Middenrang: (aantal waarden lager + ½ × aantal gelijk) / n. De waarde van het gebied zelf hoort bij n. Gelijke waarden krijgen hetzelfde percentiel, dus dezelfde klasse. |
 | Polariteit | Bij "lager is beter" (`score_type` `+/-`, `-/-`, `positive_descending` of `inverse` in de scoringsregel) geldt 1 − percentiel. **Klasse 8 is altijd de gunstigste 12,5%, klasse 1 de ongunstigste.** |
 | Klasse | `floor(percentiel × 8) + 1`, begrensd op 1..8. Grenzen bij 12,5%, 25%, …, 87,5%: een percentiel van precies 25% hoort bij klasse 3. |

@@ -19,6 +19,7 @@ from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
+from omnitwin.services.kleine_aantallen import N_DREMPEL_STANDAARD
 from omnitwin.services.logging_service import AppLogger
 from omnitwin.thema import beschikbare_themas, is_geldige_themanaam
 
@@ -163,7 +164,7 @@ def beschikbare_logos(afbeeldingen: Path = AFBEELDINGEN) -> List[str]:
 
 
 _VELDEN = ("code", "naam", "korte_naam", "oin", "gemeente_codes", "benchmark_provincie",
-           "contact_email", "thema", "logos", "meld_url")
+           "contact_email", "thema", "logos", "meld_url", "n_drempel")
 
 # Meldplek als de instantie geen eigen meld_url heeft (#312): een nieuw issue bij D-OmniTwin zelf
 STANDAARD_MELD_URL = "https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/new"
@@ -191,14 +192,14 @@ def wijzigingen(oud: Optional[Dict[str, Any]], nieuw: Dict[str, Any]) -> Dict[st
 _SCHRIJF = text("""
     INSERT INTO public.organisatie
         (id, code, naam, korte_naam, oin, gemeente_codes, benchmark_provincie, contact_email, thema, logos,
-         meld_url, bijgewerkt_op)
+         meld_url, n_drempel, bijgewerkt_op)
     VALUES (true, :code, :naam, :korte_naam, :oin, :gemeente_codes, :benchmark_provincie, :contact_email,
-            :thema, CAST(:logos AS jsonb), :meld_url, now())
+            :thema, CAST(:logos AS jsonb), :meld_url, :n_drempel, now())
     ON CONFLICT (id) DO UPDATE SET
         code = EXCLUDED.code, naam = EXCLUDED.naam, korte_naam = EXCLUDED.korte_naam, oin = EXCLUDED.oin,
         gemeente_codes = EXCLUDED.gemeente_codes, benchmark_provincie = EXCLUDED.benchmark_provincie,
         contact_email = EXCLUDED.contact_email, thema = EXCLUDED.thema, logos = EXCLUDED.logos,
-        meld_url = EXCLUDED.meld_url, bijgewerkt_op = now()
+        meld_url = EXCLUDED.meld_url, n_drempel = EXCLUDED.n_drempel, bijgewerkt_op = now()
 """)
 
 
@@ -214,7 +215,7 @@ def schrijf_organisatie(db: Session, org: Dict[str, Any]) -> None:
 
 _SQL = text("""
     SELECT code, naam, korte_naam, oin, gemeente_codes, benchmark_provincie,
-           contact_email, logos, thema, meld_url
+           contact_email, logos, thema, meld_url, n_drempel
     FROM public.organisatie
     LIMIT 1
 """)
@@ -236,6 +237,8 @@ def _als_dict(rij) -> Dict[str, Any]:
         "thema": veilig_thema(m.get("thema")),
         # Leeg = de standaard; viewer en beheer krijgen altijd een bruikbare meldplek (#312)
         "meld_url": m.get("meld_url") or STANDAARD_MELD_URL,
+        # Kleine aantallen (#325): leeg = de standaard (10)
+        "n_drempel": m.get("n_drempel") or N_DREMPEL_STANDAARD,
         "logos": [
             {"pad": l.get("pad"), "naam": l.get("naam"), "rol": l.get("rol", "partner")}
             for l in logos

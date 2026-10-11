@@ -12,6 +12,7 @@ from typing import Optional, List, Dict, Any
 import numpy as np
 
 
+from omnitwin.services import kleine_aantallen as ka
 from omnitwin.services import labelklasse as lk
 from omnitwin.services import percentielklasse as pk
 from omnitwin.services.kompas_service import KompasScoringService
@@ -64,6 +65,7 @@ class GebiedsmonitorService:
                 i.waarde as indicator_waarde,
                 i.jaar,
                 i.bron,
+                {n_kolom} AS n,
                 ind.naam as indicator_naam,
                 ind.code as indicator_code,
                 ind.eenheid,
@@ -77,7 +79,7 @@ class GebiedsmonitorService:
                 join_type = "LEFT JOIN" if show_all else "INNER JOIN"
                 query_base += f"""
                     {join_type} (
-                        SELECT gebied_id, indicator_uuid, waarde, jaar, bron 
+                        SELECT gebied_id, indicator_uuid, waarde, jaar, bron, n
                         FROM gebied_data 
                         WHERE indicator_uuid = CAST(:indicator_uuid AS uuid) 
                         AND jaar = :jaar
@@ -85,6 +87,7 @@ class GebiedsmonitorService:
                     ) i ON g.id = i.gebied_id
                     LEFT JOIN indicatoren ind ON ind.uuid = CAST(:indicator_uuid AS uuid)
                 """
+                n_kolom = "i.n"
             else:
                 join_type = "LEFT JOIN" if show_all else "INNER JOIN"
                 query_base += f"""
@@ -92,12 +95,20 @@ class GebiedsmonitorService:
                         ON g.id = i.gebied_id AND i.indicator_uuid = CAST(:indicator_uuid AS uuid)
                     LEFT JOIN indicatoren ind ON ind.uuid = CAST(:indicator_uuid AS uuid)
                 """
+                # n van die actuele waarde (de view heeft geen n), voor kleine aantallen (#325)
+                n_kolom = (
+                    "(SELECT gd.n FROM gebied_data gd WHERE gd.gebied_id = i.gebied_id"
+                    " AND gd.indicator_uuid = i.indicator_uuid AND gd.jaar IS NOT DISTINCT FROM i.jaar"
+                    " AND gd.datum IS NOT DISTINCT FROM i.datum"
+                    " AND COALESCE(gd.scenario_id, 'current') = 'current' LIMIT 1)"
+                )
         else:
             # placeholders for no indicator
             query_base += """
                 CROSS JOIN (SELECT NULL as waarde, NULL as jaar, NULL as bron) i
                 CROSS JOIN (SELECT NULL as naam, NULL as code, NULL as eenheid, '+/+' as score_type) ind
             """
+            n_kolom = "CAST(NULL AS integer)"
 
         # 3. Filters
         query_base += " WHERE g.gebiedstype_id = CAST(:gebiedstype_id AS uuid)"
@@ -115,8 +126,17 @@ class GebiedsmonitorService:
         if jaar is not None:
             params["jaar"] = jaar
             
-        result = self.db.execute(text(query_base), params)
+        result = self.db.execute(text(query_base.replace("{n_kolom}", n_kolom)), params)
         rows = [dict(row._mapping) for row in result]
+
+        # Kleine aantallen (#325): een waarde met n onder de drempel tonen we niet; het gebied
+        # blijft op de kaart (grijs, status 'onderdrukt') en telt niet mee in de klassen.
+        n_drempel = ka.drempel(self.db) if indicator_uuid else ka.N_DREMPEL_STANDAARD
+        onderdrukt_ids = set()
+        for r in rows:
+            if r.get("indicator_waarde") is not None and ka.is_onderdrukt(r.get("n"), n_drempel):
+                onderdrukt_ids.add(str(r["id"]))
+                r["indicator_waarde"] = None
         
         # 5. Calculate Colors using ColorScaleService
         color_service = ColorScaleService(self.db)
@@ -152,6 +172,9 @@ class GebiedsmonitorService:
                     k["aantal"] = sum(1 for v in klasse_per_gebied.values() if v["klasse"] == k["klasse"])
             else:
                 klassen_legenda = color_service.legenda_klassen(all_values, color_ramp, breaks)
+        if percentiel:
+            for gid in onderdrukt_ids:
+                klasse_per_gebied.setdefault(gid, {"klasse": None, "status": "onderdrukt"})
 
         data_dict = {}
         for row in rows:
@@ -165,7 +188,7 @@ class GebiedsmonitorService:
                     color = color_service.get_color_for_value(
                         float(row["indicator_waarde"]), color_ramp, breaks, nodata_color
                     )
-            elif indicator_uuid and not show_all:
+            elif indicator_uuid and not show_all and str(row["id"]) not in onderdrukt_ids:
                 continue
 
             data_dict[str(row["id"])] = {
@@ -175,6 +198,8 @@ class GebiedsmonitorService:
                 "jaar": row["jaar"],
                 "bron": row["bron"]
             }
+            if str(row["id"]) in onderdrukt_ids:
+                data_dict[str(row["id"])]["onderdrukt"] = True
             if percentiel:
                 data_dict[str(row["id"])]["klasse"] = klasse.get("klasse")
                 data_dict[str(row["id"])]["klasse_status"] = klasse.get("status")
@@ -209,6 +234,9 @@ class GebiedsmonitorService:
                 # percentiel: klasse 1-8 met label en aantal gebieden)
                 "modus": "label" if labels else ("percentiel" if percentiel else "waarde"),
                 "klassen": klassen_legenda,
+                # #325: gebieden zonder getoonde waarde omdat die op te weinig waarnemingen rust
+                "aantal_onderdrukt": len(onderdrukt_ids),
+                "n_drempel": n_drempel,
                 # #256: 'drempels' (indicator_labels) of 'kwintiel' (voorlopig)
                 "label_bron": label_bron,
                 "legenda_melding": (
