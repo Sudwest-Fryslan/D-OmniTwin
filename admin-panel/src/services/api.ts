@@ -1,6 +1,6 @@
 import axios from 'axios';
 import type {
-    ScoreType,
+    Polariteit,
     ColorSchema,
     Indicator,
     IndicatorUpdate,
@@ -47,9 +47,9 @@ export const systemPromptsAPI = {
     update: (naam: string, data: SystemPromptUpdate) => api.put<SystemPrompt>(`/prompts/${naam}`, data),
 };
 
-// Score types
-export const scoreTypesAPI = {
-    getAll: () => api.get<ScoreType[]>('/score-types'),
+// Polariteit: codelijst (#120)
+export const polariteitenAPI = {
+    getAll: () => api.get<Polariteit[]>('/polariteiten'),
 };
 
 // Color schemas
@@ -456,6 +456,15 @@ export const aiVrijgaveAPI = {
 export const aiAPI = {
     searchKompas: (q: string, limit: number = 5) =>
         publicApi.get<any[]>('/ai/kompas/search', { params: { q, limit } }),
+};
+
+export const meldingenAPI = {
+    getMeldingen: (params?: { status?: string; type?: string; limit?: number; offset?: number }) =>
+        api.get<import('../types').MeldingenResponse>('/meldingen', { params }),
+    getMelding: (id: string) =>
+        api.get<import('../types').Melding>(`/meldingen/${id}`),
+    updateMelding: (id: string, data: { status?: string; notitie_beheer?: string }) =>
+        api.patch<import('../types').Melding>(`/meldingen/${id}`, data),
 };
 
 export default api;

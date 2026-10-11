@@ -177,3 +177,14 @@ def beperk_llm(request: Request) -> None:
     wacht = _llm_limiet(maximum).probeer(client_ip(request))
     if wacht:
         raise te_veel(wacht, f"Te veel verzoeken. Probeer het over {wacht} seconden opnieuw.")
+
+
+# ── Terugmeldvoorziening: POST /api/meldingen (#311) ───────────────────────────
+_meldingen_limiet = Limiet(maximum=10, venster=60.0)
+
+
+def beperk_meldingen(request: Request) -> None:
+    """Dependency voor POST /api/meldingen: max 10 verzoeken per minuut per IP (in-memory)."""
+    wacht = _meldingen_limiet.probeer(client_ip(request))
+    if wacht:
+        raise te_veel(wacht, f"Te veel meldingen verstuurd. Probeer het over {wacht} seconden opnieuw.")

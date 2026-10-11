@@ -30,6 +30,7 @@ from sqlalchemy import text
 from omnitwin.config import instellingen
 from omnitwin.database import engine
 from omnitwin.services import gebruikersvoorkeuren
+from omnitwin.services import meldingen as meldingen_service
 
 logger = logging.getLogger(__name__)
 
@@ -149,6 +150,15 @@ async def _cleanup_loop() -> None:
         except Exception as e:
             AppLogger.error(f"Opschonen AI-logboek mislukt: {type(e).__name__}", category="SERVER")
 
+        # Terugmeldvoorziening: meldingen ouder dan 365 dagen opruimen (#311)
+        try:
+            n = await asyncio.to_thread(_ruim_meldingen_op)
+            if n:
+                AppLogger.info(f"Terugmeldvoorziening: {n} melding(en) ouder dan "
+                               f"{meldingen_service.BEWAAR_DAGEN} dagen verwijderd", category="SERVER")
+        except Exception as e:
+            AppLogger.error(f"Opruimen meldingen mislukt: {type(e).__name__}", category="SERVER")
+
 
 def _ai_onderhoud() -> int:
     from omnitwin import ai_logboek, ai_vrijgave
@@ -165,6 +175,11 @@ def _ai_onderhoud() -> int:
 def _ruim_voorkeuren_op() -> int:
     with engine.connect() as conn:
         return gebruikersvoorkeuren.ruim_op(conn)
+
+
+def _ruim_meldingen_op() -> int:
+    with engine.connect() as conn:
+        return meldingen_service.ruim_op(conn)
 
 
 def start_cleanup_scheduler() -> None:

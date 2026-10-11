@@ -188,7 +188,7 @@ def test_load_sample_idempotent(db):
 
 def test_schema_bevat_alle_migraties(db):
     assert scalar(db, "SELECT count(*) FROM pg_extension WHERE extname = 'pg_trgm'") == 1
-    assert scalar(db, "SELECT to_regclass('public.deduplicatie_uitzonderingen') IS NOT NULL")
+    assert scalar(db, "SELECT to_regclass('app.deduplicatie_uitzonderingen') IS NOT NULL")
 
 
 # ── Security: PostgREST en pg_featureserv met eigen rollen (#57) ─────────────
@@ -307,10 +307,20 @@ def test_rollen_zonder_extra_rechten(db):
 @pytest.mark.parametrize("rol", ["web_anon", "authenticator", "featureserv"])
 @pytest.mark.parametrize("tabel", GEHEIM + ["gebieden", "indicatoren", "gebied_data"])
 def test_rollen_geen_rechten_op_tabellen(db, rol, tabel):
-    """Geen enkele API-rol heeft rechten op de tabellen in public; alleen via views."""
+    """Geen enkele API-rol heeft rechten op de tabellen in public of app; alleen via views."""
+    oid = scalar(db, "SELECT coalesce(to_regclass(%s), to_regclass(%s))::oid", (f"app.{tabel}", f"public.{tabel}"))
+    assert oid, f"tabel {tabel} niet gevonden"
     for recht in ("SELECT", "INSERT", "UPDATE", "DELETE"):
-        heeft = scalar(db, "SELECT has_table_privilege(%s, %s, %s)", (rol, f"public.{tabel}", recht))
+        heeft = scalar(db, "SELECT has_table_privilege(%s, %s::oid, %s)", (rol, oid, recht))
         assert not heeft, f"{rol} heeft {recht} op {tabel}"
+
+
+@pytest.mark.parametrize("rol", ["web_anon", "authenticator", "featureserv"])
+def test_api_rollen_geen_toegang_tot_schema_app(db, rol):
+    """Applicatiedata staat in schema app (#137): daar komen PostgREST en pg_featureserv niet."""
+    assert scalar(db, "SELECT to_regnamespace('app') IS NOT NULL")
+    assert not scalar(db, "SELECT has_schema_privilege(%s, 'app', 'USAGE')", (rol,))
+    assert scalar(db, "SELECT to_regclass('app.users') IS NOT NULL AND to_regclass('public.users') IS NULL")
 
 
 def test_data_en_geo_met_versie():
