@@ -171,7 +171,7 @@ export const DashboardPage: React.FC = () => {
                 <StatsCard
                     label="Totaal Indicatoren"
                     value={stats?.total_indicators || 0}
-                    subValue="+0 deze maand"
+                    subValue="Actieve definities"
                     icon={Database}
                     color="#3b82f6"
                 />
@@ -184,8 +184,8 @@ export const DashboardPage: React.FC = () => {
                 />
                 <StatsCard
                     label="Metadata Voltooid"
-                    value={`${stats?.metadata_complete_pct || 0}%`}
-                    subValue="Documentatie compleet"
+                    value={`${stats?.metadata_complete_met_data_pct ?? stats?.metadata_complete_pct ?? 0}%`}
+                    subValue={`Van de indicatoren met data (alle definities: ${stats?.metadata_complete_pct || 0}%)`}
                     icon={FileText}
                     color="#8b5cf6"
                 />

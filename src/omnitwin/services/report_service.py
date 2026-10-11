@@ -274,6 +274,8 @@ class ReportDataService:
                            ROW_NUMBER() OVER(PARTITION BY indicator_uuid, gebied_id ORDER BY jaar DESC) as rn
                     FROM gebied_data
                     WHERE gebied_id = ANY(:gebieden_b)
+                      AND COALESCE(scenario_id, 'current') = 'current'
+                      AND jaar IS NOT NULL
                 ) gd
                 WHERE gd.rn = 1 AND NOT is_kleine_aantallen(gd.n)
                 GROUP BY gd.indicator_uuid
@@ -1114,11 +1116,13 @@ class ReportDataService:
             JOIN indicatoren i ON gd.indicator_uuid = i.uuid
             WHERE gd.gebied_id = ANY(:gebied_ids)
               AND i.naam = 'Inwoners'
+              AND COALESCE(gd.scenario_id, 'current') = 'current'
               AND gd.jaar = (
                   SELECT MAX(gd2.jaar)
                   FROM gebied_data gd2
                   WHERE gd2.gebied_id = gd.gebied_id
                     AND gd2.indicator_uuid = gd.indicator_uuid
+                    AND COALESCE(gd2.scenario_id, 'current') = 'current'
               )
         """)
         inw_rows = self.db.execute(inwoners_query, {"gebied_ids": actieve_ids}).fetchall()

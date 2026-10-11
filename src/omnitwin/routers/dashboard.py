@@ -23,25 +23,31 @@ def get_dashboard_stats(
     total_query = text("SELECT COUNT(*) FROM indicatoren WHERE is_actief = true")
     total = db.execute(total_query).scalar()
     
-    # Data coverage (indicators with at least one data point)
-    # Using a fast check on gebied_data
+    # Data coverage: actieve indicatoren met minstens één waarde. Alleen actieve, net als `total`,
+    # anders kan het percentage boven 100% uitkomen (#246).
     coverage_query = text("""
-        SELECT COUNT(DISTINCT indicator_uuid) 
-        FROM gebied_data 
-        WHERE waarde IS NOT NULL
+        SELECT COUNT(*)
+        FROM indicatoren i
+        WHERE i.is_actief = true
+          AND EXISTS (SELECT 1 FROM gebied_data gd WHERE gd.indicator_uuid = i.uuid AND gd.waarde IS NOT NULL)
     """)
     with_data = db.execute(coverage_query).scalar()
-    
-    # Metadata coverage (omschrijving, bron, eenheid present)
+
+    # Metadata coverage (omschrijving, bron, eenheid present): over alle actieve indicatoren, en apart
+    # over de indicatoren met data. Definities zonder levering (bijv. SWF-definities zonder waarden)
+    # drukken het eerste getal; het tweede zegt iets over wat de gebruiker te zien krijgt (#246).
     meta_query = text("""
-        SELECT COUNT(*) 
-        FROM indicatoren 
-        WHERE is_actief = true 
-          AND omschrijving IS NOT NULL AND omschrijving != ''
-          AND bron IS NOT NULL AND bron != ''
-          AND eenheid IS NOT NULL AND eenheid != ''
+        SELECT COUNT(*) AS alle,
+               COUNT(*) FILTER (WHERE EXISTS (
+                   SELECT 1 FROM gebied_data gd WHERE gd.indicator_uuid = i.uuid AND gd.waarde IS NOT NULL
+               )) AS met_data
+        FROM indicatoren i
+        WHERE i.is_actief = true
+          AND i.omschrijving IS NOT NULL AND i.omschrijving != ''
+          AND i.bron IS NOT NULL AND i.bron != ''
+          AND i.eenheid IS NOT NULL AND i.eenheid != ''
     """)
-    meta_complete = db.execute(meta_query).scalar()
+    meta_complete, meta_complete_met_data = db.execute(meta_query).one()
     
     # Trending (indicators with 5+ distinct years of data)
     trending_query = text("""
@@ -49,6 +55,7 @@ def get_dashboard_stats(
             SELECT indicator_uuid 
             FROM gebied_data 
             WHERE jaar IS NOT NULL
+              AND COALESCE(scenario_id, 'current') = 'current'
             GROUP BY indicator_uuid 
             HAVING COUNT(DISTINCT jaar) >= 5
         ) as sub
@@ -61,6 +68,8 @@ def get_dashboard_stats(
         "with_data_pct": round((with_data / total * 100) if total > 0 else 0, 1),
         "metadata_complete_count": meta_complete,
         "metadata_complete_pct": round((meta_complete / total * 100) if total > 0 else 0, 1),
+        "metadata_complete_met_data_count": meta_complete_met_data,
+        "metadata_complete_met_data_pct": round((meta_complete_met_data / with_data * 100) if with_data > 0 else 0, 1),
         "trending_count": trending
     }
 
@@ -150,6 +159,7 @@ def get_dashboard_indicators(
         FROM indicatoren i
         LEFT JOIN v_kompas_hierarchie vkh ON i.uuid = vkh.indicator_uuid AND vkh.config_id = 1
         LEFT JOIN gebied_data gd ON i.uuid = gd.indicator_uuid
+             AND COALESCE(gd.scenario_id, 'current') = 'current'
     """
     
     wheres = ["1=1"]
@@ -214,6 +224,7 @@ def get_dashboard_indicators(
             WHERE indicator_uuid IN :uuids 
               AND jaar >= 2015 
               AND waarde IS NOT NULL
+              AND COALESCE(scenario_id, 'current') = 'current'
             GROUP BY indicator_uuid, jaar
             ORDER BY indicator_uuid, jaar
         """)
@@ -278,6 +289,7 @@ def export_dashboard_data(
         FROM indicatoren i
         LEFT JOIN v_kompas_hierarchie vkh ON i.uuid = vkh.indicator_uuid AND vkh.config_id = 1
         LEFT JOIN gebied_data gd ON i.uuid = gd.indicator_uuid
+             AND COALESCE(gd.scenario_id, 'current') = 'current'
         GROUP BY i.uuid, i.naam, i.code, i.score_type, vkh.titel_naam, i.bron, i.eenheid
         ORDER BY i.naam ASC
     """

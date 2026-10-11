@@ -114,6 +114,8 @@ export interface DashboardStats {
     with_data_pct: number;
     metadata_complete_count: number;
     metadata_complete_pct: number;
+    metadata_complete_met_data_count?: number;
+    metadata_complete_met_data_pct?: number;
     trending_count: number;
 }
 

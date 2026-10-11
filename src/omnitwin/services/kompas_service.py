@@ -466,6 +466,7 @@ class KompasService:
             WHERE indicator_uuid = CAST(:uuid AS UUID)
               AND gebied_id = :gebied_id
               AND jaar IS NOT NULL
+              AND COALESCE(scenario_id, 'current') = 'current'
             ORDER BY jaar ASC
         """)
         
@@ -751,10 +752,12 @@ class KompasService:
                 WHERE gd.indicator_uuid = ANY(CAST(:uuids AS uuid[]))
                   AND gd.gebied_id = ANY(:buurt_ids)
                   AND gd.waarde IS NOT NULL
+                  AND COALESCE(gd.scenario_id, 'current') = 'current'
                   AND gd.jaar = (
                       SELECT MAX(gd2.jaar) FROM gebied_data gd2 
                       WHERE gd2.indicator_uuid = gd.indicator_uuid 
                         AND gd2.gebied_id = ANY(:buurt_ids2)
+                        AND COALESCE(gd2.scenario_id, 'current') = 'current'
                   )
                 GROUP BY gd.indicator_uuid
             """)
