@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { indicatorenAPI, scoreTypesAPI, colorSchemasAPI } from '../services/api';
+import { indicatorenAPI, polariteitenAPI, colorSchemasAPI } from '../services/api';
 import { useAdminStore } from '../hooks/useAdminStore';
 import { Search, ChevronLeft, ChevronRight, Edit, Save, X, Loader2, CheckCircle, Bot, Clock } from 'lucide-react';
 import type { Indicator, IndicatorUpdate, OntologieStatus } from '../types';
@@ -37,8 +37,8 @@ export const IndicatorsPage: React.FC = () => {
         setSelectedIndicator,
         colorSchemas,
         setColorSchemas,
-        scoreTypes,
-        setScoreTypes
+        polariteiten,
+        setPolariteiten
     } = useAdminStore();
 
     const [editForm, setEditForm] = useState<IndicatorUpdate>({});
@@ -51,18 +51,18 @@ export const IndicatorsPage: React.FC = () => {
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const [schemasRes, typesRes] = await Promise.all([
+                const [schemasRes, polRes] = await Promise.all([
                     colorSchemasAPI.getAll(),
-                    scoreTypesAPI.getAll(),
+                    polariteitenAPI.getAll(),
                 ]);
                 setColorSchemas(schemasRes.data);
-                setScoreTypes(typesRes.data);
+                setPolariteiten(polRes.data);
             } catch (error) {
                 console.error('Error fetching reference data:', error);
             }
         };
         fetchData();
-    }, [setColorSchemas, setScoreTypes]);
+    }, [setColorSchemas, setPolariteiten]);
 
     useEffect(() => {
         const fetchIndicators = async () => {
@@ -91,7 +91,7 @@ export const IndicatorsPage: React.FC = () => {
                 omschrijving: res.data.omschrijving || '',
                 bron: res.data.bron || '',
                 eenheid: res.data.eenheid || '',
-                score_type: res.data.score_type,
+                polariteit: res.data.polariteit || 'hoger_is_beter',
                 color_schema_id: res.data.color_schema_id || 1,
                 admin_notes: res.data.admin_notes || '',
             });
@@ -205,7 +205,7 @@ export const IndicatorsPage: React.FC = () => {
                                 <thead>
                                     <tr>
                                         <th>Naam</th>
-                                        <th>Score</th>
+                                        <th>Polariteit</th>
                                         <th>Ontologie</th>
                                     </tr>
                                 </thead>
@@ -233,8 +233,8 @@ export const IndicatorsPage: React.FC = () => {
                                                 </div>
                                             </td>
                                             <td>
-                                                <span className={`badge ${ind.score_type.startsWith('+') ? 'badge-positive' : 'badge-negative'}`}>
-                                                    {ind.score_type}
+                                                <span className={`badge ${ind.polariteit === 'lager_is_beter' ? 'badge-negative' : 'badge-positive'}`}>
+                                                    {polariteiten.find((p) => p.code === ind.polariteit)?.naam ?? ind.polariteit ?? ind.score_type}
                                                 </span>
                                             </td>
                                             <td>
@@ -335,9 +335,9 @@ export const IndicatorsPage: React.FC = () => {
                                             <textarea id="indicators-omschrijving" className="form-textarea" value={editForm.omschrijving || ''} onChange={(e) => setEditForm({ ...editForm, omschrijving: e.target.value })} />
                                         </div>
                                         <div className="form-group">
-                                            <label htmlFor="indicators-score-type" className="form-label">Score Type</label>
-                                            <select id="indicators-score-type" className="form-select" value={editForm.score_type || '+/+'} onChange={(e) => setEditForm({ ...editForm, score_type: e.target.value })}>
-                                                {scoreTypes.map((st) => (<option key={st.code} value={st.code}>{st.code} - {st.naam}</option>))}
+                                            <label htmlFor="indicators-polariteit" className="form-label">Polariteit</label>
+                                            <select id="indicators-polariteit" className="form-select" value={editForm.polariteit || 'hoger_is_beter'} onChange={(e) => setEditForm({ ...editForm, polariteit: e.target.value })}>
+                                                {polariteiten.map((p) => (<option key={p.code} value={p.code}>{p.naam}: {p.beschrijving.toLowerCase()}</option>))}
                                             </select>
                                         </div>
                                         <div className="form-group">

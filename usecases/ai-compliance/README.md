@@ -49,7 +49,7 @@ Zonder taalmodel is dit de toestand van het bewijs: B en C open, A stilgezet.
 ## Bewijs
 
 <!-- bewijs:start -->
-*Gemaakt op 11-10-2026 met D-OmniTwin 0.5.0-rc.1 (use case 0.1.0); geslaagd. Verslag: [`bewijs/bewijs.json`](bewijs/bewijs.json). Opnieuw maken (bij een release): `python -m omnitwin.usecases bewijs ai-compliance`.*
+*Gemaakt op 11-10-2026 met D-OmniTwin 0.5.0 (use case 0.1.0); geslaagd. Verslag: [`bewijs/bewijs.json`](bewijs/bewijs.json). Opnieuw maken (bij een release): `python -m omnitwin.usecases bewijs ai-compliance`.*
 
 ![Vrijgave op basis van een verklaring: B en C open met versie, geldig tot en wie/wanneer; A stilgezet met de noodstop](bewijs/vrijgave.webp)
 *Vrijgave op basis van een verklaring: B en C open met versie, geldig tot en wie/wanneer; A stilgezet met de noodstop*

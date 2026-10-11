@@ -69,10 +69,10 @@ _STAND_SQL = """
     SELECT u.code, u.naam, u.omschrijving, u.stilgezet, u.status_door, u.status_op, u.stilgezet_reden,
            v.id AS verklaring_id, v.versie, v.geldig_tot, v.bestandsnaam, v.grootte, v.sha256,
            v.geupload_door, v.geupload_op
-    FROM public.ai_usecases u
+    FROM app.ai_usecases u
     LEFT JOIN LATERAL (
         SELECT id, versie, geldig_tot, bestandsnaam, grootte, sha256, geupload_door, geupload_op
-        FROM public.ai_verklaringen WHERE usecase = u.code
+        FROM app.ai_verklaringen WHERE usecase = u.code
         ORDER BY geupload_op DESC, id DESC LIMIT 1
     ) v ON true
 """
@@ -168,14 +168,14 @@ def upload(db, usecase: str, versie: str, geldig_tot: date, bestandsnaam: Option
         raise GebruikersFout("'Geldig tot' ligt in het verleden.")
     sha = hashlib.sha256(inhoud).hexdigest()
     vid = db.execute(text("""
-        INSERT INTO public.ai_verklaringen (usecase, versie, geldig_tot, bestandsnaam, pdf, grootte, sha256, geupload_door)
+        INSERT INTO app.ai_verklaringen (usecase, versie, geldig_tot, bestandsnaam, pdf, grootte, sha256, geupload_door)
         VALUES (:code, :versie, :tot, :naam, :pdf, :grootte, :sha, :door) RETURNING id
     """), {"code": code, "versie": versie, "tot": geldig_tot, "naam": nette_bestandsnaam(bestandsnaam),
            "pdf": inhoud, "grootte": len(inhoud), "sha": sha, "door": door}).scalar()
-    db.execute(text("UPDATE public.ai_usecases SET stilgezet = false, status_door = :door, status_op = now(), "
+    db.execute(text("UPDATE app.ai_usecases SET stilgezet = false, status_door = :door, status_op = now(), "
                     "stilgezet_reden = NULL WHERE code = :code"), {"door": door, "code": code})
     db.execute(text("""
-        INSERT INTO public.ai_vrijgave_log (usecase, actie, door, verklaring_id, versie, geldig_tot, toelichting)
+        INSERT INTO app.ai_vrijgave_log (usecase, actie, door, verklaring_id, versie, geldig_tot, toelichting)
         VALUES (:code, 'verklaring_geupload', :door, :vid, :versie, :tot, :t)
     """), {"code": code, "door": door, "vid": vid, "versie": versie, "tot": geldig_tot,
            "t": f"Verklaring geüpload en usecase actief gemaakt (sha256 {sha[:12]}…)"})
@@ -187,10 +187,10 @@ def zet_noodstop(db, usecase: str, aan: bool, door: str, toelichting: Optional[s
     """Noodstop aan (stilzetten) of uit (hervatten); hervatten opent alleen met een geldige verklaring."""
     code = _code(usecase)
     toelichting = ai_logboek.afkappen(toelichting, 500)
-    db.execute(text("UPDATE public.ai_usecases SET stilgezet = :aan, status_door = :door, status_op = now(), "
+    db.execute(text("UPDATE app.ai_usecases SET stilgezet = :aan, status_door = :door, status_op = now(), "
                     "stilgezet_reden = :reden WHERE code = :code"),
                {"aan": aan, "door": door, "code": code, "reden": toelichting if aan else None})
-    db.execute(text("INSERT INTO public.ai_vrijgave_log (usecase, actie, door, toelichting) "
+    db.execute(text("INSERT INTO app.ai_vrijgave_log (usecase, actie, door, toelichting) "
                     "VALUES (:code, :actie, :door, :t)"),
                {"code": code, "actie": "noodstop" if aan else "hervat", "door": door,
                 "t": toelichting})
@@ -208,12 +208,12 @@ def automatische_noodstop(reden: str) -> None:
         from omnitwin.database import engine
         with engine.begin() as conn:
             codes = [r[0] for r in conn.execute(text("""
-                UPDATE public.ai_usecases
+                UPDATE app.ai_usecases
                 SET stilgezet = true, status_door = :door, status_op = now(), stilgezet_reden = :reden
                 WHERE NOT stilgezet RETURNING code
             """), {"door": SYSTEEM, "reden": reden})]
             for code in codes:
-                conn.execute(text("INSERT INTO public.ai_vrijgave_log (usecase, actie, door, toelichting) "
+                conn.execute(text("INSERT INTO app.ai_vrijgave_log (usecase, actie, door, toelichting) "
                                   "VALUES (:code, 'noodstop', :door, :t)"),
                              {"code": code, "door": SYSTEEM, "t": f"Automatische noodstop: {reden}"})
         if codes:
@@ -237,12 +237,12 @@ def registreer_verlopen(db, vandaag: Optional[date] = None) -> int:
     for s in standen(db, vandaag):
         if s["reden"] != VERLOPEN:
             continue
-        al = db.execute(text("SELECT 1 FROM public.ai_vrijgave_log WHERE actie = 'verlopen' AND verklaring_id = :v"),
+        al = db.execute(text("SELECT 1 FROM app.ai_vrijgave_log WHERE actie = 'verlopen' AND verklaring_id = :v"),
                         {"v": s["verklaring_id"]}).fetchone()
         if al:
             continue
         db.execute(text("""
-            INSERT INTO public.ai_vrijgave_log (usecase, actie, verklaring_id, versie, geldig_tot, toelichting)
+            INSERT INTO app.ai_vrijgave_log (usecase, actie, verklaring_id, versie, geldig_tot, toelichting)
             VALUES (:code, 'verlopen', :v, :versie, :tot, 'Automatisch dicht: geldig tot is verstreken')
         """), {"code": s["code"], "v": s["verklaring_id"], "versie": s["versie"], "tot": s["geldig_tot"]})
         n += 1
@@ -254,14 +254,14 @@ def registreer_verlopen(db, vandaag: Optional[date] = None) -> int:
 def vrijgave_log(db, limit: int = 200) -> List[Dict[str, Any]]:
     return [dict(r) for r in db.execute(text("""
         SELECT id, tijdstip, usecase, actie, door, verklaring_id, versie, geldig_tot, toelichting
-        FROM public.ai_vrijgave_log ORDER BY id DESC LIMIT :limit
+        FROM app.ai_vrijgave_log ORDER BY id DESC LIMIT :limit
     """), {"limit": limit}).mappings()]
 
 
 def verklaring_pdf(db, usecase: str) -> Optional[Dict[str, Any]]:
     """De actuele verklaring (de nieuwste) van een usecase, of None."""
     r = db.execute(text("""
-        SELECT pdf, versie, sha256 FROM public.ai_verklaringen WHERE usecase = :code
+        SELECT pdf, versie, sha256 FROM app.ai_verklaringen WHERE usecase = :code
         ORDER BY geupload_op DESC, id DESC LIMIT 1
     """), {"code": _code(usecase)}).mappings().fetchone()
     return dict(r) if r else None

@@ -118,7 +118,7 @@ def create_admin(username: str, force_reset: bool = False):
     try:
         cur.execute("""
             SELECT COUNT(*) FROM information_schema.tables
-            WHERE table_schema = 'public'
+            WHERE table_schema IN ('public', 'app')
             AND table_name = 'users'
         """)
         table_count = cur.fetchone()[0]

@@ -193,7 +193,7 @@ def export_stuurdata(conn):
     lines.append("SELECT setval('public.chat_scenarios_id_seq', COALESCE((SELECT MAX(id) FROM public.chat_scenarios), 1), true);")
     lines.append("SELECT setval('public.color_schemas_id_seq', COALESCE((SELECT MAX(id) FROM public.color_schemas), 1), true);")
     lines.append("SELECT setval('public.externe_kaartlagen_id_seq', COALESCE((SELECT MAX(id) FROM public.externe_kaartlagen), 1), true);")
-    lines.append("SELECT setval('public.llm_config_id_seq', COALESCE((SELECT MAX(id) FROM public.llm_config), 1), true);")
+    lines.append("SELECT setval('app.llm_config_id_seq', COALESCE((SELECT MAX(id) FROM app.llm_config), 1), true);")
     lines.append("SELECT setval('public.visualisatie_profielen_id_seq', COALESCE((SELECT MAX(id) FROM public.visualisatie_profielen), 1), true);")
     lines.append("SELECT setval('public.kompas_configuraties_id_seq', COALESCE((SELECT MAX(id) FROM public.kompas_configuraties), 1), true);")
     lines.append("")

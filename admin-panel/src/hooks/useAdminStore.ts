@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { Indicator, ColorSchema, HierarchyNode, ScoreType } from '../types';
+import type { Indicator, ColorSchema, HierarchyNode, Polariteit } from '../types';
 import type { AuthConfig, AuthUser } from '../services/api';
 
 // Zonder antwoord van /api/admin/auth/config: lokaal inloggen, zoals vóór Keycloak
@@ -23,8 +23,8 @@ interface AdminStore {
     colorSchemas: ColorSchema[];
     setColorSchemas: (schemas: ColorSchema[]) => void;
 
-    scoreTypes: ScoreType[];
-    setScoreTypes: (types: ScoreType[]) => void;
+    polariteiten: Polariteit[];
+    setPolariteiten: (lijst: Polariteit[]) => void;
 
     hierarchyTree: HierarchyNode[];
     setHierarchyTree: (tree: HierarchyNode[]) => void;
@@ -54,8 +54,8 @@ export const useAdminStore = create<AdminStore>((set) => ({
     colorSchemas: [],
     setColorSchemas: (schemas) => set({ colorSchemas: schemas }),
 
-    scoreTypes: [],
-    setScoreTypes: (types) => set({ scoreTypes: types }),
+    polariteiten: [],
+    setPolariteiten: (lijst) => set({ polariteiten: lijst }),
 
     hierarchyTree: [],
     setHierarchyTree: (tree) => set({ hierarchyTree: tree }),

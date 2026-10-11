@@ -102,7 +102,7 @@ WHERE toegang = 'openbaar' OR public.verzoek_mag_intern();
 -- Frontend: teller; admin: mutaties (Datakwaliteit); tests: use cases.
 DROP VIEW IF EXISTS api.indicatoren;
 CREATE VIEW api.indicatoren AS
-SELECT id, uuid, naam, code, omschrijving, eenheid, interpretatie_logica, score_type,
+SELECT id, uuid, naam, code, omschrijving, eenheid, polariteit, interpretatie_logica, score_type,
        min_waarde, max_waarde, waarde_type, bron, status, categorie,
        begingeldigheid, eindgeldigheid, color_schema_id,
        ontologische_beschrijving, ontologie_status, beschrijving_ai,
@@ -201,6 +201,18 @@ BEGIN
             SECURITY DEFINER SET search_path = public, pg_temp;
         REVOKE ALL ON FUNCTION postgisftw.buurten_in_deelgebied(integer, double precision) FROM PUBLIC;
         GRANT EXECUTE ON FUNCTION postgisftw.buurten_in_deelgebied(integer, double precision) TO featureserv;
+    END IF;
+END
+$$;
+
+-- ── Schema app (#137, V047): standaard in het zoekpad ───────────────────────
+-- pg_dump neemt instellingen van de database niet mee; na een restore zet db-init ze zo terug.
+-- web_anon en featureserv hebben geen USAGE op app: voor hen verandert er niets.
+DO $$
+BEGIN
+    IF to_regnamespace('app') IS NOT NULL THEN
+        EXECUTE format('ALTER DATABASE %I SET search_path = "$user", public, app', current_database());
+        REVOKE ALL ON SCHEMA app FROM PUBLIC;
     END IF;
 END
 $$;

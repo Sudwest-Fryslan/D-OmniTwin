@@ -210,6 +210,9 @@ app.include_router(mijn.router)  # /api/mijn: favorieten en kaartpositie per geb
 from omnitwin.routers import ai_vrijgave as ai_vrijgave_router
 app.include_router(ai_vrijgave_router.router)        # /api/ai/usecases: status en verklaring (#307)
 app.include_router(ai_vrijgave_router.admin_router)  # /api/admin/ai: vrijgave en AI-logboek (#307, #313)
+from omnitwin.routers import meldingen as meldingen_router
+app.include_router(meldingen_router.router)        # /api/meldingen: publiek terugmeldpunt (#311)
+app.include_router(meldingen_router.admin_router)  # /api/admin/meldingen: beheer terugmeldingen (#311)
 
 # forwardAuth van Traefik voor /api/data en /api/geo (#266): 204 = door, anders 401/403
 app.add_api_route(viewer_toegang.CONTROLE_PAD, viewer_toegang.controleer, methods=["GET", "HEAD"],
