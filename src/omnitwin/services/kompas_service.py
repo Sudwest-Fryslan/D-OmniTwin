@@ -9,6 +9,7 @@ from sqlalchemy import text
 from datetime import datetime
 import json
 
+from omnitwin import polariteit
 from omnitwin.services import labelklasse as lk
 from omnitwin.services import percentielklasse as pk
 from omnitwin.services.color_scale_service import ColorScaleService
@@ -970,12 +971,8 @@ class KompasScoringService:
             # Zekeringscheck
             bin_idx = min(7, max(0, bin_idx))
                 
-            # Inverse logic
-            # +/+ : Normal (high = green)
-            # +/- : Reverse (high = red)
-            # -/- : Reverse (low = green, high = red)
-            # -/+ : Normal (low = red, high = green)
-            should_reverse = score_type in ['+/-', '-/-', '-=-'] or score_type == "positive_descending" or inverse
+            # Lager is beter: omkeren (één regel, omnitwin.polariteit, #120)
+            should_reverse = polariteit.lager_is_beter(score_type, inverse)
             if should_reverse:
                 bin_idx = 7 - bin_idx
                 
