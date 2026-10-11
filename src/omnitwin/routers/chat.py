@@ -9,11 +9,15 @@ Architectuur:
 2. Intent Classificatie (rule-based)
 3. LLM Narrative (korte toelichting, max 80 woorden)
 4. Command Dispatch JSON response (acties + indicatoren)
+
+AI-vrijgave (#307): het taalmodel alleen als AI-usecase A open is, zoeken op betekenis alleen met C.
+Dicht: regelgebaseerd en op trefwoorden, met een korte melding (omnitwin/ai_vrijgave.py).
 """
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
+from omnitwin import ai_vrijgave
 from omnitwin.database import get_db
 from omnitwin.grenzen import beperk_llm
 from omnitwin.services.ai_search_service import AISearchService
@@ -93,6 +97,11 @@ class ChatResponse(BaseModel):
     kaart_actie: Optional[Dict[str, Any]] = None
     # #233: korte melding over de zekerheid van de gevonden indicatoren (bijv. 'geen goede treffer')
     melding: Optional[str] = None
+    # #312: welke AI-usecases aan dit antwoord bijdroegen ('A' taalmodel, 'C' zoeken op betekenis);
+    # de viewer toont dan het label AI met de verklaring en "Melden"
+    ai_usecases: List[str] = []
+    # #233: van welk gebied het antwoord uitgaat, als dat niet in de vraag stond (selectie op de kaart)
+    aanname: Optional[str] = None
     debug: Optional[Dict[str, Any]] = None
 
 # ============================================================================
@@ -282,6 +291,14 @@ def generate_acties(intent: str, indicatoren: List[Dict[str, Any]], vraag: str) 
     
     return acties
 
+def vaste_toelichting(indicatoren: List[Dict[str, Any]]) -> str:
+    """Toelichting zonder taalmodel: wat er gevonden is."""
+    if not indicatoren:
+        return "Ik vind geen indicator die goed bij deze vraag past. Probeer een ander woord."
+    namen = ", ".join(r["naam"] for r in indicatoren[:3])
+    return f"Ik heb {len(indicatoren)} passende indicator(en) gevonden: {namen}. Bekijk ze op de kaart."
+
+
 # ============================================================================
 # Datavraag (#149): grounded antwoord met cijfers uit de database
 # ============================================================================
@@ -319,19 +336,27 @@ def beantwoord_datavraag_route(vraag: str, context: Dict[str, Any], db: Session)
     def zoek(tekst: str):
         # AI-zoeken pas laden als het nodig is (model laden kost tijd)
         if "service" not in zoeker:
-            zoeker["service"] = AISearchService(db)
+            zoeker["service"] = AISearchService(db, functie="Chat datavraag: zoeken")
         return zoeker["service"].search_indicators(tekst, limit=5)
 
     llm = LLMService(db)
-    llm_call = getattr(llm, "_call_llm", None) or llm._call_ollama  # #88: _call_llm kiest de aanbieder
+    geweigerd = {}
 
-    def vraag_llm(systeem: str, gebruiker: str):
+    def vraag_llm(systeem: str, gebruiker: str, bronnen=None):
+        # AI-usecase A (#307): dicht → geen aanroep, de datavraag valt terug op de vaste tekst
         systeem = llm.get_system_prompt("chat_datavraag", systeem)
-        return llm_call(systeem, gebruiker, context_name="Chat Datavraag")
+        antwoord = llm._call_llm(systeem, gebruiker, context_name="Chat Datavraag", usecase=ai_vrijgave.A,
+                                 taak=vraag, bronnen=bronnen)
+        if antwoord.get("geweigerd"):
+            geweigerd["A"] = True
+        return antwoord
 
     resultaat = beantwoord_datavraag(vraag, context, db, zoek, vraag_llm)
     if resultaat is None:
         return None
+    meldingen = [ai_vrijgave.melding(ai_vrijgave.A)] if geweigerd else []
+    ai_usecases = (["A"] if resultaat["llm_gebruikt"] else []) + (
+        ["C"] if zoeker.get("service") is not None and not zoeker["service"].zonder_betekenis else [])
 
     feiten = resultaat["feiten"]
     gegevens = [
@@ -368,6 +393,9 @@ def beantwoord_datavraag_route(vraag: str, context: Dict[str, Any], db: Session)
             "indicator": feiten[0]["indicator"],
             "gebied_ids": resultaat["gebied_ids"],
         } if feiten and resultaat.get("gebied_ids") else None),
+        melding=" ".join(meldingen) or None,
+        ai_usecases=ai_usecases,
+        aanname=resultaat.get("aanname"),
         debug={
             "mode": "datavraag",
             "llm_gebruikt": resultaat["llm_gebruikt"],
@@ -447,7 +475,7 @@ def chat(
     # ------------------------------------------------
     # Stap 1: Semantisch zoeken naar relevante indicatoren
     # ------------------------------------------------
-    search_service = AISearchService(db)
+    search_service = AISearchService(db, functie="Chat: zoeken")
     search_results = search_service.search_indicators(vraag, limit=5)
     
     # Check op foutmeldingen (bijv. AI model niet geladen)
@@ -468,13 +496,22 @@ def chat(
     # Stap 2 & 3: Intelligent Intent & Action Dispatching (LLM-driven)
     # ------------------------------------------------
     llm_service = LLMService(db)
+    # AI-usecase A (#307): dicht → regelgebaseerd, zonder taalmodel (de terugval hieronder)
+    a_open = ai_vrijgave.poort(ai_vrijgave.A, "Chat", taak=vraag)
     intelligent_response = llm_service.detect_intent_and_actions(
         vraag=vraag,
         indicatoren=relevant_results,
         context=context
-    )
-    
-    if intelligent_response:
+    ) if a_open else None
+
+    a_gebruikt = False
+    if not a_open:
+        intent = classify_intent(vraag)
+        acties = generate_acties(intent, relevant_results, vraag)
+        narrative = vaste_toelichting(relevant_results)
+        melding = " ".join(m for m in (ai_vrijgave.melding(ai_vrijgave.A), melding) if m)
+        debug_info = {"mode": "zonder_ai", "intent": intent}
+    elif intelligent_response:
         intent = intelligent_response["intent"]
         narrative = intelligent_response["narrative"]
         acties_data = intelligent_response["acties"]
@@ -510,6 +547,7 @@ def chat(
             except Exception:
                 continue
                 
+        a_gebruikt = True
         debug_info = {
             "mode": "intelligent_dispatcher",
             "model": intelligent_response.get("debug", {}).get("model")
@@ -527,11 +565,11 @@ def chat(
                 intent=intent,
                 context=context
             )
-            narrative = llm_response.get("text", "")
+            a_gebruikt = not llm_response.get("error")
+            narrative = llm_response.get("text", "") if a_gebruikt else vaste_toelichting(relevant_results)
         except Exception:
-            indicator_namen = ", ".join(r["naam"] for r in relevant_results[:3])
-            narrative = f"Ik heb {len(relevant_results)} relevante indicatoren gevonden: {indicator_namen}."
-            
+            narrative = vaste_toelichting(relevant_results)
+
         debug_info = {"mode": "legacy_fallback", "intent": intent}
 
     # ------------------------------------------------
@@ -557,6 +595,7 @@ def chat(
         acties=acties,
         indicatoren=indicatoren_out,
         melding=melding,
+        ai_usecases=(["A"] if a_gebruikt else []) + ([] if search_service.zonder_betekenis else ["C"]),
         debug=debug_info
     )
 

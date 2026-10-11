@@ -52,6 +52,7 @@ class Organisatie(BaseModel):
     contact_email: Optional[str] = None
     thema: str = "d-omnitwin"  # huisstijl (NLDS-thema), static/css/themes/<thema>.css
     logos: List[Logo]
+    meld_url: str = org_service.STANDAARD_MELD_URL  # waar "Melden" heen gaat (#312)
 
 
 # ── Invoer (PUT en import) ──────────────────────────────────────────────────
@@ -62,6 +63,7 @@ _OIN = re.compile(r"^\d{20}$")
 # Praktische controle (geen volledige RFC 5322): één @, geen spaties, een punt in het domein
 _EMAIL = re.compile(r"^[^@\s<>\"']+@[^@\s<>\"']+\.[A-Za-z]{2,}$")
 _STUURTEKENS = re.compile(r"[\x00-\x1f\x7f]")
+_MELD_URL = re.compile(r"^(https://[^\s/?#]+[^\s]*|mailto:[^@\s<>\"']+@[^@\s<>\"']+\.[A-Za-z]{2,})$")
 
 
 def _tekst(waarde: Optional[str], veld: str, maximum: int, verplicht: bool = False) -> Optional[str]:
@@ -116,6 +118,8 @@ class OrganisatieInvoer(BaseModel):
     contact_email: Optional[str] = None
     thema: str = org_service.STANDAARD_THEMA
     logos: List[LogoInvoer] = Field(default_factory=list, max_length=20)
+    # Meldplek (#312): https-adres (nieuw issue, formulier) of mailto:; leeg of de standaard = standaard
+    meld_url: Optional[str] = None
 
     @field_validator("code")
     @classmethod
@@ -153,6 +157,16 @@ class OrganisatieInvoer(BaseModel):
         v = (v or "").strip() or None
         if v is not None and (len(v) > 254 or not _EMAIL.fullmatch(v)):
             raise ValueError("contact_email is geen geldig e-mailadres")
+        return v
+
+    @field_validator("meld_url")
+    @classmethod
+    def _meld_url(cls, v: Optional[str]) -> Optional[str]:
+        v = (v or "").strip() or None
+        if v is None or v == org_service.STANDAARD_MELD_URL:
+            return None
+        if len(v) > 500 or _STUURTEKENS.search(v) or not _MELD_URL.fullmatch(v):
+            raise ValueError("meld_url: een https- of mailto:-adres (hoogstens 500 tekens)")
         return v
 
     @field_validator("gemeente_codes")

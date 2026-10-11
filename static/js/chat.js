@@ -88,7 +88,7 @@ class ChatPanel {
     /**
      * Vervangt de loading met het echte antwoord.
      */
-    addAssistantMessage(response) {
+    addAssistantMessage(response, vraag = '') {
         // Verwijder loading indicator
         const loading = document.getElementById('chat-loading');
         if (loading) loading.remove();
@@ -105,18 +105,20 @@ class ChatPanel {
         const bubble = el('div', 'chat-message-bubble assistant');
         block.appendChild(bubble);
 
-        // Track E: Bronlabel (governance)
+        // Track E: Bronlabel (governance). #312: welke AI meedeed, zegt de backend (ai_usecases)
         const mode = response.debug?.mode || 'unknown';
         const isDatavraag = mode === 'datavraag';
-        // Datavraag: alleen 'AI-gegenereerd' als het taalmodel de tekst schreef; anders vaste tekst uit de cijfers
-        const isLLM = mode === 'intelligent_dispatcher' || mode === 'legacy_fallback'
-            || (isDatavraag && response.debug?.llm_gebruikt === true);
-        const isRuleBased = mode === 'deterministic_onboarding' || (isDatavraag && !isLLM);
-        const sourceLabel = isRuleBased ? '📐 Rule-based' : isLLM ? '🤖 AI-gegenereerd' : '';
-        const sourceClass = isRuleBased ? 'source-rule' : 'source-ai';
+        const aiUsecases = Array.isArray(response.ai_usecases) ? response.ai_usecases : [];
+        const isLLM = aiUsecases.includes('A');
+        const isRuleBased = !isLLM && (mode === 'deterministic_onboarding' || mode === 'zonder_ai' || isDatavraag);
 
-        if (sourceLabel) {
-            bubble.appendChild(el('span', `chat-source-badge ${sourceClass}`, sourceLabel));
+        if (isRuleBased) {
+            bubble.appendChild(el('span', 'chat-source-badge source-rule', '📐 Zonder taalmodel'));
+        }
+
+        // #233: van welke buurt het antwoord uitgaat (selectie op de kaart), vóór het antwoord
+        if (response.aanname) {
+            bubble.appendChild(el('p', 'chat-aanname', response.aanname));
         }
 
         // Narrative tekst
@@ -137,10 +139,19 @@ class ChatPanel {
             bubble.appendChild(el('p', 'chat-melding', response.melding));
         }
 
-        // Track E: Disclaimer bij LLM-responses
-        if (isLLM) {
-            bubble.appendChild(el('p', 'chat-disclaimer',
-                '⚠️ Dit antwoord is AI-gegenereerd. Controleer belangrijke gegevens altijd via de originele bron.'));
+        // #312: label AI per usecase die meedeed (A taalmodel, C zoeken op betekenis), met de
+        // verklaring ("Meer informatie") en "Melden"
+        if (window.OmniAI) {
+            const bronnen = (Array.isArray(response.bronnen) && response.bronnen.length)
+                ? response.bronnen.map(b => `${b.indicator} (${b.bron})`)
+                : (response.indicatoren || []).map(i => i.naam).filter(Boolean);
+            for (const code of aiUsecases) {
+                bubble.appendChild(window.OmniAI.label({
+                    usecase: code, vraag,
+                    resultaat: code === 'A' ? response.narrative : bronnen.join(', '),
+                    bronnen, pagina: 'Viewer: D-Omni Assistent',
+                }));
+            }
         }
 
         // Actie-knoppen
@@ -260,7 +271,7 @@ class ChatPanel {
 
             const data = await response.json();
             console.log('🤖 Chat response:', data.intent, data.acties?.length, 'acties');
-            this.addAssistantMessage(data);
+            this.addAssistantMessage(data, tekst);
 
         } catch (error) {
             console.error('❌ Chat error:', error);
@@ -486,9 +497,12 @@ class ChatPanel {
     _getKaartContext() {
         // Haal huidige kaart-staat op als context voor de LLM
         const context = {};
-        // #233: 'bij mij in de buurt' = de geselecteerde buurt op de kaart
+        // #233: 'bij mij in de buurt' = de selectie op de kaart (ook een multi-selectie)
         if (window.state?.selectedGebiedId) {
             context.huidig_gebied_id = window.state.selectedGebiedId;
+        }
+        if (window.state?.selectedGebiedIds?.size > 0) {
+            context.geselecteerde_gebied_ids = [...window.state.selectedGebiedIds].slice(0, 50);
         }
         if (window.state?.currentIndicator) {
             context.huidige_indicator_uuid = window.state.currentIndicator;

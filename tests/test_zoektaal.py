@@ -154,3 +154,29 @@ def test_synoniemenlijst_is_geldig():
     labels = [l for b in BEGRIPPEN for l in b.labels]
     dubbel = sorted({l for l in labels if labels.count(l) > 1})
     assert dubbel == []
+
+# ── Zonder embeddings (AI-usecase C dicht, #233) ─────────────────────────────
+
+def test_zonder_betekenis_telt_het_trefwoord_voor_de_hele_score():
+    """Zonder gelijkenissen kan een trefwoord ook 'sterk' zijn (anders hoogstens 0,5)."""
+    [r] = z.rangschik("hoeveel inwoners", [ind("Inwoners")], {}, [], 0.0, 1.0)
+    assert r.score == 1.0 and r.relevantie == "sterk"
+
+
+def test_woord_in_kompaspad_als_de_naam_niet_past():
+    inds = [{"uuid": "u-hemelwater", "naam": "Verwerken hemelwater exc. schade",
+             "tekst": "Kwaliteit fysieke leefomgeving Openbare ruimte Klimaat"},
+            {"uuid": "u-groen", "naam": "Oppervlak groen per inwoner", "tekst": "Wonen Groen"}]
+    rangen = z.rangschik("klimaatadaptatie", inds, {}, [], 0.0, 1.0)
+    assert namen(rangen) == ["Verwerken hemelwater exc. schade"]
+    assert rangen[0].relevantie == "matig" and rangen[0].redenen == ["thema: klimaatadaptatie"]
+
+
+def test_naam_gaat_voor_kompaspad():
+    inds = [{"uuid": "u-a", "naam": "Inwoners", "tekst": "Bevolking"},
+            {"uuid": "u-b", "naam": "Leeftijd", "tekst": "Inwoners en bevolking"}]
+    rangen = z.rangschik("inwoners", inds, {}, [], 0.0, 1.0)
+    assert namen(rangen)[0] == "Inwoners"
+    assert z.tekst_score(["inwoners"], "Inwoners en bevolking")[0] == z.TEKST_FACTOR
+    assert z.tekst_score(["hoe"], "Inwoners") == (0.0, [])
+

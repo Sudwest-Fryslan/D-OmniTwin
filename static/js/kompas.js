@@ -2424,6 +2424,15 @@ class KompasVisualization {
                 </div>
             `).join('');
 
+            // #312: label AI als het embeddingmodel meedeed (usecase C)
+            if (window.OmniAI && results.some(r => r.ai)) {
+                const zoekterm = document.getElementById('kompas-ai-search')?.value || '';
+                resultsDropdown.appendChild(window.OmniAI.label({
+                    usecase: 'C', vraag: zoekterm, resultaat: results.map(r => r.naam).join(', '),
+                    bronnen: results.map(r => r.naam), pagina: 'Viewer: Kompas-zoeken',
+                }));
+            }
+
             // Click results
             resultsDropdown.querySelectorAll('.search-result-item').forEach(item => {
                 item.addEventListener('click', () => {

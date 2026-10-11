@@ -355,7 +355,7 @@ def nep_route(monkeypatch):
 
 
 def route(vraag, antwoord):
-    return dv.beantwoord_datavraag(vraag, {}, NepDB(), lambda t: [], lambda s, u: {"text": antwoord})
+    return dv.beantwoord_datavraag(vraag, {}, NepDB(), lambda t: [], lambda s, u, *_: {"text": antwoord})
 
 
 def test_route_gebruikt_gegrond_antwoord(nep_route):
@@ -387,7 +387,7 @@ def test_route_geen_datavraag(nep_route):
 
 def test_route_zonder_llm_geeft_vaste_tekst(nep_route):
     r = dv.beantwoord_datavraag("Welke buurt in Bolsward ligt het verst van een koele plek?", {"geen_llm": True},
-                                NepDB(), lambda t: [], lambda s, u: pytest.fail("model mag niet gevraagd worden"))
+                                NepDB(), lambda t: [], lambda s, u, *_: pytest.fail("model mag niet gevraagd worden"))
     assert not r["llm_gebruikt"] and r["model"] is None
     assert "Bolsward-Noord (246 m)" in r["narrative"] and "Bolsward-Noordoost (206 m)" in r["narrative"]
 
@@ -424,7 +424,7 @@ def test_vraag_van_eduard_met_geselecteerde_buurt(nep_ouderen):
     een getal voor die buurt, met bron en jaar, en de buren ter vergelijking."""
     r = dv.beantwoord_datavraag("hoeveel % is bejaard bij mij in de buurt?",
                                 {"huidig_gebied_id": "BU19000002", "geen_llm": True}, NepDB(), lambda t: [],
-                                lambda s, u: pytest.fail("geen model"))
+                                lambda s, u, *_: pytest.fail("geen model"))
     assert [t.naam for t in r["indicatoren"]] == ["65+ jaar (%)"]
     assert r["gebieden_bron"] == "kaart" and r["gebied_ids"][0] == "BU19000002"
     assert r["narrative"].startswith("65+ jaar (%) (CBS Kerncijfers wijken en buurten 2026 (86358NED), 2026): "
@@ -448,3 +448,30 @@ def test_eigen_buurt_zonder_vraagpatroon_is_datavraag(nep_ouderen):
 def test_route_geeft_gebiedstype_en_gemeente_voor_de_kaart(nep_route):
     r = route("Welke buurt in Bolsward ligt het verst van een koele plek?", "Bolsward-Noord: 246 m.")
     assert r["gebiedstype_id"] == BUURT and r["gemeente_code"] == "1900"
+
+# ── 'Mijn buurt' (#233): multi-selectie en de aanname vooraf ─────────────────
+
+def test_multiselectie_telt_mee():
+    r = gebieden("hoeveel % is bejaard bij mij in de buurt?", huidig_gebied_id="BU19000001",
+                 geselecteerd=["BU19000001", "BU19000002", "ONBEKEND"])
+    assert r.gevraagd == ["BU19000001", "BU19000002"] and r.bron == "kaart"
+    assert dv.aanname_tekst(r).startswith(
+        "Ik ga uit van Bolsward-Noord en Bolsward-Zuidoost (geselecteerd op de kaart).")
+
+
+def test_gebied_in_de_vraag_gaat_voor_de_selectie_en_geeft_geen_aanname():
+    r = gebieden("hoeveel ouderen in Workum", geselecteerd=["BU19000001"])
+    assert r.gevraagd == ["BU19000200"] and dv.aanname_tekst(r) is None
+
+
+def test_aanname_bij_een_buurt_van_de_kaart():
+    r = gebieden("hoe staat het met eenzaamheid hier", huidig_gebied_id="BU19000004")
+    assert dv.aanname_tekst(r) == ("Ik ga uit van Bolsward-Noordoost (geselecteerd op de kaart). Een andere buurt? "
+                                   "Selecteer die op de kaart of noem de naam in je vraag.")
+
+
+@pytest.mark.parametrize("vraag", ["hoeveel ouderen wonen er bij ons in de wijk?", "zijn er veel bejaarden in deze buurt?",
+                                   "inkomen in onze straat", "waar wij wonen"])
+def test_eigen_buurt_varianten(vraag):
+    assert dv.vraagt_eigen_buurt(vraag)
+

@@ -11,7 +11,7 @@ router = APIRouter(
 
 def get_service(db: Session = Depends(get_db)) -> AISearchService:
     """Dependency injection voor AISearchService"""
-    return AISearchService(db)
+    return AISearchService(db, functie="Kompas-zoeken")
 
 @router.get("/kompas/search", response_model=List[Dict[str, Any]])
 def search_kompas(
@@ -20,7 +20,8 @@ def search_kompas(
     service: AISearchService = Depends(get_service)
 ):
     """
-    Zoekt semantisch naar indicatoren in het Kompas op basis van een natuurlijke taal query.
+    Zoekt indicatoren in het Kompas bij een vraag in gewone taal: begrippen, naam en betekenis.
+    Betekenis (embeddingmodel) alleen met AI-usecase C open (#307); anders op trefwoorden en synoniemen.
     """
     return service.search_indicators(q, limit=limit)
 

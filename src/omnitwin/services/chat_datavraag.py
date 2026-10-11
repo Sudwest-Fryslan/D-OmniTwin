@@ -34,6 +34,7 @@ MAX_INDICATOREN = 4
 MAX_GEBIEDEN_IN_FEITEN = 12   # langere lijsten: top en staart
 MAX_ALLE_GEBIEDEN = 30        # zonder plaats in de vraag: alle gebieden, als het er niet meer zijn
 MAX_REFERENTIE = 25
+MAX_SELECTIE = 50             # zoveel gebieden uit een multi-selectie op de kaart (#233)
 AI_DREMPEL = 0.7              # score van AI-zoeken (services/zoektaal.py); 'sterk' begint bij 0,6
 
 # ── Normaliseren ─────────────────────────────────────────────────────────────
@@ -62,8 +63,9 @@ _NAVIGATIE = (r"^(toon|open|ga naar|selecteer|kleur|zoom)\b|^laat\b.*\bzien\b|\b
               r"\bwelke indicatoren\b|\bwat kan\b|\bwat kun\b|\brapport\b|\bhandleiding\b|^help\b")
 
 
-_EIGEN_BUURT = (r"\bmijn (buurt|wijk|dorp|straat|omgeving|woonplaats)\b|\bbij mij\b|\bonze (buurt|wijk)\b|"
-                r"\bwaar ik woon\b|\bhier\b")
+_EIGEN_BUURT = (r"\bmijn (buurt|wijk|dorp|straat|omgeving|woonplaats)\b|\bbij mij\b|\bbij ons\b|"
+                r"\bonze (buurt|wijk|straat|omgeving|woonplaats)\b|\b(deze|dit|die) (buurt|wijk|dorp|gebied)\b|"
+                r"\bwaar ik woon\b|\bwaar wij wonen\b|\bhier\b")
 
 
 def vraagt_eigen_buurt(vraag: str) -> bool:
@@ -143,6 +145,7 @@ def herken_gebieden(
     gemeenten: Optional[Dict[str, str]] = None,
     huidig_gebied_id: Optional[str] = None,
     voorkeur_type: Optional[str] = None,
+    geselecteerd: Sequence[str] = (),
 ) -> GebiedHerkenning:
     """
     Herken gebieden in de vraag.
@@ -153,7 +156,8 @@ def herken_gebieden(
 
     Volgorde: volledige gebiedsnamen (langste eerst), dan woonplaatsen
     ('Bolsward' → alle buurten die met 'Bolsward-' beginnen), dan gemeenten.
-    Zonder treffer: het gebied op de kaart (huidig_gebied_id).
+    Zonder treffer: de selectie op de kaart (geselecteerd: alle geselecteerde gebieden, #233;
+    anders huidig_gebied_id).
     """
     gemeenten = gemeenten or {}
     per_id = {g["id"]: g for g in gebieden}
@@ -210,11 +214,14 @@ def herken_gebieden(
         res.herkend.append(naam)
         res.gevraagd.extend(i for i in ids if i not in res.gevraagd)
 
+    selectie = [i for i in dict.fromkeys(list(geselecteerd or [])[:MAX_SELECTIE]) if i in per_id]
+    if not selectie and huidig_gebied_id and huidig_gebied_id in per_id:
+        selectie = [huidig_gebied_id]
     if res.gevraagd:
         res.bron = "vraag"
-    elif huidig_gebied_id and huidig_gebied_id in per_id:
-        res.gevraagd = [huidig_gebied_id]
-        res.herkend.append(per_id[huidig_gebied_id]["naam"])
+    elif selectie:
+        res.gevraagd = selectie
+        res.herkend.extend(per_id[i]["naam"] for i in selectie)
         res.bron = "kaart"
 
     # Eén gebied: buren als referentie (zelfde woonplaats, anders zelfde gemeente)
@@ -688,6 +695,24 @@ def deelvragen(vraag: str) -> List[str]:
 _MODELFOUTEN = ("Error contacting", "Generatie mislukt", "LLM-server", "Fout bij", "AI-samenvatting is nu niet beschikbaar")
 
 
+def aanname_tekst(herkenning: GebiedHerkenning) -> Optional[str]:
+    """
+    Van welk gebied gaat het antwoord uit, als dat niet in de vraag stond (#233)? Dan zegt de
+    assistent dat vooraf: 'Ik ga uit van Bolsward-Zuidoost (geselecteerd op de kaart).'
+    """
+    if herkenning.bron != "kaart" or not herkenning.herkend:
+        return None
+    namen = herkenning.herkend
+    if len(namen) > 5:
+        lijst = f"{', '.join(namen[:5])} en nog {len(namen) - 5} andere"
+    elif len(namen) > 1:
+        lijst = f"{', '.join(namen[:-1])} en {namen[-1]}"
+    else:
+        lijst = namen[0]
+    return (f"Ik ga uit van {lijst} (geselecteerd op de kaart). Een andere buurt? Selecteer die op de "
+            "kaart of noem de naam in je vraag.")
+
+
 def beantwoord_datavraag(
     vraag: str,
     context: Optional[Dict[str, Any]],
@@ -699,7 +724,7 @@ def beantwoord_datavraag(
     Beantwoord een datavraag; None als het geen datavraag is (dan navigeert de chat zoals voorheen).
 
     zoek(tekst):          AI-zoeken, [{uuid, naam, score}]
-    vraag_llm(sys, usr):  {"text": ..., "debug": {...}}
+    vraag_llm(sys, usr, bronnen):  {"text": ..., "debug": {...}}; bronnen = indicator-uuid's (AI-logboek)
     """
     context = context or {}
     if is_navigatie(vraag):
@@ -714,7 +739,9 @@ def beantwoord_datavraag(
         db.rollback()
         gemeenten = {}
     voorkeur = voorkeur_gebiedstype(gebieden)
-    herkenning = herken_gebieden(vraag, gebieden, gemeenten, context.get("huidig_gebied_id"), voorkeur)
+    selectie = context.get("geselecteerde_gebied_ids")
+    herkenning = herken_gebieden(vraag, gebieden, gemeenten, context.get("huidig_gebied_id"), voorkeur,
+                                 geselecteerd=selectie if isinstance(selectie, list) else ())
     per_id = {g["id"]: g for g in gebieden}
 
     # 'bij mij in de buurt' zonder geselecteerde buurt: niet alle buurten, maar vragen welke (#233)
@@ -749,6 +776,7 @@ def beantwoord_datavraag(
         return None  # geen onderwerp en geen gebied: de gewone chat neemt het over
 
     basis = {"herkend": herkenning.herkend, "gebieden_bron": herkenning.bron, "feiten": [],
+             "aanname": aanname_tekst(herkenning),
              "indicatoren": treffers, "gebied_ids": [], "llm_gebruikt": False, "model": None,
              "gebiedstype_id": None, "ongegrond": [], "llm_fout": False}
 
@@ -793,7 +821,8 @@ def beantwoord_datavraag(
     tekst, model = "", None
     if not context.get("geen_llm"):
         try:
-            antwoord = vraag_llm(SYSTEEMPROMPT, gebruikersprompt(vraag, feiten, herkenning.herkend)) or {}
+            antwoord = vraag_llm(SYSTEEMPROMPT, gebruikersprompt(vraag, feiten, herkenning.herkend),
+                                 [f["indicator_uuid"] for f in feiten]) or {}
             # Foutvlag van LLMService (#65): de tekst is dan een foutmelding, geen antwoord
             tekst = "" if antwoord.get("error") else strip_denken(antwoord.get("text", ""))
             model = (antwoord.get("debug") or {}).get("model")

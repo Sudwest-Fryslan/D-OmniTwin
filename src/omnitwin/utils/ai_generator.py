@@ -1,5 +1,6 @@
 import re
 from sqlalchemy.orm import Session
+from omnitwin import ai_vrijgave
 from omnitwin.services.llm_service import LLMService
 
 def clean_ai_output(text: str) -> str:
@@ -39,7 +40,10 @@ Categorie: {categorie}
 Omschrijving: {omschrijving}
 Bron: {bron}"""
 
-    response = llm._call_llm(system_prompt, user_prompt, context_name=f"Utility: {naam}")
-    
+    # Valt niet onder AI-usecase A, B of C: de poort weigert dit altijd (#307)
+    response = llm._call_llm(system_prompt, user_prompt, context_name=f"Utility: {naam}",
+                             usecase=ai_vrijgave.BUITEN, taak=f"Beschrijving indicator '{naam}'")
+    if response.get("error"):
+        return ""
     raw_text = response.get("text", "")
     return clean_ai_output(raw_text)

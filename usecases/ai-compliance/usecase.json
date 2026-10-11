@@ -1,0 +1,88 @@
+{
+  "specificatie": "1.0",
+  "naam": "ai-compliance",
+  "versie": "0.1.0",
+  "titel": "AI volgens de afspraken: vrijgave, herkenbaar, gelogd en uit te zetten",
+  "vraag": "Kan ik als functioneel beheerder laten zien dat AI in D-OmniTwin alleen draait na een verklaring, herkenbaar is voor de gebruiker, gelogd wordt zonder gebruikersgegevens en direct uit kan, terwijl de applicatie zonder AI blijft werken?",
+  "gebruiker": "functioneel beheerder, AI Officer of auditor",
+  "status": "actief",
+  "afhankelijk_van": ["cbs-gebiedsindelingen", "cbs-kerncijfers"],
+  "rechten": [],
+  "datasets": [],
+  "controles": [
+    {
+      "type": "api",
+      "pad": "/api/ai/usecases",
+      "anoniem": true,
+      "minimaal_aantal": 3,
+      "verwacht": "A, B en C met open/dicht, reden, versie en geldig tot; geen logins",
+      "omschrijving": "transparantie: de status per AI-usecase is publiek op te vragen"
+    },
+    {
+      "type": "api",
+      "pad": "/api/organisatie",
+      "anoniem": true,
+      "verwacht": "meld_url: de meldplek van deze instantie",
+      "omschrijving": "melden: de meldplek is per instantie ingesteld (standaard een nieuw issue)"
+    },
+    {
+      "type": "chat",
+      "vraag": "hoeveel % is bejaard in Bolsward-Zuidoost?",
+      "bevat": ["De AI-assistent staat uit", "65+ jaar (%)", "Bolsward-Zuidoost:"],
+      "gebied": "BU19000002",
+      "omschrijving": "fallback: met usecase A dicht beantwoordt de assistent de datavraag zonder taalmodel, met een melding"
+    },
+    {
+      "type": "viewer",
+      "stap": "Beheer > AI-usecases: bij usecase A 'Noodstop: zet stil'",
+      "verwacht": "A direct dicht (zonder herstart), wie en wanneer bij de usecase en in het logboek aan- en uitzetten; de chat werkt zonder taalmodel"
+    },
+    {
+      "type": "viewer",
+      "stap": "Hashketen van het AI-logboek breken (alleen in een testomgeving) en Beheer > AI-usecases openen",
+      "verwacht": "automatische noodstop op A, B en C met door 'systeem' en de reden; niet vanzelf weer open"
+    }
+  ],
+  "bewijs": {
+    "stappen": [
+      {
+        "id": "vrijgave",
+        "actie": "beheer",
+        "pad": "/ai-usecases",
+        "omschrijving": "Vrijgave op basis van een verklaring: B en C open met versie, geldig tot en wie/wanneer; A stilgezet met de noodstop",
+        "bevat": ["Overzicht", "Open", "Dicht: stilgezet (noodstop)"]
+      },
+      {
+        "id": "assistent",
+        "actie": "chat",
+        "vraag": "hoeveel % is bejaard in Bolsward-Zuidoost?",
+        "omschrijving": "Label AI bij zoeken op betekenis (C), met waarschuwing, bronnen, Meer informatie en Melden; A staat uit, dus het antwoord komt zonder taalmodel",
+        "bevat": ["Meer informatie", "Melden", "De AI-assistent staat uit"]
+      },
+      {
+        "id": "logboek",
+        "actie": "beheer",
+        "pad": "/ai-usecases#ai-logboek",
+        "omschrijving": "AI-logboek: elke actie, ook geweigerd, zonder gebruikersgegevens; de hashketen klopt",
+        "bevat": ["AI-logboek", "Keten klopt"]
+      },
+      {
+        "id": "uitleg",
+        "actie": "open",
+        "pad": "/static/ai.html",
+        "omschrijving": "Transparantie voor iedereen: 'AI in deze toepassing' met per functie aan of uit, wat hij doet, de verklaring (versie, geldig tot, PDF) en hoe je meldt",
+        "bevat": ["AI in deze toepassing", "Verklaring lezen (PDF)", "Uit: tijdelijk stilgezet"]
+      }
+    ]
+  },
+  "inrichting": {
+    "testverklaring": "data/testverklaring.pdf (TESTVERKLARING - voorbeeld, geen echte toetsing)",
+    "vrijgave": "A, B en C vrijgegeven met de testverklaring door een beheerder (ingelogd); daarna A stilgezet met de noodstop",
+    "ai_aanbieder": "geen taalmodel nodig: A staat stil, B en C laten de vrijgave zien; zoeken op betekenis gebruikt het embeddingmodel in de image"
+  },
+  "bekende_afwijkingen": [
+    "De bewijsschermen tonen één toestand van de installatie (de uitvoerder kan tussen de stappen niets omzetten): B en C open, A stilgezet. 'Standaard dicht na een verse installatie' en 'dicht na geldig tot' toont tests/integration/test_ai_vrijgave_stack.py; de automatische noodstop tests/unit/test_ai_vrijgave.py.",
+    "De testverklaring is een voorbeeld en geen toetsing; een organisatie uploadt haar eigen verklaring.",
+    "chat- en viewer-controles voert de uitvoerder nog niet uit (gereserveerd); ze staan in de stappen van de README en in het bewijs."
+  ]
+}

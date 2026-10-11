@@ -8,3 +8,6 @@ static/vendor/** -text
 # Admin-panel: Vite neemt index.html ongewijzigd over in de build (static/admin-panel,
 # gecommit). Altijd LF, zodat een build op Windows gelijk is aan die in de CI (#202).
 admin-panel/index.html text eol=lf
+
+# PDF (voorbeelddocument in een use case, #314): byte-voor-byte, geen regeleinde-conversie
+*.pdf binary

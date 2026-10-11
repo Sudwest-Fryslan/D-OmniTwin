@@ -20,6 +20,7 @@ export function alsInvoer(org: Organisatie): OrganisatieInvoer {
         contact_email: org.contact_email,
         thema: org.thema,
         logos: org.logos.map(l => ({ pad: l.pad, naam: l.naam, rol: l.rol })),
+        meld_url: org.meld_url ?? null,
     };
 }
 
@@ -311,6 +312,16 @@ export const OrganisatiePage: React.FC = () => {
                         <label className="form-label" htmlFor="org-email">Contactadres (e-mail)</label>
                         <input id="org-email" type="email" className="form-input" maxLength={254} value={form.contact_email ?? ''}
                             onChange={e => zet({ contact_email: leeg(e.target.value) })} />
+                    </div>
+                    <div className="form-group">
+                        <label className="form-label" htmlFor="org-meld-url">Meldplek voor &quot;Melden&quot; (https of mailto:)</label>
+                        <input id="org-meld-url" type="text" inputMode="url" className="form-input" maxLength={500}
+                            value={form.meld_url ?? ''} aria-describedby="org-meld-url-uitleg"
+                            onChange={e => zet({ meld_url: leeg(e.target.value) })} />
+                        <small id="org-meld-url-uitleg" className="text-secondary">
+                            Waar een melding bij een AI-resultaat heen gaat: een nieuw issue (standaard bij D-OmniTwin),
+                            een eigen formulier of een functioneel e-mailadres. Leeg = de standaard.
+                        </small>
                     </div>
                     <div className="form-group">
                         <label className="form-label" htmlFor="org-oin">OIN (optioneel, 20 cijfers)</label>

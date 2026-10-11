@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="nl" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>D-OmniTwin — AI in deze toepassing</title>
+  <link rel="icon" href="/api/organisatie/beeldmerk.svg" type="image/svg+xml">
+  <style>
+    @import url('/static/vendor/inter@5.3.0/inter.css'); /* zelf gehost, #117 */
+
+    /* AI in deze toepassing (#307, #312, #314): publieke uitleg per AI-usecase. Kleuren en lettertypen uit
+       het organisatiethema (NL Design System-tokens, #89); het themabestand wordt onderaan geladen. */
+    :root {
+      --bg: var(--basis-color-default-bg-document, #f6f7f9);
+      --surface: var(--basis-color-default-bg-default, #ffffff);
+      --border: var(--basis-color-default-border-default, #d5dbe3);
+      --text: var(--basis-color-default-color-document, #1d2733);
+      --text-muted: var(--basis-color-default-color-subtle, #4b5866);
+      --accent: var(--basis-color-accent-1-color-default, #1e3a8a);
+      --ok: #1b6b36;
+      --dicht: #8a2a12;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; padding: 2rem 1rem;
+      font-family: var(--basis-text-font-family-default, 'Inter', -apple-system, sans-serif);
+      background: var(--bg); color: var(--text); line-height: 1.6;
+    }
+    h1, h2 { font-family: var(--basis-heading-font-family, inherit); line-height: 1.25; }
+    h1 { font-size: 1.9rem; margin: 0 0 .5rem; }
+    h2 { font-size: 1.15rem; margin: 0; }
+    .container { max-width: 980px; margin: 0 auto; }
+    a { color: var(--accent); }
+    a:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+    .terug { display: inline-block; margin-bottom: 1rem; }
+    .intro { color: var(--text-muted); margin: 0 0 1.5rem; max-width: 70ch; }
+    .usecases { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem; list-style: none; padding: 0; margin: 0 0 1.5rem; }
+    .kaart { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 1rem 1.2rem; }
+    .kop { display: flex; justify-content: space-between; align-items: flex-start; gap: .5rem; margin-bottom: .4rem; }
+    .status { font-weight: 700; font-size: .85rem; padding: .1rem .55rem; border-radius: 999px; border: 2px solid currentColor; white-space: nowrap; }
+    .status.open { color: var(--ok); }
+    .status.dicht { color: var(--dicht); }
+    .kaart p { margin: .3rem 0; }
+    dl { display: grid; grid-template-columns: max-content 1fr; gap: .15rem .8rem; margin: .6rem 0; font-size: .95rem; }
+    dt { color: var(--text-muted); }
+    dd { margin: 0; }
+    .blok { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 1rem 1.2rem; margin-bottom: 1rem; }
+    .blok h2 { margin-bottom: .4rem; }
+    .label { display: inline-block; font-weight: 700; font-size: .8rem; padding: 0 .4rem; border: 1px solid var(--accent); border-radius: 4px; color: var(--accent); }
+  </style>
+  <script>
+    // Themabestand van de organisatie, zoals de viewer (#89); deze pagina is statisch
+    fetch('/api/organisatie').then(r => r.ok ? r.json() : null).then(o => {
+      const thema = o && o.thema;
+      if (!thema || !/^[a-z0-9]+(-[a-z0-9]+)*$/.test(thema)) return;
+      const link = document.createElement('link');
+      link.rel = 'stylesheet';
+      link.href = `/static/css/themes/${thema}.css`;
+      document.head.appendChild(link);
+    }).catch(() => {});
+  </script>
+</head>
+<body>
+  <main class="container">
+    <a href="/" class="terug">← Terug naar de kaart</a>
+    <h1>AI in deze toepassing</h1>
+    <p class="intro">
+      Sommige functies gebruiken AI. Een functie staat alleen aan als de organisatie hem heeft getoetst en
+      vrijgegeven met een verklaring; tot die datum geldt de verklaring. Staat een functie uit, dan werkt de
+      toepassing zonder AI. Elk AI-resultaat heeft het label <span class="label">AI</span>: het kan onjuist of
+      onvolledig zijn, controleer belangrijke gegevens via de bron.
+    </p>
+
+    <section aria-labelledby="kop-usecases">
+      <h2 id="kop-usecases" style="margin-bottom:.8rem">Functies met AI</h2>
+      <p id="laden" role="status">Bezig met laden...</p>
+      <ul id="usecases" class="usecases"></ul>
+    </section>
+
+    <section class="blok" aria-labelledby="kop-melden">
+      <h2 id="kop-melden">Klopt er iets niet?</h2>
+      <p>
+        Bij elk AI-resultaat staat <strong>Melden</strong>. Daarmee meld je een fout antwoord of een storing;
+        de melding bevat de functie en het ingekorte resultaat, geen account of naam. Je kunt ook hier melden:
+        <a id="meldlink" href="#" target="_blank" rel="noopener">een melding doen (opent in een nieuw venster)</a>.
+      </p>
+    </section>
+
+    <section class="blok" aria-labelledby="kop-vastleggen">
+      <h2 id="kop-vastleggen">Wat wordt vastgelegd?</h2>
+      <p>
+        Elke AI-actie komt in een logboek: welke functie, de vraag (ingekort), de gebruikte bronnen, het model en
+        het resultaat. Niet wie de vraag stelde: geen account, sessie of IP-adres. Het logboek wordt na de
+        bewaartermijn van de organisatie verwijderd. Of je vraag de organisatie verlaat, hangt af van het
+        taalmodel dat de organisatie gebruikt; zoeken op betekenis draait op de eigen server.
+      </p>
+    </section>
+  </main>
+
+  <script src="/static/js/core/melden.js"></script>
+  <script>
+    (function () {
+      'use strict';
+      const REDEN = { open: 'Aan', geen_verklaring: 'Uit: niet vrijgegeven', verlopen: 'Uit: verklaring verlopen',
+                      stilgezet: 'Uit: tijdelijk stilgezet' };
+      const WAT = {
+        A: 'De D-Omni Assistent schrijft antwoorden en toelichtingen met een taalmodel. Uit: de assistent antwoordt met vaste teksten uit de cijfers.',
+        B: 'Rapporten krijgen een samenvatting van een taalmodel. Uit: het rapport heeft geen samenvatting.',
+        C: 'Zoeken vindt indicatoren ook op betekenis, met een AI-model. Uit: zoeken op woorden en synoniemen.',
+      };
+      const maak = (tag, klasse, tekst) => {
+        const el = document.createElement(tag);
+        if (klasse) el.className = klasse;
+        if (tekst !== undefined) el.textContent = tekst;
+        return el;
+      };
+      const datum = (w) => w ? new Date(`${w}T00:00:00`).toLocaleDateString('nl-NL', { day: 'numeric', month: 'long', year: 'numeric' }) : '–';
+
+      fetch('/api/ai/usecases').then(r => r.ok ? r.json() : Promise.reject(r.status)).then(lijst => {
+        const ul = document.getElementById('usecases');
+        for (const u of lijst) {
+          const li = maak('li', 'kaart');
+          li.id = `usecase-${u.code}`;
+          li.setAttribute('aria-labelledby', `naam-${u.code}`);
+          const kop = maak('div', 'kop');
+          const h = maak('h3', '', `${u.code} – ${u.naam}`);
+          h.id = `naam-${u.code}`;
+          h.style.margin = '0';
+          h.style.fontSize = '1.05rem';
+          kop.appendChild(h);
+          kop.appendChild(maak('span', `status ${u.open ? 'open' : 'dicht'}`, REDEN[u.reden] || (u.open ? 'Aan' : 'Uit')));
+          li.appendChild(kop);
+          li.appendChild(maak('p', '', WAT[u.code] || u.omschrijving));
+          const dl = maak('dl');
+          for (const [k, v] of [['Verklaring, versie', u.versie || '–'], ['Geldig tot en met', datum(u.geldig_tot)]]) {
+            dl.appendChild(maak('dt', '', k));
+            dl.appendChild(maak('dd', '', v));
+          }
+          li.appendChild(dl);
+          if (u.verklaring_url) {
+            const a = maak('a', '', 'Verklaring lezen (PDF)');
+            a.href = u.verklaring_url;
+            a.target = '_blank';
+            a.rel = 'noopener';
+            a.setAttribute('aria-label', `Verklaring van ${u.naam} lezen (PDF, opent in een nieuw venster)`);
+            li.appendChild(a);
+          } else {
+            li.appendChild(maak('p', '', 'Er is geen verklaring.'));
+          }
+          ul.appendChild(li);
+        }
+        document.getElementById('laden').remove();
+        if (location.hash) document.getElementById(location.hash.slice(1))?.scrollIntoView({ block: 'start' });
+      }).catch(() => {
+        document.getElementById('laden').textContent = 'De status van de AI-functies is nu niet op te halen.';
+      });
+
+      const meld = document.getElementById('meldlink');
+      const zet = () => {
+        if (window.OmniMelden) meld.href = window.OmniMelden.meldUrl({ onderwerp: 'ai', titel: 'Melding over AI in D-OmniTwin', pagina: 'AI in deze toepassing' });
+      };
+      zet();
+      setTimeout(zet, 1500);  // meldplek van de instantie is dan geladen
+      meld.addEventListener('click', (e) => {
+        if (window.OmniMelden && window.OmniMelden.heeftKanaal()) { e.preventDefault(); window.OmniMelden.meld({ onderwerp: 'ai' }); }
+        else zet();
+      });
+    })();
+  </script>
+</body>
+</html>

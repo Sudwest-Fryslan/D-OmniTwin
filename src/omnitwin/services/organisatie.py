@@ -163,7 +163,10 @@ def beschikbare_logos(afbeeldingen: Path = AFBEELDINGEN) -> List[str]:
 
 
 _VELDEN = ("code", "naam", "korte_naam", "oin", "gemeente_codes", "benchmark_provincie",
-           "contact_email", "thema", "logos")
+           "contact_email", "thema", "logos", "meld_url")
+
+# Meldplek als de instantie geen eigen meld_url heeft (#312): een nieuw issue bij D-OmniTwin zelf
+STANDAARD_MELD_URL = "https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/new"
 
 
 def wijzigingen(oud: Optional[Dict[str, Any]], nieuw: Dict[str, Any]) -> Dict[str, Any]:
@@ -188,14 +191,14 @@ def wijzigingen(oud: Optional[Dict[str, Any]], nieuw: Dict[str, Any]) -> Dict[st
 _SCHRIJF = text("""
     INSERT INTO public.organisatie
         (id, code, naam, korte_naam, oin, gemeente_codes, benchmark_provincie, contact_email, thema, logos,
-         bijgewerkt_op)
+         meld_url, bijgewerkt_op)
     VALUES (true, :code, :naam, :korte_naam, :oin, :gemeente_codes, :benchmark_provincie, :contact_email,
-            :thema, CAST(:logos AS jsonb), now())
+            :thema, CAST(:logos AS jsonb), :meld_url, now())
     ON CONFLICT (id) DO UPDATE SET
         code = EXCLUDED.code, naam = EXCLUDED.naam, korte_naam = EXCLUDED.korte_naam, oin = EXCLUDED.oin,
         gemeente_codes = EXCLUDED.gemeente_codes, benchmark_provincie = EXCLUDED.benchmark_provincie,
         contact_email = EXCLUDED.contact_email, thema = EXCLUDED.thema, logos = EXCLUDED.logos,
-        bijgewerkt_op = now()
+        meld_url = EXCLUDED.meld_url, bijgewerkt_op = now()
 """)
 
 
@@ -211,7 +214,7 @@ def schrijf_organisatie(db: Session, org: Dict[str, Any]) -> None:
 
 _SQL = text("""
     SELECT code, naam, korte_naam, oin, gemeente_codes, benchmark_provincie,
-           contact_email, logos, thema
+           contact_email, logos, thema, meld_url
     FROM public.organisatie
     LIMIT 1
 """)
@@ -231,6 +234,8 @@ def _als_dict(rij) -> Dict[str, Any]:
         "benchmark_provincie": m.get("benchmark_provincie"),
         "contact_email": m.get("contact_email"),
         "thema": veilig_thema(m.get("thema")),
+        # Leeg = de standaard; viewer en beheer krijgen altijd een bruikbare meldplek (#312)
+        "meld_url": m.get("meld_url") or STANDAARD_MELD_URL,
         "logos": [
             {"pad": l.get("pad"), "naam": l.get("naam"), "rol": l.get("rol", "partner")}
             for l in logos

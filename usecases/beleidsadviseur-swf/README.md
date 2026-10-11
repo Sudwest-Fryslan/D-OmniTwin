@@ -34,7 +34,7 @@ Zie [TC-06-001](../../docs/testcases/06-integratie-e2e/TC-06-001_beleidsadviseur
 ## Bewijs
 
 <!-- bewijs:start -->
-*Gemaakt op 04-10-2026 met D-OmniTwin 0.3.0 (use case 0.2.0); geslaagd. Verslag: [`bewijs/bewijs.json`](bewijs/bewijs.json). Opnieuw maken (bij een release): `python -m omnitwin.usecases bewijs beleidsadviseur-swf`.*
+*Gemaakt op 10-10-2026 met D-OmniTwin 0.4.0 (use case 0.2.0); geslaagd. Verslag: [`bewijs/bewijs.json`](bewijs/bewijs.json). Opnieuw maken (bij een release): `python -m omnitwin.usecases bewijs beleidsadviseur-swf`.*
 
 ![Scenario Beleidsadviseur: de D-Omni Assistent zet kaart en Kompas klaar](bewijs/chat.webp)
 *Scenario Beleidsadviseur: de D-Omni Assistent zet kaart en Kompas klaar*

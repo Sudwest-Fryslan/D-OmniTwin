@@ -18,6 +18,7 @@ import { LogViewerPage } from './pages/LogViewerPage';
 import { ExterneKaartlagenPage } from './pages/ExterneKaartlagenPage';
 import { DataKwaliteitPage } from './pages/DataKwaliteitPage';
 import { OrganisatiePage } from './pages/OrganisatiePage';
+import { AIUsecasesPage } from './pages/AIUsecasesPage';
 import {
   LayoutDashboard,
   Database,
@@ -37,7 +38,8 @@ import {
   ExternalLink,
   Building2,
   Moon,
-  Sun
+  Sun,
+  ShieldCheck
 } from 'lucide-react';
 import { authAPI } from './services/api';
 import Beeldmerk from './components/Beeldmerk';
@@ -178,6 +180,14 @@ const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
           </NavLink>
 
           <NavLink
+            to="/ai-usecases"
+            className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
+          >
+            <ShieldCheck size={18} />
+            AI-usecases
+          </NavLink>
+
+          <NavLink
             to="/logs"
             className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
           >
@@ -222,6 +232,7 @@ const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
               <Route path="/rapport/thema-analyse" element={<>Thema-Analyse</>} />
               <Route path="/rapport/*" element={<>AI Rapportage</>} />
               <Route path="/llm" element={<>AI Configuratie</>} />
+              <Route path="/ai-usecases" element={<>AI-usecases</>} />
               <Route path="/logs" element={<>Log Viewer</>} />
               <Route path="/externe-lagen" element={<>Externe Kaartlagen</>} />
               <Route path="/organisatie" element={<>Organisatie en thema</>} />
@@ -426,6 +437,10 @@ function App() {
 
           <Route path="/llm" element={
             <ProtectedRoute><LLMConfigPage /></ProtectedRoute>
+          } />
+
+          <Route path="/ai-usecases" element={
+            <ProtectedRoute><AIUsecasesPage /></ProtectedRoute>
           } />
 
           <Route path="/account" element={
