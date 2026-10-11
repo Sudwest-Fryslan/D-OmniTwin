@@ -303,3 +303,29 @@ export interface LokaalBestand {
     geometry_type?: string;
     fout?: string;
 }
+
+// ─── Terugmeldvoorziening (#311) ──────────────────────────────────────────
+
+export type MeldingsType = 'data' | 'ai' | 'systeem' | 'overig';
+export type MeldingsStatus = 'nieuw' | 'doorgestuurd_naar_bron' | 'in_behandeling' | 'afgehandeld' | 'afgewezen';
+
+export interface Melding {
+    id: string;
+    type: MeldingsType;
+    onderwerp: string;
+    toelichting: string;
+    context: Record<string, any>;
+    melder_email: string | null;
+    status: MeldingsStatus;
+    notitie_beheer: string | null;
+    aangemaakt_op: string | null;
+    bijgewerkt_op: string | null;
+}
+
+export interface MeldingenResponse {
+    items: Melding[];
+    tellingen: Record<string, number>;
+    totaal: number;
+    limit: number;
+    offset: number;
+}

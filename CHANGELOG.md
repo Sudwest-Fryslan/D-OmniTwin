@@ -8,6 +8,14 @@ Eerdere wijzigingen, van vóór dit bestand, zijn terug te vinden in de git-hist
 
 ## [Unreleased]
 
+### Toegevoegd
+
+- **Terugmeldvoorziening voor gebruikers** ([#311](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/311)): laagdrempelige, privacy-vriendelijke feedbackloop in de viewer voor data, metadata, AI-antwoorden en technische storingen. D-OmniTwin fungeert als regielogboek (&quot;bron blijft bron&quot;); feedback wordt gesignaleerd en geregistreerd om door te sturen naar bronhouders.
+  - **Viewer:** centrale meldknop in het Info-paneel en contextuele meldknoppen (in het Kompas-rechterpaneel, de D-Omni Assistent-header, AI-labels en het indicatorpaneel) die openen in een toegankelijke native `<dialog>` modal (`showModal()`, focus-trapping, Escape-sluiting, WCAG 2.1 AA), aangesloten op `OmniMelden.zetKanaal()` ([#312](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/312)) met automatische terugval naar de externe meldplek.
+  - **Backend API:** `POST /api/meldingen` (publiek, in-memory IP rate-limit, honeypot veld) en beveiligde beheerendpoints `GET /api/admin/meldingen` en `PATCH /api/admin/meldingen/{id}` (`vereis_admin`).
+  - **Privacy by Design (AVG):** meldingen zijn standaard anoniem. Een optioneel e-mailadres voor wie terugkoppeling wenst, wordt conform AVG automatisch gewist (`NULL`) zodra een melding is afgehandeld of afgewezen. Meldingen worden 365 dagen na laatste wijziging opgeruimd via de dagelijkse scheduler.
+  - **Beheer:** nieuwe beheerpagina **Meldingen** in het Admin Panel met statusfilters (`nieuw`, `doorgestuurd_naar_bron`, `in_behandeling`, `afgehandeld`, `afgewezen`), categorieën en detailweergave met interne notities. Migratie `V042__gebruiker_meldingen.sql`.
+
 ### Gewijzigd
 
 - **Gemeenteselectie als toegankelijke, filterbare combobox** ([#308](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/308)): de verouderde HTML `<datalist>` in de kaartconfiguratie is vervangen door een volwaardige WAI-ARIA 1.2 combobox (`role="combobox"`, `role="listbox"`, `aria-activedescendant`). Typen filtert direct met diakrieten-insensitiviteit (`sud` vindt `Súdwest-Fryslân`). Volledig bedienbaar met toetsenbord (`ArrowDown`/`ArrowUp`, `Alt+ArrowDown/Up`, `Home`/`End`, `Enter`, `Escape`, `Tab`), schermlezer-ondersteuning via live-regio (`#gemeente-info` met `role="status"` en `aria-live="polite"`), dichte achtergrond voor gegarandeerd contrast (>4.5:1, WCAG 2.1 AA, ADR 0011) en één centrale synchronisatiefunctie (`zetGemeente()`) voor kaart, Kompas, filter-chip en EventBus.

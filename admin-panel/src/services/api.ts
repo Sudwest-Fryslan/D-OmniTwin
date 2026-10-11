@@ -455,4 +455,13 @@ export const aiAPI = {
         publicApi.get<any[]>('/ai/kompas/search', { params: { q, limit } }),
 };
 
+export const meldingenAPI = {
+    getMeldingen: (params?: { status?: string; type?: string; limit?: number; offset?: number }) =>
+        api.get<import('../types').MeldingenResponse>('/meldingen', { params }),
+    getMelding: (id: string) =>
+        api.get<import('../types').Melding>(`/meldingen/${id}`),
+    updateMelding: (id: string, data: { status?: string; notitie_beheer?: string }) =>
+        api.patch<import('../types').Melding>(`/meldingen/${id}`, data),
+};
+
 export default api;

@@ -3941,3 +3941,133 @@ textarea {
     animation-iteration-count: infinite !important;
   }
 }
+
+/* ── Terugmeldvoorziening dialoog (#311, ADR 0011 WCAG 2.1 AA) ─────────────── */
+dialog#meld-dialoog {
+  width: 520px;
+  max-width: 94vw;
+  padding: 1.5rem;
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+  margin: auto;
+}
+
+dialog#meld-dialoog::backdrop {
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(2px);
+}
+
+.meld-dialoog-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  border-bottom: 1px solid var(--panel-border);
+  padding-bottom: 0.75rem;
+}
+
+.meld-dialoog-titel {
+  font-size: 1.15rem;
+  font-weight: 600;
+  margin: 0;
+  color: var(--text-primary);
+}
+
+.meld-dialoog-sluit-btn {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  line-height: 1;
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: var(--border-radius-sm);
+}
+
+.meld-dialoog-sluit-btn:hover,
+.meld-dialoog-sluit-btn:focus-visible {
+  color: var(--text-primary);
+  background: var(--tint);
+  outline: 2px solid var(--focus-ring);
+}
+
+.meld-context-banner {
+  background: color-mix(in srgb, var(--action-color) 10%, transparent);
+  border: 1px solid color-mix(in srgb, var(--action-color) 20%, transparent);
+  border-radius: var(--border-radius-sm);
+  padding: 0.6rem 0.8rem;
+  margin-bottom: 1rem;
+  font-size: 0.85rem;
+  display: flex;
+  gap: 6px;
+  align-items: baseline;
+}
+
+.meld-context-label {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.meld-context-tekst {
+  color: var(--text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.meld-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.meld-privacy-waarschuwing {
+  color: var(--warning-color, #d97706);
+  font-size: 0.8rem;
+  margin-top: 4px;
+}
+
+.meld-status-bericht {
+  font-size: 0.85rem;
+  min-height: 1.2rem;
+  line-height: 1.4;
+}
+
+.meld-status-succes {
+  color: var(--positive-color, #16a34a);
+  font-weight: 600;
+}
+
+.meld-status-fout {
+  color: var(--negative-color, #dc2626);
+  font-weight: 500;
+}
+
+.meld-status-bezig {
+  color: var(--text-secondary);
+  font-style: italic;
+}
+
+.meld-terugval-wrap {
+  font-size: 0.85rem;
+  padding: 8px 12px;
+  background: var(--tint);
+  border-radius: var(--border-radius-sm);
+  color: var(--text-secondary);
+}
+
+.meld-terugval-wrap a {
+  color: var(--primary-color);
+  text-decoration: underline;
+  font-weight: 500;
+}
+
+.meld-acties {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+}
