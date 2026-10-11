@@ -8,6 +8,11 @@ Eerdere wijzigingen, van vóór dit bestand, zijn terug te vinden in de git-hist
 
 ## [Unreleased]
 
+### Gewijzigd
+
+- Webframework bijgewerkt, in één keer ([#172](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/172)): FastAPI 0.115.12 → 0.143.0, Starlette 0.41.3 → 1.7.0, uvicorn 0.30.6 → 0.54.0 (`requirements.txt`, `requirements-ci.txt`, `requirements.lock`). De CORS-instelling werkt ongewijzigd met Starlette 1.x. Dependabot werkt deze drie voortaan samen bij (groep `webframework`) in plaats van ze over te slaan.
+- Afhankelijkheden bijgewerkt ([#344](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/344)): matplotlib, fiona, SQLAlchemy, GeoAlchemy2, shapely (ondergrenzen), LiteLLM v1.104.2, GitHub Actions en admin-panel (minor/patch); admin-panel opnieuw gebouwd.
+
 ## [0.4.0] - 2026-10-10
 
 AI op orde en images op Docker Hub. AI draait alleen nog na een **verklaring** per AI-usecase (assistent, samenvatting, zoeken op betekenis), is **herkenbaar** voor de gebruiker (label, bronnen, meer informatie, melden), wordt **gelogd** in een alleen-toevoegen logboek met hashketen en is **direct uit te zetten**; zonder AI blijft de applicatie werken. De nieuwe use case `ai-compliance` laat dat met bewijs zien. Elke release staat voortaan als image op Docker Hub, zodat installeren zonder bouwen kan. Verder: de database-dump van de huidige SWF-gebiedsmonitor als bron, de assistent zegt van welke buurt hij uitgaat, de referentie "provincie" volgt de instelling van de organisatie, de benchmarkkleur volgt de polariteit, en het database-image staat op een ondersteunde basis. Lees bij een upgrade de paragraaf **Migreren**: na de update staat alle AI uit.
