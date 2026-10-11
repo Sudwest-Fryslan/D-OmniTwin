@@ -188,7 +188,7 @@ def test_load_sample_idempotent(db):
 
 def test_schema_bevat_alle_migraties(db):
     assert scalar(db, "SELECT count(*) FROM pg_extension WHERE extname = 'pg_trgm'") == 1
-    assert scalar(db, "SELECT to_regclass('public.deduplicatie_uitzonderingen') IS NOT NULL")
+    assert scalar(db, "SELECT to_regclass('app.deduplicatie_uitzonderingen') IS NOT NULL")
 
 
 # ── Security: PostgREST en pg_featureserv met eigen rollen (#57) ─────────────

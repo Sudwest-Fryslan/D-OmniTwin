@@ -34,12 +34,12 @@ def test_installatie_gemarkeerd_als_voltooid(db):
 
 
 def test_objecten_van_database_gebruiker(db):
-    """Alle tabellen in public zijn van DATABASE_USER (geen vaste rol omnitwin_user)."""
+    """Alle tabellen in public en app zijn van DATABASE_USER (geen vaste rol omnitwin_user)."""
     with db.cursor() as cur:
         cur.execute("""
             SELECT c.relname, pg_get_userbyid(c.relowner)
             FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace
-            WHERE n.nspname = 'public' AND c.relkind IN ('r', 'v', 'm')
+            WHERE n.nspname IN ('public', 'app') AND c.relkind IN ('r', 'v', 'm')
               AND pg_get_userbyid(c.relowner) <> current_user
               AND NOT EXISTS (SELECT 1 FROM pg_depend d WHERE d.classid = 'pg_class'::regclass
                               AND d.objid = c.oid AND d.deptype = 'e')
