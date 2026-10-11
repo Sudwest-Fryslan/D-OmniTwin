@@ -878,6 +878,122 @@ textarea {
   margin-top: var(--spacing-xs);
 }
 
+/* ============================================================================
+   Toegankelijke Combobox (#308)
+   ============================================================================ */
+
+.combobox-group {
+  position: relative;
+}
+
+.combobox-control {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.combobox-input {
+  background-image: none !important;
+  padding-right: 2.5rem !important;
+}
+
+.combobox-input:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 1px;
+}
+
+.combobox-toggle {
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 2.25rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  border-radius: 0 var(--border-radius-sm) var(--border-radius-sm) 0;
+  transition: color var(--transition-fast);
+}
+
+.combobox-toggle:hover {
+  color: var(--text-primary);
+}
+
+.combobox-toggle:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: -2px;
+}
+
+.combobox-chevron {
+  transition: transform var(--transition-fast);
+}
+
+.combobox-toggle[aria-expanded="true"] .combobox-chevron,
+.combobox-control:has(.combobox-input[aria-expanded="true"]) .combobox-chevron {
+  transform: rotate(180deg);
+}
+
+.combobox-dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  z-index: 200;
+  background: var(--bg-secondary);
+  border: 1px solid var(--panel-border);
+  border-radius: var(--border-radius-sm);
+  box-shadow: 0 8px 24px var(--shadow-color);
+  max-height: 240px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  list-style: none;
+  margin: 0;
+  padding: 4px 0;
+}
+
+.combobox-option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+  color: var(--text-primary);
+  cursor: pointer;
+  user-select: none;
+  border-left: 3px solid transparent;
+  transition: background var(--transition-fast), color var(--transition-fast);
+}
+
+.combobox-option:hover,
+.combobox-option.combobox-option-active {
+  background: var(--tint);
+  border-left-color: var(--primary-color);
+}
+
+.combobox-option[aria-selected="true"] {
+  font-weight: 600;
+  background: var(--tint-subtle);
+  border-left-color: var(--primary-color);
+}
+
+.combobox-option.combobox-empty {
+  color: var(--text-secondary);
+  font-style: italic;
+  cursor: default;
+  border-left-color: transparent;
+}
+
+.combobox-option.combobox-empty:hover {
+  background: transparent;
+  border-left-color: transparent;
+}
+
+
 /* Checkbox Styling */
 .checkbox-label {
   display: flex;
