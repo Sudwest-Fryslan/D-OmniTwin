@@ -359,12 +359,13 @@ def enrich_features_with_color(
     if kleur_mode == "buurt":
         try:
             rows = db.execute(text("""
-                SELECT g.id as gebied_id, gd.waarde
+                SELECT DISTINCT ON (g.id) g.id as gebied_id, gd.waarde
                 FROM gebieden g
                 JOIN gebied_data gd ON gd.gebied_id = g.id
                 WHERE gd.indicator_uuid = CAST(:ind AS uuid)
                   AND g.id = ANY(:ids)
-                ORDER BY gd.jaar DESC
+                  AND COALESCE(gd.scenario_id, 'current') = 'current'
+                ORDER BY g.id, gd.jaar DESC NULLS LAST, gd.datum DESC NULLS LAST
             """), {"ind": indicator_uuid, "ids": gebied_ids}).fetchall()
             buurt_kleuren = {r.gebied_id: {"waarde": float(r.waarde) if r.waarde else None} for r in rows}
             

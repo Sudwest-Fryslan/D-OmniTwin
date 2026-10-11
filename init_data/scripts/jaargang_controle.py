@@ -124,7 +124,8 @@ def main():
     if args.fryslan:
         codes = geometrie_codes(FRYSLAN_DIR / "buurten_fryslan.geojson", sleutel="buurtcode")
         gemeenten = {c[2:6] for c in codes}
-        geo_jaar = 2024  # download_buurten_fryslan.py: PDOK gebiedsindelingen 2024
+        from download_cbs_kerncijfers import GEOMETRIE_JAAR  # één bron voor de jaargang (#159)
+        geo_jaar = GEOMETRIE_JAAR
         with open(FRYSLAN_DIR / "indicatorwaarden_fryslan.csv", encoding="utf-8") as f:
             # Alleen Friese buurtcodes; de CSV bevat ook andere gemeenten, wijken en GM/NL-regels.
             rijen = [r for r in csv.DictReader(f)

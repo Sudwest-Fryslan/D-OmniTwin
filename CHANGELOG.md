@@ -11,6 +11,12 @@ Eerdere wijzigingen, van vóór dit bestand, zijn terug te vinden in de git-hist
 ### Toegevoegd
 
 - **CI lokaal** ([#362](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/362)): `scripts/ci/ci-lokaal.sh <branch>` test een branch met dezelfde stappen als de CI (publiccode, unit 3.11/3.12, admin-panel met build-controle, verse stack, integratie, browser-e2e) in een aparte worktree, en toont de tijd per stap. Werkt op Linux, macOS en Windows (Git Bash).
+
+### Opgelost
+
+- **Projecties tellen niet meer als actuele waarde** ([#159](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/159)): de gebiedsdetails, de Kompas-tijdreeks en het groepsgemiddelde, de benchmarkreferentie "gebieden", de inwonersweging in het deelgebiedrapport, de 3D-kleuring per buurt en de dashboardtellingen nemen alleen scenario `current`, zoals de actuele view al deed. De 3D-kleuring per buurt nam bovendien de oudste in plaats van de recentste waarde; een waarde zonder jaar komt niet meer vóór een jaar.
+- **CBS-download stopt bij te veel buurtcodes zonder geometrie** (#159): meer dan 5% weggevallen waarden in een jaargang (nu hoogstens 3,6%, Smallingerland) wijst op een nieuwe herindeling. De jaargang van de geometrie staat op één plek (`GEOMETRIE_JAAR`), gecontroleerd door een unittest.
+
 ## [0.5.0] - 2026-10-11
 
 Cijfers kloppen. Alles uit [0.5.0-rc.1](#050-rc1---2026-10-11) (besluiten over de dump van de SWF-gebiedsmonitor, kleine aantallen overal hetzelfde onderdrukt, filterbare gemeenteselectie, FastAPI en afhankelijkheden), plus: een **terugmeldvoorziening** voor gebruikers ([#311](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/311)), **één polariteit per indicator** ([#120](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/120)), waarmee ook `-/+` op de kaart en in het Kompas weer "lager is beter" is, de **applicatiedata in een eigen schema `app`** ([#137](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/137), stap 1; brondata en stuurinformatie volgen in [#366](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/366)) en een **CI die op een eigen runner kan draaien** ([#364](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/364)). Lees bij een upgrade de paragraaf **Migreren**: drie nieuwe migraties, en eigen scripts die `public.users` e.d. gebruiken moeten naar `app.`.
