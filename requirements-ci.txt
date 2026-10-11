@@ -23,7 +23,7 @@ requests>=2.34.2
 httpx
 
 # --- Pydantic ---
-pydantic>=2.0.0
+pydantic>=2.13.5
 
 # --- Auth ---
 passlib[bcrypt]>=1.7.0
