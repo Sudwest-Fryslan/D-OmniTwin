@@ -37,6 +37,11 @@ BEGIN
         END IF;
     END LOOP;
 
+    -- De volgnummers van het AI-logboek horen niet bij de tabel (de trigger zet id, V039): apart verplaatsen
+    IF to_regclass('public.ai_logboek_id_seq') IS NOT NULL AND to_regclass('app.ai_logboek_id_seq') IS NULL THEN
+        ALTER SEQUENCE public.ai_logboek_id_seq SET SCHEMA app;
+    END IF;
+
     -- Rollen met rechten op een tabel in app (zoals omnitwin_ai_log) hebben het schema nodig
     FOR r IN
         SELECT DISTINCT g.grantee
