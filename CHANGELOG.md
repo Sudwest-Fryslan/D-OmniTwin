@@ -11,6 +11,8 @@ Eerdere wijzigingen, van vóór dit bestand, zijn terug te vinden in de git-hist
 ### Gewijzigd
 
 - **Gemeenteselectie als toegankelijke, filterbare combobox** ([#308](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/308)): de verouderde HTML `<datalist>` in de kaartconfiguratie is vervangen door een volwaardige WAI-ARIA 1.2 combobox (`role="combobox"`, `role="listbox"`, `aria-activedescendant`). Typen filtert direct met diakrieten-insensitiviteit (`sud` vindt `Súdwest-Fryslân`). Volledig bedienbaar met toetsenbord (`ArrowDown`/`ArrowUp`, `Alt+ArrowDown/Up`, `Home`/`End`, `Enter`, `Escape`, `Tab`), schermlezer-ondersteuning via live-regio (`#gemeente-info` met `role="status"` en `aria-live="polite"`), dichte achtergrond voor gegarandeerd contrast (>4.5:1, WCAG 2.1 AA, ADR 0011) en één centrale synchronisatiefunctie (`zetGemeente()`) voor kaart, Kompas, filter-chip en EventBus.
+- Webframework bijgewerkt, in één keer ([#172](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/172)): FastAPI 0.115.12 → 0.143.0, Starlette 0.41.3 → 1.7.0, uvicorn 0.30.6 → 0.54.0 (`requirements.txt`, `requirements-ci.txt`, `requirements.lock`). De CORS-instelling werkt ongewijzigd met Starlette 1.x. Dependabot werkt deze drie voortaan samen bij (groep `webframework`) in plaats van ze over te slaan.
+- Afhankelijkheden bijgewerkt ([#344](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/344)): matplotlib, fiona, SQLAlchemy, GeoAlchemy2, shapely (ondergrenzen), LiteLLM v1.104.2, GitHub Actions en admin-panel (minor/patch); admin-panel opnieuw gebouwd.
 
 ## [0.4.0] - 2026-10-10
 
