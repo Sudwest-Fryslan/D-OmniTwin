@@ -55,6 +55,7 @@ def get_dashboard_stats(
             SELECT indicator_uuid 
             FROM gebied_data 
             WHERE jaar IS NOT NULL
+              AND COALESCE(scenario_id, 'current') = 'current'
             GROUP BY indicator_uuid 
             HAVING COUNT(DISTINCT jaar) >= 5
         ) as sub
@@ -158,6 +159,7 @@ def get_dashboard_indicators(
         FROM indicatoren i
         LEFT JOIN v_kompas_hierarchie vkh ON i.uuid = vkh.indicator_uuid AND vkh.config_id = 1
         LEFT JOIN gebied_data gd ON i.uuid = gd.indicator_uuid
+             AND COALESCE(gd.scenario_id, 'current') = 'current'
     """
     
     wheres = ["1=1"]
@@ -222,6 +224,7 @@ def get_dashboard_indicators(
             WHERE indicator_uuid IN :uuids 
               AND jaar >= 2015 
               AND waarde IS NOT NULL
+              AND COALESCE(scenario_id, 'current') = 'current'
             GROUP BY indicator_uuid, jaar
             ORDER BY indicator_uuid, jaar
         """)
@@ -286,6 +289,7 @@ def export_dashboard_data(
         FROM indicatoren i
         LEFT JOIN v_kompas_hierarchie vkh ON i.uuid = vkh.indicator_uuid AND vkh.config_id = 1
         LEFT JOIN gebied_data gd ON i.uuid = gd.indicator_uuid
+             AND COALESCE(gd.scenario_id, 'current') = 'current'
         GROUP BY i.uuid, i.naam, i.code, i.score_type, vkh.titel_naam, i.bron, i.eenheid
         ORDER BY i.naam ASC
     """

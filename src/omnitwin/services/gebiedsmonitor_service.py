@@ -435,7 +435,8 @@ class GebiedsmonitorService:
             FROM gebied_data gd
             INNER JOIN indicatoren i ON gd.indicator_uuid = i.uuid
             WHERE gd.gebied_id = :gebied_id AND i.is_actief = true
-            ORDER BY i.uuid, gd.jaar DESC
+              AND COALESCE(gd.scenario_id, 'current') = 'current'
+            ORDER BY i.uuid, gd.jaar DESC NULLS LAST, gd.datum DESC NULLS LAST
         """)
         
         indicatoren_result = self.db.execute(
@@ -499,6 +500,7 @@ class GebiedsmonitorService:
                     MAX(gd.jaar) as nieuwste_jaar
                 FROM indicatoren i
                 LEFT JOIN gebied_data gd ON i.uuid = gd.indicator_uuid
+                     AND COALESCE(gd.scenario_id, 'current') = 'current'
                 LEFT JOIN gebieden g ON gd.gebied_id = g.id
                 WHERE i.status IN ('O', 'C') AND i.is_actief = true
                 GROUP BY i.uuid, i.naam, i.code, i.omschrijving, i.eenheid, i.categorie
@@ -524,6 +526,7 @@ class GebiedsmonitorService:
                     COUNT(DISTINCT gd.id) as aantal_metingen
                 FROM indicatoren i
                 LEFT JOIN gebied_data gd ON i.uuid = gd.indicator_uuid
+                     AND COALESCE(gd.scenario_id, 'current') = 'current'
                 WHERE i.status IN ('O', 'C') AND i.is_actief = true
                 GROUP BY i.uuid, i.naam, i.code, i.omschrijving, i.eenheid, i.categorie
                 ORDER BY i.naam

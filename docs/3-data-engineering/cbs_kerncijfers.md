@@ -72,6 +72,10 @@ Buurtcodes veranderen per jaar. Het pakket bevat alleen codes die in de geometri
 
 Smallingerland heeft per 2024 een nieuwe buurtindeling: de 61 buurten van Smallingerland in de geometrie 2024 hebben geen waarden vóór 2024. De andere 870 buurten hebben een reeks vanaf 2019 (één vanaf 2020). Omrekenen tussen indelingen is een vervolgstap (#159, "later"). Een code die in beide jaren bestaat, kan een iets andere grens hebben; dat controleert het pakket niet.
 
+**Drempel.** Valt in een jaargang meer dan `MAX_WEGGEVALLEN` (5%) van de waarden weg omdat de buurtcode niet in de geometrie bestaat, dan stopt de download met een melding (nu hoogstens 3,6%). Dan is er een nieuwe herindeling of klopt de geometrie niet; werk de geometrie bij, of verhoog de drempel bewust. De laadstraat zelf weigert een levering met een onbekende buurtcode altijd (`gebied-onbekend`).
+
+**Eén bron voor de jaargang van de geometrie:** `GEOMETRIE_JAAR` in `download_cbs_kerncijfers.py`. `download_buurten_fryslan.py` en `jaargang_controle.py` gebruiken die; de unittest controleert dat de sample, het recept en de use case `cbs-gebiedsindelingen` hetzelfde jaar hebben.
+
 ## Laden
 
 `laad_cbs.py` haalt de reeksen voor de gebieden in de database uit de cache, of downloadt ze bij CBS (enkele seconden voor de 13 use-casebuurten) en vult de cache. Zonder internet en zonder cache: een waarschuwing, de rest van de installatie gaat door. Voor een installatie zonder internet: vul de cache op een machine met internet (`download_cbs_kerncijfers.py --alle`) en kopieer `$DATA_CACHE/cbs` naar het volume.
@@ -87,6 +91,8 @@ Smallingerland heeft per 2024 een nieuwe buurtindeling: de 61 buurten van Smalli
 De sample (`init_data/sample/2_brondata/sample_indicatoren.csv`) bevat voor zijn 13 buurten dezelfde reeks; de unittest controleert dat. Bolsward-Zuidoost had demodata; voor de CBS-indicatoren zijn dat nu echte waarden.
 
 Afgeleide indicatoren in use cases (`laad_usecase.py`) nemen teller en noemer uit **hetzelfde jaar**.
+
+**Projecties zijn geen meting.** Overal waar de app "het recentste jaar" kiest, telt alleen scenario `current` (leeg telt als `current`): de view `vw_gebied_indicator_actueel` (V030), de gebiedsdetails, de Kompas-tijdreeks en het groepsgemiddelde, de benchmarkreferentie, de inwonersweging in het deelgebiedrapport, de 3D-kleuring en de dashboardtellingen. Een waarde zonder jaar komt achteraan (`NULLS LAST`). Test: `tests/integration/test_scenario_niet_actueel.py`.
 
 ## Bijwerken
 
