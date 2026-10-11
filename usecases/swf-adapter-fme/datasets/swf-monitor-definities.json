@@ -39,6 +39,17 @@
   "bewerkingen": [
     {
       "tabel": "indicatoren",
+      "id": "status-onderzoek",
+      "waarde_map": {
+        "veld": "status",
+        "map": {
+          "O": "C"
+        }
+      },
+      "omschrijving": "Besluit https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/341: SWF-status O (Onderzoek) is niet openbaar. D-OmniTwin kent geen Onderzoek; het wordt C (concept), en een indicator met status C is alleen intern zichtbaar (ingelogd met de rol lezer of beheerder, ADR 0010). C (Concept) blijft C. Vóór status-a, anders wordt A → O → C."
+    },
+    {
+      "tabel": "indicatoren",
       "id": "status-a",
       "waarde_map": {
         "veld": "status",
@@ -56,7 +67,7 @@
         "sleutel": "uuid",
         "normaliseer": true,
         "houd": {
-          "Waterdiepte op straat": "f6eafa70-9383-4de6-bd2a-e47309843437",
+          "Waterdiepte op straat": "c4e1b3bb-e4ce-4cd0-bd52-219f4a9f5df3",
           "Werkzamen": "7fd17589-46b6-460a-a1f6-ef421517ccb3"
         },
         "zet": {
@@ -65,7 +76,22 @@
         "achtervoegsel": " (vervallen)",
         "reden": "dubbele-naam"
       },
-      "omschrijving": "zoals SWF het in de DWH-SQL zou doen zolang de dubbele UUID's bestaan (aanname A4, https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/222)"
+      "omschrijving": "zoals SWF het in de DWH-SQL zou doen zolang de dubbele UUID's bestaan (A4, https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/222; Waterdiepte op straat c4e1b3bb… volgens https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/341)"
+    },
+    {
+      "tabel": "indicatoren",
+      "id": "waterdiepte-actief",
+      "zet": {
+        "als": {
+          "veld": "uuid",
+          "gelijk": "c4e1b3bb-e4ce-4cd0-bd52-219f4a9f5df3"
+        },
+        "velden": {
+          "status": "O"
+        },
+        "reden": "waterdiepte-actief"
+      },
+      "omschrijving": "Besluit https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/341: Waterdiepte op straat houdt c4e1b3bb… (staat in de geldige Klimaat- en Basismonitor, productie-werkelijkheid) en is operationeel (O, openbaar), ook als de monitor hem nog C (Concept) geeft. Na status-onderzoek en status-a."
     }
   ],
   "levering": {
@@ -77,7 +103,9 @@
       "omschrijving": "precies wat FME nu pusht (met status A en de dubbele namen): de laad-API hoort af te keuren",
       "sla_over": [
         "status-a",
-        "dubbele-naam"
+        "dubbele-naam",
+        "waterdiepte-actief",
+        "status-onderzoek"
       ]
     }
   }

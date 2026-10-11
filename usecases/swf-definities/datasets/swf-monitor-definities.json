@@ -45,6 +45,17 @@
     },
     {
       "tabel": "indicatoren",
+      "id": "status-onderzoek",
+      "waarde_map": {
+        "veld": "status",
+        "map": {
+          "O": "C"
+        }
+      },
+      "omschrijving": "Besluit https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/341: SWF-status O (Onderzoek) is niet openbaar. D-OmniTwin kent geen Onderzoek; het wordt C (concept), en een indicator met status C is alleen intern zichtbaar (ingelogd met de rol lezer of beheerder, ADR 0010). C (Concept) blijft C. Vóór status-a, anders wordt A → O → C."
+    },
+    {
+      "tabel": "indicatoren",
       "id": "status-a",
       "waarde_map": {
         "veld": "status",
@@ -52,7 +63,7 @@
           "A": "O"
         }
       },
-      "omschrijving": "A2 (https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/222), geverifieerd in de beheerinterface van de monitor: A = Actueel, B = Buiten gebruik, C = Concept, O = Onderzoek. D-OmniTwin kent C (concept), O (operationeel) en B (beëindigd): A → O. Aanname: SWF-status O (Onderzoek) blijft O, want die indicatoren staan live in de monitor; bevestiging open. Een gevulde DATE_TO komt mee als eindgeldigheid. De klimaatset staat in swf-kompasprofiel."
+      "omschrijving": "A2 (https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/222), geverifieerd in de beheerinterface van de monitor: A = Actueel, B = Buiten gebruik, C = Concept, O = Onderzoek. D-OmniTwin kent C (concept), O (operationeel) en B (beëindigd): A → O, openbaar. Besluit https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/341: O (Onderzoek) en C (Concept) zijn alleen intern zichtbaar (zie status-onderzoek). Een gevulde DATE_TO komt mee als eindgeldigheid. De klimaatset staat in swf-kompasprofiel."
     },
     {
       "tabel": "indicatoren",
@@ -62,7 +73,7 @@
         "sleutel": "uuid",
         "normaliseer": true,
         "houd": {
-          "Waterdiepte op straat": "f6eafa70-9383-4de6-bd2a-e47309843437",
+          "Waterdiepte op straat": "c4e1b3bb-e4ce-4cd0-bd52-219f4a9f5df3",
           "Werkzamen": "7fd17589-46b6-460a-a1f6-ef421517ccb3"
         },
         "zet": {
@@ -71,7 +82,22 @@
         "achtervoegsel": " (vervallen)",
         "reden": "dubbele-naam"
       },
-      "omschrijving": "Aanname A4 (https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/222): twee UUID's met dezelfde naam. De voorkeur (de UUID die live is of waarden heeft) blijft; de andere krijgt status B en de naam '<naam> (vervallen)'. Een UUID wijzigen kan alleen SWF-beheer in DWH/FME."
+      "omschrijving": "Twee UUID's met dezelfde naam (A4, https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/222). De voorkeur blijft; de andere krijgt status B en de naam '<naam> (vervallen)'. Waterdiepte op straat: c4e1b3bb… (besluit https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/341, productie-werkelijkheid van de monitors; was f6eafa70…). Werkzamen: 7fd17589… (de enige met waarden). Een UUID wijzigen kan alleen SWF-beheer in DWH/FME."
+    },
+    {
+      "tabel": "indicatoren",
+      "id": "waterdiepte-actief",
+      "zet": {
+        "als": {
+          "veld": "uuid",
+          "gelijk": "c4e1b3bb-e4ce-4cd0-bd52-219f4a9f5df3"
+        },
+        "velden": {
+          "status": "O"
+        },
+        "reden": "waterdiepte-actief"
+      },
+      "omschrijving": "Besluit https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/341: Waterdiepte op straat houdt c4e1b3bb… (staat in de geldige Klimaat- en Basismonitor, productie-werkelijkheid) en is operationeel (O, openbaar), ook als de monitor hem nog C (Concept) geeft. Na status-onderzoek en status-a."
     },
     {
       "tabel": "indicatoren",

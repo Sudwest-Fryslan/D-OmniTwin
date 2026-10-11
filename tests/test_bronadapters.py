@@ -217,9 +217,36 @@ def test_ontdubbel_voorkeurslijst_swf_definities_is_volledig_en_gelijk():
         d = json.loads((root / "usecases" / uc / "datasets" / "swf-monitor-definities.json").read_text(encoding="utf-8"))
         stap = next(b for b in d["bewerkingen"] if b.get("id") == "dubbele-naam")
         lijsten.append(stap["ontdubbel"]["houd"])
-        assert [b.get("id") for b in d["bewerkingen"]].index("status-a") < [b.get("id") for b in d["bewerkingen"]].index("dubbele-naam")
-    assert lijsten[0] == lijsten[1] == {"Waterdiepte op straat": "f6eafa70-9383-4de6-bd2a-e47309843437",
+        ids = [b.get("id") for b in d["bewerkingen"]]
+        # O → C vóór A → O (anders wordt A → O → C); waterdiepte-actief na de statusvertaling (#341)
+        assert ids.index("status-onderzoek") < ids.index("status-a") < ids.index("dubbele-naam") < ids.index("waterdiepte-actief")
+    assert lijsten[0] == lijsten[1] == {"Waterdiepte op straat": "c4e1b3bb-e4ce-4cd0-bd52-219f4a9f5df3",
                                         "Werkzamen": "7fd17589-46b6-460a-a1f6-ef421517ccb3"}
+
+
+def test_zet_alleen_in_regels_die_voldoen():
+    stap = {"zet": {"als": {"veld": "uuid", "gelijk": "c4"}, "velden": {"status": "O"}, "reden": "waterdiepte-actief"}}
+    uit, rapport = bewerk([stap], [{"uuid": "c4", "status": "C"}, {"uuid": "f6", "status": "C"}])
+    assert [r["status"] for r in uit] == ["O", "C"] and rapport == {"waterdiepte-actief": 1}
+    assert bewerk([{"zet": {"als": {"veld": "x", "leeg": True}, "velden": {"y": 1}}}], [{"x": ""}])[1] == {"gezet": 1}
+
+
+def test_swf_definities_statussen_en_waterdiepte():
+    """Besluit #341: A → O (openbaar), O (Onderzoek) → C (intern), C blijft C; Waterdiepte op straat houdt c4e1b3bb… (O)."""
+    from pathlib import Path
+    root = Path(__file__).resolve().parents[1]
+    d = json.loads((root / "usecases" / "swf-definities" / "datasets" / "swf-monitor-definities.json").read_text(encoding="utf-8"))
+    c4, f6 = "c4e1b3bb-e4ce-4cd0-bd52-219f4a9f5df3", "f6eafa70-9383-4de6-bd2a-e47309843437"
+    rijen = [{"id": c4, "naam": "Waterdiepte op straat", "status": "C"},
+             {"id": f6, "naam": "Waterdiepte op straat", "status": "A"},
+             {"id": "u1", "naam": "Actueel", "status": "A"}, {"id": "u2", "naam": "Onderzoek", "status": "O"},
+             {"id": "u3", "naam": "Concept", "status": "C"}, {"id": "u4", "naam": "Buiten gebruik", "status": "B"}]
+    stappen = [b for b in d["bewerkingen"] if b.get("tabel") == "indicatoren" and naam_van(b) != "iso_datumtijd"]
+    uit, rapport = voer_uit({"indicatoren": rijen}, stappen)
+    assert [(r["naam"], r["status"]) for r in uit["indicatoren"]] == [
+        ("Waterdiepte op straat", "O"), ("Waterdiepte op straat (vervallen)", "B"), ("Actueel", "O"),
+        ("Onderzoek", "C"), ("Concept", "C"), ("Buiten gebruik", "B")]
+    assert rapport["status: O → C"] == 1 and rapport["waterdiepte-actief"] == 1 and rapport["dubbele-naam"] == 1
 
 
 def test_snake_case():

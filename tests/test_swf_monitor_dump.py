@@ -81,10 +81,20 @@ def test_omkeren_tegenstrijdig_geeft_geen_score_type():
 
 
 def test_waarden_in_vorm_van_de_api_export(tabellen):
-    w = smd.waarden(tabellen)
+    w, legacy = smd.waarden(tabellen)
     assert w[0] == {"indicator_id": I1, "gebiedstype_id": BU, "gebieds_id": "BU99990001", "waarde": 12.5, "jaar": 2023}
     assert [r["waarde"] for r in w][:2] == [12.5, 7] and isinstance(w[1]["waarde"], int)
-    assert {r["jaar"] for r in w} >= {0, 2012}  # de use case wijst jaar 0 en oude codes af, niet het script
+    assert 0 in {r["jaar"] for r in w}  # jaar 0 wijst de use case af, niet het script
+    # legacy 2011–2012 op een numerieke code met voorloop 11: definitief weg (#342); "17" (ander gebiedstype) blijft
+    assert legacy == 1 and "1199990001" not in {r["gebieds_id"] for r in w} and "17" in {r["gebieds_id"] for r in w}
+
+
+def test_legacy_alleen_2011_2012_met_voorloop_11():
+    assert smd.is_legacy({"gebieds_id": "1119000001", "jaar": 2011})
+    assert smd.is_legacy({"gebieds_id": "111900", "jaar": 2012})
+    assert not smd.is_legacy({"gebieds_id": "1119000001", "jaar": 2013})
+    assert not smd.is_legacy({"gebieds_id": "BU19000001", "jaar": 2012})
+    assert not smd.is_legacy({"gebieds_id": "17", "jaar": 2012})
 
 
 def test_kompasregels_met_niveaus_en_volgorde(tabellen):
@@ -197,7 +207,7 @@ def test_exporteer_maakt_de_bestanden(tabellen, tmp_path):
         "definities.json", "export.json", "gebruikers-mapping.csv", "gebruikersvoorkeuren.json",
         "indicator_labels_monitor.json", "kompasprofiel_monitor.csv", "monitorconfiguraties.json", "waarden.json"]
     assert s["definities"]["status"] == {"A": 2, "B": 1, "C": 1, "O": 1}
-    assert s["waarden"]["totaal"] == 6 and s["monitors"]["versies"] == 3
+    assert s["waarden"]["totaal"] == 5 and s["waarden"]["legacy_2011_2012_weggelaten"] == 1 and s["monitors"]["versies"] == 3
     assert s["gebruikersvoorkeuren"]["gekoppeld"] == 2
     export = (tmp_path / "export.json").read_text(encoding="utf-8")
     assert "voorbeeld.gebruiker" not in export and "voorbeeld.beheerder" not in export
@@ -221,8 +231,8 @@ def test_use_cases_lezen_de_export(tabellen, tmp_path):
     smd.exporteer(tabellen, tmp_path / "export", {}, None)
     ucs = uc.lees_usecases()
     bronnen = {"SWF_DB_DUMP": str(tmp_path / "export")}
-    for naam, ds_id, verwacht in (("swf-definities", "swf-monitor-definities", None),
-                                  ("swf-basismonitor-waarden", "swf-monitor-waarden", {"jaar-ongeldig": 1, "buurtcode-oud": 1}),
+    for naam, ds_id, verwacht in (("swf-definities", "swf-monitor-definities", {"status: O → C": 1, "status: A → O": 2}),
+                                  ("swf-basismonitor-waarden", "swf-monitor-waarden", {"jaar-ongeldig": 1, "buurtcode-oud": 0}),
                                   ("swf-klimaatmonitor", "swf-monitor-waarden", None),
                                   ("swf-kompasprofiel", "swf-kompas-basis", {"indicator-niet-in-definities": 0}),
                                   ("swf-kompasprofiel", "swf-kompas-klimaat", None)):
