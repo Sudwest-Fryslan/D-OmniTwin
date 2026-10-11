@@ -65,6 +65,8 @@ python run_dev.py
 python -m pytest -m unit                  # zoals de CI-job Unit Tests, zonder database
 python -m pytest tests/test_migraties.py  # single test file
 # integration/e2e: tegen een draaiende stack, zie tests/integration/test_sample_stack.py en tests/e2e/README.md
+# alles zoals de CI, voor één branch (verse stack, integratie, e2e, tijd per stap):
+scripts/ci/ci-lokaal.sh <branch> [projectnaam] [poort]
 ```
 
 ### Admin Panel (React)
