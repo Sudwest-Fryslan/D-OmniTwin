@@ -61,7 +61,7 @@ export const colorSchemasAPI = {
 
 // Indicators
 export const indicatorenAPI = {
-    getAll: (params?: { search?: string; score_type?: string; ontologie_status?: string; limit?: number; offset?: number }) =>
+    getAll: (params?: { search?: string; score_type?: string; ontologie_status?: string; met_data?: boolean; limit?: number; offset?: number }) =>
         api.get<IndicatorenResponse>('/indicatoren', { params }),
 
     getOne: (uuid: string) =>

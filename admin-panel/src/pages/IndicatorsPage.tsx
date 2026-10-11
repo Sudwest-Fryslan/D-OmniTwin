@@ -28,6 +28,8 @@ export const IndicatorsPage: React.FC = () => {
     const [total, setTotal] = useState(0);
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState('');
+    // #246: standaard alleen indicatoren met data; definities zonder levering vervuilen de lijst
+    const [metData, setMetData] = useState(true);
     const [offset, setOffset] = useState(0);
     const [activeTab, setActiveTab] = useState<'basis' | 'validatie'>('basis');
     const limit = 20;
@@ -68,7 +70,7 @@ export const IndicatorsPage: React.FC = () => {
         const fetchIndicators = async () => {
             setLoading(true);
             try {
-                const res = await indicatorenAPI.getAll({ search, limit, offset });
+                const res = await indicatorenAPI.getAll({ search, met_data: metData, limit, offset });
                 setIndicators(res.data.indicatoren);
                 setTotal(res.data.total);
             } catch (error) {
@@ -80,7 +82,7 @@ export const IndicatorsPage: React.FC = () => {
 
         const debounce = setTimeout(fetchIndicators, 300);
         return () => clearTimeout(debounce);
-    }, [search, offset]);
+    }, [search, metData, offset]);
 
     const handleSelectIndicator = async (uuid: string) => {
         try {
@@ -110,7 +112,7 @@ export const IndicatorsPage: React.FC = () => {
         try {
             const res = await indicatorenAPI.update(selectedIndicator.uuid, editForm);
             setSelectedIndicator(res.data);
-            const listRes = await indicatorenAPI.getAll({ search, limit, offset });
+            const listRes = await indicatorenAPI.getAll({ search, met_data: metData, limit, offset });
             setIndicators(listRes.data.indicatoren);
         } catch (error) {
             console.error('Error saving indicator:', error);
@@ -128,7 +130,7 @@ export const IndicatorsPage: React.FC = () => {
                 ontologie_status: status,
             });
             setSelectedIndicator(res.data);
-            const listRes = await indicatorenAPI.getAll({ search, limit, offset });
+            const listRes = await indicatorenAPI.getAll({ search, met_data: metData, limit, offset });
             setIndicators(listRes.data.indicatoren);
         } catch (error) {
             console.error('Error validating indicator:', error);
@@ -147,7 +149,7 @@ export const IndicatorsPage: React.FC = () => {
             });
             setSelectedIndicator(res.data);
             setValidatieBeschrijving(res.data.beschrijving_ai || '');
-            const listRes = await indicatorenAPI.getAll({ search, limit, offset });
+            const listRes = await indicatorenAPI.getAll({ search, met_data: metData, limit, offset });
             setIndicators(listRes.data.indicatoren);
         } catch (error) {
             console.error('Error resetting indicator:', error);
@@ -193,6 +195,14 @@ export const IndicatorsPage: React.FC = () => {
                                 }}
                             />
                         </div>
+                        <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.5rem', fontSize: '0.875rem' }}>
+                            <input
+                                type="checkbox"
+                                checked={metData}
+                                onChange={(e) => { setMetData(e.target.checked); setOffset(0); }}
+                            />
+                            Alleen indicatoren met data
+                        </label>
                     </div>
 
                     <div style={{ flex: 1, overflow: 'auto' }}>

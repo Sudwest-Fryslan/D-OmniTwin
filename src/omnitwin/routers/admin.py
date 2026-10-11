@@ -294,11 +294,15 @@ def get_indicatoren(
     search: Optional[str] = None,
     score_type: Optional[str] = None,
     ontologie_status: Optional[str] = None,
+    met_data: bool = False,
     limit: int = 100,
     offset: int = 0,
     db: Session = Depends(get_db),
 ):
-    """Get all indicators with admin info. Filter by ontologie_status for validation workflow."""
+    """Get all indicators with admin info. Filter by ontologie_status for validation workflow.
+    met_data: alleen indicatoren met minstens één waarde (#246; definities zonder levering weg)."""
+    met_data_sql = (" AND EXISTS (SELECT 1 FROM gebied_data gd"
+                    " WHERE gd.indicator_uuid = i.uuid AND gd.waarde IS NOT NULL)")
     query = """
         SELECT 
             i.uuid::text,
@@ -334,7 +338,10 @@ def get_indicatoren(
     if ontologie_status:
         query += " AND i.ontologie_status = :ontologie_status"
         params["ontologie_status"] = ontologie_status
-    
+
+    if met_data:
+        query += met_data_sql
+
     query += " ORDER BY i.naam LIMIT :limit OFFSET :offset"
     
     result = db.execute(text(query), params)
@@ -352,6 +359,8 @@ def get_indicatoren(
     if ontologie_status:
         count_query += " AND i.ontologie_status = :ontologie_status"
         count_params["ontologie_status"] = ontologie_status
+    if met_data:
+        count_query += met_data_sql
     total = db.execute(text(count_query), count_params).scalar()
     
     return {

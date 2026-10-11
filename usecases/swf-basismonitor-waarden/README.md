@@ -1,6 +1,6 @@
 # TC-07-006 — SWF-basismonitor: waarden per indicator × gebiedstype
 
-**Status:** ontwerp (de laad-API is nog niet gebouwd; deze use case is de specificatie en straks de acceptatietest)
+**Status:** ontwerp. De laad-API en de bron (`SWF_DB_DUMP` of `SWF_DUMP_DIR`) zijn er; de use case blijft op ontwerp tot de acceptatie met de echte monitordata is gedaan (epic [#316](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/316)). Installeren kan al met `python -m omnitwin.usecases test <naam>`; zonder bron wordt de dataset overgeslagen met de reden.
 **Versie:** 0.4.0 · **Afhankelijk van:** [swf-definities](../swf-definities/README.md), [swf-gebiedsindelingen](../swf-gebiedsindelingen/README.md), [cbs-gebiedsindelingen](../cbs-gebiedsindelingen/README.md)
 **Manifest:** [`usecase.json`](usecase.json) · **Controleren:** `python -m omnitwin.usecases controleer swf-basismonitor-waarden`
 
