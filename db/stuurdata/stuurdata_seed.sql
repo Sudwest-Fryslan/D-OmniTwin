@@ -258,46 +258,46 @@ ON CONFLICT (id) DO NOTHING;
 -- -------------------------------------------------------------
 -- 7. LLM Configuratie
 -- -------------------------------------------------------------
-INSERT INTO public.llm_config (id, api_url, model_name, aangemaakt_op, bijgewerkt_op)
+INSERT INTO app.llm_config (id, api_url, model_name, aangemaakt_op, bijgewerkt_op)
 VALUES (1, 'http://host.docker.internal:11434', 'qwen3:30b', '2026-02-21 11:10:29.863903+00:00', '2026-02-21 11:10:29.863903+00:00')
 ON CONFLICT (id) DO NOTHING;
 
 -- -------------------------------------------------------------
 -- 8. Log Configuratie
 -- -------------------------------------------------------------
-INSERT INTO public.log_config (category, level, enabled, updated_at, updated_by)
+INSERT INTO app.log_config (category, level, enabled, updated_at, updated_by)
 VALUES ('ADMIN', 'INFO', TRUE, '2026-05-26 18:24:36.822693+00:00', 'system')
 ON CONFLICT (category) DO NOTHING;
 
-INSERT INTO public.log_config (category, level, enabled, updated_at, updated_by)
+INSERT INTO app.log_config (category, level, enabled, updated_at, updated_by)
 VALUES ('API', 'INFO', TRUE, '2026-05-26 18:24:36.822693+00:00', 'system')
 ON CONFLICT (category) DO NOTHING;
 
-INSERT INTO public.log_config (category, level, enabled, updated_at, updated_by)
+INSERT INTO app.log_config (category, level, enabled, updated_at, updated_by)
 VALUES ('AUTH', 'WARNING', TRUE, '2026-05-26 18:24:36.822693+00:00', 'system')
 ON CONFLICT (category) DO NOTHING;
 
-INSERT INTO public.log_config (category, level, enabled, updated_at, updated_by)
+INSERT INTO app.log_config (category, level, enabled, updated_at, updated_by)
 VALUES ('DATABASE', 'WARNING', TRUE, '2026-05-26 18:24:36.822693+00:00', 'system')
 ON CONFLICT (category) DO NOTHING;
 
-INSERT INTO public.log_config (category, level, enabled, updated_at, updated_by)
+INSERT INTO app.log_config (category, level, enabled, updated_at, updated_by)
 VALUES ('KAART', 'INFO', TRUE, '2026-05-26 18:24:36.822693+00:00', 'system')
 ON CONFLICT (category) DO NOTHING;
 
-INSERT INTO public.log_config (category, level, enabled, updated_at, updated_by)
+INSERT INTO app.log_config (category, level, enabled, updated_at, updated_by)
 VALUES ('KOMPAS', 'INFO', TRUE, '2026-05-26 18:24:36.822693+00:00', 'system')
 ON CONFLICT (category) DO NOTHING;
 
-INSERT INTO public.log_config (category, level, enabled, updated_at, updated_by)
+INSERT INTO app.log_config (category, level, enabled, updated_at, updated_by)
 VALUES ('LLM_CHAT', 'WARNING', TRUE, '2026-05-26 18:24:36.822693+00:00', 'system')
 ON CONFLICT (category) DO NOTHING;
 
-INSERT INTO public.log_config (category, level, enabled, updated_at, updated_by)
+INSERT INTO app.log_config (category, level, enabled, updated_at, updated_by)
 VALUES ('RAPPORT', 'INFO', TRUE, '2026-05-26 18:24:36.822693+00:00', 'system')
 ON CONFLICT (category) DO NOTHING;
 
-INSERT INTO public.log_config (category, level, enabled, updated_at, updated_by)
+INSERT INTO app.log_config (category, level, enabled, updated_at, updated_by)
 VALUES ('SERVER', 'INFO', TRUE, '2026-05-26 18:24:36.822693+00:00', 'system')
 ON CONFLICT (category) DO NOTHING;
 
@@ -405,6 +405,6 @@ ON CONFLICT (id) DO NOTHING;
 SELECT setval('public.chat_scenarios_id_seq', COALESCE((SELECT MAX(id) FROM public.chat_scenarios), 1), true);
 SELECT setval('public.color_schemas_id_seq', COALESCE((SELECT MAX(id) FROM public.color_schemas), 1), true);
 SELECT setval('public.externe_kaartlagen_id_seq', COALESCE((SELECT MAX(id) FROM public.externe_kaartlagen), 1), true);
-SELECT setval('public.llm_config_id_seq', COALESCE((SELECT MAX(id) FROM public.llm_config), 1), true);
+SELECT setval('app.llm_config_id_seq', COALESCE((SELECT MAX(id) FROM app.llm_config), 1), true);
 SELECT setval('public.visualisatie_profielen_id_seq', COALESCE((SELECT MAX(id) FROM public.visualisatie_profielen), 1), true);
 SELECT setval('public.kompas_configuraties_id_seq', COALESCE((SELECT MAX(id) FROM public.kompas_configuraties), 1), true);

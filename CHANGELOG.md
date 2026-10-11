@@ -15,6 +15,18 @@ Eerdere wijzigingen, van vóór dit bestand, zijn terug te vinden in de git-hist
 ### Migreren
 
 - Migratie `V046__polariteit.sql` zet de bestaande waarden om (neutraal/N/A → `neutraal`, `+/+` → `hoger_is_beter`, elke andere score_type → `lager_is_beter`) en vervangt de view `v_score_types` door `v_polariteiten`. Daarna is `score_type` altijd `+/+` of `+/-`.
+- **Applicatiedata in een eigen schema `app`** ([#137](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/137), stap 1): gebruikers, sessies, API-sleutels, OIDC-sessies, logs en logconfiguratie, LLM-configuratie, gebruikersvoorkeuren en -meldingen, deduplicatie-uitzonderingen en de AI-vrijgave en het AI-logboek staan niet meer in `public` maar in `app`. PostgREST en pg_featureserv hebben daar geen toegang; met `pg_dump -n app` is de geheime applicatiedata los te back-uppen. Stuurinformatie en brondata blijven voorlopig in `public` (vervolgstap). Uitleg: [db/README.md](db/README.md#schemas-137).
+
+### Migreren
+
+- Migratie `V047__schema_app.sql` draait vanzelf bij de start van `db-init`: de tabellen verhuizen met hun data (`ALTER TABLE … SET SCHEMA`), en de database krijgt `search_path` `"$user", public, app`. Eigen scripts of queries die `public.users` (of een andere app-tabel) met schema noemen, moeten naar `app.users` of zonder schema. Het AI-logboek en de hashketen lopen ongewijzigd door.
+### Toegevoegd
+
+- **Terugmeldvoorziening voor gebruikers** ([#311](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/311)): laagdrempelige, privacy-vriendelijke feedbackloop in de viewer voor data, metadata, AI-antwoorden en technische storingen. D-OmniTwin fungeert als regielogboek (&quot;bron blijft bron&quot;); feedback wordt gesignaleerd en geregistreerd om door te sturen naar bronhouders.
+  - **Viewer:** centrale meldknop in het Info-paneel en contextuele meldknoppen (in het Kompas-rechterpaneel, de D-Omni Assistent-header, AI-labels en het indicatorpaneel) die openen in een toegankelijke native `<dialog>` modal (`showModal()`, focus-trapping, Escape-sluiting, WCAG 2.1 AA), aangesloten op `OmniMelden.zetKanaal()` ([#312](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/312)) met automatische terugval naar de externe meldplek.
+  - **Backend API:** `POST /api/meldingen` (publiek, in-memory IP rate-limit, honeypot veld) en beveiligde beheerendpoints `GET /api/admin/meldingen` en `PATCH /api/admin/meldingen/{id}` (`vereis_admin`).
+  - **Privacy by Design (AVG):** meldingen zijn standaard anoniem. Een optioneel e-mailadres voor wie terugkoppeling wenst, wordt conform AVG automatisch gewist (`NULL`) zodra een melding is afgehandeld of afgewezen. Meldingen worden 365 dagen na laatste wijziging opgeruimd via de dagelijkse scheduler.
+  - **Beheer:** nieuwe beheerpagina **Meldingen** in het Admin Panel met statusfilters (`nieuw`, `doorgestuurd_naar_bron`, `in_behandeling`, `afgehandeld`, `afgewezen`), categorieën en detailweergave met interne notities. Migratie `V045__gebruiker_meldingen.sql`.
 
 ## [0.5.0-rc.1] - 2026-10-11
 

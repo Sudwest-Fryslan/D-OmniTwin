@@ -52,6 +52,22 @@ Een nieuwe migratie met dezelfde `\ir`-regel als V021 lost het niet op: V021 hou
 
 **Nieuwe schemawijziging:** voeg `V<volgend nummer>__<naam>.sql` toe, idempotent (`IF NOT EXISTS`, `CREATE OR REPLACE`). Pas een toegepaste migratie nooit aan; maak een nieuwe. `schema_latest.sql` hoeft niet mee: de runner past de migratie ook op een nieuwe database toe.
 
+## Schema's (#137)
+
+| Schema | Inhoud | Wie |
+|---|---|---|
+| `public` | stuurinformatie (indicatoren, Kompas, kleurschema's, prompts, scenario's, organisatie), brondata (gebieden, `gebied_data`, ...) en de beheertabellen van db-init (`schema_migraties`, `installatie_status`) | backend, laadstraat (`laden_schrijver`) |
+| `app` | applicatie- en runtime-data: `users`, `sessions`, `api_keys`, `oidc_sessies`, `app_logs`, `log_config`, `llm_config`, `gebruiker_voorkeuren`, `gebruiker_favorieten`, `gebruiker_meldingen`, `deduplicatie_uitzonderingen`, `ai_usecases`, `ai_verklaringen`, `ai_vrijgave_log`, `ai_instellingen`, `ai_logboek` | alleen de backend; geheim, nooit delen of publiceren |
+| `api` | alleen views en functies voor PostgREST (`R__api_rollen.sql`, #57) | `web_anon` (alleen lezen) |
+| `laden` | laad-API: registraties, leveringen, staging (V024) | `laden_schrijver` |
+| `postgisftw` | functies voor pg_featureserv | `featureserv` |
+
+V047 verplaatste de app-tabellen met `ALTER TABLE … SET SCHEMA`: data, indexen, triggers en rechten gaan mee, verwijzingen gaan op oid. De database heeft als standaard `search_path` `"$user", public, app`, zodat queries zonder schema (`FROM users`) blijven werken; `R__api_rollen.sql` zet dat bij elke start opnieuw, ook na een restore (pg_dump neemt instellingen van de database niet mee). PostgREST en pg_featureserv hebben geen `USAGE` op `app`.
+
+**Nieuwe code:** noem een app-tabel met schema (`app.ai_logboek`) of zonder (`ai_logboek`), nooit `public.`. Een eigen sessie die het zoekpad leegmaakt (zoals `schema_latest.sql`), moet `app.` gebruiken.
+
+**Back-up van alleen de configuratie of alleen de applicatiedata:** `pg_dump -n app` (geheim: gebruikers, sessies, sleutels, logboek). Stuurinformatie en brondata staan nog samen in `public`; die splitsing (schema's `stuur` en `bron`) is een vervolgstap van #137.
+
 ## Eerste initialisatie en eigenaar (#201)
 
 - **Init-status:** de tabel `installatie_status` krijgt pas een rij als de eerste initialisatie helemaal gelukt is (schema, migraties, stuurdata, use cases, beheerder, rollen). Staan er tabellen in de database zonder die rij, dan stopt `db-init` met een foutmelding en herstelinstructie, in plaats van een lege stack te starten. Een installatie van vóór 0.2.1 met `gebieden` en een beheerder wordt herkend en krijgt de rij automatisch.

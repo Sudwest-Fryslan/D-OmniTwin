@@ -205,6 +205,18 @@ BEGIN
 END
 $$;
 
+-- ── Schema app (#137, V047): standaard in het zoekpad ───────────────────────
+-- pg_dump neemt instellingen van de database niet mee; na een restore zet db-init ze zo terug.
+-- web_anon en featureserv hebben geen USAGE op app: voor hen verandert er niets.
+DO $$
+BEGIN
+    IF to_regnamespace('app') IS NOT NULL THEN
+        EXECUTE format('ALTER DATABASE %I SET search_path = "$user", public, app', current_database());
+        REVOKE ALL ON SCHEMA app FROM PUBLIC;
+    END IF;
+END
+$$;
+
 -- ── Views in public die interne data lezen: security_invoker (#254) ─────────
 -- Zo geldt de row level security op indicatoren, gebied_data en externe_kaartlagen (V032) ook als
 -- de backend een anoniem verzoek als omnitwin_openbaar uitvoert via een view. Elke run opnieuw, omdat
