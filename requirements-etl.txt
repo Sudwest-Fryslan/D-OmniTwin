@@ -14,7 +14,7 @@
 geopandas>=1.1.4
 pyogrio>=0.13.0
 GeoAlchemy2>=0.20.0
-pandas>=2.0.0
+pandas>=2.3.3
 openpyxl>=3.1.0         # Excel-bestanden lezen
 tqdm>=4.65.0
 python-dateutil>=2.9.0.post0
