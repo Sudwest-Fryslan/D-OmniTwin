@@ -49,27 +49,27 @@ class NepDB:
 
     def execute(self, sql, params=None):
         q, p = " ".join(str(sql).split()), params or {}
-        if q.startswith("INSERT INTO public.ai_verklaringen"):
+        if q.startswith("INSERT INTO app.ai_verklaringen"):
             vid = f"v{len(self.verklaringen) + 1}"
             self.verklaringen.append({**p, "id": vid, "volgorde": len(self.verklaringen)})
             return _Res(scalar=vid)
-        if q.startswith("UPDATE public.ai_usecases") and "WHERE NOT stilgezet" in q:
+        if q.startswith("UPDATE app.ai_usecases") and "WHERE NOT stilgezet" in q:
             codes = [c for c, u in sorted(self.usecases.items()) if not u["stilgezet"]]
             for c in codes:
                 self.usecases[c].update(stilgezet=True, status_door=p["door"], stilgezet_reden=p["reden"])
             return _Res([(c,) for c in codes])
-        if q.startswith("UPDATE public.ai_usecases"):
+        if q.startswith("UPDATE app.ai_usecases"):
             self.usecases[p["code"]]["stilgezet"] = p.get("aan", False)
             self.usecases[p["code"]]["status_door"] = p["door"]
             self.usecases[p["code"]]["stilgezet_reden"] = p.get("reden")
             return _Res()
-        if q.startswith("INSERT INTO public.ai_vrijgave_log"):
+        if q.startswith("INSERT INTO app.ai_vrijgave_log"):
             actie = re.search(r"'(verklaring_geupload|verlopen|noodstop)'", q)
             self.log.append({**p, "actie": p.get("actie") or (actie.group(1) if actie else None)})
             return _Res()
-        if q.startswith("SELECT 1 FROM public.ai_vrijgave_log"):
+        if q.startswith("SELECT 1 FROM app.ai_vrijgave_log"):
             return _Res([1] if any(r["actie"] == "verlopen" and r.get("v") == p["v"] for r in self.log) else [])
-        if "FROM public.ai_usecases u" in q:
+        if "FROM app.ai_usecases u" in q:
             return _Res(self.standen(p.get("code")))
         raise AssertionError(f"onverwachte SQL: {q[:80]}")
 

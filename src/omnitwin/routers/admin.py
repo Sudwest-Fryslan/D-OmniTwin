@@ -109,7 +109,7 @@ def update_llm_config(
     """Update active LLM Config."""
     heeft_api_type = db.execute(text("""
         SELECT 1 FROM information_schema.columns
-        WHERE table_schema = 'public' AND table_name = 'llm_config' AND column_name = 'api_type'
+        WHERE table_schema IN ('public', 'app') AND table_name = 'llm_config' AND column_name = 'api_type'
     """)).fetchone() is not None
     if heeft_api_type:
         db.execute(text("""

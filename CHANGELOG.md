@@ -8,6 +8,13 @@ Eerdere wijzigingen, van vóór dit bestand, zijn terug te vinden in de git-hist
 
 ## [Unreleased]
 
+### Gewijzigd
+
+- **Applicatiedata in een eigen schema `app`** ([#137](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/137), stap 1): gebruikers, sessies, API-sleutels, OIDC-sessies, logs en logconfiguratie, LLM-configuratie, gebruikersvoorkeuren en -meldingen, deduplicatie-uitzonderingen en de AI-vrijgave en het AI-logboek staan niet meer in `public` maar in `app`. PostgREST en pg_featureserv hebben daar geen toegang; met `pg_dump -n app` is de geheime applicatiedata los te back-uppen. Stuurinformatie en brondata blijven voorlopig in `public` (vervolgstap). Uitleg: [db/README.md](db/README.md#schemas-137).
+
+### Migreren
+
+- Migratie `V047__schema_app.sql` draait vanzelf bij de start van `db-init`: de tabellen verhuizen met hun data (`ALTER TABLE … SET SCHEMA`), en de database krijgt `search_path` `"$user", public, app`. Eigen scripts of queries die `public.users` (of een andere app-tabel) met schema noemen, moeten naar `app.users` of zonder schema. Het AI-logboek en de hashketen lopen ongewijzigd door.
 ### Toegevoegd
 
 - **Terugmeldvoorziening voor gebruikers** ([#311](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/311)): laagdrempelige, privacy-vriendelijke feedbackloop in de viewer voor data, metadata, AI-antwoorden en technische storingen. D-OmniTwin fungeert als regielogboek (&quot;bron blijft bron&quot;); feedback wordt gesignaleerd en geregistreerd om door te sturen naar bronhouders.

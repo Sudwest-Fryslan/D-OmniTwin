@@ -505,7 +505,7 @@ def laad_voorkeuren(cur, items: list[dict]) -> dict:
             telling["eigenaar_ongeldig"] += 1
             continue
         pos = geldige_positie(item.get("kaartpositie"))
-        cur.execute("INSERT INTO public.gebruiker_voorkeuren (eigenaar, kaartpositie) VALUES (%s, %s::jsonb) "
+        cur.execute("INSERT INTO app.gebruiker_voorkeuren (eigenaar, kaartpositie) VALUES (%s, %s::jsonb) "
                     "ON CONFLICT (eigenaar) DO NOTHING", (eigenaar, json.dumps(pos) if pos else None))
         telling["toegevoegd" if cur.rowcount == 1 else "al_aanwezig"] += 1
         if item.get("niet_overgenomen"):

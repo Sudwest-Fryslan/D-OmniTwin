@@ -82,7 +82,7 @@ def regel(usecase: str, functie: str, status: str, *, taak: Optional[str] = None
 
 
 _INSERT = text("""
-    INSERT INTO public.ai_logboek (usecase, functie, status, taak, bronnen, model, modelversie,
+    INSERT INTO app.ai_logboek (usecase, functie, status, taak, bronnen, model, modelversie,
                                    app_versie, resultaat, foutmelding)
     VALUES (:usecase, :functie, :status, :taak, CAST(:bronnen AS text[]), :model, :modelversie,
             :app_versie, :resultaat, :foutmelding)
@@ -157,7 +157,7 @@ _KOLOMMEN = """id, tijdstip, to_char(tijdstip AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"
 
 def controleer(db) -> Dict[str, Any]:
     """Keten narekenen; klopt hij niet, dan een automatische noodstop op A, B en C (fail-closed)."""
-    rijen = db.execute(text(f"SELECT {_KOLOMMEN} FROM public.ai_logboek ORDER BY id")).mappings()
+    rijen = db.execute(text(f"SELECT {_KOLOMMEN} FROM app.ai_logboek ORDER BY id")).mappings()
     uit = controleer_keten(dict(r) for r in rijen)
     if not uit["ok"]:
         from omnitwin import ai_vrijgave
@@ -184,8 +184,8 @@ def lees(db, usecase: Optional[str] = None, status: Optional[str] = None, van: O
         voorwaarden.append("tijdstip < CAST(:tot AS date) + 1")
         params["tot"] = tot
     waar = ("WHERE " + " AND ".join(voorwaarden)) if voorwaarden else ""
-    totaal = db.execute(text(f"SELECT count(*) FROM public.ai_logboek {waar}"), params).scalar()
-    rijen = db.execute(text(f"SELECT {_KOLOMMEN} FROM public.ai_logboek {waar} "
+    totaal = db.execute(text(f"SELECT count(*) FROM app.ai_logboek {waar}"), params).scalar()
+    rijen = db.execute(text(f"SELECT {_KOLOMMEN} FROM app.ai_logboek {waar} "
                             "ORDER BY id DESC LIMIT :limit OFFSET :offset"), params).mappings()
     return {"totaal": int(totaal or 0), "regels": [dict(r) for r in rijen]}
 
@@ -219,7 +219,7 @@ def opschonen() -> int:
 
 
 def lees_bewaartermijn(db) -> Dict[str, Any]:
-    r = db.execute(text("SELECT bewaartermijn_dagen, gewijzigd_door, gewijzigd_op FROM public.ai_instellingen "
+    r = db.execute(text("SELECT bewaartermijn_dagen, gewijzigd_door, gewijzigd_op FROM app.ai_instellingen "
                         "WHERE id")).mappings().fetchone()
     if not r:
         return {"bewaartermijn_dagen": STANDAARD_BEWAARTERMIJN, "gewijzigd_door": None, "gewijzigd_op": None}
@@ -228,12 +228,12 @@ def lees_bewaartermijn(db) -> Dict[str, Any]:
 
 def zet_bewaartermijn(db, dagen: int, door: str) -> None:
     db.execute(text("""
-        INSERT INTO public.ai_instellingen (id, bewaartermijn_dagen, gewijzigd_door, gewijzigd_op)
+        INSERT INTO app.ai_instellingen (id, bewaartermijn_dagen, gewijzigd_door, gewijzigd_op)
         VALUES (true, :d, :door, now())
         ON CONFLICT (id) DO UPDATE SET bewaartermijn_dagen = EXCLUDED.bewaartermijn_dagen,
             gewijzigd_door = EXCLUDED.gewijzigd_door, gewijzigd_op = EXCLUDED.gewijzigd_op
     """), {"d": int(dagen), "door": door})
-    db.execute(text("INSERT INTO public.ai_vrijgave_log (actie, door, toelichting) "
+    db.execute(text("INSERT INTO app.ai_vrijgave_log (actie, door, toelichting) "
                     "VALUES ('bewaartermijn', :door, :t)"),
                {"door": door, "t": f"Bewaartermijn AI-logboek: {int(dagen)} dagen"})
     db.commit()
