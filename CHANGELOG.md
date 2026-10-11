@@ -16,6 +16,7 @@ Eerdere wijzigingen, van vóór dit bestand, zijn terug te vinden in de git-hist
 - Een bestaande indicator-UUID met een andere naam volgt de bron, met een waarschuwing in het log (hergebruikte UUID's, [#340](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/340)).
 - Webframework bijgewerkt, in één keer ([#172](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/172)): FastAPI 0.115.12 → 0.143.0, Starlette 0.41.3 → 1.7.0, uvicorn 0.30.6 → 0.54.0 (`requirements.txt`, `requirements-ci.txt`, `requirements.lock`). De CORS-instelling werkt ongewijzigd met Starlette 1.x. Dependabot werkt deze drie voortaan samen bij (groep `webframework`) in plaats van ze over te slaan.
 - Afhankelijkheden bijgewerkt ([#344](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/344)): matplotlib, fiona, SQLAlchemy, GeoAlchemy2, shapely (ondergrenzen), LiteLLM v1.104.2, GitHub Actions en admin-panel (minor/patch); admin-panel opnieuw gebouwd.
+- Afhankelijkheden bijgewerkt ([#355](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/355)): ondergrenzen numpy, pandas, pydantic, pytest en tqdm, LiteLLM v1.105.0 en admin-panel (lucide-react); admin-panel opnieuw gebouwd.
 
 ## [0.4.0] - 2026-10-10
 
