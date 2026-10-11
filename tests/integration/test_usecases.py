@@ -59,7 +59,7 @@ def get(pad, **params):
 
 @pytest.fixture(scope="module")
 def indicatoren():
-    rijen = get("/api/data/indicatoren", select="uuid,naam,score_type,interpretatie_logica")
+    rijen = get("/api/data/indicatoren", select="uuid,naam,polariteit,score_type,interpretatie_logica")
     return {i["naam"]: i for i in rijen}
 
 
@@ -88,8 +88,10 @@ def test_indicatoren_aanwezig_met_waarden_voor_bolsward(uc, indicatoren, waarden
 @pytest.mark.parametrize("uc", [u for u in USE_CASES if lager_is_beter(u)])
 def test_richting_lager_is_beter(uc, indicatoren):
     """De inrichting van de use case (laad_usecase.py) zet de richting goed (#120)."""
+    # Eén codering (polariteit); de oude kolommen volgen die via de trigger (V046)
     fout = [n for n in lager_is_beter(uc)
-            if indicatoren[n]["score_type"] == "+/+" or indicatoren[n]["interpretatie_logica"] == "pos_is_pos"]
+            if indicatoren[n]["polariteit"] != "lager_is_beter"
+            or indicatoren[n]["score_type"] != "+/-" or indicatoren[n]["interpretatie_logica"] != "-/+"]
     assert not fout, f"{uc}: staat als 'hoger is beter': {fout}"
 
 

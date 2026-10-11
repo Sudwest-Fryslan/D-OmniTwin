@@ -37,6 +37,35 @@ S = _script()
 BOLSWARD = ["BU19000001", "BU19000002", "BU19000004"]
 
 
+# ── Eén jaargang voor de geometrie en een drempel voor weggevallen codes (#159) ──
+
+def test_geometriejaar_een_bron():
+    """GEOMETRIE_JAAR in het script is de bron; sample, recept, use case en downloader volgen."""
+    jaar = S.GEOMETRIE_JAAR
+    assert json.loads((CBS / "datapackage.json").read_text(encoding="utf-8"))["geometrie_jaar"] == jaar
+    sample = json.loads((ROOT / "init_data" / "sample" / "datapackage.json").read_text(encoding="utf-8"))
+    assert {r.get("geometrie_jaar") for r in sample["resources"] if "geometrie_jaar" in r} == {jaar}
+    buurten = (ROOT / "usecases" / "cbs-gebiedsindelingen" / "datasets" / "cbs-gebied-buurten.json")
+    assert f"/gebiedsindelingen/{jaar}/" in buurten.read_text(encoding="utf-8")
+    for script in ("download_buurten_fryslan.py", "jaargang_controle.py"):
+        tekst = (ROOT / "init_data" / "scripts" / script).read_text(encoding="utf-8")
+        assert "GEOMETRIE_JAAR" in tekst and "gebiedsindelingen/20" not in tekst, script
+
+
+def test_weggevallen_drempel():
+    assert S.weggevallen_boven_drempel({2023: 50}, {2023: 950}, 0.05) == []
+    assert S.weggevallen_boven_drempel({2023: 60}, {2023: 940}, 0.05) == [(2023, 60, 1000)]
+    assert S.weggevallen_boven_drempel({}, {2024: 100}, 0.05) == []
+
+
+def test_recept_onder_drempel():
+    """De uitval in het recept (volledige download) blijft onder MAX_WEGGEVALLEN."""
+    pkg = json.loads((CBS / "datapackage.json").read_text(encoding="utf-8"))
+    weg = {int(j): n for j, n in pkg["codecontrole"]["weggevallen_waarden"].items()}
+    opgenomen = {int(j): n for j, n in pkg["controle"]["rijen_per_jaar"].items()}
+    assert S.weggevallen_boven_drempel(weg, opgenomen) == []
+
+
 @pytest.fixture(scope="module")
 def rijen(tmp_path_factory):
     S.CACHE_DIR = tmp_path_factory.mktemp("cbs-cache")

@@ -260,7 +260,7 @@ Configuratie → Titel → Thema → Onderdeel → Indicator
 | **v_kompas_hierarchie** | Complete hiërarchie (alle configs) | `KompasService.get_hierarchie()` |
 | **v_kompas_config_stats** | Statistieken per configuratie | `KompasService.get_configuraties()` |
 | **v_admin_indicatoren** | Admin view met alle metadata | `AdminRouter.get_indicatoren()` |
-| **v_score_types** | Documentatie score types | `AdminRouter.get_score_types()` |
+| **v_polariteiten** | Codelijst polariteit (#120, vervangt v_score_types) | `AdminRouter.get_polariteiten()` |
 
 > 💡 **Performance Tip:** Views bevatten complexe JOINs en filtering, waardoor Python code simpeler en sneller is.
 
@@ -413,7 +413,7 @@ sequenceDiagram
 |---------|-------------|----------|----------|
 | **Indicator Lijst** | `GET /api/admin/indicatoren` | indicatoren, color_schemas | - |
 | **Indicator Bewerken** | `PUT /api/admin/indicatoren/{uuid}` | indicatoren | UPDATE |
-| **Score Types** | `GET /api/admin/score-types` | - (view) | - |
+| **Polariteiten** | `GET /api/admin/polariteiten` | - (view) | - |
 | **Kleurschemas** | `GET /api/admin/color-schemas` | color_schemas | - |
 | **Hiërarchie Boom** | `GET /api/admin/hierarchie/tree` | kompas_titels, kompas_themas, kompas_onderdelen, kompas_indicator_mapping | - |
 
@@ -644,7 +644,7 @@ data/
 | v_kompas_hierarchie | 2 | ✅ ACTIEF |
 | v_kompas_config_stats | 1 | ✅ ACTIEF |
 | v_admin_indicatoren | 0 | 🟡 ONGEBRUIKT |
-| v_score_types | 1 | ✅ ACTIEF |
+| v_polariteiten | 1 | ✅ ACTIEF |
 | v_indicatoren_actueel | 0 | 🟡 ONGEBRUIKT |
 | v_gebieden_met_data | 0 | 🟡 ONGEBRUIKT |
 | v_gebied_data_overzicht | 0 | 🟡 ONGEBRUIKT |

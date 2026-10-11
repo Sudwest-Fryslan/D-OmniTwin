@@ -46,7 +46,13 @@ UIT_DIR = ROOT / "init_data" / "cbs"
 UIT_PACKAGE = UIT_DIR / "datapackage.json"
 CACHE_DIR = Path(os.environ.get("DATA_CACHE", ROOT / "data-cache")) / "cbs"
 GEOMETRIE = ROOT / "init_data" / "fryslan" / "buurten_fryslan.geojson"
+# Eén bron voor de jaargang van de buurtgeometrie (#159): download_buurten_fryslan.py gebruikt deze,
+# en tests/test_cbs_kerncijfers.py controleert de sample, het recept en de use case cbs-gebiedsindelingen.
 GEOMETRIE_JAAR = 2024
+# Waarden van buurtcodes die niet in de geometrie bestaan, vallen weg. Boven dit aandeel per jaargang
+# stopt de download (#159): dan is er een nieuwe herindeling of klopt de geometrie niet.
+# Nu: hoogstens 3,6% (Smallingerland, herindeling 2024; zie codecontrole in datapackage.json).
+MAX_WEGGEVALLEN = 0.05
 
 CBS_API = "https://opendata.cbs.nl/ODataApi/odata"
 LICENTIE = "CC BY 4.0"
@@ -264,6 +270,17 @@ def rij(gebied, naam, waarde, jaar):
             "scenario_id": "current", "bron_tabel": TABELLEN[jaar]}
 
 
+def weggevallen_boven_drempel(weg_waarden, opgenomen, max_fractie=MAX_WEGGEVALLEN):
+    """Jaargangen waarin meer dan max_fractie van de waarden bij buurtcodes zonder geometrie hoort.
+    weg_waarden en opgenomen: {jaar: aantal}. Geeft [(jaar, weg, totaal)] terug."""
+    uit = []
+    for jaar in sorted(set(weg_waarden) | set(opgenomen)):
+        weg, totaal = weg_waarden.get(jaar, 0), weg_waarden.get(jaar, 0) + opgenomen.get(jaar, 0)
+        if totaal and weg / totaal > max_fractie:
+            uit.append((jaar, weg, totaal))
+    return uit
+
+
 def download(codes=None, log=print):
     """Download de reeksen. codes=None: alle Friese buurten. Geeft (rijen, verslag) terug.
     Alleen buurtcodes uit de geometrie van GEOMETRIE_JAAR worden opgenomen."""
@@ -271,6 +288,7 @@ def download(codes=None, log=print):
     session = requests.Session()
     geo = geometrie_codes()
     titels, rijen, weg, ontbreekt_in_tabel, weg_waarden = {}, [], {}, {}, Counter()
+    opgenomen = {}
     for jaar, tabel in TABELLEN.items():
         titels[jaar] = controleer_tabel(session, jaar, tabel, log)
         records = haal_buurten(session, tabel, kolommen(jaar), codes)
@@ -297,10 +315,16 @@ def download(codes=None, log=print):
                 if t is not None and n:
                     rijen.append(rij(code, naam, round(t / n * a["factor"], 1), jaar))
         weg[jaar] = {gm: sorted(c) for gm, c in sorted(weg_jaar.items())}
+        opgenomen[jaar] = len(rijen) - n_voor
         doel = set(codes) if codes else set(geo)
         ontbreekt_in_tabel[jaar] = len(doel - tabelcodes)
         log(f"   📥 {jaar}: {len(records)} buurten · {len(rijen) - n_voor} waarden")
         time.sleep(0.3)
+    te_veel = weggevallen_boven_drempel(weg_waarden, opgenomen)
+    if te_veel:
+        sys.exit("❌ Te veel waarden van buurtcodes zonder geometrie " + str(GEOMETRIE_JAAR) + " (max "
+                 + f"{MAX_WEGGEVALLEN:.0%}): " + ", ".join(f"{j}: {w} van {t} ({w / t:.1%})" for j, w, t in te_veel)
+                 + ". Nieuwe buurtindeling? Werk de geometrie bij, of verhoog MAX_WEGGEVALLEN bewust.")
     rijen.sort(key=lambda r: (r["gebied_id"], r["indicator_naam"], r["jaar"]))
     return rijen, {"titels": titels, "weg": weg, "ontbreekt_in_tabel": ontbreekt_in_tabel,
                    "weg_waarden": weg_waarden, "geo": geo}

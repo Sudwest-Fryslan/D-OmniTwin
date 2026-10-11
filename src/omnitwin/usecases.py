@@ -759,9 +759,17 @@ def installeer_dataset(api, uc, ds, uit, variant=None):
 
 
 def _kort(res):
+    """Samenvatting per dataset: aantal bestanden per status, met de reden van de eerste melding
+    per status (#246: niet 57x "overgeslagen" zonder reden)."""
     if isinstance(res, str):
         return res
-    return ", ".join(str(lv.get("status", lv.get("http"))) for lv in res)
+    tel, reden = {}, {}
+    for lv in res:
+        st = str(lv.get("status", lv.get("http")))
+        tel[st] = tel.get(st, 0) + 1
+        if lv.get("melding") and st not in reden:
+            reden[st] = lv["melding"]
+    return ", ".join(f"{n}x {st}" + (f" ({reden[st]})" if st in reden else "") for st, n in tel.items())
 
 
 def mislukt(resultaat):

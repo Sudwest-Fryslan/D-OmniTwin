@@ -8,6 +8,7 @@ from sqlalchemy import text
 from typing import Optional, List, Literal
 from uuid import UUID
 from pydantic import BaseModel, UUID4
+from omnitwin import polariteit
 from omnitwin.database import get_db
 import json
 import logging
@@ -22,7 +23,7 @@ router = APIRouter(prefix="/api/admin", tags=["Admin"], dependencies=[Depends(ve
 # ============================================================================
 # Pydantic Models
 # ============================================================================
-class ScoreType(BaseModel):
+class Polariteit(BaseModel):
     code: str
     naam: str
     beschrijving: str
@@ -47,6 +48,7 @@ class IndicatorBase(BaseModel):
     bron: Optional[str]
     eenheid: Optional[str]
     score_type: str
+    polariteit: Optional[str] = None
     color_schema_id: Optional[int]
     color_schema_naam: Optional[str]
     admin_notes: Optional[str]
@@ -56,7 +58,8 @@ class IndicatorUpdate(BaseModel):
     omschrijving: Optional[str] = None
     bron: Optional[str] = None
     eenheid: Optional[str] = None
-    score_type: Optional[str] = None
+    score_type: Optional[str] = None  # oude codering; zet de polariteit (#120)
+    polariteit: Optional[str] = None  # hoger_is_beter | lager_is_beter | neutraal
     color_schema_id: Optional[int] = None
     admin_notes: Optional[str] = None
 
@@ -109,7 +112,7 @@ def update_llm_config(
     """Update active LLM Config."""
     heeft_api_type = db.execute(text("""
         SELECT 1 FROM information_schema.columns
-        WHERE table_schema = 'public' AND table_name = 'llm_config' AND column_name = 'api_type'
+        WHERE table_schema IN ('public', 'app') AND table_name = 'llm_config' AND column_name = 'api_type'
     """)).fetchone() is not None
     if heeft_api_type:
         db.execute(text("""
@@ -220,15 +223,15 @@ def update_system_prompt(
 # ============================================================================
 # Hierarchy Endpoints
 # ============================================================================
-@router.get("/score-types", response_model=List[ScoreType])
-def get_score_types(
+@router.get("/polariteiten", response_model=List[Polariteit])
+def get_polariteiten(
     db: Session = Depends(get_db),
 ):
-    """Get all valid score types with descriptions."""
-    result = db.execute(text("SELECT * FROM v_score_types"))
+    """Codelijst polariteit van indicatoren (#120): hoger_is_beter, lager_is_beter, neutraal."""
+    result = db.execute(text("SELECT code, naam, beschrijving, voorbeelden FROM v_polariteiten"))
     rows = result.fetchall()
     return [
-        ScoreType(
+        Polariteit(
             code=row[0],
             naam=row[1],
             beschrijving=row[2],
@@ -291,11 +294,15 @@ def get_indicatoren(
     search: Optional[str] = None,
     score_type: Optional[str] = None,
     ontologie_status: Optional[str] = None,
+    met_data: bool = False,
     limit: int = 100,
     offset: int = 0,
     db: Session = Depends(get_db),
 ):
-    """Get all indicators with admin info. Filter by ontologie_status for validation workflow."""
+    """Get all indicators with admin info. Filter by ontologie_status for validation workflow.
+    met_data: alleen indicatoren met minstens één waarde (#246; definities zonder levering weg)."""
+    met_data_sql = (" AND EXISTS (SELECT 1 FROM gebied_data gd"
+                    " WHERE gd.indicator_uuid = i.uuid AND gd.waarde IS NOT NULL)")
     query = """
         SELECT 
             i.uuid::text,
@@ -312,7 +319,8 @@ def get_indicatoren(
             i.beschrijving_ai,
             i.gevalideerd_op,
             i.is_actief,
-            i.vervangen_door_id
+            i.vervangen_door_id,
+            i.polariteit
         FROM indicatoren i
         LEFT JOIN color_schemas cs ON i.color_schema_id = cs.id
         WHERE 1=1
@@ -330,7 +338,10 @@ def get_indicatoren(
     if ontologie_status:
         query += " AND i.ontologie_status = :ontologie_status"
         params["ontologie_status"] = ontologie_status
-    
+
+    if met_data:
+        query += met_data_sql
+
     query += " ORDER BY i.naam LIMIT :limit OFFSET :offset"
     
     result = db.execute(text(query), params)
@@ -348,6 +359,8 @@ def get_indicatoren(
     if ontologie_status:
         count_query += " AND i.ontologie_status = :ontologie_status"
         count_params["ontologie_status"] = ontologie_status
+    if met_data:
+        count_query += met_data_sql
     total = db.execute(text(count_query), count_params).scalar()
     
     return {
@@ -367,7 +380,8 @@ def get_indicatoren(
                 "beschrijving_ai": row[11],
                 "gevalideerd_op": row[12].isoformat() if row[12] else None,
                 "is_actief": row[13],
-                "vervangen_door_id": str(row[14]) if row[14] else None
+                "vervangen_door_id": str(row[14]) if row[14] else None,
+                "polariteit": row[15],
             } for row in rows
         ],
         "total": total,
@@ -404,7 +418,8 @@ def get_indicator(
             i.vervangen_door_id,
             i.bron_systeem_api,
             i.bron_tabel_referentie,
-            i.laatste_check_datum
+            i.laatste_check_datum,
+            i.polariteit
         FROM indicatoren i
         LEFT JOIN color_schemas cs ON i.color_schema_id = cs.id
         LEFT JOIN users u ON i.gevalideerd_door = u.id
@@ -437,7 +452,8 @@ def get_indicator(
         "vervangen_door_id": str(row[18]) if row[18] else None,
         "bron_systeem_api": row[19],
         "bron_tabel_referentie": row[20],
-        "laatste_check_datum": row[21].isoformat() if row[21] else None
+        "laatste_check_datum": row[21].isoformat() if row[21] else None,
+        "polariteit": row[22],
     }
 
 @router.put("/indicatoren/{uuid}")
@@ -463,7 +479,13 @@ def update_indicator(
     if data.eenheid is not None:
         updates.append("eenheid = :eenheid")
         params["eenheid"] = data.eenheid
-    if data.score_type is not None:
+    if data.polariteit is not None:
+        if data.polariteit not in polariteit.POLARITEITEN:
+            raise HTTPException(400, "Ongeldige polariteit: kies hoger_is_beter, lager_is_beter of neutraal")
+        updates.append("polariteit = :polariteit")
+        params["polariteit"] = data.polariteit
+    elif data.score_type is not None:
+        # Oude codering: de trigger leidt de polariteit af (V046, #120)
         if data.score_type not in ['+/+', '+/-', '-/+', '-/-']:
             raise HTTPException(400, "Invalid score_type. Must be +/+, +/-, -/+, or -/-")
         updates.append("score_type = :score_type")

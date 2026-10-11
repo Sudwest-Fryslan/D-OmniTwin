@@ -55,14 +55,10 @@ USECASES_DIR = ROOT / "usecases"
 # Vaste namespace: dezelfde naam geeft altijd dezelfde uuid
 NAMESPACE = uuid.UUID("6f1d3c2a-0b7e-4c8e-9a51-d0a1b2c3e4f5")
 
-RICHTING = {
-    # richting -> (interpretatie_logica, score_type); zie report_service en color_scale_service.
-    # Neutraal: score_type blijft '+/+' (kaartkleur), interpretatie_logica 'neutraal' zegt
-    # dat er geen oordeel bij hoort (de chat zegt dan niet 'beter' of 'slechter', #149).
-    "hoger_is_beter": ("pos_is_pos", "+/+"),
-    "lager_is_beter": ("-/+", "+/-"),
-    "neutraal": ("neutraal", "+/+"),
-}
+# richting = indicatoren.polariteit (#120): hoger_is_beter | lager_is_beter | neutraal.
+# Neutraal: geen oordeel (de chat zegt dan niet 'beter' of 'slechter', #149). De oude
+# kolommen score_type en interpretatie_logica volgen via de trigger uit V046.
+RICHTING = ("hoger_is_beter", "lager_is_beter", "neutraal")
 
 
 def pakketten(namen, alle, map_=USECASES_DIR):
@@ -85,11 +81,9 @@ def zet_richting(cur, indicatoren):
     for ind in indicatoren:
         if ind["richting"] not in RICHTING:
             continue  # onbekende richting: test_usecase_pakketten vangt dit af
-        logica, score_type = RICHTING[ind["richting"]]
         cur.execute(
-            "UPDATE indicatoren SET interpretatie_logica = %s, score_type = %s, updated_at = CURRENT_TIMESTAMP "
-            "WHERE naam = %s",
-            (logica, score_type, ind["naam"]),
+            "UPDATE indicatoren SET polariteit = %s, updated_at = CURRENT_TIMESTAMP WHERE naam = %s",
+            (ind["richting"], ind["naam"]),
         )
         if cur.rowcount == 0:
             print(f"   ⚠️ indicator niet gevonden: {ind['naam']}")
@@ -104,18 +98,17 @@ def zet_richting(cur, indicatoren):
 
 def maak_afgeleid(cur, afg, bron_uc):
     ind_uuid = str(uuid.uuid5(NAMESPACE, afg["naam"]))
-    logica, score_type = RICHTING.get(afg.get("richting"), ("pos_is_pos", "+/+"))
+    richting = afg.get("richting") if afg.get("richting") in RICHTING else "hoger_is_beter"
     code = f"IND_{''.join(c if c.isalnum() else '_' for c in afg['naam'].upper())[:30]}_{ind_uuid[:8]}"
     cur.execute(
         """
-        INSERT INTO indicatoren (uuid, naam, code, eenheid, categorie, interpretatie_logica, bron, score_type, status, is_actief)
-        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, 'O', TRUE)
+        INSERT INTO indicatoren (uuid, naam, code, eenheid, categorie, polariteit, bron, status, is_actief)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, 'O', TRUE)
         ON CONFLICT (uuid) DO UPDATE SET naam = EXCLUDED.naam, eenheid = EXCLUDED.eenheid,
-            interpretatie_logica = EXCLUDED.interpretatie_logica, score_type = EXCLUDED.score_type,
-            bron = EXCLUDED.bron, updated_at = CURRENT_TIMESTAMP
+            polariteit = EXCLUDED.polariteit, bron = EXCLUDED.bron, updated_at = CURRENT_TIMESTAMP
         """,
-        (ind_uuid, afg["naam"], code, afg.get("eenheid", "%"), afg.get("categorie"), logica,
-         f"Afgeleid: {afg['teller']} ÷ {afg['noemer']} (use case {bron_uc})", score_type),
+        (ind_uuid, afg["naam"], code, afg.get("eenheid", "%"), afg.get("categorie"), richting,
+         f"Afgeleid: {afg['teller']} ÷ {afg['noemer']} (use case {bron_uc})"),
     )
     # Waarde per gebied en jaar: teller en noemer uit hetzelfde jaar en scenario (#159).
     # Zonder noemer in dat jaar geen waarde; jaren mengen geeft schijnbare trends.

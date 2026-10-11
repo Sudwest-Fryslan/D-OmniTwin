@@ -19,7 +19,9 @@ import { ExterneKaartlagenPage } from './pages/ExterneKaartlagenPage';
 import { DataKwaliteitPage } from './pages/DataKwaliteitPage';
 import { OrganisatiePage } from './pages/OrganisatiePage';
 import { AIUsecasesPage } from './pages/AIUsecasesPage';
+import { MeldingenPage } from './pages/MeldingenPage';
 import {
+  Inbox,
   LayoutDashboard,
   Database,
   Palette,
@@ -188,6 +190,14 @@ const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
           </NavLink>
 
           <NavLink
+            to="/admin/meldingen"
+            className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
+          >
+            <Inbox size={18} />
+            Meldingen
+          </NavLink>
+
+          <NavLink
             to="/admin/logs"
             className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
           >
@@ -231,6 +241,7 @@ const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
               <Route path="/admin/kleurschemas" element={<>Kleurschema's</>} />
               <Route path="/admin/llm" element={<>AI Configuratie</>} />
               <Route path="/admin/ai-usecases" element={<>AI-usecases</>} />
+              <Route path="/admin/meldingen" element={<>Meldingen</>} />
               <Route path="/admin/logs" element={<>Log Viewer</>} />
               <Route path="/admin/externe-lagen" element={<>Externe Kaartlagen</>} />
               <Route path="/admin/organisatie" element={<>Organisatie en thema</>} />
@@ -452,6 +463,10 @@ function App() {
 
           <Route path="/admin/ai-usecases" element={
             <ProtectedRoute><AIUsecasesPage /></ProtectedRoute>
+          } />
+
+          <Route path="/admin/meldingen" element={
+            <ProtectedRoute><MeldingenPage /></ProtectedRoute>
           } />
 
           <Route path="/admin/account" element={

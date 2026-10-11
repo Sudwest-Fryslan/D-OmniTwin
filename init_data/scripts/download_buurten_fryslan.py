@@ -21,14 +21,16 @@ FRIESE_GEMEENTEN = {
     'GM0096': 'Vlieland', 'GM1949': 'Waadhoeke', 'GM0098': 'Weststellingwerf'
 }
 
-WFS_BASE = "https://service.pdok.nl/cbs/gebiedsindelingen/2024/wfs/v1_0"
+from download_cbs_kerncijfers import GEOMETRIE_JAAR  # één bron voor de jaargang (#159)
+
+WFS_BASE = f"https://service.pdok.nl/cbs/gebiedsindelingen/{GEOMETRIE_JAAR}/wfs/v1_0"
 LAYER = "gebiedsindelingen:buurt_gegeneraliseerd"
 PAGE_SIZE = 1000
 
 
 def download_buurten():
     print("=" * 60)
-    print("Download CBS Buurten 2024 — Fryslân (via Geopandas GML)")
+    print(f"Download CBS Buurten {GEOMETRIE_JAAR} — Fryslân (via Geopandas GML)")
     print("=" * 60)
     print(f"Bron: PDOK WFS ({LAYER})")
     print()

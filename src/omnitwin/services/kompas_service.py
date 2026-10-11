@@ -9,6 +9,7 @@ from sqlalchemy import text
 from datetime import datetime
 import json
 
+from omnitwin import polariteit
 from omnitwin.services import labelklasse as lk
 from omnitwin.services import percentielklasse as pk
 from omnitwin.services.color_scale_service import ColorScaleService
@@ -465,6 +466,7 @@ class KompasService:
             WHERE indicator_uuid = CAST(:uuid AS UUID)
               AND gebied_id = :gebied_id
               AND jaar IS NOT NULL
+              AND COALESCE(scenario_id, 'current') = 'current'
             ORDER BY jaar ASC
         """)
         
@@ -750,10 +752,12 @@ class KompasService:
                 WHERE gd.indicator_uuid = ANY(CAST(:uuids AS uuid[]))
                   AND gd.gebied_id = ANY(:buurt_ids)
                   AND gd.waarde IS NOT NULL
+                  AND COALESCE(gd.scenario_id, 'current') = 'current'
                   AND gd.jaar = (
                       SELECT MAX(gd2.jaar) FROM gebied_data gd2 
                       WHERE gd2.indicator_uuid = gd.indicator_uuid 
                         AND gd2.gebied_id = ANY(:buurt_ids2)
+                        AND COALESCE(gd2.scenario_id, 'current') = 'current'
                   )
                 GROUP BY gd.indicator_uuid
             """)
@@ -970,12 +974,8 @@ class KompasScoringService:
             # Zekeringscheck
             bin_idx = min(7, max(0, bin_idx))
                 
-            # Inverse logic
-            # +/+ : Normal (high = green)
-            # +/- : Reverse (high = red)
-            # -/- : Reverse (low = green, high = red)
-            # -/+ : Normal (low = red, high = green)
-            should_reverse = score_type in ['+/-', '-/-', '-=-'] or score_type == "positive_descending" or inverse
+            # Lager is beter: omkeren (één regel, omnitwin.polariteit, #120)
+            should_reverse = polariteit.lager_is_beter(score_type, inverse)
             if should_reverse:
                 bin_idx = 7 - bin_idx
                 

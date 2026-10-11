@@ -11,6 +11,7 @@ from sqlalchemy import text
 from typing import Dict, Any, List, Optional
 import json
 
+from omnitwin import polariteit
 from omnitwin.fouten import GebruikersFout
 from omnitwin.services.organisatie import eigen_gemeente_code, lees_organisatie
 
@@ -153,13 +154,12 @@ class ReportDataService:
             impact = "neutraal"
             score_uitleg = "neutraal"
             
-            # De gebruiker gaf aan dat voor (+/-) geldt: "een lage waarde is positief, hoge waarde is negatief".
-            # Dit betekent dat '+/-', net als '-/-' en '-/+', de regel 'lager is beter' volgen.
-            # Alleen '+/+' betekent 'hoger is beter'.
-            if score_type == '+/+':
+            # Eén regel voor de richting (omnitwin.polariteit, #120)
+            richting = polariteit.uit_oud(score_type)
+            if richting == polariteit.HOGER_IS_BETER:
                 impact = "bovengemiddeld positief" if z > 0 else "ondergemiddeld negatief"
                 score_uitleg = "Hogere waarde is beter"
-            elif score_type in ['-/-', '-/+', '+/-']:
+            elif richting == polariteit.LAGER_IS_BETER:
                 impact = "bovengemiddeld negatief" if z > 0 else "ondergemiddeld positief"
                 score_uitleg = "Lagere waarde is beter"
                 
@@ -274,6 +274,8 @@ class ReportDataService:
                            ROW_NUMBER() OVER(PARTITION BY indicator_uuid, gebied_id ORDER BY jaar DESC) as rn
                     FROM gebied_data
                     WHERE gebied_id = ANY(:gebieden_b)
+                      AND COALESCE(scenario_id, 'current') = 'current'
+                      AND jaar IS NOT NULL
                 ) gd
                 WHERE gd.rn = 1 AND NOT is_kleine_aantallen(gd.n)
                 GROUP BY gd.indicator_uuid
@@ -324,8 +326,8 @@ class ReportDataService:
             delta = waarde_a - ref_waarde
             score_type = ind_a['score_type']
 
-            # Bepaal impact op basis van score_type
-            if score_type == '+/+':
+            # Bepaal impact op basis van de polariteit (#120)
+            if polariteit.uit_oud(score_type) == polariteit.HOGER_IS_BETER:
                 impact = "bovengemiddeld positief" if delta > 0 else "ondergemiddeld negatief"
             else:
                 impact = "bovengemiddeld negatief" if delta > 0 else "ondergemiddeld positief"
@@ -406,9 +408,9 @@ class ReportDataService:
 
     def _determine_impact(self, z_score: float, score_type: str) -> str:
         """Bepaal de impact-tekst op basis van z-score en score_type."""
-        if score_type == '+/+':
+        if polariteit.uit_oud(score_type) == polariteit.HOGER_IS_BETER:
             return "bovengemiddeld positief" if z_score > 0 else "ondergemiddeld negatief"
-        else:  # -/-, -/+, +/-
+        else:  # lager is beter (#120)
             return "bovengemiddeld negatief" if z_score > 0 else "ondergemiddeld positief"
 
     def generate_multi_gebied_payload(
@@ -1114,11 +1116,13 @@ class ReportDataService:
             JOIN indicatoren i ON gd.indicator_uuid = i.uuid
             WHERE gd.gebied_id = ANY(:gebied_ids)
               AND i.naam = 'Inwoners'
+              AND COALESCE(gd.scenario_id, 'current') = 'current'
               AND gd.jaar = (
                   SELECT MAX(gd2.jaar)
                   FROM gebied_data gd2
                   WHERE gd2.gebied_id = gd.gebied_id
                     AND gd2.indicator_uuid = gd.indicator_uuid
+                    AND COALESCE(gd2.scenario_id, 'current') = 'current'
               )
         """)
         inw_rows = self.db.execute(inwoners_query, {"gebied_ids": actieve_ids}).fetchall()

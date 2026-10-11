@@ -45,7 +45,7 @@ Verwacht: `sample-open-zonder-adapter` 416 regels (32 x 13 buurten), `sample-int
 ## Bewijs
 
 <!-- bewijs:start -->
-*Gemaakt op 11-10-2026 met D-OmniTwin 0.5.0-rc.1 (use case 0.2.0); geslaagd. Verslag: [`bewijs/bewijs.json`](bewijs/bewijs.json). Opnieuw maken (bij een release): `python -m omnitwin.usecases bewijs sample-bronbibliotheek`.*
+*Gemaakt op 11-10-2026 met D-OmniTwin 0.5.0 (use case 0.2.0); geslaagd. Verslag: [`bewijs/bewijs.json`](bewijs/bewijs.json). Opnieuw maken (bij een release): `python -m omnitwin.usecases bewijs sample-bronbibliotheek`.*
 
 ![Afstand tot koele plek (DEMODATA, plaatsvervanger voor de interne bron)](bewijs/kaart.webp)
 *Afstand tot koele plek (DEMODATA, plaatsvervanger voor de interne bron)*

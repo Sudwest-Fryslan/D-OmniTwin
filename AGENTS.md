@@ -65,6 +65,8 @@ python run_dev.py
 python -m pytest -m unit                  # zoals de CI-job Unit Tests, zonder database
 python -m pytest tests/test_migraties.py  # single test file
 # integration/e2e: tegen een draaiende stack, zie tests/integration/test_sample_stack.py en tests/e2e/README.md
+# alles zoals de CI, voor één branch (verse stack, integratie, e2e, tijd per stap):
+scripts/ci/ci-lokaal.sh <branch> [projectnaam] [poort]
 ```
 
 ### Admin Panel (React)
@@ -73,6 +75,8 @@ cd admin-panel
 npm install
 npm start        # Vite dev server on port 3000 (proxy /api -> :8000)
 npm run build:static  # production build + kopie naar static/admin-panel (commit die map mee)
+# Aanbevolen voor consistente hashes conform CI (node:24 op Linux, voorkomt afwijkingen tussen Windows en Linux):
+# docker run --rm -u $(id -u):$(id -g) -v "$PWD:/app" -w /app/admin-panel node:24 npm run build:static
 npm run typecheck     # tsc --noEmit
 npm test         # Vitest (eenmalig)
 npm run lint     # ESLint

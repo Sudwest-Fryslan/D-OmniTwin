@@ -9,6 +9,10 @@
 # validatie van publiccode.yml (#56).
 #
 # Nog niet: Docker Hub push (semver-tags, #27).
+#
+# Runner (#364): standaard ubuntu-latest (GitHub). Met de repo-variabele CI_RUNNER
+# draait alles op een eigen runner, bijv. CI_RUNNER=["self-hosted","d-omnitwin"]
+# (Settings > Secrets and variables > Actions > Variables). Leegmaken = terug naar GitHub.
 
 name: CI
 
@@ -32,7 +36,7 @@ jobs:
   # ──────────────────────────────────────────────
   unit-tests:
     name: Unit Tests (Python ${{ matrix.python-version }})
-    runs-on: ubuntu-latest
+    runs-on: ${{ fromJSON(vars.CI_RUNNER || '"ubuntu-latest"') }}
     strategy:
       matrix:
         python-version: ["3.11", "3.12"]
@@ -65,7 +69,7 @@ jobs:
   # ──────────────────────────────────────────────
   docker-build:
     name: Docker Build Check
-    runs-on: ubuntu-latest
+    runs-on: ${{ fromJSON(vars.CI_RUNNER || '"ubuntu-latest"') }}
     needs: unit-tests  # Bouw pas als unit tests slagen
 
     steps:
@@ -113,7 +117,7 @@ jobs:
   # ──────────────────────────────────────────────
   integration:
     name: Integratietests (verse stack)
-    runs-on: ubuntu-latest
+    runs-on: ${{ fromJSON(vars.CI_RUNNER || '"ubuntu-latest"') }}
     needs: unit-tests
     timeout-minutes: 90
     env:
@@ -219,7 +223,7 @@ jobs:
   # ──────────────────────────────────────────────
   admin-panel:
     name: Admin-panel (typecheck, lint, test, build)
-    runs-on: ubuntu-latest
+    runs-on: ${{ fromJSON(vars.CI_RUNNER || '"ubuntu-latest"') }}
     timeout-minutes: 15
     defaults:
       run:
@@ -266,7 +270,7 @@ jobs:
   # ──────────────────────────────────────────────
   publiccode:
     name: publiccode.yml valideren
-    runs-on: ubuntu-latest
+    runs-on: ${{ fromJSON(vars.CI_RUNNER || '"ubuntu-latest"') }}
 
     steps:
       - name: Checkout code

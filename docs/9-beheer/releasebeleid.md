@@ -63,6 +63,11 @@ main ──●──●──●──●──●──●──●──●─
 
 Voorbeeld voor `0.2.0`.
 
+0. **Scope vooraf, controle vooraf.** Bij de start van een versie staat in de GitHub-mijlpaal wat erin komt (issues en het epic). Wat later bijkomt of afvalt, gaat er expliciet in of uit. Een release-PR (ook een `-rc`) komt er pas als de controle leeg is:
+   ```bash
+   gh issue list --milestone "<mijlpaal>" --state open   # moet leeg zijn
+   ```
+   en het epic van de versie gesloten is. Staat er nog iets open, dan geen release maar eerst afmaken of bewust verschuiven (met een regel in het epic waarom). Aanleiding: 0.5.0 ging uit met open punten in epic #316, waardoor 0.5.1 nodig was.
 1. **Klaar op `main`:** alle PR's voor deze versie zijn gemerged, de CI is groen.
 2. **Release-PR naar `main`** (branch `chore/release-0.2.0`):
    - `VERSION`, `publiccode.yml` (`softwareVersion` en `releaseDate`) en `admin-panel/package.json` (plus `package-lock.json`, via `npm version 0.2.0 --no-git-tag-version` in `admin-panel/`) op `0.2.0`;

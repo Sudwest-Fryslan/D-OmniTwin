@@ -1,6 +1,7 @@
 // TypeScript types for Admin Panel
 
-export interface ScoreType {
+// Codelijst polariteit van indicatoren (#120)
+export interface Polariteit {
     code: string;
     naam: string;
     beschrijving: string;
@@ -26,6 +27,7 @@ export interface Indicator {
     bron: string | null;
     eenheid: string | null;
     score_type: string;
+    polariteit?: string;
     color_schema_id: number | null;
     color_schema_naam: string | null;
     color_schema_colors?: ColorSchema['colors'];
@@ -50,7 +52,7 @@ export interface IndicatorUpdate {
     omschrijving?: string;
     bron?: string;
     eenheid?: string;
-    score_type?: string;
+    polariteit?: string;
     color_schema_id?: number;
     admin_notes?: string;
 }
@@ -112,6 +114,8 @@ export interface DashboardStats {
     with_data_pct: number;
     metadata_complete_count: number;
     metadata_complete_pct: number;
+    metadata_complete_met_data_count?: number;
+    metadata_complete_met_data_pct?: number;
     trending_count: number;
 }
 
@@ -302,4 +306,30 @@ export interface LokaalBestand {
     crs?: string | null;
     geometry_type?: string;
     fout?: string;
+}
+
+// ─── Terugmeldvoorziening (#311) ──────────────────────────────────────────
+
+export type MeldingsType = 'data' | 'ai' | 'systeem' | 'overig';
+export type MeldingsStatus = 'nieuw' | 'doorgestuurd_naar_bron' | 'in_behandeling' | 'afgehandeld' | 'afgewezen';
+
+export interface Melding {
+    id: string;
+    type: MeldingsType;
+    onderwerp: string;
+    toelichting: string;
+    context: Record<string, any>;
+    melder_email: string | null;
+    status: MeldingsStatus;
+    notitie_beheer: string | null;
+    aangemaakt_op: string | null;
+    bijgewerkt_op: string | null;
+}
+
+export interface MeldingenResponse {
+    items: Melding[];
+    tellingen: Record<string, number>;
+    totaal: number;
+    limit: number;
+    offset: number;
 }

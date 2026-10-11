@@ -49,7 +49,8 @@ class InprocesLaadApi:
         from omnitwin.laden.problemen import Probleem
         from omnitwin.routers import laden as r
         if route != "laden":
-            return {"http": 501, "status": "overgeslagen", "melding": f"route {route} niet in-process"}
+            return {"http": 501, "status": "overgeslagen", "melding": f"route {route} kan niet met --inproces: installeer via de laad-API "
+                                                                   "(HTTP) met een machineclient"}
         pad = Path(pad)
         mt = MEDIATYPE.get(pad.suffix) or mimetypes.guess_type(pad.name)[0] or "application/octet-stream"
         sleutel = f"{ds_id}-{hashlib.sha256(pad.read_bytes()).hexdigest()[:16]}"
