@@ -42,7 +42,7 @@ stap() { # stap <naam>: sluit de vorige stap af en begint een nieuwe
 cd "$REPO" || exit 2
 git fetch -q origin || { sleep 5; git fetch -q origin; } || true
 git worktree remove --force "$WT" 2>/dev/null
-[ -e "$WT" ] && rm -rf "$WT"
+[ -e "$WT" ] && { rm -rf "$WT" || { echo "map $WT is nog in gebruik (draait er nog een container?); kies een andere projectnaam"; exit 2; }; }
 for _ in 1 2 3; do git worktree add -q --detach "$WT" "origin/$BRANCH" && break; sleep 5; done
 git -C "$WT" rev-parse --verify -q HEAD >/dev/null || { echo "== RESULTAAT $BRANCH: WORKTREE_FAALT"; exit 2; }
 cd "$WT" || exit 2
@@ -70,7 +70,7 @@ for v in 3.11 3.12; do
   stap "unit $v"
   docker run --rm -v "$W":/app -w /app -e PYTHONDONTWRITEBYTECODE=1 "python:$v-slim" sh -c \
     "pip install -q --root-user-action=ignore -r requirements-ci.txt && pip install -q --root-user-action=ignore -e . --no-deps && pytest -p no:cacheprovider -m unit -q --tb=short 2>&1 | tail -3" | tee "$UNIT_UIT"
-  grep -q " failed\| error" "$UNIT_UIT" && RESULT=UNIT_FAALT
+  { grep -q " passed" "$UNIT_UIT" && ! grep -q " failed\| error" "$UNIT_UIT"; } || RESULT=UNIT_FAALT
 done
 
 stap admin-panel
