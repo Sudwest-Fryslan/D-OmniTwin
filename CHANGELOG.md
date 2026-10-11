@@ -8,6 +8,10 @@ Eerdere wijzigingen, van vóór dit bestand, zijn terug te vinden in de git-hist
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-10-11
+
+Cijfers kloppen. Alles uit [0.5.0-rc.1](#050-rc1---2026-10-11) (besluiten over de dump van de SWF-gebiedsmonitor, kleine aantallen overal hetzelfde onderdrukt, filterbare gemeenteselectie, FastAPI en afhankelijkheden), plus: een **terugmeldvoorziening** voor gebruikers ([#311](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/311)), **één polariteit per indicator** ([#120](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/120)), waarmee ook `-/+` op de kaart en in het Kompas weer "lager is beter" is, de **applicatiedata in een eigen schema `app`** ([#137](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/137), stap 1; brondata en stuurinformatie volgen in [#366](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/366)) en een **CI die op een eigen runner kan draaien** ([#364](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/364)). Lees bij een upgrade de paragraaf **Migreren**: drie nieuwe migraties, en eigen scripts die `public.users` e.d. gebruiken moeten naar `app.`.
+
 ### Toegevoegd
 
 - **Terugmeldvoorziening voor gebruikers** ([#311](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/311)): laagdrempelige, privacy-vriendelijke feedbackloop in de viewer voor data, metadata, AI-antwoorden en technische storingen. D-OmniTwin fungeert als regielogboek (&quot;bron blijft bron&quot;); feedback wordt gesignaleerd en geregistreerd om door te sturen naar bronhouders.
@@ -22,8 +26,13 @@ Eerdere wijzigingen, van vóór dit bestand, zijn terug te vinden in de git-hist
 - **Applicatiedata in een eigen schema `app`** ([#137](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/137), stap 1): gebruikers, sessies, API-sleutels, OIDC-sessies, logs en logconfiguratie, LLM-configuratie, gebruikersvoorkeuren en -meldingen, deduplicatie-uitzonderingen en de AI-vrijgave en het AI-logboek staan niet meer in `public` maar in `app`. PostgREST en pg_featureserv hebben daar geen toegang; met `pg_dump -n app` is de geheime applicatiedata los te back-uppen. Stuurinformatie en brondata blijven voorlopig in `public` (vervolgstap). Uitleg: [db/README.md](db/README.md#schemas-137).
 - De CI kan op een eigen runner draaien ([#364](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/364)): met de repo-variabele `CI_RUNNER` (bijv. `["self-hosted","d-omnitwin"]`) draaien alle jobs van `ci.yml` daar; zonder variabele zoals altijd op `ubuntu-latest`.
 
+### Opgelost
+
+- **Polariteit `-/+` overal gelijk gelezen** ([#120](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/120)): de kaart, het Kompas en de percentielklassen lazen `-/+` als "hoger is beter", rapporten en de chat als "lager is beter". Nu leest alles de polariteit via één regel (`src/omnitwin/polariteit.py`); dat raakt onder andere SWF-indicatoren met *omkeren*.
+
 ### Migreren
 
+- Migraties `V045__gebruiker_meldingen.sql`, `V046__polariteit.sql` en `V047__schema_app.sql` draaien vanzelf bij de start (`db-init`). Maak eerst een back-up.
 - Migratie `V046__polariteit.sql` zet de bestaande waarden om (neutraal/N/A → `neutraal`, `+/+` → `hoger_is_beter`, elke andere score_type → `lager_is_beter`) en vervangt de view `v_score_types` door `v_polariteiten`. Daarna is `score_type` altijd `+/+` of `+/-`.
 - Migratie `V047__schema_app.sql` draait vanzelf bij de start van `db-init`: de tabellen verhuizen met hun data (`ALTER TABLE … SET SCHEMA`), en de database krijgt `search_path` `"$user", public, app`. Eigen scripts of queries die `public.users` (of een andere app-tabel) met schema noemen, moeten naar `app.users` of zonder schema. Het AI-logboek en de hashketen lopen ongewijzigd door.
 
@@ -338,7 +347,8 @@ Eerste release; deze sectie vat de ontwikkeling sinds het begin samen, details s
 - De backend-container draait als niet-root gebruiker ([#78](https://github.com/Sudwest-Fryslan/D-OmniTwin/pull/78)).
 - Beheeromgeving gebouwd zonder sourcemaps ([#81](https://github.com/Sudwest-Fryslan/D-OmniTwin/pull/81)).
 
-[Unreleased]: https://github.com/Sudwest-Fryslan/D-OmniTwin/compare/v0.5.0-rc.1...HEAD
+[Unreleased]: https://github.com/Sudwest-Fryslan/D-OmniTwin/compare/v0.5.0...HEAD
+[0.5.0]: https://github.com/Sudwest-Fryslan/D-OmniTwin/compare/v0.5.0-rc.1...v0.5.0
 [0.5.0-rc.1]: https://github.com/Sudwest-Fryslan/D-OmniTwin/compare/v0.4.0...v0.5.0-rc.1
 [0.4.0]: https://github.com/Sudwest-Fryslan/D-OmniTwin/compare/v0.3.1...v0.4.0
 [0.3.1]: https://github.com/Sudwest-Fryslan/D-OmniTwin/compare/v0.3.0...v0.3.1
