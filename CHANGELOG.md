@@ -8,6 +8,10 @@ Eerdere wijzigingen, van vóór dit bestand, zijn terug te vinden in de git-hist
 
 ## [Unreleased]
 
+### Toegevoegd
+
+- **CI lokaal** ([#362](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/362)): `scripts/ci/ci-lokaal.sh <branch>` test een branch met dezelfde stappen als de CI (publiccode, unit 3.11/3.12, admin-panel met build-controle, verse stack, integratie, browser-e2e) in een aparte worktree, en toont de tijd per stap. Werkt op Linux, macOS en Windows (Git Bash).
+
 ## [0.5.0-rc.1] - 2026-10-11
 
 **Pre-release.** Cijfers kloppen. De besluiten over de database-dump van de huidige SWF-gebiedsmonitor zijn verwerkt ([#341](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/341), [#342](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/342)): statussen, één Waterdiepte op straat en geen legacy-waarden van 2011–2012. Kleine aantallen worden overal hetzelfde onderdrukt, met één instelbare drempel ([#325](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/325)). Verder de gemeenteselectie als filterbare combobox ([#308](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/308)), het webframework bijgewerkt (FastAPI, Starlette, uvicorn; [#172](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/172)) en de overige afhankelijkheden. De herindeling van de database in schema's ([#137](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/137)) zit bewust nog niet in deze pre-release; die komt in 0.5.0 als hij aantoonbaar goed werkt. Lees bij een upgrade de paragraaf **Migreren**.
