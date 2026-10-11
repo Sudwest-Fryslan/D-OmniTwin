@@ -27,6 +27,7 @@ from typing import Any, Callable, Dict, Iterable, List, Optional, Sequence, Tupl
 
 from sqlalchemy import text
 
+from omnitwin import polariteit
 from omnitwin.services import kleine_aantallen as ka
 from omnitwin.services import zoektaal
 from omnitwin.services.grounding import ongegronde_getallen
@@ -362,15 +363,11 @@ def richting(score_type: Optional[str], interpretatie_logica: Optional[str]) -> 
     """
     'hoger_is_beter' | 'lager_is_beter' | 'neutraal'.
 
-    Zelfde regel als report_service: alleen '+/+' is hoger-is-beter, de andere score_types
-    lager-is-beter. interpretatie_logica 'neutraal' of 'N/A' (use case: geen oordeel) gaat voor.
+    Eén regel voor alle plekken (omnitwin.polariteit, #120): interpretatie_logica
+    'neutraal' of 'N/A' gaat voor, dan '+/+' hoger-is-beter, de andere score_types
+    lager-is-beter.
     """
-    logica = (interpretatie_logica or "").strip().lower()
-    if logica in ("neutraal", "n/a"):
-        return "neutraal"
-    if (score_type or "+/+").strip() == "+/+":
-        return "hoger_is_beter"
-    return "lager_is_beter"
+    return polariteit.uit_oud(score_type or "+/+", interpretatie_logica)
 
 
 RICHTING_TEKST = {

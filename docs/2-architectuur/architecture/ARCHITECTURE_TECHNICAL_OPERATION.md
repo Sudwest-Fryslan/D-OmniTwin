@@ -283,7 +283,7 @@ erDiagram
 | `v_kompas_hierarchie` | Complete hierarchy (all configs) |
 | `v_kompas_config_stats` | Statistics per configuration |
 | `v_admin_indicatoren` | Admin view with all metadata |
-| `v_score_types` | Score type documentation |
+| `v_polariteiten` | Codelijst polariteit van indicatoren (hoger/lager is beter, neutraal; #120) |
 
 **System Views (PostGIS):**
 - `geography_columns`, `geometry_columns`

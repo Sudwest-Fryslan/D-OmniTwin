@@ -1,6 +1,6 @@
 import axios from 'axios';
 import type {
-    ScoreType,
+    Polariteit,
     ColorSchema,
     Indicator,
     IndicatorUpdate,
@@ -47,9 +47,9 @@ export const systemPromptsAPI = {
     update: (naam: string, data: SystemPromptUpdate) => api.put<SystemPrompt>(`/prompts/${naam}`, data),
 };
 
-// Score types
-export const scoreTypesAPI = {
-    getAll: () => api.get<ScoreType[]>('/score-types'),
+// Polariteit: codelijst (#120)
+export const polariteitenAPI = {
+    getAll: () => api.get<Polariteit[]>('/polariteiten'),
 };
 
 // Color schemas

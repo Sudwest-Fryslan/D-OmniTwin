@@ -14,7 +14,7 @@ Stand 02-10-2026. Hoe de huidige monitor waarden vergelijkt en kleurt, en hoe da
 - Klassenamen zijn beschrijvend ("percentiel 0–12,5"), geen letters.
 - **Eerst normaliseren** naar een vergelijkbare grootheid: % groen, niet m² groen.
 - De viewer toont een percentielwaarde per vak. Of dat de klasse is of een continu percentiel, is niet vastgesteld.
-- **Kleur:** rood → geel → groen voor kwaliteitsthema's (richting per indicator: hoger is beter of slechter), blauw voor Samenstelling (neutraal), grijs bij geen data.
+- **Kleur:** rood → geel → groen voor kwaliteitsthema's (richting per indicator: `indicatoren.polariteit` = hoger is beter, lager is beter of neutraal, [#120](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/120)), blauw voor Samenstelling (neutraal), grijs bij geen data.
 
 **Waarom geen Z-scores (onderbouwing SWF):** bij ±155 buurten, waarvan niet elke indicator voor elke buurt data heeft, en met sterke uitschieters valt met Z-scores bijna alles in −1..1 en ontstaan waarden boven |3|. De schaal wordt scheef. Percentielen geven spreiding. SWF vergeleek op de kaart Z-scores (8 klassen), kwartielen (4), kwartielen met uitschieters (6) en "halverwege"-kwartielen (5) en koos de percentielklassen.
 

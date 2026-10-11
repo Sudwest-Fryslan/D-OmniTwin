@@ -10,6 +10,8 @@ import numpy as np
 from sqlalchemy.orm import Session
 from sqlalchemy import text
 
+from omnitwin import polariteit
+
 
 class ColorScaleService:
     """Service voor het genereren van kleuren op basis van visualisatie schema's"""
@@ -303,12 +305,8 @@ class ColorScaleService:
             
             color_ramp = self.generate_color_ramp(colors, num_classes)
         
-        # 🔄 SCORE TYPE INVERSION LOGIC
-        # +/+ : High value = Good → normal (low=red/blue, high=green/red)
-        # +/- : High value = Bad → REVERSE colors
-        # -/- : Low value = Bad → REVERSE colors
-        # -/+ : Low value = Good → normal
-        should_reverse = score_type in ['+/-', '-/-', '-=-']
+        # Lager is beter: kleuren omkeren (één regel, omnitwin.polariteit, #120)
+        should_reverse = polariteit.lager_is_beter(score_type)
         if should_reverse:
             color_ramp = list(reversed(color_ramp))
         

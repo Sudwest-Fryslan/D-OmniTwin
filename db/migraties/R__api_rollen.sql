@@ -102,7 +102,7 @@ WHERE toegang = 'openbaar' OR public.verzoek_mag_intern();
 -- Frontend: teller; admin: mutaties (Datakwaliteit); tests: use cases.
 DROP VIEW IF EXISTS api.indicatoren;
 CREATE VIEW api.indicatoren AS
-SELECT id, uuid, naam, code, omschrijving, eenheid, interpretatie_logica, score_type,
+SELECT id, uuid, naam, code, omschrijving, eenheid, polariteit, interpretatie_logica, score_type,
        min_waarde, max_waarde, waarde_type, bron, status, categorie,
        begingeldigheid, eindgeldigheid, color_schema_id,
        ontologische_beschrijving, ontologie_status, beschrijving_ai,

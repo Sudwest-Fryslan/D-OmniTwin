@@ -73,7 +73,8 @@ def test_lager_is_beter_spiegelt_de_klasse():
 
 
 @pytest.mark.parametrize("score_type,inverse,verwacht", [
-    ("+/+", False, True), ("-/+", False, True), (None, None, True), ("positive_ascending", False, True),
+    ("+/+", False, True), (None, None, True), ("positive_ascending", False, True),
+    ("-/+", False, False),  # lager is beter, zoals rapporten en chat (SWF omkeren, #120)
     ("+/-", False, False), ("-/-", False, False), ("-=-", False, False), ("positive_descending", False, False),
     ("+/+", True, False),
 ])

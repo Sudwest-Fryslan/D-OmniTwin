@@ -29,6 +29,7 @@ Aanname tot https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/222 antwoord ge
 import math
 from typing import Dict, Iterable, List, Optional, Sequence, Tuple
 
+from omnitwin import polariteit
 from omnitwin.services import kleine_aantallen as ka
 
 # label_ae: labels A-E per indicator en thema (#256), zie services/labelklasse.py
@@ -39,10 +40,6 @@ KLASSEN = 8
 # organisatie.n_drempel (kleine_aantallen.drempel). De laad-API laat zulke waarden al weg
 # (n-drempel per dataset); dit vangt waarden die buiten de laad-API zijn geladen.
 N_DREMPEL = ka.N_DREMPEL_STANDAARD
-
-# score_type/inverse die betekenen: hogere waarde = ongunstiger. Gelijk aan de
-# omkeerlogica van color_scale_service en KompasScoringService.
-_OMKEREN = {"+/-", "-/-", "-=-", "positive_descending"}
 
 # Kleurenblindvriendelijk palet: color_schemas.naam (stuurdata). Klasse 1 = 'min',
 # klasse 8 = 'max'. Fallback = dezelfde kleuren, voor een database zonder dat schema.
@@ -59,7 +56,8 @@ def is_neutraal_kwadrant(naam: Optional[str]) -> bool:
 
 
 def hoger_is_beter(score_type: Optional[str], inverse: Optional[bool] = False) -> bool:
-    return not (bool(inverse) or (score_type or "+/+") in _OMKEREN)
+    """Eén regel voor kaart, Kompas en rapporten (omnitwin.polariteit, #120)."""
+    return not polariteit.lager_is_beter(score_type, inverse)
 
 
 def richting(score_type: Optional[str], inverse: Optional[bool] = False,

@@ -1,6 +1,7 @@
 // TypeScript types for Admin Panel
 
-export interface ScoreType {
+// Codelijst polariteit van indicatoren (#120)
+export interface Polariteit {
     code: string;
     naam: string;
     beschrijving: string;
@@ -26,6 +27,7 @@ export interface Indicator {
     bron: string | null;
     eenheid: string | null;
     score_type: string;
+    polariteit?: string;
     color_schema_id: number | null;
     color_schema_naam: string | null;
     color_schema_colors?: ColorSchema['colors'];
@@ -50,7 +52,7 @@ export interface IndicatorUpdate {
     omschrijving?: string;
     bron?: string;
     eenheid?: string;
-    score_type?: string;
+    polariteit?: string;
     color_schema_id?: number;
     admin_notes?: string;
 }

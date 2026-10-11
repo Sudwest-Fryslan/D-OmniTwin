@@ -8,6 +8,14 @@ Eerdere wijzigingen, van vóór dit bestand, zijn terug te vinden in de git-hist
 
 ## [Unreleased]
 
+### Gewijzigd
+
+- **Eén polariteit per indicator** ([#120](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/120)): "is hoger beter?" staat in één kolom `indicatoren.polariteit` met de codelijst `hoger_is_beter`, `lager_is_beter` en `neutraal` (check-constraint, view `v_polariteiten`, ook in `api.indicatoren`). Kaart, Kompas, percentiel- en labelklassen, rapporten en chat gebruiken dezelfde regel (`omnitwin.polariteit`). Opgelost: de kaart, het Kompas en de percentielklassen lazen score_type `-/+` als "hoger is beter", rapporten en chat als "lager is beter"; dat raakte onder meer de SWF-indicatoren met *omkeren* ([#342](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/342)). In Beheer › Indicatoren kies je de polariteit in plaats van een score type (`GET /api/admin/polariteiten` vervangt `/score-types`). `score_type` en `interpretatie_logica` blijven als afgeleide kolommen: een trigger houdt ze gelijk aan de polariteit, en wie ze schrijft (ETL, laad-API) zet daarmee de polariteit.
+
+### Migreren
+
+- Migratie `V046__polariteit.sql` zet de bestaande waarden om (neutraal/N/A → `neutraal`, `+/+` → `hoger_is_beter`, elke andere score_type → `lager_is_beter`) en vervangt de view `v_score_types` door `v_polariteiten`. Daarna is `score_type` altijd `+/+` of `+/-`.
+
 ## [0.5.0-rc.1] - 2026-10-11
 
 **Pre-release.** Cijfers kloppen. De besluiten over de database-dump van de huidige SWF-gebiedsmonitor zijn verwerkt ([#341](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/341), [#342](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/342)): statussen, één Waterdiepte op straat en geen legacy-waarden van 2011–2012. Kleine aantallen worden overal hetzelfde onderdrukt, met één instelbare drempel ([#325](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/325)). Verder de gemeenteselectie als filterbare combobox ([#308](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/308)), het webframework bijgewerkt (FastAPI, Starlette, uvicorn; [#172](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/172)) en de overige afhankelijkheden. De herindeling van de database in schema's ([#137](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/137)) zit bewust nog niet in deze pre-release; die komt in 0.5.0 als hij aantoonbaar goed werkt. Lees bij een upgrade de paragraaf **Migreren**.
