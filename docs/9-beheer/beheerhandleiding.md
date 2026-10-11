@@ -170,6 +170,9 @@ Use cases installeren of opnieuw laden: [Data](installatie.md#4-data).
 
 **Eerste SWF-vulling**: welstand × buurt, het Volledig Kompas en de externe kaartlagen laden vanzelf uit de use cases (bestanden in git); BAG, EP-Online en OpenStreetMap eenmalig via `swf-initialisatie`, zie [Eerste SWF-vulling](installatie.md#eerste-swf-vulling). Controleer daarna `swf-gebied-welstand-buurt` en `swf-init-waarnemingen` *gepubliceerd* (query hierboven), het Kompas en de externe lagen in het beheerscherm. Ruim de tijdelijke database (`docker rm -f swfdump`), de dump en de export daarna op.
 
+
+**Kleine aantallen** ([#325](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/325)): onder beheeromgeving > **Organisatie** staat het minimum aantal waarnemingen (standaard 10). Een waarde die op minder waarnemingen rust (`n` in de data), tonen we nergens (kaart, tooltip, indicatorpaneel, rapporten, chat, CSV) en telt niet mee in de vergelijking (Z-score, percentiel, label). Een waarde zonder bekende `n` telt wel mee. De instelling gaat mee in de export van de organisatie.
+
 ---
 
 ## 6. Certificaten en HTTPS

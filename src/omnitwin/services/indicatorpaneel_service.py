@@ -4,7 +4,7 @@ Indicatorpaneel en CSV-export (#258)
 Eén indicator, bekeken voor een selectie gebieden: beschrijving, eenheid, bron/jaargang/licentie,
 de waarde per gebied, het gemeentegemiddelde en dezelfde gegevens als CSV.
 
-Onderdrukking (n onder de drempel, `percentielklasse.N_DREMPEL`): de waarde gaat niet naar buiten,
+Onderdrukking (n onder de drempel, `kleine_aantallen.drempel`, standaard 10): de waarde gaat niet naar buiten,
 niet in JSON en niet in de CSV. Het gebied staat er wel, met `waarde` leeg en status `onderdrukt`.
 Daarom bouwt de server de CSV (en niet de browser uit de kaartdata): paneel en export lezen
 dezelfde rijen, met dezelfde onderdrukking.
@@ -29,6 +29,7 @@ from typing import Any, Dict, Iterable, List, Optional, Sequence
 from sqlalchemy import text
 
 from omnitwin.fouten import GebruikersFout
+from omnitwin.services import kleine_aantallen as ka
 from omnitwin.services import percentielklasse as pk
 
 MAX_GEBIEDEN = 2000
@@ -272,7 +273,7 @@ class IndicatorpaneelService:
         jaar: Optional[int] = None,
         gebiedstype_id: Optional[str] = None,
         gemeente_code: Optional[str] = None,
-        drempel: int = pk.N_DREMPEL,
+        drempel: Optional[int] = None,
         met_gebieden: bool = True,
     ) -> Dict[str, Any]:
         """Indicator, bronnen, waarde per gebied (onderdrukt: leeg) en gemeentegemiddelden.
@@ -281,6 +282,8 @@ class IndicatorpaneelService:
         zoals op de kaart (met_gebieden=False: dan alleen het gemeentegemiddelde); zonder beide alleen
         indicator en bronnen."""
         ids = list(gebied_ids)
+        if drempel is None:  # de drempel van de instantie (organisatie.n_drempel, #325)
+            drempel = ka.drempel(self.db)
         ind = self._indicator(indicator_uuid)
         bronnen = self._bronnen(indicator_uuid, ind["bron"])
 

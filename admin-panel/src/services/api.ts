@@ -276,6 +276,8 @@ export interface Organisatie {
     logos: OrganisatieLogo[];
     /** Meldplek voor "Melden" (#312): https of mailto; zonder eigen instelling de standaard */
     meld_url?: string | null;
+    /** Kleine aantallen (#325): een waarde met minder waarnemingen tonen we niet (standaard 10) */
+    n_drempel?: number;
 }
 
 export interface OrganisatieLogo { pad: string; naam: string | null; rol: string }
@@ -292,6 +294,7 @@ export interface OrganisatieInvoer {
     thema: string;
     logos: OrganisatieLogo[];
     meld_url?: string | null;
+    n_drempel?: number | null;
 }
 
 // Thema uit static/css/themes, met de kleurtokens (#hex) van het lichte en donkere blok
