@@ -15,7 +15,7 @@ psycopg2-binary>=2.9.13
 SQLAlchemy>=2.0.54
 
 # --- Data Processing ---
-pandas>=2.0.0
+pandas>=2.3.3
 numpy>=1.24.0
 
 # --- HTTP ---
