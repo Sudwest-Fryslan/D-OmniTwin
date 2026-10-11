@@ -8,6 +8,11 @@ Eerdere wijzigingen, van vóór dit bestand, zijn terug te vinden in de git-hist
 
 ## [Unreleased]
 
+### Gewijzigd
+
+- **Rapporten losgekoppeld van beheeromgeving (standalone)** ([#290](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/290)): rapportages (*Gebiedsdossier*, *Benchmark*, *Multi-Gebied*, *Thema-Analyse*, *Deelgebiedsanalyse*) worden nu standalone aangeboden onder de publieke URL `/rapport/*` in plaats van `/admin/rapport/*`. Een ingelogde beheerder ziet bij het bekijken van een rapport nooit meer de beheer-zijbalk of beheerheader. De standalone weergave heeft een eigen toegankelijke kopbalk met *"← Terug naar kaart"*, *"Afdrukken/Opslaan"* en *"Afwijking melden"* (terugmeldvoorziening #311 fase 2).
+- **Vite asset-prefix en WAF-onafhankelijkheid** ([#290](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/290)): `admin-panel` assets worden bij de productiebuild geserveerd via `/static/admin-panel/assets/` (in plaats van `/admin/assets/`). Hierdoor blijven rapporten en hun scripts volledig operationeel voor externe bezoekers wanneer `/admin/*` via een gemeentelijke WAF of firewall wordt afgeschermd. Oude `/admin/rapport/*` deeplinks krijgen een automatische HTTP 307 redirect met behoud van query-parameters naar `/rapport/*`. Alle links in de viewer (`app.js`, `chat.js`) zijn omgezet naar `/rapport/*`.
+
 ## [0.5.0-rc.1] - 2026-10-11
 
 **Pre-release.** Cijfers kloppen. De besluiten over de database-dump van de huidige SWF-gebiedsmonitor zijn verwerkt ([#341](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/341), [#342](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/342)): statussen, één Waterdiepte op straat en geen legacy-waarden van 2011–2012. Kleine aantallen worden overal hetzelfde onderdrukt, met één instelbare drempel ([#325](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/325)). Verder de gemeenteselectie als filterbare combobox ([#308](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/308)), het webframework bijgewerkt (FastAPI, Starlette, uvicorn; [#172](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/172)) en de overige afhankelijkheden. De herindeling van de database in schema's ([#137](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/137)) zit bewust nog niet in deze pre-release; die komt in 0.5.0 als hij aantoonbaar goed werkt. Lees bij een upgrade de paragraaf **Migreren**.

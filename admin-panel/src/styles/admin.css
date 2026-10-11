@@ -631,3 +631,28 @@ body {
         zoom: 0.75; /* Iets verder uitzoomen voor A4 staand */
     }
 }
+
+/* Standalone Rapportage Layout (#290) */
+.report-standalone-container {
+    min-height: 100vh;
+    background: var(--color-background);
+    color: var(--color-text-primary);
+    display: flex;
+    flex-direction: column;
+}
+
+.report-standalone-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 1.5rem;
+    background: var(--color-surface);
+    border-bottom: 1px solid var(--color-border);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+.report-standalone-body {
+    flex: 1;
+}
