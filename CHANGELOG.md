@@ -8,9 +8,12 @@ Eerdere wijzigingen, van vóór dit bestand, zijn terug te vinden in de git-hist
 
 ## [Unreleased]
 
+## [0.5.0-rc.1] - 2026-10-11
+
+**Pre-release.** Cijfers kloppen. De besluiten over de database-dump van de huidige SWF-gebiedsmonitor zijn verwerkt ([#341](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/341), [#342](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/342)): statussen, één Waterdiepte op straat en geen legacy-waarden van 2011–2012. Kleine aantallen worden overal hetzelfde onderdrukt, met één instelbare drempel ([#325](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/325)). Verder de gemeenteselectie als filterbare combobox ([#308](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/308)), het webframework bijgewerkt (FastAPI, Starlette, uvicorn; [#172](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/172)) en de overige afhankelijkheden. De herindeling van de database in schema's ([#137](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/137)) zit bewust nog niet in deze pre-release; die komt in 0.5.0 als hij aantoonbaar goed werkt. Lees bij een upgrade de paragraaf **Migreren**.
+
 ### Gewijzigd
 
-- **Kleine aantallen overal hetzelfde** ([#325](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/325)): een waarde die op minder waarnemingen rust dan de drempel (standaard 10, instelbaar in beheer › Organisatie, `organisatie.n_drempel`), tonen we nu ook niet op de kaart, in de tooltip (grijs, *niet getoond*), in benchmark en Kompas en in de chat, en hij telt niet meer mee in de Z-scorereferentie; een doelgebied krijgt er geen Z-score op. Was al zo in het indicatorpaneel, de CSV en de percentiel- en labelklassen. Eén bron: `services/kleine_aantallen.py` en in SQL `kleine_aantallen_drempel()` / `is_kleine_aantallen(n)` (migratie `V044__kleine_aantallen.sql`). De minimum-n van 5 in de Z-scorereferentie blijft: die telt gebieden, niet waarnemingen.
 - **Gemeenteselectie als toegankelijke, filterbare combobox** ([#308](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/308)): de verouderde HTML `<datalist>` in de kaartconfiguratie is vervangen door een volwaardige WAI-ARIA 1.2 combobox (`role="combobox"`, `role="listbox"`, `aria-activedescendant`). Typen filtert direct met diakrieten-insensitiviteit (`sud` vindt `Súdwest-Fryslân`). Volledig bedienbaar met toetsenbord (`ArrowDown`/`ArrowUp`, `Alt+ArrowDown/Up`, `Home`/`End`, `Enter`, `Escape`, `Tab`), schermlezer-ondersteuning via live-regio (`#gemeente-info` met `role="status"` en `aria-live="polite"`), dichte achtergrond voor gegarandeerd contrast (>4.5:1, WCAG 2.1 AA, ADR 0011) en één centrale synchronisatiefunctie (`zetGemeente()`) voor kaart, Kompas, filter-chip en EventBus.
 - **Statussen en Waterdiepte op straat uit de monitor** ([#341](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/341)): SWF-status O (Onderzoek) wordt C en is, net als C (Concept), alleen intern zichtbaar; A blijft O en openbaar. Een indicator met status C krijgt toegang `intern`, zijn waarden ook (migratie `V042__concept_indicator_intern.sql`). *Waterdiepte op straat* houdt `c4e1b3bb…` (zoals de geldige monitors) en is operationeel; `f6eafa70…` wordt B "(vervallen)". Bijgewerkt: `swf-definities` 0.5.0, `swf-adapter-fme` 0.4.0, `swf-kompasprofiel` 0.5.0 (`a4-waterdiepte` zet nu `f6eafa70…` om naar `c4e1b3bb…`) en de stuurdata-drempels. Nieuwe bewerking `zet` (vaste waarde in regels die aan een voorwaarde voldoen).
 - **Legacy 2011–2012 weg, drempels en polariteit** ([#342](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/342)): `scripts/beheer/swf_monitor_dump.py exporteer` laat de 795 waarden uit 2011–2012 op numerieke codes (voorloop `11`) definitief weg (`legacy_2011_2012_weggelaten` in `export.json`); `swf-basismonitor-waarden` 0.4.0. De stuurdata blijft leidend voor de drempels A–E, `omkeren` uit de monitor voor de polariteit (`swf-klimaatmonitor` 0.4.0, alleen documentatie).
@@ -18,6 +21,17 @@ Eerdere wijzigingen, van vóór dit bestand, zijn terug te vinden in de git-hist
 - Webframework bijgewerkt, in één keer ([#172](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/172)): FastAPI 0.115.12 → 0.143.0, Starlette 0.41.3 → 1.7.0, uvicorn 0.30.6 → 0.54.0 (`requirements.txt`, `requirements-ci.txt`, `requirements.lock`). De CORS-instelling werkt ongewijzigd met Starlette 1.x. Dependabot werkt deze drie voortaan samen bij (groep `webframework`) in plaats van ze over te slaan.
 - Afhankelijkheden bijgewerkt ([#344](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/344)): matplotlib, fiona, SQLAlchemy, GeoAlchemy2, shapely (ondergrenzen), LiteLLM v1.104.2, GitHub Actions en admin-panel (minor/patch); admin-panel opnieuw gebouwd.
 - Afhankelijkheden bijgewerkt ([#355](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/355)): ondergrenzen numpy, pandas, pydantic, pytest en tqdm, LiteLLM v1.105.0 en admin-panel (lucide-react); admin-panel opnieuw gebouwd.
+
+### Opgelost
+
+- **Kleine aantallen overal hetzelfde** ([#325](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/325)): een waarde die op minder waarnemingen rust dan de drempel (standaard 10, instelbaar in beheer › Organisatie, `organisatie.n_drempel`), tonen we nu ook niet op de kaart, in de tooltip (grijs, *niet getoond*), in benchmark en Kompas en in de chat, en hij telt niet meer mee in de Z-scorereferentie; een doelgebied krijgt er geen Z-score op. Was al zo in het indicatorpaneel, de CSV en de percentiel- en labelklassen. Eén bron: `services/kleine_aantallen.py` en in SQL `kleine_aantallen_drempel()` / `is_kleine_aantallen(n)` (migratie `V044__kleine_aantallen.sql`). De minimum-n van 5 in de Z-scorereferentie blijft: die telt gebieden, niet waarnemingen.
+
+### Migreren
+
+- Migraties `V042__concept_indicator_intern.sql` en `V044__kleine_aantallen.sql` draaien vanzelf bij de start (`db-init`). Maak eerst een back-up.
+- **Indicatoren met status C (Concept) zijn intern** (V042): anoniem niet zichtbaar, ook hun waarden niet. Na het opnieuw laden van de SWF-definities krijgen de ongeveer 200 indicatoren met SWF-status *Onderzoek* status C en zijn ze anoniem niet meer zichtbaar.
+- **Drempel voor kleine aantallen** (V044): standaard 10 waarnemingen, in te stellen in de beheeromgeving (Organisatie). Waarden onder de drempel verschijnen niet meer op de kaart, in rapporten, de chat en de Z-scorereferentie; Z-scores kunnen daardoor iets verschuiven.
+- Wie de SWF-monitor laadt: exporteer de dump opnieuw (`scripts/beheer/swf_monitor_dump.py exporteer`), zodat de besluiten over statussen, Waterdiepte op straat en 2011–2012 doorwerken.
 
 ## [0.4.0] - 2026-10-10
 
@@ -305,7 +319,8 @@ Eerste release; deze sectie vat de ontwikkeling sinds het begin samen, details s
 - De backend-container draait als niet-root gebruiker ([#78](https://github.com/Sudwest-Fryslan/D-OmniTwin/pull/78)).
 - Beheeromgeving gebouwd zonder sourcemaps ([#81](https://github.com/Sudwest-Fryslan/D-OmniTwin/pull/81)).
 
-[Unreleased]: https://github.com/Sudwest-Fryslan/D-OmniTwin/compare/v0.4.0...HEAD
+[Unreleased]: https://github.com/Sudwest-Fryslan/D-OmniTwin/compare/v0.5.0-rc.1...HEAD
+[0.5.0-rc.1]: https://github.com/Sudwest-Fryslan/D-OmniTwin/compare/v0.4.0...v0.5.0-rc.1
 [0.4.0]: https://github.com/Sudwest-Fryslan/D-OmniTwin/compare/v0.3.1...v0.4.0
 [0.3.1]: https://github.com/Sudwest-Fryslan/D-OmniTwin/compare/v0.3.0...v0.3.1
 [0.3.0]: https://github.com/Sudwest-Fryslan/D-OmniTwin/compare/v0.3.0-rc.1...v0.3.0
