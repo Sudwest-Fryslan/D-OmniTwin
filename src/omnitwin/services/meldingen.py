@@ -118,7 +118,7 @@ def maak_melding(
     email_schoon = melder_email.strip() if melder_email and melder_email.strip() else None
 
     stmt = text("""
-        INSERT INTO public.gebruiker_meldingen (
+        INSERT INTO app.gebruiker_meldingen (
             type, onderwerp, toelichting, context, melder_email
         ) VALUES (
             :type, :onderwerp, :toelichting, CAST(:context AS jsonb), :email
@@ -143,7 +143,7 @@ def haal_tellingen_per_status(db: Session) -> Dict[str, int]:
     tellingen = {s: 0 for s in TOEGESTANE_STATUSSEN}
     stmt = text("""
         SELECT status, count(*) AS aantal
-        FROM public.gebruiker_meldingen
+        FROM app.gebruiker_meldingen
         GROUP BY status
     """)
     for r in db.execute(stmt).mappings().all():
@@ -182,12 +182,12 @@ def zoek_meldingen(
 
     tellingen = haal_tellingen_per_status(db)
 
-    count_stmt = text(f"SELECT count(*) AS totaal FROM public.gebruiker_meldingen {where_clause}")
+    count_stmt = text(f"SELECT count(*) AS totaal FROM app.gebruiker_meldingen {where_clause}")
     totaal = db.execute(count_stmt, params).scalar() or 0
 
     select_stmt = text(f"""
         SELECT id, type, onderwerp, toelichting, context, melder_email, status, notitie_beheer, aangemaakt_op, bijgewerkt_op
-        FROM public.gebruiker_meldingen
+        FROM app.gebruiker_meldingen
         {where_clause}
         ORDER BY aangemaakt_op DESC
         LIMIT :limit OFFSET :offset
@@ -209,7 +209,7 @@ def haal_melding(db: Session, melding_id: uuid.UUID) -> Optional[Dict[str, Any]]
     """Haalt één melding op inclusief volledige details."""
     stmt = text("""
         SELECT id, type, onderwerp, toelichting, context, melder_email, status, notitie_beheer, aangemaakt_op, bijgewerkt_op
-        FROM public.gebruiker_meldingen
+        FROM app.gebruiker_meldingen
         WHERE id = :id
     """)
     rij = db.execute(stmt, {"id": melding_id}).mappings().first()
@@ -251,7 +251,7 @@ def werk_melding_bij(
         params["notitie"] = notitie_schoon
 
     stmt = text(f"""
-        UPDATE public.gebruiker_meldingen
+        UPDATE app.gebruiker_meldingen
         SET {', '.join(updates)}
         WHERE id = :id
         RETURNING id, type, onderwerp, toelichting, context, melder_email, status, notitie_beheer, aangemaakt_op, bijgewerkt_op
@@ -272,7 +272,7 @@ def werk_melding_bij(
 def ruim_op(db_or_conn: Any, dagen: int = BEWAAR_DAGEN) -> int:
     """Verwijdert meldingen die langer dan `dagen` geleden voor het laatst zijn gewijzigd."""
     stmt = text("""
-        DELETE FROM public.gebruiker_meldingen
+        DELETE FROM app.gebruiker_meldingen
         WHERE bijgewerkt_op < now() - make_interval(days => :dagen)
     """)
     res = db_or_conn.execute(stmt, {"dagen": int(dagen)})
