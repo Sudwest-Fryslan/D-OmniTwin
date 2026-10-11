@@ -8,18 +8,6 @@ Eerdere wijzigingen, van vóór dit bestand, zijn terug te vinden in de git-hist
 
 ## [Unreleased]
 
-### Gewijzigd
-
-- **Eén polariteit per indicator** ([#120](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/120)): "is hoger beter?" staat in één kolom `indicatoren.polariteit` met de codelijst `hoger_is_beter`, `lager_is_beter` en `neutraal` (check-constraint, view `v_polariteiten`, ook in `api.indicatoren`). Kaart, Kompas, percentiel- en labelklassen, rapporten en chat gebruiken dezelfde regel (`omnitwin.polariteit`). Opgelost: de kaart, het Kompas en de percentielklassen lazen score_type `-/+` als "hoger is beter", rapporten en chat als "lager is beter"; dat raakte onder meer de SWF-indicatoren met *omkeren* ([#342](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/342)). In Beheer › Indicatoren kies je de polariteit in plaats van een score type (`GET /api/admin/polariteiten` vervangt `/score-types`). `score_type` en `interpretatie_logica` blijven als afgeleide kolommen: een trigger houdt ze gelijk aan de polariteit, en wie ze schrijft (ETL, laad-API) zet daarmee de polariteit.
-
-### Migreren
-
-- Migratie `V046__polariteit.sql` zet de bestaande waarden om (neutraal/N/A → `neutraal`, `+/+` → `hoger_is_beter`, elke andere score_type → `lager_is_beter`) en vervangt de view `v_score_types` door `v_polariteiten`. Daarna is `score_type` altijd `+/+` of `+/-`.
-- **Applicatiedata in een eigen schema `app`** ([#137](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/137), stap 1): gebruikers, sessies, API-sleutels, OIDC-sessies, logs en logconfiguratie, LLM-configuratie, gebruikersvoorkeuren en -meldingen, deduplicatie-uitzonderingen en de AI-vrijgave en het AI-logboek staan niet meer in `public` maar in `app`. PostgREST en pg_featureserv hebben daar geen toegang; met `pg_dump -n app` is de geheime applicatiedata los te back-uppen. Stuurinformatie en brondata blijven voorlopig in `public` (vervolgstap). Uitleg: [db/README.md](db/README.md#schemas-137).
-
-### Migreren
-
-- Migratie `V047__schema_app.sql` draait vanzelf bij de start van `db-init`: de tabellen verhuizen met hun data (`ALTER TABLE … SET SCHEMA`), en de database krijgt `search_path` `"$user", public, app`. Eigen scripts of queries die `public.users` (of een andere app-tabel) met schema noemen, moeten naar `app.users` of zonder schema. Het AI-logboek en de hashketen lopen ongewijzigd door.
 ### Toegevoegd
 
 - **Terugmeldvoorziening voor gebruikers** ([#311](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/311)): laagdrempelige, privacy-vriendelijke feedbackloop in de viewer voor data, metadata, AI-antwoorden en technische storingen. D-OmniTwin fungeert als regielogboek (&quot;bron blijft bron&quot;); feedback wordt gesignaleerd en geregistreerd om door te sturen naar bronhouders.
@@ -27,6 +15,16 @@ Eerdere wijzigingen, van vóór dit bestand, zijn terug te vinden in de git-hist
   - **Backend API:** `POST /api/meldingen` (publiek, in-memory IP rate-limit, honeypot veld) en beveiligde beheerendpoints `GET /api/admin/meldingen` en `PATCH /api/admin/meldingen/{id}` (`vereis_admin`).
   - **Privacy by Design (AVG):** meldingen zijn standaard anoniem. Een optioneel e-mailadres voor wie terugkoppeling wenst, wordt conform AVG automatisch gewist (`NULL`) zodra een melding is afgehandeld of afgewezen. Meldingen worden 365 dagen na laatste wijziging opgeruimd via de dagelijkse scheduler.
   - **Beheer:** nieuwe beheerpagina **Meldingen** in het Admin Panel met statusfilters (`nieuw`, `doorgestuurd_naar_bron`, `in_behandeling`, `afgehandeld`, `afgewezen`), categorieën en detailweergave met interne notities. Migratie `V045__gebruiker_meldingen.sql`.
+
+### Gewijzigd
+
+- **Eén polariteit per indicator** ([#120](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/120)): "is hoger beter?" staat in één kolom `indicatoren.polariteit` met de codelijst `hoger_is_beter`, `lager_is_beter` en `neutraal` (check-constraint, view `v_polariteiten`, ook in `api.indicatoren`). Kaart, Kompas, percentiel- en labelklassen, rapporten en chat gebruiken dezelfde regel (`omnitwin.polariteit`). Opgelost: de kaart, het Kompas en de percentielklassen lazen score_type `-/+` als "hoger is beter", rapporten en chat als "lager is beter"; dat raakte onder meer de SWF-indicatoren met *omkeren* ([#342](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/342)). In Beheer › Indicatoren kies je de polariteit in plaats van een score type (`GET /api/admin/polariteiten` vervangt `/score-types`). `score_type` en `interpretatie_logica` blijven als afgeleide kolommen: een trigger houdt ze gelijk aan de polariteit, en wie ze schrijft (ETL, laad-API) zet daarmee de polariteit.
+- **Applicatiedata in een eigen schema `app`** ([#137](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/137), stap 1): gebruikers, sessies, API-sleutels, OIDC-sessies, logs en logconfiguratie, LLM-configuratie, gebruikersvoorkeuren en -meldingen, deduplicatie-uitzonderingen en de AI-vrijgave en het AI-logboek staan niet meer in `public` maar in `app`. PostgREST en pg_featureserv hebben daar geen toegang; met `pg_dump -n app` is de geheime applicatiedata los te back-uppen. Stuurinformatie en brondata blijven voorlopig in `public` (vervolgstap). Uitleg: [db/README.md](db/README.md#schemas-137).
+
+### Migreren
+
+- Migratie `V046__polariteit.sql` zet de bestaande waarden om (neutraal/N/A → `neutraal`, `+/+` → `hoger_is_beter`, elke andere score_type → `lager_is_beter`) en vervangt de view `v_score_types` door `v_polariteiten`. Daarna is `score_type` altijd `+/+` of `+/-`.
+- Migratie `V047__schema_app.sql` draait vanzelf bij de start van `db-init`: de tabellen verhuizen met hun data (`ALTER TABLE … SET SCHEMA`), en de database krijgt `search_path` `"$user", public, app`. Eigen scripts of queries die `public.users` (of een andere app-tabel) met schema noemen, moeten naar `app.users` of zonder schema. Het AI-logboek en de hashketen lopen ongewijzigd door.
 
 ## [0.5.0-rc.1] - 2026-10-11
 
