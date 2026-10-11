@@ -2,8 +2,8 @@
   "specificatie": "1.0",
   "naam": "brede-welvaart",
   "versie": "0.2.0",
-  "omnitwin_versie": "0.4.0",
-  "datum": "2026-10-10T19:34:13+02:00",
+  "omnitwin_versie": "0.5.0-rc.1",
+  "datum": "2026-10-11T16:25:58+02:00",
   "ai_aanbieder": "geen",
   "geslaagd": true,
   "controles": [
@@ -28,14 +28,14 @@
       "id": "kaart",
       "resultaat": "ok",
       "afbeelding": "kaart.webp",
-      "antwoordtijd_s": 44.1,
+      "antwoordtijd_s": 33.7,
       "console_fouten": []
     },
     {
       "id": "kompas",
       "resultaat": "ok",
       "afbeelding": "kompas.webp",
-      "antwoordtijd_s": 44.7,
+      "antwoordtijd_s": 36.8,
       "console_fouten": []
     },
     {
@@ -43,7 +43,7 @@
       "resultaat": "ok",
       "afbeelding": "chat.webp",
       "antwoord": "Netto arbeidsparticipatie (CBS Kerncijfers wijken en buurten, 2024): Hoogste waarde: Bolsward-Zuidwest (77%); laagste: Bolsward-Noord (66%). Daartussen: Bolsward-Noordoost (73%) en Bolsward-Zuidoost (71%). Hoger is beter: Bolsward-Zuidwest scoort het gunstigst. Ervaren gezondheid (RIVM, GGD en CBS: Gezondheid per wijk en buurt (StatLine 50150NED), 2024): Hoogste waarde: Bolsward-Noordoost (77,6%); laagste: Bolsward-Noord (65,9%). Daartussen: Bolsward-Zuidwest (73,4%) en Bolsward-Zuidoost (72,7%). Hoger is beter: Bolsward-Noordoost scoort het gunstigst. Inkomen per inwoner (CBS Kerncijfers wijken en buurten, 2023, 2024): Hoogste waarde: Bolsward-Noordoost (30,9 duizend euro); laagste: Bolsward-Noord (22,1 duizend euro). Daartussen: Bolsward-Zuidwest (29,7 duizend euro) en Bolsward-Zuidoost (26,9 duizend euro). Hoger is beter: Bolsward-Noordoost scoort het gunstigst. Diversiteit Functies (Simpson Index) (Kadaster BAG (berekend per buurt), 2026): Hoogste waarde: Bolsward-Noord (0,3); laagste: Bolsward-Noordoost (0,12). Daartussen: Bolsward-Zuidoost (0,2). Hoger is beter: Bolsward-Noord scoort het gunstigst. Let op: de waarden van Bolsward-Zuidoost zijn demodata.",
-      "antwoordtijd_s": 9.5,
+      "antwoordtijd_s": 7.9,
       "console_fouten": []
     }
   ]

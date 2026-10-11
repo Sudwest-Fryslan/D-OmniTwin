@@ -2,8 +2,8 @@
   "specificatie": "1.0",
   "naam": "politie-misdrijven",
   "versie": "0.2.0",
-  "omnitwin_versie": "0.4.0",
-  "datum": "2026-10-10T19:48:18+02:00",
+  "omnitwin_versie": "0.5.0-rc.1",
+  "datum": "2026-10-11T16:31:35+02:00",
   "geslaagd": true,
   "controles": [
     {
@@ -68,14 +68,14 @@
       "id": "kaart",
       "resultaat": "ok",
       "afbeelding": "kaart.webp",
-      "antwoordtijd_s": 54.4,
+      "antwoordtijd_s": 30.5,
       "console_fouten": []
     },
     {
       "id": "levering",
       "resultaat": "ok",
       "afbeelding": "levering.webp",
-      "antwoordtijd_s": 0.5,
+      "antwoordtijd_s": 0.3,
       "console_fouten": []
     }
   ],
@@ -91,7 +91,7 @@
         "vervangen": 0,
         "onderdrukt": 0,
         "gepubliceerd": 26068,
-        "bronpeildatum": "2026-10-10",
+        "bronpeildatum": "2026-10-11",
         "bronOnderdrukt": 26068,
         "bronpeildatumUit": "ontvangst"
       }

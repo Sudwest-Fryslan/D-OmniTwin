@@ -17,7 +17,7 @@ COPY-blokken van de tabellen `indicator`, `gebiedstype`, `indicator_gebiedstype`
 | Bestand in `--uit` | Uit de dump | Gebruikt door |
 |---|---|---|
 | `definities.json` | indicator, gebiedstype, indicator_gebiedstype; `score_type` uit `omkeren` in de actieve monitorconfiguraties | swf-definities (variant `monitor-database`) |
-| `waarden.json` | indicator_waarde | swf-basismonitor-waarden, swf-klimaatmonitor (variant `monitor-database`) |
+| `waarden.json` | indicator_waarde, zonder de legacy van 2011–2012 (numerieke codes met voorloop `11`, #342) | swf-basismonitor-waarden, swf-klimaatmonitor (variant `monitor-database`) |
 | `kompasprofiel_monitor.csv` | monitor (actieve configuratie per monitor): één regel per indicator in de boom | swf-kompasprofiel (variant `monitor-database`) |
 | `indicator_labels_monitor.json` | monitor: `labeling` (drempels A–E) per indicator, in het formaat van `db/stuurdata/indicator_labels_*.json` | `load_sample.py --stap drempels --drempels <bestand>` (keuze beheerder) |
 | `monitorconfiguraties.json` | monitor: alle versies, zonder `vastgelegd_door` | archief (geen doel in D-OmniTwin) |
@@ -53,6 +53,8 @@ UUID = re.compile(r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12
 LOKAAL = re.compile(r"^lokaal:\d+$")
 # Drempel die in de monitor 'open' betekent (bijv. tot 9999 of van -9999)
 OPEN_GRENS = 999
+# Legacy van vóór 2013: numerieke codes met voorloop 11 in deze jaren worden niet geëxporteerd (#342)
+LEGACY_JAREN = (2011, 2012)
 KOMPAS_KOLOMMEN = ("monitor", "monitor_id", "gebiedstype_id", "weergave_type", "volgorde", "niveau1", "niveau2",
                    "niveau3", "niveau4", "indicator_uuid", "indicator_naam", "omkeren", "labels")
 MAPPING_KOLOMMEN = ("gebruikersnaam", "eigenaar")
@@ -230,11 +232,21 @@ def _getal(w):
     return int(f) if f.is_integer() and "." not in str(w) else f
 
 
-def waarden(tabellen: dict) -> list[dict]:
-    """Waarden in de vorm van api_data_dump.json: indicator_id, gebiedstype_id, gebieds_id, waarde, jaar."""
-    return [{"indicator_id": w["indicator_id"].lower(), "gebiedstype_id": w["gebiedstype_id"].lower(),
-             "gebieds_id": w["gebieds_id"], "waarde": _getal(w.get("waarde")), "jaar": int(w["jaar"])}
-            for w in tabellen["indicator_waarde"]]
+def is_legacy(w: dict) -> bool:
+    """Waarde uit 2011–2012 op een numerieke code met voorloop `11` (buurt-, wijk- of gemeentecode zonder BU):
+    legacy van vóór 2013, definitief weggelaten (besluit #342)."""
+    code = str(w.get("gebieds_id") or "")
+    return int(w["jaar"]) in LEGACY_JAREN and code.isdigit() and code.startswith("11")
+
+
+def waarden(tabellen: dict) -> tuple[list[dict], int]:
+    """Waarden in de vorm van api_data_dump.json: indicator_id, gebiedstype_id, gebieds_id, waarde, jaar.
+    Geeft ook het aantal weggelaten legacy-waarden (is_legacy)."""
+    uit = [{"indicator_id": w["indicator_id"].lower(), "gebiedstype_id": w["gebiedstype_id"].lower(),
+            "gebieds_id": w["gebieds_id"], "waarde": _getal(w.get("waarde")), "jaar": int(w["jaar"])}
+           for w in tabellen["indicator_waarde"]]
+    houd = [w for w in uit if not is_legacy(w)]
+    return houd, len(uit) - len(houd)
 
 
 def _grens(w):
@@ -429,7 +441,7 @@ def exporteer(tabellen: dict, uit: Path, mapping: dict[str, str], dump_datum: st
     defs = definities(tabellen, monitors)
     _, tegenstrijdig = score_types(monitors)
     _schrijf_json(uit / "definities.json", defs)
-    w = waarden(tabellen)
+    w, legacy = waarden(tabellen)
     (uit / "waarden.json").write_text(json.dumps(w, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
     regels = kompasregels(monitors)
     _schrijf_csv(uit / "kompasprofiel_monitor.csv", regels, KOMPAS_KOLOMMEN)
@@ -450,7 +462,8 @@ def exporteer(tabellen: dict, uit: Path, mapping: dict[str, str], dump_datum: st
                        "gebiedstypen": len(defs["gebiedstypen"]), "relaties": len(defs["relaties"]),
                        "score_type_uit_monitor": sum(1 for i in defs["indicatoren"] if "score_type" in i),
                        "omkeren_tegenstrijdig": len(tegenstrijdig)},
-        "waarden": {"totaal": len(w), "indicatoren": len({r["indicator_id"] for r in w}),
+        "waarden": {"totaal": len(w), "legacy_2011_2012_weggelaten": legacy,
+                    "indicatoren": len({r["indicator_id"] for r in w}),
                     "combinaties": len({(r["indicator_id"], r["gebiedstype_id"]) for r in w}),
                     "per_gebiedstype": dekking(w)},
         "monitors": {"versies": len(tabellen["monitor"]),
@@ -533,7 +546,8 @@ def main(argv=None) -> int:
             d, w, g = s["definities"], s["waarden"], s["gebruikersvoorkeuren"]
             print(f"definities: {d['indicatoren']} indicatoren {d['status']}, {d['gebiedstypen']} gebiedstypen, "
                   f"{d['relaties']} relaties")
-            print(f"waarden: {w['totaal']} ({w['indicatoren']} indicatoren, {w['combinaties']} combinaties)")
+            print(f"waarden: {w['totaal']} ({w['indicatoren']} indicatoren, {w['combinaties']} combinaties; "
+                  f"{w['legacy_2011_2012_weggelaten']} legacy 2011–2012 weggelaten)")
             print(f"monitors: {s['monitors']['versies']} versies, actief: "
                   + ", ".join(f"{m['naam']} ({m['indicatoren']})" for m in s["monitors"]["actief"]))
             print(f"gebruikersvoorkeuren: {g.get('gekoppeld', 0)} van {g['gebruikers']} gebruikers gekoppeld"

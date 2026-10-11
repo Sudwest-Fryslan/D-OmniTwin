@@ -40,10 +40,10 @@
       "waarde_map": {
         "veld": "indicator_uuid",
         "map": {
-          "c4e1b3bb-e4ce-4cd0-bd52-219f4a9f5df3": "f6eafa70-9383-4de6-bd2a-e47309843437"
+          "f6eafa70-9383-4de6-bd2a-e47309843437": "c4e1b3bb-e4ce-4cd0-bd52-219f4a9f5df3"
         }
       },
-      "omschrijving": "Waterdiepte op straat: de vervallen UUID (status B) wordt de aangehouden UUID (A4, #222)"
+      "omschrijving": "Waterdiepte op straat: de vervallen UUID f6eafa70… (status B) wordt c4e1b3bb… (besluit https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/341; de geldige monitors gebruiken al c4e1b3bb…)"
     },
     {
       "behoud": [

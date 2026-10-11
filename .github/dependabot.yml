@@ -17,14 +17,11 @@ updates:
     schedule:
       interval: weekly
     groups:
+      # FastAPI pint starlette; los bijwerken faalt (ResolutionImpossible). Altijd samen (#172).
+      webframework:
+        patterns: ["fastapi", "starlette", "uvicorn"]
       python-minor-patch:
         update-types: ["minor", "patch"]
-    ignore:
-      # Bewust vastgezet: los bijwerken faalt (ResolutionImpossible), starlette 1.x
-      # breekt CORSMiddleware. Samen upgraden via #172.
-      - dependency-name: fastapi
-      - dependency-name: starlette
-      - dependency-name: uvicorn
 
   - package-ecosystem: docker
     directory: /

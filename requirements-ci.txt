@@ -3,27 +3,27 @@
 # system-level GDAL vereisen. Alleen wat nodig is voor unit tests + de app te starten.
 
 # --- Web Framework ---
-fastapi==0.115.12
-starlette==0.41.3
-uvicorn[standard]==0.30.6
+fastapi==0.143.0
+starlette==1.7.0
+uvicorn[standard]==0.54.0
 python-dotenv>=1.0.0
 python-multipart>=0.0.32
 Jinja2>=3.1.0
 
 # --- Database (driver, geen PostGIS extensions nodig voor unit tests) ---
 psycopg2-binary>=2.9.13
-SQLAlchemy>=2.0.0
+SQLAlchemy>=2.0.54
 
 # --- Data Processing ---
-pandas>=2.0.0
-numpy>=1.24.0
+pandas>=2.3.3
+numpy>=2.2.6
 
 # --- HTTP ---
 requests>=2.34.2
 httpx
 
 # --- Pydantic ---
-pydantic>=2.0.0
+pydantic>=2.13.5
 
 # --- Auth ---
 passlib[bcrypt]>=1.7.0
@@ -34,5 +34,5 @@ PyJWT[crypto]>=2.15.1   # OIDC: access tokens van Keycloak controleren (omnitwin
 python-dateutil>=2.9.0.post0
 
 # --- Testing ---
-pytest>=7.0.0
+pytest>=9.1.1
 pytest-cov>=7.1.0

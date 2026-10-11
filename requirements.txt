@@ -13,32 +13,32 @@
 #   docker run --rm -v "$PWD:/w" -w /w python:3.11-slim sh -c "pip install uv && <commando>"
 
 # --- Web Framework ---
-fastapi==0.115.12       # starlette 1.0.0 heeft breaking changes — pin op stabiele 0.115.x
-starlette==0.41.3       # vastgezet — 1.0.0 breekt CORSMiddleware (unhashable dict)
-uvicorn[standard]==0.30.6  # [standard] = watchfiles + httptools voor hot-reload
+fastapi==0.143.0        # samen met starlette en uvicorn bijwerken (#172); Dependabot slaat ze over
+starlette==1.7.0        # starlette 1.x: zie #172 (CORS in main.py)
+uvicorn[standard]==0.54.0  # [standard] = watchfiles + httptools voor hot-reload
 python-dotenv>=1.0.0
 python-multipart>=0.0.32
 Jinja2>=3.1.0
 
 # --- Database ---
 psycopg2-binary>=2.9.13
-SQLAlchemy>=2.0.0
+SQLAlchemy>=2.0.54
 
 # --- Geo ---
 # fiona en pyproj brengen GDAL en PROJ mee in hun wheel; geen systeem-GDAL nodig
-shapely>=2.0.0          # routers/externe_lagen.py
+shapely>=2.1.2          # routers/externe_lagen.py
 pyproj>=3.4.0           # routers/bag3d.py
-fiona>=1.9.0            # routers/externe_lagen.py (GPKG/GeoJSON uit data-upload/)
+fiona>=1.10.1            # routers/externe_lagen.py (GPKG/GeoJSON uit data-upload/)
 
 # --- Data Processing ---
-numpy>=1.24.0
+numpy>=2.2.6
 
 # --- HTTP ---
 requests>=2.34.2
 httpx
 
 # --- Pydantic ---
-pydantic>=2.0.0
+pydantic>=2.13.5
 
 # --- Auth ---
 passlib[bcrypt]>=1.7.0

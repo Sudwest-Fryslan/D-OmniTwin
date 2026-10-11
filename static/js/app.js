@@ -560,9 +560,11 @@ function initDeckGL() {
 
                 // Default buurt tooltip: waarde met jaargang en bron (#119)
                 const heeftWaarde = props.indicator_waarde !== null && props.indicator_waarde !== undefined;
+                // #325: een waarde die op te weinig waarnemingen rust, tonen we niet
+                const nDrempel = state.currentData?.metadata?.n_drempel || 10;
                 const indicatorValue = heeftWaarde ?
                     formatNumber(props.indicator_waarde) + ' ' + (props.eenheid || '') :
-                    'Geen data';
+                    (props.onderdrukt ? `Niet getoond (minder dan ${nDrempel} waarnemingen)` : 'Geen data');
                 const herkomst = heeftWaarde
                     ? `<br/><small class="tooltip-herkomst" style="opacity:0.75;">Jaar ${escapeHtml(props.jaar || 'onbekend')} · Bron: ${escapeHtml(props.bron || 'onbekend')}</small>`
                     : '';
@@ -3546,6 +3548,7 @@ function setupEventListeners() {
                     if (state.currentData && state.currentData.features) {
                         state.currentData.features.forEach(f => {
                             const props = attributes.data[f.properties.id];
+                            f.properties.onderdrukt = false; // #325: niet meenemen uit het vorige jaar
                             if (props) {
                                 Object.assign(f.properties, props);
                             } else {
