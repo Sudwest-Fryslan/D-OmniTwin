@@ -8,6 +8,9 @@ Eerdere wijzigingen, van vóór dit bestand, zijn terug te vinden in de git-hist
 
 ## [Unreleased]
 
+### Gewijzigd
+
+- **Dataspace-protocol vastgesteld** ([#32](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/32)): DSP (DCAT/ODRL) over HTTPS, geen iSHARE; FSC pas bij concrete behoefte. Zie ADR 0012.
 ### Opgelost
 
 - **Beheer › AI-usecases past binnen het scherm** ([#339](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/339)): de logboek-tabel rekte de pagina op, waardoor kolommen rechts wegvielen. Tabellen scrollen nu binnen hun eigen kader en lange tekst (vraag, resultaat, toelichting) breekt af (WCAG 1.4.10 Reflow).
