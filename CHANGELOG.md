@@ -14,7 +14,7 @@ Eerdere wijzigingen, van vóór dit bestand, zijn terug te vinden in de git-hist
 
 ### Gewijzigd
 
-- **Evaluatieset assistent 1.2** ([#336](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/336)): synoniemen aangevuld (o.a. pensioengerechtigden, babyboomers, twintigers, voedselbank, verstening, arbeidsmarkt, studieniveau, woningtekort, huurprijzen). De oude holdout-vragen zijn daarvoor gebruikt; 24 nieuwe holdout-vragen meten eerlijk. Drempels gelden voor de afgestemde vragen, de holdout heeft eigen, lagere drempels tegen terugval. Met AI-usecase C dicht: recall@3 0,715 → 0,839 (alle vragen), holdout 0,562 → 0,583.
+- **Evaluatieset assistent 1.2** ([#336](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/336)): synoniemen aangevuld (o.a. twintigers, voedselbank, verstening, arbeidsmarkt, studieniveau, woningtekort, huurprijzen). De oude holdout-vragen zijn daarvoor gebruikt; 24 nieuwe holdout-vragen meten eerlijk. Drempels gelden voor de afgestemde vragen, de holdout heeft eigen, lagere drempels tegen terugval. Met AI-usecase C dicht: recall@3 0,715 → 0,815 (alle vragen), holdout 0,562 → 0,583.
 ### Opgelost
 
 - CI op een eigen runner: de integratiejob kiest per run een vrije poort en een unieke projectnaam en ruimt zijn images op; elke job geeft vóór de checkout de werkmap terug aan de runner-gebruiker, zodat root-bestanden van een vorige run de checkout niet blokkeren ([#375](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/375)).

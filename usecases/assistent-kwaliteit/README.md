@@ -61,13 +61,13 @@ De 20 holdout-vragen van set 1.1 zijn gebruikt om synoniemen aan te vullen (`hol
 | | precision@3 | recall@3 | MRR | routering |
 |---|---|---|---|---|
 | C dicht, voor (main), alle 111 vragen | 0,733 | 0,715 | 0,770 | 0,889 |
-| C dicht, na, alle 111 vragen | 0,838 | 0,839 | 0,887 | 0,889 |
-| C dicht, na, afgestemd (87) | 0,941 | 0,910 | 0,971 | 1,000 |
+| C dicht, na, alle 111 vragen | 0,811 | 0,815 | 0,860 | 0,889 |
+| C dicht, na, afgestemd (87) | 0,906 | 0,879 | 0,937 | 1,000 |
 | C dicht, voor → na, holdout (24) | 0,472 → 0,465 | 0,562 → 0,583 | 0,583 → 0,583 | 0,500 → 0,500 |
-| C open, na, alle 111 vragen | 0,875 | 0,896 | 0,940 | 0,889 |
+| C open, na, alle 111 vragen | 0,863 | 0,892 | 0,934 | 0,889 |
 | C open, na, holdout (24) | 0,583 | 0,792 | 0,743 | 0,500 |
 
-De synoniemen helpen vooral de vragen waarvoor ze geschreven zijn; op nieuwe vragen verandert het zonder embeddings weinig. Twee holdout-datavragen ('wat kost een huis hier gemiddeld', 'hoe druk bewoond is het hier') vinden geen indicator en gaan daarom niet naar de datavraagroute.
+Synoniemen bij 65+ jaar (pensioengerechtigden, babyboomers) zijn bewust niet toegevoegd: ze veranderen de embeddingtekst, en dan komt bij 'senioren' 65+ jaar (aantal) boven 65+ jaar (%) (acceptatiecriterium 2). De synoniemen helpen vooral de vragen waarvoor ze geschreven zijn; op nieuwe vragen verandert het zonder embeddings weinig. Twee holdout-datavragen ('wat kost een huis hier gemiddeld', 'hoe druk bewoond is het hier') vinden geen indicator en gaan daarom niet naar de datavraagroute.
 
 ## Bronnen
 

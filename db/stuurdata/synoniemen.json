@@ -3,7 +3,7 @@
   "versie": "1.0",
   "begrippen": [
     {"prefLabel": "ouderen", "soort": "specifiek",
-     "altLabel": ["oudere", "senioren", "senior", "65 plussers", "65 plusser", "65plussers", "65 plus", "65 jaar en ouder", "65 jaar of ouder", "vergrijzing", "vergrijsd", "aow ers", "gepensioneerden", "gepensioneerd", "pensioengerechtigden", "pensioengerechtigde", "oude mensen", "babyboomers", "babyboomer"],
+     "altLabel": ["oudere", "senioren", "senior", "65 plussers", "65 plusser", "65plussers", "65 plus", "65 jaar en ouder", "65 jaar of ouder", "vergrijzing", "vergrijsd", "aow ers", "gepensioneerden", "gepensioneerd"],
      "indicatoren": ["65+ jaar (%)", "65+ jaar"]},
     {"prefLabel": "bejaarden", "soort": "specifiek",
      "altLabel": ["bejaard", "bejaarde"],
