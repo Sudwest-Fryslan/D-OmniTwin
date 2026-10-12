@@ -3670,6 +3670,54 @@ textarea {
   line-height: 1.4;
 }
 
+/* --- #336: eigen buurt via postcode/adres of locatie --- */
+.chat-buurtkiezer {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  margin: 0.5rem 0;
+}
+
+.chat-buurtkiezer label {
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+}
+
+.chat-buurtkiezer-rij {
+  display: flex;
+  gap: 0.4rem;
+  min-width: 0;
+}
+
+.chat-buurtkiezer input {
+  flex: 1;
+  min-width: 0;
+  padding: 0.45rem 0.7rem;
+  border-radius: 8px;
+  border: 1px solid var(--panel-border);
+  background: var(--tint-subtle);
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: 0.85rem;
+}
+
+.chat-buurtkiezer input:focus {
+  border-color: var(--action-color);
+  outline: 2px solid color-mix(in srgb, var(--action-color) 40%, transparent);
+}
+
+.chat-buurtkiezer-status:empty {
+  display: none;
+}
+
+.chat-buurtkiezer-status,
+.chat-buurtkiezer-privacy {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  margin: 0;
+  line-height: 1.4;
+}
+
 /* --- #149: bronregel bij een antwoord op een datavraag --- */
 .chat-bronregel {
   font-size: 0.72rem;

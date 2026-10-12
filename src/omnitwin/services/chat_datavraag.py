@@ -10,7 +10,8 @@ de gebruiker wil een getal of een rangorde, geen knop. De route:
 3. indicatoren: woorden uit de indicatornamen, de begrippen en synoniemen uit
    db/stuurdata/synoniemen.json ("energiearmoede", "bejaard" → 65+ jaar (%)) en AI-zoeken
    per deelvraag, alleen bij een sterke treffer (services/zoektaal.py, #233);
-   "mijn buurt" / "bij mij" / "hier" zonder geselecteerde buurt: eerst vragen welke buurt;
+   "mijn buurt" / "bij mij" / "hier" zonder geselecteerde buurt: eerst vragen welke buurt
+   (de viewer biedt dan postcode/adres of locatie aan, #336);
 4. cijfers: de meest recente waarde per gebied en indicator, met eenheid, bron, jaar,
    richting (hoger/lager is beter) en rangorde binnen de groep;
 5. antwoord: het taalmodel krijgt alleen die cijfers. Staat er in het antwoord een getal dat
@@ -698,10 +699,15 @@ def deelvragen(vraag: str) -> List[str]:
 _MODELFOUTEN = ("Error contacting", "Generatie mislukt", "LLM-server", "Fout bij", "AI-samenvatting is nu niet beschikbaar")
 
 
-def aanname_tekst(herkenning: GebiedHerkenning) -> Optional[str]:
+# Waar de buurt vandaan kwam als die niet in de vraag stond (context.buurt_herkomst, #336)
+_HERKOMST = {"adres": "gevonden bij je postcode of adres", "locatie": "gevonden bij je locatie"}
+
+
+def aanname_tekst(herkenning: GebiedHerkenning, herkomst: Optional[str] = None) -> Optional[str]:
     """
     Van welk gebied gaat het antwoord uit, als dat niet in de vraag stond (#233)? Dan zegt de
     assistent dat vooraf: 'Ik ga uit van Bolsward-Zuidoost (geselecteerd op de kaart).'
+    Kwam de buurt uit een postcode/adres of de locatie (#336), dan zegt hij dat.
     """
     if herkenning.bron != "kaart" or not herkenning.herkend:
         return None
@@ -712,8 +718,8 @@ def aanname_tekst(herkenning: GebiedHerkenning) -> Optional[str]:
         lijst = f"{', '.join(namen[:-1])} en {namen[-1]}"
     else:
         lijst = namen[0]
-    return (f"Ik ga uit van {lijst} (geselecteerd op de kaart). Een andere buurt? Selecteer die op de "
-            "kaart of noem de naam in je vraag.")
+    return (f"Ik ga uit van {lijst} ({_HERKOMST.get(herkomst, 'geselecteerd op de kaart')}). Een andere buurt? "
+            "Selecteer die op de kaart of noem de naam in je vraag.")
 
 
 def beantwoord_datavraag(
@@ -779,7 +785,7 @@ def beantwoord_datavraag(
         return None  # geen onderwerp en geen gebied: de gewone chat neemt het over
 
     basis = {"herkend": herkenning.herkend, "gebieden_bron": herkenning.bron, "feiten": [],
-             "aanname": aanname_tekst(herkenning),
+             "aanname": aanname_tekst(herkenning, context.get("buurt_herkomst")), "vraag_buurt": False,
              "indicatoren": treffers, "gebied_ids": [], "llm_gebruikt": False, "model": None,
              "gebiedstype_id": None, "ongegrond": [], "llm_fout": False}
 
@@ -792,9 +798,11 @@ def beantwoord_datavraag(
     if not herkenning.gevraagd:
         namen = ", ".join(t.naam for t in treffers)
         if eigen_buurt:
-            return {**basis, "narrative": (
-                f"Welke buurt is jouw buurt? Selecteer hem op de kaart (klik erop) en stel de vraag opnieuw, "
-                f"of noem de naam, bijvoorbeeld '... in Bolsward-Zuidoost'. Ik zoek dan in: {namen}.")}
+            # #336: de viewer toont bij vraag_buurt een veld voor postcode/adres en 'Gebruik mijn locatie'
+            return {**basis, "vraag_buurt": True, "narrative": (
+                f"Welke buurt is jouw buurt? Vul hieronder je postcode of adres in, gebruik je locatie, "
+                f"of selecteer de buurt op de kaart. Je kunt ook de naam noemen, bijvoorbeeld "
+                f"'... in Bolsward-Zuidoost'. Ik zoek dan in: {namen}.")}
         return {**basis, "narrative": (
             "Voor welk gebied wil je dit weten? Noem een buurt, woonplaats of gemeente, "
             "of selecteer een gebied op de kaart.")}

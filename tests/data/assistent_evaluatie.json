@@ -1,5 +1,5 @@
 {
-  "$comment": "Evaluatieset D-Omni Assistent (#233): vragen zoals gebruikers ze stellen, met de indicatoren die een goed antwoord gebruikt. UUID's uit de verse stack met sample-data (init_data/sample, init_data/cbs). 'relevant': alle indicatoren die een goed antwoord mag noemen, de beste eerst; 'holdout': vragen die niet gebruikt zijn om synoniemen en drempels af te stemmen (controle op overfitting). 'type': 'zoek' (welke indicatoren zijn er) of 'datavraag' (een getal voor een gebied). Bij een datavraag: 'selectie' = gebied-id's op de kaart ([] = niets geselecteerd; standaard 'gebied'), 'route': 'vraag_buurt' als de assistent moet vragen welke buurt, 'gebieden' = gebieden die een cijfer moeten krijgen; bij 'mijn_buurt' met een selectie zegt het antwoord van welke buurt het uitgaat ('aanname', #233). 'holdout_1_1': holdout in versie 1.1; in 1.2 gebruikt om synoniemen af te stemmen (#336). De holdout van 1.2 is nieuw en vastgelegd vóór het afstemmen. Meten: python scripts/ai/evalueer_assistent.py --url http://localhost:8105",
+  "$comment": "Evaluatieset D-Omni Assistent (#233): vragen zoals gebruikers ze stellen, met de indicatoren die een goed antwoord gebruikt. UUID's uit de verse stack met sample-data (init_data/sample, init_data/cbs). 'relevant': alle indicatoren die een goed antwoord mag noemen, de beste eerst; 'holdout': vragen die niet gebruikt zijn om synoniemen en drempels af te stemmen (controle op overfitting). 'type': 'zoek' (welke indicatoren zijn er) of 'datavraag' (een getal voor een gebied). Bij een datavraag: 'selectie' = gebied-id's op de kaart ([] = niets geselecteerd; standaard 'gebied'), 'route': 'vraag_buurt' als de assistent moet vragen welke buurt, 'gebieden' = gebieden die een cijfer moeten krijgen; bij 'mijn_buurt' met een selectie zegt het antwoord van welke buurt het uitgaat ('aanname', #233). 'drempels' gelden voor de afgestemde vragen, 'drempels_holdout' (lager, alleen tegen terugval) voor de holdout (#336). 'holdout_1_1': holdout in versie 1.1; in 1.2 gebruikt om synoniemen af te stemmen (#336). De holdout van 1.2 is nieuw en vastgelegd vóór het afstemmen. Meten: python scripts/ai/evalueer_assistent.py --url http://localhost:8105",
   "versie": "1.2",
   "k": 3,
   "drempels": {
@@ -7,6 +7,12 @@
     "recall_at_k": 0.8,
     "mrr": 0.8,
     "routering": 0.9
+  },
+  "drempels_holdout": {
+    "precision_at_k": 0.4,
+    "recall_at_k": 0.5,
+    "mrr": 0.5,
+    "routering": 0.5
   },
   "gebied": "BU19000002",
   "gebiedsnamen": {"BU19000002": "Bolsward-Zuidoost", "BU19000003": "Bolsward-Zuidwest"},

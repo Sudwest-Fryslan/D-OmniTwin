@@ -59,7 +59,8 @@ def test_frame_options(response):
 
 def test_permissions_policy(response):
     pp = response.headers.get("Permissions-Policy", "")
-    assert "camera=()" in pp and "geolocation=()" in pp
+    # geolocation alleen voor de eigen site: "Gebruik mijn locatie" in de assistent (#336)
+    assert "camera=()" in pp and "geolocation=(self)" in pp
 
 
 def test_csp(response):

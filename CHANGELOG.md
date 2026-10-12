@@ -8,6 +8,14 @@ Eerdere wijzigingen, van vóór dit bestand, zijn terug te vinden in de git-hist
 
 ## [Unreleased]
 
+### Toegevoegd
+
+- **Assistent: eigen buurt via postcode, adres of locatie** ([#336](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/336)): vraagt de assistent welke buurt 'mijn buurt' is, dan kan de gebruiker een postcode of adres invullen of (na toestemming in de browser) de locatie gebruiken. `POST /api/locatie/buurt` zoekt de buurt op bij de PDOK Locatieserver; adres en locatie gaan alleen in de body, worden niet gelogd of bewaard. Het antwoord zegt daarna waar de buurt vandaan kwam ('gevonden bij je postcode of adres'). Permissions-Policy staat geolocatie nu toe voor de eigen site (`geolocation=(self)`).
+
+### Gewijzigd
+
+- **Evaluatieset assistent 1.2** ([#336](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/336)): synoniemen aangevuld (o.a. pensioengerechtigden, babyboomers, twintigers, voedselbank, verstening, arbeidsmarkt, studieniveau, woningtekort, huurprijzen). De oude holdout-vragen zijn daarvoor gebruikt; 24 nieuwe holdout-vragen meten eerlijk. Drempels gelden voor de afgestemde vragen, de holdout heeft eigen, lagere drempels tegen terugval. Met AI-usecase C dicht: recall@3 0,715 → 0,865 (alle vragen), holdout 0,583.
+
 ## [0.5.1] - 2026-10-12
 
 Afronding van "cijfers kloppen": epic [#316](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/316) is dicht. Projecties tellen nergens meer als actuele waarde, de 3D-kleuring gebruikt de recentste waarde en de CBS-download bewaakt weggevallen buurtcodes ([#159](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/159)). De bevindingen uit de rondleiding zijn verwerkt: kloppende dashboardcijfers, standaard alleen indicatoren met data en duidelijke meldingen bij installeren ([#246](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/246)). Nieuw voor ontwikkelaars: de CI lokaal draaien met één script ([#362](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/362)). Bewust naar later: [#340](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/340) en [#343](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/343) (wachten op externe partijen), [#366](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/366) (schema's bron en stuur) en [#370](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/370) (herkomst per waarde). Geen migraties.
