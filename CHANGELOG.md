@@ -8,6 +8,10 @@ Eerdere wijzigingen, van vóór dit bestand, zijn terug te vinden in de git-hist
 
 ## [Unreleased]
 
+## [0.5.1] - 2026-10-12
+
+Afronding van "cijfers kloppen": epic [#316](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/316) is dicht. Projecties tellen nergens meer als actuele waarde, de 3D-kleuring gebruikt de recentste waarde en de CBS-download bewaakt weggevallen buurtcodes ([#159](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/159)). De bevindingen uit de rondleiding zijn verwerkt: kloppende dashboardcijfers, standaard alleen indicatoren met data en duidelijke meldingen bij installeren ([#246](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/246)). Nieuw voor ontwikkelaars: de CI lokaal draaien met één script ([#362](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/362)). Bewust naar later: [#340](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/340) en [#343](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/343) (wachten op externe partijen), [#366](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/366) (schema's bron en stuur) en [#370](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/370) (herkomst per waarde). Geen migraties.
+
 ### Toegevoegd
 
 - **CI lokaal** ([#362](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/362)): `scripts/ci/ci-lokaal.sh <branch>` test een branch met dezelfde stappen als de CI (publiccode, unit 3.11/3.12, admin-panel met build-controle, verse stack, integratie, browser-e2e) in een aparte worktree, en toont de tijd per stap. Werkt op Linux, macOS en Windows (Git Bash).
@@ -362,7 +366,8 @@ Eerste release; deze sectie vat de ontwikkeling sinds het begin samen, details s
 - De backend-container draait als niet-root gebruiker ([#78](https://github.com/Sudwest-Fryslan/D-OmniTwin/pull/78)).
 - Beheeromgeving gebouwd zonder sourcemaps ([#81](https://github.com/Sudwest-Fryslan/D-OmniTwin/pull/81)).
 
-[Unreleased]: https://github.com/Sudwest-Fryslan/D-OmniTwin/compare/v0.5.0...HEAD
+[Unreleased]: https://github.com/Sudwest-Fryslan/D-OmniTwin/compare/v0.5.1...HEAD
+[0.5.1]: https://github.com/Sudwest-Fryslan/D-OmniTwin/compare/v0.5.0...v0.5.1
 [0.5.0]: https://github.com/Sudwest-Fryslan/D-OmniTwin/compare/v0.5.0-rc.1...v0.5.0
 [0.5.0-rc.1]: https://github.com/Sudwest-Fryslan/D-OmniTwin/compare/v0.4.0...v0.5.0-rc.1
 [0.4.0]: https://github.com/Sudwest-Fryslan/D-OmniTwin/compare/v0.3.1...v0.4.0
