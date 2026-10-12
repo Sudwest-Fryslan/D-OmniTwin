@@ -166,7 +166,10 @@ jobs:
           grep -E '^(COMPOSE_FILE|LOAD_SAMPLE_DATA|DATABASE_(HOST|PORT|NAME|USER|SSLMODE))=' .env
 
       - name: Start stack (build + wachten op healthchecks)
-        run: docker compose up -d --build --wait --wait-timeout 600
+        run: |
+          # backend en db-init delen één image: eerst apart bouwen, anders botsen ze bij een nieuwe projectnaam
+          docker compose build backend
+          docker compose up -d --wait --wait-timeout 600
 
       - name: Wacht tot Traefik de backend routeert
         run: |
