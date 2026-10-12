@@ -121,12 +121,18 @@ jobs:
     needs: unit-tests
     timeout-minutes: 90
     env:
-      COMPOSE_PROJECT_NAME: omnitwin-ci
-      OMNITWIN_HTTP_PORT: "8080"
+      # Uniek per run: op een eigen runner (CI_RUNNER) kan er al iets draaien
+      COMPOSE_PROJECT_NAME: omnitwin-ci-${{ github.run_id }}-${{ github.run_attempt }}
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v7
+
+      - name: Kies een vrije poort
+        run: |
+          poort=$(python3 -c "import socket; s=socket.socket(); s.bind(('', 0)); print(s.getsockname()[1])")
+          echo "OMNITWIN_HTTP_PORT=$poort" >> "$GITHUB_ENV"
+          echo "Poort: $poort"
 
       - name: Maak .env met wegwerpwaarden
         run: |
@@ -213,7 +219,7 @@ jobs:
 
       - name: Stack opruimen
         if: always()
-        run: docker compose down -v --remove-orphans
+        run: docker compose down -v --remove-orphans --rmi local
 
   # ──────────────────────────────────────────────
   # Job 4: admin-panel (React/Vite) — typecheck, lint, test en build (#202)
