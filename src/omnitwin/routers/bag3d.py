@@ -16,8 +16,12 @@ Copyright: © 3DBAG by 3DGI and TU Delft (CC BY 4.0)
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
-from sqlalchemy import text
-from pyproj import Transformer
+try:
+    from pyproj import Transformer
+    _rd_to_wgs84 = Transformer.from_crs("EPSG:28992", "EPSG:4326", always_xy=True)
+except ImportError:  # pragma: no cover
+    Transformer = None
+    _rd_to_wgs84 = None
 from omnitwin.database import get_db
 from typing import List, Optional
 import requests
@@ -124,9 +128,6 @@ REST_API_BASE = "https://api.3dbag.nl/collections/pand/items"
 REST_API_TIMEOUT = 25  # seconden per request (verruimd voor grotere/dichtbevolkte buurten)
 MAX_PAGES = 30         # Maximaal aantal pagina's (volledige wijk ophalen)
 
-# Module-level gecachede transformer voor optimale performance
-_rd_to_wgs84 = Transformer.from_crs("EPSG:28992", "EPSG:4326", always_xy=True)
-
 
 def _decode_cityjson_geometry(boundaries: list, vertices: list, scale: list, translate: list) -> list:
     """
@@ -148,8 +149,9 @@ def _decode_cityjson_geometry(boundaries: list, vertices: list, scale: list, tra
                 v = vertices[idx]
                 x_rd = v[0] * scale[0] + translate[0]
                 y_rd = v[1] * scale[1] + translate[1]
-                lon, lat = _rd_to_wgs84.transform(x_rd, y_rd)
-                coords.append([round(lon, 7), round(lat, 7)])
+                if _rd_to_wgs84 is not None:
+                    lon, lat = _rd_to_wgs84.transform(x_rd, y_rd)
+                    coords.append([round(lon, 7), round(lat, 7)])
         if coords and coords[0] != coords[-1]:
             coords.append(coords[0])
         return coords

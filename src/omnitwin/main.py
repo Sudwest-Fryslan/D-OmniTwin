@@ -1,8 +1,8 @@
-from fastapi import FastAPI, Depends, HTTPException, Request
+from fastapi import FastAPI, Depends, HTTPException, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.base import BaseHTTPMiddleware
 from fastapi.templating import Jinja2Templates
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.openapi.docs import get_swagger_ui_html # Local Swagger UI
 from sqlalchemy.orm import Session
 from sqlalchemy import event, text
@@ -302,9 +302,38 @@ def root(request: Request, db: Session = Depends(get_db)):
         headers={"Cache-Control": "no-cache"})
 
 # ============================================================================
-# React SPA Support for Admin Panel
+# React SPA Support voor Admin Panel en Standalone Rapporten (#290)
 # ============================================================================
-@app.get("/admin/{catchall:path}", response_class=HTMLResponse)
+def _serve_spa_index() -> HTMLResponse:
+    """Serveert index.html van het React SPA build-pakket."""
+    index_path = os.path.join("static", "admin-panel", "index.html")
+    if os.path.exists(index_path):
+        with open(index_path) as f:
+            return HTMLResponse(content=f.read(), headers={"Cache-Control": "no-cache"})
+    return HTMLResponse(
+        content="<h1>Admin Panel Niet Gebouwd</h1><p>Draai `npm run build` in de admin-panel map.</p>",
+        status_code=404,
+    )
+
+
+@app.get("/admin/rapport/{catchall:path}", response_class=RedirectResponse, include_in_schema=False)
+@app.get("/admin/rapport", response_class=RedirectResponse, include_in_schema=False)
+async def redirect_admin_rapport(request: Request, catchall: str = ""):
+    """Redirect oude /admin/rapport/* deeplinks naar standalone /rapport/* met query parameters (#290)."""
+    doel = f"/rapport/{catchall}" if catchall else "/rapport"
+    if request.url.query:
+        doel += f"?{request.url.query}"
+    return RedirectResponse(url=doel, status_code=status.HTTP_307_TEMPORARY_REDIRECT)
+
+
+@app.get("/rapport/{catchall:path}", response_class=HTMLResponse, include_in_schema=False)
+@app.get("/rapport", response_class=HTMLResponse, include_in_schema=False)
+async def serve_rapport_spa(request: Request, catchall: str = ""):
+    """Standalone rapportage route voor React Router (#290)."""
+    return _serve_spa_index()
+
+
+@app.get("/admin/{catchall:path}", response_class=HTMLResponse, include_in_schema=False)
 async def serve_admin_spa(request: Request, catchall: str):
     """Fallback route for React Router in the Admin Panel."""
     # Serve build files if they exist: Vite-assets (/admin/assets/...) and
@@ -317,13 +346,7 @@ async def serve_admin_spa(request: Request, catchall: str):
         # Ontbrekend build-asset: 404 i.p.v. index.html (zoals eerder /admin/static/)
         return HTMLResponse(content="Not Found", status_code=404)
 
-    # Build processes put index.html in the static folder under admin-panel
-    index_path = os.path.join("static", "admin-panel", "index.html")
-    if os.path.exists(index_path):
-        with open(index_path) as f:
-            return HTMLResponse(content=f.read(), headers={"Cache-Control": "no-cache"})
-    # Development fallback
-    return HTMLResponse(content="<h1>Admin Panel Niet Gebouwd</h1><p>Draai `npm run build` in de admin-panel map.</p>", status_code=404)
+    return _serve_spa_index()
 
 @app.get("/.well-known/security.txt", include_in_schema=False)
 async def security_txt():

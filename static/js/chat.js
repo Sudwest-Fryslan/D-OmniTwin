@@ -343,15 +343,15 @@ class ChatPanel {
 
                 if (geselecteerd.length === 0) {
                     // Geen selectie: open lege benchmark pagina
-                    window.open('/admin/rapport/benchmark', '_blank');
+                    window.open('/rapport/benchmark', '_blank');
                 } else if (geselecteerd.length === 1) {
                     // Eén gebied: open gebiedsdossier
-                    window.open(`/admin/rapport/${geselecteerd[0]}`, '_blank');
+                    window.open(`/rapport/${geselecteerd[0]}`, '_blank');
                 } else {
                     // Multi-selectie: open benchmark met alle gebieden
                     const [a, ...rest] = geselecteerd;
                     window.open(
-                        `/admin/rapport/benchmark?gebied_a=${a}&gebieden_b=${rest.join(',')}`,
+                        `/rapport/benchmark?gebied_a=${a}&gebieden_b=${rest.join(',')}`,
                         '_blank'
                     );
                 }

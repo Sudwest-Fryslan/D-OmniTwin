@@ -8,12 +8,18 @@ Eerdere wijzigingen, van vóór dit bestand, zijn terug te vinden in de git-hist
 
 ## [Unreleased]
 
+## [0.5.1] - 2026-10-12
+
+Afronding van "cijfers kloppen": epic [#316](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/316) is dicht. Projecties tellen nergens meer als actuele waarde, de 3D-kleuring gebruikt de recentste waarde en de CBS-download bewaakt weggevallen buurtcodes ([#159](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/159)). De bevindingen uit de rondleiding zijn verwerkt: kloppende dashboardcijfers, standaard alleen indicatoren met data en duidelijke meldingen bij installeren ([#246](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/246)). Nieuw voor ontwikkelaars: de CI lokaal draaien met één script ([#362](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/362)). Bewust naar later: [#340](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/340) en [#343](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/343) (wachten op externe partijen), [#366](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/366) (schema's bron en stuur) en [#370](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/370) (herkomst per waarde). Geen migraties.
+
 ### Toegevoegd
 
 - **CI lokaal** ([#362](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/362)): `scripts/ci/ci-lokaal.sh <branch>` test een branch met dezelfde stappen als de CI (publiccode, unit 3.11/3.12, admin-panel met build-controle, verse stack, integratie, browser-e2e) in een aparte worktree, en toont de tijd per stap. Werkt op Linux, macOS en Windows (Git Bash).
 
 ### Gewijzigd
 
+- **Rapporten losgekoppeld van beheeromgeving (standalone)** ([#290](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/290)): rapportages (*Gebiedsdossier*, *Benchmark*, *Multi-Gebied*, *Thema-Analyse*, *Deelgebiedsanalyse*) worden nu standalone aangeboden onder de publieke URL `/rapport/*` in plaats van `/admin/rapport/*`. Een ingelogde beheerder ziet bij het bekijken van een rapport nooit meer de beheer-zijbalk of beheerheader. De standalone weergave heeft een eigen toegankelijke kopbalk met *"← Terug naar kaart"*, *"Afdrukken/Opslaan"* en *"Afwijking melden"* (terugmeldvoorziening #311 fase 2).
+- **Vite asset-prefix en WAF-onafhankelijkheid** ([#290](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/290)): `admin-panel` assets worden bij de productiebuild geserveerd via `/static/admin-panel/assets/` (in plaats van `/admin/assets/`). Hierdoor blijven rapporten en hun scripts volledig operationeel voor externe bezoekers wanneer `/admin/*` via een gemeentelijke WAF of firewall wordt afgeschermd. Oude `/admin/rapport/*` deeplinks krijgen een automatische HTTP 307 redirect met behoud van query-parameters naar `/rapport/*`. Alle links in de viewer (`app.js`, `chat.js`) zijn omgezet naar `/rapport/*`.
 - Beheer › Indicatoren toont standaard **alleen indicatoren met data** (vinkje om alles te zien; `GET /api/admin/indicatoren?met_data=true`), zodat definities zonder levering de lijst niet vervuilen ([#246](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/246)).
 - `python -m omnitwin.usecases installeer` vat de leveringen per dataset samen met het aantal per status en de reden (bijv. `57x overgeslagen (route compat kan niet met --inproces: …)`), in plaats van 57 keer "overgeslagen" ([#246](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/246)).
 
@@ -363,7 +369,8 @@ Eerste release; deze sectie vat de ontwikkeling sinds het begin samen, details s
 - De backend-container draait als niet-root gebruiker ([#78](https://github.com/Sudwest-Fryslan/D-OmniTwin/pull/78)).
 - Beheeromgeving gebouwd zonder sourcemaps ([#81](https://github.com/Sudwest-Fryslan/D-OmniTwin/pull/81)).
 
-[Unreleased]: https://github.com/Sudwest-Fryslan/D-OmniTwin/compare/v0.5.0...HEAD
+[Unreleased]: https://github.com/Sudwest-Fryslan/D-OmniTwin/compare/v0.5.1...HEAD
+[0.5.1]: https://github.com/Sudwest-Fryslan/D-OmniTwin/compare/v0.5.0...v0.5.1
 [0.5.0]: https://github.com/Sudwest-Fryslan/D-OmniTwin/compare/v0.5.0-rc.1...v0.5.0
 [0.5.0-rc.1]: https://github.com/Sudwest-Fryslan/D-OmniTwin/compare/v0.4.0...v0.5.0-rc.1
 [0.4.0]: https://github.com/Sudwest-Fryslan/D-OmniTwin/compare/v0.3.1...v0.4.0

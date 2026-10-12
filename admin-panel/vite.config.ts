@@ -2,9 +2,11 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 
-// De beheeromgeving wordt door FastAPI geserveerd onder /admin/ (zie main.py).
-export default defineConfig({
-  base: '/admin/',
+// De beheeromgeving en rapporten worden geserveerd via FastAPI (zie main.py).
+// Bij build worden assets geserveerd via /static/admin-panel/ zodat rapportages
+// onder /rapport/* WAF-onafhankelijk van /admin/* blijven (#290).
+export default defineConfig(({ command }) => ({
+  base: command === 'build' ? '/static/admin-panel/' : '/',
   plugins: [react()],
   server: {
     port: 3000,
@@ -20,4 +22,4 @@ export default defineConfig({
     environment: 'jsdom',
     setupFiles: './src/setupTests.ts',
   },
-});
+}));

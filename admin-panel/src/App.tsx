@@ -45,6 +45,7 @@ import {
 } from 'lucide-react';
 import { authAPI } from './services/api';
 import Beeldmerk from './components/Beeldmerk';
+import { MeldModal } from './components/MeldModal';
 import { huidigeModus, kiesModus } from './thema';
 import './styles/admin.css';
 
@@ -102,7 +103,7 @@ const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 
         <nav className="sidebar-nav">
           <NavLink
-            to="/dashboard"
+            to="/admin/dashboard"
             className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
           >
             <LayoutDashboard size={18} />
@@ -110,7 +111,7 @@ const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
           </NavLink>
 
           <NavLink
-            to="/indicatoren"
+            to="/admin/indicatoren"
             className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
           >
             <Database size={18} />
@@ -118,7 +119,7 @@ const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
           </NavLink>
 
           <NavLink
-            to="/data-kwaliteit"
+            to="/admin/data-kwaliteit"
             className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
           >
             <Activity size={18} />
@@ -126,7 +127,7 @@ const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
           </NavLink>
 
           <NavLink
-            to="/hierarchie"
+            to="/admin/hierarchie"
             className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
           >
             <GitBranch size={18} />
@@ -134,7 +135,7 @@ const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
           </NavLink>
 
           <NavLink
-            to="/kleurschemas"
+            to="/admin/kleurschemas"
             className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
           >
             <Palette size={18} />
@@ -174,7 +175,7 @@ const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
           </NavLink>
 
           <NavLink
-            to="/llm"
+            to="/admin/llm"
             className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
           >
             <Settings size={18} />
@@ -182,7 +183,7 @@ const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
           </NavLink>
 
           <NavLink
-            to="/ai-usecases"
+            to="/admin/ai-usecases"
             className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
           >
             <ShieldCheck size={18} />
@@ -190,7 +191,7 @@ const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
           </NavLink>
 
           <NavLink
-            to="/meldingen"
+            to="/admin/meldingen"
             className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
           >
             <Inbox size={18} />
@@ -198,7 +199,7 @@ const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
           </NavLink>
 
           <NavLink
-            to="/logs"
+            to="/admin/logs"
             className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
           >
             <ScrollText size={18} />
@@ -206,7 +207,7 @@ const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
           </NavLink>
 
           <NavLink
-            to="/externe-lagen"
+            to="/admin/externe-lagen"
             className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
           >
             <Globe size={18} />
@@ -214,7 +215,7 @@ const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
           </NavLink>
 
           <NavLink
-            to="/organisatie"
+            to="/admin/organisatie"
             className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
           >
             <Building2 size={18} />
@@ -234,20 +235,18 @@ const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
         <header className="header hide-on-print" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'relative', zIndex: 50 }}>
           <h2>
             <Routes>
-              <Route path="/dashboard" element={<>Dashboard</>} />
-              <Route path="/indicatoren" element={<>Indicatoren</>} />
-              <Route path="/data-kwaliteit" element={<>Data Kwaliteit</>} />
-              <Route path="/hierarchie" element={<>Hiërarchie</>} />
-              <Route path="/kleurschemas" element={<>Kleurschema's</>} />
-              <Route path="/rapport/thema-analyse" element={<>Thema-Analyse</>} />
-              <Route path="/rapport/*" element={<>AI Rapportage</>} />
-              <Route path="/llm" element={<>AI Configuratie</>} />
-              <Route path="/ai-usecases" element={<>AI-usecases</>} />
-              <Route path="/meldingen" element={<>Meldingen</>} />
-              <Route path="/logs" element={<>Log Viewer</>} />
-              <Route path="/externe-lagen" element={<>Externe Kaartlagen</>} />
-              <Route path="/organisatie" element={<>Organisatie en thema</>} />
-              <Route path="/account" element={<>Mijn Account</>} />
+              <Route path="/admin/dashboard" element={<>Dashboard</>} />
+              <Route path="/admin/indicatoren" element={<>Indicatoren</>} />
+              <Route path="/admin/data-kwaliteit" element={<>Data Kwaliteit</>} />
+              <Route path="/admin/hierarchie" element={<>Hiërarchie</>} />
+              <Route path="/admin/kleurschemas" element={<>Kleurschema's</>} />
+              <Route path="/admin/llm" element={<>AI Configuratie</>} />
+              <Route path="/admin/ai-usecases" element={<>AI-usecases</>} />
+              <Route path="/admin/meldingen" element={<>Meldingen</>} />
+              <Route path="/admin/logs" element={<>Log Viewer</>} />
+              <Route path="/admin/externe-lagen" element={<>Externe Kaartlagen</>} />
+              <Route path="/admin/organisatie" element={<>Organisatie en thema</>} />
+              <Route path="/admin/account" element={<>Mijn Account</>} />
             </Routes>
           </h2>
 
@@ -333,21 +332,92 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
   const { isAuthenticated } = useAdminStore();
 
   if (!isAuthenticated) {
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/admin/login" replace />;
   }
 
   return <AppLayout>{children}</AppLayout>;
 };
 
-// Publiek bereikbare rapportroutes: met menu als beheerder is ingelogd, anders standalone
-const OptionalLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { isAuthenticated } = useAdminStore();
+// Standalone rapportage layout (#290): altijd zonder beheer-zijbalk of beheerheader,
+// voor zowel anonieme bezoekers als ingelogde beheerders.
+const ReportLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [isMeldOpen, setIsMeldOpen] = React.useState(false);
+  const location = useLocation();
 
-  if (!isAuthenticated) {
-    return <>{children}</>;
-  }
+  // Bepaal context van het huidige rapport voor de terugmeldvoorziening (#311)
+  const context = React.useMemo(() => {
+    const path = location.pathname;
+    const parts = path.split('/').filter(Boolean); // ['rapport', 'BU19000113'] of ['rapport', 'benchmark']
+    const sub = parts[1] || '';
+    let rapportType = 'Rapport';
+    let gebiedId: string | undefined = undefined;
 
-  return <AppLayout>{children}</AppLayout>;
+    if (sub === 'benchmark') {
+      rapportType = 'Benchmark Vergelijker';
+    } else if (sub === 'multi-gebied') {
+      rapportType = 'Multi-Gebiedsdossier';
+    } else if (sub === 'thema-analyse') {
+      rapportType = 'Thema-Analyse';
+    } else if (sub === 'deelgebied') {
+      rapportType = 'Deelgebiedsanalyse';
+    } else if (sub) {
+      rapportType = 'Gebiedsdossier';
+      gebiedId = sub;
+    }
+
+    return {
+      rapport_type: rapportType,
+      gebied_id: gebiedId,
+      url: window.location.href,
+    };
+  }, [location.pathname]);
+
+  return (
+    <div className="report-standalone-container">
+      <header className="report-standalone-header hide-on-print">
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+          <a
+            href="/"
+            className="btn btn-secondary"
+            style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', textDecoration: 'none' }}
+            aria-label="Terug naar kaart"
+          >
+            ← Terug naar kaart
+          </a>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <Beeldmerk size={28} />
+            <span style={{ fontWeight: 600, fontSize: '1.1rem', color: 'var(--color-text-primary)' }}>D-OmniTwin</span>
+          </div>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          <button
+            type="button"
+            className="btn btn-secondary"
+            onClick={() => setIsMeldOpen(true)}
+            title="Meld een data-afwijking of geef feedback (#311)"
+          >
+            Afwijking melden
+          </button>
+          <button
+            type="button"
+            className="btn btn-primary"
+            onClick={() => window.print()}
+            title="Afdrukken of opslaan als PDF"
+          >
+            Afdrukken
+          </button>
+        </div>
+      </header>
+      <div className="report-standalone-body">
+        {children}
+      </div>
+      <MeldModal
+        isOpen={isMeldOpen}
+        onClose={() => setIsMeldOpen(false)}
+        context={context}
+      />
+    </div>
+  );
 };
 
 // KleurschemasPage is now imported from ./pages/KleurschemasPage
@@ -392,89 +462,93 @@ function App() {
           Demo-omgeving — standaardwachtwoorden, niet voor productie
         </div>
       )}
-      <BrowserRouter basename="/admin">
+      <BrowserRouter>
         <Routes>
+          {/* Beheerscherm routes */}
           <Route
-            path="/login"
+            path="/admin/login"
             element={
-              isAuthenticated ? <Navigate to="/dashboard" replace /> : <LoginPage />
+              isAuthenticated ? <Navigate to="/admin/dashboard" replace /> : <LoginPage />
             }
           />
 
-          <Route path="/dashboard" element={
+          <Route path="/admin/dashboard" element={
             <ProtectedRoute><DashboardPage /></ProtectedRoute>
           } />
 
-          <Route path="/indicatoren" element={
+          <Route path="/admin/indicatoren" element={
             <ProtectedRoute><IndicatorsPage /></ProtectedRoute>
           } />
 
-          <Route path="/data-kwaliteit" element={
+          <Route path="/admin/data-kwaliteit" element={
             <ProtectedRoute><DataKwaliteitPage /></ProtectedRoute>
           } />
 
-          <Route path="/hierarchie" element={
+          <Route path="/admin/hierarchie" element={
             <ProtectedRoute><HierarchiePage /></ProtectedRoute>
           } />
 
-          <Route path="/kleurschemas" element={
+          <Route path="/admin/kleurschemas" element={
             <ProtectedRoute><KleurschemasPage /></ProtectedRoute>
           } />
 
-          <Route path="/rapport/benchmark" element={
-            <OptionalLayout><BenchmarkPage /></OptionalLayout>
-          } />
-
-          <Route path="/rapport/multi-gebied" element={
-            <OptionalLayout><MultiGebiedPage /></OptionalLayout>
-          } />
-
-          <Route path="/rapport/thema-analyse" element={
-            <OptionalLayout><ThemaAnalysePage /></OptionalLayout>
-          } />
-
-          <Route path="/rapport/deelgebied" element={
-            <OptionalLayout><DeelgebiedPage /></OptionalLayout>
-          } />
-
-          <Route path="/rapport/:gebied_id?" element={
-            <OptionalLayout><ReportPage /></OptionalLayout>
-          } />
-
-          {/* Publieke Report Route outside of ProtectedRoute (als alias) */}
-          <Route path="/publiek-rapport/:gebied_id?" element={
-            <ReportPage />
-          } />
-
-          <Route path="/llm" element={
+          <Route path="/admin/llm/*" element={
             <ProtectedRoute><LLMConfigPage /></ProtectedRoute>
           } />
 
-          <Route path="/ai-usecases" element={
+          <Route path="/admin/ai-usecases" element={
             <ProtectedRoute><AIUsecasesPage /></ProtectedRoute>
           } />
 
-          <Route path="/meldingen" element={
+          <Route path="/admin/meldingen" element={
             <ProtectedRoute><MeldingenPage /></ProtectedRoute>
           } />
 
-          <Route path="/account" element={
+          <Route path="/admin/account" element={
             <ProtectedRoute><AccountPage /></ProtectedRoute>
           } />
 
-          <Route path="/logs" element={
+          <Route path="/admin/logs" element={
             <ProtectedRoute><LogViewerPage /></ProtectedRoute>
           } />
 
-          <Route path="/externe-lagen" element={
+          <Route path="/admin/externe-lagen" element={
             <ProtectedRoute><ExterneKaartlagenPage /></ProtectedRoute>
           } />
 
-          <Route path="/organisatie" element={
+          <Route path="/admin/organisatie" element={
             <ProtectedRoute><OrganisatiePage /></ProtectedRoute>
           } />
 
-          <Route path="*" element={<Navigate to="/dashboard" replace />} />
+          {/* Standalone Rapportage Routes (#290) - Altijd zonder beheer-sidebar */}
+          <Route path="/rapport/benchmark" element={
+            <ReportLayout><BenchmarkPage /></ReportLayout>
+          } />
+
+          <Route path="/rapport/multi-gebied" element={
+            <ReportLayout><MultiGebiedPage /></ReportLayout>
+          } />
+
+          <Route path="/rapport/thema-analyse" element={
+            <ReportLayout><ThemaAnalysePage /></ReportLayout>
+          } />
+
+          <Route path="/rapport/deelgebied" element={
+            <ReportLayout><DeelgebiedPage /></ReportLayout>
+          } />
+
+          <Route path="/rapport/:gebied_id?" element={
+            <ReportLayout><ReportPage /></ReportLayout>
+          } />
+
+          {/* Backwards compatibility & redirects */}
+          <Route path="/admin/rapport/*" element={<Navigate to="/rapport" replace />} />
+          <Route path="/publiek-rapport/:gebied_id?" element={<Navigate to="/rapport" replace />} />
+          <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
+          <Route path="/admin/" element={<Navigate to="/admin/dashboard" replace />} />
+          <Route path="/login" element={<Navigate to="/admin/login" replace />} />
+          <Route path="/dashboard" element={<Navigate to="/admin/dashboard" replace />} />
+          <Route path="*" element={<Navigate to="/admin/dashboard" replace />} />
         </Routes>
       </BrowserRouter>
     </QueryClientProvider>
