@@ -8,6 +8,10 @@ Eerdere wijzigingen, van vóór dit bestand, zijn terug te vinden in de git-hist
 
 ## [Unreleased]
 
+### Opgelost
+
+- **Beheer › AI-usecases past binnen het scherm** ([#339](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/339)): de logboek-tabel rekte de pagina op, waardoor kolommen rechts wegvielen. Tabellen scrollen nu binnen hun eigen kader en lange tekst (vraag, resultaat, toelichting) breekt af (WCAG 1.4.10 Reflow).
+
 ## [0.5.1] - 2026-10-12
 
 Afronding van "cijfers kloppen": epic [#316](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/316) is dicht. Projecties tellen nergens meer als actuele waarde, de 3D-kleuring gebruikt de recentste waarde en de CBS-download bewaakt weggevallen buurtcodes ([#159](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/159)). De bevindingen uit de rondleiding zijn verwerkt: kloppende dashboardcijfers, standaard alleen indicatoren met data en duidelijke meldingen bij installeren ([#246](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/246)). Nieuw voor ontwikkelaars: de CI lokaal draaien met één script ([#362](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/362)). Bewust naar later: [#340](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/340) en [#343](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/343) (wachten op externe partijen), [#366](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/366) (schema's bron en stuur) en [#370](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/370) (herkomst per waarde). Geen migraties.

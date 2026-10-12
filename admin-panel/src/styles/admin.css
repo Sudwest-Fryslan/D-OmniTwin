@@ -319,6 +319,13 @@ body {
     border-bottom: 1px solid var(--color-border);
 }
 
+/* Lange tekst in een tabelcel breekt af in plaats van de tabel (en de pagina) op te rekken (#339) */
+.table td.cel-lang {
+    min-width: 12rem;
+    max-width: 28rem;
+    overflow-wrap: anywhere;
+}
+
 .table th {
     font-weight: 600;
     color: var(--color-text-secondary);
