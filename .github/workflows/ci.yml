@@ -122,7 +122,7 @@ jobs:
     timeout-minutes: 90
     env:
       COMPOSE_PROJECT_NAME: omnitwin-ci
-      OMNITWIN_HTTP_PORT: "8080"
+      OMNITWIN_HTTP_PORT: "8180"
 
     steps:
       - name: Checkout code
