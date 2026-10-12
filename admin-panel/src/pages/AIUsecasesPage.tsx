@@ -116,7 +116,7 @@ export const UsecaseKaart: React.FC<{ u: AIUsecase; bijgewerkt: (m: string) => v
                     {' '}Los de oorzaak op en zet de usecase daarna zelf weer aan met <em>Noodstop opheffen</em>.
                 </div>
             )}
-            <dl style={{ display: 'grid', gridTemplateColumns: 'max-content 1fr', gap: '0.25rem 1rem', margin: '1rem 0' }}>
+            <dl style={{ display: 'grid', gridTemplateColumns: 'max-content minmax(0, 1fr)', gap: '0.25rem 1rem', margin: '1rem 0', overflowWrap: 'anywhere' }}>
                 <dt>Verklaring</dt>
                 <dd>
                     {u.verklaring_url
@@ -236,9 +236,9 @@ const AILogboek: React.FC = () => {
                         {data.regels.map(r => (
                             <tr key={r.id}>
                                 <td>{tijd(r.tijdstip)}</td><td>{r.usecase}</td><td>{r.functie}</td><td>{r.status}</td>
-                                <td>{r.taak}</td><td title={r.bronnen.join(', ')}>{r.bronnen.length}</td>
+                                <td className="cel-lang">{r.taak}</td><td title={r.bronnen.join(', ')}>{r.bronnen.length}</td>
                                 <td>{r.model}{r.modelversie ? ` (${r.modelversie})` : ''}</td>
-                                <td>{r.foutmelding ?? r.resultaat}</td><td>{r.app_versie}</td>
+                                <td className="cel-lang">{r.foutmelding ?? r.resultaat}</td><td>{r.app_versie}</td>
                             </tr>
                         ))}
                         {data.regels.length === 0 && <tr><td colSpan={9}>Geen regels.</td></tr>}
@@ -305,7 +305,8 @@ export const AIUsecasesPage: React.FC = () => {
             {fout && <div role="alert" className="login-melding login-melding-fout">{fout}</div>}
             {melding && <div role="status" className="login-melding">{melding}</div>}
             {!usecases && !fout && <p>Bezig met laden...</p>}
-            <div style={{ display: 'grid', gap: 'var(--spacing-lg, 1.5rem)' }}>
+            {/* minmax(0, 1fr): de kolom mag smaller worden dan de breedste tabel, zodat die binnen haar eigen kader scrolt (#339) */}
+            <div data-testid="ai-kaarten" style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr)', gap: 'var(--spacing-lg, 1.5rem)' }}>
                 {usecases && (
                     <section className="card" aria-labelledby="ai-overzicht-titel">
                         <div className="card-header"><h2 className="card-title" id="ai-overzicht-titel">Overzicht</h2></div>
@@ -341,7 +342,7 @@ export const AIUsecasesPage: React.FC = () => {
                                 {log.map(r => (
                                     <tr key={r.id}>
                                         <td>{tijd(r.tijdstip)}</td><td>{r.usecase ?? '–'}</td><td>{r.actie === 'noodstop' && r.door === SYSTEEM ? 'Automatische noodstop' : (ACTIE[r.actie] ?? r.actie)}</td>
-                                        <td>{r.door ? door(r.door) : 'Systeem (automatisch)'}</td><td>{r.versie ?? '–'}</td><td>{datum(r.geldig_tot)}</td><td>{r.toelichting}</td>
+                                        <td>{r.door ? door(r.door) : 'Systeem (automatisch)'}</td><td>{r.versie ?? '–'}</td><td>{datum(r.geldig_tot)}</td><td className="cel-lang">{r.toelichting}</td>
                                     </tr>
                                 ))}
                                 {log.length === 0 && <tr><td colSpan={7}>Nog niets vastgelegd.</td></tr>}
