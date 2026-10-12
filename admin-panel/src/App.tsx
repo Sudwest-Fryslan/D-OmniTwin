@@ -45,6 +45,7 @@ import {
 } from 'lucide-react';
 import { authAPI } from './services/api';
 import Beeldmerk from './components/Beeldmerk';
+import { MeldModal } from './components/MeldModal';
 import { huidigeModus, kiesModus } from './thema';
 import './styles/admin.css';
 
@@ -340,6 +341,37 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
 // Standalone rapportage layout (#290): altijd zonder beheer-zijbalk of beheerheader,
 // voor zowel anonieme bezoekers als ingelogde beheerders.
 const ReportLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [isMeldOpen, setIsMeldOpen] = React.useState(false);
+  const location = useLocation();
+
+  // Bepaal context van het huidige rapport voor de terugmeldvoorziening (#311)
+  const context = React.useMemo(() => {
+    const path = location.pathname;
+    const parts = path.split('/').filter(Boolean); // ['rapport', 'BU19000113'] of ['rapport', 'benchmark']
+    const sub = parts[1] || '';
+    let rapportType = 'Rapport';
+    let gebiedId: string | undefined = undefined;
+
+    if (sub === 'benchmark') {
+      rapportType = 'Benchmark Vergelijker';
+    } else if (sub === 'multi-gebied') {
+      rapportType = 'Multi-Gebiedsdossier';
+    } else if (sub === 'thema-analyse') {
+      rapportType = 'Thema-Analyse';
+    } else if (sub === 'deelgebied') {
+      rapportType = 'Deelgebiedsanalyse';
+    } else if (sub) {
+      rapportType = 'Gebiedsdossier';
+      gebiedId = sub;
+    }
+
+    return {
+      rapport_type: rapportType,
+      gebied_id: gebiedId,
+      url: window.location.href,
+    };
+  }, [location.pathname]);
+
   return (
     <div className="report-standalone-container">
       <header className="report-standalone-header hide-on-print">
@@ -358,16 +390,14 @@ const ReportLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => 
           </div>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-          <a
-            href="/#melden"
-            target="_blank"
-            rel="noopener noreferrer"
+          <button
+            type="button"
             className="btn btn-secondary"
-            style={{ textDecoration: 'none' }}
+            onClick={() => setIsMeldOpen(true)}
             title="Meld een data-afwijking of geef feedback (#311)"
           >
             Afwijking melden
-          </a>
+          </button>
           <button
             type="button"
             className="btn btn-primary"
@@ -381,6 +411,11 @@ const ReportLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => 
       <div className="report-standalone-body">
         {children}
       </div>
+      <MeldModal
+        isOpen={isMeldOpen}
+        onClose={() => setIsMeldOpen(false)}
+        context={context}
+      />
     </div>
   );
 };

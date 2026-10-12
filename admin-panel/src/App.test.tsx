@@ -145,5 +145,21 @@ describe('App', () => {
     expect(screen.queryByText('Beheerscherm')).not.toBeInTheDocument();
     expect(screen.queryByRole('link', { name: 'Indicatoren' })).not.toBeInTheDocument();
   });
+
+  it('standalone rapportage: knop Afwijking melden opent de melddialoog in-place (#290, #311)', async () => {
+    metConfig(new Error('geen backend'));
+    vi.spyOn(authAPI, 'getMe').mockRejectedValue(new Error('geen sessie'));
+    window.history.pushState({}, '', '/rapport/BU19000113');
+
+    render(<App />);
+
+    const meldKnop = await screen.findByRole('button', { name: /Afwijking melden/ });
+    expect(meldKnop).toBeInTheDocument();
+    meldKnop.click();
+
+    expect(await screen.findByRole('dialog')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Melding doorgeven' })).toBeInTheDocument();
+    expect(screen.getByText(/Gebiedsdossier/)).toBeInTheDocument();
+  });
 });
 
