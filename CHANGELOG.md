@@ -11,6 +11,9 @@ Eerdere wijzigingen, van vóór dit bestand, zijn terug te vinden in de git-hist
 ### Gewijzigd
 
 - **Dataspace-protocol vastgesteld** ([#32](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/32)): DSP (DCAT/ODRL) over HTTPS, geen iSHARE; FSC pas bij concrete behoefte. Zie ADR 0012.
+### Opgelost
+
+- CI op een eigen runner: de integratiejob kiest per run een vrije poort en een unieke projectnaam en ruimt zijn images op; elke job geeft vóór de checkout de werkmap terug aan de runner-gebruiker, zodat root-bestanden van een vorige run de checkout niet blokkeren ([#375](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/375)).
 
 ## [0.5.1] - 2026-10-12
 
