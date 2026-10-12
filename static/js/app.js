@@ -1838,12 +1838,16 @@ function displayOnMap(geojson) {
             // (gouden outline vervangt de oude gold fill-override)
             const value = d.properties.indicator_waarde;
             // #255: kaartmodus 'uit' kleurt als zonder data; de indicator blijft gekozen
+            // #373: subtiele, lichte tint zodat de ondergrond (PDOK) goed zichtbaar blijft
             if (value === null || value === undefined || state.kaartModus === 'uit') {
-                // Determine "No Data" color based on theme
-                const r = state.currentTheme === 'dark' ? 200 : 80;
-                const g = state.currentTheme === 'dark' ? 200 : 80;
-                const b = state.currentTheme === 'dark' ? 200 : 80;
-                const a = state.enable3D ? 255 : (state.currentTheme === 'dark' ? 100 : 200);
+                const isDark = state.currentTheme === 'dark';
+                const r = isDark ? 160 : 180;
+                const g = isDark ? 160 : 180;
+                const b = isDark ? 160 : 180;
+                // Subtiele transparantie (in 3D plat op de grond, geen donker blok omhoog)
+                const a = isDark
+                    ? (state.enable3D ? 60 : 35)
+                    : (state.enable3D ? 70 : 45);
                 return [r, g, b, a];
             }
 
@@ -1861,13 +1865,21 @@ function displayOnMap(geojson) {
             return getColorRGB(value, minValue, maxValue, state.enable3D);
         },
 
-        // Track D: Gouden outline bij selectie, witte borders voor overige
+        // Track D: Gouden outline bij selectie, borders voor overige
         getLineColor: d => {
             const featureId = d.id || d.properties?.id;
             if (featureId && isGebiedSelected(featureId)) {
                 return [234, 179, 8, 255]; // Selectie goud (#eab308)
             }
-            return [255, 255, 255, 200]; // White border
+            const value = d.properties?.indicator_waarde;
+            const isNoData = value === null || value === undefined || state.kaartModus === 'uit';
+            if (isNoData) {
+                // #373: Randen van gebieden zonder data herkenbaar houden op lichte/donkere ondergrond
+                return state.currentTheme === 'dark'
+                    ? [200, 200, 200, 160]
+                    : [120, 120, 120, 160];
+            }
+            return [255, 255, 255, 200]; // Witte border voor ingekleurde gebieden
         },
         getLineWidth: d => {
             const featureId = d.id || d.properties?.id;
@@ -1877,9 +1889,9 @@ function displayOnMap(geojson) {
             return 20; // Standaard dunne rand
         },
 
-        // 3D Height
+        // 3D Height (#373: bij geen data of modus 'uit' altijd plat op de grond)
         getElevation: d => {
-            if (!state.enable3D) return 0;
+            if (!state.enable3D || state.kaartModus === 'uit') return 0;
 
             const value = d.properties.indicator_waarde;
             if (value === null || value === undefined) return 0;
@@ -2000,9 +2012,9 @@ function displayOnMap(geojson) {
         // Performance - CRITICAL FIX: Force re-render on state changes
         updateTriggers: {
             getFillColor: [minValue, maxValue, state.enable3D, state.currentTheme, state.kaartModus],
-            getLineColor: [state.currentTheme, Array.from(state.selectedGebiedIds).join(',')],
+            getLineColor: [state.currentTheme, state.kaartModus, Array.from(state.selectedGebiedIds).join(',')],
             getLineWidth: [Array.from(state.selectedGebiedIds).join(',')],
-            getElevation: [state.enable3D, state.heightScale, minValue, maxValue],
+            getElevation: [state.enable3D, state.heightScale, minValue, maxValue, state.kaartModus],
             extruded: [state.enable3D]
         }
 
@@ -3833,8 +3845,15 @@ function setupEventListeners() {
 
 function getColorRGB(value, min, max, is3D = false) {
     // Fallback client-side interpolation (Red -> Yellow -> Green)
-    // Used if backend color is missing
-    if (value === null || value === undefined) return [200, 200, 200, is3D ? 255 : 100];
+    // Used if backend color is missing (#373: subtiele tint conform getFillColor)
+    if (value === null || value === undefined) {
+        const isDark = typeof state !== 'undefined' && state.currentTheme === 'dark';
+        const r = isDark ? 160 : 180;
+        const g = isDark ? 160 : 180;
+        const b = isDark ? 160 : 180;
+        const a = isDark ? (is3D ? 60 : 35) : (is3D ? 70 : 45);
+        return [r, g, b, a];
+    }
 
     // Normalize
     const t = (value - min) / (max - min);
