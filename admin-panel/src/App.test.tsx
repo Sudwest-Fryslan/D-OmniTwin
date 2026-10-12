@@ -119,4 +119,47 @@ describe('App', () => {
     expect(link).toHaveAttribute('href', KEYCLOAK.gebruikersbeheer_url);
     expect(screen.queryByText(/Profiel & Wachtwoord/)).not.toBeInTheDocument();
   });
+
+  it('standalone rapportage: toont terugknop en nooit de beheer-zijbalk (#290)', async () => {
+    metConfig(new Error('geen backend'));
+    vi.spyOn(authAPI, 'getMe').mockRejectedValue(new Error('geen sessie'));
+    window.history.pushState({}, '', '/rapport/benchmark');
+
+    render(<App />);
+
+    expect(await screen.findByRole('link', { name: /Terug naar kaart/ })).toBeInTheDocument();
+    expect(screen.queryByText('Beheerscherm')).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: 'Indicatoren' })).not.toBeInTheDocument();
+  });
+
+  it('standalone rapportage: toont ook geen beheer-zijbalk als beheerder is ingelogd (#290)', async () => {
+    metConfig(KEYCLOAK);
+    vi.spyOn(authAPI, 'getMe').mockResolvedValue({
+      data: { authenticated: true, user: { id: 's', username: 'beheer1', is_admin: true, bron: 'oidc' } },
+    } as never);
+    window.history.pushState({}, '', '/rapport/benchmark');
+
+    render(<App />);
+
+    expect(await screen.findByRole('link', { name: /Terug naar kaart/ })).toBeInTheDocument();
+    expect(screen.queryByText('Beheerscherm')).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: 'Indicatoren' })).not.toBeInTheDocument();
+  });
+
+  it('standalone rapportage: knop Afwijking melden opent de melddialoog in-place (#290, #311)', async () => {
+    metConfig(new Error('geen backend'));
+    vi.spyOn(authAPI, 'getMe').mockRejectedValue(new Error('geen sessie'));
+    window.history.pushState({}, '', '/rapport/BU19000113');
+
+    render(<App />);
+
+    const meldKnop = await screen.findByRole('button', { name: /Afwijking melden/ });
+    expect(meldKnop).toBeInTheDocument();
+    meldKnop.click();
+
+    expect(await screen.findByRole('dialog')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Melding doorgeven' })).toBeInTheDocument();
+    expect(screen.getByText(/Gebiedsdossier/)).toBeInTheDocument();
+  });
 });
+
