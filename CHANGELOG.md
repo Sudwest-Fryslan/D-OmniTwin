@@ -8,6 +8,10 @@ Eerdere wijzigingen, van vóór dit bestand, zijn terug te vinden in de git-hist
 
 ## [Unreleased]
 
+### Opgelost
+
+- CI op een eigen runner: de integratiejob kiest per run een vrije poort en een unieke projectnaam en ruimt zijn images op; elke job geeft vóór de checkout de werkmap terug aan de runner-gebruiker, zodat root-bestanden van een vorige run de checkout niet blokkeren ([#375](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/375)).
+
 ## [0.5.1] - 2026-10-12
 
 Afronding van "cijfers kloppen": epic [#316](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/316) is dicht. Projecties tellen nergens meer als actuele waarde, de 3D-kleuring gebruikt de recentste waarde en de CBS-download bewaakt weggevallen buurtcodes ([#159](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/159)). De bevindingen uit de rondleiding zijn verwerkt: kloppende dashboardcijfers, standaard alleen indicatoren met data en duidelijke meldingen bij installeren ([#246](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/246)). Nieuw voor ontwikkelaars: de CI lokaal draaien met één script ([#362](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/362)). Bewust naar later: [#340](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/340) en [#343](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/343) (wachten op externe partijen), [#366](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/366) (schema's bron en stuur) en [#370](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/370) (herkomst per waarde). Geen migraties.
@@ -25,7 +29,6 @@ Afronding van "cijfers kloppen": epic [#316](https://github.com/Sudwest-Fryslan/
 
 ### Opgelost
 
-- CI op een eigen runner: de integratiejob kiest per run een vrije poort en een unieke projectnaam, en ruimt zijn images op ([#375](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/375)).
 - Dashboard: *Data Dekking* telt alleen actieve indicatoren (kon boven 100% uitkomen), *Metadata Voltooid* toont het percentage over de indicatoren met data (met dat over alle definities ernaast), en de vaste tekst "+0 deze maand" is weg ([#246](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/246)).
 - **Projecties tellen niet meer als actuele waarde** ([#159](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/159)): de gebiedsdetails, de Kompas-tijdreeks en het groepsgemiddelde, de benchmarkreferentie "gebieden", de inwonersweging in het deelgebiedrapport, de 3D-kleuring per buurt en de dashboardtellingen nemen alleen scenario `current`, zoals de actuele view al deed. De 3D-kleuring per buurt nam bovendien de oudste in plaats van de recentste waarde; een waarde zonder jaar komt niet meer vóór een jaar.
 - **CBS-download stopt bij te veel buurtcodes zonder geometrie** (#159): meer dan 5% weggevallen waarden in een jaargang (nu hoogstens 3,6%, Smallingerland) wijst op een nieuwe herindeling. De jaargang van de geometrie staat op één plek (`GEOMETRIE_JAAR`), gecontroleerd door een unittest.

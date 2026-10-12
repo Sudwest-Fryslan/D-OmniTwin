@@ -42,6 +42,10 @@ jobs:
         python-version: ["3.11", "3.12"]
 
     steps:
+      - name: Werkmap vrijgeven (bestanden die containers als root schreven)
+        # Eigen runner: een vorige run kan root-bestanden achterlaten (tests/e2e/artifacts)
+        run: docker run --rm -v "$GITHUB_WORKSPACE":/w alpine chown -R "$(id -u):$(id -g)" /w
+
       - name: Checkout code
         uses: actions/checkout@v7
 
@@ -73,6 +77,10 @@ jobs:
     needs: unit-tests  # Bouw pas als unit tests slagen
 
     steps:
+      - name: Werkmap vrijgeven (bestanden die containers als root schreven)
+        # Eigen runner: een vorige run kan root-bestanden achterlaten (tests/e2e/artifacts)
+        run: docker run --rm -v "$GITHUB_WORKSPACE":/w alpine chown -R "$(id -u):$(id -g)" /w
+
       - name: Checkout code
         uses: actions/checkout@v7
 
@@ -125,6 +133,10 @@ jobs:
       COMPOSE_PROJECT_NAME: omnitwin-ci-${{ github.run_id }}-${{ github.run_attempt }}
 
     steps:
+      - name: Werkmap vrijgeven (bestanden die containers als root schreven)
+        # Eigen runner: een vorige run kan root-bestanden achterlaten (tests/e2e/artifacts)
+        run: docker run --rm -v "$GITHUB_WORKSPACE":/w alpine chown -R "$(id -u):$(id -g)" /w
+
       - name: Checkout code
         uses: actions/checkout@v7
 
@@ -236,6 +248,10 @@ jobs:
         working-directory: admin-panel
 
     steps:
+      - name: Werkmap vrijgeven (bestanden die containers als root schreven)
+        # Eigen runner: een vorige run kan root-bestanden achterlaten (tests/e2e/artifacts)
+        run: docker run --rm -v "$GITHUB_WORKSPACE":/w alpine chown -R "$(id -u):$(id -g)" /w
+
       - name: Checkout code
         uses: actions/checkout@v7
 
@@ -279,6 +295,10 @@ jobs:
     runs-on: ${{ fromJSON(vars.CI_RUNNER || '"ubuntu-latest"') }}
 
     steps:
+      - name: Werkmap vrijgeven (bestanden die containers als root schreven)
+        # Eigen runner: een vorige run kan root-bestanden achterlaten (tests/e2e/artifacts)
+        run: docker run --rm -v "$GITHUB_WORKSPACE":/w alpine chown -R "$(id -u):$(id -g)" /w
+
       - name: Checkout code
         uses: actions/checkout@v7
 
