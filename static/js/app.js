@@ -1874,19 +1874,22 @@ function displayOnMap(geojson) {
             const value = d.properties?.indicator_waarde;
             const isNoData = value === null || value === undefined || state.kaartModus === 'uit';
             if (isNoData) {
-                // #373: Randen van gebieden zonder data herkenbaar houden op lichte/donkere ondergrond
+                // #373: Duidelijke randen voor gebieden zonder data zodat grenzen ook op hoog zoomniveau niet wegvallen
                 return state.currentTheme === 'dark'
-                    ? [200, 200, 200, 160]
-                    : [120, 120, 120, 160];
+                    ? [210, 210, 210, 180]
+                    : [70, 70, 70, 200];
             }
-            return [255, 255, 255, 200]; // Witte border voor ingekleurde gebieden
+            return state.currentTheme === 'dark'
+                ? [255, 255, 255, 200]
+                : [255, 255, 255, 220]; // Witte border voor ingekleurde gebieden
         },
+        lineWidthUnits: 'pixels',
         getLineWidth: d => {
             const featureId = d.id || d.properties?.id;
             if (featureId && isGebiedSelected(featureId)) {
-                return 80; // Dikke gouden rand bij selectie
+                return 3.5; // Duidelijke gouden rand bij selectie (pixels)
             }
-            return 20; // Standaard dunne rand
+            return 1.5; // 1.5px zodat gebiedsgrenzen niet wegvallen op hoog niveau (#373)
         },
 
         // 3D Height (#373: bij geen data of modus 'uit' altijd plat op de grond)
@@ -2006,8 +2009,8 @@ function displayOnMap(geojson) {
             getElevation: 500
         },
 
-        // Track D: lineWidthMinPixels zodat gouden rand altijd zichtbaar is
-        lineWidthMinPixels: 1,
+        // Track D / #373: lineWidthMinPixels zodat gebiedsgrenzen altijd scherp zichtbaar blijven
+        lineWidthMinPixels: 1.2,
 
         // Performance - CRITICAL FIX: Force re-render on state changes
         updateTriggers: {
