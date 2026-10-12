@@ -4,7 +4,7 @@
   "begrippen": [
     {"prefLabel": "ouderen", "soort": "specifiek",
      "altLabel": ["oudere", "senioren", "senior", "65 plussers", "65 plusser", "65plussers", "65 plus", "65 jaar en ouder", "65 jaar of ouder", "vergrijzing", "vergrijsd", "aow ers", "gepensioneerden", "gepensioneerd", "pensioengerechtigden", "pensioengerechtigde", "oude mensen", "babyboomers", "babyboomer"],
-     "indicatoren": ["65+ jaar (%)", "65+ jaar", "80 jaar of ouder (%)"]},
+     "indicatoren": ["65+ jaar (%)", "65+ jaar"]},
     {"prefLabel": "bejaarden", "soort": "specifiek",
      "altLabel": ["bejaard", "bejaarde"],
      "indicatoren": ["65+ jaar (%)", "80 jaar of ouder (%)", "65+ jaar"]},
@@ -46,7 +46,7 @@
      "indicatoren": ["Eenzaamheid", "Vrijwilliger", "Mantelzorger"]},
     {"prefLabel": "lage inkomens", "soort": "specifiek",
      "altLabel": ["lage inkomen", "laag inkomen", "lager inkomen", "minima", "minimuminkomen", "minimum inkomen", "weinig geld", "weinig te besteden"],
-     "indicatoren": ["Huishoudens met laag inkomen", "Moeite met rondkomen", "Participatiewet totaal"]},
+     "indicatoren": ["Huishoudens met laag inkomen"]},
     {"prefLabel": "rondkomen", "soort": "specifiek",
      "altLabel": ["rond te komen", "rondkomen", "krap bij kas", "geldzorgen", "schulden", "financiele problemen", "geldproblemen"],
      "indicatoren": ["Moeite met rondkomen", "Huishoudens met laag inkomen"]},
