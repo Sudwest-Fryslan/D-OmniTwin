@@ -438,6 +438,15 @@ def test_vraag_van_eduard_zonder_selectie_vraagt_welke_buurt(nep_ouderen):
     assert r["feiten"] == [] and r["gebied_ids"] == []
     assert "Welke buurt is jouw buurt?" in r["narrative"] and "65+ jaar (%)" in r["narrative"]
     assert [t.naam for t in r["indicatoren"]] == ["65+ jaar (%)"]
+    # #336: de viewer biedt dan postcode/adres en locatie aan
+    assert r["vraag_buurt"] is True and "postcode of adres" in r["narrative"]
+
+
+def test_met_selectie_geen_vraag_buurt(nep_ouderen):
+    r = dv.beantwoord_datavraag("hoeveel % is bejaard bij mij in de buurt?",
+                                {"huidig_gebied_id": "BU19000002", "geen_llm": True}, NepDB(), lambda t: [],
+                                lambda s, u, *_: pytest.fail("geen model"))
+    assert r["vraag_buurt"] is False
 
 
 def test_eigen_buurt_zonder_vraagpatroon_is_datavraag(nep_ouderen):
@@ -468,6 +477,15 @@ def test_aanname_bij_een_buurt_van_de_kaart():
     r = gebieden("hoe staat het met eenzaamheid hier", huidig_gebied_id="BU19000004")
     assert dv.aanname_tekst(r) == ("Ik ga uit van Bolsward-Noordoost (geselecteerd op de kaart). Een andere buurt? "
                                    "Selecteer die op de kaart of noem de naam in je vraag.")
+
+
+@pytest.mark.parametrize("herkomst,tekst", [("adres", "gevonden bij je postcode of adres"),
+                                            ("locatie", "gevonden bij je locatie"),
+                                            (None, "geselecteerd op de kaart"), ("<script>", "geselecteerd op de kaart")])
+def test_aanname_zegt_waar_de_buurt_vandaan_kwam(herkomst, tekst):
+    """#336: buurt via postcode/adres of locatie; onbekende herkomst = de kaart (geen vrije tekst)."""
+    r = gebieden("hoeveel ouderen wonen hier", huidig_gebied_id="BU19000004")
+    assert dv.aanname_tekst(r, herkomst).startswith(f"Ik ga uit van Bolsward-Noordoost ({tekst}).")
 
 
 @pytest.mark.parametrize("vraag", ["hoeveel ouderen wonen er bij ons in de wijk?", "zijn er veel bejaarden in deze buurt?",

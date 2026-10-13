@@ -188,3 +188,14 @@ def beperk_meldingen(request: Request) -> None:
     wacht = _meldingen_limiet.probeer(client_ip(request))
     if wacht:
         raise te_veel(wacht, f"Te veel meldingen verstuurd. Probeer het over {wacht} seconden opnieuw.")
+
+
+# ── Eigen buurt via adres of locatie: POST /api/locatie/buurt (#336) ───────────
+_locatie_limiet = Limiet(maximum=30, venster=60.0)
+
+
+def beperk_locatie(request: Request) -> None:
+    """Dependency voor POST /api/locatie/buurt: max 30 verzoeken per minuut per IP (PDOK netjes gebruiken)."""
+    wacht = _locatie_limiet.probeer(client_ip(request))
+    if wacht:
+        raise te_veel(wacht, f"Te veel zoekopdrachten. Probeer het over {wacht} seconden opnieuw.")

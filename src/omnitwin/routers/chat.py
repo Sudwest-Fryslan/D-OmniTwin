@@ -102,6 +102,8 @@ class ChatResponse(BaseModel):
     ai_usecases: List[str] = []
     # #233: van welk gebied het antwoord uitgaat, als dat niet in de vraag stond (selectie op de kaart)
     aanname: Optional[str] = None
+    # #336: de assistent vraagt welke buurt 'mijn buurt' is; de viewer biedt postcode/adres en locatie aan
+    vraag_buurt: bool = False
     debug: Optional[Dict[str, Any]] = None
 
 # ============================================================================
@@ -396,6 +398,7 @@ def beantwoord_datavraag_route(vraag: str, context: Dict[str, Any], db: Session)
         melding=" ".join(meldingen) or None,
         ai_usecases=ai_usecases,
         aanname=resultaat.get("aanname"),
+        vraag_buurt=bool(resultaat.get("vraag_buurt")),
         debug={
             "mode": "datavraag",
             "llm_gebruikt": resultaat["llm_gebruikt"],
