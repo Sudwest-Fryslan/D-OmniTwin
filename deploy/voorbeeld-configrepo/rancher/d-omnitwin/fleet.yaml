@@ -1,0 +1,4 @@
+# Rancher Fleet: deze map is één bundle, uitgerold in namespace d-omnitwin.
+# Fleet ziet kustomization.yaml en rendert die. De submap base/ (gevendorde kopie van
+# deploy/kubernetes) heeft geen eigen fleet.yaml en hoort dus bij deze bundle.
+defaultNamespace: d-omnitwin

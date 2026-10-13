@@ -1,0 +1,41 @@
+# Ingress van het cluster: IngressClass haproxy, certificaat via cert-manager, twee hostnamen.
+# Strategic merge op base/70-ingress.yaml: tls en rules worden in hun geheel vervangen.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: d-omnitwin
+  namespace: d-omnitwin
+  annotations:
+    cert-manager.io/cluster-issuer: <cluster-issuer>
+    # Annotatie van ingress-nginx uit de base: niet nodig bij haproxy
+    nginx.ingress.kubernetes.io/proxy-body-size: null
+    # Uploads tot 200 MB: de naam van de annotatie verschilt per haproxy-controller, bijv.
+    # haproxy-ingress.github.io/proxy-body-size: 200m
+spec:
+  ingressClassName: haproxy
+  tls:
+    - hosts:
+        - d-omnitwin.example.nl
+        - tweede-naam.example.nl
+      secretName: d-omnitwin-tls
+  rules:
+    - host: d-omnitwin.example.nl
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: traefik
+                port:
+                  number: 80
+    - host: tweede-naam.example.nl
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: traefik
+                port:
+                  number: 80

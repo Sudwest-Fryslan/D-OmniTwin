@@ -28,8 +28,9 @@ data:
   # Mappen in de backend-image; de PVC's uit 20-opslag.yaml worden hier gemount
   LEVERINGEN_DIR: /leveringen
   DATA_CACHE: /data-cache
-  # AI (optioneel): een Ollama-server van de organisatie, of de LiteLLM-gateway (optioneel/llm-gateway)
+  # AI (optioneel): terugval voor een Ollama-server. Een LiteLLM (optioneel/llm-gateway of een die al in
+  # het cluster draait) stel je in bij Beheer > AI Configuratie, met LLM_API_KEY in de Secret.
   OLLAMA_HOST: http://ollama.example.intern:11434
-  # Keycloak of een andere OIDC-provider (optioneel). Leeg = uit.
+  # Keycloak of een andere OIDC-provider, zoals Entra ID (optioneel; README.md). Leeg = uit.
   OIDC_ISSUER: ""
   OIDC_INTERN_URL: ""

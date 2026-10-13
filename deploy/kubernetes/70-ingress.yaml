@@ -1,5 +1,7 @@
 # Toegang van buiten: de ingress-controller van het cluster stuurt alles naar Traefik (60-traefik.yaml).
 # ZELF INVULLEN: host, ingressClassName en TLS (secret of cert-manager-annotatie van het cluster).
+# Liefst met een patch in de eigen configuratierepo, zonder dit bestand te wijzigen; voorbeeld met
+# haproxy en cert-manager: deploy/voorbeeld-configrepo/rancher/d-omnitwin/ingress-patch.yaml.
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:

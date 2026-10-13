@@ -127,3 +127,69 @@ def test_web_container_achter_de_gateway():
 
 def _docs_van(naam):
     return [(K8S / naam, d) for d in _docs(K8S / naam)]
+
+
+# --- Voorbeeld van de Fleet-configrepo (#411) -------------------------------
+# Het bouwen zelf (kustomize + kubeconform) doet scripts/ci/k8s-voorbeeld-configrepo.sh in de CI.
+
+VOORBEELD = ROOT / "deploy" / "voorbeeld-configrepo" / "rancher" / "d-omnitwin"
+
+
+def _voorbeeld():
+    return yaml.safe_load((VOORBEELD / "kustomization.yaml").read_text(encoding="utf-8"))
+
+
+def test_voorbeeld_fleet_en_namespace():
+    fleet = yaml.safe_load((VOORBEELD / "fleet.yaml").read_text(encoding="utf-8"))
+    k = _voorbeeld()
+    assert fleet["defaultNamespace"] == k["namespace"] == "d-omnitwin"
+    assert k["resources"] == ["base"], "Fleet haalt geen remote bases op: gevendorde kopie in base/"
+    assert not (VOORBEELD / "base").exists(), "de base wordt gevendord in de configrepo, niet hier"
+
+
+def test_voorbeeld_een_versie_voor_images_en_remote_base():
+    k = _voorbeeld()
+    tags = {i["name"]: i["newTag"] for i in k["images"]}
+    assert set(tags) == {"sudwestfryslan/d-omnitwin", "sudwestfryslan/d-omnitwin-web", "sudwestfryslan/d-omnitwin-db"}
+    assert len(set(tags.values())) == 1
+    tekst = (VOORBEELD / "kustomization.yaml").read_text(encoding="utf-8")
+    refs = re.findall(r"github\.com/Sudwest-Fryslan/D-OmniTwin//deploy/kubernetes\?ref=v([0-9.]+)", tekst)
+    assert refs and set(refs) == set(tags.values())
+
+
+def test_voorbeeld_instellingen_bestaan():
+    """Elke instelling in de configMapGenerator is een bekende variabele (.env.example) en merget met de base."""
+    k = _voorbeeld()
+    (gen,) = k["configMapGenerator"]
+    assert gen["name"] == "omnitwin-config" and gen["behavior"] == "merge"
+    assert gen["options"]["disableNameSuffixHash"] is True
+    env = (ROOT / ".env.example").read_text(encoding="utf-8")
+    for regel in gen["literals"]:
+        naam = regel.split("=", 1)[0]
+        assert re.search(rf"^#?\s*{naam}=", env, re.M), f"{naam} staat niet in .env.example"
+        assert naam not in {"DATABASE_PASSWORD", "ADMIN_PASSWORD", "OIDC_CLIENT_SECRET", "LLM_API_KEY"}, \
+            f"{naam} is geheim en hoort in de Secret"
+
+
+def test_voorbeeld_ingress_haproxy_cert_manager_twee_hosts():
+    (patch,) = _docs(VOORBEELD / "ingress-patch.yaml")
+    assert patch["spec"]["ingressClassName"] == "haproxy"
+    assert "cert-manager.io/cluster-issuer" in patch["metadata"]["annotations"]
+    hosts = [r["host"] for r in patch["spec"]["rules"]]
+    assert len(hosts) == 2 and set(patch["spec"]["tls"][0]["hosts"]) == set(hosts)
+    basis = next(d for _, d in _docs_van("70-ingress.yaml"))
+    assert patch["metadata"]["name"] == basis["metadata"]["name"]
+    assert patch["spec"]["tls"][0]["secretName"] == basis["spec"]["tls"][0]["secretName"]
+
+
+def test_voorbeeld_zonder_interne_namen_of_geheimen():
+    for pad in VOORBEELD.parent.parent.rglob("*"):
+        if not pad.is_file():
+            continue
+        tekst = pad.read_text(encoding="utf-8")
+        for host in re.findall(r"\b(?:[a-z0-9-]+\.)+(?:nl|com|org|intern|local)\b", tekst):
+            assert host.endswith((".example.nl", ".example.org", "example.intern", "github.com",
+                                  "microsoftonline.com", "svc.cluster.local", "k8s.io")) or host in (
+                "login.microsoftonline.com",), f"{pad.name}: {host}"
+        # Geen GUID's (tenant- of client-ID's): alleen placeholders
+        assert not re.search(r"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}", tekst), pad.name

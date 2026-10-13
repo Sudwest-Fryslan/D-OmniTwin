@@ -1,7 +1,7 @@
 {
   "specificatie": "1.0",
   "naam": "uitrol-kubernetes",
-  "versie": "0.2.0",
+  "versie": "0.3.0",
   "titel": "D-OmniTwin uitrollen op Kubernetes en aantonen dat het werkt",
   "vraag": "Kan ik als platformbeheerder van een organisatie D-OmniTwin met losse, leesbare manifests op ons Kubernetes-cluster uitrollen (bijv. met Rancher Fleet), bijwerken naar een nieuwe versie en aantonen dat de instantie werkt?",
   "gebruiker": "platformbeheer van een organisatie",
@@ -66,12 +66,14 @@
   },
   "inrichting": {
     "manifests": "deploy/kubernetes/ (README.md: wat de organisatie zelf invult)",
-    "rooktest": "scripts/ci/k8s-rooktest.sh: kind-cluster, manifests, db-init, endpoints (ook / en /admin), upgrade; schrijft bewijs/rooktest.json",
-    "ci": ".github/workflows/k8s-rooktest.yml bij wijzigingen in deploy/kubernetes, de Dockerfiles, deploy/web, docker-entrypoint.sh of db/"
+    "rooktest": "scripts/ci/k8s-rooktest.sh: kind-cluster, manifests, db-init, endpoints (ook / en /admin), upgrade; met K8S_ROOKTEST_MANIFESTS=voorbeeld de overlay uit het voorbeeld; schrijft bewijs/rooktest.json",
+    "ci": ".github/workflows/k8s-rooktest.yml (beide varianten) bij wijzigingen in deploy/kubernetes, deploy/voorbeeld-configrepo, de Dockerfiles, deploy/web, docker-entrypoint.sh of db/; ci.yml bouwt en valideert het voorbeeld (scripts/ci/k8s-voorbeeld-configrepo.sh)",
+    "configrepo": "deploy/voorbeeld-configrepo/ (Fleet: rancher/d-omnitwin met fleet.yaml en een Kustomize-overlay; Secrets met de hand; Entra ID)"
   },
   "bekende_afwijkingen": [
     "Het bewijs van de uitrol zelf is bewijs/rooktest.json (uitkomst van de rooktest op een kind-cluster); de schermen gezondheid en geo-api laten een draaiende instantie zien, ongeacht hoe die is uitgerold.",
     "Keycloak en de LiteLLM-gateway (deploy/kubernetes/optioneel/) toetst de rooktest niet.",
-    "De rooktest draait zonder ingress-controller: de controles gaan rechtstreeks naar de Traefik-gateway in het cluster."
+    "De rooktest draait zonder ingress-controller: de controles gaan rechtstreeks naar de Traefik-gateway in het cluster; haproxy en cert-manager uit het voorbeeld toetst hij niet.",
+    "Inloggen via Entra ID is getoetst met unittests (tokens met Entra-claims), niet tegen een echte tenant."
   ]
 }

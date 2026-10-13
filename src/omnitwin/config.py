@@ -42,6 +42,11 @@ OIDC (#205, tokens controleren in de nieuwe API's, zie omnitwin/oidc.py):
 Inloggen in de beheeromgeving via OIDC (#251, ADR 0008, zie omnitwin/oidc_login.py):
 - OIDC_CLIENT_ID   client waarmee mensen inloggen (authorization code + PKCE), standaard
                    omnitwin-web.
+- OIDC_SCOPE       extra scopes naast `openid profile`, met spaties. Entra ID: `offline_access`
+                   (refresh token) en de scope van de eigen API (`api://<client-id>/<scope>`),
+                   zodat het access token voor deze app is en de app-rollen bevat (#411).
+- OIDC_CLIENT_SECRET  optioneel; geheim van de client (vertrouwelijke client, zoals een
+                   Entra-app met platform Web). Leeg = publieke client met alleen PKCE.
 - LOKAAL_INLOGGEN  true = noodtoegang: lokale accounts (tabel users) mogen ook inloggen als
                    OIDC_ISSUER gezet is. Standaard uit zodra OIDC aan staat; zonder OIDC werkt
                    lokaal inloggen altijd.
@@ -144,6 +149,8 @@ class Instellingen:
     oidc_jwks_url: str          # leeg = via discovery
     oidc_intern_url: str        # leeg = discovery via de issuer zelf
     oidc_client_id: str         # inloggen van mensen (#251)
+    oidc_scope: str             # extra scopes naast 'openid profile' (#411)
+    oidc_client_secret: str     # leeg = publieke client (#411)
     lokaal_inloggen: bool       # LOKAAL_INLOGGEN: noodtoegang naast OIDC
     viewer_toegang: str         # 'open' of 'inloggen' (#266)
     omgeving: str               # 'productie', 'test' of 'demo' (#245)
@@ -234,6 +241,8 @@ def instellingen() -> Instellingen:
         oidc_jwks_url=os.getenv("OIDC_JWKS_URL", "").strip(),
         oidc_intern_url=os.getenv("OIDC_INTERN_URL", "").strip().rstrip("/"),
         oidc_client_id=os.getenv("OIDC_CLIENT_ID", "omnitwin-web").strip() or "omnitwin-web",
+        oidc_scope=" ".join(os.getenv("OIDC_SCOPE", "").split()),
+        oidc_client_secret=os.getenv("OIDC_CLIENT_SECRET", "").strip(),
         lokaal_inloggen=_bool(os.getenv("LOKAAL_INLOGGEN", "false")),
         viewer_toegang=_viewer_toegang(os.getenv("VIEWER_TOEGANG", "open")),
         omgeving=_omgeving(os.getenv("OMNITWIN_OMGEVING", "productie")),

@@ -271,3 +271,39 @@ def test_forwarded_headers_https_met_poort():
     h = oidc_login._forwarded("https://omnitwin.example.nl:8443/auth/realms/omnitwin")
     assert h == {"X-Forwarded-Proto": "https", "X-Forwarded-Host": "omnitwin.example.nl:8443",
                  "X-Forwarded-Port": "8443"}
+
+
+# ------------------------------------------------------------------ Entra ID: scope en clientgeheim (#411)
+
+def test_extra_scope_bij_inloggen(discovery, monkeypatch):
+    monkeypatch.setenv("OIDC_SCOPE", " offline_access  api://00000000-0000-0000-0000-0000000000aa/toegang ")
+    r = _client().get("/api/admin/auth/oidc/login")
+    q = {k: v[0] for k, v in parse_qs(urlsplit(r.headers["location"]).query).items()}
+    assert q["scope"] == "openid profile offline_access api://00000000-0000-0000-0000-0000000000aa/toegang"
+
+
+def test_zonder_extra_scope_ongewijzigd(discovery, monkeypatch):
+    monkeypatch.delenv("OIDC_SCOPE", raising=False)
+    r = _client().get("/api/admin/auth/oidc/login")
+    assert parse_qs(urlsplit(r.headers["location"]).query)["scope"] == ["openid profile"]
+    assert oidc_login._ververs_data("rt") == {"grant_type": "refresh_token", "refresh_token": "rt"}
+
+
+def test_verversen_met_dezelfde_scope(monkeypatch):
+    monkeypatch.setenv("OIDC_SCOPE", "offline_access api://x/toegang")
+    assert oidc_login._ververs_data("rt")["scope"] == "openid profile offline_access api://x/toegang"
+
+
+@pytest.mark.parametrize("geheim, verwacht", [("", None), ("s3cr3t", "s3cr3t")])
+def test_clientgeheim_alleen_als_gezet(discovery, monkeypatch, geheim, verwacht):
+    monkeypatch.setenv("OIDC_CLIENT_SECRET", geheim)
+    verstuurd = {}
+
+    def post(url, data=None, **kw):
+        verstuurd.update(data)
+        return None
+
+    monkeypatch.setattr(oidc_login.httpx, "post", post)
+    oidc_login._token_verzoek({"grant_type": "authorization_code", "code": "c"})
+    assert verstuurd.get("client_secret") == verwacht
+    assert verstuurd["client_id"] == "omnitwin-web"
