@@ -162,14 +162,14 @@
       <span class="status-badge account-badge" id="account-naam" title="Ingelogd">{{ account.naam }}</span>
       <button type="button" id="uitloggen" class="status-badge admin-badge account-knop">Uitloggen</button>
       {% endif %}
-      <a href="#" id="admin-btn" class="status-badge admin-badge" title="Beheeromgeving openen" onclick="openAdmin(event)">
+      <button type="button" id="admin-btn" class="status-badge admin-badge" title="Beheeromgeving openen" aria-label="Beheeromgeving openen" onclick="openAdmin(event)">
         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
           stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/>
           <circle cx="12" cy="12" r="3"/>
         </svg>
         Beheer
-      </a>
+      </button>
       <!-- Theme Toggle Button -->
       <button id="theme-toggle" class="theme-toggle" aria-label="Wissel tussen licht en donker thema" title="Wissel tussen licht en donker thema">
         <span class="theme-icon">
@@ -520,7 +520,7 @@
             <h4 class="subsection-title">Visualisatie</h4>
 
             <!-- 3D Toggle -->
-            <label class="checkbox-label">
+            <label class="checkbox-label" for="enable-3d">
               <input type="checkbox" id="enable-3d" checked>
               <span class="checkbox-custom"></span>
               <span>3D Extrusie</span>
@@ -533,7 +533,7 @@
             </div>
 
             <!-- Show All Toggle -->
-            <label class="checkbox-label">
+            <label class="checkbox-label" for="show-all">
               <input type="checkbox" id="show-all">
               <span class="checkbox-custom"></span>
               <span>Toon ook gebieden zonder data</span>
@@ -603,10 +603,10 @@
                 <h4 class="subsection-title">Kleurenschaal</h4>
                 <!-- #255: kaartmodus percentielklasse / label A–E (#256) / werkelijke waarde / uit -->
                 <div id="kaart-modus" class="kaart-modus" role="radiogroup" aria-label="Kaartkleuring">
-                  <label><input type="radio" name="kaart-modus" value="percentiel"> Percentielklasse</label>
-                  <label><input type="radio" name="kaart-modus" value="label"> Label A–E</label>
-                  <label><input type="radio" name="kaart-modus" value="waarde" checked> Werkelijke waarde</label>
-                  <label><input type="radio" name="kaart-modus" value="uit"> Uit</label>
+                  <label for="kaart-modus-percentiel"><input type="radio" id="kaart-modus-percentiel" name="kaart-modus" value="percentiel"> Percentielklasse</label>
+                  <label for="kaart-modus-label"><input type="radio" id="kaart-modus-label" name="kaart-modus" value="label"> Label A–E</label>
+                  <label for="kaart-modus-waarde"><input type="radio" id="kaart-modus-waarde" name="kaart-modus" value="waarde" checked> Werkelijke waarde</label>
+                  <label for="kaart-modus-uit"><input type="radio" id="kaart-modus-uit" name="kaart-modus" value="uit"> Uit</label>
                 </div>
                 <p id="legenda-modus-uit" class="help-text" style="display: none;">Kaartkleuring staat uit. De indicator blijft gekozen.</p>
                 <svg id="color-gradient-bar" width="100%" height="30" style="margin: 10px 0;">

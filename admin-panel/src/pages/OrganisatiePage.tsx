@@ -250,10 +250,10 @@ export const OrganisatiePage: React.FC = () => {
                 <fieldset style={{ border: 'none', display: 'flex', flexWrap: 'wrap', gap: 'var(--spacing-sm)', marginBottom: 'var(--spacing-md)' }}>
                     <legend className="form-label">Kies een thema uit <code>static/css/themes/</code></legend>
                     {themas.map(t => (
-                        <label key={t.naam} className="btn btn-secondary" style={{
+                        <label key={t.naam} htmlFor={`thema-${t.naam}`} className="btn btn-secondary" style={{
                             outline: form.thema === t.naam ? '2px solid var(--merk-bg)' : 'none', cursor: 'pointer',
                         }}>
-                            <input type="radio" name="thema" value={t.naam} checked={form.thema === t.naam}
+                            <input id={`thema-${t.naam}`} type="radio" name="thema" value={t.naam} checked={form.thema === t.naam}
                                 onChange={() => zet({ thema: t.naam })} />
                             <span className="color-preview" aria-hidden="true">
                                 {['--d-omnitwin-header-background-color-start', '--d-omnitwin-header-background-color-end',
@@ -351,8 +351,8 @@ export const OrganisatiePage: React.FC = () => {
                 <ul aria-label="Gemeentecodes" style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 'var(--spacing-xs)', marginBottom: 'var(--spacing-sm)' }}>
                     {form.gemeente_codes.map((code, i) => (
                         <li key={code} style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)' }}>
-                            <label style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-xs)' }}>
-                                <input type="radio" name="standaardgemeente" checked={i === 0} onChange={() => maakStandaard(code)} />
+                            <label htmlFor={`standaardgemeente-${code}`} style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-xs)' }}>
+                                <input id={`standaardgemeente-${code}`} type="radio" name="standaardgemeente" checked={i === 0} onChange={() => maakStandaard(code)} />
                                 <span>{code}{gemeenteNaam(code) ? ` ${gemeenteNaam(code)}` : ''}{i === 0 ? ' (standaard)' : ''}</span>
                             </label>
                             <button type="button" className="btn btn-secondary" aria-label={`Gemeente ${code} verwijderen`}

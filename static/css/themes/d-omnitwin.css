@@ -1,9 +1,8 @@
 /*
  * Thema "d-omnitwin" — de standaarduitstraling van D-OmniTwin als NL Design System-tokens (#89).
  *
- * @wcag-aa: nee
- * Acht contrastparen halen WCAG 2.1 AA niet (BEKENDE_TEKORTEN in tests/test_thema.py,
- * https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/67). Voor een overheidsorganisatie: kies een thema dat AA haalt.
+ * @wcag-aa: ja
+ * Voldoet aan WCAG 2.1 AA (contrastratio's conform #67). Voor de historische v0.1.0-kleuren: kies thema legacy (#284).
  *
  * Tokennamen volgen de basis-tokens van NL Design System (https://nldesignsystem.nl,
  * https://github.com/nl-design-system/themes, pakket basis-design-tokens): basis.color.accent-1.bg-default
@@ -27,7 +26,7 @@
   --basis-color-default-bg-subtle: #f1f5f9;
   --basis-color-default-border-subtle: #e2e8f0;
   --basis-color-default-color-document: #1e293b;
-  --basis-color-default-color-subtle: #64748b;
+  --basis-color-default-color-subtle: #475569;
 
   /* Accent 1: merkkleur (Trust Blue) — links, actieve tab, vlakken met witte tekst */
   --basis-color-accent-1-bg-default: #1e3a8a;
@@ -37,7 +36,7 @@
   --basis-color-accent-1-inverse-color-default: #ffffff;
 
   /* Accent 2: Geo Gold — selecties, highlights */
-  --basis-color-accent-2-bg-default: #c59d00;
+  --basis-color-accent-2-bg-default: #b38800;
   --basis-color-accent-2-color-default: #856a00;
 
   /* Accent 3: Nature Green — milieu, duurzaamheid */
@@ -76,11 +75,11 @@
 
   /* Componenttokens D-OmniTwin (#89): actieve tab, welkomstscherm, tooltips, selectiebadge.
      Zie docs/9-beheer/thema-s.md voor waar ze gebruikt worden. */
-  --d-omnitwin-tab-active-background-color: #c59d00;
+  --d-omnitwin-tab-active-background-color: #b38800;
   --d-omnitwin-tab-active-color: #0f172a;
-  --d-omnitwin-tab-active-border-color: #c59d00;
+  --d-omnitwin-tab-active-border-color: #b38800;
   --d-omnitwin-tab-active-border-width: 2px;
-  --d-omnitwin-welcome-button-background-color: #c59d00;
+  --d-omnitwin-welcome-button-background-color: #b38800;
   --d-omnitwin-welcome-button-color: #0f172a;
   --d-omnitwin-welcome-accent-color: #856a00;
   --d-omnitwin-tooltip-background-color: #0f172a;
@@ -124,8 +123,8 @@
 
   --basis-color-accent-1-bg-default: #2563eb;
   --basis-color-accent-1-bg-hover: #1d4ed8;
-  --basis-color-accent-1-color-default: #3b82f6;
-  --basis-color-accent-1-color-hover: #2563eb;
+  --basis-color-accent-1-color-default: #60a5fa;
+  --basis-color-accent-1-color-hover: #93c5fd;
   --basis-color-accent-1-inverse-color-default: #ffffff;
 
   --basis-color-accent-2-bg-default: #eab308;
@@ -135,11 +134,11 @@
 
   --basis-color-action-1-bg-default: #2563eb;
   --basis-color-action-1-bg-hover: #1d4ed8;
-  --basis-color-action-1-color-default: #3b82f6;
-  --basis-color-action-1-color-hover: #2563eb;
+  --basis-color-action-1-color-default: #60a5fa;
+  --basis-color-action-1-color-hover: #93c5fd;
   --basis-color-action-1-inverse-color-default: #ffffff;
 
-  --basis-color-negative-color-default: #ef4444;
+  --basis-color-negative-color-default: #f87171;
   --basis-color-positive-color-default: #22c55e;
   --basis-color-warning-color-default: #f97316;
 
@@ -156,8 +155,8 @@
   --d-omnitwin-selection-badge-background-color: #047857;
   --d-omnitwin-selection-badge-color: #ffffff;
 
-  --d-omnitwin-header-background-color-start: #3b82f6;
-  --d-omnitwin-header-background-color-end: #22c55e;
+  --d-omnitwin-header-background-color-start: #1e3a8a;
+  --d-omnitwin-header-background-color-end: #14532d;
   --d-omnitwin-header-color: #f1f5f9;
   --d-omnitwin-header-accent-color: #22c55e;
 }
@@ -177,8 +176,8 @@
 
     --basis-color-accent-1-bg-default: #2563eb;
     --basis-color-accent-1-bg-hover: #1d4ed8;
-    --basis-color-accent-1-color-default: #3b82f6;
-    --basis-color-accent-1-color-hover: #2563eb;
+    --basis-color-accent-1-color-default: #60a5fa;
+    --basis-color-accent-1-color-hover: #93c5fd;
     --basis-color-accent-1-inverse-color-default: #ffffff;
 
     --basis-color-accent-2-bg-default: #eab308;
@@ -188,11 +187,11 @@
 
     --basis-color-action-1-bg-default: #2563eb;
     --basis-color-action-1-bg-hover: #1d4ed8;
-    --basis-color-action-1-color-default: #3b82f6;
-    --basis-color-action-1-color-hover: #2563eb;
+    --basis-color-action-1-color-default: #60a5fa;
+    --basis-color-action-1-color-hover: #93c5fd;
     --basis-color-action-1-inverse-color-default: #ffffff;
 
-    --basis-color-negative-color-default: #ef4444;
+    --basis-color-negative-color-default: #f87171;
     --basis-color-positive-color-default: #22c55e;
     --basis-color-warning-color-default: #f97316;
 
@@ -209,8 +208,8 @@
     --d-omnitwin-selection-badge-background-color: #047857;
     --d-omnitwin-selection-badge-color: #ffffff;
 
-    --d-omnitwin-header-background-color-start: #3b82f6;
-    --d-omnitwin-header-background-color-end: #22c55e;
+    --d-omnitwin-header-background-color-start: #1e3a8a;
+    --d-omnitwin-header-background-color-end: #14532d;
     --d-omnitwin-header-color: #f1f5f9;
     --d-omnitwin-header-accent-color: #22c55e;
   }
