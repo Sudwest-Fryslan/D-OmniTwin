@@ -15,6 +15,7 @@ Copyright: © 3DBAG by 3DGI and TU Delft (CC BY 4.0)
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
+from sqlalchemy import text
 from sqlalchemy.orm import Session
 try:
     from pyproj import Transformer

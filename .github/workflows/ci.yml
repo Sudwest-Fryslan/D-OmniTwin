@@ -4,7 +4,7 @@
 # docs/9-beheer/releasebeleid.md) en bij elke PR daarnaartoe (#202). Een push op
 # een feature-branch draait niets; de PR wel, dus niets draait dubbel.
 #
-# Jobs: unittests, Docker-build, integratie- en e2e-tests tegen een verse
+# Jobs: lint (ruff, #129), unittests, Docker-build, integratie- en e2e-tests tegen een verse
 # compose-stack (#62), admin-panel (typecheck, lint, test, build; #202) en
 # validatie van publiccode.yml (#56) en schemacheck van de Kubernetes-manifests (#406).
 #
@@ -66,6 +66,35 @@ jobs:
 
       - name: Run unit tests
         run: pytest -m unit -v --tb=short
+
+  # ──────────────────────────────────────────────
+  # Lint (ruff, #129): `ruff check .` met de config en baseline uit pyproject.toml.
+  # Nog geen `ruff format --check`: dat komt in stap 2 van #129, na `ruff format`
+  # op de hele codebase. Versie gelijk aan .pre-commit-config.yaml.
+  # ──────────────────────────────────────────────
+  lint:
+    name: Lint (ruff)
+    runs-on: ${{ fromJSON(vars.CI_RUNNER || '"ubuntu-latest"') }}
+    timeout-minutes: 10
+
+    steps:
+      - name: Werkmap vrijgeven (bestanden die containers als root schreven)
+        # Eigen runner: een vorige run kan root-bestanden achterlaten (tests/e2e/artifacts)
+        run: docker run --rm -v "$GITHUB_WORKSPACE":/w alpine chown -R "$(id -u):$(id -g)" /w
+
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+
+      - name: Installeer ruff
+        run: pip install ruff==0.17.0
+
+      - name: ruff check
+        run: ruff check --output-format=github .
 
   # ──────────────────────────────────────────────
   # Job 2: Docker Build Check — valideert Dockerfile

@@ -71,6 +71,18 @@ scripts/ci/ci-lokaal.sh <branch> [projectnaam] [poort]
 scripts/ci/k8s-rooktest.sh [clusternaam]
 ```
 
+### Lint en opmaak (Python, #129)
+Config en baseline staan in `pyproject.toml` (`[tool.ruff]`); de CI-job "Lint (ruff)" draait `ruff check .` met dezelfde versie.
+```bash
+pip install ruff==0.17.0
+ruff check .                 # moet groen zijn; zelfde check als de CI
+ruff check --fix <bestand>   # automatisch te herstellen fouten in je eigen wijziging
+pre-commit install           # optioneel: ruff check bij elke commit (.pre-commit-config.yaml)
+```
+- **Baseline:** bestaande afwijkingen staan in `extend-ignore` en `per-file-ignores`. Voeg daar geen regels of bestanden aan toe; los een fout in je eigen wijziging op.
+- **`ruff format`** staat klaar maar is nog niet op de codebase gedraaid (stap 2 van #129). Draai hem niet op bestanden die je niet wijzigt; dat geeft onnodige verschillen in andere PR's.
+- **Naamgeving:** domeinbegrippen in het Nederlands (`gebied`, `indicator`, `buurt`, `melding`, `levering`), techniek in het Engels (`router`, `service`, `schema`, `cache`, `get_db`). Bestaande namen niet massaal hernoemen; alleen bij een inhoudelijke wijziging van die code.
+
 ### Admin Panel (React)
 ```bash
 cd admin-panel
