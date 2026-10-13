@@ -1,0 +1,53 @@
+{
+  "specificatie": "1.0",
+  "naam": "uitrol-kubernetes",
+  "versie": "0.3.0",
+  "omnitwin_versie": "0.7.0",
+  "datum": "2026-10-13T19:45:16+02:00",
+  "geslaagd": true,
+  "controles": [
+    {
+      "type": "api",
+      "omschrijving": "de backend draait en bereikt de database",
+      "resultaat": "ok"
+    },
+    {
+      "type": "api",
+      "omschrijving": "de viewer is bereikbaar via de gateway",
+      "resultaat": "ok"
+    },
+    {
+      "type": "api",
+      "omschrijving": "de web-container met de bestanden van viewer en beheeromgeving is bereikbaar via de gateway (#408)",
+      "resultaat": "ok"
+    },
+    {
+      "type": "api",
+      "omschrijving": "de geo-API (pg_featureserv) is bereikbaar via de gateway, met de toegangscontrole van de backend",
+      "resultaat": "ok"
+    },
+    {
+      "type": "api",
+      "omschrijving": "de data-API (PostgREST) is bereikbaar via de gateway",
+      "resultaat": "ok"
+    }
+  ],
+  "stappen": [
+    {
+      "id": "gezondheid",
+      "resultaat": "ok",
+      "afbeelding": "gezondheid.webp",
+      "antwoordtijd_s": 2.0,
+      "console_fouten": []
+    },
+    {
+      "id": "geo-api",
+      "resultaat": "ok",
+      "afbeelding": "geo-api.webp",
+      "antwoordtijd_s": 2.0,
+      "console_fouten": [
+        "Loading the image 'https://www.crunchydata.com/favicon.png' violates the following Content Security Policy directive: \"img-src 'self' data: blob: https://api.pdok.nl https://service.pdok.nl\". The action has been blocked."
+      ]
+    }
+  ]
+}

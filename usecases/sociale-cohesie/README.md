@@ -58,7 +58,7 @@ Een use case is een **bundel**: data + inrichting + stappen. Alle drie staan hie
 ## Bewijs
 
 <!-- bewijs:start -->
-*Gemaakt op 12-10-2026 met D-OmniTwin 0.5.1 (use case 0.2.0); geslaagd. Verslag: [`bewijs/bewijs.json`](bewijs/bewijs.json). Opnieuw maken (bij een release): `python -m omnitwin.usecases bewijs sociale-cohesie`.*
+*Gemaakt op 13-10-2026 met D-OmniTwin 0.7.0 (use case 0.2.0); geslaagd. Verslag: [`bewijs/bewijs.json`](bewijs/bewijs.json). Opnieuw maken (bij een release): `python -m omnitwin.usecases bewijs sociale-cohesie`.*
 
 ![Eenzaamheid per buurt in Bolsward (RIVM Gezondheidsmonitor)](bewijs/kaart.webp)
 *Eenzaamheid per buurt in Bolsward (RIVM Gezondheidsmonitor)*

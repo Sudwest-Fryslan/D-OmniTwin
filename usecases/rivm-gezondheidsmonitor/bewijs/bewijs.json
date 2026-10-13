@@ -2,8 +2,8 @@
   "specificatie": "1.0",
   "naam": "rivm-gezondheidsmonitor",
   "versie": "0.2.0",
-  "omnitwin_versie": "0.5.1",
-  "datum": "2026-10-12T19:23:57+02:00",
+  "omnitwin_versie": "0.7.0",
+  "datum": "2026-10-13T19:42:13+02:00",
   "geslaagd": true,
   "controles": [
     {
@@ -63,7 +63,7 @@
       "id": "kaart",
       "resultaat": "ok",
       "afbeelding": "kaart.webp",
-      "antwoordtijd_s": 36.9,
+      "antwoordtijd_s": 31.9,
       "console_fouten": []
     },
     {
@@ -86,7 +86,7 @@
         "vervangen": 0,
         "onderdrukt": 0,
         "gepubliceerd": 37056,
-        "bronpeildatum": "2026-10-12",
+        "bronpeildatum": "2026-10-13",
         "bronOnderdrukt": 37056,
         "bronpeildatumUit": "ontvangst"
       }

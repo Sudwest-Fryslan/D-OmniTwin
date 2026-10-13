@@ -58,7 +58,7 @@ Bron → levering op 02-10-2026: 37.056 regels, niets afgewezen. Bolsward-Zuidoo
 ## Bewijs
 
 <!-- bewijs:start -->
-*Gemaakt op 12-10-2026 met D-OmniTwin 0.5.1 (use case 0.2.0); geslaagd. Verslag: [`bewijs/bewijs.json`](bewijs/bewijs.json). Opnieuw maken (bij een release): `python -m omnitwin.usecases bewijs rivm-gezondheidsmonitor`.*
+*Gemaakt op 13-10-2026 met D-OmniTwin 0.7.0 (use case 0.2.0); geslaagd. Verslag: [`bewijs/bewijs.json`](bewijs/bewijs.json). Opnieuw maken (bij een release): `python -m omnitwin.usecases bewijs rivm-gezondheidsmonitor`.*
 
 ![Ervaren gezondheid per buurt in Súdwest-Fryslân (RIVM Gezondheidsmonitor)](bewijs/kaart.webp)
 *Ervaren gezondheid per buurt in Súdwest-Fryslân (RIVM Gezondheidsmonitor)*
