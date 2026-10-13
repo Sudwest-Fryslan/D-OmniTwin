@@ -2,16 +2,19 @@
 Admin API Router for Beheerscherm (Admin Panel)
 Manages indicators, score types, color schemas, and Kompas configurations.
 """
-from fastapi import APIRouter, Depends, HTTPException, Request, Header
-from sqlalchemy.orm import Session
-from sqlalchemy import text
-from typing import Optional, List, Literal
-from uuid import UUID
-from pydantic import BaseModel, UUID4
-from omnitwin import polariteit
-from omnitwin.database import get_db
+
 import json
 import logging
+from typing import Literal
+from uuid import UUID
+
+from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel
+from sqlalchemy import text
+from sqlalchemy.orm import Session
+
+from omnitwin import polariteit
+from omnitwin.database import get_db
 
 logger = logging.getLogger(__name__)
 
@@ -19,6 +22,7 @@ from omnitwin.routers.auth import vereis_admin
 
 # Alle routes in deze router vereisen een beheerder (#65)
 router = APIRouter(prefix="/api/admin", tags=["Admin"], dependencies=[Depends(vereis_admin)])
+
 
 # ============================================================================
 # Pydantic Models
@@ -29,43 +33,49 @@ class Polariteit(BaseModel):
     beschrijving: str
     voorbeelden: str
 
+
 class ColorSchema(BaseModel):
     id: int
     naam: str
-    beschrijving: Optional[str]
+    beschrijving: str | None
     colors: dict
     is_actief: bool
 
+
 class ColorSchemaCreate(BaseModel):
     naam: str
-    beschrijving: Optional[str] = None
+    beschrijving: str | None = None
     colors: dict
+
 
 class IndicatorBase(BaseModel):
     uuid: str
     naam: str
-    omschrijving: Optional[str]
-    bron: Optional[str]
-    eenheid: Optional[str]
+    omschrijving: str | None
+    bron: str | None
+    eenheid: str | None
     score_type: str
-    polariteit: Optional[str] = None
-    color_schema_id: Optional[int]
-    color_schema_naam: Optional[str]
-    admin_notes: Optional[str]
+    polariteit: str | None = None
+    color_schema_id: int | None
+    color_schema_naam: str | None
+    admin_notes: str | None
+
 
 class IndicatorUpdate(BaseModel):
-    naam: Optional[str] = None
-    omschrijving: Optional[str] = None
-    bron: Optional[str] = None
-    eenheid: Optional[str] = None
-    score_type: Optional[str] = None  # oude codering; zet de polariteit (#120)
-    polariteit: Optional[str] = None  # hoger_is_beter | lager_is_beter | neutraal
-    color_schema_id: Optional[int] = None
-    admin_notes: Optional[str] = None
+    naam: str | None = None
+    omschrijving: str | None = None
+    bron: str | None = None
+    eenheid: str | None = None
+    score_type: str | None = None  # oude codering; zet de polariteit (#120)
+    polariteit: str | None = None  # hoger_is_beter | lager_is_beter | neutraal
+    color_schema_id: int | None = None
+    admin_notes: str | None = None
+
 
 class OntologieValidatie(BaseModel):
     ontologische_beschrijving: str
     ontologie_status: str  # 'draft' | 'beoordeeld_ai' | 'goedgekeurd_mens'
+
 
 class LLMConfig(BaseModel):
     api_url: str
@@ -73,26 +83,30 @@ class LLMConfig(BaseModel):
     # 'ollama' = Ollama-eigen API, 'openai' = OpenAI Chat Completions (ADR 0001, migratie v20)
     api_type: Literal["ollama", "openai"] = "ollama"
 
+
 class SystemPrompt(BaseModel):
     naam: str
-    beschrijving: Optional[str] = None
+    beschrijving: str | None = None
     prompt_text: str
     is_actief: bool
 
+
 class SystemPromptUpdate(BaseModel):
     prompt_text: str
-    beschrijving: Optional[str] = None
-    is_actief: Optional[bool] = None
+    beschrijving: str | None = None
+    is_actief: bool | None = None
+
 
 # ============================================================================
 # LLM Config & System Prompts Endpoints
 # ============================================================================
-def _lees_llm_config(db: Session) -> Optional[dict]:
+def _lees_llm_config(db: Session) -> dict | None:
     """Laatste llm_config-rij; SELECT * zodat een database zonder migratie v20 ook werkt."""
     row = db.execute(text("SELECT * FROM llm_config ORDER BY id DESC LIMIT 1")).mappings().fetchone()
     if not row:
         return None
     return {"api_url": row["api_url"], "model_name": row["model_name"], "api_type": row.get("api_type") or "ollama"}
+
 
 @router.get("/llm/config", response_model=LLMConfig)
 def get_llm_config(
@@ -104,26 +118,38 @@ def get_llm_config(
         return {"api_url": "http://localhost:11434", "model_name": "qwen3:30b", "api_type": "ollama"}
     return config
 
+
 @router.put("/llm/config", response_model=LLMConfig)
 def update_llm_config(
     config: LLMConfig,
     db: Session = Depends(get_db),
 ):
     """Update active LLM Config."""
-    heeft_api_type = db.execute(text("""
+    heeft_api_type = (
+        db.execute(
+            text("""
         SELECT 1 FROM information_schema.columns
         WHERE table_schema IN ('public', 'app') AND table_name = 'llm_config' AND column_name = 'api_type'
-    """)).fetchone() is not None
+    """)
+        ).fetchone()
+        is not None
+    )
     if heeft_api_type:
-        db.execute(text("""
+        db.execute(
+            text("""
             INSERT INTO llm_config (api_url, model_name, api_type)
             VALUES (:api, :model, :api_type)
-        """), {"api": config.api_url, "model": config.model_name, "api_type": config.api_type})
+        """),
+            {"api": config.api_url, "model": config.model_name, "api_type": config.api_type},
+        )
     elif config.api_type == "ollama":
-        db.execute(text("""
+        db.execute(
+            text("""
             INSERT INTO llm_config (api_url, model_name)
             VALUES (:api, :model)
-        """), {"api": config.api_url, "model": config.model_name})
+        """),
+            {"api": config.api_url, "model": config.model_name},
+        )
     else:
         raise HTTPException(
             status_code=409,
@@ -132,12 +158,14 @@ def update_llm_config(
     db.commit()
     return config
 
+
 @router.get("/llm/models")
 def get_ollama_models(
     db: Session = Depends(get_db),
 ):
     """Beschikbare modellen van de geconfigureerde LLM-server: /api/tags (ollama) of /v1/models (openai)."""
     import requests
+
     from omnitwin.services.llm_service import openai_base_url, openai_headers, veilige_host
 
     config = _lees_llm_config(db)
@@ -153,7 +181,7 @@ def get_ollama_models(
             response = requests.get(f"{api_url}/api/tags", timeout=5)
             response.raise_for_status()
             data = response.json()
-            models = [m['name'] for m in data.get('models', [])]
+            models = [m["name"] for m in data.get("models", [])]
         return {"models": models}
     except Exception as e:
         # Detail alleen in de serverlog; de UI krijgt een nette melding zonder interne fouttekst
@@ -169,21 +197,16 @@ def get_ollama_models(
         # Fallback to current configured model if API is offline
         return {"models": [config["model_name"] if config else "qwen3:30b"], "error": melding}
 
-@router.get("/prompts", response_model=List[SystemPrompt])
+
+@router.get("/prompts", response_model=list[SystemPrompt])
 def get_system_prompts(
     db: Session = Depends(get_db),
 ):
     """Get all system prompts."""
     result = db.execute(text("SELECT naam, beschrijving, prompt_text, is_actief FROM system_prompts ORDER BY id DESC"))
     rows = result.fetchall()
-    return [
-        SystemPrompt(
-            naam=row[0],
-            beschrijving=row[1],
-            prompt_text=row[2],
-            is_actief=row[3]
-        ) for row in rows
-    ]
+    return [SystemPrompt(naam=row[0], beschrijving=row[1], prompt_text=row[2], is_actief=row[3]) for row in rows]
+
 
 @router.put("/prompts/{naam}", response_model=SystemPrompt)
 def update_system_prompt(
@@ -192,77 +215,62 @@ def update_system_prompt(
     db: Session = Depends(get_db),
 ):
     """Update a specific system prompt."""
-    
+
     updates = ["prompt_text = :prompt"]
     params = {"naam": naam, "prompt": data.prompt_text}
-    
+
     if data.beschrijving is not None:
         updates.append("beschrijving = :desc")
         params["desc"] = data.beschrijving
-    
+
     if data.is_actief is not None:
         updates.append("is_actief = :actief")
         params["actief"] = data.is_actief
-        
+
     query = f"UPDATE system_prompts SET {', '.join(updates)} WHERE naam = :naam RETURNING naam, beschrijving, prompt_text, is_actief"
-    
+
     result = db.execute(text(query), params)
     row = result.fetchone()
     db.commit()
-    
+
     if not row:
         raise HTTPException(404, f"Prompt {naam} niet gevonden")
-        
-    return SystemPrompt(
-        naam=row[0],
-        beschrijving=row[1],
-        prompt_text=row[2],
-        is_actief=row[3]
-    )
+
+    return SystemPrompt(naam=row[0], beschrijving=row[1], prompt_text=row[2], is_actief=row[3])
+
 
 # ============================================================================
 # Hierarchy Endpoints
 # ============================================================================
-@router.get("/polariteiten", response_model=List[Polariteit])
+@router.get("/polariteiten", response_model=list[Polariteit])
 def get_polariteiten(
     db: Session = Depends(get_db),
 ):
     """Codelijst polariteit van indicatoren (#120): hoger_is_beter, lager_is_beter, neutraal."""
     result = db.execute(text("SELECT code, naam, beschrijving, voorbeelden FROM v_polariteiten"))
     rows = result.fetchall()
-    return [
-        Polariteit(
-            code=row[0],
-            naam=row[1],
-            beschrijving=row[2],
-            voorbeelden=row[3]
-        ) for row in rows
-    ]
+    return [Polariteit(code=row[0], naam=row[1], beschrijving=row[2], voorbeelden=row[3]) for row in rows]
+
 
 # ============================================================================
 # Color Schema Endpoints
 # ============================================================================
-@router.get("/color-schemas", response_model=List[ColorSchema])
+@router.get("/color-schemas", response_model=list[ColorSchema])
 def get_color_schemas(
     db: Session = Depends(get_db),
 ):
     """Get all available color schemas."""
-    result = db.execute(text("""
-        SELECT id, naam, beschrijving, colors, is_actief 
-        FROM color_schemas 
-        WHERE is_actief = true 
+    result = db.execute(
+        text("""
+        SELECT id, naam, beschrijving, colors, is_actief
+        FROM color_schemas
+        WHERE is_actief = true
         ORDER BY id
-    """))
+    """)
+    )
     rows = result.fetchall()
-    return [
-        ColorSchema(
-            id=row[0],
-            naam=row[1],
-            beschrijving=row[2],
-            colors=row[3],
-            is_actief=row[4]
-        ) for row in rows
-    ]
+    return [ColorSchema(id=row[0], naam=row[1], beschrijving=row[2], colors=row[3], is_actief=row[4]) for row in rows]
+
 
 @router.post("/color-schemas", response_model=ColorSchema)
 def create_color_schema(
@@ -270,30 +278,27 @@ def create_color_schema(
     db: Session = Depends(get_db),
 ):
     """Create a new color schema."""
-    result = db.execute(text("""
+    result = db.execute(
+        text("""
         INSERT INTO color_schemas (naam, beschrijving, colors)
         VALUES (:naam, :beschrijving, CAST(:colors AS jsonb))
         RETURNING id, naam, beschrijving, colors, is_actief
-    """), {
-        "naam": data.naam,
-        "beschrijving": data.beschrijving,
-        "colors": json.dumps(data.colors)
-    })
+    """),
+        {"naam": data.naam, "beschrijving": data.beschrijving, "colors": json.dumps(data.colors)},
+    )
     db.commit()
     row = result.fetchone()
-    return ColorSchema(
-        id=row[0], naam=row[1], beschrijving=row[2], 
-        colors=row[3], is_actief=row[4]
-    )
+    return ColorSchema(id=row[0], naam=row[1], beschrijving=row[2], colors=row[3], is_actief=row[4])
+
 
 # ============================================================================
 # Indicator Endpoints
 # ============================================================================
 @router.get("/indicatoren")
 def get_indicatoren(
-    search: Optional[str] = None,
-    score_type: Optional[str] = None,
-    ontologie_status: Optional[str] = None,
+    search: str | None = None,
+    score_type: str | None = None,
+    ontologie_status: str | None = None,
     met_data: bool = False,
     limit: int = 100,
     offset: int = 0,
@@ -301,10 +306,11 @@ def get_indicatoren(
 ):
     """Get all indicators with admin info. Filter by ontologie_status for validation workflow.
     met_data: alleen indicatoren met minstens één waarde (#246; definities zonder levering weg)."""
-    met_data_sql = (" AND EXISTS (SELECT 1 FROM gebied_data gd"
-                    " WHERE gd.indicator_uuid = i.uuid AND gd.waarde IS NOT NULL)")
+    met_data_sql = (
+        " AND EXISTS (SELECT 1 FROM gebied_data gd WHERE gd.indicator_uuid = i.uuid AND gd.waarde IS NOT NULL)"
+    )
     query = """
-        SELECT 
+        SELECT
             i.uuid::text,
             i.naam,
             i.omschrijving,
@@ -326,15 +332,15 @@ def get_indicatoren(
         WHERE 1=1
     """
     params = {"limit": limit, "offset": offset}
-    
+
     if search:
         query += " AND (i.naam ILIKE :search OR i.omschrijving ILIKE :search)"
         params["search"] = f"%{search}%"
-    
+
     if score_type:
         query += " AND i.score_type = :score_type"
         params["score_type"] = score_type
-    
+
     if ontologie_status:
         query += " AND i.ontologie_status = :ontologie_status"
         params["ontologie_status"] = ontologie_status
@@ -343,10 +349,10 @@ def get_indicatoren(
         query += met_data_sql
 
     query += " ORDER BY i.naam LIMIT :limit OFFSET :offset"
-    
+
     result = db.execute(text(query), params)
     rows = result.fetchall()
-    
+
     # Get total count (with same filters)
     count_query = "SELECT COUNT(*) FROM indicatoren i WHERE 1=1"
     count_params = {}
@@ -362,7 +368,7 @@ def get_indicatoren(
     if met_data:
         count_query += met_data_sql
     total = db.execute(text(count_query), count_params).scalar()
-    
+
     return {
         "indicatoren": [
             {
@@ -382,12 +388,14 @@ def get_indicatoren(
                 "is_actief": row[13],
                 "vervangen_door_id": str(row[14]) if row[14] else None,
                 "polariteit": row[15],
-            } for row in rows
+            }
+            for row in rows
         ],
         "total": total,
         "limit": limit,
-        "offset": offset
+        "offset": offset,
     }
+
 
 @router.get("/indicatoren/{uuid}")
 def get_indicator(
@@ -395,8 +403,9 @@ def get_indicator(
     db: Session = Depends(get_db),
 ):
     """Get single indicator by UUID, including ontology validation fields."""
-    result = db.execute(text("""
-        SELECT 
+    result = db.execute(
+        text("""
+        SELECT
             i.uuid::text,
             i.naam,
             i.omschrijving,
@@ -424,12 +433,14 @@ def get_indicator(
         LEFT JOIN color_schemas cs ON i.color_schema_id = cs.id
         LEFT JOIN users u ON i.gevalideerd_door = u.id
         WHERE i.uuid = :uuid
-    """), {"uuid": str(uuid)})
+    """),
+        {"uuid": str(uuid)},
+    )
     row = result.fetchone()
-    
+
     if not row:
         raise HTTPException(404, f"Indicator {uuid} not found")
-    
+
     return {
         "uuid": row[0],
         "naam": row[1],
@@ -456,6 +467,7 @@ def get_indicator(
         "polariteit": row[22],
     }
 
+
 @router.put("/indicatoren/{uuid}")
 def update_indicator(
     uuid: UUID,
@@ -466,7 +478,7 @@ def update_indicator(
     # Build dynamic update query
     updates = []
     params = {"uuid": str(uuid)}
-    
+
     if data.naam is not None:
         updates.append("naam = :naam")
         params["naam"] = data.naam
@@ -486,7 +498,7 @@ def update_indicator(
         params["polariteit"] = data.polariteit
     elif data.score_type is not None:
         # Oude codering: de trigger leidt de polariteit af (V046, #120)
-        if data.score_type not in ['+/+', '+/-', '-/+', '-/-']:
+        if data.score_type not in ["+/+", "+/-", "-/+", "-/-"]:
             raise HTTPException(400, "Invalid score_type. Must be +/+, +/-, -/+, or -/-")
         updates.append("score_type = :score_type")
         params["score_type"] = data.score_type
@@ -496,43 +508,42 @@ def update_indicator(
     if data.admin_notes is not None:
         updates.append("admin_notes = :admin_notes")
         params["admin_notes"] = data.admin_notes
-    
+
     if not updates:
         raise HTTPException(400, "No fields to update")
-    
+
     query = f"UPDATE indicatoren SET {', '.join(updates)} WHERE uuid = :uuid RETURNING uuid::text"
     result = db.execute(text(query), params)
     db.commit()
-    
+
     if result.rowcount == 0:
         raise HTTPException(404, f"Indicator {uuid} not found")
-    
+
     # Return updated indicator
     return get_indicator(uuid, db)
 
+
 @router.patch("/indicatoren/{uuid}/valideer")
 def valideer_indicator_ontologie(
-    uuid: UUID,
-    data: OntologieValidatie,
-    db: Session = Depends(get_db),
-    gebruiker: dict = Depends(vereis_admin)
+    uuid: UUID, data: OntologieValidatie, db: Session = Depends(get_db), gebruiker: dict = Depends(vereis_admin)
 ):
     """
     Valideer of keur de ontologische beschrijving van een indicator goed.
     Sprint 9 Track B: Mens-in-the-loop validatie voor AI-gegenereerde ontologieën.
     """
     # Valideer ontologie_status waarde
-    valid_statuses = ['draft', 'beoordeeld_ai', 'goedgekeurd_mens']
+    valid_statuses = ["draft", "beoordeeld_ai", "goedgekeurd_mens"]
     if data.ontologie_status not in valid_statuses:
         raise HTTPException(400, f"Ongeldige ontologie_status. Keuze uit: {valid_statuses}")
-    
+
     # Gebruiker uit de sessie; bij een script (X-Admin-Key) blijft dit leeg. Een Keycloak-gebruiker
     # (OIDC-sessie of bearer-token) staat er met sub en preferred_username (#251)
     user_id = str(gebruiker["user_id"]) if gebruiker.get("type") == "session" else None
     oidc_gebruiker = gebruiker.get("type") in ("oidc", "bearer")
-    
+
     # Update indicator
-    result = db.execute(text("""
+    result = db.execute(
+        text("""
         UPDATE indicatoren SET
             ontologische_beschrijving = :beschrijving,
             ontologie_status = :status,
@@ -542,22 +553,25 @@ def valideer_indicator_ontologie(
             gevalideerd_op = NOW()
         WHERE uuid = :uuid
         RETURNING uuid::text
-    """), {
-        "beschrijving": data.ontologische_beschrijving,
-        "status": data.ontologie_status,
-        "user_id": user_id,
-        "sub": gebruiker.get("onderwerp") if oidc_gebruiker else None,
-        "gebruikersnaam": gebruiker.get("username") if oidc_gebruiker else None,
-        "uuid": str(uuid)
-    })
-    
+    """),
+        {
+            "beschrijving": data.ontologische_beschrijving,
+            "status": data.ontologie_status,
+            "user_id": user_id,
+            "sub": gebruiker.get("onderwerp") if oidc_gebruiker else None,
+            "gebruikersnaam": gebruiker.get("username") if oidc_gebruiker else None,
+            "uuid": str(uuid),
+        },
+    )
+
     if result.rowcount == 0:
         raise HTTPException(404, f"Indicator {uuid} niet gevonden")
-    
+
     db.commit()
-    
+
     # Return updated indicator
     return get_indicator(uuid, db)
+
 
 @router.get("/ontologie/status")
 def get_ontologie_validatiestatus(
@@ -569,17 +583,18 @@ def get_ontologie_validatiestatus(
     """
     result = db.execute(text("SELECT * FROM v_ontologie_validatiestatus"))
     rows = result.fetchall()
-    
+
     status_map = {row[0]: row[1] for row in rows}
     total = sum(status_map.values())
-    goedgekeurd = status_map.get('goedgekeurd_mens', 0)
-    
+    goedgekeurd = status_map.get("goedgekeurd_mens", 0)
+
     return {
         "statussen": status_map,
         "totaal": total,
         "goedgekeurd": goedgekeurd,
-        "percentage_gereed": round(goedgekeurd / total * 100, 1) if total > 0 else 0
+        "percentage_gereed": round(goedgekeurd / total * 100, 1) if total > 0 else 0,
     }
+
 
 # ============================================================================
 # Hierarchy Endpoints
@@ -592,42 +607,42 @@ def get_hierarchy_tree(
     """Get full hierarchy tree for visualization."""
     """Get full hierarchy tree for visualization."""
     from omnitwin.services.kompas_service import KompasService
-    
+
     service = KompasService(db)
     # Reuse the robust logic from KompasService which includes Titels (Quadrants)
     hierarchy_data = service.get_hierarchie(config_id)
-    
+
     if not hierarchy_data or "hierarchie" not in hierarchy_data:
         raise HTTPException(404, f"Cluster configuration {config_id} not found")
 
     # The service returns a Root node with children (Titels)
     root_node = hierarchy_data["hierarchie"]
     raw_tree = root_node.get("children", [])
-    
+
     # Transform keys to match frontend expectation (name -> naam, ensure id)
     def transform_node(node, prefix="node", index=0):
         # Generate ID if missing (KompasService nodes might lack unique IDs for D3)
         node_id = node.get("uuid") or f"{prefix}-{index}"
-        
+
         new_node = {
             "id": node_id,
-            "naam": node.get("name", "Naamloos"), # Frontend expects 'naam'
+            "naam": node.get("name", "Naamloos"),  # Frontend expects 'naam'
             "type": node.get("type", "unknown"),
             "children": [],
-            "score_type": node.get("score_type"), # Preserve extra fields
-            "volgorde": node.get("volgorde", index)
+            "score_type": node.get("score_type"),  # Preserve extra fields
+            "volgorde": node.get("volgorde", index),
         }
-        
+
         # Recurse
         if "children" in node:
             for i, child in enumerate(node["children"]):
                 child_prefix = f"{node_id}-{i}"
                 new_node["children"].append(transform_node(child, child_prefix, i))
-                
+
         return new_node
 
     tree = [transform_node(node, "titel", i) for i, node in enumerate(raw_tree)]
-    
+
     # Calculate stats recursively
     def count_nodes(nodes, type_filter):
         count = 0
@@ -641,14 +656,11 @@ def get_hierarchy_tree(
     stats = {
         "themas": count_nodes(tree, "thema"),
         "onderdelen": count_nodes(tree, "onderdeel"),
-        "indicatoren": hierarchy_data.get("total_indicators", 0)
+        "indicatoren": hierarchy_data.get("total_indicators", 0),
     }
 
-    return {
-        "config_id": config_id,
-        "tree": tree,
-        "stats": stats
-    }
+    return {"config_id": config_id, "tree": tree, "stats": stats}
+
 
 # ============================================================================
 # Health Check
@@ -661,14 +673,14 @@ def admin_health(
     # Check database connectivity
     result = db.execute(text("SELECT COUNT(*) FROM indicatoren"))
     indicator_count = result.scalar()
-    
+
     schema_result = db.execute(text("SELECT COUNT(*) FROM color_schemas"))
     schema_count = schema_result.scalar()
-    
+
     return {
         "status": "healthy",
         "auth": "valid",
         "database": "connected",
         "indicatoren": indicator_count,
-        "color_schemas": schema_count
+        "color_schemas": schema_count,
     }

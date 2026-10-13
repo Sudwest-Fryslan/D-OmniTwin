@@ -60,11 +60,14 @@ def enums(knoop, sleutel, uit=None):
 
 def voorbeelden(soort):
     """JSON-blokken in de README direct na <!-- voorbeeld: <soort> -->."""
-    return [json.loads(m) for m in re.findall(
-        rf"<!-- voorbeeld: {soort} -->\s*```json\n(.*?)\n```", README.replace("\r\n", "\n"), re.S)]
+    return [
+        json.loads(m)
+        for m in re.findall(rf"<!-- voorbeeld: {soort} -->\s*```json\n(.*?)\n```", README.replace("\r\n", "\n"), re.S)
+    ]
 
 
 # ---------------------------------------------------------------- één bron
+
 
 def test_uitvoerder_gebruikt_de_schemas_van_de_specificatie():
     assert uc.SCHEMA == SPEC / VERSIE / "usecase.schema.json"
@@ -80,12 +83,16 @@ def test_schema_heeft_absolute_stabiele_id(naam):
 
 def test_geen_tweede_exemplaar_van_de_schemas():
     for naam in SCHEMAS:
-        kopieen = [p for p in ROOT.rglob(naam)
-                   if not {"node_modules", ".git", ".claude"} & set(p.parts) and p.parent != SPEC / VERSIE]
+        kopieen = [
+            p
+            for p in ROOT.rglob(naam)
+            if not {"node_modules", ".git", ".claude"} & set(p.parts) and p.parent != SPEC / VERSIE
+        ]
         assert not kopieen, f"dubbel schema: {kopieen}"
 
 
 # ---------------------------------------------------------------- de use cases
+
 
 @pytest.mark.parametrize("naam", sorted(uc.lees_usecases()))
 def test_use_case_voldoet_aan_de_specificatie(naam):
@@ -102,7 +109,9 @@ def test_onbekend_veld_en_onbekende_specificatie_worden_afgekeurd():
     assert valideer(goed, s, s) == []
     assert any("onbekend veld 'extra'" in f for f in valideer({**goed, "extra": 1}, s, s))
     assert any("specificatie" in f for f in valideer({**goed, "specificatie": "9.0"}, s, s))
-    assert any("'specificatie' ontbreekt" in f for f in valideer({k: v for k, v in goed.items() if k != "specificatie"}, s, s))
+    assert any(
+        "'specificatie' ontbreekt" in f for f in valideer({k: v for k, v in goed.items() if k != "specificatie"}, s, s)
+    )
 
 
 def test_actoren_en_bewijsstappen_zonder_geheimen_of_code():
@@ -120,18 +129,29 @@ def test_actoren_en_bewijsstappen_zonder_geheimen_of_code():
 
 # ---------------------------------------------------------------- documentatie volgt het schema
 
+
 @pytest.mark.parametrize("naam", SCHEMAS)
 def test_specificatie_noemt_elk_schemaveld(naam):
     ontbreekt = sorted(v for v in velden(schema(naam)) if f"`{v}`" not in README)
     assert not ontbreekt, f"velden uit {naam} die niet in docs/specificaties/usecase/README.md staan: {ontbreekt}"
 
 
-@pytest.mark.parametrize("naam,veld", [
-    ("usecase.schema.json", "status"), ("usecase.schema.json", "type"), ("usecase.schema.json", "route"),
-    ("usecase.schema.json", "profiel"), ("usecase.schema.json", "soort"), ("usecase.schema.json", "actie"),
-    ("dataset.schema.json", "adapter"), ("dataset.schema.json", "formaat"), ("dataset.schema.json", "export"),
-    ("bewijs.schema.json", "resultaat"), ("bewijs.schema.json", "omgeving"),
-])
+@pytest.mark.parametrize(
+    "naam,veld",
+    [
+        ("usecase.schema.json", "status"),
+        ("usecase.schema.json", "type"),
+        ("usecase.schema.json", "route"),
+        ("usecase.schema.json", "profiel"),
+        ("usecase.schema.json", "soort"),
+        ("usecase.schema.json", "actie"),
+        ("dataset.schema.json", "adapter"),
+        ("dataset.schema.json", "formaat"),
+        ("dataset.schema.json", "export"),
+        ("bewijs.schema.json", "resultaat"),
+        ("bewijs.schema.json", "omgeving"),
+    ],
+)
 def test_specificatie_noemt_elke_enumwaarde(naam, veld):
     waarden = enums(schema(naam), veld)
     assert waarden, f"geen enum voor {veld} in {naam}"
@@ -142,6 +162,7 @@ def test_specificatie_noemt_elke_enumwaarde(naam, veld):
 def test_specificatie_noemt_alle_adapters_en_bewerkingen_van_de_kern():
     from omnitwin.bronadapters import ADAPTERS
     from omnitwin.bronadapters.bewerkingen import BEWERKINGEN, TOETSEN
+
     for naam in [*ADAPTERS, *BEWERKINGEN, *TOETSEN]:
         assert f"`{naam}`" in README, naam
     assert set(ADAPTERS) == enums(schema("dataset.schema.json"), "adapter")
@@ -153,6 +174,7 @@ def test_specificatie_noemt_de_bestandstypen_van_de_uitvoerder():
 
 
 # ---------------------------------------------------------------- voorbeelden
+
 
 def test_voorbeelden_zijn_geldig():
     s = schema("usecase.schema.json")
@@ -170,6 +192,8 @@ def test_voorbeelden_zijn_geldig():
     (verslag,) = voorbeelden("bewijs")
     assert valideer(verslag, bs, bs) == []
     volledig = manifesten[1]
-    assert {c["dataset"] for c in volledig["controles"] if "dataset" in c and c["type"] != "recht"}         <= {d["id"] for d in volledig["datasets"]}
+    assert {c["dataset"] for c in volledig["controles"] if "dataset" in c and c["type"] != "recht"} <= {
+        d["id"] for d in volledig["datasets"]
+    }
     assert {c["actor"] for c in volledig["controles"] if "actor" in c} <= {a["naam"] for a in volledig["actoren"]}
     assert {c.get("variant") for c in volledig["controles"] if c.get("variant")} <= set(dataset["varianten"])

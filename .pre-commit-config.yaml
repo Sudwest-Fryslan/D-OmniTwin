@@ -5,6 +5,4 @@ repos:
     rev: v0.17.0
     hooks:
       - id: ruff-check
-      # Aan na stap 2 van #129 (ruff format op de hele codebase); nu zou hij elk
-      # aangeraakt bestand helemaal herformatteren.
-      # - id: ruff-format
+      - id: ruff-format

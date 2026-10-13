@@ -17,8 +17,12 @@ import mimetypes
 from pathlib import Path
 
 CLIENT = "inproces"
-MEDIATYPE = {".zip": "application/zip", ".gpkg": "application/geopackage+sqlite3", ".csv": "text/csv",
-             ".json": "application/json"}
+MEDIATYPE = {
+    ".zip": "application/zip",
+    ".gpkg": "application/geopackage+sqlite3",
+    ".csv": "text/csv",
+    ".json": "application/json",
+}
 HTTP = {"gepubliceerd": 201, "gevalideerd": 201, "afgekeurd": 422, "mislukt": 500}
 
 
@@ -34,6 +38,7 @@ class InprocesLaadApi:
     def registreer(self, registratie: dict) -> dict:
         from omnitwin.laden.problemen import Probleem
         from omnitwin.routers import laden as r
+
         try:
             r._registratie_fouten(registratie)
             with r.transactie() as cur:
@@ -48,17 +53,30 @@ class InprocesLaadApi:
         from omnitwin.laden import laadstraat, opslag
         from omnitwin.laden.problemen import Probleem
         from omnitwin.routers import laden as r
+
         if route != "laden":
-            return {"http": 501, "status": "overgeslagen", "melding": f"route {route} kan niet met --inproces: installeer via de laad-API "
-                                                                   "(HTTP) met een machineclient"}
+            return {
+                "http": 501,
+                "status": "overgeslagen",
+                "melding": f"route {route} kan niet met --inproces: installeer via de laad-API "
+                "(HTTP) met een machineclient",
+            }
         pad = Path(pad)
         mt = MEDIATYPE.get(pad.suffix) or mimetypes.guess_type(pad.name)[0] or "application/octet-stream"
         sleutel = f"{ds_id}-{hashlib.sha256(pad.read_bytes()).hexdigest()[:16]}"
         with open(pad, "rb") as f:
             ontvangen = opslag.ontvang_bestand(f, r._limiet(mt))
         try:
-            lv, nieuw = r._db_nieuwe_levering(ds_id, ontvangen, mt, opslag.veilige_bestandsnaam(pad.name, mt), sleutel,
-                                              alleen_valideren, self.client, None)
+            lv, nieuw = r._db_nieuwe_levering(
+                ds_id,
+                ontvangen,
+                mt,
+                opslag.veilige_bestandsnaam(pad.name, mt),
+                sleutel,
+                alleen_valideren,
+                self.client,
+                None,
+            )
         except Probleem as p:
             return {"http": p.status, "status": p.code, "melding": p.detail}
         finally:
@@ -72,4 +90,5 @@ class InprocesLaadApi:
         """Inrichting (Kompasprofielen, externe kaartlagen) via `omnitwin.laden.beheer`; andere soorten:
         overgeslagen (501)."""
         from omnitwin.laden import beheer
+
         return beheer.voer_uit(pad_api, bestand)

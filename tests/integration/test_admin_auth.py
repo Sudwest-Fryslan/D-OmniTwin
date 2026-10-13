@@ -28,8 +28,14 @@ BASE_URL = os.environ.get("OMNITWIN_BASE_URL", "http://localhost").rstrip("/")
 TIMEOUT = 30
 DUMMY_UUID = "00000000-0000-0000-0000-000000000000"
 
-PUBLIEKE_ADMIN_ROUTES = {"/api/admin/auth/login", "/api/admin/auth/logout", "/api/admin/auth/me",
-                         "/api/admin/auth/config", "/api/admin/auth/oidc/login", "/api/admin/auth/oidc/callback"}
+PUBLIEKE_ADMIN_ROUTES = {
+    "/api/admin/auth/login",
+    "/api/admin/auth/logout",
+    "/api/admin/auth/me",
+    "/api/admin/auth/config",
+    "/api/admin/auth/oidc/login",
+    "/api/admin/auth/oidc/callback",
+}
 # Elke ingelogde gebruiker (ook zonder is_admin) mag zijn eigen wachtwoord wijzigen
 EIGEN_ACCOUNT_ROUTES = {"/api/admin/auth/change-password"}
 # Moeten in elk geval beveiligd zijn (stonden zonder auth vóór #65)
@@ -45,8 +51,7 @@ VERPLICHT_BEVEILIGD = {
 # GET-routes die de beheerder-test overslaat: hangen af van externe diensten
 BEHEERDER_GET_OVERSLAAN = {"/api/admin/llm/models"}
 
-PLACEHOLDER_KEYS = ["", "<genereer-met-python-secrets-token-hex-32>", "jouw_admin_api_key",
-                    "your_admin_key_here"]
+PLACEHOLDER_KEYS = ["", "<genereer-met-python-secrets-token-hex-32>", "jouw_admin_api_key", "your_admin_key_here"]
 
 
 def is_beheerroute(path):
@@ -58,6 +63,7 @@ def is_beheerroute(path):
 def vul_in(path):
     """Padparameters vervangen door een geldige maar niet-bestaande waarde."""
     import re
+
     return re.sub(r"\{[^}]+\}", lambda m: DUMMY_UUID if "uuid" in m.group(0) else "1", path)
 
 
@@ -66,10 +72,7 @@ def beheerroutes():
     r = requests.get(f"{BASE_URL}/openapi.json", timeout=TIMEOUT)
     r.raise_for_status()
     routes = sorted(
-        (method.upper(), path)
-        for path, ops in r.json()["paths"].items()
-        for method in ops
-        if is_beheerroute(path)
+        (method.upper(), path) for path, ops in r.json()["paths"].items() for method in ops if is_beheerroute(path)
     )
     assert routes, "geen beheerroutes in /openapi.json"
     ontbrekend = VERPLICHT_BEVEILIGD - set(routes)
@@ -101,8 +104,7 @@ def doe(sessie, method, path, **kwargs):
 
 def login(username, password):
     s = requests.Session()
-    r = s.post(f"{BASE_URL}/api/admin/auth/login",
-               data={"username": username, "password": password}, timeout=TIMEOUT)
+    r = s.post(f"{BASE_URL}/api/admin/auth/login", data={"username": username, "password": password}, timeout=TIMEOUT)
     if r.status_code == 403 and "Lokaal inloggen staat uit" in r.text:
         pytest.skip("lokaal inloggen staat uit (Keycloak aan, #251); zie test_beheer_keycloak.py")
     assert r.status_code == 200, r.text[:300]
@@ -119,8 +121,10 @@ def gewone_gebruiker(db):
     hashed = bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()
     with db.cursor() as cur:
         # is_admin bewust niet opgegeven: de kolomdefault moet false zijn
-        cur.execute("INSERT INTO users (username, hashed_password, is_active) VALUES (%s, %s, true) RETURNING id",
-                    (username, hashed))
+        cur.execute(
+            "INSERT INTO users (username, hashed_password, is_active) VALUES (%s, %s, true) RETURNING id",
+            (username, hashed),
+        )
         user_id = cur.fetchone()[0]
     yield {"id": user_id, "username": username, "password": password}
     with db.cursor() as cur:
@@ -137,6 +141,7 @@ def beheerder():
 
 
 # ── Zonder login: 401 ────────────────────────────────────────────────────────
+
 
 def test_beheerroutes_zonder_login_401(beheerroutes):
     fout = []
@@ -167,6 +172,7 @@ def test_x_admin_key_geldig_werkt():
 
 # ── Ingelogd zonder is_admin: 403 ────────────────────────────────────────────
 
+
 def test_is_admin_default_false(db):
     with db.cursor() as cur:
         cur.execute("""SELECT column_default FROM information_schema.columns
@@ -187,6 +193,7 @@ def test_beheerroutes_zonder_is_admin_403(beheerroutes, gewone_gebruiker):
 
 
 # ── Beheerder: 200 ───────────────────────────────────────────────────────────
+
 
 def test_beheerroutes_met_beheerder(beheerroutes, beheerder):
     fout = []
@@ -213,14 +220,16 @@ def test_beheerder_niet_geweigerd_op_routes_met_parameters(beheerroutes, beheerd
 
 # ── Sessies ──────────────────────────────────────────────────────────────────
 
+
 def test_sessietoken_gehasht_opgeslagen(db, gewone_gebruiker):
     s = login(gewone_gebruiker["username"], gewone_gebruiker["password"])
     token = s.cookies.get("session_token")
     with db.cursor() as cur:
         cur.execute("SELECT count(*) FROM sessions WHERE token_hash = %s", (token,))
         assert cur.fetchone()[0] == 0, "ruw token staat in de database"
-        cur.execute("SELECT count(*) FROM sessions WHERE token_hash = %s",
-                    (hashlib.sha256(token.encode()).hexdigest(),))
+        cur.execute(
+            "SELECT count(*) FROM sessions WHERE token_hash = %s", (hashlib.sha256(token.encode()).hexdigest(),)
+        )
         assert cur.fetchone()[0] == 1
 
 
@@ -236,8 +245,10 @@ def test_uitloggen_verwijdert_sessie(db, gewone_gebruiker):
 def test_verlopen_sessies_opgeruimd_bij_inloggen(db, gewone_gebruiker):
     verlopen = hashlib.sha256(secrets.token_bytes(16)).hexdigest()
     with db.cursor() as cur:
-        cur.execute("INSERT INTO sessions (token_hash, user_id, expires_at) VALUES (%s, %s, NOW() - interval '1 hour')",
-                    (verlopen, gewone_gebruiker["id"]))
+        cur.execute(
+            "INSERT INTO sessions (token_hash, user_id, expires_at) VALUES (%s, %s, NOW() - interval '1 hour')",
+            (verlopen, gewone_gebruiker["id"]),
+        )
     login(gewone_gebruiker["username"], gewone_gebruiker["password"])
     with db.cursor() as cur:
         cur.execute("SELECT count(*) FROM sessions WHERE expires_at <= NOW()")
@@ -246,14 +257,25 @@ def test_verlopen_sessies_opgeruimd_bij_inloggen(db, gewone_gebruiker):
 
 # ── Rapporten: publiek, maar niet meer dan de publieke app toont ────────────
 
-BEHEERVELDEN = ("admin_notes", "gevalideerd_door", "gevalideerd_op", "ontologie_status",
-                "ontologie_beoordeeld", "system_prompt", "user_prompt", "debug_info", "api_url")
+BEHEERVELDEN = (
+    "admin_notes",
+    "gevalideerd_door",
+    "gevalideerd_op",
+    "ontologie_status",
+    "ontologie_beoordeeld",
+    "system_prompt",
+    "user_prompt",
+    "debug_info",
+    "api_url",
+)
 
 
 def test_rapportdata_publiek_zonder_beheervelden(buurten_ids):
-    for url in (f"/api/report/data/{buurten_ids[0]}",
-                f"/api/report/executive/{buurten_ids[0]}",
-                f"/api/report/benchmark?gebied_a={buurten_ids[0]}&mode=gebieden&gebieden_b={buurten_ids[1]}"):
+    for url in (
+        f"/api/report/data/{buurten_ids[0]}",
+        f"/api/report/executive/{buurten_ids[0]}",
+        f"/api/report/benchmark?gebied_a={buurten_ids[0]}&mode=gebieden&gebieden_b={buurten_ids[1]}",
+    ):
         r = requests.get(f"{BASE_URL}{url}", timeout=TIMEOUT)
         assert r.status_code == 200, f"{url}: {r.status_code} {r.text[:200]}"
         gevonden = [v for v in BEHEERVELDEN if v in r.text]

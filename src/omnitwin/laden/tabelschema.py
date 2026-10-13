@@ -40,7 +40,7 @@ def _datumtijd(w: str) -> dt.datetime:
     if len(t) == 16 and t[10] in " T":  # JJJJ-MM-DD HH:MM (SWF-monitor)
         t += ":00"
     d = dt.datetime.fromisoformat(t.replace(" ", "T", 1))
-    return d.astimezone(dt.timezone.utc).replace(tzinfo=None) if d.tzinfo else d
+    return d.astimezone(dt.UTC).replace(tzinfo=None) if d.tzinfo else d
 
 
 def converteer(waarde, veld: dict):
@@ -50,7 +50,11 @@ def converteer(waarde, veld: dict):
     t = veld.get("type", "string")
     try:
         if t == "string":
-            w = waarde if isinstance(waarde, str) else (str(waarde) if not isinstance(waarde, (dict, list, bool)) else None)
+            w = (
+                waarde
+                if isinstance(waarde, str)
+                else (str(waarde) if not isinstance(waarde, (dict, list, bool)) else None)
+            )
             if w is None:
                 raise Ongeldig("geen tekst")
             if veld.get("format") == "uuid" and not UUID_RE.match(w):
@@ -140,13 +144,24 @@ class Tabel:
         bekend = set(self.velden) | set(self.extra)
         onbekend = [k for k in kop if k not in bekend]
         if onbekend:
-            fouten.append(Fout("schema-ongeldig", f"onbekende kolom(men): {', '.join(onbekend[:10])}; extra velden "
-                               "alleen via een eigen schema in het laadprofiel", self.resource))
+            fouten.append(
+                Fout(
+                    "schema-ongeldig",
+                    f"onbekende kolom(men): {', '.join(onbekend[:10])}; extra velden "
+                    "alleen via een eigen schema in het laadprofiel",
+                    self.resource,
+                )
+            )
         if strikt:
             ontbreekt = [n for n in self.velden if n not in kop]
             if ontbreekt:
-                fouten.append(Fout("schema-ongeldig", f"kolom(men) uit het profiel ontbreken: {', '.join(ontbreekt)}",
-                                   self.resource))
+                fouten.append(
+                    Fout(
+                        "schema-ongeldig",
+                        f"kolom(men) uit het profiel ontbreken: {', '.join(ontbreekt)}",
+                        self.resource,
+                    )
+                )
         return fouten
 
     def rij(self, ruw: dict, regel: int) -> tuple[dict, list[Fout]]:
@@ -168,8 +183,9 @@ class Tabel:
             if naam in self.uniek and w is not None:
                 eerder = self.uniek[naam].setdefault(w, regel)
                 if eerder != regel:
-                    fouten.append(Fout("dubbele-sleutel", f"{naam} komt ook voor in regel {eerder}",
-                                       self.resource, regel, naam))
+                    fouten.append(
+                        Fout("dubbele-sleutel", f"{naam} komt ook voor in regel {eerder}", self.resource, regel, naam)
+                    )
             uit[naam] = w
         if self.extra:
             meta = {}

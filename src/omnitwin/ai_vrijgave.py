@@ -17,13 +17,14 @@ Gebruik: `poort(usecase, functie, taak)` vóór elke AI-aanroep met gebruikersin
 weigering in het AI-logboek (#313). `LLMService._call_llm` roept hem zelf ook aan (verplichte
 parameter `usecase`), zodat een nieuw pad naar het taalmodel er niet omheen kan.
 """
+
 from __future__ import annotations
 
 import hashlib
 import logging
 import re
 from datetime import date
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 from sqlalchemy import text
 
@@ -54,7 +55,7 @@ def melding(usecase: str) -> str:
     return MELDINGEN.get(usecase, MELDINGEN[BUITEN])
 
 
-def beoordeel(geldig_tot: Optional[date], stilgezet: bool, vandaag: date) -> Tuple[bool, str]:
+def beoordeel(geldig_tot: date | None, stilgezet: bool, vandaag: date) -> tuple[bool, str]:
     """(open, reden) voor een usecase. Zonder verklaring dicht; geldig tot en met geldig_tot."""
     if geldig_tot is None:
         return False, GEEN_VERKLARING
@@ -78,17 +79,18 @@ _STAND_SQL = """
 """
 
 
-def _lees_standen(code: Optional[str] = None, db=None) -> List[Dict[str, Any]]:
+def _lees_standen(code: str | None = None, db=None) -> list[dict[str, Any]]:
     sql = text(_STAND_SQL + (" WHERE u.code = :code" if code else "") + " ORDER BY u.code")
     params = {"code": code} if code else {}
     if db is not None:
         return [dict(r) for r in db.execute(sql, params).mappings()]
     from omnitwin.database import engine
+
     with engine.connect() as conn:
         return [dict(r) for r in conn.execute(sql, params).mappings()]
 
 
-def standen(db=None, vandaag: Optional[date] = None) -> List[Dict[str, Any]]:
+def standen(db=None, vandaag: date | None = None) -> list[dict[str, Any]]:
     """Alle usecases met verklaring, open/dicht en de reden (voor beheer; bevat logins)."""
     vandaag = vandaag or date.today()
     uit = []
@@ -112,27 +114,31 @@ def is_open(usecase: str) -> bool:
     return beoordeel(rijen[0]["geldig_tot"], rijen[0]["stilgezet"], date.today())[0]
 
 
-def poort(usecase: str, functie: str, taak: Optional[str] = None) -> bool:
+def poort(usecase: str, functie: str, taak: str | None = None) -> bool:
     """True als de usecase open is; anders False en een regel 'geweigerd' in het AI-logboek."""
     if is_open(usecase):
         return True
-    ai_logboek.schrijf(usecase if usecase in USECASES else BUITEN, functie, ai_logboek.GEWEIGERD,
-                       taak=taak, resultaat=melding(usecase))
+    ai_logboek.schrijf(
+        usecase if usecase in USECASES else BUITEN, functie, ai_logboek.GEWEIGERD, taak=taak, resultaat=melding(usecase)
+    )
     return False
 
 
 # ── Beheer: verklaring, noodstop, logboek ────────────────────────────────────
 
+
 def _code(usecase: str) -> str:
     if usecase not in USECASES:
         from omnitwin.fouten import GebruikersFout
+
         raise GebruikersFout(f"Onbekende AI-usecase: {usecase}")
     return usecase
 
 
-def valideer_pdf(inhoud: bytes, content_type: Optional[str]) -> None:
+def valideer_pdf(inhoud: bytes, content_type: str | None) -> None:
     """Alleen een PDF (content-type en de eerste bytes %PDF), niet leeg en hoogstens MAX_PDF."""
     from omnitwin.fouten import GebruikersFout
+
     if (content_type or "").split(";")[0].strip().lower() not in PDF_TYPES:
         raise GebruikersFout("De verklaring moet een PDF zijn (application/pdf).")
     if not inhoud:
@@ -145,55 +151,95 @@ def valideer_pdf(inhoud: bytes, content_type: Optional[str]) -> None:
 
 def valideer_versie(versie: str) -> str:
     from omnitwin.fouten import GebruikersFout
+
     versie = (versie or "").strip()
     if not 1 <= len(versie) <= 100 or _STUURTEKENS.search(versie):
         raise GebruikersFout("Versie is verplicht (hoogstens 100 tekens, zonder stuurtekens).")
     return versie
 
 
-def nette_bestandsnaam(naam: Optional[str]) -> str:
+def nette_bestandsnaam(naam: str | None) -> str:
     naam = re.split(r"[\\/]", naam or "")[-1]
     naam = re.sub(r"[^A-Za-z0-9._ -]+", "_", naam).strip(" .")[:200]
     return naam or "verklaring.pdf"
 
 
-def upload(db, usecase: str, versie: str, geldig_tot: date, bestandsnaam: Optional[str], inhoud: bytes,
-           content_type: Optional[str], door: str, vandaag: Optional[date] = None) -> Dict[str, Any]:
+def upload(
+    db,
+    usecase: str,
+    versie: str,
+    geldig_tot: date,
+    bestandsnaam: str | None,
+    inhoud: bytes,
+    content_type: str | None,
+    door: str,
+    vandaag: date | None = None,
+) -> dict[str, Any]:
     """Nieuwe verklaring: de usecase gaat open (een noodstop wordt opgeheven). Vastgelegd met login en tijd."""
     from omnitwin.fouten import GebruikersFout
+
     code = _code(usecase)
     versie = valideer_versie(versie)
     valideer_pdf(inhoud, content_type)
     if geldig_tot < (vandaag or date.today()):
         raise GebruikersFout("'Geldig tot' ligt in het verleden.")
     sha = hashlib.sha256(inhoud).hexdigest()
-    vid = db.execute(text("""
+    vid = db.execute(
+        text("""
         INSERT INTO app.ai_verklaringen (usecase, versie, geldig_tot, bestandsnaam, pdf, grootte, sha256, geupload_door)
         VALUES (:code, :versie, :tot, :naam, :pdf, :grootte, :sha, :door) RETURNING id
-    """), {"code": code, "versie": versie, "tot": geldig_tot, "naam": nette_bestandsnaam(bestandsnaam),
-           "pdf": inhoud, "grootte": len(inhoud), "sha": sha, "door": door}).scalar()
-    db.execute(text("UPDATE app.ai_usecases SET stilgezet = false, status_door = :door, status_op = now(), "
-                    "stilgezet_reden = NULL WHERE code = :code"), {"door": door, "code": code})
-    db.execute(text("""
+    """),
+        {
+            "code": code,
+            "versie": versie,
+            "tot": geldig_tot,
+            "naam": nette_bestandsnaam(bestandsnaam),
+            "pdf": inhoud,
+            "grootte": len(inhoud),
+            "sha": sha,
+            "door": door,
+        },
+    ).scalar()
+    db.execute(
+        text(
+            "UPDATE app.ai_usecases SET stilgezet = false, status_door = :door, status_op = now(), "
+            "stilgezet_reden = NULL WHERE code = :code"
+        ),
+        {"door": door, "code": code},
+    )
+    db.execute(
+        text("""
         INSERT INTO app.ai_vrijgave_log (usecase, actie, door, verklaring_id, versie, geldig_tot, toelichting)
         VALUES (:code, 'verklaring_geupload', :door, :vid, :versie, :tot, :t)
-    """), {"code": code, "door": door, "vid": vid, "versie": versie, "tot": geldig_tot,
-           "t": f"Verklaring geüpload en usecase actief gemaakt (sha256 {sha[:12]}…)"})
+    """),
+        {
+            "code": code,
+            "door": door,
+            "vid": vid,
+            "versie": versie,
+            "tot": geldig_tot,
+            "t": f"Verklaring geüpload en usecase actief gemaakt (sha256 {sha[:12]}…)",
+        },
+    )
     db.commit()
     return {"verklaring_id": str(vid), "sha256": sha}
 
 
-def zet_noodstop(db, usecase: str, aan: bool, door: str, toelichting: Optional[str] = None) -> None:
+def zet_noodstop(db, usecase: str, aan: bool, door: str, toelichting: str | None = None) -> None:
     """Noodstop aan (stilzetten) of uit (hervatten); hervatten opent alleen met een geldige verklaring."""
     code = _code(usecase)
     toelichting = ai_logboek.afkappen(toelichting, 500)
-    db.execute(text("UPDATE app.ai_usecases SET stilgezet = :aan, status_door = :door, status_op = now(), "
-                    "stilgezet_reden = :reden WHERE code = :code"),
-               {"aan": aan, "door": door, "code": code, "reden": toelichting if aan else None})
-    db.execute(text("INSERT INTO app.ai_vrijgave_log (usecase, actie, door, toelichting) "
-                    "VALUES (:code, :actie, :door, :t)"),
-               {"code": code, "actie": "noodstop" if aan else "hervat", "door": door,
-                "t": toelichting})
+    db.execute(
+        text(
+            "UPDATE app.ai_usecases SET stilgezet = :aan, status_door = :door, status_op = now(), "
+            "stilgezet_reden = :reden WHERE code = :code"
+        ),
+        {"aan": aan, "door": door, "code": code, "reden": toelichting if aan else None},
+    )
+    db.execute(
+        text("INSERT INTO app.ai_vrijgave_log (usecase, actie, door, toelichting) VALUES (:code, :actie, :door, :t)"),
+        {"code": code, "actie": "noodstop" if aan else "hervat", "door": door, "t": toelichting},
+    )
     db.commit()
 
 
@@ -206,16 +252,27 @@ def automatische_noodstop(reden: str) -> None:
     reden = ai_logboek.afkappen(reden, 500) or "onbekend"
     try:
         from omnitwin.database import engine
+
         with engine.begin() as conn:
-            codes = [r[0] for r in conn.execute(text("""
+            codes = [
+                r[0]
+                for r in conn.execute(
+                    text("""
                 UPDATE app.ai_usecases
                 SET stilgezet = true, status_door = :door, status_op = now(), stilgezet_reden = :reden
                 WHERE NOT stilgezet RETURNING code
-            """), {"door": SYSTEEM, "reden": reden})]
+            """),
+                    {"door": SYSTEEM, "reden": reden},
+                )
+            ]
             for code in codes:
-                conn.execute(text("INSERT INTO app.ai_vrijgave_log (usecase, actie, door, toelichting) "
-                                  "VALUES (:code, 'noodstop', :door, :t)"),
-                             {"code": code, "door": SYSTEEM, "t": f"Automatische noodstop: {reden}"})
+                conn.execute(
+                    text(
+                        "INSERT INTO app.ai_vrijgave_log (usecase, actie, door, toelichting) "
+                        "VALUES (:code, 'noodstop', :door, :t)"
+                    ),
+                    {"code": code, "door": SYSTEEM, "t": f"Automatische noodstop: {reden}"},
+                )
         if codes:
             _applicatielog(f"AI: automatische noodstop op {', '.join(codes)}: {reden}")
     except Exception as e:  # noqa: BLE001 - de database is weg: dan staat AI al dicht (is_open faalt)
@@ -226,42 +283,61 @@ def _applicatielog(tekst: str) -> None:
     logger.critical(tekst)
     try:
         from omnitwin.services.logging_service import AppLogger
+
         AppLogger.critical(tekst, category="SERVER")
     except Exception:  # noqa: BLE001
         pass
 
 
-def registreer_verlopen(db, vandaag: Optional[date] = None) -> int:
+def registreer_verlopen(db, vandaag: date | None = None) -> int:
     """Een verlopen verklaring één keer als 'verlopen' in het vrijgavelogboek (automatisch, zonder login)."""
     n = 0
     for s in standen(db, vandaag):
         if s["reden"] != VERLOPEN:
             continue
-        al = db.execute(text("SELECT 1 FROM app.ai_vrijgave_log WHERE actie = 'verlopen' AND verklaring_id = :v"),
-                        {"v": s["verklaring_id"]}).fetchone()
+        al = db.execute(
+            text("SELECT 1 FROM app.ai_vrijgave_log WHERE actie = 'verlopen' AND verklaring_id = :v"),
+            {"v": s["verklaring_id"]},
+        ).fetchone()
         if al:
             continue
-        db.execute(text("""
+        db.execute(
+            text("""
             INSERT INTO app.ai_vrijgave_log (usecase, actie, verklaring_id, versie, geldig_tot, toelichting)
             VALUES (:code, 'verlopen', :v, :versie, :tot, 'Automatisch dicht: geldig tot is verstreken')
-        """), {"code": s["code"], "v": s["verklaring_id"], "versie": s["versie"], "tot": s["geldig_tot"]})
+        """),
+            {"code": s["code"], "v": s["verklaring_id"], "versie": s["versie"], "tot": s["geldig_tot"]},
+        )
         n += 1
     if n:
         db.commit()
     return n
 
 
-def vrijgave_log(db, limit: int = 200) -> List[Dict[str, Any]]:
-    return [dict(r) for r in db.execute(text("""
+def vrijgave_log(db, limit: int = 200) -> list[dict[str, Any]]:
+    return [
+        dict(r)
+        for r in db.execute(
+            text("""
         SELECT id, tijdstip, usecase, actie, door, verklaring_id, versie, geldig_tot, toelichting
         FROM app.ai_vrijgave_log ORDER BY id DESC LIMIT :limit
-    """), {"limit": limit}).mappings()]
+    """),
+            {"limit": limit},
+        ).mappings()
+    ]
 
 
-def verklaring_pdf(db, usecase: str) -> Optional[Dict[str, Any]]:
+def verklaring_pdf(db, usecase: str) -> dict[str, Any] | None:
     """De actuele verklaring (de nieuwste) van een usecase, of None."""
-    r = db.execute(text("""
+    r = (
+        db.execute(
+            text("""
         SELECT pdf, versie, sha256 FROM app.ai_verklaringen WHERE usecase = :code
         ORDER BY geupload_op DESC, id DESC LIMIT 1
-    """), {"code": _code(usecase)}).mappings().fetchone()
+    """),
+            {"code": _code(usecase)},
+        )
+        .mappings()
+        .fetchone()
+    )
     return dict(r) if r else None

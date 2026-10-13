@@ -10,20 +10,25 @@ Gebruik:
 Idempotent: kan veilig herhaald worden (TRUNCATE + herinsert).
 """
 
+import sys
+from pathlib import Path
+
 import geopandas as gpd
 from sqlalchemy import text
-from pathlib import Path
-import sys
 
 # Project root toevoegen aan sys.path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from omnitwin.database import engine
 
-
 # ============================================================================
 # Configuratie
 # ============================================================================
-GPKG_PATH = Path(__file__).resolve().parent.parent / "data" / "bestuurlijke_postcode_gebieden" / "Deelgebieden_omgevingsvisie.gpkg"
+GPKG_PATH = (
+    Path(__file__).resolve().parent.parent
+    / "data"
+    / "bestuurlijke_postcode_gebieden"
+    / "Deelgebieden_omgevingsvisie.gpkg"
+)
 TABLE_NAME = "omgevingsvisie_deelgebieden"
 
 
@@ -69,7 +74,7 @@ def main():
 
         # Truncate voor idempotentie
         conn.execute(text(f"TRUNCATE TABLE {TABLE_NAME} RESTART IDENTITY"))
-        print(f"🗑️  Tabel geleegd")
+        print("🗑️  Tabel geleegd")
 
         # Insert per deelgebied
         insert_sql = text(f"""
@@ -86,12 +91,15 @@ def main():
             wkt_28992 = row.geometry.wkt
             wkt_4326 = gdf_wgs84.iloc[idx].geometry.wkt
 
-            conn.execute(insert_sql, {
-                "naam": row["Naam"],
-                "deelgebied": row["Deelgebied"],
-                "wkt_28992": wkt_28992,
-                "wkt_4326": wkt_4326,
-            })
+            conn.execute(
+                insert_sql,
+                {
+                    "naam": row["Naam"],
+                    "deelgebied": row["Deelgebied"],
+                    "wkt_28992": wkt_28992,
+                    "wkt_4326": wkt_4326,
+                },
+            )
             print(f"   ✅ {row['Deelgebied']} ({row.geometry.area / 1e6:.1f} km²)")
 
     # --- Verificatie ---
@@ -100,10 +108,12 @@ def main():
         print(f"\n✅ Import voltooid: {count} deelgebieden in `{TABLE_NAME}`")
 
         # Snelle check: SRID correct?
-        srid_check = conn.execute(text(f"""
+        srid_check = conn.execute(
+            text(f"""
             SELECT ST_SRID(geom) as srid_rd, ST_SRID(geom_wgs84) as srid_wgs
             FROM {TABLE_NAME} LIMIT 1
-        """)).fetchone()
+        """)
+        ).fetchone()
         print(f"   SRID check: geom={srid_check.srid_rd}, geom_wgs84={srid_check.srid_wgs}")
 
 

@@ -60,8 +60,11 @@ def test_accounts_bestaan_met_de_juiste_rollen(api):
     assert "lezer" in rollen["lezer"] and not rollen["lezer"] & {"beheerder", "datasets:laden"}
 
 
-@pytest.mark.parametrize("controle", [c for c in uc.lees_usecases()[NAAM]["controles"] if c["type"] == "recht"],
-                         ids=lambda c: f"{c['actor']}-{c['actie']}-{c.get('dataset', '')}-{c['toegestaan']}")
+@pytest.mark.parametrize(
+    "controle",
+    [c for c in uc.lees_usecases()[NAAM]["controles"] if c["type"] == "recht"],
+    ids=lambda c: f"{c['actor']}-{c['actie']}-{c.get('dataset', '')}-{c['toegestaan']}",
+)
 def test_rechten(controle, api, ucs):
     assert uc.controle_api(controle, api, ucs[NAAM]) is None
 
@@ -72,8 +75,12 @@ def test_opruimen_verwijdert_de_accounts(ucs):
     url = uc.token_url()
     assert ta.token(etl, ta.loginclient(NAAM), url)
     weg = uc.opruimen([NAAM], ucs)[NAAM]
-    assert sorted(weg) == ["uc-swf-definities--login", "uc-swf-definities-beheerder", "uc-swf-definities-etl-swf",
-                           "uc-swf-definities-lezer"]
+    assert sorted(weg) == [
+        "uc-swf-definities--login",
+        "uc-swf-definities-beheerder",
+        "uc-swf-definities-etl-swf",
+        "uc-swf-definities-lezer",
+    ]
     r = requests.post(url, data={"grant_type": "client_credentials"}, auth=(etl["id"], etl["geheim"]), timeout=30)
     assert r.status_code in (400, 401)
     assert NAAM not in ta.lees()

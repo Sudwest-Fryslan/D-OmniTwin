@@ -55,8 +55,21 @@ LOKAAL = re.compile(r"^lokaal:\d+$")
 OPEN_GRENS = 999
 # Legacy van vóór 2013: numerieke codes met voorloop 11 in deze jaren worden niet geëxporteerd (#342)
 LEGACY_JAREN = (2011, 2012)
-KOMPAS_KOLOMMEN = ("monitor", "monitor_id", "gebiedstype_id", "weergave_type", "volgorde", "niveau1", "niveau2",
-                   "niveau3", "niveau4", "indicator_uuid", "indicator_naam", "omkeren", "labels")
+KOMPAS_KOLOMMEN = (
+    "monitor",
+    "monitor_id",
+    "gebiedstype_id",
+    "weergave_type",
+    "volgorde",
+    "niveau1",
+    "niveau2",
+    "niveau3",
+    "niveau4",
+    "indicator_uuid",
+    "indicator_naam",
+    "omkeren",
+    "labels",
+)
 MAPPING_KOLOMMEN = ("gebruikersnaam", "eigenaar")
 
 
@@ -65,6 +78,7 @@ class DumpFout(ValueError):
 
 
 # ------------------------------------------------------------------ dump lezen
+
 
 def _ontsnap(veld: str):
     r"""Tekstformaat van COPY: \N = NULL, backslash-escapes voor tab, newline enz."""
@@ -111,8 +125,12 @@ def lees_dump(pad: Path, pg_restore: str | None = None) -> dict[str, list[dict]]
         programma = pg_restore or os.environ.get("PG_RESTORE") or shutil.which("pg_restore")
         if not programma:
             raise DumpFout("pg_restore niet gevonden (PATH, PG_RESTORE of --pg-restore)")
-        proc = subprocess.Popen([programma, "--data-only", "-f", "-", str(pad)], stdout=subprocess.PIPE,
-                                stderr=subprocess.PIPE, encoding="utf-8")
+        proc = subprocess.Popen(
+            [programma, "--data-only", "-f", "-", str(pad)],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            encoding="utf-8",
+        )
         tabellen = lees_copy(proc.stdout)
         fout = proc.stderr.read()
         if proc.wait() != 0:
@@ -124,6 +142,7 @@ def lees_dump(pad: Path, pg_restore: str | None = None) -> dict[str, list[dict]]
 
 
 # ------------------------------------------------------------------ omzetten (getest)
+
 
 def _leeg(w) -> bool:
     return w is None or str(w).strip() == ""
@@ -158,6 +177,7 @@ def _config(m: dict) -> dict:
 
 def indicatorknopen(m: dict):
     """(pad van categorieën, knoop) voor elke indicator in de boom van een monitor, in volgorde."""
+
     def loop(knoop, pad):
         if knoop.get("type") == "indicator":
             yield pad, knoop
@@ -165,6 +185,7 @@ def indicatorknopen(m: dict):
         sub = pad if knoop.get("type") == "root" else pad + [str(knoop.get("text") or knoop.get("naam") or "").strip()]
         for kind in knoop.get("children") or []:
             yield from loop(kind, sub)
+
     yield from loop(_config(m), [])
 
 
@@ -177,14 +198,23 @@ def kompasregels(monitors: list[dict]) -> list[dict]:
             if len(pad) > 4:
                 raise DumpFout(f"monitor {m['naam']}: meer dan 4 niveaus boven indicator {k.get('indicator_id')}")
             niveaus = (pad + ["", "", "", ""])[:4]
-            regels.append({
-                "monitor": m["naam"], "monitor_id": m["id"], "gebiedstype_id": c.get("gebiedstype_id") or m.get("gebiedstype_id") or "",
-                "weergave_type": c.get("weergave_type") or "", "volgorde": volgorde,
-                "niveau1": niveaus[0], "niveau2": niveaus[1], "niveau3": niveaus[2], "niveau4": niveaus[3],
-                "indicator_uuid": str(k.get("indicator_id") or "").lower(), "indicator_naam": str(k.get("text") or "").strip(),
-                "omkeren": "" if k.get("omkeren") is None else str(bool(k["omkeren"])).lower(),
-                "labels": "ja" if k.get("labeling") else "",
-            })
+            regels.append(
+                {
+                    "monitor": m["naam"],
+                    "monitor_id": m["id"],
+                    "gebiedstype_id": c.get("gebiedstype_id") or m.get("gebiedstype_id") or "",
+                    "weergave_type": c.get("weergave_type") or "",
+                    "volgorde": volgorde,
+                    "niveau1": niveaus[0],
+                    "niveau2": niveaus[1],
+                    "niveau3": niveaus[2],
+                    "niveau4": niveaus[3],
+                    "indicator_uuid": str(k.get("indicator_id") or "").lower(),
+                    "indicator_naam": str(k.get("text") or "").strip(),
+                    "omkeren": "" if k.get("omkeren") is None else str(bool(k["omkeren"])).lower(),
+                    "labels": "ja" if k.get("labeling") else "",
+                }
+            )
     return regels
 
 
@@ -210,18 +240,33 @@ def definities(tabellen: dict, monitors: list[dict] | None = None) -> dict:
     scores, _ = score_types(monitors or [])
     indicatoren = []
     for i in tabellen["indicator"]:
-        r = {"id": i["id"].lower(), "naam": i["naam"], "omschrijving": i.get("omschrijving") or "",
-             "status": (i.get("status") or "").strip(), "begingeldigheid": _datumtijd(i.get("begingeldigheid")),
-             "eindgeldigheid": _datumtijd(i.get("eindgeldigheid"))}
+        r = {
+            "id": i["id"].lower(),
+            "naam": i["naam"],
+            "omschrijving": i.get("omschrijving") or "",
+            "status": (i.get("status") or "").strip(),
+            "begingeldigheid": _datumtijd(i.get("begingeldigheid")),
+            "eindgeldigheid": _datumtijd(i.get("eindgeldigheid")),
+        }
         if r["id"] in scores:
             r["score_type"] = scores[r["id"]]
         indicatoren.append(r)
-    gebiedstypen = [{"id": g["id"].lower(), "naam": g["naam"], "wfs": (g.get("wfs") or "").strip(),
-                     "typenames": (g.get("typenames") or "").strip(), "sleutel": (g.get("sleutel") or "").strip(),
-                     "label": (g.get("label") or "").strip(), "actief": _bool(g.get("actief"))}
-                    for g in tabellen["gebiedstype"]]
-    relaties = [{"indicator_id": r["indicator_id"].lower(), "gebiedstype_id": r["gebiedstype_id"].lower()}
-                for r in tabellen["indicator_gebiedstype"]]
+    gebiedstypen = [
+        {
+            "id": g["id"].lower(),
+            "naam": g["naam"],
+            "wfs": (g.get("wfs") or "").strip(),
+            "typenames": (g.get("typenames") or "").strip(),
+            "sleutel": (g.get("sleutel") or "").strip(),
+            "label": (g.get("label") or "").strip(),
+            "actief": _bool(g.get("actief")),
+        }
+        for g in tabellen["gebiedstype"]
+    ]
+    relaties = [
+        {"indicator_id": r["indicator_id"].lower(), "gebiedstype_id": r["gebiedstype_id"].lower()}
+        for r in tabellen["indicator_gebiedstype"]
+    ]
     return {"indicatoren": indicatoren, "gebiedstypen": gebiedstypen, "relaties": relaties}
 
 
@@ -242,9 +287,16 @@ def is_legacy(w: dict) -> bool:
 def waarden(tabellen: dict) -> tuple[list[dict], int]:
     """Waarden in de vorm van api_data_dump.json: indicator_id, gebiedstype_id, gebieds_id, waarde, jaar.
     Geeft ook het aantal weggelaten legacy-waarden (is_legacy)."""
-    uit = [{"indicator_id": w["indicator_id"].lower(), "gebiedstype_id": w["gebiedstype_id"].lower(),
-            "gebieds_id": w["gebieds_id"], "waarde": _getal(w.get("waarde")), "jaar": int(w["jaar"])}
-           for w in tabellen["indicator_waarde"]]
+    uit = [
+        {
+            "indicator_id": w["indicator_id"].lower(),
+            "gebiedstype_id": w["gebiedstype_id"].lower(),
+            "gebieds_id": w["gebieds_id"],
+            "waarde": _getal(w.get("waarde")),
+            "jaar": int(w["jaar"]),
+        }
+        for w in tabellen["indicator_waarde"]
+    ]
     houd = [w for w in uit if not is_legacy(w)]
     return houd, len(uit) - len(houd)
 
@@ -273,39 +325,76 @@ def labels(monitors: list[dict], indicatornamen: dict[str, str], bron: str) -> d
                 grenzen = sorted(float(g) for g in (v.get("van"), v.get("tot")) if g is not None)
                 a, b = (grenzen + [None, None])[:2] if len(grenzen) < 2 else grenzen
                 rijen.append([letter, _grens(a), _grens(b)])
-            item = {"indicator_uuid": u, "indicator_naam": indicatornamen.get(u, k.get("text") or ""),
-                    "labels": rijen, "namen": {letter: (lab[letter] or {}).get("label") for letter in sorted(lab)}}
+            item = {
+                "indicator_uuid": u,
+                "indicator_naam": indicatornamen.get(u, k.get("text") or ""),
+                "labels": rijen,
+                "namen": {letter: (lab[letter] or {}).get("label") for letter in sorted(lab)},
+            }
             if u in per and per[u]["labels"] != rijen:
                 per[u]["opmerking"] = "verschillende drempels in de monitors; eerste aangehouden"
                 continue
             per.setdefault(u, item)
-    return {"bron": bron,
-            "toelichting": "Drempels voor de labels A-E uit de configuratie van de huidige gebiedsmonitor (labeling). "
-                           "ondergrens inclusief, bovengrens exclusief, null = open. Laden: init_data/scripts/load_sample.py "
-                           "--stap drempels --drempels <dit bestand> (overschrijft de stuurdata voor deze indicatoren).",
-            "indicatoren": sorted(per.values(), key=lambda i: i["indicator_naam"])}
+    return {
+        "bron": bron,
+        "toelichting": "Drempels voor de labels A-E uit de configuratie van de huidige gebiedsmonitor (labeling). "
+        "ondergrens inclusief, bovengrens exclusief, null = open. Laden: init_data/scripts/load_sample.py "
+        "--stap drempels --drempels <dit bestand> (overschrijft de stuurdata voor deze indicatoren).",
+        "indicatoren": sorted(per.values(), key=lambda i: i["indicator_naam"]),
+    }
 
 
 def monitorarchief(monitor: list[dict]) -> list[dict]:
     """Alle versies van de monitorconfiguraties, zonder wie ze vastlegde."""
-    return [{"id": m["id"], "naam": m["naam"], "gebiedstype_id": m.get("gebiedstype_id"),
-             "volgnummer": int(m.get("volgnummer") or 0), "begingeldigheid": m.get("begingeldigheid"),
-             "eindgeldigheid": m.get("eindgeldigheid"), "configuratie": _config(m)}
-            for m in sorted(monitor, key=lambda m: (m["naam"], int(m.get("volgnummer") or 0)))]
+    return [
+        {
+            "id": m["id"],
+            "naam": m["naam"],
+            "gebiedstype_id": m.get("gebiedstype_id"),
+            "volgnummer": int(m.get("volgnummer") or 0),
+            "begingeldigheid": m.get("begingeldigheid"),
+            "eindgeldigheid": m.get("eindgeldigheid"),
+            "configuratie": _config(m),
+        }
+        for m in sorted(monitor, key=lambda m: (m["naam"], int(m.get("volgnummer") or 0)))
+    ]
 
 
 # --- kaartpositie: RD (EPSG:28992) of Web Mercator → lengte/breedte en MapLibre-zoom
 
+
 def rd_naar_wgs84(x: float, y: float) -> tuple[float, float]:
     """Benadering (Schreutelkamp en Strang van Hees), nauwkeurig tot ±1 m binnen Nederland: (lon, lat)."""
     dx, dy = (x - 155000) * 1e-5, (y - 463000) * 1e-5
-    k = ((0, 1, 3235.65389), (2, 0, -32.58297), (0, 2, -0.24750), (2, 1, -0.84978), (0, 3, -0.06550),
-         (2, 2, -0.01709), (1, 0, -0.00738), (4, 0, 0.00530), (2, 3, -0.00039), (4, 1, 0.00033), (1, 1, -0.00012))
-    l_ = ((1, 0, 5260.52916), (1, 1, 105.94684), (1, 2, 2.45656), (3, 0, -0.81885), (1, 3, 0.05594),
-          (3, 1, -0.05607), (0, 1, 0.01199), (3, 2, -0.00256), (1, 4, 0.00128), (0, 2, 0.00022), (2, 0, -0.00022),
-          (5, 0, 0.00026))
-    lat = 52.15517440 + sum(c * dx ** p * dy ** q for p, q, c in k) / 3600
-    lon = 5.38720621 + sum(c * dx ** p * dy ** q for p, q, c in l_) / 3600
+    k = (
+        (0, 1, 3235.65389),
+        (2, 0, -32.58297),
+        (0, 2, -0.24750),
+        (2, 1, -0.84978),
+        (0, 3, -0.06550),
+        (2, 2, -0.01709),
+        (1, 0, -0.00738),
+        (4, 0, 0.00530),
+        (2, 3, -0.00039),
+        (4, 1, 0.00033),
+        (1, 1, -0.00012),
+    )
+    l_ = (
+        (1, 0, 5260.52916),
+        (1, 1, 105.94684),
+        (1, 2, 2.45656),
+        (3, 0, -0.81885),
+        (1, 3, 0.05594),
+        (3, 1, -0.05607),
+        (0, 1, 0.01199),
+        (3, 2, -0.00256),
+        (1, 4, 0.00128),
+        (0, 2, 0.00022),
+        (2, 0, -0.00022),
+        (5, 0, 0.00026),
+    )
+    lat = 52.15517440 + sum(c * dx**p * dy**q for p, q, c in k) / 3600
+    lon = 5.38720621 + sum(c * dx**p * dy**q for p, q, c in l_) / 3600
     return lon, lat
 
 
@@ -346,14 +435,18 @@ def lees_mapping(pad: Path | None) -> dict[str, str]:
             if not naam or not eigenaar:
                 continue
             if "@" in eigenaar:
-                raise DumpFout(f"mapping regel {i}: geef de Keycloak-sub (gebruikers-ID) of lokaal:<id>, geen e-mailadres")
+                raise DumpFout(
+                    f"mapping regel {i}: geef de Keycloak-sub (gebruikers-ID) of lokaal:<id>, geen e-mailadres"
+                )
             if not (UUID.match(eigenaar.lower()) or LOKAAL.match(eigenaar)) or len(eigenaar) > 255:
                 raise DumpFout(f"mapping regel {i}: eigenaar is geen Keycloak-sub (UUID) of lokaal:<id>")
             uit[naam] = eigenaar
     return uit
 
 
-def voorkeuren(user_properties: list[dict], mapping: dict[str, str], monitornamen: dict[str, str]) -> tuple[list[dict], dict]:
+def voorkeuren(
+    user_properties: list[dict], mapping: dict[str, str], monitornamen: dict[str, str]
+) -> tuple[list[dict], dict]:
     """user_properties → gebruikersvoorkeuren per gekoppelde gebruiker, plus tellingen (zonder namen).
 
     | key | D-OmniTwin |
@@ -382,12 +475,17 @@ def voorkeuren(user_properties: list[dict], mapping: dict[str, str], monitorname
         rest = {}
         if "selected_node_id" in props:
             rest["monitor"] = monitornamen.get(props["selected_node_id"], props["selected_node_id"])
-        for oud, nieuw in (("active_item", "actief_paneel"), ("panel_visible", "paneel_zichtbaar"),
-                           ("visible_base_layer", "basislaag")):
+        for oud, nieuw in (
+            ("active_item", "actief_paneel"),
+            ("panel_visible", "paneel_zichtbaar"),
+            ("visible_base_layer", "basislaag"),
+        ):
             if oud in props:
                 rest[nieuw] = _bool(props[oud]) if oud == "panel_visible" else props[oud]
-        onbekend = sorted(set(props) - {"last_map_coordinate", "selected_node_id", "active_item", "panel_visible",
-                                         "visible_base_layer"})
+        onbekend = sorted(
+            set(props)
+            - {"last_map_coordinate", "selected_node_id", "active_item", "panel_visible", "visible_base_layer"}
+        )
         for k in onbekend:
             rest[k] = props[k]
         if rest:
@@ -398,10 +496,13 @@ def voorkeuren(user_properties: list[dict], mapping: dict[str, str], monitorname
 
 
 def mapping_sjabloon(user_properties: list[dict], mapping: dict[str, str]) -> list[dict]:
-    return [{"gebruikersnaam": n, "eigenaar": mapping.get(n, "")} for n in sorted({p["username"] for p in user_properties})]
+    return [
+        {"gebruikersnaam": n, "eigenaar": mapping.get(n, "")} for n in sorted({p["username"] for p in user_properties})
+    ]
 
 
 # ------------------------------------------------------------------ export
+
 
 def sha256(pad: Path) -> str:
     h = hashlib.sha256()
@@ -431,8 +532,15 @@ def dekking(w: list[dict]) -> dict:
         p["indicatoren"].add(r["indicator_id"])
         p["gebieden"].add(r["gebieds_id"])
         p["jaren"].add(r["jaar"])
-    return {gt: {"waarden": p["waarden"], "indicatoren": len(p["indicatoren"]), "gebieden": len(p["gebieden"]),
-                 "jaren": [min(p["jaren"]), max(p["jaren"])]} for gt, p in sorted(per.items())}
+    return {
+        gt: {
+            "waarden": p["waarden"],
+            "indicatoren": len(p["indicatoren"]),
+            "gebieden": len(p["gebieden"]),
+            "jaren": [min(p["jaren"]), max(p["jaren"])],
+        }
+        for gt, p in sorted(per.items())
+    }
 
 
 def exporteer(tabellen: dict, uit: Path, mapping: dict[str, str], dump_datum: str | None = None) -> dict:
@@ -446,35 +554,56 @@ def exporteer(tabellen: dict, uit: Path, mapping: dict[str, str], dump_datum: st
     regels = kompasregels(monitors)
     _schrijf_csv(uit / "kompasprofiel_monitor.csv", regels, KOMPAS_KOLOMMEN)
     namen = {i["id"]: i["naam"] for i in defs["indicatoren"]}
-    lab = labels(monitors, namen, f"Configuratie van de huidige gebiedsmonitor SWF (database-dump {dump_datum or 'onbekend'})")
+    lab = labels(
+        monitors, namen, f"Configuratie van de huidige gebiedsmonitor SWF (database-dump {dump_datum or 'onbekend'})"
+    )
     _schrijf_json(uit / "indicator_labels_monitor.json", lab)
     _schrijf_json(uit / "monitorconfiguraties.json", monitorarchief(tabellen["monitor"]))
-    _schrijf_csv(uit / "gebruikers-mapping.csv", mapping_sjabloon(tabellen["user_properties"], mapping), MAPPING_KOLOMMEN)
+    _schrijf_csv(
+        uit / "gebruikers-mapping.csv", mapping_sjabloon(tabellen["user_properties"], mapping), MAPPING_KOLOMMEN
+    )
     vk, vk_telling = voorkeuren(tabellen["user_properties"], mapping, {m["id"]: m["naam"] for m in monitors})
     _schrijf_json(uit / "gebruikersvoorkeuren.json", vk)
     status = Counter(i["status"] for i in defs["indicatoren"])
     samenvatting = {
-        "gemaakt_op": dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds"),
-        "bron": "database-dump van de huidige gebiedsmonitor SWF", "dump_datum": dump_datum,
+        "gemaakt_op": dt.datetime.now(dt.UTC).isoformat(timespec="seconds"),
+        "bron": "database-dump van de huidige gebiedsmonitor SWF",
+        "dump_datum": dump_datum,
         "gemaakt_met": "scripts/beheer/swf_monitor_dump.py exporteer",
-        "definities": {"indicatoren": len(defs["indicatoren"]), "status": dict(sorted(status.items())),
-                       "met_eindgeldigheid": sum(1 for i in defs["indicatoren"] if i["eindgeldigheid"]),
-                       "gebiedstypen": len(defs["gebiedstypen"]), "relaties": len(defs["relaties"]),
-                       "score_type_uit_monitor": sum(1 for i in defs["indicatoren"] if "score_type" in i),
-                       "omkeren_tegenstrijdig": len(tegenstrijdig)},
-        "waarden": {"totaal": len(w), "legacy_2011_2012_weggelaten": legacy,
-                    "indicatoren": len({r["indicator_id"] for r in w}),
-                    "combinaties": len({(r["indicator_id"], r["gebiedstype_id"]) for r in w}),
-                    "per_gebiedstype": dekking(w)},
-        "monitors": {"versies": len(tabellen["monitor"]),
-                     "actief": [{"naam": m["naam"], "volgnummer": int(m.get("volgnummer") or 0),
-                                 "indicatoren": sum(1 for r in regels if r["monitor_id"] == m["id"]),
-                                 "met_labels": sum(1 for r in regels if r["monitor_id"] == m["id"] and r["labels"])}
-                                for m in monitors]},
+        "definities": {
+            "indicatoren": len(defs["indicatoren"]),
+            "status": dict(sorted(status.items())),
+            "met_eindgeldigheid": sum(1 for i in defs["indicatoren"] if i["eindgeldigheid"]),
+            "gebiedstypen": len(defs["gebiedstypen"]),
+            "relaties": len(defs["relaties"]),
+            "score_type_uit_monitor": sum(1 for i in defs["indicatoren"] if "score_type" in i),
+            "omkeren_tegenstrijdig": len(tegenstrijdig),
+        },
+        "waarden": {
+            "totaal": len(w),
+            "legacy_2011_2012_weggelaten": legacy,
+            "indicatoren": len({r["indicator_id"] for r in w}),
+            "combinaties": len({(r["indicator_id"], r["gebiedstype_id"]) for r in w}),
+            "per_gebiedstype": dekking(w),
+        },
+        "monitors": {
+            "versies": len(tabellen["monitor"]),
+            "actief": [
+                {
+                    "naam": m["naam"],
+                    "volgnummer": int(m.get("volgnummer") or 0),
+                    "indicatoren": sum(1 for r in regels if r["monitor_id"] == m["id"]),
+                    "met_labels": sum(1 for r in regels if r["monitor_id"] == m["id"] and r["labels"]),
+                }
+                for m in monitors
+            ],
+        },
         "labels": {"indicatoren": len(lab["indicatoren"])},
         "gebruikersvoorkeuren": vk_telling,
     }
-    samenvatting["bestanden"] = {p.name: sha256(p) for p in sorted(uit.iterdir()) if p.is_file() and p.name != "export.json"}
+    samenvatting["bestanden"] = {
+        p.name: sha256(p) for p in sorted(uit.iterdir()) if p.is_file() and p.name != "export.json"
+    }
     _schrijf_json(uit / "export.json", samenvatting)
     return samenvatting
 
@@ -505,8 +634,11 @@ def laad_voorkeuren(cur, items: list[dict]) -> dict:
             telling["eigenaar_ongeldig"] += 1
             continue
         pos = geldige_positie(item.get("kaartpositie"))
-        cur.execute("INSERT INTO app.gebruiker_voorkeuren (eigenaar, kaartpositie) VALUES (%s, %s::jsonb) "
-                    "ON CONFLICT (eigenaar) DO NOTHING", (eigenaar, json.dumps(pos) if pos else None))
+        cur.execute(
+            "INSERT INTO app.gebruiker_voorkeuren (eigenaar, kaartpositie) VALUES (%s, %s::jsonb) "
+            "ON CONFLICT (eigenaar) DO NOTHING",
+            (eigenaar, json.dumps(pos) if pos else None),
+        )
         telling["toegevoegd" if cur.rowcount == 1 else "al_aanwezig"] += 1
         if item.get("niet_overgenomen"):
             telling["met_niet_overgenomen_instellingen"] += 1
@@ -515,17 +647,23 @@ def laad_voorkeuren(cur, items: list[dict]) -> dict:
 
 def verbind(dsn: str):
     import psycopg2
+
     if dsn:
         return psycopg2.connect(dsn)
-    return psycopg2.connect(host=os.environ.get("DATABASE_HOST", "127.0.0.1"),
-                            port=int(os.environ.get("DATABASE_PORT", 5432)),
-                            dbname=os.environ.get("DATABASE_NAME", "omnitwin_db"),
-                            user=os.environ.get("DATABASE_USER", "omnitwin_user"),
-                            password=os.environ.get("DATABASE_PASSWORD", ""), connect_timeout=10)
+    return psycopg2.connect(
+        host=os.environ.get("DATABASE_HOST", "127.0.0.1"),
+        port=int(os.environ.get("DATABASE_PORT", 5432)),
+        dbname=os.environ.get("DATABASE_NAME", "omnitwin_db"),
+        user=os.environ.get("DATABASE_USER", "omnitwin_user"),
+        password=os.environ.get("DATABASE_PASSWORD", ""),
+        connect_timeout=10,
+    )
 
 
 def main(argv=None) -> int:
-    a = argparse.ArgumentParser(description=__doc__.split("\n")[1], formatter_class=argparse.RawDescriptionHelpFormatter)
+    a = argparse.ArgumentParser(
+        description=__doc__.split("\n")[1], formatter_class=argparse.RawDescriptionHelpFormatter
+    )
     sub = a.add_subparsers(dest="opdracht", required=True)
     e = sub.add_parser("exporteer", help="dump → bestanden voor de use cases (SWF_DB_DUMP)")
     e.add_argument("--dump", required=True, help="pg_dump van de monitor: custom format (-Fc) of platte SQL")
@@ -544,15 +682,26 @@ def main(argv=None) -> int:
             mapping = lees_mapping(Path(args.gebruikers_mapping) if args.gebruikers_mapping else None)
             s = exporteer(tabellen, Path(args.uit), mapping, args.dump_datum)
             d, w, g = s["definities"], s["waarden"], s["gebruikersvoorkeuren"]
-            print(f"definities: {d['indicatoren']} indicatoren {d['status']}, {d['gebiedstypen']} gebiedstypen, "
-                  f"{d['relaties']} relaties")
-            print(f"waarden: {w['totaal']} ({w['indicatoren']} indicatoren, {w['combinaties']} combinaties; "
-                  f"{w['legacy_2011_2012_weggelaten']} legacy 2011–2012 weggelaten)")
-            print(f"monitors: {s['monitors']['versies']} versies, actief: "
-                  + ", ".join(f"{m['naam']} ({m['indicatoren']})" for m in s["monitors"]["actief"]))
-            print(f"gebruikersvoorkeuren: {g.get('gekoppeld', 0)} van {g['gebruikers']} gebruikers gekoppeld"
-                  + (f"; vul {Path(args.uit) / 'gebruikers-mapping.csv'} aan en exporteer opnieuw met --gebruikers-mapping"
-                     if g.get("niet_gekoppeld") else ""))
+            print(
+                f"definities: {d['indicatoren']} indicatoren {d['status']}, {d['gebiedstypen']} gebiedstypen, "
+                f"{d['relaties']} relaties"
+            )
+            print(
+                f"waarden: {w['totaal']} ({w['indicatoren']} indicatoren, {w['combinaties']} combinaties; "
+                f"{w['legacy_2011_2012_weggelaten']} legacy 2011–2012 weggelaten)"
+            )
+            print(
+                f"monitors: {s['monitors']['versies']} versies, actief: "
+                + ", ".join(f"{m['naam']} ({m['indicatoren']})" for m in s["monitors"]["actief"])
+            )
+            print(
+                f"gebruikersvoorkeuren: {g.get('gekoppeld', 0)} van {g['gebruikers']} gebruikers gekoppeld"
+                + (
+                    f"; vul {Path(args.uit) / 'gebruikers-mapping.csv'} aan en exporteer opnieuw met --gebruikers-mapping"
+                    if g.get("niet_gekoppeld")
+                    else ""
+                )
+            )
             return 0
         items = json.loads(Path(args.bestand).read_text(encoding="utf-8"))
         conn = verbind(args.dsn)

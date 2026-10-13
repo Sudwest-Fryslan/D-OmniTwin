@@ -39,9 +39,9 @@ class NepKeycloak:
     def __init__(self, admin_wachtwoord="geheim-admin"):
         self.admin_wachtwoord = admin_wachtwoord
         self.realmrollen = {"beheerder", "gebruikersbeheerder", "lezer", "default-roles-omnitwin"}
-        self.clients = {}            # id -> representatie
-        self.clientrollen = {}       # client-id -> {naam}
-        self.users = {}              # id -> representatie (met _wachtwoord, _rollen)
+        self.clients = {}  # id -> representatie
+        self.clientrollen = {}  # client-id -> {naam}
+        self.users = {}  # id -> representatie (met _wachtwoord, _rollen)
         self.verzoeken = []
         self.tokens = set()
         self.verloop_volgende = False
@@ -57,8 +57,12 @@ class NepKeycloak:
         self.clients[cid] = dict(rep, id=cid)
         if rep.get("serviceAccountsEnabled"):
             # Zoals Keycloak: een service account krijgt de standaardrol van de realm
-            self.users[f"sa-{cid}"] = {"id": f"sa-{cid}", "username": f"service-account-{rep['clientId']}",
-                                       "_client": cid, "_rollen": {"default-roles-omnitwin"}}
+            self.users[f"sa-{cid}"] = {
+                "id": f"sa-{cid}",
+                "username": f"service-account-{rep['clientId']}",
+                "_client": cid,
+                "_rollen": {"default-roles-omnitwin"},
+            }
         return cid
 
     # -- tokenendpoints
@@ -93,11 +97,17 @@ class NepKeycloak:
         if tok not in self.tokens:
             return Antwoord(401)
         assert url.startswith(ADMIN), url
-        pad, params = url[len(ADMIN):], params or {}
+        pad, params = url[len(ADMIN) :], params or {}
         if methode == "GET" and pad == "/clients":
             q = params.get("clientId", "")
-            return Antwoord(200, [c for c in self.clients.values()
-                                  if (q in c["clientId"] if params.get("search") else c["clientId"] == q)])
+            return Antwoord(
+                200,
+                [
+                    c
+                    for c in self.clients.values()
+                    if (q in c["clientId"] if params.get("search") else c["clientId"] == q)
+                ],
+            )
         if methode == "POST" and pad == "/clients":
             if any(c["clientId"] == json["clientId"] for c in self.clients.values()):
                 return Antwoord(409)
@@ -122,12 +132,22 @@ class NepKeycloak:
             if any(u["username"] == json["username"] for u in self.users.values()):
                 return Antwoord(409)
             gid = str(uuid.uuid4())
-            self.users[gid] = {**{k: v for k, v in json.items() if k != "credentials"}, "id": gid,
-                               "_wachtwoord": json["credentials"][0]["value"], "_rollen": set()}
+            self.users[gid] = {
+                **{k: v for k, v in json.items() if k != "credentials"},
+                "id": gid,
+                "_wachtwoord": json["credentials"][0]["value"],
+                "_rollen": set(),
+            }
             return Antwoord(201, headers={"Location": f"{ADMIN}/users/{gid}"})
         if methode == "GET" and pad == "/users":
-            return Antwoord(200, [{k: v for k, v in u.items() if not k.startswith("_")}
-                                  for u in self.users.values() if params.get("search", "") in u["username"]])
+            return Antwoord(
+                200,
+                [
+                    {k: v for k, v in u.items() if not k.startswith("_")}
+                    for u in self.users.values()
+                    if params.get("search", "") in u["username"]
+                ],
+            )
         if m := re.fullmatch(r"/users/([^/]+)", pad):
             self.users.pop(m.group(1), None)
             return Antwoord(204)
@@ -152,11 +172,15 @@ class NepKeycloak:
         return next(u for u in self.users.values() if u.get("_client") == cid)["_rollen"]
 
 
-UC = {"naam": "voorbeeld", "actoren": [
-    {"naam": "beheerder", "soort": "gebruiker", "rollen": ["beheerder"]},
-    {"naam": "etl-x", "soort": "machineclient", "rollen": ["dataset:ds-x:laden"]},
-    {"naam": "lezer", "soort": "gebruiker", "rollen": ["lezer"]}],
-    "datasets": [{"id": "ds-x", "route": "laden", "client": "etl-x"}]}
+UC = {
+    "naam": "voorbeeld",
+    "actoren": [
+        {"naam": "beheerder", "soort": "gebruiker", "rollen": ["beheerder"]},
+        {"naam": "etl-x", "soort": "machineclient", "rollen": ["dataset:ds-x:laden"]},
+        {"naam": "lezer", "soort": "gebruiker", "rollen": ["lezer"]},
+    ],
+    "datasets": [{"id": "ds-x", "route": "laden", "client": "etl-x"}],
+}
 
 
 @pytest.fixture
@@ -181,12 +205,16 @@ def beheer(kc):
 
 # ------------------------------------------------------------------ alleen in test en dev
 
-@pytest.mark.parametrize("env,melding", [
-    ({}, "OMNITWIN_TESTACCOUNTS=1"),
-    ({"OMNITWIN_TESTACCOUNTS": "true"}, "OMNITWIN_TESTACCOUNTS=1"),
-    ({"OMNITWIN_TESTACCOUNTS": "1", "OMNITWIN_OMGEVING": "productie"}, "productie"),
-    ({"OMNITWIN_TESTACCOUNTS": "1", "OMNITWIN_OMGEVING": "Production"}, "production"),
-])
+
+@pytest.mark.parametrize(
+    "env,melding",
+    [
+        ({}, "OMNITWIN_TESTACCOUNTS=1"),
+        ({"OMNITWIN_TESTACCOUNTS": "true"}, "OMNITWIN_TESTACCOUNTS=1"),
+        ({"OMNITWIN_TESTACCOUNTS": "1", "OMNITWIN_OMGEVING": "productie"}, "productie"),
+        ({"OMNITWIN_TESTACCOUNTS": "1", "OMNITWIN_OMGEVING": "Production"}, "production"),
+    ],
+)
 def test_geweigerd_buiten_test_en_dev(env, melding, monkeypatch):
     for k in ("OMNITWIN_TESTACCOUNTS", "OMNITWIN_OMGEVING"):
         monkeypatch.delenv(k, raising=False)
@@ -222,10 +250,14 @@ def test_cli_weigert_testaccounts_in_productie(omgeving, monkeypatch, capsys):
 
 # ------------------------------------------------------------------ aanmaken
 
+
 def test_maak_gebruikers_machineclients_en_loginclient(omgeving, kc, beheer, capsys):
     uit = ta.maak("voorbeeld", UC, beheer)
     assert {a: v["id"] for a, v in uit.items()} == {
-        "beheerder": "uc-voorbeeld-beheerder", "etl-x": "uc-voorbeeld-etl-x", "lezer": "uc-voorbeeld-lezer"}
+        "beheerder": "uc-voorbeeld-beheerder",
+        "etl-x": "uc-voorbeeld-etl-x",
+        "lezer": "uc-voorbeeld-lezer",
+    }
     # gebruikers: wachtwoord, rollen, herkenbaar als testaccount, geen verplichte acties (wachtwoordgrant)
     b = kc.gebruiker("uc-voorbeeld-beheerder")
     assert b["_rollen"] == {"beheerder"} and b["firstName"] == "Testaccount" and b["lastName"] == "voorbeeld"
@@ -234,7 +266,9 @@ def test_maak_gebruikers_machineclients_en_loginclient(omgeving, kc, beheer, cap
     # machineclient: service account met alleen zijn datasetrol (ontbrekende client-rol aangemaakt), kenmerk
     c = kc.client("uc-voorbeeld-etl-x")
     assert c["serviceAccountsEnabled"] and not c["publicClient"] and not c["directAccessGrantsEnabled"]
-    assert c["secret"] == uit["etl-x"]["geheim"] and kc.rollen_van_client("uc-voorbeeld-etl-x") == {"dataset:ds-x:laden"}
+    assert c["secret"] == uit["etl-x"]["geheim"] and kc.rollen_van_client("uc-voorbeeld-etl-x") == {
+        "dataset:ds-x:laden"
+    }
     assert "dataset:ds-x:laden" in kc.clientrollen[kc.api_id]
     assert c["attributes"][ta.KENMERK_UC] == "voorbeeld" and c["attributes"][ta.KENMERK_TOT]
     assert c["protocolMappers"][0]["config"]["included.client.audience"] == "omnitwin-api"
@@ -256,10 +290,14 @@ def test_opnieuw_maken_vervangt_de_oude_accounts(omgeving, kc, beheer):
     een = ta.maak("voorbeeld", UC, beheer)
     twee = ta.maak("voorbeeld", UC, beheer)
     assert een["etl-x"]["geheim"] != twee["etl-x"]["geheim"]
-    assert [u["username"] for u in kc.users.values() if u["username"].startswith("uc-")] == \
-        ["uc-voorbeeld-beheerder", "uc-voorbeeld-lezer"]
-    assert sorted(c["clientId"] for c in kc.clients.values() if c["clientId"].startswith("uc-")) == \
-        ["uc-voorbeeld--login", "uc-voorbeeld-etl-x"]
+    assert [u["username"] for u in kc.users.values() if u["username"].startswith("uc-")] == [
+        "uc-voorbeeld-beheerder",
+        "uc-voorbeeld-lezer",
+    ]
+    assert sorted(c["clientId"] for c in kc.clients.values() if c["clientId"].startswith("uc-")) == [
+        "uc-voorbeeld--login",
+        "uc-voorbeeld-etl-x",
+    ]
 
 
 def test_onbekende_realmrol_is_een_fout(omgeving, beheer):
@@ -302,13 +340,18 @@ def test_service_account_voor_de_admin_api(omgeving, monkeypatch, kc, beheer):
     def post(url, data=None, auth=None, timeout=None):
         gezien.append((url, data["grant_type"], auth))
         return Antwoord(200, {"access_token": kc._token()})
+
     monkeypatch.setattr(kc, "post", post)
     ta.maak("voorbeeld", UC, beheer)
-    assert gezien[0] == (f"{KC}/realms/omnitwin/protocol/openid-connect/token", "client_credentials",
-                         ("testaccounts-beheer", "s3"))
+    assert gezien[0] == (
+        f"{KC}/realms/omnitwin/protocol/openid-connect/token",
+        "client_credentials",
+        ("testaccounts-beheer", "s3"),
+    )
 
 
 # ------------------------------------------------------------------ tokens en opruimen
+
 
 def test_tokens_voor_machineclient_en_gebruiker(omgeving, kc, beheer):
     uit = ta.maak("voorbeeld", UC, beheer)
@@ -320,21 +363,37 @@ def test_tokens_voor_machineclient_en_gebruiker(omgeving, kc, beheer):
 
 
 def test_opruimen_alleen_eigen_prefix_en_kenmerk(omgeving, kc, beheer):
-    kort = {"naam": "cbs", "actoren": [{"naam": "etl", "soort": "machineclient", "rollen": ["datasets:laden"]},
-                                       {"naam": "lezer", "soort": "gebruiker", "rollen": ["lezer"]}]}
-    lang = {"naam": "cbs-kerncijfers", "actoren": [{"naam": "etl", "soort": "machineclient", "rollen": ["lezer"]},
-                                                   {"naam": "lezer", "soort": "gebruiker", "rollen": ["lezer"]}]}
+    kort = {
+        "naam": "cbs",
+        "actoren": [
+            {"naam": "etl", "soort": "machineclient", "rollen": ["datasets:laden"]},
+            {"naam": "lezer", "soort": "gebruiker", "rollen": ["lezer"]},
+        ],
+    }
+    lang = {
+        "naam": "cbs-kerncijfers",
+        "actoren": [
+            {"naam": "etl", "soort": "machineclient", "rollen": ["lezer"]},
+            {"naam": "lezer", "soort": "gebruiker", "rollen": ["lezer"]},
+        ],
+    }
     ta.maak("cbs", kort, beheer)
     ta.maak("cbs-kerncijfers", lang, beheer)
     # 'uc-cbs-' is ook een prefix van 'uc-cbs-kerncijfers-…': het kenmerk beslist
     weg = ta.opruimen("cbs", beheer)
     assert sorted(weg) == ["uc-cbs--login", "uc-cbs-etl", "uc-cbs-lezer"]
     assert kc.client("uc-cbs-kerncijfers-etl") and kc.gebruiker("uc-cbs-kerncijfers-lezer")
-    assert not kc.client("uc-cbs-etl") and not any(u.get("_client") and u["username"] == "service-account-uc-cbs-etl"
-                                                     for u in kc.users.values())
+    assert not kc.client("uc-cbs-etl") and not any(
+        u.get("_client") and u["username"] == "service-account-uc-cbs-etl" for u in kc.users.values()
+    )
     assert list(json.loads(omgeving.read_text(encoding="utf-8"))) == ["cbs-kerncijfers"]
     # een gewone gebruiker of client met hetzelfde prefix blijft staan
-    kc.users["x"] = {"id": "x", "username": "uc-cbs-kerncijfers-eigen", "firstName": "Jan", "lastName": "cbs-kerncijfers"}
+    kc.users["x"] = {
+        "id": "x",
+        "username": "uc-cbs-kerncijfers-eigen",
+        "firstName": "Jan",
+        "lastName": "cbs-kerncijfers",
+    }
     kc._maak_client({"clientId": "uc-cbs-kerncijfers-eigen", "attributes": {}})
     ta.opruimen("cbs-kerncijfers", beheer)
     assert kc.gebruiker("uc-cbs-kerncijfers-eigen") and kc.client("uc-cbs-kerncijfers-eigen")
@@ -342,6 +401,7 @@ def test_opruimen_alleen_eigen_prefix_en_kenmerk(omgeving, kc, beheer):
 
 
 # ------------------------------------------------------------------ uitvoerder: actoren gebruiken
+
 
 class NepLaadApi:
     def __init__(self, naam, statussen=None):
@@ -389,6 +449,7 @@ def actor_api(uc_, accounts, statussen=None, terugval=True):
         naam = "omgeving" if tokenbron is None else tokenbron()
         gemaakt[naam] = NepLaadApi(naam, (statussen or {}).get(naam))
         return gemaakt[naam]
+
     return uc.ActorApi(uc_, {"loginclient": "uc-voorbeeld--login", "actoren": accounts}, "http://nep", maak), gemaakt
 
 
@@ -396,8 +457,10 @@ def actor_api(uc_, accounts, statussen=None, terugval=True):
 def accounts(monkeypatch):
     monkeypatch.setattr(uc, "token_url", lambda basis=None: "http://nep/token")
     monkeypatch.setattr(ta, "token", lambda acc, login, url, sessie=None: acc["id"])
-    return {a["naam"]: {"soort": a["soort"], "id": f"uc-voorbeeld-{a['naam']}", "geheim": "-", "rollen": a["rollen"]}
-            for a in UC["actoren"]}
+    return {
+        a["naam"]: {"soort": a["soort"], "id": f"uc-voorbeeld-{a['naam']}", "geheim": "-", "rollen": a["rollen"]}
+        for a in UC["actoren"]
+    }
 
 
 def test_actorapi_registreert_als_beheerder_en_levert_als_client(accounts):
@@ -422,18 +485,26 @@ def test_actorapi_valt_terug_op_de_machineclient_uit_de_omgeving(accounts):
 def test_rechtencontroles(accounts):
     statussen = {
         "uc-voorbeeld-beheerder": {("POST", "/api/laden/v1/datasets"): 400},
-        "uc-voorbeeld-etl-x": {("POST", "/datasets/ds-x/leveringen"): 400, ("POST", "/datasets/ander/leveringen"): 403,
-                               ("POST", "/api/laden/v1/datasets"): 403},
-        "uc-voorbeeld-lezer": {("POST", "/datasets/ds-x/leveringen"): 403, ("POST", "/api/laden/v1/datasets"): 403,
-                               ("GET", "/datasets/ds-x"): 403},
+        "uc-voorbeeld-etl-x": {
+            ("POST", "/datasets/ds-x/leveringen"): 400,
+            ("POST", "/datasets/ander/leveringen"): 403,
+            ("POST", "/api/laden/v1/datasets"): 403,
+        },
+        "uc-voorbeeld-lezer": {
+            ("POST", "/datasets/ds-x/leveringen"): 403,
+            ("POST", "/api/laden/v1/datasets"): 403,
+            ("GET", "/datasets/ds-x"): 403,
+        },
     }
     api, gemaakt = actor_api(UC, accounts, statussen)
-    ok = [{"type": "recht", "actor": "beheerder", "actie": "registreren", "toegestaan": True},
-          {"type": "recht", "actor": "etl-x", "actie": "leveren", "dataset": "ds-x", "toegestaan": True},
-          {"type": "recht", "actor": "etl-x", "actie": "leveren", "dataset": "ander", "toegestaan": False},
-          {"type": "recht", "actor": "etl-x", "actie": "registreren", "toegestaan": False},
-          {"type": "recht", "actor": "lezer", "actie": "leveren", "dataset": "ds-x", "toegestaan": False},
-          {"type": "recht", "actor": "lezer", "actie": "lezen", "dataset": "ds-x", "toegestaan": False}]
+    ok = [
+        {"type": "recht", "actor": "beheerder", "actie": "registreren", "toegestaan": True},
+        {"type": "recht", "actor": "etl-x", "actie": "leveren", "dataset": "ds-x", "toegestaan": True},
+        {"type": "recht", "actor": "etl-x", "actie": "leveren", "dataset": "ander", "toegestaan": False},
+        {"type": "recht", "actor": "etl-x", "actie": "registreren", "toegestaan": False},
+        {"type": "recht", "actor": "lezer", "actie": "leveren", "dataset": "ds-x", "toegestaan": False},
+        {"type": "recht", "actor": "lezer", "actie": "lezen", "dataset": "ds-x", "toegestaan": False},
+    ]
     for c in ok:
         assert uc.controle_api(c, api, UC) is None, c
     # de levering is een proef: ongeldige alleenValideren, dus de laad-API wijst hem af na de rolcontrole
@@ -467,9 +538,14 @@ def test_controle_met_actor_draait_als_die_actor(accounts):
 
 
 def test_maak_actor_apis_met_afhankelijkheden(omgeving, monkeypatch, kc, beheer, tmp_path):
-    ucs = {"basis": {"naam": "basis", "actoren": [{"naam": "etl", "soort": "machineclient", "rollen": ["datasets:laden"]}]},
-           "boven": {"naam": "boven", "afhankelijk_van": ["basis"], "actoren": UC["actoren"]},
-           "zonder": {"naam": "zonder"}}
+    ucs = {
+        "basis": {
+            "naam": "basis",
+            "actoren": [{"naam": "etl", "soort": "machineclient", "rollen": ["datasets:laden"]}],
+        },
+        "boven": {"naam": "boven", "afhankelijk_van": ["basis"], "actoren": UC["actoren"]},
+        "zonder": {"naam": "zonder"},
+    }
     apis = uc.maak_actor_apis(["boven", "zonder"], ucs, beheer)
     assert set(apis) == {"basis", "boven", "zonder"}
     assert set(apis["boven"].accounts) == {"beheerder", "etl-x", "lezer"} and apis["zonder"].accounts == {}
@@ -486,13 +562,19 @@ def test_maak_actor_apis_weigert_buiten_test(monkeypatch):
 
 # ------------------------------------------------------------------ manifest
 
+
 def test_manifest_actor_en_recht_worden_gecontroleerd():
-    m = {"naam": "x", "actoren": UC["actoren"] + [{"naam": "lezer", "soort": "gebruiker", "rollen": ["lezer"]}],
-         "datasets": [], "controles": [
-             {"type": "recht", "actor": "onbekend", "actie": "registreren", "toegestaan": False},
-             {"type": "recht", "actor": "lezer", "actie": "leveren", "toegestaan": False},
-             {"type": "recht", "actor": "lezer", "actie": "leveren", "dataset": "van-een-ander", "toegestaan": False},
-             {"type": "idempotent", "dataset": "van-een-ander"}]}
+    m = {
+        "naam": "x",
+        "actoren": UC["actoren"] + [{"naam": "lezer", "soort": "gebruiker", "rollen": ["lezer"]}],
+        "datasets": [],
+        "controles": [
+            {"type": "recht", "actor": "onbekend", "actie": "registreren", "toegestaan": False},
+            {"type": "recht", "actor": "lezer", "actie": "leveren", "toegestaan": False},
+            {"type": "recht", "actor": "lezer", "actie": "leveren", "dataset": "van-een-ander", "toegestaan": False},
+            {"type": "idempotent", "dataset": "van-een-ander"},
+        ],
+    }
     fouten = uc.valideer_manifest(m)
     assert "actoren: naam lezer komt meer dan eens voor" in fouten
     assert "controle recht: actor onbekend niet in actoren" in fouten
@@ -527,13 +609,16 @@ def test_accountbestand_staat_in_gitignore():
 
 # ------------------------------------------------------------------ toegang per laag (#254)
 
+
 def test_rechtencontrole_bekijken(accounts):
     """recht bekijken: GET <pad> met het token van de actor; 401/403 = niet toegestaan."""
     pad = "/api/gebiedsmonitor/kaart_data/gt?indicator_uuid=u"
     statussen = {"uc-voorbeeld-lezer": {("GET", pad): 200}, "uc-voorbeeld-etl-x": {("GET", pad): 403}}
     api, gemaakt = actor_api(UC, accounts, statussen)
-    goed = [{"type": "recht", "actor": "lezer", "actie": "bekijken", "pad": pad, "toegestaan": True},
-            {"type": "recht", "actor": "etl-x", "actie": "bekijken", "pad": pad, "toegestaan": False}]
+    goed = [
+        {"type": "recht", "actor": "lezer", "actie": "bekijken", "pad": pad, "toegestaan": True},
+        {"type": "recht", "actor": "etl-x", "actie": "bekijken", "pad": pad, "toegestaan": False},
+    ]
     for c in goed:
         assert uc.controle_api(c, api, UC) is None, c
     assert gemaakt["uc-voorbeeld-lezer"].s.verzoeken == [("GET", f"http://nep{pad}", None)]
@@ -544,9 +629,15 @@ def test_rechtencontrole_bekijken(accounts):
 
 
 def test_manifest_recht_bekijken_vraagt_pad():
-    m = {"naam": "x", "actoren": UC["actoren"], "datasets": [], "controles": [
-        {"type": "recht", "actor": "lezer", "actie": "bekijken", "toegestaan": True},
-        {"type": "recht", "actor": "lezer", "actie": "bekijken", "pad": "/api/x", "toegestaan": True}]}
+    m = {
+        "naam": "x",
+        "actoren": UC["actoren"],
+        "datasets": [],
+        "controles": [
+            {"type": "recht", "actor": "lezer", "actie": "bekijken", "toegestaan": True},
+            {"type": "recht", "actor": "lezer", "actie": "bekijken", "pad": "/api/x", "toegestaan": True},
+        ],
+    }
     fouten = uc.valideer_manifest(m)
     assert fouten.count("controle recht: veld pad ontbreekt") == 1
     assert "controle recht: veld dataset ontbreekt" not in fouten
@@ -563,12 +654,19 @@ def test_api_controle_maximaal_aantal(monkeypatch):
 
         def json(self):
             return self.data
+
     antwoorden = {"/leeg": [], "/een": [{"x": 1}]}
     monkeypatch.setattr(requests, "get", lambda url, headers=None, timeout=None: R(antwoorden[url.split("nep")[1]]))
     api = NepLaadApi("omgeving")
     api.basis = "http://nep"
     assert uc.controle_api({"type": "api", "pad": "/leeg", "anoniem": True, "maximaal_aantal": 0}, api, UC) is None
-    assert uc.controle_api({"type": "api", "pad": "/een", "anoniem": True, "maximaal_aantal": 0}, api, UC) \
+    assert (
+        uc.controle_api({"type": "api", "pad": "/een", "anoniem": True, "maximaal_aantal": 0}, api, UC)
         == "1 resultaten, verwacht ≤ 0"
-    assert uc.controle_api({"type": "api", "pad": "/een", "anoniem": True, "minimaal_aantal": 1,
-                            "maximaal_aantal": 1}, api, UC) is None
+    )
+    assert (
+        uc.controle_api(
+            {"type": "api", "pad": "/een", "anoniem": True, "minimaal_aantal": 1, "maximaal_aantal": 1}, api, UC
+        )
+        is None
+    )

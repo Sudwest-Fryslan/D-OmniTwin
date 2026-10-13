@@ -2,6 +2,7 @@
 Unit tests voor de evaluatie van de D-Omni Assistent (#233): de maten en de testset zelf.
 De evaluatie tegen een draaiende stack staat in tests/integration/test_assistent_kwaliteit.py.
 """
+
 import re
 
 import pytest
@@ -14,7 +15,7 @@ UUID = re.compile(r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12
 
 
 def test_precision_telt_alleen_wat_getoond_is():
-    assert ev.precision_at_k(["a", "x"], ["a"], 3) == 0.5      # 2 getoond, 1 goed
+    assert ev.precision_at_k(["a", "x"], ["a"], 3) == 0.5  # 2 getoond, 1 goed
     assert ev.precision_at_k(["a", "x", "y", "b"], ["a", "b"], 3) == pytest.approx(1 / 3)
     assert ev.precision_at_k([], ["a"], 3) == 0.0
 
@@ -31,19 +32,29 @@ def test_reciprocal_rank():
 
 
 def test_scoor_en_drempel():
-    res = [{"type": "zoek", "relevant": ["a"], "gevonden": ["a"]},
-           {"type": "datavraag", "relevant": ["b"], "gevonden": ["x", "b"], "gerouteerd": False}]
+    res = [
+        {"type": "zoek", "relevant": ["a"], "gevonden": ["a"]},
+        {"type": "datavraag", "relevant": ["b"], "gevonden": ["x", "b"], "gerouteerd": False},
+    ]
     s = ev.scoor(res, 3)
     assert s["mrr"] == 0.75 and s["routering"] == 0.0
     assert ev.onder_drempel(s, {"mrr": 0.8, "precision_at_k": 0.5}) == ["mrr 0.750 < 0.8"]
 
 
 def test_evalueer_routeert_datavragen_naar_de_chat():
-    testset = {"gebied": "BU19000002", "vragen": [
-        {"vraag": "ouderen", "type": "zoek", "relevant": ["a"]},
-        {"vraag": "hoeveel ouderen hier", "type": "datavraag", "relevant": ["a"]}]}
-    chat = lambda v, g: {"intent": "DATAVRAAG", "indicatoren": [{"uuid": "a"}],  # noqa: E731
-                         "gegevens": [{"gebied_id": x} for x in g], "narrative": "x"}
+    testset = {
+        "gebied": "BU19000002",
+        "vragen": [
+            {"vraag": "ouderen", "type": "zoek", "relevant": ["a"]},
+            {"vraag": "hoeveel ouderen hier", "type": "datavraag", "relevant": ["a"]},
+        ],
+    }
+    chat = lambda v, g: {  # noqa: E731
+        "intent": "DATAVRAAG",
+        "indicatoren": [{"uuid": "a"}],
+        "gegevens": [{"gebied_id": x} for x in g],
+        "narrative": "x",
+    }
     res = ev.evalueer(testset, lambda v: ["a"], chat)
     assert [r["gerouteerd"] for r in res] == [None, True]
 
@@ -52,8 +63,11 @@ def test_gerouteerd_mijn_buurt_selectie_en_aanname():
     """#233: bij 'mijn buurt' met een (multi-)selectie zegt het antwoord van welke buurt(en) het uitgaat."""
     v = {"vraag": "hoeveel % is bejaard bij mij in de buurt?", "type": "datavraag", "mijn_buurt": True}
     namen = {"B1": "Noord", "B2": "Zuid"}
-    goed = {"intent": "DATAVRAAG", "gegevens": [{"gebied_id": "B1"}, {"gebied_id": "B2"}],
-            "aanname": "Ik ga uit van Noord en Zuid (geselecteerd op de kaart)."}
+    goed = {
+        "intent": "DATAVRAAG",
+        "gegevens": [{"gebied_id": "B1"}, {"gebied_id": "B2"}],
+        "aanname": "Ik ga uit van Noord en Zuid (geselecteerd op de kaart).",
+    }
     assert ev.gerouteerd(v, goed, ["B1", "B2"], namen)
     assert not ev.gerouteerd(v, {**goed, "aanname": None}, ["B1", "B2"], namen)
     assert not ev.gerouteerd(v, {**goed, "gegevens": [{"gebied_id": "B1"}]}, ["B1", "B2"], namen)

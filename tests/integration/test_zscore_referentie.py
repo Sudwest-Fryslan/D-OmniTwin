@@ -34,12 +34,12 @@ pytestmark = pytest.mark.integration
 BASE_URL = os.environ.get("OMNITWIN_BASE_URL", "http://localhost").rstrip("/")
 TIMEOUT = 60
 
-GEBIED = "BU19000002"          # Bolsward-Zuidoost
-GEBIED_2 = "BU19000200"        # Workum
+GEBIED = "BU19000002"  # Bolsward-Zuidoost
+GEBIED_2 = "BU19000200"  # Workum
 GEMEENTE = "1900"
-WATERBUURT = "BU1900T066"      # bestaat niet in de sample; wordt opgeruimd
+WATERBUURT = "BU1900T066"  # bestaat niet in de sample; wordt opgeruimd
 WATERBUURT_NAAM = "BU1900T155"  # waterbuurt alleen op naam (#155); wordt opgeruimd
-MIN_N = 5                       # standaard minimum-n (services.zscore_referentie.MIN_N_STANDAARD)
+MIN_N = 5  # standaard minimum-n (services.zscore_referentie.MIN_N_STANDAARD)
 
 
 @pytest.fixture(scope="module")
@@ -80,7 +80,7 @@ def referentie_stats(cur, gebiedstype_id):
 
 def voeg_waterbuurt_toe(cur, gebiedstype_id, water=True, gebied_id=WATERBUURT, naam="Testwaterbuurt #66"):
     """Waterbuurt (of gewone buurt) met extreme waarden voor alle indicatoren."""
-    metadata = '{"water": "JA"}' if water else '{}'
+    metadata = '{"water": "JA"}' if water else "{}"
     cur.execute(
         """INSERT INTO gebieden (id, gebiedstype_id, naam, gemeente_code, metadata, actief)
            VALUES (%s, %s::uuid, %s, %s, %s::jsonb, true)""",
@@ -106,10 +106,17 @@ def ruim_waterbuurt_op(conn, gebied_id=WATERBUURT):
 
 # ── Schema ───────────────────────────────────────────────────────────────────
 
+
 def test_referentiefuncties_bestaan(conn):
     with conn.cursor() as cur:
-        for f in ("zscore_referentie_waarden", "zscore_referentie_stats", "zscore", "zscore_gebieden",
-                  "is_waterbuurt", "markeer_waterbuurten"):
+        for f in (
+            "zscore_referentie_waarden",
+            "zscore_referentie_stats",
+            "zscore",
+            "zscore_gebieden",
+            "is_waterbuurt",
+            "markeer_waterbuurten",
+        ):
             cur.execute("SELECT count(*) FROM pg_proc WHERE proname = %s", (f,))
             assert cur.fetchone()[0] >= 1, f"functie {f} ontbreekt"
     conn.rollback()
@@ -130,13 +137,16 @@ def test_referentie_per_provincie(conn, gebiedstype_id):
             assert cur.fetchall() == []
             cur.execute(
                 """SELECT count(*) FROM zscore_gebieden(ARRAY[%s]::varchar[], %s::uuid,
-                       p_provincie => %s)""", (GEBIED, gebiedstype_id, "Provincie-die-niet-bestaat"))
+                       p_provincie => %s)""",
+                (GEBIED, gebiedstype_id, "Provincie-die-niet-bestaat"),
+            )
             assert cur.fetchone()[0] == 0
     finally:
         conn.rollback()
 
 
 # ── Waterbuurten en scenario's ───────────────────────────────────────────────
+
 
 def test_waterbuurt_verandert_referentie_niet(conn, gebiedstype_id):
     try:
@@ -169,8 +179,9 @@ def test_waterbuurt_op_naam_uitgesloten(conn, gebiedstype_id):
     try:
         with conn.cursor() as cur:
             voor = referentie_stats(cur, gebiedstype_id)
-            voeg_waterbuurt_toe(cur, gebiedstype_id, water=False,
-                                gebied_id=WATERBUURT_NAAM, naam="Buitenwater Test #155")
+            voeg_waterbuurt_toe(
+                cur, gebiedstype_id, water=False, gebied_id=WATERBUURT_NAAM, naam="Buitenwater Test #155"
+            )
             na = referentie_stats(cur, gebiedstype_id)
             cur.execute("SELECT count(*) FROM vw_gebied_kaart_basis WHERE id = %s", (WATERBUURT_NAAM,))
             op_kaart = cur.fetchone()[0]
@@ -178,8 +189,9 @@ def test_waterbuurt_op_naam_uitgesloten(conn, gebiedstype_id):
             is_water = cur.fetchone()[0]
             cur.execute("SELECT markeer_waterbuurten()")
             assert cur.fetchone()[0] >= 1
-            cur.execute("SELECT metadata->>'water', metadata->>'water_bron' FROM gebieden WHERE id = %s",
-                        (WATERBUURT_NAAM,))
+            cur.execute(
+                "SELECT metadata->>'water', metadata->>'water_bron' FROM gebieden WHERE id = %s", (WATERBUURT_NAAM,)
+            )
             vlag = cur.fetchone()
             cur.execute("SELECT markeer_waterbuurten()")
             tweede_keer = cur.fetchone()[0]
@@ -211,14 +223,18 @@ def test_scenario_telt_niet_mee(conn, gebiedstype_id):
 
 # ── Formule en randgevallen ──────────────────────────────────────────────────
 
-@pytest.mark.parametrize("waarde,gem,sd,n", [
-    (12, 10, 2, 5),
-    (8, 10, 2, 5),
-    (10, 10, 2, 2),
-    (15, 10, 0, 5),      # sd = 0
-    (15, 15, None, 1),   # n < 2
-    (15, 10, 2, 1),      # n < 2
-])
+
+@pytest.mark.parametrize(
+    "waarde,gem,sd,n",
+    [
+        (12, 10, 2, 5),
+        (8, 10, 2, 5),
+        (10, 10, 2, 2),
+        (15, 10, 0, 5),  # sd = 0
+        (15, 15, None, 1),  # n < 2
+        (15, 10, 2, 1),  # n < 2
+    ],
+)
 def test_sql_en_python_formule_gelijk(conn, waarde, gem, sd, n):
     with conn.cursor() as cur:
         cur.execute("SELECT zscore(%s::numeric, %s::numeric, %s::numeric, %s)", (waarde, gem, sd, n))
@@ -318,8 +334,8 @@ def test_minimum_n_terugval_met_vlag(conn, gebiedstype_id):
         cur.execute(
             f"""SELECT zs.indicator_uuid, zs.referentie_terugval, zs.gemiddelde, zs.n,
                        {ZELFDE_JAAR_N} AS n_jaar,
-                       {RECENTST.format(agg='AVG(r.waarde)')} AS gem_recent,
-                       {RECENTST.format(agg='COUNT(*)')} AS n_recent
+                       {RECENTST.format(agg="AVG(r.waarde)")} AS gem_recent,
+                       {RECENTST.format(agg="COUNT(*)")} AS n_recent
                 FROM zscore_gebieden(ARRAY[%(a)s, %(b)s]::varchar[], %(gt)s::uuid, %(gm)s) zs""",
             {"a": GEBIED, "b": GEBIED_2, "gt": gebiedstype_id, "gm": GEMEENTE},
         )
@@ -406,6 +422,7 @@ def test_gebiedsdossier_meldt_terugval(conn):
 
 # ── Waterbuurt als doelgebied (#155) ─────────────────────────────────────────
 
+
 def test_waterbuurt_als_doelgebied_geen_zscore(conn, gebiedstype_id):
     try:
         with conn.cursor() as cur:
@@ -448,14 +465,12 @@ def test_waterbuurt_als_doelgebied_geen_zscore(conn, gebiedstype_id):
 
 # ── Rapportroutes geven dezelfde Z-score ─────────────────────────────────────
 
+
 def zscores_data(gebied_id):
     """Route 1: GET /api/report/data/{id} (executive-basis), alleen |Z| >= 1."""
     r = requests.get(f"{BASE_URL}/api/report/data/{gebied_id}", timeout=TIMEOUT)
     assert r.status_code == 200, r.text[:300]
-    return {
-        i["indicator"]: i["z_score"]
-        for lst in r.json()["significante_domeinen"].values() for i in lst
-    }
+    return {i["indicator"]: i["z_score"] for lst in r.json()["significante_domeinen"].values() for i in lst}
 
 
 def zscores_thema(gebied_ids):
@@ -468,7 +483,8 @@ def zscores_thema(gebied_ids):
     assert r.status_code == 200, r.text[:300]
     return {
         (b["buurt_id"], i["indicator_naam"]): i["z_score"]
-        for b in r.json()["buurten_analyse"] for i in b["indicatoren"]
+        for b in r.json()["buurten_analyse"]
+        for i in b["indicatoren"]
     }
 
 

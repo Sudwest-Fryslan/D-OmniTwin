@@ -27,7 +27,6 @@ BASE_URL = os.environ.get("OMNITWIN_BASE_URL", "http://localhost").rstrip("/")
 TIMEOUT = 30
 
 
-
 @pytest.fixture(autouse=True, scope="module")
 def _secure_cookies_op_localhost():
     """Keycloak zet zijn cookies met `Secure`. Een browser stuurt die ook naar http://localhost (een
@@ -40,6 +39,7 @@ def _secure_cookies_op_localhost():
 
 def sessie():
     return requests.Session()
+
 
 try:
     _config = requests.get(f"{BASE_URL}/api/admin/auth/config", timeout=TIMEOUT)
@@ -77,7 +77,7 @@ def test_demo_admin_is_beheerder():
 @pytest.mark.skipif(not DEMO, reason="alleen bij OMNITWIN_OMGEVING=demo")
 def test_demo_gebruiker_is_lezer():
     s, r = inloggen_beheer("gebruiker", "gebruiker")
-    assert r.url == f"{BASE_URL}/admin/login", r.url   # ingelogd, maar geen beheer
+    assert r.url == f"{BASE_URL}/admin/login", r.url  # ingelogd, maar geen beheer
     me = _me(s)
     assert me["authenticated"] and me["user"]["is_admin"] is False
     assert s.get(f"{BASE_URL}/api/admin/health", timeout=TIMEOUT).status_code == 403
@@ -86,17 +86,20 @@ def test_demo_gebruiker_is_lezer():
 @pytest.mark.skipif(not DEMO, reason="alleen bij OMNITWIN_OMGEVING=demo")
 def test_demo_balk_in_viewer():
     r = requests.get(f"{BASE_URL}/", headers={"Accept": "text/html"}, timeout=TIMEOUT, allow_redirects=False)
-    if r.status_code == 302:   # VIEWER_TOEGANG=inloggen
+    if r.status_code == 302:  # VIEWER_TOEGANG=inloggen
         s, _ = inloggen_beheer("gebruiker", "gebruiker")
         r = s.get(f"{BASE_URL}/", timeout=TIMEOUT)
     assert "Demo-omgeving — standaardwachtwoorden, niet voor productie" in r.text
 
 
-@pytest.mark.skipif(not DEMO or not os.environ.get("KEYCLOAK_ADMIN_PASSWORD"),
-                    reason="alleen bij demo met toegang tot de admin-API van Keycloak")
+@pytest.mark.skipif(
+    not DEMO or not os.environ.get("KEYCLOAK_ADMIN_PASSWORD"),
+    reason="alleen bij demo met toegang tot de admin-API van Keycloak",
+)
 def test_demo_rollen_in_keycloak():
     from omnitwin import omgeving
     from omnitwin.testaccounts import KeycloakBeheer
+
     beheer = KeycloakBeheer(kc=f"{BASE_URL}/auth")
     for naam, (_, rollen) in omgeving.DEMO_ACCOUNTS.items():
         g = beheer._verzoek("GET", "/users", params={"username": naam, "exact": "true"}).json()[0]
@@ -112,7 +115,7 @@ def test_demo_rollen_in_keycloak():
 @pytest.mark.parametrize("naam", ["admin", "gebruiker"])
 def test_buiten_demo_geen_standaardaccounts(naam):
     s, r = inloggen_beheer(naam, naam)
-    assert "kc-form-login" in r.text, r.url      # formulier opnieuw: ongeldige inloggegevens
+    assert "kc-form-login" in r.text, r.url  # formulier opnieuw: ongeldige inloggegevens
     assert not s.cookies.get("session_token")
     assert _me(s)["authenticated"] is False
 

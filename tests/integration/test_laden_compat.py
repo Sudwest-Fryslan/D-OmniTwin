@@ -26,8 +26,13 @@ COMPAT = f"{API}/compat/swf-monitor/monitor_api"
 SPEC = laad_openapi()
 GEBIED = "BU19000002"
 CBS_BUURTEN = "afba67cb-6b38-4723-9c95-102a22d5b38a"
-PADEN = [("POST", "indicator/setup/inlezen"), ("POST", "indicator_waarde/inlezen"), ("GET", "indicator/setup"),
-         ("GET", "indicator_waarde"), ("GET", "indicator_waarde/00000000-0000-4000-8000-000000000999")]
+PADEN = [
+    ("POST", "indicator/setup/inlezen"),
+    ("POST", "indicator_waarde/inlezen"),
+    ("GET", "indicator/setup"),
+    ("GET", "indicator_waarde"),
+    ("GET", "indicator_waarde/00000000-0000-4000-8000-000000000999"),
+]
 
 if not uc.laad_api_beschikbaar(BASIS):
     pytest.skip(f"laad-API niet beschikbaar op {API}", allow_module_level=True)
@@ -81,20 +86,37 @@ def waarden(s):
     ds = next(d for d in ucs["swf-adapter-fme"]["datasets"] if d["id"] == "swf-monitor-waarden")
     r = s.post(f"{API}/datasets", json=uc.registratie_voor_api(uc.lees_dataset(ucs["swf-adapter-fme"], ds)), timeout=30)
     assert r.status_code == 201, r.text[:500]
-    r = requests.get(f"{BASIS}/api/data/v1/indicatoren?select=uuid&min_waarde=is.null&max_waarde=is.null"
-                     "&order=uuid&limit=20", timeout=30)
+    r = requests.get(
+        f"{BASIS}/api/data/v1/indicatoren?select=uuid&min_waarde=is.null&max_waarde=is.null&order=uuid&limit=20",
+        timeout=30,
+    )
     assert r.status_code == 200, r.text[:300]
     for ind in (x["uuid"] for x in r.json()):  # een indicator die op CBS-buurten mag (alleen valideren)
-        r = s.post(f"{COMPAT}/indicator_waarde/inlezen", params={"alleenValideren": "true"}, data=body(ind),
-                   headers={"Content-Type": "application/json"}, timeout=180)
+        r = s.post(
+            f"{COMPAT}/indicator_waarde/inlezen",
+            params={"alleenValideren": "true"},
+            data=body(ind),
+            headers={"Content-Type": "application/json"},
+            timeout=180,
+        )
         if r.status_code == 200:
             return ind
     pytest.skip("geen indicator gevonden die op CBS-buurten geleverd mag worden")
 
 
 def body(ind, waarde=1.5):
-    return json.dumps([{"indicator_id": ind, "gebiedstype_id": CBS_BUURTEN, "gebieds_id": GEBIED, "waarde": waarde,
-                        "begingeldigheid": "2098-01-01", "eindgeldigheid": None}]).encode()
+    return json.dumps(
+        [
+            {
+                "indicator_id": ind,
+                "gebiedstype_id": CBS_BUURTEN,
+                "gebieds_id": GEBIED,
+                "waarde": waarde,
+                "begingeldigheid": "2098-01-01",
+                "eindgeldigheid": None,
+            }
+        ]
+    ).encode()
 
 
 def test_waarden_inlezen_idempotent_en_terug(s, waarden):
@@ -115,8 +137,13 @@ def test_waarden_inlezen_idempotent_en_terug(s, waarden):
     # terug in het oude formaat
     r = s.get(f"{COMPAT}/indicator_waarde/{waarden}", timeout=60)
     assert r.status_code == 200
-    assert {"indicator_id": waarden, "gebiedstype_id": CBS_BUURTEN, "gebieds_id": GEBIED, "jaar": 2098,
-            "waarde": 1.5} in r.json()
+    assert {
+        "indicator_id": waarden,
+        "gebiedstype_id": CBS_BUURTEN,
+        "gebieds_id": GEBIED,
+        "jaar": 2098,
+        "waarde": 1.5,
+    } in r.json()
 
 
 def test_waarden_fouten(s, waarden):

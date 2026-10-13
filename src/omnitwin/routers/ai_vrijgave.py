@@ -9,10 +9,11 @@ Beheer (``vereis_admin``: sessie, bearer met rol ``beheerder`` of ``X-Admin-Key`
 - usecases met wie en wanneer, verklaring uploaden (PDF + versie + geldig tot), noodstop en hervatten;
 - het vrijgavelogboek, het AI-logboek (filter, CSV-export, controle van de hashketen) en de bewaartermijn.
 """
+
 from __future__ import annotations
 
 import datetime as dt
-from typing import Any, Dict, Literal, Optional
+from typing import Any, Literal
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Path, Query, Response, UploadFile
 from pydantic import BaseModel, Field
@@ -25,8 +26,7 @@ from omnitwin.routers.auth import vereis_admin
 from omnitwin.services.logging_service import AppLogger
 
 router = APIRouter(prefix="/api/ai/usecases", tags=["AI-vrijgave"])
-admin_router = APIRouter(prefix="/api/admin/ai", tags=["AI-vrijgave (beheer)"],
-                         dependencies=[Depends(vereis_admin)])
+admin_router = APIRouter(prefix="/api/admin/ai", tags=["AI-vrijgave (beheer)"], dependencies=[Depends(vereis_admin)])
 
 Code = Literal["A", "B", "C"]
 Status = Literal["uitgevoerd", "geweigerd", "fout", "opgeschoond"]
@@ -37,14 +37,19 @@ def _iso(w):
     return w.isoformat() if isinstance(w, (dt.date, dt.datetime)) else w
 
 
-def _json(r: Dict[str, Any]) -> Dict[str, Any]:
+def _json(r: dict[str, Any]) -> dict[str, Any]:
     return {k: (str(v) if k.endswith("_id") and v is not None else _iso(v)) for k, v in r.items()}
 
 
-def _publiek(s: Dict[str, Any]) -> Dict[str, Any]:
+def _publiek(s: dict[str, Any]) -> dict[str, Any]:
     return {
-        "code": s["code"], "naam": s["naam"], "omschrijving": s["omschrijving"],
-        "open": s["open"], "reden": s["reden"], "versie": s["versie"], "geldig_tot": _iso(s["geldig_tot"]),
+        "code": s["code"],
+        "naam": s["naam"],
+        "omschrijving": s["omschrijving"],
+        "open": s["open"],
+        "reden": s["reden"],
+        "versie": s["versie"],
+        "geldig_tot": _iso(s["geldig_tot"]),
         "verklaring_url": f"/api/ai/usecases/{s['code']}/verklaring" if s["verklaring_id"] else None,
     }
 
@@ -59,28 +64,37 @@ def _audit(gebruiker: dict, tekst: str) -> None:
 
 # ── Publiek ──────────────────────────────────────────────────────────────────
 
+
 @router.get("")
 def publieke_status(db: Session = Depends(get_db)):
     """Per AI-usecase: open of dicht, reden (open, geen_verklaring, verlopen, stilgezet), versie en geldig tot."""
     return [_publiek(s) for s in ai_vrijgave.standen(db)]
 
 
-@router.get("/{code}/verklaring", response_class=Response,
-            responses={200: {"content": {"application/pdf": {}}}, 404: {"description": "Geen verklaring"}})
+@router.get(
+    "/{code}/verklaring",
+    response_class=Response,
+    responses={200: {"content": {"application/pdf": {}}}, 404: {"description": "Geen verklaring"}},
+)
 def verklaring(code: Code = Path(...), db: Session = Depends(get_db)):
     """De actuele verklaring (DPIA, IAMA of besluit) van een AI-usecase, als PDF."""
     v = ai_vrijgave.verklaring_pdf(db, code)
     if not v:
         raise HTTPException(status_code=404, detail="Voor deze AI-usecase is geen verklaring geüpload.")
-    return Response(content=bytes(v["pdf"]), media_type="application/pdf", headers={
-        "Content-Disposition": f'inline; filename="ai-usecase-{code}-verklaring.pdf"',
-        "X-Content-Type-Options": "nosniff",
-        "Cache-Control": "no-cache",
-        "ETag": f'"{v["sha256"]}"',
-    })
+    return Response(
+        content=bytes(v["pdf"]),
+        media_type="application/pdf",
+        headers={
+            "Content-Disposition": f'inline; filename="ai-usecase-{code}-verklaring.pdf"',
+            "X-Content-Type-Options": "nosniff",
+            "Cache-Control": "no-cache",
+            "ETag": f'"{v["sha256"]}"',
+        },
+    )
 
 
 # ── Beheer: vrijgave ─────────────────────────────────────────────────────────
+
 
 @admin_router.get("/usecases")
 def beheer_status(db: Session = Depends(get_db)):
@@ -101,8 +115,9 @@ def upload_verklaring(
     """Verklaring uploaden: de usecase gaat open tot en met geldig_tot (een noodstop wordt opgeheven)."""
     inhoud = bestand.file.read(ai_vrijgave.MAX_PDF + 1)
     try:
-        uit = ai_vrijgave.upload(db, code, versie, geldig_tot, bestand.filename, inhoud,
-                                 bestand.content_type, _wie(gebruiker))
+        uit = ai_vrijgave.upload(
+            db, code, versie, geldig_tot, bestand.filename, inhoud, bestand.content_type, _wie(gebruiker)
+        )
     except GebruikersFout as e:
         db.rollback()
         raise HTTPException(status_code=422, detail=str(e))
@@ -111,12 +126,16 @@ def upload_verklaring(
 
 
 class Noodstop(BaseModel):
-    toelichting: Optional[str] = Field(None, max_length=500)
+    toelichting: str | None = Field(None, max_length=500)
 
 
 @admin_router.post("/usecases/{code}/noodstop")
-def noodstop(code: Code = Path(...), invoer: Optional[Noodstop] = None, db: Session = Depends(get_db),
-             gebruiker: dict = Depends(vereis_admin)):
+def noodstop(
+    code: Code = Path(...),
+    invoer: Noodstop | None = None,
+    db: Session = Depends(get_db),
+    gebruiker: dict = Depends(vereis_admin),
+):
     """Usecase direct stilzetten (noodstop). De applicatie werkt dan zonder deze AI."""
     ai_vrijgave.zet_noodstop(db, code, True, _wie(gebruiker), invoer.toelichting if invoer else None)
     _audit(gebruiker, f"noodstop usecase {code}")
@@ -124,8 +143,12 @@ def noodstop(code: Code = Path(...), invoer: Optional[Noodstop] = None, db: Sess
 
 
 @admin_router.post("/usecases/{code}/hervatten")
-def hervatten(code: Code = Path(...), invoer: Optional[Noodstop] = None, db: Session = Depends(get_db),
-              gebruiker: dict = Depends(vereis_admin)):
+def hervatten(
+    code: Code = Path(...),
+    invoer: Noodstop | None = None,
+    db: Session = Depends(get_db),
+    gebruiker: dict = Depends(vereis_admin),
+):
     """Noodstop opheffen. De usecase is pas weer open met een geldige verklaring."""
     ai_vrijgave.zet_noodstop(db, code, False, _wie(gebruiker), invoer.toelichting if invoer else None)
     _audit(gebruiker, f"noodstop opgeheven usecase {code}")
@@ -140,12 +163,13 @@ def vrijgavelog(limit: int = Query(200, ge=1, le=1000), db: Session = Depends(ge
 
 # ── Beheer: AI-logboek ───────────────────────────────────────────────────────
 
+
 @admin_router.get("/logboek")
 def logboek(
-    usecase: Optional[LogUsecase] = None,
-    status: Optional[Status] = None,
-    van: Optional[dt.date] = None,
-    tot: Optional[dt.date] = None,
+    usecase: LogUsecase | None = None,
+    status: Status | None = None,
+    van: dt.date | None = None,
+    tot: dt.date | None = None,
     limit: int = Query(100, ge=1, le=1000),
     offset: int = Query(0, ge=0),
     db: Session = Depends(get_db),
@@ -155,20 +179,22 @@ def logboek(
     return {"totaal": uit["totaal"], "regels": [_json(r) for r in uit["regels"]]}
 
 
-@admin_router.get("/logboek/export", response_class=Response,
-                  responses={200: {"content": {"text/csv": {}}}})
+@admin_router.get("/logboek/export", response_class=Response, responses={200: {"content": {"text/csv": {}}}})
 def logboek_csv(
-    usecase: Optional[LogUsecase] = None,
-    status: Optional[Status] = None,
-    van: Optional[dt.date] = None,
-    tot: Optional[dt.date] = None,
+    usecase: LogUsecase | None = None,
+    status: Status | None = None,
+    van: dt.date | None = None,
+    tot: dt.date | None = None,
     db: Session = Depends(get_db),
 ):
     """Het AI-logboek als CSV (puntkomma, UTF-8), met dezelfde filters; hoogstens 100.000 regels."""
     regels = ai_logboek.lees(db, usecase, status, van, tot, limit=100_000, offset=0)["regels"]
     naam = f"ai-logboek-{dt.date.today().isoformat()}.csv"
-    return Response(content="﻿" + ai_logboek.als_csv(regels), media_type="text/csv; charset=utf-8",
-                    headers={"Content-Disposition": f'attachment; filename="{naam}"', "Cache-Control": "no-store"})
+    return Response(
+        content="﻿" + ai_logboek.als_csv(regels),
+        media_type="text/csv; charset=utf-8",
+        headers={"Content-Disposition": f'attachment; filename="{naam}"', "Cache-Control": "no-store"},
+    )
 
 
 @admin_router.get("/logboek/controle")
@@ -187,8 +213,7 @@ def lees_bewaartermijn(db: Session = Depends(get_db)):
 
 
 @admin_router.put("/bewaartermijn")
-def zet_bewaartermijn(invoer: Bewaartermijn, db: Session = Depends(get_db),
-                      gebruiker: dict = Depends(vereis_admin)):
+def zet_bewaartermijn(invoer: Bewaartermijn, db: Session = Depends(get_db), gebruiker: dict = Depends(vereis_admin)):
     """Bewaartermijn van het AI-logboek (dagen, 30 tot 3650). Opschonen gebeurt dagelijks."""
     ai_logboek.zet_bewaartermijn(db, invoer.bewaartermijn_dagen, _wie(gebruiker))
     _audit(gebruiker, f"bewaartermijn AI-logboek op {invoer.bewaartermijn_dagen} dagen gezet")

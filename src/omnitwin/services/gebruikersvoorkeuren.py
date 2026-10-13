@@ -16,7 +16,7 @@ from __future__ import annotations
 import json
 import math
 import re
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from sqlalchemy import text
 
@@ -38,7 +38,7 @@ POSITIE_GRENZEN = {
 }
 
 
-def eigenaar_van(gebruiker: Optional[Dict[str, Any]]) -> Optional[str]:
+def eigenaar_van(gebruiker: dict[str, Any] | None) -> str | None:
     """De sleutel van een ingelogde persoon, of None (anoniem of een script)."""
     if not gebruiker:
         return None
@@ -51,8 +51,8 @@ def eigenaar_van(gebruiker: Optional[Dict[str, Any]]) -> Optional[str]:
     return None
 
 
-def controleer_positie(positie: Dict[str, Any]) -> Dict[str, float]:
-    uit: Dict[str, float] = {}
+def controleer_positie(positie: dict[str, Any]) -> dict[str, float]:
+    uit: dict[str, float] = {}
     for veld, (laag, hoog) in POSITIE_GRENZEN.items():
         waarde = positie.get(veld)
         if waarde is None:
@@ -69,11 +69,11 @@ def controleer_positie(positie: Dict[str, Any]) -> Dict[str, float]:
     return uit
 
 
-def controleer_favoriet(naam: str, gebied_ids: List[str]) -> tuple[str, List[str]]:
+def controleer_favoriet(naam: str, gebied_ids: list[str]) -> tuple[str, list[str]]:
     naam = (naam or "").strip()
     if not 1 <= len(naam) <= MAX_NAAM:
         raise GebruikersFout(f"Geef de favoriet een naam van 1 tot {MAX_NAAM} tekens.")
-    ids: List[str] = []
+    ids: list[str] = []
     for g in gebied_ids or []:
         g = str(g).strip()
         if not GEBIED_ID.match(g):
@@ -87,12 +87,14 @@ def controleer_favoriet(naam: str, gebied_ids: List[str]) -> tuple[str, List[str
     return naam, ids
 
 
-def _favoriet(r) -> Dict[str, Any]:
+def _favoriet(r) -> dict[str, Any]:
     return {
-        "id": str(r["id"]), "naam": r["naam"],
+        "id": str(r["id"]),
+        "naam": r["naam"],
         "gebiedstypeId": str(r["gebiedstype_id"]) if r["gebiedstype_id"] else None,
         "gebiedIds": list(r["gebied_ids"]),
-        "aangemaakt": r["aangemaakt"].isoformat(), "gewijzigd": r["gewijzigd"].isoformat(),
+        "aangemaakt": r["aangemaakt"].isoformat(),
+        "gewijzigd": r["gewijzigd"].isoformat(),
     }
 
 
@@ -104,69 +106,99 @@ class Voorkeuren:
         self.eigenaar = eigenaar
 
     def _raak_aan(self) -> None:
-        self.db.execute(text("""
+        self.db.execute(
+            text("""
             INSERT INTO gebruiker_voorkeuren (eigenaar) VALUES (:e)
             ON CONFLICT (eigenaar) DO UPDATE SET laatst_gebruikt = now()
-        """), {"e": self.eigenaar})
+        """),
+            {"e": self.eigenaar},
+        )
 
-    def instellingen(self) -> Dict[str, Any]:
+    def instellingen(self) -> dict[str, Any]:
         self._raak_aan()
-        positie = self.db.execute(text("SELECT kaartpositie FROM gebruiker_voorkeuren WHERE eigenaar = :e"),
-                                  {"e": self.eigenaar}).scalar()
+        positie = self.db.execute(
+            text("SELECT kaartpositie FROM gebruiker_voorkeuren WHERE eigenaar = :e"), {"e": self.eigenaar}
+        ).scalar()
         self.db.commit()
         return {"kaartpositie": positie}
 
-    def zet_instellingen(self, kaartpositie: Optional[Dict[str, Any]]) -> Dict[str, Any]:
+    def zet_instellingen(self, kaartpositie: dict[str, Any] | None) -> dict[str, Any]:
         positie = controleer_positie(kaartpositie) if kaartpositie is not None else None
         self._raak_aan()
-        self.db.execute(text("UPDATE gebruiker_voorkeuren SET kaartpositie = CAST(:p AS jsonb) WHERE eigenaar = :e"),
-                        {"p": json.dumps(positie) if positie is not None else None, "e": self.eigenaar})
+        self.db.execute(
+            text("UPDATE gebruiker_voorkeuren SET kaartpositie = CAST(:p AS jsonb) WHERE eigenaar = :e"),
+            {"p": json.dumps(positie) if positie is not None else None, "e": self.eigenaar},
+        )
         self.db.commit()
         return {"kaartpositie": positie}
 
-    def favorieten(self) -> List[Dict[str, Any]]:
+    def favorieten(self) -> list[dict[str, Any]]:
         self._raak_aan()
-        rijen = self.db.execute(text("""
+        rijen = (
+            self.db.execute(
+                text("""
             SELECT id, naam, gebiedstype_id, gebied_ids, aangemaakt, gewijzigd FROM gebruiker_favorieten
             WHERE eigenaar = :e ORDER BY lower(naam)
-        """), {"e": self.eigenaar}).mappings().all()
+        """),
+                {"e": self.eigenaar},
+            )
+            .mappings()
+            .all()
+        )
         self.db.commit()
         return [_favoriet(r) for r in rijen]
 
-    def bewaar_favoriet(self, naam: str, gebied_ids: List[str], gebiedstype_id: Optional[str]) -> tuple[Dict, bool]:
+    def bewaar_favoriet(self, naam: str, gebied_ids: list[str], gebiedstype_id: str | None) -> tuple[dict, bool]:
         """Nieuw, of een bestaande met dezelfde naam vervangen. (favoriet, nieuw?)"""
         naam, ids = controleer_favoriet(naam, gebied_ids)
         self._raak_aan()
-        bestaat = self.db.execute(text("SELECT 1 FROM gebruiker_favorieten WHERE eigenaar = :e AND naam = :n"),
-                                  {"e": self.eigenaar, "n": naam}).first() is not None
+        bestaat = (
+            self.db.execute(
+                text("SELECT 1 FROM gebruiker_favorieten WHERE eigenaar = :e AND naam = :n"),
+                {"e": self.eigenaar, "n": naam},
+            ).first()
+            is not None
+        )
         if not bestaat:
-            aantal = self.db.execute(text("SELECT count(*) FROM gebruiker_favorieten WHERE eigenaar = :e"),
-                                     {"e": self.eigenaar}).scalar()
+            aantal = self.db.execute(
+                text("SELECT count(*) FROM gebruiker_favorieten WHERE eigenaar = :e"), {"e": self.eigenaar}
+            ).scalar()
             if aantal >= MAX_FAVORIETEN:
                 self.db.rollback()
                 raise GebruikersFout(f"Maximaal {MAX_FAVORIETEN} favorieten; verwijder er eerst een.")
-        r = self.db.execute(text("""
+        r = (
+            self.db.execute(
+                text("""
             INSERT INTO gebruiker_favorieten (eigenaar, naam, gebiedstype_id, gebied_ids)
             VALUES (:e, :n, CAST(:gt AS uuid), CAST(:ids AS text[]))
             ON CONFLICT (eigenaar, naam) DO UPDATE
                SET gebiedstype_id = EXCLUDED.gebiedstype_id, gebied_ids = EXCLUDED.gebied_ids, gewijzigd = now()
             RETURNING id, naam, gebiedstype_id, gebied_ids, aangemaakt, gewijzigd
-        """), {"e": self.eigenaar, "n": naam, "gt": gebiedstype_id, "ids": ids}).mappings().first()
+        """),
+                {"e": self.eigenaar, "n": naam, "gt": gebiedstype_id, "ids": ids},
+            )
+            .mappings()
+            .first()
+        )
         self.db.commit()
         return _favoriet(r), not bestaat
 
     def verwijder_favoriet(self, favoriet_id: str) -> bool:
         """Alleen een eigen favoriet; een andere (of onbekende) geeft False."""
         self._raak_aan()
-        n = self.db.execute(text("DELETE FROM gebruiker_favorieten WHERE id = CAST(:id AS uuid) AND eigenaar = :e"),
-                            {"id": favoriet_id, "e": self.eigenaar}).rowcount
+        n = self.db.execute(
+            text("DELETE FROM gebruiker_favorieten WHERE id = CAST(:id AS uuid) AND eigenaar = :e"),
+            {"id": favoriet_id, "e": self.eigenaar},
+        ).rowcount
         self.db.commit()
         return n > 0
 
 
 def ruim_op(conn, dagen: int = BEWAAR_DAGEN) -> int:
     """Voorkeuren (en via de cascade de favorieten) zonder gebruik in `dagen` dagen verwijderen."""
-    n = conn.execute(text("DELETE FROM gebruiker_voorkeuren WHERE laatst_gebruikt < now() - make_interval(days => :d)"),
-                     {"d": int(dagen)}).rowcount
+    n = conn.execute(
+        text("DELETE FROM gebruiker_voorkeuren WHERE laatst_gebruikt < now() - make_interval(days => :d)"),
+        {"d": int(dagen)},
+    ).rowcount
     conn.commit()
     return n

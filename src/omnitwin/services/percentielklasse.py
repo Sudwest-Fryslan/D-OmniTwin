@@ -27,7 +27,7 @@ Aanname tot https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/222 antwoord ge
 """
 
 import math
-from typing import Dict, Iterable, List, Optional, Sequence, Tuple
+from collections.abc import Iterable, Sequence
 
 from omnitwin import polariteit
 from omnitwin.services import kleine_aantallen as ka
@@ -51,17 +51,16 @@ PALET_NEUTRAAL_SCHEMA = "sequential-blue"
 PALET_NEUTRAAL_FALLBACK = {"min": "#deebf7", "mid": "#4292c6", "max": "#08306b"}
 
 
-def is_neutraal_kwadrant(naam: Optional[str]) -> bool:
+def is_neutraal_kwadrant(naam: str | None) -> bool:
     return bool(naam) and "samenstelling" in naam.lower()
 
 
-def hoger_is_beter(score_type: Optional[str], inverse: Optional[bool] = False) -> bool:
+def hoger_is_beter(score_type: str | None, inverse: bool | None = False) -> bool:
     """Eén regel voor kaart, Kompas en rapporten (omnitwin.polariteit, #120)."""
     return not polariteit.lager_is_beter(score_type, inverse)
 
 
-def richting(score_type: Optional[str], inverse: Optional[bool] = False,
-             kwadrant: Optional[str] = None) -> str:
+def richting(score_type: str | None, inverse: bool | None = False, kwadrant: str | None = None) -> str:
     """'hoger_is_beter' | 'lager_is_beter' | 'neutraal' (kwadrant Samenstelling), voor de
     kleur van een afwijking (bijv. de Kompas-benchmark, #323)."""
     if is_neutraal_kwadrant(kwadrant):
@@ -69,11 +68,11 @@ def richting(score_type: Optional[str], inverse: Optional[bool] = False,
     return "hoger_is_beter" if hoger_is_beter(score_type, inverse) else "lager_is_beter"
 
 
-def is_onderdrukt(n: Optional[int], drempel: int = N_DREMPEL) -> bool:
+def is_onderdrukt(n: int | None, drempel: int = N_DREMPEL) -> bool:
     return ka.is_onderdrukt(n, drempel)
 
 
-def percentiel(waarde: float, referentie: Sequence[float]) -> Optional[float]:
+def percentiel(waarde: float, referentie: Sequence[float]) -> float | None:
     """Middenrang-percentiel (0..1) van waarde in de referentie; None zonder referentie."""
     if waarde is None or not referentie:
         return None
@@ -82,7 +81,7 @@ def percentiel(waarde: float, referentie: Sequence[float]) -> Optional[float]:
     return (lager + 0.5 * gelijk) / len(referentie)
 
 
-def klasse_uit_percentiel(p: Optional[float], hoger_beter: bool = True) -> Optional[int]:
+def klasse_uit_percentiel(p: float | None, hoger_beter: bool = True) -> int | None:
     if p is None:
         return None
     if not hoger_beter:
@@ -90,7 +89,7 @@ def klasse_uit_percentiel(p: Optional[float], hoger_beter: bool = True) -> Optio
     return max(1, min(KLASSEN, math.floor(p * KLASSEN) + 1))
 
 
-def klasse(waarde: Optional[float], referentie: Sequence[float], hoger_beter: bool = True) -> Optional[int]:
+def klasse(waarde: float | None, referentie: Sequence[float], hoger_beter: bool = True) -> int | None:
     """Percentielklasse 1..8 (8 = gunstigst) van waarde binnen de referentie."""
     return klasse_uit_percentiel(percentiel(waarde, referentie), hoger_beter)
 
@@ -100,9 +99,7 @@ def rond_klasse(x: float, klassen: int = KLASSEN) -> int:
     return max(1, min(klassen, math.floor(x + 0.5)))
 
 
-def aggregeer(
-    klassen_met_gewicht: Iterable[Tuple[Optional[int], Optional[float]]], klassen: int = KLASSEN
-) -> Optional[int]:
+def aggregeer(klassen_met_gewicht: Iterable[tuple[int | None, float | None]], klassen: int = KLASSEN) -> int | None:
     """
     Gewogen gemiddelde van klassen, afgerond naar een klasse. Paren zonder klasse of
     met gewicht <= 0 tellen niet mee. None als er niets overblijft.
@@ -134,7 +131,7 @@ def klasse_label(k: int) -> str:
     return label
 
 
-def palet(color_service=None, neutraal: bool = False, klassen: int = KLASSEN) -> List[str]:
+def palet(color_service=None, neutraal: bool = False, klassen: int = KLASSEN) -> list[str]:
     """Kleuren voor klasse 1..klassen (standaard 8), uit color_schemas
     (kleurenblindvriendelijk; neutraal: blauw)."""
     from omnitwin.services.color_scale_service import ColorScaleService
@@ -147,11 +144,11 @@ def palet(color_service=None, neutraal: bool = False, klassen: int = KLASSEN) ->
     return svc.generate_color_ramp(kleuren or fallback, klassen)
 
 
-def legenda(kleuren: List[str]) -> List[Dict[str, object]]:
+def legenda(kleuren: list[str]) -> list[dict[str, object]]:
     return [{"klasse": k, "label": klasse_label(k), "kleur": kleuren[k - 1]} for k in range(1, KLASSEN + 1)]
 
 
-def normaliseer_classificatie(waarde: Optional[str]) -> str:
+def normaliseer_classificatie(waarde: str | None) -> str:
     return waarde if waarde in CLASSIFICATIES else CLASSIFICATIE_STANDAARD
 
 
@@ -189,11 +186,11 @@ _SQL_ONDERDRUKT = """
 def referentie_waarden(
     db,
     gebiedstype_id,
-    gemeente_codes: Iterable[Optional[str]],
-    indicator_uuids: Optional[Iterable[str]] = None,
-    jaar: Optional[int] = None,
-    drempel: Optional[int] = None,
-) -> Dict[Tuple[Optional[str], str], List[float]]:
+    gemeente_codes: Iterable[str | None],
+    indicator_uuids: Iterable[str] | None = None,
+    jaar: int | None = None,
+    drempel: int | None = None,
+) -> dict[tuple[str | None, str], list[float]]:
     """
     Referentiewaarden per (gemeentecode, indicator_uuid). Zonder jaar: jaarlogica
     'zelfde_jaar' (zoals de Z-score); met jaar: alle waarden van dat jaar.
@@ -212,15 +209,17 @@ def referentie_waarden(
     if drempel is None:
         drempel = ka.drempel(db)
     params.update({"pk_gemeenten": gemeenten, "pk_jaar": jaar, "pk_drempel": int(drempel)})
-    uit: Dict[Tuple[Optional[str], str], List[float]] = {}
+    uit: dict[tuple[str | None, str], list[float]] = {}
     for r in db.execute(text(_SQL_REFERENTIE), params):
         uit.setdefault((r.gemeente_code, r.indicator_uuid), []).append(float(r.waarde))
     return uit
 
 
 def onderdrukte_waarden(
-    db, gebied_ids: Iterable[str], indicator_uuids: Optional[Iterable[str]] = None,
-    drempel: Optional[int] = None,
+    db,
+    gebied_ids: Iterable[str],
+    indicator_uuids: Iterable[str] | None = None,
+    drempel: int | None = None,
 ) -> set:
     """{(gebied_id, indicator_uuid, jaar)} met n onder de drempel (zonder drempel: die van de instantie)."""
     from sqlalchemy import text
@@ -230,23 +229,26 @@ def onderdrukte_waarden(
         return set()
     if drempel is None:
         drempel = ka.drempel(db)
-    rows = db.execute(text(_SQL_ONDERDRUKT), {
-        "pk_gebied_ids": ids,
-        "pk_indicator_uuids": [str(u) for u in indicator_uuids] if indicator_uuids else None,
-        "pk_drempel": int(drempel),
-    })
+    rows = db.execute(
+        text(_SQL_ONDERDRUKT),
+        {
+            "pk_gebied_ids": ids,
+            "pk_indicator_uuids": [str(u) for u in indicator_uuids] if indicator_uuids else None,
+            "pk_drempel": int(drempel),
+        },
+    )
     return {(r.gebied_id, r.indicator_uuid, r.jaar) for r in rows}
 
 
 def annoteer_boom(
-    boom: Dict,
-    paren: Dict[str, List[Tuple[Optional[int], float]]],
-    n_onderdrukt: Dict[str, int],
-    kleuren: List[str],
+    boom: dict,
+    paren: dict[str, list[tuple[int | None, float]]],
+    n_onderdrukt: dict[str, int],
+    kleuren: list[str],
     geen_data_kleur: str,
-    kleuren_neutraal: Optional[List[str]] = None,
+    kleuren_neutraal: list[str] | None = None,
     klassen: int = KLASSEN,
-) -> Dict:
+) -> dict:
     """
     Zet de percentielklasse in een kompasboom (kopie). Indicator: klasse over zijn eigen
     paren (bij een selectie: over de gebieden), kleur = klassekleur. Onderdeel, thema,
@@ -257,7 +259,7 @@ def annoteer_boom(
     """
     standaard_kleuren = kleuren
 
-    def annoteer(node: Dict, kleuren: List[str] = standaard_kleuren):
+    def annoteer(node: dict, kleuren: list[str] = standaard_kleuren):
         node = dict(node)
         neutraal = node.get("type") == "titel" and is_neutraal_kwadrant(node.get("name"))
         if neutraal:
@@ -270,7 +272,7 @@ def annoteer_boom(
             node["color"] = node["klasse_kleur"] or geen_data_kleur
             node["klasse_status"] = "onderdrukt" if k is None and n_onderdrukt.get(node["uuid"]) else None
             return node, eigen
-        onder: List = []
+        onder: list = []
         if node.get("children"):
             kinderen = []
             for kind in node["children"]:

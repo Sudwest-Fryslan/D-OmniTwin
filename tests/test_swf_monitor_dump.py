@@ -21,8 +21,11 @@ smd = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(smd)
 
 BU, WS = "afba67cb-6b38-4723-9c95-102a22d5b38a", "29fc9f28-89d9-488b-bf68-2ed176187b21"
-I1, I2, I5 = ("0e5b1c4a-1111-4aaa-8aaa-000000000001", "0e5b1c4a-2222-4bbb-8bbb-000000000002",
-              "0e5b1c4a-5555-4eee-8eee-000000000005")
+I1, I2, I5 = (
+    "0e5b1c4a-1111-4aaa-8aaa-000000000001",
+    "0e5b1c4a-2222-4bbb-8bbb-000000000002",
+    "0e5b1c4a-5555-4eee-8eee-000000000005",
+)
 SUB = "0e5b1c4a-9999-4999-8999-000000000099"
 
 
@@ -33,8 +36,13 @@ def tabellen():
 
 def test_lees_copy_tekstformaat(tabellen):
     assert {t: len(r) for t, r in tabellen.items()} == {
-        "gebiedstype": 3, "indicator": 5, "indicator_gebiedstype": 5, "indicator_waarde": 6, "monitor": 3,
-        "user_properties": 9}
+        "gebiedstype": 3,
+        "indicator": 5,
+        "indicator_gebiedstype": 5,
+        "indicator_waarde": 6,
+        "monitor": 3,
+        "user_properties": 9,
+    }
     i1 = next(i for i in tabellen["indicator"] if i["id"] == I1)
     assert i1["omschrijving"] == "Omschrijving met een tab\tin de tekst" and i1["eindgeldigheid"] is None
 
@@ -68,15 +76,40 @@ def test_definities_in_vorm_van_de_api_export(tabellen):
     assert i1["score_type"] == "-/+" and i2["score_type"] == "+/+"
     assert not any("score_type" in i for i in d["indicatoren"] if i["naam"] == "Fictieve indicator drie")
     bbk = next(g for g in d["gebiedstypen"] if g["naam"].endswith("komgrens"))
-    assert bbk == {"id": "d210c084-506b-48b4-87c9-b7d4bf422553", "naam": "CBS buurten bebouwde komgrens", "wfs": "",
-                   "typenames": "", "sleutel": "", "label": "", "actief": False}
+    assert bbk == {
+        "id": "d210c084-506b-48b4-87c9-b7d4bf422553",
+        "naam": "CBS buurten bebouwde komgrens",
+        "wfs": "",
+        "typenames": "",
+        "sleutel": "",
+        "label": "",
+        "actief": False,
+    }
     assert len(d["relaties"]) == 5 and set(d["relaties"][0]) == {"indicator_id", "gebiedstype_id"}
 
 
 def test_omkeren_tegenstrijdig_geeft_geen_score_type():
-    m = {"id": "m", "naam": "m", "configuratie": json.dumps({"type": "root", "children": [
-        {"type": "categorie", "text": "a", "children": [{"type": "indicator", "indicator_id": I1, "omkeren": True}]},
-        {"type": "categorie", "text": "b", "children": [{"type": "indicator", "indicator_id": I1, "omkeren": False}]}]})}
+    m = {
+        "id": "m",
+        "naam": "m",
+        "configuratie": json.dumps(
+            {
+                "type": "root",
+                "children": [
+                    {
+                        "type": "categorie",
+                        "text": "a",
+                        "children": [{"type": "indicator", "indicator_id": I1, "omkeren": True}],
+                    },
+                    {
+                        "type": "categorie",
+                        "text": "b",
+                        "children": [{"type": "indicator", "indicator_id": I1, "omkeren": False}],
+                    },
+                ],
+            }
+        ),
+    }
     assert smd.score_types([m]) == ({}, [I1])
 
 
@@ -101,11 +134,21 @@ def test_kompasregels_met_niveaus_en_volgorde(tabellen):
     regels = smd.kompasregels(smd.actieve_monitors(tabellen["monitor"]))
     basis = [r for r in regels if r["gebiedstype_id"] == BU]
     assert [r["volgorde"] for r in basis] == [1, 2, 3, 4]
-    assert basis[1] == {"monitor": "Voorbeeld basis", "monitor_id": "node_id_0e5b1c4a-aaaa-4aaa-8aaa-0000000000aa",
-                        "gebiedstype_id": BU, "weergave_type": "percentiel_waarden", "volgorde": 2,
-                        "niveau1": "Kwadrant een", "niveau2": "Thema een", "niveau3": "Onderdeel een",
-                        "niveau4": "Extra niveau", "indicator_uuid": I2, "indicator_naam": "Fictieve indicator twee",
-                        "omkeren": "false", "labels": "ja"}
+    assert basis[1] == {
+        "monitor": "Voorbeeld basis",
+        "monitor_id": "node_id_0e5b1c4a-aaaa-4aaa-8aaa-0000000000aa",
+        "gebiedstype_id": BU,
+        "weergave_type": "percentiel_waarden",
+        "volgorde": 2,
+        "niveau1": "Kwadrant een",
+        "niveau2": "Thema een",
+        "niveau3": "Onderdeel een",
+        "niveau4": "Extra niveau",
+        "indicator_uuid": I2,
+        "indicator_naam": "Fictieve indicator twee",
+        "omkeren": "false",
+        "labels": "ja",
+    }
     assert basis[0]["niveau4"] == "" and basis[0]["omkeren"] == "true"
     klimaat = [r for r in regels if r["gebiedstype_id"] == WS]
     assert len(klimaat) == 1 and klimaat[0]["niveau1"] == "Hitte" and klimaat[0]["niveau2"] == ""
@@ -121,7 +164,9 @@ def test_labels_open_grenzen_en_omgedraaid(tabellen):
     assert per[I5][0] == ["A", 50.0, None] and per[I5][4] == ["E", None, -100.0]
     assert lab["indicatoren"][0]["namen"]["A"] == "Robuust"
     # zelfde formaat als db/stuurdata/indicator_labels_*.json (load_sample.py --stap drempels)
-    stuur = json.loads((ROOT / "db" / "stuurdata" / "indicator_labels_klimaatmonitor_swf.json").read_text(encoding="utf-8"))
+    stuur = json.loads(
+        (ROOT / "db" / "stuurdata" / "indicator_labels_klimaatmonitor_swf.json").read_text(encoding="utf-8")
+    )
     assert {"bron", "indicatoren"} <= set(lab) and {"indicator_uuid", "labels"} <= set(stuur["indicatoren"][0])
 
 
@@ -150,12 +195,18 @@ def test_kaartpositie():
 
 
 def test_mapping_expliciet_geen_email(tmp_path):
-    assert smd.lees_mapping(DATA / "gebruikers-mapping.csv") == {"voorbeeld.gebruiker1": SUB,
-                                                                 "voorbeeld.gebruiker2": "lokaal:7"}
-    (tmp_path / "m.csv").write_text("gebruikersnaam,eigenaar\nvoorbeeld.gebruiker1,iemand@voorbeeld.nl\n", encoding="utf-8")
+    assert smd.lees_mapping(DATA / "gebruikers-mapping.csv") == {
+        "voorbeeld.gebruiker1": SUB,
+        "voorbeeld.gebruiker2": "lokaal:7",
+    }
+    (tmp_path / "m.csv").write_text(
+        "gebruikersnaam,eigenaar\nvoorbeeld.gebruiker1,iemand@voorbeeld.nl\n", encoding="utf-8"
+    )
     with pytest.raises(smd.DumpFout, match="e-mail"):
         smd.lees_mapping(tmp_path / "m.csv")
-    (tmp_path / "m.csv").write_text("gebruikersnaam,eigenaar\nvoorbeeld.gebruiker1,Voorbeeld Gebruiker\n", encoding="utf-8")
+    (tmp_path / "m.csv").write_text(
+        "gebruikersnaam,eigenaar\nvoorbeeld.gebruiker1,Voorbeeld Gebruiker\n", encoding="utf-8"
+    )
     with pytest.raises(smd.DumpFout, match="sub"):
         smd.lees_mapping(tmp_path / "m.csv")
 
@@ -169,8 +220,12 @@ def test_voorkeuren_alleen_gekoppelde_gebruikers(tabellen):
     assert "voorbeeld.gebruiker" not in json.dumps(items) + json.dumps(telling)  # geen oude namen in de uitvoer
     een = items[0]
     assert set(een["kaartpositie"]) == {"longitude", "latitude", "zoom"}
-    assert een["niet_overgenomen"] == {"monitor": "Voorbeeld basis", "actief_paneel": "Voorbeeldpaneel",
-                                       "paneel_zichtbaar": True, "basislaag": "Voorbeeldkaart"}
+    assert een["niet_overgenomen"] == {
+        "monitor": "Voorbeeld basis",
+        "actief_paneel": "Voorbeeldpaneel",
+        "paneel_zichtbaar": True,
+        "basislaag": "Voorbeeldkaart",
+    }
     assert items[1]["niet_overgenomen"] == {"monitor": "Voorbeeld klimaat"}
 
 
@@ -190,10 +245,15 @@ class NepCursor:
 
 def test_laad_voorkeuren_vult_aan_en_overschrijft_niet():
     cur = NepCursor(bestaand={"lokaal:7"})
-    items = [{"eigenaar": SUB, "kaartpositie": {"longitude": 5.6, "latitude": 53.0, "zoom": 12.3}},
-             {"eigenaar": "lokaal:7", "kaartpositie": {"longitude": 5.6, "latitude": 53.0, "zoom": 12.3}},
-             {"eigenaar": "voorbeeld.gebruiker3"},
-             {"eigenaar": "0e5b1c4a-8888-4888-8888-000000000088", "kaartpositie": {"longitude": 500, "latitude": 1, "zoom": 1}}]
+    items = [
+        {"eigenaar": SUB, "kaartpositie": {"longitude": 5.6, "latitude": 53.0, "zoom": 12.3}},
+        {"eigenaar": "lokaal:7", "kaartpositie": {"longitude": 5.6, "latitude": 53.0, "zoom": 12.3}},
+        {"eigenaar": "voorbeeld.gebruiker3"},
+        {
+            "eigenaar": "0e5b1c4a-8888-4888-8888-000000000088",
+            "kaartpositie": {"longitude": 500, "latitude": 1, "zoom": 1},
+        },
+    ]
     telling = smd.laad_voorkeuren(cur, items)
     assert telling == {"toegevoegd": 2, "al_aanwezig": 1, "eigenaar_ongeldig": 1}
     assert cur.rijen[SUB] == {"longitude": 5.6, "latitude": 53.0, "zoom": 12.3}
@@ -204,10 +264,21 @@ def test_exporteer_maakt_de_bestanden(tabellen, tmp_path):
     mapping = smd.lees_mapping(DATA / "gebruikers-mapping.csv")
     s = smd.exporteer(tabellen, tmp_path, mapping, "2026-01-01")
     assert sorted(p.name for p in tmp_path.iterdir()) == [
-        "definities.json", "export.json", "gebruikers-mapping.csv", "gebruikersvoorkeuren.json",
-        "indicator_labels_monitor.json", "kompasprofiel_monitor.csv", "monitorconfiguraties.json", "waarden.json"]
+        "definities.json",
+        "export.json",
+        "gebruikers-mapping.csv",
+        "gebruikersvoorkeuren.json",
+        "indicator_labels_monitor.json",
+        "kompasprofiel_monitor.csv",
+        "monitorconfiguraties.json",
+        "waarden.json",
+    ]
     assert s["definities"]["status"] == {"A": 2, "B": 1, "C": 1, "O": 1}
-    assert s["waarden"]["totaal"] == 5 and s["waarden"]["legacy_2011_2012_weggelaten"] == 1 and s["monitors"]["versies"] == 3
+    assert (
+        s["waarden"]["totaal"] == 5
+        and s["waarden"]["legacy_2011_2012_weggelaten"] == 1
+        and s["monitors"]["versies"] == 3
+    )
     assert s["gebruikersvoorkeuren"]["gekoppeld"] == 2
     export = (tmp_path / "export.json").read_text(encoding="utf-8")
     assert "voorbeeld.gebruiker" not in export and "voorbeeld.beheerder" not in export
@@ -221,21 +292,36 @@ def test_main_exporteer_en_foutmelding(tmp_path, capsys):
     assert smd.main(["exporteer", "--dump", str(DATA / "voorbeeld_monitor.sql"), "--uit", str(tmp_path / "uit")]) == 0
     assert "0 van 3 gebruikers gekoppeld" in capsys.readouterr().out
     (tmp_path / "m.csv").write_text("gebruikersnaam,eigenaar\nx,iemand@voorbeeld.nl\n", encoding="utf-8")
-    assert smd.main(["exporteer", "--dump", str(DATA / "voorbeeld_monitor.sql"), "--uit", str(tmp_path / "uit"),
-                     "--gebruikers-mapping", str(tmp_path / "m.csv")]) == 2
+    assert (
+        smd.main(
+            [
+                "exporteer",
+                "--dump",
+                str(DATA / "voorbeeld_monitor.sql"),
+                "--uit",
+                str(tmp_path / "uit"),
+                "--gebruikers-mapping",
+                str(tmp_path / "m.csv"),
+            ]
+        )
+        == 2
+    )
 
 
 def test_use_cases_lezen_de_export(tabellen, tmp_path):
     """De varianten monitor-database van de swf-* use cases maken een geldige levering uit de export."""
     from omnitwin import usecases as uc
+
     smd.exporteer(tabellen, tmp_path / "export", {}, None)
     ucs = uc.lees_usecases()
     bronnen = {"SWF_DB_DUMP": str(tmp_path / "export")}
-    for naam, ds_id, verwacht in (("swf-definities", "swf-monitor-definities", {"status: O → C": 1, "status: A → O": 2}),
-                                  ("swf-basismonitor-waarden", "swf-monitor-waarden", {"jaar-ongeldig": 1, "buurtcode-oud": 0}),
-                                  ("swf-klimaatmonitor", "swf-monitor-waarden", None),
-                                  ("swf-kompasprofiel", "swf-kompas-basis", {"indicator-niet-in-definities": 0}),
-                                  ("swf-kompasprofiel", "swf-kompas-klimaat", None)):
+    for naam, ds_id, verwacht in (
+        ("swf-definities", "swf-monitor-definities", {"status: O → C": 1, "status: A → O": 2}),
+        ("swf-basismonitor-waarden", "swf-monitor-waarden", {"jaar-ongeldig": 1, "buurtcode-oud": 0}),
+        ("swf-klimaatmonitor", "swf-monitor-waarden", None),
+        ("swf-kompasprofiel", "swf-kompas-basis", {"indicator-niet-in-definities": 0}),
+        ("swf-kompasprofiel", "swf-kompas-klimaat", None),
+    ):
         u = ucs[naam]
         ds = next(d for d in u["datasets"] if d["id"] == ds_id)
         paden, rapport = uc.maak_levering(u, ds, tmp_path / naam / ds_id, bron_env=bronnen)
@@ -243,6 +329,10 @@ def test_use_cases_lezen_de_export(tabellen, tmp_path):
         assert paden and paden[0].exists()
         for reden, n in (verwacht or {}).items():
             assert rapport["bewerkingen"].get(reden, 0) == n, (naam, reden)
-    _, rapport = uc.maak_levering(ucs["swf-kompasprofiel"], next(
-        d for d in ucs["swf-kompasprofiel"]["datasets"] if d["id"] == "swf-kompas-basis"), tmp_path / "k", bron_env=bronnen)
+    _, rapport = uc.maak_levering(
+        ucs["swf-kompasprofiel"],
+        next(d for d in ucs["swf-kompasprofiel"]["datasets"] if d["id"] == "swf-kompas-basis"),
+        tmp_path / "k",
+        bron_env=bronnen,
+    )
     assert rapport["geschreven"] == {"data": 4}

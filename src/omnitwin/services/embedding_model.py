@@ -22,6 +22,7 @@ Met HF_HUB_OFFLINE=1 en zonder lokale kopie volgt een duidelijke foutmelding.
 Dit bestand importeert bij het laden alleen de standaardbibliotheek, zodat het
 Dockerfile het vóór `COPY . .` los kan draaien.
 """
+
 import os
 import threading
 from pathlib import Path
@@ -45,9 +46,17 @@ GELIJKENIS_MARGE_BOVEN = 0.07
 MODEL_PAD = Path(os.environ.get("EMBEDDING_MODEL_PAD", "/opt/models/multilingual-e5-small"))
 
 # Alleen wat sentence-transformers met PyTorch nodig heeft; geen ONNX/OpenVINO/TF-varianten
-_BESTANDEN = ["config.json", "modules.json", "sentence_bert_config.json", "special_tokens_map.json",
-             "tokenizer.json", "tokenizer_config.json", "model.safetensors", "sentencepiece.bpe.model",
-             "1_Pooling/*"]
+_BESTANDEN = [
+    "config.json",
+    "modules.json",
+    "sentence_bert_config.json",
+    "special_tokens_map.json",
+    "tokenizer.json",
+    "tokenizer_config.json",
+    "model.safetensors",
+    "sentencepiece.bpe.model",
+    "1_Pooling/*",
+]
 
 
 class ModelNietBeschikbaar(RuntimeError):
@@ -85,8 +94,7 @@ def laad_model():
         # .float(): de gewichten staan als float16 in de image; rekenen in float32 op de CPU
         return SentenceTransformer(str(MODEL_PAD), device="cpu", local_files_only=True).float()
     try:
-        return SentenceTransformer(MODEL_ID, revision=MODEL_REVISIE, device="cpu",
-                                   local_files_only=offline()).float()
+        return SentenceTransformer(MODEL_ID, revision=MODEL_REVISIE, device="cpu", local_files_only=offline()).float()
     except Exception as e:
         raise ModelNietBeschikbaar(
             f"Embeddingmodel {MODEL_ID}@{MODEL_REVISIE[:8]} niet gevonden in {MODEL_PAD}"
@@ -117,8 +125,11 @@ def naar_float16(doel: Path = MODEL_PAD) -> None:
 
     pad = Path(doel) / "model.safetensors"
     gewichten = load_file(str(pad))
-    save_file({k: (v.half() if v.is_floating_point() else v) for k, v in gewichten.items()},
-              str(pad), metadata={"format": "pt"})
+    save_file(
+        {k: (v.half() if v.is_floating_point() else v) for k, v in gewichten.items()},
+        str(pad),
+        metadata={"format": "pt"},
+    )
     os.chmod(pad, 0o644)  # save_file maakt het bestand alleen leesbaar voor root; de app draait als gewone gebruiker
 
 
@@ -126,8 +137,7 @@ def download(doel: Path = MODEL_PAD) -> None:
     """Downloadt de gepinde revisie naar doel en zet de gewichten om naar float16 (Dockerfile)."""
     from huggingface_hub import snapshot_download
 
-    snapshot_download(repo_id=MODEL_ID, revision=MODEL_REVISIE, local_dir=str(doel),
-                      allow_patterns=_BESTANDEN)
+    snapshot_download(repo_id=MODEL_ID, revision=MODEL_REVISIE, local_dir=str(doel), allow_patterns=_BESTANDEN)
     naar_float16(doel)
     print(f"Model {MODEL_ID}@{MODEL_REVISIE} staat in {doel} (float16)")
 

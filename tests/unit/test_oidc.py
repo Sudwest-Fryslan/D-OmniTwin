@@ -70,11 +70,18 @@ def provider(monkeypatch):
 def maak_token(prive=SLEUTEL_A, kid="a", alg="RS256", **wijzig):
     nu = int(time.time())
     claims = {
-        "iss": ISSUER, "aud": ["omnitwin-api", "account"], "sub": "8f1c-service-account",
-        "azp": "etl-voorbeeld", "jti": "jti-1", "iat": nu, "exp": nu + 300,
+        "iss": ISSUER,
+        "aud": ["omnitwin-api", "account"],
+        "sub": "8f1c-service-account",
+        "azp": "etl-voorbeeld",
+        "jti": "jti-1",
+        "iat": nu,
+        "exp": nu + 300,
         "realm_access": {"roles": ["default-roles-omnitwin"]},
-        "resource_access": {"omnitwin-api": {"roles": ["dataset:voorbeeld:laden"]},
-                            "account": {"roles": ["manage-account"]}},
+        "resource_access": {
+            "omnitwin-api": {"roles": ["dataset:voorbeeld:laden"]},
+            "account": {"roles": ["manage-account"]},
+        },
     }
     claims.update(wijzig)
     claims = {k: v for k, v in claims.items() if v is not None}
@@ -86,8 +93,7 @@ def _app():
     registreer_foutafhandeling(app)
 
     @app.post("/datasets/{dataset_id}/leveringen")
-    def lever(dataset_id: str,
-              p: Principal = Depends(vereis_rol("dataset:{dataset_id}:laden", "datasets:laden"))):
+    def lever(dataset_id: str, p: Principal = Depends(vereis_rol("dataset:{dataset_id}:laden", "datasets:laden"))):
         return {"client_id": p.client_id, "rollen": sorted(p.rollen), "sub": p.onderwerp, "jti": p.token_id}
 
     @app.post("/datasets")
@@ -129,18 +135,25 @@ def _is_probleem(r, status, code):
 
 # --- geldig ---------------------------------------------------------------
 
+
 def test_geldig_token_met_datasetrol(client, provider):
     r = _lever(client, maak_token())
     assert r.status_code == 200, r.text
-    assert r.json() == {"client_id": "etl-voorbeeld", "sub": "8f1c-service-account", "jti": "jti-1",
-                        "rollen": ["dataset:voorbeeld:laden", "default-roles-omnitwin"]}
+    assert r.json() == {
+        "client_id": "etl-voorbeeld",
+        "sub": "8f1c-service-account",
+        "jti": "jti-1",
+        "rollen": ["dataset:voorbeeld:laden", "default-roles-omnitwin"],
+    }
     # discovery intern, jwks_uri herschreven naar het interne adres
     assert provider.opgehaald == [INTERN + "/.well-known/openid-configuration", INTERN + JWKS_PAD]
 
 
 def test_rollen_van_andere_clients_tellen_niet():
-    claims = {"realm_access": {"roles": ["beheerder"]},
-              "resource_access": {"account": {"roles": ["datasets:laden"]}, "omnitwin-api": {"roles": ["x"]}}}
+    claims = {
+        "realm_access": {"roles": ["beheerder"]},
+        "resource_access": {"account": {"roles": ["datasets:laden"]}, "omnitwin-api": {"roles": ["x"]}},
+    }
     assert oidc._rollen(claims, "omnitwin-api") == frozenset({"beheerder", "x"})
 
 
@@ -191,15 +204,19 @@ def test_zonder_intern_adres_discovery_via_issuer(monkeypatch):
 
 # --- ongeldig: 401 --------------------------------------------------------
 
-@pytest.mark.parametrize("wijzig, reden", [
-    ({"aud": "account"}, "aud"),
-    ({"aud": None}, "aud"),
-    ({"iss": "http://evil/auth/realms/omnitwin"}, "issuer"),
-    ({"iss": "http://localhost:8080/auth/realms/omnitwin"}, "issuer"),  # intern adres is geen issuer
-    ({"exp": int(time.time()) - 120}, "verlopen"),
-    ({"exp": None}, "exp"),
-    ({"nbf": int(time.time()) + 600}, "nbf"),
-])
+
+@pytest.mark.parametrize(
+    "wijzig, reden",
+    [
+        ({"aud": "account"}, "aud"),
+        ({"aud": None}, "aud"),
+        ({"iss": "http://evil/auth/realms/omnitwin"}, "issuer"),
+        ({"iss": "http://localhost:8080/auth/realms/omnitwin"}, "issuer"),  # intern adres is geen issuer
+        ({"exp": int(time.time()) - 120}, "verlopen"),
+        ({"exp": None}, "exp"),
+        ({"nbf": int(time.time()) + 600}, "nbf"),
+    ],
+)
 def test_ongeldige_claims(client, wijzig, reden):
     r = _lever(client, maak_token(**wijzig))
     _is_probleem(r, 401, "niet-geauthenticeerd")
@@ -230,15 +247,22 @@ def test_alg_none_geweigerd(client):
 def test_hs256_geweigerd(client):
     # Klassieke aanval: HMAC met de publieke sleutel als geheim
     from cryptography.hazmat.primitives import serialization
-    pem = SLEUTEL_A.public_key().public_bytes(serialization.Encoding.PEM,
-                                               serialization.PublicFormat.SubjectPublicKeyInfo)
+
+    pem = SLEUTEL_A.public_key().public_bytes(
+        serialization.Encoding.PEM, serialization.PublicFormat.SubjectPublicKeyInfo
+    )
     nu = int(time.time())
-    claims = {"iss": ISSUER, "aud": "omnitwin-api", "exp": nu + 300,
-              "resource_access": {"omnitwin-api": {"roles": ["datasets:laden"]}}}
+    claims = {
+        "iss": ISSUER,
+        "aud": "omnitwin-api",
+        "exp": nu + 300,
+        "resource_access": {"omnitwin-api": {"roles": ["datasets:laden"]}},
+    }
     kop = base64.urlsafe_b64encode(json.dumps({"alg": "HS256", "kid": "a"}).encode()).rstrip(b"=")
     body = base64.urlsafe_b64encode(json.dumps(claims).encode()).rstrip(b"=")
     import hashlib
     import hmac
+
     sig = base64.urlsafe_b64encode(hmac.new(pem, kop + b"." + body, hashlib.sha256).digest()).rstrip(b"=")
     token = (kop + b"." + body + b"." + sig).decode()
     _is_probleem(_lever(client, token), 401, "niet-geauthenticeerd")
@@ -265,6 +289,7 @@ def test_ander_schema_dan_bearer(client):
 
 
 # --- sleutelrotatie -------------------------------------------------------
+
 
 def test_onbekende_kid_ververst_jwks(client, provider):
     assert _lever(client, maak_token()).status_code == 200
@@ -307,6 +332,7 @@ def test_provider_even_weg_bekende_sleutels_blijven(client, provider, monkeypatc
 
 # --- rollen: 403 ----------------------------------------------------------
 
+
 def test_rol_ontbreekt_403(client):
     r = client.post("/datasets", headers=_kop(maak_token()))
     body = _is_probleem(r, 403, "geen-toegang")
@@ -343,6 +369,7 @@ def test_vereis_rol_zonder_rollen():
 
 # --- optioneel ------------------------------------------------------------
 
+
 def test_optioneel(client):
     assert client.get("/optioneel").json() == {"client_id": None}
     assert client.get("/optioneel", headers=_kop(maak_token())).json() == {"client_id": "etl-voorbeeld"}
@@ -350,6 +377,7 @@ def test_optioneel(client):
 
 
 # --- OIDC uit: 503 --------------------------------------------------------
+
 
 def test_oidc_uit_503(monkeypatch):
     monkeypatch.setenv("OIDC_ISSUER", "")
@@ -362,6 +390,7 @@ def test_oidc_uit_503(monkeypatch):
 
 # --- logging --------------------------------------------------------------
 
+
 def test_log_zonder_token_of_persoonsgegevens(client, caplog):
     token = maak_token(exp=int(time.time()) - 120, sub="geheim-sub", email="jan@example.nl")
     with caplog.at_level("WARNING", logger="omnitwin.oidc"):
@@ -373,6 +402,7 @@ def test_log_zonder_token_of_persoonsgegevens(client, caplog):
 
 
 # --- endpoint /api/oidc/ik ------------------------------------------------
+
 
 def test_ik_endpoint(provider):
     from omnitwin.routers import oidc_ik
@@ -390,8 +420,8 @@ def test_ik_endpoint(provider):
 
 # --- Microsoft Entra ID: app-rollen in de claim `roles` (#411) ------------
 
-ENTRA_TENANT = "00000000-0000-0000-0000-000000000001"   # fictief
-ENTRA_CLIENT = "00000000-0000-0000-0000-0000000000aa"   # fictief; aud van een v2-access-token
+ENTRA_TENANT = "00000000-0000-0000-0000-000000000001"  # fictief
+ENTRA_CLIENT = "00000000-0000-0000-0000-0000000000aa"  # fictief; aud van een v2-access-token
 ENTRA_ISSUER = f"https://login.microsoftonline.com/{ENTRA_TENANT}/v2.0"
 ENTRA_JWKS = f"https://login.microsoftonline.com/{ENTRA_TENANT}/discovery/v2.0/keys"
 
@@ -400,9 +430,19 @@ def entra_token(**wijzig):
     """Access token zoals Entra ID (v2) het voor de eigen API uitgeeft: geen realm_access, wel `roles`."""
     nu = int(time.time())
     claims = {
-        "iss": ENTRA_ISSUER, "aud": ENTRA_CLIENT, "sub": "AAAAbbbbCCCCdddd", "oid": "fictief-oid",
-        "tid": ENTRA_TENANT, "azp": ENTRA_CLIENT, "uti": "uti-1", "ver": "2.0", "scp": "toegang",
-        "preferred_username": "gebruiker@example.org", "iat": nu, "nbf": nu, "exp": nu + 3600,
+        "iss": ENTRA_ISSUER,
+        "aud": ENTRA_CLIENT,
+        "sub": "AAAAbbbbCCCCdddd",
+        "oid": "fictief-oid",
+        "tid": ENTRA_TENANT,
+        "azp": ENTRA_CLIENT,
+        "uti": "uti-1",
+        "ver": "2.0",
+        "scp": "toegang",
+        "preferred_username": "gebruiker@example.org",
+        "iat": nu,
+        "nbf": nu,
+        "exp": nu + 3600,
         "roles": ["beheerder", "datasets:laden"],
     }
     claims.update(wijzig)
@@ -458,7 +498,10 @@ def test_entra_v1_token_andere_issuer_geweigerd(entra):
 
 
 def test_roles_naast_keycloak_claims_en_alleen_tekst():
-    claims = {"roles": ["lezer", 7, None], "realm_access": {"roles": ["beheerder"]},
-              "resource_access": {"omnitwin-api": {"roles": ["datasets:laden"]}}}
+    claims = {
+        "roles": ["lezer", 7, None],
+        "realm_access": {"roles": ["beheerder"]},
+        "resource_access": {"omnitwin-api": {"roles": ["datasets:laden"]}},
+    }
     assert oidc._rollen(claims, "omnitwin-api") == frozenset({"lezer", "beheerder", "datasets:laden"})
     assert oidc._rollen({"roles": "beheerder"}, "omnitwin-api") == frozenset()

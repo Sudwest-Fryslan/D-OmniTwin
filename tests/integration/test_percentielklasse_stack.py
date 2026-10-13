@@ -25,8 +25,8 @@ pytestmark = pytest.mark.integration
 
 BASE_URL = os.environ.get("OMNITWIN_BASE_URL", "http://localhost").rstrip("/")
 TIMEOUT = 60
-GEBIED = "BU19000002"     # Bolsward-Zuidoost
-GEBIED_2 = "BU19000001"   # Bolsward-Noord
+GEBIED = "BU19000002"  # Bolsward-Zuidoost
+GEBIED_2 = "BU19000001"  # Bolsward-Noord
 GEMEENTE = "1900"
 
 
@@ -104,6 +104,7 @@ def verwachte_klassen(conn, gebiedstype_id, uuid, score_type):
 
 # ── Kaart ────────────────────────────────────────────────────────────────────
 
+
 def test_kaart_percentiel_geeft_klasse_per_gebied(conn, gebiedstype_id, indicator):
     uuid, score_type = indicator
     d = kaart(gebiedstype_id, uuid, "percentiel")
@@ -170,6 +171,7 @@ def test_onderdrukte_waarde_krijgt_geen_klasse(conn, gebiedstype_id, indicator):
 
 
 # ── Kompas ───────────────────────────────────────────────────────────────────
+
 
 @pytest.fixture
 def percentiel_profiel(conn):

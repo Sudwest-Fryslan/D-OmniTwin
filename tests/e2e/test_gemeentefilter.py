@@ -75,7 +75,8 @@ def _open_met_filter(browser, code, zonder_gebieden=False):
     page.wait_for_function(
         "() => window.state && window.state.deckgl"
         " && document.querySelectorAll('#gebiedstype-select option').length > 1",
-        polling=100, timeout=geschaald(60_000),
+        polling=100,
+        timeout=geschaald(60_000),
     )
     return context, page
 
@@ -91,7 +92,8 @@ def _laad_buurten(page):
         toon.click()
     page.wait_for_function(
         "() => !!(window.state.currentData && Array.isArray(window.state.currentData.features))",
-        polling=100, timeout=geschaald(30_000),
+        polling=100,
+        timeout=geschaald(30_000),
     )
 
 
@@ -114,7 +116,8 @@ def test_filter_zonder_gebieden_toont_melding_en_wissen_herstelt_kaart(browser):
             page.get_by_role("button", name="Gemeentefilter Leeuwarden wissen").click()
         page.wait_for_function(
             "() => window.state.currentData && window.state.currentData.features.length > 0",
-            polling=100, timeout=geschaald(30_000),
+            polling=100,
+            timeout=geschaald(30_000),
         )
         expect(chip).to_be_hidden()
         assert page.evaluate("() => localStorage.getItem('omnitwin-gemeente')") == ""

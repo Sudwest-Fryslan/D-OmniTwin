@@ -20,6 +20,7 @@ UC = "beheer-e2e"
 
 def _config():
     import requests
+
     try:
         r = requests.get(f"{BASE_URL}/api/admin/auth/config", timeout=30)
         return r.json() if r.status_code == 200 else {}
@@ -32,9 +33,11 @@ def beheerder(tmp_path_factory):
     if not _config().get("oidc"):
         pytest.skip("Keycloak/OIDC niet aan in de backend")
     if os.environ.get("OMNITWIN_TESTACCOUNTS") != "1" or not (
-            os.environ.get("KEYCLOAK_ADMIN_PASSWORD") or os.environ.get("KEYCLOAK_ADMIN_CLIENT_SECRET")):
+        os.environ.get("KEYCLOAK_ADMIN_PASSWORD") or os.environ.get("KEYCLOAK_ADMIN_CLIENT_SECRET")
+    ):
         pytest.skip("testaccounts niet toegestaan (OMNITWIN_TESTACCOUNTS=1 en toegang tot de admin-API)")
     from omnitwin import testaccounts as ta
+
     beheer = ta.KeycloakBeheer(kc=f"{BASE_URL}/auth")
     pad = tmp_path_factory.mktemp("accounts") / "accounts.json"
     uc = {"actoren": [{"naam": "beheerder", "soort": "gebruiker", "rollen": ["beheerder"]}]}
@@ -69,7 +72,8 @@ def test_inloggen_en_uitloggen_via_keycloak(beheerder, pagina):
 
     knop.click()
     expect(pagina.get_by_role("link", name=re.compile("Gebruikers en rollen beheren"))).to_have_attribute(
-        "href", re.compile(r"/auth/admin/omnitwin/console/$"))
+        "href", re.compile(r"/auth/admin/omnitwin/console/$")
+    )
     pagina.get_by_role("button", name="Uitloggen").click()
 
     # Uitgelogd bij Keycloak en terug op de inlogpagina

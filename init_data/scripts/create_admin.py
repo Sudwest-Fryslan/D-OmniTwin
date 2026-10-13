@@ -31,6 +31,7 @@ from pathlib import Path
 # Laad .env bestand vanuit projectroot
 try:
     from dotenv import load_dotenv
+
     load_dotenv(Path(__file__).parent.parent.parent / ".env")
 except ImportError:
     pass  # python-dotenv optioneel, env-vars worden direct gelezen
@@ -43,6 +44,7 @@ except ImportError:
 
 try:
     from passlib.context import CryptContext
+
     pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 except ImportError:
     print("❌ passlib niet gevonden. Installeer met: pip install passlib[bcrypt]")
@@ -75,7 +77,7 @@ def get_admin_password(username: str, force_reset: bool = False) -> str:
     if not force_reset:
         env_password = os.environ.get("ADMIN_PASSWORD", "").strip()
         if env_password:
-            print(f"   📋 Wachtwoord geladen uit .env (ADMIN_PASSWORD)")
+            print("   📋 Wachtwoord geladen uit .env (ADMIN_PASSWORD)")
             return env_password
 
     # Interactief vragen
@@ -125,7 +127,7 @@ def create_admin(username: str, force_reset: bool = False):
         if table_count < 1:
             print("❌ User management tabellen niet gevonden!")
             print("   Voer eerst het schema script uit:")
-            print(f"   bash init_data/scripts/init_database.sh")
+            print("   bash init_data/scripts/init_database.sh")
             sys.exit(1)
     except Exception as e:
         print(f"❌ Fout bij controleren tabellen: {e}")
@@ -152,18 +154,24 @@ def create_admin(username: str, force_reset: bool = False):
     print()
     if existing_user and force_reset:
         user_id = existing_user[0]
-        cur.execute("""
+        cur.execute(
+            """
             UPDATE users
             SET hashed_password = %s, is_admin = TRUE, is_active = TRUE, updated_at = NOW()
             WHERE id = %s
-        """, (hashed_password, user_id))
+        """,
+            (hashed_password, user_id),
+        )
         print(f"🔄 Wachtwoord gereset voor gebruiker '{username}'")
     else:
-        cur.execute("""
+        cur.execute(
+            """
             INSERT INTO users (username, hashed_password, is_admin, is_active)
             VALUES (%s, %s, TRUE, TRUE)
             RETURNING id
-        """, (username, hashed_password))
+        """,
+            (username, hashed_password),
+        )
         user_id = cur.fetchone()[0]
         print(f"✅ Admin gebruiker aangemaakt: {username} (id: {user_id})")
 
@@ -176,9 +184,9 @@ def create_admin(username: str, force_reset: bool = False):
     print("=" * 60)
     print("✅ Admin initialisatie voltooid!")
     print()
-    print(f"   🌐 Admin Panel:      /admin/ (bijv. http://localhost/admin/)")
+    print("   🌐 Admin Panel:      /admin/ (bijv. http://localhost/admin/)")
     print(f"   👤 Gebruikersnaam:   {username}")
-    print(f"   🔐 Wachtwoord:       [zoals ingesteld]")
+    print("   🔐 Wachtwoord:       [zoals ingesteld]")
     print("=" * 60)
     print()
 
@@ -187,18 +195,14 @@ def create_admin(username: str, force_reset: bool = False):
 # CLI
 # ─────────────────────────────────────────────────────────
 def main():
-    parser = argparse.ArgumentParser(
-        description="D-OmniTwin — Admin gebruiker aanmaken / resetten"
-    )
+    parser = argparse.ArgumentParser(description="D-OmniTwin — Admin gebruiker aanmaken / resetten")
     parser.add_argument(
         "--username",
         default=os.environ.get("ADMIN_USER", "admin"),
-        help="Gebruikersnaam voor de admin (default: ADMIN_USER uit .env, anders 'admin')"
+        help="Gebruikersnaam voor de admin (default: ADMIN_USER uit .env, anders 'admin')",
     )
     parser.add_argument(
-        "--reset-password",
-        action="store_true",
-        help="Bestaand wachtwoord resetten (ook als gebruiker al bestaat)"
+        "--reset-password", action="store_true", help="Bestaand wachtwoord resetten (ook als gebruiker al bestaat)"
     )
     args = parser.parse_args()
 

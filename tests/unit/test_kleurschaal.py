@@ -4,6 +4,7 @@ Unit test: kaartkleuring bij weinig gebieden of gelijke waarden (#161).
 Zonder database: de visualisatieconfiguratie (kleurenschema, classificatie) wordt
 vervangen door een vaste configuratie.
 """
+
 import pytest
 
 from omnitwin.services.color_scale_service import ColorScaleService

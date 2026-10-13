@@ -65,7 +65,9 @@ def etl_secret(discovery):
         f"{KC}/admin/realms/{REALM}/clients", params={"clientId": "etl-voorbeeld"}, headers=kop, timeout=TIMEOUT
     ).json()
     assert clients, "client etl-voorbeeld ontbreekt in de realm"
-    r = requests.get(f"{KC}/admin/realms/{REALM}/clients/{clients[0]['id']}/client-secret", headers=kop, timeout=TIMEOUT)
+    r = requests.get(
+        f"{KC}/admin/realms/{REALM}/clients/{clients[0]['id']}/client-secret", headers=kop, timeout=TIMEOUT
+    )
     r.raise_for_status()
     return r.json()["value"]
 

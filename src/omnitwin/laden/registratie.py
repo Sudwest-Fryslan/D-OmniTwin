@@ -34,6 +34,7 @@ DOEL_VERPLICHT = {
 
 def laad_openapi(pad=OPENAPI):
     import yaml  # PyYAML: in requirements-ci.txt via uvicorn[standard]
+
     return yaml.safe_load(Path(pad).read_text(encoding="utf-8"))
 
 

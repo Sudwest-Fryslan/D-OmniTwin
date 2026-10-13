@@ -22,7 +22,7 @@ referentiegroep), afgerond naar de dichtstbijzijnde score (x,5 naar boven), en d
 """
 
 import math
-from typing import Dict, Iterable, List, Optional, Sequence, Tuple
+from collections.abc import Iterable, Sequence
 
 from omnitwin.services import percentielklasse as pk
 
@@ -30,8 +30,8 @@ CLASSIFICATIE = "label_ae"
 LABELS = ("A", "B", "C", "D", "E")  # A = gunstigst
 KLASSEN = len(LABELS)
 
-BRON_KWINTIEL = "kwintiel"   # voorlopig: 20%-klassen binnen de referentiegroep
-BRON_DREMPELS = "drempels"   # drempels uit indicator_labels
+BRON_KWINTIEL = "kwintiel"  # voorlopig: 20%-klassen binnen de referentiegroep
+BRON_DREMPELS = "drempels"  # drempels uit indicator_labels
 
 MELDING_VOORLOPIG = (
     "Voorlopige drempels (kwintielen): A = gunstigste 20% van de vergelijkbare gebieden, "
@@ -39,10 +39,10 @@ MELDING_VOORLOPIG = (
 )
 
 # Drempel: (label, ondergrens, bovengrens); None = open grens
-Drempel = Tuple[str, Optional[float], Optional[float]]
+Drempel = tuple[str, float | None, float | None]
 
 
-def score_naar_label(score: Optional[int]) -> Optional[str]:
+def score_naar_label(score: int | None) -> str | None:
     """Labelscore 5..1 -> 'A'..'E'."""
     if score is None:
         return None
@@ -53,7 +53,7 @@ def label_naar_score(label: str) -> int:
     return KLASSEN - LABELS.index(label.strip().upper())
 
 
-def score_uit_percentiel(p: Optional[float], hoger_beter: bool = True) -> Optional[int]:
+def score_uit_percentiel(p: float | None, hoger_beter: bool = True) -> int | None:
     """Kwintiel: floor(p x 5) + 1, begrensd op 1..5; bij 'lager is beter' eerst 1 - p."""
     if p is None:
         return None
@@ -62,7 +62,7 @@ def score_uit_percentiel(p: Optional[float], hoger_beter: bool = True) -> Option
     return max(1, min(KLASSEN, math.floor(p * KLASSEN) + 1))
 
 
-def score_uit_drempels(waarde: Optional[float], drempels: Sequence[Drempel]) -> Optional[int]:
+def score_uit_drempels(waarde: float | None, drempels: Sequence[Drempel]) -> int | None:
     """Score volgens absolute drempels: eerste label (A..E) met ondergrens <= waarde < bovengrens."""
     if waarde is None or not drempels:
         return None
@@ -73,11 +73,11 @@ def score_uit_drempels(waarde: Optional[float], drempels: Sequence[Drempel]) -> 
 
 
 def label_score(
-    waarde: Optional[float],
+    waarde: float | None,
     referentie: Sequence[float],
     hoger_beter: bool = True,
-    drempels: Optional[Sequence[Drempel]] = None,
-) -> Tuple[Optional[int], str]:
+    drempels: Sequence[Drempel] | None = None,
+) -> tuple[int | None, str]:
     """(score 1..5 of None, bron). Drempels gaan voor; anders kwintielen in de referentie."""
     if drempels:
         return score_uit_drempels(waarde, drempels), BRON_DREMPELS
@@ -85,25 +85,25 @@ def label_score(
 
 
 def label(
-    waarde: Optional[float],
+    waarde: float | None,
     referentie: Sequence[float],
     hoger_beter: bool = True,
-    drempels: Optional[Sequence[Drempel]] = None,
-) -> Optional[str]:
+    drempels: Sequence[Drempel] | None = None,
+) -> str | None:
     return score_naar_label(label_score(waarde, referentie, hoger_beter, drempels)[0])
 
 
-def aggregeer(scores_met_gewicht: Iterable[Tuple[Optional[int], Optional[float]]]) -> Optional[int]:
+def aggregeer(scores_met_gewicht: Iterable[tuple[int | None, float | None]]) -> int | None:
     """Themalabel: dezelfde regel als percentiel_8 (gewogen gemiddelde, afgerond)."""
     return pk.aggregeer(scores_met_gewicht, KLASSEN)
 
 
-def palet(color_service=None) -> List[str]:
+def palet(color_service=None) -> list[str]:
     """5 kleuren voor score 1..5 (E..A), kleurenblindvriendelijk uit color_schemas."""
     return pk.palet(color_service, klassen=KLASSEN)
 
 
-def legenda(kleuren: List[str], voorlopig: bool = True) -> List[Dict[str, object]]:
+def legenda(kleuren: list[str], voorlopig: bool = True) -> list[dict[str, object]]:
     """A..E (gunstigst eerst), met kleur; 'klasse' = labelscore (5 = A)."""
     uit = []
     for lbl in LABELS:
@@ -129,37 +129,39 @@ _SQL_DREMPELS = """
 """
 
 
-def drempels_uit_db(db, indicator_uuids: Optional[Iterable[str]] = None) -> Dict[str, List[Drempel]]:
+def drempels_uit_db(db, indicator_uuids: Iterable[str] | None = None) -> dict[str, list[Drempel]]:
     """{indicator_uuid: [(label, ondergrens, bovengrens)]} uit indicator_labels."""
     from sqlalchemy import text
 
     uuids = [str(u) for u in indicator_uuids] if indicator_uuids is not None else None
     if uuids is not None and not uuids:
         return {}
-    uit: Dict[str, List[Drempel]] = {}
+    uit: dict[str, list[Drempel]] = {}
     for r in db.execute(text(_SQL_DREMPELS), {"il_uuids": uuids}):
-        uit.setdefault(r.indicator_uuid, []).append((
-            r.label,
-            float(r.ondergrens) if r.ondergrens is not None else None,
-            float(r.bovengrens) if r.bovengrens is not None else None,
-        ))
+        uit.setdefault(r.indicator_uuid, []).append(
+            (
+                r.label,
+                float(r.ondergrens) if r.ondergrens is not None else None,
+                float(r.bovengrens) if r.bovengrens is not None else None,
+            )
+        )
     return uit
 
 
 def annoteer_boom(
-    boom: Dict,
-    paren: Dict[str, List[Tuple[Optional[int], float]]],
-    n_onderdrukt: Dict[str, int],
-    kleuren: List[str],
+    boom: dict,
+    paren: dict[str, list[tuple[int | None, float]]],
+    n_onderdrukt: dict[str, int],
+    kleuren: list[str],
     geen_data_kleur: str,
-    bron_per_indicator: Dict[str, str],
-    kleuren_neutraal: Optional[List[str]] = None,
-) -> Dict:
+    bron_per_indicator: dict[str, str],
+    kleuren_neutraal: list[str] | None = None,
+) -> dict:
     """Labels in een kompasboom: de klasse-aggregatie van percentiel_8 met 5 scores, plus
     'label' op elke node en 'label_bron' (kwintiel/drempels) op de indicatoren."""
     boom = pk.annoteer_boom(boom, paren, n_onderdrukt, kleuren, geen_data_kleur, kleuren_neutraal, KLASSEN)
 
-    def zet(node: Dict):
+    def zet(node: dict):
         node["label"] = score_naar_label(node.get("klasse"))
         if node.get("type") == "indicator" and node.get("uuid"):
             node["label_bron"] = bron_per_indicator.get(node["uuid"], BRON_KWINTIEL)

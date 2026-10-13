@@ -9,6 +9,7 @@ Integratietest: dashboardcijfers en het filter "alleen met data" (#246).
 Draaien tegen een stack met sampledata:
     OMNITWIN_BASE_URL=http://localhost:8080 ADMIN_API_KEY=... pytest -m integration tests/integration/test_dashboard_met_data.py
 """
+
 import os
 
 import pytest

@@ -33,6 +33,7 @@ from pathlib import Path
 
 try:
     from dotenv import load_dotenv
+
     load_dotenv(Path(__file__).resolve().parent.parent.parent / ".env")
 except ImportError:
     pass
@@ -94,6 +95,7 @@ def onderliggend_model(naam: str):
     except OSError:
         return None
     import re
+
     m = re.search(rf"model_name:\s*{re.escape(alias)}\s*\n\s*litellm_params:\s*\n(?:\s*#.*\n)*\s*model:\s*(\S+)", tekst)
     return m.group(1) if m else None
 
@@ -132,8 +134,12 @@ def actieve_config(conn) -> dict:
             return {}
         kolommen = [d[0] for d in cur.description]
     r = dict(zip(kolommen, rij))
-    return {"id": r["id"], "api_type": r.get("api_type") or "ollama",
-            "api_url": r["api_url"], "model_name": r["model_name"]}
+    return {
+        "id": r["id"],
+        "api_type": r.get("api_type") or "ollama",
+        "api_url": r["api_url"],
+        "model_name": r["model_name"],
+    }
 
 
 def zet_config(conn, api_type: str, api_url: str, model_name: str) -> dict:
@@ -169,14 +175,19 @@ def toon(cfg: dict, als_json: bool, extra: dict = None):
     if als_json:
         print(json.dumps(uit, ensure_ascii=False))
     else:
-        print(f"Actief: {uit['provider']}  (llm_config id {cfg.get('id')}: api_type={cfg.get('api_type')}, "
-              f"api_url={cfg.get('api_url')}, model={cfg.get('model_name')})")
+        print(
+            f"Actief: {uit['provider']}  (llm_config id {cfg.get('id')}: api_type={cfg.get('api_type')}, "
+            f"api_url={cfg.get('api_url')}, model={cfg.get('model_name')})"
+        )
 
 
 def main(argv=None) -> int:
     p = argparse.ArgumentParser(description="Kies de LLM-aanbieder (nieuwe rij in llm_config).")
-    p.add_argument("opdracht", choices=[*PROVIDERS, "status", "beschikbaar", "herstel"],
-                   help="aanbieder, of status/beschikbaar/herstel")
+    p.add_argument(
+        "opdracht",
+        choices=[*PROVIDERS, "status", "beschikbaar", "herstel"],
+        help="aanbieder, of status/beschikbaar/herstel",
+    )
     p.add_argument("--json", action="store_true", help="uitvoer als JSON (voor scripts)")
     p.add_argument("--api-type", help="alleen bij herstel")
     p.add_argument("--api-url", help="alleen bij herstel")

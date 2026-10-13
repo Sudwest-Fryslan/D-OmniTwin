@@ -32,8 +32,12 @@ from omnitwin.config import instellingen
 
 logger = logging.getLogger("omnitwin.laden.opslag")
 
-EXTENSIE = {"application/zip": ".zip", "application/geopackage+sqlite3": ".gpkg", "text/csv": ".csv",
-            "application/json": ".json"}
+EXTENSIE = {
+    "application/zip": ".zip",
+    "application/geopackage+sqlite3": ".gpkg",
+    "text/csv": ".csv",
+    "application/json": ".json",
+}
 BLOK = 1024 * 1024
 
 
@@ -43,7 +47,7 @@ class TeGroot(Exception):
 
 @dataclass
 class Ontvangen:
-    pad: Path        # tijdelijk bestand in .ontvangst/
+    pad: Path  # tijdelijk bestand in .ontvangst/
     sha256: str
     grootte: int
 
@@ -168,11 +172,19 @@ WHERE l.bestand_verwijderd_op IS NULL
 def ruim_op(cur) -> int:
     """Verwijder de bestanden waarvan de bewaartermijn verstreken is. Geeft het aantal."""
     inst = instellingen()
-    cur.execute(TE_VERWIJDEREN_SQL, {"versies": inst.laden_bewaar_versies, "dagen": inst.laden_bewaar_dagen,
-                                     "afgekeurd": inst.laden_bewaar_afgekeurd_dagen})
+    cur.execute(
+        TE_VERWIJDEREN_SQL,
+        {
+            "versies": inst.laden_bewaar_versies,
+            "dagen": inst.laden_bewaar_dagen,
+            "afgekeurd": inst.laden_bewaar_afgekeurd_dagen,
+        },
+    )
     weg = [r for r in cur.fetchall() if _verwijder(pad(r["dataset_id"], r["id"], r["bestandsnaam"]))]
     if weg:
-        cur.execute("UPDATE laden.leveringen SET bestand_verwijderd_op = now() WHERE id = ANY(%s::uuid[])",
-                    ([r["id"] for r in weg],))
+        cur.execute(
+            "UPDATE laden.leveringen SET bestand_verwijderd_op = now() WHERE id = ANY(%s::uuid[])",
+            ([r["id"] for r in weg],),
+        )
         logger.info("Bewaartermijn: %d ruwe leveringen verwijderd", len(weg))
     return len(weg)

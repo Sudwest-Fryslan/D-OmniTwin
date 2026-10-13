@@ -10,8 +10,9 @@ API-endpoints voor de terugmeldvoorziening (#311).
 from __future__ import annotations
 
 import uuid
-from typing import Any, Dict, Literal, Optional
-from fastapi import APIRouter, Depends, HTTPException, Query, Request
+from typing import Any, Literal
+
+from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
@@ -31,14 +32,16 @@ class MeldingInvoer(BaseModel):
     type: Literal["data", "ai", "systeem", "overig"]
     onderwerp: str = Field(..., min_length=1, max_length=120, description="Kort onderwerp van de melding")
     toelichting: str = Field(..., min_length=1, max_length=4000, description="Uitgebreide toelichting")
-    context: Optional[Dict[str, Any]] = Field(default=None, description="Contextuele metadata (buurt, indicator, etc.)")
-    melder_email: Optional[str] = Field(default=None, pattern=EMAIL_REGEX, description="Optioneel e-mailadres voor terugkoppeling")
-    website: Optional[str] = Field(default=None, description="Honeypot-veld voor spambots; moet leeg blijven")
+    context: dict[str, Any] | None = Field(default=None, description="Contextuele metadata (buurt, indicator, etc.)")
+    melder_email: str | None = Field(
+        default=None, pattern=EMAIL_REGEX, description="Optioneel e-mailadres voor terugkoppeling"
+    )
+    website: str | None = Field(default=None, description="Honeypot-veld voor spambots; moet leeg blijven")
 
 
 class MeldingWijziging(BaseModel):
-    status: Optional[Literal["nieuw", "doorgestuurd_naar_bron", "in_behandeling", "afgehandeld", "afgewezen"]] = None
-    notitie_beheer: Optional[str] = Field(default=None, max_length=4000)
+    status: Literal["nieuw", "doorgestuurd_naar_bron", "in_behandeling", "afgehandeld", "afgewezen"] | None = None
+    notitie_beheer: str | None = Field(default=None, max_length=4000)
 
 
 def _wie(gebruiker: dict) -> str:
@@ -46,6 +49,7 @@ def _wie(gebruiker: dict) -> str:
 
 
 # ── Publiek meldpunt ──────────────────────────────────────────────────────────
+
 
 @router.post("", status_code=201, dependencies=[Depends(beperk_meldingen)])
 def meld(invoer: MeldingInvoer, db: Session = Depends(get_db)):
@@ -73,10 +77,11 @@ def meld(invoer: MeldingInvoer, db: Session = Depends(get_db)):
 
 # ── Beheerder endpoints ───────────────────────────────────────────────────────
 
+
 @admin_router.get("")
 def overzicht(
-    status: Optional[str] = Query(None, description="Filter op status"),
-    type: Optional[str] = Query(None, description="Filter op type"),
+    status: str | None = Query(None, description="Filter op status"),
+    type: str | None = Query(None, description="Filter op type"),
     limit: int = Query(50, ge=1, le=100),
     offset: int = Query(0, ge=0),
     db: Session = Depends(get_db),

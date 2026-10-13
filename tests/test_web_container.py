@@ -35,21 +35,24 @@ def _onveranderlijk_regexen():
     return uit
 
 
-@pytest.mark.parametrize("uri", [
-    "/static/vendor/d3@7.9.0/d3.min.js",
-    "/static/vendor/maplibre-gl@3.6.2/maplibre-gl.css",
-    "/static/vendor/inter@5.3.0/inter.css",
-    "/static/admin-panel/assets/index-D_76-aSi.js",
-    "/static/admin-panel/assets/index-B5kdNBqP.css",
-    "/static/css/styles.css",
-    "/static/css/themes/swf.css",
-    "/static/images/beeldmerk.svg",
-    "/static/js/app.js",
-    "/static/vendor/README.md",
-    "/static/admin-panel/index.html",
-    "/static/admin-panel/manifest.json",
-    "/static/help.html",
-])
+@pytest.mark.parametrize(
+    "uri",
+    [
+        "/static/vendor/d3@7.9.0/d3.min.js",
+        "/static/vendor/maplibre-gl@3.6.2/maplibre-gl.css",
+        "/static/vendor/inter@5.3.0/inter.css",
+        "/static/admin-panel/assets/index-D_76-aSi.js",
+        "/static/admin-panel/assets/index-B5kdNBqP.css",
+        "/static/css/styles.css",
+        "/static/css/themes/swf.css",
+        "/static/images/beeldmerk.svg",
+        "/static/js/app.js",
+        "/static/vendor/README.md",
+        "/static/admin-panel/index.html",
+        "/static/admin-panel/manifest.json",
+        "/static/help.html",
+    ],
+)
 def test_cachebeleid_gelijk_aan_statisch_py(uri):
     lang = any(r.search(uri) for r in _onveranderlijk_regexen())
     assert lang == (cache_control(uri) == ONVERANDERLIJK), uri
@@ -68,8 +71,12 @@ def test_elke_location_met_add_header_heeft_de_security_headers():
 
 
 def test_security_headers_als_de_backend():
-    for kop in ("X-Content-Type-Options \"nosniff\"", "X-Frame-Options \"DENY\"",
-                "Referrer-Policy \"strict-origin-when-cross-origin\"", "Content-Security-Policy"):
+    for kop in (
+        'X-Content-Type-Options "nosniff"',
+        'X-Frame-Options "DENY"',
+        'Referrer-Policy "strict-origin-when-cross-origin"',
+        "Content-Security-Policy",
+    ):
         assert f"add_header {kop}" in HEADERS, kop
     regels = [r for r in HEADERS.splitlines() if r.startswith("add_header")]
     assert regels and all(r.endswith(" always;") for r in regels)
@@ -98,8 +105,11 @@ def test_backend_image_zonder_frontend():
     for r in ("admin-panel", "static", "!static/css/themes", "!static/images"):
         assert r in regels, r
     # De web-image krijgt alleen static/ en de nginx-config
-    web = [r for r in (ROOT / "web.Dockerfile.dockerignore").read_text(encoding="utf-8").splitlines()
-           if r and not r.startswith("#")]
+    web = [
+        r
+        for r in (ROOT / "web.Dockerfile.dockerignore").read_text(encoding="utf-8").splitlines()
+        if r and not r.startswith("#")
+    ]
     assert web == ["*", "!static", "!deploy/web"]
 
 

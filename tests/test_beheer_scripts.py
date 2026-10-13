@@ -54,8 +54,15 @@ def test_volumes_en_paden_bestaan_in_compose():
 def test_backup_en_restore_gebruiken_dezelfde_bestanden():
     backup = (BEHEER / "backup.sh").read_text(encoding="utf-8")
     restore = (BEHEER / "restore.sh").read_text(encoding="utf-8")
-    for bestand in ("database.dump", "keycloak.dump", "rollen.sql", "leveringen.tar.gz",
-                    "uploads.tar.gz", "info.txt", "SHA256SUMS"):
+    for bestand in (
+        "database.dump",
+        "keycloak.dump",
+        "rollen.sql",
+        "leveringen.tar.gz",
+        "uploads.tar.gz",
+        "info.txt",
+        "SHA256SUMS",
+    ):
         assert bestand in backup and bestand in restore, bestand
     # Rollen zonder wachtwoorden; db-init en keycloak-db-init zetten ze opnieuw
     assert "--no-role-passwords" in backup

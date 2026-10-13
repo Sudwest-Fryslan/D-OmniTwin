@@ -42,7 +42,7 @@ def test_api_organisatie_geeft_swf():
 
 def test_footer_logos_zoals_voorheen():
     html = requests.get(f"{BASE_URL}/", timeout=TIMEOUT).text
-    footer = html[html.index('<footer class="footer">'):html.index("</footer>")]
+    footer = html[html.index('<footer class="footer">') : html.index("</footer>")]
     imgs = re.findall(r'<img src="([^"]+)" alt="([^"]*)" class="footer-logo" title="([^"]*)">', footer)
     assert [(src, alt) for src, alt, _ in imgs] == SWF_LOGOS
     for src, _ in SWF_LOGOS:
@@ -58,11 +58,12 @@ def test_kompas_standaard_is_configuratie_1():
 
 
 def _buurt_ids(n=3):
-    r = requests.get(f"{BASE_URL}/api/data/gebieden",
-                     # Buurten van de eigen gemeente; sinds #236 staan alle Friese buurten in een verse installatie
-                     params={"select": "id,gemeente_code", "id": "like.BU*", "gemeente_code": "eq.1900",
-                             "limit": str(n)},
-                     timeout=TIMEOUT)
+    r = requests.get(
+        f"{BASE_URL}/api/data/gebieden",
+        # Buurten van de eigen gemeente; sinds #236 staan alle Friese buurten in een verse installatie
+        params={"select": "id,gemeente_code", "id": "like.BU*", "gemeente_code": "eq.1900", "limit": str(n)},
+        timeout=TIMEOUT,
+    )
     assert r.status_code == 200, r.text
     rijen = r.json()
     assert rijen and all(g["gemeente_code"] == "1900" for g in rijen)
@@ -72,17 +73,21 @@ def _buurt_ids(n=3):
 def test_rapport_zonder_gemeente_gebruikt_eigen_gemeente():
     """Zonder gemeente_code is de referentie de gemeente van de organisatie (SWF), zoals voorheen met '1900'."""
     ids = _buurt_ids()
-    zonder = requests.post(f"{BASE_URL}/api/report/multi-gebied",
-                           json={"gebied_ids": ids, "referentie": "gemeente"}, timeout=TIMEOUT)
-    met = requests.post(f"{BASE_URL}/api/report/multi-gebied",
-                        json={"gebied_ids": ids, "referentie": "gemeente", "gemeente_code": "1900"},
-                        timeout=TIMEOUT)
+    zonder = requests.post(
+        f"{BASE_URL}/api/report/multi-gebied", json={"gebied_ids": ids, "referentie": "gemeente"}, timeout=TIMEOUT
+    )
+    met = requests.post(
+        f"{BASE_URL}/api/report/multi-gebied",
+        json={"gebied_ids": ids, "referentie": "gemeente", "gemeente_code": "1900"},
+        timeout=TIMEOUT,
+    )
     assert zonder.status_code == 200, zonder.text
     assert met.status_code == 200, met.text
     assert zonder.json()["referentie_label"] == "⌀ Gemeente Súdwest-Fryslân"
     assert zonder.json() == met.json()
 
-    thema = requests.post(f"{BASE_URL}/api/report/thema-analyse",
-                          json={"gebied_ids": ids, "referentie": "gemeente"}, timeout=TIMEOUT)
+    thema = requests.post(
+        f"{BASE_URL}/api/report/thema-analyse", json={"gebied_ids": ids, "referentie": "gemeente"}, timeout=TIMEOUT
+    )
     assert thema.status_code == 200, thema.text
     assert thema.json()["referentie_label"] == "⌀ Gemeente Súdwest-Fryslân"

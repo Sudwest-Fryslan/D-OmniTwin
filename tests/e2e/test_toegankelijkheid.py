@@ -10,13 +10,16 @@ Toegankelijkheid (WCAG 2.1, #67): focusbeheer in dialogen en "minder beweging".
   instelling laat zien dat de overgang er normaal wel is.
 """
 
-from playwright.sync_api import expect
-
 from e2e_helpers import (
     WORKUM,
-    klik_kompas_segment, laad_buurtenkaart, open_kompas, open_paneel, selecteer_buurt_via_app,
+    klik_kompas_segment,
+    laad_buurtenkaart,
+    open_kompas,
+    open_paneel,
+    selecteer_buurt_via_app,
     wacht_op_selectie,
 )
+from playwright.sync_api import expect
 
 FOCUS_IN = "(sel) => { const d = document.querySelector(sel); return !!d && d.contains(document.activeElement); }"
 
@@ -136,9 +139,7 @@ def test_reduced_motion_camera_springt_en_kompas_zonder_transitie(app_page_reduc
 
     # Kompas: inzoomen op een thema zonder D3-transitie
     open_kompas(page, "Workum")
-    thema = page.evaluate(
-        "() => window.kompasViz.root.children.find(c => c.children && c.children.length).data.name"
-    )
+    thema = page.evaluate("() => window.kompasViz.root.children.find(c => c.children && c.children.length).data.name")
     klik_kompas_segment(page, thema)
     expect(page.locator("#kompas-breadcrumb")).to_contain_text(thema)
     # Niet op de klok toetsen: in CI rendert de kaart in software (SwiftShader) en kan één

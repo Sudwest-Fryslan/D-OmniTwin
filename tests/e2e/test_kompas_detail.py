@@ -12,13 +12,19 @@ Subjectieve stappen (begrijpelijkheid van uitleg) staan als skip.
 import re
 
 import pytest
-from playwright.sync_api import expect
-
 from e2e_helpers import (
-    KOUDUM, WORKUM, geschaald,
-    kompas_namen, laad_buurtenkaart, open_indicator_in_kompas, open_kompas, selecteer_buurt_via_app,
-    wacht_op_selectie, wacht_op_vergelijkingsgrafiek,
+    KOUDUM,
+    WORKUM,
+    geschaald,
+    kompas_namen,
+    laad_buurtenkaart,
+    open_indicator_in_kompas,
+    open_kompas,
+    selecteer_buurt_via_app,
+    wacht_op_selectie,
+    wacht_op_vergelijkingsgrafiek,
 )
+from playwright.sync_api import expect
 
 JAARTAL = re.compile(r"^(19|20)\d{2}$")
 
@@ -35,6 +41,7 @@ def _kompas_voor(page, *gebied_ids):
 
 
 # ── TC-02-001 Wonen ──────────────────────────────────────────────────────────
+
 
 def test_tc_02_001_wonen_indicatoren(app_page):
     """TC-02-001 stap 1-3: thema Wonen in het Kompas, indicator met waarde,
@@ -66,7 +73,9 @@ def test_tc_02_001_benchmark_twee_gebieden(app_page):
     wacht_op_vergelijkingsgrafiek(page, ["Workum", "Koudum"])
 
 
-@pytest.mark.skip(reason="TC-02-001 stap 4: begrijpelijkheid van de Z-score-uitleg is een subjectieve reviewstap (handmatig)")
+@pytest.mark.skip(
+    reason="TC-02-001 stap 4: begrijpelijkheid van de Z-score-uitleg is een subjectieve reviewstap (handmatig)"
+)
 def test_tc_02_001_uitleg_zscore():
     """TC-02-001 stap 4: uitleg van de Z-score voor de eindgebruiker."""
 
@@ -89,6 +98,7 @@ def test_tc_02_001_starterswoningen(app_page):
 
 
 # ── TC-02-002 Sociaal domein ─────────────────────────────────────────────────
+
 
 def test_tc_02_002_participatiewet(app_page):
     """TC-02-002 stap 1-2: participatiewet-indicator vindbaar via Rondkomen, met waarde,
@@ -123,8 +133,10 @@ def test_tc_02_002_trendlijn(app_page):
     expect(page.locator("#timeslider-container")).to_be_visible(timeout=geschaald(5_000))
 
 
-@pytest.mark.skip(reason="TC-02-002 stap 5: vroegsignalering/drempelwaarden bestaan nog niet; "
-                         "beoordeling van kleurcodering is handmatig")
+@pytest.mark.skip(
+    reason="TC-02-002 stap 5: vroegsignalering/drempelwaarden bestaan nog niet; "
+    "beoordeling van kleurcodering is handmatig"
+)
 def test_tc_02_002_vroegsignalering():
     """TC-02-002 stap 5: drempelwaarden of signaleringslogica."""
 

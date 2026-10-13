@@ -10,7 +10,6 @@ nu alleen in-process bestaat (installeer --inproces); over HTTP worden ze hier n
 """
 
 import pytest
-
 from usecase_laden import controle_id, controles, installeer, vereisten, voer_uit
 
 pytestmark = pytest.mark.integration

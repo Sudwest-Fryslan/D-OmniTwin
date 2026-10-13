@@ -83,8 +83,8 @@ _WAAR = ("1", "true", "ja", "yes", "on")
 
 # Vaste grenzen (geen omgevingsvariabele; aanpassen in de code met een reden)
 # Inloggen (#203): na zoveel mislukte pogingen binnen het venster volgt 429.
-LOGIN_MAX_PER_GEBRUIKER = 5      # per IP-adres + gebruikersnaam
-LOGIN_MAX_PER_IP = 20            # per IP-adres, alle gebruikersnamen samen
+LOGIN_MAX_PER_GEBRUIKER = 5  # per IP-adres + gebruikersnaam
+LOGIN_MAX_PER_IP = 20  # per IP-adres, alle gebruikersnamen samen
 LOGIN_VENSTER_SECONDEN = 15 * 60
 LOGIN_VERTRAGING_SECONDEN = 1.0  # wachttijd na elke mislukte poging
 # Maximale duur van één databasequery van de webapp (niet voor db-init/ETL)
@@ -122,14 +122,14 @@ class Instellingen:
     database_sslmode: str
     # Web
     cors_origins: tuple[str, ...]
-    cookie_secure: str          # 'auto', 'true' of 'false'
-    llm_rate_limit: int         # verzoeken per minuut per IP; 0 = uit
+    cookie_secure: str  # 'auto', 'true' of 'false'
+    llm_rate_limit: int  # verzoeken per minuut per IP; 0 = uit
     admin_api_key: str
     log_level: str
     # Privacy (#264)
     log_bewaar_dagen: int
     log_ip_bewaar_dagen: int
-    trusted_proxies: str        # ruwe lijst; geparsed in omnitwin.grenzen
+    trusted_proxies: str  # ruwe lijst; geparsed in omnitwin.grenzen
     # LLM
     ollama_host: str
     ollama_model: str
@@ -144,16 +144,16 @@ class Instellingen:
     laden_bewaar_dagen: int
     laden_bewaar_afgekeurd_dagen: int
     # OIDC (#205)
-    oidc_issuer: str            # leeg = uit
+    oidc_issuer: str  # leeg = uit
     oidc_audience: str
-    oidc_jwks_url: str          # leeg = via discovery
-    oidc_intern_url: str        # leeg = discovery via de issuer zelf
-    oidc_client_id: str         # inloggen van mensen (#251)
-    oidc_scope: str             # extra scopes naast 'openid profile' (#411)
-    oidc_client_secret: str     # leeg = publieke client (#411)
-    lokaal_inloggen: bool       # LOKAAL_INLOGGEN: noodtoegang naast OIDC
-    viewer_toegang: str         # 'open' of 'inloggen' (#266)
-    omgeving: str               # 'productie', 'test' of 'demo' (#245)
+    oidc_jwks_url: str  # leeg = via discovery
+    oidc_intern_url: str  # leeg = discovery via de issuer zelf
+    oidc_client_id: str  # inloggen van mensen (#251)
+    oidc_scope: str  # extra scopes naast 'openid profile' (#411)
+    oidc_client_secret: str  # leeg = publieke client (#411)
+    lokaal_inloggen: bool  # LOKAAL_INLOGGEN: noodtoegang naast OIDC
+    viewer_toegang: str  # 'open' of 'inloggen' (#266)
+    omgeving: str  # 'productie', 'test' of 'demo' (#245)
 
     @property
     def viewer_dicht(self) -> bool:
@@ -177,9 +177,11 @@ class Instellingen:
     @property
     def database_url(self) -> str:
         # Driver expliciet: SQLAlchemy 2.1+ kiest anders standaard psycopg (v3)
-        return (f"postgresql+psycopg2://{self.database_user}:{self.database_password}"
-                f"@{self.database_host}:{self.database_port}/{self.database_name}"
-                f"?sslmode={self.database_sslmode}")
+        return (
+            f"postgresql+psycopg2://{self.database_user}:{self.database_password}"
+            f"@{self.database_host}:{self.database_port}/{self.database_name}"
+            f"?sslmode={self.database_sslmode}"
+        )
 
 
 def _cookie_secure(waarde: str) -> str:

@@ -9,6 +9,7 @@ Gebruik in een script buiten het pakket:
     sys.path.insert(0, str(Path(__file__).resolve().parents[N] / "src"))
     from omnitwin.scriptdb import verbind
 """
+
 from __future__ import annotations
 
 from typing import Any

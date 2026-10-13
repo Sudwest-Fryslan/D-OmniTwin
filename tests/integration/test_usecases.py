@@ -65,8 +65,11 @@ def indicatoren():
 
 @pytest.fixture(scope="module")
 def waarden():
-    rijen = get("/api/data/vw_gebied_indicator_actueel", select="gebied_id,indicator_uuid,waarde",
-                gebied_id=f"in.({','.join(BOLSWARD)})")
+    rijen = get(
+        "/api/data/vw_gebied_indicator_actueel",
+        select="gebied_id,indicator_uuid,waarde",
+        gebied_id=f"in.({','.join(BOLSWARD)})",
+    )
     return {(r["gebied_id"], r["indicator_uuid"]): r["waarde"] for r in rijen if r["waarde"] is not None}
 
 
@@ -89,9 +92,13 @@ def test_indicatoren_aanwezig_met_waarden_voor_bolsward(uc, indicatoren, waarden
 def test_richting_lager_is_beter(uc, indicatoren):
     """De inrichting van de use case (laad_usecase.py) zet de richting goed (#120)."""
     # Eén codering (polariteit); de oude kolommen volgen die via de trigger (V046)
-    fout = [n for n in lager_is_beter(uc)
-            if indicatoren[n]["polariteit"] != "lager_is_beter"
-            or indicatoren[n]["score_type"] != "+/-" or indicatoren[n]["interpretatie_logica"] != "-/+"]
+    fout = [
+        n
+        for n in lager_is_beter(uc)
+        if indicatoren[n]["polariteit"] != "lager_is_beter"
+        or indicatoren[n]["score_type"] != "+/-"
+        or indicatoren[n]["interpretatie_logica"] != "-/+"
+    ]
     assert not fout, f"{uc}: staat als 'hoger is beter': {fout}"
 
 

@@ -7,7 +7,6 @@ zolang de laad-API, een bron of de machineclient ontbreekt (zie usecase_laden.py
 """
 
 import pytest
-
 from usecase_laden import controle_id, controles, installeer, vereisten, voer_uit
 
 pytestmark = pytest.mark.integration

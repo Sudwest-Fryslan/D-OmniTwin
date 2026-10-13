@@ -8,6 +8,7 @@ verwijst dat niet expliciet is toegestaan.
 Toegestaan zijn alleen data-API's (de pagina haalt er data, geen code of
 opmaak, vandaan) en hyperlinks (<a href>) waar de gebruiker zelf op klikt.
 """
+
 import re
 import unittest
 from pathlib import Path
@@ -101,7 +102,8 @@ class TestGeenExterneResources(unittest.TestCase):
                 if domein not in TOEGESTANE_DOMEINEN:
                     fouten.append(f"{pad.relative_to(ROOT)}: {domein}")
         self.assertEqual(
-            fouten, [],
+            fouten,
+            [],
             "Onbekend extern domein. Host de resource zelf, of voeg een data-API "
             "met reden toe aan TOEGESTANE_DOMEINEN.",
         )

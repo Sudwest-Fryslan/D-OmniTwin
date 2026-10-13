@@ -9,8 +9,6 @@ gaat in de body (niet in de URL of de logregel), wordt niet bewaard en alleen do
 PDOK Locatieserver (services/locatie.py). 404 als de buurt niet bij deze installatie hoort.
 """
 
-from typing import Optional
-
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field, model_validator
 from sqlalchemy.orm import Session
@@ -24,9 +22,11 @@ router = APIRouter(prefix="/api/locatie", tags=["Locatie"])
 
 
 class BuurtVraag(BaseModel):
-    adres: Optional[str] = Field(None, max_length=200, description="Postcode of adres, bijv. '8601 CR' of 'Marktstraat 15 Sneek'")
-    lat: Optional[float] = Field(None, description="Breedtegraad (WGS84), alleen na toestemming van de gebruiker")
-    lon: Optional[float] = Field(None, description="Lengtegraad (WGS84)")
+    adres: str | None = Field(
+        None, max_length=200, description="Postcode of adres, bijv. '8601 CR' of 'Marktstraat 15 Sneek'"
+    )
+    lat: float | None = Field(None, description="Breedtegraad (WGS84), alleen na toestemming van de gebruiker")
+    lon: float | None = Field(None, description="Lengtegraad (WGS84)")
 
     @model_validator(mode="after")
     def adres_of_locatie(self):
@@ -49,15 +49,23 @@ def buurt(vraag: BuurtVraag, db: Session = Depends(get_db)):
     elif not locatie.in_nederland(vraag.lat, vraag.lon):
         raise HTTPException(422, "Deze locatie ligt niet in Nederland.")
     try:
-        gevonden = (locatie.buurt_bij_adres(vraag.adres) if vraag.adres is not None
-                    else locatie.buurt_bij_punt(vraag.lat, vraag.lon))
+        gevonden = (
+            locatie.buurt_bij_adres(vraag.adres)
+            if vraag.adres is not None
+            else locatie.buurt_bij_punt(vraag.lat, vraag.lon)
+        )
     except locatie.LocatieFout:
         raise HTTPException(503, "De PDOK Locatieserver is nu niet bereikbaar. Selecteer je buurt op de kaart.")
     if not gevonden:
-        raise HTTPException(404, "Geen buurt gevonden. Controleer de postcode of het adres, of selecteer je buurt op de kaart.")
+        raise HTTPException(
+            404, "Geen buurt gevonden. Controleer de postcode of het adres, of selecteer je buurt op de kaart."
+        )
     per_id = {g["id"]: g for g in laad_gebieden(db)}
     gebied = per_id.get(gevonden["buurtcode"])
     if not gebied:
-        raise HTTPException(404, f"{gevonden['buurtnaam']} hoort niet bij de gebieden van deze installatie. "
-                                 "Selecteer een buurt op de kaart.")
+        raise HTTPException(
+            404,
+            f"{gevonden['buurtnaam']} hoort niet bij de gebieden van deze installatie. "
+            "Selecteer een buurt op de kaart.",
+        )
     return BuurtAntwoord(gebied_id=gebied["id"], naam=gebied["naam"])

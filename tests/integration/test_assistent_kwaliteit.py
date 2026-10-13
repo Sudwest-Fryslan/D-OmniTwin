@@ -8,6 +8,7 @@ Kwaliteit van de D-Omni Assistent (#233), tegen een draaiende stack met sample-d
 
     OMNITWIN_BASE_URL=http://localhost:8105 pytest -m integration tests/integration/test_assistent_kwaliteit.py
 """
+
 import json
 import os
 from pathlib import Path
@@ -63,8 +64,9 @@ def test_api_controle(controle):
 
 @pytest.mark.parametrize("controle", [c for c in MANIFEST["controles"] if c["type"] == "chat"], ids=_id)
 def test_chat_controle(controle):
-    r = requests.post(f"{BASE_URL}/api/chat", json={"vraag": controle["vraag"], "context": {"geen_llm": True}},
-                      timeout=300)
+    r = requests.post(
+        f"{BASE_URL}/api/chat", json={"vraag": controle["vraag"], "context": {"geen_llm": True}}, timeout=300
+    )
     assert r.status_code == 200, r.text[:300]
     antwoord = r.json()
     tekst = antwoord["narrative"] + " " + " ".join(i["naam"] for i in antwoord["indicatoren"])
@@ -76,9 +78,14 @@ def test_chat_controle(controle):
 
 def test_vraag_van_eduard_met_geselecteerde_buurt():
     """'hoeveel % is bejaard bij mij in de buurt?' met Bolsward-Zuidoost geselecteerd (#233)."""
-    r = requests.post(f"{BASE_URL}/api/chat", json={
-        "vraag": "hoeveel % is bejaard bij mij in de buurt?",
-        "context": {"huidig_gebied_id": "BU19000002", "geen_llm": True}}, timeout=300)
+    r = requests.post(
+        f"{BASE_URL}/api/chat",
+        json={
+            "vraag": "hoeveel % is bejaard bij mij in de buurt?",
+            "context": {"huidig_gebied_id": "BU19000002", "geen_llm": True},
+        },
+        timeout=300,
+    )
     assert r.status_code == 200
     a = r.json()
     assert a["intent"] == "DATAVRAAG"

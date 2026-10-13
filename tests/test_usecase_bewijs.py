@@ -6,7 +6,6 @@ root-README actueel. Geen stack, geen browser.
 
 import io
 import json
-from pathlib import Path
 
 import pytest
 
@@ -23,6 +22,7 @@ BEWIJSMAPPEN = sorted(p for p in ub.USECASES_DIR.glob("*/bewijs") if p.is_dir())
 
 
 # ---------------------------------------------------------------- manifesten
+
 
 @pytest.mark.parametrize("naam", sorted(ACTIEF))
 def test_actieve_use_case_heeft_twee_tot_vier_bewijsstappen(naam):
@@ -42,6 +42,7 @@ def test_actieve_use_case_heeft_twee_tot_vier_bewijsstappen(naam):
 
 # ---------------------------------------------------------------- compact bewijs in git
 
+
 @pytest.mark.parametrize("map_", BEWIJSMAPPEN, ids=lambda p: p.parent.name)
 def test_afbeeldingen_klein_en_hooguit_vier(map_):
     afbeeldingen = sorted(map_.glob("*.webp"))
@@ -52,8 +53,7 @@ def test_afbeeldingen_klein_en_hooguit_vier(map_):
         assert p.is_dir() or p.suffix in (".webp", ".json", ".md"), f"{p}: alleen .webp, bewijs.json en README.md"
 
 
-@pytest.mark.parametrize("map_", [m for m in BEWIJSMAPPEN if (m / "bewijs.json").exists()],
-                         ids=lambda p: p.parent.name)
+@pytest.mark.parametrize("map_", [m for m in BEWIJSMAPPEN if (m / "bewijs.json").exists()], ids=lambda p: p.parent.name)
 def test_bewijsverslag_geldig_en_bij_het_manifest(map_):
     naam = map_.parent.name
     verslag = json.loads((map_ / "bewijs.json").read_text(encoding="utf-8"))
@@ -74,6 +74,7 @@ def test_galerij_en_readmes_actueel():
 
 # ---------------------------------------------------------------- functies
 
+
 def test_gemeentecode():
     assert ub.gemeentecode("BU19000002") == "1900"
     assert ub.gemeentecode("WK190000") == "1900"
@@ -84,6 +85,7 @@ def test_gemeentecode():
 def test_comprimeren_tot_onder_de_grens(tmp_path):
     Image = pytest.importorskip("PIL.Image")
     import random
+
     rnd = random.Random(1)
     beeld = Image.new("RGB", (1440, 860))
     beeld.putdata([(rnd.randrange(256), rnd.randrange(256), rnd.randrange(256)) for _ in range(1440 * 860)])
@@ -98,19 +100,41 @@ def test_comprimeren_tot_onder_de_grens(tmp_path):
 def _fixture(tmp_path, crlf=False, met_bewijs=True):
     map_ = tmp_path / "usecases"
     (map_ / "x" / "bewijs").mkdir(parents=True)
-    u = {"naam": "x", "titel": "Titel X", "vraag": "Hoe | waar?", "status": "actief", "versie": "1.0.0",
-         "bewijs": {"stappen": [{"id": "kaart", "actie": "kaart", "omschrijving": "De kaart"},
-                                {"id": "chat", "actie": "chat", "vraag": "v"}]}}
+    u = {
+        "naam": "x",
+        "titel": "Titel X",
+        "vraag": "Hoe | waar?",
+        "status": "actief",
+        "versie": "1.0.0",
+        "bewijs": {
+            "stappen": [
+                {"id": "kaart", "actie": "kaart", "omschrijving": "De kaart"},
+                {"id": "chat", "actie": "chat", "vraag": "v"},
+            ]
+        },
+    }
     readme = "# X\n\n## Bewijs\n\nOude tekst, niet in git.\n\n## Bekende afwijkingen\n\n- geen\n"
     (map_ / "x" / "README.md").write_bytes((readme.replace("\n", "\r\n") if crlf else readme).encode())
     if met_bewijs:
         (map_ / "x" / "bewijs" / "kaart.webp").write_bytes(b"RIFF")
         (map_ / "x" / "bewijs" / "chat.webp").write_bytes(b"RIFF")
-        (map_ / "x" / "bewijs" / "bewijs.json").write_text(json.dumps({
-            "specificatie": "1.0", "naam": "x", "versie": "1.0.0", "omnitwin_versie": "0.3.0",
-            "datum": "2026-10-03T10:00:00+02:00", "geslaagd": True, "controles": [],
-            "stappen": [{"id": "kaart", "resultaat": "ok", "afbeelding": "kaart.webp"},
-                        {"id": "chat", "resultaat": "ok", "afbeelding": "chat.webp"}]}))
+        (map_ / "x" / "bewijs" / "bewijs.json").write_text(
+            json.dumps(
+                {
+                    "specificatie": "1.0",
+                    "naam": "x",
+                    "versie": "1.0.0",
+                    "omnitwin_versie": "0.3.0",
+                    "datum": "2026-10-03T10:00:00+02:00",
+                    "geslaagd": True,
+                    "controles": [],
+                    "stappen": [
+                        {"id": "kaart", "resultaat": "ok", "afbeelding": "kaart.webp"},
+                        {"id": "chat", "resultaat": "ok", "afbeelding": "chat.webp"},
+                    ],
+                }
+            )
+        )
     root = tmp_path / "README.md"
     root.write_text(f"# R\n\n{ub.GALERIJ_START}\n{ub.GALERIJ_EINDE}\n\nrest\n", encoding="utf-8")
     return map_, root, {"x": u}

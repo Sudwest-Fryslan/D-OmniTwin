@@ -4,13 +4,14 @@ Unit tests voor de terugmeldvoorziening (#311): validatie, context, honeypot, ra
 
 import uuid
 from unittest.mock import MagicMock, patch
+
 import pytest
 from fastapi import HTTPException
 from pydantic import ValidationError
 
 from omnitwin.fouten import GebruikersFout
 from omnitwin.grenzen import Limiet, beperk_meldingen
-from omnitwin.routers.meldingen import MeldingInvoer, MeldingWijziging, meld
+from omnitwin.routers.meldingen import MeldingInvoer, meld
 from omnitwin.services import meldingen as meldingen_service
 
 pytestmark = pytest.mark.unit
@@ -110,7 +111,7 @@ def test_rate_limit_blokkeert_na_maximum():
 
     assert limiet.probeer(ip) == 0  # 1e verzoek: toegestaan
     assert limiet.probeer(ip) == 0  # 2e verzoek: toegestaan
-    wacht = limiet.probeer(ip)      # 3e verzoek: geblokkeerd!
+    wacht = limiet.probeer(ip)  # 3e verzoek: geblokkeerd!
     assert wacht > 0
 
 
@@ -121,6 +122,7 @@ def test_beperk_meldingen_dependency():
 
     # Reset limiet voor test IP
     from omnitwin import grenzen
+
     grenzen._meldingen_limiet.reset("192.0.2.2")
 
     for _ in range(10):

@@ -33,6 +33,7 @@ def ucs(*manifesten):
 
 # ---------------------------------------------------------------- volgorde en plan
 
+
 def test_volgorde_afhankelijkheden_eerst_en_elk_een_keer():
     s = ucs(m("a"), m("b", "a"), m("c", "a", "b"), m("d", "c", "b"))
     assert uc.volgorde(["d"], s) == ["a", "b", "c", "d"]
@@ -56,17 +57,28 @@ def test_onbekende_naam_geeft_fout():
 
 
 def test_versie_eis():
-    s = ucs(m("basis", versie="0.2.1"), m("ok", {"naam": "basis", "versie": ">=0.2.0,<1.0.0"}),
-            m("te-nieuw", {"naam": "basis", "versie": ">=0.3.0"}))
+    s = ucs(
+        m("basis", versie="0.2.1"),
+        m("ok", {"naam": "basis", "versie": ">=0.2.0,<1.0.0"}),
+        m("te-nieuw", {"naam": "basis", "versie": ">=0.3.0"}),
+    )
     assert uc.volgorde(["ok"], s) == ["basis", "ok"]
     with pytest.raises(uc.UseCaseFout, match="vraagt basis >=0.3.0"):
         uc.volgorde(["te-nieuw"], s)
 
 
-@pytest.mark.parametrize("versie,eis,ok", [
-    ("0.1.0", ">=0.1.0", True), ("0.1.0", ">0.1.0", False), ("1.2.3", "1.2.3", True), ("1.2.3", "==1.2", False),
-    ("0.9.9", "<1.0.0", True), ("1.0.0", ">=0.1,<1", False), ("2.0.0", None, True),
-])
+@pytest.mark.parametrize(
+    "versie,eis,ok",
+    [
+        ("0.1.0", ">=0.1.0", True),
+        ("0.1.0", ">0.1.0", False),
+        ("1.2.3", "1.2.3", True),
+        ("1.2.3", "==1.2", False),
+        ("0.9.9", "<1.0.0", True),
+        ("1.0.0", ">=0.1,<1", False),
+        ("2.0.0", None, True),
+    ],
+)
 def test_voldoet(versie, eis, ok):
     assert uc.voldoet(versie, eis) is ok
 
@@ -78,12 +90,20 @@ def test_extern_nog_niet_ondersteund():
 
 
 def test_ontwerp_en_afhankelijken_overgeslagen_optioneel_niet():
-    s = ucs(m("api", status="ontwerp"), m("hangt-af", "api"), m("los"),
-            m("optioneel", {"naam": "api", "optioneel": True}), m("indirect", "hangt-af"))
+    s = ucs(
+        m("api", status="ontwerp"),
+        m("hangt-af", "api"),
+        m("los"),
+        m("optioneel", {"naam": "api", "optioneel": True}),
+        m("indirect", "hangt-af"),
+    )
     orde, over = uc.plan([], s, alle=True)
     assert orde == ["los", "optioneel"]
-    assert over == {"api": "status ontwerp", "hangt-af": "hangt af van api (overgeslagen)",
-                    "indirect": "hangt af van hangt-af (overgeslagen)"}
+    assert over == {
+        "api": "status ontwerp",
+        "hangt-af": "hangt af van api (overgeslagen)",
+        "indirect": "hangt af van hangt-af (overgeslagen)",
+    }
 
 
 def test_boom():
@@ -92,6 +112,7 @@ def test_boom():
 
 
 # ---------------------------------------------------------------- de use cases in de repo
+
 
 @pytest.mark.parametrize("naam", sorted(ALLE))
 def test_manifest_geldig(naam):
@@ -113,8 +134,12 @@ def test_alle_afhankelijkheden_oplosbaar():
 def test_swf_gebiedsmonitor_neemt_alle_swf_use_cases_mee_in_de_goede_volgorde():
     orde = uc.volgorde(["swf-gebiedsmonitor"], ALLE)
     assert {n for n in ALLE if n.startswith("swf-")} == set(orde) - {"cbs-gebiedsindelingen"}
-    for eerder, later in [("swf-definities", "swf-gebiedsindelingen"), ("swf-gebiedsindelingen", "swf-kompasprofiel"),
-                          ("swf-kompasprofiel", "swf-basismonitor-waarden"), ("swf-basismonitor-waarden", "swf-kaartlagen")]:
+    for eerder, later in [
+        ("swf-definities", "swf-gebiedsindelingen"),
+        ("swf-gebiedsindelingen", "swf-kompasprofiel"),
+        ("swf-kompasprofiel", "swf-basismonitor-waarden"),
+        ("swf-basismonitor-waarden", "swf-kaartlagen"),
+    ]:
         assert orde.index(eerder) < orde.index(later)
 
 
@@ -123,8 +148,9 @@ def test_demopakketten_blijven_laden():
     orde, _ = uc.plan([], ALLE, alle=True)
     oud = [n for n in orde if "datasets" not in ALLE[n]]
     assert oud == sorted(n for n, u in ALLE.items() if "datasets" not in u and u.get("status") != "ontwerp")
-    assert all(ALLE[n].get("status") == "actief" for n in orde if "datasets" in ALLE[n]), \
+    assert all(ALLE[n].get("status") == "actief" for n in orde if "datasets" in ALLE[n]), (
         "laad-API-use cases met status ontwerp horen overgeslagen"
+    )
 
 
 @pytest.mark.parametrize("naam", sorted(MET_DATASETS))
@@ -145,7 +171,9 @@ def test_zelfde_dataset_zelfde_registratie():
                 continue
             reg = uc.registratie_voor_api(uc.lees_dataset(u, ds))
             if ds["id"] in gezien:
-                assert reg == gezien[ds["id"]][1], f"{ds['id']}: registratie in {u['naam']} wijkt af van {gezien[ds['id']][0]}"
+                assert reg == gezien[ds["id"]][1], (
+                    f"{ds['id']}: registratie in {u['naam']} wijkt af van {gezien[ds['id']][0]}"
+                )
             else:
                 gezien[ds["id"]] = (u["naam"], reg)
 
@@ -186,21 +214,37 @@ def test_index_actueel():
 
 def test_registratievoorbeelden_uit_de_specificatie_zijn_geldig():
     from omnitwin.laden.registratie import valideer_registratie
+
     spec = laad_openapi()
     for naam in ("RegistratieWaarnemingen", "RegistratieKaartlaag"):
         assert valideer_registratie(spec["components"]["examples"][naam]["value"], spec) == []
     fout = {"id": "X", "beschrijving": {"@type": "dcat:Dataset"}, "laadprofiel": {"profiel": "kaartlaag"}}
     fouten = valideer_registratie(fout, spec)
-    assert any("patroon" in f for f in fouten) and any("dct:title" in f for f in fouten) and any("featureTabel" in f for f in fouten)
+    assert (
+        any("patroon" in f for f in fouten)
+        and any("dct:title" in f for f in fouten)
+        and any("featureTabel" in f for f in fouten)
+    )
 
 
 # ---------------------------------------------------------------- controleer (fixture zonder netwerk en zonder GDAL)
 
 DEFINITIES = {
-    "indicatoren": [{"id": "00000000-0000-4000-8000-000000000001", "naam": "Voorbeeld", "status": "A",
-                     "begingeldigheid": "2024-11-20 00:00"}],
+    "indicatoren": [
+        {
+            "id": "00000000-0000-4000-8000-000000000001",
+            "naam": "Voorbeeld",
+            "status": "A",
+            "begingeldigheid": "2024-11-20 00:00",
+        }
+    ],
     "gebiedstypen": [{"id": "00000000-0000-4000-8000-0000000000a1", "naam": "CBS buurten", "actief": True}],
-    "relaties": [{"indicator_id": "00000000-0000-4000-8000-000000000001", "gebiedstype_id": "00000000-0000-4000-8000-0000000000a1"}],
+    "relaties": [
+        {
+            "indicator_id": "00000000-0000-4000-8000-000000000001",
+            "gebiedstype_id": "00000000-0000-4000-8000-0000000000a1",
+        }
+    ],
 }
 
 
@@ -211,16 +255,39 @@ def fixture_usecases(tmp_path):
     (map_ / "datasets").mkdir(parents=True)
     (map_ / "definities.json").write_text(json.dumps(DEFINITIES), encoding="utf-8")
     (map_ / "README.md").write_text("# voorbeeld", encoding="utf-8")
-    reg = json.loads((ROOT / "usecases" / "swf-adapter-fme" / "datasets" / "swf-monitor-definities.json").read_text(encoding="utf-8"))
+    reg = json.loads(
+        (ROOT / "usecases" / "swf-adapter-fme" / "datasets" / "swf-monitor-definities.json").read_text(encoding="utf-8")
+    )
     reg["bron"] = {"adapter": "usecase-bestand", "pad": "definities.json"}
     (map_ / "datasets" / "swf-monitor-definities.json").write_text(json.dumps(reg), encoding="utf-8")
-    (map_ / "usecase.json").write_text(json.dumps({
-        "specificatie": "1.0", "naam": "voorbeeld-adapter", "versie": "0.1.0", "titel": "Voorbeeld", "vraag": "?", "gebruiker": "test",
-        "status": "ontwerp", "afhankelijk_van": [], "rechten": [],
-        "datasets": [{"id": "swf-monitor-definities", "route": "compat", "registratie": "datasets/swf-monitor-definities.json"}],
-        "controles": [{"type": "aantal", "dataset": "swf-monitor-definities", "resource": "indicatoren", "gelijk": 1},
-                      {"type": "bewerking", "dataset": "swf-monitor-definities", "reden": "status: A → O", "gelijk": 1},
-                      {"type": "api", "pad": "/api/data/v1/indicatoren"}]}), encoding="utf-8")
+    (map_ / "usecase.json").write_text(
+        json.dumps(
+            {
+                "specificatie": "1.0",
+                "naam": "voorbeeld-adapter",
+                "versie": "0.1.0",
+                "titel": "Voorbeeld",
+                "vraag": "?",
+                "gebruiker": "test",
+                "status": "ontwerp",
+                "afhankelijk_van": [],
+                "rechten": [],
+                "datasets": [
+                    {
+                        "id": "swf-monitor-definities",
+                        "route": "compat",
+                        "registratie": "datasets/swf-monitor-definities.json",
+                    }
+                ],
+                "controles": [
+                    {"type": "aantal", "dataset": "swf-monitor-definities", "resource": "indicatoren", "gelijk": 1},
+                    {"type": "bewerking", "dataset": "swf-monitor-definities", "reden": "status: A → O", "gelijk": 1},
+                    {"type": "api", "pad": "/api/data/v1/indicatoren"},
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
     return root
 
 
@@ -263,9 +330,11 @@ def test_controleer_keurt_code_in_de_map_af(fixture_usecases, tmp_path):
 
 def test_laad_usecase_slaat_laad_api_use_cases_over(capsys):
     import sys
+
     sys.path.insert(0, str(ROOT / "init_data" / "scripts"))
     pytest.importorskip("psycopg2")
     import laad_usecase
+
     namen = laad_usecase.pakketten([], True)
     assert namen == sorted(n for n, u in ALLE.items() if "datasets" not in u)
     uit = capsys.readouterr().out
@@ -301,6 +370,9 @@ def test_controleer_telt_ook_zonder_frictionless(tmp_path, monkeypatch):
 
     monkeypatch.setattr(levering, "valideer_levering", ontbreekt)
     r = uc.controleer("swf-kaartlagen", tmp_path, bron_env={})
-    c = next(c for c in r["controles"] if c["controle"].get("dataset") == "swf-laag-extern"
-             and c["controle"]["type"] == "aantal")
+    c = next(
+        c
+        for c in r["controles"]
+        if c["controle"].get("dataset") == "swf-laag-extern" and c["controle"]["type"] == "aantal"
+    )
     assert c["resultaat"] == "ok" and c["waarde"] == 8

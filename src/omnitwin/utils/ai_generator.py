@@ -1,25 +1,27 @@
 import re
-from sqlalchemy.orm import Session
+
 from omnitwin import ai_vrijgave
 from omnitwin.services.llm_service import LLMService
+
 
 def clean_ai_output(text: str) -> str:
     """Schoont de AI output op door <think> tags en markdown te verwijderen."""
     if not text:
         return ""
-    
+
     # 1. Verwijder de volledige <think> blokken (indien aanwezig)
-    text = re.sub(r'<think>.*?</think>', '', text, flags=re.DOTALL)
-    
+    text = re.sub(r"<think>.*?</think>", "", text, flags=re.DOTALL)
+
     # 2. Verwijder resterende losse tags (safeguard)
-    text = text.replace('<think>', '').replace('</think>', '')
-    
+    text = text.replace("<think>", "").replace("</think>", "")
+
     # 3. Verwijder markdown code blokken (```turtle, ```json, etc)
-    text = re.sub(r'```[a-z]*\n?', '', text)
-    text = text.replace('```', '')
-    
+    text = re.sub(r"```[a-z]*\n?", "", text)
+    text = text.replace("```", "")
+
     # 4. Verwijder overtollige witregels aan begin/eind
     return text.strip()
+
 
 def generate_indicator_description(llm: LLMService, naam: str, categorie: str, omschrijving: str, bron: str) -> str:
     """
@@ -41,8 +43,13 @@ Omschrijving: {omschrijving}
 Bron: {bron}"""
 
     # Valt niet onder AI-usecase A, B of C: de poort weigert dit altijd (#307)
-    response = llm._call_llm(system_prompt, user_prompt, context_name=f"Utility: {naam}",
-                             usecase=ai_vrijgave.BUITEN, taak=f"Beschrijving indicator '{naam}'")
+    response = llm._call_llm(
+        system_prompt,
+        user_prompt,
+        context_name=f"Utility: {naam}",
+        usecase=ai_vrijgave.BUITEN,
+        taak=f"Beschrijving indicator '{naam}'",
+    )
     if response.get("error"):
         return ""
     raw_text = response.get("text", "")

@@ -21,9 +21,8 @@ Scheduling:
 
 import asyncio
 import ipaddress
-import random
 import logging
-from typing import Optional
+import random
 
 from sqlalchemy import text
 
@@ -44,7 +43,7 @@ _JITTER_S = 30 * 60  # ±30 minuten
 _cleanup_task: asyncio.Task | None = None
 
 
-def ip_inkorten(adres: Optional[str]) -> Optional[str]:
+def ip_inkorten(adres: str | None) -> str | None:
     """IPv4 → laatste octet 0, IPv6 → /48 (rest nullen). Onleesbaar → None (leeg).
 
     Idempotent: een ingekort adres blijft gelijk.
@@ -103,9 +102,7 @@ def _run_cleanup(conn=None) -> dict[str, int]:
         for oud in adressen:
             nieuw = ip_inkorten(oud)
             if nieuw != oud:
-                ingekort += conn.execute(
-                    _IP_UPDATE_SQL, {"nieuw": nieuw, "oud": oud, "ip_dagen": ip_dagen}
-                ).rowcount
+                ingekort += conn.execute(_IP_UPDATE_SQL, {"nieuw": nieuw, "oud": oud, "ip_dagen": ip_dagen}).rowcount
         conn.commit()
 
     return {"verwijderd": verwijderd, "ip_ingekort": ingekort}
@@ -113,8 +110,10 @@ def _run_cleanup(conn=None) -> dict[str, int]:
 
 def samenvatting(resultaat: dict[str, int]) -> str:
     inst = instellingen()
-    return (f"{resultaat.get('verwijderd', 0)} logregels verwijderd (ouder dan {inst.log_bewaar_dagen} dagen), "
-            f"{resultaat.get('ip_ingekort', 0)} IP-adressen ingekort (ouder dan {inst.log_ip_bewaar_dagen} dagen)")
+    return (
+        f"{resultaat.get('verwijderd', 0)} logregels verwijderd (ouder dan {inst.log_bewaar_dagen} dagen), "
+        f"{resultaat.get('ip_ingekort', 0)} IP-adressen ingekort (ouder dan {inst.log_ip_bewaar_dagen} dagen)"
+    )
 
 
 async def _cleanup_loop() -> None:
@@ -136,8 +135,11 @@ async def _cleanup_loop() -> None:
         try:
             n = await asyncio.to_thread(_ruim_voorkeuren_op)
             if n:
-                AppLogger.info(f"Voorkeuren van {n} gebruiker(s) verwijderd (langer dan "
-                               f"{gebruikersvoorkeuren.BEWAAR_DAGEN} dagen niet gebruikt)", category="SERVER")
+                AppLogger.info(
+                    f"Voorkeuren van {n} gebruiker(s) verwijderd (langer dan "
+                    f"{gebruikersvoorkeuren.BEWAAR_DAGEN} dagen niet gebruikt)",
+                    category="SERVER",
+                )
         except Exception as e:
             AppLogger.error(f"Opruimen voorkeuren mislukt: {type(e).__name__}", category="SERVER")
 
@@ -154,8 +156,11 @@ async def _cleanup_loop() -> None:
         try:
             n = await asyncio.to_thread(_ruim_meldingen_op)
             if n:
-                AppLogger.info(f"Terugmeldvoorziening: {n} melding(en) ouder dan "
-                               f"{meldingen_service.BEWAAR_DAGEN} dagen verwijderd", category="SERVER")
+                AppLogger.info(
+                    f"Terugmeldvoorziening: {n} melding(en) ouder dan "
+                    f"{meldingen_service.BEWAAR_DAGEN} dagen verwijderd",
+                    category="SERVER",
+                )
         except Exception as e:
             AppLogger.error(f"Opruimen meldingen mislukt: {type(e).__name__}", category="SERVER")
 
@@ -163,6 +168,7 @@ async def _cleanup_loop() -> None:
 def _ai_onderhoud() -> int:
     from omnitwin import ai_logboek, ai_vrijgave
     from omnitwin.database import SessionLocal
+
     db = SessionLocal()
     try:
         ai_vrijgave.registreer_verlopen(db)

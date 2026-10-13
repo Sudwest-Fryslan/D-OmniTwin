@@ -26,8 +26,8 @@ pytestmark = pytest.mark.integration
 
 BASE_URL = os.environ.get("OMNITWIN_BASE_URL", "http://localhost").rstrip("/")
 TIMEOUT = 60
-GEBIED = "BU19000002"     # Bolsward-Zuidoost
-GEBIED_2 = "BU19000001"   # Bolsward-Noord
+GEBIED = "BU19000002"  # Bolsward-Zuidoost
+GEBIED_2 = "BU19000001"  # Bolsward-Noord
 GEMEENTE = "1900"
 HITTE_EILAND = "dacb8005-ecc2-5014-a5c2-a07c119b43ae"  # use case hittestress, lager is beter
 KLIMAAT = "Klimaat Kompas"
@@ -97,6 +97,7 @@ def hitte_eiland(conn, gebiedstype_id):
 
 # ── Kaart ────────────────────────────────────────────────────────────────────
 
+
 def test_kaart_label_kwintielen(gebiedstype_id, hitte_eiland):
     ref, per_gebied = hitte_eiland
     d = kaart(gebiedstype_id, HITTE_EILAND)
@@ -151,6 +152,7 @@ def test_kaart_label_onbekende_modus_blijft_422(gebiedstype_id):
 
 
 # ── Kompas ───────────────────────────────────────────────────────────────────
+
 
 def knopen(node):
     yield node

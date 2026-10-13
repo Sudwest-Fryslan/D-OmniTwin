@@ -16,6 +16,7 @@ Omgeving:
 Welke LLM-koppeling getest wordt, bepaalt llm_config in de database (api_type, api_url,
 model_name); zie README, 'AI Instellen'.
 """
+
 import os
 import re
 
@@ -36,8 +37,30 @@ MAX_WORDS_RAPPORT = int(os.getenv("LLM_TEST_MAX_WORDS_RAPPORT", "200"))
 TIMEOUT = int(os.getenv("LLM_TEST_TIMEOUT", "900"))
 
 NEDERLANDSE_WOORDEN = {
-    "de", "het", "een", "en", "van", "in", "is", "dat", "op", "voor", "met", "niet",
-    "zijn", "te", "er", "je", "ik", "wordt", "deze", "als", "ook", "om", "bij", "naar",
+    "de",
+    "het",
+    "een",
+    "en",
+    "van",
+    "in",
+    "is",
+    "dat",
+    "op",
+    "voor",
+    "met",
+    "niet",
+    "zijn",
+    "te",
+    "er",
+    "je",
+    "ik",
+    "wordt",
+    "deze",
+    "als",
+    "ook",
+    "om",
+    "bij",
+    "naar",
 }
 FOUTMELDINGEN = ("Error contacting", "LLM-server", "Generatie mislukt", "Fout bij")
 

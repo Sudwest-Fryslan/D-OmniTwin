@@ -62,15 +62,21 @@ def lees_features(bron: Bron, ctx: Context, fouten: Fouten) -> tuple[list[dict],
         raise afkeuren("formaat-ongeldig", "geen GeoPackage in de levering (los of als resource in de zip)")
     lagen = gpkg_lagen(bron.gpkg)
     if tabel not in lagen:
-        raise afkeuren("formaat-ongeldig", f"featureTabel {tabel} ontbreekt in de GeoPackage "
-                       f"(tabellen: {', '.join(sorted(lagen)) or 'geen'})", resource=tabel)
+        raise afkeuren(
+            "formaat-ongeldig",
+            f"featureTabel {tabel} ontbreekt in de GeoPackage (tabellen: {', '.join(sorted(lagen)) or 'geen'})",
+            resource=tabel,
+        )
     features = []
     try:
         with fiona.open(bron.gpkg, layer=tabel) as src:
             epsg = src.crs.to_epsg() if src.crs else None
             if epsg not in CRS_TOEGESTAAN:
-                raise afkeuren("crs-niet-ondersteund", f"CRS EPSG:{epsg} wordt niet ondersteund; gebruik EPSG:28992 "
-                               "of EPSG:4326", resource=tabel)
+                raise afkeuren(
+                    "crs-niet-ondersteund",
+                    f"CRS EPSG:{epsg} wordt niet ondersteund; gebruik EPSG:28992 of EPSG:4326",
+                    resource=tabel,
+                )
             velden = list(src.schema["properties"])
             for i, f in enumerate(src, start=1):
                 props = {k: _json_waarde(v) for k, v in dict(f.properties or {}).items()}
@@ -80,13 +86,22 @@ def lees_features(bron: Bron, ctx: Context, fouten: Fouten) -> tuple[list[dict],
                 else:
                     geom = shape(f.geometry)
                     if geom.is_empty or not geom.is_valid:
-                        fouten.voeg(Fout("geometrie-ongeldig", "lege of ongeldige geometrie (niet gerepareerd)",
-                                         tabel, i, "geometrie"))
+                        fouten.voeg(
+                            Fout(
+                                "geometrie-ongeldig",
+                                "lege of ongeldige geometrie (niet gerepareerd)",
+                                tabel,
+                                i,
+                                "geometrie",
+                            )
+                        )
                 features.append({"regel": i, "props": props, "geom": geom})
     except Afkeuring:
         raise
     except Exception as e:  # fiona/GDAL: onleesbare tabel
-        raise afkeuren("formaat-ongeldig", f"featureTabel {tabel} is niet te lezen ({type(e).__name__})", resource=tabel)
+        raise afkeuren(
+            "formaat-ongeldig", f"featureTabel {tabel} is niet te lezen ({type(e).__name__})", resource=tabel
+        )
     ctx.extra["velden"] = velden
     return features, epsg, tabel
 
@@ -105,11 +120,19 @@ def _sleutels(features, veld, tabel, fouten, prefix=""):
         f["code"] = code
         eerder = gezien.setdefault(code, f["regel"])
         if eerder != f["regel"]:
-            fouten.voeg(Fout("dubbele-sleutel", f"regel {f['regel']} heeft dezelfde sleutel als regel {eerder}",
-                             tabel, f["regel"], veld))
+            fouten.voeg(
+                Fout(
+                    "dubbele-sleutel",
+                    f"regel {f['regel']} heeft dezelfde sleutel als regel {eerder}",
+                    tabel,
+                    f["regel"],
+                    veld,
+                )
+            )
 
 
 # ── gebiedsindeling ──────────────────────────────────────────────────────────
+
 
 def controleer_gebiedsindeling(bron: Bron, ctx: Context) -> tuple[dict, Fouten, dict]:
     fouten = Fouten()
@@ -133,6 +156,7 @@ def controleer_gebiedsindeling(bron: Bron, ctx: Context) -> tuple[dict, Fouten, 
 def stage_gebiedsindeling(cur, ctx: Context, data: dict) -> None:
     import psycopg2.extras
     from shapely.geometry import MultiPolygon
+
     doel = ctx.laadprofiel["doel"]
     eigen = {doel["sleutelveld"], doel["labelveld"], "gemeente_code", "actief"}
     rijen = []
@@ -145,15 +169,28 @@ def stage_gebiedsindeling(cur, ctx: Context, data: dict) -> None:
         gm = (str(int(gm)).zfill(4) if isinstance(gm, (int, float)) else str(gm)) if gm not in (None, "") else None
         actief = p.get("actief")
         meta = {k: v for k, v in p.items() if k not in eigen and v is not None}
-        rijen.append((ctx.levering_id, f["regel"], f["code"], str(p[doel["labelveld"]])[:255],
-                      gm if gm and re.fullmatch(r"\d{4}", gm) else None,
-                      True if actief is None else bool(actief), psycopg2.extras.Json(meta) if meta else None,
-                      g.wkb, data["epsg"]))
-    psycopg2.extras.execute_values(cur, """
+        rijen.append(
+            (
+                ctx.levering_id,
+                f["regel"],
+                f["code"],
+                str(p[doel["labelveld"]])[:255],
+                gm if gm and re.fullmatch(r"\d{4}", gm) else None,
+                True if actief is None else bool(actief),
+                psycopg2.extras.Json(meta) if meta else None,
+                g.wkb,
+                data["epsg"],
+            )
+        )
+    psycopg2.extras.execute_values(
+        cur,
+        """
         INSERT INTO laden.staging_gebieden (levering_id, regel, id, naam, gemeente_code, actief, metadata, geom)
-        VALUES %s""", rijen,
+        VALUES %s""",
+        rijen,
         template="(%s, %s, %s, %s, %s, %s, %s, ST_Multi(ST_Transform(ST_GeomFromWKB(%s, %s), 28992)))",
-        page_size=500)
+        page_size=500,
+    )
 
 
 def db_controles_gebiedsindeling(cur, ctx: Context, fouten: Fouten) -> None:
@@ -161,14 +198,29 @@ def db_controles_gebiedsindeling(cur, ctx: Context, fouten: Fouten) -> None:
     p = {"lv": ctx.levering_id, "gt": doel["gebiedstypeId"]}
     cur.execute("SELECT 1 FROM public.gebiedstypes WHERE id = %(gt)s", p)
     if not cur.fetchone():
-        fouten.voeg(Fout("gebiedstype-onbekend", "het gebiedstype van de registratie (doel.gebiedstypeId) bestaat "
-                         "niet; lever eerst de definities of vul de stuurdata aan"))
+        fouten.voeg(
+            Fout(
+                "gebiedstype-onbekend",
+                "het gebiedstype van de registratie (doel.gebiedstypeId) bestaat "
+                "niet; lever eerst de definities of vul de stuurdata aan",
+            )
+        )
         return
-    cur.execute("""SELECT s.regel FROM laden.staging_gebieden s JOIN public.gebieden g ON g.id = s.id
-                   WHERE s.levering_id = %(lv)s AND g.gebiedstype_id <> %(gt)s ORDER BY s.regel LIMIT 1000""", p)
+    cur.execute(
+        """SELECT s.regel FROM laden.staging_gebieden s JOIN public.gebieden g ON g.id = s.id
+                   WHERE s.levering_id = %(lv)s AND g.gebiedstype_id <> %(gt)s ORDER BY s.regel LIMIT 1000""",
+        p,
+    )
     for r in cur.fetchall():
-        fouten.voeg(Fout("dubbele-sleutel", "deze gebiedscode bestaat al bij een ander gebiedstype; gebruik "
-                         "codePrefix", None, r["regel"], doel["sleutelveld"]))
+        fouten.voeg(
+            Fout(
+                "dubbele-sleutel",
+                "deze gebiedscode bestaat al bij een ander gebiedstype; gebruik codePrefix",
+                None,
+                r["regel"],
+                doel["sleutelveld"],
+            )
+        )
 
 
 def publiceer_gebiedsindeling(cur, ctx: Context) -> dict:
@@ -176,11 +228,15 @@ def publiceer_gebiedsindeling(cur, ctx: Context) -> dict:
     p = {"lv": ctx.levering_id, "gt": doel["gebiedstypeId"]}
     cur.execute("SELECT count(*) AS n FROM public.gebieden WHERE gebiedstype_id = %(gt)s AND actief", p)
     vorig = cur.fetchone()["n"]
-    cur.execute("""UPDATE laden.staging_gebieden s SET gemeente_code = NULL
+    cur.execute(
+        """UPDATE laden.staging_gebieden s SET gemeente_code = NULL
                    WHERE s.levering_id = %(lv)s AND s.gemeente_code IS NOT NULL
-                     AND NOT EXISTS (SELECT 1 FROM public.gemeenten m WHERE m.code = s.gemeente_code)""", p)
+                     AND NOT EXISTS (SELECT 1 FROM public.gemeenten m WHERE m.code = s.gemeente_code)""",
+        p,
+    )
     gemeente_onbekend = cur.rowcount
-    cur.execute("""
+    cur.execute(
+        """
         INSERT INTO public.gebieden AS g (id, gebiedstype_id, naam, geom, metadata, actief, gemeente_code)
         SELECT s.id, %(gt)s, s.naam, s.geom, s.metadata, s.actief, s.gemeente_code
         FROM laden.staging_gebieden s WHERE s.levering_id = %(lv)s
@@ -190,31 +246,46 @@ def publiceer_gebiedsindeling(cur, ctx: Context) -> dict:
             actief = EXCLUDED.actief,
             gemeente_code = coalesce(EXCLUDED.gemeente_code, g.gemeente_code),
             metadata = coalesce(g.metadata, '{}'::jsonb) || coalesce(EXCLUDED.metadata, '{}'::jsonb)
-        WHERE g.gebiedstype_id = EXCLUDED.gebiedstype_id""", p)
+        WHERE g.gebiedstype_id = EXCLUDED.gebiedstype_id""",
+        p,
+    )
     gepubliceerd = cur.rowcount
     # Verdwenen gebieden: met waarden inactief, zonder waarden weg
-    cur.execute("""
+    cur.execute(
+        """
         UPDATE public.gebieden g SET actief = false
         WHERE g.gebiedstype_id = %(gt)s AND g.actief
           AND NOT EXISTS (SELECT 1 FROM laden.staging_gebieden s WHERE s.levering_id = %(lv)s AND s.id = g.id)
-          AND EXISTS (SELECT 1 FROM public.gebied_data d WHERE d.gebied_id = g.id)""", p)
+          AND EXISTS (SELECT 1 FROM public.gebied_data d WHERE d.gebied_id = g.id)""",
+        p,
+    )
     inactief = cur.rowcount
-    cur.execute("""
+    cur.execute(
+        """
         DELETE FROM public.gebieden g
         WHERE g.gebiedstype_id = %(gt)s
           AND NOT EXISTS (SELECT 1 FROM laden.staging_gebieden s WHERE s.levering_id = %(lv)s AND s.id = g.id)
-          AND NOT EXISTS (SELECT 1 FROM public.gebied_data d WHERE d.gebied_id = g.id)""", p)
+          AND NOT EXISTS (SELECT 1 FROM public.gebied_data d WHERE d.gebied_id = g.id)""",
+        p,
+    )
     verwijderd = cur.rowcount
     cur.execute("DELETE FROM laden.staging_gebieden WHERE levering_id = %(lv)s", p)
     plausibel(ctx.laadprofiel, gepubliceerd, vorig)
-    uit = {"gepubliceerd": gepubliceerd, "vervangen": vorig, "inactief": inactief, "verwijderd": verwijderd,
-           "_aantal_regels": gepubliceerd, "_levering_ids": [ctx.levering_id]}
+    uit = {
+        "gepubliceerd": gepubliceerd,
+        "vervangen": vorig,
+        "inactief": inactief,
+        "verwijderd": verwijderd,
+        "_aantal_regels": gepubliceerd,
+        "_levering_ids": [ctx.levering_id],
+    }
     if gemeente_onbekend:
         uit["gemeenteOnbekend"] = gemeente_onbekend
     return uit
 
 
 # ── kaartlaag ────────────────────────────────────────────────────────────────
+
 
 def controleer_kaartlaag(bron: Bron, ctx: Context) -> tuple[dict, Fouten, dict]:
     fouten = Fouten()
@@ -223,8 +294,9 @@ def controleer_kaartlaag(bron: Bron, ctx: Context) -> tuple[dict, Fouten, dict]:
     velden = ctx.extra["velden"]
     for v in velden:
         if len(v) > 63 or not SNAKE.match(v):
-            fouten.voeg(Fout("schema-ongeldig", "attribuutnaam niet in snake_case of langer dan 63 tekens",
-                             tabel, None, v))
+            fouten.voeg(
+                Fout("schema-ongeldig", "attribuutnaam niet in snake_case of langer dan 63 tekens", tabel, None, v)
+            )
     for v in (doel.get("sleutelveld"), doel.get("labelveld")):
         if v and v not in velden:
             raise afkeuren("schema-ongeldig", f"veld {v} ontbreekt in {tabel}", resource=tabel, veld=v)
@@ -247,21 +319,33 @@ def publiceer_kaartlaag(cur, ctx: Context, data: dict) -> dict:
     doel = ctx.laadprofiel["doel"]
     plausibel(ctx.laadprofiel, len(data["features"]), 0)
     rel = f"laden/{ctx.dataset_id}.gpkg"
-    p = {"naam": str(besch.get("dct:title") or ctx.dataset_id)[:100], "beschrijving": besch.get("dct:description"),
-         "url": rel, "typename": data["tabel"], "toegang": toegang_van(besch), "id": ctx.dataset.get("kaartlaag_id"),
-         "ds": ctx.dataset_id}
+    p = {
+        "naam": str(besch.get("dct:title") or ctx.dataset_id)[:100],
+        "beschrijving": besch.get("dct:description"),
+        "url": rel,
+        "typename": data["tabel"],
+        "toegang": toegang_van(besch),
+        "id": ctx.dataset.get("kaartlaag_id"),
+        "ds": ctx.dataset_id,
+    }
     if p["id"]:
-        cur.execute("""UPDATE public.externe_kaartlagen SET naam = %(naam)s, beschrijving = %(beschrijving)s,
+        cur.execute(
+            """UPDATE public.externe_kaartlagen SET naam = %(naam)s, beschrijving = %(beschrijving)s,
                        bron_type = 'lokaal', url = %(url)s, typename = %(typename)s, srsname = 'EPSG:28992',
                        filter_type = 'alles', actief = true, toegang = %(toegang)s, updated_at = now()
-                       WHERE id = %(id)s RETURNING id""", p)
+                       WHERE id = %(id)s RETURNING id""",
+            p,
+        )
         rij = cur.fetchone()
         p["id"] = rij["id"] if rij else None
     if not p["id"]:
-        cur.execute("""INSERT INTO public.externe_kaartlagen (naam, beschrijving, laag_type, bron_type, url, typename,
+        cur.execute(
+            """INSERT INTO public.externe_kaartlagen (naam, beschrijving, laag_type, bron_type, url, typename,
                            srsname, filter_type, actief, toegang)
                        VALUES (%(naam)s, %(beschrijving)s, 'selectie', 'lokaal', %(url)s, %(typename)s, 'EPSG:28992',
-                               'alles', true, %(toegang)s) RETURNING id""", p)
+                               'alles', true, %(toegang)s) RETURNING id""",
+            p,
+        )
         p["id"] = cur.fetchone()["id"]
         cur.execute("UPDATE laden.datasets SET kaartlaag_id = %(id)s WHERE id = %(ds)s", p)
     # Bestand naast het doel klaarzetten; pas na de commit omwisselen (os.replace is atomisch)
@@ -271,8 +355,13 @@ def publiceer_kaartlaag(cur, ctx: Context, data: dict) -> dict:
     shutil.copyfile(data["gpkg"], tijdelijk)
     ctx.extra["kaartlaag_klaar"] = (tijdelijk, doelpad, p["id"])
     n = len(data["features"])
-    return {"gepubliceerd": n, "vervangen": 0, "kaartlaagId": p["id"], "_aantal_regels": n,
-            "_levering_ids": [ctx.levering_id]}
+    return {
+        "gepubliceerd": n,
+        "vervangen": 0,
+        "kaartlaagId": p["id"],
+        "_aantal_regels": n,
+        "_levering_ids": [ctx.levering_id],
+    }
 
 
 def kaartlaag_klaar(ctx: Context, geslaagd: bool) -> None:
@@ -284,6 +373,7 @@ def kaartlaag_klaar(ctx: Context, geslaagd: bool) -> None:
         os.replace(tijdelijk, doelpad)
         try:  # cache van de kaartlaag in dit proces vervalt
             from omnitwin.routers.externe_lagen import _wfs_cache
+
             _wfs_cache.pop(laag_id, None)
         except Exception:  # pragma: no cover
             pass

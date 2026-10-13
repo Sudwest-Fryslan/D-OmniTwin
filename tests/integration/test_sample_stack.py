@@ -80,6 +80,7 @@ def buurten():
 
 # ── 1. App laadt ─────────────────────────────────────────────────────────────
 
+
 def test_app_laadt():
     r = requests.get(f"{BASE_URL}/", timeout=TIMEOUT)
     assert r.status_code == 200
@@ -87,6 +88,7 @@ def test_app_laadt():
 
 
 # ── 2. Kaart toont de CBS-buurten, met de testbuurten ────────────────────────
+
 
 def test_kaart_toont_sample_buurten(buurten):
     """Sinds #236 laadt een verse installatie alle CBS-buurten van Fryslân (use case
@@ -102,6 +104,7 @@ def test_buurten_hebben_geometrie(buurten):
 
 
 # ── 3. Buurt aanklikken toont Kompas-data ────────────────────────────────────
+
 
 def test_kompas_data_voor_buurt(buurten):
     configs = requests.get(f"{BASE_URL}/api/kompas/configuraties", timeout=TIMEOUT)
@@ -121,6 +124,7 @@ def test_kompas_data_voor_buurt(buurten):
 
 # ── 4. Chat-scenario 'Beleidsadviseur' ───────────────────────────────────────
 
+
 def test_chat_scenario_beleidsadviseur():
     r = requests.post(f"{BASE_URL}/api/chat", json={"vraag": "Ik ben beleidsadviseur"}, timeout=TIMEOUT)
     assert r.status_code == 200, r.text[:300]
@@ -132,12 +136,16 @@ def test_chat_scenario_beleidsadviseur():
 
 # ── AI-zoeken: embeddings na verse installatie (#139) ────────────────────────
 
+
 def test_embeddings_voor_alle_actieve_indicatoren(db):
-    zonder = scalar(db, """
+    zonder = scalar(
+        db,
+        """
         SELECT count(*) FROM indicatoren i
         LEFT JOIN indicator_embeddings e ON i.uuid = e.indicator_uuid
         WHERE i.is_actief AND e.id IS NULL
-    """)
+    """,
+    )
     assert scalar(db, "SELECT count(*) FROM indicator_embeddings") > 0
     assert zonder == 0
 
@@ -177,7 +185,9 @@ def test_load_sample_idempotent(db):
     voor = {k: scalar(db, q) for k, q in TELLINGEN.items()}
     result = subprocess.run(
         [sys.executable, str(ROOT / "init_data" / "scripts" / "load_sample.py"), "--stap", "alle"],
-        capture_output=True, text=True, timeout=300,
+        capture_output=True,
+        text=True,
+        timeout=300,
     )
     assert result.returncode == 0, result.stdout[-2000:] + result.stderr[-2000:]
     na = {k: scalar(db, q) for k, q in TELLINGEN.items()}
@@ -185,6 +195,7 @@ def test_load_sample_idempotent(db):
 
 
 # ── Schema compleet: migraties v18/v19 worden bij init geladen (#52, structureel #54) ──
+
 
 def test_schema_bevat_alle_migraties(db):
     assert scalar(db, "SELECT count(*) FROM pg_extension WHERE extname = 'pg_trgm'") == 1
@@ -239,17 +250,20 @@ def test_postgrest_toont_alleen_whitelist():
     assert paden == set(API_WHITELIST)
 
 
-@pytest.mark.parametrize("methode,pad,body", [
-    ("POST", "gemeenten", {"code": "9999", "naam": "Test", "provincie": "Test"}),
-    ("POST", "indicatoren", {"naam": "test-57"}),
-    ("PATCH", "gemeenten?code=eq.1900", {"naam": "Gehackt"}),
-    ("PATCH", "indicatoren?id=gt.0", {"naam": "Gehackt"}),
-    ("DELETE", "gebieden?id=eq.BU19000002", None),
-    ("DELETE", "externe_kaartlagen?id=gt.0", None),
-    ("POST", "users", {"username": "x"}),
-    ("PATCH", "users?id=not.is.null", {"is_active": False}),
-    ("DELETE", "sessions?token=not.is.null", None),
-])
+@pytest.mark.parametrize(
+    "methode,pad,body",
+    [
+        ("POST", "gemeenten", {"code": "9999", "naam": "Test", "provincie": "Test"}),
+        ("POST", "indicatoren", {"naam": "test-57"}),
+        ("PATCH", "gemeenten?code=eq.1900", {"naam": "Gehackt"}),
+        ("PATCH", "indicatoren?id=gt.0", {"naam": "Gehackt"}),
+        ("DELETE", "gebieden?id=eq.BU19000002", None),
+        ("DELETE", "externe_kaartlagen?id=gt.0", None),
+        ("POST", "users", {"username": "x"}),
+        ("PATCH", "users?id=not.is.null", {"is_active": False}),
+        ("DELETE", "sessions?token=not.is.null", None),
+    ],
+)
 def test_postgrest_anoniem_kan_niet_schrijven(methode, pad, body):
     r = requests.request(methode, f"{BASE_URL}/api/data/{pad}", json=body, timeout=TIMEOUT)
     assert r.status_code in (401, 403, 404, 405), f"{methode} {pad}: HTTP {r.status_code}"
@@ -257,17 +271,21 @@ def test_postgrest_anoniem_kan_niet_schrijven(methode, pad, body):
 
 def test_postgrest_schrijfpoging_verandert_niets(db):
     voor = scalar(db, "SELECT naam FROM gemeenten WHERE code = '1900'")
-    requests.patch(f"{BASE_URL}/api/data/gemeenten", params={"code": "eq.1900"},
-                   json={"naam": "Gehackt"}, timeout=TIMEOUT)
+    requests.patch(
+        f"{BASE_URL}/api/data/gemeenten", params={"code": "eq.1900"}, json={"naam": "Gehackt"}, timeout=TIMEOUT
+    )
     assert scalar(db, "SELECT naam FROM gemeenten WHERE code = '1900'") == voor
 
 
-@pytest.mark.parametrize("functie", [
-    "update_updated_at_column",
-    "update_gebied_centroid",
-    "postgis_full_version",
-    "st_asgeojson",
-])
+@pytest.mark.parametrize(
+    "functie",
+    [
+        "update_updated_at_column",
+        "update_gebied_centroid",
+        "postgis_full_version",
+        "st_asgeojson",
+    ],
+)
 def test_postgrest_rpc_buiten_whitelist(functie):
     r = requests.post(f"{BASE_URL}/api/data/rpc/{functie}", json={}, timeout=TIMEOUT)
     assert r.status_code in (401, 404), f"{functie}: HTTP {r.status_code}"
@@ -283,8 +301,11 @@ def test_featureserv_alleen_geo_views():
 
 
 def test_featureserv_functie_buurten_in_deelgebied():
-    r = requests.get(f"{BASE_URL}/api/geo/functions/postgisftw.buurten_in_deelgebied/items",
-                     params={"deelgebied_id": 1}, timeout=TIMEOUT)
+    r = requests.get(
+        f"{BASE_URL}/api/geo/functions/postgisftw.buurten_in_deelgebied/items",
+        params={"deelgebied_id": 1},
+        timeout=TIMEOUT,
+    )
     assert r.status_code == 200, r.text[:300]
 
 
@@ -328,8 +349,12 @@ def test_data_en_geo_met_versie():
     r = requests.get(f"{BASE_URL}/api/data/v1/gebieden", params={"limit": 1}, timeout=TIMEOUT)
     assert r.status_code == 200 and isinstance(r.json(), list)
     # Een meegestuurd token gaat niet naar PostgREST (dat valideert nog geen tokens)
-    r = requests.get(f"{BASE_URL}/api/data/v1/gebieden", params={"limit": 1}, timeout=TIMEOUT,
-                     headers={"Authorization": "Bearer niet-gecontroleerd"})
+    r = requests.get(
+        f"{BASE_URL}/api/data/v1/gebieden",
+        params={"limit": 1},
+        timeout=TIMEOUT,
+        headers={"Authorization": "Bearer niet-gecontroleerd"},
+    )
     assert r.status_code == 200
     r = requests.get(f"{BASE_URL}/api/geo/v1/collections", timeout=TIMEOUT)
     assert r.status_code == 200

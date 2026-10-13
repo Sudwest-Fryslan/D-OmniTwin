@@ -98,6 +98,7 @@ def test_gebruikersfout_is_valueerror():
 
 # ── Ongeldige UUID in het pad: 422 vóór er een databasequery is ────────────────
 
+
 class _GeenDatabase:
     def __getattr__(self, naam):
         raise AssertionError("Bij een ongeldige UUID mag de database niet aangeroepen worden")
@@ -106,6 +107,7 @@ class _GeenDatabase:
 @pytest.fixture
 def app_client():
     from omnitwin.routers import gebiedsmonitor, kompas, visualisatie
+
     app = FastAPI()
     registreer_foutafhandeling(app)
     for r in (gebiedsmonitor.router, kompas.router, visualisatie.router):
@@ -114,14 +116,17 @@ def app_client():
     return TestClient(app, raise_server_exceptions=False)
 
 
-@pytest.mark.parametrize("pad", [
-    "/api/gebiedsmonitor/kaart_data/1",
-    "/api/gebiedsmonitor/kaart_data/00000000-0000-0000-0000-000000000000?indicator_uuid=abc",
-    "/api/kompas/indicator/geen-uuid/top-buurten",
-    "/api/kompas/1/history/BU19000002/geen-uuid",
-    "/api/kompas/1/indicator/geen-uuid",
-    "/api/visualisatie/config/geen-uuid",
-])
+@pytest.mark.parametrize(
+    "pad",
+    [
+        "/api/gebiedsmonitor/kaart_data/1",
+        "/api/gebiedsmonitor/kaart_data/00000000-0000-0000-0000-000000000000?indicator_uuid=abc",
+        "/api/kompas/indicator/geen-uuid/top-buurten",
+        "/api/kompas/1/history/BU19000002/geen-uuid",
+        "/api/kompas/1/indicator/geen-uuid",
+        "/api/visualisatie/config/geen-uuid",
+    ],
+)
 def test_ongeldige_uuid_geeft_422(app_client, pad):
     r = app_client.get(pad)
     assert r.status_code == 422, r.text

@@ -14,9 +14,11 @@ Gebruik:
   'definities'): herbereken_embeddings(db, indicator_uuids) na de commit van de publicatie.
   Alleen wat gewijzigd is wordt berekend; het model wordt alleen geladen als er iets te doen is.
 """
+
 import hashlib
 import logging
-from typing import Any, Dict, Iterable, List, Optional
+from collections.abc import Iterable
+from typing import Any
 
 from sqlalchemy import text
 
@@ -27,21 +29,22 @@ logger = logging.getLogger(__name__)
 
 def tekst_hash(tekst: str) -> str:
     """Hash van model, revisie en tekst: verandert een van drieën, dan opnieuw berekenen."""
-    return hashlib.sha256(
-        f"{embedding_model.MODEL_ID}@{embedding_model.MODEL_REVISIE}\n{tekst}".encode("utf-8")).hexdigest()
+    return hashlib.sha256(f"{embedding_model.MODEL_ID}@{embedding_model.MODEL_REVISIE}\n{tekst}".encode()).hexdigest()
 
 
-def lees_indicatoren(db, indicator_uuids: Optional[Iterable[str]] = None,
-                     alleen_goedgekeurd: bool = False) -> List[Dict[str, Any]]:
+def lees_indicatoren(
+    db, indicator_uuids: Iterable[str] | None = None, alleen_goedgekeurd: bool = False
+) -> list[dict[str, Any]]:
     """Actieve indicatoren met de velden voor de tekst en de huidige hash."""
     filters = ["i.is_actief = true"]
-    params: Dict[str, Any] = {}
+    params: dict[str, Any] = {}
     if indicator_uuids is not None:
         filters.append("CAST(i.uuid AS text) = ANY(:uuids)")
         params["uuids"] = [str(u) for u in indicator_uuids]
     if alleen_goedgekeurd:
         filters.append("i.ontologie_status = 'goedgekeurd_mens'")
-    rows = db.execute(text(f"""
+    rows = db.execute(
+        text(f"""
         SELECT CAST(i.uuid AS text), i.naam,
                COALESCE(NULLIF(i.ontologische_beschrijving, ''), NULLIF(i.beschrijving_ai, ''),
                         NULLIF(i.omschrijving, '')) AS beschrijving,
@@ -50,28 +53,47 @@ def lees_indicatoren(db, indicator_uuids: Optional[Iterable[str]] = None,
         FROM indicatoren i
         LEFT JOIN v_kompas_hierarchie vkh ON vkh.indicator_uuid = i.uuid AND vkh.config_id = 1
         LEFT JOIN indicator_embeddings e ON e.indicator_uuid = i.uuid
-        WHERE {' AND '.join(filters)}
+        WHERE {" AND ".join(filters)}
         ORDER BY i.naam
-    """), params).fetchall()
+    """),
+        params,
+    ).fetchall()
     uit, gezien = [], set()
     for r in rows:
         if r[0] in gezien:  # een indicator kan in de view meer dan eens voorkomen
             continue
         gezien.add(r[0])
-        uit.append({"uuid": r[0], "naam": r[1], "beschrijving": r[2], "kompaspad": [r[3], r[4], r[5]],
-                    "eenheid": r[6], "tekst_hash": r[7], "model_naam": r[8]})
+        uit.append(
+            {
+                "uuid": r[0],
+                "naam": r[1],
+                "beschrijving": r[2],
+                "kompaspad": [r[3], r[4], r[5]],
+                "eenheid": r[6],
+                "tekst_hash": r[7],
+                "model_naam": r[8],
+            }
+        )
     return uit
 
 
-def teksten(indicatoren: List[Dict[str, Any]], begrippen=None) -> List[str]:
+def teksten(indicatoren: list[dict[str, Any]], begrippen=None) -> list[str]:
     begrippen = zoektaal.laad_begrippen() if begrippen is None else begrippen
-    return [zoektaal.indicator_tekst(i["naam"], i["beschrijving"], i["kompaspad"], i["eenheid"],
-                                     zoektaal.synoniemen_van(i["naam"], begrippen))
-            for i in indicatoren]
+    return [
+        zoektaal.indicator_tekst(
+            i["naam"], i["beschrijving"], i["kompaspad"], i["eenheid"], zoektaal.synoniemen_van(i["naam"], begrippen)
+        )
+        for i in indicatoren
+    ]
 
 
-def herbereken_embeddings(db, indicator_uuids: Optional[Iterable[str]] = None, opnieuw: bool = False,
-                          alleen_goedgekeurd: bool = False, model=None) -> Dict[str, int]:
+def herbereken_embeddings(
+    db,
+    indicator_uuids: Iterable[str] | None = None,
+    opnieuw: bool = False,
+    alleen_goedgekeurd: bool = False,
+    model=None,
+) -> dict[str, int]:
     """
     Berekent de embeddings van nieuwe of gewijzigde actieve indicatoren en commit.
 
@@ -85,15 +107,22 @@ def herbereken_embeddings(db, indicator_uuids: Optional[Iterable[str]] = None, o
     indicatoren = lees_indicatoren(db, indicator_uuids, alleen_goedgekeurd)
     alle_teksten = teksten(indicatoren)
     te_doen = [(i, t, tekst_hash(t)) for i, t in zip(indicatoren, alle_teksten)]
-    te_doen = [(i, t, h) for i, t, h in te_doen
-               if opnieuw or i["tekst_hash"] != h or i["model_naam"] != embedding_model.MODEL_NAAM]
+    te_doen = [
+        (i, t, h)
+        for i, t, h in te_doen
+        if opnieuw or i["tekst_hash"] != h or i["model_naam"] != embedding_model.MODEL_NAAM
+    ]
     resultaat = {"berekend": 0, "ongewijzigd": len(indicatoren) - len(te_doen)}
     if not te_doen:
         return resultaat
 
     model = model or embedding_model.gedeeld_model()
-    vectoren = model.encode([embedding_model.TEKST_VOORVOEGSEL + t for _, t, _ in te_doen],
-                            batch_size=32, show_progress_bar=False, normalize_embeddings=True)
+    vectoren = model.encode(
+        [embedding_model.TEKST_VOORVOEGSEL + t for _, t, _ in te_doen],
+        batch_size=32,
+        show_progress_bar=False,
+        normalize_embeddings=True,
+    )
     sql = text("""
         INSERT INTO indicator_embeddings (indicator_uuid, embedding, model_naam, tekst_hash)
         VALUES (CAST(:uuid AS uuid), CAST(:emb AS vector), :model, :hash)

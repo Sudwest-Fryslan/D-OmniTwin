@@ -26,7 +26,9 @@ def test_drempelbestand_is_geldig():
 def test_banden_overlappen_niet():
     data = json.loads(BESTAND.read_text(encoding="utf-8"))
     for ind in data["indicatoren"]:
-        banden = sorted(((o if o is not None else float("-inf")), (b if b is not None else float("inf")))
-                        for _, o, b in ind["labels"])
+        banden = sorted(
+            ((o if o is not None else float("-inf")), (b if b is not None else float("inf")))
+            for _, o, b in ind["labels"]
+        )
         for (o1, b1), (o2, b2) in zip(banden, banden[1:]):
             assert b1 <= o2, f"{ind['indicator_naam']}: banden overlappen"

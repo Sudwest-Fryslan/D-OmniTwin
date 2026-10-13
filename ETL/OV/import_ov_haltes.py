@@ -24,36 +24,36 @@ Gebruik:
     python ETL/OV/import_ov_haltes.py --skip-schema
 """
 
-import sys
-import os
-import time
+import argparse
 import json
 import logging
-import argparse
-from pathlib import Path
+import os
+import sys
+import time
 from datetime import date
+from pathlib import Path
 
-import numpy as np
 import pandas as pd
 from pyproj import Transformer
 from scipy.spatial import cKDTree
 
 # ─── Paden ───────────────────────────────────────────────────────────────────
-SCRIPT_DIR = Path(__file__).resolve().parent          # ETL/OV/
-ETL_DIR = SCRIPT_DIR.parent                           # ETL/
-PROJECT_ROOT = ETL_DIR.parent                         # D-OmniTwin/
+SCRIPT_DIR = Path(__file__).resolve().parent  # ETL/OV/
+ETL_DIR = SCRIPT_DIR.parent  # ETL/
+PROJECT_ROOT = ETL_DIR.parent  # D-OmniTwin/
 SCHEMA_FILE = SCRIPT_DIR / "migrations" / "schema_v14_ov_haltes.sql"
 
 sys.path.insert(0, str(ETL_DIR / "local"))
 sys.path.insert(0, str(SCRIPT_DIR))
 
-from overpass_client import ophalen_ov_nodes, PROVINCIES
+from overpass_client import PROVINCIES, ophalen_ov_nodes
 
 
 def get_connection():
     """DB connectie met hardcoded sslmode (workaround .env comment-bug)."""
     import psycopg2
     from dotenv import load_dotenv
+
     load_dotenv(PROJECT_ROOT / ".env")
     conn = psycopg2.connect(
         host=os.getenv("DATABASE_HOST"),
@@ -66,6 +66,7 @@ def get_connection():
     logger.info(f"🔌 Verbonden met {os.getenv('DATABASE_NAME')}")
     return conn
 
+
 # ─── Logging ─────────────────────────────────────────────────────────────────
 logging.basicConfig(
     level=logging.INFO,
@@ -75,15 +76,15 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # ─── Constanten ──────────────────────────────────────────────────────────────
-CLUSTER_RADIUS_M = 75.0   # Deduplicatieradius in meters
+CLUSTER_RADIUS_M = 75.0  # Deduplicatieradius in meters
 PEILJAAR = 2026
 BRON = "OpenStreetMap / Overpass API 2026"
 
 INDICATOR_CODES = {
-    "totaal":   "OV_HALTES_TOTAAL",
-    "bus":      "OV_HALTES_BUS",
-    "trein":    "OV_HALTES_TREIN",
-    "tram":     "OV_HALTES_TRAM",
+    "totaal": "OV_HALTES_TOTAAL",
+    "bus": "OV_HALTES_BUS",
+    "trein": "OV_HALTES_TREIN",
+    "tram": "OV_HALTES_TRAM",
     "veerboot": "OV_HALTES_VEERBOOT",
 }
 
@@ -92,6 +93,7 @@ transformer = Transformer.from_crs("EPSG:4326", "EPSG:28992", always_xy=True)
 
 
 # ─── Fase 1: Schema ─────────────────────────────────────────────────────────
+
 
 def maak_schema(conn):
     """Maak de OV-haltes tabellen aan (idempotent)."""
@@ -105,6 +107,7 @@ def maak_schema(conn):
 
 
 # ─── Fase 2: Ophalen & transformeren ────────────────────────────────────────
+
 
 def verwerk_provincie(provincie_code: str, peildatum: date) -> pd.DataFrame:
     """
@@ -147,6 +150,7 @@ def verwerk_provincie(provincie_code: str, peildatum: date) -> pd.DataFrame:
 
 # ─── Fase 2b: Clustering ────────────────────────────────────────────────────
 
+
 def cluster_platforms(df: pd.DataFrame, radius_m: float = CLUSTER_RADIUS_M) -> pd.DataFrame:
     """
     Groepeer platform-nodes met dezelfde naam en ov_type die binnen radius_m
@@ -174,23 +178,26 @@ def cluster_platforms(df: pd.DataFrame, radius_m: float = CLUSTER_RADIUS_M) -> p
         zelfde = [j for j in idxs if namen[j] == namen[i] and typen[j] == typen[i]]
         cluster_coords = coords[zelfde]
         centroid = cluster_coords.mean(axis=0)
-        clusters.append({
-            "naam": namen[i] or None,
-            "ov_type": typen[i],
-            "n_platforms": len(zelfde),
-            "x_rd": centroid[0],
-            "y_rd": centroid[1],
-            "provincie": df.iloc[i]["provincie"],
-            "peildatum": df.iloc[i]["peildatum"],
-        })
+        clusters.append(
+            {
+                "naam": namen[i] or None,
+                "ov_type": typen[i],
+                "n_platforms": len(zelfde),
+                "x_rd": centroid[0],
+                "y_rd": centroid[1],
+                "provincie": df.iloc[i]["provincie"],
+                "peildatum": df.iloc[i]["peildatum"],
+            }
+        )
         used.update(zelfde)
 
     result = pd.DataFrame(clusters)
-    logger.info(f"  → {len(df)} nodes → {len(result)} clusters (factor {len(df)/len(result):.1f}x)")
+    logger.info(f"  → {len(df)} nodes → {len(result)} clusters (factor {len(df) / len(result):.1f}x)")
     return result
 
 
 # ─── Fase 3: Laden naar database ────────────────────────────────────────────
+
 
 def laad_ruwe_haltes(conn, df: pd.DataFrame):
     """INSERT ruwe nodes in ov_haltes (idempotent via ON CONFLICT)."""
@@ -199,7 +206,8 @@ def laad_ruwe_haltes(conn, df: pd.DataFrame):
     logger.info(f"  Laden {len(df)} ruwe haltes naar ov_haltes...")
     with conn.cursor() as cur:
         for _, row in df.iterrows():
-            cur.execute("""
+            cur.execute(
+                """
                 INSERT INTO ov_haltes
                     (osm_id, naam, ov_type, osm_pt_type, network, ref,
                      provincie, geom, peildatum, tags)
@@ -215,13 +223,21 @@ def laad_ruwe_haltes(conn, df: pd.DataFrame):
                     geom        = EXCLUDED.geom,
                     peildatum   = EXCLUDED.peildatum,
                     tags        = EXCLUDED.tags
-            """, (
-                int(row["osm_id"]), row["naam"], row["ov_type"],
-                row["osm_pt_type"], row["network"], row["ref"],
-                row["provincie"], float(row["x_rd"]), float(row["y_rd"]),
-                row["peildatum"],
-                json.dumps(row["tags"], ensure_ascii=False) if row["tags"] else None,
-            ))
+            """,
+                (
+                    int(row["osm_id"]),
+                    row["naam"],
+                    row["ov_type"],
+                    row["osm_pt_type"],
+                    row["network"],
+                    row["ref"],
+                    row["provincie"],
+                    float(row["x_rd"]),
+                    float(row["y_rd"]),
+                    row["peildatum"],
+                    json.dumps(row["tags"], ensure_ascii=False) if row["tags"] else None,
+                ),
+            )
     conn.commit()
     logger.info(f"  ✅ {len(df)} ruwe haltes geladen")
 
@@ -260,23 +276,26 @@ def laad_clusters(conn, df_clusters: pd.DataFrame):
     prov = df_clusters.iloc[0]["provincie"]
     peildatum = df_clusters.iloc[0]["peildatum"]
     with conn.cursor() as cur:
-        cur.execute(
-            "DELETE FROM ov_halte_clusters WHERE provincie = %s AND peildatum = %s",
-            (prov, peildatum)
-        )
+        cur.execute("DELETE FROM ov_halte_clusters WHERE provincie = %s AND peildatum = %s", (prov, peildatum))
 
         for _, row in df_clusters.iterrows():
-            cur.execute("""
+            cur.execute(
+                """
                 INSERT INTO ov_halte_clusters
                     (naam, ov_type, n_platforms, provincie, geom, peildatum)
                 VALUES (%s, %s, %s, %s,
                         ST_SetSRID(ST_MakePoint(%s, %s), 28992), %s)
-            """, (
-                row["naam"], row["ov_type"], int(row["n_platforms"]),
-                row["provincie"],
-                float(row["x_rd"]), float(row["y_rd"]),
-                row["peildatum"],
-            ))
+            """,
+                (
+                    row["naam"],
+                    row["ov_type"],
+                    int(row["n_platforms"]),
+                    row["provincie"],
+                    float(row["x_rd"]),
+                    float(row["y_rd"]),
+                    row["peildatum"],
+                ),
+            )
     conn.commit()
     logger.info(f"  ✅ {len(df_clusters)} clusters geladen")
 
@@ -300,6 +319,7 @@ def koppel_clusters_gebieden(conn):
 
 # ─── Fase 4: Aggregatie & gebied_data ────────────────────────────────────────
 
+
 def bereken_aggregaten(conn, jaar: int):
     """Bereken haltes per buurt per type uit clusters en sla op."""
     logger.info("Fase 4: Aggregatie per buurt...")
@@ -307,7 +327,8 @@ def bereken_aggregaten(conn, jaar: int):
         # Wis bestaande aggregaten voor dit jaar
         cur.execute("DELETE FROM ov_haltes_per_buurt WHERE jaar = %s", (jaar,))
 
-        cur.execute("""
+        cur.execute(
+            """
             INSERT INTO ov_haltes_per_buurt
                 (gebied_id, jaar, totaal_haltes, haltes_bus, haltes_trein,
                  haltes_tram, haltes_veerboot, haltes_metro)
@@ -323,7 +344,9 @@ def bereken_aggregaten(conn, jaar: int):
             FROM ov_halte_clusters
             WHERE gebied_id IS NOT NULL
             GROUP BY gebied_id
-        """, (jaar,))
+        """,
+            (jaar,),
+        )
         n = cur.rowcount
     conn.commit()
     logger.info(f"  ✅ Aggregaten voor {n} buurten opgeslagen")
@@ -357,25 +380,29 @@ def schrijf_naar_gebied_data(conn, jaar: int):
                 return 0
 
         # Lees aggregaten
-        cur.execute("""
+        cur.execute(
+            """
             SELECT gebied_id, totaal_haltes, haltes_bus, haltes_trein,
                    haltes_tram, haltes_veerboot
             FROM ov_haltes_per_buurt
             WHERE jaar = %s
-        """, (jaar,))
+        """,
+            (jaar,),
+        )
         rijen = cur.fetchall()
 
         n_geschreven = 0
-        for (gebied_id, totaal, bus, trein, tram, veerboot) in rijen:
+        for gebied_id, totaal, bus, trein, tram, veerboot in rijen:
             waarden = {
-                "totaal":   totaal,
-                "bus":      bus,
-                "trein":    trein,
-                "tram":     tram,
+                "totaal": totaal,
+                "bus": bus,
+                "trein": trein,
+                "tram": tram,
                 "veerboot": veerboot,
             }
             for ov_type, waarde in waarden.items():
-                cur.execute("""
+                cur.execute(
+                    """
                     INSERT INTO gebied_data
                         (gebied_id, indicator_uuid, waarde, jaar, scenario_id, bron)
                     VALUES (%s, %s, %s, %s, 'current', %s)
@@ -383,7 +410,9 @@ def schrijf_naar_gebied_data(conn, jaar: int):
                     DO UPDATE SET
                         waarde     = EXCLUDED.waarde,
                         updated_at = CURRENT_TIMESTAMP
-                """, (gebied_id, uuids[ov_type], waarde, jaar, BRON))
+                """,
+                    (gebied_id, uuids[ov_type], waarde, jaar, BRON),
+                )
                 n_geschreven += 1
 
     conn.commit()
@@ -392,6 +421,7 @@ def schrijf_naar_gebied_data(conn, jaar: int):
 
 
 # ─── Verificatie ─────────────────────────────────────────────────────────────
+
 
 def verificatie(conn, jaar: int):
     """Print verificatierapport."""
@@ -429,7 +459,8 @@ def verificatie(conn, jaar: int):
         logger.info(f"\n⚠️  Clusters zonder buurt-koppeling: {ongekoppeld}")
 
         # gebied_data
-        cur.execute("""
+        cur.execute(
+            """
             SELECT i.code, COUNT(*) AS n, AVG(gd.waarde)::numeric(5,1) AS gem
             FROM gebied_data gd
             JOIN indicatoren i ON gd.indicator_uuid = i.uuid
@@ -438,7 +469,9 @@ def verificatie(conn, jaar: int):
               AND gd.jaar = %s
             GROUP BY i.code
             ORDER BY i.code
-        """, (jaar,))
+        """,
+            (jaar,),
+        )
         logger.info(f"\n📊 gebied_data per indicator (jaar={jaar}):")
         for code, n, gem in cur.fetchall():
             logger.info(f"  {code:<25} | {n:>5} buurten | gem={gem}")
@@ -448,25 +481,30 @@ def verificatie(conn, jaar: int):
 
 # ─── Main ────────────────────────────────────────────────────────────────────
 
+
 def main():
     parser = argparse.ArgumentParser(
         description="D-OmniTwin ETL — OV Haltes Import (Issue #11)",
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     parser.add_argument(
-        "--provincies", default="FR,GR,DR",
+        "--provincies",
+        default="FR,GR,DR",
         help="Komma-gescheiden provincielijst (default: FR,GR,DR)",
     )
     parser.add_argument(
-        "--peildatum", default=str(date.today()),
-        help=f"Peildatum voor import (default: vandaag)",
+        "--peildatum",
+        default=str(date.today()),
+        help="Peildatum voor import (default: vandaag)",
     )
     parser.add_argument(
-        "--dry-run", action="store_true",
+        "--dry-run",
+        action="store_true",
         help="Alleen ophalen en tellen, niet naar DB schrijven",
     )
     parser.add_argument(
-        "--skip-schema", action="store_true",
+        "--skip-schema",
+        action="store_true",
         help="Schema-aanmaak overslaan (al aangemaakt)",
     )
     args = parser.parse_args()

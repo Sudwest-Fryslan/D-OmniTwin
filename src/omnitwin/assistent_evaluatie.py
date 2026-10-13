@@ -30,14 +30,16 @@ holdout meer. Na zo'n afstemronde gaan de oude holdout-vragen naar de afgestemde
 Draaien tegen een stack met sample-data:
     python scripts/ai/evalueer_assistent.py --url http://localhost:8105
 """
+
 import json
+from collections.abc import Callable, Sequence
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Sequence
+from typing import Any
 
 TESTSET = Path(__file__).resolve().parents[2] / "tests" / "data" / "assistent_evaluatie.json"
 
 
-def laad_testset(pad: Path = TESTSET) -> Dict[str, Any]:
+def laad_testset(pad: Path = TESTSET) -> dict[str, Any]:
     return json.loads(Path(pad).read_text(encoding="utf-8"))
 
 
@@ -62,7 +64,7 @@ def reciprocal_rank(gevonden: Sequence[str], relevant: Sequence[str]) -> float:
     return 0.0
 
 
-def scoor(resultaten: List[Dict[str, Any]], k: int) -> Dict[str, float]:
+def scoor(resultaten: list[dict[str, Any]], k: int) -> dict[str, float]:
     """resultaten: [{type, relevant, gevonden: [uuid], gerouteerd: bool|None}] → gemiddelden."""
     n = len(resultaten) or 1
     datavragen = [r for r in resultaten if r.get("type") == "datavraag"]
@@ -76,12 +78,12 @@ def scoor(resultaten: List[Dict[str, Any]], k: int) -> Dict[str, float]:
     }
 
 
-def onder_drempel(scores: Dict[str, float], drempels: Dict[str, float]) -> List[str]:
+def onder_drempel(scores: dict[str, float], drempels: dict[str, float]) -> list[str]:
     """Maten die onder de afgesproken drempel liggen, leesbaar."""
     return [f"{m} {scores[m]:.3f} < {d}" for m, d in drempels.items() if scores.get(m, 0.0) < d]
 
 
-def drempelfouten(resultaten: List[Dict[str, Any]], testset: Dict[str, Any]) -> List[str]:
+def drempelfouten(resultaten: list[dict[str, Any]], testset: dict[str, Any]) -> list[str]:
     """Maten onder de drempel: afgestemde vragen tegen 'drempels', holdout tegen 'drempels_holdout'."""
     k = testset.get("k", 3)
     fout = []
@@ -92,8 +94,9 @@ def drempelfouten(resultaten: List[Dict[str, Any]], testset: Dict[str, Any]) -> 
     return fout
 
 
-def gerouteerd(v: Dict[str, Any], antwoord: Dict[str, Any], selectie: Sequence[str],
-               namen: Optional[Dict[str, str]] = None) -> bool:
+def gerouteerd(
+    v: dict[str, Any], antwoord: dict[str, Any], selectie: Sequence[str], namen: dict[str, str] | None = None
+) -> bool:
     """Goed beantwoord? Zie de kop van dit bestand ('route', 'selectie', 'mijn_buurt')."""
     if v.get("route") == "vraag_buurt":
         return "welke buurt" in (antwoord.get("narrative") or "").lower() and not antwoord.get("gegevens")
@@ -109,8 +112,9 @@ def gerouteerd(v: Dict[str, Any], antwoord: Dict[str, Any], selectie: Sequence[s
     return True
 
 
-def evalueer(testset: Dict[str, Any], zoek: Callable[[str], List[str]],
-             chat: Callable[..., Dict[str, Any]]) -> List[Dict[str, Any]]:
+def evalueer(
+    testset: dict[str, Any], zoek: Callable[[str], list[str]], chat: Callable[..., dict[str, Any]]
+) -> list[dict[str, Any]]:
     """
     zoek(vraag)               → uuids in de volgorde die de gebruiker ziet
     chat(vraag, gebied_ids)   → antwoord van /api/chat (dict); gebied_ids = de selectie op de kaart
@@ -119,8 +123,13 @@ def evalueer(testset: Dict[str, Any], zoek: Callable[[str], List[str]],
     namen = testset.get("gebiedsnamen") or {}
     uit = []
     for v in testset["vragen"]:
-        r = {"vraag": v["vraag"], "type": v["type"], "relevant": v["relevant"], "gerouteerd": None,
-             "holdout": bool(v.get("holdout"))}
+        r = {
+            "vraag": v["vraag"],
+            "type": v["type"],
+            "relevant": v["relevant"],
+            "gerouteerd": None,
+            "holdout": bool(v.get("holdout")),
+        }
         if v["type"] == "datavraag":
             selectie = v["selectie"] if "selectie" in v else ([gebied] if gebied else [])
             antwoord = chat(v["vraag"], selectie)
@@ -142,13 +151,13 @@ def http_zoek_en_chat(basis_url: str, timeout: int = 120):
     s = requests.Session()
     basis = basis_url.rstrip("/")
 
-    def zoek(vraag: str) -> List[str]:
+    def zoek(vraag: str) -> list[str]:
         r = s.get(f"{basis}/api/ai/kompas/search", params={"q": vraag, "limit": 10}, timeout=timeout)
         r.raise_for_status()
         return [x["uuid"] for x in r.json() if "uuid" in x]
 
-    def chat(vraag: str, gebied_ids: Sequence[str] = ()) -> Dict[str, Any]:
-        context: Dict[str, Any] = {"geen_llm": True}
+    def chat(vraag: str, gebied_ids: Sequence[str] = ()) -> dict[str, Any]:
+        context: dict[str, Any] = {"geen_llm": True}
         if isinstance(gebied_ids, str):
             gebied_ids = [gebied_ids]
         if gebied_ids:

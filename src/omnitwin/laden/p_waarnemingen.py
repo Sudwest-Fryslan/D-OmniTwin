@@ -34,10 +34,30 @@ from omnitwin.laden.tabelschema import Tabel, laad_schema
 
 PROFIEL = "waarnemingen"
 RESOURCE = "waarnemingen"
-STAGING_KOLOMMEN = ["levering_id", "regel", "gebied_code", "gebiedstype", "indicator_uuid", "jaar", "datum",
-                    "scenario_id", "waarde", "n", "n_status", "kwaliteit", "bron", "opmerking", "metadata"]
-BEREIK_KOLOM = {"indicator_uuid": "indicator_uuid", "gebiedstype": "gebiedstype_id", "gebied_code": "gebied_id",
-                "jaar": "jaar", "scenario": "scenario_id"}
+STAGING_KOLOMMEN = [
+    "levering_id",
+    "regel",
+    "gebied_code",
+    "gebiedstype",
+    "indicator_uuid",
+    "jaar",
+    "datum",
+    "scenario_id",
+    "waarde",
+    "n",
+    "n_status",
+    "kwaliteit",
+    "bron",
+    "opmerking",
+    "metadata",
+]
+BEREIK_KOLOM = {
+    "indicator_uuid": "indicator_uuid",
+    "gebiedstype": "gebiedstype_id",
+    "gebied_code": "gebied_id",
+    "jaar": "jaar",
+    "scenario": "scenario_id",
+}
 
 
 def schema_en_extra(lp: dict) -> tuple[dict, dict]:
@@ -66,29 +86,32 @@ def _datum(w) -> dt.date | None:
     return dt.date.fromisoformat(w)
 
 
-def bronpeildatum(dcat: dict | None, ontvangen_op: dt.datetime | None,
-                  vandaag: dt.date | None = None) -> tuple[dt.date, str]:
+def bronpeildatum(
+    dcat: dict | None, ontvangen_op: dt.datetime | None, vandaag: dt.date | None = None
+) -> tuple[dt.date, str]:
     """(bronpeildatum, herkomst) van een levering, voor de voorrang bij overlap (A6, #222).
 
     Eerst `dct:modified` uit de meegeleverde dcat.jsonld (de stand van de bron), dan `dct:issued`,
     anders de datum van ontvangst (UTC; herkomst 'ontvangst'). Een datum die niet te lezen is of
     na vandaag ligt, keurt de levering af: anders wint hij elke overlap."""
-    vandaag = vandaag or dt.datetime.now(dt.timezone.utc).date()
+    vandaag = vandaag or dt.datetime.now(dt.UTC).date()
     for sleutel in BRONPEILDATUM_UIT:
         try:
             d = _datum((dcat or {}).get(sleutel)) if isinstance(dcat, dict) else None
         except ValueError:
-            raise afkeuren("schema-ongeldig", f"{sleutel} in dcat.jsonld is geen datum (ISO 8601)",
-                           resource="dcat", veld=sleutel)
+            raise afkeuren(
+                "schema-ongeldig", f"{sleutel} in dcat.jsonld is geen datum (ISO 8601)", resource="dcat", veld=sleutel
+            )
         if d is not None:
             if d > vandaag + dt.timedelta(days=1):
-                raise afkeuren("schema-ongeldig", f"{sleutel} in dcat.jsonld ligt in de toekomst",
-                               resource="dcat", veld=sleutel)
+                raise afkeuren(
+                    "schema-ongeldig", f"{sleutel} in dcat.jsonld ligt in de toekomst", resource="dcat", veld=sleutel
+                )
             return d, sleutel
     if ontvangen_op is None:
         return vandaag, "ontvangst"
     if ontvangen_op.tzinfo is not None:
-        ontvangen_op = ontvangen_op.astimezone(dt.timezone.utc)
+        ontvangen_op = ontvangen_op.astimezone(dt.UTC)
     return ontvangen_op.date(), "ontvangst"
 
 
@@ -119,8 +142,10 @@ def controleer(bron: Bron, ctx: Context, prefixen: dict[str, str]) -> tuple[list
     elif bron.json is not None and len(bron.resources) == 1:
         regels, strikt = next(iter(bron.resources.values())).regels, False
     else:
-        raise afkeuren("formaat-ongeldig", f"resource {RESOURCE} ontbreekt (gevonden: "
-                       f"{', '.join(sorted(bron.resources)) or 'geen'})")
+        raise afkeuren(
+            "formaat-ongeldig",
+            f"resource {RESOURCE} ontbreekt (gevonden: {', '.join(sorted(bron.resources)) or 'geen'})",
+        )
     if fouten and any(f.regel is None for f in fouten.lijst):
         raise Afkeuring(fouten, {"gelezen": len(regels)})
     ctx.extra["resource"] = resource
@@ -137,16 +162,22 @@ def controleer(bron: Bron, ctx: Context, prefixen: dict[str, str]) -> tuple[list
     for i, ruw in enumerate(regels, start=1):
         r, rfouten = tabel.rij(ruw, i)
         for f in rfouten:  # jaar of peildatum buiten bereik of ongeldig: jaar-ongeldig (README, probleemtypen)
-            fouten.voeg(Fout("jaar-ongeldig", f.melding, f.resource, f.regel, f.veld)
-                        if f.code == "schema-ongeldig" and f.veld in ("jaar", "peildatum") else f)
+            fouten.voeg(
+                Fout("jaar-ongeldig", f.melding, f.resource, f.regel, f.veld)
+                if f.code == "schema-ongeldig" and f.veld in ("jaar", "peildatum")
+                else f
+            )
         if (r.get("jaar") is None) == (r.get("peildatum") is None) and (resource, i) not in al_fout:
-            fouten.voeg(Fout("jaar-ongeldig", "precies één van jaar en peildatum moet gevuld zijn", resource, i, "jaar"))
+            fouten.voeg(
+                Fout("jaar-ongeldig", "precies één van jaar en peildatum moet gevuld zijn", resource, i, "jaar")
+            )
         scenario = r.get("scenario") or "current"
         n = r.get("n")
         if n is None:
             if ontbrekend == "afkeuren":
-                fouten.voeg(Fout("n-ontbreekt", "n is leeg; de dataset staat dat niet toe (bijOntbrekendeN)",
-                                 resource, i, "n"))
+                fouten.voeg(
+                    Fout("n-ontbreekt", "n is leeg; de dataset staat dat niet toe (bijOntbrekendeN)", resource, i, "n")
+                )
             n_status = "bron-onderdrukt"
         else:
             drempel = per_indicator.get(str(r.get("indicator_uuid") or ""), minimum_n)
@@ -166,18 +197,41 @@ def controleer(bron: Bron, ctx: Context, prefixen: dict[str, str]) -> tuple[list
             onderdrukt += 1
         elif n_status == "bron-onderdrukt":
             bron_onderdrukt += 1
-        staging.append((lid, i, r["gebied_code"], r.get("gebiedstype"), r["indicator_uuid"], r.get("jaar"),
-                        r.get("peildatum"), scenario, r["waarde"], n, n_status, r.get("kwaliteit"), r.get("bron"),
-                        r.get("opmerking"), r.get("_metadata")))
-    aantallen.update(gelezen=len(regels), fout=fouten.foute_regels, geldig=len(regels) - fouten.foute_regels,
-                     onderdrukt=onderdrukt, bronOnderdrukt=bron_onderdrukt)
+        staging.append(
+            (
+                lid,
+                i,
+                r["gebied_code"],
+                r.get("gebiedstype"),
+                r["indicator_uuid"],
+                r.get("jaar"),
+                r.get("peildatum"),
+                scenario,
+                r["waarde"],
+                n,
+                n_status,
+                r.get("kwaliteit"),
+                r.get("bron"),
+                r.get("opmerking"),
+                r.get("_metadata"),
+            )
+        )
+    aantallen.update(
+        gelezen=len(regels),
+        fout=fouten.foute_regels,
+        geldig=len(regels) - fouten.foute_regels,
+        onderdrukt=onderdrukt,
+        bronOnderdrukt=bron_onderdrukt,
+    )
     return staging, fouten, aantallen
 
 
 def prefixen(cur) -> dict[str, str]:
     """gebiedstype-id → code_prefix (gebiedstypes.metadata, profiel definities)."""
-    cur.execute("SELECT id::text AS id, metadata->>'code_prefix' AS p FROM public.gebiedstypes "
-                "WHERE coalesce(metadata->>'code_prefix', '') <> ''")
+    cur.execute(
+        "SELECT id::text AS id, metadata->>'code_prefix' AS p FROM public.gebiedstypes "
+        "WHERE coalesce(metadata->>'code_prefix', '') <> ''"
+    )
     return {r["id"]: r["p"] for r in cur.fetchall()}
 
 
@@ -186,49 +240,67 @@ def stage(cur, staging: list[tuple]) -> None:
 
 
 DB_CONTROLES = [
-    ("gebiedstype-onbekend", "gebiedstype",
-     """SELECT s.regel, count(*) OVER () AS totaal FROM laden.staging_waarnemingen s
+    (
+        "gebiedstype-onbekend",
+        "gebiedstype",
+        """SELECT s.regel, count(*) OVER () AS totaal FROM laden.staging_waarnemingen s
         WHERE s.levering_id = %(lv)s AND s.gebiedstype IS NOT NULL
           AND NOT EXISTS (SELECT 1 FROM public.gebiedstypes t
                           WHERE t.id::text = lower(s.gebiedstype) OR t.code = s.gebiedstype)
         ORDER BY s.regel LIMIT 1000""",
-     "gebiedstype bestaat niet"),
-    ("gebied-onbekend", "gebied_code",
-     """SELECT s.regel, count(*) OVER () AS totaal FROM laden.staging_waarnemingen s
+        "gebiedstype bestaat niet",
+    ),
+    (
+        "gebied-onbekend",
+        "gebied_code",
+        """SELECT s.regel, count(*) OVER () AS totaal FROM laden.staging_waarnemingen s
         WHERE s.levering_id = %(lv)s
           AND NOT EXISTS (SELECT 1 FROM public.gebieden g WHERE g.id = s.gebied_code)
         ORDER BY s.regel LIMIT 1000""",
-     "gebied_code komt niet voor in D-OmniTwin"),
-    ("gebied-onbekend", "gebied_code",
-     """SELECT s.regel, t.code AS gt, count(*) OVER () AS totaal FROM laden.staging_waarnemingen s
+        "gebied_code komt niet voor in D-OmniTwin",
+    ),
+    (
+        "gebied-onbekend",
+        "gebied_code",
+        """SELECT s.regel, t.code AS gt, count(*) OVER () AS totaal FROM laden.staging_waarnemingen s
         JOIN public.gebieden g ON g.id = s.gebied_code
         JOIN public.gebiedstypes t ON t.id::text = lower(s.gebiedstype) OR t.code = s.gebiedstype
         WHERE s.levering_id = %(lv)s AND g.gebiedstype_id <> t.id
         ORDER BY s.regel LIMIT 1000""",
-     "gebied_code komt niet voor in gebiedstype {gt}"),
-    ("indicator-onbekend", "indicator_uuid",
-     """SELECT s.regel, count(*) OVER () AS totaal FROM laden.staging_waarnemingen s
+        "gebied_code komt niet voor in gebiedstype {gt}",
+    ),
+    (
+        "indicator-onbekend",
+        "indicator_uuid",
+        """SELECT s.regel, count(*) OVER () AS totaal FROM laden.staging_waarnemingen s
         WHERE s.levering_id = %(lv)s
           AND NOT EXISTS (SELECT 1 FROM public.indicatoren i WHERE i.uuid = s.indicator_uuid)
         ORDER BY s.regel LIMIT 1000""",
-     "indicator bestaat niet"),
-    ("indicator-onbekend", "indicator_uuid",
-     """SELECT s.regel, count(*) OVER () AS totaal FROM laden.staging_waarnemingen s
+        "indicator bestaat niet",
+    ),
+    (
+        "indicator-onbekend",
+        "indicator_uuid",
+        """SELECT s.regel, count(*) OVER () AS totaal FROM laden.staging_waarnemingen s
         JOIN public.gebieden g ON g.id = s.gebied_code
         WHERE s.levering_id = %(lv)s
           AND EXISTS (SELECT 1 FROM public.indicator_gebiedstype_relaties r WHERE r.indicator_uuid = s.indicator_uuid)
           AND NOT EXISTS (SELECT 1 FROM public.indicator_gebiedstype_relaties r
                           WHERE r.indicator_uuid = s.indicator_uuid AND r.gebiedstype_id = g.gebiedstype_id)
         ORDER BY s.regel LIMIT 1000""",
-     "indicator is niet gekoppeld aan het gebiedstype van het gebied"),
-    ("waarde-buiten-bereik", "waarde",
-     """SELECT s.regel, count(*) OVER () AS totaal FROM laden.staging_waarnemingen s
+        "indicator is niet gekoppeld aan het gebiedstype van het gebied",
+    ),
+    (
+        "waarde-buiten-bereik",
+        "waarde",
+        """SELECT s.regel, count(*) OVER () AS totaal FROM laden.staging_waarnemingen s
         JOIN public.indicatoren i ON i.uuid = s.indicator_uuid
         WHERE s.levering_id = %(lv)s
           AND ((i.min_waarde IS NOT NULL AND s.waarde < i.min_waarde)
             OR (i.max_waarde IS NOT NULL AND s.waarde > i.max_waarde))
         ORDER BY s.regel LIMIT 1000""",
-     "waarde buiten min_waarde/max_waarde van de indicator"),
+        "waarde buiten min_waarde/max_waarde van de indicator",
+    ),
 ]
 
 
@@ -237,9 +309,11 @@ def db_controles(cur, ctx: Context, fouten: Fouten) -> None:
     for code, veld, sql, melding in DB_CONTROLES:
         sql_fouten(cur, fouten, sql, {"lv": ctx.levering_id}, code, resource, veld, melding)
     # Gebiedstype van het gebied vastleggen (vervangbereik, voorrang)
-    cur.execute("""UPDATE laden.staging_waarnemingen s SET gebiedstype_id = g.gebiedstype_id
+    cur.execute(
+        """UPDATE laden.staging_waarnemingen s SET gebiedstype_id = g.gebiedstype_id
                    FROM public.gebieden g WHERE s.levering_id = %(lv)s AND g.id = s.gebied_code""",
-                {"lv": ctx.levering_id})
+        {"lv": ctx.levering_id},
+    )
 
 
 def _bereik_voorwaarde(lp: dict) -> str:
@@ -250,8 +324,10 @@ def _bereik_voorwaarde(lp: dict) -> str:
     if not velden:
         return ""
     kol = [BEREIK_KOLOM[v] for v in velden]
-    return (f" AND ({', '.join('w.' + k for k in kol)}) IN (SELECT DISTINCT {', '.join('s.' + k for k in kol)} "
-            f"FROM laden.staging_waarnemingen s WHERE s.levering_id = %(lv)s)")
+    return (
+        f" AND ({', '.join('w.' + k for k in kol)}) IN (SELECT DISTINCT {', '.join('s.' + k for k in kol)} "
+        f"FROM laden.staging_waarnemingen s WHERE s.levering_id = %(lv)s)"
+    )
 
 
 def publiceer(cur, ctx: Context) -> dict:
@@ -260,39 +336,55 @@ def publiceer(cur, ctx: Context) -> dict:
     p = {"lv": ctx.levering_id, "ds": ctx.dataset_id, "peil": ctx.extra.get("bronpeildatum")}
     cur.execute("""CREATE TEMP TABLE _weg (gebied_id varchar(100), indicator_uuid uuid, jaar integer,
                    datum timestamp, scenario_id varchar(50)) ON COMMIT DROP""")
-    cur.execute(f"""WITH d AS (DELETE FROM laden.waarnemingen w WHERE w.dataset_id = %(ds)s{_bereik_voorwaarde(lp)}
+    cur.execute(
+        f"""WITH d AS (DELETE FROM laden.waarnemingen w WHERE w.dataset_id = %(ds)s{_bereik_voorwaarde(lp)}
                     RETURNING w.gebied_id, w.indicator_uuid, w.jaar, w.datum, w.scenario_id)
-                    INSERT INTO _weg SELECT * FROM d""", p)
+                    INSERT INTO _weg SELECT * FROM d""",
+        p,
+    )
     vervangen = cur.rowcount
-    cur.execute("""INSERT INTO laden.waarnemingen (dataset_id, levering_id, gebied_id, gebiedstype_id, indicator_uuid,
+    cur.execute(
+        """INSERT INTO laden.waarnemingen (dataset_id, levering_id, gebied_id, gebiedstype_id, indicator_uuid,
                        jaar, datum, scenario_id, waarde, n, n_status, kwaliteit, bron, opmerking, metadata,
                        bronpeildatum)
                    SELECT %(ds)s, s.levering_id, s.gebied_code, s.gebiedstype_id, s.indicator_uuid, s.jaar, s.datum,
                           s.scenario_id, s.waarde, s.n, s.n_status, s.kwaliteit, s.bron, s.opmerking, s.metadata,
                           coalesce(%(peil)s::date, (now() AT TIME ZONE 'UTC')::date)
                    FROM laden.staging_waarnemingen s
-                   WHERE s.levering_id = %(lv)s AND s.n_status <> 'onderdrukt'""", p)
+                   WHERE s.levering_id = %(lv)s AND s.n_status <> 'onderdrukt'""",
+        p,
+    )
     gepubliceerd = cur.rowcount
     plausibel(lp, gepubliceerd, vervangen)
 
     # Geraakte sleutels: wat wegging en wat erbij kwam; gebied_data daarvoor opnieuw (voorrang, V036)
-    cur.execute("""CREATE TEMP TABLE _sleutels ON COMMIT DROP AS
+    cur.execute(
+        """CREATE TEMP TABLE _sleutels ON COMMIT DROP AS
                    SELECT DISTINCT gebied_id, indicator_uuid, jaar, datum, scenario_id FROM (
                        SELECT gebied_id, indicator_uuid, jaar, datum, scenario_id FROM _weg
                        UNION ALL
                        SELECT gebied_id, indicator_uuid, jaar, datum, scenario_id
-                       FROM laden.waarnemingen WHERE levering_id = %(lv)s) x""", p)
+                       FROM laden.waarnemingen WHERE levering_id = %(lv)s) x""",
+        p,
+    )
     cur.execute("CREATE INDEX ON _sleutels (gebied_id, indicator_uuid)")
     cur.execute("ANALYZE _sleutels")
     cur.execute("SELECT laden.herbouw_gebied_data()")
     cur.execute("SELECT count(*) AS n FROM public.gebied_data WHERE levering_id = %(lv)s", p)
     zichtbaar = cur.fetchone()["n"]
     cur.execute("DELETE FROM laden.staging_waarnemingen WHERE levering_id = %(lv)s", p)
-    cur.execute("SELECT count(*) AS n, array_agg(DISTINCT levering_id) AS ids FROM laden.waarnemingen "
-                "WHERE dataset_id = %(ds)s", p)
+    cur.execute(
+        "SELECT count(*) AS n, array_agg(DISTINCT levering_id) AS ids FROM laden.waarnemingen "
+        "WHERE dataset_id = %(ds)s",
+        p,
+    )
     r = cur.fetchone()
-    uit = {"gepubliceerd": gepubliceerd, "vervangen": vervangen, "_aantal_regels": r["n"],
-           "_levering_ids": [str(x) for x in (r["ids"] or [])]}
+    uit = {
+        "gepubliceerd": gepubliceerd,
+        "vervangen": vervangen,
+        "_aantal_regels": r["n"],
+        "_levering_ids": [str(x) for x in (r["ids"] or [])],
+    }
     if zichtbaar < gepubliceerd:
         uit["nietZichtbaarDoorVoorrang"] = gepubliceerd - zichtbaar
     return uit
@@ -302,8 +394,13 @@ def plausibel(lp: dict, nieuw: int, vorig: int) -> None:
     """plausibiliteit uit het laadprofiel: minRegels en maxDalingProcent t.o.v. wat vervangen wordt."""
     pl = lp.get("plausibiliteit") or {}
     if pl.get("minRegels") is not None and nieuw < pl["minRegels"]:
-        raise afkeuren("aantal-niet-plausibel", f"{nieuw} regels, minimaal {pl['minRegels']} (plausibiliteit.minRegels)")
+        raise afkeuren(
+            "aantal-niet-plausibel", f"{nieuw} regels, minimaal {pl['minRegels']} (plausibiliteit.minRegels)"
+        )
     pct = pl.get("maxDalingProcent")
     if pct is not None and vorig and nieuw < vorig * (100 - pct) / 100:
-        raise afkeuren("aantal-niet-plausibel", f"{nieuw} regels, de vorige versie had er binnen het vervangbereik "
-                       f"{vorig}: meer dan {pct}% minder (plausibiliteit.maxDalingProcent)")
+        raise afkeuren(
+            "aantal-niet-plausibel",
+            f"{nieuw} regels, de vorige versie had er binnen het vervangbereik "
+            f"{vorig}: meer dan {pct}% minder (plausibiliteit.maxDalingProcent)",
+        )

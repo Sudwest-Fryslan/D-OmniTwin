@@ -47,8 +47,11 @@ TOEGESTAAN = {
 def claim(levering_id: str) -> tuple[dict, dict] | None:
     """Zet een ontvangen levering op bezig. None als een ander proces hem al heeft."""
     with transactie() as cur:
-        cur.execute("""UPDATE laden.leveringen SET status = 'bezig', gestart_op = now()
-                       WHERE id = %s AND status = 'ontvangen' RETURNING *""", (levering_id,))
+        cur.execute(
+            """UPDATE laden.leveringen SET status = 'bezig', gestart_op = now()
+                       WHERE id = %s AND status = 'ontvangen' RETURNING *""",
+            (levering_id,),
+        )
         lv = cur.fetchone()
         if not lv:
             return None
@@ -56,18 +59,24 @@ def claim(levering_id: str) -> tuple[dict, dict] | None:
         return dict(lv), dict(cur.fetchone())
 
 
-def _rond_af(cur, lid: str, status: str, aantallen: dict, versie: int | None = None,
-             fouten: Fouten | None = None) -> None:
+def _rond_af(
+    cur, lid: str, status: str, aantallen: dict, versie: int | None = None, fouten: Fouten | None = None
+) -> None:
     if fouten:
         cur.execute("DELETE FROM laden.fouten WHERE levering_id = %s", (lid,))
         import psycopg2.extras
-        psycopg2.extras.execute_values(cur, """INSERT INTO laden.fouten (levering_id, resource, regel, veld, code, melding)
+
+        psycopg2.extras.execute_values(
+            cur,
+            """INSERT INTO laden.fouten (levering_id, resource, regel, veld, code, melding)
                                                VALUES %s""",
-                                       [(lid, f.resource, f.regel, f.veld, f.code, f.melding[:1000])
-                                        for f in fouten.lijst[:MAX_FOUTEN]])
-    cur.execute("""UPDATE laden.leveringen SET status = %s, aantallen = %s, versie = %s, fouten_aantal = %s,
+            [(lid, f.resource, f.regel, f.veld, f.code, f.melding[:1000]) for f in fouten.lijst[:MAX_FOUTEN]],
+        )
+    cur.execute(
+        """UPDATE laden.leveringen SET status = %s, aantallen = %s, versie = %s, fouten_aantal = %s,
                           klaar_op = now() WHERE id = %s""",
-                (status, json.dumps(aantallen), versie, fouten.totaal if fouten else 0, lid))
+        (status, json.dumps(aantallen), versie, fouten.totaal if fouten else 0, lid),
+    )
 
 
 def _afgekeurd(lid: str, afk: Afkeuring, aantallen: dict) -> None:
@@ -80,8 +89,13 @@ def _afgekeurd(lid: str, afk: Afkeuring, aantallen: dict) -> None:
 
 def _mislukt(lid: str, cid: str) -> None:
     f = Fouten()
-    f.voeg(Fout("serverfout", f"Technische fout bij het verwerken; meld code {cid} aan de beheerder. "
-                "Niets gepubliceerd; opnieuw leveren mag."))
+    f.voeg(
+        Fout(
+            "serverfout",
+            f"Technische fout bij het verwerken; meld code {cid} aan de beheerder. "
+            "Niets gepubliceerd; opnieuw leveren mag.",
+        )
+    )
     try:
         with transactie() as cur:
             _rond_af(cur, lid, "mislukt", {"gepubliceerd": 0}, fouten=f)
@@ -96,10 +110,13 @@ def _openbaar(a: dict) -> dict:
 
 def _ongewijzigd(cur, lv: dict, ds: dict) -> dict | None:
     """Levering in de actieve versie met hetzelfde bestand (sha256)? Dan geen nieuwe versie."""
-    cur.execute("""SELECT l.id, l.aantallen, v.versie FROM laden.versies v
+    cur.execute(
+        """SELECT l.id, l.aantallen, v.versie FROM laden.versies v
                    JOIN laden.leveringen l ON l.id = ANY(v.levering_ids)
                    WHERE v.dataset_id = %s AND v.actief AND l.sha256 = %s AND l.id <> %s
-                   ORDER BY l.klaar_op DESC LIMIT 1""", (ds["id"], lv["sha256"], lv["id"]))
+                   ORDER BY l.klaar_op DESC LIMIT 1""",
+        (ds["id"], lv["sha256"], lv["id"]),
+    )
     return cur.fetchone()
 
 
@@ -107,9 +124,11 @@ def _versie(cur, ctx: Context, resultaat: dict) -> int:
     cur.execute("SELECT coalesce(max(versie), 0) + 1 AS v FROM laden.versies WHERE dataset_id = %s", (ctx.dataset_id,))
     v = cur.fetchone()["v"]
     cur.execute("UPDATE laden.versies SET actief = false WHERE dataset_id = %s AND actief", (ctx.dataset_id,))
-    cur.execute("""INSERT INTO laden.versies (dataset_id, versie, levering_id, levering_ids, actief, aantal_regels)
+    cur.execute(
+        """INSERT INTO laden.versies (dataset_id, versie, levering_id, levering_ids, actief, aantal_regels)
                    VALUES (%s, %s, %s, %s::uuid[], true, %s)""",
-                (ctx.dataset_id, v, ctx.levering_id, resultaat["_levering_ids"], resultaat["_aantal_regels"]))
+        (ctx.dataset_id, v, ctx.levering_id, resultaat["_levering_ids"], resultaat["_aantal_regels"]),
+    )
     return v
 
 
@@ -117,12 +136,17 @@ def _beschrijving_bij(cur, ctx: Context, dcat: dict | None, versie: int) -> None
     """dcat.jsonld uit de levering, plus dct:modified en de distributie (D-OmniTwin zet die zelf)."""
     besch = dict(ctx.dataset["beschrijving"] or {})
     if isinstance(dcat, dict):
-        besch.update({k: v for k, v in dcat.items() if k not in ("@context", "@id", "dct:modified", "dcat:distribution")})
+        besch.update(
+            {k: v for k, v in dcat.items() if k not in ("@context", "@id", "dct:modified", "dcat:distribution")}
+        )
     from omnitwin.laden.catalogus import distributie
+
     besch["dct:modified"] = _nu_iso(cur)
     besch["dcat:distribution"] = [distributie(ctx.dataset_id, versie, ctx.levering)]
-    cur.execute("UPDATE laden.datasets SET beschrijving = %s, huidige_versie = %s, gewijzigd_op = now() WHERE id = %s",
-                (json.dumps(besch, ensure_ascii=False), versie, ctx.dataset_id))
+    cur.execute(
+        "UPDATE laden.datasets SET beschrijving = %s, huidige_versie = %s, gewijzigd_op = now() WHERE id = %s",
+        (json.dumps(besch, ensure_ascii=False), versie, ctx.dataset_id),
+    )
 
 
 def _nu_iso(cur) -> str:
@@ -150,8 +174,12 @@ def verwerk(levering_id: str) -> str | None:
                     _rond_af(cur, lid, "gepubliceerd", a, versie=zelfde["versie"])
                     return "gepubliceerd"
         try:
-            bron = lees(opslag.pad(ds["id"], lid, lv["bestandsnaam"]), lv["mediatype"],
-                        ENIGE_RESOURCE.get(profiel), ctx.max_bytes)
+            bron = lees(
+                opslag.pad(ds["id"], lid, lv["bestandsnaam"]),
+                lv["mediatype"],
+                ENIGE_RESOURCE.get(profiel),
+                ctx.max_bytes,
+            )
         except Onleesbaar as e:
             raise afkeuren("formaat-ongeldig", str(e))
         return _verwerk_profiel(ctx, bron, profiel, aantallen)
@@ -214,8 +242,10 @@ def _verwerk_profiel(ctx: Context, bron, profiel: str, aantallen: dict) -> str:
             slot_waarnemingen(cur)
             resultaat = pwrn.publiceer(cur, ctx)
         elif profiel == "definities":
-            cur.execute("SELECT DISTINCT CAST(uuid AS text) AS uuid FROM laden.staging_indicatoren "
-                        "WHERE levering_id = %(lv)s", {"lv": ctx.levering_id})
+            cur.execute(
+                "SELECT DISTINCT CAST(uuid AS text) AS uuid FROM laden.staging_indicatoren WHERE levering_id = %(lv)s",
+                {"lv": ctx.levering_id},
+            )
             ctx.extra["herbereken_embeddings"] = [r["uuid"] for r in cur.fetchall()]
             resultaat = pdef.publiceer(cur, ctx)
         elif profiel == "gebiedsindeling":
@@ -250,16 +280,15 @@ def _herbereken_embeddings(indicator_uuids: list[str]) -> None:
     try:
         from omnitwin.database import SessionLocal
         from omnitwin.services.indicator_embeddings import herbereken_embeddings
+
         db = SessionLocal()
         try:
             r = herbereken_embeddings(db, indicator_uuids)
-            logger.info("Embeddings na levering: %s berekend, %s ongewijzigd",
-                        r.get("berekend"), r.get("ongewijzigd"))
+            logger.info("Embeddings na levering: %s berekend, %s ongewijzigd", r.get("berekend"), r.get("ongewijzigd"))
         finally:
             db.close()
     except Exception:
-        logger.exception("Embeddings herberekenen na levering mislukt (%d indicatoren)",
-                         len(indicator_uuids))
+        logger.exception("Embeddings herberekenen na levering mislukt (%d indicatoren)", len(indicator_uuids))
 
 
 def nieuw_id() -> str:

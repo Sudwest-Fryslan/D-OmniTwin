@@ -3,6 +3,7 @@ Integratietest: na een geslaagde eerste initialisatie staat de markering (#201).
 
 Draait tegen een draaiende stack, zoals de andere integratietests (zie test_sample_stack.py).
 """
+
 import os
 
 import pytest
@@ -46,4 +47,3 @@ def test_objecten_van_database_gebruiker(db):
         """)
         anders = cur.fetchall()
     assert not anders, f"tabellen met een andere eigenaar: {anders}"
-

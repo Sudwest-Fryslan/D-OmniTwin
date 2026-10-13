@@ -4,10 +4,10 @@ Doel: Strategiebepaling voor deduplicatie en OV-type classificatie
 Uitvoering: python ETL/OV/onderzoek_osm_structuur.py
 """
 
-import requests
-import json
 import time
 from collections import Counter, defaultdict
+
+import requests
 
 OVERPASS_URL = "https://overpass-api.de/api/interpreter"
 
@@ -16,12 +16,7 @@ def overpass_query(query: str) -> dict:
     headers = {
         "Content-Type": "application/x-www-form-urlencoded",
     }
-    response = requests.post(
-        OVERPASS_URL,
-        data=f"data={requests.utils.quote(query)}",
-        headers=headers,
-        timeout=90
-    )
+    response = requests.post(OVERPASS_URL, data=f"data={requests.utils.quote(query)}", headers=headers, timeout=90)
     if not response.ok:
         print(f"  HTTP {response.status_code}: {response.text[:200]}")
     response.raise_for_status()
@@ -168,22 +163,24 @@ for node in fr_nodes:
         heeft_naam += 1
         naam = tags["name"]
         naam_freq[naam] += 1
-        naam_nodes[naam].append({
-            "id": node["id"],
-            "lat": node["lat"],
-            "lon": node["lon"],
-            "pt": pt,
-            "railway": rw,
-            "highway": hw,
-            "operator": tags.get("operator", ""),
-            "network": tags.get("network", ""),
-            "ref": tags.get("ref", ""),
-            "uic_ref": tags.get("uic_ref", ""),
-            "bus": tags.get("bus", ""),
-            "train": tags.get("train", ""),
-            "tram": tags.get("tram", ""),
-            "ferry": tags.get("ferry", ""),
-        })
+        naam_nodes[naam].append(
+            {
+                "id": node["id"],
+                "lat": node["lat"],
+                "lon": node["lon"],
+                "pt": pt,
+                "railway": rw,
+                "highway": hw,
+                "operator": tags.get("operator", ""),
+                "network": tags.get("network", ""),
+                "ref": tags.get("ref", ""),
+                "uic_ref": tags.get("uic_ref", ""),
+                "bus": tags.get("bus", ""),
+                "train": tags.get("train", ""),
+                "tram": tags.get("tram", ""),
+                "ferry": tags.get("ferry", ""),
+            }
+        )
     if tags.get("uic_ref"):
         heeft_uic += 1
     if tags.get("operator"):
@@ -203,8 +200,8 @@ print("\n--- highway tag waarden ---")
 for val, count in highway_values.most_common():
     print(f"  '{val}': {count}")
 
-print(f"\n--- Coverage ---")
-print(f"  Heeft naam: {heeft_naam} / {len(fr_nodes)} ({100*heeft_naam//len(fr_nodes) if fr_nodes else 0}%)")
+print("\n--- Coverage ---")
+print(f"  Heeft naam: {heeft_naam} / {len(fr_nodes)} ({100 * heeft_naam // len(fr_nodes) if fr_nodes else 0}%)")
 print(f"  Heeft uic_ref: {heeft_uic} / {len(fr_nodes)}")
 print(f"  Heeft operator: {heeft_operator} / {len(fr_nodes)}")
 print(f"  Heeft ref: {heeft_ref} / {len(fr_nodes)}")
@@ -216,8 +213,10 @@ print("Top 15 meest voorkomende dubbele namen:")
 for naam, nodes in sorted(duplicaat_namen.items(), key=lambda x: -len(x[1]))[:15]:
     print(f"\n  '{naam}' ({len(nodes)}x):")
     for n in nodes[:4]:
-        print(f"    ID={n['id']} pt={n['pt']} railway={n['railway']} hw={n['highway']} "
-              f"bus={n['bus']} train={n['train']} operator={n['operator'][:30]}")
+        print(
+            f"    ID={n['id']} pt={n['pt']} railway={n['railway']} hw={n['highway']} "
+            f"bus={n['bus']} train={n['train']} operator={n['operator'][:30]}"
+        )
 
 
 # ── 4. Overpass Attic beschikbaarheid check ───────────────────────────────────

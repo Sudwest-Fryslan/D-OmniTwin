@@ -15,13 +15,27 @@ import re
 from pathlib import Path
 
 import pytest
-from playwright.sync_api import expect
-
 from e2e_helpers import (
-    BOLSWARD_ZUIDOOST, KOUDUM, WORKUM, aantal_kaartgebieden,
-    klik_buurt_op_kaart, klik_chatactie, kompas_namen, laad_buurtenkaart, open_indicator_in_kompas, open_kompas,
-    open_paneel, selecteer_buurt_via_app, verplaats_kompasvenster_rechts, wacht_op_kaartdata, wacht_op_selectie, wacht_op_zonnediagram, geschaald, traag_ms,
+    BOLSWARD_ZUIDOOST,
+    KOUDUM,
+    WORKUM,
+    aantal_kaartgebieden,
+    geschaald,
+    klik_buurt_op_kaart,
+    klik_chatactie,
+    kompas_namen,
+    laad_buurtenkaart,
+    open_indicator_in_kompas,
+    open_kompas,
+    open_paneel,
+    selecteer_buurt_via_app,
+    traag_ms,
+    verplaats_kompasvenster_rechts,
+    wacht_op_kaartdata,
+    wacht_op_selectie,
+    wacht_op_zonnediagram,
 )
+from playwright.sync_api import expect
 
 
 def _chat_actie(page, label_regex):
@@ -168,15 +182,18 @@ def test_tc_06_001_fase2_verkeer_bereikbaarheid(app_page):
     assert verkeer, f"geen indicatoren onder Verkeer (Kompas: {len(kompas_namen(page))} knopen)"
 
 
-@pytest.mark.skip(reason="TC-06-001 stap 11-12 en acceptatiecriterium 'zonder uitleg': kernniveau-detail, "
-                         "historische trend en begrijpelijkheid vergen handmatige review "
-                         "(trend: zie TC-02-002 xfail)")
+@pytest.mark.skip(
+    reason="TC-06-001 stap 11-12 en acceptatiecriterium 'zonder uitleg': kernniveau-detail, "
+    "historische trend en begrijpelijkheid vergen handmatige review "
+    "(trend: zie TC-02-002 xfail)"
+)
 def test_tc_06_001_handmatige_review():
     """TC-06-001 stap 11-12 en gebruikersbeleving."""
 
 
-@pytest.mark.skip(reason="TC-06-001 stap 13 (PDF-rapport): gebiedsdossier gebruikt de LLM; "
-                         "niet deterministisch in de sample-stack")
+@pytest.mark.skip(
+    reason="TC-06-001 stap 13 (PDF-rapport): gebiedsdossier gebruikt de LLM; niet deterministisch in de sample-stack"
+)
 def test_tc_06_001_pdf_rapport():
     """TC-06-001 stap 13: PDF-rapport genereren."""
 
@@ -185,8 +202,32 @@ def test_tc_06_001_pdf_rapport():
 
 # Lokaal model op CPU: een chatantwoord kan minuten duren
 LLM_TIMEOUT_MS = int(os.environ.get("E2E_LLM_TIMEOUT", "300")) * 1000
-_NL_WOORDEN = {"de", "het", "een", "en", "van", "in", "is", "dat", "op", "voor", "met", "niet",
-               "zijn", "te", "er", "je", "ik", "wordt", "deze", "als", "ook", "om", "bij", "naar"}
+_NL_WOORDEN = {
+    "de",
+    "het",
+    "een",
+    "en",
+    "van",
+    "in",
+    "is",
+    "dat",
+    "op",
+    "voor",
+    "met",
+    "niet",
+    "zijn",
+    "te",
+    "er",
+    "je",
+    "ik",
+    "wordt",
+    "deze",
+    "als",
+    "ook",
+    "om",
+    "bij",
+    "naar",
+}
 _LLM_FOUTEN = ("Error contacting", "LLM-server", "Generatie mislukt", "Fout bij")
 
 
@@ -205,8 +246,9 @@ def _open_assistent(page):
 def _vraag(page, tekst, timeout=30_000):
     """Stel een vraag in de Assistent; geeft (JSON-antwoord, laatste assistent-bericht) terug."""
     page.locator("#chat-input").fill(tekst)
-    with page.expect_response(lambda r: r.url.endswith("/api/chat") and r.request.method == "POST",
-                              timeout=timeout) as resp:
+    with page.expect_response(
+        lambda r: r.url.endswith("/api/chat") and r.request.method == "POST", timeout=timeout
+    ) as resp:
         page.get_by_role("button", name="Vraag versturen").click()
     assert resp.value.ok, f"/api/chat gaf {resp.value.status}"
     data = resp.value.json()
@@ -228,8 +270,10 @@ def test_tc_06_004a_chat_ai_hoe_groen(app_page):
     mode = (data.get("debug") or {}).get("mode")
     narrative = data.get("narrative") or ""
     if mode != "intelligent_dispatcher" or any(f in narrative for f in _LLM_FOUTEN):
-        pytest.skip(f"TC-06-004 stap 2-4: geen LLM-antwoord (debug.mode={mode!r}, "
-                    f"narrative: {narrative[:120]!r}); LLM niet geconfigureerd of gaf geen geldige JSON")
+        pytest.skip(
+            f"TC-06-004 stap 2-4: geen LLM-antwoord (debug.mode={mode!r}, "
+            f"narrative: {narrative[:120]!r}); LLM niet geconfigureerd of gaf geen geldige JSON"
+        )
 
     # Herkomst zichtbaar: label AI met de waarschuwing, verklaring en melden (#312)
     label = bericht.locator('.ai-label[data-usecase="A"]')
@@ -246,8 +290,10 @@ def test_tc_06_004a_chat_ai_hoe_groen(app_page):
     # Minstens één kaartactie die naar het geselecteerde gebied verwijst
     kaartacties = [a for a in data.get("acties", []) if a.get("type") == "TOON_OP_KAART"]
     assert kaartacties, f"geen TOON_OP_KAART-actie: {data.get('acties')}"
-    assert any("Bolsward" in (a.get("label") or "") or BOLSWARD_ZUIDOOST in (a.get("indicator_uuid") or "")
-               for a in kaartacties), f"geen kaartactie voor Bolsward-Zuidoost: {kaartacties}"
+    assert any(
+        "Bolsward" in (a.get("label") or "") or BOLSWARD_ZUIDOOST in (a.get("indicator_uuid") or "")
+        for a in kaartacties
+    ), f"geen kaartactie voor Bolsward-Zuidoost: {kaartacties}"
     expect(bericht.locator('.chat-actie-btn[data-type="TOON_OP_KAART"]').first).to_be_visible()
 
 

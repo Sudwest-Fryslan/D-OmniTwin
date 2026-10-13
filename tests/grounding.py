@@ -17,6 +17,7 @@ kan gebruiken, telt voor dubbelzinnige getallen ("1.132", "1,132") elke lezing m
 Triviaal (nooit een overtreding): 0-3 (rangtelwoorden/opsommingen), jaartallen
 2000-2030 en getallen direct gevolgd door 'woorden' (lengte-instructie uit de prompt).
 """
+
 import json
 import re
 
@@ -69,11 +70,9 @@ def getallen_in_tekst(tekst: str) -> list:
         if m.group("teken"):
             waarden = {-w for w in waarden}
         is_pct = bool(m.group("pct"))
-        triviaal = (
-            _WOORDEN_ACHTER.match(tekst, m.end())
-            or (not is_pct and any(
-                w == int(w) and (abs(w) <= TRIVIAAL_MAX or JAARTAL_MIN <= w <= JAARTAL_MAX)
-                for w in waarden))
+        triviaal = _WOORDEN_ACHTER.match(tekst, m.end()) or (
+            not is_pct
+            and any(w == int(w) and (abs(w) <= TRIVIAAL_MAX or JAARTAL_MIN <= w <= JAARTAL_MAX) for w in waarden)
         )
         resultaat.append((raw, waarden, is_pct, bool(triviaal)))
     return resultaat
@@ -121,7 +120,8 @@ def ongegronde_getallen(tekst: str, bron) -> list:
     """Getallen (zoals in de tekst geschreven) die niet in de bron voorkomen."""
     bron_getallen = getallen_in_bron(bron)
     return [
-        raw for raw, waarden, is_pct, triviaal in getallen_in_tekst(tekst)
+        raw
+        for raw, waarden, is_pct, triviaal in getallen_in_tekst(tekst)
         if not triviaal and not is_gegrond(waarden, is_pct, bron_getallen)
     ]
 
@@ -131,7 +131,7 @@ def grounding_melding(label: str, tekst: str, bron, ongegrond: list) -> str:
     zinnen = []
     for raw in ongegrond:
         i = tekst.find(raw)
-        zinnen.append(f"  - '{raw}' in: …{tekst[max(0, i - 80):i + len(raw) + 40]}…")
+        zinnen.append(f"  - '{raw}' in: …{tekst[max(0, i - 80) : i + len(raw) + 40]}…")
     bron_getallen = sorted({round(s, 2) for s in getallen_in_bron(bron)})
     return (
         f"{label}: {len(ongegrond)} getal(len) niet in de brondata:\n"

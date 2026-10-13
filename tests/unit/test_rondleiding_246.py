@@ -5,6 +5,7 @@ Unit test: bevindingen rondleiding demo-omgeving (#246).
   in plaats van 57x "overgeslagen" zonder uitleg.
 - In-process installeren van een compat-dataset (swf-adapter-fme) zegt wat er wel moet.
 """
+
 import pytest
 
 from omnitwin import usecases as uc
@@ -28,6 +29,7 @@ def test_kort_tekst_blijft_tekst():
 
 def test_inproces_compat_noemt_de_weg_via_http(tmp_path):
     from omnitwin.laden.inproces import InprocesLaadApi
+
     api = InprocesLaadApi.__new__(InprocesLaadApi)  # geen database nodig voor deze tak
     pad = tmp_path / "x.json"
     pad.write_text("{}", encoding="utf-8")

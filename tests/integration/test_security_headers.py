@@ -14,7 +14,7 @@ Draaien tegen een draaiende stack, zoals tests/integration/test_sample_stack.py:
 """
 
 import os
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 import pytest
 import requests
@@ -81,6 +81,7 @@ def test_geen_hsts_op_http(response):
 
 # ── security.txt (RFC 9116) ─────────────────────────────────────────────────
 
+
 @pytest.fixture(scope="module")
 def security_txt():
     r = requests.get(f"{BASE_URL}/.well-known/security.txt", timeout=TIMEOUT)
@@ -106,6 +107,6 @@ def test_security_txt_expires(security_txt):
     expires = security_txt.get("expires", [])
     assert len(expires) == 1, "precies één Expires: verplicht"
     datum = datetime.fromisoformat(expires[0].replace("Z", "+00:00"))
-    nu = datetime.now(timezone.utc)
+    nu = datetime.now(UTC)
     assert datum > nu + timedelta(days=30), f"Expires {datum} verloopt binnen 30 dagen: verlengen"
     assert datum < nu + timedelta(days=366), "Expires hooguit een jaar vooruit (RFC 9116)"

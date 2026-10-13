@@ -37,8 +37,11 @@ ROOT = Path(__file__).resolve().parents[3]
 PROFIELEN = ROOT / "docs" / "api" / "laden" / "profielen"
 RESOURCES = {
     "waarnemingen": {"waarnemingen": "waarnemingen"},
-    "definities": {"indicatoren": "definities-indicatoren", "gebiedstypen": "definities-gebiedstypen",
-                   "relaties": "definities-relaties"},
+    "definities": {
+        "indicatoren": "definities-indicatoren",
+        "gebiedstypen": "definities-gebiedstypen",
+        "relaties": "definities-relaties",
+    },
 }
 MAX_FOUTEN = 50
 
@@ -69,7 +72,9 @@ def valideer_datapackage(pad, registratie, schema_paden=None):
     try:
         from frictionless import Package, system
     except ImportError:
-        raise OntbrekendPakket("frictionless ontbreekt: pip install frictionless (alleen nodig om Data Packages te controleren)")
+        raise OntbrekendPakket(
+            "frictionless ontbreekt: pip install frictionless (alleen nodig om Data Packages te controleren)"
+        )
     lp = registratie.get("laadprofiel") or {}
     profiel = lp.get("profiel", "eigen schema")
     rapport = _rapport(pad, profiel)
@@ -84,18 +89,32 @@ def valideer_datapackage(pad, registratie, schema_paden=None):
             return rapport
         descriptor = {"name": dp.get("name", "levering"), "resources": []}
         for r in dp["resources"]:
-            descriptor["resources"].append({"name": r["name"], "path": r["path"], "format": "csv",
-                                            "encoding": "utf-8", "schema": _schema(verwacht[r["name"]])})
+            descriptor["resources"].append(
+                {
+                    "name": r["name"],
+                    "path": r["path"],
+                    "format": "csv",
+                    "encoding": "utf-8",
+                    "schema": _schema(verwacht[r["name"]]),
+                }
+            )
         with system.use_context(trusted=True):
             pkg = Package(descriptor, basepath=tmp)
             rep = pkg.validate(limit_errors=MAX_FOUTEN)
         for task in rep.tasks:
             # Zelf tellen: frictionless stopt met tellen bij de foutlimiet
-            with open(Path(tmp) / next(r["path"] for r in dp["resources"] if r["name"] == task.name), encoding="utf-8", newline="") as f:
+            with open(
+                Path(tmp) / next(r["path"] for r in dp["resources"] if r["name"] == task.name),
+                encoding="utf-8",
+                newline="",
+            ) as f:
                 rapport["aantallen"][task.name] = max(sum(1 for _ in csv.reader(f)) - 1, 0)
             for e in task.errors:
                 veld = getattr(e, "field_name", None)
-                _fout(rapport, f"{task.name} regel {getattr(e, 'row_number', '-')}{f' veld {veld}' if veld else ''}: {e.type}: {e.note or e.message}")
+                _fout(
+                    rapport,
+                    f"{task.name} regel {getattr(e, 'row_number', '-')}{f' veld {veld}' if veld else ''}: {e.type}: {e.note or e.message}",
+                )
         for e in rep.errors:
             _fout(rapport, f"pakket: {e.type}: {e.message}")
         if profiel == "waarnemingen":
@@ -117,7 +136,9 @@ def _waarnemingen_regels(csv_pad, lp, rapport):
                 n_stat["bronOnderdrukt"] += 1
             elif int(r["n"]) < per_indicator.get(r["indicator_uuid"], minimum_n):
                 n_stat["onderdrukt"] += 1
-            sleutels[(r["gebied_code"], r["indicator_uuid"], r["jaar"], r["peildatum"], r["scenario"] or "current")] += 1
+            sleutels[
+                (r["gebied_code"], r["indicator_uuid"], r["jaar"], r["peildatum"], r["scenario"] or "current")
+            ] += 1
     dubbel = sum(v - 1 for v in sleutels.values() if v > 1)
     if dubbel:
         _fout(rapport, f"waarnemingen: dubbele-sleutel: {dubbel} regels")
@@ -198,8 +219,10 @@ def valideer_swf_json(pad, registratie, spec=None):
         jaar0 = sum(1 for w in data if str(w.get("begingeldigheid", "")).startswith("0000"))
         if jaar0:
             fouten.append(f"jaar-ongeldig: {jaar0} regels met jaar 0")
-        rapport["aantallen"] = {"waarden": len(data),
-                                "combinaties": len({(w.get("indicator_id"), w.get("gebiedstype_id")) for w in data})}
+        rapport["aantallen"] = {
+            "waarden": len(data),
+            "combinaties": len({(w.get("indicator_id"), w.get("gebiedstype_id")) for w in data}),
+        }
     for f in fouten:
         _fout(rapport, f)
     return rapport
@@ -221,8 +244,12 @@ def valideer_levering(registratie, pad, schema_paden=None):
 
 def samenvatting(rapporten):
     geldig = all(r["geldig"] for r in rapporten)
-    return {"geldig": geldig, "bestanden": len(rapporten),
-            "afgekeurd": [r["bestand"] for r in rapporten if not r["geldig"]], "rapporten": rapporten}
+    return {
+        "geldig": geldig,
+        "bestanden": len(rapporten),
+        "afgekeurd": [r["bestand"] for r in rapporten if not r["geldig"]],
+        "rapporten": rapporten,
+    }
 
 
 def main(argv):

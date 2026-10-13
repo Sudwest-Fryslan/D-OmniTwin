@@ -52,9 +52,9 @@ logger = logging.getLogger("omnitwin.oidc")
 
 # Alleen asymmetrisch: de backend heeft geen gedeeld geheim met de provider
 TOEGESTANE_ALGORITMES = ("RS256", "RS384", "RS512", "PS256", "PS384", "PS512", "ES256", "ES384", "ES512")
-KLOKRUIMTE = 30              # seconden speling op exp/nbf/iat
-JWKS_TTL = 300               # seconden dat een opgehaalde JWKS geldig blijft
-JWKS_MIN_VERVERSING = 10     # minimaal aantal seconden tussen twee keer ophalen bij een onbekende kid
+KLOKRUIMTE = 30  # seconden speling op exp/nbf/iat
+JWKS_TTL = 300  # seconden dat een opgehaalde JWKS geldig blijft
+JWKS_MIN_VERVERSING = 10  # minimaal aantal seconden tussen twee keer ophalen bij een onbekende kid
 HTTP_TIMEOUT = 5.0
 
 PROBLEEM_BASIS = "https://github.com/Sudwest-Fryslan/D-OmniTwin/blob/main/docs/api/laden/README.md#"
@@ -62,10 +62,10 @@ PROBLEEM_BASIS = "https://github.com/Sudwest-Fryslan/D-OmniTwin/blob/main/docs/a
 
 @dataclass(frozen=True)
 class Principal:
-    onderwerp: str            # sub
-    client_id: str | None     # azp / client_id
-    rollen: frozenset[str]    # realm-rollen + client-rollen van de audience (Keycloak) + `roles` (Entra)
-    token_id: str | None      # jti
+    onderwerp: str  # sub
+    client_id: str | None  # azp / client_id
+    rollen: frozenset[str]  # realm-rollen + client-rollen van de audience (Keycloak) + `roles` (Entra)
+    token_id: str | None  # jti
     gebruikersnaam: str | None = None  # preferred_username (mensen); voor de auditlog, nooit e-mail
 
 
@@ -75,8 +75,7 @@ class Principal:
 class AuthProbleem(Exception):
     """Weigering als Problem Details (RFC 9457); de handler staat in `registreer`."""
 
-    def __init__(self, status: int, code: str, titel: str, detail: str,
-                 www_authenticate: str | None = None):
+    def __init__(self, status: int, code: str, titel: str, detail: str, www_authenticate: str | None = None):
         super().__init__(detail)
         self.status = status
         self.code = code
@@ -152,7 +151,7 @@ def _haal_json(url: str) -> dict[str, Any]:
 def _intern(url: str, publiek_prefix: str, intern: str) -> str:
     """Herschrijf een URL uit de discovery naar het interne adres van de provider."""
     if url.startswith(publiek_prefix):
-        return intern + url[len(publiek_prefix):]
+        return intern + url[len(publiek_prefix) :]
     # Anders alleen schema en host vervangen; het pad is binnen en buiten gelijk
     d, i = urlsplit(url), urlsplit(intern)
     return urlunsplit((i.scheme, i.netloc, d.path, d.query, ""))
@@ -331,8 +330,9 @@ def controleer_token(token: str, cfg: _Config | None = None) -> Principal:
 # ---------------------------------------------------------------------------
 # FastAPI-dependencies
 # ---------------------------------------------------------------------------
-_bearer = HTTPBearer(auto_error=False, scheme_name="oidc",
-                     description="Access token van Keycloak (realm omnitwin), aud omnitwin-api.")
+_bearer = HTTPBearer(
+    auto_error=False, scheme_name="oidc", description="Access token van Keycloak (realm omnitwin), aud omnitwin-api."
+)
 
 
 def _principal(request: Request, cred: HTTPAuthorizationCredentials | None, verplicht: bool) -> Principal | None:
@@ -349,14 +349,14 @@ def _principal(request: Request, cred: HTTPAuthorizationCredentials | None, verp
     return controleer_token(cred.credentials)
 
 
-def principal_optioneel(request: Request,
-                        cred: HTTPAuthorizationCredentials | None = Depends(_bearer)) -> Principal | None:
+def principal_optioneel(
+    request: Request, cred: HTTPAuthorizationCredentials | None = Depends(_bearer)
+) -> Principal | None:
     """Dependency: de Principal, of None als er geen token is meegestuurd. Ongeldig token: 401."""
     return _principal(request, cred, verplicht=False)
 
 
-def vereis_principal(request: Request,
-                     cred: HTTPAuthorizationCredentials | None = Depends(_bearer)) -> Principal:
+def vereis_principal(request: Request, cred: HTTPAuthorizationCredentials | None = Depends(_bearer)) -> Principal:
     """Dependency: een geldig token, ongeacht de rollen."""
     p = _principal(request, cred, verplicht=True)
     assert p is not None
@@ -370,8 +370,7 @@ def vereis_rol(*rollen: str) -> Callable[..., Principal]:
     if not rollen:
         raise ValueError("vereis_rol zonder rollen; gebruik vereis_principal")
 
-    def afhankelijkheid(request: Request,
-                        cred: HTTPAuthorizationCredentials | None = Depends(_bearer)) -> Principal:
+    def afhankelijkheid(request: Request, cred: HTTPAuthorizationCredentials | None = Depends(_bearer)) -> Principal:
         principal = _principal(request, cred, verplicht=True)
         assert principal is not None
         nodig = set()
@@ -384,10 +383,16 @@ def vereis_rol(*rollen: str) -> Callable[..., Principal]:
             nodig.add(rol)
         if principal.rollen & nodig:
             return principal
-        logger.warning("Rol ontbreekt (nodig een van %s): client_id=%s jti=%s",
-                       sorted(nodig), principal.client_id, principal.token_id)
+        logger.warning(
+            "Rol ontbreekt (nodig een van %s): client_id=%s jti=%s",
+            sorted(nodig),
+            principal.client_id,
+            principal.token_id,
+        )
         raise AuthProbleem(
-            403, "geen-toegang", "Geen toegang",
+            403,
+            "geen-toegang",
+            "Geen toegang",
             "Het token heeft geen van de benodigde rollen: " + ", ".join(sorted(nodig)) + ".",
             'Bearer error="insufficient_scope"',
         )

@@ -44,8 +44,11 @@ def distributie(dataset_id: str, versie: int, levering: dict) -> dict:
         "dcat:accessURL": f"{BASIS}/datasets/{dataset_id}/versies/{versie}/bestand",
         "dcat:mediaType": levering.get("mediatype"),
         "dcat:byteSize": levering.get("grootte"),
-        "spdx:checksum": {"@type": "spdx:Checksum", "spdx:algorithm": "spdx:checksumAlgorithm_sha256",
-                          "spdx:checksumValue": levering.get("sha256")},
+        "spdx:checksum": {
+            "@type": "spdx:Checksum",
+            "spdx:algorithm": "spdx:checksumAlgorithm_sha256",
+            "spdx:checksumValue": levering.get("sha256"),
+        },
     }
 
 

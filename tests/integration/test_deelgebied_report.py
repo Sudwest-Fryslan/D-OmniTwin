@@ -54,10 +54,12 @@ def test_methodologie_gewogen_gemiddelde(rapport):
 
 
 def test_indicatoren_met_buurt_drilldown(rapport):
-    items = [ind
-             for kwadrant in rapport["kwadranten"]
-             for thema in kwadrant["themas"]
-             for ind in thema["top10_aandachtspunten"] + thema["top10_kansen"]]
+    items = [
+        ind
+        for kwadrant in rapport["kwadranten"]
+        for thema in kwadrant["themas"]
+        for ind in thema["top10_aandachtspunten"] + thema["top10_kansen"]
+    ]
     assert items, "geen enkele indicator in de top-10's"
     ind = items[0]
     for veld in ("gewogen_waarde", "ref_gemiddelde", "z_score", "buurten_drilldown"):

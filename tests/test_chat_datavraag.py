@@ -2,6 +2,7 @@
 Unit tests voor datavragen in de chat (#149): herkennen van datavragen, gebieden en
 indicatoren, richting, feiten en de grounding-terugval. Geen database, geen taalmodel.
 """
+
 import os
 import sys
 
@@ -34,22 +35,41 @@ def ind(naam, uuid=None, **kw):
     return {"uuid": uuid or f"u-{naam}", "naam": naam, **kw}
 
 
-INDICATOREN = [ind(n) for n in [
-    "Afstand tot koele plek", "Oppervlak groen per inwoner", "65+ jaar", "65+ jaar (%)", "45-65 jaar",
-    "Eenzaamheid", "Vrijwilliger", "Mantelzorger", "Gemiddeld energielabel", "Aantal energielabels",
-    "Aantal energielabels (definitief)", "Definitief energielabel", "Energielabel coverage",
-    "Huishoudens met laag inkomen", "Moeite met rondkomen", "Inkomen per inwoner",
-    "Netto arbeidsparticipatie", "Ervaren gezondheid", "Diversiteit Functies (Simpson Index)",
-    "Afstand tot huisarts", "Eenpersoonshuishoudens", "Eenpersoonshuishoudens (%)",
-]]
+INDICATOREN = [
+    ind(n)
+    for n in [
+        "Afstand tot koele plek",
+        "Oppervlak groen per inwoner",
+        "65+ jaar",
+        "65+ jaar (%)",
+        "45-65 jaar",
+        "Eenzaamheid",
+        "Vrijwilliger",
+        "Mantelzorger",
+        "Gemiddeld energielabel",
+        "Aantal energielabels",
+        "Aantal energielabels (definitief)",
+        "Definitief energielabel",
+        "Energielabel coverage",
+        "Huishoudens met laag inkomen",
+        "Moeite met rondkomen",
+        "Inkomen per inwoner",
+        "Netto arbeidsparticipatie",
+        "Ervaren gezondheid",
+        "Diversiteit Functies (Simpson Index)",
+        "Afstand tot huisarts",
+        "Eenpersoonshuishoudens",
+        "Eenpersoonshuishoudens (%)",
+    ]
+]
 
 USECASE_VRAGEN = {
     "hittestress": "Ik werk aan hittestress in Bolsward. Welke buurt ligt het verst van een koele plek, "
-                   "en waar wonen relatief de meeste 65-plussers?",
+    "en waar wonen relatief de meeste 65-plussers?",
     "sociale-cohesie": "Ik ben wijkcoördinator in Bolsward-Zuidoost. Hoe staat het met eenzaamheid en "
-                       "vrijwilligerswerk in mijn wijk?",
+    "vrijwilligerswerk in mijn wijk?",
     "energiearmoede": "Waar in Bolsward is het risico op energiearmoede het grootst? Ik wil weten waar slechte "
-                      "energielabels samengaan met lage inkomens.",
+    "energielabels samengaan met lage inkomens.",
     "brede-welvaart": "Hoe staat het met de brede welvaart in Bolsward-Zuidoost vergeleken met de rest van Bolsward?",
 }
 
@@ -69,30 +89,38 @@ def indicatoren(vraag, **kw):
 
 # ── Datavraag herkennen ──────────────────────────────────────────────────────
 
-@pytest.mark.parametrize("vraag", list(USECASE_VRAGEN.values()) + [
-    "welke buurt ligt het verst van een koele plek",
-    "hoe staat het met eenzaamheid in Bolsward-Zuidoost",
-    "vergelijk Workum met Hindeloopen op eenzaamheid",
-    "top 3 buurten met de hoogste eenzaamheid",
-    "Hoeveel 65-plussers wonen er in Workum?",
-    "Hoe groen is Bolsward-Zuidoost?",
-    "Hoe staat Workum ervoor op eenzaamheid?",
-    "Hoe veilig is Hindeloopen?",
-    "Wat is de eenzaamheid in Workum?",
-])
+
+@pytest.mark.parametrize(
+    "vraag",
+    list(USECASE_VRAGEN.values())
+    + [
+        "welke buurt ligt het verst van een koele plek",
+        "hoe staat het met eenzaamheid in Bolsward-Zuidoost",
+        "vergelijk Workum met Hindeloopen op eenzaamheid",
+        "top 3 buurten met de hoogste eenzaamheid",
+        "Hoeveel 65-plussers wonen er in Workum?",
+        "Hoe groen is Bolsward-Zuidoost?",
+        "Hoe staat Workum ervoor op eenzaamheid?",
+        "Hoe veilig is Hindeloopen?",
+        "Wat is de eenzaamheid in Workum?",
+    ],
+)
 def test_datavraag_herkend(vraag):
     assert dv.is_datavraag(vraag)
 
 
-@pytest.mark.parametrize("vraag", [
-    "Ik ben beleidsadviseur",
-    "Welke indicatoren zeggen iets over eenzaamheid bij ouderen in de buurt?",
-    "Maak een rapport van deze buurt",
-    "Toon eenzaamheid op de kaart",
-    "Open het Kompas",
-    "Selecteer Bolsward-Zuidoost",
-    "Wat kun je allemaal?",
-])
+@pytest.mark.parametrize(
+    "vraag",
+    [
+        "Ik ben beleidsadviseur",
+        "Welke indicatoren zeggen iets over eenzaamheid bij ouderen in de buurt?",
+        "Maak een rapport van deze buurt",
+        "Toon eenzaamheid op de kaart",
+        "Open het Kompas",
+        "Selecteer Bolsward-Zuidoost",
+        "Wat kun je allemaal?",
+    ],
+)
 def test_geen_datavraag(vraag):
     assert not dv.is_datavraag(vraag)
 
@@ -106,6 +134,7 @@ def test_gevraagd_aantal_en_volgorde():
 
 
 # ── Gebieden herkennen ───────────────────────────────────────────────────────
+
 
 def test_woonplaats_wordt_buurten():
     r = gebieden(USECASE_VRAGEN["hittestress"])
@@ -162,6 +191,7 @@ def test_voorkeur_buurten_boven_wijk():
 
 # ── Indicatoren herkennen ────────────────────────────────────────────────────
 
+
 def test_indicatoren_hittestress():
     gevonden = indicatoren(USECASE_VRAGEN["hittestress"])
     assert gevonden[0] == "Afstand tot koele plek"
@@ -185,8 +215,12 @@ def test_indicatoren_energiearmoede():
 
 def test_indicatoren_brede_welvaart():
     gevonden = indicatoren(USECASE_VRAGEN["brede-welvaart"])
-    assert set(gevonden) == {"Inkomen per inwoner", "Netto arbeidsparticipatie", "Ervaren gezondheid",
-                             "Diversiteit Functies (Simpson Index)"}
+    assert set(gevonden) == {
+        "Inkomen per inwoner",
+        "Netto arbeidsparticipatie",
+        "Ervaren gezondheid",
+        "Diversiteit Functies (Simpson Index)",
+    }
 
 
 def test_geen_indicator_bij_onbekend_onderwerp():
@@ -207,28 +241,35 @@ def test_indicatoren_via_synoniem():
     assert indicatoren("Hoe ver is de dokter in Workum?") == ["Afstand tot huisarts"]
 
 
-@pytest.mark.parametrize("vraag,verwacht", [
-    ("hoeveel % is bejaard bij mij in de buurt?", True),
-    ("hoe gezond zijn de mensen in mijn wijk", True),
-    ("hoe staat het met eenzaamheid hier", True),
-    ("hoeveel ouderen wonen er in Workum", False),
-    ("Welke indicatoren zeggen iets over eenzaamheid bij ouderen in de buurt?", False),
-])
+@pytest.mark.parametrize(
+    "vraag,verwacht",
+    [
+        ("hoeveel % is bejaard bij mij in de buurt?", True),
+        ("hoe gezond zijn de mensen in mijn wijk", True),
+        ("hoe staat het met eenzaamheid hier", True),
+        ("hoeveel ouderen wonen er in Workum", False),
+        ("Welke indicatoren zeggen iets over eenzaamheid bij ouderen in de buurt?", False),
+    ],
+)
 def test_vraagt_eigen_buurt(vraag, verwacht):
     assert dv.vraagt_eigen_buurt(vraag) is verwacht
 
 
 # ── Richting en feiten ───────────────────────────────────────────────────────
 
-@pytest.mark.parametrize("score_type,logica,verwacht", [
-    ("+/+", "pos_is_pos", "hoger_is_beter"),
-    ("+/-", "-/+", "lager_is_beter"),
-    ("-/+", None, "lager_is_beter"),
-    ("-/-", None, "lager_is_beter"),  # zelfde regel als report_service
-    ("+/+", "neutraal", "neutraal"),
-    ("+/+", "N/A", "neutraal"),
-    (None, None, "hoger_is_beter"),
-])
+
+@pytest.mark.parametrize(
+    "score_type,logica,verwacht",
+    [
+        ("+/+", "pos_is_pos", "hoger_is_beter"),
+        ("+/-", "-/+", "lager_is_beter"),
+        ("-/+", None, "lager_is_beter"),
+        ("-/-", None, "lager_is_beter"),  # zelfde regel als report_service
+        ("+/+", "neutraal", "neutraal"),
+        ("+/+", "N/A", "neutraal"),
+        (None, None, "hoger_is_beter"),
+    ],
+)
 def test_richting(score_type, logica, verwacht):
     assert dv.richting(score_type, logica) == verwacht
 
@@ -239,11 +280,22 @@ def test_formatteer_getal(w, verwacht):
 
 
 NAMEN = {"BU19000001": "Bolsward-Noord", "BU19000002": "Bolsward-Zuidoost", "BU19000004": "Bolsward-Noordoost"}
-KOEL = ind("Afstand tot koele plek", eenheid="m", bron="bf4e5b8f-6b0a-4632-b9b4-8e29d025e68c_d_cbs_buurten.json",
-           score_type="+/-", interpretatie_logica="-/+")
+KOEL = ind(
+    "Afstand tot koele plek",
+    eenheid="m",
+    bron="bf4e5b8f-6b0a-4632-b9b4-8e29d025e68c_d_cbs_buurten.json",
+    score_type="+/-",
+    interpretatie_logica="-/+",
+)
 WAARDEN = [
     {"gebied_id": "BU19000001", "indicator_uuid": KOEL["uuid"], "waarde": 246.0, "jaar": 2021, "bron": "x"},
-    {"gebied_id": "BU19000002", "indicator_uuid": KOEL["uuid"], "waarde": 226.0, "jaar": 2021, "bron": "DEMO: gemiddelde"},
+    {
+        "gebied_id": "BU19000002",
+        "indicator_uuid": KOEL["uuid"],
+        "waarde": 226.0,
+        "jaar": 2021,
+        "bron": "DEMO: gemiddelde",
+    },
     {"gebied_id": "BU19000004", "indicator_uuid": KOEL["uuid"], "waarde": 206.0, "jaar": 2021, "bron": "x"},
 ]
 
@@ -297,27 +349,33 @@ def test_vaste_tekst_met_eenheid_bron_en_demo():
     assert "Bolsward-Zuidoost zijn demodata" in tekst
 
 
-@pytest.mark.parametrize("e,verwacht", [("%", "48,3%"), ("m", "48,3 m"), ("x 1 000 euro", "48,3 duizend euro"),
-                                        ("aantal", "48,3"), ("", "48,3")])
+@pytest.mark.parametrize(
+    "e,verwacht",
+    [("%", "48,3%"), ("m", "48,3 m"), ("x 1 000 euro", "48,3 duizend euro"), ("aantal", "48,3"), ("", "48,3")],
+)
 def test_waarde_met_eenheid(e, verwacht):
     assert dv._waarde_tekst({"waarde": 48.3}, e) == verwacht
 
 
-@pytest.mark.parametrize("bron,verwacht", [
-    ("bf4e5b8f-6b0a-4632-b9b4-8e29d025e68c_d_cbs_buurten.json", "onbekende bron (import)"),
-    ("upload/groen_per_inwoner.csv", "onbekende bron (import)"),
-    ("Gezondheidsmonitor RIVM 2024", "Gezondheidsmonitor RIVM 2024"),
-    ("", "bron onbekend"),
-])
+@pytest.mark.parametrize(
+    "bron,verwacht",
+    [
+        ("bf4e5b8f-6b0a-4632-b9b4-8e29d025e68c_d_cbs_buurten.json", "onbekende bron (import)"),
+        ("upload/groen_per_inwoner.csv", "onbekende bron (import)"),
+        ("Gezondheidsmonitor RIVM 2024", "Gezondheidsmonitor RIVM 2024"),
+        ("", "bron onbekend"),
+    ],
+)
 def test_nette_bron(bron, verwacht):
     assert dv.nette_bron(bron) == verwacht
 
 
 def test_prompt_bevat_cijfers_als_json():
     import json
+
     feiten = dv.bouw_feiten([KOEL], WAARDEN, NAMEN, BOLSWARD)
     prompt = dv.gebruikersprompt("Welke buurt ligt het verst van een koele plek?", feiten, ["Bolsward"])
-    blok = json.loads(prompt[prompt.index("["):prompt.rindex("]") + 1])
+    blok = json.loads(prompt[prompt.index("[") : prompt.rindex("]") + 1])
     assert [w["waarde"] for w in blok[0]["waarden"]] == ["246 m", "226 m", "206 m"]
     assert blok[0]["eenheid"] == "m" and "gunstigst" in blok[0]["samenvatting"]
     assert blok[0]["richting"].startswith("lager is beter")
@@ -337,6 +395,7 @@ def test_controleer_getallen_vindt_verzonnen_getal():
 
 # ── Route met nep-database en nep-model ──────────────────────────────────────
 
+
 class NepDB:
     """Minimale stand-in voor de SQLAlchemy-sessie; de laad-functies worden vervangen."""
 
@@ -346,11 +405,15 @@ class NepDB:
 
 @pytest.fixture
 def nep_route(monkeypatch):
-    monkeypatch.setattr(dv, "laad_gebieden", lambda db: [{**g, "gebiedstype": "CBS Buurten"} for g in GEBIEDEN
-                                                       if g["gebiedstype_id"] == BUURT])
+    monkeypatch.setattr(
+        dv,
+        "laad_gebieden",
+        lambda db: [{**g, "gebiedstype": "CBS Buurten"} for g in GEBIEDEN if g["gebiedstype_id"] == BUURT],
+    )
     monkeypatch.setattr(dv, "laad_indicatoren", lambda db: [KOEL])
     monkeypatch.setattr(dv, "laad_waarden", lambda db, u, ids: [w for w in WAARDEN if w["gebied_id"] in ids])
     import omnitwin.services.gemeente_validatie as gv
+
     monkeypatch.setattr(gv, "laad_gemeenten", lambda db, alleen_met_gebieden=False: GEMEENTEN)
 
 
@@ -359,8 +422,10 @@ def route(vraag, antwoord):
 
 
 def test_route_gebruikt_gegrond_antwoord(nep_route):
-    r = route("Welke buurt in Bolsward ligt het verst van een koele plek?",
-              "Bolsward-Noord ligt het verst van een koele plek: 246 (bron onbekend, 2021).")
+    r = route(
+        "Welke buurt in Bolsward ligt het verst van een koele plek?",
+        "Bolsward-Noord ligt het verst van een koele plek: 246 (bron onbekend, 2021).",
+    )
     assert r["llm_gebruikt"] and r["narrative"].startswith("Bolsward-Noord")
     assert sorted(r["gebied_ids"]) == BOLSWARD
 
@@ -386,8 +451,13 @@ def test_route_geen_datavraag(nep_route):
 
 
 def test_route_zonder_llm_geeft_vaste_tekst(nep_route):
-    r = dv.beantwoord_datavraag("Welke buurt in Bolsward ligt het verst van een koele plek?", {"geen_llm": True},
-                                NepDB(), lambda t: [], lambda s, u, *_: pytest.fail("model mag niet gevraagd worden"))
+    r = dv.beantwoord_datavraag(
+        "Welke buurt in Bolsward ligt het verst van een koele plek?",
+        {"geen_llm": True},
+        NepDB(),
+        lambda t: [],
+        lambda s, u, *_: pytest.fail("model mag niet gevraagd worden"),
+    )
     assert not r["llm_gebruikt"] and r["model"] is None
     assert "Bolsward-Noord (246 m)" in r["narrative"] and "Bolsward-Noordoost (206 m)" in r["narrative"]
 
@@ -403,8 +473,13 @@ def test_route_navigatie_blijft_navigatie(nep_route):
     assert route("Toon de koele plek in Bolsward-Zuidoost op de kaart", "x") is None
 
 
-OUDEREN = ind("65+ jaar (%)", eenheid="%", bron="CBS Kerncijfers wijken en buurten 2026 (86358NED)", score_type="+/+",
-               interpretatie_logica="neutraal")
+OUDEREN = ind(
+    "65+ jaar (%)",
+    eenheid="%",
+    bron="CBS Kerncijfers wijken en buurten 2026 (86358NED)",
+    score_type="+/+",
+    interpretatie_logica="neutraal",
+)
 OUDEREN_WAARDEN = [
     {"gebied_id": "BU19000001", "indicator_uuid": OUDEREN["uuid"], "waarde": 24.1, "jaar": 2026, "bron": "CBS"},
     {"gebied_id": "BU19000002", "indicator_uuid": OUDEREN["uuid"], "waarde": 29.5, "jaar": 2026, "bron": "CBS"},
@@ -415,20 +490,29 @@ OUDEREN_WAARDEN = [
 @pytest.fixture
 def nep_ouderen(nep_route, monkeypatch):
     monkeypatch.setattr(dv, "laad_indicatoren", lambda db: [KOEL, OUDEREN])
-    monkeypatch.setattr(dv, "laad_waarden", lambda db, u, ids: [w for w in WAARDEN + OUDEREN_WAARDEN
-                                                               if w["gebied_id"] in ids and w["indicator_uuid"] in u])
+    monkeypatch.setattr(
+        dv,
+        "laad_waarden",
+        lambda db, u, ids: [w for w in WAARDEN + OUDEREN_WAARDEN if w["gebied_id"] in ids and w["indicator_uuid"] in u],
+    )
 
 
 def test_vraag_van_eduard_met_geselecteerde_buurt(nep_ouderen):
     """#233: 'hoeveel % is bejaard bij mij in de buurt?' met Bolsward-Zuidoost geselecteerd:
     een getal voor die buurt, met bron en jaar, en de buren ter vergelijking."""
-    r = dv.beantwoord_datavraag("hoeveel % is bejaard bij mij in de buurt?",
-                                {"huidig_gebied_id": "BU19000002", "geen_llm": True}, NepDB(), lambda t: [],
-                                lambda s, u, *_: pytest.fail("geen model"))
+    r = dv.beantwoord_datavraag(
+        "hoeveel % is bejaard bij mij in de buurt?",
+        {"huidig_gebied_id": "BU19000002", "geen_llm": True},
+        NepDB(),
+        lambda t: [],
+        lambda s, u, *_: pytest.fail("geen model"),
+    )
     assert [t.naam for t in r["indicatoren"]] == ["65+ jaar (%)"]
     assert r["gebieden_bron"] == "kaart" and r["gebied_ids"][0] == "BU19000002"
-    assert r["narrative"].startswith("65+ jaar (%) (CBS Kerncijfers wijken en buurten 2026 (86358NED), 2026): "
-                                     "Bolsward-Zuidoost: 29,5% (2026). Ter vergelijking:")
+    assert r["narrative"].startswith(
+        "65+ jaar (%) (CBS Kerncijfers wijken en buurten 2026 (86358NED), 2026): "
+        "Bolsward-Zuidoost: 29,5% (2026). Ter vergelijking:"
+    )
     assert dv.controleer_getallen(r["narrative"], r["feiten"]) == []
 
 
@@ -443,9 +527,13 @@ def test_vraag_van_eduard_zonder_selectie_vraagt_welke_buurt(nep_ouderen):
 
 
 def test_met_selectie_geen_vraag_buurt(nep_ouderen):
-    r = dv.beantwoord_datavraag("hoeveel % is bejaard bij mij in de buurt?",
-                                {"huidig_gebied_id": "BU19000002", "geen_llm": True}, NepDB(), lambda t: [],
-                                lambda s, u, *_: pytest.fail("geen model"))
+    r = dv.beantwoord_datavraag(
+        "hoeveel % is bejaard bij mij in de buurt?",
+        {"huidig_gebied_id": "BU19000002", "geen_llm": True},
+        NepDB(),
+        lambda t: [],
+        lambda s, u, *_: pytest.fail("geen model"),
+    )
     assert r["vraag_buurt"] is False
 
 
@@ -458,14 +546,20 @@ def test_route_geeft_gebiedstype_en_gemeente_voor_de_kaart(nep_route):
     r = route("Welke buurt in Bolsward ligt het verst van een koele plek?", "Bolsward-Noord: 246 m.")
     assert r["gebiedstype_id"] == BUURT and r["gemeente_code"] == "1900"
 
+
 # ── 'Mijn buurt' (#233): multi-selectie en de aanname vooraf ─────────────────
 
+
 def test_multiselectie_telt_mee():
-    r = gebieden("hoeveel % is bejaard bij mij in de buurt?", huidig_gebied_id="BU19000001",
-                 geselecteerd=["BU19000001", "BU19000002", "ONBEKEND"])
+    r = gebieden(
+        "hoeveel % is bejaard bij mij in de buurt?",
+        huidig_gebied_id="BU19000001",
+        geselecteerd=["BU19000001", "BU19000002", "ONBEKEND"],
+    )
     assert r.gevraagd == ["BU19000001", "BU19000002"] and r.bron == "kaart"
     assert dv.aanname_tekst(r).startswith(
-        "Ik ga uit van Bolsward-Noord en Bolsward-Zuidoost (geselecteerd op de kaart).")
+        "Ik ga uit van Bolsward-Noord en Bolsward-Zuidoost (geselecteerd op de kaart)."
+    )
 
 
 def test_gebied_in_de_vraag_gaat_voor_de_selectie_en_geeft_geen_aanname():
@@ -475,21 +569,35 @@ def test_gebied_in_de_vraag_gaat_voor_de_selectie_en_geeft_geen_aanname():
 
 def test_aanname_bij_een_buurt_van_de_kaart():
     r = gebieden("hoe staat het met eenzaamheid hier", huidig_gebied_id="BU19000004")
-    assert dv.aanname_tekst(r) == ("Ik ga uit van Bolsward-Noordoost (geselecteerd op de kaart). Een andere buurt? "
-                                   "Selecteer die op de kaart of noem de naam in je vraag.")
+    assert dv.aanname_tekst(r) == (
+        "Ik ga uit van Bolsward-Noordoost (geselecteerd op de kaart). Een andere buurt? "
+        "Selecteer die op de kaart of noem de naam in je vraag."
+    )
 
 
-@pytest.mark.parametrize("herkomst,tekst", [("adres", "gevonden bij je postcode of adres"),
-                                            ("locatie", "gevonden bij je locatie"),
-                                            (None, "geselecteerd op de kaart"), ("<script>", "geselecteerd op de kaart")])
+@pytest.mark.parametrize(
+    "herkomst,tekst",
+    [
+        ("adres", "gevonden bij je postcode of adres"),
+        ("locatie", "gevonden bij je locatie"),
+        (None, "geselecteerd op de kaart"),
+        ("<script>", "geselecteerd op de kaart"),
+    ],
+)
 def test_aanname_zegt_waar_de_buurt_vandaan_kwam(herkomst, tekst):
     """#336: buurt via postcode/adres of locatie; onbekende herkomst = de kaart (geen vrije tekst)."""
     r = gebieden("hoeveel ouderen wonen hier", huidig_gebied_id="BU19000004")
     assert dv.aanname_tekst(r, herkomst).startswith(f"Ik ga uit van Bolsward-Noordoost ({tekst}).")
 
 
-@pytest.mark.parametrize("vraag", ["hoeveel ouderen wonen er bij ons in de wijk?", "zijn er veel bejaarden in deze buurt?",
-                                   "inkomen in onze straat", "waar wij wonen"])
+@pytest.mark.parametrize(
+    "vraag",
+    [
+        "hoeveel ouderen wonen er bij ons in de wijk?",
+        "zijn er veel bejaarden in deze buurt?",
+        "inkomen in onze straat",
+        "waar wij wonen",
+    ],
+)
 def test_eigen_buurt_varianten(vraag):
     assert dv.vraagt_eigen_buurt(vraag)
-

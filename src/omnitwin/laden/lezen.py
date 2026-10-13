@@ -22,9 +22,9 @@ import json
 import sqlite3
 import tempfile
 import zipfile
+from collections.abc import Iterator
 from dataclasses import dataclass, field
 from pathlib import Path, PurePosixPath
-from typing import Iterator
 
 csv.field_size_limit(10 * 1024 * 1024)
 
@@ -43,16 +43,16 @@ class Onleesbaar(ValueError):
 @dataclass
 class Resource:
     naam: str
-    kop: list[str] | None            # kolommen (CSV, GeoPackage-tabel); None bij JSON
+    kop: list[str] | None  # kolommen (CSV, GeoPackage-tabel); None bij JSON
     regels: list[dict] = field(default_factory=list)
 
 
 @dataclass
 class Bron:
     resources: dict[str, Resource] = field(default_factory=dict)
-    gpkg: Path | None = None          # GeoPackage (los of uit de zip), voor featuretabellen
-    dcat: dict | None = None          # dcat.jsonld uit de zip
-    json: object = None               # de geparste JSON-body (voor adapters)
+    gpkg: Path | None = None  # GeoPackage (los of uit de zip), voor featuretabellen
+    dcat: dict | None = None  # dcat.jsonld uit de zip
+    json: object = None  # de geparste JSON-body (voor adapters)
     tijdelijk: tempfile.TemporaryDirectory | None = None
 
     def sluit(self):

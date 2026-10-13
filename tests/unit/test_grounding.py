@@ -1,4 +1,5 @@
 """Unit-tests voor tests/grounding.py (#88): getallen in AI-tekst tegen de brondata."""
+
 import pytest
 
 from tests.grounding import getallen_in_bron, getallen_in_tekst, grounding_melding, lezingen, ongegronde_getallen
@@ -9,22 +10,32 @@ BRON = {
     "metadata": {"gebied": "Workum", "referentie_kader": "Gemeente Súdwest-Fryslân"},
     "significante_domeinen": {
         "Sociaal": [
-            {"indicator": "Eenzaamheid", "omschrijving": "Aandeel 65 jaar en ouder, per 1.000 inwoners",
-             "meetjaar": 2024, "waarde": 53.95, "gemiddelde": 41.27, "z_score": -1.83, "eenheid": "%"},
+            {
+                "indicator": "Eenzaamheid",
+                "omschrijving": "Aandeel 65 jaar en ouder, per 1.000 inwoners",
+                "meetjaar": 2024,
+                "waarde": 53.95,
+                "gemiddelde": 41.27,
+                "z_score": -1.83,
+                "eenheid": "%",
+            },
             {"indicator": "Inwoners", "waarde": 1132.0, "gemiddelde": 0.12, "z_score": 2.4},
         ]
     },
 }
 
 
-@pytest.mark.parametrize("tekst,verwacht", [
-    ("53,95", {53.95}),
-    ("53.95", {53.95}),
-    ("1.132", {1132.0, 1.132}),
-    ("1,132", {1.132, 1132.0}),
-    ("1.132,5", {1132.5}),
-    ("12", {12.0}),
-])
+@pytest.mark.parametrize(
+    "tekst,verwacht",
+    [
+        ("53,95", {53.95}),
+        ("53.95", {53.95}),
+        ("1.132", {1132.0, 1.132}),
+        ("1,132", {1.132, 1132.0}),
+        ("1.132,5", {1132.5}),
+        ("12", {12.0}),
+    ],
+)
 def test_lezingen_nederlands_en_engels(tekst, verwacht):
     assert lezingen(tekst) == verwacht
 
@@ -53,7 +64,10 @@ def test_negatieve_bron_telt_op_absolute_waarde():
 
 
 def test_verzonnen_getallen_worden_gemeld():
-    assert ongegronde_getallen("Het aandeel is 67% en er wonen 2.500 mensen, 53,95 klopt wel.", BRON) == ["67%", "2.500"]
+    assert ongegronde_getallen("Het aandeel is 67% en er wonen 2.500 mensen, 53,95 klopt wel.", BRON) == [
+        "67%",
+        "2.500",
+    ]
 
 
 def test_triviale_getallen_worden_genegeerd():

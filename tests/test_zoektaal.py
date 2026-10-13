@@ -2,6 +2,7 @@
 Unit tests voor zoeken in gewone taal (#233): begrippen en synoniemen, rangschikken, afkappen,
 de embeddingtekst en de synoniemenlijst zelf. Geen database, geen model.
 """
+
 import csv
 import json
 from pathlib import Path
@@ -20,12 +21,28 @@ def ind(naam):
     return {"uuid": f"u-{naam}", "naam": naam}
 
 
-INDICATOREN = [ind(n) for n in [
-    "65+ jaar (%)", "65+ jaar", "80 jaar of ouder (%)", "Oppervlak groen per inwoner", "Boomkroonbedekking",
-    "Bouwjaar voor 1915", "Verwerken hemelwater exc. schade", "Ervaren gezondheid", "Bouwjaar 1945-1984",
-    "Huishoudens met laag inkomen", "Moeite met rondkomen", "Inkomen per inwoner", "Gemiddelde WOZ-waarde",
-    "Gemiddelde woonoppervlakte (BAG)", "Gemiddeld energielabel", "Aantal energielabels", "Inwoners",
-]]
+INDICATOREN = [
+    ind(n)
+    for n in [
+        "65+ jaar (%)",
+        "65+ jaar",
+        "80 jaar of ouder (%)",
+        "Oppervlak groen per inwoner",
+        "Boomkroonbedekking",
+        "Bouwjaar voor 1915",
+        "Verwerken hemelwater exc. schade",
+        "Ervaren gezondheid",
+        "Bouwjaar 1945-1984",
+        "Huishoudens met laag inkomen",
+        "Moeite met rondkomen",
+        "Inkomen per inwoner",
+        "Gemiddelde WOZ-waarde",
+        "Gemiddelde woonoppervlakte (BAG)",
+        "Gemiddeld energielabel",
+        "Aantal energielabels",
+        "Inwoners",
+    ]
+]
 
 
 def namen(rangen):
@@ -33,6 +50,7 @@ def namen(rangen):
 
 
 # ── Begrippen herkennen ──────────────────────────────────────────────────────
+
 
 def test_bejaard_is_een_synoniem_van_ouderen():
     [t] = z.herken_begrippen("hoeveel % is bejaard bij mij in de buurt?", BEGRIPPEN)
@@ -64,12 +82,15 @@ def test_begrippen_in_volgorde_van_de_vraag():
 
 # ── Rangschikken en afkappen ─────────────────────────────────────────────────
 
+
 def test_vraag_van_eduard_geeft_ouderen_en_niet_groen():
     """De vraag uit #233: eerst 65+ jaar (%) en 80 jaar of ouder (%), geen groen, bouwjaren of hemelwater."""
     gelijkenis = {i["uuid"]: 0.5 for i in INDICATOREN}  # betekenis zegt niets: alleen het begrip telt
     rangen = z.rangschik("hoeveel % is bejaard bij mij in de buurt?", INDICATOREN, gelijkenis, BEGRIPPEN, 0.5, 0.6)
     assert namen(rangen)[:3] == ["65+ jaar (%)", "80 jaar of ouder (%)", "65+ jaar"]
-    assert not {"Oppervlak groen per inwoner", "Bouwjaar voor 1915", "Verwerken hemelwater exc. schade"} & set(namen(rangen))
+    assert not {"Oppervlak groen per inwoner", "Bouwjaar voor 1915", "Verwerken hemelwater exc. schade"} & set(
+        namen(rangen)
+    )
     assert rangen[0].redenen == ["begrip: bejaarden"]
 
 
@@ -106,6 +127,7 @@ def test_relatieve_grenzen_rond_de_mediaan():
 
 # ── Embeddingtekst ───────────────────────────────────────────────────────────
 
+
 def test_indicator_tekst_met_kompaspad_eenheid_en_synoniemen():
     syn = z.synoniemen_van("65+ jaar (%)", BEGRIPPEN)
     assert "bejaard" in syn and "senioren" in syn
@@ -114,6 +136,7 @@ def test_indicator_tekst_met_kompaspad_eenheid_en_synoniemen():
 
 
 # ── De synoniemenlijst zelf ──────────────────────────────────────────────────
+
 
 def _alle_teksten(data, uit):
     if isinstance(data, dict):
@@ -130,8 +153,11 @@ def _alle_teksten(data, uit):
 def bekende_indicatornamen():
     """Indicatornamen uit stuurdata, sample, CBS-recept en use cases."""
     namen = set()
-    for pad in [ROOT / "db/stuurdata/indicatoren_seed.json", ROOT / "init_data/cbs/datapackage.json",
-                *sorted(ROOT.glob("usecases/*/usecase.json"))]:
+    for pad in [
+        ROOT / "db/stuurdata/indicatoren_seed.json",
+        ROOT / "init_data/cbs/datapackage.json",
+        *sorted(ROOT.glob("usecases/*/usecase.json")),
+    ]:
         _alle_teksten(json.loads(pad.read_text(encoding="utf-8")), namen)
     with open(ROOT / "init_data/sample/2_brondata/sample_indicatoren.csv", encoding="utf-8") as f:
         namen |= {z.normaliseer(r["indicator_naam"]) for r in csv.DictReader(f)}
@@ -155,7 +181,9 @@ def test_synoniemenlijst_is_geldig():
     dubbel = sorted({l for l in labels if labels.count(l) > 1})
     assert dubbel == []
 
+
 # ── Zonder embeddings (AI-usecase C dicht, #233) ─────────────────────────────
+
 
 def test_zonder_betekenis_telt_het_trefwoord_voor_de_hele_score():
     """Zonder gelijkenissen kan een trefwoord ook 'sterk' zijn (anders hoogstens 0,5)."""
@@ -164,19 +192,25 @@ def test_zonder_betekenis_telt_het_trefwoord_voor_de_hele_score():
 
 
 def test_woord_in_kompaspad_als_de_naam_niet_past():
-    inds = [{"uuid": "u-hemelwater", "naam": "Verwerken hemelwater exc. schade",
-             "tekst": "Kwaliteit fysieke leefomgeving Openbare ruimte Klimaat"},
-            {"uuid": "u-groen", "naam": "Oppervlak groen per inwoner", "tekst": "Wonen Groen"}]
+    inds = [
+        {
+            "uuid": "u-hemelwater",
+            "naam": "Verwerken hemelwater exc. schade",
+            "tekst": "Kwaliteit fysieke leefomgeving Openbare ruimte Klimaat",
+        },
+        {"uuid": "u-groen", "naam": "Oppervlak groen per inwoner", "tekst": "Wonen Groen"},
+    ]
     rangen = z.rangschik("klimaatadaptatie", inds, {}, [], 0.0, 1.0)
     assert namen(rangen) == ["Verwerken hemelwater exc. schade"]
     assert rangen[0].relevantie == "matig" and rangen[0].redenen == ["thema: klimaatadaptatie"]
 
 
 def test_naam_gaat_voor_kompaspad():
-    inds = [{"uuid": "u-a", "naam": "Inwoners", "tekst": "Bevolking"},
-            {"uuid": "u-b", "naam": "Leeftijd", "tekst": "Inwoners en bevolking"}]
+    inds = [
+        {"uuid": "u-a", "naam": "Inwoners", "tekst": "Bevolking"},
+        {"uuid": "u-b", "naam": "Leeftijd", "tekst": "Inwoners en bevolking"},
+    ]
     rangen = z.rangschik("inwoners", inds, {}, [], 0.0, 1.0)
     assert namen(rangen)[0] == "Inwoners"
     assert z.tekst_score(["inwoners"], "Inwoners en bevolking")[0] == z.TEKST_FACTOR
     assert z.tekst_score(["hoe"], "Inwoners") == (0.0, [])
-

@@ -14,10 +14,20 @@ pytestmark = pytest.mark.unit
 ROOT = Path(__file__).resolve().parents[2]
 
 
-@pytest.mark.parametrize("waarde,verwacht", [
-    (None, "productie"), ("", "productie"), ("productie", "productie"), ("test", "test"), ("demo", "demo"),
-    ("DEMO", "demo"), (" Demo ", "demo"), ("production", "productie"), ("dev", "productie"),
-])
+@pytest.mark.parametrize(
+    "waarde,verwacht",
+    [
+        (None, "productie"),
+        ("", "productie"),
+        ("productie", "productie"),
+        ("test", "test"),
+        ("demo", "demo"),
+        ("DEMO", "demo"),
+        (" Demo ", "demo"),
+        ("production", "productie"),
+        ("dev", "productie"),
+    ],
+)
 def test_omgeving_instelling(monkeypatch, waarde, verwacht):
     if waarde is None:
         monkeypatch.delenv("OMNITWIN_OMGEVING", raising=False)
@@ -27,12 +37,23 @@ def test_omgeving_instelling(monkeypatch, waarde, verwacht):
     assert instellingen().demo is (verwacht == "demo")
 
 
-@pytest.mark.parametrize("wachtwoord,gebruiker,zwak", [
-    ("admin", "admin", True), ("Admin", "beheer", True), ("wachtwoord", None, True), ("Welkom", None, True),
-    ("changeme", None, True), ("12345678", None, True), ("kort12", None, True), ("beheer01", "beheer01", True),
-    ("", "admin", False), (None, "admin", False), ("a8f3c19e0b7d4e21", "admin", False),
-    ("correct-horse-battery", "admin", False),
-])
+@pytest.mark.parametrize(
+    "wachtwoord,gebruiker,zwak",
+    [
+        ("admin", "admin", True),
+        ("Admin", "beheer", True),
+        ("wachtwoord", None, True),
+        ("Welkom", None, True),
+        ("changeme", None, True),
+        ("12345678", None, True),
+        ("kort12", None, True),
+        ("beheer01", "beheer01", True),
+        ("", "admin", False),
+        (None, "admin", False),
+        ("a8f3c19e0b7d4e21", "admin", False),
+        ("correct-horse-battery", "admin", False),
+    ],
+)
 def test_is_zwak(wachtwoord, gebruiker, zwak):
     assert omgeving.is_zwak(wachtwoord, gebruiker) is zwak
 
@@ -85,7 +106,7 @@ def test_demo_accounts_en_rollen():
 
 def test_entrypoint_controleert_voor_de_init_en_zet_demo_admin():
     tekst = (ROOT / "docker-entrypoint.sh").read_text(encoding="utf-8")
-    init = tekst[tekst.index('if [ "$1" = "init" ]'):]
+    init = tekst[tekst.index('if [ "$1" = "init" ]') :]
     assert init.index("controleer_omgeving") < init.index("init_db")
     assert "python -m omnitwin.omgeving controleer" in tekst
     assert "export ADMIN_PASSWORD=admin" in tekst
@@ -94,12 +115,14 @@ def test_entrypoint_controleert_voor_de_init_en_zet_demo_admin():
 
 def test_compose_keycloak_demo_service():
     import yaml
+
     dienst = yaml.safe_load((ROOT / "docker-compose.yml").read_text(encoding="utf-8"))["services"]["keycloak-demo"]
     assert dienst["command"] == ["keycloak-demo"] and dienst["profiles"] == ["keycloak"]
     assert dienst["depends_on"]["keycloak"]["condition"] == "service_healthy"
 
 
 # ---------------------------------------------------------------- Keycloak (nagebootst)
+
 
 class Antwoord:
     def __init__(self, data=None, status=200):
@@ -154,7 +177,7 @@ def test_demo_maakt_accounts_en_versoepelt_beleid():
     assert kc.wachtwoorden == {"admin": "admin", "gebruiker": "gebruiker"}
     assert kc.rollen == {"admin": ("beheerder", "gebruikersbeheerder"), "gebruiker": ("lezer",)}
     assert all(omgeving.is_demo_account(g) for g in kc.gebruikers.values())
-    assert not any("admin\"" in m or "wachtwoord admin" in m for m in meldingen)
+    assert not any('admin"' in m or "wachtwoord admin" in m for m in meldingen)
 
 
 def test_demo_is_idempotent_en_herstelt():
@@ -166,7 +189,7 @@ def test_demo_is_idempotent_en_herstelt():
     assert set(kc.gebruikers) == {"admin", "gebruiker"}
     assert kc.gebruikers["admin"]["enabled"] is True and kc.gebruikers["admin"]["firstName"] == "Demo"
     assert kc.wachtwoorden == {"admin": "admin", "gebruiker": "gebruiker"}
-    assert ("POST", "/users") not in kc.log[kc.log.index(("GET", ""), 1):]
+    assert ("POST", "/users") not in kc.log[kc.log.index(("GET", ""), 1) :]
 
 
 def test_demo_laat_eigen_gebruiker_admin_ongemoeid():
@@ -204,14 +227,24 @@ def test_buiten_demo_eigen_admin_blijft():
 
 # ---------------------------------------------------------------- zoals db-init het aanroept
 
+
 def _controleer(**env):
     import subprocess
     import sys
-    omgeving_ = {k: v for k, v in __import__("os").environ.items()
-                 if k not in ("ADMIN_PASSWORD", "KEYCLOAK_ADMIN_PASSWORD", "OMNITWIN_OMGEVING", "ADMIN_USER")}
+
+    omgeving_ = {
+        k: v
+        for k, v in __import__("os").environ.items()
+        if k not in ("ADMIN_PASSWORD", "KEYCLOAK_ADMIN_PASSWORD", "OMNITWIN_OMGEVING", "ADMIN_USER")
+    }
     omgeving_.update(env)
-    return subprocess.run([sys.executable, "-m", "omnitwin.omgeving", "controleer"], env=omgeving_,
-                          capture_output=True, text=True, timeout=60)
+    return subprocess.run(
+        [sys.executable, "-m", "omnitwin.omgeving", "controleer"],
+        env=omgeving_,
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
 
 
 def test_cli_productie_weigert_admin_admin():
