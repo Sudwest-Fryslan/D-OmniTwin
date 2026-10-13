@@ -195,8 +195,9 @@ export const IndicatorsPage: React.FC = () => {
                                 }}
                             />
                         </div>
-                        <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.5rem', fontSize: '0.875rem' }}>
+                        <label htmlFor="filter-met-data" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.5rem', fontSize: '0.875rem' }}>
                             <input
+                                id="filter-met-data"
                                 type="checkbox"
                                 checked={metData}
                                 onChange={(e) => { setMetData(e.target.checked); setOffset(0); }}

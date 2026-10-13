@@ -8,7 +8,8 @@ Controleert de themabestanden in static/css/themes/:
 - contrast volgens WCAG 2.1 AA: 4,5:1 voor tekst (1.4.3), 3:1 voor UI-onderdelen en focus (1.4.11);
 - de themanaam: alleen [a-z0-9-], anders het standaardthema;
 - de regel "@wcag-aa: ja|nee" in de kop van elk thema klopt met de contrasten; een thema met "nee"
-  (d-omnitwin, legacy) is nooit de standaard voor een organisatie; swf haalt voor tekst AAA (7:1) (#284).
+  (legacy) is nooit de standaard voor een organisatie; swf haalt voor tekst AAA (7:1) (#284);
+  d-omnitwin voldoet aan WCAG 2.1 AA (#67).
 
 Los draaien met een overzicht van alle contrasten: python tests/test_thema.py --rapport
 """
@@ -120,11 +121,10 @@ OPTIONEEL = {
     "basis-color-highlight-color-default",
 }
 
-# Bekende tekorten in de huidige standaarduitstraling. Het thema d-omnitwin neemt de bestaande kleuren
-# één op één over (geen visuele regressie); aanpassen hoort bij de toegankelijkheidsronde (#67).
-# legacy (#284) is v0.1.0 zo exact mogelijk: dezelfde tekorten, plus wit op goud (actieve tab) en wit op
-# groen (selectiebadge) zoals toen. Beide thema's hebben "@wcag-aa: nee" in de kop.
-# Alleen thema's met "@wcag-aa: nee" mogen hier staan; swf (en elk thema met "ja") nooit.
+# Bekende tekorten in legacy (#284; v0.1.0-kleuren). d-omnitwin voldoet aan WCAG 2.1 AA (#67).
+# legacy is v0.1.0 zo exact mogelijk: de oorspronkelijke tekorten, plus wit op goud (actieve tab) en wit op
+# groen (selectiebadge) zoals toen. legacy heeft "@wcag-aa: nee" in de kop.
+# Alleen thema's met "@wcag-aa: nee" mogen hier staan; swf en d-omnitwin (elk thema met "ja") nooit.
 # Een paar dat hier staat maar wél voldoet, laat de test falen: dan moet het van de lijst af.
 _TEKORTEN_V010 = {
     ("licht", "basis-color-default-color-subtle", "basis-color-default-bg-document"),
@@ -139,7 +139,6 @@ _TEKORTEN_V010 = {
     ("donker", "d-omnitwin-header-color", "d-omnitwin-header-background-color-end"),
 }
 BEKENDE_TEKORTEN = {
-    *{("d-omnitwin", *t) for t in _TEKORTEN_V010},
     *{("legacy", *t) for t in _TEKORTEN_V010},
     *{
         ("legacy", modus, voor, achter)
@@ -469,6 +468,9 @@ class TestContrast(unittest.TestCase):
     def test_swf_heeft_geen_tekorten(self):
         self.assertFalse([t for t in BEKENDE_TEKORTEN if t[0] == "swf"])
 
+    def test_d_omnitwin_heeft_geen_tekorten(self):
+        self.assertFalse([t for t in BEKENDE_TEKORTEN if t[0] == "d-omnitwin"])
+
     def test_swf_tekst_aaa(self):
         """swf (#284): tekst 7:1 (AAA), op de gedocumenteerde uitzonderingen na; UI en focus 3:1 (AA)."""
         for modus in ("licht", "donker"):
@@ -507,9 +509,10 @@ class TestWcagStatus(unittest.TestCase):
                 else:
                     self.assertTrue(tekorten, f"{naam} haalt AA: zet '@wcag-aa: ja' in de kop")
 
-    def test_legacy_en_swf(self):
+    def test_legacy_swf_en_d_omnitwin(self):
         self.assertEqual(wcag_status("legacy"), "nee")
         self.assertEqual(wcag_status("swf"), "ja")
+        self.assertEqual(wcag_status("d-omnitwin"), "ja")
 
     def test_beheermodus(self):
         """Standaardweergave van het beheerscherm (#284): swf licht zoals de site, de rest donker zoals het was."""
