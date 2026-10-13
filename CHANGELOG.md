@@ -8,6 +8,10 @@ Eerdere wijzigingen, van vóór dit bestand, zijn terug te vinden in de git-hist
 
 ## [Unreleased]
 
+### Opgelost
+
+- Release-images: de publicatie naar Docker Hub draait op dezelfde runner als de CI (repo-variabele `CI_RUNNER`), zodat hij niet afhangt van GitHub-gehoste minuten.
+
 ### Gewijzigd
 
 - **Dataspace-protocol vastgesteld** ([#32](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/32)): DSP (DCAT/ODRL) over HTTPS, geen iSHARE; FSC pas bij concrete behoefte. Zie ADR 0012.

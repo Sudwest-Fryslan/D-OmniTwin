@@ -21,7 +21,8 @@ permissions:
 jobs:
   publiceer:
     name: Publiceer ${{ matrix.naam }}
-    runs-on: ubuntu-latest
+    # Zelfde runner als de CI (repo-variabele CI_RUNNER), anders GitHub-gehost
+    runs-on: ${{ fromJSON(vars.CI_RUNNER || '"ubuntu-latest"') }}
     timeout-minutes: 60
     strategy:
       fail-fast: false
