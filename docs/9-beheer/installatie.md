@@ -102,7 +102,7 @@ docker compose up -d --build
 
 De eerste keer duurt dit lang (10 tot 30 minuten, afhankelijk van de verbinding): de backend-image installeert onder meer PyTorch en GDAL.
 
-**Sneller: kant-en-klare images.** Elke release staat als image op Docker Hub: `sudwestfryslan/d-omnitwin` (backend), `sudwestfryslan/d-omnitwin-web` (bestanden van de viewer en de beheeromgeving, sinds [#408](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/408)) en `sudwestfryslan/d-omnitwin-db` (database). Zet in `.env` `COMPOSE_FILE=docker-compose.yml:docker-compose.images.yml` (op Windows met `;` in plaats van `:`) en eventueel `OMNITWIN_VERSIE=0.4.0` (standaard `latest`), en start met `docker compose pull && docker compose up -d`. Dan wordt er niets gebouwd. Daarna starten de services in deze volgorde:
+**Sneller: kant-en-klare images.** Elke release staat als image op Docker Hub: `sudwestfryslan/d-omnitwin` (backend), `sudwestfryslan/d-omnitwin-web` (bestanden van de viewer en de beheeromgeving, sinds [#408](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/408)) en `sudwestfryslan/d-omnitwin-db` (database). Zet in `.env` `COMPOSE_FILE=docker-compose.yml:docker-compose.images.yml` (op Windows met `;` in plaats van `:`) en eventueel `OMNITWIN_VERSIE=0.7.0` (standaard `latest`), en start met `docker compose pull && docker compose up -d`. Dan wordt er niets gebouwd. Daarna starten de services in deze volgorde:
 
 1. `postgres` (PostGIS met pgvector) wordt *healthy*.
 2. `db-init` draait één keer en stopt. Hij kijkt eerst in wat voor database hij terechtkomt:

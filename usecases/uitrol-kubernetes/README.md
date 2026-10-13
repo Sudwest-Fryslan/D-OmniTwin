@@ -21,7 +21,7 @@ Met Fleet: [`deploy/voorbeeld-configrepo`](../../deploy/voorbeeld-configrepo/REA
 1. **Manifests invullen:** host, IngressClass, ConfigMap en Secret (zie Inrichting); met Fleet in de overlay van het voorbeeld.
 2. **Uitrollen:** Fleet (of `kubectl apply -k`). Volgorde regelt zichzelf: PostgreSQL start, de Job `db-init-<versie>` maakt schema, rollen en beheerder aan, en backend, PostgREST en pg_featureserv wachten tot die klaar is. Web (de bestanden van viewer en beheeromgeving) start meteen; die heeft geen configuratie en geen database nodig.
 3. **Controleren:** `/health` geeft database en api *online* met de versie; `/` (de viewer, backend), `/admin` (de beheeromgeving, web), `/api/geo/collections` en `/api/data/` antwoorden via de Traefik-gateway.
-4. **Bijwerken:** nieuwe image-tags (backend, web en database) en een nieuwe Job-naam (`db-init-0-6-0`); in de configrepo: de base opnieuw vendoren en `images:` aanpassen. De Job draait de migraties op de bestaande database; daarna start de nieuwe backend. Stap 3 opnieuw.
+4. **Bijwerken:** nieuwe image-tags (backend, web en database) en een nieuwe Job-naam (`db-init-0-8-0`); in de configrepo: de base opnieuw vendoren en `images:` aanpassen. De Job draait de migraties op de bestaande database; daarna start de nieuwe backend. Stap 3 opnieuw.
 
 De rooktest doet stap 2 tot en met 4 automatisch op een tijdelijk kind-cluster, met fictieve secrets, eerst met `deploy/kubernetes` en daarna met de overlay uit het voorbeeld (`K8S_ROOKTEST_MANIFESTS=voorbeeld`), en schrijft de uitkomst naar [`bewijs/rooktest.json`](bewijs/rooktest.json): tijdstip, versie, image-tag, gecontroleerde endpoints, duur en resultaat. Geen secrets of hostnamen.
 

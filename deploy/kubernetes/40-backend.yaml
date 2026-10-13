@@ -49,7 +49,7 @@ spec:
       initContainers:
         # Wachten tot db-init de eerste installatie heeft afgerond
         - name: wacht-op-db-init
-          image: sudwestfryslan/d-omnitwin:0.5.1
+          image: sudwestfryslan/d-omnitwin:0.7.0
           imagePullPolicy: IfNotPresent
           command:
             - sh
@@ -70,7 +70,7 @@ spec:
             capabilities: { drop: ["ALL"] }
       containers:
         - name: backend
-          image: sudwestfryslan/d-omnitwin:0.5.1
+          image: sudwestfryslan/d-omnitwin:0.7.0
           imagePullPolicy: IfNotPresent
           envFrom:
             - configMapRef: { name: omnitwin-config }

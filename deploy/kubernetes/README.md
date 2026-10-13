@@ -210,13 +210,13 @@ Alles kan in één keer worden toegepast:
    (tabel `installatie_status`) en starten dan.
 
 Het eerste beheerwachtwoord is `ADMIN_PASSWORD` uit de Secret. Zonder waarde maakt db-init er een aan en
-toont het eenmalig in de log: `kubectl -n d-omnitwin logs job/db-init-0-5-1`.
+toont het eenmalig in de log: `kubectl -n d-omnitwin logs job/db-init-0-7-0`.
 
 ## Bijwerken
 
 1. Image-tags naar de nieuwe versie (`sudwestfryslan/d-omnitwin:<versie>`, `sudwestfryslan/d-omnitwin-web:<versie>`,
    `sudwestfryslan/d-omnitwin-db:<versie>`).
-2. Naam van de Job naar de nieuwe versie (`db-init-0-5-1` wordt `db-init-0-6-0`): een Job is niet te wijzigen,
+2. Naam van de Job naar de nieuwe versie (`db-init-0-7-0` wordt `db-init-0-8-0`): een Job is niet te wijzigen,
    een nieuwe naam draait opnieuw. De oude Job mag weg.
 3. Toepassen. De nieuwe Job migreert; de backend wordt vervangen (strategie `Recreate`, één replica), web
    met een gewone rolling update.
@@ -237,8 +237,8 @@ Lees vóór een upgrade de CHANGELOG (sectie *Migreren*).
 
 - De volumes zijn ReadWriteOnce: de backend draait met één replica. Meer replicas vraagt ReadWriteMany.
   Web heeft geen toestand en kan wel met meer replicas.
-- De web-image staat pas op Docker Hub vanaf de eerste release na 0.5.1; met tag `0.5.1` bestaat hij
-  nog niet.
+- De web-image staat op Docker Hub vanaf 0.7.0; met een oudere tag (zoals `0.5.1`) bestaat hij
+  niet.
 - Back-up van PostgreSQL regelt de organisatie (bijv. `pg_dump` in een CronJob of een backup-operator);
   zie `db/README.md`.
 - Keycloak gebruikt hier het standaardthema; de huisstijlthema's uit `deploy/keycloak/themes` zitten

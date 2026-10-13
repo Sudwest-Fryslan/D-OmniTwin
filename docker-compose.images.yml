@@ -1,7 +1,7 @@
 # Installeren met de kant-en-klare images van Docker Hub in plaats van zelf bouwen (#126).
 # Gebruik naast docker-compose.yml, bijv. in .env:
 #   COMPOSE_FILE=docker-compose.yml:docker-compose.images.yml
-#   OMNITWIN_VERSIE=0.4.0        (standaard: latest)
+#   OMNITWIN_VERSIE=0.7.0        (standaard: latest)
 # Dan: docker compose pull && docker compose up -d
 x-backend-image: &backend-image sudwestfryslan/d-omnitwin:${OMNITWIN_VERSIE:-latest}
 
