@@ -14,6 +14,8 @@
 #   K8S_ROOKTEST_TAG=rooktest    image-tag van de zelf gebouwde images
 #   K8S_ROOKTEST_BOUWEN=ja       nee = de Docker Hub-images met de tag uit de manifests
 #   K8S_ROOKTEST_BEWIJS=<pad>    bewijsbestand (standaard usecases/uitrol-kubernetes/bewijs/rooktest.json)
+#   K8S_ROOKTEST_MANIFESTS=basis basis = deploy/kubernetes; voorbeeld = de overlay uit deploy/voorbeeld-configrepo
+#                                (Fleet-configrepo, #411) met deze map als gevendorde base
 #   KIND_VERSIE=v0.27.0          versie van kind (wordt gedownload als kind ontbreekt)
 # Vereist: Docker. Raakt geen andere containers of clusters aan.
 set -euo pipefail
@@ -25,6 +27,7 @@ CLUSTER="${1:-omnitwin-rooktest-$$}"
 TAG="${K8S_ROOKTEST_TAG:-rooktest}"
 BOUWEN="${K8S_ROOKTEST_BOUWEN:-ja}"
 BEWIJS="${K8S_ROOKTEST_BEWIJS:-usecases/uitrol-kubernetes/bewijs/rooktest.json}"
+MANIFESTS="${K8S_ROOKTEST_MANIFESTS:-basis}"
 KIND_VERSIE="${KIND_VERSIE:-v0.27.0}"
 NS=d-omnitwin
 NODE="${CLUSTER}-control-plane"
@@ -47,7 +50,9 @@ if [ -z "$KIND" ]; then
     fi
 fi
 
+WERK=$(mktemp -d)
 opruimen() {
+    rm -rf "$WERK"
     stap "Cluster $CLUSTER opruimen"
     "$KIND" delete cluster --name "$CLUSTER" >/dev/null 2>&1 || true
 }
@@ -73,14 +78,23 @@ if [ "$BOUWEN" = "ja" ]; then
 fi
 
 stap "Manifests toepassen"
-dk cp deploy/kubernetes "$NODE:/rooktest"
-manifests=$(k kustomize /rooktest)
+case "$MANIFESTS" in
+    basis) BRON=deploy/kubernetes; MAP=/rooktest ;;
+    voorbeeld)
+        # Zoals de configrepo: overlay + gevendorde base; Fleet maakt de namespace, wij hieronder
+        bash scripts/ci/k8s-voorbeeld-configrepo.sh maak "$WERK/configrepo"
+        BRON="$WERK/configrepo"; MAP=/rooktest/rancher/d-omnitwin ;;
+    *) echo "K8S_ROOKTEST_MANIFESTS: basis of voorbeeld"; exit 2 ;;
+esac
+command -v cygpath >/dev/null && BRON=$(cygpath -w "$BRON")
+dk cp "$BRON" "$NODE:/rooktest"
+manifests=$(k kustomize "$MAP")
 if [ "$BOUWEN" = "ja" ]; then
     # Alleen de image-tag van de eigen images vervangen; de manifests zelf blijven ongewijzigd
     manifests=$(echo "$manifests" | sed -E "s#(sudwestfryslan/d-omnitwin(-db|-web)?):[0-9A-Za-z._-]+#\1:$TAG#")
 fi
 GEBRUIKTE_TAG=$(echo "$manifests" | grep -oE 'sudwestfryslan/d-omnitwin:[0-9A-Za-z._-]+' | head -1 | cut -d: -f2)
-k apply -f /rooktest/00-namespace.yaml
+k create namespace "$NS"
 # Fictieve test-secrets, per run nieuw; ze verlaten het tijdelijke cluster niet
 k -n "$NS" create secret generic omnitwin-secrets \
     --from-literal=DATABASE_PASSWORD="$(geheim)" \
@@ -144,6 +158,7 @@ mkdir -p "$(dirname "$BEWIJS")"
     echo "  \"versie\": \"$(tr -d '\r\n' < VERSION)\","
     echo "  \"commit\": \"$(git rev-parse --short HEAD)\","
     echo "  \"image_tag\": \"$GEBRUIKTE_TAG\","
+    echo "  \"manifests\": \"$MANIFESTS\","
     echo "  \"zelf_gebouwd\": $([ "$BOUWEN" = "ja" ] && echo true || echo false),"
     echo "  \"kubernetes\": \"$(k version -o json 2>/dev/null | grep -m1 gitVersion | cut -d'"' -f4)\","
     echo "  \"stappen\": [\"manifests toepassen\", \"db-init\", \"deployments klaar\", \"endpoints\", \"upgrade\", \"endpoints na upgrade\"],"

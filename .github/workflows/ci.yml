@@ -383,3 +383,8 @@ jobs:
           -ignore-filename-pattern 'fleet\.yaml'
           -ignore-filename-pattern '\.md$'
           /m
+
+      - name: Voorbeeld-configrepo bouwen en valideren (#411)
+        # Overlay uit deploy/voorbeeld-configrepo met deploy/kubernetes als gevendorde base:
+        # kustomize build, kubeconform en de inhoud (haproxy, cert-manager, geen Secret of Namespace)
+        run: bash scripts/ci/k8s-voorbeeld-configrepo.sh controleer

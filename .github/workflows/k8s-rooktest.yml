@@ -1,6 +1,7 @@
 # Kubernetes-rooktest (#406): rolt deploy/kubernetes uit op een tijdelijk kind-cluster met de
 # images van deze code en controleert /health, de viewer, de beheeromgeving (web-container), de data-
-# en de geo-API en een upgrade.
+# en de geo-API en een upgrade. Daarna hetzelfde met het voorbeeld van de Fleet-configrepo (#411):
+# de overlay uit deploy/voorbeeld-configrepo met deze manifests als gevendorde base.
 # Zelfde script als lokaal: scripts/ci/k8s-rooktest.sh.
 #
 # Alleen bij wijzigingen die de uitrol raken, zodat niet elke PR langer duurt; en met de hand
@@ -13,6 +14,7 @@ on:
     branches: [main, "release/**"]
     paths:
       - "deploy/kubernetes/**"
+      - "deploy/voorbeeld-configrepo/**"
       - "Dockerfile"
       - "db.Dockerfile"
       - "web.Dockerfile"
@@ -20,11 +22,13 @@ on:
       - "docker-entrypoint.sh"
       - "db/**"
       - "scripts/ci/k8s-rooktest.sh"
+      - "scripts/ci/k8s-voorbeeld-configrepo.sh"
       - ".github/workflows/k8s-rooktest.yml"
   push:
     branches: [main, "release/**"]
     paths:
       - "deploy/kubernetes/**"
+      - "deploy/voorbeeld-configrepo/**"
       - "Dockerfile"
       - "db.Dockerfile"
       - "web.Dockerfile"
@@ -32,6 +36,7 @@ on:
       - "docker-entrypoint.sh"
       - "db/**"
       - "scripts/ci/k8s-rooktest.sh"
+      - "scripts/ci/k8s-voorbeeld-configrepo.sh"
       - ".github/workflows/k8s-rooktest.yml"
   workflow_dispatch:
 
@@ -65,18 +70,30 @@ jobs:
           TMPDIR: ${{ runner.temp }}
         run: bash scripts/ci/k8s-rooktest.sh "omnitwin-rooktest-${{ github.run_id }}-${{ github.run_attempt }}"
 
+      - name: Rooktest met het voorbeeld van de configrepo
+        # Images zijn al gebouwd (Docker-cache); eigen cluster, na het eerste
+        env:
+          K8S_ROOKTEST_MANIFESTS: voorbeeld
+          K8S_ROOKTEST_BEWIJS: ${{ runner.temp }}/rooktest-voorbeeld.json
+          TMPDIR: ${{ runner.temp }}
+        run: bash scripts/ci/k8s-rooktest.sh "omnitwin-rooktest-vb-${{ github.run_id }}-${{ github.run_attempt }}"
+
       - name: Cluster opruimen (vangnet)
         if: always()
         run: |
-          for k in "$RUNNER_TEMP"/kind-*; do
-            [ -x "$k" ] && "$k" delete cluster --name "omnitwin-rooktest-${{ github.run_id }}-${{ github.run_attempt }}" || true
+          for c in "omnitwin-rooktest-${{ github.run_id }}-${{ github.run_attempt }}" "omnitwin-rooktest-vb-${{ github.run_id }}-${{ github.run_attempt }}"; do
+            for k in "$RUNNER_TEMP"/kind-*; do
+              [ -x "$k" ] && "$k" delete cluster --name "$c" || true
+            done
+            command -v kind >/dev/null && kind delete cluster --name "$c" || true
           done
-          command -v kind >/dev/null && kind delete cluster --name "omnitwin-rooktest-${{ github.run_id }}-${{ github.run_attempt }}" || true
 
       - name: Bewaar het rooktestverslag
         if: always()
         uses: actions/upload-artifact@v7
         with:
           name: k8s-rooktest
-          path: ${{ runner.temp }}/rooktest.json
+          path: |
+            ${{ runner.temp }}/rooktest.json
+            ${{ runner.temp }}/rooktest-voorbeeld.json
           if-no-files-found: ignore

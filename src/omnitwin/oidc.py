@@ -19,7 +19,8 @@ Controle: handtekening met een sleutel uit de JWKS van de issuer (gecachet; bij 
 `kid` opnieuw opgehaald, hooguit eens per `JWKS_MIN_VERVERSING` seconden), `iss` gelijk aan
 OIDC_ISSUER, `aud` bevat OIDC_AUDIENCE, `exp`/`nbf` met `KLOKRUIMTE` seconden speling. Alleen
 asymmetrische algoritmes; `none` en HS* worden geweigerd. Rollen: realm-rollen
-(`realm_access.roles`) plus de client-rollen van de audience (`resource_access.<aud>.roles`).
+(`realm_access.roles`) plus de client-rollen van de audience (`resource_access.<aud>.roles`)
+(Keycloak), plus de standaard-claim `roles` (app-rollen van Microsoft Entra ID, #411).
 
 Achter Traefik bereikt de backend Keycloak intern (`http://keycloak:8080/auth/...`), terwijl de
 issuer in de tokens de publieke URL is. OIDC_INTERN_URL is dan het interne adres van de issuer:
@@ -63,7 +64,7 @@ PROBLEEM_BASIS = "https://github.com/Sudwest-Fryslan/D-OmniTwin/blob/main/docs/a
 class Principal:
     onderwerp: str            # sub
     client_id: str | None     # azp / client_id
-    rollen: frozenset[str]    # realm-rollen + client-rollen van omnitwin-api (resource_access['omnitwin-api'].roles)
+    rollen: frozenset[str]    # realm-rollen + client-rollen van de audience (Keycloak) + `roles` (Entra)
     token_id: str | None      # jti
     gebruikersnaam: str | None = None  # preferred_username (mensen); voor de auditlog, nooit e-mail
 
@@ -256,6 +257,9 @@ def _weiger(token: str, reden: str, detail: str) -> AuthProbleem:
 
 def _rollen(claims: dict[str, Any], audience: str) -> frozenset[str]:
     rollen: set[str] = set()
+    # Entra ID (en andere providers): app-rollen in de top-level claim `roles` (#411)
+    if isinstance(claims.get("roles"), list):
+        rollen.update(r for r in claims["roles"] if isinstance(r, str))
     realm = claims.get("realm_access")
     if isinstance(realm, dict) and isinstance(realm.get("roles"), list):
         rollen.update(r for r in realm["roles"] if isinstance(r, str))

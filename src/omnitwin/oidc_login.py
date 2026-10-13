@@ -6,7 +6,10 @@ de beheer-UI (client OIDC_CLIENT_ID, standaard `omnitwin-web`), wisselt de code 
 het access token met `oidc.controleer_token` (zelfde controle als de laad-API) en zet het
 bestaande HttpOnly-cookie `session_token`. De sessie staat in tabel `oidc_sessies` (V029).
 
-- Rollen komen uit het access token (realm-rollen); `beheerder` geeft beheerrechten.
+- Rollen komen uit het access token (realm-rollen van Keycloak of app-rollen in `roles` van
+  Entra ID); `beheerder` geeft beheerrechten.
+- Extra scopes (OIDC_SCOPE) en een clientgeheim (OIDC_CLIENT_SECRET) zijn optioneel; Entra ID heeft
+  de scope van de eigen API nodig, anders is het access token voor Microsoft Graph (#411).
 - Verloopt het access token (Keycloak: 5 minuten), dan ververst de backend het bij het
   volgende verzoek met het refresh token. Weigert Keycloak dat (sessie beëindigd, gebruiker
   uitgeschakeld, idle-time-out), dan is de sessie weg: 401. Zo werkt een ingetrokken rol of
@@ -132,6 +135,8 @@ def _token_verzoek(data: dict[str, str]) -> httpx.Response:
     headers = {"Accept": "application/json"}
     if i.oidc_intern_url:
         headers.update(_forwarded(i.oidc_issuer))
+    if i.oidc_client_secret:
+        data = {**data, "client_secret": i.oidc_client_secret}
     return httpx.post(eindpunten().token, data={"client_id": i.oidc_client_id, **data},
                       headers=headers, timeout=oidc.HTTP_TIMEOUT)
 
@@ -187,7 +192,7 @@ def start(request: Request, terug: str | None) -> tuple[str, str]:
     params = {
         "client_id": i.oidc_client_id,
         "response_type": "code",
-        "scope": SCOPE,
+        "scope": f"{SCOPE} {i.oidc_scope}".strip(),
         "redirect_uri": redirect_uri,
         "state": state,
         "code_challenge": _b64(hashlib.sha256(verifier.encode("ascii")).digest()),
@@ -285,6 +290,14 @@ def gebruiker(db: Session, token_hash: str) -> dict | None:
     return _ververs(db, token_hash)
 
 
+def _ververs_data(refresh_token: str) -> dict[str, str]:
+    """Refresh-verzoek; met OIDC_SCOPE dezelfde scopes als bij het inloggen (Entra ID vraagt daarom)."""
+    data = {"grant_type": "refresh_token", "refresh_token": refresh_token}
+    if instellingen().oidc_scope:
+        data["scope"] = f"{SCOPE} {instellingen().oidc_scope}"
+    return data
+
+
 def _ververs(db: Session, token_hash: str) -> dict | None:
     # Rij vergrendelen: Keycloak roteert refresh tokens (één keer bruikbaar), dus maar één
     # verzoek tegelijk mag verversen; de rest wacht en leest daarna het nieuwe resultaat.
@@ -299,8 +312,7 @@ def _ververs(db: Session, token_hash: str) -> dict | None:
         db.commit()  # een ander verzoek was ons voor
         return _als_gebruiker(rij.onderwerp, rij.gebruikersnaam, rij.rollen)
     try:
-        r = _token_verzoek({"grant_type": "refresh_token", "refresh_token": rij.refresh_token or ""}) \
-            if rij.refresh_token else None
+        r = _token_verzoek(_ververs_data(rij.refresh_token)) if rij.refresh_token else None
     except (httpx.HTTPError, ValueError, InlogFout) as e:
         db.rollback()
         logger.error("Sessie niet te verversen, provider onbereikbaar: %s", type(e).__name__)
