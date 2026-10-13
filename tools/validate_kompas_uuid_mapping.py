@@ -23,35 +23,20 @@ import os
 import sys
 from pathlib import Path
 from datetime import datetime
-import configparser
 
 # Database
-import psycopg2
 from psycopg2.extras import RealDictCursor
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
+from omnitwin.scriptdb import verbind  # noqa: E402
 
 # ============================================================================
 # DATABASE CONNECTIE
 # ============================================================================
 
 def get_db_connection():
-    """Maak database connectie op basis van config.ini"""
-    config_path = Path(__file__).parent.parent / 'config.ini'
-    
-    if not config_path.exists():
-        print(f"❌ Config file niet gevonden: {config_path}")
-        sys.exit(1)
-    
-    config = configparser.ConfigParser()
-    config.read(config_path)
-    
-    db_config = config['DATABASE']
-    return psycopg2.connect(
-        host=db_config.get('host', 'localhost'),
-        port=db_config.get('port', '5432'),
-        database=db_config.get('dbname', 'omnitwin_db'),
-        user=db_config.get('user', 'omnitwin_user'),
-        password=db_config.get('password', '')
-    )
+    """Databaseverbinding uit .env (DATABASE_*, #69)."""
+    return verbind()
 
 
 # ============================================================================

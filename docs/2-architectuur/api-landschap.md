@@ -141,7 +141,7 @@ Inventaris met bewijs: [RFC D-OmniTwin vullen, § 2](rfc-vullen-van-d-omnitwin.m
 | `/api/visualisatie/*`, `/api/externe-lagen/*`, `/api/3dbag/*` | `/api/viewer/v1/*` | alias |
 | `/api/data/*` | `/api/data/v1/*` | alias; `PGRST_SERVER_PROXY_URI` uit de publieke URL |
 | `/api/geo/*` | `/api/geo/v1/*` | alias |
-| directe database-scripts (`scripts/import_metingen.py`, `laad_usecase.py`) | laad-API (HTTP of dezelfde functie in-process) | #182 fase 4 |
+| directe database-scripts (`laad_usecase.py`; `scripts/import_metingen.py` is verwijderd in #69) | laad-API (HTTP of dezelfde functie in-process) | #182 fase 4 |
 
 Volgorde: eerst de laad-API (nieuw, geen alias nodig) en het portaal; daarna beheer (met Keycloak); dan data/geo (alleen routering); als laatste analyse/chat/viewer (frontend-paden aanpassen).
 

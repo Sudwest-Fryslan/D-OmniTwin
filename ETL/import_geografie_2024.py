@@ -31,23 +31,19 @@ from shapely.ops import unary_union
 
 # ── Configuratie ───────────────────────────────────────────────
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, os.path.join(BASE_DIR, "src"))
+from omnitwin.scriptdb import verbind  # noqa: E402
+
 PROVINCIES_GPKG = os.path.join(BASE_DIR, "data", "cbs_pc6_huisnr_buurt", "provincies.gpkg")
 BUURTEN_GPKG = os.path.join(BASE_DIR, "data", "cbs_pc6_huisnr_buurt", "CBS_BUURTEN2024.gpkg")
 
 NOORD_PROVINCIES = ["Fryslân", "Groningen", "Drenthe"]
 BUFFER_METERS = 100  # 100m buffer rondom provinciegrenzen
 
-DB_CONFIG = {
-    "host": os.getenv("DB_HOST", "localhost"),
-    "port": os.getenv("DB_PORT", "5432"),
-    "dbname": os.getenv("DB_NAME", "omnitwin_db"),
-    "user": os.getenv("DB_USER", "omnitwin_user"),
-    "password": os.getenv("DB_PASSWORD") or os.getenv("DATABASE_PASSWORD") or sys.exit("DB_PASSWORD/DATABASE_PASSWORD ontbreekt; zet hem in de omgeving of in .env."),
-}
-
 
 def get_conn():
-    return psycopg2.connect(**DB_CONFIG)
+    """Databaseverbinding uit .env (DATABASE_*, #69)."""
+    return verbind()
 
 
 # ── Stap 1: Provincies importeren ──────────────────────────────

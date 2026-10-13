@@ -13,7 +13,6 @@ import textwrap
 # Definieer de paden naar de onderliggende modules
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 CBS_DIR = os.path.join(BASE_DIR, 'CBS')
-RIVM_DIR = os.path.join(BASE_DIR, 'RIVM')
 
 # We gebruiken tijdelijk de bestaande scripts als "modules" totdat we ze volledig ombouwen.
 CBS_FETCHER = os.path.join(CBS_DIR, 'cbs_data_fetcher.py')
@@ -42,23 +41,19 @@ def run_extraction(dataset_id, endpoint, gemeente, output_dir):
         print(f"❌ Extractie gefaald (Code: {e.returncode}). Zie logs hierboven.")
         sys.exit(1)
 
-def run_import(metadata_only=False, gemeente=None):
+def run_import(gemeente=None):
     """Fase 2: Importeren in PostgreSQL (Load & Transform)"""
     print_header("Fase 2: Database Import & Transformatie")
-    
-    if metadata_only:
-        print("⚠️ Let op: Enkel metadata (zoals RIVM) enrichment wordt uitgevoerd.")
-        cmd = [sys.executable, os.path.join(RIVM_DIR, 'enrich_rivm_metadata.py')]
-    else:
-        # Dit script zoekt automatisch in de data/temp_cbs_import of output mappen 
-        # op basis van de configuration in CBS/cbs_mapping_v3.json
-        cmd = [sys.executable, CBS_IMPORTER]
-        if gemeente:
-            cmd.extend(['--gemeente', gemeente])
-        
+
+    # Dit script zoekt automatisch in de data/temp_cbs_import of output mappen
+    # op basis van de configuration in CBS/cbs_mapping_v3.json
+    cmd = [sys.executable, CBS_IMPORTER]
+    if gemeente:
+        cmd.extend(['--gemeente', gemeente])
+
     print(f"Running command: {' '.join(cmd)}")
     try:
-        # De environment moet wel ingesteld zijn (config.ini of .env)
+        # Databasegegevens uit .env (DATABASE_*, #69)
         subprocess.run(cmd, check=True)
         print("\n✅ Import succesvol afgerond.")
     except subprocess.CalledProcessError as e:
@@ -106,7 +101,7 @@ def main():
         run_extraction(args.dataset, endpoint, args.gemeente, args.output)
         
     if not args.extract_only:
-        run_import(metadata_only=False, gemeente=args.gemeente)
+        run_import(gemeente=args.gemeente)
 
 if __name__ == "__main__":
     main()

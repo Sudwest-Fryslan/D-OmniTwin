@@ -14,9 +14,9 @@ Usage:
 """
 
 import os
+import sys
 import json
-import configparser
-import psycopg2
+from pathlib import Path
 from psycopg2.extras import RealDictCursor
 import matplotlib
 matplotlib.use('Agg')  # Non-interactive backend
@@ -24,23 +24,16 @@ import matplotlib.pyplot as plt
 import numpy as np
 from datetime import datetime
 
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
+from omnitwin.scriptdb import verbind  # noqa: E402
+
 # ============================================================================
 # DATABASE CONNECTIE
 # ============================================================================
 
 def get_db_connection():
-    """Maak database connectie op basis van config.ini"""
-    config = configparser.ConfigParser()
-    config_path = os.path.join(os.path.dirname(__file__), '..', 'config.ini')
-    config.read(config_path)
-    
-    return psycopg2.connect(
-        host=config['DATABASE']['host'],
-        port=config['DATABASE']['port'],
-        dbname=config['DATABASE']['dbname'],
-        user=config['DATABASE']['user'],
-        password=config['DATABASE']['password']
-    )
+    """Databaseverbinding uit .env (DATABASE_*, #69)."""
+    return verbind()
 
 # ============================================================================
 # DATABASE INSPECTIE

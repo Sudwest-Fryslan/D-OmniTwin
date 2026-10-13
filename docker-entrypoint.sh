@@ -23,6 +23,8 @@ DB_PORT="${DATABASE_PORT:-5432}"
 DB_NAME="${DATABASE_NAME:-omnitwin_db}"
 DB_USER="${DATABASE_USER:-omnitwin_user}"
 DB_PASS="${DATABASE_PASSWORD:-}"
+# Projectmap: /app in het image; init_data/scripts/init_database.sh zet hem op de repo (zonder Docker, #69)
+APP_DIR="${APP_DIR:-/app}"
 
 export PGPASSWORD="$DB_PASS"
 
@@ -107,7 +109,7 @@ db_toestand() {
 
 markeer_voltooid() {
     local versie
-    versie=$(tr -d '\r\n' < /app/VERSION 2>/dev/null || echo onbekend)  # VERSION kan CRLF hebben (Windows)
+    versie=$(tr -d '\r\n' < "$APP_DIR/VERSION" 2>/dev/null || echo onbekend)  # VERSION kan CRLF hebben (Windows)
     db_psql -v ON_ERROR_STOP=1 -q -v versie="$versie" -v hoe="$1" >/dev/null <<'SQL'
 SET client_min_messages = warning;
 CREATE TABLE IF NOT EXISTS public.installatie_status (
@@ -166,16 +168,16 @@ init_db() {
     INIT_HOE="nieuwe installatie"
     echo "⚙️ Database is leeg. Initialiseren via schema_latest.sql..."
     # ON_ERROR_STOP en één transactie per bestand: bij een fout blijft er van dat bestand niets staan
-    db_psql -q -v ON_ERROR_STOP=1 --single-transaction -f /app/db/schema/schema_latest.sql >/dev/null
+    db_psql -q -v ON_ERROR_STOP=1 --single-transaction -f "$APP_DIR/db/schema/schema_latest.sql" >/dev/null
     # Views voor pg_featureserv (vw_gebieden_features, gebruikt door de kaart) staan niet in schema_latest.sql
-    db_psql -q -v ON_ERROR_STOP=1 --single-transaction -f /app/db/schema/06_pg_featureserv_views.sql >/dev/null
+    db_psql -q -v ON_ERROR_STOP=1 --single-transaction -f "$APP_DIR/db/schema/06_pg_featureserv_views.sql" >/dev/null
     # SQL-functies die pg_featureserv publiceert onder /api/geo/functions (schema postgisftw)
-    db_psql -q -v ON_ERROR_STOP=1 --single-transaction -f /app/db/schema/07_postgisftw_functions.sql >/dev/null
+    db_psql -q -v ON_ERROR_STOP=1 --single-transaction -f "$APP_DIR/db/schema/07_postgisftw_functions.sql" >/dev/null
     run_migrations
     echo "✅ Database schema succesvol aangemaakt."
 
     # Altijd: het product zonder data (stuurdata, indicatordefinities, Kompas)
-    python /app/init_data/scripts/load_sample.py --stap definities
+    python "$APP_DIR/init_data/scripts/load_sample.py" --stap definities
     echo "✅ Stuurdata en definities ingeladen."
 
     # Data komt uit de use cases (usecases/<naam>/): gebieden, waarden en inrichting per use case
@@ -193,7 +195,7 @@ init_db() {
             echo "⚠️ Niet alle use cases zijn ingeladen (zie hierboven); de installatie gaat door zonder die data."
         fi
         # Drempels labels A–E (#256) na de use cases: de SWF-klimaatindicatoren bestaan pas na swf-definities
-        python /app/init_data/scripts/load_sample.py --stap drempels || echo "⚠️ Drempels niet geladen; labels A–E rekenen voorlopig met kwintielen."
+        python "$APP_DIR/init_data/scripts/load_sample.py" --stap drempels || echo "⚠️ Drempels niet geladen; labels A–E rekenen voorlopig met kwintielen."
     else
         echo "⚙️ LOAD_SAMPLE_DATA niet actief: geen data, alleen het product."
     fi
@@ -214,7 +216,7 @@ init_db() {
     esac
     echo "👤 Admin gebruiker controleren/aanmaken ('$ADMIN_USER')..."
     # Mislukt dit, dan stopt de init (set -e): zonder beheerder is de installatie niet af
-    python /app/init_data/scripts/create_admin.py
+    python "$APP_DIR/init_data/scripts/create_admin.py"
 
     # PostgREST schema cache herladen via NOTIFY
     db_psql -c "NOTIFY pgrst, 'reload schema';" >/dev/null 2>&1 || true
@@ -241,7 +243,7 @@ demo_admin_bestaand() {
     if [ "$(echo "${OMNITWIN_OMGEVING:-}" | tr '[:upper:]' '[:lower:]' | tr -d '[:space:]')" = "demo" ]; then
         export ADMIN_USER="${ADMIN_USER:-admin}"
         demo_admin_wachtwoord
-        python /app/init_data/scripts/create_admin.py >/dev/null
+        python "$APP_DIR/init_data/scripts/create_admin.py" >/dev/null
     fi
 }
 
@@ -249,7 +251,7 @@ demo_admin_bestaand() {
 # contact. Bij elke start, ook bij een bestaande database, maar alleen als de tabel
 # organisatie nog leeg is: een eigen inrichting wordt nooit overschreven.
 seed_organisatie() {
-    db_psql -v ON_ERROR_STOP=1 -q -f /app/db/stuurdata/organisatie.sql >/dev/null
+    db_psql -v ON_ERROR_STOP=1 -q -f "$APP_DIR/db/stuurdata/organisatie.sql" >/dev/null
     echo "✅ Organisatie: $(db_waarde "SELECT naam FROM public.organisatie")"
 }
 
@@ -260,7 +262,7 @@ seed_organisatie() {
 # wachtwoord al; de rollen zelf hebben geen rechten op de tabellen.
 setup_api_rollen() {
     echo "🔐 Rollen en schema api voor PostgREST en pg_featureserv bijwerken..."
-    psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -v ON_ERROR_STOP=1 -q -f /app/db/migraties/R__api_rollen.sql >/dev/null
+    psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -v ON_ERROR_STOP=1 -q -f "$APP_DIR/db/migraties/R__api_rollen.sql" >/dev/null
     # Wachtwoord via een psql-variabele (:'pw' quote het correct), niet in de SQL-bestanden
     psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -v ON_ERROR_STOP=1 -q -v pw="$DB_PASS" >/dev/null <<'SQL'
 ALTER ROLE authenticator PASSWORD :'pw';
@@ -274,7 +276,7 @@ SQL
 # als er iets te doen is. Geen model of geen netwerk: waarschuwing, init gaat door.
 generate_embeddings() {
     echo "🧠 Embeddings voor AI-zoeken genereren..."
-    python /app/scripts/ai/genereer_embeddings.py || echo "⚠️ Embeddings niet gegenereerd: AI-zoeken en de chat vinden geen indicatoren. Later opnieuw: docker compose run --rm db-init (of python scripts/ai/genereer_embeddings.py)."
+    python "$APP_DIR/scripts/ai/genereer_embeddings.py" || echo "⚠️ Embeddings niet gegenereerd: AI-zoeken en de chat vinden geen indicatoren. Later opnieuw: docker compose run --rm db-init (of python scripts/ai/genereer_embeddings.py)."
 }
 
 # Database en rol voor Keycloak (#214, compose-profiel keycloak). Zelfde PostgreSQL-server,

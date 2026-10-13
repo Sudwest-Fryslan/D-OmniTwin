@@ -59,7 +59,7 @@ Het gebied zelf telt mee in de referentiegroep als het erin valt (zelfde gebieds
 
 Eén definitie, in SQL: `is_waterbuurt(naam, metadata)` (`db/schema/08_zscore_referentie.sql`). Een gebied is een waterbuurt als:
 
-1. **de data het zegt:** `gebieden.metadata->>'water' = 'JA'`. De CBS-wijk- en buurtkaart heeft een kolom `water` (JA/NEE). `ETL/Geometrie/import_geometrie.py` neemt alle kolommen mee in `metadata`; `ETL/import_geografie_2024.py` neemt de kolom `water` mee (#155);
+1. **de data het zegt:** `gebieden.metadata->>'water' = 'JA'`. De CBS-wijk- en buurtkaart heeft een kolom `water` (JA/NEE). `ETL/import_geografie_2024.py` neemt de kolom `water` mee (#155);
 2. **of, als vangnet, de naam op water wijst:** `buitenwater`, `Wadden Sea` of `IJsselmeer` (hoofdletterongevoelig). Dit is de lijst uit de oude kaartview, voor bronnen zonder watervlag, zoals `init_data/fryslan/buurten_fryslan.geojson` (PDOK WFS).
 
 `markeer_waterbuurten()` zet bij het laden de vlag in de data voor gebieden die alleen op naam herkend worden (`metadata.water = 'JA'`, `metadata.water_bron = 'naam'`). De migratie, `load_sample.py`, `seed_fryslan.py` en `import_geografie_2024.py` roepen hem aan. Daarna is de naam alleen nog vangnet.
