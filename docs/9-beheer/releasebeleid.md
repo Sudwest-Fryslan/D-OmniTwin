@@ -81,7 +81,7 @@ Voorbeeld voor `0.2.0`.
    git tag -a v0.2.0 -m "D-OmniTwin 0.2.0"
    git push origin release/0.2 v0.2.0
    ```
-5. **GitHub-release** bij de tag, met de CHANGELOG-sectie als tekst. Grote databestanden die niet in git horen, gaan als release-asset mee (op code.overheid.nl staat LFS uit). Ook het **volledige bewijs** (`bewijs-0.2.0.zip` uit stap 2: originele schermen in PNG en de verslagen) gaat als asset mee: `gh release upload v0.2.0 bewijs-0.2.0.zip`.
+5. **GitHub-release** bij de tag. De tekst begint met een kort verhaal van 2 à 3 alinea's voor een CIO of informatieadviseur: wat er nu mogelijk is en wat het de organisatie oplevert. Wervend, maar concreet en waar: alleen wat in deze versie zit en werkt. Daaronder het kopje "Wat er precies veranderd is" met de CHANGELOG-sectie. Het verhaal staat alleen in de release, niet in de CHANGELOG. Grote databestanden die niet in git horen, gaan als release-asset mee (op code.overheid.nl staat LFS uit). Ook het **volledige bewijs** (`bewijs-0.2.0.zip` uit stap 2: originele schermen in PNG en de verslagen) gaat als asset mee: `gh release upload v0.2.0 bewijs-0.2.0.zip`.
 6. **Controle:** een verse installatie volgens de [installatiegids](installatie.md) vanaf de tag werkt, en `/health` toont `0.2.0`.
 
 ## Patches
