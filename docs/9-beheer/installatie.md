@@ -101,7 +101,7 @@ docker compose up -d --build
 
 De eerste keer duurt dit lang (10 tot 30 minuten, afhankelijk van de verbinding): de backend-image installeert onder meer PyTorch en GDAL.
 
-**Sneller: kant-en-klare images.** Elke release staat als image op Docker Hub: `sudwestfryslan/d-omnitwin` (backend) en `sudwestfryslan/d-omnitwin-db` (database). Zet in `.env` `COMPOSE_FILE=docker-compose.yml:docker-compose.images.yml` (op Windows met `;` in plaats van `:`) en eventueel `OMNITWIN_VERSIE=0.4.0` (standaard `latest`), en start met `docker compose pull && docker compose up -d`. Dan wordt er niets gebouwd. Daarna starten de services in deze volgorde:
+**Sneller: kant-en-klare images.** Elke release staat als image op Docker Hub: `sudwestfryslan/d-omnitwin` (backend), `sudwestfryslan/d-omnitwin-web` (bestanden van de viewer en de beheeromgeving, sinds [#408](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/408)) en `sudwestfryslan/d-omnitwin-db` (database). Zet in `.env` `COMPOSE_FILE=docker-compose.yml:docker-compose.images.yml` (op Windows met `;` in plaats van `:`) en eventueel `OMNITWIN_VERSIE=0.4.0` (standaard `latest`), en start met `docker compose pull && docker compose up -d`. Dan wordt er niets gebouwd. Daarna starten de services in deze volgorde:
 
 1. `postgres` (PostGIS met pgvector) wordt *healthy*.
 2. `db-init` draait één keer en stopt. Hij kijkt eerst in wat voor database hij terechtkomt:
@@ -112,7 +112,7 @@ De eerste keer duurt dit lang (10 tot 30 minuten, afhankelijk van de verbinding)
    Daarna werkt hij altijd de databaserollen en het schema `api` voor PostgREST en pg_featureserv bij (`db/migraties/R__api_rollen.sql`, zie [Beveiliging](#beveiliging)). Dat raakt geen data. Bij een nieuwe installatie legt hij dan in de tabel `installatie_status` vast dat de installatie voltooid is.
 
    Tot slot maakt hij, ook bij een bestaande database, de embeddings voor AI-zoeken en de chat aan (`scripts/ai/genereer_embeddings.py`), voor alle actieve indicatoren zonder embedding of waarvan de tekst, de synoniemen of het model veranderd is, ook concepten. Het model daarvoor (`multilingual-e5-small`) zit al in de image; zie [Embeddingmodel](#embeddingmodel-offline). Lukt dit niet, dan staat er een waarschuwing in de log en gaat de installatie gewoon door; AI-zoeken en de chat vinden dan geen indicatoren.
-3. `backend` (FastAPI), `postgrest` en `pg_featureserv` starten, `traefik` stuurt het verkeer door. Stopt `db-init` met een fout, dan starten deze drie niet.
+3. `backend` (FastAPI), `postgrest` en `pg_featureserv` starten, `traefik` stuurt het verkeer door. Stopt `db-init` met een fout, dan starten deze drie niet. `web` (nginx, de bestanden van de viewer en de beheeromgeving) wacht nergens op.
 
 Controleer:
 
@@ -120,7 +120,7 @@ Controleer:
 docker compose ps -a
 ```
 
-Goed is: `postgres` en `backend` staan op `Up ... (healthy)`, `traefik`, `postgrest` en `pg_featureserv` op `Up`, en `db-init` op `Exited (0)`. De backend heeft tot een minuut nodig om *healthy* te worden.
+Goed is: `postgres`, `backend` en `web` staan op `Up ... (healthy)`, `traefik`, `postgrest` en `pg_featureserv` op `Up`, en `db-init` op `Exited (0)`. De backend heeft tot een minuut nodig om *healthy* te worden.
 
 ### 2.4 Eerste keer inloggen
 
@@ -428,7 +428,12 @@ Eigen logo gebruiken:
     backend:
       volumes:
         - ./mijn-logo.svg:/app/static/images/beeldmerk.svg:ro
+    web:
+      volumes:
+        - ./mijn-logo.svg:/usr/share/nginx/html/static/images/beeldmerk.svg:ro
   ```
+
+  Beide: de backend maakt er het favicon van, web levert het logo linksboven ([#408](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/408)). Zo ook voor een eigen footer-logo onder `static/images/`.
 
   Voeg het toe aan `COMPOSE_FILE` in `.env` (scheidingsteken `:` op Linux en macOS, `;` op Windows):
 

@@ -128,6 +128,28 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
+      # Web-image (#408): bestanden van viewer en beheeromgeving (nginx), eigen bouwcontext
+      # (web.Dockerfile.dockerignore)
+      - name: Build web-image (no push)
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          file: web.Dockerfile
+          push: false
+          load: true
+          tags: d-omnitwin-web:ci-check
+          cache-from: type=gha,scope=web
+          cache-to: type=gha,mode=max,scope=web
+
+      - name: Backend-image zonder frontend en beheeromgeving
+        # De backend leest alleen static/css/themes en static/images (#408)
+        run: |
+          docker run --rm --entrypoint sh d-omnitwin:ci-check -c '
+            [ ! -e /app/admin-panel ] || { echo "admin-panel staat in de backend-image"; exit 1; }
+            [ "$(ls -A /app/static | xargs)" = "css images" ] || { echo "static: $(ls -A /app/static | xargs)"; exit 1; }
+            [ "$(ls -A /app/static/css | xargs)" = "themes" ] || { echo "static/css: $(ls -A /app/static/css | xargs)"; exit 1; }
+            echo "backend-image zonder frontend en beheeromgeving"'
+
       # Bewaking imagegrootte (#157): faalt als de uitgepakte image groter wordt dan
       # de grens. Was 3,2 GiB; na multi-stage en het afsplitsen van ETL-pakketten
       # 1,6 GiB, waarvan PyTorch CPU 0,6 GiB. Gemeten als som van de lagen uit
@@ -267,8 +289,8 @@ jobs:
 
   # ──────────────────────────────────────────────
   # Job 4: admin-panel (React/Vite) — typecheck, lint, test en build (#202)
-  # De build staat gecommit in static/admin-panel (FastAPI serveert die onder
-  # /admin/). Na build:static mag daar niets veranderd zijn: anders is de
+  # De build staat gecommit in static/admin-panel (de web-image serveert die onder
+  # /admin/, #408). Na build:static mag daar niets veranderd zijn: anders is de
   # gecommitte build niet van deze broncode.
   # ──────────────────────────────────────────────
   admin-panel:

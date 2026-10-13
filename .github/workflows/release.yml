@@ -4,6 +4,7 @@ name: Release-images naar Docker Hub
 # Docker Hub, zoals bij OpenZaakBrug en WebformulierenVerwerker (#126):
 #   sudwestfryslan/d-omnitwin      backend (ook db-init en Keycloak-hulpjes)
 #   sudwestfryslan/d-omnitwin-db   PostgreSQL + PostGIS + pgvector (db.Dockerfile)
+#   sudwestfryslan/d-omnitwin-web  bestanden van viewer en beheeromgeving, nginx (web.Dockerfile, #408)
 # Tags: <versie>, <major>.<minor> en latest (alleen bij een gewone release, niet bij
 # een pre-release). Vereist de repository-secrets DOCKERHUB_USERNAME en DOCKERHUB_TOKEN.
 on:
@@ -34,6 +35,9 @@ jobs:
           - naam: d-omnitwin-db
             dockerfile: db.Dockerfile
             titel: D-OmniTwin database (PostgreSQL, PostGIS, pgvector)
+          - naam: d-omnitwin-web
+            dockerfile: web.Dockerfile
+            titel: D-OmniTwin web (viewer en beheeromgeving, nginx)
     env:
       TAG: ${{ github.event.release.tag_name || inputs.tag }}
       PRERELEASE: ${{ github.event.release.prerelease || false }}

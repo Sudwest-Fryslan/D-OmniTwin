@@ -1,5 +1,6 @@
-# Backend (FastAPI): website, beheeromgeving, assistent, laad-API. Initialiseert zelf niets;
-# start pas als db-init de eerste installatie heeft afgerond (tabel installatie_status).
+# Backend (FastAPI): de API's (assistent, beheer, laad-API) en de pagina van de viewer; de bestanden
+# van viewer en beheeromgeving staan in web (45-web.yaml). Initialiseert zelf niets; start pas als
+# db-init de eerste installatie heeft afgerond (tabel installatie_status).
 apiVersion: v1
 kind: Service
 metadata:

@@ -1,6 +1,6 @@
 # D-OmniTwin Beheer (admin-panel)
 
-React 19 + TypeScript, gebouwd met [Vite](https://vite.dev/). FastAPI serveert de build onder `/admin/` vanuit `static/admin-panel/` (zie `main.py`).
+React 19 + TypeScript, gebouwd met [Vite](https://vite.dev/). De web-container (nginx, `web.Dockerfile`, #408) serveert de build onder `/admin/` vanuit `static/admin-panel/` (zie `deploy/web/default.conf`).
 
 ## Scripts
 

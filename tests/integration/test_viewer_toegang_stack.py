@@ -107,6 +107,16 @@ def test_dicht_pagina_naar_keycloak():
 
 
 @pytest.mark.skipif(not DICHT, reason="VIEWER_TOEGANG=open")
+@pytest.mark.parametrize("pad", ["/rapport", "/rapport/benchmark"])
+def test_dicht_rapport_naar_inloggen(pad):
+    """Rapporten staan in de web-container (#408); forwardAuth viewer-pagina stuurt naar het inloggen."""
+    r = requests.get(f"{BASE_URL}{pad}", headers=HTML, timeout=TIMEOUT, allow_redirects=False)
+    assert r.status_code == 302, pad
+    verwacht = "/api/admin/auth/oidc/login?terug=/" if CONFIG.get("oidc") else "/admin/login"
+    assert r.headers["location"].endswith(verwacht), r.headers["location"]
+
+
+@pytest.mark.skipif(not DICHT, reason="VIEWER_TOEGANG=open")
 @pytest.mark.parametrize("pad", DATA_API)
 def test_dicht_anoniem_api_401(pad):
     r = requests.get(f"{BASE_URL}{pad}", timeout=TIMEOUT, allow_redirects=False)
