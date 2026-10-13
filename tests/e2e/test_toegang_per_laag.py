@@ -24,10 +24,13 @@ OPEN_LAAG = "BAG Woonplaatsen"
 
 def _stack():
     import requests
+
     try:
         config = requests.get(f"{BASE_URL}/api/admin/auth/config", timeout=30).json()
-        open_ = requests.get(f"{BASE_URL}/", headers={"Accept": "text/html"}, timeout=30,
-                             allow_redirects=False).status_code == 200
+        open_ = (
+            requests.get(f"{BASE_URL}/", headers={"Accept": "text/html"}, timeout=30, allow_redirects=False).status_code
+            == 200
+        )
         return config, open_
     except (requests.RequestException, ValueError):
         return {}, False
@@ -59,7 +62,9 @@ def _lijsten(page):
     # seconden na elkaar (zie e2e_helpers.py)
     page.wait_for_function(
         "() => Array.isArray(window.state && window.state.externeKaartlagen)"
-        " && document.querySelectorAll('#gebiedstype-select option').length > 1", polling=250)
+        " && document.querySelectorAll('#gebiedstype-select option').length > 1",
+        polling=250,
+    )
     page.evaluate("""() => { const s = document.getElementById('gebiedstype-select');
         const o = [...s.options].find(o => o.textContent.trim() === 'CBS Buurten');
         s.value = o.value; s.dispatchEvent(new Event('change', {bubbles: true})); }""")

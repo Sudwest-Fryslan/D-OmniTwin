@@ -24,6 +24,7 @@ UC = "organisatie-e2e"
 
 def _config():
     import requests
+
     try:
         r = requests.get(f"{BASE_URL}/api/admin/auth/config", timeout=30)
         return r.json() if r.status_code == 200 else {}
@@ -39,8 +40,10 @@ def inlog(tmp_path_factory):
         pytest.skip("stack niet bereikbaar")
     if config.get("oidc"):
         if os.environ.get("OMNITWIN_TESTACCOUNTS") == "1" and (
-                os.environ.get("KEYCLOAK_ADMIN_PASSWORD") or os.environ.get("KEYCLOAK_ADMIN_CLIENT_SECRET")):
+            os.environ.get("KEYCLOAK_ADMIN_PASSWORD") or os.environ.get("KEYCLOAK_ADMIN_CLIENT_SECRET")
+        ):
             from omnitwin import testaccounts as ta
+
             beheer = ta.KeycloakBeheer(kc=f"{BASE_URL}/auth")
             pad = tmp_path_factory.mktemp("accounts") / "accounts.json"
             uc = {"actoren": [{"naam": "beheerder", "soort": "gebruiker", "rollen": ["beheerder"]}]}
@@ -126,13 +129,14 @@ def test_thema_wisselen_kopbalk_viewer_verandert(beheer):
     for modus in ("licht", "donker"):
         start = nieuw["kleuren"][modus]["--d-omnitwin-header-background-color-start"]
         expect(page.get_by_test_id(f"voorbeeld-{modus}-kopbalk")).to_have_css(
-            "background-image", re.compile(re.escape(_rgb(start))))
+            "background-image", re.compile(re.escape(_rgb(start)))
+        )
     page.get_by_role("button", name="Opslaan").click()
     expect(page.get_by_role("status").filter(has_text="Opgeslagen")).to_be_visible()
 
     na, bestanden = _kopbalk(page.context)
     start = nieuw["kleuren"]["licht"]["--d-omnitwin-header-background-color-start"]
-    assert bestanden == [f'/static/css/themes/{nieuw["naam"]}.css']
+    assert bestanden == [f"/static/css/themes/{nieuw['naam']}.css"]
     assert _rgb(start) in na, (na, start)
     assert na != voor
 

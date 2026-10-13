@@ -2,6 +2,7 @@
 Unit tests voor de validatie van SELECTEER_GEMEENTE-acties uit de chat (#140).
 Pure Python: geen database, geen taalmodel.
 """
+
 import os
 import sys
 

@@ -15,8 +15,6 @@ Eén plek voor de drempels rond kleine aantallen.
   de betrouwbaarheid van één waarde.
 """
 
-from typing import Optional
-
 N_DREMPEL_STANDAARD = 10
 MIN_GEBIEDEN_REFERENTIE = 5
 
@@ -44,6 +42,6 @@ def drempel(db) -> int:
     return int(waarde) if waarde else N_DREMPEL_STANDAARD
 
 
-def is_onderdrukt(n: Optional[int], drempel: int = N_DREMPEL_STANDAARD) -> bool:
+def is_onderdrukt(n: int | None, drempel: int = N_DREMPEL_STANDAARD) -> bool:
     """True als n bekend is en onder de drempel ligt."""
     return n is not None and n < drempel

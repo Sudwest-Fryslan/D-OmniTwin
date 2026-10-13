@@ -48,8 +48,9 @@ def geometrie_codes(geojson: Path, sleutel: str = "id"):
     return {feat["properties"].get(sleutel) for feat in data.get("features", [])} - {None}
 
 
-def controleer_jaargangen(rijen, codes, geometrie_jaar, max_afwijking=MAX_AFWIJKING,
-                          gebied_kolom="gebied_id", naam_kolom="indicator_naam"):
+def controleer_jaargangen(
+    rijen, codes, geometrie_jaar, max_afwijking=MAX_AFWIJKING, gebied_kolom="gebied_id", naam_kolom="indicator_naam"
+):
     """Controleer waarden tegen de geometrie.
 
     rijen: iterable van dicts met gebied_kolom, naam_kolom en 'jaar'.
@@ -82,23 +83,29 @@ def controleer_jaargangen(rijen, codes, geometrie_jaar, max_afwijking=MAX_AFWIJK
 def rapporteer(ontbrekend, jaren, afwijkend, geometrie_jaar, max_regels=10, uitvoer=print):
     """Print de waarschuwingen. Geeft het aantal waarschuwingen terug."""
     n = 0
-    uitvoer(f"   ℹ️  Geometrie-jaargang: {geometrie_jaar or 'onbekend'}; "
-            f"{len(jaren)} indicatoren, jaargangen {format_jaren(set().union(*jaren.values()) if jaren else set())}")
+    uitvoer(
+        f"   ℹ️  Geometrie-jaargang: {geometrie_jaar or 'onbekend'}; "
+        f"{len(jaren)} indicatoren, jaargangen {format_jaren(set().union(*jaren.values()) if jaren else set())}"
+    )
     if not geometrie_jaar:
         uitvoer("   ⚠️  Geometrie-jaargang onbekend: leg hem vast (datapackage.json of gebieden.metadata)")
         n += 1
     if ontbrekend:
         n += 1
-        uitvoer(f"   ⚠️  {len(ontbrekend)} buurtcodes in de waarden bestaan niet in de geometrie "
-                f"({sum(ontbrekend.values())} regels worden niet gekoppeld):")
+        uitvoer(
+            f"   ⚠️  {len(ontbrekend)} buurtcodes in de waarden bestaan niet in de geometrie "
+            f"({sum(ontbrekend.values())} regels worden niet gekoppeld):"
+        )
         for code, aantal in sorted(ontbrekend.items())[:max_regels]:
             uitvoer(f"        {code} ({aantal} regels)")
         if len(ontbrekend) > max_regels:
             uitvoer(f"        … en {len(ontbrekend) - max_regels} meer")
     if afwijkend:
         n += 1
-        uitvoer(f"   ⚠️  {len(afwijkend)} indicatoren: meest recente jaargang wijkt meer dan "
-                f"{MAX_AFWIJKING} jaar af van geometriejaar {geometrie_jaar}:")
+        uitvoer(
+            f"   ⚠️  {len(afwijkend)} indicatoren: meest recente jaargang wijkt meer dan "
+            f"{MAX_AFWIJKING} jaar af van geometriejaar {geometrie_jaar}:"
+        )
         for naam, jaar in sorted(afwijkend.items())[:max_regels]:
             uitvoer(f"        {naam}: {jaar}")
         if len(afwijkend) > max_regels:
@@ -117,19 +124,18 @@ def format_jaren(js):
 
 def main():
     parser = argparse.ArgumentParser(description="Jaargangcontrole waarden vs. geometrie (#119)")
-    parser.add_argument("--fryslan", action="store_true",
-                        help="Controleer init_data/fryslan in plaats van de sample")
+    parser.add_argument("--fryslan", action="store_true", help="Controleer init_data/fryslan in plaats van de sample")
     args = parser.parse_args()
 
     if args.fryslan:
         codes = geometrie_codes(FRYSLAN_DIR / "buurten_fryslan.geojson", sleutel="buurtcode")
         gemeenten = {c[2:6] for c in codes}
         from download_cbs_kerncijfers import GEOMETRIE_JAAR  # één bron voor de jaargang (#159)
+
         geo_jaar = GEOMETRIE_JAAR
         with open(FRYSLAN_DIR / "indicatorwaarden_fryslan.csv", encoding="utf-8") as f:
             # Alleen Friese buurtcodes; de CSV bevat ook andere gemeenten, wijken en GM/NL-regels.
-            rijen = [r for r in csv.DictReader(f)
-                     if r["buurt_id"].startswith("BU") and r["buurt_id"][2:6] in gemeenten]
+            rijen = [r for r in csv.DictReader(f) if r["buurt_id"].startswith("BU") and r["buurt_id"][2:6] in gemeenten]
         ontbrekend, jaren, afwijkend = controleer_jaargangen(rijen, codes, geo_jaar, gebied_kolom="buurt_id")
     else:
         codes = geometrie_codes(SAMPLE_DIR / "2_brondata" / "sample_buurten.geojson")

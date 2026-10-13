@@ -31,8 +31,8 @@ from contextvars import ContextVar, Token
 
 from fastapi import Request
 
-ROL_OPENBAAR = "omnitwin_openbaar"          # databaserol voor anonieme verzoeken (V032)
-HEADER = "X-Omnitwin-Toegang"               # forwardAuth → PostgREST (authResponseHeaders)
+ROL_OPENBAAR = "omnitwin_openbaar"  # databaserol voor anonieme verzoeken (V032)
+HEADER = "X-Omnitwin-Toegang"  # forwardAuth → PostgREST (authResponseHeaders)
 OPENBAAR, INTERN = "openbaar", "intern"
 
 ANONIEM, ZONDER_ROL, MET_ROL = "anoniem", "zonder-rol", "met-rol"
@@ -64,6 +64,7 @@ def heeft_inloggegevens(request: Request) -> bool:
 
 # ------------------------------------------------------------------ database
 
+
 def registreer(engine) -> None:
     """Pool-event: elke verbinding uit de pool krijgt de rol die bij het verzoek hoort.
 
@@ -81,15 +82,23 @@ def registreer(engine) -> None:
 def weigering(soort: str, stand_: str | None = None):
     """AuthProbleem voor iets interns: 403 als ingelogd zonder rol, anders 401 (Problem Details)."""
     from omnitwin.oidc import AuthProbleem
+
     if (stand_ or stand()) == ZONDER_ROL:
-        return AuthProbleem(403, "geen-toegang", "Geen toegang",
-                            f"Deze {soort} is intern: alleen met de rol lezer of beheerder.")
-    return AuthProbleem(401, "niet-ingelogd", "Niet ingelogd",
-                        f"Deze {soort} is intern: log in met de rol lezer of beheerder.", www_authenticate="Bearer")
+        return AuthProbleem(
+            403, "geen-toegang", "Geen toegang", f"Deze {soort} is intern: alleen met de rol lezer of beheerder."
+        )
+    return AuthProbleem(
+        401,
+        "niet-ingelogd",
+        "Niet ingelogd",
+        f"Deze {soort} is intern: log in met de rol lezer of beheerder.",
+        www_authenticate="Bearer",
+    )
 
 
 def _toegang_van(db, functie: str, sleutel) -> str | None:
     from sqlalchemy import text
+
     return db.execute(text(f"SELECT public.{functie}(:s)"), {"s": sleutel}).scalar()
 
 
@@ -130,11 +139,16 @@ def collectie_is_intern(uri: str) -> bool:
     from sqlalchemy import text
 
     from omnitwin.database import SessionLocal
+
     db = SessionLocal()
     try:
-        return bool(db.execute(text("""
+        return bool(
+            db.execute(
+                text("""
             SELECT 1 FROM laden.datasets
             WHERE profiel = 'kaartlaag' AND toegang = 'intern' AND laadprofiel->'doel'->>'featureTabel' = :t"""),
-            {"t": c[1]}).first())
+                {"t": c[1]},
+            ).first()
+        )
     finally:
         db.close()

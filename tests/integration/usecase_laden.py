@@ -29,8 +29,9 @@ def benodigde_bronnen(naam, ucs):
     for n in uc.volgorde([naam], ucs):
         for ds in ucs[n].get("datasets", []):
             tekst = (uc.USECASES_DIR / n / ds["registratie"]).read_text(encoding="utf-8")
-            nodig |= {v for v in BRONVARIABELEN
-                      if "${" + v + "}" in tekst or (v == "SWF_DUMP_DIR" and '"swf-dump"' in tekst)}
+            nodig |= {
+                v for v in BRONVARIABELEN if "${" + v + "}" in tekst or (v == "SWF_DUMP_DIR" and '"swf-dump"' in tekst)
+            }
     return nodig
 
 
@@ -38,6 +39,7 @@ def beheer_api_ontbreekt(naam, ucs):
     """Een use case met status ontwerp die de (nog niet gebouwde) beheer-API nodig heeft: melding,
     anders None. Zodra de beheer-API er is (geen 404), draait de acceptatietest gewoon."""
     import requests
+
     for n in uc.volgorde([naam], ucs):
         for ds in ucs[n].get("datasets", []):
             if ds.get("route") != "beheer" or ucs[n].get("status") != "ontwerp":
@@ -55,7 +57,9 @@ def vereisten(naam):
     """Slaat de module over als de laad-API, een bron of de machineclient ontbreekt."""
     ucs = uc.lees_usecases()
     if not uc.laad_api_beschikbaar():
-        pytest.skip(f"laad-API nog niet beschikbaar ({uc.basis_url()}{uc.LAAD_API}/openapi.json)", allow_module_level=True)
+        pytest.skip(
+            f"laad-API nog niet beschikbaar ({uc.basis_url()}{uc.LAAD_API}/openapi.json)", allow_module_level=True
+        )
     ontbreekt_api = beheer_api_ontbreekt(naam, ucs)
     if ontbreekt_api:
         pytest.skip(ontbreekt_api, allow_module_level=True)

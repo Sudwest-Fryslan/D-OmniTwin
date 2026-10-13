@@ -32,6 +32,7 @@ def test_eigen_logo_zonder_tokens_ongewijzigd(tmp_path):
 
 def test_paginas_gebruiken_het_thema_favicon():
     from pathlib import Path
+
     root = Path(__file__).resolve().parents[1]
     for pad in ("templates/index.html", "static/help.html", "admin-panel/index.html"):
         assert 'href="/api/organisatie/beeldmerk.svg"' in (root / pad).read_text(encoding="utf-8"), pad

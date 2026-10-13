@@ -20,23 +20,43 @@ ROOT = Path(__file__).resolve().parents[2]
 
 # ── Opmaak ───────────────────────────────────────────────────────────────────
 
-@pytest.mark.parametrize("waarde, verwacht", [
-    (None, ""), (0, "0"), (12.5, "12,5"), (1234567.25, "1234567,25"), (-0.75, "-0,75"),
-    (1 / 3, "0,333333"), (100.0, "100"), (1e-7, "0"), (2.5e9, "2500000000"),
-])
+
+@pytest.mark.parametrize(
+    "waarde, verwacht",
+    [
+        (None, ""),
+        (0, "0"),
+        (12.5, "12,5"),
+        (1234567.25, "1234567,25"),
+        (-0.75, "-0,75"),
+        (1 / 3, "0,333333"),
+        (100.0, "100"),
+        (1e-7, "0"),
+        (2.5e9, "2500000000"),
+    ],
+)
 def test_getal_nl(waarde, verwacht):
     assert ip.getal_nl(waarde) == verwacht
 
 
 def test_getal_nl_decimal_uit_database():
     from decimal import Decimal
+
     assert ip.getal_nl(Decimal("12.500")) == "12,5"
     assert ip.getal_nl(Decimal("1E+2")) == "100"
 
 
-@pytest.mark.parametrize("tekst, verwacht", [
-    ("Bolsward", "Bolsward"), ("=SOM(A1)", "'=SOM(A1)"), ("+31", "'+31"), ("-x", "'-x"), ("@a", "'@a"), (None, ""),
-])
+@pytest.mark.parametrize(
+    "tekst, verwacht",
+    [
+        ("Bolsward", "Bolsward"),
+        ("=SOM(A1)", "'=SOM(A1)"),
+        ("+31", "'+31"),
+        ("-x", "'-x"),
+        ("@a", "'@a"),
+        (None, ""),
+    ],
+)
 def test_veilige_tekst_tegen_csv_injectie(tekst, verwacht):
     assert ip.veilige_tekst(tekst) == verwacht
 
@@ -63,18 +83,51 @@ def test_licentie_en_dcat_tekst():
 def _paneel():
     return {
         "indicator": {"naam": "Hitte-eiland", "code": "UHI/1", "eenheid": "°C"},
-        "bronnen": [{"sleutel": "dataset:hitte", "titel": "Hittekaart", "uitgever": "RIVM",
-                     "licentie": "CC BY 4.0", "bron": None, "jaargangen": [2022]}],
-        "gebieden": [
-            {"id": "BU19000002", "naam": "Bolsward-Zuidoost", "jaar": 2022, "waarde": 1.25, "status": "gemeten",
-             "bronSleutel": "dataset:hitte"},
-            {"id": "BU19000001", "naam": "=Bolsward; centrum", "jaar": 2022, "waarde": None, "status": "onderdrukt",
-             "bronSleutel": "dataset:hitte"},
-            {"id": "BU19000003", "naam": "Zonder", "jaar": None, "waarde": None, "status": "geen-data",
-             "bronSleutel": None},
+        "bronnen": [
+            {
+                "sleutel": "dataset:hitte",
+                "titel": "Hittekaart",
+                "uitgever": "RIVM",
+                "licentie": "CC BY 4.0",
+                "bron": None,
+                "jaargangen": [2022],
+            }
         ],
-        "gemeentegemiddelden": [{"gemeenteCode": "1900", "gemeenteNaam": "Súdwest-Fryslân", "jaar": 2022,
-                                 "waarde": 0.8, "aantalGebieden": 140}],
+        "gebieden": [
+            {
+                "id": "BU19000002",
+                "naam": "Bolsward-Zuidoost",
+                "jaar": 2022,
+                "waarde": 1.25,
+                "status": "gemeten",
+                "bronSleutel": "dataset:hitte",
+            },
+            {
+                "id": "BU19000001",
+                "naam": "=Bolsward; centrum",
+                "jaar": 2022,
+                "waarde": None,
+                "status": "onderdrukt",
+                "bronSleutel": "dataset:hitte",
+            },
+            {
+                "id": "BU19000003",
+                "naam": "Zonder",
+                "jaar": None,
+                "waarde": None,
+                "status": "geen-data",
+                "bronSleutel": None,
+            },
+        ],
+        "gemeentegemiddelden": [
+            {
+                "gemeenteCode": "1900",
+                "gemeenteNaam": "Súdwest-Fryslân",
+                "jaar": 2022,
+                "waarde": 0.8,
+                "aantalGebieden": 140,
+            }
+        ],
         "drempel": 10,
     }
 
@@ -85,8 +138,16 @@ def test_csv_formaat_bom_puntkomma_decimale_komma():
     assert tekst.encode("utf-8")[:3] == b"\xef\xbb\xbf"
     rijen = list(csv.reader(io.StringIO(tekst[1:]), delimiter=";"))
     assert rijen[0] == ["gebied-code", "gebied-naam", "indicator", "jaar", "waarde", "eenheid", "bron", "status"]
-    assert rijen[1] == ["BU19000002", "Bolsward-Zuidoost", "Hitte-eiland", "2022", "1,25", "°C",
-                        "Hittekaart (RIVM), CC BY 4.0", "gemeten"]
+    assert rijen[1] == [
+        "BU19000002",
+        "Bolsward-Zuidoost",
+        "Hitte-eiland",
+        "2022",
+        "1,25",
+        "°C",
+        "Hittekaart (RIVM), CC BY 4.0",
+        "gemeten",
+    ]
     # onderdrukt: waarde leeg, met status; tekst met ; tussen aanhalingstekens, formule geneutraliseerd
     assert rijen[2][1] == "'=Bolsward; centrum" and rijen[2][4] == "" and rijen[2][7] == "onderdrukt"
     assert rijen[3][3:5] == ["", ""] and rijen[3][7] == "geen-data"
@@ -106,6 +167,7 @@ def test_gemiddelde():
 
 # ── Eigen voorkeuren ─────────────────────────────────────────────────────────
 
+
 def test_eigenaar_alleen_sub_of_lokaal_id():
     assert gv.eigenaar_van({"type": "oidc", "onderwerp": "abc-123", "username": "gebruiker"}) == "abc-123"
     assert gv.eigenaar_van({"type": "bearer", "onderwerp": "s9", "user_id": "s9"}) == "s9"
@@ -117,8 +179,12 @@ def test_eigenaar_alleen_sub_of_lokaal_id():
 def test_kaartpositie_grenzen():
     p = gv.controleer_positie({"longitude": 5.53, "latitude": 53.03, "zoom": 13.2, "pitch": 0, "bearing": 10})
     assert p == {"longitude": 5.53, "latitude": 53.03, "zoom": 13.2, "pitch": 0.0, "bearing": 10.0}
-    for fout in ({"longitude": 200, "latitude": 53, "zoom": 10}, {"latitude": 53, "zoom": 10},
-                 {"longitude": 5, "latitude": 53, "zoom": float("nan")}, {"longitude": "x", "latitude": 1, "zoom": 1}):
+    for fout in (
+        {"longitude": 200, "latitude": 53, "zoom": 10},
+        {"latitude": 53, "zoom": 10},
+        {"longitude": 5, "latitude": 53, "zoom": float("nan")},
+        {"longitude": "x", "latitude": 1, "zoom": 1},
+    ):
         with pytest.raises(GebruikersFout):
             gv.controleer_positie(fout)
 
@@ -151,13 +217,16 @@ def mijn_app(monkeypatch):
     return TestClient(app)
 
 
-@pytest.mark.parametrize("methode, pad, body", [
-    ("get", "/api/mijn/favorieten", None),
-    ("post", "/api/mijn/favorieten", {"naam": "x", "gebiedIds": ["BU1"]}),
-    ("delete", "/api/mijn/favorieten/7b1c6f2e-1d1a-4c1e-9c43-6a4b7a0f3c11", None),
-    ("get", "/api/mijn/instellingen", None),
-    ("put", "/api/mijn/instellingen", {"kaartpositie": {"longitude": 5, "latitude": 53, "zoom": 9}}),
-])
+@pytest.mark.parametrize(
+    "methode, pad, body",
+    [
+        ("get", "/api/mijn/favorieten", None),
+        ("post", "/api/mijn/favorieten", {"naam": "x", "gebiedIds": ["BU1"]}),
+        ("delete", "/api/mijn/favorieten/7b1c6f2e-1d1a-4c1e-9c43-6a4b7a0f3c11", None),
+        ("get", "/api/mijn/instellingen", None),
+        ("put", "/api/mijn/instellingen", {"kaartpositie": {"longitude": 5, "latitude": 53, "zoom": 9}}),
+    ],
+)
 def test_mijn_zonder_login_401(mijn_app, methode, pad, body):
     r = getattr(mijn_app, methode)(pad, **({"json": body} if body else {}))
     assert r.status_code == 401, r.text
@@ -165,24 +234,36 @@ def test_mijn_zonder_login_401(mijn_app, methode, pad, body):
 
 def test_mijn_script_met_key_401(monkeypatch, mijn_app):
     from omnitwin.routers import auth
-    monkeypatch.setattr(auth, "huidige_gebruiker",
-                        lambda request, db: {"type": "api_key", "user_id": "system_admin_key", "is_admin": True})
+
+    monkeypatch.setattr(
+        auth,
+        "huidige_gebruiker",
+        lambda request, db: {"type": "api_key", "user_id": "system_admin_key", "is_admin": True},
+    )
     assert mijn_app.get("/api/mijn/favorieten").status_code == 401
 
 
 # ── Inbouw ───────────────────────────────────────────────────────────────────
 
+
 def test_routes_in_de_app():
     from omnitwin.routers import indicatorpaneel, mijn
+
     paden = {r.path for r in indicatorpaneel.router.routes} | {r.path for r in mijn.router.routes}
-    assert {"/api/gebiedsmonitor/indicatorpaneel", "/api/gebiedsmonitor/indicatorpaneel.csv",
-            "/api/mijn/favorieten", "/api/mijn/favorieten/{favoriet_id}", "/api/mijn/instellingen"} <= paden
+    assert {
+        "/api/gebiedsmonitor/indicatorpaneel",
+        "/api/gebiedsmonitor/indicatorpaneel.csv",
+        "/api/mijn/favorieten",
+        "/api/mijn/favorieten/{favoriet_id}",
+        "/api/mijn/instellingen",
+    } <= paden
     main = (ROOT / "src/omnitwin/main.py").read_text(encoding="utf-8")
     assert "app.include_router(indicatorpaneel.router)" in main and "app.include_router(mijn.router)" in main
 
 
 def test_mijn_niet_open_bij_dichte_viewer():
     from omnitwin import viewer_toegang
+
     assert not viewer_toegang.is_open_pad("/api/mijn/favorieten")
     assert not viewer_toegang.is_open_pad("/api/gebiedsmonitor/indicatorpaneel.csv")
 
@@ -201,13 +282,22 @@ def test_migratie_alleen_sub_geen_persoonsgegevens():
 
 def test_viewer_laadt_paneel_en_favorieten():
     html = (ROOT / "templates/index.html").read_text(encoding="utf-8")
-    for nodig in ('data-panel="indicator"', 'id="panel-indicator"', 'id="ip-grafiek"', 'id="ip-csv"',
-                  'id="mijn-favorieten"', 'name="omnitwin-ingelogd"', "/static/js/indicatorpaneel.js",
-                  "/static/js/mijn.js", "/static/css/indicatorpaneel.css"):
+    for nodig in (
+        'data-panel="indicator"',
+        'id="panel-indicator"',
+        'id="ip-grafiek"',
+        'id="ip-csv"',
+        'id="mijn-favorieten"',
+        'name="omnitwin-ingelogd"',
+        "/static/js/indicatorpaneel.js",
+        "/static/js/mijn.js",
+        "/static/css/indicatorpaneel.css",
+    ):
         assert nodig in html, nodig
 
 
 # ── Paneel met een nepdatabase: onderdrukking en gemiddelde ─────────────────
+
 
 class _Resultaat:
     def __init__(self, rijen):
@@ -236,22 +326,76 @@ class _NepDb:
         q = str(sql)
         self.vragen.append((q, params))
         if "FROM indicatoren WHERE uuid" in q:
-            return _Resultaat([{"uuid": "u1", "naam": "Hitte", "code": "UHI", "omschrijving": "Uitleg",
-                                "ontologische_beschrijving": None, "eenheid": "°C", "score_type": "-/-",
-                                "bron": "RIVM"}])
+            return _Resultaat(
+                [
+                    {
+                        "uuid": "u1",
+                        "naam": "Hitte",
+                        "code": "UHI",
+                        "omschrijving": "Uitleg",
+                        "ontologische_beschrijving": None,
+                        "eenheid": "°C",
+                        "score_type": "-/-",
+                        "bron": "RIVM",
+                    }
+                ]
+            )
         if "array_agg(DISTINCT gd.jaar" in q:
-            return _Resultaat([{"dataset_id": "hitte", "beschrijving": {
-                "dct:title": "Hittekaart", "dct:publisher": "https://www.rivm.nl/",
-                "dct:license": "http://creativecommons.org/publicdomain/zero/1.0/"}, "bron": None, "jaren": [2022]}])
+            return _Resultaat(
+                [
+                    {
+                        "dataset_id": "hitte",
+                        "beschrijving": {
+                            "dct:title": "Hittekaart",
+                            "dct:publisher": "https://www.rivm.nl/",
+                            "dct:license": "http://creativecommons.org/publicdomain/zero/1.0/",
+                        },
+                        "bron": None,
+                        "jaren": [2022],
+                    }
+                ]
+            )
         if "LEFT JOIN LATERAL" in q:
-            return _Resultaat([
-                {"id": "BU2", "naam": "Twee", "gemeente_code": "1900", "gebiedstype_id": "gt", "is_waterbuurt": False,
-                 "waarde": 1.5, "jaar": 2022, "n": 40, "bron": None, "levering_id": "lv1"},
-                {"id": "BU1", "naam": "Een", "gemeente_code": "1900", "gebiedstype_id": "gt", "is_waterbuurt": False,
-                 "waarde": 9.9, "jaar": 2022, "n": 4, "bron": None, "levering_id": "lv1"},
-                {"id": "BU3", "naam": "Drie", "gemeente_code": "1900", "gebiedstype_id": "gt", "is_waterbuurt": False,
-                 "waarde": None, "jaar": None, "n": None, "bron": None, "levering_id": None},
-            ])
+            return _Resultaat(
+                [
+                    {
+                        "id": "BU2",
+                        "naam": "Twee",
+                        "gemeente_code": "1900",
+                        "gebiedstype_id": "gt",
+                        "is_waterbuurt": False,
+                        "waarde": 1.5,
+                        "jaar": 2022,
+                        "n": 40,
+                        "bron": None,
+                        "levering_id": "lv1",
+                    },
+                    {
+                        "id": "BU1",
+                        "naam": "Een",
+                        "gemeente_code": "1900",
+                        "gebiedstype_id": "gt",
+                        "is_waterbuurt": False,
+                        "waarde": 9.9,
+                        "jaar": 2022,
+                        "n": 4,
+                        "bron": None,
+                        "levering_id": "lv1",
+                    },
+                    {
+                        "id": "BU3",
+                        "naam": "Drie",
+                        "gemeente_code": "1900",
+                        "gebiedstype_id": "gt",
+                        "is_waterbuurt": False,
+                        "waarde": None,
+                        "jaar": None,
+                        "n": None,
+                        "bron": None,
+                        "levering_id": None,
+                    },
+                ]
+            )
         if "FROM laden.leveringen" in q:
             return _Resultaat([("lv1", "hitte")])
         if "FROM gemeenten" in q:
@@ -261,6 +405,7 @@ class _NepDb:
 
 def test_paneel_onderdrukt_en_gemiddelde(monkeypatch):
     from omnitwin.services import percentielklasse as pk
+
     gevraagd = {}
 
     def referentie(db, gt, gemeenten, inds, jaar=None, drempel=10):
@@ -277,8 +422,16 @@ def test_paneel_onderdrukt_en_gemiddelde(monkeypatch):
     assert paneel["bronnen"][0]["uitgever"] == "rivm.nl"
     assert paneel["bronnen"][0]["licentie"] == "CC0 1.0" and paneel["bronnen"][0]["jaargangen"] == [2022]
     gm = paneel["gemeentegemiddelden"]
-    assert gm == [{"gemeenteCode": "1900", "gemeenteNaam": "Súdwest-Fryslân", "gebiedstypeId": "gt", "jaar": 2022,
-                   "waarde": 2.0, "aantalGebieden": 3}]
+    assert gm == [
+        {
+            "gemeenteCode": "1900",
+            "gemeenteNaam": "Súdwest-Fryslân",
+            "gebiedstypeId": "gt",
+            "jaar": 2022,
+            "waarde": 2.0,
+            "aantalGebieden": 3,
+        }
+    ]
     assert gevraagd == {"gt": "gt", "gemeenten": ["1900"], "jaar": 2022, "drempel": 10}
     # De onderdrukte waarde staat ook niet in de CSV
     assert "9,9" not in ip.maak_csv(paneel)

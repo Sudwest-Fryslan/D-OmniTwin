@@ -5,6 +5,7 @@ Unit test: één versienummer (#27).
 (`src/omnitwin/version.py`, gebruikt door `src/omnitwin/main.py`) moeten hetzelfde nummer hebben, en het
 moet geldige Semantic Versioning zijn. Zie docs/9-beheer/releasebeleid.md.
 """
+
 import json
 import re
 import sys

@@ -12,7 +12,6 @@ Interne API van de viewer (api-landschap: viewer), dus met de sessie van de BFF 
 niet met `vereis_rol`. Sleutel = `sub` (of `lokaal:<id>`), zie omnitwin.services.gebruikersvoorkeuren.
 """
 
-from typing import List, Optional
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Request, Response
@@ -28,6 +27,7 @@ router = APIRouter(prefix="/api/mijn", tags=["Mijn voorkeuren"])
 
 def voorkeuren(request: Request, db: Session = Depends(get_db)) -> Voorkeuren:
     from omnitwin.routers.auth import huidige_gebruiker
+
     try:
         gebruiker = huidige_gebruiker(request, db)
     except HTTPException:
@@ -42,18 +42,18 @@ class Kaartpositie(BaseModel):
     longitude: float
     latitude: float
     zoom: float
-    pitch: Optional[float] = None
-    bearing: Optional[float] = None
+    pitch: float | None = None
+    bearing: float | None = None
 
 
 class Instellingen(BaseModel):
-    kaartpositie: Optional[Kaartpositie] = None
+    kaartpositie: Kaartpositie | None = None
 
 
 class NieuweFavoriet(BaseModel):
     naam: str = Field(..., max_length=200)
-    gebiedIds: List[str] = Field(..., max_length=5000)
-    gebiedstypeId: Optional[UUID] = None
+    gebiedIds: list[str] = Field(..., max_length=5000)
+    gebiedstypeId: UUID | None = None
 
 
 def _fout(e: GebruikersFout):
@@ -81,8 +81,9 @@ def lees_favorieten(v: Voorkeuren = Depends(voorkeuren)):
 @router.post("/favorieten", status_code=201)
 def bewaar_favoriet(body: NieuweFavoriet, response: Response, v: Voorkeuren = Depends(voorkeuren)):
     try:
-        favoriet, nieuw = v.bewaar_favoriet(body.naam, body.gebiedIds,
-                                            str(body.gebiedstypeId) if body.gebiedstypeId else None)
+        favoriet, nieuw = v.bewaar_favoriet(
+            body.naam, body.gebiedIds, str(body.gebiedstypeId) if body.gebiedstypeId else None
+        )
     except GebruikersFout as e:
         _fout(e)
     if not nieuw:

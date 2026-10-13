@@ -13,7 +13,8 @@ De Locatieserver is open (geen sleutel), bron BAG en CBS.
 """
 
 import re
-from typing import Any, Callable, Dict, Optional
+from collections.abc import Callable
+from typing import Any
 
 import requests
 
@@ -29,7 +30,7 @@ class LocatieFout(Exception):
     """De Locatieserver is niet bereikbaar of gaf een fout."""
 
 
-def _vraag(pad: str, params: Dict[str, Any], get: Callable[..., Any]) -> Dict[str, Any]:
+def _vraag(pad: str, params: dict[str, Any], get: Callable[..., Any]) -> dict[str, Any]:
     try:
         r = get(f"{PDOK_LOCATIESERVER}/{pad}", params=params, timeout=TIMEOUT)
         r.raise_for_status()
@@ -49,16 +50,19 @@ def in_nederland(lat: float, lon: float) -> bool:
     return _NL["lat"][0] <= lat <= _NL["lat"][1] and _NL["lon"][0] <= lon <= _NL["lon"][1]
 
 
-def buurt_bij_adres(adres: str, get: Callable[..., Any] = requests.get) -> Optional[Dict[str, str]]:
+def buurt_bij_adres(adres: str, get: Callable[..., Any] = requests.get) -> dict[str, str] | None:
     """'8601 CR' of 'Marktstraat 15 Sneek' → {'buurtcode': 'BU19000101', 'buurtnaam': ...} of None."""
     doc = _vraag("free", {"q": adres.strip(), "fq": "type:adres", "fl": "buurtcode,buurtnaam", "rows": 1}, get)
     code = doc.get("buurtcode")
     return {"buurtcode": code, "buurtnaam": doc.get("buurtnaam") or code} if code and _BUURTCODE.match(code) else None
 
 
-def buurt_bij_punt(lat: float, lon: float, get: Callable[..., Any] = requests.get) -> Optional[Dict[str, str]]:
+def buurt_bij_punt(lat: float, lon: float, get: Callable[..., Any] = requests.get) -> dict[str, str] | None:
     """Locatie (WGS84) → de CBS-buurt waarin het punt ligt, of None."""
-    doc = _vraag("reverse", {"lat": f"{lat:.5f}", "lon": f"{lon:.5f}", "type": "buurt", "rows": 1,
-                             "fl": "identificatie,buurtnaam"}, get)
+    doc = _vraag(
+        "reverse",
+        {"lat": f"{lat:.5f}", "lon": f"{lon:.5f}", "type": "buurt", "rows": 1, "fl": "identificatie,buurtnaam"},
+        get,
+    )
     code = doc.get("identificatie")
     return {"buurtcode": code, "buurtnaam": doc.get("buurtnaam") or code} if code and _BUURTCODE.match(code) else None

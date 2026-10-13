@@ -23,8 +23,9 @@ from __future__ import annotations
 import csv
 import io
 import re
+from collections.abc import Iterable, Sequence
 from decimal import Decimal
-from typing import Any, Dict, Iterable, List, Optional, Sequence
+from typing import Any
 
 from sqlalchemy import text
 
@@ -50,11 +51,12 @@ LICENTIES = {
 
 # ── Invoer ───────────────────────────────────────────────────────────────────
 
-def lees_gebied_ids(waarde: Optional[str]) -> List[str]:
+
+def lees_gebied_ids(waarde: str | None) -> list[str]:
     """Kommagescheiden gebied-id's, ontdubbeld met behoud van volgorde."""
     if not waarde:
         return []
-    ids: List[str] = []
+    ids: list[str] = []
     for deel in waarde.split(","):
         deel = deel.strip()
         if not deel:
@@ -69,6 +71,7 @@ def lees_gebied_ids(waarde: Optional[str]) -> List[str]:
 
 
 # ── Opmaak ───────────────────────────────────────────────────────────────────
+
 
 def getal_nl(waarde: Any, decimalen: int = 6) -> str:
     """Getal met decimale komma, zonder duizendtalscheiding of exponent; None = leeg."""
@@ -93,13 +96,13 @@ def veilige_tekst(waarde: Any) -> str:
     return tekst
 
 
-def licentie_naam(uri: Optional[str]) -> Optional[str]:
+def licentie_naam(uri: str | None) -> str | None:
     if not uri:
         return None
     return LICENTIES.get(uri.strip(), uri.strip())
 
 
-def _tekst(waarde: Any) -> Optional[str]:
+def _tekst(waarde: Any) -> str | None:
     """DCAT-veld als tekst: string, {'@id'|'@value'|'foaf:name'|'vcard:fn'} of lijst."""
     if waarde is None:
         return None
@@ -114,21 +117,22 @@ def _tekst(waarde: Any) -> Optional[str]:
     return None
 
 
-def uitgever_naam(waarde: Any) -> Optional[str]:
+def uitgever_naam(waarde: Any) -> str | None:
     """Uitgever als leesbare naam: een URI wordt de domeinnaam (https://www.rivm.nl/ -> rivm.nl)."""
     tekst = _tekst(waarde)
     if tekst and re.match(r"^https?://", tekst):
         from urllib.parse import urlsplit
+
         host = urlsplit(tekst).hostname or tekst
         return host[4:] if host.startswith("www.") else host
     return tekst
 
 
-def gemiddelde(waarden: Sequence[float]) -> Optional[float]:
+def gemiddelde(waarden: Sequence[float]) -> float | None:
     return sum(waarden) / len(waarden) if waarden else None
 
 
-def bron_label(bron: Dict[str, Any]) -> str:
+def bron_label(bron: dict[str, Any]) -> str:
     """Korte bronvermelding voor een CSV-regel: titel (uitgever), licentie."""
     deel = bron.get("titel") or bron.get("bron") or ""
     if bron.get("uitgever") and bron["uitgever"] not in deel:
@@ -138,7 +142,7 @@ def bron_label(bron: Dict[str, Any]) -> str:
     return deel
 
 
-def maak_csv(paneel: Dict[str, Any]) -> str:
+def maak_csv(paneel: dict[str, Any]) -> str:
     """CSV (UTF-8 met BOM, puntkomma, decimale komma) van een paneel uit `IndicatorpaneelService.paneel`."""
     ind = paneel["indicator"]
     bronnen = {b["sleutel"]: b for b in paneel["bronnen"]}
@@ -147,22 +151,35 @@ def maak_csv(paneel: Dict[str, Any]) -> str:
     w.writerow(CSV_KOLOMMEN)
     for g in paneel["gebieden"]:
         bron = bronnen.get(g.get("bronSleutel"))
-        w.writerow([
-            veilige_tekst(g["id"]), veilige_tekst(g["naam"]), veilige_tekst(ind["naam"]),
-            g["jaar"] if g["jaar"] is not None else "", getal_nl(g["waarde"]),
-            veilige_tekst(ind.get("eenheid")), veilige_tekst(bron_label(bron) if bron else ""), g["status"],
-        ])
+        w.writerow(
+            [
+                veilige_tekst(g["id"]),
+                veilige_tekst(g["naam"]),
+                veilige_tekst(ind["naam"]),
+                g["jaar"] if g["jaar"] is not None else "",
+                getal_nl(g["waarde"]),
+                veilige_tekst(ind.get("eenheid")),
+                veilige_tekst(bron_label(bron) if bron else ""),
+                g["status"],
+            ]
+        )
     for gm in paneel["gemeentegemiddelden"]:
-        w.writerow([
-            veilige_tekst(gm["gemeenteCode"]),
-            veilige_tekst(f"Gemiddelde {gm['gemeenteNaam']} ({gm['aantalGebieden']} gebieden)"),
-            veilige_tekst(ind["naam"]), gm["jaar"] if gm["jaar"] is not None else "",
-            getal_nl(gm["waarde"]), veilige_tekst(ind.get("eenheid")), "", "gemeentegemiddelde",
-        ])
+        w.writerow(
+            [
+                veilige_tekst(gm["gemeenteCode"]),
+                veilige_tekst(f"Gemiddelde {gm['gemeenteNaam']} ({gm['aantalGebieden']} gebieden)"),
+                veilige_tekst(ind["naam"]),
+                gm["jaar"] if gm["jaar"] is not None else "",
+                getal_nl(gm["waarde"]),
+                veilige_tekst(ind.get("eenheid")),
+                "",
+                "gemeentegemiddelde",
+            ]
+        )
     return "﻿" + uit.getvalue()
 
 
-def csv_bestandsnaam(paneel: Dict[str, Any], datum: str) -> str:
+def csv_bestandsnaam(paneel: dict[str, Any], datum: str) -> str:
     code = paneel["indicator"].get("code") or "indicator"
     code = re.sub(r"[^A-Za-z0-9_-]+", "-", code).strip("-") or "indicator"
     return f"indicator-{code}-{datum}.csv"
@@ -224,17 +241,21 @@ class IndicatorpaneelService:
     def __init__(self, db):
         self.db = db
 
-    def _indicator(self, indicator_uuid: str) -> Dict[str, Any]:
+    def _indicator(self, indicator_uuid: str) -> dict[str, Any]:
         rij = self.db.execute(_SQL_INDICATOR, {"ind": indicator_uuid}).mappings().first()
         if rij is None:
             raise GebruikersFout("Onbekende indicator.")
         return {
-            "uuid": rij["uuid"], "naam": rij["naam"], "code": rij["code"],
+            "uuid": rij["uuid"],
+            "naam": rij["naam"],
+            "code": rij["code"],
             "beschrijving": rij["omschrijving"] or rij["ontologische_beschrijving"],
-            "eenheid": rij["eenheid"], "scoreType": rij["score_type"], "bron": rij["bron"],
+            "eenheid": rij["eenheid"],
+            "scoreType": rij["score_type"],
+            "bron": rij["bron"],
         }
 
-    def _bronnen(self, indicator_uuid: str, indicator_bron: Optional[str]) -> List[Dict[str, Any]]:
+    def _bronnen(self, indicator_uuid: str, indicator_bron: str | None) -> list[dict[str, Any]]:
         bronnen = []
         for r in self.db.execute(_SQL_BRONNEN, {"ind": indicator_uuid}).mappings():
             b = r["beschrijving"] or {}
@@ -244,22 +265,34 @@ class IndicatorpaneelService:
             if bestaand:
                 bestaand["jaargangen"] = sorted(set(bestaand["jaargangen"]) | set(jaren))
                 continue
-            bronnen.append({
-                "sleutel": sleutel,
-                "dataset": r["dataset_id"],
-                "titel": _tekst(b.get("dct:title")),
-                "uitgever": uitgever_naam(b.get("dct:publisher")),
-                "licentie": licentie_naam(_tekst(b.get("dct:license"))),
-                "licentieUri": _tekst(b.get("dct:license")),
-                "bron": r["bron"] or indicator_bron,
-                "jaargangen": jaren,
-            })
+            bronnen.append(
+                {
+                    "sleutel": sleutel,
+                    "dataset": r["dataset_id"],
+                    "titel": _tekst(b.get("dct:title")),
+                    "uitgever": uitgever_naam(b.get("dct:publisher")),
+                    "licentie": licentie_naam(_tekst(b.get("dct:license"))),
+                    "licentieUri": _tekst(b.get("dct:license")),
+                    "bron": r["bron"] or indicator_bron,
+                    "jaargangen": jaren,
+                }
+            )
         if not bronnen and indicator_bron:
-            bronnen.append({"sleutel": f"bron:{indicator_bron}", "dataset": None, "titel": None, "uitgever": None,
-                            "licentie": None, "licentieUri": None, "bron": indicator_bron, "jaargangen": []})
+            bronnen.append(
+                {
+                    "sleutel": f"bron:{indicator_bron}",
+                    "dataset": None,
+                    "titel": None,
+                    "uitgever": None,
+                    "licentie": None,
+                    "licentieUri": None,
+                    "bron": indicator_bron,
+                    "jaargangen": [],
+                }
+            )
         return bronnen
 
-    def _bron_sleutel(self, r, datasets: Dict[str, Optional[str]], indicator_bron: Optional[str]) -> Optional[str]:
+    def _bron_sleutel(self, r, datasets: dict[str, str | None], indicator_bron: str | None) -> str | None:
         if r["levering_id"] and datasets.get(r["levering_id"]):
             return f"dataset:{datasets[r['levering_id']]}"
         if r["waarde"] is None:
@@ -270,12 +303,12 @@ class IndicatorpaneelService:
         self,
         indicator_uuid: str,
         gebied_ids: Iterable[str] = (),
-        jaar: Optional[int] = None,
-        gebiedstype_id: Optional[str] = None,
-        gemeente_code: Optional[str] = None,
-        drempel: Optional[int] = None,
+        jaar: int | None = None,
+        gebiedstype_id: str | None = None,
+        gemeente_code: str | None = None,
+        drempel: int | None = None,
         met_gebieden: bool = True,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Indicator, bronnen, waarde per gebied (onderdrukt: leeg) en gemeentegemiddelden.
 
         Met gebied_ids: die gebieden. Zonder: alle gebieden van gebiedstype_id (in gemeente_code),
@@ -287,22 +320,35 @@ class IndicatorpaneelService:
         ind = self._indicator(indicator_uuid)
         bronnen = self._bronnen(indicator_uuid, ind["bron"])
 
-        rijen: List[Dict[str, Any]] = []
+        rijen: list[dict[str, Any]] = []
         if ids or (gebiedstype_id and met_gebieden):
-            rijen = [dict(r) for r in self.db.execute(_SQL_WAARDEN, {
-                "ind": indicator_uuid, "jaar": jaar, "ids": ids or None,
-                "gt": gebiedstype_id, "gm": gemeente_code,
-            }).mappings()]
+            rijen = [
+                dict(r)
+                for r in self.db.execute(
+                    _SQL_WAARDEN,
+                    {
+                        "ind": indicator_uuid,
+                        "jaar": jaar,
+                        "ids": ids or None,
+                        "gt": gebiedstype_id,
+                        "gm": gemeente_code,
+                    },
+                ).mappings()
+            ]
         if ids:  # volgorde van de selectie aanhouden
             volgorde = {g: i for i, g in enumerate(ids)}
             rijen.sort(key=lambda r: volgorde.get(r["id"], len(volgorde)))
 
         leveringen = sorted({r["levering_id"] for r in rijen if r["levering_id"]})
-        datasets: Dict[str, Optional[str]] = {}
+        datasets: dict[str, str | None] = {}
         if leveringen:
-            datasets = {r[0]: r[1] for r in self.db.execute(text(
-                "SELECT id::text, dataset_id FROM laden.leveringen WHERE id = ANY(CAST(:ids AS uuid[]))"),
-                {"ids": leveringen})}
+            datasets = {
+                r[0]: r[1]
+                for r in self.db.execute(
+                    text("SELECT id::text, dataset_id FROM laden.leveringen WHERE id = ANY(CAST(:ids AS uuid[]))"),
+                    {"ids": leveringen},
+                )
+            }
 
         gebieden = []
         for r in rijen:
@@ -312,19 +358,26 @@ class IndicatorpaneelService:
                 status, waarde = "onderdrukt", None
             else:
                 status, waarde = "gemeten", float(r["waarde"])
-            gebieden.append({
-                "id": r["id"], "naam": r["naam"], "gemeenteCode": r["gemeente_code"],
-                "jaar": r["jaar"], "waarde": waarde, "status": status,
-                "waterbuurt": bool(r["is_waterbuurt"]),
-                "bronSleutel": self._bron_sleutel(r, datasets, ind["bron"]) if status != "geen-data" else None,
-            })
+            gebieden.append(
+                {
+                    "id": r["id"],
+                    "naam": r["naam"],
+                    "gemeenteCode": r["gemeente_code"],
+                    "jaar": r["jaar"],
+                    "waarde": waarde,
+                    "status": status,
+                    "waterbuurt": bool(r["is_waterbuurt"]),
+                    "bronSleutel": self._bron_sleutel(r, datasets, ind["bron"]) if status != "geen-data" else None,
+                }
+            )
 
         return {
             "indicator": ind,
             "bronnen": bronnen,
             "gebieden": gebieden,
-            "gemeentegemiddelden": self._gemeentegemiddelden(indicator_uuid, rijen, jaar, gebiedstype_id,
-                                                            gemeente_code, drempel),
+            "gemeentegemiddelden": self._gemeentegemiddelden(
+                indicator_uuid, rijen, jaar, gebiedstype_id, gemeente_code, drempel
+            ),
             "drempel": drempel,
         }
 
@@ -340,6 +393,7 @@ class IndicatorpaneelService:
             gm = gemeente_code
             if not gm:
                 from omnitwin.services.organisatie import eigen_gemeente_code
+
                 gm = eigen_gemeente_code(self.db)
             if gm:
                 groepen.add((gebiedstype_id, gm, jaar))
@@ -355,8 +409,14 @@ class IndicatorpaneelService:
                     continue
             ref = pk.referentie_waarden(self.db, gt, [gm], [indicator_uuid], jaar=j, drempel=drempel)
             waarden = ref.get((gm, indicator_uuid), [])
-            uit.append({
-                "gemeenteCode": gm, "gemeenteNaam": namen.get(gm, gm), "gebiedstypeId": gt, "jaar": j,
-                "waarde": gemiddelde(waarden), "aantalGebieden": len(waarden),
-            })
+            uit.append(
+                {
+                    "gemeenteCode": gm,
+                    "gemeenteNaam": namen.get(gm, gm),
+                    "gebiedstypeId": gt,
+                    "jaar": j,
+                    "waarde": gemiddelde(waarden),
+                    "aantalGebieden": len(waarden),
+                }
+            )
         return uit

@@ -1,4 +1,5 @@
 """Unit-tests voor scripts/llm/kies_provider.py (#88): beschikbaarheid zonder database of gateway."""
+
 import importlib.util
 from pathlib import Path
 
@@ -63,10 +64,13 @@ def test_onderliggend_model_uit_gateway_config(env):
     assert kp.onderliggend_model("ollama") == "qwen3:4b-instruct"
 
 
-@pytest.mark.parametrize("cfg,verwacht", [
-    ({"api_type": "openai", "model_name": "d-omnitwin-gemini"}, "gemini"),
-    ({"api_type": "openai", "model_name": "d-omnitwin-default"}, "anders"),
-    ({"api_type": "ollama", "model_name": "qwen3:30b"}, "direct-ollama"),
-])
+@pytest.mark.parametrize(
+    "cfg,verwacht",
+    [
+        ({"api_type": "openai", "model_name": "d-omnitwin-gemini"}, "gemini"),
+        ({"api_type": "openai", "model_name": "d-omnitwin-default"}, "anders"),
+        ({"api_type": "ollama", "model_name": "qwen3:30b"}, "direct-ollama"),
+    ],
+)
 def test_provider_van(cfg, verwacht):
     assert kp.provider_van(cfg) == verwacht

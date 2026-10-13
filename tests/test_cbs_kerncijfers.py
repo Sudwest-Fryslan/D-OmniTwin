@@ -25,7 +25,8 @@ SAMPLE = ROOT / "init_data" / "sample" / "2_brondata" / "sample_indicatoren.csv"
 
 def _script():
     spec = importlib.util.spec_from_file_location(
-        "download_cbs_kerncijfers", ROOT / "init_data" / "scripts" / "download_cbs_kerncijfers.py")
+        "download_cbs_kerncijfers", ROOT / "init_data" / "scripts" / "download_cbs_kerncijfers.py"
+    )
     mod = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(mod)
     return mod
@@ -39,13 +40,14 @@ BOLSWARD = ["BU19000001", "BU19000002", "BU19000004"]
 
 # ── Eén jaargang voor de geometrie en een drempel voor weggevallen codes (#159) ──
 
+
 def test_geometriejaar_een_bron():
     """GEOMETRIE_JAAR in het script is de bron; sample, recept, use case en downloader volgen."""
     jaar = S.GEOMETRIE_JAAR
     assert json.loads((CBS / "datapackage.json").read_text(encoding="utf-8"))["geometrie_jaar"] == jaar
     sample = json.loads((ROOT / "init_data" / "sample" / "datapackage.json").read_text(encoding="utf-8"))
     assert {r.get("geometrie_jaar") for r in sample["resources"] if "geometrie_jaar" in r} == {jaar}
-    buurten = (ROOT / "usecases" / "cbs-gebiedsindelingen" / "datasets" / "cbs-gebied-buurten.json")
+    buurten = ROOT / "usecases" / "cbs-gebiedsindelingen" / "datasets" / "cbs-gebied-buurten.json"
     assert f"/gebiedsindelingen/{jaar}/" in buurten.read_text(encoding="utf-8")
     for script in ("download_buurten_fryslan.py", "jaargang_controle.py"):
         tekst = (ROOT / "init_data" / "scripts" / script).read_text(encoding="utf-8")
@@ -113,9 +115,12 @@ def test_codes_bestaan_in_geometrie_2024(rijen):
 
 
 def test_jaar_is_peiljaar(rijen):
-    fout = [r for r in rijen
-            if r["bron_tabel"] != S.TABELLEN.get(int(r["jaar"]))
-            or r["bron"] != f"CBS Kerncijfers wijken en buurten {r['jaar']} ({r['bron_tabel']})"]
+    fout = [
+        r
+        for r in rijen
+        if r["bron_tabel"] != S.TABELLEN.get(int(r["jaar"]))
+        or r["bron"] != f"CBS Kerncijfers wijken en buurten {r['jaar']} ({r['bron_tabel']})"
+    ]
     assert not fout, f"{len(fout)} rijen met jaar ≠ peiljaar, bijv. {fout[0]}"
 
 
@@ -136,7 +141,9 @@ def test_sample_bevat_geen_cbs_rijen_en_zelfde_uuids():
     """CBS-waarden worden gedownload; in de sample (git) staan ze niet."""
     with open(SAMPLE, encoding="utf-8") as f:
         sample = list(csv.DictReader(f))
-    assert not [r for r in sample if r["bron"].startswith(("CBS Kerncijfers", "Kerncijfers wijken en buurten"))],         "CBS Kerncijfers horen niet in de sample: ze worden gedownload (laad_cbs.py)"
+    assert not [r for r in sample if r["bron"].startswith(("CBS Kerncijfers", "Kerncijfers wijken en buurten"))], (
+        "CBS Kerncijfers horen niet in de sample: ze worden gedownload (laad_cbs.py)"
+    )
     sample_uuid = {}
     for r in sample:
         sample_uuid.setdefault(r["indicator_naam"], set()).add(r["indicator_uuid"])

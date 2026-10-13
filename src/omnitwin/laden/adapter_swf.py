@@ -24,8 +24,13 @@ ADAPTER = "swf-monitor-v1"
 
 
 def is_waarden(data) -> bool:
-    return isinstance(data, list) and bool(data) and isinstance(data[0], dict) \
-        and "indicator_id" in data[0] and "gebieds_id" in data[0]
+    return (
+        isinstance(data, list)
+        and bool(data)
+        and isinstance(data[0], dict)
+        and "indicator_id" in data[0]
+        and "gebieds_id" in data[0]
+    )
 
 
 def is_definities(data) -> bool:
@@ -47,8 +52,11 @@ def waarden_naar_waarnemingen(rijen: list[dict], prefixen: dict[str, str]) -> tu
         try:
             jaar, peildatum = _peil(r.get("begingeldigheid"))
         except (TypeError, ValueError):
-            fouten.append(Fout("jaar-ongeldig", "begingeldigheid is geen geldige datum vanaf 1900",
-                               "waarden", i, "begingeldigheid"))
+            fouten.append(
+                Fout(
+                    "jaar-ongeldig", "begingeldigheid is geen geldige datum vanaf 1900", "waarden", i, "begingeldigheid"
+                )
+            )
             jaar, peildatum = None, None
         if r.get("eindgeldigheid"):
             eind += 1
@@ -57,9 +65,21 @@ def waarden_naar_waarnemingen(rijen: list[dict], prefixen: dict[str, str]) -> tu
         prefix = prefixen.get(gt) or ""
         if prefix and code and not code.startswith(prefix):
             code = prefix + code
-        uit.append({"gebied_code": code, "gebiedstype": gt or None, "indicator_uuid": r.get("indicator_id"),
-                    "jaar": jaar, "peildatum": peildatum, "scenario": "current", "waarde": r.get("waarde"),
-                    "n": r.get("n"), "kwaliteit": None, "bron": None, "opmerking": None})
+        uit.append(
+            {
+                "gebied_code": code,
+                "gebiedstype": gt or None,
+                "indicator_uuid": r.get("indicator_id"),
+                "jaar": jaar,
+                "peildatum": peildatum,
+                "scenario": "current",
+                "waarde": r.get("waarde"),
+                "n": r.get("n"),
+                "kwaliteit": None,
+                "bron": None,
+                "opmerking": None,
+            }
+        )
     return uit, fouten, eind
 
 
@@ -69,15 +89,30 @@ def _datumtijd(w):
 
 def definities_naar_resources(data: dict) -> dict[str, list[dict]]:
     """SwfDefinities → {indicatoren, gebiedstypen, relaties} in de velden van profiel definities."""
-    indicatoren = [{"uuid": i.get("id"), "naam": i.get("naam"), "omschrijving": i.get("omschrijving"),
-                    "status": i.get("status"), "begingeldigheid": _datumtijd(i.get("begingeldigheid")),
-                    "eindgeldigheid": _datumtijd(i.get("eindgeldigheid"))}
-                   for i in data.get("indicatoren", [])]
-    gebiedstypen = [{"id": g.get("id"), "naam": g.get("naam"), "actief": g.get("actief"),
-                     "_metadata": {k: g[k] for k in ("wfs", "typenames", "sleutel", "label") if g.get(k)} or None}
-                    for g in data.get("gebiedstypen", [])]
-    relaties = [{"indicator_uuid": r.get("indicator_id"), "gebiedstype_id": r.get("gebiedstype_id")}
-                for r in data.get("relaties", [])]
+    indicatoren = [
+        {
+            "uuid": i.get("id"),
+            "naam": i.get("naam"),
+            "omschrijving": i.get("omschrijving"),
+            "status": i.get("status"),
+            "begingeldigheid": _datumtijd(i.get("begingeldigheid")),
+            "eindgeldigheid": _datumtijd(i.get("eindgeldigheid")),
+        }
+        for i in data.get("indicatoren", [])
+    ]
+    gebiedstypen = [
+        {
+            "id": g.get("id"),
+            "naam": g.get("naam"),
+            "actief": g.get("actief"),
+            "_metadata": {k: g[k] for k in ("wfs", "typenames", "sleutel", "label") if g.get(k)} or None,
+        }
+        for g in data.get("gebiedstypen", [])
+    ]
+    relaties = [
+        {"indicator_uuid": r.get("indicator_id"), "gebiedstype_id": r.get("gebiedstype_id")}
+        for r in data.get("relaties", [])
+    ]
     return {"indicatoren": indicatoren, "gebiedstypen": gebiedstypen, "relaties": relaties}
 
 
@@ -89,30 +124,40 @@ DATUMTIJD = "YYYY-MM-DD HH24:MI"
 def definities_terug(cur, dataset_id: str) -> dict:
     """De set die de dataset als laatste publiceerde (laden.dataset_objecten), met de actuele velden."""
     p = {"ds": dataset_id, "f": DATUMTIJD}
-    cur.execute("""SELECT i.uuid::text AS id, i.naam, i.omschrijving, i.status,
+    cur.execute(
+        """SELECT i.uuid::text AS id, i.naam, i.omschrijving, i.status,
                           to_char(i.begingeldigheid, %(f)s) AS begingeldigheid,
                           to_char(i.eindgeldigheid, %(f)s) AS eindgeldigheid
                    FROM public.indicatoren i
                    JOIN laden.dataset_objecten o ON o.dataset_id = %(ds)s AND o.soort = 'indicator'
                                                 AND o.sleutel = i.uuid::text
-                   ORDER BY i.naam, i.uuid""", p)
+                   ORDER BY i.naam, i.uuid""",
+        p,
+    )
     indicatoren = [dict(r) for r in cur.fetchall()]
-    cur.execute("""SELECT t.id::text AS id, t.naam, t.metadata->>'wfs' AS wfs, t.metadata->>'typenames' AS typenames,
+    cur.execute(
+        """SELECT t.id::text AS id, t.naam, t.metadata->>'wfs' AS wfs, t.metadata->>'typenames' AS typenames,
                           t.metadata->>'sleutel' AS sleutel, t.metadata->>'label' AS label, t.actief
                    FROM public.gebiedstypes t
                    JOIN laden.dataset_objecten o ON o.dataset_id = %(ds)s AND o.soort = 'gebiedstype'
                                                 AND o.sleutel = t.id::text
-                   ORDER BY t.naam, t.id""", p)
+                   ORDER BY t.naam, t.id""",
+        p,
+    )
     gebiedstypen = [dict(r) for r in cur.fetchall()]
-    cur.execute("""SELECT split_part(sleutel, '|', 1) AS indicator_id, split_part(sleutel, '|', 2) AS gebiedstype_id
+    cur.execute(
+        """SELECT split_part(sleutel, '|', 1) AS indicator_id, split_part(sleutel, '|', 2) AS gebiedstype_id
                    FROM laden.dataset_objecten WHERE dataset_id = %(ds)s AND soort = 'relatie'
-                   ORDER BY 1, 2""", p)
+                   ORDER BY 1, 2""",
+        p,
+    )
     return {"indicatoren": indicatoren, "gebiedstypen": gebiedstypen, "relaties": [dict(r) for r in cur.fetchall()]}
 
 
 def waarden_terug(cur, dataset_id: str, indicator_id: str | None = None) -> list[dict]:
     """De gepubliceerde waarden van de dataset (zonder de onderdrukte), gebieds_id zonder code_prefix."""
-    cur.execute("""SELECT w.indicator_uuid::text AS indicator_id, w.gebiedstype_id::text AS gebiedstype_id,
+    cur.execute(
+        """SELECT w.indicator_uuid::text AS indicator_id, w.gebiedstype_id::text AS gebiedstype_id,
                           CASE WHEN coalesce(t.metadata->>'code_prefix', '') <> ''
                                 AND starts_with(w.gebied_id, t.metadata->>'code_prefix')
                                THEN substr(w.gebied_id, length(t.metadata->>'code_prefix') + 1)
@@ -122,5 +167,6 @@ def waarden_terug(cur, dataset_id: str, indicator_id: str | None = None) -> list
                    LEFT JOIN public.gebiedstypes t ON t.id = w.gebiedstype_id
                    WHERE w.dataset_id = %(ds)s AND (%(ind)s::uuid IS NULL OR w.indicator_uuid = %(ind)s::uuid)
                    ORDER BY w.indicator_uuid, w.gebiedstype_id, w.gebied_id, w.jaar, w.datum""",
-                {"ds": dataset_id, "ind": indicator_id})
+        {"ds": dataset_id, "ind": indicator_id},
+    )
     return [dict(r) for r in cur.fetchall()]

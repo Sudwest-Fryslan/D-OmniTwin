@@ -50,10 +50,10 @@ from omnitwin.config import instellingen
 
 logger = logging.getLogger("omnitwin.oidc_login")
 
-SCOPE = "openid profile"          # geen email: die hoort niet in de sessie of de log
-INLOG_COOKIE = "oidc_inlog"       # state, PKCE-verifier en terugadres tijdens het inloggen
+SCOPE = "openid profile"  # geen email: die hoort niet in de sessie of de log
+INLOG_COOKIE = "oidc_inlog"  # state, PKCE-verifier en terugadres tijdens het inloggen
 INLOG_PAD = "/api/admin/auth/oidc"
-INLOG_DUUR = 600                  # seconden om in te loggen bij Keycloak
+INLOG_DUUR = 600  # seconden om in te loggen bij Keycloak
 SESSIE_MAX = dt.timedelta(hours=12)
 VERVERS_MARGE = dt.timedelta(seconds=30)
 DISCOVERY_TTL = 300
@@ -73,9 +73,9 @@ class InlogFout(Exception):
 # ---------------------------------------------------------------------------
 @dataclass(frozen=True)
 class Eindpunten:
-    autorisatie: str          # browser (publiek)
-    token: str                # backend (intern)
-    uitloggen: str | None     # browser (publiek); None als de provider het niet kent
+    autorisatie: str  # browser (publiek)
+    token: str  # backend (intern)
+    uitloggen: str | None  # browser (publiek); None als de provider het niet kent
 
 
 _disc: dict[tuple[str, str], tuple[float, Eindpunten]] = {}
@@ -90,7 +90,7 @@ def _forwarded(issuer: str) -> dict[str, str]:
 
 
 def _vervang(url: str, van: str, naar: str) -> str:
-    return naar + url[len(van):] if url.startswith(van) else url
+    return naar + url[len(van) :] if url.startswith(van) else url
 
 
 def eindpunten() -> Eindpunten:
@@ -104,8 +104,11 @@ def eindpunten() -> Eindpunten:
         if gevonden and time.monotonic() - gevonden[0] < DISCOVERY_TTL:
             return gevonden[1]
     basis = i.oidc_intern_url or i.oidc_issuer
-    r = httpx.get(f"{basis}/.well-known/openid-configuration", timeout=oidc.HTTP_TIMEOUT,
-                  headers={"Accept": "application/json", **(_forwarded(i.oidc_issuer) if i.oidc_intern_url else {})})
+    r = httpx.get(
+        f"{basis}/.well-known/openid-configuration",
+        timeout=oidc.HTTP_TIMEOUT,
+        headers={"Accept": "application/json", **(_forwarded(i.oidc_issuer) if i.oidc_intern_url else {})},
+    )
     r.raise_for_status()
     disc = r.json()
     disc_issuer = str(disc.get("issuer") or i.oidc_issuer).rstrip("/")
@@ -137,8 +140,9 @@ def _token_verzoek(data: dict[str, str]) -> httpx.Response:
         headers.update(_forwarded(i.oidc_issuer))
     if i.oidc_client_secret:
         data = {**data, "client_secret": i.oidc_client_secret}
-    return httpx.post(eindpunten().token, data={"client_id": i.oidc_client_id, **data},
-                      headers=headers, timeout=oidc.HTTP_TIMEOUT)
+    return httpx.post(
+        eindpunten().token, data={"client_id": i.oidc_client_id, **data}, headers=headers, timeout=oidc.HTTP_TIMEOUT
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -212,36 +216,50 @@ def _lees_cookie(waarde: str | None) -> dict[str, str]:
     raise InlogFout("sessie-verlopen")
 
 
-def _verwerk_tokens(db: Session, tokens: dict[str, Any], token_hash: str, nieuw: bool,
-                    oud: Any = None) -> oidc.Principal:
+def _verwerk_tokens(
+    db: Session, tokens: dict[str, Any], token_hash: str, nieuw: bool, oud: Any = None
+) -> oidc.Principal:
     """Controleer het access token en schrijf de sessie (nieuw of ververst)."""
     principal = oidc.controleer_token(str(tokens.get("access_token") or ""))
-    nu = dt.datetime.now(dt.timezone.utc)
+    nu = dt.datetime.now(dt.UTC)
     token_verloopt = nu + dt.timedelta(seconds=max(int(tokens.get("expires_in") or 60), 10))
     refresh_duur = int(tokens.get("refresh_expires_in") or 0)
     if nieuw:
         verloopt = nu + (min(dt.timedelta(seconds=refresh_duur), SESSIE_MAX) if refresh_duur else SESSIE_MAX)
     else:
-        verloopt = min(oud.aangemaakt + SESSIE_MAX,
-                       nu + dt.timedelta(seconds=refresh_duur) if refresh_duur else oud.aangemaakt + SESSIE_MAX)
+        verloopt = min(
+            oud.aangemaakt + SESSIE_MAX,
+            nu + dt.timedelta(seconds=refresh_duur) if refresh_duur else oud.aangemaakt + SESSIE_MAX,
+        )
     waarden = {
-        "h": token_hash, "sub": principal.onderwerp, "naam": principal.gebruikersnaam,
-        "rollen": sorted(principal.rollen), "rt": tokens.get("refresh_token"),
-        "idt": tokens.get("id_token"), "tv": token_verloopt, "v": verloopt,
+        "h": token_hash,
+        "sub": principal.onderwerp,
+        "naam": principal.gebruikersnaam,
+        "rollen": sorted(principal.rollen),
+        "rt": tokens.get("refresh_token"),
+        "idt": tokens.get("id_token"),
+        "tv": token_verloopt,
+        "v": verloopt,
     }
     if nieuw:
-        db.execute(text("""
+        db.execute(
+            text("""
             INSERT INTO oidc_sessies (token_hash, onderwerp, gebruikersnaam, rollen, refresh_token, id_token,
                                       token_verloopt, verloopt)
             VALUES (:h, :sub, :naam, :rollen, :rt, :idt, :tv, :v)
-        """), waarden)
+        """),
+            waarden,
+        )
     else:
-        db.execute(text("""
+        db.execute(
+            text("""
             UPDATE oidc_sessies SET gebruikersnaam = :naam, rollen = :rollen,
                    refresh_token = COALESCE(:rt, refresh_token), id_token = COALESCE(:idt, id_token),
                    token_verloopt = :tv, verloopt = :v
             WHERE token_hash = :h
-        """), waarden)
+        """),
+            waarden,
+        )
     return principal
 
 
@@ -251,8 +269,9 @@ def rond_af(db: Session, code: str, state: str, cookie: str | None, sessie_hash:
     if not secrets.compare_digest(state.encode(), inlog["s"].encode()):
         raise InlogFout("state")
     try:
-        r = _token_verzoek({"grant_type": "authorization_code", "code": code,
-                            "redirect_uri": inlog["r"], "code_verifier": inlog["v"]})
+        r = _token_verzoek(
+            {"grant_type": "authorization_code", "code": code, "redirect_uri": inlog["r"], "code_verifier": inlog["v"]}
+        )
     except httpx.HTTPError as e:
         logger.error("Token-endpoint niet bereikbaar: %s", type(e).__name__)
         raise InlogFout("provider-onbereikbaar")
@@ -272,20 +291,28 @@ def rond_af(db: Session, code: str, state: str, cookie: str | None, sessie_hash:
 # Sessie gebruiken
 # ---------------------------------------------------------------------------
 def _als_gebruiker(onderwerp: str, gebruikersnaam: str | None, rollen) -> dict:
-    return {"user_id": onderwerp, "username": gebruikersnaam or onderwerp,
-            "is_admin": BEHEERROL in set(rollen or ()), "type": "oidc", "onderwerp": onderwerp,
-            "rollen": sorted(rollen or ())}
+    return {
+        "user_id": onderwerp,
+        "username": gebruikersnaam or onderwerp,
+        "is_admin": BEHEERROL in set(rollen or ()),
+        "type": "oidc",
+        "onderwerp": onderwerp,
+        "rollen": sorted(rollen or ()),
+    }
 
 
 def gebruiker(db: Session, token_hash: str) -> dict | None:
     """De gebruiker van een OIDC-sessie, of None (geen of verlopen sessie). Ververst zo nodig."""
-    rij = db.execute(text("""
+    rij = db.execute(
+        text("""
         SELECT onderwerp, gebruikersnaam, rollen, token_verloopt FROM oidc_sessies
         WHERE token_hash = :h AND verloopt > NOW()
-    """), {"h": token_hash}).fetchone()
+    """),
+        {"h": token_hash},
+    ).fetchone()
     if rij is None:
         return None
-    if rij.token_verloopt - VERVERS_MARGE > dt.datetime.now(dt.timezone.utc):
+    if rij.token_verloopt - VERVERS_MARGE > dt.datetime.now(dt.UTC):
         return _als_gebruiker(rij.onderwerp, rij.gebruikersnaam, rij.rollen)
     return _ververs(db, token_hash)
 
@@ -301,14 +328,17 @@ def _ververs_data(refresh_token: str) -> dict[str, str]:
 def _ververs(db: Session, token_hash: str) -> dict | None:
     # Rij vergrendelen: Keycloak roteert refresh tokens (één keer bruikbaar), dus maar één
     # verzoek tegelijk mag verversen; de rest wacht en leest daarna het nieuwe resultaat.
-    rij = db.execute(text("""
+    rij = db.execute(
+        text("""
         SELECT onderwerp, gebruikersnaam, rollen, refresh_token, token_verloopt, aangemaakt
         FROM oidc_sessies WHERE token_hash = :h AND verloopt > NOW() FOR UPDATE
-    """), {"h": token_hash}).fetchone()
+    """),
+        {"h": token_hash},
+    ).fetchone()
     if rij is None:
         db.rollback()
         return None
-    if rij.token_verloopt - VERVERS_MARGE > dt.datetime.now(dt.timezone.utc):
+    if rij.token_verloopt - VERVERS_MARGE > dt.datetime.now(dt.UTC):
         db.commit()  # een ander verzoek was ons voor
         return _als_gebruiker(rij.onderwerp, rij.gebruikersnaam, rij.rollen)
     try:
@@ -316,8 +346,9 @@ def _ververs(db: Session, token_hash: str) -> dict | None:
     except (httpx.HTTPError, ValueError, InlogFout) as e:
         db.rollback()
         logger.error("Sessie niet te verversen, provider onbereikbaar: %s", type(e).__name__)
-        raise oidc.AuthProbleem(503, "oidc-niet-bereikbaar", "Authenticatie niet beschikbaar",
-                                "De identity provider is niet bereikbaar.")
+        raise oidc.AuthProbleem(
+            503, "oidc-niet-bereikbaar", "Authenticatie niet beschikbaar", "De identity provider is niet bereikbaar."
+        )
     principal = None
     if r is not None and r.status_code == 200:
         try:
@@ -335,8 +366,10 @@ def _ververs(db: Session, token_hash: str) -> dict | None:
 
 def uitloggen(db: Session, token_hash: str, terug: str) -> str | None:
     """Sessie weg; geeft het adres voor RP-initiated logout bij de provider (of None)."""
-    rij = db.execute(text("DELETE FROM oidc_sessies WHERE token_hash = :h RETURNING onderwerp, gebruikersnaam, id_token"),
-                     {"h": token_hash}).fetchone()
+    rij = db.execute(
+        text("DELETE FROM oidc_sessies WHERE token_hash = :h RETURNING onderwerp, gebruikersnaam, id_token"),
+        {"h": token_hash},
+    ).fetchone()
     db.commit()
     if rij is None:
         return None

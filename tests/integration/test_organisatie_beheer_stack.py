@@ -34,9 +34,12 @@ except (requests.RequestException, ValueError) as e:  # pragma: no cover - geen 
 
 
 def _testaccounts_mogelijk() -> bool:
-    return (bool(_CONFIG.get("oidc")) and os.environ.get("OMNITWIN_TESTACCOUNTS") == "1"
-            and os.environ.get("OMNITWIN_OMGEVING", "").lower() != "productie"
-            and bool(os.environ.get("KEYCLOAK_ADMIN_PASSWORD") or os.environ.get("KEYCLOAK_ADMIN_CLIENT_SECRET")))
+    return (
+        bool(_CONFIG.get("oidc"))
+        and os.environ.get("OMNITWIN_TESTACCOUNTS") == "1"
+        and os.environ.get("OMNITWIN_OMGEVING", "").lower() != "productie"
+        and bool(os.environ.get("KEYCLOAK_ADMIN_PASSWORD") or os.environ.get("KEYCLOAK_ADMIN_CLIENT_SECRET"))
+    )
 
 
 @pytest.fixture(scope="module")
@@ -46,14 +49,21 @@ def accounts(tmp_path_factory):
         yield None
         return
     from omnitwin import testaccounts as ta
+
     beheer = ta.KeycloakBeheer(kc=f"{BASE_URL}/auth", realm_=REALM)
     pad = tmp_path_factory.mktemp("accounts") / "accounts.json"
-    uc = {"actoren": [{"naam": "beheerder", "soort": "gebruiker", "rollen": ["beheerder"]},
-                      {"naam": "lezer", "soort": "gebruiker", "rollen": ["lezer"]}]}
+    uc = {
+        "actoren": [
+            {"naam": "beheerder", "soort": "gebruiker", "rollen": ["beheerder"]},
+            {"naam": "lezer", "soort": "gebruiker", "rollen": ["lezer"]},
+        ]
+    }
     uit = ta.maak(UC, uc, beheer=beheer, pad=pad)
     url = f"{BASE_URL}/auth/realms/{REALM}/protocol/openid-connect/token"
-    yield {naam: {"Authorization": f"Bearer {ta.token(uit[naam], ta.loginclient(UC), url)}"}
-           for naam in ("beheerder", "lezer")}
+    yield {
+        naam: {"Authorization": f"Bearer {ta.token(uit[naam], ta.loginclient(UC), url)}"}
+        for naam in ("beheerder", "lezer")
+    }
     ta.opruimen(UC, beheer=beheer, pad=pad)
 
 
@@ -118,8 +128,12 @@ def test_beheerder_themas_en_logos(beheerder):
 
 def test_beheerder_ongeldig_thema_422(beheerder, oorspronkelijk):
     voor = requests.get(ORG, timeout=TIMEOUT).json()
-    for fout in ({"thema": "bestaat-niet"}, {"logos": [{"pad": "/static/images/../css/styles.css"}]},
-                 {"contact_email": "geen-adres"}, {"gemeente_codes": ["GM1900"]}):
+    for fout in (
+        {"thema": "bestaat-niet"},
+        {"logos": [{"pad": "/static/images/../css/styles.css"}]},
+        {"contact_email": "geen-adres"},
+        {"gemeente_codes": ["GM1900"]},
+    ):
         r = requests.put(ORG, json={**oorspronkelijk["organisatie"], **fout}, headers=beheerder, timeout=TIMEOUT)
         assert r.status_code == 422, (fout, r.text[:300])
     assert requests.get(ORG, timeout=TIMEOUT).json() == voor
@@ -132,7 +146,7 @@ def test_beheerder_put_export_import_rondreis(beheerder, oorspronkelijk):
     assert r.status_code == 200, r.text[:300]
     assert r.json()["thema"] == ander
     # De viewer laadt meteen het nieuwe themabestand (geen herstart nodig)
-    assert f'/static/css/themes/{ander}.css' in requests.get(f"{BASE_URL}/", timeout=TIMEOUT).text
+    assert f"/static/css/themes/{ander}.css" in requests.get(f"{BASE_URL}/", timeout=TIMEOUT).text
 
     r = requests.post(f"{ORG}/import", json=oorspronkelijk, headers=beheerder, timeout=TIMEOUT)
     assert r.status_code == 200, r.text[:300]
@@ -141,6 +155,7 @@ def test_beheerder_put_export_import_rondreis(beheerder, oorspronkelijk):
 
 
 def test_import_onbekend_formaat_422(beheerder, oorspronkelijk):
-    r = requests.post(f"{ORG}/import", json={**oorspronkelijk, "formaat": "iets-anders"}, headers=beheerder,
-                      timeout=TIMEOUT)
+    r = requests.post(
+        f"{ORG}/import", json={**oorspronkelijk, "formaat": "iets-anders"}, headers=beheerder, timeout=TIMEOUT
+    )
     assert r.status_code == 422

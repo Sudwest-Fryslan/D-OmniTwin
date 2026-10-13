@@ -21,10 +21,13 @@ UC = "viewer-e2e"
 
 def _stack():
     import requests
+
     try:
         config = requests.get(f"{BASE_URL}/api/admin/auth/config", timeout=30).json()
-        dicht = requests.get(f"{BASE_URL}/", headers={"Accept": "text/html"}, timeout=30,
-                             allow_redirects=False).status_code == 302
+        dicht = (
+            requests.get(f"{BASE_URL}/", headers={"Accept": "text/html"}, timeout=30, allow_redirects=False).status_code
+            == 302
+        )
         return config, dicht
     except (requests.RequestException, ValueError):
         return {}, False
@@ -39,9 +42,11 @@ def lezer(tmp_path_factory):
         yield {"id": "gebruiker", "geheim": "gebruiker"}
         return
     if os.environ.get("OMNITWIN_TESTACCOUNTS") != "1" or not (
-            os.environ.get("KEYCLOAK_ADMIN_PASSWORD") or os.environ.get("KEYCLOAK_ADMIN_CLIENT_SECRET")):
+        os.environ.get("KEYCLOAK_ADMIN_PASSWORD") or os.environ.get("KEYCLOAK_ADMIN_CLIENT_SECRET")
+    ):
         pytest.skip("geen lezer: geen demo-omgeving en geen testaccounts")
     from omnitwin import testaccounts as ta
+
     beheer = ta.KeycloakBeheer(kc=f"{BASE_URL}/auth")
     pad = tmp_path_factory.mktemp("accounts") / "accounts.json"
     uc = {"actoren": [{"naam": "lezer", "soort": "gebruiker", "rollen": ["lezer"]}]}

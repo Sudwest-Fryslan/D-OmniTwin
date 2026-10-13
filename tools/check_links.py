@@ -35,8 +35,7 @@ def git_md_bestanden() -> list[Path]:
     uit = subprocess.run(
         ["git", "ls-files", "-z", "--", "*.md"], cwd=ROOT, capture_output=True, check=True
     ).stdout.decode("utf-8")
-    return [ROOT / p for p in uit.split("\0")
-            if p and not p.startswith(UITGESLOTEN) and (ROOT / p).is_file()]
+    return [ROOT / p for p in uit.split("\0") if p and not p.startswith(UITGESLOTEN) and (ROOT / p).is_file()]
 
 
 def zonder_code(tekst: str, inline: bool = True) -> str:
@@ -59,10 +58,10 @@ def zonder_code(tekst: str, inline: bool = True) -> str:
 
 def github_slug(kop: str) -> str:
     """Anker zoals GitHub het maakt: kleine letters, leestekens weg, spaties -> '-'."""
-    kop = re.sub(r"<[^>]+>", "", kop)               # HTML-tags
+    kop = re.sub(r"<[^>]+>", "", kop)  # HTML-tags
     kop = re.sub(r"!?\[([^\]]*)\]\([^)]*\)", r"\1", kop)  # links -> tekst
     kop = kop.replace("`", "").lower()
-    kop = re.sub(r"[^\w\- ]", "", kop)             # \w houdt letters met accenten en cijfers
+    kop = re.sub(r"[^\w\- ]", "", kop)  # \w houdt letters met accenten en cijfers
     return kop.replace(" ", "-")
 
 
@@ -98,7 +97,7 @@ def dode_links() -> list[str]:
                 if pad_deel.startswith("/"):
                     doelpad = ROOT / pad_deel.lstrip("/")
                 elif pad_deel:
-                    doelpad = (bestand.parent / pad_deel)
+                    doelpad = bestand.parent / pad_deel
                 else:
                     doelpad = bestand
                 rel = bestand.relative_to(ROOT).as_posix()

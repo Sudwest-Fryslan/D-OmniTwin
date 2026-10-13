@@ -50,9 +50,20 @@ def _secret():
             return os.environ[naam]
     if shutil.which("docker"):
         p = subprocess.run(
-            ["docker", "compose", "exec", "-T", "keycloak", "bash",
-             "/opt/keycloak/omnitwin/client-secret.sh", "etl-voorbeeld"],
-            capture_output=True, text=True, timeout=120, check=False,
+            [
+                "docker",
+                "compose",
+                "exec",
+                "-T",
+                "keycloak",
+                "bash",
+                "/opt/keycloak/omnitwin/client-secret.sh",
+                "etl-voorbeeld",
+            ],
+            capture_output=True,
+            text=True,
+            timeout=120,
+            check=False,
         )
         if p.returncode == 0 and p.stdout.strip():
             return p.stdout.strip().splitlines()[-1]

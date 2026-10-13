@@ -48,6 +48,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src"))
 import load_sample  # noqa: E402  (databaseverbinding en CSV-import hergebruiken)
+
 from omnitwin import usecases as uitvoerder  # noqa: E402  (volgorde, afhankelijkheden, status)
 
 ROOT = Path(__file__).resolve().parent.parent.parent
@@ -107,8 +108,15 @@ def maak_afgeleid(cur, afg, bron_uc):
         ON CONFLICT (uuid) DO UPDATE SET naam = EXCLUDED.naam, eenheid = EXCLUDED.eenheid,
             polariteit = EXCLUDED.polariteit, bron = EXCLUDED.bron, updated_at = CURRENT_TIMESTAMP
         """,
-        (ind_uuid, afg["naam"], code, afg.get("eenheid", "%"), afg.get("categorie"), richting,
-         f"Afgeleid: {afg['teller']} ÷ {afg['noemer']} (use case {bron_uc})"),
+        (
+            ind_uuid,
+            afg["naam"],
+            code,
+            afg.get("eenheid", "%"),
+            afg.get("categorie"),
+            richting,
+            f"Afgeleid: {afg['teller']} ÷ {afg['noemer']} (use case {bron_uc})",
+        ),
     )
     # Waarde per gebied en jaar: teller en noemer uit hetzelfde jaar en scenario (#159).
     # Zonder noemer in dat jaar geen waarde; jaren mengen geeft schijnbare trends.
@@ -201,8 +209,11 @@ def main():
     parser = argparse.ArgumentParser(description="Laad use-casepakketten (usecases/<naam>/)")
     parser.add_argument("namen", nargs="*", help="naam van de map onder usecases/")
     parser.add_argument("--alle", action="store_true", help="alle use cases laden")
-    parser.add_argument("--inrichting", action="store_true",
-                        help="alleen de inrichting (richting, eenheid, afgeleide indicatoren), geen data")
+    parser.add_argument(
+        "--inrichting",
+        action="store_true",
+        help="alleen de inrichting (richting, eenheid, afgeleide indicatoren), geen data",
+    )
     parser.add_argument("--lijst", action="store_true", help="use cases tonen (zie python -m omnitwin.usecases lijst)")
     parser.add_argument("--boom", metavar="NAAM", help="afhankelijkheden als boom")
     parser.add_argument("--index", action="store_true", help="index in usecases/README.md bijwerken")

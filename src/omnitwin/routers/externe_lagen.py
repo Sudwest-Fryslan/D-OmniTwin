@@ -20,21 +20,20 @@ Endpoints (admin):
 - POST   /api/admin/externe-lagen/upload       → Bestand uploaden naar data-upload/
 """
 
-from fastapi import APIRouter, Depends, HTTPException, Request, UploadFile, File
-from fastapi.concurrency import run_in_threadpool
-from sqlalchemy.orm import Session
-from sqlalchemy import text
-from pydantic import BaseModel, field_validator
-from typing import Optional
-from pathlib import Path
-import httpx
+import logging
 import os
+import re
 import shutil
 import time
 import uuid
-import re
-import json
-import logging
+from pathlib import Path
+
+import httpx
+from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
+from fastapi.concurrency import run_in_threadpool
+from pydantic import BaseModel, field_validator
+from sqlalchemy import text
+from sqlalchemy.orm import Session
 
 from omnitwin import toegang
 from omnitwin.database import get_db
@@ -51,19 +50,19 @@ DATA_UPLOAD_DIR = Path("data-upload")
 # Provincie bounding boxes (Rijksdriehoek / EPSG:28992)
 # ============================================================================
 PROVINCIE_BBOXEN = {
-    "Fryslân":          "90000,535000,250000,640000",
-    "Groningen":        "210000,575000,280000,620000",
-    "Drenthe":          "195000,520000,265000,580000",
-    "Overijssel":       "175000,470000,270000,540000",
-    "Flevoland":        "130000,475000,190000,530000",
-    "Gelderland":       "130000,415000,230000,490000",
-    "Utrecht":          "115000,440000,170000,475000",
-    "Noord-Holland":    "95000,465000,165000,560000",
-    "Zuid-Holland":      "50000,410000,130000,475000",
-    "Zeeland":          "10000,365000,80000,415000",
-    "Noord-Brabant":    "80000,370000,200000,420000",
-    "Limburg":          "160000,310000,210000,420000",
-    "Nederland":        "7000,289000,300000,629000",
+    "Fryslân": "90000,535000,250000,640000",
+    "Groningen": "210000,575000,280000,620000",
+    "Drenthe": "195000,520000,265000,580000",
+    "Overijssel": "175000,470000,270000,540000",
+    "Flevoland": "130000,475000,190000,530000",
+    "Gelderland": "130000,415000,230000,490000",
+    "Utrecht": "115000,440000,170000,475000",
+    "Noord-Holland": "95000,465000,165000,560000",
+    "Zuid-Holland": "50000,410000,130000,475000",
+    "Zeeland": "10000,365000,80000,415000",
+    "Noord-Brabant": "80000,370000,200000,420000",
+    "Limburg": "160000,310000,210000,420000",
+    "Nederland": "7000,289000,300000,629000",
 }
 
 # ============================================================================
@@ -76,7 +75,8 @@ CACHE_TTL_SEC = 86400  # 24 uur
 # Pydantic models
 # ============================================================================
 
-_VALID_HEX_RE = re.compile(r'^#[0-9A-Fa-f]{6}$')
+_VALID_HEX_RE = re.compile(r"^#[0-9A-Fa-f]{6}$")
+
 
 def _check_toegang(v: str) -> str:
     if v not in ("openbaar", "intern"):
@@ -86,22 +86,22 @@ def _check_toegang(v: str) -> str:
 
 class ExterneKaartlaagCreate(BaseModel):
     naam: str
-    beschrijving: Optional[str] = None
+    beschrijving: str | None = None
     laag_type: str = "selectie"
     bron_type: str = "WFS"
     url: str
-    typename: Optional[str] = None
+    typename: str | None = None
     srsname: str = "EPSG:28992"
     versie: str = "2.0.0"
     filter_type: str = "provincie"
-    filter_waarde: Optional[str] = None
-    koppel_veld: Optional[str] = None
+    filter_waarde: str | None = None
+    koppel_veld: str | None = None
     kleur_lijn: str = "#8B5CF6"
     kleur_fill: str = "#8B5CF6"
     opacity: float = 0.15
     actief: bool = True
     volgorde: int = 0
-    toegang: str = "openbaar"   # openbaar | intern (alleen met rol lezer of beheerder, #254)
+    toegang: str = "openbaar"  # openbaar | intern (alleen met rol lezer of beheerder, #254)
 
     @field_validator("toegang")
     @classmethod
@@ -145,32 +145,33 @@ class ExterneKaartlaagCreate(BaseModel):
 
 
 class ExterneKaartlaagUpdate(BaseModel):
-    naam: Optional[str] = None
-    beschrijving: Optional[str] = None
-    laag_type: Optional[str] = None
-    bron_type: Optional[str] = None
-    url: Optional[str] = None
-    typename: Optional[str] = None
-    srsname: Optional[str] = None
-    versie: Optional[str] = None
-    filter_type: Optional[str] = None
-    filter_waarde: Optional[str] = None
-    koppel_veld: Optional[str] = None
-    kleur_lijn: Optional[str] = None
-    kleur_fill: Optional[str] = None
-    opacity: Optional[float] = None
-    actief: Optional[bool] = None
-    volgorde: Optional[int] = None
-    toegang: Optional[str] = None
+    naam: str | None = None
+    beschrijving: str | None = None
+    laag_type: str | None = None
+    bron_type: str | None = None
+    url: str | None = None
+    typename: str | None = None
+    srsname: str | None = None
+    versie: str | None = None
+    filter_type: str | None = None
+    filter_waarde: str | None = None
+    koppel_veld: str | None = None
+    kleur_lijn: str | None = None
+    kleur_fill: str | None = None
+    opacity: float | None = None
+    actief: bool | None = None
+    volgorde: int | None = None
+    toegang: str | None = None
 
     @field_validator("toegang")
     @classmethod
-    def check_toegang(cls, v: Optional[str]) -> Optional[str]:
+    def check_toegang(cls, v: str | None) -> str | None:
         return None if v is None else _check_toegang(v)
 
 
 class BuurtenRequest(BaseModel):
     """WKT geometry van een extern laag-feature voor ST_Intersects."""
+
     wkt: str
 
     @field_validator("wkt")
@@ -190,12 +191,15 @@ class BuurtenRequest(BaseModel):
 router = APIRouter(tags=["Externe Kaartlagen"])
 
 # Beheer-routes (/api/admin/externe-lagen/*): apart router met admin-check (#65)
-admin_router = APIRouter(prefix="/api/admin/externe-lagen", tags=["Externe Kaartlagen"], dependencies=[Depends(vereis_admin)])
+admin_router = APIRouter(
+    prefix="/api/admin/externe-lagen", tags=["Externe Kaartlagen"], dependencies=[Depends(vereis_admin)]
+)
 
 
 # ============================================================================
 # Hulpfuncties: lokaal bestand lezen + WFS ophalen
 # ============================================================================
+
 
 def _load_local_file(filename: str, layer_name: str = None) -> dict:
     """
@@ -203,7 +207,7 @@ def _load_local_file(filename: str, layer_name: str = None) -> dict:
     GeoJSON FeatureCollection in WGS84 (EPSG:4326).
     """
     import fiona
-    from shapely.geometry import shape, mapping
+    from shapely.geometry import mapping, shape
 
     filepath = DATA_UPLOAD_DIR / filename
     if not filepath.exists():
@@ -215,7 +219,7 @@ def _load_local_file(filename: str, layer_name: str = None) -> dict:
     except ValueError:
         raise HTTPException(400, "Ongeldig bestandspad")
 
-    allowed_extensions = {'.gpkg', '.geojson', '.json'}
+    allowed_extensions = {".gpkg", ".geojson", ".json"}
     if filepath.suffix.lower() not in allowed_extensions:
         raise HTTPException(400, f"Bestandstype '{filepath.suffix}' niet ondersteund")
 
@@ -237,17 +241,9 @@ def _load_local_file(filename: str, layer_name: str = None) -> dict:
                     # Gebruik bestaande _transform_rd_to_wgs84 logica
                     geom_geojson = mapping(geom)
                     # We transformeren de coords inline
-                    features.append({
-                        "type": "Feature",
-                        "geometry": geom_geojson,
-                        "properties": props
-                    })
+                    features.append({"type": "Feature", "geometry": geom_geojson, "properties": props})
                 else:
-                    features.append({
-                        "type": "Feature",
-                        "geometry": mapping(geom),
-                        "properties": props
-                    })
+                    features.append({"type": "Feature", "geometry": mapping(geom), "properties": props})
 
         geojson = {"type": "FeatureCollection", "features": features}
 
@@ -255,8 +251,13 @@ def _load_local_file(filename: str, layer_name: str = None) -> dict:
         if needs_transform:
             geojson = _transform_rd_to_wgs84(geojson)
 
-        logger.info("Lokaal bestand geladen: %s (layer=%s, %d features, transform=%s)",
-                    filename, open_layer, len(features), needs_transform)
+        logger.info(
+            "Lokaal bestand geladen: %s (layer=%s, %d features, transform=%s)",
+            filename,
+            open_layer,
+            len(features),
+            needs_transform,
+        )
         return geojson
 
     except HTTPException:
@@ -308,6 +309,7 @@ async def _fetch_wfs(row) -> dict:
 # Public endpoints
 # ============================================================================
 
+
 @router.get("/api/externe-lagen")
 def get_actieve_lagen(db: Session = Depends(get_db)):
     """
@@ -315,13 +317,15 @@ def get_actieve_lagen(db: Session = Depends(get_db)):
     Geen authenticatie nodig — alleen actieve lagen, geen connectie-details. Interne lagen alleen
     met de rol lezer of beheerder (#254: row level security, zie omnitwin.toegang).
     """
-    rows = db.execute(text("""
+    rows = db.execute(
+        text("""
         SELECT id, naam, beschrijving, laag_type, bron_type,
                kleur_lijn, kleur_fill, opacity, volgorde, toegang
         FROM externe_kaartlagen
         WHERE actief = true
         ORDER BY volgorde, naam
-    """)).fetchall()
+    """)
+    ).fetchall()
 
     return {
         "lagen": [
@@ -335,10 +339,11 @@ def get_actieve_lagen(db: Session = Depends(get_db)):
                 "kleur_fill": r.kleur_fill,
                 "opacity": r.opacity,
                 "volgorde": r.volgorde,
-                "toegang": r.toegang
-            } for r in rows
+                "toegang": r.toegang,
+            }
+            for r in rows
         ],
-        "totaal": len(rows)
+        "totaal": len(rows),
     }
 
 
@@ -352,12 +357,17 @@ async def get_laag_features(laag_id: int, db: Session = Depends(get_db)):
     await run_in_threadpool(toegang.vereis_kaartlaag, db, laag_id)
     # Laag ophalen (alleen actieve). Synchrone database en fiona in de threadpool,
     # zodat ze de event loop niet blokkeren (#68); de WFS-aanroep is async.
-    row = await run_in_threadpool(lambda: db.execute(text("""
+    row = await run_in_threadpool(
+        lambda: db.execute(
+            text("""
         SELECT id, naam, bron_type, url, typename, srsname, versie,
                filter_type, filter_waarde
         FROM externe_kaartlagen
         WHERE id = :id AND actief = true
-    """), {"id": laag_id}).fetchone())
+    """),
+            {"id": laag_id},
+        ).fetchone()
+    )
 
     if not row:
         raise HTTPException(404, f"Kaartlaag {laag_id} niet gevonden of niet actief")
@@ -386,23 +396,18 @@ async def get_laag_features(laag_id: int, db: Session = Depends(get_db)):
         "typename": row.typename,
         "filter": f"{row.filter_type}={row.filter_waarde}" if row.filter_type else None,
         "features_count": feature_count,
-        "crs": "EPSG:4326"
+        "crs": "EPSG:4326",
     }
 
     # Cache opslaan
     _wfs_cache[laag_id] = (time.time(), geojson)
-    logger.info("%s features opgehaald voor laag %d (%s): %d features",
-                row.bron_type, laag_id, row.naam, feature_count)
+    logger.info("%s features opgehaald voor laag %d (%s): %d features", row.bron_type, laag_id, row.naam, feature_count)
 
     return geojson
 
 
 @router.post("/api/externe-lagen/{laag_id}/buurten")
-def get_buurten_voor_feature(
-    laag_id: int,
-    body: BuurtenRequest,
-    db: Session = Depends(get_db)
-):
+def get_buurten_voor_feature(laag_id: int, body: BuurtenRequest, db: Session = Depends(get_db)):
     """
     Selecteer CBS-buurten waarvan het zwaartepunt (centroid) binnen de
     gegeven geometrie valt. Dit is preciezer dan ST_Intersects+buffer
@@ -413,9 +418,9 @@ def get_buurten_voor_feature(
     """
     # Verifieer dat de laag bestaat en actief is (interne laag zonder rol: 401/403, #254)
     toegang.vereis_kaartlaag(db, laag_id)
-    laag = db.execute(text(
-        "SELECT id, naam FROM externe_kaartlagen WHERE id = :id AND actief = true"
-    ), {"id": laag_id}).fetchone()
+    laag = db.execute(
+        text("SELECT id, naam FROM externe_kaartlagen WHERE id = :id AND actief = true"), {"id": laag_id}
+    ).fetchone()
 
     if not laag:
         raise HTTPException(404, f"Kaartlaag {laag_id} niet gevonden of niet actief")
@@ -425,7 +430,8 @@ def get_buurten_voor_feature(
     # Dit voorkomt randoverlap-selectie bij kleinere polygonen.
     # WKT komt in WGS84 (4326) vanuit de frontend, transformeer naar RD (28992)
     try:
-        rows = db.execute(text("""
+        rows = db.execute(
+            text("""
             SELECT g.id, g.naam
             FROM gebieden g
             JOIN gebiedstypes gt ON g.gebiedstype_id = gt.id
@@ -436,7 +442,9 @@ def get_buurten_voor_feature(
                     ST_Centroid(g.geom)
               )
             ORDER BY g.naam
-        """), {"wkt": body.wkt}).fetchall()
+        """),
+            {"wkt": body.wkt},
+        ).fetchall()
     except Exception as e:
         logger.error("Spatial query fout voor laag %d: %s", laag_id, e)
         raise HTTPException(500, "Fout bij uitvoeren van ruimtelijke query")
@@ -448,7 +456,7 @@ def get_buurten_voor_feature(
         "laag_naam": laag.naam,
         "buurten": buurten,
         "totaal": len(buurten),
-        "methode": "centroid"
+        "methode": "centroid",
     }
 
 
@@ -456,12 +464,14 @@ def get_buurten_voor_feature(
 # Admin CRUD endpoints
 # ============================================================================
 
+
 @admin_router.get("")
 def admin_get_alle_lagen(
     db: Session = Depends(get_db),
 ):
     """Alle externe kaartlagen ophalen (inclusief inactieve) voor admin beheer."""
-    rows = db.execute(text("""
+    rows = db.execute(
+        text("""
         SELECT id, naam, beschrijving, laag_type, bron_type,
                url, typename, srsname, versie,
                filter_type, filter_waarde, koppel_veld,
@@ -469,7 +479,8 @@ def admin_get_alle_lagen(
                created_at, updated_at
         FROM externe_kaartlagen
         ORDER BY volgorde, naam
-    """)).fetchall()
+    """)
+    ).fetchall()
 
     return {
         "lagen": [
@@ -494,9 +505,10 @@ def admin_get_alle_lagen(
                 "toegang": r.toegang,
                 "created_at": r.created_at.isoformat() if r.created_at else None,
                 "updated_at": r.updated_at.isoformat() if r.updated_at else None,
-            } for r in rows
+            }
+            for r in rows
         ],
-        "totaal": len(rows)
+        "totaal": len(rows),
     }
 
 
@@ -506,7 +518,8 @@ def admin_create_laag(
     db: Session = Depends(get_db),
 ):
     """Nieuwe externe kaartlaag aanmaken."""
-    result = db.execute(text("""
+    result = db.execute(
+        text("""
         INSERT INTO externe_kaartlagen
             (naam, beschrijving, laag_type, bron_type, url, typename,
              srsname, versie, filter_type, filter_waarde, koppel_veld,
@@ -516,25 +529,27 @@ def admin_create_laag(
              :srsname, :versie, :filter_type, :filter_waarde, :koppel_veld,
              :kleur_lijn, :kleur_fill, :opacity, :actief, :volgorde, :toegang)
         RETURNING id
-    """), {
-        "naam": data.naam,
-        "beschrijving": data.beschrijving,
-        "laag_type": data.laag_type,
-        "bron_type": data.bron_type,
-        "url": data.url,
-        "typename": data.typename,
-        "srsname": data.srsname,
-        "versie": data.versie,
-        "filter_type": data.filter_type,
-        "filter_waarde": data.filter_waarde,
-        "koppel_veld": data.koppel_veld,
-        "kleur_lijn": data.kleur_lijn,
-        "kleur_fill": data.kleur_fill,
-        "opacity": data.opacity,
-        "actief": data.actief,
-        "volgorde": data.volgorde,
-        "toegang": data.toegang,
-    })
+    """),
+        {
+            "naam": data.naam,
+            "beschrijving": data.beschrijving,
+            "laag_type": data.laag_type,
+            "bron_type": data.bron_type,
+            "url": data.url,
+            "typename": data.typename,
+            "srsname": data.srsname,
+            "versie": data.versie,
+            "filter_type": data.filter_type,
+            "filter_waarde": data.filter_waarde,
+            "koppel_veld": data.koppel_veld,
+            "kleur_lijn": data.kleur_lijn,
+            "kleur_fill": data.kleur_fill,
+            "opacity": data.opacity,
+            "actief": data.actief,
+            "volgorde": data.volgorde,
+            "toegang": data.toegang,
+        },
+    )
     new_id = result.fetchone()[0]
     db.commit()
 
@@ -553,9 +568,7 @@ def admin_update_laag(
 ):
     """Bestaande externe kaartlaag bijwerken."""
     # Verifieer dat laag bestaat
-    existing = db.execute(text(
-        "SELECT id FROM externe_kaartlagen WHERE id = :id"
-    ), {"id": laag_id}).fetchone()
+    existing = db.execute(text("SELECT id FROM externe_kaartlagen WHERE id = :id"), {"id": laag_id}).fetchone()
     if not existing:
         raise HTTPException(404, f"Kaartlaag {laag_id} niet gevonden")
 
@@ -565,9 +578,23 @@ def admin_update_laag(
 
     # Veilig: alleen expliciete velden, geen string-concatenatie met user input
     allowed_fields = {
-        "naam", "beschrijving", "laag_type", "bron_type", "url", "typename",
-        "srsname", "versie", "filter_type", "filter_waarde", "koppel_veld",
-        "kleur_lijn", "kleur_fill", "opacity", "actief", "volgorde", "toegang"
+        "naam",
+        "beschrijving",
+        "laag_type",
+        "bron_type",
+        "url",
+        "typename",
+        "srsname",
+        "versie",
+        "filter_type",
+        "filter_waarde",
+        "koppel_veld",
+        "kleur_lijn",
+        "kleur_fill",
+        "opacity",
+        "actief",
+        "volgorde",
+        "toegang",
     }
     for field_name in allowed_fields:
         value = getattr(data, field_name, None)
@@ -595,9 +622,7 @@ def admin_delete_laag(
     db: Session = Depends(get_db),
 ):
     """Externe kaartlaag verwijderen."""
-    result = db.execute(text(
-        "DELETE FROM externe_kaartlagen WHERE id = :id RETURNING id, naam"
-    ), {"id": laag_id})
+    result = db.execute(text("DELETE FROM externe_kaartlagen WHERE id = :id RETURNING id, naam"), {"id": laag_id})
     row = result.fetchone()
     db.commit()
 
@@ -615,9 +640,9 @@ def admin_delete_laag(
 # Admin: Lokale bestanden beheer
 # ============================================================================
 
+
 @admin_router.get("/lokale-bestanden")
-def admin_lokale_bestanden(
-):
+def admin_lokale_bestanden():
     """Lijst beschikbare bestanden in data-upload/ met metadata."""
     import fiona
 
@@ -626,26 +651,30 @@ def admin_lokale_bestanden(
 
     bestanden = []
     for f in sorted(DATA_UPLOAD_DIR.iterdir()):
-        if f.suffix.lower() in ('.gpkg', '.geojson', '.json') and f.is_file():
+        if f.suffix.lower() in (".gpkg", ".geojson", ".json") and f.is_file():
             try:
                 layers = fiona.listlayers(str(f))
                 # Haal metadata van eerste layer
                 with fiona.open(str(f), layer=layers[0]) as src:
-                    bestanden.append({
-                        "bestandsnaam": f.name,
-                        "grootte_kb": round(f.stat().st_size / 1024, 1),
-                        "layers": layers,
-                        "features": len(src),
-                        "crs": str(src.crs) if src.crs else None,
-                        "geometry_type": src.schema.get("geometry", "onbekend"),
-                    })
+                    bestanden.append(
+                        {
+                            "bestandsnaam": f.name,
+                            "grootte_kb": round(f.stat().st_size / 1024, 1),
+                            "layers": layers,
+                            "features": len(src),
+                            "crs": str(src.crs) if src.crs else None,
+                            "geometry_type": src.schema.get("geometry", "onbekend"),
+                        }
+                    )
             except Exception as e:
                 logger.warning("Kan bestand %s niet lezen: %s", f.name, e)
-                bestanden.append({
-                    "bestandsnaam": f.name,
-                    "grootte_kb": round(f.stat().st_size / 1024, 1),
-                    "fout": "Niet leesbaar als geo-bestand (details in de serverlog)",
-                })
+                bestanden.append(
+                    {
+                        "bestandsnaam": f.name,
+                        "grootte_kb": round(f.stat().st_size / 1024, 1),
+                        "fout": "Niet leesbaar als geo-bestand (details in de serverlog)",
+                    }
+                )
 
     return {"bestanden": bestanden, "totaal": len(bestanden)}
 
@@ -658,14 +687,14 @@ def admin_upload_bestand(  # def: fiona en schrijven blokkeren, dus in de thread
     import fiona
 
     # Valideer bestandstype
-    allowed = {'.gpkg', '.geojson', '.json'}
+    allowed = {".gpkg", ".geojson", ".json"}
     suffix = Path(bestand.filename).suffix.lower()
     if suffix not in allowed:
         raise HTTPException(400, f"Bestandstype '{suffix}' niet toegestaan. Gebruik: {', '.join(allowed)}")
 
     # Veilige bestandsnaam (geen pad-traversal)
     safe_name = Path(bestand.filename).name
-    if not safe_name or safe_name.startswith('.'):
+    if not safe_name or safe_name.startswith("."):
         raise HTTPException(400, "Ongeldige bestandsnaam")
 
     filepath = DATA_UPLOAD_DIR / safe_name
@@ -687,7 +716,7 @@ def admin_upload_bestand(  # def: fiona en schrijven blokkeren, dus in de thread
             while blok := bestand.file.read(1024 * 1024):
                 grootte += len(blok)
                 if grootte > MAX_SIZE:
-                    raise HTTPException(413, f"Bestand te groot (max {MAX_SIZE // (1024*1024)}MB)")
+                    raise HTTPException(413, f"Bestand te groot (max {MAX_SIZE // (1024 * 1024)}MB)")
                 uit.write(blok)
 
         # Valideer dat fiona het kan lezen
@@ -710,18 +739,20 @@ def admin_upload_bestand(  # def: fiona en schrijven blokkeren, dus in de thread
         try:
             os.link(tijdelijk, filepath)
         except FileExistsError:
-            raise HTTPException(409, f"Er staat al een bestand '{safe_name}'. Kies een andere naam of verwijder het eerst.")
+            raise HTTPException(
+                409, f"Er staat al een bestand '{safe_name}'. Kies een andere naam of verwijder het eerst."
+            )
     finally:
         shutil.rmtree(tijdelijke_map, ignore_errors=True)  # ook eventuele hulpbestanden van GDAL
 
-    logger.info("Bestand geüpload: %s (%d features, %s)",
-                safe_name, meta["features"], meta["crs"])
+    logger.info("Bestand geüpload: %s (%d features, %s)", safe_name, meta["features"], meta["crs"])
     return {"status": "geüpload", **meta}
 
 
 # ============================================================================
 # RD → WGS84 transformatie (EPSG:28992 → EPSG:4326)
 # ============================================================================
+
 
 def _transform_rd_to_wgs84(geojson: dict) -> dict:
     """
@@ -772,11 +803,11 @@ def _transform_rd_to_wgs84(geojson: dict) -> dict:
 
         phi = PHI0
         for p, q, k in Kp:
-            phi += k * (dx ** p) * (dy ** q) / 3600.0
+            phi += k * (dx**p) * (dy**q) / 3600.0
 
         lam = LAM0
         for p, q, k in Kq:
-            lam += k * (dx ** p) * (dy ** q) / 3600.0
+            lam += k * (dx**p) * (dy**q) / 3600.0
 
         return [round(lam, 7), round(phi, 7)]
 

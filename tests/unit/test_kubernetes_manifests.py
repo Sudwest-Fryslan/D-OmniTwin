@@ -72,7 +72,9 @@ def test_secret_voorbeeld_zonder_waarden():
 
 def test_traefik_middlewares_gelijk_aan_compose():
     compose = yaml.safe_load((ROOT / "deploy" / "traefik" / "dynamic.yml").read_text(encoding="utf-8"))
-    cm = next(d for _, d in _alle_manifests() if d["kind"] == "ConfigMap" and d["metadata"]["name"] == "traefik-dynamisch")
+    cm = next(
+        d for _, d in _alle_manifests() if d["kind"] == "ConfigMap" and d["metadata"]["name"] == "traefik-dynamisch"
+    )
     k8s = yaml.safe_load(cm["data"]["middlewares.yml"])
     assert k8s == compose
 
@@ -80,7 +82,9 @@ def test_traefik_middlewares_gelijk_aan_compose():
 def test_traefik_routes_dekken_de_compose_routers():
     compose = (ROOT / "docker-compose.yml").read_text(encoding="utf-8")
     compose_routers = set(re.findall(r"traefik\.http\.routers\.([a-z0-9_-]+)\.rule", compose)) - {"keycloak"}
-    cm = next(d for _, d in _alle_manifests() if d["kind"] == "ConfigMap" and d["metadata"]["name"] == "traefik-dynamisch")
+    cm = next(
+        d for _, d in _alle_manifests() if d["kind"] == "ConfigMap" and d["metadata"]["name"] == "traefik-dynamisch"
+    )
     routers = yaml.safe_load(cm["data"]["routes.yml"])["http"]["routers"]
     assert set(routers) == compose_routers
     for naam, r in routers.items():
@@ -92,14 +96,17 @@ def _compose_routers():
     compose = (ROOT / "docker-compose.yml").read_text(encoding="utf-8")
     uit = {}
     for naam, veld, waarde in re.findall(
-            r'"traefik\.http\.routers\.([a-z0-9_-]+)\.(rule|service|middlewares)=(.*)"$', compose, re.M):
+        r'"traefik\.http\.routers\.([a-z0-9_-]+)\.(rule|service|middlewares)=(.*)"$', compose, re.M
+    ):
         uit.setdefault(naam, {})[veld] = waarde
     return uit
 
 
 def test_traefik_routes_gelijk_aan_compose():
     """Zelfde regel, service en middlewares (zonder @file) als in docker-compose.yml (#408)."""
-    cm = next(d for _, d in _alle_manifests() if d["kind"] == "ConfigMap" and d["metadata"]["name"] == "traefik-dynamisch")
+    cm = next(
+        d for _, d in _alle_manifests() if d["kind"] == "ConfigMap" and d["metadata"]["name"] == "traefik-dynamisch"
+    )
     routers = yaml.safe_load(cm["data"]["routes.yml"])["http"]["routers"]
     for naam, c in _compose_routers().items():
         if naam == "keycloak":
@@ -112,7 +119,9 @@ def test_traefik_routes_gelijk_aan_compose():
 
 def test_web_container_achter_de_gateway():
     """#408: alles wat geen andere router heeft gaat naar web; /rapport met de toegang van de viewer."""
-    cm = next(d for _, d in _alle_manifests() if d["kind"] == "ConfigMap" and d["metadata"]["name"] == "traefik-dynamisch")
+    cm = next(
+        d for _, d in _alle_manifests() if d["kind"] == "ConfigMap" and d["metadata"]["name"] == "traefik-dynamisch"
+    )
     routes = yaml.safe_load(cm["data"]["routes.yml"])["http"]
     assert routes["routers"]["web"]["rule"] == "PathPrefix(`/`)" and routes["routers"]["web"]["service"] == "web"
     assert "viewer-pagina" in routes["routers"]["rapport"]["middlewares"]
@@ -167,8 +176,9 @@ def test_voorbeeld_instellingen_bestaan():
     for regel in gen["literals"]:
         naam = regel.split("=", 1)[0]
         assert re.search(rf"^#?\s*{naam}=", env, re.M), f"{naam} staat niet in .env.example"
-        assert naam not in {"DATABASE_PASSWORD", "ADMIN_PASSWORD", "OIDC_CLIENT_SECRET", "LLM_API_KEY"}, \
+        assert naam not in {"DATABASE_PASSWORD", "ADMIN_PASSWORD", "OIDC_CLIENT_SECRET", "LLM_API_KEY"}, (
             f"{naam} is geheim en hoort in de Secret"
+        )
 
 
 def test_voorbeeld_ingress_haproxy_cert_manager_twee_hosts():
@@ -188,8 +198,16 @@ def test_voorbeeld_zonder_interne_namen_of_geheimen():
             continue
         tekst = pad.read_text(encoding="utf-8")
         for host in re.findall(r"\b(?:[a-z0-9-]+\.)+(?:nl|com|org|intern|local)\b", tekst):
-            assert host.endswith((".example.nl", ".example.org", "example.intern", "github.com",
-                                  "microsoftonline.com", "svc.cluster.local", "k8s.io")) or host in (
-                "login.microsoftonline.com",), f"{pad.name}: {host}"
+            assert host.endswith(
+                (
+                    ".example.nl",
+                    ".example.org",
+                    "example.intern",
+                    "github.com",
+                    "microsoftonline.com",
+                    "svc.cluster.local",
+                    "k8s.io",
+                )
+            ) or host in ("login.microsoftonline.com",), f"{pad.name}: {host}"
         # Geen GUID's (tenant- of client-ID's): alleen placeholders
         assert not re.search(r"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}", tekst), pad.name

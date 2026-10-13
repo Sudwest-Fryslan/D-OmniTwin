@@ -30,7 +30,6 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import download_cbs_kerncijfers as cbs  # noqa: E402
 import load_sample  # noqa: E402  (databaseverbinding hergebruiken)
-
 from psycopg2.extras import execute_values  # noqa: E402
 
 ROOT = Path(__file__).resolve().parent.parent.parent
@@ -45,8 +44,10 @@ def lees(gebieden):
     try:
         return cbs.rijen_voor(buurten)
     except Exception as e:  # geen netwerk, CBS onbereikbaar, tabel gewijzigd
-        print(f"   ⚠️  CBS Kerncijfers niet opgehaald ({type(e).__name__}: {e}). Zonder internet: "
-              f"vul de cache ($DATA_CACHE/cbs) met download_cbs_kerncijfers.py --alle op een machine met internet.")
+        print(
+            f"   ⚠️  CBS Kerncijfers niet opgehaald ({type(e).__name__}: {e}). Zonder internet: "
+            f"vul de cache ($DATA_CACHE/cbs) met download_cbs_kerncijfers.py --alle op een machine met internet."
+        )
         return []
 
 
@@ -75,8 +76,17 @@ def indicator_uuids(cur, rijen):
                 "INSERT INTO indicatoren (uuid, naam, code, eenheid, categorie, interpretatie_logica, bron, "
                 "score_type, status, is_actief) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, 'O', TRUE) "
                 "ON CONFLICT (uuid) DO NOTHING",
-                (u, naam, code, r["eenheid"] or None, r["categorie"] or None, logica,
-                 "CBS Kerncijfers wijken en buurten", "+/-" if logica == "-/+" else "+/+"))
+                (
+                    u,
+                    naam,
+                    code,
+                    r["eenheid"] or None,
+                    r["categorie"] or None,
+                    logica,
+                    "CBS Kerncijfers wijken en buurten",
+                    "+/-" if logica == "-/+" else "+/+",
+                ),
+            )
             uit[u] = u
             print(f"   ➕ indicator aangemaakt: {naam}")
     return uit
@@ -99,28 +109,43 @@ def laad(conn, gebied_ids=None):
     # Oude, verkeerd gelabelde rijen van dezelfde indicatoren in deze gebieden weghalen
     cur.execute(
         "DELETE FROM gebied_data WHERE indicator_uuid = ANY(%s::uuid[]) AND gebied_id = ANY(%s) AND bron = ANY(%s)",
-        (doel, sorted({r["gebied_id"] for r in rijen}), list(OUDE_BRONNEN)))
+        (doel, sorted({r["gebied_id"] for r in rijen}), list(OUDE_BRONNEN)),
+    )
     verwijderd = cur.rowcount
 
     waarden = {}
     for r in rijen:
         key = (r["gebied_id"], uuids[r["indicator_uuid"]], int(r["jaar"]), r["scenario_id"] or "current")
-        waarden[key] = key[:2] + (float(r["waarde"]), key[2], r["bron"], None, key[3],
-                                  json.dumps({"bron_tabel": r["bron_tabel"]}))
-    execute_values(cur, """
+        waarden[key] = key[:2] + (
+            float(r["waarde"]),
+            key[2],
+            r["bron"],
+            None,
+            key[3],
+            json.dumps({"bron_tabel": r["bron_tabel"]}),
+        )
+    execute_values(
+        cur,
+        """
         INSERT INTO gebied_data (gebied_id, indicator_uuid, waarde, jaar, bron, kwaliteit, scenario_id, metadata)
         VALUES %s
         ON CONFLICT (gebied_id, indicator_uuid, jaar, scenario_id) DO UPDATE SET
             waarde = EXCLUDED.waarde, bron = EXCLUDED.bron, kwaliteit = EXCLUDED.kwaliteit,
             metadata = COALESCE(gebied_data.metadata, '{}'::jsonb) || EXCLUDED.metadata,
             updated_at = CURRENT_TIMESTAMP
-    """, list(waarden.values()), template="(%s, %s, %s, %s, %s, %s, %s, %s::jsonb)", page_size=5000)
+    """,
+        list(waarden.values()),
+        template="(%s, %s, %s, %s, %s, %s, %s, %s::jsonb)",
+        page_size=5000,
+    )
     conn.commit()
     cur.close()
     jaren = sorted({k[2] for k in waarden})
-    print(f"   ✅ CBS Kerncijfers: {len(waarden)} waarden, {len({k[0] for k in waarden})} gebieden, "
-          f"{len(doel)} indicatoren, jaren {jaren[0]}-{jaren[-1]}"
-          + (f" | {verwijderd} oude rijen verwijderd" if verwijderd else ""))
+    print(
+        f"   ✅ CBS Kerncijfers: {len(waarden)} waarden, {len({k[0] for k in waarden})} gebieden, "
+        f"{len(doel)} indicatoren, jaren {jaren[0]}-{jaren[-1]}"
+        + (f" | {verwijderd} oude rijen verwijderd" if verwijderd else "")
+    )
     return len(waarden)
 
 

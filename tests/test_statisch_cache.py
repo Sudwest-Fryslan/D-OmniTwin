@@ -9,19 +9,22 @@ from omnitwin.statisch import ONVERANDERLIJK, OPNIEUW_VALIDEREN, StatischeBestan
 pytestmark = pytest.mark.unit
 
 
-@pytest.mark.parametrize("pad,verwacht", [
-    ("/static/vendor/d3@7.9.0/d3.min.js", ONVERANDERLIJK),
-    ("vendor/maplibre-gl@3.6.2/maplibre-gl.css", ONVERANDERLIJK),
-    ("admin-panel/assets/index-D_76-aSi.js", ONVERANDERLIJK),
-    ("/static/admin-panel/assets/index-B5kdNBqP.css", ONVERANDERLIJK),
-    ("/static/css/styles.css", OPNIEUW_VALIDEREN),
-    ("/static/css/themes/swf.css", OPNIEUW_VALIDEREN),
-    ("/static/images/beeldmerk.svg", OPNIEUW_VALIDEREN),
-    ("/static/js/app.js", OPNIEUW_VALIDEREN),
-    ("/static/vendor/README.md", OPNIEUW_VALIDEREN),
-    ("admin-panel/index.html", OPNIEUW_VALIDEREN),
-    ("admin-panel/manifest.json", OPNIEUW_VALIDEREN),
-])
+@pytest.mark.parametrize(
+    "pad,verwacht",
+    [
+        ("/static/vendor/d3@7.9.0/d3.min.js", ONVERANDERLIJK),
+        ("vendor/maplibre-gl@3.6.2/maplibre-gl.css", ONVERANDERLIJK),
+        ("admin-panel/assets/index-D_76-aSi.js", ONVERANDERLIJK),
+        ("/static/admin-panel/assets/index-B5kdNBqP.css", ONVERANDERLIJK),
+        ("/static/css/styles.css", OPNIEUW_VALIDEREN),
+        ("/static/css/themes/swf.css", OPNIEUW_VALIDEREN),
+        ("/static/images/beeldmerk.svg", OPNIEUW_VALIDEREN),
+        ("/static/js/app.js", OPNIEUW_VALIDEREN),
+        ("/static/vendor/README.md", OPNIEUW_VALIDEREN),
+        ("admin-panel/index.html", OPNIEUW_VALIDEREN),
+        ("admin-panel/manifest.json", OPNIEUW_VALIDEREN),
+    ],
+)
 def test_cache_control(pad, verwacht):
     assert cache_control(pad) == verwacht
 

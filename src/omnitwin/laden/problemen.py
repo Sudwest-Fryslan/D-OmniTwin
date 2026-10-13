@@ -49,14 +49,26 @@ TITELS = {
     "serverfout": "Serverfout",
 }
 
-HTTP_CODE = {400: "ongeldig-verzoek", 401: "niet-geauthenticeerd", 403: "geen-toegang", 404: "niet-gevonden",
-             405: "ongeldig-verzoek", 409: "levering-loopt", 413: "te-groot", 415: "mediatype-past-niet",
-             422: "registratie-ongeldig", 429: "te-veel-verzoeken", 503: "niet-beschikbaar", 500: "serverfout"}
+HTTP_CODE = {
+    400: "ongeldig-verzoek",
+    401: "niet-geauthenticeerd",
+    403: "geen-toegang",
+    404: "niet-gevonden",
+    405: "ongeldig-verzoek",
+    409: "levering-loopt",
+    413: "te-groot",
+    415: "mediatype-past-niet",
+    422: "registratie-ongeldig",
+    429: "te-veel-verzoeken",
+    503: "niet-beschikbaar",
+    500: "serverfout",
+}
 
 
 @dataclass(frozen=True)
 class Fout:
     """Eén fout in een levering (regel, of de hele levering als regel None is)."""
+
     code: str
     melding: str
     resource: str | None = None
@@ -64,8 +76,12 @@ class Fout:
     veld: str | None = None
 
     def als_probleem(self) -> dict:
-        p = {"type": TYPE_BASIS + self.code, "code": self.code, "title": TITELS.get(self.code, self.code),
-             "detail": self.melding}
+        p = {
+            "type": TYPE_BASIS + self.code,
+            "code": self.code,
+            "title": TITELS.get(self.code, self.code),
+            "detail": self.melding,
+        }
         for k in ("resource", "regel", "veld"):
             if getattr(self, k) is not None:
                 p[k] = getattr(self, k)
@@ -74,8 +90,7 @@ class Fout:
 
 def probleem(status: int, code: str, detail: str, **extra) -> dict:
     """Problem Details-document (zonder interne details)."""
-    p = {"type": TYPE_BASIS + code, "code": code, "title": TITELS.get(code, code), "status": status,
-         "detail": detail}
+    p = {"type": TYPE_BASIS + code, "code": code, "title": TITELS.get(code, code), "status": status, "detail": detail}
     p.update({k: v for k, v in extra.items() if v is not None})
     return p
 

@@ -43,6 +43,7 @@ from pathlib import Path
 # Laad .env bestand (bestaande omgevingsvariabelen gaan voor)
 try:
     from dotenv import load_dotenv
+
     load_dotenv(Path(__file__).resolve().parent.parent.parent / ".env")
 except ImportError:
     pass  # python-dotenv optioneel
@@ -69,29 +70,29 @@ EILANDGEMEENTEN = {"0060", "0088", "0093", "0096"}  # Ameland, Schiermonnikoog, 
 # CBS-naam → DB-naam aliases (CBS OData namen ≠ seed JSON namen).
 # Alleen gebruikt als de CBS-naam zelf niet als indicator bestaat.
 CBS_ALIASES = {
-    "0 tot 15 jaar":                        "0-15 jaar",
-    "15 tot 25 jaar":                       "15-25 jaar",
-    "25 tot 45 jaar":                       "25-45 jaar",
-    "45 tot 65 jaar":                       "45-65 jaar",
-    "65 jaar of ouder":                     "65+ jaar",
-    "Aantal inwoners":                      "Inwoners",
-    "Afstand tot huisartsenpraktijk":       "Huisarts",
-    "Eenzaam":                              "Eenzaamheid",
-    "Ernstig eenzaam":                      "Eenzaamheid",
-    "Gemiddeld inkomen per inwoner":        "Inkomen per inwoner",
-    "Gemiddelde WOZ-waarde van woningen":   "Gemiddelde WOZ-waarde",
-    "Goed ervaren gezondheid":              "Ervaren gezondheid",
+    "0 tot 15 jaar": "0-15 jaar",
+    "15 tot 25 jaar": "15-25 jaar",
+    "25 tot 45 jaar": "25-45 jaar",
+    "45 tot 65 jaar": "45-65 jaar",
+    "65 jaar of ouder": "65+ jaar",
+    "Aantal inwoners": "Inwoners",
+    "Afstand tot huisartsenpraktijk": "Huisarts",
+    "Eenzaam": "Eenzaamheid",
+    "Ernstig eenzaam": "Eenzaamheid",
+    "Gemiddeld inkomen per inwoner": "Inkomen per inwoner",
+    "Gemiddelde WOZ-waarde van woningen": "Gemiddelde WOZ-waarde",
+    "Goed ervaren gezondheid": "Ervaren gezondheid",
     "Hoog risico angststoornis of depressie": "Gezondheid",
-    "Huishoudens met een laag inkomen":     "Huishoudens met laag inkomen",
-    "Huishoudens met kinderen":             "Huishoudens met kind",
-    "Huishoudens zonder kinderen":          "Huishoudens zonder kind",
-    "In bezit overige verhuurders":         "Particulier huurbezit",
-    "In bezit woningcorporatie":            "Woningcorporatie bezit",
-    "Overmatige drinker":                   "Overmatig drinken",
-    "Roker":                                "Roken",
-    "Personen met bijstand":                "Participatiewet totaal",
-    "Voldoet aan beweegrichtlijn":          "Bewegen",
-    "Vrijwilligerswerk":                    "Vrijwilliger",
+    "Huishoudens met een laag inkomen": "Huishoudens met laag inkomen",
+    "Huishoudens met kinderen": "Huishoudens met kind",
+    "Huishoudens zonder kinderen": "Huishoudens zonder kind",
+    "In bezit overige verhuurders": "Particulier huurbezit",
+    "In bezit woningcorporatie": "Woningcorporatie bezit",
+    "Overmatige drinker": "Overmatig drinken",
+    "Roker": "Roken",
+    "Personen met bijstand": "Participatiewet totaal",
+    "Voldoet aan beweegrichtlijn": "Bewegen",
+    "Vrijwilligerswerk": "Vrijwilliger",
 }
 
 
@@ -102,8 +103,8 @@ class StapResultaat:
         self.naam = naam
         self.ok = 0
         self.fouten = 0
-        self.info = []          # extra regels voor de samenvatting (overgeslagen e.d.)
-        self.mislukt = False    # stap kon niet draaien (bestand ontbreekt, onverwachte fout)
+        self.info = []  # extra regels voor de samenvatting (overgeslagen e.d.)
+        self.mislukt = False  # stap kon niet draaien (bestand ontbreekt, onverwachte fout)
         self.duur = 0.0
 
     @property
@@ -155,11 +156,14 @@ def import_buurten(conn, res):
             gemeenten[code.zfill(4)] = (props.get("gemeentenaam") or "").strip() or code
     nieuw = 0
     for code, naam in sorted(gemeenten.items()):
-        cur.execute("""
+        cur.execute(
+            """
             INSERT INTO gemeenten (code, naam, provincie, is_eiland)
             VALUES (%s, %s, %s, %s)
             ON CONFLICT (code) DO NOTHING
-        """, (code, naam, PROVINCIE, code in EILANDGEMEENTEN))
+        """,
+            (code, naam, PROVINCIE, code in EILANDGEMEENTEN),
+        )
         nieuw += cur.rowcount
     conn.commit()
     print(f"   🏛️  {len(gemeenten)} gemeenten in GeoJSON, {nieuw} toegevoegd aan tabel gemeenten")
@@ -170,10 +174,10 @@ def import_buurten(conn, res):
         props = feature.get("properties", {})
         geom = feature.get("geometry")
 
-        bu_code = (props.get("buurtcode") or props.get("BU_CODE") or
-                   props.get("statcode") or "").strip().replace("BU", "")
-        bu_naam = (props.get("buurtnaam") or props.get("BU_NAAM") or
-                   props.get("statnaam") or "Onbekend").strip()
+        bu_code = (
+            (props.get("buurtcode") or props.get("BU_CODE") or props.get("statcode") or "").strip().replace("BU", "")
+        )
+        bu_naam = (props.get("buurtnaam") or props.get("BU_NAAM") or props.get("statnaam") or "Onbekend").strip()
         gm_code = (props.get("gemeentecode") or props.get("GM_CODE") or "").strip()
         gm_code = gm_code.replace("GM", "").zfill(4) if gm_code else None
 
@@ -186,7 +190,8 @@ def import_buurten(conn, res):
 
         try:
             cur.execute("SAVEPOINT sp_buurt")
-            cur.execute("""
+            cur.execute(
+                """
                 INSERT INTO gebieden (id, gebiedstype_id, naam, gemeente_code, geom, provincienaam, actief)
                 VALUES (
                     %s, %s, %s, %s,
@@ -203,7 +208,9 @@ def import_buurten(conn, res):
                     provincienaam = EXCLUDED.provincienaam,
                     actief = TRUE,
                     updated_at = CURRENT_TIMESTAMP
-            """, (bu_id, CBS_BUURT_TYPE_ID, bu_naam, gm_code, geom_str, geom_str, PROVINCIE))
+            """,
+                (bu_id, CBS_BUURT_TYPE_ID, bu_naam, gm_code, geom_str, geom_str, PROVINCIE),
+            )
             cur.execute("RELEASE SAVEPOINT sp_buurt")
             res.ok += 1
         except Exception as e:
@@ -246,8 +253,10 @@ def _score_type(ind, naam):
     if score_type:
         return score_type
     naam_lower = naam.lower()
-    if any(kw in naam_lower for kw in ["afstand", "criminaliteit", "overlast", "diefstal",
-                                       "inbraak", "eenzaam", "werkloos", "moeite"]):
+    if any(
+        kw in naam_lower
+        for kw in ["afstand", "criminaliteit", "overlast", "diefstal", "inbraak", "eenzaam", "werkloos", "moeite"]
+    ):
         return "+/-"
     return "+/+"
 
@@ -281,8 +290,8 @@ def import_indicatoren(conn, res):
         bron = ind.get("bron") or ""
         eenheid = ind.get("eenheid") or ""
         code = ind.get("code") or (
-            "IND_" + naam.upper()[:40].replace(" ", "_").replace("/", "_")
-            .replace(",", "").replace("-", "_"))
+            "IND_" + naam.upper()[:40].replace(" ", "_").replace("/", "_").replace(",", "").replace("-", "_")
+        )
         omschrijving = ind.get("omschrijving") or ""
         if not omschrijving:
             titel, thema, onderdeel = ind.get("titel", ""), ind.get("thema", ""), ind.get("onderdeel", "")
@@ -293,17 +302,21 @@ def import_indicatoren(conn, res):
             cur.execute("SAVEPOINT sp_ind")
             if naam.lower() in bestaand:
                 # Bestaat al (bijv. uit de sample, met eigen uuid/code): alleen lege velden aanvullen
-                cur.execute("""
+                cur.execute(
+                    """
                     UPDATE indicatoren SET
                         eenheid = COALESCE(NULLIF(eenheid, ''), NULLIF(%s, '')),
                         omschrijving = COALESCE(NULLIF(omschrijving, ''), NULLIF(%s, '')),
                         bron = COALESCE(NULLIF(bron, ''), NULLIF(%s, '')),
                         score_type = COALESCE(score_type, %s)
                     WHERE uuid = %s
-                """, (eenheid, omschrijving, bron, score_type, bestaand[naam.lower()]))
+                """,
+                    (eenheid, omschrijving, bron, score_type, bestaand[naam.lower()]),
+                )
                 bijgewerkt += 1
             else:
-                cur.execute("""
+                cur.execute(
+                    """
                     INSERT INTO indicatoren (uuid, naam, code, eenheid, omschrijving, bron, score_type, status)
                     VALUES (gen_random_uuid(), %s, %s, %s, %s, %s, %s, 'O')
                     ON CONFLICT (code) DO UPDATE SET
@@ -314,7 +327,9 @@ def import_indicatoren(conn, res):
                         score_type = EXCLUDED.score_type,
                         updated_at = CURRENT_TIMESTAMP
                     RETURNING uuid
-                """, (naam, code, eenheid, omschrijving, bron, score_type))
+                """,
+                    (naam, code, eenheid, omschrijving, bron, score_type),
+                )
                 bestaand[naam.lower()] = cur.fetchone()[0]
                 nieuw += 1
             cur.execute("RELEASE SAVEPOINT sp_ind")
@@ -363,8 +378,10 @@ def import_kompas(conn, res):
         row = cur.fetchone()
         if row:
             return row[0]
-        cur.execute(f"INSERT INTO {table} ({', '.join(cols)}) VALUES ({', '.join('%s' for _ in cols)}) RETURNING id",
-                    [values[c] for c in cols])
+        cur.execute(
+            f"INSERT INTO {table} ({', '.join(cols)}) VALUES ({', '.join('%s' for _ in cols)}) RETURNING id",
+            [values[c] for c in cols],
+        )
         return cur.fetchone()[0]
 
     onderdelen = set()
@@ -387,17 +404,22 @@ def import_kompas(conn, res):
                 onderdelen.add(onderdeel_id)
 
                 if indicator_naam:
-                    cur.execute("SELECT uuid FROM indicatoren WHERE lower(naam) = lower(%s) ORDER BY id LIMIT 1",
-                                (indicator_naam,))
+                    cur.execute(
+                        "SELECT uuid FROM indicatoren WHERE lower(naam) = lower(%s) ORDER BY id LIMIT 1",
+                        (indicator_naam,),
+                    )
                     ind_row = cur.fetchone()
                     if ind_row:
-                        cur.execute("""
+                        cur.execute(
+                            """
                             INSERT INTO kompas_indicator_mapping
                                 (config_id, indicator_uuid, onderdeel_id, is_actueel)
                             VALUES (%s, %s, %s, %s)
                             ON CONFLICT (config_id, indicator_uuid, onderdeel_id) DO UPDATE SET
                                 is_actueel = EXCLUDED.is_actueel
-                        """, (config_id, ind_row[0], onderdeel_id, actueel))
+                        """,
+                            (config_id, ind_row[0], onderdeel_id, actueel),
+                        )
                         res.ok += 1
                     else:
                         niet_gevonden.add(indicator_naam)
@@ -513,7 +535,13 @@ def import_waarden(conn, res):
 
             # Laatste waarde per (gebied, indicator, jaar) wint — voorkomt ON CONFLICT-fouten in één batch
             rijen[(buurt_id, indicator_uuid, jaar)] = (
-                buurt_id, indicator_uuid, waarde, jaar, row.get("bron", "").strip() or None, "current")
+                buurt_id,
+                indicator_uuid,
+                waarde,
+                jaar,
+                row.get("bron", "").strip() or None,
+                "current",
+            )
 
     print(f"   📂 {totaal} rijen in CSV | {len(rijen)} te laden | {buiten_dataset} voor gebieden buiten de database")
     if totaal and not rijen:
@@ -522,7 +550,7 @@ def import_waarden(conn, res):
 
     batch = list(rijen.values())
     for i in range(0, len(batch), 5000):
-        _schrijf_batch(conn, cur, batch[i:i + 5000], res)
+        _schrijf_batch(conn, cur, batch[i : i + 5000], res)
 
     cur.close()
     res.fouten += ongeldig
@@ -542,6 +570,7 @@ def import_cbs(conn, res):
     print("-" * 50)
     sys.path.insert(0, str(Path(__file__).resolve().parent))
     import laad_cbs
+
     res.ok += laad_cbs.laad(conn)
 
 
@@ -563,7 +592,9 @@ def main():
         help="Welke stap uitvoeren (default: alle)",
     )
     parser.add_argument(
-        "--max-fouten-pct", type=float, default=1.0,
+        "--max-fouten-pct",
+        type=float,
+        default=1.0,
         help="Maximaal percentage foute rijen per stap voordat de exitcode 1 wordt (default: 1.0)",
     )
     args = parser.parse_args()
@@ -625,8 +656,10 @@ def main():
         if res.mislukt or te_veel:
             geslaagd = False
         extra = " (afgebroken)" if res.mislukt else ""
-        print(f"{status} {res.naam:<12} ok: {res.ok:>7}  fouten: {res.fouten:>6} ({res.fout_pct:.1f}%)"
-              f"  {res.duur:6.1f}s{extra}")
+        print(
+            f"{status} {res.naam:<12} ok: {res.ok:>7}  fouten: {res.fouten:>6} ({res.fout_pct:.1f}%)"
+            f"  {res.duur:6.1f}s{extra}"
+        )
         for regel in res.info:
             print(f"      {regel}")
     print("-" * 60)
@@ -634,8 +667,10 @@ def main():
     if geslaagd:
         print("✅ Seed Fryslân voltooid.")
     else:
-        print(f"❌ Seed Fryslân NIET volledig geslaagd (stap afgebroken of meer dan "
-              f"{args.max_fouten_pct}% fouten). Zie de meldingen hierboven.")
+        print(
+            f"❌ Seed Fryslân NIET volledig geslaagd (stap afgebroken of meer dan "
+            f"{args.max_fouten_pct}% fouten). Zie de meldingen hierboven."
+        )
     print("=" * 60)
     sys.exit(0 if geslaagd else 1)
 

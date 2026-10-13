@@ -10,9 +10,8 @@ zetten daarmee de polariteit.
 code die nog een score_type (of een Kompas-scoringregel) krijgt, leidt de richting
 hiermee af, zodat kaart, Kompas, rapporten en chat hetzelfde zeggen.
 """
-from __future__ import annotations
 
-from typing import Optional
+from __future__ import annotations
 
 HOGER_IS_BETER = "hoger_is_beter"
 LAGER_IS_BETER = "lager_is_beter"
@@ -23,7 +22,7 @@ POLARITEITEN = (HOGER_IS_BETER, LAGER_IS_BETER, NEUTRAAL)
 _KOMPAS = {"positive_ascending": HOGER_IS_BETER, "positive_descending": LAGER_IS_BETER}
 
 
-def uit_oud(score_type: Optional[str], interpretatie_logica: Optional[str] = None) -> str:
+def uit_oud(score_type: str | None, interpretatie_logica: str | None = None) -> str:
     """Oude codering naar polariteit. Neutraal (logica 'neutraal'/'N/A') gaat voor; dan
     '+/+' (of '+=+') hoger is beter, elke andere score_type lager is beter."""
     logica = (interpretatie_logica or "").strip()
@@ -44,6 +43,6 @@ def score_type_van(polariteit: str) -> str:
     return "+/-" if polariteit == LAGER_IS_BETER else "+/+"
 
 
-def lager_is_beter(score_type: Optional[str], inverse: Optional[bool] = False) -> bool:
+def lager_is_beter(score_type: str | None, inverse: bool | None = False) -> bool:
     """Kleur omkeren? Ja bij lager-is-beter, of als een Kompas-regel ``inverse`` zet."""
     return bool(inverse) or uit_oud(score_type) == LAGER_IS_BETER

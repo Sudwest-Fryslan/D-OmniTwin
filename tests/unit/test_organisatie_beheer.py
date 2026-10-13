@@ -76,8 +76,7 @@ class _Db:
 @pytest.fixture
 def audit(monkeypatch):
     regels = []
-    monkeypatch.setattr(org_router.AppLogger, "info",
-                        classmethod(lambda cls, msg, **kw: regels.append((msg, kw))))
+    monkeypatch.setattr(org_router.AppLogger, "info", classmethod(lambda cls, msg, **kw: regels.append((msg, kw))))
     return regels
 
 
@@ -86,8 +85,10 @@ def _client(db, gebruiker=BEHEERDER):
     app.include_router(org_router.router)
     app.dependency_overrides[get_db] = lambda: db
     if isinstance(gebruiker, HTTPException):
+
         def weiger():
             raise gebruiker
+
         app.dependency_overrides[vereis_admin] = weiger
     else:
         app.dependency_overrides[vereis_admin] = lambda: gebruiker
@@ -102,6 +103,7 @@ def _invoer(**wijziging):
 
 # ── validatie ───────────────────────────────────────────────────────────────
 
+
 def test_put_geldig_zet_de_rij_en_geeft_de_organisatie(audit):
     db = _Db(SWF)
     r = _client(db).put("/api/organisatie", json=_invoer(thema="d-omnitwin", korte_naam="  SWF  "))
@@ -111,29 +113,32 @@ def test_put_geldig_zet_de_rij_en_geeft_de_organisatie(audit):
     assert db.commits == 1
 
 
-@pytest.mark.parametrize("wijziging", [
-    {"thema": "bestaat-niet"},
-    {"thema": "../swf"},
-    {"thema": "SWF"},
-    {"logos": [{"pad": "/static/images/bestaat-niet.png"}]},
-    {"logos": [{"pad": "/static/images/../css/styles.css"}]},
-    {"logos": [{"pad": "/static/css/themes/swf.css"}]},
-    {"logos": [{"pad": "https://example.org/logo.png"}]},
-    {"logos": [{"pad": "/static/images/SWF-logo.png", "rol": "baas"}]},
-    {"logos": [{"pad": "/static/images/SWF-logo.png", "extra": 1}]},
-    {"contact_email": "geen-adres"},
-    {"contact_email": "a@b"},
-    {"contact_email": "twee@@voorbeeld.nl"},
-    {"gemeente_codes": ["190"]},
-    {"gemeente_codes": ["GM1900"]},
-    {"gemeente_codes": ["19000"]},
-    {"gemeente_codes": ["1900"], "standaard_gemeente_code": "0080"},
-    {"oin": "123"},
-    {"code": "SWF"},
-    {"code": "a/b"},
-    {"naam": "   "},
-    {"onbekend_veld": "x"},
-])
+@pytest.mark.parametrize(
+    "wijziging",
+    [
+        {"thema": "bestaat-niet"},
+        {"thema": "../swf"},
+        {"thema": "SWF"},
+        {"logos": [{"pad": "/static/images/bestaat-niet.png"}]},
+        {"logos": [{"pad": "/static/images/../css/styles.css"}]},
+        {"logos": [{"pad": "/static/css/themes/swf.css"}]},
+        {"logos": [{"pad": "https://example.org/logo.png"}]},
+        {"logos": [{"pad": "/static/images/SWF-logo.png", "rol": "baas"}]},
+        {"logos": [{"pad": "/static/images/SWF-logo.png", "extra": 1}]},
+        {"contact_email": "geen-adres"},
+        {"contact_email": "a@b"},
+        {"contact_email": "twee@@voorbeeld.nl"},
+        {"gemeente_codes": ["190"]},
+        {"gemeente_codes": ["GM1900"]},
+        {"gemeente_codes": ["19000"]},
+        {"gemeente_codes": ["1900"], "standaard_gemeente_code": "0080"},
+        {"oin": "123"},
+        {"code": "SWF"},
+        {"code": "a/b"},
+        {"naam": "   "},
+        {"onbekend_veld": "x"},
+    ],
+)
 def test_put_ongeldig_422_en_niets_gewijzigd(wijziging, audit):
     db = _Db(SWF)
     r = _client(db).put("/api/organisatie", json=_invoer(**wijziging))
@@ -144,8 +149,9 @@ def test_put_ongeldig_422_en_niets_gewijzigd(wijziging, audit):
 
 def test_standaardgemeente_komt_vooraan_en_dubbele_codes_weg(audit):
     db = _Db(SWF)
-    r = _client(db).put("/api/organisatie", json=_invoer(
-        gemeente_codes=["1900", "0080", "1900"], standaard_gemeente_code="0080"))
+    r = _client(db).put(
+        "/api/organisatie", json=_invoer(gemeente_codes=["1900", "0080", "1900"], standaard_gemeente_code="0080")
+    )
     assert r.status_code == 200, r.text
     assert db.rij["gemeente_codes"] == ["0080", "1900"]
     assert r.json()["standaard_gemeente_code"] == "0080"
@@ -153,8 +159,9 @@ def test_standaardgemeente_komt_vooraan_en_dubbele_codes_weg(audit):
 
 def test_lege_optionele_velden_worden_null(audit):
     db = _Db(SWF)
-    r = _client(db).put("/api/organisatie", json=_invoer(contact_email="", korte_naam="", oin="",
-                                                          gemeente_codes=[], logos=[]))
+    r = _client(db).put(
+        "/api/organisatie", json=_invoer(contact_email="", korte_naam="", oin="", gemeente_codes=[], logos=[])
+    )
     assert r.status_code == 200, r.text
     assert db.rij["contact_email"] is None and db.rij["korte_naam"] is None and db.rij["oin"] is None
     assert r.json()["standaard_gemeente_code"] is None
@@ -162,14 +169,18 @@ def test_lege_optionele_velden_worden_null(audit):
 
 # ── rechten ─────────────────────────────────────────────────────────────────
 
+
 @pytest.mark.parametrize("status", [401, 403])
-@pytest.mark.parametrize("methode,pad,body", [
-    ("PUT", "/api/organisatie", SWF),
-    ("GET", "/api/organisatie/themas", None),
-    ("GET", "/api/organisatie/logos", None),
-    ("GET", "/api/organisatie/export", None),
-    ("POST", "/api/organisatie/import", {"formaat": "d-omnitwin/organisatie", "versie": 1, "organisatie": SWF}),
-])
+@pytest.mark.parametrize(
+    "methode,pad,body",
+    [
+        ("PUT", "/api/organisatie", SWF),
+        ("GET", "/api/organisatie/themas", None),
+        ("GET", "/api/organisatie/logos", None),
+        ("GET", "/api/organisatie/export", None),
+        ("POST", "/api/organisatie/import", {"formaat": "d-omnitwin/organisatie", "versie": 1, "organisatie": SWF}),
+    ],
+)
 def test_zonder_beheerrechten_geweigerd(status, methode, pad, body, audit):
     db = _Db(SWF)
     r = _client(db, HTTPException(status_code=status)).request(methode, pad, json=body)
@@ -194,11 +205,12 @@ def test_schrijfroutes_hangen_aan_vereis_admin():
 
 # ── auditlog ────────────────────────────────────────────────────────────────
 
+
 def test_audit_wie_en_wat_zonder_e_mailadres(audit):
     db = _Db(SWF)
     r = _client(db).put("/api/organisatie", json=_invoer(thema="d-omnitwin", contact_email="nieuw@voorbeeld.nl"))
     assert r.status_code == 200
-    (melding, kw), = audit
+    ((melding, kw),) = audit
     assert "beheer1" in melding and "sub=s-123" in melding
     assert kw["category"] == "ADMIN" and kw["user_id"] == "s-123"
     extra = kw["extra"]
@@ -220,6 +232,7 @@ def test_wijzigingen_logos():
 
 # ── export en import ────────────────────────────────────────────────────────
 
+
 def test_export_import_rondreis(audit):
     bron = _Db(dict(SWF, gemeente_codes=["1900", "0080"], oin="00000001234567890000"))
     r = _client(bron).get("/api/organisatie/export")
@@ -236,14 +249,20 @@ def test_export_import_rondreis(audit):
     assert audit[-1][1]["extra"]["actie"] == "organisatie.geimporteerd"
 
 
-@pytest.mark.parametrize("export", [
-    {"formaat": "iets-anders", "versie": 1, "organisatie": SWF},
-    {"formaat": "d-omnitwin/organisatie", "versie": 2, "organisatie": SWF},
-    {"formaat": "d-omnitwin/organisatie", "versie": 1, "organisatie": dict(SWF, thema="bestaat-niet")},
-    {"formaat": "d-omnitwin/organisatie", "versie": 1,
-     "organisatie": dict(SWF, logos=[{"pad": "/static/images/van-een-andere-instantie.png"}])},
-    {"formaat": "d-omnitwin/organisatie", "versie": 1},
-])
+@pytest.mark.parametrize(
+    "export",
+    [
+        {"formaat": "iets-anders", "versie": 1, "organisatie": SWF},
+        {"formaat": "d-omnitwin/organisatie", "versie": 2, "organisatie": SWF},
+        {"formaat": "d-omnitwin/organisatie", "versie": 1, "organisatie": dict(SWF, thema="bestaat-niet")},
+        {
+            "formaat": "d-omnitwin/organisatie",
+            "versie": 1,
+            "organisatie": dict(SWF, logos=[{"pad": "/static/images/van-een-andere-instantie.png"}]),
+        },
+        {"formaat": "d-omnitwin/organisatie", "versie": 1},
+    ],
+)
 def test_import_valideert_hetzelfde(export, audit):
     db = _Db(SWF)
     r = _client(db).post("/api/organisatie/import", json=export)
@@ -264,6 +283,7 @@ def test_eerste_keer_zetten_zonder_rij(audit):
 
 
 # ── thema's en logo's ───────────────────────────────────────────────────────
+
 
 def test_themalijst_uit_static():
     lijst = _client(_Db(SWF)).get("/api/organisatie/themas").json()
@@ -287,7 +307,8 @@ def test_themalijst_uit_static():
 
 
 def test_themakleuren_lossen_var_op_en_donker_valt_terug_op_licht(tmp_path):
-    (tmp_path / "proef.css").write_text("""/*
+    (tmp_path / "proef.css").write_text(
+        """/*
  * Thema "proef" — Gemeente Proef, als NL Design System-tokens.
  */
 :root {
@@ -301,7 +322,9 @@ def test_themakleuren_lossen_var_op_en_donker_valt_terug_op_licht(tmp_path):
   --basis-color-accent-1-bg-default: #abcdef;
 }
 @media (prefers-color-scheme: dark) { :root:not([data-theme]) { --basis-color-accent-1-bg-default: #abcdef; } }
-""", encoding="utf-8")
+""",
+        encoding="utf-8",
+    )
     (tmp_path / "Ongeldig.css").write_text(":root {}", encoding="utf-8")
     lijst = org_service.themas(tmp_path)
     assert [t["naam"] for t in lijst] == ["proef"]
@@ -323,10 +346,21 @@ def test_beschikbare_logos_en_logo_bestand(tmp_path):
     for naam in ("a.png", "b.SVG", "sub/c.webp", "leesmij.txt"):
         (tmp_path / naam).write_bytes(b"x")
     assert org_service.beschikbare_logos(tmp_path) == [
-        "/static/images/a.png", "/static/images/b.SVG", "/static/images/sub/c.webp"]
+        "/static/images/a.png",
+        "/static/images/b.SVG",
+        "/static/images/sub/c.webp",
+    ]
     assert org_service.logo_bestand("/static/images/sub/c.webp", tmp_path) is not None
-    for pad in ("/static/images/leesmij.txt", "/static/images/../a.png", "/static/images/sub/../a.png",
-                "/static/images/", "/static/a.png", "/static/images/sub\\c.webp", None, 3):
+    for pad in (
+        "/static/images/leesmij.txt",
+        "/static/images/../a.png",
+        "/static/images/sub/../a.png",
+        "/static/images/",
+        "/static/a.png",
+        "/static/images/sub\\c.webp",
+        None,
+        3,
+    ):
         assert org_service.logo_bestand(pad, tmp_path) is None, pad
 
 

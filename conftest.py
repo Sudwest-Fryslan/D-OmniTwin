@@ -8,6 +8,7 @@ die markers draait in geen enkele CI-job; daarom faalt de collectie dan (#202).
 De E2E-tests (tests/e2e) krijgen hun marker in tests/e2e/conftest.py en slaan
 zichzelf over als Playwright niet geïnstalleerd is.
 """
+
 import pytest
 
 SOORTEN = ("unit", "integration", "e2e", "llm")
@@ -17,10 +18,11 @@ SOORTEN = ("unit", "integration", "e2e", "llm")
 # registratie aan, dus eerst tests/e2e/conftest.py (zet de e2e-marker), dan deze, en pas
 # daarna de deselectie van `-m`. Zo vangt ook `pytest -m unit` tests zonder marker.
 def pytest_collection_modifyitems(config, items):
-    zonder = [item.nodeid for item in items
-              if not any(item.get_closest_marker(soort) for soort in SOORTEN)]
+    zonder = [item.nodeid for item in items if not any(item.get_closest_marker(soort) for soort in SOORTEN)]
     if zonder:
         raise pytest.UsageError(
-            "Tests zonder marker (" + "/".join(SOORTEN) + "), die in geen enkele CI-job draaien:\n  "
+            "Tests zonder marker ("
+            + "/".join(SOORTEN)
+            + "), die in geen enkele CI-job draaien:\n  "
             + "\n  ".join(zonder)
         )

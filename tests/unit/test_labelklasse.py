@@ -5,6 +5,7 @@ Zonder database. Aanname tot de drempels van SWF zijn vastgesteld (#222, A3): kw
 binnen de referentiegroep; drempels in indicator_labels gaan voor.
 Methodiek: docs/3-data-engineering/labels_methodiek.md.
 """
+
 import json
 from pathlib import Path
 
@@ -20,6 +21,7 @@ ROOT = Path(__file__).resolve().parents[2]
 
 # ── Kwintielgrenzen ──────────────────────────────────────────────────────────
 
+
 def test_vijf_waarden_vijf_labels():
     ref = [1.0, 2.0, 3.0, 4.0, 5.0]
     assert [lk.label(v, ref) for v in ref] == ["E", "D", "C", "B", "A"]
@@ -30,9 +32,21 @@ def test_tien_waarden_twee_per_label():
     assert [lk.label(v, ref) for v in ref] == ["E", "E", "D", "D", "C", "C", "B", "B", "A", "A"]
 
 
-@pytest.mark.parametrize("p,verwacht", [
-    (0.0, 1), (0.1999, 1), (0.2, 2), (0.3999, 2), (0.4, 3), (0.5, 3), (0.6, 4), (0.7999, 4), (0.8, 5), (1.0, 5),
-])
+@pytest.mark.parametrize(
+    "p,verwacht",
+    [
+        (0.0, 1),
+        (0.1999, 1),
+        (0.2, 2),
+        (0.3999, 2),
+        (0.4, 3),
+        (0.5, 3),
+        (0.6, 4),
+        (0.7999, 4),
+        (0.8, 5),
+        (1.0, 5),
+    ],
+)
 def test_grenzen_op_20_procent(p, verwacht):
     assert lk.score_uit_percentiel(p) == verwacht
 
@@ -51,6 +65,7 @@ def test_zonder_referentie_geen_label():
 
 # ── Polariteit ───────────────────────────────────────────────────────────────
 
+
 def test_lager_is_beter_spiegelt_het_label():
     ref = [1.0, 2.0, 3.0, 4.0, 5.0]
     assert [lk.label(v, ref, hoger_beter=False) for v in ref] == ["A", "B", "C", "D", "E"]
@@ -64,6 +79,7 @@ def test_polariteit_uit_score_type():
 
 
 # ── Gelijke waarden ──────────────────────────────────────────────────────────
+
 
 def test_gelijke_waarden_zelfde_label():
     ref = [1.0, 2.0, 2.0, 2.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0]
@@ -81,9 +97,19 @@ def test_allemaal_gelijk_middenlabel():
 DREMPELS = [("E", 25.0, None), ("A", None, 5.0), ("B", 5.0, 10.0), ("C", 10.0, 15.0), ("D", 15.0, 20.0)]
 
 
-@pytest.mark.parametrize("waarde,verwacht", [
-    (0.0, "A"), (4.99, "A"), (5.0, "B"), (9.9, "B"), (10.0, "C"), (19.99, "D"), (25.0, "E"), (1e6, "E"),
-])
+@pytest.mark.parametrize(
+    "waarde,verwacht",
+    [
+        (0.0, "A"),
+        (4.99, "A"),
+        (5.0, "B"),
+        (9.9, "B"),
+        (10.0, "C"),
+        (19.99, "D"),
+        (25.0, "E"),
+        (1e6, "E"),
+    ],
+)
 def test_drempels_gaan_voor(waarde, verwacht):
     ref = [1.0, 2.0, 3.0]  # kwintielen zouden iets anders geven
     score, bron = lk.label_score(waarde, ref, hoger_beter=True, drempels=DREMPELS)
@@ -117,6 +143,7 @@ def test_zonder_drempels_kwintiel():
 
 # ── Themalabel (aggregatie) ──────────────────────────────────────────────────
 
+
 def test_themalabel_gewogen_gemiddelde():
     # A (5) op 10 gebieden, E (1) op 30: (50 + 30) / 40 = 2,0 -> D
     assert lk.score_naar_label(lk.aggregeer([(5, 10), (1, 30)])) == "D"
@@ -126,32 +153,48 @@ def test_themalabel_gewogen_gemiddelde():
 
 
 def test_annoteer_boom_labels_en_bron():
-    boom = {"name": "Klimaat", "type": "root", "children": [
-        {"name": "Klimaat", "type": "titel", "children": [
-            {"name": "Hittestress", "type": "thema", "children": [
-                {"name": "Hitte", "type": "onderdeel", "children": [
-                    {"name": "i1", "type": "indicator", "uuid": "u1"},
-                    {"name": "i2", "type": "indicator", "uuid": "u2"},
-                    {"name": "i3", "type": "indicator", "uuid": "u3"},
-                ]},
-            ]},
-        ]},
-    ]}
+    boom = {
+        "name": "Klimaat",
+        "type": "root",
+        "children": [
+            {
+                "name": "Klimaat",
+                "type": "titel",
+                "children": [
+                    {
+                        "name": "Hittestress",
+                        "type": "thema",
+                        "children": [
+                            {
+                                "name": "Hitte",
+                                "type": "onderdeel",
+                                "children": [
+                                    {"name": "i1", "type": "indicator", "uuid": "u1"},
+                                    {"name": "i2", "type": "indicator", "uuid": "u2"},
+                                    {"name": "i3", "type": "indicator", "uuid": "u3"},
+                                ],
+                            },
+                        ],
+                    },
+                ],
+            },
+        ],
+    }
     kleuren = [f"#00000{k}" for k in range(1, 6)]
     paren = {"u1": [(5, 10)], "u2": [(2, 10)]}  # A en D; u3 onderdrukt
-    uit = lk.annoteer_boom(boom, paren, {"u3": 1}, kleuren, "#grijs",
-                           {"u1": lk.BRON_DREMPELS, "u2": lk.BRON_KWINTIEL})
+    uit = lk.annoteer_boom(boom, paren, {"u3": 1}, kleuren, "#grijs", {"u1": lk.BRON_DREMPELS, "u2": lk.BRON_KWINTIEL})
     thema = uit["children"][0]["children"][0]
     i1, i2, i3 = thema["children"][0]["children"]
     assert (i1["label"], i1["klasse"], i1["color"], i1["label_bron"]) == ("A", 5, "#000005", "drempels")
     assert (i2["label"], i2["label_bron"]) == ("D", "kwintiel")
     assert (i3["label"], i3["klasse_status"], i3["color"]) == (None, "onderdrukt", "#grijs")
-    assert thema["label"] == "B" and thema["klasse"] == 4   # (5 + 2) / 2 = 3,5 -> 4
+    assert thema["label"] == "B" and thema["klasse"] == 4  # (5 + 2) / 2 = 3,5 -> 4
     assert uit["label"] == "B"
     assert "label_bron" not in thema
 
 
 # ── Palet en legenda ─────────────────────────────────────────────────────────
+
 
 def test_palet_vijf_kleuren_kleurenblindvriendelijk():
     kleuren = lk.palet()
@@ -178,6 +221,7 @@ def test_classificatie_label_ae_bekend():
 
 
 # ── Stuurdata: Klimaat Kompas ────────────────────────────────────────────────
+
 
 def test_kompasprofiel_klimaat_stuurdata():
     profiel = json.loads((ROOT / "db" / "stuurdata" / "kompasprofiel_klimaat.json").read_text(encoding="utf-8"))

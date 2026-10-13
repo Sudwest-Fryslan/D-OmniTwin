@@ -4,6 +4,7 @@ Unit test: migratierunner (src/omnitwin/migraties.py, #54).
 Zonder database: psql wordt vervangen door een nep-uitvoerder die de tabel
 schema_migraties in het geheugen bijhoudt.
 """
+
 import contextlib
 import re
 from pathlib import Path
@@ -131,8 +132,13 @@ def test_dubbele_versie_en_ongeldige_naam(tmp_path):
 
 def test_status_past_niets_toe(map_):
     psql = NepPsql(toegepast={1: mig.checksum(map_ / "V001__een.sql")})
-    open_ = mig.migreer(map_, uitvoeren=psql, alleen_status=True, log=lambda _: None,
-                        slot=lambda: pytest.fail("--status neemt geen lock"))
+    open_ = mig.migreer(
+        map_,
+        uitvoeren=psql,
+        alleen_status=True,
+        log=lambda _: None,
+        slot=lambda: pytest.fail("--status neemt geen lock"),
+    )
     assert [m.versie for m in open_] == [2, 10]
     assert psql.uitgevoerd == []
     assert not any("CREATE TABLE" in a for a in psql.log)
@@ -180,6 +186,7 @@ def test_ontbrekende_map_is_een_fout(tmp_path):
 
 # ── advisory lock (#202) ─────────────────────────────────────────────────────
 
+
 class NepSlot:
     """Contextmanager die in het gedeelde log bijhoudt wanneer de lock vastgehouden wordt."""
 
@@ -222,8 +229,7 @@ def test_tweede_run_leest_pas_na_de_lock(map_):
     psql = NepPsql()
     run_a = lambda: mig.migreer(map_, uitvoeren=psql, log=lambda _: None)  # noqa: E731
     regels = []
-    toegepast_b = mig.migreer(map_, uitvoeren=psql, log=regels.append,
-                              slot=NepSlot([], tijdens_wachten=run_a))
+    toegepast_b = mig.migreer(map_, uitvoeren=psql, log=regels.append, slot=NepSlot([], tijdens_wachten=run_a))
     assert toegepast_b == []
     assert psql.uitgevoerd == ["V001__een.sql", "V002__twee.sql", "V010__tien.sql"]
     assert any("niets te doen" in r for r in regels)

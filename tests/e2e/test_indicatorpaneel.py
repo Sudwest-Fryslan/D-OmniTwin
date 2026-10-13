@@ -13,10 +13,18 @@ Indicatorpaneel, CSV-export en favorieten in de browser (#258).
 import re
 
 import pytest
+from e2e_helpers import (
+    BOLSWARD_ZUIDOOST,
+    TRAAG_MS,
+    WORKUM,
+    klik,
+    klik_en_bevestig,
+    laad_buurtenkaart,
+    open_paneel,
+    selecteer_buurt_via_app,
+    wacht_op_selectie,
+)
 from playwright.sync_api import expect
-
-from e2e_helpers import (BOLSWARD_ZUIDOOST, TRAAG_MS, WORKUM, klik, klik_en_bevestig, laad_buurtenkaart,
-                         open_paneel, selecteer_buurt_via_app, wacht_op_selectie)
 
 BASE_URL = __import__("os").environ.get("OMNITWIN_BASE_URL", "http://localhost").rstrip("/")
 INDICATOR = "Stedelijk hitte-eiland effect"  # use case hittestress
@@ -40,8 +48,10 @@ def selecteer_twee(page):
     """Eerst de ene buurt (en wachten tot de klik verwerkt is), dan met Shift de tweede."""
     selecteer_buurt_via_app(page, BOLSWARD_ZUIDOOST)
     wacht_op_selectie(page, [BOLSWARD_ZUIDOOST])
-    with page.expect_response(lambda r: "/api/gebiedsmonitor/indicatorpaneel" in r.url
-                              and "gebied_ids=" in r.url and "%2C" in r.url and r.ok, timeout=TRAAG_MS):
+    with page.expect_response(
+        lambda r: "/api/gebiedsmonitor/indicatorpaneel" in r.url and "gebied_ids=" in r.url and "%2C" in r.url and r.ok,
+        timeout=TRAAG_MS,
+    ):
         selecteer_buurt_via_app(page, WORKUM, shift=True)
     wacht_op_selectie(page, [BOLSWARD_ZUIDOOST, WORKUM])
 
@@ -99,6 +109,7 @@ try {
 
 def _demo_met_keycloak():
     import requests
+
     try:
         c = requests.get(f"{BASE_URL}/api/admin/auth/config", timeout=30).json()
     except (requests.RequestException, ValueError):
@@ -131,10 +142,13 @@ def ingelogd(browser):
     _klaar(page)
     yield page
     # Opruimen: favoriet weg (ook als de test halverwege faalde)
-    page.evaluate("""async (naam) => {
+    page.evaluate(
+        """async (naam) => {
         const r = await fetch('/api/mijn/favorieten'); if (!r.ok) return;
         for (const f of (await r.json()).favorieten)
-            if (f.naam === naam) await fetch('/api/mijn/favorieten/' + f.id, { method: 'DELETE' }); }""", FAVORIET)
+            if (f.naam === naam) await fetch('/api/mijn/favorieten/' + f.id, { method: 'DELETE' }); }""",
+        FAVORIET,
+    )
     context.close()
 
 
@@ -151,9 +165,12 @@ def test_favoriet_bewaren_na_inloggen(ingelogd):
     klik(page, page.locator("#selection-bewaar-btn"))
     expect(page.locator("#mijn-favorieten")).to_be_visible()
     page.locator("#mijn-favoriet-naam").fill(FAVORIET)
-    klik_en_bevestig(page, page.locator("#mijn-bewaar-selectie"),
-                     f"() => document.getElementById('mijn-favorieten-lijst').textContent.includes({FAVORIET!r})",
-                     "Bewaar selectie")
+    klik_en_bevestig(
+        page,
+        page.locator("#mijn-bewaar-selectie"),
+        f"() => document.getElementById('mijn-favorieten-lijst').textContent.includes({FAVORIET!r})",
+        "Bewaar selectie",
+    )
     expect(page.locator("#mijn-favorieten-lijst")).to_contain_text(f"{FAVORIET} (2)")
 
     # Kaartpositie bewaren (anders bij het verlaten van de pagina)
@@ -164,8 +181,11 @@ def test_favoriet_bewaren_na_inloggen(ingelogd):
     # Opnieuw laden: favoriet staat er nog, de kaart opent op de bewaarde positie
     page.goto(f"{BASE_URL}/", wait_until="domcontentloaded", timeout=TRAAG_MS)  # software-WebGL: traag
     _klaar(page)
-    page.wait_for_function("() => Math.abs(window.state.currentViewState.zoom - 12.5) < 0.01"
-                           " && Math.abs(window.state.currentViewState.longitude - 5.52) < 1e-4", timeout=TRAAG_MS)
+    page.wait_for_function(
+        "() => Math.abs(window.state.currentViewState.zoom - 12.5) < 0.01"
+        " && Math.abs(window.state.currentViewState.longitude - 5.52) < 1e-4",
+        timeout=TRAAG_MS,
+    )
     open_paneel(page, "Info & Start")
     knop = page.locator(".mijn-favoriet-open", has_text=FAVORIET)
     klik_en_bevestig(page, knop, "() => window.state.selectedGebiedIds.size === 2", f"favoriet {FAVORIET}")

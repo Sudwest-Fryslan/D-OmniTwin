@@ -14,97 +14,103 @@ AI-vrijgave (#307): het taalmodel alleen als AI-usecase A open is, zoeken op bet
 Dicht: regelgebaseerd en op trefwoorden, met een korte melding (omnitwin/ai_vrijgave.py).
 """
 
+import logging
+import re
+from typing import Any
+
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
+
 from omnitwin import ai_vrijgave
 from omnitwin.database import get_db
 from omnitwin.grenzen import beperk_llm
 from omnitwin.services.ai_search_service import AISearchService
-from omnitwin.services.llm_service import LLMService
-from omnitwin.services.gemeente_validatie import valideer_gemeente_acties
 from omnitwin.services.chat_datavraag import beantwoord_datavraag
-from typing import List, Dict, Any, Optional
-import re
-import logging
-
+from omnitwin.services.gemeente_validatie import valideer_gemeente_acties
+from omnitwin.services.llm_service import LLMService
 from omnitwin.services.logging_service import AppLogger
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(
-    prefix="/api/chat",
-    tags=["D-Omni Assistant"]
-)
+router = APIRouter(prefix="/api/chat", tags=["D-Omni Assistant"])
 
 # ============================================================================
 # Request / Response Models
 # ============================================================================
 
+
 class ChatRequest(BaseModel):
     vraag: str = Field(..., min_length=2, max_length=1000, description="De vraag van de gebruiker")
-    context: Optional[Dict[str, Any]] = Field(None, description="Optionele kaartcontext (huidig_gebied_id, etc.)")
+    context: dict[str, Any] | None = Field(None, description="Optionele kaartcontext (huidig_gebied_id, etc.)")
+
 
 class ActieKnop(BaseModel):
     type: str  # TOON_OP_KAART, SELECTEER_BUURTEN, MAAK_RAPPORT, SELECTEER_GEMEENTE, SELECTEER_GEBIEDSTYPE, SELECTEER_KOMPAS, OPEN_KOMPAS, INFO_KAART, INFO_KOMPAS, INFO_RAPPORT, OPEN_WIKI, SEND_MESSAGE
     label: str
-    rol_code: Optional[str] = None
-    indicator_uuid: Optional[str] = None
-    gemeente_code: Optional[str] = None
-    gebiedstype_id: Optional[str] = None
-    config_id: Optional[int] = None
-    filters: Optional[Dict[str, Any]] = None
-    thema: Optional[str] = None
-    gebied_ids: Optional[List[str]] = None  # datavraag (#149): deze gebieden selecteren
+    rol_code: str | None = None
+    indicator_uuid: str | None = None
+    gemeente_code: str | None = None
+    gebiedstype_id: str | None = None
+    config_id: int | None = None
+    filters: dict[str, Any] | None = None
+    thema: str | None = None
+    gebied_ids: list[str] | None = None  # datavraag (#149): deze gebieden selecteren
+
 
 class IndicatorResultaat(BaseModel):
     uuid: str
     naam: str
-    beschrijving: Optional[str] = None
-    categorie: Optional[str] = None
-    eenheid: Optional[str] = None
-    score_type: Optional[str] = None
+    beschrijving: str | None = None
+    categorie: str | None = None
+    eenheid: str | None = None
+    score_type: str | None = None
     relevantie: float  # 0-1 rangschikkingsscore (services/zoektaal.py); geen datawaarde, niet als % tonen
-    relevantie_label: Optional[str] = None  # 'sterk' of 'matig' (#233): dit toont de UI
+    relevantie_label: str | None = None  # 'sterk' of 'matig' (#233): dit toont de UI
+
 
 class BronRegel(BaseModel):
     indicator: str
     bron: str
-    jaren: List[int] = []
+    jaren: list[int] = []
+
 
 class Gegeven(BaseModel):
     """Eén cijfer waarop een antwoord op een datavraag steunt (#149)."""
+
     indicator_uuid: str
     indicator: str
     gebied_id: str
     gebied: str
     waarde: float
-    jaar: Optional[int] = None
-    eenheid: Optional[str] = None
+    jaar: int | None = None
+    eenheid: str | None = None
     richting: str
     rang_hoog: int
     aantal_gebieden: int
     demo: bool = False
 
+
 class ChatResponse(BaseModel):
     intent: str
     narrative: str
-    acties: List[ActieKnop]
-    indicatoren: List[IndicatorResultaat]
-    bronnen: Optional[List[BronRegel]] = None
-    gegevens: Optional[List[Gegeven]] = None
+    acties: list[ActieKnop]
+    indicatoren: list[IndicatorResultaat]
+    bronnen: list[BronRegel] | None = None
+    gegevens: list[Gegeven] | None = None
     # #149: de kaart beweegt mee na een datavraag (gebiedstype, indicator, selectie, inzoomen)
-    kaart_actie: Optional[Dict[str, Any]] = None
+    kaart_actie: dict[str, Any] | None = None
     # #233: korte melding over de zekerheid van de gevonden indicatoren (bijv. 'geen goede treffer')
-    melding: Optional[str] = None
+    melding: str | None = None
     # #312: welke AI-usecases aan dit antwoord bijdroegen ('A' taalmodel, 'C' zoeken op betekenis);
     # de viewer toont dan het label AI met de verklaring en "Melden"
-    ai_usecases: List[str] = []
+    ai_usecases: list[str] = []
     # #233: van welk gebied het antwoord uitgaat, als dat niet in de vraag stond (selectie op de kaart)
-    aanname: Optional[str] = None
+    aanname: str | None = None
     # #336: de assistent vraagt welke buurt 'mijn buurt' is; de viewer biedt postcode/adres en locatie aan
     vraag_buurt: bool = False
-    debug: Optional[Dict[str, Any]] = None
+    debug: dict[str, Any] | None = None
+
 
 # ============================================================================
 # Intent Classificatie (Rule-Based)
@@ -112,37 +118,43 @@ class ChatResponse(BaseModel):
 
 # --- HELP_ONBOARDING: Deterministic (geen LLM nodig) ---
 HELP_ONBOARDING_PATTERNS = [
-    r"wat\s+kan\s+jij", r"wat\s+kun\s+je", r"wat\s+doe\s+jij",
-    r"hoe\s+gebruik\s+ik", r"hoe\s+werkt\s+(dit|deze|de\s+app)",
-    r"waar\s+moet\s+ik\s+beginnen", r"hoe\s+begin\s+ik",
-    r"mogelijkheden", r"functies", r"functionaliteit",
-    r"^help$", r"^help\b", r"handleiding", r"uitleg",
-    r"wat\s+zijn\s+je\s+mogelijkheden", r"hoe\s+kan\s+ik\s+jou\s+(inzetten|gebruiken)",
-    r"wat\s+kan\s+deze\s+app", r"wat\s+kan\s+ik\s+hier\s+doen"
+    r"wat\s+kan\s+jij",
+    r"wat\s+kun\s+je",
+    r"wat\s+doe\s+jij",
+    r"hoe\s+gebruik\s+ik",
+    r"hoe\s+werkt\s+(dit|deze|de\s+app)",
+    r"waar\s+moet\s+ik\s+beginnen",
+    r"hoe\s+begin\s+ik",
+    r"mogelijkheden",
+    r"functies",
+    r"functionaliteit",
+    r"^help$",
+    r"^help\b",
+    r"handleiding",
+    r"uitleg",
+    r"wat\s+zijn\s+je\s+mogelijkheden",
+    r"hoe\s+kan\s+ik\s+jou\s+(inzetten|gebruiken)",
+    r"wat\s+kan\s+deze\s+app",
+    r"wat\s+kan\s+ik\s+hier\s+doen",
 ]
+
 
 def is_help_onboarding(vraag: str) -> bool:
     """Detecteert of een vraag een help/onboarding-vraag is (vóór LLM-aanroep)."""
     vraag_lower = vraag.lower().strip()
     return any(re.search(p, vraag_lower) for p in HELP_ONBOARDING_PATTERNS)
 
+
 def get_help_onboarding_response(db: Session) -> ChatResponse:
     """Retourneert een vaste, instant response voor help-vragen, met actieve profielen uit de DB."""
     try:
         from sqlalchemy import text
-        scenarios = db.execute(text(
-            "SELECT rol_code, rol_naam, beschrijving FROM chat_scenarios "
-            "WHERE is_actief = true ORDER BY volgorde"
-        )).fetchall()
-        
-        acties = [
-            ActieKnop(
-                type="SEND_MESSAGE",
-                label=f"👤 {s.rol_naam}",
-                rol_code=s.rol_code
-            )
-            for s in scenarios
-        ]
+
+        scenarios = db.execute(
+            text("SELECT rol_code, rol_naam, beschrijving FROM chat_scenarios WHERE is_actief = true ORDER BY volgorde")
+        ).fetchall()
+
+        acties = [ActieKnop(type="SEND_MESSAGE", label=f"👤 {s.rol_naam}", rol_code=s.rol_code) for s in scenarios]
     except Exception as e:
         AppLogger.error(f"Error loading chat scenarios: {e}", category="LLM_CHAT")
         acties = []
@@ -158,23 +170,25 @@ def get_help_onboarding_response(db: Session) -> ChatResponse:
         ),
         acties=acties,
         indicatoren=[],
-        debug={"mode": "deterministic_onboarding"}
+        debug={"mode": "deterministic_onboarding"},
     )
+
 
 def match_scenario(vraag: str, context: dict, db: Session):
     """Matcht een deterministisch scenario op basis van rol_code of trigger_keywords."""
     rol_code = context.get("rol_code")
     from sqlalchemy import text
+
     if rol_code:
         try:
-            scenario = db.execute(text(
-                "SELECT * FROM chat_scenarios WHERE rol_code = :code AND is_actief = true"
-            ), {"code": rol_code}).fetchone()
+            scenario = db.execute(
+                text("SELECT * FROM chat_scenarios WHERE rol_code = :code AND is_actief = true"), {"code": rol_code}
+            ).fetchone()
             if scenario:
                 return scenario
         except Exception as e:
             AppLogger.error(f"Error matching scenario by rol_code: {e}", category="LLM_CHAT")
-            
+
     # Fallback: vrije tekst match op trigger_keywords
     vraag_lower = vraag.lower().strip()
     try:
@@ -185,33 +199,38 @@ def match_scenario(vraag: str, context: dict, db: Session):
                 return scenario
     except Exception as e:
         AppLogger.error(f"Error matching scenario by keywords: {e}", category="LLM_CHAT")
-        
+
     return None
+
 
 # --- Overige intents (LLM-driven) ---
 INTENT_PATTERNS = {
-    "TOON_OP_KAART": [
-        r"toon\b", r"laat\s+zien", r"kaart", r"kleur", r"visualiseer",
-        r"op de kaart", r"in de kaart"
-    ],
+    "TOON_OP_KAART": [r"toon\b", r"laat\s+zien", r"kaart", r"kleur", r"visualiseer", r"op de kaart", r"in de kaart"],
     "SELECTEER_BUURTEN": [
-        r"selecteer", r"filter", r"laagste", r"hoogste", r"grootste",
-        r"minste", r"welke\s+buurten", r"welke\s+wijken", r"top\s+\d+",
-        r"onderste", r"bovenste"
+        r"selecteer",
+        r"filter",
+        r"laagste",
+        r"hoogste",
+        r"grootste",
+        r"minste",
+        r"welke\s+buurten",
+        r"welke\s+wijken",
+        r"top\s+\d+",
+        r"onderste",
+        r"bovenste",
     ],
     "MAAK_RAPPORT": [
-        r"rapport", r"samenvatting", r"analyse\b", r"exporteer",
-        r"maak\s+een\s+rapport", r"genereer\s+rapport"
+        r"rapport",
+        r"samenvatting",
+        r"analyse\b",
+        r"exporteer",
+        r"maak\s+een\s+rapport",
+        r"genereer\s+rapport",
     ],
-    "ANALYSEER_GEBIED": [
-        r"hoe\s+scoort", r"hoe\s+staat", r"vergelijk", r"benchmark",
-        r"presteer"
-    ],
-    "VERBIND_THEMAS": [
-        r"verbind", r"samenhang", r"relatie\s+tussen", r"correlatie",
-        r"verband", r"koppel"
-    ],
+    "ANALYSEER_GEBIED": [r"hoe\s+scoort", r"hoe\s+staat", r"vergelijk", r"benchmark", r"presteer"],
+    "VERBIND_THEMAS": [r"verbind", r"samenhang", r"relatie\s+tussen", r"correlatie", r"verband", r"koppel"],
 }
+
 
 def classify_intent(vraag: str) -> str:
     """
@@ -219,37 +238,35 @@ def classify_intent(vraag: str) -> str:
     Retourneert de meest passende intent of 'ZOEK_INDICATOREN' als fallback.
     """
     vraag_lower = vraag.lower()
-    
+
     # Tel matches per intent
     intent_scores = {}
     for intent, patterns in INTENT_PATTERNS.items():
         score = sum(1 for p in patterns if re.search(p, vraag_lower))
         if score > 0:
             intent_scores[intent] = score
-    
+
     if not intent_scores:
         return "ZOEK_INDICATOREN"
-    
+
     # Retourneer intent met meeste matches
     return max(intent_scores, key=intent_scores.get)
+
 
 # ============================================================================
 # Actie-knoppen generatie op basis van intent + indicatoren
 # ============================================================================
 
-def generate_acties(intent: str, indicatoren: List[Dict[str, Any]], vraag: str) -> List[ActieKnop]:
+
+def generate_acties(intent: str, indicatoren: list[dict[str, Any]], vraag: str) -> list[ActieKnop]:
     """Genereert actie-knoppen op basis van intent en gevonden indicatoren."""
     acties = []
-    
+
     # Altijd: eerste indicator "Toon op kaart" (als er indicatoren zijn)
     if indicatoren:
         top = indicatoren[0]
-        acties.append(ActieKnop(
-            type="TOON_OP_KAART",
-            label=f"🗺 Toon: {top['naam']}",
-            indicator_uuid=top["uuid"]
-        ))
-    
+        acties.append(ActieKnop(type="TOON_OP_KAART", label=f"🗺 Toon: {top['naam']}", indicator_uuid=top["uuid"]))
+
     # Bij selectie-intent: filter-actie
     if intent in ("SELECTEER_BUURTEN", "ZOEK_INDICATOREN", "VERBIND_THEMAS") and indicatoren:
         # Detecteer of gebruiker "laagste" of "hoogste" wil
@@ -263,37 +280,36 @@ def generate_acties(intent: str, indicatoren: List[Dict[str, Any]], vraag: str) 
         else:
             percentiel = "P0-P25"
             label_prefix = "Selectie"
-        
-        acties.append(ActieKnop(
-            type="SELECTEER_BUURTEN",
-            label=f"📋 {label_prefix}: {indicatoren[0]['naam']}",
-            indicator_uuid=indicatoren[0]["uuid"],
-            filters={"percentiel": percentiel}
-        ))
-    
+
+        acties.append(
+            ActieKnop(
+                type="SELECTEER_BUURTEN",
+                label=f"📋 {label_prefix}: {indicatoren[0]['naam']}",
+                indicator_uuid=indicatoren[0]["uuid"],
+                filters={"percentiel": percentiel},
+            )
+        )
+
     # Bij rapport-intent of als er meerdere indicatoren zijn
     if intent == "MAAK_RAPPORT" or (intent == "VERBIND_THEMAS" and len(indicatoren) >= 2):
         # Probeer een thema af te leiden uit de categorieën
         categorieen = list(set(i.get("categorie", "") for i in indicatoren[:4] if i.get("categorie")))
         thema_label = " & ".join(categorieen[:2]) if categorieen else "Analyse"
-        
-        acties.append(ActieKnop(
-            type="MAAK_RAPPORT",
-            label=f"📄 Rapport: {thema_label}",
-            thema=thema_label.lower().replace(" ", "_")
-        ))
-    
+
+        acties.append(
+            ActieKnop(
+                type="MAAK_RAPPORT", label=f"📄 Rapport: {thema_label}", thema=thema_label.lower().replace(" ", "_")
+            )
+        )
+
     # Extra indicatoren op kaart (2e en 3e)
     for ind in indicatoren[1:3]:
-        acties.append(ActieKnop(
-            type="TOON_OP_KAART",
-            label=f"🗺 Toon: {ind['naam']}",
-            indicator_uuid=ind["uuid"]
-        ))
-    
+        acties.append(ActieKnop(type="TOON_OP_KAART", label=f"🗺 Toon: {ind['naam']}", indicator_uuid=ind["uuid"]))
+
     return acties
 
-def vaste_toelichting(indicatoren: List[Dict[str, Any]]) -> str:
+
+def vaste_toelichting(indicatoren: list[dict[str, Any]]) -> str:
     """Toelichting zonder taalmodel: wat er gevonden is."""
     if not indicatoren:
         return "Ik vind geen indicator die goed bij deze vraag past. Probeer een ander woord."
@@ -305,33 +321,42 @@ def vaste_toelichting(indicatoren: List[Dict[str, Any]]) -> str:
 # Datavraag (#149): grounded antwoord met cijfers uit de database
 # ============================================================================
 
-def datavraag_acties(resultaat: Dict[str, Any]) -> List[ActieKnop]:
+
+def datavraag_acties(resultaat: dict[str, Any]) -> list[ActieKnop]:
     """Toon op kaart (indicator + gebieden), Open Kompas en Rapport, met de bestaande actietypes."""
     gebied_ids = resultaat.get("gebied_ids") or None
     gebiedstype_id = resultaat.get("gebiedstype_id")
     gemeente_code = resultaat.get("gemeente_code")
     acties = []
     for f in resultaat.get("feiten", [])[:2]:
-        acties.append(ActieKnop(
-            type="TOON_OP_KAART",
-            label=f"🗺 Toon op kaart: {f['indicator']}",
-            indicator_uuid=f["indicator_uuid"],
-            gebied_ids=gebied_ids,
-            gebiedstype_id=gebiedstype_id,
-            gemeente_code=gemeente_code,
-        ))
+        acties.append(
+            ActieKnop(
+                type="TOON_OP_KAART",
+                label=f"🗺 Toon op kaart: {f['indicator']}",
+                indicator_uuid=f["indicator_uuid"],
+                gebied_ids=gebied_ids,
+                gebiedstype_id=gebiedstype_id,
+                gemeente_code=gemeente_code,
+            )
+        )
     if not acties:
         for t in resultaat.get("indicatoren", [])[:1]:
-            acties.append(ActieKnop(type="TOON_OP_KAART", label=f"🗺 Toon op kaart: {t.naam}",
-                                    indicator_uuid=t.uuid))
+            acties.append(ActieKnop(type="TOON_OP_KAART", label=f"🗺 Toon op kaart: {t.naam}", indicator_uuid=t.uuid))
     if gebied_ids:
-        acties.append(ActieKnop(type="OPEN_KOMPAS", label="🧭 Open Kompas", gebied_ids=gebied_ids,
-                                gebiedstype_id=gebiedstype_id, gemeente_code=gemeente_code))
+        acties.append(
+            ActieKnop(
+                type="OPEN_KOMPAS",
+                label="🧭 Open Kompas",
+                gebied_ids=gebied_ids,
+                gebiedstype_id=gebiedstype_id,
+                gemeente_code=gemeente_code,
+            )
+        )
         acties.append(ActieKnop(type="MAAK_RAPPORT", label="📄 Rapport", gebied_ids=gebied_ids))
     return acties
 
 
-def beantwoord_datavraag_route(vraag: str, context: Dict[str, Any], db: Session) -> Optional[ChatResponse]:
+def beantwoord_datavraag_route(vraag: str, context: dict[str, Any], db: Session) -> ChatResponse | None:
     """ChatResponse voor een datavraag, of None (dan de gewone navigatieroute)."""
     zoeker = {}
 
@@ -347,8 +372,9 @@ def beantwoord_datavraag_route(vraag: str, context: Dict[str, Any], db: Session)
     def vraag_llm(systeem: str, gebruiker: str, bronnen=None):
         # AI-usecase A (#307): dicht → geen aanroep, de datavraag valt terug op de vaste tekst
         systeem = llm.get_system_prompt("chat_datavraag", systeem)
-        antwoord = llm._call_llm(systeem, gebruiker, context_name="Chat Datavraag", usecase=ai_vrijgave.A,
-                                 taak=vraag, bronnen=bronnen)
+        antwoord = llm._call_llm(
+            systeem, gebruiker, context_name="Chat Datavraag", usecase=ai_vrijgave.A, taak=vraag, bronnen=bronnen
+        )
         if antwoord.get("geweigerd"):
             geweigerd["A"] = True
         return antwoord
@@ -358,29 +384,42 @@ def beantwoord_datavraag_route(vraag: str, context: Dict[str, Any], db: Session)
         return None
     meldingen = [ai_vrijgave.melding(ai_vrijgave.A)] if geweigerd else []
     ai_usecases = (["A"] if resultaat["llm_gebruikt"] else []) + (
-        ["C"] if zoeker.get("service") is not None and not zoeker["service"].zonder_betekenis else [])
+        ["C"] if zoeker.get("service") is not None and not zoeker["service"].zonder_betekenis else []
+    )
 
     feiten = resultaat["feiten"]
     gegevens = [
         Gegeven(
-            indicator_uuid=f["indicator_uuid"], indicator=f["indicator"], gebied_id=w["gebied_id"],
-            gebied=w["gebied"], waarde=w["waarde"], jaar=w.get("jaar"), eenheid=f["eenheid"] or None,
-            richting=f["richting"], rang_hoog=w["rang_hoog"], aantal_gebieden=f["aantal_gebieden"],
+            indicator_uuid=f["indicator_uuid"],
+            indicator=f["indicator"],
+            gebied_id=w["gebied_id"],
+            gebied=w["gebied"],
+            waarde=w["waarde"],
+            jaar=w.get("jaar"),
+            eenheid=f["eenheid"] or None,
+            richting=f["richting"],
+            rang_hoog=w["rang_hoog"],
+            aantal_gebieden=f["aantal_gebieden"],
             demo=w["demo"],
         )
-        for f in feiten for w in f["waarden"]
+        for f in feiten
+        for w in f["waarden"]
     ]
-    bronnen = [BronRegel(indicator=f["indicator"], bron=f["bron"], jaren=[j for j in f["jaren"] if j])
-               for f in feiten]
+    bronnen = [BronRegel(indicator=f["indicator"], bron=f["bron"], jaren=[j for j in f["jaren"] if j]) for f in feiten]
     indicatoren_out = [
-        IndicatorResultaat(uuid=t.uuid, naam=t.naam, relevantie=round(min(t.score, 1.0), 4),
-                           relevantie_label="sterk" if t.soort in ("specifiek", "lexicaal") or t.score >= 0.6 else "matig")
+        IndicatorResultaat(
+            uuid=t.uuid,
+            naam=t.naam,
+            relevantie=round(min(t.score, 1.0), 4),
+            relevantie_label="sterk" if t.soort in ("specifiek", "lexicaal") or t.score >= 0.6 else "matig",
+        )
         for t in resultaat["indicatoren"]
     ]
     AppLogger.info(
         f"DATAVRAAG: {len(feiten)} indicator(en), {len(resultaat['gebied_ids'])} gebied(en), "
         f"llm={resultaat['llm_gebruikt']}, verworpen getallen={resultaat['ongegrond']}",
-        category="LLM_CHAT")
+        category="LLM_CHAT",
+    )
     return ChatResponse(
         intent="DATAVRAAG",
         narrative=resultaat["narrative"],
@@ -388,13 +427,17 @@ def beantwoord_datavraag_route(vraag: str, context: Dict[str, Any], db: Session)
         indicatoren=indicatoren_out,
         bronnen=bronnen,
         gegevens=gegevens,
-        kaart_actie=({
-            "gebiedstype_id": resultaat.get("gebiedstype_id"),
-            "gemeente_code": resultaat.get("gemeente_code"),
-            "indicator_uuid": feiten[0]["indicator_uuid"],
-            "indicator": feiten[0]["indicator"],
-            "gebied_ids": resultaat["gebied_ids"],
-        } if feiten and resultaat.get("gebied_ids") else None),
+        kaart_actie=(
+            {
+                "gebiedstype_id": resultaat.get("gebiedstype_id"),
+                "gemeente_code": resultaat.get("gemeente_code"),
+                "indicator_uuid": feiten[0]["indicator_uuid"],
+                "indicator": feiten[0]["indicator"],
+                "gebied_ids": resultaat["gebied_ids"],
+            }
+            if feiten and resultaat.get("gebied_ids")
+            else None
+        ),
         melding=" ".join(meldingen) or None,
         ai_usecases=ai_usecases,
         aanname=resultaat.get("aanname"),
@@ -416,12 +459,10 @@ def beantwoord_datavraag_route(vraag: str, context: Dict[str, Any], db: Session)
 # Chat Endpoint
 # ============================================================================
 
+
 # LLM_RATE_LIMIT per minuut per IP (#203)
 @router.post("", response_model=ChatResponse, dependencies=[Depends(beperk_llm)])
-def chat(
-    request: ChatRequest,
-    db: Session = Depends(get_db)
-):
+def chat(request: ChatRequest, db: Session = Depends(get_db)):
     """
     D-Omni Assistant: Verwerkt een Nederlandstalige vraag en retourneert
     een Command Dispatch JSON met intent, narrative, actie-knoppen en
@@ -429,9 +470,9 @@ def chat(
     """
     vraag = request.vraag.strip()
     context = request.context or {}
-    
+
     AppLogger.info(f"Chat vraag ontvangen: '{vraag[:80]}'", category="LLM_CHAT")
-    
+
     # ------------------------------------------------
     # Stap 0a: Help/Onboarding — instant, geen LLM nodig
     # ------------------------------------------------
@@ -466,26 +507,26 @@ def chat(
                 acties.append(ActieKnop(**a))
             except Exception:
                 pass
-                
+
         return ChatResponse(
             intent="SCENARIO_" + scenario.rol_code.upper(),
             narrative=scenario.narrative,
             acties=acties,
             indicatoren=[],
-            debug={"mode": "deterministic_scenario", "rol_code": scenario.rol_code}
+            debug={"mode": "deterministic_scenario", "rol_code": scenario.rol_code},
         )
-    
+
     # ------------------------------------------------
     # Stap 1: Semantisch zoeken naar relevante indicatoren
     # ------------------------------------------------
     search_service = AISearchService(db, functie="Chat: zoeken")
     search_results = search_service.search_indicators(vraag, limit=5)
-    
+
     # Check op foutmeldingen (bijv. AI model niet geladen)
     if search_results and "error" in search_results[0]:
         AppLogger.error(f"Fout bij zoeken indicatoren: {search_results[0]['error']}", category="LLM_CHAT")
         raise HTTPException(status_code=503, detail="AI zoekfunctionaliteit tijdelijk niet beschikbaar.")
-        
+
     # AI-zoeken kapt zelf af (#233): alleen resultaten dicht bij de beste, liever 2 goede dan 8 matige
     relevant_results = search_results
     if not relevant_results:
@@ -494,18 +535,18 @@ def chat(
         melding = "Geen sterke treffer: controleer of deze indicatoren zijn wat je zoekt."
     else:
         melding = None
-    
+
     # ------------------------------------------------
     # Stap 2 & 3: Intelligent Intent & Action Dispatching (LLM-driven)
     # ------------------------------------------------
     llm_service = LLMService(db)
     # AI-usecase A (#307): dicht → regelgebaseerd, zonder taalmodel (de terugval hieronder)
     a_open = ai_vrijgave.poort(ai_vrijgave.A, "Chat", taak=vraag)
-    intelligent_response = llm_service.detect_intent_and_actions(
-        vraag=vraag,
-        indicatoren=relevant_results,
-        context=context
-    ) if a_open else None
+    intelligent_response = (
+        llm_service.detect_intent_and_actions(vraag=vraag, indicatoren=relevant_results, context=context)
+        if a_open
+        else None
+    )
 
     a_gebruikt = False
     if not a_open:
@@ -526,47 +567,45 @@ def chat(
             if len(acties_data) < aantal_voor:
                 AppLogger.warning(
                     f"{aantal_voor - len(acties_data)} ongeldige SELECTEER_GEMEENTE-actie(s) weggelaten",
-                    category="LLM_CHAT")
+                    category="LLM_CHAT",
+                )
         except Exception as e:
             db.rollback()
             AppLogger.error(f"Gemeentevalidatie mislukt, gemeente-acties weggelaten: {e}", category="LLM_CHAT")
-            acties_data = [a for a in (acties_data or [])
-                           if not (isinstance(a, dict) and a.get("type") == "SELECTEER_GEMEENTE")]
-        
+            acties_data = [
+                a for a in (acties_data or []) if not (isinstance(a, dict) and a.get("type") == "SELECTEER_GEMEENTE")
+            ]
+
         # Mappen van LLM actie-dicts naar ActieKnop Pydantic modellen
         acties = []
         for a in acties_data:
             try:
-                acties.append(ActieKnop(
-                    type=a.get("type", "ZOEK_RESULTATEN"),
-                    label=a.get("label", "Bekijk info"),
-                    indicator_uuid=a.get("indicator_uuid"),
-                    gemeente_code=a.get("gemeente_code"),
-                    gebiedstype_id=a.get("gebiedstype_id"),
-                    config_id=a.get("config_id"),
-                    filters=a.get("filters"),
-                    thema=a.get("thema")
-                ))
+                acties.append(
+                    ActieKnop(
+                        type=a.get("type", "ZOEK_RESULTATEN"),
+                        label=a.get("label", "Bekijk info"),
+                        indicator_uuid=a.get("indicator_uuid"),
+                        gemeente_code=a.get("gemeente_code"),
+                        gebiedstype_id=a.get("gebiedstype_id"),
+                        config_id=a.get("config_id"),
+                        filters=a.get("filters"),
+                        thema=a.get("thema"),
+                    )
+                )
             except Exception:
                 continue
-                
+
         a_gebruikt = True
-        debug_info = {
-            "mode": "intelligent_dispatcher",
-            "model": intelligent_response.get("debug", {}).get("model")
-        }
+        debug_info = {"mode": "intelligent_dispatcher", "model": intelligent_response.get("debug", {}).get("model")}
     else:
         # FALLBACK: Oude rule-based logica als LLM faalt of ongeldige JSON geeft
         AppLogger.warning("Intelligent dispatcher faalde, terugval naar legacy mode", category="LLM_CHAT")
         intent = classify_intent(vraag)
         acties = generate_acties(intent, relevant_results, vraag)
-        
+
         try:
             llm_response = llm_service.generate_chat_narrative(
-                vraag=vraag,
-                indicatoren=relevant_results,
-                intent=intent,
-                context=context
+                vraag=vraag, indicatoren=relevant_results, intent=intent, context=context
             )
             a_gebruikt = not llm_response.get("error")
             narrative = llm_response.get("text", "") if a_gebruikt else vaste_toelichting(relevant_results)
@@ -591,7 +630,7 @@ def chat(
         )
         for r in relevant_results
     ]
-    
+
     return ChatResponse(
         intent=intent,
         narrative=narrative,
@@ -599,7 +638,7 @@ def chat(
         indicatoren=indicatoren_out,
         melding=melding,
         ai_usecases=(["A"] if a_gebruikt else []) + ([] if search_service.zonder_betekenis else ["C"]),
-        debug=debug_info
+        debug=debug_info,
     )
 
 

@@ -10,6 +10,7 @@ GEO = {"gpkg", "geojson", "shp", "fgb"}
 def _naar_28992(geom, epsg):
     from fiona.transform import transform_geom
     from shapely.geometry import mapping, shape
+
     if not epsg or epsg == 28992:
         return geom
     return shape(transform_geom(f"EPSG:{epsg}", "EPSG:28992", mapping(geom)))
@@ -22,6 +23,7 @@ def lees_geo(pad, laag=None):
         from shapely.geometry import shape
     except ImportError as e:
         from omnitwin.bronadapters import GeenBron
+
         raise GeenBron(f"fiona/shapely ontbreekt: {e}")
     uit = []
     with fiona.open(pad, layer=laag or fiona.listlayers(pad)[0]) as src:
@@ -41,6 +43,7 @@ def lees_geojson(pad, epsg=None):
         from shapely.geometry import shape
     except ImportError as e:  # slanke omgeving (CI): bron hier niet te lezen, overgeslagen
         from omnitwin.bronadapters import GeenBron
+
         raise GeenBron(f"shapely ontbreekt: {e}")
     data = json.loads(Path(pad).read_text(encoding="utf-8"))
     crs = ((data.get("crs") or {}).get("properties") or {}).get("name", "")
@@ -75,4 +78,5 @@ def lees_bestand(pad, formaat=None, laag=None, tabel="data", crs=None):
     if formaat in GEO:
         return {tabel: lees_geo(pad, laag)}
     from omnitwin.bronadapters import BronFout
+
     raise BronFout(f"onbekend formaat {formaat!r} voor {pad.name}")

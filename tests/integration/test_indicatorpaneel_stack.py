@@ -52,8 +52,9 @@ def inloggen(naam, wachtwoord):
     r = s.get(f"{BASE_URL}/api/admin/auth/oidc/login?terug=/", headers=HTML, timeout=TIMEOUT)
     assert "kc-form-login" in r.text, r.url
     actie = html.unescape(re.search(r'<form[^>]*id="kc-form-login"[^>]*action="([^"]+)"', r.text).group(1))
-    r = s.post(actie, data={"username": naam, "password": wachtwoord, "credentialId": ""}, headers=HTML,
-               timeout=TIMEOUT)
+    r = s.post(
+        actie, data={"username": naam, "password": wachtwoord, "credentialId": ""}, headers=HTML, timeout=TIMEOUT
+    )
     assert r.status_code == 200 and r.url.rstrip("/") == BASE_URL, (r.status_code, r.url)
     return s
 
@@ -67,8 +68,11 @@ def anoniem():
 
 @pytest.fixture(scope="module")
 def indicator(anoniem):
-    r = anoniem.get(f"{BASE_URL}/api/data/indicatoren",
-                    params={"select": "uuid,naam,eenheid", "naam": f"eq.{INDICATOR}"}, timeout=TIMEOUT)
+    r = anoniem.get(
+        f"{BASE_URL}/api/data/indicatoren",
+        params={"select": "uuid,naam,eenheid", "naam": f"eq.{INDICATOR}"},
+        timeout=TIMEOUT,
+    )
     assert r.status_code == 200, r.text
     if not r.json():
         pytest.skip(f"indicator {INDICATOR} niet geladen (use case hittestress)")
@@ -77,17 +81,24 @@ def indicator(anoniem):
 
 @pytest.fixture(scope="module")
 def buurten(anoniem):
-    r = anoniem.get(f"{BASE_URL}/api/data/gebieden", params={"select": "gebiedstype_id", "id": f"eq.{BOLSWARD_ZUIDOOST}"},
-                    timeout=TIMEOUT)
+    r = anoniem.get(
+        f"{BASE_URL}/api/data/gebieden",
+        params={"select": "gebiedstype_id", "id": f"eq.{BOLSWARD_ZUIDOOST}"},
+        timeout=TIMEOUT,
+    )
     assert r.status_code == 200 and r.json(), r.text
     return r.json()[0]["gebiedstype_id"]
 
 
 # ── Paneel en CSV ────────────────────────────────────────────────────────────
 
+
 def test_paneel_met_eenheid_bron_en_gemeentegemiddelde(anoniem, indicator):
-    r = anoniem.get(f"{BASE_URL}/api/gebiedsmonitor/indicatorpaneel",
-                    params={"indicator_uuid": indicator["uuid"], "gebied_ids": BOLSWARD_ZUIDOOST}, timeout=TIMEOUT)
+    r = anoniem.get(
+        f"{BASE_URL}/api/gebiedsmonitor/indicatorpaneel",
+        params={"indicator_uuid": indicator["uuid"], "gebied_ids": BOLSWARD_ZUIDOOST},
+        timeout=TIMEOUT,
+    )
     assert r.status_code == 200, r.text
     d = r.json()
     assert d["indicator"]["naam"] == INDICATOR and d["indicator"]["eenheid"] == indicator["eenheid"]
@@ -100,8 +111,16 @@ def test_paneel_met_eenheid_bron_en_gemeentegemiddelde(anoniem, indicator):
 
 
 def test_paneel_zonder_selectie_alleen_gemiddelde(anoniem, indicator, buurten):
-    r = anoniem.get(f"{BASE_URL}/api/gebiedsmonitor/indicatorpaneel", timeout=TIMEOUT, params={
-        "indicator_uuid": indicator["uuid"], "gebiedstype_id": buurten, "gemeente_code": "1900", "gebieden": "false"})
+    r = anoniem.get(
+        f"{BASE_URL}/api/gebiedsmonitor/indicatorpaneel",
+        timeout=TIMEOUT,
+        params={
+            "indicator_uuid": indicator["uuid"],
+            "gebiedstype_id": buurten,
+            "gemeente_code": "1900",
+            "gebieden": "false",
+        },
+    )
     assert r.status_code == 200, r.text
     d = r.json()
     assert d["gebieden"] == [] and d["gemeentegemiddelden"][0]["gemeenteCode"] == "1900"
@@ -110,20 +129,25 @@ def test_paneel_zonder_selectie_alleen_gemiddelde(anoniem, indicator, buurten):
 def test_paneel_ongeldige_invoer(anoniem, indicator):
     url = f"{BASE_URL}/api/gebiedsmonitor/indicatorpaneel"
     assert anoniem.get(url, params={"indicator_uuid": "geen-uuid"}, timeout=TIMEOUT).status_code == 422
-    assert anoniem.get(url, params={"indicator_uuid": indicator["uuid"], "gebied_ids": "BU1;x"},
-                       timeout=TIMEOUT).status_code == 400
+    assert (
+        anoniem.get(
+            url, params={"indicator_uuid": indicator["uuid"], "gebied_ids": "BU1;x"}, timeout=TIMEOUT
+        ).status_code
+        == 400
+    )
     onbekend = "00000000-0000-4000-8000-000000000000"
     assert anoniem.get(url, params={"indicator_uuid": onbekend}, timeout=TIMEOUT).status_code == 400
 
 
 def test_csv_formaat(anoniem, indicator):
-    r = anoniem.get(f"{BASE_URL}/api/gebiedsmonitor/indicatorpaneel.csv",
-                    params={"indicator_uuid": indicator["uuid"], "gebied_ids": f"{BOLSWARD_ZUIDOOST},BU19000001"},
-                    timeout=TIMEOUT)
+    r = anoniem.get(
+        f"{BASE_URL}/api/gebiedsmonitor/indicatorpaneel.csv",
+        params={"indicator_uuid": indicator["uuid"], "gebied_ids": f"{BOLSWARD_ZUIDOOST},BU19000001"},
+        timeout=TIMEOUT,
+    )
     assert r.status_code == 200, r.text
     assert r.headers["content-type"].startswith("text/csv") and "charset=utf-8" in r.headers["content-type"]
-    assert re.match(r'attachment; filename="indicator-[\w-]+-\d{4}-\d{2}-\d{2}\.csv"',
-                    r.headers["content-disposition"])
+    assert re.match(r'attachment; filename="indicator-[\w-]+-\d{4}-\d{2}-\d{2}\.csv"', r.headers["content-disposition"])
     assert r.content[:3] == b"\xef\xbb\xbf", "geen BOM"
     rijen = list(csv.reader(io.StringIO(r.content.decode("utf-8-sig")), delimiter=";"))
     assert rijen[0] == ["gebied-code", "gebied-naam", "indicator", "jaar", "waarde", "eenheid", "bron", "status"]
@@ -133,21 +157,27 @@ def test_csv_formaat(anoniem, indicator):
     gemiddelde = [x for x in rijen if x[7] == "gemeentegemiddelde"]
     assert gemiddelde and gemiddelde[0][0] == "1900"
     # Waarde in de CSV = waarde in het paneel (zelfde rijen)
-    paneel = anoniem.get(f"{BASE_URL}/api/gebiedsmonitor/indicatorpaneel",
-                         params={"indicator_uuid": indicator["uuid"], "gebied_ids": BOLSWARD_ZUIDOOST},
-                         timeout=TIMEOUT).json()
+    paneel = anoniem.get(
+        f"{BASE_URL}/api/gebiedsmonitor/indicatorpaneel",
+        params={"indicator_uuid": indicator["uuid"], "gebied_ids": BOLSWARD_ZUIDOOST},
+        timeout=TIMEOUT,
+    ).json()
     assert float(bolsward[4].replace(",", ".")) == pytest.approx(paneel["gebieden"][0]["waarde"], abs=1e-6)
 
 
 # ── /api/mijn ────────────────────────────────────────────────────────────────
 
-@pytest.mark.parametrize("methode, pad, body", [
-    ("get", "/api/mijn/favorieten", None),
-    ("post", "/api/mijn/favorieten", {"naam": "x", "gebiedIds": [BOLSWARD_ZUIDOOST]}),
-    ("delete", "/api/mijn/favorieten/7b1c6f2e-1d1a-4c1e-9c43-6a4b7a0f3c11", None),
-    ("get", "/api/mijn/instellingen", None),
-    ("put", "/api/mijn/instellingen", {"kaartpositie": {"longitude": 5.5, "latitude": 53, "zoom": 10}}),
-])
+
+@pytest.mark.parametrize(
+    "methode, pad, body",
+    [
+        ("get", "/api/mijn/favorieten", None),
+        ("post", "/api/mijn/favorieten", {"naam": "x", "gebiedIds": [BOLSWARD_ZUIDOOST]}),
+        ("delete", "/api/mijn/favorieten/7b1c6f2e-1d1a-4c1e-9c43-6a4b7a0f3c11", None),
+        ("get", "/api/mijn/instellingen", None),
+        ("put", "/api/mijn/instellingen", {"kaartpositie": {"longitude": 5.5, "latitude": 53, "zoom": 10}}),
+    ],
+)
 def test_mijn_anoniem_401(methode, pad, body):
     r = getattr(requests, methode)(f"{BASE_URL}{pad}", timeout=TIMEOUT, **({"json": body} if body else {}))
     assert r.status_code == 401, (pad, r.status_code, r.text[:200])
@@ -171,14 +201,18 @@ def test_favorieten_alleen_eigen(twee_gebruikers, buurten):
     naam = "Integratietest #258"
     _opruimen(gebruiker, naam)
     try:
-        r = gebruiker.post(f"{BASE_URL}/api/mijn/favorieten", timeout=TIMEOUT, json={
-            "naam": naam, "gebiedIds": [BOLSWARD_ZUIDOOST, "BU19000001"], "gebiedstypeId": buurten})
+        r = gebruiker.post(
+            f"{BASE_URL}/api/mijn/favorieten",
+            timeout=TIMEOUT,
+            json={"naam": naam, "gebiedIds": [BOLSWARD_ZUIDOOST, "BU19000001"], "gebiedstypeId": buurten},
+        )
         assert r.status_code == 201, r.text
         fav = r.json()
         assert fav["gebiedIds"] == [BOLSWARD_ZUIDOOST, "BU19000001"] and fav["gebiedstypeId"] == buurten
         # Zelfde naam nog eens: vervangen (200), niet dubbel
-        r = gebruiker.post(f"{BASE_URL}/api/mijn/favorieten", timeout=TIMEOUT,
-                           json={"naam": naam, "gebiedIds": [BOLSWARD_ZUIDOOST]})
+        r = gebruiker.post(
+            f"{BASE_URL}/api/mijn/favorieten", timeout=TIMEOUT, json={"naam": naam, "gebiedIds": [BOLSWARD_ZUIDOOST]}
+        )
         assert r.status_code == 200 and r.json()["id"] == fav["id"]
         eigen = gebruiker.get(f"{BASE_URL}/api/mijn/favorieten", timeout=TIMEOUT).json()["favorieten"]
         assert [f["naam"] for f in eigen].count(naam) == 1
@@ -196,8 +230,11 @@ def test_favorieten_alleen_eigen(twee_gebruikers, buurten):
 
 def test_favoriet_ongeldig_400(twee_gebruikers):
     gebruiker, _ = twee_gebruikers
-    for body in ({"naam": " ", "gebiedIds": [BOLSWARD_ZUIDOOST]}, {"naam": "x", "gebiedIds": []},
-                 {"naam": "x", "gebiedIds": ["BU 1"]}):
+    for body in (
+        {"naam": " ", "gebiedIds": [BOLSWARD_ZUIDOOST]},
+        {"naam": "x", "gebiedIds": []},
+        {"naam": "x", "gebiedIds": ["BU 1"]},
+    ):
         r = gebruiker.post(f"{BASE_URL}/api/mijn/favorieten", json=body, timeout=TIMEOUT)
         assert r.status_code == 400, (body, r.status_code, r.text)
 
@@ -209,8 +246,9 @@ def test_kaartpositie_per_gebruiker(twee_gebruikers):
     assert r.status_code == 200, r.text
     assert gebruiker.get(f"{BASE_URL}/api/mijn/instellingen", timeout=TIMEOUT).json()["kaartpositie"] == positie
     assert admin.get(f"{BASE_URL}/api/mijn/instellingen", timeout=TIMEOUT).json()["kaartpositie"] != positie
-    r = gebruiker.put(f"{BASE_URL}/api/mijn/instellingen", json={"kaartpositie": {**positie, "zoom": 99}},
-                      timeout=TIMEOUT)
+    r = gebruiker.put(
+        f"{BASE_URL}/api/mijn/instellingen", json={"kaartpositie": {**positie, "zoom": 99}}, timeout=TIMEOUT
+    )
     assert r.status_code in (400, 422)
 
 

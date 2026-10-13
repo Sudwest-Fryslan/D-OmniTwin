@@ -60,8 +60,10 @@ def _log(request: Request, exc: Exception, correlatie_id: str, status: int) -> N
         samenvatting,
         category="API",
         endpoint=pad,
-        extra={"correlatie_id": correlatie_id,
-               "traceback": "".join(traceback.format_exception(type(exc), exc, exc.__traceback__))[-8000:]},
+        extra={
+            "correlatie_id": correlatie_id,
+            "traceback": "".join(traceback.format_exception(type(exc), exc, exc.__traceback__))[-8000:],
+        },
     )
 
 
@@ -74,8 +76,11 @@ async def _ongeldige_waarde(request: Request, exc: Exception) -> JSONResponse:
 async def _conflict(request: Request, exc: Exception) -> JSONResponse:
     cid = nieuwe_correlatie_id()
     _log(request, exc, cid, 409)
-    return _antwoord(409, "Conflict met bestaande gegevens (bijvoorbeeld een naam die al bestaat "
-                          "of een verwijzing die niet klopt).", cid)
+    return _antwoord(
+        409,
+        "Conflict met bestaande gegevens (bijvoorbeeld een naam die al bestaat of een verwijzing die niet klopt).",
+        cid,
+    )
 
 
 async def _interne_fout(request: Request, exc: Exception) -> JSONResponse:

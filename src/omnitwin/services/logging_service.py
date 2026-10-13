@@ -13,14 +13,15 @@ Config wordt uit log_config tabel geladen en gecached (refresh elke 60s).
 
 import asyncio
 import logging
-import queue
 import logging.handlers
+import queue
 import time
-from pathlib import Path
-from typing import Optional, Dict, Any
 from datetime import datetime
+from pathlib import Path
+from typing import Any
 
 from sqlalchemy import text
+
 from omnitwin.config import instellingen
 from omnitwin.database import SessionLocal
 
@@ -38,8 +39,15 @@ LEVEL_MAP = {
 LEVEL_PRIORITY = {"DEBUG": 0, "INFO": 1, "WARNING": 2, "ERROR": 3, "CRITICAL": 4}
 
 VALID_CATEGORIES = {
-    "SERVER", "API", "AUTH", "KOMPAS", "KAART",
-    "RAPPORT", "LLM_CHAT", "DATABASE", "ADMIN",
+    "SERVER",
+    "API",
+    "AUTH",
+    "KOMPAS",
+    "KAART",
+    "RAPPORT",
+    "LLM_CHAT",
+    "DATABASE",
+    "ADMIN",
 }
 
 
@@ -50,7 +58,7 @@ class _ConfigCache:
     """In-memory cache van log_config tabel. Refresht elke 60 seconden."""
 
     def __init__(self):
-        self._config: Dict[str, Dict[str, Any]] = {}
+        self._config: dict[str, dict[str, Any]] = {}
         self._last_refresh: float = 0
         self._refresh_interval: float = 60.0  # seconden
 
@@ -63,10 +71,7 @@ class _ConfigCache:
             db = SessionLocal()
             try:
                 rows = db.execute(text("SELECT category, level, enabled FROM log_config")).fetchall()
-                self._config = {
-                    row[0]: {"level": row[1], "enabled": row[2]}
-                    for row in rows
-                }
+                self._config = {row[0]: {"level": row[1], "enabled": row[2]} for row in rows}
                 self._last_refresh = time.time()
             finally:
                 db.close()
@@ -132,7 +137,7 @@ class AsyncLogQueue:
         # Flush remaining
         await self._flush_batch()
 
-    def enqueue(self, entry: Dict[str, Any]):
+    def enqueue(self, entry: dict[str, Any]):
         """Voeg een log entry toe aan de queue (fire-and-forget)."""
         if self._queue is None:
             return
@@ -140,6 +145,7 @@ class AsyncLogQueue:
             self._queue.put_nowait(entry)
         except queue.Full:
             import sys
+
             print(
                 "WARNING: Log queue vol — oudste entries worden overgeslagen",
                 file=sys.stderr,
@@ -180,12 +186,12 @@ class AsyncLogQueue:
                 for entry in batch:
                     db.execute(
                         text("""
-                            INSERT INTO app_logs 
-                                (timestamp, level, category, message, user_id, 
+                            INSERT INTO app_logs
+                                (timestamp, level, category, message, user_id,
                                  session_id, ip_address, endpoint, response_time_ms, extra)
-                            VALUES 
+                            VALUES
                                 (:timestamp, :level, :category, :message, :user_id,
-                                 :session_id, :ip_address, :endpoint, :response_time_ms, 
+                                 :session_id, :ip_address, :endpoint, :response_time_ms,
                                  CAST(:extra AS jsonb))
                         """),
                         {
@@ -290,12 +296,12 @@ class AppLogger:
         level: str,
         message: str,
         category: str = "SERVER",
-        user_id: Optional[str] = None,
-        session_id: Optional[str] = None,
-        ip_address: Optional[str] = None,
-        endpoint: Optional[str] = None,
-        response_time_ms: Optional[int] = None,
-        extra: Optional[Dict[str, Any]] = None,
+        user_id: str | None = None,
+        session_id: str | None = None,
+        ip_address: str | None = None,
+        endpoint: str | None = None,
+        response_time_ms: int | None = None,
+        extra: dict[str, Any] | None = None,
     ):
         """Interne log methode."""
         # 1. Check config cache
@@ -309,18 +315,21 @@ class AppLogger:
 
         # 3. Enqueue voor DB schrijven
         import json
-        _log_queue.enqueue({
-            "timestamp": datetime.utcnow(),
-            "level": level,
-            "category": category,
-            "message": message,
-            "user_id": user_id,
-            "session_id": session_id,
-            "ip_address": ip_address,
-            "endpoint": endpoint,
-            "response_time_ms": response_time_ms,
-            "extra": json.dumps(extra) if extra else "null",
-        })
+
+        _log_queue.enqueue(
+            {
+                "timestamp": datetime.utcnow(),
+                "level": level,
+                "category": category,
+                "message": message,
+                "user_id": user_id,
+                "session_id": session_id,
+                "ip_address": ip_address,
+                "endpoint": endpoint,
+                "response_time_ms": response_time_ms,
+                "extra": json.dumps(extra) if extra else "null",
+            }
+        )
 
     @classmethod
     def debug(cls, message: str, **kwargs):
@@ -352,8 +361,7 @@ async def init_logging():
     _setup_python_logging(log_level)
     _config_cache.refresh()
     await _log_queue.start()
-    AppLogger.info("Logging infrastructuur geïnitialiseerd", category="SERVER",
-                   extra={"log_level": log_level})
+    AppLogger.info("Logging infrastructuur geïnitialiseerd", category="SERVER", extra={"log_level": log_level})
 
 
 async def shutdown_logging():

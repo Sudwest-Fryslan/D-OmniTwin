@@ -29,7 +29,12 @@ playwright = pytest.importorskip("playwright.sync_api")
 expect = playwright.expect
 
 from e2e_helpers import (  # noqa: E402
-    PAGINA_TIMEOUT_MS, geschaald, klik_chatactie, stel_wachttijden_in, traag_ms, wacht_op_kaart_in_rust,
+    PAGINA_TIMEOUT_MS,
+    geschaald,
+    klik_chatactie,
+    stel_wachttijden_in,
+    traag_ms,
+    wacht_op_kaart_in_rust,
     zonder_basiskaarttegels,
 )
 
@@ -86,7 +91,8 @@ def page(browser):
     pg.wait_for_function(
         "() => window.state && window.state.deckgl && window.chatPanel"
         " && document.querySelectorAll('#gebiedstype-select option').length > 1",
-        polling=100, timeout=geschaald(60_000),
+        polling=100,
+        timeout=geschaald(60_000),
     )
     yield pg
     context.close()
@@ -98,8 +104,9 @@ def test_datavraag_in_de_chat(page, uc):
     page.locator("#chat-toggle-btn").click()
     invoer = page.locator("#chat-input")
     invoer.fill(u["persona"]["vraag"])
-    with page.expect_response(lambda r: r.url.endswith("/api/chat") and r.request.method == "POST",
-                              timeout=LLM_TIMEOUT_MS) as resp:
+    with page.expect_response(
+        lambda r: r.url.endswith("/api/chat") and r.request.method == "POST", timeout=LLM_TIMEOUT_MS
+    ) as resp:
         invoer.press("Enter")
     data = resp.value.json()
     assert data["intent"] == "DATAVRAAG", data
@@ -115,7 +122,8 @@ def test_datavraag_in_de_chat(page, uc):
         label = bericht.locator(f'.ai-label[data-usecase="{code}"]')
         expect(label).to_be_visible()
         expect(label.get_by_role("link", name=re.compile("Meer informatie"))).to_have_attribute(
-            "href", f"/static/ai.html#usecase-{code}")
+            "href", f"/static/ai.html#usecase-{code}"
+        )
         expect(label.get_by_role("link", name=re.compile("Melden"))).to_have_attribute("href", re.compile(r"title="))
     expect(bericht.locator(".chat-bronregel")).to_contain_text("Bron:")
     for b in data["bronnen"]:
@@ -134,7 +142,8 @@ def test_datavraag_in_de_chat(page, uc):
     page.wait_for_function(
         "([uuid, n]) => window.state.currentIndicator === uuid && window.state.selectedGebiedIds.size === n",
         arg=[ka["indicator_uuid"], len(ka["gebied_ids"])],
-        polling=100, timeout=geschaald(60_000),
+        polling=100,
+        timeout=geschaald(60_000),
     )
     # De badge volgt pas na het laden en tekenen van de kaartdata; in de eerste test van de sessie
     # met de eerste shadercompilatie (onder --cpus=2 ruim een minuut): TRAAG_MS (#212)
@@ -144,14 +153,17 @@ def test_datavraag_in_de_chat(page, uc):
     # seconden; daarom de wachttijd voor trage stappen (TRAAG_MS, geschaald) en een vast pollinterval (#194)
     page.wait_for_function("() => (window.state.currentViewState?.zoom || 0) >= 11", polling=100, timeout=traag_ms())
     wacht_op_kaart_in_rust(page)
-    camera = page.evaluate("""(ids) => {
+    camera = page.evaluate(
+        """(ids) => {
         const set = new Set(ids); let x0 = 180, x1 = -180, y0 = 90, y1 = -90;
         const walk = a => { if (typeof a[0] === 'number') { x0 = Math.min(x0, a[0]); x1 = Math.max(x1, a[0]);
             y0 = Math.min(y0, a[1]); y1 = Math.max(y1, a[1]); } else a.forEach(walk); };
         window.state.currentData.features.filter(f => set.has(f.properties.id)).forEach(f => walk(f.geometry.coordinates));
         const v = window.state.currentViewState;
         return { lon: v.longitude, lat: v.latitude, zoom: v.zoom, bbox: [x0, y0, x1, y1] };
-    }""", ka["gebied_ids"])
+    }""",
+        ka["gebied_ids"],
+    )
     x0, y0, x1, y1 = camera["bbox"]
     marge_x, marge_y = (x1 - x0) * 1.5 + 0.02, (y1 - y0) * 1.5 + 0.02  # vrije zone naast panelen
     assert x0 - marge_x <= camera["lon"] <= x1 + marge_x and y0 - marge_y <= camera["lat"] <= y1 + marge_y, camera
@@ -166,7 +178,8 @@ def test_datavraag_in_de_chat(page, uc):
     page.wait_for_function(
         "([uuid, n]) => window.state.currentIndicator === uuid && window.state.selectedGebiedIds.size === n",
         arg=[toon["indicator_uuid"], len(toon["gebied_ids"])],
-        polling=100, timeout=geschaald(30_000),
+        polling=100,
+        timeout=geschaald(30_000),
     )
     geselecteerd = page.evaluate("() => [...window.state.selectedGebiedIds].sort()")
     assert geselecteerd == sorted(toon["gebied_ids"])
@@ -176,10 +189,13 @@ def test_vraag_van_eduard_toont_relevantie_als_woord(page):
     """#233: 'hoeveel % is bejaard bij mij in de buurt?' met Bolsward-Zuidoost als eigen buurt:
     het cijfer voor die buurt, de indicator als onderbouwing en relevantie als woord, geen percentage."""
     page.locator("#chat-toggle-btn").click()
-    with page.expect_response(lambda r: r.url.endswith("/api/chat") and r.request.method == "POST",
-                              timeout=LLM_TIMEOUT_MS) as resp:
-        page.evaluate("() => window.chatPanel.sendVraag('hoeveel % is bejaard bij mij in de buurt?',"
-                      " {huidig_gebied_id: 'BU19000002', geen_llm: true})")
+    with page.expect_response(
+        lambda r: r.url.endswith("/api/chat") and r.request.method == "POST", timeout=LLM_TIMEOUT_MS
+    ) as resp:
+        page.evaluate(
+            "() => window.chatPanel.sendVraag('hoeveel % is bejaard bij mij in de buurt?',"
+            " {huidig_gebied_id: 'BU19000002', geen_llm: true})"
+        )
     data = resp.value.json()
     assert data["intent"] == "DATAVRAAG", data
     bericht = page.locator(".chat-message-assistant").last

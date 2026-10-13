@@ -6,12 +6,18 @@ docs/testcases/01-kaartmodule/TC-01-004_kaartmodus.md,
 docs/testcases/02-kompas-detail/TC-02-003_klimaat-labels.md
 """
 
-from playwright.sync_api import expect
-
 from e2e_helpers import (
-    BOLSWARD_ZUIDOOST, TRAAG_MS, klik, laad_buurtenkaart, open_kompas, open_paneel, selecteer_buurt_via_app,
-    traag_ms, wacht_op_selectie,
+    BOLSWARD_ZUIDOOST,
+    TRAAG_MS,
+    klik,
+    laad_buurtenkaart,
+    open_kompas,
+    open_paneel,
+    selecteer_buurt_via_app,
+    traag_ms,
+    wacht_op_selectie,
 )
+from playwright.sync_api import expect
 
 INDICATOR = "Stedelijk hitte-eiland effect"  # use case hittestress
 
@@ -19,8 +25,9 @@ INDICATOR = "Stedelijk hitte-eiland effect"  # use case hittestress
 def kies_indicator(page, naam):
     """De indicatorkeuze is een eigen dropdown; de onderliggende select via de app zetten."""
     open_paneel(page, "Kaartconfiguratie")
-    with page.expect_response(lambda r: "/api/gebiedsmonitor/kaart_data/" in r.url
-                              and "indicator_uuid" in r.url and r.ok):
+    with page.expect_response(
+        lambda r: "/api/gebiedsmonitor/kaart_data/" in r.url and "indicator_uuid" in r.url and r.ok
+    ):
         page.evaluate(
             """(naam) => { const s = document.getElementById('indicator-select');
                 const o = [...s.options].find(o => o.text.startsWith(naam));
@@ -42,8 +49,9 @@ def kies_modus(page, label, verwacht_verzoek=True, percentiel=False):
     if not verwacht_verzoek:
         klik(page, knop)
         return
-    with page.expect_response(lambda r: "/api/gebiedsmonitor/kaart_data/" in r.url and r.ok
-                              and (("modus=percentiel" in r.url) == percentiel)):
+    with page.expect_response(
+        lambda r: "/api/gebiedsmonitor/kaart_data/" in r.url and r.ok and (("modus=percentiel" in r.url) == percentiel)
+    ):
         klik(page, knop)
 
 
@@ -100,8 +108,9 @@ def test_tc_01_004_label_ae(app_page):
     open_paneel(page, "Legenda")
     klassen = page.locator("#legenda-klassen li")
 
-    with page.expect_response(lambda r: "/api/gebiedsmonitor/kaart_data/" in r.url and r.ok
-                              and "modus=label" in r.url, timeout=TRAAG_MS):
+    with page.expect_response(
+        lambda r: "/api/gebiedsmonitor/kaart_data/" in r.url and r.ok and "modus=label" in r.url, timeout=TRAAG_MS
+    ):
         page.locator("#kaart-modus label", has_text="Label A–E").click()
     expect(klassen).to_have_count(5)
     expect(klassen.first).to_contain_text("label A (gunstigst)")
@@ -129,8 +138,9 @@ def test_tc_02_003_klimaat_kompas_labels(app_page):
     wacht_op_selectie(page, [BOLSWARD_ZUIDOOST])
     open_kompas(page, "Indicatordekking")
 
-    with page.expect_response(lambda r: "/api/kompas/" in r.url and f"/gebied/{BOLSWARD_ZUIDOOST}" in r.url and r.ok,
-                              timeout=TRAAG_MS):
+    with page.expect_response(
+        lambda r: "/api/kompas/" in r.url and f"/gebied/{BOLSWARD_ZUIDOOST}" in r.url and r.ok, timeout=TRAAG_MS
+    ):
         page.locator("#custom-select-trigger").click()
         page.locator("#custom-options .custom-option", has_text="Klimaat Kompas").click()
     info = page.locator("#kompas-info")
@@ -138,9 +148,7 @@ def test_tc_02_003_klimaat_kompas_labels(app_page):
     expect(info).to_contain_text("Kleur: label A–E")
     expect(info.locator(".kompas-labels li")).to_have_count(5)
     expect(info.locator(".kompas-label-melding")).to_contain_text("Voorlopige drempels (kwintielen)")
-    page.wait_for_function(
-        "() => document.querySelectorAll('#kompas-container path.kompas-arc-path').length >= 6"
-    )
+    page.wait_for_function("() => document.querySelectorAll('#kompas-container path.kompas-arc-path').length >= 6")
     labels = page.evaluate(
         "() => window.kompasViz.root.descendants().filter(d => d.data.label)"
         ".map(d => [d.data.type, d.data.name, d.data.label])"

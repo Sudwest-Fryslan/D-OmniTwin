@@ -69,8 +69,26 @@ TABELLEN = {
     2026: "86358NED",
 }
 
-FRIESE_GM_CODES = ["0059", "0060", "1891", "1940", "0072", "0074", "0080", "1970", "0085",
-                   "0086", "0088", "0090", "1900", "0093", "0737", "0096", "1949", "0098"]
+FRIESE_GM_CODES = [
+    "0059",
+    "0060",
+    "1891",
+    "1940",
+    "0072",
+    "0074",
+    "0080",
+    "1970",
+    "0085",
+    "0086",
+    "0088",
+    "0090",
+    "1900",
+    "0093",
+    "0737",
+    "0096",
+    "1949",
+    "0098",
+]
 
 # Indicatoren van D-OmniTwin (namen en UUID's uit init_data/sample/2_brondata/sample_indicatoren.csv):
 # naam -> (uuid, eenheid, interpretatie_logica, categorie). Leeftijdsgroepen zijn neutraal: geen oordeel (#236).
@@ -115,13 +133,27 @@ INDICATOREN = {
 _NAMESPACE_AFGELEID = uuid.UUID("6f1d3c2a-0b7e-4c8e-9a51-d0a1b2c3e4f5")
 AFGELEID = {
     "65+ jaar (%)": {"teller": "65+ jaar", "noemer": "Inwoners", "factor": 100, "eenheid": "%", "logica": "neutraal"},
-    "Eenpersoonshuishoudens (%)": {"teller": "Eenpersoonshuishoudens", "noemer": "Huishoudens totaal",
-                                   "factor": 100, "eenheid": "%"},
-    "80 jaar of ouder (%)": {"teller": "80 jaar of ouder", "noemer": "Inwoners", "factor": 100, "eenheid": "%",
-                             "logica": "neutraal"},
+    "Eenpersoonshuishoudens (%)": {
+        "teller": "Eenpersoonshuishoudens",
+        "noemer": "Huishoudens totaal",
+        "factor": 100,
+        "eenheid": "%",
+    },
+    "80 jaar of ouder (%)": {
+        "teller": "80 jaar of ouder",
+        "noemer": "Inwoners",
+        "factor": 100,
+        "eenheid": "%",
+        "logica": "neutraal",
+    },
 }
 for _naam, _a in AFGELEID.items():
-    INDICATOREN[_naam] = (str(uuid.uuid5(_NAMESPACE_AFGELEID, _naam)), _a["eenheid"], _a.get("logica", "pos_is_pos"), "")
+    INDICATOREN[_naam] = (
+        str(uuid.uuid5(_NAMESPACE_AFGELEID, _naam)),
+        _a["eenheid"],
+        _a.get("logica", "pos_is_pos"),
+        "",
+    )
 
 
 def _reeks(stam, n2019, n2020, n2021, n2022, n2023, n2024, n2025, n2026):
@@ -139,8 +171,10 @@ MAPPING = {
     "25-45 jaar": _reeks("k_25Tot45Jaar", 10, 10, 10, 10, 10, 10, 10, 10),
     "45-65 jaar": _reeks("k_45Tot65Jaar", 11, 11, 11, 11, 11, 11, 11, 11),
     # 2026 splitst 65+ in 65-80 en 80+: som uit dezelfde tabel
-    "65+ jaar": {**_reeks("k_65JaarOfOuder", 12, 12, 12, 12, 12, 12, 12, None),
-                 2026: ("k_65JaarTot80Jaar_12", "k_80JaarOfOuder_13")},
+    "65+ jaar": {
+        **_reeks("k_65JaarOfOuder", 12, 12, 12, 12, 12, 12, 12, None),
+        2026: ("k_65JaarTot80Jaar_12", "k_80JaarOfOuder_13"),
+    },
     "80 jaar of ouder": {2026: "k_80JaarOfOuder_13"},
     "Huishoudens totaal": _reeks("HuishoudensTotaal", 28, 28, 28, 28, 29, 29, 29, 30),
     "Eenpersoonshuishoudens": _reeks("Eenpersoonshuishoudens", 29, 29, 29, 29, 30, 30, 30, 31),
@@ -159,12 +193,18 @@ MAPPING = {
     # Na 2023 niet meer in de Kerncijfers
     "Huishoudens met laag inkomen": _reeks("HuishoudensMetEenLaagInkomen", 78, 78, 78, 78, 87, None, None, None),
     # Vanaf 2023 heet het onderwijsniveau anders (basis/vmbo/mbo1, havo/vwo/mbo2-4, hbo/wo): zelfde indeling
-    "Opleidingsniveau laag": {**_reeks("OpleidingsniveauLaag", 64, 64, 64, 64, None, None, None, None),
-                              **_reeks("BasisonderwijsVmboMbo1", None, None, None, None, 70, 67, 67, 68)},
-    "Opleidingsniveau middelbaar": {**_reeks("OpleidingsniveauMiddelbaar", 65, 65, 65, 65, None, None, None, None),
-                                    **_reeks("HavoVwoMbo24", None, None, None, None, 71, 68, 68, 69)},
-    "Opleidingsniveau hoog": {**_reeks("OpleidingsniveauHoog", 66, 66, 66, 66, None, None, None, None),
-                              **_reeks("HboWo", None, None, None, None, 72, 69, 69, 70)},
+    "Opleidingsniveau laag": {
+        **_reeks("OpleidingsniveauLaag", 64, 64, 64, 64, None, None, None, None),
+        **_reeks("BasisonderwijsVmboMbo1", None, None, None, None, 70, 67, 67, 68),
+    },
+    "Opleidingsniveau middelbaar": {
+        **_reeks("OpleidingsniveauMiddelbaar", 65, 65, 65, 65, None, None, None, None),
+        **_reeks("HavoVwoMbo24", None, None, None, None, 71, 68, 68, 69),
+    },
+    "Opleidingsniveau hoog": {
+        **_reeks("OpleidingsniveauHoog", 66, 66, 66, 66, None, None, None, None),
+        **_reeks("HboWo", None, None, None, None, 72, 69, 69, 70),
+    },
     "Participatiewet totaal": _reeks("PersonenPerSoortUitkeringBijstand", 83, 83, 83, 83, 92, 87, 87, 88),
     "Personenauto's per huishouden": _reeks("PersonenautoSPerHuishouden", 102, 103, 103, 103, 112, 107, 107, 108),
     "Personenauto's naar oppervlakte": _reeks("PersonenautoSNaarOppervlakte", 103, 104, 104, 104, 113, 108, 108, 109),
@@ -180,8 +220,20 @@ NIET_GEPUBLICEERD = {
     "80 jaar of ouder": {2019, 2020, 2021, 2022, 2023, 2024, 2025},  # pas vanaf 2026 apart (daarvoor 65+)
 }
 
-VELDEN = ["gebied_id", "indicator_uuid", "indicator_naam", "waarde", "jaar", "bron", "kwaliteit",
-          "eenheid", "categorie", "interpretatie_logica", "scenario_id", "bron_tabel"]
+VELDEN = [
+    "gebied_id",
+    "indicator_uuid",
+    "indicator_naam",
+    "waarde",
+    "jaar",
+    "bron",
+    "kwaliteit",
+    "eenheid",
+    "categorie",
+    "interpretatie_logica",
+    "scenario_id",
+    "bron_tabel",
+]
 
 
 def bron_naam(jaar):
@@ -239,7 +291,7 @@ def haal_buurten(session, tabel, cols, codes=None):
         rijen = []
         lijst = sorted(codes)
         for i in range(0, len(lijst), 40):  # URL-lengte beperken
-            filt = " or ".join(f"WijkenEnBuurten eq '{c:<10}'" for c in lijst[i:i + 40])
+            filt = " or ".join(f"WijkenEnBuurten eq '{c:<10}'" for c in lijst[i : i + 40])
             params = {"$format": "json", "$filter": filt, "$select": select}
             rijen += _get(session, f"{CBS_API}/{tabel}/TypedDataSet", params)["value"]
         return rijen
@@ -264,10 +316,20 @@ def waarde_van(record, kolom):
 def rij(gebied, naam, waarde, jaar):
     ind_uuid, eenheid, logica, categorie = INDICATOREN[naam]
     w = round(waarde, 4)
-    return {"gebied_id": gebied, "indicator_uuid": ind_uuid, "indicator_naam": naam,
-            "waarde": int(w) if w == int(w) else w, "jaar": jaar, "bron": bron_naam(jaar),
-            "kwaliteit": "", "eenheid": eenheid, "categorie": categorie, "interpretatie_logica": logica,
-            "scenario_id": "current", "bron_tabel": TABELLEN[jaar]}
+    return {
+        "gebied_id": gebied,
+        "indicator_uuid": ind_uuid,
+        "indicator_naam": naam,
+        "waarde": int(w) if w == int(w) else w,
+        "jaar": jaar,
+        "bron": bron_naam(jaar),
+        "kwaliteit": "",
+        "eenheid": eenheid,
+        "categorie": categorie,
+        "interpretatie_logica": logica,
+        "scenario_id": "current",
+        "bron_tabel": TABELLEN[jaar],
+    }
 
 
 def weggevallen_boven_drempel(weg_waarden, opgenomen, max_fractie=MAX_WEGGEVALLEN):
@@ -285,6 +347,7 @@ def download(codes=None, log=print):
     """Download de reeksen. codes=None: alle Friese buurten. Geeft (rijen, verslag) terug.
     Alleen buurtcodes uit de geometrie van GEOMETRIE_JAAR worden opgenomen."""
     import requests
+
     session = requests.Session()
     geo = geometrie_codes()
     titels, rijen, weg, ontbreekt_in_tabel, weg_waarden = {}, [], {}, {}, Counter()
@@ -322,12 +385,22 @@ def download(codes=None, log=print):
         time.sleep(0.3)
     te_veel = weggevallen_boven_drempel(weg_waarden, opgenomen)
     if te_veel:
-        sys.exit("❌ Te veel waarden van buurtcodes zonder geometrie " + str(GEOMETRIE_JAAR) + " (max "
-                 + f"{MAX_WEGGEVALLEN:.0%}): " + ", ".join(f"{j}: {w} van {t} ({w / t:.1%})" for j, w, t in te_veel)
-                 + ". Nieuwe buurtindeling? Werk de geometrie bij, of verhoog MAX_WEGGEVALLEN bewust.")
+        sys.exit(
+            "❌ Te veel waarden van buurtcodes zonder geometrie "
+            + str(GEOMETRIE_JAAR)
+            + " (max "
+            + f"{MAX_WEGGEVALLEN:.0%}): "
+            + ", ".join(f"{j}: {w} van {t} ({w / t:.1%})" for j, w, t in te_veel)
+            + ". Nieuwe buurtindeling? Werk de geometrie bij, of verhoog MAX_WEGGEVALLEN bewust."
+        )
     rijen.sort(key=lambda r: (r["gebied_id"], r["indicator_naam"], r["jaar"]))
-    return rijen, {"titels": titels, "weg": weg, "ontbreekt_in_tabel": ontbreekt_in_tabel,
-                   "weg_waarden": weg_waarden, "geo": geo}
+    return rijen, {
+        "titels": titels,
+        "weg": weg,
+        "ontbreekt_in_tabel": ontbreekt_in_tabel,
+        "weg_waarden": weg_waarden,
+        "geo": geo,
+    }
 
 
 def cache_pad(codes=None):
@@ -383,35 +456,49 @@ def schrijf_package(rijen, verslag):
         "name": "cbs-kerncijfers-fryslan",
         "title": "CBS Kerncijfers wijken en buurten 2019-%d, buurten in Fryslân" % max(TABELLEN),
         "description": "Recept voor de Kerncijfers wijken en buurten van alle jaargangen vanaf 2019 voor de "
-                       "buurten in Fryslân, gemapt op de indicatoren van D-OmniTwin. De data zelf staat niet in "
-                       "git: init_data/scripts/laad_cbs.py downloadt bij het laden van een use case, met cache "
-                       "in $DATA_CACHE. Jaar = peiljaar van de CBS-tabel. Alleen buurtcodes die in de "
-                       f"CBS-geometrie {GEOMETRIE_JAAR} bestaan.",
-        "licenses": [{"name": "CC-BY-4.0", "title": "Creative Commons Attribution 4.0",
-                      "path": "https://creativecommons.org/licenses/by/4.0/"}],
-        "sources": [{"title": bron_naam(j), "path": f"https://opendata.cbs.nl/statline/#/CBS/nl/dataset/{t}"}
-                    for j, t in TABELLEN.items()],
+        "buurten in Fryslân, gemapt op de indicatoren van D-OmniTwin. De data zelf staat niet in "
+        "git: init_data/scripts/laad_cbs.py downloadt bij het laden van een use case, met cache "
+        "in $DATA_CACHE. Jaar = peiljaar van de CBS-tabel. Alleen buurtcodes die in de "
+        f"CBS-geometrie {GEOMETRIE_JAAR} bestaan.",
+        "licenses": [
+            {
+                "name": "CC-BY-4.0",
+                "title": "Creative Commons Attribution 4.0",
+                "path": "https://creativecommons.org/licenses/by/4.0/",
+            }
+        ],
+        "sources": [
+            {"title": bron_naam(j), "path": f"https://opendata.cbs.nl/statline/#/CBS/nl/dataset/{t}"}
+            for j, t in TABELLEN.items()
+        ],
         "bronvermelding": "Centraal Bureau voor de Statistiek (CBS), Kerncijfers wijken en buurten 2019-%d. "
-                          "CC BY 4.0." % max(TABELLEN),
+        "CC BY 4.0." % max(TABELLEN),
         "geometrie_jaar": GEOMETRIE_JAAR,
         "gecontroleerd": date.today().isoformat(),
         "tabellen": {str(j): {"tabel": t, "titel": titels[j], "peiljaar": j} for j, t in TABELLEN.items()},
-        "indicatoren": {n: {"uuid": INDICATOREN[n][0], "jaren": sorted(per_ind[n]),
-                            "kolommen": {str(j): (list(k) if isinstance(k, tuple) else k)
-                                         for j, k in MAPPING.get(n, {}).items()} if n in MAPPING else None,
-                            "afgeleid": AFGELEID.get(n)}
-                        for n in INDICATOREN},
+        "indicatoren": {
+            n: {
+                "uuid": INDICATOREN[n][0],
+                "jaren": sorted(per_ind[n]),
+                "kolommen": {str(j): (list(k) if isinstance(k, tuple) else k) for j, k in MAPPING.get(n, {}).items()}
+                if n in MAPPING
+                else None,
+                "afgeleid": AFGELEID.get(n),
+            }
+            for n in INDICATOREN
+        },
         "controle": {
             "toelichting": "Omvang van een volledige download (heel Fryslân), om een nieuwe download mee te "
-                           "vergelijken.",
+            "vergelijken.",
             "rijen_totaal": len(rijen),
             "rijen_per_jaar": {str(j): sum(1 for r in rijen if r["jaar"] == j) for j in TABELLEN},
         },
         "codecontrole": {
             "toelichting": f"Buurtcodes uit de CBS-tabel die niet in de geometrie {GEOMETRIE_JAAR} bestaan, "
-                           "per peiljaar en gemeente. Deze waarden worden niet opgenomen.",
-            "weggevallen": {str(j): {f"{gm} {gm_naam.get(gm, '?')}": len(c) for gm, c in g.items()}
-                            for j, g in weg.items()},
+            "per peiljaar en gemeente. Deze waarden worden niet opgenomen.",
+            "weggevallen": {
+                str(j): {f"{gm} {gm_naam.get(gm, '?')}": len(c) for gm, c in g.items()} for j, g in weg.items()
+            },
             "weggevallen_waarden": {str(j): verslag["weg_waarden"][j] for j in TABELLEN},
             "weggevallen_codes": {str(j): g for j, g in weg.items() if g},
             "geometriebuurten_zonder_tabelrij": {str(j): n for j, n in verslag["ontbreekt_in_tabel"].items()},
@@ -430,6 +517,7 @@ def main():
         sys.stdout.reconfigure(encoding="utf-8")  # emoji op Windows-consoles
     if args.controle:
         import requests
+
         session = requests.Session()
         for jaar, tabel in TABELLEN.items():
             controleer_tabel(session, jaar, tabel)

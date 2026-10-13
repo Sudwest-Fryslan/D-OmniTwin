@@ -21,8 +21,12 @@ class NepCursor:
     def __init__(self, indicatoren=(), profielen=(), lagen=(), toegang_kolom=False):
         self.toegang_kolom, self.classificatie = toegang_kolom, {}
         self.indicatoren = set(indicatoren)
-        self.tabellen = {"kompas_configuraties": {n: i for i, n in enumerate(profielen, start=1)},
-                         "kompas_titels": {}, "kompas_themas": {}, "kompas_onderdelen": {}}
+        self.tabellen = {
+            "kompas_configuraties": {n: i for i, n in enumerate(profielen, start=1)},
+            "kompas_titels": {},
+            "kompas_themas": {},
+            "kompas_onderdelen": {},
+        }
         self.mapping, self.lagen, self._rij, self.rowcount = set(), {la: {} for la in lagen}, None, 0
 
     def execute(self, sql, p=()):
@@ -75,12 +79,33 @@ def pakket(tmp_path, regels, naam="r"):
 
 
 KOMPAS = [
-    {"profiel": "Volledig Kompas", "kwadrant": "Samenstelling", "thema": "Bevolking", "onderdeel": "Leeftijd",
-     "indicator_uuid": "u1", "weging": "10", "is_actueel": "True"},
-    {"profiel": "Volledig Kompas", "kwadrant": "Samenstelling", "thema": "Bevolking", "onderdeel": "",
-     "indicator_uuid": "u2", "weging": "", "is_actueel": "False"},
-    {"profiel": "Volledig Kompas", "kwadrant": "Samenstelling", "thema": "Bevolking", "onderdeel": "Leeftijd",
-     "indicator_uuid": "onbekend", "weging": "1", "is_actueel": "True"},
+    {
+        "profiel": "Volledig Kompas",
+        "kwadrant": "Samenstelling",
+        "thema": "Bevolking",
+        "onderdeel": "Leeftijd",
+        "indicator_uuid": "u1",
+        "weging": "10",
+        "is_actueel": "True",
+    },
+    {
+        "profiel": "Volledig Kompas",
+        "kwadrant": "Samenstelling",
+        "thema": "Bevolking",
+        "onderdeel": "",
+        "indicator_uuid": "u2",
+        "weging": "",
+        "is_actueel": "False",
+    },
+    {
+        "profiel": "Volledig Kompas",
+        "kwadrant": "Samenstelling",
+        "thema": "Bevolking",
+        "onderdeel": "Leeftijd",
+        "indicator_uuid": "onbekend",
+        "weging": "1",
+        "is_actueel": "True",
+    },
 ]
 
 
@@ -119,18 +144,35 @@ def test_kompasprofiel_classificatie_bij_een_nieuw_profiel():
     assert cur.classificatie["SWF Klimaat"] == "label_ae"
 
 
-LAAG = {"naam": "Natura 2000", "beschrijving": "", "laag_type": "selectie", "bron_type": "WFS",
-        "url": "https://service.pdok.nl/rvo/natura2000/wfs/v1_0", "typename": "natura2000:natura2000",
-        "srsname": "EPSG:28992", "versie": "2.0.0", "filter_type": "provincie", "filter_waarde": "Fryslân",
-        "koppel_veld": "", "kleur_lijn": "#059669", "kleur_fill": "#34ef99", "opacity": "0.3", "actief": "True",
-        "volgorde": "2", "toegang": "openbaar"}
+LAAG = {
+    "naam": "Natura 2000",
+    "beschrijving": "",
+    "laag_type": "selectie",
+    "bron_type": "WFS",
+    "url": "https://service.pdok.nl/rvo/natura2000/wfs/v1_0",
+    "typename": "natura2000:natura2000",
+    "srsname": "EPSG:28992",
+    "versie": "2.0.0",
+    "filter_type": "provincie",
+    "filter_waarde": "Fryslân",
+    "koppel_veld": "",
+    "kleur_lijn": "#059669",
+    "kleur_fill": "#34ef99",
+    "opacity": "0.3",
+    "actief": "True",
+    "volgorde": "2",
+    "toegang": "openbaar",
+}
 
 
 def test_externe_kaartlagen_toevoegen_bestaand_blijft_intern_niet_actief(tmp_path):
     pytest.importorskip("fastapi")
     cur = NepCursor(lagen=["BAG Woonplaatsen"])
-    regels = [dict(LAAG), dict(LAAG, naam="BAG Woonplaatsen"),
-              dict(LAAG, naam="GeoVisia Project Locaties", toegang="intern")]
+    regels = [
+        dict(LAAG),
+        dict(LAAG, naam="BAG Woonplaatsen"),
+        dict(LAAG, naam="GeoVisia Project Locaties", toegang="intern"),
+    ]
     uit = beheer.externe_kaartlagen(cur, beheer.lees_resource(pakket(tmp_path, regels)))
     assert uit["toegevoegd"] == ["Natura 2000", "GeoVisia Project Locaties"]
     assert uit["alAanwezig"] == ["BAG Woonplaatsen"] and uit["internNietActief"] == ["GeoVisia Project Locaties"]
@@ -157,6 +199,7 @@ def test_voer_uit_onbekende_soort_is_overgeslagen(tmp_path):
 
 def test_voer_uit_in_een_transactie(tmp_path):
     from contextlib import contextmanager
+
     cur = NepCursor(indicatoren={"u1", "u2"}, profielen=["Volledig Kompas"])
 
     @contextmanager

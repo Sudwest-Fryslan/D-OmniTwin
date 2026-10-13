@@ -24,9 +24,15 @@ KOP = "gebied_code,gebiedstype,indicator_uuid,jaar,peildatum,scenario,waarde,n,k
 
 
 def ctx(**lp):
-    return Context(levering={"id": "11111111-1111-4111-8111-111111111111", "alleen_valideren": False},
-                   dataset={"id": "test-waarden", "profiel": lp.get("profiel", "waarnemingen"),
-                            "laadprofiel": {"profiel": "waarnemingen", **lp}, "beschrijving": {}})
+    return Context(
+        levering={"id": "11111111-1111-4111-8111-111111111111", "alleen_valideren": False},
+        dataset={
+            "id": "test-waarden",
+            "profiel": lp.get("profiel", "waarnemingen"),
+            "laadprofiel": {"profiel": "waarnemingen", **lp},
+            "beschrijving": {},
+        },
+    )
 
 
 def csv_bestand(tmp_path, regels, naam="w.csv"):
@@ -36,6 +42,7 @@ def csv_bestand(tmp_path, regels, naam="w.csv"):
 
 
 # ── Table Schema ─────────────────────────────────────────────────────────────
+
 
 def test_converteer_typen():
     assert converteer("12", {"type": "integer"}) == 12
@@ -68,6 +75,7 @@ def test_tabel_constraints_en_kop():
 
 # ── lezen ────────────────────────────────────────────────────────────────────
 
+
 def test_lees_csv_en_regelnummers(tmp_path):
     b = lees(csv_bestand(tmp_path, ["BU1,,%s,2025,,,1,20,,," % IND]), "text/csv", "waarnemingen", 10**6)
     assert b.resources["waarnemingen"].kop == KOP.split(",")
@@ -84,8 +92,10 @@ def test_lees_zip_met_dcat(tmp_path):
     assert b.dcat == {"dct:title": "t"} and "waarnemingen" in b.resources
 
 
-@pytest.mark.parametrize("inhoud,mt", [(b"geen zip", "application/zip"), (b"{", "application/json"),
-                                        (b"", "text/csv"), (b"42", "application/json")])
+@pytest.mark.parametrize(
+    "inhoud,mt",
+    [(b"geen zip", "application/zip"), (b"{", "application/json"), (b"", "text/csv"), (b"42", "application/json")],
+)
 def test_onleesbaar(tmp_path, inhoud, mt):
     p = tmp_path / "x"
     p.write_bytes(inhoud)
@@ -103,13 +113,14 @@ def test_zip_zonder_datapackage_en_pad_buiten_de_zip(tmp_path):
 
 # ── profiel waarnemingen ─────────────────────────────────────────────────────
 
+
 def test_waarnemingen_n_drempel_jaar_en_dubbel(tmp_path):
     regels = [
-        f"BU1,,{IND},2025,,,1.5,148,definitief,,",       # gemeten
-        f"BU2,,{IND},2025,,,1.5,7,definitief,,",         # onder drempel → onderdrukt
-        f"BU3,,{IND},2025,,current,1.5,,,,",             # n ontbreekt → bron-onderdrukt
-        f"BU4,,{IND},,,,1.5,20,,,",                      # jaar én peildatum leeg
-        f"BU1,,{IND},2025,,current,2,30,,,",             # dubbel met regel 1 (scenario leeg = current)
+        f"BU1,,{IND},2025,,,1.5,148,definitief,,",  # gemeten
+        f"BU2,,{IND},2025,,,1.5,7,definitief,,",  # onder drempel → onderdrukt
+        f"BU3,,{IND},2025,,current,1.5,,,,",  # n ontbreekt → bron-onderdrukt
+        f"BU4,,{IND},,,,1.5,20,,,",  # jaar én peildatum leeg
+        f"BU1,,{IND},2025,,current,2,30,,,",  # dubbel met regel 1 (scenario leeg = current)
     ]
     b = lees(csv_bestand(tmp_path, regels), "text/csv", "waarnemingen", 10**6)
     staging, fouten, a = pwrn.controleer(b, ctx(minimumN=10, bijOntbrekendeN="bron-onderdrukt"), {})
@@ -120,8 +131,12 @@ def test_waarnemingen_n_drempel_jaar_en_dubbel(tmp_path):
 
 
 def test_waarnemingen_n_per_indicator_en_afkeuren(tmp_path):
-    b = lees(csv_bestand(tmp_path, [f"BU1,,{IND},2025,,,1,20,,,", f"BU2,,{IND},2025,,,1,,,,"]),
-             "text/csv", "waarnemingen", 10**6)
+    b = lees(
+        csv_bestand(tmp_path, [f"BU1,,{IND},2025,,,1,20,,,", f"BU2,,{IND},2025,,,1,,,,"]),
+        "text/csv",
+        "waarnemingen",
+        10**6,
+    )
     _, fouten, _ = pwrn.controleer(b, ctx(minimumNPerIndicator={IND: 25}, bijNOnderDrempel="afkeuren"), {})
     assert {(f.code, f.regel) for f in fouten.lijst} == {("n-onder-drempel", 1), ("n-ontbreekt", 2)}
 
@@ -143,24 +158,30 @@ def test_waarnemingen_json_zonder_kop(tmp_path):
 
 # ── voorrang bij overlap: bronpeildatum (A6, #222) ──────────────────────────
 
+
 def test_bronpeildatum_volgorde_modified_issued_ontvangst():
     import datetime as dt
+
     ontvangen = dt.datetime(2026, 10, 3, 23, 30, tzinfo=dt.timezone(dt.timedelta(hours=-2)))  # 4 okt UTC
     vandaag = dt.date(2026, 10, 4)
     assert pwrn.bronpeildatum({"dct:modified": "2025-06-01", "dct:issued": "2024-01-01"}, ontvangen, vandaag) == (
-        dt.date(2025, 6, 1), "dct:modified")
+        dt.date(2025, 6, 1),
+        "dct:modified",
+    )
     assert pwrn.bronpeildatum({"dct:issued": {"@value": "2024-01-01", "@type": "xsd:date"}}, ontvangen, vandaag) == (
-        dt.date(2024, 1, 1), "dct:issued")
+        dt.date(2024, 1, 1),
+        "dct:issued",
+    )
     assert pwrn.bronpeildatum({"dct:modified": "2025-06-01T10:00:00Z"}, ontvangen, vandaag)[0] == dt.date(2025, 6, 1)
     assert pwrn.bronpeildatum({"dct:modified": ""}, ontvangen, vandaag) == (dt.date(2026, 10, 4), "ontvangst")
     assert pwrn.bronpeildatum(None, ontvangen, vandaag) == (dt.date(2026, 10, 4), "ontvangst")
     assert pwrn.bronpeildatum(None, None, vandaag) == (vandaag, "ontvangst")
 
 
-@pytest.mark.parametrize("dcat", [{"dct:modified": "gisteren"}, {"dct:issued": 2025},
-                                  {"dct:modified": "2099-01-01"}])
+@pytest.mark.parametrize("dcat", [{"dct:modified": "gisteren"}, {"dct:issued": 2025}, {"dct:modified": "2099-01-01"}])
 def test_bronpeildatum_ongeldig_of_in_de_toekomst_keurt_af(dcat):
     import datetime as dt
+
     with pytest.raises(Afkeuring) as e:
         pwrn.bronpeildatum(dcat, None, dt.date(2026, 10, 4))
     f = e.value.fouten.lijst[0]
@@ -169,6 +190,7 @@ def test_bronpeildatum_ongeldig_of_in_de_toekomst_keurt_af(dcat):
 
 def test_controleer_legt_bronpeildatum_vast(tmp_path):
     import datetime as dt
+
     p = tmp_path / "l.zip"
     with zipfile.ZipFile(p, "w") as z:
         z.writestr("datapackage.json", json.dumps({"resources": [{"name": "waarnemingen", "path": "w.csv"}]}))
@@ -180,25 +202,29 @@ def test_controleer_legt_bronpeildatum_vast(tmp_path):
     assert c.extra["bronpeildatum"] == dt.date(2025, 3, 15)
     # zonder dcat: datum van ontvangst
     c = ctx()
-    c.levering["ontvangen_op"] = dt.datetime(2026, 1, 2, 12, tzinfo=dt.timezone.utc)
-    _, _, a = pwrn.controleer(lees(csv_bestand(tmp_path, [f"BU1,,{IND},2025,,,1,20,,,"]), "text/csv",
-                                   "waarnemingen", 10**6), c, {})
+    c.levering["ontvangen_op"] = dt.datetime(2026, 1, 2, 12, tzinfo=dt.UTC)
+    _, _, a = pwrn.controleer(
+        lees(csv_bestand(tmp_path, [f"BU1,,{IND},2025,,,1,20,,,"]), "text/csv", "waarnemingen", 10**6), c, {}
+    )
     assert (a["bronpeildatum"], a["bronpeildatumUit"]) == ("2026-01-02", "ontvangst")
 
 
 def test_voorrangsregel_staat_in_een_functie_in_v036():
     """De regel staat op één plek (laden.herbouw_gebied_data, V036): nieuwste bronpeildatum, dan laatst
     aangeleverd; de rest als andere_bronnen. Geen vaste voorkeursdataset meer (LADEN_VOORRANG)."""
-    from pathlib import Path
     import re
+    from pathlib import Path
+
     root = Path(__file__).resolve().parents[2]
     sql = (root / "db" / "migraties" / "V036__voorrang_bronpeildatum.sql").read_text(encoding="utf-8")
     volgorde = re.search(r"ORDER BY (w\.bronpeildatum DESC, l\.ontvangen_op DESC, [^)]*)\)", sql)
     assert volgorde and volgorde.group(1).split(",")[0] == "w.bronpeildatum DESC"
     assert "'andere_bronnen'" in sql and "WHERE a.rang = 1" in sql
     assert "laden.herbouw_gebied_data()" in (root / "src" / "omnitwin" / "laden" / "p_waarnemingen.py").read_text(
-        encoding="utf-8")
+        encoding="utf-8"
+    )
     from omnitwin import config
+
     assert "LADEN_VOORRANG" not in Path(config.__file__).read_text(encoding="utf-8")
 
 
@@ -219,16 +245,28 @@ def test_plausibiliteit():
 
 # ── adapter swf-monitor-v1 ───────────────────────────────────────────────────
 
+
 def test_adapter_waarden(tmp_path):
     gt = "29fc9f28-89d9-488b-bf68-2ed176187b21"
-    data = [{"indicator_id": IND, "gebiedstype_id": gt, "gebieds_id": 728, "waarde": 1.5, "begingeldigheid": "2025-01-01"},
-            {"indicator_id": IND, "gebiedstype_id": gt, "gebieds_id": "729", "waarde": 2, "begingeldigheid": "2025-06-30",
-             "eindgeldigheid": "2025-12-31"},
-            {"indicator_id": IND, "gebiedstype_id": gt, "gebieds_id": "730", "waarde": 2, "begingeldigheid": "0000-01-01"}]
+    data = [
+        {"indicator_id": IND, "gebiedstype_id": gt, "gebieds_id": 728, "waarde": 1.5, "begingeldigheid": "2025-01-01"},
+        {
+            "indicator_id": IND,
+            "gebiedstype_id": gt,
+            "gebieds_id": "729",
+            "waarde": 2,
+            "begingeldigheid": "2025-06-30",
+            "eindgeldigheid": "2025-12-31",
+        },
+        {"indicator_id": IND, "gebiedstype_id": gt, "gebieds_id": "730", "waarde": 2, "begingeldigheid": "0000-01-01"},
+    ]
     p = tmp_path / "w.json"
     p.write_text(json.dumps(data))
-    staging, fouten, a = pwrn.controleer(lees(p, "application/json", "waarnemingen", 10**6),
-                                         ctx(adapter="swf-monitor-v1", bijOntbrekendeN="bron-onderdrukt"), {gt: "WS"})
+    staging, fouten, a = pwrn.controleer(
+        lees(p, "application/json", "waarnemingen", 10**6),
+        ctx(adapter="swf-monitor-v1", bijOntbrekendeN="bron-onderdrukt"),
+        {gt: "WS"},
+    )
     assert [(f.code, f.regel, f.resource) for f in fouten.lijst] == [("jaar-ongeldig", 3, "waarden")]
     assert [s[2] for s in staging] == ["WS728", "WS729"]
     assert staging[0][5] == 2025 and staging[1][5] is None and str(staging[1][6]) == "2025-06-30"
@@ -237,17 +275,23 @@ def test_adapter_waarden(tmp_path):
 
 def test_adapter_definities_status_a_afgekeurd(tmp_path):
     gt = "afba67cb-6b38-4723-9c95-102a22d5b38a"
-    data = {"indicatoren": [{"id": IND, "naam": "x", "status": "A", "begingeldigheid": "2024-11-20 00:00"}],
-            "gebiedstypen": [{"id": gt, "naam": "CBS buurten", "wfs": "https://example.org/wfs", "actief": True}],
-            "relaties": [{"indicator_id": IND, "gebiedstype_id": gt},
-                         {"indicator_id": "00000000-0000-4000-8000-000000000009", "gebiedstype_id": gt}]}
+    data = {
+        "indicatoren": [{"id": IND, "naam": "x", "status": "A", "begingeldigheid": "2024-11-20 00:00"}],
+        "gebiedstypen": [{"id": gt, "naam": "CBS buurten", "wfs": "https://example.org/wfs", "actief": True}],
+        "relaties": [
+            {"indicator_id": IND, "gebiedstype_id": gt},
+            {"indicator_id": "00000000-0000-4000-8000-000000000009", "gebiedstype_id": gt},
+        ],
+    }
     p = tmp_path / "d.json"
     p.write_text(json.dumps(data))
     c = ctx(adapter="swf-monitor-v1")
     c.dataset["laadprofiel"]["profiel"] = "definities"
     uit, fouten, a = pdef.controleer(lees(p, "application/json", None, 10**6), c)
     assert {(f.code, f.resource, f.veld) for f in fouten.lijst} == {
-        ("schema-ongeldig", "indicatoren", "status"), ("indicator-onbekend", "relaties", "indicator_uuid")}
+        ("schema-ongeldig", "indicatoren", "status"),
+        ("indicator-onbekend", "relaties", "indicator_uuid"),
+    }
     assert uit["gebiedstypen"][0]["_meta"] == {"wfs": "https://example.org/wfs"}
     assert a["perResource"] == {"indicatoren": 1, "gebiedstypen": 1, "relaties": 2}
 
@@ -265,6 +309,7 @@ def test_definities_zonder_resources_afgekeurd(tmp_path):
 
 
 # ── opslag ───────────────────────────────────────────────────────────────────
+
 
 def test_opslag_limiet_sha256_en_onveranderlijk(tmp_path, monkeypatch):
     monkeypatch.setenv("LEVERINGEN_DIR", str(tmp_path))
@@ -286,10 +331,18 @@ def test_veilige_bestandsnaam():
 
 # ── catalogus ────────────────────────────────────────────────────────────────
 
+
 def test_catalogus_jsonld():
-    ds = {"id": "voorbeeld", "profiel": "waarnemingen", "beschrijving": {
-        "@context": "x", "@type": "dcat:Dataset", "dct:title": "T",
-        "dct:accessRights": "http://publications.europa.eu/resource/authority/access-right/PUBLIC"}}
+    ds = {
+        "id": "voorbeeld",
+        "profiel": "waarnemingen",
+        "beschrijving": {
+            "@context": "x",
+            "@type": "dcat:Dataset",
+            "dct:title": "T",
+            "dct:accessRights": "http://publications.europa.eu/resource/authority/access-right/PUBLIC",
+        },
+    }
     c = catalogus([ds], "https://omnitwin.example.nl")
     assert c["@type"] == "dcat:Catalog"
     d = c["dcat:dataset"][0]

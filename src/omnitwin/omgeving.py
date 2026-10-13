@@ -30,12 +30,41 @@ from omnitwin.config import instellingen
 
 # Bekende zwakke wachtwoorden (kleine letters). Een wachtwoord gelijk aan de gebruikersnaam of korter
 # dan MIN_LENGTE is ook zwak.
-ZWAK = frozenset({
-    "admin", "administrator", "beheer", "beheerder", "gebruiker", "demo", "test", "testen",
-    "password", "passwd", "wachtwoord", "geheim", "secret", "welkom", "welcome", "changeme", "letmein",
-    "qwerty", "azerty", "123456", "1234567", "12345678", "123456789", "1234567890", "000000",
-    "omnitwin", "d-omnitwin", "keycloak", "postgres", "root", "toor",
-})
+ZWAK = frozenset(
+    {
+        "admin",
+        "administrator",
+        "beheer",
+        "beheerder",
+        "gebruiker",
+        "demo",
+        "test",
+        "testen",
+        "password",
+        "passwd",
+        "wachtwoord",
+        "geheim",
+        "secret",
+        "welkom",
+        "welcome",
+        "changeme",
+        "letmein",
+        "qwerty",
+        "azerty",
+        "123456",
+        "1234567",
+        "12345678",
+        "123456789",
+        "1234567890",
+        "000000",
+        "omnitwin",
+        "d-omnitwin",
+        "keycloak",
+        "postgres",
+        "root",
+        "toor",
+    }
+)
 MIN_LENGTE = 8
 
 # Demo-accounts in Keycloak: naam -> (wachtwoord, realm-rollen). Bewust publiek, alleen bij demo.
@@ -44,7 +73,7 @@ DEMO_ACCOUNTS = {
     "gebruiker": ("gebruiker", ("lezer",)),
 }
 DEMO_VOORNAAM = "Demo"
-DEMO_ACHTERNAAM = "D-OmniTwin demo"   # geen leestekens: Keycloak weigert die in namen
+DEMO_ACHTERNAAM = "D-OmniTwin demo"  # geen leestekens: Keycloak weigert die in namen
 DEMO_BELEID = "length(5)"
 # Beleid uit deploy/keycloak/realm-omnitwin.json (tests/unit/test_omgeving.py houdt ze gelijk)
 STANDAARD_BELEID = "length(12) and notUsername and notEmail"
@@ -60,8 +89,9 @@ def is_zwak(wachtwoord: str | None, gebruikersnaam: str | None = None) -> bool:
     w = (wachtwoord or "").strip()
     if not w:
         return False
-    return (w.lower() in ZWAK or len(w) < MIN_LENGTE
-            or bool(gebruikersnaam and w.lower() == gebruikersnaam.strip().lower()))
+    return (
+        w.lower() in ZWAK or len(w) < MIN_LENGTE or bool(gebruikersnaam and w.lower() == gebruikersnaam.strip().lower())
+    )
 
 
 def zwakke_instellingen(omgeving: dict[str, str]) -> list[str]:
@@ -77,6 +107,7 @@ def zwakke_instellingen(omgeving: dict[str, str]) -> list[str]:
 def controleer_installatie(omgeving: dict[str, str] | None = None) -> list[str]:
     """Meldingen voor db-init. Productie met een zwak wachtwoord: OmgevingFout."""
     import os
+
     env = dict(os.environ) if omgeving is None else omgeving
     soort = instellingen().omgeving if omgeving is None else _soort(env.get("OMNITWIN_OMGEVING", ""))
     zwak = zwakke_instellingen(env)
@@ -85,7 +116,8 @@ def controleer_installatie(omgeving: dict[str, str] | None = None) -> list[str]:
             f"{', '.join(zwak)} is een bekend of te zwak wachtwoord (minimaal {MIN_LENGTE} tekens, niet "
             "gelijk aan de gebruikersnaam). Dat wordt geweigerd bij OMNITWIN_OMGEVING=productie (de "
             "standaard). Kies een sterk wachtwoord (openssl rand -hex 24), of laat ADMIN_PASSWORD leeg "
-            "(dan wordt er een gegenereerd). Alleen om te proberen: OMNITWIN_OMGEVING=demo.")
+            "(dan wordt er een gegenereerd). Alleen om te proberen: OMNITWIN_OMGEVING=demo."
+        )
     meldingen = [f"Omgeving: {soort}"]
     if zwak:
         meldingen.append(f"Waarschuwing: zwak wachtwoord in {', '.join(zwak)} (toegestaan bij {soort}).")
@@ -94,6 +126,7 @@ def controleer_installatie(omgeving: dict[str, str] | None = None) -> list[str]:
 
 def _soort(waarde: str) -> str:
     from omnitwin.config import _omgeving
+
     return _omgeving(waarde)
 
 
@@ -106,6 +139,7 @@ def lokaal_admin_wachtwoord(admin_password: str | None, soort: str) -> str | Non
 
 
 # ------------------------------------------------------------------ Keycloak
+
 
 def is_demo_account(rep: dict) -> bool:
     return rep.get("firstName") == DEMO_VOORNAAM and rep.get("lastName") == DEMO_ACHTERNAAM
@@ -132,18 +166,32 @@ def pas_toe_in_keycloak(beheer, soort: str) -> list[str]:
                 meldingen.append(f"gebruiker {naam} bestaat al en is geen demo-account: niet aangeraakt")
                 continue
             if bestaand is None:
-                beheer._verzoek("POST", "/users", json={
-                    "username": naam, "enabled": True, "firstName": DEMO_VOORNAAM, "lastName": DEMO_ACHTERNAAM,
-                    "email": f"{naam}@demo.example.org", "emailVerified": True, "requiredActions": []})
+                beheer._verzoek(
+                    "POST",
+                    "/users",
+                    json={
+                        "username": naam,
+                        "enabled": True,
+                        "firstName": DEMO_VOORNAAM,
+                        "lastName": DEMO_ACHTERNAAM,
+                        "email": f"{naam}@demo.example.org",
+                        "emailVerified": True,
+                        "requiredActions": [],
+                    },
+                )
                 bestaand = _zoek(beheer, naam)
                 meldingen.append(f"demo-account {naam} aangemaakt ({', '.join(rollen)})")
             else:
                 # Volledige representatie terug: een gedeeltelijke kan velden (voornaam e.d.) wissen
-                beheer._verzoek("PUT", f"/users/{bestaand['id']}",
-                                json={**bestaand, "enabled": True, "requiredActions": []})
+                beheer._verzoek(
+                    "PUT", f"/users/{bestaand['id']}", json={**bestaand, "enabled": True, "requiredActions": []}
+                )
                 meldingen.append(f"demo-account {naam} bijgewerkt ({', '.join(rollen)})")
-            beheer._verzoek("PUT", f"/users/{bestaand['id']}/reset-password",
-                            json={"type": "password", "value": wachtwoord, "temporary": False})
+            beheer._verzoek(
+                "PUT",
+                f"/users/{bestaand['id']}/reset-password",
+                json={"type": "password", "value": wachtwoord, "temporary": False},
+            )
             beheer.ken_rollen_toe(bestaand["id"], rollen)
     else:
         for naam in DEMO_ACCOUNTS:
@@ -159,6 +207,7 @@ def pas_toe_in_keycloak(beheer, soort: str) -> list[str]:
 
 def keycloak(pogingen: int = 6, wacht: float = 5.0) -> int:
     from omnitwin.testaccounts import KeycloakBeheer, TestaccountFout
+
     soort = instellingen().omgeving
     for poging in range(1, pogingen + 1):
         try:
@@ -172,11 +221,16 @@ def keycloak(pogingen: int = 6, wacht: float = 5.0) -> int:
         except OSError as e:  # requests.ConnectionError e.d.: Keycloak start nog
             fout = e
         if poging == pogingen:
-            print(f"❌ Demo-accounts in Keycloak: Keycloak niet bereikbaar ({type(fout).__name__}: {fout})",
-                  file=sys.stderr)
+            print(
+                f"❌ Demo-accounts in Keycloak: Keycloak niet bereikbaar ({type(fout).__name__}: {fout})",
+                file=sys.stderr,
+            )
             return 1
         time.sleep(wacht)
-    print(f"✅ Keycloak, omgeving {soort}: " + ("; ".join(meldingen) if meldingen else "geen demo-accounts, niets te doen"))
+    print(
+        f"✅ Keycloak, omgeving {soort}: "
+        + ("; ".join(meldingen) if meldingen else "geen demo-accounts, niets te doen")
+    )
     return 0
 
 

@@ -50,9 +50,11 @@ addopts = "-v --tb=short"
 [tool.ruff]
 target-version = "py311"
 line-length = 120
+# Alleen Python; geen codeblokken in Markdown (documentatie blijft zoals hij is)
+extend-exclude = ["*.md"]
 
-# `ruff format` staat klaar maar is nog niet op de codebase gedraaid (stap 2 van #129);
-# daarom nog geen `ruff format --check` in de CI.
+# `ruff format` is op de hele codebase gedraaid (#129, stap 2); de CI controleert het
+# met `ruff format --check .`. Die commit staat in .git-blame-ignore-revs.
 [tool.ruff.format]
 quote-style = "double"
 indent-style = "space"
@@ -60,17 +62,10 @@ line-ending = "lf"
 
 [tool.ruff.lint]
 select = ["E", "F", "W", "I", "B", "UP"]
-# Baseline (#129, stap 1): regels die nu massaal falen staan uit, zodat `ruff check .`
-# groen is zonder de code te wijzigen. Aantal = treffers bij het invoeren.
+# Baseline (#129): regels die nog op veel plekken falen staan uit. Aantal = treffers na stap 2.
 extend-ignore = [
-    "W293",   # 1002× witruimte op lege regel. TODO stap 2: verdwijnt met `ruff format`
-    "W291",   # 169× witruimte aan regeleinde. TODO stap 2: verdwijnt met `ruff format`
-    "E501",   # 346× regel langer dan 120. TODO stap 2: na `ruff format` de rest met de hand
-    "I001",   # 115× importvolgorde. TODO stap 2: `ruff check --select I --fix`
-    "UP006",  # 508× List/Dict i.p.v. list/dict. TODO stap 2: `ruff check --select UP --fix`
-    "UP045",  # 444× Optional[X] i.p.v. X | None. TODO stap 2: idem
-    "UP035",  # 97× verouderde import uit typing. TODO stap 2: idem
-    "B904",   # 76× raise zonder `from` in except. TODO stap 2: per geval beoordelen
+    "E501",   # 129× regel langer dan 120 (lange strings en commentaar). TODO: met de hand, per bestand
+    "B904",   # 76× raise zonder `from` in except. TODO: per geval beoordelen; verandert de foutketen
 ]
 
 [tool.ruff.lint.flake8-bugbear]
@@ -82,84 +77,52 @@ extend-immutable-calls = [
 ]
 
 [tool.ruff.lint.per-file-ignores]
-# Baseline per bestand (#129, stap 1): bestaande afwijkingen van regels die nergens massaal falen.
-# Nieuwe bestanden vallen hier niet onder. TODO stap 2: per bestand oplossen en de regel hier weghalen.
-"ETL/BAG/import_bag_indicators.py" = ["E401", "F401", "F402", "F541", "F841", "UP015"]
-"ETL/CBS/batch_fetch.py" = ["F541", "F841", "UP015"]
-"ETL/CBS/cbs_data_fetcher.py" = ["F401"]
-"ETL/CBS/import_cbs_data.py" = ["E722", "F401", "UP015"]
-"ETL/CBS/update_pc6_mapping_2024.py" = ["B007", "F401", "UP015"]
-"ETL/CBS/update_pc6_mapping_from_csv.py" = ["B007", "E701", "UP015"]
-"ETL/Energielabel/calc_energielabel_coverage.py" = ["E401", "E402", "F541"]
-"ETL/Energielabel/import_energielabels.py" = ["B007", "E401", "E701", "F841", "UP015"]
-"ETL/Kompas/export_kompas_hierarchie.py" = ["E402", "F401"]
-"ETL/OV/import_ov_haltes.py" = ["E402", "F401", "F541"]
-"ETL/OV/onderzoek_osm_structuur.py" = ["F401", "F541"]
-"ETL/OV/overpass_client.py" = ["F401"]
-"ETL/import_geografie_2024.py" = ["B007", "F401", "F541", "F841"]
-"ETL/import_omgevingsvisie.py" = ["F541"]
-"ETL/search_api.py" = ["F401"]
-"init_data/scripts/_generate_kompas_seed.py" = ["UP015"]
-"init_data/scripts/analyse_cbs_aliases.py" = ["F401"]
-"init_data/scripts/create_admin.py" = ["F541"]
+# Baseline per bestand (#129): bestaande afwijkingen; nieuwe bestanden vallen hier niet onder.
+# Wat overblijft kan gedrag veranderen en vraagt een beoordeling per geval. TODO: per bestand
+# oplossen en de regel hier weghalen. E402 (imports na een `sys.path`-aanpassing) verdwijnt met
+# de package-structuur (`pip install -e .`, #414).
+"ETL/BAG/import_bag_indicators.py" = ["F402", "F841"]
+"ETL/CBS/batch_fetch.py" = ["F841"]
+"ETL/CBS/import_cbs_data.py" = ["E722"]
+"ETL/CBS/update_pc6_mapping_2024.py" = ["B007"]
+"ETL/CBS/update_pc6_mapping_from_csv.py" = ["B007"]
+"ETL/Energielabel/calc_energielabel_coverage.py" = ["E402"]
+"ETL/Energielabel/import_energielabels.py" = ["B007", "F841"]
+"ETL/Kompas/export_kompas_hierarchie.py" = ["E402"]
+"ETL/OV/import_ov_haltes.py" = ["E402"]
+"ETL/import_geografie_2024.py" = ["B007", "F841"]
 "init_data/scripts/download_buurten_fryslan.py" = ["E402"]
 "init_data/scripts/download_cbs_kerncijfers.py" = ["B905", "UP031"]
-"init_data/scripts/download_indicatoren_fryslan.py" = ["F401", "F541"]
-"init_data/scripts/load_sample.py" = ["UP015"]
-"init_data/scripts/setup_env.py" = ["F401", "F541", "UP015"]
-"scripts/ai/genereer_ontologie.py" = ["E402", "F401"]
-"scripts/ai/normalisation.py" = ["F541"]
-"scripts/beheer/swf_export.py" = ["UP017"]
-"scripts/beheer/swf_monitor_dump.py" = ["B905", "UP017"]
+"scripts/ai/genereer_ontologie.py" = ["E402"]
+"scripts/beheer/swf_monitor_dump.py" = ["B905"]
 "scripts/enrich_indicator_lineage.py" = ["F841"]
 "scripts/llm/kies_provider.py" = ["B905"]
 "src/omnitwin/grenzen.py" = ["UP007"]
 "src/omnitwin/laden/lezen.py" = ["B905", "UP028"]
 "src/omnitwin/laden/p_geo.py" = ["F841"]
-"src/omnitwin/laden/p_waarnemingen.py" = ["F841", "UP017"]
-"src/omnitwin/laden/tabelschema.py" = ["UP017"]
-"src/omnitwin/main.py" = ["E402", "F401"]
-"src/omnitwin/oidc_login.py" = ["UP017"]
-"src/omnitwin/routers/admin.py" = ["E402", "F401"]
-"src/omnitwin/routers/auth.py" = ["UP017"]
+"src/omnitwin/laden/p_waarnemingen.py" = ["F841"]
+"src/omnitwin/main.py" = ["E402"]
+"src/omnitwin/routers/admin.py" = ["E402"]
 "src/omnitwin/routers/bag3d.py" = ["B007"]
-"src/omnitwin/routers/dashboard.py" = ["F401"]
-"src/omnitwin/routers/externe_lagen.py" = ["F401"]
-"src/omnitwin/routers/gebiedsmonitor.py" = ["F401"]
-"src/omnitwin/routers/kompas.py" = ["F401"]
-"src/omnitwin/routers/laden.py" = ["F401", "UP017"]
-"src/omnitwin/routers/log_viewer.py" = ["F401"]
-"src/omnitwin/routers/meldingen.py" = ["F401"]
-"src/omnitwin/routers/organisatie.py" = ["UP017"]
-"src/omnitwin/routers/visualisatie.py" = ["E402", "F401"]
-"src/omnitwin/schemas/gebiedsmonitor.py" = ["F401"]
-"src/omnitwin/schemas/kompas.py" = ["F401"]
-"src/omnitwin/services/gebiedsmonitor_service.py" = ["F401"]
-"src/omnitwin/services/indicator_embeddings.py" = ["B905", "UP012"]
-"src/omnitwin/services/kompas_service.py" = ["E701"]
-"src/omnitwin/services/meldingen.py" = ["F401"]
+"src/omnitwin/routers/visualisatie.py" = ["E402"]
+"src/omnitwin/services/indicator_embeddings.py" = ["B905"]
 "src/omnitwin/services/organisatie.py" = ["E741"]
-"src/omnitwin/services/report_service.py" = ["E701", "F401", "F541", "F841"]
+"src/omnitwin/services/report_service.py" = ["F841"]
 "src/omnitwin/services/zoektaal.py" = ["E741"]
-"src/omnitwin/testaccounts.py" = ["UP017"]
-"src/omnitwin/utils/ai_generator.py" = ["F401"]
 "tests/e2e/e2e_helpers.py" = ["B028"]
 "tests/e2e/test_kaartmodule.py" = ["B905", "E741"]
 "tests/integration/test_ai_vrijgave_stack.py" = ["B905"]
 "tests/integration/test_organisatie_instantie.py" = ["E741"]
-"tests/integration/test_security_headers.py" = ["UP017"]
 "tests/integration/test_toegang_per_laag.py" = ["E741"]
 "tests/test_cbs_kerncijfers.py" = ["B007"]
 "tests/test_thema.py" = ["B007"]
-"tests/test_usecase_bewijs.py" = ["F401"]
 "tests/test_zoektaal.py" = ["E741"]
 "tests/unit/test_drempels_klimaatmonitor.py" = ["B007", "B905"]
 "tests/unit/test_kleurschaal.py" = ["B905"]
 "tests/unit/test_laden_beheer.py" = ["B905"]
-"tests/unit/test_laden_laadstraat.py" = ["UP017", "UP031"]
+"tests/unit/test_laden_laadstraat.py" = ["UP031"]
 "tests/unit/test_llm_service.py" = ["B017"]
-"tests/unit/test_meldingen.py" = ["F401", "F841"]
+"tests/unit/test_meldingen.py" = ["F841"]
 "tests/unit/test_organisatie.py" = ["E741"]
 "tests/unit/test_organisatie_beheer.py" = ["E741"]
-"tools/validate_gebiedsmonitor.py" = ["B905", "F541"]
-"tools/validate_kompas_uuid_mapping.py" = ["F401", "F541"]
+"tools/validate_gebiedsmonitor.py" = ["B905"]

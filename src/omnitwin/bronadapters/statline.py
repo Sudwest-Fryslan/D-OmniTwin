@@ -49,8 +49,15 @@ def odata_filter(bron, dim_keys):
     if bron.get("gebieden"):
         delen.append(_of(regio, [str(g).strip() for g in bron["gebieden"]]))
     elif bron.get("gemeenten"):
-        delen.append("(" + " or ".join(f"startswith({regio},{_q(p + str(g).zfill(4))})"
-                                       for p in bron.get("regio_prefix", ["BU"]) for g in bron["gemeenten"]) + ")")
+        delen.append(
+            "("
+            + " or ".join(
+                f"startswith({regio},{_q(p + str(g).zfill(4))})"
+                for p in bron.get("regio_prefix", ["BU"])
+                for g in bron["gemeenten"]
+            )
+            + ")"
+        )
     for dim, waarde in (bron.get("filter") or {}).items():
         keys = waarde if isinstance(waarde, list) else [waarde]
         echt = dim_keys.get(dim, {})
@@ -69,8 +76,11 @@ def records(rijen, bron):
         m = PERIODE_JAAR.match(str(r.get("Perioden", "")).strip())
         if not m:
             continue
-        basis = {"gebied_code": str(r.get(regio, "")).strip(), "jaar": int(m.group(1)),
-                 "periode": str(r["Perioden"]).strip()}
+        basis = {
+            "gebied_code": str(r.get(regio, "")).strip(),
+            "jaar": int(m.group(1)),
+            "periode": str(r["Perioden"]).strip(),
+        }
         for d in dims:
             basis[d] = str(r.get(d, "")).strip()
         for k in bron["kolommen"]:
@@ -89,13 +99,15 @@ def _json(sessie, url, params=None):
 
 def cbs_statline(bron, ctx):
     from omnitwin.bronadapters import BronFout, GeenBron, cache_pad, controleer_url
+
     url = controleer_url(str(bron["url"]).rstrip("/"))
     if not FEED.match(urlparse(url).path):
         raise BronFout(f"cbs-statline: url moet https://<host>/ODataFeed/odata/<tabel> zijn: {url}")
     if not bron.get("kolommen"):
         raise BronFout("cbs-statline: kolommen ontbreekt")
-    sleutel = {k: bron.get(k) for k in ("url", "kolommen", "regio", "gemeenten", "gebieden", "regio_prefix",
-                                        "filter", "jaren")}
+    sleutel = {
+        k: bron.get(k) for k in ("url", "kolommen", "regio", "gemeenten", "gebieden", "regio_prefix", "filter", "jaren")
+    }
     cache = cache_pad(ctx.get("bronnen"), "statline", sleutel, ".json")
     if cache.exists():
         rijen = json.loads(cache.read_text(encoding="utf-8"))
@@ -109,10 +121,14 @@ def cbs_statline(bron, ctx):
         try:
             with requests.Session() as s:
                 # Echte keys van de dimensies (CBS vult ze soms op met spaties, bijv. '1.1.1 ')
-                dim_keys = {d: {str(x["Key"]).strip(): x["Key"] for x in _json(s, f"{url}/{d}").get("value", [])}
-                            for d in (bron.get("filter") or {})}
+                dim_keys = {
+                    d: {str(x["Key"]).strip(): x["Key"] for x in _json(s, f"{url}/{d}").get("value", [])}
+                    for d in (bron.get("filter") or {})
+                }
                 for d, gevraagd in (bron.get("filter") or {}).items():
-                    onbekend = {str(k).strip() for k in (gevraagd if isinstance(gevraagd, list) else [gevraagd])} - set(dim_keys[d])
+                    onbekend = {str(k).strip() for k in (gevraagd if isinstance(gevraagd, list) else [gevraagd])} - set(
+                        dim_keys[d]
+                    )
                     if onbekend:
                         raise BronFout(f"cbs-statline: {d} kent {sorted(onbekend)} niet ({url})")
                 params = {"$select": ",".join(select), "$format": "json"}

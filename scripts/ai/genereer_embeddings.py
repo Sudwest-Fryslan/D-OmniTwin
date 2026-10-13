@@ -18,6 +18,7 @@ Exitcode 1 als het model niet geladen kan worden (niet in de image, offline, pac
 Model en revisie: services/embedding_model.py (#118).
 docker-entrypoint.sh vangt dat af: db-init geeft dan een waarschuwing en gaat door.
 """
+
 import sys
 from pathlib import Path
 
@@ -52,11 +53,12 @@ def generate_embeddings(alleen_goedgekeurd=False, opnieuw=False):
 
 if __name__ == "__main__":
     import argparse
+
     parser = argparse.ArgumentParser(description="Genereer embeddings voor AI-zoeken")
-    parser.add_argument("--alleen-goedgekeurd", action="store_true",
-                        help="Alleen indicatoren met status goedgekeurd_mens")
-    parser.add_argument("--opnieuw", action="store_true",
-                        help="Ook ongewijzigde embeddings herberekenen")
+    parser.add_argument(
+        "--alleen-goedgekeurd", action="store_true", help="Alleen indicatoren met status goedgekeurd_mens"
+    )
+    parser.add_argument("--opnieuw", action="store_true", help="Ook ongewijzigde embeddings herberekenen")
     args = parser.parse_args()
 
     ok = generate_embeddings(alleen_goedgekeurd=args.alleen_goedgekeurd, opnieuw=args.opnieuw)

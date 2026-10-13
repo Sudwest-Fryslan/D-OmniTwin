@@ -28,15 +28,18 @@ def duiding(diff, richting):
     return json.loads(out.stdout)
 
 
-@pytest.mark.parametrize("diff,richting,kleur,oordeel", [
-    (5, "hoger_is_beter", "--color-success", "gunstig"),
-    (-5, "hoger_is_beter", "--color-danger", "ongunstig"),
-    (5, "lager_is_beter", "--color-danger", "ongunstig"),
-    (-5, "lager_is_beter", "--color-success", "gunstig"),
-    (5, "neutraal", "--text-secondary", "neutraal"),
-    (-5, None, "--text-secondary", "neutraal"),
-    (0, "hoger_is_beter", "--text-secondary", "gelijk"),
-])
+@pytest.mark.parametrize(
+    "diff,richting,kleur,oordeel",
+    [
+        (5, "hoger_is_beter", "--color-success", "gunstig"),
+        (-5, "hoger_is_beter", "--color-danger", "ongunstig"),
+        (5, "lager_is_beter", "--color-danger", "ongunstig"),
+        (-5, "lager_is_beter", "--color-success", "gunstig"),
+        (5, "neutraal", "--text-secondary", "neutraal"),
+        (-5, None, "--text-secondary", "neutraal"),
+        (0, "hoger_is_beter", "--text-secondary", "gelijk"),
+    ],
+)
 def test_kleur_volgt_polariteit(diff, richting, kleur, oordeel):
     assert duiding(diff, richting) == {"kleur": kleur, "oordeel": oordeel}
 

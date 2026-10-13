@@ -33,6 +33,7 @@ def geotiff(inhoud):
     ModelTransformationTag (34264) en ModelTiepoint (33922) + ModelPixelScale (33550)."""
     import numpy as np
     from PIL import Image
+
     im = Image.open(io.BytesIO(inhoud))
     tags = im.tag_v2
     if 34264 in tags:
@@ -50,6 +51,7 @@ def zonaal(a, transform, polys, nodata=-9999, nodata_als=None, decimalen=2):
     """Gemiddelde per polygoon over de cellen met het middelpunt erin. polys: {code: shapely-geometrie}."""
     import numpy as np
     import shapely
+
     ox, cx, oy, cy = transform
     rij, kol = np.indices(a.shape)
     xs, ys = ox + (kol + 0.5) * cx, oy + (rij + 0.5) * cy
@@ -69,13 +71,18 @@ def zonaal(a, transform, polys, nodata=-9999, nodata_als=None, decimalen=2):
 def uitsnede(bounds, cel):
     """Uitsnede op hele cellen met een marge van twee cellen."""
     x0, y0, x1, y1 = bounds
-    return (int(math.floor(x0 / cel) * cel - 2 * cel), int(math.floor(y0 / cel) * cel - 2 * cel),
-            int(math.ceil(x1 / cel) * cel + 2 * cel), int(math.ceil(y1 / cel) * cel + 2 * cel))
+    return (
+        int(math.floor(x0 / cel) * cel - 2 * cel),
+        int(math.floor(y0 / cel) * cel - 2 * cel),
+        int(math.ceil(x1 / cel) * cel + 2 * cel),
+        int(math.ceil(y1 / cel) * cel + 2 * cel),
+    )
 
 
 def wcs_zonaal(bron, ctx):
     from omnitwin.bronadapters import BronFout, GeenBron, cache_pad, controleer_url, haal
     from omnitwin.bronadapters.bewerkingen import voer_uit
+
     controleer_url(bron["url"])
     g = bron.get("gebieden") or {}
     if not isinstance(g.get("bron"), dict):
@@ -94,14 +101,21 @@ def wcs_zonaal(bron, ctx):
     cel = float(bron.get("celgrootte", 10))
     max_cellen = int(bron.get("max_cellen", 25_000_000))
     import requests
+
     uit = []
     for code, poly in sorted(polys.items()):
         x0, y0, x1, y1 = uitsnede(poly.bounds, cel)
         if (x1 - x0) / cel * (y1 - y0) / cel > max_cellen:
             raise BronFout(f"wcs-zonaal: uitsnede voor {code} groter dan max_cellen ({max_cellen})")
-        params = [("service", "WCS"), ("version", "2.0.1"), ("request", "GetCoverage"),
-                  ("CoverageId", bron["coverage"]), ("format", "image/tiff"),
-                  ("subset", f"X({x0},{x1})"), ("subset", f"Y({y0},{y1})")]
+        params = [
+            ("service", "WCS"),
+            ("version", "2.0.1"),
+            ("request", "GetCoverage"),
+            ("CoverageId", bron["coverage"]),
+            ("format", "image/tiff"),
+            ("subset", f"X({x0},{x1})"),
+            ("subset", f"Y({y0},{y1})"),
+        ]
         cache = cache_pad(ctx.get("bronnen"), "wcs", {"url": bron["url"], "params": params}, ".tif")
         if not cache.exists():
             try:
@@ -113,8 +127,9 @@ def wcs_zonaal(bron, ctx):
                 raise GeenBron(f"WCS {bron['url']} gaf geen GeoTIFF voor {code}: {r.content[:200]!r}")
             cache.write_bytes(r.content)
         a, transform = geotiff(cache.read_bytes())
-        res = zonaal(a, transform, {code: poly}, bron.get("nodata", -9999), bron.get("nodata_als"),
-                     int(bron.get("decimalen", 2)))
+        res = zonaal(
+            a, transform, {code: poly}, bron.get("nodata", -9999), bron.get("nodata_als"), int(bron.get("decimalen", 2))
+        )
         if code in res:
             uit.append({"gebied_code": code, "waarde": res[code][0], "cellen": res[code][1]})
     return {bron.get("tabel", "waarnemingen"): uit}

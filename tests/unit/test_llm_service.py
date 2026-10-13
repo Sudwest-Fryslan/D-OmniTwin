@@ -4,6 +4,7 @@ Unit-tests voor services/llm_service.py (#88, ADR 0001): Ollama- en OpenAI-pad.
 Geen database en geen echt model: een nep-LLM-server (http.server in een thread)
 en een nep-databasesessie. Draait in de CI met `pytest -m unit`.
 """
+
 import json
 import socket
 import threading
@@ -19,12 +20,13 @@ pytestmark = pytest.mark.unit
 
 # ─── Nep-LLM-server ─────────────────────────────────────────────────────────
 
+
 class FakeLLM:
     """Houdt verzoeken bij en geeft per pad een vooraf ingesteld antwoord."""
 
     def __init__(self):
-        self.requests = []          # (method, path, headers, body)
-        self.responses = {}         # path -> (status, body: dict|str)
+        self.requests = []  # (method, path, headers, body)
+        self.responses = {}  # path -> (status, body: dict|str)
 
     def set(self, path, body, status=200):
         self.responses[path] = (status, body)
@@ -67,6 +69,7 @@ def fake_llm():
 
 # ─── Nep-database ───────────────────────────────────────────────────────────
 
+
 class _Result:
     def __init__(self, row):
         self._row = row
@@ -105,10 +108,12 @@ class FakeDB:
 @pytest.fixture(autouse=True)
 def stille_logger(monkeypatch):
     """AppLogger schrijft naar de database; in unit-tests alleen stil wegschrijven."""
+
     class Stil:
         @staticmethod
         def _noop(*args, **kwargs):
             pass
+
         debug = info = warning = error = critical = _noop
 
     monkeypatch.setattr(llm_mod, "AppLogger", Stil)
@@ -132,25 +137,32 @@ def chat_antwoord(content):
 
 # ─── Hulpfuncties ───────────────────────────────────────────────────────────
 
-@pytest.mark.parametrize("url, verwacht", [
-    ("http://host:11434", "http://host:11434/v1"),
-    ("http://host:11434/", "http://host:11434/v1"),
-    ("http://llm-gateway:4000/v1", "http://llm-gateway:4000/v1"),
-    ("http://llm-gateway:4000/v1/", "http://llm-gateway:4000/v1"),
-    ("https://api.example.org/openai/v1", "https://api.example.org/openai/v1"),
-])
+
+@pytest.mark.parametrize(
+    "url, verwacht",
+    [
+        ("http://host:11434", "http://host:11434/v1"),
+        ("http://host:11434/", "http://host:11434/v1"),
+        ("http://llm-gateway:4000/v1", "http://llm-gateway:4000/v1"),
+        ("http://llm-gateway:4000/v1/", "http://llm-gateway:4000/v1"),
+        ("https://api.example.org/openai/v1", "https://api.example.org/openai/v1"),
+    ],
+)
 def test_openai_base_url_geen_dubbele_v1(url, verwacht):
     assert openai_base_url(url) == verwacht
 
 
-@pytest.mark.parametrize("invoer, verwacht", [
-    ("<think>\nredeneren...\n</think>\n\nHet antwoord.", "Het antwoord."),
-    ("Voor <think>a</think>na", "Voor na"),
-    ("alleen denken</think>Antwoord", "Antwoord"),
-    ("<think></think>{\"intent\": \"X\"}", "{\"intent\": \"X\"}"),
-    ("Geen denkblok.", "Geen denkblok."),
-    ("", ""),
-])
+@pytest.mark.parametrize(
+    "invoer, verwacht",
+    [
+        ("<think>\nredeneren...\n</think>\n\nHet antwoord.", "Het antwoord."),
+        ("Voor <think>a</think>na", "Voor na"),
+        ("alleen denken</think>Antwoord", "Antwoord"),
+        ('<think></think>{"intent": "X"}', '{"intent": "X"}'),
+        ("Geen denkblok.", "Geen denkblok."),
+        ("", ""),
+    ],
+)
 def test_strip_think(invoer, verwacht):
     assert strip_think(invoer) == verwacht
 
@@ -160,6 +172,7 @@ def test_veilige_host_zonder_pad_en_inlog():
 
 
 # ─── Configuratie ───────────────────────────────────────────────────────────
+
 
 def test_config_zonder_api_type_kolom_is_ollama():
     """Database zonder migratie v20: gedrag als voorheen."""
@@ -175,8 +188,9 @@ def test_config_zonder_rij_valt_terug_op_env():
 
 # ─── Ollama-pad (ongewijzigd gedrag) ────────────────────────────────────────
 
+
 def test_ollama_pad_gebruikt_api_generate(fake_llm):
-    fake_llm.set("/api/generate", {"response": "```json\n{\"summary\": \"Kort verhaal.\"}\n```"})
+    fake_llm.set("/api/generate", {"response": '```json\n{"summary": "Kort verhaal."}\n```'})
     res = service(fake_llm.url, "ollama")._call_llm("sys", "vraag", "test", usecase="A")
 
     method, path, _, body = fake_llm.requests[-1]
@@ -224,6 +238,7 @@ def test_ollama_pad_foutmelding_zonder_interne_url():
 
 
 # ─── OpenAI-pad ─────────────────────────────────────────────────────────────
+
 
 def test_openai_pad_chat_completions(fake_llm):
     fake_llm.set("/v1/chat/completions", chat_antwoord("Dit is het antwoord."))
@@ -294,7 +309,7 @@ def test_openai_pad_bearer_uit_env(fake_llm, monkeypatch):
 
 
 def test_openai_pad_haalt_think_weg_en_pakt_json_uit(fake_llm):
-    inhoud = "<think>\nEerst nadenken.\n</think>\n```json\n{\"summary\": \"Samenvatting.\"}\n```"
+    inhoud = '<think>\nEerst nadenken.\n</think>\n```json\n{"summary": "Samenvatting."}\n```'
     fake_llm.set("/v1/chat/completions", chat_antwoord(inhoud))
     res = service(fake_llm.url, "openai")._call_llm("sys", "vraag", "test", usecase="A")
     assert res["text"] == "Samenvatting."
@@ -302,8 +317,11 @@ def test_openai_pad_haalt_think_weg_en_pakt_json_uit(fake_llm):
 
 def test_openai_pad_intent_json(fake_llm):
     """detect_intent_and_actions parseert het JSON-antwoord ook via het OpenAI-pad."""
-    antwoord = {"intent": "MAAK_RAPPORT", "narrative": "Ik open het rapport.",
-                "acties": [{"type": "MAAK_RAPPORT", "label": "Rapport openen"}]}
+    antwoord = {
+        "intent": "MAAK_RAPPORT",
+        "narrative": "Ik open het rapport.",
+        "acties": [{"type": "MAAK_RAPPORT", "label": "Rapport openen"}],
+    }
     fake_llm.set("/v1/chat/completions", chat_antwoord("<think>x</think>" + json.dumps(antwoord)))
     res = service(fake_llm.url, "openai").detect_intent_and_actions("maak een rapport", [])
     assert res["intent"] == "MAAK_RAPPORT"
@@ -317,12 +335,16 @@ def test_openai_pad_null_content(fake_llm):
 
 # ─── Foutafhandeling OpenAI-pad ─────────────────────────────────────────────
 
-@pytest.mark.parametrize("status, fragment", [
-    (401, "weigert toegang (401); controleer LLM_API_KEY"),
-    (403, "weigert toegang (403)"),
-    (500, "gaf een fout (500)"),
-    (404, "gaf een fout (404)"),
-])
+
+@pytest.mark.parametrize(
+    "status, fragment",
+    [
+        (401, "weigert toegang (401); controleer LLM_API_KEY"),
+        (403, "weigert toegang (403)"),
+        (500, "gaf een fout (500)"),
+        (404, "gaf een fout (404)"),
+    ],
+)
 def test_openai_http_fout_nette_melding(fake_llm, monkeypatch, status, fragment):
     monkeypatch.setenv("LLM_API_KEY", "sk-mag-niet-lekken")
     fake_llm.set("/v1/chat/completions", {"error": {"message": "intern detail"}}, status=status)
@@ -347,6 +369,7 @@ def test_openai_onverwacht_antwoord(fake_llm, body):
 
 
 # ─── Admin: modellen ophalen ────────────────────────────────────────────────
+
 
 def _models(db):
     admin = pytest.importorskip("omnitwin.routers.admin")
