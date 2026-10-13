@@ -40,7 +40,7 @@ De rooktest doet stap 2 tot en met 4 automatisch op een tijdelijk kind-cluster, 
 Het bewijs van de uitrol is [`bewijs/rooktest.json`](bewijs/rooktest.json), opnieuw te maken met `scripts/ci/k8s-rooktest.sh`. De schermen hieronder tonen een draaiende instantie.
 
 <!-- bewijs:start -->
-*Gemaakt op 13-10-2026 met D-OmniTwin 0.7.0 (use case 0.3.0); geslaagd. Verslag: [`bewijs/bewijs.json`](bewijs/bewijs.json). Opnieuw maken (bij een release): `python -m omnitwin.usecases bewijs uitrol-kubernetes`.*
+*Gemaakt op 13-10-2026 met D-OmniTwin 0.6.0 (use case 0.3.0); geslaagd. Verslag: [`bewijs/bewijs.json`](bewijs/bewijs.json). Opnieuw maken (bij een release): `python -m omnitwin.usecases bewijs uitrol-kubernetes`.*
 
 ![Health van de instantie: database en api online, met de versie](bewijs/gezondheid.webp)
 *Health van de instantie: database en api online, met de versie*

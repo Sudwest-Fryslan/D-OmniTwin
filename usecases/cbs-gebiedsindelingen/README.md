@@ -81,7 +81,7 @@ Verwacht:
 ## Bewijs
 
 <!-- bewijs:start -->
-*Gemaakt op 13-10-2026 met D-OmniTwin 0.7.0 (use case 0.2.0); geslaagd. Verslag: [`bewijs/bewijs.json`](bewijs/bewijs.json). Opnieuw maken (bij een release): `python -m omnitwin.usecases bewijs cbs-gebiedsindelingen`.*
+*Gemaakt op 13-10-2026 met D-OmniTwin 0.6.0 (use case 0.2.0); geslaagd. Verslag: [`bewijs/bewijs.json`](bewijs/bewijs.json). Opnieuw maken (bij een release): `python -m omnitwin.usecases bewijs cbs-gebiedsindelingen`.*
 
 ![De CBS-buurten van Súdwest-Fryslân op de kaart (gemeentefilter)](bewijs/kaart.webp)
 *De CBS-buurten van Súdwest-Fryslân op de kaart (gemeentefilter)*

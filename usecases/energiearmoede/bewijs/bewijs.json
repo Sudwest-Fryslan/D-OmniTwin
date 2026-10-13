@@ -2,8 +2,8 @@
   "specificatie": "1.0",
   "naam": "energiearmoede",
   "versie": "0.2.0",
-  "omnitwin_versie": "0.7.0",
-  "datum": "2026-10-13T19:39:15+02:00",
+  "omnitwin_versie": "0.6.0",
+  "datum": "2026-10-13T21:34:20+02:00",
   "ai_aanbieder": "geen",
   "geslaagd": true,
   "controles": [
@@ -33,7 +33,7 @@
       "id": "kaart",
       "resultaat": "ok",
       "afbeelding": "kaart.webp",
-      "antwoordtijd_s": 31.9,
+      "antwoordtijd_s": 38.5,
       "console_fouten": []
     },
     {
@@ -41,14 +41,14 @@
       "resultaat": "ok",
       "afbeelding": "chat.webp",
       "antwoord": "Gemiddeld energielabel (RVO EP-Online energielabels (berekend per buurt), 2025): Hoogste waarde: Bolsward-Noord (4,4); laagste: Bolsward-Noordoost (4,1). Daartussen: Bolsward-Zuidoost (4,2). Lager is beter: Bolsward-Noordoost scoort het gunstigst, Bolsward-Noord het ongunstigst. Huishoudens met laag inkomen (CBS Kerncijfers wijken en buurten, 2023): Hoogste waarde: Bolsward-Noord (4,4%); laagste: Bolsward-Zuidwest (1%). Daartussen: Bolsward-Zuidoost (3,1%) en Bolsward-Noordoost (1,6%). Lager is beter: Bolsward-Zuidwest scoort het gunstigst, Bolsward-Noord het ongunstigst. Moeite met rondkomen (RIVM, GGD en CBS: Gezondheid per wijk en buurt (StatLine 50150NED), 2024): Hoogste waarde: Bolsward-Noord (19,1%); laagste: Bolsward-Noordoost (9,1%). Daartussen: Bolsward-Zuidoost (12,9%) en Bolsward-Zuidwest (11,3%). Lager is beter: Bolsward-Noordoost scoort het gunstigst, Bolsward-Noord het ongunstigst. Let op: de waarden van Bolsward-Zuidoost zijn demodata.",
-      "antwoordtijd_s": 14.1,
+      "antwoordtijd_s": 7.3,
       "console_fouten": []
     },
     {
       "id": "kompas",
       "resultaat": "ok",
       "afbeelding": "kompas.webp",
-      "antwoordtijd_s": 35.3,
+      "antwoordtijd_s": 45.9,
       "console_fouten": []
     }
   ]

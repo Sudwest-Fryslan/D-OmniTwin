@@ -2,8 +2,8 @@
   "specificatie": "1.0",
   "naam": "ai-compliance",
   "versie": "0.1.0",
-  "omnitwin_versie": "0.7.0",
-  "datum": "2026-10-13T19:33:00+02:00",
+  "omnitwin_versie": "0.6.0",
+  "datum": "2026-10-13T21:26:50+02:00",
   "ai_aanbieder": "geen",
   "geslaagd": true,
   "controles": [
@@ -39,7 +39,7 @@
       "id": "vrijgave",
       "resultaat": "ok",
       "afbeelding": "vrijgave.webp",
-      "antwoordtijd_s": 4.0,
+      "antwoordtijd_s": 4.4,
       "console_fouten": []
     },
     {
@@ -47,14 +47,14 @@
       "resultaat": "ok",
       "afbeelding": "assistent.webp",
       "antwoord": "65+ jaar (%) (CBS Kerncijfers wijken en buurten, 2026): Bolsward-Zuidoost: 29,5% (2026). Ter vergelijking: Hoogste waarde: Bolsward-Zuidoost (29,5%); laagste: Bolsward-Noord (24,1%). 80 jaar of ouder (%) (CBS Kerncijfers wijken en buurten, 2026): Bolsward-Zuidoost: 10,2% (2026). Ter vergelijking: Hoogste waarde: Bolsward-Zuidoost (10,2%); laagste: Bolsward-Zuidwest (3,9%).",
-      "antwoordtijd_s": 14.9,
+      "antwoordtijd_s": 44.6,
       "console_fouten": []
     },
     {
       "id": "logboek",
       "resultaat": "ok",
       "afbeelding": "logboek.webp",
-      "antwoordtijd_s": 3.9,
+      "antwoordtijd_s": 3.7,
       "console_fouten": []
     },
     {
