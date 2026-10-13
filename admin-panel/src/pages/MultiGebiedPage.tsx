@@ -241,7 +241,16 @@ export const MultiGebiedPage: React.FC = () => {
         document.title = `MultiGebied_${deelgebiedNaam.replace(/\s+/g, '_')}_${dateStr}`;
         const afterPrint = () => { document.title = originalTitle; window.removeEventListener('afterprint', afterPrint); };
         window.addEventListener('afterprint', afterPrint);
-        setTimeout(() => window.print(), 100);
+        setTimeout(() => {
+            try {
+                if (window.opener) {
+                    window.opener = null;
+                }
+            } catch {
+                // negeer mogelijke restricties
+            }
+            window.print();
+        }, 100);
     };
 
     // ─── SVG Choropleth (D3 geoMercator) ────────────────────────────────────

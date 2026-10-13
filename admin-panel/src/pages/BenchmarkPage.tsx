@@ -181,7 +181,16 @@ export const BenchmarkPage: React.FC = () => {
         }
         const afterPrint = () => { document.title = originalTitle; window.removeEventListener('afterprint', afterPrint); };
         window.addEventListener('afterprint', afterPrint);
-        setTimeout(() => window.print(), 100);
+        setTimeout(() => {
+            try {
+                if (window.opener) {
+                    window.opener = null;
+                }
+            } catch {
+                // negeer mogelijke restricties
+            }
+            window.print();
+        }, 100);
     };
 
     // ─── Typeahead Dropdown Component ───────────────────────────────────────

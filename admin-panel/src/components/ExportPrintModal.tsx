@@ -33,6 +33,13 @@ export const ExportPrintModal: React.FC<ExportPrintModalProps> = ({ isOpen, onCl
 
         // 3. Wacht even tot browser styles heeft verwerkt, dan printen
         setTimeout(() => {
+            try {
+                if (window.opener) {
+                    window.opener = null;
+                }
+            } catch {
+                // negeer mogelijke restricties
+            }
             window.print();
             
             // 4. Cleanup

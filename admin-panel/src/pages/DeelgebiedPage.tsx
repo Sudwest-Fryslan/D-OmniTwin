@@ -502,6 +502,13 @@ export const DeelgebiedPage: React.FC = () => {
 
     // Print
     const handlePrint = () => {
+        try {
+            if (window.opener) {
+                window.opener = null;
+            }
+        } catch {
+            // negeer mogelijke restricties
+        }
         window.print();
     };
 
@@ -1410,7 +1417,7 @@ export const DeelgebiedPage: React.FC = () => {
                                                     <td style={{ padding: '0.45rem 0.75rem', color: 'var(--color-text-secondary)' }}>{b.peildata || 'Recentste'}</td>
                                                     <td style={{ padding: '0.45rem 0.75rem', textAlign: 'center' }}>
                                                         {b.bron_url ? (
-                                                            <a href={b.bron_url} target="_blank" rel="noreferrer" style={{ color: 'var(--color-primary)' }}>
+                                                            <a href={b.bron_url} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--color-primary)' }}>
                                                                 <ExternalLink size={13} />
                                                             </a>
                                                         ) : '—'}
