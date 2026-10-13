@@ -50,6 +50,8 @@ addopts = "-v --tb=short"
 [tool.ruff]
 target-version = "py311"
 line-length = 120
+# Alleen Python; geen codeblokken in Markdown (documentatie blijft zoals hij is)
+extend-exclude = ["*.md"]
 
 # `ruff format` staat klaar maar is nog niet op de codebase gedraaid (stap 2 van #129);
 # daarom nog geen `ruff format --check` in de CI.
