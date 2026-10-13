@@ -386,3 +386,79 @@ def test_ik_endpoint(provider):
     assert r.json() == {"client_id": "etl-voorbeeld", "rollen": ["dataset:voorbeeld:laden", "default-roles-omnitwin"]}
     assert "8f1c" not in r.text  # geen sub
     _is_probleem(c.get("/api/oidc/ik"), 401, "niet-geauthenticeerd")
+
+
+# --- Microsoft Entra ID: app-rollen in de claim `roles` (#411) ------------
+
+ENTRA_TENANT = "00000000-0000-0000-0000-000000000001"   # fictief
+ENTRA_CLIENT = "00000000-0000-0000-0000-0000000000aa"   # fictief; aud van een v2-access-token
+ENTRA_ISSUER = f"https://login.microsoftonline.com/{ENTRA_TENANT}/v2.0"
+ENTRA_JWKS = f"https://login.microsoftonline.com/{ENTRA_TENANT}/discovery/v2.0/keys"
+
+
+def entra_token(**wijzig):
+    """Access token zoals Entra ID (v2) het voor de eigen API uitgeeft: geen realm_access, wel `roles`."""
+    nu = int(time.time())
+    claims = {
+        "iss": ENTRA_ISSUER, "aud": ENTRA_CLIENT, "sub": "AAAAbbbbCCCCdddd", "oid": "fictief-oid",
+        "tid": ENTRA_TENANT, "azp": ENTRA_CLIENT, "uti": "uti-1", "ver": "2.0", "scp": "toegang",
+        "preferred_username": "gebruiker@example.org", "iat": nu, "nbf": nu, "exp": nu + 3600,
+        "roles": ["beheerder", "datasets:laden"],
+    }
+    claims.update(wijzig)
+    claims = {k: v for k, v in claims.items() if v is not None}
+    return jwt.encode(claims, SLEUTEL_A, algorithm="RS256", headers={"kid": "entra-1", "typ": "JWT"})
+
+
+@pytest.fixture
+def entra(monkeypatch):
+    """OIDC_* zoals in deploy/kubernetes/README.md voor Entra ID: issuer, audience, geen intern adres."""
+    monkeypatch.setenv("OIDC_ISSUER", ENTRA_ISSUER)
+    monkeypatch.setenv("OIDC_AUDIENCE", ENTRA_CLIENT)
+    monkeypatch.setenv("OIDC_INTERN_URL", "")
+    monkeypatch.delenv("OIDC_JWKS_URL", raising=False)
+    gevraagd = []
+
+    def nep(url):
+        gevraagd.append(url)
+        if url == ENTRA_ISSUER + "/.well-known/openid-configuration":
+            return {"issuer": ENTRA_ISSUER, "jwks_uri": ENTRA_JWKS}
+        if url == ENTRA_JWKS:
+            # Entra zet geen alg in de JWK
+            d = json.loads(jwt.algorithms.RSAAlgorithm.to_jwk(SLEUTEL_A.public_key()))
+            d.update(kid="entra-1", use="sig", x5t="entra-1")
+            return {"keys": [d]}
+        raise AssertionError(f"onverwachte URL {url}")
+
+    monkeypatch.setattr(oidc, "_haal_json", nep)
+    oidc.wis_cache()
+    yield gevraagd
+    oidc.wis_cache()
+
+
+def test_entra_app_rollen_uit_roles(entra):
+    p = oidc.controleer_token(entra_token())
+    assert p.rollen == frozenset({"beheerder", "datasets:laden"})
+    assert p.client_id == ENTRA_CLIENT and p.gebruikersnaam == "gebruiker@example.org"
+    assert p.token_id is None  # Entra heeft geen jti
+    assert entra == [ENTRA_ISSUER + "/.well-known/openid-configuration", ENTRA_JWKS]
+
+
+def test_entra_rol_geeft_toegang_tot_beheerroute(entra):
+    c = _app()
+    assert c.post("/datasets", headers=_kop(entra_token())).status_code == 200
+    assert c.post("/datasets", headers=_kop(entra_token(roles=["lezer"]))).status_code == 403
+    assert c.post("/datasets", headers=_kop(entra_token(roles=None))).status_code == 403
+
+
+def test_entra_v1_token_andere_issuer_geweigerd(entra):
+    """Zonder accessTokenAcceptedVersion=2 geeft Entra v1-tokens met een andere issuer: 401."""
+    t = entra_token(iss=f"https://sts.windows.net/{ENTRA_TENANT}/", aud=f"api://{ENTRA_CLIENT}")
+    _is_probleem(_app().post("/datasets", headers=_kop(t)), 401, "niet-geauthenticeerd")
+
+
+def test_roles_naast_keycloak_claims_en_alleen_tekst():
+    claims = {"roles": ["lezer", 7, None], "realm_access": {"roles": ["beheerder"]},
+              "resource_access": {"omnitwin-api": {"roles": ["datasets:laden"]}}}
+    assert oidc._rollen(claims, "omnitwin-api") == frozenset({"lezer", "beheerder", "datasets:laden"})
+    assert oidc._rollen({"roles": "beheerder"}, "omnitwin-api") == frozenset()
