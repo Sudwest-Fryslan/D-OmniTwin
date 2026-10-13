@@ -23,8 +23,9 @@ zonder database of model te testen (tests/test_chat_datavraag.py).
 
 import json
 import re
+from collections.abc import Callable, Iterable, Sequence
 from dataclasses import dataclass, field
-from typing import Any, Callable, Dict, Iterable, List, Optional, Sequence, Tuple
+from typing import Any
 
 from sqlalchemy import text
 
@@ -109,7 +110,7 @@ def is_datavraag(vraag: str) -> bool:
 _GETALWOORDEN = {"twee": 2, "drie": 3, "vier": 4, "vijf": 5, "tien": 10}
 
 
-def gevraagd_aantal(vraag: str) -> Optional[int]:
+def gevraagd_aantal(vraag: str) -> int | None:
     """'top 3 buurten', 'de 5 wijken met ...' → 3 / 5; anders None."""
     v = normaliseer(vraag)
     m = re.search(r"\btop (\d+)\b", v) or re.search(
@@ -163,18 +164,18 @@ def plaats_van(naam: str) -> str:
 
 @dataclass
 class GebiedHerkenning:
-    gevraagd: List[str] = field(default_factory=list)  # gebied-ids uit de vraag of de kaart
-    referentie: List[str] = field(default_factory=list)  # buren, voor de rangorde
-    herkend: List[str] = field(default_factory=list)  # leesbaar: welke namen herkend zijn
+    gevraagd: list[str] = field(default_factory=list)  # gebied-ids uit de vraag of de kaart
+    referentie: list[str] = field(default_factory=list)  # buren, voor de rangorde
+    herkend: list[str] = field(default_factory=list)  # leesbaar: welke namen herkend zijn
     bron: str = "geen"  # vraag | kaart | alle | geen
 
 
 def herken_gebieden(
     vraag: str,
-    gebieden: Sequence[Dict[str, Any]],
-    gemeenten: Optional[Dict[str, str]] = None,
-    huidig_gebied_id: Optional[str] = None,
-    voorkeur_type: Optional[str] = None,
+    gebieden: Sequence[dict[str, Any]],
+    gemeenten: dict[str, str] | None = None,
+    huidig_gebied_id: str | None = None,
+    voorkeur_type: str | None = None,
     geselecteerd: Sequence[str] = (),
 ) -> GebiedHerkenning:
     """
@@ -197,20 +198,20 @@ def herken_gebieden(
 
     origineel = rest = f" {normaliseer(vraag)} "
     res = GebiedHerkenning()
-    treffers: List[Tuple[int, List[str], str]] = []  # (plek in de vraag, ids, naam)
+    treffers: list[tuple[int, list[str], str]] = []  # (plek in de vraag, ids, naam)
 
     def voeg_toe(frase: str, ids: Iterable[str], naam: str):
         treffers.append((origineel.find(f" {frase} "), list(ids), naam))
 
     # Woonplaatsen van het voorkeurstype: 'bolsward' → [Bolsward-Noord, Bolsward-Zuidoost, ...]
-    plaatsen: Dict[str, List[str]] = {}
+    plaatsen: dict[str, list[str]] = {}
     for g in van_type:
         p = normaliseer(plaats_van(g["naam"]))
         if len(p) >= 4 and p not in _GEEN_GEBIEDSNAAM:
             plaatsen.setdefault(p, []).append(g["id"])
 
     # a. Volledige gebiedsnamen, langste eerst; de tekst wordt 'opgebruikt'
-    namen: Dict[str, List[Dict[str, Any]]] = {}
+    namen: dict[str, list[dict[str, Any]]] = {}
     for g in gebieden:
         n = normaliseer(g["naam"])
         if len(n) >= 4 and n not in _GEEN_GEBIEDSNAAM:
@@ -308,11 +309,11 @@ class IndicatorTreffer:
 
 def herken_indicatoren(
     vraag: str,
-    indicatoren: Sequence[Dict[str, Any]],
-    ai_treffers: Sequence[Dict[str, Any]] = (),
+    indicatoren: Sequence[dict[str, Any]],
+    ai_treffers: Sequence[dict[str, Any]] = (),
     max_aantal: int = MAX_INDICATOREN,
-    begrippen: Optional[Sequence[zoektaal.Begrip]] = None,
-) -> List[IndicatorTreffer]:
+    begrippen: Sequence[zoektaal.Begrip] | None = None,
+) -> list[IndicatorTreffer]:
     """
     Kies de indicatoren bij de vraag.
 
@@ -329,7 +330,7 @@ def herken_indicatoren(
     per_uuid = {str(i["uuid"]): i for i in indicatoren}
     v_norm = normaliseer(vraag)
     vraagwoorden = _tokens(vraag)
-    treffers: Dict[str, IndicatorTreffer] = {}
+    treffers: dict[str, IndicatorTreffer] = {}
 
     def voeg_toe(ind, soort, score, woorden):
         u = str(ind["uuid"])
@@ -381,7 +382,7 @@ def herken_indicatoren(
     namen_gekozen = {t.naam for t in volgorde}
     volgorde = [t for t in volgorde if f"{t.naam} (%)" not in namen_gekozen]
 
-    gekozen: List[IndicatorTreffer] = []
+    gekozen: list[IndicatorTreffer] = []
     gedekt: set = set()
     for t in volgorde:
         if t.soort == "lexicaal" and t.woorden and t.woorden <= gedekt:
@@ -398,7 +399,7 @@ def herken_indicatoren(
 # ── 4. Richting, rangorde en feiten ──────────────────────────────────────────
 
 
-def richting(score_type: Optional[str], interpretatie_logica: Optional[str]) -> str:
+def richting(score_type: str | None, interpretatie_logica: str | None) -> str:
     """
     'hoger_is_beter' | 'lager_is_beter' | 'neutraal'.
 
@@ -438,7 +439,7 @@ _UUIDACHTIG = re.compile(r"^[0-9a-f]{8}-[0-9a-f]{4}-", re.IGNORECASE)
 _BESTAND = re.compile(r"\.(json|geojson|csv|xlsx?|parquet|gpkg|shp|zip)$|[\\/]", re.IGNORECASE)
 
 
-def nette_bron(bron: Optional[str]) -> str:
+def nette_bron(bron: str | None) -> str:
     """Bron leesbaar maken; een importbestand met uuid-naam zegt de gebruiker niets."""
     b = (bron or "").strip()
     if not b:
@@ -448,18 +449,18 @@ def nette_bron(bron: Optional[str]) -> str:
     return b
 
 
-def is_demo(bron: Optional[str]) -> bool:
+def is_demo(bron: str | None) -> bool:
     return (bron or "").strip().upper().startswith("DEMO")
 
 
 def bouw_feiten(
-    indicatoren: Sequence[Dict[str, Any]],
-    waarden: Sequence[Dict[str, Any]],
-    gebiedsnamen: Dict[str, str],
+    indicatoren: Sequence[dict[str, Any]],
+    waarden: Sequence[dict[str, Any]],
+    gebiedsnamen: dict[str, str],
     gevraagd: Sequence[str],
     volgorde: str = "hoog",
-    aantal: Optional[int] = None,
-) -> List[Dict[str, Any]]:
+    aantal: int | None = None,
+) -> list[dict[str, Any]]:
     """
     Per indicator: waarden van de gebieden, gesorteerd, met rang en richting.
 
@@ -534,7 +535,7 @@ def bouw_feiten(
     return feiten
 
 
-def _waarde_tekst(item: Dict[str, Any], eenheid: str) -> str:
+def _waarde_tekst(item: dict[str, Any], eenheid: str) -> str:
     """Waarde met eenheid: '48,3%', '246 m', '30,9 duizend euro'."""
     e = (eenheid or "").strip()
     getal = formatteer_getal(item["waarde"])
@@ -547,11 +548,11 @@ def _waarde_tekst(item: Dict[str, Any], eenheid: str) -> str:
     return getal
 
 
-def _namen(items: Sequence[Dict[str, Any]], eenheid: str) -> str:
+def _namen(items: Sequence[dict[str, Any]], eenheid: str) -> str:
     return " en ".join(f"{w['gebied']} ({_waarde_tekst(w, eenheid)})" for w in items)
 
 
-def samenvatting(f: Dict[str, Any]) -> str:
+def samenvatting(f: dict[str, Any]) -> str:
     """
     Vaste duiding per indicator, uit de cijfers: hoogste, laagste, de gevraagde gebieden
     daartussen en wat gunstig is volgens de richting. Voor het taalmodel (houvast) en de terugvaltekst.
@@ -580,7 +581,7 @@ def samenvatting(f: Dict[str, Any]) -> str:
     return " ".join(zinnen)
 
 
-def eigen_waarde(f: Dict[str, Any]) -> Optional[str]:
+def eigen_waarde(f: dict[str, Any]) -> str | None:
     """Bij precies één gevraagd gebied (met buren als referentie): 'Bolsward-Zuidoost: 29,5% (2026).'"""
     gevraagd = [w for w in f["waarden"] if w.get("gevraagd")]
     if len(gevraagd) != 1 or len(f["waarden"]) < 2:
@@ -590,7 +591,7 @@ def eigen_waarde(f: Dict[str, Any]) -> Optional[str]:
     return f"{w['gebied']}: {_waarde_tekst(w, f['eenheid'])}{jaar}."
 
 
-def vaste_tekst(feiten: Sequence[Dict[str, Any]]) -> str:
+def vaste_tekst(feiten: Sequence[dict[str, Any]]) -> str:
     """Antwoord zonder taalmodel, alleen uit de feiten (terugval, of zonder LLM-koppeling).
     Eén gevraagd gebied: eerst de waarde van dat gebied, dan ter vergelijking de buren."""
     zinnen = []
@@ -605,7 +606,7 @@ def vaste_tekst(feiten: Sequence[Dict[str, Any]]) -> str:
     return " ".join(zinnen)
 
 
-def bron_getallen(feiten: Sequence[Dict[str, Any]], vraag: str = "") -> Dict[str, Any]:
+def bron_getallen(feiten: Sequence[dict[str, Any]], vraag: str = "") -> dict[str, Any]:
     """De brondata voor de grounding-check: alle getallen die het model mocht gebruiken."""
     return {
         "vraag": vraag,
@@ -623,7 +624,7 @@ def bron_getallen(feiten: Sequence[Dict[str, Any]], vraag: str = "") -> Dict[str
     }
 
 
-def controleer_getallen(antwoord: str, feiten: Sequence[Dict[str, Any]], vraag: str = "") -> List[str]:
+def controleer_getallen(antwoord: str, feiten: Sequence[dict[str, Any]], vraag: str = "") -> list[str]:
     """Getallen in het antwoord die niet in de feiten (of de vraag) staan."""
     return ongegronde_getallen(antwoord, bron_getallen(feiten, vraag))
 
@@ -643,7 +644,7 @@ Regels:
 8. Antwoord in het Nederlands, in maximaal 4 zinnen. Gewone tekst: geen kopjes, geen opsomming, geen begroeting, geen JSON."""
 
 
-def feiten_als_json(feiten: Sequence[Dict[str, Any]]) -> str:
+def feiten_als_json(feiten: Sequence[dict[str, Any]]) -> str:
     """De cijfers voor het taalmodel als JSON: per indicator de bron, jaar, richting en waarden."""
     blok = []
     for f in feiten:
@@ -671,7 +672,7 @@ def feiten_als_json(feiten: Sequence[Dict[str, Any]]) -> str:
     return json.dumps(blok, ensure_ascii=False, indent=1)
 
 
-def gebruikersprompt(vraag: str, feiten: Sequence[Dict[str, Any]], herkend: Sequence[str]) -> str:
+def gebruikersprompt(vraag: str, feiten: Sequence[dict[str, Any]], herkend: Sequence[str]) -> str:
     gebieden = ", ".join(herkend) if herkend else "geen specifiek gebied genoemd"
     return (
         f"Vraag: {vraag}\n"
@@ -690,7 +691,7 @@ def strip_denken(tekst: str) -> str:
 # ── Database ─────────────────────────────────────────────────────────────────
 
 
-def laad_gebieden(db) -> List[Dict[str, Any]]:
+def laad_gebieden(db) -> list[dict[str, Any]]:
     rows = db.execute(
         text(
             "SELECT g.id, g.naam, g.gemeente_code, CAST(g.gebiedstype_id AS text), t.naam "
@@ -703,9 +704,9 @@ def laad_gebieden(db) -> List[Dict[str, Any]]:
     ]
 
 
-def voorkeur_gebiedstype(gebieden: Sequence[Dict[str, Any]]) -> Optional[str]:
+def voorkeur_gebiedstype(gebieden: Sequence[dict[str, Any]]) -> str | None:
     """Buurten als die er zijn, anders het type met de meeste gebieden."""
-    tellingen: Dict[str, int] = {}
+    tellingen: dict[str, int] = {}
     buurttypes = set()
     for g in gebieden:
         tellingen[g["gebiedstype_id"]] = tellingen.get(g["gebiedstype_id"], 0) + 1
@@ -715,7 +716,7 @@ def voorkeur_gebiedstype(gebieden: Sequence[Dict[str, Any]]) -> Optional[str]:
     return max(kandidaten, key=tellingen.get) if kandidaten else None
 
 
-def laad_indicatoren(db) -> List[Dict[str, Any]]:
+def laad_indicatoren(db) -> list[dict[str, Any]]:
     """Actieve indicatoren met minstens één waarde."""
     rows = db.execute(
         text(
@@ -730,7 +731,7 @@ def laad_indicatoren(db) -> List[Dict[str, Any]]:
     ]
 
 
-def laad_waarden(db, indicator_uuids: Sequence[str], gebied_ids: Sequence[str]) -> List[Dict[str, Any]]:
+def laad_waarden(db, indicator_uuids: Sequence[str], gebied_ids: Sequence[str]) -> list[dict[str, Any]]:
     """Meest recente waarde per gebied en indicator (scenario 'current').
 
     Rust die waarde op te weinig waarnemingen (kleine aantallen, #325), dan valt hij weg."""
@@ -758,7 +759,7 @@ def laad_waarden(db, indicator_uuids: Sequence[str], gebied_ids: Sequence[str]) 
 # ── Route ────────────────────────────────────────────────────────────────────
 
 
-def deelvragen(vraag: str) -> List[str]:
+def deelvragen(vraag: str) -> list[str]:
     """'Welke buurt ligt het verst van een koele plek, en waar wonen de meeste 65-plussers?' → 2 delen."""
     delen = re.split(r"[.?!;,]|\s+en\s+(?=waar|welke|hoe|wat)", vraag or "")
     return [d.strip() for d in delen if d and len(d.strip()) > 3]
@@ -778,7 +779,7 @@ _MODELFOUTEN = (
 _HERKOMST = {"adres": "gevonden bij je postcode of adres", "locatie": "gevonden bij je locatie"}
 
 
-def aanname_tekst(herkenning: GebiedHerkenning, herkomst: Optional[str] = None) -> Optional[str]:
+def aanname_tekst(herkenning: GebiedHerkenning, herkomst: str | None = None) -> str | None:
     """
     Van welk gebied gaat het antwoord uit, als dat niet in de vraag stond (#233)? Dan zegt de
     assistent dat vooraf: 'Ik ga uit van Bolsward-Zuidoost (geselecteerd op de kaart).'
@@ -801,11 +802,11 @@ def aanname_tekst(herkenning: GebiedHerkenning, herkomst: Optional[str] = None) 
 
 def beantwoord_datavraag(
     vraag: str,
-    context: Optional[Dict[str, Any]],
+    context: dict[str, Any] | None,
     db,
-    zoek: Callable[[str], List[Dict[str, Any]]],
-    vraag_llm: Callable[[str, str], Dict[str, Any]],
-) -> Optional[Dict[str, Any]]:
+    zoek: Callable[[str], list[dict[str, Any]]],
+    vraag_llm: Callable[[str, str], dict[str, Any]],
+) -> dict[str, Any] | None:
     """
     Beantwoord een datavraag; None als het geen datavraag is (dan navigeert de chat zoals voorheen).
 
@@ -852,7 +853,7 @@ def beantwoord_datavraag(
         [g["naam"] for g in gebieden] + [plaats_van(g["naam"]) for g in gebieden] + list(gemeenten.values())
     )
     onderwerp = resterende_tekst(vraag, gebiedswoorden)
-    ai_treffers: List[Dict[str, Any]] = []
+    ai_treffers: list[dict[str, Any]] = []
     for deel in deelvragen(vraag):
         tekst = resterende_tekst(deel, gebiedswoorden)
         if len(tekst) > 3:

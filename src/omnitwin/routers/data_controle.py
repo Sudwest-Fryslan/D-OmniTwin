@@ -1,27 +1,29 @@
+from typing import Any
+from uuid import UUID
+
 from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel
 from sqlalchemy.orm import Session
+
 from omnitwin.database import get_db
 from omnitwin.fouten import GebruikersFout
-from omnitwin.services.data_controle_service import DataControleService
-from typing import List, Dict, Any
-from uuid import UUID
-from pydantic import BaseModel
-from omnitwin.services.deduplicatie_service import DeduplicatieService
 from omnitwin.routers.auth import vereis_admin
+from omnitwin.services.data_controle_service import DataControleService
+from omnitwin.services.deduplicatie_service import DeduplicatieService
 
 
 class MergeRequest(BaseModel):
     primary_uuid: str
-    duplicate_uuids: List[str]
+    duplicate_uuids: list[str]
     actie: str  # 'exact_duplicaat' of 'groepeer_bronnen'
 
 
 class ActiesRequest(BaseModel):
-    indicator_uuids: List[str]
+    indicator_uuids: list[str]
 
 
 class UitzonderingRequest(BaseModel):
-    indicator_uuids: List[str]  # Alle UUIDs in de groep die als 'geen duplicaat' worden gemarkeerd
+    indicator_uuids: list[str]  # Alle UUIDs in de groep die als 'geen duplicaat' worden gemarkeerd
 
 
 # Alle routes in deze router vereisen een beheerder (#65)
@@ -37,7 +39,7 @@ def get_service(db: Session = Depends(get_db)) -> DataControleService:
     return DataControleService(db)
 
 
-@router.get("/run", response_model=List[Dict[str, Any]])
+@router.get("/run", response_model=list[dict[str, Any]])
 def run_all_checks(service: DataControleService = Depends(get_service)):
     """
     Voert data lineage checks uit voor alle indicatoren die een bron_systeem_api hebben.
@@ -45,7 +47,7 @@ def run_all_checks(service: DataControleService = Depends(get_service)):
     return service.batch_run_all()
 
 
-@router.get("/check/{indicator_uuid}", response_model=Dict[str, Any])
+@router.get("/check/{indicator_uuid}", response_model=dict[str, Any])
 def check_single_indicator(indicator_uuid: UUID, service: DataControleService = Depends(get_service)):
     """
     Voert een data check uit voor één specifieke indicator op basis van UUID.
@@ -84,13 +86,13 @@ def get_dedup_service(db: Session = Depends(get_db)) -> DeduplicatieService:
     return DeduplicatieService(db)
 
 
-@router.get("/deduplicatie/kandidaten", response_model=List[Dict[str, Any]])
+@router.get("/deduplicatie/kandidaten", response_model=list[dict[str, Any]])
 def get_dedup_kandidaten(service: DeduplicatieService = Depends(get_dedup_service)):
     """Haalt potentiele dubbele indicatoren op (Sprint 21 Data Kwaliteit)"""
     return service.get_kandidaten()
 
 
-@router.post("/deduplicatie/merge", response_model=Dict[str, Any])
+@router.post("/deduplicatie/merge", response_model=dict[str, Any])
 def merge_indicatoren(req: MergeRequest, service: DeduplicatieService = Depends(get_dedup_service)):
     """Merged of deactiveert dubbele indicatoren (Sprint 21)"""
     if req.actie not in ["exact_duplicaat", "groepeer_bronnen"]:
@@ -101,7 +103,7 @@ def merge_indicatoren(req: MergeRequest, service: DeduplicatieService = Depends(
         raise HTTPException(status_code=400, detail=str(e))
 
 
-@router.post("/deduplicatie/uitzondering", response_model=Dict[str, Any])
+@router.post("/deduplicatie/uitzondering", response_model=dict[str, Any])
 def markeer_uitzondering(req: UitzonderingRequest, service: DeduplicatieService = Depends(get_dedup_service)):
     """Markeert een groep indicatoren als 'geen duplicaat' (worden uitgesloten bij toekomstige scans)"""
     if len(req.indicator_uuids) < 2:

@@ -27,8 +27,9 @@ import math
 import threading
 import time
 from collections import deque
+from collections.abc import Callable
 from functools import lru_cache
-from typing import Callable, Deque, Dict, Optional, Tuple, Union
+from typing import Union
 
 from fastapi import HTTPException, Request
 
@@ -44,10 +45,10 @@ class Limiet:
         self.maximum = maximum
         self.venster = venster
         self._klok = klok
-        self._tijden: Dict[str, Deque[float]] = {}
+        self._tijden: dict[str, deque[float]] = {}
         self._slot = threading.Lock()
 
-    def _opschonen(self, sleutel: str, nu: float) -> Deque[float]:
+    def _opschonen(self, sleutel: str, nu: float) -> deque[float]:
         tijden = self._tijden.get(sleutel)
         if tijden is None:
             return deque()
@@ -97,7 +98,7 @@ _Netwerk = Union[ipaddress.IPv4Network, ipaddress.IPv6Network]
 
 
 @lru_cache(maxsize=8)
-def vertrouwde_proxies(lijst: str) -> Tuple[_Netwerk, ...]:
+def vertrouwde_proxies(lijst: str) -> tuple[_Netwerk, ...]:
     """TRUSTED_PROXIES als netwerken. Ongeldige onderdelen worden overgeslagen."""
     netwerken = []
     for deel in lijst.split(","):
@@ -111,7 +112,7 @@ def vertrouwde_proxies(lijst: str) -> Tuple[_Netwerk, ...]:
     return tuple(netwerken)
 
 
-def _als_ip(adres: str) -> Optional[Union[ipaddress.IPv4Address, ipaddress.IPv6Address]]:
+def _als_ip(adres: str) -> Union[ipaddress.IPv4Address, ipaddress.IPv6Address] | None:
     try:
         ip = ipaddress.ip_address(adres.strip())
     except ValueError:
@@ -122,7 +123,7 @@ def _als_ip(adres: str) -> Optional[Union[ipaddress.IPv4Address, ipaddress.IPv6A
     return ip
 
 
-def _vertrouwd(ip, netwerken: Tuple[_Netwerk, ...]) -> bool:
+def _vertrouwd(ip, netwerken: tuple[_Netwerk, ...]) -> bool:
     return ip is not None and any(ip.version == n.version and ip in n for n in netwerken)
 
 
@@ -158,7 +159,7 @@ def te_veel(wachttijd: int, melding: str) -> HTTPException:
 
 
 # ── LLM-routes: chat en AI-teksten (narratives) ───────────────────────────────
-_llm_limieten: Dict[int, Limiet] = {}
+_llm_limieten: dict[int, Limiet] = {}
 
 
 def _llm_limiet(maximum: int) -> Limiet:

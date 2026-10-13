@@ -21,8 +21,9 @@ import csv
 import hashlib
 import io
 import logging
+from collections.abc import Iterable, Sequence
 from datetime import date
-from typing import Any, Dict, Iterable, List, Optional, Sequence
+from typing import Any
 
 from sqlalchemy import text
 
@@ -61,15 +62,15 @@ HASHVELDEN = (
 SCHEIDER = "\x1f"
 
 
-def afkappen(tekst: Optional[str], maximum: int) -> Optional[str]:
+def afkappen(tekst: str | None, maximum: int) -> str | None:
     if tekst is None:
         return None
     tekst = str(tekst).strip()
     return tekst if len(tekst) <= maximum else tekst[: maximum - 1] + "…"
 
 
-def _bronnen(bronnen: Optional[Iterable[Any]]) -> List[str]:
-    uit: List[str] = []
+def _bronnen(bronnen: Iterable[Any] | None) -> list[str]:
+    uit: list[str] = []
     for b in bronnen or ():
         s = str(b).strip() if b is not None else ""
         if s and s not in uit:
@@ -84,13 +85,13 @@ def regel(
     functie: str,
     status: str,
     *,
-    taak: Optional[str] = None,
-    bronnen: Optional[Iterable[Any]] = None,
-    model: Optional[str] = None,
-    modelversie: Optional[str] = None,
-    resultaat: Optional[str] = None,
-    foutmelding: Optional[str] = None,
-) -> Dict[str, Any]:
+    taak: str | None = None,
+    bronnen: Iterable[Any] | None = None,
+    model: str | None = None,
+    modelversie: str | None = None,
+    resultaat: str | None = None,
+    foutmelding: str | None = None,
+) -> dict[str, Any]:
     """De rij zoals hij in het logboek komt (zonder id, tijdstip en hash: die zet de database)."""
     if status not in STATUSSEN:
         raise ValueError(f"onbekende status {status!r}")
@@ -116,7 +117,7 @@ _INSERT = text("""
 """)
 
 
-def _schrijf_rij(rij: Dict[str, Any]) -> None:
+def _schrijf_rij(rij: dict[str, Any]) -> None:
     """Eigen transactie (los van het verzoek), als de schrijfrol: alleen INSERT."""
     from omnitwin.database import engine
 
@@ -147,7 +148,7 @@ def schrijf(usecase: str, functie: str, status: str, **velden) -> bool:
 # ── Hashketen ────────────────────────────────────────────────────────────────
 
 
-def regelhash(r: Dict[str, Any]) -> str:
+def regelhash(r: dict[str, Any]) -> str:
     """sha256 van de regel (velden in HASHVELDEN, bronnen met komma's), zoals ai_logboek_regelhash."""
     delen = []
     for veld in HASHVELDEN:
@@ -158,7 +159,7 @@ def regelhash(r: Dict[str, Any]) -> str:
     return hashlib.sha256(SCHEIDER.join(delen).encode("utf-8")).hexdigest()
 
 
-def controleer_keten(regels: Iterable[Dict[str, Any]], max_fouten: int = 20) -> Dict[str, Any]:
+def controleer_keten(regels: Iterable[dict[str, Any]], max_fouten: int = 20) -> dict[str, Any]:
     """
     Rekent de keten na (regels op volgorde van id). Per regel: klopt de hash bij de inhoud, en
     verwijst vorige_hash naar de regel ervoor? De eerste regel is het anker (na opschonen wijst
@@ -185,7 +186,7 @@ _KOLOMMEN = """id, tijdstip, to_char(tijdstip AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"
                foutmelding, vorige_hash, hash"""
 
 
-def controleer(db) -> Dict[str, Any]:
+def controleer(db) -> dict[str, Any]:
     """Keten narekenen; klopt hij niet, dan een automatische noodstop op A, B en C (fail-closed)."""
     rijen = db.execute(text(f"SELECT {_KOLOMMEN} FROM app.ai_logboek ORDER BY id")).mappings()
     uit = controleer_keten(dict(r) for r in rijen)
@@ -204,13 +205,13 @@ def controleer(db) -> Dict[str, Any]:
 
 def lees(
     db,
-    usecase: Optional[str] = None,
-    status: Optional[str] = None,
-    van: Optional[date] = None,
-    tot: Optional[date] = None,
+    usecase: str | None = None,
+    status: str | None = None,
+    van: date | None = None,
+    tot: date | None = None,
     limit: int = 100,
     offset: int = 0,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     voorwaarden, params = [], {"limit": limit, "offset": offset}
     if usecase:
         voorwaarden.append("usecase = :usecase")
@@ -256,7 +257,7 @@ def _csv_veilig(w: Any) -> str:
     return "'" + s if s[:1] in ("=", "+", "-", "@", "\t", "\r") else s
 
 
-def als_csv(regels: Sequence[Dict[str, Any]]) -> str:
+def als_csv(regels: Sequence[dict[str, Any]]) -> str:
     buf = io.StringIO()
     schrijver = csv.writer(buf, delimiter=";", lineterminator="\r\n")
     schrijver.writerow(CSV_VELDEN)
@@ -276,7 +277,7 @@ def opschonen() -> int:
         )
 
 
-def lees_bewaartermijn(db) -> Dict[str, Any]:
+def lees_bewaartermijn(db) -> dict[str, Any]:
     r = (
         db.execute(text("SELECT bewaartermijn_dagen, gewijzigd_door, gewijzigd_op FROM app.ai_instellingen WHERE id"))
         .mappings()

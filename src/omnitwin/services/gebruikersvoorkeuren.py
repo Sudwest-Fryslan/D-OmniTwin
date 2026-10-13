@@ -16,7 +16,7 @@ from __future__ import annotations
 import json
 import math
 import re
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from sqlalchemy import text
 
@@ -38,7 +38,7 @@ POSITIE_GRENZEN = {
 }
 
 
-def eigenaar_van(gebruiker: Optional[Dict[str, Any]]) -> Optional[str]:
+def eigenaar_van(gebruiker: dict[str, Any] | None) -> str | None:
     """De sleutel van een ingelogde persoon, of None (anoniem of een script)."""
     if not gebruiker:
         return None
@@ -51,8 +51,8 @@ def eigenaar_van(gebruiker: Optional[Dict[str, Any]]) -> Optional[str]:
     return None
 
 
-def controleer_positie(positie: Dict[str, Any]) -> Dict[str, float]:
-    uit: Dict[str, float] = {}
+def controleer_positie(positie: dict[str, Any]) -> dict[str, float]:
+    uit: dict[str, float] = {}
     for veld, (laag, hoog) in POSITIE_GRENZEN.items():
         waarde = positie.get(veld)
         if waarde is None:
@@ -69,11 +69,11 @@ def controleer_positie(positie: Dict[str, Any]) -> Dict[str, float]:
     return uit
 
 
-def controleer_favoriet(naam: str, gebied_ids: List[str]) -> tuple[str, List[str]]:
+def controleer_favoriet(naam: str, gebied_ids: list[str]) -> tuple[str, list[str]]:
     naam = (naam or "").strip()
     if not 1 <= len(naam) <= MAX_NAAM:
         raise GebruikersFout(f"Geef de favoriet een naam van 1 tot {MAX_NAAM} tekens.")
-    ids: List[str] = []
+    ids: list[str] = []
     for g in gebied_ids or []:
         g = str(g).strip()
         if not GEBIED_ID.match(g):
@@ -87,7 +87,7 @@ def controleer_favoriet(naam: str, gebied_ids: List[str]) -> tuple[str, List[str
     return naam, ids
 
 
-def _favoriet(r) -> Dict[str, Any]:
+def _favoriet(r) -> dict[str, Any]:
     return {
         "id": str(r["id"]),
         "naam": r["naam"],
@@ -114,7 +114,7 @@ class Voorkeuren:
             {"e": self.eigenaar},
         )
 
-    def instellingen(self) -> Dict[str, Any]:
+    def instellingen(self) -> dict[str, Any]:
         self._raak_aan()
         positie = self.db.execute(
             text("SELECT kaartpositie FROM gebruiker_voorkeuren WHERE eigenaar = :e"), {"e": self.eigenaar}
@@ -122,7 +122,7 @@ class Voorkeuren:
         self.db.commit()
         return {"kaartpositie": positie}
 
-    def zet_instellingen(self, kaartpositie: Optional[Dict[str, Any]]) -> Dict[str, Any]:
+    def zet_instellingen(self, kaartpositie: dict[str, Any] | None) -> dict[str, Any]:
         positie = controleer_positie(kaartpositie) if kaartpositie is not None else None
         self._raak_aan()
         self.db.execute(
@@ -132,7 +132,7 @@ class Voorkeuren:
         self.db.commit()
         return {"kaartpositie": positie}
 
-    def favorieten(self) -> List[Dict[str, Any]]:
+    def favorieten(self) -> list[dict[str, Any]]:
         self._raak_aan()
         rijen = (
             self.db.execute(
@@ -148,7 +148,7 @@ class Voorkeuren:
         self.db.commit()
         return [_favoriet(r) for r in rijen]
 
-    def bewaar_favoriet(self, naam: str, gebied_ids: List[str], gebiedstype_id: Optional[str]) -> tuple[Dict, bool]:
+    def bewaar_favoriet(self, naam: str, gebied_ids: list[str], gebiedstype_id: str | None) -> tuple[dict, bool]:
         """Nieuw, of een bestaande met dezelfde naam vervangen. (favoriet, nieuw?)"""
         naam, ids = controleer_favoriet(naam, gebied_ids)
         self._raak_aan()

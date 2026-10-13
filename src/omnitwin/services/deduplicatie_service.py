@@ -1,9 +1,10 @@
-from sqlalchemy.orm import Session
-from sqlalchemy import text
-from typing import List, Dict, Any
-from collections import defaultdict
 import difflib
 import re
+from collections import defaultdict
+from typing import Any
+
+from sqlalchemy import text
+from sqlalchemy.orm import Session
 
 from omnitwin import ai_logboek, ai_vrijgave
 from omnitwin.fouten import GebruikersFout
@@ -14,7 +15,7 @@ class DeduplicatieService:
     def __init__(self, db: Session):
         self.db = db
 
-    def get_kandidaten(self, zonder_ai: bool = False) -> List[Dict[str, Any]]:
+    def get_kandidaten(self, zonder_ai: bool = False) -> list[dict[str, Any]]:
         """
         Vindt potentiele duplicaten op basis van naam-gelijkenis (substring, pg_trgm)
         en semantische gelijkenis (pgvector).
@@ -47,8 +48,8 @@ class DeduplicatieService:
         # Drempelfilter in SQL voorkomt dat we tienduizenden irrelevante paren ophalen
         # NOT EXISTS filtert paren die als uitzondering zijn gemarkeerd
         query_pairs = text("""
-            SELECT 
-                i1.uuid as u1, 
+            SELECT
+                i1.uuid as u1,
                 i2.uuid as u2,
                 similarity(i1.naam::text, i2.naam::text) as trgm_sim,
                 (e1.embedding <=> e2.embedding) as vec_dist
@@ -152,7 +153,7 @@ class DeduplicatieService:
                 return self.get_kandidaten(zonder_ai=True)  # fail-closed: zonder embeddings
         return candidates
 
-    def merge_indicatoren(self, primary_uuid: str, duplicate_uuids: List[str], actie: str) -> Dict[str, Any]:
+    def merge_indicatoren(self, primary_uuid: str, duplicate_uuids: list[str], actie: str) -> dict[str, Any]:
         """
         Merged of groepeert indicatoren.
         Actie: 'exact_duplicaat' (is_actief=false) of 'groepeer_bronnen' (hoofd_indicator_id)
@@ -171,7 +172,7 @@ class DeduplicatieService:
         for dup_uuid in duplicate_uuids:
             if actie == "exact_duplicaat":
                 update_query = text("""
-                    UPDATE indicatoren 
+                    UPDATE indicatoren
                     SET is_actief = false, vervangen_door_id = :primary_id
                     WHERE uuid = CAST(:dup_uuid AS UUID)
                 """)
@@ -179,7 +180,7 @@ class DeduplicatieService:
                 success_count += 1
             elif actie == "groepeer_bronnen":
                 update_query = text("""
-                    UPDATE indicatoren 
+                    UPDATE indicatoren
                     SET hoofd_indicator_id = :primary_id
                     WHERE uuid = CAST(:dup_uuid AS UUID)
                 """)
@@ -197,7 +198,7 @@ class DeduplicatieService:
 
         return {"status": "success", "actie": actie, "primary_uuid": primary_uuid, "verwerkt_aantal": success_count}
 
-    def markeer_uitzondering(self, indicator_uuids: List[str]) -> Dict[str, Any]:
+    def markeer_uitzondering(self, indicator_uuids: list[str]) -> dict[str, Any]:
         """
         Markeert alle paar-combinaties van de gegeven UUIDs als 'geen duplicaat'.
         Deze paren worden bij toekomstige scans uitgefilterd.

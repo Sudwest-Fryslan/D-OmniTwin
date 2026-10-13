@@ -4,10 +4,10 @@ D-OmniTwin ETL Runner
 Een unificerend stuurscript voor het ophalen en importeren van CBS, RIVM en Politie datasets via OData.
 """
 
-import sys
-import os
 import argparse
+import os
 import subprocess
+import sys
 import textwrap
 
 # Definieer de paden naar de onderliggende modules
@@ -72,10 +72,10 @@ def main():
         Voorbeelden:
           1. Run de volledige pijplijn voor CBS dataset Kerncijfers (83739NED) in gemeente Súdwest-Fryslân (1900):
              python run_etl.py -ds 83739NED -gm 1900
-             
+
           2. Haal een RIVM dataset op (DataDerden endpoint):
              python run_etl.py -ds 50150NED -gm 1900 --derden
-             
+
           3. Alleen de import stap draaien (handig na bulk fetching):
              python run_etl.py --import-only
         """),

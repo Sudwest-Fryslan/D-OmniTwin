@@ -13,17 +13,19 @@ Usage:
     python tools/validate_gebiedsmonitor.py
 """
 
+import json
 import os
 import sys
-import json
 from pathlib import Path
-from psycopg2.extras import RealDictCursor
+
 import matplotlib
+from psycopg2.extras import RealDictCursor
 
 matplotlib.use("Agg")  # Non-interactive backend
+from datetime import datetime
+
 import matplotlib.pyplot as plt
 import numpy as np
-from datetime import datetime
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 from omnitwin.scriptdb import verbind  # noqa: E402
@@ -122,7 +124,7 @@ def get_indexes(conn):
             LEFT JOIN pg_attribute a ON a.attrelid = t.oid AND a.attnum = ANY(ix.indkey)
             WHERE t.relkind = 'r'
                 AND t.relnamespace = (SELECT oid FROM pg_namespace WHERE nspname = 'public')
-                AND t.relname IN ('gebiedstypes', 'gebieden', 'indicatoren', 
+                AND t.relname IN ('gebiedstypes', 'gebieden', 'indicatoren',
                                   'indicator_gebiedstype_relaties', 'gebied_data')
             ORDER BY t.relname, i.relname
         """)
@@ -139,7 +141,7 @@ def analyze_geodata(conn):
     with conn.cursor(cursor_factory=RealDictCursor) as cur:
         # Gebieden per type
         cur.execute("""
-            SELECT 
+            SELECT
                 gt.naam as gebiedstype,
                 COUNT(*) as aantal,
                 ST_GeometryType(g.geom) as geom_type,
@@ -154,7 +156,7 @@ def analyze_geodata(conn):
 
         # Bbox per gebiedstype
         cur.execute("""
-            SELECT 
+            SELECT
                 gt.naam as gebiedstype,
                 ST_XMin(ST_Extent(g.geom)) as min_x,
                 ST_YMin(ST_Extent(g.geom)) as min_y,
@@ -169,7 +171,7 @@ def analyze_geodata(conn):
 
         # Sample geometrieën voor visualisatie
         cur.execute("""
-            SELECT 
+            SELECT
                 g.id,
                 g.naam,
                 gt.naam as gebiedstype,
@@ -189,7 +191,7 @@ def analyze_data_coverage(conn):
     with conn.cursor(cursor_factory=RealDictCursor) as cur:
         # Gebieden met data
         cur.execute("""
-            SELECT 
+            SELECT
                 gt.naam as gebiedstype,
                 COUNT(DISTINCT g.id) as totaal_gebieden,
                 COUNT(DISTINCT gd.gebied_id) as gebieden_met_data,
@@ -204,7 +206,7 @@ def analyze_data_coverage(conn):
 
         # Indicatoren per gebiedstype
         cur.execute("""
-            SELECT 
+            SELECT
                 gt.naam as gebiedstype,
                 COUNT(DISTINCT igr.indicator_uuid) as aantal_indicatoren,
                 COUNT(DISTINCT igr.indicator_uuid) FILTER (WHERE igr.verplicht = true) as aantal_verplicht
@@ -474,7 +476,7 @@ def generate_markdown_report(stats, fkeys, indexes, geodata, datacoverage, vis_f
     lines.append("### View 1: Gebieden met Type Info")
     lines.append("```sql")
     lines.append("""CREATE OR REPLACE VIEW v_gebieden_volledig AS
-SELECT 
+SELECT
     g.id,
     g.naam as gebied_naam,
     gt.naam as gebiedstype_naam,
@@ -493,7 +495,7 @@ WHERE g.actief = true;""")
     lines.append("### View 2: Gebied Data met Indicator Details")
     lines.append("```sql")
     lines.append("""CREATE OR REPLACE VIEW v_gebied_data_volledig AS
-SELECT 
+SELECT
     gd.id as meting_id,
     g.id as gebied_id,
     g.naam as gebied_naam,
@@ -517,7 +519,7 @@ WHERE i.status = 'O';  -- Alleen operationele indicatoren""")
     lines.append("### View 3: Data Coverage per Gebied")
     lines.append("```sql")
     lines.append("""CREATE OR REPLACE VIEW v_gebied_data_coverage AS
-SELECT 
+SELECT
     g.id as gebied_id,
     g.naam as gebied_naam,
     gt.naam as gebiedstype_naam,
@@ -537,7 +539,7 @@ GROUP BY g.id, g.naam, gt.naam;""")
     lines.append("### View 4: Indicatoren met Gebiedstype Relaties")
     lines.append("```sql")
     lines.append("""CREATE OR REPLACE VIEW v_indicator_gebiedstype_mapping AS
-SELECT 
+SELECT
     i.uuid as indicator_uuid,
     i.code as indicator_code,
     i.naam as indicator_naam,

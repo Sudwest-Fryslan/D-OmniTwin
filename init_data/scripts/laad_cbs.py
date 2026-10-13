@@ -30,7 +30,6 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import download_cbs_kerncijfers as cbs  # noqa: E402
 import load_sample  # noqa: E402  (databaseverbinding hergebruiken)
-
 from psycopg2.extras import execute_values  # noqa: E402
 
 ROOT = Path(__file__).resolve().parent.parent.parent

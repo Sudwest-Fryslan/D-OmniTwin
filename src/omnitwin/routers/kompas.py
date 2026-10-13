@@ -3,33 +3,33 @@ Kompas API Router
 Endpoints voor multi-kompas configuratie systeem
 """
 
+from uuid import UUID
+
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
-from typing import List, Optional, Dict, Any
-from uuid import UUID
+
 from omnitwin import toegang
 from omnitwin.database import get_db
 from omnitwin.schemas.kompas import (
-    KompasConfiguratiesResponse,
-    HierarchieResponse,
     GebiedKompasResponse,
+    HierarchieResponse,
     IndicatorPathResponse,
+    KompasConfiguratiesResponse,
 )
 from omnitwin.services.kompas_service import KompasService
-
 
 # ─── Pydantic Models (Sprint 18 Track C) ────────────────────────────────────
 
 
 class BenchmarkGroep(BaseModel):
     naam: str = Field(..., description="Naam van de woonplaats/kern")
-    buurt_ids: List[str] = Field(..., min_length=1, description="CBS buurt-IDs in deze groep")
+    buurt_ids: list[str] = Field(..., min_length=1, description="CBS buurt-IDs in deze groep")
 
 
 class BenchmarkRequest(BaseModel):
-    groepen: List[BenchmarkGroep] = Field(..., min_length=1, max_length=8)
-    gemeente_code: Optional[str] = Field(None, description="Gemeente code voor referentie")
+    groepen: list[BenchmarkGroep] = Field(..., min_length=1, max_length=8)
+    gemeente_code: str | None = Field(None, description="Gemeente code voor referentie")
 
 
 router = APIRouter(prefix="/api/kompas", tags=["Kompas"])
@@ -142,7 +142,7 @@ def get_gebied_kompas(config_id: int, gebied_id: str, db: Session = Depends(get_
 @router.get("/{config_id}/selectie")
 def get_selectie_kompas(
     config_id: int,
-    gebied_id: List[str] = Query(
+    gebied_id: list[str] = Query(
         ..., min_length=1, max_length=500, description="Gebied-ID's van de selectie (herhaal de parameter)"
     ),
     db: Session = Depends(get_db),
@@ -218,7 +218,7 @@ def get_indicator_history(config_id: int, gebied_id: str, indicator_uuid: UUID, 
 @router.get("/indicator/{indicator_uuid}/top-buurten")
 def get_top_buurten(
     indicator_uuid: UUID,
-    gebied_id: Optional[str] = Query(None),
+    gebied_id: str | None = Query(None),
     limit: int = Query(default=3, ge=1, le=10),
     db: Session = Depends(get_db),
 ):

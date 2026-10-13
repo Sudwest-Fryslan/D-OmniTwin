@@ -1,15 +1,16 @@
-import requests
 import json
-from sqlalchemy.orm import Session
-from sqlalchemy import text
-from typing import Dict, Any, Optional
 import re
+from typing import Any
 from urllib.parse import urlsplit
+
+import requests
+from sqlalchemy import text
+from sqlalchemy.orm import Session
 
 from omnitwin import ai_logboek, ai_vrijgave
 from omnitwin.config import instellingen
-from omnitwin.services.logging_service import AppLogger
 from omnitwin.services.gemeente_validatie import laad_gemeenten
+from omnitwin.services.logging_service import AppLogger
 
 # Fallbacks instellen, maar in deze v8 schema wordt de API URL dynamisch uit de database gehaald
 DEFAULT_OLLAMA_HOST = instellingen().ollama_host
@@ -34,7 +35,7 @@ def denken_aan() -> bool:
     return instellingen().llm_think
 
 
-def reasoning_effort() -> Optional[str]:
+def reasoning_effort() -> str | None:
     """Waarde voor reasoning_effort in het OpenAI-pad, of None om het veld weg te laten.
 
     Standaard 'none' (Ollama /v1 zet dan denken uit). LLM_REASONING_EFFORT= (leeg) laat het
@@ -59,7 +60,7 @@ def openai_base_url(api_url: str) -> str:
     return base if base.endswith("/v1") else f"{base}/v1"
 
 
-def openai_headers() -> Dict[str, str]:
+def openai_headers() -> dict[str, str]:
     """Authorization-header uit LLM_API_KEY (alleen .env, nooit de database)."""
     key = instellingen().llm_api_key
     return {"Authorization": f"Bearer {key}"} if key else {}
@@ -109,7 +110,7 @@ class LLMService:
     def __init__(self, db: Session):
         self.db = db
 
-    def get_llm_config(self) -> Dict[str, str]:
+    def get_llm_config(self) -> dict[str, str]:
         """Haalt de actieve LLM configuratie op (API URL, model en API-type)."""
         # SELECT *: werkt ook op een database zonder migratie v20 (dan geldt 'ollama')
         query = text("SELECT * FROM llm_config ORDER BY id DESC LIMIT 1")
@@ -136,9 +137,9 @@ class LLMService:
         context_name: str,
         *,
         usecase: str,
-        taak: Optional[str] = None,
-        bronnen: Optional[list] = None,
-    ) -> Dict[str, Any]:
+        taak: str | None = None,
+        bronnen: list | None = None,
+    ) -> dict[str, Any]:
         """Roept de geconfigureerde LLM aan via het juiste API-type (zie ADR 0001).
 
         Elke aanroep van het taalmodel gaat hierdoor: `usecase` (A, B, C of ai_vrijgave.BUITEN) is
@@ -182,8 +183,8 @@ class LLMService:
         return res
 
     def _call_ollama(
-        self, system_prompt: str, user_prompt: str, context_name: str, llm_config: Optional[Dict[str, str]] = None
-    ) -> Dict[str, Any]:
+        self, system_prompt: str, user_prompt: str, context_name: str, llm_config: dict[str, str] | None = None
+    ) -> dict[str, Any]:
         """Gedeelde helperfunctie voor Ollama API calls met logging en fallback parser."""
         llm_config = llm_config or self.get_llm_config()
         url = f"{llm_config['api_url']}/api/generate"
@@ -242,8 +243,8 @@ class LLMService:
             }
 
     def _call_openai(
-        self, llm_config: Dict[str, str], system_prompt: str, user_prompt: str, context_name: str
-    ) -> Dict[str, Any]:
+        self, llm_config: dict[str, str], system_prompt: str, user_prompt: str, context_name: str
+    ) -> dict[str, Any]:
         """OpenAI Chat Completions (/v1/chat/completions); zelfde contract als _call_ollama."""
         url = f"{openai_base_url(llm_config['api_url'])}/chat/completions"
 
@@ -313,7 +314,7 @@ class LLMService:
         AppLogger.debug(f"[{context_name}] LLM RESPONSE — {cleaned[:500]}", category="LLM_CHAT")
         return {"text": cleaned, "debug": debug_info, "error": False, "modelversie": modelversie}
 
-    def generate_domain_summary(self, domain_name: str, domain_data: list) -> Dict[str, Any]:
+    def generate_domain_summary(self, domain_name: str, domain_data: list) -> dict[str, Any]:
         """Genereert een samenvatting specifiek voor één kwadrant/domein."""
 
         default_prompt = """Je bent de scherpe, integere beleidsadviseur en data-analist van een Nederlandse gemeente. Je bent de vertaler van de 'harde' werkelijkheid (cijfers) naar de 'zachte' werkelijkheid (leefbaarheid in de wijk). Jouw missie is om een wethouder of beleidsmaker te voorzien van een feitelijk, eerlijk en menselijk beeld van een gebied, zonder dat zij zelf door complexe tabellen hoeven te graven.
@@ -346,13 +347,13 @@ Strikte Kaders (Constraints):
             bronnen=_bron_ids(domain_data),
         )
 
-    def generate_overall_summary(self, domain_summaries: Dict[str, str], metadata: Dict[str, str]) -> Dict[str, Any]:
+    def generate_overall_summary(self, domain_summaries: dict[str, str], metadata: dict[str, str]) -> dict[str, Any]:
         """Combineert de kwadrant samenvattingen in één overkoepelende summary."""
 
         default_prompt = """Je bent een senior beleidsadviseur die informatie van verschillende beleidsterreinen integreert tot een overkoepelend bestuursadvies.
 Je gaat 4 kwadrant-analyses (fysiek, sociaal, economisch, veiligheid o.i.d.) samenvoegen tot één krachtige algemene executive summary.
 
-Vind de grote gemene deler tussen deze kwadranten. Is het bijvoorbeeld een kwetsbare wijk op álle fronten? Of gaat fysiek goed, maar sociaal slecht? 
+Vind de grote gemene deler tussen deze kwadranten. Is het bijvoorbeeld een kwetsbare wijk op álle fronten? Of gaat fysiek goed, maar sociaal slecht?
 
 Strikte Kaders (Constraints):
 - Taal: Uitsluitend Nederlands.
@@ -377,7 +378,7 @@ Strikte Kaders (Constraints):
             taak=f"Totaalsamenvatting gebied {metadata.get('gebied', 'onbekend')}",
         )
 
-    def generate_benchmark_narrative(self, benchmark_data: dict) -> Dict[str, Any]:
+    def generate_benchmark_narrative(self, benchmark_data: dict) -> dict[str, Any]:
         """Genereert een vergelijkende analyse voor de Benchmark Vergelijker (Sjabloon C)."""
 
         default_prompt = """Je bent een scherpe beleidsadviseur die twee gebiedssituaties vergelijkt. Je krijgt een dataset met de indicatorwaarden van één specifiek gebied (A) en de referentiewaarden van een vergelijkingsgroep.
@@ -419,7 +420,7 @@ Geef een bondige, vergelijkende analyse."""
 
     def generate_chat_narrative(
         self, vraag: str, indicatoren: list, intent: str, context: dict = None
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Genereert een korte narrative voor de D-Omni Assistant chat respons."""
 
         default_prompt = """Je bent de D-Omni Assistent, een AI-gedreven gebiedsanalist voor Nederlandse gemeenten. Je bent een bondig en vriendelijke spraakmaker die de gebruiker helpt het datalandschap te verkennen.
@@ -463,7 +464,7 @@ Gedetecteerd doel: {intent}
 Gevonden indicatoren:
 {json.dumps(ind_context, ensure_ascii=False)}
 
-Schrijf een korte, behulpzame toelichting. 
+Schrijf een korte, behulpzame toelichting.
 BELANGRIJK: Als het doel MAAK_RAPPORT is, noem dan GEEN indicatoren, maar bevestig alleen dat je het rapport opent."""
 
         return self._call_llm(
@@ -475,7 +476,7 @@ BELANGRIJK: Als het doel MAAK_RAPPORT is, noem dan GEEN indicatoren, maar bevest
             bronnen=_bron_ids(indicatoren[:5]),
         )
 
-    def validate_duplicates(self, indicators: list) -> Dict[str, Any]:
+    def validate_duplicates(self, indicators: list) -> dict[str, Any]:
         """
         Valideert een groep potentiële duplicaten.
         Retourneert een dict met 'is_duplicaat' (bool) en 'ai_advies' (str).
@@ -531,14 +532,14 @@ Strikte Kaders:
 
         return {"is_duplicaat": False, "ai_advies": "Fout bij validatie door AI."}
 
-    def detect_intent_and_actions(self, vraag: str, indicatoren: list, context: dict = None) -> Dict[str, Any]:
+    def detect_intent_and_actions(self, vraag: str, indicatoren: list, context: dict = None) -> dict[str, Any]:
         """
         Gebruikt de LLM om de intent en bijbehorende actie-knoppen te bepalen
         op basis van de gebruikersvraag en gevonden indicatoren.
         """
 
         fallback_prompt = """Je bent de "D-Omni Assistant Intent Dispatcher". Vertaal de vraag van de gebruiker naar een gestructureerde JSON response.
-        
+
         Output JSON:
         {
           "intent": "MAAK_RAPPORT",
@@ -569,7 +570,7 @@ Strikte Kaders:
         Indicatoren: {json.dumps(ind_context, ensure_ascii=False)}
         Gemeenten: {json.dumps(gemeenten_info, ensure_ascii=False)}
         (SELECTEER_GEMEENTE alleen met een code en naam uit deze lijst. Een woonplaats of buurt is geen gemeente.)
-        
+
         Retourneer UITSLUITEND de JSON:"""
 
         # Gebruik de gedeelde helper voor robuuste JSON cleaning

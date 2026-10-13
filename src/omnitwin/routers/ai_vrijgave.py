@@ -13,7 +13,7 @@ Beheer (``vereis_admin``: sessie, bearer met rol ``beheerder`` of ``X-Admin-Key`
 from __future__ import annotations
 
 import datetime as dt
-from typing import Any, Dict, Literal, Optional
+from typing import Any, Literal
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Path, Query, Response, UploadFile
 from pydantic import BaseModel, Field
@@ -37,11 +37,11 @@ def _iso(w):
     return w.isoformat() if isinstance(w, (dt.date, dt.datetime)) else w
 
 
-def _json(r: Dict[str, Any]) -> Dict[str, Any]:
+def _json(r: dict[str, Any]) -> dict[str, Any]:
     return {k: (str(v) if k.endswith("_id") and v is not None else _iso(v)) for k, v in r.items()}
 
 
-def _publiek(s: Dict[str, Any]) -> Dict[str, Any]:
+def _publiek(s: dict[str, Any]) -> dict[str, Any]:
     return {
         "code": s["code"],
         "naam": s["naam"],
@@ -126,13 +126,13 @@ def upload_verklaring(
 
 
 class Noodstop(BaseModel):
-    toelichting: Optional[str] = Field(None, max_length=500)
+    toelichting: str | None = Field(None, max_length=500)
 
 
 @admin_router.post("/usecases/{code}/noodstop")
 def noodstop(
     code: Code = Path(...),
-    invoer: Optional[Noodstop] = None,
+    invoer: Noodstop | None = None,
     db: Session = Depends(get_db),
     gebruiker: dict = Depends(vereis_admin),
 ):
@@ -145,7 +145,7 @@ def noodstop(
 @admin_router.post("/usecases/{code}/hervatten")
 def hervatten(
     code: Code = Path(...),
-    invoer: Optional[Noodstop] = None,
+    invoer: Noodstop | None = None,
     db: Session = Depends(get_db),
     gebruiker: dict = Depends(vereis_admin),
 ):
@@ -166,10 +166,10 @@ def vrijgavelog(limit: int = Query(200, ge=1, le=1000), db: Session = Depends(ge
 
 @admin_router.get("/logboek")
 def logboek(
-    usecase: Optional[LogUsecase] = None,
-    status: Optional[Status] = None,
-    van: Optional[dt.date] = None,
-    tot: Optional[dt.date] = None,
+    usecase: LogUsecase | None = None,
+    status: Status | None = None,
+    van: dt.date | None = None,
+    tot: dt.date | None = None,
     limit: int = Query(100, ge=1, le=1000),
     offset: int = Query(0, ge=0),
     db: Session = Depends(get_db),
@@ -181,10 +181,10 @@ def logboek(
 
 @admin_router.get("/logboek/export", response_class=Response, responses={200: {"content": {"text/csv": {}}}})
 def logboek_csv(
-    usecase: Optional[LogUsecase] = None,
-    status: Optional[Status] = None,
-    van: Optional[dt.date] = None,
-    tot: Optional[dt.date] = None,
+    usecase: LogUsecase | None = None,
+    status: Status | None = None,
+    van: dt.date | None = None,
+    tot: dt.date | None = None,
     db: Session = Depends(get_db),
 ):
     """Het AI-logboek als CSV (puntkomma, UTF-8), met dezelfde filters; hoogstens 100.000 regels."""

@@ -1,23 +1,24 @@
-from fastapi import FastAPI, Depends, HTTPException, Request
-from fastapi.middleware.cors import CORSMiddleware
-from starlette.middleware.base import BaseHTTPMiddleware
-from fastapi.templating import Jinja2Templates
-from fastapi.responses import HTMLResponse
-from fastapi.openapi.docs import get_swagger_ui_html  # Local Swagger UI
-from sqlalchemy.orm import Session
-from sqlalchemy import event, text
-from omnitwin.config import CORS_ALLOW_HEADERS, STATEMENT_TIMEOUT_MS, instellingen
-from omnitwin.database import get_db, engine
-from omnitwin.statisch import StatischeBestanden
 import os
 import time
 
-from omnitwin.services.logging_service import AppLogger, init_logging, shutdown_logging
+from fastapi import Depends, FastAPI, HTTPException, Request
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.openapi.docs import get_swagger_ui_html  # Local Swagger UI
+from fastapi.responses import HTMLResponse
+from fastapi.templating import Jinja2Templates
+from sqlalchemy import event, text
+from sqlalchemy.orm import Session
+from starlette.middleware.base import BaseHTTPMiddleware
+
+from omnitwin.config import CORS_ALLOW_HEADERS, STATEMENT_TIMEOUT_MS, instellingen
+from omnitwin.database import engine, get_db
 from omnitwin.grenzen import client_ip
-from omnitwin.services.log_cleanup_service import start_cleanup_scheduler, stop_cleanup_scheduler
 
 # Import routers
-from omnitwin.routers import gebiedsmonitor, kompas, admin, dashboard, visualisatie
+from omnitwin.routers import admin, dashboard, gebiedsmonitor, kompas, visualisatie
+from omnitwin.services.log_cleanup_service import start_cleanup_scheduler, stop_cleanup_scheduler
+from omnitwin.services.logging_service import AppLogger, init_logging, shutdown_logging
+from omnitwin.statisch import StatischeBestanden
 from omnitwin.version import __version__
 
 app = FastAPI(
@@ -203,7 +204,7 @@ app.include_router(visualisatie.admin_router)
 from omnitwin.routers import report
 
 app.include_router(report.router)
-from omnitwin.routers import data_controle, ai_search, chat, bag3d, log_viewer, externe_lagen
+from omnitwin.routers import ai_search, bag3d, chat, data_controle, externe_lagen, log_viewer
 
 app.include_router(data_controle.router)
 app.include_router(ai_search.router)

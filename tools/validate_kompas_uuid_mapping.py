@@ -21,8 +21,8 @@ Laatste update: 23-01-2026
 
 import os
 import sys
-from pathlib import Path
 from datetime import datetime
+from pathlib import Path
 
 # Database
 from psycopg2.extras import RealDictCursor
@@ -52,7 +52,7 @@ def get_kompas_indicators(conn, config_id: int = None) -> dict:
     Returns: {uuid: {naam, config_id, config_naam, ...}}
     """
     query = """
-        SELECT 
+        SELECT
             kim.indicator_uuid,
             i.naam as indicator_naam,
             i.omschrijving as beschrijving,
@@ -99,7 +99,7 @@ def get_dropdown_indicators(conn, gebiedstype_id: int = None) -> dict:
     Returns: {uuid: {naam, status, gebiedstypes: [...]}}
     """
     query = """
-        SELECT 
+        SELECT
             i.uuid,
             i.naam,
             i.status,
@@ -139,7 +139,7 @@ def get_data_indicators(conn) -> dict:
     Returns: {uuid: {naam, count_records, count_gebieden, jaren: [...]}}
     """
     query = """
-        SELECT 
+        SELECT
             i.uuid,
             i.naam,
             COUNT(*) as count_records,
@@ -171,7 +171,7 @@ def get_data_indicators(conn) -> dict:
 def get_kompas_configs(conn) -> list:
     """Haal alle actieve kompas configuraties op"""
     query = """
-        SELECT 
+        SELECT
             id, naam, is_standaard,
             (SELECT COUNT(*) FROM kompas_indicator_mapping WHERE config_id = kc.id) as indicator_count
         FROM kompas_configuraties kc
@@ -262,7 +262,7 @@ def generate_report(configs: list, kompas_ind: dict, dropdown_ind: dict, data_in
 
 ## 🎯 Kompas Configuraties
 
-"""
+"""  # noqa: W291 (twee spaties = regeleinde in Markdown)
 
     for config in configs:
         status = "✅ STANDAARD" if config["is_standaard"] else ""

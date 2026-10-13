@@ -4,10 +4,11 @@ Unified Search API voor D-OmniTwin ETL
 Helpt bij het vinden en inspecteren van datasets van CBS, RIVM en Politie.
 """
 
-import requests
-import json
 import argparse
+import json
 import textwrap
+
+import requests
 
 ENDPOINTS = {
     "CBS": "https://opendata.cbs.nl/ODataCatalog",
@@ -93,10 +94,10 @@ def main():
         Voorbeelden:
           1. Zoek naar het woord 'Gezondheid' over alle OData API's:
              python search_api.py -q Gezondheid
-             
+
           2. Inspecteer de kolommen van de CBS dataset '83739NED' voor mapping in kompas:
              python search_api.py -i 83739NED
-             
+
           3. Inspecteer een de kolommen van een RIVM/Politie dataset (Dataderden):
              python search_api.py -i 50150NED -d
         """),

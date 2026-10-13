@@ -1,7 +1,8 @@
-import pandas as pd
 import json
 import os
 import zipfile
+
+import pandas as pd
 
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 zip_path = os.path.join(PROJECT_ROOT, "data/cbs_pc6_huisnr_buurt/2025-cbs-pc6huisnr20250801_buurt.zip")

@@ -20,21 +20,22 @@ Endpoints (admin):
 - POST   /api/admin/externe-lagen/upload       → Bestand uploaden naar data-upload/
 """
 
-from fastapi import APIRouter, Depends, HTTPException, Request, UploadFile, File
-from fastapi.concurrency import run_in_threadpool
-from sqlalchemy.orm import Session
-from sqlalchemy import text
-from pydantic import BaseModel, field_validator
-from typing import Optional
-from pathlib import Path
-import httpx
+import json
+import logging
 import os
+import re
 import shutil
 import time
 import uuid
-import re
-import json
-import logging
+from pathlib import Path
+from typing import Optional
+
+import httpx
+from fastapi import APIRouter, Depends, File, HTTPException, Request, UploadFile
+from fastapi.concurrency import run_in_threadpool
+from pydantic import BaseModel, field_validator
+from sqlalchemy import text
+from sqlalchemy.orm import Session
 
 from omnitwin import toegang
 from omnitwin.database import get_db
@@ -87,16 +88,16 @@ def _check_toegang(v: str) -> str:
 
 class ExterneKaartlaagCreate(BaseModel):
     naam: str
-    beschrijving: Optional[str] = None
+    beschrijving: str | None = None
     laag_type: str = "selectie"
     bron_type: str = "WFS"
     url: str
-    typename: Optional[str] = None
+    typename: str | None = None
     srsname: str = "EPSG:28992"
     versie: str = "2.0.0"
     filter_type: str = "provincie"
-    filter_waarde: Optional[str] = None
-    koppel_veld: Optional[str] = None
+    filter_waarde: str | None = None
+    koppel_veld: str | None = None
     kleur_lijn: str = "#8B5CF6"
     kleur_fill: str = "#8B5CF6"
     opacity: float = 0.15
@@ -146,27 +147,27 @@ class ExterneKaartlaagCreate(BaseModel):
 
 
 class ExterneKaartlaagUpdate(BaseModel):
-    naam: Optional[str] = None
-    beschrijving: Optional[str] = None
-    laag_type: Optional[str] = None
-    bron_type: Optional[str] = None
-    url: Optional[str] = None
-    typename: Optional[str] = None
-    srsname: Optional[str] = None
-    versie: Optional[str] = None
-    filter_type: Optional[str] = None
-    filter_waarde: Optional[str] = None
-    koppel_veld: Optional[str] = None
-    kleur_lijn: Optional[str] = None
-    kleur_fill: Optional[str] = None
-    opacity: Optional[float] = None
-    actief: Optional[bool] = None
-    volgorde: Optional[int] = None
-    toegang: Optional[str] = None
+    naam: str | None = None
+    beschrijving: str | None = None
+    laag_type: str | None = None
+    bron_type: str | None = None
+    url: str | None = None
+    typename: str | None = None
+    srsname: str | None = None
+    versie: str | None = None
+    filter_type: str | None = None
+    filter_waarde: str | None = None
+    koppel_veld: str | None = None
+    kleur_lijn: str | None = None
+    kleur_fill: str | None = None
+    opacity: float | None = None
+    actief: bool | None = None
+    volgorde: int | None = None
+    toegang: str | None = None
 
     @field_validator("toegang")
     @classmethod
-    def check_toegang(cls, v: Optional[str]) -> Optional[str]:
+    def check_toegang(cls, v: str | None) -> str | None:
         return None if v is None else _check_toegang(v)
 
 
@@ -208,7 +209,7 @@ def _load_local_file(filename: str, layer_name: str = None) -> dict:
     GeoJSON FeatureCollection in WGS84 (EPSG:4326).
     """
     import fiona
-    from shapely.geometry import shape, mapping
+    from shapely.geometry import mapping, shape
 
     filepath = DATA_UPLOAD_DIR / filename
     if not filepath.exists():

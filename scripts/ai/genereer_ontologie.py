@@ -1,19 +1,20 @@
+import json
 import os
 import sys
-import json
 from pathlib import Path
-from sqlalchemy.orm import Session
+
 from sqlalchemy import text
+from sqlalchemy.orm import Session
 
 # Voeg src/ (pakket omnitwin) toe aan python path
 project_root = Path(__file__).resolve().parent.parent.parent
 sys.path.append(str(project_root / "src"))
 
+import re
+
 from omnitwin import ai_vrijgave
 from omnitwin.database import SessionLocal
 from omnitwin.services.llm_service import LLMService
-import re
-
 from omnitwin.utils.ai_generator import generate_indicator_description
 
 
@@ -51,7 +52,7 @@ GEBRUIK DE VOLGENDE STIJL:
 
     if not exists:
         insert_query = text("""
-            INSERT INTO system_prompts (naam, prompt_text, is_actief) 
+            INSERT INTO system_prompts (naam, prompt_text, is_actief)
             VALUES (:naam, :text, true)
         """)
         db.execute(insert_query, {"naam": prompt_name, "text": prompt_text})
@@ -76,7 +77,7 @@ def process_indicators():
     # Query voor 'draft' of geflagde audit fouten
     query = text("""
         SELECT uuid, naam, categorie, omschrijving, bron
-        FROM indicatoren 
+        FROM indicatoren
         WHERE ontologie_status IN ('draft', 'audit_fout')
     """)
 
@@ -97,7 +98,7 @@ def process_indicators():
 
         if description:
             update_query = text("""
-                UPDATE indicatoren 
+                UPDATE indicatoren
                 SET ontologische_beschrijving = :desc,
                     ontologie_status = 'beoordeeld_ai_herstel',
                     updated_at = CURRENT_TIMESTAMP

@@ -1,9 +1,10 @@
-import sys
-import os
 import json
+import os
+import sys
+from pathlib import Path
+
 import pandas as pd
 from sqlalchemy import text
-from pathlib import Path
 
 # Add project root to path to import src and services
 current_dir = Path(__file__).resolve().parent
@@ -51,7 +52,7 @@ def main():
         # We join with indicatoren table to get metadata like eenheid and bron
         print("Fetching flat data for Excel...")
         query = text("""
-            SELECT 
+            SELECT
                 v.titel_naam AS "Titel",
                 v.thema_naam AS "Thema",
                 v.onderdeel_naam AS "Onderdeel",

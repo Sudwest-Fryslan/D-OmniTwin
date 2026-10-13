@@ -14,20 +14,21 @@ AI-vrijgave (#307): het taalmodel alleen als AI-usecase A open is, zoeken op bet
 Dicht: regelgebaseerd en op trefwoorden, met een korte melding (omnitwin/ai_vrijgave.py).
 """
 
+import logging
+import re
+from typing import Any
+
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
+
 from omnitwin import ai_vrijgave
 from omnitwin.database import get_db
 from omnitwin.grenzen import beperk_llm
 from omnitwin.services.ai_search_service import AISearchService
-from omnitwin.services.llm_service import LLMService
-from omnitwin.services.gemeente_validatie import valideer_gemeente_acties
 from omnitwin.services.chat_datavraag import beantwoord_datavraag
-from typing import List, Dict, Any, Optional
-import re
-import logging
-
+from omnitwin.services.gemeente_validatie import valideer_gemeente_acties
+from omnitwin.services.llm_service import LLMService
 from omnitwin.services.logging_service import AppLogger
 
 logger = logging.getLogger(__name__)
@@ -41,37 +42,37 @@ router = APIRouter(prefix="/api/chat", tags=["D-Omni Assistant"])
 
 class ChatRequest(BaseModel):
     vraag: str = Field(..., min_length=2, max_length=1000, description="De vraag van de gebruiker")
-    context: Optional[Dict[str, Any]] = Field(None, description="Optionele kaartcontext (huidig_gebied_id, etc.)")
+    context: dict[str, Any] | None = Field(None, description="Optionele kaartcontext (huidig_gebied_id, etc.)")
 
 
 class ActieKnop(BaseModel):
     type: str  # TOON_OP_KAART, SELECTEER_BUURTEN, MAAK_RAPPORT, SELECTEER_GEMEENTE, SELECTEER_GEBIEDSTYPE, SELECTEER_KOMPAS, OPEN_KOMPAS, INFO_KAART, INFO_KOMPAS, INFO_RAPPORT, OPEN_WIKI, SEND_MESSAGE
     label: str
-    rol_code: Optional[str] = None
-    indicator_uuid: Optional[str] = None
-    gemeente_code: Optional[str] = None
-    gebiedstype_id: Optional[str] = None
-    config_id: Optional[int] = None
-    filters: Optional[Dict[str, Any]] = None
-    thema: Optional[str] = None
-    gebied_ids: Optional[List[str]] = None  # datavraag (#149): deze gebieden selecteren
+    rol_code: str | None = None
+    indicator_uuid: str | None = None
+    gemeente_code: str | None = None
+    gebiedstype_id: str | None = None
+    config_id: int | None = None
+    filters: dict[str, Any] | None = None
+    thema: str | None = None
+    gebied_ids: list[str] | None = None  # datavraag (#149): deze gebieden selecteren
 
 
 class IndicatorResultaat(BaseModel):
     uuid: str
     naam: str
-    beschrijving: Optional[str] = None
-    categorie: Optional[str] = None
-    eenheid: Optional[str] = None
-    score_type: Optional[str] = None
+    beschrijving: str | None = None
+    categorie: str | None = None
+    eenheid: str | None = None
+    score_type: str | None = None
     relevantie: float  # 0-1 rangschikkingsscore (services/zoektaal.py); geen datawaarde, niet als % tonen
-    relevantie_label: Optional[str] = None  # 'sterk' of 'matig' (#233): dit toont de UI
+    relevantie_label: str | None = None  # 'sterk' of 'matig' (#233): dit toont de UI
 
 
 class BronRegel(BaseModel):
     indicator: str
     bron: str
-    jaren: List[int] = []
+    jaren: list[int] = []
 
 
 class Gegeven(BaseModel):
@@ -82,8 +83,8 @@ class Gegeven(BaseModel):
     gebied_id: str
     gebied: str
     waarde: float
-    jaar: Optional[int] = None
-    eenheid: Optional[str] = None
+    jaar: int | None = None
+    eenheid: str | None = None
     richting: str
     rang_hoog: int
     aantal_gebieden: int
@@ -93,22 +94,22 @@ class Gegeven(BaseModel):
 class ChatResponse(BaseModel):
     intent: str
     narrative: str
-    acties: List[ActieKnop]
-    indicatoren: List[IndicatorResultaat]
-    bronnen: Optional[List[BronRegel]] = None
-    gegevens: Optional[List[Gegeven]] = None
+    acties: list[ActieKnop]
+    indicatoren: list[IndicatorResultaat]
+    bronnen: list[BronRegel] | None = None
+    gegevens: list[Gegeven] | None = None
     # #149: de kaart beweegt mee na een datavraag (gebiedstype, indicator, selectie, inzoomen)
-    kaart_actie: Optional[Dict[str, Any]] = None
+    kaart_actie: dict[str, Any] | None = None
     # #233: korte melding over de zekerheid van de gevonden indicatoren (bijv. 'geen goede treffer')
-    melding: Optional[str] = None
+    melding: str | None = None
     # #312: welke AI-usecases aan dit antwoord bijdroegen ('A' taalmodel, 'C' zoeken op betekenis);
     # de viewer toont dan het label AI met de verklaring en "Melden"
-    ai_usecases: List[str] = []
+    ai_usecases: list[str] = []
     # #233: van welk gebied het antwoord uitgaat, als dat niet in de vraag stond (selectie op de kaart)
-    aanname: Optional[str] = None
+    aanname: str | None = None
     # #336: de assistent vraagt welke buurt 'mijn buurt' is; de viewer biedt postcode/adres en locatie aan
     vraag_buurt: bool = False
-    debug: Optional[Dict[str, Any]] = None
+    debug: dict[str, Any] | None = None
 
 
 # ============================================================================
@@ -257,7 +258,7 @@ def classify_intent(vraag: str) -> str:
 # ============================================================================
 
 
-def generate_acties(intent: str, indicatoren: List[Dict[str, Any]], vraag: str) -> List[ActieKnop]:
+def generate_acties(intent: str, indicatoren: list[dict[str, Any]], vraag: str) -> list[ActieKnop]:
     """Genereert actie-knoppen op basis van intent en gevonden indicatoren."""
     acties = []
 
@@ -308,7 +309,7 @@ def generate_acties(intent: str, indicatoren: List[Dict[str, Any]], vraag: str) 
     return acties
 
 
-def vaste_toelichting(indicatoren: List[Dict[str, Any]]) -> str:
+def vaste_toelichting(indicatoren: list[dict[str, Any]]) -> str:
     """Toelichting zonder taalmodel: wat er gevonden is."""
     if not indicatoren:
         return "Ik vind geen indicator die goed bij deze vraag past. Probeer een ander woord."
@@ -321,7 +322,7 @@ def vaste_toelichting(indicatoren: List[Dict[str, Any]]) -> str:
 # ============================================================================
 
 
-def datavraag_acties(resultaat: Dict[str, Any]) -> List[ActieKnop]:
+def datavraag_acties(resultaat: dict[str, Any]) -> list[ActieKnop]:
     """Toon op kaart (indicator + gebieden), Open Kompas en Rapport, met de bestaande actietypes."""
     gebied_ids = resultaat.get("gebied_ids") or None
     gebiedstype_id = resultaat.get("gebiedstype_id")
@@ -355,7 +356,7 @@ def datavraag_acties(resultaat: Dict[str, Any]) -> List[ActieKnop]:
     return acties
 
 
-def beantwoord_datavraag_route(vraag: str, context: Dict[str, Any], db: Session) -> Optional[ChatResponse]:
+def beantwoord_datavraag_route(vraag: str, context: dict[str, Any], db: Session) -> ChatResponse | None:
     """ChatResponse voor een datavraag, of None (dan de gewone navigatieroute)."""
     zoeker = {}
 

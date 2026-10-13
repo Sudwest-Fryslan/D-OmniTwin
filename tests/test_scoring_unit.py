@@ -10,8 +10,9 @@ Wat wordt getest:
 - Normalize-helper op grenscondities
 """
 
-import sys
 import os
+import sys
+
 import pytest
 
 # Voeg project root toe aan sys.path zodat services importeerbaar zijn zonder installatie
@@ -20,7 +21,6 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 # Importeer direct de scoring class (geen DB-afhankelijkheden)
 from omnitwin.services.kompas_service import KompasScoringService
 from omnitwin.services.zscore_referentie import JAARLOGICA_STANDAARD, MIN_N_STANDAARD, bereken_zscore, referentie_params
-
 
 # ─── Fixtures ────────────────────────────────────────────────────────────────
 

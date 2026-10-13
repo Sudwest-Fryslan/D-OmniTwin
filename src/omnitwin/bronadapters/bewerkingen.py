@@ -141,6 +141,7 @@ def _sjabloon(tekst, r):
 
 def _vereniging(bron, ctx, stappen=None):
     from shapely.ops import unary_union
+
     from omnitwin.bronadapters import haal
 
     tab, _ = voer_uit(haal(bron, ctx), stappen or [], ctx)

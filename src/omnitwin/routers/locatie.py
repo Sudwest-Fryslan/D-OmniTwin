@@ -9,8 +9,6 @@ gaat in de body (niet in de URL of de logregel), wordt niet bewaard en alleen do
 PDOK Locatieserver (services/locatie.py). 404 als de buurt niet bij deze installatie hoort.
 """
 
-from typing import Optional
-
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field, model_validator
 from sqlalchemy.orm import Session
@@ -24,11 +22,11 @@ router = APIRouter(prefix="/api/locatie", tags=["Locatie"])
 
 
 class BuurtVraag(BaseModel):
-    adres: Optional[str] = Field(
+    adres: str | None = Field(
         None, max_length=200, description="Postcode of adres, bijv. '8601 CR' of 'Marktstraat 15 Sneek'"
     )
-    lat: Optional[float] = Field(None, description="Breedtegraad (WGS84), alleen na toestemming van de gebruiker")
-    lon: Optional[float] = Field(None, description="Lengtegraad (WGS84)")
+    lat: float | None = Field(None, description="Breedtegraad (WGS84), alleen na toestemming van de gebruiker")
+    lon: float | None = Field(None, description="Lengtegraad (WGS84)")
 
     @model_validator(mode="after")
     def adres_of_locatie(self):

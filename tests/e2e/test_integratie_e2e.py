@@ -15,13 +15,12 @@ import re
 from pathlib import Path
 
 import pytest
-from playwright.sync_api import expect
-
 from e2e_helpers import (
     BOLSWARD_ZUIDOOST,
     KOUDUM,
     WORKUM,
     aantal_kaartgebieden,
+    geschaald,
     klik_buurt_op_kaart,
     klik_chatactie,
     kompas_namen,
@@ -30,13 +29,13 @@ from e2e_helpers import (
     open_kompas,
     open_paneel,
     selecteer_buurt_via_app,
+    traag_ms,
     verplaats_kompasvenster_rechts,
     wacht_op_kaartdata,
     wacht_op_selectie,
     wacht_op_zonnediagram,
-    geschaald,
-    traag_ms,
 )
+from playwright.sync_api import expect
 
 
 def _chat_actie(page, label_regex):

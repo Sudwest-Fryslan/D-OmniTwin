@@ -11,19 +11,20 @@ bezoeker in de app ziet (#65). Daarom:
 
 import threading
 import time
+from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
-from typing import Dict, Any, Optional, List
+
 from omnitwin import ai_vrijgave
 from omnitwin.database import get_db
 from omnitwin.fouten import GebruikersFout
 from omnitwin.grenzen import beperk_llm
-from omnitwin.services.report_service import ReportDataService
-from omnitwin.services.llm_service import LLMService
 from omnitwin.oidc import AuthProbleem
 from omnitwin.routers.auth import huidige_gebruiker
+from omnitwin.services.llm_service import LLMService
+from omnitwin.services.report_service import ReportDataService
 
 
 def _is_beheerder(request: Request, db: Session) -> bool:
@@ -34,7 +35,7 @@ def _is_beheerder(request: Request, db: Session) -> bool:
 
 
 # Kleine in-memory cache per worker voor AI-teksten (sleutel -> (tijd, waarde))
-_AI_CACHE: Dict[tuple, tuple] = {}
+_AI_CACHE: dict[tuple, tuple] = {}
 _AI_CACHE_TTL = 3600
 _AI_CACHE_MAX = 256
 _AI_CACHE_LOCK = threading.Lock()
@@ -62,46 +63,46 @@ def _cache_put(key: tuple, value) -> None:
 class MultiGebiedRequest(BaseModel):
     """Request model voor Multi-Gebiedsdossier endpoints."""
 
-    gebied_ids: List[str] = Field(..., min_length=1, max_length=200, description="CBS buurt-IDs")
+    gebied_ids: list[str] = Field(..., min_length=1, max_length=200, description="CBS buurt-IDs")
     referentie: str = Field("gemeente", description="'gemeente' of 'fryslan'")
-    gemeente_code: Optional[str] = Field(
+    gemeente_code: str | None = Field(
         None,
         description="Gemeentecode voor de referentie (standaard: die van de eigen organisatie, GET /api/organisatie)",
     )
-    deelgebied_naam: Optional[str] = Field(None, description="Label voor de rapportheader")
-    thema: Optional[str] = Field(None, description="Thema filter (bijv. 'Kwaliteit van Leven')")
+    deelgebied_naam: str | None = Field(None, description="Label voor de rapportheader")
+    thema: str | None = Field(None, description="Thema filter (bijv. 'Kwaliteit van Leven')")
 
 
 class ThemaAnalyseRequest(BaseModel):
     """Request model voor Thema-Analyse rapport."""
 
-    gebied_ids: List[str] = Field(..., min_length=1, max_length=200)
+    gebied_ids: list[str] = Field(..., min_length=1, max_length=200)
     referentie: str = Field("gemeente")
-    gemeente_code: Optional[str] = Field(
+    gemeente_code: str | None = Field(
         None,
         description="Gemeentecode voor de referentie (standaard: die van de eigen organisatie, GET /api/organisatie)",
     )
-    deelgebied_naam: Optional[str] = Field(None)
-    categorie: Optional[str] = Field(None, description="Niveau 0: bijv. 'Kwaliteit fysieke leefomgeving'")
-    thema_naam: Optional[str] = Field(None, description="Niveau 1: bijv. 'Verkeer'")
-    onderdeel_naam: Optional[str] = Field(None, description="Niveau 2: bijv. 'Bereikbaarheid en parkeren'")
+    deelgebied_naam: str | None = Field(None)
+    categorie: str | None = Field(None, description="Niveau 0: bijv. 'Kwaliteit fysieke leefomgeving'")
+    thema_naam: str | None = Field(None, description="Niveau 1: bijv. 'Verkeer'")
+    onderdeel_naam: str | None = Field(None, description="Niveau 2: bijv. 'Bereikbaarheid en parkeren'")
 
 
 class DeelgebiedAnalyseRequest(BaseModel):
     """Request model voor Woonplaats- & Deelgebiedsanalyse (Sjabloon F)."""
 
-    gebied_ids: List[str] = Field(..., min_length=1, max_length=500, description="CBS buurt-IDs")
+    gebied_ids: list[str] = Field(..., min_length=1, max_length=500, description="CBS buurt-IDs")
     referentie: str = Field("gemeente", description="'gemeente' of 'fryslan'")
-    gemeente_code: Optional[str] = Field(
+    gemeente_code: str | None = Field(
         None, description="Gemeentecode (optioneel, wordt automatisch afgeleid indien niet meegegeven)"
     )
-    deelgebied_naam: Optional[str] = Field(None, description="Label voor het deelgebied of woonplaats (bijv. 'Sneek')")
+    deelgebied_naam: str | None = Field(None, description="Label voor het deelgebied of woonplaats (bijv. 'Sneek')")
 
 
 router = APIRouter(prefix="/api/report", tags=["Report"])
 
 
-@router.get("/data/{gebied_id}", response_model=Dict[str, Any])
+@router.get("/data/{gebied_id}", response_model=dict[str, Any])
 def get_report_data(gebied_id: str, db: Session = Depends(get_db)):
     """
     Fase 1: Genereert de geaggregeerde payload.
@@ -114,7 +115,7 @@ def get_report_data(gebied_id: str, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail=str(e))
 
 
-@router.get("/narrative/{gebied_id}", response_model=Dict[str, Any], dependencies=[Depends(beperk_llm)])
+@router.get("/narrative/{gebied_id}", response_model=dict[str, Any], dependencies=[Depends(beperk_llm)])
 def generate_report_narrative(gebied_id: str, request: Request, db: Session = Depends(get_db)):
     """
     Fase 2: Roept Ollama aan om een narrative (Executive Summary) te genereren
@@ -183,12 +184,12 @@ def generate_report_narrative(gebied_id: str, request: Request, db: Session = De
 # ─── Sjabloon C: Benchmark Vergelijker ───────────────────────────────────────
 
 
-@router.get("/benchmark", response_model=Dict[str, Any])
+@router.get("/benchmark", response_model=dict[str, Any])
 def get_benchmark_data(
     gebied_a: str = Query(..., description="Gebied ID van het referentiegebied"),
     mode: str = Query("gebieden", description="Vergelijkingsmodus: 'gebieden', 'gemeente' of 'fryslan'"),
-    gebieden_b: Optional[str] = Query(None, description="Komma-gescheiden lijst van vergelijkingsgebied IDs (max 5)"),
-    referentie_gemeente: Optional[str] = Query(None, description="Gemeente code voor gemeente-gemiddelde modus"),
+    gebieden_b: str | None = Query(None, description="Komma-gescheiden lijst van vergelijkingsgebied IDs (max 5)"),
+    referentie_gemeente: str | None = Query(None, description="Gemeente code voor gemeente-gemiddelde modus"),
     db: Session = Depends(get_db),
 ):
     """
@@ -208,13 +209,13 @@ def get_benchmark_data(
         raise HTTPException(status_code=400, detail=str(e))
 
 
-@router.get("/benchmark/narrative", response_model=Dict[str, Any], dependencies=[Depends(beperk_llm)])
+@router.get("/benchmark/narrative", response_model=dict[str, Any], dependencies=[Depends(beperk_llm)])
 def get_benchmark_narrative(
     request: Request,
     gebied_a: str = Query(..., description="Gebied ID van het referentiegebied"),
     mode: str = Query("gebieden", description="Vergelijkingsmodus"),
-    gebieden_b: Optional[str] = Query(None, description="Komma-gescheiden vergelijkingsgebied IDs"),
-    referentie_gemeente: Optional[str] = Query(None, description="Gemeente code"),
+    gebieden_b: str | None = Query(None, description="Komma-gescheiden vergelijkingsgebied IDs"),
+    referentie_gemeente: str | None = Query(None, description="Gemeente code"),
     db: Session = Depends(get_db),
 ):
     """
@@ -264,7 +265,7 @@ def get_benchmark_narrative(
 # ─── Sjabloon A: Executive Summary ──────────────────────────────────────────
 
 
-@router.get("/executive/{gebied_id}", response_model=Dict[str, Any])
+@router.get("/executive/{gebied_id}", response_model=dict[str, Any])
 def get_executive_data(gebied_id: str, db: Session = Depends(get_db)):
     """
     Sjabloon A — Executive Summary (1-pager).
@@ -280,7 +281,7 @@ def get_executive_data(gebied_id: str, db: Session = Depends(get_db)):
 # ─── Sjabloon D: Multi-Gebiedsdossier ────────────────────────────────────────
 
 
-@router.post("/multi-gebied", response_model=Dict[str, Any])
+@router.post("/multi-gebied", response_model=dict[str, Any])
 def get_multi_gebied_data(payload: MultiGebiedRequest, db: Session = Depends(get_db)):
     """
     Multi-Gebiedsdossier — Analyse payload.
@@ -300,7 +301,7 @@ def get_multi_gebied_data(payload: MultiGebiedRequest, db: Session = Depends(get
         raise HTTPException(status_code=400, detail=str(e))
 
 
-@router.post("/multi-gebied/geojson", response_model=Dict[str, Any])
+@router.post("/multi-gebied/geojson", response_model=dict[str, Any])
 def get_multi_gebied_geojson(payload: MultiGebiedRequest, db: Session = Depends(get_db)):
     """
     Multi-Gebiedsdossier — GeoJSON voor choropleth.
@@ -321,7 +322,7 @@ def get_multi_gebied_geojson(payload: MultiGebiedRequest, db: Session = Depends(
 # ─── Sjabloon E: Thema-Analyse ───────────────────────────────────────────────
 
 
-@router.post("/thema-analyse", response_model=Dict[str, Any])
+@router.post("/thema-analyse", response_model=dict[str, Any])
 def get_thema_analyse_data(payload: ThemaAnalyseRequest, db: Session = Depends(get_db)):
     """
     Thema-Analyse — Analyse payload.
@@ -343,7 +344,7 @@ def get_thema_analyse_data(payload: ThemaAnalyseRequest, db: Session = Depends(g
         raise HTTPException(status_code=400, detail=str(e))
 
 
-@router.post("/thema-analyse/geojson", response_model=Dict[str, Any])
+@router.post("/thema-analyse/geojson", response_model=dict[str, Any])
 def get_thema_analyse_geojson(payload: ThemaAnalyseRequest, db: Session = Depends(get_db)):
     """
     Thema-Analyse — GeoJSON voor choropleth.
@@ -367,7 +368,7 @@ def get_thema_analyse_geojson(payload: ThemaAnalyseRequest, db: Session = Depend
 # ─── Sjabloon F: Woonplaats- & Deelgebiedsanalyse ─────────────────────────────
 
 
-@router.post("/deelgebied", response_model=Dict[str, Any])
+@router.post("/deelgebied", response_model=dict[str, Any])
 def get_deelgebied_analyse_data(payload: DeelgebiedAnalyseRequest, db: Session = Depends(get_db)):
     """
     Sjabloon F: Woonplaats- & Deelgebiedsanalyse.
@@ -387,7 +388,7 @@ def get_deelgebied_analyse_data(payload: DeelgebiedAnalyseRequest, db: Session =
         raise HTTPException(status_code=400, detail=str(e))
 
 
-@router.post("/deelgebied/kaart", response_model=Dict[str, Any])
+@router.post("/deelgebied/kaart", response_model=dict[str, Any])
 def get_deelgebied_kaart(payload: DeelgebiedAnalyseRequest, db: Session = Depends(get_db)):
     """
     Genereert een inline SVG choropleet van de geselecteerde buurten,

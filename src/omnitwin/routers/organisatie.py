@@ -16,7 +16,7 @@ docs/2-architectuur/api-landschap.md) als beschrijving van de aanbieder.
 
 import datetime as dt
 import re
-from typing import Any, Dict, List, Literal, Optional
+from typing import Any, Literal
 
 from fastapi import APIRouter, Depends, HTTPException, Response
 from fastapi.responses import JSONResponse
@@ -38,21 +38,21 @@ EXPORT_VERSIE = 1
 
 class Logo(BaseModel):
     pad: str
-    naam: Optional[str] = None
+    naam: str | None = None
     rol: str = "partner"  # "eigen" of "partner"
 
 
 class Organisatie(BaseModel):
     code: str
     naam: str
-    korte_naam: Optional[str] = None
-    oin: Optional[str] = None
-    gemeente_codes: List[str]
-    standaard_gemeente_code: Optional[str] = None
-    benchmark_provincie: Optional[str] = None
-    contact_email: Optional[str] = None
+    korte_naam: str | None = None
+    oin: str | None = None
+    gemeente_codes: list[str]
+    standaard_gemeente_code: str | None = None
+    benchmark_provincie: str | None = None
+    contact_email: str | None = None
     thema: str = "d-omnitwin"  # huisstijl (NLDS-thema), static/css/themes/<thema>.css
-    logos: List[Logo]
+    logos: list[Logo]
     meld_url: str = org_service.STANDAARD_MELD_URL  # waar "Melden" heen gaat (#312)
     n_drempel: int = 10  # kleine aantallen (#325): minder waarnemingen = niet tonen
 
@@ -68,7 +68,7 @@ _STUURTEKENS = re.compile(r"[\x00-\x1f\x7f]")
 _MELD_URL = re.compile(r"^(https://[^\s/?#]+[^\s]*|mailto:[^@\s<>\"']+@[^@\s<>\"']+\.[A-Za-z]{2,})$")
 
 
-def _tekst(waarde: Optional[str], veld: str, maximum: int, verplicht: bool = False) -> Optional[str]:
+def _tekst(waarde: str | None, veld: str, maximum: int, verplicht: bool = False) -> str | None:
     if waarde is None:
         if verplicht:
             raise ValueError(f"{veld} is verplicht")
@@ -89,7 +89,7 @@ class LogoInvoer(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     pad: str
-    naam: Optional[str] = None
+    naam: str | None = None
     rol: Literal["eigen", "partner"] = "partner"
 
     @field_validator("pad")
@@ -101,7 +101,7 @@ class LogoInvoer(BaseModel):
 
     @field_validator("naam")
     @classmethod
-    def _naam(cls, v: Optional[str]) -> Optional[str]:
+    def _naam(cls, v: str | None) -> str | None:
         return _tekst(v, "naam van het logo", 200)
 
 
@@ -112,19 +112,19 @@ class OrganisatieInvoer(BaseModel):
 
     code: str
     naam: str
-    korte_naam: Optional[str] = None
-    oin: Optional[str] = None
-    gemeente_codes: List[str] = Field(default_factory=list, max_length=50)
+    korte_naam: str | None = None
+    oin: str | None = None
+    gemeente_codes: list[str] = Field(default_factory=list, max_length=50)
     # Optioneel: de standaardgemeente; komt vooraan in gemeente_codes (de eerste is de standaard)
-    standaard_gemeente_code: Optional[str] = None
-    benchmark_provincie: Optional[str] = None
-    contact_email: Optional[str] = None
+    standaard_gemeente_code: str | None = None
+    benchmark_provincie: str | None = None
+    contact_email: str | None = None
     thema: str = org_service.STANDAARD_THEMA
-    logos: List[LogoInvoer] = Field(default_factory=list, max_length=20)
+    logos: list[LogoInvoer] = Field(default_factory=list, max_length=20)
     # Meldplek (#312): https-adres (nieuw issue, formulier) of mailto:; leeg of de standaard = standaard
-    meld_url: Optional[str] = None
+    meld_url: str | None = None
     # Kleine aantallen (#325): een waarde met minder waarnemingen tonen we niet; leeg = 10
-    n_drempel: Optional[int] = Field(default=None, ge=1, le=1000)
+    n_drempel: int | None = Field(default=None, ge=1, le=1000)
 
     @field_validator("code")
     @classmethod
@@ -140,17 +140,17 @@ class OrganisatieInvoer(BaseModel):
 
     @field_validator("korte_naam")
     @classmethod
-    def _korte_naam(cls, v: Optional[str]) -> Optional[str]:
+    def _korte_naam(cls, v: str | None) -> str | None:
         return _tekst(v, "korte naam", 50)
 
     @field_validator("benchmark_provincie")
     @classmethod
-    def _provincie(cls, v: Optional[str]) -> Optional[str]:
+    def _provincie(cls, v: str | None) -> str | None:
         return _tekst(v, "benchmarkprovincie", 100)
 
     @field_validator("oin")
     @classmethod
-    def _oin(cls, v: Optional[str]) -> Optional[str]:
+    def _oin(cls, v: str | None) -> str | None:
         v = (v or "").strip() or None
         if v is not None and not _OIN.fullmatch(v):
             raise ValueError("OIN bestaat uit 20 cijfers")
@@ -158,7 +158,7 @@ class OrganisatieInvoer(BaseModel):
 
     @field_validator("contact_email")
     @classmethod
-    def _email(cls, v: Optional[str]) -> Optional[str]:
+    def _email(cls, v: str | None) -> str | None:
         v = (v or "").strip() or None
         if v is not None and (len(v) > 254 or not _EMAIL.fullmatch(v)):
             raise ValueError("contact_email is geen geldig e-mailadres")
@@ -166,7 +166,7 @@ class OrganisatieInvoer(BaseModel):
 
     @field_validator("meld_url")
     @classmethod
-    def _meld_url(cls, v: Optional[str]) -> Optional[str]:
+    def _meld_url(cls, v: str | None) -> str | None:
         v = (v or "").strip() or None
         if v is None or v == org_service.STANDAARD_MELD_URL:
             return None
@@ -176,8 +176,8 @@ class OrganisatieInvoer(BaseModel):
 
     @field_validator("gemeente_codes")
     @classmethod
-    def _gemeente_codes(cls, v: List[str]) -> List[str]:
-        uit: List[str] = []
+    def _gemeente_codes(cls, v: list[str]) -> list[str]:
+        uit: list[str] = []
         for code in v:
             if not isinstance(code, str) or not _GEMEENTECODE.fullmatch(code):
                 raise ValueError(f"gemeentecode {code!r}: vier cijfers (CBS), bijvoorbeeld 0080")
@@ -202,7 +202,7 @@ class OrganisatieInvoer(BaseModel):
         self.standaard_gemeente_code = self.gemeente_codes[0] if self.gemeente_codes else None
         return self
 
-    def als_dict(self) -> Dict[str, Any]:
+    def als_dict(self) -> dict[str, Any]:
         d = self.model_dump()
         d.pop("standaard_gemeente_code", None)
         return d
@@ -222,8 +222,8 @@ class Thema(BaseModel):
     naam: str
     titel: str
     # WCAG 2.1 AA volgens het kopcommentaar van het thema ("@wcag-aa: ja|nee", #284); None = onbekend
-    wcag_aa: Optional[bool] = None
-    kleuren: Dict[str, Dict[str, str]]  # {"licht": {token: "#hex"}, "donker": {...}}
+    wcag_aa: bool | None = None
+    kleuren: dict[str, dict[str, str]]  # {"licht": {token: "#hex"}, "donker": {...}}
 
 
 # ── Lezen (publiek) ─────────────────────────────────────────────────────────
@@ -249,7 +249,7 @@ def get_beeldmerk(db: Session = Depends(get_db)):
 # ── Instellen (beheerder, #253) ─────────────────────────────────────────────
 
 
-def _audit(gebruiker: dict, actie: str, wijzigingen: Dict[str, Any]) -> None:
+def _audit(gebruiker: dict, actie: str, wijzigingen: dict[str, Any]) -> None:
     """Auditregel: wie (sub/gebruikersnaam, nooit e-mail of tokens) en wat."""
     wie = gebruiker.get("username")
     sub = gebruiker.get("onderwerp")
@@ -268,7 +268,7 @@ def _audit(gebruiker: dict, actie: str, wijzigingen: Dict[str, Any]) -> None:
     )
 
 
-def _zet(db: Session, invoer: OrganisatieInvoer, gebruiker: dict, actie: str) -> Dict[str, Any]:
+def _zet(db: Session, invoer: OrganisatieInvoer, gebruiker: dict, actie: str) -> dict[str, Any]:
     nieuw = invoer.als_dict()
     oud = lees_organisatie(db)
     org_service.schrijf_organisatie(db, nieuw)
@@ -283,13 +283,13 @@ def put_organisatie(invoer: OrganisatieInvoer, db: Session = Depends(get_db), ge
     return _zet(db, invoer, gebruiker, "bijgewerkt")
 
 
-@router.get("/themas", response_model=List[Thema])
+@router.get("/themas", response_model=list[Thema])
 def get_themas(_: dict = Depends(vereis_admin)):
     """De thema's in static/css/themes, met titel en voorbeeldkleuren (licht en donker)."""
     return org_service.themas()
 
 
-@router.get("/logos", response_model=List[str])
+@router.get("/logos", response_model=list[str])
 def get_logos(_: dict = Depends(vereis_admin)):
     """Afbeeldingen onder /static/images/ die als footer-logo gekozen kunnen worden (geen uploads)."""
     return org_service.beschikbare_logos()

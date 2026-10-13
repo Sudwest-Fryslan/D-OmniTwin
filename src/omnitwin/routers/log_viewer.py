@@ -16,16 +16,17 @@ Endpoints:
     POST /api/admin/logs/cleanup  — Handmatige log cleanup
 """
 
-from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy.orm import Session
+from typing import Any
+
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
+from pydantic import BaseModel
 from sqlalchemy import text
+from sqlalchemy.orm import Session
+
 from omnitwin.database import get_db
 from omnitwin.routers.auth import vereis_admin
-from omnitwin.services.logging_service import AppLogger, _config_cache
 from omnitwin.services.log_cleanup_service import run_cleanup_now, samenvatting
-from pydantic import BaseModel
-from typing import Optional, List, Dict, Any
-from fastapi import Request
+from omnitwin.services.logging_service import AppLogger, _config_cache
 
 # Alle routes in deze router vereisen een beheerder (#65)
 router = APIRouter(prefix="/api/admin", tags=["Log Viewer"], dependencies=[Depends(vereis_admin)])
@@ -47,9 +48,9 @@ def get_logs(
     request: Request,
     page: int = Query(1, ge=1),
     per_page: int = Query(50, ge=10, le=200),
-    category: Optional[str] = Query(None),
-    level: Optional[str] = Query(None),
-    search: Optional[str] = Query(None),
+    category: str | None = Query(None),
+    level: str | None = Query(None),
+    search: str | None = Query(None),
     period: str = Query("today"),  # today, week, month, all
     db: Session = Depends(get_db),
     auth: dict = Depends(vereis_admin),
@@ -58,7 +59,7 @@ def get_logs(
 
     # Basis query
     where_clauses = []
-    params: Dict[str, Any] = {}
+    params: dict[str, Any] = {}
 
     # Periode filter
     if period == "today":

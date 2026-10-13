@@ -3,16 +3,18 @@ Admin API Router for Beheerscherm (Admin Panel)
 Manages indicators, score types, color schemas, and Kompas configurations.
 """
 
-from fastapi import APIRouter, Depends, HTTPException, Request, Header
-from sqlalchemy.orm import Session
-from sqlalchemy import text
-from typing import Optional, List, Literal
-from uuid import UUID
-from pydantic import BaseModel, UUID4
-from omnitwin import polariteit
-from omnitwin.database import get_db
 import json
 import logging
+from typing import Literal
+from uuid import UUID
+
+from fastapi import APIRouter, Depends, Header, HTTPException, Request
+from pydantic import UUID4, BaseModel
+from sqlalchemy import text
+from sqlalchemy.orm import Session
+
+from omnitwin import polariteit
+from omnitwin.database import get_db
 
 logger = logging.getLogger(__name__)
 
@@ -35,39 +37,39 @@ class Polariteit(BaseModel):
 class ColorSchema(BaseModel):
     id: int
     naam: str
-    beschrijving: Optional[str]
+    beschrijving: str | None
     colors: dict
     is_actief: bool
 
 
 class ColorSchemaCreate(BaseModel):
     naam: str
-    beschrijving: Optional[str] = None
+    beschrijving: str | None = None
     colors: dict
 
 
 class IndicatorBase(BaseModel):
     uuid: str
     naam: str
-    omschrijving: Optional[str]
-    bron: Optional[str]
-    eenheid: Optional[str]
+    omschrijving: str | None
+    bron: str | None
+    eenheid: str | None
     score_type: str
-    polariteit: Optional[str] = None
-    color_schema_id: Optional[int]
-    color_schema_naam: Optional[str]
-    admin_notes: Optional[str]
+    polariteit: str | None = None
+    color_schema_id: int | None
+    color_schema_naam: str | None
+    admin_notes: str | None
 
 
 class IndicatorUpdate(BaseModel):
-    naam: Optional[str] = None
-    omschrijving: Optional[str] = None
-    bron: Optional[str] = None
-    eenheid: Optional[str] = None
-    score_type: Optional[str] = None  # oude codering; zet de polariteit (#120)
-    polariteit: Optional[str] = None  # hoger_is_beter | lager_is_beter | neutraal
-    color_schema_id: Optional[int] = None
-    admin_notes: Optional[str] = None
+    naam: str | None = None
+    omschrijving: str | None = None
+    bron: str | None = None
+    eenheid: str | None = None
+    score_type: str | None = None  # oude codering; zet de polariteit (#120)
+    polariteit: str | None = None  # hoger_is_beter | lager_is_beter | neutraal
+    color_schema_id: int | None = None
+    admin_notes: str | None = None
 
 
 class OntologieValidatie(BaseModel):
@@ -84,21 +86,21 @@ class LLMConfig(BaseModel):
 
 class SystemPrompt(BaseModel):
     naam: str
-    beschrijving: Optional[str] = None
+    beschrijving: str | None = None
     prompt_text: str
     is_actief: bool
 
 
 class SystemPromptUpdate(BaseModel):
     prompt_text: str
-    beschrijving: Optional[str] = None
-    is_actief: Optional[bool] = None
+    beschrijving: str | None = None
+    is_actief: bool | None = None
 
 
 # ============================================================================
 # LLM Config & System Prompts Endpoints
 # ============================================================================
-def _lees_llm_config(db: Session) -> Optional[dict]:
+def _lees_llm_config(db: Session) -> dict | None:
     """Laatste llm_config-rij; SELECT * zodat een database zonder migratie v20 ook werkt."""
     row = db.execute(text("SELECT * FROM llm_config ORDER BY id DESC LIMIT 1")).mappings().fetchone()
     if not row:
@@ -163,6 +165,7 @@ def get_ollama_models(
 ):
     """Beschikbare modellen van de geconfigureerde LLM-server: /api/tags (ollama) of /v1/models (openai)."""
     import requests
+
     from omnitwin.services.llm_service import openai_base_url, openai_headers, veilige_host
 
     config = _lees_llm_config(db)
@@ -195,7 +198,7 @@ def get_ollama_models(
         return {"models": [config["model_name"] if config else "qwen3:30b"], "error": melding}
 
 
-@router.get("/prompts", response_model=List[SystemPrompt])
+@router.get("/prompts", response_model=list[SystemPrompt])
 def get_system_prompts(
     db: Session = Depends(get_db),
 ):
@@ -239,7 +242,7 @@ def update_system_prompt(
 # ============================================================================
 # Hierarchy Endpoints
 # ============================================================================
-@router.get("/polariteiten", response_model=List[Polariteit])
+@router.get("/polariteiten", response_model=list[Polariteit])
 def get_polariteiten(
     db: Session = Depends(get_db),
 ):
@@ -252,16 +255,16 @@ def get_polariteiten(
 # ============================================================================
 # Color Schema Endpoints
 # ============================================================================
-@router.get("/color-schemas", response_model=List[ColorSchema])
+@router.get("/color-schemas", response_model=list[ColorSchema])
 def get_color_schemas(
     db: Session = Depends(get_db),
 ):
     """Get all available color schemas."""
     result = db.execute(
         text("""
-        SELECT id, naam, beschrijving, colors, is_actief 
-        FROM color_schemas 
-        WHERE is_actief = true 
+        SELECT id, naam, beschrijving, colors, is_actief
+        FROM color_schemas
+        WHERE is_actief = true
         ORDER BY id
     """)
     )
@@ -293,9 +296,9 @@ def create_color_schema(
 # ============================================================================
 @router.get("/indicatoren")
 def get_indicatoren(
-    search: Optional[str] = None,
-    score_type: Optional[str] = None,
-    ontologie_status: Optional[str] = None,
+    search: str | None = None,
+    score_type: str | None = None,
+    ontologie_status: str | None = None,
     met_data: bool = False,
     limit: int = 100,
     offset: int = 0,
@@ -307,7 +310,7 @@ def get_indicatoren(
         " AND EXISTS (SELECT 1 FROM gebied_data gd WHERE gd.indicator_uuid = i.uuid AND gd.waarde IS NOT NULL)"
     )
     query = """
-        SELECT 
+        SELECT
             i.uuid::text,
             i.naam,
             i.omschrijving,
@@ -402,7 +405,7 @@ def get_indicator(
     """Get single indicator by UUID, including ontology validation fields."""
     result = db.execute(
         text("""
-        SELECT 
+        SELECT
             i.uuid::text,
             i.naam,
             i.omschrijving,

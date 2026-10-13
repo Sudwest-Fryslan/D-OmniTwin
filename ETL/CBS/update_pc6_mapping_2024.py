@@ -1,8 +1,9 @@
-import pandas as pd
-import geopandas as gpd
 import json
 import os
 import sys
+
+import geopandas as gpd
+import pandas as pd
 import psycopg2
 
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))

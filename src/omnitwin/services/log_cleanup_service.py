@@ -21,9 +21,8 @@ Scheduling:
 
 import asyncio
 import ipaddress
-import random
 import logging
-from typing import Optional
+import random
 
 from sqlalchemy import text
 
@@ -44,7 +43,7 @@ _JITTER_S = 30 * 60  # ±30 minuten
 _cleanup_task: asyncio.Task | None = None
 
 
-def ip_inkorten(adres: Optional[str]) -> Optional[str]:
+def ip_inkorten(adres: str | None) -> str | None:
     """IPv4 → laatste octet 0, IPv6 → /48 (rest nullen). Onleesbaar → None (leeg).
 
     Idempotent: een ingekort adres blijft gelijk.

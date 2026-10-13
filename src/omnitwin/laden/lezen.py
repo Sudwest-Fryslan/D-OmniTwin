@@ -22,9 +22,9 @@ import json
 import sqlite3
 import tempfile
 import zipfile
+from collections.abc import Iterator
 from dataclasses import dataclass, field
 from pathlib import Path, PurePosixPath
-from typing import Iterator
 
 csv.field_size_limit(10 * 1024 * 1024)
 

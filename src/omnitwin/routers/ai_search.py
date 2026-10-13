@@ -1,8 +1,10 @@
+from typing import Any
+
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
+
 from omnitwin.database import get_db
 from omnitwin.services.ai_search_service import AISearchService
-from typing import List, Dict, Any
 
 router = APIRouter(prefix="/api/ai", tags=["AI Search & Intelligence"])
 
@@ -12,7 +14,7 @@ def get_service(db: Session = Depends(get_db)) -> AISearchService:
     return AISearchService(db, functie="Kompas-zoeken")
 
 
-@router.get("/kompas/search", response_model=List[Dict[str, Any]])
+@router.get("/kompas/search", response_model=list[dict[str, Any]])
 def search_kompas(
     q: str = Query(..., min_length=2, description="De zoekterm of vraag"),
     limit: int = Query(10, ge=1, le=20),

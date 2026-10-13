@@ -1,6 +1,7 @@
-import uvicorn
 import os
 from pathlib import Path
+
+import uvicorn
 from dotenv import load_dotenv
 
 # Load .env zodat LOG_LEVEL beschikbaar is

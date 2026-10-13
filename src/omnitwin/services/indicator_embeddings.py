@@ -17,7 +17,8 @@ Gebruik:
 
 import hashlib
 import logging
-from typing import Any, Dict, Iterable, List, Optional
+from collections.abc import Iterable
+from typing import Any
 
 from sqlalchemy import text
 
@@ -34,11 +35,11 @@ def tekst_hash(tekst: str) -> str:
 
 
 def lees_indicatoren(
-    db, indicator_uuids: Optional[Iterable[str]] = None, alleen_goedgekeurd: bool = False
-) -> List[Dict[str, Any]]:
+    db, indicator_uuids: Iterable[str] | None = None, alleen_goedgekeurd: bool = False
+) -> list[dict[str, Any]]:
     """Actieve indicatoren met de velden voor de tekst en de huidige hash."""
     filters = ["i.is_actief = true"]
-    params: Dict[str, Any] = {}
+    params: dict[str, Any] = {}
     if indicator_uuids is not None:
         filters.append("CAST(i.uuid AS text) = ANY(:uuids)")
         params["uuids"] = [str(u) for u in indicator_uuids]
@@ -78,7 +79,7 @@ def lees_indicatoren(
     return uit
 
 
-def teksten(indicatoren: List[Dict[str, Any]], begrippen=None) -> List[str]:
+def teksten(indicatoren: list[dict[str, Any]], begrippen=None) -> list[str]:
     begrippen = zoektaal.laad_begrippen() if begrippen is None else begrippen
     return [
         zoektaal.indicator_tekst(
@@ -90,11 +91,11 @@ def teksten(indicatoren: List[Dict[str, Any]], begrippen=None) -> List[str]:
 
 def herbereken_embeddings(
     db,
-    indicator_uuids: Optional[Iterable[str]] = None,
+    indicator_uuids: Iterable[str] | None = None,
     opnieuw: bool = False,
     alleen_goedgekeurd: bool = False,
     model=None,
-) -> Dict[str, int]:
+) -> dict[str, int]:
     """
     Berekent de embeddings van nieuwe of gewijzigde actieve indicatoren en commit.
 

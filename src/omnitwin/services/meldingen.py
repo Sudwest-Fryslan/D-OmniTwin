@@ -15,7 +15,8 @@ from __future__ import annotations
 
 import json
 import uuid
-from typing import Any, Dict, List, Optional
+from typing import Any
+
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
@@ -40,12 +41,12 @@ TOEGESTANE_CONTEXT_SLEUTELS = {
 MAX_CONTEXT_BYTES = 10_240
 
 
-def valideer_context(ruwe_context: Optional[Dict[str, Any]]) -> Dict[str, Any]:
+def valideer_context(ruwe_context: dict[str, Any] | None) -> dict[str, Any]:
     """Filtert en begrenst context-invoer op vaste sleutels en maximale payload-grootte."""
     if not ruwe_context or not isinstance(ruwe_context, dict):
         return {}
 
-    opgeschoond: Dict[str, Any] = {}
+    opgeschoond: dict[str, Any] = {}
     for sleutel, waarde in ruwe_context.items():
         if sleutel not in TOEGESTANE_CONTEXT_SLEUTELS:
             continue
@@ -71,7 +72,7 @@ def valideer_context(ruwe_context: Optional[Dict[str, Any]]) -> Dict[str, Any]:
     return opgeschoond
 
 
-def _naar_dict(rij: Any) -> Dict[str, Any]:
+def _naar_dict(rij: Any) -> dict[str, Any]:
     """Zet een database-rij om naar een veilige dictionary voor API-weergave."""
     context_data = rij.context
     if isinstance(context_data, str):
@@ -99,9 +100,9 @@ def maak_melding(
     type_: str,
     onderwerp: str,
     toelichting: str,
-    context_data: Optional[Dict[str, Any]] = None,
-    melder_email: Optional[str] = None,
-) -> Dict[str, Any]:
+    context_data: dict[str, Any] | None = None,
+    melder_email: str | None = None,
+) -> dict[str, Any]:
     """Maakt een nieuwe melding aan in het regielogboek."""
     if type_ not in TOEGESTANE_TYPES:
         raise GebruikersFout(f"Ongeldig type melding: {type_}")
@@ -145,7 +146,7 @@ def maak_melding(
     return _naar_dict(rij)
 
 
-def haal_tellingen_per_status(db: Session) -> Dict[str, int]:
+def haal_tellingen_per_status(db: Session) -> dict[str, int]:
     """Geeft de aantallen meldingen per status terug voor statusfilters en tellers."""
     tellingen = {s: 0 for s in TOEGESTANE_STATUSSEN}
     stmt = text("""
@@ -161,11 +162,11 @@ def haal_tellingen_per_status(db: Session) -> Dict[str, int]:
 
 def zoek_meldingen(
     db: Session,
-    status: Optional[str] = None,
-    type_: Optional[str] = None,
+    status: str | None = None,
+    type_: str | None = None,
     limit: int = 50,
     offset: int = 0,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Haalt een gepagineerde lijst meldingen op met tellingen en filtering."""
     if status and status not in TOEGESTANE_STATUSSEN:
         raise GebruikersFout(f"Ongeldige status-filter: {status}")
@@ -176,7 +177,7 @@ def zoek_meldingen(
     offset_veilig = max(0, offset)
 
     voorwaarden = []
-    params: Dict[str, Any] = {"limit": limit_veilig, "offset": offset_veilig}
+    params: dict[str, Any] = {"limit": limit_veilig, "offset": offset_veilig}
 
     if status:
         voorwaarden.append("status = :status")
@@ -212,7 +213,7 @@ def zoek_meldingen(
     }
 
 
-def haal_melding(db: Session, melding_id: uuid.UUID) -> Optional[Dict[str, Any]]:
+def haal_melding(db: Session, melding_id: uuid.UUID) -> dict[str, Any] | None:
     """Haalt één melding op inclusief volledige details."""
     stmt = text("""
         SELECT id, type, onderwerp, toelichting, context, melder_email, status, notitie_beheer, aangemaakt_op, bijgewerkt_op
@@ -226,10 +227,10 @@ def haal_melding(db: Session, melding_id: uuid.UUID) -> Optional[Dict[str, Any]]
 def werk_melding_bij(
     db: Session,
     melding_id: uuid.UUID,
-    status: Optional[str] = None,
-    notitie_beheer: Optional[str] = None,
+    status: str | None = None,
+    notitie_beheer: str | None = None,
     beheerder: str = "onbekend",
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Werkt de status of interne notitie van een melding bij.
     Conform AVG: Zodra status 'afgehandeld' of 'afgewezen' wordt, wordt melder_email gewist.
@@ -239,7 +240,7 @@ def werk_melding_bij(
         raise GebruikersFout("Melding niet gevonden.")
 
     updates = ["bijgewerkt_op = now()"]
-    params: Dict[str, Any] = {"id": melding_id}
+    params: dict[str, Any] = {"id": melding_id}
 
     nieuwe_status = status or bestaand["status"]
     if status is not None:

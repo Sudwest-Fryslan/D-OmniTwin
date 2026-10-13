@@ -24,14 +24,14 @@ Gebruik:
     python ETL/OV/import_ov_haltes.py --skip-schema
 """
 
-import sys
-import os
-import time
+import argparse
 import json
 import logging
-import argparse
-from pathlib import Path
+import os
+import sys
+import time
 from datetime import date
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
@@ -47,7 +47,7 @@ SCHEMA_FILE = SCRIPT_DIR / "migrations" / "schema_v14_ov_haltes.sql"
 sys.path.insert(0, str(ETL_DIR / "local"))
 sys.path.insert(0, str(SCRIPT_DIR))
 
-from overpass_client import ophalen_ov_nodes, PROVINCIES
+from overpass_client import PROVINCIES, ophalen_ov_nodes
 
 
 def get_connection():

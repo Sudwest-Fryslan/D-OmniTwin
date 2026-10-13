@@ -24,7 +24,7 @@ import hashlib
 import logging
 import re
 from datetime import date
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 from sqlalchemy import text
 
@@ -55,7 +55,7 @@ def melding(usecase: str) -> str:
     return MELDINGEN.get(usecase, MELDINGEN[BUITEN])
 
 
-def beoordeel(geldig_tot: Optional[date], stilgezet: bool, vandaag: date) -> Tuple[bool, str]:
+def beoordeel(geldig_tot: date | None, stilgezet: bool, vandaag: date) -> tuple[bool, str]:
     """(open, reden) voor een usecase. Zonder verklaring dicht; geldig tot en met geldig_tot."""
     if geldig_tot is None:
         return False, GEEN_VERKLARING
@@ -79,7 +79,7 @@ _STAND_SQL = """
 """
 
 
-def _lees_standen(code: Optional[str] = None, db=None) -> List[Dict[str, Any]]:
+def _lees_standen(code: str | None = None, db=None) -> list[dict[str, Any]]:
     sql = text(_STAND_SQL + (" WHERE u.code = :code" if code else "") + " ORDER BY u.code")
     params = {"code": code} if code else {}
     if db is not None:
@@ -90,7 +90,7 @@ def _lees_standen(code: Optional[str] = None, db=None) -> List[Dict[str, Any]]:
         return [dict(r) for r in conn.execute(sql, params).mappings()]
 
 
-def standen(db=None, vandaag: Optional[date] = None) -> List[Dict[str, Any]]:
+def standen(db=None, vandaag: date | None = None) -> list[dict[str, Any]]:
     """Alle usecases met verklaring, open/dicht en de reden (voor beheer; bevat logins)."""
     vandaag = vandaag or date.today()
     uit = []
@@ -114,7 +114,7 @@ def is_open(usecase: str) -> bool:
     return beoordeel(rijen[0]["geldig_tot"], rijen[0]["stilgezet"], date.today())[0]
 
 
-def poort(usecase: str, functie: str, taak: Optional[str] = None) -> bool:
+def poort(usecase: str, functie: str, taak: str | None = None) -> bool:
     """True als de usecase open is; anders False en een regel 'geweigerd' in het AI-logboek."""
     if is_open(usecase):
         return True
@@ -135,7 +135,7 @@ def _code(usecase: str) -> str:
     return usecase
 
 
-def valideer_pdf(inhoud: bytes, content_type: Optional[str]) -> None:
+def valideer_pdf(inhoud: bytes, content_type: str | None) -> None:
     """Alleen een PDF (content-type en de eerste bytes %PDF), niet leeg en hoogstens MAX_PDF."""
     from omnitwin.fouten import GebruikersFout
 
@@ -158,7 +158,7 @@ def valideer_versie(versie: str) -> str:
     return versie
 
 
-def nette_bestandsnaam(naam: Optional[str]) -> str:
+def nette_bestandsnaam(naam: str | None) -> str:
     naam = re.split(r"[\\/]", naam or "")[-1]
     naam = re.sub(r"[^A-Za-z0-9._ -]+", "_", naam).strip(" .")[:200]
     return naam or "verklaring.pdf"
@@ -169,12 +169,12 @@ def upload(
     usecase: str,
     versie: str,
     geldig_tot: date,
-    bestandsnaam: Optional[str],
+    bestandsnaam: str | None,
     inhoud: bytes,
-    content_type: Optional[str],
+    content_type: str | None,
     door: str,
-    vandaag: Optional[date] = None,
-) -> Dict[str, Any]:
+    vandaag: date | None = None,
+) -> dict[str, Any]:
     """Nieuwe verklaring: de usecase gaat open (een noodstop wordt opgeheven). Vastgelegd met login en tijd."""
     from omnitwin.fouten import GebruikersFout
 
@@ -225,7 +225,7 @@ def upload(
     return {"verklaring_id": str(vid), "sha256": sha}
 
 
-def zet_noodstop(db, usecase: str, aan: bool, door: str, toelichting: Optional[str] = None) -> None:
+def zet_noodstop(db, usecase: str, aan: bool, door: str, toelichting: str | None = None) -> None:
     """Noodstop aan (stilzetten) of uit (hervatten); hervatten opent alleen met een geldige verklaring."""
     code = _code(usecase)
     toelichting = ai_logboek.afkappen(toelichting, 500)
@@ -289,7 +289,7 @@ def _applicatielog(tekst: str) -> None:
         pass
 
 
-def registreer_verlopen(db, vandaag: Optional[date] = None) -> int:
+def registreer_verlopen(db, vandaag: date | None = None) -> int:
     """Een verlopen verklaring één keer als 'verlopen' in het vrijgavelogboek (automatisch, zonder login)."""
     n = 0
     for s in standen(db, vandaag):
@@ -314,7 +314,7 @@ def registreer_verlopen(db, vandaag: Optional[date] = None) -> int:
     return n
 
 
-def vrijgave_log(db, limit: int = 200) -> List[Dict[str, Any]]:
+def vrijgave_log(db, limit: int = 200) -> list[dict[str, Any]]:
     return [
         dict(r)
         for r in db.execute(
@@ -327,7 +327,7 @@ def vrijgave_log(db, limit: int = 200) -> List[Dict[str, Any]]:
     ]
 
 
-def verklaring_pdf(db, usecase: str) -> Optional[Dict[str, Any]]:
+def verklaring_pdf(db, usecase: str) -> dict[str, Any] | None:
     """De actuele verklaring (de nieuwste) van een usecase, of None."""
     r = (
         db.execute(

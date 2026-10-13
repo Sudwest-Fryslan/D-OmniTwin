@@ -455,6 +455,7 @@ th{{text-align:left;color:#5b6b7b;font-weight:500;width:240px}} th,td{{padding:8
 def controles(uc: dict, basis: str, tok: str | None) -> list:
     """Controles uit het manifest tegen de installatie: api en aantal; de rest overgeslagen (zie module)."""
     import requests
+
     from omnitwin import usecases as u
 
     api = None

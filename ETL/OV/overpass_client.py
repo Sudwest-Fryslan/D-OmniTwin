@@ -11,8 +11,9 @@ Gebruik:
     # Retourneert list[dict] met osm_id, naam, lat, lon, ov_type, tags, ...
 """
 
-import time
 import logging
+import time
+
 from OSMPythonTools.overpass import Overpass
 
 logger = logging.getLogger(__name__)

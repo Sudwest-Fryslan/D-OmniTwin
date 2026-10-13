@@ -105,6 +105,7 @@ def test_rapport_met_samenvatting_heeft_ai_label(monkeypatch, logboek):
 )
 def test_meld_url_validatie(url, ok):
     from pydantic import ValidationError
+
     from omnitwin.routers.organisatie import OrganisatieInvoer
 
     basis = {"code": "test", "naam": "Test", "gemeente_codes": ["0080"], "thema": "d-omnitwin"}

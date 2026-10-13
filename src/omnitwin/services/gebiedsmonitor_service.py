@@ -6,11 +6,11 @@ Business logic en database queries voor Gebiedsmonitor API endpoints.
 Gebruik parameterized queries voor dynamic filtering op basis van indicator selectie.
 """
 
-from sqlalchemy.orm import Session
-from sqlalchemy import text
-from typing import Optional, List, Dict, Any
-import numpy as np
+from typing import Any
 
+import numpy as np
+from sqlalchemy import text
+from sqlalchemy.orm import Session
 
 from omnitwin.services import kleine_aantallen as ka
 from omnitwin.services import labelklasse as lk
@@ -34,12 +34,12 @@ class GebiedsmonitorService:
     def get_kaart_attributes(
         self,
         gebiedstype_id: str,
-        indicator_uuid: Optional[str] = None,
+        indicator_uuid: str | None = None,
         show_all: bool = False,
-        gemeente_code: Optional[str] = None,
-        jaar: Optional[int] = None,
+        gemeente_code: str | None = None,
+        jaar: int | None = None,
         modus: str = "waarde",
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Haal attribuut data op voor kaartvisualisatie (ZONDER geometry).
         Ontworpen voor de Hybride "Lego" architectuur.
@@ -57,9 +57,9 @@ class GebiedsmonitorService:
 
         # 1. Base Query: Zonder geometry!
         query_base = """
-            SELECT 
-                g.id, 
-                g.naam, 
+            SELECT
+                g.id,
+                g.naam,
                 g.gebiedstype_id,
                 g.gemeente_code,
                 public.is_waterbuurt(g.naam, g.metadata) AS is_waterbuurt,
@@ -81,8 +81,8 @@ class GebiedsmonitorService:
                 query_base += f"""
                     {join_type} (
                         SELECT gebied_id, indicator_uuid, waarde, jaar, bron, n
-                        FROM gebied_data 
-                        WHERE indicator_uuid = CAST(:indicator_uuid AS uuid) 
+                        FROM gebied_data
+                        WHERE indicator_uuid = CAST(:indicator_uuid AS uuid)
                         AND jaar = :jaar
                         AND COALESCE(scenario_id, 'current') = 'current'
                     ) i ON g.id = i.gebied_id
@@ -92,7 +92,7 @@ class GebiedsmonitorService:
             else:
                 join_type = "LEFT JOIN" if show_all else "INNER JOIN"
                 query_base += f"""
-                    {join_type} vw_gebied_indicator_actueel i 
+                    {join_type} vw_gebied_indicator_actueel i
                         ON g.id = i.gebied_id AND i.indicator_uuid = CAST(:indicator_uuid AS uuid)
                     LEFT JOIN indicatoren ind ON ind.uuid = CAST(:indicator_uuid AS uuid)
                 """
@@ -149,7 +149,7 @@ class GebiedsmonitorService:
         klassen_legenda = []
         labels = modus == "label" and bool(indicator_uuid)
         percentiel = (modus == "percentiel" or labels) and bool(indicator_uuid)
-        klasse_per_gebied: Dict[str, Dict[str, Any]] = {}
+        klasse_per_gebied: dict[str, dict[str, Any]] = {}
         label_bron = None
 
         if indicator_uuid and len(all_values) > 0:
@@ -268,7 +268,7 @@ class GebiedsmonitorService:
             self.db, gebiedstype_id, {r["gemeente_code"] for r in met_waarde}, [indicator_uuid], jaar=jaar
         )
         onderdrukt = pk.onderdrukte_waarden(self.db, [str(r["id"]) for r in met_waarde], [indicator_uuid])
-        uit: Dict[str, Dict[str, Any]] = {}
+        uit: dict[str, dict[str, Any]] = {}
         for r in met_waarde:
             gid = str(r["id"])
             if r["is_waterbuurt"]:
@@ -286,7 +286,7 @@ class GebiedsmonitorService:
                 uit[gid] = {"klasse": k, "status": None if k else status}
         return (kleuren, uit, bron) if labels else (kleuren, uit)
 
-    def get_gebiedstypes(self) -> List[Dict[str, Any]]:
+    def get_gebiedstypes(self) -> list[dict[str, Any]]:
         """
         Haal alle gebiedstypes op met aantal gebieden.
 
@@ -294,7 +294,7 @@ class GebiedsmonitorService:
         gebieden te tellen (dus zonder water).
         """
         query = text("""
-            SELECT 
+            SELECT
                 gt.id,
                 gt.naam,
                 gt.code,
@@ -315,7 +315,7 @@ class GebiedsmonitorService:
     # Gebieden
     # ========================================================================
 
-    def get_gebieden(self, gebiedstype_id: Optional[str] = None, limit: int = 50, offset: int = 0) -> Dict[str, Any]:
+    def get_gebieden(self, gebiedstype_id: str | None = None, limit: int = 50, offset: int = 0) -> dict[str, Any]:
         """
         Haal gebieden op met optional filter op gebiedstype.
 
@@ -339,7 +339,7 @@ class GebiedsmonitorService:
 
         # Data query
         data_query = text("""
-            SELECT 
+            SELECT
                 g.id,
                 g.naam,
                 gt.naam as gebiedstype_naam,
@@ -361,7 +361,7 @@ class GebiedsmonitorService:
 
         return {"total": total, "limit": limit, "offset": offset, "gebieden": gebieden}
 
-    def get_gebied_detail(self, gebied_id: str) -> Optional[Dict[str, Any]]:
+    def get_gebied_detail(self, gebied_id: str) -> dict[str, Any] | None:
         """
         Haal details van een specifiek gebied op inclusief alle indicator waarden.
 
@@ -373,7 +373,7 @@ class GebiedsmonitorService:
         """
         # Gebied info
         gebied_query = text("""
-            SELECT 
+            SELECT
                 g.id,
                 g.naam,
                 gt.id as gebiedstype_id,
@@ -441,7 +441,7 @@ class GebiedsmonitorService:
     # Indicatoren
     # ========================================================================
 
-    def get_indicatoren(self, gebiedstype_id: Optional[str] = None) -> List[Dict[str, Any]]:
+    def get_indicatoren(self, gebiedstype_id: str | None = None) -> list[dict[str, Any]]:
         """
         Haal indicatoren op, optioneel gefilterd op gebiedstype.
         UPDATED: Toont ALLE indicatoren, ook zonder data.
@@ -455,16 +455,16 @@ class GebiedsmonitorService:
         if gebiedstype_id:
             # Met gebiedstype filter: toon ALLE indicatoren, sorteer op coverage
             query = text("""
-                SELECT 
+                SELECT
                     i.uuid,
                     i.naam,
                     i.code,
                     i.omschrijving,
                     i.eenheid,
                     i.categorie,
-                    COALESCE(COUNT(DISTINCT CASE 
-                        WHEN g.gebiedstype_id = CAST(:gebiedstype_id AS uuid) 
-                        THEN gd.gebied_id 
+                    COALESCE(COUNT(DISTINCT CASE
+                        WHEN g.gebiedstype_id = CAST(:gebiedstype_id AS uuid)
+                        THEN gd.gebied_id
                     END), 0) as aantal_gebieden_met_data,
                     COALESCE(COUNT(DISTINCT gd.id), 0) as aantal_metingen,
                     MAX(gd.jaar) as nieuwste_jaar
@@ -474,10 +474,10 @@ class GebiedsmonitorService:
                 LEFT JOIN gebieden g ON gd.gebied_id = g.id
                 WHERE i.status IN ('O', 'C') AND i.is_actief = true
                 GROUP BY i.uuid, i.naam, i.code, i.omschrijving, i.eenheid, i.categorie
-                ORDER BY 
-                    COUNT(DISTINCT CASE 
-                        WHEN g.gebiedstype_id = CAST(:gebiedstype_id AS uuid) 
-                        THEN gd.gebied_id 
+                ORDER BY
+                    COUNT(DISTINCT CASE
+                        WHEN g.gebiedstype_id = CAST(:gebiedstype_id AS uuid)
+                        THEN gd.gebied_id
                     END) DESC NULLS LAST,
                     i.naam
             """)
@@ -486,7 +486,7 @@ class GebiedsmonitorService:
         else:
             # Zonder filter: alle operationele indicatoren
             query = text("""
-                SELECT 
+                SELECT
                     i.uuid,
                     i.naam,
                     i.code,

@@ -13,7 +13,7 @@ staat in SQL (db/schema/08_zscore_referentie.sql):
 Methodiek: docs/3-data-engineering/zscore_methodiek.md
 """
 
-from typing import Any, Dict, Optional
+from typing import Any
 
 from omnitwin.fouten import GebruikersFout
 from omnitwin.services import kleine_aantallen as ka
@@ -67,14 +67,14 @@ SQL_REFERENTIE_WAARDEN = """public.zscore_referentie_waarden(
 
 def referentie_params(
     gebiedstype_id: Any,
-    gemeente_code: Optional[str] = None,
-    gebied_ids: Optional[list] = None,
-    indicator_uuids: Optional[list] = None,
+    gemeente_code: str | None = None,
+    gebied_ids: list | None = None,
+    indicator_uuids: list | None = None,
     jaarlogica: str = JAARLOGICA_STANDAARD,
     scenario_id: str = SCENARIO_STANDAARD,
     min_n: int = MIN_N_STANDAARD,
-    provincie: Optional[str] = None,
-) -> Dict[str, Any]:
+    provincie: str | None = None,
+) -> dict[str, Any]:
     """
     Bind-parameters voor de SQL-fragmenten hierboven.
 
@@ -96,7 +96,7 @@ def referentie_params(
     }
 
 
-def bereken_zscore(waarde: float, gemiddelde: float, standaarddeviatie: Optional[float], n: int) -> Optional[float]:
+def bereken_zscore(waarde: float, gemiddelde: float, standaarddeviatie: float | None, n: int) -> float | None:
     """
     Python-tegenhanger van SQL zscore(), voor afgeleide waarden die niet in de
     database staan (zoals het gewogen deelgebiedsgemiddelde). None als er geen
@@ -111,7 +111,7 @@ def bereken_zscore(waarde: float, gemiddelde: float, standaarddeviatie: Optional
 
 def methodiek_beschrijving(
     jaarlogica: str = JAARLOGICA_STANDAARD, scenario_id: str = SCENARIO_STANDAARD
-) -> Dict[str, str]:
+) -> dict[str, str]:
     """Korte, navolgbare beschrijving voor in rapport-payloads."""
     return {
         "formule": "Z = (waarde - gemiddelde_ref) / sd_ref (steekproef-sd)",

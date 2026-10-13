@@ -19,8 +19,8 @@ Vereisten:
 
 import argparse
 import json
-import sys
 import os
+import sys
 import time
 
 import geopandas as gpd

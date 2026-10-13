@@ -16,16 +16,19 @@ Strategie:
 Resultaat: ~20 indicatoren per buurt
 """
 
-import os, sys, json, uuid
-from datetime import datetime
+import json
+import os
+import sys
+import uuid
 from collections import defaultdict
+from datetime import datetime
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from dotenv import load_dotenv
-import psycopg2
 import geopandas as gpd
-import pandas as pd
 import numpy as np
+import pandas as pd
+import psycopg2
+from dotenv import load_dotenv
 
 load_dotenv(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), ".env"))
 
@@ -190,7 +193,7 @@ def load_buurt_to_gebied(conn):
     """Haal mapping buurtcode → gebied_id uit database"""
     cur = conn.cursor()
     cur.execute("""
-        SELECT id FROM gebieden 
+        SELECT id FROM gebieden
         WHERE id LIKE 'BU%'
     """)
     mapping = {}

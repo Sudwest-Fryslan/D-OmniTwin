@@ -8,9 +8,9 @@ Usage:
     python batch_fetch.py datasets.txt -gm 1900
 """
 
+import argparse
 import subprocess
 import sys
-import argparse
 from pathlib import Path
 
 

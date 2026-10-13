@@ -16,6 +16,7 @@ Databronnen (CBS OData, open data, CC BY):
 import csv
 import time
 from pathlib import Path
+
 import requests
 
 ROOT = Path(__file__).parent.parent.parent

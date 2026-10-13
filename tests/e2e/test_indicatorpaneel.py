@@ -13,8 +13,6 @@ Indicatorpaneel, CSV-export en favorieten in de browser (#258).
 import re
 
 import pytest
-from playwright.sync_api import expect
-
 from e2e_helpers import (
     BOLSWARD_ZUIDOOST,
     TRAAG_MS,
@@ -26,6 +24,7 @@ from e2e_helpers import (
     selecteer_buurt_via_app,
     wacht_op_selectie,
 )
+from playwright.sync_api import expect
 
 BASE_URL = __import__("os").environ.get("OMNITWIN_BASE_URL", "http://localhost").rstrip("/")
 INDICATOR = "Stedelijk hitte-eiland effect"  # use case hittestress

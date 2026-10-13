@@ -65,13 +65,7 @@ select = ["E", "F", "W", "I", "B", "UP"]
 # Baseline (#129, stap 1): regels die nu massaal falen staan uit, zodat `ruff check .`
 # groen is zonder de code te wijzigen. Aantal = treffers bij het invoeren.
 extend-ignore = [
-    "W293",   # 1002× witruimte op lege regel. TODO stap 2: verdwijnt met `ruff format`
-    "W291",   # 169× witruimte aan regeleinde. TODO stap 2: verdwijnt met `ruff format`
     "E501",   # 346× regel langer dan 120. TODO stap 2: na `ruff format` de rest met de hand
-    "I001",   # 115× importvolgorde. TODO stap 2: `ruff check --select I --fix`
-    "UP006",  # 508× List/Dict i.p.v. list/dict. TODO stap 2: `ruff check --select UP --fix`
-    "UP045",  # 444× Optional[X] i.p.v. X | None. TODO stap 2: idem
-    "UP035",  # 97× verouderde import uit typing. TODO stap 2: idem
     "B904",   # 76× raise zonder `from` in except. TODO stap 2: per geval beoordelen
 ]
 

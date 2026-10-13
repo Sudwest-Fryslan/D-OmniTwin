@@ -12,7 +12,6 @@ Interne API van de viewer (api-landschap: viewer), dus met de sessie van de BFF 
 niet met `vereis_rol`. Sleutel = `sub` (of `lokaal:<id>`), zie omnitwin.services.gebruikersvoorkeuren.
 """
 
-from typing import List, Optional
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Request, Response
@@ -43,18 +42,18 @@ class Kaartpositie(BaseModel):
     longitude: float
     latitude: float
     zoom: float
-    pitch: Optional[float] = None
-    bearing: Optional[float] = None
+    pitch: float | None = None
+    bearing: float | None = None
 
 
 class Instellingen(BaseModel):
-    kaartpositie: Optional[Kaartpositie] = None
+    kaartpositie: Kaartpositie | None = None
 
 
 class NieuweFavoriet(BaseModel):
     naam: str = Field(..., max_length=200)
-    gebiedIds: List[str] = Field(..., max_length=5000)
-    gebiedstypeId: Optional[UUID] = None
+    gebiedIds: list[str] = Field(..., max_length=5000)
+    gebiedstypeId: UUID | None = None
 
 
 def _fout(e: GebruikersFout):

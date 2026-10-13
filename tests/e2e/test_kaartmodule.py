@@ -8,12 +8,11 @@ Makkum noemt, gebruiken we Workum/Koudum/Hindeloopen (ook IJsselmeerkust).
 import time
 
 import pytest
-from playwright.sync_api import expect
-
 from e2e_helpers import (
     HINDELOOPEN,
     KOUDUM,
     WORKUM,
+    geschaald,
     klik,
     klik_buurt_op_kaart,
     laad_buurtenkaart,
@@ -22,12 +21,11 @@ from e2e_helpers import (
     selecteer_buurt_via_app,
     selectie,
     selectie_overlay_aanwezig,
+    traag_ms,
     wacht_op_selectie,
     zoom_kaart,
-    geschaald,
-    traag_ms,
 )
-
+from playwright.sync_api import expect
 
 # ── TC-01-001 Enkelvoudige gebiedsselectie ───────────────────────────────────
 

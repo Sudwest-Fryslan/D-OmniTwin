@@ -1,10 +1,9 @@
 # Pydantic Schemas voor Gebiedsmonitor API
+from datetime import datetime
+from typing import Any
 from uuid import UUID
 
 from pydantic import BaseModel, Field
-from typing import Optional, List, Dict, Any
-from datetime import datetime
-
 
 # ============================================================================
 # Gebiedstypes
@@ -13,22 +12,22 @@ from datetime import datetime
 
 class GebiedstypeBase(BaseModel):
     naam: str
-    code: Optional[str] = None
-    beschrijving: Optional[str] = None
-    bron: Optional[str] = None
-    niveau: Optional[str] = None
+    code: str | None = None
+    beschrijving: str | None = None
+    bron: str | None = None
+    niveau: str | None = None
 
 
 class GebiedstypeResponse(GebiedstypeBase):
     id: UUID
-    aantal_gebieden: Optional[int] = 0
+    aantal_gebieden: int | None = 0
 
     class Config:
         from_attributes = True
 
 
 class GebiedstypesListResponse(BaseModel):
-    gebiedstypes: List[GebiedstypeResponse]
+    gebiedstypes: list[GebiedstypeResponse]
 
 
 # ============================================================================
@@ -39,7 +38,7 @@ class GebiedstypesListResponse(BaseModel):
 class GebiedBase(BaseModel):
     id: str
     naam: str
-    gebiedstype_naam: Optional[str] = None
+    gebiedstype_naam: str | None = None
     heeft_data: bool = False
     aantal_indicatoren: int = 0
 
@@ -47,9 +46,9 @@ class GebiedBase(BaseModel):
 class GebiedDetail(BaseModel):
     id: str
     naam: str
-    gebiedstype: Dict[str, Any]
-    centroid: Optional[Dict[str, float]] = None
-    metadata: Optional[Dict[str, Any]] = None
+    gebiedstype: dict[str, Any]
+    centroid: dict[str, float] | None = None
+    metadata: dict[str, Any] | None = None
 
     class Config:
         from_attributes = True
@@ -59,7 +58,7 @@ class GebiedenListResponse(BaseModel):
     total: int
     limit: int
     offset: int
-    gebieden: List[GebiedBase]
+    gebieden: list[GebiedBase]
 
 
 # ============================================================================
@@ -70,24 +69,24 @@ class GebiedenListResponse(BaseModel):
 class IndicatorBase(BaseModel):
     uuid: UUID  # ook uuid5: afgeleide indicatoren uit use cases (#141)
     naam: str
-    code: Optional[str] = None
-    omschrijving: Optional[str] = None
-    eenheid: Optional[str] = None
-    categorie: Optional[str] = None
+    code: str | None = None
+    omschrijving: str | None = None
+    eenheid: str | None = None
+    categorie: str | None = None
 
 
 class IndicatorResponse(IndicatorBase):
-    aantal_metingen: Optional[int] = 0
-    aantal_gebieden_met_data: Optional[int] = None
-    coverage_percentage: Optional[float] = None
-    nieuwste_jaar: Optional[int] = None
+    aantal_metingen: int | None = 0
+    aantal_gebieden_met_data: int | None = None
+    coverage_percentage: float | None = None
+    nieuwste_jaar: int | None = None
 
     class Config:
         from_attributes = True
 
 
 class IndicatorenListResponse(BaseModel):
-    indicatoren: List[IndicatorResponse]
+    indicatoren: list[IndicatorResponse]
 
 
 # ============================================================================
@@ -98,12 +97,12 @@ class IndicatorenListResponse(BaseModel):
 class IndicatorWaardeResponse(BaseModel):
     uuid: UUID  # ook uuid5: afgeleide indicatoren uit use cases (#141)
     naam: str
-    code: Optional[str] = None
+    code: str | None = None
     waarde: float
-    jaar: Optional[int] = None
-    datum: Optional[datetime] = None
-    eenheid: Optional[str] = None
-    bron: Optional[str] = None
+    jaar: int | None = None
+    datum: datetime | None = None
+    eenheid: str | None = None
+    bron: str | None = None
 
     class Config:
         from_attributes = True
@@ -111,7 +110,7 @@ class IndicatorWaardeResponse(BaseModel):
 
 class GebiedDetailResponse(BaseModel):
     gebied: GebiedDetail
-    indicatoren: List[IndicatorWaardeResponse]
+    indicatoren: list[IndicatorWaardeResponse]
 
 
 # ============================================================================
@@ -121,33 +120,33 @@ class GebiedDetailResponse(BaseModel):
 
 class GeoJSONGeometry(BaseModel):
     type: str
-    coordinates: List[Any]  # Nested structure, depends on geometry type
+    coordinates: list[Any]  # Nested structure, depends on geometry type
 
 
 class GeoJSONProperties(BaseModel):
     id: str
     naam: str
-    gebiedstype_naam: Optional[str] = None
-    indicator_waarde: Optional[float] = None
-    indicator_naam: Optional[str] = None
-    indicator_code: Optional[str] = None
-    eenheid: Optional[str] = None
-    jaar: Optional[int] = None
-    color: Optional[str] = None  # Backend-calculated hex color for map
+    gebiedstype_naam: str | None = None
+    indicator_waarde: float | None = None
+    indicator_naam: str | None = None
+    indicator_code: str | None = None
+    eenheid: str | None = None
+    jaar: int | None = None
+    color: str | None = None  # Backend-calculated hex color for map
     heeft_data: bool = True
 
 
 class GeoJSONFeature(BaseModel):
     type: str = "Feature"
     id: str
-    geometry: Dict[str, Any]  # GeoJSON geometry object
+    geometry: dict[str, Any]  # GeoJSON geometry object
     properties: GeoJSONProperties
 
 
 class GeoJSONFeatureCollection(BaseModel):
     type: str = "FeatureCollection"
-    features: List[GeoJSONFeature]
-    metadata: Optional[Dict[str, Any]] = None  # Extra info like count, bounds, etc.
+    features: list[GeoJSONFeature]
+    metadata: dict[str, Any] | None = None  # Extra info like count, bounds, etc.
 
 
 # ============================================================================
@@ -157,4 +156,4 @@ class GeoJSONFeatureCollection(BaseModel):
 
 class ErrorResponse(BaseModel):
     detail: str
-    error_code: Optional[str] = None
+    error_code: str | None = None

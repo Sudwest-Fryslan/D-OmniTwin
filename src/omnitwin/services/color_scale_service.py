@@ -5,10 +5,11 @@ Genereert kleuren op basis van database color schemas en classification methods.
 """
 
 import json
-from typing import List, Tuple, Optional, Dict, Any
+from typing import Any
+
 import numpy as np
-from sqlalchemy.orm import Session
 from sqlalchemy import text
+from sqlalchemy.orm import Session
 
 from omnitwin import polariteit
 
@@ -34,7 +35,7 @@ class ColorScaleService:
 
         return f"#{r:02x}{g:02x}{b:02x}"
 
-    def generate_color_ramp(self, colors: Dict[str, str], num_classes: int) -> List[str]:
+    def generate_color_ramp(self, colors: dict[str, str], num_classes: int) -> list[str]:
         """Genereer color ramp van min → mid → max"""
         min_color = colors["min"]
         mid_color = colors["mid"]
@@ -56,7 +57,7 @@ class ColorScaleService:
 
         return ramp
 
-    def classify_quantile(self, values: List[float], num_classes: int) -> List[float]:
+    def classify_quantile(self, values: list[float], num_classes: int) -> list[float]:
         """Quantile classificatie (gelijke aantallen per klasse) met unieke breaks"""
         if len(values) < 2:
             return []
@@ -65,7 +66,7 @@ class ColorScaleService:
         breaks = [float(np.percentile(values, p)) for p in percentiles]
         return sorted(list(set(breaks)))
 
-    def classify_equal_interval(self, values: List[float], num_classes: int) -> List[float]:
+    def classify_equal_interval(self, values: list[float], num_classes: int) -> list[float]:
         """Equal interval classificatie met unieke breaks"""
         min_val = min(values)
         max_val = max(values)
@@ -76,7 +77,7 @@ class ColorScaleService:
         breaks = [min_val + interval * i for i in range(1, num_classes)]
         return sorted(list(set(breaks)))
 
-    def classify_jenks(self, values: List[float], num_classes: int) -> List[float]:
+    def classify_jenks(self, values: list[float], num_classes: int) -> list[float]:
         """
         Natural Breaks (1D K-Means benadering).
         """
@@ -120,8 +121,8 @@ class ColorScaleService:
         return sorted(list(set(breaks)))
 
     def classify_diverging_midpoint(
-        self, values: List[float], num_classes: int, midpoint: Optional[float] = None
-    ) -> List[float]:
+        self, values: list[float], num_classes: int, midpoint: float | None = None
+    ) -> list[float]:
         """
         Diverging classification met midpoint (bijv. 50 voor index scores).
         Zorgt voor robuuste omgang met scheve data.
@@ -149,7 +150,7 @@ class ColorScaleService:
         return sorted(list(set(breaks)))
 
     def get_color_for_value(
-        self, value: float, color_ramp: List[str], breaks: List[float], nodata_color: str = "#d1d5db"
+        self, value: float, color_ramp: list[str], breaks: list[float], nodata_color: str = "#d1d5db"
     ) -> str:
         """Map een waarde naar een kleur proportioneel verdeeld over unieke breaks"""
         if value is None:
@@ -178,7 +179,7 @@ class ColorScaleService:
 
         return color_ramp[color_index]
 
-    def schema_kleuren(self, naam: str) -> Optional[Dict[str, str]]:
+    def schema_kleuren(self, naam: str) -> dict[str, str] | None:
         """Kleuren (min/mid/max) van een actief schema in color_schemas, op naam."""
         try:
             row = self.db.execute(
@@ -195,13 +196,13 @@ class ColorScaleService:
         kleuren = row[0] if isinstance(row[0], dict) else json.loads(row[0])
         return kleuren if all(k in kleuren for k in ("min", "mid", "max")) else None
 
-    def legenda_klassen(self, values: List[float], color_ramp: List[str], breaks: List[float]) -> List[Dict[str, Any]]:
+    def legenda_klassen(self, values: list[float], color_ramp: list[str], breaks: list[float]) -> list[dict[str, Any]]:
         """
         Klassen voor de legenda bij de werkelijke waarde (#255): per gebruikte kleur
         het bereik (kleinste en grootste waarde) van de gebieden met die kleur, oplopend.
         Alleen klassen die voorkomen; zo klopt de legenda ook bij weinig gebieden (#161).
         """
-        per_kleur: Dict[str, List[float]] = {}
+        per_kleur: dict[str, list[float]] = {}
         for v in values:
             if v is None:
                 continue
@@ -209,14 +210,14 @@ class ColorScaleService:
         klassen = [{"van": min(vs), "tot": max(vs), "kleur": k, "aantal": len(vs)} for k, vs in per_kleur.items()]
         return sorted(klassen, key=lambda k: k["van"])
 
-    def get_visualization_config(self, indicator_uuid: str) -> Optional[Dict[str, Any]]:
+    def get_visualization_config(self, indicator_uuid: str) -> dict[str, Any] | None:
         """
         Haal visualisatie configuratie op voor indicator.
         Returns color schema + classification method.
         """
         try:
             query = text("""
-                SELECT 
+                SELECT
                     cs.id as schema_id,
                     cs.naam as schema_naam,
                     cs.colors,
@@ -237,7 +238,7 @@ class ColorScaleService:
 
             # Fallback to profile matching
             profile_query = text("""
-                SELECT 
+                SELECT
                     cs.id as schema_id,
                     cs.naam as schema_naam,
                     cs.colors,
@@ -248,7 +249,7 @@ class ColorScaleService:
                     vp.midpoint_waarde,
                     i.score_type
                 FROM indicatoren i
-                LEFT JOIN visualisatie_profielen vp 
+                LEFT JOIN visualisatie_profielen vp
                     ON i.naam LIKE vp.indicator_pattern AND vp.is_actief = true
                 LEFT JOIN color_schemas cs ON vp.color_schema_id = cs.id
                 WHERE i.uuid::text = :indicator_uuid AND cs.id IS NOT NULL AND i.is_actief = true
@@ -269,7 +270,7 @@ class ColorScaleService:
             AppLogger.error(f"get_visualization_config failed: {e}", category="KAART")
             return None
 
-    def compute_colors_for_data(self, values: List[float], indicator_uuid: str) -> Tuple[List[str], List[float], str]:
+    def compute_colors_for_data(self, values: list[float], indicator_uuid: str) -> tuple[list[str], list[float], str]:
         """
         Compute color ramp and breaks for given data values.
 

@@ -6,8 +6,6 @@ docs/testcases/01-kaartmodule/TC-01-004_kaartmodus.md,
 docs/testcases/02-kompas-detail/TC-02-003_klimaat-labels.md
 """
 
-from playwright.sync_api import expect
-
 from e2e_helpers import (
     BOLSWARD_ZUIDOOST,
     TRAAG_MS,
@@ -19,6 +17,7 @@ from e2e_helpers import (
     traag_ms,
     wacht_op_selectie,
 )
+from playwright.sync_api import expect
 
 INDICATOR = "Stedelijk hitte-eiland effect"  # use case hittestress
 

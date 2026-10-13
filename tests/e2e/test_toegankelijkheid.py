@@ -10,8 +10,6 @@ Toegankelijkheid (WCAG 2.1, #67): focusbeheer in dialogen en "minder beweging".
   instelling laat zien dat de overgang er normaal wel is.
 """
 
-from playwright.sync_api import expect
-
 from e2e_helpers import (
     WORKUM,
     klik_kompas_segment,
@@ -21,6 +19,7 @@ from e2e_helpers import (
     selecteer_buurt_via_app,
     wacht_op_selectie,
 )
+from playwright.sync_api import expect
 
 FOCUS_IN = "(sel) => { const d = document.querySelector(sel); return !!d && d.contains(document.activeElement); }"
 

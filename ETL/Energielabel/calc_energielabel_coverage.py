@@ -4,12 +4,14 @@ Bereken EP-Online coverage: percentage huishoudens met energielabel.
 Koppeling: 'Aantal energielabels' / 'Huishoudens (BAG woonfunctie)' * 100
 """
 
-import os, sys, uuid
+import os
+import sys
+import uuid
 
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 sys.path.insert(0, PROJECT_ROOT)
-from dotenv import load_dotenv
 import psycopg2
+from dotenv import load_dotenv
 
 load_dotenv(os.path.join(PROJECT_ROOT, ".env"))
 
@@ -135,7 +137,7 @@ def main():
     # Top/bottom 5
     cur.execute(
         """
-        SELECT g.naam, gd.waarde 
+        SELECT g.naam, gd.waarde
         FROM gebied_data gd JOIN gebieden g ON g.id = gd.gebied_id
         WHERE gd.indicator_uuid = %s
         ORDER BY gd.waarde DESC LIMIT 5
@@ -148,7 +150,7 @@ def main():
 
     cur.execute(
         """
-        SELECT g.naam, gd.waarde 
+        SELECT g.naam, gd.waarde
         FROM gebied_data gd JOIN gebieden g ON g.id = gd.gebied_id
         WHERE gd.indicator_uuid = %s AND gd.waarde > 0
         ORDER BY gd.waarde ASC LIMIT 5

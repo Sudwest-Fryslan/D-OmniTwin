@@ -5,12 +5,14 @@ Parses the large XML file and aggregates per buurt for Friese gemeenten.
 Uses streaming parser to handle the 8GB file.
 """
 
+import json
+import os
+import sys
 import xml.etree.ElementTree as ET
 from collections import defaultdict
-import psycopg2
-import os, sys
-import json
 from datetime import datetime
+
+import psycopg2
 from dotenv import load_dotenv
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -86,7 +88,7 @@ def load_buurt_to_gebied_mapping(conn):
     cur = conn.cursor()
     cur.execute("""
         SELECT id, REPLACE(id, 'BU', '') as cbs_code
-        FROM gebieden 
+        FROM gebieden
         WHERE id LIKE 'BU%'
     """)
     return {row[1]: row[0] for row in cur.fetchall()}
@@ -277,7 +279,7 @@ def import_to_database(buurt_aggregates, buurt_to_gebied, conn):
             # Check if exists
             cur.execute(
                 """
-                SELECT id FROM gebied_data 
+                SELECT id FROM gebied_data
                 WHERE gebied_id = %s AND indicator_uuid = %s AND jaar = 2025
             """,
                 (gebied_id, ind_uuid),
@@ -286,7 +288,7 @@ def import_to_database(buurt_aggregates, buurt_to_gebied, conn):
             if cur.fetchone():
                 cur.execute(
                     """
-                    UPDATE gebied_data 
+                    UPDATE gebied_data
                     SET waarde = %s, bron = %s
                     WHERE gebied_id = %s AND indicator_uuid = %s AND jaar = 2025
                 """,

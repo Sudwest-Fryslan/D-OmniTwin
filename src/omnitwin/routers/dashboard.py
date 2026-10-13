@@ -1,8 +1,8 @@
-from fastapi import APIRouter, Depends, HTTPException, Header, Request
-from sqlalchemy.orm import Session
-from sqlalchemy import text
-from typing import List, Optional, Dict, Any
+from fastapi import APIRouter, Depends, Header, HTTPException, Request
 from pydantic import BaseModel
+from sqlalchemy import text
+from sqlalchemy.orm import Session
+
 from omnitwin.database import get_db
 from omnitwin.routers.auth import vereis_admin
 
@@ -52,11 +52,11 @@ def get_dashboard_stats(
     # Trending (indicators with 5+ distinct years of data)
     trending_query = text("""
         SELECT COUNT(*) FROM (
-            SELECT indicator_uuid 
-            FROM gebied_data 
+            SELECT indicator_uuid
+            FROM gebied_data
             WHERE jaar IS NOT NULL
               AND COALESCE(scenario_id, 'current') = 'current'
-            GROUP BY indicator_uuid 
+            GROUP BY indicator_uuid
             HAVING COUNT(DISTINCT jaar) >= 5
         ) as sub
     """)
@@ -86,15 +86,15 @@ def get_quadrant_coverage(
 
     # Get all titels and their indicators count
     query = text("""
-        SELECT 
+        SELECT
             titel_naam,
             COUNT(DISTINCT vkh.indicator_uuid) as total_indicators,
             COUNT(DISTINCT CASE WHEN gd.indicator_uuid IS NOT NULL THEN i.uuid END) as with_data
         FROM v_kompas_hierarchie vkh
         JOIN indicatoren i ON vkh.indicator_uuid = i.uuid
         LEFT JOIN (
-            SELECT DISTINCT indicator_uuid 
-            FROM gebied_data 
+            SELECT DISTINCT indicator_uuid
+            FROM gebied_data
             WHERE waarde IS NOT NULL
         ) gd ON i.uuid = gd.indicator_uuid
         WHERE vkh.config_id = :config_id
@@ -120,7 +120,7 @@ def get_quadrant_coverage(
 # ============================================================================
 @router.get("/indicators")
 def get_dashboard_indicators(
-    search: Optional[str] = None,
+    search: str | None = None,
     sort: str = "naam",
     direction: str = "asc",
     filter_status: str = "all",  # all, no_data, outdated_meta
@@ -132,27 +132,27 @@ def get_dashboard_indicators(
 
     # Base query
     query_str = """
-        SELECT 
+        SELECT
             i.uuid::text,
             i.naam,
             i.score_type,
             vkh.titel_naam as kwadrant,
-            
+
             -- Data stats
             COUNT(DISTINCT gd.jaar) as years_count,
             MAX(gd.updated_at) as last_updated,
             MAX(gd.jaar) as last_year,
-            
+
             -- Metadata check
-            (CASE WHEN 
+            (CASE WHEN
                 (i.omschrijving IS NOT NULL AND i.omschrijving != '') AND
                 (i.bron IS NOT NULL AND i.bron != '') AND
                 (i.eenheid IS NOT NULL AND i.eenheid != '')
             THEN true ELSE false END) as meta_complete,
-            
+
             -- Sparkline (last 5 years of averages)
             NULL as sparkline -- Placeholder, populated later if needed or via separate query for perf
-            
+
         FROM indicatoren i
         LEFT JOIN v_kompas_hierarchie vkh ON i.uuid = vkh.indicator_uuid AND vkh.config_id = 1
         LEFT JOIN gebied_data gd ON i.uuid = gd.indicator_uuid
@@ -220,8 +220,8 @@ def get_dashboard_indicators(
         spark_query = text("""
             SELECT indicator_uuid, jaar, AVG(waarde) as avg_val
             FROM gebied_data
-            WHERE indicator_uuid IN :uuids 
-              AND jaar >= 2015 
+            WHERE indicator_uuid IN :uuids
+              AND jaar >= 2015
               AND waarde IS NOT NULL
               AND COALESCE(scenario_id, 'current') = 'current'
             GROUP BY indicator_uuid, jaar
@@ -267,12 +267,13 @@ def export_dashboard_data(
     """Export all dashboard data as CSV."""
     import csv
     import io
-    from fastapi.responses import StreamingResponse
     from datetime import datetime
+
+    from fastapi.responses import StreamingResponse
 
     # 1. Fetch ALL data (no pagination)
     query_str = """
-        SELECT 
+        SELECT
             i.naam,
             i.code,
             i.score_type,

@@ -4,15 +4,16 @@ Manages color palettes, visualization profiles, and config for the map frontend.
 Based on: docs/visual/kaartkleuring_visualisatie_d_omn_itwin.md (v1.1)
 """
 
-from fastapi import APIRouter, Depends, HTTPException, Header, Request
-from sqlalchemy.orm import Session
+import os
+from uuid import UUID
+
+from fastapi import APIRouter, Depends, Header, HTTPException, Request
+from pydantic import BaseModel
 from sqlalchemy import text
+from sqlalchemy.orm import Session
+
 from omnitwin import toegang
 from omnitwin.database import get_db
-from pydantic import BaseModel
-from typing import Optional, List
-from uuid import UUID
-import os
 
 router = APIRouter(prefix="/api/visualisatie", tags=["Visualisatie"])
 
@@ -28,18 +29,18 @@ admin_router = APIRouter(prefix="/api/visualisatie/admin", tags=["Visualisatie"]
 class ColorSchemaBase(BaseModel):
     id: int
     naam: str
-    beschrijving: Optional[str] = None
+    beschrijving: str | None = None
     colors: dict
-    palette_type: Optional[str] = "sequential"
-    classificatie: Optional[str] = "quantile"
-    klassen: Optional[int] = 5
-    nodata_kleur: Optional[str] = "#d1d5db"
+    palette_type: str | None = "sequential"
+    classificatie: str | None = "quantile"
+    klassen: int | None = 5
+    nodata_kleur: str | None = "#d1d5db"
     is_actief: bool = True
 
 
 class ColorSchemaCreate(BaseModel):
     naam: str
-    beschrijving: Optional[str] = None
+    beschrijving: str | None = None
     colors: dict
     palette_type: str = "sequential"
     classificatie: str = "quantile"
@@ -48,47 +49,47 @@ class ColorSchemaCreate(BaseModel):
 
 
 class ColorSchemaUpdate(BaseModel):
-    naam: Optional[str] = None
-    beschrijving: Optional[str] = None
-    colors: Optional[dict] = None
-    palette_type: Optional[str] = None
-    classificatie: Optional[str] = None
-    klassen: Optional[int] = None
-    nodata_kleur: Optional[str] = None
-    is_actief: Optional[bool] = None
+    naam: str | None = None
+    beschrijving: str | None = None
+    colors: dict | None = None
+    palette_type: str | None = None
+    classificatie: str | None = None
+    klassen: int | None = None
+    nodata_kleur: str | None = None
+    is_actief: bool | None = None
 
 
 class VisualisatieProfiel(BaseModel):
     id: int
     naam: str
-    beschrijving: Optional[str] = None
-    indicator_pattern: Optional[str] = None
-    color_schema_id: Optional[int] = None
-    classificatie_override: Optional[str] = None
-    klassen_override: Optional[int] = None
-    midpoint_waarde: Optional[float] = None
+    beschrijving: str | None = None
+    indicator_pattern: str | None = None
+    color_schema_id: int | None = None
+    classificatie_override: str | None = None
+    klassen_override: int | None = None
+    midpoint_waarde: float | None = None
     is_actief: bool = True
 
 
 class ProfielCreate(BaseModel):
     naam: str
-    beschrijving: Optional[str] = None
-    indicator_pattern: Optional[str] = None
-    color_schema_id: Optional[int] = None
-    classificatie_override: Optional[str] = None
-    klassen_override: Optional[int] = None
-    midpoint_waarde: Optional[float] = None
+    beschrijving: str | None = None
+    indicator_pattern: str | None = None
+    color_schema_id: int | None = None
+    classificatie_override: str | None = None
+    klassen_override: int | None = None
+    midpoint_waarde: float | None = None
 
 
 class ProfielUpdate(BaseModel):
-    naam: Optional[str] = None
-    beschrijving: Optional[str] = None
-    indicator_pattern: Optional[str] = None
-    color_schema_id: Optional[int] = None
-    classificatie_override: Optional[str] = None
-    klassen_override: Optional[int] = None
-    midpoint_waarde: Optional[float] = None
-    is_actief: Optional[bool] = None
+    naam: str | None = None
+    beschrijving: str | None = None
+    indicator_pattern: str | None = None
+    color_schema_id: int | None = None
+    classificatie_override: str | None = None
+    klassen_override: int | None = None
+    midpoint_waarde: float | None = None
+    is_actief: bool | None = None
 
 
 # ============================================================================
@@ -440,7 +441,7 @@ def create_profiel(
     try:
         result = db.execute(
             text("""
-            INSERT INTO visualisatie_profielen 
+            INSERT INTO visualisatie_profielen
                 (naam, beschrijving, indicator_pattern, color_schema_id,
                  classificatie_override, klassen_override, midpoint_waarde)
             VALUES (:naam, :beschrijving, :indicator_pattern, :color_schema_id,

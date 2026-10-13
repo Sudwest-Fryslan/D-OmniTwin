@@ -11,7 +11,7 @@ AI-usecase C (#307): het embeddingmodel alleen als C is vrijgegeven. Dicht: alle
 """
 
 import logging
-from typing import Any, Dict, List
+from typing import Any
 
 from sqlalchemy import text
 from sqlalchemy.orm import Session
@@ -37,8 +37,8 @@ class AISearchService:
         global _model
         if _model is None:
             try:
-                from omnitwin.services.logging_service import AppLogger
                 from omnitwin.services.embedding_model import MODEL_ID, MODEL_REVISIE, gedeeld_model
+                from omnitwin.services.logging_service import AppLogger
 
                 AppLogger.info(
                     f"Initialiseren van AISearch model ({MODEL_ID}@{MODEL_REVISIE[:8]})...", category="SERVER"
@@ -47,7 +47,7 @@ class AISearchService:
             except Exception as e:
                 logger.error(f"Fout bij laden van AI model: {e}")
 
-    def _gelijkenissen(self, query_text: str) -> Dict[str, float]:
+    def _gelijkenissen(self, query_text: str) -> dict[str, float]:
         """Cosinusgelijkenis van de vraag met elke indicator met een embedding van het huidige model."""
         from omnitwin.services import embedding_model
 
@@ -63,7 +63,7 @@ class AISearchService:
         ).fetchall()
         return {r[0]: float(r[1]) for r in rows}
 
-    def search_indicators(self, query_text: str, limit: int = 5, zonder_ai: bool = False) -> List[Dict[str, Any]]:
+    def search_indicators(self, query_text: str, limit: int = 5, zonder_ai: bool = False) -> list[dict[str, Any]]:
         """
         Zoekt de indicatoren die bij een vraag passen, de beste eerst.
 
@@ -76,7 +76,7 @@ class AISearchService:
         """
         from omnitwin.services import embedding_model
 
-        gelijkenis: Dict[str, float] = {}
+        gelijkenis: dict[str, float] = {}
         self.zonder_betekenis = zonder_ai or not ai_vrijgave.poort(ai_vrijgave.C, self.functie, taak=query_text)
         if not self.zonder_betekenis:
             self._ensure_model()

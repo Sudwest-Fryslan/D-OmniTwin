@@ -13,8 +13,9 @@ Enriches all active indicators in `omnitwin_db` with standardized lineage metada
 import os
 import sys
 from pathlib import Path
-from dotenv import load_dotenv
+
 import psycopg2
+from dotenv import load_dotenv
 from psycopg2.extras import RealDictCursor
 
 # Load environment
@@ -183,7 +184,7 @@ def run_enrichment():
 
             # Verify result summary
             cur.execute("""
-                SELECT 
+                SELECT
                     COUNT(*) as total,
                     COUNT(bron_systeem_api) as with_api,
                     COUNT(bron_tabel_referentie) as with_ref,

@@ -6,9 +6,10 @@ en filtert deze lokaal. Dit is de meest robuuste manier omdat PDOK WFS filters v
 Output: init_data/fryslan/buurten_fryslan.geojson (WGS84)
 """
 
+from pathlib import Path
+
 import geopandas as gpd
 import pandas as pd
-from pathlib import Path
 
 ROOT = Path(__file__).parent.parent.parent
 OUTPUT = ROOT / "init_data" / "fryslan" / "buurten_fryslan.geojson"

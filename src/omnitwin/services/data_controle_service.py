@@ -1,9 +1,10 @@
-from sqlalchemy.orm import Session
-from sqlalchemy import text
-from datetime import datetime
-import requests
-from typing import Dict, Any, List, Optional
 import logging
+from datetime import datetime
+from typing import Any
+
+import requests
+from sqlalchemy import text
+from sqlalchemy.orm import Session
 
 logger = logging.getLogger(__name__)
 
@@ -14,7 +15,7 @@ class DataControleService:
     def __init__(self, db: Session):
         self.db = db
 
-    def check_cbs_odata_update(self, dataset_id: str, endpoint: str = "opendata.cbs.nl") -> Dict[str, Any]:
+    def check_cbs_odata_update(self, dataset_id: str, endpoint: str = "opendata.cbs.nl") -> dict[str, Any]:
         """
         Checkt de CBS OData API v4 op de 'Modified' datum van een dataset.
 
@@ -43,7 +44,7 @@ class DataControleService:
                 "message": "Bron niet bereikbaar of onverwacht antwoord (details in de serverlog)",
             }
 
-    def resolve_source_url(self, bron_systeem: Optional[str], bron_ref: Optional[str]) -> Optional[str]:
+    def resolve_source_url(self, bron_systeem: str | None, bron_ref: str | None) -> str | None:
         """Genereert de catalogus URL voor een bronsysteem."""
         if not bron_systeem or not bron_ref:
             return None
@@ -62,15 +63,15 @@ class DataControleService:
             return "https://openov.nl/"
         return None
 
-    def run_indicator_check(self, indicator_uuid: str) -> Dict[str, Any]:
+    def run_indicator_check(self, indicator_uuid: str) -> dict[str, Any]:
         """
         Voert een data lineage check uit voor een specifieke indicator.
         Updates de 'laatste_check_datum' en eventueel 'laatste_update_bron'.
         """
         # 1. Haal indicator info op
         query = text("""
-            SELECT uuid, naam, bron_systeem_api, bron_tabel_referentie, laatste_update_bron, laatste_check_datum 
-            FROM indicatoren 
+            SELECT uuid, naam, bron_systeem_api, bron_tabel_referentie, laatste_update_bron, laatste_check_datum
+            FROM indicatoren
             WHERE uuid = :uuid
         """)
         indicator = self.db.execute(query, {"uuid": indicator_uuid}).fetchone()
@@ -108,7 +109,7 @@ class DataControleService:
                         result["has_update"] = False  # synchroon na check
 
                         update_query = text("""
-                            UPDATE indicatoren 
+                            UPDATE indicatoren
                             SET laatste_check_datum = CURRENT_TIMESTAMP,
                                 laatste_update_bron = :mod_date
                             WHERE uuid = :uuid
@@ -116,8 +117,8 @@ class DataControleService:
                         self.db.execute(update_query, {"uuid": uuid, "mod_date": modified_at_source})
             else:
                 update_query = text("""
-                    UPDATE indicatoren 
-                    SET laatste_check_datum = CURRENT_TIMESTAMP 
+                    UPDATE indicatoren
+                    SET laatste_check_datum = CURRENT_TIMESTAMP
                     WHERE uuid = :uuid
                 """)
                 self.db.execute(update_query, {"uuid": uuid})
@@ -125,11 +126,11 @@ class DataControleService:
         self.db.commit()
         return result
 
-    def batch_run_all(self, limit: int = 50) -> List[Dict[str, Any]]:
+    def batch_run_all(self, limit: int = 50) -> list[dict[str, Any]]:
         """Run checks for indicators that have a source system defined (batched)."""
         query = text("""
-            SELECT uuid 
-            FROM indicatoren 
+            SELECT uuid
+            FROM indicatoren
             WHERE bron_systeem_api IS NOT NULL AND is_actief = true
             ORDER BY laatste_check_datum ASC NULLS FIRST
             LIMIT :limit
@@ -142,7 +143,7 @@ class DataControleService:
 
         return results
 
-    def herbereken_statistieken(self, indicator_uuids: List[str]) -> Dict[str, Any]:
+    def herbereken_statistieken(self, indicator_uuids: list[str]) -> dict[str, Any]:
         """Herbereken min_waarde en max_waarde voor de gegeven indicatoren op basis van gebied_data."""
         if not indicator_uuids:
             return {"status": "success", "message": "Geen indicatoren opgegeven."}
@@ -169,7 +170,7 @@ class DataControleService:
             logger.error(f"Error herbereken_statistieken: {e}")
             return {"status": "error", "message": "Herberekenen mislukt (details in de serverlog)"}
 
-    def genereer_ontologie(self, indicator_uuids: List[str]) -> Dict[str, Any]:
+    def genereer_ontologie(self, indicator_uuids: list[str]) -> dict[str, Any]:
         """Trigger AI ontologie generatie voor indicatoren."""
         if not indicator_uuids:
             return {"status": "success", "message": "Geen indicatoren opgegeven."}

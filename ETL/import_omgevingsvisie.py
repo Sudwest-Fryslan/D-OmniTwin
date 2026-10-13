@@ -10,15 +10,15 @@ Gebruik:
 Idempotent: kan veilig herhaald worden (TRUNCATE + herinsert).
 """
 
+import sys
+from pathlib import Path
+
 import geopandas as gpd
 from sqlalchemy import text
-from pathlib import Path
-import sys
 
 # Project root toevoegen aan sys.path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from omnitwin.database import engine
-
 
 # ============================================================================
 # Configuratie

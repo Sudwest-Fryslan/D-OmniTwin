@@ -9,11 +9,11 @@ Gebruik:
     python init_data/scripts/setup_env.py
 """
 
+import getpass
 import os
 import secrets
 import string
 from pathlib import Path
-import getpass
 
 ROOT = Path(__file__).parent.parent.parent
 ENV_FILE = ROOT / ".env"

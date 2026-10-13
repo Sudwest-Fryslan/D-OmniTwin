@@ -25,11 +25,11 @@ try:
 except ImportError:  # pragma: no cover
     Transformer = None
     _rd_to_wgs84 = None
-from omnitwin.database import get_db
-from typing import List, Optional
-import requests
 import logging
 
+import requests
+
+from omnitwin.database import get_db
 from omnitwin.services.logging_service import AppLogger
 
 logger = logging.getLogger(__name__)
@@ -42,10 +42,10 @@ router = APIRouter(prefix="/api/3dbag", tags=["3D BAG Panden"])
 
 
 class BAG3DRequest(BaseModel):
-    gebied_ids: List[str] = Field(
+    gebied_ids: list[str] = Field(
         ..., min_length=1, max_length=3, description="CBS buurt-IDs (bijv. BU00800000). Maximaal 3."
     )
-    indicator_uuid: Optional[str] = Field(None, description="Actieve indicator UUID voor kleurstrategie")
+    indicator_uuid: str | None = Field(None, description="Actieve indicator UUID voor kleurstrategie")
 
 
 # ============================================================================
@@ -101,14 +101,14 @@ ENERGIELABEL_INDICATOR_CODES = {"pct_energielabel", "gem_energielabel"}
 # ============================================================================
 
 
-def get_bbox_for_gebieden(db: Session, gebied_ids: List[str]) -> dict:
+def get_bbox_for_gebieden(db: Session, gebied_ids: list[str]) -> dict:
     """
     Berekent de bounding box van een set gebieden via PostGIS.
     Retourneert BBOX in EPSG:28992 (RD New) voor de 3DBAG API call.
     """
     result = db.execute(
         text("""
-        SELECT 
+        SELECT
             ST_XMin(env) as minx,
             ST_YMin(env) as miny,
             ST_XMax(env) as maxx,
@@ -336,15 +336,13 @@ def fetch_buildings_from_api(bbox: dict, max_pages: int = MAX_PAGES) -> dict:
 # ============================================================================
 
 
-def get_indicator_code(db: Session, indicator_uuid: str) -> Optional[str]:
+def get_indicator_code(db: Session, indicator_uuid: str) -> str | None:
     """Haal de indicator code op voor kleurmode-detectie."""
     result = db.execute(text("SELECT code FROM indicatoren WHERE uuid = :uuid"), {"uuid": indicator_uuid}).fetchone()
     return result.code if result else None
 
 
-def enrich_features_with_color(
-    features: list, db: Session, indicator_uuid: Optional[str], gebied_ids: List[str]
-) -> list:
+def enrich_features_with_color(features: list, db: Session, indicator_uuid: str | None, gebied_ids: list[str]) -> list:
     """
     Verrijkt elke feature met indicator_color op basis van drielaagse strategie.
     Mode A (bouwjaar) → Mode B (energielabel) → Mode C (buurt spatial fallback)

@@ -212,8 +212,8 @@ def test_controleer_legt_bronpeildatum_vast(tmp_path):
 def test_voorrangsregel_staat_in_een_functie_in_v036():
     """De regel staat op één plek (laden.herbouw_gebied_data, V036): nieuwste bronpeildatum, dan laatst
     aangeleverd; de rest als andere_bronnen. Geen vaste voorkeursdataset meer (LADEN_VOORRANG)."""
-    from pathlib import Path
     import re
+    from pathlib import Path
 
     root = Path(__file__).resolve().parents[2]
     sql = (root / "db" / "migraties" / "V036__voorrang_bronpeildatum.sql").read_text(encoding="utf-8")

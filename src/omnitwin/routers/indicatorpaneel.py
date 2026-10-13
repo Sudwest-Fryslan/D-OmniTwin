@@ -10,7 +10,6 @@ rol lezer of beheerder (middleware, ADR 0009). Waarden met n onder de drempel ga
 """
 
 import datetime as dt
-from typing import Optional
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -57,10 +56,10 @@ _GEMEENTE = Query(None, pattern=r"^[0-9]{4}$", description="Gemeentecode (CBS, 4
 @router.get("/indicatorpaneel")
 def indicatorpaneel(
     indicator_uuid: UUID,
-    gebied_ids: Optional[str] = _GEBIED_IDS,
-    jaar: Optional[int] = _JAAR,
-    gebiedstype_id: Optional[UUID] = None,
-    gemeente_code: Optional[str] = _GEMEENTE,
+    gebied_ids: str | None = _GEBIED_IDS,
+    jaar: int | None = _JAAR,
+    gebiedstype_id: UUID | None = None,
+    gemeente_code: str | None = _GEMEENTE,
     gebieden: bool = Query(
         True,
         description="false: zonder gebied_ids geen waarden per gebied, alleen indicator, bronnen en gemeentegemiddelde",
@@ -75,10 +74,10 @@ def indicatorpaneel(
 @router.get("/indicatorpaneel.csv", response_class=Response)
 def indicatorpaneel_csv(
     indicator_uuid: UUID,
-    gebied_ids: Optional[str] = _GEBIED_IDS,
-    jaar: Optional[int] = _JAAR,
-    gebiedstype_id: Optional[UUID] = None,
-    gemeente_code: Optional[str] = _GEMEENTE,
+    gebied_ids: str | None = _GEBIED_IDS,
+    jaar: int | None = _JAAR,
+    gebiedstype_id: UUID | None = None,
+    gemeente_code: str | None = _GEMEENTE,
     db: Session = Depends(get_db),
 ):
     """CSV van het paneel: UTF-8 met BOM, puntkomma, decimale komma. Kolommen: gebied-code, gebied-naam,

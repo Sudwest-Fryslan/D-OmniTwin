@@ -4,10 +4,11 @@ Doel: Strategiebepaling voor deduplicatie en OV-type classificatie
 Uitvoering: python ETL/OV/onderzoek_osm_structuur.py
 """
 
-import requests
 import json
 import time
 from collections import Counter, defaultdict
+
+import requests
 
 OVERPASS_URL = "https://overpass-api.de/api/interpreter"
 

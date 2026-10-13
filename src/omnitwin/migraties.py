@@ -45,9 +45,10 @@ import os
 import re
 import subprocess
 import sys
+from collections.abc import Callable, Iterable, Iterator
+from contextlib import AbstractContextManager
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Callable, ContextManager, Iterable, Iterator
 
 ROOT = Path(__file__).resolve().parents[2]  # root van de repository (src/omnitwin/migraties.py)
 MIGRATIE_MAP = ROOT / "db" / "migraties"
@@ -188,7 +189,7 @@ def psql(args: list[str]) -> str:
     return res.stdout
 
 
-Slot = Callable[[], ContextManager[None]]
+Slot = Callable[[], AbstractContextManager[None]]
 
 
 @contextlib.contextmanager

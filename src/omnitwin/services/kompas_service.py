@@ -3,11 +3,12 @@ Kompas Service Layer
 Business logic voor multi-kompas configuratie systeem
 """
 
-from typing import List, Optional, Dict, Any
-from sqlalchemy.orm import Session
-from sqlalchemy import text
-from datetime import datetime
 import json
+from datetime import datetime
+from typing import Any
+
+from sqlalchemy import text
+from sqlalchemy.orm import Session
 
 from omnitwin import polariteit
 from omnitwin.services import labelklasse as lk
@@ -22,7 +23,6 @@ from omnitwin.services.zscore_referentie import (
     referentie_params,
 )
 
-
 GEEN_DATA_KLEUR = "#94A3B8"  # zelfde grijs als elders in het Kompas
 
 
@@ -33,14 +33,14 @@ class KompasService:
         self.db = db
         self.scoring = KompasScoringService()
 
-    def get_configuraties(self) -> List[Dict[str, Any]]:
+    def get_configuraties(self) -> list[dict[str, Any]]:
         """
         Haal alle actieve configuraties op met statistieken
 
         Returns: List van configuratie dicts met counts
         """
         query = text("""
-            SELECT 
+            SELECT
                 s.id, s.naam, s.beschrijving, s.is_standaard, s.is_actief, s.icoon,
                 s.aantal_themas, s.aantal_onderdelen, s.aantal_indicatoren, s.aantal_scoring_regels,
                 kc.classificatie
@@ -55,7 +55,7 @@ class KompasService:
     def get_standaard_config_id(self) -> int:
         """Haal ID op van standaard configuratie"""
         query = text("""
-            SELECT id FROM kompas_configuraties 
+            SELECT id FROM kompas_configuraties
             WHERE is_standaard = TRUE AND is_actief = TRUE
             LIMIT 1
         """)
@@ -71,7 +71,7 @@ class KompasService:
         ).fetchone()
         return pk.normaliseer_classificatie(row[0] if row else None)
 
-    def get_hierarchie(self, config_id: int) -> Dict[str, Any]:
+    def get_hierarchie(self, config_id: int) -> dict[str, Any]:
         """
         Build complete hiërarchie tree voor D3.js sunburst
 
@@ -82,8 +82,8 @@ class KompasService:
         """
         # Haal config info op
         config_query = text("""
-            SELECT id, naam, icoon 
-            FROM kompas_configuraties 
+            SELECT id, naam, icoon
+            FROM kompas_configuraties
             WHERE id = :config_id AND is_actief = TRUE
         """)
         config_row = self.db.execute(config_query, {"config_id": config_id}).fetchone()
@@ -93,7 +93,7 @@ class KompasService:
 
         # Haal hiërarchie data op
         hierarchy_query = text("""
-            SELECT 
+            SELECT
                 titel_id, titel_naam, titel_kleur,
                 thema_id, thema_naam,
                 onderdeel_id, onderdeel_naam,
@@ -121,7 +121,7 @@ class KompasService:
             "last_updated": datetime.now(),
         }
 
-    def get_gebied_kompas(self, config_id: int, gebied_id: str) -> Optional[Dict[str, Any]]:
+    def get_gebied_kompas(self, config_id: int, gebied_id: str) -> dict[str, Any] | None:
         """
         Haal kompas data voor één gebied op (met waarden + kleuren)
 
@@ -150,7 +150,7 @@ class KompasService:
         # Haal ALLE indicatoren op die in dit kompas zitten
         # LEFT JOIN LATERAL voor meest recente jaar (MAX) per indicator
         data_query = text("""
-            SELECT 
+            SELECT
                 i.uuid as indicator_uuid,
                 i.naam as indicator_naam,
                 i.ontologische_beschrijving,
@@ -173,8 +173,8 @@ class KompasService:
                 ORDER BY jaar DESC
                 LIMIT 1
             ) gd ON true
-            LEFT JOIN kompas_indicator_scoring_regels sr 
-                ON i.uuid = sr.indicator_uuid 
+            LEFT JOIN kompas_indicator_scoring_regels sr
+                ON i.uuid = sr.indicator_uuid
                 AND sr.config_id = :config_id
             WHERE kim.config_id = :config_id AND i.is_actief = true
         """)
@@ -252,7 +252,7 @@ class KompasService:
 
     # ── Percentielklasse (#255) ─────────────────────────────────────────────
 
-    def get_selectie_kompas(self, config_id: int, gebied_ids: List[str]) -> Optional[Dict[str, Any]]:
+    def get_selectie_kompas(self, config_id: int, gebied_ids: list[str]) -> dict[str, Any] | None:
         """
         Percentielklassen over een selectie van gebieden (#255): per indicator en per
         onderdeel/thema/kwadrant één klasse, met dezelfde aggregatieregel als voor één
@@ -280,7 +280,7 @@ class KompasService:
             "hierarchie": boom,
         }
 
-    def _percentielklassen(self, config_id: int, gebied_ids: List[str], labels: bool = False):
+    def _percentielklassen(self, config_id: int, gebied_ids: list[str], labels: bool = False):
         """
         Per indicator de (klasse, gewicht)-paren over de gebieden, en per indicator
         het aantal gebieden waarvan de waarde onderdrukt is (n onder de drempel).
@@ -317,16 +317,16 @@ class KompasService:
         met_waarde = [r for r in rows if r.waarde is not None and not r.is_waterbuurt]
         uuids = sorted({r.indicator_uuid for r in met_waarde})
         onderdrukt = pk.onderdrukte_waarden(self.db, gebied_ids, uuids)
-        referentie: Dict = {}
+        referentie: dict = {}
         for gt in {r.gebiedstype_id for r in met_waarde}:
             gemeenten = {r.gemeente_code for r in met_waarde if r.gebiedstype_id == gt}
             for (gm, u), waarden in pk.referentie_waarden(self.db, gt, gemeenten, uuids).items():
                 referentie[(gt, gm, u)] = waarden
 
         drempels = lk.drempels_uit_db(self.db, uuids) if labels else {}
-        paren: Dict[str, List] = {}
-        n_onderdrukt: Dict[str, int] = {}
-        bron: Dict[str, str] = {}
+        paren: dict[str, list] = {}
+        n_onderdrukt: dict[str, int] = {}
+        bron: dict[str, str] = {}
         for r in met_waarde:
             if (r.gebied_id, r.indicator_uuid, r.jaar) in onderdrukt:
                 n_onderdrukt[r.indicator_uuid] = n_onderdrukt.get(r.indicator_uuid, 0) + 1
@@ -346,7 +346,7 @@ class KompasService:
             return paren, n_onderdrukt, bron
         return paren, n_onderdrukt
 
-    def _percentielklassen_in_boom(self, config_id: int, gebied_ids: List[str], boom: Dict):
+    def _percentielklassen_in_boom(self, config_id: int, gebied_ids: list[str], boom: dict):
         """Zet klasse, klasse_kleur (en bij indicatoren color) in de boom; geeft (boom, legenda)."""
         paren, n_onderdrukt = self._percentielklassen(config_id, gebied_ids)
         color_service = ColorScaleService(self.db)
@@ -354,7 +354,7 @@ class KompasService:
         neutraal = pk.palet(color_service, neutraal=True)
         return pk.annoteer_boom(boom, paren, n_onderdrukt, kleuren, GEEN_DATA_KLEUR, neutraal), pk.legenda(kleuren)
 
-    def _labels_in_boom(self, config_id: int, gebied_ids: List[str], boom: Dict):
+    def _labels_in_boom(self, config_id: int, gebied_ids: list[str], boom: dict):
         """
         Labels A-E (#256): label, klasse (score 5 = A .. 1 = E) en klasse_kleur op elke node,
         label_bron op de indicatoren. Geeft (boom, legenda, melding); melding = voorlopige
@@ -368,7 +368,7 @@ class KompasService:
         voorlopig = not bron or lk.BRON_KWINTIEL in bron.values()
         return boom, lk.legenda(kleuren, voorlopig), (lk.MELDING_VOORLOPIG if voorlopig else None)
 
-    def _get_bulk_percentiles(self, gebiedstype_id, gemeente_code: Optional[str] = None) -> Dict[str, List[float]]:
+    def _get_bulk_percentiles(self, gebiedstype_id, gemeente_code: str | None = None) -> dict[str, list[float]]:
         """
         Bereken 12.5% stap thresholds voor alle indicatoren, over dezelfde
         referentiegroep als de Z-scores (#66): gebiedstype + gemeente, meest
@@ -394,14 +394,14 @@ class KompasService:
                 threshold_map[str(row.indicator_uuid)] = list(row.thresholds)
         return threshold_map
 
-    def get_indicator_path(self, config_id: int, indicator_uuid: str) -> Optional[Dict[str, Any]]:
+    def get_indicator_path(self, config_id: int, indicator_uuid: str) -> dict[str, Any] | None:
         """
         Haal hiërarchie pad op voor specifieke indicator (breadcrumb)
 
         Returns: {"path": ["Titel", "Thema", "Onderdeel", "Indicator"], ...}
         """
         query = text("""
-            SELECT 
+            SELECT
                 titel_naam, thema_naam, onderdeel_naam, indicator_naam,
                 titel_kleur, is_actueel, weging
             FROM v_kompas_hierarchie
@@ -424,7 +424,7 @@ class KompasService:
             "indicator_details": dict(row._mapping),
         }
 
-    def get_indicator_history(self, config_id: int, gebied_id: str, indicator_uuid: str) -> Optional[Dict[str, Any]]:
+    def get_indicator_history(self, config_id: int, gebied_id: str, indicator_uuid: str) -> dict[str, Any] | None:
         """
         Haal historische data op voor een indicator in een gebied (voor time-series chart)
 
@@ -437,7 +437,7 @@ class KompasService:
         """
         # 1. Haal indicator metadata inclusief Data Lineage (Sprint 22 Track C)
         meta_query = text("""
-            SELECT 
+            SELECT
                 i.naam, i.eenheid, i.bron, i.omschrijving, i.ontologische_beschrijving,
                 i.bron_systeem_api, i.bron_tabel_referentie, i.laatste_check_datum,
                 i.begingeldigheid, i.eindgeldigheid
@@ -451,9 +451,9 @@ class KompasService:
 
         # 2. Haal data points (gebied_data) - gebruik jaar
         history_query = text("""
-            SELECT 
-                jaar, 
-                waarde, 
+            SELECT
+                jaar,
+                waarde,
                 bron,
                 updated_at
             FROM gebied_data
@@ -506,7 +506,7 @@ class KompasService:
             "history": history,
         }
 
-    def _resolve_source_url(self, bron_systeem: Optional[str], bron_ref: Optional[str]) -> Optional[str]:
+    def _resolve_source_url(self, bron_systeem: str | None, bron_ref: str | None) -> str | None:
         """Genereert de externe URL naar de officiële catalogus/dataset voor data lineage."""
         if not bron_systeem or not bron_ref:
             return None
@@ -531,7 +531,7 @@ class KompasService:
     # PRIVATE HELPER METHODS
     # ========================================================================
 
-    def _build_tree_from_rows(self, rows: List) -> Dict[str, Any]:
+    def _build_tree_from_rows(self, rows: list) -> dict[str, Any]:
         """
         Build geneste hiërarchie tree van flat database rows
 
@@ -598,11 +598,11 @@ class KompasService:
 
     def _enrich_tree_with_values(
         self,
-        tree: Dict,
-        data_map: Dict[str, Dict],
-        bulk_thresholds: Dict[str, List[float]] = None,
+        tree: dict,
+        data_map: dict[str, dict],
+        bulk_thresholds: dict[str, list[float]] = None,
         current_titel: str = None,
-    ) -> Dict:
+    ) -> dict:
         """
         Recursively voeg waarden en kleuren toe aan tree nodes
 
@@ -666,7 +666,7 @@ class KompasService:
 
         return enriched
 
-    def get_benchmark(self, config_id: int, groepen: List[Dict], gemeente_code: str = None) -> Optional[Dict[str, Any]]:
+    def get_benchmark(self, config_id: int, groepen: list[dict], gemeente_code: str = None) -> dict[str, Any] | None:
         """
         Sprint 18 Track C: Berekent per groep (woonplaats) het gemiddelde per indicator,
         plus het gemeentegemiddelde als referentie.
@@ -683,13 +683,13 @@ class KompasService:
 
         # 1. Haal alle indicator UUIDs op die in dit kompas zitten
         indicator_query = text("""
-            SELECT 
+            SELECT
                 i.uuid, i.naam, COALESCE(sr.eenheid, i.eenheid) as eenheid,
                 COALESCE(sr.score_type, i.score_type) AS score_type, sr.inverse,
                 kt.naam AS kwadrant
             FROM kompas_indicator_mapping kim
             JOIN indicatoren i ON kim.indicator_uuid = i.uuid
-            LEFT JOIN kompas_indicator_scoring_regels sr 
+            LEFT JOIN kompas_indicator_scoring_regels sr
                 ON i.uuid = sr.indicator_uuid AND sr.config_id = :config_id
             LEFT JOIN kompas_onderdelen ko ON ko.id = kim.onderdeel_id
             LEFT JOIN kompas_themas kth ON kth.id = ko.thema_id
@@ -723,7 +723,7 @@ class KompasService:
 
             # Query: gemiddelde waarde per indicator voor deze buurt-set
             avg_query = text("""
-                SELECT 
+                SELECT
                     gd.indicator_uuid,
                     AVG(gd.waarde) as gem_waarde
                 FROM gebied_data gd
@@ -732,8 +732,8 @@ class KompasService:
                   AND gd.waarde IS NOT NULL
                   AND COALESCE(gd.scenario_id, 'current') = 'current'
                   AND gd.jaar = (
-                      SELECT MAX(gd2.jaar) FROM gebied_data gd2 
-                      WHERE gd2.indicator_uuid = gd.indicator_uuid 
+                      SELECT MAX(gd2.jaar) FROM gebied_data gd2
+                      WHERE gd2.indicator_uuid = gd.indicator_uuid
                         AND gd2.gebied_id = ANY(:buurt_ids2)
                         AND COALESCE(gd2.scenario_id, 'current') = 'current'
                   )
@@ -795,14 +795,14 @@ class KompasService:
             "indicator_meta": indicator_meta,
         }
 
-    def _gebiedstype_id_voor_code(self, code: str) -> Optional[str]:
+    def _gebiedstype_id_voor_code(self, code: str) -> str | None:
         """Gebiedstype-id op code (bijv. CBS_BUURT); None als het type niet bestaat."""
         row = self.db.execute(text("SELECT id FROM gebiedstypes WHERE code = :code"), {"code": code}).fetchone()
         return str(row.id) if row else None
 
     def get_top_afwijkende_buurten(
-        self, indicator_uuid: str, limit: int = 3, gebied_id: Optional[str] = None
-    ) -> Optional[Dict[str, Any]]:
+        self, indicator_uuid: str, limit: int = 3, gebied_id: str | None = None
+    ) -> dict[str, Any] | None:
         """
         Bereken Z-scores voor alle CBS-buurten en retourneer Top N positief + Top N negatief.
 
@@ -912,9 +912,9 @@ class KompasScoringService:
         self,
         value: float,
         score_type: str = "positive_ascending",
-        thresholds: Optional[List[float]] = None,
+        thresholds: list[float] | None = None,
         inverse: bool = False,
-        context: Optional[str] = None,
+        context: str | None = None,
     ) -> str:
         """
         Bepaal kleur obv percentiel thresholds (8 bins).

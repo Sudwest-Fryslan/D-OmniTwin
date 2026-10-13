@@ -13,14 +13,15 @@ Config wordt uit log_config tabel geladen en gecached (refresh elke 60s).
 
 import asyncio
 import logging
-import queue
 import logging.handlers
+import queue
 import time
-from pathlib import Path
-from typing import Optional, Dict, Any
 from datetime import datetime
+from pathlib import Path
+from typing import Any
 
 from sqlalchemy import text
+
 from omnitwin.config import instellingen
 from omnitwin.database import SessionLocal
 
@@ -57,7 +58,7 @@ class _ConfigCache:
     """In-memory cache van log_config tabel. Refresht elke 60 seconden."""
 
     def __init__(self):
-        self._config: Dict[str, Dict[str, Any]] = {}
+        self._config: dict[str, dict[str, Any]] = {}
         self._last_refresh: float = 0
         self._refresh_interval: float = 60.0  # seconden
 
@@ -136,7 +137,7 @@ class AsyncLogQueue:
         # Flush remaining
         await self._flush_batch()
 
-    def enqueue(self, entry: Dict[str, Any]):
+    def enqueue(self, entry: dict[str, Any]):
         """Voeg een log entry toe aan de queue (fire-and-forget)."""
         if self._queue is None:
             return
@@ -185,12 +186,12 @@ class AsyncLogQueue:
                 for entry in batch:
                     db.execute(
                         text("""
-                            INSERT INTO app_logs 
-                                (timestamp, level, category, message, user_id, 
+                            INSERT INTO app_logs
+                                (timestamp, level, category, message, user_id,
                                  session_id, ip_address, endpoint, response_time_ms, extra)
-                            VALUES 
+                            VALUES
                                 (:timestamp, :level, :category, :message, :user_id,
-                                 :session_id, :ip_address, :endpoint, :response_time_ms, 
+                                 :session_id, :ip_address, :endpoint, :response_time_ms,
                                  CAST(:extra AS jsonb))
                         """),
                         {
@@ -295,12 +296,12 @@ class AppLogger:
         level: str,
         message: str,
         category: str = "SERVER",
-        user_id: Optional[str] = None,
-        session_id: Optional[str] = None,
-        ip_address: Optional[str] = None,
-        endpoint: Optional[str] = None,
-        response_time_ms: Optional[int] = None,
-        extra: Optional[Dict[str, Any]] = None,
+        user_id: str | None = None,
+        session_id: str | None = None,
+        ip_address: str | None = None,
+        endpoint: str | None = None,
+        response_time_ms: int | None = None,
+        extra: dict[str, Any] | None = None,
     ):
         """Interne log methode."""
         # 1. Check config cache

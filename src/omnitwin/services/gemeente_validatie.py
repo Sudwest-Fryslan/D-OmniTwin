@@ -18,7 +18,7 @@ Regels:
 
 import re
 import unicodedata
-from typing import Callable, Dict, Iterable, List, Optional, Tuple
+from collections.abc import Callable, Iterable
 
 from sqlalchemy import text
 
@@ -49,15 +49,15 @@ def _begint_met_plaats(gebiedsnaam: str, plaats: str) -> bool:
     return rest == "" or rest[0] in " -,("
 
 
-def gemeente_actie(code: str, naam: str) -> Dict[str, str]:
+def gemeente_actie(code: str, naam: str) -> dict[str, str]:
     return {"type": ACTIE_TYPE, "label": f"📍 Gemeente: {naam}", "gemeente_code": code}
 
 
 def valideer_gemeente_actie(
-    actie: Dict,
-    gemeenten: Dict[str, str],
-    gebieden_voor: Callable[[str], Iterable[Tuple[str, Optional[str]]]] = lambda naam: [],
-) -> Optional[Dict]:
+    actie: dict,
+    gemeenten: dict[str, str],
+    gebieden_voor: Callable[[str], Iterable[tuple[str, str | None]]] = lambda naam: [],
+) -> dict | None:
     """
     Controleer één actie van het taalmodel.
 
@@ -105,7 +105,7 @@ def valideer_gemeente_actie(
 # ── Database ─────────────────────────────────────────────────────────────────
 
 
-def laad_gemeenten(db, alleen_met_gebieden: bool = False) -> Dict[str, str]:
+def laad_gemeenten(db, alleen_met_gebieden: bool = False) -> dict[str, str]:
     """{code: naam} uit `gemeenten`; optioneel alleen gemeenten waarvoor gebieden geladen zijn."""
     sql = "SELECT code, naam FROM gemeenten"
     if alleen_met_gebieden:
@@ -114,7 +114,7 @@ def laad_gemeenten(db, alleen_met_gebieden: bool = False) -> Dict[str, str]:
     return {r[0]: r[1] for r in db.execute(text(sql)).fetchall()}
 
 
-def gebieden_met_naam(db, plaats: str, limit: int = 50) -> List[Tuple[str, Optional[str]]]:
+def gebieden_met_naam(db, plaats: str, limit: int = 50) -> list[tuple[str, str | None]]:
     """Gebieden waarvan de naam met `plaats` begint (fijnere check in _begint_met_plaats)."""
     patroon = plaats.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_") + "%"
     rows = db.execute(
@@ -124,7 +124,7 @@ def gebieden_met_naam(db, plaats: str, limit: int = 50) -> List[Tuple[str, Optio
     return [(r[0], r[1]) for r in rows]
 
 
-def valideer_gemeente_acties(acties: Iterable[Dict], db) -> List[Dict]:
+def valideer_gemeente_acties(acties: Iterable[dict], db) -> list[dict]:
     """Valideer alle SELECTEER_GEMEENTE-acties tegen de database; ongeldige vervallen."""
     acties = list(acties or [])
     if not any(isinstance(a, dict) and a.get("type") == ACTIE_TYPE for a in acties):

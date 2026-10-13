@@ -12,8 +12,6 @@ Subjectieve stappen (begrijpelijkheid van uitleg) staan als skip.
 import re
 
 import pytest
-from playwright.sync_api import expect
-
 from e2e_helpers import (
     KOUDUM,
     WORKUM,
@@ -26,6 +24,7 @@ from e2e_helpers import (
     wacht_op_selectie,
     wacht_op_vergelijkingsgrafiek,
 )
+from playwright.sync_api import expect
 
 JAARTAL = re.compile(r"^(19|20)\d{2}$")
 

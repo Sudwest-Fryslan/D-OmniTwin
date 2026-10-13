@@ -4,11 +4,12 @@ Import CBS Data
 Orchestrates the fetching and importing of CBS data based on configuration mapping.
 """
 
-import sys
-import os
-import json
 import glob
+import json
+import os
+import sys
 from datetime import datetime
+
 import psycopg2
 from dotenv import load_dotenv
 
@@ -337,11 +338,11 @@ def process_dataset(mapping, dataset_id, output_dir, conn, gemeente_code=None, e
 
                 cur.execute(
                     """
-                    INSERT INTO gebied_data 
+                    INSERT INTO gebied_data
                         (gebied_id, indicator_uuid, waarde, jaar, bron, scenario_id)
                     VALUES (%s, %s, %s, %s, %s, 'current')
                     ON CONFLICT (gebied_id, indicator_uuid, jaar, scenario_id)
-                    DO UPDATE SET 
+                    DO UPDATE SET
                         waarde = EXCLUDED.waarde,
                         updated_at = CURRENT_TIMESTAMP
                 """,
@@ -434,7 +435,7 @@ def main():
                 print("🔍 Detecting municipalities with NO data...")
                 with conn.cursor() as cur:
                     cur.execute("""
-                        SELECT g.code 
+                        SELECT g.code
                         FROM gemeenten g
                         LEFT JOIN gebieden gb ON g.code = gb.gemeente_code
                         LEFT JOIN gebied_data gd ON gb.id = gd.gebied_id

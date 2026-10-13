@@ -113,7 +113,7 @@ def test_percentiel_volgt_de_instelling():
 
 def test_indicatorpaneel_gebruikt_de_instelling():
     tekst = (SRC / "services" / "indicatorpaneel_service.py").read_text(encoding="utf-8")
-    assert "drempel: Optional[int] = None" in tekst and "ka.drempel(self.db)" in tekst
+    assert "drempel: int | None = None" in tekst and "ka.drempel(self.db)" in tekst
 
 
 # ── Chat-datavraag ───────────────────────────────────────────────────────────

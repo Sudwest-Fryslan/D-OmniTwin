@@ -19,8 +19,6 @@ from pathlib import Path
 import pytest
 
 try:
-    from playwright.sync_api import expect, sync_playwright
-
     from e2e_helpers import (
         EXPECT_TIMEOUT_MS,
         PAGINA_TIMEOUT_MS,
@@ -29,6 +27,7 @@ try:
         traagheidsmetingen,
         zonder_basiskaarttegels,
     )
+    from playwright.sync_api import expect, sync_playwright
 
     # Software-WebGL in de container is traag, op CI-runners zonder GPU nog trager:
     # ruimere standaardtimeout voor expect(), instelbaar via E2E_EXPECT_TIMEOUT_MS; per pagina

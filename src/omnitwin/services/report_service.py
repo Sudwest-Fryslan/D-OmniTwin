@@ -6,15 +6,15 @@ Berekent Z-scores, gemiddelden en filtert de belangrijkste uitschieters
 om een strakke JSON payload voor de LLM (Fase 2) of frontend te genereren.
 """
 
-from sqlalchemy.orm import Session
-from sqlalchemy import text
-from typing import Dict, Any, List, Optional
 import json
+from typing import Any
+
+from sqlalchemy import text
+from sqlalchemy.orm import Session
 
 from omnitwin import polariteit
 from omnitwin.fouten import GebruikersFout
 from omnitwin.services.organisatie import eigen_gemeente_code, lees_organisatie
-
 from omnitwin.services.zscore_referentie import (
     MIN_N_STANDAARD,
     SQL_ZSCORE_GEBIEDEN,
@@ -24,7 +24,7 @@ from omnitwin.services.zscore_referentie import (
 )
 
 
-def provincie_referentie_label(provincie: Optional[str], aantal: int) -> str:
+def provincie_referentie_label(provincie: str | None, aantal: int) -> str:
     """Label van de referentie 'provincie' (#324), met het aantal gebieden uit de data."""
     if provincie:
         return f"⌀ Provincie {provincie} ({aantal} gebieden)"
@@ -61,7 +61,7 @@ class ReportDataService:
         )
         return provincie, provincie_referentie_label(provincie, int(aantal))
 
-    def generate_report_payload(self, gebied_id: str) -> Dict[str, Any]:
+    def generate_report_payload(self, gebied_id: str) -> dict[str, Any]:
         """
         Berekent Z-scores en genereert een geaggregeerde payload voor een gebied.
         Filtert op de meest significante afwijkingen.
@@ -221,7 +221,7 @@ class ReportDataService:
         mode: str,  # 'gebieden' | 'gemeente' | 'fryslan'
         gebieden_b: list = None,  # max 5, alleen bij mode='gebieden'
         referentie_gemeente: str = None,  # alleen bij mode='gemeente'
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Vergelijkt Gebied A met een referentie (specifieke gebieden, gemeente-gemiddelde of Fryslân-gemiddelde).
         Berekent de delta per indicator.
@@ -371,7 +371,7 @@ class ReportDataService:
             "totaal_indicatoren": len(vergelijking),
         }
 
-    def generate_executive_payload(self, gebied_id: str) -> Dict[str, Any]:
+    def generate_executive_payload(self, gebied_id: str) -> dict[str, Any]:
         """
         Compacte executive samenvatting: top 3 kansen en top 3 risico's.
         Hergebruikt de bestaande generate_report_payload method.
@@ -429,12 +429,12 @@ class ReportDataService:
 
     def generate_multi_gebied_payload(
         self,
-        gebied_ids: List[str],
+        gebied_ids: list[str],
         referentie: str = "gemeente",
-        gemeente_code: Optional[str] = None,
+        gemeente_code: str | None = None,
         deelgebied_naam: str = None,
         thema: str = None,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Multi-Gebiedsdossier: Berekent per buurt de top 3 indicatoren met de sterkste
         z-score afwijking en aggregeert per thema.
@@ -479,7 +479,7 @@ class ReportDataService:
         provincie, provincie_label = (
             (None, None) if referentie == "gemeente" else self._provincie_referentie(gebiedstype_id)
         )
-        params: Dict[str, Any] = referentie_params(
+        params: dict[str, Any] = referentie_params(
             gebiedstype_id,
             gemeente_code if referentie == "gemeente" else None,
             gebied_ids=gefilterde_ids,
@@ -548,7 +548,7 @@ class ReportDataService:
         #    Groepeer per buurt_id, rn=1 bepaalt de hoofdrij + kleur
         from collections import OrderedDict
 
-        buurt_groups: Dict[str, Dict[str, Any]] = OrderedDict()
+        buurt_groups: dict[str, dict[str, Any]] = OrderedDict()
 
         for row in rows:
             z = float(row["z_score"])
@@ -670,7 +670,7 @@ class ReportDataService:
             "bronverantwoording": bronverantwoording,
         }
 
-    def get_bronverantwoording_for_indicators(self, indicator_uuids: List[str]) -> List[Dict[str, Any]]:
+    def get_bronverantwoording_for_indicators(self, indicator_uuids: list[str]) -> list[dict[str, Any]]:
         """
         Genereert een gestructureerde lijst met bronverantwoording en peildata.
         """
@@ -678,7 +678,7 @@ class ReportDataService:
             return []
 
         query = text("""
-            SELECT 
+            SELECT
                 uuid, naam, bron, bron_systeem_api, bron_tabel_referentie,
                 begingeldigheid, eindgeldigheid, laatste_check_datum
             FROM indicatoren
@@ -731,11 +731,11 @@ class ReportDataService:
 
     def generate_multi_gebied_geojson(
         self,
-        gebied_ids: List[str],
+        gebied_ids: list[str],
         referentie: str = "gemeente",
-        gemeente_code: Optional[str] = None,
+        gemeente_code: str | None = None,
         thema: str = None,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Genereert een GeoJSON FeatureCollection met per buurt:
         - Geometrie (WGS84)
@@ -793,14 +793,14 @@ class ReportDataService:
 
     def generate_thema_analyse_payload(
         self,
-        gebied_ids: List[str],
+        gebied_ids: list[str],
         referentie: str = "gemeente",
-        gemeente_code: Optional[str] = None,
+        gemeente_code: str | None = None,
         deelgebied_naam: str = None,
         categorie: str = None,
         thema_naam: str = None,
         onderdeel_naam: str = None,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Thema-Analyse: Berekent alle indicatoren binnen de hiërarchie-selectie
         en groepeert deze per buurt.
@@ -838,7 +838,7 @@ class ReportDataService:
         provincie, provincie_label = (
             (None, None) if referentie == "gemeente" else self._provincie_referentie(gebiedstype_id)
         )
-        params: Dict[str, Any] = referentie_params(
+        params: dict[str, Any] = referentie_params(
             gebiedstype_id,
             gemeente_code if referentie == "gemeente" else None,
             gebied_ids=gefilterde_ids,
@@ -898,7 +898,7 @@ class ReportDataService:
                 SELECT * FROM alle_zscores
                 {thema_filter_clause}
             )
-            SELECT * FROM gefilterde_zscores 
+            SELECT * FROM gefilterde_zscores
             ORDER BY gebied_id, ABS(z_score) DESC
         """)
 
@@ -908,7 +908,7 @@ class ReportDataService:
         # 4. Groepeer per buurt
         from collections import OrderedDict
 
-        buurt_groups: Dict[str, Dict[str, Any]] = OrderedDict()
+        buurt_groups: dict[str, dict[str, Any]] = OrderedDict()
 
         for row in rows:
             z = float(row["z_score"])
@@ -985,13 +985,13 @@ class ReportDataService:
 
     def generate_thema_analyse_geojson(
         self,
-        gebied_ids: List[str],
+        gebied_ids: list[str],
         referentie: str = "gemeente",
-        gemeente_code: Optional[str] = None,
+        gemeente_code: str | None = None,
         categorie: str = None,
         thema_naam: str = None,
         onderdeel_naam: str = None,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Genereert een GeoJSON FeatureCollection voor de Thema-Analyse.
         Geometrie bevat alle indicatoren. Kleuring op basis van max z-score of gem_zscore.
@@ -1057,11 +1057,11 @@ class ReportDataService:
 
     def generate_deelgebied_payload(
         self,
-        gebied_ids: List[str],
+        gebied_ids: list[str],
         referentie: str = "gemeente",
-        gemeente_code: Optional[str] = None,
-        deelgebied_naam: Optional[str] = None,
-    ) -> Dict[str, Any]:
+        gemeente_code: str | None = None,
+        deelgebied_naam: str | None = None,
+    ) -> dict[str, Any]:
         """
         Sjabloon F: Woonplaats- & Deelgebiedsanalyse.
         Berekent een gewogen stads-/deelgebiedsgemiddelde op basis van inwoneraantallen,
@@ -1118,7 +1118,7 @@ class ReportDataService:
             provincie, referentie_label = self._provincie_referentie(gebiedstype_id)
 
         actieve_ids = [str(b["id"]) for b in actieve_buurten]
-        params: Dict[str, Any] = referentie_params(
+        params: dict[str, Any] = referentie_params(
             gebiedstype_id,
             gemeente_code if referentie == "gemeente" else None,
             gebied_ids=actieve_ids,
@@ -1148,9 +1148,9 @@ class ReportDataService:
             if r._mapping["inwoners"] is not None
         }
 
-        inwoners_per_buurt: Dict[str, Dict[str, Any]] = {}
-        fallback_buurten: List[Dict[str, str]] = []
-        nul_inwoners_buurten: List[Dict[str, str]] = []
+        inwoners_per_buurt: dict[str, dict[str, Any]] = {}
+        fallback_buurten: list[dict[str, str]] = []
+        nul_inwoners_buurten: list[dict[str, str]] = []
         totaal_inwoners = 0.0
 
         for b in actieve_buurten:
@@ -1439,10 +1439,10 @@ class ReportDataService:
 
     def generate_deelgebied_svg_kaart(
         self,
-        gebied_ids: List[str],
+        gebied_ids: list[str],
         referentie: str = "gemeente",
-        gemeente_code: Optional[str] = None,
-        deelgebied_naam: Optional[str] = None,
+        gemeente_code: str | None = None,
+        deelgebied_naam: str | None = None,
     ) -> str:
         """
         Genereert een inline SVG choropleet van de geselecteerde buurten,
@@ -1458,7 +1458,7 @@ class ReportDataService:
         )
 
         # 2. Bepaal max absolute Z-score per buurt (zelfde metric als Multi-Gebiedsdossier)
-        buurt_zscores: Dict[str, List[float]] = {}
+        buurt_zscores: dict[str, list[float]] = {}
         for kw in payload.get("kwadranten", []):
             for thema in kw.get("themas", []):
                 for tab_key in ("top10_aandachtspunten", "top10_kansen"):
@@ -1469,7 +1469,7 @@ class ReportDataService:
                                 buurt_zscores[bid] = []
                             buurt_zscores[bid].append(abs(bd["buurt_z_score"]))
 
-        buurt_max_z: Dict[str, float] = {}
+        buurt_max_z: dict[str, float] = {}
         for bid, scores in buurt_zscores.items():
             buurt_max_z[bid] = max(scores) if scores else 0.0
 
@@ -1581,7 +1581,7 @@ class ReportDataService:
 
         return svg
 
-    def _extract_polygon_coords(self, geojson: dict) -> List[List[float]]:
+    def _extract_polygon_coords(self, geojson: dict) -> list[list[float]]:
         """Extraheert alle [lon, lat] coördinaten uit een GeoJSON Polygon/MultiPolygon."""
         coords = []
         geom_type = geojson.get("type", "")
@@ -1594,7 +1594,7 @@ class ReportDataService:
                     coords.extend(ring)
         return coords
 
-    def _geom_to_svg_rings(self, geojson: dict, lon_to_x, lat_to_y) -> List[List[tuple]]:
+    def _geom_to_svg_rings(self, geojson: dict, lon_to_x, lat_to_y) -> list[list[tuple]]:
         """Converteert GeoJSON Polygon/MultiPolygon naar lijsten van (x, y) punten voor SVG."""
         rings = []
         geom_type = geojson.get("type", "")

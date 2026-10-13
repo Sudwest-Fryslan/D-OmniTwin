@@ -8,13 +8,14 @@ Author: Based on A. Wolters scripts
 Last modified: 19-01-2026
 """
 
-import requests
-import pandas as pd
+import argparse
 import json
 import time
-import argparse
 from datetime import datetime
-from typing import Dict, List, Any, Optional
+from typing import Any
+
+import pandas as pd
+import requests
 from tqdm import tqdm
 
 
@@ -38,7 +39,7 @@ class CBSDataFetcher:
         self.timeout = timeout
         self.session = requests.Session()
 
-    def fetch_table_info(self, dataset_id: str) -> Dict[str, Any]:
+    def fetch_table_info(self, dataset_id: str) -> dict[str, Any]:
         """
         Haal TableInfos op voor dataset metadata
 
@@ -64,7 +65,7 @@ class CBSDataFetcher:
             print(f"⚠️  Waarschuwing: Kon TableInfos niet ophalen: {e}")
             return {}
 
-    def fetch_data_properties(self, dataset_id: str) -> List[Dict[str, Any]]:
+    def fetch_data_properties(self, dataset_id: str) -> list[dict[str, Any]]:
         """
         Haal DataProperties op voor metadata/beschrijvingen
 
@@ -87,7 +88,7 @@ class CBSDataFetcher:
             print(f"⚠️  Waarschuwing: Kon DataProperties niet ophalen: {e}")
             return []
 
-    def get_available_tables(self, dataset_id: str) -> List[str]:
+    def get_available_tables(self, dataset_id: str) -> list[str]:
         """
         Haal lijst van beschikbare tabellen op
 
@@ -124,9 +125,9 @@ class CBSDataFetcher:
         self,
         dataset_id: str,
         table_name: str,
-        gemeente_filter: Optional[str] = None,
-        available_columns: List[str] = None,
-    ) -> List[Dict[str, Any]]:
+        gemeente_filter: str | None = None,
+        available_columns: list[str] = None,
+    ) -> list[dict[str, Any]]:
         """
         Haal data op van specifieke tabel (met paginering)
 
@@ -206,7 +207,7 @@ class CBSDataFetcher:
         print(f"  ✅ {len(all_data)} rijen opgehaald")
         return all_data
 
-    def create_metadata_json(self, dataset_id: str, table_info: Dict, data_properties: List[Dict]) -> Dict[str, Any]:
+    def create_metadata_json(self, dataset_id: str, table_info: dict, data_properties: list[dict]) -> dict[str, Any]:
         """
         Creëer gestructureerd metadata JSON object
 
@@ -254,8 +255,8 @@ class CBSDataFetcher:
         return metadata
 
     def create_data_json(
-        self, dataset_id: str, table_name: str, data_records: List[Dict], filters_applied: Dict
-    ) -> Dict[str, Any]:
+        self, dataset_id: str, table_name: str, data_records: list[dict], filters_applied: dict
+    ) -> dict[str, Any]:
         """
         Creëer gestructureerd data JSON object
 
@@ -283,7 +284,7 @@ class CBSDataFetcher:
 
         return data_json
 
-    def _calculate_completeness(self, records: List[Dict]) -> float:
+    def _calculate_completeness(self, records: list[dict]) -> float:
         """
         Bereken data completeness percentage
 
@@ -310,7 +311,7 @@ class CBSDataFetcher:
 
         return round((non_null_values / total_values) * 100, 2)
 
-    def save_json(self, data: Dict[str, Any], filepath: str, pretty: bool = True):
+    def save_json(self, data: dict[str, Any], filepath: str, pretty: bool = True):
         """
         Sla JSON data op naar bestand
 
@@ -327,7 +328,7 @@ class CBSDataFetcher:
 
         print(f"  💾 Opgeslagen: {filepath}")
 
-    def fetch_and_save(self, dataset_id: str, output_dir: str = "./output", gemeente_filter: Optional[str] = None):
+    def fetch_and_save(self, dataset_id: str, output_dir: str = "./output", gemeente_filter: str | None = None):
         """
         Hoofd workflow: haal data en metadata op en sla op als JSON
 
@@ -403,13 +404,13 @@ def main():
 Voorbeelden:
   # Basis gebruik
   python cbs_data_fetcher.py -ds 83739NED
-  
+
   # Met gemeente filter (Súdwest-Fryslân)
   python cbs_data_fetcher.py -ds 83739NED -gm 1900
-  
+
   # Aangepaste output directory
   python cbs_data_fetcher.py -ds 84417NED -o ./mijn_output
-  
+
   # Politie data (ander endpoint)
   python cbs_data_fetcher.py -ds 47026NED -e dataderden.cbs.nl
         """,

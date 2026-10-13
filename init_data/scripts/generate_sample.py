@@ -218,7 +218,7 @@ def export_buurten(conn):
     target_file = BRONDATA_DIR / "sample_buurten.geojson"
 
     q = """
-    SELECT 
+    SELECT
         id, naam, gemeente_code, gebiedstype_id, provincienaam,
         ST_AsGeoJSON(ST_Transform(geom, 4326)) as geojson_geom
     FROM gebieden
@@ -266,7 +266,7 @@ def export_indicatoren(conn):
     target_file = BRONDATA_DIR / "sample_indicatoren.csv"
 
     q = """
-    SELECT 
+    SELECT
         gd.gebied_id,
         gd.indicator_uuid::text,
         i.naam as indicator_naam,

@@ -145,9 +145,10 @@ def _lezer():
         os.environ.get("KEYCLOAK_ADMIN_PASSWORD") or os.environ.get("KEYCLOAK_ADMIN_CLIENT_SECRET")
     ):
         pytest.skip("geen lezer: geen demo-omgeving en geen testaccounts (OMNITWIN_TESTACCOUNTS=1)")
-    from omnitwin import testaccounts as ta
     import tempfile
     from pathlib import Path
+
+    from omnitwin import testaccounts as ta
 
     beheer = ta.KeycloakBeheer(kc=f"{BASE_URL}/auth")
     pad = Path(tempfile.mkdtemp()) / "accounts.json"
