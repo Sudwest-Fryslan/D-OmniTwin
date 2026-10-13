@@ -1,14 +1,14 @@
 {
   "usecase": "uitrol-kubernetes",
-  "tijdstip": "2026-10-13T17:19:15Z",
-  "versie": "0.7.0",
-  "commit": "ed6d090",
-  "image_tag": "rooktest-rel070",
+  "tijdstip": "2026-10-13T19:22:16Z",
+  "versie": "0.6.0",
+  "commit": "792993e",
+  "image_tag": "rooktest-rel060",
   "manifests": "basis",
   "zelf_gebouwd": true,
   "kubernetes": "v1.32.2",
   "stappen": ["manifests toepassen", "db-init", "deployments klaar", "endpoints", "upgrade", "endpoints na upgrade"],
   "controles": [{"pad": "/health", "http": 200, "verwacht": 200},{"pad": "/", "http": 200, "verwacht": 200},{"pad": "/admin", "http": 200, "verwacht": 200},{"pad": "/static/js/app.js", "http": 200, "verwacht": 200},{"pad": "/api/geo/collections", "http": 200, "verwacht": 200},{"pad": "/api/data/", "http": 200, "verwacht": 200},{"pad": "/health", "http": 200, "verwacht": 200},{"pad": "/", "http": 200, "verwacht": 200},{"pad": "/admin", "http": 200, "verwacht": 200}],
-  "duur_seconden": 229,
+  "duur_seconden": 170,
   "resultaat": "geslaagd"
 }
