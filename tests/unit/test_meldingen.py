@@ -11,7 +11,7 @@ from pydantic import ValidationError
 
 from omnitwin.fouten import GebruikersFout
 from omnitwin.grenzen import Limiet, beperk_meldingen
-from omnitwin.routers.meldingen import MeldingInvoer, MeldingWijziging, meld
+from omnitwin.routers.meldingen import MeldingInvoer, meld
 from omnitwin.services import meldingen as meldingen_service
 
 pytestmark = pytest.mark.unit

@@ -79,7 +79,7 @@ def load_pc6_buurt_mapping():
     """Load PC6 to Buurt mapping from JSON"""
     PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
     mapping_path = os.path.join(PROJECT_ROOT, "data", "cbs_pc6_huisnr_buurt", "pc6_buurt_mapping.json")
-    with open(mapping_path, "r") as f:
+    with open(mapping_path) as f:
         return json.load(f)
 
 

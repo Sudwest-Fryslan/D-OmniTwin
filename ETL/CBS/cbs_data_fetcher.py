@@ -14,7 +14,6 @@ import time
 from datetime import datetime
 from typing import Any
 
-import pandas as pd
 import requests
 from tqdm import tqdm
 

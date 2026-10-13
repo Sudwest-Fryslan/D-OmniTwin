@@ -8,7 +8,6 @@ import glob
 import json
 import os
 import sys
-from datetime import datetime
 
 import psycopg2
 from dotenv import load_dotenv
@@ -59,7 +58,7 @@ def load_json_file(filepath):
     if not os.path.exists(filepath):
         print(f"⚠️  File not found: {filepath}")
         return None
-    with open(filepath, "r", encoding="utf-8") as f:
+    with open(filepath, encoding="utf-8") as f:
         return json.load(f)
 
 
@@ -192,7 +191,7 @@ def process_dataset(mapping, dataset_id, output_dir, conn, gemeente_code=None, e
     data_file = json_files[0]  # Take most recent
     print(f"   Reading {os.path.basename(data_file)}...")
 
-    with open(data_file, "r", encoding="utf-8") as f:
+    with open(data_file, encoding="utf-8") as f:
         data_json = json.load(f)
 
     records = data_json.get("data", {}).get("records", [])
@@ -204,7 +203,7 @@ def process_dataset(mapping, dataset_id, output_dir, conn, gemeente_code=None, e
     title_to_key = {}
 
     if os.path.exists(metadata_file):
-        with open(metadata_file, "r", encoding="utf-8") as f:
+        with open(metadata_file, encoding="utf-8") as f:
             meta_json = json.load(f)
             props = meta_json.get("metadata", {}).get("properties", [])
             for p in props:

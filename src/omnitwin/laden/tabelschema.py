@@ -40,7 +40,7 @@ def _datumtijd(w: str) -> dt.datetime:
     if len(t) == 16 and t[10] in " T":  # JJJJ-MM-DD HH:MM (SWF-monitor)
         t += ":00"
     d = dt.datetime.fromisoformat(t.replace(" ", "T", 1))
-    return d.astimezone(dt.timezone.utc).replace(tzinfo=None) if d.tzinfo else d
+    return d.astimezone(dt.UTC).replace(tzinfo=None) if d.tzinfo else d
 
 
 def converteer(waarde, veld: dict):

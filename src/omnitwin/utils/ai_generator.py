@@ -1,7 +1,5 @@
 import re
 
-from sqlalchemy.orm import Session
-
 from omnitwin import ai_vrijgave
 from omnitwin.services.llm_service import LLMService
 

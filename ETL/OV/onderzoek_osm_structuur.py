@@ -4,7 +4,6 @@ Doel: Strategiebepaling voor deduplicatie en OV-type classificatie
 Uitvoering: python ETL/OV/onderzoek_osm_structuur.py
 """
 
-import json
 import time
 from collections import Counter, defaultdict
 
@@ -201,7 +200,7 @@ print("\n--- highway tag waarden ---")
 for val, count in highway_values.most_common():
     print(f"  '{val}': {count}")
 
-print(f"\n--- Coverage ---")
+print("\n--- Coverage ---")
 print(f"  Heeft naam: {heeft_naam} / {len(fr_nodes)} ({100 * heeft_naam // len(fr_nodes) if fr_nodes else 0}%)")
 print(f"  Heeft uic_ref: {heeft_uic} / {len(fr_nodes)}")
 print(f"  Heeft operator: {heeft_operator} / {len(fr_nodes)}")

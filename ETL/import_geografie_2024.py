@@ -25,9 +25,6 @@ import time
 
 import geopandas as gpd
 import psycopg2
-from psycopg2.extras import execute_values
-from shapely import wkb
-from shapely.ops import unary_union
 
 # ── Configuratie ───────────────────────────────────────────────
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -362,7 +359,7 @@ def import_buurten():
     conn.close()
 
     t_total = time.time() - t0
-    print(f"\n  📊 Resultaat:")
+    print("\n  📊 Resultaat:")
     print(f"     🏘️  Buurten:    {inserted_bu} ingevoegd/bijgewerkt")
     print(f"     🏗️  Wijken:     {inserted_wk} ingevoegd/bijgewerkt")
     print(f"     🏛️  Gemeenten:  {inserted_gm} ingevoegd/bijgewerkt")

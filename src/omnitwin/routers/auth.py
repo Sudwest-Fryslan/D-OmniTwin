@@ -256,7 +256,7 @@ def _inloggen(db: Session, username: str, password: str):
     # Wachtwoord is goed: verlopen sessies opruimen en een nieuwe sessie maken
     ruim_verlopen_sessies_op(db)
     token = create_session_token()
-    expires = datetime.datetime.now(datetime.timezone.utc) + SESSIE_DUUR
+    expires = datetime.datetime.now(datetime.UTC) + SESSIE_DUUR
 
     # Alleen de hash in de database; het ruwe token gaat in het cookie
     db.execute(

@@ -566,7 +566,7 @@ def exporteer(tabellen: dict, uit: Path, mapping: dict[str, str], dump_datum: st
     _schrijf_json(uit / "gebruikersvoorkeuren.json", vk)
     status = Counter(i["status"] for i in defs["indicatoren"])
     samenvatting = {
-        "gemaakt_op": dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds"),
+        "gemaakt_op": dt.datetime.now(dt.UTC).isoformat(timespec="seconds"),
         "bron": "database-dump van de huidige gebiedsmonitor SWF",
         "dump_datum": dump_datum,
         "gemaakt_met": "scripts/beheer/swf_monitor_dump.py exporteer",

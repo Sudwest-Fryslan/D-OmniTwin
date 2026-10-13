@@ -66,7 +66,7 @@ def get_table_stats(conn):
 
             # Kolom info
             cur.execute(
-                f"""
+                """
                 SELECT column_name, data_type, is_nullable
                 FROM information_schema.columns
                 WHERE table_name = %s
@@ -566,7 +566,7 @@ ORDER BY gt.naam, igr.display_volgorde;""")
     total_metingen = sum(s["count"] for t, s in stats.items() if t == "gebied_data")
     total_indicatoren = sum(s["count"] for t, s in stats.items() if t == "indicatoren")
 
-    lines.append(f"### Samenvatting")
+    lines.append("### Samenvatting")
     lines.append(f"- **Totaal gebieden:** {total_gebieden:,}")
     lines.append(f"- **Totaal indicatoren:** {total_indicatoren:,}")
     lines.append(f"- **Totaal metingen:** {total_metingen:,}")
@@ -608,7 +608,7 @@ ORDER BY gt.naam, igr.display_volgorde;""")
 
     lines.append("---")
     lines.append("")
-    lines.append(f"*Rapport gegenereerd door `validate_gebiedsmonitor.py`*")
+    lines.append("*Rapport gegenereerd door `validate_gebiedsmonitor.py`*")
 
     # Write to file
     with open(output_path, "w", encoding="utf-8") as f:

@@ -19,7 +19,6 @@ Auteur: D-OmniTwin Team
 Laatste update: 23-01-2026
 """
 
-import os
 import sys
 from datetime import datetime
 from pathlib import Path
@@ -345,7 +344,7 @@ def generate_report(configs: list, kompas_ind: dict, dropdown_ind: dict, data_in
     else:
         report += "\n✅ Alle indicatoren met data zijn in kompas opgenomen.\n"
 
-    report += f"""
+    report += """
 ---
 
 ## 🔧 Aanbevelingen
@@ -376,7 +375,7 @@ def generate_report(configs: list, kompas_ind: dict, dropdown_ind: dict, data_in
     for rec in recommendations:
         report += f"{rec}\n"
 
-    report += f"""
+    report += """
 ---
 
 *Rapport gegenereerd door `validate_kompas_uuid_mapping.py`*
@@ -391,7 +390,7 @@ def print_console_summary(analysis: dict, kompas_ind: dict):
     print("🔍 KOMPAS UUID MAPPING VALIDATIE")
     print("=" * 60)
 
-    print(f"\n📊 Totalen:")
+    print("\n📊 Totalen:")
     print(f"   • Kompas indicatoren:  {analysis['total_kompas']}")
     print(f"   • Dropdown indicatoren: {analysis['total_dropdown']}")
     print(f"   • Met data:            {analysis['total_with_data']}")

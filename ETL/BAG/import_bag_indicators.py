@@ -26,7 +26,6 @@ from datetime import datetime
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import geopandas as gpd
 import numpy as np
-import pandas as pd
 import psycopg2
 from dotenv import load_dotenv
 
@@ -183,7 +182,7 @@ def get_conn():
 def load_pc6_mapping():
     """Laad PC6 → Buurtcode mapping"""
     print(f"📂 Laden PC6 mapping: {PC6_MAPPING_PATH}")
-    with open(PC6_MAPPING_PATH, "r") as f:
+    with open(PC6_MAPPING_PATH) as f:
         mapping = json.load(f)
     print(f"   ✅ {len(mapping)} PC6 codes geladen")
     return mapping
@@ -209,7 +208,7 @@ def load_buurt_to_gebied(conn):
 def load_bag_vbo():
     """Laad BAG Verblijfsobjecten (zonder geometrie voor snelheid)"""
     print(f"\n📂 Laden BAG VBO: {BAG_VBO_PATH}")
-    print(f"   (dit kan 1-2 minuten duren voor 380k records...)")
+    print("   (dit kan 1-2 minuten duren voor 380k records...)")
 
     # We hoeven geen geometrie te laden - we matchen via postcode
     vbo = gpd.read_file(BAG_VBO_PATH, ignore_geometry=True)
@@ -238,7 +237,7 @@ def load_bag_vbo():
 
 def match_vbo_to_buurt(vbo, pc6_mapping, buurt_to_gebied):
     """Match VBO postcode → Buurtcode → Gebied_id (vectorized voor snelheid)"""
-    print(f"\n🔗 Matching VBO's aan buurten via postcode (vectorized)...")
+    print("\n🔗 Matching VBO's aan buurten via postcode (vectorized)...")
 
     # Stap 1: PC6 → Buurtcode
     vbo["buurtcode"] = vbo["postcode"].map(pc6_mapping)
@@ -259,7 +258,7 @@ def match_vbo_to_buurt(vbo, pc6_mapping, buurt_to_gebied):
 
 def aggregate_per_buurt(vbo_matched):
     """Bereken indicatoren per buurt, inclusief nieuwe Kompas indicatoren"""
-    print(f"\n📊 Aggregeren per buurt...")
+    print("\n📊 Aggregeren per buurt...")
 
     results = {}
 
@@ -415,7 +414,7 @@ def ensure_indicators(conn):
 
 def import_to_database(conn, buurt_aggregates, indicator_uuids):
     """Import aggregaties naar gebied_data tabel"""
-    print(f"\n💾 Importeren naar database...")
+    print("\n💾 Importeren naar database...")
     cur = conn.cursor()
 
     inserted = 0
@@ -458,7 +457,7 @@ def print_summary(conn, indicator_uuids):
     """Print samenvatting van geïmporteerde data"""
     cur = conn.cursor()
     print(f"\n{'=' * 60}")
-    print(f"IMPORT SAMENVATTING")
+    print("IMPORT SAMENVATTING")
     print(f"{'=' * 60}")
 
     # Groepeer op category voor netter overzicht
@@ -489,37 +488,37 @@ def print_summary(conn, indicator_uuids):
 def main():
     start_time = datetime.now()
     print(f"{'=' * 60}")
-    print(f"BAG FRYSLÂN IMPORT - Huishoudens & Bouwjaar Indicatoren")
+    print("BAG FRYSLÂN IMPORT - Huishoudens & Bouwjaar Indicatoren")
     print(f"Gestart: {start_time.strftime('%Y-%m-%d %H:%M:%S')}")
     print(f"{'=' * 60}")
 
     # 1. Database connectie
-    print(f"\n1️⃣  Database connectie...")
+    print("\n1️⃣  Database connectie...")
     conn = get_conn()
     buurt_to_gebied = load_buurt_to_gebied(conn)
 
     # 2. PC6 mapping laden
-    print(f"\n2️⃣  PC6 mapping laden...")
+    print("\n2️⃣  PC6 mapping laden...")
     pc6_mapping = load_pc6_mapping()
 
     # 3. BAG VBO laden
-    print(f"\n3️⃣  BAG Verblijfsobjecten laden...")
+    print("\n3️⃣  BAG Verblijfsobjecten laden...")
     vbo = load_bag_vbo()
 
     # 4. Match via postcode → buurt
-    print(f"\n4️⃣  Matching VBO → Buurt...")
+    print("\n4️⃣  Matching VBO → Buurt...")
     vbo_matched = match_vbo_to_buurt(vbo, pc6_mapping, buurt_to_gebied)
 
     # 5. Aggregeren per buurt
-    print(f"\n5️⃣  Aggregeren per buurt...")
+    print("\n5️⃣  Aggregeren per buurt...")
     buurt_aggregates = aggregate_per_buurt(vbo_matched)
 
     # 6. Indicatoren aanmaken/ophalen
-    print(f"\n6️⃣  Indicatoren configuratie...")
+    print("\n6️⃣  Indicatoren configuratie...")
     indicator_uuids = ensure_indicators(conn)
 
     # 7. Import naar database
-    print(f"\n7️⃣  Import naar database...")
+    print("\n7️⃣  Import naar database...")
     count = import_to_database(conn, buurt_aggregates, indicator_uuids)
 
     # 8. Samenvatting

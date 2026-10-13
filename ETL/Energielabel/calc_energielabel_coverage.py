@@ -128,7 +128,7 @@ def main():
     stats = cur.fetchone()
 
     print(f"\n{'=' * 50}")
-    print(f"✅ Energielabel Coverage berekend:")
+    print("✅ Energielabel Coverage berekend:")
     print(f"   Buurten: {stats[0]}")
     print(f"   Gemiddelde: {stats[1]}%")
     print(f"   Bereik: {stats[2]}% - {stats[3]}%")
@@ -144,7 +144,7 @@ def main():
     """,
         (coverage_uuid,),
     )
-    print(f"\n   Top 5 hoogste coverage:")
+    print("\n   Top 5 hoogste coverage:")
     for r in cur.fetchall():
         print(f"     {r[0]}: {r[1]}%")
 
@@ -157,7 +157,7 @@ def main():
     """,
         (coverage_uuid,),
     )
-    print(f"\n   Top 5 laagste coverage (>0%):")
+    print("\n   Top 5 laagste coverage (>0%):")
     for r in cur.fetchall():
         print(f"     {r[0]}: {r[1]}%")
 

@@ -307,7 +307,7 @@ def export_organisatie(db: Session = Depends(get_db), _: dict = Depends(vereis_a
         "formaat": EXPORT_FORMAAT,
         "versie": EXPORT_VERSIE,
         "d_omnitwin_versie": __version__,
-        "geexporteerd_op": dt.datetime.now(dt.timezone.utc).replace(microsecond=0).isoformat(),
+        "geexporteerd_op": dt.datetime.now(dt.UTC).replace(microsecond=0).isoformat(),
         "organisatie": org,
     }
     return JSONResponse(

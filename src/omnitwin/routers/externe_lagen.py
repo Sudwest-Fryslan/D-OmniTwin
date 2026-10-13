@@ -20,7 +20,6 @@ Endpoints (admin):
 - POST   /api/admin/externe-lagen/upload       → Bestand uploaden naar data-upload/
 """
 
-import json
 import logging
 import os
 import re
@@ -28,10 +27,9 @@ import shutil
 import time
 import uuid
 from pathlib import Path
-from typing import Optional
 
 import httpx
-from fastapi import APIRouter, Depends, File, HTTPException, Request, UploadFile
+from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
 from fastapi.concurrency import run_in_threadpool
 from pydantic import BaseModel, field_validator
 from sqlalchemy import text

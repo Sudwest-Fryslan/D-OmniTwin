@@ -221,7 +221,7 @@ def _verwerk_tokens(
 ) -> oidc.Principal:
     """Controleer het access token en schrijf de sessie (nieuw of ververst)."""
     principal = oidc.controleer_token(str(tokens.get("access_token") or ""))
-    nu = dt.datetime.now(dt.timezone.utc)
+    nu = dt.datetime.now(dt.UTC)
     token_verloopt = nu + dt.timedelta(seconds=max(int(tokens.get("expires_in") or 60), 10))
     refresh_duur = int(tokens.get("refresh_expires_in") or 0)
     if nieuw:
@@ -312,7 +312,7 @@ def gebruiker(db: Session, token_hash: str) -> dict | None:
     ).fetchone()
     if rij is None:
         return None
-    if rij.token_verloopt - VERVERS_MARGE > dt.datetime.now(dt.timezone.utc):
+    if rij.token_verloopt - VERVERS_MARGE > dt.datetime.now(dt.UTC):
         return _als_gebruiker(rij.onderwerp, rij.gebruikersnaam, rij.rollen)
     return _ververs(db, token_hash)
 
@@ -338,7 +338,7 @@ def _ververs(db: Session, token_hash: str) -> dict | None:
     if rij is None:
         db.rollback()
         return None
-    if rij.token_verloopt - VERVERS_MARGE > dt.datetime.now(dt.timezone.utc):
+    if rij.token_verloopt - VERVERS_MARGE > dt.datetime.now(dt.UTC):
         db.commit()  # een ander verzoek was ons voor
         return _als_gebruiker(rij.onderwerp, rij.gebruikersnaam, rij.rollen)
     try:

@@ -202,7 +202,7 @@ def test_controleer_legt_bronpeildatum_vast(tmp_path):
     assert c.extra["bronpeildatum"] == dt.date(2025, 3, 15)
     # zonder dcat: datum van ontvangst
     c = ctx()
-    c.levering["ontvangen_op"] = dt.datetime(2026, 1, 2, 12, tzinfo=dt.timezone.utc)
+    c.levering["ontvangen_op"] = dt.datetime(2026, 1, 2, 12, tzinfo=dt.UTC)
     _, _, a = pwrn.controleer(
         lees(csv_bestand(tmp_path, [f"BU1,,{IND},2025,,,1,20,,,"]), "text/csv", "waarnemingen", 10**6), c, {}
     )

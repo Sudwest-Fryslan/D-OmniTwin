@@ -22,7 +22,7 @@ print(f"Columns: {df.columns.tolist()}")
 # Let op: Soms ligt 1 pc6 over meerdere buurten. We pakken de meest voorkomende (mode) of de eerste.
 df_grouped = df.groupby("pc6")["buurt2025"].first().reset_index()
 
-with open(json_path, "r") as f:
+with open(json_path) as f:
     mapping = json.load(f)
 
 print(f"Bestaande mapping: {len(mapping)} records")

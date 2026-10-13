@@ -6,7 +6,6 @@ root-README actueel. Geen stack, geen browser.
 
 import io
 import json
-from pathlib import Path
 
 import pytest
 

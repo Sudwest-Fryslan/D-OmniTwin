@@ -16,7 +16,7 @@ SEED_OUT = ROOT / "db" / "stuurdata" / "indicatoren_seed.json"
 actuele_indicatoren = []
 kompas_rijen = []
 
-with open(INPUT, "r", encoding="utf-8-sig") as f:
+with open(INPUT, encoding="utf-8-sig") as f:
     reader = csv.DictReader(f)
     for row in reader:
         titel = row.get("Title", "").strip()

@@ -5,7 +5,6 @@ Helpt bij het vinden en inspecteren van datasets van CBS, RIVM en Politie.
 """
 
 import argparse
-import json
 import textwrap
 
 import requests

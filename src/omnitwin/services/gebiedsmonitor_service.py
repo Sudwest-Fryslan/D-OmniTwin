@@ -8,7 +8,6 @@ Gebruik parameterized queries voor dynamic filtering op basis van indicator sele
 
 from typing import Any
 
-import numpy as np
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 

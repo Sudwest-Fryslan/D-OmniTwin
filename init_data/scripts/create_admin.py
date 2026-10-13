@@ -77,7 +77,7 @@ def get_admin_password(username: str, force_reset: bool = False) -> str:
     if not force_reset:
         env_password = os.environ.get("ADMIN_PASSWORD", "").strip()
         if env_password:
-            print(f"   📋 Wachtwoord geladen uit .env (ADMIN_PASSWORD)")
+            print("   📋 Wachtwoord geladen uit .env (ADMIN_PASSWORD)")
             return env_password
 
     # Interactief vragen
@@ -127,7 +127,7 @@ def create_admin(username: str, force_reset: bool = False):
         if table_count < 1:
             print("❌ User management tabellen niet gevonden!")
             print("   Voer eerst het schema script uit:")
-            print(f"   bash init_data/scripts/init_database.sh")
+            print("   bash init_data/scripts/init_database.sh")
             sys.exit(1)
     except Exception as e:
         print(f"❌ Fout bij controleren tabellen: {e}")
@@ -184,9 +184,9 @@ def create_admin(username: str, force_reset: bool = False):
     print("=" * 60)
     print("✅ Admin initialisatie voltooid!")
     print()
-    print(f"   🌐 Admin Panel:      /admin/ (bijv. http://localhost/admin/)")
+    print("   🌐 Admin Panel:      /admin/ (bijv. http://localhost/admin/)")
     print(f"   👤 Gebruikersnaam:   {username}")
-    print(f"   🔐 Wachtwoord:       [zoals ingesteld]")
+    print("   🔐 Wachtwoord:       [zoals ingesteld]")
     print("=" * 60)
     print()
 

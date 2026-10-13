@@ -77,7 +77,7 @@ if __name__ == "__main__":
     weights = pd.Series([0.5, 0.5])
 
     agg = geometric_aggregation(scores, weights)
-    print(f"\nGeometrische Aggregatie Test:")
+    print("\nGeometrische Aggregatie Test:")
     print(f"Scores {scores.tolist()} met gelijke weging -> Resultaat: {round(agg, 3)}")
     print("Opmerking: Exact 0.00 had geresulteerd in 0.0 (fataal). 0.01 laat wat ruimte over.")
     print("\n✅ Normalisatiescript Gereed.")

@@ -38,7 +38,7 @@ from urllib.parse import urlencode
 from fastapi import APIRouter, Depends, Query, Request
 from fastapi.concurrency import run_in_threadpool
 from fastapi.exceptions import RequestValidationError
-from fastapi.responses import FileResponse, JSONResponse, Response
+from fastapi.responses import FileResponse, JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from omnitwin.config import instellingen
@@ -85,8 +85,8 @@ def _iso(t) -> str | None:
         return None
     if isinstance(t, dt.datetime):
         if t.tzinfo is None:
-            t = t.replace(tzinfo=dt.timezone.utc)
-        return t.astimezone(dt.timezone.utc).isoformat().replace("+00:00", "Z")
+            t = t.replace(tzinfo=dt.UTC)
+        return t.astimezone(dt.UTC).isoformat().replace("+00:00", "Z")
     return str(t)
 
 

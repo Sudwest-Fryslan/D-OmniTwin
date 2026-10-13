@@ -11,7 +11,7 @@ Endpoints:
 - GET /kaart/{type_id} - GeoJSON voor kaartvisualisatie
 """
 
-from typing import Any, Optional
+from typing import Any
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -23,7 +23,6 @@ from omnitwin.schemas.gebiedsmonitor import (
     GebiedDetailResponse,
     GebiedenListResponse,
     GebiedstypesListResponse,
-    GeoJSONFeatureCollection,
     IndicatorenListResponse,
 )
 from omnitwin.services.gebiedsmonitor_service import GebiedsmonitorService

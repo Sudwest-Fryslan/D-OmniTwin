@@ -449,7 +449,7 @@ def main(argv=None) -> int:
                 uit = Path(args.uit)
                 uit.mkdir(parents=True, exist_ok=True)
                 samenvatting = {
-                    "gemaakt_op": dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds"),
+                    "gemaakt_op": dt.datetime.now(dt.UTC).isoformat(timespec="seconds"),
                     "database": conn.get_dsn_parameters().get("dbname"),
                     "dump_datum": args.dump_datum,
                     "provincie": args.provincie,

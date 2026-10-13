@@ -33,7 +33,6 @@ import time
 from datetime import date
 from pathlib import Path
 
-import numpy as np
 import pandas as pd
 from pyproj import Transformer
 from scipy.spatial import cKDTree
@@ -496,7 +495,7 @@ def main():
     parser.add_argument(
         "--peildatum",
         default=str(date.today()),
-        help=f"Peildatum voor import (default: vandaag)",
+        help="Peildatum voor import (default: vandaag)",
     )
     parser.add_argument(
         "--dry-run",

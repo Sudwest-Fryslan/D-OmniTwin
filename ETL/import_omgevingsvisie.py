@@ -74,7 +74,7 @@ def main():
 
         # Truncate voor idempotentie
         conn.execute(text(f"TRUNCATE TABLE {TABLE_NAME} RESTART IDENTITY"))
-        print(f"🗑️  Tabel geleegd")
+        print("🗑️  Tabel geleegd")
 
         # Insert per deelgebied
         insert_sql = text(f"""

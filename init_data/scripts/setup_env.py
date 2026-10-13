@@ -10,7 +10,6 @@ Gebruik:
 """
 
 import getpass
-import os
 import secrets
 import string
 from pathlib import Path
@@ -75,7 +74,7 @@ def main():
     admin_api_key = secrets.token_hex(32)
 
     # Lees template en vervang
-    with open(ENV_EXAMPLE, "r", encoding="utf-8") as f:
+    with open(ENV_EXAMPLE, encoding="utf-8") as f:
         env_content = f.read()
 
     # Vervang placeholders (dit is robuuster dan exact string matchen omdat we keys vervangen)
@@ -101,11 +100,11 @@ def main():
     print("\n" + "=" * 50)
     print("✅ .env bestand is succesvol aangemaakt!")
     print("=" * 50)
-    print(f"\n🔑 Bewaar deze inloggegevens goed:")
-    print(f"   Applicatie url:  http://localhost:8000/admin")
+    print("\n🔑 Bewaar deze inloggegevens goed:")
+    print("   Applicatie url:  http://localhost:8000/admin")
     print(f"   Gebruikersnaam:  {admin_user}")
     print(f"   Wachtwoord:      {admin_pass}\n")
-    print(f"   (Deze logingegevens staan ook in het .env bestand)")
+    print("   (Deze logingegevens staan ook in het .env bestand)")
     print("\nVolgende stap: Voer het database init script uit (indien je dit nog niet hebt gedaan):")
     print("   bash init_data/scripts/init_database.sh")
 

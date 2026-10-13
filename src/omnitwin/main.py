@@ -1,7 +1,7 @@
 import os
 import time
 
-from fastapi import Depends, FastAPI, HTTPException, Request
+from fastapi import Depends, FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.docs import get_swagger_ui_html  # Local Swagger UI
 from fastapi.responses import HTMLResponse

@@ -208,7 +208,7 @@ def download_rivm_dataset(ds_config, alle_rijen):
 
     print(f"\n  📊 {naam} ({dataset_id})")
     print(f"     Dimensie-filters: {dimensie_filters}")
-    print(f"     ⚠️  Geen server-side regio filter → client-side filtering op Fryslân")
+    print("     ⚠️  Geen server-side regio filter → client-side filtering op Fryslân")
 
     # Server-side filter op dimensies (Leeftijd + Marges)
     dim_filter_parts = [f"{dim} eq '{val}'" for dim, val in dimensie_filters.items()]
@@ -316,13 +316,12 @@ def main():
         writer.writeheader()
         writer.writerows(alle_rijen)
 
-    print(f"\n✅ Klaar!")
+    print("\n✅ Klaar!")
     print(f"   {len(alle_rijen)} rijen opgeslagen")
     size_kb = OUTPUT.stat().st_size / 1024
     print(f"   Bestandsgrootte: {size_kb:.0f} KB")
 
     # Overzicht indicatoren
-    import collections
 
     unique_indicators = sorted(set(r["indicator_naam"] for r in alle_rijen))
     print(f"\n📊 Indicatoren ({len(unique_indicators)}):")

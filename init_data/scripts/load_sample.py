@@ -99,7 +99,7 @@ def import_stuurdata(conn):
         print(f"❌ Bestand niet gevonden: {STUURDATA_SQL}")
         return False
 
-    with open(STUURDATA_SQL, "r", encoding="utf-8") as f:
+    with open(STUURDATA_SQL, encoding="utf-8") as f:
         sql = f.read()
 
     cur = conn.cursor()
@@ -127,7 +127,7 @@ def import_buurten(conn):
         print(f"❌ GeoJSON niet gevonden: {BUURTEN_GEOJSON}")
         return False
 
-    with open(BUURTEN_GEOJSON, "r", encoding="utf-8") as f:
+    with open(BUURTEN_GEOJSON, encoding="utf-8") as f:
         data = json.load(f)
 
     features = data.get("features", [])
@@ -232,7 +232,7 @@ def import_indicatoren(conn):
         return False
 
     unique_indicators = {}
-    with open(bron_csv, "r", encoding="utf-8") as f:
+    with open(bron_csv, encoding="utf-8") as f:
         reader = csv.DictReader(f)
         for row in reader:
             uuid = (row.get("uuid") or row.get("indicator_uuid") or "").strip()
@@ -534,7 +534,7 @@ def import_waarden(conn):
 
     # Jaargangcontrole tegen de geometrie (#119): alleen waarschuwingen
     geo_jaar = geometrie_jaar_sample()
-    with open(INDICATOREN_CSV, "r", encoding="utf-8") as f:
+    with open(INDICATOREN_CSV, encoding="utf-8") as f:
         controle = controleer_jaargangen(csv.DictReader(f), geometrie_codes(BUURTEN_GEOJSON), geo_jaar)
     rapporteer(*controle, geo_jaar)
 
@@ -552,7 +552,7 @@ def import_waarden(conn):
     errors = 0
     batch = []
 
-    with open(INDICATOREN_CSV, "r", encoding="utf-8") as f:
+    with open(INDICATOREN_CSV, encoding="utf-8") as f:
         reader = csv.DictReader(f)
         for row in reader:
             buurt_id = row.get("gebied_id", "").strip()

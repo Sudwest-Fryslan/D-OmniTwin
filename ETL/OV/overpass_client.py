@@ -12,7 +12,6 @@ Gebruik:
 """
 
 import logging
-import time
 
 from OSMPythonTools.overpass import Overpass
 

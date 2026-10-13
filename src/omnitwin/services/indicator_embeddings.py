@@ -29,9 +29,7 @@ logger = logging.getLogger(__name__)
 
 def tekst_hash(tekst: str) -> str:
     """Hash van model, revisie en tekst: verandert een van drieën, dan opnieuw berekenen."""
-    return hashlib.sha256(
-        f"{embedding_model.MODEL_ID}@{embedding_model.MODEL_REVISIE}\n{tekst}".encode("utf-8")
-    ).hexdigest()
+    return hashlib.sha256(f"{embedding_model.MODEL_ID}@{embedding_model.MODEL_REVISIE}\n{tekst}".encode()).hexdigest()
 
 
 def lees_indicatoren(

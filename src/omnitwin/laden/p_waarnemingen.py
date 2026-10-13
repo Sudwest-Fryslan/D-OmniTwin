@@ -94,7 +94,7 @@ def bronpeildatum(
     Eerst `dct:modified` uit de meegeleverde dcat.jsonld (de stand van de bron), dan `dct:issued`,
     anders de datum van ontvangst (UTC; herkomst 'ontvangst'). Een datum die niet te lezen is of
     na vandaag ligt, keurt de levering af: anders wint hij elke overlap."""
-    vandaag = vandaag or dt.datetime.now(dt.timezone.utc).date()
+    vandaag = vandaag or dt.datetime.now(dt.UTC).date()
     for sleutel in BRONPEILDATUM_UIT:
         try:
             d = _datum((dcat or {}).get(sleutel)) if isinstance(dcat, dict) else None
@@ -111,7 +111,7 @@ def bronpeildatum(
     if ontvangen_op is None:
         return vandaag, "ontvangst"
     if ontvangen_op.tzinfo is not None:
-        ontvangen_op = ontvangen_op.astimezone(dt.timezone.utc)
+        ontvangen_op = ontvangen_op.astimezone(dt.UTC)
     return ontvangen_op.date(), "ontvangst"
 
 

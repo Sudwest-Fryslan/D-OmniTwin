@@ -3,7 +3,6 @@ import os
 import sys
 
 import geopandas as gpd
-import pandas as pd
 import psycopg2
 
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -22,7 +21,7 @@ def get_db():
 
 print("Laden bestaande pc6 mapping...")
 mapping_path = os.path.join(PROJECT_ROOT, "data/cbs_pc6_huisnr_buurt/pc6_buurt_mapping.json")
-with open(mapping_path, "r") as f:
+with open(mapping_path) as f:
     mapping = json.load(f)
 
 print(f"Bestaande map: {len(mapping)} PC6 codes")

@@ -323,7 +323,7 @@ def maak(usecase, uc, beheer=None, pad=None, nu=None):
     if not actoren:
         return {}
     beheer = beheer or KeycloakBeheer()
-    nu = nu or dt.datetime.now(dt.timezone.utc)
+    nu = nu or dt.datetime.now(dt.UTC)
     tot = (
         (nu + dt.timedelta(hours=float(os.environ.get("OMNITWIN_TESTACCOUNTS_UUR", "24"))))
         .replace(microsecond=0)

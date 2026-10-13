@@ -6,7 +6,6 @@ Berekent Z-scores, gemiddelden en filtert de belangrijkste uitschieters
 om een strakke JSON payload voor de LLM (Fase 2) of frontend te genereren.
 """
 
-import json
 from typing import Any
 
 from sqlalchemy import text
@@ -606,7 +605,7 @@ class ReportDataService:
         # Gebruik ALLE z-scores (niet alleen top per buurt) voor thema-gemiddelde
         thema_agg_filter = ""
         if thema and thema != "alle":
-            thema_agg_filter = f"AND COALESCE(vkh.titel_naam, i.categorie, 'Overig') = :thema_filter"
+            thema_agg_filter = "AND COALESCE(vkh.titel_naam, i.categorie, 'Overig') = :thema_filter"
 
         thema_query = text(f"""
             WITH zscores AS (

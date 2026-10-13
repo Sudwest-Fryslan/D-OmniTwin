@@ -4,10 +4,9 @@ Manages color palettes, visualization profiles, and config for the map frontend.
 Based on: docs/visual/kaartkleuring_visualisatie_d_omn_itwin.md (v1.1)
 """
 
-import os
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Header, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from sqlalchemy import text
 from sqlalchemy.orm import Session

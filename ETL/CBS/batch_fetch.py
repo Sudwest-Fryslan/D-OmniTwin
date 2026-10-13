@@ -16,7 +16,7 @@ from pathlib import Path
 
 def read_dataset_list(filepath):
     """Lees dataset IDs uit bestand"""
-    with open(filepath, "r") as f:
+    with open(filepath) as f:
         content = f.read()
 
     # Parse dataset IDs (whitespace separated)
@@ -106,7 +106,7 @@ Voorbeelden:
 
     # Samenvatting
     print(f"\n{'=' * 60}")
-    print(f"🏁 BATCH VOLTOOID")
+    print("🏁 BATCH VOLTOOID")
     print(f"{'=' * 60}")
     print(f"✅ Succesvol: {success_count}/{len(datasets)}")
 
