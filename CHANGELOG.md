@@ -8,6 +8,10 @@ Eerdere wijzigingen, van vóór dit bestand, zijn terug te vinden in de git-hist
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-10-13
+
+Onderhoud en uitrol: epic [#317](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/317) is dicht. De images gaan via de eigen runner naar Docker Hub, met een nieuwe web-container voor viewer en beheeromgeving ([#408](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/408)); Kubernetes-manifests met een rooktest en een voorbeeld-configrepo voor Fleet ([#406](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/406), [#411](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/411)), inloggen met Entra ID-rollen, en lint en opmaak met ruff ([#129](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/129)). Verder: ADR 0012 (dataspace-protocol DSP), de assistent zoekt de eigen buurt op adres of postcode ([#336](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/336)), en een functionele beschrijving van het geoportaal met een inventarisatie van open data. Geen databasemigraties; wel een nieuwe service `web` (zie *Migreren*).
+
 ### Toegevoegd
 
 - **Assistent: eigen buurt via postcode, adres of locatie** ([#336](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/336)): vraagt de assistent welke buurt 'mijn buurt' is, dan kan de gebruiker een postcode of adres invullen of (na toestemming in de browser) de locatie gebruiken. `POST /api/locatie/buurt` zoekt de buurt op bij de PDOK Locatieserver; adres en locatie gaan alleen in de body, worden niet gelogd of bewaard. Het antwoord zegt daarna waar de buurt vandaan kwam ('gevonden bij je postcode of adres'). Permissions-Policy staat geolocatie nu toe voor de eigen site (`geolocation=(self)`).
@@ -16,6 +20,7 @@ Eerdere wijzigingen, van vóór dit bestand, zijn terug te vinden in de git-hist
 - **Frontend en beheeromgeving in een eigen container** ([#408](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/408)): nieuwe image `sudwestfryslan/d-omnitwin-web` (nginx zonder root, `web.Dockerfile`) met de bestanden van de viewer (`static/`) en de build van de beheeromgeving. Generiek, zonder configuratie; cachebeleid en security-headers als voorheen in de backend. Service `web` in Docker Compose en `deploy/kubernetes/45-web.yaml`; `release.yml` publiceert de derde image met dezelfde tags. De rooktest controleert `/` en `/admin` via de gateway.
 - **Voorbeeld van een Fleet-configuratierepo** ([#411](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/411)): `deploy/voorbeeld-configrepo/` met `rancher/d-omnitwin/fleet.yaml` en een Kustomize-overlay op `deploy/kubernetes` (image-tags met `images:`, instellingen met `configMapGenerator`, Ingress met haproxy, cert-manager en twee hostnamen). Fleet haalt geen remote bases op; de configrepo bevat een gevendorde kopie van de base op een release-tag. De README noemt de Secrets met de exacte `kubectl`-opdracht, de controle na de uitrol en het bijwerken.
 - **Inloggen via Microsoft Entra ID** ([#411](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/411)): de backend leest naast de Keycloak-claims ook de standaard-claim `roles` (app-rollen). Nieuw en optioneel: `OIDC_SCOPE` (extra scopes, voor Entra de scope van de eigen API en `offline_access`) en `OIDC_CLIENT_SECRET` (vertrouwelijke client). `deploy/kubernetes/README.md` beschrijft de app-registratie, de `OIDC_*`-waarden en de rollen.
+- **Geoportaal en open data** ([#388](https://github.com/Sudwest-Fryslan/D-OmniTwin/pull/388)): functionele beschrijving van het geoportaal (`docs/specificaties/functionele-beschrijving-geoportaal-swf.md`) en een inventarisatie van open data van Súdwest-Fryslân (`docs/3-data-engineering/opendata-swf-inventarisatie.md`).
 
 ### Gewijzigd
 
@@ -38,6 +43,7 @@ Eerdere wijzigingen, van vóór dit bestand, zijn terug te vinden in de git-hist
 - **3D-pandenlaag geeft geen foutmelding meer en vangt buitengebieden netjes op** ([#410](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/410)): de ontbrekende SQLAlchemy `text`-import in `bag3d.py` is hersteld waardoor de bounding box query (`ST_Envelope`) niet meer crasht met een 500 NameError. Bovendien retourneren buitengebieden of gebieden zonder 3D-panden op 3DBAG nu een HTTP 200 met een lege FeatureCollection en een informatieve blauwe notificatietoast (`showInfo`) in plaats van een harde HTTP 404 uitzondering of rode error toast.
 - **3D BAG-panden** ([#129](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/129)): `POST /api/3dbag/buildings` faalde altijd met een `NameError`, omdat `text` uit SQLAlchemy niet geïmporteerd was. Gevonden door ruff (F821), net als een niet-bestaande variabele in de foutmelding van `ETL/CBS/import_cbs_data.py`.
 - **UI bevriest niet meer tijdens print-dialoog in rapporttabblad** ([#46](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/46)): `window.open` naar rapporten en externe schermen (`app.js`, `chat.js`, `melden.js`, `index.html`) is geïsoleerd met `noopener,noreferrer`, zodat geopende tabbladen in een eigen browsing context draaien. In rapportcomponenten (`ExportPrintModal`, `BenchmarkPage`, `DeelgebiedPage`, `MultiGebiedPage`, `App.tsx`) worden venster-referenties (`window.opener = null`) verbroken vóór `window.print()`, waardoor synchrone printdialogen de hoofdapplicatie niet meer kunnen pauzeren. Externe links zijn voorzien van `rel="noopener noreferrer"`.
+- **Kaart: gebieden zonder data transparant** ([#373](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/373)): gebieden zonder waarde zijn transparant, zodat de ondergrond zichtbaar is; randen 1,5 px met hoog contrast, zodat grenzen zichtbaar blijven.
 - **Beheer › AI-usecases past binnen het scherm** ([#339](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/339)): de logboek-tabel rekte de pagina op, waardoor kolommen rechts wegvielen. Tabellen scrollen nu binnen hun eigen kader en lange tekst (vraag, resultaat, toelichting) breekt af (WCAG 1.4.10 Reflow).
 - CI op een eigen runner: de integratiejob kiest per run een vrije poort en een unieke projectnaam en ruimt zijn images op; elke job geeft vóór de checkout de werkmap terug aan de runner-gebruiker, zodat root-bestanden van een vorige run de checkout niet blokkeren ([#375](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/375)).
 - Release-images: de publicatie naar Docker Hub draait op dezelfde runner als de CI (repo-variabele `CI_RUNNER`), zodat hij niet afhangt van GitHub-gehoste minuten.
@@ -406,7 +412,8 @@ Eerste release; deze sectie vat de ontwikkeling sinds het begin samen, details s
 - De backend-container draait als niet-root gebruiker ([#78](https://github.com/Sudwest-Fryslan/D-OmniTwin/pull/78)).
 - Beheeromgeving gebouwd zonder sourcemaps ([#81](https://github.com/Sudwest-Fryslan/D-OmniTwin/pull/81)).
 
-[Unreleased]: https://github.com/Sudwest-Fryslan/D-OmniTwin/compare/v0.5.1...HEAD
+[Unreleased]: https://github.com/Sudwest-Fryslan/D-OmniTwin/compare/v0.6.0...HEAD
+[0.6.0]: https://github.com/Sudwest-Fryslan/D-OmniTwin/compare/v0.5.1...v0.6.0
 [0.5.1]: https://github.com/Sudwest-Fryslan/D-OmniTwin/compare/v0.5.0...v0.5.1
 [0.5.0]: https://github.com/Sudwest-Fryslan/D-OmniTwin/compare/v0.5.0-rc.1...v0.5.0
 [0.5.0-rc.1]: https://github.com/Sudwest-Fryslan/D-OmniTwin/compare/v0.4.0...v0.5.0-rc.1
