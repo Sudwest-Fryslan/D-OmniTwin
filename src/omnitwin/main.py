@@ -1,14 +1,14 @@
-from fastapi import FastAPI, Depends, HTTPException, Request, status
+from fastapi import FastAPI, Depends, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.base import BaseHTTPMiddleware
 from fastapi.templating import Jinja2Templates
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.responses import HTMLResponse
 from fastapi.openapi.docs import get_swagger_ui_html # Local Swagger UI
 from sqlalchemy.orm import Session
 from sqlalchemy import event, text
 from omnitwin.config import CORS_ALLOW_HEADERS, STATEMENT_TIMEOUT_MS, instellingen
 from omnitwin.database import get_db, engine
-from omnitwin.statisch import StatischeBestanden, cache_control
+from omnitwin.statisch import StatischeBestanden
 import os
 import time
 
@@ -173,8 +173,11 @@ app.add_middleware(
     allow_headers=list(CORS_ALLOW_HEADERS),
 )
 
-# Mount static files
-app.mount("/static", StatischeBestanden(directory="static"), name="static")
+# Statische bestanden en de beheeromgeving serveert de web-container (#408, web.Dockerfile); die
+# zitten niet in de backend-image. Alleen vanuit een checkout van de repo (`python run_dev.py`,
+# zonder gateway) serveert de backend /static zelf.
+if os.path.isdir(os.path.join("static", "js")):
+    app.mount("/static", StatischeBestanden(directory="static"), name="static")
 
 # Setup templates
 templates = Jinja2Templates(directory="templates")
@@ -300,62 +303,6 @@ def root(request: Request, db: Session = Depends(get_db)):
         "organisatie": organisatie, "thema_css": thema_css(organisatie),
         "account": account, "demo": ins.demo},
         headers={"Cache-Control": "no-cache"})
-
-# ============================================================================
-# React SPA Support voor Admin Panel en Standalone Rapporten (#290)
-# ============================================================================
-def _serve_spa_index() -> HTMLResponse:
-    """Serveert index.html van het React SPA build-pakket."""
-    index_path = os.path.join("static", "admin-panel", "index.html")
-    if os.path.exists(index_path):
-        with open(index_path) as f:
-            return HTMLResponse(content=f.read(), headers={"Cache-Control": "no-cache"})
-    return HTMLResponse(
-        content="<h1>Admin Panel Niet Gebouwd</h1><p>Draai `npm run build` in de admin-panel map.</p>",
-        status_code=404,
-    )
-
-
-@app.get("/admin/rapport/{catchall:path}", response_class=RedirectResponse, include_in_schema=False)
-@app.get("/admin/rapport", response_class=RedirectResponse, include_in_schema=False)
-async def redirect_admin_rapport(request: Request, catchall: str = ""):
-    """Redirect oude /admin/rapport/* deeplinks naar standalone /rapport/* met query parameters (#290)."""
-    doel = f"/rapport/{catchall}" if catchall else "/rapport"
-    if request.url.query:
-        doel += f"?{request.url.query}"
-    return RedirectResponse(url=doel, status_code=status.HTTP_307_TEMPORARY_REDIRECT)
-
-
-@app.get("/rapport/{catchall:path}", response_class=HTMLResponse, include_in_schema=False)
-@app.get("/rapport", response_class=HTMLResponse, include_in_schema=False)
-async def serve_rapport_spa(request: Request, catchall: str = ""):
-    """Standalone rapportage route voor React Router (#290)."""
-    return _serve_spa_index()
-
-
-@app.get("/admin/{catchall:path}", response_class=HTMLResponse, include_in_schema=False)
-async def serve_admin_spa(request: Request, catchall: str):
-    """Fallback route for React Router in the Admin Panel."""
-    # Serve build files if they exist: Vite-assets (/admin/assets/...) and
-    # public-bestanden zoals manifest.json en favicon.ico in de root van de build.
-    root_asset_path = os.path.join("static", "admin-panel", catchall)
-    if catchall and "." in catchall and os.path.exists(root_asset_path):
-        from fastapi.responses import FileResponse
-        return FileResponse(root_asset_path, headers={"Cache-Control": cache_control(f"admin-panel/{catchall}")})
-    if catchall.startswith("assets/"):
-        # Ontbrekend build-asset: 404 i.p.v. index.html (zoals eerder /admin/static/)
-        return HTMLResponse(content="Not Found", status_code=404)
-
-    return _serve_spa_index()
-
-@app.get("/.well-known/security.txt", include_in_schema=False)
-async def security_txt():
-    """security.txt (RFC 9116): waar je kwetsbaarheden meldt."""
-    from fastapi.responses import FileResponse
-    return FileResponse(
-        os.path.join("static", ".well-known", "security.txt"),
-        media_type="text/plain; charset=utf-8",
-    )
 
 @app.get("/docs", include_in_schema=False)
 async def custom_swagger_ui_html():

@@ -1,0 +1,71 @@
+# Web (nginx, #408): de bestanden van de viewer (/static) en de beheeromgeving (/admin, /rapport).
+# Statisch en generiek: geen ConfigMap of Secret nodig, geen volume, geen database. De gateway
+# (60-traefik.yaml) stuurt alles wat niet naar de backend, PostgREST of pg_featureserv gaat hierheen.
+apiVersion: v1
+kind: Service
+metadata:
+  name: web
+  namespace: d-omnitwin
+  labels:
+    app.kubernetes.io/name: web
+    app.kubernetes.io/part-of: d-omnitwin
+spec:
+  selector:
+    app.kubernetes.io/name: web
+  ports:
+    - name: http
+      port: 8080
+      targetPort: 8080
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: web
+  namespace: d-omnitwin
+  labels:
+    app.kubernetes.io/name: web
+    app.kubernetes.io/part-of: d-omnitwin
+spec:
+  # Geen toestand: meer replicas kan zonder meer
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: web
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: web
+        app.kubernetes.io/part-of: d-omnitwin
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 101
+        runAsGroup: 101
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: web
+          image: sudwestfryslan/d-omnitwin-web:0.5.1
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+          readinessProbe:
+            httpGet: { path: /admin/, port: 8080 }
+            periodSeconds: 10
+          livenessProbe:
+            httpGet: { path: /admin/, port: 8080 }
+            initialDelaySeconds: 5
+            periodSeconds: 20
+          resources:
+            requests: { cpu: 10m, memory: 16Mi }
+            limits: { cpu: 500m, memory: 128Mi }
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities: { drop: ["ALL"] }
+          volumeMounts:
+            # nginx schrijft alleen zijn pid en tijdelijke bestanden, in /tmp
+            - { name: tmp, mountPath: /tmp }
+      volumes:
+        - name: tmp
+          emptyDir: {}

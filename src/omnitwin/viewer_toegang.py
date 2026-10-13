@@ -11,6 +11,8 @@ Waar het gecontroleerd wordt:
 - PostgREST (`/api/data`) en pg_featureserv (`/api/geo`): Traefik forwardAuth (middleware
   `viewer-toegang@file`, deploy/traefik/dynamic.yml) naar `GET /api/viewer/toegang` van de backend.
   Die middleware staat altijd aan; bij `open` antwoordt de backend direct 204.
+- pagina's van de web-container (`/rapport`, #408): forwardAuth `viewer-pagina@file`, hetzelfde
+  endpoint met `?pagina=1` (doorsturen naar het inloggen in plaats van 401).
 
 Uitzonderingen (altijd open): health, de inlogroutes van de backend, de beheeromgeving zelf (de
 SPA-schil; de beheer-API's controleren zelf), de laad-API en `/api/oidc/ik` (eigen tokens),
@@ -195,10 +197,20 @@ async def controleer(request: Request) -> Response:
 
     Bij 204 de header X-Omnitwin-Toegang (intern of openbaar) voor PostgREST (#254); Traefik zet hem op
     het doorgestuurde verzoek en vervangt een meegestuurde (authResponseHeaders). Een interne collectie
-    van pg_featureserv (X-Forwarded-Uri) zonder rol: 401 of 403."""
+    van pg_featureserv (X-Forwarded-Uri) zonder rol: 401 of 403.
+
+    Met `?pagina=1` (middleware viewer-pagina, #408): voor pagina's van de web-container (/rapport).
+    Niet ingelogd gaat dan naar het inloggen (302), zonder rol naar de pagina "Geen toegang" (403), zoals
+    bij de viewer zelf. De Location is absoluut: Traefik maakt een relatief adres absoluut ten opzichte
+    van de backend."""
     if instellingen().viewer_dicht:
         besluit = await run_in_threadpool(beoordeel, request)
         if not besluit.toegang:
+            if request.query_params.get("pagina") and besluit.probleem is None:
+                if besluit.status == 401:
+                    return RedirectResponse(oidc_login.publieke_basis(request) + login_adres("/"), status_code=302)
+                if besluit.status == 403:
+                    return geen_toegang_pagina(besluit.gebruiker)
             return _probleem(request, besluit)
         stand = toegang.MET_ROL
     elif toegang.heeft_inloggegevens(request):

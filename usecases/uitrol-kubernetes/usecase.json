@@ -1,7 +1,7 @@
 {
   "specificatie": "1.0",
   "naam": "uitrol-kubernetes",
-  "versie": "0.1.0",
+  "versie": "0.2.0",
   "titel": "D-OmniTwin uitrollen op Kubernetes en aantonen dat het werkt",
   "vraag": "Kan ik als platformbeheerder van een organisatie D-OmniTwin met losse, leesbare manifests op ons Kubernetes-cluster uitrollen (bijv. met Rancher Fleet), bijwerken naar een nieuwe versie en aantonen dat de instantie werkt?",
   "gebruiker": "platformbeheer van een organisatie",
@@ -16,6 +16,20 @@
       "anoniem": true,
       "verwacht": "database en api online, met de versie",
       "omschrijving": "de backend draait en bereikt de database"
+    },
+    {
+      "type": "api",
+      "pad": "/",
+      "anoniem": true,
+      "verwacht": "de pagina van de viewer (backend)",
+      "omschrijving": "de viewer is bereikbaar via de gateway"
+    },
+    {
+      "type": "api",
+      "pad": "/admin",
+      "anoniem": true,
+      "verwacht": "de beheeromgeving (web-container)",
+      "omschrijving": "de web-container met de bestanden van viewer en beheeromgeving is bereikbaar via de gateway (#408)"
     },
     {
       "type": "api",
@@ -52,8 +66,8 @@
   },
   "inrichting": {
     "manifests": "deploy/kubernetes/ (README.md: wat de organisatie zelf invult)",
-    "rooktest": "scripts/ci/k8s-rooktest.sh: kind-cluster, manifests, db-init, endpoints, upgrade; schrijft bewijs/rooktest.json",
-    "ci": ".github/workflows/k8s-rooktest.yml bij wijzigingen in deploy/kubernetes, Dockerfile, docker-entrypoint.sh of db/"
+    "rooktest": "scripts/ci/k8s-rooktest.sh: kind-cluster, manifests, db-init, endpoints (ook / en /admin), upgrade; schrijft bewijs/rooktest.json",
+    "ci": ".github/workflows/k8s-rooktest.yml bij wijzigingen in deploy/kubernetes, de Dockerfiles, deploy/web, docker-entrypoint.sh of db/"
   },
   "bekende_afwijkingen": [
     "Het bewijs van de uitrol zelf is bewijs/rooktest.json (uitkomst van de rooktest op een kind-cluster); de schermen gezondheid en geo-api laten een draaiende instantie zien, ongeacht hoe die is uitgerold.",

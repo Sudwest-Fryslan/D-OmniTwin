@@ -85,3 +85,45 @@ def test_traefik_routes_dekken_de_compose_routers():
     assert set(routers) == compose_routers
     for naam, r in routers.items():
         assert any(m in r["middlewares"] for m in ("security-headers", "keycloak-headers")), naam
+
+
+def _compose_routers():
+    """{router: {"rule", "service", "middlewares"}} uit de labels in docker-compose.yml."""
+    compose = (ROOT / "docker-compose.yml").read_text(encoding="utf-8")
+    uit = {}
+    for naam, veld, waarde in re.findall(
+            r'"traefik\.http\.routers\.([a-z0-9_-]+)\.(rule|service|middlewares)=(.*)"$', compose, re.M):
+        uit.setdefault(naam, {})[veld] = waarde
+    return uit
+
+
+def test_traefik_routes_gelijk_aan_compose():
+    """Zelfde regel, service en middlewares (zonder @file) als in docker-compose.yml (#408)."""
+    cm = next(d for _, d in _alle_manifests() if d["kind"] == "ConfigMap" and d["metadata"]["name"] == "traefik-dynamisch")
+    routers = yaml.safe_load(cm["data"]["routes.yml"])["http"]["routers"]
+    for naam, c in _compose_routers().items():
+        if naam == "keycloak":
+            continue
+        r = routers[naam]
+        assert r["rule"] == c["rule"], naam
+        assert r["service"] == c["service"], naam
+        assert r["middlewares"] == [m.removesuffix("@file") for m in c["middlewares"].split(",")], naam
+
+
+def test_web_container_achter_de_gateway():
+    """#408: alles wat geen andere router heeft gaat naar web; /rapport met de toegang van de viewer."""
+    cm = next(d for _, d in _alle_manifests() if d["kind"] == "ConfigMap" and d["metadata"]["name"] == "traefik-dynamisch")
+    routes = yaml.safe_load(cm["data"]["routes.yml"])["http"]
+    assert routes["routers"]["web"]["rule"] == "PathPrefix(`/`)" and routes["routers"]["web"]["service"] == "web"
+    assert "viewer-pagina" in routes["routers"]["rapport"]["middlewares"]
+    assert routes["services"]["web"]["loadBalancer"]["servers"] == [{"url": "http://web:8080"}]
+    deploy = next(d for _, d in _docs_van("45-web.yaml") if d["kind"] == "Deployment")
+    c = _containers(deploy)[0]
+    assert c["image"].startswith("sudwestfryslan/d-omnitwin-web:")
+    assert c["securityContext"]["readOnlyRootFilesystem"] is True
+    assert {"name": "tmp", "mountPath": "/tmp"} in c["volumeMounts"]
+    assert "envFrom" not in c, "de web-image is generiek: geen ConfigMap of Secret"
+
+
+def _docs_van(naam):
+    return [(K8S / naam, d) for d in _docs(K8S / naam)]

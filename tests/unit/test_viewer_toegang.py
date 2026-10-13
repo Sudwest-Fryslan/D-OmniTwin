@@ -187,6 +187,51 @@ def test_provider_onbereikbaar_503(app, monkeypatch):
     assert r.status_code == 503 and r.json()["code"] == "oidc-niet-bereikbaar"
 
 
+# ---------------------------------------------------------------- pagina's in de web-container (#408)
+
+PAGINA = viewer_toegang.CONTROLE_PAD + "?pagina=1"
+VIA_TRAEFIK = {**HTML, "X-Forwarded-Proto": "https", "X-Forwarded-Host": "omnitwin.example.nl",
+               "X-Forwarded-Uri": "/rapport/benchmark"}
+
+
+def test_pagina_open_204(app):
+    assert client(app).get(PAGINA, headers=VIA_TRAEFIK).status_code == 204
+
+
+def test_pagina_anoniem_naar_inloggen_met_absoluut_adres(app, monkeypatch):
+    """Traefik maakt een relatieve Location absoluut ten opzichte van de backend; daarom absoluut."""
+    monkeypatch.setenv("VIEWER_TOEGANG", "inloggen")
+    r = client(app).get(PAGINA, headers=VIA_TRAEFIK)
+    assert r.status_code == 302
+    assert r.headers["location"] == "https://omnitwin.example.nl/api/admin/auth/oidc/login?terug=/"
+
+
+def test_pagina_zonder_rol_geen_toegang(app, monkeypatch):
+    monkeypatch.setenv("VIEWER_TOEGANG", "inloggen")
+    r = client(app, ZONDER_ROL).get(PAGINA, headers=VIA_TRAEFIK)
+    assert r.status_code == 403 and "Geen toegang" in r.text
+
+
+@pytest.mark.parametrize("wie", [LEZER, BEHEERDER])
+def test_pagina_met_rol_204(app, monkeypatch, wie):
+    monkeypatch.setenv("VIEWER_TOEGANG", "inloggen")
+    assert client(app, wie).get(PAGINA, headers=VIA_TRAEFIK).status_code == 204
+
+
+def test_pagina_ongeldig_token_blijft_401(app, monkeypatch):
+    monkeypatch.setenv("VIEWER_TOEGANG", "inloggen")
+    fout = oidc.AuthProbleem(401, "token-ongeldig", "Ongeldig token", "x", www_authenticate="Bearer")
+    assert client(app, fout).get(PAGINA, headers=VIA_TRAEFIK).status_code == 401
+
+
+def test_rapport_router_heeft_pagina_forwardauth():
+    tekst = (ROOT / "docker-compose.yml").read_text(encoding="utf-8")
+    m = re.search(r"traefik\.http\.routers\.rapport\.middlewares=([^\"\s]+)", tekst)
+    assert m and "viewer-pagina@file" in m.group(1).split(",")
+    dynamic = (ROOT / "deploy/traefik/dynamic.yml").read_text(encoding="utf-8")
+    assert f'address: "http://backend:8000{PAGINA}"' in dynamic
+
+
 # ---------------------------------------------------------------- BFF: terug naar de viewer
 
 @pytest.mark.parametrize("terug,verwacht", [

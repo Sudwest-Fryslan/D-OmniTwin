@@ -6,8 +6,9 @@
 #
 # Stappen: images bouwen (code van deze checkout) -> kind-cluster -> images laden -> manifests
 # toepassen met fictieve, per run gegenereerde secrets -> wachten op db-init en de deployments ->
-# /health, data-API en geo-API via de Traefik-gateway -> upgrade naspelen (nieuwe db-init-Job,
-# backend opnieuw starten) -> nogmaals controleren -> bewijs schrijven -> cluster opruimen.
+# /health, de viewer (/), de beheeromgeving (/admin, web-container), data-API en geo-API via de
+# Traefik-gateway -> upgrade naspelen (nieuwe db-init-Job, backend opnieuw starten) -> nogmaals
+# controleren -> bewijs schrijven -> cluster opruimen.
 #
 # Instellingen (omgeving):
 #   K8S_ROOKTEST_TAG=rooktest    image-tag van de zelf gebouwde images
@@ -59,6 +60,7 @@ if [ "$BOUWEN" = "ja" ]; then
     stap "Images bouwen (tag $TAG)"
     docker build -q -t "sudwestfryslan/d-omnitwin:$TAG" .
     docker build -q -f db.Dockerfile -t "sudwestfryslan/d-omnitwin-db:$TAG" .
+    docker build -q -f web.Dockerfile -t "sudwestfryslan/d-omnitwin-web:$TAG" .
 fi
 
 stap "kind-cluster $CLUSTER maken"
@@ -66,7 +68,8 @@ stap "kind-cluster $CLUSTER maken"
 
 if [ "$BOUWEN" = "ja" ]; then
     stap "Images in het cluster laden"
-    "$KIND" load docker-image --name "$CLUSTER" "sudwestfryslan/d-omnitwin:$TAG" "sudwestfryslan/d-omnitwin-db:$TAG"
+    "$KIND" load docker-image --name "$CLUSTER" "sudwestfryslan/d-omnitwin:$TAG" "sudwestfryslan/d-omnitwin-db:$TAG" \
+        "sudwestfryslan/d-omnitwin-web:$TAG"
 fi
 
 stap "Manifests toepassen"
@@ -74,7 +77,7 @@ dk cp deploy/kubernetes "$NODE:/rooktest"
 manifests=$(k kustomize /rooktest)
 if [ "$BOUWEN" = "ja" ]; then
     # Alleen de image-tag van de eigen images vervangen; de manifests zelf blijven ongewijzigd
-    manifests=$(echo "$manifests" | sed -E "s#(sudwestfryslan/d-omnitwin(-db)?):[0-9A-Za-z._-]+#\1:$TAG#")
+    manifests=$(echo "$manifests" | sed -E "s#(sudwestfryslan/d-omnitwin(-db|-web)?):[0-9A-Za-z._-]+#\1:$TAG#")
 fi
 GEBRUIKTE_TAG=$(echo "$manifests" | grep -oE 'sudwestfryslan/d-omnitwin:[0-9A-Za-z._-]+' | head -1 | cut -d: -f2)
 k apply -f /rooktest/00-namespace.yaml
@@ -89,6 +92,7 @@ diagnose() {
     k -n "$NS" get pods -o wide || true
     k -n "$NS" logs job/"$JOB" --all-containers --tail=80 || true
     k -n "$NS" logs deploy/backend --all-containers --tail=80 || true
+    k -n "$NS" logs deploy/web --tail=40 || true
     exit 1
 }
 
@@ -96,7 +100,7 @@ wacht_klaar() {
     JOB=$1
     stap "Wachten op Job $JOB"
     k -n "$NS" wait --for=condition=complete "job/$JOB" --timeout=1200s || diagnose "Job $JOB niet klaar"
-    for d in backend postgrest pg-featureserv traefik; do
+    for d in backend web postgrest pg-featureserv traefik; do
         stap "Wachten op deployment $d"
         k -n "$NS" rollout status "deploy/$d" --timeout=600s || diagnose "deployment $d niet klaar"
     done
@@ -116,6 +120,9 @@ JOB=$(echo "$manifests" | awk '/^kind: Job/{j=1} j && /^  name:/{print $2; exit}
 wacht_klaar "$JOB"
 stap "Controleren via de Traefik-gateway"
 controleer /health 200
+controleer / 200
+controleer /admin 200
+controleer /static/js/app.js 200
 controleer /api/geo/collections 200
 controleer /api/data/ 200
 
@@ -124,6 +131,8 @@ echo "$manifests" | sed "s/name: $JOB/name: ${JOB}-upgrade/" | k apply -f -
 k -n "$NS" rollout restart deploy/backend
 wacht_klaar "${JOB}-upgrade"
 controleer /health 200
+controleer / 200
+controleer /admin 200
 
 DUUR=$(( $(date +%s) - START ))
 stap "Bewijs schrijven: $BEWIJS"

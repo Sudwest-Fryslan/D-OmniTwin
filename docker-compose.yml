@@ -6,8 +6,9 @@
 #      databasepoort 5433 en Traefik-dashboard op 8081)
 #
 # Opstartvolgorde: postgres (healthy) -> db-init (eenmalig, klaar) -> backend,
-# postgrest en pg_featureserv. db-init maakt bij een lege database het schema,
-# de pg_featureserv-views, de sample-/stuurdata en de admin-gebruiker aan; bij een
+# postgrest en pg_featureserv. De service web (bestanden van viewer en beheer, #408)
+# wacht nergens op. db-init maakt bij een lege database het schema, de pg_featureserv-views,
+# de sample-/stuurdata en de admin-gebruiker aan; bij een
 # bestaande database slaat hij dat over; een half mislukte eerste init geeft een
 # fout met herstelinstructie (#201). Daarna werkt hij altijd de rollen en het
 # schema api voor PostgREST en pg_featureserv bij (#57) en stopt. De backend
@@ -107,9 +108,14 @@ services:
     build: .
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.backend.rule=PathPrefix(`/`)"
+      # De API's, en de pagina van de viewer, health en de API-documentatie. De bestanden van de
+      # viewer (/static) en de beheeromgeving (/admin, /rapport) serveert de service web (#408).
+      - "traefik.http.routers.backend.rule=PathPrefix(`/api`)"
       - "traefik.http.routers.backend.middlewares=security-headers@file"
       - "traefik.http.routers.backend.service=backend"
+      - "traefik.http.routers.backend-paginas.rule=Path(`/`) || Path(`/health`) || Path(`/docs`) || Path(`/openapi.json`)"
+      - "traefik.http.routers.backend-paginas.middlewares=security-headers@file"
+      - "traefik.http.routers.backend-paginas.service=backend"
       - "traefik.http.services.backend.loadbalancer.server.port=8000"
       # Laad-API (#205): eigen router (later eigen container, zelfde URL). Body maximaal 200 MB
       # (buffering, boven 2 MB op schijf); leveren (POST) maximaal LADEN_RATE_LIMIT per minuut
@@ -167,6 +173,32 @@ services:
         condition: service_healthy
       db-init:
         condition: service_completed_successfully
+
+  web:
+    logging: *logging
+    # Bestanden van de viewer (static/) en de gebouwde beheeromgeving (static/admin-panel), met
+    # nginx zonder root (#408, web.Dockerfile). Generiek: geen instellingen uit .env.
+    image: ${COMPOSE_PROJECT_NAME:-d-omnitwin}-web
+    build:
+      context: .
+      dockerfile: web.Dockerfile
+    labels:
+      - "traefik.enable=true"
+      # Alles wat geen andere router heeft (kortste regel, laagste prioriteit)
+      - "traefik.http.routers.web.rule=PathPrefix(`/`)"
+      - "traefik.http.routers.web.middlewares=security-headers@file"
+      - "traefik.http.routers.web.service=web"
+      # Rapporten: dezelfde toegang als de viewer (forwardAuth naar de backend, ADR 0009)
+      - "traefik.http.routers.rapport.rule=Path(`/rapport`) || PathPrefix(`/rapport/`)"
+      - "traefik.http.routers.rapport.middlewares=security-headers@file,viewer-pagina@file"
+      - "traefik.http.routers.rapport.service=web"
+      - "traefik.http.services.web.loadbalancer.server.port=8080"
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:8080/admin/"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
 
   postgrest:
     logging: *logging

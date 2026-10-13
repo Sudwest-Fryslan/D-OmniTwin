@@ -16,9 +16,28 @@ data:
   routes.yml: |
     http:
       routers:
-        # Alles wat niet hieronder valt: de backend (website, beheer, assistent)
-        backend:
+        # Alles wat niet hieronder valt: de web-container (#408), met de bestanden van de viewer
+        # (/static) en de beheeromgeving (/admin)
+        web:
           rule: "PathPrefix(`/`)"
+          entryPoints: [web]
+          middlewares: [security-headers]
+          service: web
+        # Rapporten (SPA in de web-container): dezelfde toegang als de viewer
+        rapport:
+          rule: "Path(`/rapport`) || PathPrefix(`/rapport/`)"
+          entryPoints: [web]
+          middlewares: [security-headers, viewer-pagina]
+          service: web
+        # Backend (FastAPI): de API's (assistent, beheer, laad-API) ...
+        backend:
+          rule: "PathPrefix(`/api`)"
+          entryPoints: [web]
+          middlewares: [security-headers]
+          service: backend
+        # ... en de pagina van de viewer, health en de API-documentatie
+        backend-paginas:
+          rule: "Path(`/`) || Path(`/health`) || Path(`/docs`) || Path(`/openapi.json`)"
           entryPoints: [web]
           middlewares: [security-headers]
           service: backend
@@ -99,6 +118,9 @@ data:
             replacement: "/api/geo$1"
 
       services:
+        web:
+          loadBalancer:
+            servers: [{ url: "http://web:8080" }]
         backend:
           loadBalancer:
             servers: [{ url: "http://backend:8000" }]
@@ -157,6 +179,13 @@ data:
             address: "http://backend:8000/api/viewer/toegang"
             authResponseHeaders:
               - "X-Omnitwin-Toegang"
+
+        # Pagina's van de web-container achter dezelfde toegang (#408): /rapport. Zelfde endpoint met
+        # ?pagina=1: niet ingelogd gaat naar het inloggen (302), zonder rol naar "Geen toegang" (403).
+        # De pagina van de viewer (/) serveert de backend zelf, met dezelfde controle in de backend.
+        viewer-pagina:
+          forwardAuth:
+            address: "http://backend:8000/api/viewer/toegang?pagina=1"
 
         # Keycloak (/auth): zonder CSP, X-Frame-Options en Referrer-Policy. Die zet Keycloak
         # zelf per realm (Realm settings > Security defenses), standaard

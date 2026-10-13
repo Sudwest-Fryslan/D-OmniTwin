@@ -15,6 +15,9 @@ services:
   backend:
     image: *backend-image
     pull_policy: always
+  web:
+    image: sudwestfryslan/d-omnitwin-web:${OMNITWIN_VERSIE:-latest}
+    pull_policy: always
   keycloak-db-init:
     image: *backend-image
     pull_policy: missing
