@@ -1,0 +1,35 @@
+# Opslag van de backend (zelfde volumes als in docker-compose.yml).
+# ReadWriteOnce: de backend draait dan met één replica. Meer replicas = ReadWriteMany (bijv. NFS/CephFS).
+# storageClassName weglaten = standaard StorageClass. ZELF KIEZEN indien nodig.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: uploads
+  namespace: d-omnitwin
+  labels: { app.kubernetes.io/part-of: d-omnitwin }
+spec:
+  # Geüploade kaartlagen (Beheer › externe lagen)
+  accessModes: ["ReadWriteOnce"]
+  resources: { requests: { storage: 5Gi } }
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: leveringen
+  namespace: d-omnitwin
+  labels: { app.kubernetes.io/part-of: d-omnitwin }
+spec:
+  # Ruwe leveringen van de laad-API (/api/laden/v1), met bewaartermijn
+  accessModes: ["ReadWriteOnce"]
+  resources: { requests: { storage: 10Gi } }
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: bron-cache
+  namespace: d-omnitwin
+  labels: { app.kubernetes.io/part-of: d-omnitwin }
+spec:
+  # Cache van gedownloade open data (CBS, PDOK, RIVM); mag weg
+  accessModes: ["ReadWriteOnce"]
+  resources: { requests: { storage: 5Gi } }

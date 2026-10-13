@@ -46,3 +46,4 @@ Wat wordt makkelijker, wat moeilijker, wat moet er nog gebeuren.
 | [0009](0009-viewer-achter-login-forwardauth.md) | Viewer optioneel achter Keycloak-login, data-API's via Traefik forwardAuth | voorgesteld |
 | [0010](0010-toegang-per-laag-en-bron.md) | Toegang per laag en bron: openbaar of intern, afgedwongen in de database en de forwardAuth | voorgesteld |
 | [0011](0011-toegankelijkheid-wcag.md) | Toegankelijkheid: zoveel mogelijk WCAG 2.1 AA, met tekstalternatieven voor geo | voorgesteld |
+| [0012](0012-dataspace-protocol-dsp.md) | Dataspace-protocol: DSP (DCAT/ODRL) over HTTPS, geen iSHARE | aanvaard |

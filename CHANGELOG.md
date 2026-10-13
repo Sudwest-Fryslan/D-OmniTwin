@@ -15,9 +15,23 @@ Eerdere wijzigingen, van vóór dit bestand, zijn terug te vinden in de git-hist
 ### Gewijzigd
 
 - **Evaluatieset assistent 1.2** ([#336](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/336)): synoniemen aangevuld (o.a. twintigers, voedselbank, verstening, arbeidsmarkt, studieniveau, woningtekort, huurprijzen). De oude holdout-vragen zijn daarvoor gebruikt; 24 nieuwe holdout-vragen meten eerlijk. Drempels gelden voor de afgestemde vragen, de holdout heeft eigen, lagere drempels tegen terugval. Met AI-usecase C dicht: recall@3 0,715 → 0,815 (alle vragen), holdout 0,562 → 0,583.
+- **Uitrollen op Kubernetes** ([#406](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/406)): losse, leesbare manifests in `deploy/kubernetes/` (PostgreSQL, db-init als Job, backend, PostgREST, pg_featureserv, Traefik als interne gateway, Ingress; Keycloak en de LiteLLM-gateway optioneel) met de images van Docker Hub, uit te rollen met Rancher Fleet of `kubectl apply -k`. De CI valideert de manifests (kubeconform); de workflow *Kubernetes-rooktest* (`scripts/ci/k8s-rooktest.sh`) rolt ze uit op een kind-cluster met de images van de PR, controleert `/health`, de data- en de geo-API en een upgrade. Use case `uitrol-kubernetes`.
+
+### Gewijzigd
+
+- **Dataspace-protocol vastgesteld** ([#32](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/32)): DSP (DCAT/ODRL) over HTTPS, geen iSHARE; FSC pas bij concrete behoefte. Zie ADR 0012.
+- **Eén initialisatieroute** ([#69](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/69)): `init_data/scripts/init_database.sh` (zonder Docker) roept nu `docker-entrypoint.sh init` aan, dezelfde route als de service `db-init`: schema, migraties, stuurdata, use cases, beheerder, organisatie en rollen. Voorheen sloeg hij de migraties, `06`/`07` en de API-rollen over. `docker-entrypoint.sh` gebruikt daarvoor de projectmap `APP_DIR` (standaard `/app`).
+- **Eén configuratie voor scripts** ([#69](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/69)): losse scripts (ETL, tools) lezen de database alleen uit `.env` (`DATABASE_*`) via `omnitwin.scriptdb`; geen `config.ini`, `db.ini` of `DB_*`-variabelen meer. Een unittest bewaakt dat.
+
+### Verwijderd
+
+- **Kapotte en eenmalige scripts** ([#69](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/69)): ze lazen `config.ini` en/of bestanden uit `data/voorbeeld_gebiedsmonitor/` die niet in de repo staan, of waren eenmalige fixes. Geometrie, Kompas en waarden komen sinds 0.2.0 uit `db/` en de use cases. Weg: `ETL/Geometrie/import_geometrie.py`, `ETL/Kompas/import_kompas_hierarchie.py`, `ETL/Gemeente/update_gebieden_gemeente.py`, `ETL/RIVM/enrich_rivm_metadata.py` (en `rivm_wfs_capabilities.xml`), `ETL/Utils/enrich_metadata.py`, `ETL/Utils/enrich_indicator_metadata.py`, `ETL/CBS/verify_cbs_imports.py`, `ETL/BAG/fix_bag_scoring.sql`, `ETL/Energielabel/seed_ep_indicators.py`, `ETL/Energielabel/calculate_label_percentage.sql` (dubbel met `calc_energielabel_coverage.py`), `scripts/import_metingen.py`, `scripts/import_extra_indicatoren.py` en `scripts/run_bag_import.py` (kopie van `ETL/BAG/import_bag_indicators.py`). `ETL/run_etl.py` verliest de ongebruikte RIVM-metadatastap.
+
 ### Opgelost
 
+- **Beheer › AI-usecases past binnen het scherm** ([#339](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/339)): de logboek-tabel rekte de pagina op, waardoor kolommen rechts wegvielen. Tabellen scrollen nu binnen hun eigen kader en lange tekst (vraag, resultaat, toelichting) breekt af (WCAG 1.4.10 Reflow).
 - CI op een eigen runner: de integratiejob kiest per run een vrije poort en een unieke projectnaam en ruimt zijn images op; elke job geeft vóór de checkout de werkmap terug aan de runner-gebruiker, zodat root-bestanden van een vorige run de checkout niet blokkeren ([#375](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/375)).
+- Release-images: de publicatie naar Docker Hub draait op dezelfde runner als de CI (repo-variabele `CI_RUNNER`), zodat hij niet afhangt van GitHub-gehoste minuten.
 
 ## [0.5.1] - 2026-10-12
 

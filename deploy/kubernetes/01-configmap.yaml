@@ -1,0 +1,35 @@
+# Niet-geheime instellingen; zelfde namen als in .env.example (zie docs/9-beheer/installatie.md).
+# Geheimen (wachtwoorden, sleutels) staan in de Secret omnitwin-secrets: zie secret.example.yaml.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: omnitwin-config
+  namespace: d-omnitwin
+data:
+  # Database: de service postgres in deze namespace
+  DATABASE_HOST: postgres
+  DATABASE_PORT: "5432"
+  DATABASE_NAME: omnitwin_db
+  DATABASE_USER: omnitwin_user
+  # productie (standaard), test of demo. Productie weigert zwakke beheerderswachtwoorden.
+  OMNITWIN_OMGEVING: productie
+  # Adres zoals gebruikers het zien. ZELF INVULLEN (zelfde host als in 70-ingress.yaml).
+  OMNITWIN_BASE_URL: https://omnitwin.example.nl
+  # open of inloggen (alleen met Keycloak of een andere OIDC-provider)
+  VIEWER_TOEGANG: open
+  # false = product zonder data, klaar voor eigen data; true = demodata (downloadt open data bij de eerste start)
+  LOAD_SAMPLE_DATA: "false"
+  LOG_LEVEL: INFO
+  ADMIN_USER: admin
+  # Achter de TLS-ingress van het cluster: cookie altijd Secure
+  COOKIE_SECURE: "true"
+  # X-Forwarded-For alleen overnemen van het podnetwerk (Traefik en de ingress-controller)
+  TRUSTED_PROXIES: 10.0.0.0/8,172.16.0.0/12,192.168.0.0/16
+  # Mappen in de backend-image; de PVC's uit 20-opslag.yaml worden hier gemount
+  LEVERINGEN_DIR: /leveringen
+  DATA_CACHE: /data-cache
+  # AI (optioneel): een Ollama-server van de organisatie, of de LiteLLM-gateway (optioneel/llm-gateway)
+  OLLAMA_HOST: http://ollama.example.intern:11434
+  # Keycloak of een andere OIDC-provider (optioneel). Leeg = uit.
+  OIDC_ISSUER: ""
+  OIDC_INTERN_URL: ""

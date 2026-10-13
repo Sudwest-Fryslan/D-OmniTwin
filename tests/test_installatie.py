@@ -51,7 +51,14 @@ def test_entrypoint_markeert_pas_na_de_rollen():
     hoofd = sh[sh.index('if [ "$1" = "init" ]'):]
     assert hoofd.index("init_db") < hoofd.index("setup_api_rollen") < hoofd.index("markeer_voltooid")
     # schema in één transactie: een fout laat geen half schema achter
-    assert re.search(r"--single-transaction -f /app/db/schema/schema_latest\.sql", sh)
+    assert re.search(r'--single-transaction -f "\$APP_DIR/db/schema/schema_latest\.sql"', sh)
+
+
+def test_init_zonder_docker_volgt_dezelfde_route():
+    """Eén initialisatieroute (#69): init_database.sh roept docker-entrypoint.sh init aan."""
+    sh = (ROOT / "init_data/scripts/init_database.sh").read_text(encoding="utf-8")
+    assert re.search(r'docker-entrypoint\.sh" init', sh)
+    assert "schema_latest.sql" not in sh  # geen eigen, afwijkende stappen
 
 
 def test_uploads_in_volume():

@@ -1,0 +1,13 @@
+{
+  "usecase": "uitrol-kubernetes",
+  "tijdstip": "2026-10-13T08:21:01Z",
+  "versie": "0.5.1",
+  "commit": "8ee96fd",
+  "image_tag": "rooktest",
+  "zelf_gebouwd": true,
+  "kubernetes": "v1.32.2",
+  "stappen": ["manifests toepassen", "db-init", "deployments klaar", "endpoints", "upgrade", "endpoints na upgrade"],
+  "controles": [{"pad": "/health", "http": 200, "verwacht": 200},{"pad": "/api/geo/collections", "http": 200, "verwacht": 200},{"pad": "/api/data/", "http": 200, "verwacht": 200},{"pad": "/health", "http": 200, "verwacht": 200}],
+  "duur_seconden": 265,
+  "resultaat": "geslaagd"
+}

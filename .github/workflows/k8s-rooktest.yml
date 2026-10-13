@@ -1,0 +1,77 @@
+# Kubernetes-rooktest (#406): rolt deploy/kubernetes uit op een tijdelijk kind-cluster met de
+# images van deze code en controleert /health, de data- en de geo-API en een upgrade.
+# Zelfde script als lokaal: scripts/ci/k8s-rooktest.sh.
+#
+# Alleen bij wijzigingen die de uitrol raken, zodat niet elke PR langer duurt; en met de hand
+# (Actions > Kubernetes-rooktest > Run workflow).
+
+name: Kubernetes-rooktest
+
+on:
+  pull_request:
+    branches: [main, "release/**"]
+    paths:
+      - "deploy/kubernetes/**"
+      - "Dockerfile"
+      - "db.Dockerfile"
+      - "docker-entrypoint.sh"
+      - "db/**"
+      - "scripts/ci/k8s-rooktest.sh"
+      - ".github/workflows/k8s-rooktest.yml"
+  push:
+    branches: [main, "release/**"]
+    paths:
+      - "deploy/kubernetes/**"
+      - "Dockerfile"
+      - "db.Dockerfile"
+      - "docker-entrypoint.sh"
+      - "db/**"
+      - "scripts/ci/k8s-rooktest.sh"
+      - ".github/workflows/k8s-rooktest.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: k8s-rooktest-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  rooktest:
+    name: Kubernetes-rooktest (kind)
+    runs-on: ${{ fromJSON(vars.CI_RUNNER || '"ubuntu-latest"') }}
+    timeout-minutes: 60
+
+    steps:
+      - name: Werkmap vrijgeven (bestanden die containers als root schreven)
+        # Eigen runner: een vorige run kan root-bestanden achterlaten (tests/e2e/artifacts)
+        run: docker run --rm -v "$GITHUB_WORKSPACE":/w alpine chown -R "$(id -u):$(id -g)" /w
+
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Rooktest
+        # Eigen clusternaam per run: op een eigen runner kan er al iets draaien.
+        # Het script ruimt het cluster zelf op, ook bij een fout.
+        env:
+          K8S_ROOKTEST_BEWIJS: ${{ runner.temp }}/rooktest.json
+          # kind wordt hier gedownload als hij op de runner ontbreekt
+          TMPDIR: ${{ runner.temp }}
+        run: bash scripts/ci/k8s-rooktest.sh "omnitwin-rooktest-${{ github.run_id }}-${{ github.run_attempt }}"
+
+      - name: Cluster opruimen (vangnet)
+        if: always()
+        run: |
+          for k in "$RUNNER_TEMP"/kind-*; do
+            [ -x "$k" ] && "$k" delete cluster --name "omnitwin-rooktest-${{ github.run_id }}-${{ github.run_attempt }}" || true
+          done
+          command -v kind >/dev/null && kind delete cluster --name "omnitwin-rooktest-${{ github.run_id }}-${{ github.run_attempt }}" || true
+
+      - name: Bewaar het rooktestverslag
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: k8s-rooktest
+          path: ${{ runner.temp }}/rooktest.json
+          if-no-files-found: ignore

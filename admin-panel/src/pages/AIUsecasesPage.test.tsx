@@ -74,4 +74,22 @@ describe('AIUsecasesPage', () => {
         await userEvent.click(knop);
         await waitFor(() => expect(upload).toHaveBeenCalledWith('B', pdf, '0.4.0', '2027-06-30'));
     });
+
+    it('past binnen het scherm: tabellen scrollen in hun eigen kader en lange tekst breekt af (#339)', async () => {
+        vi.spyOn(aiVrijgaveAPI, 'logboek').mockImplementation(() => ok({ totaal: 1, regels: [{
+            id: 1, tijdstip: '2026-10-10T10:00:00Z', usecase: 'A', functie: 'chat', status: 'uitgevoerd',
+            taak: 'x'.repeat(400), bronnen: [], model: 'm', modelversie: null, resultaat: 'y'.repeat(400),
+            foutmelding: null, app_versie: '0.6.0', hash: 'h',
+        }] }));
+        render(<AIUsecasesPage />);
+        const kaarten = await screen.findByTestId('ai-kaarten');
+        // Zonder minmax(0, 1fr) wordt de rasterkolom zo breed als de breedste tabel
+        expect(kaarten.style.gridTemplateColumns).toBe('minmax(0, 1fr)');
+        const cel = await screen.findByText('x'.repeat(400));
+        expect(cel).toHaveClass('cel-lang');
+        expect(screen.getByText('y'.repeat(400))).toHaveClass('cel-lang');
+        for (const tabel of kaarten.querySelectorAll('table')) {
+            expect((tabel.parentElement as HTMLElement).style.overflowX).toBe('auto');
+        }
+    });
 });

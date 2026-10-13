@@ -189,7 +189,7 @@ D-OmniTwin is gestart door Gemeente Súdwest-Fryslân en wordt doorontwikkeld me
 | Gemeente Súdwest-Fryslân | Initiatiefnemer en inhoudelijk opdrachtgever |
 | Gemeente Leeuwarden | Pilotgemeente |
 | Gemeente Tytsjerksteradiel | Pilotgemeente |
-| Coöperatie DataFryslân | Dataspace-partner (FRLDS, iSHARE) |
+| Coöperatie DataFryslân | Dataspace-partner (FRLDS) |
 
 Interesse in samenwerking of een pilot? Maak een [issue op GitHub](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues) of mail naar [geo-groep@sudwestfryslan.nl](mailto:geo-groep@sudwestfryslan.nl). Zie ook het [communicatieplan](./docs/8-communicatie/communicatieplan_subsidie_2026.md).
 

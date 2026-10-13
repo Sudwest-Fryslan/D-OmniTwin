@@ -1,0 +1,7 @@
+# Namespace voor één D-OmniTwin-instantie (één organisatie, ADR 0007).
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: d-omnitwin
+  labels:
+    app.kubernetes.io/part-of: d-omnitwin

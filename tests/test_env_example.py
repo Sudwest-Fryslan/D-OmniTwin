@@ -24,6 +24,8 @@ NIET_VOOR_GEBRUIKER = {
     "POSTGRES_USER", "POSTGRES_DB", "POSTGRES_PASSWORD", "PYTHONDONTWRITEBYTECODE",
     # Gezet in de Dockerfile voor het offline embeddingmodel (#118), geen gebruikersinstelling
     "HF_HUB_OFFLINE", "TRANSFORMERS_OFFLINE", "HF_HUB_DISABLE_TELEMETRY", "EMBEDDING_MODEL_PAD",
+    # Projectmap voor docker-entrypoint.sh; alleen gezet door init_database.sh (zonder Docker, #69)
+    "APP_DIR",
 }
 
 PY_ENV = re.compile(r"""os\.(?:getenv|environ\.get)\(\s*['"]([A-Z][A-Z0-9_]+)['"]|os\.environ\[\s*['"]([A-Z][A-Z0-9_]+)['"]""")

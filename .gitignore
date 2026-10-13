@@ -37,6 +37,7 @@ usecases/*/bewijs/*
 !usecases/*/bewijs/README.md
 !usecases/*/bewijs/*.webp
 !usecases/*/bewijs/bewijs.json
+!usecases/uitrol-kubernetes/bewijs/rooktest.json
 
 # Exports (gegenereerde rapporten, JSON exports, Excel)
 exports/

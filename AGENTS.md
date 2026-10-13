@@ -67,6 +67,8 @@ python -m pytest tests/test_migraties.py  # single test file
 # integration/e2e: tegen een draaiende stack, zie tests/integration/test_sample_stack.py en tests/e2e/README.md
 # alles zoals de CI, voor één branch (verse stack, integratie, e2e, tijd per stap):
 scripts/ci/ci-lokaal.sh <branch> [projectnaam] [poort]
+# Kubernetes-manifests (deploy/kubernetes) uitrollen en testen op een tijdelijk kind-cluster (#406):
+scripts/ci/k8s-rooktest.sh [clusternaam]
 ```
 
 ### Admin Panel (React)
@@ -91,13 +93,13 @@ MSYS_NO_PATHCONV=1 docker run --rm -v "$PWD:/w" -w /w stoplight/spectral:6 lint 
 npx -y @redocly/cli@1 lint --extends minimal docs/api/laden/openapi.yaml   # OpenAPI-validatie, ook voorbeelden tegen schema's
 ```
 
-### Database initialisatie — Fryslân-dataset zonder Docker (verouderd)
+### Database initialisatie — één route (#69)
+Er is één initialisatieroute: `docker-entrypoint.sh init` (schema, migraties, stuurdata, use cases, beheerder, organisatie, rollen, embeddings). In Docker draait die als service `db-init`; zonder Docker roept `init_database.sh` precies dezelfde route aan, met de repo als projectmap (`APP_DIR`).
 ```bash
-python init_data/scripts/download_buurten_fryslan.py
-python init_data/scripts/download_indicatoren_fryslan.py
-bash init_data/scripts/init_database.sh   # master initiatie-script, zie init_data/README.md
+bash init_data/scripts/init_database.sh   # zonder Docker: PostgreSQL met PostGIS en pgvector, psql, Python-omgeving
+docker compose run --rm db-init python init_data/scripts/seed_fryslan.py --stap alle   # optioneel: volledige Fryslân-data
 ```
-Alleen voor een PostgreSQL zonder Docker (`docs/archief/GETTING_STARTED.md`). Loopt achter op `docker-entrypoint.sh`: geen `06`/`07`, geen migratierunner en geen `R__api_rollen.sql`. Werkt niet tegen de Docker-stack: `init_database.sh` verwacht een `.env` in de container en laadt het schema opnieuw. In Docker laad je de Fryslân-data na `db-init` met `docker compose exec backend python init_data/scripts/seed_fryslan.py --stap alle` (idempotent, exitcode 1 bij fouten; zie `docs/9-beheer/installatie.md`).
+Configuratie alleen uit `.env` met `DATABASE_*`. Losse scripts (ETL, tools) verbinden via `omnitwin.scriptdb.verbind()`; geen `config.ini`, `db.ini` of `DB_*`-variabelen.
 
 ### ETL — doorlopend nieuwe databronnen/gemeenten toevoegen (ná de initiële setup)
 ```bash
