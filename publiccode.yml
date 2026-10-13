@@ -18,7 +18,7 @@ name: D-OmniTwin
 url: "https://github.com/Sudwest-Fryslan/D-OmniTwin"
 # Tijdelijk beeldmerk, zie #83
 logo: static/images/beeldmerk-woordmerk.svg
-softwareVersion: "0.7.0"
+softwareVersion: "0.6.0"
 releaseDate: "2026-10-13"
 
 platforms:

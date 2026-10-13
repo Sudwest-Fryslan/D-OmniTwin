@@ -45,7 +45,7 @@ spec:
           type: RuntimeDefault
       containers:
         - name: web
-          image: sudwestfryslan/d-omnitwin-web:0.7.0
+          image: sudwestfryslan/d-omnitwin-web:0.6.0
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8080
