@@ -2984,19 +2984,19 @@ function openRapportTypeModal(gebiedId, baseUrl) {
             const woonplaatsen = state.selectedGroepen.map(g => encodeURIComponent(g.naam)).join(',');
             extraParams += `&woonplaatsen=${woonplaatsen}`;
         }
-        window.open(`${baseUrl}/rapport/deelgebied?gebieden=${ids.join(',')}&naam=${naam}${gemeente}${extraParams}`, '_blank');
+        window.open(`${baseUrl}/rapport/deelgebied?gebieden=${ids.join(',')}&naam=${naam}${gemeente}${extraParams}`, '_blank', 'noopener,noreferrer');
         sluit();
     });
     document.getElementById('rapport-modal-dossier').addEventListener('click', () => {
-        window.open(`${baseUrl}/rapport/${gebiedId}`, '_blank');
+        window.open(`${baseUrl}/rapport/${gebiedId}`, '_blank', 'noopener,noreferrer');
         sluit();
     });
     document.getElementById('rapport-modal-thema').addEventListener('click', () => {
-        window.open(`${baseUrl}/rapport/thema-analyse?gebieden=${gebiedId}`, '_blank');
+        window.open(`${baseUrl}/rapport/thema-analyse?gebieden=${gebiedId}`, '_blank', 'noopener,noreferrer');
         sluit();
     });
     document.getElementById('rapport-modal-benchmark').addEventListener('click', () => {
-        window.open(`${baseUrl}/rapport/benchmark?gebied_a=${gebiedId}`, '_blank');
+        window.open(`${baseUrl}/rapport/benchmark?gebied_a=${gebiedId}`, '_blank', 'noopener,noreferrer');
         sluit();
     });
     document.getElementById('rapport-modal-sluiten').addEventListener('click', sluit);
@@ -3055,12 +3055,12 @@ function openMultiSelectRapportModal(ids, baseUrl) {
             const woonplaatsen = state.selectedGroepen.map(g => encodeURIComponent(g.naam)).join(',');
             extraParams += `&woonplaatsen=${woonplaatsen}`;
         }
-        window.open(`${baseUrl}/rapport/deelgebied?gebieden=${gebiedenParam}&naam=${naam}${gemeente}${extraParams}`, '_blank');
+        window.open(`${baseUrl}/rapport/deelgebied?gebieden=${gebiedenParam}&naam=${naam}${gemeente}${extraParams}`, '_blank', 'noopener,noreferrer');
         sluit();
     });
     document.getElementById('rapport-modal-benchmark').addEventListener('click', () => {
         const [a, ...rest] = ids;
-        window.open(`${baseUrl}/rapport/benchmark?gebied_a=${a}&gebieden_b=${rest.join(',')}`, '_blank');
+        window.open(`${baseUrl}/rapport/benchmark?gebied_a=${a}&gebieden_b=${rest.join(',')}`, '_blank', 'noopener,noreferrer');
         sluit();
     });
     document.getElementById('rapport-modal-multi-gebied').addEventListener('click', () => {
@@ -3073,7 +3073,7 @@ function openMultiSelectRapportModal(ids, baseUrl) {
             const woonplaatsen = state.selectedGroepen.map(g => encodeURIComponent(g.naam)).join(',');
             extraParams += `&woonplaatsen=${woonplaatsen}`;
         }
-        window.open(`${baseUrl}/rapport/multi-gebied?gebieden=${gebiedenParam}&naam=${naam}${extraParams}`, '_blank');
+        window.open(`${baseUrl}/rapport/multi-gebied?gebieden=${gebiedenParam}&naam=${naam}${extraParams}`, '_blank', 'noopener,noreferrer');
         sluit();
     });
     document.getElementById('rapport-modal-thema-analyse').addEventListener('click', () => {
@@ -3085,7 +3085,7 @@ function openMultiSelectRapportModal(ids, baseUrl) {
             const woonplaatsen = state.selectedGroepen.map(g => encodeURIComponent(g.naam)).join(',');
             extraParams += `&woonplaatsen=${woonplaatsen}`;
         }
-        window.open(`${baseUrl}/rapport/thema-analyse?gebieden=${gebiedenParam}&naam=${naam}${extraParams}`, '_blank');
+        window.open(`${baseUrl}/rapport/thema-analyse?gebieden=${gebiedenParam}&naam=${naam}${extraParams}`, '_blank', 'noopener,noreferrer');
         sluit();
     });
     document.getElementById('rapport-modal-sluiten-multi').addEventListener('click', sluit);

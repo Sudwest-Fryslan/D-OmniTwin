@@ -343,16 +343,17 @@ class ChatPanel {
 
                 if (geselecteerd.length === 0) {
                     // Geen selectie: open lege benchmark pagina
-                    window.open('/rapport/benchmark', '_blank');
+                    window.open('/rapport/benchmark', '_blank', 'noopener,noreferrer');
                 } else if (geselecteerd.length === 1) {
                     // Eén gebied: open gebiedsdossier
-                    window.open(`/rapport/${geselecteerd[0]}`, '_blank');
+                    window.open(`/rapport/${geselecteerd[0]}`, '_blank', 'noopener,noreferrer');
                 } else {
                     // Multi-selectie: open benchmark met alle gebieden
                     const [a, ...rest] = geselecteerd;
                     window.open(
                         `/rapport/benchmark?gebied_a=${a}&gebieden_b=${rest.join(',')}`,
-                        '_blank'
+                        '_blank',
+                        'noopener,noreferrer'
                     );
                 }
                 break;
@@ -432,7 +433,7 @@ class ChatPanel {
                 break;
 
             case 'OPEN_WIKI':
-                window.open('/static/help.html', '_blank');
+                window.open('/static/help.html', '_blank', 'noopener,noreferrer');
                 break;
 
             default:

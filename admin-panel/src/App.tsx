@@ -401,7 +401,16 @@ const ReportLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => 
           <button
             type="button"
             className="btn btn-primary"
-            onClick={() => window.print()}
+            onClick={() => {
+              try {
+                if (window.opener) {
+                  window.opener = null;
+                }
+              } catch {
+                // negeer mogelijke restricties
+              }
+              window.print();
+            }}
             title="Afdrukken of opslaan als PDF"
           >
             Afdrukken

@@ -120,7 +120,7 @@ export const UsecaseKaart: React.FC<{ u: AIUsecase; bijgewerkt: (m: string) => v
                 <dt>Verklaring</dt>
                 <dd>
                     {u.verklaring_url
-                        ? <a href={u.verklaring_url} target="_blank" rel="noreferrer"><FileText size={14} /> {u.bestandsnaam}</a>
+                        ? <a href={u.verklaring_url} target="_blank" rel="noopener noreferrer"><FileText size={14} /> {u.bestandsnaam}</a>
                         : 'Geen verklaring geüpload'}
                 </dd>
                 <dt>Versie</dt><dd>{u.versie ?? '–'}</dd>
