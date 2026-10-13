@@ -14,6 +14,7 @@
   let jaar = null;
   let volgnummer = 0;
   let grafiek = null;
+  let uitgesteld = null; // gegevens voor een grafiek die wacht tot het paneel zichtbaar is (#419)
   let timer = null;
 
   const $ = (id) => document.getElementById(id);
@@ -42,6 +43,7 @@
     $('indicatorpaneel-leeg').hidden = false;
     $('indicatorpaneel-inhoud').hidden = true;
     if (grafiek) { grafiek.destroy(); grafiek = null; }
+    uitgesteld = null;
   }
 
   function bronTekst(b) {
@@ -106,6 +108,7 @@
     $('ip-onderdrukt').hidden = !melding.length;
 
     if (grafiek) { grafiek.destroy(); grafiek = null; }
+    uitgesteld = null;
     if (!gebieden.length || typeof Chart === 'undefined') {
       wrap.hidden = true;
       leeg.hidden = false;
@@ -114,6 +117,9 @@
     wrap.hidden = false;
     leeg.hidden = true;
     wrap.style.height = `${Math.max(140, Math.min(gebieden.length, 40) * 30 + 90)}px`;
+    // Paneel dicht (display: none): Chart.js zou 0×0 meten en herstelt dat niet altijd.
+    // Pas tekenen als het paneel opengaat (#419).
+    if (!wrap.clientWidth) { uitgesteld = data; return; }
 
     const eenheid = data.indicator.eenheid || '';
     const gem = {};
@@ -237,6 +243,10 @@
     // Thema gewisseld: grafiek opnieuw met de nieuwe kleuren
     new MutationObserver(() => { if (grafiek) planLaden(); })
       .observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+    // Paneel geopend: een uitgestelde grafiek nu tekenen (#419)
+    new MutationObserver(() => {
+      if (uitgesteld && $('panel-indicator').classList.contains('active')) tekenGrafiek(uitgesteld);
+    }).observe($('panel-indicator'), { attributes: true, attributeFilter: ['class'] });
     window.indicatorpaneel = { laad };
   }
 
