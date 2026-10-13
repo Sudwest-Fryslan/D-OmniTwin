@@ -1293,6 +1293,20 @@ async function loadBag3DBuildings() {
         }
 
         const data = await res.json();
+
+        // Geen panden gevonden in het gebied (#410: graceful degradation voor bijv. buitengebieden)
+        if (!data.features || data.features.length === 0) {
+            state.bag3dData = null;
+            state.show3DBuildings = false;
+            if (state.currentData) {
+                displayOnMap(state.currentData);
+            }
+            updateSelectionUI();
+            const melding = data.metadata?.melding || 'Geen 3D-panden gevonden in het geselecteerde gebied.';
+            showInfo(melding);
+            return;
+        }
+
         state.bag3dData = data;
         state.show3DBuildings = true;
 
@@ -3961,6 +3975,23 @@ function showError(message) {
     `;
     document.body.appendChild(toast);
     // Auto-verwijder na 6 seconden
+    setTimeout(() => {
+        if (toast.parentElement) {
+            toast.classList.add('fade-out');
+            setTimeout(() => toast.remove(), 300);
+        }
+    }, 6000);
+}
+
+function showInfo(message) {
+    const toast = document.createElement('div');
+    toast.className = 'info-toast';
+    toast.innerHTML = `
+        <span class="info-toast-icon">ℹ️</span>
+        <span class="info-toast-msg">${escapeHtml(message)}</span>
+        <button class="info-toast-close" onclick="this.parentElement.remove()">✕</button>
+    `;
+    document.body.appendChild(toast);
     setTimeout(() => {
         if (toast.parentElement) {
             toast.classList.add('fade-out');
