@@ -20,7 +20,7 @@ try:
     from cbs_data_fetcher import CBSDataFetcher
 except ImportError as e:
     print(f"❌ Critical: Could not import CBSDataFetcher: {e}")
-    print(f"   Path: {etl_scripts_path}")
+    print(f"   Path: {os.path.dirname(os.path.abspath(__file__))}")
     sys.exit(1)
 
 def get_db_connection():

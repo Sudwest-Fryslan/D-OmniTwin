@@ -1,0 +1,10 @@
+# pre-commit (#129): eenmalig `pip install pre-commit && pre-commit install`.
+# Versie van ruff gelijk aan de CI-job "Lint (ruff)" en aan AGENTS.md.
+repos:
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.17.0
+    hooks:
+      - id: ruff-check
+      # Aan na stap 2 van #129 (ruff format op de hele codebase); nu zou hij elk
+      # aangeraakt bestand helemaal herformatteren.
+      # - id: ruff-format
