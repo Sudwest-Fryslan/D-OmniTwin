@@ -26,6 +26,7 @@ Eerdere wijzigingen, van vóór dit bestand, zijn terug te vinden in de git-hist
 
 - **Beheer › AI-usecases past binnen het scherm** ([#339](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/339)): de logboek-tabel rekte de pagina op, waardoor kolommen rechts wegvielen. Tabellen scrollen nu binnen hun eigen kader en lange tekst (vraag, resultaat, toelichting) breekt af (WCAG 1.4.10 Reflow).
 - CI op een eigen runner: de integratiejob kiest per run een vrije poort en een unieke projectnaam en ruimt zijn images op; elke job geeft vóór de checkout de werkmap terug aan de runner-gebruiker, zodat root-bestanden van een vorige run de checkout niet blokkeren ([#375](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/375)).
+- Release-images: de publicatie naar Docker Hub draait op dezelfde runner als de CI (repo-variabele `CI_RUNNER`), zodat hij niet afhangt van GitHub-gehoste minuten.
 
 ## [0.5.1] - 2026-10-12
 
