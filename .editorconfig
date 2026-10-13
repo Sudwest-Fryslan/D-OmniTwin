@@ -1,0 +1,30 @@
+# Basisopmaak voor editors (#129). Python-opmaak zelf: ruff (pyproject.toml).
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+indent_style = space
+indent_size = 4
+
+[*.{yml,yaml,json}]
+indent_size = 2
+
+# Admin-panel (React/TypeScript): 2 spaties
+[admin-panel/**.{ts,tsx,js,jsx,css,html}]
+indent_size = 2
+
+# Markdown: twee spaties aan het eind is een harde regelafbreking
+[*.md]
+trim_trailing_whitespace = false
+
+# Data en zelf-gehoste bibliotheken niet aanpassen (zie .gitattributes)
+[{*.csv,*.txt,static/vendor/**,static/admin-panel/**}]
+charset = unset
+end_of_line = unset
+insert_final_newline = unset
+trim_trailing_whitespace = unset
+indent_style = unset
+indent_size = unset
