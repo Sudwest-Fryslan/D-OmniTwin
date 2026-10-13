@@ -1,0 +1,28 @@
+# Toegang van buiten: de ingress-controller van het cluster stuurt alles naar Traefik (60-traefik.yaml).
+# ZELF INVULLEN: host, ingressClassName en TLS (secret of cert-manager-annotatie van het cluster).
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: d-omnitwin
+  namespace: d-omnitwin
+  labels:
+    app.kubernetes.io/part-of: d-omnitwin
+  annotations:
+    # Uploads en leveringen tot 200 MB (alleen voor ingress-nginx; andere controllers: eigen instelling)
+    nginx.ingress.kubernetes.io/proxy-body-size: 200m
+spec:
+  # ingressClassName: nginx        # ZELF INVULLEN: de IngressClass van het cluster
+  tls:
+    - hosts: [omnitwin.example.nl]
+      secretName: d-omnitwin-tls
+  rules:
+    - host: omnitwin.example.nl
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: traefik
+                port:
+                  number: 80

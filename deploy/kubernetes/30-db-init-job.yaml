@@ -1,0 +1,83 @@
+# Eenmalige database-initialisatie en migraties (zelfde als de db-init-service in docker-compose.yml).
+# Lege database: schema, stuurdata, (demo)data en beheerder. Bestaande database: alleen migraties
+# en rollen bijwerken. Daarna stopt de Job.
+#
+# Upgrade: een Job is niet te wijzigen. Daarom heeft hij de versie in de naam: bij een nieuwe
+# versie pas je de naam én de image-tag aan (db-init-0-5-1 -> db-init-0-6-0); de oude Job mag weg.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: db-init-0-5-1
+  namespace: d-omnitwin
+  labels:
+    app.kubernetes.io/name: db-init
+    app.kubernetes.io/part-of: d-omnitwin
+spec:
+  backoffLimit: 2
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: db-init
+        app.kubernetes.io/part-of: d-omnitwin
+    spec:
+      restartPolicy: OnFailure
+      # Gebruiker app (1000) uit de backend-image
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        seccompProfile:
+          type: RuntimeDefault
+      initContainers:
+        # Wachten tot PostgreSQL verbindingen aanneemt
+        - name: wacht-op-postgres
+          image: sudwestfryslan/d-omnitwin:0.5.1
+          imagePullPolicy: IfNotPresent
+          command: ["sh", "-c", "until pg_isready -h \"$DATABASE_HOST\" -p \"$DATABASE_PORT\"; do sleep 2; done"]
+          envFrom:
+            - configMapRef: { name: omnitwin-config }
+          resources:
+            requests: { cpu: 10m, memory: 32Mi }
+            limits: { cpu: 100m, memory: 64Mi }
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities: { drop: ["ALL"] }
+        # Meegeleverde kaartlagen uit de image naar een nieuw uploads-volume (Docker doet dat vanzelf)
+        - name: vul-uploads
+          image: sudwestfryslan/d-omnitwin:0.5.1
+          imagePullPolicy: IfNotPresent
+          command: ["sh", "-c", "cp -rn /app/data-upload/. /uploads/"]
+          resources:
+            requests: { cpu: 10m, memory: 32Mi }
+            limits: { cpu: 100m, memory: 64Mi }
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities: { drop: ["ALL"] }
+          volumeMounts:
+            - { name: uploads, mountPath: /uploads }
+      containers:
+        - name: db-init
+          image: sudwestfryslan/d-omnitwin:0.5.1
+          imagePullPolicy: IfNotPresent
+          args: ["init"]
+          envFrom:
+            - configMapRef: { name: omnitwin-config }
+            - secretRef: { name: omnitwin-secrets }
+          resources:
+            requests: { cpu: 250m, memory: 1Gi }
+            limits: { cpu: "2", memory: 3Gi }
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities: { drop: ["ALL"] }
+          volumeMounts:
+            - { name: uploads, mountPath: /app/data-upload }
+            - { name: leveringen, mountPath: /leveringen }
+            - { name: bron-cache, mountPath: /data-cache }
+      volumes:
+        - name: uploads
+          persistentVolumeClaim: { claimName: uploads }
+        - name: leveringen
+          persistentVolumeClaim: { claimName: leveringen }
+        - name: bron-cache
+          persistentVolumeClaim: { claimName: bron-cache }

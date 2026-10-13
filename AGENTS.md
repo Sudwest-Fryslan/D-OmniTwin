@@ -67,6 +67,8 @@ python -m pytest tests/test_migraties.py  # single test file
 # integration/e2e: tegen een draaiende stack, zie tests/integration/test_sample_stack.py en tests/e2e/README.md
 # alles zoals de CI, voor één branch (verse stack, integratie, e2e, tijd per stap):
 scripts/ci/ci-lokaal.sh <branch> [projectnaam] [poort]
+# Kubernetes-manifests (deploy/kubernetes) uitrollen en testen op een tijdelijk kind-cluster (#406):
+scripts/ci/k8s-rooktest.sh [clusternaam]
 ```
 
 ### Admin Panel (React)

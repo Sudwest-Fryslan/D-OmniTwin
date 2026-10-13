@@ -6,7 +6,7 @@
 #
 # Jobs: unittests, Docker-build, integratie- en e2e-tests tegen een verse
 # compose-stack (#62), admin-panel (typecheck, lint, test, build; #202) en
-# validatie van publiccode.yml (#56).
+# validatie van publiccode.yml (#56) en schemacheck van de Kubernetes-manifests (#406).
 #
 # Nog niet: Docker Hub push (semver-tags, #27).
 #
@@ -307,3 +307,28 @@ jobs:
 
       - name: Valideer publiccode.yml
         run: docker run --rm -v "$PWD":/data italia/publiccode-parser-go:v5.4.3 -no-network /data/publiccode.yml
+
+  # ──────────────────────────────────────────────
+  # Job 6: Kubernetes-manifests valideren tegen de schema's (#406)
+  # De echte uitrol op een kind-cluster: workflow k8s-rooktest.yml
+  # ──────────────────────────────────────────────
+  kubernetes-manifests:
+    name: Kubernetes-manifests (kubeconform)
+    runs-on: ${{ fromJSON(vars.CI_RUNNER || '"ubuntu-latest"') }}
+
+    steps:
+      - name: Werkmap vrijgeven (bestanden die containers als root schreven)
+        # Eigen runner: een vorige run kan root-bestanden achterlaten (tests/e2e/artifacts)
+        run: docker run --rm -v "$GITHUB_WORKSPACE":/w alpine chown -R "$(id -u):$(id -g)" /w
+
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Valideer deploy/kubernetes
+        run: >-
+          docker run --rm -v "$PWD/deploy/kubernetes":/m:ro ghcr.io/yannh/kubeconform:v0.7.0
+          -strict -summary
+          -ignore-filename-pattern 'kustomization\.yaml'
+          -ignore-filename-pattern 'fleet\.yaml'
+          -ignore-filename-pattern '\.md$'
+          /m

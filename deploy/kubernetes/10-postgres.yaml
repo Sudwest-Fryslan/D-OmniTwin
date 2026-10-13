@@ -1,0 +1,100 @@
+# PostgreSQL 15 + PostGIS + pgvector (image sudwestfryslan/d-omnitwin-db, zie db.Dockerfile).
+# Eén replica met eigen opslag (StatefulSet). Back-up: zie db/README.md (pg_dump in de pod).
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres
+  namespace: d-omnitwin
+  labels:
+    app.kubernetes.io/name: postgres
+    app.kubernetes.io/part-of: d-omnitwin
+spec:
+  selector:
+    app.kubernetes.io/name: postgres
+  ports:
+    - name: postgres
+      port: 5432
+      targetPort: 5432
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: postgres
+  namespace: d-omnitwin
+  labels:
+    app.kubernetes.io/name: postgres
+    app.kubernetes.io/part-of: d-omnitwin
+spec:
+  serviceName: postgres
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: postgres
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: postgres
+        app.kubernetes.io/part-of: d-omnitwin
+    spec:
+      # Gebruiker postgres (999) uit de officiële image; fsGroup maakt de PVC schrijfbaar
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 999
+        runAsGroup: 999
+        fsGroup: 999
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: postgres
+          image: sudwestfryslan/d-omnitwin-db:0.5.1
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: POSTGRES_USER
+              valueFrom:
+                configMapKeyRef: { name: omnitwin-config, key: DATABASE_USER }
+            - name: POSTGRES_DB
+              valueFrom:
+                configMapKeyRef: { name: omnitwin-config, key: DATABASE_NAME }
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef: { name: omnitwin-secrets, key: DATABASE_PASSWORD }
+            # Submap: de root van een volume bevat soms lost+found
+            - name: PGDATA
+              value: /var/lib/postgresql/data/pgdata
+          ports:
+            - containerPort: 5432
+          readinessProbe:
+            exec:
+              command: ["sh", "-c", "pg_isready -h localhost -U \"$POSTGRES_USER\" -d \"$POSTGRES_DB\""]
+            periodSeconds: 5
+            timeoutSeconds: 5
+          livenessProbe:
+            exec:
+              command: ["sh", "-c", "pg_isready -h localhost -U \"$POSTGRES_USER\" -d \"$POSTGRES_DB\""]
+            initialDelaySeconds: 30
+            periodSeconds: 20
+            timeoutSeconds: 5
+          resources:
+            requests: { cpu: 250m, memory: 512Mi }
+            limits: { cpu: "2", memory: 2Gi }
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities: { drop: ["ALL"] }
+          volumeMounts:
+            - name: pgdata
+              mountPath: /var/lib/postgresql/data
+            # Gedeeld geheugen voor PostgreSQL (standaard 64 MB in een container)
+            - name: dshm
+              mountPath: /dev/shm
+      volumes:
+        - name: dshm
+          emptyDir: { medium: Memory, sizeLimit: 256Mi }
+  # storageClassName: weglaten = standaard StorageClass van het cluster. ZELF KIEZEN indien nodig.
+  volumeClaimTemplates:
+    - metadata:
+        name: pgdata
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 20Gi

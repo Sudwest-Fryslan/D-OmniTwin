@@ -1,0 +1,81 @@
+# Optioneel: LiteLLM-gateway (ADR 0001), alleen intern bereikbaar. De backend gebruikt
+# http://llm-gateway:4000 met llm_config.api_type=openai (Beheer > AI Configuratie).
+# Vooraf (eenmalig, configuratie uit de repo):
+#   kubectl -n d-omnitwin create configmap litellm-config --from-file=config.yaml=deploy/litellm/config.yaml
+# In omnitwin-secrets: LITELLM_MASTER_KEY en LLM_API_KEY (zelfde waarde, begint met sk-).
+apiVersion: v1
+kind: Service
+metadata:
+  name: llm-gateway
+  namespace: d-omnitwin
+  labels:
+    app.kubernetes.io/name: llm-gateway
+    app.kubernetes.io/part-of: d-omnitwin
+spec:
+  selector:
+    app.kubernetes.io/name: llm-gateway
+  ports:
+    - name: http
+      port: 4000
+      targetPort: 4000
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: llm-gateway
+  namespace: d-omnitwin
+  labels:
+    app.kubernetes.io/name: llm-gateway
+    app.kubernetes.io/part-of: d-omnitwin
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: llm-gateway
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: llm-gateway
+        app.kubernetes.io/part-of: d-omnitwin
+    spec:
+      securityContext:
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: llm-gateway
+          image: ghcr.io/berriai/litellm:v1.105.0
+          imagePullPolicy: IfNotPresent
+          args: ["--config", "/app/config.yaml", "--port", "4000"]
+          env:
+            - name: LITELLM_MASTER_KEY
+              valueFrom:
+                secretKeyRef: { name: omnitwin-secrets, key: LITELLM_MASTER_KEY }
+            - name: OLLAMA_HOST
+              valueFrom:
+                configMapKeyRef: { name: omnitwin-config, key: OLLAMA_HOST }
+            # Model achter de standaardalias (ollama_chat/<model>)
+            - { name: LITELLM_DEFAULT_MODEL, value: "ollama_chat/qwen3:30b" }
+          ports:
+            - containerPort: 4000
+          readinessProbe:
+            httpGet: { path: /health/liveliness, port: 4000 }
+            periodSeconds: 15
+          livenessProbe:
+            httpGet: { path: /health/liveliness, port: 4000 }
+            initialDelaySeconds: 60
+            periodSeconds: 20
+          resources:
+            requests: { cpu: 100m, memory: 512Mi }
+            limits: { cpu: "1", memory: 1Gi }
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities: { drop: ["ALL"] }
+          volumeMounts:
+            - name: config
+              mountPath: /app/config.yaml
+              subPath: config.yaml
+              readOnly: true
+      volumes:
+        - name: config
+          configMap:
+            name: litellm-config

@@ -1,0 +1,4 @@
+# Rancher Fleet: rol deze map uit in namespace d-omnitwin.
+# In de interne configuratierepo van de organisatie verwijst een GitRepo naar deze map (of naar een
+# kopie met eigen host, ConfigMap-waarden en een versleutelde Secret). Zie README.md.
+defaultNamespace: d-omnitwin

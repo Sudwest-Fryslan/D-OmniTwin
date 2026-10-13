@@ -8,6 +8,10 @@ Eerdere wijzigingen, van vóór dit bestand, zijn terug te vinden in de git-hist
 
 ## [Unreleased]
 
+### Toegevoegd
+
+- **Uitrollen op Kubernetes** ([#406](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/406)): losse, leesbare manifests in `deploy/kubernetes/` (PostgreSQL, db-init als Job, backend, PostgREST, pg_featureserv, Traefik als interne gateway, Ingress; Keycloak en de LiteLLM-gateway optioneel) met de images van Docker Hub, uit te rollen met Rancher Fleet of `kubectl apply -k`. De CI valideert de manifests (kubeconform); de workflow *Kubernetes-rooktest* (`scripts/ci/k8s-rooktest.sh`) rolt ze uit op een kind-cluster met de images van de PR, controleert `/health`, de data- en de geo-API en een upgrade. Use case `uitrol-kubernetes`.
+
 ### Gewijzigd
 
 - **Dataspace-protocol vastgesteld** ([#32](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/32)): DSP (DCAT/ODRL) over HTTPS, geen iSHARE; FSC pas bij concrete behoefte. Zie ADR 0012.
