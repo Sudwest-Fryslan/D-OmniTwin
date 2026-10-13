@@ -1,0 +1,103 @@
+# Backend (FastAPI): website, beheeromgeving, assistent, laad-API. Initialiseert zelf niets;
+# start pas als db-init de eerste installatie heeft afgerond (tabel installatie_status).
+apiVersion: v1
+kind: Service
+metadata:
+  name: backend
+  namespace: d-omnitwin
+  labels:
+    app.kubernetes.io/name: backend
+    app.kubernetes.io/part-of: d-omnitwin
+spec:
+  selector:
+    app.kubernetes.io/name: backend
+  ports:
+    - name: http
+      port: 8000
+      targetPort: 8000
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend
+  namespace: d-omnitwin
+  labels:
+    app.kubernetes.io/name: backend
+    app.kubernetes.io/part-of: d-omnitwin
+spec:
+  # Eén replica zolang de volumes ReadWriteOnce zijn (zie 20-opslag.yaml)
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: backend
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: backend
+        app.kubernetes.io/part-of: d-omnitwin
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        seccompProfile:
+          type: RuntimeDefault
+      initContainers:
+        # Wachten tot db-init de eerste installatie heeft afgerond
+        - name: wacht-op-db-init
+          image: sudwestfryslan/d-omnitwin:0.5.1
+          imagePullPolicy: IfNotPresent
+          command:
+            - sh
+            - -c
+            - >-
+              until [ "$(PGPASSWORD="$DATABASE_PASSWORD" psql -h "$DATABASE_HOST" -p "$DATABASE_PORT"
+              -U "$DATABASE_USER" -d "$DATABASE_NAME" -tAc
+              "SELECT count(*) FROM public.installatie_status" 2>/dev/null)" = "1" ];
+              do echo "wachten op db-init"; sleep 5; done
+          envFrom:
+            - configMapRef: { name: omnitwin-config }
+            - secretRef: { name: omnitwin-secrets }
+          resources:
+            requests: { cpu: 10m, memory: 32Mi }
+            limits: { cpu: 100m, memory: 64Mi }
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities: { drop: ["ALL"] }
+      containers:
+        - name: backend
+          image: sudwestfryslan/d-omnitwin:0.5.1
+          imagePullPolicy: IfNotPresent
+          envFrom:
+            - configMapRef: { name: omnitwin-config }
+            - secretRef: { name: omnitwin-secrets }
+          ports:
+            - containerPort: 8000
+          readinessProbe:
+            httpGet: { path: /health, port: 8000 }
+            periodSeconds: 10
+            timeoutSeconds: 5
+          livenessProbe:
+            httpGet: { path: /health, port: 8000 }
+            initialDelaySeconds: 60
+            periodSeconds: 20
+            timeoutSeconds: 5
+            failureThreshold: 5
+          resources:
+            # Het embeddingmodel voor AI-zoeken zit in het geheugen
+            requests: { cpu: 250m, memory: 1Gi }
+            limits: { cpu: "2", memory: 3Gi }
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities: { drop: ["ALL"] }
+          volumeMounts:
+            - { name: uploads, mountPath: /app/data-upload }
+            - { name: leveringen, mountPath: /leveringen }
+      volumes:
+        - name: uploads
+          persistentVolumeClaim: { claimName: uploads }
+        - name: leveringen
+          persistentVolumeClaim: { claimName: leveringen }

@@ -1,0 +1,101 @@
+# pg_featureserv: geo-API (OGC API Features) op /api/geo en /api/geo/v1 (via Traefik).
+# Rol featureserv, alleen-lezen: ziet alleen de views en postgisftw-functies voor de kaart.
+apiVersion: v1
+kind: Service
+metadata:
+  name: pg-featureserv
+  namespace: d-omnitwin
+  labels:
+    app.kubernetes.io/name: pg-featureserv
+    app.kubernetes.io/part-of: d-omnitwin
+spec:
+  selector:
+    app.kubernetes.io/name: pg-featureserv
+  ports:
+    - name: http
+      port: 9000
+      targetPort: 9000
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pg-featureserv
+  namespace: d-omnitwin
+  labels:
+    app.kubernetes.io/name: pg-featureserv
+    app.kubernetes.io/part-of: d-omnitwin
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: pg-featureserv
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: pg-featureserv
+        app.kubernetes.io/part-of: d-omnitwin
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
+      initContainers:
+        # Wachten tot db-init de rollen authenticator en featureserv heeft aangemaakt
+        - name: wacht-op-db-init
+          image: sudwestfryslan/d-omnitwin:0.5.1
+          imagePullPolicy: IfNotPresent
+          command:
+            - sh
+            - -c
+            - >-
+              until [ "$(PGPASSWORD="$DATABASE_PASSWORD" psql -h "$DATABASE_HOST" -p "$DATABASE_PORT"
+              -U "$DATABASE_USER" -d "$DATABASE_NAME" -tAc
+              "SELECT count(*) FROM public.installatie_status" 2>/dev/null)" = "1" ];
+              do echo "wachten op db-init"; sleep 5; done
+          envFrom:
+            - configMapRef: { name: omnitwin-config }
+            - secretRef: { name: omnitwin-secrets }
+          resources:
+            requests: { cpu: 10m, memory: 32Mi }
+            limits: { cpu: 100m, memory: 64Mi }
+          securityContext:
+            runAsUser: 1000
+            allowPrivilegeEscalation: false
+            capabilities: { drop: ["ALL"] }
+      containers:
+        - name: pg-featureserv
+          # Geen semver-tags op Docker Hub; datumtag van de huidige release
+          image: pramsey/pg_featureserv:20250917
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: DATABASE_PASSWORD
+              valueFrom:
+                secretKeyRef: { name: omnitwin-secrets, key: DATABASE_PASSWORD }
+            - name: DATABASE_NAME
+              valueFrom:
+                configMapKeyRef: { name: omnitwin-config, key: DATABASE_NAME }
+            - name: DATABASE_URL
+              value: postgres://featureserv:$(DATABASE_PASSWORD)@postgres:5432/$(DATABASE_NAME)
+            - name: PGFS_SERVER_BASEPATH
+              value: /api/geo
+            - name: PGFS_PAGING_LIMITMAX
+              value: "10000"
+            - name: PGFS_PAGING_LIMITDEFAULT
+              value: "10000"
+          ports:
+            - containerPort: 9000
+          readinessProbe:
+            tcpSocket: { port: 9000 }
+            periodSeconds: 10
+          livenessProbe:
+            tcpSocket: { port: 9000 }
+            initialDelaySeconds: 20
+            periodSeconds: 20
+          resources:
+            requests: { cpu: 50m, memory: 64Mi }
+            limits: { cpu: "1", memory: 256Mi }
+          securityContext:
+            runAsUser: 65534
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities: { drop: ["ALL"] }

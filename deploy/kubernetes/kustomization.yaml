@@ -1,0 +1,16 @@
+# Lijst van wat er wordt uitgerold (Fleet en `kubectl apply -k` lezen dit bestand).
+# Geen patches of generatoren: wat hier staat, is wat er in de bestanden staat.
+# Niet in de lijst: secret.example.yaml (voorbeeld) en optioneel/ (Keycloak, LiteLLM-gateway).
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - 00-namespace.yaml
+  - 01-configmap.yaml
+  - 10-postgres.yaml
+  - 20-opslag.yaml
+  - 30-db-init-job.yaml
+  - 40-backend.yaml
+  - 50-postgrest.yaml
+  - 51-pg-featureserv.yaml
+  - 60-traefik.yaml
+  - 70-ingress.yaml

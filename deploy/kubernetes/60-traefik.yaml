@@ -1,0 +1,261 @@
+# Traefik als interne gateway van de instantie: dezelfde routes, headers, toegangscontrole
+# (forwardAuth naar de backend) en limieten als in docker-compose.yml. De ingress-controller van
+# het cluster stuurt alles naar deze service (70-ingress.yaml); TLS doet de ingress.
+#
+# Waarom een eigen Traefik en geen losse Ingress-regels: forwardAuth met het doorgeven van
+# X-Omnitwin-Toegang, prefix strippen en rate limiting per token zijn niet standaard in Ingress.
+# Zo werkt het op elke ingress-controller hetzelfde.
+#
+# middlewares.yml is een kopie van deploy/traefik/dynamic.yml (een test bewaakt dat ze gelijk blijven).
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: traefik-dynamisch
+  namespace: d-omnitwin
+data:
+  routes.yml: |
+    http:
+      routers:
+        # Alles wat niet hieronder valt: de backend (website, beheer, assistent)
+        backend:
+          rule: "PathPrefix(`/`)"
+          entryPoints: [web]
+          middlewares: [security-headers]
+          service: backend
+        # Laad-API (/api/laden/v1): body hoogstens 200 MB
+        laden:
+          rule: "PathPrefix(`/api/laden/v1`)"
+          entryPoints: [web]
+          middlewares: [laden-body, security-headers]
+          service: backend
+        # Leveren (POST): hoogstens 10 per minuut per token
+        laden-leveren:
+          rule: "PathPrefix(`/api/laden/v1`) && Method(`POST`)"
+          entryPoints: [web]
+          middlewares: [laden-tempo, laden-body, security-headers]
+          service: backend
+        # Compatibiliteitsingang SWF-monitor (FME): hoogstens 120 per minuut per token
+        laden-compat:
+          rule: "PathPrefix(`/api/laden/v1/compat/`) && Method(`POST`)"
+          entryPoints: [web]
+          middlewares: [laden-compat-tempo, laden-body, security-headers]
+          service: backend
+        # Data-API (PostgREST): eerst toegang via de backend, dan het voorvoegsel eraf
+        postgrest:
+          rule: "PathPrefix(`/api/data`)"
+          entryPoints: [web]
+          middlewares: [security-headers, viewer-toegang, postgrest-strip]
+          service: postgrest
+        postgrest-v1:
+          rule: "PathPrefix(`/api/data/v1`)"
+          entryPoints: [web]
+          middlewares: [security-headers, viewer-toegang, postgrest-v1-strip, postgrest-anoniem]
+          service: postgrest
+        # Geo-API (pg_featureserv)
+        pg_featureserv:
+          rule: "PathPrefix(`/api/geo`)"
+          entryPoints: [web]
+          middlewares: [security-headers, viewer-toegang]
+          service: pg_featureserv
+        pg_featureserv-v1:
+          rule: "PathPrefix(`/api/geo/v1`)"
+          entryPoints: [web]
+          middlewares: [security-headers, viewer-toegang, pg_featureserv-v1]
+          service: pg_featureserv
+
+      middlewares:
+        laden-body:
+          buffering:
+            maxRequestBodyBytes: 209715200
+            memRequestBodyBytes: 2097152
+        laden-tempo:
+          rateLimit:
+            average: 10
+            burst: 10
+            period: 1m
+            sourceCriterion:
+              requestHeaderName: Authorization
+        laden-compat-tempo:
+          rateLimit:
+            average: 120
+            burst: 120
+            period: 1m
+            sourceCriterion:
+              requestHeaderName: Authorization
+        postgrest-strip:
+          stripPrefix:
+            prefixes: ["/api/data"]
+        postgrest-v1-strip:
+          stripPrefix:
+            prefixes: ["/api/data/v1"]
+        # PostgREST valideert (nog) geen tokens: geen Authorization-header doorsturen
+        postgrest-anoniem:
+          headers:
+            customRequestHeaders:
+              Authorization: ""
+        pg_featureserv-v1:
+          replacePathRegex:
+            regex: "^/api/geo/v1(/.*)?$"
+            replacement: "/api/geo$1"
+
+      services:
+        backend:
+          loadBalancer:
+            servers: [{ url: "http://backend:8000" }]
+        postgrest:
+          loadBalancer:
+            servers: [{ url: "http://postgrest:3000" }]
+        pg_featureserv:
+          loadBalancer:
+            servers: [{ url: "http://pg-featureserv:9000" }]
+
+  middlewares.yml: |
+    http:
+      middlewares:
+        security-headers:
+          headers:
+            contentTypeNosniff: true
+            referrerPolicy: "strict-origin-when-cross-origin"
+            frameDeny: true
+            customResponseHeaders:
+              # Verouderd XSS-filter van oude browsers uitzetten (OWASP-advies)
+              X-XSS-Protection: "0"
+            permissionsPolicy: "camera=(), microphone=(), geolocation=(), payment=(), usb=()"
+            contentSecurityPolicy: >-
+              default-src 'self';
+              script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval';
+              style-src 'self' 'unsafe-inline';
+              font-src 'self' data:;
+              img-src 'self' data: blob: https://api.pdok.nl https://service.pdok.nl;
+              connect-src 'self' https://api.pdok.nl https://service.pdok.nl;
+              worker-src 'self' blob:;
+              child-src 'self' blob:;
+              frame-src 'self';
+              frame-ancestors 'none';
+              object-src 'none';
+              base-uri 'self';
+              form-action 'self'
+            # HSTS: Traefik stuurt deze header alleen op HTTPS-verbindingen die
+            # Traefik zelf afhandelt (zie deploy/traefik/tls.example.yml). Op de
+            # standaardinstallatie (HTTP) verschijnt hij dus niet. Staat er een
+            # TLS-proxy van de organisatie vóór Traefik, dan zet die proxy HSTS.
+            stsSeconds: 31536000
+            stsIncludeSubdomains: false
+
+        # Toegang tot de data-API's (#266, ADR 0009). Traefik stuurt de headers van het verzoek (cookie,
+        # Authorization) naar de backend; 2xx = door, anders gaat het antwoord van de backend (401/403,
+        # Problem Details) naar de browser. De backend beslist op VIEWER_TOEGANG (open = altijd 204), zodat
+        # er maar één schakelaar is. `backend` is de servicenaam in het compose-netwerk van het project.
+        # Staat de backend niet, dan geven /api/data en /api/geo een fout: dicht bij twijfel.
+        #
+        # Toegang per laag en bron (#254, ADR 0010): bij 204 zet de backend X-Omnitwin-Toegang (intern of
+        # openbaar). Traefik kopieert die naar het verzoek aan PostgREST en verwijdert een gelijknamige
+        # header van de client eerst, zodat een bezoeker zich niet zelf intern kan maken. De views in
+        # schema api filteren daarop (db/migraties/R__api_rollen.sql).
+        viewer-toegang:
+          forwardAuth:
+            address: "http://backend:8000/api/viewer/toegang"
+            authResponseHeaders:
+              - "X-Omnitwin-Toegang"
+
+        # Keycloak (/auth): zonder CSP, X-Frame-Options en Referrer-Policy. Die zet Keycloak
+        # zelf per realm (Realm settings > Security defenses), standaard
+        # "frame-src 'self'; frame-ancestors 'self'; object-src 'none'", SAMEORIGIN en
+        # no-referrer (strenger dan hierboven: geen code of state in de Referer).
+        # De admin-console en keycloak-js gebruiken iframes op hetzelfde adres
+        # (sessiecontrole); frame-ancestors 'none' en DENY uit security-headers breken die.
+        keycloak-headers:
+          headers:
+            contentTypeNosniff: true
+            customResponseHeaders:
+              X-XSS-Protection: "0"
+            permissionsPolicy: "camera=(), microphone=(), geolocation=(), payment=(), usb=()"
+            stsSeconds: 31536000
+            stsIncludeSubdomains: false
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: traefik
+  namespace: d-omnitwin
+  labels:
+    app.kubernetes.io/name: traefik
+    app.kubernetes.io/part-of: d-omnitwin
+spec:
+  selector:
+    app.kubernetes.io/name: traefik
+  ports:
+    - name: http
+      port: 80
+      targetPort: 8080
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: traefik
+  namespace: d-omnitwin
+  labels:
+    app.kubernetes.io/name: traefik
+    app.kubernetes.io/part-of: d-omnitwin
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: traefik
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: traefik
+        app.kubernetes.io/part-of: d-omnitwin
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65532
+        runAsGroup: 65532
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: traefik
+          image: traefik:v3.7.13
+          imagePullPolicy: IfNotPresent
+          args:
+            # Poort 8080 in de pod (geen root nodig); de service luistert op 80
+            - --entrypoints.web.address=:8080
+            # X-Forwarded-For alleen overnemen van het podnetwerk (de ingress-controller). ZELF CONTROLEREN.
+            - --entrypoints.web.forwardedheaders.trustedips=10.0.0.0/8,172.16.0.0/12,192.168.0.0/16
+            - --providers.file.directory=/etc/traefik/dynamisch
+            - --ping=true
+            - --ping.entrypoint=ping
+            - --entrypoints.ping.address=:8082
+            - --log.level=INFO
+          ports:
+            - containerPort: 8080
+          readinessProbe:
+            httpGet: { path: /ping, port: 8082 }
+            periodSeconds: 10
+          livenessProbe:
+            httpGet: { path: /ping, port: 8082 }
+            initialDelaySeconds: 10
+            periodSeconds: 20
+          resources:
+            requests: { cpu: 50m, memory: 64Mi }
+            limits: { cpu: "1", memory: 256Mi }
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities: { drop: ["ALL"] }
+          volumeMounts:
+            - name: dynamisch
+              mountPath: /etc/traefik/dynamisch
+              readOnly: true
+      volumes:
+        - name: dynamisch
+          projected:
+            sources:
+              - configMap:
+                  name: traefik-dynamisch
+              # Route /auth naar Keycloak; alleen aanwezig met optioneel/keycloak
+              - configMap:
+                  name: traefik-keycloak
+                  optional: true
