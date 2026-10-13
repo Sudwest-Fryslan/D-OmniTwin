@@ -1,5 +1,6 @@
 # Kubernetes-rooktest (#406): rolt deploy/kubernetes uit op een tijdelijk kind-cluster met de
-# images van deze code en controleert /health, de data- en de geo-API en een upgrade.
+# images van deze code en controleert /health, de viewer, de beheeromgeving (web-container), de data-
+# en de geo-API en een upgrade.
 # Zelfde script als lokaal: scripts/ci/k8s-rooktest.sh.
 #
 # Alleen bij wijzigingen die de uitrol raken, zodat niet elke PR langer duurt; en met de hand
@@ -14,6 +15,8 @@ on:
       - "deploy/kubernetes/**"
       - "Dockerfile"
       - "db.Dockerfile"
+      - "web.Dockerfile"
+      - "deploy/web/**"
       - "docker-entrypoint.sh"
       - "db/**"
       - "scripts/ci/k8s-rooktest.sh"
@@ -24,6 +27,8 @@ on:
       - "deploy/kubernetes/**"
       - "Dockerfile"
       - "db.Dockerfile"
+      - "web.Dockerfile"
+      - "deploy/web/**"
       - "docker-entrypoint.sh"
       - "db/**"
       - "scripts/ci/k8s-rooktest.sh"

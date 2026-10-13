@@ -14,7 +14,8 @@ use case: [`usecases/uitrol-kubernetes`](../../usecases/uitrol-kubernetes/README
 | `10-postgres.yaml` | PostgreSQL + PostGIS + pgvector, StatefulSet met eigen volume | `postgres` |
 | `20-opslag.yaml` | volumes `uploads`, `leveringen`, `bron-cache` | volumes |
 | `30-db-init-job.yaml` | Job: schema, migraties, rollen, beheerder; daarna klaar | `db-init` |
-| `40-backend.yaml` | backend (FastAPI), wacht op db-init | `backend` |
+| `40-backend.yaml` | backend (FastAPI): de API's en de pagina van de viewer, wacht op db-init | `backend` |
+| `45-web.yaml` | web (nginx): bestanden van de viewer en de beheeromgeving, generiek en zonder config | `web` |
 | `50-postgrest.yaml` | data-API `/api/data` | `postgrest` |
 | `51-pg-featureserv.yaml` | geo-API `/api/geo` | `pg_featureserv` |
 | `60-traefik.yaml` | interne gateway: routes, headers, toegangscontrole, limieten | `traefik` + `deploy/traefik/dynamic.yml` |
@@ -24,6 +25,25 @@ use case: [`usecases/uitrol-kubernetes`](../../usecases/uitrol-kubernetes/README
 
 Niet uitgerold: `secret.example.yaml` (voorbeeld) en `optioneel/` (alleen als je die map ook toepast).
 Wat er wordt toegepast, staat in `kustomization.yaml`: een lijst bestanden, zonder patches.
+
+Drie eigen images, elk apart uit te rollen: `sudwestfryslan/d-omnitwin` (backend, ook db-init),
+`sudwestfryslan/d-omnitwin-web` (web) en `sudwestfryslan/d-omnitwin-db` (database). Configuratie zit
+niet in de images maar in de ConfigMap en de Secret; web heeft geen van beide nodig.
+
+### Routes in de gateway
+
+| Pad | Naar | Toegang |
+|---|---|---|
+| `/api/...` | backend | de backend controleert zelf (ADR 0009) |
+| `/`, `/health`, `/docs`, `/openapi.json` | backend | `/` en de documentatie: de backend controleert zelf |
+| `/api/data/...` | PostgREST | forwardAuth `viewer-toegang` |
+| `/api/geo/...` | pg_featureserv | forwardAuth `viewer-toegang` |
+| `/rapport`, `/rapport/...` | web | forwardAuth `viewer-pagina` (niet ingelogd: naar het inloggen) |
+| al het andere: `/static/...`, `/admin/...`, `/.well-known/security.txt` | web | open (geen data; de beheer-API's controleren zelf) |
+| `/auth/...` | Keycloak (optioneel) | eigen headers |
+
+De pagina van de viewer (`/`) blijft bij de backend: die vult per verzoek de organisatie (thema,
+logo's), de ingelogde gebruiker, de demobalk en de versie in.
 
 Waarom een eigen Traefik in de namespace: de data- en geo-API gaan eerst langs de backend
 (forwardAuth, [ADR 0009](../../docs/2-architectuur/adr/0009-viewer-achter-login-forwardauth.md)),
@@ -73,10 +93,12 @@ toont het eenmalig in de log: `kubectl -n d-omnitwin logs job/db-init-0-5-1`.
 
 ## Bijwerken
 
-1. Image-tags naar de nieuwe versie (`sudwestfryslan/d-omnitwin:<versie>`, `sudwestfryslan/d-omnitwin-db:<versie>`).
+1. Image-tags naar de nieuwe versie (`sudwestfryslan/d-omnitwin:<versie>`, `sudwestfryslan/d-omnitwin-web:<versie>`,
+   `sudwestfryslan/d-omnitwin-db:<versie>`).
 2. Naam van de Job naar de nieuwe versie (`db-init-0-5-1` wordt `db-init-0-6-0`): een Job is niet te wijzigen,
    een nieuwe naam draait opnieuw. De oude Job mag weg.
-3. Toepassen. De nieuwe Job migreert; de backend wordt vervangen (strategie `Recreate`, één replica).
+3. Toepassen. De nieuwe Job migreert; de backend wordt vervangen (strategie `Recreate`, één replica), web
+   met een gewone rolling update.
 
 Lees vóór een upgrade de CHANGELOG (sectie *Migreren*).
 
@@ -84,13 +106,17 @@ Lees vóór een upgrade de CHANGELOG (sectie *Migreren*).
 
 - Schemacheck: de CI draait kubeconform op deze map.
 - Rooktest: `scripts/ci/k8s-rooktest.sh` bouwt de images, maakt een tijdelijk kind-cluster, rolt deze
-  manifests uit met fictieve secrets, controleert `/health`, de data- en de geo-API, speelt een upgrade
-  na en ruimt op. In de CI: workflow *Kubernetes-rooktest*, bij wijzigingen in deze map, de Dockerfiles,
+  manifests uit met fictieve secrets, controleert `/health`, de viewer (`/`), de beheeromgeving
+  (`/admin`, web), de data- en de geo-API, speelt een upgrade na en ruimt op. In de CI: workflow
+  *Kubernetes-rooktest*, bij wijzigingen in deze map, de Dockerfiles, `deploy/web/`,
   `docker-entrypoint.sh` of `db/`.
 
 ## Beperkingen
 
 - De volumes zijn ReadWriteOnce: de backend draait met één replica. Meer replicas vraagt ReadWriteMany.
+  Web heeft geen toestand en kan wel met meer replicas.
+- De web-image staat pas op Docker Hub vanaf de eerste release na 0.5.1; met tag `0.5.1` bestaat hij
+  nog niet.
 - Back-up van PostgreSQL regelt de organisatie (bijv. `pg_dump` in een CronJob of een backup-operator);
   zie `db/README.md`.
 - Keycloak gebruikt hier het standaardthema; de huisstijlthema's uit `deploy/keycloak/themes` zitten

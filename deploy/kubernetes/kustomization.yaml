@@ -10,6 +10,7 @@ resources:
   - 20-opslag.yaml
   - 30-db-init-job.yaml
   - 40-backend.yaml
+  - 45-web.yaml
   - 50-postgrest.yaml
   - 51-pg-featureserv.yaml
   - 60-traefik.yaml

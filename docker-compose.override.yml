@@ -32,6 +32,10 @@ services:
       - backend-logs:/app/logs   # eigen volume: logs/ op de host is niet altijd schrijfbaar voor de niet-root app-gebruiker (Windows)
       # data-upload/ zit ook in dev in het volume uploads (docker-compose.yml), niet in de repomap
 
+  web:
+    volumes:
+      - ./static:/usr/share/nginx/html/static:ro   # bestanden van de host: wijzigingen direct zichtbaar
+
   keycloak-db-init:
     volumes:
       - .:/app        # entrypoint van de host

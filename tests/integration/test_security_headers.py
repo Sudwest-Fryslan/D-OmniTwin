@@ -24,14 +24,15 @@ pytestmark = pytest.mark.integration
 BASE_URL = os.environ.get("OMNITWIN_BASE_URL", "http://localhost").rstrip("/")
 TIMEOUT = 30
 
-ROUTES = ["/", "/api/data/", "/api/geo/", "/health"]
+# Ook de web-container (#408): de beheeromgeving en de bestanden van de viewer
+ROUTES = ["/", "/api/data/", "/api/geo/", "/health", "/admin/", "/static/js/app.js"]
 # Viewer achter de login (#266): dan ook de headers op de weigering (302 voor de pagina, 401 voor de
 # API's, ook via forwardAuth van Traefik). Geef dezelfde VIEWER_TOEGANG mee als de stack heeft.
 DICHT = os.environ.get("VIEWER_TOEGANG", "open").strip().lower() not in ("", "open")
 
 
 def _verwacht(pad):
-    if not DICHT or pad == "/health":
+    if not DICHT or pad in ("/health", "/admin/", "/static/js/app.js"):
         return 200
     return 302 if pad == "/" else 401
 

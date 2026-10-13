@@ -1,0 +1,5 @@
+# Bouwcontext van web.Dockerfile (#408): alleen de statische bestanden en de nginx-config.
+# BuildKit gebruikt dit bestand in plaats van .dockerignore voor deze Dockerfile.
+*
+!static
+!deploy/web

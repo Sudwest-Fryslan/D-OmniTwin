@@ -253,8 +253,8 @@ Intent Classifier [<1ms]
 
 - **Stack:** React 18 + TypeScript + React Router v6 + Zustand
 - **Authenticatie:** `X-Admin-Key` header (API key uit `.env`)
-- **Build:** `npm run build` → `static/admin-panel/` → geserved door FastAPI
-- **Routing:** FastAPI catchall `/admin/{catchall:path}` → React SPA
+- **Build:** `npm run build:static` → `static/admin-panel/` → geserveerd door de web-container (nginx, #408)
+- **Routing:** `/admin/...` en `/rapport/...` → React SPA (`deploy/web/default.conf`)
 
 ### Pagina's
 | Pagina | Route | Functie |

@@ -21,10 +21,17 @@
 .venv
 venv
 
-# Node / admin-panel broncode-artefacten (build-output staat in static/admin-panel)
+# Node-artefacten
 **/node_modules
 
 # Lokale output
 logs
 exports
 obsolete
+
+# Frontend en beheeromgeving: eigen image (web.Dockerfile, #408). De backend leest alleen de
+# thema's (themalijst, favicon-kleuren) en de afbeeldingen (beeldmerk, keuze van footer-logo's).
+admin-panel
+static
+!static/css/themes
+!static/images

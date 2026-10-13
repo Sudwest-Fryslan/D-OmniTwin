@@ -129,7 +129,7 @@ Gegenereerd met `python -m omnitwin.usecases index`; een unittest faalt als hij 
 | [swf-kaartlagen](./swf-kaartlagen/README.md) | TC-07-008 | SWF-kaartlagen: klimaat, deelgebieden, projecten en overige lagen | medewerker team of vakgroep (SWF) | actief | 0.3.0 | swf-gebiedsindelingen |
 | [swf-klimaatmonitor](./swf-klimaatmonitor/README.md) | TC-07-007 | SWF-klimaatmonitor: welstand × buurt met labels A–E | adviseur klimaatadaptatie | ontwerp | 0.4.0 | swf-definities, swf-gebiedsindelingen, swf-kompasprofiel |
 | [swf-kompasprofiel](./swf-kompasprofiel/README.md) | TC-07-005 | SWF-kompasprofielen Basis (4/12/33) en Klimaat | functioneel beheerder SWF | actief | 0.5.0 | swf-definities |
-| [uitrol-kubernetes](./uitrol-kubernetes/README.md) | – | D-OmniTwin uitrollen op Kubernetes en aantonen dat het werkt | platformbeheer van een organisatie | actief | 0.1.0 | – |
+| [uitrol-kubernetes](./uitrol-kubernetes/README.md) | – | D-OmniTwin uitrollen op Kubernetes en aantonen dat het werkt | platformbeheer van een organisatie | actief | 0.2.0 | – |
 <!-- usecase-index:end -->
 
 De vijf demopakketten komen uit de innovatieaanvraag Digitale Overheid 2026 en zijn nagespeeld op Bolsward, met focus op Bolsward-Zuidoost (status per pakket in zijn README). De `cbs-*`- en `swf-*`-use cases zijn de specificatie en straks de acceptatietests van de laad-API (0.3.0); `swf-gebiedsmonitor` is de acceptatietest voor "D-OmniTwin vervangt de huidige gebiedsmonitor".
