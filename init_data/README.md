@@ -6,7 +6,9 @@
 > docker compose run --rm db-init python init_data/scripts/seed_fryslan.py --stap alle
 > ```
 >
-> Idempotent, eindigt met een samenvatting per stap en exitcode 1 bij fouten. `init_database.sh` hieronder is voor een PostgreSQL zonder Docker.
+> Idempotent, eindigt met een samenvatting per stap en exitcode 1 bij fouten.
+>
+> **Eén initialisatieroute (#69):** `docker-entrypoint.sh init`. In Docker is dat de service `db-init`; zonder Docker doet `init_database.sh` precies hetzelfde. Configuratie alleen uit `.env` (`DATABASE_*`).
 
 Deze map bevat alle benodigde data en scripts om D-OmniTwin **vanaf nul** op te zetten.  
 Na dit proces heb je een gevulde database met **alle buurten in de provincie Fryslân** en **echte CBS open data** voor direct gebruik.
@@ -31,9 +33,10 @@ init_data/
 │   └── datapackage.json               # bron, licentie, tabellen per jaar, mapping, codecontrole
 │
 └── scripts/
-    ├── init_database.sh               # ⭐ Master initiatie script (alles in 1 stap, incl. admin)
-    ├── seed_fryslan.py                # Python import script (database vullen; ook in Docker)
-    ├── create_admin.py                # 👤 Admin gebruiker + API key aanmaken (stap 6)
+    ├── init_database.sh               # Zonder Docker: dezelfde route als db-init (docker-entrypoint.sh init)
+    ├── load_sample.py                 # Stuurdata, definities en drempels (aangeroepen door de init)
+    ├── seed_fryslan.py                # Volledige Fryslân-data (na de init; ook in Docker)
+    ├── create_admin.py                # 👤 Beheerder aanmaken of wachtwoord resetten
     ├── download_buurten_fryslan.py    # Download GeoJSON via PDOK WFS
     ├── download_indicatoren_fryslan.py # Download RIVM-indicatorwaarden via CBS dataderden
     ├── download_cbs_kerncijfers.py    # Download CBS Kerncijfers 2019-nu (alle jaargangen) via OData
@@ -44,23 +47,21 @@ init_data/
 
 ## 🚀 Gebruik
 
-Zie [`docs/archief/GETTING_STARTED.md`](../docs/archief/GETTING_STARTED.md) voor de volledige stap-voor-stap gids (verouderd; Docker: [installatiegids](../docs/9-beheer/installatie.md)).
+Installeren met Docker: zie de [installatiegids](../docs/9-beheer/installatie.md).
 
-**Snel starten (na database aanmaken):**
+**Zonder Docker** (PostgreSQL met PostGIS en pgvector, `psql` en een Python-omgeving met `requirements.txt`; `.env` met de `DATABASE_*`-gegevens):
 
 ```bash
-# 1. Geodata downloaden (eenmalig, ~5 MB)
-python init_data/scripts/download_buurten_fryslan.py
-
-# 2. Indicatorwaarden downloaden (eenmalig; de CSV's staan ook in git)
-python init_data/scripts/download_indicatoren_fryslan.py   # RIVM
-python init_data/scripts/download_cbs_kerncijfers.py       # CBS Kerncijfers 2019-nu
-
-# 3. Alles in de database laden (incl. admin gebruiker aanmaken)
+# 1. Database inrichten: schema, migraties, stuurdata, use cases (LOAD_SAMPLE_DATA=true), beheerder, rollen
 bash init_data/scripts/init_database.sh
+
+# 2. Optioneel: volledige Fryslân-data
+python init_data/scripts/download_buurten_fryslan.py        # eenmalig, ~5 MB
+python init_data/scripts/download_indicatoren_fryslan.py    # RIVM (de CSV staat ook in git)
+python init_data/scripts/seed_fryslan.py --stap alle
 ```
 
-Of los de admin stap separaat draaien:
+Beheerder los aanmaken of het wachtwoord resetten:
 ```bash
 python init_data/scripts/create_admin.py
 # Of wachtwoord resetten:
