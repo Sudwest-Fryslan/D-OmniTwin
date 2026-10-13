@@ -60,8 +60,13 @@ GALERIJ_START, GALERIJ_EINDE = "<!-- usecase-galerij:start -->", "<!-- usecase-g
 # Controles die een levering uit de bron maken: horen bij `test`, niet bij het bewijs
 ALLEEN_TEST = ("idempotent", "afkeuring")
 TRAAG_MS = int(os.environ.get("BEWIJS_TIMEOUT_MS", "90000"))
-# Consolemeldingen van de externe achtergrondkaart zeggen niets over de applicatie (zoals tests/e2e)
-CONSOLE_RUIS = (re.compile(r"Failed to load resource", re.I), re.compile(r"tiles?\b|glyphs|sprite", re.I))
+# Consolemeldingen van de externe achtergrondkaart zeggen niets over de applicatie (zoals tests/e2e),
+# net als het externe favicon van de HTML-pagina van pg_featureserv (geblokkeerd door de CSP)
+CONSOLE_RUIS = (
+    re.compile(r"Failed to load resource", re.I),
+    re.compile(r"tiles?\b|glyphs|sprite", re.I),
+    re.compile(r"favicon", re.I),
+)
 
 _INIT_JS = """
 try {

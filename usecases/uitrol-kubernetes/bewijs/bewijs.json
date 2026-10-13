@@ -3,7 +3,7 @@
   "naam": "uitrol-kubernetes",
   "versie": "0.3.0",
   "omnitwin_versie": "0.7.0",
-  "datum": "2026-10-13T19:45:16+02:00",
+  "datum": "2026-10-13T19:49:26+02:00",
   "geslaagd": true,
   "controles": [
     {
@@ -45,9 +45,7 @@
       "resultaat": "ok",
       "afbeelding": "geo-api.webp",
       "antwoordtijd_s": 2.0,
-      "console_fouten": [
-        "Loading the image 'https://www.crunchydata.com/favicon.png' violates the following Content Security Policy directive: \"img-src 'self' data: blob: https://api.pdok.nl https://service.pdok.nl\". The action has been blocked."
-      ]
+      "console_fouten": []
     }
   ]
 }
