@@ -6,7 +6,8 @@ Meet hoe goed de D-Omni Assistent de juiste indicatoren vindt (#233).
 
 Vragen en verwachte indicatoren: tests/data/assistent_evaluatie.json.
 Maten en uitleg: src/omnitwin/assistent_evaluatie.py.
-Exitcode 1 als een maat onder de drempel uit het testbestand ligt.
+Exitcode 1 als een maat onder de drempel uit het testbestand ligt (afgestemd: 'drempels',
+holdout: 'drempels_holdout').
 """
 import argparse
 import json
@@ -16,7 +17,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src"))
 
 from omnitwin.assistent_evaluatie import (  # noqa: E402
-    TESTSET, evalueer, http_zoek_en_chat, laad_testset, onder_drempel, precision_at_k, reciprocal_rank, scoor,
+    TESTSET, drempelfouten, evalueer, http_zoek_en_chat, laad_testset, precision_at_k, reciprocal_rank, scoor,
 )
 
 
@@ -49,7 +50,7 @@ def main() -> int:
     if a.json:
         Path(a.json).write_text(json.dumps({"scores": scores, "resultaten": resultaten}, ensure_ascii=False, indent=1),
                                 encoding="utf-8")
-    fout = onder_drempel(scores, testset.get("drempels", {}))
+    fout = drempelfouten(resultaten, testset)
     for f in fout:
         print(f"FOUT onder de drempel: {f}")
     return 1 if fout else 0

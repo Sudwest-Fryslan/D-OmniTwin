@@ -36,12 +36,13 @@ def test_evaluatie_boven_de_drempels(uitslag):
     testset, resultaten, scores = uitslag
     print(f"\nEvaluatie: {json.dumps({k: round(v, 3) for k, v in scores.items()})}")
     missers = [r["vraag"] for r in resultaten if ev.reciprocal_rank(r["gevonden"], r["relevant"]) == 0]
-    assert ev.onder_drempel(scores, testset["drempels"]) == [], f"geen relevante indicator bij: {missers}"
+    assert ev.drempelfouten(resultaten, testset) == [], f"geen relevante indicator bij: {missers}"
 
 
 def test_datavragen_gaan_naar_de_datavraagroute(uitslag):
     _, resultaten, _ = uitslag
-    fout = [(r["vraag"], r.get("intent")) for r in resultaten if r["gerouteerd"] is False]
+    # De holdout telt mee via drempels_holdout (routering), niet hier (#336)
+    fout = [(r["vraag"], r.get("intent")) for r in resultaten if r["gerouteerd"] is False and not r["holdout"]]
     assert len(fout) <= 1, f"niet als datavraag beantwoord: {fout}"
 
 

@@ -20,7 +20,12 @@ Maten (k uit het bestand, standaard 3):
 - routering: deel van de datavragen dat als datavraag met een cijfer wordt beantwoord.
 
 Vragen met "holdout" zijn niet gebruikt om synoniemen en drempels af te stemmen; hun score
-apart laat zien of de verbetering ook geldt voor vragen die we niet vooraf kenden.
+apart laat zien of de verbetering ook geldt voor vragen die we niet vooraf kenden. De drempels
+('drempels') gelden voor de afgestemde vragen; de holdout heeft eigen, lagere drempels
+('drempels_holdout') die alleen terugval vangen (#336). Zou de holdout dezelfde drempel moeten
+halen, dan dwingt elke nieuwe holdout-vraag die faalt tot afstemmen op die vraag, en is het geen
+holdout meer. Na zo'n afstemronde gaan de oude holdout-vragen naar de afgestemde set
+('holdout_<versie>': true) en komen er nieuwe bij.
 
 Draaien tegen een stack met sample-data:
     python scripts/ai/evalueer_assistent.py --url http://localhost:8105
@@ -74,6 +79,17 @@ def scoor(resultaten: List[Dict[str, Any]], k: int) -> Dict[str, float]:
 def onder_drempel(scores: Dict[str, float], drempels: Dict[str, float]) -> List[str]:
     """Maten die onder de afgesproken drempel liggen, leesbaar."""
     return [f"{m} {scores[m]:.3f} < {d}" for m, d in drempels.items() if scores.get(m, 0.0) < d]
+
+
+def drempelfouten(resultaten: List[Dict[str, Any]], testset: Dict[str, Any]) -> List[str]:
+    """Maten onder de drempel: afgestemde vragen tegen 'drempels', holdout tegen 'drempels_holdout'."""
+    k = testset.get("k", 3)
+    fout = []
+    for naam, holdout, sleutel in (("afgestemd", False, "drempels"), ("holdout", True, "drempels_holdout")):
+        deel = [r for r in resultaten if bool(r.get("holdout")) == holdout]
+        if deel and testset.get(sleutel):
+            fout += [f"{naam}: {f}" for f in onder_drempel(scoor(deel, k), testset[sleutel])]
+    return fout
 
 
 def gerouteerd(v: Dict[str, Any], antwoord: Dict[str, Any], selectie: Sequence[str],

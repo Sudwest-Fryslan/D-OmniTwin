@@ -65,11 +65,22 @@ def test_gerouteerd_zonder_selectie_vraagt_welke_buurt():
     assert not ev.gerouteerd(v, {"intent": "DATAVRAAG", "narrative": "65+: 20%", "gegevens": [{"gebied_id": "X"}]}, [])
 
 
+def test_drempels_apart_voor_afgestemd_en_holdout():
+    """#336: de holdout haalt niet dezelfde drempel, maar een eigen, lagere (alleen tegen terugval)."""
+    testset = {"k": 3, "drempels": {"recall_at_k": 0.8}, "drempels_holdout": {"recall_at_k": 0.5}}
+    goed = {"type": "zoek", "relevant": ["a"], "gevonden": ["a"]}
+    mis = {"type": "zoek", "relevant": ["a"], "gevonden": ["b"]}
+    assert ev.drempelfouten([goed, {**goed, "holdout": True}, {**mis, "holdout": True}], testset) == []
+    assert ev.drempelfouten([goed, mis], testset) == ["afgestemd: recall_at_k 0.500 < 0.8"]
+    assert ev.drempelfouten([goed, {**mis, "holdout": True}], testset) == ["holdout: recall_at_k 0.000 < 0.5"]
+
+
 def test_testset_is_volledig():
     t = ev.laad_testset()
     vragen = t["vragen"]
     assert len(vragen) >= 40
     assert {"precision_at_k", "recall_at_k", "mrr", "routering"} <= set(t["drempels"])
+    assert {"precision_at_k", "recall_at_k", "mrr", "routering"} <= set(t["drempels_holdout"])
     sleutels = [(v["vraag"], tuple(v.get("selectie", ["standaard"]))) for v in vragen]
     assert len(set(sleutels)) == len(vragen), "dubbele vraag (zelfde vraag en selectie)"
     assert sum(1 for v in vragen if v["type"] == "datavraag") >= 5

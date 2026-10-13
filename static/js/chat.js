@@ -126,6 +126,11 @@ class ChatPanel {
             bubble.appendChild(el('p', 'chat-narrative', response.narrative));
         }
 
+        // #336: 'bij mij in de buurt' zonder selectie: eigen buurt via postcode/adres of locatie
+        if (response.vraag_buurt) {
+            bubble.appendChild(this._buurtKiezer(vraag));
+        }
+
         // #149: bronregel bij een datavraag (indicator, jaar, bron)
         if (Array.isArray(response.bronnen) && response.bronnen.length > 0) {
             const regel = response.bronnen
@@ -282,6 +287,94 @@ class ChatPanel {
         }
     }
 
+    /**
+     * #336: formulier "Welke buurt is jouw buurt?": postcode/adres of (na toestemming) de locatie.
+     * POST /api/locatie/buurt geeft de buurt; daarna gaat de vraag opnieuw met die buurt als selectie.
+     * Adres en locatie gaan alleen in de body naar de backend (PDOK Locatieserver) en worden niet bewaard.
+     */
+    _buurtKiezer(vraag) {
+        const form = document.createElement('form');
+        form.className = 'chat-buurtkiezer';
+        form.noValidate = true;
+        const id = `chat-adres-${Date.now()}`;
+
+        const label = document.createElement('label');
+        label.htmlFor = id;
+        label.textContent = 'Postcode of adres';
+        const rij = document.createElement('div');
+        rij.className = 'chat-buurtkiezer-rij';
+        const input = document.createElement('input');
+        input.id = id;
+        input.type = 'text';
+        input.autocomplete = 'postal-code';
+        input.placeholder = 'bijv. 8601 CR';
+        input.maxLength = 200;
+        const zoek = document.createElement('button');
+        zoek.type = 'submit';
+        zoek.className = 'chat-actie-btn';
+        zoek.textContent = 'Zoek mijn buurt';
+        rij.append(input, zoek);
+
+        const status = document.createElement('p');
+        status.className = 'chat-buurtkiezer-status';
+        status.setAttribute('role', 'status');
+
+        const privacy = document.createElement('p');
+        privacy.className = 'chat-buurtkiezer-privacy';
+        privacy.textContent = 'We gebruiken je postcode, adres of locatie alleen om je buurt te vinden '
+            + '(via de PDOK Locatieserver) en bewaren die niet.';
+
+        form.append(label, rij);
+        if (navigator.geolocation) {
+            const locatie = document.createElement('button');
+            locatie.type = 'button';
+            locatie.className = 'chat-actie-btn';
+            locatie.textContent = '📍 Gebruik mijn locatie';
+            locatie.addEventListener('click', () => {
+                status.textContent = 'Je browser vraagt toestemming voor je locatie…';
+                navigator.geolocation.getCurrentPosition(
+                    pos => this._zoekBuurt({ lat: pos.coords.latitude, lon: pos.coords.longitude }, 'locatie', vraag, status),
+                    () => { status.textContent = 'Geen locatie: geen toestemming of niet beschikbaar. Vul een postcode in of selecteer je buurt op de kaart.'; },
+                    { enableHighAccuracy: false, timeout: 15000, maximumAge: 600000 });
+            });
+            form.appendChild(locatie);
+        }
+        form.append(status, privacy);
+        form.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const adres = input.value.trim();
+            if (!adres) { status.textContent = 'Vul een postcode of adres in.'; input.focus(); return; }
+            this._zoekBuurt({ adres }, 'adres', vraag, status);
+        });
+        return form;
+    }
+
+    async _zoekBuurt(body, herkomst, vraag, status) {
+        status.textContent = 'Buurt zoeken…';
+        try {
+            const r = await fetch('/api/locatie/buurt', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body),
+            });
+            const data = await r.json().catch(() => ({}));
+            if (!r.ok) {
+                const detail = typeof data.detail === 'string' ? data.detail : (data.melding || data.message);
+                status.textContent = detail || `Buurt niet gevonden (${r.status}).`;
+                return;
+            }
+            status.textContent = `Gevonden: ${data.naam}.`;
+            // Dezelfde vraag opnieuw, nu met deze buurt (de kaart beweegt mee met het antwoord)
+            this.sendVraag(vraag, {
+                huidig_gebied_id: data.gebied_id,
+                geselecteerde_gebied_ids: [data.gebied_id],
+                buurt_herkomst: herkomst,
+            });
+        } catch (e) {
+            status.textContent = 'Zoeken lukt nu niet. Selecteer je buurt op de kaart.';
+        }
+    }
+
     // ========================================================================
     // Actie Handlers (Command Dispatch → EventBus)
     // ========================================================================
@@ -343,16 +436,17 @@ class ChatPanel {
 
                 if (geselecteerd.length === 0) {
                     // Geen selectie: open lege benchmark pagina
-                    window.open('/rapport/benchmark', '_blank');
+                    window.open('/rapport/benchmark', '_blank', 'noopener,noreferrer');
                 } else if (geselecteerd.length === 1) {
                     // Eén gebied: open gebiedsdossier
-                    window.open(`/rapport/${geselecteerd[0]}`, '_blank');
+                    window.open(`/rapport/${geselecteerd[0]}`, '_blank', 'noopener,noreferrer');
                 } else {
                     // Multi-selectie: open benchmark met alle gebieden
                     const [a, ...rest] = geselecteerd;
                     window.open(
                         `/rapport/benchmark?gebied_a=${a}&gebieden_b=${rest.join(',')}`,
-                        '_blank'
+                        '_blank',
+                        'noopener,noreferrer'
                     );
                 }
                 break;
@@ -432,7 +526,7 @@ class ChatPanel {
                 break;
 
             case 'OPEN_WIKI':
-                window.open('/static/help.html', '_blank');
+                window.open('/static/help.html', '_blank', 'noopener,noreferrer');
                 break;
 
             default:

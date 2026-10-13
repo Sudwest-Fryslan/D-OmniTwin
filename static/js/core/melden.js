@@ -70,7 +70,7 @@
     /** Een melding doen: via het aangesloten kanaal, anders de meldplek in een nieuw venster. */
     function meld(m) {
         if (typeof kanaal === 'function') return kanaal(m);
-        if (typeof window !== 'undefined') window.open(meldUrl(m), '_blank', 'noopener');
+        if (typeof window !== 'undefined') window.open(meldUrl(m), '_blank', 'noopener,noreferrer');
         return undefined;
     }
 
