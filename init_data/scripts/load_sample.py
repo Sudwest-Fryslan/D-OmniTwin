@@ -31,6 +31,7 @@ from pathlib import Path
 # Laad .env bestand
 try:
     from dotenv import load_dotenv
+
     load_dotenv(Path(__file__).resolve().parent.parent.parent / ".env")
 except ImportError:
     pass
@@ -60,7 +61,10 @@ CBS_BUURT_TYPE_ID = "afba67cb-6b38-4723-9c95-102a22d5b38a"
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from jaargang_controle import (  # noqa: E402
-    controleer_jaargangen, geometrie_codes, geometrie_jaar_sample, rapporteer,
+    controleer_jaargangen,
+    geometrie_codes,
+    geometrie_jaar_sample,
+    rapporteer,
 )
 
 
@@ -131,8 +135,7 @@ def import_buurten(conn):
 
     # Geometrie-jaargang vastleggen in gebieden.metadata (#119)
     geo_jaar = geometrie_jaar_sample()
-    geo_meta = json.dumps({"geometrie_jaar": geo_jaar, "geometrie_bron": "CBS Wijk- en buurtkaart"}
-                          if geo_jaar else {})
+    geo_meta = json.dumps({"geometrie_jaar": geo_jaar, "geometrie_bron": "CBS Wijk- en buurtkaart"} if geo_jaar else {})
     print(f"   🗓️  Geometrie-jaargang: {geo_jaar or 'onbekend'}")
 
     cur = conn.cursor()
@@ -156,7 +159,8 @@ def import_buurten(conn):
 
         try:
             cur.execute("SAVEPOINT sp_buurt")
-            cur.execute("""
+            cur.execute(
+                """
                 INSERT INTO gebieden (id, gebiedstype_id, naam, gemeente_code, geom, provincienaam, actief, metadata)
                 VALUES (
                     %s, %s, %s, %s,
@@ -176,7 +180,9 @@ def import_buurten(conn):
                     actief = TRUE,
                     metadata = COALESCE(gebieden.metadata, '{}'::jsonb) || EXCLUDED.metadata,
                     updated_at = CURRENT_TIMESTAMP;
-            """, (bu_id, type_id, naam, gm_code, geom_str, geom_str, prov, geo_meta))
+            """,
+                (bu_id, type_id, naam, gm_code, geom_str, geom_str, prov, geo_meta),
+            )
             cur.execute("RELEASE SAVEPOINT sp_buurt")
             inserted += 1
         except Exception as e:
@@ -248,12 +254,20 @@ def import_indicatoren(conn):
     # de stuurdata en komen uit het recept (download_cbs_kerncijfers.INDICATOREN), niet uit de sample.
     if standaard:
         import download_cbs_kerncijfers as cbs
+
         voor = len(unique_indicators)
         for naam, (ind_uuid, eenheid, logica, categorie) in cbs.INDICATOREN.items():
-            unique_indicators.setdefault(ind_uuid, {
-                "uuid": ind_uuid, "naam": naam, "eenheid": eenheid or None, "categorie": categorie or None,
-                "interpretatie_logica": logica or "pos_is_pos", "bron": "CBS Kerncijfers wijken en buurten",
-            })
+            unique_indicators.setdefault(
+                ind_uuid,
+                {
+                    "uuid": ind_uuid,
+                    "naam": naam,
+                    "eenheid": eenheid or None,
+                    "categorie": categorie or None,
+                    "interpretatie_logica": logica or "pos_is_pos",
+                    "bron": "CBS Kerncijfers wijken en buurten",
+                },
+            )
         print(f"   📂 {len(unique_indicators) - voor} CBS-indicatoren uit het recept (init_data/cbs)")
 
     cur = conn.cursor()
@@ -271,7 +285,8 @@ def import_indicatoren(conn):
 
         try:
             cur.execute("SAVEPOINT sp_ind")
-            cur.execute("""
+            cur.execute(
+                """
                 INSERT INTO indicatoren (uuid, naam, code, eenheid, categorie, interpretatie_logica, bron, score_type, status, is_actief)
                 VALUES (%s, %s, %s, %s, %s, %s, %s, %s, 'O', TRUE)
                 ON CONFLICT (uuid) DO UPDATE SET
@@ -283,16 +298,18 @@ def import_indicatoren(conn):
                     score_type = EXCLUDED.score_type,
                     is_actief = TRUE,
                     updated_at = CURRENT_TIMESTAMP;
-            """, (
-                uuid,
-                naam,
-                code,
-                ind["eenheid"],
-                ind["categorie"],
-                ind["interpretatie_logica"],
-                ind["bron"],
-                score_type,
-            ))
+            """,
+                (
+                    uuid,
+                    naam,
+                    code,
+                    ind["eenheid"],
+                    ind["categorie"],
+                    ind["interpretatie_logica"],
+                    ind["bron"],
+                    score_type,
+                ),
+            )
             cur.execute("RELEASE SAVEPOINT sp_ind")
             inserted += 1
         except Exception as e:
@@ -337,15 +354,15 @@ def import_kompas(conn):
 
     def get_or_create(table, where_cols, insert_cols, values_dict):
         where = " AND ".join(f"{c} = %s" for c in where_cols)
-        cur.execute(f"SELECT id FROM {table} WHERE {where}",
-                    [values_dict[c] for c in where_cols])
+        cur.execute(f"SELECT id FROM {table} WHERE {where}", [values_dict[c] for c in where_cols])
         row = cur.fetchone()
         if row:
             return row[0]
         cols = ", ".join(insert_cols)
         placeholders = ", ".join("%s" for _ in insert_cols)
-        cur.execute(f"INSERT INTO {table} ({cols}) VALUES ({placeholders}) RETURNING id",
-                    [values_dict[c] for c in insert_cols])
+        cur.execute(
+            f"INSERT INTO {table} ({cols}) VALUES ({placeholders}) RETURNING id", [values_dict[c] for c in insert_cols]
+        )
         return cur.fetchone()[0]
 
     with open(KOMPAS_CSV, encoding="utf-8") as f:
@@ -361,40 +378,34 @@ def import_kompas(conn):
                 continue
 
             titel_id = get_or_create(
-                "kompas_titels",
-                ["naam", "config_id"],
-                ["naam", "config_id"],
-                {"naam": titel, "config_id": config_id}
+                "kompas_titels", ["naam", "config_id"], ["naam", "config_id"], {"naam": titel, "config_id": config_id}
             )
 
             thema_id = get_or_create(
-                "kompas_themas",
-                ["naam", "titel_id"],
-                ["naam", "titel_id"],
-                {"naam": thema, "titel_id": titel_id}
+                "kompas_themas", ["naam", "titel_id"], ["naam", "titel_id"], {"naam": thema, "titel_id": titel_id}
             )
 
             onderdeel_id = get_or_create(
                 "kompas_onderdelen",
                 ["naam", "thema_id"],
                 ["naam", "thema_id"],
-                {"naam": onderdeel, "thema_id": thema_id}
+                {"naam": onderdeel, "thema_id": thema_id},
             )
 
             if indicator_naam:
-                cur.execute(
-                    "SELECT uuid FROM indicatoren WHERE naam ILIKE %s LIMIT 1",
-                    (indicator_naam,)
-                )
+                cur.execute("SELECT uuid FROM indicatoren WHERE naam ILIKE %s LIMIT 1", (indicator_naam,))
                 ind_row = cur.fetchone()
                 if ind_row:
-                    cur.execute("""
+                    cur.execute(
+                        """
                         INSERT INTO kompas_indicator_mapping
                             (config_id, indicator_uuid, onderdeel_id, is_actueel)
                         VALUES (%s, %s, %s, %s)
                         ON CONFLICT (config_id, indicator_uuid, onderdeel_id) DO UPDATE SET
                             is_actueel = EXCLUDED.is_actueel
-                    """, (config_id, ind_row[0], onderdeel_id, actueel))
+                    """,
+                        (config_id, ind_row[0], onderdeel_id, actueel),
+                    )
                     stats["gekoppeld"] += 1
                 else:
                     stats["overgeslagen"] += 1
@@ -424,8 +435,10 @@ def import_drempels(conn, bestanden=None):
                 overgeslagen += 1
                 continue
             labels = [lab[0] for lab in ind["labels"]]
-            cur.execute("DELETE FROM indicator_labels WHERE indicator_uuid = %s AND NOT (label = ANY(%s))",
-                        (ind["indicator_uuid"], labels))
+            cur.execute(
+                "DELETE FROM indicator_labels WHERE indicator_uuid = %s AND NOT (label = ANY(%s))",
+                (ind["indicator_uuid"], labels),
+            )
             for label, onder, boven in ind["labels"]:
                 cur.execute(
                     "INSERT INTO indicator_labels (indicator_uuid, label, ondergrens, bovengrens, bron, opmerking)"
@@ -433,7 +446,8 @@ def import_drempels(conn, bestanden=None):
                     " ON CONFLICT (indicator_uuid, label) DO UPDATE SET ondergrens = EXCLUDED.ondergrens,"
                     " bovengrens = EXCLUDED.bovengrens, bron = EXCLUDED.bron, opmerking = EXCLUDED.opmerking,"
                     " bijgewerkt = now()",
-                    (ind["indicator_uuid"], label, onder, boven, data.get("bron"), ind.get("opmerking")))
+                    (ind["indicator_uuid"], label, onder, boven, data.get("bron"), ind.get("opmerking")),
+                )
             geladen += 1
     conn.commit()
     print(f"   ✅ Drempels labels A–E: {geladen} indicatoren geladen, {overgeslagen} (nog) niet aanwezig.")
@@ -477,23 +491,32 @@ def import_kompasprofielen(conn, bestanden=None):
                 cur.execute(f"SELECT id FROM {tabel} WHERE naam = %s AND {ouder_kolom} = %s", (naam, ouder))
                 r = cur.fetchone()
                 if not r:
-                    cur.execute(f"INSERT INTO {tabel} (naam, {ouder_kolom}, volgorde) VALUES (%s, %s, %s) RETURNING id",
-                                (naam, ouder, volgorde))
+                    cur.execute(
+                        f"INSERT INTO {tabel} (naam, {ouder_kolom}, volgorde) VALUES (%s, %s, %s) RETURNING id",
+                        (naam, ouder, volgorde),
+                    )
                     r = cur.fetchone()
                 ids.append(r[0])
-            cur.execute("""
+            cur.execute(
+                """
                 INSERT INTO kompas_indicator_mapping (config_id, indicator_uuid, onderdeel_id, is_actueel)
                 VALUES (%s, %s, %s, TRUE)
                 ON CONFLICT (config_id, indicator_uuid, onderdeel_id) DO NOTHING
-            """, (config_id, ind["indicator_uuid"], ids[-1]))
+            """,
+                (config_id, ind["indicator_uuid"], ids[-1]),
+            )
             gekoppeld += 1
         if gekoppeld and profiel.get("classificatie"):
-            cur.execute("UPDATE kompas_configuraties SET classificatie = %s WHERE id = %s",
-                        (profiel["classificatie"], config_id))
+            cur.execute(
+                "UPDATE kompas_configuraties SET classificatie = %s WHERE id = %s",
+                (profiel["classificatie"], config_id),
+            )
         conn.commit()
-        print(f"   ✅ Kompasprofiel '{profiel['profiel']}': {gekoppeld} indicatoren gekoppeld"
-              + (f", classificatie {profiel['classificatie']}" if gekoppeld and profiel.get("classificatie") else "")
-              + (f"; overgeslagen (bestaat niet): {', '.join(overgeslagen)}" if overgeslagen else ""))
+        print(
+            f"   ✅ Kompasprofiel '{profiel['profiel']}': {gekoppeld} indicatoren gekoppeld"
+            + (f", classificatie {profiel['classificatie']}" if gekoppeld and profiel.get("classificatie") else "")
+            + (f"; overgeslagen (bestaat niet): {', '.join(overgeslagen)}" if overgeslagen else "")
+        )
     cur.close()
     return True
 
@@ -562,7 +585,9 @@ def import_waarden(conn):
                 deduped = list(seen.values())
 
                 try:
-                    execute_values(cur, """
+                    execute_values(
+                        cur,
+                        """
                         INSERT INTO gebied_data (gebied_id, indicator_uuid, waarde, jaar, bron, kwaliteit, scenario_id)
                         VALUES %s
                         ON CONFLICT (gebied_id, indicator_uuid, jaar, scenario_id) DO UPDATE SET
@@ -570,7 +595,9 @@ def import_waarden(conn):
                             bron = EXCLUDED.bron,
                             kwaliteit = EXCLUDED.kwaliteit,
                             updated_at = CURRENT_TIMESTAMP;
-                    """, deduped)
+                    """,
+                        deduped,
+                    )
                     inserted += len(deduped)
                     conn.commit()
                 except Exception as e:
@@ -587,7 +614,9 @@ def import_waarden(conn):
             seen[key] = b
         deduped = list(seen.values())
         try:
-            execute_values(cur, """
+            execute_values(
+                cur,
+                """
                 INSERT INTO gebied_data (gebied_id, indicator_uuid, waarde, jaar, bron, kwaliteit, scenario_id)
                 VALUES %s
                 ON CONFLICT (gebied_id, indicator_uuid, jaar, scenario_id) DO UPDATE SET
@@ -595,7 +624,9 @@ def import_waarden(conn):
                     bron = EXCLUDED.bron,
                     kwaliteit = EXCLUDED.kwaliteit,
                     updated_at = CURRENT_TIMESTAMP;
-            """, deduped)
+            """,
+                deduped,
+            )
             inserted += len(deduped)
             conn.commit()
         except Exception as e:
@@ -609,20 +640,21 @@ def import_waarden(conn):
 
 
 def main():
-    parser = argparse.ArgumentParser(
-        description="D-OmniTwin — Laad Sample Dataset (Súdwest-Fryslân)"
-    )
+    parser = argparse.ArgumentParser(description="D-OmniTwin — Laad Sample Dataset (Súdwest-Fryslân)")
     parser.add_argument(
         "--stap",
         choices=["alle", "definities", "stuurdata", "buurten", "indicatoren", "kompas", "waarden", "drempels"],
         default="alle",
         help="Welke stap uitvoeren (default: alle). 'definities' = stuurdata, indicatoren en Kompas, "
-             "zonder gebieden en waarden; die komen uit de use cases (laad_usecase.py)"
+        "zonder gebieden en waarden; die komen uit de use cases (laad_usecase.py)",
     )
     parser.add_argument(
-        "--drempels", action="append", default=[], metavar="BESTAND",
+        "--drempels",
+        action="append",
+        default=[],
+        metavar="BESTAND",
         help="extra drempelbestand (formaat db/stuurdata/indicator_labels_*.json), na de stuurdata geladen; "
-             "bijv. indicator_labels_monitor.json uit scripts/beheer/swf_monitor_dump.py"
+        "bijv. indicator_labels_monitor.json uit scripts/beheer/swf_monitor_dump.py",
     )
     args = parser.parse_args()
 

@@ -34,9 +34,18 @@ def _jwks():
 
 def token(rollen, **wijzig):
     nu = int(time.time())
-    claims = {"iss": ISSUER, "aud": ["omnitwin-api"], "sub": "4b1d-sub", "azp": "omnitwin-web",
-              "preferred_username": "anne", "email": "anne@example.org", "jti": "j1",
-              "iat": nu, "exp": nu + 300, "realm_access": {"roles": list(rollen)}}
+    claims = {
+        "iss": ISSUER,
+        "aud": ["omnitwin-api"],
+        "sub": "4b1d-sub",
+        "azp": "omnitwin-web",
+        "preferred_username": "anne",
+        "email": "anne@example.org",
+        "jti": "j1",
+        "iat": nu,
+        "exp": nu + 300,
+        "realm_access": {"roles": list(rollen)},
+    }
     claims.update(wijzig)
     return jwt.encode(claims, SLEUTEL, algorithm="RS256", headers={"kid": "a"})
 
@@ -60,8 +69,14 @@ def stil(monkeypatch):
 
 @pytest.fixture
 def oidc_aan(monkeypatch, stil):
-    for naam in ("OIDC_AUDIENCE", "OIDC_JWKS_URL", "LOKAAL_INLOGGEN", "OIDC_CLIENT_ID", "ADMIN_API_KEY",
-                 "OMNITWIN_OMGEVING"):
+    for naam in (
+        "OIDC_AUDIENCE",
+        "OIDC_JWKS_URL",
+        "LOKAAL_INLOGGEN",
+        "OIDC_CLIENT_ID",
+        "ADMIN_API_KEY",
+        "OMNITWIN_OMGEVING",
+    ):
         monkeypatch.delenv(naam, raising=False)
     monkeypatch.setenv("OIDC_ISSUER", ISSUER)
     monkeypatch.setenv("OIDC_INTERN_URL", INTERN)
@@ -102,12 +117,16 @@ def _client():
 
 # ------------------------------------------------------------------ instellingen
 
-@pytest.mark.parametrize("issuer, lokaal, aan, nood", [
-    ("", "", True, False),            # zonder Keycloak: lokaal inloggen zoals altijd
-    ("", "false", True, False),       # ook dan; anders kan niemand meer in
-    (ISSUER, "", False, False),       # met Keycloak standaard uit
-    (ISSUER, "true", True, True),     # noodtoegang
-])
+
+@pytest.mark.parametrize(
+    "issuer, lokaal, aan, nood",
+    [
+        ("", "", True, False),  # zonder Keycloak: lokaal inloggen zoals altijd
+        ("", "false", True, False),  # ook dan; anders kan niemand meer in
+        (ISSUER, "", False, False),  # met Keycloak standaard uit
+        (ISSUER, "true", True, True),  # noodtoegang
+    ],
+)
 def test_lokaal_inloggen(monkeypatch, issuer, lokaal, aan, nood):
     monkeypatch.setenv("OIDC_ISSUER", issuer)
     monkeypatch.setenv("LOKAAL_INLOGGEN", lokaal)
@@ -119,19 +138,29 @@ def test_lokaal_inloggen(monkeypatch, issuer, lokaal, aan, nood):
 def test_config_met_oidc(oidc_aan):
     r = _client().get("/api/admin/auth/config")
     assert r.json() == {
-        "oidc": True, "lokaal": False, "noodtoegang": False,
+        "oidc": True,
+        "lokaal": False,
+        "noodtoegang": False,
         "gebruikersbeheer_url": "http://localhost/auth/admin/omnitwin/console/",
-        "account_url": ISSUER + "/account", "demo": False,
+        "account_url": ISSUER + "/account",
+        "demo": False,
     }
 
 
 def test_config_zonder_oidc(oidc_uit):
     r = _client().get("/api/admin/auth/config")
-    assert r.json() == {"oidc": False, "lokaal": True, "noodtoegang": False,
-                        "gebruikersbeheer_url": None, "account_url": None, "demo": False}
+    assert r.json() == {
+        "oidc": False,
+        "lokaal": True,
+        "noodtoegang": False,
+        "gebruikersbeheer_url": None,
+        "account_url": None,
+        "demo": False,
+    }
 
 
 # ------------------------------------------------------------------ beheerroutes met een bearer-token
+
 
 def _kop(t):
     return {"Authorization": f"Bearer {t}"}
@@ -154,8 +183,10 @@ def test_zonder_token_401(oidc_aan):
     assert _client().get("/api/admin/iets").status_code == 401
 
 
-@pytest.mark.parametrize("t", ["geen-jwt", token(["beheerder"], exp=int(time.time()) - 600),
-                               token(["beheerder"], iss="http://elders/realms/x")])
+@pytest.mark.parametrize(
+    "t",
+    ["geen-jwt", token(["beheerder"], exp=int(time.time()) - 600), token(["beheerder"], iss="http://elders/realms/x")],
+)
 def test_ongeldig_token_401(oidc_aan, t):
     r = _client().get("/api/admin/iets", headers=_kop(t))
     assert r.status_code == 401
@@ -168,6 +199,7 @@ def test_bearer_genegeerd_zonder_oidc(oidc_uit):
 
 # ------------------------------------------------------------------ lokaal inloggen
 
+
 def test_lokaal_inloggen_uit_bij_oidc(oidc_aan):
     r = _client().post("/api/admin/auth/login", data={"username": "admin", "password": "x"})
     assert r.status_code == 403
@@ -175,6 +207,7 @@ def test_lokaal_inloggen_uit_bij_oidc(oidc_aan):
 
 
 # ------------------------------------------------------------------ authorization code + PKCE
+
 
 @pytest.fixture
 def discovery(monkeypatch, oidc_aan):
@@ -189,9 +222,12 @@ def discovery(monkeypatch, oidc_aan):
 
         def json(self):
             b = "http://localhost:8080/auth/realms/omnitwin"  # interne issuer (KC_HOSTNAME zonder schema)
-            return {"issuer": b, "authorization_endpoint": b + "/protocol/openid-connect/auth",
-                    "token_endpoint": b + "/protocol/openid-connect/token",
-                    "end_session_endpoint": b + "/protocol/openid-connect/logout"}
+            return {
+                "issuer": b,
+                "authorization_endpoint": b + "/protocol/openid-connect/auth",
+                "token_endpoint": b + "/protocol/openid-connect/token",
+                "end_session_endpoint": b + "/protocol/openid-connect/logout",
+            }
 
     def get(url, **kw):
         gevraagd.append((url, kw.get("headers", {})))
@@ -213,8 +249,10 @@ def test_eindpunten_publiek_voor_browser_intern_voor_backend(discovery):
 
 
 def test_start_inloggen_met_pkce(discovery):
-    r = _client().get("/api/admin/auth/oidc/login?terug=/admin/indicatoren",
-                      headers={"host": "omnitwin.example.nl", "x-forwarded-proto": "https"})
+    r = _client().get(
+        "/api/admin/auth/oidc/login?terug=/admin/indicatoren",
+        headers={"host": "omnitwin.example.nl", "x-forwarded-proto": "https"},
+    )
     assert r.status_code == 303
     adres = urlsplit(r.headers["location"])
     q = {k: v[0] for k, v in parse_qs(adres.query).items()}
@@ -250,14 +288,17 @@ def test_callback_geweigerd_door_gebruiker(oidc_aan):
     assert r.headers["location"] == "/admin/login?fout=geweigerd"
 
 
-@pytest.mark.parametrize("terug, verwacht", [
-    ("/admin/indicatoren", "/admin/indicatoren"),
-    ("https://elders.example/admin", "/admin/dashboard"),
-    ("//elders.example/admin", "/admin/dashboard"),
-    ("/admin//elders", "/admin/dashboard"),
-    ("/api/admin/llm", "/admin/dashboard"),
-    (None, "/admin/dashboard"),
-])
+@pytest.mark.parametrize(
+    "terug, verwacht",
+    [
+        ("/admin/indicatoren", "/admin/indicatoren"),
+        ("https://elders.example/admin", "/admin/dashboard"),
+        ("//elders.example/admin", "/admin/dashboard"),
+        ("/admin//elders", "/admin/dashboard"),
+        ("/api/admin/llm", "/admin/dashboard"),
+        (None, "/admin/dashboard"),
+    ],
+)
 def test_alleen_terug_naar_de_beheeromgeving(terug, verwacht):
     assert oidc_login.veilig_terug(terug) == verwacht
 
@@ -269,11 +310,15 @@ def test_geen_keycloak_console_bij_andere_provider(monkeypatch):
 
 def test_forwarded_headers_https_met_poort():
     h = oidc_login._forwarded("https://omnitwin.example.nl:8443/auth/realms/omnitwin")
-    assert h == {"X-Forwarded-Proto": "https", "X-Forwarded-Host": "omnitwin.example.nl:8443",
-                 "X-Forwarded-Port": "8443"}
+    assert h == {
+        "X-Forwarded-Proto": "https",
+        "X-Forwarded-Host": "omnitwin.example.nl:8443",
+        "X-Forwarded-Port": "8443",
+    }
 
 
 # ------------------------------------------------------------------ Entra ID: scope en clientgeheim (#411)
+
 
 def test_extra_scope_bij_inloggen(discovery, monkeypatch):
     monkeypatch.setenv("OIDC_SCOPE", " offline_access  api://00000000-0000-0000-0000-0000000000aa/toegang ")

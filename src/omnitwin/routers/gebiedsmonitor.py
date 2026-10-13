@@ -25,18 +25,16 @@ from omnitwin.schemas.gebiedsmonitor import (
     GebiedenListResponse,
     GebiedDetailResponse,
     IndicatorenListResponse,
-    GeoJSONFeatureCollection
+    GeoJSONFeatureCollection,
 )
 
-router = APIRouter(
-    prefix="/api/gebiedsmonitor",
-    tags=["Gebiedsmonitor"]
-)
+router = APIRouter(prefix="/api/gebiedsmonitor", tags=["Gebiedsmonitor"])
 
 
 # ============================================================================
 # Helper function
 # ============================================================================
+
 
 def get_service(db: Session = Depends(get_db)) -> GebiedsmonitorService:
     """Dependency injection voor service"""
@@ -47,13 +45,12 @@ def get_service(db: Session = Depends(get_db)) -> GebiedsmonitorService:
 # Endpoints
 # ============================================================================
 
+
 @router.get("/gebiedstypes", response_model=GebiedstypesListResponse)
-def get_gebiedstypes(
-    service: GebiedsmonitorService = Depends(get_service)
-):
+def get_gebiedstypes(service: GebiedsmonitorService = Depends(get_service)):
     """
     Haal alle beschikbare gebiedstypes op.
-    
+
     Returns:
         Lijst van gebiedstypes met aantal gebieden per type
     """
@@ -66,73 +63,60 @@ def get_gebieden(
     gebiedstype_id: Optional[str] = Query(None, description="Filter op gebiedstype UUID"),
     limit: int = Query(50, ge=1, le=500, description="Aantal resultaten"),
     offset: int = Query(0, ge=0, description="Paginatie offset"),
-    service: GebiedsmonitorService = Depends(get_service)
+    service: GebiedsmonitorService = Depends(get_service),
 ):
     """
     Haal gebieden op met optional filtering en paginatie.
-    
+
     Args:
         gebiedstype_id: Optional UUID van gebiedstype om op te filteren
         limit: Maximaal aantal resultaten (1-500)
         offset: Aantal records om over te slaan voor paginatie
-    
+
     Returns:
         Lijst van gebieden met pagination metadata
     """
-    result = service.get_gebieden(
-        gebiedstype_id=gebiedstype_id,
-        limit=limit,
-        offset=offset
-    )
+    result = service.get_gebieden(gebiedstype_id=gebiedstype_id, limit=limit, offset=offset)
     return result
 
 
 @router.get("/gebieden/{gebied_id}", response_model=GebiedDetailResponse)
-def get_gebied_detail(
-    gebied_id: str,
-    service: GebiedsmonitorService = Depends(get_service)
-):
+def get_gebied_detail(gebied_id: str, service: GebiedsmonitorService = Depends(get_service)):
     """
     Haal gedetailleerde informatie op van een specifiek gebied,
     inclusief alle indicator waarden.
-    
+
     Args:
         gebied_id: ID van het gebied (bijv. "BU19000000")
-    
+
     Returns:
         Gebied details met alle indicator data
-        
+
     Raises:
         HTTPException 404: Als gebied niet gevonden
     """
     result = service.get_gebied_detail(gebied_id)
-    
+
     if not result:
-        raise HTTPException(
-            status_code=404,
-            detail=f"Gebied met ID '{gebied_id}' niet gevonden"
-        )
-    
+        raise HTTPException(status_code=404, detail=f"Gebied met ID '{gebied_id}' niet gevonden")
+
     return result
 
 
 @router.get("/indicatoren", response_model=IndicatorenListResponse)
 def get_indicatoren(
-    gebiedstype_id: Optional[str] = Query(
-        None, 
-        description="Filter indicatoren die data hebben voor dit gebiedstype"
-    ),
-    service: GebiedsmonitorService = Depends(get_service)
+    gebiedstype_id: Optional[str] = Query(None, description="Filter indicatoren die data hebben voor dit gebiedstype"),
+    service: GebiedsmonitorService = Depends(get_service),
 ):
     """
     Haal beschikbare indicatoren op.
-    
+
     Als gebiedstype_id is opgegeven, worden alleen indicatoren getoond
     die data hebben voor dat specifieke gebiedstype.
-    
+
     Args:
         gebiedstype_id: Optional UUID van gebiedstype
-    
+
     Returns:
         Lijst van indicatoren met metadata over beschikbaarheid
     """
@@ -143,28 +127,16 @@ def get_indicatoren(
 @router.get("/kaart_data/{gebiedstype_id}", response_model=Dict[str, Any])
 def get_kaart_attributes(
     gebiedstype_id: UUID,  # ongeldige UUID: 422 (#203)
-    indicator_uuid: Optional[UUID] = Query(
-        None, 
-        description="OPTIONEEL: UUID van indicator om te visualiseren"
-    ),
-    show_all: bool = Query(
-        False, 
-        description="True = toon ook gebieden zonder data (grijs)"
-    ),
-    gemeente_code: Optional[str] = Query(
-        None,
-        description="Filter op specifieke gemeente"
-    ),
-    jaar: Optional[int] = Query(
-        None,
-        description="Optioneel: Specifiek jaar"
-    ),
+    indicator_uuid: Optional[UUID] = Query(None, description="OPTIONEEL: UUID van indicator om te visualiseren"),
+    show_all: bool = Query(False, description="True = toon ook gebieden zonder data (grijs)"),
+    gemeente_code: Optional[str] = Query(None, description="Filter op specifieke gemeente"),
+    jaar: Optional[int] = Query(None, description="Optioneel: Specifiek jaar"),
     modus: str = Query(
         "waarde",
         pattern="^(waarde|percentiel|label)$",
         description="waarde = kleur naar de werkelijke waarde; percentiel = percentielklasse 1-8 binnen de "
-                    "referentiegroep (#255); label = label A-E (drempels uit indicator_labels, anders "
-                    "voorlopig kwintielen, #256)"
+        "referentiegroep (#255); label = label A-E (drempels uit indicator_labels, anders "
+        "voorlopig kwintielen, #256)",
     ),
     service: GebiedsmonitorService = Depends(get_service),
     db: Session = Depends(get_db),
@@ -190,13 +162,10 @@ def get_kaart_attributes(
 # Health Check
 # ============================================================================
 
+
 @router.get("/health")
 def health_check():
     """
     Simple health check endpoint voor Gebiedsmonitor API.
     """
-    return {
-        "status": "healthy",
-        "service": "Gebiedsmonitor API",
-        "version": __version__
-    }
+    return {"status": "healthy", "service": "Gebiedsmonitor API", "version": __version__}

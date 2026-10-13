@@ -8,6 +8,7 @@ eigen gebied, standaard-benchmarkgebied, contactpunt en logo's staan in de tabel
 Regel: code die "de eigen gemeente" nodig heeft, vraagt die hier op
 (``eigen_gemeente_code``) en neemt nooit een vaste code aan.
 """
+
 from __future__ import annotations
 
 import json
@@ -45,7 +46,7 @@ def beeldmerk_kleuren(thema: str, themamap: Path = THEMA_MAP) -> Dict[str, str]:
         return {}
     css = pad.read_text(encoding="utf-8")
     start = css.find(":root")
-    blok = css[start:css.find("}", start)] if start >= 0 else ""
+    blok = css[start : css.find("}", start)] if start >= 0 else ""
     kleuren = {}
     for deel in ("vlak", "lijn", "kern"):
         m = re.search(rf"--d-omnitwin-beeldmerk-{deel}:\s*([^;]+);", blok)
@@ -63,7 +64,8 @@ def beeldmerk_svg(org: Optional[Dict[str, Any]], svg: Path = BEELDMERK, themamap
     kleuren = beeldmerk_kleuren(veilig_thema(org.get("thema") if org else None), themamap)
     tekst = svg.read_text(encoding="utf-8")
     return _BEELDMERK_TOKEN.sub(
-        lambda m: f"var(--d-omnitwin-beeldmerk-{m.group(1)}, {kleuren.get(m.group(1), m.group(2))})", tekst)
+        lambda m: f"var(--d-omnitwin-beeldmerk-{m.group(1)}, {kleuren.get(m.group(1), m.group(2))})", tekst
+    )
 
 
 def thema_css(org: Optional[Dict[str, Any]], themamap: Path = THEMA_MAP) -> Optional[str]:
@@ -92,11 +94,12 @@ def _blok(css: str, selector: str) -> str:
     if start < 0:
         return ""
     open_ = css.find("{", start)
-    return css[open_ + 1:css.find("}", open_)]
+    return css[open_ + 1 : css.find("}", open_)]
 
 
 def _kleuren(tokens: Dict[str, str]) -> Dict[str, str]:
     """Alleen de tokens met een kleur (#hex), met ``var(--ander)`` opgelost binnen dezelfde set."""
+
     def los_op(waarde: str, diepte: int = 0) -> Optional[str]:
         waarde = waarde.strip()
         if _KLEUR.match(waarde):
@@ -125,13 +128,16 @@ def thema_info(naam: str, themamap: Path = THEMA_MAP) -> Dict[str, Any]:
     (zoals de cascade in de browser: wat donker niet zet, komt uit :root)."""
     css = (themamap / f"{naam}.css").read_text(encoding="utf-8")
     m = _TITEL.search(css[:600])
-    kop = css[:css.find("*/")] if css.lstrip().startswith("/*") else ""
+    kop = css[: css.find("*/")] if css.lstrip().startswith("/*") else ""
     wcag = _WCAG_AA.search(kop)
     licht = dict(_TOKEN.findall(_blok(css, ":root")))
     donker = {**licht, **dict(_TOKEN.findall(_blok(css, _DONKER)))}
-    return {"naam": naam, "titel": m.group(1).strip() if m else naam,
-            "wcag_aa": (wcag.group(1) == "ja") if wcag else None,
-            "kleuren": {"licht": _kleuren(licht), "donker": _kleuren(donker)}}
+    return {
+        "naam": naam,
+        "titel": m.group(1).strip() if m else naam,
+        "wcag_aa": (wcag.group(1) == "ja") if wcag else None,
+        "kleuren": {"licht": _kleuren(licht), "donker": _kleuren(donker)},
+    }
 
 
 def themas(themamap: Path = THEMA_MAP) -> List[Dict[str, Any]]:
@@ -144,7 +150,7 @@ def logo_bestand(pad: object, afbeeldingen: Path = AFBEELDINGEN) -> Optional[Pat
     /static/images/ is (geen ``..``, geen andere map, geen uploads); anders None."""
     if not isinstance(pad, str) or not pad.startswith(LOGO_PREFIX) or len(pad) > 300:
         return None
-    rel = pad[len(LOGO_PREFIX):]
+    rel = pad[len(LOGO_PREFIX) :]
     if not rel or "\\" in rel or any(d in ("", ".", "..") for d in rel.split("/")):
         return None
     bestand = (afbeeldingen / rel).resolve()
@@ -163,8 +169,19 @@ def beschikbare_logos(afbeeldingen: Path = AFBEELDINGEN) -> List[str]:
     )
 
 
-_VELDEN = ("code", "naam", "korte_naam", "oin", "gemeente_codes", "benchmark_provincie",
-           "contact_email", "thema", "logos", "meld_url", "n_drempel")
+_VELDEN = (
+    "code",
+    "naam",
+    "korte_naam",
+    "oin",
+    "gemeente_codes",
+    "benchmark_provincie",
+    "contact_email",
+    "thema",
+    "logos",
+    "meld_url",
+    "n_drempel",
+)
 
 # Meldplek als de instantie geen eigen meld_url heeft (#312): een nieuw issue bij D-OmniTwin zelf
 STANDAARD_MELD_URL = "https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/new"
@@ -181,7 +198,9 @@ def wijzigingen(oud: Optional[Dict[str, Any]], nieuw: Dict[str, Any]) -> Dict[st
         if veld == "logos":
             a = [l.get("pad") for l in (a or [])]
             b = [l.get("pad") for l in (b or [])]
-            if a == b and [(l.get("naam"), l.get("rol")) for l in (oud.get("logos") or [])] !=                     [(l.get("naam"), l.get("rol")) for l in (nieuw.get("logos") or [])]:
+            if a == b and [(l.get("naam"), l.get("rol")) for l in (oud.get("logos") or [])] != [
+                (l.get("naam"), l.get("rol")) for l in (nieuw.get("logos") or [])
+            ]:
                 uit[veld] = "namen of rollen gewijzigd"
                 continue
         if a != b:
@@ -207,8 +226,10 @@ def schrijf_organisatie(db: Session, org: Dict[str, Any]) -> None:
     """Zet de (enige) rij van de organisatie; de invoer is al gevalideerd (router)."""
     params = {veld: org.get(veld) for veld in _VELDEN}
     params["gemeente_codes"] = list(org.get("gemeente_codes") or [])
-    params["logos"] = json.dumps([{"pad": l["pad"], "naam": l.get("naam"), "rol": l.get("rol", "partner")}
-                                  for l in org.get("logos") or []], ensure_ascii=False)
+    params["logos"] = json.dumps(
+        [{"pad": l["pad"], "naam": l.get("naam"), "rol": l.get("rol", "partner")} for l in org.get("logos") or []],
+        ensure_ascii=False,
+    )
     db.execute(_SCHRIJF, params)
     db.commit()
 

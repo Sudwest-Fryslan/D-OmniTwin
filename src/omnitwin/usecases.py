@@ -67,7 +67,18 @@ SCHEMA = SPECIFICATIE / "usecase.schema.json"
 DATASET_SCHEMA = SPECIFICATIE / "dataset.schema.json"
 README = USECASES_DIR / "README.md"
 INDEX_START, INDEX_EINDE = "<!-- usecase-index:start -->", "<!-- usecase-index:end -->"
-VOLLEDIG = ("naam", "versie", "titel", "vraag", "gebruiker", "status", "afhankelijk_van", "rechten", "datasets", "controles")
+VOLLEDIG = (
+    "naam",
+    "versie",
+    "titel",
+    "vraag",
+    "gebruiker",
+    "status",
+    "afhankelijk_van",
+    "rechten",
+    "datasets",
+    "controles",
+)
 # Een use case is declaratief: alleen deze bestanden. bewijs/ wordt gevuld door de uitvoerder
 # (in git alleen bewijs/*.webp, bewijs/bewijs.json en bewijs/README.md; #225).
 TOEGESTAAN = {".json", ".md", ".csv"}
@@ -87,6 +98,7 @@ class UseCaseFout(Exception):
 
 
 # ------------------------------------------------------------------ manifesten en afhankelijkheden
+
 
 def lees_usecases(map_=USECASES_DIR):
     """Alle manifesten, op naam (= mapnaam). `_map` wijst naar de map van de use case."""
@@ -150,7 +162,7 @@ def volgorde(namen, ucs):
         if naam in uit:
             return
         if naam in bezig:
-            raise UseCaseFout("cyclus: " + " -> ".join(bezig[bezig.index(naam):] + [naam]))
+            raise UseCaseFout("cyclus: " + " -> ".join(bezig[bezig.index(naam) :] + [naam]))
         bezig.append(naam)
         for dep, dep_eis in afhankelijkheden(ucs[naam]):
             bezoek(dep, dep_eis, naam)
@@ -201,12 +213,16 @@ def gebruiker(uc):
 
 
 def index_markdown(ucs):
-    regels = ["| Use case | ID | Titel | Gebruiker | Status | Versie | Afhankelijk van |",
-              "|---|---|---|---|---|---|---|"]
+    regels = [
+        "| Use case | ID | Titel | Gebruiker | Status | Versie | Afhankelijk van |",
+        "|---|---|---|---|---|---|---|",
+    ]
     for naam, uc in sorted(ucs.items()):
         deps = ", ".join(f"{d}{' (opt.)' if o else ''}" for d, _, o in afhankelijkheden(uc, True)) or "–"
-        regels.append(f"| [{naam}](./{naam}/README.md) | {uc.get('id', '–')} | {uc.get('titel', '')} | "
-                      f"{gebruiker(uc)} | {uc.get('status', '–')} | {uc.get('versie', '–')} | {deps} |")
+        regels.append(
+            f"| [{naam}](./{naam}/README.md) | {uc.get('id', '–')} | {uc.get('titel', '')} | "
+            f"{gebruiker(uc)} | {uc.get('status', '–')} | {uc.get('versie', '–')} | {deps} |"
+        )
     return "\n".join(regels)
 
 
@@ -228,8 +244,10 @@ def werk_index_bij(controleer=False, readme=README, ucs=None):
 
 # ------------------------------------------------------------------ controleren
 
+
 def _schema_fouten(data, schema_pad):
     from omnitwin.laden.registratie import valideer
+
     schema = json.loads(Path(schema_pad).read_text(encoding="utf-8"))
     return valideer({k: v for k, v in data.items() if not k.startswith("_")}, schema, schema)
 
@@ -245,20 +263,32 @@ def bestandsfouten(map_, naam=None):
         rel = p.relative_to(map_).as_posix()
         if f"{naam}/{rel}" in UIT_TE_FASEREN:
             continue
-        toegestaan = (TOEGESTAAN_BEWIJS if rel.startswith("bewijs/")
-                      else TOEGESTAAN_DATA if rel.startswith("data/") else TOEGESTAAN)
+        toegestaan = (
+            TOEGESTAAN_BEWIJS
+            if rel.startswith("bewijs/")
+            else TOEGESTAAN_DATA
+            if rel.startswith("data/")
+            else TOEGESTAAN
+        )
         if p.suffix.lower() not in toegestaan:
-            fouten.append(f"{rel}: bestandstype {p.suffix or '(geen)'} niet toegestaan in een use case "
-                          f"(alleen {', '.join(sorted(toegestaan))}); code hoort in de kern (omnitwin.bronadapters)")
-        elif p.suffix.lower() == ".pdf" and (p.stat().st_size > MAX_PDF_BYTES or not p.read_bytes().startswith(b"%PDF")):
-            fouten.append(f"{rel}: een PDF in een use case is een klein voorbeelddocument (geldige PDF, "
-                          f"hoogstens {MAX_PDF_BYTES // 1024} KB)")
+            fouten.append(
+                f"{rel}: bestandstype {p.suffix or '(geen)'} niet toegestaan in een use case "
+                f"(alleen {', '.join(sorted(toegestaan))}); code hoort in de kern (omnitwin.bronadapters)"
+            )
+        elif p.suffix.lower() == ".pdf" and (
+            p.stat().st_size > MAX_PDF_BYTES or not p.read_bytes().startswith(b"%PDF")
+        ):
+            fouten.append(
+                f"{rel}: een PDF in een use case is een klein voorbeelddocument (geldige PDF, "
+                f"hoogstens {MAX_PDF_BYTES // 1024} KB)"
+            )
     return fouten
 
 
 def _bron_fouten(bron, pad):
     """Bekende adapter, toegestane map of domein (zonder iets op te halen)."""
     from omnitwin.bronadapters import ADAPTERS, TOEGESTANE_MAPPEN, BronFout, controleer_url
+
     if not isinstance(bron, dict) or bron.get("adapter") not in ADAPTERS:
         return [f"{pad}: onbekende adapter {(bron or {}).get('adapter')!r} (bekend: {', '.join(sorted(ADAPTERS))})"]
     fouten = []
@@ -272,13 +302,15 @@ def _bron_fouten(bron, pad):
         if not m or m.group(1) not in TOEGESTANE_MAPPEN or ".." in bron["pad"]:
             fouten.append(f"{pad}: pad moet ${{VAR}}/... zijn met VAR uit {TOEGESTANE_MAPPEN}")
     if bron["adapter"] == "usecase-bestand" and (
-            ".." in str(bron.get("pad", "")) or not str(bron.get("pad", "")).endswith((".json", ".csv"))):
+        ".." in str(bron.get("pad", "")) or not str(bron.get("pad", "")).endswith((".json", ".csv"))
+    ):
         fouten.append(f"{pad}: usecase-bestand alleen .json/.csv in de use case")
     return fouten
 
 
 def _stappen_fouten(stappen, pad):
     from omnitwin.bronadapters.bewerkingen import BewerkingFout, naam_van
+
     fouten = []
     for i, stap in enumerate(stappen or []):
         try:
@@ -304,6 +336,7 @@ def registratie_voor_api(dataset):
 
 def dataset_fouten(uc, ds, spec=None):
     from omnitwin.laden.registratie import valideer_registratie
+
     pad = ds.get("registratie", "?")
     if not ds.get("registratie") or not (Path(uc["_map"]) / ds["registratie"]).exists():
         return [f"{pad}: ontbreekt"]
@@ -316,6 +349,7 @@ def dataset_fouten(uc, ds, spec=None):
     if ds.get("toegang"):
         # Toegang per laag (#254): het manifest toont hem, dct:accessRights in de registratie bepaalt hem
         from omnitwin.laden.catalogus import toegang_van
+
         echt = toegang_van(d.get("beschrijving") or {})
         if echt != ds["toegang"]:
             fouten.append(f"{pad}: toegang {ds['toegang']!r} in het manifest, maar dct:accessRights geeft {echt!r}")
@@ -359,8 +393,10 @@ def valideer_manifest(uc, naam=None):
 
 
 def bronnen():
-    return {k: os.environ.get(k) for k in ("SWF_DUMP_DIR", "SWF_DOCS_DIR", "SWF_GEO_DIR", "SWF_DB_DUMP", "SWF_EXPORT_DIR",
-                                        "DATA_CACHE")}
+    return {
+        k: os.environ.get(k)
+        for k in ("SWF_DUMP_DIR", "SWF_DOCS_DIR", "SWF_GEO_DIR", "SWF_DB_DUMP", "SWF_EXPORT_DIR", "DATA_CACHE")
+    }
 
 
 def schema_paden(uc, dataset):
@@ -388,10 +424,14 @@ def maak_levering(uc, ds, uit, variant=None, bron_env=None):
     from omnitwin.bronadapters import haal
     from omnitwin.bronadapters.bewerkingen import voer_uit
     from omnitwin.bronadapters.schrijvers import schrijf
+
     basis = lees_dataset(uc, ds)
     ctx = {"bronnen": bron_env if bron_env is not None else bronnen(), "usecase_map": uc["_map"]}
-    pogingen = [variant] if variant else [n for n, v in (basis.get("varianten") or {}).items()
-                                           if v.get("als_beschikbaar")] + [None]
+    pogingen = (
+        [variant]
+        if variant
+        else [n for n, v in (basis.get("varianten") or {}).items() if v.get("als_beschikbaar")] + [None]
+    )
     for i, naam in enumerate(pogingen):
         d, sla_over = met_variant(basis, naam)
         try:
@@ -403,8 +443,12 @@ def maak_levering(uc, ds, uit, variant=None, bron_env=None):
         gelezen = {t: len(r) for t, r in tabellen.items()}
         tabellen, rapport = voer_uit(tabellen, d.get("bewerkingen", []), ctx, sla_over)
         paden = schrijf(tabellen, d, uit, schema_paden(uc, d))
-        return paden, {"gelezen": gelezen, "geschreven": {t: len(r) for t, r in tabellen.items()},
-                       "bewerkingen": rapport, "variant": naam}
+        return paden, {
+            "gelezen": gelezen,
+            "geschreven": {t: len(r) for t, r in tabellen.items()},
+            "bewerkingen": rapport,
+            "variant": naam,
+        }
 
 
 def controleer(naam, uit=None, ucs=None, variant=None, bron_env=None):
@@ -412,11 +456,18 @@ def controleer(naam, uit=None, ucs=None, variant=None, bron_env=None):
     from omnitwin.bronadapters import BronFout
     from omnitwin.laden.levering import OntbrekendPakket, valideer_levering
     from omnitwin.laden.registratie import laad_openapi
+
     ucs = ucs or lees_usecases()
     if naam not in ucs:
         raise UseCaseFout(f"onbekende use case '{naam}'")
     uc = ucs[naam]
-    r = {"naam": naam, "versie": uc.get("versie"), "manifest": valideer_manifest(uc, naam), "datasets": {}, "controles": []}
+    r = {
+        "naam": naam,
+        "versie": uc.get("versie"),
+        "manifest": valideer_manifest(uc, naam),
+        "datasets": {},
+        "controles": [],
+    }
     try:
         r["volgorde"] = volgorde([naam], ucs)
     except UseCaseFout as e:
@@ -444,13 +495,18 @@ def controleer(naam, uit=None, ucs=None, variant=None, bron_env=None):
             except OntbrekendPakket as e:
                 # Niet gecontroleerd (bijv. frictionless ontbreekt), maar wel geteld: anders geeft elke
                 # aantal-controle 0 en daarmee een valse fout
-                d["leveringen"].append({"bestand": p.name, "geldig": None, "aantallen": tel_regels(p), "fouten": [str(e)]})
+                d["leveringen"].append(
+                    {"bestand": p.name, "geldig": None, "aantallen": tel_regels(p), "fouten": [str(e)]}
+                )
         if any(lv["geldig"] is False for lv in d["leveringen"]):
             d["status"] = "fout"
     for c in uc.get("controles", []):
         r["controles"].append(controle_lokaal(c, r))
-    r["geldig"] = not r["manifest"] and all(d["status"] != "fout" for d in r["datasets"].values()) \
+    r["geldig"] = (
+        not r["manifest"]
+        and all(d["status"] != "fout" for d in r["datasets"].values())
         and all(c["resultaat"] != "fout" for c in r["controles"])
+    )
     r["uitvoer"] = str(uit)
     (uit / "controle.json").write_text(json.dumps(r, ensure_ascii=False, indent=2, default=str), encoding="utf-8")
     return r
@@ -461,6 +517,7 @@ def tel_regels(pad):
     import csv
     import io
     import zipfile
+
     if Path(pad).suffix != ".zip":
         return {}
     uit = {}
@@ -514,8 +571,12 @@ def controle_lokaal(c, r):
 # ------------------------------------------------------------------ installeren en testen (laad-API)
 
 LAAD_API = "/api/laden/v1"
-MEDIATYPE = {".zip": "application/zip", ".gpkg": "application/geopackage+sqlite3", ".csv": "text/csv",
-             ".json": "application/json"}
+MEDIATYPE = {
+    ".zip": "application/zip",
+    ".gpkg": "application/geopackage+sqlite3",
+    ".csv": "text/csv",
+    ".json": "application/json",
+}
 
 
 def basis_url():
@@ -525,6 +586,7 @@ def basis_url():
 def laad_api_beschikbaar(basis=None):
     """True als de laad-API zijn specificatie serveert (GET /api/laden/v1/openapi.json → 200)."""
     import requests
+
     try:
         return requests.get(f"{basis or basis_url()}{LAAD_API}/openapi.json", timeout=10).status_code == 200
     except requests.RequestException:
@@ -534,6 +596,7 @@ def laad_api_beschikbaar(basis=None):
 def token_url(basis=None):
     """Tokenendpoint: OMNITWIN_TOKEN_URL, of via discovery van realm KEYCLOAK_REALM (standaard omnitwin)."""
     import requests
+
     url = os.environ.get("OMNITWIN_TOKEN_URL")
     if not url:
         realm = os.environ.get("KEYCLOAK_REALM", "omnitwin")
@@ -546,6 +609,7 @@ def token_url(basis=None):
 def token(basis=None):
     """Token voor de machineclient (client credentials) uit OMNITWIN_CLIENT_ID/OMNITWIN_CLIENT_SECRET."""
     import requests
+
     cid, geheim = os.environ.get("OMNITWIN_CLIENT_ID"), os.environ.get("OMNITWIN_CLIENT_SECRET")
     if not cid or not geheim:
         raise UseCaseFout("OMNITWIN_CLIENT_ID en OMNITWIN_CLIENT_SECRET (machineclient) zijn niet gezet")
@@ -561,6 +625,7 @@ class LaadApi:
         """tokenbron: functie die een (nieuw) token geeft; standaard de machineclient uit de omgeving.
         Bij 401 haalt de client eenmaal een nieuw token (access tokens leven 5 minuten)."""
         import requests
+
         self.basis, self.s = basis or basis_url(), requests.Session()
         self.tokenbron = tokenbron or (None if tok else (lambda: token(self.basis)))
         self.s.headers["Authorization"] = f"Bearer {tok or self.tokenbron()}"
@@ -593,24 +658,39 @@ class LaadApi:
     def registreer(self, registratie):
         url = f"{self.basis}{LAAD_API}/datasets"
         bestaat = self.s.get(f"{url}/{registratie['id']}", timeout=30).status_code == 200
-        r = (self.s.put(f"{url}/{registratie['id']}", json=registratie, timeout=30) if bestaat
-             else self.s.post(url, json=registratie, timeout=30))
+        r = (
+            self.s.put(f"{url}/{registratie['id']}", json=registratie, timeout=30)
+            if bestaat
+            else self.s.post(url, json=registratie, timeout=30)
+        )
         r.raise_for_status()
         return r.json()
 
     def lever(self, ds_id, pad, route="laden", alleen_valideren=False):
         import hashlib
+
         pad = Path(pad)
         inhoud = pad.read_bytes()
-        headers = {"Content-Type": MEDIATYPE[pad.suffix],
-                   "Idempotency-Key": f"{ds_id}-{hashlib.sha256(inhoud).hexdigest()[:16]}"}
+        headers = {
+            "Content-Type": MEDIATYPE[pad.suffix],
+            "Idempotency-Key": f"{ds_id}-{hashlib.sha256(inhoud).hexdigest()[:16]}",
+        }
         if route == "compat":
             soort = "indicator/setup" if pad.name == "definities.json" else "indicator_waarde"
-            r = self.s.post(f"{self.basis}{LAAD_API}/compat/swf-monitor/monitor_api/{soort}/inlezen",
-                            data=inhoud, headers=headers, timeout=180)
+            r = self.s.post(
+                f"{self.basis}{LAAD_API}/compat/swf-monitor/monitor_api/{soort}/inlezen",
+                data=inhoud,
+                headers=headers,
+                timeout=180,
+            )
         else:
-            r = self.s.post(f"{self.basis}{LAAD_API}/datasets/{ds_id}/leveringen", data=inhoud, headers=headers,
-                            params={"wacht": "true", "alleenValideren": str(alleen_valideren).lower()}, timeout=180)
+            r = self.s.post(
+                f"{self.basis}{LAAD_API}/datasets/{ds_id}/leveringen",
+                data=inhoud,
+                headers=headers,
+                params={"wacht": "true", "alleenValideren": str(alleen_valideren).lower()},
+                timeout=180,
+            )
         if r.status_code == 202 and r.headers.get("Location"):
             return self.volg(r.headers["Location"])
         return self._json(r)
@@ -626,8 +706,12 @@ class LaadApi:
         raise UseCaseFout(f"levering {locatie} niet klaar binnen {maximaal} s")
 
     def beheer(self, pad_api, bestand):
-        r = self.s.put(f"{self.basis}{pad_api}", data=Path(bestand).read_bytes(),
-                       headers={"Content-Type": MEDIATYPE[Path(bestand).suffix]}, timeout=60)
+        r = self.s.put(
+            f"{self.basis}{pad_api}",
+            data=Path(bestand).read_bytes(),
+            headers={"Content-Type": MEDIATYPE[Path(bestand).suffix]},
+            timeout=60,
+        )
         return self._json(r)
 
 
@@ -649,9 +733,12 @@ class ActorApi:
         if naam not in self._apis:
             acc = self.accounts.get(naam)
             if acc is None:
-                raise UseCaseFout(f"{self.uc.get('naam')}: actor {naam!r} heeft geen testaccount "
-                                  "(niet in actoren, of zonder --testaccounts)")
+                raise UseCaseFout(
+                    f"{self.uc.get('naam')}: actor {naam!r} heeft geen testaccount "
+                    "(niet in actoren, of zonder --testaccounts)"
+                )
             from omnitwin import testaccounts
+
             url = token_url(self.basis)
             self._apis[naam] = self._maak_api(tokenbron=lambda: testaccounts.token(acc, self.loginclient, url))
         return self._apis[naam]
@@ -699,6 +786,7 @@ def maak_actor_apis(namen, ucs, beheer=None):
     """Testaccounts voor de use cases (met hun afhankelijkheden) die actoren declareren, en per use case
     een ActorApi. Weigert buiten test en dev (omnitwin.testaccounts.toegestaan)."""
     from omnitwin import testaccounts
+
     apis = {}
     try:
         testaccounts.toegestaan()
@@ -707,8 +795,11 @@ def maak_actor_apis(namen, ucs, beheer=None):
             if ucs[n].get("actoren"):
                 actoren = testaccounts.maak(n, ucs[n], beheer)
                 accounts = {"loginclient": testaccounts.loginclient(n), "actoren": actoren}
-                print(f"👤 {n}: testaccounts {', '.join(a['id'] for a in actoren.values())} "
-                      f"(geheimen in {testaccounts.bestand().name}, niet in git)", flush=True)
+                print(
+                    f"👤 {n}: testaccounts {', '.join(a['id'] for a in actoren.values())} "
+                    f"(geheimen in {testaccounts.bestand().name}, niet in git)",
+                    flush=True,
+                )
             apis[n] = ActorApi(ucs[n], accounts)
     except testaccounts.TestaccountFout as e:
         raise UseCaseFout(str(e)) from None
@@ -718,6 +809,7 @@ def maak_actor_apis(namen, ucs, beheer=None):
 def opruimen(namen, ucs, beheer=None):
     """Testaccounts van de use cases (met hun afhankelijkheden) verwijderen. Geeft {naam: [accounts]}."""
     from omnitwin import testaccounts
+
     try:
         return {n: testaccounts.opruimen(n, beheer) for n in volgorde(namen, ucs) if ucs[n].get("actoren")}
     except testaccounts.TestaccountFout as e:
@@ -737,8 +829,9 @@ def oude_route(namen, alleen_inrichting=False):
     alleen_inrichting: alleen de richting van de indicatoren (de data komt via de laad-API)."""
     if namen:
         extra = ["--inrichting"] if alleen_inrichting else []
-        subprocess.run([sys.executable, str(ROOT / "init_data" / "scripts" / "laad_usecase.py"), *extra, *namen],
-                       check=True)
+        subprocess.run(
+            [sys.executable, str(ROOT / "init_data" / "scripts" / "laad_usecase.py"), *extra, *namen], check=True
+        )
 
 
 def heeft_inrichting(uc):
@@ -778,8 +871,13 @@ def mislukt(resultaat):
     for n, per_ds in (resultaat or {}).items():
         for ds, res in (per_ds if isinstance(per_ds, dict) else {}).items():
             if (isinstance(res, str) and res.startswith("fout")) or (
-                    isinstance(res, list) and any(lv.get("status") != "overgeslagen" and (
-                        lv.get("status") in ("afgekeurd", "mislukt") or (lv.get("http") or 0) >= 400) for lv in res)):
+                isinstance(res, list)
+                and any(
+                    lv.get("status") != "overgeslagen"
+                    and (lv.get("status") in ("afgekeurd", "mislukt") or (lv.get("http") or 0) >= 400)
+                    for lv in res
+                )
+            ):
                 uit.append(f"{n}/{ds}")
     return uit
 
@@ -798,11 +896,14 @@ def installeer(namen, alle=False, ucs=None, api=None, uit=None, ook_ontwerp=Fals
     oude_route([n for n in orde if "datasets" not in ucs[n]])
     nieuw = [n for n in orde if ucs[n].get("datasets")]
     if nieuw and api is None and apis is None and not inproces and not laad_api_beschikbaar():
-        print(f"⏸️  laad-API nog niet beschikbaar ({basis_url()}{LAAD_API}/openapi.json); niet geïnstalleerd: {', '.join(nieuw)}")
+        print(
+            f"⏸️  laad-API nog niet beschikbaar ({basis_url()}{LAAD_API}/openapi.json); niet geïnstalleerd: {', '.join(nieuw)}"
+        )
         return {n: "laad-API nog niet beschikbaar" for n in nieuw}
     if api is None and apis is None and nieuw:
         if inproces:
             from omnitwin.laden.inproces import InprocesLaadApi
+
             api = InprocesLaadApi()
         else:
             api = LaadApi()
@@ -822,8 +923,10 @@ def installeer(namen, alle=False, ucs=None, api=None, uit=None, ook_ontwerp=Fals
     try:
         oude_route([n for n in orde if "datasets" in ucs[n] and heeft_inrichting(ucs[n])], alleen_inrichting=True)
     except subprocess.CalledProcessError:  # bijv. installeren op afstand, zonder databasetoegang
-        print("⚠️  inrichting (richting van de indicatoren) niet gezet: laad_usecase.py --inrichting faalde "
-              "(geen databasetoegang?); de data is wel geladen")
+        print(
+            "⚠️  inrichting (richting van de indicatoren) niet gezet: laad_usecase.py --inrichting faalde "
+            "(geen databasetoegang?); de data is wel geladen"
+        )
     return resultaat
 
 
@@ -849,10 +952,18 @@ def controle_recht(c, api, uc):
         return None
     else:
         route = next((d.get("route") for d in uc.get("datasets", []) if d["id"] == ds_id), "laden")
-        url = (f"{a.basis}{LAAD_API}/compat/swf-monitor/monitor_api/{COMPAT_SOORT[ds_id]}/inlezen"
-               if route == "compat" and ds_id in COMPAT_SOORT else f"{a.basis}{LAAD_API}/datasets/{ds_id}/leveringen")
-        r = a.s.post(url, params={"alleenValideren": "rechtencontrole"}, data=b"",
-                     headers={"Content-Type": "application/json"}, timeout=30)
+        url = (
+            f"{a.basis}{LAAD_API}/compat/swf-monitor/monitor_api/{COMPAT_SOORT[ds_id]}/inlezen"
+            if route == "compat" and ds_id in COMPAT_SOORT
+            else f"{a.basis}{LAAD_API}/datasets/{ds_id}/leveringen"
+        )
+        r = a.s.post(
+            url,
+            params={"alleenValideren": "rechtencontrole"},
+            data=b"",
+            headers={"Content-Type": "application/json"},
+            timeout=30,
+        )
     if r.status_code == 401:
         return f"HTTP 401: token van {c['actor']} geweigerd"
     if (r.status_code != 403) != c["toegestaan"]:
@@ -865,6 +976,7 @@ def controle_api(c, api, uc):
     Met testaccounts (ActorApi) voert `actor` de controle uit; zonder testaccounts wordt `actor`
     genegeerd (de machineclient uit de omgeving) en zijn rechtencontroles overgeslagen."""
     import requests
+
     t = c["type"]
     if t == "recht":
         return controle_recht(c, api, uc)
@@ -878,7 +990,11 @@ def controle_api(c, api, uc):
         grenzen = (c.get("minimaal_aantal"), c.get("maximaal_aantal"))
         if grenzen != (None, None) and r.status_code == 200:
             data = r.json()
-            n = len(data.get("features", data.get("datasets", data.get("indicatoren", [])))) if isinstance(data, dict) else len(data)
+            n = (
+                len(data.get("features", data.get("datasets", data.get("indicatoren", []))))
+                if isinstance(data, dict)
+                else len(data)
+            )
             if c.get("minimaal_aantal") is not None and n < c["minimaal_aantal"]:
                 return f"{n} resultaten, verwacht ≥ {c['minimaal_aantal']}"
             if c.get("maximaal_aantal") is not None and n > c["maximaal_aantal"]:
@@ -944,6 +1060,7 @@ def test(naam, ucs=None, api=None, testaccounts=False, apis=None):
 
 # ------------------------------------------------------------------ CLI
 
+
 def _print_controle(r):
     for f in r["manifest"]:
         print(f"❌ manifest: {f}")
@@ -963,8 +1080,10 @@ def _print_controle(r):
     for cr in r["controles"]:
         if cr["resultaat"] != "alleen-api":
             c = cr["controle"]
-            print(f"   controle {c['type']} {c.get('dataset', '')} {c.get('resource', c.get('reden', ''))}: "
-                  f"{cr['resultaat']} {cr.get('waarde', '')} {cr.get('melding') or ''}".rstrip())
+            print(
+                f"   controle {c['type']} {c.get('dataset', '')} {c.get('resource', c.get('reden', ''))}: "
+                f"{cr['resultaat']} {cr.get('waarde', '')} {cr.get('melding') or ''}".rstrip()
+            )
     print(f"{'✅ geldig' if r['geldig'] else '❌ niet geldig'}; uitvoer: {r['uitvoer']}")
 
 
@@ -972,19 +1091,23 @@ def bewijs_cli(a, ucs, p):
     """`bewijs`: stappen uitvoeren tegen OMNITWIN_BASE_URL, daarna de galerij bijwerken. Exit 1 als een
     use case niet geslaagd is."""
     from omnitwin import usecase_bewijs
+
     if not a.namen and not a.alle:
         p.error("geef een of meer namen, of --alle")
     onbekend = [n for n in a.namen if n not in ucs]
     if onbekend:
         raise UseCaseFout(f"onbekende use case: {', '.join(onbekend)}")
-    namen = a.namen or [n for n, uc in sorted(ucs.items())
-                        if uc.get("status") == "actief" and usecase_bewijs.stappen(uc)]
+    namen = a.namen or [
+        n for n, uc in sorted(ucs.items()) if uc.get("status") == "actief" and usecase_bewijs.stappen(uc)
+    ]
     tok = None
     if os.environ.get("OMNITWIN_CLIENT_ID"):
         tok = token  # functie: tokens verlopen tijdens een lange run
     else:
-        print("⚠️  geen machineclient (OMNITWIN_CLIENT_ID/OMNITWIN_CLIENT_SECRET): geen leveringsstatus en "
-              "geen controles van type aantal")
+        print(
+            "⚠️  geen machineclient (OMNITWIN_CLIENT_ID/OMNITWIN_CLIENT_SECRET): geen leveringsstatus en "
+            "geen controles van type aantal"
+        )
     res = usecase_bewijs.maak(namen, ucs, basis_url(), tok, volledig=not a.zonder_volledig)
     usecase_bewijs.werk_galerij_bij(ucs)
     if a.zip:
@@ -998,6 +1121,7 @@ def bewijs_cli(a, ucs, p):
 
 def main(argv=None):
     from omnitwin.testaccounts import TestaccountFout
+
     p = argparse.ArgumentParser(prog="python -m omnitwin.usecases", description="Use-case-uitvoerder")
     sub = p.add_subparsers(dest="cmd", required=True)
     sub.add_parser("lijst", help="naam, versie, status, titel en afhankelijkheden")
@@ -1009,13 +1133,20 @@ def main(argv=None):
     c.add_argument("naam")
     c.add_argument("--uit", help="map voor de leveringen (standaard een tijdelijke map)")
     c.add_argument("--variant", help="variant van de leveringen (zie varianten in datasets/<id>.json)")
-    ins = sub.add_parser("installeer", help="use case(s) met afhankelijkheden installeren (laad-API of laad_usecase.py)")
+    ins = sub.add_parser(
+        "installeer", help="use case(s) met afhankelijkheden installeren (laad-API of laad_usecase.py)"
+    )
     ins.add_argument("namen", nargs="*")
     ins.add_argument("--alle", action="store_true")
-    ins.add_argument("--inproces", action="store_true",
-                     help="laadstraat zonder HTTP en token (eerste installatie in db-init; vereist databasetoegang)")
-    TA = ("actoren als tijdelijke testaccounts in Keycloak (alleen test/dev: OMNITWIN_TESTACCOUNTS=1, "
-          "niet OMNITWIN_OMGEVING=productie); geheimen in .usecase-accounts.json")
+    ins.add_argument(
+        "--inproces",
+        action="store_true",
+        help="laadstraat zonder HTTP en token (eerste installatie in db-init; vereist databasetoegang)",
+    )
+    TA = (
+        "actoren als tijdelijke testaccounts in Keycloak (alleen test/dev: OMNITWIN_TESTACCOUNTS=1, "
+        "niet OMNITWIN_OMGEVING=productie); geheimen in .usecase-accounts.json"
+    )
     ins.add_argument("--testaccounts", action="store_true", help=TA)
     t = sub.add_parser("test", help="installeren en de controles tegen de API uitvoeren")
     t.add_argument("naam")
@@ -1037,13 +1168,18 @@ def main(argv=None):
         if a.cmd == "lijst":
             for n, uc in sorted(ucs.items()):
                 deps = ", ".join(d for d, _ in afhankelijkheden(uc)) or "-"
-                print(f"{n:26} {uc.get('versie', '-'):7} {uc.get('status', '-'):8} {uc.get('titel', '')}  [afh.: {deps}]")
+                print(
+                    f"{n:26} {uc.get('versie', '-'):7} {uc.get('status', '-'):8} {uc.get('titel', '')}  [afh.: {deps}]"
+                )
         elif a.cmd == "boom":
             print(boom(a.naam, ucs))
         elif a.cmd == "index":
             actueel = werk_index_bij(controleer=a.controleer, ucs=ucs)
-            print(("index actueel" if a.controleer else "index bijgewerkt") if actueel
-                  else "index niet actueel: python -m omnitwin.usecases index")
+            print(
+                ("index actueel" if a.controleer else "index bijgewerkt")
+                if actueel
+                else "index niet actueel: python -m omnitwin.usecases index"
+            )
             return 0 if actueel else 1
         elif a.cmd == "controleer":
             r = controleer(a.naam, a.uit, ucs, a.variant)
@@ -1074,9 +1210,13 @@ def main(argv=None):
             return bewijs_cli(a, ucs, p)
         elif a.cmd == "galerij":
             from omnitwin import usecase_bewijs
+
             actueel = usecase_bewijs.werk_galerij_bij(ucs, controleer=a.controleer)
-            print(("galerij actueel" if a.controleer else "galerij bijgewerkt") if actueel
-                  else "galerij niet actueel: python -m omnitwin.usecases galerij")
+            print(
+                ("galerij actueel" if a.controleer else "galerij bijgewerkt")
+                if actueel
+                else "galerij niet actueel: python -m omnitwin.usecases galerij"
+            )
             return 0 if actueel else 1
     except (UseCaseFout, TestaccountFout) as e:
         print(f"❌ {e}")

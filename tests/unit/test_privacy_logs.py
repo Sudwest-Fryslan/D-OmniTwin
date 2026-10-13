@@ -24,6 +24,7 @@ def omgeving(monkeypatch):
 
 # ── Instellingen ──────────────────────────────────────────────────────────────
 
+
 def test_standaardwaarden(omgeving):
     inst = instellingen()
     assert inst.log_bewaar_dagen == 30
@@ -35,30 +36,35 @@ def test_ongeldige_waarden_vallen_terug(omgeving):
     omgeving.setenv("LOG_BEWAAR_DAGEN", "0")
     omgeving.setenv("LOG_IP_BEWAAR_DAGEN", "zeven")
     inst = instellingen()
-    assert inst.log_bewaar_dagen == 1        # minimaal één dag
+    assert inst.log_bewaar_dagen == 1  # minimaal één dag
     assert inst.log_ip_bewaar_dagen == 7
 
 
 # ── IP inkorten ───────────────────────────────────────────────────────────────
 
-@pytest.mark.parametrize("adres, verwacht", [
-    ("203.0.113.77", "203.0.113.0"),
-    ("203.0.113.0", "203.0.113.0"),                       # idempotent
-    ("2001:db8:abcd:12:3456::1", "2001:db8:abcd::"),       # /48
-    ("2001:db8:abcd::", "2001:db8:abcd::"),
-    ("::ffff:198.51.100.9", "198.51.100.0"),               # IPv4 in IPv6
-    (" 192.0.2.5 ", "192.0.2.0"),
-    ("1.2.3.4, 5.6.7.8", None),                            # oude, ongefilterde XFF-waarde
-    ("unknown", None),
-    ("testclient", None),
-    ("", None),
-    (None, None),
-])
+
+@pytest.mark.parametrize(
+    "adres, verwacht",
+    [
+        ("203.0.113.77", "203.0.113.0"),
+        ("203.0.113.0", "203.0.113.0"),  # idempotent
+        ("2001:db8:abcd:12:3456::1", "2001:db8:abcd::"),  # /48
+        ("2001:db8:abcd::", "2001:db8:abcd::"),
+        ("::ffff:198.51.100.9", "198.51.100.0"),  # IPv4 in IPv6
+        (" 192.0.2.5 ", "192.0.2.0"),
+        ("1.2.3.4, 5.6.7.8", None),  # oude, ongefilterde XFF-waarde
+        ("unknown", None),
+        ("testclient", None),
+        ("", None),
+        (None, None),
+    ],
+)
 def test_ip_inkorten(adres, verwacht):
     assert lc.ip_inkorten(adres) == verwacht
 
 
 # ── Cleanup ───────────────────────────────────────────────────────────────────
+
 
 class _Res:
     def __init__(self, rowcount=0, rijen=()):
@@ -115,9 +121,9 @@ def test_cleanup_kort_oude_ip_adressen_in(omgeving):
     assert updates == [
         {"nieuw": "203.0.113.0", "oud": "203.0.113.77", "ip_dagen": 7},
         {"nieuw": "2001:db8:abcd::", "oud": "2001:db8:abcd:12::1", "ip_dagen": 7},
-        {"nieuw": None, "oud": "1.2.3.4, 5.6.7.8", "ip_dagen": 7},     # onleesbaar → leeg
+        {"nieuw": None, "oud": "1.2.3.4, 5.6.7.8", "ip_dagen": 7},  # onleesbaar → leeg
     ]
-    assert resultaat["ip_ingekort"] == 6   # 3 updates × 2 rijen (nep)
+    assert resultaat["ip_ingekort"] == 6  # 3 updates × 2 rijen (nep)
 
 
 def test_cleanup_instelbaar(omgeving):
@@ -140,6 +146,7 @@ def test_cleanup_zonder_inkorten_als_ip_termijn_niet_korter_is(omgeving):
 def test_run_cleanup_is_synchroon():
     # Eerder `async def`, aangeroepen via asyncio.to_thread: de query liep nooit (#264)
     import inspect
+
     assert not inspect.iscoroutinefunction(lc._run_cleanup)
 
 
@@ -148,48 +155,58 @@ def test_run_cleanup_is_synchroon():
 T = STANDAARD_TRUSTED_PROXIES
 
 
-@pytest.mark.parametrize("peer, xff, trusted, verwacht", [
-    # Onvertrouwde peer: header negeren, ook als hij er "vertrouwd" uitziet
-    ("8.8.8.8", ["10.9.9.9"], T, "8.8.8.8"),
-    ("8.8.8.8", ["1.2.3.4"], T, "8.8.8.8"),
-    # Traefik (Docker-netwerk) zet het echte adres achteraan
-    ("172.18.0.3", ["198.51.100.7"], T, "198.51.100.7"),
-    # Client stuurt zelf een vals adres mee: het meest rechtse onvertrouwde adres telt
-    ("172.18.0.3", ["1.2.3.4, 198.51.100.7"], T, "198.51.100.7"),
-    # Keten van vertrouwde proxy's: vertrouwde hops rechts overslaan
-    ("172.18.0.3", ["198.51.100.7, 10.0.0.5, 192.168.1.1"], T, "198.51.100.7"),
-    # Meerdere headers tellen als één lijst
-    ("172.18.0.3", ["203.0.113.1", "198.51.100.7"], T, "198.51.100.7"),
-    # Geen header of lege header: de peer
-    ("172.18.0.3", [], T, "172.18.0.3"),
-    ("172.18.0.3", [" , "], T, "172.18.0.3"),
-    # Onzin in de keten: niet raden, de peer
-    ("172.18.0.3", ["1.2.3.4, unknown"], T, "172.18.0.3"),
-    ("172.18.0.3", ["198.51.100.7:4321"], T, "172.18.0.3"),
-    # Alleen vertrouwde adressen: het verste (bijv. een interne client)
-    ("172.18.0.3", ["10.1.2.3"], T, "10.1.2.3"),
-    # TRUSTED_PROXIES leeg: nooit vertrouwen
-    ("172.18.0.3", ["198.51.100.7"], "", "172.18.0.3"),
-    # Precies ingesteld: alleen dat adres
-    ("172.18.0.3", ["198.51.100.7"], "172.18.0.2", "172.18.0.3"),
-    ("172.18.0.2", ["198.51.100.7"], "172.18.0.2, ongeldig", "198.51.100.7"),
-    # IPv6 en IPv4-in-IPv6
-    ("::1", ["2001:db8::5"], T, "2001:db8::5"),
-    ("::ffff:172.18.0.3", ["198.51.100.7"], T, "198.51.100.7"),
-    ("2001:db8::9", ["198.51.100.7"], T, "2001:db8::9"),
-    # Peer zonder IP (TestClient)
-    ("testclient", ["198.51.100.7"], T, "testclient"),
-])
+@pytest.mark.parametrize(
+    "peer, xff, trusted, verwacht",
+    [
+        # Onvertrouwde peer: header negeren, ook als hij er "vertrouwd" uitziet
+        ("8.8.8.8", ["10.9.9.9"], T, "8.8.8.8"),
+        ("8.8.8.8", ["1.2.3.4"], T, "8.8.8.8"),
+        # Traefik (Docker-netwerk) zet het echte adres achteraan
+        ("172.18.0.3", ["198.51.100.7"], T, "198.51.100.7"),
+        # Client stuurt zelf een vals adres mee: het meest rechtse onvertrouwde adres telt
+        ("172.18.0.3", ["1.2.3.4, 198.51.100.7"], T, "198.51.100.7"),
+        # Keten van vertrouwde proxy's: vertrouwde hops rechts overslaan
+        ("172.18.0.3", ["198.51.100.7, 10.0.0.5, 192.168.1.1"], T, "198.51.100.7"),
+        # Meerdere headers tellen als één lijst
+        ("172.18.0.3", ["203.0.113.1", "198.51.100.7"], T, "198.51.100.7"),
+        # Geen header of lege header: de peer
+        ("172.18.0.3", [], T, "172.18.0.3"),
+        ("172.18.0.3", [" , "], T, "172.18.0.3"),
+        # Onzin in de keten: niet raden, de peer
+        ("172.18.0.3", ["1.2.3.4, unknown"], T, "172.18.0.3"),
+        ("172.18.0.3", ["198.51.100.7:4321"], T, "172.18.0.3"),
+        # Alleen vertrouwde adressen: het verste (bijv. een interne client)
+        ("172.18.0.3", ["10.1.2.3"], T, "10.1.2.3"),
+        # TRUSTED_PROXIES leeg: nooit vertrouwen
+        ("172.18.0.3", ["198.51.100.7"], "", "172.18.0.3"),
+        # Precies ingesteld: alleen dat adres
+        ("172.18.0.3", ["198.51.100.7"], "172.18.0.2", "172.18.0.3"),
+        ("172.18.0.2", ["198.51.100.7"], "172.18.0.2, ongeldig", "198.51.100.7"),
+        # IPv6 en IPv4-in-IPv6
+        ("::1", ["2001:db8::5"], T, "2001:db8::5"),
+        ("::ffff:172.18.0.3", ["198.51.100.7"], T, "198.51.100.7"),
+        ("2001:db8::9", ["198.51.100.7"], T, "2001:db8::9"),
+        # Peer zonder IP (TestClient)
+        ("testclient", ["198.51.100.7"], T, "testclient"),
+    ],
+)
 def test_bepaal_client_ip(peer, xff, trusted, verwacht):
     assert bepaal_client_ip(peer, xff, trusted) == verwacht
 
 
 def _verzoek(client, headers=()):
-    return Request({
-        "type": "http", "scheme": "http", "method": "GET", "path": "/", "query_string": b"",
-        "headers": [(k.lower().encode(), v.encode()) for k, v in headers],
-        "server": ("testserver", 80), "client": (client, 1234) if client else None,
-    })
+    return Request(
+        {
+            "type": "http",
+            "scheme": "http",
+            "method": "GET",
+            "path": "/",
+            "query_string": b"",
+            "headers": [(k.lower().encode(), v.encode()) for k, v in headers],
+            "server": ("testserver", 80),
+            "client": (client, 1234) if client else None,
+        }
+    )
 
 
 def test_client_ip_leest_trusted_proxies(omgeving):
@@ -203,8 +220,9 @@ def test_client_ip_leest_trusted_proxies(omgeving):
 def test_alleen_grenzen_leest_x_forwarded_for():
     """Rate limiting, login en de logmiddleware gebruiken allemaal client_ip."""
     patroon = re.compile(r"""headers\.(?:get|getlist)\(\s*['"]x-forwarded-for""", re.IGNORECASE)
-    lezers = sorted(p.relative_to(SRC).as_posix() for p in SRC.rglob("*.py")
-                    if patroon.search(p.read_text(encoding="utf-8")))
+    lezers = sorted(
+        p.relative_to(SRC).as_posix() for p in SRC.rglob("*.py") if patroon.search(p.read_text(encoding="utf-8"))
+    )
     assert lezers == ["grenzen.py"]
     main = (SRC / "main.py").read_text(encoding="utf-8")
     assert main.count("client_ip(request)") == 2
@@ -216,6 +234,7 @@ def test_alleen_grenzen_leest_x_forwarded_for():
 def test_rate_limiting_en_logging_gebruiken_dezelfde_functie(omgeving):
     from omnitwin import grenzen
     from omnitwin.routers import auth
+
     assert auth.client_ip is grenzen.client_ip
     # beperk_llm roept de module-functie aan: een vervalste header van buiten telt niet
     omgeving.setenv("LLM_RATE_LIMIT", "1")
@@ -233,6 +252,7 @@ def test_ip_niet_in_logtekst_bij_geblokkeerde_login():
 
 
 # ── Containerlogs ─────────────────────────────────────────────────────────────
+
 
 def test_containerlogs_begrensd():
     yaml = pytest.importorskip("yaml")  # komt mee met uvicorn[standard]

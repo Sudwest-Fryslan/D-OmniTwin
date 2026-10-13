@@ -62,18 +62,26 @@ def s():
 
 @pytest.fixture(scope="module")
 def indicatoren():
-    r = requests.get(f"{BASIS}/api/data/v1/indicatoren?select=uuid&min_waarde=is.null&max_waarde=is.null"
-                     "&order=uuid&limit=3", timeout=30)
+    r = requests.get(
+        f"{BASIS}/api/data/v1/indicatoren?select=uuid&min_waarde=is.null&max_waarde=is.null&order=uuid&limit=3",
+        timeout=30,
+    )
     assert r.status_code == 200, r.text[:300]
     return [x["uuid"] for x in r.json()]
 
 
 def registratie(ds_id, **laadprofiel):
-    return {"id": ds_id, "beschrijving": {
-        "@type": "dcat:Dataset", "dct:title": f"Test laad-API {ds_id}", "dct:description": "Integratietest (#228).",
-        "dct:publisher": "https://identifier.overheid.nl/tooi/id/gemeente/gm1900",
-        "dct:accessRights": "http://publications.europa.eu/resource/authority/access-right/PUBLIC"},
-        "laadprofiel": {"profiel": "waarnemingen", **laadprofiel}}
+    return {
+        "id": ds_id,
+        "beschrijving": {
+            "@type": "dcat:Dataset",
+            "dct:title": f"Test laad-API {ds_id}",
+            "dct:description": "Integratietest (#228).",
+            "dct:publisher": "https://identifier.overheid.nl/tooi/id/gemeente/gm1900",
+            "dct:accessRights": "http://publications.europa.eu/resource/authority/access-right/PUBLIC",
+        },
+        "laadprofiel": {"profiel": "waarnemingen", **laadprofiel},
+    }
 
 
 def csv(regels):
@@ -84,13 +92,21 @@ def lever(s, ds, body, mt="text/csv", sleutel=None, **params):
     headers = {"Content-Type": mt}
     if sleutel:
         headers["Idempotency-Key"] = sleutel
-    return s.post(f"{API}/datasets/{ds}/leveringen", data=body, headers=headers,
-                  params={k: str(v).lower() for k, v in params.items()}, timeout=180)
+    return s.post(
+        f"{API}/datasets/{ds}/leveringen",
+        data=body,
+        headers=headers,
+        params={k: str(v).lower() for k, v in params.items()},
+        timeout=180,
+    )
 
 
 def waarde(ind, jaar=2099):
-    r = requests.get(f"{BASIS}/api/data/v1/gebied_data?gebied_id=eq.{GEBIED}&indicator_uuid=eq.{ind}&jaar=eq.{jaar}"
-                     "&select=waarde,n_status", timeout=30)
+    r = requests.get(
+        f"{BASIS}/api/data/v1/gebied_data?gebied_id=eq.{GEBIED}&indicator_uuid=eq.{ind}&jaar=eq.{jaar}"
+        "&select=waarde,n_status",
+        timeout=30,
+    )
     assert r.status_code == 200, r.text[:300]
     return r.json()
 
@@ -98,8 +114,13 @@ def waarde(ind, jaar=2099):
 @pytest.fixture(scope="module")
 def dataset(s, indicatoren):
     ds = f"test-laden-{RUN}"
-    r = s.post(f"{API}/datasets", json=registratie(ds, minimumN=10, bijOntbrekendeN="bron-onderdrukt",
-                                                    vervangBereik=["indicator_uuid", "gebiedstype"]), timeout=30)
+    r = s.post(
+        f"{API}/datasets",
+        json=registratie(
+            ds, minimumN=10, bijOntbrekendeN="bron-onderdrukt", vervangBereik=["indicator_uuid", "gebiedstype"]
+        ),
+        timeout=30,
+    )
     assert r.status_code == 201, r.text[:500]
     assert r.headers["location"] == f"/api/laden/v1/datasets/{ds}"
     assert schema_fouten(r.json(), "Dataset") == []
@@ -194,9 +215,15 @@ def test_asynchroon_vervangbereik_versies_en_bestand(s, dataset, indicatoren):
 
 def test_multipart_met_dcat_en_beschrijving(s, dataset, indicatoren):
     dcat = {"dct:temporal": {"@type": "dct:PeriodOfTime", "dcat:startDate": "2099-01-01"}}
-    r = s.post(f"{API}/datasets/{dataset}/leveringen", params={"wacht": "true"}, timeout=180,
-               files={"bestand": ("w.csv", csv([f"{GEBIED},,{indicatoren[2]},2099,,,8,,,,"]), "text/csv"),
-                      "dcat": ("dcat.jsonld", json.dumps(dcat), "application/ld+json")})
+    r = s.post(
+        f"{API}/datasets/{dataset}/leveringen",
+        params={"wacht": "true"},
+        timeout=180,
+        files={
+            "bestand": ("w.csv", csv([f"{GEBIED},,{indicatoren[2]},2099,,,8,,,,"]), "text/csv"),
+            "dcat": ("dcat.jsonld", json.dumps(dcat), "application/ld+json"),
+        },
+    )
     assert r.status_code == 201, r.text[:500]
     d = s.get(f"{API}/datasets/{dataset}", timeout=30).json()
     assert d["beschrijving"]["dct:temporal"]["dcat:startDate"] == "2099-01-01"
@@ -207,8 +234,12 @@ def test_multipart_met_dcat_en_beschrijving(s, dataset, indicatoren):
 def test_fouten_bij_het_leveren(s, dataset):
     probleem(lever(s, dataset, b"x", mt="text/plain"), 415, "mediatype-past-niet")
     probleem(lever(s, dataset, b"x", modus="aanvullen"), 400)
-    r = s.post(f"{API}/datasets/{dataset}/leveringen", data=b"abc", timeout=30,
-               headers={"Content-Type": "text/csv", "Content-Digest": "sha-256=:AAAA:"})
+    r = s.post(
+        f"{API}/datasets/{dataset}/leveringen",
+        data=b"abc",
+        timeout=30,
+        headers={"Content-Type": "text/csv", "Content-Digest": "sha-256=:AAAA:"},
+    )
     probleem(r, 400)
     probleem(lever(s, "bestaat-niet-xyz", b"x"), 404)
     probleem(s.get(f"{API}/leveringen/{uuid.uuid4()}", timeout=30), 404)
@@ -216,8 +247,12 @@ def test_fouten_bij_het_leveren(s, dataset):
 
 
 def test_wijzigen_patch_en_put(s, dataset):
-    r = s.patch(f"{API}/datasets/{dataset}", data=json.dumps({"beschrijving": {"dct:description": "Gewijzigd."}}),
-                headers={"Content-Type": "application/merge-patch+json"}, timeout=30)
+    r = s.patch(
+        f"{API}/datasets/{dataset}",
+        data=json.dumps({"beschrijving": {"dct:description": "Gewijzigd."}}),
+        headers={"Content-Type": "application/merge-patch+json"},
+        timeout=30,
+    )
     assert r.status_code == 200 and r.json()["beschrijving"]["dct:description"] == "Gewijzigd."
     probleem(s.patch(f"{API}/datasets/{dataset}", json={}, timeout=30), 415)
     reg = registratie(dataset)
@@ -244,8 +279,11 @@ def _lever_met_peildatum(s, ds, regel, peildatum=None):
 
 
 def _stand(ind, jaar):
-    r = requests.get(f"{BASIS}/api/data/v1/gebied_data?gebied_id=eq.{GEBIED}&indicator_uuid=eq.{ind}&jaar=eq.{jaar}"
-                     "&select=waarde,andere_bronnen", timeout=30)
+    r = requests.get(
+        f"{BASIS}/api/data/v1/gebied_data?gebied_id=eq.{GEBIED}&indicator_uuid=eq.{ind}&jaar=eq.{jaar}"
+        "&select=waarde,andere_bronnen",
+        timeout=30,
+    )
     assert r.status_code == 200, r.text[:300]
     assert len(r.json()) == 1, r.json()
     x = r.json()[0]
@@ -255,12 +293,17 @@ def _stand(ind, jaar):
 def test_voorrang_nieuwste_bronpeildatum_dan_laatst_aangeleverd(s, indicatoren):
     """A6 (#222): bij overlap wint de nieuwste bronpeildatum (dct:modified in dcat.jsonld), bij gelijke
     bronpeildatum de laatst aangeleverde levering; de andere waarde blijft zichtbaar als andere_bronnen."""
-    i1, jaar = indicatoren[0], 2050 + int(RUN, 16) % 40  # eigen jaar per run: een herhaalde run op dezelfde stack botst niet
+    i1, jaar = (
+        indicatoren[0],
+        2050 + int(RUN, 16) % 40,
+    )  # eigen jaar per run: een herhaalde run op dezelfde stack botst niet
     a, b, c = f"test-voorrang-a-{RUN}", f"test-voorrang-b-{RUN}", f"test-voorrang-c-{RUN}"
     for ds in (a, b):
         assert s.post(f"{API}/datasets", json=registratie(ds, minimumN=0), timeout=30).status_code == 201
     intern = registratie(c, minimumN=0)
-    intern["beschrijving"]["dct:accessRights"] = "http://publications.europa.eu/resource/authority/access-right/NON_PUBLIC"
+    intern["beschrijving"]["dct:accessRights"] = (
+        "http://publications.europa.eu/resource/authority/access-right/NON_PUBLIC"
+    )
     assert s.post(f"{API}/datasets", json=intern, timeout=30).status_code == 201
     regel = f"{GEBIED},,{i1},{jaar},,,{{}},50,,,"
 
@@ -297,8 +340,11 @@ def test_lijst_en_rechten(s, dataset):
     cid, geheim = os.environ.get("LADEN_BEPERKT_CLIENT_ID"), os.environ.get("LADEN_BEPERKT_CLIENT_SECRET")
     if not (cid and geheim):
         pytest.skip("geen beperkte client (LADEN_BEPERKT_CLIENT_ID/SECRET)")
-    os.environ["OMNITWIN_CLIENT_ID"], os.environ["OMNITWIN_CLIENT_SECRET"], oud = cid, geheim, (
-        os.environ["OMNITWIN_CLIENT_ID"], os.environ["OMNITWIN_CLIENT_SECRET"])
+    os.environ["OMNITWIN_CLIENT_ID"], os.environ["OMNITWIN_CLIENT_SECRET"], oud = (
+        cid,
+        geheim,
+        (os.environ["OMNITWIN_CLIENT_ID"], os.environ["OMNITWIN_CLIENT_SECRET"]),
+    )
     try:
         beperkt = {"Authorization": f"Bearer {uc.token(BASIS)}"}
     finally:
@@ -313,6 +359,7 @@ def test_lijst_en_rechten(s, dataset):
 def _gpkg(tmp_path, naam, features, crs=4326):
     fiona = pytest.importorskip("fiona")
     from fiona.crs import CRS
+
     pad = tmp_path / f"{naam}.gpkg"
     schema = {"geometry": features[0]["geometry"]["type"], "properties": {k: "str" for k in features[0]["properties"]}}
     with fiona.open(pad, "w", driver="GPKG", layer=naam, crs=CRS.from_epsg(crs), schema=schema) as dst:
@@ -327,12 +374,25 @@ def _vlak(x, y, d=0.001):
 def test_gebiedsindeling_en_kaartlaag(s, tmp_path):
     ds = f"test-gebieden-{RUN}"
     reg = registratie(ds)
-    reg["laadprofiel"] = {"profiel": "gebiedsindeling", "doel": {
-        "gebiedstypeId": "29fc9f28-89d9-488b-bf68-2ed176187b21", "featureTabel": "gebieden",
-        "sleutelveld": "code", "labelveld": "naam", "codePrefix": f"T{RUN}-"}}
+    reg["laadprofiel"] = {
+        "profiel": "gebiedsindeling",
+        "doel": {
+            "gebiedstypeId": "29fc9f28-89d9-488b-bf68-2ed176187b21",
+            "featureTabel": "gebieden",
+            "sleutelveld": "code",
+            "labelveld": "naam",
+            "codePrefix": f"T{RUN}-",
+        },
+    }
     assert s.post(f"{API}/datasets", json=reg, timeout=30).status_code == 201
-    body = _gpkg(tmp_path, "gebieden", [{"geometry": _vlak(5.53, 53.03), "properties": {"code": "1", "naam": "Een"}},
-                                         {"geometry": _vlak(5.54, 53.03), "properties": {"code": "2", "naam": "Twee"}}])
+    body = _gpkg(
+        tmp_path,
+        "gebieden",
+        [
+            {"geometry": _vlak(5.53, 53.03), "properties": {"code": "1", "naam": "Een"}},
+            {"geometry": _vlak(5.54, 53.03), "properties": {"code": "2", "naam": "Twee"}},
+        ],
+    )
     r = lever(s, ds, body, mt="application/geopackage+sqlite3", wacht=True)
     assert r.status_code == 201, r.text[:800]
     assert r.json()["aantallen"]["gepubliceerd"] == 2
@@ -342,20 +402,27 @@ def test_gebiedsindeling_en_kaartlaag(s, tmp_path):
     body = _gpkg(tmp_path, "gebieden", [{"geometry": _vlak(5.53, 53.03), "properties": {"code": "1", "naam": "Een"}}])
     assert lever(s, ds, body, mt="application/geopackage+sqlite3", wacht=True).json()["aantallen"]["verwijderd"] == 1
     # ongeldig CRS-verhaal: geen polygoon
-    slecht = _gpkg(tmp_path, "gebieden", [{"geometry": {"type": "Point", "coordinates": (5.5, 53.0)},
-                                            "properties": {"code": "3", "naam": "Drie"}}])
+    slecht = _gpkg(
+        tmp_path,
+        "gebieden",
+        [{"geometry": {"type": "Point", "coordinates": (5.5, 53.0)}, "properties": {"code": "3", "naam": "Drie"}}],
+    )
     probleem(lever(s, ds, slecht, mt="application/geopackage+sqlite3", wacht=True), 422, "levering-afgekeurd")
 
     kl = f"test-kaartlaag-{RUN}"
     reg = registratie(kl)
     reg["laadprofiel"] = {"profiel": "kaartlaag", "doel": {"featureTabel": "punten", "sleutelveld": "id"}}
     assert s.post(f"{API}/datasets", json=reg, timeout=30).status_code == 201
-    body = _gpkg(tmp_path, "punten", [{"geometry": {"type": "Point", "coordinates": (5.5, 53.0)},
-                                       "properties": {"id": "a", "klasse": "x"}}])
+    body = _gpkg(
+        tmp_path,
+        "punten",
+        [{"geometry": {"type": "Point", "coordinates": (5.5, 53.0)}, "properties": {"id": "a", "klasse": "x"}}],
+    )
     r = lever(s, kl, body, mt="application/geopackage+sqlite3", wacht=True)
     assert r.status_code == 201, r.text[:800]
-    lagen = requests.get(f"{BASIS}/api/data/v1/externe_kaartlagen?url=eq.laden/{kl}.gpkg&select=id,actief",
-                         timeout=30).json()
+    lagen = requests.get(
+        f"{BASIS}/api/data/v1/externe_kaartlagen?url=eq.laden/{kl}.gpkg&select=id,actief", timeout=30
+    ).json()
     assert len(lagen) == 1 and lagen[0]["actief"] is True
     f = requests.get(f"{BASIS}/api/externe-lagen/{lagen[0]['id']}/features", timeout=30)
     assert f.status_code == 200 and len(f.json()["features"]) == 1

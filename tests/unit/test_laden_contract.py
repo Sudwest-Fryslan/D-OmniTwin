@@ -37,7 +37,7 @@ def router_operaties():
     uit = set()
     for r in laden.router.routes:
         for m in r.methods - {"HEAD", "OPTIONS"}:
-            uit.add((m, _norm(r.path[len(laden.PREFIX):])))
+            uit.add((m, _norm(r.path[len(laden.PREFIX) :])))
     return uit
 
 
@@ -55,9 +55,17 @@ def test_compat_paden_gedekt():
 def spec_rollen():
     """(methode, pad) → rollen uit `security` van de spec, {datasetId} als {dataset_id}."""
     spec = laden.specificatie()
-    return {(m.upper(), _norm(p)): {r.replace("{datasetId}", "{dataset_id}") for eis in op.get("security", [])
-                                    for rollen in eis.values() for r in rollen}
-            for p, item in spec["paths"].items() for m, op in item.items() if m in METHODEN}
+    return {
+        (m.upper(), _norm(p)): {
+            r.replace("{datasetId}", "{dataset_id}")
+            for eis in op.get("security", [])
+            for rollen in eis.values()
+            for r in rollen
+        }
+        for p, item in spec["paths"].items()
+        for m, op in item.items()
+        if m in METHODEN
+    }
 
 
 def router_rollen():
@@ -68,7 +76,7 @@ def router_rollen():
             naam = getattr(d.call, "__name__", "")
             if naam.startswith("vereis_rol_"):
                 for m in r.methods - {"HEAD", "OPTIONS"}:
-                    uit[(m, _norm(r.path[len(laden.PREFIX):]))] = set(naam[len("vereis_rol_"):].split("_"))
+                    uit[(m, _norm(r.path[len(laden.PREFIX) :]))] = set(naam[len("vereis_rol_") :].split("_"))
     return uit
 
 
@@ -79,16 +87,21 @@ def test_compat_rollen_volgens_spec():
     for o in compat:
         assert router[o] == spec[o], o
     assert router[("POST", "/compat/swf-monitor/monitor_api/indicator_waarde/inlezen")] == {
-        "dataset:swf-monitor-waarden:laden", "datasets:laden"}
+        "dataset:swf-monitor-waarden:laden",
+        "datasets:laden",
+    }
 
 
-@pytest.mark.parametrize("methode,pad", [
-    ("POST", "/compat/swf-monitor/monitor_api/indicator/setup/inlezen"),
-    ("POST", "/compat/swf-monitor/monitor_api/indicator_waarde/inlezen"),
-    ("GET", "/compat/swf-monitor/monitor_api/indicator/setup"),
-    ("GET", "/compat/swf-monitor/monitor_api/indicator_waarde"),
-    ("GET", "/compat/swf-monitor/monitor_api/indicator_waarde/00000000-0000-4000-8000-000000000001"),
-])
+@pytest.mark.parametrize(
+    "methode,pad",
+    [
+        ("POST", "/compat/swf-monitor/monitor_api/indicator/setup/inlezen"),
+        ("POST", "/compat/swf-monitor/monitor_api/indicator_waarde/inlezen"),
+        ("GET", "/compat/swf-monitor/monitor_api/indicator/setup"),
+        ("GET", "/compat/swf-monitor/monitor_api/indicator_waarde"),
+        ("GET", "/compat/swf-monitor/monitor_api/indicator_waarde/00000000-0000-4000-8000-000000000001"),
+    ],
+)
 def test_compat_zonder_token_is_probleem(client, methode, pad):
     r = client.request(methode, f"/api/laden/v1{pad}", content=b"[]" if methode == "POST" else None)
     assert r.status_code in (401, 503)  # 503: OIDC niet ingesteld (vereis_rol)
@@ -107,6 +120,7 @@ def test_padparameter_heet_dataset_id():
 def client():
     app = FastAPI()
     from omnitwin.fouten import registreer_foutafhandeling
+
     registreer_foutafhandeling(app)
     laden.registreer(app)
     return TestClient(app)  # zonder context: geen startup (verwerker, database)
@@ -171,6 +185,7 @@ def test_merge_patch():
 def test_content_digest():
     import base64
     import hashlib
+
     h = hashlib.sha256(b"abc").digest()
     assert laden._digest_klopt(f"sha-256=:{base64.b64encode(h).decode()}:", h.hex())
     assert not laden._digest_klopt(f"sha-256=:{base64.b64encode(b'x' * 32).decode()}:", h.hex())

@@ -27,8 +27,8 @@ pytestmark = pytest.mark.integration
 
 BASE_URL = os.environ.get("OMNITWIN_BASE_URL", "http://localhost").rstrip("/")
 TIMEOUT = 60
-U_INTERN = "e36c5cab-2e36-4be0-bd8f-ade7924975a6"          # DEMODATA: interne voorbeeldindicator
-U_OPEN = "bf4e5b8f-6b0a-4632-b9b4-8e29d025e68c"            # Afstand tot koele plek (sample, openbaar)
+U_INTERN = "e36c5cab-2e36-4be0-bd8f-ade7924975a6"  # DEMODATA: interne voorbeeldindicator
+U_OPEN = "bf4e5b8f-6b0a-4632-b9b4-8e29d025e68c"  # Afstand tot koele plek (sample, openbaar)
 BUURTEN = "afba67cb-6b38-4723-9c95-102a22d5b38a"
 LAAG_INTERN = "DEMODATA: interne voorbeeldlaag (buurten)"
 HTML = {"Accept": "text/html,application/xhtml+xml"}
@@ -47,8 +47,11 @@ def _interne_laag_id():
     key = os.environ.get("ADMIN_API_KEY")
     if not key:
         pytest.skip("ADMIN_API_KEY ontbreekt (--env-file .env)")
-    r = requests.get(f"{BASE_URL}/api/data/v1/externe_kaartlagen?naam=eq.{quote(LAAG_INTERN, safe='')}&select=id",
-                     headers={"X-Admin-Key": key}, timeout=TIMEOUT)
+    r = requests.get(
+        f"{BASE_URL}/api/data/v1/externe_kaartlagen?naam=eq.{quote(LAAG_INTERN, safe='')}&select=id",
+        headers={"X-Admin-Key": key},
+        timeout=TIMEOUT,
+    )
     if r.status_code != 200 or not r.json():
         pytest.skip("use case rechten-per-laag niet geïnstalleerd")
     return r.json()[0]["id"]
@@ -83,6 +86,7 @@ def paden(laag_id):
 
 # ------------------------------------------------------------------ anoniem
 
+
 def test_anoniem_lijsten_zonder_intern(laag_id):
     p = paden(laag_id)
     for naam in ("indicator_postgrest", "waarden_postgrest", "actueel_postgrest", "laag_postgrest"):
@@ -96,7 +100,9 @@ def test_anoniem_lijsten_zonder_intern(laag_id):
     assert U_INTERN not in requests.get(f"{BASE_URL}/api/kompas/standaard/hierarchie", timeout=TIMEOUT).text
 
 
-@pytest.mark.parametrize("naam", ["kaart_direct", "visualisatie_direct", "paneel_direct", "paneel_csv_direct", "laag_direct"])
+@pytest.mark.parametrize(
+    "naam", ["kaart_direct", "visualisatie_direct", "paneel_direct", "paneel_csv_direct", "laag_direct"]
+)
 def test_anoniem_directe_aanroep_401(laag_id, naam):
     r = requests.get(f"{BASE_URL}{paden(laag_id)[naam]}", timeout=TIMEOUT)
     assert r.status_code == 401, (naam, r.status_code, r.text[:200])
@@ -113,14 +119,16 @@ def test_anoniem_interne_collectie_401():
 
 def test_zelf_meegestuurde_header_telt_niet(laag_id):
     """Traefik vervangt X-Omnitwin-Toegang door die van de forwardAuth (authResponseHeaders)."""
-    r = requests.get(f"{BASE_URL}{paden(laag_id)['indicator_postgrest']}",
-                     headers={"X-Omnitwin-Toegang": "intern"}, timeout=TIMEOUT)
+    r = requests.get(
+        f"{BASE_URL}{paden(laag_id)['indicator_postgrest']}", headers={"X-Omnitwin-Toegang": "intern"}, timeout=TIMEOUT
+    )
     assert r.status_code == 200 and r.json() == []
 
 
 def test_openbare_data_ongewijzigd():
-    r = requests.get(f"{BASE_URL}/api/data/v1/gebied_data?indicator_uuid=eq.{U_OPEN}&select=waarde,toegang&limit=5",
-                     timeout=TIMEOUT)
+    r = requests.get(
+        f"{BASE_URL}/api/data/v1/gebied_data?indicator_uuid=eq.{U_OPEN}&select=waarde,toegang&limit=5", timeout=TIMEOUT
+    )
     assert r.status_code == 200 and r.json() and all(w["toegang"] == "openbaar" for w in r.json())
     kaart = requests.get(f"{BASE_URL}/api/gebiedsmonitor/kaart_data/{BUURTEN}?indicator_uuid={U_OPEN}", timeout=TIMEOUT)
     assert kaart.status_code == 200 and kaart.json()
@@ -128,6 +136,7 @@ def test_openbare_data_ongewijzigd():
 
 
 # ------------------------------------------------------------------ beheerder (X-Admin-Key) en lezer (sessie)
+
 
 def _alles_zichtbaar(s, laag_id):
     p = paden(laag_id)
@@ -165,8 +174,12 @@ def lezer_sessie():
     r = s.get(f"{BASE_URL}/api/admin/auth/oidc/login?terug=/", headers=HTML, timeout=TIMEOUT)
     assert "kc-form-login" in r.text, r.url
     actie = html.unescape(re.search(r'<form[^>]*id="kc-form-login"[^>]*action="([^"]+)"', r.text).group(1))
-    r = s.post(actie, data={"username": "gebruiker", "password": "gebruiker", "credentialId": ""}, headers=HTML,
-               timeout=TIMEOUT)
+    r = s.post(
+        actie,
+        data={"username": "gebruiker", "password": "gebruiker", "credentialId": ""},
+        headers=HTML,
+        timeout=TIMEOUT,
+    )
     assert r.status_code == 200 and r.url == f"{BASE_URL}/", (r.status_code, r.url)
     yield s
     s.post(f"{BASE_URL}/api/admin/auth/logout", timeout=TIMEOUT)
@@ -182,15 +195,18 @@ def test_lezer_geen_beheer(lezer_sessie):
 
 # ------------------------------------------------------------------ ingelogd zonder rol: 403
 
+
 def test_token_zonder_rol_403(laag_id):
     """Een machineclient zonder lezer of beheerder (OMNITWIN_CLIENT_ID met alleen laadrollen)."""
     from omnitwin import usecases as uc
+
     if not (os.environ.get("OMNITWIN_CLIENT_ID") and os.environ.get("OMNITWIN_CLIENT_SECRET")):
         pytest.skip("geen machineclient (OMNITWIN_CLIENT_ID, OMNITWIN_CLIENT_SECRET)")
     token = uc.token(BASE_URL)
     ik = requests.get(f"{BASE_URL}/api/oidc/ik", headers={"Authorization": f"Bearer {token}"}, timeout=TIMEOUT).json()
     if {"lezer", "beheerder"} & set(ik.get("rollen", [])):
         pytest.skip("de machineclient heeft lezer of beheerder")
-    r = requests.get(f"{BASE_URL}{paden(laag_id)['kaart_direct']}", headers={"Authorization": f"Bearer {token}"},
-                     timeout=TIMEOUT)
+    r = requests.get(
+        f"{BASE_URL}{paden(laag_id)['kaart_direct']}", headers={"Authorization": f"Bearer {token}"}, timeout=TIMEOUT
+    )
     assert r.status_code == 403 and r.json()["code"] == "geen-toegang"

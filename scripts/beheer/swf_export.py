@@ -49,8 +49,11 @@ ROOT = Path(__file__).resolve().parents[2]
 WELSTAND = "29fc9f28-89d9-488b-bf68-2ed176187b21"  # gebiedstype welstand × buurt (codes 1..758 → WS1..)
 UUID = re.compile(r"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}")
 # Definities die D-OmniTwin al zelf levert (stuurdata, sample, CBS-recept): niet opnieuw uit de export
-REPO_DEFINITIES = ("db/stuurdata/indicatoren.csv", "init_data/sample/2_brondata/sample_indicatoren.csv",
-                   "init_data/cbs/datapackage.json")
+REPO_DEFINITIES = (
+    "db/stuurdata/indicatoren.csv",
+    "init_data/sample/2_brondata/sample_indicatoren.csv",
+    "init_data/cbs/datapackage.json",
+)
 REPO_WELSTAND = "usecases/swf-gebiedsindelingen/data/welstandsgebieden.gpkg"
 REPO_KOMPAS = "usecases/swf-kompasprofiel/data"
 REPO_KAARTLAGEN = "usecases/swf-kaartlagen/data/externe_kaartlagen.json"
@@ -61,16 +64,54 @@ PROVINCIE = "22401c4c-8272-4895-a0a2-a8d48a0b4c36"
 # Aanname B3 (#222): alleen voor ingelogden
 INTERN = re.compile(r"geovisia|in plan", re.IGNORECASE)
 
-INDICATOR_KOLOMMEN = ("uuid", "naam", "code", "omschrijving", "eenheid", "score_type", "min_waarde", "max_waarde",
-                      "status", "begingeldigheid", "eindgeldigheid", "bron")
-WAARDE_KOLOMMEN = ("gebied_id", "gebiedstype_id", "indicator_uuid", "jaar", "peildatum", "scenario_id", "waarde",
-                   "n", "kwaliteit", "bron")
-KAARTLAAG_KOLOMMEN = ("naam", "beschrijving", "laag_type", "bron_type", "url", "typename", "srsname", "versie",
-                      "filter_type", "filter_waarde", "koppel_veld", "kleur_lijn", "kleur_fill", "opacity", "actief",
-                      "volgorde")
+INDICATOR_KOLOMMEN = (
+    "uuid",
+    "naam",
+    "code",
+    "omschrijving",
+    "eenheid",
+    "score_type",
+    "min_waarde",
+    "max_waarde",
+    "status",
+    "begingeldigheid",
+    "eindgeldigheid",
+    "bron",
+)
+WAARDE_KOLOMMEN = (
+    "gebied_id",
+    "gebiedstype_id",
+    "indicator_uuid",
+    "jaar",
+    "peildatum",
+    "scenario_id",
+    "waarde",
+    "n",
+    "kwaliteit",
+    "bron",
+)
+KAARTLAAG_KOLOMMEN = (
+    "naam",
+    "beschrijving",
+    "laag_type",
+    "bron_type",
+    "url",
+    "typename",
+    "srsname",
+    "versie",
+    "filter_type",
+    "filter_waarde",
+    "koppel_veld",
+    "kleur_lijn",
+    "kleur_fill",
+    "opacity",
+    "actief",
+    "volgorde",
+)
 
 
 # ------------------------------------------------------------------ zonder database (getest)
+
 
 def bekende_definities(monitor_definities: Path | None, root: Path = ROOT) -> set[str]:
     """UUID's waarvan D-OmniTwin de definitie al uit een andere bron haalt: de SWF-definities (export
@@ -102,18 +143,26 @@ def kompasprofielen(regels: list[dict]) -> list[dict]:
     weging, is_actueel) → één profiel per naam, in het formaat van db/stuurdata/kompasprofiel_*.json."""
     uit: dict[str, dict] = {}
     for r in regels:
-        p = uit.setdefault(r["profiel"], {
-            "omschrijving": r.get("beschrijving") or "",
-            "profiel": r["profiel"],
-            "classificatie": r.get("classificatie") or "zscore",
-            "indicatoren": [],
-        })
-        p["indicatoren"].append({
-            "kwadrant": r["kwadrant"], "thema": r["thema"], "onderdeel": r.get("onderdeel") or "",
-            "indicator_uuid": str(r["indicator_uuid"]), "indicator_naam": r.get("indicator_naam") or "",
-            "weging": float(r["weging"]) if r.get("weging") is not None else 1.0,
-            "is_actueel": bool(r.get("is_actueel")),
-        })
+        p = uit.setdefault(
+            r["profiel"],
+            {
+                "omschrijving": r.get("beschrijving") or "",
+                "profiel": r["profiel"],
+                "classificatie": r.get("classificatie") or "zscore",
+                "indicatoren": [],
+            },
+        )
+        p["indicatoren"].append(
+            {
+                "kwadrant": r["kwadrant"],
+                "thema": r["thema"],
+                "onderdeel": r.get("onderdeel") or "",
+                "indicator_uuid": str(r["indicator_uuid"]),
+                "indicator_naam": r.get("indicator_naam") or "",
+                "weging": float(r["weging"]) if r.get("weging") is not None else 1.0,
+                "is_actueel": bool(r.get("is_actueel")),
+            }
+        )
     return list(uit.values())
 
 
@@ -135,9 +184,11 @@ def _tekst(w):
 
 # ------------------------------------------------------------------ export
 
+
 def verbind(dsn: str):
     import psycopg2
     import psycopg2.extras
+
     conn = psycopg2.connect(dsn)  # leeg: PGHOST, PGDATABASE, PGUSER, ... uit de omgeving
     conn.set_client_encoding("UTF8")
     conn.set_session(readonly=True)
@@ -157,34 +208,51 @@ def exporteer_waarden(cur, uit: Path, provincie: str, alleen_mee: bool = False) 
     binnen = "(g.gebiedstype_id = %(welstand)s OR g.provincienaam = %(provincie)s)"
     niet_mee = 0
     if alleen_mee:
-        cur.execute(f"""SELECT count(*) AS n FROM gebied_data d JOIN gebieden g ON g.id = d.gebied_id
-                        WHERE coalesce(d.bron, '') NOT LIKE 'DEMODATA%%' AND {binnen} AND NOT {mee_voorwaarde()}""", p)
+        cur.execute(
+            f"""SELECT count(*) AS n FROM gebied_data d JOIN gebieden g ON g.id = d.gebied_id
+                        WHERE coalesce(d.bron, '') NOT LIKE 'DEMODATA%%' AND {binnen} AND NOT {mee_voorwaarde()}""",
+            p,
+        )
         niet_mee = cur.fetchone()["n"]
         binnen = f"({binnen} AND {mee_voorwaarde()})"
     cur.execute("SELECT count(*) AS n FROM gebied_data", p)
     totaal = cur.fetchone()["n"]
     cur.execute("SELECT count(*) AS n FROM gebied_data d WHERE coalesce(d.bron, '') LIKE 'DEMODATA%%'", p)
     demodata = cur.fetchone()["n"]
-    cur.execute(f"""SELECT count(*) AS n FROM gebied_data d JOIN gebieden g ON g.id = d.gebied_id
-                    WHERE coalesce(d.bron, '') NOT LIKE 'DEMODATA%%' AND NOT {binnen}""", p)
+    cur.execute(
+        f"""SELECT count(*) AS n FROM gebied_data d JOIN gebieden g ON g.id = d.gebied_id
+                    WHERE coalesce(d.bron, '') NOT LIKE 'DEMODATA%%' AND NOT {binnen}""",
+        p,
+    )
     buiten = cur.fetchone()["n"]
-    sql = cur.mogrify(f"""
+    sql = cur.mogrify(
+        f"""
         SELECT d.gebied_id, g.gebiedstype_id, d.indicator_uuid, d.jaar,
                CASE WHEN d.jaar IS NULL THEN d.datum::date END AS peildatum,
                coalesce(d.scenario_id, 'current') AS scenario_id, d.waarde, d.n, d.kwaliteit, d.bron
         FROM gebied_data d JOIN gebieden g ON g.id = d.gebied_id
         WHERE coalesce(d.bron, '') NOT LIKE 'DEMODATA%%' AND {binnen}
-        ORDER BY d.indicator_uuid, g.gebiedstype_id, d.gebied_id, d.jaar, d.datum""", p).decode()
+        ORDER BY d.indicator_uuid, g.gebiedstype_id, d.gebied_id, d.jaar, d.datum""",
+        p,
+    ).decode()
     with open(uit / "gebied_data.csv", "w", encoding="utf-8", newline="") as f:
         cur.copy_expert(f"COPY ({sql}) TO STDOUT WITH (FORMAT csv, HEADER true)", f)
-    cur.execute(f"""SELECT coalesce(d.bron, '') AS bron, count(*) AS n FROM gebied_data d
+    cur.execute(
+        f"""SELECT coalesce(d.bron, '') AS bron, count(*) AS n FROM gebied_data d
                     JOIN gebieden g ON g.id = d.gebied_id
                     WHERE coalesce(d.bron, '') NOT LIKE 'DEMODATA%%' AND {binnen}
-                    GROUP BY 1 ORDER BY 2 DESC, 1""", p)
+                    GROUP BY 1 ORDER BY 2 DESC, 1""",
+        p,
+    )
     per_bron = {r["bron"]: r["n"] for r in cur.fetchall()}
-    return {"totaal_in_database": totaal, "demodata": demodata, "buiten_gebied": buiten - niet_mee,
-            "niet_mee": niet_mee,
-            "geschreven": sum(per_bron.values()), "per_bron": per_bron}
+    return {
+        "totaal_in_database": totaal,
+        "demodata": demodata,
+        "buiten_gebied": buiten - niet_mee,
+        "niet_mee": niet_mee,
+        "geschreven": sum(per_bron.values()),
+        "per_bron": per_bron,
+    }
 
 
 def exporteer_welstand(cur, pad: Path) -> int:
@@ -193,19 +261,28 @@ def exporteer_welstand(cur, pad: Path) -> int:
     from fiona.crs import CRS
     from shapely import wkb
     from shapely.geometry import mapping
-    cur.execute("""SELECT id, naam, metadata->>'aanduiding' AS aanduiding, ST_AsBinary(ST_Multi(geom)) AS geom
+
+    cur.execute(
+        """SELECT id, naam, metadata->>'aanduiding' AS aanduiding, ST_AsBinary(ST_Multi(geom)) AS geom
                    FROM gebieden WHERE gebiedstype_id = %s AND geom IS NOT NULL
-                   ORDER BY (CASE WHEN id ~ '^[0-9]+$' THEN id::int END), id""", (WELSTAND,))
+                   ORDER BY (CASE WHEN id ~ '^[0-9]+$' THEN id::int END), id""",
+        (WELSTAND,),
+    )
     rijen = cur.fetchall()
     pad.parent.mkdir(parents=True, exist_ok=True)
     if pad.exists():
         pad.unlink()
     schema = {"geometry": "MultiPolygon", "properties": {"id": "str", "naam": "str", "aanduiding": "str"}}
-    with fiona.open(pad, "w", driver="GPKG", layer="welstandsgebieden", crs=CRS.from_epsg(28992), schema=schema,
-                    SPATIAL_INDEX="NO") as dst:  # kleiner bestand; de laadstraat leest alles
-        dst.writerecords({"geometry": mapping(wkb.loads(bytes(r["geom"]))),
-                          "properties": {"id": r["id"], "naam": r["naam"], "aanduiding": r["aanduiding"]}}
-                         for r in rijen)
+    with fiona.open(
+        pad, "w", driver="GPKG", layer="welstandsgebieden", crs=CRS.from_epsg(28992), schema=schema, SPATIAL_INDEX="NO"
+    ) as dst:  # kleiner bestand; de laadstraat leest alles
+        dst.writerecords(
+            {
+                "geometry": mapping(wkb.loads(bytes(r["geom"]))),
+                "properties": {"id": r["id"], "naam": r["naam"], "aanduiding": r["aanduiding"]},
+            }
+            for r in rijen
+        )
     return len(rijen)
 
 
@@ -226,8 +303,11 @@ def exporteer_kompas(cur, uit: Path) -> dict:
     for p in profielen:
         pad = uit / f"kompasprofiel_{slug(p['profiel'])}.json"
         pad.write_text(json.dumps(p, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
-        bestanden[pad.name] = {"profiel": p["profiel"], "indicatoren": len(p["indicatoren"]),
-                               "unieke_indicatoren": len({i["indicator_uuid"] for i in p["indicatoren"]})}
+        bestanden[pad.name] = {
+            "profiel": p["profiel"],
+            "indicatoren": len(p["indicatoren"]),
+            "unieke_indicatoren": len({i["indicator_uuid"] for i in p["indicatoren"]}),
+        }
     niet = {}
     for t in ("kompas_extra_onderdelen", "kompas_indicator_extra_tags", "kompas_indicator_scoring_regels"):
         cur.execute(f"SELECT count(*) AS n FROM {t}")
@@ -251,8 +331,11 @@ def exporteer_kaartlagen(cur, pad: Path) -> dict:
         lagen.append(laag)
     pad.parent.mkdir(parents=True, exist_ok=True)
     pad.write_text(json.dumps(lagen, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
-    return {"lagen": len(lagen), "intern": [la["naam"] for la in lagen if la["toegang"] == "intern"],
-            "lokaal_niet_geexporteerd": lokaal}
+    return {
+        "lagen": len(lagen),
+        "intern": [la["naam"] for la in lagen if la["toegang"] == "intern"],
+        "lokaal_niet_geexporteerd": lokaal,
+    }
 
 
 def exporteer_indicatoren(cur, uit: Path, bekend: set[str], waarden_csv: Path) -> dict:
@@ -264,8 +347,11 @@ def exporteer_indicatoren(cur, uit: Path, bekend: set[str], waarden_csv: Path) -
     cur.execute("SELECT DISTINCT indicator_uuid::text AS u FROM kompas_indicator_mapping")
     gebruikt |= {r["u"] for r in cur.fetchall()}
     nodig = sorted(u for u in gebruikt if u not in bekend)
-    cur.execute(f"SELECT uuid::text AS uuid, {', '.join(INDICATOR_KOLOMMEN[1:])} FROM indicatoren "
-                "WHERE uuid::text = ANY(%s) ORDER BY naam, uuid", (nodig,))
+    cur.execute(
+        f"SELECT uuid::text AS uuid, {', '.join(INDICATOR_KOLOMMEN[1:])} FROM indicatoren "
+        "WHERE uuid::text = ANY(%s) ORDER BY naam, uuid",
+        (nodig,),
+    )
     rijen = cur.fetchall()
     with open(uit / "indicatoren.csv", "w", encoding="utf-8", newline="") as f:
         w = csv.writer(f, lineterminator="\r\n")
@@ -273,44 +359,77 @@ def exporteer_indicatoren(cur, uit: Path, bekend: set[str], waarden_csv: Path) -
         for r in rijen:
             w.writerow([_tekst(r[k]) for k in INDICATOR_KOLOMMEN])
     cur.execute("SELECT count(*) AS n FROM indicatoren")
-    return {"in_database": cur.fetchone()["n"], "gebruikt": len(gebruikt), "al_bekend": len(gebruikt) - len(nodig),
-            "geschreven": len(rijen), "zonder_definitie": sorted(set(nodig) - {r["uuid"] for r in rijen})}
+    return {
+        "in_database": cur.fetchone()["n"],
+        "gebruikt": len(gebruikt),
+        "al_bekend": len(gebruikt) - len(nodig),
+        "geschreven": len(rijen),
+        "zonder_definitie": sorted(set(nodig) - {r["uuid"] for r in rijen}),
+    }
 
 
 def herkomst(map_: Path, dump_datum: str | None, inhoud: dict) -> None:
     """herkomst.json naast de bestanden in de repo: waar het vandaan komt, aantallen, controlesommen."""
     bestanden = {p.name: sha256(p) for p in sorted(map_.iterdir()) if p.is_file() and p.name != "herkomst.json"}
-    (map_ / "herkomst.json").write_text(json.dumps({
-        "bron": "lokale D-OmniTwin-database van de projectleider SWF (dump)",
-        "dump_datum": dump_datum,
-        "toegang": "openbaar (besluit projectleiding 04-10-2026, https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/222)",
-        "gemaakt_met": "scripts/beheer/swf_export.py --repo",
-        "inhoud": inhoud, "bestanden": bestanden}, ensure_ascii=False, indent=1, default=str) + "\n",
-        encoding="utf-8")
+    (map_ / "herkomst.json").write_text(
+        json.dumps(
+            {
+                "bron": "lokale D-OmniTwin-database van de projectleider SWF (dump)",
+                "dump_datum": dump_datum,
+                "toegang": "openbaar (besluit projectleiding 04-10-2026, https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/222)",
+                "gemaakt_met": "scripts/beheer/swf_export.py --repo",
+                "inhoud": inhoud,
+                "bestanden": bestanden,
+            },
+            ensure_ascii=False,
+            indent=1,
+            default=str,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
 
 
 def main(argv=None) -> int:
     import os
-    a = argparse.ArgumentParser(description=__doc__.split("\n")[1], formatter_class=argparse.RawDescriptionHelpFormatter)
+
+    a = argparse.ArgumentParser(
+        description=__doc__.split("\n")[1], formatter_class=argparse.RawDescriptionHelpFormatter
+    )
     a.add_argument("--uit", help="exportmap voor swf-initialisatie (SWF_EXPORT_DIR, niet in git)")
-    a.add_argument("--repo", action="store_true", help="welstandsgebieden, Kompas en externe kaartlagen naar de "
-                   "data-mappen van hun use case in deze repo")
+    a.add_argument(
+        "--repo",
+        action="store_true",
+        help="welstandsgebieden, Kompas en externe kaartlagen naar de data-mappen van hun use case in deze repo",
+    )
     a.add_argument("--repo-map", default=str(ROOT), help="root van de repo (standaard die van dit script)")
     a.add_argument("--dsn", default="", help="libpq-verbinding; leeg = PG*-omgevingsvariabelen")
-    a.add_argument("--monitor-definities", help="api_backup_dump.json van de monitor (standaard "
-                   "$SWF_DUMP_DIR/output/api_backup_dump.json): die definities levert swf-definities")
+    a.add_argument(
+        "--monitor-definities",
+        help="api_backup_dump.json van de monitor (standaard "
+        "$SWF_DUMP_DIR/output/api_backup_dump.json): die definities levert swf-definities",
+    )
     a.add_argument("--provincie", default="Fryslân", help="gebied van de installatie (gebieden.provincienaam)")
-    a.add_argument("--alles", action="store_true", help="--uit: ook open data, waarden zonder bron en provincies "
-                   "(de use case laat ze dan weg en telt ze)")
+    a.add_argument(
+        "--alles",
+        action="store_true",
+        help="--uit: ook open data, waarden zonder bron en provincies (de use case laat ze dan weg en telt ze)",
+    )
     a.add_argument("--dump-datum", help="datum van de dump (JJJJ-MM-DD), voor herkomst.json en export.json")
     args = a.parse_args(argv)
     if not args.uit and not args.repo:
         a.error("geef --uit, --repo of beide")
     monitor = args.monitor_definities or (
-        str(Path(os.environ["SWF_DUMP_DIR"]) / "output" / "api_backup_dump.json") if os.environ.get("SWF_DUMP_DIR") else None)
+        str(Path(os.environ["SWF_DUMP_DIR"]) / "output" / "api_backup_dump.json")
+        if os.environ.get("SWF_DUMP_DIR")
+        else None
+    )
     if args.uit and (not monitor or not Path(monitor).exists()):
-        print("FOUT: de definities van de monitor zijn nodig (--monitor-definities of SWF_DUMP_DIR), anders "
-              "levert de export definities opnieuw die swf-definities al levert.", file=sys.stderr)
+        print(
+            "FOUT: de definities van de monitor zijn nodig (--monitor-definities of SWF_DUMP_DIR), anders "
+            "levert de export definities opnieuw die swf-definities al levert.",
+            file=sys.stderr,
+        )
         return 2
     conn, dict_cursor = verbind(args.dsn)
     try:
@@ -329,18 +448,25 @@ def main(argv=None) -> int:
             if args.uit:
                 uit = Path(args.uit)
                 uit.mkdir(parents=True, exist_ok=True)
-                samenvatting = {"gemaakt_op": dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds"),
-                                "database": conn.get_dsn_parameters().get("dbname"), "dump_datum": args.dump_datum,
-                                "provincie": args.provincie, "alleen_mee": not args.alles}
+                samenvatting = {
+                    "gemaakt_op": dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds"),
+                    "database": conn.get_dsn_parameters().get("dbname"),
+                    "dump_datum": args.dump_datum,
+                    "provincie": args.provincie,
+                    "alleen_mee": not args.alles,
+                }
                 samenvatting["gebied_data"] = exporteer_waarden(cur, uit, args.provincie, not args.alles)
                 print(f"gebied_data.csv: {samenvatting['gebied_data']['geschreven']} waarden")
-                samenvatting["indicatoren"] = exporteer_indicatoren(cur, uit, bekende_definities(Path(monitor)),
-                                                                    uit / "gebied_data.csv")
+                samenvatting["indicatoren"] = exporteer_indicatoren(
+                    cur, uit, bekende_definities(Path(monitor)), uit / "gebied_data.csv"
+                )
                 print(f"indicatoren.csv: {samenvatting['indicatoren']['geschreven']} definities")
-                samenvatting["bestanden"] = {p.name: sha256(p) for p in sorted(uit.iterdir())
-                                             if p.is_file() and p.name != "export.json"}
-                (uit / "export.json").write_text(json.dumps(samenvatting, ensure_ascii=False, indent=1, default=str),
-                                                 encoding="utf-8")
+                samenvatting["bestanden"] = {
+                    p.name: sha256(p) for p in sorted(uit.iterdir()) if p.is_file() and p.name != "export.json"
+                }
+                (uit / "export.json").write_text(
+                    json.dumps(samenvatting, ensure_ascii=False, indent=1, default=str), encoding="utf-8"
+                )
                 print(f"klaar: {uit}")
     finally:
         conn.close()

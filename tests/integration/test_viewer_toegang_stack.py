@@ -31,7 +31,6 @@ BASE_URL = os.environ.get("OMNITWIN_BASE_URL", "http://localhost").rstrip("/")
 TIMEOUT = 30
 
 
-
 @pytest.fixture(autouse=True, scope="module")
 def _secure_cookies_op_localhost():
     """Keycloak zet zijn cookies met `Secure`. Een browser stuurt die ook naar http://localhost (een
@@ -44,6 +43,8 @@ def _secure_cookies_op_localhost():
 
 def sessie():
     return requests.Session()
+
+
 DICHT = os.environ.get("VIEWER_TOEGANG", "open").strip().lower() not in ("", "open")
 HTML = {"Accept": "text/html,application/xhtml+xml"}
 
@@ -78,6 +79,7 @@ def test_open_paden_altijd_open(pad):
 
 # ------------------------------------------------------------------ open
 
+
 @pytest.mark.skipif(DICHT, reason="VIEWER_TOEGANG=inloggen")
 @pytest.mark.parametrize("pad", ["/", *DATA_API])
 def test_open_anoniem_200(pad):
@@ -97,6 +99,7 @@ def test_open_kop_een_knop_beheer():
 
 
 # ------------------------------------------------------------------ inloggen
+
 
 @pytest.mark.skipif(not DICHT, reason="VIEWER_TOEGANG=open")
 def test_dicht_pagina_naar_keycloak():
@@ -128,8 +131,9 @@ def test_dicht_anoniem_api_401(pad):
 
 @pytest.mark.skipif(not DICHT, reason="VIEWER_TOEGANG=open")
 def test_dicht_ongeldig_token_401():
-    r = requests.get(f"{BASE_URL}/api/data/gebiedstypes?limit=1", headers={"Authorization": "Bearer a.b.c"},
-                     timeout=TIMEOUT)
+    r = requests.get(
+        f"{BASE_URL}/api/data/gebiedstypes?limit=1", headers={"Authorization": "Bearer a.b.c"}, timeout=TIMEOUT
+    )
     assert r.status_code == 401
 
 
@@ -138,15 +142,21 @@ def _lezer():
     if CONFIG.get("demo"):
         return "gebruiker", "gebruiker", None
     if os.environ.get("OMNITWIN_TESTACCOUNTS") != "1" or not (
-            os.environ.get("KEYCLOAK_ADMIN_PASSWORD") or os.environ.get("KEYCLOAK_ADMIN_CLIENT_SECRET")):
+        os.environ.get("KEYCLOAK_ADMIN_PASSWORD") or os.environ.get("KEYCLOAK_ADMIN_CLIENT_SECRET")
+    ):
         pytest.skip("geen lezer: geen demo-omgeving en geen testaccounts (OMNITWIN_TESTACCOUNTS=1)")
     from omnitwin import testaccounts as ta
     import tempfile
     from pathlib import Path
+
     beheer = ta.KeycloakBeheer(kc=f"{BASE_URL}/auth")
     pad = Path(tempfile.mkdtemp()) / "accounts.json"
-    uit = ta.maak("viewer-toegang", {"actoren": [{"naam": "lezer", "soort": "gebruiker", "rollen": ["lezer"]}]},
-                  beheer=beheer, pad=pad)["lezer"]
+    uit = ta.maak(
+        "viewer-toegang",
+        {"actoren": [{"naam": "lezer", "soort": "gebruiker", "rollen": ["lezer"]}]},
+        beheer=beheer,
+        pad=pad,
+    )["lezer"]
     return uit["id"], uit["geheim"], lambda: ta.opruimen("viewer-toegang", beheer=beheer, pad=pad)
 
 
@@ -156,8 +166,9 @@ def inloggen_viewer(naam, wachtwoord):
     r = s.get(f"{BASE_URL}/", headers=HTML, timeout=TIMEOUT)
     assert "kc-form-login" in r.text, r.url
     actie = html.unescape(re.search(r'<form[^>]*id="kc-form-login"[^>]*action="([^"]+)"', r.text).group(1))
-    r = s.post(actie, data={"username": naam, "password": wachtwoord, "credentialId": ""}, headers=HTML,
-               timeout=TIMEOUT)
+    r = s.post(
+        actie, data={"username": naam, "password": wachtwoord, "credentialId": ""}, headers=HTML, timeout=TIMEOUT
+    )
     return s, r
 
 

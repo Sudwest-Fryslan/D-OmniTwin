@@ -10,6 +10,7 @@ zetten daarmee de polariteit.
 code die nog een score_type (of een Kompas-scoringregel) krijgt, leidt de richting
 hiermee af, zodat kaart, Kompas, rapporten en chat hetzelfde zeggen.
 """
+
 from __future__ import annotations
 
 from typing import Optional

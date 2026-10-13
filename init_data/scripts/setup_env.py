@@ -2,7 +2,7 @@
 """
 D-OmniTwin — Setup Environment Wizard
 =====================================
-Dit script genereert interactief een veilig .env configuratiebestand 
+Dit script genereert interactief een veilig .env configuratiebestand
 voor de applicatie.
 
 Gebruik:
@@ -23,7 +23,7 @@ ENV_EXAMPLE = ROOT / ".env.example"
 def generate_password(length=16):
     """Genereer een veilig, willekeurig wachtwoord."""
     alphabet = string.ascii_letters + string.digits + "!@#$%^&*"
-    return ''.join(secrets.choice(alphabet) for i in range(length))
+    return "".join(secrets.choice(alphabet) for i in range(length))
 
 
 def prompt(text, default=""):
@@ -37,22 +37,22 @@ def prompt_password(text, auto_generate=True):
     """Vraag om een wachtwoord of genereer er een automatisch als het leeg wordt gelaten."""
     prompt_text = f"{text} (laat leeg voor auto-generatie): " if auto_generate else f"{text}: "
     response = getpass.getpass(prompt_text).strip()
-    
+
     if not response and auto_generate:
         response = generate_password()
         print(f"   ↳ Gegenereerd wachtwoord: {response}")
-    
+
     return response
 
 
 def main():
-    print("\n" + "="*50)
+    print("\n" + "=" * 50)
     print("🪄  D-OmniTwin — .env Configuratie Wizard")
-    print("="*50 + "\n")
+    print("=" * 50 + "\n")
 
     if ENV_FILE.exists():
         print(f"⚠️  Er bestaat al een .env bestand op {ENV_FILE.absolute()}")
-        if input("   Wil je dit overschrijven? (y/N): ").strip().lower() != 'y':
+        if input("   Wil je dit overschrijven? (y/N): ").strip().lower() != "y":
             print("Geannuleerd. Je huidige .env is ongewijzigd.")
             return
 
@@ -66,7 +66,7 @@ def main():
     db_name = prompt("1. Database naam", "omnitwin_db")
     db_user = prompt("2. Database gebruiker", "omnitwin_user")
     db_pass = prompt_password(f"3. Wachtwoord voor {db_user}", auto_generate=True)
-    
+
     admin_user = prompt("4. Applicatie Admin gebruikersnaam", "admin")
     admin_pass = prompt_password(f"5. Wachtwoord voor {admin_user}", auto_generate=True)
 
@@ -80,7 +80,7 @@ def main():
 
     # Vervang placeholders (dit is robuuster dan exact string matchen omdat we keys vervangen)
     import re
-    
+
     replacements = {
         r"DATABASE_NAME=.*": f"DATABASE_NAME={db_name}",
         r"DATABASE_USER=.*": f"DATABASE_USER={db_user}",
@@ -98,9 +98,9 @@ def main():
     with open(ENV_FILE, "w", encoding="utf-8") as f:
         f.write(env_content)
 
-    print("\n" + "="*50)
+    print("\n" + "=" * 50)
     print("✅ .env bestand is succesvol aangemaakt!")
-    print("="*50)
+    print("=" * 50)
     print(f"\n🔑 Bewaar deze inloggegevens goed:")
     print(f"   Applicatie url:  http://localhost:8000/admin")
     print(f"   Gebruikersnaam:  {admin_user}")

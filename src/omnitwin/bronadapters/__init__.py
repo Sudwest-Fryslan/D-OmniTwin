@@ -35,12 +35,25 @@ from pathlib import Path
 from urllib.parse import urlparse
 
 ROOT = Path(__file__).resolve().parents[3]
-TOEGESTANE_MAPPEN = ("SWF_DUMP_DIR", "SWF_DOCS_DIR", "SWF_GEO_DIR", "SWF_DB_DUMP", "SWF_EXPORT_DIR", "DATA_CACHE", "REPO")
+TOEGESTANE_MAPPEN = (
+    "SWF_DUMP_DIR",
+    "SWF_DOCS_DIR",
+    "SWF_GEO_DIR",
+    "SWF_DB_DUMP",
+    "SWF_EXPORT_DIR",
+    "DATA_CACHE",
+    "REPO",
+)
 TOEGESTANE_DOMEINEN = (
-    "opendata.cbs.nl", "datasets.cbs.nl", "www.cbs.nl", "dataderden.cbs.nl",
-    "service.pdok.nl", "api.pdok.nl",
+    "opendata.cbs.nl",
+    "datasets.cbs.nl",
+    "www.cbs.nl",
+    "dataderden.cbs.nl",
+    "service.pdok.nl",
+    "api.pdok.nl",
     "data.rivm.nl",
-    "www.klimaateffectatlas.nl", "klimaateffectatlas.nl",
+    "www.klimaateffectatlas.nl",
+    "klimaateffectatlas.nl",
 )
 
 
@@ -101,10 +114,13 @@ def cache_pad(bronnen, soort, sleutel, achtervoegsel):
 
 # ------------------------------------------------------------------ adapters
 
+
 def swf_dump(bron, ctx):
     """Export van de huidige monitor: `export` = definities (3 tabellen) of waarden (1 tabel)."""
     basis = map_van("SWF_DUMP_DIR", ctx.get("bronnen"))
-    bestand = {"definities": "output/api_backup_dump.json", "waarden": "output/api_data_dump.json"}.get(bron.get("export"))
+    bestand = {"definities": "output/api_backup_dump.json", "waarden": "output/api_data_dump.json"}.get(
+        bron.get("export")
+    )
     if not bestand:
         raise BronFout("swf-dump: export moet definities of waarden zijn")
     pad = veilig_pad(f"${{SWF_DUMP_DIR}}/{bestand}", ctx.get("bronnen"))
@@ -121,6 +137,7 @@ def lokaal_bestand(bron, ctx):
     if not pad.exists():
         raise GeenBron(f"{pad} ontbreekt")
     from omnitwin.bronadapters.bestanden import lees_bestand
+
     return lees_bestand(pad, bron.get("formaat"), bron.get("laag"), bron.get("tabel", "data"), bron.get("crs"))
 
 
@@ -130,6 +147,7 @@ def usecase_bestand(bron, ctx):
     if basis not in pad.parents or pad.suffix not in (".json", ".csv"):
         raise BronFout(f"usecase-bestand: alleen .json/.csv in de use case: {bron['pad']!r}")
     from omnitwin.bronadapters.bestanden import lees_bestand
+
     return lees_bestand(pad, None, None, bron.get("tabel", "data"))
 
 
@@ -145,8 +163,16 @@ def wfs(bron, ctx):
             raise GeenBron(f"requests ontbreekt: {e}")
         feats, start, pagina = [], 0, int(bron.get("pagina", 1000))
         while True:
-            params = {"service": "WFS", "version": "2.0.0", "request": "GetFeature", "typeNames": bron["laag"],
-                      "outputFormat": "application/json", "srsName": "EPSG:28992", "count": pagina, "startIndex": start}
+            params = {
+                "service": "WFS",
+                "version": "2.0.0",
+                "request": "GetFeature",
+                "typeNames": bron["laag"],
+                "outputFormat": "application/json",
+                "srsName": "EPSG:28992",
+                "count": pagina,
+                "startIndex": start,
+            }
             if bron.get("bbox"):
                 params["bbox"] = ",".join(map(str, bron["bbox"])) + ",urn:ogc:def:crs:EPSG::28992"
             try:
@@ -161,6 +187,7 @@ def wfs(bron, ctx):
             start += pagina
         cache.write_text(json.dumps({"type": "FeatureCollection", "features": feats}), encoding="utf-8")
     from omnitwin.bronadapters.bestanden import lees_geojson
+
     return {bron.get("tabel", "data"): lees_geojson(cache, epsg=28992)}
 
 
@@ -170,6 +197,7 @@ def download(bron, ctx):
     cache = cache_pad(ctx.get("bronnen"), "download", {"url": bron["url"]}, f".{formaat}")
     if not cache.exists():
         import requests
+
         try:
             r = requests.get(bron["url"], timeout=300)
             r.raise_for_status()
@@ -182,6 +210,7 @@ def download(bron, ctx):
             cache.unlink()
             raise BronFout(f"sha256 van {bron['url']} is {h}, verwacht {bron['sha256']}")
     from omnitwin.bronadapters.bestanden import lees_bestand
+
     return lees_bestand(cache, formaat, bron.get("laag"), bron.get("tabel", "data"), bron.get("crs"))
 
 
@@ -189,6 +218,7 @@ def cbs_odata(bron, ctx):
     """CBS Kerncijfers wijken en buurten via init_data/scripts/download_cbs_kerncijfers.py (met cache).
     `gemeenten`: gemeentecodes (4 cijfers) of leeg = heel Fryslân; `jaren`: optioneel filter."""
     import sys
+
     scripts = str(ROOT / "init_data" / "scripts")
     if scripts not in sys.path:
         sys.path.insert(0, scripts)
@@ -220,11 +250,13 @@ def cbs_odata(bron, ctx):
 
 def cbs_statline(bron, ctx):
     from omnitwin.bronadapters.statline import cbs_statline as uitvoeren
+
     return uitvoeren(bron, ctx)
 
 
 def wcs_zonaal(bron, ctx):
     from omnitwin.bronadapters.raster import wcs_zonaal as uitvoeren
+
     return uitvoeren(bron, ctx)
 
 

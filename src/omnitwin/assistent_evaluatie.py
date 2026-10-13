@@ -30,6 +30,7 @@ holdout meer. Na zo'n afstemronde gaan de oude holdout-vragen naar de afgestemde
 Draaien tegen een stack met sample-data:
     python scripts/ai/evalueer_assistent.py --url http://localhost:8105
 """
+
 import json
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Sequence
@@ -92,8 +93,9 @@ def drempelfouten(resultaten: List[Dict[str, Any]], testset: Dict[str, Any]) -> 
     return fout
 
 
-def gerouteerd(v: Dict[str, Any], antwoord: Dict[str, Any], selectie: Sequence[str],
-               namen: Optional[Dict[str, str]] = None) -> bool:
+def gerouteerd(
+    v: Dict[str, Any], antwoord: Dict[str, Any], selectie: Sequence[str], namen: Optional[Dict[str, str]] = None
+) -> bool:
     """Goed beantwoord? Zie de kop van dit bestand ('route', 'selectie', 'mijn_buurt')."""
     if v.get("route") == "vraag_buurt":
         return "welke buurt" in (antwoord.get("narrative") or "").lower() and not antwoord.get("gegevens")
@@ -109,8 +111,9 @@ def gerouteerd(v: Dict[str, Any], antwoord: Dict[str, Any], selectie: Sequence[s
     return True
 
 
-def evalueer(testset: Dict[str, Any], zoek: Callable[[str], List[str]],
-             chat: Callable[..., Dict[str, Any]]) -> List[Dict[str, Any]]:
+def evalueer(
+    testset: Dict[str, Any], zoek: Callable[[str], List[str]], chat: Callable[..., Dict[str, Any]]
+) -> List[Dict[str, Any]]:
     """
     zoek(vraag)               → uuids in de volgorde die de gebruiker ziet
     chat(vraag, gebied_ids)   → antwoord van /api/chat (dict); gebied_ids = de selectie op de kaart
@@ -119,8 +122,13 @@ def evalueer(testset: Dict[str, Any], zoek: Callable[[str], List[str]],
     namen = testset.get("gebiedsnamen") or {}
     uit = []
     for v in testset["vragen"]:
-        r = {"vraag": v["vraag"], "type": v["type"], "relevant": v["relevant"], "gerouteerd": None,
-             "holdout": bool(v.get("holdout"))}
+        r = {
+            "vraag": v["vraag"],
+            "type": v["type"],
+            "relevant": v["relevant"],
+            "gerouteerd": None,
+            "holdout": bool(v.get("holdout")),
+        }
         if v["type"] == "datavraag":
             selectie = v["selectie"] if "selectie" in v else ([gebied] if gebied else [])
             antwoord = chat(v["vraag"], selectie)

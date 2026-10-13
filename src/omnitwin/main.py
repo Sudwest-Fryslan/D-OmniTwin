@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.base import BaseHTTPMiddleware
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import HTMLResponse
-from fastapi.openapi.docs import get_swagger_ui_html # Local Swagger UI
+from fastapi.openapi.docs import get_swagger_ui_html  # Local Swagger UI
 from sqlalchemy.orm import Session
 from sqlalchemy import event, text
 from omnitwin.config import CORS_ALLOW_HEADERS, STATEMENT_TIMEOUT_MS, instellingen
@@ -24,9 +24,10 @@ app = FastAPI(
     title="D-OmniTwin API",
     description="Backend API voor D-OmniTwin: The Omni Twin - Digitale spiegel van de fysieke leefomgeving",
     version=__version__,  # bron: VERSION (zie docs/9-beheer/releasebeleid.md)
-    docs_url=None, # Disable default docs (served locally)
-    redoc_url=None # Disable default redoc (served locally)
+    docs_url=None,  # Disable default docs (served locally)
+    redoc_url=None,  # Disable default redoc (served locally)
 )
+
 
 # Grens per databasequery van de webapp (#203). Alleen hier, niet in database.py:
 # db-init, migraties en ETL-scripts gebruiken dezelfde engine en mogen langer duren.
@@ -36,15 +37,19 @@ def _zet_statement_timeout(dbapi_connection, _record):
         cursor.execute(f"SET statement_timeout = {int(STATEMENT_TIMEOUT_MS)}")
     dbapi_connection.commit()  # anders draait de rollback bij teruggave aan de pool de SET terug
 
+
 # Toegang per laag en bron (#254, ADR 0010): een anoniem verzoek leest als databaserol
 # omnitwin_openbaar (row level security: alleen openbaar). Alleen in de webapp, zoals hierboven.
 from omnitwin import toegang as _toegang
+
 _toegang.registreer(engine)
 
 # Centrale foutafhandeling (#203): details in de log, naar buiten een generieke
 # melding met correlatie-id; ongeldige invoer in de database → 422, conflict → 409
 from omnitwin.fouten import registreer_foutafhandeling
+
 registreer_foutafhandeling(app)
+
 
 # ============================================================================
 # SECURITY: Headers Middleware
@@ -56,10 +61,10 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
     headers uit deploy/traefik/dynamic.yml leidend (ook voor /api/data en
     /api/geo); Traefik overschrijft deze waarden.
     """
-    
+
     async def dispatch(self, request: Request, call_next):
         response = await call_next(request)
-        
+
         # Content Security Policy - STRICT LOCAL ONLY
         # MapLibre GL, D3.js, deck.gl, Chart.js en het lettertype Inter worden zelf gehost
         # onder /static/vendor (#117); geen CDN- of font-domeinen meer nodig.
@@ -76,13 +81,13 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
             "child-src 'self' blob:; "
             "frame-src 'self';"
         )
-        
+
         # XSS and Clickjacking Protection
         response.headers["X-Content-Type-Options"] = "nosniff"
         response.headers["X-Frame-Options"] = "DENY"
         response.headers["X-XSS-Protection"] = "1; mode=block"
         response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
-        
+
         return response
 
 
@@ -91,24 +96,24 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
 # ============================================================================
 class RequestLoggingMiddleware(BaseHTTPMiddleware):
     """Logt elke HTTP request naar AppLogger (category=API).
-    
+
     Uitsluitingen: /static/*, /health (noisy, geen diagnostische waarde).
     Niveau: INFO voor 2xx/3xx, WARNING voor 4xx, ERROR voor 5xx.
     """
-    
+
     # Paden die niet gelogd worden
     # /api/viewer/toegang: forwardAuth van Traefik bij elk verzoek naar /api/data en /api/geo (#266)
     _SKIP_PREFIXES = ("/static/", "/health", "/api/viewer/toegang")
-    
+
     async def dispatch(self, request: Request, call_next):
         path = request.url.path
-        
+
         # Skip noisy paden
         if any(path.startswith(prefix) for prefix in self._SKIP_PREFIXES):
             return await call_next(request)
-        
+
         start = time.time()
-        
+
         try:
             response = await call_next(request)
         except Exception:
@@ -123,11 +128,11 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
                 response_time_ms=elapsed_ms,
             )
             raise
-        
+
         elapsed_ms = int((time.time() - start) * 1000)
         status = response.status_code
         ip = client_ip(request)  # X-Forwarded-For alleen van TRUSTED_PROXIES (#264)
-        
+
         # Bepaal log niveau op basis van status code
         if status >= 500:
             log_fn = AppLogger.error
@@ -135,7 +140,7 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
             log_fn = AppLogger.warning
         else:
             log_fn = AppLogger.info
-        
+
         log_fn(
             f"{request.method} {path} → {status} ({elapsed_ms}ms)",
             category="API",
@@ -143,13 +148,14 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
             endpoint=path,
             response_time_ms=elapsed_ms,
         )
-        
+
         return response
 
 
 # Toegang tot de viewer (#266, ADR 0009): bij VIEWER_TOEGANG=inloggen alleen met rol lezer of
 # beheerder. Binnenste middleware, zodat redirects en 401's ook de headers en de log krijgen.
 from omnitwin import viewer_toegang
+
 app.add_middleware(viewer_toegang.ViewerToegangMiddleware)
 
 # Add security headers middleware FIRST
@@ -188,14 +194,17 @@ app.include_router(gebiedsmonitor.router)
 app.include_router(kompas.router)
 
 from omnitwin.routers import auth
+
 app.include_router(auth.router)
 app.include_router(admin.router)
 app.include_router(dashboard.router)
 app.include_router(visualisatie.router)
 app.include_router(visualisatie.admin_router)
 from omnitwin.routers import report
+
 app.include_router(report.router)
 from omnitwin.routers import data_controle, ai_search, chat, bag3d, log_viewer, externe_lagen
+
 app.include_router(data_controle.router)
 app.include_router(ai_search.router)
 app.include_router(chat.router)
@@ -204,36 +213,45 @@ app.include_router(log_viewer.router)
 app.include_router(externe_lagen.router)
 app.include_router(externe_lagen.admin_router)
 from omnitwin.routers import oidc_ik
+
 app.include_router(oidc_ik.router)  # GET /api/oidc/ik: token controleren (#205)
 from omnitwin.routers import organisatie
+
 app.include_router(organisatie.router)  # GET /api/organisatie: eigen organisatie (#231)
 from omnitwin.routers import indicatorpaneel, mijn
+
 app.include_router(indicatorpaneel.router)  # indicatorpaneel en CSV-export (#258)
 app.include_router(mijn.router)  # /api/mijn: favorieten en kaartpositie per gebruiker (#258)
 from omnitwin.routers import ai_vrijgave as ai_vrijgave_router
-app.include_router(ai_vrijgave_router.router)        # /api/ai/usecases: status en verklaring (#307)
+
+app.include_router(ai_vrijgave_router.router)  # /api/ai/usecases: status en verklaring (#307)
 app.include_router(ai_vrijgave_router.admin_router)  # /api/admin/ai: vrijgave en AI-logboek (#307, #313)
 from omnitwin.routers import meldingen as meldingen_router
-app.include_router(meldingen_router.router)        # /api/meldingen: publiek terugmeldpunt (#311)
+
+app.include_router(meldingen_router.router)  # /api/meldingen: publiek terugmeldpunt (#311)
 app.include_router(meldingen_router.admin_router)  # /api/admin/meldingen: beheer terugmeldingen (#311)
 
 from omnitwin.routers import locatie as locatie_router
+
 app.include_router(locatie_router.router)  # /api/locatie/buurt: eigen buurt via adres of locatie (#336)
 
 # forwardAuth van Traefik voor /api/data en /api/geo (#266): 204 = door, anders 401/403
-app.add_api_route(viewer_toegang.CONTROLE_PAD, viewer_toegang.controleer, methods=["GET", "HEAD"],
-                  include_in_schema=False)
+app.add_api_route(
+    viewer_toegang.CONTROLE_PAD, viewer_toegang.controleer, methods=["GET", "HEAD"], include_in_schema=False
+)
 
 # Laad-API /api/laden/v1 (#205): eigen spec, API-Version, Problem Details, achtergrondverwerking
 from omnitwin.routers import laden as laden_api
+
 laden_api.registreer(app)
+
 
 @app.on_event("startup")
 async def startup_event():
     """Startup checks and logging."""
     # Initialiseer logging stack (file handler + async DB queue + config cache)
     await init_logging()
-    
+
     try:
         with engine.connect() as conn:
             conn.execute(text("SELECT 1"))
@@ -250,27 +268,35 @@ async def startup_event():
 
     # X-Admin-Key alleen met een echte key; een lege of voorbeeldwaarde geeft geen toegang (#65)
     from omnitwin.routers.auth import geldige_admin_api_key
+
     if geldige_admin_api_key() is None:
         AppLogger.warning("ADMIN_API_KEY is leeg of een voorbeeldwaarde: X-Admin-Key is uitgeschakeld", category="AUTH")
 
     # Inloggen (#251): met OIDC alleen via Keycloak, lokale accounts alleen als noodtoegang
     if instellingen().noodtoegang:
-        AppLogger.warning("Noodtoegang aan: lokale accounts kunnen inloggen naast Keycloak (LOKAAL_INLOGGEN=true). "
-                          "Zet dit na gebruik weer uit.", category="AUTH")
+        AppLogger.warning(
+            "Noodtoegang aan: lokale accounts kunnen inloggen naast Keycloak (LOKAAL_INLOGGEN=true). "
+            "Zet dit na gebruik weer uit.",
+            category="AUTH",
+        )
     elif instellingen().oidc_issuer:
         AppLogger.info("Inloggen in de beheeromgeving via Keycloak; lokaal inloggen staat uit", category="AUTH")
 
     # Viewer (#266) en soort omgeving (#245)
     ins = instellingen()
     if ins.viewer_dicht:
-        AppLogger.info("Viewer alleen na inloggen (VIEWER_TOEGANG=inloggen, of een onbekende waarde)",
-                       category="AUTH")
+        AppLogger.info("Viewer alleen na inloggen (VIEWER_TOEGANG=inloggen, of een onbekende waarde)", category="AUTH")
         if not ins.oidc_issuer:
-            AppLogger.warning("VIEWER_TOEGANG=inloggen zonder Keycloak (OIDC_ISSUER leeg): alleen een lokale "
-                              "beheerder heeft toegang tot de viewer", category="AUTH")
+            AppLogger.warning(
+                "VIEWER_TOEGANG=inloggen zonder Keycloak (OIDC_ISSUER leeg): alleen een lokale "
+                "beheerder heeft toegang tot de viewer",
+                category="AUTH",
+            )
     if ins.demo:
-        AppLogger.warning("Demo-omgeving (OMNITWIN_OMGEVING=demo): standaardaccounts met bekende wachtwoorden. "
-                          "Niet voor productie.", category="AUTH")
+        AppLogger.warning(
+            "Demo-omgeving (OMNITWIN_OMGEVING=demo): standaardaccounts met bekende wachtwoorden. Niet voor productie.",
+            category="AUTH",
+        )
 
     # Start dagelijkse log cleanup
     start_cleanup_scheduler()
@@ -282,12 +308,14 @@ async def shutdown_event():
     await stop_cleanup_scheduler()
     await shutdown_logging()
 
+
 @app.get("/", response_class=HTMLResponse)
 def root(request: Request, db: Session = Depends(get_db)):
     """Serve the frontend application. Footer-logo's uit de organisatie-instelling (#231).
     In de kop: inloggen/uitloggen en de gebruikersnaam als Keycloak aan staat (#266), en de
     demobalk bij OMNITWIN_OMGEVING=demo (#245)."""
     from omnitwin.services.organisatie import lees_organisatie, thema_css
+
     organisatie = lees_organisatie(db)
     ins = instellingen()
     gebruiker = getattr(request.state, "viewer_gebruiker", None)
@@ -302,10 +330,13 @@ def root(request: Request, db: Session = Depends(get_db)):
         "inloggen": viewer_toegang.login_adres("/"),
     }
     # Starlette 1.x: request als eerste argument (de oude vorm met "request" in de context bestaat niet meer, #172)
-    return templates.TemplateResponse(request, "index.html", {
-        "organisatie": organisatie, "thema_css": thema_css(organisatie),
-        "account": account, "demo": ins.demo},
-        headers={"Cache-Control": "no-cache"})
+    return templates.TemplateResponse(
+        request,
+        "index.html",
+        {"organisatie": organisatie, "thema_css": thema_css(organisatie), "account": account, "demo": ins.demo},
+        headers={"Cache-Control": "no-cache"},
+    )
+
 
 @app.get("/docs", include_in_schema=False)
 async def custom_swagger_ui_html():
@@ -319,11 +350,12 @@ async def custom_swagger_ui_html():
         swagger_favicon_url="/api/organisatie/beeldmerk.svg",  # lokaal i.p.v. fastapi.tiangolo.com (CSP)
     )
 
+
 @app.get("/api")
 def api_root():
     """API root endpoint."""
     return {
-        "message": "Welcome to D-OmniTwin API", 
+        "message": "Welcome to D-OmniTwin API",
         "status": "running",
         "version": __version__,
         "security": "🔒 CORS locked, Security headers active",
@@ -331,20 +363,17 @@ def api_root():
             "gebiedsmonitor": "/api/gebiedsmonitor",
             "kompas": "/api/kompas",
             "docs": "/docs",
-            "openapi": "/openapi.json"
-        }
+            "openapi": "/openapi.json",
+        },
     }
+
 
 @app.get("/health")
 def health_check(db: Session = Depends(get_db)):
     """Health check endpoint. Een databasefout gaat naar de centrale foutafhandeling
     (500 met correlatie-id, details alleen in de log)."""
     db.execute(text("SELECT 1"))
-    return {
-        "database": "online",
-        "api": "online",
-        "version": __version__,
-        "security": "headers_active"
-    }
+    return {"database": "online", "api": "online", "version": __version__, "security": "headers_active"}
+
 
 # reload trigger 2026-03-15 15:58

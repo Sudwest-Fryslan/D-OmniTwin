@@ -38,6 +38,7 @@ def _pool_() -> ThreadPoolExecutor:
 
 def _verwerk(levering_id: str) -> None:
     from omnitwin.laden.laadstraat import verwerk
+
     try:
         status = verwerk(levering_id)
         logger.info("Levering %s: %s", levering_id, status or "door een ander proces verwerkt")
@@ -52,12 +53,15 @@ def bied_aan(levering_id: str) -> None:
 def start() -> None:
     """Bij het starten van de backend: openstaande leveringen oppakken."""
     from omnitwin.laden.db import transactie
+
     try:
         with transactie() as cur:
-            cur.execute("""UPDATE laden.leveringen SET status = 'mislukt', klaar_op = now(),
+            cur.execute(
+                """UPDATE laden.leveringen SET status = 'mislukt', klaar_op = now(),
                                   aantallen = aantallen || '{"vastgelopen": true}'::jsonb
                            WHERE status = 'bezig' AND gestart_op < now() - make_interval(mins => %s)""",
-                        (VASTGELOPEN_MINUTEN,))
+                (VASTGELOPEN_MINUTEN,),
+            )
             cur.execute("SELECT id::text AS id FROM laden.leveringen WHERE status = 'ontvangen' ORDER BY ontvangen_op")
             open_ = [r["id"] for r in cur.fetchall()]
     except Exception as e:  # schema laden ontbreekt (migratie nog niet gedraaid): laad-API werkt dan niet

@@ -87,9 +87,7 @@ def get_logs(
     where_sql = (" WHERE " + " AND ".join(where_clauses)) if where_clauses else ""
 
     # Count query
-    count_result = db.execute(
-        text(f"SELECT COUNT(*) FROM app_logs{where_sql}"), params
-    ).scalar()
+    count_result = db.execute(text(f"SELECT COUNT(*) FROM app_logs{where_sql}"), params).scalar()
 
     # Data query met paginatie
     offset = (page - 1) * per_page
@@ -228,10 +226,7 @@ def get_log_stats(
             {"endpoint": r[0], "hits": r[1], "avg_ms": int(r[2]) if r[2] else 0, "p95_ms": int(r[3]) if r[3] else 0}
             for r in top_endpoint_rows
         ],
-        "error_trend": [
-            {"dag": r[0].isoformat() if r[0] else None, "errors": r[1]}
-            for r in error_trend_rows
-        ],
+        "error_trend": [{"dag": r[0].isoformat() if r[0] else None, "errors": r[1]} for r in error_trend_rows],
     }
 
 

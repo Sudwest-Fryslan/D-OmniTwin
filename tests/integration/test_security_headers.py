@@ -81,6 +81,7 @@ def test_geen_hsts_op_http(response):
 
 # ── security.txt (RFC 9116) ─────────────────────────────────────────────────
 
+
 @pytest.fixture(scope="module")
 def security_txt():
     r = requests.get(f"{BASE_URL}/.well-known/security.txt", timeout=TIMEOUT)

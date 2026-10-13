@@ -17,7 +17,7 @@ pytestmark = pytest.mark.integration
 
 BASE_URL = os.environ.get("OMNITWIN_BASE_URL", "http://localhost").rstrip("/")
 TIMEOUT = 30
-GEBIED = "BU19000001"                                # Bolsward-Noord
+GEBIED = "BU19000001"  # Bolsward-Noord
 INWONERS = "31f70dff-c116-4267-bef0-d15b0ff4c020"
 BRON = "test #159 projectie"
 JAAR = 2050
@@ -27,15 +27,20 @@ WAARDE = 987654
 @pytest.fixture(scope="module")
 def projectie():
     psycopg2 = pytest.importorskip("psycopg2")
-    conn = psycopg2.connect(host=os.environ.get("DATABASE_HOST", "localhost"),
-                            port=int(os.environ.get("DATABASE_PORT", 5432)),
-                            dbname=os.environ.get("DATABASE_NAME", "omnitwin_db"),
-                            user=os.environ.get("DATABASE_USER", "omnitwin_user"),
-                            password=os.environ.get("DATABASE_PASSWORD", ""))
+    conn = psycopg2.connect(
+        host=os.environ.get("DATABASE_HOST", "localhost"),
+        port=int(os.environ.get("DATABASE_PORT", 5432)),
+        dbname=os.environ.get("DATABASE_NAME", "omnitwin_db"),
+        user=os.environ.get("DATABASE_USER", "omnitwin_user"),
+        password=os.environ.get("DATABASE_PASSWORD", ""),
+    )
     conn.autocommit = True
     with conn.cursor() as cur:
-        cur.execute("""INSERT INTO gebied_data (gebied_id, indicator_uuid, waarde, jaar, scenario_id, bron)
-                       VALUES (%s, %s::uuid, %s, %s, '2050', %s)""", (GEBIED, INWONERS, WAARDE, JAAR, BRON))
+        cur.execute(
+            """INSERT INTO gebied_data (gebied_id, indicator_uuid, waarde, jaar, scenario_id, bron)
+                       VALUES (%s, %s::uuid, %s, %s, '2050', %s)""",
+            (GEBIED, INWONERS, WAARDE, JAAR, BRON),
+        )
     yield conn
     with conn.cursor() as cur:
         cur.execute("DELETE FROM gebied_data WHERE bron = %s", (BRON,))
@@ -44,8 +49,10 @@ def projectie():
 
 def test_actuele_view(projectie):
     with projectie.cursor() as cur:
-        cur.execute("SELECT waarde, jaar FROM vw_gebied_indicator_actueel "
-                    "WHERE gebied_id = %s AND indicator_uuid = %s::uuid", (GEBIED, INWONERS))
+        cur.execute(
+            "SELECT waarde, jaar FROM vw_gebied_indicator_actueel WHERE gebied_id = %s AND indicator_uuid = %s::uuid",
+            (GEBIED, INWONERS),
+        )
         waarde, jaar = cur.fetchone()
     assert jaar != JAAR and float(waarde) != WAARDE
 

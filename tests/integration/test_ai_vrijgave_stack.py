@@ -11,6 +11,7 @@ AI-vrijgave (#307) en AI-logboek (#313) tegen een draaiende stack.
 Nodig: ADMIN_API_KEY en DATABASE_* (zoals in de CI, --env-file .env). Laat usecase A na afloop
 stilgezet achter; C laat de CI-stap 'Geef AI-usecase C vrij' open.
 """
+
 import datetime as dt
 import os
 
@@ -59,9 +60,12 @@ def status(code):
 
 def upload(beheer, code, inhoud=PDF, ctype="application/pdf", geldig_tot=None):
     geldig_tot = geldig_tot or (dt.date.today() + dt.timedelta(days=7)).isoformat()
-    return beheer.post(f"{BASE_URL}/api/admin/ai/usecases/{code}/verklaring", timeout=TIMEOUT,
-                       files={"bestand": ("verklaring.pdf", inhoud, ctype)},
-                       data={"versie": "integratietest", "geldig_tot": geldig_tot})
+    return beheer.post(
+        f"{BASE_URL}/api/admin/ai/usecases/{code}/verklaring",
+        timeout=TIMEOUT,
+        files={"bestand": ("verklaring.pdf", inhoud, ctype)},
+        data={"versie": "integratietest", "geldig_tot": geldig_tot},
+    )
 
 
 def test_publieke_status_zonder_logins():
@@ -114,8 +118,9 @@ def test_levenscyclus_a(beheer, db):
 
     # Na geldig_tot dicht (de datum terugzetten kan alleen in de database)
     with db.cursor() as cur:
-        cur.execute("UPDATE ai_verklaringen SET geldig_tot = current_date - 1 WHERE id = %s",
-                    (r.json()["verklaring_id"],))
+        cur.execute(
+            "UPDATE ai_verklaringen SET geldig_tot = current_date - 1 WHERE id = %s", (r.json()["verklaring_id"],)
+        )
     assert (status("A")["open"], status("A")["reden"]) == (False, "verlopen")
     beheer.get(f"{BASE_URL}/api/admin/ai/usecases", timeout=TIMEOUT)
     log = beheer.get(f"{BASE_URL}/api/admin/ai/vrijgavelog", timeout=TIMEOUT).json()
@@ -134,8 +139,9 @@ def test_chat_met_a_dicht_wordt_gelogd_als_geweigerd(beheer):
     r = requests.post(f"{BASE_URL}/api/chat", json={"vraag": vraag}, timeout=300)
     assert r.status_code == 200, r.text[:300]
     assert "AI-assistent staat uit" in (r.json().get("melding") or "")
-    log = beheer.get(f"{BASE_URL}/api/admin/ai/logboek", params={"usecase": "A", "status": "geweigerd"},
-                     timeout=TIMEOUT).json()
+    log = beheer.get(
+        f"{BASE_URL}/api/admin/ai/logboek", params={"usecase": "A", "status": "geweigerd"}, timeout=TIMEOUT
+    ).json()
     regel = next(x for x in log["regels"] if x["taak"] == vraag)
     assert regel["app_versie"] and regel["hash"]
     assert not {"user_id", "gebruiker", "ip_address", "sessie"} & set(regel)
@@ -148,9 +154,11 @@ def test_hashketen_klopt_en_python_rekent_hetzelfde(beheer, db):
     assert controle["ok"], controle
     assert controle["aantal"] >= 1
     with db.cursor() as cur:
-        cur.execute("SELECT id, to_char(tijdstip AT TIME ZONE 'UTC', 'YYYY-MM-DD\"T\"HH24:MI:SS.US\"Z\"'), usecase, "
-                    "functie, status, taak, bronnen, model, modelversie, app_versie, resultaat, foutmelding, "
-                    "vorige_hash, hash FROM ai_logboek ORDER BY id DESC LIMIT 5")
+        cur.execute(
+            "SELECT id, to_char(tijdstip AT TIME ZONE 'UTC', 'YYYY-MM-DD\"T\"HH24:MI:SS.US\"Z\"'), usecase, "
+            "functie, status, taak, bronnen, model, modelversie, app_versie, resultaat, foutmelding, "
+            "vorige_hash, hash FROM ai_logboek ORDER BY id DESC LIMIT 5"
+        )
         kolommen = [d[0] for d in cur.description]
         for rij in cur.fetchall():
             r = dict(zip(kolommen, rij))
@@ -172,19 +180,22 @@ def _fout(db, sql, rol=None):
             cur.execute("ROLLBACK")
 
 
-@pytest.mark.parametrize("sql", ["UPDATE ai_logboek SET resultaat = 'x'", "DELETE FROM ai_logboek",
-                                 "TRUNCATE ai_logboek"])
+@pytest.mark.parametrize(
+    "sql", ["UPDATE ai_logboek SET resultaat = 'x'", "DELETE FROM ai_logboek", "TRUNCATE ai_logboek"]
+)
 def test_logboek_alleen_toevoegen(db, sql):
-    assert _fout(db, sql, rol="omnitwin_ai_log") == "42501"   # rol: geen recht
-    assert _fout(db, sql) == "42501"                           # eigenaar/superuser: de trigger
+    assert _fout(db, sql, rol="omnitwin_ai_log") == "42501"  # rol: geen recht
+    assert _fout(db, sql) == "42501"  # eigenaar/superuser: de trigger
 
 
 def test_schrijfrol_mag_toevoegen_en_opschonen_aanroepen(db):
     with db.cursor() as cur:
         cur.execute("BEGIN")
         cur.execute("SET LOCAL ROLE omnitwin_ai_log")
-        cur.execute("INSERT INTO ai_logboek (usecase, functie, status, taak) "
-                    "VALUES ('C', 'integratietest', 'geweigerd', 'test') RETURNING id, hash")
+        cur.execute(
+            "INSERT INTO ai_logboek (usecase, functie, status, taak) "
+            "VALUES ('C', 'integratietest', 'geweigerd', 'test') RETURNING id, hash"
+        )
         id_, hash_ = cur.fetchone()
         assert id_ and len(hash_) == 64
         cur.execute("SELECT ai_logboek_opschonen('test')")

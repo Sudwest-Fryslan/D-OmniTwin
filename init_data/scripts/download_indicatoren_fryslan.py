@@ -12,6 +12,7 @@ Databronnen (CBS OData, open data, CC BY):
   - CBS Kerncijfers wijken en buurten: niet meer hier, zie download_cbs_kerncijfers.py (#159)
   - 50150NED: Gezondheidsmonitor RIVM via dataderden.cbs.nl (2012-2024)
 """
+
 import csv
 import time
 from pathlib import Path
@@ -22,9 +23,24 @@ OUTPUT = ROOT / "init_data" / "fryslan" / "indicatorwaarden_fryslan.csv"
 
 # Alle Friese gemeentecodes (4-cijferig, zonder GM prefix)
 FRIESE_GM_CODES = [
-    '0059', '0060', '1891', '1940', '0072', '0074',
-    '0080', '1970', '0085', '0086', '0088', '0090',
-    '1900', '0093', '0737', '0096', '1949', '0098'
+    "0059",
+    "0060",
+    "1891",
+    "1940",
+    "0072",
+    "0074",
+    "0080",
+    "1970",
+    "0085",
+    "0086",
+    "0088",
+    "0090",
+    "1900",
+    "0093",
+    "0737",
+    "0096",
+    "1949",
+    "0098",
 ]
 
 # Prefixen voor client-side filtering
@@ -56,8 +72,8 @@ RIVM_DATASETS = [
         "server_filter": False,  # dataderden ondersteunt GEEN server-side $filter op Codering_3
         # Dimensie-filters: alleen totaal leeftijd + alleen waarde (geen betrouwbaarheidsinterval)
         "dimensie_filters": {
-            "Leeftijd": "20300",      # 18 jaar of ouder (= totaal)
-            "Marges": "MW00000",      # Waarde (geen onder/bovengrens)
+            "Leeftijd": "20300",  # 18 jaar of ouder (= totaal)
+            "Marges": "MW00000",  # Waarde (geen onder/bovengrens)
         },
         # Perioden kolom → jaar extractie (2022JJ00 → 2022)
         "periode_col": "Perioden",
@@ -83,8 +99,9 @@ def is_friese_buurt(buurt_id):
     return any(buurt_id.startswith(pfx) for pfx in FRIESE_BU_PREFIXES)
 
 
-def fetch_page(base_url, dataset_id, select_cols, regio_filter_col,
-               extra_select=None, extra_filter=None, skip=0, top=10000):
+def fetch_page(
+    base_url, dataset_id, select_cols, regio_filter_col, extra_select=None, extra_filter=None, skip=0, top=10000
+):
     """Haal 1 pagina op van CBS/RIVM ODataFeed."""
     url = f"{base_url}/{dataset_id}/TypedDataSet"
 
@@ -131,8 +148,7 @@ def download_cbs_dataset(ds_config, alle_rijen):
 
     while True:
         print(f"     Pagina {pagina}...", end=" ", flush=True)
-        records = fetch_page(base, dataset_id, select_cols, regio_filter_col,
-                             extra_filter=filter_str, skip=skip)
+        records = fetch_page(base, dataset_id, select_cols, regio_filter_col, extra_filter=filter_str, skip=skip)
         if not records:
             print("klaar")
             break
@@ -151,13 +167,15 @@ def download_cbs_dataset(ds_config, alle_rijen):
                 except (ValueError, TypeError):
                     continue
 
-                alle_rijen.append({
-                    "buurt_id": buurt_code,
-                    "indicator_naam": indicator_naam,
-                    "waarde": waarde_float,
-                    "jaar": jaar,
-                    "bron": naam,
-                })
+                alle_rijen.append(
+                    {
+                        "buurt_id": buurt_code,
+                        "indicator_naam": indicator_naam,
+                        "waarde": waarde_float,
+                        "jaar": jaar,
+                        "bron": naam,
+                    }
+                )
 
         print(f"{len(records)} records → totaal rijen: {len(alle_rijen)}")
 
@@ -171,7 +189,7 @@ def download_cbs_dataset(ds_config, alle_rijen):
 def download_rivm_dataset(ds_config, alle_rijen):
     """
     Download een RIVM dataset met dimensie-filtering en client-side buurtfiltering.
-    
+
     RIVM data via dataderden.cbs.nl ondersteunt geen server-side $filter op Codering_3.
     We halen alle buurten op, maar filteren op:
     - Leeftijd = 20300 (18 jaar of ouder = totaal)
@@ -205,9 +223,15 @@ def download_rivm_dataset(ds_config, alle_rijen):
 
     while True:
         print(f"     Pagina {pagina}...", end=" ", flush=True)
-        records = fetch_page(base, dataset_id, select_cols, regio_filter_col,
-                             extra_select=extra_select, extra_filter=dim_filter,
-                             skip=skip)
+        records = fetch_page(
+            base,
+            dataset_id,
+            select_cols,
+            regio_filter_col,
+            extra_select=extra_select,
+            extra_filter=dim_filter,
+            skip=skip,
+        )
         if not records:
             print("klaar")
             break
@@ -236,13 +260,15 @@ def download_rivm_dataset(ds_config, alle_rijen):
                 except (ValueError, TypeError):
                     continue
 
-                alle_rijen.append({
-                    "buurt_id": buurt_code,
-                    "indicator_naam": indicator_naam,
-                    "waarde": waarde_float,
-                    "jaar": jaar,
-                    "bron": f"{naam} {jaar}",
-                })
+                alle_rijen.append(
+                    {
+                        "buurt_id": buurt_code,
+                        "indicator_naam": indicator_naam,
+                        "waarde": waarde_float,
+                        "jaar": jaar,
+                        "bron": f"{naam} {jaar}",
+                    }
+                )
                 friese_count += 1
 
         print(f"{len(records)} records (Fryslân: +{friese_count}) → totaal rijen: {len(alle_rijen)}")
@@ -283,7 +309,7 @@ def main():
     # Schrijf CSV
     OUTPUT.parent.mkdir(parents=True, exist_ok=True)
     print(f"\n  💾 Schrijven naar {OUTPUT}...")
-    with open(OUTPUT, 'w', encoding='utf-8', newline='') as f:
+    with open(OUTPUT, "w", encoding="utf-8", newline="") as f:
         fieldnames = ["buurt_id", "indicator_naam", "waarde", "jaar", "bron"]
         writer = csv.DictWriter(f, fieldnames=fieldnames)
         writer.writeheader()
@@ -296,6 +322,7 @@ def main():
 
     # Overzicht indicatoren
     import collections
+
     unique_indicators = sorted(set(r["indicator_naam"] for r in alle_rijen))
     print(f"\n📊 Indicatoren ({len(unique_indicators)}):")
     for ind in unique_indicators:

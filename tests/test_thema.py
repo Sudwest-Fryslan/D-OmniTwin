@@ -12,6 +12,7 @@ Controleert de themabestanden in static/css/themes/:
 
 Los draaien met een overzicht van alle contrasten: python tests/test_thema.py --rapport
 """
+
 import re
 import sys
 import tempfile
@@ -34,8 +35,11 @@ VIEWER_BESTANDEN = [
     *sorted((ROOT / "static" / "js").rglob("*.js")),
     *sorted((ROOT / "templates").glob("*.html")),
     *sorted((ROOT / "static" / "images").glob("*.svg")),
-    *sorted(p for p in (ROOT / "admin-panel" / "src").rglob("*.*")
-            if p.suffix in (".css", ".ts", ".tsx") and ".test." not in p.name),
+    *sorted(
+        p
+        for p in (ROOT / "admin-panel" / "src").rglob("*.*")
+        if p.suffix in (".css", ".ts", ".tsx") and ".test." not in p.name
+    ),
 ]
 ADMIN_CSS = ROOT / "admin-panel" / "src" / "styles" / "admin.css"
 
@@ -78,11 +82,31 @@ PAREN = [
     ("d-omnitwin-welcome-button-color", "d-omnitwin-welcome-button-background-color", TEKST, "tekst op welkomstknop"),
     ("d-omnitwin-welcome-accent-color", "basis-color-default-bg-default", TEKST, "welkomstaccent op paneel"),
     ("d-omnitwin-tooltip-color", "d-omnitwin-tooltip-background-color", TEKST, "tooltiptekst"),
-    ("d-omnitwin-selection-badge-color", "d-omnitwin-selection-badge-background-color", TEKST, "tekst op selectiebadge"),
+    (
+        "d-omnitwin-selection-badge-color",
+        "d-omnitwin-selection-badge-background-color",
+        TEKST,
+        "tekst op selectiebadge",
+    ),
     ("d-omnitwin-tab-active-border-color", "basis-color-default-bg-default", UI, "rand actieve tab op paneel"),
-    ("d-omnitwin-beheer-kop-color", "d-omnitwin-beheer-kop-background-color-start", TEKST, "beheerscherm: koptekst (begin)"),
-    ("d-omnitwin-beheer-kop-color", "d-omnitwin-beheer-kop-background-color-end", TEKST, "beheerscherm: koptekst (eind)"),
-    ("d-omnitwin-beheer-nav-active-color", "d-omnitwin-beheer-nav-active-background-color", TEKST, "beheerscherm: actief menu-item"),
+    (
+        "d-omnitwin-beheer-kop-color",
+        "d-omnitwin-beheer-kop-background-color-start",
+        TEKST,
+        "beheerscherm: koptekst (begin)",
+    ),
+    (
+        "d-omnitwin-beheer-kop-color",
+        "d-omnitwin-beheer-kop-background-color-end",
+        TEKST,
+        "beheerscherm: koptekst (eind)",
+    ),
+    (
+        "d-omnitwin-beheer-nav-active-color",
+        "d-omnitwin-beheer-nav-active-background-color",
+        TEKST,
+        "beheerscherm: actief menu-item",
+    ),
     ("basis-focus-outline-color", "basis-color-default-bg-document", UI, "focusrand op pagina"),
     ("basis-focus-outline-color", "basis-color-default-bg-default", UI, "focusrand op paneel"),
     # Alleen als het thema ze definieert:
@@ -117,10 +141,14 @@ _TEKORTEN_V010 = {
 BEKENDE_TEKORTEN = {
     *{("d-omnitwin", *t) for t in _TEKORTEN_V010},
     *{("legacy", *t) for t in _TEKORTEN_V010},
-    *{("legacy", modus, voor, achter) for modus in ("licht", "donker") for voor, achter in (
-        ("d-omnitwin-tab-active-color", "d-omnitwin-tab-active-background-color"),
-        ("d-omnitwin-selection-badge-color", "d-omnitwin-selection-badge-background-color"),
-    )},
+    *{
+        ("legacy", modus, voor, achter)
+        for modus in ("licht", "donker")
+        for voor, achter in (
+            ("d-omnitwin-tab-active-color", "d-omnitwin-tab-active-background-color"),
+            ("d-omnitwin-selection-badge-color", "d-omnitwin-selection-badge-background-color"),
+        )
+    },
 }
 
 # swf (#284): elk tekstpaar haalt AAA (7:1), behalve deze (wel AA). Reden erbij.
@@ -156,7 +184,7 @@ def lees_thema(naam):
 
 
 def wcag_status(naam):
-    """"ja", "nee" of None: de regel "@wcag-aa: ..." in het kopcommentaar van het thema."""
+    """ "ja", "nee" of None: de regel "@wcag-aa: ..." in het kopcommentaar van het thema."""
     tekst = (THEMA_MAP / f"{naam}.css").read_text(encoding="utf-8")
     kop = tekst[: tekst.find("*/")] if tekst.lstrip().startswith("/*") else ""
     m = WCAG_REGEL.search(kop)
@@ -374,7 +402,12 @@ class TestKeycloakInlogthema(unittest.TestCase):
 
     def test_knopkleur_gelijk_aan_thema(self):
         for naam in beschikbare_themas(THEMA_MAP):
-            css = COMMENTAAR.sub(" ", (self.KC / "themes" / naam / "login" / "resources" / "css" / "omnitwin.css").read_text(encoding="utf-8"))
+            css = COMMENTAAR.sub(
+                " ",
+                (self.KC / "themes" / naam / "login" / "resources" / "css" / "omnitwin.css").read_text(
+                    encoding="utf-8"
+                ),
+            )
             licht = declaraties(BLOK_LICHT.search(css).group(1))
             with self.subTest(thema=naam):
                 self.assertEqual(
@@ -404,7 +437,9 @@ class TestGeenRegressieStandaardthema(unittest.TestCase):
         donker = tokens(STANDAARD_THEMA, "donker")  # het beheerscherm is altijd donker
         for token, terugval in gevonden:
             with self.subTest(token=token):
-                self.assertTrue(gelijk(los_op(donker, token), terugval), f"--{token}: {los_op(donker, token)} != {terugval}")
+                self.assertTrue(
+                    gelijk(los_op(donker, token), terugval), f"--{token}: {los_op(donker, token)} != {terugval}"
+                )
 
     def test_lettertypen_standaard_gelijk(self):
         tekst = STYLES.read_text(encoding="utf-8")
@@ -423,7 +458,9 @@ class TestContrast(unittest.TestCase):
                     bekend = (naam, modus, voor, achter) in BEKENDE_TEKORTEN
                     with self.subTest(thema=naam, modus=modus, paar=omschrijving):
                         if bekend:
-                            self.assertLess(ratio, minimum, f"{omschrijving} voldoet nu ({ratio:.2f}); haal van BEKENDE_TEKORTEN")
+                            self.assertLess(
+                                ratio, minimum, f"{omschrijving} voldoet nu ({ratio:.2f}); haal van BEKENDE_TEKORTEN"
+                            )
                         else:
                             self.assertGreaterEqual(
                                 round(ratio, 2), minimum, f"{omschrijving}: {kv} op {ka} = {ratio:.2f}:1 < {minimum}:1"
@@ -448,7 +485,7 @@ class TestContrast(unittest.TestCase):
 
 
 class TestWcagStatus(unittest.TestCase):
-    """"@wcag-aa: ja|nee" in de kop van elk thema (#284): klopt met de contrasten en staat in het beheerscherm."""
+    """ "@wcag-aa: ja|nee" in de kop van elk thema (#284): klopt met de contrasten en staat in het beheerscherm."""
 
     def test_elk_thema_heeft_de_regel(self):
         for naam in beschikbare_themas(THEMA_MAP):
@@ -473,7 +510,6 @@ class TestWcagStatus(unittest.TestCase):
     def test_legacy_en_swf(self):
         self.assertEqual(wcag_status("legacy"), "nee")
         self.assertEqual(wcag_status("swf"), "ja")
-
 
     def test_beheermodus(self):
         """Standaardweergave van het beheerscherm (#284): swf licht zoals de site, de rest donker zoals het was."""
@@ -529,8 +565,23 @@ class TestThemanaam(unittest.TestCase):
                 self.assertTrue(is_geldige_themanaam(naam))
 
     def test_ongeldige_namen(self):
-        for naam in ("", "SWF", "swf.css", "../swf", "swf/x", "swf x", "-swf", "swf-", "a--b", "swf_1",
-                     "swéf", "x" * 65, None, 3, ["swf"]):
+        for naam in (
+            "",
+            "SWF",
+            "swf.css",
+            "../swf",
+            "swf/x",
+            "swf x",
+            "-swf",
+            "swf-",
+            "a--b",
+            "swf_1",
+            "swéf",
+            "x" * 65,
+            None,
+            3,
+            ["swf"],
+        ):
             with self.subTest(naam=naam):
                 self.assertFalse(is_geldige_themanaam(naam))
 
@@ -554,7 +605,9 @@ def rapport():
     regels = []
     for naam in beschikbare_themas(THEMA_MAP):
         for modus in ("licht", "donker"):
-            regels.append(f"\n### {naam} — {modus} (@wcag-aa: {wcag_status(naam)})\n\n| Paar | Voorgrond | Achtergrond | Contrast | Eis | |\n|---|---|---|---|---|---|")
+            regels.append(
+                f"\n### {naam} — {modus} (@wcag-aa: {wcag_status(naam)})\n\n| Paar | Voorgrond | Achtergrond | Contrast | Eis | |\n|---|---|---|---|---|---|"
+            )
             for voor, achter, kv, ka, ratio, minimum, omschrijving in contrasten(naam, modus):
                 bekend = (naam, modus, voor, achter) in BEKENDE_TEKORTEN
                 teken = "ok" if round(ratio, 2) >= minimum else ("bekend tekort (#67)" if bekend else "FOUT")

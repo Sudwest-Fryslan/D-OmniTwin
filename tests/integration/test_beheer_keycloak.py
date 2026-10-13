@@ -37,7 +37,7 @@ pytestmark = pytest.mark.integration
 BASE_URL = os.environ.get("OMNITWIN_BASE_URL", "http://localhost").rstrip("/")
 REALM = os.environ.get("KEYCLOAK_REALM", "omnitwin")
 TIMEOUT = 30
-UC = "beheer-login"   # prefix uc-beheer-login-, opgeruimd met testaccounts.opruimen
+UC = "beheer-login"  # prefix uc-beheer-login-, opgeruimd met testaccounts.opruimen
 BEHEERROUTE = f"{BASE_URL}/api/admin/health"
 
 try:
@@ -71,8 +71,12 @@ def beheer():
 @pytest.fixture(scope="module")
 def accounts(beheer, tmp_path_factory):
     pad = tmp_path_factory.mktemp("accounts") / "accounts.json"
-    uc = {"actoren": [{"naam": "beheerder", "soort": "gebruiker", "rollen": ["beheerder"]},
-                      {"naam": "lezer", "soort": "gebruiker", "rollen": ["lezer"]}]}
+    uc = {
+        "actoren": [
+            {"naam": "beheerder", "soort": "gebruiker", "rollen": ["beheerder"]},
+            {"naam": "lezer", "soort": "gebruiker", "rollen": ["lezer"]},
+        ]
+    }
     uit = ta.maak(UC, uc, beheer=beheer, pad=pad)
     yield uit
     ta.opruimen(UC, beheer=beheer, pad=pad)
@@ -85,15 +89,14 @@ def _token(account):
 
 # ------------------------------------------------------------------ bearer-token op beheerroutes
 
+
 def test_bearer_beheerder_200(accounts):
-    r = requests.get(BEHEERROUTE, headers={"Authorization": f"Bearer {_token(accounts['beheerder'])}"},
-                     timeout=TIMEOUT)
+    r = requests.get(BEHEERROUTE, headers={"Authorization": f"Bearer {_token(accounts['beheerder'])}"}, timeout=TIMEOUT)
     assert r.status_code == 200, r.text[:300]
 
 
 def test_bearer_lezer_403(accounts):
-    r = requests.get(BEHEERROUTE, headers={"Authorization": f"Bearer {_token(accounts['lezer'])}"},
-                     timeout=TIMEOUT)
+    r = requests.get(BEHEERROUTE, headers={"Authorization": f"Bearer {_token(accounts['lezer'])}"}, timeout=TIMEOUT)
     assert r.status_code == 403
 
 
@@ -109,11 +112,13 @@ def test_ongeldig_token_401():
 
 # ------------------------------------------------------------------ lokaal inloggen
 
+
 def test_lokaal_inloggen_uit_tenzij_noodtoegang():
     noodtoegang = os.environ.get("LOKAAL_INLOGGEN", "").lower() in ("1", "true", "ja", "yes", "on")
     assert CONFIG["lokaal"] is noodtoegang and CONFIG["noodtoegang"] is noodtoegang
-    r = requests.post(f"{BASE_URL}/api/admin/auth/login", data={"username": "admin", "password": "onjuist"},
-                      timeout=TIMEOUT)
+    r = requests.post(
+        f"{BASE_URL}/api/admin/auth/login", data={"username": "admin", "password": "onjuist"}, timeout=TIMEOUT
+    )
     assert r.status_code == (401 if noodtoegang else 403)
 
 
@@ -124,14 +129,16 @@ def test_config_linkt_naar_keycloak():
 
 # ------------------------------------------------------------------ browserflow
 
+
 def inloggen(account):
     """Als een browser: beheer -> Keycloak-formulier -> callback -> sessiecookie."""
     s = requests.Session()
     r = s.get(f"{BASE_URL}/api/admin/auth/oidc/login?terug=/admin/indicatoren", timeout=TIMEOUT)
     assert r.status_code == 200 and "kc-form-login" in r.text, r.url
     actie = html.unescape(re.search(r'<form[^>]*id="kc-form-login"[^>]*action="([^"]+)"', r.text).group(1))
-    r = s.post(actie, data={"username": account["id"], "password": account["geheim"], "credentialId": ""},
-               timeout=TIMEOUT)
+    r = s.post(
+        actie, data={"username": account["id"], "password": account["geheim"], "credentialId": ""}, timeout=TIMEOUT
+    )
     return s, r
 
 
@@ -177,9 +184,13 @@ def db():
     psycopg2 = pytest.importorskip("psycopg2")
     try:
         conn = psycopg2.connect(
-            host=os.environ.get("DATABASE_HOST", "localhost"), port=int(os.environ.get("DATABASE_PORT", 5432)),
-            dbname=os.environ.get("DATABASE_NAME", "omnitwin_db"), user=os.environ.get("DATABASE_USER", "omnitwin_user"),
-            password=os.environ.get("DATABASE_PASSWORD", ""), connect_timeout=5)
+            host=os.environ.get("DATABASE_HOST", "localhost"),
+            port=int(os.environ.get("DATABASE_PORT", 5432)),
+            dbname=os.environ.get("DATABASE_NAME", "omnitwin_db"),
+            user=os.environ.get("DATABASE_USER", "omnitwin_user"),
+            password=os.environ.get("DATABASE_PASSWORD", ""),
+            connect_timeout=5,
+        )
     except psycopg2.OperationalError as e:
         pytest.skip(f"database niet bereikbaar: {e}")
     conn.autocommit = True
@@ -189,15 +200,18 @@ def db():
 
 def _laat_token_verlopen(db, naam):
     with db.cursor() as cur:
-        cur.execute("UPDATE oidc_sessies SET token_verloopt = now() - interval '1 minute' "
-                    "WHERE gebruikersnaam = %s RETURNING token_verloopt", (naam,))
+        cur.execute(
+            "UPDATE oidc_sessies SET token_verloopt = now() - interval '1 minute' "
+            "WHERE gebruikersnaam = %s RETURNING token_verloopt",
+            (naam,),
+        )
         assert cur.rowcount >= 1
 
 
 def test_verversen_en_intrekken(beheerder_sessie, beheer, db):
     s, naam = beheerder_sessie, "uc-beheer-login-beheerder"
     _laat_token_verlopen(db, naam)
-    assert s.get(BEHEERROUTE, timeout=TIMEOUT).status_code == 200   # ververst met het refresh token
+    assert s.get(BEHEERROUTE, timeout=TIMEOUT).status_code == 200  # ververst met het refresh token
     with db.cursor() as cur:
         # Alleen de sessie van dit verzoek is ververst; die van eerdere tests niet
         cur.execute("SELECT bool_or(token_verloopt > now()) FROM oidc_sessies WHERE gebruikersnaam = %s", (naam,))

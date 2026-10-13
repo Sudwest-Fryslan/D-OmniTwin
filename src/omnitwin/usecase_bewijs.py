@@ -77,6 +77,7 @@ try {
 
 # ------------------------------------------------------------------ manifest en bestanden
 
+
 def stappen(uc: dict) -> list:
     return (uc.get("bewijs") or {}).get("stappen") or []
 
@@ -103,8 +104,11 @@ def comprimeer(png: bytes, doel: Path, max_bytes: int = MAX_BYTES) -> int:
     beeld = Image.open(io.BytesIO(png)).convert("RGB")
     schaal = 1.0
     while True:
-        b = beeld if schaal == 1.0 else beeld.resize(
-            (round(beeld.width * schaal), round(beeld.height * schaal)), Image.LANCZOS)
+        b = (
+            beeld
+            if schaal == 1.0
+            else beeld.resize((round(beeld.width * schaal), round(beeld.height * schaal)), Image.LANCZOS)
+        )
         for kwaliteit in (82, 74, 66, 58, 50, 42):
             buf = io.BytesIO()
             b.save(buf, "WEBP", quality=kwaliteit, method=6)
@@ -122,6 +126,7 @@ def _zonder_host(tekst: str, basis: str, lengte: int = 300) -> str:
 
 
 # ------------------------------------------------------------------ uitvoerder (Playwright)
+
 
 class Stapfout(Exception):
     """Een stap kon niet worden uitgevoerd (pagina laadde niet, gebied of indicator onbekend, ...)."""
@@ -148,8 +153,7 @@ class Bewijsmaker:
     # -- pagina's
 
     def _context(self, gemeente: str = ""):
-        ctx = self.browser.new_context(viewport=VIEWPORT, locale="nl-NL", color_scheme="light",
-                                       reduced_motion="reduce")
+        ctx = self.browser.new_context(viewport=VIEWPORT, locale="nl-NL", color_scheme="light", reduced_motion="reduce")
         ctx.add_init_script(_INIT_JS % json.dumps(gemeente))
         return ctx
 
@@ -158,7 +162,8 @@ class Bewijsmaker:
         page.wait_for_function(
             "() => window.state && window.state.deckgl && window.kompasViz && window.chatPanel"
             " && document.querySelectorAll('#gebiedstype-select option').length > 1",
-            timeout=TRAAG_MS)
+            timeout=TRAAG_MS,
+        )
         page.add_style_tag(content="#contextual-tooltip { display: none !important; }")
 
     def _wacht_op_rust(self, page, ms: int = 2500):
@@ -173,20 +178,23 @@ class Bewijsmaker:
         """CBS Buurten, indicator op de kaart, gebied geselecteerd, de wijk van het gebied in beeld."""
         gebiedstype = page.evaluate(
             "() => { const o = [...document.querySelectorAll('#gebiedstype-select option')]"
-            ".find(o => /CBS Buurten/i.test(o.textContent)); return o ? o.value : null; }")
+            ".find(o => /CBS Buurten/i.test(o.textContent)); return o ? o.value : null; }"
+        )
         if not gebiedstype:
             raise Stapfout("gebiedstype CBS Buurten niet gevonden")
-        page.evaluate("(id) => window.EventBus.emit('CHAT_GEBIEDEN_TONEN', {ids: [], gebiedstypeId: id})",
-                      gebiedstype)
-        page.wait_for_function("() => document.querySelectorAll('#indicator-select option').length > 1",
-                               timeout=TRAAG_MS)
+        page.evaluate("(id) => window.EventBus.emit('CHAT_GEBIEDEN_TONEN', {ids: [], gebiedstypeId: id})", gebiedstype)
+        page.wait_for_function(
+            "() => document.querySelectorAll('#indicator-select option').length > 1", timeout=TRAAG_MS
+        )
         uuid, naam = None, ""
         if indicator:
             gevonden = page.evaluate(
                 """(w) => { const opts = [...document.querySelectorAll('#indicator-select option')].filter(o => o.value);
                     const o = opts.find(o => o.value === w) || opts.find(o => o.textContent.trim() === w)
                           || opts.find(o => o.textContent.toLowerCase().includes(w.toLowerCase()));
-                    return o ? [o.value, o.textContent.trim()] : null; }""", indicator)
+                    return o ? [o.value, o.textContent.trim()] : null; }""",
+                indicator,
+            )
             if not gevonden:
                 raise Stapfout(f"indicator {indicator!r} niet gevonden bij CBS Buurten")
             uuid, naam = gevonden
@@ -194,12 +202,15 @@ class Bewijsmaker:
         # Zonder zoom: de camera zet _toon_omgeving (de wijk in beeld, niet alleen de buurt)
         page.evaluate(
             "([ids, uuid, naam]) => window.EventBus.emit('CHAT_GEBIEDEN_TONEN', {ids, uuid, name: naam, zoom: false})",
-            [ids, uuid, naam])
+            [ids, uuid, naam],
+        )
         page.wait_for_function(
             "([uuid, n]) => window.state.currentData && window.state.deckgl.props.layers.some("
             "l => l && l.id && l.id.startsWith('gebieden-layer-')) && (!uuid || window.state.currentIndicator === uuid)"
             " && window.state.selectedGebiedIds.size === n",
-            arg=[uuid, len(ids)], timeout=TRAAG_MS)
+            arg=[uuid, len(ids)],
+            timeout=TRAAG_MS,
+        )
         self._wacht_op_rust(page, 1000)
         if gebied and camera:
             self._toon_omgeving(page, gebied)
@@ -228,7 +239,9 @@ class Bewijsmaker:
                                       zoom: vp.zoom, pitch: 0, bearing: 0, transitionDuration: 0};
                 s.deckgl.setProps({viewState: s.currentViewState});
                 return true;
-            }""", prefix)
+            }""",
+            prefix,
+        )
         if not ok:
             raise Stapfout(f"gebied {gebied} niet op de kaart")
         self._wacht_op_rust(page, 4000)  # tegels van de achtergrondkaart (PDOK)
@@ -240,16 +253,21 @@ class Bewijsmaker:
                     const c = (d.configuraties || []).find(c => c.naam === naam || (c.naam || '').includes(naam));
                     if (!c) return false; window.kompasViz.currentConfigId = c.id;
                     const sel = document.getElementById('kompas-config-select'); if (sel) sel.value = c.id; return true; }""",
-                profiel)
+                profiel,
+            )
             if not gevonden:
                 raise Stapfout(f"Kompas-profiel {profiel!r} niet gevonden")
         page.evaluate("() => window.openKompasVenster()")
         if gebied and gebied.startswith("BU"):
-            page.wait_for_function("(id) => window.kompasViz.currentGebiedId === id"
-                                   " && /Indicatordekking/.test(document.getElementById('kompas-info')?.textContent || '')",
-                                   arg=gebied, timeout=TRAAG_MS)
-        page.wait_for_function("() => document.querySelectorAll('#kompas-container path.kompas-arc-path').length > 10",
-                               timeout=TRAAG_MS)
+            page.wait_for_function(
+                "(id) => window.kompasViz.currentGebiedId === id"
+                " && /Indicatordekking/.test(document.getElementById('kompas-info')?.textContent || '')",
+                arg=gebied,
+                timeout=TRAAG_MS,
+            )
+        page.wait_for_function(
+            "() => document.querySelectorAll('#kompas-container path.kompas-arc-path').length > 10", timeout=TRAAG_MS
+        )
         # Venster naar de rechterrand (zoals tests/e2e), de kaart met het gebied links ervan
         kop = page.locator("#kompas-window .floating-window-header h3").bounding_box()
         if kop:
@@ -266,27 +284,37 @@ class Bewijsmaker:
         page.locator("#chat-toggle-btn").click()
         invoer = page.locator("#chat-input")
         invoer.fill(vraag)
-        with page.expect_response(lambda r: r.url.endswith("/api/chat") and r.request.method == "POST",
-                                  timeout=int(os.environ.get("BEWIJS_CHAT_TIMEOUT_MS", "300000"))) as resp:
+        with page.expect_response(
+            lambda r: r.url.endswith("/api/chat") and r.request.method == "POST",
+            timeout=int(os.environ.get("BEWIJS_CHAT_TIMEOUT_MS", "300000")),
+        ) as resp:
             invoer.press("Enter")
         data = resp.value.json()
         debug = data.get("debug") or {}
-        self.ai_aanbieder = (debug.get("model") or debug.get("provider") or "onbekend") if debug.get("llm_gebruikt") \
+        self.ai_aanbieder = (
+            (debug.get("model") or debug.get("provider") or "onbekend")
+            if debug.get("llm_gebruikt")
             else (self.ai_aanbieder or "geen")
+        )
         page.locator(".chat-message-assistant").last.wait_for(timeout=TRAAG_MS)
         if data.get("kaart_actie"):  # de kaart beweegt mee; laag en tegels laten landen
             page.wait_for_timeout(1500)
         # De vraag bovenaan in beeld, met zoveel mogelijk van het antwoord eronder
-        page.evaluate("() => { const v = [...document.querySelectorAll('.chat-message-user')].pop();"
-                      " if (v) v.scrollIntoView({block: 'start'}); }")
+        page.evaluate(
+            "() => { const v = [...document.querySelectorAll('.chat-message-user')].pop();"
+            " if (v) v.scrollIntoView({block: 'start'}); }"
+        )
         self._wacht_op_rust(page, 3000)
         return (data.get("narrative") or page.locator(".chat-message-assistant").last.inner_text()).strip()
 
     def leveringsstatus(self, dataset: str) -> dict:
         """Dataset en laatste levering volgens de laad-API (machineclient nodig)."""
         import requests
+
         if not self.tok:
-            raise Stapfout("geen machineclient (OMNITWIN_CLIENT_ID/OMNITWIN_CLIENT_SECRET): leveringsstatus niet op te vragen")
+            raise Stapfout(
+                "geen machineclient (OMNITWIN_CLIENT_ID/OMNITWIN_CLIENT_SECRET): leveringsstatus niet op te vragen"
+            )
         h = {"Authorization": f"Bearer {self.tok}"}
         r = requests.get(f"{self.basis}/api/laden/v1/datasets/{dataset}", headers=h, timeout=30)
         if r.status_code == 404:
@@ -326,8 +354,12 @@ class Bewijsmaker:
         page.set_default_timeout(TRAAG_MS)
         fouten = []
         page.on("pageerror", lambda e: fouten.append(f"pageerror: {e}"))
-        page.on("console", lambda m: fouten.append(m.text) if m.type == "error"
-                and not any(p.search(m.text) for p in CONSOLE_RUIS) else None)
+        page.on(
+            "console",
+            lambda m: (
+                fouten.append(m.text) if m.type == "error" and not any(p.search(m.text) for p in CONSOLE_RUIS) else None
+            ),
+        )
         res = {"id": s["id"], "resultaat": "ok", "afbeelding": f"{s['id']}.webp"}
         melding = None
         begin = time.time()
@@ -371,27 +403,36 @@ class Bewijsmaker:
             fouten.append(f"screenshot: {type(e).__name__}: {e}")
         res["console_fouten"] = [_zonder_host(f, self.basis) for f in fouten[:10]]
         if "antwoord" in res:
-            res["antwoord"] = _zonder_host(res["antwoord"], self.basis) if len(res["antwoord"]) <= 300 \
-                else res["antwoord"][:1500]
+            res["antwoord"] = (
+                _zonder_host(res["antwoord"], self.basis) if len(res["antwoord"]) <= 300 else res["antwoord"][:1500]
+            )
         ctx.close()
         return res
 
 
 def _esc(t) -> str:
     import html
+
     return html.escape(str(t if t is not None else "–"))
 
 
 def _leveringspagina(dataset: str, uc: dict, ds: dict, lv: dict) -> str:
     aantallen = lv.get("aantallen") or {}
-    rijen = [("Dataset", dataset), ("Profiel", ds.get("profiel")), ("Huidige versie", ds.get("huidigeVersie", ds.get("versie"))),
-             ("Laatste levering", lv.get("id")), ("Status", lv.get("status")), ("Versie na levering", lv.get("versie")),
-             ("Ontvangen", lv.get("ontvangen") or lv.get("aangemaakt")), ("Gepubliceerd", lv.get("gepubliceerd"))]
+    rijen = [
+        ("Dataset", dataset),
+        ("Profiel", ds.get("profiel")),
+        ("Huidige versie", ds.get("huidigeVersie", ds.get("versie"))),
+        ("Laatste levering", lv.get("id")),
+        ("Status", lv.get("status")),
+        ("Versie na levering", lv.get("versie")),
+        ("Ontvangen", lv.get("ontvangen") or lv.get("aangemaakt")),
+        ("Gepubliceerd", lv.get("gepubliceerd")),
+    ]
     rijen += [(f"Aantal {k}", f"{v:,}".replace(",", ".") if isinstance(v, int) else v) for k, v in aantallen.items()]
     titel = (ds.get("beschrijving") or {}).get("dct:title") or dataset
     fouten = lv.get("fouten") or []
     tabel = "".join(f"<tr><th>{_esc(k)}</th><td>{_esc(v)}</td></tr>" for k, v in rijen if v not in (None, ""))
-    status = (lv.get("status") or "geen levering")
+    status = lv.get("status") or "geen levering"
     kleur = "#1b7a3d" if status == "gepubliceerd" else "#a15c00"
     return f"""<!doctype html><html lang="nl"><head><meta charset="utf-8"><title>Leveringsstatus {_esc(dataset)}</title>
 <style>body{{font-family:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;background:#f4f6f8;color:#1d2733;margin:0;padding:48px 64px}}
@@ -401,7 +442,7 @@ border-radius:14px;color:#fff;background:{kleur};font-weight:600;margin-bottom:1
 th{{text-align:left;color:#5b6b7b;font-weight:500;width:240px}} th,td{{padding:8px 0;border-bottom:1px solid #e6eaee;font-size:16px}}
 .voet{{color:#5b6b7b;font-size:13px;margin-top:18px}}</style></head><body>
 <h1>Leveringsstatus: {_esc(titel)}</h1>
-<p class="sub">Use case <b>{_esc(uc.get('naam'))}</b> {_esc(uc.get('versie'))} · laad-API <code>GET /api/laden/v1/datasets/{_esc(dataset)}</code> en <code>/leveringen/&lt;id&gt;</code></p>
+<p class="sub">Use case <b>{_esc(uc.get("naam"))}</b> {_esc(uc.get("versie"))} · laad-API <code>GET /api/laden/v1/datasets/{_esc(dataset)}</code> en <code>/leveringen/&lt;id&gt;</code></p>
 <div class="kaart"><span class="status">{_esc(status)}</span><table>{tabel}</table>
 {"<p>Fouten: " + _esc(len(fouten)) + "</p>" if fouten else ""}
 <p class="voet">Weergave van de JSON van de laad-API door de use-case-uitvoerder (python -m omnitwin.usecases bewijs).</p></div>
@@ -409,6 +450,7 @@ th{{text-align:left;color:#5b6b7b;font-weight:500;width:240px}} th,td{{padding:8
 
 
 # ------------------------------------------------------------------ verslag
+
 
 def controles(uc: dict, basis: str, tok: str | None) -> list:
     """Controles uit het manifest tegen de installatie: api en aantal; de rest overgeslagen (zie module)."""
@@ -424,9 +466,14 @@ def controles(uc: dict, basis: str, tok: str | None) -> list:
         if c.get("omschrijving"):
             r["omschrijving"] = c["omschrijving"]
         if c["type"] in ALLEEN_TEST:
-            r.update(resultaat="overgeslagen", melding=f"maakt een levering uit de bron: python -m omnitwin.usecases test {uc['naam']}")
+            r.update(
+                resultaat="overgeslagen",
+                melding=f"maakt een levering uit de bron: python -m omnitwin.usecases test {uc['naam']}",
+            )
         elif c["type"] in ("chat", "viewer"):
-            r.update(resultaat="overgeslagen", melding=f"{c['type']}-controles nog niet in de uitvoerder; zie de screenshots")
+            r.update(
+                resultaat="overgeslagen", melding=f"{c['type']}-controles nog niet in de uitvoerder; zie de screenshots"
+            )
         elif c["type"] == "aantal" and api is None:
             r.update(resultaat="overgeslagen", melding="geen machineclient (OMNITWIN_CLIENT_ID/OMNITWIN_CLIENT_SECRET)")
         elif c["type"] == "api" and not c.get("anoniem") and api is None:
@@ -440,14 +487,17 @@ def controles(uc: dict, basis: str, tok: str | None) -> list:
             if melding is None:
                 r["resultaat"] = "ok"
             else:
-                r.update(resultaat="overgeslagen" if str(melding).startswith("overgeslagen") else "fout",
-                         melding=_zonder_host(str(melding), basis))
+                r.update(
+                    resultaat="overgeslagen" if str(melding).startswith("overgeslagen") else "fout",
+                    melding=_zonder_host(str(melding), basis),
+                )
         uit.append(r)
     return uit
 
 
 def omnitwin_versie(basis: str) -> str:
     import requests
+
     try:
         v = requests.get(f"{basis}/health", timeout=15).json().get("version")
         if v:
@@ -459,6 +509,7 @@ def omnitwin_versie(basis: str) -> str:
 
 def schemafouten(verslag: dict) -> list:
     from omnitwin.laden.registratie import valideer
+
     schema = json.loads(BEWIJS_SCHEMA.read_text(encoding="utf-8"))
     return valideer(verslag, schema, schema)
 
@@ -469,8 +520,9 @@ def maak(namen: list, ucs: dict, basis: str, tok: str | None = None, volledig: b
 
     resultaat = {}
     with sync_playwright() as p:
-        browser = p.chromium.launch(args=["--use-angle=swiftshader", "--enable-unsafe-swiftshader",
-                                          "--ignore-gpu-blocklist"])
+        browser = p.chromium.launch(
+            args=["--use-angle=swiftshader", "--enable-unsafe-swiftshader", "--ignore-gpu-blocklist"]
+        )
         for naam in namen:
             uc = ucs[naam]
             if not stappen(uc):
@@ -501,8 +553,10 @@ def maak_een(maker: Bewijsmaker, uc: dict, volledig: bool = True):
     naam = uc["naam"]
     ontbreekt = niet_geleverd(maker, uc)
     if ontbreekt:
-        print(f"⏭️  {naam}: overgeslagen, geen levering voor {', '.join(ontbreekt)} (bron hier niet beschikbaar?); "
-              "bestaand bewijs blijft staan")
+        print(
+            f"⏭️  {naam}: overgeslagen, geen levering voor {', '.join(ontbreekt)} (bron hier niet beschikbaar?); "
+            "bestaand bewijs blijft staan"
+        )
         return f"overgeslagen: geen levering voor {', '.join(ontbreekt)}"
     uit = bewijsmap(naam)
     uit.mkdir(parents=True, exist_ok=True)
@@ -515,8 +569,11 @@ def maak_een(maker: Bewijsmaker, uc: dict, volledig: bool = True):
         r = maker.stap(uc, s, uit, uit / "volledig" if volledig else None)
         grootte = r.pop("_bytes", 0)
         teken = "✅" if r["resultaat"] == "ok" else "❌"
-        print(f"{teken} {naam}/{r['afbeelding']}: {grootte / 1024:.0f} KB, {r.get('antwoordtijd_s', '–')} s"
-              + (f"; {r['console_fouten'][0]}" if r["resultaat"] != "ok" else ""), flush=True)
+        print(
+            f"{teken} {naam}/{r['afbeelding']}: {grootte / 1024:.0f} KB, {r.get('antwoordtijd_s', '–')} s"
+            + (f"; {r['console_fouten'][0]}" if r["resultaat"] != "ok" else ""),
+            flush=True,
+        )
         res_stappen.append(r)
     ctr = controles(uc, maker.basis, maker.tok)
     for c in ctr:
@@ -531,7 +588,9 @@ def maak_een(maker: Bewijsmaker, uc: dict, volledig: bool = True):
     }
     if maker.ai_aanbieder:
         verslag["ai_aanbieder"] = maker.ai_aanbieder
-    verslag["geslaagd"] = all(c["resultaat"] != "fout" for c in ctr) and all(s["resultaat"] == "ok" for s in res_stappen)
+    verslag["geslaagd"] = all(c["resultaat"] != "fout" for c in ctr) and all(
+        s["resultaat"] == "ok" for s in res_stappen
+    )
     verslag["controles"] = ctr
     verslag["stappen"] = res_stappen
     leveringen = []
@@ -553,8 +612,9 @@ def maak_een(maker: Bewijsmaker, uc: dict, volledig: bool = True):
     fouten = schemafouten(verslag)
     if fouten:
         raise ValueError(f"{naam}: bewijs.json voldoet niet aan het schema: {fouten[:3]}")
-    (uit / "bewijs.json").write_text(json.dumps(verslag, ensure_ascii=False, indent=2) + "\n", encoding="utf-8",
-                                     newline="\n")
+    (uit / "bewijs.json").write_text(
+        json.dumps(verslag, ensure_ascii=False, indent=2) + "\n", encoding="utf-8", newline="\n"
+    )
     print(f"{'✅' if verslag['geslaagd'] else '❌'} {naam}: bewijs.json ({len(res_stappen)} stappen)")
     return verslag
 
@@ -575,6 +635,7 @@ def zip_volledig(doel: Path, namen: list | None = None) -> Path:
 
 # ------------------------------------------------------------------ README-blok en galerij
 
+
 def _datum_nl(iso: str) -> str:
     try:
         return datetime.fromisoformat(iso).strftime("%d-%m-%Y")
@@ -587,10 +648,12 @@ def blok_markdown(naam: str, uc: dict, map_: Path = USECASES_DIR) -> str:
     verslag = lees_verslag(naam, map_)
     if not verslag:
         return f"*Nog geen bewijs. Maken tegen een draaiende installatie: `python -m omnitwin.usecases bewijs {naam}`.*"
-    regels = [f"*Gemaakt op {_datum_nl(verslag['datum'])} met D-OmniTwin {verslag['omnitwin_versie']} "
-              f"(use case {verslag['versie']}); {'geslaagd' if verslag['geslaagd'] else '**niet geslaagd**'}. "
-              f"Verslag: [`bewijs/bewijs.json`](bewijs/bewijs.json). Opnieuw maken (bij een release): "
-              f"`python -m omnitwin.usecases bewijs {naam}`.*"]
+    regels = [
+        f"*Gemaakt op {_datum_nl(verslag['datum'])} met D-OmniTwin {verslag['omnitwin_versie']} "
+        f"(use case {verslag['versie']}); {'geslaagd' if verslag['geslaagd'] else '**niet geslaagd**'}. "
+        f"Verslag: [`bewijs/bewijs.json`](bewijs/bewijs.json). Opnieuw maken (bij een release): "
+        f"`python -m omnitwin.usecases bewijs {naam}`.*"
+    ]
     per_id = {s["id"]: s for s in verslag.get("stappen", [])}
     for s in stappen(uc):
         if s["id"] not in per_id or not (bewijsmap(naam, map_) / f"{s['id']}.webp").exists():
@@ -613,7 +676,8 @@ def galerij_markdown(ucs: dict, map_: Path = USECASES_DIR) -> str:
         vraag = " ".join(str(uc.get("vraag", "")).split()).replace("|", "\\|")
         regels.append(
             f'| <a href="usecases/{naam}/README.md"><img src="usecases/{naam}/bewijs/{eerste["id"]}.webp" '
-            f'width="320" alt="{alt}"></a> | **[{uc.get("titel", naam)}](usecases/{naam}/README.md)**<br>{vraag} |')
+            f'width="320" alt="{alt}"></a> | **[{uc.get("titel", naam)}](usecases/{naam}/README.md)**<br>{vraag} |'
+        )
     if len(regels) == 2:
         return "*Nog geen bewijs: `python -m omnitwin.usecases bewijs --alle` tegen een draaiende installatie.*"
     return "\n".join(regels)
@@ -651,23 +715,30 @@ def werk_readme_bij(naam: str, uc: dict, controleer: bool = False, map_: Path = 
         sectie = f"## Bewijs\n\n{BLOK_START}\n{blok}\n{BLOK_EINDE}\n"
         m = re.search(r"^## Bewijs[^\n]*\n.*?(?=^## |\Z)", tekst, re.M | re.S)
         if m:
-            nieuw = tekst[:m.start()] + sectie + ("\n" if m.end() < len(tekst) else "") + tekst[m.end():]
+            nieuw = tekst[: m.start()] + sectie + ("\n" if m.end() < len(tekst) else "") + tekst[m.end() :]
         else:
             m = re.search(r"^## Bekende afwijkingen", tekst, re.M)
-            nieuw = (tekst[:m.start()] + sectie + "\n" + tekst[m.start():]) if m \
-                else tekst.rstrip("\n") + "\n\n" + sectie
+            nieuw = (
+                (tekst[: m.start()] + sectie + "\n" + tekst[m.start() :]) if m else tekst.rstrip("\n") + "\n\n" + sectie
+            )
     return _schrijf_als_anders(pad, nieuw, tekst, crlf, controleer)
 
 
-def werk_galerij_bij(ucs: dict, controleer: bool = False, readme: Path = ROOT_README,
-                     map_: Path = USECASES_DIR) -> bool:
+def werk_galerij_bij(
+    ucs: dict, controleer: bool = False, readme: Path = ROOT_README, map_: Path = USECASES_DIR
+) -> bool:
     """Galerij in de root-README en de blokken in de README's van de use cases met bewijs.stappen.
     True = alles actueel (of bijgewerkt)."""
     tekst, crlf = _lees(readme)
     if GALERIJ_START not in tekst or GALERIJ_EINDE not in tekst:
         raise ValueError(f"markers {GALERIJ_START} / {GALERIJ_EINDE} ontbreken in {readme}")
-    actueel = _schrijf_als_anders(Path(readme), _vervang(tekst, GALERIJ_START, GALERIJ_EINDE,
-                                                         galerij_markdown(ucs, map_)), tekst, crlf, controleer)
+    actueel = _schrijf_als_anders(
+        Path(readme),
+        _vervang(tekst, GALERIJ_START, GALERIJ_EINDE, galerij_markdown(ucs, map_)),
+        tekst,
+        crlf,
+        controleer,
+    )
     for naam, uc in sorted(ucs.items()):
         if stappen(uc) and (Path(map_) / naam / "README.md").exists():
             actueel = werk_readme_bij(naam, uc, controleer, map_) and actueel

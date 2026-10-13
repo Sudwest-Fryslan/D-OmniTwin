@@ -97,11 +97,13 @@ def import_provincies():
         # Converteer geometrie naar MultiPolygon WKB
         if geom.geom_type == "Polygon":
             from shapely.geometry import MultiPolygon
+
             geom = MultiPolygon([geom])
 
         geom_bytes = psycopg2.Binary(geom.wkb)
 
-        cur.execute("""
+        cur.execute(
+            """
             INSERT INTO gebieden (id, gebiedstype_id, naam, geom, provincienaam, actief)
             VALUES (%s, %s, %s, ST_SetSRID(ST_GeomFromWKB(%s), 28992), %s, true)
             ON CONFLICT (id) DO UPDATE SET
@@ -109,7 +111,9 @@ def import_provincies():
                 geom = EXCLUDED.geom,
                 provincienaam = EXCLUDED.provincienaam,
                 updated_at = CURRENT_TIMESTAMP;
-        """, (prov_id, str(prov_type_id), prov_naam, geom_bytes, prov_naam))
+        """,
+            (prov_id, str(prov_type_id), prov_naam, geom_bytes, prov_naam),
+        )
 
         if cur.rowcount > 0:
             inserted += 1
@@ -160,11 +164,14 @@ def import_gemeenten(gdf_buurten):
             skipped += 1
             continue
 
-        cur.execute("""
+        cur.execute(
+            """
             INSERT INTO gemeenten (code, naam, provincie)
             VALUES (%s, %s, %s)
             ON CONFLICT (code) DO NOTHING;
-        """, (gm_code, gm_naam, prov_naam))
+        """,
+            (gm_code, gm_naam, prov_naam),
+        )
 
         if cur.rowcount > 0:
             inserted += 1
@@ -210,12 +217,7 @@ def import_buurten():
 
     # 3. Spatial join: buurten binnen de gebufferde provincies
     print("  🔍 Spatial join uitvoeren (buurten × gebufferde provincies)...")
-    buurten_noord = gpd.sjoin(
-        buurten_gdf,
-        noord_buffered[["naam", "geometry"]],
-        how="inner",
-        predicate="intersects"
-    )
+    buurten_noord = gpd.sjoin(buurten_gdf, noord_buffered[["naam", "geometry"]], how="inner", predicate="intersects")
     # Hernoem de provincie kolom
     buurten_noord = buurten_noord.rename(columns={"naam": "provincie_naam"})
     # Verwijder duplicaten (een buurt kan door meerdere buffers geraakt worden)
@@ -278,6 +280,7 @@ def import_buurten():
 
             if geom.geom_type == "Polygon":
                 from shapely.geometry import MultiPolygon
+
                 geom = MultiPolygon([geom])
 
             geom_bytes = psycopg2.Binary(geom.wkb)
@@ -285,13 +288,16 @@ def import_buurten():
             # Insert GM record als dat nog niet bestaat
             gm_id = f"GM{gm_code}"
             if gm_id not in seen_gemeenten and gm_type_id:
-                cur.execute("""
+                cur.execute(
+                    """
                     INSERT INTO gebieden (id, gebiedstype_id, naam, gemeente_code, provincienaam, actief)
                     VALUES (%s, %s, %s, %s, %s, true)
                     ON CONFLICT (id) DO UPDATE SET
                         provincienaam = EXCLUDED.provincienaam,
                         updated_at = CURRENT_TIMESTAMP;
-                """, (gm_id, gm_type_id, gm_naam, gm_code, prov_naam))
+                """,
+                    (gm_id, gm_type_id, gm_naam, gm_code, prov_naam),
+                )
                 if cur.rowcount > 0:
                     inserted_gm += 1
                 seen_gemeenten.add(gm_id)
@@ -299,13 +305,16 @@ def import_buurten():
             # Insert WK record als dat nog niet bestaat
             if wk_code and wk_code not in seen_wijken:
                 wk_id = f"WK{wk_code.replace('WK', '')}"
-                cur.execute("""
+                cur.execute(
+                    """
                     INSERT INTO gebieden (id, gebiedstype_id, naam, gemeente_code, provincienaam, actief)
                     VALUES (%s, %s, %s, %s, %s, true)
                     ON CONFLICT (id) DO UPDATE SET
                         provincienaam = EXCLUDED.provincienaam,
                         updated_at = CURRENT_TIMESTAMP;
-                """, (wk_id, buurt_type_id, f"Wijk {wk_code}", gm_code, prov_naam))
+                """,
+                    (wk_id, buurt_type_id, f"Wijk {wk_code}", gm_code, prov_naam),
+                )
                 if cur.rowcount > 0:
                     inserted_wk += 1
                 seen_wijken.add(wk_code)
@@ -315,7 +324,8 @@ def import_buurten():
             metadata = json.dumps({"water": water} if water in ("JA", "NEE") else {})
 
             # Insert buurt
-            cur.execute("""
+            cur.execute(
+                """
                 INSERT INTO gebieden (id, gebiedstype_id, naam, geom, gemeente_code, provincienaam, metadata, actief)
                 VALUES (%s, %s, %s, ST_SetSRID(ST_GeomFromWKB(%s), 28992), %s, %s, %s::jsonb, true)
                 ON CONFLICT (id) DO UPDATE SET
@@ -325,7 +335,9 @@ def import_buurten():
                     provincienaam = EXCLUDED.provincienaam,
                     metadata = COALESCE(gebieden.metadata, '{}'::jsonb) || EXCLUDED.metadata,
                     updated_at = CURRENT_TIMESTAMP;
-            """, (bu_id, buurt_type_id, bu_naam, geom_bytes, gm_code, prov_naam, metadata))
+            """,
+                (bu_id, buurt_type_id, bu_naam, geom_bytes, gm_code, prov_naam, metadata),
+            )
 
             if cur.rowcount > 0:
                 inserted_bu += 1
@@ -364,8 +376,9 @@ def import_buurten():
 # ── Main ───────────────────────────────────────────────────────
 def main():
     parser = argparse.ArgumentParser(description="Import CBS Gebiedsindeling 2024")
-    parser.add_argument("--stap", choices=["provincies", "gemeenten", "buurten", "alles"],
-                        default="alles", help="Welke stap uitvoeren")
+    parser.add_argument(
+        "--stap", choices=["provincies", "gemeenten", "buurten", "alles"], default="alles", help="Welke stap uitvoeren"
+    )
     args = parser.parse_args()
 
     print("=" * 60)

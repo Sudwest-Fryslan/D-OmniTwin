@@ -9,6 +9,7 @@ from omnitwin import ai_logboek, ai_vrijgave
 from omnitwin.fouten import GebruikersFout
 from omnitwin.services.logging_service import AppLogger
 
+
 class DeduplicatieService:
     def __init__(self, db: Session):
         self.db = db
@@ -22,8 +23,9 @@ class DeduplicatieService:
         oordeel van het taalmodel valt buiten de usecases en staat altijd uit: elke groep komt
         terug voor een oordeel van de beheerder.
         """
-        met_embedding = not zonder_ai and ai_vrijgave.poort(ai_vrijgave.C, "Deduplicatie: kandidaten",
-                                          taak="Kandidaten voor deduplicatie op betekenis")
+        met_embedding = not zonder_ai and ai_vrijgave.poort(
+            ai_vrijgave.C, "Deduplicatie: kandidaten", taak="Kandidaten voor deduplicatie op betekenis"
+        )
         # We halen eerst alle actieve indicatoren op voor hun metadata, inclusief broodkruimels
         query_all = text("""
             SELECT i.uuid, i.naam, i.bron, i.categorie, i.omschrijving,
@@ -35,12 +37,12 @@ class DeduplicatieService:
         """)
         indicatoren_rows = self.db.execute(query_all).fetchall()
         ind_dict = {str(row.uuid): dict(row._mapping) for row in indicatoren_rows}
-        
+
         # Converteer eventuele None arrays naar lege lijsten voor JSON serialisatie
         for key in ind_dict:
-            if ind_dict[key].get('broodkruimels') is None:
-                ind_dict[key]['broodkruimels'] = []
-        
+            if ind_dict[key].get("broodkruimels") is None:
+                ind_dict[key]["broodkruimels"] = []
+
         # SQL query die alle matches vindt via trgm en embeddings
         # Drempelfilter in SQL voorkomt dat we tienduizenden irrelevante paren ophalen
         # NOT EXISTS filtert paren die als uitzondering zijn gemarkeerd
@@ -65,35 +67,34 @@ class DeduplicatieService:
                    OR (du.indicator_uuid_1 = i2.uuid AND du.indicator_uuid_2 = i1.uuid)
               )
         """)
-        
+
         pairs = self.db.execute(query_pairs, {"met_embedding": met_embedding}).fetchall()
-        
-        
+
         def clean_name(name):
             # Verwijder veelvoorkomende ruis
             n = name.lower()
-            n = re.sub(r'\b(aantal|percentage|perc\.|totaal|definitief|voorlopig)\b', '', n)
-            n = re.sub(r'[()\-\.,]', ' ', n)
-            return ' '.join(n.split())
-            
+            n = re.sub(r"\b(aantal|percentage|perc\.|totaal|definitief|voorlopig)\b", "", n)
+            n = re.sub(r"[()\-\.,]", " ", n)
+            return " ".join(n.split())
+
         edges = []
         for row in pairs:
             u1, u2, trgm_sim, vec_dist = str(row.u1), str(row.u2), row.trgm_sim, row.vec_dist
-            
+
             is_match = False
             # 1. Trigram check (via database)
             if trgm_sim is not None and trgm_sim > 0.6:
                 is_match = True
-                
+
             # 2. Vector check (via database)
             if met_embedding and vec_dist is not None and vec_dist < 0.15:
                 is_match = True
-                
+
             # 3. Substring & Difflib check (via Python)
             if not is_match and u1 in ind_dict and u2 in ind_dict:
-                name1 = clean_name(ind_dict[u1]['naam'])
-                name2 = clean_name(ind_dict[u2]['naam'])
-                
+                name1 = clean_name(ind_dict[u1]["naam"])
+                name2 = clean_name(ind_dict[u2]["naam"])
+
                 if len(name1) > 4 and len(name2) > 4:
                     if name1 in name2 or name2 in name1:
                         is_match = True
@@ -101,19 +102,19 @@ class DeduplicatieService:
                         sim = difflib.SequenceMatcher(None, name1, name2).ratio()
                         if sim > 0.70:
                             is_match = True
-                            
+
             if is_match:
                 edges.append((u1, u2))
-                
+
         # Groepeer connected components
         adj = defaultdict(list)
         for u, v in edges:
             adj[u].append(v)
             adj[v].append(u)
-            
+
         visited = set()
         candidates = []
-        
+
         # Oordeel door het taalmodel: buiten AI-usecase A/B/C, dus altijd dicht; de weigering komt in het logboek (#307)
         ai_vrijgave.poort(ai_vrijgave.BUITEN, "Deduplicatie: oordeel taalmodel", taak="Duplicaten beoordelen")
         advies = ai_vrijgave.melding(ai_vrijgave.BUITEN) + " Beoordeel de groep zelf."
@@ -132,20 +133,22 @@ class DeduplicatieService:
                         if neighbor not in visited:
                             visited.add(neighbor)
                             queue.append(neighbor)
-                
+
                 if len(comp) > 1:
-                    candidates.append({
-                        "groep_id": str(comp[0]['uuid']),
-                        "ai_advies": advies,
-                        "indicatoren": comp
-                    })
+                    candidates.append({"groep_id": str(comp[0]["uuid"]), "ai_advies": advies, "indicatoren": comp})
 
         if met_embedding:
             from omnitwin.services import embedding_model
-            if not ai_logboek.schrijf(ai_vrijgave.C, "Deduplicatie: kandidaten", ai_logboek.UITGEVOERD,
-                                      taak="Kandidaten voor deduplicatie op betekenis (opgeslagen embeddings)",
-                                      model=embedding_model.MODEL_ID, modelversie=embedding_model.MODEL_REVISIE,
-                                      resultaat=f"{len(candidates)} groepen"):
+
+            if not ai_logboek.schrijf(
+                ai_vrijgave.C,
+                "Deduplicatie: kandidaten",
+                ai_logboek.UITGEVOERD,
+                taak="Kandidaten voor deduplicatie op betekenis (opgeslagen embeddings)",
+                model=embedding_model.MODEL_ID,
+                modelversie=embedding_model.MODEL_REVISIE,
+                resultaat=f"{len(candidates)} groepen",
+            ):
                 return self.get_kandidaten(zonder_ai=True)  # fail-closed: zonder embeddings
         return candidates
 
@@ -157,13 +160,13 @@ class DeduplicatieService:
         # Controleer of primary bestaat
         check_query = text("SELECT id, naam FROM indicatoren WHERE uuid = CAST(:uuid AS UUID)")
         primary_row = self.db.execute(check_query, {"uuid": primary_uuid}).fetchone()
-        
+
         if not primary_row:
             raise GebruikersFout("Primary indicator niet gevonden")
-        
+
         primary_id = primary_row[0]
         primary_naam = primary_row[1]
-            
+
         success_count = 0
         for dup_uuid in duplicate_uuids:
             if actie == "exact_duplicaat":
@@ -182,22 +185,17 @@ class DeduplicatieService:
                 """)
                 self.db.execute(update_query, {"primary_id": primary_id, "dup_uuid": dup_uuid})
                 success_count += 1
-                
+
         self.db.commit()
-        
+
         # Audit trail: log de merge actie
         AppLogger.info(
             f"Deduplicatie merge: actie='{actie}', primary='{primary_naam}' ({primary_uuid}), "
             f"verwerkt={success_count} duplicaten ({', '.join(duplicate_uuids)})",
-            category="DATA_KWALITEIT"
+            category="DATA_KWALITEIT",
         )
-        
-        return {
-            "status": "success",
-            "actie": actie,
-            "primary_uuid": primary_uuid,
-            "verwerkt_aantal": success_count
-        }
+
+        return {"status": "success", "actie": actie, "primary_uuid": primary_uuid, "verwerkt_aantal": success_count}
 
     def markeer_uitzondering(self, indicator_uuids: List[str]) -> Dict[str, Any]:
         """
@@ -205,10 +203,10 @@ class DeduplicatieService:
         Deze paren worden bij toekomstige scans uitgefilterd.
         """
         from itertools import combinations
-        
+
         paren = list(combinations(sorted(indicator_uuids), 2))
         ingevoegd = 0
-        
+
         for uuid_1, uuid_2 in paren:
             insert_query = text("""
                 INSERT INTO deduplicatie_uitzonderingen (indicator_uuid_1, indicator_uuid_2)
@@ -217,15 +215,12 @@ class DeduplicatieService:
             """)
             self.db.execute(insert_query, {"u1": uuid_1, "u2": uuid_2})
             ingevoegd += 1
-        
+
         self.db.commit()
-        
+
         AppLogger.info(
             f"Deduplicatie uitzondering: {len(indicator_uuids)} indicatoren gemarkeerd als 'geen duplicaat' ({ingevoegd} paren)",
-            category="DATA_KWALITEIT"
+            category="DATA_KWALITEIT",
         )
-        
-        return {
-            "status": "success",
-            "paren_gemarkeerd": ingevoegd
-        }
+
+        return {"status": "success", "paren_gemarkeerd": ingevoegd}

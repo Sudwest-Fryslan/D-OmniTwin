@@ -67,6 +67,7 @@ class NepDB:
 
 # ── De module ────────────────────────────────────────────────────────────────
 
+
 def test_standaard_en_onderdrukking():
     assert ka.N_DREMPEL_STANDAARD == 10 == pk.N_DREMPEL
     assert ka.is_onderdrukt(9) and not ka.is_onderdrukt(10)
@@ -97,6 +98,7 @@ def test_geen_losse_drempels_meer():
 
 # ── Percentiel en label: zonder drempel die van de instantie ────────────────
 
+
 def test_percentiel_volgt_de_instelling():
     db = NepDB(7)
     pk.onderdrukte_waarden(db, ["BU1"], ["u"])
@@ -108,12 +110,14 @@ def test_percentiel_volgt_de_instelling():
 
 # ── Indicatorpaneel ──────────────────────────────────────────────────────────
 
+
 def test_indicatorpaneel_gebruikt_de_instelling():
     tekst = (SRC / "services" / "indicatorpaneel_service.py").read_text(encoding="utf-8")
     assert "drempel: Optional[int] = None" in tekst and "ka.drempel(self.db)" in tekst
 
 
 # ── Chat-datavraag ───────────────────────────────────────────────────────────
+
 
 def test_chat_laat_kleine_aantallen_weg():
     db = NepDB()
@@ -125,6 +129,7 @@ def test_chat_laat_kleine_aantallen_weg():
 
 
 # ── Rapporten en Kompas ──────────────────────────────────────────────────────
+
 
 @pytest.mark.parametrize("bestand,aantal", [("report_service.py", 2), ("kompas_service.py", 1)])
 def test_rapport_en_kompas_onderdrukken(bestand, aantal):
@@ -144,6 +149,7 @@ def test_zscore_sql_v044():
 
 
 # ── Kaart ────────────────────────────────────────────────────────────────────
+
 
 def test_kaart_onderdrukt_en_tooltip():
     tekst = (SRC / "services" / "gebiedsmonitor_service.py").read_text(encoding="utf-8")

@@ -126,13 +126,20 @@ def maak_melding(
         RETURNING id, type, onderwerp, toelichting, context, melder_email, status, notitie_beheer, aangemaakt_op, bijgewerkt_op
     """)
 
-    rij = db.execute(stmt, {
-        "type": type_,
-        "onderwerp": onderwerp_schoon,
-        "toelichting": toelichting_schoon,
-        "context": json.dumps(veilige_context),
-        "email": email_schoon,
-    }).mappings().first()
+    rij = (
+        db.execute(
+            stmt,
+            {
+                "type": type_,
+                "onderwerp": onderwerp_schoon,
+                "toelichting": toelichting_schoon,
+                "context": json.dumps(veilige_context),
+                "email": email_schoon,
+            },
+        )
+        .mappings()
+        .first()
+    )
     db.commit()
 
     return _naar_dict(rij)
@@ -252,7 +259,7 @@ def werk_melding_bij(
 
     stmt = text(f"""
         UPDATE app.gebruiker_meldingen
-        SET {', '.join(updates)}
+        SET {", ".join(updates)}
         WHERE id = :id
         RETURNING id, type, onderwerp, toelichting, context, melder_email, status, notitie_beheer, aangemaakt_op, bijgewerkt_op
     """)

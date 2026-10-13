@@ -26,7 +26,7 @@ PROVINCIES = {
 }
 
 # OSMPythonTools voegt zelf [out:json][timeout:N] toe
-QUERY_TEMPLATE = '''
+QUERY_TEMPLATE = """
     area["name"="{naam}"]["admin_level"="4"]["boundary"="administrative"]->.prov;
     (
       node["public_transport"~"platform|station|halt"](area.prov);
@@ -35,17 +35,29 @@ QUERY_TEMPLATE = '''
       node["amenity"="ferry_terminal"](area.prov);
     );
     out body;
-'''
+"""
 
 # Tags die we per node ophalen
 TAGS_VAN_BELANG = [
-    "name", "public_transport", "railway", "highway", "amenity",
-    "bus", "tram", "train", "ferry", "subway",
-    "operator", "network", "ref", "ref:IFOPT",
+    "name",
+    "public_transport",
+    "railway",
+    "highway",
+    "amenity",
+    "bus",
+    "tram",
+    "train",
+    "ferry",
+    "subway",
+    "operator",
+    "network",
+    "ref",
+    "ref:IFOPT",
 ]
 
 
 # ─── OV-type bepaling ───────────────────────────────────────────────────────
+
 
 def bepaal_ov_type(tags: dict) -> str:
     """
@@ -88,6 +100,7 @@ def bepaal_osm_pt_type(tags: dict) -> str:
 
 # ─── Overpass ophalen ────────────────────────────────────────────────────────
 
+
 def ophalen_ov_nodes(provincie_code: str, timeout: int = 90) -> list[dict]:
     """
     Haal alle OV-halte nodes op voor een provincie via Overpass API.
@@ -125,18 +138,20 @@ def ophalen_ov_nodes(provincie_code: str, timeout: int = 90) -> list[dict]:
         ov_type = bepaal_ov_type(tags)
         osm_pt_type = bepaal_osm_pt_type(tags)
 
-        nodes.append({
-            "osm_id": el.id(),
-            "naam": tags.get("name"),
-            "lat": el.lat(),
-            "lon": el.lon(),
-            "ov_type": ov_type,
-            "osm_pt_type": osm_pt_type,
-            "network": tags.get("operator") or tags.get("network"),
-            "ref": tags.get("ref") or tags.get("ref:IFOPT"),
-            "provincie": provincie_code,
-            "tags": tags,
-        })
+        nodes.append(
+            {
+                "osm_id": el.id(),
+                "naam": tags.get("name"),
+                "lat": el.lat(),
+                "lon": el.lon(),
+                "ov_type": ov_type,
+                "osm_pt_type": osm_pt_type,
+                "network": tags.get("operator") or tags.get("network"),
+                "ref": tags.get("ref") or tags.get("ref:IFOPT"),
+                "provincie": provincie_code,
+                "tags": tags,
+            }
+        )
 
     logger.info(f"  → {len(nodes)} nodes verwerkt voor {naam}")
     return nodes

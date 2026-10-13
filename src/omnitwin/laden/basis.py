@@ -58,6 +58,7 @@ def afkeuren(code: str, melding: str, aantallen: dict | None = None, **waar) -> 
 @dataclass
 class Context:
     """Wat een profiel nodig heeft om een levering te verwerken."""
+
     levering: dict
     dataset: dict
     max_bytes: int = 200 * 1024 * 1024
@@ -102,8 +103,9 @@ def copy(cur, tabel: str, kolommen: list[str], rijen) -> int:
     return n
 
 
-def sql_fouten(cur, fouten: Fouten, sql: str, params: dict, code: str, resource: str, veld: str | None,
-               melding: str) -> int:
+def sql_fouten(
+    cur, fouten: Fouten, sql: str, params: dict, code: str, resource: str, veld: str | None, melding: str
+) -> int:
     """Voer een query uit die (regel, totaal = count(*) OVER ()) teruggeeft voor elke foute regel, met een
     LIMIT; voeg ze als fout toe en tel de rest mee. Geeft het aantal foute regels."""
     cur.execute(sql, params)

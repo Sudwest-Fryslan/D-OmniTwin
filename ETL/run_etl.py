@@ -12,34 +12,37 @@ import textwrap
 
 # Definieer de paden naar de onderliggende modules
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-CBS_DIR = os.path.join(BASE_DIR, 'CBS')
+CBS_DIR = os.path.join(BASE_DIR, "CBS")
 
 # We gebruiken tijdelijk de bestaande scripts als "modules" totdat we ze volledig ombouwen.
-CBS_FETCHER = os.path.join(CBS_DIR, 'cbs_data_fetcher.py')
-CBS_IMPORTER = os.path.join(CBS_DIR, 'import_cbs_data.py')
+CBS_FETCHER = os.path.join(CBS_DIR, "cbs_data_fetcher.py")
+CBS_IMPORTER = os.path.join(CBS_DIR, "import_cbs_data.py")
+
 
 def print_header(title):
-    print(f"\n{'='*70}")
+    print(f"\n{'=' * 70}")
     print(f"🚀 D-OmniTwin ETL: {title}")
-    print(f"{'='*70}\n")
+    print(f"{'=' * 70}\n")
+
 
 def run_extraction(dataset_id, endpoint, gemeente, output_dir):
     """Fase 1: Extractie (Ophalen via OData en opslaan als JSON)"""
     print_header(f"Fase 1: Extractie van {dataset_id}")
-    
-    cmd = [sys.executable, CBS_FETCHER, '-ds', dataset_id, '-o', output_dir]
+
+    cmd = [sys.executable, CBS_FETCHER, "-ds", dataset_id, "-o", output_dir]
     if endpoint:
-        cmd.extend(['-e', endpoint])
+        cmd.extend(["-e", endpoint])
     if gemeente:
-        cmd.extend(['-gm', gemeente])
-    
+        cmd.extend(["-gm", gemeente])
+
     print(f"Running command: {' '.join(cmd)}")
-    
+
     try:
         subprocess.run(cmd, check=True)
     except subprocess.CalledProcessError as e:
         print(f"❌ Extractie gefaald (Code: {e.returncode}). Zie logs hierboven.")
         sys.exit(1)
+
 
 def run_import(gemeente=None):
     """Fase 2: Importeren in PostgreSQL (Load & Transform)"""
@@ -49,7 +52,7 @@ def run_import(gemeente=None):
     # op basis van de configuration in CBS/cbs_mapping_v3.json
     cmd = [sys.executable, CBS_IMPORTER]
     if gemeente:
-        cmd.extend(['--gemeente', gemeente])
+        cmd.extend(["--gemeente", gemeente])
 
     print(f"Running command: {' '.join(cmd)}")
     try:
@@ -60,11 +63,12 @@ def run_import(gemeente=None):
         print(f"❌ Import gefaald (Code: {e.returncode}). Zie logs hierboven.")
         sys.exit(1)
 
+
 def main():
     parser = argparse.ArgumentParser(
         description="Unified ETL Runner voor D-OmniTwin (CBS, RIVM, Politie)",
         formatter_class=argparse.RawTextHelpFormatter,
-        epilog=textwrap.dedent('''\
+        epilog=textwrap.dedent("""\
         Voorbeelden:
           1. Run de volledige pijplijn voor CBS dataset Kerncijfers (83739NED) in gemeente Súdwest-Fryslân (1900):
              python run_etl.py -ds 83739NED -gm 1900
@@ -74,15 +78,27 @@ def main():
              
           3. Alleen de import stap draaien (handig na bulk fetching):
              python run_etl.py --import-only
-        ''')
+        """),
     )
-    
-    parser.add_argument('-ds', '--dataset', type=str, help='Dataset ID (bijv. "83739NED").')
-    parser.add_argument('-gm', '--gemeente', type=str, help='Gemeente code (bijv. "1900" voor SWF).')
-    parser.add_argument('--derden', action='store_true', help='Gebruik het dataderden.cbs.nl endpoint (nodig voor RIVM/Politie).')
-    parser.add_argument('--extract-only', action='store_true', help='Alleen data ophalen, niet direct importeren in DB.')
-    parser.add_argument('--import-only', action='store_true', help='Sla ophalen over, start direct de import/database stap.')
-    parser.add_argument('-o', '--output', type=str, default=os.path.join(BASE_DIR, '..', 'data', 'temp_cbs_import'), help='Output map voor ruwe JSON.')
+
+    parser.add_argument("-ds", "--dataset", type=str, help='Dataset ID (bijv. "83739NED").')
+    parser.add_argument("-gm", "--gemeente", type=str, help='Gemeente code (bijv. "1900" voor SWF).')
+    parser.add_argument(
+        "--derden", action="store_true", help="Gebruik het dataderden.cbs.nl endpoint (nodig voor RIVM/Politie)."
+    )
+    parser.add_argument(
+        "--extract-only", action="store_true", help="Alleen data ophalen, niet direct importeren in DB."
+    )
+    parser.add_argument(
+        "--import-only", action="store_true", help="Sla ophalen over, start direct de import/database stap."
+    )
+    parser.add_argument(
+        "-o",
+        "--output",
+        type=str,
+        default=os.path.join(BASE_DIR, "..", "data", "temp_cbs_import"),
+        help="Output map voor ruwe JSON.",
+    )
 
     args = parser.parse_args()
 
@@ -99,9 +115,10 @@ def main():
 
     if not args.import_only:
         run_extraction(args.dataset, endpoint, args.gemeente, args.output)
-        
+
     if not args.extract_only:
         run_import(gemeente=args.gemeente)
+
 
 if __name__ == "__main__":
     main()

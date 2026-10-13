@@ -43,16 +43,16 @@ class Onleesbaar(ValueError):
 @dataclass
 class Resource:
     naam: str
-    kop: list[str] | None            # kolommen (CSV, GeoPackage-tabel); None bij JSON
+    kop: list[str] | None  # kolommen (CSV, GeoPackage-tabel); None bij JSON
     regels: list[dict] = field(default_factory=list)
 
 
 @dataclass
 class Bron:
     resources: dict[str, Resource] = field(default_factory=dict)
-    gpkg: Path | None = None          # GeoPackage (los of uit de zip), voor featuretabellen
-    dcat: dict | None = None          # dcat.jsonld uit de zip
-    json: object = None               # de geparste JSON-body (voor adapters)
+    gpkg: Path | None = None  # GeoPackage (los of uit de zip), voor featuretabellen
+    dcat: dict | None = None  # dcat.jsonld uit de zip
+    json: object = None  # de geparste JSON-body (voor adapters)
     tijdelijk: tempfile.TemporaryDirectory | None = None
 
     def sluit(self):

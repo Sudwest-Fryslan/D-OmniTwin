@@ -87,11 +87,13 @@ def realm():
 
 # ------------------------------------------------------------------ admin-API
 
+
 class KeycloakBeheer:
     """Dunne client voor de admin-API van Keycloak (alleen wat de testaccounts nodig hebben)."""
 
     def __init__(self, kc=None, realm_=None, sessie=None):
         import requests
+
         self.kc, self.realm = (kc or keycloak_url()).rstrip("/"), realm_ or realm()
         self.s = sessie or requests.Session()
         self._token = None
@@ -100,16 +102,24 @@ class KeycloakBeheer:
     def _haal_token(self):
         cid, geheim = os.environ.get("KEYCLOAK_ADMIN_CLIENT_ID"), os.environ.get("KEYCLOAK_ADMIN_CLIENT_SECRET")
         if cid and geheim:
-            url, data, auth = f"{self.kc}/realms/{self.realm}/protocol/openid-connect/token", \
-                {"grant_type": "client_credentials"}, (cid, geheim)
+            url, data, auth = (
+                f"{self.kc}/realms/{self.realm}/protocol/openid-connect/token",
+                {"grant_type": "client_credentials"},
+                (cid, geheim),
+            )
         elif os.environ.get("KEYCLOAK_ADMIN_PASSWORD"):
             url, auth = f"{self.kc}/realms/master/protocol/openid-connect/token", None
-            data = {"grant_type": "password", "client_id": "admin-cli",
-                    "username": os.environ.get("KEYCLOAK_ADMIN", "admin"),
-                    "password": os.environ["KEYCLOAK_ADMIN_PASSWORD"]}
+            data = {
+                "grant_type": "password",
+                "client_id": "admin-cli",
+                "username": os.environ.get("KEYCLOAK_ADMIN", "admin"),
+                "password": os.environ["KEYCLOAK_ADMIN_PASSWORD"],
+            }
         else:
-            raise TestaccountFout("geen toegang tot de admin-API van Keycloak: zet KEYCLOAK_ADMIN_CLIENT_ID en "
-                                  "KEYCLOAK_ADMIN_CLIENT_SECRET, of KEYCLOAK_ADMIN_PASSWORD")
+            raise TestaccountFout(
+                "geen toegang tot de admin-API van Keycloak: zet KEYCLOAK_ADMIN_CLIENT_ID en "
+                "KEYCLOAK_ADMIN_CLIENT_SECRET, of KEYCLOAK_ADMIN_PASSWORD"
+            )
         r = self.s.post(url, data=data, auth=auth, timeout=TIMEOUT)
         if r.status_code != 200:
             raise TestaccountFout(f"admin-token geweigerd door Keycloak (HTTP {r.status_code})")
@@ -121,8 +131,7 @@ class KeycloakBeheer:
         for poging in range(2):
             if self._token is None:
                 self._token = self._haal_token()
-            r = self.s.request(methode, url, headers={"Authorization": f"Bearer {self._token}"},
-                               timeout=TIMEOUT, **kw)
+            r = self.s.request(methode, url, headers={"Authorization": f"Bearer {self._token}"}, timeout=TIMEOUT, **kw)
             if r.status_code == 401 and poging == 0:
                 self._token = None
                 continue
@@ -156,8 +165,11 @@ class KeycloakBeheer:
             raise TestaccountFout(f"client {API_CLIENT} ontbreekt in realm {self.realm}")
         r = self._verzoek("GET", f"/clients/{api}/roles/{rol}", verwacht=(200, 404))
         if r.status_code == 404 and maak:
-            self._verzoek("POST", f"/clients/{api}/roles",
-                          json={"name": rol, "description": "Aangemaakt voor een use-case-testaccount (#223)"})
+            self._verzoek(
+                "POST",
+                f"/clients/{api}/roles",
+                json={"name": rol, "description": "Aangemaakt voor een use-case-testaccount (#223)"},
+            )
             r = self._verzoek("GET", f"/clients/{api}/roles/{rol}")
         return f"clients/{api}", r.json()
 
@@ -170,24 +182,51 @@ class KeycloakBeheer:
             self._verzoek("POST", f"/users/{gebruiker_id}/role-mappings/{doel}", json=reps)
 
     def maak_gebruiker(self, naam, wachtwoord, usecase, rollen):
-        r = self._verzoek("POST", "/users", json={
-            "username": naam, "enabled": True, "firstName": "Testaccount", "lastName": usecase,
-            "email": f"{naam}@example.org", "emailVerified": True, "requiredActions": [],
-            "credentials": [{"type": "password", "value": wachtwoord, "temporary": False}]})
+        r = self._verzoek(
+            "POST",
+            "/users",
+            json={
+                "username": naam,
+                "enabled": True,
+                "firstName": "Testaccount",
+                "lastName": usecase,
+                "email": f"{naam}@example.org",
+                "emailVerified": True,
+                "requiredActions": [],
+                "credentials": [{"type": "password", "value": wachtwoord, "temporary": False}],
+            },
+        )
         gid = self._id_uit(r)
         self.ken_rollen_toe(gid, rollen)
         return gid
 
     def _maak_client(self, rep):
-        r = self._verzoek("POST", "/clients", json={
-            "protocol": "openid-connect", "enabled": True, "standardFlowEnabled": False,
-            "implicitFlowEnabled": False, "frontchannelLogout": False, "fullScopeAllowed": True,
-            "protocolMappers": [{
-                "name": f"audience {API_CLIENT}", "protocol": "openid-connect",
-                "protocolMapper": "oidc-audience-mapper",
-                "config": {"included.client.audience": API_CLIENT, "access.token.claim": "true",
-                           "id.token.claim": "false", "introspection.token.claim": "true"}}],
-            **rep})
+        r = self._verzoek(
+            "POST",
+            "/clients",
+            json={
+                "protocol": "openid-connect",
+                "enabled": True,
+                "standardFlowEnabled": False,
+                "implicitFlowEnabled": False,
+                "frontchannelLogout": False,
+                "fullScopeAllowed": True,
+                "protocolMappers": [
+                    {
+                        "name": f"audience {API_CLIENT}",
+                        "protocol": "openid-connect",
+                        "protocolMapper": "oidc-audience-mapper",
+                        "config": {
+                            "included.client.audience": API_CLIENT,
+                            "access.token.claim": "true",
+                            "id.token.claim": "false",
+                            "introspection.token.claim": "true",
+                        },
+                    }
+                ],
+                **rep,
+            },
+        )
         return self._id_uit(r)
 
     @staticmethod
@@ -195,11 +234,18 @@ class KeycloakBeheer:
         return {KENMERK_UC: usecase, KENMERK_TOT: tot}
 
     def maak_machineclient(self, naam, geheim, usecase, rollen, tot):
-        cid = self._maak_client({
-            "clientId": naam, "name": f"Testaccount {usecase}", "publicClient": False,
-            "clientAuthenticatorType": "client-secret", "secret": geheim, "serviceAccountsEnabled": True,
-            "directAccessGrantsEnabled": False,
-            "attributes": {"client_credentials.use_refresh_token": "false", **self._kenmerk(usecase, tot)}})
+        cid = self._maak_client(
+            {
+                "clientId": naam,
+                "name": f"Testaccount {usecase}",
+                "publicClient": False,
+                "clientAuthenticatorType": "client-secret",
+                "secret": geheim,
+                "serviceAccountsEnabled": True,
+                "directAccessGrantsEnabled": False,
+                "attributes": {"client_credentials.use_refresh_token": "false", **self._kenmerk(usecase, tot)},
+            }
+        )
         sa = self._verzoek("GET", f"/clients/{cid}/service-account-user").json()
         self.ken_rollen_toe(sa["id"], rollen)
         self._zonder_standaardrol(sa["id"])
@@ -215,10 +261,16 @@ class KeycloakBeheer:
 
     def maak_loginclient(self, naam, usecase, tot):
         """Public client met alleen de wachtwoordgrant: tokens voor de testgebruikers (alleen test/dev)."""
-        return self._maak_client({
-            "clientId": naam, "name": f"Testaccounts {usecase} (inloggen)", "publicClient": True,
-            "directAccessGrantsEnabled": True, "serviceAccountsEnabled": False,
-            "attributes": self._kenmerk(usecase, tot)})
+        return self._maak_client(
+            {
+                "clientId": naam,
+                "name": f"Testaccounts {usecase} (inloggen)",
+                "publicClient": True,
+                "directAccessGrantsEnabled": True,
+                "serviceAccountsEnabled": False,
+                "attributes": self._kenmerk(usecase, tot),
+            }
+        )
 
     def verwijder(self, usecase):
         """Clients en gebruikers met het prefix van de use case én zijn kenmerk. Geeft de verwijderde namen."""
@@ -228,14 +280,18 @@ class KeycloakBeheer:
                 self._verzoek("DELETE", f"/clients/{c['id']}", verwacht=(204, 404))
                 weg.append(c["clientId"])
         for g in self._verzoek("GET", "/users", params={"search": p, "max": 1000}).json():
-            if g.get("username", "").startswith(p) and g.get("lastName") == usecase \
-                    and g.get("firstName") == "Testaccount":
+            if (
+                g.get("username", "").startswith(p)
+                and g.get("lastName") == usecase
+                and g.get("firstName") == "Testaccount"
+            ):
                 self._verzoek("DELETE", f"/users/{g['id']}", verwacht=(204, 404))
                 weg.append(g["username"])
         return weg
 
 
 # ------------------------------------------------------------------ bewaren (lokaal, buiten git)
+
 
 def bestand():
     return Path(os.environ.get("OMNITWIN_TESTACCOUNTS_BESTAND") or BESTAND)
@@ -258,6 +314,7 @@ def schrijf(data, pad=None):
 
 # ------------------------------------------------------------------ aanmaken en opruimen
 
+
 def maak(usecase, uc, beheer=None, pad=None, nu=None):
     """De actoren van één use case als testaccounts (eerst de oude met hetzelfde prefix weg).
     Geeft {actor: {soort, id, geheim, rollen}} en bewaart het in .usecase-accounts.json."""
@@ -267,8 +324,11 @@ def maak(usecase, uc, beheer=None, pad=None, nu=None):
         return {}
     beheer = beheer or KeycloakBeheer()
     nu = nu or dt.datetime.now(dt.timezone.utc)
-    tot = (nu + dt.timedelta(hours=float(os.environ.get("OMNITWIN_TESTACCOUNTS_UUR", "24")))) \
-        .replace(microsecond=0).isoformat()
+    tot = (
+        (nu + dt.timedelta(hours=float(os.environ.get("OMNITWIN_TESTACCOUNTS_UUR", "24"))))
+        .replace(microsecond=0)
+        .isoformat()
+    )
     beheer.verwijder(usecase)
     uit = {}
     if any(a["soort"] == "gebruiker" for a in actoren):
@@ -281,8 +341,14 @@ def maak(usecase, uc, beheer=None, pad=None, nu=None):
             beheer.maak_machineclient(naam, geheim, usecase, a["rollen"], tot)
         uit[a["naam"]] = {"soort": a["soort"], "id": naam, "geheim": geheim, "rollen": list(a["rollen"])}
     data = lees(pad)
-    data[usecase] = {"keycloak": beheer.kc, "realm": beheer.realm, "loginclient": loginclient(usecase),
-                     "aangemaakt": nu.replace(microsecond=0).isoformat(), "tot": tot, "actoren": uit}
+    data[usecase] = {
+        "keycloak": beheer.kc,
+        "realm": beheer.realm,
+        "loginclient": loginclient(usecase),
+        "aangemaakt": nu.replace(microsecond=0).isoformat(),
+        "tot": tot,
+        "actoren": uit,
+    }
     schrijf(data, pad)
     return uit
 
@@ -302,14 +368,27 @@ def token(account, loginclient_, token_url, sessie=None):
     """Access token voor een testaccount: client credentials (machineclient) of wachtwoordgrant via
     de loginclient (gebruiker)."""
     import requests
+
     s = sessie or requests
     if account["soort"] == "machineclient":
-        r = s.post(token_url, data={"grant_type": "client_credentials"},
-                   auth=(account["id"], account["geheim"]), timeout=TIMEOUT)
+        r = s.post(
+            token_url,
+            data={"grant_type": "client_credentials"},
+            auth=(account["id"], account["geheim"]),
+            timeout=TIMEOUT,
+        )
     else:
-        r = s.post(token_url, data={"grant_type": "password", "client_id": loginclient_,
-                                    "username": account["id"], "password": account["geheim"],
-                                    "scope": "openid"}, timeout=TIMEOUT)
+        r = s.post(
+            token_url,
+            data={
+                "grant_type": "password",
+                "client_id": loginclient_,
+                "username": account["id"],
+                "password": account["geheim"],
+                "scope": "openid",
+            },
+            timeout=TIMEOUT,
+        )
     if r.status_code != 200:
         raise TestaccountFout(f"geen token voor {account['id']} (HTTP {r.status_code})")
     return r.json()["access_token"]

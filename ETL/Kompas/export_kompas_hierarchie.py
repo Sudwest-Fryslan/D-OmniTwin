@@ -13,39 +13,40 @@ sys.path.append(str(project_root))
 from omnitwin.database import SessionLocal
 from omnitwin.services.kompas_service import KompasService
 
+
 def main():
     print("Starting Kompas Hierarchy Export...")
-    
+
     # 1. Setup DB
     db = SessionLocal()
     try:
         service = KompasService(db)
-        
+
         # 2. Get Config ID
         # Default to standard config (usually id=1)
         config_id = service.get_standaard_config_id()
         print(f"Using Config ID: {config_id}")
-        
+
         # 3. Fetch Hierarchy JSON (Nested structure)
         print("Fetching JSON hierarchy...")
         hierarchy_data = service.get_hierarchie(config_id)
-        
+
         # 4. Save JSON
-        export_dir = project_root / 'exports'
+        export_dir = project_root / "exports"
         export_dir.mkdir(exist_ok=True)
-        
-        json_path = export_dir / 'kompas_hierarchie.json'
-        
+
+        json_path = export_dir / "kompas_hierarchie.json"
+
         # Helper to convert datetime to string for JSON serialization
         def json_serial(obj):
-            if hasattr(obj, 'isoformat'):
+            if hasattr(obj, "isoformat"):
                 return obj.isoformat()
-            raise TypeError (f"Type {type(obj)} not serializable")
+            raise TypeError(f"Type {type(obj)} not serializable")
 
-        with open(json_path, 'w') as f:
+        with open(json_path, "w") as f:
             json.dump(hierarchy_data, f, indent=2, default=json_serial)
         print(f"JSON exported to: {json_path}")
-        
+
         # 5. Fetch Flat Data for Excel
         # We join with indicatoren table to get metadata like eenheid and bron
         print("Fetching flat data for Excel...")
@@ -64,22 +65,24 @@ def main():
             WHERE v.config_id = :config_id
             ORDER BY v.titel_id, v.thema_id, v.onderdeel_id, v.indicator_naam
         """)
-        
+
         # Use pandas to read sql
         df = pd.read_sql(query, db.bind, params={"config_id": config_id})
-        
-        excel_path = export_dir / 'kompas_hierarchie.xlsx'
+
+        excel_path = export_dir / "kompas_hierarchie.xlsx"
         df.to_excel(excel_path, index=False)
         print(f"Excel exported to: {excel_path}")
-        
+
         print("Done!")
-        
+
     except Exception as e:
         print(f"Error: {e}")
         import traceback
+
         traceback.print_exc()
     finally:
         db.close()
+
 
 if __name__ == "__main__":
     main()

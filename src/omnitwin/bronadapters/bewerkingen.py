@@ -44,11 +44,43 @@ import re
 from collections import Counter
 
 BEWERKINGEN = (
-    "hernoem", "behoud", "verwijder", "constant", "kopieer", "tekst", "getal", "waarde_map", "koppel",
-    "afwijzen", "filter", "jaar_uit_datum", "jaar_naar_datum", "iso_datumtijd", "prefix", "sjabloon", "deel",
-    "snake_case", "multipolygon", "geometrietype", "binnen", "splits_op", "nummer", "ontdubbel", "zet",
+    "hernoem",
+    "behoud",
+    "verwijder",
+    "constant",
+    "kopieer",
+    "tekst",
+    "getal",
+    "waarde_map",
+    "koppel",
+    "afwijzen",
+    "filter",
+    "jaar_uit_datum",
+    "jaar_naar_datum",
+    "iso_datumtijd",
+    "prefix",
+    "sjabloon",
+    "deel",
+    "snake_case",
+    "multipolygon",
+    "geometrietype",
+    "binnen",
+    "splits_op",
+    "nummer",
+    "ontdubbel",
+    "zet",
 )
-TOETSEN = ("gelijk", "niet_gelijk", "in", "niet_in", "leeg", "begint_met", "niet_begint_met", "kleiner_dan", "groter_dan")
+TOETSEN = (
+    "gelijk",
+    "niet_gelijk",
+    "in",
+    "niet_in",
+    "leeg",
+    "begint_met",
+    "niet_begint_met",
+    "kleiner_dan",
+    "groter_dan",
+)
 
 
 class BewerkingFout(ValueError):
@@ -110,6 +142,7 @@ def _sjabloon(tekst, r):
 def _vereniging(bron, ctx, stappen=None):
     from shapely.ops import unary_union
     from omnitwin.bronadapters import haal
+
     tab, _ = voer_uit(haal(bron, ctx), stappen or [], ctx)
     geoms = [r["geometry"] for rs in tab.values() for r in rs if r.get("geometry") is not None]
     return unary_union(geoms) if geoms else None
@@ -145,6 +178,7 @@ def _stap(naam, p, rijen, rapport, ctx):
         return uit
     if naam == "koppel":
         from omnitwin.bronadapters import haal
+
         tab = haal(p["bron"], ctx)
         if p.get("bewerkingen"):  # de bron eerst bewerken, bijv. alleen de buurten binnen de provincie
             tab, _ = voer_uit(tab, p["bewerkingen"], ctx)
@@ -197,11 +231,13 @@ def _stap(naam, p, rijen, rapport, ctx):
     if naam == "jaar_naar_datum":
         return [{**r, p["naar"]: f"{int(r[p['veld']]):04d}-01-01"} for r in rijen]
     if naam == "iso_datumtijd":
+
         def iso(w):
             if _leeg(w):
                 return ""
             w = str(w).strip().replace(" ", "T")
             return w + ":00" if len(w) == 16 else w
+
         return [{**r, **{v: iso(r.get(v)) for v in p}} for r in rijen]
     if naam == "prefix":
         uit = []
@@ -214,7 +250,7 @@ def _stap(naam, p, rijen, rapport, ctx):
     if naam == "sjabloon":
         return [{**r, p["naar"]: _sjabloon(p["sjabloon"], r)} for r in rijen]
     if naam == "deel":
-        return [{**r, p["naar"]: str(r.get(p["veld"]) or "")[p["start"]:p.get("eind")]} for r in rijen]
+        return [{**r, p["naar"]: str(r.get(p["veld"]) or "")[p["start"] : p.get("eind")]} for r in rijen]
     if naam == "nummer":
         return [{**r, p["naar"]: i} for i, r in enumerate(rijen, start=p.get("start", 1))]
     if naam == "snake_case":
@@ -222,6 +258,7 @@ def _stap(naam, p, rijen, rapport, ctx):
     if naam == "multipolygon":
         from shapely import make_valid
         from shapely.geometry import MultiPolygon, Polygon
+
         uit = []
         for r in rijen:
             g = r.get("geometry")
@@ -231,7 +268,11 @@ def _stap(naam, p, rijen, rapport, ctx):
             if not g.is_valid:
                 g = make_valid(g)
                 rapport["gerepareerd"] += 1
-            delen = [g] if isinstance(g, Polygon) else [d for d in getattr(g, "geoms", []) if isinstance(d, (Polygon, MultiPolygon))]
+            delen = (
+                [g]
+                if isinstance(g, Polygon)
+                else [d for d in getattr(g, "geoms", []) if isinstance(d, (Polygon, MultiPolygon))]
+            )
             polys = [q for d in delen for q in (d.geoms if isinstance(d, MultiPolygon) else [d]) if not q.is_empty]
             if not polys:
                 rapport["geometrie-geen-vlak"] += 1
@@ -246,7 +287,9 @@ def _stap(naam, p, rijen, rapport, ctx):
         gebied = _vereniging(p["bron"], ctx, p.get("bewerkingen"))
         if gebied is None:
             raise BewerkingFout("binnen: de bron heeft geen geometrie")
-        uit = [r for r in rijen if r.get("geometry") is not None and gebied.contains(r["geometry"].representative_point())]
+        uit = [
+            r for r in rijen if r.get("geometry") is not None and gebied.contains(r["geometry"].representative_point())
+        ]
         rapport["buiten het gebied"] += len(rijen) - len(uit)
         return uit
     if naam == "splits_op":

@@ -22,7 +22,11 @@ try:
     from playwright.sync_api import expect, sync_playwright
 
     from e2e_helpers import (
-        EXPECT_TIMEOUT_MS, PAGINA_TIMEOUT_MS, geschaald, stel_wachttijden_in, traagheidsmetingen,
+        EXPECT_TIMEOUT_MS,
+        PAGINA_TIMEOUT_MS,
+        geschaald,
+        stel_wachttijden_in,
+        traagheidsmetingen,
         zonder_basiskaarttegels,
     )
 
@@ -81,7 +85,8 @@ def pytest_terminal_summary(terminalreporter):
     if ms:
         terminalreporter.write_line(
             f"Traagheid renderer (#212): {len(ms)} metingen, taak {ms[0]:.0f}/{ms[len(ms) // 2]:.0f}/{ms[-1]:.0f} ms"
-            f" (min/mediaan/max), wachttijdfactor {factoren[0]:.1f}-{factoren[-1]:.1f}")
+            f" (min/mediaan/max), wachttijdfactor {factoren[0]:.1f}-{factoren[-1]:.1f}"
+        )
 
 
 def pytest_collection_modifyitems(config, items):
@@ -124,9 +129,11 @@ def _open(browser, request, skip_onboarding, reduced_motion=None):
     page.on("pageerror", lambda exc: fouten.append(f"pageerror: {exc}"))
     page.on(
         "console",
-        lambda msg: fouten.append(f"console.error: {msg.text}")
-        if msg.type == "error" and not any(p.search(msg.text) for p in _CONSOLE_RUIS)
-        else None,
+        lambda msg: (
+            fouten.append(f"console.error: {msg.text}")
+            if msg.type == "error" and not any(p.search(msg.text) for p in _CONSOLE_RUIS)
+            else None
+        ),
     )
     page.console_fouten = fouten
 
@@ -136,13 +143,15 @@ def _open(browser, request, skip_onboarding, reduced_motion=None):
     page.wait_for_function(
         "() => window.state && window.state.deckgl && window.kompasViz && window.kompasViz.currentConfigId"
         " && document.querySelectorAll('#gebiedstype-select option').length > 1",
-        polling=100, timeout=geschaald(60_000),
+        polling=100,
+        timeout=geschaald(60_000),
     )
 
     yield page
 
-    failed = any(getattr(request.node, f"rep_{w}", None) and getattr(request.node, f"rep_{w}").failed
-                 for w in ("setup", "call"))
+    failed = any(
+        getattr(request.node, f"rep_{w}", None) and getattr(request.node, f"rep_{w}").failed for w in ("setup", "call")
+    )
     if failed:
         ARTIFACTS.mkdir(exist_ok=True)
         naam = re.sub(r"[^\w.-]+", "_", request.node.nodeid.split("::")[-1])

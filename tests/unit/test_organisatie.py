@@ -67,6 +67,7 @@ class _NepDb:
 
 # ── service ─────────────────────────────────────────────────────────────────
 
+
 def test_lees_organisatie_geeft_instelling_en_standaardgemeente():
     org = org_service.lees_organisatie(_NepDb(SWF))
     assert org["naam"] == "Gemeente Súdwest-Fryslân"
@@ -98,11 +99,22 @@ def test_logos_zonder_pad_worden_overgeslagen():
 
 # ── thema (huisstijl) ───────────────────────────────────────────────────────
 
-@pytest.mark.parametrize("invoer,verwacht", [
-    ("swf", "swf"), ("d-omnitwin", "d-omnitwin"), ("gemeente-0080", "gemeente-0080"),
-    (None, "d-omnitwin"), ("", "d-omnitwin"), ("../geheim", "d-omnitwin"),
-    ("SWF", "d-omnitwin"), ("swf.css", "d-omnitwin"), ("a/b", "d-omnitwin"), ("x" + chr(10), "d-omnitwin"),
-])
+
+@pytest.mark.parametrize(
+    "invoer,verwacht",
+    [
+        ("swf", "swf"),
+        ("d-omnitwin", "d-omnitwin"),
+        ("gemeente-0080", "gemeente-0080"),
+        (None, "d-omnitwin"),
+        ("", "d-omnitwin"),
+        ("../geheim", "d-omnitwin"),
+        ("SWF", "d-omnitwin"),
+        ("swf.css", "d-omnitwin"),
+        ("a/b", "d-omnitwin"),
+        ("x" + chr(10), "d-omnitwin"),
+    ],
+)
 def test_veilig_thema(invoer, verwacht):
     assert org_service.veilig_thema(invoer) == verwacht
 
@@ -119,14 +131,16 @@ def test_thema_css_alleen_als_bestand_bestaat(tmp_path):
 
 def test_template_laadt_themabestand_na_basis_css():
     env = Environment(loader=FileSystemLoader(str(ROOT / "templates")), autoescape=True)
-    html = env.get_template("index.html").render(request=None, organisatie=None, app_version="t",
-                                                   thema_css="/static/css/themes/swf.css")
+    html = env.get_template("index.html").render(
+        request=None, organisatie=None, app_version="t", thema_css="/static/css/themes/swf.css"
+    )
     assert html.index('href="/static/css/styles.css"') < html.index('href="/static/css/themes/swf.css"')
     zonder = env.get_template("index.html").render(request=None, organisatie=None, app_version="t", thema_css=None)
     assert "/static/css/themes/" not in zonder
 
 
 # ── GET /api/organisatie ────────────────────────────────────────────────────
+
 
 def _client(router, db):
     app = FastAPI()
@@ -152,15 +166,20 @@ def test_endpoint_organisatie():
 
 # ── rapporten: geen vaste gemeentecode ──────────────────────────────────────
 
+
 def test_rapport_standaardgemeente_komt_uit_organisatie():
     from omnitwin.routers.report import MultiGebiedRequest, ThemaAnalyseRequest
     from omnitwin.services.report_service import ReportDataService
 
     assert MultiGebiedRequest(gebied_ids=["x"]).gemeente_code is None
     assert ThemaAnalyseRequest(gebied_ids=["x"]).gemeente_code is None
-    for naam in ("generate_multi_gebied_payload", "generate_multi_gebied_geojson",
-                 "generate_thema_analyse_payload", "generate_thema_analyse_geojson",
-                 "generate_deelgebied_payload"):
+    for naam in (
+        "generate_multi_gebied_payload",
+        "generate_multi_gebied_geojson",
+        "generate_thema_analyse_payload",
+        "generate_thema_analyse_geojson",
+        "generate_deelgebied_payload",
+    ):
         param = inspect.signature(getattr(ReportDataService, naam)).parameters["gemeente_code"]
         assert param.default is None, naam
 
@@ -200,8 +219,9 @@ class _Telling:
         return self.n
 
 
-@pytest.mark.parametrize("methode", ["generate_multi_gebied_payload", "generate_thema_analyse_payload",
-                                     "generate_deelgebied_payload"])
+@pytest.mark.parametrize(
+    "methode", ["generate_multi_gebied_payload", "generate_thema_analyse_payload", "generate_deelgebied_payload"]
+)
 @pytest.mark.parametrize("provincie", ["Fryslân", "Groningen", None])
 def test_referentie_provincie_volgt_instelling(monkeypatch, methode, provincie):
     """#324: referentie 'fryslan' filtert op organisatie.benchmark_provincie, niet op alle gebieden."""
@@ -225,8 +245,9 @@ def test_referentie_provincie_volgt_instelling(monkeypatch, methode, provincie):
                 return _NepDb({"gebiedstype_id": "t"})
             if "FROM gemeenten" in q:
                 return _Lijst([("Súdwest-Fryslân",)])
-            return _Lijst([_Rij({"id": "BU1", "naam": "B", "gemeente_code": "1900", "gebiedstype_id": "t",
-                                 "is_water": False})])
+            return _Lijst(
+                [_Rij({"id": "BU1", "naam": "B", "gemeente_code": "1900", "gebiedstype_id": "t", "is_water": False})]
+            )
 
     monkeypatch.setattr(report_service, "referentie_params", nep_referentie_params)
     with pytest.raises(RuntimeError, match="stop"):
@@ -254,7 +275,10 @@ def test_provincie_referentie_label_uit_de_data():
 
 def test_referentie_params_provincie():
     from omnitwin.services.zscore_referentie import (
-        SQL_REFERENTIE_STATS, SQL_REFERENTIE_WAARDEN, SQL_ZSCORE_GEBIEDEN, referentie_params,
+        SQL_REFERENTIE_STATS,
+        SQL_REFERENTIE_WAARDEN,
+        SQL_ZSCORE_GEBIEDEN,
+        referentie_params,
     )
 
     assert referentie_params("t")["zs_provincie"] is None
@@ -266,7 +290,8 @@ def test_referentie_params_provincie():
 def test_geen_vaste_provincie_in_referentie():
     """#324: geen vast label 'Provincie Fryslân' of vast provinciefilter in de code."""
     bestanden = [ROOT / "src/omnitwin/services/report_service.py", ROOT / "static/js/app.js"] + [
-        ROOT / f"admin-panel/src/pages/{p}Page.tsx" for p in ("Benchmark", "Deelgebied", "MultiGebied", "ThemaAnalyse")]
+        ROOT / f"admin-panel/src/pages/{p}Page.tsx" for p in ("Benchmark", "Deelgebied", "MultiGebied", "ThemaAnalyse")
+    ]
     for pad in bestanden:
         tekst = pad.read_text(encoding="utf-8")
         assert "Provincie Fryslân" not in tekst, pad
@@ -276,10 +301,11 @@ def test_geen_vaste_provincie_in_referentie():
 
 # ── footer ──────────────────────────────────────────────────────────────────
 
+
 def _footer(organisatie):
     env = Environment(loader=FileSystemLoader(str(ROOT / "templates")), autoescape=True)
     html = env.get_template("index.html").render(request=None, organisatie=organisatie, app_version="t")
-    return html[html.index('<footer class="footer">'):html.index("</footer>")]
+    return html[html.index('<footer class="footer">') : html.index("</footer>")]
 
 
 def test_footer_logos_uit_instelling():
@@ -294,6 +320,7 @@ def test_footer_zonder_organisatie_geen_logos():
 
 # ── Kompas: standaardconfiguratie zonder vaste ID ───────────────────────────
 
+
 def test_kompas_standaard_hierarchie(monkeypatch):
     from omnitwin.routers import kompas
 
@@ -305,9 +332,14 @@ def test_kompas_standaard_hierarchie(monkeypatch):
             return 7
 
         def get_hierarchie(self, config_id):
-            return {"config_id": config_id, "config_naam": "x", "config_icoon": "x",
-                    "hierarchie": {"name": "Root", "children": []}, "total_indicators": 0,
-                    "last_updated": "2026-10-02T00:00:00"}
+            return {
+                "config_id": config_id,
+                "config_naam": "x",
+                "config_icoon": "x",
+                "hierarchie": {"name": "Root", "children": []},
+                "total_indicators": 0,
+                "last_updated": "2026-10-02T00:00:00",
+            }
 
     monkeypatch.setattr(kompas, "KompasService", NepService)
     r = _client(kompas.router, object()).get("/api/kompas/standaard/hierarchie")
@@ -360,13 +392,13 @@ def test_seed_en_migratie_passen_bij_elkaar():
     """De seed vult precies kolommen die de migratie aanmaakt, en bevat de SWF-gegevens."""
     migratie = (ROOT / "db/migraties/V027__organisatie.sql").read_text(encoding="utf-8")
     seed = (ROOT / "db/stuurdata/organisatie.sql").read_text(encoding="utf-8")
-    tabel = migratie[migratie.index("CREATE TABLE IF NOT EXISTS public.organisatie"):]
-    tabel = tabel[:tabel.index(");")]
+    tabel = migratie[migratie.index("CREATE TABLE IF NOT EXISTS public.organisatie") :]
+    tabel = tabel[: tabel.index(");")]
     kolommen = set(re.findall(r"^\s{4}(\w+)\s", tabel, re.MULTILINE))
     seed_kolommen = re.search(r"INSERT INTO public\.organisatie\s*\(([^)]*)\)", seed).group(1)
     assert {k.strip() for k in seed_kolommen.split(",")} <= kolommen
     assert "ON CONFLICT (id) DO NOTHING" in seed
     assert "ARRAY['1900']" in seed and "geo-groep@sudwestfryslan.nl" in seed
     # buurten_in_deelgebied filtert op de organisatie, niet op een vaste code
-    functie = migratie[migratie.index("FUNCTION postgisftw.buurten_in_deelgebied"):]
+    functie = migratie[migratie.index("FUNCTION postgisftw.buurten_in_deelgebied") :]
     assert "organisatie" in functie and "1900" not in functie

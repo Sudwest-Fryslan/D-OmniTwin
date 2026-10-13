@@ -22,6 +22,7 @@ sterke treffer hoogstens MAX_MATIG. Liever 2 goede dan 8 matige. Labels voor de 
 
 Alles hier is zonder database of model te testen (tests/test_zoektaal.py).
 """
+
 import json
 import re
 import unicodedata
@@ -35,12 +36,12 @@ SYNONIEMEN = Path(__file__).resolve().parents[3] / "db" / "stuurdata" / "synonie
 # Afgestemd op tests/data/assistent_evaluatie.json (zonder de holdout-vragen), #233
 GEWICHT_TREFWOORD = 0.5
 GEWICHT_BETEKENIS = 0.5
-THEMA_FACTOR = 0.9      # een verzamelbegrip ('armoede') is minder precies dan een specifiek begrip
-MIN_SCORE = 0.25        # daaronder nooit tonen
-MAX_AFSTAND = 0.25      # alleen resultaten binnen deze afstand van de beste
-STERK = 0.6             # vanaf hier 'sterk'; daaronder 'matig'
-MAX_MATIG = 3           # zonder sterke treffer hoogstens zoveel resultaten
-TEKST_FACTOR = 0.55     # woord uit de vraag in het kompaspad of de beschrijving: zwakker dan de naam, nooit sterk
+THEMA_FACTOR = 0.9  # een verzamelbegrip ('armoede') is minder precies dan een specifiek begrip
+MIN_SCORE = 0.25  # daaronder nooit tonen
+MAX_AFSTAND = 0.25  # alleen resultaten binnen deze afstand van de beste
+STERK = 0.6  # vanaf hier 'sterk'; daaronder 'matig'
+MAX_MATIG = 3  # zonder sterke treffer hoogstens zoveel resultaten
+TEKST_FACTOR = 0.55  # woord uit de vraag in het kompaspad of de beschrijving: zwakker dan de naam, nooit sterk
 
 # ── Normaliseren ─────────────────────────────────────────────────────────────
 
@@ -54,11 +55,56 @@ def normaliseer(tekst: str) -> str:
 
 # Woorden die in indicatornamen niets onderscheiden
 STOPWOORDEN = {
-    "de", "het", "een", "van", "tot", "met", "per", "en", "in", "op", "voor", "naar", "uit",
-    "aantal", "totaal", "gemiddeld", "gemiddelde", "percentage", "index", "bag", "cbs", "exc",
-    "t", "o", "v", "nu", "jaar", "wat", "hoe", "waar", "welke", "is", "zijn", "er", "ik", "mijn",
-    "wil", "weten", "staat", "ligt", "wonen", "buurt", "buurten", "wijk", "wijken", "meeste",
-    "minste", "hoogste", "laagste", "relatief",
+    "de",
+    "het",
+    "een",
+    "van",
+    "tot",
+    "met",
+    "per",
+    "en",
+    "in",
+    "op",
+    "voor",
+    "naar",
+    "uit",
+    "aantal",
+    "totaal",
+    "gemiddeld",
+    "gemiddelde",
+    "percentage",
+    "index",
+    "bag",
+    "cbs",
+    "exc",
+    "t",
+    "o",
+    "v",
+    "nu",
+    "jaar",
+    "wat",
+    "hoe",
+    "waar",
+    "welke",
+    "is",
+    "zijn",
+    "er",
+    "ik",
+    "mijn",
+    "wil",
+    "weten",
+    "staat",
+    "ligt",
+    "wonen",
+    "buurt",
+    "buurten",
+    "wijk",
+    "wijken",
+    "meeste",
+    "minste",
+    "hoogste",
+    "laagste",
+    "relatief",
 }
 
 
@@ -76,11 +122,12 @@ def token_past(vraagwoord: str, naamwoord: str) -> bool:
 
 # ── Begrippen ────────────────────────────────────────────────────────────────
 
+
 @dataclass(frozen=True)
 class Begrip:
-    label: str                    # prefLabel
-    soort: str                    # specifiek | thema
-    labels: Tuple[str, ...]       # genormaliseerd: prefLabel + altLabel
+    label: str  # prefLabel
+    soort: str  # specifiek | thema
+    labels: Tuple[str, ...]  # genormaliseerd: prefLabel + altLabel
     indicatoren: Tuple[str, ...]  # indicatornamen, de beste eerst
 
 
@@ -88,8 +135,14 @@ def lees_begrippen(data: Dict[str, Any]) -> List[Begrip]:
     uit = []
     for b in data.get("begrippen", []):
         labels = [normaliseer(b["prefLabel"])] + [normaliseer(a) for a in b.get("altLabel", [])]
-        uit.append(Begrip(b["prefLabel"], b.get("soort", "specifiek"),
-                          tuple(dict.fromkeys(l for l in labels if l)), tuple(b.get("indicatoren", []))))
+        uit.append(
+            Begrip(
+                b["prefLabel"],
+                b.get("soort", "specifiek"),
+                tuple(dict.fromkeys(l for l in labels if l)),
+                tuple(b.get("indicatoren", [])),
+            )
+        )
     return uit
 
 
@@ -109,9 +162,9 @@ def laad_begrippen(pad: Optional[Path] = None) -> List[Begrip]:
 @dataclass
 class BegripTreffer:
     begrip: Begrip
-    label: str          # het label dat paste
+    label: str  # het label dat paste
     woorden: List[str]  # de woorden uit de vraag die het label dekt
-    positie: int        # plek in de vraag (voor de volgorde)
+    positie: int  # plek in de vraag (voor de volgorde)
 
 
 def _label_past(woorden: List[str], i: int, label: List[str]) -> bool:
@@ -136,17 +189,18 @@ def herken_begrippen(vraag: str, begrippen: Sequence[Begrip]) -> List[BegripTref
     """
     woorden = normaliseer(vraag).split()
     bezet = [False] * len(woorden)
-    kandidaten = sorted(((len(l.split()), len(l), l, b) for b in begrippen for l in b.labels),
-                        key=lambda t: (-t[0], -t[1]))
+    kandidaten = sorted(
+        ((len(l.split()), len(l), l, b) for b in begrippen for l in b.labels), key=lambda t: (-t[0], -t[1])
+    )
     treffers: List[BegripTreffer] = []
     for _, _, label, b in kandidaten:
         lw = label.split()
         for i in range(len(woorden)):
-            if any(bezet[i:i + len(lw)]) or not _label_past(woorden, i, lw):
+            if any(bezet[i : i + len(lw)]) or not _label_past(woorden, i, lw):
                 continue
             for j in range(i, i + len(lw)):
                 bezet[j] = True
-            treffers.append(BegripTreffer(b, label, woorden[i:i + len(lw)], i))
+            treffers.append(BegripTreffer(b, label, woorden[i : i + len(lw)], i))
     return sorted(treffers, key=lambda t: t.positie)
 
 
@@ -165,8 +219,13 @@ def synoniemen_van(naam: str, begrippen: Sequence[Begrip]) -> List[str]:
     return uit
 
 
-def indicator_tekst(naam: str, beschrijving: Optional[str] = None, kompaspad: Sequence[Optional[str]] = (),
-                    eenheid: Optional[str] = None, synoniemen: Sequence[str] = ()) -> str:
+def indicator_tekst(
+    naam: str,
+    beschrijving: Optional[str] = None,
+    kompaspad: Sequence[Optional[str]] = (),
+    eenheid: Optional[str] = None,
+    synoniemen: Sequence[str] = (),
+) -> str:
     """
     De tekst die per indicator geëmbed wordt (zonder voorvoegsel van het model):
     'Inwoners. Thema: Meedoen / Netwerk. Eenheid: aantal. Ook: bevolking, inwonertal. <beschrijving>'
@@ -185,6 +244,7 @@ def indicator_tekst(naam: str, beschrijving: Optional[str] = None, kompaspad: Se
 
 
 # ── Rangschikken ─────────────────────────────────────────────────────────────
+
 
 def relatieve_grenzen(gelijkenis: Dict[str, float], marge_onder: float, marge_boven: float) -> Tuple[float, float]:
     """Onder- en bovengrens voor deze vraag: mediane gelijkenis plus de marges van het model."""

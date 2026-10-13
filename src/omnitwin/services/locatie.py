@@ -58,7 +58,10 @@ def buurt_bij_adres(adres: str, get: Callable[..., Any] = requests.get) -> Optio
 
 def buurt_bij_punt(lat: float, lon: float, get: Callable[..., Any] = requests.get) -> Optional[Dict[str, str]]:
     """Locatie (WGS84) → de CBS-buurt waarin het punt ligt, of None."""
-    doc = _vraag("reverse", {"lat": f"{lat:.5f}", "lon": f"{lon:.5f}", "type": "buurt", "rows": 1,
-                             "fl": "identificatie,buurtnaam"}, get)
+    doc = _vraag(
+        "reverse",
+        {"lat": f"{lat:.5f}", "lon": f"{lon:.5f}", "type": "buurt", "rows": 1, "fl": "identificatie,buurtnaam"},
+        get,
+    )
     code = doc.get("identificatie")
     return {"buurtcode": code, "buurtnaam": doc.get("buurtnaam") or code} if code and _BUURTCODE.match(code) else None

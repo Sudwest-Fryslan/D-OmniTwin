@@ -11,13 +11,26 @@ import pytest
 from playwright.sync_api import expect
 
 from e2e_helpers import (
-    HINDELOOPEN, KOUDUM, WORKUM,
-    klik, klik_buurt_op_kaart, laad_buurtenkaart, open_kompas, open_paneel, selecteer_buurt_via_app,
-    selectie, selectie_overlay_aanwezig, wacht_op_selectie, zoom_kaart, geschaald, traag_ms,
+    HINDELOOPEN,
+    KOUDUM,
+    WORKUM,
+    klik,
+    klik_buurt_op_kaart,
+    laad_buurtenkaart,
+    open_kompas,
+    open_paneel,
+    selecteer_buurt_via_app,
+    selectie,
+    selectie_overlay_aanwezig,
+    wacht_op_selectie,
+    zoom_kaart,
+    geschaald,
+    traag_ms,
 )
 
 
 # ── TC-01-001 Enkelvoudige gebiedsselectie ───────────────────────────────────
+
 
 def test_tc_01_001_gebiedsselectie(app_page):
     """TC-01-001 stap 1-5: kaart laden, buurt aanklikken (echte canvasklik), badge en
@@ -57,6 +70,7 @@ def test_tc_01_001_gebiedsselectie(app_page):
 
 
 # ── TC-01-002 Meervoudige selectie ───────────────────────────────────────────
+
 
 def test_tc_01_002a_meervoudige_klikselectie(app_page):
     """TC-01-002 A stap 1-7: Shift+klik op drie kernen, overzicht in badge, Kompas
@@ -108,8 +122,11 @@ def test_tc_01_002b_polygoonselectie():
 
 # ── TC-01-003 Alternatieve gebiedslagen ──────────────────────────────────────
 
-@pytest.mark.skip(reason="TC-01-003 A: omgevingsvisie-deelgebieden zitten niet in de sample dataset "
-                         "en zijn geen externe kaartlaag in de sample-stuurdata")
+
+@pytest.mark.skip(
+    reason="TC-01-003 A: omgevingsvisie-deelgebieden zitten niet in de sample dataset "
+    "en zijn geen externe kaartlaag in de sample-stuurdata"
+)
 def test_tc_01_003a_omgevingsvisie():
     """TC-01-003 A: Omgevingsvisie SWF als selectieframe."""
 
@@ -127,8 +144,9 @@ def test_tc_01_003b_bag_woonplaatsen(app_page):
     laag = page.evaluate("() => window.state.externeKaartlagen.find(l => l.naam === 'BAG Woonplaatsen')")
     assert laag, "externe kaartlaag 'BAG Woonplaatsen' ontbreekt in de sample-stuurdata"
     toggle = page.locator(f"#toggle-externe-laag-{laag['id']}")
-    with page.expect_response(lambda r: f"/api/externe-lagen/{laag['id']}/features" in r.url,
-                              timeout=geschaald(120_000)) as resp:
+    with page.expect_response(
+        lambda r: f"/api/externe-lagen/{laag['id']}/features" in r.url, timeout=geschaald(120_000)
+    ) as resp:
         page.locator(f"label:has(#toggle-externe-laag-{laag['id']})").click()
     if not resp.value.ok:
         pytest.skip(f"PDOK WFS niet bereikbaar vanuit de backend (HTTP {resp.value.status})")
@@ -180,6 +198,7 @@ def test_tc_01_003c_woonbeleid():
 
 
 # ── Kaart-export (vervangt het oude script tests/test_canvas.py) ─────────────
+
 
 @pytest.mark.basiskaart
 def test_kaart_canvas_exporteerbaar(app_page, tmp_path):

@@ -30,8 +30,8 @@ CLASSIFICATIE = "label_ae"
 LABELS = ("A", "B", "C", "D", "E")  # A = gunstigst
 KLASSEN = len(LABELS)
 
-BRON_KWINTIEL = "kwintiel"   # voorlopig: 20%-klassen binnen de referentiegroep
-BRON_DREMPELS = "drempels"   # drempels uit indicator_labels
+BRON_KWINTIEL = "kwintiel"  # voorlopig: 20%-klassen binnen de referentiegroep
+BRON_DREMPELS = "drempels"  # drempels uit indicator_labels
 
 MELDING_VOORLOPIG = (
     "Voorlopige drempels (kwintielen): A = gunstigste 20% van de vergelijkbare gebieden, "
@@ -138,11 +138,13 @@ def drempels_uit_db(db, indicator_uuids: Optional[Iterable[str]] = None) -> Dict
         return {}
     uit: Dict[str, List[Drempel]] = {}
     for r in db.execute(text(_SQL_DREMPELS), {"il_uuids": uuids}):
-        uit.setdefault(r.indicator_uuid, []).append((
-            r.label,
-            float(r.ondergrens) if r.ondergrens is not None else None,
-            float(r.bovengrens) if r.bovengrens is not None else None,
-        ))
+        uit.setdefault(r.indicator_uuid, []).append(
+            (
+                r.label,
+                float(r.ondergrens) if r.ondergrens is not None else None,
+                float(r.bovengrens) if r.bovengrens is not None else None,
+            )
+        )
     return uit
 
 

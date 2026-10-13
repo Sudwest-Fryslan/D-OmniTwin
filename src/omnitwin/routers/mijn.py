@@ -28,6 +28,7 @@ router = APIRouter(prefix="/api/mijn", tags=["Mijn voorkeuren"])
 
 def voorkeuren(request: Request, db: Session = Depends(get_db)) -> Voorkeuren:
     from omnitwin.routers.auth import huidige_gebruiker
+
     try:
         gebruiker = huidige_gebruiker(request, db)
     except HTTPException:
@@ -81,8 +82,9 @@ def lees_favorieten(v: Voorkeuren = Depends(voorkeuren)):
 @router.post("/favorieten", status_code=201)
 def bewaar_favoriet(body: NieuweFavoriet, response: Response, v: Voorkeuren = Depends(voorkeuren)):
     try:
-        favoriet, nieuw = v.bewaar_favoriet(body.naam, body.gebiedIds,
-                                            str(body.gebiedstypeId) if body.gebiedstypeId else None)
+        favoriet, nieuw = v.bewaar_favoriet(
+            body.naam, body.gebiedIds, str(body.gebiedstypeId) if body.gebiedstypeId else None
+        )
     except GebruikersFout as e:
         _fout(e)
     if not nieuw:

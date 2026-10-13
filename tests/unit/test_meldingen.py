@@ -110,7 +110,7 @@ def test_rate_limit_blokkeert_na_maximum():
 
     assert limiet.probeer(ip) == 0  # 1e verzoek: toegestaan
     assert limiet.probeer(ip) == 0  # 2e verzoek: toegestaan
-    wacht = limiet.probeer(ip)      # 3e verzoek: geblokkeerd!
+    wacht = limiet.probeer(ip)  # 3e verzoek: geblokkeerd!
     assert wacht > 0
 
 
@@ -121,6 +121,7 @@ def test_beperk_meldingen_dependency():
 
     # Reset limiet voor test IP
     from omnitwin import grenzen
+
     grenzen._meldingen_limiet.reset("192.0.2.2")
 
     for _ in range(10):

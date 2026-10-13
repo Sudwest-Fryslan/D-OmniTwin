@@ -9,6 +9,7 @@ Wat wordt getest:
 - Z-score formule (services.zscore_referentie.bereken_zscore) en referentieparameters
 - Normalize-helper op grenscondities
 """
+
 import sys
 import os
 import pytest
@@ -23,6 +24,7 @@ from omnitwin.services.zscore_referentie import JAARLOGICA_STANDAARD, MIN_N_STAN
 
 # ─── Fixtures ────────────────────────────────────────────────────────────────
 
+
 @pytest.fixture
 def svc():
     return KompasScoringService()
@@ -35,6 +37,7 @@ def even_thresholds():
 
 
 # ─── Kleurpalet selectie ─────────────────────────────────────────────────────
+
 
 @pytest.mark.unit
 class TestPaletSelection:
@@ -57,6 +60,7 @@ class TestPaletSelection:
 
 
 # ─── Bin-index berekening ────────────────────────────────────────────────────
+
 
 @pytest.mark.unit
 class TestBinIndexCalculation:
@@ -93,6 +97,7 @@ class TestBinIndexCalculation:
 
 # ─── Inversie-logica (score_type) ────────────────────────────────────────────
 
+
 @pytest.mark.unit
 class TestScoreTypeInversion:
     """
@@ -121,26 +126,27 @@ class TestScoreTypeInversion:
 
     def test_inverse_flag_inverteert_ongeacht_score_type(self, svc, even_thresholds):
         """De `inverse` flag inverteert onafhankelijk van score_type."""
-        normaal = svc.get_color_for_value(100.0, score_type="positive_ascending",
-                                          thresholds=even_thresholds, inverse=False)
-        geinverteerd = svc.get_color_for_value(100.0, score_type="positive_ascending",
-                                               thresholds=even_thresholds, inverse=True)
+        normaal = svc.get_color_for_value(
+            100.0, score_type="positive_ascending", thresholds=even_thresholds, inverse=False
+        )
+        geinverteerd = svc.get_color_for_value(
+            100.0, score_type="positive_ascending", thresholds=even_thresholds, inverse=True
+        )
         assert normaal != geinverteerd
         assert normaal == "#1A9850"
         assert geinverteerd == "#D73027"
 
     def test_inversie_is_symmetrisch(self, svc, even_thresholds):
         """Kleur van bin X normaal == kleur van bin (7-X) geinverteerd."""
-        kleur_laag_normaal = svc.get_color_for_value(0.0, score_type="positive_ascending",
-                                                     thresholds=even_thresholds)
-        kleur_laag_invers = svc.get_color_for_value(0.0, score_type="+/-",
-                                                    thresholds=even_thresholds)
+        kleur_laag_normaal = svc.get_color_for_value(0.0, score_type="positive_ascending", thresholds=even_thresholds)
+        kleur_laag_invers = svc.get_color_for_value(0.0, score_type="+/-", thresholds=even_thresholds)
         # Laag normaal = bin 0 = donkerrood; laag invers = bin 7 = donkergroen
         assert kleur_laag_normaal == "#D73027"
         assert kleur_laag_invers == "#1A9850"
 
 
 # ─── Z-score formule ─────────────────────────────────────────────────────────
+
 
 @pytest.mark.unit
 class TestZScoreFormula:
@@ -203,6 +209,7 @@ class TestReferentieParams:
 
 
 # ─── Normalize helper ────────────────────────────────────────────────────────
+
 
 @pytest.mark.unit
 class TestNormalizeHelper:

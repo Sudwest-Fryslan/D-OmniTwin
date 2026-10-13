@@ -3,6 +3,7 @@ Unit test: geen dode relatieve links in de Markdown-bestanden (#204).
 
 Zie tools/check_links.py (ook los te draaien). Externe links en docs/archief/ vallen erbuiten.
 """
+
 import shutil
 import subprocess
 import sys

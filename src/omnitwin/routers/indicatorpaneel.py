@@ -34,16 +34,22 @@ def _paneel(db, indicator_uuid, gebied_ids, jaar, gebiedstype_id, gemeente_code,
     toegang.vereis_indicator(db, indicator_uuid)  # interne indicator zonder rol: 401/403 (#254)
     try:
         return IndicatorpaneelService(db).paneel(
-            str(indicator_uuid), lees_gebied_ids(gebied_ids), jaar=jaar,
+            str(indicator_uuid),
+            lees_gebied_ids(gebied_ids),
+            jaar=jaar,
             gebiedstype_id=str(gebiedstype_id) if gebiedstype_id else None,
-            gemeente_code=gemeente_code or None, met_gebieden=met_gebieden,
+            gemeente_code=gemeente_code or None,
+            met_gebieden=met_gebieden,
         )
     except GebruikersFout as e:
         raise HTTPException(status_code=400, detail=str(e))
 
 
-_GEBIED_IDS = Query(None, description="Kommagescheiden gebied-id's (de selectie). Leeg: alle gebieden "
-                                      "van gebiedstype_id (in gemeente_code), zoals op de kaart.")
+_GEBIED_IDS = Query(
+    None,
+    description="Kommagescheiden gebied-id's (de selectie). Leeg: alle gebieden "
+    "van gebiedstype_id (in gemeente_code), zoals op de kaart.",
+)
 _JAAR = Query(None, description="Jaar; leeg = per gebied de recentste waarde")
 _GEMEENTE = Query(None, pattern=r"^[0-9]{4}$", description="Gemeentecode (CBS, 4 cijfers)")
 
@@ -55,8 +61,10 @@ def indicatorpaneel(
     jaar: Optional[int] = _JAAR,
     gebiedstype_id: Optional[UUID] = None,
     gemeente_code: Optional[str] = _GEMEENTE,
-    gebieden: bool = Query(True, description="false: zonder gebied_ids geen waarden per gebied, alleen "
-                                             "indicator, bronnen en gemeentegemiddelde"),
+    gebieden: bool = Query(
+        True,
+        description="false: zonder gebied_ids geen waarden per gebied, alleen indicator, bronnen en gemeentegemiddelde",
+    ),
     db: Session = Depends(get_db),
 ):
     """Indicator (beschrijving, eenheid), bronnen (titel, uitgever, licentie, jaargangen), de waarde per

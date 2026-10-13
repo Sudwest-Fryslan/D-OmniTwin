@@ -42,19 +42,18 @@ from omnitwin import oidc, oidc_login, toegang
 from omnitwin.config import instellingen
 
 ROLLEN = frozenset({"lezer", oidc_login.BEHEERROL})
-CONTROLE_PAD = "/api/viewer/toegang"     # forwardAuth van Traefik
+CONTROLE_PAD = "/api/viewer/toegang"  # forwardAuth van Traefik
 LOGIN_PAD = oidc_login.INLOG_PAD + "/login"
 
 # Altijd open, ook bij VIEWER_TOEGANG=inloggen. Prefixen; "/" alleen exact.
-OPEN_EXACT = frozenset({"/health", "/favicon.ico", CONTROLE_PAD, "/api/organisatie",
-                        "/api/organisatie/beeldmerk.svg"})
+OPEN_EXACT = frozenset({"/health", "/favicon.ico", CONTROLE_PAD, "/api/organisatie", "/api/organisatie/beeldmerk.svg"})
 OPEN_PREFIX = (
-    "/static/",              # code, stijl, afbeeldingen (geen data)
+    "/static/",  # code, stijl, afbeeldingen (geen data)
     "/.well-known/",
-    "/admin",                # SPA van de beheeromgeving; de beheer-API's hebben vereis_admin
-    "/api/admin/auth/",      # inloggen, callback, uitloggen, me, config
-    "/api/laden/",           # laad-API: eigen tokens (vereis_rol)
-    "/api/oidc/ik",          # testendpoint, eigen token
+    "/admin",  # SPA van de beheeromgeving; de beheer-API's hebben vereis_admin
+    "/api/admin/auth/",  # inloggen, callback, uitloggen, me, config
+    "/api/laden/",  # laad-API: eigen tokens (vereis_rol)
+    "/api/oidc/ik",  # testendpoint, eigen token
 )
 
 
@@ -65,8 +64,8 @@ def is_open_pad(pad: str) -> bool:
 @dataclass(frozen=True)
 class Besluit:
     toegang: bool
-    gebruiker: dict | None          # wie (sessie, bearer of key), of None
-    status: int = 200               # 200, 401 (niet ingelogd), 403 (geen rol), 503 (provider weg)
+    gebruiker: dict | None  # wie (sessie, bearer of key), of None
+    status: int = 200  # 200, 401 (niet ingelogd), 403 (geen rol), 503 (provider weg)
     probleem: oidc.AuthProbleem | None = None
 
 
@@ -84,6 +83,7 @@ def gebruiker_van(request: Request) -> dict | None:
     (401) of een storing bij de provider (503) gaat als AuthProbleem door."""
     from omnitwin.database import SessionLocal
     from omnitwin.routers.auth import huidige_gebruiker
+
     db = SessionLocal()
     try:
         return huidige_gebruiker(request, db)
@@ -97,7 +97,7 @@ def beoordeel(request: Request) -> Besluit:
     """Toegang tot de viewer en data-API's voor dit verzoek (synchroon: database)."""
     try:
         gebruiker = gebruiker_van(request)
-    except oidc.AuthProbleem as e:     # ongeldig token (401, met WWW-Authenticate) of provider weg (503)
+    except oidc.AuthProbleem as e:  # ongeldig token (401, met WWW-Authenticate) of provider weg (503)
         return Besluit(False, None, e.status, e)
     if gebruiker is None:
         return Besluit(False, None, 401)
@@ -110,12 +110,15 @@ def _probleem(request: Request, besluit: Besluit) -> JSONResponse:
     if besluit.probleem is not None:
         return oidc.probleem_antwoord(request, besluit.probleem)
     if besluit.status == 401:
-        p = oidc.AuthProbleem(401, "niet-ingelogd", "Niet ingelogd",
-                              "Deze installatie is alleen toegankelijk na inloggen (VIEWER_TOEGANG=inloggen).",
-                              www_authenticate="Bearer")
+        p = oidc.AuthProbleem(
+            401,
+            "niet-ingelogd",
+            "Niet ingelogd",
+            "Deze installatie is alleen toegankelijk na inloggen (VIEWER_TOEGANG=inloggen).",
+            www_authenticate="Bearer",
+        )
     else:
-        p = oidc.AuthProbleem(403, "geen-toegang", "Geen toegang",
-                              "Ingelogd, maar zonder de rol lezer of beheerder.")
+        p = oidc.AuthProbleem(403, "geen-toegang", "Geen toegang", "Ingelogd, maar zonder de rol lezer of beheerder.")
     return oidc.probleem_antwoord(request, p)
 
 
@@ -141,13 +144,17 @@ Vraag een gebruikersbeheerder om je die rol te geven.</p>
 
 def geen_toegang_pagina(gebruiker: dict | None) -> HTMLResponse:
     from html import escape
+
     naam = escape(str((gebruiker or {}).get("username") or "onbekend"))
     return HTMLResponse(GEEN_TOEGANG_HTML.replace("{naam}", naam), status_code=403)
 
 
 def wil_html(request: Request) -> bool:
-    return request.method == "GET" and "text/html" in request.headers.get("accept", "") \
+    return (
+        request.method == "GET"
+        and "text/html" in request.headers.get("accept", "")
         and not request.url.path.startswith("/api")
+    )
 
 
 class ViewerToegangMiddleware(BaseHTTPMiddleware):

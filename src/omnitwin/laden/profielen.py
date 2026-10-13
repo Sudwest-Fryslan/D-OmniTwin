@@ -8,17 +8,38 @@ DOCS = "https://github.com/Sudwest-Fryslan/D-OmniTwin/blob/main/docs/api/laden/p
 GPKG, ZIP, CSV, JSON = "application/geopackage+sqlite3", "application/zip", "text/csv", "application/json"
 
 PROFIELEN = {
-    "waarnemingen": {"titel": "Waarnemingen: indicatorwaarden per gebied en moment",
-                     "contract": "waarnemingen.schema.json", "mediatypes": [GPKG, ZIP, CSV, JSON],
-                     "schemas": {"waarnemingen": "waarnemingen"}, "adapters": ["swf-monitor-v1"]},
-    "definities": {"titel": "Definities: indicatoren, gebiedstypen en hun relaties",
-                   "contract": "definities-indicatoren.schema.json", "mediatypes": [GPKG, ZIP, JSON],
-                   "schemas": {"indicatoren": "definities-indicatoren", "gebiedstypen": "definities-gebiedstypen",
-                               "relaties": "definities-relaties"}, "adapters": ["swf-monitor-v1"]},
-    "gebiedsindeling": {"titel": "Gebiedsindeling: gebieden met geometrie van één gebiedstype",
-                        "contract": "gebiedsindeling.md", "mediatypes": [GPKG, ZIP], "schemas": {}, "adapters": []},
-    "kaartlaag": {"titel": "Kaartlaag: features voor de kaart", "contract": "kaartlaag.md",
-                  "mediatypes": [GPKG, ZIP], "schemas": {}, "adapters": []},
+    "waarnemingen": {
+        "titel": "Waarnemingen: indicatorwaarden per gebied en moment",
+        "contract": "waarnemingen.schema.json",
+        "mediatypes": [GPKG, ZIP, CSV, JSON],
+        "schemas": {"waarnemingen": "waarnemingen"},
+        "adapters": ["swf-monitor-v1"],
+    },
+    "definities": {
+        "titel": "Definities: indicatoren, gebiedstypen en hun relaties",
+        "contract": "definities-indicatoren.schema.json",
+        "mediatypes": [GPKG, ZIP, JSON],
+        "schemas": {
+            "indicatoren": "definities-indicatoren",
+            "gebiedstypen": "definities-gebiedstypen",
+            "relaties": "definities-relaties",
+        },
+        "adapters": ["swf-monitor-v1"],
+    },
+    "gebiedsindeling": {
+        "titel": "Gebiedsindeling: gebieden met geometrie van één gebiedstype",
+        "contract": "gebiedsindeling.md",
+        "mediatypes": [GPKG, ZIP],
+        "schemas": {},
+        "adapters": [],
+    },
+    "kaartlaag": {
+        "titel": "Kaartlaag: features voor de kaart",
+        "contract": "kaartlaag.md",
+        "mediatypes": [GPKG, ZIP],
+        "schemas": {},
+        "adapters": [],
+    },
 }
 
 
@@ -33,5 +54,11 @@ def profiel(code: str) -> dict:
         s = laad_schema(naam)
         s.pop("$schema", None)
         schemas[res] = s
-    return {"id": code, "titel": p["titel"], "uri": profiel_uri(code), "mediatypes": list(p["mediatypes"]),
-            "tableSchemas": schemas, "adapters": list(p["adapters"])}
+    return {
+        "id": code,
+        "titel": p["titel"],
+        "uri": profiel_uri(code),
+        "mediatypes": list(p["mediatypes"]),
+        "tableSchemas": schemas,
+        "adapters": list(p["adapters"]),
+    }

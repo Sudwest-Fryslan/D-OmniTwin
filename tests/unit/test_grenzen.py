@@ -23,12 +23,12 @@ def test_limiet_schuivend_venster():
     klok = Klok()
     limiet = Limiet(3, 60, klok=klok)
     assert [limiet.probeer("a") for _ in range(3)] == [0, 0, 0]
-    assert limiet.probeer("a") == 60          # vol: wachten tot de oudste verloopt
-    assert limiet.probeer("b") == 0           # andere sleutel telt apart
+    assert limiet.probeer("a") == 60  # vol: wachten tot de oudste verloopt
+    assert limiet.probeer("b") == 0  # andere sleutel telt apart
     klok.t += 30
     assert limiet.wachttijd("a") == 30
     klok.t += 30
-    assert limiet.wachttijd("a") == 0         # oudste is verlopen
+    assert limiet.wachttijd("a") == 0  # oudste is verlopen
     limiet.registreer("a")
     limiet.reset("a")
     assert limiet.wachttijd("a") == 0
@@ -46,11 +46,18 @@ def test_limiet_ruimt_verlopen_sleutels_op():
 
 
 def _verzoek(client, headers=None):
-    return Request({
-        "type": "http", "scheme": "http", "method": "GET", "path": "/", "query_string": b"",
-        "headers": [(k.lower().encode(), v.encode()) for k, v in (headers or {}).items()],
-        "server": ("testserver", 80), "client": (client, 1234),
-    })
+    return Request(
+        {
+            "type": "http",
+            "scheme": "http",
+            "method": "GET",
+            "path": "/",
+            "query_string": b"",
+            "headers": [(k.lower().encode(), v.encode()) for k, v in (headers or {}).items()],
+            "server": ("testserver", 80),
+            "client": (client, 1234),
+        }
+    )
 
 
 def test_client_ip():
@@ -90,6 +97,7 @@ def test_llm_limiet_uit_met_nul(monkeypatch):
 
 
 # ── Inloggen ──────────────────────────────────────────────────────────────────
+
 
 class _Resultaat:
     def __init__(self, rij=None):

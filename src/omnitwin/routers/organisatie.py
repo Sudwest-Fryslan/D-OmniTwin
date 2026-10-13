@@ -13,6 +13,7 @@ De eigen organisatie van deze instantie (#231, #253, ADR 0007).
 Gaat later op in de catalogus-API (``/api/catalogus/v1``, zie
 docs/2-architectuur/api-landschap.md) als beschrijving van de aanbieder.
 """
+
 import datetime as dt
 import re
 from typing import Any, Dict, List, Literal, Optional
@@ -106,6 +107,7 @@ class LogoInvoer(BaseModel):
 
 class OrganisatieInvoer(BaseModel):
     """De instelling zoals de beheerder hem zet (en zoals hij in een export staat)."""
+
     model_config = ConfigDict(extra="forbid")
 
     code: str
@@ -208,6 +210,7 @@ class OrganisatieInvoer(BaseModel):
 
 class OrganisatieExport(BaseModel):
     """Exportbestand: de instelling met een kop, zodat een andere instantie hem kan overnemen."""
+
     model_config = ConfigDict(extra="ignore")
 
     formaat: Literal["d-omnitwin/organisatie"]
@@ -225,6 +228,7 @@ class Thema(BaseModel):
 
 # ── Lezen (publiek) ─────────────────────────────────────────────────────────
 
+
 @router.get("", response_model=Organisatie)
 def get_organisatie(db: Session = Depends(get_db)):
     """De organisatie van deze instantie (één instantie = één organisatie)."""
@@ -237,11 +241,13 @@ def get_organisatie(db: Session = Depends(get_db)):
 @router.get("/beeldmerk.svg", include_in_schema=False)
 def get_beeldmerk(db: Session = Depends(get_db)):
     """Beeldmerk in de kleuren van het organisatiethema, als favicon (#249)."""
-    return Response(beeldmerk_svg(lees_organisatie(db)), media_type="image/svg+xml",
-                    headers={"Cache-Control": "no-cache"})
+    return Response(
+        beeldmerk_svg(lees_organisatie(db)), media_type="image/svg+xml", headers={"Cache-Control": "no-cache"}
+    )
 
 
 # ── Instellen (beheerder, #253) ─────────────────────────────────────────────
+
 
 def _audit(gebruiker: dict, actie: str, wijzigingen: Dict[str, Any]) -> None:
     """Auditregel: wie (sub/gebruikersnaam, nooit e-mail of tokens) en wat."""
@@ -250,9 +256,15 @@ def _audit(gebruiker: dict, actie: str, wijzigingen: Dict[str, Any]) -> None:
     velden = ", ".join(sorted(wijzigingen)) or "geen wijzigingen"
     AppLogger.info(
         f"Organisatie {actie} door '{wie}'" + (f" sub={sub}" if sub else "") + f": {velden}",
-        category="ADMIN", user_id=str(gebruiker.get("user_id")) if gebruiker.get("user_id") is not None else None,
-        extra={"actie": f"organisatie.{actie}", "wie": wie, "sub": sub, "bron": gebruiker.get("type"),
-               "wijzigingen": wijzigingen},
+        category="ADMIN",
+        user_id=str(gebruiker.get("user_id")) if gebruiker.get("user_id") is not None else None,
+        extra={
+            "actie": f"organisatie.{actie}",
+            "wie": wie,
+            "sub": sub,
+            "bron": gebruiker.get("type"),
+            "wijzigingen": wijzigingen,
+        },
     )
 
 
@@ -265,8 +277,7 @@ def _zet(db: Session, invoer: OrganisatieInvoer, gebruiker: dict, actie: str) ->
 
 
 @router.put("", response_model=Organisatie)
-def put_organisatie(invoer: OrganisatieInvoer, db: Session = Depends(get_db),
-                    gebruiker: dict = Depends(vereis_admin)):
+def put_organisatie(invoer: OrganisatieInvoer, db: Session = Depends(get_db), gebruiker: dict = Depends(vereis_admin)):
     """Organisatie en thema instellen. Ongeldige invoer (onbekend thema, logo buiten
     /static/images/, e-mail, gemeentecode) geeft 422; er verandert dan niets."""
     return _zet(db, invoer, gebruiker, "bijgewerkt")
@@ -299,15 +310,19 @@ def export_organisatie(db: Session = Depends(get_db), _: dict = Depends(vereis_a
         "geexporteerd_op": dt.datetime.now(dt.timezone.utc).replace(microsecond=0).isoformat(),
         "organisatie": org,
     }
-    return JSONResponse(body, headers={
-        "Content-Disposition": f'attachment; filename="organisatie-{org["code"]}.json"',
-        "Cache-Control": "no-store",
-    })
+    return JSONResponse(
+        body,
+        headers={
+            "Content-Disposition": f'attachment; filename="organisatie-{org["code"]}.json"',
+            "Cache-Control": "no-store",
+        },
+    )
 
 
 @router.post("/import", response_model=Organisatie)
-def import_organisatie(export: OrganisatieExport, db: Session = Depends(get_db),
-                       gebruiker: dict = Depends(vereis_admin)):
+def import_organisatie(
+    export: OrganisatieExport, db: Session = Depends(get_db), gebruiker: dict = Depends(vereis_admin)
+):
     """Een export van (een andere) instantie overnemen. Zelfde validatie als PUT: een thema of
     logo dat hier niet bestaat geeft 422."""
     return _zet(db, export.organisatie, gebruiker, "geimporteerd")

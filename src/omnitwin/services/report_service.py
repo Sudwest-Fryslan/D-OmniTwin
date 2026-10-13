@@ -23,6 +23,7 @@ from omnitwin.services.zscore_referentie import (
     referentie_params,
 )
 
+
 def provincie_referentie_label(provincie: Optional[str], aantal: int) -> str:
     """Label van de referentie 'provincie' (#324), met het aantal gebieden uit de data."""
     if provincie:
@@ -32,7 +33,7 @@ def provincie_referentie_label(provincie: Optional[str], aantal: int) -> str:
 
 class ReportDataService:
     """Service class voor Rapportage data aggregatie & pre-processing"""
-    
+
     def __init__(self, db: Session):
         self.db = db
 
@@ -44,14 +45,20 @@ class ReportDataService:
         Geeft (provincie of None, label).
         """
         provincie = (lees_organisatie(self.db) or {}).get("benchmark_provincie") or None
-        aantal = self.db.execute(text("""
+        aantal = (
+            self.db.execute(
+                text("""
             SELECT COUNT(*) FROM gebieden g
             WHERE g.gebiedstype_id = CAST(:gt AS uuid)
               AND NOT public.is_waterbuurt(g.naam, g.metadata)
               AND (CAST(:provincie AS varchar) IS NULL OR EXISTS (
                     SELECT 1 FROM gemeenten gm
                     WHERE gm.code = g.gemeente_code AND gm.provincie = CAST(:provincie AS varchar)))
-        """), {"gt": str(gebiedstype_id), "provincie": provincie}).scalar() or 0
+        """),
+                {"gt": str(gebiedstype_id), "provincie": provincie},
+            ).scalar()
+            or 0
+        )
         return provincie, provincie_referentie_label(provincie, int(aantal))
 
     def generate_report_payload(self, gebied_id: str) -> Dict[str, Any]:
@@ -69,24 +76,28 @@ class ReportDataService:
             WHERE g.id = :gebied_id
         """)
         gebied_info = self.db.execute(gebied_query, {"gebied_id": gebied_id}).fetchone()
-        
+
         if not gebied_info:
             raise GebruikersFout(f"Gebied met ID {gebied_id} niet gevonden.")
-        
+
         gebied_dict = dict(gebied_info._mapping)
-        gemeente_code = gebied_dict.get('gemeente_code')
-        gemeente_naam = gebied_dict.get('gemeente_naam')
-        gebiedstype_id = gebied_dict.get('gebiedstype_id')
-        referentie_str = f"Gemeente {gemeente_naam}" if gemeente_naam else (f"Gemeente {gemeente_code}" if gemeente_code else f"Alle {gebied_dict['gebiedstype_naam']}(en)")
+        gemeente_code = gebied_dict.get("gemeente_code")
+        gemeente_naam = gebied_dict.get("gemeente_naam")
+        gebiedstype_id = gebied_dict.get("gebiedstype_id")
+        referentie_str = (
+            f"Gemeente {gemeente_naam}"
+            if gemeente_naam
+            else (f"Gemeente {gemeente_code}" if gemeente_code else f"Alle {gebied_dict['gebiedstype_naam']}(en)")
+        )
         metadata = {
-            "gebied": gebied_dict['naam'],
-            "gebiedstype": gebied_dict['gebiedstype_naam'],
-            "referentie_kader": referentie_str
+            "gebied": gebied_dict["naam"],
+            "gebiedstype": gebied_dict["gebiedstype_naam"],
+            "referentie_kader": referentie_str,
         }
 
         # Waterbuurt als doelgebied: geen Z-scores, net als multi-gebied, thema-analyse
         # en deelgebied (#155). Eén definitie: is_waterbuurt() in 08_zscore_referentie.sql.
-        if gebied_dict.get('is_waterbuurt'):
+        if gebied_dict.get("is_waterbuurt"):
             return {
                 "gebied_id": gebied_id,
                 "referentie_groep": referentie_str,
@@ -99,7 +110,7 @@ class ReportDataService:
                     "Dit gebied is een waterbuurt. Waterbuurten worden niet vergeleken met "
                     "de referentiegroep; er zijn geen Z-scores."
                 ],
-                "methodiek": methodiek_beschrijving()
+                "methodiek": methodiek_beschrijving(),
             }
 
         # 2. Z-scores t.o.v. zelfde gebiedstype binnen zelfde gemeente, in hetzelfde jaar als de
@@ -133,27 +144,24 @@ class ReportDataService:
         # 3. Filtering: Selecteer alleen 'significante' indicatoren
         # Bijv: |Z-score| > 1.0 (meer dan 1 standaarddeviatie afwijking)
         # Sorteer op absolute Z-score impact
-        significante_indicatoren = [
-            ind for ind in indicators 
-            if abs(float(ind['z_score'])) >= 1.0
-        ]
-        
+        significante_indicatoren = [ind for ind in indicators if abs(float(ind["z_score"])) >= 1.0]
+
         # Sorteer van sterkst afwijkend naar minst afwijkend
-        significante_indicatoren.sort(key=lambda x: abs(float(x['z_score'])), reverse=True)
-        
+        significante_indicatoren.sort(key=lambda x: abs(float(x["z_score"])), reverse=True)
+
         # Groepeer per kwadrant voor LLM structuur
         domains_dict = {}
         for ind in significante_indicatoren:
-            cat = ind['kwadrant'] or 'Overig'
+            cat = ind["kwadrant"] or "Overig"
             if cat not in domains_dict:
                 domains_dict[cat] = []
-                
+
             # Bepaal 'trend' of sentiment o.b.v. score_type
-            z = float(ind['z_score'])
-            score_type = ind['score_type']
+            z = float(ind["z_score"])
+            score_type = ind["score_type"]
             impact = "neutraal"
             score_uitleg = "neutraal"
-            
+
             # Eén regel voor de richting (omnitwin.polariteit, #120)
             richting = polariteit.uit_oud(score_type)
             if richting == polariteit.HOGER_IS_BETER:
@@ -162,26 +170,28 @@ class ReportDataService:
             elif richting == polariteit.LAGER_IS_BETER:
                 impact = "bovengemiddeld negatief" if z > 0 else "ondergemiddeld positief"
                 score_uitleg = "Lagere waarde is beter"
-                
-            domains_dict[cat].append({
-                "indicator": ind['indicator_naam'],
-                "omschrijving": ind['omschrijving'] if ind['omschrijving'] else "",
-                "meetjaar": ind['meetjaar'],
-                "waarde": round(float(ind['gebied_waarde']), 2),
-                "gemiddelde": round(float(ind['referentie_gemiddelde']), 2),
-                "z_score": round(z, 2),
-                "score_type": score_type,
-                "score_uitleg": score_uitleg,
-                "eenheid": ind['eenheid'] or "",
-                "impact": impact,
-                "n_referentie": ind['referentie_n'],
-                "referentie_terugval": bool(ind['referentie_terugval'])
-            })
+
+            domains_dict[cat].append(
+                {
+                    "indicator": ind["indicator_naam"],
+                    "omschrijving": ind["omschrijving"] if ind["omschrijving"] else "",
+                    "meetjaar": ind["meetjaar"],
+                    "waarde": round(float(ind["gebied_waarde"]), 2),
+                    "gemiddelde": round(float(ind["referentie_gemiddelde"]), 2),
+                    "z_score": round(z, 2),
+                    "score_type": score_type,
+                    "score_uitleg": score_uitleg,
+                    "eenheid": ind["eenheid"] or "",
+                    "impact": impact,
+                    "n_referentie": ind["referentie_n"],
+                    "referentie_terugval": bool(ind["referentie_terugval"]),
+                }
+            )
 
         # Minimum-n (#155): melding als de referentie is teruggevallen op de meest
         # recente waarde per gebied (te weinig gebieden met een waarde in hetzelfde jaar)
         meldingen = []
-        terugval = sorted({ind['indicator_naam'] for ind in indicators if ind.get('referentie_terugval')})
+        terugval = sorted({ind["indicator_naam"] for ind in indicators if ind.get("referentie_terugval")})
         if terugval:
             meldingen.append(
                 f"Bij {len(terugval)} indicator(en) hadden minder dan {MIN_N_STANDAARD} gebieden "
@@ -200,17 +210,17 @@ class ReportDataService:
             "is_waterbuurt": False,
             "referentie_terugval_indicatoren": terugval,
             "meldingen": meldingen,
-            "methodiek": methodiek_beschrijving()
+            "methodiek": methodiek_beschrijving(),
         }
-        
+
         return payload
 
     def generate_benchmark_payload(
         self,
         gebied_id_a: str,
-        mode: str,                          # 'gebieden' | 'gemeente' | 'fryslan'
-        gebieden_b: list = None,            # max 5, alleen bij mode='gebieden'
-        referentie_gemeente: str = None     # alleen bij mode='gemeente'
+        mode: str,  # 'gebieden' | 'gemeente' | 'fryslan'
+        gebieden_b: list = None,  # max 5, alleen bij mode='gebieden'
+        referentie_gemeente: str = None,  # alleen bij mode='gemeente'
     ) -> Dict[str, Any]:
         """
         Vergelijkt Gebied A met een referentie (specifieke gebieden, gemeente-gemiddelde of Fryslân-gemiddelde).
@@ -220,11 +230,11 @@ class ReportDataService:
             gebieden_b = []
 
         # Validatie
-        if mode == 'gebieden' and len(gebieden_b) == 0:
+        if mode == "gebieden" and len(gebieden_b) == 0:
             raise GebruikersFout("Modus 'gebieden' vereist minstens 1 vergelijkingsgebied.")
-        if mode == 'gebieden' and len(gebieden_b) > 5:
+        if mode == "gebieden" and len(gebieden_b) > 5:
             raise GebruikersFout("Maximaal 5 vergelijkingsgebieden toegestaan.")
-        if mode == 'gemeente' and not referentie_gemeente:
+        if mode == "gemeente" and not referentie_gemeente:
             raise GebruikersFout("Modus 'gemeente' vereist een gemeente_code.")
 
         # 1. Haal metadata Gebied A op
@@ -259,13 +269,13 @@ class ReportDataService:
             WHERE gd.rn = 1 AND i.is_actief = true AND NOT is_kleine_aantallen(gd.n)
 """)
         resultaat_a = self.db.execute(waarden_a_query, {"gebied_id_a": gebied_id_a})
-        indicatoren_a = {str(r._mapping['indicator_uuid']): dict(r._mapping) for r in resultaat_a}
+        indicatoren_a = {str(r._mapping["indicator_uuid"]): dict(r._mapping) for r in resultaat_a}
 
         if not indicatoren_a:
             raise GebruikersFout(f"Geen data beschikbaar voor gebied {gebied_id_a}.")
 
         # 3. Bereken referentiewaarden per modus
-        if mode == 'gebieden':
+        if mode == "gebieden":
             # Gemiddelde van specifieke gebieden
             ref_query = text("""
                 SELECT gd.indicator_uuid, AVG(gd.waarde) as ref_waarde, COUNT(DISTINCT gd.gebied_id) as n
@@ -283,7 +293,7 @@ class ReportDataService:
             ref_result = self.db.execute(ref_query, {"gebieden_b": gebieden_b})
             referentie_label = f"{len(gebieden_b)} gebied{'en' if len(gebieden_b) > 1 else ''}"
 
-        elif mode == 'gemeente':
+        elif mode == "gemeente":
             # Gemiddelde van alle buurten in een gemeente (centrale referentie, #66)
             gemeente_naam_query = text("SELECT naam FROM gemeenten WHERE code = :code")
             gem_naam = self.db.execute(gemeente_naam_query, {"code": referentie_gemeente}).fetchone()
@@ -294,37 +304,39 @@ class ReportDataService:
                 SELECT zs.indicator_uuid, zs.gemiddelde as ref_waarde, zs.n
                 FROM {SQL_ZSCORE_GEBIEDEN} zs
             """)
-            ref_result = self.db.execute(ref_query, referentie_params(
-                gebied_a_dict['gebiedstype_id'], referentie_gemeente, gebied_ids=[gebied_id_a]
-            ))
+            ref_result = self.db.execute(
+                ref_query,
+                referentie_params(gebied_a_dict["gebiedstype_id"], referentie_gemeente, gebied_ids=[gebied_id_a]),
+            )
             referentie_label = f"⌀ Gemeente {gemeente_label}"
 
-        elif mode == 'fryslan':
+        elif mode == "fryslan":
             # Gemiddelde van de buurten in de benchmarkprovincie van de organisatie (#66, #324)
-            provincie, referentie_label = self._provincie_referentie(gebied_a_dict['gebiedstype_id'])
+            provincie, referentie_label = self._provincie_referentie(gebied_a_dict["gebiedstype_id"])
             ref_query = text(f"""
                 SELECT zs.indicator_uuid, zs.gemiddelde as ref_waarde, zs.n
                 FROM {SQL_ZSCORE_GEBIEDEN} zs
             """)
-            ref_result = self.db.execute(ref_query, referentie_params(
-                gebied_a_dict['gebiedstype_id'], None, gebied_ids=[gebied_id_a], provincie=provincie
-            ))
+            ref_result = self.db.execute(
+                ref_query,
+                referentie_params(gebied_a_dict["gebiedstype_id"], None, gebied_ids=[gebied_id_a], provincie=provincie),
+            )
 
         else:
             raise GebruikersFout(f"Onbekende modus: {mode}")
 
         # 4. Match referentie met Gebied A en bereken delta's
-        ref_dict = {str(r._mapping['indicator_uuid']): dict(r._mapping) for r in ref_result}
+        ref_dict = {str(r._mapping["indicator_uuid"]): dict(r._mapping) for r in ref_result}
 
         vergelijking = []
         for uuid, ind_a in indicatoren_a.items():
             if uuid not in ref_dict:
                 continue
             ref = ref_dict[uuid]
-            waarde_a = float(ind_a['waarde'])
-            ref_waarde = float(ref['ref_waarde'])
+            waarde_a = float(ind_a["waarde"])
+            ref_waarde = float(ref["ref_waarde"])
             delta = waarde_a - ref_waarde
-            score_type = ind_a['score_type']
+            score_type = ind_a["score_type"]
 
             # Bepaal impact op basis van de polariteit (#120)
             if polariteit.uit_oud(score_type) == polariteit.HOGER_IS_BETER:
@@ -332,29 +344,31 @@ class ReportDataService:
             else:
                 impact = "bovengemiddeld negatief" if delta > 0 else "ondergemiddeld positief"
 
-            vergelijking.append({
-                "indicator": ind_a['indicator_naam'],
-                "kwadrant": ind_a['kwadrant'] or 'Overig',
-                "eenheid": ind_a['eenheid'] or '',
-                "omschrijving": ind_a['omschrijving'] or '',
-                "waarde_a": round(waarde_a, 2),
-                "referentie_waarde": round(ref_waarde, 2),
-                "delta": round(delta, 2),
-                "delta_pct": round((delta / ref_waarde * 100), 2) if ref_waarde != 0 else 0.0,
-                "score_type": score_type,
-                "impact": impact,
-                "n_gebieden": int(ref['n'])
-            })
+            vergelijking.append(
+                {
+                    "indicator": ind_a["indicator_naam"],
+                    "kwadrant": ind_a["kwadrant"] or "Overig",
+                    "eenheid": ind_a["eenheid"] or "",
+                    "omschrijving": ind_a["omschrijving"] or "",
+                    "waarde_a": round(waarde_a, 2),
+                    "referentie_waarde": round(ref_waarde, 2),
+                    "delta": round(delta, 2),
+                    "delta_pct": round((delta / ref_waarde * 100), 2) if ref_waarde != 0 else 0.0,
+                    "score_type": score_type,
+                    "impact": impact,
+                    "n_gebieden": int(ref["n"]),
+                }
+            )
 
         # Sorteer op absolute delta (sterkste afwijking eerst)
-        vergelijking.sort(key=lambda x: abs(x['delta']), reverse=True)
+        vergelijking.sort(key=lambda x: abs(x["delta"]), reverse=True)
 
         return {
-            "gebied_a": {"id": gebied_id_a, "naam": gebied_a_dict['naam']},
+            "gebied_a": {"id": gebied_id_a, "naam": gebied_a_dict["naam"]},
             "referentie_label": referentie_label,
             "mode": mode,
             "vergelijking": vergelijking,
-            "totaal_indicatoren": len(vergelijking)
+            "totaal_indicatoren": len(vergelijking),
         }
 
     def generate_executive_payload(self, gebied_id: str) -> Dict[str, Any]:
@@ -368,16 +382,16 @@ class ReportDataService:
         alle_indicatoren = []
         for domain, indicators in full_payload.get("significante_domeinen", {}).items():
             for ind in indicators:
-                ind['kwadrant'] = domain
+                ind["kwadrant"] = domain
                 alle_indicatoren.append(ind)
 
         # Splits op impact: positief = kansen, negatief = risico's
-        kansen = [i for i in alle_indicatoren if 'positief' in i.get('impact', '')]
-        risicos = [i for i in alle_indicatoren if 'negatief' in i.get('impact', '')]
+        kansen = [i for i in alle_indicatoren if "positief" in i.get("impact", "")]
+        risicos = [i for i in alle_indicatoren if "negatief" in i.get("impact", "")]
 
         # Sorteer op absolute z_score en pak top 3
-        kansen.sort(key=lambda x: abs(x['z_score']), reverse=True)
-        risicos.sort(key=lambda x: abs(x['z_score']), reverse=True)
+        kansen.sort(key=lambda x: abs(x["z_score"]), reverse=True)
+        risicos.sort(key=lambda x: abs(x["z_score"]), reverse=True)
 
         return {
             "gebied_id": gebied_id,
@@ -388,7 +402,7 @@ class ReportDataService:
             "totaal_uitschieters": full_payload.get("totaal_uitschieters", 0),
             "aantal_indicatoren": full_payload.get("aantal_indicatoren", 0),
             "is_waterbuurt": full_payload.get("is_waterbuurt", False),
-            "meldingen": full_payload.get("meldingen", [])
+            "meldingen": full_payload.get("meldingen", []),
         }
 
     # ─── Multi-Gebiedsdossier (Zones-analyse) ────────────────────────────────
@@ -396,15 +410,15 @@ class ReportDataService:
     def _get_zscore_kleur(self, z_score_abs: float, is_negatief_impact: bool) -> str:
         """Bepaal kleur op basis van absolute z-score. Colorblind-safe divergerend palet."""
         if z_score_abs < 0.5:
-            return "#8c96a0"   # neutraal grijs — in lijn
+            return "#8c96a0"  # neutraal grijs — in lijn
         elif z_score_abs < 1.0:
-            return "#d4b483"   # warm zand — licht afwijkend
+            return "#d4b483"  # warm zand — licht afwijkend
         elif z_score_abs < 1.5:
-            return "#c17c3e"   # donker zand/brons — matig afwijkend
+            return "#c17c3e"  # donker zand/brons — matig afwijkend
         elif z_score_abs < 2.0:
-            return "#2b6ca3"   # blauw — sterk afwijkend
+            return "#2b6ca3"  # blauw — sterk afwijkend
         else:
-            return "#1a3d5c"   # donkerblauw — extreem afwijkend
+            return "#1a3d5c"  # donkerblauw — extreem afwijkend
 
     def _determine_impact(self, z_score: float, score_type: str) -> str:
         """Bepaal de impact-tekst op basis van z-score en score_type."""
@@ -416,10 +430,10 @@ class ReportDataService:
     def generate_multi_gebied_payload(
         self,
         gebied_ids: List[str],
-        referentie: str = 'gemeente',
+        referentie: str = "gemeente",
         gemeente_code: Optional[str] = None,
         deelgebied_naam: str = None,
-        thema: str = None
+        thema: str = None,
     ) -> Dict[str, Any]:
         """
         Multi-Gebiedsdossier: Berekent per buurt de top 3 indicatoren met de sterkste
@@ -447,7 +461,7 @@ class ReportDataService:
         gt_row = self.db.execute(gebiedstype_query, {"sample_id": gebied_ids[0]}).fetchone()
         if not gt_row:
             raise GebruikersFout(f"Gebied {gebied_ids[0]} niet gevonden.")
-        gebiedstype_id = str(gt_row._mapping['gebiedstype_id'])
+        gebiedstype_id = str(gt_row._mapping["gebiedstype_id"])
 
         # 2b. Filter water-buurten uit de selectie
         water_filter_query = text("""
@@ -456,23 +470,25 @@ class ReportDataService:
               AND NOT public.is_waterbuurt(g.naam, g.metadata)
         """)
         water_result = self.db.execute(water_filter_query, {"gebied_ids": gebied_ids})
-        gefilterde_ids = [str(r._mapping['id']) for r in water_result]
+        gefilterde_ids = [str(r._mapping["id"]) for r in water_result]
         if not gefilterde_ids:
             raise GebruikersFout("Alle geselecteerde gebieden zijn water-buurten.")
 
         # 2. Referentiegroep: gebiedstype (+ gemeente bij referentie 'gemeente'), #66;
         #    anders de benchmarkprovincie van de organisatie (#324)
-        provincie, provincie_label = (None, None) if referentie == 'gemeente'             else self._provincie_referentie(gebiedstype_id)
+        provincie, provincie_label = (
+            (None, None) if referentie == "gemeente" else self._provincie_referentie(gebiedstype_id)
+        )
         params: Dict[str, Any] = referentie_params(
             gebiedstype_id,
-            gemeente_code if referentie == 'gemeente' else None,
+            gemeente_code if referentie == "gemeente" else None,
             gebied_ids=gefilterde_ids,
             provincie=provincie,
         )
 
         # 2c. Optioneel thema-filter
         thema_filter_clause = ""
-        if thema and thema != 'alle':
+        if thema and thema != "alle":
             thema_filter_clause = "WHERE thema = :thema_filter"
             params["thema_filter"] = thema
 
@@ -531,64 +547,65 @@ class ReportDataService:
         # 4. Bouw buurten_analyse met geneste top_3 structuur
         #    Groepeer per buurt_id, rn=1 bepaalt de hoofdrij + kleur
         from collections import OrderedDict
+
         buurt_groups: Dict[str, Dict[str, Any]] = OrderedDict()
 
         for row in rows:
-            z = float(row['z_score'])
+            z = float(row["z_score"])
             z_abs = abs(z)
-            score_type = row['score_type']
+            score_type = row["score_type"]
             impact = self._determine_impact(z, score_type)
-            is_negatief = 'negatief' in impact
+            is_negatief = "negatief" in impact
             kleur = self._get_zscore_kleur(z_abs, is_negatief)
-            rang = int(row['rang'])
+            rang = int(row["rang"])
 
             entry = {
-                "indicator_uuid": str(row.get('indicator_uuid', '')),
-                "indicator_naam": row['indicator_naam'],
-                "eenheid": row.get('eenheid') or '',
-                "thema": row['thema'],
+                "indicator_uuid": str(row.get("indicator_uuid", "")),
+                "indicator_naam": row["indicator_naam"],
+                "eenheid": row.get("eenheid") or "",
+                "thema": row["thema"],
                 "score_type": score_type,
                 "z_score": round(z, 2),
                 "z_score_abs": round(z_abs, 2),
                 "impact": impact,
                 "kleur_hex": kleur,
-                "waarde": round(float(row['waarde']), 2),
-                "ref_gemiddelde": round(float(row['avg_waarde']), 2),
-                "ref_min": round(float(row['min_waarde']), 2),
-                "ref_max": round(float(row['max_waarde']), 2)
+                "waarde": round(float(row["waarde"]), 2),
+                "ref_gemiddelde": round(float(row["avg_waarde"]), 2),
+                "ref_min": round(float(row["min_waarde"]), 2),
+                "ref_max": round(float(row["max_waarde"]), 2),
             }
 
-            bid = row['gebied_id']
+            bid = row["gebied_id"]
             if bid not in buurt_groups:
                 # Eerste (rang=1) rij wordt de hoofdrij
                 buurt_groups[bid] = {
                     "buurt_id": bid,
-                    "buurt_naam": row['buurt_naam'],
+                    "buurt_naam": row["buurt_naam"],
                     "max_z_score": round(z, 2),
                     "max_z_score_abs": round(z_abs, 2),
-                    "indicator_naam": row['indicator_naam'],
-                    "eenheid": row.get('eenheid') or '',
-                    "thema": row['thema'],
+                    "indicator_naam": row["indicator_naam"],
+                    "eenheid": row.get("eenheid") or "",
+                    "thema": row["thema"],
                     "score_type": score_type,
                     "impact": impact,
                     "kleur_hex": kleur,
-                    "waarde": round(float(row['waarde']), 2),
-                    "ref_gemiddelde": round(float(row['avg_waarde']), 2),
-                    "ref_min": round(float(row['min_waarde']), 2),
-                    "ref_max": round(float(row['max_waarde']), 2),
-                    "top_3": [entry]
+                    "waarde": round(float(row["waarde"]), 2),
+                    "ref_gemiddelde": round(float(row["avg_waarde"]), 2),
+                    "ref_min": round(float(row["min_waarde"]), 2),
+                    "ref_max": round(float(row["max_waarde"]), 2),
+                    "top_3": [entry],
                 }
             else:
                 buurt_groups[bid]["top_3"].append(entry)
 
         buurten_analyse = list(buurt_groups.values())
         # Sorteer op sterkste afwijking (primaire rij)
-        buurten_analyse.sort(key=lambda x: x['max_z_score_abs'], reverse=True)
+        buurten_analyse.sort(key=lambda x: x["max_z_score_abs"], reverse=True)
 
         # 5. Bereken thema-aggregaat
         # Gebruik ALLE z-scores (niet alleen top per buurt) voor thema-gemiddelde
         thema_agg_filter = ""
-        if thema and thema != 'alle':
+        if thema and thema != "alle":
             thema_agg_filter = f"AND COALESCE(vkh.titel_naam, i.categorie, 'Overig') = :thema_filter"
 
         thema_query = text(f"""
@@ -620,29 +637,25 @@ class ReportDataService:
         thema_aggregaat = {}
         for row in thema_result:
             r = dict(row._mapping)
-            thema_aggregaat[r['thema']] = {
-                "gem_zscore": round(float(r['gem_zscore']), 2),
-                "n_uitschieters": int(r['n_uitschieters']),
-                "n_datapunten": int(r['n_datapunten'])
+            thema_aggregaat[r["thema"]] = {
+                "gem_zscore": round(float(r["gem_zscore"]), 2),
+                "n_uitschieters": int(r["n_uitschieters"]),
+                "n_datapunten": int(r["n_datapunten"]),
             }
 
         # 6. Label
-        if referentie == 'gemeente':
+        if referentie == "gemeente":
             gem_naam_row = self.db.execute(
-                text("SELECT naam FROM gemeenten WHERE code = :code"),
-                {"code": gemeente_code}
+                text("SELECT naam FROM gemeenten WHERE code = :code"), {"code": gemeente_code}
             ).fetchone()
             referentie_label = f"⌀ Gemeente {gem_naam_row[0]}" if gem_naam_row else f"⌀ Gemeente {gemeente_code}"
         else:
             referentie_label = provincie_label
 
         # 7. Data Lineage & Bronverantwoording
-        used_indicator_uuids = list({
-            top['indicator_uuid'] 
-            for b in buurten_analyse 
-            for top in b.get('top_3', []) 
-            if top.get('indicator_uuid')
-        })
+        used_indicator_uuids = list(
+            {top["indicator_uuid"] for b in buurten_analyse for top in b.get("top_3", []) if top.get("indicator_uuid")}
+        )
         bronverantwoording = self.get_bronverantwoording_for_indicators(used_indicator_uuids)
 
         return {
@@ -654,7 +667,7 @@ class ReportDataService:
             "buurten_analyse": buurten_analyse,
             "thema_aggregaat": thema_aggregaat,
             "top_uitschieters": buurten_analyse[:10],
-            "bronverantwoording": bronverantwoording
+            "bronverantwoording": bronverantwoording,
         }
 
     def get_bronverantwoording_for_indicators(self, indicator_uuids: List[str]) -> List[Dict[str, Any]]:
@@ -663,7 +676,7 @@ class ReportDataService:
         """
         if not indicator_uuids:
             return []
-        
+
         query = text("""
             SELECT 
                 uuid, naam, bron, bron_systeem_api, bron_tabel_referentie,
@@ -673,7 +686,7 @@ class ReportDataService:
             ORDER BY bron, naam
         """)
         rows = self.db.execute(query, {"uuids": indicator_uuids}).fetchall()
-        
+
         result = []
         for r in rows:
             bron_url = None
@@ -682,14 +695,18 @@ class ReportDataService:
                 if s == "CBS_ODATA":
                     bron_url = f"https://opendata.cbs.nl/#/CBS/nl/dataset/{r.bron_tabel_referentie}/table"
                 elif s == "RIVM_STATLINE":
-                    bron_url = f"https://opendata.cbs.nl/#/CBS/nl/dataset/{r.bron_tabel_referentie}/table" if "NED" in r.bron_tabel_referentie.upper() else "https://www.volksgezondheidenzorg.info/"
+                    bron_url = (
+                        f"https://opendata.cbs.nl/#/CBS/nl/dataset/{r.bron_tabel_referentie}/table"
+                        if "NED" in r.bron_tabel_referentie.upper()
+                        else "https://www.volksgezondheidenzorg.info/"
+                    )
                 elif s == "BAG_API":
                     bron_url = "https://bag.basisregistraties.overheid.nl/"
                 elif s == "POLITIE_DATA":
                     bron_url = f"https://opendata.cbs.nl/#/CBS/nl/dataset/{r.bron_tabel_referentie}/table"
                 elif s == "OV_API":
                     bron_url = "https://openov.nl/"
-                    
+
             peildata_str = ""
             if r.begingeldigheid and r.eindgeldigheid:
                 peildata_str = f"{r.begingeldigheid.year} - {r.eindgeldigheid.year}"
@@ -697,25 +714,27 @@ class ReportDataService:
                 peildata_str = str(r.eindgeldigheid.year)
             elif r.begingeldigheid:
                 peildata_str = str(r.begingeldigheid.year)
-                
-            result.append({
-                "indicator_uuid": str(r.uuid),
-                "indicator_naam": r.naam,
-                "bron": r.bron or "Centraal Bureau voor de Statistiek (CBS)",
-                "bron_systeem_api": r.bron_systeem_api,
-                "bron_tabel_referentie": r.bron_tabel_referentie,
-                "bron_url": bron_url,
-                "peildata": peildata_str,
-                "laatste_controle": r.laatste_check_datum.strftime("%d-%m-%Y") if r.laatste_check_datum else None
-            })
+
+            result.append(
+                {
+                    "indicator_uuid": str(r.uuid),
+                    "indicator_naam": r.naam,
+                    "bron": r.bron or "Centraal Bureau voor de Statistiek (CBS)",
+                    "bron_systeem_api": r.bron_systeem_api,
+                    "bron_tabel_referentie": r.bron_tabel_referentie,
+                    "bron_url": bron_url,
+                    "peildata": peildata_str,
+                    "laatste_controle": r.laatste_check_datum.strftime("%d-%m-%Y") if r.laatste_check_datum else None,
+                }
+            )
         return result
 
     def generate_multi_gebied_geojson(
         self,
         gebied_ids: List[str],
-        referentie: str = 'gemeente',
+        referentie: str = "gemeente",
         gemeente_code: Optional[str] = None,
-        thema: str = None
+        thema: str = None,
     ) -> Dict[str, Any]:
         """
         Genereert een GeoJSON FeatureCollection met per buurt:
@@ -726,14 +745,11 @@ class ReportDataService:
         """
         # Haal de analyse-data op (inclusief thema-filter)
         payload = self.generate_multi_gebied_payload(
-            gebied_ids=gebied_ids,
-            referentie=referentie,
-            gemeente_code=gemeente_code,
-            thema=thema
+            gebied_ids=gebied_ids, referentie=referentie, gemeente_code=gemeente_code, thema=thema
         )
-        
+
         # Maak een lookup van buurt_id → analyse-data (1 per buurt, met geneste top_3)
-        analyse_lookup = {b['buurt_id']: b for b in payload['buurten_analyse']}
+        analyse_lookup = {b["buurt_id"]: b for b in payload["buurten_analyse"]}
 
         # Haal geometrieën op (als GeoJSON) — filter water-buurten
         geom_query = text("""
@@ -749,44 +765,41 @@ class ReportDataService:
         features = []
         for row in geom_result:
             r = dict(row._mapping)
-            buurt_id = r['id']
+            buurt_id = r["id"]
             analyse = analyse_lookup.get(buurt_id, {})
 
             feature = {
                 "type": "Feature",
-                "geometry": r['geometry'],
+                "geometry": r["geometry"],
                 "properties": {
                     "buurt_id": buurt_id,
-                    "buurt_naam": r['naam'],
-                    "max_z_score": analyse.get('max_z_score', 0),
-                    "max_z_score_abs": analyse.get('max_z_score_abs', 0),
-                    "indicator_naam": analyse.get('indicator_naam', ''),
-                    "thema": analyse.get('thema', ''),
-                    "impact": analyse.get('impact', ''),
-                    "kleur_hex": analyse.get('kleur_hex', '#6b7280'),
-                    "top_3": analyse.get('top_3', [])
-                }
+                    "buurt_naam": r["naam"],
+                    "max_z_score": analyse.get("max_z_score", 0),
+                    "max_z_score_abs": analyse.get("max_z_score_abs", 0),
+                    "indicator_naam": analyse.get("indicator_naam", ""),
+                    "thema": analyse.get("thema", ""),
+                    "impact": analyse.get("impact", ""),
+                    "kleur_hex": analyse.get("kleur_hex", "#6b7280"),
+                    "top_3": analyse.get("top_3", []),
+                },
             }
             features.append(feature)
 
         return {
             "type": "FeatureCollection",
-            "metadata": {
-                "referentie_label": payload['referentie_label'],
-                "totaal_buurten": payload['totaal_buurten']
-            },
-            "features": features
+            "metadata": {"referentie_label": payload["referentie_label"], "totaal_buurten": payload["totaal_buurten"]},
+            "features": features,
         }
 
     def generate_thema_analyse_payload(
         self,
         gebied_ids: List[str],
-        referentie: str = 'gemeente',
+        referentie: str = "gemeente",
         gemeente_code: Optional[str] = None,
         deelgebied_naam: str = None,
         categorie: str = None,
         thema_naam: str = None,
-        onderdeel_naam: str = None
+        onderdeel_naam: str = None,
     ) -> Dict[str, Any]:
         """
         Thema-Analyse: Berekent alle indicatoren binnen de hiërarchie-selectie
@@ -807,7 +820,7 @@ class ReportDataService:
         gt_row = self.db.execute(gebiedstype_query, {"sample_id": gebied_ids[0]}).fetchone()
         if not gt_row:
             raise GebruikersFout(f"Gebied {gebied_ids[0]} niet gevonden.")
-        gebiedstype_id = str(gt_row._mapping['gebiedstype_id'])
+        gebiedstype_id = str(gt_row._mapping["gebiedstype_id"])
 
         # 2b. Filter water-buurten uit
         water_filter_query = text("""
@@ -816,16 +829,18 @@ class ReportDataService:
               AND NOT public.is_waterbuurt(g.naam, g.metadata)
         """)
         water_result = self.db.execute(water_filter_query, {"gebied_ids": gebied_ids})
-        gefilterde_ids = [str(r._mapping['id']) for r in water_result]
+        gefilterde_ids = [str(r._mapping["id"]) for r in water_result]
         if not gefilterde_ids:
             raise GebruikersFout("Alle geselecteerde gebieden zijn water-buurten.")
 
         # 2. Referentiegroep: gebiedstype (+ gemeente bij referentie 'gemeente'), #66;
         #    anders de benchmarkprovincie van de organisatie (#324)
-        provincie, provincie_label = (None, None) if referentie == 'gemeente'             else self._provincie_referentie(gebiedstype_id)
+        provincie, provincie_label = (
+            (None, None) if referentie == "gemeente" else self._provincie_referentie(gebiedstype_id)
+        )
         params: Dict[str, Any] = referentie_params(
             gebiedstype_id,
-            gemeente_code if referentie == 'gemeente' else None,
+            gemeente_code if referentie == "gemeente" else None,
             gebied_ids=gefilterde_ids,
             provincie=provincie,
         )
@@ -841,7 +856,7 @@ class ReportDataService:
         if onderdeel_naam:
             filters.append("onderdeel_naam = :onderdeel_naam")
             params["onderdeel_naam"] = onderdeel_naam
-        
+
         thema_filter_clause = "WHERE " + " AND ".join(filters) if filters else ""
 
         # 3. Bereken z-scores
@@ -892,40 +907,41 @@ class ReportDataService:
 
         # 4. Groepeer per buurt
         from collections import OrderedDict
+
         buurt_groups: Dict[str, Dict[str, Any]] = OrderedDict()
 
         for row in rows:
-            z = float(row['z_score'])
+            z = float(row["z_score"])
             z_abs = abs(z)
-            score_type = row['score_type']
+            score_type = row["score_type"]
             impact = self._determine_impact(z, score_type)
-            is_negatief = 'negatief' in impact
+            is_negatief = "negatief" in impact
             kleur = self._get_zscore_kleur(z_abs, is_negatief)
 
             entry = {
-                "indicator_naam": row['indicator_naam'],
-                "eenheid": row.get('eenheid') or '',
-                "thema": row.get('thema_naam') or row.get('titel_naam') or 'Overig',
-                "onderdeel": row.get('onderdeel_naam') or '',
+                "indicator_naam": row["indicator_naam"],
+                "eenheid": row.get("eenheid") or "",
+                "thema": row.get("thema_naam") or row.get("titel_naam") or "Overig",
+                "onderdeel": row.get("onderdeel_naam") or "",
                 "score_type": score_type,
                 "z_score": round(z, 2),
                 "z_score_abs": round(z_abs, 2),
                 "impact": impact,
                 "kleur_hex": kleur,
-                "waarde": round(float(row['waarde']), 2),
-                "ref_gemiddelde": round(float(row['avg_waarde']), 2),
-                "ref_min": round(float(row['min_waarde']), 2),
-                "ref_max": round(float(row['max_waarde']), 2)
+                "waarde": round(float(row["waarde"]), 2),
+                "ref_gemiddelde": round(float(row["avg_waarde"]), 2),
+                "ref_min": round(float(row["min_waarde"]), 2),
+                "ref_max": round(float(row["max_waarde"]), 2),
             }
 
-            bid = row['gebied_id']
+            bid = row["gebied_id"]
             if bid not in buurt_groups:
                 buurt_groups[bid] = {
                     "buurt_id": bid,
-                    "buurt_naam": row['buurt_naam'],
+                    "buurt_naam": row["buurt_naam"],
                     "max_z_score": round(z, 2),
                     "max_z_score_abs": round(z_abs, 2),
-                    "indicatoren": [entry]
+                    "indicatoren": [entry],
                 }
             else:
                 buurt_groups[bid]["indicatoren"].append(entry)
@@ -935,13 +951,12 @@ class ReportDataService:
                     buurt_groups[bid]["max_z_score_abs"] = round(z_abs, 2)
 
         buurten_analyse = list(buurt_groups.values())
-        buurten_analyse.sort(key=lambda x: x['max_z_score_abs'], reverse=True)
+        buurten_analyse.sort(key=lambda x: x["max_z_score_abs"], reverse=True)
 
         # 5. Label
-        if referentie == 'gemeente':
+        if referentie == "gemeente":
             gem_naam_row = self.db.execute(
-                text("SELECT naam FROM gemeenten WHERE code = :code"),
-                {"code": gemeente_code}
+                text("SELECT naam FROM gemeenten WHERE code = :code"), {"code": gemeente_code}
             ).fetchone()
             referentie_label = f"⌀ Gemeente {gem_naam_row[0]}" if gem_naam_row else f"⌀ Gemeente {gemeente_code}"
         else:
@@ -949,9 +964,12 @@ class ReportDataService:
 
         # 6. Beschrijving
         filter_parts = []
-        if categorie: filter_parts.append(categorie)
-        if thema_naam: filter_parts.append(thema_naam)
-        if onderdeel_naam: filter_parts.append(onderdeel_naam)
+        if categorie:
+            filter_parts.append(categorie)
+        if thema_naam:
+            filter_parts.append(thema_naam)
+        if onderdeel_naam:
+            filter_parts.append(onderdeel_naam)
         filter_beschrijving = " › ".join(filter_parts) if filter_parts else "Alle indicatoren"
 
         return {
@@ -962,17 +980,17 @@ class ReportDataService:
             "referentie_modus": referentie,
             "totaal_buurten": len(gebied_ids),
             "buurten_met_data": len(buurten_analyse),
-            "buurten_analyse": buurten_analyse
+            "buurten_analyse": buurten_analyse,
         }
 
     def generate_thema_analyse_geojson(
         self,
         gebied_ids: List[str],
-        referentie: str = 'gemeente',
+        referentie: str = "gemeente",
         gemeente_code: Optional[str] = None,
         categorie: str = None,
         thema_naam: str = None,
-        onderdeel_naam: str = None
+        onderdeel_naam: str = None,
     ) -> Dict[str, Any]:
         """
         Genereert een GeoJSON FeatureCollection voor de Thema-Analyse.
@@ -985,10 +1003,10 @@ class ReportDataService:
             gemeente_code=gemeente_code,
             categorie=categorie,
             thema_naam=thema_naam,
-            onderdeel_naam=onderdeel_naam
+            onderdeel_naam=onderdeel_naam,
         )
-        
-        analyse_lookup = {b['buurt_id']: b for b in payload['buurten_analyse']}
+
+        analyse_lookup = {b["buurt_id"]: b for b in payload["buurten_analyse"]}
 
         geom_query = text("""
             SELECT g.id, g.naam,
@@ -1003,36 +1021,36 @@ class ReportDataService:
         features = []
         for row in geom_result:
             r = dict(row._mapping)
-            buurt_id = r['id']
+            buurt_id = r["id"]
             analyse = analyse_lookup.get(buurt_id, {})
 
             feature = {
                 "type": "Feature",
-                "geometry": r['geometry'],
+                "geometry": r["geometry"],
                 "properties": {
                     "buurt_id": buurt_id,
-                    "buurt_naam": r['naam'],
-                    "max_z_score": analyse.get('max_z_score', 0),
-                    "max_z_score_abs": analyse.get('max_z_score_abs', 0),
-                    "indicatoren": analyse.get('indicatoren', [])
-                }
+                    "buurt_naam": r["naam"],
+                    "max_z_score": analyse.get("max_z_score", 0),
+                    "max_z_score_abs": analyse.get("max_z_score_abs", 0),
+                    "indicatoren": analyse.get("indicatoren", []),
+                },
             }
             # Kleur bepalen voor de map: we nemen de kleur van de hoogste uitschieter (al gesorteerd op 0 in array)
             if feature["properties"]["indicatoren"]:
                 feature["properties"]["kleur_hex"] = feature["properties"]["indicatoren"][0]["kleur_hex"]
             else:
-                feature["properties"]["kleur_hex"] = '#6b7280'
+                feature["properties"]["kleur_hex"] = "#6b7280"
 
             features.append(feature)
 
         return {
             "type": "FeatureCollection",
             "metadata": {
-                "referentie_label": payload['referentie_label'],
-                "totaal_buurten": payload['totaal_buurten'],
-                "filter_beschrijving": payload['filter_beschrijving']
+                "referentie_label": payload["referentie_label"],
+                "totaal_buurten": payload["totaal_buurten"],
+                "filter_beschrijving": payload["filter_beschrijving"],
             },
-            "features": features
+            "features": features,
         }
 
     # ─── Sjabloon F: Woonplaats- & Deelgebiedsanalyse ─────────────────────────
@@ -1040,9 +1058,9 @@ class ReportDataService:
     def generate_deelgebied_payload(
         self,
         gebied_ids: List[str],
-        referentie: str = 'gemeente',
+        referentie: str = "gemeente",
         gemeente_code: Optional[str] = None,
-        deelgebied_naam: Optional[str] = None
+        deelgebied_naam: Optional[str] = None,
     ) -> Dict[str, Any]:
         """
         Sjabloon F: Woonplaats- & Deelgebiedsanalyse.
@@ -1072,39 +1090,37 @@ class ReportDataService:
         if not geb_rows:
             raise GebruikersFout("Geen van de opgegeven gebieden is gevonden in de database.")
 
-        waterbuurten = [
-            {"id": str(g['id']), "naam": str(g['naam'])}
-            for g in geb_rows if g.get('is_water')
-        ]
-        actieve_buurten = [g for g in geb_rows if not g.get('is_water')]
+        waterbuurten = [{"id": str(g["id"]), "naam": str(g["naam"])} for g in geb_rows if g.get("is_water")]
+        actieve_buurten = [g for g in geb_rows if not g.get("is_water")]
 
         if not actieve_buurten:
-            raise GebruikersFout("Alle geselecteerde gebieden zijn water-buurten en worden conform projectstandaard uitgesloten van analyse.")
+            raise GebruikersFout(
+                "Alle geselecteerde gebieden zijn water-buurten en worden conform projectstandaard uitgesloten van analyse."
+            )
 
         first_buurt = actieve_buurten[0]
-        gebiedstype_id = str(first_buurt['gebiedstype_id'])
+        gebiedstype_id = str(first_buurt["gebiedstype_id"])
         if not gemeente_code:
-            gemeente_code = first_buurt.get('gemeente_code') or eigen_gemeente_code(self.db)
+            gemeente_code = first_buurt.get("gemeente_code") or eigen_gemeente_code(self.db)
             gemeente_code = str(gemeente_code) if gemeente_code else None
 
         # Gemeente naam ophalen voor duiding
         gem_row = self.db.execute(
-            text("SELECT naam FROM gemeenten WHERE code = :code"),
-            {"code": gemeente_code}
+            text("SELECT naam FROM gemeenten WHERE code = :code"), {"code": gemeente_code}
         ).fetchone()
         gemeente_naam = gem_row[0] if gem_row else gemeente_code
 
         # 2. Referentiegroep: gebiedstype (+ gemeente bij referentie 'gemeente'), #66
         provincie = None
-        if referentie == 'gemeente':
+        if referentie == "gemeente":
             referentie_label = f"⌀ Gemeente {gemeente_naam}"
         else:
             provincie, referentie_label = self._provincie_referentie(gebiedstype_id)
 
-        actieve_ids = [str(b['id']) for b in actieve_buurten]
+        actieve_ids = [str(b["id"]) for b in actieve_buurten]
         params: Dict[str, Any] = referentie_params(
             gebiedstype_id,
-            gemeente_code if referentie == 'gemeente' else None,
+            gemeente_code if referentie == "gemeente" else None,
             gebied_ids=actieve_ids,
             provincie=provincie,
         )
@@ -1127,9 +1143,9 @@ class ReportDataService:
         """)
         inw_rows = self.db.execute(inwoners_query, {"gebied_ids": actieve_ids}).fetchall()
         inw_map = {
-            str(r._mapping['gebied_id']): float(r._mapping['inwoners'])
+            str(r._mapping["gebied_id"]): float(r._mapping["inwoners"])
             for r in inw_rows
-            if r._mapping['inwoners'] is not None
+            if r._mapping["inwoners"] is not None
         }
 
         inwoners_per_buurt: Dict[str, Dict[str, Any]] = {}
@@ -1138,8 +1154,8 @@ class ReportDataService:
         totaal_inwoners = 0.0
 
         for b in actieve_buurten:
-            bid = str(b['id'])
-            bnaam = str(b['naam'])
+            bid = str(b["id"])
+            bnaam = str(b["naam"])
             if bid in inw_map:
                 inw_val = inw_map[bid]
                 if inw_val <= 0:
@@ -1153,23 +1169,17 @@ class ReportDataService:
                     "naam": bnaam,
                     "inwoners": inw_val,
                     "gewicht": gew,
-                    "is_fallback": False
+                    "is_fallback": False,
                 }
             else:
                 fallback_buurten.append({"id": bid, "naam": bnaam})
-                inwoners_per_buurt[bid] = {
-                    "id": bid,
-                    "naam": bnaam,
-                    "inwoners": 0,
-                    "gewicht": 1.0,
-                    "is_fallback": True
-                }
+                inwoners_per_buurt[bid] = {"id": bid, "naam": bnaam, "inwoners": 0, "gewicht": 1.0, "is_fallback": True}
 
         # Fallback als ALLE buurten 0 inwoners of fallback hebben
-        positive_weights = sum(b['gewicht'] for b in inwoners_per_buurt.values())
+        positive_weights = sum(b["gewicht"] for b in inwoners_per_buurt.values())
         if positive_weights == 0:
             for bid in inwoners_per_buurt:
-                inwoners_per_buurt[bid]['gewicht'] = 1.0
+                inwoners_per_buurt[bid]["gewicht"] = 1.0
 
         # 4. Target data en referentiestatistieken ophalen
         query = text(f"""
@@ -1220,59 +1230,59 @@ class ReportDataService:
         # 5. Groepeer per indicator en bereken gewogen gemiddelde + drilldown
         indicator_points = defaultdict(list)
         for r in result_rows:
-            indicator_points[str(r['indicator_uuid'])].append(r)
+            indicator_points[str(r["indicator_uuid"])].append(r)
 
-        kwadrant_map = defaultdict(lambda: {
-            "kwadrant_naam": "",
-            "kwadrant_kleur": "#3B82F6",
-            "themas": defaultdict(list)
-        })
+        kwadrant_map = defaultdict(
+            lambda: {"kwadrant_naam": "", "kwadrant_kleur": "#3B82F6", "themas": defaultdict(list)}
+        )
 
         used_indicator_uuids = set()
 
         for uuid_str, pts in indicator_points.items():
             first_pt = pts[0]
-            kw_naam = first_pt['kwadrant_naam'] or 'Overig'
-            kw_kleur = first_pt['kwadrant_kleur'] or '#3B82F6'
-            th_naam = first_pt['thema_naam'] or 'Overig'
+            kw_naam = first_pt["kwadrant_naam"] or "Overig"
+            kw_kleur = first_pt["kwadrant_kleur"] or "#3B82F6"
+            th_naam = first_pt["thema_naam"] or "Overig"
 
             # Referentie voor het gewogen gemiddelde: die van het meest recente meetjaar
             # onder de buurten. ⚠️ Bij jaarlogica zelfde_jaar kunnen buurten met een ouder
             # meetjaar een andere referentie hebben; hun buurt-Z gebruikt hun eigen jaar.
-            ref_pt = max(pts, key=lambda p: p['jaar'])
-            avg_waarde = float(ref_pt['avg_waarde'])
-            std_waarde = float(ref_pt['std_waarde'])
-            n_ref = int(ref_pt['n_ref_buurten'])
+            ref_pt = max(pts, key=lambda p: p["jaar"])
+            avg_waarde = float(ref_pt["avg_waarde"])
+            std_waarde = float(ref_pt["std_waarde"])
+            n_ref = int(ref_pt["n_ref_buurten"])
 
             w_sum = 0.0
             sum_val_w = 0.0
             drilldown = []
 
             for pt in pts:
-                bid = str(pt['gebied_id'])
+                bid = str(pt["gebied_id"])
                 w_info = inwoners_per_buurt.get(bid, {"gewicht": 1.0, "inwoners": 0})
-                gew = float(w_info['gewicht'])
-                val = float(pt['waarde'])
+                gew = float(w_info["gewicht"])
+                val = float(pt["waarde"])
 
                 if gew > 0:
                     sum_val_w += val * gew
                     w_sum += gew
 
                 # Buurt-zscore (uit zscore_gebieden) en afwijking t.o.v. referentie
-                b_z = float(pt['z_score'])
+                b_z = float(pt["z_score"])
                 b_diff = val - avg_waarde
                 b_diff_pct = (b_diff / avg_waarde * 100.0) if avg_waarde != 0 else 0.0
 
-                drilldown.append({
-                    "buurt_id": bid,
-                    "buurt_naam": pt['buurt_naam'],
-                    "waarde": round(val, 2),
-                    "inwoners": int(w_info['inwoners']),
-                    "gewicht": round(gew, 1),
-                    "buurt_z_score": round(b_z, 2),
-                    "verschil": round(b_diff, 2),
-                    "verschil_pct": round(b_diff_pct, 1)
-                })
+                drilldown.append(
+                    {
+                        "buurt_id": bid,
+                        "buurt_naam": pt["buurt_naam"],
+                        "waarde": round(val, 2),
+                        "inwoners": int(w_info["inwoners"]),
+                        "gewicht": round(gew, 1),
+                        "buurt_z_score": round(b_z, 2),
+                        "verschil": round(b_diff, 2),
+                        "verschil_pct": round(b_diff_pct, 1),
+                    }
+                )
 
             if w_sum <= 0:
                 continue
@@ -1284,24 +1294,24 @@ class ReportDataService:
             verschil = gewogen_waarde - avg_waarde
             verschil_pct = (verschil / avg_waarde * 100.0) if avg_waarde != 0 else 0.0
 
-            score_type = first_pt['score_type']
+            score_type = first_pt["score_type"]
             impact = self._determine_impact(z_score, score_type)
-            is_ongunstig = 'negatief' in impact
+            is_ongunstig = "negatief" in impact
             kleur = self._get_zscore_kleur(z_abs, is_ongunstig)
 
             # Sorteer drilldown buurten op afwijking van referentie
-            drilldown.sort(key=lambda x: abs(x['buurt_z_score']), reverse=True)
+            drilldown.sort(key=lambda x: abs(x["buurt_z_score"]), reverse=True)
 
             indicator_item = {
                 "indicator_uuid": uuid_str,
-                "indicator_naam": first_pt['indicator_naam'],
-                "eenheid": first_pt.get('eenheid') or '',
+                "indicator_naam": first_pt["indicator_naam"],
+                "eenheid": first_pt.get("eenheid") or "",
                 "score_type": score_type,
                 "gewogen_waarde": round(gewogen_waarde, 2),
                 "ref_gemiddelde": round(avg_waarde, 2),
                 "ref_std": round(std_waarde, 2),
-                "ref_min": round(float(ref_pt['min_waarde']), 2),
-                "ref_max": round(float(ref_pt['max_waarde']), 2),
+                "ref_min": round(float(ref_pt["min_waarde"]), 2),
+                "ref_max": round(float(ref_pt["max_waarde"]), 2),
                 "z_score": round(z_score, 2),
                 "z_score_abs": round(z_abs, 2),
                 "verschil": round(verschil, 2),
@@ -1309,11 +1319,11 @@ class ReportDataService:
                 "impact": impact,
                 "is_ongunstig": is_ongunstig,
                 "kleur_hex": kleur,
-                "omschrijving": first_pt.get('omschrijving') or '',
-                "ontologische_beschrijving": first_pt.get('ontologische_beschrijving') or '',
-                "bron": first_pt.get('bron') or '',
+                "omschrijving": first_pt.get("omschrijving") or "",
+                "ontologische_beschrijving": first_pt.get("ontologische_beschrijving") or "",
+                "bron": first_pt.get("bron") or "",
                 "n_buurten_met_data": len(drilldown),
-                "buurten_drilldown": drilldown
+                "buurten_drilldown": drilldown,
             }
 
             kwadrant_map[kw_naam]["kwadrant_naam"] = kw_naam
@@ -1327,13 +1337,12 @@ class ReportDataService:
             "Kwaliteit fysieke leefomgeving",
             "Kwaliteit sociale leefomgeving",
             "Kwaliteit van leven",
-            "Samenstelling"
+            "Samenstelling",
         ]
 
         # Sorteer kwadranten volgens standaard volgorde
         gesorteerde_kw_namen = sorted(
-            kwadrant_map.keys(),
-            key=lambda k: kwadranten_volgorde.index(k) if k in kwadranten_volgorde else 99
+            kwadrant_map.keys(), key=lambda k: kwadranten_volgorde.index(k) if k in kwadranten_volgorde else 99
         )
 
         for kw_naam in gesorteerde_kw_namen:
@@ -1346,44 +1355,48 @@ class ReportDataService:
                 alle_kw_indicatoren.extend(ind_list)
 
                 # Splits in aandachtspunten (ongunstig) en kansen (gunstig)
-                aandachtspunten = [i for i in ind_list if i['is_ongunstig']]
-                kansen = [i for i in ind_list if not i['is_ongunstig']]
+                aandachtspunten = [i for i in ind_list if i["is_ongunstig"]]
+                kansen = [i for i in ind_list if not i["is_ongunstig"]]
 
                 # Sorteer op absolute z-score dalend
-                aandachtspunten.sort(key=lambda x: x['z_score_abs'], reverse=True)
-                kansen.sort(key=lambda x: x['z_score_abs'], reverse=True)
+                aandachtspunten.sort(key=lambda x: x["z_score_abs"], reverse=True)
+                kansen.sort(key=lambda x: x["z_score_abs"], reverse=True)
 
-                themas_output.append({
-                    "thema_naam": th_naam,
-                    "totaal_indicatoren": len(ind_list),
-                    "totaal_aandachtspunten": len(aandachtspunten),
-                    "totaal_kansen": len(kansen),
-                    "top10_aandachtspunten": aandachtspunten[:10],
-                    "top10_kansen": kansen[:10]
-                })
+                themas_output.append(
+                    {
+                        "thema_naam": th_naam,
+                        "totaal_indicatoren": len(ind_list),
+                        "totaal_aandachtspunten": len(aandachtspunten),
+                        "totaal_kansen": len(kansen),
+                        "top10_aandachtspunten": aandachtspunten[:10],
+                        "top10_kansen": kansen[:10],
+                    }
+                )
 
             n_ind = len(alle_kw_indicatoren)
-            gem_z = round(sum(i['z_score'] for i in alle_kw_indicatoren) / n_ind, 2) if n_ind > 0 else 0.0
-            n_uitschieters = sum(1 for i in alle_kw_indicatoren if i['z_score_abs'] >= 1.0)
-            n_aandacht_sterk = sum(1 for i in alle_kw_indicatoren if i['is_ongunstig'] and i['z_score_abs'] >= 1.0)
-            n_kans_sterk = sum(1 for i in alle_kw_indicatoren if not i['is_ongunstig'] and i['z_score_abs'] >= 1.0)
-            totaal_aandacht = sum(1 for i in alle_kw_indicatoren if i['is_ongunstig'])
-            totaal_kans = sum(1 for i in alle_kw_indicatoren if not i['is_ongunstig'])
+            gem_z = round(sum(i["z_score"] for i in alle_kw_indicatoren) / n_ind, 2) if n_ind > 0 else 0.0
+            n_uitschieters = sum(1 for i in alle_kw_indicatoren if i["z_score_abs"] >= 1.0)
+            n_aandacht_sterk = sum(1 for i in alle_kw_indicatoren if i["is_ongunstig"] and i["z_score_abs"] >= 1.0)
+            n_kans_sterk = sum(1 for i in alle_kw_indicatoren if not i["is_ongunstig"] and i["z_score_abs"] >= 1.0)
+            totaal_aandacht = sum(1 for i in alle_kw_indicatoren if i["is_ongunstig"])
+            totaal_kans = sum(1 for i in alle_kw_indicatoren if not i["is_ongunstig"])
 
-            kwadranten_output.append({
-                "kwadrant_naam": kw_naam,
-                "kwadrant_kleur": kw_data["kwadrant_kleur"],
-                "gem_zscore": gem_z,
-                "n_indicatoren": n_ind,
-                "n_uitschieters": n_uitschieters,
-                "n_aandachtspunten": totaal_aandacht,
-                "n_kansen": totaal_kans,
-                "totaal_aandachtspunten": totaal_aandacht,
-                "totaal_kansen": totaal_kans,
-                "n_aandachtspunten_sterk": n_aandacht_sterk,
-                "n_kansen_sterk": n_kans_sterk,
-                "themas": themas_output
-            })
+            kwadranten_output.append(
+                {
+                    "kwadrant_naam": kw_naam,
+                    "kwadrant_kleur": kw_data["kwadrant_kleur"],
+                    "gem_zscore": gem_z,
+                    "n_indicatoren": n_ind,
+                    "n_uitschieters": n_uitschieters,
+                    "n_aandachtspunten": totaal_aandacht,
+                    "n_kansen": totaal_kans,
+                    "totaal_aandachtspunten": totaal_aandacht,
+                    "totaal_kansen": totaal_kans,
+                    "n_aandachtspunten_sterk": n_aandacht_sterk,
+                    "n_kansen_sterk": n_kans_sterk,
+                    "themas": themas_output,
+                }
+            )
 
         # 7. Bronverantwoording
         bronverantwoording = self.get_bronverantwoording_for_indicators(list(used_indicator_uuids))
@@ -1405,7 +1418,7 @@ class ReportDataService:
             "z_score_formule": "Z = (W - μ_ref) / σ_ref",
             "z_score_referentie": methodiek_beschrijving(),
             "statistisch_effect": "Het gewogen stadsgemiddelde (W) vlakt extreme pieken en dalen van individuele buurten uit. Hierdoor wijkt de Z-score van de stad structureel minder sterk af dan die van de meest extreme buurten. Dit is statistisch correct (de centrale limietstelling) en geen rekenfout.",
-            "scoringtype_disclaimer": "De scoringstypen (+/+, +/-, -/-, -/+) en de resulterende duiding naar aandachtspunt of kans zijn onderdeel van het Kompas-model en nog onderhevig aan methodologische validatie."
+            "scoringtype_disclaimer": "De scoringstypen (+/+, +/-, -/-, -/+) en de resulterende duiding naar aandachtspunt of kans zijn onderdeel van het Kompas-model en nog onderhevig aan methodologische validatie.",
         }
 
         display_naam = deelgebied_naam or f"{len(actieve_buurten)} buurten"
@@ -1421,15 +1434,15 @@ class ReportDataService:
             "geselecteerde_buurten": list(inwoners_per_buurt.values()),
             "kwadranten": kwadranten_output,
             "methodologie": methodologie,
-            "bronverantwoording": bronverantwoording
+            "bronverantwoording": bronverantwoording,
         }
 
     def generate_deelgebied_svg_kaart(
         self,
         gebied_ids: List[str],
-        referentie: str = 'gemeente',
+        referentie: str = "gemeente",
         gemeente_code: Optional[str] = None,
-        deelgebied_naam: Optional[str] = None
+        deelgebied_naam: Optional[str] = None,
     ) -> str:
         """
         Genereert een inline SVG choropleet van de geselecteerde buurten,
@@ -1441,23 +1454,20 @@ class ReportDataService:
 
         # 1. Haal de analyse-data op zodat we Z-scores per buurt per indicator hebben
         payload = self.generate_deelgebied_payload(
-            gebied_ids=gebied_ids,
-            referentie=referentie,
-            gemeente_code=gemeente_code,
-            deelgebied_naam=deelgebied_naam
+            gebied_ids=gebied_ids, referentie=referentie, gemeente_code=gemeente_code, deelgebied_naam=deelgebied_naam
         )
 
         # 2. Bepaal max absolute Z-score per buurt (zelfde metric als Multi-Gebiedsdossier)
         buurt_zscores: Dict[str, List[float]] = {}
-        for kw in payload.get('kwadranten', []):
-            for thema in kw.get('themas', []):
-                for tab_key in ('top10_aandachtspunten', 'top10_kansen'):
+        for kw in payload.get("kwadranten", []):
+            for thema in kw.get("themas", []):
+                for tab_key in ("top10_aandachtspunten", "top10_kansen"):
                     for ind in thema.get(tab_key, []):
-                        for bd in ind.get('buurten_drilldown', []):
-                            bid = bd['buurt_id']
+                        for bd in ind.get("buurten_drilldown", []):
+                            bid = bd["buurt_id"]
                             if bid not in buurt_zscores:
                                 buurt_zscores[bid] = []
-                            buurt_zscores[bid].append(abs(bd['buurt_z_score']))
+                            buurt_zscores[bid].append(abs(bd["buurt_z_score"]))
 
         buurt_max_z: Dict[str, float] = {}
         for bid, scores in buurt_zscores.items():
@@ -1472,10 +1482,7 @@ class ReportDataService:
               AND g.geom IS NOT NULL
               AND NOT public.is_waterbuurt(g.naam, g.metadata)
         """)
-        geom_rows = [
-            dict(r._mapping)
-            for r in self.db.execute(geom_query, {"gebied_ids": gebied_ids}).fetchall()
-        ]
+        geom_rows = [dict(r._mapping) for r in self.db.execute(geom_query, {"gebied_ids": gebied_ids}).fetchall()]
 
         if not geom_rows:
             return self._svg_empty_fallback(deelgebied_naam or "Geen data")
@@ -1484,17 +1491,19 @@ class ReportDataService:
         all_coords = []
         features = []
         for row in geom_rows:
-            geom = row['geometry']
+            geom = row["geometry"]
             coords_list = self._extract_polygon_coords(geom)
             all_coords.extend(coords_list)
-            z_abs = buurt_max_z.get(str(row['id']), 0.0)
-            features.append({
-                'id': str(row['id']),
-                'naam': row['naam'],
-                'geometry': geom,
-                'z_score_abs': z_abs,
-                'kleur': self._get_zscore_kleur(z_abs, z_abs >= 1.0)
-            })
+            z_abs = buurt_max_z.get(str(row["id"]), 0.0)
+            features.append(
+                {
+                    "id": str(row["id"]),
+                    "naam": row["naam"],
+                    "geometry": geom,
+                    "z_score_abs": z_abs,
+                    "kleur": self._get_zscore_kleur(z_abs, z_abs >= 1.0),
+                }
+            )
 
         if not all_coords:
             return self._svg_empty_fallback(deelgebied_naam or "Geen data")
@@ -1523,6 +1532,7 @@ class ReportDataService:
             # Pseudo-Mercator, Y geïnverteerd (SVG Y loopt naar beneden)
             def merc(lat_deg):
                 return math.log(math.tan(math.pi / 4 + math.radians(lat_deg) / 2))
+
             y_min = merc(min_lat)
             y_max = merc(max_lat)
             y = merc(lat)
@@ -1531,19 +1541,19 @@ class ReportDataService:
         # 7. SVG opbouwen — zelfde kleuren als Multi-Gebiedsdossier (_get_zscore_kleur)
         polygons_svg = []
         for feat in features:
-            color = feat['kleur']
+            color = feat["kleur"]
             z_label = f"|Z| {feat['z_score_abs']:.2f}"
             title = f"{feat['naam']} ({z_label})"
-            rings = self._geom_to_svg_rings(feat['geometry'], lon_to_x, lat_to_y)
+            rings = self._geom_to_svg_rings(feat["geometry"], lon_to_x, lat_to_y)
             for ring_points in rings:
                 points_str = " ".join(f"{x:.1f},{y:.1f}" for x, y in ring_points)
                 polygons_svg.append(
                     f'<polygon points="{points_str}" '
                     f'fill="{color}" stroke="#1a1f2e" stroke-width="0.8" opacity="0.9">'
-                    f'<title>{title}</title></polygon>'
+                    f"<title>{title}</title></polygon>"
                 )
 
-        naam_label = deelgebied_naam or payload.get('deelgebied_naam', '')
+        naam_label = deelgebied_naam or payload.get("deelgebied_naam", "")
 
         svg = f'''<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {svg_w} {svg_h}"
   width="{svg_w}" height="{svg_h}" style="background:#0d1117;border-radius:8px;">
@@ -1574,12 +1584,12 @@ class ReportDataService:
     def _extract_polygon_coords(self, geojson: dict) -> List[List[float]]:
         """Extraheert alle [lon, lat] coördinaten uit een GeoJSON Polygon/MultiPolygon."""
         coords = []
-        geom_type = geojson.get('type', '')
-        if geom_type == 'Polygon':
-            for ring in geojson.get('coordinates', []):
+        geom_type = geojson.get("type", "")
+        if geom_type == "Polygon":
+            for ring in geojson.get("coordinates", []):
                 coords.extend(ring)
-        elif geom_type == 'MultiPolygon':
-            for polygon in geojson.get('coordinates', []):
+        elif geom_type == "MultiPolygon":
+            for polygon in geojson.get("coordinates", []):
                 for ring in polygon:
                     coords.extend(ring)
         return coords
@@ -1587,22 +1597,22 @@ class ReportDataService:
     def _geom_to_svg_rings(self, geojson: dict, lon_to_x, lat_to_y) -> List[List[tuple]]:
         """Converteert GeoJSON Polygon/MultiPolygon naar lijsten van (x, y) punten voor SVG."""
         rings = []
-        geom_type = geojson.get('type', '')
-        if geom_type == 'Polygon':
-            for ring in geojson.get('coordinates', []):
+        geom_type = geojson.get("type", "")
+        if geom_type == "Polygon":
+            for ring in geojson.get("coordinates", []):
                 rings.append([(lon_to_x(c[0]), lat_to_y(c[1])) for c in ring])
-        elif geom_type == 'MultiPolygon':
-            for polygon in geojson.get('coordinates', []):
+        elif geom_type == "MultiPolygon":
+            for polygon in geojson.get("coordinates", []):
                 for ring in polygon:
                     rings.append([(lon_to_x(c[0]), lat_to_y(c[1])) for c in ring])
         return rings
 
     def _svg_empty_fallback(self, label: str) -> str:
         """Geeft een fallback SVG terug als er geen geometrieën beschikbaar zijn."""
-        return f'''<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 320"
+        return f"""<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 320"
   width="400" height="320" style="background:#0d1117;border-radius:8px;">
   <text x="200" y="155" fill="#6b7280" font-size="13" text-anchor="middle"
     font-family="Inter, system-ui, sans-serif">Geen kaartdata beschikbaar</text>
   <text x="200" y="175" fill="#4b5563" font-size="11" text-anchor="middle"
     font-family="Inter, system-ui, sans-serif">{label}</text>
-</svg>'''
+</svg>"""

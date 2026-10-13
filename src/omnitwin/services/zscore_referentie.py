@@ -64,6 +64,7 @@ SQL_REFERENTIE_WAARDEN = """public.zscore_referentie_waarden(
     CAST(:zs_indicator_uuids AS uuid[]), CAST(:zs_min_n AS integer),
     CAST(:zs_provincie AS varchar))"""
 
+
 def referentie_params(
     gebiedstype_id: Any,
     gemeente_code: Optional[str] = None,
@@ -108,7 +109,9 @@ def bereken_zscore(waarde: float, gemiddelde: float, standaarddeviatie: Optional
     return (waarde - gemiddelde) / standaarddeviatie
 
 
-def methodiek_beschrijving(jaarlogica: str = JAARLOGICA_STANDAARD, scenario_id: str = SCENARIO_STANDAARD) -> Dict[str, str]:
+def methodiek_beschrijving(
+    jaarlogica: str = JAARLOGICA_STANDAARD, scenario_id: str = SCENARIO_STANDAARD
+) -> Dict[str, str]:
     """Korte, navolgbare beschrijving voor in rapport-payloads."""
     return {
         "formule": "Z = (waarde - gemiddelde_ref) / sd_ref (steekproef-sd)",

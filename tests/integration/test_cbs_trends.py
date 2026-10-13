@@ -27,6 +27,7 @@ def history(indicator_uuid, gebied=BOLSWARD_NOORD):
 def _uuid_65_plus():
     """Zelfde uuid5 als laad_usecase.py en download_cbs_kerncijfers.py."""
     import uuid
+
     return str(uuid.uuid5(uuid.UUID("6f1d3c2a-0b7e-4c8e-9a51-d0a1b2c3e4f5"), "65+ jaar (%)"))
 
 
@@ -51,19 +52,24 @@ def test_history_jaar_is_peiljaar():
 def test_trending_vijf_jaar_of_meer():
     """Dezelfde telling als routers/dashboard.py ('Trending (5j+)')."""
     psycopg2 = pytest.importorskip("psycopg2")
-    conn = psycopg2.connect(host=os.environ.get("DATABASE_HOST", "localhost"),
-                            port=int(os.environ.get("DATABASE_PORT", 5432)),
-                            dbname=os.environ.get("DATABASE_NAME", "omnitwin_db"),
-                            user=os.environ.get("DATABASE_USER", "omnitwin_user"),
-                            password=os.environ.get("DATABASE_PASSWORD", ""))
+    conn = psycopg2.connect(
+        host=os.environ.get("DATABASE_HOST", "localhost"),
+        port=int(os.environ.get("DATABASE_PORT", 5432)),
+        dbname=os.environ.get("DATABASE_NAME", "omnitwin_db"),
+        user=os.environ.get("DATABASE_USER", "omnitwin_user"),
+        password=os.environ.get("DATABASE_PASSWORD", ""),
+    )
     try:
         with conn.cursor() as cur:
             cur.execute("""SELECT COUNT(*) FROM (SELECT indicator_uuid FROM gebied_data WHERE jaar IS NOT NULL
                            GROUP BY indicator_uuid HAVING COUNT(DISTINCT jaar) >= 5) s""")
             assert cur.fetchone()[0] > 0
             # Via de laadstraat (#236): de dataset staat in metadata, de CBS-tabel in de bron
-            cur.execute("SELECT metadata->>'dataset', bron FROM gebied_data WHERE gebied_id = %s "
-                        "AND indicator_uuid = %s AND jaar = 2024", (BOLSWARD_NOORD, INWONERS))
+            cur.execute(
+                "SELECT metadata->>'dataset', bron FROM gebied_data WHERE gebied_id = %s "
+                "AND indicator_uuid = %s AND jaar = 2024",
+                (BOLSWARD_NOORD, INWONERS),
+            )
             dataset, bron = cur.fetchone()
             assert dataset == "cbs-kerncijfers" and "85984NED" in bron
     finally:

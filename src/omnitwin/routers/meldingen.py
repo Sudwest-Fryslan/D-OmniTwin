@@ -32,7 +32,9 @@ class MeldingInvoer(BaseModel):
     onderwerp: str = Field(..., min_length=1, max_length=120, description="Kort onderwerp van de melding")
     toelichting: str = Field(..., min_length=1, max_length=4000, description="Uitgebreide toelichting")
     context: Optional[Dict[str, Any]] = Field(default=None, description="Contextuele metadata (buurt, indicator, etc.)")
-    melder_email: Optional[str] = Field(default=None, pattern=EMAIL_REGEX, description="Optioneel e-mailadres voor terugkoppeling")
+    melder_email: Optional[str] = Field(
+        default=None, pattern=EMAIL_REGEX, description="Optioneel e-mailadres voor terugkoppeling"
+    )
     website: Optional[str] = Field(default=None, description="Honeypot-veld voor spambots; moet leeg blijven")
 
 
@@ -46,6 +48,7 @@ def _wie(gebruiker: dict) -> str:
 
 
 # ── Publiek meldpunt ──────────────────────────────────────────────────────────
+
 
 @router.post("", status_code=201, dependencies=[Depends(beperk_meldingen)])
 def meld(invoer: MeldingInvoer, db: Session = Depends(get_db)):
@@ -72,6 +75,7 @@ def meld(invoer: MeldingInvoer, db: Session = Depends(get_db)):
 
 
 # ── Beheerder endpoints ───────────────────────────────────────────────────────
+
 
 @admin_router.get("")
 def overzicht(

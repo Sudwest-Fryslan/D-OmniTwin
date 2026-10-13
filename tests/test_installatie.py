@@ -7,6 +7,7 @@ Unit test: robuuste installatie (#201), zonder database.
   installatie pas als voltooid na de laatste verplichte stap;
 - geüploade kaartlagen staan in een volume.
 """
+
 import re
 from pathlib import Path
 
@@ -48,7 +49,7 @@ def test_entrypoint_slikt_admin_fout_niet_in():
 
 def test_entrypoint_markeert_pas_na_de_rollen():
     sh = (ROOT / "docker-entrypoint.sh").read_text(encoding="utf-8")
-    hoofd = sh[sh.index('if [ "$1" = "init" ]'):]
+    hoofd = sh[sh.index('if [ "$1" = "init" ]') :]
     assert hoofd.index("init_db") < hoofd.index("setup_api_rollen") < hoofd.index("markeer_voltooid")
     # schema in één transactie: een fout laat geen half schema achter
     assert re.search(r'--single-transaction -f "\$APP_DIR/db/schema/schema_latest\.sql"', sh)

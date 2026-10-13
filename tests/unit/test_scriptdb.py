@@ -16,13 +16,22 @@ ROOT = Path(__file__).resolve().parents[2]
 
 
 def test_verbindingsparameters_uit_database_variabelen(monkeypatch):
-    for naam, waarde in {"DATABASE_HOST": "db.test", "DATABASE_PORT": "6543", "DATABASE_NAME": "testdb",
-                         "DATABASE_USER": "tester", "DATABASE_PASSWORD": "geheim",
-                         "DATABASE_SSLMODE": "require"}.items():
+    for naam, waarde in {
+        "DATABASE_HOST": "db.test",
+        "DATABASE_PORT": "6543",
+        "DATABASE_NAME": "testdb",
+        "DATABASE_USER": "tester",
+        "DATABASE_PASSWORD": "geheim",
+        "DATABASE_SSLMODE": "require",
+    }.items():
         monkeypatch.setenv(naam, waarde)
     assert scriptdb.verbindingsparameters() == {
-        "host": "db.test", "port": "6543", "dbname": "testdb",
-        "user": "tester", "password": "geheim", "sslmode": "require",
+        "host": "db.test",
+        "port": "6543",
+        "dbname": "testdb",
+        "user": "tester",
+        "password": "geheim",
+        "sslmode": "require",
     }
 
 

@@ -45,7 +45,7 @@ def _begint_met_plaats(gebiedsnaam: str, plaats: str) -> bool:
     g, p = normaliseer(gebiedsnaam), normaliseer(plaats)
     if not p or not g.startswith(p):
         return False
-    rest = g[len(p):]
+    rest = g[len(p) :]
     return rest == "" or rest[0] in " -,("
 
 
@@ -91,7 +91,8 @@ def valideer_gemeente_actie(
 
     # 3. Woonplaats of buurtnaam: herleid via gebieden, alleen bij één gemeente
     codes = {
-        g_code for g_naam, g_code in gebieden_voor(naam)
+        g_code
+        for g_naam, g_code in gebieden_voor(naam)
         if g_code and g_code in gemeenten and _begint_met_plaats(g_naam, naam)
     }
     if len(codes) == 1:
@@ -102,6 +103,7 @@ def valideer_gemeente_actie(
 
 
 # ── Database ─────────────────────────────────────────────────────────────────
+
 
 def laad_gemeenten(db, alleen_met_gebieden: bool = False) -> Dict[str, str]:
     """{code: naam} uit `gemeenten`; optioneel alleen gemeenten waarvoor gebieden geladen zijn."""
@@ -116,8 +118,7 @@ def gebieden_met_naam(db, plaats: str, limit: int = 50) -> List[Tuple[str, Optio
     """Gebieden waarvan de naam met `plaats` begint (fijnere check in _begint_met_plaats)."""
     patroon = plaats.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_") + "%"
     rows = db.execute(
-        text("SELECT naam, gemeente_code FROM gebieden "
-             "WHERE naam ILIKE :p AND gemeente_code IS NOT NULL LIMIT :n"),
+        text("SELECT naam, gemeente_code FROM gebieden WHERE naam ILIKE :p AND gemeente_code IS NOT NULL LIMIT :n"),
         {"p": patroon, "n": limit},
     ).fetchall()
     return [(r[0], r[1]) for r in rows]

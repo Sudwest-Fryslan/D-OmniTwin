@@ -5,6 +5,7 @@ Faalt alleen als een gebied_id in sample_indicatoren.csv niet in
 sample_buurten.geojson bestaat. De jaargang per indicator wordt alleen
 gerapporteerd (pytest -s toont de lijst).
 """
+
 import csv
 import sys
 from pathlib import Path
@@ -15,7 +16,10 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "init_data" / "scripts"))
 
 from jaargang_controle import (  # noqa: E402
-    controleer_jaargangen, format_jaren, geometrie_codes, geometrie_jaar_sample,
+    controleer_jaargangen,
+    format_jaren,
+    geometrie_codes,
+    geometrie_jaar_sample,
 )
 
 pytestmark = pytest.mark.unit

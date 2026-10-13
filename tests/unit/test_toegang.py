@@ -37,8 +37,9 @@ def app(monkeypatch):
         return staat["wie"]
 
     monkeypatch.setattr(viewer_toegang, "gebruiker_van", gebruiker_van)
-    monkeypatch.setattr(toegang, "collectie_is_intern",
-                        lambda uri: (toegang.collectie_uit_uri(uri) or ("", ""))[1] in staat["intern"])
+    monkeypatch.setattr(
+        toegang, "collectie_is_intern", lambda uri: (toegang.collectie_uit_uri(uri) or ("", ""))[1] in staat["intern"]
+    )
     a = FastAPI()
     oidc.registreer(a)
     a.add_middleware(viewer_toegang.ViewerToegangMiddleware)
@@ -46,6 +47,7 @@ def app(monkeypatch):
 
     def stand():
         return JSONResponse({"stand": toegang.stand(), "mag_intern": toegang.mag_intern()})
+
     for pad in ("/api/kompas/stand", "/api/laden/v1/stand", "/static/stand"):
         a.add_api_route(pad, stand, methods=["GET"])
     a.state.staat = staat
@@ -59,18 +61,22 @@ def client(app, wie=None):
 
 # ---------------------------------------------------------------- stand per verzoek
 
+
 def test_zonder_verzoek_geen_filter():
     assert toegang.stand() is None and toegang.mag_intern()
 
 
-@pytest.mark.parametrize("wie,cookies,stand", [
-    (None, {}, "anoniem"),
-    (LEZER, {}, "anoniem"),               # zonder cookie of token: niet opzoeken
-    (LEZER, COOKIE, "met-rol"),
-    (BEHEERDER, COOKIE, "met-rol"),
-    (ZONDER_ROL, COOKIE, "zonder-rol"),
-    (None, COOKIE, "anoniem"),            # verlopen sessie
-])
+@pytest.mark.parametrize(
+    "wie,cookies,stand",
+    [
+        (None, {}, "anoniem"),
+        (LEZER, {}, "anoniem"),  # zonder cookie of token: niet opzoeken
+        (LEZER, COOKIE, "met-rol"),
+        (BEHEERDER, COOKIE, "met-rol"),
+        (ZONDER_ROL, COOKIE, "zonder-rol"),
+        (None, COOKIE, "anoniem"),  # verlopen sessie
+    ],
+)
 def test_stand_in_open_modus(app, wie, cookies, stand):
     c = client(app, wie)
     c.cookies.update(cookies)
@@ -110,10 +116,16 @@ def test_stand_lekt_niet_naar_een_volgend_verzoek(app):
 
 # ---------------------------------------------------------------- forwardAuth
 
-@pytest.mark.parametrize("wie,cookies,header", [
-    (None, {}, "openbaar"), (LEZER, COOKIE, "intern"), (BEHEERDER, COOKIE, "intern"),
-    (ZONDER_ROL, COOKIE, "openbaar"),
-])
+
+@pytest.mark.parametrize(
+    "wie,cookies,header",
+    [
+        (None, {}, "openbaar"),
+        (LEZER, COOKIE, "intern"),
+        (BEHEERDER, COOKIE, "intern"),
+        (ZONDER_ROL, COOKIE, "openbaar"),
+    ],
+)
 def test_forwardauth_header_voor_postgrest(app, wie, cookies, header):
     c = client(app, wie)
     c.cookies.update(cookies)
@@ -132,8 +144,10 @@ def test_forwardauth_interne_collectie(app, wie, cookies, status):
     app.state.staat["intern"] = {"demo_intern_laag"}
     c = client(app, wie)
     c.cookies.update(cookies)
-    r = c.get(viewer_toegang.CONTROLE_PAD,
-              headers={"X-Forwarded-Uri": "/api/geo/v1/collections/laag.demo_intern_laag/items?limit=1"})
+    r = c.get(
+        viewer_toegang.CONTROLE_PAD,
+        headers={"X-Forwarded-Uri": "/api/geo/v1/collections/laag.demo_intern_laag/items?limit=1"},
+    )
     assert r.status_code == status
     if status != 204:
         assert r.headers["content-type"].startswith("application/problem+json")
@@ -141,17 +155,24 @@ def test_forwardauth_interne_collectie(app, wie, cookies, status):
 
 def test_forwardauth_openbare_collectie(app):
     app.state.staat["intern"] = {"demo_intern_laag"}
-    r = client(app).get(viewer_toegang.CONTROLE_PAD,
-                        headers={"X-Forwarded-Uri": "/api/geo/collections/public.vw_gebieden_features/items"})
+    r = client(app).get(
+        viewer_toegang.CONTROLE_PAD,
+        headers={"X-Forwarded-Uri": "/api/geo/collections/public.vw_gebieden_features/items"},
+    )
     assert r.status_code == 204
 
 
-@pytest.mark.parametrize("uri,verwacht", [
-    ("/api/geo/v1/collections/laag.x_y/items", ("laag", "x_y")),
-    ("/api/geo/collections/public.vw_gebieden_features", ("public", "vw_gebieden_features")),
-    ("/api/geo/collections/laag.abc?f=json", ("laag", "abc")),
-    ("/api/geo/collections", None), ("/api/data/indicatoren", None), ("", None),
-])
+@pytest.mark.parametrize(
+    "uri,verwacht",
+    [
+        ("/api/geo/v1/collections/laag.x_y/items", ("laag", "x_y")),
+        ("/api/geo/collections/public.vw_gebieden_features", ("public", "vw_gebieden_features")),
+        ("/api/geo/collections/laag.abc?f=json", ("laag", "abc")),
+        ("/api/geo/collections", None),
+        ("/api/data/indicatoren", None),
+        ("", None),
+    ],
+)
 def test_collectie_uit_uri(uri, verwacht):
     assert toegang.collectie_uit_uri(uri) == verwacht
 
@@ -162,6 +183,7 @@ def test_collectie_buiten_schema_laag_niet_opzoeken(monkeypatch):
 
 
 # ---------------------------------------------------------------- rol per databaseverbinding
+
 
 class NepCursor:
     def __init__(self, log):
@@ -188,14 +210,20 @@ class NepVerbinding:
         self.log.append("COMMIT")
 
 
-@pytest.mark.parametrize("stand,sql", [
-    (None, "RESET ROLE"), ("met-rol", "RESET ROLE"),
-    ("anoniem", "SET ROLE omnitwin_openbaar"), ("zonder-rol", "SET ROLE omnitwin_openbaar"),
-])
+@pytest.mark.parametrize(
+    "stand,sql",
+    [
+        (None, "RESET ROLE"),
+        ("met-rol", "RESET ROLE"),
+        ("anoniem", "SET ROLE omnitwin_openbaar"),
+        ("zonder-rol", "SET ROLE omnitwin_openbaar"),
+    ],
+)
 def test_checkout_zet_rol_en_commit(monkeypatch, stand, sql):
     from sqlalchemy import event
+
     vangst = {}
-    monkeypatch.setattr(event, "listens_for", lambda doel, naam: (lambda fn: vangst.setdefault(naam, fn)))
+    monkeypatch.setattr(event, "listens_for", lambda doel, naam: lambda fn: vangst.setdefault(naam, fn))
     toegang.registreer(object())
     verbinding = NepVerbinding()
     token = toegang.zet(stand)
@@ -208,6 +236,7 @@ def test_checkout_zet_rol_en_commit(monkeypatch, stand, sql):
 
 # ---------------------------------------------------------------- directe aanroep: 401/403
 
+
 class NepDb:
     def __init__(self, waarde):
         self.waarde, self.sql = waarde, []
@@ -219,6 +248,7 @@ class NepDb:
         class R:
             def scalar(self):
                 return waarde
+
         return R()
 
 
@@ -235,8 +265,9 @@ def test_interne_indicator_geweigerd(stand, status):
         toegang.herstel(token)
 
 
-@pytest.mark.parametrize("stand,waarde", [("anoniem", "openbaar"), ("anoniem", None), ("met-rol", "intern"),
-                                          (None, "intern")])
+@pytest.mark.parametrize(
+    "stand,waarde", [("anoniem", "openbaar"), ("anoniem", None), ("met-rol", "intern"), (None, "intern")]
+)
 def test_indicator_toegestaan(stand, waarde):
     token = toegang.zet(stand)
     try:
@@ -262,19 +293,24 @@ def test_geen_uuid_geen_opzoeking():
 
 # ---------------------------------------------------------------- toegang uit dct:accessRights
 
-@pytest.mark.parametrize("w,verwacht", [
-    ("http://publications.europa.eu/resource/authority/access-right/PUBLIC", "openbaar"),
-    ("http://publications.europa.eu/resource/authority/access-right/PUBLIC/", "openbaar"),
-    ({"@id": "http://publications.europa.eu/resource/authority/access-right/PUBLIC"}, "openbaar"),
-    ("http://publications.europa.eu/resource/authority/access-right/RESTRICTED", "intern"),
-    ("http://publications.europa.eu/resource/authority/access-right/NON_PUBLIC", "intern"),
-    (None, "intern"),
-])
+
+@pytest.mark.parametrize(
+    "w,verwacht",
+    [
+        ("http://publications.europa.eu/resource/authority/access-right/PUBLIC", "openbaar"),
+        ("http://publications.europa.eu/resource/authority/access-right/PUBLIC/", "openbaar"),
+        ({"@id": "http://publications.europa.eu/resource/authority/access-right/PUBLIC"}, "openbaar"),
+        ("http://publications.europa.eu/resource/authority/access-right/RESTRICTED", "intern"),
+        ("http://publications.europa.eu/resource/authority/access-right/NON_PUBLIC", "intern"),
+        (None, "intern"),
+    ],
+)
 def test_toegang_van(w, verwacht):
     assert toegang_van({} if w is None else {"dct:accessRights": w}) == verwacht
 
 
 # ---------------------------------------------------------------- vastgelegd in migratie, api en Traefik
+
 
 def test_migratie_rls_en_rol():
     sql = (ROOT / "db/migraties/V032__toegang_per_laag.sql").read_text(encoding="utf-8")
@@ -291,11 +327,11 @@ def test_migratie_rls_en_rol():
 def test_schema_api_filtert_op_toegang():
     sql = (ROOT / "db/migraties/R__api_rollen.sql").read_text(encoding="utf-8")
     for view in ("externe_kaartlagen", "indicatoren", "vw_gebied_indicator_actueel", "gebied_data"):
-        blok = sql[sql.index(f"CREATE VIEW api.{view} AS"):]
-        blok = blok[:blok.index(";")]
+        blok = sql[sql.index(f"CREATE VIEW api.{view} AS") :]
+        blok = blok[: blok.index(";")]
         assert "public.verzoek_mag_intern()" in blok, view
-    rpc = sql[sql.index("CREATE FUNCTION api.get_indicatoren_stats"):]
-    assert "public.verzoek_mag_intern()" in rpc[:rpc.index("$$;")]
+    rpc = sql[sql.index("CREATE FUNCTION api.get_indicatoren_stats") :]
+    assert "public.verzoek_mag_intern()" in rpc[: rpc.index("$$;")]
     assert "x-omnitwin-toegang" in sql
     assert "security_invoker = true" in sql
     # de controlefunctie is geen RPC: niet in schema api en niet aan web_anon gegeven
@@ -305,7 +341,7 @@ def test_schema_api_filtert_op_toegang():
 
 def test_traefik_vervangt_toegangsheader():
     yml = (ROOT / "deploy/traefik/dynamic.yml").read_text(encoding="utf-8")
-    blok = yml[yml.index("viewer-toegang:"):]
-    blok = blok[:blok.index("keycloak-headers:")]
+    blok = yml[yml.index("viewer-toegang:") :]
+    blok = blok[: blok.index("keycloak-headers:")]
     assert "authResponseHeaders" in blok and '"X-Omnitwin-Toegang"' in blok
     assert toegang.HEADER == "X-Omnitwin-Toegang"

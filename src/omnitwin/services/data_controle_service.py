@@ -7,6 +7,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+
 class DataControleService:
     """Service voor het beheren van data lineage en het controleren van bron-updates."""
 
@@ -16,11 +17,11 @@ class DataControleService:
     def check_cbs_odata_update(self, dataset_id: str, endpoint: str = "opendata.cbs.nl") -> Dict[str, Any]:
         """
         Checkt de CBS OData API v4 op de 'Modified' datum van een dataset.
-        
+
         Args:
             dataset_id: De code van de CBS dataset (bijv. '85984NED', '50150NED')
             endpoint: 'opendata.cbs.nl' of 'dataderden.cbs.nl'
-            
+
         Returns:
             Dict met update status en datums.
         """
@@ -29,20 +30,18 @@ class DataControleService:
             response = requests.get(url, timeout=5)
             response.raise_for_status()
             data = response.json()
-            
+
             if "value" in data and len(data["value"]) > 0:
                 info = data["value"][0]
                 modified_str = info.get("Modified")
-                return {
-                    "source": "CBS",
-                    "dataset": dataset_id,
-                    "modified_at_source": modified_str,
-                    "status": "success"
-                }
+                return {"source": "CBS", "dataset": dataset_id, "modified_at_source": modified_str, "status": "success"}
             return {"status": "error", "message": "Geen TableInfos gevonden voor dataset"}
         except Exception as e:
             logger.error(f"Error checking CBS dataset {dataset_id}: {e}")
-            return {"status": "error", "message": "Bron niet bereikbaar of onverwacht antwoord (details in de serverlog)"}
+            return {
+                "status": "error",
+                "message": "Bron niet bereikbaar of onverwacht antwoord (details in de serverlog)",
+            }
 
     def resolve_source_url(self, bron_systeem: Optional[str], bron_ref: Optional[str]) -> Optional[str]:
         """Genereert de catalogus URL voor een bronsysteem."""
@@ -52,7 +51,11 @@ class DataControleService:
         if s in ["CBS_ODATA", "CBS ODATA"]:
             return f"https://opendata.cbs.nl/#/CBS/nl/dataset/{bron_ref}/table"
         elif s in ["RIVM_STATLINE", "POLITIE_DATA"]:
-            return f"https://opendata.cbs.nl/#/CBS/nl/dataset/{bron_ref}/table" if "NED" in bron_ref.upper() else "https://www.volksgezondheidenzorg.info/"
+            return (
+                f"https://opendata.cbs.nl/#/CBS/nl/dataset/{bron_ref}/table"
+                if "NED" in bron_ref.upper()
+                else "https://www.volksgezondheidenzorg.info/"
+            )
         elif s == "BAG_API":
             return "https://bag.basisregistraties.overheid.nl/"
         elif s == "OV_API":
@@ -71,14 +74,14 @@ class DataControleService:
             WHERE uuid = :uuid
         """)
         indicator = self.db.execute(query, {"uuid": indicator_uuid}).fetchone()
-        
+
         if not indicator:
             return {"error": "Indicator niet gevonden"}
-        
+
         uuid, naam, bron_systeem, bron_ref, laatste_update_db, laatste_check_db = indicator
-        
+
         url = self.resolve_source_url(bron_systeem, bron_ref)
-        
+
         result = {
             "uuid": str(uuid),
             "naam": naam,
@@ -87,33 +90,30 @@ class DataControleService:
             "bron_url": url,
             "checked_at": datetime.now().isoformat(),
             "has_update": False,
-            "status": "actueel"
+            "status": "actueel",
         }
-        
+
         # 2. Voer OData check uit indien van toepassing
         if bron_systeem and bron_ref:
             bs = bron_systeem.upper()
             endpoint = "dataderden.cbs.nl" if bs in ["RIVM_STATLINE", "POLITIE_DATA"] else "opendata.cbs.nl"
-            
+
             if bs in ["CBS_ODATA", "CBS ODATA", "RIVM_STATLINE", "POLITIE_DATA"]:
                 cbs_result = self.check_cbs_odata_update(bron_ref, endpoint)
                 if cbs_result["status"] == "success":
                     modified_at_source = cbs_result.get("modified_at_source")
                     result["modified_at_source"] = modified_at_source
-                    
+
                     if modified_at_source:
                         result["has_update"] = False  # synchroon na check
-                        
+
                         update_query = text("""
                             UPDATE indicatoren 
                             SET laatste_check_datum = CURRENT_TIMESTAMP,
                                 laatste_update_bron = :mod_date
                             WHERE uuid = :uuid
                         """)
-                        self.db.execute(update_query, {
-                            "uuid": uuid,
-                            "mod_date": modified_at_source
-                        })
+                        self.db.execute(update_query, {"uuid": uuid, "mod_date": modified_at_source})
             else:
                 update_query = text("""
                     UPDATE indicatoren 
@@ -121,7 +121,7 @@ class DataControleService:
                     WHERE uuid = :uuid
                 """)
                 self.db.execute(update_query, {"uuid": uuid})
-        
+
         self.db.commit()
         return result
 
@@ -135,18 +135,18 @@ class DataControleService:
             LIMIT :limit
         """)
         uuids = self.db.execute(query, {"limit": limit}).fetchall()
-        
+
         results = []
         for (u_id,) in uuids:
             results.append(self.run_indicator_check(u_id))
-            
+
         return results
 
     def herbereken_statistieken(self, indicator_uuids: List[str]) -> Dict[str, Any]:
         """Herbereken min_waarde en max_waarde voor de gegeven indicatoren op basis van gebied_data."""
         if not indicator_uuids:
             return {"status": "success", "message": "Geen indicatoren opgegeven."}
-            
+
         try:
             # For each indicator, calculate min and max from gebied_data
             for uuid in indicator_uuids:
@@ -173,7 +173,7 @@ class DataControleService:
         """Trigger AI ontologie generatie voor indicatoren."""
         if not indicator_uuids:
             return {"status": "success", "message": "Geen indicatoren opgegeven."}
-            
+
         try:
             for uuid in indicator_uuids:
                 query = text("""
@@ -184,7 +184,10 @@ class DataControleService:
                 """)
                 self.db.execute(query, {"uuid": uuid})
             self.db.commit()
-            return {"status": "success", "message": f"Ontologie-generatie gestart voor {len(indicator_uuids)} indicatoren."}
+            return {
+                "status": "success",
+                "message": f"Ontologie-generatie gestart voor {len(indicator_uuids)} indicatoren.",
+            }
         except Exception as e:
             self.db.rollback()
             logger.error(f"Error genereer_ontologie: {e}")

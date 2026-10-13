@@ -23,6 +23,7 @@ from pathlib import Path
 # Zorg voor .env laden
 try:
     from dotenv import load_dotenv
+
     load_dotenv(Path(__file__).parent.parent.parent / ".env")
 except ImportError:
     pass
@@ -62,9 +63,7 @@ def get_conn():
     dbname = os.environ.get("DATABASE_NAME", "omnitwin_db")
     user = os.environ.get("DATABASE_USER", "omnitwin_user")
     password = os.environ.get("DATABASE_PASSWORD", "")
-    return psycopg2.connect(
-        host=host, port=port, dbname=dbname, user=user, password=password, connect_timeout=5
-    )
+    return psycopg2.connect(host=host, port=port, dbname=dbname, user=user, password=password, connect_timeout=5)
 
 
 def format_sql_val(val):
@@ -183,19 +182,27 @@ def export_stuurdata(conn):
         for row in rows:
             formatted_vals = [format_sql_val(v) for v in row]
             vals_str = ", ".join(formatted_vals)
-            lines.append(
-                f"INSERT INTO public.{table} ({cols})\nVALUES ({vals_str})\nON CONFLICT ({pk}) DO NOTHING;\n"
-            )
+            lines.append(f"INSERT INTO public.{table} ({cols})\nVALUES ({vals_str})\nON CONFLICT ({pk}) DO NOTHING;\n")
 
     lines.append("-- -------------------------------------------------------------")
     lines.append("-- Sequenties bijwerken")
     lines.append("-- -------------------------------------------------------------")
-    lines.append("SELECT setval('public.chat_scenarios_id_seq', COALESCE((SELECT MAX(id) FROM public.chat_scenarios), 1), true);")
-    lines.append("SELECT setval('public.color_schemas_id_seq', COALESCE((SELECT MAX(id) FROM public.color_schemas), 1), true);")
-    lines.append("SELECT setval('public.externe_kaartlagen_id_seq', COALESCE((SELECT MAX(id) FROM public.externe_kaartlagen), 1), true);")
+    lines.append(
+        "SELECT setval('public.chat_scenarios_id_seq', COALESCE((SELECT MAX(id) FROM public.chat_scenarios), 1), true);"
+    )
+    lines.append(
+        "SELECT setval('public.color_schemas_id_seq', COALESCE((SELECT MAX(id) FROM public.color_schemas), 1), true);"
+    )
+    lines.append(
+        "SELECT setval('public.externe_kaartlagen_id_seq', COALESCE((SELECT MAX(id) FROM public.externe_kaartlagen), 1), true);"
+    )
     lines.append("SELECT setval('app.llm_config_id_seq', COALESCE((SELECT MAX(id) FROM app.llm_config), 1), true);")
-    lines.append("SELECT setval('public.visualisatie_profielen_id_seq', COALESCE((SELECT MAX(id) FROM public.visualisatie_profielen), 1), true);")
-    lines.append("SELECT setval('public.kompas_configuraties_id_seq', COALESCE((SELECT MAX(id) FROM public.kompas_configuraties), 1), true);")
+    lines.append(
+        "SELECT setval('public.visualisatie_profielen_id_seq', COALESCE((SELECT MAX(id) FROM public.visualisatie_profielen), 1), true);"
+    )
+    lines.append(
+        "SELECT setval('public.kompas_configuraties_id_seq', COALESCE((SELECT MAX(id) FROM public.kompas_configuraties), 1), true);"
+    )
     lines.append("")
 
     with open(target_file, "w", encoding="utf-8") as f:
@@ -225,26 +232,25 @@ def export_buurten(conn):
     for r in rows:
         b_id, naam, gm_code, type_id, prov, geom_str = r
         geom = json.loads(geom_str) if geom_str else None
-        features.append({
-            "type": "Feature",
-            "geometry": geom,
-            "properties": {
-                "id": b_id,
-                "naam": naam,
-                "gemeente_code": gm_code,
-                "gebiedstype_id": str(type_id) if type_id else None,
-                "provincienaam": prov or "Fryslân",
+        features.append(
+            {
+                "type": "Feature",
+                "geometry": geom,
+                "properties": {
+                    "id": b_id,
+                    "naam": naam,
+                    "gemeente_code": gm_code,
+                    "gebiedstype_id": str(type_id) if type_id else None,
+                    "provincienaam": prov or "Fryslân",
+                },
             }
-        })
+        )
 
     geojson_data = {
         "type": "FeatureCollection",
         "name": "sample_buurten_swf",
-        "crs": {
-            "type": "name",
-            "properties": {"name": "urn:ogc:def:crs:OGC:1.3:CRS84"}
-        },
-        "features": features
+        "crs": {"type": "name", "properties": {"name": "urn:ogc:def:crs:OGC:1.3:CRS84"}},
+        "features": features,
     }
 
     with open(target_file, "w", encoding="utf-8") as f:
@@ -296,7 +302,7 @@ def export_indicatoren(conn):
         "eenheid",
         "categorie",
         "interpretatie_logica",
-        "scenario_id"
+        "scenario_id",
     ]
 
     with open(target_file, "w", encoding="utf-8", newline="") as f:
@@ -325,6 +331,7 @@ def main():
     except Exception as e:
         print(f"❌ Fout tijdens genereren: {e}", file=sys.stderr)
         import traceback
+
         traceback.print_exc()
         sys.exit(1)
 

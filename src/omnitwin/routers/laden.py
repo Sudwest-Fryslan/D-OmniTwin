@@ -67,6 +67,7 @@ LD_JSON = "application/ld+json"
 
 # ── specificatie ─────────────────────────────────────────────────────────────
 
+
 @functools.lru_cache(maxsize=1)
 def specificatie() -> dict:
     return laad_openapi(OPENAPI)
@@ -77,6 +78,7 @@ def api_versie() -> str:
 
 
 # ── hulpfuncties ─────────────────────────────────────────────────────────────
+
 
 def _iso(t) -> str | None:
     if t is None:
@@ -93,15 +95,28 @@ def _link(href: str) -> dict:
 
 
 def levering_kort(r: dict) -> dict:
-    return {"id": str(r["id"]), "datasetId": r["dataset_id"], "status": r["status"], "modus": r["modus"],
-            "alleenValideren": r["alleen_valideren"], "versie": r["versie"], "ontvangenOp": _iso(r["ontvangen_op"]),
-            "afgerondOp": _iso(r["klaar_op"])}
+    return {
+        "id": str(r["id"]),
+        "datasetId": r["dataset_id"],
+        "status": r["status"],
+        "modus": r["modus"],
+        "alleenValideren": r["alleen_valideren"],
+        "versie": r["versie"],
+        "ontvangenOp": _iso(r["ontvangen_op"]),
+        "afgerondOp": _iso(r["klaar_op"]),
+    }
 
 
 def levering_uit(r: dict, fouten: list[dict] | None = None) -> dict:
     uit = levering_kort(r)
-    uit.update({"idempotencyKey": r["idempotency_key"], "sha256": r["sha256"], "mediatype": r["mediatype"],
-                "grootte": r["grootte"]})
+    uit.update(
+        {
+            "idempotencyKey": r["idempotency_key"],
+            "sha256": r["sha256"],
+            "mediatype": r["mediatype"],
+            "grootte": r["grootte"],
+        }
+    )
     if r.get("client_id"):
         uit["client"] = r["client_id"]
     if r["status"] not in LOOPT:
@@ -120,15 +135,24 @@ def dataset_uit(r: dict, laatste: dict | None) -> dict:
     uit = {"id": r["id"]}
     if r.get("bron_id"):
         uit["bronId"] = r["bron_id"]
-    uit.update({"beschrijving": r["beschrijving"], "laadprofiel": r["laadprofiel"], "actueleVersie": r["huidige_versie"],
-                "toegang": r.get("toegang") or toegang_van(r["beschrijving"]),
-                "aangemaaktOp": _iso(r["aangemaakt_op"]), "gewijzigdOp": _iso(r["gewijzigd_op"])})
+    uit.update(
+        {
+            "beschrijving": r["beschrijving"],
+            "laadprofiel": r["laadprofiel"],
+            "actueleVersie": r["huidige_versie"],
+            "toegang": r.get("toegang") or toegang_van(r["beschrijving"]),
+            "aangemaaktOp": _iso(r["aangemaakt_op"]),
+            "gewijzigdOp": _iso(r["gewijzigd_op"]),
+        }
+    )
     if laatste:
         uit["laatsteLevering"] = levering_kort(laatste)
-    uit["_links"] = {"self": _link(f"{PREFIX}/datasets/{r['id']}"),
-                     "leveringen": _link(f"{PREFIX}/datasets/{r['id']}/leveringen"),
-                     "versies": _link(f"{PREFIX}/datasets/{r['id']}/versies"),
-                     "profiel": _link(f"{PREFIX}/profielen/{r['profiel']}")}
+    uit["_links"] = {
+        "self": _link(f"{PREFIX}/datasets/{r['id']}"),
+        "leveringen": _link(f"{PREFIX}/datasets/{r['id']}/leveringen"),
+        "versies": _link(f"{PREFIX}/datasets/{r['id']}/versies"),
+        "profiel": _link(f"{PREFIX}/profielen/{r['profiel']}"),
+    }
     return uit
 
 
@@ -141,6 +165,7 @@ def _pagina_links(pad: str, pagina: int, grootte: int, meer: bool, extra: dict |
 
     def url(p):
         return f"{pad}?{urlencode({**q, 'pagina': p, 'paginaGrootte': grootte})}"
+
     links = {"self": _link(url(pagina))}
     if meer:
         links["next"] = _link(url(pagina + 1))
@@ -163,14 +188,25 @@ def _json_body(raw: bytes) -> object:
 def _registratie_fouten(reg: dict) -> None:
     fouten = valideer_registratie(reg, specificatie())
     if fouten:
-        raise Probleem(422, "registratie-ongeldig", f"De registratie voldoet niet aan DatasetRegistratie "
-                       f"({len(fouten)} fouten).",
-                       fouten=[{"type": "https://github.com/Sudwest-Fryslan/D-OmniTwin/blob/main/docs/api/laden/README.md#"
-                                        "schema-ongeldig", "code": "schema-ongeldig", "title": "Schema ongeldig",
-                                "detail": f} for f in fouten[:100]])
+        raise Probleem(
+            422,
+            "registratie-ongeldig",
+            f"De registratie voldoet niet aan DatasetRegistratie ({len(fouten)} fouten).",
+            fouten=[
+                {
+                    "type": "https://github.com/Sudwest-Fryslan/D-OmniTwin/blob/main/docs/api/laden/README.md#"
+                    "schema-ongeldig",
+                    "code": "schema-ongeldig",
+                    "title": "Schema ongeldig",
+                    "detail": f,
+                }
+                for f in fouten[:100]
+            ],
+        )
 
 
 # ── database (in de threadpool) ──────────────────────────────────────────────
+
 
 def _haal_dataset(cur, dataset_id: str) -> dict | None:
     cur.execute("SELECT * FROM laden.datasets WHERE id = %s", (dataset_id,))
@@ -178,7 +214,9 @@ def _haal_dataset(cur, dataset_id: str) -> dict | None:
 
 
 def _laatste_levering(cur, dataset_id: str) -> dict | None:
-    cur.execute("SELECT * FROM laden.leveringen WHERE dataset_id = %s ORDER BY ontvangen_op DESC LIMIT 1", (dataset_id,))
+    cur.execute(
+        "SELECT * FROM laden.leveringen WHERE dataset_id = %s ORDER BY ontvangen_op DESC LIMIT 1", (dataset_id,)
+    )
     return cur.fetchone()
 
 
@@ -199,16 +237,25 @@ def _db_registreer(reg: dict) -> dict:
     with transactie() as cur:
         if _haal_dataset(cur, reg["id"]):
             raise Probleem(409, "dataset-bestaat", f"Dataset {reg['id']} bestaat al; wijzig hem met PUT of PATCH.")
-        cur.execute("""INSERT INTO laden.datasets (id, bron_id, beschrijving, laadprofiel, profiel)
+        cur.execute(
+            """INSERT INTO laden.datasets (id, bron_id, beschrijving, laadprofiel, profiel)
                        VALUES (%s, %s, %s, %s, %s) RETURNING *""",
-                    (reg["id"], reg.get("bronId"), json.dumps(reg["beschrijving"], ensure_ascii=False),
-                     json.dumps(reg["laadprofiel"], ensure_ascii=False), reg["laadprofiel"]["profiel"]))
+            (
+                reg["id"],
+                reg.get("bronId"),
+                json.dumps(reg["beschrijving"], ensure_ascii=False),
+                json.dumps(reg["laadprofiel"], ensure_ascii=False),
+                reg["laadprofiel"]["profiel"],
+            ),
+        )
         return dataset_uit(cur.fetchone(), None)
 
 
 def _profiel_vast(oud: dict, nieuw: dict) -> bool:
     lo, ln = oud["laadprofiel"] or {}, nieuw["laadprofiel"] or {}
-    return lo.get("profiel") != ln.get("profiel") or (lo.get("sleutelvelden") or None) != (ln.get("sleutelvelden") or None)
+    return lo.get("profiel") != ln.get("profiel") or (lo.get("sleutelvelden") or None) != (
+        ln.get("sleutelvelden") or None
+    )
 
 
 def _db_vervang(dataset_id: str, reg: dict) -> dict:
@@ -216,12 +263,22 @@ def _db_vervang(dataset_id: str, reg: dict) -> dict:
         ds = _dataset_of_404(cur, dataset_id)
         cur.execute("SELECT 1 FROM laden.versies WHERE dataset_id = %s LIMIT 1", (dataset_id,))
         if cur.fetchone() and _profiel_vast(ds, reg):
-            raise Probleem(409, "profiel-vast", "Profiel en sleutelvelden liggen vast na de eerste publicatie; "
-                           "registreer een nieuwe dataset.")
-        cur.execute("""UPDATE laden.datasets SET bron_id = %s, beschrijving = %s, laadprofiel = %s, profiel = %s,
+            raise Probleem(
+                409,
+                "profiel-vast",
+                "Profiel en sleutelvelden liggen vast na de eerste publicatie; registreer een nieuwe dataset.",
+            )
+        cur.execute(
+            """UPDATE laden.datasets SET bron_id = %s, beschrijving = %s, laadprofiel = %s, profiel = %s,
                               gewijzigd_op = now() WHERE id = %s RETURNING *""",
-                    (reg.get("bronId"), json.dumps(reg["beschrijving"], ensure_ascii=False),
-                     json.dumps(reg["laadprofiel"], ensure_ascii=False), reg["laadprofiel"]["profiel"], dataset_id))
+            (
+                reg.get("bronId"),
+                json.dumps(reg["beschrijving"], ensure_ascii=False),
+                json.dumps(reg["laadprofiel"], ensure_ascii=False),
+                reg["laadprofiel"]["profiel"],
+                dataset_id,
+            ),
+        )
         nieuw = cur.fetchone()
         if nieuw["toegang"] != ds.get("toegang"):
             # Andere dct:accessRights: wat de dataset al publiceerde volgt (#254)
@@ -253,6 +310,7 @@ def merge_patch(doel, patch):
 
 # ── routes: specificatie en profielen ────────────────────────────────────────
 
+
 @router.get("/openapi.json", include_in_schema=False)
 def haal_specificatie():
     return JSONResponse(specificatie(), headers={"Access-Control-Allow-Origin": "*"})
@@ -272,28 +330,38 @@ def haal_profiel(profiel_id: str):
 
 # ── routes: datasets ─────────────────────────────────────────────────────────
 
+
 @router.get("/datasets")
-def lijst_datasets(request: Request, profiel_: str | None = Query(None, alias="profiel"),
-                   pagina: int = Query(1, ge=1), pagina_grootte: int = Query(20, ge=1, le=100, alias="paginaGrootte"),
-                   principal: Principal | None = Depends(principal_optioneel)):
+def lijst_datasets(
+    request: Request,
+    profiel_: str | None = Query(None, alias="profiel"),
+    pagina: int = Query(1, ge=1),
+    pagina_grootte: int = Query(20, ge=1, le=100, alias="paginaGrootte"),
+    principal: Principal | None = Depends(principal_optioneel),
+):
     ld = LD_JSON in request.headers.get("accept", "")
     if principal is None and not ld:
         raise Probleem(401, "niet-geauthenticeerd", "Bearer-token ontbreekt.", headers={"WWW-Authenticate": "Bearer"})
     if profiel_ is not None and profiel_ not in PROFIELEN:
         raise Probleem(400, "ongeldig-verzoek", f"Onbekend profiel; kies uit {', '.join(PROFIELEN)}.")
     with transactie() as cur:
-        cur.execute("SELECT * FROM laden.datasets WHERE (%(p)s::text IS NULL OR profiel = %(p)s) ORDER BY id",
-                    {"p": profiel_})
+        cur.execute(
+            "SELECT * FROM laden.datasets WHERE (%(p)s::text IS NULL OR profiel = %(p)s) ORDER BY id", {"p": profiel_}
+        )
         alle = [dict(r) for r in cur.fetchall()]
         zichtbaar = [d for d in alle if mag_lezen(principal, d["id"]) or (ld and is_publiek(d["beschrijving"]))]
         if ld:
             basis = str(request.base_url).rstrip("/")
             return JSONResponse(catalogus(zichtbaar, basis), media_type=LD_JSON)
         start = (pagina - 1) * pagina_grootte
-        deel = zichtbaar[start:start + pagina_grootte]
+        deel = zichtbaar[start : start + pagina_grootte]
         uit = [dataset_uit(d, _laatste_levering(cur, d["id"])) for d in deel]
-    return {"datasets": uit, "_links": _pagina_links(f"{PREFIX}/datasets", pagina, pagina_grootte,
-                                                      start + pagina_grootte < len(zichtbaar), {"profiel": profiel_})}
+    return {
+        "datasets": uit,
+        "_links": _pagina_links(
+            f"{PREFIX}/datasets", pagina, pagina_grootte, start + pagina_grootte < len(zichtbaar), {"profiel": profiel_}
+        ),
+    }
 
 
 @router.post("/datasets", status_code=201)
@@ -339,6 +407,7 @@ async def wijzig_dataset(dataset_id: str, request: Request, principal: Principal
 
 # ── routes: leveringen ───────────────────────────────────────────────────────
 
+
 def _bool(w: str | None, naam: str, standaard: bool = False) -> bool:
     if w is None:
         return standaard
@@ -365,36 +434,66 @@ def _digest_klopt(kop: str, sha256_hex: str) -> bool:
     return True  # geen sha-256 in de header: niets te controleren
 
 
-def _db_nieuwe_levering(ds_id: str, ontvangen: opslag.Ontvangen, mediatype: str, bestandsnaam: str, sleutel: str | None,
-                        alleen_valideren: bool, client_id: str | None, dcat: dict | None) -> tuple[dict, bool]:
+def _db_nieuwe_levering(
+    ds_id: str,
+    ontvangen: opslag.Ontvangen,
+    mediatype: str,
+    bestandsnaam: str,
+    sleutel: str | None,
+    alleen_valideren: bool,
+    client_id: str | None,
+    dcat: dict | None,
+) -> tuple[dict, bool]:
     """(levering, nieuw). Idempotentie: zelfde sleutel + zelfde inhoud = bestaande levering."""
     with transactie() as cur:
         cur.execute("SELECT pg_advisory_xact_lock(hashtext('laden:ontvangst:' || %s))", (ds_id,))
         if sleutel:
-            cur.execute("""UPDATE laden.leveringen SET idempotency_key = NULL WHERE dataset_id = %s
+            cur.execute(
+                """UPDATE laden.leveringen SET idempotency_key = NULL WHERE dataset_id = %s
                            AND idempotency_key = %s AND ontvangen_op < now() - make_interval(days => %s)""",
-                        (ds_id, sleutel, IDEMPOTENTIE_DAGEN))
-            cur.execute("SELECT * FROM laden.leveringen WHERE dataset_id = %s AND idempotency_key = %s", (ds_id, sleutel))
+                (ds_id, sleutel, IDEMPOTENTIE_DAGEN),
+            )
+            cur.execute(
+                "SELECT * FROM laden.leveringen WHERE dataset_id = %s AND idempotency_key = %s", (ds_id, sleutel)
+            )
             bestaand = cur.fetchone()
             if bestaand:
                 if bestaand["sha256"] != ontvangen.sha256:
-                    raise Probleem(422, "idempotency-key-hergebruikt", "Deze Idempotency-Key is binnen 7 dagen al "
-                                   "gebruikt voor een levering met andere inhoud.",
-                                   levering=f"{PREFIX}/leveringen/{bestaand['id']}")
+                    raise Probleem(
+                        422,
+                        "idempotency-key-hergebruikt",
+                        "Deze Idempotency-Key is binnen 7 dagen al gebruikt voor een levering met andere inhoud.",
+                        levering=f"{PREFIX}/leveringen/{bestaand['id']}",
+                    )
                 if bestaand["status"] in LOOPT:
-                    raise Probleem(409, "levering-loopt", "Een levering met deze Idempotency-Key is nog in behandeling.",
-                                   headers={"Location": f"{PREFIX}/leveringen/{bestaand['id']}",
-                                            "Retry-After": str(RETRY_AFTER)},
-                                   levering=f"{PREFIX}/leveringen/{bestaand['id']}")
+                    raise Probleem(
+                        409,
+                        "levering-loopt",
+                        "Een levering met deze Idempotency-Key is nog in behandeling.",
+                        headers={"Location": f"{PREFIX}/leveringen/{bestaand['id']}", "Retry-After": str(RETRY_AFTER)},
+                        levering=f"{PREFIX}/leveringen/{bestaand['id']}",
+                    )
                 return dict(bestaand), False
         lid = str(uuid.uuid4())
         opslag.bewaar(ontvangen, ds_id, lid, bestandsnaam)
         try:
-            cur.execute("""INSERT INTO laden.leveringen (id, dataset_id, alleen_valideren, idempotency_key, sha256,
+            cur.execute(
+                """INSERT INTO laden.leveringen (id, dataset_id, alleen_valideren, idempotency_key, sha256,
                                bestandsnaam, mediatype, grootte, dcat, client_id)
                            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING *""",
-                        (lid, ds_id, alleen_valideren, sleutel, ontvangen.sha256, bestandsnaam, mediatype,
-                         ontvangen.grootte, json.dumps(dcat, ensure_ascii=False) if dcat else None, client_id))
+                (
+                    lid,
+                    ds_id,
+                    alleen_valideren,
+                    sleutel,
+                    ontvangen.sha256,
+                    bestandsnaam,
+                    mediatype,
+                    ontvangen.grootte,
+                    json.dumps(dcat, ensure_ascii=False) if dcat else None,
+                    client_id,
+                ),
+            )
             return dict(cur.fetchone()), True
         except BaseException:
             p = opslag.pad(ds_id, lid, bestandsnaam)
@@ -409,8 +508,11 @@ def _db_levering(lid: str) -> tuple[dict | None, list[dict]]:
         r = cur.fetchone()
         if not r:
             return None, []
-        cur.execute("SELECT resource, regel, veld, code, melding FROM laden.fouten WHERE levering_id = %s ORDER BY id "
-                    "LIMIT 1000", (lid,))
+        cur.execute(
+            "SELECT resource, regel, veld, code, melding FROM laden.fouten WHERE levering_id = %s ORDER BY id "
+            "LIMIT 1000",
+            (lid,),
+        )
         return dict(r), [_fout_uit(f) for f in cur.fetchall()]
 
 
@@ -418,14 +520,16 @@ def _levering_response(r: dict, fouten: list[dict], status: int) -> JSONResponse
     headers = {"Location": f"{PREFIX}/leveringen/{r['id']}"}
     if r["status"] in LOOPT:
         headers["Retry-After"] = str(RETRY_AFTER)
-    return JSONResponse(levering_uit(r, fouten if r["status"] not in LOOPT else None), status_code=status,
-                        headers=headers)
+    return JSONResponse(
+        levering_uit(r, fouten if r["status"] not in LOOPT else None), status_code=status, headers=headers
+    )
 
 
 def _afgekeurd_probleem(r: dict, fouten: list[dict], versie: int | None) -> JSONResponse:
     loc = f"{PREFIX}/leveringen/{r['id']}"
-    detail = (f"{r['fouten_aantal']} fout(en); niets gepubliceerd" +
-              (f", versie {versie} blijft actief." if versie else "."))
+    detail = f"{r['fouten_aantal']} fout(en); niets gepubliceerd" + (
+        f", versie {versie} blijft actief." if versie else "."
+    )
     doc = probleem(422, "levering-afgekeurd", detail, instance=loc, levering=loc, fouten=fouten)
     return JSONResponse(doc, status_code=422, media_type=MEDIATYPE, headers={"Location": loc})
 
@@ -442,8 +546,12 @@ async def _ontvang(request: Request, mediatype: str) -> tuple[opslag.Ontvangen, 
                 raise Probleem(400, "ongeldig-verzoek", "multipart/form-data zonder deel 'bestand'.")
             mt = kale_mediatype(getattr(bestand, "content_type", None))
             if mt in ("", "application/octet-stream"):
-                mt = {".zip": "application/zip", ".gpkg": "application/geopackage+sqlite3", ".csv": "text/csv",
-                      ".json": "application/json"}.get(Path(bestand.filename or "").suffix.lower(), mt)
+                mt = {
+                    ".zip": "application/zip",
+                    ".gpkg": "application/geopackage+sqlite3",
+                    ".csv": "text/csv",
+                    ".json": "application/json",
+                }.get(Path(bestand.filename or "").suffix.lower(), mt)
             dcat = None
             if form.get("dcat") is not None:
                 d = form.get("dcat")
@@ -484,32 +592,54 @@ def _sleutel(request: Request) -> str | None:
     return sleutel
 
 
-async def _neem_aan(request: Request, ds: dict, principal: Principal, alleen_valideren: bool,
-                    ct: str, controle=None) -> tuple[dict, bool]:
+async def _neem_aan(
+    request: Request, ds: dict, principal: Principal, alleen_valideren: bool, ct: str, controle=None
+) -> tuple[dict, bool]:
     """Body ontvangen, bewaren en als levering registreren: (levering, nieuw). controle(pad): extra
     inhoudscontrole op het ontvangen bestand (compatibiliteitsingang)."""
     toegestaan = PROFIELEN[ds["profiel"]]["mediatypes"]
     if ct != "multipart/form-data" and ct not in toegestaan:
-        raise Probleem(415, "mediatype-past-niet", f"{ct or 'geen Content-Type'} past niet bij profiel {ds['profiel']} "
-                       f"(toegestaan: {', '.join(toegestaan)}).")
+        raise Probleem(
+            415,
+            "mediatype-past-niet",
+            f"{ct or 'geen Content-Type'} past niet bij profiel {ds['profiel']} (toegestaan: {', '.join(toegestaan)}).",
+        )
     ontvangen, mt, naam, dcat = await _ontvang(request, ct)
     try:
         if mt not in toegestaan:
-            raise Probleem(415, "mediatype-past-niet", f"{mt or 'onbekend'} past niet bij profiel {ds['profiel']} "
-                           f"(toegestaan: {', '.join(toegestaan)}).")
+            raise Probleem(
+                415,
+                "mediatype-past-niet",
+                f"{mt or 'onbekend'} past niet bij profiel {ds['profiel']} (toegestaan: {', '.join(toegestaan)}).",
+            )
         digest = request.headers.get("content-digest")
         if digest and not _digest_klopt(digest, ontvangen.sha256):
             raise Probleem(400, "ongeldig-verzoek", "Content-Digest komt niet overeen met de body.")
         if controle:
             await run_in_threadpool(controle, ontvangen.pad)
-        r, nieuw = await run_in_threadpool(_db_nieuwe_levering, ds["id"], ontvangen, mt, naam, _sleutel(request),
-                                           alleen_valideren, principal.client_id, dcat)
+        r, nieuw = await run_in_threadpool(
+            _db_nieuwe_levering,
+            ds["id"],
+            ontvangen,
+            mt,
+            naam,
+            _sleutel(request),
+            alleen_valideren,
+            principal.client_id,
+            dcat,
+        )
     finally:
         opslag.verwijder_tijdelijk(ontvangen)
     if nieuw:
         verwerker.bied_aan(str(r["id"]))
-        logger.info("Levering %s op %s ontvangen (%s, %d bytes, client %s)", r["id"], ds["id"], mt, r["grootte"],
-                    principal.client_id)
+        logger.info(
+            "Levering %s op %s ontvangen (%s, %d bytes, client %s)",
+            r["id"],
+            ds["id"],
+            mt,
+            r["grootte"],
+            principal.client_id,
+        )
     return r, nieuw
 
 
@@ -527,14 +657,23 @@ async def _wacht_op(r: dict, seconden: int | None = None) -> tuple[dict, list[di
 
 def _mislukt_probleem(r: dict, fouten: list[dict]) -> JSONResponse:
     loc = f"{PREFIX}/leveringen/{r['id']}"
-    return JSONResponse(probleem(500, "serverfout", "Technische fout bij het verwerken; niets gepubliceerd. "
-                                 "Opnieuw leveren mag.", instance=loc, levering=loc, fouten=fouten),
-                        status_code=500, media_type=MEDIATYPE, headers={"Location": loc})
+    return JSONResponse(
+        probleem(
+            500,
+            "serverfout",
+            "Technische fout bij het verwerken; niets gepubliceerd. Opnieuw leveren mag.",
+            instance=loc,
+            levering=loc,
+            fouten=fouten,
+        ),
+        status_code=500,
+        media_type=MEDIATYPE,
+        headers={"Location": loc},
+    )
 
 
 @router.post("/datasets/{dataset_id}/leveringen")
-async def lever_dataset(dataset_id: str, request: Request,
-                        principal: Principal = Depends(vereis_rol(*LEVEREN))):
+async def lever_dataset(dataset_id: str, request: Request, principal: Principal = Depends(vereis_rol(*LEVEREN))):
     q = request.query_params
     if q.get("modus", "vervangen") != "vervangen":
         raise Probleem(400, "ongeldig-verzoek", "Alleen modus vervangen wordt ondersteund (v1).")
@@ -542,8 +681,9 @@ async def lever_dataset(dataset_id: str, request: Request,
     wacht = _bool(q.get("wacht"), "wacht")
     _sleutel(request)
     ds = await run_in_threadpool(_db_dataset_rij, dataset_id)
-    r, nieuw = await _neem_aan(request, ds, principal, alleen_valideren,
-                               kale_mediatype(request.headers.get("content-type")))
+    r, nieuw = await _neem_aan(
+        request, ds, principal, alleen_valideren, kale_mediatype(request.headers.get("content-type"))
+    )
     if not nieuw:
         r, fouten = await run_in_threadpool(_db_levering, str(r["id"]))
         return _levering_response(r, fouten, 200)
@@ -564,47 +704,79 @@ def _db_dataset_rij(dataset_id: str) -> dict:
 
 
 @router.get("/datasets/{dataset_id}/leveringen")
-def lijst_leveringen(dataset_id: str, status: str | None = Query(None), sinds: dt.datetime | None = Query(None),
-                     pagina: int = Query(1, ge=1), pagina_grootte: int = Query(20, ge=1, le=100, alias="paginaGrootte"),
-                     principal: Principal = Depends(vereis_rol(*LEZEN))):
+def lijst_leveringen(
+    dataset_id: str,
+    status: str | None = Query(None),
+    sinds: dt.datetime | None = Query(None),
+    pagina: int = Query(1, ge=1),
+    pagina_grootte: int = Query(20, ge=1, le=100, alias="paginaGrootte"),
+    principal: Principal = Depends(vereis_rol(*LEZEN)),
+):
     if status is not None and status not in (*LOOPT, *EINDSTATUS):
         raise Probleem(400, "ongeldig-verzoek", "Onbekende status.")
     with transactie() as cur:
         _dataset_of_404(cur, dataset_id)
-        cur.execute("""SELECT * FROM laden.leveringen WHERE dataset_id = %(ds)s
+        cur.execute(
+            """SELECT * FROM laden.leveringen WHERE dataset_id = %(ds)s
                        AND (%(st)s::text IS NULL OR status = %(st)s)
                        AND (%(sinds)s::timestamptz IS NULL OR ontvangen_op >= %(sinds)s)
                        ORDER BY ontvangen_op DESC LIMIT %(n)s OFFSET %(off)s""",
-                    {"ds": dataset_id, "st": status, "sinds": sinds, "n": pagina_grootte + 1,
-                     "off": (pagina - 1) * pagina_grootte})
+            {
+                "ds": dataset_id,
+                "st": status,
+                "sinds": sinds,
+                "n": pagina_grootte + 1,
+                "off": (pagina - 1) * pagina_grootte,
+            },
+        )
         rijen = cur.fetchall()
-    return {"leveringen": [levering_kort(r) for r in rijen[:pagina_grootte]],
-            "_links": _pagina_links(f"{PREFIX}/datasets/{dataset_id}/leveringen", pagina, pagina_grootte,
-                                    len(rijen) > pagina_grootte,
-                                    {"status": status, "sinds": sinds.isoformat() if sinds else None})}
+    return {
+        "leveringen": [levering_kort(r) for r in rijen[:pagina_grootte]],
+        "_links": _pagina_links(
+            f"{PREFIX}/datasets/{dataset_id}/leveringen",
+            pagina,
+            pagina_grootte,
+            len(rijen) > pagina_grootte,
+            {"status": status, "sinds": sinds.isoformat() if sinds else None},
+        ),
+    }
 
 
 @router.get("/datasets/{dataset_id}/versies")
-def lijst_versies(dataset_id: str, pagina: int = Query(1, ge=1),
-                  pagina_grootte: int = Query(20, ge=1, le=100, alias="paginaGrootte"),
-                  principal: Principal = Depends(vereis_rol(*LEZEN))):
+def lijst_versies(
+    dataset_id: str,
+    pagina: int = Query(1, ge=1),
+    pagina_grootte: int = Query(20, ge=1, le=100, alias="paginaGrootte"),
+    principal: Principal = Depends(vereis_rol(*LEZEN)),
+):
     with transactie() as cur:
         _dataset_of_404(cur, dataset_id)
-        cur.execute("""SELECT v.*, (SELECT l.sha256 FROM laden.leveringen l WHERE l.id = v.levering_id) AS sha256
+        cur.execute(
+            """SELECT v.*, (SELECT l.sha256 FROM laden.leveringen l WHERE l.id = v.levering_id) AS sha256
                        FROM laden.versies v WHERE v.dataset_id = %s ORDER BY v.versie DESC LIMIT %s OFFSET %s""",
-                    (dataset_id, pagina_grootte + 1, (pagina - 1) * pagina_grootte))
+            (dataset_id, pagina_grootte + 1, (pagina - 1) * pagina_grootte),
+        )
         rijen = cur.fetchall()
     versies = []
     for v in rijen[:pagina_grootte]:
         enkel = len(v["levering_ids"]) == 1
-        item = {"versie": v["versie"], "actueel": v["actief"], "leveringIds": [str(x) for x in v["levering_ids"]],
-                "gepubliceerdOp": _iso(v["gepubliceerd_op"]), "aantalRegels": v["aantal_regels"],
-                "sha256": v["sha256"] if enkel else None}
+        item = {
+            "versie": v["versie"],
+            "actueel": v["actief"],
+            "leveringIds": [str(x) for x in v["levering_ids"]],
+            "gepubliceerdOp": _iso(v["gepubliceerd_op"]),
+            "aantalRegels": v["aantal_regels"],
+            "sha256": v["sha256"] if enkel else None,
+        }
         if enkel:
             item["_links"] = {"bestand": _link(f"{PREFIX}/datasets/{dataset_id}/versies/{v['versie']}/bestand")}
         versies.append(item)
-    return {"versies": versies, "_links": _pagina_links(f"{PREFIX}/datasets/{dataset_id}/versies", pagina,
-                                                         pagina_grootte, len(rijen) > pagina_grootte)}
+    return {
+        "versies": versies,
+        "_links": _pagina_links(
+            f"{PREFIX}/datasets/{dataset_id}/versies", pagina, pagina_grootte, len(rijen) > pagina_grootte
+        ),
+    }
 
 
 def _db_versie_bestand(dataset_id: str, versie: str) -> dict:
@@ -620,9 +792,12 @@ def _db_versie_bestand(dataset_id: str, versie: str) -> dict:
         if not v:
             raise Probleem(404, "niet-gevonden", f"Versie {versie} van {dataset_id} bestaat niet.")
         if len(v["levering_ids"]) != 1:
-            raise Probleem(409, "versie-meerdere-leveringen",
-                           "Deze versie bestaat uit meerdere leveringen (vervangbereik kleiner dan de dataset); "
-                           "haal per levering het bestand op, zie /versies.")
+            raise Probleem(
+                409,
+                "versie-meerdere-leveringen",
+                "Deze versie bestaat uit meerdere leveringen (vervangbereik kleiner dan de dataset); "
+                "haal per levering het bestand op, zie /versies.",
+            )
         cur.execute("SELECT * FROM laden.leveringen WHERE id = %s", (v["levering_ids"][0],))
         return dict(cur.fetchone())
 
@@ -634,8 +809,9 @@ def haal_versie_bestand(dataset_id: str, versie: str, principal: Principal = Dep
     if lv["bestand_verwijderd_op"] or not pad.is_file():
         raise Probleem(404, "niet-gevonden", "Het bestand van deze versie is niet meer bewaard (bewaartermijn).")
     digest = base64.b64encode(bytes.fromhex(lv["sha256"])).decode()
-    return FileResponse(pad, media_type=lv["mediatype"], filename=lv["bestandsnaam"],
-                        headers={"Content-Digest": f"sha-256=:{digest}:"})
+    return FileResponse(
+        pad, media_type=lv["mediatype"], filename=lv["bestandsnaam"], headers={"Content-Digest": f"sha-256=:{digest}:"}
+    )
 
 
 @router.get("/leveringen/{levering_id}")
@@ -643,7 +819,9 @@ def haal_levering(levering_id: uuid.UUID, principal: Principal | None = Depends(
     if principal is None:
         raise Probleem(401, "niet-geauthenticeerd", "Bearer-token ontbreekt.", headers={"WWW-Authenticate": "Bearer"})
     r, fouten = _db_levering(str(levering_id))
-    if not r or not (mag_lezen(principal, r["dataset_id"]) or (principal.client_id and principal.client_id == r["client_id"])):
+    if not r or not (
+        mag_lezen(principal, r["dataset_id"]) or (principal.client_id and principal.client_id == r["client_id"])
+    ):
         raise Probleem(404, "niet-gevonden", "Levering bestaat niet.")
     return _levering_response(r, fouten, 200)
 
@@ -664,8 +842,12 @@ def _compat_dataset(dataset_id: str, profiel_: str) -> dict:
     with transactie() as cur:
         ds = _haal_dataset(cur, dataset_id)
     if not ds or ds["profiel"] != profiel_ or (ds["laadprofiel"] or {}).get("adapter") != adapter_swf.ADAPTER:
-        raise Probleem(404, "niet-gevonden", f"Dataset {dataset_id} is niet geregistreerd met profiel {profiel_} en "
-                       f"adapter {adapter_swf.ADAPTER}; vraag de beheerder hem te registreren.")
+        raise Probleem(
+            404,
+            "niet-gevonden",
+            f"Dataset {dataset_id} is niet geregistreerd met profiel {profiel_} en "
+            f"adapter {adapter_swf.ADAPTER}; vraag de beheerder hem te registreren.",
+        )
     return dict(ds)
 
 
@@ -677,6 +859,7 @@ def _compat_vorm(is_vorm, wat: str):
             raise Probleem(400, "ongeldig-verzoek", "De body is geen geldige JSON (UTF-8).")
         if not is_vorm(data):
             raise Probleem(400, "ongeldig-verzoek", f"De body is geen {wat} in het formaat van de SWF-monitor.")
+
     return controle
 
 
@@ -708,17 +891,24 @@ async def _compat_inlezen(request: Request, principal: Principal, dataset_id: st
 
 
 @router.post(f"{COMPAT}/indicator/setup/inlezen")
-async def swf_definities_inlezen(request: Request, principal: Principal = Depends(
-        vereis_rol(f"dataset:{SWF_DEFINITIES}:laden", "datasets:laden"))):
+async def swf_definities_inlezen(
+    request: Request, principal: Principal = Depends(vereis_rol(f"dataset:{SWF_DEFINITIES}:laden", "datasets:laden"))
+):
     vorm = _compat_vorm(adapter_swf.is_definities, "definities-snapshot (indicatoren, gebiedstypen, relaties)")
     return await _compat_inlezen(request, principal, SWF_DEFINITIES, "definities", vorm)
 
 
 @router.post(f"{COMPAT}/indicator_waarde/inlezen")
-async def swf_waarden_inlezen(request: Request, principal: Principal = Depends(
-        vereis_rol(f"dataset:{SWF_WAARDEN}:laden", "datasets:laden"))):
-    return await _compat_inlezen(request, principal, SWF_WAARDEN, "waarnemingen",
-                                 _compat_vorm(adapter_swf.is_waarden, "niet-lege array van waarden"))
+async def swf_waarden_inlezen(
+    request: Request, principal: Principal = Depends(vereis_rol(f"dataset:{SWF_WAARDEN}:laden", "datasets:laden"))
+):
+    return await _compat_inlezen(
+        request,
+        principal,
+        SWF_WAARDEN,
+        "waarnemingen",
+        _compat_vorm(adapter_swf.is_waarden, "niet-lege array van waarden"),
+    )
 
 
 def _db_definities_terug() -> dict:
@@ -739,24 +929,29 @@ def _db_waarden_terug(indicator_id: str | None) -> list[dict]:
 
 
 @router.get(f"{COMPAT}/indicator/setup")
-async def swf_definities_lezen(principal: Principal = Depends(
-        vereis_rol(f"dataset:{SWF_DEFINITIES}:laden", "datasets:laden", "beheerder"))):
+async def swf_definities_lezen(
+    principal: Principal = Depends(vereis_rol(f"dataset:{SWF_DEFINITIES}:laden", "datasets:laden", "beheerder")),
+):
     return await run_in_threadpool(_db_definities_terug)
 
 
 @router.get(f"{COMPAT}/indicator_waarde")
-async def swf_waarden_lezen(principal: Principal = Depends(
-        vereis_rol(f"dataset:{SWF_WAARDEN}:laden", "datasets:laden", "beheerder"))):
+async def swf_waarden_lezen(
+    principal: Principal = Depends(vereis_rol(f"dataset:{SWF_WAARDEN}:laden", "datasets:laden", "beheerder")),
+):
     return JSONResponse(await run_in_threadpool(_db_waarden_terug, None))
 
 
 @router.get(f"{COMPAT}/indicator_waarde/{{indicator_id}}")
-async def swf_waarden_indicator_lezen(indicator_id: uuid.UUID, principal: Principal = Depends(
-        vereis_rol(f"dataset:{SWF_WAARDEN}:laden", "datasets:laden", "beheerder"))):
+async def swf_waarden_indicator_lezen(
+    indicator_id: uuid.UUID,
+    principal: Principal = Depends(vereis_rol(f"dataset:{SWF_WAARDEN}:laden", "datasets:laden", "beheerder")),
+):
     return JSONResponse(await run_in_threadpool(_db_waarden_terug, str(indicator_id)))
 
 
 # ── koppeling met de app: API-Version, Problem Details, verwerker ────────────
+
 
 class ApiVersieMiddleware:
     """Zet API-Version op elke response onder /api/laden/v1 (ook op fouten van de auth-laag)."""
@@ -779,17 +974,23 @@ class ApiVersieMiddleware:
         await self.app(scope, receive, stuur)
 
 
-def _problem_response(request: Request, status: int, code: str, detail: str, headers: dict | None = None,
-                      **extra) -> JSONResponse:
+def _problem_response(
+    request: Request, status: int, code: str, detail: str, headers: dict | None = None, **extra
+) -> JSONResponse:
     h = dict(headers or {})
     h["API-Version"] = api_versie()
-    return JSONResponse(probleem(status, code, detail, instance=request.url.path, **extra), status_code=status,
-                        media_type=MEDIATYPE, headers=h)
+    return JSONResponse(
+        probleem(status, code, detail, instance=request.url.path, **extra),
+        status_code=status,
+        media_type=MEDIATYPE,
+        headers=h,
+    )
 
 
 def registreer(app) -> None:
     """Router, middleware, foutafhandeling en verwerker aan de app koppelen (main.py)."""
     from omnitwin.fouten import HEADER, nieuwe_correlatie_id
+
     app.include_router(router)
     app.add_middleware(ApiVersieMiddleware)
 
@@ -802,29 +1003,46 @@ def registreer(app) -> None:
 
     async def bij_http(request: Request, exc: StarletteHTTPException):
         if request.url.path.startswith(PREFIX):
-            return _problem_response(request, exc.status_code, HTTP_CODE.get(exc.status_code, "ongeldig-verzoek"),
-                                     str(exc.detail), getattr(exc, "headers", None))
+            return _problem_response(
+                request,
+                exc.status_code,
+                HTTP_CODE.get(exc.status_code, "ongeldig-verzoek"),
+                str(exc.detail),
+                getattr(exc, "headers", None),
+            )
         if vorige_http:
             return await vorige_http(request, exc)
         from fastapi.exception_handlers import http_exception_handler
+
         return await http_exception_handler(request, exc)
 
     async def bij_validatie(request: Request, exc: RequestValidationError):
         if request.url.path.startswith(PREFIX):
             velden = sorted({".".join(str(x) for x in e.get("loc", [])[1:]) for e in exc.errors()})
-            return _problem_response(request, 400, "ongeldig-verzoek",
-                                     f"Ongeldige parameter(s): {', '.join(v for v in velden if v) or 'onbekend'}.")
+            return _problem_response(
+                request,
+                400,
+                "ongeldig-verzoek",
+                f"Ongeldige parameter(s): {', '.join(v for v in velden if v) or 'onbekend'}.",
+            )
         if vorige_validatie:
             return await vorige_validatie(request, exc)
         from fastapi.exception_handlers import request_validation_exception_handler
+
         return await request_validation_exception_handler(request, exc)
 
     async def bij_fout(request: Request, exc: Exception):
         if request.url.path.startswith(PREFIX):
             cid = nieuwe_correlatie_id()
             logger.error("%s %s → 500 [%s]", request.method, request.url.path, cid, exc_info=exc)
-            return _problem_response(request, 500, "serverfout", f"Er ging iets mis op de server. Meld deze code aan "
-                                     f"de beheerder: {cid}", {HEADER: cid}, correlatieId=cid)
+            return _problem_response(
+                request,
+                500,
+                "serverfout",
+                f"Er ging iets mis op de server. Meld deze code aan de beheerder: {cid}",
+                {HEADER: cid},
+                correlatieId=cid,
+            )
         return await vorige_fout(request, exc)
 
     app.add_exception_handler(Probleem, bij_probleem)

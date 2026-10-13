@@ -76,7 +76,9 @@ def test_demo_use_case_is_volledig_en_actief(naam):
     assert u["status"] == "actief"
     assert not uc.valideer_manifest(u, naam)
     assert u["data"]["focus"] in u["data"]["gebieden"]
-    assert "afgeleid" not in u["data"], "afgeleide indicatoren komen uit het CBS-recept, niet uit directe databasevulling"
+    assert "afgeleid" not in u["data"], (
+        "afgeleide indicatoren komen uit het CBS-recept, niet uit directe databasevulling"
+    )
     assert "extra_data" not in u["data"], "downloadbare data hoort in een dataset met een bronadapter"
     assert not (u["_map"] / "data").exists(), "geen eigen waarden.csv: data via datasets"
 
@@ -120,8 +122,10 @@ def test_demodata_is_gemarkeerd():
     assert intern["beschrijving"]["dct:type"] == "demodata"
     assert "plaatsvervanger" in intern["beschrijving"]["dct:description"]
     assert intern["varianten"]["intern"]["als_beschikbaar"] is True
-    assert "${SWF_" in intern["varianten"]["intern"]["bron"].get("omschrijving", "") or \
-        intern["varianten"]["intern"]["bron"]["adapter"] == "swf-dump"
+    assert (
+        "${SWF_" in intern["varianten"]["intern"]["bron"].get("omschrijving", "")
+        or intern["varianten"]["intern"]["bron"]["adapter"] == "swf-dump"
+    )
     intern_uuids = set(next(s["filter"]["in"] for s in intern["bewerkingen"] if "filter" in s))
     for r in sample_rijen():
         if r["indicator_uuid"] in intern_uuids or r["gebied_id"] == "BU19000002":

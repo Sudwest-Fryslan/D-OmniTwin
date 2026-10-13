@@ -140,7 +140,7 @@ def bepaal_client_ip(peer: str, forwarded_for: list[str], trusted_proxies: str) 
     for hop in reversed(hops):
         ip = _als_ip(hop)
         if ip is None:
-            return peer          # onleesbare waarde: niet raden
+            return peer  # onleesbare waarde: niet raden
         if not _vertrouwd(ip, netwerken):
             return str(ip)
     # Alleen vertrouwde adressen (of geen header): het verste adres in de keten
@@ -150,8 +150,7 @@ def bepaal_client_ip(peer: str, forwarded_for: list[str], trusted_proxies: str) 
 def client_ip(request: Request) -> str:
     """IP-adres van de bezoeker (zie de modulebeschrijving)."""
     peer = request.client.host if request.client else "onbekend"
-    return bepaal_client_ip(peer, request.headers.getlist("x-forwarded-for"),
-                            instellingen().trusted_proxies)
+    return bepaal_client_ip(peer, request.headers.getlist("x-forwarded-for"), instellingen().trusted_proxies)
 
 
 def te_veel(wachttijd: int, melding: str) -> HTTPException:

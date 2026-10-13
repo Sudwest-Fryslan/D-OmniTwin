@@ -30,8 +30,9 @@ import requests
 from omnitwin.services.chat_datavraag import is_datavraag
 from tests.grounding import getallen_in_bron, getallen_in_tekst, grounding_melding, ongegronde_getallen
 
-BASE_URL = (os.environ.get("OMNITWIN_BASE_URL") or os.environ.get("LLM_TEST_BASE_URL")
-            or "http://localhost").rstrip("/")
+BASE_URL = (os.environ.get("OMNITWIN_BASE_URL") or os.environ.get("LLM_TEST_BASE_URL") or "http://localhost").rstrip(
+    "/"
+)
 TIMEOUT = int(os.environ.get("LLM_TEST_TIMEOUT", "900"))
 ROOT = Path(__file__).resolve().parents[2]
 
@@ -60,9 +61,11 @@ def verwachte_buurten(uc):
 def verwachte_getallen(uc):
     """Niet-triviale getallen in verwacht.verwacht (zoals geschreven), behalve die uit de vraag ('65-plussers')."""
     in_vraag = {w for _, ws, _, _ in getallen_in_tekst(USE_CASES[uc]["persona"]["vraag"]) for w in ws}
-    return [(raw, waarden, pct) for raw, waarden, pct, triviaal
-            in getallen_in_tekst(USE_CASES[uc]["verwacht"]["verwacht"])
-            if not triviaal and not (waarden & in_vraag)]
+    return [
+        (raw, waarden, pct)
+        for raw, waarden, pct, triviaal in getallen_in_tekst(USE_CASES[uc]["verwacht"]["verwacht"])
+        if not triviaal and not (waarden & in_vraag)
+    ]
 
 
 _antwoorden = {}
@@ -71,8 +74,9 @@ _antwoorden = {}
 def vraag(uc):
     """Eén chat-verzoek per use case, gedeeld door de tests (model is traag)."""
     if uc not in _antwoorden:
-        r = requests.post(f"{BASE_URL}/api/chat", json={"vraag": USE_CASES[uc]["persona"]["vraag"], "context": {}},
-                          timeout=TIMEOUT)
+        r = requests.post(
+            f"{BASE_URL}/api/chat", json={"vraag": USE_CASES[uc]["persona"]["vraag"], "context": {}}, timeout=TIMEOUT
+        )
         assert r.status_code == 200, r.text[:500]
         _antwoorden[uc] = r.json()
     return _antwoorden[uc]
@@ -84,6 +88,7 @@ def bron(antwoord):
 
 
 # ── Zonder model ─────────────────────────────────────────────────────────────
+
 
 @pytest.mark.integration
 @pytest.mark.parametrize("uc", USE_CASES)
@@ -103,7 +108,8 @@ def test_datavraag_haalt_verwachte_cijfers_op(uc):
     for raw, _, _ in verwachte_getallen(uc):
         assert not ongegronde_getallen(raw, bron_getallen), (
             f"{uc}: verwacht getal {raw} niet in de gegevens: "
-            + json.dumps([(g['indicator'], g['gebied'], g['waarde']) for g in gegevens], ensure_ascii=False))
+            + json.dumps([(g["indicator"], g["gebied"], g["waarde"]) for g in gegevens], ensure_ascii=False)
+        )
 
 
 @pytest.mark.integration
@@ -111,9 +117,11 @@ def test_datavraag_haalt_verwachte_cijfers_op(uc):
 def test_gegevens_gelijk_aan_database(uc):
     gegevens = vraag(uc).get("gegevens") or []
     ids = sorted({g["gebied_id"] for g in gegevens})
-    r = requests.get(f"{BASE_URL}/api/data/vw_gebied_indicator_actueel",
-                     params={"select": "gebied_id,indicator_uuid,waarde,jaar", "gebied_id": f"in.({','.join(ids)})"},
-                     timeout=30)
+    r = requests.get(
+        f"{BASE_URL}/api/data/vw_gebied_indicator_actueel",
+        params={"select": "gebied_id,indicator_uuid,waarde,jaar", "gebied_id": f"in.({','.join(ids)})"},
+        timeout=30,
+    )
     r.raise_for_status()
     db = {(x["gebied_id"], x["indicator_uuid"]): x for x in r.json()}
     for g in gegevens:
@@ -135,8 +143,9 @@ def test_knoppen_bij_datavraag(uc):
 
 @pytest.mark.integration
 def test_vraag_zonder_data_zegt_eerlijk_geen_cijfers():
-    r = requests.post(f"{BASE_URL}/api/chat", json={"vraag": "Hoeveel windmolens staan er in Bolsward?"},
-                      timeout=TIMEOUT)
+    r = requests.post(
+        f"{BASE_URL}/api/chat", json={"vraag": "Hoeveel windmolens staan er in Bolsward?"}, timeout=TIMEOUT
+    )
     assert r.status_code == 200, r.text[:500]
     a = r.json()
     assert a["intent"] == "DATAVRAAG"
@@ -148,8 +157,11 @@ def test_vraag_zonder_data_zegt_eerlijk_geen_cijfers():
 @pytest.mark.parametrize("uc", USE_CASES)
 def test_zonder_llm_vaste_tekst_met_juiste_cijfers(uc):
     """Out of the box, zonder LLM-koppeling: de vaste tekst noemt de buurten en de verwachte getallen."""
-    r = requests.post(f"{BASE_URL}/api/chat",
-                      json={"vraag": USE_CASES[uc]["persona"]["vraag"], "context": {"geen_llm": True}}, timeout=60)
+    r = requests.post(
+        f"{BASE_URL}/api/chat",
+        json={"vraag": USE_CASES[uc]["persona"]["vraag"], "context": {"geen_llm": True}},
+        timeout=60,
+    )
     assert r.status_code == 200, r.text[:500]
     a = r.json()
     assert a["intent"] == "DATAVRAAG" and a["debug"]["llm_gebruikt"] is False
@@ -170,8 +182,9 @@ GROEN_VRAAG = "Hoe groen is Bolsward-Zuidoost?"
 @pytest.mark.integration
 @pytest.mark.parametrize("geen_llm", [True, False], ids=["zonder-llm", "met-llm-of-terugval"])
 def test_tc_06_004_hoe_groen(geen_llm):
-    r = requests.post(f"{BASE_URL}/api/chat", json={"vraag": GROEN_VRAAG, "context": {"geen_llm": geen_llm}},
-                      timeout=TIMEOUT)
+    r = requests.post(
+        f"{BASE_URL}/api/chat", json={"vraag": GROEN_VRAAG, "context": {"geen_llm": geen_llm}}, timeout=TIMEOUT
+    )
     assert r.status_code == 200, r.text[:500]
     a = r.json()
     assert a["intent"] == "DATAVRAAG", a

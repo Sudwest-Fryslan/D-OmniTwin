@@ -34,11 +34,11 @@ from omnitwin.services import zoektaal
 from omnitwin.services.grounding import ongegronde_getallen
 
 MAX_INDICATOREN = 4
-MAX_GEBIEDEN_IN_FEITEN = 12   # langere lijsten: top en staart
-MAX_ALLE_GEBIEDEN = 30        # zonder plaats in de vraag: alle gebieden, als het er niet meer zijn
+MAX_GEBIEDEN_IN_FEITEN = 12  # langere lijsten: top en staart
+MAX_ALLE_GEBIEDEN = 30  # zonder plaats in de vraag: alle gebieden, als het er niet meer zijn
 MAX_REFERENTIE = 25
-MAX_SELECTIE = 50             # zoveel gebieden uit een multi-selectie op de kaart (#233)
-AI_DREMPEL = 0.7              # score van AI-zoeken (services/zoektaal.py); 'sterk' begint bij 0,6
+MAX_SELECTIE = 50  # zoveel gebieden uit een multi-selectie op de kaart (#233)
+AI_DREMPEL = 0.7  # score van AI-zoeken (services/zoektaal.py); 'sterk' begint bij 0,6
 
 # ── Normaliseren ─────────────────────────────────────────────────────────────
 
@@ -51,10 +51,18 @@ _DATAVRAAG_PATRONEN = [
     r"\bwelke (buurt|buurten|wijk|wijken|kern|kernen|dorp|dorpen|gebied|gebieden|plaats|plaatsen)\b",
     r"\bwaar\b.*\b(meest|meeste|minst|minste|hoogst|hoogste|laagst|laagste|grootst|grootste|"
     r"kleinst|kleinste|verst|verste|dichtst|dichtste|slechtst|slechtste|best|beste)\b",
-    r"\bhoe staat het\b", r"\bhoe staan\b", r"\bhoe scoort\b", r"\bhoe scoren\b",
-    r"\bhoe (hoog|laag|groot|veel)\b", r"\bhoeveel\b",
-    r"\bvergelijk", r"\bvergeleken\b", r"\bten opzichte van\b", r"\bt o v\b",
-    r"\btop \d+\b", r"\b(\d+|twee|drie|vier|vijf|tien) (buurten|wijken|gebieden|kernen)\b",
+    r"\bhoe staat het\b",
+    r"\bhoe staan\b",
+    r"\bhoe scoort\b",
+    r"\bhoe scoren\b",
+    r"\bhoe (hoog|laag|groot|veel)\b",
+    r"\bhoeveel\b",
+    r"\bvergelijk",
+    r"\bvergeleken\b",
+    r"\bten opzichte van\b",
+    r"\bt o v\b",
+    r"\btop \d+\b",
+    r"\b(\d+|twee|drie|vier|vijf|tien) (buurten|wijken|gebieden|kernen)\b",
     r"\b(hoogste|laagste|meeste|minste|verst|verste|dichtst|dichtste|grootste|kleinste)\b",
     r"\bwat is (de|het)\b.*\b(in|van|voor)\b",
     r"\bhoe staat\b.*\bervoor\b",
@@ -62,13 +70,17 @@ _DATAVRAAG_PATRONEN = [
 ]
 
 # Expliciete navigatie of uitleg: nooit een datavraag
-_NAVIGATIE = (r"^(toon|open|ga naar|selecteer|kleur|zoom)\b|^laat\b.*\bzien\b|\bop de kaart\b|"
-              r"\bwelke indicatoren\b|\bwat kan\b|\bwat kun\b|\brapport\b|\bhandleiding\b|^help\b")
+_NAVIGATIE = (
+    r"^(toon|open|ga naar|selecteer|kleur|zoom)\b|^laat\b.*\bzien\b|\bop de kaart\b|"
+    r"\bwelke indicatoren\b|\bwat kan\b|\bwat kun\b|\brapport\b|\bhandleiding\b|^help\b"
+)
 
 
-_EIGEN_BUURT = (r"\bmijn (buurt|wijk|dorp|straat|omgeving|woonplaats)\b|\bbij mij\b|\bbij ons\b|"
-                r"\bonze (buurt|wijk|straat|omgeving|woonplaats)\b|\b(deze|dit|die) (buurt|wijk|dorp|gebied)\b|"
-                r"\bwaar ik woon\b|\bwaar wij wonen\b|\bhier\b")
+_EIGEN_BUURT = (
+    r"\bmijn (buurt|wijk|dorp|straat|omgeving|woonplaats)\b|\bbij mij\b|\bbij ons\b|"
+    r"\bonze (buurt|wijk|straat|omgeving|woonplaats)\b|\b(deze|dit|die) (buurt|wijk|dorp|gebied)\b|"
+    r"\bwaar ik woon\b|\bwaar wij wonen\b|\bhier\b"
+)
 
 
 def vraagt_eigen_buurt(vraag: str) -> bool:
@@ -101,7 +113,8 @@ def gevraagd_aantal(vraag: str) -> Optional[int]:
     """'top 3 buurten', 'de 5 wijken met ...' → 3 / 5; anders None."""
     v = normaliseer(vraag)
     m = re.search(r"\btop (\d+)\b", v) or re.search(
-        r"\b(\d+|twee|drie|vier|vijf|tien) (buurten|wijken|gebieden|kernen)\b", v)
+        r"\b(\d+|twee|drie|vier|vijf|tien) (buurten|wijken|gebieden|kernen)\b", v
+    )
     if not m:
         return None
     n = m.group(1)
@@ -124,8 +137,22 @@ def gevraagde_volgorde(vraag: str) -> str:
 
 # Namen die ook gewone woorden zijn: niet als gebied herkennen
 _GEEN_GEBIEDSNAAM = {
-    "centrum", "buitengebied", "noord", "zuid", "oost", "west", "dorp", "wijk", "buurt",
-    "verspreide huizen", "bedrijventerrein", "haven", "stad", "kern", "de", "het",
+    "centrum",
+    "buitengebied",
+    "noord",
+    "zuid",
+    "oost",
+    "west",
+    "dorp",
+    "wijk",
+    "buurt",
+    "verspreide huizen",
+    "bedrijventerrein",
+    "haven",
+    "stad",
+    "kern",
+    "de",
+    "het",
 }
 
 
@@ -136,10 +163,10 @@ def plaats_van(naam: str) -> str:
 
 @dataclass
 class GebiedHerkenning:
-    gevraagd: List[str] = field(default_factory=list)    # gebied-ids uit de vraag of de kaart
+    gevraagd: List[str] = field(default_factory=list)  # gebied-ids uit de vraag of de kaart
     referentie: List[str] = field(default_factory=list)  # buren, voor de rangorde
-    herkend: List[str] = field(default_factory=list)     # leesbaar: welke namen herkend zijn
-    bron: str = "geen"                                   # vraag | kaart | alle | geen
+    herkend: List[str] = field(default_factory=list)  # leesbaar: welke namen herkend zijn
+    bron: str = "geen"  # vraag | kaart | alle | geen
 
 
 def herken_gebieden(
@@ -232,13 +259,22 @@ def herken_gebieden(
         g = per_id[res.gevraagd[0]]
         type_id = g.get("gebiedstype_id")
         p = normaliseer(plaats_van(g["naam"]))
-        buren = [b["id"] for b in gebieden
-                 if b["id"] != g["id"] and b.get("gebiedstype_id") == type_id
-                 and normaliseer(plaats_van(b["naam"])) == p and p != normaliseer(g["naam"])]
+        buren = [
+            b["id"]
+            for b in gebieden
+            if b["id"] != g["id"]
+            and b.get("gebiedstype_id") == type_id
+            and normaliseer(plaats_van(b["naam"])) == p
+            and p != normaliseer(g["naam"])
+        ]
         if not buren and g.get("gemeente_code"):
-            buren = [b["id"] for b in gebieden
-                     if b["id"] != g["id"] and b.get("gebiedstype_id") == type_id
-                     and b.get("gemeente_code") == g["gemeente_code"]]
+            buren = [
+                b["id"]
+                for b in gebieden
+                if b["id"] != g["id"]
+                and b.get("gebiedstype_id") == type_id
+                and b.get("gemeente_code") == g["gemeente_code"]
+            ]
         res.referentie = buren[:MAX_REFERENTIE]
     return res
 
@@ -264,10 +300,10 @@ _token_past = zoektaal.token_past
 class IndicatorTreffer:
     uuid: str
     naam: str
-    soort: str        # specifiek | lexicaal | ai | thema
+    soort: str  # specifiek | lexicaal | ai | thema
     score: float
     woorden: set = field(default_factory=set)  # vraagwoorden die deze treffer 'dekt'
-    begrip: bool = False                        # ook genoemd in de begrippenlijst
+    begrip: bool = False  # ook genoemd in de begrippenlijst
 
 
 def herken_indicatoren(
@@ -300,8 +336,9 @@ def herken_indicatoren(
         oud = treffers.get(u)
         begrip = soort in ("specifiek", "thema") or bool(oud and oud.begrip)
         if oud is None or _PRIORITEIT[soort] < _PRIORITEIT[oud.soort]:
-            treffers[u] = IndicatorTreffer(u, ind["naam"], soort, score, set(woorden) | (oud.woorden if oud else set()),
-                                           begrip)
+            treffers[u] = IndicatorTreffer(
+                u, ind["naam"], soort, score, set(woorden) | (oud.woorden if oud else set()), begrip
+            )
         else:
             oud.woorden |= set(woorden)
             oud.begrip = begrip
@@ -359,6 +396,7 @@ def herken_indicatoren(
 
 
 # ── 4. Richting, rangorde en feiten ──────────────────────────────────────────
+
 
 def richting(score_type: Optional[str], interpretatie_logica: Optional[str]) -> str:
     """
@@ -477,20 +515,22 @@ def bouw_feiten(
         elif len(lijst) > MAX_GEBIEDEN_IN_FEITEN:
             # gevraagde gebieden altijd houden, verder top en staart
             kop = lijst[: MAX_GEBIEDEN_IN_FEITEN // 2]
-            staart = lijst[-MAX_GEBIEDEN_IN_FEITEN // 2:]
+            staart = lijst[-MAX_GEBIEDEN_IN_FEITEN // 2 :]
             midden = [x for x in lijst if x["gevraagd"] and x not in kop and x not in staart]
             lijst = kop + midden + staart
         jaren = sorted({w.get("jaar") for w in rijen if w.get("jaar")})
-        feiten.append({
-            "indicator_uuid": u,
-            "indicator": ind["naam"],
-            "eenheid": (ind.get("eenheid") or "").strip(),
-            "bron": nette_bron(ind.get("bron")),
-            "jaren": jaren,
-            "richting": r,
-            "aantal_gebieden": n,
-            "waarden": lijst,
-        })
+        feiten.append(
+            {
+                "indicator_uuid": u,
+                "indicator": ind["naam"],
+                "eenheid": (ind.get("eenheid") or "").strip(),
+                "bron": nette_bron(ind.get("bron")),
+                "jaren": jaren,
+                "richting": r,
+                "aantal_gebieden": n,
+                "waarden": lijst,
+            }
+        )
     return feiten
 
 
@@ -529,10 +569,14 @@ def samenvatting(f: Dict[str, Any]) -> str:
     if gevraagd_midden:
         zinnen.append(f"Daartussen: {_namen(gevraagd_midden, e)}.")
     if f["richting"] == "hoger_is_beter":
-        zinnen.append(f"Hoger is beter: {' en '.join(x['gebied'] for x in hoog)} {'scoren' if len(hoog) > 1 else 'scoort'} het gunstigst.")
+        zinnen.append(
+            f"Hoger is beter: {' en '.join(x['gebied'] for x in hoog)} {'scoren' if len(hoog) > 1 else 'scoort'} het gunstigst."
+        )
     elif f["richting"] == "lager_is_beter":
-        zinnen.append(f"Lager is beter: {' en '.join(x['gebied'] for x in laag)} {'scoren' if len(laag) > 1 else 'scoort'} het gunstigst, "
-                      f"{' en '.join(x['gebied'] for x in hoog)} het ongunstigst.")
+        zinnen.append(
+            f"Lager is beter: {' en '.join(x['gebied'] for x in laag)} {'scoren' if len(laag) > 1 else 'scoort'} het gunstigst, "
+            f"{' en '.join(x['gebied'] for x in hoog)} het ongunstigst."
+        )
     return " ".join(zinnen)
 
 
@@ -566,9 +610,14 @@ def bron_getallen(feiten: Sequence[Dict[str, Any]], vraag: str = "") -> Dict[str
     return {
         "vraag": vraag,
         "feiten": [
-            {"indicator": f["indicator"], "eenheid": f["eenheid"], "bron": f["bron"],
-             "jaren": f["jaren"], "aantal": f["aantal_gebieden"],
-             "waarden": [[w["waarde"], w["jaar"], w["rang_hoog"]] for w in f["waarden"]]}
+            {
+                "indicator": f["indicator"],
+                "eenheid": f["eenheid"],
+                "bron": f["bron"],
+                "jaren": f["jaren"],
+                "aantal": f["aantal_gebieden"],
+                "waarden": [[w["waarde"], w["jaar"], w["rang_hoog"]] for w in f["waarden"]],
+            }
             for f in feiten
         ],
     }
@@ -598,31 +647,38 @@ def feiten_als_json(feiten: Sequence[Dict[str, Any]]) -> str:
     """De cijfers voor het taalmodel als JSON: per indicator de bron, jaar, richting en waarden."""
     blok = []
     for f in feiten:
-        blok.append({
-            "indicator": f["indicator"],
-            "bron": f["bron"],
-            "jaar": f["jaren"],
-            "eenheid": f["eenheid"] or None,
-            "richting": RICHTING_UITLEG[f["richting"]],
-            "aantal_gebieden": f["aantal_gebieden"],
-            "samenvatting": samenvatting(f),
-            "waarden": [
-                {"gebied": w["gebied"], "waarde": _waarde_tekst(w, f["eenheid"]),
-                 **({"jaar": w["jaar"]} if len(f["jaren"]) > 1 and w.get("jaar") else {}),
-                 **({"kenmerk": ", ".join(w["labels"])} if w["labels"] else {}),
-                 **({"demowaarde": True} if w["demo"] else {})}
-                for w in f["waarden"]
-            ],
-        })
+        blok.append(
+            {
+                "indicator": f["indicator"],
+                "bron": f["bron"],
+                "jaar": f["jaren"],
+                "eenheid": f["eenheid"] or None,
+                "richting": RICHTING_UITLEG[f["richting"]],
+                "aantal_gebieden": f["aantal_gebieden"],
+                "samenvatting": samenvatting(f),
+                "waarden": [
+                    {
+                        "gebied": w["gebied"],
+                        "waarde": _waarde_tekst(w, f["eenheid"]),
+                        **({"jaar": w["jaar"]} if len(f["jaren"]) > 1 and w.get("jaar") else {}),
+                        **({"kenmerk": ", ".join(w["labels"])} if w["labels"] else {}),
+                        **({"demowaarde": True} if w["demo"] else {}),
+                    }
+                    for w in f["waarden"]
+                ],
+            }
+        )
     return json.dumps(blok, ensure_ascii=False, indent=1)
 
 
 def gebruikersprompt(vraag: str, feiten: Sequence[Dict[str, Any]], herkend: Sequence[str]) -> str:
     gebieden = ", ".join(herkend) if herkend else "geen specifiek gebied genoemd"
-    return (f"Vraag: {vraag}\n"
-            f"Herkende gebieden: {gebieden}\n\n"
-            f"Cijfers (meest recente jaar per gebied):\n{feiten_als_json(feiten)}\n\n"
-            "Beantwoord de vraag in maximaal 4 zinnen. Gebruik alleen deze getallen en noem de buurten bij naam.")
+    return (
+        f"Vraag: {vraag}\n"
+        f"Herkende gebieden: {gebieden}\n\n"
+        f"Cijfers (meest recente jaar per gebied):\n{feiten_als_json(feiten)}\n\n"
+        "Beantwoord de vraag in maximaal 4 zinnen. Gebruik alleen deze getallen en noem de buurten bij naam."
+    )
 
 
 def strip_denken(tekst: str) -> str:
@@ -633,14 +689,18 @@ def strip_denken(tekst: str) -> str:
 
 # ── Database ─────────────────────────────────────────────────────────────────
 
+
 def laad_gebieden(db) -> List[Dict[str, Any]]:
-    rows = db.execute(text(
-        "SELECT g.id, g.naam, g.gemeente_code, CAST(g.gebiedstype_id AS text), t.naam "
-        "FROM gebieden g LEFT JOIN gebiedstypes t ON t.id = g.gebiedstype_id "
-        "WHERE COALESCE(g.actief, true)"
-    )).fetchall()
-    return [{"id": r[0], "naam": r[1], "gemeente_code": r[2], "gebiedstype_id": r[3], "gebiedstype": r[4]}
-            for r in rows]
+    rows = db.execute(
+        text(
+            "SELECT g.id, g.naam, g.gemeente_code, CAST(g.gebiedstype_id AS text), t.naam "
+            "FROM gebieden g LEFT JOIN gebiedstypes t ON t.id = g.gebiedstype_id "
+            "WHERE COALESCE(g.actief, true)"
+        )
+    ).fetchall()
+    return [
+        {"id": r[0], "naam": r[1], "gemeente_code": r[2], "gebiedstype_id": r[3], "gebiedstype": r[4]} for r in rows
+    ]
 
 
 def voorkeur_gebiedstype(gebieden: Sequence[Dict[str, Any]]) -> Optional[str]:
@@ -657,13 +717,17 @@ def voorkeur_gebiedstype(gebieden: Sequence[Dict[str, Any]]) -> Optional[str]:
 
 def laad_indicatoren(db) -> List[Dict[str, Any]]:
     """Actieve indicatoren met minstens één waarde."""
-    rows = db.execute(text(
-        "SELECT CAST(i.uuid AS text), i.naam, i.eenheid, i.bron, i.score_type, i.interpretatie_logica "
-        "FROM indicatoren i WHERE i.is_actief = true "
-        "AND EXISTS (SELECT 1 FROM gebied_data d WHERE d.indicator_uuid = i.uuid)"
-    )).fetchall()
-    return [{"uuid": r[0], "naam": r[1], "eenheid": r[2], "bron": r[3], "score_type": r[4],
-             "interpretatie_logica": r[5]} for r in rows]
+    rows = db.execute(
+        text(
+            "SELECT CAST(i.uuid AS text), i.naam, i.eenheid, i.bron, i.score_type, i.interpretatie_logica "
+            "FROM indicatoren i WHERE i.is_actief = true "
+            "AND EXISTS (SELECT 1 FROM gebied_data d WHERE d.indicator_uuid = i.uuid)"
+        )
+    ).fetchall()
+    return [
+        {"uuid": r[0], "naam": r[1], "eenheid": r[2], "bron": r[3], "score_type": r[4], "interpretatie_logica": r[5]}
+        for r in rows
+    ]
 
 
 def laad_waarden(db, indicator_uuids: Sequence[str], gebied_ids: Sequence[str]) -> List[Dict[str, Any]]:
@@ -672,22 +736,27 @@ def laad_waarden(db, indicator_uuids: Sequence[str], gebied_ids: Sequence[str]) 
     Rust die waarde op te weinig waarnemingen (kleine aantallen, #325), dan valt hij weg."""
     if not indicator_uuids or not gebied_ids:
         return []
-    rows = db.execute(text(
-        "SELECT r.gebied_id, r.indicator_uuid, r.waarde, r.jaar, r.bron FROM ("
-        "SELECT DISTINCT ON (d.gebied_id, d.indicator_uuid) d.gebied_id, "
-        "CAST(d.indicator_uuid AS text) AS indicator_uuid, d.waarde, "
-        "COALESCE(d.jaar, CAST(EXTRACT(YEAR FROM d.datum) AS integer)) AS jaar, d.bron, d.n "
-        "FROM gebied_data d "
-        "WHERE CAST(d.indicator_uuid AS text) = ANY(:uuids) AND d.gebied_id = ANY(:ids) "
-        "AND COALESCE(d.scenario_id, 'current') = 'current' "
-        "ORDER BY d.gebied_id, d.indicator_uuid, d.jaar DESC NULLS LAST, d.datum DESC NULLS LAST"
-        ") r WHERE " + ka.niet_onderdrukt_sql("r")
-    ), {"uuids": list(indicator_uuids), "ids": list(gebied_ids)}).fetchall()
-    return [{"gebied_id": r[0], "indicator_uuid": r[1], "waarde": float(r[2]), "jaar": r[3], "bron": r[4]}
-            for r in rows]
+    rows = db.execute(
+        text(
+            "SELECT r.gebied_id, r.indicator_uuid, r.waarde, r.jaar, r.bron FROM ("
+            "SELECT DISTINCT ON (d.gebied_id, d.indicator_uuid) d.gebied_id, "
+            "CAST(d.indicator_uuid AS text) AS indicator_uuid, d.waarde, "
+            "COALESCE(d.jaar, CAST(EXTRACT(YEAR FROM d.datum) AS integer)) AS jaar, d.bron, d.n "
+            "FROM gebied_data d "
+            "WHERE CAST(d.indicator_uuid AS text) = ANY(:uuids) AND d.gebied_id = ANY(:ids) "
+            "AND COALESCE(d.scenario_id, 'current') = 'current' "
+            "ORDER BY d.gebied_id, d.indicator_uuid, d.jaar DESC NULLS LAST, d.datum DESC NULLS LAST"
+            ") r WHERE " + ka.niet_onderdrukt_sql("r")
+        ),
+        {"uuids": list(indicator_uuids), "ids": list(gebied_ids)},
+    ).fetchall()
+    return [
+        {"gebied_id": r[0], "indicator_uuid": r[1], "waarde": float(r[2]), "jaar": r[3], "bron": r[4]} for r in rows
+    ]
 
 
 # ── Route ────────────────────────────────────────────────────────────────────
+
 
 def deelvragen(vraag: str) -> List[str]:
     """'Welke buurt ligt het verst van een koele plek, en waar wonen de meeste 65-plussers?' → 2 delen."""
@@ -696,7 +765,13 @@ def deelvragen(vraag: str) -> List[str]:
 
 
 # Foutteksten die LLMService als 'text' teruggeeft (Ollama en, na #88, OpenAI/gateway)
-_MODELFOUTEN = ("Error contacting", "Generatie mislukt", "LLM-server", "Fout bij", "AI-samenvatting is nu niet beschikbaar")
+_MODELFOUTEN = (
+    "Error contacting",
+    "Generatie mislukt",
+    "LLM-server",
+    "Fout bij",
+    "AI-samenvatting is nu niet beschikbaar",
+)
 
 
 # Waar de buurt vandaan kwam als die niet in de vraag stond (context.buurt_herkomst, #336)
@@ -718,8 +793,10 @@ def aanname_tekst(herkenning: GebiedHerkenning, herkomst: Optional[str] = None) 
         lijst = f"{', '.join(namen[:-1])} en {namen[-1]}"
     else:
         lijst = namen[0]
-    return (f"Ik ga uit van {lijst} ({_HERKOMST.get(herkomst, 'geselecteerd op de kaart')}). Een andere buurt? "
-            "Selecteer die op de kaart of noem de naam in je vraag.")
+    return (
+        f"Ik ga uit van {lijst} ({_HERKOMST.get(herkomst, 'geselecteerd op de kaart')}). Een andere buurt? "
+        "Selecteer die op de kaart of noem de naam in je vraag."
+    )
 
 
 def beantwoord_datavraag(
@@ -743,14 +820,21 @@ def beantwoord_datavraag(
     gebieden = laad_gebieden(db)
     try:
         from omnitwin.services.gemeente_validatie import laad_gemeenten
+
         gemeenten = laad_gemeenten(db, alleen_met_gebieden=True)
     except Exception:
         db.rollback()
         gemeenten = {}
     voorkeur = voorkeur_gebiedstype(gebieden)
     selectie = context.get("geselecteerde_gebied_ids")
-    herkenning = herken_gebieden(vraag, gebieden, gemeenten, context.get("huidig_gebied_id"), voorkeur,
-                                 geselecteerd=selectie if isinstance(selectie, list) else ())
+    herkenning = herken_gebieden(
+        vraag,
+        gebieden,
+        gemeenten,
+        context.get("huidig_gebied_id"),
+        voorkeur,
+        geselecteerd=selectie if isinstance(selectie, list) else (),
+    )
     per_id = {g["id"]: g for g in gebieden}
 
     # 'bij mij in de buurt' zonder geselecteerde buurt: niet alle buurten, maar vragen welke (#233)
@@ -764,8 +848,9 @@ def beantwoord_datavraag(
             herkenning.bron = "alle"
 
     # Indicatoren: woorden, begrippen en AI-zoeken per deelvraag (zonder gebiedsnamen)
-    gebiedswoorden = ([g["naam"] for g in gebieden] + [plaats_van(g["naam"]) for g in gebieden]
-                      + list(gemeenten.values()))
+    gebiedswoorden = (
+        [g["naam"] for g in gebieden] + [plaats_van(g["naam"]) for g in gebieden] + list(gemeenten.values())
+    )
     onderwerp = resterende_tekst(vraag, gebiedswoorden)
     ai_treffers: List[Dict[str, Any]] = []
     for deel in deelvragen(vraag):
@@ -784,36 +869,62 @@ def beantwoord_datavraag(
     if not treffers and not gebied_herkend:
         return None  # geen onderwerp en geen gebied: de gewone chat neemt het over
 
-    basis = {"herkend": herkenning.herkend, "gebieden_bron": herkenning.bron, "feiten": [],
-             "aanname": aanname_tekst(herkenning, context.get("buurt_herkomst")), "vraag_buurt": False,
-             "indicatoren": treffers, "gebied_ids": [], "llm_gebruikt": False, "model": None,
-             "gebiedstype_id": None, "ongegrond": [], "llm_fout": False}
+    basis = {
+        "herkend": herkenning.herkend,
+        "gebieden_bron": herkenning.bron,
+        "feiten": [],
+        "aanname": aanname_tekst(herkenning, context.get("buurt_herkomst")),
+        "vraag_buurt": False,
+        "indicatoren": treffers,
+        "gebied_ids": [],
+        "llm_gebruikt": False,
+        "model": None,
+        "gebiedstype_id": None,
+        "ongegrond": [],
+        "llm_fout": False,
+    }
 
     if not treffers:
         plek = f" voor {', '.join(herkenning.herkend)}" if herkenning.herkend else ""
-        return {**basis, "narrative": (
-            f"Daar heb ik geen cijfers over{plek}: ik vind in de database geen indicator die bij deze "
-            "vraag past. Ik verzin geen getallen. Probeer een ander woord, of zoek in de lijst met indicatoren.")}
+        return {
+            **basis,
+            "narrative": (
+                f"Daar heb ik geen cijfers over{plek}: ik vind in de database geen indicator die bij deze "
+                "vraag past. Ik verzin geen getallen. Probeer een ander woord, of zoek in de lijst met indicatoren."
+            ),
+        }
 
     if not herkenning.gevraagd:
         namen = ", ".join(t.naam for t in treffers)
         if eigen_buurt:
             # #336: de viewer toont bij vraag_buurt een veld voor postcode/adres en 'Gebruik mijn locatie'
-            return {**basis, "vraag_buurt": True, "narrative": (
-                f"Welke buurt is jouw buurt? Vul hieronder je postcode of adres in, gebruik je locatie, "
-                f"of selecteer de buurt op de kaart. Je kunt ook de naam noemen, bijvoorbeeld "
-                f"'... in Bolsward-Zuidoost'. Ik zoek dan in: {namen}.")}
-        return {**basis, "narrative": (
-            "Voor welk gebied wil je dit weten? Noem een buurt, woonplaats of gemeente, "
-            "of selecteer een gebied op de kaart.")}
+            return {
+                **basis,
+                "vraag_buurt": True,
+                "narrative": (
+                    f"Welke buurt is jouw buurt? Vul hieronder je postcode of adres in, gebruik je locatie, "
+                    f"of selecteer de buurt op de kaart. Je kunt ook de naam noemen, bijvoorbeeld "
+                    f"'... in Bolsward-Zuidoost'. Ik zoek dan in: {namen}."
+                ),
+            }
+        return {
+            **basis,
+            "narrative": (
+                "Voor welk gebied wil je dit weten? Noem een buurt, woonplaats of gemeente, "
+                "of selecteer een gebied op de kaart."
+            ),
+        }
 
     alle_ids = herkenning.gevraagd + [i for i in herkenning.referentie if i not in herkenning.gevraagd]
     ind_meta = {i["uuid"]: i for i in indicatoren}
     waarden = laad_waarden(db, [t.uuid for t in treffers], alle_ids)
     feiten = bouw_feiten(
-        [ind_meta[t.uuid] for t in treffers], waarden,
+        [ind_meta[t.uuid] for t in treffers],
+        waarden,
         {i: per_id[i]["naam"] for i in alle_ids if i in per_id},
-        herkenning.gevraagd, gevraagde_volgorde(vraag), gevraagd_aantal(vraag),
+        herkenning.gevraagd,
+        gevraagde_volgorde(vraag),
+        gevraagd_aantal(vraag),
     )
     basis["gebied_ids"] = alle_ids
     eerste = per_id.get(alle_ids[0], {})
@@ -823,17 +934,27 @@ def beantwoord_datavraag(
 
     if not feiten:
         namen = ", ".join(t.naam for t in treffers)
-        return {**basis, "narrative": (
-            f"Ik vind wel indicatoren ({namen}), maar geen waarden voor "
-            f"{', '.join(herkenning.herkend) or 'deze gebieden'}. Ik verzin geen getallen.")}
+        return {
+            **basis,
+            "narrative": (
+                f"Ik vind wel indicatoren ({namen}), maar geen waarden voor "
+                f"{', '.join(herkenning.herkend) or 'deze gebieden'}. Ik verzin geen getallen."
+            ),
+        }
 
     # Taalmodel: alleen de feiten; daarna controle op de getallen.
     # context.geen_llm: direct de vaste tekst (werkt zonder model; ook voor tests)
     tekst, model = "", None
     if not context.get("geen_llm"):
         try:
-            antwoord = vraag_llm(SYSTEEMPROMPT, gebruikersprompt(vraag, feiten, herkenning.herkend),
-                                 [f["indicator_uuid"] for f in feiten]) or {}
+            antwoord = (
+                vraag_llm(
+                    SYSTEEMPROMPT,
+                    gebruikersprompt(vraag, feiten, herkenning.herkend),
+                    [f["indicator_uuid"] for f in feiten],
+                )
+                or {}
+            )
             # Foutvlag van LLMService (#65): de tekst is dan een foutmelding, geen antwoord
             tekst = "" if antwoord.get("error") else strip_denken(antwoord.get("text", ""))
             model = (antwoord.get("debug") or {}).get("model")
@@ -849,5 +970,11 @@ def beantwoord_datavraag(
     zonder_data = [t.naam for t in treffers if t.uuid not in met_data]
     if zonder_data:
         tekst += f" Geen waarden gevonden voor: {', '.join(zonder_data)}."
-    return {**basis, "narrative": tekst, "llm_gebruikt": llm_gebruikt, "model": model,
-            "ongegrond": ongegrond, "llm_fout": fout}
+    return {
+        **basis,
+        "narrative": tekst,
+        "llm_gebruikt": llm_gebruikt,
+        "model": model,
+        "ongegrond": ongegrond,
+        "llm_fout": fout,
+    }

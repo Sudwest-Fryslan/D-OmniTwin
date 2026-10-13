@@ -4,6 +4,7 @@ Unit test: percentielklasse (8 x 12,5%) en klasse-aggregatie (#255).
 Zonder database. De aanname (tot #222 antwoord geeft) staat in
 docs/3-data-engineering/percentielklasse_methodiek.md.
 """
+
 import pytest
 
 from omnitwin.services import percentielklasse as pk
@@ -12,6 +13,7 @@ pytestmark = pytest.mark.unit
 
 
 # ── Klassegrenzen ────────────────────────────────────────────────────────────
+
 
 def test_acht_waarden_geven_acht_klassen():
     ref = [float(i) for i in range(1, 9)]
@@ -24,9 +26,20 @@ def test_zestien_waarden_twee_per_klasse():
     assert klassen == [1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8, 8]
 
 
-@pytest.mark.parametrize("p,verwacht", [
-    (0.0, 1), (0.1249, 1), (0.125, 2), (0.4999, 4), (0.5, 5), (0.8749, 7), (0.875, 8), (0.9999, 8), (1.0, 8),
-])
+@pytest.mark.parametrize(
+    "p,verwacht",
+    [
+        (0.0, 1),
+        (0.1249, 1),
+        (0.125, 2),
+        (0.4999, 4),
+        (0.5, 5),
+        (0.8749, 7),
+        (0.875, 8),
+        (0.9999, 8),
+        (1.0, 8),
+    ],
+)
 def test_grenzen_op_12_5_procent(p, verwacht):
     assert pk.klasse_uit_percentiel(p) == verwacht
 
@@ -50,6 +63,7 @@ def test_zonder_referentie_geen_klasse():
 
 # ── Gelijke waarden ──────────────────────────────────────────────────────────
 
+
 def test_gelijke_waarden_zelfde_klasse():
     ref = [1.0, 2.0, 2.0, 2.0, 2.0, 3.0, 4.0, 5.0]
     klassen = {pk.klasse(2.0, ref) for _ in range(4)}
@@ -64,6 +78,7 @@ def test_allemaal_gelijk_middenklasse():
 
 # ── Polariteit ───────────────────────────────────────────────────────────────
 
+
 def test_lager_is_beter_spiegelt_de_klasse():
     ref = [float(i) for i in range(1, 9)]
     hoger = [pk.klasse(v, ref, hoger_beter=True) for v in ref]
@@ -72,29 +87,41 @@ def test_lager_is_beter_spiegelt_de_klasse():
     assert pk.klasse(1.0, ref, hoger_beter=False) == 8  # laagste waarde = gunstigst
 
 
-@pytest.mark.parametrize("score_type,inverse,verwacht", [
-    ("+/+", False, True), (None, None, True), ("positive_ascending", False, True),
-    ("-/+", False, False),  # lager is beter, zoals rapporten en chat (SWF omkeren, #120)
-    ("+/-", False, False), ("-/-", False, False), ("-=-", False, False), ("positive_descending", False, False),
-    ("+/+", True, False),
-])
+@pytest.mark.parametrize(
+    "score_type,inverse,verwacht",
+    [
+        ("+/+", False, True),
+        (None, None, True),
+        ("positive_ascending", False, True),
+        ("-/+", False, False),  # lager is beter, zoals rapporten en chat (SWF omkeren, #120)
+        ("+/-", False, False),
+        ("-/-", False, False),
+        ("-=-", False, False),
+        ("positive_descending", False, False),
+        ("+/+", True, False),
+    ],
+)
 def test_hoger_is_beter(score_type, inverse, verwacht):
     assert pk.hoger_is_beter(score_type, inverse) is verwacht
 
 
-@pytest.mark.parametrize("score_type,inverse,kwadrant,verwacht", [
-    ("+/+", False, "Welzijn", "hoger_is_beter"),
-    ("+/-", False, "Welzijn", "lager_is_beter"),
-    ("+/+", True, None, "lager_is_beter"),
-    ("+/+", False, "Samenstelling", "neutraal"),
-    ("+/-", False, "Samenstelling bevolking", "neutraal"),
-])
+@pytest.mark.parametrize(
+    "score_type,inverse,kwadrant,verwacht",
+    [
+        ("+/+", False, "Welzijn", "hoger_is_beter"),
+        ("+/-", False, "Welzijn", "lager_is_beter"),
+        ("+/+", True, None, "lager_is_beter"),
+        ("+/+", False, "Samenstelling", "neutraal"),
+        ("+/-", False, "Samenstelling bevolking", "neutraal"),
+    ],
+)
 def test_richting_voor_benchmarkkleur(score_type, inverse, kwadrant, verwacht):
     # #323: de Kompas-benchmark kleurt de afwijking op deze richting
     assert pk.richting(score_type, inverse, kwadrant) == verwacht
 
 
 # ── Onderdrukking (n < 10) ───────────────────────────────────────────────────
+
 
 @pytest.mark.parametrize("n,verwacht", [(None, False), (0, True), (9, True), (10, False), (250, False)])
 def test_onderdrukt_onder_de_drempel(n, verwacht):
@@ -108,6 +135,7 @@ def test_onderdrukte_waarde_telt_niet_mee_in_de_aggregatie():
 
 # ── Aggregatie ───────────────────────────────────────────────────────────────
 
+
 def test_aggregatie_voorbeeld_methodiek():
     # methodiek.md: scores 1, 3 en 4 op 88, 100 en 155 buurten geven 2,9 -> klasse 3
     assert pk.aggregeer([(1, 88), (3, 100), (4, 155)]) == 3
@@ -119,8 +147,8 @@ def test_aggregatie_weegt_naar_aantal_gebieden():
 
 
 def test_afronden_half_naar_boven():
-    assert pk.aggregeer([(1, 1), (2, 1)]) == 2   # 1,5
-    assert pk.aggregeer([(4, 1), (5, 1)]) == 5   # 4,5
+    assert pk.aggregeer([(1, 1), (2, 1)]) == 2  # 1,5
+    assert pk.aggregeer([(4, 1), (5, 1)]) == 5  # 4,5
 
 
 def test_aggregatie_zonder_data():
@@ -129,20 +157,41 @@ def test_aggregatie_zonder_data():
 
 
 def test_annoteer_boom_aggregeert_over_alle_indicatoren_eronder():
-    boom = {"name": "Root", "type": "root", "children": [
-        {"name": "Kwadrant", "type": "titel", "color": "#123456", "children": [
-            {"name": "Thema", "type": "thema", "children": [
-                {"name": "Onderdeel A", "type": "onderdeel", "children": [
-                    {"name": "i1", "type": "indicator", "uuid": "u1"},
-                    {"name": "i2", "type": "indicator", "uuid": "u2"},
-                ]},
-                {"name": "Onderdeel B", "type": "onderdeel", "children": [
-                    {"name": "i3", "type": "indicator", "uuid": "u3"},
-                    {"name": "i4", "type": "indicator", "uuid": "u4"},
-                ]},
-            ]},
-        ]},
-    ]}
+    boom = {
+        "name": "Root",
+        "type": "root",
+        "children": [
+            {
+                "name": "Kwadrant",
+                "type": "titel",
+                "color": "#123456",
+                "children": [
+                    {
+                        "name": "Thema",
+                        "type": "thema",
+                        "children": [
+                            {
+                                "name": "Onderdeel A",
+                                "type": "onderdeel",
+                                "children": [
+                                    {"name": "i1", "type": "indicator", "uuid": "u1"},
+                                    {"name": "i2", "type": "indicator", "uuid": "u2"},
+                                ],
+                            },
+                            {
+                                "name": "Onderdeel B",
+                                "type": "onderdeel",
+                                "children": [
+                                    {"name": "i3", "type": "indicator", "uuid": "u3"},
+                                    {"name": "i4", "type": "indicator", "uuid": "u4"},
+                                ],
+                            },
+                        ],
+                    },
+                ],
+            },
+        ],
+    }
     kleuren = [f"#00000{k}" for k in range(1, 9)]
     # selectie van twee gebieden: i1 klasse 2 en 4 (gemiddeld 3), i3 onderdrukt in beide
     paren = {"u1": [(2, 10), (4, 10)], "u2": [(8, 30)], "u3": []}
@@ -168,6 +217,7 @@ def test_annoteer_boom_aggregeert_over_alle_indicatoren_eronder():
 
 # ── Labels en palet ──────────────────────────────────────────────────────────
 
+
 def test_labels():
     assert pk.klasse_label(1) == "klasse 1: 0–12,5% (ongunstigst)"
     assert pk.klasse_label(4) == "klasse 4: 37,5–50%"
@@ -190,12 +240,14 @@ def test_onbekende_classificatie_wordt_standaard():
 
 
 def test_samenstelling_neutraal_palet_en_niet_in_de_wortel():
-    boom = {"name": "Root", "type": "root", "children": [
-        {"name": "Kwaliteit", "type": "titel", "children": [
-            {"name": "i1", "type": "indicator", "uuid": "u1"}]},
-        {"name": "Samenstelling", "type": "titel", "children": [
-            {"name": "i2", "type": "indicator", "uuid": "u2"}]},
-    ]}
+    boom = {
+        "name": "Root",
+        "type": "root",
+        "children": [
+            {"name": "Kwaliteit", "type": "titel", "children": [{"name": "i1", "type": "indicator", "uuid": "u1"}]},
+            {"name": "Samenstelling", "type": "titel", "children": [{"name": "i2", "type": "indicator", "uuid": "u2"}]},
+        ],
+    }
     kleuren = [f"#00000{k}" for k in range(1, 9)]
     neutraal = [f"#0000a{k}" for k in range(1, 9)]
     uit = pk.annoteer_boom(boom, {"u1": [(2, 10)], "u2": [(8, 10)]}, {}, kleuren, "#grijs", neutraal)

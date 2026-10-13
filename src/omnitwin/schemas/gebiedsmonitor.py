@@ -10,6 +10,7 @@ from datetime import datetime
 # Gebiedstypes
 # ============================================================================
 
+
 class GebiedstypeBase(BaseModel):
     naam: str
     code: Optional[str] = None
@@ -21,7 +22,7 @@ class GebiedstypeBase(BaseModel):
 class GebiedstypeResponse(GebiedstypeBase):
     id: UUID
     aantal_gebieden: Optional[int] = 0
-    
+
     class Config:
         from_attributes = True
 
@@ -33,6 +34,7 @@ class GebiedstypesListResponse(BaseModel):
 # ============================================================================
 # Gebieden
 # ============================================================================
+
 
 class GebiedBase(BaseModel):
     id: str
@@ -48,7 +50,7 @@ class GebiedDetail(BaseModel):
     gebiedstype: Dict[str, Any]
     centroid: Optional[Dict[str, float]] = None
     metadata: Optional[Dict[str, Any]] = None
-    
+
     class Config:
         from_attributes = True
 
@@ -64,6 +66,7 @@ class GebiedenListResponse(BaseModel):
 # Indicatoren
 # ============================================================================
 
+
 class IndicatorBase(BaseModel):
     uuid: UUID  # ook uuid5: afgeleide indicatoren uit use cases (#141)
     naam: str
@@ -78,7 +81,7 @@ class IndicatorResponse(IndicatorBase):
     aantal_gebieden_met_data: Optional[int] = None
     coverage_percentage: Optional[float] = None
     nieuwste_jaar: Optional[int] = None
-    
+
     class Config:
         from_attributes = True
 
@@ -91,6 +94,7 @@ class IndicatorenListResponse(BaseModel):
 # Indicator Waarden (voor gebied details)
 # ============================================================================
 
+
 class IndicatorWaardeResponse(BaseModel):
     uuid: UUID  # ook uuid5: afgeleide indicatoren uit use cases (#141)
     naam: str
@@ -100,7 +104,7 @@ class IndicatorWaardeResponse(BaseModel):
     datum: Optional[datetime] = None
     eenheid: Optional[str] = None
     bron: Optional[str] = None
-    
+
     class Config:
         from_attributes = True
 
@@ -113,6 +117,7 @@ class GebiedDetailResponse(BaseModel):
 # ============================================================================
 # GeoJSON Responses
 # ============================================================================
+
 
 class GeoJSONGeometry(BaseModel):
     type: str
@@ -148,6 +153,7 @@ class GeoJSONFeatureCollection(BaseModel):
 # ============================================================================
 # Error Response
 # ============================================================================
+
 
 class ErrorResponse(BaseModel):
     detail: str

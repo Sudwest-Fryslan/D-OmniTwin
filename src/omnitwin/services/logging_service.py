@@ -38,8 +38,15 @@ LEVEL_MAP = {
 LEVEL_PRIORITY = {"DEBUG": 0, "INFO": 1, "WARNING": 2, "ERROR": 3, "CRITICAL": 4}
 
 VALID_CATEGORIES = {
-    "SERVER", "API", "AUTH", "KOMPAS", "KAART",
-    "RAPPORT", "LLM_CHAT", "DATABASE", "ADMIN",
+    "SERVER",
+    "API",
+    "AUTH",
+    "KOMPAS",
+    "KAART",
+    "RAPPORT",
+    "LLM_CHAT",
+    "DATABASE",
+    "ADMIN",
 }
 
 
@@ -63,10 +70,7 @@ class _ConfigCache:
             db = SessionLocal()
             try:
                 rows = db.execute(text("SELECT category, level, enabled FROM log_config")).fetchall()
-                self._config = {
-                    row[0]: {"level": row[1], "enabled": row[2]}
-                    for row in rows
-                }
+                self._config = {row[0]: {"level": row[1], "enabled": row[2]} for row in rows}
                 self._last_refresh = time.time()
             finally:
                 db.close()
@@ -140,6 +144,7 @@ class AsyncLogQueue:
             self._queue.put_nowait(entry)
         except queue.Full:
             import sys
+
             print(
                 "WARNING: Log queue vol — oudste entries worden overgeslagen",
                 file=sys.stderr,
@@ -309,18 +314,21 @@ class AppLogger:
 
         # 3. Enqueue voor DB schrijven
         import json
-        _log_queue.enqueue({
-            "timestamp": datetime.utcnow(),
-            "level": level,
-            "category": category,
-            "message": message,
-            "user_id": user_id,
-            "session_id": session_id,
-            "ip_address": ip_address,
-            "endpoint": endpoint,
-            "response_time_ms": response_time_ms,
-            "extra": json.dumps(extra) if extra else "null",
-        })
+
+        _log_queue.enqueue(
+            {
+                "timestamp": datetime.utcnow(),
+                "level": level,
+                "category": category,
+                "message": message,
+                "user_id": user_id,
+                "session_id": session_id,
+                "ip_address": ip_address,
+                "endpoint": endpoint,
+                "response_time_ms": response_time_ms,
+                "extra": json.dumps(extra) if extra else "null",
+            }
+        )
 
     @classmethod
     def debug(cls, message: str, **kwargs):
@@ -352,8 +360,7 @@ async def init_logging():
     _setup_python_logging(log_level)
     _config_cache.refresh()
     await _log_queue.start()
-    AppLogger.info("Logging infrastructuur geïnitialiseerd", category="SERVER",
-                   extra={"log_level": log_level})
+    AppLogger.info("Logging infrastructuur geïnitialiseerd", category="SERVER", extra={"log_level": log_level})
 
 
 async def shutdown_logging():

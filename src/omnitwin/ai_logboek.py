@@ -14,6 +14,7 @@ Opschonen na de bewaartermijn (`ai_instellingen`, standaard 365 dagen) kan allee
 Fail-closed: mislukt het schrijven of klopt de keten niet, dan zet de applicatie A, B en C automatisch
 stil (`ai_vrijgave.automatische_noodstop`); functioneel beheer zet ze zelf weer open.
 """
+
 from __future__ import annotations
 
 import csv
@@ -42,8 +43,21 @@ STANDAARD_BEWAARTERMIJN = 365
 MIN_BEWAARTERMIJN, MAX_BEWAARTERMIJN = 30, 3650
 
 # Velden in de volgorde van de hash (zelfde als public.ai_logboek_regelhash in V039)
-HASHVELDEN = ("id", "tijdstip_utc", "usecase", "functie", "status", "taak", "bronnen", "model",
-              "modelversie", "app_versie", "resultaat", "foutmelding", "vorige_hash")
+HASHVELDEN = (
+    "id",
+    "tijdstip_utc",
+    "usecase",
+    "functie",
+    "status",
+    "taak",
+    "bronnen",
+    "model",
+    "modelversie",
+    "app_versie",
+    "resultaat",
+    "foutmelding",
+    "vorige_hash",
+)
 SCHEIDER = "\x1f"
 
 
@@ -65,18 +79,31 @@ def _bronnen(bronnen: Optional[Iterable[Any]]) -> List[str]:
     return uit
 
 
-def regel(usecase: str, functie: str, status: str, *, taak: Optional[str] = None,
-          bronnen: Optional[Iterable[Any]] = None, model: Optional[str] = None,
-          modelversie: Optional[str] = None, resultaat: Optional[str] = None,
-          foutmelding: Optional[str] = None) -> Dict[str, Any]:
+def regel(
+    usecase: str,
+    functie: str,
+    status: str,
+    *,
+    taak: Optional[str] = None,
+    bronnen: Optional[Iterable[Any]] = None,
+    model: Optional[str] = None,
+    modelversie: Optional[str] = None,
+    resultaat: Optional[str] = None,
+    foutmelding: Optional[str] = None,
+) -> Dict[str, Any]:
     """De rij zoals hij in het logboek komt (zonder id, tijdstip en hash: die zet de database)."""
     if status not in STATUSSEN:
         raise ValueError(f"onbekende status {status!r}")
     return {
-        "usecase": usecase, "functie": afkappen(functie, 100) or "onbekend", "status": status,
-        "taak": afkappen(taak, MAX_TAAK), "bronnen": _bronnen(bronnen),
-        "model": afkappen(model, 200), "modelversie": afkappen(modelversie, 200),
-        "app_versie": __version__, "resultaat": afkappen(resultaat, MAX_RESULTAAT),
+        "usecase": usecase,
+        "functie": afkappen(functie, 100) or "onbekend",
+        "status": status,
+        "taak": afkappen(taak, MAX_TAAK),
+        "bronnen": _bronnen(bronnen),
+        "model": afkappen(model, 200),
+        "modelversie": afkappen(modelversie, 200),
+        "app_versie": __version__,
+        "resultaat": afkappen(resultaat, MAX_RESULTAAT),
         "foutmelding": afkappen(foutmelding, MAX_FOUT),
     }
 
@@ -92,6 +119,7 @@ _INSERT = text("""
 def _schrijf_rij(rij: Dict[str, Any]) -> None:
     """Eigen transactie (los van het verzoek), als de schrijfrol: alleen INSERT."""
     from omnitwin.database import engine
+
     with engine.begin() as conn:
         conn.execute(text(f"SET LOCAL ROLE {SCHRIJFROL}"))
         conn.execute(_INSERT, rij)
@@ -111,11 +139,13 @@ def schrijf(usecase: str, functie: str, status: str, **velden) -> bool:
     except Exception as e:  # noqa: BLE001 - elke fout: dicht
         logger.error("AI-logboek: schrijven mislukt (%s, %s, %s): %s", usecase, functie, status, type(e).__name__)
         from omnitwin import ai_vrijgave
+
         ai_vrijgave.automatische_noodstop(f"Schrijven in het AI-logboek mislukt ({type(e).__name__})")
         return False
 
 
 # ── Hashketen ────────────────────────────────────────────────────────────────
+
 
 def regelhash(r: Dict[str, Any]) -> str:
     """sha256 van de regel (velden in HASHVELDEN, bronnen met komma's), zoals ai_logboek_regelhash."""
@@ -161,15 +191,26 @@ def controleer(db) -> Dict[str, Any]:
     uit = controleer_keten(dict(r) for r in rijen)
     if not uit["ok"]:
         from omnitwin import ai_vrijgave
+
         eerste = uit["fouten"][0]
-        ai_vrijgave.automatische_noodstop(f"Hashketen van het AI-logboek klopt niet (id {eerste['id']}: {eerste['reden']})")
+        ai_vrijgave.automatische_noodstop(
+            f"Hashketen van het AI-logboek klopt niet (id {eerste['id']}: {eerste['reden']})"
+        )
     return uit
 
 
 # ── Inzien, exporteren, opschonen ────────────────────────────────────────────
 
-def lees(db, usecase: Optional[str] = None, status: Optional[str] = None, van: Optional[date] = None,
-         tot: Optional[date] = None, limit: int = 100, offset: int = 0) -> Dict[str, Any]:
+
+def lees(
+    db,
+    usecase: Optional[str] = None,
+    status: Optional[str] = None,
+    van: Optional[date] = None,
+    tot: Optional[date] = None,
+    limit: int = 100,
+    offset: int = 0,
+) -> Dict[str, Any]:
     voorwaarden, params = [], {"limit": limit, "offset": offset}
     if usecase:
         voorwaarden.append("usecase = :usecase")
@@ -185,13 +226,28 @@ def lees(db, usecase: Optional[str] = None, status: Optional[str] = None, van: O
         params["tot"] = tot
     waar = ("WHERE " + " AND ".join(voorwaarden)) if voorwaarden else ""
     totaal = db.execute(text(f"SELECT count(*) FROM app.ai_logboek {waar}"), params).scalar()
-    rijen = db.execute(text(f"SELECT {_KOLOMMEN} FROM app.ai_logboek {waar} "
-                            "ORDER BY id DESC LIMIT :limit OFFSET :offset"), params).mappings()
+    rijen = db.execute(
+        text(f"SELECT {_KOLOMMEN} FROM app.ai_logboek {waar} ORDER BY id DESC LIMIT :limit OFFSET :offset"), params
+    ).mappings()
     return {"totaal": int(totaal or 0), "regels": [dict(r) for r in rijen]}
 
 
-CSV_VELDEN = ("id", "tijdstip_utc", "usecase", "functie", "status", "taak", "bronnen", "model", "modelversie",
-              "app_versie", "resultaat", "foutmelding", "vorige_hash", "hash")
+CSV_VELDEN = (
+    "id",
+    "tijdstip_utc",
+    "usecase",
+    "functie",
+    "status",
+    "taak",
+    "bronnen",
+    "model",
+    "modelversie",
+    "app_versie",
+    "resultaat",
+    "foutmelding",
+    "vorige_hash",
+    "hash",
+)
 
 
 def _csv_veilig(w: Any) -> str:
@@ -212,28 +268,37 @@ def als_csv(regels: Sequence[Dict[str, Any]]) -> str:
 def opschonen() -> int:
     """Verwijdert regels ouder dan de bewaartermijn, via de functie van de opschoonrol; geeft het aantal."""
     from omnitwin.database import engine
+
     with engine.begin() as conn:
         conn.execute(text(f"SET LOCAL ROLE {SCHRIJFROL}"))
-        return int(conn.execute(text("SELECT public.ai_logboek_opschonen(:versie)"),
-                                {"versie": __version__}).scalar() or 0)
+        return int(
+            conn.execute(text("SELECT public.ai_logboek_opschonen(:versie)"), {"versie": __version__}).scalar() or 0
+        )
 
 
 def lees_bewaartermijn(db) -> Dict[str, Any]:
-    r = db.execute(text("SELECT bewaartermijn_dagen, gewijzigd_door, gewijzigd_op FROM app.ai_instellingen "
-                        "WHERE id")).mappings().fetchone()
+    r = (
+        db.execute(text("SELECT bewaartermijn_dagen, gewijzigd_door, gewijzigd_op FROM app.ai_instellingen WHERE id"))
+        .mappings()
+        .fetchone()
+    )
     if not r:
         return {"bewaartermijn_dagen": STANDAARD_BEWAARTERMIJN, "gewijzigd_door": None, "gewijzigd_op": None}
     return dict(r)
 
 
 def zet_bewaartermijn(db, dagen: int, door: str) -> None:
-    db.execute(text("""
+    db.execute(
+        text("""
         INSERT INTO app.ai_instellingen (id, bewaartermijn_dagen, gewijzigd_door, gewijzigd_op)
         VALUES (true, :d, :door, now())
         ON CONFLICT (id) DO UPDATE SET bewaartermijn_dagen = EXCLUDED.bewaartermijn_dagen,
             gewijzigd_door = EXCLUDED.gewijzigd_door, gewijzigd_op = EXCLUDED.gewijzigd_op
-    """), {"d": int(dagen), "door": door})
-    db.execute(text("INSERT INTO app.ai_vrijgave_log (actie, door, toelichting) "
-                    "VALUES ('bewaartermijn', :door, :t)"),
-               {"door": door, "t": f"Bewaartermijn AI-logboek: {int(dagen)} dagen"})
+    """),
+        {"d": int(dagen), "door": door},
+    )
+    db.execute(
+        text("INSERT INTO app.ai_vrijgave_log (actie, door, toelichting) VALUES ('bewaartermijn', :door, :t)"),
+        {"door": door, "t": f"Bewaartermijn AI-logboek: {int(dagen)} dagen"},
+    )
     db.commit()

@@ -35,6 +35,7 @@ ontbreken die, dan DATABASE_HOST/PORT/NAME/USER/PASSWORD zoals in .env.
 Niet hier: ``R__*.sql`` (herhaalbaar, bijv. ``R__api_rollen.sql``). Die voert
 docker-entrypoint.sh bij elke start uit.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -149,8 +150,7 @@ def plan(migraties: Iterable[Migratie], toegepast: dict[int, str]) -> tuple[list
             meetellend = f" De checksum telt ook mee: {', '.join(m.includes)}." if m.includes else ""
             waarschuwingen.append(
                 f"{m.label} is gewijzigd sinds hij is toegepast (checksum verschilt). "
-                "Hij wordt niet opnieuw uitgevoerd; zet een wijziging in een nieuwe migratie."
-                + meetellend
+                "Hij wordt niet opnieuw uitgevoerd; zet een wijziging in een nieuwe migratie." + meetellend
             )
     return te_doen, waarschuwingen
 
@@ -163,9 +163,13 @@ Psql = Callable[[list[str]], str]
 def _psql_omgeving() -> dict[str, str]:
     env = dict(os.environ)
     # Standaardwaarden zoals in docker-entrypoint.sh en database.py
-    for pg, db, standaard in [("PGHOST", "DATABASE_HOST", None), ("PGPORT", "DATABASE_PORT", None),
-                              ("PGDATABASE", "DATABASE_NAME", "omnitwin_db"), ("PGUSER", "DATABASE_USER", "omnitwin_user"),
-                              ("PGPASSWORD", "DATABASE_PASSWORD", None)]:
+    for pg, db, standaard in [
+        ("PGHOST", "DATABASE_HOST", None),
+        ("PGPORT", "DATABASE_PORT", None),
+        ("PGDATABASE", "DATABASE_NAME", "omnitwin_db"),
+        ("PGUSER", "DATABASE_USER", "omnitwin_user"),
+        ("PGPASSWORD", "DATABASE_PASSWORD", None),
+    ]:
         waarde = env.get(pg) or env.get(db) or standaard
         if waarde:
             env[pg] = waarde
@@ -176,8 +180,9 @@ def _psql_omgeving() -> dict[str, str]:
 
 def psql(args: list[str]) -> str:
     """Draai psql (ON_ERROR_STOP, zonder psqlrc) en geef stdout terug; fout bij exitcode != 0."""
-    res = subprocess.run(["psql", "-X", "-q", "-v", "ON_ERROR_STOP=1", *args],
-                         capture_output=True, text=True, env=_psql_omgeving())
+    res = subprocess.run(
+        ["psql", "-X", "-q", "-v", "ON_ERROR_STOP=1", *args], capture_output=True, text=True, env=_psql_omgeving()
+    )
     if res.returncode != 0:
         raise MigratieFout(res.stderr.strip() or f"psql faalde met exitcode {res.returncode}")
     return res.stdout
@@ -192,9 +197,14 @@ def psql_slot(sleutel: int = SLOT_SLEUTEL, log: Callable[[str], None] = print) -
 
     De lock hoort bij de sessie: hij vervalt als psql stopt, ook bij een crash.
     """
-    proc = subprocess.Popen(["psql", "-X", "-q", "-At", "-v", "ON_ERROR_STOP=1"],
-                            stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-                            text=True, env=_psql_omgeving())
+    proc = subprocess.Popen(
+        ["psql", "-X", "-q", "-At", "-v", "ON_ERROR_STOP=1"],
+        stdin=subprocess.PIPE,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+        env=_psql_omgeving(),
+    )
 
     def vraag(sql: str) -> str:
         proc.stdin.write(sql + "\n")
@@ -230,16 +240,22 @@ def lees_toegepast(uitvoer: str) -> dict[int, str]:
 
 def registreer_sql(m: Migratie) -> str:
     # naam is [A-Za-z0-9_]+ (BESTANDSNAAM) en checksum hex: veilig als literal
-    return (f"INSERT INTO public.schema_migraties (versie, naam, checksum) "
-            f"VALUES ({m.versie}, '{m.naam}', '{m.checksum}');")
+    return (
+        f"INSERT INTO public.schema_migraties (versie, naam, checksum) VALUES ({m.versie}, '{m.naam}', '{m.checksum}');"
+    )
 
 
 LEES_SQL = "SELECT versie, checksum FROM public.schema_migraties ORDER BY versie"
 BESTAAT_SQL = "SELECT to_regclass('public.schema_migraties') IS NOT NULL"
 
 
-def migreer(map_: Path = MIGRATIE_MAP, uitvoeren: Psql = psql, alleen_status: bool = False,
-            log: Callable[[str], None] = print, slot: Slot | None = None) -> list[Migratie]:
+def migreer(
+    map_: Path = MIGRATIE_MAP,
+    uitvoeren: Psql = psql,
+    alleen_status: bool = False,
+    log: Callable[[str], None] = print,
+    slot: Slot | None = None,
+) -> list[Migratie]:
     """Pas openstaande migraties toe; geeft de toegepaste (of, bij alleen_status, openstaande) terug.
 
     slot: contextmanager die zorgt dat maar één run tegelijk migreert. Standaard

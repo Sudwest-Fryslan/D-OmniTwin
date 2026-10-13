@@ -28,15 +28,15 @@ GEEN_DATA_KLEUR = "#94A3B8"  # zelfde grijs als elders in het Kompas
 
 class KompasService:
     """Service voor Kompas hiërarchie en data queries"""
-    
+
     def __init__(self, db: Session):
         self.db = db
         self.scoring = KompasScoringService()
-    
+
     def get_configuraties(self) -> List[Dict[str, Any]]:
         """
         Haal alle actieve configuraties op met statistieken
-        
+
         Returns: List van configuratie dicts met counts
         """
         query = text("""
@@ -48,10 +48,10 @@ class KompasService:
             JOIN kompas_configuraties kc ON kc.id = s.id
             ORDER BY s.is_standaard DESC, s.naam
         """)
-        
+
         result = self.db.execute(query)
         return [dict(row._mapping) for row in result]
-    
+
     def get_standaard_config_id(self) -> int:
         """Haal ID op van standaard configuratie"""
         query = text("""
@@ -59,10 +59,10 @@ class KompasService:
             WHERE is_standaard = TRUE AND is_actief = TRUE
             LIMIT 1
         """)
-        
+
         result = self.db.execute(query).fetchone()
         return result[0] if result else 1
-    
+
     def get_classificatie(self, config_id: int) -> str:
         """Classificatie van een kompasprofiel: zscore (standaard), percentiel_8 (#255) of label_ae (#256)."""
         row = self.db.execute(
@@ -74,10 +74,10 @@ class KompasService:
     def get_hierarchie(self, config_id: int) -> Dict[str, Any]:
         """
         Build complete hiërarchie tree voor D3.js sunburst
-        
+
         Args:
             config_id: ID van kompas configuratie
-        
+
         Returns: Dict met config info + hierarchie tree
         """
         # Haal config info op
@@ -87,10 +87,10 @@ class KompasService:
             WHERE id = :config_id AND is_actief = TRUE
         """)
         config_row = self.db.execute(config_query, {"config_id": config_id}).fetchone()
-        
+
         if not config_row:
             return None
-        
+
         # Haal hiërarchie data op
         hierarchy_query = text("""
             SELECT 
@@ -103,32 +103,32 @@ class KompasService:
             WHERE config_id = :config_id
             ORDER BY titel_id, thema_id, onderdeel_id, indicator_naam
         """)
-        
+
         rows = self.db.execute(hierarchy_query, {"config_id": config_id}).fetchall()
-        
+
         # Build tree
         tree = self._build_tree_from_rows(rows)
-        
+
         # Count total indicators
         indicator_count = len([r for r in rows if r.indicator_uuid])
-        
+
         return {
             "config_id": config_row.id,
             "config_naam": config_row.naam,
             "config_icoon": config_row.icoon,
             "hierarchie": tree,
             "total_indicators": indicator_count,
-            "last_updated": datetime.now()
+            "last_updated": datetime.now(),
         }
-    
+
     def get_gebied_kompas(self, config_id: int, gebied_id: str) -> Optional[Dict[str, Any]]:
         """
         Haal kompas data voor één gebied op (met waarden + kleuren)
-        
+
         Args:
             config_id: ID van kompas configuratie
             gebied_id: UUID van gebied
-        
+
         Returns: Dict met hierarchie + waarden ingevuld
         """
         # Check of gebied bestaat
@@ -138,15 +138,15 @@ class KompasService:
             FROM gebieden WHERE id = :gebied_id LIMIT 1
         """)
         gebied_row = self.db.execute(gebied_query, {"gebied_id": gebied_id}).fetchone()
-        
+
         if not gebied_row:
             return None
-        
+
         # Haal basis hiërarchie op
         hierarchie_data = self.get_hierarchie(config_id)
         if not hierarchie_data:
             return None
-        
+
         # Haal ALLE indicatoren op die in dit kompas zitten
         # LEFT JOIN LATERAL voor meest recente jaar (MAX) per indicator
         data_query = text("""
@@ -178,13 +178,11 @@ class KompasService:
                 AND sr.config_id = :config_id
             WHERE kim.config_id = :config_id AND i.is_actief = true
         """)
-        
-        data_rows = self.db.execute(data_query, {
-            "config_id": config_id,
-            "gebied_id": gebied_id,
-            "scenario_id": SCENARIO_STANDAARD
-        }).fetchall()
-        
+
+        data_rows = self.db.execute(
+            data_query, {"config_id": config_id, "gebied_id": gebied_id, "scenario_id": SCENARIO_STANDAARD}
+        ).fetchall()
+
         # Converteer naar dict voor makkelijke lookup
         # Indicatoren zonder data krijgen None als waarde
         data_map = {}
@@ -196,50 +194,46 @@ class KompasService:
                     thresholds = json.loads(row.thresholds)
                 else:
                     thresholds = row.thresholds
-            
+
             data_map[str(row.indicator_uuid)] = {
                 "waarde": float(row.waarde) if row.waarde is not None else None,
                 "score_type": row.score_type,
                 "inverse": row.inverse,
                 "thresholds": thresholds,
                 "eenheid": row.eenheid,
-                "ontologische_beschrijving": row.ontologische_beschrijving
+                "ontologische_beschrijving": row.ontologische_beschrijving,
             }
-        
+
         # Percentiel-drempels per indicator binnen de referentiegroep van dit gebied (#66).
         # Een waterbuurt wordt niet met de referentiegroep vergeleken (#155): geen
         # drempels, dus grijze kleuring, en een melding.
         melding = None
         if gebied_row.is_waterbuurt:
             bulk_thresholds = {}
-            melding = ("Dit gebied is een waterbuurt. Waterbuurten worden niet vergeleken "
-                       "met de referentiegroep; de kleuring vervalt.")
+            melding = (
+                "Dit gebied is een waterbuurt. Waterbuurten worden niet vergeleken "
+                "met de referentiegroep; de kleuring vervalt."
+            )
         else:
             bulk_thresholds = self._get_bulk_percentiles(gebied_row.gebiedstype_id, gebied_row.gemeente_code)
-        
+
         # Enrich hierarchie met waarden en kleuren
         enriched_tree = self._enrich_tree_with_values(
-            hierarchie_data["hierarchie"], 
-            data_map,
-            bulk_thresholds=bulk_thresholds 
+            hierarchie_data["hierarchie"], data_map, bulk_thresholds=bulk_thresholds
         )
-        
+
         # Bereken coverage
         total_indicators = hierarchie_data["total_indicators"]
         coverage_pct = (len(data_map) / total_indicators * 100) if total_indicators > 0 else 0
-        
+
         # #255: percentielklassen per indicator en geaggregeerd per onderdeel/thema/kwadrant
         classificatie = self.get_classificatie(config_id)
         klassen_legenda = None
         label_melding = None
         if classificatie == "percentiel_8":
-            enriched_tree, klassen_legenda = self._percentielklassen_in_boom(
-                config_id, [gebied_id], enriched_tree
-            )
+            enriched_tree, klassen_legenda = self._percentielklassen_in_boom(config_id, [gebied_id], enriched_tree)
         elif classificatie == lk.CLASSIFICATIE:
-            enriched_tree, klassen_legenda, label_melding = self._labels_in_boom(
-                config_id, [gebied_id], enriched_tree
-            )
+            enriched_tree, klassen_legenda, label_melding = self._labels_in_boom(config_id, [gebied_id], enriched_tree)
 
         return {
             "gebied_id": gebied_id,
@@ -253,9 +247,9 @@ class KompasService:
             "coverage_percentage": round(coverage_pct, 1),
             "is_waterbuurt": bool(gebied_row.is_waterbuurt),
             "melding": melding,
-            "laatste_update": datetime.now()
+            "laatste_update": datetime.now(),
         }
-        
+
     # ── Percentielklasse (#255) ─────────────────────────────────────────────
 
     def get_selectie_kompas(self, config_id: int, gebied_ids: List[str]) -> Optional[Dict[str, Any]]:
@@ -297,7 +291,8 @@ class KompasService:
         indicator_labels als die er zijn, anders kwintielen in dezelfde referentiegroep.
         Geeft dan ook de bron per indicator ('drempels' of 'kwintiel').
         """
-        rows = self.db.execute(text("""
+        rows = self.db.execute(
+            text("""
             SELECT g.id AS gebied_id, g.gebiedstype_id, g.gemeente_code,
                    public.is_waterbuurt(g.naam, g.metadata) AS is_waterbuurt,
                    i.uuid::text AS indicator_uuid, gd.waarde, gd.jaar,
@@ -315,8 +310,9 @@ class KompasService:
             LEFT JOIN kompas_indicator_scoring_regels sr
                 ON sr.indicator_uuid = i.uuid AND sr.config_id = :config_id
             WHERE g.id = ANY(CAST(:gebied_ids AS varchar[]))
-        """), {"config_id": config_id, "gebied_ids": list(gebied_ids),
-               "scenario_id": SCENARIO_STANDAARD}).fetchall()
+        """),
+            {"config_id": config_id, "gebied_ids": list(gebied_ids), "scenario_id": SCENARIO_STANDAARD},
+        ).fetchall()
 
         met_waarde = [r for r in rows if r.waarde is not None and not r.is_waterbuurt]
         uuids = sorted({r.indicator_uuid for r in met_waarde})
@@ -339,7 +335,8 @@ class KompasService:
             hoger_beter = pk.hoger_is_beter(r.score_type, r.inverse)
             if labels:
                 k, bron[r.indicator_uuid] = lk.label_score(
-                    float(r.waarde), ref, hoger_beter, drempels.get(r.indicator_uuid))
+                    float(r.waarde), ref, hoger_beter, drempels.get(r.indicator_uuid)
+                )
                 # met drempels telt het gebied ook mee zonder referentie (gewicht minimaal 1)
                 paren.setdefault(r.indicator_uuid, []).append((k, max(len(ref), 1)))
             else:
@@ -389,18 +386,18 @@ class KompasService:
         """)
 
         results = self.db.execute(query, referentie_params(gebiedstype_id, gemeente_code)).fetchall()
-        
+
         # Convert to dict
         threshold_map = {}
         for row in results:
             if row.thresholds:
                 threshold_map[str(row.indicator_uuid)] = list(row.thresholds)
         return threshold_map
-    
+
     def get_indicator_path(self, config_id: int, indicator_uuid: str) -> Optional[Dict[str, Any]]:
         """
         Haal hiërarchie pad op voor specifieke indicator (breadcrumb)
-        
+
         Returns: {"path": ["Titel", "Thema", "Onderdeel", "Indicator"], ...}
         """
         query = text("""
@@ -411,34 +408,31 @@ class KompasService:
             WHERE config_id = :config_id AND indicator_uuid = :uuid::uuid
             LIMIT 1
         """)
-        
-        row = self.db.execute(query, {
-            "config_id": config_id,
-            "uuid": indicator_uuid
-        }).fetchone()
-        
+
+        row = self.db.execute(query, {"config_id": config_id, "uuid": indicator_uuid}).fetchone()
+
         if not row:
             return None
-        
+
         path = [row.titel_naam, row.thema_naam, row.onderdeel_naam, row.indicator_naam]
-        
+
         return {
             "config_id": config_id,
             "indicator_uuid": indicator_uuid,
             "path": path,
             "full_path_string": " > ".join(path),
-            "indicator_details": dict(row._mapping)
+            "indicator_details": dict(row._mapping),
         }
-    
+
     def get_indicator_history(self, config_id: int, gebied_id: str, indicator_uuid: str) -> Optional[Dict[str, Any]]:
         """
         Haal historische data op voor een indicator in een gebied (voor time-series chart)
-        
+
         Args:
             config_id: ID van kompas configuratie (voor verificatie/context)
             gebied_id: UUID van gebied
             indicator_uuid: UUID van indicator
-            
+
         Returns: Dict met indicator info en list van history points
         """
         # 1. Haal indicator metadata inclusief Data Lineage (Sprint 22 Track C)
@@ -451,10 +445,10 @@ class KompasService:
             WHERE i.uuid = CAST(:uuid AS UUID) AND i.is_actief = true
         """)
         meta = self.db.execute(meta_query, {"uuid": indicator_uuid}).fetchone()
-        
+
         if not meta:
             return None
-            
+
         # 2. Haal data points (gebied_data) - gebruik jaar
         history_query = text("""
             SELECT 
@@ -469,28 +463,27 @@ class KompasService:
               AND COALESCE(scenario_id, 'current') = 'current'
             ORDER BY jaar ASC
         """)
-        
-        history_rows = self.db.execute(history_query, {
-            "uuid": indicator_uuid,
-            "gebied_id": gebied_id
-        }).fetchall()
-        
+
+        history_rows = self.db.execute(history_query, {"uuid": indicator_uuid, "gebied_id": gebied_id}).fetchall()
+
         # Format history
         history = []
         for row in history_rows:
-            history.append({
-                "jaar": row.jaar,
-                "waarde": float(row.waarde),
-                "bron": row.bron or meta.bron,
-                "datum": row.updated_at.strftime("%Y-%m-%d") if row.updated_at else None
-            })
-            
+            history.append(
+                {
+                    "jaar": row.jaar,
+                    "waarde": float(row.waarde),
+                    "bron": row.bron or meta.bron,
+                    "datum": row.updated_at.strftime("%Y-%m-%d") if row.updated_at else None,
+                }
+            )
+
         # 3. Haal gebied naam
         gebied_query = text("SELECT naam FROM gebieden WHERE id = :id")
         gebied = self.db.execute(gebied_query, {"id": gebied_id}).fetchone()
-        
+
         bron_url = self._resolve_source_url(meta.bron_systeem_api, meta.bron_tabel_referentie)
-        
+
         return {
             "bron": meta.bron,
             "bron_systeem_api": meta.bron_systeem_api,
@@ -507,13 +500,10 @@ class KompasService:
                 "bron": meta.bron,
                 "bron_systeem_api": meta.bron_systeem_api,
                 "bron_tabel_referentie": meta.bron_tabel_referentie,
-                "bron_url": bron_url
+                "bron_url": bron_url,
             },
-            "gebied": {
-                "id": gebied_id,
-                "naam": gebied.naam if gebied else "Onbekend"
-            },
-            "history": history
+            "gebied": {"id": gebied_id, "naam": gebied.naam if gebied else "Onbekend"},
+            "history": history,
         }
 
     def _resolve_source_url(self, bron_systeem: Optional[str], bron_ref: Optional[str]) -> Optional[str]:
@@ -524,7 +514,11 @@ class KompasService:
         if s == "CBS_ODATA":
             return f"https://opendata.cbs.nl/#/CBS/nl/dataset/{bron_ref}/table"
         elif s == "RIVM_STATLINE":
-            return f"https://opendata.cbs.nl/#/CBS/nl/dataset/{bron_ref}/table" if "NED" in bron_ref.upper() else "https://www.volksgezondheidenzorg.info/"
+            return (
+                f"https://opendata.cbs.nl/#/CBS/nl/dataset/{bron_ref}/table"
+                if "NED" in bron_ref.upper()
+                else "https://www.volksgezondheidenzorg.info/"
+            )
         elif s == "BAG_API":
             return "https://bag.basisregistraties.overheid.nl/"
         elif s == "POLITIE_DATA":
@@ -533,45 +527,35 @@ class KompasService:
             return "https://openov.nl/"
         return None
 
-    
     # ========================================================================
     # PRIVATE HELPER METHODS
     # ========================================================================
-    
+
     def _build_tree_from_rows(self, rows: List) -> Dict[str, Any]:
         """
         Build geneste hiërarchie tree van flat database rows
-        
+
         Returns: KompasNode compatible dict
         """
         if not rows:
             return {"name": "Root", "children": []}
-        
+
         # Group by titel
         titels = {}
         for row in rows:
             if not row.titel_id:
                 continue
-            
+
             titel_id = row.titel_id
             if titel_id not in titels:
-                titels[titel_id] = {
-                    "name": row.titel_naam,
-                    "type": "titel",
-                    "color": row.titel_kleur,
-                    "children": {}
-                }
-            
+                titels[titel_id] = {"name": row.titel_naam, "type": "titel", "color": row.titel_kleur, "children": {}}
+
             # Group by thema binnen titel
             if row.thema_id:
                 thema_id = row.thema_id
                 if thema_id not in titels[titel_id]["children"]:
-                    titels[titel_id]["children"][thema_id] = {
-                        "name": row.thema_naam,
-                        "type": "thema",
-                        "children": {}
-                    }
-                
+                    titels[titel_id]["children"][thema_id] = {"name": row.thema_naam, "type": "thema", "children": {}}
+
                 # Group by onderdeel binnen thema
                 if row.onderdeel_id:
                     onderdeel_id = row.onderdeel_id
@@ -579,96 +563,91 @@ class KompasService:
                         titels[titel_id]["children"][thema_id]["children"][onderdeel_id] = {
                             "name": row.onderdeel_naam,
                             "type": "onderdeel",
-                            "children": []
+                            "children": [],
                         }
-                    
+
                     # Add indicator
                     if row.indicator_uuid:
-                        titels[titel_id]["children"][thema_id]["children"][onderdeel_id]["children"].append({
-                            "name": row.indicator_naam,
-                            "type": "indicator",
-                            "uuid": str(row.indicator_uuid),
-                            "value": None,  # Wordt later ingevuld
-                            "color": None
-                        })
-        
+                        titels[titel_id]["children"][thema_id]["children"][onderdeel_id]["children"].append(
+                            {
+                                "name": row.indicator_naam,
+                                "type": "indicator",
+                                "uuid": str(row.indicator_uuid),
+                                "value": None,  # Wordt later ingevuld
+                                "color": None,
+                            }
+                        )
+
         # Convert nested dicts to lists
         root_children = []
         for titel in titels.values():
-            titel_node = {
-                "name": titel["name"],
-                "type": titel["type"],
-                "color": titel["color"],
-                "children": []
-            }
-            
+            titel_node = {"name": titel["name"], "type": titel["type"], "color": titel["color"], "children": []}
+
             for thema in titel["children"].values():
-                thema_node = {
-                    "name": thema["name"],
-                    "type": thema["type"],
-                    "children": []
-                }
-                
+                thema_node = {"name": thema["name"], "type": thema["type"], "children": []}
+
                 for onderdeel in thema["children"].values():
                     # Children zijn al een list van indicators
                     thema_node["children"].append(onderdeel)
-                
+
                 titel_node["children"].append(thema_node)
-            
+
             root_children.append(titel_node)
-        
-        return {
-            "name": "Root",
-            "type": "root",
-            "children": root_children
-        }
-    
-    def _enrich_tree_with_values(self, tree: Dict, data_map: Dict[str, Dict], bulk_thresholds: Dict[str, List[float]] = None, current_titel: str = None) -> Dict:
+
+        return {"name": "Root", "type": "root", "children": root_children}
+
+    def _enrich_tree_with_values(
+        self,
+        tree: Dict,
+        data_map: Dict[str, Dict],
+        bulk_thresholds: Dict[str, List[float]] = None,
+        current_titel: str = None,
+    ) -> Dict:
         """
         Recursively voeg waarden en kleuren toe aan tree nodes
-        
+
         Args:
             tree: Hiërarchie tree dict
             data_map: Dict[indicator_uuid] -> {waarde, score_type, ...}
             bulk_thresholds: Map van indicator uuid naar 7 percentile values
             current_titel: Naam van de huidige hoofdtitel (context)
-        
+
         Returns: Enriched tree
         """
         enriched = tree.copy()
-        
+
         # Track titel context
         if enriched.get("type") == "titel":
             current_titel = enriched.get("name")
-        
+
         # Pass context down via temporary private prop
         enriched["_context_titel"] = current_titel
-        
+
         # Als dit een indicator is, vul waarde + kleur in
         if enriched.get("type") == "indicator" and enriched.get("uuid"):
             uuid = enriched["uuid"]
             if uuid in data_map:
                 data = data_map[uuid]
                 waarde = data["waarde"]
-                
+
                 # Altijd eenheid tonen (ook bij NULL)
                 enriched["eenheid"] = data.get("eenheid")
                 enriched["ontologische_beschrijving"] = data.get("ontologische_beschrijving")
-                
+
                 if waarde is not None:
                     # Indicator heeft data
                     enriched["value"] = waarde
-                    
+
                     # Haal percentiel thresholds uit bulk cache
                     thresholds = bulk_thresholds.get(uuid) if bulk_thresholds else None
-                    
+
                     # Bereken kleur via scoring service
                     enriched["color"] = self.scoring.get_color_for_value(
                         value=waarde,
                         score_type=data.get("score_type") or "positive_ascending",
-                        thresholds=thresholds, # Use percentiles!
+                        thresholds=thresholds,  # Use percentiles!
                         inverse=data.get("inverse", False),
-                        context=current_titel
+                        context=current_titel,
                     )
                 else:
                     enriched["value"] = None
@@ -677,32 +656,31 @@ class KompasService:
                 enriched["value"] = None
                 enriched["color"] = "#94A3B8"
                 enriched["eenheid"] = None
-        
+
         # Recursief voor children
         if "children" in enriched and enriched["children"]:
             enriched["children"] = [
-                self._enrich_tree_with_values(child, data_map, bulk_thresholds, current_titel) 
+                self._enrich_tree_with_values(child, data_map, bulk_thresholds, current_titel)
                 for child in enriched["children"]
             ]
-        
-        return enriched
 
+        return enriched
 
     def get_benchmark(self, config_id: int, groepen: List[Dict], gemeente_code: str = None) -> Optional[Dict[str, Any]]:
         """
         Sprint 18 Track C: Berekent per groep (woonplaats) het gemiddelde per indicator,
         plus het gemeentegemiddelde als referentie.
-        
+
         Args:
             config_id: ID van kompas configuratie
             groepen: [{"naam": "Makkum", "buurt_ids": ["BU...", ...]}, ...]
             gemeente_code: optioneel, voor gemeentegemiddelde
-        
+
         Returns: Dict met groepen, referentie, en indicator metadata
         """
         if not groepen:
             return None
-        
+
         # 1. Haal alle indicator UUIDs op die in dit kompas zitten
         indicator_query = text("""
             SELECT 
@@ -719,10 +697,10 @@ class KompasService:
             WHERE kim.config_id = :config_id AND i.is_actief = true
         """)
         indicator_rows = self.db.execute(indicator_query, {"config_id": config_id}).fetchall()
-        
+
         if not indicator_rows:
             return None
-        
+
         # Metadata per indicator
         indicator_meta = {}
         indicator_uuids = []
@@ -735,14 +713,14 @@ class KompasService:
                 # Polariteit voor de kleur van de afwijking (#323)
                 "richting": pk.richting(row.score_type, row.inverse, row.kwadrant),
             }
-        
+
         # 2. Per groep: haal gemiddelde waarden op
         result_groepen = []
         for groep in groepen:
             buurt_ids = groep.get("buurt_ids", [])
             if not buurt_ids:
                 continue
-            
+
             # Query: gemiddelde waarde per indicator voor deze buurt-set
             avg_query = text("""
                 SELECT 
@@ -761,23 +739,19 @@ class KompasService:
                   )
                 GROUP BY gd.indicator_uuid
             """)
-            
-            avg_rows = self.db.execute(avg_query, {
-                "uuids": indicator_uuids,
-                "buurt_ids": buurt_ids,
-                "buurt_ids2": buurt_ids
-            }).fetchall()
-            
+
+            avg_rows = self.db.execute(
+                avg_query, {"uuids": indicator_uuids, "buurt_ids": buurt_ids, "buurt_ids2": buurt_ids}
+            ).fetchall()
+
             indicatoren = {}
             for row in avg_rows:
                 indicatoren[str(row.indicator_uuid)] = round(float(row.gem_waarde), 2)
-            
-            result_groepen.append({
-                "naam": groep.get("naam", "Onbekend"),
-                "aantal_buurten": len(buurt_ids),
-                "indicatoren": indicatoren
-            })
-        
+
+            result_groepen.append(
+                {"naam": groep.get("naam", "Onbekend"), "aantal_buurten": len(buurt_ids), "indicatoren": indicatoren}
+            )
+
         # 3. Referentie: gemeentegemiddelde
         referentie = None
         if gemeente_code:
@@ -788,51 +762,58 @@ class KompasService:
             """)
 
             buurt_type_id = self._gebiedstype_id_voor_code(CBS_BUURT_CODE)
-            ref_rows = self.db.execute(ref_query, referentie_params(
-                buurt_type_id,
-                gemeente_code,
-                indicator_uuids=indicator_uuids,
-            )).fetchall() if buurt_type_id else []
-            
+            ref_rows = (
+                self.db.execute(
+                    ref_query,
+                    referentie_params(
+                        buurt_type_id,
+                        gemeente_code,
+                        indicator_uuids=indicator_uuids,
+                    ),
+                ).fetchall()
+                if buurt_type_id
+                else []
+            )
+
             ref_indicatoren = {}
             for row in ref_rows:
                 ref_indicatoren[str(row.indicator_uuid)] = round(float(row.gem_waarde), 2)
-            
+
             # Haal gemeentenaam op
             naam_query = text("SELECT naam FROM gemeenten WHERE code = :code")
             naam_res = self.db.execute(naam_query, {"code": gemeente_code}).fetchone()
-            
+
             referentie = {
                 "naam": naam_res.naam if naam_res else f"Gemeente {gemeente_code}",
-                "indicatoren": ref_indicatoren
+                "indicatoren": ref_indicatoren,
             }
-        
+
         return {
             "config_id": config_id,
             "groepen": result_groepen,
             "referentie": referentie,
-            "indicator_meta": indicator_meta
+            "indicator_meta": indicator_meta,
         }
 
     def _gebiedstype_id_voor_code(self, code: str) -> Optional[str]:
         """Gebiedstype-id op code (bijv. CBS_BUURT); None als het type niet bestaat."""
-        row = self.db.execute(
-            text("SELECT id FROM gebiedstypes WHERE code = :code"), {"code": code}
-        ).fetchone()
+        row = self.db.execute(text("SELECT id FROM gebiedstypes WHERE code = :code"), {"code": code}).fetchone()
         return str(row.id) if row else None
 
-    def get_top_afwijkende_buurten(self, indicator_uuid: str, limit: int = 3, gebied_id: Optional[str] = None) -> Optional[Dict[str, Any]]:
+    def get_top_afwijkende_buurten(
+        self, indicator_uuid: str, limit: int = 3, gebied_id: Optional[str] = None
+    ) -> Optional[Dict[str, Any]]:
         """
         Bereken Z-scores voor alle CBS-buurten en retourneer Top N positief + Top N negatief.
-        
+
         Args:
             indicator_uuid: UUID van de indicator
             limit: Aantal buurten per richting (default 3)
             gebied_id: Optioneel, UUID van het gebied om de buurten te filteren op de gemeente van dit gebied
-        
+
         Returns: Dict met top_positief en top_negatief lijsten, of None
         """
-        
+
         # 1. Referentiegroep (#66): gebiedstype + gemeente van gebied_id; zonder
         #    gebied_id alle CBS-buurten (alle gemeenten). Waterbuurten uitgesloten.
         gem_res = None
@@ -862,12 +843,12 @@ class KompasService:
             ORDER BY ABS(zs.z_score) DESC, g.naam
         """)
 
-        rows = self.db.execute(query, referentie_params(
-            gebiedstype_id, gemeente_code, gebied_ids=None, indicator_uuids=[indicator_uuid]
-        )).fetchall()
+        rows = self.db.execute(
+            query, referentie_params(gebiedstype_id, gemeente_code, gebied_ids=None, indicator_uuids=[indicator_uuid])
+        ).fetchall()
         if not rows:
             return None
-        
+
         # Haal indicator metadata op
         meta_query = text("""
             SELECT i.naam, COALESCE(sr.eenheid, i.eenheid) as eenheid
@@ -877,25 +858,25 @@ class KompasService:
             LIMIT 1
         """)
         meta = self.db.execute(meta_query, {"uuid": indicator_uuid}).fetchone()
-        
+
         positief = []
         negatief = []
-        
+
         for row in rows:
             entry = {
                 "buurt_id": row.buurt_id,
                 "buurt_naam": row.buurt_naam,
                 "waarde": round(float(row.waarde), 2),
-                "z_score": round(float(row.z_score), 2)
+                "z_score": round(float(row.z_score), 2),
             }
             if row.z_score > 0 and len(positief) < limit:
                 positief.append(entry)
             elif row.z_score < 0 and len(negatief) < limit:
                 negatief.append(entry)
-            
+
             if len(positief) >= limit and len(negatief) >= limit:
                 break
-        
+
         # 2. Return payload with context
         context_naam = "Alle gemeenten"
         if gebied_id and gem_res and gem_res.gemeente_code:
@@ -904,47 +885,36 @@ class KompasService:
             naam_res = self.db.execute(naam_query, {"code": gem_res.gemeente_code}).fetchone()
             if naam_res:
                 context_naam = naam_res.naam
-        
+
         return {
             "indicator_naam": meta.naam if meta else "",
             "eenheid": (meta.eenheid or "") if meta else "",
             "referentie_gemiddelde": round(float(rows[0].gemiddelde), 2) if rows else 0,
             "context_naam": context_naam,
             "top_positief": positief,
-            "top_negatief": negatief
+            "top_negatief": negatief,
         }
+
 
 class KompasScoringService:
     """Service voor kleurberekening op basis van scoring regels"""
-    
+
     # 8-bin Scales
-    PALETTE_NORMAL = [
-        "#D73027", "#F46D43", "#FDAE61", "#FEE08B", 
-        "#D9EF8B", "#A6D96A", "#66BD63", "#1A9850"
-    ]
-    
+    PALETTE_NORMAL = ["#D73027", "#F46D43", "#FDAE61", "#FEE08B", "#D9EF8B", "#A6D96A", "#66BD63", "#1A9850"]
+
     # Blue scale (Dark -> Light) for Samenstelling
     # Dark Blue (#08306B) -> Light Blue (#F7FBFF)
-    PALETTE_BLUE = [
-        "#08306B", "#08519C", "#2171B5", "#4292C6",
-        "#6BAED6", "#9ECAE1", "#C6DBEF", "#DEEBF7"
-    ]
+    PALETTE_BLUE = ["#08306B", "#08519C", "#2171B5", "#4292C6", "#6BAED6", "#9ECAE1", "#C6DBEF", "#DEEBF7"]
 
-    COLOR_MAP = {
-        "green": "#22C55E",
-        "yellow": "#FBBF24",
-        "orange": "#F97316",
-        "red": "#EF4444",
-        "gray": "#94A3B8"
-    }
-    
+    COLOR_MAP = {"green": "#22C55E", "yellow": "#FBBF24", "orange": "#F97316", "red": "#EF4444", "gray": "#94A3B8"}
+
     def get_color_for_value(
-        self, 
+        self,
         value: float,
         score_type: str = "positive_ascending",
         thresholds: Optional[List[float]] = None,
         inverse: bool = False,
-        context: Optional[str] = None
+        context: Optional[str] = None,
     ) -> str:
         """
         Bepaal kleur obv percentiel thresholds (8 bins).
@@ -953,32 +923,32 @@ class KompasScoringService:
         palette = self.PALETTE_NORMAL
         if context and "samenstelling" in context.lower():
             palette = self.PALETTE_BLUE
-            
+
         # 2. Threshold Binning (Percentiles)
         if thresholds and len(thresholds) == 7:
             # Bug #46 fix: Maak drempels uniek om clipping bij scheve datasets (veel 0-waarden) te voorkomen
             unique_thresholds = sorted(list(set(thresholds)))
-            
+
             bin_idx = 0
             for t in unique_thresholds:
                 if value > t:
                     bin_idx += 1
                 else:
                     break
-            
+
             # Proportioneel schalen naar het 8-kleurenpalet als er minder unieke drempels zijn
             if len(unique_thresholds) < 7 and len(unique_thresholds) > 0:
                 scale_factor = 7 / len(unique_thresholds)
                 bin_idx = round(bin_idx * scale_factor)
-                
+
             # Zekeringscheck
             bin_idx = min(7, max(0, bin_idx))
-                
+
             # Lager is beter: omkeren (één regel, omnitwin.polariteit, #120)
             should_reverse = polariteit.lager_is_beter(score_type, inverse)
             if should_reverse:
                 bin_idx = 7 - bin_idx
-                
+
             return palette[bin_idx]
 
         # 3. Fallback: Interpolation (Legacy or no data)
@@ -991,9 +961,9 @@ class KompasScoringService:
         r = int(r1 + (r2 - r1) * t)
         g = int(g1 + (g2 - g1) * t)
         b = int(b1 + (b2 - b1) * t)
-        return f"#{max(0,min(255,r)):02x}{max(0,min(255,g)):02x}{max(0,min(255,b)):02x}"
-        
-    def _normalize_value(self, value: float, min_val: float, max_val: float) -> float:
-        if max_val == min_val: return 0.5
-        return max(0.0, min(1.0, (value - min_val) / (max_val - min_val)))
+        return f"#{max(0, min(255, r)):02x}{max(0, min(255, g)):02x}{max(0, min(255, b)):02x}"
 
+    def _normalize_value(self, value: float, min_val: float, max_val: float) -> float:
+        if max_val == min_val:
+            return 0.5
+        return max(0.0, min(1.0, (value - min_val) / (max_val - min_val)))

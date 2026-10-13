@@ -4,6 +4,7 @@ noodstop, en geen aanroep van taalmodel of embeddingmodel in dichte toestand.
 
 Zonder database: een nep-sessie die de paar statements van omnitwin.ai_vrijgave nadoet.
 """
+
 import contextlib
 import re
 from datetime import date, timedelta
@@ -42,9 +43,18 @@ class NepDB:
     """Houdt usecases, verklaringen en het vrijgavelogboek in het geheugen bij."""
 
     def __init__(self):
-        self.usecases = {c: {"code": c, "naam": n, "omschrijving": n, "stilgezet": False,
-                             "status_door": None, "status_op": None, "stilgezet_reden": None}
-                         for c, n in ai_vrijgave.USECASES.items()}
+        self.usecases = {
+            c: {
+                "code": c,
+                "naam": n,
+                "omschrijving": n,
+                "stilgezet": False,
+                "status_door": None,
+                "status_op": None,
+                "stilgezet_reden": None,
+            }
+            for c, n in ai_vrijgave.USECASES.items()
+        }
         self.verklaringen, self.log, self.commits = [], [], 0
 
     def execute(self, sql, params=None):
@@ -80,9 +90,19 @@ class NepDB:
                 continue
             vs = [v for v in self.verklaringen if v["code"] == c]
             v = max(vs, key=lambda v: v["volgorde"]) if vs else {}
-            uit.append({**u, "verklaring_id": v.get("id"), "versie": v.get("versie"), "geldig_tot": v.get("tot"),
-                        "bestandsnaam": v.get("naam"), "grootte": v.get("grootte"), "sha256": v.get("sha"),
-                        "geupload_door": v.get("door"), "geupload_op": None})
+            uit.append(
+                {
+                    **u,
+                    "verklaring_id": v.get("id"),
+                    "versie": v.get("versie"),
+                    "geldig_tot": v.get("tot"),
+                    "bestandsnaam": v.get("naam"),
+                    "grootte": v.get("grootte"),
+                    "sha256": v.get("sha"),
+                    "geupload_door": v.get("door"),
+                    "geupload_op": None,
+                }
+            )
         return uit
 
     def commit(self):
@@ -108,14 +128,18 @@ def logboek(monkeypatch):
 
 # ── Beoordeling ──────────────────────────────────────────────────────────────
 
-@pytest.mark.parametrize("geldig_tot, stilgezet, verwacht", [
-    (None, False, (False, "geen_verklaring")),
-    (VANDAAG + timedelta(days=30), False, (True, "open")),
-    (VANDAAG, False, (True, "open")),                       # tot en met geldig_tot
-    (VANDAAG - timedelta(days=1), False, (False, "verlopen")),
-    (VANDAAG + timedelta(days=30), True, (False, "stilgezet")),
-    (None, True, (False, "geen_verklaring")),
-])
+
+@pytest.mark.parametrize(
+    "geldig_tot, stilgezet, verwacht",
+    [
+        (None, False, (False, "geen_verklaring")),
+        (VANDAAG + timedelta(days=30), False, (True, "open")),
+        (VANDAAG, False, (True, "open")),  # tot en met geldig_tot
+        (VANDAAG - timedelta(days=1), False, (False, "verlopen")),
+        (VANDAAG + timedelta(days=30), True, (False, "stilgezet")),
+        (None, True, (False, "geen_verklaring")),
+    ],
+)
 def test_beoordeel(geldig_tot, stilgezet, verwacht):
     assert ai_vrijgave.beoordeel(geldig_tot, stilgezet, VANDAAG) == verwacht
 
@@ -134,13 +158,15 @@ def test_onbekend_en_buiten_altijd_dicht(db):
 def test_dicht_als_de_status_niet_te_lezen_is(monkeypatch):
     def kapot(code=None, db=None):
         raise RuntimeError("database weg")
+
     monkeypatch.setattr(ai_vrijgave, "_lees_standen", kapot)
     assert ai_vrijgave.is_open("A") is False
 
 
 def test_open_na_upload_en_vastgelegd_wie(db):
-    ai_vrijgave.upload(db, "A", " 0.4.0 ", VANDAAG + timedelta(days=10), "C:\\map\\DPIA A.pdf", PDF,
-                       "application/pdf", "beheerder1")
+    ai_vrijgave.upload(
+        db, "A", " 0.4.0 ", VANDAAG + timedelta(days=10), "C:\\map\\DPIA A.pdf", PDF, "application/pdf", "beheerder1"
+    )
     assert ai_vrijgave.is_open("A")
     assert not ai_vrijgave.is_open("B")
     v = db.verklaringen[0]
@@ -179,12 +205,16 @@ def test_upload_na_noodstop_opent_weer(db):
     assert ai_vrijgave.is_open("A")
 
 
-@pytest.mark.parametrize("inhoud, ctype, fout", [
-    (PDF, "text/plain", "PDF zijn"),
-    (b"GIF89a....", "application/pdf", "geen PDF"),
-    (b"", "application/pdf", "leeg"),
-    (b"%PDF" + b"0" * ai_vrijgave.MAX_PDF, "application/pdf", "groter"),
-], ids=["content-type", "magic", "leeg", "te-groot"])
+@pytest.mark.parametrize(
+    "inhoud, ctype, fout",
+    [
+        (PDF, "text/plain", "PDF zijn"),
+        (b"GIF89a....", "application/pdf", "geen PDF"),
+        (b"", "application/pdf", "leeg"),
+        (b"%PDF" + b"0" * ai_vrijgave.MAX_PDF, "application/pdf", "groter"),
+    ],
+    ids=["content-type", "magic", "leeg", "te-groot"],
+)
 def test_upload_alleen_pdf(db, inhoud, ctype, fout):
     with pytest.raises(GebruikersFout, match=fout):
         ai_vrijgave.upload(db, "A", "1", VANDAAG + timedelta(days=1), "a.pdf", inhoud, ctype, "x")
@@ -217,6 +247,7 @@ def test_poort_open_logt_geen_weigering(db, logboek):
 
 # ── Geen AI-aanroep in dichte toestand ───────────────────────────────────────
 
+
 class _LLMDB:
     def execute(self, *a, **k):
         raise AssertionError("dicht: de LLM-configuratie hoort niet eens gelezen te worden")
@@ -224,6 +255,7 @@ class _LLMDB:
 
 def test_call_llm_dicht_doet_geen_aanroep(db, logboek, monkeypatch):
     import omnitwin.services.llm_service as llm_mod
+
     monkeypatch.setattr(llm_mod.requests, "post", lambda *a, **k: pytest.fail("taalmodel aangeroepen"))
     res = llm_mod.LLMService(_LLMDB())._call_llm("sys", "vraag", "test", usecase="A", bronnen=["u1"])
     assert res["error"] and res["geweigerd"] and "staat uit" in res["text"]
@@ -232,6 +264,7 @@ def test_call_llm_dicht_doet_geen_aanroep(db, logboek, monkeypatch):
 
 class _PromptDB:
     """Alleen de systeemprompt mag gelezen worden (geen rij: de standaardprompt)."""
+
     def execute(self, sql, params=None):
         assert "system_prompts" in str(sql), str(sql)
         return _Res()
@@ -239,16 +272,19 @@ class _PromptDB:
 
 def test_call_llm_buiten_altijd_dicht(monkeypatch, logboek):
     import omnitwin.services.llm_service as llm_mod
+
     monkeypatch.setattr(ai_vrijgave, "_lees_standen", lambda code=None, db=None: pytest.fail("niet nodig"))
     monkeypatch.setattr(llm_mod.requests, "post", lambda *a, **k: pytest.fail("taalmodel aangeroepen"))
     svc = llm_mod.LLMService(_PromptDB())
     assert svc.validate_duplicates([{"uuid": "u1", "naam": "x"}])["is_duplicaat"] is False
     from omnitwin.utils.ai_generator import generate_indicator_description
+
     assert generate_indicator_description(svc, "n", "c", "o", "b") == ""
 
 
 def test_call_llm_vraagt_een_usecase():
     from omnitwin.services.llm_service import LLMService
+
     with pytest.raises(TypeError):
         LLMService(_LLMDB())._call_llm("sys", "vraag", "test")
 
@@ -261,8 +297,12 @@ class _ZoekDB:
         self.sql.append(str(sql))
         if "indicator_embeddings" in str(sql):
             raise AssertionError("dicht: geen gelijkenis via embeddings")
-        return _Rows([("u-1", "65+ jaar (%)", "Aandeel ouderen", "Bevolking", None, None, "draft", "%", "+/-"),
-                      ("u-2", "Gemiddeld energielabel", "Energie", "Wonen", None, None, "draft", "", "+/-")])
+        return _Rows(
+            [
+                ("u-1", "65+ jaar (%)", "Aandeel ouderen", "Bevolking", None, None, "draft", "%", "+/-"),
+                ("u-2", "Gemiddeld energielabel", "Energie", "Wonen", None, None, "draft", "", "+/-"),
+            ]
+        )
 
 
 class _Rows:
@@ -275,6 +315,7 @@ class _Rows:
 
 def test_zoeken_dicht_zonder_embeddingmodel(db, logboek, monkeypatch):
     from omnitwin.services import ai_search_service, embedding_model
+
     monkeypatch.setattr(ai_search_service, "_model", None)
     monkeypatch.setattr(embedding_model, "gedeeld_model", lambda: pytest.fail("embeddingmodel geladen"))
     svc = ai_search_service.AISearchService(_ZoekDB(), functie="Kompas-zoeken")
@@ -286,10 +327,14 @@ def test_zoeken_dicht_zonder_embeddingmodel(db, logboek, monkeypatch):
 
 def test_chat_dicht_regelgebaseerd_zonder_taalmodel(db, logboek, monkeypatch):
     from omnitwin.routers import chat as chat_mod
+
     monkeypatch.setattr(chat_mod, "beantwoord_datavraag_route", lambda *a: None)
     monkeypatch.setattr(chat_mod, "match_scenario", lambda *a: None)
-    monkeypatch.setattr(chat_mod.AISearchService, "search_indicators",
-                        lambda self, q, limit=5: [{"uuid": "u-1", "naam": "Groen (%)", "score": 0.7, "relevantie": "sterk"}])
+    monkeypatch.setattr(
+        chat_mod.AISearchService,
+        "search_indicators",
+        lambda self, q, limit=5: [{"uuid": "u-1", "naam": "Groen (%)", "score": 0.7, "relevantie": "sterk"}],
+    )
     monkeypatch.setattr(chat_mod.LLMService, "_call_llm", lambda *a, **k: pytest.fail("taalmodel aangeroepen"))
     antwoord = chat_mod.chat(chat_mod.ChatRequest(vraag="toon groen op de kaart"), db=None)
     assert antwoord.debug["mode"] == "zonder_ai"
@@ -301,17 +346,20 @@ def test_chat_dicht_regelgebaseerd_zonder_taalmodel(db, logboek, monkeypatch):
 
 def test_rapport_dicht_zonder_samenvatting(db, logboek, monkeypatch):
     from omnitwin.routers import report
+
     monkeypatch.setattr(report, "LLMService", lambda *a: pytest.fail("taalmodel aangeroepen"))
     monkeypatch.setattr(report, "ReportDataService", lambda *a: pytest.fail("niet nodig"))
     uit = report.generate_report_narrative("BU19000002", request=None, db=None)
     assert uit["ai_uit"] and uit["ai_summary"] == ai_vrijgave.melding("B") and uit["domain_summaries"] == {}
-    uit = report.get_benchmark_narrative(request=None, gebied_a="BU19000002", mode="gebieden", gebieden_b=None,
-                                         referentie_gemeente=None, db=None)
+    uit = report.get_benchmark_narrative(
+        request=None, gebied_a="BU19000002", mode="gebieden", gebieden_b=None, referentie_gemeente=None, db=None
+    )
     assert uit["ai_uit"] and uit["ai_narrative"] == ai_vrijgave.melding("B")
     assert [r[0][0] for r in logboek] == ["B", "B"]
 
 
 # ── Geen pad om de poort heen ────────────────────────────────────────────────
+
 
 def _python_bestanden():
     for map_ in ("src", "scripts", "ETL", "init_data"):
@@ -323,11 +371,12 @@ def test_elke_llm_aanroep_noemt_een_usecase():
     for pad in _python_bestanden():
         tekst = pad.read_text(encoding="utf-8", errors="ignore")
         for m in re.finditer(r"\._call_llm\(", tekst):
-            aanroep = tekst[m.start(): m.start() + 400]
+            aanroep = tekst[m.start() : m.start() + 400]
             assert "usecase=" in aanroep, f"{pad}: _call_llm zonder usecase"
         if pad.name != "llm_service.py":
-            assert "/api/generate" not in tekst and "chat/completions" not in tekst, \
+            assert "/api/generate" not in tekst and "chat/completions" not in tekst, (
                 f"{pad}: eigen aanroep van een taalmodel buiten LLMService"
+            )
             assert "_call_ollama" not in tekst and "_call_openai" not in tekst, f"{pad}: omzeilt _call_llm"
 
 
@@ -339,11 +388,13 @@ def test_embeddingmodel_alleen_achter_de_poort():
         if pad.name in toegestaan:
             continue
         tekst = pad.read_text(encoding="utf-8", errors="ignore")
-        assert "gedeeld_model(" not in tekst and "SentenceTransformer(" not in tekst, \
+        assert "gedeeld_model(" not in tekst and "SentenceTransformer(" not in tekst, (
             f"{pad}: embeddingmodel buiten de AI-poort"
+        )
 
 
 # ── Fail-closed: logboek mislukt of keten klopt niet → automatische noodstop ─
+
 
 @pytest.fixture
 def nep_engine(db, monkeypatch):
@@ -352,6 +403,7 @@ def nep_engine(db, monkeypatch):
     class _Engine:
         def begin(self):
             return contextlib.nullcontext(db)
+
     monkeypatch.setattr(database, "engine", _Engine())
     return db
 
@@ -391,6 +443,7 @@ def test_automatische_noodstop_zonder_database_in_applicatielog(monkeypatch, cap
     class _Kapot:
         def begin(self):
             raise RuntimeError("database weg")
+
     monkeypatch.setattr(database, "engine", _Kapot())
     with caplog.at_level("CRITICAL", logger="omnitwin.ai_vrijgave"):
         ai_vrijgave.automatische_noodstop("logboek mislukt")
@@ -408,12 +461,22 @@ def test_schrijven_mislukt_geeft_noodstop(monkeypatch):
 def test_keten_klopt_niet_geeft_noodstop(monkeypatch):
     stops = []
     monkeypatch.setattr(ai_vrijgave, "automatische_noodstop", stops.append)
-    monkeypatch.setattr(ai_logboek, "controleer_keten", lambda rijen: {"ok": False, "aantal": 2, "eerste_id": 1,
-                        "laatste_id": 2, "fouten": [{"id": 2, "reden": "hash past niet bij de inhoud"}]})
+    monkeypatch.setattr(
+        ai_logboek,
+        "controleer_keten",
+        lambda rijen: {
+            "ok": False,
+            "aantal": 2,
+            "eerste_id": 1,
+            "laatste_id": 2,
+            "fouten": [{"id": 2, "reden": "hash past niet bij de inhoud"}],
+        },
+    )
 
     class _DB:
         def execute(self, *a, **k):
             return _Res([])
+
     assert ai_logboek.controleer(_DB())["ok"] is False
     assert stops and "id 2" in stops[0]
 
@@ -424,6 +487,7 @@ def test_keten_klopt_geen_noodstop(monkeypatch):
     class _DB:
         def execute(self, *a, **k):
             return _Res([])
+
     assert ai_logboek.controleer(_DB())["ok"] is True
 
 
@@ -434,6 +498,7 @@ class _ConfigDB:
 
 def test_llm_resultaat_niet_gelogd_geeft_geen_ai_resultaat(db, monkeypatch):
     import omnitwin.services.llm_service as llm_mod
+
     _open_alles(db)
     monkeypatch.setattr(ai_logboek, "schrijf", lambda *a, **k: False)
     svc = llm_mod.LLMService(_ConfigDB())
@@ -444,6 +509,7 @@ def test_llm_resultaat_niet_gelogd_geeft_geen_ai_resultaat(db, monkeypatch):
 
 def test_storing_taalmodel_sluit_niet(db, logboek, monkeypatch):
     import omnitwin.services.llm_service as llm_mod
+
     _open_alles(db)
     monkeypatch.setattr(ai_vrijgave, "automatische_noodstop", lambda r: pytest.fail("storing taalmodel sluit niet"))
     svc = llm_mod.LLMService(_ConfigDB())
@@ -456,12 +522,15 @@ def test_storing_taalmodel_sluit_niet(db, logboek, monkeypatch):
 
 def test_zoeken_niet_gelogd_geeft_trefwoorden(db, monkeypatch):
     from omnitwin.services import ai_search_service
+
     _open_alles(db)
 
     class _Model:
         def encode(self, *a, **k):
             import numpy
+
             return numpy.zeros(3)
+
     monkeypatch.setattr(ai_search_service, "_model", _Model())
     monkeypatch.setattr(ai_search_service.AISearchService, "_gelijkenissen", lambda self, q: {"u-1": 0.99, "u-2": 0.1})
     monkeypatch.setattr(ai_logboek, "schrijf", lambda *a, **k: False)

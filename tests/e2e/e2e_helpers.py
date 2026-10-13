@@ -27,8 +27,21 @@ BOLSWARD_ZUIDOOST = "BU19000002"
 WORKUM = "BU19000200"
 HINDELOOPEN = "BU19000202"
 KOUDUM = "BU19000300"
-TESTBUURTEN = ["BU19000001", "BU19000002", "BU19000004", "BU19000108", "BU19000200", "BU19000202", "BU19000300",
-               "BU19000301", "BU19000400", "BU19000401", "BU19001200", "BU19001300", "BU19002017"]
+TESTBUURTEN = [
+    "BU19000001",
+    "BU19000002",
+    "BU19000004",
+    "BU19000108",
+    "BU19000200",
+    "BU19000202",
+    "BU19000300",
+    "BU19000301",
+    "BU19000400",
+    "BU19000401",
+    "BU19001200",
+    "BU19001300",
+    "BU19002017",
+]
 
 
 # ── Traagheid van de renderer (#212) ─────────────────────────────────────────
@@ -226,6 +239,7 @@ def klik_chatactie(page: Page, knop: Locator, omschrijving: str):
 
 # ── Kaart ────────────────────────────────────────────────────────────────────
 
+
 def open_paneel(page: Page, aria_label: str):
     """Open een zijpaneel via de tabbalk (laat een al open paneel open)."""
     knop = page.get_by_role("button", name=aria_label, exact=True)
@@ -273,14 +287,13 @@ def wacht_op_selectie(page: Page, ids):
     page.wait_for_function(
         "(ids) => { const s = [...window.state.selectedGebiedIds].sort();"
         " return JSON.stringify(s) === JSON.stringify([...ids].sort()); }",
-        arg=list(ids), polling=_POLL_MS,
+        arg=list(ids),
+        polling=_POLL_MS,
     )
 
 
 def selectie_overlay_aanwezig(page: Page) -> bool:
-    return page.evaluate(
-        "() => window.state.deckgl.props.layers.some(l => l && l.id === 'selection-overlay-layer')"
-    )
+    return page.evaluate("() => window.state.deckgl.props.layers.some(l => l && l.id === 'selection-overlay-layer')")
 
 
 # Klikpunt binnen een buurt (#212). Vroeger werd een raster van punten één voor één met
@@ -372,8 +385,10 @@ def klikpunt_buurt(page: Page, gebied_id: str, timeout: float = None):
         vorige = punt
         resterend = int((eind - time.monotonic()) * 1000)
         if resterend <= 0:
-            raise AssertionError(f"Geen klikbaar punt gevonden voor {gebied_id} binnen "
-                                 f"{timeout or geschaald(15_000) / 1000:.0f}s (laatste kandidaat {punt})")
+            raise AssertionError(
+                f"Geen klikbaar punt gevonden voor {gebied_id} binnen "
+                f"{timeout or geschaald(15_000) / 1000:.0f}s (laatste kandidaat {punt})"
+            )
         try:
             wacht_op_frames(page, timeout=resterend)
         except PlaywrightTimeoutError:
@@ -398,7 +413,9 @@ def _vind_klikpunt(page: Page, gebied_id: str):
         if poging < 3:
             zoom_kaart(page, 400)
             wacht_op_camera_in_rust(page)
-    raise AssertionError(f"Geen klikbaar punt gevonden voor {gebied_id}: niet onafgedekt in beeld, ook niet na uitzoomen")
+    raise AssertionError(
+        f"Geen klikbaar punt gevonden voor {gebied_id}: niet onafgedekt in beeld, ook niet na uitzoomen"
+    )
 
 
 def wacht_op_camera_in_rust(page: Page, timeout: float = None):
@@ -408,8 +425,10 @@ def wacht_op_camera_in_rust(page: Page, timeout: float = None):
     vorige, gelijk = None, 0
     while time.monotonic() < eind:
         wacht_op_frames(page, timeout=max(1, int((eind - time.monotonic()) * 1000)))
-        nu = page.evaluate("() => { const v = window.state.currentViewState || {};"
-                           " return [v.longitude, v.latitude, v.zoom, v.pitch, v.bearing]; }")
+        nu = page.evaluate(
+            "() => { const v = window.state.currentViewState || {};"
+            " return [v.longitude, v.latitude, v.zoom, v.pitch, v.bearing]; }"
+        )
         gelijk = gelijk + 1 if nu == vorige else 0
         if gelijk >= 2:
             return
@@ -503,8 +522,9 @@ def klik_buurt_op_kaart(page: Page, gebied_id: str, shift: bool = False, terugva
             if shift:
                 page.keyboard.up("Shift")
         try:
-            uitkomst = page.wait_for_function(_KLIKUITKOMST_JS, arg=voor, polling=_POLL_MS,
-                                              timeout=geschaald(15_000)).json_value()
+            uitkomst = page.wait_for_function(
+                _KLIKUITKOMST_JS, arg=voor, polling=_POLL_MS, timeout=geschaald(15_000)
+            ).json_value()
         except PlaywrightTimeoutError:
             uitkomst = "geen-pointerup"
         if uitkomst == "selectie":
@@ -514,19 +534,27 @@ def klik_buurt_op_kaart(page: Page, gebied_id: str, shift: bool = False, terugva
         if uitkomst == "geen-click" and verwerking and verwerking > tapdrempel:
             nieuw = min(_MAX_TAPDREMPEL_MS, max(2_000, math.ceil(verwerking * 3 / 1000) * 1000))
             page.evaluate("(t) => window.state.deckgl.eventManager.manager.get('click').set({ time: t })", nieuw)
-            warnings.warn(f"kaartklik op {gebied_id}: pointerdown en pointerup {verwerking} ms na elkaar verwerkt "
-                          f"(pick bij pointerdown), boven de tapdrempel van {tapdrempel} ms; tapdrempel voor deze "
-                          f"testpagina verruimd naar {nieuw} ms (poging {poging + 1})")
+            warnings.warn(
+                f"kaartklik op {gebied_id}: pointerdown en pointerup {verwerking} ms na elkaar verwerkt "
+                f"(pick bij pointerdown), boven de tapdrempel van {tapdrempel} ms; tapdrempel voor deze "
+                f"testpagina verruimd naar {nieuw} ms (poging {poging + 1})"
+            )
         else:
-            warnings.warn(f"kaartklik op {gebied_id} niet geregistreerd: {uitkomst}, verwerking "
-                          f"{verwerking} ms, tapdrempel {tapdrempel} ms (poging {poging + 1}), opnieuw")
+            warnings.warn(
+                f"kaartklik op {gebied_id} niet geregistreerd: {uitkomst}, verwerking "
+                f"{verwerking} ms, tapdrempel {tapdrempel} ms (poging {poging + 1}), opnieuw"
+            )
     if terugval and punt:
-        warnings.warn(f"kaartklik op {gebied_id} na 4 echte klikken niet aangekomen; laatste redmiddel: "
-                      "pick + onClick-handler van de gebiedenlaag")
+        warnings.warn(
+            f"kaartklik op {gebied_id} na 4 echte klikken niet aangekomen; laatste redmiddel: "
+            "pick + onClick-handler van de gebiedenlaag"
+        )
         if page.evaluate(_KLIK_VIA_PICK_JS, [gebied_id, punt["lx"], punt["ly"], shift]):
             page.wait_for_function(
                 "(voor) => JSON.stringify([...window.state.selectedGebiedIds].sort()) !== JSON.stringify(voor)",
-                arg=voor, polling=_POLL_MS)
+                arg=voor,
+                polling=_POLL_MS,
+            )
             return
     raise AssertionError(f"kaartklik op {gebied_id} wijzigt de selectie niet")
 
@@ -547,6 +575,7 @@ def selecteer_buurt_via_app(page: Page, gebied_id: str, shift: bool = False):
 
 # ── Kompas ───────────────────────────────────────────────────────────────────
 
+
 def verplaats_kompasvenster_rechts(page: Page):
     """Sleep het Kompas-venster aan de titelbalk naar de rechterrand (vrij zicht op de kaart)."""
     kop = page.locator("#kompas-window .floating-window-header h3").bounding_box()
@@ -555,6 +584,7 @@ def verplaats_kompasvenster_rechts(page: Page):
     page.mouse.down()
     page.mouse.move(start_x + 2000, start_y, steps=10)  # venster wordt binnen het scherm begrensd
     page.mouse.up()
+
 
 def open_kompas(page: Page, verwacht_in_info: str):
     """Kompas-paneel → 'Open Kompas'; wacht tot het venster de selectie toont."""
@@ -628,7 +658,9 @@ def klik_kompas_segment(page: Page, naam: str, timeout: float = None):
         try:
             page.wait_for_function(
                 "(naam) => window.kompasViz.currentNode && window.kompasViz.currentNode.data.name === naam",
-                arg=naam, polling=_POLL_MS, timeout=geschaald(5_000),
+                arg=naam,
+                polling=_POLL_MS,
+                timeout=geschaald(5_000),
             )
             return
         except PlaywrightTimeoutError:
@@ -657,7 +689,8 @@ def wacht_op_vergelijkingsgrafiek(page: Page, namen):
     page.wait_for_function(
         "(namen) => { const c = window.kompasViz.trendChart;"
         " return c && namen.every(n => c.data.labels.includes(n)); }",
-        arg=list(namen), polling=_POLL_MS,
+        arg=list(namen),
+        polling=_POLL_MS,
     )
     expect(page.locator("#kompas-trend-chart")).to_be_visible()
 

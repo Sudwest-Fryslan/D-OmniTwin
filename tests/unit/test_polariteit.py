@@ -5,6 +5,7 @@ Kaart (kleurschaal), Kompas, percentielklassen, rapporten en chat leiden de rich
 met dezelfde regel (omnitwin.polariteit.uit_oud). Voorheen las de kaart '-/+' als
 "hoger is beter" en de rapporten als "lager is beter".
 """
+
 from pathlib import Path
 
 import pytest
@@ -24,9 +25,9 @@ GEVALLEN = [
     ("+/+", "pos_is_pos", pol.HOGER_IS_BETER),
     ("+=+", None, pol.HOGER_IS_BETER),
     ("+/-", "-/+", pol.LAGER_IS_BETER),
-    ("-/+", None, pol.LAGER_IS_BETER),   # SWF-monitor: omkeren (#342)
+    ("-/+", None, pol.LAGER_IS_BETER),  # SWF-monitor: omkeren (#342)
     ("-/-", None, pol.LAGER_IS_BETER),
-    ("-=-", None, pol.LAGER_IS_BETER),   # energielabel e.d.: lager getal = beter
+    ("-=-", None, pol.LAGER_IS_BETER),  # energielabel e.d.: lager getal = beter
     ("+/+", "neutraal", pol.NEUTRAAL),
     ("+/+", "N/A", pol.NEUTRAAL),
     (None, "-/+", pol.LAGER_IS_BETER),

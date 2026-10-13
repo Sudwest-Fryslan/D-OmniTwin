@@ -28,8 +28,13 @@ from pathlib import Path
 
 WAAR = {"true", "t", "1", "ja", "j", "yes"}
 # classificatie in het Table Schema van de use case → kompas_configuraties.classificatie
-CLASSIFICATIE = {"label": "label_ae", "label_ae": "label_ae", "percentielklasse": "percentiel_8",
-                 "percentiel_8": "percentiel_8", "zscore": "zscore"}
+CLASSIFICATIE = {
+    "label": "label_ae",
+    "label_ae": "label_ae",
+    "percentielklasse": "percentiel_8",
+    "percentiel_8": "percentiel_8",
+    "zscore": "zscore",
+}
 
 
 def lees_resource(pad) -> list[dict]:
@@ -63,28 +68,36 @@ def kompasprofielen(cur, regels: list[dict]) -> dict:
             cur.execute("SELECT id FROM public.kompas_configuraties WHERE naam = %s", (naam,))
             rij = cur.fetchone()
             if rij is None:
-                cur.execute("INSERT INTO public.kompas_configuraties (naam, is_standaard, is_actief, classificatie) "
-                            "VALUES (%s, false, true, %s) RETURNING id",
-                            (naam, CLASSIFICATIE.get(r.get("classificatie") or "", "zscore")))
+                cur.execute(
+                    "INSERT INTO public.kompas_configuraties (naam, is_standaard, is_actief, classificatie) "
+                    "VALUES (%s, false, true, %s) RETURNING id",
+                    (naam, CLASSIFICATIE.get(r.get("classificatie") or "", "zscore")),
+                )
                 rij = cur.fetchone()
                 uit["nieuweProfielen"].append(naam)
             profielen[naam] = rij[0]
         config_id = profielen[naam]
         ouder = config_id
-        for tabel, ouder_kolom, waarde in (("kompas_titels", "config_id", r["kwadrant"]),
-                                           ("kompas_themas", "titel_id", r["thema"]),
-                                           ("kompas_onderdelen", "thema_id", r.get("onderdeel") or "(Algemeen)")):
+        for tabel, ouder_kolom, waarde in (
+            ("kompas_titels", "config_id", r["kwadrant"]),
+            ("kompas_themas", "titel_id", r["thema"]),
+            ("kompas_onderdelen", "thema_id", r.get("onderdeel") or "(Algemeen)"),
+        ):
             cur.execute(f"SELECT id FROM public.{tabel} WHERE naam = %s AND {ouder_kolom} = %s", (waarde, ouder))
             rij = cur.fetchone()
             if rij is None:
-                cur.execute(f"INSERT INTO public.{tabel} (naam, {ouder_kolom}, volgorde) VALUES (%s, %s, %s) RETURNING id",
-                            (waarde, ouder, volgorde))
+                cur.execute(
+                    f"INSERT INTO public.{tabel} (naam, {ouder_kolom}, volgorde) VALUES (%s, %s, %s) RETURNING id",
+                    (waarde, ouder, volgorde),
+                )
                 rij = cur.fetchone()
             ouder = rij[0]
-        cur.execute("""INSERT INTO public.kompas_indicator_mapping (config_id, indicator_uuid, onderdeel_id, weging, is_actueel)
+        cur.execute(
+            """INSERT INTO public.kompas_indicator_mapping (config_id, indicator_uuid, onderdeel_id, weging, is_actueel)
                        VALUES (%s, %s, %s, %s, %s)
                        ON CONFLICT (config_id, indicator_uuid, onderdeel_id) DO NOTHING""",
-                    (config_id, r["indicator_uuid"], ouder, _getal(r.get("weging"), 1.0), _bool(r.get("is_actueel"), True)))
+            (config_id, r["indicator_uuid"], ouder, _getal(r.get("weging"), 1.0), _bool(r.get("is_actueel"), True)),
+        )
         uit["gekoppeld" if cur.rowcount else "alAanwezig"] += 1
     return uit
 
@@ -92,10 +105,13 @@ def kompasprofielen(cur, regels: list[dict]) -> dict:
 def externe_kaartlagen(cur, regels: list[dict]) -> dict:
     """Externe kaartlagen (WFS/WMS/GeoJSON) toevoegen; een laag met dezelfde naam blijft ongewijzigd."""
     from omnitwin.routers.externe_lagen import ExterneKaartlaagCreate
+
     uit = {"regels": len(regels), "toegevoegd": [], "alAanwezig": [], "intern": [], "internNietActief": []}
     # Met de toegang per laag (#254, kolom toegang) wordt een interne laag intern; daarvoor: niet actief
-    cur.execute("SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' "
-                "AND table_name = 'externe_kaartlagen' AND column_name = 'toegang'")
+    cur.execute(
+        "SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' "
+        "AND table_name = 'externe_kaartlagen' AND column_name = 'toegang'"
+    )
     met_toegang = cur.fetchone() is not None
     for r in regels:
         toegang = (r.pop("toegang", None) or "openbaar").strip().lower()
@@ -123,8 +139,11 @@ def externe_kaartlagen(cur, regels: list[dict]) -> dict:
             uit["alAanwezig"].append(laag["naam"])
             continue
         kolommen = list(laag)
-        cur.execute(f"INSERT INTO public.externe_kaartlagen ({', '.join(kolommen)}) "
-                    f"VALUES ({', '.join(['%s'] * len(kolommen))})", [laag[k] for k in kolommen])
+        cur.execute(
+            f"INSERT INTO public.externe_kaartlagen ({', '.join(kolommen)}) "
+            f"VALUES ({', '.join(['%s'] * len(kolommen))})",
+            [laag[k] for k in kolommen],
+        )
         uit["toegevoegd"].append(laag["naam"])
     return uit
 
@@ -136,6 +155,7 @@ SOORTEN = {"kompasprofielen": kompasprofielen, "externe-kaartlagen": externe_kaa
 def transactie():
     """Eén transactie met de verbinding van de backend (in-process: de databasebeheerder)."""
     from omnitwin.database import engine
+
     conn = engine.raw_connection()
     try:
         cur = conn.cursor()

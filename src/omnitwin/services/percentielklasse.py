@@ -60,8 +60,7 @@ def hoger_is_beter(score_type: Optional[str], inverse: Optional[bool] = False) -
     return not polariteit.lager_is_beter(score_type, inverse)
 
 
-def richting(score_type: Optional[str], inverse: Optional[bool] = False,
-             kwadrant: Optional[str] = None) -> str:
+def richting(score_type: Optional[str], inverse: Optional[bool] = False, kwadrant: Optional[str] = None) -> str:
     """'hoger_is_beter' | 'lager_is_beter' | 'neutraal' (kwadrant Samenstelling), voor de
     kleur van een afwijking (bijv. de Kompas-benchmark, #323)."""
     if is_neutraal_kwadrant(kwadrant):
@@ -219,7 +218,9 @@ def referentie_waarden(
 
 
 def onderdrukte_waarden(
-    db, gebied_ids: Iterable[str], indicator_uuids: Optional[Iterable[str]] = None,
+    db,
+    gebied_ids: Iterable[str],
+    indicator_uuids: Optional[Iterable[str]] = None,
     drempel: Optional[int] = None,
 ) -> set:
     """{(gebied_id, indicator_uuid, jaar)} met n onder de drempel (zonder drempel: die van de instantie)."""
@@ -230,11 +231,14 @@ def onderdrukte_waarden(
         return set()
     if drempel is None:
         drempel = ka.drempel(db)
-    rows = db.execute(text(_SQL_ONDERDRUKT), {
-        "pk_gebied_ids": ids,
-        "pk_indicator_uuids": [str(u) for u in indicator_uuids] if indicator_uuids else None,
-        "pk_drempel": int(drempel),
-    })
+    rows = db.execute(
+        text(_SQL_ONDERDRUKT),
+        {
+            "pk_gebied_ids": ids,
+            "pk_indicator_uuids": [str(u) for u in indicator_uuids] if indicator_uuids else None,
+            "pk_drempel": int(drempel),
+        },
+    )
     return {(r.gebied_id, r.indicator_uuid, r.jaar) for r in rows}
 
 

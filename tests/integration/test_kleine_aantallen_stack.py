@@ -21,7 +21,7 @@ pytestmark = pytest.mark.integration
 
 BASE_URL = os.environ.get("OMNITWIN_BASE_URL", "http://localhost").rstrip("/")
 TIMEOUT = 60
-GEBIED = "BU19000002"     # Bolsward-Zuidoost
+GEBIED = "BU19000002"  # Bolsward-Zuidoost
 GEMEENTE = "1900"
 BRON = "test #325"
 
@@ -91,8 +91,10 @@ def kleine_waarde(conn, indicator):
 
 def test_drempel_in_sql(conn):
     with conn.cursor() as cur:
-        cur.execute("SELECT kleine_aantallen_drempel(), is_kleine_aantallen(9), is_kleine_aantallen(10), "
-                    "is_kleine_aantallen(NULL)")
+        cur.execute(
+            "SELECT kleine_aantallen_drempel(), is_kleine_aantallen(9), is_kleine_aantallen(10), "
+            "is_kleine_aantallen(NULL)"
+        )
         drempel, negen, tien, onbekend = cur.fetchone()
         cur.execute("SELECT n_drempel FROM organisatie LIMIT 1")
         rij = cur.fetchone()
