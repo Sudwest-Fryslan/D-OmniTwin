@@ -15,6 +15,7 @@ Copyright: © 3DBAG by 3DGI and TU Delft (CC BY 4.0)
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
+from sqlalchemy import text
 from sqlalchemy.orm import Session
 try:
     from pyproj import Transformer
@@ -453,10 +454,17 @@ def get_3d_buildings(
     AppLogger.info(f"3DBAG {len(features)} panden opgehaald van REST API", category="KAART")
 
     if not features:
-        raise HTTPException(
-            status_code=404,
-            detail="Geen 3D panden gevonden in het geselecteerde gebied op 3DBAG."
-        )
+        return {
+            "type": "FeatureCollection",
+            "features": [],
+            "metadata": {
+                "bbox_rd": bbox,
+                "panden_count": 0,
+                "kleur_mode": "geen",
+                "copyright": "© 3DBAG by 3DGI and TU Delft (CC BY 4.0)",
+                "melding": "Geen 3D panden gevonden in het geselecteerde gebied op 3DBAG.",
+            }
+        }
 
     # Stap 3: Kleurverrijking
     enriched = enrich_features_with_color(

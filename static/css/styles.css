@@ -3178,6 +3178,57 @@ textarea {
   color: var(--text-primary);
 }
 
+/* --- Info Toast (#410) --- */
+.info-toast {
+  position: fixed;
+  top: 16px;
+  right: 16px;
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.7rem 1rem;
+  max-width: min(420px, 90vw);
+  background: color-mix(in srgb, var(--color-primary, #3b82f6) 12%, var(--bg-secondary));
+  border: 1px solid color-mix(in srgb, var(--color-primary, #3b82f6) 35%, transparent);
+  border-radius: 10px;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+  animation: tooltipSlideIn 0.3s ease;
+  font-size: 0.85rem;
+  color: var(--text-primary);
+}
+
+.info-toast.fade-out {
+  animation: tooltipSlideOut 0.25s ease forwards;
+}
+
+.info-toast-icon {
+  font-size: 1.1rem;
+  flex-shrink: 0;
+}
+
+.info-toast-msg {
+  flex: 1;
+  line-height: 1.4;
+}
+
+.info-toast-close {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-size: 0.95rem;
+  padding: 0 0.2rem;
+  line-height: 1;
+  transition: color 0.2s;
+}
+
+.info-toast-close:hover {
+  color: var(--text-primary);
+}
+
 
 /* ============================================================================
    Track B — Directe Feedback & Micro-interacties (Sprint 11B)
