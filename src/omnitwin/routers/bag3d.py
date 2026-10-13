@@ -471,7 +471,7 @@ def get_3d_buildings(request: BAG3DRequest, db: Session = Depends(get_db)):
                 "kleur_mode": "geen",
                 "copyright": "© 3DBAG by 3DGI and TU Delft (CC BY 4.0)",
                 "melding": "Geen 3D panden gevonden in het geselecteerde gebied op 3DBAG.",
-            }
+            },
         }
 
     # Stap 3: Kleurverrijking

@@ -5,16 +5,17 @@ kleurberekening en validaties.
 """
 
 from unittest.mock import MagicMock, patch
+
 import pytest
 from fastapi import FastAPI, HTTPException
 from fastapi.testclient import TestClient
 
 from omnitwin.database import get_db
 from omnitwin.routers.bag3d import (
-    router,
     bouwjaar_kleur,
     get_bbox_for_gebieden,
     get_indicator_code,
+    router,
 )
 
 pytestmark = pytest.mark.unit
@@ -134,13 +135,15 @@ def test_bag3d_gevulde_respons(mock_bbox, mock_fetch, mock_enrich, bag3d_client)
     raw_feature = {
         "type": "Feature",
         "geometry": {"type": "Polygon", "coordinates": [[[5.0, 52.0], [5.1, 52.0], [5.1, 52.1], [5.0, 52.0]]]},
-        "properties": {"identificatie": "NL.IMBAG.Pand.001", "bouwjaar": 1965}
+        "properties": {"identificatie": "NL.IMBAG.Pand.001", "bouwjaar": 1965},
     }
     mock_fetch.return_value = {"type": "FeatureCollection", "features": [raw_feature]}
-    mock_enrich.return_value = [{
-        **raw_feature,
-        "properties": {**raw_feature["properties"], "indicator_color": "#e67e22", "kleur_mode": "bouwjaar"}
-    }]
+    mock_enrich.return_value = [
+        {
+            **raw_feature,
+            "properties": {**raw_feature["properties"], "indicator_color": "#e67e22", "kleur_mode": "bouwjaar"},
+        }
+    ]
 
     res = client.post("/api/3dbag/buildings", json={"gebied_ids": ["BU00800000"]})
     assert res.status_code == 200
