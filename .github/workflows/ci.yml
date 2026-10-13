@@ -68,9 +68,8 @@ jobs:
         run: pytest -m unit -v --tb=short
 
   # ──────────────────────────────────────────────
-  # Lint (ruff, #129): `ruff check .` met de config en baseline uit pyproject.toml.
-  # Nog geen `ruff format --check`: dat komt in stap 2 van #129, na `ruff format`
-  # op de hele codebase. Versie gelijk aan .pre-commit-config.yaml.
+  # Lint (ruff, #129): `ruff check .` met de config en baseline uit pyproject.toml,
+  # en `ruff format --check .`. Versie gelijk aan .pre-commit-config.yaml.
   # ──────────────────────────────────────────────
   lint:
     name: Lint (ruff)
@@ -95,6 +94,9 @@ jobs:
 
       - name: ruff check
         run: ruff check --output-format=github .
+
+      - name: ruff format --check
+        run: ruff format --check .
 
   # ──────────────────────────────────────────────
   # Job 2: Docker Build Check — valideert Dockerfile
