@@ -1,106 +1,51 @@
 # D-OmniTwin
 
-> Digitale spiegel van de fysieke leefomgeving: indicatoren op buurtniveau op een kaart, in een Kompas en in rapporten. Open source (EUPL 1.2).
-
-**Status:** versie 0.3.0 (het actuele nummer staat in [`VERSION`](./VERSION), de wijzigingen in de [CHANGELOG](./CHANGELOG.md)). Lees vóór gebruik buiten je eigen netwerk de paragraaf [Beveiliging](./docs/9-beheer/installatie.md#beveiliging) van de installatiegids.
+D-OmniTwin brengt data over de leefomgeving per buurt samen in één beeld: een kaart, het D-Omni Kompas (indicatoren in 12 thema's, vergeleken met een referentiegroep) en rapporten, met een assistent die vragen in gewone taal beantwoordt. Voor gemeenten en partners die werken aan opgaven als energietransitie, klimaatadaptatie, sociale cohesie en brede welvaart. Open source (EUPL 1.2): een open methodiek met referentie-implementatie, geen product of SaaS-dienst.
 
 [![Licentie: EUPL 1.2](https://img.shields.io/badge/Licentie-EUPL_1.2-blue)](./LICENSE) [![Docs: CC BY 4.0](https://img.shields.io/badge/Docs-CC_BY_4.0-green)](./LICENSE-DOCS)
 
----
+![Kaart van Workum en omgeving gekleurd op afstand tot een voorziening, met rechts het D-Omni Kompas als sunburst met de thema's](usecases/beleidsadviseur-swf/bewijs/kompas.webp)
 
-## Wat is D-OmniTwin?
+*Kaart en Kompas voor Workum (use case [Beleidsadviseur](usecases/beleidsadviseur-swf/README.md)).*
 
-Gemeenten en provincies werken aan opgaven als energietransitie, klimaatadaptatie, sociale cohesie en brede welvaart. De data daarvoor is er vaak wel, maar verspreid over organisaties en systemen. D-OmniTwin brengt die data per buurt samen in één beeld, voor beleidsmakers, wijkfunctionarissen en inwoners:
-
-- **Kaart** (MapLibre GL, deck.gl, PDOK-achtergrondkaart): buurten gekleurd op een indicator, met externe kaartlagen en 3D-panden (3DBAG).
-- **D-Omni Kompas** (D3.js-sunburst): indicatoren in 12 thema's, gekleurd met Z-scores ten opzichte van een referentiegroep.
-- **Rapporten:** gebiedsdossier, benchmark en deelgebiedsanalyse, met export.
-- **D-Omni Assistent:** een chat die de kaart en het Kompas aanstuurt en datavragen met cijfers uit de database beantwoordt. Het taalmodel draait standaard lokaal (Ollama); zonder taalmodel werkt de rest gewoon.
-- **Beheeromgeving** (`/admin`): indicatoren, Kompas-indeling, kaartlagen, prompts, AI-configuratie, datakwaliteit en logs.
-
-D-OmniTwin is bedoeld als **open methodiek met referentie-implementatie**, niet als product of SaaS-dienst. De architectuur is voorbereid op dataspaces (data blijft bij de bron), zoals de Fryslân Data Space (FRLDS).
-
-De repository bevat **use cases** als installeerbare pakketten: vijf vragen van gebruikers (energiearmoede, hittestress, brede welvaart, sociale cohesie, beleidsadviseur) en de bronnen eronder. Bij de eerste start laden ze **open data** voor heel Fryslân: CBS-kerncijfers 2019–2026 en gebiedsindelingen, de RIVM-gezondheidsmonitor, RIVM-hitte en -boomkroon en politiecijfers. Wat (nog) niet open is, staat als gemarkeerde demodata in de bron. Testbuurt is Bolsward-Zuidoost (BU19000002). Zie de galerij [Use cases in beeld](#use-cases-in-beeld) en [`usecases/`](./usecases/README.md).
-
----
+De actuele versie staat in [`VERSION`](./VERSION), de wijzigingen in de [CHANGELOG](./CHANGELOG.md). Meer achtergrond, schermen en de opbouw: [D-OmniTwin in het kort](./docs/overzicht.md).
 
 ## Snel starten
 
-Vereist: [Docker](https://www.docker.com/) met Docker Compose v2. Ollama is optioneel (alleen voor de AI-chat).
+Vereist: [Docker](https://www.docker.com/) met Docker Compose v2. Met de kant-en-klare images van Docker Hub wordt er niets gebouwd:
 
 ```bash
 git clone https://github.com/Sudwest-Fryslan/D-OmniTwin.git && cd D-OmniTwin
 cp .env.example .env
-# Vul in .env DATABASE_PASSWORD in (openssl rand -hex 24) en bij voorkeur ADMIN_PASSWORD
-docker compose up -d --build
+# Zet in .env:
+#   DATABASE_PASSWORD=...   (bijv. openssl rand -hex 24) en bij voorkeur ADMIN_PASSWORD
+#   COMPOSE_FILE=docker-compose.yml:docker-compose.images.yml   (Windows: ; in plaats van :)
+docker compose pull && docker compose up -d
 ```
 
-Open daarna **http://localhost**. Alles loopt via Traefik op poort 80.
+Open **http://localhost** (kaart), **http://localhost/admin/** (beheer, inloggen met `ADMIN_USER` en `ADMIN_PASSWORD`) en **http://localhost/docs** (API). Bij de eerste start laadt de installatie de use cases met open data voor Fryslân.
 
-- Bij de eerste start richt de eenmalige service `db-init` de database in en laadt de use cases uit [`usecases/`](./usecases/README.md) (`LOAD_SAMPLE_DATA=true`, de standaard). Met `false` krijg je het product zonder data.
-- **Beheeromgeving:** http://localhost/admin/. Inloggen met `ADMIN_USER` (standaard `admin`) en `ADMIN_PASSWORD`. Laat je `ADMIN_PASSWORD` leeg, dan staat een eenmalig gegenereerd wachtwoord in `docker compose logs db-init`. Met Keycloak aan (`OIDC_ISSUER`) log je in via Keycloak en beheer je gebruikers en rollen daar; zie de [installatiegids](docs/9-beheer/installatie.md#keycloak-optioneel).
-- **API-documentatie:** http://localhost/docs.
+- **Installatie bij je organisatie** (`.env`, backup, bijwerken, HTTPS, Keycloak): de [installatiegids](./docs/9-beheer/installatie.md). Lees vóór gebruik buiten je eigen netwerk de paragraaf [Beveiliging](./docs/9-beheer/installatie.md#beveiliging).
+- **Demo met inloggen** (Keycloak en kant-en-klare accounts): [installatiegids, Demo, test of productie](./docs/9-beheer/installatie.md#26-demo-test-of-productie).
+- **Kubernetes:** losse manifests in [`deploy/kubernetes`](./deploy/kubernetes/README.md), uit te rollen met Rancher Fleet of `kubectl apply -k`; een voorbeeld-configrepo staat in [`deploy/voorbeeld-configrepo`](./deploy/voorbeeld-configrepo/README.md).
+- **Zelf bouwen of ontwikkelen:** [installatiegids, Ontwikkelmodus](./docs/9-beheer/installatie.md#3-ontwikkelmodus).
 
-### Demo proberen (met inloggen)
+## Wat kan het
 
-Wil je zien hoe inloggen werkt, met kant-en-klare accounts? Start een **demo-omgeving** met Keycloak. Alleen op je eigen machine: de wachtwoorden zijn publiek.
+- **Kaart:** buurten gekleurd op een indicator, met externe kaartlagen en 3D-panden (3DBAG).
+- **D-Omni Kompas:** alle indicatoren in thema's, gekleurd met Z-scores ten opzichte van een referentiegroep.
+- **Rapporten:** gebiedsdossier, benchmark en deelgebiedsanalyse, met export.
+- **D-Omni Assistent:** een chat die kaart en Kompas aanstuurt en datavragen met cijfers uit de database beantwoordt. Het taalmodel draait standaard lokaal; zonder taalmodel werkt de rest gewoon ([AI instellen](./docs/9-beheer/installatie.md#7-llm-optioneel)).
+- **Beheeromgeving:** indicatoren, Kompas-indeling, kaartlagen, AI-configuratie, datakwaliteit en logs; inloggen via Keycloak of Entra ID.
+- **Data laden:** use cases als installeerbare pakketten en een laad-API voor eigen leveringen ([laad-API](./docs/api/laden/README.md)).
+- **Eén instantie per organisatie:** samenwerken door uitwisselen tussen instanties, voorbereid op dataspaces ([mesh van instanties](./docs/2-architectuur/mesh-van-instanties.md)).
 
-```bash
-git clone https://github.com/Sudwest-Fryslan/D-OmniTwin.git && cd D-OmniTwin
-cat > .env <<EOF
-DATABASE_PASSWORD=$(openssl rand -hex 24)
-COMPOSE_FILE=docker-compose.yml
-OMNITWIN_OMGEVING=demo
-COMPOSE_PROFILES=keycloak
-KEYCLOAK_ADMIN_PASSWORD=$(openssl rand -hex 24)
-KEYCLOAK_DB_PASSWORD=$(openssl rand -hex 24)
-OIDC_ISSUER=http://localhost/auth/realms/omnitwin
-EOF
-docker compose up -d --build
-```
+## Use cases
 
-| Wat | Adres | Hoe |
-|-----|-------|-----|
-| Kaart (viewer) | http://localhost/ | Open voor iedereen. Rechtsboven *Beheer*: daar log je in. |
-| Beheeromgeving | http://localhost/admin/ | Knop **Inloggen met Keycloak**, dan `admin` / `admin`. |
-| Gebruikers en rollen | http://localhost/auth/admin/omnitwin/console/ | `admin` / `admin` (ook via het menu rechtsboven in de beheeromgeving). |
+Elke use case is een vraag van een gebruiker met de data, de inrichting en het bewijs dat hij werkt (schermen van een verse installatie, gemaakt bij elke release). Overzicht en specificatie: [`usecases/`](./usecases/README.md) en de [Use Case Specificatie](./docs/specificaties/usecase/README.md).
 
-Accounts, **alleen bij `OMNITWIN_OMGEVING=demo`**:
-
-| Gebruiker | Wachtwoord | Rollen | Mag |
-|-----------|------------|--------|-----|
-| `admin` | `admin` | `beheerder`, `gebruikersbeheerder` | beheeromgeving, gebruikers beheren in Keycloak, kaart |
-| `gebruiker` | `gebruiker` | `lezer` | kaart (ook als die dichtstaat), geen beheer |
-
-**Kaart dichtzetten** (alleen na inloggen, zoals de huidige SWF-monitor): zet `VIEWER_TOEGANG=inloggen` in `.env` en draai `docker compose up -d`. Dan stuurt http://localhost/ je naar het inlogformulier van Keycloak, en zijn ook de data-API's (`/api/...`, `/api/data`, `/api/geo`) dicht zonder inloggen. Log in als `gebruiker` / `gebruiker` en je ziet de kaart.
-
-In de kaart en de beheeromgeving staat een gele balk *Demo-omgeving — standaardwachtwoorden, niet voor productie*. Zonder `OMNITWIN_OMGEVING` (standaard `productie`) bestaan deze accounts niet, en weigert de installatie een zwak `ADMIN_PASSWORD` zoals `admin`. Meer: [installatiegids, Demo, test of productie](./docs/9-beheer/installatie.md#26-demo-test-of-productie) en [Toegang tot de viewer](./docs/9-beheer/installatie.md#toegang-tot-de-viewer-open-of-dicht).
-
-Voor een installatie bij je organisatie (vereisten, `.env`, backup, bijwerken, HTTPS, beveiliging) volg je de **[installatiegids](./docs/9-beheer/installatie.md)**. Data laden (use cases, laad-API): [installatiegids, Data](./docs/9-beheer/installatie.md#4-data).
-
----
-
-## Zo ziet het eruit
-
-Schermafbeeldingen van versie 0.3.0 met het SWF-thema (dagstand) op een verse installatie: open data en de SWF-gegevens die bij de use cases horen, ingezoomd op Bolsward.
-
-![Kaart: buurten in Bolsward gekleurd op een indicator, met PDOK-achtergrondkaart](docs/images/kaart-bolsward.jpg)
-*Kaart na de hittestress-vraag aan de assistent: buurten gekleurd op "Afstand tot koele plek", de vier Bolsward-buurten geselecteerd, PDOK-achtergrondkaart.*
-
-![Kompas: sunburst met de thema's voor de vier Bolsward-buurten](docs/images/kompas-bolsward-zuidoost.jpg)
-*D-Omni Kompas voor de vier Bolsward-buurten uit de vraag (gemiddelde): alle indicatoren in thema's, gekleurd ten opzichte van de referentiegroep.*
-
-![Chat: de D-Omni Assistent met het scenario Beleidsadviseur](docs/images/chat-beleidsadviseur.jpg)
-*D-Omni Assistent: het scenario "Beleidsadviseur" zet kaart en Kompas klaar.*
-
-![Beheerscherm: dashboard met datadekking per Kompas-kwadrant](docs/images/beheer-dashboard.jpg)
-*Beheerscherm (`/admin`, inloggen via Keycloak): indicatoren, datakwaliteit, AI-configuratie en rapportage.*
-
-De screenshots maak je opnieuw met [`scripts/docs/maak_screenshots.py`](scripts/docs/maak_screenshots.py).
-
-### Use cases in beeld
-
-Per use case het bewijs dat hij werkt: schermen van een verse installatie met open data, gemaakt door de use-case-uitvoerder bij elke release (`python -m omnitwin.usecases bewijs --alle`, zie de [Use Case Specificatie, Bewijs](docs/specificaties/usecase/README.md#12-bewijs)). Klik op een use case voor alle schermen.
+<details>
+<summary>Galerij: alle use cases in beeld</summary>
 
 <!-- usecase-galerij:start -->
 | | Use case |
@@ -120,68 +65,28 @@ Per use case het bewijs dat hij werkt: schermen van een verse installatie met op
 | <a href="usecases/uitrol-kubernetes/README.md"><img src="usecases/uitrol-kubernetes/bewijs/gezondheid.webp" width="320" alt="Health van de instantie: database en api online, met de versie"></a> | **[D-OmniTwin uitrollen op Kubernetes en aantonen dat het werkt](usecases/uitrol-kubernetes/README.md)**<br>Kan ik als platformbeheerder van een organisatie D-OmniTwin met losse, leesbare manifests op ons Kubernetes-cluster uitrollen (bijv. met Rancher Fleet), bijwerken naar een nieuwe versie en aantonen dat de instantie werkt? |
 <!-- usecase-galerij:end -->
 
----
+</details>
 
-## Opbouw
+## Documentatie
 
-| Onderdeel | Technologie | Via Traefik |
-|-----------|-------------|-------------|
-| Gateway | Traefik (security-headers op alle routes) | poort 80 op de host |
-| Backend | FastAPI, Python-pakket [`src/omnitwin/`](./src/omnitwin/) | `/`, `/api/*`, `/admin/` |
-| Data-API | PostgREST, alleen-lezen views in schema `api` | `/api/data` |
-| Geo-API | pg_featureserv (OGC API Features) | `/api/geo` |
-| Database | PostgreSQL 15 met PostGIS, pgvector en pg_trgm | niet van buiten Docker bereikbaar |
-| Frontend | Vanilla JS zonder build-stap (`static/`, `templates/`) | `/` |
-| Beheeromgeving | React + TypeScript, gebouwd met Vite naar `static/admin-panel/` | `/admin/` |
+- [docs/INDEX.md](./docs/INDEX.md): overzicht van alle documentatie per domein
+- [Installatiegids](./docs/9-beheer/installatie.md) en [beheerhandleiding](./docs/9-beheer/beheerhandleiding.md)
+- [D-OmniTwin in het kort](./docs/overzicht.md): functies, schermen en opbouw
+- [AGENTS.md](./AGENTS.md): projectfeiten en werkafspraken voor ontwikkelaars
+- [CHANGELOG.md](./CHANGELOG.md) en het [releasebeleid](./docs/9-beheer/releasebeleid.md)
 
-```
-Browser (kaart, Kompas, chat, beheer)
-   │ HTTP, poort 80
-   ▼
-Traefik ──► /api/data  ► PostgREST       ─┐
-        ──► /api/geo   ► pg_featureserv  ─┤
-        ──► overig     ► FastAPI-backend ─┤──► PostgreSQL + PostGIS + pgvector
-                             │            │
-                             └─► taalmodel (Ollama lokaal, optioneel via LiteLLM)
-```
+## Bijdragen
 
-Databaseschema, migraties en stuurdata staan in [`db/`](./db/README.md). Technische details: [`AGENTS.md`](./AGENTS.md) en [`docs/2-architectuur/`](./docs/2-architectuur/architecture/ARCHITECTURE_TECHNICAL_OPERATION.md).
+Werkwijze (issue, branch, pull request, CHANGELOG): [CONTRIBUTING.md](./CONTRIBUTING.md), met de [gedragscode](./CODE_OF_CONDUCT.md). Vragen en ideeën in de [issues](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues). Een kwetsbaarheid gevonden? Meld die privé volgens [SECURITY.md](./SECURITY.md), niet in een openbaar issue.
 
----
+## Licentie en governance
 
-## AI instellen
+- **Software:** [European Union Public License 1.2](./LICENSE). De code blijft open; hergebruik, ook in dienstverlening, mag onder dezelfde voorwaarden.
+- **Methodiek en documentatie:** [Creative Commons Naamsvermelding 4.0](./LICENSE-DOCS): de methodiek, de Kompas-indeling, de indicatorstructuur en alle documenten in `docs/`.
+- **Derden en databronnen:** [NOTICE.md](./NOTICE.md).
+- **Governance:** rollen en besluitvorming volgens het OpenWebconcept in [GOVERNANCE.md](./GOVERNANCE.md); onderhoudstermijn in [SUPPORT.md](./SUPPORT.md); metadata in [publiccode.yml](./publiccode.yml).
 
-De chat en de AI-rapportteksten gebruiken een taalmodel; AI-zoeken gebruikt een meertalig embeddingmodel (`multilingual-e5-small`) dat in de image zit en offline werkt, samen met een synoniemenlijst (`db/stuurdata/synoniemen.json`).
-
-- **Lokaal (standaard):** Ollama op de host, bijvoorbeeld `ollama pull qwen3:30b-instruct` (of kleiner: `qwen3:4b-instruct`). Kies in de beheeromgeving onder **AI Configuratie** de URL `http://host.docker.internal:11434` en het model.
-- **OpenAI-compatibel:** in **AI Configuratie** het API-type `OpenAI-compatibel` (vLLM, LM Studio, de `/v1`-API van Ollama of een aanbieder, [ADR 0001](./docs/2-architectuur/adr/0001-llm-koppeling-openai-standaard.md)). Een sleutel zet je als `LLM_API_KEY` in `.env`, nooit in de database.
-- **LiteLLM-gateway** (optioneel, `docker compose --profile llm-gateway up -d`): vaste aliassen voor Ollama, Claude, OpenAI en Gemini, wisselen met `scripts/llm/kies_provider.py`.
-
-Met een externe aanbieder verlaten vragen en gebiedsdata de organisatie (AVG, IAMA). Alle stappen: [installatiegids, LLM](./docs/9-beheer/installatie.md#7-llm-optioneel).
-
----
-
-## Ontwikkelen
-
-- **Met Docker (aanbevolen):** haal in `.env` de regel `COMPOSE_FILE=docker-compose.yml` weg. Dan laadt `docker compose up -d --build` ook `docker-compose.override.yml`: de repository als bind-mount, de database op poort 5433 en het Traefik-dashboard op 8081. Zie [installatiegids, Ontwikkelmodus](./docs/9-beheer/installatie.md#3-ontwikkelmodus).
-- **Backend op de host:** Python 3.10 of nieuwer (de image gebruikt 3.11, de CI test 3.11 en 3.12).
-
-  ```bash
-  python -m venv .venv && source .venv/bin/activate
-  pip install -r requirements.txt
-  pip install -e . --no-deps     # pakket omnitwin (src/omnitwin)
-  python run_dev.py              # http://localhost:8000, met automatische herstart
-  ```
-
-  Gebruik de database uit de ontwikkelmodus (`DATABASE_HOST=localhost`, `DATABASE_PORT=5433` in `.env`).
-- **Beheeromgeving:** `cd admin-panel && npm install && npm start` (Vite op poort 3000, `/api` naar poort 8000). `npm run build:static` bouwt naar `static/admin-panel/`; die map gaat mee in de commit.
-- **Tests:** `python -m pytest -m unit`. Integratie- en e2e-tests draaien tegen een verse stack, zoals in [`.github/workflows/ci.yml`](./.github/workflows/ci.yml) en [`tests/e2e/README.md`](./tests/e2e/README.md).
-
-Werkwijze (issue, branch, pull request, CHANGELOG): [CONTRIBUTING.md](./CONTRIBUTING.md). Releases: [releasebeleid](./docs/9-beheer/releasebeleid.md).
-
----
-
-## Samenwerking
+## Partners
 
 D-OmniTwin is gestart door Gemeente Súdwest-Fryslân en wordt doorontwikkeld met het **Innovatiebudget Digitale Overheid 2026** ([toekenning](https://www.digitaleoverheid.nl/overzicht-van-alle-onderwerpen/innovatie/innovatiebudget/toekenning-innovatiebudget-2026/); september 2026 tot augustus 2027): van referentie-implementatie naar een gevalideerde federatieve voorziening, met pilots bij drie gemeenten.
 
@@ -192,41 +97,4 @@ D-OmniTwin is gestart door Gemeente Súdwest-Fryslân en wordt doorontwikkeld me
 | Gemeente Tytsjerksteradiel | Pilotgemeente |
 | Coöperatie DataFryslân | Dataspace-partner (FRLDS) |
 
-Interesse in samenwerking of een pilot? Maak een [issue op GitHub](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues) of mail naar [geo-groep@sudwestfryslan.nl](mailto:geo-groep@sudwestfryslan.nl). Zie ook het [communicatieplan](./docs/8-communicatie/communicatieplan_subsidie_2026.md).
-
-Bijdragen: [CONTRIBUTING.md](./CONTRIBUTING.md) en de [gedragscode](./CODE_OF_CONDUCT.md). Een kwetsbaarheid gevonden? Meld die privé volgens [SECURITY.md](./SECURITY.md), niet in een openbaar issue.
-
----
-
-## Documentatie
-
-| Document | Waarover |
-|----------|----------|
-| [docs/9-beheer/installatie.md](./docs/9-beheer/installatie.md) | Installatie en beheer (Docker): de installatiegids |
-| [docs/9-beheer/beheerhandleiding.md](./docs/9-beheer/beheerhandleiding.md) | Beheer in productie: back-up en herstel, bijwerken, Keycloak, leveringen, incidenten, acceptatie |
-| [docs/5-secops/privacy-quickscan.md](./docs/5-secops/privacy-quickscan.md) | Privacy-quickscan: persoonsgegevens, bewaartermijnen, AI |
-| [docs/4-ux-design/toegankelijkheid.md](./docs/4-ux-design/toegankelijkheid.md) | Toegankelijkheid: status en conceptverklaring |
-| [CHANGELOG.md](./CHANGELOG.md) | Wijzigingen per versie, met migratie-instructies |
-| [CONTRIBUTING.md](./CONTRIBUTING.md) | Bijdragen: van issue tot merge |
-| [AGENTS.md](./AGENTS.md) | Projectfeiten en werkafspraken voor ontwikkelaars en AI-agents |
-| [GOVERNANCE.md](./GOVERNANCE.md) | Rollen en besluitvorming, volgens het OpenWebconcept |
-| [SUPPORT.md](./SUPPORT.md) | Onderhoudstermijn en waar je terechtkunt |
-| [PARTICIPANTS.md](./PARTICIPANTS.md) | Deelnemende organisaties |
-| [SECURITY.md](./SECURITY.md) | Kwetsbaarheden privé melden |
-| [CODE_OF_CONDUCT.md](./CODE_OF_CONDUCT.md) | Gedragscode (Contributor Covenant 2.1) |
-| [publiccode.yml](./publiccode.yml) | Metadata voor codebase-registers |
-| [db/README.md](./db/README.md) | Databaseschema, migraties en stuurdata |
-| [usecases/README.md](./usecases/README.md) | De use cases: data, inrichting en teststappen |
-| [init_data/README.md](./init_data/README.md) | Brondata (sample en Fryslân) |
-| [docs/INDEX.md](./docs/INDEX.md) | Overzicht van de documentatie per domein |
-| [docs/archief/](./docs/archief/) | Verouderde documenten (`BUILD.md`, `GETTING_STARTED.md`, `ROADMAP.md`, `TODO.md`, `BUGFIX.md`); taken en bugs staan in de [issues](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues) |
-
----
-
-## Licenties
-
-- **Software:** [European Union Public License 1.2](./LICENSE). De code blijft open; hergebruik, ook in dienstverlening, mag onder dezelfde voorwaarden.
-- **Methodiek en documentatie:** [Creative Commons Naamsvermelding 4.0](./LICENSE-DOCS): de D-OmniTwin-methodiek, de Kompas-indeling, de indicatorstructuur en alle documenten in `docs/`.
-- **Derden en databronnen:** [NOTICE.md](./NOTICE.md).
-
-*Ontwikkeld door Gemeente Súdwest-Fryslân, met Leeuwarden, Tytsjerksteradiel en DataFryslân.*
+Interesse in samenwerking of een pilot? Maak een [issue](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues) of mail naar [geo-groep@sudwestfryslan.nl](mailto:geo-groep@sudwestfryslan.nl). Zie ook [PARTICIPANTS.md](./PARTICIPANTS.md) en het [communicatieplan](./docs/8-communicatie/communicatieplan_subsidie_2026.md).

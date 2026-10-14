@@ -15,7 +15,7 @@ Draaien tegen een stack met de sample-use-cases (LOAD_SAMPLE_DATA=true):
     OMNITWIN_BASE_URL=http://localhost:8120 pytest -m integration tests/integration/test_chat_datavragen.py
     LLM_TEST=1 OMNITWIN_BASE_URL=http://localhost:8120 pytest -m llm tests/integration/test_chat_datavragen.py
 
-Het model staat in llm_config (README, 'AI Instellen'). Zonder werkend model geeft de chat
+Het model staat in llm_config (installatiegids, sectie 7 LLM). Zonder werkend model geeft de chat
 de vaste tekst uit de cijfers (debug.llm_gebruikt = false); de llm-tests falen dan.
 """
 

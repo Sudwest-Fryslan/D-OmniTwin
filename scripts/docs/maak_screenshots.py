@@ -1,5 +1,5 @@
 """
-Maakt de screenshots voor de README (docs/images/) reproduceerbaar opnieuw.
+Maakt de screenshots voor docs/overzicht.md (docs/images/) reproduceerbaar opnieuw.
 
 Draait tegen een stack met de sample dataset en richt zich op Bolsward
 (Bolsward-Zuidoost bevat demodata). Vaste venstergrootte en licht thema,
