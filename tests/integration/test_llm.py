@@ -14,7 +14,7 @@ Omgeving:
     LLM_TEST_TIMEOUT             seconden per verzoek (standaard 900; lokaal model is traag)
 
 Welke LLM-koppeling getest wordt, bepaalt llm_config in de database (api_type, api_url,
-model_name); zie README, 'AI Instellen'.
+model_name); zie de installatiegids, sectie 7 (LLM).
 """
 
 import os

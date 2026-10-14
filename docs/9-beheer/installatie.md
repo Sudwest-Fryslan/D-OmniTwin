@@ -186,6 +186,30 @@ Bij een bestaande database maakt `db-init` in demo de lokale `admin` aan als die
 
 Een demo hoort niet op een netwerk dat anderen kunnen bereiken: iedereen kent de wachtwoorden.
 
+**Snel een demo met inloggen starten** (alleen op je eigen machine):
+
+```bash
+git clone https://github.com/Sudwest-Fryslan/D-OmniTwin.git && cd D-OmniTwin
+cat > .env <<EOF
+DATABASE_PASSWORD=$(openssl rand -hex 24)
+COMPOSE_FILE=docker-compose.yml
+OMNITWIN_OMGEVING=demo
+COMPOSE_PROFILES=keycloak
+KEYCLOAK_ADMIN_PASSWORD=$(openssl rand -hex 24)
+KEYCLOAK_DB_PASSWORD=$(openssl rand -hex 24)
+OIDC_ISSUER=http://localhost/auth/realms/omnitwin
+EOF
+docker compose up -d --build
+```
+
+| Wat | Adres | Hoe |
+|-----|-------|-----|
+| Kaart (viewer) | http://localhost/ | Open voor iedereen. Rechtsboven *Beheer*: daar log je in. |
+| Beheeromgeving | http://localhost/admin/ | Knop **Inloggen met Keycloak**, dan `admin` / `admin`. |
+| Gebruikers en rollen | http://localhost/auth/admin/omnitwin/console/ | `admin` / `admin` (ook via het menu rechtsboven in de beheeromgeving). |
+
+Kaart dichtzetten in de demo: zet `VIEWER_TOEGANG=inloggen` in `.env` en draai `docker compose up -d`. Dan stuurt http://localhost/ je naar het inlogformulier van Keycloak en zijn ook de data-API's dicht; log in als `gebruiker` / `gebruiker`. Zie [Toegang tot de viewer](#toegang-tot-de-viewer-open-of-dicht).
+
 ---
 
 ## 3. Ontwikkelmodus
@@ -202,7 +226,24 @@ docker compose up -d --build
 
 Gebruik dit niet voor een installatie: de database en het dashboard zijn dan onbeveiligd bereikbaar.
 
-Ontwikkelen zonder Docker (Python venv, `run_dev.py`, admin-panel met `npm start`) staat in de [README](../../README.md#ontwikkelen) en [`AGENTS.md`](../../AGENTS.md).
+Met Docker ontwikkelen vanuit een bestaande `.env`: haal daar de regel `COMPOSE_FILE=docker-compose.yml` weg, dan geldt het bovenstaande.
+
+### Ontwikkelen zonder Docker
+
+- **Backend op de host:** Python 3.11 of nieuwer (de image gebruikt 3.11, de CI test 3.11 en 3.12).
+
+  ```bash
+  python -m venv .venv && source .venv/bin/activate
+  pip install -r requirements.txt
+  pip install -e . --no-deps     # pakket omnitwin (src/omnitwin)
+  python run_dev.py              # http://localhost:8000, met automatische herstart
+  ```
+
+  Gebruik de database uit de ontwikkelmodus (`DATABASE_HOST=localhost`, `DATABASE_PORT=5433` in `.env`).
+- **Beheeromgeving:** `cd admin-panel && npm install && npm start` (Vite op poort 3000, `/api` naar poort 8000). `npm run build:static` bouwt naar `static/admin-panel/`; die map gaat mee in de commit.
+- **Tests:** `python -m pytest -m unit`. Integratie- en e2e-tests draaien tegen een verse stack, zoals in [`.github/workflows/ci.yml`](../../.github/workflows/ci.yml) en [`tests/e2e/README.md`](../../tests/e2e/README.md).
+
+Meer over de code en de werkafspraken: [`AGENTS.md`](../../AGENTS.md) en [CONTRIBUTING.md](../../CONTRIBUTING.md).
 
 ---
 

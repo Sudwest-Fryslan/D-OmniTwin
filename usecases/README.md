@@ -65,7 +65,7 @@ python -m omnitwin.usecases test swf-definities --testaccounts   # als de actore
 python -m omnitwin.usecases opruimen swf-definities         # testaccounts weer weg
 ```
 
-`bewijs` voert de `bewijs.stappen` uit het manifest uit in een browser (Playwright, tegen `OMNITWIN_BASE_URL`), en schrijft per stap een WebP-screenshot (≤ 150 KB) en `bewijs/bewijs.json`. Daarna toont de README van de use case de schermen en staat de use case in de galerij van de [root-README](../README.md#use-cases-in-beeld). Alleen bij een release opnieuw maken ([releasebeleid](../docs/9-beheer/releasebeleid.md)); het docker-commando staat in [`src/omnitwin/usecase_bewijs.py`](../src/omnitwin/usecase_bewijs.py), de regels in de [specificatie, sectie 12](../docs/specificaties/usecase/README.md#12-bewijs).
+`bewijs` voert de `bewijs.stappen` uit het manifest uit in een browser (Playwright, tegen `OMNITWIN_BASE_URL`), en schrijft per stap een WebP-screenshot (≤ 150 KB) en `bewijs/bewijs.json`. Daarna toont de README van de use case de schermen en staat de use case in de galerij van de [root-README](../README.md#use-cases). Alleen bij een release opnieuw maken ([releasebeleid](../docs/9-beheer/releasebeleid.md)); het docker-commando staat in [`src/omnitwin/usecase_bewijs.py`](../src/omnitwin/usecase_bewijs.py), de regels in de [specificatie, sectie 12](../docs/specificaties/usecase/README.md#12-bewijs).
 
 `controleer` werkt nu al, zonder draaiende stack: manifest tegen het schema, bestanden in de map, afhankelijkheden, registraties tegen de laad-API-specificatie, en de levering(en) maken uit de bron en valideren tegen het profiel (Table Schema met frictionless, GeoPackage met fiona). Ontbreekt een bron, dan is die dataset *overgeslagen*.
 

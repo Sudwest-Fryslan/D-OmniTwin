@@ -61,9 +61,26 @@
 
 | Bestand | Doel |
 |---------|------|
-| `README.md` | Versie, quickstart, overzicht |
+| `README.md` | Voorpagina: wat het is, snel starten, use cases, links |
+| [`docs/overzicht.md`](./overzicht.md) | D-OmniTwin in het kort: functies, schermafbeeldingen, opbouw (componenten en routes), AI in het kort (uit de README, #377) |
 | `LICENSE` & `LICENSE-DOCS` | EUPL 1.2 (Code) & CC BY 4.0 (Methodiek) |
+| `NOTICE.md` | Derden en databronnen |
 | `CHANGELOG.md` | Wijzigingen per versie, met migratie-instructies |
+| `CONTRIBUTING.md` | Bijdragen: van issue tot merge |
+| `AGENTS.md` | Projectfeiten en werkafspraken voor ontwikkelaars en AI-agents |
+| `GOVERNANCE.md` | Rollen en besluitvorming, volgens het OpenWebconcept |
+| `SUPPORT.md` | Onderhoudstermijn en waar je terechtkunt |
+| `PARTICIPANTS.md` | Deelnemende organisaties |
+| `SECURITY.md` | Kwetsbaarheden privé melden |
+| `CODE_OF_CONDUCT.md` | Gedragscode (Contributor Covenant 2.1) |
+| `publiccode.yml` | Metadata voor codebase-registers |
+| [`db/README.md`](../db/README.md) | Databaseschema, migraties en stuurdata |
+| [`usecases/README.md`](../usecases/README.md) | De use cases: data, inrichting en teststappen |
+| [`init_data/README.md`](../init_data/README.md) | Brondata (sample en Fryslân) |
+| [`deploy/kubernetes/README.md`](../deploy/kubernetes/README.md) | Uitrol op Kubernetes; voorbeeld-configrepo voor Fleet in [`deploy/voorbeeld-configrepo/`](../deploy/voorbeeld-configrepo/README.md) |
+| [`9-beheer/beheerhandleiding.md`](./9-beheer/beheerhandleiding.md) | Beheer in productie: back-up en herstel, bijwerken, Keycloak, leveringen, incidenten, acceptatie |
+| [`5-secops/privacy-quickscan.md`](./5-secops/privacy-quickscan.md) | Privacy-quickscan: persoonsgegevens, bewaartermijnen, AI |
+| [`4-ux-design/toegankelijkheid.md`](./4-ux-design/toegankelijkheid.md) | Toegankelijkheid: status en conceptverklaring |
 | `docs/archief/` | Archief: `BUILD.md`, `GETTING_STARTED.md`, `ROADMAP.md`, `TODO.md`, `BUGFIX.md` (verouderd; taken en bugs staan in de GitHub-issues) |
 
 ---

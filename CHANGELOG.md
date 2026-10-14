@@ -8,6 +8,10 @@ Eerdere wijzigingen, van vóór dit bestand, zijn terug te vinden in de git-hist
 
 ## [Unreleased]
 
+### Gewijzigd
+
+- **Kortere README** ([#377](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/377)): de voorpagina zegt in een paar zinnen wat D-OmniTwin is, met snel starten via de images van Docker Hub, een verwijzing naar Kubernetes, en korte secties voor functies, use cases, documentatie, bijdragen, licentie en partners (231 → 100 regels). De galerij van de use cases staat ingeklapt; `python -m omnitwin.usecases galerij` werkt hem bij zoals voorheen. Wat wegging, staat nu elders: functies, schermafbeeldingen, opbouw en AI in het kort in het nieuwe [`docs/overzicht.md`](docs/overzicht.md); de demo met inloggen en ontwikkelen zonder Docker in de [installatiegids](docs/9-beheer/installatie.md); de tabel met kernbestanden in [`docs/INDEX.md`](docs/INDEX.md).
+
 ## [0.6.1] - 2026-10-14
 
 ### Opgelost
