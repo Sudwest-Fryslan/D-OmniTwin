@@ -74,6 +74,7 @@
     "gebiedstype": "CBS Buurten",
     "focus": "BU19000200",
     "gebieden": {
+      "BU19001700": "Makkum",
       "BU19000202": "Hindeloopen",
       "BU19000200": "Workum",
       "BU19000300": "Koudum",
@@ -109,7 +110,6 @@
       }
     ],
     "ontbreekt_nog": [
-      "Makkum (genoemd in TC-06-001, niet in de testbuurten)",
       "Reistijd OV naar voorzieningen",
       "OV-haltes: open (OpenStreetMap), adapter volgt; nu uit sample-bronbibliotheek"
     ]

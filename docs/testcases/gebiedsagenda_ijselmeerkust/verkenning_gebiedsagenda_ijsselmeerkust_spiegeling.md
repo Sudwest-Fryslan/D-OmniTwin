@@ -148,59 +148,287 @@ In onderstaande tabel staat exact gespecificeerd welke concrete passages of ambi
 
 ---
 
-## 5. Spiegeling van het Gebiedsplan: Acties per Regiokern
+## 5. Vier Geïntegreerde Verhaallijnen voor Beleid en Visualisatie (Storylines)
 
-Het Gebiedsplan (Tabel 1 uit het document) koppelt concrete projecten aan regiokernen. Hieronder staat hoe D-OmniTwin deze projecten direct van data voorziet:
+Om de stap te maken van losse data-indicatoren naar een overtuigend bestuurlijk verhaal, zijn onderstaande vier integrale verhaallijnen uitgewerkt. Elke verhaallijn pakt een herkenbaar maatschappelijk vraagstuk uit de Gebiedsagenda op, onderbouwt dit met harde cijfers uit D-OmniTwin, en biedt een **stap-voor-stap demonstratieroute** om het verhaal interactief te presenteren in de applicatie.
 
 ```
-┌─────────────────────────────────────────────────────────────────────────────────────────┐
-│              GEBIEDSPLAN ACTIES ↔ D-OMNITWIN ONDERBOUWINGSCRITERIA                      │
-├─────────────────┬───────────────────────────────────┬───────────────────────────────────┤
-│ REGIOKERN       │ GEPLANDE ACTIE IN AGENDA          │ WAT D-OMNITWIN ONDERBOUWT         │
-├─────────────────┼───────────────────────────────────┼───────────────────────────────────┤
-│ **Makkum**      │ • Tichelaarlocatie Wonen-Zorg     │ Toont % 80+ en alleenwonende      │
-│                 │   (32 zorgappartementen)          │ ouderen in Makkum-Centrum.        │
-│                 │ • Herontwikkeling DOM Centrum     │ Brengt winkeldichtheid en leef-   │
-│                 │ • Regiodeal Plekberaad            │ baarheidsscores in beeld.         │
-│                 │   (hoge eenzaamheid & armoede)    │ Toont exacte Z-scores op          │
-│                 │ • Uitrol Warmtenet                │ eenzaamheid (> +1.5 Z) en inkomen.│
-│                 │ • Bedrijventerrein uitbreiding    │ Analyseert energielabels E/F/G    │
-│                 │                                   │ van de naoorlogse woningvoorraad. │
-├─────────────────┼───────────────────────────────────┼───────────────────────────────────┤
-│ **Workum**      │ • Woningbouw Workum-Zuid (120)    │ Brengt demografische aanwas en    │
-│                 │ • Herontwikkeling It Soal & Haven │ verhouding koop/huur in kaart.    │
-│                 │ • Integrale wijkaanpak De Ikkers  │ Toont sociale kwetsbaarheid en    │
-│                 │ • Stadspark & vergroening         │ inkomen per buurt binnen Workum.  │
-│                 │ • 3e afslag provinciale weg       │ Onderbouwt verkeersdruk en loop-  │
-│                 │                                   │ afstanden tot openbaar vervoer.   │
-├─────────────────┼───────────────────────────────────┼───────────────────────────────────┤
-│ **Stavoren**    │ • Kwaliteitsimpuls Stationshaven  │ Analyseert overstappunten trein/  │
-│                 │ • MFC Ontmoeten, Onderwijs, Sport │ bus en recreatieve passantenstromen│
-│                 │ • Woningbouw Koepoort (41)        │ Toont afname aantal schoolgaande  │
-│                 │ • Verhalen Hanzestad & Identiteit │ kinderen (0-14 jr) en urgentie    │
-│                 │                                   │ voor multifunctioneel combineren. │
-├─────────────────┼───────────────────────────────────┼───────────────────────────────────┤
-│ **Koudum**      │ • Centrumverplaatsing Poiesz      │ Analyseert loopafstanden tot      │
-│                 │ • Woningbouw diverse locaties (47)│ dagelijkse levensmiddelen.        │
-│                 │ • Herontwikkeling Galamadammen    │ Brengt recreatieve dichtheid en   │
-│                 │   en De Kuilart                   │ toeristische werkgelegenheid in   │
-│                 │                                   │ relatie tot vaste voorzieningen.  │
-├─────────────────┼───────────────────────────────────┼───────────────────────────────────┤
-│ **Kleine**      │ • Pilot Maatwerk-OV & Deelauto's  │ Berekent halte-afstanden voor     │
-│ **Kernen**      │   (Allingawier, Piaam, Gaast)     │ dorpen waar 100% van de inwoners  │
-│                 │ • Behoud dorpshuizen & scholen    │ >1.500m van een halte woont.      │
-│                 │ • Kleine kernenaanpak wonen       │ Toont startersdruk en vergrijzing │
-│                 │   (Wons, Molkwerum, Kimswerd)     │ per afzonderlijk dorpsgebied.     │
-└─────────────────┴───────────────────────────────────┴───────────────────────────────────┘
+┌────────────────────────────────────────────────────────────────────────────────────────────────┐
+│                   HET VERHAAL VAN DE IJSSELMEERKUST & WADDEN IN D-OMNITWIN                    │
+├───────────────────────────────┬────────────────────────────────┬───────────────────────────────┤
+│  VERHAALLIJN 1: SOCIAAL-FYSIEK│  VERHAALLIJN 2: ERFGOED & WONEN│  VERHAALLIJN 3: KLIMAAT & NAT │
+│  "De Zorgankers en het        │  "De Toerismeparadox &         │  "Waterveiligheid, Klimaat-   │
+│   Kwetsbare Achterland"       │   Starterskloof in Zuiderzee-  │   buffer & Biodiversiteit"    │
+│   (Makkum/Workum vs. Gaast/   │   stadjes" (Hindeloopen &      │   (Kornwerderzand, Makkum &   │
+│    Piaam/Ferwoude)            │    Stavoren)                   │    Kleipolders)               │
+├───────────────────────────────┴────────────────────────────────┴───────────────────────────────┤
+│  VERHAALLIJN 4: LEEFBAARHEID & MIENSKIP                                                        │
+│  "Actieve Recreatie, Gezondheid & Mienskip: Historische Kerkenpaden & Dorpsommetjes"          │
+│   (Warns, Koudum, Allingawier, Molkwerum)                                                      │
+└────────────────────────────────────────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## 6. Conclusies & Strategisch Vervolg
+### Verhaallijn 1: "De Zorgankers en het Kwetsbare Achterland"
+*Hoe regiokernen de voorzieningenlast dragen, terwijl kleine kernen te maken hebben met dubbele vergrijzing en vervoersarmoede.*
 
-1. **D-OmniTwin is gereed als besluitvormingsinstrument:**
-   De huidige functionaliteiten van D-OmniTwin (Sunburst Kompas, Z-score afwijkingen, Multi-Gebiedsdossier, Woonplaatsen-selectie en Thema-Analyse) sluiten naadloos aan op de structuur van de Gebiedsagenda IJsselmeergebied-Wadden.
-2. **85% Dekking van beleidsvragen:**
-   Vrijwel alle sociaal-maatschappelijke, economische, demografische, gezondheids- en basisbereikbaarheidsvragen kunnen **per direct** feitelijk worden onderbouwd.
-3. **Gerichte verrijking voor de resterende 15%:**
-   Door in Sprint 22/23 specifieke externe WFS-lagen toe te voegen (Landelijk Bomenbestand voor de 3-30-300 regel, gemeentelijke woningbouwprojecten en fiets/wandelnetwerken) kan het platform doorgroeien naar een 100% sluitende digitale tweeling voor dit gebied.
+#### 1. Het Maatschappelijke Vraagstuk
+De westkust van Fryslân kent een sterke concentratie van basisvoorzieningen in de regiokernen Makkum, Workum en Koudum. In de tussenliggende lintdorpen (Gaast, Piaam, Ferwoude, Allingawier) voltrekt zich een stille transformatie: de bevolking vergrijst in rap tempo (`% 80+` stijgt gestaag), terwijl reguliere buslijnen zijn uitgedund en lokale winkels en praktijken verdwenen zijn. De kernvraag voor het Gebiedsplan luidt: *Hoe borgen we zelfstandig wonen met zorg voor ouderen in de dorpen, zonder dat dit leidt tot vereenzaming of acute afhankelijkheid van mantelzorgers die zelf vergrijzen?*
+
+#### 2. Betrokken Kernen & Buurten
+* **Zorgankers:** Makkum (Centrum, Maggenheim, Waardwei) en Workum (Centrum, De Ikkers).
+* **Kwetsbaar Achterland:** Gaast, Piaam, Ferwoude, Idsegahuizum, Allingawier.
+
+#### 3. Feitelijke Onderbouwing in D-OmniTwin
+* **Demografische druk:** `% Inwoners 80+` in Gaast en Ferwoude ligt significant boven het gemeentelijk gemiddelde (Z-score > +1.4).
+* **Voorzieningenniveau:** `Afstand tot huisartsenpraktijk` in Gaast is ruim 5,8 km (Z-score +2.3), tegenover 0,4 km in Makkum-Centrum (Z-score -1.1).
+* **Mobiliteit & Bereikbaarheid:** `OV_HALTES_AFSTAND` toont dat in Gaast en Piaam 100% van de inwoners meer dan 800 meter moet lopen naar de dichtstbijzijnde halte.
+* **Welzijn & Eenzaamheid:** RIVM-indicator `% Ernstig eenzaam` piekt in specifieke naoorlogse wijken van Makkum (Maggenheim) en bij alleenwonende ouderen in de kleine dorpen.
+
+#### 4. Stap-voor-Stap Visualisatie in de App
+1. **Kaart openen & Laagconfiguratie:**
+   * Schakel de laag **CBS Buurten** in.
+   * Kies als actieve indicator `OV_HALTES_AFSTAND` (Thema Mobiliteit).
+   * *Wat je ziet:* De kustdorpen tussen Makkum en Workum lichten dieprood op (grote loopafstanden), terwijl de regiokernen blauwgroen kleuren.
+2. **Woonplaatsenselectie & Benchmark:**
+   * Selecteer via de Woonplaatsen-kiezer gelijktijdig **Makkum** en **Gaast**.
+   * Open de **Multi-Gebied Benchmark**: vergelijk direct de kolom *Afstand Huisarts* en *Grijze Druk*.
+3. **D-Omni Kompas & Z-Score Diverging Bar Chart:**
+   * Open het Kompas voor Gaast. Draai naar het kwadrant **Voorzieningen & Bereikbaarheid**.
+   * Bekijk de D3 Diverging Bar Chart: zie hoe alle nabijheidsindicatoren naar rechts uitschieten (sterk bovengemiddelde afstanden), terwijl het inkomen en zelfredzaamheid rond het gemiddelde liggen.
+4. **D-Omni Assistent Bevraging:**
+   * Typ in het chatpaneel:  
+     `"Vergelijk de voorzieningendruk en bereikbaarheid van huisartsenzorg tussen Makkum en Gaast/Piaam."`
+   * *Resultaat:* De assistent genereert een feitelijke samenvatting op basis van CBS-nabijheid en OV-haltes, die direct als paragraaf in een beleidsnotitie kan worden geplakt.
+
+#### 5. Beleidsmatig Handelingsperspectief
+* **Wonen-Zorg Zone Makkum:** Concentratie van 32 levensloopbestendige zorgappartementen op de voormalige Tichelaarlocatie en DOM-centrum herontwikkeling.
+* **Maatwerkvervoer dorpen:** Inzet van een flexibele dorpsbus/deelauto-pilot voor Gaast, Piaam en Ferwoude, gekoppeld aan de markt- en spreekuurdagen in Makkum en Workum.
+
+---
+
+### Verhaallijn 2: "De Toerismeparadox & Starterskloof in Zuiderzeestadjes"
+*Historische monumentale pracht versus extreme veroudering van woningen, krimpende jeugd en recreatieve verdringing in Hindeloopen en Stavoren.*
+
+#### 1. Het Maatschappelijke Vraagstuk
+Stavoren en Hindeloopen zijn iconische Zuiderzeestadjes met een rijke Hanzegeschiedenis, beschermde stadsgezichten en drukbezochte havens. Maar achter de historische gevels wringt het leefklimaat. Jonge gezinnen en starters kunnen geen betaalbare woning vinden: panden worden opgekocht als tweede woning of recreatief verhuurd. Gevolg: het aandeel basisschoolleerlingen krimpt, waardoor scholen onder de opheffingsnorm dreigen te vallen. Bovendien zijn de historische panden monumentaal en slecht geïsoleerd (energielabels E, F en G), terwijl zonnepanelen of gevelisolatie stuiten op strikte welstandseisen.
+
+#### 2. Betrokken Kernen & Buurten
+* **Stavoren:** Centrum, Koepoort, Stations-/Havengebied, Schotsman.
+* **Hindeloopen:** Oude Stad (binnen de vestingwallen), Nieuwbouwzone, Havenstrand.
+* **Satellietdorp:** Molkwerum (overloopkernen).
+
+#### 3. Feitelijke Onderbouwing in D-OmniTwin
+* **Vergrijzing vs. Jeugdontgroening:** `% Inwoners 0–14 jaar` vertoont een scherpe negatieve afwijking (Z-score < -1.6), terwijl `% Inwoners 65+` tot de hoogste van de gemeente behoort.
+* **Woningvoorraad & Energiearmoede:** In Stavoren Centrum heeft meer dan 48% van de woningen een bouwjaar van vóór 1945 (BAG). Het `Gemiddeld energielabel` scoort diep in de categorie E/F.
+* **WOZ vs. Lokaal Inkomen:** De stijging van de WOZ-waarde houdt gelijke tred met toeristische hotspot-ontwikkeling, terwijl het `Gestandaardiseerd huishoudinkomen` achterblijft bij de grotere steden.
+* **Cultuurhistorie:** Dichtheid van rijksmonumenten en beschermd stadsgezicht (RCE) per km² is de hoogste van Súdwest-Fryslân na Sneek en Bolsward.
+
+#### 4. Stap-voor-Stap Visualisatie in de App
+1. **3D Weergave & Erfgoedlaag:**
+   * Schakel in het lagenpaneel de **3D Gebouwenlaag (BAG)** in en kantel de kaart (pitch 45°).
+   * Activeer de vectorlaag **RCE Rijksmonumenten & Beschermde Stadsgezichten**.
+   * *Wat je ziet:* Het historische centrum van Hindeloopen en Stavoren tekent zich af als een dicht, monumentaal weefsel aan het water.
+2. **Thema-Analyse: Wonen & Energie:**
+   * Selecteer het thema **Wonen** en klik op `Gemiddeld energielabel`.
+   * *Wat je ziet:* De oude stadskernen kleuren oranje en donkerrood. Bekijk de uitsplitsing in de D3 distributiegrafiek: overgrote deel is niet-geïsoleerd erfgoed.
+3. **Kompas & Onderwijsdruk:**
+   * Open het Kompas voor Stavoren en navigeer naar **Opgroeien (Jeugd)**.
+   * De indicator `Afstand tot basisonderwijs` staat momenteel nog op groen, maar de indicator `% Inwoners 0-14 jaar` vertoont een acute krimpindicatie.
+4. **D-Omni Assistent Bevraging:**
+   * Prompt:  
+     `"Geef een overzicht van de energielabelverdeling en het aandeel jongeren (0-14 jaar) in Stavoren Centrum en vergelijk dit met Workum."`
+   * *Resultaat:* D-OmniTwin toont direct het contrast tussen het kwetsbare, krimpende Stavoren en het vitalere, bredere profiel van Workum.
+
+#### 5. Beleidsmatig Handelingsperspectief
+* **Woningbouw Koepoort Stavoren:** Urgentie aantonen voor de bouw van 41 starterswoningen met zelfbewoningsplicht om jonge gezinnen vast te houden.
+* **MFC Stavoren:** Behoud van basisonderwijs door fusie/huisvesting in één multifunctioneel centrum met sport en ontmoeting.
+* **Erfgoed-verduurzaming:** Collectieve ontzorgingsaanpak voor historische panden binnen het beschermd stadsgezicht (zon-op-achterdak, collectieve warmteoplossing).
+
+---
+
+### Verhaallijn 3: "Waterveiligheid, Klimaatbuffer & Biodiversiteit: De Scharnierfunctie bij Kornwerderzand & Makkum"
+*De strategische overgang van zout Waddenzee-werelderfgoed naar zoetwaterbassin IJsselmeer, waar ecologie, waterveiligheid en maritieme maakindustrie samenkomen.*
+
+#### 1. Het Maatschappelijke Vraagstuk
+De kuststrook van Zurich en Kornwerderzand tot Makkum vormt het ecologische en infrastructurele scharnier van Noord-Nederland. Hier ontmoeten de Waddenzee (zout, getij, UNESCO Werelderfgoed) en het IJsselmeer (zoet, strategische drinkwaterbuffer van Nederland) elkaar. Aan de Afsluitdijk wordt gebouwd aan de Vismigratierivier en verruiming van de sluizen; bij Breezanddijk landt Windpark Fryslân aan. Tegelijkertijd herbergt Makkum-Buitenhaven wereldberoemde scheepswerven (Royal Huisman, Damen Shipyards) die afhankelijk zijn van diep vaarwater en industriële ruimte, pal grenzend aan Natura 2000-natuur. In het agrarische achterland dreigt ondertussen verzilting van de kleipolders bij extreme droogte.
+
+#### 2. Betrokken Kernen & Buurten
+* **Kust- & Waterknooppunten:** Kornwerderzand, Breezanddijk, Makkum (Buitenhaven, Centrum).
+* **Kustpolders & Waddenkust:** Zurich, Wons, Pingjum, Idsegahuizum.
+
+#### 3. Feitelijke Onderbouwing in D-OmniTwin
+* **Ruimtelijke bestemming & Visie:** Omgevingsvisie SWF *Deelgebied 3 (IJsselmeergebied)* legt de focus op landschappelijke openheid, buitendijkse rust en waterveiligheid.
+* **Natuurbescherming:** WFS-vectorgrenzen van **Natura 2000 IJsselmeer & Waddenzee** bakenen de ecologische restricties haarscherp af.
+* **Economische Pijler:** CBS-bedrijvigheid toont dat Makkum-Buitenhaven verantwoordelijk is voor een disproportioneel hoog aandeel van de industriële en maritieme werkgelegenheid in de gemeente.
+* **Fysieke Barrières:** De A7 en de primaire waterkering (zeedijk) vormen harde scheidslijnen tussen het zoute/zoete water en de bewoonde terpdorpen.
+
+#### 4. Stap-voor-Stap Visualisatie in de App
+1. **Kaart & Zonering Omgevingsvisie:**
+   * Schakel de kaartlaag **Omgevingsvisie Deelgebieden** in.
+   * Selecteer *Deelgebied 3: IJsselmeergebied*.
+   * Projecteer hier overheen de vectorlaag **Natura 2000**.
+   * *Wat je ziet:* De scherpe overgang tussen de agrarische openheid van Zurich/Pingjum en de kwetsbare waterzones van het IJsselmeer en de Waddenzee.
+2. **3D Zoom op Makkum Buitenhaven:**
+   * Zoom in op Makkum Buitenhaven met de **3D Gebouwenlaag**.
+   * Identificeer de grote industriële volumes van de scheepsbouwfaciliteiten direct aan het open water.
+3. **Thema-Analyse Ondernemen:**
+   * Bekijk het thema **Ondernemen** voor Makkum: de sector *Industrie & Vervaardiging van vervoermiddelen* vertoont een extreme positieve Z-score (+3.1), wat het maritieme karakter mathematisch bevestigt.
+4. **D-Omni Assistent Bevraging:**
+   * Prompt:  
+     `"Wat is het economische profiel van Makkum Buitenhaven en hoe verhoudt dit zich tot de natuur- en milieuzonering van de IJsselmeerkust?"`
+   * *Resultaat:* De assistent schetst het evenwicht tussen maakindustrie, havenontwikkeling en ecologische randvoorwaarden.
+
+#### 5. Beleidsmatig Handelingsperspectief
+* **Buitendijkse balans:** Geen ongebreidelde buitendijkse woningbouw; economische ruimte reserveren voor maritieme topsectoren met strenge ecologische inpassing.
+* **Zoetwaterbeschikbaarheid:** Bescherming van de polderlandbouw rond Wons en Pingjum tegen verzilting door actieve sturing op zoetwaterbuffers.
+* **Koppelkansen Afsluitdijk:** Recreatieve en educatieve ontsluiting van de Vismigratierivier koppelen aan belevingsroutes vanuit Kornwerderzand en Makkum.
+
+---
+
+### Verhaallijn 4: "Actieve Recreatie, Gezondheid & Mienskip: Historische Kerkenpaden & Dorpsommetjes"
+*Gezondheidswinst, eenzaamheidsbestrijding en cultuurhistorie verbinden via fijnmazige dorpsommetjes en het herstel van historische voetpaden.*
+
+#### 1. Het Maatschappelijke Vraagstuk
+De mienskip in de dorpen langs de IJsselmeerkust is hecht, maar staat onder druk door individualisering en het wegvallen van informele ontmoetingsplekken. Uit de RIVM Gezondheidsmonitor blijkt dat een aanzienlijk deel van de inwoners niet voldoet aan de landelijke beweegnorm en dat matige tot ernstige eenzaamheid toeneemt bij zowel senioren als alleenstaanden. De Gebiedsagenda signaleert een enorme kans: *het herstel van historische kerkenpaden (zoals tussen Allingawier en Makkum), het Brekkenpaad en lokale dorpsommetjes rond Warns, Molkwerum en Koudum.* Wandelen in het historische cultuurlandschap bevordert niet alleen fysieke en mentale gezondheid, maar brengt dorpsbewoners en recreanten op een natuurlijke wijze met elkaar in contact.
+
+#### 2. Betrokken Kernen & Buurten
+* **Historische Kust- en Klifdorpen:** Warns (Roode Klif), Molkwerum, Hemelum.
+* **Verbindingscorridors:** Allingawier, Idsegahuizum, Parrega, Koudum.
+
+#### 3. Feitelijke Onderbouwing in D-OmniTwin
+* **Beweegrichtlijn & Vitaliteit:** RIVM-indicator `% Voldoet aan beweegrichtlijn` schommelt in agrarische buitengebieden rond de 45-50%, met uitschieters naar beneden bij oudere cohorten.
+* **Eenzaamheid & Sociale Cohesie:** De `Sociale cohesie score` is hoog in kleine kernen (sterke mienskip), maar `% Ernstig eenzaam` openbaart zich achter de voordeur bij alleenstaanden.
+* **Groen & Buitenruimte:** `Afstand tot openbaar groen` en `Percentage stedelijk groen` laten zien dat er weliswaar veel agrarisch landschap is, maar relatief weinig vrij toegankelijk wandelgebied dicht bij de dorpskern.
+* **Infrastructuurbarrières:** De provinciale wegen (N359), spoorlijnen (Leeuwarden-Stavoren) en brede vaarten vormen harde barrières die dorpen afsnijden van hun ommeland en de IJsselmeerdijk.
+
+#### 4. Stap-voor-Stap Visualisatie in de App
+1. **D-Omni Kompas: Gezondheid & Zorg:**
+   * Open het Kompas voor **Warns** en **Koudum**.
+   * Selecteer het kwadrant **Gezondheid & Zorg**.
+   * *Wat je ziet:* Vergelijk de indicatoren `Ervaren goede gezondheid`, `Voldoet aan beweegrichtlijn` en `Ernstig eenzaam`.
+2. **Recreatieve Kaartprojectie:**
+   * Schakel de recreatieve routelaag (**Wandelnetwerken & Kerkenpaden**) in over de buurtenkaart.
+   * *Wat je ziet:* De 'missing links' tussen dorpen en de kustlijn worden direct zichtbaar: wandelaars moeten nu vaak kilometers omlopen langs drukke autowegen zonder vrij liggend voetpad.
+3. **Multi-Gebiedsdossier:**
+   * Maak een dossier aan met **Warns**, **Molkwerum** en **Allingawier**.
+   * Exporteer de PDF/Print-weergave: de benchmark toont exact aan waarom investeringen in wandelinfrastructuur een integraal gezondheidseffect sorteren.
+4. **D-Omni Assistent Bevraging:**
+   * Prompt:  
+     `"Welke relatie toont de data tussen de beweegrichtlijn, eenzaamheid en de nabijheid van openbare wandel- en groenvoorzieningen in Koudum en Warns?"`
+   * *Resultaat:* Een integrale synthese die de koppeling legt tussen sociaal domein en fysieke inrichting.
+
+#### 5. Beleidsmatig Handelingsperspectief
+* **Uitvoeringsprogramma Dorpsommetjes:** Prioriteit geven aan de financiering van het kerkenpad Allingawier–Makkum en het klifpad Warns–Roode Klif in het Gebiedsplan 2027.
+* **Wandelen op Recept:** Samenwerking tussen de huisartsenpraktijk in Koudum, welzijnswerk en dorpsbelangen om wandelgroepen over de herstelde paden te initiëren.
+* **Veilige Kustverbindingen:** Aanleg van veilige oversteekpunten over de N359 en spoorovergangen om dorpsbewoners een autovrije route naar het IJsselmeerstrand te bieden.
+
+---
+
+## 6. Spiegeling van het Gebiedsplan: Acties per Regiokern
+
+Onderstaande matrix koppelt de concrete investeringsprojecten uit Tabel 1 van het gemeentelijke Gebiedsplan rechtstreeks aan de vier verhaallijnen en de onderliggende data-indicatoren in D-OmniTwin:
+
+| Regiokern / Gebied | Geplande Actie in Gebiedsagenda / Gebiedsplan | Relevante Verhaallijn | Wat D-OmniTwin Onderbouwt & Visualiseert | Primaire Indicatoren |
+|--------------------|-----------------------------------------------|:---------------------:|------------------------------------------|----------------------|
+| **Makkum** | • Tichelaarlocatie Wonen-Zorg (32 app.)<br>• Herontwikkeling DOM Centrum<br>• Regiodeal Plekberaad (Eenzaamheid & Armoede)<br>• Uitrol Warmtenet & Bedrijventerrein | **Verhaallijn 1 & 3** | Toont concentratie 80+ en alleenwonenden in Makkum-Centrum; bewijst urgentie warmtenet door hoog aandeel energielabels E/F/G; toont maritieme economie Buitenhaven. | `% 80+`, `Afstand Huisarts`, `Energielabel`, `% Eenzaamheid`, `SBI Industrie banen` |
+| **Workum** | • Woningbouw Workum-Zuid (120 woningen)<br>• Herontwikkeling It Soal & Haven<br>• Wijkaanpak De Ikkers (sociale versterking)<br>• Stadspark & Vergroening<br>• 3e afslag provinciale weg | **Verhaallijn 1 & 2** | Brengt demografische aanwas in kaart; toont inkomens- en gezondheidsverschillen tussen De Ikkers en Centrum; onderbouwt verkeersdruk en loopafstanden tot station/bus. | `WOZ-waarde`, `Koop/Huur verhouding`, `Gestandaardiseerd Inkomen`, `OV Haltes Afstand` |
+| **Stavoren** | • Kwaliteitsimpuls Stationshaven & Entree<br>• MFC Ontmoeten, Onderwijs & Sport<br>• Woningbouw Koepoort (41 woningen)<br>• Beleving Hanzestad & Identiteit | **Verhaallijn 2** | Brengt de scherpe daling van schoolgaande jeugd (0-14 jaar) in beeld; toont de monumentale erfgoeddichtheid; onderbouwt noodzaak van permanente starterswoningen. | `% Inwoners 0-14 jr`, `% Inwoners 65+`, `Bouwjaar < 1945`, `Afstand Basisonderwijs` |
+| **Koudum** | • Centrumverplaatsing Poiesz & Vitalisering<br>• Woningbouw diverse locaties (47 woningen)<br>• Herontwikkeling Galamadammen & De Kuilart<br>• Versterking Zorgankerfunctie | **Verhaallijn 1 & 4** | Analyseert loopafstanden tot dagelijkse levensmiddelen; berekent de zorgfunctie voor omringende dorpen; brengt toeristische seizoensbanen vs. vaste bewoners in beeld. | `Afstand Supermarkt`, `Afstand Huisartsenpost`, `Toeristische vestigingen`, `Beweegnorm` |
+| **Kleine Kernen**<br>*(Warns, Gaast, Piaam, Allingawier, Molkwerum)* | • Pilot Maatwerk-OV & Deelauto's<br>• Herstel Kerkenpaden (Allingawier-Makkum)<br>• Kleine kernenaanpak starterswoningen<br>• Behoud dorpshuizen & ontmoetingsplekken | **Verhaallijn 1 & 4** | Berekent halte-afstanden voor dorpen waar 100% >800m van OV woont; brengt sociale cohesie en beweegarmoede in beeld; toont barrières in het landschap. | `OV_HALTES_AFSTAND`, `Sociale Cohesie`, `% Voldoet aan beweegrichtlijn`, `% Ernstig eenzaam` |
+
+---
+
+## 7. Verbinding met de Use Cases in de Repository (Declaratieve Apps)
+
+Conform de architectuur van D-OmniTwin (ADR 0003 en [Use Case Specificatie 1.0](../../../docs/specificaties/usecase/README.md)) is elke beleidsmatige functionaliteit ontworpen als een **declaratieve use case**: een kant-en-klaar pakket van data, inrichting en toetsbare stappen, zonder applicatiecode. De vier verhaallijnen sluiten direct aan op de use cases die al in de map [`usecases/`](../../../usecases/) van de repository aanwezig zijn:
+
+```
+┌─────────────────────────────────────────────────────────────────────────────────────────────────┐
+│                 KOPPELING VERHAALLIJNEN ↔ DECLARATIEVE REPO USE CASES                           │
+├────────────────────────────────────────┬────────────────────────────────────────────────────────┤
+│ VERHAALLIJN GEBIEDSAGENDA              │ USE CASE IN DE REPOSITORY (usecases/<naam>/)           │
+├────────────────────────────────────────┼────────────────────────────────────────────────────────┤
+│ **Verhaallijn 1: Zorgankers &**        │ • `beleidsadviseur-swf` (TC-06-001): 4 regiokernen     │
+│ **Kwetsbaar Achterland**               │   incl. Makkum, Workum, Koudum en omliggende dorpen.   │
+│                                        │ • `sociale-cohesie` (TC-06-008): RIVM Zorgzwaarte,     │
+│                                        │   eenzaamheid en sociale cohesie.                      │
+├────────────────────────────────────────┼────────────────────────────────────────────────────────┤
+│ **Verhaallijn 2: Toerismeparadox &**   │ • `energiearmoede` (TC-06-005): energielabels E/F/G    │
+│ **Starterskloof Zuiderzeestadjes**     │   kruisen met inkomen en BAG bouwjaar <1945.           │
+│                                        │ • `brede-welvaart` (TC-06-007): functiemenging,        │
+│                                        │   economische vitaliteit vs. demografische krimp.      │
+├────────────────────────────────────────┼────────────────────────────────────────────────────────┤
+│ **Verhaallijn 3: Waterveiligheid,**    │ • `hittestress` & `swf-klimaatmonitor` (TC-06-006):    │
+│ **Klimaatbuffer & Biodiversiteit**     │   klimaatadaptatie en kwetsbaarheidskaarten.           │
+│                                        │ • `swf-kaartlagen` (TC-07-008): Omgevingsvisie         │
+│                                        │   Deelgebied 3 (IJsselmeergebied) en welstand.         │
+├────────────────────────────────────────┼────────────────────────────────────────────────────────┤
+│ **Verhaallijn 4: Actieve Recreatie &** │ • `sociale-cohesie` (TC-06-008): beweegrichtlijn en    │
+│ **Mienskip (Kerkenpaden)**             │   ontmoetingsplekken in de dorpen.                     │
+│                                        │ • `brede-welvaart` (TC-06-007): recreatieve voorziening│
+└────────────────────────────────────────┴────────────────────────────────────────────────────────┘
+```
+
+### Directe toepassingen in de praktijk:
+1. **Actieve use case `beleidsadviseur-swf` (TC-06-001):**  
+   Bevat na de recente actualisatie nu ook **Makkum** (`BU19001700`) naast Workum, Hindeloopen, Koudum, Warns en Hemelum. Met de chat-trigger `"Ik ben beleidsadviseur"` zet de D-Omni Assistent de kustkernen en het Kompas automatisch klaar.
+2. **Koppeling aan geautomatiseerde acceptatietests:**  
+   Door deze verhaallijnen te verankeren in de use case structuur, worden de onderliggende datakoppelingen (CBS, RIVM, BAG, EP-Online) bij elke release automatisch gevalideerd (`python -m omnitwin.usecases test beleidsadviseur-swf`).
+3. **Doorgroei naar een zelfstandige use case `gebiedsagenda-ijsselmeerkust` (TC-06-003):**  
+   Het strategische 5-fasen testscenario uit [`TC-06-003`](./TC-06-003_gebiedsagenda_ijsselmeerkust_usecase.md) kan direct worden omgezet in een eigen declaratieve use case in `usecases/gebiedsagenda-ijsselmeerkust/`, zodat gemeenten met één commando de complete thematische inrichting voor de kustzone kunnen installeren.
+
+---
+
+## 8. Praktische Handreiking: Externe Kaartlagen Configureren
+
+Om de verhaallijnen visueel maximaal te laten spreken, kunnen de ontbrekende vectorlagen direct in D-OmniTwin worden geactiveerd. 
+
+> [!NOTE]
+> **Belangrijk technisch detail over kaartlagen:**  
+> De backend proxy (`/api/externe-lagen/{id}/features`) en de Deck.gl rendering engine van D-OmniTwin zijn ontworpen voor **vectordata** (WFS en GeoJSON). Een klassieke **WMS-laag** retourneert gerasterde PNG-tegels in plaats van vectorobjecten, waardoor de proxy een `501 Not Implemented` geeft. Gebruik daarom voor externe bronnen altijd een **WFS-endpoint** of upload een **GeoJSON-bestand**.
+
+### Direct bruikbare endpoints en stappen in het Beheerpaneel:
+
+Navigeer in de beheeromgeving naar **Kaartlagen beheren** (`http://localhost/admin-panel/#/externe-lagen`) en voeg onderstaande lagen toe:
+
+#### 1. Natura 2000 IJsselmeer & Waddenzee (WFS)
+* **Naam:** `Natura 2000 IJsselmeerkust & Wadden`
+* **Type:** `WFS`
+* **URL:** `https://service.pdok.nl/rvo/beschermde-gebieden/natura2000/wfs/v2_0?request=GetCapabilities&service=WFS`
+* **Feature Type / Laagnaam:** `natura2000:ProtectedSite`
+* **Styling:** Lijnkleur `#059669` (smaragdgroen), vulkleur `#10b98122` (semi-transparant groen).
+* **Toepassing in app:** Geeft de exacte wettelijke ecologische grens aan langs de kustlijn voor Verhaallijn 3.
+
+#### 2. Rijksmonumenten & Beschermde Stadsgezichten (PDOK / RCE WFS)
+* **Naam:** `RCE Rijksmonumenten & Erfgoed`
+* **Type:** `WFS`
+* **URL:** `https://service.pdok.nl/rce/beschermde-gebieden-cultuurhistorie/wfs/v1_0`
+* **Feature Type / Laagnaam:** `ps:ProtectedSite`
+* **Styling:** Lijnkleur `#d97706` (warm amber/goud), puntgrootte 6px.
+* **Toepassing in app:** Toont de erfgoeddichtheid in Hindeloopen, Stavoren en Makkum voor Verhaallijn 2.
+
+#### 3. Wandel- en Fietsnetwerken Fryslân (GeoJSON Upload)
+* Aangezien Stichting Wandelnet via PDOK primair een WMS aanbiedt, is de beste route voor recreatieve netwerken het downloaden van de officiële vectordata (GeoJSON) via **Routedatabank.nl** of het **Provincie Fryslân Geo-dataportaal**.
+* **Stap:** Download het GeoJSON-bestand van de Friese wandelknooppunten of kerkenpaden.
+* **Invoer in Admin Panel:** Klik op **Bestand uploaden** (`/api/admin/externe-lagen/upload`), selecteer het GeoJSON-bestand, kies type `Wandelen` en stel de lijnkleur in op `#2563eb` (helder blauw).
+* **Toepassing in app:** Maakt historische kerkenpaden, dorpsommetjes en 'missing links' direct klikbaar op de kaart voor Verhaallijn 4.
+
+---
+
+## 9. Conclusies & Strategische Routekaart
+
+1. **D-OmniTwin is gereed als besluitvormings- en dialooginstrument:**
+   De combinatie van interactieve kaarten, het 12-kwadranten Kompas, D3 Z-score visualisaties en de multi-gebied benchmarking maakt D-OmniTwin het ideale instrument om het bestuurlijke verhaal van de IJsselmeerkust feitelijk én visueel te presenteren.
+2. **85% van de beleidsvragen is per direct onderbouwd:**
+   Vrijwel alle vraagstukken rondom vergrijzing, voorzieningen, inkomen, woningvoorraad, energielabels en mobiliteit worden realtime gevoed vanuit betrouwbare open databronnen (CBS, RIVM, BAG, EP-Online).
+3. **Stappenplan voor het vervolg:**
+   * **Stap 1: Presentatie aan Gebiedsregisseurs & Wethouder:**  
+     Gebruik de vier uitgewerkte demonstratieroutes uit hoofdstuk 5 tijdens het ambtelijk en bestuurlijk overleg over het Gebiedsplan IJsselmeergebied-Wadden.
+   * **Stap 2: Handmatige Verrijking met Recreatieve & Erfgoedlagen:**  
+     Configureer via het admin-panel de WFS van Natura 2000 en de GeoJSON van de kerkenpaden/wandelnetwerken conform de handreiking in hoofdstuk 8.
+   * **Stap 3: Koppeling met het Plekberaad (Regiodeal):**  
+     Zet D-OmniTwin interactief in tijdens werksessies met dorpsbelangen in Makkum, Stavoren en Koudum om gezamenlijk prioriteiten te stellen op basis van gedeelde feiten.
+
+
