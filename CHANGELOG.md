@@ -8,6 +8,12 @@ Eerdere wijzigingen, van vóór dit bestand, zijn terug te vinden in de git-hist
 
 ## [Unreleased]
 
+## [0.6.1] - 2026-10-14
+
+### Opgelost
+
+- **Staafdiagram in het indicatorpaneel bleef soms leeg** ([#422](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/422)): wie eerst gebieden selecteerde en daarna het tabblad Indicator opende, kreeg een grafiek van 0×0. Chart.js tekende in het verborgen paneel. `indicatorpaneel.js` tekent de grafiek nu pas als het paneel opengaat.
+
 ## [0.6.0] - 2026-10-13
 
 Onderhoud en uitrol: epic [#317](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/317) is dicht. De images gaan via de eigen runner naar Docker Hub, met een nieuwe web-container voor viewer en beheeromgeving ([#408](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/408)); Kubernetes-manifests met een rooktest en een voorbeeld-configrepo voor Fleet ([#406](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/406), [#411](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/411)), inloggen met Entra ID-rollen, en lint en opmaak met ruff ([#129](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/129)). Verder: ADR 0012 (dataspace-protocol DSP), de assistent zoekt de eigen buurt op adres of postcode ([#336](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/336)), en een functionele beschrijving van het geoportaal met een inventarisatie van open data. Geen databasemigraties; wel een nieuwe service `web` (zie *Migreren*).
@@ -412,7 +418,8 @@ Eerste release; deze sectie vat de ontwikkeling sinds het begin samen, details s
 - De backend-container draait als niet-root gebruiker ([#78](https://github.com/Sudwest-Fryslan/D-OmniTwin/pull/78)).
 - Beheeromgeving gebouwd zonder sourcemaps ([#81](https://github.com/Sudwest-Fryslan/D-OmniTwin/pull/81)).
 
-[Unreleased]: https://github.com/Sudwest-Fryslan/D-OmniTwin/compare/v0.6.0...HEAD
+[Unreleased]: https://github.com/Sudwest-Fryslan/D-OmniTwin/compare/v0.6.1...HEAD
+[0.6.1]: https://github.com/Sudwest-Fryslan/D-OmniTwin/compare/v0.6.0...v0.6.1
 [0.6.0]: https://github.com/Sudwest-Fryslan/D-OmniTwin/compare/v0.5.1...v0.6.0
 [0.5.1]: https://github.com/Sudwest-Fryslan/D-OmniTwin/compare/v0.5.0...v0.5.1
 [0.5.0]: https://github.com/Sudwest-Fryslan/D-OmniTwin/compare/v0.5.0-rc.1...v0.5.0

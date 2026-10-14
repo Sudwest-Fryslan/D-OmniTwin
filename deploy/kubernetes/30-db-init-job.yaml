@@ -3,11 +3,11 @@
 # en rollen bijwerken. Daarna stopt de Job.
 #
 # Upgrade: een Job is niet te wijzigen. Daarom heeft hij de versie in de naam: bij een nieuwe
-# versie pas je de naam én de image-tag aan (db-init-0-6-0 -> db-init-0-7-0); de oude Job mag weg.
+# versie pas je de naam én de image-tag aan (db-init-0-6-1 -> db-init-0-7-0); de oude Job mag weg.
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: db-init-0-6-0
+  name: db-init-0-6-1
   namespace: d-omnitwin
   labels:
     app.kubernetes.io/name: db-init
@@ -32,7 +32,7 @@ spec:
       initContainers:
         # Wachten tot PostgreSQL verbindingen aanneemt
         - name: wacht-op-postgres
-          image: sudwestfryslan/d-omnitwin:0.6.0
+          image: sudwestfryslan/d-omnitwin:0.6.1
           imagePullPolicy: IfNotPresent
           command: ["sh", "-c", "until pg_isready -h \"$DATABASE_HOST\" -p \"$DATABASE_PORT\"; do sleep 2; done"]
           envFrom:
@@ -45,7 +45,7 @@ spec:
             capabilities: { drop: ["ALL"] }
         # Meegeleverde kaartlagen uit de image naar een nieuw uploads-volume (Docker doet dat vanzelf)
         - name: vul-uploads
-          image: sudwestfryslan/d-omnitwin:0.6.0
+          image: sudwestfryslan/d-omnitwin:0.6.1
           imagePullPolicy: IfNotPresent
           command: ["sh", "-c", "cp -rn /app/data-upload/. /uploads/"]
           resources:
@@ -58,7 +58,7 @@ spec:
             - { name: uploads, mountPath: /uploads }
       containers:
         - name: db-init
-          image: sudwestfryslan/d-omnitwin:0.6.0
+          image: sudwestfryslan/d-omnitwin:0.6.1
           imagePullPolicy: IfNotPresent
           args: ["init"]
           envFrom:

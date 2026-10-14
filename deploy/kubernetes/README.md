@@ -210,13 +210,13 @@ Alles kan in één keer worden toegepast:
    (tabel `installatie_status`) en starten dan.
 
 Het eerste beheerwachtwoord is `ADMIN_PASSWORD` uit de Secret. Zonder waarde maakt db-init er een aan en
-toont het eenmalig in de log: `kubectl -n d-omnitwin logs job/db-init-0-6-0`.
+toont het eenmalig in de log: `kubectl -n d-omnitwin logs job/db-init-0-6-1`.
 
 ## Bijwerken
 
 1. Image-tags naar de nieuwe versie (`sudwestfryslan/d-omnitwin:<versie>`, `sudwestfryslan/d-omnitwin-web:<versie>`,
    `sudwestfryslan/d-omnitwin-db:<versie>`).
-2. Naam van de Job naar de nieuwe versie (`db-init-0-6-0` wordt `db-init-0-7-0`): een Job is niet te wijzigen,
+2. Naam van de Job naar de nieuwe versie (`db-init-0-6-1` wordt `db-init-0-7-0`): een Job is niet te wijzigen,
    een nieuwe naam draait opnieuw. De oude Job mag weg.
 3. Toepassen. De nieuwe Job migreert; de backend wordt vervangen (strategie `Recreate`, één replica), web
    met een gewone rolling update.
