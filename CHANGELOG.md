@@ -8,6 +8,12 @@ Eerdere wijzigingen, van vóór dit bestand, zijn terug te vinden in de git-hist
 
 ## [Unreleased]
 
+## [0.6.1] - 2026-10-14
+
+### Opgelost
+
+- **Staafdiagram in het indicatorpaneel bleef soms leeg** ([#422](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/422)): wie eerst gebieden selecteerde en daarna het tabblad Indicator opende, kreeg een grafiek van 0×0. Chart.js tekende in het verborgen paneel. `indicatorpaneel.js` tekent de grafiek nu pas als het paneel opengaat.
+
 ## [0.6.0] - 2026-10-13
 
 Onderhoud en uitrol: epic [#317](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/317) is dicht. De images gaan via de eigen runner naar Docker Hub, met een nieuwe web-container voor viewer en beheeromgeving ([#408](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/408)); Kubernetes-manifests met een rooktest en een voorbeeld-configrepo voor Fleet ([#406](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/406), [#411](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/411)), inloggen met Entra ID-rollen, en lint en opmaak met ruff ([#129](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/129)). Verder: ADR 0012 (dataspace-protocol DSP), de assistent zoekt de eigen buurt op adres of postcode ([#336](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/336)), en een functionele beschrijving van het geoportaal met een inventarisatie van open data. Geen databasemigraties; wel een nieuwe service `web` (zie *Migreren*).
@@ -40,7 +46,6 @@ Onderhoud en uitrol: epic [#317](https://github.com/Sudwest-Fryslan/D-OmniTwin/i
 
 ### Opgelost
 
-- **Staafdiagram in het indicatorpaneel bleef soms leeg** ([#419](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/419)): wie eerst gebieden selecteerde en daarna het tabblad Indicator opende, kreeg een grafiek van 0×0. Chart.js tekende in het verborgen paneel. `indicatorpaneel.js` tekent de grafiek nu pas als het paneel opengaat.
 - **3D-pandenlaag geeft geen foutmelding meer en vangt buitengebieden netjes op** ([#410](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/410)): de ontbrekende SQLAlchemy `text`-import in `bag3d.py` is hersteld waardoor de bounding box query (`ST_Envelope`) niet meer crasht met een 500 NameError. Bovendien retourneren buitengebieden of gebieden zonder 3D-panden op 3DBAG nu een HTTP 200 met een lege FeatureCollection en een informatieve blauwe notificatietoast (`showInfo`) in plaats van een harde HTTP 404 uitzondering of rode error toast.
 - **3D BAG-panden** ([#129](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/129)): `POST /api/3dbag/buildings` faalde altijd met een `NameError`, omdat `text` uit SQLAlchemy niet geïmporteerd was. Gevonden door ruff (F821), net als een niet-bestaande variabele in de foutmelding van `ETL/CBS/import_cbs_data.py`.
 - **UI bevriest niet meer tijdens print-dialoog in rapporttabblad** ([#46](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/46)): `window.open` naar rapporten en externe schermen (`app.js`, `chat.js`, `melden.js`, `index.html`) is geïsoleerd met `noopener,noreferrer`, zodat geopende tabbladen in een eigen browsing context draaien. In rapportcomponenten (`ExportPrintModal`, `BenchmarkPage`, `DeelgebiedPage`, `MultiGebiedPage`, `App.tsx`) worden venster-referenties (`window.opener = null`) verbroken vóór `window.print()`, waardoor synchrone printdialogen de hoofdapplicatie niet meer kunnen pauzeren. Externe links zijn voorzien van `rel="noopener noreferrer"`.
@@ -413,7 +418,8 @@ Eerste release; deze sectie vat de ontwikkeling sinds het begin samen, details s
 - De backend-container draait als niet-root gebruiker ([#78](https://github.com/Sudwest-Fryslan/D-OmniTwin/pull/78)).
 - Beheeromgeving gebouwd zonder sourcemaps ([#81](https://github.com/Sudwest-Fryslan/D-OmniTwin/pull/81)).
 
-[Unreleased]: https://github.com/Sudwest-Fryslan/D-OmniTwin/compare/v0.6.0...HEAD
+[Unreleased]: https://github.com/Sudwest-Fryslan/D-OmniTwin/compare/v0.6.1...HEAD
+[0.6.1]: https://github.com/Sudwest-Fryslan/D-OmniTwin/compare/v0.6.0...v0.6.1
 [0.6.0]: https://github.com/Sudwest-Fryslan/D-OmniTwin/compare/v0.5.1...v0.6.0
 [0.5.1]: https://github.com/Sudwest-Fryslan/D-OmniTwin/compare/v0.5.0...v0.5.1
 [0.5.0]: https://github.com/Sudwest-Fryslan/D-OmniTwin/compare/v0.5.0-rc.1...v0.5.0

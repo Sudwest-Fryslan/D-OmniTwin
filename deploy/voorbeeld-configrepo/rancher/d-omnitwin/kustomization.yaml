@@ -10,16 +10,16 @@ resources:
   # Fleet haalt geen remote bases op; daarom staat de base in deze repo.
   - base
   # Zonder Fleet (kubectl apply -k, Argo CD, Flux) kan het ook rechtstreeks, zodra de repo publiek is:
-  # - https://github.com/Sudwest-Fryslan/D-OmniTwin//deploy/kubernetes?ref=v0.6.0
+  # - https://github.com/Sudwest-Fryslan/D-OmniTwin//deploy/kubernetes?ref=v0.6.1
 
 # Versie van de images: dezelfde als de tag van de base
 images:
   - name: sudwestfryslan/d-omnitwin
-    newTag: "0.6.0"
+    newTag: "0.6.1"
   - name: sudwestfryslan/d-omnitwin-web
-    newTag: "0.6.0"
+    newTag: "0.6.1"
   - name: sudwestfryslan/d-omnitwin-db
-    newTag: "0.6.0"
+    newTag: "0.6.1"
 
 # Instellingen: alleen wat afwijkt van base/01-configmap.yaml. Geheimen staan in de Secret
 # omnitwin-secrets (met de hand aangemaakt, zie README.md), nooit hier.

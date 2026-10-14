@@ -10,7 +10,7 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: keycloak-db-init-0-6-0
+  name: keycloak-db-init-0-6-1
   namespace: d-omnitwin
   labels:
     app.kubernetes.io/name: keycloak-db-init
@@ -30,7 +30,7 @@ spec:
           type: RuntimeDefault
       containers:
         - name: keycloak-db-init
-          image: sudwestfryslan/d-omnitwin:0.6.0
+          image: sudwestfryslan/d-omnitwin:0.6.1
           imagePullPolicy: IfNotPresent
           args: ["keycloak-db"]
           envFrom:
