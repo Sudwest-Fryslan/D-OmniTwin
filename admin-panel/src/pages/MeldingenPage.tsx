@@ -338,9 +338,9 @@ export const MeldingenPage: React.FC = () => {
 
                         {/* Toelichting */}
                         <div style={{ marginBottom: '1.25rem' }}>
-                            <label style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--color-text-secondary)', display: 'block', marginBottom: '0.4rem' }}>
+                            <span style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--color-text-secondary)', display: 'block', marginBottom: '0.4rem' }}>
                                 Toelichting van melder
-                            </label>
+                            </span>
                             <div style={{ padding: '0.8rem', background: 'var(--color-bg-base)', border: '1px solid var(--color-border)', borderRadius: 'var(--border-radius)', fontSize: '0.9rem', whiteSpace: 'pre-wrap', lineHeight: 1.5 }}>
                                 {geselecteerdeMelding.toelichting}
                             </div>
@@ -349,9 +349,9 @@ export const MeldingenPage: React.FC = () => {
                         {/* Meegezonden Context */}
                         {geselecteerdeMelding.context && Object.keys(geselecteerdeMelding.context).length > 0 && (
                             <div style={{ marginBottom: '1.5rem' }}>
-                                <label style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--color-text-secondary)', display: 'block', marginBottom: '0.4rem' }}>
+                                <span style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--color-text-secondary)', display: 'block', marginBottom: '0.4rem' }}>
                                     Meegezonden context
-                                </label>
+                                </span>
                                 <div style={{ padding: '0.75rem', background: 'var(--color-bg-base)', border: '1px solid var(--color-border)', borderRadius: 'var(--border-radius)', fontSize: '0.8rem', display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
                                     {Object.entries(geselecteerdeMelding.context).map(([k, v]) => (
                                         <div key={k} style={{ display: 'flex', gap: '0.5rem' }}>

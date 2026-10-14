@@ -23,7 +23,7 @@ Fleet rendert Kustomize zelf en haalt geen remote bases op
 base in de configrepo. Vanuit de map `rancher/d-omnitwin`, met de versie die je uitrolt:
 
 ```bash
-VERSIE=0.7.0
+VERSIE=0.6.0
 git clone --depth 1 --branch "v$VERSIE" https://github.com/Sudwest-Fryslan/D-OmniTwin.git /tmp/d-omnitwin
 rm -rf base && mkdir base
 cp /tmp/d-omnitwin/deploy/kubernetes/kustomization.yaml /tmp/d-omnitwin/deploy/kubernetes/[0-9]*.yaml base/
@@ -35,7 +35,7 @@ tweede bundle), geen `secret.example.yaml`. De repo is nu nog privé; tot hij pu
 bestanden met een account dat toegang heeft (of uit het release-archief).
 
 Zonder Fleet (`kubectl apply -k`, Argo CD, Flux) kan de base ook als remote URL op een release-tag,
-zodra de repo publiek is: `https://github.com/Sudwest-Fryslan/D-OmniTwin//deploy/kubernetes?ref=v0.7.0`
+zodra de repo publiek is: `https://github.com/Sudwest-Fryslan/D-OmniTwin//deploy/kubernetes?ref=v0.6.0`
 (staat als commentaar in `kustomization.yaml`).
 
 ## Invullen
@@ -81,8 +81,8 @@ dat staat ook in de database.
 
 ```bash
 kubectl -n d-omnitwin get pods                      # alles Running, db-init-<versie> Completed
-kubectl -n d-omnitwin get jobs                      # db-init-0-7-0: 1/1
-kubectl -n d-omnitwin logs job/db-init-0-7-0        # initialisatie of migraties
+kubectl -n d-omnitwin get jobs                      # db-init-0-6-0: 1/1
+kubectl -n d-omnitwin logs job/db-init-0-6-0        # initialisatie of migraties
 kubectl -n d-omnitwin logs deploy/backend
 kubectl -n d-omnitwin get ingress,certificate       # certificaat Ready (cert-manager)
 curl -s https://d-omnitwin.example.nl/health        # database en api "online", met de versie
@@ -97,7 +97,7 @@ Daarna in de browser: `https://d-omnitwin.example.nl/` (de kaart) en `/admin` (i
 3. Zet `images:` in `kustomization.yaml` op dezelfde versie.
 4. Commit. Fleet rolt uit.
 
-De nieuwe base bevat een db-init-Job met de versie in de naam (`db-init-0-7-0` wordt `db-init-0-8-0`).
+De nieuwe base bevat een db-init-Job met de versie in de naam (`db-init-0-6-0` wordt `db-init-0-7-0`).
 Die draait de migraties op de bestaande database; de backend start daarna opnieuw. De oude Job haalt
 Fleet weg. Controleer met de opdrachten hierboven, met de nieuwe Job-naam.
 

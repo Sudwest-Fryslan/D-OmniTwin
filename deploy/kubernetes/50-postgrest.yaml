@@ -42,7 +42,7 @@ spec:
       initContainers:
         # Wachten tot db-init de rollen authenticator en featureserv heeft aangemaakt
         - name: wacht-op-db-init
-          image: sudwestfryslan/d-omnitwin:0.5.1
+          image: sudwestfryslan/d-omnitwin:0.6.0
           imagePullPolicy: IfNotPresent
           command:
             - sh

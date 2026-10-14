@@ -710,8 +710,8 @@ export const ThemaAnalysePage: React.FC = () => {
                                 <Map size={18} /> Z-score Afwijkingskaart
                             </h3>
                             {woonplaatsGeo && (
-                                <label style={{ fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.5rem', cursor: 'pointer', color: 'var(--color-text-muted)' }}>
-                                    <input type="checkbox" checked={showWoonplaatsGrenzen}
+                                <label htmlFor="thema-show-woonplaats" style={{ fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.5rem', cursor: 'pointer', color: 'var(--color-text-muted)' }}>
+                                    <input id="thema-show-woonplaats" type="checkbox" checked={showWoonplaatsGrenzen}
                                            onChange={e => setShowWoonplaatsGrenzen(e.target.checked)} />
                                     Toon woonplaatsgrenzen
                                     <span style={{ color: '#8b5cf6', fontWeight: 600 }}>━ ━</span>

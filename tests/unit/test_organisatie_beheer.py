@@ -303,7 +303,7 @@ def test_themalijst_uit_static():
     legacy = next(t for t in lijst if t["naam"] == "legacy")
     assert legacy["wcag_aa"] is False
     assert legacy["titel"] == "Klassiek groen-blauw"
-    assert next(t for t in lijst if t["naam"] == "d-omnitwin")["wcag_aa"] is False
+    assert next(t for t in lijst if t["naam"] == "d-omnitwin")["wcag_aa"] is True
 
 
 def test_themakleuren_lossen_var_op_en_donker_valt_terug_op_licht(tmp_path):

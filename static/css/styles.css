@@ -191,7 +191,7 @@
   --bg-primary: var(--basis-color-default-bg-document, #f1f5f9);
   --bg-secondary: var(--basis-color-default-bg-default, #ffffff);
   --text-primary: var(--basis-color-default-color-document, #1e293b);
-  --text-secondary: var(--basis-color-default-color-subtle, #64748b);
+  --text-secondary: var(--basis-color-default-color-subtle, #475569);
   --border-color: var(--basis-color-default-border-subtle, #e2e8f0);
   /* Glas-vlakken en randen afgeleid van de themakleuren (licht en donker) */
   --panel-bg: color-mix(in srgb, var(--bg-secondary) 40%, transparent);
@@ -226,7 +226,7 @@
   --action-color: var(--basis-color-action-1-color-default, #1e3a8a);
   /* Trust Blue — Universal CTA (was groen/rood) */
   --action-dark: var(--basis-color-action-1-color-hover, #1e40af);
-  --accent-color: var(--basis-color-accent-2-bg-default, #c59d00);
+  --accent-color: var(--basis-color-accent-2-bg-default, #b38800);
   /* Geo Gold Light — π-node, selecties, highlights */
   --accent-text: var(--basis-color-accent-2-color-default, #856a00);
   /* Geo Gold voor tekst en iconen: 5,17:1 op wit, 4,72:1 op #f1f5f9 (WCAG 1.4.3) */
@@ -240,7 +240,7 @@
   /* Oranje — data-alerts; 5,18:1 op wit (was #DD6B20, 3,39:1) */
   --brand-nature: var(--basis-color-accent-3-color-default, #15803d);
   /* Nature Green Light — milieu, duurzaamheid */
-  --brand-accent: var(--basis-color-accent-2-bg-default, #c59d00);
+  --brand-accent: var(--basis-color-accent-2-bg-default, #b38800);
   /* Geo Gold Light */
 
   /* Border Radius */
@@ -271,12 +271,12 @@
   --on-action-fill: var(--basis-color-action-1-inverse-color-default, #ffffff);
 
   /* Componenttokens (#89): actieve tab, welkomstscherm, tooltips, selectiebadge */
-  --tab-active-bg: var(--d-omnitwin-tab-active-background-color, #c59d00);
+  --tab-active-bg: var(--d-omnitwin-tab-active-background-color, #b38800);
   --tab-active-text: var(--d-omnitwin-tab-active-color, #0f172a);
   /* Rand van de actieve tab (#284): standaard gelijk aan het vlak en even dik als gewone tabs */
-  --tab-active-border: var(--d-omnitwin-tab-active-border-color, #c59d00);
+  --tab-active-border: var(--d-omnitwin-tab-active-border-color, #b38800);
   --tab-active-border-width: var(--d-omnitwin-tab-active-border-width, 2px);
-  --welcome-btn-bg: var(--d-omnitwin-welcome-button-background-color, #c59d00);
+  --welcome-btn-bg: var(--d-omnitwin-welcome-button-background-color, #b38800);
   --welcome-btn-text: var(--d-omnitwin-welcome-button-color, #0f172a);
   --welcome-accent: var(--d-omnitwin-welcome-accent-color, #856a00);
   --tooltip-bg: var(--d-omnitwin-tooltip-background-color, #0f172a);
@@ -530,27 +530,27 @@ textarea {
   --shadow-color: rgba(0, 0, 0, 0.5);
 
   /* Header — Trust Blue Dark → Nature Green Dark (Hue-Consistent!) */
-  --header-bg-start: var(--d-omnitwin-header-background-color-start, #3b82f6);
-  --header-bg-end: var(--d-omnitwin-header-background-color-end, #22c55e);
+  --header-bg-start: var(--d-omnitwin-header-background-color-start, #1e3a8a);
+  --header-bg-end: var(--d-omnitwin-header-background-color-end, #14532d);
   --header-text: var(--d-omnitwin-header-color, #f1f5f9);
   --header-accent: var(--d-omnitwin-header-accent-color, #22c55e);
   --header-overlay: var(--d-omnitwin-header-overlay-color, #ffffff);
 
   /* Brand Colors — zelfde hue, hogere luminance */
-  --primary-color: var(--basis-color-accent-1-color-default, #3b82f6);
+  --primary-color: var(--basis-color-accent-1-color-default, #60a5fa);
   /* Trust Blue Dark */
-  --primary-dark: var(--basis-color-accent-1-color-hover, #2563eb);
+  --primary-dark: var(--basis-color-accent-1-color-hover, #93c5fd);
 
-  --action-color: var(--basis-color-action-1-color-default, #3b82f6);
+  --action-color: var(--basis-color-action-1-color-default, #60a5fa);
   /* Trust Blue Dark — Universal CTA */
-  --action-dark: var(--basis-color-action-1-color-hover, #2563eb);
+  --action-dark: var(--basis-color-action-1-color-hover, #93c5fd);
   --accent-color: var(--basis-color-accent-2-bg-default, #eab308);
   /* Geo Gold Dark */
   --accent-text: var(--basis-color-accent-2-color-default, #eab308);
   /* 9,31:1 op #0f172a */
 
   /* Semantische kleuren */
-  --color-danger: var(--basis-color-negative-color-default, #ef4444);
+  --color-danger: var(--basis-color-negative-color-default, #f87171);
   --color-success: var(--basis-color-positive-color-default, #22c55e);
   --color-warning: var(--basis-color-warning-color-default, #f97316);
   --brand-nature: var(--basis-color-accent-3-color-default, #22c55e);

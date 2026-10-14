@@ -560,8 +560,8 @@ export const MultiGebiedPage: React.FC = () => {
                             </h3>
                             {/* Sprint 18 Track C: Toggle woonplaatsgrenzen */}
                             {woonplaatsGeo && (
-                                <label style={{ fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.5rem', cursor: 'pointer', color: 'var(--color-text-muted)' }}>
-                                    <input type="checkbox" checked={showWoonplaatsGrenzen}
+                                <label htmlFor="multigebied-show-woonplaats" style={{ fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.5rem', cursor: 'pointer', color: 'var(--color-text-muted)' }}>
+                                    <input id="multigebied-show-woonplaats" type="checkbox" checked={showWoonplaatsGrenzen}
                                            onChange={e => setShowWoonplaatsGrenzen(e.target.checked)} />
                                     Toon woonplaatsgrenzen
                                     <span style={{ color: '#8b5cf6', fontWeight: 600 }}>━ ━</span>

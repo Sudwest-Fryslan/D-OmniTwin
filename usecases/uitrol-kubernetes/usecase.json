@@ -60,7 +60,7 @@
         "actie": "open",
         "pad": "/api/geo/collections",
         "omschrijving": "Geo-API via de gateway: de collecties van pg_featureserv",
-        "bevat": ["collections"]
+        "bevat": ["Feature Collections"]
       }
     ]
   },
