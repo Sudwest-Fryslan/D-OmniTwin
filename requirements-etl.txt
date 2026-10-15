@@ -20,5 +20,5 @@ tqdm>=4.70.1
 python-dateutil>=2.9.0.post0
 
 # --- Visualisatie ---
-matplotlib>=3.10.9
+matplotlib>=3.11.2
 pydeck>=0.9.3
