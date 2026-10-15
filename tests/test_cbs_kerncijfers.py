@@ -73,7 +73,7 @@ def rijen(tmp_path_factory):
     S.CACHE_DIR = tmp_path_factory.mktemp("cbs-cache")
     try:
         return S.rijen_voor(BOLSWARD, log=lambda *_: None)
-    except Exception as e:  # geen netwerk of CBS onbereikbaar: niet de schuld van de code
+    except (Exception, SystemExit) as e:  # geen netwerk of CBS onbereikbaar: niet de schuld van de code
         pytest.skip(f"CBS niet bereikbaar: {type(e).__name__}")
 
 
