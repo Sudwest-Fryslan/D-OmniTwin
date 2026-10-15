@@ -8,6 +8,10 @@ Eerdere wijzigingen, van vóór dit bestand, zijn terug te vinden in de git-hist
 
 ## [Unreleased]
 
+### Opgelost
+
+- **CBS Kerncijfers auto-mapping 2024–2026** ([#439](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/439)): CBS StatLine tabel `85984NED` (2024) en opvolgende jaren splitsten particuliere personenauto's af van de leasewagens en wijzigden de kolomnamen (`PersonenautoSParticulierenPerHh...`). De mapping in `download_cbs_kerncijfers.py` en `init_data/cbs/datapackage.json` is bijgewerkt; `controleer_tabel` werpt nu een `RuntimeError` in plaats van `sys.exit()`.
+
 ### Gewijzigd
 
 - **Kortere README** ([#377](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/377)): de voorpagina zegt in een paar zinnen wat D-OmniTwin is, met snel starten via de images van Docker Hub, een verwijzing naar Kubernetes, en korte secties voor functies, use cases, documentatie, bijdragen, licentie en partners (231 → 100 regels). De galerij van de use cases staat ingeklapt; `python -m omnitwin.usecases galerij` werkt hem bij zoals voorheen. Wat wegging, staat nu elders: functies, schermafbeeldingen, opbouw en AI in het kort in het nieuwe [`docs/overzicht.md`](docs/overzicht.md); de demo met inloggen en ontwikkelen zonder Docker in de [installatiegids](docs/9-beheer/installatie.md); de tabel met kernbestanden in [`docs/INDEX.md`](docs/INDEX.md).

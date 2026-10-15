@@ -693,9 +693,9 @@
         "2021": "PersonenautoSPerHuishouden_103",
         "2022": "PersonenautoSPerHuishouden_103",
         "2023": "PersonenautoSPerHuishouden_112",
-        "2024": "PersonenautoSPerHuishouden_107",
-        "2025": "PersonenautoSPerHuishouden_107",
-        "2026": "PersonenautoSPerHuishouden_108"
+        "2024": "PersonenautoSParticulierenPerHh_107",
+        "2025": "PersonenautoSParticulierenPerHh_107",
+        "2026": "PersonenautoSParticulierenPerHh_108"
       },
       "afgeleid": null
     },
@@ -716,9 +716,9 @@
         "2021": "PersonenautoSNaarOppervlakte_104",
         "2022": "PersonenautoSNaarOppervlakte_104",
         "2023": "PersonenautoSNaarOppervlakte_113",
-        "2024": "PersonenautoSNaarOppervlakte_108",
-        "2025": "PersonenautoSNaarOppervlakte_108",
-        "2026": "PersonenautoSNaarOppervlakte_109"
+        "2024": "PersonenautoSParticulierenOppervlakte_108",
+        "2025": "PersonenautoSParticulierenOppervlakte_108",
+        "2026": "PersonenautoSParticulierenOppervlakte_109"
       },
       "afgeleid": null
     },

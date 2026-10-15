@@ -14,11 +14,11 @@ Een bundel van data, inrichting en stappen. Dit pakket bevat de tien sample-buur
 
 ## 1. Data
 
-**Gebieden:** Hindeloopen, Workum, Koudum, Warns, Hemelum, Witmarsum, Heidenschap, Boazum, Bomenbuurt, Woudsend. De waarden komen via de laad-API uit `cbs-kerncijfers` (afstand tot huisarts en grote supermarkt, woningvoorraad, Participatiewet) en `sample-bronbibliotheek` (OV-haltes, OpenStreetMap; adapter volgt). Zie [demodata naar open data](../../docs/3-data-engineering/demodata-naar-open-data.md).
+**Gebieden:** Makkum, Hindeloopen, Workum, Koudum, Warns, Hemelum, Witmarsum, Heidenschap, Boazum, Bomenbuurt, Woudsend. De waarden komen via de laad-API uit `cbs-kerncijfers` (afstand tot huisarts en grote supermarkt, woningvoorraad, Participatiewet) en `sample-bronbibliotheek` (OV-haltes, OpenStreetMap; adapter volgt). Zie [demodata naar open data](../../docs/3-data-engineering/demodata-naar-open-data.md).
 
 **Kernindicatoren:** OV-haltes, afstand tot huisarts en grote supermarkt, woningvoorraad, Participatiewet (zie [`usecase.json`](./usecase.json)).
 
-**Ontbreekt nog:** Makkum (staat in TC-06-001, maar niet in de testbuurten), reistijd OV.
+**Ontbreekt nog:** reistijd OV.
 
 ## 2. Inrichting
 
@@ -29,7 +29,7 @@ Een bundel van data, inrichting en stappen. Dit pakket bevat de tien sample-buur
 
 ## 3. Stappen
 
-Zie [TC-06-001](../../docs/testcases/06-integratie-e2e/TC-06-001_beleidsadviseur-ijsselmeerkust.md). Workum en Koudum zijn aanwezig; voor Makkum geldt "ontbreekt nog".
+Zie [TC-06-001](../../docs/testcases/06-integratie-e2e/TC-06-001_beleidsadviseur-ijsselmeerkust.md). Makkum, Workum en Koudum zijn aanwezig.
 
 ## Bewijs
 

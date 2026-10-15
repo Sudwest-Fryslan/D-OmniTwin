@@ -206,8 +206,14 @@ MAPPING = {
         **_reeks("HboWo", None, None, None, None, 72, 69, 69, 70),
     },
     "Participatiewet totaal": _reeks("PersonenPerSoortUitkeringBijstand", 83, 83, 83, 83, 92, 87, 87, 88),
-    "Personenauto's per huishouden": _reeks("PersonenautoSPerHuishouden", 102, 103, 103, 103, 112, 107, 107, 108),
-    "Personenauto's naar oppervlakte": _reeks("PersonenautoSNaarOppervlakte", 103, 104, 104, 104, 113, 108, 108, 109),
+    "Personenauto's per huishouden": {
+        **_reeks("PersonenautoSPerHuishouden", 102, 103, 103, 103, 112, None, None, None),
+        **_reeks("PersonenautoSParticulierenPerHh", None, None, None, None, None, 107, 107, 108),
+    },
+    "Personenauto's naar oppervlakte": {
+        **_reeks("PersonenautoSNaarOppervlakte", 103, 104, 104, 104, 113, None, None, None),
+        **_reeks("PersonenautoSParticulierenOppervlakte", None, None, None, None, None, 108, 108, 109),
+    },
     "Afstand tot huisarts": _reeks("AfstandTotHuisartsenpraktijk", 105, 106, 106, 106, 115, 110, 110, 111),
     "Afstand tot grote supermarkt": _reeks("AfstandTotGroteSupermarkt", 106, 107, 107, 107, 116, 111, 111, 112),
     "Afstand tot kinderdagverblijf": _reeks("AfstandTotKinderdagverblijf", 107, 108, 108, 108, 117, 112, 112, 113),
@@ -272,12 +278,12 @@ def controleer_tabel(session, jaar, tabel, log=print):
     info = _get(session, f"{CBS_API}/{tabel}/TableInfos", {"$format": "json"})["value"][0]
     periode = str(info.get("Period", "")).strip()
     if periode != str(jaar):
-        sys.exit(f"❌ {tabel}: Period is '{periode}', verwacht {jaar} ({info.get('Title')})")
+        raise RuntimeError(f"❌ {tabel}: Period is '{periode}', verwacht {jaar} ({info.get('Title')})")
     props = _get(session, f"{CBS_API}/{tabel}/DataProperties", {"$format": "json"})["value"]
     sleutels = {p["Key"] for p in props}
     ontbreekt = [k for k in kolommen(jaar) if k not in sleutels]
     if ontbreekt:
-        sys.exit(f"❌ {tabel} ({jaar}): kolommen ontbreken: {ontbreekt}")
+        raise RuntimeError(f"❌ {tabel} ({jaar}): kolommen ontbreken: {ontbreekt}")
     log(f"   ✅ {tabel}: {info.get('Title')} · Period {periode} · {len(kolommen(jaar))} kolommen")
     return info.get("Title")
 
