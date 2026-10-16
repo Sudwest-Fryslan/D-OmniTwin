@@ -8,6 +8,10 @@ Eerdere wijzigingen, van vóór dit bestand, zijn terug te vinden in de git-hist
 
 ## [Unreleased]
 
+### Toegevoegd
+
+- **Integrale gebruikerservaring-audit** ([#309](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/309)): cognitive walkthrough en visuele inspectie van de zes kerninterfaces vanuit vijf persona's en WCAG 2.1 AA (ADR 0011), inclusief ontwerpkeuzes voor Kaart ↔ Kompas synchronisatie en de functionele blauwdruk voor het factsheet-redesign ([#441](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/441)) in `docs/4-ux-design/gebruikerservaring-audit.md`.
+
 ### Opgelost
 
 - **CBS Kerncijfers auto-mapping 2024–2026** ([#439](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/439)): CBS StatLine tabel `85984NED` (2024) en opvolgende jaren splitsten particuliere personenauto's af van de leasewagens en wijzigden de kolomnamen (`PersonenautoSParticulierenPerHh...`). De mapping in `download_cbs_kerncijfers.py` en `init_data/cbs/datapackage.json` is bijgewerkt; `controleer_tabel` werpt nu een `RuntimeError` in plaats van `sys.exit()`.
