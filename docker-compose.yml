@@ -342,7 +342,7 @@ services:
     # metrics alleen intern op poort 9000. Bij de eerste start importeert hij de
     # realm uit deploy/keycloak/realm-omnitwin.json (een bestaande realm blijft staan).
     # Zie docs/9-beheer/installatie.md, "Keycloak (optioneel)".
-    image: quay.io/keycloak/keycloak:26.8.0
+    image: quay.io/keycloak/keycloak:26.8.1
     profiles: ["keycloak"]
     command: ["start", "--import-realm"]
     environment:
