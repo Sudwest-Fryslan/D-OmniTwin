@@ -151,8 +151,9 @@ export const HierarchiePage: React.FC = () => {
                 .attr('stroke', '#1e293b')
                 .attr('stroke-width', 2);
 
-            // Expand/collapse indicator
+            // Expand/collapse indicator inside the circle
             nodeEnter.append('text')
+                .attr('class', 'node-toggle')
                 .attr('x', 0)
                 .attr('y', 0)
                 .attr('dy', '0.35em')
@@ -160,31 +161,43 @@ export const HierarchiePage: React.FC = () => {
                 .attr('fill', '#1e293b')
                 .attr('font-size', '10px')
                 .attr('font-weight', 'bold')
+                .style('pointer-events', 'none')
+                .style('user-select', 'none')
                 .text(d => d._children ? '+' : (d.children ? '-' : ''));
 
-            // Node label
-            nodeEnter.append('text')
+            // Browser tooltip on hover
+            nodeEnter.append('title')
+                .text(d => d.data.naam || (d.data as any).name || "Naamloos");
+
+            // Node label with halo for contrast against background and connection lines
+            const label = nodeEnter.append('text')
+                .attr('class', 'node-label')
                 .attr('dy', '.35em')
                 .attr('x', d => d.children || d._children ? -15 : 15)
                 .attr('text-anchor', d => d.children || d._children ? 'end' : 'start')
-                .attr('fill', '#f1f5f9')
-                .attr('font-size', '12px')
+                .style('font-size', '12px')
+                .style('font-weight', '500')
+                .style('fill', 'var(--color-text-primary, #0f172a)')
                 .text(d => {
                     const name = d.data.naam || (d.data as any).name || "Naamloos";
-                    return name.length > 25 ? name.substring(0, 25) + '...' : name;
-                })
-                .clone(true).lower()
-                .attr('stroke', '#0f172a')
-                .attr('stroke-width', 3);
+                    return name.length > 32 ? name.substring(0, 32) + '...' : name;
+                });
+
+            // Halo layer behind the label (rendered underneath via .lower())
+            label.clone(true).lower()
+                .attr('class', 'node-label-halo')
+                .style('fill', 'none')
+                .style('stroke', 'var(--color-background, #ffffff)')
+                .style('stroke-width', '4px')
+                .style('stroke-linejoin', 'round');
 
             // Update positions
             const nodeUpdate = nodeEnter.merge(node);
             nodeUpdate.transition().duration(duration)
                 .attr('transform', d => `translate(${d.y},${d.x})`);
 
-            // Update circle indicator
-            nodeUpdate.select('text')
-                .filter((d, i) => i === 1) // Second text element (the +/-)
+            // Update circle indicator (+ / -) for all nodes
+            nodeUpdate.select('text.node-toggle')
                 .text(d => d._children ? '+' : (d.children ? '-' : ''));
 
             // Exit nodes
