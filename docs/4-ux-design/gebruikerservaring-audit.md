@@ -154,13 +154,28 @@ De beoordeling is verricht vanuit vijf sleutelpersona's en getoetst aan de **WCA
 
 ---
 
-## 6. Conclusie & Vervolgstappen
+## 6. Conclusie & Sub-issues onder Epic #309
 
-1. **Sub-issue [#441](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/441) uitvoeren:**
+De auditbevindingen zijn conform de #305-vorm uitgesplitst naar zes afzonderlijke, behapbare sub-issues met het label `UX`. Zodra deze zes sub-issues zijn gerealiseerd en gemerged naar `main`, kan Epic #309 formeel worden gesloten:
+
+1. **[#441](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/441) — Factsheet- en rapportageredesign conform WBM/Buurtbarometer** (§5 Rapportages & Dashboards):
    - Redesign van de factsheets naar het WBM/Twentse Buurtbarometer model.
-   - Toevoegen van gemeentelijke rangorde, thematische benchmarkbalken met gemeentegemiddelde als verticale lijn, trendline-indicatie en BAG-bouwperiodes.
-2. **Kaart ↔ Kompas Interacties:**
-   - Weergave-schakelaar toevoegen (Docked split-view vs. Floating window).
-   - Volledige tweerichtingssync met automatische selectie van `CBS_BUURT` bij indicator-klik in het Kompas.
-3. **Onboarding & Beheerpaneel verfijnen:**
-   - Startfocus op een kernbuurt en actiegerichte to-do lijst in het beheerpaneel.
+   - Gemeentelijke rangorde ("Rang 5 van 72"), thematische benchmarkbalken met gemeentegemiddelde als verticale referentielijn, trendline-indicatie en BAG-bouwperiodes.
+2. **[#442](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/442) — Interactieve rondleiding (tutorial) en herhaalbare instaphulp** (§1 Startscherm & Onboarding):
+   - Permanente herstartknop (`?`) in de navigatie om de rondleiding altijd te kunnen herhalen.
+   - 4-staps interactieve spotlight tour (Kaart ➔ Indicatoren ➔ Kompas ➔ Factsheet/Assistent).
+   - Rol-gestuurde instap (Inwoner: buurt zoeken vs. Adviseur/Raad: gebiedsanalyse).
+3. **[#443](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/443) — Startkaart met automatische gebiedsfocus en actieve startindicator** (§1 Onboarding & §2 Kaartinteracties):
+   - Automatische startfocus op de organisatie-gemeente (`standaard_gemeente_code`).
+   - Directe activering van een representatieve kernindicator met legenda (voorkomt lege donkere startkaart).
+   - Uitklapbare tekstlabels voor de linker navigatiebalk.
+4. **[#444](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/444) — Tweerichtingssynchronisatie en docked split-view voor Kompas en Kaart** (§2 Kaartinteracties & §3 D-Omni Kompas):
+   - Weergave-schakelaar: Docked zijpaneel (split-view) naast de kaart vs. Floating pop-out.
+   - Automatische selectie van `CBS_BUURT` bij indicator-klik in het Kompas (lost de foutmelding op).
+   - Kaart/paneel-activatie navigeert en focust direct het Kompas.
+5. **[#445](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/445) — Interactieve suggestie-chips en contextuele kaartsturing in de Assistent** (§4 D-Omni Assistent):
+   - Klikbare prompt-chips bij opening en na antwoorden ("Toon buurten met laagste energielabels", "Geef me een rondleiding").
+   - Directe EventBus-sturing van kaart, Kompas en factsheet vanuit de chat.
+6. **[#446](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/446) — Handelingsgerichte to-do lijst en zichtbaarheid van datasets en use cases in beheer** (§6 Functioneel Beheer):
+   - "Aanbevolen acties voor vandaag" op het dashboard met directe doorklikfilters.
+   - Overzichtsschermen voor use cases (`/admin/usecases`) en datasets/leveringen (`/admin/datasets`).
