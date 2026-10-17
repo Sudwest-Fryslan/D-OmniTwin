@@ -14,6 +14,7 @@ Eerdere wijzigingen, van vóór dit bestand, zijn terug te vinden in de git-hist
 
 ### Opgelost
 
+- **Hiërarchieboom beheerpaneel overschreef titel en miste contrast** ([#448](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/448)): bij het bijwerken van de `+`/`-` indicator in de D3-boom overschreef een selectiefilter (`i === 1`) de stroke-laag van de tweede titel (*Kwaliteit fysieke leefomgeving*) met een zwarte indicator. Doordat het resterende label een vaste lichte kleur had, viel de titel in lichte weergave weg. De boom selecteert nu specifiek `text.node-toggle`, koppelt label- en halokleuren aan `--color-text-primary` en `--color-background`, en verhoogt de afkapgrens naar 32 tekens met een hover-tooltip.
 - **CBS Kerncijfers auto-mapping 2024–2026** ([#439](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/439)): CBS StatLine tabel `85984NED` (2024) en opvolgende jaren splitsten particuliere personenauto's af van de leasewagens en wijzigden de kolomnamen (`PersonenautoSParticulierenPerHh...`). De mapping in `download_cbs_kerncijfers.py` en `init_data/cbs/datapackage.json` is bijgewerkt; `controleer_tabel` werpt nu een `RuntimeError` in plaats van `sys.exit()`.
 
 ### Gewijzigd
