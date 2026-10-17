@@ -176,6 +176,7 @@ De auditbevindingen zijn conform de #305-vorm uitgesplitst naar zes afzonderlijk
 5. **[#445](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/445) — Interactieve suggestie-chips en contextuele kaartsturing in de Assistent** (§4 D-Omni Assistent):
    - Klikbare prompt-chips bij opening en na antwoorden ("Toon buurten met laagste energielabels", "Geef me een rondleiding").
    - Directe EventBus-sturing van kaart, Kompas en factsheet vanuit de chat.
-6. **[#446](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/446) — Handelingsgerichte to-do lijst en zichtbaarheid van datasets en use cases in beheer** (§6 Functioneel Beheer):
+6. **[#446](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/446) — Handelingsgerichte to-do lijst, DCAT-compliance en zichtbaarheid van datasets en use cases in beheer** (§6 Functioneel Beheer):
    - "Aanbevolen acties voor vandaag" op het dashboard met directe doorklikfilters.
+   - Bewaking van verplichte **DCAT-AP-NL** velden per dataset en indicator conform [#401](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/401) en inzicht in de DCAT-catalogusstatus (`/catalogus`, [#399](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/399)) voor federatieve datadeling (DataFryslân, FRLDS, Terp 2030, harvesting data.overheid.nl [#393](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/393)).
    - Overzichtsschermen voor use cases (`/admin/usecases`) en datasets/leveringen (`/admin/datasets`).
