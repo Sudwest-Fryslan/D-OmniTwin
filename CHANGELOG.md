@@ -8,6 +8,10 @@ Eerdere wijzigingen, van vóór dit bestand, zijn terug te vinden in de git-hist
 
 ## [Unreleased]
 
+### Toegevoegd
+
+- **Integrale gebruikerservaring-audit** ([#309](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/309)): cognitive walkthrough en visuele inspectie van de zes kerninterfaces vanuit vijf persona's en WCAG 2.1 AA (ADR 0011), inclusief ontwerpkeuzes voor Kaart ↔ Kompas synchronisatie en de functionele blauwdruk voor het factsheet-redesign ([#441](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/441)) in `docs/4-ux-design/gebruikerservaring-audit.md`.
+
 ### Opgelost
 
 - **Kleurvervaging, toetsenbordbediening en weergave Kompas en panelen** ([#450](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/450)):
