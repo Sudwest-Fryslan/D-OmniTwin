@@ -815,7 +815,7 @@ class KompasVisualization {
             // Reset transforms just in case
             // self.g.transition(t).attr('transform', 'scale(1)'); 
 
-            // Transition arcs
+            // Transition arcs (fill-opacity permanent 1.0 voor zichtbare segmenten conform #450)
             path.transition(t)
                 .tween('data', d => {
                     const i = d3.interpolate(d.current, d.target);
@@ -824,20 +824,7 @@ class KompasVisualization {
                 .filter(function (d) {
                     return +this.getAttribute('fill-opacity') || self.arcVisible(d.target);
                 })
-                .attr('fill-opacity', d => self.arcVisible(d.target) ? (d.children ? 0.6 : 0.4) : 0)
-                .attr('pointer-events', d => self.arcVisible(d.target) ? 'auto' : 'none')
-                .attrTween('d', d => () => arc(d.current));
-
-            // Transition arcs
-            path.transition(t)
-                .tween('data', d => {
-                    const i = d3.interpolate(d.current, d.target);
-                    return t => d.current = i(t);
-                })
-                .filter(function (d) {
-                    return +this.getAttribute('fill-opacity') || self.arcVisible(d.target);
-                })
-                .attr('fill-opacity', d => self.arcVisible(d.target) ? (d.children ? 0.6 : 0.4) : 0)
+                .attr('fill-opacity', d => self.arcVisible(d.target) ? 1.0 : 0)
                 .attr('pointer-events', d => self.arcVisible(d.target) ? 'auto' : 'none')
                 .attrTween('d', d => () => arc(d.current));
 
@@ -874,14 +861,12 @@ class KompasVisualization {
         this._labelSelection = label;
         this._parentSelection = parent;
 
-        // Hover effects
+        // Hover effects: behoud volle kleurdekking (1.0), visuele feedback via stroke in CSS (#450)
         path.on('mouseover', function (event, d) {
             self.handleMouseOver(event, d);
-            d3.select(this).attr('fill-opacity', d.children ? 0.8 : 0.6);
         })
             .on('mouseout', function (event, d) {
                 self.handleMouseOut();
-                d3.select(this).attr('fill-opacity', self.arcVisible(d.current) ? (d.children ? 0.6 : 0.4) : 0);
             });
 
         console.log('✅ Sunburst rendered:', root.descendants().length, 'nodes');
@@ -1935,9 +1920,9 @@ class KompasVisualization {
 
         container.innerHTML = html;
 
-        // Click handlers — flyToGebied
+        // Click & keyboard handlers — flyToGebied (#450: toegankelijk met Enter/Spatie)
         container.querySelectorAll('[data-buurt-id]').forEach(el => {
-            el.addEventListener('click', () => {
+            const activeer = () => {
                 const buurtId = el.dataset.buurtId;
                 // Zoek de feature in de huidige kaartdata
                 if (window.state?.currentData?.features) {
@@ -1952,6 +1937,14 @@ class KompasVisualization {
                             window.highlightGebied(actualId);
                         }
                     }
+                }
+            };
+
+            el.addEventListener('click', activeer);
+            el.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    activeer();
                 }
             });
         });

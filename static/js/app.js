@@ -2667,6 +2667,7 @@ function populateGebiedstypeSelect(gebiedstypes) {
         const option = document.createElement('option');
         option.value = gt.id;
         option.textContent = gt.naam;
+        if (gt.code) option.dataset.code = gt.code;
         select.appendChild(option);
     });
 
@@ -3519,6 +3520,22 @@ function setupEventListeners() {
         console.log('🔗 Kompas sync event received:', name, uuid);
 
         state.currentIndicator = uuid;
+
+        // Fallback (#450): als er nog geen gebiedstype actief was, automatisch terugvallen op CBS_BUURT
+        if (!state.currentGebiedstype) {
+            const gtSelect = document.getElementById('gebiedstype-select');
+            if (gtSelect) {
+                const buurtOpt = Array.from(gtSelect.options).find(o =>
+                    o.dataset?.code === 'CBS_BUURT' || o.text.toLowerCase().includes('buurten')
+                );
+                if (buurtOpt && buurtOpt.value) {
+                    gtSelect.value = buurtOpt.value;
+                    state.currentGebiedstype = buurtOpt.value;
+                    const gtCountEl = document.getElementById('gebiedstype-count');
+                    if (gtCountEl) gtCountEl.textContent = 'Gegevens laden...';
+                }
+            }
+        }
 
         // Track B3: Update indicator badge
         updateIndicatorBadge(name);

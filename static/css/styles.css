@@ -150,6 +150,7 @@
   line-height: 1.5;
   color: var(--text-primary);
   opacity: 0.9;
+  white-space: pre-line;
 }
 
 .metadata-source {
@@ -193,8 +194,8 @@
   --text-primary: var(--basis-color-default-color-document, #1e293b);
   --text-secondary: var(--basis-color-default-color-subtle, #475569);
   --border-color: var(--basis-color-default-border-subtle, #e2e8f0);
-  /* Glas-vlakken en randen afgeleid van de themakleuren (licht en donker) */
-  --panel-bg: color-mix(in srgb, var(--bg-secondary) 40%, transparent);
+  /* Glas-vlakken en randen afgeleid van de themakleuren (96% dekkend conform #314, #450) */
+  --panel-bg: color-mix(in srgb, var(--bg-secondary) 96%, transparent);
   --panel-border: color-mix(in srgb, var(--text-primary) 20%, transparent);
   --shadow-color: rgba(0, 0, 0, 0.15);
   /* Neutrale tint voor hover en subtiele vlakken: tekstkleur met lage dekking, werkt in licht én donker */
@@ -1856,12 +1857,20 @@ textarea {
 /* Sunburst Arc Styling (applying via D3.js) */
 .kompas-arc-path {
   /* No stroke - use padding in arc generator for separation */
-  transition: opacity 0.2s ease, fill-opacity 0.2s ease;
+  transition: stroke 0.15s ease, stroke-width 0.15s ease;
 }
 
-.kompas-arc-path:hover {
-  opacity: 0.8;
-  stroke-width: 3px;
+.kompas-arc-path:hover,
+.kompas-arc-path:focus-visible {
+  stroke: var(--color-border-focus, #ffffff);
+  stroke-width: 2.5px;
+  stroke-linejoin: round;
+  paint-order: stroke fill;
+}
+
+[data-buurt-id]:focus-visible {
+  outline: 2px solid var(--accent, #6366f1);
+  outline-offset: 1px;
 }
 
 /* Tooltip (D3.js creates this dynamically) */
@@ -2468,8 +2477,8 @@ textarea {
   top: 80px;
   bottom: 35px;
   width: 380px;
-  /* Bijna dekkend: een felle kaartlaag mag de tekst van de chat niet onleesbaar maken (#314) */
-  background: color-mix(in srgb, var(--bg-secondary) 96%, transparent);
+  /* Bijna dekkend: een felle kaartlaag mag de tekst niet onleesbaar maken (#314, #450) */
+  background: var(--panel-bg);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   border-left: 1px solid var(--panel-border);
