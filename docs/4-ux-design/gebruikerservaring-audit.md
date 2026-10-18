@@ -57,23 +57,47 @@ De beoordeling is verricht vanuit vijf sleutelpersona's en getoetst aan de **WCA
   - Detailpaneel toont bij doorklikken een trendgrafiek over meerdere meetjaren en een tijdlijn-slider.
 - **Frictie & Visuele Bevindingen (Live Audit):**
   - **Zwevende modal overlapt de kaart:** `#kompas-window` opent gecentreerd over de kaart, waardoor de geselecteerde buurt volledig aan het zicht wordt onttrokken.
-  - **Kleurvervaging ('doorzichtige waas') bij drilldown en hover:** Bij het doorklikken of hoveren in het Kompas zetten D3-transities de `fill-opacity` van segmenten geforceerd terug naar `0.4` of `0.6` (in plaats van `1.0`), waardoor de kleuren flets en melkachtig vervagen.
-  - **Vaste vensterbreedte blokkeert herschalen:** `#kompas-window` staat via CSS geforceerd op `width: 1100px !important` met een vaste paneelbreedte van 650px, waardoor het venster niet smaller kan worden gesleept of meeschaalt op compacte schermen.
-  - **Tekstopmaak in definities:** Brondefinities tonen letterlijke escape-reeksen (`\r\n\r\n`) in plaats van nette alinea's en missen `white-space: pre-line`.
-  - **Inconsistente paneel-opaciteit (40% vs. 96%):** De linkerpanelen (zoals de legenda) hebben een sterke transparantie (`color-mix 40%`) waardoor felle kaartkleuren door de tekst heen schijnen, terwijl de D-Omni Assistent rechts juist bijna massief dekkend is (`color-mix 96%`).
+  - **Kleurvervaging ('doorzichtige waas') bij drilldown en hover:** Het Kompas tekent segmenten met `fill-opacity` 1.0, maar zowel de drilldown-transitie als elke `mouseout` in `kompas.js` zetten die terug op `0.6`/`0.4`. Een segment vervaagt dus blijvend zodra je erover bent geweest of erin hebt gedrild. De hover gebruikt opaciteit als enige feedback.
+  - **Vaste vensterbreedte blokkeert herschalen:** drie oorzaken samen. `.floating-window.expanded` staat op `width: 1100px !important` (wint van de inline breedte van `DraggableWindow`), `.kompas-main-panel` heeft een vaste `650px` met `flex-shrink: 0`, en `DraggableWindow` laat niet smaller dan 400 px toe. De sunburst heeft al een `ResizeObserver`; dat is niet de blokkade.
+  - **Tekstopmaak in definities (datafout én CSS-opmaak):** in de database staan letterlijke `\r\n`-tekens, verkeerd ontsnapt overgenomen uit de oude dump. Dit wordt eerst via een aparte veilige datacorrectie hersteld (alleen de 10 getroffen indicatoren in `omschrijving`). Vervolgens is in CSS `white-space: pre-line` nodig op `.metadata-text` en `.ip-beschrijving` (opgepakt in #450) zodat de browser de resulterende regeleinden netjes als alinea's rendert in plaats van ze als enkele spatie samen te voegen.
+  - **Inconsistente paneel-opaciteit (40% vs. 96%):** De linkerpanelen (zoals de legenda) hebben een sterke transparantie (`color-mix 40%`) waardoor felle kaartkleuren door de tekst heen schijnen, terwijl de D-Omni Assistent rechts bijna massief dekkend is (`color-mix 96%`). De 96% is een bewuste keuze uit #314 (leesbaarheid boven een felle kaartlaag); gelijktrekken gaat dus omhoog, niet omlaag.
   - **Foutmelding bij indicator-activatie vanuit Kompas:** Wanneer een gebruiker op een blad-indicator klikt in het Kompas, roept `kompas.js` `syncIndicatorToMap` aan, maar geeft de kaart direct de foutmelding `⚠️ Selecteer eerst een gebiedstype` als er nog geen gebiedstype (buurten/wijken) actief was geselecteerd.
   - **Eenzijdige synchronisatie bij gesloten Kompas:** Als een indicator op de kaart of in het linkerpaneel wordt geactiveerd terwijl het Kompas gesloten is, negeert het Kompas het event. Bij later handmatig openen staat het Kompas weer in de algemene stand zonder focus op de actieve indicator.
+  - **Twee panelen voor dezelfde indicator:** het Kompas-detailpaneel en het indicatorpaneel (`indicatorpaneel.js`) tonen overlappende gegevens (beschrijving, bron, waarde) met elk een eigen knop 'Afwijking melden'. Ze hebben ook elk een eigen vergelijkingsstaafdiagram: het Kompas haalt per gebied de historie op (max. 5 gebieden, geen gemeentegemiddelde, en het vervangt de trendlijn), het indicatorpaneel gebruikt een serverroute met onderdrukking van kleine aantallen (#325), gemeentegemiddelde en een CSV die dezelfde gegevens bevat. Ze volgen bovendien een andere 'actieve indicator': het Kompas de aangeklikte knoop, het indicatorpaneel de kaartindicator (`state.currentIndicator`).
+  - **Top-uitschieters werken alleen met de muis:** de rijen zijn klikbaar (vliegen naar het gebied) en hebben `role="button"` en `tabindex="0"`, maar alleen een `click`-handler (geen Enter/Spatie). Staat het gebied niet in de geladen kaartdata, dan gebeurt er stilzwijgend niets.
+  - **Lege definitie bij ca. 122 van 245 Kompas-indicatoren** (geen `omschrijving`): het indicatorpaneel valt dan terug op de ontologische beschrijving, de Definitie-tab van het Kompas niet. Bij samenvoegen mag dit niet verslechteren.
 - **Vastgestelde Oplossingen & Besluiten (via `/grill-me` & gebruikersfeedback):**
-  1. **Drieluik-architectuur: Links Invoer/Bronnen ➔ Midden Kaart ➔ Rechts Output:**
-     - Alle output, analyse en duiding (Kompas, Indicatorpaneel, D-Omni Assistent) verenigen in één overzichtelijk, inklapbaar **Inzichten-dock aan de rechterzijde** met tabs/modules. De kaart in het midden blijft altijd zichtbaar en interactief.
-     - Harmonisatie van paneel-opaciteit en glasstijl (uniforme token conform WCAG 2.1 AA) over zowel linker- als rechterpanelen.
-  2. **Herstel van Kompas-weergave & responsiviteit:**
-     - D3 `fill-opacity` permanent op `1.0` voor actieve segmenten, zodat kleuren levendig blijven bij inzoomen en hoveren.
-     - Vaste `!important` breedtes verwijderen; sunburst dynamisch laten meeschalen met de container via `ResizeObserver` en SVG `viewBox`.
-     - `white-space: pre-line` en newline-clearing voor brondefinities.
-  3. **Volledige tweerichtingssynchronisatie:**
+  1. **Drieluik: Links Invoer/Bronnen ➔ Midden Kaart ➔ Rechts Output.** Links blijft alles waarmee je kiest en instelt: gebied, indicator *kiezen*, lagen, filters en legenda. Rechts komt alle output en duiding. De kaart blijft altijd zichtbaar.
+  2. **Rechter dock (standaard weergave van het Kompas).**
+     - Breedte `clamp(340px, 25vw, 480px)`: doel is ca. 25% van het scherm (bij 1920 px gemaximeerd op 480 px, bij 1536 px ≈ 384 px). Op schermen smaller dan ca. 1360 px geldt de ondergrens van 340 px; het indicatorpaneel toont zijn staafdiagram bij ca. 340 px al leesbaar. Onder 900 px wordt het dock een bottom sheet.
+     - Geen versleepbare breedte in het dock (voorkomt een toetsenbord-resizer en extra toestanden).
+     - Tabs: **Kompas** en **Assistent**. De kaart krijgt `padding` zodat een geselecteerd gebied niet onder het dock verdwijnt.
+  3. **Eén samengevoegd detailpaneel in het Kompas** (het indicatorpaneel gaat erin op; de linker icoon 'Indicator' vervalt, de indicatorkiezer blijft in Kaartconfiguratie). Volgorde in het smalle dock, verticaal en scrollbaar:
+     1. broodkruimel;
+     2. sunburst met 'Terug naar boven' en 'Reset' (inklapbaar zodra een indicator gekozen is);
+     3. titel, waarde en trend;
+     4. **trendlijn** met peiljaar-slider; bij meerdere geselecteerde gebieden toont een compacte selectielijst boven de trendlijn de geselecteerde gebieden. Klikken op een gebied toont direct de trendlijn van dat specifieke gebied (standaard het laatst geselecteerde; toetsenbordtoegankelijk via knoppen met `aria-current`);
+     5. tabs Definitie | Ontologie (terugval op ontologie als de omschrijving leeg is);
+     6. metadata: eenheid, bron, peildatum, gemeentegemiddelde;
+     7. **liggend staafdiagram** van de geselecteerde gebieden tegen het gemeentegemiddelde;
+     8. **Top-uitschieters** (klik = naar het gebied vliegen, ook met Enter/Spatie);
+     9. acties: **CSV downloaden** en **Afwijking melden** (één knop, nu dubbel);
+     10. indicatordekking.
+     - Trendlijn en staafdiagram staan *naast elkaar* en vervangen elkaar niet meer.
+     - Eén bron voor staafdiagram, metadata en CSV: de bestaande route `/api/gebiedsmonitor/indicatorpaneel` (onderdrukking kleine aantallen #325, gemeentegemiddelde, CSV gelijk aan paneel). Het Kompas-eigen vergelijkingsdiagram vervalt.
+     - Eén 'actieve indicator' (`state.currentIndicator`), gedeeld met de kaart. De detailweergave is bereikbaar zonder sunburst: kies je een indicator via lijst of kaart, dan opent het dock direct op het detail. Zo blijft het tekstalternatief voor de kaart bestaan (ADR 0011).
+  4. **Los te koppelen venster, dock blijft de standaard.** Een knop 'Losmaken'/'Vastzetten' verplaatst *dezelfde* component tussen dock en zwevend venster (geen tweede implementatie); drilldown-stand, indicator en tab blijven behouden en de keuze wordt onthouden. Het venster behoudt de twee-koloms indeling via een container query (vanaf ca. 760 px breedte staat het detail naast de sunburst, anders eronder). Onder 900 px alleen dock/bottom sheet. Na verplaatsen of verbergen herberekent Chart.js zijn afmeting (zelfde valkuil als #419).
+  5. **Herstel van de Kompas-weergave.** Segmenten blijven op `fill-opacity` 1.0, ook na hover en drilldown. De hover krijgt een andere, niet op kleur steunende feedback (dikkere rand of outline), met dezelfde focusring voor het toetsenbord. De vaste breedtes (`1100px !important`, `650px`, minimum 400 px) verdwijnen.
+  6. **Eén dekkingstoken voor alle panelen.** Startwaarde 96% (conform #314), dus ook voor de linkerpanelen en het dock. Controleren tegen felle choropleten (WCAG 2.1 AA).
+  7. **Toegankelijkheid.** Dock met `role="tablist"`/`tabpanel`, bewust focusbeheer en Escape-gedrag; toetsenbordbediening op de uitschieters.
+  8. **Tests.** De e2e-tests koppelen aan `#kompas-window`, `#chat-panel` en `.floating-window-header h3` (`test_toegankelijkheid.py`, `test_integratie_e2e.py`, `e2e_helpers.py`) en aan het indicatorpaneel (`test_indicatorpaneel.py`). Die moeten mee herschreven worden, plus een nieuwe test voor losmaken/vastzetten. Een opgeslagen vensterstand in `localStorage` mag het dock niet verstoren.
+  9. **Volledige tweerichtingssynchronisatie:**
      - *Kompas ➔ Kaart:* Klik op een indicator in het Kompas selecteert automatisch het schaalniveau `CBS_BUURT` indien nog geen gebiedstype actief was, en laadt direct de choropleet op de kaart.
      - *Kaart/Paneel ➔ Kompas:* Een indicator activeren navigeert en zoomt direct het Kompas naar de betreffende taartpunt/subthema en opent de details. Als het Kompas gesloten is en later geopend wordt, opent het direct gefocust op de actieve indicator.
+  10. **Splitsing in snelle fixes (#450) en dockarchitectuur (#444):**
+     - **Quickfixes (#450, direct oppakbaar op `main`):** herstel van kleurvervaging (`fill-opacity: 1.0`, outline/stroke bij hover en focus), `CBS_BUURT`-fallback bij indicator-klik, toetsenbordbediening (Enter/Spatie) op top-uitschieters, uniform dekkingsniveau (96%, conform #314) voor alle panelen, en `white-space: pre-line` voor definities in CSS.
+     - **Dockarchitectuur (#444):** rechter dock van ca. 25% schermbreedte (`clamp(340px, 25vw, 480px)`, bottom sheet onder 900 px) met tabs Kompas en Assistent; samenvoeging van het indicatorpaneel in het Kompas (volledige volgorde, staafdiagram, trendlijn met gebiedskiezer bij multiselect, CSV, één meldknop); loskoppelbaar venster met container query (≥ 760 px); kaartpadding; e2e-tests herschrijven.
+     - De datacorrectie voor letterlijke `\r\n`-escapes in 10 indicatordefinities is een aparte database-actie vooraf (zie overdrachtsdocument).
 
 ---
 
@@ -166,7 +190,7 @@ De beoordeling is verricht vanuit vijf sleutelpersona's en getoetst aan de **WCA
 
 ## 6. Conclusie & Sub-issues onder Epic #309
 
-De auditbevindingen zijn conform de #305-vorm uitgesplitst naar zes afzonderlijke, behapbare sub-issues met het label `UX`. Zodra deze zes sub-issues zijn gerealiseerd en gemerged naar `main`, kan Epic #309 formeel worden gesloten:
+De auditbevindingen zijn conform de #305-vorm uitgesplitst naar zeven afzonderlijke, behapbare sub-issues met het label `UX`. Zodra deze zeven sub-issues zijn gerealiseerd en gemerged naar `main`, kan Epic #309 formeel worden gesloten:
 
 1. **[#441](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/441) — Factsheet- en rapportageredesign conform WBM/Buurtbarometer** (§5 Rapportages & Dashboards):
    - Redesign van de factsheets naar het WBM/Twentse Buurtbarometer model.
@@ -179,17 +203,21 @@ De auditbevindingen zijn conform de #305-vorm uitgesplitst naar zes afzonderlijk
    - Automatische startfocus op de organisatie-gemeente (`standaard_gemeente_code`).
    - Directe activering van een representatieve kernindicator met legenda (voorkomt lege donkere startkaart).
    - Uitklapbare tekstlabels voor de linker navigatiebalk.
-4. **[#444](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/444) — Drieluik-architectuur (Rechter Inzichten-dock voor Kompas/Indicator/Assistent), tweerichtingssync en visuele harmonisatie** (§2 Kaartinteracties & §3 D-Omni Kompas):
-   - Herstructurering naar het rustige drieluik: Links Invoer/Bronnen ➔ Midden Kaart ➔ Rechts Output & Inzichten (Kompas, Indicatordetails en D-Omni Assistent verenigd in één dockend paneel i.p.v. willekeurig zwevende/overlappende modals).
-   - Harmonisatie van paneel-opaciteit en glasstijl (uniforme token; gelijktrekken van het verschil tussen 40% links en 96% rechts conform WCAG 2.1 AA).
-   - Oplossen van de D3-kleurvervaging in het Kompas (`fill-opacity` permanent op `1.0` bij zoom/hover).
-   - Flexibele responsieve venster- en SVG-schaling (verwijderen van `width: 1100px !important`, dynamische `ResizeObserver` en `viewBox`).
-   - Tekstopmaak van brondefinities opschonen (newline-clearing & `white-space: pre-line`).
-   - Automatische selectie van `CBS_BUURT` bij indicator-klik in het Kompas (lost de foutmelding op) en kaart-naar-kompas focus.
-5. **[#445](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/445) — Interactieve suggestie-chips en contextuele kaartsturing in de Assistent** (§4 D-Omni Assistent):
+4. **[#450](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/450) — Herstel kleurvervaging, toetsenbordbediening en weergave van Kompas en panelen** (§2 Kaartinteracties & §3 D-Omni Kompas):
+   - Herstel van kleurvervaging (`fill-opacity: 1.0` behouden bij hover en drilldown; rand/focusring als visuele feedback).
+   - `CBS_BUURT`-fallback bij indicator-klik in het Kompas (voorkomt foutmelding).
+   - Toetsenbordbediening (Enter/Spatie) op top-uitschietersrijen.
+   - Uniform dekkingsniveau (96%, conform #314) voor alle panelen (legenda, configuratie, etc.).
+   - `white-space: pre-line` in CSS voor weergave van alinea's in definities.
+5. **[#444](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/444) — Rechter dock voor D-Omni Kompas en Assistent met samengevoegd detailpaneel en tweerichtingssync** (§2 Kaartinteracties & §3 D-Omni Kompas), uitwerking in §2.3:
+   - Rechter dock van ca. 25% schermbreedte (`clamp(340px, 25vw, 480px)`, bottom sheet onder 900 px) met tabs Kompas en Assistent; vaste vensterbreedtes vervallen.
+   - Samenvoegen van indicatorpaneel in het Kompas (vaste volgorde: broodkruimel, sunburst, titel/trend, trendlijn met selectielijst bij meerdere gebieden, definitie/ontologie, metadata, liggend staafdiagram via `/api/gebiedsmonitor/indicatorpaneel`, top-uitschieters, CSV en één meldknop).
+   - Behoud van loskoppelbaar zwevend venster (dezelfde component, keuze onthouden; 2-koloms indeling via container query vanaf ca. 760 px).
+   - Kaartpadding en bijwerken van e2e-tests.
+6. **[#445](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/445) — Interactieve suggestie-chips en contextuele kaartsturing in de Assistent** (§4 D-Omni Assistent):
    - Klikbare prompt-chips bij opening en na antwoorden ("Toon buurten met laagste energielabels", "Geef me een rondleiding").
    - Directe EventBus-sturing van kaart, Kompas en factsheet vanuit de chat.
-6. **[#446](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/446) — Handelingsgerichte to-do lijst, DCAT-compliance en zichtbaarheid van datasets en use cases in beheer** (§6 Functioneel Beheer):
+7. **[#446](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/446) — Handelingsgerichte to-do lijst, DCAT-compliance en zichtbaarheid van datasets en use cases in beheer** (§6 Functioneel Beheer):
    - "Aanbevolen acties voor vandaag" op het dashboard met directe doorklikfilters.
    - Bewaking van verplichte **DCAT-AP-NL** velden per dataset en indicator conform [#401](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/401) en inzicht in de DCAT-catalogusstatus (`/catalogus`, [#399](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/399)) voor federatieve datadeling (DataFryslân, FRLDS, Terp 2030, harvesting data.overheid.nl [#393](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/393)).
    - Overzichtsschermen voor use cases (`/admin/usecases`) en datasets/leveringen (`/admin/datasets`).
