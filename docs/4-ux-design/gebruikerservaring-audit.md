@@ -57,11 +57,21 @@ De beoordeling is verricht vanuit vijf sleutelpersona's en getoetst aan de **WCA
   - Detailpaneel toont bij doorklikken een trendgrafiek over meerdere meetjaren en een tijdlijn-slider.
 - **Frictie & Visuele Bevindingen (Live Audit):**
   - **Zwevende modal overlapt de kaart:** `#kompas-window` opent gecentreerd over de kaart, waardoor de geselecteerde buurt volledig aan het zicht wordt onttrokken.
+  - **Kleurvervaging ('doorzichtige waas') bij drilldown en hover:** Bij het doorklikken of hoveren in het Kompas zetten D3-transities de `fill-opacity` van segmenten geforceerd terug naar `0.4` of `0.6` (in plaats van `1.0`), waardoor de kleuren flets en melkachtig vervagen.
+  - **Vaste vensterbreedte blokkeert herschalen:** `#kompas-window` staat via CSS geforceerd op `width: 1100px !important` met een vaste paneelbreedte van 650px, waardoor het venster niet smaller kan worden gesleept of meeschaalt op compacte schermen.
+  - **Tekstopmaak in definities:** Brondefinities tonen letterlijke escape-reeksen (`\r\n\r\n`) in plaats van nette alinea's en missen `white-space: pre-line`.
+  - **Inconsistente paneel-opaciteit (40% vs. 96%):** De linkerpanelen (zoals de legenda) hebben een sterke transparantie (`color-mix 40%`) waardoor felle kaartkleuren door de tekst heen schijnen, terwijl de D-Omni Assistent rechts juist bijna massief dekkend is (`color-mix 96%`).
   - **Foutmelding bij indicator-activatie vanuit Kompas:** Wanneer een gebruiker op een blad-indicator klikt in het Kompas, roept `kompas.js` `syncIndicatorToMap` aan, maar geeft de kaart direct de foutmelding `⚠️ Selecteer eerst een gebiedstype` als er nog geen gebiedstype (buurten/wijken) actief was geselecteerd.
   - **Eenzijdige synchronisatie bij gesloten Kompas:** Als een indicator op de kaart of in het linkerpaneel wordt geactiveerd terwijl het Kompas gesloten is, negeert het Kompas het event. Bij later handmatig openen staat het Kompas weer in de algemene stand zonder focus op de actieve indicator.
-- **Vastgestelde Oplossingen & Besluiten (via `/grill-me`):**
-  1. **Docked / Zijpaneel vs. Zwevende Modus:** Toevoegen van een weergave-schakelaar. In gedockte modus schuift het Kompas in als zijpaneel naast de kaart (split-view), zodat kaart en sunburst gelijktijdig zichtbaar zijn en synchroon reageren. De zwevende pop-out blijft beschikbaar voor 'deep dives' op grote schermen.
-  2. **Volledige tweerichtingssynchronisatie:**
+- **Vastgestelde Oplossingen & Besluiten (via `/grill-me` & gebruikersfeedback):**
+  1. **Drieluik-architectuur: Links Invoer/Bronnen ➔ Midden Kaart ➔ Rechts Output:**
+     - Alle output, analyse en duiding (Kompas, Indicatorpaneel, D-Omni Assistent) verenigen in één overzichtelijk, inklapbaar **Inzichten-dock aan de rechterzijde** met tabs/modules. De kaart in het midden blijft altijd zichtbaar en interactief.
+     - Harmonisatie van paneel-opaciteit en glasstijl (uniforme token conform WCAG 2.1 AA) over zowel linker- als rechterpanelen.
+  2. **Herstel van Kompas-weergave & responsiviteit:**
+     - D3 `fill-opacity` permanent op `1.0` voor actieve segmenten, zodat kleuren levendig blijven bij inzoomen en hoveren.
+     - Vaste `!important` breedtes verwijderen; sunburst dynamisch laten meeschalen met de container via `ResizeObserver` en SVG `viewBox`.
+     - `white-space: pre-line` en newline-clearing voor brondefinities.
+  3. **Volledige tweerichtingssynchronisatie:**
      - *Kompas ➔ Kaart:* Klik op een indicator in het Kompas selecteert automatisch het schaalniveau `CBS_BUURT` indien nog geen gebiedstype actief was, en laadt direct de choropleet op de kaart.
      - *Kaart/Paneel ➔ Kompas:* Een indicator activeren navigeert en zoomt direct het Kompas naar de betreffende taartpunt/subthema en opent de details. Als het Kompas gesloten is en later geopend wordt, opent het direct gefocust op de actieve indicator.
 
@@ -169,10 +179,13 @@ De auditbevindingen zijn conform de #305-vorm uitgesplitst naar zes afzonderlijk
    - Automatische startfocus op de organisatie-gemeente (`standaard_gemeente_code`).
    - Directe activering van een representatieve kernindicator met legenda (voorkomt lege donkere startkaart).
    - Uitklapbare tekstlabels voor de linker navigatiebalk.
-4. **[#444](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/444) — Tweerichtingssynchronisatie en docked split-view voor Kompas en Kaart** (§2 Kaartinteracties & §3 D-Omni Kompas):
-   - Weergave-schakelaar: Docked zijpaneel (split-view) naast de kaart vs. Floating pop-out.
-   - Automatische selectie van `CBS_BUURT` bij indicator-klik in het Kompas (lost de foutmelding op).
-   - Kaart/paneel-activatie navigeert en focust direct het Kompas.
+4. **[#444](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/444) — Drieluik-architectuur (Rechter Inzichten-dock voor Kompas/Indicator/Assistent), tweerichtingssync en visuele harmonisatie** (§2 Kaartinteracties & §3 D-Omni Kompas):
+   - Herstructurering naar het rustige drieluik: Links Invoer/Bronnen ➔ Midden Kaart ➔ Rechts Output & Inzichten (Kompas, Indicatordetails en D-Omni Assistent verenigd in één dockend paneel i.p.v. willekeurig zwevende/overlappende modals).
+   - Harmonisatie van paneel-opaciteit en glasstijl (uniforme token; gelijktrekken van het verschil tussen 40% links en 96% rechts conform WCAG 2.1 AA).
+   - Oplossen van de D3-kleurvervaging in het Kompas (`fill-opacity` permanent op `1.0` bij zoom/hover).
+   - Flexibele responsieve venster- en SVG-schaling (verwijderen van `width: 1100px !important`, dynamische `ResizeObserver` en `viewBox`).
+   - Tekstopmaak van brondefinities opschonen (newline-clearing & `white-space: pre-line`).
+   - Automatische selectie van `CBS_BUURT` bij indicator-klik in het Kompas (lost de foutmelding op) en kaart-naar-kompas focus.
 5. **[#445](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/445) — Interactieve suggestie-chips en contextuele kaartsturing in de Assistent** (§4 D-Omni Assistent):
    - Klikbare prompt-chips bij opening en na antwoorden ("Toon buurten met laagste energielabels", "Geef me een rondleiding").
    - Directe EventBus-sturing van kaart, Kompas en factsheet vanuit de chat.
