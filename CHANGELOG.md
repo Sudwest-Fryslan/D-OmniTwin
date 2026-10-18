@@ -8,6 +8,10 @@ Eerdere wijzigingen, van vóór dit bestand, zijn terug te vinden in de git-hist
 
 ## [Unreleased]
 
+### Toegevoegd
+
+- **Integrale gebruikerservaring-audit** ([#309](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/309)): cognitive walkthrough en visuele inspectie van de zes kerninterfaces vanuit vijf persona's en WCAG 2.1 AA (ADR 0011), inclusief ontwerpkeuzes voor Kaart ↔ Kompas synchronisatie en de functionele blauwdruk voor het factsheet-redesign ([#441](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/441)) in `docs/4-ux-design/gebruikerservaring-audit.md`.
+
 ### Opgelost
 
 - **Hiërarchieboom beheerpaneel overschreef titel en miste contrast** ([#448](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/448)): bij het bijwerken van de `+`/`-` indicator in de D3-boom overschreef een selectiefilter (`i === 1`) de stroke-laag van de tweede titel (*Kwaliteit fysieke leefomgeving*) met een zwarte indicator. Doordat het resterende label een vaste lichte kleur had, viel de titel in lichte weergave weg. De boom selecteert nu specifiek `text.node-toggle`, koppelt label- en halokleuren aan `--color-text-primary` en `--color-background`, en verhoogt de afkapgrens naar 32 tekens met een hover-tooltip.
