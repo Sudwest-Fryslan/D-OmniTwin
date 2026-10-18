@@ -194,8 +194,8 @@
   --text-primary: var(--basis-color-default-color-document, #1e293b);
   --text-secondary: var(--basis-color-default-color-subtle, #475569);
   --border-color: var(--basis-color-default-border-subtle, #e2e8f0);
-  /* Glas-vlakken en randen afgeleid van de themakleuren (86% dekkend conform #314, #450) */
-  --panel-bg: color-mix(in srgb, var(--bg-secondary) 86%, transparent);
+  /* Glas-vlakken en randen afgeleid van de themakleuren (80% dekkend conform #314, #450) */
+  --panel-bg: color-mix(in srgb, var(--bg-secondary) 80%, transparent);
   --panel-border: color-mix(in srgb, var(--text-primary) 20%, transparent);
   --shadow-color: rgba(0, 0, 0, 0.15);
   /* Neutrale tint voor hover en subtiele vlakken: tekstkleur met lage dekking, werkt in licht én donker */
