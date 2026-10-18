@@ -221,3 +221,38 @@ De auditbevindingen zijn conform de #305-vorm uitgesplitst naar zeven afzonderli
    - "Aanbevolen acties voor vandaag" op het dashboard met directe doorklikfilters.
    - Bewaking van verplichte **DCAT-AP-NL** velden per dataset en indicator conform [#401](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/401) en inzicht in de DCAT-catalogusstatus (`/catalogus`, [#399](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/399)) voor federatieve datadeling (DataFryslân, FRLDS, Terp 2030, harvesting data.overheid.nl [#393](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/393)).
    - Overzichtsschermen voor use cases (`/admin/usecases`) en datasets/leveringen (`/admin/datasets`).
+
+---
+
+## 7. Fasering & Het Kritieke Pad (Uitvoeringsvolgorde)
+
+Om dubbel werk te voorkomen en afhankelijkheden te stroomlijnen, worden de 7 sub-issues uitgevoerd conform onderstaand kritiek pad:
+
+### 7.1 Overlap en beïnvloeding
+
+| Raakvlak / Onderdeel | Betrokken issues | Aandachtspunt / Voorkom dubbel werk |
+|---|---|---|
+| **Kompas interne logica vs. container** | [#450](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/450) & [#444](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/444) | **#450 moet vóór #444.** #450 fixt de interne D3-kleurvervaging, CSS-tokens en events. Als je eerst #444 bouwt, sleep je die bugs mee in de nieuwe dock-architectuur. |
+| **Linker navigatiebalk** | [#443](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/443), [#444](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/444), [#442](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/442) | #444 verwijdert het losse indicator-icoon (gaat op in Kompas). #443 voegt uitklapbare tekstlabels toe. #442 voegt het vaste vraagteken (`?`) toe. Door dit af te stemmen bouwen we de balk maar één keer om. |
+| **Spotlight Tour anchors** | [#442](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/442) & [#444](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/444) | De spotlight-tour in #442 licht het Kompas en de Assistent uit. Als #442 *vóór* #444 wordt gebouwd, wijzen de spotlights naar de oude floating vensters en moeten ze bij #444 opnieuw geschreven worden. **#444 moet dus vóór #442.** |
+| **Assistent chips & Tour** | [#445](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/445) & [#442](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/442) | Een van de interactieve chips in #445 is *"Geef me een interactieve rondleiding"*. Die chip kan direct inhaken op de spotlight-tour van #442. |
+| **Rapporten & Beheer (Geen overlap)** | [#441](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/441) & [#446](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/446) | #441 is backend + report templates (WBM-methodiek). #446 is 100% React SPA (`admin-panel/`). Deze raken de frontend-kaartviewer niet en kunnen volledig geïsoleerd worden opgepakt. |
+
+### 7.2 Het Kritieke Pad
+
+```
+FASE 1: Fundament & Quickfixes
+  └─► #450: Herstel kleurvervaging, CBS_BUURT fallback, uitschieters toetsenbord, 96% dekking, CSS pre-line
+        │
+FASE 2: De Grote Drieluik-Transitie
+  └─► #444: Rechter dock (25vw), indicatorpaneel samenvoegen, zwevend venster (container query)
+        │
+FASE 3: Instap & Synergie (Startkaart, Spotlight & Chat)
+  ├─► #443: Startkaart met automatische gebiedsfocus en actieve startindicator (definitieve linker balk)
+  ├─► #442: Spotlight rondleiding (haakt direct in op de definitieve dock- en kaartselectors)
+  └─► #445: Assistent suggestie-chips (kan rondleiding starten en dock aansturen)
+        │
+FASE 4: Diepgang & Beheer
+  ├─► #441: Factsheets conform WBM/Buurtbarometer (rapportageservice + design)
+  └─► #446: Beheer to-do lijst, datasets & DCAT-compliance (React admin-panel)
+```
