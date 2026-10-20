@@ -10,9 +10,20 @@ Eerdere wijzigingen, van vóór dit bestand, zijn terug te vinden in de git-hist
 
 ### Toegevoegd
 
+- **Rechter Dock-architectuur & samengevoegd detailpaneel** ([#444](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/444)): viewer-layout getransformeerd naar een 3-delige indeling (links: invoer/selectie, midden: kaart, rechts: uitvoer-dock met Tab 1 Kompas en Tab 2 Assistent). Het losse indicatorpaneel is geïntegreerd in het Kompas onder de sunburst met dynamische breadcrumb, benchmarks, filterbadges en CSV-export. Asymmetrische kaartverschuiving (laag-mismatch tussen PDOK BRT en CBS-buurten) is opgelost door het behoud van synchrone cameraprojectie (`setPadding: 0`) en freezone-centrering via `flyToGebied`.
 - **Integrale gebruikerservaring-audit** ([#309](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/309)): cognitive walkthrough en visuele inspectie van de zes kerninterfaces vanuit vijf persona's en WCAG 2.1 AA (ADR 0011), inclusief ontwerpkeuzes voor Kaart ↔ Kompas synchronisatie en de functionele blauwdruk voor het factsheet-redesign ([#441](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/441)) in `docs/4-ux-design/gebruikerservaring-audit.md`.
 
 ### Opgelost
+
+- **Kaartlaag-verschuiving, dock-interacties en Kompas drill-down** ([#444](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/444)):
+  - Het openen van het Kompas of Assistent-venster veroorzaakte een mismatch tussen de PDOK BRT achtergrondkaart (MapLibre) en de vectorlaag (Deck.gl CBS-buurten). Dit werd veroorzaakt doordat MapLibre asymmetrische padding toepaste terwijl Deck.gl's MapView geen asymmetrische canvas-padding ondersteunt. Dit is hersteld door padding op 0 te houden en centrering uitsluitend via `getFreezone()` en `flyToGebied()` uit te voeren.
+  - De assistent-knop in de linker balk opent nu direct het Assistent-tabblad in het rechter dock zonder ongewenst openen van het linker paneel of dubbele toggle-events.
+  - Map `leveringen/` toegevoegd aan `.gitignore` zodat binnengehaalde datasets van de laadstraat niet in git belanden.
+  - **Kompas drill-down en indicatorselectie behouden toestand**: het aanklikken van een indicator herstelt niet langer de sunburst naar de beginstand; `handleResize()` her-rendert de D3-hiërarchie niet meer bij container-resizes (zoals het verschijnen van een scrollbar bij het tonen van het detailpaneel). Drill-down reageert nu direct op de 1e klik (geen dubbelklik meer nodig), breadcrumbs worden ook voor indicator-leafnodes bijgewerkt, en 'Terug naar boven' stapt geanimeerd één niveau omhoog zonder de DOM opnieuw op te bouwen.
+  - **Multi-buurt trendlijnen en behoud detailpaneel bij 3+ gebieden**:
+    - Het bovenste grafiekvak toont bij multi-selectie van buurten (tot max 5) nu een meervoudige tijdreeks (multi-line trendgrafiek per buurt met legenda en jaartooltips) in plaats van een dubbel liggend staafdiagram.
+    - Het liggende staafdiagram wordt uitsluitend getoond in het onderste benchmarkpaneel (vergelijking van alle geselecteerde buurten met het gemeentegemiddelde).
+    - Het detailpaneel en de actieve indicator worden betrouwbaar bewaard bij het toevoegen van 3 of meer gebieden op de kaart (`_lastExpandedIndicatorUuid`), zonder dat de weergave verdwijnt of terugvalt naar een lege toestand.
 
 - **Kleurvervaging, toetsenbordbediening en weergave Kompas en panelen** ([#450](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/450)):
   - De segmenten van het Kompas (`kompas.js`) behouden nu permanent hun volle kleurdekking (`fill-opacity: 1.0`), ook na in- en uitzoomen (drilldown-transities) en hoveren; visuele focus en hover worden weergegeven met een oplichtende SVG-rand (`stroke: #ffffff`) conform WCAG 2.1 AA.

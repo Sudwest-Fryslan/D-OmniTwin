@@ -283,15 +283,13 @@ def test_migratie_alleen_sub_geen_persoonsgegevens():
 def test_viewer_laadt_paneel_en_favorieten():
     html = (ROOT / "templates/index.html").read_text(encoding="utf-8")
     for nodig in (
-        'data-panel="indicator"',
-        'id="panel-indicator"',
+        'id="rechter-dock"',
+        'id="dock-panel-kompas"',
         'id="ip-grafiek"',
         'id="ip-csv"',
         'id="mijn-favorieten"',
         'name="omnitwin-ingelogd"',
-        "/static/js/indicatorpaneel.js",
         "/static/js/mijn.js",
-        "/static/css/indicatorpaneel.css",
     ):
         assert nodig in html, nodig
 

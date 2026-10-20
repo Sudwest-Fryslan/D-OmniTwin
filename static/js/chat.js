@@ -10,16 +10,17 @@
 
 class ChatPanel {
     constructor() {
-        this.panelEl = document.getElementById('chat-panel');
+        this.panelEl = document.getElementById('dock-panel-chat') || document.getElementById('chat-panel');
+        this.dockEl = document.getElementById('rechter-dock');
         this.messagesEl = document.getElementById('chat-messages');
         this.inputEl = document.getElementById('chat-input');
         this.sendBtn = document.getElementById('chat-send-btn');
         this.toggleBtn = document.getElementById('chat-toggle-btn');
         this.closeBtn = document.getElementById('chat-close-btn');
-        
+
         this.isOpen = false;
         this.isLoading = false;
-        
+
         this._setupEventListeners();
         console.log('🤖 D-Omni Assistant ChatPanel initialized');
     }
@@ -29,23 +30,34 @@ class ChatPanel {
     // ========================================================================
 
     open() {
-        if (!this.panelEl) return;
         this.isOpen = true;
-        this.panelEl.classList.add('open');
+        if (typeof window.openRechterDock === 'function') {
+            window.openRechterDock('chat');
+        } else if (this.panelEl) {
+            this.panelEl.classList.add('open');
+        }
         this.toggleBtn?.classList.add('active');
-        // Focus op input
         setTimeout(() => this.inputEl?.focus(), 300);
     }
 
     close() {
-        if (!this.panelEl) return;
         this.isOpen = false;
-        this.panelEl.classList.remove('open');
+        if (typeof window.closeRechterDock === 'function') {
+            window.closeRechterDock();
+        } else if (this.panelEl) {
+            this.panelEl.classList.remove('open');
+        }
         this.toggleBtn?.classList.remove('active');
     }
 
     toggle() {
-        this.isOpen ? this.close() : this.open();
+        const isDockOpen = this.dockEl && !this.dockEl.classList.contains('collapsed');
+        const isChatActive = document.getElementById('dock-panel-chat')?.classList.contains('active');
+        if (isDockOpen && isChatActive) {
+            this.close();
+        } else {
+            this.open();
+        }
     }
 
     // ========================================================================
@@ -203,6 +215,25 @@ class ChatPanel {
                     item.appendChild(label);
                 }
                 item.addEventListener('click', () => this._handleIndicatorClick(item));
+
+                // FE-5.3: Actiechip om indicator in Kompas te bekijken zonder gedwongen tabwissel
+                const chip = el('button', 'chat-action-chip', '📊 Bekijk in Kompas');
+                chip.type = 'button';
+                chip.title = `Bekijk '${escapeHtml(ind.naam || 'indicator')}' in het Kompas`;
+                chip.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    if (typeof window.switchDockTab === 'function') {
+                        window.switchDockTab('kompas');
+                    }
+                    if (ind.uuid && window.EventBus) {
+                        window.EventBus.emit('INDICATOR_SELECTED', {
+                            uuid: ind.uuid,
+                            name: ind.naam || ''
+                        });
+                    }
+                });
+                item.appendChild(chip);
+
                 lijst.appendChild(item);
             }
             bubble.appendChild(lijst);
@@ -559,8 +590,7 @@ class ChatPanel {
     // ========================================================================
 
     _setupEventListeners() {
-        // Toggle knop
-        this.toggleBtn?.addEventListener('click', () => this.toggle());
+        // Toggle knop wordt gecoördineerd via initRechterDock() in app.js
 
         // Sluit knop
         this.closeBtn?.addEventListener('click', () => this.close());

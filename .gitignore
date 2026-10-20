@@ -24,6 +24,7 @@ config.ini
 
 # Data (volledige uitsluiting, bevat grote datasets)
 data/
+leveringen/
 # Testdata (o.a. de evaluatieset van de assistent, #233) WEL in git
 !tests/data/
 
@@ -78,6 +79,8 @@ docs/5-secops/*
 !docs/5-secops/privacy-quickscan.md
 docs/6-ai-parallel-track/
 docs/7-projectmanagement/
+docs/8-communicatie/gespreksleidraad_*.md
+docs/8-communicatie/overleg_leidraad_*.md
 docs/10-testen/
 docs/1-visie-concept/juridisch/samenvatting_open_source_model_verdienstrategie_overheid.md
 
