@@ -31,6 +31,8 @@ function kaartModusParam() {
 const state = {
     currentGebiedstype: null,
     currentIndicator: null,
+    currentJaar: null,
+    currentDataRevision: 0,
     currentGemeenteCode: localStorage.getItem('omnitwin-gemeente') || '', // Default: Alle gemeenten (empty = no filter)
     deckgl: null,
     currentData: null,
@@ -1223,6 +1225,8 @@ async function loadKaartData() {
         geojson.metadata = attributes.metadata;
 
         state.currentData = geojson;
+        state.currentJaar = geojson.metadata?.jaar || null;
+        state.currentDataRevision = (state.currentDataRevision || 0) + 1;
         // Alleen inzoomen bij een ander gebiedstype of andere gemeente, niet bij een indicatorwissel
         const fitKey = `${state.currentGebiedstype}|${state.currentGemeenteCode || ''}`;
         if (state.fittedFor !== fitKey) {
@@ -2039,10 +2043,10 @@ function displayOnMap(geojson) {
 
         // Performance - CRITICAL FIX: Force re-render on state changes
         updateTriggers: {
-            getFillColor: [minValue, maxValue, state.enable3D, state.currentTheme, state.kaartModus],
+            getFillColor: [minValue, maxValue, state.enable3D, state.currentTheme, state.kaartModus, state.currentJaar, state.currentDataRevision],
             getLineColor: [state.currentTheme, state.kaartModus, Array.from(state.selectedGebiedIds).join(',')],
             getLineWidth: [Array.from(state.selectedGebiedIds).join(',')],
-            getElevation: [state.enable3D, state.heightScale, minValue, maxValue, state.kaartModus],
+            getElevation: [state.enable3D, state.heightScale, minValue, maxValue, state.kaartModus, state.currentJaar, state.currentDataRevision],
             extruded: [state.enable3D]
         }
 
@@ -3855,7 +3859,32 @@ function setupEventListeners() {
         // A3: Timeslider Year Changed
         window.EventBus.on('YEAR_CHANGED', async (data) => {
             console.log(`⏱️ Year changed via Timeslider: ${data.jaar}`);
-            if (state.currentGebiedstype && state.currentIndicator === data.uuid) {
+
+            // Fallback (#450): als er nog geen gebiedstype actief was, automatisch terugvallen op CBS_BUURT
+            if (!state.currentGebiedstype) {
+                const gtSelect = document.getElementById('gebiedstype-select');
+                if (gtSelect) {
+                    const buurtOpt = Array.from(gtSelect.options).find(o =>
+                        o.dataset?.code === 'CBS_BUURT' || o.text.toLowerCase().includes('buurten')
+                    );
+                    if (buurtOpt && buurtOpt.value) {
+                        gtSelect.value = buurtOpt.value;
+                        state.currentGebiedstype = buurtOpt.value;
+                    }
+                }
+            }
+
+            const indicatorUuid = data.uuid || state.currentIndicator;
+            if (indicatorUuid && state.currentIndicator !== indicatorUuid) {
+                state.currentIndicator = indicatorUuid;
+            }
+
+            if (state.currentGebiedstype && state.currentIndicator) {
+                // Zorg dat basis-geometrieën geladen zijn als die nog ontbreken
+                if (!state.currentData || !state.currentData.features || state.currentData.features.length === 0) {
+                    await loadKaartData();
+                }
+
                 // We keep the map view but update the data for the specific year
                 try {
                     let attrUrl = `/api/gebiedsmonitor/kaart_data/${state.currentGebiedstype}?show_all=${state.showAll}&indicator_uuid=${state.currentIndicator}&jaar=${data.jaar}${kaartModusParam()}`;
@@ -3868,6 +3897,9 @@ function setupEventListeners() {
 
                     const attributes = await response.json();
                     
+                    state.currentJaar = data.jaar;
+                    state.currentDataRevision = (state.currentDataRevision || 0) + 1;
+
                     // Merge attributes into existing GeoJSON features
                     if (state.currentData && state.currentData.features) {
                         state.currentData.features.forEach(f => {
@@ -3878,7 +3910,7 @@ function setupEventListeners() {
                             } else {
                                 // Clear missing data
                                 f.properties.indicator_waarde = null;
-                                f.properties.jaar = null;
+                                f.properties.jaar = data.jaar;
                                 f.properties.bron = null;
                                 f.properties.color = '#94A3B8';
                             }

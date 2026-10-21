@@ -871,6 +871,9 @@ class KompasVisualization {
         path.on('mouseover', function (event, d) {
             self.handleMouseOver(event, d);
         })
+            .on('mousemove', function (event) {
+                self._positionTooltip(event);
+            })
             .on('mouseout', function (event, d) {
                 self.handleMouseOut();
             });
@@ -1072,6 +1075,37 @@ class KompasVisualization {
         return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
     }
 
+    _positionTooltip(event) {
+        if (!event) return;
+        const tooltipEl = this.tooltip.node();
+        const tooltipWidth = tooltipEl ? (tooltipEl.offsetWidth || 250) : 250;
+        const tooltipHeight = tooltipEl ? (tooltipEl.offsetHeight || 80) : 80;
+        const padding = 14;
+
+        let left = event.pageX + padding;
+        // Als de tooltip voorbij de rechter schermrand valt (bijv. in het gedockte rechterpaneel):
+        // val naar links van de cursor zodat het detailpaneel volledig zichtbaar blijft
+        if (event.clientX + tooltipWidth + padding > window.innerWidth) {
+            left = event.pageX - tooltipWidth - padding;
+        }
+        if (left < padding) {
+            left = padding;
+        }
+
+        let top = event.pageY - 10;
+        // Als de tooltip onderaan buiten beeld dreigt te vallen: schuif omhoog
+        if (event.clientY + tooltipHeight + padding > window.innerHeight) {
+            top = event.pageY - tooltipHeight + 10;
+        }
+        if (top < padding) {
+            top = padding;
+        }
+
+        this.tooltip
+            .style('left', left + 'px')
+            .style('top', top + 'px');
+    }
+
     handleMouseOver(event, d) {
         /**
          * Show tooltip on hover
@@ -1110,9 +1144,8 @@ class KompasVisualization {
 
         this.tooltip
             .html(html)
-            .style('visibility', 'visible')
-            .style('top', (event.pageY - 10) + 'px')
-            .style('left', (event.pageX + 10) + 'px');
+            .style('visibility', 'visible');
+        this._positionTooltip(event);
     }
 
     handleMouseOut() {
@@ -1629,15 +1662,35 @@ class KompasVisualization {
         const punt = (this._timesliderHistory || []).find(h => h.jaar === jaar);
         const bronEl = document.getElementById('details-bron');
         if (bronEl && punt && punt.bron) bronEl.textContent = punt.bron;
+
+        // Update waarde behorende bij het gekozen peiljaar
+        if (punt && punt.waarde !== undefined && punt.waarde !== null) {
+            const valEl = document.getElementById('details-value');
+            if (valEl) {
+                const isMulti = this.currentData?._multiGebiedIds?.length > 1;
+                const node = this.currentNode;
+                const eenheid = (node && node.data && node.data.eenheid) || '';
+                const eenheidText = eenheid ? ` ${eenheid}` : '';
+                valEl.textContent = `${isMulti ? '⌀ ' : ''}${Number(punt.waarde).toFixed(2)}${eenheidText}`;
+            }
+        }
     }
     
     _dispatchMapYear(jaar) {
-        if (window.EventBus && this.currentNode && this.currentNode.data.uuid) {
+        // Resolveer indicator UUID robuust (currentNode, cached indicator UUID, of active indicator in state)
+        const uuid = (this.currentNode && this.currentNode.data && this.currentNode.data.uuid)
+            || this._currentIndicatorUuid
+            || this._lastExpandedIndicatorUuid
+            || (window.state && window.state.currentIndicator);
+
+        if (window.EventBus && uuid) {
             // Actively dispatch the specific year for rendering
             window.EventBus.emit('YEAR_CHANGED', {
-                uuid: this.currentNode.data.uuid,
+                uuid: uuid,
                 jaar: jaar
             });
+        } else {
+            console.warn('⚠️ _dispatchMapYear: geen indicator UUID gevonden');
         }
     }
     
@@ -1701,6 +1754,7 @@ class KompasVisualization {
          */
         this.isExpanded = true;
         this.currentNode = node;
+        this._currentIndicatorUuid = node.data?.uuid || null;
         this._lastExpandedIndicatorUuid = node.data?.uuid || null;
         this.updateBreadcrumb(node);
 
@@ -1768,6 +1822,7 @@ class KompasVisualization {
          * Sluit het detailpaneel onder het kompas
          */
         this.isExpanded = false;
+        this._currentIndicatorUuid = null;
         this._lastExpandedIndicatorUuid = null;
 
         const windowEl = document.getElementById('kompas-window');
@@ -2151,6 +2206,17 @@ class KompasVisualization {
                         datasets: datasets
                     },
                     options: {
+                        onClick: (e, elements) => {
+                            if (elements.length > 0) {
+                                const idx = elements[0].index;
+                                const slider = document.getElementById('timeslider-input');
+                                if (slider) {
+                                    slider.value = idx;
+                                    const evt = new Event('input');
+                                    slider.dispatchEvent(evt);
+                                }
+                            }
+                        },
                         responsive: true,
                         maintainAspectRatio: false,
                         animation: window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches ? false : undefined,
