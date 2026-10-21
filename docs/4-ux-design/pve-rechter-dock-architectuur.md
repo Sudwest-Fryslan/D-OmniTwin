@@ -108,13 +108,10 @@ De interface transformeren naar een rustig, voorspelbaar en intuïtief **drielui
   In de dock header bevindt zich een prominente toggle-knop: **"Losmaken"** / **"Vastzetten"** (met iconen `external-link` / `pin`).
 - **FE-3.2 (Vrij herschaalbaar):**  
   In losgekoppelde (zwevende) toestand is het venster vrij versleepbaar (`DraggableWindow`) en vrij herschaalbaar via de `resize-handle` (minimaal 400px breed, maximaal tot schermgrootte).
-- **FE-3.3 (Vloeiende Layout-wissel bij Resizen via Container Queries):**  
-  - **Smal (< 750px):** 1-koloms gestapeld (identiek aan de dock-layout).
-  - **Breder gesleept (≥ 750px):** De component schakelt automatisch over naar een **2-koloms indeling**:
-    - Linker kolom: Sunburst cirkelvisualisatie.
-    - Rechter kolom: Geünificeerd indicator-detailpaneel (trendlijn, staafdiagram, definities).
-  - **Extra breed (≥ 1100px, bijv. op Ultrawide 3440×1440 of dual monitor):**  
-    Optionele **Duo-weergave**: de gebruiker kan zowel het Kompas als de Assistent (Chat) tegelijkertijd naast elkaar geopend houden in het losse venster.
+- **FE-3.3 (Consistente 1-koloms Layout & Verticale Ruimte-optimalisatie):**  
+  - Zowel gedockt als losgekoppeld (zwevend) hanteert het Kompas een uniforme, elegante **1-koloms gestapelde indeling**.
+  - Dit biedt een rustige, logische lees- en scrollvolgorde (Thema-overzicht ➔ Navigatie & Kruimelpad ➔ Detaildata & Benchmarks) en voorkomt dat een breed 2-koloms venster de onderliggende kaart bedekt of 'lege vlakken' toont vóór indicatorselectie.
+  - **Verticale optimalisatie via `— Cirkel inklappen`:** Met de knop `[— Cirkel inklappen]` / `[+ Cirkel uitklappen]` kan de gebruiker de Sunburst op elk moment inklappen. Hierdoor schuiven de indicatoren, filters, multi-buurt trendlijnen en benchmarkgrafieken direct naar boven zonder kostbare schermruimte te verspillen.
 - **FE-3.4 (Persistentie):**  
   De gekozen toestand (`omnitwin_dock_mode: 'docked' | 'floating'`), evenals positie en afmetingen van het zwevende venster, worden opgeslagen in `localStorage`.
 
@@ -348,12 +345,12 @@ function verplaatsPaneel(naarZwevend) {
 
 ## 7. Verificatie & Acceptatiecriteria (Definition of Done)
 
-- [ ] **AC-1:** De kaartapplicatie start schoon met de volledige kaart; het rechter dock opent soepel zodra een buurt op de kaart wordt aangeklikt of een indicator wordt gekozen.
-- [ ] **AC-2:** Het rechter dock (`clamp(340px, 25vw, 480px)`) dekt de geselecteerde buurt niet af doordat de kaart automatisch naar links schuift via viewport padding.
-- [ ] **AC-3:** Het losse indicatorpaneel aan de linkerkant is volledig gesaneerd; alle details, trendlijn (met play-slider), liggend staafdiagram, uitschieters en CSV-export zijn geïntegreerd in het Kompas.
-- [ ] **AC-4:** Bovenin het Kompas is de Sunburst inklapbaar via een knop (`—`), met een helder kruimelpad (`Kwadrant ➔ Thema ➔ Indicator`) en een directe zoekbalk.
-- [ ] **AC-5:** Geselecteerde buurten worden boven de data getoond (maximaal 5 voluit, daarna `+ xx overige buurten`).
-- [ ] **AC-6:** Met de knop "Losmaken" kan het dock worden ontkoppeld naar een zwevend, versleepbaar venster. Bij verbreding (≥ 750px) schakelt dit automatisch over naar een 2-koloms indeling zonder renderingfouten in de grafieken.
-- [ ] **AC-7:** In de Assistent-tab verspringt de weergave niet ongevraagd bij een suggestie; de gebruiker kan via een klikbare chip bewust overschakelen naar het Kompas.
-- [ ] **AC-8:** Alle unit tests en E2E tests slagen met de nieuwe selectors en structuur.
-- [ ] **AC-9:** Documentatie in `CHANGELOG.md` is bijgewerkt als feature voor `v0.7.0`.
+- [x] **AC-1:** De kaartapplicatie start schoon met de volledige kaart; het rechter dock opent soepel zodra een buurt op de kaart wordt aangeklikt of een indicator wordt gekozen.
+- [x] **AC-2:** Het rechter dock dekt de geselecteerde buurt niet af doordat de kaart automatisch centreert binnen de vrije kaartruimte via `flyToGebied()` en `getFreezone()`.
+- [x] **AC-3:** Het losse indicatorpaneel aan de linkerkant is volledig gesaneerd; alle details, trendlijn (met play-slider), liggend staafdiagram, uitschieters en CSV-export zijn geïntegreerd in het Kompas.
+- [x] **AC-4:** Bovenin het Kompas is de Sunburst inklapbaar via de knop `[— Cirkel inklappen]`, met een doorklikbaar kruimelpad (`Kompas › Kwadrant › Thema › Indicator`) en een directe zoekbalk.
+- [x] **AC-5:** Geselecteerde buurten worden boven de data getoond (tot 5 buurten in multi-line trendgrafiek en benchmark, en als chips).
+- [x] **AC-6:** Met de knop "Losmaken" kan het dock worden ontkoppeld naar een zwevend, versleepbaar en herschaalbaar venster (en weer vastgezet via de dock-knop). Zowel gedockt als zwevend wordt een consistente 1-koloms verticale flow gehanteerd, met de knop `— Cirkel inklappen` om alle verticale ruimte direct aan de cijfers en grafieken te geven zonder de kaart te overdekken.
+- [x] **AC-7:** In de Assistent-tab verspringt de weergave niet ongevraagd bij een suggestie; de gebruiker kan via een klikbare chip bewust overschakelen naar het Kompas.
+- [x] **AC-8:** Alle unit tests en integratietests slagen met de nieuwe selectors en structuur.
+- [x] **AC-9:** Documentatie in `CHANGELOG.md` is bijgewerkt onder `[Unreleased]` voor issue #444.
