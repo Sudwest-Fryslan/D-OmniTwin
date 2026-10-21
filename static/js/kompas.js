@@ -7,12 +7,44 @@
 
 /**
  * Kleur uit het thema (#89) voor Chart.js, dat geen CSS-variabelen kent.
+let _dummyColorProbe = null;
+
+/**
  * Leest de berekende waarde van een variabele uit styles.css, bv. '--text-secondary'.
+ * Lost CSS-variabelen betrouwbaar op naar echte rgb/hex waarden voor Canvas/Chart.js.
  */
 function themaKleur(naam, terugval) {
+    try {
+        if (!_dummyColorProbe && document.body) {
+            _dummyColorProbe = document.createElement('span');
+            _dummyColorProbe.style.display = 'none';
+            _dummyColorProbe.id = 'kompas-theme-color-probe';
+            document.body.appendChild(_dummyColorProbe);
+        }
+        if (_dummyColorProbe) {
+            const cssVar = naam.startsWith('--') ? `var(${naam})` : naam;
+            _dummyColorProbe.style.color = '';
+            _dummyColorProbe.style.color = cssVar;
+            const computed = getComputedStyle(_dummyColorProbe).color;
+            if (computed && computed !== '') {
+                return computed;
+            }
+        }
+    } catch (_) {}
+
+    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    const fallback = isDark && terugval === '#1e293b' ? '#f1f5f9'
+                   : (isDark && terugval === '#64748b' ? '#94a3b8'
+                   : (isDark && terugval === '#e2e8f0' ? '#334155' : terugval));
+
     const waarde = getComputedStyle(document.documentElement).getPropertyValue(naam).trim();
-    return waarde || terugval;
+    if (!waarde || waarde.startsWith('var(')) {
+        return fallback;
+    }
+    return waarde;
 }
+
+window.themaKleur = themaKleur;
 
 class KompasVisualization {
     constructor(containerId) {
@@ -1003,11 +1035,18 @@ class KompasVisualization {
         return '#94A3B8';
     }
 
-    hexToRgb(hex) {
+    hexToRgb(color) {
         /**
-         * Convert HEX color to RGB object
+         * Convert HEX or RGB color to RGB object
          */
-        const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+        if (!color) return { r: 148, g: 163, b: 184 };
+        if (typeof color === 'string' && color.startsWith('rgb')) {
+            const m = color.match(/\d+/g);
+            if (m && m.length >= 3) {
+                return { r: parseInt(m[0], 10), g: parseInt(m[1], 10), b: parseInt(m[2], 10) };
+            }
+        }
+        const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(color);
         return result ? {
             r: parseInt(result[1], 16),
             g: parseInt(result[2], 16),
@@ -1096,6 +1135,8 @@ class KompasVisualization {
             rootBtn.type = 'button';
             rootBtn.className = 'breadcrumb-item breadcrumb-root';
             rootBtn.textContent = 'Kompas';
+            rootBtn.title = 'Terug naar startoverzicht';
+            rootBtn.setAttribute('aria-label', 'Navigeer naar Kompas start');
             rootBtn.addEventListener('click', () => {
                 this.collapseDetails();
                 this.reset();
@@ -1113,6 +1154,8 @@ class KompasVisualization {
                     btn.type = 'button';
                     btn.className = 'breadcrumb-item';
                     btn.textContent = item.name;
+                    btn.title = `Navigeer naar ${item.name}`;
+                    btn.setAttribute('aria-label', `Navigeer naar ${item.name}`);
                     btn.addEventListener('click', () => {
                         this.collapseDetails();
                         if (this._zoomFn) {
@@ -1129,6 +1172,7 @@ class KompasVisualization {
                     const span = document.createElement('span');
                     span.className = 'breadcrumb-current';
                     span.textContent = item.name;
+                    span.title = `Geselecteerde indicator: ${item.name}`;
                     breadcrumb.appendChild(span);
                 }
             });
@@ -2084,6 +2128,11 @@ class KompasVisualization {
 
                 this.destroyChart();
 
+                const tekst = themaKleur('--text-primary', '#1e293b');
+                const subtiel = themaKleur('--text-secondary', '#64748b');
+                const lijn = themaKleur('--border-color', '#e2e8f0');
+                const eenheid = node.data?.eenheid || '';
+
                 this.trendChart = new Chart(ctx, {
                     type: 'line',
                     data: {
@@ -2093,14 +2142,15 @@ class KompasVisualization {
                     options: {
                         responsive: true,
                         maintainAspectRatio: false,
+                        animation: window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches ? false : undefined,
                         plugins: {
                             legend: {
                                 display: true,
                                 position: 'top',
                                 labels: {
-                                    boxWidth: 10,
-                                    color: themaKleur('--text-primary', '#e2e8f0'),
-                                    font: { size: 10 }
+                                    boxWidth: 12,
+                                    color: tekst,
+                                    font: { size: 11 }
                                 }
                             },
                             tooltip: {
@@ -2109,12 +2159,12 @@ class KompasVisualization {
                                 backgroundColor: themaKleur('--tooltip-bg', '#0f172a'),
                                 titleColor: themaKleur('--tooltip-text', '#ffffff'),
                                 bodyColor: themaKleur('--tooltip-text', '#ffffff'),
-                                borderColor: themaKleur('--border-color', '#334155'),
+                                borderColor: lijn,
                                 borderWidth: 1,
                                 callbacks: {
                                     label: (item) => {
                                         const v = item.raw !== null && item.raw !== undefined ? Number(item.raw).toLocaleString('nl-NL', { maximumFractionDigits: 2 }) : '-';
-                                        const eenh = node.data?.eenheid ? ` ${node.data.eenheid}` : '';
+                                        const eenh = eenheid ? ` ${eenheid}` : '';
                                         return `${item.dataset.label}: ${v}${eenh}`;
                                     }
                                 }
@@ -2122,12 +2172,13 @@ class KompasVisualization {
                         },
                         scales: {
                             x: {
-                                grid: { display: false, drawBorder: false },
-                                ticks: { color: themaKleur('--text-secondary', '#94a3b8') }
+                                grid: { color: lijn, drawBorder: false },
+                                ticks: { color: subtiel, font: { size: 11 } }
                             },
                             y: {
-                                grid: { color: themaKleur('--border-color', '#334155'), drawBorder: false },
-                                ticks: { color: themaKleur('--text-secondary', '#94a3b8') }
+                                grid: { color: lijn, drawBorder: false },
+                                ticks: { color: tekst, font: { size: 11 }, autoSkip: false },
+                                title: { display: !!eenheid, text: eenheid, color: subtiel, font: { size: 11 } }
                             }
                         }
                     }
@@ -2251,7 +2302,7 @@ class KompasVisualization {
                         backgroundColor: themaKleur('--tooltip-bg', '#0f172a'),
                         titleColor: themaKleur('--tooltip-text', '#ffffff'),
                         bodyColor: themaKleur('--tooltip-text', '#ffffff'),
-                        borderColor: themaKleur('--border-color', '#334155'),
+                        borderColor: themaKleur('--border-color', '#e2e8f0'),
                         borderWidth: 1,
                         callbacks: {
                             label: (ctx) => `${ctx.parsed.x?.toFixed(2) ?? '-'} ${eenheid}`
@@ -2260,12 +2311,12 @@ class KompasVisualization {
                 },
                 scales: {
                     x: {
-                        grid: { color: themaKleur('--border-color', '#334155'), drawBorder: false },
-                        ticks: { color: themaKleur('--text-secondary', '#94a3b8') }
+                        grid: { color: themaKleur('--border-color', '#e2e8f0'), drawBorder: false },
+                        ticks: { color: themaKleur('--text-secondary', '#64748b'), font: { size: 11 } }
                     },
                     y: {
                         grid: { display: false, drawBorder: false },
-                        ticks: { color: themaKleur('--text-primary', '#e2e8f0'), font: { size: 11 } }
+                        ticks: { color: themaKleur('--text-primary', '#1e293b'), font: { size: 11 }, autoSkip: false }
                     }
                 }
             }
@@ -2421,6 +2472,10 @@ class KompasVisualization {
         const labels = history.map(d => d.jaar);
         const data = history.map(d => d.waarde);
         const chartColor = color || '#3b82f6'; // Trust Blue Dark (was SWF Keperblauw)
+        const tekst = themaKleur('--text-primary', '#1e293b');
+        const subtiel = themaKleur('--text-secondary', '#64748b');
+        const lijn = themaKleur('--border-color', '#e2e8f0');
+        const eenheid = this.currentNode?.data?.eenheid || '';
 
         this.trendChart = new Chart(ctx, {
             type: 'line',
@@ -2432,7 +2487,7 @@ class KompasVisualization {
                     borderColor: chartColor,
                     backgroundColor: (() => {
                         const rgb = this.hexToRgb(chartColor);
-                        return `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.1)`;
+                        return `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.12)`;
                     })(),
                     borderWidth: 2,
                     pointRadius: 3,
@@ -2456,6 +2511,7 @@ class KompasVisualization {
                 },
                 responsive: true,
                 maintainAspectRatio: false,
+                animation: window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches ? false : undefined,
                 plugins: {
                     legend: { display: false },
                     tooltip: {
@@ -2464,18 +2520,26 @@ class KompasVisualization {
                         backgroundColor: themaKleur('--tooltip-bg', '#0f172a'),
                         titleColor: themaKleur('--tooltip-text', '#ffffff'),
                         bodyColor: themaKleur('--tooltip-text', '#ffffff'),
-                        borderColor: themaKleur('--border-color', '#334155'),
-                        borderWidth: 1
+                        borderColor: lijn,
+                        borderWidth: 1,
+                        callbacks: {
+                            label: (item) => {
+                                const v = item.raw !== null && item.raw !== undefined ? Number(item.raw).toLocaleString('nl-NL', { maximumFractionDigits: 2 }) : '-';
+                                const eenh = eenheid ? ` ${eenheid}` : '';
+                                return `Waarde: ${v}${eenh}`;
+                            }
+                        }
                     }
                 },
                 scales: {
                     x: {
-                        grid: { display: false, drawBorder: false },
-                        ticks: { color: themaKleur('--text-secondary', '#94a3b8') }
+                        grid: { color: lijn, drawBorder: false },
+                        ticks: { color: subtiel, font: { size: 11 } }
                     },
                     y: {
-                        grid: { color: themaKleur('--border-color', '#334155'), drawBorder: false },
-                        ticks: { color: themaKleur('--text-secondary', '#94a3b8') }
+                        grid: { color: lijn, drawBorder: false },
+                        ticks: { color: tekst, font: { size: 11 }, autoSkip: false },
+                        title: { display: !!eenheid, text: eenheid, color: subtiel, font: { size: 11 } }
                     }
                 }
             }
@@ -2956,10 +3020,10 @@ document.addEventListener('DOMContentLoaded', async function () {
             }
         });
 
-        // Thema gewisseld: grafiek opnieuw met de nieuwe kleuren
+        // Thema gewisseld: grafieken opnieuw met de nieuwe kleuren
         new MutationObserver(() => {
             if (kompasViz && kompasViz.currentNode && kompasViz.currentNode.data?.uuid) {
-                kompasViz._loadBenchmarkBarChart(kompasViz.currentNode);
+                kompasViz.loadIndicatorDetails(kompasViz.currentNode);
             }
         }).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
 

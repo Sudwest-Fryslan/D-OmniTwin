@@ -1774,25 +1774,6 @@ textarea {
   border-color: var(--primary-color);
 }
 
-/* Breadcrumb Trail */
-.kompas-breadcrumb {
-  font-size: 0.75rem;
-  color: var(--text-secondary);
-  margin-bottom: var(--spacing-md);
-  padding: var(--spacing-sm);
-  background: var(--bg-secondary);
-  border-radius: var(--border-radius-sm);
-  border-left: 3px solid var(--primary-color);
-}
-
-.kompas-breadcrumb span {
-  margin: 0 0.25rem;
-}
-
-.kompas-breadcrumb .breadcrumb-separator {
-  color: var(--border-color);
-  margin: 0 0.5rem;
-}
 
 /* Viz Container */
 .kompas-viz-container {
@@ -4417,32 +4398,67 @@ dialog#meld-dialoog::backdrop {
   flex-wrap: wrap;
   align-items: center;
   gap: 4px;
-  font-size: 0.8rem;
+  font-size: 0.75rem;
   color: var(--text-secondary);
   padding: 4px 0;
+  margin: 2px 0 6px 0;
+  background: transparent;
+  border: none;
 }
 
 .breadcrumb-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--tint);
+  border: 1px solid var(--panel-border);
+  border-radius: 12px;
+  font-family: inherit;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  padding: 2px 8px;
   cursor: pointer;
-  padding: 2px 6px;
-  border-radius: 4px;
-  transition: background 0.15s ease;
+  line-height: 1.3;
+  transition: all var(--transition-fast, 0.15s ease);
+  user-select: none;
+  white-space: nowrap;
 }
 
 .breadcrumb-item:hover {
-  background: var(--tint);
+  background: var(--tint-strong);
   color: var(--text-primary);
+  border-color: var(--text-secondary);
 }
 
-.breadcrumb-separator {
-  color: var(--border-color);
-  font-size: 0.75rem;
+.breadcrumb-item:focus-visible {
+  outline: 2px solid var(--primary-color);
+  outline-offset: 1px;
 }
 
 .breadcrumb-item.active {
+  background: var(--tint-strong);
+  color: var(--text-primary);
+  font-weight: 600;
+  cursor: default;
+}
+
+.breadcrumb-separator {
+  color: var(--text-secondary);
+  opacity: 0.5;
+  font-size: 0.75rem;
+  margin: 0 1px;
+  user-select: none;
+}
+
+.breadcrumb-current {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.75rem;
   font-weight: 600;
   color: var(--text-primary);
-  cursor: default;
+  padding: 2px 6px;
+  white-space: nowrap;
 }
 
 /* --- Geselecteerde Buurten Badges --- */

@@ -24,6 +24,9 @@ Eerdere wijzigingen, van vóór dit bestand, zijn terug te vinden in de git-hist
     - Het bovenste grafiekvak toont bij multi-selectie van buurten (tot max 5) nu een meervoudige tijdreeks (multi-line trendgrafiek per buurt met legenda en jaartooltips) in plaats van een dubbel liggend staafdiagram.
     - Het liggende staafdiagram wordt uitsluitend getoond in het onderste benchmarkpaneel (vergelijking van alle geselecteerde buurten met het gemeentegemiddelde).
     - Het detailpaneel en de actieve indicator worden betrouwbaar bewaard bij het toevoegen van 3 of meer gebieden op de kaart (`_lastExpandedIndicatorUuid`), zonder dat de weergave verdwijnt of terugvalt naar een lege toestand.
+  - **Visuele harmonisatie kruimelspoor en donkere modus trendlijnen**:
+    - Kruimelspoor in het Kompasvenster visueel gelijkgetrokken met de standaard bedieningsknoppen (`Wis indicator`, `Beheer`, `— Cirkel inklappen`) als subtiele pills (`var(--tint)`, `var(--panel-border)`, `border-radius: 12px`, afgeronde hoeken, hover- en focus-states).
+    - Aslabels en raster van de trendlijngrafiek (`kompas-trend-chart`) in donkere modus gelijkgetrokken met de benchmarkgrafiek onder 'Vergelijk met gemeentegemiddelde': Canvas-kleurresolutie garandeert geldige RGB-waarden in plaats van onverwerkte CSS-variabelen, met heldere `--text-primary` waarden langs de Y-as, `--text-secondary` langs de X-as en automatische verversing bij het wisselen van thema (`data-theme`).
 
 - **Kleurvervaging, toetsenbordbediening en weergave Kompas en panelen** ([#450](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/450)):
   - De segmenten van het Kompas (`kompas.js`) behouden nu permanent hun volle kleurdekking (`fill-opacity: 1.0`), ook na in- en uitzoomen (drilldown-transities) en hoveren; visuele focus en hover worden weergegeven met een oplichtende SVG-rand (`stroke: #ffffff`) conform WCAG 2.1 AA.
