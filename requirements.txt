@@ -49,4 +49,4 @@ PyJWT[crypto]>=2.15.1   # OIDC: access tokens van Keycloak controleren (omnitwin
 sentence-transformers>=6.1.0   # AI embeddings; trekt PyTorch mee (CPU, ~0,6 GB)
 
 # --- Afbeeldingen ---
-pillow>=12.3.0          # GeoTIFF lezen bij het laden van use case hittestress (RIVM-rasters)
+pillow>=13.0.0          # GeoTIFF lezen bij het laden van use case hittestress (RIVM-rasters)
