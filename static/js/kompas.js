@@ -2264,15 +2264,16 @@ class KompasVisualization {
                 this._initTimeslider(allYears.map(yr => ({ jaar: yr })));
 
             } else if (allYears.length === 1) {
-                // Slechts 1 peiljaar (bijv. BAG/Kadaster): meld dit netjes en toon de balkjes hieronder
-                this.destroyChart();
-                if (chartWrapper) chartWrapper.style.display = 'block';
-                if (fallback) {
-                    fallback.style.display = 'flex';
-                    fallback.textContent = `Geen historische tijdreeks beschikbaar (peiljaar ${allYears[0]})`;
-                }
-                if (ctx) ctx.style.display = 'none';
-                if (tijdschuif) tijdschuif.style.display = 'none';
+                // Slechts 1 peiljaar (bijv. BAG/Kadaster): toon een vergelijkende staafgrafiek van de gebieden
+                const barData = results.map((r, idx) => {
+                    const hist = r?.history || [];
+                    const val = hist.length > 0 ? hist[0].waarde : null;
+                    return {
+                        naam: r?.gebied_naam || getNaam(actieveGebiedIds[idx], idx),
+                        waarde: val
+                    };
+                });
+                this._renderComparisonBarChart(barData, node.data?.eenheid || '');
             } else {
                 this.destroyChart();
                 if (chartWrapper) chartWrapper.style.display = 'none';

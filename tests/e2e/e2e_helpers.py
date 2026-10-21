@@ -697,31 +697,37 @@ def wacht_op_vergelijkingsgrafiek(page: Page, namen):
     """Kompas-detailpaneel toont een vergelijkingsgrafiek (trendlijn of staafdiagram) voor de geselecteerde gebieden."""
     page.wait_for_function(
         """(namen) => {
+            const isZichtbaar = (el) => {
+                if (!el) return false;
+                const style = window.getComputedStyle(el);
+                if (style.display === 'none' || style.visibility === 'hidden' || el.hidden) return false;
+                return (el.offsetWidth > 0 || el.offsetHeight > 0 || el.getClientRects().length > 0);
+            };
+
+            // 1. Multi-lijn trendgrafiek of vergelijkingsbarchart in Kompas (#kompas-trend-chart)
             const tc = window.kompasViz && window.kompasViz.trendChart;
-            if (tc && tc.data) {
-                const inLabels = namen.every(n => tc.data.labels && tc.data.labels.includes(n));
-                const inDatasets = namen.every(n => tc.data.datasets && tc.data.datasets.some(d => d.label === n || d.label.includes(n)));
+            const tcCanvas = document.getElementById('kompas-trend-chart');
+            if (tc && tc.data && isZichtbaar(tcCanvas)) {
+                const inLabels = namen.every(n => tc.data.labels && tc.data.labels.some(l => l === n || (typeof l === 'string' && l.includes(n))));
+                const inDatasets = namen.every(n => tc.data.datasets && tc.data.datasets.some(d => d && typeof d.label === 'string' && (d.label === n || d.label.includes(n))));
                 if (inLabels || inDatasets) return true;
             }
-            const ip = (window.kompasViz && window.kompasViz._ipChart) || (typeof Chart !== 'undefined' && Chart.getChart(document.getElementById('ip-grafiek')));
-            if (ip && ip.data && ip.data.labels) {
-                if (namen.every(n => ip.data.labels.some(l => l === n || l.includes(n)))) return true;
+
+            // 2. Geïntegreerd benchmark-staafdiagram (#ip-grafiek, #444)
+            const ip = window.kompasViz && window.kompasViz._ipChart;
+            const ipCanvas = document.getElementById('ip-grafiek');
+            if (ip && ip.data && ip.data.labels && isZichtbaar(ipCanvas)) {
+                if (namen.every(n => ip.data.labels.some(l => l === n || (typeof l === 'string' && l.includes(n))))) return true;
             }
+
             return false;
         }""",
         arg=list(namen),
         polling=_POLL_MS,
     )
-    chart_visible = page.evaluate(
-        """() => {
-            const tc = document.getElementById('kompas-trend-chart');
-            const ip = document.getElementById('ip-grafiek');
-            const tcVis = tc && tc.style.display !== 'none' && !tc.hidden && tc.offsetParent !== null;
-            const ipVis = ip && ip.style.display !== 'none' && !ip.hidden && ip.offsetParent !== null;
-            return Boolean(tcVis || ipVis);
-        }"""
-    )
-    assert chart_visible, "Geen vergelijkingsgrafiek zichtbaar in het Kompas-detailpaneel"
+    expect(
+        page.locator("#kompas-trend-chart, #ip-grafiek").filter(has_not=page.locator("[hidden]")).first
+    ).to_be_visible()
 
 
 def dump(obj) -> str:
