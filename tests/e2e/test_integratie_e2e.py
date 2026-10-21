@@ -152,9 +152,8 @@ def test_chatactie_open_kompas_laadt_selectie(app_page):
     selecteer_buurt_via_app(page, WORKUM, shift=True)
     selecteer_buurt_via_app(page, KOUDUM, shift=True)
     wacht_op_selectie(page, [WORKUM, KOUDUM])
-    expect(page.locator("#dock-panel-kompas")).to_be_hidden()
-
     _open_assistent(page)
+    expect(page.locator("#dock-panel-kompas")).to_be_hidden()
     page.locator("#chat-input").fill("help")
     page.get_by_role("button", name="Vraag versturen").click()
     _chat_actie(page, r"Beleidsadviseur")

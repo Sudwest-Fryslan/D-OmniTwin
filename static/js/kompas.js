@@ -149,7 +149,8 @@ class KompasVisualization {
         if (this.trendChart?.resize) {
             this.trendChart.resize();
         }
-        if (this._uitgesteldIpData && document.getElementById('ip-grafiek-wrap')?.clientWidth) {
+        const isDockCollapsed = document.getElementById('rechter-dock')?.classList.contains('collapsed') && window.state?.dockMode !== 'floating';
+        if (this._uitgesteldIpData && document.getElementById('ip-grafiek-wrap')?.clientWidth && !isDockCollapsed) {
             const data = this._uitgesteldIpData;
             this._uitgesteldIpData = null;
             this._renderBenchmarkGrafiek(data);
@@ -2065,7 +2066,7 @@ class KompasVisualization {
         };
 
         const trendEl = document.getElementById('details-trend');
-        if (trendEl) trendEl.innerHTML = `<span style="color: var(--action-color)">Vergelijking (${gebiedIds.length} buurten)</span>`;
+        if (trendEl) trendEl.innerHTML = `<span style="color: var(--action-color)">Vergelijking</span>`;
 
         try {
             // Haal historie op voor alle geselecteerde gebieden (max 5 voor de trendlijnen)
@@ -2840,8 +2841,9 @@ class KompasVisualization {
         if (leeg) leeg.hidden = true;
         wrap.style.height = `${Math.max(140, Math.min(gebieden.length, 40) * 30 + 90)}px`;
 
-        // Als de container nog 0 breedte heeft (dock schuift nog open)
-        if (!wrap.clientWidth) {
+        // Als de container nog 0 breedte heeft (dock schuift nog open) of dock is ingeklapt
+        const isDockCollapsed = document.getElementById('rechter-dock')?.classList.contains('collapsed') && window.state?.dockMode !== 'floating';
+        if (!wrap.clientWidth || isDockCollapsed) {
             this._uitgesteldIpData = data;
             return;
         }

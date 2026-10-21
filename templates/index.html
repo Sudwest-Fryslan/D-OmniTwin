@@ -711,25 +711,6 @@
           <p class="help-text">Het kompas toont een hiërarchische visualisatie van indicatoren voor een geselecteerd
             gebied.</p>
 
-          <!-- Kompas Configuration Selector (Custom Dropdown) -->
-          <div class="kompas-controls" style="margin-top: 1rem;">
-            <label id="kompas-config-label">Configuratie:</label>
-            <div class="custom-select-container" id="kompas-config-container">
-              <!-- Selection Trigger -->
-              <div class="custom-select-trigger" id="custom-select-trigger" role="button" tabindex="0" aria-haspopup="true" aria-expanded="false" aria-labelledby="kompas-config-label selected-config-text">
-                <span id="selected-config-text">Laden...</span>
-                <span class="arrow" aria-hidden="true">▼</span>
-              </div>
-              <!-- Options List (Hidden by default) -->
-              <div class="custom-options" id="custom-options">
-                <!-- Populated by JS -->
-              </div>
-              <!-- Hidden Input for Form Data -->
-              <input type="hidden" id="kompas-config-select">
-            </div>
-            <span class="help-text" id="kompas-config-info">Selecteer een kompas configuratie</span>
-          </div>
-
           <button id="open-kompas-btn" class="btn btn-primary" style="margin-top: 1rem;">
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
               stroke="currentColor" stroke-width="2" style="margin-right: 8px;">
@@ -825,6 +806,19 @@
               <button type="button" id="btn-toggle-sunburst" class="btn-toggle-viz" title="Cirkel inklappen/uitklappen" aria-label="Cirkel inklappen of uitklappen">
                 <span id="btn-toggle-sunburst-text">— Cirkel inklappen</span>
               </button>
+            </div>
+            <!-- Kompas Configuration Selector (Custom Dropdown) -->
+            <div class="kompas-controls" style="padding: 0.25rem 0.75rem 0.5rem;">
+              <label id="kompas-config-label" class="visually-hidden">Configuratie:</label>
+              <div class="custom-select-container" id="kompas-config-container">
+                <div class="custom-select-trigger" id="custom-select-trigger" role="button" tabindex="0" aria-haspopup="true" aria-expanded="false" aria-labelledby="kompas-config-label selected-config-text">
+                  <span id="selected-config-text">Laden...</span>
+                  <span class="arrow" aria-hidden="true">▼</span>
+                </div>
+                <div class="custom-options" id="custom-options"></div>
+                <input type="hidden" id="kompas-config-select">
+              </div>
+              <span class="help-text visually-hidden" id="kompas-config-info">Selecteer een kompas configuratie</span>
             </div>
             <!-- SVG Container for Sunburst -->
             <div id="kompas-container" class="kompas-viz-container">
@@ -1034,8 +1028,9 @@
     <!-- ================================================================
          Floating Kompas Window (Draggable, Resizable Host)
          ================================================================ -->
-    <div id="kompas-window" class="floating-window" role="dialog" aria-modal="false" aria-labelledby="kompas-window-title" style="display: none;">
+    <div id="kompas-window" class="floating-window" role="dialog" aria-modal="false" aria-label="D-Omni Kompas" aria-labelledby="kompas-window-title" style="display: none;">
       <div class="floating-window-header">
+        <span id="kompas-window-title" class="visually-hidden">D-Omni Kompas</span>
         <div role="tablist" class="floating-tabs dock-tabs" aria-label="Zwevend venster functies">
           <button id="float-tab-kompas" role="tab" class="dock-tab active" aria-selected="true" aria-controls="dock-panel-kompas">
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"

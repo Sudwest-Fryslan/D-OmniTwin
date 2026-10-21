@@ -1761,7 +1761,9 @@ async function selectBuurtenVanExterneLaag(laag, feature) {
         }
 
         // Reload kompas als open
-        if (state.kompasWindow && state.kompasWindow.isVisible && window.kompasViz && window.kompasViz.currentConfigId) {
+        const dockEl = document.getElementById('rechter-dock');
+        const isDockOpen = (dockEl && !dockEl.classList.contains('collapsed')) || (state.kompasWindow && state.kompasWindow.isVisible);
+        if (isDockOpen && window.kompasViz && window.kompasViz.currentConfigId) {
             loadKompasForSelection(window.kompasViz.currentConfigId);
         }
 
@@ -3266,6 +3268,10 @@ function openRechterDock(tab = 'kompas') {
     }
 
     switchDockTab(tab);
+
+    if (tab === 'kompas' && state?.selectedGebiedIds?.size > 0 && window.kompasViz?.currentConfigId) {
+        loadKompasForSelection(window.kompasViz.currentConfigId);
+    }
 }
 window.openRechterDock = openRechterDock;
 
@@ -3452,7 +3458,7 @@ function initRechterDock() {
         const isClosed = !dockEl || dockEl.classList.contains('collapsed');
         const isKompasActive = document.getElementById('dock-panel-kompas')?.classList.contains('active');
         if (isClosed || !isKompasActive) {
-            openRechterDock('kompas');
+            openKompasVenster();
         } else {
             closeRechterDock();
         }
@@ -4003,9 +4009,10 @@ function setupEventListeners() {
                 window.kompasViz.currentConfigId = newConfigId;
                 console.log('🔄 Kompas config changed to:', newConfigId);
 
-                // If window is open, reload data
-                const kompasWindow = document.getElementById('kompas-window');
-                if (kompasWindow && kompasWindow.style.display !== 'none') {
+                // If window or dock is open, reload data
+                const dockEl = document.getElementById('rechter-dock');
+                const isDockOpen = (dockEl && !dockEl.classList.contains('collapsed')) || (state.kompasWindow && state.kompasWindow.isVisible);
+                if (isDockOpen) {
                     if (state.selectedGebiedIds.size > 0) {
                         loadKompasForSelection(newConfigId);
                     } else {
