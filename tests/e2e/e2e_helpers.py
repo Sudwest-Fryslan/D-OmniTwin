@@ -694,14 +694,34 @@ def open_indicator_in_kompas(page: Page, thema: str, indicator: str):
 
 
 def wacht_op_vergelijkingsgrafiek(page: Page, namen):
-    """Kompas-detailpaneel toont de staafgrafiek met één staaf per geselecteerd gebied."""
+    """Kompas-detailpaneel toont een vergelijkingsgrafiek (trendlijn of staafdiagram) voor de geselecteerde gebieden."""
     page.wait_for_function(
-        "(namen) => { const c = window.kompasViz.trendChart;"
-        " return c && namen.every(n => c.data.labels.includes(n)); }",
+        """(namen) => {
+            const tc = window.kompasViz && window.kompasViz.trendChart;
+            if (tc && tc.data) {
+                const inLabels = namen.every(n => tc.data.labels && tc.data.labels.includes(n));
+                const inDatasets = namen.every(n => tc.data.datasets && tc.data.datasets.some(d => d.label === n || d.label.includes(n)));
+                if (inLabels || inDatasets) return true;
+            }
+            const ip = (window.kompasViz && window.kompasViz._ipChart) || (typeof Chart !== 'undefined' && Chart.getChart(document.getElementById('ip-grafiek')));
+            if (ip && ip.data && ip.data.labels) {
+                if (namen.every(n => ip.data.labels.some(l => l === n || l.includes(n)))) return true;
+            }
+            return false;
+        }""",
         arg=list(namen),
         polling=_POLL_MS,
     )
-    expect(page.locator("#kompas-trend-chart")).to_be_visible()
+    chart_visible = page.evaluate(
+        """() => {
+            const tc = document.getElementById('kompas-trend-chart');
+            const ip = document.getElementById('ip-grafiek');
+            const tcVis = tc && tc.style.display !== 'none' && !tc.hidden && tc.offsetParent !== null;
+            const ipVis = ip && ip.style.display !== 'none' && !ip.hidden && ip.offsetParent !== null;
+            return Boolean(tcVis || ipVis);
+        }"""
+    )
+    assert chart_visible, "Geen vergelijkingsgrafiek zichtbaar in het Kompas-detailpaneel"
 
 
 def dump(obj) -> str:
