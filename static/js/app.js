@@ -2306,8 +2306,10 @@ function fitBounds(geojson) {
     const width = (mapEl && mapEl.clientWidth) || window.innerWidth;
     const height = (mapEl && mapEl.clientHeight) || window.innerHeight;
     const leftPanel = document.querySelector('.panel-container.open') ? 360 : 0;
-    const chatOpen = document.getElementById('chat-panel')?.classList.contains('open');
-    let padding = { top: 40, bottom: 80, left: 70 + leftPanel + 40, right: (chatOpen ? 380 : 0) + 40 };
+    const dockEl = document.getElementById('rechter-dock');
+    const dockOpen = dockEl && !dockEl.classList.contains('collapsed') && window.state?.dockMode !== 'floating';
+    const rightPad = dockOpen ? 420 : 0;
+    let padding = { top: 40, bottom: 80, left: 70 + leftPanel + 40, right: rightPad + 40 };
     if (width - padding.left - padding.right < 100 || height - padding.top - padding.bottom < 100) {
         padding = 20;
     }
@@ -3652,6 +3654,9 @@ function setupEventListeners() {
             const coverage = selectedOption.dataset.coverage;
             document.getElementById('indicator-coverage').textContent =
                 coverage ? `${coverage} gebieden met data` : 'Data beschikbaarheid onbekend';
+            if (window.EventBus) {
+                window.EventBus.emit('INDICATOR_SELECTED', { uuid: selectedId, name: selectedOption.text });
+            }
         }
 
         updateButtonState();
@@ -4452,13 +4457,15 @@ function zoomNaarGebieden(ids) {
         .forEach(f => f.geometry && walk(f.geometry.coordinates));
     if (minLon === Infinity) return false;
 
-    // Vrije zone: linkerpaneel en chat niet over de gebieden heen
+    // Vrije zone: linkerpaneel en rechter-dock niet over de gebieden heen
     const mapEl = document.getElementById('map');
     const width = (mapEl && mapEl.clientWidth) || window.innerWidth;
     const height = (mapEl && mapEl.clientHeight) || window.innerHeight;
     const leftPanel = document.querySelector('.panel-container.open') ? 360 : 0;
-    const chatOpen = document.getElementById('chat-panel')?.classList.contains('open');
-    let padding = { top: 60, bottom: 100, left: 110 + leftPanel, right: (chatOpen ? 380 : 0) + 60 };
+    const dockEl = document.getElementById('rechter-dock');
+    const dockOpen = dockEl && !dockEl.classList.contains('collapsed') && window.state?.dockMode !== 'floating';
+    const rightPad = dockOpen ? 420 : 0;
+    let padding = { top: 60, bottom: 100, left: 110 + leftPanel, right: rightPad + 60 };
     if (width - padding.left - padding.right < 100 || height - padding.top - padding.bottom < 100) padding = 20;
 
     let longitude = (minLon + maxLon) / 2, latitude = (minLat + maxLat) / 2, zoom = 13;

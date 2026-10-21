@@ -64,7 +64,7 @@ def test_indicatorpaneel_staafdiagram_en_csv(app_page, tmp_path):
     # Paneel nog dicht: de grafiek wacht tot het paneel opengaat, anders wordt hij 0×0 (#419)
     page.wait_for_function("() => !document.getElementById('ip-grafiek-wrap').hidden")
     assert page.evaluate("() => !Chart.getChart(document.getElementById('ip-grafiek'))")
-    open_paneel(page, "Indicator")
+    open_paneel(page, "D-Omni Kompas")
 
     expect(page.locator("#ip-naam")).to_contain_text(INDICATOR)
     expect(page.locator("#ip-eenheid")).to_have_text("°C")

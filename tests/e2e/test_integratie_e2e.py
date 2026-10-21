@@ -56,8 +56,7 @@ def test_tc_06_001_beleidsadviseur_ijsselmeerkust(app_page_fresh, tmp_path: Path
     expect(modal).to_be_hidden()
 
     # Assistent: help → profielkeuze → Beleidsadviseur
-    page.get_by_role("button", name="D-Omni Assistent", exact=True).click()
-    expect(page.locator("#chat-panel")).to_have_class(re.compile(r"\bopen\b"))
+    _open_assistent(page)
     page.locator("#chat-input").fill("help")
     page.get_by_role("button", name="Vraag versturen").click()
     _chat_actie(page, r"Beleidsadviseur")
@@ -71,10 +70,11 @@ def test_tc_06_001_beleidsadviseur_ijsselmeerkust(app_page_fresh, tmp_path: Path
     page.wait_for_function("() => window.state.currentGemeenteCode === '1900'")
     wacht_op_kaartdata(page)
     _chat_actie(page, r"Open het D-Omni Kompas")
-    expect(page.locator("#kompas-window")).to_be_visible()
+    expect(page.locator("#dock-panel-kompas")).to_be_visible()
 
-    # Assistent sluiten en Kompas-venster opzij slepen zodat de kaart vrij is
-    page.get_by_role("button", name="Assistent sluiten").click()
+    # Assistent/dock sluiten en venster opzij slepen (indien zwevend)
+    if page.locator("#dock-panel-chat").is_visible():
+        page.locator("#dock-btn-close").click()
     verplaats_kompasvenster_rechts(page)
 
     # 3. Selecteer de eerste kern op de kaart (echte klik) → Kompas laadt het gebied. Scenariotest:
@@ -127,7 +127,7 @@ def test_tc_06_001_fase5_export_bronvermelding(app_page, tmp_path: Path):
         " && window.state.currentData.metadata.indicator_naam === 'Participatiewet totaal'",
         timeout=traag_ms(),
     )
-    page.get_by_role("button", name="Kompasvenster sluiten").click()
+    page.locator("#dock-btn-close").click()
     op_kaart = aantal_kaartgebieden(page)
 
     open_paneel(page, "Exporteren")
@@ -152,15 +152,15 @@ def test_chatactie_open_kompas_laadt_selectie(app_page):
     selecteer_buurt_via_app(page, WORKUM, shift=True)
     selecteer_buurt_via_app(page, KOUDUM, shift=True)
     wacht_op_selectie(page, [WORKUM, KOUDUM])
-    expect(page.locator("#kompas-window")).to_be_hidden()
+    expect(page.locator("#dock-panel-kompas")).to_be_hidden()
 
-    page.get_by_role("button", name="D-Omni Assistent", exact=True).click()
+    _open_assistent(page)
     page.locator("#chat-input").fill("help")
     page.get_by_role("button", name="Vraag versturen").click()
     _chat_actie(page, r"Beleidsadviseur")
     _chat_actie(page, r"Open het D-Omni Kompas")
 
-    expect(page.locator("#kompas-window")).to_be_visible()
+    expect(page.locator("#dock-panel-kompas")).to_be_visible()
     expect(page.locator("#kompas-info")).to_contain_text("Gemiddelde van 2 gebieden", timeout=traag_ms())
     expect(page.locator("#kompas-info")).to_contain_text("Workum, Koudum")
     wacht_op_zonnediagram(page)
@@ -240,7 +240,8 @@ def _selecteer_bolsward_zuidoost(page):
 
 def _open_assistent(page):
     page.get_by_role("button", name="D-Omni Assistent", exact=True).click()
-    expect(page.locator("#chat-panel")).to_have_class(re.compile(r"\bopen\b"))
+    expect(page.locator("#rechter-dock")).not_to_have_class(re.compile(r"\bcollapsed\b"))
+    expect(page.locator("#dock-panel-chat")).to_be_visible()
 
 
 def _vraag(page, tekst, timeout=30_000):
@@ -315,7 +316,7 @@ def test_tc_06_004bc_beleidsadviseur_kompas(app_page):
 
     # 7-8. Kompas openen vanuit de chat → venster met het geselecteerde gebied
     _chat_actie(page, r"Open het D-Omni Kompas")
-    expect(page.locator("#kompas-window")).to_be_visible()
+    expect(page.locator("#dock-panel-kompas")).to_be_visible()
     expect(page.locator("#kompas-info")).to_contain_text("Bolsward-Zuidoost", timeout=geschaald(30_000))
     # De dekking hangt van de vulling af (met de SWF-inrichting 98,8%): getoond en hoog
     expect(page.locator("#kompas-info")).to_contain_text(re.compile(r"Indicatordekking: (9\d|100)(\.\d+)?%"))

@@ -70,7 +70,7 @@ def test_rapportdialoog_focus_vasthouden_escape_en_focus_terug(app_page):
 def test_kompasvenster_escape_en_focus_terug(app_page):
     page = app_page
     open_paneel(page, "D-Omni Kompas")
-    knop = page.locator("#open-kompas-btn")
+    knop = page.locator("#dock-btn-detach")
     knop.focus()
     page.keyboard.press("Enter")
 

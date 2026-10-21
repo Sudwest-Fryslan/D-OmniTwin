@@ -149,7 +149,11 @@ class KompasVisualization {
         if (this.trendChart?.resize) {
             this.trendChart.resize();
         }
-        if (this._ipChart?.resize) {
+        if (this._uitgesteldIpData && document.getElementById('ip-grafiek-wrap')?.clientWidth) {
+            const data = this._uitgesteldIpData;
+            this._uitgesteldIpData = null;
+            this._renderBenchmarkGrafiek(data);
+        } else if (this._ipChart?.resize) {
             this._ipChart.resize();
         }
     }
@@ -302,6 +306,12 @@ class KompasVisualization {
 
             // Render sunburst
             this.renderSunburst(data.hierarchie);
+
+            if (this._pendingIndicatorUuid) {
+                const pending = this._pendingIndicatorUuid;
+                this._pendingIndicatorUuid = null;
+                setTimeout(() => this.navigateToIndicator(pending), 100);
+            }
 
             return data;
         } catch (error) {
@@ -2639,7 +2649,8 @@ class KompasVisualization {
          * Navigeer het kompas naar een specifieke indicator op basis van UUID.
          */
         if (!this.root || !this._zoomFn) {
-            console.error("❌ Kompas niet klaar voor navigatie");
+            console.warn("⚠️ Kompas niet klaar voor navigatie, uitgesteld");
+            this._pendingIndicatorUuid = uuid;
             return;
         }
 
@@ -2672,10 +2683,12 @@ class KompasVisualization {
      * - Waarschuwing onderdrukking kleine aantallen (#ip-onderdrukt)
      * - CSV download link (#ip-csv)
      */
-    async _loadBenchmarkBarChart(node) {
-        if (!node || !node.data?.uuid) return;
+    async _loadBenchmarkBarChart(indicatorOrNode) {
+        const uuid = typeof indicatorOrNode === 'string'
+            ? indicatorOrNode
+            : (indicatorOrNode?.data?.uuid || indicatorOrNode?.uuid || window.state?.currentIndicator);
+        if (!uuid) return;
         const s = window.state || {};
-        const uuid = node.data.uuid;
 
         // Bepaal selectie
         const ids = s.selectedGebiedIds && s.selectedGebiedIds.size > 0
@@ -2699,6 +2712,8 @@ class KompasVisualization {
             const data = await res.json();
 
             // Synchroon naam en eenheid wegschrijven voor tests en DOM
+            const detailsPanel = document.getElementById('kompas-details-panel');
+            if (detailsPanel) detailsPanel.style.display = 'block';
             const ipNaam = document.getElementById('ip-naam');
             if (ipNaam) ipNaam.textContent = data.indicator.naam + (this._currentJaar ? ` (${this._currentJaar})` : '');
             const ipEenheid = document.getElementById('ip-eenheid');
@@ -2990,7 +3005,11 @@ document.addEventListener('DOMContentLoaded', async function () {
         kompasViz._isSyncing = false;
 
         window.EventBus.on('INDICATOR_SELECTED', (data) => {
-            if (!kompasViz || !kompasViz.root) return;
+            if (!data || !data.uuid) return;
+            if (!kompasViz || !kompasViz.root) {
+                if (kompasViz) kompasViz._pendingIndicatorUuid = data.uuid;
+                return;
+            }
             if (kompasViz._isSyncing) return; // ← LOOP GUARD
             
             // Rechter dock architectuur (#444): open het Kompas tabblad
@@ -3010,6 +3029,8 @@ document.addEventListener('DOMContentLoaded', async function () {
             kompasViz.updateSelectedAreasBadges();
             if (kompasViz.currentNode && kompasViz.currentNode.data?.uuid) {
                 kompasViz.loadIndicatorDetails(kompasViz.currentNode);
+            } else if (window.state?.currentIndicator) {
+                kompasViz._loadBenchmarkBarChart(window.state.currentIndicator);
             }
         });
 
@@ -3017,6 +3038,8 @@ document.addEventListener('DOMContentLoaded', async function () {
             if (d && d.jaar != null) kompasViz._currentJaar = d.jaar;
             if (kompasViz.currentNode && kompasViz.currentNode.data?.uuid) {
                 kompasViz._loadBenchmarkBarChart(kompasViz.currentNode);
+            } else if (window.state?.currentIndicator) {
+                kompasViz._loadBenchmarkBarChart(window.state.currentIndicator);
             }
         });
 
