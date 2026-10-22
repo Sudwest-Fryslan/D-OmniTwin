@@ -99,6 +99,8 @@ def test_tc_06_001_beleidsadviseur_ijsselmeerkust(app_page_fresh, tmp_path: Path
 
     # ── Fase 4 — Sociaal domein (stap 10) ────────────────────────────────────
     page.locator("#kompas-reset").click()
+    expect(page.locator("#kompas-details-panel")).not_to_be_visible()
+    expect(page.locator("#kompas-breadcrumb")).to_contain_text("Start")
     wacht_op_zonnediagram(page)
     open_indicator_in_kompas(page, "Rondkomen", "Participatiewet totaal")
     expect(page.locator("#details-bron")).to_contain_text("Kerncijfers")

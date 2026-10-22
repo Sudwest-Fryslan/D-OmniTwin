@@ -1247,6 +1247,10 @@ class KompasVisualization {
          * Reset kompas naar het beginniveau (root)
          */
         this.collapseDetails();
+        this.currentNode = this.root;
+        if (this.root) {
+            this.updateBreadcrumb(this.root);
+        }
         if (this._zoomFn && this.root) {
             this._zoomFn(null, this.root);
         } else if (this.currentData && this.currentData.hierarchie) {
@@ -2155,7 +2159,7 @@ class KompasVisualization {
 
                 const areaColors = ['#3b82f6', '#10b981', '#f59e0b', '#ec4899', '#8b5cf6', '#06b6d4'];
                 const datasets = results.map((r, idx) => {
-                    const naam = r?.gebied_naam || getNaam(actieveGebiedIds[idx], idx);
+                    const naam = r?.gebied?.naam || r?.gebied_naam || getNaam(actieveGebiedIds[idx], idx);
                     const histMap = new Map((r?.history || []).map(h => [h.jaar, h.waarde]));
                     const color = areaColors[idx % areaColors.length];
                     return {
@@ -2269,7 +2273,7 @@ class KompasVisualization {
                     const hist = r?.history || [];
                     const val = hist.length > 0 ? hist[0].waarde : null;
                     return {
-                        naam: r?.gebied_naam || getNaam(actieveGebiedIds[idx], idx),
+                        naam: r?.gebied?.naam || r?.gebied_naam || getNaam(actieveGebiedIds[idx], idx),
                         waarde: val
                     };
                 });
