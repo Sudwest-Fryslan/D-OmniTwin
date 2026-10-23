@@ -17,7 +17,7 @@ SQLAlchemy>=2.0.54
 # --- Data Processing ---
 pandas>=2.3.3
 numpy>=2.2.6
-pyproj>=3.4.0
+pyproj>=3.7.2
 
 # --- HTTP ---
 requests>=2.34.2
