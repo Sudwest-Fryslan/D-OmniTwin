@@ -253,19 +253,7 @@
           </svg>
         </span>
       </button>
-      <!-- #258: indicatorpaneel -->
-      <button class="tab-button" data-panel="indicator" title="Indicator" aria-label="Indicator">
-        <span class="tab-icon">
-          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-            class="lucide lucide-chart-bar">
-            <path d="M3 3v16a2 2 0 0 0 2 2h16" />
-            <path d="M7 16h8" />
-            <path d="M7 11h12" />
-            <path d="M7 6h3" />
-          </svg>
-        </span>
-      </button>
+
       <button class="tab-button" data-panel="layers" title="Kaartlagen" aria-label="Kaartlagen">
         <span class="tab-icon">
           <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
@@ -631,50 +619,7 @@
         </div>
       </div>
 
-      <!-- Indicatorpaneel (#258): static/js/indicatorpaneel.js -->
-      <div id="panel-indicator" class="panel-content">
-        <div class="panel">
-          <h3 class="panel-title">Indicator</h3>
-          <p id="indicatorpaneel-leeg" class="help-text">Kies een indicator voor de kaart om hier de gegevens te zien.</p>
-          <div id="indicatorpaneel-inhoud" class="indicatorpaneel" hidden>
-            <h4 id="ip-naam" class="subsection-title"></h4>
-            <p id="ip-beschrijving" class="ip-beschrijving"></p>
-            <dl class="ip-meta">
-              <dt>Eenheid</dt>
-              <dd id="ip-eenheid"></dd>
-              <dt>Bron</dt>
-              <dd id="ip-bronnen"></dd>
-              <dt>Gemeentegemiddelde</dt>
-              <dd id="ip-gemiddelde"></dd>
-            </dl>
-            <h4 class="subsection-title">Geselecteerde gebieden</h4>
-            <div id="ip-grafiek-wrap" class="ip-grafiek" hidden>
-              <canvas id="ip-grafiek" role="img" aria-label="Staafdiagram van de geselecteerde gebieden met het gemeentegemiddelde"></canvas>
-            </div>
-            <p id="ip-grafiek-leeg" class="help-text">Selecteer gebieden op de kaart voor een staafdiagram (Shift+klik voor meer gebieden).</p>
-            <p id="ip-onderdrukt" class="help-text" hidden></p>
-            <div class="form-group ip-export">
-              <a id="ip-csv" class="btn btn-secondary" href="#" download>
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
-                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                  class="lucide lucide-download" aria-hidden="true">
-                  <path d="M12 15V3" />
-                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                  <path d="m7 10 5 5 5-5" />
-                </svg>
-                CSV downloaden
-              </a>
-              <span id="ip-csv-uitleg" class="help-text"></span>
-            </div>
-            <div class="form-group" style="margin-top: 8px;">
-              <button type="button" id="ip-meld-btn" class="btn btn-secondary" style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px;">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>
-                Afwijking melden over deze indicator
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
+
 
       <!-- Panel 3: Layers (Basemap) -->
       <div id="panel-layers" class="panel-content">
@@ -766,25 +711,6 @@
           <p class="help-text">Het kompas toont een hiërarchische visualisatie van indicatoren voor een geselecteerd
             gebied.</p>
 
-          <!-- Kompas Configuration Selector (Custom Dropdown) -->
-          <div class="kompas-controls" style="margin-top: 1rem;">
-            <label id="kompas-config-label">Configuratie:</label>
-            <div class="custom-select-container" id="kompas-config-container">
-              <!-- Selection Trigger -->
-              <div class="custom-select-trigger" id="custom-select-trigger" role="button" tabindex="0" aria-haspopup="true" aria-expanded="false" aria-labelledby="kompas-config-label selected-config-text">
-                <span id="selected-config-text">Laden...</span>
-                <span class="arrow" aria-hidden="true">▼</span>
-              </div>
-              <!-- Options List (Hidden by default) -->
-              <div class="custom-options" id="custom-options">
-                <!-- Populated by JS -->
-              </div>
-              <!-- Hidden Input for Form Data -->
-              <input type="hidden" id="kompas-config-select">
-            </div>
-            <span class="help-text" id="kompas-config-info">Selecteer een kompas configuratie</span>
-          </div>
-
           <button id="open-kompas-btn" class="btn btn-primary" style="margin-top: 1rem;">
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
               stroke="currentColor" stroke-width="2" style="margin-right: 8px;">
@@ -831,146 +757,185 @@
     </aside>
 
     <!-- ================================================================
-         Floating Kompas Window (Draggable, Resizable)
+         Rechter Dock (D-Omni Kompas & D-Omni Assistent) — Issue #444
          ================================================================ -->
-    <div id="kompas-window" class="floating-window" role="dialog" aria-modal="false" aria-labelledby="kompas-window-title" style="display: none;">
-      <div class="floating-window-header">
-        <h3 id="kompas-window-title">
-          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
-            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-            class="lucide lucide-compass" style="flex-shrink: 0;">
-            <path d="m16.24 7.76-1.804 5.411a2 2 0 0 1-1.265 1.265L7.76 16.24l1.804-5.411a2 2 0 0 1 1.265-1.265z" />
-            <circle cx="12" cy="12" r="10" />
-          </svg>
-          D-Omni Kompas
-        </h3>
-        <div class="window-controls">
-          <button class="btn-minimize" title="Minimaliseer" aria-label="Kompasvenster minimaliseren">_</button>
-          <button class="btn-close" title="Sluiten" aria-label="Kompasvenster sluiten">✕</button>
+    <aside id="rechter-dock" class="rechter-dock collapsed" role="region" aria-label="Zijpaneel met Kompas en Assistent">
+      <div class="dock-header">
+        <div role="tablist" class="dock-tabs" aria-label="Zijpaneel functies">
+          <button id="dock-tab-kompas" role="tab" class="dock-tab active" aria-selected="true" aria-controls="dock-panel-kompas">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="dock-tab-icon">
+              <path d="m16.24 7.76-1.804 5.411a2 2 0 0 1-1.265 1.265L7.76 16.24l1.804-5.411a2 2 0 0 1 1.265-1.265z" />
+              <circle cx="12" cy="12" r="10" />
+            </svg>
+            <span>Kompas</span>
+          </button>
+          <button id="dock-tab-chat" role="tab" class="dock-tab" aria-selected="false" aria-controls="dock-panel-chat">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="dock-tab-icon">
+              <path d="M12 20v2"/><path d="M12 2v2"/><path d="M17 20v2"/><path d="M17 2v2"/>
+              <path d="M2 12h2"/><path d="M2 17h2"/><path d="M2 7h2"/>
+              <path d="M20 12h2"/><path d="M20 17h2"/><path d="M20 7h2"/>
+              <path d="M7 20v2"/><path d="M7 2v2"/>
+              <rect x="4" y="4" width="16" height="16" rx="2"/>
+              <rect x="8" y="8" width="8" height="8" rx="1"/>
+            </svg>
+            <span>Assistent</span>
+          </button>
+        </div>
+        <div class="dock-actions">
+          <button id="dock-btn-detach" class="dock-action-btn" title="Losmaken naar zwevend venster" aria-label="Venster losmaken naar zwevend venster">
+            <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+              <polyline points="15 3 21 3 21 9"/>
+              <line x1="10" y1="14" x2="21" y2="3"/>
+            </svg>
+          </button>
+          <button id="dock-btn-close" class="dock-action-btn" title="Sluiten" aria-label="Zijpaneel sluiten">✕</button>
         </div>
       </div>
-      <div class="floating-window-content">
-        <!-- Main Kompas View (Left Panel) -->
-        <div class="kompas-main-panel">
-          <!-- AI Search Bar -->
-          <div class="kompas-search-container">
+
+      <div class="dock-body">
+        <!-- Tab 1: Kompas + Samengevoegd Detailpaneel -->
+        <div id="dock-panel-kompas" role="tabpanel" class="dock-panel active" aria-labelledby="dock-tab-kompas">
+          <!-- Sunburst visualisatie sectie (inklapbaar) -->
+          <div id="kompas-viz-section" class="kompas-viz-section">
+            <div class="viz-header">
+              <span class="viz-title">D-Omni Kompas</span>
+              <button type="button" id="btn-toggle-sunburst" class="btn-toggle-viz" title="Cirkel inklappen/uitklappen" aria-label="Cirkel inklappen of uitklappen">
+                <span id="btn-toggle-sunburst-text">— Cirkel inklappen</span>
+              </button>
+            </div>
+            <!-- Kompas Configuration Selector (Custom Dropdown) -->
+            <div class="kompas-controls" style="padding: 0.25rem 0.75rem 0.5rem;">
+              <label id="kompas-config-label" class="visually-hidden">Configuratie:</label>
+              <div class="custom-select-container" id="kompas-config-container">
+                <div class="custom-select-trigger" id="custom-select-trigger" role="button" tabindex="0" aria-haspopup="true" aria-expanded="false" aria-labelledby="kompas-config-label selected-config-text">
+                  <span id="selected-config-text">Laden...</span>
+                  <span class="arrow" aria-hidden="true">▼</span>
+                </div>
+                <div class="custom-options" id="custom-options"></div>
+                <input type="hidden" id="kompas-config-select">
+              </div>
+              <span class="help-text visually-hidden" id="kompas-config-info">Selecteer een kompas configuratie</span>
+            </div>
+            <!-- SVG Container for Sunburst -->
+            <div id="kompas-container" class="kompas-viz-container">
+              <!-- D3.js sunburst renders here -->
+            </div>
+            <!-- Kompas UI Actions -->
+            <div class="kompas-actions" style="display: flex; gap: 8px; justify-content: center; margin-top: 6px;">
+              <button id="kompas-zoom-out" class="kompas-viz-btn" title="Zoom Uit">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="m15 18-6-6 6-6" />
+                </svg>
+                Terug naar boven
+              </button>
+              <button id="kompas-reset" class="kompas-viz-btn" title="Reset Kompas">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+                  <path d="M3 3v5h5" />
+                </svg>
+                Reset
+              </button>
+            </div>
+          </div>
+
+          <!-- Doorklikbaar kruimelpad -->
+          <nav id="kompas-breadcrumb" class="kompas-breadcrumb" aria-label="Thema hiërarchie" style="display: none;">
+            <!-- Populated by JavaScript -->
+          </nav>
+
+          <!-- Directe Zoekfunctie -->
+          <div class="kompas-search-container" style="margin: 4px 0;">
             <div class="search-input-wrapper">
-              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
                 stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
                 class="search-icon">
                 <circle cx="11" cy="11" r="8" />
                 <path d="m21 21-4.3-4.3" />
               </svg>
-              <label for="kompas-ai-search" class="visually-hidden">Zoek of chat op thema of kernwoord</label>
-              <input type="text" id="kompas-ai-search" placeholder="Chat/Zoek op thema of kernwoord..."
-                autocomplete="off">
+              <label for="kompas-ai-search" class="visually-hidden">Zoek indicator op thema of kernwoord</label>
+              <input type="text" id="kompas-ai-search" placeholder="Zoek indicator op naam of kernwoord…" autocomplete="off">
             </div>
             <div id="kompas-search-results" class="search-results-dropdown" style="display: none;">
               <!-- Populated by JS -->
             </div>
           </div>
 
-          <!-- Breadcrumb Trail -->
-          <div id="kompas-breadcrumb" class="kompas-breadcrumb" style="display: none;">
-            <!-- Populated by JavaScript -->
+          <!-- Geselecteerde Buurten Badges -->
+          <div id="kompas-selected-areas" class="selected-areas-chips">
+            <!-- Dynamisch gevuld door kompas.js -->
           </div>
 
-          <!-- SVG Container for Sunburst -->
-          <div id="kompas-container" class="kompas-viz-container">
-            <!-- D3.js sunburst renders here -->
-          </div>
-
-          <!-- Kompas UI Actions (Sprint 7/8F) -->
-          <div class="kompas-actions">
-            <button id="kompas-zoom-out" class="kompas-viz-btn" title="Zoom Uit">
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
-                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="m15 18-6-6 6-6" />
-              </svg>
-              Terug naar boven
-            </button>
-            <button id="kompas-reset" class="kompas-viz-btn" title="Reset Kompas">
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
-                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
-                <path d="M3 3v5h5" />
-              </svg>
-              Reset
-            </button>
-          </div>
-
-          <!-- Info Box -->
+          <!-- Info Box / Help text -->
           <div id="kompas-info" class="kompas-info">
             <p class="help-text">💡 Selecteer een gebied op de kaart om het kompas te vullen met data.</p>
           </div>
-        </div>
 
-        <!-- Details View (Right Panel - Hidden by default) -->
-        <div id="kompas-details-panel" class="kompas-details-panel" style="display: none;">
-          <div class="details-header">
-            <h4 id="details-title">Indicator Naam</h4>
-            <!-- Close button removed per user request (replaced by center interaction) -->
-            <!-- <button id="close-details-btn" class="close-details-btn" title="Sluit details">
-              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
-                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M18 6 6 18" />
-                <path d="m6 6 12 12" />
-              </svg>
-            </button> -->
-          </div>
-
-          <div class="details-content">
-            <!-- Chart Container -->
-            <div class="chart-container-wrapper" id="chart-container-wrapper" style="position: relative; min-height: 120px;">
-              <canvas id="kompas-trend-chart"></canvas>
-              
-              <!-- A3: Fallback message -->
-              <div id="chart-fallback-message" class="chart-fallback" style="display:none; position: absolute; inset: 0; align-items: center; justify-content: center; background: var(--tint-subtle); border-radius: 6px; color: var(--text-secondary); font-size: 0.85rem; font-style: italic;">
-                Geen historische data (nog) beschikbaar
-              </div>
+          <!-- Geünificeerd Indicator Detailpaneel -->
+          <div id="kompas-details-panel" class="kompas-details-panel kompas-unified-details" style="display: none;">
+            <div class="details-header" style="padding: 8px 0 4px 0; border-bottom: 1px solid var(--panel-border);">
+              <h4 id="details-title" style="margin: 0; font-size: 1.05rem; font-weight: 600;"><span id="ip-naam">Indicator Naam</span></h4>
+              <span id="ip-eenheid" class="visually-hidden"></span>
+              <span id="ip-beschrijving" class="visually-hidden"></span>
             </div>
 
-            <!-- A3: Timeslider Container -->
-            <div id="timeslider-container" class="timeslider-container" style="display:none; align-items: center; gap: 8px; margin-top: 8px; padding: 4px 8px; background: var(--tint); border-radius: 6px;">
-              <button id="timeslider-play-btn" class="btn btn-icon" title="Afspelen/Pauzeren" aria-label="Tijdreeks afspelen of pauzeren" style="padding: 4px; border-radius: 4px; background: transparent; border: none; color: var(--text-primary); cursor: pointer; display: flex; align-items: center; justify-content: center;">
-                <svg id="icon-play" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <polygon points="5 3 19 12 5 21 5 3"></polygon>
-                </svg>
-                <svg id="icon-pause" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none;">
-                  <rect x="6" y="4" width="4" height="16"></rect>
-                  <rect x="14" y="4" width="4" height="16"></rect>
-                </svg>
-              </button>
-              <input type="range" id="timeslider-input" class="timeslider-range" aria-label="Peiljaar" min="0" max="10" value="10" style="flex: 1; cursor: pointer;">
-              <span id="timeslider-label" style="font-size: 0.8rem; font-weight: 600; color: var(--text-primary); min-width: 32px; text-align: center;">2024</span>
-            </div>
+            <div class="details-content" style="display: flex; flex-direction: column; gap: 8px;">
+              <!-- Trend Chart Container -->
+              <div class="chart-container-wrapper" id="chart-container-wrapper" style="position: relative; min-height: 120px;">
+                <canvas id="kompas-trend-chart"></canvas>
+                <div id="chart-fallback-message" class="chart-fallback" style="display:none; position: absolute; inset: 0; align-items: center; justify-content: center; background: var(--tint-subtle); border-radius: 6px; color: var(--text-secondary); font-size: 0.85rem; font-style: italic;">
+                  Geen historische data beschikbaar
+                </div>
+              </div>
 
-            <!-- Metadata Section -->
-            <div class="metadata-section">
-              <div class="metadata-item">
-                <span class="metadata-label">Waarde</span>
-                <span class="metadata-value" id="details-value">-</span>
+              <!-- Timeslider Container -->
+              <div id="timeslider-container" class="timeslider-container" style="display:none; align-items: center; gap: 8px; padding: 4px 8px; background: var(--tint); border-radius: 6px;">
+                <button type="button" id="timeslider-play-btn" class="btn btn-icon" title="Afspelen/Pauzeren" aria-label="Tijdreeks afspelen of pauzeren" style="padding: 4px; border-radius: 4px; background: transparent; border: none; color: var(--text-primary); cursor: pointer; display: flex; align-items: center; justify-content: center;">
+                  <svg id="icon-play" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                  </svg>
+                  <svg id="icon-pause" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none;">
+                    <rect x="6" y="4" width="4" height="16"></rect>
+                    <rect x="14" y="4" width="4" height="16"></rect>
+                  </svg>
+                </button>
+                <input type="range" id="timeslider-input" class="timeslider-range" aria-label="Peiljaar" min="0" max="10" value="10" style="flex: 1; cursor: pointer;">
+                <span id="timeslider-label" style="font-size: 0.8rem; font-weight: 600; color: var(--text-primary); min-width: 32px; text-align: center;">2024</span>
               </div>
-              <div class="metadata-item">
-                <span class="metadata-label">Trend</span>
-                <span class="metadata-value" id="details-trend">-</span>
+
+              <!-- Metadata Section -->
+              <div class="metadata-section" style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 6px 0;">
+                <div class="metadata-item">
+                  <span class="metadata-label" style="font-size: 0.75rem; color: var(--text-secondary); display: block;">Waarde</span>
+                  <span class="metadata-value" id="details-value" style="font-size: 1.1rem; font-weight: 700;">-</span>
+                </div>
+                <div class="metadata-item">
+                  <span class="metadata-label" style="font-size: 0.75rem; color: var(--text-secondary); display: block;">Trend</span>
+                  <span class="metadata-value" id="details-trend" style="font-size: 0.95rem; font-weight: 600;">-</span>
+                </div>
               </div>
-              
-              <div class="metadata-item full-width" style="margin-bottom: 0;">
-                <div class="kompas-tabs" style="display: flex; gap: 12px; margin-bottom: 8px; border-bottom: 1px solid var(--border-color); padding-bottom: 0;">
-                  <button id="tab-definitie" class="tab-btn active" style="background: none; border: none; color: var(--text-primary); font-weight: 600; cursor: pointer; padding: 4px 0; opacity: 1; border-bottom: 2px solid var(--accent-color); font-size: 0.85rem;">Definitie</button>
-                  <button id="tab-ontologie" class="tab-btn" style="background: none; border: none; color: var(--text-secondary); font-weight: 600; cursor: pointer; padding: 4px 0; opacity: 0.7; font-size: 0.85rem;">Ontologie</button>
+
+              <!-- Tabs Definitie | Ontologie -->
+              <div class="metadata-item full-width" style="margin-top: 4px;">
+                <div class="kompas-tabs" style="display: flex; gap: 12px; margin-bottom: 6px; border-bottom: 1px solid var(--border-color); padding-bottom: 0;">
+                  <button type="button" id="tab-definitie" class="tab-btn active" style="background: none; border: none; color: var(--text-primary); font-weight: 600; cursor: pointer; padding: 4px 0; border-bottom: 2px solid var(--accent-color); font-size: 0.85rem;">Definitie</button>
+                  <button type="button" id="tab-ontologie" class="tab-btn" style="background: none; border: none; color: var(--text-secondary); font-weight: 600; cursor: pointer; padding: 4px 0; opacity: 0.7; font-size: 0.85rem;">Ontologie</button>
                 </div>
                 <div id="content-definitie" class="tab-content" style="display: block;">
-                  <p class="metadata-text" id="details-definitie">Selecteer een indicator voor details.</p>
+                  <p class="metadata-text" id="details-definitie" style="font-size: 0.85rem; line-height: 1.45; white-space: pre-line; margin: 0;">Selecteer een indicator voor details.</p>
                 </div>
                 <div id="content-ontologie" class="tab-content" style="display: none;">
-                  <p class="metadata-text" id="details-ontologie">Geen ontologische beschrijving beschikbaar.</p>
+                  <p class="metadata-text" id="details-ontologie" style="font-size: 0.85rem; line-height: 1.45; white-space: pre-line; margin: 0;">Geen ontologische beschrijving beschikbaar.</p>
                 </div>
               </div>
-              
-              <!-- A1: Bronvermelding + peildatum met lineage link & tooltip (Sprint 22 Track C) -->
-              <div class="metadata-source" style="margin-top: 12px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px; font-size: 0.8rem; color: var(--text-secondary); border-top: 1px solid var(--border-color); padding-top: 8px;">
+
+              <!-- Bronvermelding & peildatum -->
+              <div class="metadata-source" style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px; font-size: 0.8rem; color: var(--text-secondary); border-top: 1px solid var(--border-color); padding-top: 6px;">
                 <div style="display: flex; align-items: center; gap: 4px;">
                   📊 <span id="details-bron" title="Bron van deze data" style="font-weight: 500;">CBS</span>
                   <a id="details-bron-link" href="#" target="_blank" rel="noopener noreferrer" title="Open officiële dataset in nieuwe tab" aria-label="Open officiële dataset (opent in nieuw tabblad)" style="display: none; color: var(--primary-color); text-decoration: none; margin-left: 2px;">
@@ -983,9 +948,39 @@
                 </div>
               </div>
 
-              <!-- Melden over indicator in Kompas (#311) -->
-              <div id="kompas-meld-wrap" style="margin-top: 10px; border-top: 1px solid var(--border-color); padding-top: 8px;">
-                <button type="button" id="kompas-meld-btn" class="btn btn-secondary" style="width: 100%; font-size: 0.8rem; padding: 5px 8px; display: flex; align-items: center; justify-content: center; gap: 6px;">
+              <!-- Liggend Benchmark Staafdiagram (Geïntegreerd uit Indicatorpaneel #258/#444) -->
+              <div id="kompas-benchmark-section" style="border-top: 1px solid var(--border-color); padding-top: 8px; margin-top: 4px;">
+                <h5 style="margin: 0 0 6px 0; font-size: 0.85rem; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.04em;">Vergelijking met Gemeentegemiddelde</h5>
+                <div id="ip-onderdrukt" class="help-text" style="color: var(--color-warning, #eab308); font-size: 0.8rem; margin-bottom: 4px;" hidden></div>
+                <div id="ip-grafiek-wrap" class="ip-grafiek" style="min-height: 140px;" hidden>
+                  <canvas id="ip-grafiek" role="img" aria-label="Staafdiagram van de geselecteerde gebieden met het gemeentegemiddelde"></canvas>
+                </div>
+                <p id="ip-grafiek-leeg" class="help-text" style="font-size: 0.8rem; font-style: italic; margin: 4px 0;">Selecteer gebieden op de kaart voor een vergelijking.</p>
+                <div id="ip-gemiddelde-wrap" style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 6px;">
+                  <span style="font-weight: 500;">Gemeentegemiddelde:</span>
+                  <div id="ip-gemiddelde" style="margin-top: 2px;"></div>
+                </div>
+                <div id="ip-bronnen-wrap" style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 6px;">
+                  <span style="font-weight: 500;">Bronnen:</span>
+                  <div id="ip-bronnen" style="margin-top: 2px;"></div>
+                </div>
+              </div>
+
+              <!-- Acties: CSV downloaden & Afwijking Melden -->
+              <div class="kompas-details-actions" style="border-top: 1px solid var(--border-color); padding-top: 8px; margin-top: 6px; display: flex; flex-direction: column; gap: 6px;">
+                <div class="ip-export">
+                  <a id="ip-csv" class="btn btn-secondary" href="#" download style="width: 100%; font-size: 0.8rem; padding: 6px 10px; display: flex; align-items: center; justify-content: center; gap: 6px; text-decoration: none;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                      stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                      <path d="M12 15V3" />
+                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                      <path d="m7 10 5 5 5-5" />
+                    </svg>
+                    CSV downloaden
+                  </a>
+                  <span id="ip-csv-uitleg" class="help-text" style="display: block; text-align: center; margin-top: 2px; font-size: 0.75rem; opacity: 0.7;"></span>
+                </div>
+                <button type="button" id="kompas-meld-btn" class="btn btn-secondary" style="width: 100%; font-size: 0.8rem; padding: 6px 10px; display: flex; align-items: center; justify-content: center; gap: 6px;">
                   <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>
                   Afwijking melden over deze indicator
                 </button>
@@ -993,6 +988,79 @@
             </div>
           </div>
         </div>
+
+        <!-- Tab 2: Assistent (Chat) -->
+        <div id="dock-panel-chat" role="tabpanel" class="dock-panel" aria-labelledby="dock-tab-chat" hidden>
+          <div class="chat-panel-header" style="display: flex; align-items: center; justify-content: space-between; padding-bottom: 8px; border-bottom: 1px solid var(--panel-border);">
+            <div class="chat-panel-title" style="display: flex; align-items: center; gap: 6px; font-weight: 600;">
+              <span>D-Omni Assistent</span>
+            </div>
+            <button type="button" id="chat-meld-btn" class="chat-close-btn" title="Feedback of afwijking melden" aria-label="Feedback of afwijking melden">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/>
+              </svg>
+            </button>
+          </div>
+          <div id="chat-messages" class="chat-messages" style="flex: 1; min-height: 250px; overflow-y: auto;">
+            <!-- Welkomstbericht -->
+            <div class="chat-message chat-message-assistant">
+              <div class="chat-message-bubble assistant">
+                <p class="chat-narrative">Welkom bij de D-Omni Assistent. Stel een vraag over gebieden, indicatoren of leefbaarheid en ik help je de data te verkennen.</p>
+              </div>
+            </div>
+          </div>
+          <div class="chat-input-bar" style="display: flex; gap: 6px; margin-top: auto; padding-top: 8px; border-top: 1px solid var(--panel-border);">
+            <label for="chat-input" class="visually-hidden">Vraag aan de D-Omni Assistent</label>
+            <input type="text" id="chat-input" class="chat-input" placeholder="Stel een vraag over gebieden…" autocomplete="off" style="flex: 1;">
+            <button id="chat-send-btn" class="chat-send-btn" disabled title="Verstuur" aria-label="Vraag versturen">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="m22 2-7 20-4-9-9-4Z" />
+                <path d="M22 2 11 13" />
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- ================================================================
+         Floating Kompas Window (Draggable, Resizable Host)
+         ================================================================ -->
+    <div id="kompas-window" class="floating-window" role="dialog" aria-modal="false" aria-label="D-Omni Kompas" aria-labelledby="kompas-window-title" style="display: none;">
+      <div class="floating-window-header">
+        <span id="kompas-window-title" class="visually-hidden">D-Omni Kompas</span>
+        <div role="tablist" class="floating-tabs dock-tabs" aria-label="Zwevend venster functies">
+          <button id="float-tab-kompas" role="tab" class="dock-tab active" aria-selected="true" aria-controls="dock-panel-kompas">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="dock-tab-icon">
+              <path d="m16.24 7.76-1.804 5.411a2 2 0 0 1-1.265 1.265L7.76 16.24l1.804-5.411a2 2 0 0 1 1.265-1.265z" />
+              <circle cx="12" cy="12" r="10" />
+            </svg>
+            <span>Kompas</span>
+          </button>
+          <button id="float-tab-chat" role="tab" class="dock-tab" aria-selected="false" aria-controls="dock-panel-chat">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="dock-tab-icon">
+              <path d="M12 20v2"/><path d="M12 2v2"/><path d="M17 20v2"/><path d="M17 2v2"/>
+              <path d="M2 12h2"/><path d="M2 17h2"/><path d="M2 7h2"/>
+              <path d="M20 12h2"/><path d="M20 17h2"/><path d="M20 7h2"/>
+              <path d="M7 20v2"/><path d="M7 2v2"/>
+              <rect x="4" y="4" width="16" height="16" rx="2"/>
+              <rect x="8" y="8" width="8" height="8" rx="1"/>
+            </svg>
+            <span>Assistent</span>
+          </button>
+        </div>
+        <div class="window-controls">
+          <button id="float-btn-dock" class="btn-dock" title="Vastzetten in rechter dock" aria-label="Venster vastzetten in rechter dock">📌</button>
+          <button class="btn-minimize" title="Minimaliseer" aria-label="Kompasvenster minimaliseren">_</button>
+          <button class="btn-close" title="Sluiten" aria-label="Kompasvenster sluiten">✕</button>
+        </div>
+      </div>
+      <div class="floating-window-content">
+        <!-- Wordt dynamisch gevuld bij loskoppelen -->
       </div>
       <div class="resize-handle"></div>
     </div>
@@ -1034,59 +1102,7 @@
 
     </main>
 
-    <!-- ================================================================
-         D-Omni Assistant Chat Zijpaneel (Rechts)
-         ================================================================ -->
-    <aside id="chat-panel" class="chat-panel">
-      <div class="chat-panel-header">
-        <div class="chat-panel-title">
-          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
-            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M12 20v2"/><path d="M12 2v2"/><path d="M17 20v2"/><path d="M17 2v2"/>
-            <path d="M2 12h2"/><path d="M2 17h2"/><path d="M2 7h2"/>
-            <path d="M20 12h2"/><path d="M20 17h2"/><path d="M20 7h2"/>
-            <path d="M7 20v2"/><path d="M7 2v2"/>
-            <rect x="4" y="4" width="16" height="16" rx="2"/>
-            <rect x="8" y="8" width="8" height="8" rx="1"/>
-          </svg>
-          <span>D-Omni Assistent</span>
-        </div>
-        <div style="display: flex; align-items: center; gap: 4px;">
-          <button type="button" id="chat-meld-btn" class="chat-close-btn" title="Feedback of afwijking melden" aria-label="Feedback of afwijking melden">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
-              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/>
-            </svg>
-          </button>
-          <button type="button" id="chat-close-btn" class="chat-close-btn" title="Sluiten" aria-label="Assistent sluiten">
-            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
-              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M18 6 6 18" />
-              <path d="m6 6 12 12" />
-            </svg>
-          </button>
-        </div>
-      </div>
-      <div id="chat-messages" class="chat-messages">
-        <!-- Welkomstbericht -->
-        <div class="chat-message chat-message-assistant">
-          <div class="chat-message-bubble assistant">
-            <p class="chat-narrative">Welkom bij de D-Omni Assistent. Stel een vraag over gebieden, indicatoren of leefbaarheid en ik help je de data te verkennen.</p>
-          </div>
-        </div>
-      </div>
-      <div class="chat-input-bar">
-        <label for="chat-input" class="visually-hidden">Vraag aan de D-Omni Assistent</label>
-        <input type="text" id="chat-input" class="chat-input" placeholder="Stel een vraag over gebieden…" autocomplete="off">
-        <button id="chat-send-btn" class="chat-send-btn" disabled title="Verstuur" aria-label="Vraag versturen">
-          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
-            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="m22 2-7 20-4-9-9-4Z" />
-            <path d="M22 2 11 13" />
-          </svg>
-        </button>
-      </div>
-    </aside>
+
 
   </div>
 
@@ -1198,7 +1214,6 @@
   <script src="/static/js/kompas.js"></script>
   <script src="/static/js/chat.js"></script>
   <script src="/static/js/app.js?v=7"></script>
-  <script src="/static/js/indicatorpaneel.js"></script>
   <script src="/static/js/mijn.js"></script>
 </body>
 

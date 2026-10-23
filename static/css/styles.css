@@ -1,58 +1,22 @@
-/* Floating Window (Specific for Kompas) - Consolidated at line 1670+ */
+/* Floating Window (Specific for Kompas) */
 
-/* Expanded State */
-/* Expanded State */
-.floating-window.expanded {
-  width: 1100px !important;
-  /* Force width override */
-  max-width: 95vw;
-  /* Prevent overflow on small screens */
-}
-
-/* Flex Content Container */
 .floating-window-content {
   display: flex;
-  /* Side-by-side layout */
+  flex-direction: column;
   flex: 1;
   overflow: hidden;
   position: relative;
 }
 
-/* Left Panel (Sunburst) */
-.kompas-main-panel {
-  width: 650px;
-  /* Fixed width matching initial window width */
-  flex-shrink: 0;
-  display: flex;
-  flex-direction: column;
-  border-right: 1px solid transparent;
-  /* Prepare for border */
-  transition: border-color 0.3s ease;
-}
-
-.floating-window.expanded .kompas-main-panel {
-  border-right: 1px solid var(--panel-border);
-}
-
-/* Right Panel (Details) */
+/* Details Panel */
 .kompas-details-panel {
   flex: 1;
   min-width: 0;
-  /* Prevent flex overflow */
-  opacity: 0;
-  transform: translateX(20px);
-  transition: opacity 0.3s ease 0.1s, transform 0.3s ease 0.1s;
-  /* Delayed fade in */
   display: flex;
   flex-direction: column;
   padding: 0;
-  background: rgba(0, 0, 0, 0.02);
-  /* Slight contrast */
-}
-
-.floating-window.expanded .kompas-details-panel {
   opacity: 1;
-  transform: translateX(0);
+  transform: none;
 }
 
 /* Details Header */
@@ -164,21 +128,18 @@
 }
 
 /* Light Mode Override for darker background/opacity */
+/* Light Mode Frosted Glass Transparency */
 :root:not([data-theme="dark"]) .floating-window {
-  background: color-mix(in srgb, var(--bg-secondary) 95%, transparent);
-  /* Even higher opacity for readability */
-  /* Higher Opacity for Light Mode */
-  border: 1px solid rgba(0, 0, 0, 0.1);
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+  background: color-mix(in srgb, var(--bg-secondary) 82%, transparent);
+  border: 1px solid var(--panel-border);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.18);
 }
 
-/* Dark Mode Override */
+/* Dark Mode Frosted Glass Transparency */
 [data-theme="dark"] .floating-window {
-  background: color-mix(in srgb, var(--bg-primary) 90%, transparent);
-  /* Higher opacity for chart contrast */
-  /* Dark & distinct */
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+  background: color-mix(in srgb, var(--bg-primary) 80%, transparent);
+  border: 1px solid var(--panel-border);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6);
 }
 
 /* Update panel-bg variable as well for consistency if needed, but request was specifically for "Kompas venster" */
@@ -1813,25 +1774,6 @@ textarea {
   border-color: var(--primary-color);
 }
 
-/* Breadcrumb Trail */
-.kompas-breadcrumb {
-  font-size: 0.75rem;
-  color: var(--text-secondary);
-  margin-bottom: var(--spacing-md);
-  padding: var(--spacing-sm);
-  background: var(--bg-secondary);
-  border-radius: var(--border-radius-sm);
-  border-left: 3px solid var(--primary-color);
-}
-
-.kompas-breadcrumb span {
-  margin: 0 0.25rem;
-}
-
-.kompas-breadcrumb .breadcrumb-separator {
-  color: var(--border-color);
-  margin: 0 0.5rem;
-}
 
 /* Viz Container */
 .kompas-viz-container {
@@ -1851,8 +1793,10 @@ textarea {
 }
 
 .kompas-viz-container svg {
+  width: 100%;
   max-width: 100%;
   height: auto;
+  aspect-ratio: 1 / 1;
   cursor: pointer;
 }
 
@@ -2055,22 +1999,22 @@ textarea {
   right: 20px;
   z-index: 10000;
   /* Above theme toggle (9999) */
-  min-width: 400px;
+  min-width: 420px;
   min-height: 450px;
   max-width: 95vw;
   max-height: 90vh;
-  width: 650px;
-  height: 800px;
-  background: var(--panel-bg);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+  width: 520px;
+  height: 820px;
+  background: color-mix(in srgb, var(--panel-bg) 80%, transparent);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
   border-radius: var(--border-radius);
-  box-shadow: 0 8px 32px var(--shadow-color), 0 0 0 1px var(--panel-border);
+  box-shadow: 0 12px 40px var(--shadow-color), 0 0 0 1px var(--panel-border);
   border: 1px solid var(--panel-border);
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  transition: box-shadow 0.2s ease, width 0.4s cubic-bezier(0.2, 0.8, 0.2, 1), height 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+  transition: box-shadow 0.2s ease, width 0.3s ease, height 0.3s ease;
   will-change: width, height, left, top;
 }
 
@@ -2083,13 +2027,47 @@ textarea {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0.75rem 1rem;
+  padding: 0.5rem 0.75rem;
   background: linear-gradient(135deg, var(--header-bg-start), var(--header-bg-end));
   box-shadow: inset 0 calc(-1 * var(--header-accent-width)) 0 var(--header-accent);
   color: var(--header-text);
   cursor: grab;
   user-select: none;
   flex-shrink: 0;
+}
+
+.floating-window-header .dock-tabs {
+  display: flex;
+  gap: 4px;
+}
+
+.floating-window-header .dock-tab {
+  color: color-mix(in srgb, var(--header-text) 80%, transparent);
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  padding: 6px 12px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  border-radius: 4px 4px 0 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all var(--transition-fast);
+}
+
+.floating-window-header .dock-tab:hover {
+  color: var(--header-text);
+  background: color-mix(in srgb, var(--header-overlay) 15%, transparent);
+}
+
+.floating-window-header .dock-tab.active,
+.floating-window-header .dock-tab[aria-selected="true"] {
+  color: var(--header-text);
+  border-bottom-color: var(--header-accent, #fff);
+  background: color-mix(in srgb, var(--header-overlay) 25%, transparent);
+  font-weight: 600;
 }
 
 .floating-window-header:active {
@@ -4240,4 +4218,323 @@ dialog#meld-dialoog::backdrop {
   justify-content: flex-end;
   gap: 0.75rem;
   margin-top: 0.5rem;
+}
+
+/* ============================================================================
+   Rechter Dock-architectuur & Samengevoegd Detailpaneel (Issue #444, v0.7.0)
+   ============================================================================ */
+
+/* --- Rechter Dock Hoofdcontainer --- */
+.rechter-dock {
+  position: fixed;
+  top: 80px;
+  right: 0;
+  bottom: 35px;
+  width: clamp(440px, 30vw, 560px);
+  background: var(--panel-bg);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-left: 1px solid var(--panel-border);
+  border-radius: var(--border-radius) 0 0 var(--border-radius);
+  z-index: 200;
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: -4px 0 24px rgba(0, 0, 0, 0.15);
+}
+
+.rechter-dock.collapsed {
+  transform: translateX(100%);
+  pointer-events: none;
+}
+
+/* --- Dock Header & Tabs --- */
+.dock-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.5rem 0.75rem;
+  border-bottom: 1px solid var(--panel-border);
+  background: var(--tint-subtle);
+  flex-shrink: 0;
+}
+
+.dock-tabs {
+  display: flex;
+  gap: 4px;
+}
+
+.dock-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--text-secondary);
+  font-family: inherit;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  border-radius: 4px 4px 0 0;
+  transition: all var(--transition-fast);
+}
+
+.dock-tab:hover {
+  color: var(--text-primary);
+  background: var(--tint);
+}
+
+.dock-tab.active,
+.dock-tab[aria-selected="true"] {
+  color: var(--primary-color);
+  border-bottom-color: var(--primary-color);
+  font-weight: 600;
+  background: color-mix(in srgb, var(--primary-color) 8%, transparent);
+}
+
+.dock-tab-icon {
+  flex-shrink: 0;
+}
+
+.dock-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.dock-action-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--border-radius-sm);
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: all var(--transition-fast);
+}
+
+.dock-action-btn:hover {
+  color: var(--text-primary);
+  background: var(--tint);
+  border-color: var(--panel-border);
+}
+
+/* --- Dock Body & Panels --- */
+.dock-body {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+.dock-panel {
+  display: none;
+  flex-direction: column;
+  flex: 1;
+  padding: var(--spacing-md);
+  gap: var(--spacing-sm);
+}
+
+.dock-panel.active {
+  display: flex;
+}
+
+/* --- Kompas Viz Section (Collapsible Sunburst) --- */
+.kompas-viz-section {
+  position: relative;
+  border-bottom: 1px solid var(--panel-border);
+  padding-bottom: var(--spacing-sm);
+  margin-bottom: var(--spacing-xs);
+  transition: all 0.2s ease;
+}
+
+.kompas-viz-section .viz-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+
+.kompas-viz-section .viz-title {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.btn-toggle-viz {
+  background: var(--tint);
+  border: 1px solid var(--panel-border);
+  border-radius: 12px;
+  font-size: 0.75rem;
+  padding: 2px 8px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.btn-toggle-viz:hover {
+  background: var(--tint-hover);
+  color: var(--text-primary);
+}
+
+.kompas-viz-section.viz-collapsed #kompas-container,
+.kompas-viz-section.viz-collapsed .kompas-actions {
+  display: none !important;
+}
+
+/* --- Doorklikbaar Kruimelpad & Search in Dock --- */
+.kompas-breadcrumb {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  padding: 4px 0;
+  margin: 2px 0 6px 0;
+  background: transparent;
+  border: none;
+}
+
+.breadcrumb-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--tint);
+  border: 1px solid var(--panel-border);
+  border-radius: 12px;
+  font-family: inherit;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  padding: 2px 8px;
+  cursor: pointer;
+  line-height: 1.3;
+  transition: all var(--transition-fast, 0.15s ease);
+  user-select: none;
+  white-space: nowrap;
+}
+
+.breadcrumb-item:hover {
+  background: var(--tint-strong);
+  color: var(--text-primary);
+  border-color: var(--text-secondary);
+}
+
+.breadcrumb-item:focus-visible {
+  outline: 2px solid var(--primary-color);
+  outline-offset: 1px;
+}
+
+.breadcrumb-item.active {
+  background: var(--tint-strong);
+  color: var(--text-primary);
+  font-weight: 600;
+  cursor: default;
+}
+
+.breadcrumb-separator {
+  color: var(--text-secondary);
+  opacity: 0.5;
+  font-size: 0.75rem;
+  margin: 0 1px;
+  user-select: none;
+}
+
+.breadcrumb-current {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  padding: 2px 6px;
+  white-space: nowrap;
+}
+
+/* --- Geselecteerde Buurten Badges --- */
+.selected-areas-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin: 6px 0;
+}
+
+.area-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  background: var(--tint);
+  border: 1px solid var(--panel-border);
+  color: var(--text-primary);
+}
+
+.area-chip-overflow {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  font-style: italic;
+  padding: 2px 4px;
+}
+
+/* --- Geünificeerd Detailpaneel --- */
+.kompas-unified-details {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+  margin-top: var(--spacing-xs);
+}
+
+/* --- Chat Chips voor Kompas Navigatie --- */
+.chat-action-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
+  padding: 4px 10px;
+  background: color-mix(in srgb, var(--primary-color) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--primary-color) 30%, transparent);
+  border-radius: 14px;
+  color: var(--primary-color);
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.chat-action-chip:hover {
+  background: color-mix(in srgb, var(--primary-color) 20%, transparent);
+  transform: translateY(-1px);
+}
+
+
+
+/* --- Mobiele Bottom Sheet (< 900px) --- */
+@media (max-width: 900px) {
+  .rechter-dock {
+    top: auto;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100%;
+    height: 48vh;
+    border-left: none;
+    border-top: 1px solid var(--panel-border);
+    border-radius: var(--border-radius) var(--border-radius) 0 0;
+    transform: translateY(0);
+  }
+  .rechter-dock.collapsed {
+    transform: translateY(100%);
+  }
 }

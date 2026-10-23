@@ -7,12 +7,44 @@
 
 /**
  * Kleur uit het thema (#89) voor Chart.js, dat geen CSS-variabelen kent.
+let _dummyColorProbe = null;
+
+/**
  * Leest de berekende waarde van een variabele uit styles.css, bv. '--text-secondary'.
+ * Lost CSS-variabelen betrouwbaar op naar echte rgb/hex waarden voor Canvas/Chart.js.
  */
 function themaKleur(naam, terugval) {
+    try {
+        if (!_dummyColorProbe && document.body) {
+            _dummyColorProbe = document.createElement('span');
+            _dummyColorProbe.style.display = 'none';
+            _dummyColorProbe.id = 'kompas-theme-color-probe';
+            document.body.appendChild(_dummyColorProbe);
+        }
+        if (_dummyColorProbe) {
+            const cssVar = naam.startsWith('--') ? `var(${naam})` : naam;
+            _dummyColorProbe.style.color = '';
+            _dummyColorProbe.style.color = cssVar;
+            const computed = getComputedStyle(_dummyColorProbe).color;
+            if (computed && computed !== '') {
+                return computed;
+            }
+        }
+    } catch (_) {}
+
+    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    const fallback = isDark && terugval === '#1e293b' ? '#f1f5f9'
+                   : (isDark && terugval === '#64748b' ? '#94a3b8'
+                   : (isDark && terugval === '#e2e8f0' ? '#334155' : terugval));
+
     const waarde = getComputedStyle(document.documentElement).getPropertyValue(naam).trim();
-    return waarde || terugval;
+    if (!waarde || waarde.startsWith('var(')) {
+        return fallback;
+    }
+    return waarde;
 }
+
+window.themaKleur = themaKleur;
 
 class KompasVisualization {
     constructor(containerId) {
@@ -44,20 +76,16 @@ class KompasVisualization {
     }
 
     init() {
-        // Get container dimensions
-        const containerRect = this.container.getBoundingClientRect();
-        const containerWidth = containerRect.width || 360;  // Fallback to panel width
-
-        // Make SVG square, fitting container width
-        this.width = Math.min(containerWidth - 40, 800);  // Max 800px, with padding
-        this.height = this.width;  // Square
-        this.radius = this.width / 10;  // room for 4 layers + labels
+        // Vaste coördinatenruimte (600x600) voor stabiele layout en native SVG-schaling
+        this.width = 600;
+        this.height = 600;
+        this.radius = this.width / 10;  // 60, ruimte voor 4 lagen + labels
 
         // Create SVG with responsive sizing
         this.svg = d3.select(`#${this.containerId}`)
             .append('svg')
             .attr('width', '100%')  // Responsive width
-            .attr('height', this.height)
+            .attr('height', '100%')
             .attr('viewBox', `0 0 ${this.width} ${this.height}`)
             .attr('preserveAspectRatio', 'xMidYMid meet')
             .style('font-family', 'Inter, sans-serif')
@@ -113,42 +141,22 @@ class KompasVisualization {
 
     handleResize() {
         /**
-         * Handle window resize (and floating window resize)
+         * Responsieve schaling van het kompas gebeurt via de SVG viewBox en CSS.
+         * We her-renderen de sunburst hier bewust NOOIT: dat zou de actieve drill-down
+         * en geselecteerde indicator afbreken zodra containers van grootte veranderen
+         * (bijv. scrollbars die verschijnen bij openen van het detailpaneel).
          */
-        if (!this.container) return;
-
-        const containerRect = this.container.getBoundingClientRect();
-
-        // Skip if hidden/collapsed
-        if (containerRect.width === 0 || containerRect.height === 0) return;
-
-        // Calculate new dimensions - make it square fitting in container
-        const availWidth = containerRect.width - 40;  // Padding
-        const availHeight = containerRect.height - 40;
-        const size = Math.min(availWidth, availHeight, 800);  // Max 800px
-
-        this.width = Math.max(400, size); // Min 400px
-        this.height = this.width;
-        this.radius = this.width / 10;  // room for 4 layers + labels
-
-        // Update SVG dimensions
-        this.svg
-            .attr('width', '100%')
-            .attr('height', '100%')
-            .attr('viewBox', `0 0 ${this.width} ${this.height}`);
-
-        // Update Center Group Position
-        if (this.centerG) {
-            this.centerG.attr('transform', `translate(${this.width / 2}, ${this.height / 2})`);
+        if (this.trendChart?.resize) {
+            this.trendChart.resize();
         }
-
-        // Re-render if we have data
-        // Note: We might just need to update radius variables, but re-render is safest for scales
-        if (this.currentData && this.currentData.hierarchie) {
-            this.renderSunburst(this.currentData.hierarchie);
+        const isDockCollapsed = document.getElementById('rechter-dock')?.classList.contains('collapsed') && window.state?.dockMode !== 'floating';
+        if (this._uitgesteldIpData && document.getElementById('ip-grafiek-wrap')?.clientWidth && !isDockCollapsed) {
+            const data = this._uitgesteldIpData;
+            this._uitgesteldIpData = null;
+            this._renderBenchmarkGrafiek(data);
+        } else if (this._ipChart?.resize) {
+            this._ipChart.resize();
         }
-
-        console.log('📏 Kompas resized:', this.width, 'x', this.height);
     }
 
     async loadConfigurations() {
@@ -300,6 +308,12 @@ class KompasVisualization {
             // Render sunburst
             this.renderSunburst(data.hierarchie);
 
+            if (this._pendingIndicatorUuid) {
+                const pending = this._pendingIndicatorUuid;
+                this._pendingIndicatorUuid = null;
+                setTimeout(() => this.navigateToIndicator(pending), 100);
+            }
+
             return data;
         } catch (error) {
             console.error('❌ Fout bij ophalen hiërarchie:', error);
@@ -311,11 +325,10 @@ class KompasVisualization {
         /**
          * Laad kompas data voor specifiek gebied (met waarden)
          */
-        // Sprint 7: Bewaar expanded state EN zoom-pad vóór re-render
+        // Sprint 7 / #444: Bewaar expanded state EN indicator UUID vóór re-render
         const wasExpanded = this.isExpanded;
-        const expandedIndicatorUuid = wasExpanded && this.currentNode?.data?.uuid
-            ? this.currentNode.data.uuid
-            : null;
+        const expandedIndicatorUuid = this._lastExpandedIndicatorUuid
+            || (wasExpanded && this.currentNode?.data?.uuid ? this.currentNode.data.uuid : null);
         const zoomPath = this._getZoomPath();
 
         this.showLoading();
@@ -340,22 +353,17 @@ class KompasVisualization {
 
             // Render sunburst with data
             this.renderSunburst(data.hierarchie);
+            this.updateSelectedAreasBadges();
 
-            // Sprint 7: Herstel zoom-pad en expanded state (gelijk aan loadMultiGebiedData)
-            if (zoomPath.length > 0 || expandedIndicatorUuid) {
-                setTimeout(() => {
-                    if (zoomPath.length > 0) {
-                        this._navigateToPath(zoomPath);
-                    }
-                    if (expandedIndicatorUuid && this.root) {
-                        setTimeout(() => {
-                            const targetNode = this._findNodeByUuid(this.root, expandedIndicatorUuid);
-                            if (targetNode) {
-                                this.expandDetails(targetNode);
-                            }
-                        }, zoomPath.length > 0 ? 200 : 50);
-                    }
-                }, 50);
+            // Sprint 7 / #444: Herstel zoom-pad en actieve indicator direct zonder race condition
+            if (zoomPath.length > 0) {
+                this._navigateToPath(zoomPath);
+            }
+            if (expandedIndicatorUuid && this.root) {
+                const targetNode = this._findNodeByUuid(this.root, expandedIndicatorUuid);
+                if (targetNode) {
+                    this.expandDetails(targetNode);
+                }
             }
 
             this.hideLoading();
@@ -380,11 +388,10 @@ class KompasVisualization {
             return this.loadGebiedData(configId, gebiedIds[0]);
         }
 
-        // Sprint 7: Bewaar expanded state EN zoom-pad vóór re-render
+        // Sprint 7 / #444: Bewaar expanded state EN indicator UUID vóór re-render
         const wasExpanded = this.isExpanded;
-        const expandedIndicatorUuid = wasExpanded && this.currentNode?.data?.uuid
-            ? this.currentNode.data.uuid
-            : null;
+        const expandedIndicatorUuid = this._lastExpandedIndicatorUuid
+            || (wasExpanded && this.currentNode?.data?.uuid ? this.currentNode.data.uuid : null);
         const zoomPath = this._getZoomPath();
 
         this.showLoading();
@@ -453,25 +460,17 @@ class KompasVisualization {
 
             // Render sunburst with merged data
             this.renderSunburst(merged.hierarchie);
+            this.updateSelectedAreasBadges();
 
-            // Sprint 7: Herstel zoom-pad en expanded state
-            if (zoomPath.length > 0 || expandedIndicatorUuid) {
-                setTimeout(() => {
-                    // 1. Eerst zoom-pad herstellen (zonder animatie)
-                    if (zoomPath.length > 0) {
-                        this._navigateToPath(zoomPath);
-                    }
-                    // 2. Dan expanded indicator herstellen (met kleine delay voor zoom)
-                    if (expandedIndicatorUuid && this.root) {
-                        setTimeout(() => {
-                            const targetNode = this._findNodeByUuid(this.root, expandedIndicatorUuid);
-                            if (targetNode) {
-                                console.log(`✅ Herstel expanded indicator: ${targetNode.data.name}`);
-                                this.expandDetails(targetNode);
-                            }
-                        }, zoomPath.length > 0 ? 200 : 50);
-                    }
-                }, 50);
+            // Sprint 7 / #444: Herstel zoom-pad en actieve indicator direct zonder race condition
+            if (zoomPath.length > 0) {
+                this._navigateToPath(zoomPath);
+            }
+            if (expandedIndicatorUuid && this.root) {
+                const targetNode = this._findNodeByUuid(this.root, expandedIndicatorUuid);
+                if (targetNode) {
+                    this.expandDetails(targetNode);
+                }
             }
 
             this.hideLoading();
@@ -701,6 +700,14 @@ class KompasVisualization {
         // Reset scale group to default
         this.g.attr('transform', 'scale(1)');
 
+        // Parent circle for zoom out (click center hole to go back, sits behind arcs)
+        const parent = this.g.append('circle')
+            .datum(root)
+            .attr('r', radius)
+            .attr('fill', 'none')
+            .attr('pointer-events', 'all')
+            .style('cursor', 'pointer');
+
         // Draw arcs using d.current
         const path = this.g.append('g')
             .selectAll('path')
@@ -733,13 +740,6 @@ class KompasVisualization {
             .style('font-weight', '500')
             .text(d => d.data.name)
             .call((text) => this.wrapText(text, radius)); // Apply wrapping
-
-        // Parent circle for zoom out (click center to go back)
-        const parent = this.g.append('circle')
-            .datum(root)
-            .attr('r', radius)
-            .attr('fill', 'none')
-            .attr('pointer-events', 'all')
         // Center visual circle
         this.g.append('circle')
             .attr('r', radius * 0.2)
@@ -779,8 +779,14 @@ class KompasVisualization {
                 // Sync to map immediately (Interactive Legend)
                 self.syncIndicatorToMap(p.data.uuid, p.data.name);
 
+                // Update breadcrumb om de volledige keten tot de indicator te tonen
+                self.updateBreadcrumb(p);
+
                 // Expand window and show details panel
                 self.expandDetails(p);
+
+                // Verberg hover-tooltip zodat deze niet blijft hangen
+                self.handleMouseOut();
                 return;
             } else {
                 // Collapse details when navigating out
@@ -865,6 +871,9 @@ class KompasVisualization {
         path.on('mouseover', function (event, d) {
             self.handleMouseOver(event, d);
         })
+            .on('mousemove', function (event) {
+                self._positionTooltip(event);
+            })
             .on('mouseout', function (event, d) {
                 self.handleMouseOut();
             });
@@ -1040,11 +1049,18 @@ class KompasVisualization {
         return '#94A3B8';
     }
 
-    hexToRgb(hex) {
+    hexToRgb(color) {
         /**
-         * Convert HEX color to RGB object
+         * Convert HEX or RGB color to RGB object
          */
-        const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+        if (!color) return { r: 148, g: 163, b: 184 };
+        if (typeof color === 'string' && color.startsWith('rgb')) {
+            const m = color.match(/\d+/g);
+            if (m && m.length >= 3) {
+                return { r: parseInt(m[0], 10), g: parseInt(m[1], 10), b: parseInt(m[2], 10) };
+            }
+        }
+        const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(color);
         return result ? {
             r: parseInt(result[1], 16),
             g: parseInt(result[2], 16),
@@ -1057,6 +1073,37 @@ class KompasVisualization {
          * Convert RGB to HEX color
          */
         return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
+    }
+
+    _positionTooltip(event) {
+        if (!event) return;
+        const tooltipEl = this.tooltip.node();
+        const tooltipWidth = tooltipEl ? (tooltipEl.offsetWidth || 250) : 250;
+        const tooltipHeight = tooltipEl ? (tooltipEl.offsetHeight || 80) : 80;
+        const padding = 14;
+
+        let left = event.pageX + padding;
+        // Als de tooltip voorbij de rechter schermrand valt (bijv. in het gedockte rechterpaneel):
+        // val naar links van de cursor zodat het detailpaneel volledig zichtbaar blijft
+        if (event.clientX + tooltipWidth + padding > window.innerWidth) {
+            left = event.pageX - tooltipWidth - padding;
+        }
+        if (left < padding) {
+            left = padding;
+        }
+
+        let top = event.pageY - 10;
+        // Als de tooltip onderaan buiten beeld dreigt te vallen: schuif omhoog
+        if (event.clientY + tooltipHeight + padding > window.innerHeight) {
+            top = event.pageY - tooltipHeight + 10;
+        }
+        if (top < padding) {
+            top = padding;
+        }
+
+        this.tooltip
+            .style('left', left + 'px')
+            .style('top', top + 'px');
     }
 
     handleMouseOver(event, d) {
@@ -1097,9 +1144,8 @@ class KompasVisualization {
 
         this.tooltip
             .html(html)
-            .style('visibility', 'visible')
-            .style('top', (event.pageY - 10) + 'px')
-            .style('left', (event.pageX + 10) + 'px');
+            .style('visibility', 'visible');
+        this._positionTooltip(event);
     }
 
     handleMouseOut() {
@@ -1108,67 +1154,108 @@ class KompasVisualization {
 
     updateBreadcrumb(node) {
         /**
-         * Update breadcrumb trail
+         * Update breadcrumb trail (FE-2.2: Doorklikbaar kruimelpad)
          */
         const breadcrumb = document.getElementById('kompas-breadcrumb');
         if (!breadcrumb) return;
 
-        // Ensure stable layout:
         breadcrumb.style.minHeight = '24px';
-        breadcrumb.style.display = 'flex'; // Always display to hold space/alignment
+        breadcrumb.style.display = 'flex';
         breadcrumb.style.alignItems = 'center';
-        breadcrumb.style.visibility = 'visible'; // Always visible now per user request
+        breadcrumb.style.flexWrap = 'wrap';
+        breadcrumb.style.visibility = 'visible';
 
         const path = [];
         let current = node;
-        while (current.parent) {
-            path.unshift(current.data.name);
+        while (current && current.parent) {
+            path.unshift({ name: current.data.name, node: current });
             current = current.parent;
         }
 
         if (path.length > 0) {
-            breadcrumb.innerHTML = path.map((name, i) => {
-                if (i < path.length - 1) {
-                    return `<span>${escapeHtml(name)}</span><span class="breadcrumb-separator">›</span>`;
+            breadcrumb.replaceChildren();
+
+            const rootBtn = document.createElement('button');
+            rootBtn.type = 'button';
+            rootBtn.className = 'breadcrumb-item breadcrumb-root';
+            rootBtn.textContent = 'Kompas';
+            rootBtn.title = 'Terug naar startoverzicht';
+            rootBtn.setAttribute('aria-label', 'Navigeer naar Kompas start');
+            rootBtn.addEventListener('click', () => {
+                this.collapseDetails();
+                this.reset();
+            });
+            breadcrumb.appendChild(rootBtn);
+
+            const sep0 = document.createElement('span');
+            sep0.className = 'breadcrumb-separator';
+            sep0.textContent = '›';
+            breadcrumb.appendChild(sep0);
+
+            path.forEach((item, idx) => {
+                if (idx < path.length - 1) {
+                    const btn = document.createElement('button');
+                    btn.type = 'button';
+                    btn.className = 'breadcrumb-item';
+                    btn.textContent = item.name;
+                    btn.title = `Navigeer naar ${item.name}`;
+                    btn.setAttribute('aria-label', `Navigeer naar ${item.name}`);
+                    btn.addEventListener('click', () => {
+                        this.collapseDetails();
+                        if (this._zoomFn) {
+                            this._zoomFn(null, item.node);
+                        }
+                    });
+                    breadcrumb.appendChild(btn);
+
+                    const sep = document.createElement('span');
+                    sep.className = 'breadcrumb-separator';
+                    sep.textContent = '›';
+                    breadcrumb.appendChild(sep);
+                } else {
+                    const span = document.createElement('span');
+                    span.className = 'breadcrumb-current';
+                    span.textContent = item.name;
+                    span.title = `Geselecteerde indicator: ${item.name}`;
+                    breadcrumb.appendChild(span);
                 }
-                return `<span>${escapeHtml(name)}</span>`;
-            }).join('');
+            });
         } else {
-            // Root level (Default text)
             breadcrumb.innerHTML = `<span style="opacity: 0.6; font-style: italic;">Start: Selecteer een onderdeel</span>`;
         }
     }
 
     zoomOut() {
         /**
-         * Zoom out - handled by clicking the center parent circle
-         * This method is a fallback that just re-renders
+         * Stap één niveau omhoog in de thema-hiërarchie
          */
-        if (this.currentData && this.currentData.hierarchie) {
+        this.collapseDetails();
+        if (this.currentNode && this.currentNode.parent && this._zoomFn) {
+            const target = (!this.currentNode.children && this.currentNode.parent.parent)
+                ? this.currentNode.parent.parent
+                : (this.currentNode.parent || this.root);
+            this._zoomFn(null, target);
+        } else if (this._zoomFn && this.root) {
+            this._zoomFn(null, this.root);
+        } else if (this.currentData && this.currentData.hierarchie) {
             this.renderSunburst(this.currentData.hierarchie);
         }
-        this.currentNode = null;
+    }
 
-        // Restore default breadcrumb
-        const breadcrumb = document.getElementById('kompas-breadcrumb');
-        if (breadcrumb) {
-            breadcrumb.style.visibility = 'visible';
-            breadcrumb.innerHTML = `<span style="opacity: 0.6; font-style: italic;">Start: Selecteer een onderdeel</span>`;
+    reset() {
+        /**
+         * Reset kompas naar het beginniveau (root)
+         */
+        this.collapseDetails();
+        this.currentNode = this.root;
+        if (this.root) {
+            this.updateBreadcrumb(this.root);
         }
-    }
-
-    reset() {
-        /**
-         * Reset to root view
-         */
-        this.zoomOut();
-    }
-
-    reset() {
-        /**
-         * Reset to root view
-         */
-        this.zoomOut();
+        if (this._zoomFn && this.root) {
+            this._zoomFn(null, this.root);
+        } else if (this.currentData && this.currentData.hierarchie) {
+            this.renderSunburst(this.currentData.hierarchie);
+        }
     }
 
     syncIndicatorToMap(indicatorUuid, indicatorName) {
@@ -1579,15 +1666,35 @@ class KompasVisualization {
         const punt = (this._timesliderHistory || []).find(h => h.jaar === jaar);
         const bronEl = document.getElementById('details-bron');
         if (bronEl && punt && punt.bron) bronEl.textContent = punt.bron;
+
+        // Update waarde behorende bij het gekozen peiljaar
+        if (punt && punt.waarde !== undefined && punt.waarde !== null) {
+            const valEl = document.getElementById('details-value');
+            if (valEl) {
+                const isMulti = this.currentData?._multiGebiedIds?.length > 1;
+                const node = this.currentNode;
+                const eenheid = (node && node.data && node.data.eenheid) || '';
+                const eenheidText = eenheid ? ` ${eenheid}` : '';
+                valEl.textContent = `${isMulti ? '⌀ ' : ''}${Number(punt.waarde).toFixed(2)}${eenheidText}`;
+            }
+        }
     }
     
     _dispatchMapYear(jaar) {
-        if (window.EventBus && this.currentNode && this.currentNode.data.uuid) {
+        // Resolveer indicator UUID robuust (currentNode, cached indicator UUID, of active indicator in state)
+        const uuid = (this.currentNode && this.currentNode.data && this.currentNode.data.uuid)
+            || this._currentIndicatorUuid
+            || this._lastExpandedIndicatorUuid
+            || (window.state && window.state.currentIndicator);
+
+        if (window.EventBus && uuid) {
             // Actively dispatch the specific year for rendering
             window.EventBus.emit('YEAR_CHANGED', {
-                uuid: this.currentNode.data.uuid,
+                uuid: uuid,
                 jaar: jaar
             });
+        } else {
+            console.warn('⚠️ _dispatchMapYear: geen indicator UUID gevonden');
         }
     }
     
@@ -1647,9 +1754,13 @@ class KompasVisualization {
 
     expandDetails(node) {
         /**
-         * Expand window horizontally and show details panel
+         * Toon detailpaneel met trendlijn en benchmark voor geselecteerde indicator
          */
         this.isExpanded = true;
+        this.currentNode = node;
+        this._currentIndicatorUuid = node.data?.uuid || null;
+        this._lastExpandedIndicatorUuid = node.data?.uuid || null;
+        this.updateBreadcrumb(node);
 
         const windowEl = document.getElementById('kompas-window');
         const detailsPanel = document.getElementById('kompas-details-panel');
@@ -1657,8 +1768,8 @@ class KompasVisualization {
         if (!windowEl || !detailsPanel) return;
 
         // Update Center Label to "Sluiten"
-        const centerLabel = this.g.select('.kompas-center-label');
-        if (!centerLabel.empty()) {
+        const centerLabel = this.g?.select('.kompas-center-label');
+        if (centerLabel && !centerLabel.empty()) {
             centerLabel
                 .text('✕ Sluiten')
                 .style('fill', 'var(--secondary-color)')
@@ -1673,11 +1784,18 @@ class KompasVisualization {
 
         detailsPanel.style.display = 'flex'; // Make visible for transition
 
-        // 2. Check Bounds (Shift left if off-screen)
-        this.checkWindowBounds();
+        // 2. Check Bounds (Shift left if off-screen, only if floating)
+        if (window.state?.dockMode === 'floating') {
+            this.checkWindowBounds();
+        }
 
         // 3. Populate Basic Data
-        document.getElementById('details-title').textContent = node.data.name;
+        const titleEl = document.getElementById('details-title');
+        if (titleEl) titleEl.textContent = node.data.name;
+        const ipNaam = document.getElementById('ip-naam');
+        if (ipNaam) ipNaam.textContent = node.data.name;
+        const ipEenheid = document.getElementById('ip-eenheid');
+        if (ipEenheid) ipEenheid.textContent = node.data.eenheid || '';
 
         // Sprint 7: Bij multi-select, toon gemiddelde waarde met label
         const isMulti = this.currentData?._multiGebiedIds?.length > 1;
@@ -1705,34 +1823,35 @@ class KompasVisualization {
 
     collapseDetails() {
         /**
-         * Collapse window back to circle only
+         * Sluit het detailpaneel onder het kompas
          */
         this.isExpanded = false;
+        this._currentIndicatorUuid = null;
+        this._lastExpandedIndicatorUuid = null;
 
         const windowEl = document.getElementById('kompas-window');
         const detailsPanel = document.getElementById('kompas-details-panel');
 
         // Restore Center Label (Clear it, as default is empty)
-        const centerLabel = this.g.select('.kompas-center-label');
-        if (!centerLabel.empty()) {
+        const centerLabel = this.g?.select('.kompas-center-label');
+        if (centerLabel && !centerLabel.empty()) {
             centerLabel.text('');
         }
 
         if (windowEl) {
             windowEl.classList.remove('expanded');
-            // Inline styles from DraggableWindow remain intact — window keeps user's size
         }
 
-        // Hide panel after transition (0.4s matches CSS)
-        setTimeout(() => {
-            if (detailsPanel && windowEl && !windowEl.classList.contains('expanded')) {
-                detailsPanel.style.display = 'none';
-            }
-        }, 400);
+        if (detailsPanel) {
+            detailsPanel.style.display = 'none';
+        }
 
-        // Zoom out sunburst if leaf
+        // Als huidige node een leaf indicator was, stap terug naar het bovenliggende thema
         if (this.currentNode && !this.currentNode.children) {
-            this.zoomOut();
+            this.currentNode = this.currentNode.parent || this.root;
+            if (this.currentNode) {
+                this.updateBreadcrumb(this.currentNode);
+            }
         }
     }
 
@@ -1745,13 +1864,11 @@ class KompasVisualization {
         
         const rect = windowEl.getBoundingClientRect();
         const viewportWidth = window.innerWidth;
-        
-        // BUGFIX 1: Match with CSS width for expanded (1100px)
-        const expandedWidth = 1100;
+        const currentWidth = rect.width || 650;
 
         // If right edge exceeds viewport
-        if (rect.left + expandedWidth > viewportWidth) {
-            const overflow = (rect.left + expandedWidth) - viewportWidth + 20; // 20px padding
+        if (rect.left + currentWidth > viewportWidth) {
+            const overflow = (rect.left + currentWidth) - viewportWidth + 20; // 20px padding
             const newLeft = Math.max(20, rect.left - overflow);
             windowEl.style.left = `${newLeft}px`;
             
@@ -1766,7 +1883,13 @@ class KompasVisualization {
          * Sprint 7: Bij multi-select, toon vergelijkende barchart i.p.v. trendlijn.
          * Sprint 18 Track C: Bij 2+ groepen, toon benchmarktabel.
          */
-        if (!this.currentGebiedId || !node.data.uuid) return;
+        if (!node || !node.data.uuid) return;
+        if (!this.currentGebiedId && window.state?.selectedGebiedIds?.size > 0) {
+            this.currentGebiedId = [...window.state.selectedGebiedIds][0];
+        }
+
+        // FE-2.4: Laad altijd benchmark staafdiagram en CSV export (#444)
+        this._loadBenchmarkBarChart(node);
 
         // Sprint 18 Track C: Benchmark-modus — 2+ groepen (woonplaatsen) actief
         const groepen = window.state?.selectedGroepen || [];
@@ -1775,8 +1898,13 @@ class KompasVisualization {
             return;
         }
 
-        // Sprint 7: Multi-select → barchart vergelijking
-        const isMulti = this.currentData?._multiGebiedIds?.length > 1;
+        // Multi-select gebieden → multi-line trendgrafiek (max 5 buurten)
+        const s = window.state || {};
+        const gebiedIds = s.selectedGebiedIds && s.selectedGebiedIds.size > 0
+            ? [...s.selectedGebiedIds]
+            : (this.currentData?._multiGebiedIds || (this.currentGebiedId ? [this.currentGebiedId] : []));
+
+        const isMulti = gebiedIds.length > 1;
 
         if (isMulti) {
             await this._loadMultiGebiedIndicatorComparison(node);
@@ -1971,67 +2099,202 @@ class KompasVisualization {
 
     async _loadMultiGebiedIndicatorComparison(node) {
         /**
-         * Sprint 7: Laad indicator waarden voor alle geselecteerde gebieden
-         * en toon als vergelijkende horizontale barchart in het Kompas detailpaneel.
+         * Multi-buurt vergelijking (#444):
+         * Toont een multi-line trendlijn van alle geselecteerde buurten (max 5) in het bovenste grafiekvak.
+         * De liggende staafdiagrammen worden uitsluitend in de onderste benchmarksectie getoond,
+         * zodat er geen dubbele staafdiagrammen ontstaan.
          */
-        const gebiedIds = this.currentData._multiGebiedIds;
-        const gebiedNamen = this.currentData._multiGebiedNamen;
+        const s = window.state || {};
+        const gebiedIds = s.selectedGebiedIds && s.selectedGebiedIds.size > 0
+            ? [...s.selectedGebiedIds]
+            : (this.currentData?._multiGebiedIds || []);
+        if (gebiedIds.length === 0) return;
+
         const indicatorUuid = node.data.uuid;
 
-        // Update trend label to show it's a comparison
+        // Bepaal namen van buurten
+        const getNaam = (id, idx) => {
+            if (this.currentData?._multiGebiedNamen && this.currentData._multiGebiedNamen[idx]) {
+                return this.currentData._multiGebiedNamen[idx];
+            }
+            if (s.currentData?.features) {
+                const feat = s.currentData.features.find(f => f.properties?.id === id || f.id === id);
+                if (feat?.properties?.naam) return feat.properties.naam;
+            }
+            return id;
+        };
+
         const trendEl = document.getElementById('details-trend');
         if (trendEl) trendEl.innerHTML = `<span style="color: var(--action-color)">Vergelijking</span>`;
 
         try {
-            // Fetch each area's history to get current values
-            const promises = gebiedIds.map(id =>
-                this.fetchHistory(id, indicatorUuid)
-            );
+            // Haal historie op voor alle geselecteerde gebieden (max 5 voor de trendlijnen)
+            const maxLijnen = 5;
+            const actieveGebiedIds = gebiedIds.slice(0, maxLijnen);
+            const promises = actieveGebiedIds.map(id => this.fetchHistory(id, indicatorUuid));
             const results = await Promise.all(promises);
 
-            // Extract latest value per area
-            const barData = [];
-            results.forEach((result, idx) => {
-                if (result && result.history && result.history.length > 0) {
-                    const latest = result.history[result.history.length - 1];
-                    barData.push({
-                        naam: gebiedNamen[idx] || gebiedIds[idx],
-                        waarde: latest.waarde,
-                        jaar: latest.jaar
-                    });
-                } else {
-                    barData.push({
-                        naam: gebiedNamen[idx] || gebiedIds[idx],
-                        waarde: null,
-                        jaar: null
-                    });
+            // Update metadata van eerste resultaat
+            if (results[0]) {
+                this._updateIndicatorMetadata(results[0]);
+                if (results[0].definitie) {
+                    document.getElementById('details-definitie').textContent = results[0].definitie;
                 }
-            });
-
-            // Update jaar to show range
-            // Gebieden kunnen verschillende jaargangen hebben (#119): toon de spreiding
-            const jaren = barData.filter(d => d.jaar).map(d => d.jaar);
-            if (jaren.length > 0) {
-                const min = Math.min(...jaren), max = Math.max(...jaren);
-                document.getElementById('details-jaar').textContent =
-                    min === max ? String(min) : `${min}–${max} (verschilt per gebied)`;
             }
 
-            // Update definitie
-            if (results[0]?.definitie) {
-                document.getElementById('details-definitie').textContent = results[0].definitie;
+            // Verzamel alle unieke jaren over alle geselecteerde gebieden
+            const allYears = [...new Set(results.flatMap(r => (r?.history || []).map(h => h.jaar)))].sort((a, b) => a - b);
+
+            const ctx = document.getElementById('kompas-trend-chart');
+            const chartWrapper = document.getElementById('chart-container-wrapper');
+            const fallback = document.getElementById('chart-fallback-message');
+            const tijdschuif = document.getElementById('timeslider-container');
+
+            if (allYears.length >= 2) {
+                // Tijdreeks beschikbaar: render multi-line trendgrafiek
+                if (chartWrapper) chartWrapper.style.display = 'block';
+                if (fallback) fallback.style.display = 'none';
+                if (ctx) ctx.style.display = 'block';
+                if (tijdschuif) tijdschuif.style.display = 'flex';
+
+                const areaColors = ['#3b82f6', '#10b981', '#f59e0b', '#ec4899', '#8b5cf6', '#06b6d4'];
+                const datasets = results.map((r, idx) => {
+                    const naam = r?.gebied?.naam || r?.gebied_naam || getNaam(actieveGebiedIds[idx], idx);
+                    const histMap = new Map((r?.history || []).map(h => [h.jaar, h.waarde]));
+                    const color = areaColors[idx % areaColors.length];
+                    return {
+                        label: naam.length > 20 ? naam.slice(0, 19) + '…' : naam,
+                        data: allYears.map(yr => histMap.has(yr) ? histMap.get(yr) : null),
+                        borderColor: color,
+                        backgroundColor: 'transparent',
+                        pointBackgroundColor: color,
+                        pointBorderColor: color,
+                        borderWidth: 2,
+                        pointRadius: 3,
+                        pointHoverRadius: 5,
+                        fill: false,
+                        tension: 0.3,
+                        spanGaps: true
+                    };
+                });
+
+                // "+N overige buurten" annotatie als selectie > 5
+                const remaining = gebiedIds.length - maxLijnen;
+                const noteEl = ctx.parentElement?.querySelector('.chart-overflow-note');
+                if (remaining > 0) {
+                    if (noteEl) {
+                        noteEl.textContent = `+${remaining} overige buurten (alle ${gebiedIds.length} getoond in vergelijking hieronder)`;
+                        noteEl.style.display = 'block';
+                    } else {
+                        const note = document.createElement('div');
+                        note.className = 'chart-overflow-note';
+                        note.style.cssText = 'font-size: 0.75rem; color: var(--text-secondary); text-align: center; padding-top: 4px;';
+                        note.textContent = `+${remaining} overige buurten (alle ${gebiedIds.length} getoond in vergelijking hieronder)`;
+                        ctx.parentElement?.appendChild(note);
+                    }
+                } else if (noteEl) {
+                    noteEl.style.display = 'none';
+                }
+
+                this.destroyChart();
+
+                const tekst = themaKleur('--text-primary', '#1e293b');
+                const subtiel = themaKleur('--text-secondary', '#64748b');
+                const lijn = themaKleur('--border-color', '#e2e8f0');
+                const eenheid = node.data?.eenheid || '';
+
+                this.trendChart = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: allYears,
+                        datasets: datasets
+                    },
+                    options: {
+                        onClick: (e, elements) => {
+                            if (elements.length > 0) {
+                                const idx = elements[0].index;
+                                const slider = document.getElementById('timeslider-input');
+                                if (slider) {
+                                    slider.value = idx;
+                                    const evt = new Event('input');
+                                    slider.dispatchEvent(evt);
+                                }
+                            }
+                        },
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        animation: window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches ? false : undefined,
+                        plugins: {
+                            legend: {
+                                display: true,
+                                position: 'top',
+                                labels: {
+                                    boxWidth: 12,
+                                    color: tekst,
+                                    font: { size: 11 }
+                                }
+                            },
+                            tooltip: {
+                                mode: 'index',
+                                intersect: false,
+                                backgroundColor: themaKleur('--tooltip-bg', '#0f172a'),
+                                titleColor: themaKleur('--tooltip-text', '#ffffff'),
+                                bodyColor: themaKleur('--tooltip-text', '#ffffff'),
+                                borderColor: lijn,
+                                borderWidth: 1,
+                                callbacks: {
+                                    label: (item) => {
+                                        const v = item.raw !== null && item.raw !== undefined ? Number(item.raw).toLocaleString('nl-NL', { maximumFractionDigits: 2 }) : '-';
+                                        const eenh = eenheid ? ` ${eenheid}` : '';
+                                        return `${item.dataset.label}: ${v}${eenh}`;
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            x: {
+                                grid: { color: lijn, drawBorder: false },
+                                ticks: { color: subtiel, font: { size: 11 } }
+                            },
+                            y: {
+                                grid: { color: lijn, drawBorder: false },
+                                ticks: { color: tekst, font: { size: 11 }, autoSkip: false },
+                                title: { display: !!eenheid, text: eenheid, color: subtiel, font: { size: 11 } }
+                            }
+                        }
+                    }
+                });
+
+                this._initTimeslider(allYears.map(yr => ({ jaar: yr })));
+
+            } else if (allYears.length === 1) {
+                // Slechts 1 peiljaar (bijv. BAG/Kadaster): toon een vergelijkende staafgrafiek van de gebieden
+                const barData = results.map((r, idx) => {
+                    const hist = r?.history || [];
+                    const val = hist.length > 0 ? hist[0].waarde : null;
+                    return {
+                        naam: r?.gebied?.naam || r?.gebied_naam || getNaam(actieveGebiedIds[idx], idx),
+                        waarde: val
+                    };
+                });
+                this._renderComparisonBarChart(barData, node.data?.eenheid || '');
             } else {
-                document.getElementById('details-definitie').textContent = 'Vergelijking tussen geselecteerde gebieden.';
-            }
-            if (results[0]?.bron) {
-                document.getElementById('details-bron').textContent = results[0].bron;
+                this.destroyChart();
+                if (chartWrapper) chartWrapper.style.display = 'none';
+                if (tijdschuif) tijdschuif.style.display = 'none';
             }
 
-            // Render horizontal bar chart
-            this._renderComparisonBarChart(barData, node.data.eenheid || '');
+            // Jaren tekst bijwerken
+            if (allYears.length > 0) {
+                const min = allYears[0], max = allYears[allYears.length - 1];
+                const jaarEl = document.getElementById('details-jaar');
+                if (jaarEl) {
+                    jaarEl.textContent = min === max ? String(min) : `${min}–${max}`;
+                }
+            }
 
         } catch (e) {
-            console.error('Error loading multi-gebied comparison:', e);
+            console.error('Error loading multi-area trend:', e);
             document.getElementById('details-definitie').textContent = 'Fout bij laden vergelijking.';
         }
     }
@@ -2121,7 +2384,7 @@ class KompasVisualization {
                         backgroundColor: themaKleur('--tooltip-bg', '#0f172a'),
                         titleColor: themaKleur('--tooltip-text', '#ffffff'),
                         bodyColor: themaKleur('--tooltip-text', '#ffffff'),
-                        borderColor: themaKleur('--border-color', '#334155'),
+                        borderColor: themaKleur('--border-color', '#e2e8f0'),
                         borderWidth: 1,
                         callbacks: {
                             label: (ctx) => `${ctx.parsed.x?.toFixed(2) ?? '-'} ${eenheid}`
@@ -2130,12 +2393,12 @@ class KompasVisualization {
                 },
                 scales: {
                     x: {
-                        grid: { color: themaKleur('--border-color', '#334155'), drawBorder: false },
-                        ticks: { color: themaKleur('--text-secondary', '#94a3b8') }
+                        grid: { color: themaKleur('--border-color', '#e2e8f0'), drawBorder: false },
+                        ticks: { color: themaKleur('--text-secondary', '#64748b'), font: { size: 11 } }
                     },
                     y: {
                         grid: { display: false, drawBorder: false },
-                        ticks: { color: themaKleur('--text-primary', '#e2e8f0'), font: { size: 11 } }
+                        ticks: { color: themaKleur('--text-primary', '#1e293b'), font: { size: 11 }, autoSkip: false }
                     }
                 }
             }
@@ -2291,6 +2554,10 @@ class KompasVisualization {
         const labels = history.map(d => d.jaar);
         const data = history.map(d => d.waarde);
         const chartColor = color || '#3b82f6'; // Trust Blue Dark (was SWF Keperblauw)
+        const tekst = themaKleur('--text-primary', '#1e293b');
+        const subtiel = themaKleur('--text-secondary', '#64748b');
+        const lijn = themaKleur('--border-color', '#e2e8f0');
+        const eenheid = this.currentNode?.data?.eenheid || '';
 
         this.trendChart = new Chart(ctx, {
             type: 'line',
@@ -2302,7 +2569,7 @@ class KompasVisualization {
                     borderColor: chartColor,
                     backgroundColor: (() => {
                         const rgb = this.hexToRgb(chartColor);
-                        return `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.1)`;
+                        return `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.12)`;
                     })(),
                     borderWidth: 2,
                     pointRadius: 3,
@@ -2326,6 +2593,7 @@ class KompasVisualization {
                 },
                 responsive: true,
                 maintainAspectRatio: false,
+                animation: window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches ? false : undefined,
                 plugins: {
                     legend: { display: false },
                     tooltip: {
@@ -2334,18 +2602,26 @@ class KompasVisualization {
                         backgroundColor: themaKleur('--tooltip-bg', '#0f172a'),
                         titleColor: themaKleur('--tooltip-text', '#ffffff'),
                         bodyColor: themaKleur('--tooltip-text', '#ffffff'),
-                        borderColor: themaKleur('--border-color', '#334155'),
-                        borderWidth: 1
+                        borderColor: lijn,
+                        borderWidth: 1,
+                        callbacks: {
+                            label: (item) => {
+                                const v = item.raw !== null && item.raw !== undefined ? Number(item.raw).toLocaleString('nl-NL', { maximumFractionDigits: 2 }) : '-';
+                                const eenh = eenheid ? ` ${eenheid}` : '';
+                                return `Waarde: ${v}${eenh}`;
+                            }
+                        }
                     }
                 },
                 scales: {
                     x: {
-                        grid: { display: false, drawBorder: false },
-                        ticks: { color: themaKleur('--text-secondary', '#94a3b8') }
+                        grid: { color: lijn, drawBorder: false },
+                        ticks: { color: subtiel, font: { size: 11 } }
                     },
                     y: {
-                        grid: { color: themaKleur('--border-color', '#334155'), drawBorder: false },
-                        ticks: { color: themaKleur('--text-secondary', '#94a3b8') }
+                        grid: { color: lijn, drawBorder: false },
+                        ticks: { color: tekst, font: { size: 11 }, autoSkip: false },
+                        title: { display: !!eenheid, text: eenheid, color: subtiel, font: { size: 11 } }
                     }
                 }
             }
@@ -2445,7 +2721,8 @@ class KompasVisualization {
          * Navigeer het kompas naar een specifieke indicator op basis van UUID.
          */
         if (!this.root || !this._zoomFn) {
-            console.error("❌ Kompas niet klaar voor navigatie");
+            console.warn("⚠️ Kompas niet klaar voor navigatie, uitgesteld");
+            this._pendingIndicatorUuid = uuid;
             return;
         }
 
@@ -2466,6 +2743,307 @@ class KompasVisualization {
         } else {
             console.warn(`⚠️ Indicator met UUID ${uuid} niet gevonden in huidige hiërarchie.`);
             // Misschien waarschuwing tonen aan user
+        }
+    }
+
+    /**
+     * Benchmark & Bar Chart Integratie (#258/#444)
+     * Haalt data op via /api/gebiedsmonitor/indicatorpaneel en vult:
+     * - Horizontaal staafdiagram met gemeentegemiddelde (#ip-grafiek)
+     * - Bronvermelding (#ip-bronnen)
+     * - Gemeentegemiddelde (#ip-gemiddelde)
+     * - Waarschuwing onderdrukking kleine aantallen (#ip-onderdrukt)
+     * - CSV download link (#ip-csv)
+     */
+    async _loadBenchmarkBarChart(indicatorOrNode) {
+        const uuid = typeof indicatorOrNode === 'string'
+            ? indicatorOrNode
+            : (indicatorOrNode?.data?.uuid || indicatorOrNode?.uuid || window.state?.currentIndicator);
+        if (!uuid) return;
+        const s = window.state || {};
+
+        // Bepaal selectie
+        const ids = s.selectedGebiedIds && s.selectedGebiedIds.size > 0
+            ? [...s.selectedGebiedIds]
+            : (this.currentGebiedId ? [this.currentGebiedId] : []);
+        const metSelectie = ids.length > 0;
+
+        const p = new URLSearchParams({ indicator_uuid: uuid });
+        if (metSelectie) {
+            p.set('gebied_ids', ids.join(','));
+        } else {
+            p.set('gebieden', 'false');
+        }
+        if (s.currentGebiedstype) p.set('gebiedstype_id', s.currentGebiedstype);
+        if (s.currentGemeenteCode) p.set('gemeente_code', s.currentGemeenteCode);
+        if (this._currentJaar) p.set('jaar', String(this._currentJaar));
+
+        try {
+            const res = await fetch(`/api/gebiedsmonitor/indicatorpaneel?${p.toString()}`, { credentials: 'same-origin' });
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            const data = await res.json();
+
+            // Synchroon naam en eenheid wegschrijven voor tests en DOM
+            const detailsPanel = document.getElementById('kompas-details-panel');
+            if (detailsPanel) detailsPanel.style.display = 'block';
+            const ipNaam = document.getElementById('ip-naam');
+            if (ipNaam) ipNaam.textContent = data.indicator.naam + (this._currentJaar ? ` (${this._currentJaar})` : '');
+            const ipEenheid = document.getElementById('ip-eenheid');
+            if (ipEenheid) ipEenheid.textContent = data.indicator.eenheid || '';
+            const ipBeschrijving = document.getElementById('ip-beschrijving');
+            if (ipBeschrijving) ipBeschrijving.textContent = data.indicator.beschrijving || '';
+
+            // Bronnen & Gemeentegemiddelde
+            this._renderIpBronnen(data.bronnen);
+            this._renderIpGemiddelde(data.gemeentegemiddelden, data.indicator.eenheid);
+
+            // Staafdiagram
+            this._renderBenchmarkGrafiek(data);
+
+            // CSV Link
+            const csvBtn = document.getElementById('ip-csv');
+            if (csvBtn) {
+                const csvParams = new URLSearchParams(p);
+                csvParams.delete('gebieden');
+                if (ids.length) csvParams.set('gebied_ids', ids.join(','));
+                csvBtn.href = `/api/gebiedsmonitor/indicatorpaneel.csv?${csvParams.toString()}`;
+            }
+            const csvUitleg = document.getElementById('ip-csv-uitleg');
+            if (csvUitleg) {
+                const aantal = (data.gebieden || []).length;
+                csvUitleg.textContent = ids.length
+                    ? `De ${aantal} geselecteerde gebieden en het gemeentegemiddelde`
+                    : `Alle ${aantal} gebieden op de kaart en het gemeentegemiddelde`;
+            }
+        } catch (e) {
+            console.warn('Fout bij laden benchmark data:', e);
+            const leeg = document.getElementById('ip-grafiek-leeg');
+            if (leeg) {
+                leeg.textContent = 'De benchmarkgegevens van deze indicator zijn niet te laden.';
+                leeg.hidden = false;
+            }
+            const wrap = document.getElementById('ip-grafiek-wrap');
+            if (wrap) wrap.hidden = true;
+        }
+    }
+
+    _renderIpBronnen(bronnen) {
+        const lijst = document.getElementById('ip-bronnen');
+        if (!lijst) return;
+        lijst.replaceChildren();
+        if (!bronnen || !bronnen.length) {
+            lijst.textContent = 'Niet vastgelegd';
+            return;
+        }
+        const ul = document.createElement('ul');
+        ul.className = 'ip-bronnen-lijst';
+        bronnen.forEach((b) => {
+            const li = document.createElement('li');
+            const delen = [];
+            let kop = b.titel || b.bron || 'Onbekende bron';
+            if (b.uitgever && !kop.includes(b.uitgever)) kop += ` (${b.uitgever})`;
+            delen.push(kop);
+            if (b.jaargangen && b.jaargangen.length) {
+                delen.push(b.jaargangen.length > 1 ? `jaargangen ${b.jaargangen[0]}–${b.jaargangen[b.jaargangen.length - 1]}` : `jaargang ${b.jaargangen[0]}`);
+            }
+            if (b.licentie) delen.push(`licentie ${b.licentie}`);
+            li.textContent = delen.join(', ');
+            ul.appendChild(li);
+        });
+        lijst.appendChild(ul);
+    }
+
+    _renderIpGemiddelde(gemiddelden, eenheid) {
+        const el = document.getElementById('ip-gemiddelde');
+        if (!el) return;
+        el.replaceChildren();
+        if (!gemiddelden || !gemiddelden.length) {
+            el.textContent = 'Niet te berekenen (geen gebiedstype of gemeente)';
+            return;
+        }
+        const ul = document.createElement('ul');
+        ul.className = 'ip-bronnen-lijst';
+        gemiddelden.forEach((g) => {
+            const li = document.createElement('li');
+            const waarde = g.waarde === null ? 'geen data' : `${Number(g.waarde).toLocaleString('nl-NL', { maximumFractionDigits: 2 })}${eenheid ? ' ' + eenheid : ''}`;
+            li.textContent = `${g.gemeenteNaam}${g.jaar ? ' (' + g.jaar + ')' : ''}: ${waarde}`;
+            li.title = `Ongewogen gemiddelde van ${g.aantalGebieden} gebieden van hetzelfde type, zonder waterbuurten`;
+            ul.appendChild(li);
+        });
+        el.appendChild(ul);
+    }
+
+    _renderBenchmarkGrafiek(data) {
+        const gebieden = data.gebieden || [];
+        const leeg = document.getElementById('ip-grafiek-leeg');
+        const wrap = document.getElementById('ip-grafiek-wrap');
+        const canvas = document.getElementById('ip-grafiek');
+        if (!wrap || !canvas) return;
+
+        const onderdrukt = gebieden.filter((g) => g.status === 'onderdrukt').length;
+        const zonder = gebieden.filter((g) => g.status === 'geen-data').length;
+        const melding = [];
+        if (onderdrukt) melding.push(`${onderdrukt} gebied(en) onderdrukt (minder dan ${data.drempel} waarnemingen)`);
+        if (zonder) melding.push(`${zonder} gebied(en) zonder data`);
+        
+        const onderdruktEl = document.getElementById('ip-onderdrukt');
+        if (onderdruktEl) {
+            onderdruktEl.textContent = melding.join('; ');
+            onderdruktEl.hidden = !melding.length;
+        }
+
+        if (this._ipChart) {
+            this._ipChart.destroy();
+            this._ipChart = null;
+        }
+        window.ipChartInstance = null;
+        this._uitgesteldIpData = null;
+
+        if (!gebieden.length || typeof Chart === 'undefined') {
+            wrap.hidden = true;
+            if (leeg) {
+                leeg.textContent = 'Selecteer gebieden op de kaart voor een vergelijking.';
+                leeg.hidden = false;
+            }
+            return;
+        }
+
+        wrap.hidden = false;
+        if (leeg) leeg.hidden = true;
+        wrap.style.height = `${Math.max(140, Math.min(gebieden.length, 40) * 30 + 90)}px`;
+
+        // Als de container nog 0 breedte heeft (dock schuift nog open) of dock is ingeklapt
+        const isDockCollapsed = document.getElementById('rechter-dock')?.classList.contains('collapsed') && window.state?.dockMode !== 'floating';
+        if (!wrap.clientWidth || isDockCollapsed) {
+            this._uitgesteldIpData = data;
+            return;
+        }
+
+        const eenheid = data.indicator.eenheid || '';
+        const gem = {};
+        (data.gemeentegemiddelden || []).forEach((g) => { gem[`${g.gemeenteCode}|${g.jaar}`] = g; });
+        const gemVan = (g) => gem[`${g.gemeenteCode}|${this._currentJaar ?? g.jaar}`];
+        
+        const tekst = themaKleur('--text-primary', '#1e293b');
+        const subtiel = themaKleur('--text-secondary', '#64748b');
+        const lijn = themaKleur('--border-color', '#e2e8f0');
+
+        this._ipChart = new Chart(canvas, {
+            data: {
+                labels: gebieden.map((g) => g.naam || g.id),
+                datasets: [
+                    {
+                        type: 'bar',
+                        label: data.indicator.naam,
+                        data: gebieden.map((g) => g.waarde),
+                        backgroundColor: themaKleur('--primary-fill', '#1e3a8a'),
+                        borderRadius: 3,
+                        barPercentage: 0.75,
+                    },
+                    {
+                        type: 'line',
+                        label: 'Gemeentegemiddelde',
+                        data: gebieden.map((g) => (gemVan(g) ? gemVan(g).waarde : null)),
+                        borderColor: themaKleur('--accent-color', '#c59d00'),
+                        backgroundColor: themaKleur('--accent-color', '#c59d00'),
+                        borderDash: [5, 4],
+                        borderWidth: 2,
+                        pointRadius: 0,
+                        pointHitRadius: 8,
+                        stepped: 'middle',
+                    },
+                ],
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                maintainAspectRatio: false,
+                animation: window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches ? false : undefined,
+                plugins: {
+                    legend: { labels: { color: tekst, boxWidth: 12 } },
+                    tooltip: {
+                        backgroundColor: themaKleur('--tooltip-bg', '#0f172a'),
+                        titleColor: themaKleur('--tooltip-text', '#ffffff'),
+                        bodyColor: themaKleur('--tooltip-text', '#ffffff'),
+                        borderColor: lijn,
+                        borderWidth: 1,
+                        callbacks: {
+                            label: (ctx) => {
+                                const g = gebieden[ctx.dataIndex];
+                                if (ctx.datasetIndex === 0 && g && g.status === 'onderdrukt') return 'onderdrukt (kleine aantallen)';
+                                if (ctx.raw === null || ctx.raw === undefined) return `${ctx.dataset.label}: geen data`;
+                                return `${ctx.dataset.label}: ${Number(ctx.raw).toLocaleString('nl-NL', { maximumFractionDigits: 2 })} ${eenheid}`.trim();
+                            },
+                        },
+                    },
+                },
+                scales: {
+                    x: { grid: { color: lijn }, ticks: { color: subtiel },
+                         title: { display: !!eenheid, text: eenheid, color: subtiel } },
+                    y: { grid: { display: false }, ticks: { color: tekst, font: { size: 11 }, autoSkip: false } },
+                },
+            },
+        });
+        window.ipChartInstance = this._ipChart;
+    }
+
+    updateSelectedAreasBadges() {
+        const container = document.getElementById('kompas-selected-areas');
+        if (!container) return;
+        container.innerHTML = '';
+
+        const s = window.state || {};
+        const ids = s.selectedGebiedIds && s.selectedGebiedIds.size > 0
+            ? [...s.selectedGebiedIds]
+            : (this.currentGebiedId ? [this.currentGebiedId] : []);
+
+        if (ids.length === 0) {
+            container.style.display = 'none';
+            return;
+        }
+        container.style.display = 'flex';
+
+        const getName = (id) => {
+            if (this.currentData?._multiGebiedIds && this.currentData?._multiGebiedNamen) {
+                const idx = this.currentData._multiGebiedIds.indexOf(id);
+                if (idx >= 0 && this.currentData._multiGebiedNamen[idx]) return this.currentData._multiGebiedNamen[idx];
+            }
+            if (this.currentGebiedId === id && this.currentData?.gebied_naam) {
+                return this.currentData.gebied_naam;
+            }
+            if (window.state?.currentData?.features) {
+                const feat = window.state.currentData.features.find(f => f.properties?.id === id || f.id === id);
+                if (feat?.properties?.naam) return feat.properties.naam;
+            }
+            return id;
+        };
+
+        const maxBadges = 5;
+        const showIds = ids.slice(0, maxBadges);
+        const overflowCount = ids.length - maxBadges;
+
+        showIds.forEach(id => {
+            const badge = document.createElement('span');
+            badge.className = 'area-chip';
+            badge.textContent = getName(id);
+            badge.title = `Klik om naar ${getName(id)} te vliegen`;
+            badge.style.cursor = 'pointer';
+            badge.addEventListener('click', () => {
+                if (window.state?.currentData?.features) {
+                    const feat = window.state.currentData.features.find(f => f.properties?.id === id || f.id === id);
+                    if (feat && typeof window.flyToGebied === 'function') {
+                        window.flyToGebied(feat);
+                    }
+                }
+            });
+            container.appendChild(badge);
+        });
+
+        if (overflowCount > 0) {
+            const overflow = document.createElement('span');
+            overflow.className = 'area-chip-overflow';
+            overflow.textContent = `+ ${overflowCount} overige buurten`;
+            container.appendChild(overflow);
         }
     }
 }
@@ -2500,12 +3078,17 @@ document.addEventListener('DOMContentLoaded', async function () {
         kompasViz._isSyncing = false;
 
         window.EventBus.on('INDICATOR_SELECTED', (data) => {
-            if (!kompasViz || !kompasViz.root) return;
+            if (!data || !data.uuid) return;
+            if (!kompasViz || !kompasViz.root) {
+                if (kompasViz) kompasViz._pendingIndicatorUuid = data.uuid;
+                return;
+            }
             if (kompasViz._isSyncing) return; // ← LOOP GUARD
             
-            // Check of het Kompas-venster zichtbaar is
-            const kompasWindow = document.getElementById('kompas-window');
-            if (!kompasWindow || kompasWindow.style.display === 'none') return;
+            // Rechter dock architectuur (#444): open het Kompas tabblad
+            if (typeof window.openRechterDock === 'function') {
+                window.openRechterDock('kompas');
+            }
 
             console.log('🧭↔🤖 Kompas sync: navigating to indicator', data.name, data.uuid);
             kompasViz._isSyncing = true;
@@ -2513,6 +3096,32 @@ document.addEventListener('DOMContentLoaded', async function () {
             // Reset guard na animatie (navigateToIndicator heeft 800ms delay)
             setTimeout(() => { kompasViz._isSyncing = false; }, 1200);
         });
+
+        // Selectie of kaartdata gewijzigd -> update badges, multi-trendlijn en benchmark staafdiagram
+        window.EventBus.on('SELECTIE_GEWIJZIGD', () => {
+            kompasViz.updateSelectedAreasBadges();
+            if (kompasViz.currentNode && kompasViz.currentNode.data?.uuid) {
+                kompasViz.loadIndicatorDetails(kompasViz.currentNode);
+            } else if (window.state?.currentIndicator) {
+                kompasViz._loadBenchmarkBarChart(window.state.currentIndicator);
+            }
+        });
+
+        window.EventBus.on('KAARTDATA_GELADEN', (d) => {
+            if (d && d.jaar != null) kompasViz._currentJaar = d.jaar;
+            if (kompasViz.currentNode && kompasViz.currentNode.data?.uuid) {
+                kompasViz._loadBenchmarkBarChart(kompasViz.currentNode);
+            } else if (window.state?.currentIndicator) {
+                kompasViz._loadBenchmarkBarChart(window.state.currentIndicator);
+            }
+        });
+
+        // Thema gewisseld: grafieken opnieuw met de nieuwe kleuren
+        new MutationObserver(() => {
+            if (kompasViz && kompasViz.currentNode && kompasViz.currentNode.data?.uuid) {
+                kompasViz.loadIndicatorDetails(kompasViz.currentNode);
+            }
+        }).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
 
         // Chat -> Kompas: Change Config
         window.EventBus.on('KOMPAS_CONFIG_SELECTED', async (data) => {
@@ -2525,20 +3134,17 @@ document.addEventListener('DOMContentLoaded', async function () {
             }
         });
 
-        // Chat -> Kompas: Open Window
+        // Chat -> Kompas: Open Window / Dock
         window.EventBus.on('KOMPAS_OPEN_REQUESTED', () => {
             console.log('🧭 Chat sync: opening kompas window');
-            if (typeof window.openKompasVenster === 'function') {
-                // Zelfde codepad als de knop "Open Kompas Venster": laadt ook de selectie (#79)
+            if (typeof window.openRechterDock === 'function') {
+                window.openRechterDock('kompas');
+            } else if (typeof window.openKompasVenster === 'function') {
                 window.openKompasVenster();
             } else if (window.state && window.state.kompasWindow) {
                 window.state.kompasWindow.open();
-            } else {
-                // Fallback direct DOM
-                const win = document.getElementById('kompas-window');
-                if (win) win.style.display = 'block';
             }
-            // Zelfde gedrag als de knop 'Open Kompas': toon de huidige kaartselectie
+            // Toon de huidige kaartselectie
             const ids = window.state?.selectedGebiedIds ? [...window.state.selectedGebiedIds] : [];
             const configId = kompasViz.currentConfigId;
             if (ids.length > 0 && configId) {
@@ -2548,6 +3154,15 @@ document.addEventListener('DOMContentLoaded', async function () {
         });
 
         console.log('🧭 Kompas subscribed to EventBus chat sync events');
+
+        // Backwards compatibility shim voor scripts die indicatorpaneel.laad aanroepen (#258/#444)
+        window.indicatorpaneel = {
+            laad: () => {
+                if (kompasViz && kompasViz.currentNode) {
+                    kompasViz._loadBenchmarkBarChart(kompasViz.currentNode);
+                }
+            }
+        };
     }
 
     // Config selector change

@@ -4,6 +4,24 @@
 > **Context:** Innovatieproject D-OmniTwin — gefinancierd via Innovatiebudget Digitale Overheid, Ministerie BZK
 > **Opgesteld door:** Project Manager ⟡ Samenwerking & Adoptie Assistent ⟡ Technisch-Communicatie Assistent
 
+> [!WARNING]
+> ### ⚠️ Historische Momentopname (Stand per 24 augustus 2026)
+> **Dit document is een gearchiveerde briefing voor een specifiek overleg op 24 augustus 2026 en is NIET leidend voor de actuele architectuur van D-OmniTwin.**
+> 
+> Sinds het opstellen van dit document zijn fundamentele architectuurbesluiten genomen die eerdere aannames in dit stuk overschrijven:
+> 
+> | Onderwerp in dit stuk | Stand per 24-08-2026 (Historisch) | Actuele architectuur (Leidend) |
+> |---|---|---|
+> | **Multi-Tenancy (§7 & §8)** | *Gepland: `organizations` tabel met `organization_id` FK en RLS per gemeente* | **Geen multi-tenancy (ADR 0007).** Elke gemeente draait een autonome instantie met eigen database en Keycloak. Samenwerken gebeurt via een *mesh van instanties*. |
+> | **Dataspace Protocol (§6 & §9)** | *iSHARE als centrale verplichte dataspace-autorisatie* | **DSP over HTTPS (ADR 0012).** We hanteren het Eclipse Dataspace Protocol voor catalogus en contracten. iSHARE of OIN/PKIoverheid zijn optionele trust-adapters ([#33](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/33)). |
+> | **PostgREST Beveiliging (§9)** | *Open / beveiligingsrisico (op te lossen)* | **Volledig beveiligd.** Alleen schema `api` gepubliceerd, rol `web_anon`, ForwardAuth viewer-toegang en RLS actief ([#57](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/57), ADR 0009/0010). |
+> | **Laadstraat & Uploads (§9)** | *Handmatige uploads nog niet via UI afgerond* | **Live.** Laad-API `/api/laden/v1` (schema `laden`) valideert en verwerkt GeoPackage, CSV en Data Packages conform DCAT-AP-NL. |
+> | **Indicatoren & Stack (§4 & §6)** | *244 indicatoren, PostgreSQL 16, React 18* | **249 indicatoren** in het Kompas; PostgreSQL 15 ([#191](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/191)); React 19 in admin-panel; Python 3.10+. |
+> 
+> **Geldende documentatie:**
+> - Architectuur en ontwerpprincipes: [docs/2-architectuur/](file:///mnt/e/antigrafity_projects/D-OmniTwin/docs/2-architectuur/) en [AGENTS.md](file:///mnt/e/antigrafity_projects/D-OmniTwin/AGENTS.md)
+> - Recente dataspace-gespreksleidraad: [docs/8-communicatie/gespreksleidraad_coe_dsc_frlds_omnitwin_2026-10-19.md](file:///mnt/e/antigrafity_projects/D-OmniTwin/docs/8-communicatie/gespreksleidraad_coe_dsc_frlds_omnitwin_2026-10-19.md)
+
 ---
 
 ## 1. 🧭 Wie zit er aan tafel?

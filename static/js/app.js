@@ -31,6 +31,8 @@ function kaartModusParam() {
 const state = {
     currentGebiedstype: null,
     currentIndicator: null,
+    currentJaar: null,
+    currentDataRevision: 0,
     currentGemeenteCode: localStorage.getItem('omnitwin-gemeente') || '', // Default: Alle gemeenten (empty = no filter)
     deckgl: null,
     currentData: null,
@@ -219,6 +221,7 @@ getFillColor: d => {
             setupGemeenteSelector(); // NEW: Setup gemeente change handler
             setupEventListeners();
             setupTabBar();
+            initRechterDock();
 
             // Track A2 — Contextuele tooltips (na alle EventBus setup)
             initContextualTooltips();
@@ -392,8 +395,11 @@ function showNotification(message) {
 
 function setupTabBar() {
     document.querySelectorAll('.tab-button').forEach(btn => {
+        const panelId = btn.dataset.panel;
+        // Knoppen die het rechter dock bedienen (Kompas en Assistent) openen geen linker paneel
+        if (!panelId || panelId === 'kompas' || btn.id === 'chat-toggle-btn') return;
+
         btn.addEventListener('click', (e) => {
-            const panelId = e.currentTarget.dataset.panel;
             togglePanel(panelId);
         });
     });
@@ -409,7 +415,16 @@ function togglePanel(panelId) {
         container.classList.remove('open');
         state.activePanelId = null;
         buttons.forEach(btn => btn.classList.remove('active'));
+        updateMapPadding(document.getElementById('rechter-dock') && !document.getElementById('rechter-dock').classList.contains('collapsed'));
         return;
+    }
+
+    // On screens < 1400px: softly collapse rechter dock if open (FE-5.2)
+    if (window.innerWidth < 1400) {
+        const dockEl = document.getElementById('rechter-dock');
+        if (dockEl && !dockEl.classList.contains('collapsed') && window.state?.dockMode !== 'floating') {
+            dockEl.classList.add('collapsed');
+        }
     }
 
     // Switch panels
@@ -428,6 +443,7 @@ function togglePanel(panelId) {
     });
 
     console.log(`📂 Panel opened: ${panelId}`);
+    updateMapPadding(document.getElementById('rechter-dock') && !document.getElementById('rechter-dock').classList.contains('collapsed'));
 }
 
 // ============================================================================
@@ -1209,6 +1225,8 @@ async function loadKaartData() {
         geojson.metadata = attributes.metadata;
 
         state.currentData = geojson;
+        state.currentJaar = geojson.metadata?.jaar || null;
+        state.currentDataRevision = (state.currentDataRevision || 0) + 1;
         // Alleen inzoomen bij een ander gebiedstype of andere gemeente, niet bij een indicatorwissel
         const fitKey = `${state.currentGebiedstype}|${state.currentGemeenteCode || ''}`;
         if (state.fittedFor !== fitKey) {
@@ -1747,7 +1765,9 @@ async function selectBuurtenVanExterneLaag(laag, feature) {
         }
 
         // Reload kompas als open
-        if (state.kompasWindow && state.kompasWindow.isVisible && window.kompasViz && window.kompasViz.currentConfigId) {
+        const dockEl = document.getElementById('rechter-dock');
+        const isDockOpen = (dockEl && !dockEl.classList.contains('collapsed')) || (state.kompasWindow && state.kompasWindow.isVisible);
+        if (isDockOpen && window.kompasViz && window.kompasViz.currentConfigId) {
             loadKompasForSelection(window.kompasViz.currentConfigId);
         }
 
@@ -1972,14 +1992,9 @@ function displayOnMap(geojson) {
                 // Load gebied details (voor het laatst aangeklikte gebied)
                 loadGebiedDetails(gebiedId);
 
-                // Kompas-paneel actief: open het Kompas-venster automatisch (zoals de hint belooft)
-                if (state.activePanelId === 'kompas' && state.kompasWindow && !state.kompasWindow.isVisible) {
-                    state.kompasWindow.open();
-                }
-
-                // Trigger re-render to show selection highlight
-                // Reload kompas data if window is already open
-                if (state.kompasWindow && state.kompasWindow.isVisible && window.kompasViz && window.kompasViz.currentConfigId) {
+                // Rechter dock openen bij selectie (FE-1.2)
+                openRechterDock('kompas');
+                if (window.kompasViz && window.kompasViz.currentConfigId) {
                     loadKompasForSelection(window.kompasViz.currentConfigId);
                 }
 
@@ -2028,10 +2043,10 @@ function displayOnMap(geojson) {
 
         // Performance - CRITICAL FIX: Force re-render on state changes
         updateTriggers: {
-            getFillColor: [minValue, maxValue, state.enable3D, state.currentTheme, state.kaartModus],
+            getFillColor: [minValue, maxValue, state.enable3D, state.currentTheme, state.kaartModus, state.currentJaar, state.currentDataRevision],
             getLineColor: [state.currentTheme, state.kaartModus, Array.from(state.selectedGebiedIds).join(',')],
             getLineWidth: [Array.from(state.selectedGebiedIds).join(',')],
-            getElevation: [state.enable3D, state.heightScale, minValue, maxValue, state.kaartModus],
+            getElevation: [state.enable3D, state.heightScale, minValue, maxValue, state.kaartModus, state.currentJaar, state.currentDataRevision],
             extruded: [state.enable3D]
         }
 
@@ -2297,8 +2312,10 @@ function fitBounds(geojson) {
     const width = (mapEl && mapEl.clientWidth) || window.innerWidth;
     const height = (mapEl && mapEl.clientHeight) || window.innerHeight;
     const leftPanel = document.querySelector('.panel-container.open') ? 360 : 0;
-    const chatOpen = document.getElementById('chat-panel')?.classList.contains('open');
-    let padding = { top: 40, bottom: 80, left: 70 + leftPanel + 40, right: (chatOpen ? 380 : 0) + 40 };
+    const dockEl = document.getElementById('rechter-dock');
+    const dockOpen = dockEl && !dockEl.classList.contains('collapsed') && window.state?.dockMode !== 'floating';
+    const rightPad = dockOpen ? 420 : 0;
+    let padding = { top: 40, bottom: 80, left: 70 + leftPanel + 40, right: rightPad + 40 };
     if (width - padding.left - padding.right < 100 || height - padding.top - padding.bottom < 100) {
         padding = 20;
     }
@@ -3211,18 +3228,200 @@ function updateSelectionUI() {
     window.EventBus?.emit('SELECTIE_GEWIJZIGD', { ids: [...state.selectedGebiedIds] });
 }
 
+// ============================================================================
+// Rechter Dock Controller & Viewport Padding (Issue #444, v0.7.0)
+// ============================================================================
+
 /**
- * Open het Kompas-venster en laad de huidige selectie (of de hiërarchie zonder selectie).
- * Gedeeld door de knop "Open Kompas Venster" en de chatactie OPEN_KOMPAS (#79).
+ * Zorgt dat MapLibre altijd 0 padding behoudt zodat de Deck.gl overlay
+ * en de onderliggende PDOK basemap exact 1-op-1 uitgelijnd blijven.
+ * Zichtbaarheid van gebieden wordt geregeld via getFreezone() en flyToGebied().
+ */
+function updateMapPadding(dockOpen, dockWidth = null) {
+    const map = state.deckgl?.getMapboxMap ? state.deckgl.getMapboxMap() : null;
+    if (map && typeof map.setPadding === 'function') {
+        map.setPadding({ top: 0, right: 0, bottom: 0, left: 0 });
+    }
+}
+window.updateMapPadding = updateMapPadding;
+
+/**
+ * Opent het rechter dock (of activeert het zwevend venster indien losgekoppeld).
+ */
+function openRechterDock(tab = 'kompas') {
+    const dockEl = document.getElementById('rechter-dock');
+    const floatEl = document.getElementById('kompas-window');
+    const isFloating = window.state?.dockMode === 'floating';
+
+    // Op compacte schermen (< 1400px): sluit linker paneel zachtjes (FE-5.2)
+    if (window.innerWidth < 1400) {
+        const leftContainer = document.querySelector('.panel-container.open');
+        if (leftContainer) {
+            leftContainer.classList.remove('open');
+            state.activePanelId = null;
+            document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+        }
+    }
+
+    if (isFloating) {
+        if (state.kompasWindow) state.kompasWindow.open();
+        else if (floatEl) floatEl.style.display = 'flex';
+    } else if (dockEl) {
+        dockEl.classList.remove('collapsed');
+        updateMapPadding(true);
+    }
+
+    switchDockTab(tab);
+
+    if (tab === 'kompas' && state?.selectedGebiedIds?.size > 0 && window.kompasViz?.currentConfigId) {
+        loadKompasForSelection(window.kompasViz.currentConfigId);
+    }
+}
+window.openRechterDock = openRechterDock;
+
+/**
+ * Sluit het rechter dock (of minimaliseert het zwevende venster).
+ */
+function closeRechterDock() {
+    const dockEl = document.getElementById('rechter-dock');
+    const floatEl = document.getElementById('kompas-window');
+    const isFloating = window.state?.dockMode === 'floating';
+
+    if (isFloating) {
+        if (state.kompasWindow) state.kompasWindow.close();
+        else if (floatEl) floatEl.style.display = 'none';
+    } else if (dockEl) {
+        dockEl.classList.add('collapsed');
+        updateMapPadding(false);
+    }
+
+    const kompasToggleBtn = document.querySelector('.tab-button[data-panel="kompas"]');
+    const chatToggleBtn = document.getElementById('chat-toggle-btn');
+    kompasToggleBtn?.classList.remove('active');
+    chatToggleBtn?.classList.remove('active');
+}
+window.closeRechterDock = closeRechterDock;
+
+/**
+ * Wisselt tussen de tabs van het rechter dock (Tab 1: Kompas, Tab 2: Assistent).
+ */
+function switchDockTab(tab) {
+    const tabKompas = document.getElementById('dock-tab-kompas');
+    const tabChat = document.getElementById('dock-tab-chat');
+    const floatTabKompas = document.getElementById('float-tab-kompas');
+    const floatTabChat = document.getElementById('float-tab-chat');
+    const panelKompas = document.getElementById('dock-panel-kompas');
+    const panelChat = document.getElementById('dock-panel-chat');
+    const kompasToggleBtn = document.querySelector('.tab-button[data-panel="kompas"]');
+    const chatToggleBtn = document.getElementById('chat-toggle-btn');
+
+    if (tab === 'chat') {
+        tabChat?.classList.add('active');
+        tabChat?.setAttribute('aria-selected', 'true');
+        tabKompas?.classList.remove('active');
+        tabKompas?.setAttribute('aria-selected', 'false');
+
+        floatTabChat?.classList.add('active');
+        floatTabChat?.setAttribute('aria-selected', 'true');
+        floatTabKompas?.classList.remove('active');
+        floatTabKompas?.setAttribute('aria-selected', 'false');
+
+        panelChat?.classList.add('active');
+        if (panelChat) panelChat.hidden = false;
+        panelKompas?.classList.remove('active');
+        if (panelKompas) panelKompas.hidden = true;
+
+        chatToggleBtn?.classList.add('active');
+        kompasToggleBtn?.classList.remove('active');
+
+        setTimeout(() => document.getElementById('chat-input')?.focus(), 200);
+    } else {
+        tabKompas?.classList.add('active');
+        tabKompas?.setAttribute('aria-selected', 'true');
+        tabChat?.classList.remove('active');
+        tabChat?.setAttribute('aria-selected', 'false');
+
+        floatTabKompas?.classList.add('active');
+        floatTabKompas?.setAttribute('aria-selected', 'true');
+        floatTabChat?.classList.remove('active');
+        floatTabChat?.setAttribute('aria-selected', 'false');
+
+        panelKompas?.classList.add('active');
+        if (panelKompas) panelKompas.hidden = false;
+        panelChat?.classList.remove('active');
+        if (panelChat) panelChat.hidden = true;
+
+        kompasToggleBtn?.classList.add('active');
+        chatToggleBtn?.classList.remove('active');
+
+        requestAnimationFrame(() => {
+            if (window.trendChartInstance) window.trendChartInstance.resize();
+            if (window.ipChartInstance) window.ipChartInstance.resize();
+            if (window.kompasViz?.handleResize) window.kompasViz.handleResize();
+        });
+    }
+}
+window.switchDockTab = switchDockTab;
+
+/**
+ * Schakelt tussen gedockte toestand en zwevend venster (FE-3.1 / TE-3).
+ */
+function setDockMode(mode) {
+    window.state = window.state || {};
+    window.state.dockMode = mode;
+    try {
+        localStorage.setItem('omnitwin_dock_mode', mode);
+    } catch (e) {}
+
+    const dockEl = document.getElementById('rechter-dock');
+    const floatEl = document.getElementById('kompas-window');
+    const dockBody = document.querySelector('#rechter-dock .dock-body') || document.querySelector('.dock-body');
+    const floatContent = document.querySelector('#kompas-window .floating-window-content');
+    const detachBtn = document.getElementById('dock-btn-detach');
+
+    if (mode === 'floating') {
+        if (dockBody && floatContent && dockBody.parentElement !== floatContent) {
+            floatContent.appendChild(dockBody);
+        }
+        if (dockEl) dockEl.classList.add('collapsed');
+        updateMapPadding(false);
+
+        if (state.kompasWindow) state.kompasWindow.open();
+        else if (floatEl) floatEl.style.display = 'flex';
+
+        if (detachBtn) {
+            detachBtn.title = 'Vastzetten in rechter dock';
+            detachBtn.setAttribute('aria-label', 'Venster vastzetten in rechter dock');
+        }
+    } else {
+        if (dockBody && dockEl && dockBody.parentElement !== dockEl) {
+            dockEl.appendChild(dockBody);
+        }
+        if (state.kompasWindow) state.kompasWindow.close();
+        else if (floatEl) floatEl.style.display = 'none';
+
+        if (dockEl) dockEl.classList.remove('collapsed');
+        updateMapPadding(true);
+
+        if (detachBtn) {
+            detachBtn.title = 'Losmaken naar zwevend venster';
+            detachBtn.setAttribute('aria-label', 'Venster losmaken naar zwevend venster');
+        }
+    }
+
+    requestAnimationFrame(() => {
+        if (window.trendChartInstance) window.trendChartInstance.resize();
+        if (window.kompasViz?.handleResize) window.kompasViz.handleResize();
+    });
+}
+window.setDockMode = setDockMode;
+
+/**
+ * Open het Kompas in het rechter dock en laad de huidige selectie (of hiërarchie).
  */
 function openKompasVenster() {
-    if (!state.kompasWindow) {
-        console.error('❌ Kompas window state not initialized');
-        return;
-    }
-    state.kompasWindow.open();
+    openRechterDock('kompas');
 
-    // Load data for selected area(s) if available
     if (state.selectedGebiedIds.size > 0 && window.kompasViz && window.kompasViz.currentConfigId) {
         loadKompasForSelection(window.kompasViz.currentConfigId);
     } else if (window.kompasViz && window.kompasViz.currentConfigId) {
@@ -3230,6 +3429,86 @@ function openKompasVenster() {
     }
 }
 window.openKompasVenster = openKompasVenster;
+
+/**
+ * Initialiseert event listeners voor het rechter dock.
+ */
+function initRechterDock() {
+    const tabKompas = document.getElementById('dock-tab-kompas');
+    const tabChat = document.getElementById('dock-tab-chat');
+    const floatTabKompas = document.getElementById('float-tab-kompas');
+    const floatTabChat = document.getElementById('float-tab-chat');
+    const btnClose = document.getElementById('dock-btn-close');
+    const btnDetach = document.getElementById('dock-btn-detach');
+    const btnFloatDock = document.getElementById('float-btn-dock');
+    const chatToggleBtn = document.getElementById('chat-toggle-btn');
+    const kompasToggleBtn = document.querySelector('.tab-button[data-panel="kompas"]');
+
+    tabKompas?.addEventListener('click', () => switchDockTab('kompas'));
+    tabChat?.addEventListener('click', () => switchDockTab('chat'));
+    floatTabKompas?.addEventListener('click', () => switchDockTab('kompas'));
+    floatTabChat?.addEventListener('click', () => switchDockTab('chat'));
+    btnClose?.addEventListener('click', () => closeRechterDock());
+    btnDetach?.addEventListener('click', () => {
+        setDockMode(window.state?.dockMode === 'floating' ? 'docked' : 'floating');
+    });
+    btnFloatDock?.addEventListener('click', () => setDockMode('docked'));
+
+    // Pill-knop voor Kompas opent direct het rechter dock
+    kompasToggleBtn?.addEventListener('click', (e) => {
+        e.stopPropagation();
+        e.preventDefault();
+        const dockEl = document.getElementById('rechter-dock');
+        const isClosed = !dockEl || dockEl.classList.contains('collapsed');
+        const isKompasActive = document.getElementById('dock-panel-kompas')?.classList.contains('active');
+        if (isClosed || !isKompasActive) {
+            openKompasVenster();
+        } else {
+            closeRechterDock();
+        }
+    });
+
+    // Pill-knop voor chat opent direct het rechter dock op Tab 2
+    chatToggleBtn?.addEventListener('click', (e) => {
+        e.stopPropagation();
+        e.preventDefault();
+        const dockEl = document.getElementById('rechter-dock');
+        const isClosed = !dockEl || dockEl.classList.contains('collapsed');
+        const isChatActive = document.getElementById('dock-panel-chat')?.classList.contains('active');
+        if (isClosed || !isChatActive) {
+            openRechterDock('chat');
+        } else {
+            closeRechterDock();
+        }
+    });
+
+    // Sunburst minimaliseren/inklappen knop (#btn-toggle-sunburst)
+    const btnToggleSunburst = document.getElementById('btn-toggle-sunburst');
+    const vizSection = document.getElementById('kompas-viz-section');
+    btnToggleSunburst?.addEventListener('click', () => {
+        if (!vizSection) return;
+        vizSection.classList.toggle('viz-collapsed');
+        const isCollapsed = vizSection.classList.contains('viz-collapsed');
+        const txt = document.getElementById('btn-toggle-sunburst-text');
+        if (txt) txt.textContent = isCollapsed ? '+ Cirkel uitklappen' : '— Cirkel inklappen';
+        if (!isCollapsed && window.kompasViz?.handleResize) {
+            window.kompasViz.handleResize();
+        }
+    });
+
+    // EventBus koppeling voor indicator selectie
+    window.EventBus?.on('INDICATOR_SELECTED', () => {
+        openRechterDock('kompas');
+    });
+
+    // Herstel opgeslagen toestand
+    try {
+        const savedMode = localStorage.getItem('omnitwin_dock_mode');
+        if (savedMode === 'floating') {
+            setDockMode('floating');
+        }
+    } catch (e) {}
+}
 
 /**
  * Sprint 7: Laad kompas voor de huidige selectie.
@@ -3385,6 +3664,9 @@ function setupEventListeners() {
             const coverage = selectedOption.dataset.coverage;
             document.getElementById('indicator-coverage').textContent =
                 coverage ? `${coverage} gebieden met data` : 'Data beschikbaarheid onbekend';
+            if (window.EventBus) {
+                window.EventBus.emit('INDICATOR_SELECTED', { uuid: selectedId, name: selectedOption.text });
+            }
         }
 
         updateButtonState();
@@ -3577,7 +3859,32 @@ function setupEventListeners() {
         // A3: Timeslider Year Changed
         window.EventBus.on('YEAR_CHANGED', async (data) => {
             console.log(`⏱️ Year changed via Timeslider: ${data.jaar}`);
-            if (state.currentGebiedstype && state.currentIndicator === data.uuid) {
+
+            // Fallback (#450): als er nog geen gebiedstype actief was, automatisch terugvallen op CBS_BUURT
+            if (!state.currentGebiedstype) {
+                const gtSelect = document.getElementById('gebiedstype-select');
+                if (gtSelect) {
+                    const buurtOpt = Array.from(gtSelect.options).find(o =>
+                        o.dataset?.code === 'CBS_BUURT' || o.text.toLowerCase().includes('buurten')
+                    );
+                    if (buurtOpt && buurtOpt.value) {
+                        gtSelect.value = buurtOpt.value;
+                        state.currentGebiedstype = buurtOpt.value;
+                    }
+                }
+            }
+
+            const indicatorUuid = data.uuid || state.currentIndicator;
+            if (indicatorUuid && state.currentIndicator !== indicatorUuid) {
+                state.currentIndicator = indicatorUuid;
+            }
+
+            if (state.currentGebiedstype && state.currentIndicator) {
+                // Zorg dat basis-geometrieën geladen zijn als die nog ontbreken
+                if (!state.currentData || !state.currentData.features || state.currentData.features.length === 0) {
+                    await loadKaartData();
+                }
+
                 // We keep the map view but update the data for the specific year
                 try {
                     let attrUrl = `/api/gebiedsmonitor/kaart_data/${state.currentGebiedstype}?show_all=${state.showAll}&indicator_uuid=${state.currentIndicator}&jaar=${data.jaar}${kaartModusParam()}`;
@@ -3590,6 +3897,9 @@ function setupEventListeners() {
 
                     const attributes = await response.json();
                     
+                    state.currentJaar = data.jaar;
+                    state.currentDataRevision = (state.currentDataRevision || 0) + 1;
+
                     // Merge attributes into existing GeoJSON features
                     if (state.currentData && state.currentData.features) {
                         state.currentData.features.forEach(f => {
@@ -3600,7 +3910,7 @@ function setupEventListeners() {
                             } else {
                                 // Clear missing data
                                 f.properties.indicator_waarde = null;
-                                f.properties.jaar = null;
+                                f.properties.jaar = data.jaar;
                                 f.properties.bron = null;
                                 f.properties.color = '#94A3B8';
                             }
@@ -3731,9 +4041,10 @@ function setupEventListeners() {
                 window.kompasViz.currentConfigId = newConfigId;
                 console.log('🔄 Kompas config changed to:', newConfigId);
 
-                // If window is open, reload data
-                const kompasWindow = document.getElementById('kompas-window');
-                if (kompasWindow && kompasWindow.style.display !== 'none') {
+                // If window or dock is open, reload data
+                const dockEl = document.getElementById('rechter-dock');
+                const isDockOpen = (dockEl && !dockEl.classList.contains('collapsed')) || (state.kompasWindow && state.kompasWindow.isVisible);
+                if (isDockOpen) {
                     if (state.selectedGebiedIds.size > 0) {
                         loadKompasForSelection(newConfigId);
                     } else {
@@ -4057,9 +4368,15 @@ function getFreezone() {
     const leftPanel = document.querySelector('.panel-container.open') ? 360 : 0;
     const leftEdge = tabBar + leftPanel;
 
-    // Chat panel (rechts)
-    const chatOpen = document.getElementById('chat-panel')?.classList.contains('open');
-    const rightEdge = chatOpen ? 380 : 0;
+    // Rechter dock (rechts) of floating window
+    const dockEl = document.getElementById('rechter-dock');
+    const isFloating = window.state?.dockMode === 'floating';
+    const dockOpen = dockEl && !dockEl.classList.contains('collapsed') && (!dockEl.offsetParent || dockEl.style.display !== 'none');
+
+    let rightEdge = 0;
+    if (dockOpen && !isFloating) {
+        rightEdge = dockEl.getBoundingClientRect().width || 380;
+    }
 
     // Vrije zone zonder Kompas
     const freeLeft = leftEdge;
@@ -4068,7 +4385,7 @@ function getFreezone() {
 
     // Kompas venster (zwevend, draggable)
     const kompasEl = document.getElementById('kompas-window');
-    const kompasVisible = kompasEl && kompasEl.style.display !== 'none';
+    const kompasVisible = isFloating && kompasEl && kompasEl.style.display !== 'none';
 
     if (!kompasVisible) {
         return { centerX: baseCenterX, screenCenterX: W / 2 };
@@ -4179,13 +4496,15 @@ function zoomNaarGebieden(ids) {
         .forEach(f => f.geometry && walk(f.geometry.coordinates));
     if (minLon === Infinity) return false;
 
-    // Vrije zone: linkerpaneel en chat niet over de gebieden heen
+    // Vrije zone: linkerpaneel en rechter-dock niet over de gebieden heen
     const mapEl = document.getElementById('map');
     const width = (mapEl && mapEl.clientWidth) || window.innerWidth;
     const height = (mapEl && mapEl.clientHeight) || window.innerHeight;
     const leftPanel = document.querySelector('.panel-container.open') ? 360 : 0;
-    const chatOpen = document.getElementById('chat-panel')?.classList.contains('open');
-    let padding = { top: 60, bottom: 100, left: 110 + leftPanel, right: (chatOpen ? 380 : 0) + 60 };
+    const dockEl = document.getElementById('rechter-dock');
+    const dockOpen = dockEl && !dockEl.classList.contains('collapsed') && window.state?.dockMode !== 'floating';
+    const rightPad = dockOpen ? 420 : 0;
+    let padding = { top: 60, bottom: 100, left: 110 + leftPanel, right: rightPad + 60 };
     if (width - padding.left - padding.right < 100 || height - padding.top - padding.bottom < 100) padding = 20;
 
     let longitude = (minLon + maxLon) / 2, latitude = (minLat + maxLat) / 2, zoom = 13;

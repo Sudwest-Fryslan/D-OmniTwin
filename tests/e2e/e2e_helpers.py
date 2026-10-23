@@ -396,9 +396,9 @@ def klikpunt_buurt(page: Page, gebied_id: str, timeout: float = None):
 
 
 def zoom_kaart(page: Page, delta_y: int):
-    """Scrollwiel boven het rechterdeel van de kaart (positief = uitzoomen)."""
+    """Scrollwiel boven het vrije middendeel van de kaart (positief = uitzoomen)."""
     kaart = page.locator("#map").bounding_box()
-    page.mouse.move(kaart["x"] + kaart["width"] * 0.7, kaart["y"] + kaart["height"] / 2)
+    page.mouse.move(kaart["x"] + kaart["width"] * 0.5, kaart["y"] + kaart["height"] / 2)
     page.mouse.wheel(0, delta_y)
     page.wait_for_timeout(600)
 
@@ -577,8 +577,16 @@ def selecteer_buurt_via_app(page: Page, gebied_id: str, shift: bool = False):
 
 
 def verplaats_kompasvenster_rechts(page: Page):
-    """Sleep het Kompas-venster aan de titelbalk naar de rechterrand (vrij zicht op de kaart)."""
-    kop = page.locator("#kompas-window .floating-window-header h3").bounding_box()
+    """Sleep het Kompas-venster aan de titelbalk naar de rechterrand (vrij zicht op de kaart, indien zwevend)."""
+    venster = page.locator("#kompas-window")
+    if not venster.is_visible():
+        return
+    kop_loc = page.locator("#kompas-window .floating-window-header h3")
+    if not kop_loc.is_visible():
+        return
+    kop = kop_loc.bounding_box()
+    if not kop:
+        return
     start_x, start_y = kop["x"] + 20, kop["y"] + kop["height"] / 2
     page.mouse.move(start_x, start_y)
     page.mouse.down()
@@ -587,10 +595,11 @@ def verplaats_kompasvenster_rechts(page: Page):
 
 
 def open_kompas(page: Page, verwacht_in_info: str):
-    """Kompas-paneel → 'Open Kompas'; wacht tot het venster de selectie toont."""
-    open_paneel(page, "D-Omni Kompas")
-    klik(page, page.locator("#open-kompas-btn"))
-    expect(page.locator("#kompas-window")).to_be_visible()
+    """Kompas openen via het rechter dock of de tabbalk; wacht tot het dock de selectie toont."""
+    dock = page.locator("#rechter-dock")
+    if "collapsed" in (dock.get_attribute("class") or "") or not page.locator("#dock-panel-kompas").is_visible():
+        open_paneel(page, "D-Omni Kompas")
+    expect(page.locator("#dock-panel-kompas")).to_be_visible()
     expect(page.locator("#kompas-info")).to_contain_text(verwacht_in_info, timeout=traag_ms())
     wacht_op_zonnediagram(page)
 
@@ -685,14 +694,70 @@ def open_indicator_in_kompas(page: Page, thema: str, indicator: str):
 
 
 def wacht_op_vergelijkingsgrafiek(page: Page, namen):
-    """Kompas-detailpaneel toont de staafgrafiek met één staaf per geselecteerd gebied."""
-    page.wait_for_function(
-        "(namen) => { const c = window.kompasViz.trendChart;"
-        " return c && namen.every(n => c.data.labels.includes(n)); }",
-        arg=list(namen),
-        polling=_POLL_MS,
-    )
-    expect(page.locator("#kompas-trend-chart")).to_be_visible()
+    """Kompas-detailpaneel toont een vergelijkingsgrafiek (trendlijn of staafdiagram) voor de geselecteerde gebieden."""
+    try:
+        page.wait_for_function(
+            """(namen) => {
+                const isZichtbaar = (el) => {
+                    if (!el) return false;
+                    const style = window.getComputedStyle(el);
+                    if (style.display === 'none' || style.visibility === 'hidden' || el.hidden) return false;
+                    return (el.offsetWidth > 0 || el.offsetHeight > 0 || el.getClientRects().length > 0);
+                };
+
+                // 1. Multi-lijn trendgrafiek of vergelijkingsbarchart in Kompas (#kompas-trend-chart)
+                const tc = window.kompasViz && window.kompasViz.trendChart;
+                const tcCanvas = document.getElementById('kompas-trend-chart');
+                if (tc && tc.data && isZichtbaar(tcCanvas)) {
+                    const inLabels = namen.every(n => tc.data.labels && tc.data.labels.some(l => l === n || (typeof l === 'string' && l.includes(n))));
+                    const inDatasets = namen.every(n => tc.data.datasets && tc.data.datasets.some(d => d && typeof d.label === 'string' && (d.label === n || d.label.includes(n))));
+                    if (inLabels || inDatasets) return true;
+                }
+
+                // 2. Geïntegreerd benchmark-staafdiagram (#ip-grafiek, #444)
+                const ip = window.kompasViz && window.kompasViz._ipChart;
+                const ipCanvas = document.getElementById('ip-grafiek');
+                if (ip && ip.data && ip.data.labels && isZichtbaar(ipCanvas)) {
+                    if (namen.every(n => ip.data.labels.some(l => l === n || (typeof l === 'string' && l.includes(n))))) return true;
+                }
+
+                return false;
+            }""",
+            arg=list(namen),
+            polling=_POLL_MS,
+        )
+    except Exception as exc:
+        diag = page.evaluate("""() => {
+            const kv = window.kompasViz || {};
+            const tcEl = document.getElementById('kompas-trend-chart');
+            const ipEl = document.getElementById('ip-grafiek');
+            const detailsPanel = document.getElementById('kompas-details-panel');
+            const rectInfo = (el) => el ? {
+                display: window.getComputedStyle(el).display,
+                visibility: window.getComputedStyle(el).visibility,
+                hidden: el.hidden,
+                offsetW: el.offsetWidth,
+                offsetH: el.offsetHeight,
+                parentDisplay: el.parentElement ? window.getComputedStyle(el.parentElement).display : null
+            } : null;
+            return {
+                currentNode: kv.currentNode?.data?.name ?? null,
+                isExpanded: kv.isExpanded ?? null,
+                detailsPanel: rectInfo(detailsPanel),
+                hasTrendChart: Boolean(kv.trendChart),
+                tcLabels: kv.trendChart?.data?.labels ?? null,
+                tcDatasetLabels: kv.trendChart?.data?.datasets?.map(d => d?.label) ?? null,
+                tcDom: rectInfo(tcEl),
+                hasIpChart: Boolean(kv._ipChart),
+                ipLabels: kv._ipChart?.data?.labels ?? null,
+                uitgesteldIpData: Boolean(kv._uitgesteldIpData),
+                ipDom: rectInfo(ipEl),
+            };
+        }""")
+        raise AssertionError(f"wacht_op_vergelijkingsgrafiek timeout voor {namen}. Diagnostiek: {diag}") from exc
+    expect(
+        page.locator("#kompas-trend-chart, #ip-grafiek").filter(has_not=page.locator("[hidden]")).first
+    ).to_be_visible()
 
 
 def dump(obj) -> str:
