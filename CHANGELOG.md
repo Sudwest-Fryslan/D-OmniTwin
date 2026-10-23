@@ -15,6 +15,7 @@ Eerdere wijzigingen, van vóór dit bestand, zijn terug te vinden in de git-hist
 
 ### Opgelost
 
+- **Race condition in multi-gebiedsselectie en E2E-benchmarktest** ([#463](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/463)): in `static/js/kompas.js` werd bij een trage multi-gebieds fetch (`loadMultiGebiedData`) een tussentijdse klik op een indicator overschreven door het laat binnenkomende response; met een sequence-counter (`_loadRequestId`) worden verouderde netwerkantwoorden nu genegeerd en de actieve indicator behouden. De Playwright-helper `wacht_op_zonnediagram` en `_SEGMENT_JS` wachten nu expliciet tot `#kompas-container` niet meer de klasse `.loading` heeft.
 - **Kaartlaag-verschuiving, dock-interacties en Kompas drill-down** ([#444](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/444)):
   - Het openen van het Kompas of Assistent-venster veroorzaakte een mismatch tussen de PDOK BRT achtergrondkaart (MapLibre) en de vectorlaag (Deck.gl CBS-buurten). Dit werd veroorzaakt doordat MapLibre asymmetrische padding toepaste terwijl Deck.gl's MapView geen asymmetrische canvas-padding ondersteunt. Dit is hersteld door padding op 0 te houden en centrering uitsluitend via `getFreezone()` en `flyToGebied()` uit te voeren.
   - De assistent-knop in de linker balk opent nu direct het Assistent-tabblad in het rechter dock zonder ongewenst openen van het linker paneel of dubbele toggle-events.
