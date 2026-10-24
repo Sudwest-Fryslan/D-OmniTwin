@@ -606,7 +606,12 @@ def open_kompas(page: Page, verwacht_in_info: str):
 
 def wacht_op_zonnediagram(page: Page):
     page.wait_for_function(
-        "() => document.querySelectorAll('#kompas-container path.kompas-arc-path').length > 10", polling=_POLL_MS
+        "() => {"
+        "  const c = document.getElementById('kompas-container');"
+        "  if (!c || c.classList.contains('loading')) return false;"
+        "  return c.querySelectorAll('path.kompas-arc-path').length > 10;"
+        "}",
+        polling=_POLL_MS,
     )
 
 
@@ -616,6 +621,7 @@ _SEGMENT_JS = """
 (naam) => {
   const kv = window.kompasViz;
   const container = document.getElementById('kompas-container');
+  if (!container || container.classList.contains('loading')) return null;
   // d3 zet __transition op elk element met een lopende of geplande transitie
   if ([...container.querySelectorAll('*')].some(n => n.__transition)) return null;
   const paths = [...container.querySelectorAll('path.kompas-arc-path')];

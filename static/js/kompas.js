@@ -71,6 +71,9 @@ class KompasVisualization {
         // History for zoom out
         this.zoomStack = [];
 
+        // Request tracking om verouderde async responses te negeren (#463)
+        this._loadRequestId = 0;
+
         // Init
         this.init();
     }
@@ -325,11 +328,12 @@ class KompasVisualization {
         /**
          * Laad kompas data voor specifiek gebied (met waarden)
          */
-        // Sprint 7 / #444: Bewaar expanded state EN indicator UUID vóór re-render
+        // Sprint 7 / #444 / #463: Bewaar expanded state EN indicator UUID vóór re-render
         const wasExpanded = this.isExpanded;
         const expandedIndicatorUuid = this._lastExpandedIndicatorUuid
             || (wasExpanded && this.currentNode?.data?.uuid ? this.currentNode.data.uuid : null);
         const zoomPath = this._getZoomPath();
+        const reqId = ++this._loadRequestId;
 
         this.showLoading();
 
@@ -338,6 +342,10 @@ class KompasVisualization {
             if (!response.ok) throw new Error(`HTTP ${response.status}`);
 
             const data = await response.json();
+            if (reqId !== this._loadRequestId) {
+                console.log('🔄 Verouderde gebied data genegeerd (#463)');
+                return;
+            }
             this.currentData = data;
             this.currentConfigId = configId;
             this.currentGebiedId = gebiedId;
@@ -351,16 +359,23 @@ class KompasVisualization {
                     ? '<br><span class="kompas-classificatie">Kleur: percentielklasse (8 × 12,5%)</span>' : '') +
                 `</p>` + this._labelLegenda(data);
 
+            // Bepaal actuele toestand (ook als gebruiker tijdens de fetch doorklikte, #463)
+            const currentZoomPath = this._getZoomPath().length > 0 ? this._getZoomPath() : zoomPath;
+            const activeIndicatorUuid = this._currentIndicatorUuid
+                || this._lastExpandedIndicatorUuid
+                || expandedIndicatorUuid
+                || (this.isExpanded && this.currentNode?.data?.uuid ? this.currentNode.data.uuid : null);
+
             // Render sunburst with data
             this.renderSunburst(data.hierarchie);
             this.updateSelectedAreasBadges();
 
-            // Sprint 7 / #444: Herstel zoom-pad en actieve indicator direct zonder race condition
-            if (zoomPath.length > 0) {
-                this._navigateToPath(zoomPath);
+            // Sprint 7 / #444 / #463: Herstel zoom-pad en actieve indicator direct zonder race condition
+            if (currentZoomPath.length > 0) {
+                this._navigateToPath(currentZoomPath);
             }
-            if (expandedIndicatorUuid && this.root) {
-                const targetNode = this._findNodeByUuid(this.root, expandedIndicatorUuid);
+            if (activeIndicatorUuid && this.root) {
+                const targetNode = this._findNodeByUuid(this.root, activeIndicatorUuid);
                 if (targetNode) {
                     this.expandDetails(targetNode);
                 }
@@ -369,6 +384,7 @@ class KompasVisualization {
             this.hideLoading();
             return data;
         } catch (error) {
+            if (reqId !== this._loadRequestId) return;
             console.error('❌ Fout bij ophalen gebied data:', error);
             this.showError('Kon gebied data niet laden: ' + (error.message || 'Onbekende fout'));
             this.hideLoading();
@@ -388,11 +404,12 @@ class KompasVisualization {
             return this.loadGebiedData(configId, gebiedIds[0]);
         }
 
-        // Sprint 7 / #444: Bewaar expanded state EN indicator UUID vóór re-render
+        // Sprint 7 / #444 / #463: Bewaar expanded state EN indicator UUID vóór re-render
         const wasExpanded = this.isExpanded;
         const expandedIndicatorUuid = this._lastExpandedIndicatorUuid
             || (wasExpanded && this.currentNode?.data?.uuid ? this.currentNode.data.uuid : null);
         const zoomPath = this._getZoomPath();
+        const reqId = ++this._loadRequestId;
 
         this.showLoading();
         console.log(`📊 Multi-gebied Kompas: ${gebiedIds.length} gebieden laden...`);
@@ -409,6 +426,10 @@ class KompasVisualization {
                 })
             );
             const results = await Promise.all(promises);
+            if (reqId !== this._loadRequestId) {
+                console.log('🔄 Verouderde multi-gebied data genegeerd (#463)');
+                return;
+            }
 
             // Use the first result as a template
             const merged = JSON.parse(JSON.stringify(results[0]));
@@ -424,6 +445,10 @@ class KompasVisualization {
                     if (!r.ok) throw new Error(`HTTP ${r.status} selectie`);
                     return r.json();
                 });
+                if (reqId !== this._loadRequestId) {
+                    console.log('🔄 Verouderde selectie data genegeerd (#463)');
+                    return;
+                }
                 this._neemKlassenOver(merged.hierarchie, sel.hierarchie);
                 selectie = sel;
             }
@@ -458,16 +483,23 @@ class KompasVisualization {
                     ? '<br><span class="kompas-classificatie">Kleur: percentielklasse over de selectie (8 × 12,5%)</span>' : '') +
                 `</p>` + this._labelLegenda(selectie || results[0], true);
 
+            // Bepaal actuele toestand (ook als gebruiker tijdens de fetch doorklikte, #463)
+            const currentZoomPath = this._getZoomPath().length > 0 ? this._getZoomPath() : zoomPath;
+            const activeIndicatorUuid = this._currentIndicatorUuid
+                || this._lastExpandedIndicatorUuid
+                || expandedIndicatorUuid
+                || (this.isExpanded && this.currentNode?.data?.uuid ? this.currentNode.data.uuid : null);
+
             // Render sunburst with merged data
             this.renderSunburst(merged.hierarchie);
             this.updateSelectedAreasBadges();
 
-            // Sprint 7 / #444: Herstel zoom-pad en actieve indicator direct zonder race condition
-            if (zoomPath.length > 0) {
-                this._navigateToPath(zoomPath);
+            // Sprint 7 / #444 / #463: Herstel zoom-pad en actieve indicator direct zonder race condition
+            if (currentZoomPath.length > 0) {
+                this._navigateToPath(currentZoomPath);
             }
-            if (expandedIndicatorUuid && this.root) {
-                const targetNode = this._findNodeByUuid(this.root, expandedIndicatorUuid);
+            if (activeIndicatorUuid && this.root) {
+                const targetNode = this._findNodeByUuid(this.root, activeIndicatorUuid);
                 if (targetNode) {
                     this.expandDetails(targetNode);
                 }
@@ -477,6 +509,7 @@ class KompasVisualization {
             console.log(`✅ Multi-gebied Kompas geladen: ${gebiedIds.length} gebieden gemiddeld`);
             return merged;
         } catch (error) {
+            if (reqId !== this._loadRequestId) return;
             console.error('❌ Fout bij multi-gebied kompas:', error);
             this.showError('Kon multi-gebied data niet laden');
             this.hideLoading();
