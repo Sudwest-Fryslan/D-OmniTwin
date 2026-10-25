@@ -185,8 +185,9 @@ Bij alle varianten blijft gelden: met `prefers-reduced-motion` geen animatie (B5
 H4 (`preserveDrawingBuffer`) is niet via DevTools uit te zetten; die toetsen we alleen als H1 tot en met H3 het haperen niet verklaren.
 
 **Uitkomsten:**
-- **S1 (Nulmeting Desktop):** zie [`testresultaten/scenario-1-nulmeting.md`](testresultaten/scenario-1-nulmeting.md) (B1, H1 en H2 bewezen; Long Task van 127 ms + layout thrashing).
-- **S2 t/m S7:** nog te meten.
+- **S1 (Nulmeting Desktop, zonder indicator):** zie [`testresultaten/scenario-1-nulmeting.md`](testresultaten/scenario-1-nulmeting.md) (B1, H1 en H2 bewezen; Long Task 127 ms + layout thrashing).
+- **S2 (Desktop, met actieve indicator):** zie [`testresultaten/scenario-2-actieve-indicator.md`](testresultaten/scenario-2-actieve-indicator.md) (B1 én B2 bewezen; 8 backend-calls waarvan 4 overbodig, Long Task 164 ms, +148% reflow).
+- **S3 t/m S7:** nog te meten.
 
 ---
 
