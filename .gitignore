@@ -76,6 +76,7 @@ docs/5-secops/*
 !docs/4-ux-design/toegankelijkheid.md
 !docs/4-ux-design/gebruikerservaring-audit.md
 !docs/4-ux-design/pve-rechter-dock-architectuur.md
+!docs/4-ux-design/interactie-gebiedsselectie.md
 !docs/5-secops/privacy-quickscan.md
 docs/6-ai-parallel-track/
 docs/7-projectmanagement/
