@@ -129,28 +129,35 @@ Asynchroon, zodra antwoorden binnen zijn (tijdstip onbekend):
 
 ---
 
-## 4. Gebruikersverwachting: vragen ter toetsing
+## 4. Gebruikersverwachting: vragen ter toetsing en standpunten
 
-Eerste aanzet, af te stemmen met Taeke en Eduard. Per antwoord volgt een meetbaar criterium (sectie 6).
+Per antwoord volgt een meetbaar criterium voor de uiteindelijke choreografie (sectie 6).
 
-**Vraag 1: wat wil de gebruiker direct na een klik als eerste zien?**
-- A. Eerst waar het gebied ligt (kaart), daarna de cijfers.
-- B. Zo snel mogelijk de cijfers; de kaartbeweging is bijzaak.
+### Vraag 1: wat wil de gebruiker direct na een klik als eerste zien?
+- **Keuze:** Optie A.
+- **Standpunt Taeke (PO):** Eerst rustig zien waar het gebied ligt en hoe de grens loopt (visuele focus op de kaart), daarna pas de cijfers en grafieken.
+- **Standpunt Eduard:** *Nog te reviewen.*
 
-**Vraag 2: moet het dock bij elke selectie automatisch openen?**
-- A. Altijd (huidige eis FE-1.2).
-- B. Nee, alleen als de gebruiker erom vraagt (badge of knop).
-- C. Alleen als er al een indicator of het Kompas actief is.
+### Vraag 2: moet het dock bij elke selectie automatisch openen?
+- **Standpunt Taeke (PO):** Bij de eerste klik op een buurt in de kaart opent het venster pas **zodra de fly-to stopt** (of wanneer het kompasvenster expliciet geactiveerd wordt via de knop). Daarna blijft het dock open totdat de gebruiker er zelf voor kiest het venster te sluiten (dus ook als er daarna in de kaart op een andere buurt wordt geklikt).
+- **Standpunt Eduard:** *Nog te reviewen.*
 
-**Vraag 3: wat moet de gebruiker in het dock zien terwijl de kaart nog beweegt?**
-- Direct de cijfers van het nieuwe gebied, of is het acceptabel dat die pas verschijnen als de kaart stilstaat? Hoe lang mag dat duren?
+### Vraag 3: wat moet de gebruiker in het dock zien terwijl de kaart nog beweegt?
+- **Keuze:** In lijn met voorstel C.
+- **Standpunt Taeke (PO):** Zodra de kaart beweegt bij de initiële klik is het dockvenster nog niet geopend, dus is er nog geen sprake van het tonen van cijfers. Als het dock al open staat (bij een vervolgklik): pas updaten en renderen zodra de camera stilstaat, zodat de vlucht 100% vloeiend blijft.
+- **Standpunt Eduard:** *Nog te reviewen.*
 
-**Vraag 4: wat verwacht de gebruiker op smalle schermen?**
-- Laptop (±1280–1536 CSS-px): het dock neemt 30–34% van de breedte in. Is die verhouding goed, of moet het dock daar kleiner of pas op verzoek openen?
-- Telefoon en tablet staand (< 900 px): het dock bedekt de onderste helft. Waar moet het geselecteerde gebied dan in beeld komen?
+### Vraag 4: wat verwacht de gebruiker op smalle schermen?
+- **Standpunt Taeke (PO):**
+  - **Laptop (±1280–1536 px):** Prima breedte, behoud de huidige 30–34% (`clamp(440px, 30vw, 560px)`).
+  - **Mobiel en tablet (< 900 px):** Blijft voor nu open; hier zijn nog geen specifieke gebruikerswensen of ervaringen voor verzameld.
+- **Standpunt Eduard:** *Nog te reviewen.*
 
-**Vraag 5: wat verwacht de gebruiker bij een tweede klik terwijl de kaart nog beweegt, of bij een meervoudige selectie?**
-- Moet de kaart direct naar het nieuwe gebied, en moeten de cijfers altijd bij het laatst gekozen gebied horen?
+### Vraag 5: wat verwacht de gebruiker bij een tweede klik terwijl de kaart nog beweegt, of bij een meervoudige selectie?
+- **Standpunt Taeke (PO):**
+  - **Doorklikken tijdens beweging:** Nette bijsturing (de lopende camera-vlucht wordt zachtjes onderbroken en stuurt direct bij naar het nieuwe doel).
+  - **Meervoudige selectie (Shift-klik):** Bij multiselectie blijft de *eerste* aangeklikte buurt gecentreerd in de vrije zone. Daarna worden met Shift-klik extra buurten geselecteerd zonder nieuwe cameravlucht; het dockvenster (Kompas) verwerkt en toont netjes de geaggregeerde cijfers van alle geselecteerde gebieden, zoals dat nu ook werkt.
+- **Standpunt Eduard:** *Nog te reviewen.*
 
 Bij alle varianten blijft gelden: met `prefers-reduced-motion` geen animatie (B5, WCAG 2.1 AA).
 
