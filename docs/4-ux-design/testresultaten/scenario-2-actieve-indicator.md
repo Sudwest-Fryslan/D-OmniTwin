@@ -2,7 +2,7 @@
 
 > **Status:** Uitgevoerd (Zonder blur op dock)  
 > **Datum:** 2026-10-25  
-> **Omgeving:** Chrome DevTools Performance Trace ([`traces/s2-desktop-actieve-indicator-geen-blur.json.gz`](traces/s2-desktop-actieve-indicator-geen-blur.json.gz))  
+> **Omgeving:** Chrome DevTools Performance Trace (`traces/s2-desktop-actieve-indicator-geen-blur.json.gz` — gearchiveerd bij [#465](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/465))  
 > **Viewport:** Desktop 1920×1080  
 > **Selectie:** 1 buurt (`BU19001007`)  
 > **Initiële staat:** Rechterdock GESLOTEN, **Indicator ACTIEF** (`1bec5763-5216-484d-95fe-474a4296a341`)  

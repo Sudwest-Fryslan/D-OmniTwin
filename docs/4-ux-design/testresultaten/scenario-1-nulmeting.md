@@ -2,7 +2,7 @@
 
 > **Status:** Uitgevoerd (Eerste opname — met standaard blur)  
 > **Datum:** 2026-10-25  
-> **Omgeving:** Chrome DevTools Performance Trace ([`traces/s1-desktop-nulmeting.json.gz`](traces/s1-desktop-nulmeting.json.gz))  
+> **Omgeving:** Chrome DevTools Performance Trace (`traces/s1-desktop-nulmeting.json.gz` — gearchiveerd bij [#465](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/465))  
 > **Viewport:** Desktop 1920×1080  
 > **Selectie:** 1 buurt (`BU19000115`, Bolsward)  
 > **Initiële staat:** Rechterdock GESLOTEN, geen actieve indicator  
