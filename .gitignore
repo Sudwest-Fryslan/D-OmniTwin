@@ -47,8 +47,9 @@ exports/
 backups/
 *.dump
 
-# E2E-testartefacten (screenshots bij fouten)
+# E2E-testartefacten (screenshots bij fouten en ruwe traces)
 tests/e2e/artifacts/
+tests/e2e/traces/
 
 # Logs
 *.log
@@ -76,6 +77,7 @@ docs/5-secops/*
 !docs/4-ux-design/toegankelijkheid.md
 !docs/4-ux-design/gebruikerservaring-audit.md
 !docs/4-ux-design/pve-rechter-dock-architectuur.md
+!docs/4-ux-design/factsheet-rapportagedesign.md
 !docs/5-secops/privacy-quickscan.md
 docs/6-ai-parallel-track/
 docs/7-projectmanagement/
