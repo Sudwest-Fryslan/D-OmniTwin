@@ -2014,6 +2014,10 @@ function displayOnMap(geojson) {
                     // 2. Als het dock al open staat, visueel dimmen via .dock-updating tijdens vlucht
                     if (isDockOpen && dockEl) {
                         dockEl.classList.add('dock-updating');
+                    } else if (!state.dockManuallyClosed) {
+                        // Dock zal bij landing openen (#466); markeer Kompas knop alvast als actief
+                        document.querySelector('.tab-button[data-panel="kompas"]')?.classList.add('active');
+                        document.getElementById('chat-toggle-btn')?.classList.remove('active');
                     }
 
                     // 3. Callback voor wanneer de camera landt
@@ -2024,8 +2028,9 @@ function displayOnMap(geojson) {
                         if (window.kompasViz) {
                             window.kompasViz.triggerDeferredRender();
                         }
+                        const isChatActive = document.getElementById('dock-panel-chat')?.classList.contains('active');
                         if (!isDockOpen && !state.dockManuallyClosed) {
-                            openRechterDock('kompas', false);
+                            openRechterDock(isChatActive ? 'chat' : 'kompas', false);
                         }
                     };
 
@@ -4478,14 +4483,14 @@ function getFreezone(targetDockOpen = null) {
 window.getFreezone = getFreezone;
 
 function flyToGebied(feature, clickCoordinate = null, onLanded = null) {
-    if (!feature || !feature.geometry) {
-        if (typeof onLanded === 'function') onLanded();
-        return;
-    }
-
     if (typeof clickCoordinate === 'function') {
         onLanded = clickCoordinate;
         clickCoordinate = null;
+    }
+
+    if (!feature || !feature.geometry) {
+        if (typeof onLanded === 'function') onLanded();
+        return;
     }
 
     let minLon = Infinity, maxLon = -Infinity, minLat = Infinity, maxLat = -Infinity;
