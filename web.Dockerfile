@@ -4,7 +4,7 @@
 # Generiek: geen omgevingsconfig in de image. Instellingen, sessies en data komen van de backend
 # (/api); de gateway (Traefik) verdeelt de paden. Config van nginx: deploy/web/.
 # Wat er in de bouwcontext komt: web.Dockerfile.dockerignore (alleen static/ en deploy/web/).
-FROM nginxinc/nginx-unprivileged:1.31.6-alpine
+FROM nginxinc/nginx-unprivileged:1.31.7-alpine
 
 # Voorbeeldpagina's van nginx weg; de bestanden blijven van root (alleen-lezen voor nginx)
 USER root
