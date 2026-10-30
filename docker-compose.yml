@@ -202,7 +202,7 @@ services:
 
   postgrest:
     logging: *logging
-    image: postgrest/postgrest:v16.4
+    image: postgrest/postgrest:v16.5
     # Eigen rollen (#57): verbindt als authenticator, voert verzoeken uit als web_anon en
     # ziet alleen schema api (views en functies). Rollen en wachtwoord: db-init
     # (docker-entrypoint.sh, db/migraties/R__api_rollen.sql).
