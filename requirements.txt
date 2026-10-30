@@ -46,7 +46,7 @@ bcrypt==4.0.1  # passlib 1.7.x incompatibel met bcrypt 4.1+ (verwijderd __about_
 PyJWT[crypto]>=2.15.1   # OIDC: access tokens van Keycloak controleren (omnitwin/oidc.py, #205)
 
 # --- AI Functies ---
-sentence-transformers>=6.1.0   # AI embeddings; trekt PyTorch mee (CPU, ~0,6 GB)
+sentence-transformers>=6.2.0   # AI embeddings; trekt PyTorch mee (CPU, ~0,6 GB)
 
 # --- Afbeeldingen ---
 pillow>=13.0.0          # GeoTIFF lezen bij het laden van use case hittestress (RIVM-rasters)
