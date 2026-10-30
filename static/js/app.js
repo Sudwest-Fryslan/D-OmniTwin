@@ -3476,7 +3476,7 @@ window.setDockMode = setDockMode;
  */
 function openKompasVenster() {
     state.dockManuallyClosed = false;
-    openRechterDock('kompas', true, true);
+    openRechterDock('kompas', false, true);
 
     if (state.selectedGebiedIds.size > 0 && window.kompasViz && window.kompasViz.currentConfigId) {
         loadKompasForSelection(window.kompasViz.currentConfigId);
@@ -3554,7 +3554,7 @@ function initRechterDock() {
 
     // EventBus koppeling voor indicator selectie
     window.EventBus?.on('INDICATOR_SELECTED', () => {
-        openRechterDock('kompas', true, true);
+        openRechterDock('kompas', false, true);
     });
 
     // Herstel opgeslagen toestand

@@ -398,11 +398,12 @@ class KompasVisualization {
                 `</p>` + this._labelLegenda(data);
 
             // Bepaal actuele toestand (ook als gebruiker tijdens de fetch doorklikte, #463)
-            const currentZoomPath = this._getZoomPath().length > 0 ? this._getZoomPath() : zoomPath;
-            const activeIndicatorUuid = this._currentIndicatorUuid
-                || this._lastExpandedIndicatorUuid
-                || expandedIndicatorUuid
-                || (this.isExpanded && this.currentNode?.data?.uuid ? this.currentNode.data.uuid : null);
+            const currentZoomPath = (this.currentNode === this.root)
+                ? []
+                : (this._getZoomPath().length > 0 ? this._getZoomPath() : zoomPath);
+            const activeIndicatorUuid = this.isExpanded
+                ? (this._currentIndicatorUuid || this._lastExpandedIndicatorUuid || (this.currentNode?.data?.uuid ? this.currentNode.data.uuid : null))
+                : null;
 
             // Render sunburst with data (of stel uit tot landing camera, #465/#466)
             const doRender = () => {
@@ -535,11 +536,12 @@ class KompasVisualization {
                 `</p>` + this._labelLegenda(selectie || results[0], true);
 
             // Bepaal actuele toestand (ook als gebruiker tijdens de fetch doorklikte, #463)
-            const currentZoomPath = this._getZoomPath().length > 0 ? this._getZoomPath() : zoomPath;
-            const activeIndicatorUuid = this._currentIndicatorUuid
-                || this._lastExpandedIndicatorUuid
-                || expandedIndicatorUuid
-                || (this.isExpanded && this.currentNode?.data?.uuid ? this.currentNode.data.uuid : null);
+            const currentZoomPath = (this.currentNode === this.root)
+                ? []
+                : (this._getZoomPath().length > 0 ? this._getZoomPath() : zoomPath);
+            const activeIndicatorUuid = this.isExpanded
+                ? (this._currentIndicatorUuid || this._lastExpandedIndicatorUuid || (this.currentNode?.data?.uuid ? this.currentNode.data.uuid : null))
+                : null;
 
             // Render sunburst with merged data (of stel uit tot landing camera, #465/#466)
             const doRender = () => {
@@ -1340,6 +1342,12 @@ class KompasVisualization {
         /**
          * Reset kompas naar het beginniveau (root)
          */
+        this._loadRequestId++;
+        this.deferNextRenderUntilLanding = false;
+        this._pendingRender = null;
+        this._lastExpandedIndicatorUuid = null;
+        this._currentIndicatorUuid = null;
+        this.hideLoading();
         this.collapseDetails();
         this.currentNode = this.root;
         if (this.root) {
