@@ -3,8 +3,8 @@
 # system-level GDAL vereisen. Alleen wat nodig is voor unit tests + de app te starten.
 
 # --- Web Framework ---
-fastapi==0.145.0
-starlette==1.8.0
+fastapi==0.162.0
+starlette==1.10.0
 uvicorn[standard]==0.54.0
 python-dotenv>=1.0.0
 python-multipart>=0.0.32
