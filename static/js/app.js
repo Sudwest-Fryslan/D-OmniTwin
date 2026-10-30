@@ -76,6 +76,9 @@ const state = {
     // Sprint 18: Externe kaartlagen (WFS, PDOK, etc.)
     externeKaartlagen: [],         // Actieve lagen definitie [{id, naam, kleur_lijn, ...}]
     externeKaartlaagData: {},      // { laag_id: { laag, geojson } }
+
+    // Performance / UX (#466): bijhouden of de gebruiker het dock handmatig heeft gesloten
+    dockManuallyClosed: false,
 };
 
 // Publiceer state op window zodat chat.js en andere modules de kaartselectie kunnen lezen
@@ -493,7 +496,9 @@ function initDeckGL() {
             state.currentViewState = viewState;
             state.deckgl.setProps({ viewState: state.currentViewState });
         },
-        controller: true,
+        controller: {
+            doubleClickZoom: false
+        },
         layers: [],
         effects: lightingEffect ? [lightingEffect] : [], // Add 3D lighting
         glOptions: {
@@ -1992,24 +1997,53 @@ function displayOnMap(geojson) {
                 // Load gebied details (voor het laatst aangeklikte gebied)
                 loadGebiedDetails(gebiedId);
 
-                // Rechter dock openen bij selectie (FE-1.2)
-                openRechterDock('kompas');
-                if (window.kompasViz && window.kompasViz.currentConfigId) {
-                    loadKompasForSelection(window.kompasViz.currentConfigId);
-                }
+                // Dock status controleren (#465/#466)
+                const dockEl = document.getElementById('rechter-dock');
+                const isDockOpen = dockEl && !dockEl.classList.contains('collapsed') && (!dockEl.offsetParent || dockEl.style.display !== 'none');
 
-                if (state.currentData && state.currentData.features && state.currentData.features.length > 0) {
-                    try {
-                        displayOnMap(state.currentData);
-                    } catch (e) {
-                        console.error('⚠️ Fout tijdens displayOnMap:', e);
-                    }
-                } else {
-                    console.warn('⚠️ Cannot re-render map: state.currentData is empty/invalid');
-                }
-
-                // Camera: Auto-pan to selected area (UI Polish)
                 if (!isMultiSelect) {
+                    // Choreografie synchronisatie (#465/#466):
+                    // 1. Haal data direct parallel op, maar stel D3 render uit tot camera landing
+                    if (window.kompasViz) {
+                        window.kompasViz.deferNextRenderUntilLanding = true;
+                        if (window.kompasViz.currentConfigId) {
+                            loadKompasForSelection(window.kompasViz.currentConfigId);
+                        }
+                    }
+
+                    // 2. Als het dock al open staat, visueel dimmen via .dock-updating tijdens vlucht
+                    if (isDockOpen && dockEl) {
+                        dockEl.classList.add('dock-updating');
+                    } else if (!state.dockManuallyClosed) {
+                        // Dock zal bij landing openen (#466); markeer Kompas knop alvast als actief
+                        document.querySelector('.tab-button[data-panel="kompas"]')?.classList.add('active');
+                        document.getElementById('chat-toggle-btn')?.classList.remove('active');
+                    }
+
+                    // 3. Callback voor wanneer de camera landt
+                    const onCameraLanded = () => {
+                        if (dockEl) {
+                            dockEl.classList.remove('dock-updating');
+                        }
+                        if (window.kompasViz) {
+                            window.kompasViz.triggerDeferredRender();
+                        }
+                        const isChatActive = document.getElementById('dock-panel-chat')?.classList.contains('active');
+                        if (!isDockOpen && !state.dockManuallyClosed) {
+                            openRechterDock(isChatActive ? 'chat' : 'kompas', false);
+                        }
+                    };
+
+                    if (state.currentData && state.currentData.features && state.currentData.features.length > 0) {
+                        try {
+                            displayOnMap(state.currentData);
+                        } catch (e) {
+                            console.error('⚠️ Fout tijdens displayOnMap:', e);
+                        }
+                    } else {
+                        console.warn('⚠️ Cannot re-render map: state.currentData is empty/invalid');
+                    }
+
                     const originalFeature = state.currentData && state.currentData.features 
                         ? state.currentData.features.find(f => (f.id || f.properties?.id) === gebiedId) 
                         : null;
@@ -2020,11 +2054,26 @@ function displayOnMap(geojson) {
                     // Decouple from MapController event loop
                     setTimeout(() => {
                         try {
-                            flyToGebied(safeFeature, safeCoordinate);
+                            flyToGebied(safeFeature, safeCoordinate, onCameraLanded);
                         } catch (e) {
                             console.error('⚠️ Fout tijdens flyToGebied animatie:', e);
+                            onCameraLanded();
                         }
                     }, 50);
+                } else {
+                    if (window.kompasViz && window.kompasViz.currentConfigId) {
+                        loadKompasForSelection(window.kompasViz.currentConfigId);
+                    }
+                    if (!isDockOpen && !state.dockManuallyClosed) {
+                        openRechterDock('kompas', false);
+                    }
+                    if (state.currentData && state.currentData.features && state.currentData.features.length > 0) {
+                        try {
+                            displayOnMap(state.currentData);
+                        } catch (e) {
+                            console.error('⚠️ Fout tijdens displayOnMap:', e);
+                        }
+                    }
                 }
                 
                 return true; // Stop propagation to prevent MapController from canceling the transition
@@ -3248,7 +3297,10 @@ window.updateMapPadding = updateMapPadding;
 /**
  * Opent het rechter dock (of activeert het zwevend venster indien losgekoppeld).
  */
-function openRechterDock(tab = 'kompas') {
+function openRechterDock(tab = 'kompas', reloadData = true, manualOpen = false) {
+    if (manualOpen) {
+        state.dockManuallyClosed = false;
+    }
     const dockEl = document.getElementById('rechter-dock');
     const floatEl = document.getElementById('kompas-window');
     const isFloating = window.state?.dockMode === 'floating';
@@ -3273,7 +3325,7 @@ function openRechterDock(tab = 'kompas') {
 
     switchDockTab(tab);
 
-    if (tab === 'kompas' && state?.selectedGebiedIds?.size > 0 && window.kompasViz?.currentConfigId) {
+    if (reloadData && tab === 'kompas' && state?.selectedGebiedIds?.size > 0 && window.kompasViz?.currentConfigId) {
         loadKompasForSelection(window.kompasViz.currentConfigId);
     }
 }
@@ -3282,7 +3334,10 @@ window.openRechterDock = openRechterDock;
 /**
  * Sluit het rechter dock (of minimaliseert het zwevende venster).
  */
-function closeRechterDock() {
+function closeRechterDock(manual = true) {
+    if (manual) {
+        state.dockManuallyClosed = true;
+    }
     const dockEl = document.getElementById('rechter-dock');
     const floatEl = document.getElementById('kompas-window');
     const isFloating = window.state?.dockMode === 'floating';
@@ -3420,7 +3475,8 @@ window.setDockMode = setDockMode;
  * Open het Kompas in het rechter dock en laad de huidige selectie (of hiërarchie).
  */
 function openKompasVenster() {
-    openRechterDock('kompas');
+    state.dockManuallyClosed = false;
+    openRechterDock('kompas', false, true);
 
     if (state.selectedGebiedIds.size > 0 && window.kompasViz && window.kompasViz.currentConfigId) {
         loadKompasForSelection(window.kompasViz.currentConfigId);
@@ -3448,7 +3504,7 @@ function initRechterDock() {
     tabChat?.addEventListener('click', () => switchDockTab('chat'));
     floatTabKompas?.addEventListener('click', () => switchDockTab('kompas'));
     floatTabChat?.addEventListener('click', () => switchDockTab('chat'));
-    btnClose?.addEventListener('click', () => closeRechterDock());
+    btnClose?.addEventListener('click', () => closeRechterDock(true));
     btnDetach?.addEventListener('click', () => {
         setDockMode(window.state?.dockMode === 'floating' ? 'docked' : 'floating');
     });
@@ -3464,7 +3520,7 @@ function initRechterDock() {
         if (isClosed || !isKompasActive) {
             openKompasVenster();
         } else {
-            closeRechterDock();
+            closeRechterDock(true);
         }
     });
 
@@ -3476,9 +3532,9 @@ function initRechterDock() {
         const isClosed = !dockEl || dockEl.classList.contains('collapsed');
         const isChatActive = document.getElementById('dock-panel-chat')?.classList.contains('active');
         if (isClosed || !isChatActive) {
-            openRechterDock('chat');
+            openRechterDock('chat', true, true);
         } else {
-            closeRechterDock();
+            closeRechterDock(true);
         }
     });
 
@@ -3498,7 +3554,7 @@ function initRechterDock() {
 
     // EventBus koppeling voor indicator selectie
     window.EventBus?.on('INDICATOR_SELECTED', () => {
-        openRechterDock('kompas');
+        openRechterDock('kompas', false, true);
     });
 
     // Herstel opgeslagen toestand
@@ -4358,8 +4414,9 @@ console.log(`
  * Berekent het X-pixel centrum van de vrije (onbedekte) kaartzone.
  * Houdt rekening met: tab bar, linker panel, chat panel en Kompas venster.
  * Blend het vrije-zone-midden met het overall schermmidden om extreme offsets te voorkomen.
+ * @param {boolean|null} targetDockOpen - Doelstand van dock; null berekent op basis van status en state.dockManuallyClosed
  */
-function getFreezone() {
+function getFreezone(targetDockOpen = null) {
     const W = window.innerWidth;
     const MIN_ZONE = 150;       // Minimale bruikbare segmentbreedte (px)
 
@@ -4371,11 +4428,20 @@ function getFreezone() {
     // Rechter dock (rechts) of floating window
     const dockEl = document.getElementById('rechter-dock');
     const isFloating = window.state?.dockMode === 'floating';
-    const dockOpen = dockEl && !dockEl.classList.contains('collapsed') && (!dockEl.offsetParent || dockEl.style.display !== 'none');
+
+    // Bepaal of het dock open is of open zal zijn in de doelstand (#466)
+    let willBeOpen;
+    if (targetDockOpen !== null) {
+        willBeOpen = targetDockOpen;
+    } else {
+        const isCurrentOpen = dockEl && !dockEl.classList.contains('collapsed') && (!dockEl.offsetParent || dockEl.style.display !== 'none');
+        willBeOpen = isCurrentOpen || (!state?.dockManuallyClosed);
+    }
 
     let rightEdge = 0;
-    if (dockOpen && !isFloating) {
-        rightEdge = dockEl.getBoundingClientRect().width || 380;
+    if (willBeOpen && !isFloating) {
+        const rectWidth = dockEl ? dockEl.getBoundingClientRect().width : 0;
+        rightEdge = rectWidth > 100 ? rectWidth : Math.min(560, Math.max(440, W * 0.3));
     }
 
     // Vrije zone zonder Kompas
@@ -4388,7 +4454,7 @@ function getFreezone() {
     const kompasVisible = isFloating && kompasEl && kompasEl.style.display !== 'none';
 
     if (!kompasVisible) {
-        return { centerX: baseCenterX, screenCenterX: W / 2 };
+        return { centerX: baseCenterX, screenCenterX: W / 2, freeLeft, freeRight, leftEdge, rightEdge };
     }
 
     const kr = kompasEl.getBoundingClientRect();
@@ -4412,67 +4478,145 @@ function getFreezone() {
     // Zorg dat centerX binnen het bruikbare schermgebied blijft
     centerX = Math.max(freeLeft + 50, Math.min(freeRight - 50, centerX));
 
-    return { centerX, screenCenterX: W / 2 };
+    return { centerX, screenCenterX: W / 2, freeLeft, freeRight, leftEdge, rightEdge };
 }
+window.getFreezone = getFreezone;
 
-function flyToGebied(feature, clickCoordinate = null) {
-    if (!feature || !feature.geometry) return;
+function flyToGebied(feature, clickCoordinate = null, onLanded = null) {
+    if (typeof clickCoordinate === 'function') {
+        onLanded = clickCoordinate;
+        clickCoordinate = null;
+    }
 
+    if (!feature || !feature.geometry) {
+        if (typeof onLanded === 'function') onLanded();
+        return;
+    }
+
+    let minLon = Infinity, maxLon = -Infinity, minLat = Infinity, maxLat = -Infinity;
     let centroid = [0, 0];
+    let count = 0;
+
+    const walk = (arr) => {
+        if (!Array.isArray(arr)) return;
+        if (typeof arr[0] === 'number') {
+            minLon = Math.min(minLon, arr[0]);
+            maxLon = Math.max(maxLon, arr[0]);
+            minLat = Math.min(minLat, arr[1]);
+            maxLat = Math.max(maxLat, arr[1]);
+            centroid[0] += arr[0];
+            centroid[1] += arr[1];
+            count++;
+        } else {
+            arr.forEach(walk);
+        }
+    };
+
+    if (feature.geometry && feature.geometry.coordinates) {
+        walk(feature.geometry.coordinates);
+    }
 
     // Gebruik de klik-coördinaat als die er is (altijd accuraat binnen de MultiPolygon)
     if (clickCoordinate && Array.isArray(clickCoordinate) && clickCoordinate.length >= 2) {
         centroid = [clickCoordinate[0], clickCoordinate[1]];
+    } else if (count > 0) {
+        centroid[0] /= count;
+        centroid[1] /= count;
     } else {
-        // Fallback: Calculate centroid by averaging all vertices
-        let count = 0;
-        const coords = feature.geometry.coordinates;
+        if (typeof onLanded === 'function') onLanded();
+        return; // Geen geldige geometrie
+    }
 
-        const flatten = (arr) => {
-            if (typeof arr[0] === 'number') {
-                centroid[0] += arr[0];
-                centroid[1] += arr[1];
-                count++;
-            } else {
-                arr.forEach(flatten);
-            }
-        };
-
-        flatten(coords);
-
-        if (count > 0) {
-            centroid[0] /= count;
-            centroid[1] /= count;
-        } else {
-            return; // Geen geldige geometrie
-        }
+    if (!state.deckgl) {
+        if (typeof onLanded === 'function') onLanded();
+        return;
     }
 
     // Gebruik altijd state.currentViewState als bron van waarheid voor de huidige camera
-    // DeckGL kan soms transitions missen als initialViewState niet genoeg verschilt van de vorige initialViewState,
-    // maar door de actuele (gepande) currentViewState te gebruiken, dwingen we altijd een verandering af.
-    const baseState = state.currentViewState || state.deckgl.props.initialViewState || { zoom: 12, pitch: 45, bearing: 0 };
-    const zoom = Math.max(baseState.zoom || 12, 12);
+    const baseState = state.currentViewState || (state.deckgl && state.deckgl.props.viewState) || (state.deckgl && state.deckgl.props.initialViewState) || { zoom: 12, pitch: 45, bearing: 0 };
+    let zoom = Math.max(baseState.zoom || 12, 12);
 
-    // Sprint 16: Verschuif longitude zodat buurt in de vrije zone valt
-    const { centerX, screenCenterX } = getFreezone();
-    const pixelOffset = screenCenterX - centerX; // positief = vrije zone is links van midden
-    // Graden per pixel bij gegeven zoom (Web Mercator)
-    const degreesPerPixel = 360 / (256 * Math.pow(2, zoom));
-    const lngOffset = pixelOffset * degreesPerPixel;
+    // Sprint 16 / #466: Vrije zone berekenen met dock-doelstand
+    const freezone = getFreezone();
+    const mapEl = document.getElementById('map');
+    const width = (mapEl && mapEl.clientWidth) || window.innerWidth;
+    const height = (mapEl && mapEl.clientHeight) || window.innerHeight;
 
-    console.log(`🎥 Flying to area:`, centroid, `offset: ${pixelOffset.toFixed(0)}px → ${lngOffset.toFixed(4)}°`);
+    let longitude = centroid[0];
+    let latitude = centroid[1];
 
-        state.deckgl.setProps({
-            viewState: {
-                ...baseState,
-                longitude: centroid[0] + lngOffset,
-                latitude: centroid[1],
-                zoom: zoom,
-                ...A11y.cameraTransition(800, true)
+    let fitSuccess = false;
+    if (minLon !== Infinity && typeof deck !== 'undefined' && deck.WebMercatorViewport) {
+        try {
+            // Padding afgestemd op de vrije zone (links tabBar+paneel, rechts dock)
+            const padding = {
+                top: 50,
+                bottom: 50,
+                left: (freezone.leftEdge || 70) + 30,
+                right: (freezone.rightEdge || 0) + 30
+            };
+            if (width - padding.left - padding.right >= 100 && height - padding.top - padding.bottom >= 100) {
+                const vp = new deck.WebMercatorViewport({ width, height })
+                    .fitBounds([[minLon, minLat], [maxLon, maxLat]], { padding, maxZoom: 14.5 });
+                longitude = vp.longitude;
+                latitude = vp.latitude;
+                // Beperk zoom tot maximaal 14.5 en behoud context (minimaal 11)
+                zoom = Math.min(14.5, Math.max(11, vp.zoom));
+                fitSuccess = true;
             }
-        });
+        } catch (e) {
+            console.warn('flyToGebied: fitBounds mislukt, terugval op pixel offset', e);
+        }
+    }
+
+    if (!fitSuccess) {
+        // Fallback: Verschuif longitude zodat buurt in de vrije zone valt
+        const pixelOffset = freezone.screenCenterX - freezone.centerX;
+        const degreesPerPixel = 360 / (256 * Math.pow(2, zoom));
+        const lngOffset = pixelOffset * degreesPerPixel;
+        longitude = centroid[0] + lngOffset;
+        latitude = centroid[1];
+    }
+
+    console.log(`🎥 Flying to area: [${longitude.toFixed(4)}, ${latitude.toFixed(4)}], zoom: ${typeof zoom === 'number' ? zoom.toFixed(1) : zoom}`);
+
+    // Choreografie landing callback (#465/#466)
+    let landedFired = false;
+    const triggerLanded = () => {
+        if (landedFired) return;
+        landedFired = true;
+        if (typeof onLanded === 'function') {
+            try {
+                onLanded();
+            } catch (err) {
+                console.error('⚠️ Fout in onLanded callback:', err);
+            }
+        }
+    };
+
+    const isReduced = typeof A11y !== 'undefined' && A11y.prefersReducedMotion && A11y.prefersReducedMotion();
+    if (isReduced) {
+        setTimeout(triggerLanded, 0);
+    } else {
+        setTimeout(triggerLanded, 850);
+    }
+
+    const transitionProps = (typeof A11y !== 'undefined' && A11y.cameraTransition)
+        ? A11y.cameraTransition(750, true)
+        : { transitionDuration: 750, transitionInterpolator: typeof deck !== 'undefined' ? new deck.FlyToInterpolator() : undefined };
+
+    state.deckgl.setProps({
+        viewState: {
+            ...baseState,
+            longitude,
+            latitude,
+            zoom,
+            ...transitionProps,
+            onTransitionEnd: triggerLanded
+        }
+    });
 }
+window.flyToGebied = flyToGebied;
 
 /**
  * #149: zoom in op een set gebieden (bbox van hun geometrie in state.currentData).

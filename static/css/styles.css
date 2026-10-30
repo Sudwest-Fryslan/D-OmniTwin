@@ -4248,6 +4248,13 @@ dialog#meld-dialoog::backdrop {
   pointer-events: none;
 }
 
+/* Gedimde weergave tijdens cameravlucht wanneer dock al open stond (#465/#466) */
+.rechter-dock.dock-updating .kompas-viz-section,
+.rechter-dock.dock-updating .dock-body {
+  opacity: 0.55;
+  transition: opacity 0.2s ease;
+}
+
 /* --- Dock Header & Tabs --- */
 .dock-header {
   display: flex;
