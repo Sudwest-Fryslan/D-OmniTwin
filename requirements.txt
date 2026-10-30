@@ -42,7 +42,7 @@ pydantic>=2.14.1
 
 # --- Auth ---
 passlib[bcrypt]>=1.7.4
-bcrypt==4.0.1  # passlib 1.7.x incompatibel met bcrypt 4.1+ (verwijderd __about__)
+bcrypt==4.3.0  # passlib 1.7.x incompatibel met bcrypt 4.1+ (verwijderd __about__)
 PyJWT[crypto]>=2.15.1   # OIDC: access tokens van Keycloak controleren (omnitwin/oidc.py, #205)
 
 # --- AI Functies ---
