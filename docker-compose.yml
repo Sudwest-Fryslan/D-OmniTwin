@@ -30,7 +30,7 @@ x-logging: &logging
 services:
   traefik:
     logging: *logging
-    image: traefik:v3.7.15
+    image: traefik:v3.7.16
     command:
       - "--providers.docker=true"
       - "--providers.docker.exposedbydefault=false"
