@@ -11,7 +11,7 @@
 -r requirements.txt
 
 # --- Geo / Data ---
-geopandas>=1.1.4
+geopandas>=1.2.0
 pyogrio>=0.13.0
 GeoAlchemy2>=0.20.0
 pandas>=3.1.0
