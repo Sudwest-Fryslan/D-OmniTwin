@@ -46,6 +46,18 @@ function themaKleur(naam, terugval) {
 
 window.themaKleur = themaKleur;
 
+let _measureCanvasCtx = null;
+function getMeasureCanvasCtx() {
+    if (!_measureCanvasCtx && typeof document !== 'undefined') {
+        const c = document.createElement('canvas');
+        _measureCanvasCtx = c.getContext ? c.getContext('2d') : null;
+        if (_measureCanvasCtx) {
+            _measureCanvasCtx.font = '500 10px Inter, sans-serif';
+        }
+    }
+    return _measureCanvasCtx;
+}
+
 class KompasVisualization {
     constructor(containerId) {
         this.containerId = containerId;
@@ -71,11 +83,28 @@ class KompasVisualization {
         // History for zoom out
         this.zoomStack = [];
 
-        // Request tracking om verouderde async responses te negeren (#463)
+        // Request tracking om verouderde async responses te negeren (#463/#466)
         this._loadRequestId = 0;
+        this._detailsRequestId = 0;
+        this._benchmarkRequestId = 0;
+        this._lastGebiedReq = null;
+        this._lastDetailsReq = null;
+
+        // Choreografie synchronisatie (#465/#466): uitstel van D3 render tot camera landing
+        this.deferNextRenderUntilLanding = false;
+        this._pendingRender = null;
 
         // Init
         this.init();
+    }
+
+    triggerDeferredRender() {
+        this.deferNextRenderUntilLanding = false;
+        if (typeof this._pendingRender === 'function') {
+            const fn = this._pendingRender;
+            this._pendingRender = null;
+            fn();
+        }
     }
 
     init() {
@@ -328,6 +357,14 @@ class KompasVisualization {
         /**
          * Laad kompas data voor specifiek gebied (met waarden)
          */
+        // B1 deduplicatie: identieke aanroep binnen 300 ms negeren (#465/#466)
+        const reqKey = `${configId}|${gebiedId}`;
+        const nu = (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
+        if (this._lastGebiedReq && this._lastGebiedReq.key === reqKey && (nu - this._lastGebiedReq.time < 300)) {
+            return Promise.resolve(this.currentData);
+        }
+        this._lastGebiedReq = { key: reqKey, time: nu };
+
         // Sprint 7 / #444 / #463: Bewaar expanded state EN indicator UUID vóór re-render
         const wasExpanded = this.isExpanded;
         const expandedIndicatorUuid = this._lastExpandedIndicatorUuid
@@ -344,6 +381,7 @@ class KompasVisualization {
             const data = await response.json();
             if (reqId !== this._loadRequestId) {
                 console.log('🔄 Verouderde gebied data genegeerd (#463)');
+                this.hideLoading();
                 return;
             }
             this.currentData = data;
@@ -360,34 +398,46 @@ class KompasVisualization {
                 `</p>` + this._labelLegenda(data);
 
             // Bepaal actuele toestand (ook als gebruiker tijdens de fetch doorklikte, #463)
-            const currentZoomPath = this._getZoomPath().length > 0 ? this._getZoomPath() : zoomPath;
-            const activeIndicatorUuid = this._currentIndicatorUuid
-                || this._lastExpandedIndicatorUuid
-                || expandedIndicatorUuid
-                || (this.isExpanded && this.currentNode?.data?.uuid ? this.currentNode.data.uuid : null);
+            const currentZoomPath = (this.currentNode === this.root)
+                ? []
+                : (this._getZoomPath().length > 0 ? this._getZoomPath() : zoomPath);
+            const activeIndicatorUuid = this.isExpanded
+                ? (this._currentIndicatorUuid || this._lastExpandedIndicatorUuid || (this.currentNode?.data?.uuid ? this.currentNode.data.uuid : null))
+                : null;
 
-            // Render sunburst with data
-            this.renderSunburst(data.hierarchie);
-            this.updateSelectedAreasBadges();
+            // Render sunburst with data (of stel uit tot landing camera, #465/#466)
+            const doRender = () => {
+                this.renderSunburst(data.hierarchie);
+                this.updateSelectedAreasBadges();
 
-            // Sprint 7 / #444 / #463: Herstel zoom-pad en actieve indicator direct zonder race condition
-            if (currentZoomPath.length > 0) {
-                this._navigateToPath(currentZoomPath);
-            }
-            if (activeIndicatorUuid && this.root) {
-                const targetNode = this._findNodeByUuid(this.root, activeIndicatorUuid);
-                if (targetNode) {
-                    this.expandDetails(targetNode);
+                // Sprint 7 / #444 / #463: Herstel zoom-pad en actieve indicator direct zonder race condition
+                if (currentZoomPath.length > 0) {
+                    this._navigateToPath(currentZoomPath);
                 }
+                if (activeIndicatorUuid && this.root) {
+                    const targetNode = this._findNodeByUuid(this.root, activeIndicatorUuid);
+                    if (targetNode) {
+                        this.expandDetails(targetNode);
+                    }
+                }
+            };
+
+            if (this.deferNextRenderUntilLanding) {
+                this._pendingRender = () => {
+                    doRender();
+                    this.hideLoading();
+                };
+            } else {
+                doRender();
+                this.hideLoading();
             }
 
-            this.hideLoading();
             return data;
         } catch (error) {
+            this.hideLoading();
             if (reqId !== this._loadRequestId) return;
             console.error('❌ Fout bij ophalen gebied data:', error);
             this.showError('Kon gebied data niet laden: ' + (error.message || 'Onbekende fout'));
-            this.hideLoading();
         }
     }
 
@@ -428,6 +478,7 @@ class KompasVisualization {
             const results = await Promise.all(promises);
             if (reqId !== this._loadRequestId) {
                 console.log('🔄 Verouderde multi-gebied data genegeerd (#463)');
+                this.hideLoading();
                 return;
             }
 
@@ -447,6 +498,7 @@ class KompasVisualization {
                 });
                 if (reqId !== this._loadRequestId) {
                     console.log('🔄 Verouderde selectie data genegeerd (#463)');
+                    this.hideLoading();
                     return;
                 }
                 this._neemKlassenOver(merged.hierarchie, sel.hierarchie);
@@ -484,28 +536,40 @@ class KompasVisualization {
                 `</p>` + this._labelLegenda(selectie || results[0], true);
 
             // Bepaal actuele toestand (ook als gebruiker tijdens de fetch doorklikte, #463)
-            const currentZoomPath = this._getZoomPath().length > 0 ? this._getZoomPath() : zoomPath;
-            const activeIndicatorUuid = this._currentIndicatorUuid
-                || this._lastExpandedIndicatorUuid
-                || expandedIndicatorUuid
-                || (this.isExpanded && this.currentNode?.data?.uuid ? this.currentNode.data.uuid : null);
+            const currentZoomPath = (this.currentNode === this.root)
+                ? []
+                : (this._getZoomPath().length > 0 ? this._getZoomPath() : zoomPath);
+            const activeIndicatorUuid = this.isExpanded
+                ? (this._currentIndicatorUuid || this._lastExpandedIndicatorUuid || (this.currentNode?.data?.uuid ? this.currentNode.data.uuid : null))
+                : null;
 
-            // Render sunburst with merged data
-            this.renderSunburst(merged.hierarchie);
-            this.updateSelectedAreasBadges();
+            // Render sunburst with merged data (of stel uit tot landing camera, #465/#466)
+            const doRender = () => {
+                this.renderSunburst(merged.hierarchie);
+                this.updateSelectedAreasBadges();
 
-            // Sprint 7 / #444 / #463: Herstel zoom-pad en actieve indicator direct zonder race condition
-            if (currentZoomPath.length > 0) {
-                this._navigateToPath(currentZoomPath);
-            }
-            if (activeIndicatorUuid && this.root) {
-                const targetNode = this._findNodeByUuid(this.root, activeIndicatorUuid);
-                if (targetNode) {
-                    this.expandDetails(targetNode);
+                // Sprint 7 / #444 / #463: Herstel zoom-pad en actieve indicator direct zonder race condition
+                if (currentZoomPath.length > 0) {
+                    this._navigateToPath(currentZoomPath);
                 }
+                if (activeIndicatorUuid && this.root) {
+                    const targetNode = this._findNodeByUuid(this.root, activeIndicatorUuid);
+                    if (targetNode) {
+                        this.expandDetails(targetNode);
+                    }
+                }
+            };
+
+            if (this.deferNextRenderUntilLanding) {
+                this._pendingRender = () => {
+                    doRender();
+                    this.hideLoading();
+                };
+            } else {
+                doRender();
+                this.hideLoading();
             }
 
-            this.hideLoading();
             console.log(`✅ Multi-gebied Kompas geladen: ${gebiedIds.length} gebieden gemiddeld`);
             return merged;
         } catch (error) {
@@ -948,14 +1012,13 @@ class KompasVisualization {
         /**
          * Wraps text to max 3 lines.
          * Adds '...' if truncated.
+         * Woordomloop via canvas.measureText i.p.v. getComputedTextLength (#465/#466)
+         * Voorkomt synchrone DOM forced reflows (layout thrashing) bij elk woord.
          */
-        const self = this;
+        const ctx = getMeasureCanvasCtx();
         textSelection.each(function (d) {
             const text = d3.select(this);
             // Heuristic for width: Use arc length at mid-radius, clamped.
-            // d.current contains layout data.
-            // Horizontal space in a wedge depends on angle.
-            // Simplified: allow wider text for wider angles.
             const midRadius = (d.current.y0 + d.current.y1) / 2 * radius;
             const angle = d.current.x1 - d.current.x0;
             const arcLength = angle * midRadius;
@@ -972,41 +1035,41 @@ class KompasVisualization {
             let line = [];
             let lineNumber = 0;
             const lineHeight = 1.1; // ems
-            const y = text.attr("y") || 0;
             const dy = parseFloat(text.attr("dy") || 0);
 
-            let tspan = text.text(null).append("tspan")
-                .attr("x", 0)
-                .attr("y", y)
-                .attr("dy", dy + "em");
-
-            while (word = words.pop()) {
+            const lines = [];
+            while ((word = words.pop())) {
                 line.push(word);
-                tspan.text(line.join(" "));
-                if (tspan.node().getComputedTextLength() > width) {
+                const testLine = line.join(" ");
+                const textWidth = ctx ? ctx.measureText(testLine).width : (testLine.length * 6);
+                if (textWidth > width) {
                     line.pop();
-                    tspan.text(line.join(" "));
+                    lines.push(line.join(" "));
                     line = [word];
+                    lineNumber++;
 
                     // Max 3 lines constraint
                     if (lineNumber >= 2) {
-                        tspan.text(tspan.text() + "...");
-                        break; // Stop processing further words
+                        line = [word + "..."];
+                        break;
                     }
-
-                    tspan = text.append("tspan")
-                        .attr("x", 0)
-                        .attr("y", y)
-                        .attr("dy", ++lineNumber * lineHeight + dy + "em")
-                        .text(word);
                 }
             }
+            if (line.length > 0) {
+                lines.push(line.join(" "));
+            }
 
-            // Center vertically based on number of lines
-            // dy was 0.35em (centered for 1 line).
-            // For N lines, shift up by (N-1) * lineHeight / 2
-            const shift = -(lineNumber * lineHeight) / 2;
-            text.selectAll("tspan").attr("y", shift + "em");
+            text.text(null);
+            const totalLines = Math.max(1, lines.length);
+            const shift = -((totalLines - 1) * lineHeight) / 2;
+
+            lines.forEach((lText, idx) => {
+                text.append("tspan")
+                    .attr("x", 0)
+                    .attr("y", shift + "em")
+                    .attr("dy", (idx * lineHeight + dy) + "em")
+                    .text(lText);
+            });
         });
     }
 
@@ -1279,6 +1342,12 @@ class KompasVisualization {
         /**
          * Reset kompas naar het beginniveau (root)
          */
+        this._loadRequestId++;
+        this.deferNextRenderUntilLanding = false;
+        this._pendingRender = null;
+        this._lastExpandedIndicatorUuid = null;
+        this._currentIndicatorUuid = null;
+        this.hideLoading();
         this.collapseDetails();
         this.currentNode = this.root;
         if (this.root) {
@@ -1921,6 +1990,8 @@ class KompasVisualization {
             this.currentGebiedId = [...window.state.selectedGebiedIds][0];
         }
 
+        const detailsReqId = ++this._detailsRequestId;
+
         // FE-2.4: Laad altijd benchmark staafdiagram en CSV export (#444)
         this._loadBenchmarkBarChart(node);
 
@@ -1950,6 +2021,11 @@ class KompasVisualization {
                 this.fetchHistory(this.currentGebiedId, node.data.uuid),
                 this._fetchTopBuurten(node.data.uuid, this.currentGebiedId)
             ]);
+
+            if (detailsReqId !== this._detailsRequestId) {
+                console.log('🔄 Verouderde indicator details genegeerd (B2)');
+                return;
+            }
 
             // Update fallback eenheid if missing
             if (historyData && historyData.eenheid && !node.data.eenheid) {
@@ -2794,6 +2870,7 @@ class KompasVisualization {
             : (indicatorOrNode?.data?.uuid || indicatorOrNode?.uuid || window.state?.currentIndicator);
         if (!uuid) return;
         const s = window.state || {};
+        const benchReqId = ++this._benchmarkRequestId;
 
         // Bepaal selectie
         const ids = s.selectedGebiedIds && s.selectedGebiedIds.size > 0
@@ -2815,6 +2892,11 @@ class KompasVisualization {
             const res = await fetch(`/api/gebiedsmonitor/indicatorpaneel?${p.toString()}`, { credentials: 'same-origin' });
             if (!res.ok) throw new Error(`HTTP ${res.status}`);
             const data = await res.json();
+
+            if (benchReqId !== this._benchmarkRequestId) {
+                console.log('🔄 Verouderde benchmark data genegeerd (B2)');
+                return;
+            }
 
             // Synchroon naam en eenheid wegschrijven voor tests en DOM
             const detailsPanel = document.getElementById('kompas-details-panel');

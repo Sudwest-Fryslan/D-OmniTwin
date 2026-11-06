@@ -30,7 +30,7 @@ x-logging: &logging
 services:
   traefik:
     logging: *logging
-    image: traefik:v3.7.15
+    image: traefik:v3.7.16
     command:
       - "--providers.docker=true"
       - "--providers.docker.exposedbydefault=false"
@@ -202,7 +202,7 @@ services:
 
   postgrest:
     logging: *logging
-    image: postgrest/postgrest:v16.4
+    image: postgrest/postgrest:v16.5
     # Eigen rollen (#57): verbindt als authenticator, voert verzoeken uit als web_anon en
     # ziet alleen schema api (views en functies). Rollen en wachtwoord: db-init
     # (docker-entrypoint.sh, db/migraties/R__api_rollen.sql).
@@ -268,7 +268,7 @@ services:
     # Optionele LiteLLM-gateway (ADR 0001): alleen met `--profile llm-gateway`.
     # Alleen intern bereikbaar (geen hostpoort); de backend gebruikt
     # http://llm-gateway:4000 met llm_config.api_type=openai.
-    image: ghcr.io/berriai/litellm:v1.106.2
+    image: ghcr.io/berriai/litellm:v1.108.0
     profiles: ["llm-gateway"]
     command: ["--config", "/app/config.yaml", "--port", "4000"]
     environment:

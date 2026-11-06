@@ -1,9 +1,9 @@
 # Programma van Eisen (PvE) — Rechter Dock-architectuur & Samengevoegd Detailpaneel
 
-**Status:** Definitief vastgesteld (getoetst via `/grill-me` ontwerpsessie op 19–20 oktober 2026)  
-**Issue:** [#444](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/444) (Fase 2 van het Kritieke Pad, Epic [#309](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/309))  
+**Status:** Definitief vastgesteld (v1.1 bijgewerkt conform issue #466)  
+**Issues:** [#444](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/444), [#466](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/466) (Fase 2 van het Kritieke Pad, Epic [#309](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/309))  
 **Doelversie:** `v0.7.0`  
-**Datum:** 20 oktober 2026  
+**Datum:** 28 oktober 2026 (v1.1)  
 **Auteurs / Betrokkenen:** Taeke van der Laan (Product Owner / CDO), Eduard Witteveen (Lead Architect)
 
 ---
@@ -354,3 +354,12 @@ function verplaatsPaneel(naarZwevend) {
 - [x] **AC-7:** In de Assistent-tab verspringt de weergave niet ongevraagd bij een suggestie; de gebruiker kan via een klikbare chip bewust overschakelen naar het Kompas.
 - [x] **AC-8:** Alle unit tests en integratietests slagen met de nieuwe selectors en structuur.
 - [x] **AC-9:** Documentatie in `CHANGELOG.md` is bijgewerkt onder `[Unreleased]` voor issue #444.
+
+---
+
+## 8. Wijzigingshistorie (v1.1 — Choreografie & Performance Synchronisatie #466)
+
+| Versie | Datum | Issue | Belangrijkste wijzigingen |
+|---|---|---|---|
+| **1.0** | 20 oktober 2026 | [#444](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/444) | Initiële definitieve architectuur voor het rechter dock, integratie detailpaneel en drieluik. |
+| **1.1** | 28 oktober 2026 | [#466](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/466) | **Soepele gebiedsselectie & choreografie synchronisatie:**<br>- **Layout thrashing geëlimineerd:** `wrapText` in `kompas.js` omgebouwd van `getComputedTextLength` naar `canvas.measureText`, waardoor geforceerde reflows (~90–120ms) verdwijnen.<br>- **Directe klikreactie (< 100ms):** deck.gl `controller: { doubleClickZoom: false }` schakelt de 300ms klikvertraging uit.<br>- **Deduplicatie & Request tracking:** dubbele fetches binnen 300ms afgevangen (B1) en request-id counters op detail- en benchmark calls (B2).<br>- **Choreografie gesynchroniseerd:** data parallel ophalen bij klik; D3 render uitgesteld tot landing (`deferNextRenderUntilLanding`); zacht dimmen met `.dock-updating` tijdens vlucht; dock inschuiven ná landing.<br>- **Doelstand-centrering:** `getFreezone` houdt rekening met de doelstand van het dock; `flyToGebied` gebruikt contour bounding box en `fitBounds` met vrije-zone padding zodat het gebied niet onder het inschuivende dock verdwijnt.<br>- **Voorkeur gerespecteerd:** handmatig gesloten dock (`state.dockManuallyClosed`) blijft gesloten bij selectie. |
