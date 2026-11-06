@@ -268,7 +268,7 @@ services:
     # Optionele LiteLLM-gateway (ADR 0001): alleen met `--profile llm-gateway`.
     # Alleen intern bereikbaar (geen hostpoort); de backend gebruikt
     # http://llm-gateway:4000 met llm_config.api_type=openai.
-    image: ghcr.io/berriai/litellm:v1.106.5
+    image: ghcr.io/berriai/litellm:v1.108.0
     profiles: ["llm-gateway"]
     command: ["--config", "/app/config.yaml", "--port", "4000"]
     environment:
