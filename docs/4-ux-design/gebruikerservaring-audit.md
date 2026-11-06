@@ -113,27 +113,27 @@ De beoordeling is verricht vanuit vijf sleutelpersona's en getoetst aan de **WCA
 ---
 
 ### 2.5 Rapportages en Dashboards (Gebiedsdossiers)
-- **Status:** **Hoogste prioriteit voor herontwerp — Sub-issue #441**.
+- **Status:** **Hoogste prioriteit voor herontwerp — Sub-issue #441** (uitgewerkt in [`factsheet-rapportagedesign.md`](./factsheet-rapportagedesign.md)).
 - **Wat goed werkt:**
   - De backend berekent betrouwbare Z-scores en uitschieters via SQL (`08_zscore_referentie.sql`) met correcte uitsluiting van waterbuurten en minimum-n bewaking.
   - De PDF-export knop en afdrukmodus zijn technisch aanwezig.
 - **Frictie & Verbeterpunten:**
   - **Droge cijfertabel:** Het huidige rapport (`/rapport/:gebied_id`) toont een technische tabel met z-score getallen (`+10.91`, `+8.16`) zonder visuele benchmark of grafiek.
-  - **Geen gemeentelijk overzicht in 1 oogopslag:** Er ontbreekt een gestapelde staafgrafiek waarin zichtbaar is hoe de geselecteerde buurt zich verhoudt tot de andere buurten in de gemeente.
-  - **Gebrek aan context:** Kerncijfers (aantal inwoners, huishoudens, woningen) en de fysieke bouwperiode (BAG) ontbreken in de hero-sectie.
+  - **Geen thematisch benchmarkoverzicht in 1 oogopslag:** Het ontbreekt aan visuele benchmarkbalken waarmee direct zichtbaar is hoe het geselecteerde gebied per Kompas-thema afwijkt van het gemeentegemiddelde.
+  - **Gebrek aan context:** Kerncijfers (aantal inwoners, huishoudens, woningen), de fysieke bouwperiode (BAG) en een ruimtelijk contourkaartje ontbreken in de hero-sectie.
   - **Verouderde subheader:** De header toont de ruwe code `BU19000101` in plaats van de begrijpelijke naam *"Sneek binnen de grachten"*.
-- **Vastgestelde Oplossingen & Blauwdruk (#441, via `/grill-me`):**
-  1. **Directe instap / Transitiemoment:** Directe actieknop ("Open Factsheet") in de actieve buurt-tooltip/kaart én in de topnavigatie zodra een buurt actief is.
-  2. **Meervoudige Factsheets conform bestaande sjablonen:** Niet 1 generieke factsheet, maar meervoudige factsheet-types aansluitend op de 5 bestaande D-OmniTwin rapportagesjablonen:
-     - *Type 1: Buurtfactsheet (WBM buurtniveau, Sjabloon B / ReportPage):* Hero met rangorde ("Rang 5 van 72"), context-KPI's, thematische benchmarkbalken en BAG-bouwperiodes.
-     - *Type 2: Gemeentebrede Top-grafiek & Ranglijst (Sjabloon D / MultiGebiedPage):* Gestapelde balken per buurt opgebouwd uit de thematische deelscores.
-     - *Type 3: Benchmark Factsheet (Sjabloon C / BenchmarkPage):* 1-op-1 of 1-op-n vergelijking met deltabalken t.o.v. gemeentegemiddelde.
-     - *Type 4: Thema-Factsheet (Sjabloon E / ThemaAnalysePage):* Diepte-analyse voor één specifiek thema/onderdeel over buurten heen.
-     - *Type 5: Woonplaats- & Deelgebiedsanalyse (Sjabloon F / DeelgebiedPage):* Gewogen stadsanalyse voor hele dorpen/steden (Sneek, Bolsward).
-  3. **Visuele Benchmarkbalken (WBM & WCAG 2.1 AA):**
-     - Horizontale benchmarkbalken per indicator gegroepeerd per Kompas-kwadrant met het gemeentelijk of provinciaal gemiddelde als vaste verticale referentielijn.
-     - Duidelijke tekstlabels en werkelijke eenheden (geen uitsluitende afhankelijkheid van kleur).
-     - Trendline-integratie: tonen van trendlijnen / sparklines of trendindicatie (↗ ↘ ➔) conform het Kompas detailpaneel wanneer er meerdere meetjaren zijn.
+- **Vastgestelde Oplossingen & Blauwdruk (#441, na code- & data-audit):**
+  1. **Nieuw zelfstandig rapporttype bovenaan de rapportkeuze (`/rapport/factsheet`):** De **Gebiedsfactsheet** (`FactsheetPage.tsx`) wordt toegevoegd *naast* de bestaande rapporten (`Gebiedsdossier`, `Deelgebiedsanalyse`, `Multi-Gebiedsdossier`, `Thema-Analyse`, `Benchmark`) en komt als **eerste optie bovenaan** te staan in de rapportkeuze-modal vanuit de viewer — zowel bij 1 gebied als bij meervoudige selectie.
+  2. **Enkelvoudige buurt én meervoudige gebiedsselectie:**
+     - *1 gebied (bijv. één buurt):* toont individuele waarden, thematische benchmarkbalken t.o.v. gemeente of Fryslân én de dynamische gemeentelijke rangpositie per normatief thema (`#14 van {n_met_score}`).
+     - *Meerdere gebieden (bijv. 6 of 42 buurten):* sommeert aantal-KPI's in de Hero en detailtabel, berekent inwonersgewogen gemiddelden voor relatieve indicatoren, en toont een samengesteld SVG-contourkaartje (zonder enkelvoudig buurtranggetal).
+  3. **Methodische zuiverheid (WBM / Thematische Buurtbarometer):**
+     - **Geen vage buurt-totaalscore, geen gestapelde buurt-totaalbalken en geen 4-kwadranten scatterplot:** ongelijksoortige domeinen (bijv. criminaliteit en groen) worden niet bij elkaar opgeteld; de factsheet blijft 100% deterministisch zonder LLM-afhankelijkheid.
+     - **Kwadrant 4 (*Samenstelling*: Bebouwing & Bevolking) is neutraal:** demografische en fysieke samenstelling krijgen geen goed/slecht-kleur of normatieve rang en tellen niet mee in *Top Sterke kanten & Aandachtspunten*.
+     - **Ruwe aantallen (`eenheid = 'aantal'`) alleen in detail:** uitgesloten van normatieve themascores en *Top Sterke kanten/Aandachtspunten* om schaalgrootte-bias te voorkomen, maar volledig zichtbaar in de uitklapbare detailtabel.
+  4. **Visuele Benchmarkbalken, Drill-down & Trendlijnen (WCAG 2.1 AA):**
+     - Horizontale diverging benchmarkbalken per Kompas-thema met gemeentelijk of provinciaal gemiddelde als vaste verticale referentielijn, duidelijke tekstlabels en werkelijke eenheden (informatie nooit alleen via kleur).
+     - Uitklapbare indicatorentabel per thema met onderdrukking van kleine aantallen (#325) én **inline sparklines + trendpijlen (`↗` `↘` `➔`)** bij meerdere meetjaren.
 
 ---
 
@@ -153,7 +153,7 @@ De beoordeling is verricht vanuit vijf sleutelpersona's en getoetst aan de **WCA
 
 | Persona | Behoefte | Huidige Ervaring | Verbetering via Audit / #441 |
 |---------|----------|------------------|------------------------------|
-| **Bestuurder / Raadslid** | Snelle kernboodschap, rangorde, geen jargon | ⚠️ Ziet losse Z-scores; mist "is dit goed of slecht?" | Hero-factsheet met rangorde ("5 van 72") en samenvattende urgentiescore (#441) |
+| **Bestuurder / Raadslid** | Snelle kernboodschap, duiding per thema, geen jargon | ⚠️ Ziet losse Z-scores; mist "is dit goed of slecht?" | Gebiedsfactsheet met kern-KPI's, thematische rangorde per onderwerp (bij 1 buurt) en Top 3 sterke kanten & aandachtspunten zonder vage totaalscore (#441) |
 | **Beleidsadviseur** | Thematische duiding, vergelijking met gemeentegemiddelde | ⚠️ Moet zelf getallen interpreteren | Horizontale benchmarkbalken met gemeentegemiddelde als referentielijn |
 | **Inwoner / Burger** | Laagdrempeligheid, duidelijke taal | ❌ Hoge drempel door technische vaktermen | Verhalende duiding, contextuele uitleg en duidelijke legenda |
 | **Data-analist** | Diepgang, databronnen, lineage, filters | ✅ Zeer tevreden over Z-score methodiek en metadata | Behoud van gedetailleerde datapunten onder de visualisaties |
@@ -192,9 +192,9 @@ De beoordeling is verricht vanuit vijf sleutelpersona's en getoetst aan de **WCA
 
 De auditbevindingen zijn conform de #305-vorm uitgesplitst naar zeven afzonderlijke, behapbare sub-issues met het label `UX`. Zodra deze zeven sub-issues zijn gerealiseerd en gemerged naar `main`, kan Epic #309 formeel worden gesloten:
 
-1. **[#441](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/441) — Factsheet- en rapportageredesign conform WBM/Buurtbarometer** (§5 Rapportages & Dashboards):
-   - Redesign van de factsheets naar het WBM/Twentse Buurtbarometer model.
-   - Gemeentelijke rangorde ("Rang 5 van 72"), thematische benchmarkbalken met gemeentegemiddelde als verticale referentielijn, trendline-indicatie en BAG-bouwperiodes.
+1. **[#441](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/441) — Factsheet- en rapportageredesign conform WBM/Buurtbarometer** (§2.5 Rapportages & Dashboards, uitgewerkt in [`factsheet-rapportagedesign.md`](./factsheet-rapportagedesign.md)):
+   - Nieuw zelfstandig rapporttype **Gebiedsfactsheet** (`/rapport/factsheet`, bovenaan de rapportkeuze-modal voor zowel 1 gebied als meerdere gebieden), naast de bestaande rapporten.
+   - Hero met kern-KPI's, BAG-bouwperiodeverdeling en SVG-contourkaartje; thematische benchmarkbalken t.o.v. gemeente/Fryslân (met dynamische rangpositie per normatief thema bij 1 buurt, neutrale weergave van *Samenstelling* en uitsluiting van ruwe aantallen uit normatieve scores); Top 3 sterke kanten & aandachtspunten; uitklapbare indicatorentabel met sparklines/trendlijnen (`↗` `↘` `➔`).
 2. **[#442](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/442) — Interactieve rondleiding (tutorial) en herhaalbare instaphulp** (§1 Startscherm & Onboarding):
    - Permanente herstartknop (`?`) in de navigatie om de rondleiding altijd te kunnen herhalen.
    - 4-staps interactieve spotlight tour (Kaart ➔ Indicatoren ➔ Kompas ➔ Factsheet/Assistent).
@@ -236,7 +236,7 @@ Om dubbel werk te voorkomen en afhankelijkheden te stroomlijnen, worden de 7 sub
 | **Linker navigatiebalk** | [#443](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/443), [#444](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/444), [#442](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/442) | #444 verwijdert het losse indicator-icoon (gaat op in Kompas). #443 voegt uitklapbare tekstlabels toe. #442 voegt het vaste vraagteken (`?`) toe. Door dit af te stemmen bouwen we de balk maar één keer om. |
 | **Spotlight Tour anchors** | [#442](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/442) & [#444](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/444) | De spotlight-tour in #442 licht het Kompas en de Assistent uit. Als #442 *vóór* #444 wordt gebouwd, wijzen de spotlights naar de oude floating vensters en moeten ze bij #444 opnieuw geschreven worden. **#444 moet dus vóór #442.** |
 | **Assistent chips & Tour** | [#445](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/445) & [#442](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/442) | Een van de interactieve chips in #445 is *"Geef me een interactieve rondleiding"*. Die chip kan direct inhaken op de spotlight-tour van #442. |
-| **Rapporten & Beheer (Geen overlap)** | [#441](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/441) & [#446](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/446) | #441 is backend + report templates (WBM-methodiek). #446 is 100% React SPA (`admin-panel/`). Deze raken de frontend-kaartviewer niet en kunnen volledig geïsoleerd worden opgepakt. |
+| **Rapporten & Beheer (Geen overlap)** | [#441](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/441) & [#446](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/446) | #441 voegt het nieuwe rapporttype `/rapport/factsheet` toe in backend + React report-omgeving en plaatst één extra keuze-ingang bovenaan de bestaande rapportmodal in `app.js`. #446 zit in het beheer-gedeelte van `admin-panel/`. Beide raken de Kompas/dock-ombouw (#450/#444) niet en kunnen onafhankelijk worden opgepakt. |
 
 ### 7.2 Het Kritieke Pad
 
