@@ -77,6 +77,59 @@ def get_standaard_hierarchie(db: Session = Depends(get_db)):
     return result
 
 
+@router.get("/standaard/hierarchie/tree")
+def get_standaard_hierarchie_tree(db: Session = Depends(get_db)):
+    """
+    Publieke hiërarchieboom voor rapportages en visualisaties (#453).
+    Transformeert het standaard-kompasprofiel naar de door D3/dropdowns verwachte
+    boomstructuur (Titels -> Thema's -> Onderdelen -> Indicatoren).
+    """
+    service = KompasService(db)
+    config_id = service.get_standaard_config_id()
+    hierarchy_data = service.get_hierarchie(config_id)
+    if not hierarchy_data or "hierarchie" not in hierarchy_data:
+        raise HTTPException(status_code=404, detail="Geen actieve standaard-kompasconfiguratie")
+
+    root_node = hierarchy_data["hierarchie"]
+    raw_tree = root_node.get("children", [])
+
+    def transform_node(node, prefix="node", index=0):
+        node_id = node.get("uuid") or f"{prefix}-{index}"
+        new_node = {
+            "id": node_id,
+            "naam": node.get("name", "Naamloos"),
+            "type": node.get("type", "unknown"),
+            "children": [],
+            "score_type": node.get("score_type"),
+            "volgorde": node.get("volgorde", index),
+        }
+        children = node.get("children")
+        if children:
+            for i, child in enumerate(children):
+                child_prefix = f"{node_id}-{i}"
+                new_node["children"].append(transform_node(child, child_prefix, i))
+        return new_node
+
+    tree = [transform_node(node, "titel", i) for i, node in enumerate(raw_tree)]
+
+    def count_nodes(nodes, type_filter):
+        count = 0
+        for node in nodes:
+            if node.get("type") == type_filter:
+                count += 1
+            if "children" in node:
+                count += count_nodes(node["children"], type_filter)
+        return count
+
+    stats = {
+        "themas": count_nodes(tree, "thema"),
+        "onderdelen": count_nodes(tree, "onderdeel"),
+        "indicatoren": hierarchy_data.get("total_indicators", 0),
+    }
+
+    return {"config_id": config_id, "tree": tree, "stats": stats}
+
+
 @router.get("/{config_id}/hierarchie", response_model=HierarchieResponse)
 def get_hierarchie(config_id: int, db: Session = Depends(get_db)):
     """

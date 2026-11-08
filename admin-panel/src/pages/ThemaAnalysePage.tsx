@@ -122,7 +122,7 @@ export const ThemaAnalysePage: React.FC = () => {
     useEffect(() => {
         const fetchTree = async () => {
             try {
-                const res = await hierarchyAPI.getTree(1);
+                const res = await hierarchyAPI.getStandaardTree();
                 if (res.data.tree && res.data.tree.length > 0) {
                     setTree(res.data.tree);
                 }
