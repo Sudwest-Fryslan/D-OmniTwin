@@ -109,6 +109,8 @@ export const postgrestAPI = {
 export const hierarchyAPI = {
     getTree: (configId: number = 1) =>
         api.get<HierarchyResponse>('/hierarchie/tree', { params: { config_id: configId } }),
+    getStandaardTree: () =>
+        publicApi.get<HierarchyResponse>('/kompas/standaard/hierarchie/tree'),
 };
 
 // Dashboard
