@@ -345,7 +345,7 @@ class FactsheetService:
                 "sterke_kanten": [],
                 "aandachtspunten": [],
                 "klassen_legenda": pk.legenda(kleuren_normatief),
-                "klassen_legenda_neutraal": pk.legenda(kleuren_neutraal),
+                "klassen_legenda_neutraal": pk.legenda(kleuren_neutraal, neutraal=True),
                 "meldingen": [
                     "Dit gebied is een waterbuurt. Waterbuurten vallen buiten de bewoningsbenchmark "
                     "en krijgen geen percentielklassen of rangpositie."
@@ -423,7 +423,7 @@ class FactsheetService:
             "sterke_kanten": sterke_kanten,
             "aandachtspunten": aandachtspunten,
             "klassen_legenda": pk.legenda(kleuren_normatief),
-            "klassen_legenda_neutraal": pk.legenda(kleuren_neutraal),
+            "klassen_legenda_neutraal": pk.legenda(kleuren_neutraal, neutraal=True),
             "meldingen": meldingen,
         }
 

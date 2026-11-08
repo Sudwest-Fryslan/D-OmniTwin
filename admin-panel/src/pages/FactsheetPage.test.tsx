@@ -267,8 +267,10 @@ describe('FactsheetPage (#441)', () => {
             screen.getByRole('img', { name: /Contourkaart van Workum binnen gemeente Testgemeente/ })
         ).toBeInTheDocument();
 
-        // Gemeentelijke rang op normatief thema (#2 van 8) en neutrale Samenstelling zonder rang
-        expect(screen.getAllByText('#2 van 8').length).toBeGreaterThan(0);
+        // Gemeentelijke rang op normatief thema (#2 van 8) met verklarende tooltip en neutrale Samenstelling zonder rang
+        const rangItems = screen.getAllByText('#2 van 8');
+        expect(rangItems.length).toBeGreaterThan(0);
+        expect(rangItems[0].getAttribute('title')).toMatch(/onafgeronde themascore/i);
         expect(screen.getAllByText(/Kl\. 5 · Midden \(neutraal\)/).length).toBeGreaterThan(0);
 
         // Top 3 Sterke kanten op Onderdeel-niveau

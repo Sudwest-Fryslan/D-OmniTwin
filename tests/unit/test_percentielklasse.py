@@ -232,6 +232,14 @@ def test_labels():
     assert pk.klasse_label(8) == "klasse 8: 87,5–100% (gunstigst)"
 
 
+def test_labels_neutraal_zonder_goed_of_slecht():
+    """Samenstelling (#441): geen gunstig/ongunstig in de legenda."""
+    assert pk.klasse_label(1, neutraal=True) == "klasse 1: 0–12,5% (laagst)"
+    assert pk.klasse_label(8, neutraal=True) == "klasse 8: 87,5–100% (hoogst)"
+    labels = [k["label"] for k in pk.legenda(pk.palet(neutraal=True), neutraal=True)]
+    assert not any("gunstig" in label for label in labels)
+
+
 def test_palet_kleurenblindvriendelijk_uit_fallback():
     kleuren = pk.palet()
     assert len(kleuren) == 8

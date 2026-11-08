@@ -327,6 +327,21 @@
     white-space: nowrap;
 }
 
+.factsheet-rang-header {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-size: 0.75rem;
+    color: var(--color-text-secondary);
+    cursor: help;
+    border-bottom: 1px dotted var(--color-text-secondary);
+}
+
+.factsheet-rang-badge {
+    cursor: help;
+    border-bottom: 1px dotted var(--color-border);
+}
+
 /* ── 3. Top 3 Sterke kanten & Aandachtspunten (Onderdeel-niveau) ────────── */
 
 .factsheet-top-grid {

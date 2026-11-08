@@ -1,5 +1,5 @@
 import React from 'react';
-import { ChevronRight } from 'lucide-react';
+import { ChevronRight, Info } from 'lucide-react';
 import type { FactsheetKwadrant, FactsheetThema } from '../../types';
 
 interface ThemaBenchmarkBalkenProps {
@@ -77,7 +77,18 @@ export const ThemaBenchmarkBalken: React.FC<ThemaBenchmarkBalkenProps> = ({
 
                 <div>
                     {heeftScore ? (
-                        <span className="factsheet-klasse-badge">
+                        <span
+                            className="factsheet-klasse-badge"
+                            title={
+                                thema.is_neutraal
+                                    ? `Percentielklasse ${thema.klasse} van 8 (gemiddelde score ${
+                                          thema.score !== null ? thema.score.toFixed(1).replace('.', ',') : '—'
+                                      }) — beschrijvend, geen goed of slecht`
+                                    : `Gemiddelde themaklasse ${thema.klasse} van 8 (gewogen gemiddelde score ${
+                                          thema.score !== null ? thema.score.toFixed(1).replace('.', ',') : '—'
+                                      } over de onderliggende indicatoren). Doordat uitschieters elkaar uitmiddelen binnen een thema, liggen themaklassen meestal dichter bij het midden (4–6) dan losse indicatoren.`
+                            }
+                        >
                             <span
                                 className="factsheet-klasse-dot"
                                 style={{ backgroundColor: thema.klasse_kleur }}
@@ -99,7 +110,12 @@ export const ThemaBenchmarkBalken: React.FC<ThemaBenchmarkBalkenProps> = ({
                         thema.is_neutraal ? (
                             <span title="Samenstelling is beschrijvend en heeft geen goed/slecht-ranglijst">—</span>
                         ) : thema.rang ? (
-                            <span title={`Positie ${thema.rang.positie} van ${thema.rang.totaal_met_score} buurten met voldoende dekking`}>
+                            <span
+                                className="factsheet-rang-badge"
+                                title={`Positie #${thema.rang.positie} van ${thema.rang.totaal_met_score} buurten in de gemeente met voldoende datadekking (op basis van de onafgeronde themascore ${
+                                    thema.score !== null ? thema.score.toFixed(2).replace('.', ',') : '—'
+                                } op schaal 1–8). Een buurt kan op #1 staan bij bijv. Klasse 5 doordat een themascore het gemiddelde is van meerdere indicatoren en vrijwel geen enkele buurt op alle indicatoren tegelijk Klasse 8 haalt.`}
+                            >
                                 #{thema.rang.positie} van {thema.rang.totaal_met_score}
                             </span>
                         ) : (
@@ -141,8 +157,12 @@ export const ThemaBenchmarkBalken: React.FC<ThemaBenchmarkBalkenProps> = ({
                             )}
                         </div>
                         {toonRangKolom && !kw.is_neutraal && (
-                            <span style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)' }}>
-                                Rang in gemeente
+                            <span
+                                className="factsheet-rang-header"
+                                title="Rangschikking binnen de gemeente op basis van de onafgeronde gemiddelde themascore (1,0–8,0). Omdat een themascore meerdere indicatoren middelt, ligt zelfs de hoogst scorende buurt (#1) vaak rond Klasse 5 of 6."
+                            >
+                                <span>Rang in gemeente</span>
+                                <Info size={12} aria-hidden="true" style={{ opacity: 0.75 }} />
                             </span>
                         )}
                     </div>

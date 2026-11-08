@@ -1463,7 +1463,7 @@
   },
   {
    "kwadrant": "Kwaliteit sociale leefomgeving",
-   "thema": "Veilgheid",
+   "thema": "Veiligheid",
    "onderdeel": "Vermogensdelicten",
    "indicator_uuid": "9c3224e6-7b1a-4284-a658-52eca918c750",
    "indicator_naam": "slachtoffer inbraak",
@@ -1472,7 +1472,7 @@
   },
   {
    "kwadrant": "Kwaliteit sociale leefomgeving",
-   "thema": "Veilgheid",
+   "thema": "Veiligheid",
    "onderdeel": "Vermogensdelicten",
    "indicator_uuid": "d90d2b4c-4bce-428c-834a-1cc8113958e4",
    "indicator_naam": "inbraak woning",
@@ -1481,7 +1481,7 @@
   },
   {
    "kwadrant": "Kwaliteit sociale leefomgeving",
-   "thema": "Veilgheid",
+   "thema": "Veiligheid",
    "onderdeel": "Vermogensdelicten",
    "indicator_uuid": "92137246-e0f1-493d-97a8-e4a5660a99fb",
    "indicator_naam": "inbraak auto",
@@ -1490,7 +1490,7 @@
   },
   {
    "kwadrant": "Kwaliteit sociale leefomgeving",
-   "thema": "Veilgheid",
+   "thema": "Veiligheid",
    "onderdeel": "Vermogensdelicten",
    "indicator_uuid": "3ca8572d-cc03-4fd9-9bc9-e1cd0fc0a627",
    "indicator_naam": "diefstal fiets",
@@ -1499,7 +1499,7 @@
   },
   {
    "kwadrant": "Kwaliteit sociale leefomgeving",
-   "thema": "Veilgheid",
+   "thema": "Veiligheid",
    "onderdeel": "Vermogensdelicten",
    "indicator_uuid": "b7090c23-7495-48c2-bfb3-cbfb7140386f",
    "indicator_naam": "beschadiging auto's",
@@ -1508,7 +1508,7 @@
   },
   {
    "kwadrant": "Kwaliteit sociale leefomgeving",
-   "thema": "Veilgheid",
+   "thema": "Veiligheid",
    "onderdeel": "Overlast",
    "indicator_uuid": "ee076c87-95e8-4f5a-a753-e31fc05a0eb8",
    "indicator_naam": "wonen",
@@ -1517,7 +1517,7 @@
   },
   {
    "kwadrant": "Kwaliteit sociale leefomgeving",
-   "thema": "Veilgheid",
+   "thema": "Veiligheid",
    "onderdeel": "Overlast",
    "indicator_uuid": "b8f453e4-522a-4c9d-b4d8-1f0b25594bb9",
    "indicator_naam": "woonomgeving",
@@ -1526,7 +1526,7 @@
   },
   {
    "kwadrant": "Kwaliteit sociale leefomgeving",
-   "thema": "Veilgheid",
+   "thema": "Veiligheid",
    "onderdeel": "Overlast",
    "indicator_uuid": "3bbd1382-eaae-4e2c-ae48-caa40c112340",
    "indicator_naam": "jongeren",
@@ -1535,7 +1535,7 @@
   },
   {
    "kwadrant": "Kwaliteit sociale leefomgeving",
-   "thema": "Veilgheid",
+   "thema": "Veiligheid",
    "onderdeel": "Overlast",
    "indicator_uuid": "3fa946ce-b007-4748-9fab-c838c7ccb9dc",
    "indicator_naam": "omwonenden",
@@ -1544,7 +1544,7 @@
   },
   {
    "kwadrant": "Kwaliteit sociale leefomgeving",
-   "thema": "Veilgheid",
+   "thema": "Veiligheid",
    "onderdeel": "Overlast",
    "indicator_uuid": "b558af0f-fa63-4735-a27c-79d12813ee1e",
    "indicator_naam": "geluid",
@@ -1553,7 +1553,7 @@
   },
   {
    "kwadrant": "Kwaliteit sociale leefomgeving",
-   "thema": "Veilgheid",
+   "thema": "Veiligheid",
    "onderdeel": "Overlast",
    "indicator_uuid": "7524a0df-fc76-4755-a855-cbcb368a43be",
    "indicator_naam": "dronken personen",
@@ -1562,7 +1562,7 @@
   },
   {
    "kwadrant": "Kwaliteit sociale leefomgeving",
-   "thema": "Veilgheid",
+   "thema": "Veiligheid",
    "onderdeel": "Overlast",
    "indicator_uuid": "48edd30f-ef82-4820-8e80-7eb8daf82963",
    "indicator_naam": "drugs",
@@ -1571,7 +1571,7 @@
   },
   {
    "kwadrant": "Kwaliteit sociale leefomgeving",
-   "thema": "Veilgheid",
+   "thema": "Veiligheid",
    "onderdeel": "Dreiging en geweld",
    "indicator_uuid": "784f5a85-7dcc-43fe-89a1-df4df500e34a",
    "indicator_naam": "Geweld",
@@ -1580,7 +1580,7 @@
   },
   {
    "kwadrant": "Kwaliteit sociale leefomgeving",
-   "thema": "Veilgheid",
+   "thema": "Veiligheid",
    "onderdeel": "Dreiging en geweld",
    "indicator_uuid": "b6c4e4fd-2ec9-4427-92b6-b28b64c125ab",
    "indicator_naam": "idee geweldsdelicten",
@@ -1589,7 +1589,7 @@
   },
   {
    "kwadrant": "Kwaliteit sociale leefomgeving",
-   "thema": "Veilgheid",
+   "thema": "Veiligheid",
    "onderdeel": "Dreiging en geweld",
    "indicator_uuid": "379cd3a8-409e-499d-beac-02682fd13bcf",
    "indicator_naam": "idee bedreiging",
@@ -1598,7 +1598,7 @@
   },
   {
    "kwadrant": "Kwaliteit sociale leefomgeving",
-   "thema": "Veilgheid",
+   "thema": "Veiligheid",
    "onderdeel": "Dreiging en geweld",
    "indicator_uuid": "6f354ae4-db0a-4645-bec6-8218b4ab572d",
    "indicator_naam": "idee lastigvallen",
@@ -1607,7 +1607,7 @@
   },
   {
    "kwadrant": "Kwaliteit sociale leefomgeving",
-   "thema": "Veilgheid",
+   "thema": "Veiligheid",
    "onderdeel": "Dreiging en geweld",
    "indicator_uuid": "6d56f7bc-aaf6-441e-a423-f19b3a825a79",
    "indicator_naam": "gevoel onveilig",

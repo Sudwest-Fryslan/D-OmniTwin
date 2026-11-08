@@ -126,8 +126,8 @@ def aggregeer(klassen_met_gewicht: Iterable[tuple[int | None, float | None]], kl
     return rond_klasse(gem, klassen)
 
 
-def klasse_label(k: int) -> str:
-    """Bijv. 'klasse 1: 0-12,5% (ongunstigst)'."""
+def klasse_label(k: int, neutraal: bool = False) -> str:
+    """Bijv. 'klasse 1: 0-12,5% (ongunstigst)'; neutraal (Samenstelling): '(laagst)'/'(hoogst)'."""
     van = (k - 1) * 100 / KLASSEN
     tot = k * 100 / KLASSEN
 
@@ -136,9 +136,9 @@ def klasse_label(k: int) -> str:
 
     label = f"klasse {k}: {fmt(van)}–{fmt(tot)}%"
     if k == 1:
-        label += " (ongunstigst)"
+        label += " (laagst)" if neutraal else " (ongunstigst)"
     elif k == KLASSEN:
-        label += " (gunstigst)"
+        label += " (hoogst)" if neutraal else " (gunstigst)"
     return label
 
 
@@ -155,8 +155,8 @@ def palet(color_service=None, neutraal: bool = False, klassen: int = KLASSEN) ->
     return svc.generate_color_ramp(kleuren or fallback, klassen)
 
 
-def legenda(kleuren: list[str]) -> list[dict[str, object]]:
-    return [{"klasse": k, "label": klasse_label(k), "kleur": kleuren[k - 1]} for k in range(1, KLASSEN + 1)]
+def legenda(kleuren: list[str], neutraal: bool = False) -> list[dict[str, object]]:
+    return [{"klasse": k, "label": klasse_label(k, neutraal), "kleur": kleuren[k - 1]} for k in range(1, KLASSEN + 1)]
 
 
 def normaliseer_classificatie(waarde: str | None) -> str:

@@ -84,3 +84,14 @@ UPDATE indicatoren i
           AND lower(vkh2.titel_naam) NOT LIKE '%samenstelling%'
    );
 
+-- 3. Typfout in themanaam 'Veilgheid' -> 'Veiligheid' corrigeren
+UPDATE kompas_themas kth
+   SET naam = 'Veiligheid'
+ WHERE kth.naam = 'Veilgheid'
+   AND NOT EXISTS (
+       SELECT 1
+         FROM kompas_themas kth2
+        WHERE kth2.titel_id = kth.titel_id
+          AND kth2.naam = 'Veiligheid'
+   );
+

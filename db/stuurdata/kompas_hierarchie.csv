@@ -144,27 +144,27 @@ Kwaliteit sociale leefomgeving,Mienskip,Omgang integratie,Etnische groepen,N,,
 Kwaliteit sociale leefomgeving,Mienskip,Omgang integratie,Jong en oud,N,,
 Kwaliteit sociale leefomgeving,Mienskip,Omgang integratie,Student en ander,N,,
 Kwaliteit sociale leefomgeving,Mienskip,Omgang integratie,Buurtgenoten,N,,
-Kwaliteit sociale leefomgeving,Veilgheid,Vermogensdelicten,slachtoffer inbraak,N,,
-Kwaliteit sociale leefomgeving,Veilgheid,Vermogensdelicten,inbraak woning,J,Misdrijven_per_wijk_en_buurt_per_jaar (CBS),Diefstal/inbraak woning
-Kwaliteit sociale leefomgeving,Veilgheid,Vermogensdelicten,inbraak auto,J,Misdrijven_per_wijk_en_buurt_per_jaar (CBS),Diefstal van motorvoertuigen
-Kwaliteit sociale leefomgeving,Veilgheid,Vermogensdelicten,diefstal fiets,J,Misdrijven_per_wijk_en_buurt_per_jaar (CBS),"Diefstal van brom-, snor-, fietsen"
-Kwaliteit sociale leefomgeving,Veilgheid,Vermogensdelicten,inbraak woning,N,,
-Kwaliteit sociale leefomgeving,Veilgheid,Vermogensdelicten,inbraak auto's,N,,
-Kwaliteit sociale leefomgeving,Veilgheid,Vermogensdelicten,beschadiging auto's,N,,
-Kwaliteit sociale leefomgeving,Veilgheid,Vermogensdelicten,diefstal fietsen,N,,
-Kwaliteit sociale leefomgeving,Veilgheid,Overlast,wonen,J,Geregistreerde_overlast_per_buurt (CBS),Totaal registraties overlast
-Kwaliteit sociale leefomgeving,Veilgheid,Overlast,woonomgeving,N,,
-Kwaliteit sociale leefomgeving,Veilgheid,Overlast,jongeren,J,Geregistreerde_overlast_per_buurt (CBS),Melding overlast jeugd
-Kwaliteit sociale leefomgeving,Veilgheid,Overlast,omwonenden,N,,
-Kwaliteit sociale leefomgeving,Veilgheid,Overlast,geluid,J,Geregistreerde_overlast_per_buurt (CBS),Geluidshinder overig
-Kwaliteit sociale leefomgeving,Veilgheid,Overlast,dronken personen,J,Geregistreerde_overlast_per_buurt (CBS),Openbare dronkenschap
-Kwaliteit sociale leefomgeving,Veilgheid,Overlast,drugs,J,Geregistreerde_overlast_per_buurt (CBS),Overlast ivm alcohol/ drugs
-Kwaliteit sociale leefomgeving,Veilgheid,Dreiging en geweld,Geweld,N,,
-Kwaliteit sociale leefomgeving,Veilgheid,Dreiging en geweld,idee wapens,N,,
-Kwaliteit sociale leefomgeving,Veilgheid,Dreiging en geweld,idee geweldsdelicten,N,,
-Kwaliteit sociale leefomgeving,Veilgheid,Dreiging en geweld,idee bedreiging,N,,
-Kwaliteit sociale leefomgeving,Veilgheid,Dreiging en geweld,idee lastigvallen,N,,
-Kwaliteit sociale leefomgeving,Veilgheid,Dreiging en geweld,gevoel onveilig,N,,
+Kwaliteit sociale leefomgeving,Veiligheid,Vermogensdelicten,slachtoffer inbraak,N,,
+Kwaliteit sociale leefomgeving,Veiligheid,Vermogensdelicten,inbraak woning,J,Misdrijven_per_wijk_en_buurt_per_jaar (CBS),Diefstal/inbraak woning
+Kwaliteit sociale leefomgeving,Veiligheid,Vermogensdelicten,inbraak auto,J,Misdrijven_per_wijk_en_buurt_per_jaar (CBS),Diefstal van motorvoertuigen
+Kwaliteit sociale leefomgeving,Veiligheid,Vermogensdelicten,diefstal fiets,J,Misdrijven_per_wijk_en_buurt_per_jaar (CBS),"Diefstal van brom-, snor-, fietsen"
+Kwaliteit sociale leefomgeving,Veiligheid,Vermogensdelicten,inbraak woning,N,,
+Kwaliteit sociale leefomgeving,Veiligheid,Vermogensdelicten,inbraak auto's,N,,
+Kwaliteit sociale leefomgeving,Veiligheid,Vermogensdelicten,beschadiging auto's,N,,
+Kwaliteit sociale leefomgeving,Veiligheid,Vermogensdelicten,diefstal fietsen,N,,
+Kwaliteit sociale leefomgeving,Veiligheid,Overlast,wonen,J,Geregistreerde_overlast_per_buurt (CBS),Totaal registraties overlast
+Kwaliteit sociale leefomgeving,Veiligheid,Overlast,woonomgeving,N,,
+Kwaliteit sociale leefomgeving,Veiligheid,Overlast,jongeren,J,Geregistreerde_overlast_per_buurt (CBS),Melding overlast jeugd
+Kwaliteit sociale leefomgeving,Veiligheid,Overlast,omwonenden,N,,
+Kwaliteit sociale leefomgeving,Veiligheid,Overlast,geluid,J,Geregistreerde_overlast_per_buurt (CBS),Geluidshinder overig
+Kwaliteit sociale leefomgeving,Veiligheid,Overlast,dronken personen,J,Geregistreerde_overlast_per_buurt (CBS),Openbare dronkenschap
+Kwaliteit sociale leefomgeving,Veiligheid,Overlast,drugs,J,Geregistreerde_overlast_per_buurt (CBS),Overlast ivm alcohol/ drugs
+Kwaliteit sociale leefomgeving,Veiligheid,Dreiging en geweld,Geweld,N,,
+Kwaliteit sociale leefomgeving,Veiligheid,Dreiging en geweld,idee wapens,N,,
+Kwaliteit sociale leefomgeving,Veiligheid,Dreiging en geweld,idee geweldsdelicten,N,,
+Kwaliteit sociale leefomgeving,Veiligheid,Dreiging en geweld,idee bedreiging,N,,
+Kwaliteit sociale leefomgeving,Veiligheid,Dreiging en geweld,idee lastigvallen,N,,
+Kwaliteit sociale leefomgeving,Veiligheid,Dreiging en geweld,gevoel onveilig,N,,
 Samenstelling,Bebouwing,Gebruik omgeving,Woningen,N,,
 Samenstelling,Bebouwing,Gebruik omgeving,Bedrijven,N,,
 Samenstelling,Bebouwing,Bouwperiode,voor 1915,N,,
