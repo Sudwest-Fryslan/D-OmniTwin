@@ -23,6 +23,7 @@ from omnitwin.fouten import GebruikersFout
 from omnitwin.grenzen import beperk_llm
 from omnitwin.oidc import AuthProbleem
 from omnitwin.routers.auth import huidige_gebruiker
+from omnitwin.services.factsheet_service import FactsheetService
 from omnitwin.services.llm_service import LLMService
 from omnitwin.services.report_service import ReportDataService
 
@@ -97,6 +98,23 @@ class DeelgebiedAnalyseRequest(BaseModel):
         None, description="Gemeentecode (optioneel, wordt automatisch afgeleid indien niet meegegeven)"
     )
     deelgebied_naam: str | None = Field(None, description="Label voor het deelgebied of woonplaats (bijv. 'Sneek')")
+
+
+class FactsheetRequest(BaseModel):
+    """Request model voor de Gebiedsfactsheet (#441)."""
+
+    gebied_ids: list[str] = Field(..., min_length=1, max_length=200, description="CBS buurt-IDs binnen één gemeente")
+    referentie: str = Field("gemeente", description="'gemeente' of 'fryslan'")
+    gemeente_code: str | None = Field(
+        None,
+        description="Optionele gemeentecode ter validatie of terugval",
+    )
+    deelgebied_naam: str | None = Field(None, description="Optionele titel voor een meervoudige buurtselectie")
+    config_id: int | None = Field(
+        None,
+        ge=1,
+        description="Optionele Kompas-configuratie ID (standaard: het actieve standaardprofiel)",
+    )
 
 
 router = APIRouter(prefix="/api/report", tags=["Report"])
@@ -406,3 +424,49 @@ def get_deelgebied_kaart(payload: DeelgebiedAnalyseRequest, db: Session = Depend
         return {"svg": svg}
     except GebruikersFout as e:
         raise HTTPException(status_code=400, detail=str(e))
+
+
+# ─── Gebiedsfactsheet (#441) ─────────────────────────────────────────────────
+
+
+@router.post("/factsheet", response_model=dict[str, Any])
+def post_factsheet_data(payload: FactsheetRequest, db: Session = Depends(get_db)):
+    """
+    Gebiedsfactsheet voor één of meer CBS-buurten binnen dezelfde gemeente (#441).
+    Gebruikt de Kompas-boom en percentielklassen 1..8 (percentielklasse.py).
+    """
+    service = FactsheetService(db)
+    try:
+        return service.genereer_factsheet(
+            gebied_ids=payload.gebied_ids,
+            referentie=payload.referentie,
+            gemeente_code=payload.gemeente_code,
+            deelgebied_naam=payload.deelgebied_naam,
+            config_id=payload.config_id,
+        )
+    except GebruikersFout as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@router.get("/factsheet/{gebied_id}", response_model=dict[str, Any])
+def get_factsheet_data(
+    gebied_id: str,
+    referentie: str = Query("gemeente", description="'gemeente' of 'fryslan'"),
+    gemeente_code: str | None = Query(None, description="Optionele gemeentecode"),
+    config_id: int | None = Query(None, ge=1, description="Optionele Kompas-configuratie ID"),
+    db: Session = Depends(get_db),
+):
+    """
+    Gebiedsfactsheet voor één specifieke CBS-buurt (#441).
+    """
+    service = FactsheetService(db)
+    try:
+        return service.genereer_factsheet(
+            gebied_ids=[gebied_id],
+            referentie=referentie,
+            gemeente_code=gemeente_code,
+            config_id=config_id,
+        )
+    except GebruikersFout as e:
+        status = 404 if "niet gevonden" in str(e).lower() else 400
+        raise HTTPException(status_code=status, detail=str(e))

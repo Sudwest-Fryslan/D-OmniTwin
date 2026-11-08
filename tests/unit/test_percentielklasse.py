@@ -113,11 +113,19 @@ def test_hoger_is_beter(score_type, inverse, verwacht):
         ("+/+", True, None, "lager_is_beter"),
         ("+/+", False, "Samenstelling", "neutraal"),
         ("+/-", False, "Samenstelling bevolking", "neutraal"),
+        ("neutraal", False, "Welzijn", "neutraal"),
     ],
 )
 def test_richting_voor_benchmarkkleur(score_type, inverse, kwadrant, verwacht):
     # #323: de Kompas-benchmark kleurt de afwijking op deze richting
     assert pk.richting(score_type, inverse, kwadrant) == verwacht
+
+
+def test_gemiddelde_score_onafgerond():
+    assert pk.gemiddelde_score([(1, 10), (8, 90)]) == pytest.approx(7.3)
+    assert pk.gemiddelde_score([(1, 88), (3, 100), (4, 155)]) == pytest.approx(1008 / 343)
+    assert pk.gemiddelde_score([]) is None
+    assert pk.gemiddelde_score([(None, 10), (4, 0)]) is None
 
 
 # ── Onderdrukking (n < 10) ───────────────────────────────────────────────────

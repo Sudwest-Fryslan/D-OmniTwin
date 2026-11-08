@@ -19,6 +19,7 @@ from omnitwin.services.report_service import ReportDataService
 pytestmark = pytest.mark.unit
 
 V046 = Path(__file__).resolve().parents[2] / "db" / "migraties" / "V046__polariteit.sql"
+V048 = Path(__file__).resolve().parents[2] / "db" / "migraties" / "V048__polariteit_kompas_audit.sql"
 
 # (score_type, interpretatie_logica) -> polariteit
 GEVALLEN = [
@@ -75,3 +76,15 @@ def test_migratie_heeft_codelijst_en_dezelfde_regel():
     assert "('neutraal', 'n/a')" in sql and "('+/+', '+=+')" in sql
     assert "public." not in sql  # schema volgt het search_path (#137)
     assert set(pol.POLARITEITEN) == {"hoger_is_beter", "lager_is_beter", "neutraal"}
+
+
+def test_migratie_v048_polariteit_kompas_audit():
+    """V048 (#441): corrigeert verkeerde polariteit op Kompas-indicatoren zonder public.-prefix."""
+    sql = V048.read_text(encoding="utf-8")
+    assert "SET polariteit = 'lager_is_beter'" in sql
+    assert "SET polariteit = 'neutraal'" in sql
+    assert "a4780646-844e-4221-b07a-b4f4ade25059" in sql  # Roken
+    assert "0432fef2-83f2-4405-a457-08b89945ca86" in sql  # Obesitas
+    assert "3c2d0ca0-3a6d-4f53-809f-f82fa9b9fd22" in sql  # Gemiddeld energielabel (score 1..9)
+    assert "0ed37b61-f13d-446b-b108-70bb09af98e0" in sql  # Huisarts (afstand km)
+    assert "public." not in sql  # schema volgt het search_path (#137)

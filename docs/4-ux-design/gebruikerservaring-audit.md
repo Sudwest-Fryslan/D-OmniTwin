@@ -122,18 +122,20 @@ De beoordeling is verricht vanuit vijf sleutelpersona's en getoetst aan de **WCA
   - **Geen thematisch benchmarkoverzicht in 1 oogopslag:** Het ontbreekt aan visuele benchmarkbalken waarmee direct zichtbaar is hoe het geselecteerde gebied per Kompas-thema afwijkt van het gemeentegemiddelde.
   - **Gebrek aan context:** Kerncijfers (aantal inwoners, huishoudens, woningen), de fysieke bouwperiode (BAG) en een ruimtelijk contourkaartje ontbreken in de hero-sectie.
   - **Verouderde subheader:** De header toont de ruwe code `BU19000101` in plaats van de begrijpelijke naam *"Sneek binnen de grachten"*.
-- **Vastgestelde Oplossingen & Blauwdruk (#441, na code- & data-audit):**
-  1. **Nieuw zelfstandig rapporttype bovenaan de rapportkeuze (`/rapport/factsheet`):** De **Gebiedsfactsheet** (`FactsheetPage.tsx`) wordt toegevoegd *naast* de bestaande rapporten (`Gebiedsdossier`, `Deelgebiedsanalyse`, `Multi-Gebiedsdossier`, `Thema-Analyse`, `Benchmark`) en komt als **eerste optie bovenaan** te staan in de rapportkeuze-modal vanuit de viewer — zowel bij 1 gebied als bij meervoudige selectie.
-  2. **Enkelvoudige buurt én meervoudige gebiedsselectie:**
-     - *1 gebied (bijv. één buurt):* toont individuele waarden, thematische benchmarkbalken t.o.v. gemeente of Fryslân én de dynamische gemeentelijke rangpositie per normatief thema (`#14 van {n_met_score}`).
-     - *Meerdere gebieden (bijv. 6 of 42 buurten):* sommeert aantal-KPI's in de Hero en detailtabel, berekent inwonersgewogen gemiddelden voor relatieve indicatoren, en toont een samengesteld SVG-contourkaartje (zonder enkelvoudig buurtranggetal).
+- **Vastgestelde Oplossingen & Blauwdruk (#441, na kritische code- & data-review):**
+  1. **Nieuw zelfstandig rapporttype bovenaan de rapportkeuze (`/rapport/factsheet`):** De **Gebiedsfactsheet** (`FactsheetPage.tsx`) wordt toegevoegd *naast* de bestaande rapporten (`Gebiedsdossier`, `Deelgebiedsanalyse`, `Multi-Gebiedsdossier`, `Thema-Analyse`, `Benchmark`) en komt als **eerste optie bovenaan** te staan in de rapportkeuze-modal vanuit de viewer — zowel bij 1 buurt als bij meervoudige buurtselectie binnen één gemeente.
+  2. **Gebouwd op Kompas-boom & Percentielklassen (`percentielklasse.py`, klasse 1–8):**
+     - Geen vijfde losstaande Z-score-aggregatie: de factsheet gebruikt dezelfde Kompas-boom en percentielklassen (1–8) als de kaart en het Kompas, zodat scores en kleuren 1-op-1 overeenkomen en bij meervoudige buurtselectie niet naar het midden krimpen.
+     - *1 buurt:* toont individuele waarden (met peiljaar), thematische benchmarkbalken (klasse 1–8) t.o.v. gemeente of Fryslân én de dynamische gemeentelijke rangpositie per normatief thema (`#14 van {n_met_score}`, met $\ge 50\%$ dekkingsdrempel).
+     - *Meerdere buurten (binnen 1 gemeente):* sommeert aantal-KPI's in de Hero en detailtabel, aggregeert percentielklassen over alle `(buurt × indicator)`-paren, berekent inwonersgewogen gemiddelden voor relatieve waarden in de detailtabel, en toont een samengesteld React `<svg>`-contourkaartje (zonder enkelvoudig buurtranggetal).
   3. **Methodische zuiverheid (WBM / Thematische Buurtbarometer):**
-     - **Geen vage buurt-totaalscore, geen gestapelde buurt-totaalbalken en geen 4-kwadranten scatterplot:** ongelijksoortige domeinen (bijv. criminaliteit en groen) worden niet bij elkaar opgeteld; de factsheet blijft 100% deterministisch zonder LLM-afhankelijkheid.
-     - **Kwadrant 4 (*Samenstelling*: Bebouwing & Bevolking) is neutraal:** demografische en fysieke samenstelling krijgen geen goed/slecht-kleur of normatieve rang en tellen niet mee in *Top Sterke kanten & Aandachtspunten*.
-     - **Ruwe aantallen (`eenheid = 'aantal'`) alleen in detail:** uitgesloten van normatieve themascores en *Top Sterke kanten/Aandachtspunten* om schaalgrootte-bias te voorkomen, maar volledig zichtbaar in de uitklapbare detailtabel.
-  4. **Visuele Benchmarkbalken, Drill-down & Trendlijnen (WCAG 2.1 AA):**
-     - Horizontale diverging benchmarkbalken per Kompas-thema met gemeentelijk of provinciaal gemiddelde als vaste verticale referentielijn, duidelijke tekstlabels en werkelijke eenheden (informatie nooit alleen via kleur).
-     - Uitklapbare indicatorentabel per thema met onderdrukking van kleine aantallen (#325) én **inline sparklines + trendpijlen (`↗` `↘` `➔`)** bij meerdere meetjaren.
+     - **Geen buurt-totaalscore, geen gestapelde buurt-totaalbalken en geen 4-kwadranten scatterplot:** ongelijksoortige domeinen worden niet bij elkaar opgeteld; de factsheet blijft 100% deterministisch zonder LLM-afhankelijkheid.
+     - **Volgorde ontwerp 27 oktober & Top 3 op Onderdeel-niveau (Ring 3):** Hero → Thema-benchmarkbalken (Ring 2) → Top 3 Sterke kanten & Top 3 Aandachtspunten op Onderdeel-niveau (Ring 3, normatieve onderdelen met klasse $\ge 6$ resp. $\le 3$) → Uitklapbare detailtabel (Ring 4).
+     - **Polariteit-audit (#441) & Kwadrant 4 (*Samenstelling*) neutraal:** polariteit van de Kompas-indicatoren geaudit; *Samenstelling* krijgt het neutrale blauwe palet zonder goed/slecht-oordeel of normatieve rang.
+     - **Ruwe aantallen (`aantal`) alleen in detail:** uitgesloten van normatieve thema- en onderdeelklassen om schaalgrootte-bias te voorkomen, maar volledig zichtbaar in de uitklapbare detailtabel.
+  4. **Veilige Contourkaart, Drill-down & Trendlijnen (WCAG 2.1 AA):**
+     - React `<svg>`-contourkaart op basis van vereenvoudigde padgegevens (`fillRule="evenodd"`, themakleuren, geen `dangerouslySetInnerHTML`) met melding bij ontbrekende buurtgeometrie.
+     - Uitklapbare indicatorentabel per thema met vier expliciete statussen (`ok`, `onderdrukt`, `geen_data`, `geen_referentie`) én **inline sparklines + polariteitsbewuste trendpijlen (`↗` `↘` `➔`)** bij meerdere meetjaren.
 
 ---
 
@@ -193,8 +195,8 @@ De beoordeling is verricht vanuit vijf sleutelpersona's en getoetst aan de **WCA
 De auditbevindingen zijn conform de #305-vorm uitgesplitst naar zeven afzonderlijke, behapbare sub-issues met het label `UX`. Zodra deze zeven sub-issues zijn gerealiseerd en gemerged naar `main`, kan Epic #309 formeel worden gesloten:
 
 1. **[#441](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/441) — Factsheet- en rapportageredesign conform WBM/Buurtbarometer** (§2.5 Rapportages & Dashboards, uitgewerkt in [`factsheet-rapportagedesign.md`](./factsheet-rapportagedesign.md)):
-   - Nieuw zelfstandig rapporttype **Gebiedsfactsheet** (`/rapport/factsheet`, bovenaan de rapportkeuze-modal voor zowel 1 gebied als meerdere gebieden), naast de bestaande rapporten.
-   - Hero met kern-KPI's, BAG-bouwperiodeverdeling en SVG-contourkaartje; thematische benchmarkbalken t.o.v. gemeente/Fryslân (met dynamische rangpositie per normatief thema bij 1 buurt, neutrale weergave van *Samenstelling* en uitsluiting van ruwe aantallen uit normatieve scores); Top 3 sterke kanten & aandachtspunten; uitklapbare indicatorentabel met sparklines/trendlijnen (`↗` `↘` `➔`).
+   - Nieuw zelfstandig rapporttype **Gebiedsfactsheet** (`/rapport/factsheet`, bovenaan de rapportkeuze-modal voor zowel 1 buurt als meerdere buurten binnen één gemeente), gebouwd op de Kompas-boom en percentielklassen (`percentielklasse.py`, klasse 1–8).
+   - Volgorde: Hero (kern-KPI's met peiljaar, BAG-bouwperiodeverdeling, React `<svg>`-contourkaart) → Thema-benchmarkbalken (met dynamische gemeentelijke rangpositie bij 1 buurt, neutrale weergave van *Samenstelling* en uitsluiting van ruwe aantallen uit normatieve scores) → Top 3 sterke kanten & aandachtspunten op Onderdeel-niveau (Ring 3) → Uitklapbare indicatorentabel met sparklines/trendlijnen (`↗` `↘` `➔`) en polariteit-audit van de Kompas-indicatoren.
 2. **[#442](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/442) — Interactieve rondleiding (tutorial) en herhaalbare instaphulp** (§1 Startscherm & Onboarding):
    - Permanente herstartknop (`?`) in de navigatie om de rondleiding altijd te kunnen herhalen.
    - 4-staps interactieve spotlight tour (Kaart ➔ Indicatoren ➔ Kompas ➔ Factsheet/Assistent).

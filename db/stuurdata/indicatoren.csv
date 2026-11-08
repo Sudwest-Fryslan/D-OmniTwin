@@ -30,7 +30,7 @@ a4f84d1c-3263-4229-ad95-615924cb7852,Gemiddeld Laagste Grondwaterstand,,,pos_is_
 7d9339e3-ea2c-474b-802a-49c854849f73,Gemiddelde woonoppervlakte (BAG),m²,Wonen,pos_is_pos,Kadaster BAG (berekend per buurt)
 311a6449-b145-4678-b51e-ac4e342dd1bf,Gezondheid,%,,pos_is_pos,"RIVM, GGD en CBS: Gezondheid per wijk en buurt (StatLine 50150NED)"
 3baca929-ccc3-48aa-b966-e6877d01cbe7,Gezondheidszorgfunctie,aantal,Gebruik,pos_is_pos,Kadaster BAG (berekend per buurt)
-0ed37b61-f13d-446b-b108-70bb09af98e0,Huisarts,km,,pos_is_pos,CBS Kerncijfers wijken en buurten 2024 (85984NED)
+0ed37b61-f13d-446b-b108-70bb09af98e0,Huisarts,km,,-/+,CBS Kerncijfers wijken en buurten 2024 (85984NED)
 b2e606cc-1d58-4917-9dec-148d90c80742,Huishoudens (BAG woonfunctie),aantal,Wonen,pos_is_pos,Kadaster BAG (berekend per buurt)
 92137246-e0f1-493d-97a8-e4a5660a99fb,inbraak auto,aantal,,-/+,"Politie, Geregistreerde misdrijven per wijk en buurt (StatLine 47018NED)"
 d90d2b4c-4bce-428c-834a-1cc8113958e4,inbraak woning,aantal,,-/+,"Politie, Geregistreerde misdrijven per wijk en buurt (StatLine 47018NED)"
