@@ -333,3 +333,190 @@ export interface MeldingenResponse {
     limit: number;
     offset: number;
 }
+
+// ─── Gebiedsfactsheet (#441) ────────────────────────────────────────────────
+
+export interface FactsheetHeroKpi {
+    waarde: number;
+    jaar: number;
+    aantal_buurten_met_data: number;
+}
+
+export interface FactsheetBouwperiode {
+    label: string;
+    aantal: number;
+    percentage: number;
+}
+
+export interface FactsheetHeroData {
+    inwoners: FactsheetHeroKpi | null;
+    huishoudens: FactsheetHeroKpi | null;
+    woningen: FactsheetHeroKpi | null;
+    bouwperiodes: FactsheetBouwperiode[];
+    bouwperiodes_jaar: number | null;
+}
+
+export interface FactsheetContourPad {
+    id: string;
+    naam: string;
+    d: string;
+}
+
+export interface FactsheetContourKaart {
+    view_box: string;
+    achtergrond_paden: FactsheetContourPad[];
+    geselecteerde_paden: FactsheetContourPad[];
+    ontbrekende_geometrie_buurten: { id: string; naam: string }[];
+}
+
+export interface FactsheetHistoriePunt {
+    jaar: number;
+    waarde: number;
+}
+
+export interface FactsheetTrend {
+    richting: 'stijgend' | 'dalend' | 'stabiel';
+    duiding: 'gunstig' | 'ongunstig' | 'neutraal';
+    delta: number;
+    van_jaar: number;
+    tot_jaar: number;
+    label: string;
+}
+
+export type FactsheetIndicatorStatus =
+    | 'ok'
+    | 'onderdrukt'
+    | 'geen_data'
+    | 'geen_referentie'
+    | 'context_aantal';
+
+export interface FactsheetIndicator {
+    indicator_uuid: string;
+    naam: string;
+    eenheid: string;
+    polariteit: 'hoger_is_beter' | 'lager_is_beter' | 'neutraal';
+    is_aantal: boolean;
+    is_neutraal: boolean;
+    status: FactsheetIndicatorStatus;
+    jaar: number | null;
+    waarde: number | null;
+    waarde_per_buurt: number | null;
+    ref_gemiddelde: number | null;
+    verschil: number | null;
+    n_referentie: number;
+    klasse: number | null;
+    score: number | null;
+    klasse_kleur: string;
+    duiding: string | null;
+    historie: FactsheetHistoriePunt[];
+    trend: FactsheetTrend | null;
+    bron: string;
+}
+
+export interface FactsheetOnderdeel {
+    onderdeel_id: number;
+    onderdeel_naam: string;
+    is_neutraal: boolean;
+    klasse: number | null;
+    score: number | null;
+    klasse_kleur: string;
+    duiding: string | null;
+    aantal_indicatoren_met_score: number;
+    indicatoren: FactsheetIndicator[];
+}
+
+export interface FactsheetThemaRang {
+    positie: number;
+    totaal_met_score: number;
+    min_indicatoren_vereist: number;
+}
+
+export interface FactsheetThema {
+    thema_id: number;
+    thema_naam: string;
+    is_neutraal: boolean;
+    klasse: number | null;
+    score: number | null;
+    klasse_kleur: string;
+    duiding: string | null;
+    aantal_indicatoren_met_score: number;
+    aantal_indicatoren_totaal: number;
+    rang: FactsheetThemaRang | null;
+    onderdelen: FactsheetOnderdeel[];
+}
+
+export interface FactsheetKwadrant {
+    kwadrant_id: number;
+    kwadrant_naam: string;
+    kwadrant_kleur: string;
+    is_neutraal: boolean;
+    klasse: number | null;
+    score: number | null;
+    klasse_kleur: string;
+    duiding: string | null;
+    themas: FactsheetThema[];
+}
+
+export interface FactsheetTopOnderdeel {
+    onderdeel_id: number;
+    onderdeel_naam: string;
+    thema_id: number;
+    thema_naam: string;
+    kwadrant_naam: string;
+    klasse: number;
+    score: number;
+    klasse_kleur: string;
+    duiding: string | null;
+    aantal_indicatoren_met_score: number;
+    voorbeeld_indicator: {
+        naam: string;
+        waarde: number | null;
+        ref_gemiddelde: number | null;
+        eenheid: string;
+        jaar: number | null;
+        klasse: number | null;
+    } | null;
+}
+
+export interface FactsheetKlasseLegendaItem {
+    klasse: number;
+    label: string;
+    kleur: string;
+}
+
+export interface FactsheetPayload {
+    titel: string;
+    is_meervoudig: boolean;
+    is_waterbuurt: boolean;
+    totaal_geselecteerd: number;
+    aantal_actieve_buurten: number;
+    geselecteerde_buurten: {
+        id: string;
+        naam: string;
+        is_waterbuurt: boolean;
+        inwoners?: number | null;
+    }[];
+    waterbuurten_uitgesloten: { id: string; naam: string }[];
+    gemeente_code: string | null;
+    gemeente_naam: string;
+    referentie_modus: 'gemeente' | 'fryslan';
+    referentie_label: string;
+    n_referentie_buurten: number;
+    config_id: number;
+    hero: FactsheetHeroData;
+    contour_kaart: FactsheetContourKaart;
+    kwadranten: FactsheetKwadrant[];
+    sterke_kanten: FactsheetTopOnderdeel[];
+    aandachtspunten: FactsheetTopOnderdeel[];
+    klassen_legenda: FactsheetKlasseLegendaItem[];
+    klassen_legenda_neutraal: FactsheetKlasseLegendaItem[];
+    meldingen: string[];
+}
+
+export interface FactsheetRequestPayload {
+    gebied_ids: string[];
+    referentie?: 'gemeente' | 'fryslan';
+    gemeente_code?: string;
+    deelgebied_naam?: string;
+    config_id?: number;
+}

@@ -160,6 +160,7 @@ export const visualisatieAPI = {
 // Report API - used for UI reporting module
 const reportApiClient = axios.create({
     baseURL: '/api/report',
+    withCredentials: true,
     headers: { 'Content-Type': 'application/json' },
 });
 
@@ -254,6 +255,14 @@ export const reportAPI = {
         gemeente_code?: string;
         deelgebied_naam?: string;
     }) => reportApiClient.post<{ svg: string }>('/deelgebied/kaart', payload),
+
+    // Gebiedsfactsheet (#441)
+    getFactsheet: (
+        gebiedId: string,
+        params?: { referentie?: 'gemeente' | 'fryslan'; gemeente_code?: string; config_id?: number }
+    ) => reportApiClient.get<import('../types').FactsheetPayload>(`/factsheet/${encodeURIComponent(gebiedId)}`, { params }),
+    postFactsheet: (payload: import('../types').FactsheetRequestPayload) =>
+        reportApiClient.post<import('../types').FactsheetPayload>('/factsheet', payload),
 };
 
 // Public API client — voor gebieden/gemeenten endpoint (geen auth nodig)

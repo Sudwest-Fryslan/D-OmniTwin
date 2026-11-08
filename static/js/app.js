@@ -3012,6 +3012,23 @@ function toonRapportDialoog(modal) {
 }
 
 /**
+ * Bouwt een veilige rapportkeuzeknop voor de Gebiedsfactsheet (#441) zonder innerHTML.
+ */
+function maakFactsheetKeuzeKnop(id, ondertitel, onClick) {
+    const knop = document.createElement('button');
+    knop.id = id;
+    knop.type = 'button';
+    knop.className = 'rapport-keuze rapport-keuze--primair';
+    knop.appendChild(document.createTextNode('📋 Gebiedsfactsheet'));
+    knop.appendChild(document.createElement('br'));
+    const span = document.createElement('span');
+    span.textContent = ondertitel;
+    knop.appendChild(span);
+    knop.addEventListener('click', onClick);
+    return knop;
+}
+
+/**
  * Sprint 8D: Rapport type keuze modal — Gebiedsdossier vs Benchmark
  */
 function openRapportTypeModal(gebiedId, baseUrl) {
@@ -3026,13 +3043,13 @@ function openRapportTypeModal(gebiedId, baseUrl) {
             </p>
             <div class="rapport-keuzes">
                 ${state.selectedDeelgebiedNaam ? `
-                <button id="rapport-modal-deelgebied-single" class="rapport-keuze rapport-keuze--primair">🏘️ Woonplaatsanalyse (${escapeHtml(state.selectedDeelgebiedNaam)})<br>
+                <button id="rapport-modal-deelgebied-single" class="rapport-keuze">🏘️ Woonplaatsanalyse (${escapeHtml(state.selectedDeelgebiedNaam)})<br>
                     <span>
                         Gewogen stadsbrede analyse per thema
                     </span>
                 </button>
                 ` : ''}
-                <button id="rapport-modal-dossier" class="rapport-keuze${state.selectedDeelgebiedNaam ? '' : ' rapport-keuze--primair'}">📄 Gebiedsdossier<br>
+                <button id="rapport-modal-dossier" class="rapport-keuze">📄 Gebiedsdossier<br>
                     <span>
                         Volledige analyse van dit gebied
                     </span>
@@ -3052,7 +3069,24 @@ function openRapportTypeModal(gebiedId, baseUrl) {
         </div>
     `;
 
+    const keuzesSingle = modal.querySelector('.rapport-keuzes');
     const sluit = toonRapportDialoog(modal);
+
+    if (keuzesSingle) {
+        const factsheetKnop = maakFactsheetKeuzeKnop(
+            'rapport-modal-factsheet',
+            'Compact overzicht op Kompas-thema\'s, percentielklassen en trends',
+            () => {
+                const ids = state.selectedGebiedIds.size > 0 ? Array.from(state.selectedGebiedIds) : [gebiedId];
+                const naam = state.selectedDeelgebiedNaam ? `&naam=${encodeURIComponent(state.selectedDeelgebiedNaam)}` : '';
+                const gemeente = state.gemeenteCode ? `&gemeente=${encodeURIComponent(state.gemeenteCode)}` : '';
+                const gebieden = ids.map(encodeURIComponent).join(',');
+                window.open(`${baseUrl}/rapport/factsheet?gebieden=${gebieden}${naam}${gemeente}`, '_blank', 'noopener,noreferrer');
+                sluit();
+            }
+        );
+        keuzesSingle.prepend(factsheetKnop);
+    }
 
     document.getElementById('rapport-modal-deelgebied-single')?.addEventListener('click', () => {
         const ids = Array.from(state.selectedGebiedIds).length > 0 ? Array.from(state.selectedGebiedIds) : [gebiedId];
@@ -3098,7 +3132,7 @@ function openMultiSelectRapportModal(ids, baseUrl) {
                 ${ids.length} gebieden geselecteerd ${state.selectedDeelgebiedNaam ? `(${escapeHtml(state.selectedDeelgebiedNaam)})` : ''}
             </p>
             <div class="rapport-keuzes">
-                <button id="rapport-modal-deelgebied" class="rapport-keuze rapport-keuze--primair">🏘️ Woonplaats- & Deelgebiedsanalyse<br>
+                <button id="rapport-modal-deelgebied" class="rapport-keuze">🏘️ Woonplaats- & Deelgebiedsanalyse<br>
                     <span>
                         Gewogen stadsanalyse per thema met Top 10
                     </span>
@@ -3123,7 +3157,23 @@ function openMultiSelectRapportModal(ids, baseUrl) {
         </div>
     `;
 
+    const keuzesMulti = modal.querySelector('.rapport-keuzes');
     const sluit = toonRapportDialoog(modal);
+
+    if (keuzesMulti) {
+        const factsheetMultiKnop = maakFactsheetKeuzeKnop(
+            'rapport-modal-factsheet-multi',
+            'Gecombineerde factsheet op Kompas-thema\'s, percentielklassen en trends',
+            () => {
+                const gebiedenParam = ids.map(encodeURIComponent).join(',');
+                const naam = deelgebiedNaam ? `&naam=${encodeURIComponent(deelgebiedNaam)}` : '';
+                const gemeente = state.gemeenteCode ? `&gemeente=${encodeURIComponent(state.gemeenteCode)}` : '';
+                window.open(`${baseUrl}/rapport/factsheet?gebieden=${gebiedenParam}${naam}${gemeente}`, '_blank', 'noopener,noreferrer');
+                sluit();
+            }
+        );
+        keuzesMulti.prepend(factsheetMultiKnop);
+    }
 
     document.getElementById('rapport-modal-deelgebied').addEventListener('click', () => {
         const gebiedenParam = ids.join(',');

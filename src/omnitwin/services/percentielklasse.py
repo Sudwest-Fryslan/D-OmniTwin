@@ -61,9 +61,9 @@ def hoger_is_beter(score_type: str | None, inverse: bool | None = False) -> bool
 
 
 def richting(score_type: str | None, inverse: bool | None = False, kwadrant: str | None = None) -> str:
-    """'hoger_is_beter' | 'lager_is_beter' | 'neutraal' (kwadrant Samenstelling), voor de
-    kleur van een afwijking (bijv. de Kompas-benchmark, #323)."""
-    if is_neutraal_kwadrant(kwadrant):
+    """'hoger_is_beter' | 'lager_is_beter' | 'neutraal' (kwadrant Samenstelling of polariteit neutraal),
+    voor de kleur van een afwijking (bijv. de Kompas-benchmark, #323, en de Gebiedsfactsheet, #441)."""
+    if is_neutraal_kwadrant(kwadrant) or (not inverse and polariteit.uit_oud(score_type) == polariteit.NEUTRAAL):
         return "neutraal"
     return "hoger_is_beter" if hoger_is_beter(score_type, inverse) else "lager_is_beter"
 
@@ -99,9 +99,9 @@ def rond_klasse(x: float, klassen: int = KLASSEN) -> int:
     return max(1, min(klassen, math.floor(x + 0.5)))
 
 
-def aggregeer(klassen_met_gewicht: Iterable[tuple[int | None, float | None]], klassen: int = KLASSEN) -> int | None:
+def gemiddelde_score(klassen_met_gewicht: Iterable[tuple[int | None, float | None]]) -> float | None:
     """
-    Gewogen gemiddelde van klassen, afgerond naar een klasse. Paren zonder klasse of
+    Onafgerond gewogen gemiddelde van klassen (op schaal 1,0..8,0). Paren zonder klasse of
     met gewicht <= 0 tellen niet mee. None als er niets overblijft.
     """
     som = gewicht = 0.0
@@ -112,11 +112,22 @@ def aggregeer(klassen_met_gewicht: Iterable[tuple[int | None, float | None]], kl
         gewicht += w
     if gewicht == 0:
         return None
-    return rond_klasse(som / gewicht, klassen)
+    return som / gewicht
 
 
-def klasse_label(k: int) -> str:
-    """Bijv. 'klasse 1: 0-12,5% (ongunstigst)'."""
+def aggregeer(klassen_met_gewicht: Iterable[tuple[int | None, float | None]], klassen: int = KLASSEN) -> int | None:
+    """
+    Gewogen gemiddelde van klassen, afgerond naar een klasse. Paren zonder klasse of
+    met gewicht <= 0 tellen niet mee. None als er niets overblijft.
+    """
+    gem = gemiddelde_score(klassen_met_gewicht)
+    if gem is None:
+        return None
+    return rond_klasse(gem, klassen)
+
+
+def klasse_label(k: int, neutraal: bool = False) -> str:
+    """Bijv. 'klasse 1: 0-12,5% (ongunstigst)'; neutraal (Samenstelling): '(laagst)'/'(hoogst)'."""
     van = (k - 1) * 100 / KLASSEN
     tot = k * 100 / KLASSEN
 
@@ -125,9 +136,9 @@ def klasse_label(k: int) -> str:
 
     label = f"klasse {k}: {fmt(van)}–{fmt(tot)}%"
     if k == 1:
-        label += " (ongunstigst)"
+        label += " (laagst)" if neutraal else " (ongunstigst)"
     elif k == KLASSEN:
-        label += " (gunstigst)"
+        label += " (hoogst)" if neutraal else " (gunstigst)"
     return label
 
 
@@ -144,8 +155,8 @@ def palet(color_service=None, neutraal: bool = False, klassen: int = KLASSEN) ->
     return svc.generate_color_ramp(kleuren or fallback, klassen)
 
 
-def legenda(kleuren: list[str]) -> list[dict[str, object]]:
-    return [{"klasse": k, "label": klasse_label(k), "kleur": kleuren[k - 1]} for k in range(1, KLASSEN + 1)]
+def legenda(kleuren: list[str], neutraal: bool = False) -> list[dict[str, object]]:
+    return [{"klasse": k, "label": klasse_label(k, neutraal), "kleur": kleuren[k - 1]} for k in range(1, KLASSEN + 1)]
 
 
 def normaliseer_classificatie(waarde: str | None) -> str:

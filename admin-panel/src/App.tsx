@@ -12,6 +12,7 @@ import { BenchmarkPage } from './pages/BenchmarkPage';
 import { MultiGebiedPage } from './pages/MultiGebiedPage';
 import { ThemaAnalysePage } from './pages/ThemaAnalysePage';
 import { DeelgebiedPage } from './pages/DeelgebiedPage';
+import { FactsheetPage } from './pages/FactsheetPage';
 import { LLMConfigPage } from './pages/LLMConfigPage';
 import { AccountPage } from './pages/AccountPage';
 import { LogViewerPage } from './pages/LogViewerPage';
@@ -28,6 +29,7 @@ import {
   GitBranch,
   LogOut,
   FileText,
+  ClipboardList,
   Scale,
   Layers,
   Settings,
@@ -66,7 +68,7 @@ const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [dropdownOpen, setDropdownOpen] = React.useState(false);
   // Gebiedsdossier = /rapport of /rapport/<gebied_id>, niet de andere rapporten onder /rapport/
   const { pathname } = useLocation();
-  const isGebiedsdossier = /^\/rapport(\/(?!benchmark|multi-gebied|thema-analyse|deelgebied)[^/]+)?\/?$/.test(pathname);
+  const isGebiedsdossier = /^\/rapport(\/(?!benchmark|multi-gebied|thema-analyse|deelgebied|factsheet)[^/]+)?\/?$/.test(pathname);
 
   const handleLogout = async () => {
     try {
@@ -140,6 +142,14 @@ const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
           >
             <Palette size={18} />
             Kleurschema's
+          </NavLink>
+
+          <NavLink
+            to="/rapport/factsheet"
+            className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
+          >
+            <ClipboardList size={18} />
+            Gebiedsfactsheet
           </NavLink>
 
           <NavLink
@@ -360,6 +370,9 @@ const ReportLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => 
       rapportType = 'Thema-Analyse';
     } else if (sub === 'deelgebied') {
       rapportType = 'Deelgebiedsanalyse';
+    } else if (sub === 'factsheet') {
+      rapportType = 'Gebiedsfactsheet';
+      gebiedId = new URLSearchParams(location.search).get('gebieden') || undefined;
     } else if (sub) {
       rapportType = 'Gebiedsdossier';
       gebiedId = sub;
@@ -370,7 +383,7 @@ const ReportLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => 
       gebied_id: gebiedId,
       url: window.location.href,
     };
-  }, [location.pathname]);
+  }, [location.pathname, location.search]);
 
   return (
     <div className="report-standalone-container">
@@ -530,6 +543,10 @@ function App() {
           } />
 
           {/* Standalone Rapportage Routes (#290) - Altijd zonder beheer-sidebar */}
+          <Route path="/rapport/factsheet" element={
+            <ReportLayout><FactsheetPage /></ReportLayout>
+          } />
+
           <Route path="/rapport/benchmark" element={
             <ReportLayout><BenchmarkPage /></ReportLayout>
           } />
