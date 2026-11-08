@@ -1666,19 +1666,30 @@ class KompasVisualization {
             }
         }
 
-        if (historyData.definitie) document.getElementById('details-definitie').textContent = historyData.definitie;
-        else document.getElementById('details-definitie').textContent = "Geen definitie beschikbaar.";
-        
-        // A1: Ontologie tab
+        const definitieTekst = historyData.definitie || historyData.ontologische_beschrijving;
         const ontologieText = historyData.ontologische_beschrijving;
+        const tabDefinitie = document.getElementById('tab-definitie');
         const tabOntologie = document.getElementById('tab-ontologie');
-        if (ontologieText && ontologieText.trim() !== '') {
+
+        if (definitieTekst && definitieTekst.trim() !== '') {
+            document.getElementById('details-definitie').textContent = definitieTekst;
+        } else {
+            document.getElementById('details-definitie').textContent = "Geen beschrijving beschikbaar.";
+        }
+
+        // Toon tab Ontologie alleen als er een afzonderlijke ontologische beschrijving is
+        // die daadwerkelijk verschilt van de getoonde definitie/beschrijving (#437)
+        const heeftOnderscheidendeOntologie = ontologieText && ontologieText.trim() !== '' && ontologieText.trim() !== (definitieTekst || '').trim();
+
+        if (heeftOnderscheidendeOntologie) {
             document.getElementById('details-ontologie').textContent = ontologieText;
             if (tabOntologie) tabOntologie.style.display = 'block';
+            if (tabDefinitie) tabDefinitie.textContent = 'Definitie';
         } else {
             document.getElementById('details-ontologie').textContent = "Geen ontologische beschrijving beschikbaar.";
             if (tabOntologie) tabOntologie.style.display = 'none';
-            // Switch back to definitie if it was on ontologie
+            if (tabDefinitie) tabDefinitie.textContent = 'Beschrijving';
+            // Switch back to definitie/beschrijving if it was on ontologie
             this._switchTab('definitie');
         }
     }

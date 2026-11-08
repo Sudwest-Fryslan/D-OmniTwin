@@ -490,7 +490,7 @@ class KompasService:
             "bron_tabel_referentie": meta.bron_tabel_referentie,
             "bron_url": bron_url,
             "laatste_check_datum": meta.laatste_check_datum.strftime("%d-%m-%Y") if meta.laatste_check_datum else None,
-            "definitie": meta.omschrijving or "Geen beschrijving beschikbaar.",
+            "definitie": meta.omschrijving or meta.ontologische_beschrijving or "Geen beschrijving beschikbaar.",
             "ontologische_beschrijving": meta.ontologische_beschrijving,
             "eenheid": meta.eenheid,
             "indicator": {
