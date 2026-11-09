@@ -621,7 +621,14 @@ class ReportDataService:
             )
             SELECT
                 COALESCE(vkh.titel_naam, i.categorie, 'Overig') AS thema,
-                AVG(td.z_score) AS gem_zscore,
+                AVG(CASE
+                    WHEN COALESCE(i.polariteit, CASE WHEN i.score_type = '+/-' THEN 'lager_is_beter' ELSE 'hoger_is_beter' END) = 'lager_is_beter'
+                    THEN -td.z_score
+                    ELSE td.z_score
+                END) FILTER (
+                    WHERE COALESCE(i.polariteit, 'hoger_is_beter') != 'neutraal'
+                      AND lower(COALESCE(vkh.titel_naam, '')) NOT LIKE '%samenstelling%'
+                ) AS gem_zscore,
                 COUNT(*) FILTER (WHERE ABS(td.z_score) >= 1.0) AS n_uitschieters,
                 COUNT(*) AS n_datapunten
             FROM zscores td
@@ -629,15 +636,23 @@ class ReportDataService:
             JOIN v_kompas_hierarchie vkh ON i.uuid = vkh.indicator_uuid AND vkh.config_id = 1
             WHERE 1=1 {thema_agg_filter}
             GROUP BY COALESCE(vkh.titel_naam, i.categorie, 'Overig')
-            ORDER BY ABS(AVG(td.z_score)) DESC
+            ORDER BY ABS(COALESCE(AVG(CASE
+                    WHEN COALESCE(i.polariteit, CASE WHEN i.score_type = '+/-' THEN 'lager_is_beter' ELSE 'hoger_is_beter' END) = 'lager_is_beter'
+                    THEN -td.z_score
+                    ELSE td.z_score
+                END) FILTER (
+                    WHERE COALESCE(i.polariteit, 'hoger_is_beter') != 'neutraal'
+                      AND lower(COALESCE(vkh.titel_naam, '')) NOT LIKE '%samenstelling%'
+                ), 0)) DESC
         """)
 
         thema_result = self.db.execute(thema_query, params)
         thema_aggregaat = {}
         for row in thema_result:
             r = dict(row._mapping)
+            gem_z = r["gem_zscore"]
             thema_aggregaat[r["thema"]] = {
-                "gem_zscore": round(float(r["gem_zscore"]), 2),
+                "gem_zscore": round(float(gem_z), 2) if gem_z is not None else None,
                 "n_uitschieters": int(r["n_uitschieters"]),
                 "n_datapunten": int(r["n_datapunten"]),
             }
@@ -1207,6 +1222,7 @@ class ReportDataService:
                 td.z_score,
                 i.naam                          AS indicator_naam,
                 i.eenheid                       AS eenheid,
+                COALESCE(i.polariteit, CASE WHEN i.score_type = '+/-' THEN 'lager_is_beter' ELSE 'hoger_is_beter' END) AS polariteit,
                 COALESCE(i.score_type, '+/+')   AS score_type,
                 i.omschrijving,
                 i.ontologische_beschrijving,
@@ -1305,6 +1321,7 @@ class ReportDataService:
                 "indicator_uuid": uuid_str,
                 "indicator_naam": first_pt["indicator_naam"],
                 "eenheid": first_pt.get("eenheid") or "",
+                "polariteit": first_pt.get("polariteit") or polariteit.uit_oud(score_type),
                 "score_type": score_type,
                 "gewogen_waarde": round(gewogen_waarde, 2),
                 "ref_gemiddelde": round(avg_waarde, 2),
@@ -1372,8 +1389,20 @@ class ReportDataService:
                     }
                 )
 
+            normatieve_z = []
+            if kw_naam != "Samenstelling":
+                for ind in alle_kw_indicatoren:
+                    pol = ind.get("polariteit") or polariteit.uit_oud(ind.get("score_type"))
+                    if pol == polariteit.NEUTRAAL:
+                        continue
+                    z_val = ind["z_score"]
+                    if pol == polariteit.LAGER_IS_BETER:
+                        normatieve_z.append(-z_val)
+                    else:
+                        normatieve_z.append(z_val)
+
+            gem_z = round(sum(normatieve_z) / len(normatieve_z), 2) if normatieve_z else None
             n_ind = len(alle_kw_indicatoren)
-            gem_z = round(sum(i["z_score"] for i in alle_kw_indicatoren) / n_ind, 2) if n_ind > 0 else 0.0
             n_uitschieters = sum(1 for i in alle_kw_indicatoren if i["z_score_abs"] >= 1.0)
             n_aandacht_sterk = sum(1 for i in alle_kw_indicatoren if i["is_ongunstig"] and i["z_score_abs"] >= 1.0)
             n_kans_sterk = sum(1 for i in alle_kw_indicatoren if not i["is_ongunstig"] and i["z_score_abs"] >= 1.0)
