@@ -1397,15 +1397,15 @@
     "heeft_data": false
   },
   {
-    "naam": "Gezondheid",
+    "naam": "Hoog risico op angststoornis of depressie",
     "code": null,
-    "eenheid": "",
+    "eenheid": "%",
     "titel": "Kwaliteit van leven",
     "thema": "Gezondheid",
     "onderdeel": "Functioneren",
-    "bron": "",
-    "score_type": "+/+",
-    "heeft_data": false
+    "bron": "RIVM, GGD en CBS: Gezondheid per wijk en buurt (StatLine 50150NED)",
+    "score_type": "+/-",
+    "heeft_data": true
   },
   {
     "naam": "Tevreden leven",
