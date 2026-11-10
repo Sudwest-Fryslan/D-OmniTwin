@@ -1,0 +1,131 @@
+{
+  "specificatie": "1.0",
+  "naam": "gebiedsagenda-ijsselmeerkust",
+  "id": "TC-06-003",
+  "versie": "0.1.0",
+  "titel": "Gebiedsagenda IJsselmeerkust & Wadden — integraal kustprofiel en kernvergelijking",
+  "vraag": "Hoe staan de kernen langs de IJsselmeerkust en het Waddengebied (o.a. Makkum, Workum, Hindeloopen, Stavoren, Koudum en Witmarsum) ervoor op demografie, gezondheid, sociaal-economische status, veiligheid en klimaatadaptatie ten opzichte van elkaar en het gemeentegemiddelde?",
+  "gebruiker": "beleidsadviseur / gebiedsregisseur IJsselmeergebied-Wadden",
+  "status": "actief",
+  "afhankelijk_van": [
+    "cbs-gebiedsindelingen",
+    "cbs-kerncijfers",
+    "rivm-gezondheidsmonitor",
+    "cbs-ses-woa",
+    "politie-misdrijven",
+    "hittestress"
+  ],
+  "rechten": [],
+  "datasets": [],
+  "controles": [
+    {
+      "type": "api",
+      "pad": "/api/data/v1/gebied_data?gebied_id=eq.BU19000200&indicator_uuid=eq.1b28d9ef-f7ff-4609-9ef7-7ab8a9b6cba7&select=jaar,waarde,bron",
+      "anoniem": true,
+      "minimaal_aantal": 3,
+      "uuid": "1b28d9ef-f7ff-4609-9ef7-7ab8a9b6cba7",
+      "gebied": "BU19000200",
+      "omschrijving": "CBS Kerncijfers (65+ jaar) beschikbaar voor Workum over meerdere jaren"
+    },
+    {
+      "type": "api",
+      "pad": "/api/data/v1/gebied_data?gebied_id=eq.BU19001700&indicator_uuid=eq.69616648-298a-493e-8264-57b5756e6fb7&select=jaar,waarde,bron",
+      "anoniem": true,
+      "minimaal_aantal": 3,
+      "uuid": "69616648-298a-493e-8264-57b5756e6fb7",
+      "gebied": "BU19001700",
+      "omschrijving": "RIVM Beperking (Beperkt vanwege gezondheid) beschikbaar voor Makkum (2020–2024)"
+    },
+    {
+      "type": "api",
+      "pad": "/api/data/v1/gebied_data?gebied_id=eq.BU19001700&indicator_uuid=eq.fba5fd33-969f-585f-8701-4f3fdd03f954&select=jaar,waarde,bron",
+      "anoniem": true,
+      "minimaal_aantal": 4,
+      "uuid": "fba5fd33-969f-585f-8701-4f3fdd03f954",
+      "gebied": "BU19001700",
+      "omschrijving": "RIVM Voldoet aan de alcoholrichtlijn beschikbaar voor Makkum (2016–2024)"
+    },
+    {
+      "type": "api",
+      "pad": "/api/data/v1/gebied_data?gebied_id=eq.BU19000403&indicator_uuid=eq.6d01bbda-a8c8-56c4-a7a4-5158c04f37c9&select=jaar,waarde,bron",
+      "anoniem": true,
+      "minimaal_aantal": 3,
+      "uuid": "6d01bbda-a8c8-56c4-a7a4-5158c04f37c9",
+      "gebied": "BU19000403",
+      "omschrijving": "RIVM Matig/veel regie over het eigen leven beschikbaar voor Stavoren (2016/2020/2024)"
+    },
+    {
+      "type": "api",
+      "pad": "/api/data/v1/gebied_data?gebied_id=eq.BU19000403&indicator_uuid=eq.95e436e2-4626-5ff9-af18-30faa2e4dbe8&select=jaar,waarde,bron",
+      "anoniem": true,
+      "minimaal_aantal": 1,
+      "uuid": "95e436e2-4626-5ff9-af18-30faa2e4dbe8",
+      "gebied": "BU19000403",
+      "omschrijving": "RIVM Krijgt steun van anderen beschikbaar voor Stavoren (2024)"
+    },
+    {
+      "type": "api",
+      "pad": "/api/data/v1/gebied_data?gebied_id=eq.BU19001700&indicator_uuid=eq.1c12fa21-cabd-5f2a-8cf6-fcc7a651b59e&select=jaar,waarde,bron",
+      "anoniem": true,
+      "minimaal_aantal": 5,
+      "uuid": "1c12fa21-cabd-5f2a-8cf6-fcc7a651b59e",
+      "gebied": "BU19001700",
+      "omschrijving": "CBS SES-WOA totaalscore beschikbaar voor Makkum (2014–2023)"
+    },
+    {
+      "type": "api",
+      "pad": "/api/data/v1/gebied_data?gebied_id=eq.BU19000300&indicator_uuid=eq.d2c0086f-8c3a-5442-80fd-5bb86674b50a&select=jaar,waarde,bron",
+      "anoniem": true,
+      "minimaal_aantal": 5,
+      "uuid": "d2c0086f-8c3a-5442-80fd-5bb86674b50a",
+      "gebied": "BU19000300",
+      "omschrijving": "CBS Afgelopen 4 jaar niet werkzaam beschikbaar voor Koudum (2014–2023)"
+    },
+    {
+      "type": "api",
+      "pad": "/api/data/v1/gebied_data?gebied_id=eq.BU19000200&indicator_uuid=eq.d90d2b4c-4bce-428c-834a-1cc8113958e4&select=jaar,waarde,bron",
+      "anoniem": true,
+      "minimaal_aantal": 1,
+      "uuid": "d90d2b4c-4bce-428c-834a-1cc8113958e4",
+      "gebied": "BU19000200",
+      "omschrijving": "Politie geregistreerde woninginbraken beschikbaar voor Workum"
+    },
+    {
+      "type": "api",
+      "pad": "/api/data/v1/gebied_data?gebied_id=eq.BU19000202&indicator_uuid=eq.dacb8005-ecc2-5014-a5c2-a07c119b43ae&select=jaar,waarde,bron",
+      "anoniem": true,
+      "minimaal_aantal": 1,
+      "uuid": "dacb8005-ecc2-5014-a5c2-a07c119b43ae",
+      "gebied": "BU19000202",
+      "omschrijving": "RIVM Stedelijk hitte-eiland effect beschikbaar voor Hindeloopen"
+    }
+  ],
+  "bewijs": {
+    "stappen": [
+      {
+        "id": "kaart",
+        "actie": "kaart",
+        "gebied": "BU19001700",
+        "indicator": "1c12fa21-cabd-5f2a-8cf6-fcc7a651b59e",
+        "omschrijving": "Kaartbeeld van de IJsselmeerkust op SES-WOA totaalscore met Makkum geselecteerd"
+      },
+      {
+        "id": "kompas",
+        "actie": "kompas",
+        "gebied": "BU19000403",
+        "omschrijving": "Kompasprofiel van Stavoren met Gezondheid en Sociaal-economische status"
+      },
+      {
+        "id": "chat",
+        "actie": "chat",
+        "vraag": "Vergelijk de eenzaamheid en sociaal-economische status tussen Makkum, Workum en Stavoren",
+        "omschrijving": "D-Omni Assistent vergelijkt de kustkernen op basis van beheerde kernindicatoren"
+      }
+    ]
+  },
+  "bekende_afwijkingen": [
+    "Zeer kleine kernen langs de kust (o.a. Piaam BU19001802, Allingawier BU19001801, Gaast BU19001803, Scharl BU19000402) hebben wegens privacyonderdrukking bij CBS en RIVM niet in alle jaren waarden.",
+    "Categorie D uit de spiegeling (Vektis D-GZS20/GP07, CBS maatwerk VSOH52023 en interne SWF Suite_*-indicatoren) valt buiten deze open-data use case (#497) en volgt in aparte vervolg-use-cases of federatieve uitwisseling."
+  ]
+}
+

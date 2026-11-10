@@ -1,0 +1,45 @@
+{
+  "id": "rivm-gezondheid-definities",
+  "bronId": "rivm",
+  "beschrijving": {
+    "@context": "https://data.overheid.nl/dcat-ap-nl/context.jsonld",
+    "@type": "dcat:Dataset",
+    "dct:title": "Gezondheidsmonitor 50150NED — aanvullende indicatordefinities",
+    "dct:description": "Indicatordefinities voor Beperking (Beperkt vanwege gezondheid), Matig/veel regie over het eigen leven, Krijgt steun van anderen en Voldoet aan de alcoholrichtlijn uit RIVM/GGD/CBS Gezondheidsmonitor Volwassenen en Ouderen (StatLine 50150NED).",
+    "dct:publisher": "https://www.rivm.nl/",
+    "dct:accessRights": "http://publications.europa.eu/resource/authority/access-right/PUBLIC",
+    "dct:license": "http://creativecommons.org/licenses/by/4.0/",
+    "dct:spatial": "https://identifier.overheid.nl/tooi/id/country/nl",
+    "dct:source": "https://dataderden.cbs.nl/ODataFeed/odata/50150NED",
+    "dcat:landingPage": "https://www.vzinfo.nl/gezondheidsmonitor-volwassenen-en-ouderen",
+    "dcat:theme": [
+      "http://standaarden.overheid.nl/owms/terms/Zorg_en_gezondheid"
+    ],
+    "dcat:keyword": [
+      "Gezondheidsmonitor",
+      "RIVM",
+      "indicatoren",
+      "definities"
+    ],
+    "dcat:contactPoint": {
+      "@type": "vcard:Organization",
+      "vcard:fn": "Functioneel beheer D-OmniTwin"
+    }
+  },
+  "laadprofiel": {
+    "profiel": "definities",
+    "plausibiliteit": {
+      "maxDalingProcent": 20
+    }
+  },
+  "bron": {
+    "adapter": "usecase-bestand",
+    "pad": "definities.json",
+    "omschrijving": "aanvullende indicatordefinities voor 50150NED (uitbreiding TC-06-003 / #497)"
+  },
+  "levering": {
+    "formaat": "datapackage",
+    "bestand": "rivm-gezondheid-definities.zip"
+  }
+}
+

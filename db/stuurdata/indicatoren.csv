@@ -57,3 +57,13 @@ e2f618ca-0726-4c1f-8442-c1150578622e,Sportfunctie,aantal,Gebruik,pos_is_pos,Kada
 b1011f4c-30b1-4088-bcf6-a67893d92c5f,Woonfunctie,aantal,Gebruik,pos_is_pos,Kadaster BAG (berekend per buurt)
 e4d53c01-ef30-56a3-9fc6-29e192462066,Boomkroonbedekking,%,Klimaat,pos_is_pos,RIVM Atlas Natuurlijk Kapitaal (WCS)
 dacb8005-ecc2-5014-a5c2-a07c119b43ae,Stedelijk hitte-eiland effect,°C,Klimaat,-/+,RIVM Atlas Natuurlijk Kapitaal (WCS)
+6d01bbda-a8c8-56c4-a7a4-5158c04f37c9,Matig/veel regie over het eigen leven,%,Gezondheid,pos_is_pos,"RIVM, GGD en CBS: Gezondheid per wijk en buurt (StatLine 50150NED)"
+95e436e2-4626-5ff9-af18-30faa2e4dbe8,Krijgt steun van anderen,%,Gezondheid,pos_is_pos,"RIVM, GGD en CBS: Gezondheid per wijk en buurt (StatLine 50150NED)"
+fba5fd33-969f-585f-8701-4f3fdd03f954,Voldoet aan de alcoholrichtlijn,%,Gezondheid,pos_is_pos,"RIVM, GGD en CBS: Gezondheid per wijk en buurt (StatLine 50150NED)"
+1c12fa21-cabd-5f2a-8cf6-fcc7a651b59e,SES-WOA totaalscore,score,,pos_is_pos,"CBS: Sociaal-economische status; scores per wijk en buurt (StatLine 86092NED)"
+8b735edf-2925-525b-bf1c-a8399ffa11e5,SES-WOA deelscore financiële welvaart,score,,pos_is_pos,"CBS: Sociaal-economische status; scores per wijk en buurt (StatLine 86092NED)"
+802e0f6b-00b4-51a9-ab66-826a774b607f,SES-WOA deelscore opleidingsniveau,score,,pos_is_pos,"CBS: Sociaal-economische status; scores per wijk en buurt (StatLine 86092NED)"
+097c6bd5-26a7-5aeb-821f-bda8cd69c5b8,SES-WOA deelscore arbeidsverleden,score,,pos_is_pos,"CBS: Sociaal-economische status; scores per wijk en buurt (StatLine 86092NED)"
+59f321e9-73c6-5f4d-b5ea-b8985f87c209,Afgelopen 4 jaar voortdurend werkzaam,%,,pos_is_pos,"CBS: Sociaal-economische status; scores per wijk en buurt (StatLine 86092NED)"
+d9efc4e5-bd32-522d-a6fb-cca1c88eeb92,Afgelopen 4 jaar niet voortdurend werkzaam,%,,N/A,"CBS: Sociaal-economische status; scores per wijk en buurt (StatLine 86092NED)"
+d2c0086f-8c3a-5442-80fd-5bb86674b50a,Afgelopen 4 jaar niet werkzaam,%,,-/+,"CBS: Sociaal-economische status; scores per wijk en buurt (StatLine 86092NED)"

@@ -1,0 +1,55 @@
+{
+  "indicatoren": [
+    {
+      "uuid": "69616648-298a-493e-8264-57b5756e6fb7",
+      "naam": "Beperking",
+      "code": "CALGA264",
+      "omschrijving": "Percentage inwoners van 18 jaar en ouder dat vanwege een langdurige ziekte of aandoening (minimaal 6 maanden) sterk of licht beperkt is bij activiteiten die mensen gewoonlijk doen (CBS/RIVM Gezondheidsmonitor 50150NED, kolom BeperktVanwegeGezondheid_7).",
+      "eenheid": "%",
+      "score_type": "+/-",
+      "min_waarde": 0,
+      "max_waarde": 100,
+      "status": "O",
+      "bron": "RIVM, GGD en CBS: Gezondheid per wijk en buurt (StatLine 50150NED)"
+    },
+    {
+      "uuid": "6d01bbda-a8c8-56c4-a7a4-5158c04f37c9",
+      "naam": "Matig/veel regie over het eigen leven",
+      "code": "GGRLS203",
+      "omschrijving": "Percentage inwoners van 18 jaar en ouder dat aangeeft matig tot veel regie over het eigen leven te ervaren (Pearlin Mastery Scale, CBS/RIVM Gezondheidsmonitor 50150NED, kolom MatigVeelRegieOverHetEigenLeven_24).",
+      "eenheid": "%",
+      "score_type": "+/+",
+      "min_waarde": 0,
+      "max_waarde": 100,
+      "status": "O",
+      "bron": "RIVM, GGD en CBS: Gezondheid per wijk en buurt (StatLine 50150NED)"
+    },
+    {
+      "uuid": "95e436e2-4626-5ff9-af18-30faa2e4dbe8",
+      "naam": "Krijgt steun van anderen",
+      "code": "GGSSS202",
+      "omschrijving": "Percentage inwoners van 18 jaar en ouder dat in geval van nood hulp of sociale steun van anderen kan krijgen (CBS/RIVM Gezondheidsmonitor 50150NED, kolom KrijgtSteunVanAnderen_29).",
+      "eenheid": "%",
+      "score_type": "+/+",
+      "min_waarde": 0,
+      "max_waarde": 100,
+      "status": "O",
+      "bron": "RIVM, GGD en CBS: Gezondheid per wijk en buurt (StatLine 50150NED)"
+    },
+    {
+      "uuid": "fba5fd33-969f-585f-8701-4f3fdd03f954",
+      "naam": "Voldoet aan de alcoholrichtlijn",
+      "code": "LFALS232",
+      "omschrijving": "Percentage inwoners van 18 jaar en ouder dat voldoet aan de alcoholrichtlijn van de Gezondheidsraad: geen alcohol of gemiddeld maximaal 1 glas per dag (CBS/RIVM Gezondheidsmonitor 50150NED, kolom VoldoetAanDeAlcoholrichtlijn_38).",
+      "eenheid": "%",
+      "score_type": "+/+",
+      "min_waarde": 0,
+      "max_waarde": 100,
+      "status": "O",
+      "bron": "RIVM, GGD en CBS: Gezondheid per wijk en buurt (StatLine 50150NED)"
+    }
+  ],
+  "gebiedstypen": [],
+  "relaties": []
+}
+

@@ -5,7 +5,7 @@
     "@context": "https://data.overheid.nl/dcat-ap-nl/context.jsonld",
     "@type": "dcat:Dataset",
     "dct:title": "Gezondheid per wijk en buurt 2012–2024 (RIVM, GGD en CBS), buurten in Fryslân",
-    "dct:description": "Geschatte percentages uit de Gezondheidsmonitor Volwassenen en Ouderen (GGD'en, CBS, RIVM), modelberekening van het RIVM per buurt (indeling 2024), 18 jaar en ouder: ervaren gezondheid, eenzaamheid, mantelzorg, vrijwilligerswerk, moeite met rondkomen, overgewicht, roken, alcohol, bewegen en psychische klachten. Peiljaren 2012, 2016, 2020, 2022 en 2024. Bronvermelding: RIVM, GGD'en en CBS, Gezondheidsmonitor Volwassenen en Ouderen; StatLine-tabel 50150NED.",
+    "dct:description": "Geschatte percentages uit de Gezondheidsmonitor Volwassenen en Ouderen (GGD'en, CBS, RIVM), modelberekening van het RIVM per buurt (indeling 2024), 18 jaar en ouder: ervaren gezondheid, beperking vanwege gezondheid, regie over het eigen leven, eenzaamheid, steun van anderen, mantelzorg, vrijwilligerswerk, moeite met rondkomen, overgewicht, roken, alcohol, bewegen en psychische klachten. Peiljaren 2012, 2016, 2020, 2022 en 2024. Bronvermelding: RIVM, GGD'en en CBS, Gezondheidsmonitor Volwassenen en Ouderen; StatLine-tabel 50150NED.",
     "dct:publisher": "https://www.rivm.nl/",
     "dct:accessRights": "http://publications.europa.eu/resource/authority/access-right/PUBLIC",
     "dct:license": "http://creativecommons.org/licenses/by/4.0/",
@@ -73,7 +73,11 @@
       "Overgewicht_33",
       "OvermatigDrinken_37",
       "RooktTabak_35",
-      "Vrijwilligerswerk_31"
+      "Vrijwilligerswerk_31",
+      "BeperktVanwegeGezondheid_7",
+      "MatigVeelRegieOverHetEigenLeven_24",
+      "KrijgtSteunVanAnderen_29",
+      "VoldoetAanDeAlcoholrichtlijn_38"
     ],
     "omschrijving": "RIVM StatLine 50150NED via dataderden.cbs.nl (CC BY 4.0); 18 jaar en ouder, puntschatting"
   },
@@ -94,7 +98,11 @@
           "Overgewicht_33": "34e36ae1-4132-4555-a4fc-d16b039d467e",
           "OvermatigDrinken_37": "1ed22149-7fed-4466-a3b8-dfd7ff28f5b5",
           "RooktTabak_35": "a4780646-844e-4221-b07a-b4f4ade25059",
-          "Vrijwilligerswerk_31": "9b168456-9219-4c3b-af16-636662a74155"
+          "Vrijwilligerswerk_31": "9b168456-9219-4c3b-af16-636662a74155",
+          "BeperktVanwegeGezondheid_7": "69616648-298a-493e-8264-57b5756e6fb7",
+          "MatigVeelRegieOverHetEigenLeven_24": "6d01bbda-a8c8-56c4-a7a4-5158c04f37c9",
+          "KrijgtSteunVanAnderen_29": "95e436e2-4626-5ff9-af18-30faa2e4dbe8",
+          "VoldoetAanDeAlcoholrichtlijn_38": "fba5fd33-969f-585f-8701-4f3fdd03f954"
         }
       }
     },

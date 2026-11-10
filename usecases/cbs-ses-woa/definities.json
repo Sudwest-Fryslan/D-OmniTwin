@@ -1,0 +1,91 @@
+{
+  "indicatoren": [
+    {
+      "uuid": "1c12fa21-cabd-5f2a-8cf6-fcc7a651b59e",
+      "naam": "SES-WOA totaalscore",
+      "code": "SESWOA_TOTAAL",
+      "omschrijving": "Samenvattende sociaal-economische statusscore van particuliere huishoudens per wijk en buurt op basis van financiële welvaart, opleidingsniveau en recent arbeidsverleden (CBS StatLine 86092NED, kolom GemiddeldeScore_29). Hoe hoger de score, hoe hoger de gemiddelde sociaal-economische status.",
+      "eenheid": "score",
+      "score_type": "+/+",
+      "min_waarde": -5,
+      "max_waarde": 5,
+      "status": "O",
+      "bron": "CBS: Sociaal-economische status; scores per wijk en buurt (StatLine 86092NED)"
+    },
+    {
+      "uuid": "8b735edf-2925-525b-bf1c-a8399ffa11e5",
+      "naam": "SES-WOA deelscore financiële welvaart",
+      "code": "SESWOA_WELVAART",
+      "omschrijving": "Deelscore van de sociaal-economische status (SES-WOA) voor de financiële welvaart van huishoudens, gebaseerd op inkomen en vermogen (CBS StatLine 86092NED, kolom GemiddeldeScore_31).",
+      "eenheid": "score",
+      "score_type": "+/+",
+      "min_waarde": -5,
+      "max_waarde": 5,
+      "status": "O",
+      "bron": "CBS: Sociaal-economische status; scores per wijk en buurt (StatLine 86092NED)"
+    },
+    {
+      "uuid": "802e0f6b-00b4-51a9-ab66-826a774b607f",
+      "naam": "SES-WOA deelscore opleidingsniveau",
+      "code": "SESWOA_OPLEIDING",
+      "omschrijving": "Deelscore van de sociaal-economische status (SES-WOA) voor het hoogst behaalde opleidingsniveau binnen huishoudens (CBS StatLine 86092NED, kolom GemiddeldeScore_33).",
+      "eenheid": "score",
+      "score_type": "+/+",
+      "min_waarde": -5,
+      "max_waarde": 5,
+      "status": "O",
+      "bron": "CBS: Sociaal-economische status; scores per wijk en buurt (StatLine 86092NED)"
+    },
+    {
+      "uuid": "097c6bd5-26a7-5aeb-821f-bda8cd69c5b8",
+      "naam": "SES-WOA deelscore arbeidsverleden",
+      "code": "SESWOA_ARBEID",
+      "omschrijving": "Deelscore van de sociaal-economische status (SES-WOA) voor de mate van arbeidsmarktdeelname in de voorafgaande 4 jaar binnen huishoudens (CBS StatLine 86092NED, kolom GemiddeldeScore_35).",
+      "eenheid": "score",
+      "score_type": "+/+",
+      "min_waarde": -5,
+      "max_waarde": 5,
+      "status": "O",
+      "bron": "CBS: Sociaal-economische status; scores per wijk en buurt (StatLine 86092NED)"
+    },
+    {
+      "uuid": "59f321e9-73c6-5f4d-b5ea-b8985f87c209",
+      "naam": "Afgelopen 4 jaar voortdurend werkzaam",
+      "code": "SESWOA_WERK_4JR_VOORTDUREND",
+      "omschrijving": "Percentage huishoudens waarvan de hoofdkostwinner of personen in de referentieperiode in alle 48 voorafgaande maanden werkzaam waren (CBS StatLine 86092NED, kolom Afgelopen4JaarVoortdurendWerkzaam_24).",
+      "eenheid": "%",
+      "score_type": "+/+",
+      "min_waarde": 0,
+      "max_waarde": 100,
+      "status": "O",
+      "bron": "CBS: Sociaal-economische status; scores per wijk en buurt (StatLine 86092NED)"
+    },
+    {
+      "uuid": "d9efc4e5-bd32-522d-a6fb-cca1c88eeb92",
+      "naam": "Afgelopen 4 jaar niet voortdurend werkzaam",
+      "code": "SESWOA_WERK_4JR_WISSELEND",
+      "omschrijving": "Percentage huishoudens met gedeeltelijke of wisselende arbeidsparticipatie (1 tot 47 maanden werkzaam) in de voorafgaande 4 jaar (CBS StatLine 86092NED, kolom Afgelopen4JrNietVoortdurendWerkzaam_25).",
+      "eenheid": "%",
+      "score_type": "+/+",
+      "min_waarde": 0,
+      "max_waarde": 100,
+      "status": "O",
+      "bron": "CBS: Sociaal-economische status; scores per wijk en buurt (StatLine 86092NED)"
+    },
+    {
+      "uuid": "d2c0086f-8c3a-5442-80fd-5bb86674b50a",
+      "naam": "Afgelopen 4 jaar niet werkzaam",
+      "code": "SESWOA_WERK_4JR_NIET",
+      "omschrijving": "Percentage huishoudens zonder arbeidsinkomen (0 maanden werkzaam) in de voorafgaande 4 jaar (CBS StatLine 86092NED, kolom Afgelopen4JaarNietWerkzaam_26).",
+      "eenheid": "%",
+      "score_type": "+/-",
+      "min_waarde": 0,
+      "max_waarde": 100,
+      "status": "O",
+      "bron": "CBS: Sociaal-economische status; scores per wijk en buurt (StatLine 86092NED)"
+    }
+  ],
+  "gebiedstypen": [],
+  "relaties": []
+}
+
