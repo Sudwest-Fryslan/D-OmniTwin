@@ -20,6 +20,7 @@ pytestmark = pytest.mark.unit
 
 V046 = Path(__file__).resolve().parents[2] / "db" / "migraties" / "V046__polariteit.sql"
 V048 = Path(__file__).resolve().parents[2] / "db" / "migraties" / "V048__polariteit_kompas_audit.sql"
+V049 = Path(__file__).resolve().parents[2] / "db" / "migraties" / "V049__polariteit_angst_depressie.sql"
 
 # (score_type, interpretatie_logica) -> polariteit
 GEVALLEN = [
@@ -96,3 +97,35 @@ def test_migratie_v048_polariteit_kompas_audit():
         "usecases/swf-kompasprofiel/data/kompasprofiel_volledig_kompas.json",
     ):
         assert "Veilgheid" not in (root / rel).read_text(encoding="utf-8"), rel
+
+
+def test_migratie_v049_polariteit_angst_depressie():
+    """V049 (#498): hernoemt 'Gezondheid' naar 'Hoog risico op angststoornis of depressie' met 'lager_is_beter' en RIVM-metadata."""
+    sql = V049.read_text(encoding="utf-8")
+    assert "polariteit = 'lager_is_beter'" in sql
+    assert "SET naam = 'Hoog risico op angststoornis of depressie'" in sql
+    assert "311a6449-b145-4678-b51e-ac4e342dd1bf" in sql
+    assert "eenheid = '%'" in sql
+    assert "Kessler-10" in sql
+    assert "ontologische_beschrijving" in sql
+    assert "public." not in sql  # schema volgt search_path (#137)
+
+    root = V049.resolve().parents[2]
+    ind_csv = (root / "db/stuurdata/indicatoren.csv").read_text(encoding="utf-8")
+    assert "311a6449-b145-4678-b51e-ac4e342dd1bf,Hoog risico op angststoornis of depressie,%,,-/+" in ind_csv
+
+    kompas_csv = (root / "db/stuurdata/kompas_hierarchie.csv").read_text(encoding="utf-8")
+    assert "Hoog risico op angststoornis of depressie" in kompas_csv
+
+    kompas_json = (root / "usecases/swf-kompasprofiel/data/kompasprofiel_volledig_kompas.json").read_text(
+        encoding="utf-8"
+    )
+    assert "Hoog risico op angststoornis of depressie" in kompas_json
+
+    seed_json = (root / "db/stuurdata/indicatoren_seed.json").read_text(encoding="utf-8")
+    assert '"naam": "Hoog risico op angststoornis of depressie"' in seed_json
+    assert '"naam": "Gezondheid"' not in seed_json
+
+    syn_json = (root / "db/stuurdata/synoniemen.json").read_text(encoding="utf-8")
+    assert "mentale gezondheid" in syn_json
+    assert "Gezondheid" not in syn_json

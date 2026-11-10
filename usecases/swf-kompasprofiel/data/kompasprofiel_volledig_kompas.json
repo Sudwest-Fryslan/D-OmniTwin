@@ -863,9 +863,9 @@
    "thema": "Gezondheid",
    "onderdeel": "Functioneren",
    "indicator_uuid": "311a6449-b145-4678-b51e-ac4e342dd1bf",
-   "indicator_naam": "Gezondheid",
+   "indicator_naam": "Hoog risico op angststoornis of depressie",
    "weging": 1.0,
-   "is_actueel": false
+   "is_actueel": true
   },
   {
    "kwadrant": "Kwaliteit van leven",
