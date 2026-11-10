@@ -12,15 +12,15 @@ describe('MultiGebiedPage', () => {
 
     it('toont Neutraal in plaats van z̄=null voor Samenstelling', async () => {
         vi.spyOn(organisatieAPI, 'get').mockResolvedValue({
-            data: { benchmark_provincie: 'Fryslân', korte_naam: 'SWF', standaard_gemeente_code: '1900' },
+            data: { benchmark_provincie: 'Fryslân', korte_naam: 'TST', standaard_gemeente_code: '0080' },
         } as never);
         vi.spyOn(reportAPI, 'getMultiGebiedGeoJSON').mockResolvedValue({
             data: { type: 'FeatureCollection', features: [] },
         } as never);
         vi.spyOn(reportAPI, 'getMultiGebied').mockResolvedValue({
             data: {
-                deelgebied_naam: 'Sneek',
-                referentie_label: 'Gemeente Súdwest-Fryslân',
+                deelgebied_naam: 'Voorbeeldstad',
+                referentie_label: 'Gemeente Testgemeente',
                 referentie_modus: 'gemeente',
                 totaal_buurten: 2,
                 buurten_met_data: 2,
@@ -34,7 +34,7 @@ describe('MultiGebiedPage', () => {
         } as never);
 
         render(
-            <MemoryRouter initialEntries={['/rapport/multi-gebied?gebieden=BU19000101,BU19000102&naam=Sneek']}>
+            <MemoryRouter initialEntries={['/rapport/multi-gebied?gebieden=BU00800101,BU00800102&naam=Voorbeeldstad']}>
                 <Routes>
                     <Route path="/rapport/multi-gebied" element={<MultiGebiedPage />} />
                 </Routes>

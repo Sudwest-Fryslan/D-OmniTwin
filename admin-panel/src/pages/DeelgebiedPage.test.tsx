@@ -23,16 +23,16 @@ describe('DeelgebiedPage', () => {
         } as never);
         vi.spyOn(reportAPI, 'getDeelgebied').mockResolvedValue({
             data: {
-                deelgebied_naam: 'Sneek',
-                referentie_label: 'Gemeente Súdwest-Fryslân',
+                deelgebied_naam: 'Voorbeeldstad',
+                referentie_label: 'Gemeente Testgemeente',
                 referentie_modus: 'gemeente',
-                gemeente_code: '1900',
-                gemeente_naam: 'Súdwest-Fryslân',
+                gemeente_code: '0080',
+                gemeente_naam: 'Testgemeente',
                 totaal_buurten: 2,
                 buurten_met_data: 2,
                 geselecteerde_buurten: [
-                    { id: 'BU19000101', naam: 'Sneek binnen de grachten', inwoners: 1500, gewicht: 0.5, is_fallback: false },
-                    { id: 'BU19000102', naam: 'Stationsbuurt', inwoners: 1500, gewicht: 0.5, is_fallback: false },
+                    { id: 'BU00800101', naam: 'Centrum', inwoners: 1500, gewicht: 0.5, is_fallback: false },
+                    { id: 'BU00800102', naam: 'Stationsbuurt', inwoners: 1500, gewicht: 0.5, is_fallback: false },
                 ],
                 kwadranten: [
                     {
@@ -68,10 +68,10 @@ describe('DeelgebiedPage', () => {
                 methodologie: {
                     aggregatie: 'inwonergewogen',
                     gewicht_bron: 'CBS Inwoners',
-                    referentie: 'Gemeente Súdwest-Fryslân',
+                    referentie: 'Gemeente Testgemeente',
                     referentie_modus: 'gemeente',
-                    gemeente_code: '1900',
-                    gemeente_naam: 'Súdwest-Fryslân',
+                    gemeente_code: '0080',
+                    gemeente_naam: 'Testgemeente',
                     totaal_geselecteerde_buurten: 2,
                     waterbuurten_uitgesloten: [],
                     actieve_buurten_telling: 2,
@@ -87,7 +87,7 @@ describe('DeelgebiedPage', () => {
         } as never);
 
         render(
-            <MemoryRouter initialEntries={['/rapport/deelgebied?gebieden=BU19000101,BU19000102&naam=Sneek']}>
+            <MemoryRouter initialEntries={['/rapport/deelgebied?gebieden=BU00800101,BU00800102&naam=Voorbeeldstad']}>
                 <Routes>
                     <Route path="/rapport/deelgebied" element={<DeelgebiedPage />} />
                 </Routes>
@@ -95,7 +95,7 @@ describe('DeelgebiedPage', () => {
         );
 
         await waitFor(() => {
-            expect(screen.getByRole('heading', { name: 'Sneek' })).toBeInTheDocument();
+            expect(screen.getByRole('heading', { name: 'Voorbeeldstad' })).toBeInTheDocument();
         });
 
         expect(screen.getByText('-0.45 Z')).toBeInTheDocument();
