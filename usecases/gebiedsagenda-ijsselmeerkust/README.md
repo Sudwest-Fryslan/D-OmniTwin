@@ -35,7 +35,7 @@ Deze use case registreert zelf geen datasets (`datasets: []`), maar steunt op de
 
 | # | Type | Wat | Verwacht |
 |---|---|---|---|
-| 1 | api | Workum (`BU19000200`) — 65+ jaar (CBS Kerncijfers) | HTTP 200, ≥ 3 resultaten |
+| 1 | api | Workum (`BU19000200`) — Afstand tot huisarts (CBS Kerncijfers) | HTTP 200, ≥ 3 resultaten |
 | 2 | api | Makkum (`BU19001700`) — Beperking (RIVM) | HTTP 200, ≥ 3 resultaten (2020–2024) |
 | 3 | api | Makkum (`BU19001700`) — Voldoet aan alcoholrichtlijn (RIVM) | HTTP 200, ≥ 4 resultaten (2016–2024) |
 | 4 | api | Stavoren (`BU19000403`) — Matig/veel regie over eigen leven (RIVM) | HTTP 200, ≥ 3 resultaten |

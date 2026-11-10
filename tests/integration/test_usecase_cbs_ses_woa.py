@@ -24,4 +24,3 @@ def api():
 @pytest.mark.parametrize("controle", controles(NAAM), ids=controle_id)
 def test_controle(controle, api):
     voer_uit(controle, api, UCS, NAAM)
-
