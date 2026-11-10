@@ -42,7 +42,7 @@ interface BuurtAnalyse {
 }
 
 interface ThemaAggregaat {
-    gem_zscore: number;
+    gem_zscore: number | null;
     n_uitschieters: number;
     n_datapunten: number;
 }
@@ -324,15 +324,26 @@ export const MultiGebiedPage: React.FC = () => {
 
     const renderThemaBars = () => {
         if (!data) return null;
-        const entries = Object.entries(data.thema_aggregaat)
-            .sort((a, b) => Math.abs(b[1].gem_zscore) - Math.abs(a[1].gem_zscore));
-        const maxZ = Math.max(...entries.map(([, v]) => Math.abs(v.gem_zscore)), 0.1);
+        const entries = Object.entries(data.thema_aggregaat).sort((a, b) => {
+            const az = a[1].gem_zscore;
+            const bz = b[1].gem_zscore;
+            if (az === null && bz === null) return 0;
+            if (az === null) return 1;
+            if (bz === null) return -1;
+            return Math.abs(bz) - Math.abs(az);
+        });
+        const maxZ = Math.max(
+            ...entries.map(([, v]) => (v.gem_zscore !== null ? Math.abs(v.gem_zscore) : 0)),
+            0.1
+        );
 
         return (
             <div>
                 {entries.map(([thema, agg]) => {
-                    const pct = Math.min((Math.abs(agg.gem_zscore) / maxZ) * 100, 100);
-                    const barColor = Math.abs(agg.gem_zscore) >= 1.0
+                    const heeftZ = agg.gem_zscore !== null && agg.gem_zscore !== undefined;
+                    const zVal = agg.gem_zscore as number;
+                    const pct = heeftZ ? Math.min((Math.abs(zVal) / maxZ) * 100, 100) : 0;
+                    const barColor = heeftZ && Math.abs(zVal) >= 1.0
                         ? '#2b6ca3'
                         : '#8c96a0';
 
@@ -341,7 +352,7 @@ export const MultiGebiedPage: React.FC = () => {
                             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', marginBottom: '0.25rem' }}>
                                 <span style={{ fontWeight: 500 }}>{thema}</span>
                                 <span style={{ color: 'var(--color-text-muted)', fontFamily: 'monospace', fontSize: '0.8rem' }}>
-                                    z̄={agg.gem_zscore > 0 ? '+' : ''}{agg.gem_zscore} · {agg.n_uitschieters} uitschieter{agg.n_uitschieters !== 1 ? 's' : ''}
+                                    {heeftZ ? `z̄=${zVal > 0 ? '+' : ''}${zVal}` : 'Neutraal'} · {agg.n_uitschieters} uitschieter{agg.n_uitschieters !== 1 ? 's' : ''}
                                 </span>
                             </div>
                             <div style={{ background: 'var(--color-bg-alt)', borderRadius: '4px', height: '10px', overflow: 'hidden' }}>
