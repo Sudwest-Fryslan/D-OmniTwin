@@ -69,6 +69,7 @@ Kwaliteit van leven,Gezondheid,Eigenkracht,Zelfregie,N,,
 Kwaliteit van leven,Gezondheid,Eigenkracht,Grip op leven,N,,
 Kwaliteit van leven,Gezondheid,Eigenkracht,Draad oppakken,N,,
 Kwaliteit van leven,Gezondheid,Eigenkracht,Hulp organiseren,N,,
+Kwaliteit van leven,Gezondheid,Eigenkracht,Matig/veel regie over het eigen leven,J,Gezondheid_per_wijk_en_buurt_2022 (CBS),Matig/veel regie over het eigen leven
 Kwaliteit van leven,Gezondheid,Functioneren,"Chronische aandoening, 2 of meer",N,,
 Kwaliteit van leven,Gezondheid,Functioneren,Beperking zicht,N,,
 Kwaliteit van leven,Gezondheid,Functioneren,Beperking gehoord,N,,
@@ -82,6 +83,7 @@ Kwaliteit van leven,Gezondheid,Leefstijl,Overmatig drinken,J,Gezondheid_per_wijk
 Kwaliteit van leven,Gezondheid,Leefstijl,Alcohol,J,Gezondheid_per_wijk_en_buurt_2022 (CBS),Drinker
 Kwaliteit van leven,Gezondheid,Leefstijl,Overgewicht,J,Gezondheid_per_wijk_en_buurt_2022 (CBS),Overgewicht
 Kwaliteit van leven,Gezondheid,Leefstijl,Bewegen,J,Gezondheid_per_wijk_en_buurt_2022 (CBS),Voldoet aan beweegrichtlijn
+Kwaliteit van leven,Gezondheid,Leefstijl,Voldoet aan de alcoholrichtlijn,J,Gezondheid_per_wijk_en_buurt_2022 (CBS),Voldoet aan de alcoholrichtlijn
 Kwaliteit van leven,Meedoen,Deelname,Levensbeschouwing,N,,
 Kwaliteit van leven,Meedoen,Deelname,Wijkgebouw,N,,
 Kwaliteit van leven,Meedoen,Deelname,Uitgaan,N,,
@@ -100,6 +102,7 @@ Kwaliteit van leven,Meedoen,Netwerk,Voldoende,N,,
 Kwaliteit van leven,Meedoen,Netwerk,Echt praten,N,,
 Kwaliteit van leven,Meedoen,Netwerk,Hulp vragen,N,,
 Kwaliteit van leven,Meedoen,Netwerk,Eenzaamheid,J,Gezondheid_per_wijk_en_buurt_2022 (CBS),Eenzaam
+Kwaliteit van leven,Meedoen,Netwerk,Krijgt steun van anderen,J,Gezondheid_per_wijk_en_buurt_2022 (CBS),Krijgt steun van anderen
 Kwaliteit van leven,Meedoen,Netwerk,Meedoen,N,,
 Kwaliteit sociale leefomgeving,Voorzieningen,Sociaal culturele,Zwembad,J,"Nabijheid voorzieningen; afstand locatie, wijk- en buurtcijfers (CBS)",Afstand tot zwembad
 Kwaliteit sociale leefomgeving,Voorzieningen,Sociaal culturele,Bibliotheek,J,"Nabijheid voorzieningen; afstand locatie, wijk- en buurtcijfers (CBS)",Afstand tot bibliotheek
@@ -216,6 +219,13 @@ Samenstelling,Bevolking,Sociaal economische status,laag,J,Kerncijfers_wijken_en_
 Samenstelling,Bevolking,Sociaal economische status,zzp'ers,J,Arbeidsdeelname_wijken_en_buurten_2022 (CBS),Zelfstandige
 Samenstelling,Bevolking,Sociaal economische status,werkzamen,J,Arbeidsdeelname_wijken_en_buurten_2022 (CBS),Werknemer
 Samenstelling,Bevolking,Sociaal economische status,potentiële,N,,
+Samenstelling,Bevolking,Sociaal economische status,SES-WOA totaalscore,J,"Sociaal-economische status; scores per wijk en buurt (CBS)",SES-WOA totaalscore
+Samenstelling,Bevolking,Sociaal economische status,SES-WOA deelscore financiële welvaart,J,"Sociaal-economische status; scores per wijk en buurt (CBS)",SES-WOA deelscore financiële welvaart
+Samenstelling,Bevolking,Sociaal economische status,SES-WOA deelscore opleidingsniveau,J,"Sociaal-economische status; scores per wijk en buurt (CBS)",SES-WOA deelscore opleidingsniveau
+Samenstelling,Bevolking,Sociaal economische status,SES-WOA deelscore arbeidsverleden,J,"Sociaal-economische status; scores per wijk en buurt (CBS)",SES-WOA deelscore arbeidsverleden
+Samenstelling,Bevolking,Sociaal economische status,Afgelopen 4 jaar voortdurend werkzaam,J,"Sociaal-economische status; scores per wijk en buurt (CBS)",Afgelopen 4 jaar voortdurend werkzaam
+Samenstelling,Bevolking,Sociaal economische status,Afgelopen 4 jaar niet voortdurend werkzaam,J,"Sociaal-economische status; scores per wijk en buurt (CBS)",Afgelopen 4 jaar niet voortdurend werkzaam
+Samenstelling,Bevolking,Sociaal economische status,Afgelopen 4 jaar niet werkzaam,J,"Sociaal-economische status; scores per wijk en buurt (CBS)",Afgelopen 4 jaar niet werkzaam
 Kwaliteit fysieke leefomgeving,Openbare ruimte,Klimaat,Gemiddeld Laagste Grondwaterstand,J,KEA,
 Kwaliteit fysieke leefomgeving,Openbare ruimte,Klimaat,Verandering GLG nu t.o.v. 2050,J,"KEA, GLG 2050 Hoog",
 Kwaliteit fysieke leefomgeving,Openbare ruimte,Klimaat,Oppervlakte verharding (openbare ruimte),N,BGT,

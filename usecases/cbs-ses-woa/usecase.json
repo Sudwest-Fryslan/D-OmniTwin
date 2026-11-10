@@ -1,0 +1,149 @@
+{
+  "specificatie": "1.0",
+  "naam": "cbs-ses-woa",
+  "id": "TC-07-027",
+  "versie": "0.1.0",
+  "titel": "CBS SES-WOA (welvaart, opleiding en arbeidsverleden) per buurt via de laad-API",
+  "vraag": "Ik wil de sociaal-economische statusscores (SES-WOA totaalscore en deelscores financiële welvaart, opleidingsniveau en arbeidsverleden) en het 4-jaars arbeidsverleden per buurt in D-OmniTwin, met de meerjarige ontwikkeling sinds 2014.",
+  "gebruiker": "beheerder D-OmniTwin",
+  "status": "actief",
+  "afhankelijk_van": [
+    "cbs-gebiedsindelingen"
+  ],
+  "actoren": [
+    {
+      "naam": "beheerder",
+      "soort": "gebruiker",
+      "rollen": [
+        "beheerder"
+      ],
+      "omschrijving": "beheerder van D-OmniTwin: registreert de datasets"
+    },
+    {
+      "naam": "etl-open-data",
+      "soort": "machineclient",
+      "rollen": [
+        "dataset:cbs-ses-woa-definities:laden",
+        "dataset:cbs-ses-woa-buurten:laden"
+      ],
+      "omschrijving": "ETL voor open bronnen: levert alleen de eigen datasets"
+    },
+    {
+      "naam": "lezer",
+      "soort": "gebruiker",
+      "rollen": [
+        "lezer"
+      ],
+      "omschrijving": "ingelogde gebruiker: leest de waarden op de kaart en via PostgREST"
+    }
+  ],
+  "rechten": [
+    "realm-rol beheerder (registreren)",
+    "dataset:cbs-ses-woa-definities:laden",
+    "dataset:cbs-ses-woa-buurten:laden",
+    "realm-rol lezer"
+  ],
+  "datasets": [
+    {
+      "id": "cbs-ses-woa-definities",
+      "route": "laden",
+      "registratie": "datasets/cbs-ses-woa-definities.json",
+      "profiel": "definities",
+      "rol": "dataset:cbs-ses-woa-definities:laden",
+      "client": "etl-open-data",
+      "prioriteit": "Must",
+      "bron": "indicatordefinities voor CBS StatLine 86092NED"
+    },
+    {
+      "id": "cbs-ses-woa-buurten",
+      "route": "laden",
+      "registratie": "datasets/cbs-ses-woa-buurten.json",
+      "profiel": "waarnemingen",
+      "rol": "dataset:cbs-ses-woa-buurten:laden",
+      "client": "etl-open-data",
+      "prioriteit": "Must",
+      "bron": "CBS StatLine 86092NED via opendata.cbs.nl (open, CC BY 4.0)",
+      "verwacht": {
+        "regels": "7 indicatoren voor de buurten in Fryslân, peiljaren 2014–2023",
+        "kwaliteit": "definitief"
+      }
+    }
+  ],
+  "controles": [
+    {
+      "type": "aantal",
+      "dataset": "cbs-ses-woa-definities",
+      "resource": "indicatoren",
+      "gelijk": 7
+    },
+    {
+      "type": "aantal",
+      "dataset": "cbs-ses-woa-buurten",
+      "minimaal": 35000,
+      "omschrijving": "7 SES-WOA en arbeidsverleden-indicatoren voor de buurten in Fryslân, 2014–2023 (nu 37.919)"
+    },
+    {
+      "type": "api",
+      "pad": "/api/data/v1/gebied_data?gebied_id=eq.BU19001700&indicator_uuid=eq.1c12fa21-cabd-5f2a-8cf6-fcc7a651b59e&select=jaar,waarde,bron",
+      "anoniem": true,
+      "minimaal_aantal": 5,
+      "uuid": "1c12fa21-cabd-5f2a-8cf6-fcc7a651b59e",
+      "omschrijving": "SES-WOA totaalscore in Makkum over meerdere jaren via PostgREST zonder sessie"
+    },
+    {
+      "type": "recht",
+      "actor": "beheerder",
+      "actie": "registreren",
+      "toegestaan": true,
+      "omschrijving": "de beheerder mag datasets registreren"
+    },
+    {
+      "type": "recht",
+      "actor": "etl-open-data",
+      "actie": "leveren",
+      "dataset": "cbs-ses-woa-buurten",
+      "toegestaan": true,
+      "omschrijving": "etl-open-data voor cbs-ses-woa mag de eigen dataset leveren"
+    },
+    {
+      "type": "recht",
+      "actor": "etl-open-data",
+      "actie": "leveren",
+      "dataset": "politie-misdrijven-buurten",
+      "toegestaan": false,
+      "omschrijving": "etl-open-data voor cbs-ses-woa mag een andere dataset niet leveren (403)"
+    },
+    {
+      "type": "recht",
+      "actor": "lezer",
+      "actie": "leveren",
+      "dataset": "cbs-ses-woa-buurten",
+      "toegestaan": false,
+      "omschrijving": "een lezer mag niet laden (403)"
+    }
+  ],
+  "bewijs": {
+    "stappen": [
+      {
+        "id": "kaart",
+        "actie": "kaart",
+        "gebied": "BU19001700",
+        "indicator": "1c12fa21-cabd-5f2a-8cf6-fcc7a651b59e",
+        "omschrijving": "SES-WOA totaalscore per buurt in Súdwest-Fryslân (Makkum geselecteerd)"
+      },
+      {
+        "id": "levering",
+        "actie": "levering",
+        "dataset": "cbs-ses-woa-buurten",
+        "omschrijving": "Leveringsstatus van CBS SES-WOA per buurt (laad-API)",
+        "bevat": [
+          "gepubliceerd"
+        ]
+      }
+    ]
+  },
+  "bekende_afwijkingen": [
+    "Buurten met weinig particuliere huishoudens zijn door het CBS onderdrukt om privacyredenen en ontbreken daardoor in de levering.",
+    "Reekslengte in CBS StatLine 86092NED loopt van 2014 tot en met 2023 (peiljaar 2024 nog niet gepubliceerd door CBS)."
+  ]
+}

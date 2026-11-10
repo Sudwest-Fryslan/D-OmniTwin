@@ -82,7 +82,7 @@ PLAN_[beschrijvende-naam-kebab-case].md
 |----|------|--------|
 | [TC-06-001](./06-integratie-e2e/TC-06-001_beleidsadviseur-ijsselmeerkust.md) | Beleidsadviseur — IJsselmeerkust & Wadden | ❓ |
 | [TC-06-002](./06-integratie-e2e/TC-06-002_multi-gebiedsdossier.md) | Multi-Gebiedsdossier — Zones-analyse | 📋 Nog te implementeren |
-| [TC-06-003](./gebiedsagenda_ijselmeerkust/TC-06-003_gebiedsagenda_ijsselmeerkust_usecase.md) | Integraal Gebiedsgericht Werken — IJsselmeergebied-Wadden | 🧪 Toetsbaar |
+| [TC-06-003](./gebiedsagenda_ijselmeerkust/TC-06-003_gebiedsagenda_ijsselmeerkust_usecase.md) ([use case](../../usecases/gebiedsagenda-ijsselmeerkust/README.md)) | Integraal Gebiedsgericht Werken — IJsselmeergebied-Wadden | 🧪 Toetsbaar |
 | [TC-06-004](./06-integratie-e2e/TC-06-004_chat-ai-en-beleidsadviseur-bolsward.md) | Chat (AI) en beleidsadviseur — Bolsward-Zuidoost | ✅ (stap 1-4 met LLM) |
 | [TC-06-005](../../usecases/energiearmoede/README.md) | Use case energiearmoede (Bolsward) | ⚠️ |
 | [TC-06-006](../../usecases/hittestress/README.md) | Use case hittestress (Bolsward) | ⚠️ |

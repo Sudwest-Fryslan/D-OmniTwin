@@ -1,0 +1,46 @@
+{
+  "id": "cbs-ses-woa-definities",
+  "bronId": "cbs-ses-woa",
+  "beschrijving": {
+    "@context": "https://data.overheid.nl/dcat-ap-nl/context.jsonld",
+    "@type": "dcat:Dataset",
+    "dct:title": "CBS SES-WOA (86092NED) — indicatordefinities",
+    "dct:description": "Indicatordefinities voor de CBS SES-WOA totaalscore, deelscores (financiële welvaart, opleidingsniveau, arbeidsverleden) en 4-jaars arbeidsmarktdeelname uit CBS StatLine 86092NED.",
+    "dct:publisher": "https://www.cbs.nl/",
+    "dct:accessRights": "http://publications.europa.eu/resource/authority/access-right/PUBLIC",
+    "dct:license": "http://creativecommons.org/licenses/by/4.0/",
+    "dct:spatial": "https://identifier.overheid.nl/tooi/id/country/nl",
+    "dct:source": "https://opendata.cbs.nl/ODataFeed/odata/86092NED",
+    "dcat:landingPage": "https://opendata.cbs.nl/#/CBS/nl/dataset/86092NED/table",
+    "dcat:theme": [
+      "http://standaarden.overheid.nl/owms/terms/Economie"
+    ],
+    "dcat:keyword": [
+      "SES-WOA",
+      "sociaal-economische status",
+      "arbeidsverleden",
+      "CBS",
+      "definities"
+    ],
+    "dcat:contactPoint": {
+      "@type": "vcard:Organization",
+      "vcard:fn": "Functioneel beheer D-OmniTwin"
+    }
+  },
+  "laadprofiel": {
+    "profiel": "definities",
+    "plausibiliteit": {
+      "maxDalingProcent": 20
+    }
+  },
+  "bron": {
+    "adapter": "usecase-bestand",
+    "pad": "definities.json",
+    "omschrijving": "indicatordefinities voor CBS SES-WOA 86092NED (#497)"
+  },
+  "levering": {
+    "formaat": "datapackage",
+    "bestand": "cbs-ses-woa-definities.zip"
+  }
+}
+

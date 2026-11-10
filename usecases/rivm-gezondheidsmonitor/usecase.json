@@ -2,7 +2,7 @@
   "specificatie": "1.0",
   "naam": "rivm-gezondheidsmonitor",
   "id": "TC-07-021",
-  "versie": "0.2.0",
+  "versie": "0.3.0",
   "titel": "RIVM Gezondheidsmonitor per buurt via de laad-API",
   "vraag": "Ik wil de gezondheidscijfers per buurt (ervaren gezondheid, eenzaamheid, mantelzorg, vrijwilligerswerk, moeite met rondkomen, leefstijl) uit de Gezondheidsmonitor in D-OmniTwin, met de trend sinds 2012.",
   "gebruiker": "beheerder D-OmniTwin",
@@ -23,6 +23,7 @@
       "naam": "etl-open-data",
       "soort": "machineclient",
       "rollen": [
+        "dataset:rivm-gezondheid-definities:laden",
         "dataset:rivm-gezondheid-buurten:laden"
       ],
       "omschrijving": "ETL voor open bronnen: levert alleen de eigen datasets"
@@ -38,10 +39,20 @@
   ],
   "rechten": [
     "realm-rol beheerder (registreren)",
+    "dataset:rivm-gezondheid-definities:laden",
     "dataset:rivm-gezondheid-buurten:laden",
     "realm-rol lezer"
   ],
   "datasets": [
+    {
+      "id": "rivm-gezondheid-definities",
+      "route": "laden",
+      "registratie": "datasets/rivm-gezondheid-definities.json",
+      "profiel": "definities",
+      "rol": "dataset:rivm-gezondheid-definities:laden",
+      "client": "etl-open-data",
+      "bron": "aanvullende indicatordefinities voor StatLine 50150NED (uitbreiding TC-06-003)"
+    },
     {
       "id": "rivm-gezondheid-buurten",
       "route": "laden",
@@ -52,7 +63,7 @@
       "prioriteit": "Must",
       "bron": "RIVM StatLine 50150NED via dataderden.cbs.nl (open, CC BY 4.0)",
       "verwacht": {
-        "regels": "37.056 (11 indicatoren, buurten in Fryslân, peiljaren 2012-2024)",
+        "regels": "44.609 (15 indicatoren, buurten in Fryslân, peiljaren 2012-2024)",
         "kwaliteit": "geschat (modelberekening RIVM)"
       }
     }
@@ -60,9 +71,15 @@
   "controles": [
     {
       "type": "aantal",
+      "dataset": "rivm-gezondheid-definities",
+      "resource": "indicatoren",
+      "gelijk": 4
+    },
+    {
+      "type": "aantal",
       "dataset": "rivm-gezondheid-buurten",
-      "minimaal": 35000,
-      "omschrijving": "11 indicatoren voor de buurten in Fryslân, 5 peiljaren (nu 37.056)"
+      "minimaal": 43000,
+      "omschrijving": "15 indicatoren voor de buurten in Fryslân, 5 peiljaren (nu 44.609)"
     },
     {
       "type": "api",
@@ -145,7 +162,7 @@
     ]
   },
   "bekende_afwijkingen": [
-    "Indicator 'Gezondheid' is in de bron 'Hoog risico angststoornis of depressie' (naam uit de vroegere sample); de richting staat als hoger is beter, dat klopt niet (vervolg: definitie corrigeren).",
-    "2012 en 2016 hebben minder buurten (kleine buurten onderdrukt of niet berekend)."
+    "2012 en 2016 hebben minder buurten (kleine buurten onderdrukt of niet berekend).",
+    "Krijgt steun van anderen is in 50150NED alleen in 2024 opgenomen; Matig/veel regie ontbreekt in 2012 en 2022; Beperking ontbreekt in 2012 en 2016."
   ]
 }
