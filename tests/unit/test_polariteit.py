@@ -21,6 +21,8 @@ pytestmark = pytest.mark.unit
 V046 = Path(__file__).resolve().parents[2] / "db" / "migraties" / "V046__polariteit.sql"
 V048 = Path(__file__).resolve().parents[2] / "db" / "migraties" / "V048__polariteit_kompas_audit.sql"
 V049 = Path(__file__).resolve().parents[2] / "db" / "migraties" / "V049__polariteit_angst_depressie.sql"
+V050 = Path(__file__).resolve().parents[2] / "db" / "migraties" / "V050__groep2_kompas_en_ao.sql"
+V051 = Path(__file__).resolve().parents[2] / "db" / "migraties" / "V051__cbs_armoede_2024.sql"
 
 # (score_type, interpretatie_logica) -> polariteit
 GEVALLEN = [
@@ -129,3 +131,38 @@ def test_migratie_v049_polariteit_angst_depressie():
     syn_json = (root / "db/stuurdata/synoniemen.json").read_text(encoding="utf-8")
     assert "mentale gezondheid" in syn_json
     assert "Gezondheid" not in syn_json
+
+
+def test_migratie_v050_groep2_kompas_en_ao():
+    """V050 (#507): voegt Arbeidsongeschiktheid (AO) toe en koppelt AO + Netto arbeidsparticipatie in Kompas."""
+    sql = V050.read_text(encoding="utf-8")
+    assert "polariteit" in sql and "'lager_is_beter'" in sql
+    assert "8d4c7f51-e8e8-5576-af88-650cee66e899" in sql  # Arbeidsongeschiktheid (AO)
+    assert "b07f74eb-5117-4705-802c-597ba830d016" in sql  # Netto arbeidsparticipatie
+    assert "public." not in sql  # schema volgt search_path (#137)
+
+    root = V050.resolve().parents[2]
+    kompas_csv = (root / "db/stuurdata/kompas_hierarchie.csv").read_text(encoding="utf-8")
+    assert "Rondkomen,Werk,Netto arbeidsparticipatie,J," in kompas_csv
+    assert "Rondkomen,Werk,Arbeidsongeschiktheid (AO),J," in kompas_csv
+
+    syn_json = (root / "db/stuurdata/synoniemen.json").read_text(encoding="utf-8")
+    assert "Arbeidsongeschiktheid (AO)" in syn_json
+
+
+def test_migratie_v051_cbs_armoede_2024():
+    """V051 (#507): voegt nieuwe CBS-armoede-indicatoren (vanaf 2024) toe onder Rondkomen > Armoede."""
+    sql = V051.read_text(encoding="utf-8")
+    assert "polariteit" in sql and "'lager_is_beter'" in sql
+    assert "61b9c64b-9fc9-528c-ab91-fd39597c4080" in sql  # Personen in armoede
+    assert "66ff2a84-d859-5b72-b308-ef6fce09d820" in sql  # Personen tot 25% boven armoedegrens
+    assert "public." not in sql  # schema volgt search_path (#137)
+
+    root = V051.resolve().parents[2]
+    kompas_csv = (root / "db/stuurdata/kompas_hierarchie.csv").read_text(encoding="utf-8")
+    assert "Rondkomen,Armoede,Personen in armoede,J," in kompas_csv
+    assert "Rondkomen,Armoede,Personen tot 25% boven armoedegrens,J," in kompas_csv
+
+    syn_json = (root / "db/stuurdata/synoniemen.json").read_text(encoding="utf-8")
+    assert "Personen in armoede" in syn_json
+    assert "Personen tot 25% boven armoedegrens" in syn_json

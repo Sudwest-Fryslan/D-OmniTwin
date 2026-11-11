@@ -52,8 +52,10 @@ Eén mapping in het script (`MAPPING`): per indicator en per jaar de CBS-kolom. 
 | Woningvoorraad, Gemiddelde WOZ-waarde, Koopwoningen, Woningcorporatie bezit, Particulier huurbezit | 2019-2025 | percentages zoals CBS ze geeft |
 | Netto arbeidsparticipatie, Percentage werknemers, Percentage zelfstandigen, Inkomen per inwoner | 2019-2024 | |
 | Huishoudens met laag inkomen | 2019-2023 | na 2023 niet meer in de Kerncijfers |
+| Personen in armoede, Personen tot 25% boven armoedegrens | 2024 | nieuwe CBS-armoededefinitie (opvolger vanaf 2024; 2025/2026 nog niet gevuld bij CBS) |
 | Opleidingsniveau laag/middelbaar/hoog | 2019-2024 | vanaf 2023 heet het "basisonderwijs/vmbo/mbo1", "havo/vwo/mbo2-4", "hbo/wo"; mogelijke breuk in de reeks |
 | Participatiewet totaal | 2019-2025 | CBS: personen met bijstand |
+| Arbeidsongeschiktheid (AO) | 2019-2025 | CBS: personen met AO-uitkering (`aantal`) |
 | Personenauto's per huishouden / naar oppervlakte | 2019-2025 | |
 | Afstand tot huisarts, grote supermarkt, kinderdagverblijf, school | 2019-2025 | |
 
