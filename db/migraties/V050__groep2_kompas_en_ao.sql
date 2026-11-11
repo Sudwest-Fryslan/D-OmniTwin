@@ -12,59 +12,76 @@
 -- Idempotent en veilig op een lege database vóór load_sample.py (#137).
 -- ============================================================
 
-INSERT INTO indicatoren (
-    uuid,
-    naam,
-    code,
-    omschrijving,
-    eenheid,
-    polariteit,
-    score_type,
-    interpretatie_logica,
-    bron,
-    status,
-    ontologische_beschrijving,
-    beschrijving_ai,
-    is_actief
-)
-VALUES (
-    '8d4c7f51-e8e8-5576-af88-650cee66e899'::uuid,
-    'Arbeidsongeschiktheid (AO)',
-    'CBS_ARBEIDSONGESCHIKTHEID_AO',
-    'Aantal personen dat op de laatste dag van december een arbeidsongeschiktheidsuitkering ontvangt op grond van WAO, WAZ, Wajong of WIA (CBS Kerncijfers wijken en buurten, kolom PersonenPerSoortUitkeringAO). Personen met een uitkering in een instelling zijn meegeteld conform CBS-definitie.',
-    'aantal',
-    'lager_is_beter',
-    '+/-',
-    '-/+',
-    'CBS Kerncijfers wijken en buurten',
-    'O',
-    'De indicator "Arbeidsongeschiktheid (AO)" telt het aantal inwoners met een arbeidsongeschiktheidsuitkering (WAO, WAZ, Wajong of WIA) op de peildatum van 31 december per wijk en buurt, gebaseerd op CBS Kerncijfers wijken en buurten. Gemeenten en beleidsteams gebruiken dit cijfer samen met bijstandsuitkeringen en arbeidsparticipatie om uitval op de arbeidsmarkt en zorg-/inkomensondersteuning in buurten in beeld te brengen.',
-    'De indicator "Arbeidsongeschiktheid (AO)" telt het aantal inwoners met een arbeidsongeschiktheidsuitkering (WAO, WAZ, Wajong of WIA) op de peildatum van 31 december per wijk en buurt, gebaseerd op CBS Kerncijfers wijken en buurten.',
-    TRUE
-)
-ON CONFLICT (uuid) DO UPDATE SET
-    naam = EXCLUDED.naam,
-    eenheid = COALESCE(indicatoren.eenheid, EXCLUDED.eenheid),
-    polariteit = EXCLUDED.polariteit,
-    omschrijving = COALESCE(NULLIF(indicatoren.omschrijving, ''), EXCLUDED.omschrijving),
-    ontologische_beschrijving = COALESCE(NULLIF(indicatoren.ontologische_beschrijving, ''), EXCLUDED.ontologische_beschrijving),
-    beschrijving_ai = COALESCE(NULLIF(indicatoren.beschrijving_ai, ''), EXCLUDED.beschrijving_ai),
-    is_actief = TRUE;
-
 DO $$
 DECLARE
+    v_color_schema_id integer;
     v_config_id integer;
     v_titel_id integer;
     v_thema_id integer;
     v_onderdeel_id integer;
 BEGIN
+    SELECT id INTO v_color_schema_id
+      FROM color_schemas
+     WHERE id = 1
+     LIMIT 1;
+    IF v_color_schema_id IS NULL THEN
+        SELECT id INTO v_color_schema_id
+          FROM color_schemas
+         ORDER BY id
+         LIMIT 1;
+    END IF;
+
+    -- Op een verse installatie draaien migraties vóór load_sample.py (stuurdata_seed.sql);
+    -- dan vult load_sample.py --stap definities daarna color_schemas, indicatoren en Kompas.
+    IF v_color_schema_id IS NULL THEN
+        RETURN;
+    END IF;
+
+    INSERT INTO indicatoren (
+        uuid,
+        naam,
+        code,
+        omschrijving,
+        eenheid,
+        polariteit,
+        score_type,
+        interpretatie_logica,
+        color_schema_id,
+        bron,
+        status,
+        ontologische_beschrijving,
+        beschrijving_ai,
+        is_actief
+    )
+    VALUES (
+        '8d4c7f51-e8e8-5576-af88-650cee66e899'::uuid,
+        'Arbeidsongeschiktheid (AO)',
+        'CBS_ARBEIDSONGESCHIKTHEID_AO',
+        'Aantal personen dat op de laatste dag van december een arbeidsongeschiktheidsuitkering ontvangt op grond van WAO, WAZ, Wajong of WIA (CBS Kerncijfers wijken en buurten, kolom PersonenPerSoortUitkeringAO). Personen met een uitkering in een instelling zijn meegeteld conform CBS-definitie.',
+        'aantal',
+        'lager_is_beter',
+        '+/-',
+        '-/+',
+        v_color_schema_id,
+        'CBS Kerncijfers wijken en buurten',
+        'O',
+        'De indicator "Arbeidsongeschiktheid (AO)" telt het aantal inwoners met een arbeidsongeschiktheidsuitkering (WAO, WAZ, Wajong of WIA) op de peildatum van 31 december per wijk en buurt, gebaseerd op CBS Kerncijfers wijken en buurten. Gemeenten en beleidsteams gebruiken dit cijfer samen met bijstandsuitkeringen en arbeidsparticipatie om uitval op de arbeidsmarkt en zorg-/inkomensondersteuning in buurten in beeld te brengen.',
+        'De indicator "Arbeidsongeschiktheid (AO)" telt het aantal inwoners met een arbeidsongeschiktheidsuitkering (WAO, WAZ, Wajong of WIA) op de peildatum van 31 december per wijk en buurt, gebaseerd op CBS Kerncijfers wijken en buurten.',
+        TRUE
+    )
+    ON CONFLICT (uuid) DO UPDATE SET
+        naam = EXCLUDED.naam,
+        eenheid = COALESCE(indicatoren.eenheid, EXCLUDED.eenheid),
+        polariteit = EXCLUDED.polariteit,
+        omschrijving = COALESCE(NULLIF(indicatoren.omschrijving, ''), EXCLUDED.omschrijving),
+        ontologische_beschrijving = COALESCE(NULLIF(indicatoren.ontologische_beschrijving, ''), EXCLUDED.ontologische_beschrijving),
+        beschrijving_ai = COALESCE(NULLIF(indicatoren.beschrijving_ai, ''), EXCLUDED.beschrijving_ai),
+        is_actief = TRUE;
+
     SELECT id INTO v_config_id
       FROM kompas_configuraties
      WHERE naam = 'Volledig Kompas'
      LIMIT 1;
-
-    -- Op een verse installatie draaien migraties vóór load_sample.py; dan maakt load_sample.py
-    -- het profiel daarna aan vanuit db/stuurdata/kompas_hierarchie.csv.
     IF v_config_id IS NULL THEN
         RETURN;
     END IF;
@@ -108,4 +125,3 @@ BEGIN
      )
     ON CONFLICT DO NOTHING;
 END $$;
-
