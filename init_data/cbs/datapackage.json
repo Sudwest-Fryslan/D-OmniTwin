@@ -45,7 +45,7 @@
   ],
   "bronvermelding": "Centraal Bureau voor de Statistiek (CBS), Kerncijfers wijken en buurten 2019-2026. CC BY 4.0.",
   "geometrie_jaar": 2024,
-  "gecontroleerd": "2026-10-02",
+  "gecontroleerd": "2026-11-11",
   "tabellen": {
     "2019": {
       "tabel": "84583NED",
@@ -587,6 +587,30 @@
       },
       "afgeleid": null
     },
+    "Personen in armoede": {
+      "uuid": "61b9c64b-9fc9-528c-ab91-fd39597c4080",
+      "jaren": [
+        2024
+      ],
+      "kolommen": {
+        "2024": "PersonenInArmoede_81",
+        "2025": "PersonenInArmoede_81",
+        "2026": "PersonenInArmoede_82"
+      },
+      "afgeleid": null
+    },
+    "Personen tot 25% boven armoedegrens": {
+      "uuid": "66ff2a84-d859-5b72-b308-ef6fce09d820",
+      "jaren": [
+        2024
+      ],
+      "kolommen": {
+        "2024": "PersonenTot25BovenArmoedegrens_82",
+        "2025": "PersonenTot25BovenArmoedegrens_82",
+        "2026": "PersonenTot25BovenArmoedegrens_83"
+      },
+      "afgeleid": null
+    },
     "Opleidingsniveau laag": {
       "uuid": "c9719a07-57a5-48cf-8f93-b6f932aead51",
       "jaren": [
@@ -676,6 +700,29 @@
       },
       "afgeleid": null
     },
+    "Arbeidsongeschiktheid (AO)": {
+      "uuid": "8d4c7f51-e8e8-5576-af88-650cee66e899",
+      "jaren": [
+        2019,
+        2020,
+        2021,
+        2022,
+        2023,
+        2024,
+        2025
+      ],
+      "kolommen": {
+        "2019": "PersonenPerSoortUitkeringAO_84",
+        "2020": "PersonenPerSoortUitkeringAO_84",
+        "2021": "PersonenPerSoortUitkeringAO_84",
+        "2022": "PersonenPerSoortUitkeringAO_84",
+        "2023": "PersonenPerSoortUitkeringAO_93",
+        "2024": "PersonenPerSoortUitkeringAO_88",
+        "2025": "PersonenPerSoortUitkeringAO_88",
+        "2026": "PersonenPerSoortUitkeringAO_89"
+      },
+      "afgeleid": null
+    },
     "Personenauto's per huishouden": {
       "uuid": "461d542b-b8be-4510-9dd0-5ba554b818cb",
       "jaren": [
@@ -685,7 +732,8 @@
         2022,
         2023,
         2024,
-        2025
+        2025,
+        2026
       ],
       "kolommen": {
         "2019": "PersonenautoSPerHuishouden_102",
@@ -708,7 +756,8 @@
         2022,
         2023,
         2024,
-        2025
+        2025,
+        2026
       ],
       "kolommen": {
         "2019": "PersonenautoSNaarOppervlakte_103",
@@ -831,7 +880,8 @@
         "teller": "65+ jaar",
         "noemer": "Inwoners",
         "factor": 100,
-        "eenheid": "%"
+        "eenheid": "%",
+        "logica": "neutraal"
       }
     },
     "Eenpersoonshuishoudens (%)": {
@@ -864,22 +914,23 @@
         "teller": "80 jaar of ouder",
         "noemer": "Inwoners",
         "factor": 100,
-        "eenheid": "%"
+        "eenheid": "%",
+        "logica": "neutraal"
       }
     }
   },
   "controle": {
     "toelichting": "Omvang van een volledige download (heel Fryslân), om een nieuwe download mee te vergelijken.",
-    "rijen_totaal": 188606,
+    "rijen_totaal": 197051,
     "rijen_per_jaar": {
-      "2019": 25551,
-      "2020": 25585,
-      "2021": 25605,
-      "2022": 25629,
-      "2023": 24781,
-      "2024": 25355,
-      "2025": 22200,
-      "2026": 13900
+      "2019": 26335,
+      "2020": 26365,
+      "2021": 26388,
+      "2022": 26413,
+      "2023": 25566,
+      "2024": 27657,
+      "2025": 23051,
+      "2026": 15276
     }
   },
   "codecontrole": {
@@ -911,14 +962,14 @@
       }
     },
     "weggevallen_waarden": {
-      "2019": 909,
-      "2020": 909,
-      "2021": 910,
-      "2022": 943,
-      "2023": 925,
+      "2019": 938,
+      "2020": 938,
+      "2021": 939,
+      "2022": 972,
+      "2023": 954,
       "2024": 0,
-      "2025": 68,
-      "2026": 59
+      "2025": 70,
+      "2026": 61
     },
     "weggevallen_codes": {
       "2019": {

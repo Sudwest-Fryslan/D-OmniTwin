@@ -116,10 +116,13 @@ INDICATOREN = {
     "Percentage zelfstandigen": ("f8d0d890-3975-4183-9555-06d673c4657f", "percentage", "pos_is_pos", "Gebruik"),
     "Inkomen per inwoner": ("9c035f53-75a5-43eb-8496-22c4c6f08d6b", "x 1 000 euro", "pos_is_pos", ""),
     "Huishoudens met laag inkomen": ("3dd70913-391e-4d5f-a121-d17c8b466372", "%", "-/+", ""),
+    "Personen in armoede": ("61b9c64b-9fc9-528c-ab91-fd39597c4080", "%", "-/+", ""),
+    "Personen tot 25% boven armoedegrens": ("66ff2a84-d859-5b72-b308-ef6fce09d820", "%", "-/+", ""),
     "Opleidingsniveau laag": ("c9719a07-57a5-48cf-8f93-b6f932aead51", "aantal", "pos_is_pos", ""),
     "Opleidingsniveau middelbaar": ("1fa5df89-13e3-424f-9eba-9372cae42896", "aantal", "pos_is_pos", ""),
     "Opleidingsniveau hoog": ("56f32b9a-bc45-4be1-9e1c-c2668c2e2a32", "aantal", "pos_is_pos", ""),
     "Participatiewet totaal": ("aa5ce990-a43e-439a-9e98-69899321cf40", "aantal", "-/+", ""),
+    "Arbeidsongeschiktheid (AO)": ("8d4c7f51-e8e8-5576-af88-650cee66e899", "aantal", "-/+", ""),
     "Personenauto's per huishouden": ("461d542b-b8be-4510-9dd0-5ba554b818cb", "per huishouden", "pos_is_pos", ""),
     "Personenauto's naar oppervlakte": ("88192b70-faa9-4108-a473-302aa0f624a9", "per km²", "pos_is_pos", ""),
     "Afstand tot huisarts": ("1b28d9ef-f7ff-4609-9ef7-7ab8a9b6cba7", "km", "-/+", ""),
@@ -192,6 +195,11 @@ MAPPING = {
     "Inkomen per inwoner": _reeks("GemiddeldInkomenPerInwoner", 72, 72, 72, 72, 81, 78, 78, 79),
     # Na 2023 niet meer in de Kerncijfers
     "Huishoudens met laag inkomen": _reeks("HuishoudensMetEenLaagInkomen", 78, 78, 78, 78, 87, None, None, None),
+    # Nieuwe CBS-armoededefinitie vanaf 2024
+    "Personen in armoede": _reeks("PersonenInArmoede", None, None, None, None, None, 81, 81, 82),
+    "Personen tot 25% boven armoedegrens": _reeks(
+        "PersonenTot25BovenArmoedegrens", None, None, None, None, None, 82, 82, 83
+    ),
     # Vanaf 2023 heet het onderwijsniveau anders (basis/vmbo/mbo1, havo/vwo/mbo2-4, hbo/wo): zelfde indeling
     "Opleidingsniveau laag": {
         **_reeks("OpleidingsniveauLaag", 64, 64, 64, 64, None, None, None, None),
@@ -206,6 +214,7 @@ MAPPING = {
         **_reeks("HboWo", None, None, None, None, 72, 69, 69, 70),
     },
     "Participatiewet totaal": _reeks("PersonenPerSoortUitkeringBijstand", 83, 83, 83, 83, 92, 87, 87, 88),
+    "Arbeidsongeschiktheid (AO)": _reeks("PersonenPerSoortUitkeringAO", 84, 84, 84, 84, 93, 88, 88, 89),
     "Personenauto's per huishouden": {
         **_reeks("PersonenautoSPerHuishouden", 102, 103, 103, 103, 112, None, None, None),
         **_reeks("PersonenautoSParticulierenPerHh", None, None, None, None, None, 107, 107, 108),
@@ -223,6 +232,8 @@ MAPPING = {
 # Jaren waarin CBS een variabele niet (meer) publiceert; de unittest eist dat MAPPING + dit = alle jaren.
 NIET_GEPUBLICEERD = {
     "Huishoudens met laag inkomen": {2024, 2025, 2026},  # vervallen in de Kerncijfers na 2023
+    "Personen in armoede": {2019, 2020, 2021, 2022, 2023},  # nieuwe CBS-armoededefinitie vanaf 2024
+    "Personen tot 25% boven armoedegrens": {2019, 2020, 2021, 2022, 2023},  # idem
     "80 jaar of ouder": {2019, 2020, 2021, 2022, 2023, 2024, 2025},  # pas vanaf 2026 apart (daarvoor 65+)
 }
 

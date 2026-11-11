@@ -50,6 +50,8 @@ Kwaliteit van leven,Rondkomen,Werk,Werkloze jongeren,N,,
 Kwaliteit van leven,Rondkomen,Werk,Werkloos totaal,N,,
 Kwaliteit van leven,Rondkomen,Werk,"Werkzamen deeltd 0,3+",N,,
 Kwaliteit van leven,Rondkomen,Werk,Werkzamen,N,,
+Kwaliteit van leven,Rondkomen,Werk,Netto arbeidsparticipatie,J,Kerncijfers wijken en buurten (CBS),Netto arbeidsparticipatie
+Kwaliteit van leven,Rondkomen,Werk,Arbeidsongeschiktheid (AO),J,Kerncijfers wijken en buurten (CBS),Arbeidsongeschiktheid (AO)
 Kwaliteit van leven,Rondkomen,Armoede,Minima personen,N,,
 Kwaliteit van leven,Rondkomen,Armoede,Minima huishouden,N,,
 Kwaliteit van leven,Rondkomen,Armoede,Minima kinderen,N,,
@@ -59,6 +61,8 @@ Kwaliteit van leven,Rondkomen,Armoede,Participatiewet 5+ jaar,N,,
 Kwaliteit van leven,Rondkomen,Armoede,Financiële buffer,N,,
 Kwaliteit van leven,Rondkomen,Armoede,Moeite met rondkomen,J,Gezondheid_per_wijk_en_buurt_2022 (CBS),Moeite met rondkomen
 Kwaliteit van leven,Rondkomen,Armoede,Verwachting inkomen,N,,
+Kwaliteit van leven,Rondkomen,Armoede,Personen in armoede,J,Kerncijfers wijken en buurten (CBS),Personen in armoede
+Kwaliteit van leven,Rondkomen,Armoede,Personen tot 25% boven armoedegrens,J,Kerncijfers wijken en buurten (CBS),Personen tot 25% boven armoedegrens
 Kwaliteit van leven,Opgroeien,Onderwijs,Achterstand leerlingen,J,Achterstandsscores_per_school_2024 (CBS),Achterstand leerlingen
 Kwaliteit van leven,Opgroeien,Onderwijs,Niveau VO,N,,
 Kwaliteit van leven,Opgroeien,Onderwijs,Opleiding jonge volwassenen,N,,

@@ -2617,5 +2617,38 @@
     "bron": "CBS Kerncijfers wijken en buurten",
     "score_type": "+/+",
     "heeft_data": true
+  },
+  {
+    "naam": "Arbeidsongeschiktheid (AO)",
+    "code": "CBS_ARBEIDSONGESCHIKTHEID_AO",
+    "eenheid": "aantal",
+    "titel": "Kwaliteit van leven",
+    "thema": "Rondkomen",
+    "onderdeel": "Werk",
+    "bron": "CBS Kerncijfers wijken en buurten",
+    "score_type": "+/-",
+    "heeft_data": true
+  },
+  {
+    "naam": "Personen in armoede",
+    "code": "CBS_PERSONEN_IN_ARMOEDE",
+    "eenheid": "%",
+    "titel": "Kwaliteit van leven",
+    "thema": "Rondkomen",
+    "onderdeel": "Armoede",
+    "bron": "CBS Kerncijfers wijken en buurten",
+    "score_type": "+/-",
+    "heeft_data": true
+  },
+  {
+    "naam": "Personen tot 25% boven armoedegrens",
+    "code": "CBS_PERSONEN_TOT_25_BOVEN_ARMOEDEGRENS",
+    "eenheid": "%",
+    "titel": "Kwaliteit van leven",
+    "thema": "Rondkomen",
+    "onderdeel": "Armoede",
+    "bron": "CBS Kerncijfers wijken en buurten",
+    "score_type": "+/-",
+    "heeft_data": true
   }
 ]
