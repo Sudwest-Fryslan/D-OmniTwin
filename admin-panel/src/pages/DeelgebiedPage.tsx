@@ -70,7 +70,7 @@ interface ThemaGroup {
 interface KwadrantGroup {
     kwadrant_naam: string;
     kwadrant_kleur: string;
-    gem_zscore: number;
+    gem_zscore: number | null;
     n_indicatoren: number;
     n_uitschieters: number;
     n_aandachtspunten: number;
@@ -792,8 +792,16 @@ export const DeelgebiedPage: React.FC = () => {
                     gap: '1rem'
                 }}>
                     {kwadranten.map(kw => {
-                        const isPos = kw.gem_zscore > 0;
-                        const zColor = Math.abs(kw.gem_zscore) >= 1.0 ? '#2b6ca3' : Math.abs(kw.gem_zscore) >= 0.5 ? '#d4b483' : '#8c96a0';
+                        const gemZscore = kw.gem_zscore;
+                        const heeftGemZscore = gemZscore !== null && gemZscore !== undefined;
+                        const isPos = heeftGemZscore && gemZscore > 0;
+                        const zColor = !heeftGemZscore
+                            ? '#475569'
+                            : Math.abs(gemZscore) >= 1.0
+                              ? '#2b6ca3'
+                              : Math.abs(gemZscore) >= 0.5
+                                ? '#d4b483'
+                                : '#8c96a0';
 
                         return (
                             <div
@@ -832,7 +840,7 @@ export const DeelgebiedPage: React.FC = () => {
                                         background: zColor,
                                         color: 'white'
                                     }}>
-                                        {isPos ? '+' : ''}{kw.gem_zscore.toFixed(2)} Z
+                                        {heeftGemZscore ? `${isPos ? '+' : ''}${gemZscore.toFixed(2)} Z` : 'Neutraal'}
                                     </span>
                                 </div>
 
@@ -905,7 +913,10 @@ export const DeelgebiedPage: React.FC = () => {
                                     color: 'var(--color-text-muted)',
                                     marginLeft: 'auto'
                                 }}>
-                                    {kw.themas?.length || 0} thema's | Gemiddeld {kw.gem_zscore > 0 ? '+' : ''}{kw.gem_zscore.toFixed(2)} Z
+                                    {kw.themas?.length || 0} thema's |{' '}
+                                    {kw.gem_zscore !== null && kw.gem_zscore !== undefined
+                                        ? `Gemiddeld ${kw.gem_zscore > 0 ? '+' : ''}${kw.gem_zscore.toFixed(2)} Z`
+                                        : 'Beschrijvend (geen normatief gemiddelde)'}
                                 </span>
                             </div>
 
