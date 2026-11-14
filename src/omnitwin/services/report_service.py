@@ -6,6 +6,7 @@ Berekent Z-scores, gemiddelden en filtert de belangrijkste uitschieters
 om een strakke JSON payload voor de LLM (Fase 2) of frontend te genereren.
 """
 
+import html
 from typing import Any
 
 from sqlalchemy import text
@@ -419,9 +420,12 @@ class ReportDataService:
         else:
             return "#1a3d5c"  # donkerblauw — extreem afwijkend
 
-    def _determine_impact(self, z_score: float, score_type: str) -> str:
-        """Bepaal de impact-tekst op basis van z-score en score_type."""
-        if polariteit.uit_oud(score_type) == polariteit.HOGER_IS_BETER:
+    def _determine_impact(self, z_score: float, score_type: str, polariteit_waarde: str | None = None) -> str:
+        """Bepaal de impact-tekst op basis van z-score en score_type of polariteit."""
+        pol = polariteit_waarde or polariteit.uit_oud(score_type)
+        if pol == polariteit.NEUTRAAL:
+            return "neutraal"
+        if pol == polariteit.HOGER_IS_BETER:
             return "bovengemiddeld positief" if z_score > 0 else "ondergemiddeld negatief"
         else:  # lager is beter (#120)
             return "bovengemiddeld negatief" if z_score > 0 else "ondergemiddeld positief"
@@ -1235,7 +1239,9 @@ class ReportDataService:
             JOIN gebieden g        ON td.gebied_id = g.id
             JOIN indicatoren i     ON td.indicator_uuid = i.uuid
             JOIN v_kompas_hierarchie vkh
-                                   ON i.uuid = vkh.indicator_uuid AND vkh.config_id = 1
+                                   ON i.uuid = vkh.indicator_uuid
+            JOIN kompas_configuraties kc
+                                   ON kc.id = vkh.config_id AND kc.is_standaard = TRUE
             WHERE i.naam != 'Inwoners'
             ORDER BY vkh.titel_naam, vkh.thema_naam, i.naam
         """)
@@ -1310,8 +1316,14 @@ class ReportDataService:
             verschil_pct = (verschil / avg_waarde * 100.0) if avg_waarde != 0 else 0.0
 
             score_type = first_pt["score_type"]
-            impact = self._determine_impact(z_score, score_type)
-            is_ongunstig = "negatief" in impact
+            pol = first_pt.get("polariteit") or polariteit.uit_oud(score_type)
+            is_neutraal = (kw_naam == "Samenstelling") or (pol == polariteit.NEUTRAAL)
+            if is_neutraal:
+                impact = "neutraal"
+                is_ongunstig = False
+            else:
+                impact = self._determine_impact(z_score, score_type, pol)
+                is_ongunstig = "negatief" in impact
             kleur = self._get_zscore_kleur(z_abs, is_ongunstig)
 
             # Sorteer drilldown buurten op afwijking van referentie
@@ -1371,8 +1383,22 @@ class ReportDataService:
                 alle_kw_indicatoren.extend(ind_list)
 
                 # Splits in aandachtspunten (ongunstig) en kansen (gunstig)
-                aandachtspunten = [i for i in ind_list if i["is_ongunstig"]]
-                kansen = [i for i in ind_list if not i["is_ongunstig"]]
+                if kw_naam == "Samenstelling":
+                    aandachtspunten = []
+                    kansen = []
+                else:
+                    aandachtspunten = [
+                        i
+                        for i in ind_list
+                        if i["is_ongunstig"]
+                        and (i.get("polariteit") or polariteit.uit_oud(i.get("score_type"))) != polariteit.NEUTRAAL
+                    ]
+                    kansen = [
+                        i
+                        for i in ind_list
+                        if not i["is_ongunstig"]
+                        and (i.get("polariteit") or polariteit.uit_oud(i.get("score_type"))) != polariteit.NEUTRAAL
+                    ]
 
                 # Sorteer op absolute z-score dalend
                 aandachtspunten.sort(key=lambda x: x["z_score_abs"], reverse=True)
@@ -1404,10 +1430,25 @@ class ReportDataService:
             gem_z = round(sum(normatieve_z) / len(normatieve_z), 2) if normatieve_z else None
             n_ind = len(alle_kw_indicatoren)
             n_uitschieters = sum(1 for i in alle_kw_indicatoren if i["z_score_abs"] >= 1.0)
-            n_aandacht_sterk = sum(1 for i in alle_kw_indicatoren if i["is_ongunstig"] and i["z_score_abs"] >= 1.0)
-            n_kans_sterk = sum(1 for i in alle_kw_indicatoren if not i["is_ongunstig"] and i["z_score_abs"] >= 1.0)
-            totaal_aandacht = sum(1 for i in alle_kw_indicatoren if i["is_ongunstig"])
-            totaal_kans = sum(1 for i in alle_kw_indicatoren if not i["is_ongunstig"])
+            if kw_naam == "Samenstelling":
+                n_aandacht_sterk = 0
+                n_kans_sterk = 0
+                totaal_aandacht = 0
+                totaal_kans = 0
+            else:
+                normatieve_indicatoren = [
+                    i
+                    for i in alle_kw_indicatoren
+                    if (i.get("polariteit") or polariteit.uit_oud(i.get("score_type"))) != polariteit.NEUTRAAL
+                ]
+                n_aandacht_sterk = sum(
+                    1 for i in normatieve_indicatoren if i["is_ongunstig"] and i["z_score_abs"] >= 1.0
+                )
+                n_kans_sterk = sum(
+                    1 for i in normatieve_indicatoren if not i["is_ongunstig"] and i["z_score_abs"] >= 1.0
+                )
+                totaal_aandacht = sum(1 for i in normatieve_indicatoren if i["is_ongunstig"])
+                totaal_kans = sum(1 for i in normatieve_indicatoren if not i["is_ongunstig"])
 
             kwadranten_output.append(
                 {
@@ -1578,7 +1619,7 @@ class ReportDataService:
                 polygons_svg.append(
                     f'<polygon points="{points_str}" '
                     f'fill="{color}" stroke="#1a1f2e" stroke-width="0.8" opacity="0.9">'
-                    f"<title>{title}</title></polygon>"
+                    f"<title>{html.escape(title)}</title></polygon>"
                 )
 
         naam_label = deelgebied_naam or payload.get("deelgebied_naam", "")
@@ -1591,7 +1632,7 @@ class ReportDataService:
     text {{ font-family: Inter, system-ui, sans-serif; }}
   </style>
   {"".join(polygons_svg)}
-  <text x="8" y="16" fill="#9ca3af" font-size="11">{naam_label}</text>
+  <text x="8" y="16" fill="#9ca3af" font-size="11">{html.escape(naam_label)}</text>
   <!-- legenda — zelfde als Multi-Gebiedsdossier -->
   <g transform="translate(8, {svg_h - 18})">
     <rect x="0" y="0" width="10" height="10" fill="#8c96a0" rx="1.5"/>
@@ -1642,5 +1683,5 @@ class ReportDataService:
   <text x="200" y="155" fill="#6b7280" font-size="13" text-anchor="middle"
     font-family="Inter, system-ui, sans-serif">Geen kaartdata beschikbaar</text>
   <text x="200" y="175" fill="#4b5563" font-size="11" text-anchor="middle"
-    font-family="Inter, system-ui, sans-serif">{label}</text>
+    font-family="Inter, system-ui, sans-serif">{html.escape(label)}</text>
 </svg>"""
