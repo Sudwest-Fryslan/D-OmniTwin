@@ -344,3 +344,43 @@ def test_selectiebadge_knoppen(app_page):
     wacht_op_selectie(page, [])
     expect(badge).to_be_hidden()
     assert page.console_fouten == [], "\n".join(page.console_fouten)
+
+
+def test_startkaart_automatische_gebiedsfocus_en_startindicator(app_page):
+    """#443: bij binnenkomst staat de startkaart direct klaar met standaardgemeente,
+    CBS Buurten, actieve startindicator (Bevolkingsdichtheid) in modus 'waarde',
+    geopend Legenda-paneel links en geopend Kompas + Indicator Detailpaneel rechts."""
+    page = app_page
+
+    # 1. Startkaartdata en actieve indicator direct geladen zonder handmatige klik op 'Toon op kaart'
+    start_state = page.evaluate(
+        """() => ({
+            gemeenteCode: window.state.currentGemeenteCode,
+            gebiedstype: window.state.currentGebiedstype,
+            indicator: window.state.currentIndicator,
+            kaartModus: window.state.kaartModus,
+            aantalFeatures: window.state.currentData?.features?.length || 0,
+            indicatorNaam: window.state.currentData?.metadata?.indicator_naam || '',
+        })"""
+    )
+    assert start_state["gemeenteCode"] == "1900"
+    assert start_state["gebiedstype"]
+    assert start_state["indicator"]
+    assert start_state["kaartModus"] == "waarde"
+    assert start_state["aantalFeatures"] > 0
+    assert "Bevolkingsdichtheid" in start_state["indicatorNaam"]
+
+    # 2. Links: Legenda-paneel is geopend met kleurenschaal, klassen en gebiedsdekking
+    expect(page.locator("#panel-legenda")).to_be_visible()
+    expect(page.locator("#color-scale-container")).to_be_visible()
+    expect(page.locator("#legenda-klassen")).to_contain_text("inw/km²")
+    expect(page.locator("#coverage-text")).to_contain_text("gebieden")
+
+    # 3. Rechts: Rechter dock op tabblad Kompas met volledig Kompas én gevuld Indicator Detailpaneel
+    assert "collapsed" not in (page.locator("#rechter-dock").get_attribute("class") or "")
+    expect(page.locator("#dock-panel-kompas")).to_be_visible()
+    expect(page.locator("#kompas-details-panel")).to_be_visible()
+    expect(page.locator("#ip-naam")).to_contain_text("Bevolkingsdichtheid")
+    expect(page.locator("#details-definitie")).not_to_contain_text("Gegevens laden")
+    expect(page.locator("#details-value")).not_to_have_text("-")
+    assert page.console_fouten == [], "\n".join(page.console_fouten)

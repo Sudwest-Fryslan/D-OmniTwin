@@ -1435,6 +1435,7 @@ class KompasVisualization {
     }
 
     async fetchHistory(gebiedId, indicatorUuid) {
+        if (!gebiedId) return null;
         try {
             const configId = this.currentConfigId || 1;
             console.log(`fetching history for ${gebiedId}, indicator ${indicatorUuid}`);
@@ -1903,10 +1904,13 @@ class KompasVisualization {
         }
 
         // 3. Populate Basic Data
-        const titleEl = document.getElementById('details-title');
-        if (titleEl) titleEl.textContent = node.data.name;
         const ipNaam = document.getElementById('ip-naam');
-        if (ipNaam) ipNaam.textContent = node.data.name;
+        const titleEl = document.getElementById('details-title');
+        if (ipNaam) {
+            ipNaam.textContent = node.data.name;
+        } else if (titleEl) {
+            titleEl.textContent = node.data.name;
+        }
         const ipEenheid = document.getElementById('ip-eenheid');
         if (ipEenheid) ipEenheid.textContent = node.data.eenheid || '';
 
@@ -2919,6 +2923,36 @@ class KompasVisualization {
             const ipBeschrijving = document.getElementById('ip-beschrijving');
             if (ipBeschrijving) ipBeschrijving.textContent = data.indicator.beschrijving || '';
 
+            // #443: Bij startkaart of indicatorwissel zonder geselecteerd gebied ook definitie, metadata en uitschieters vullen
+            if (!metSelectie && (!this.currentNode || !this.currentNode.data?.uuid)) {
+                const chartWrapper = document.getElementById('chart-container-wrapper');
+                if (chartWrapper) chartWrapper.style.display = 'none';
+                const tsContainer = document.getElementById('timeslider-container');
+                if (tsContainer) tsContainer.style.display = 'none';
+
+                const defEl = document.getElementById('details-definitie');
+                if (defEl) defEl.textContent = data.indicator.beschrijving || 'Geen beschrijving beschikbaar.';
+
+                const gem = (data.gemeentegemiddelden || [])[0];
+                const valEl = document.getElementById('details-value');
+                const trendEl = document.getElementById('details-trend');
+                const eenh = data.indicator.eenheid ? ` ${data.indicator.eenheid}` : '';
+                if (valEl) {
+                    valEl.textContent = gem && gem.waarde !== null && gem.waarde !== undefined
+                        ? `⌀ ${Number(gem.waarde).toLocaleString('nl-NL', { maximumFractionDigits: 2 })}${eenh}`
+                        : '-';
+                }
+                if (trendEl) trendEl.textContent = gem ? 'Gemeentegemiddelde' : '-';
+
+                const bronEl = document.getElementById('details-bron');
+                if (bronEl) bronEl.textContent = data.bronnen?.[0]?.titel || data.bronnen?.[0]?.bron || 'CBS';
+                const jaarEl = document.getElementById('details-jaar');
+                if (jaarEl) jaarEl.textContent = gem?.jaar || data.bronnen?.[0]?.jaargangen?.slice(-1)?.[0] || '-';
+
+                const refGebiedId = s.currentGemeenteCode ? (s.currentData?.features?.[0]?.properties?.id || null) : null;
+                this._fetchTopBuurten(uuid, refGebiedId).then(tb => this._renderTopBuurten(tb));
+            }
+
             // Bronnen & Gemeentegemiddelde
             this._renderIpBronnen(data.bronnen);
             this._renderIpGemiddelde(data.gemeentegemiddelden, data.indicator.eenheid);
@@ -3236,9 +3270,9 @@ document.addEventListener('DOMContentLoaded', async function () {
         window.EventBus.on('KAARTDATA_GELADEN', (d) => {
             if (d && d.jaar != null) kompasViz._currentJaar = d.jaar;
             if (kompasViz.currentNode && kompasViz.currentNode.data?.uuid) {
-                kompasViz._loadBenchmarkBarChart(kompasViz.currentNode);
+                kompasViz._lastBenchmarkPromise = kompasViz._loadBenchmarkBarChart(kompasViz.currentNode);
             } else if (window.state?.currentIndicator) {
-                kompasViz._loadBenchmarkBarChart(window.state.currentIndicator);
+                kompasViz._lastBenchmarkPromise = kompasViz._loadBenchmarkBarChart(window.state.currentIndicator);
             }
         });
 
@@ -3284,8 +3318,11 @@ document.addEventListener('DOMContentLoaded', async function () {
         // Backwards compatibility shim voor scripts die indicatorpaneel.laad aanroepen (#258/#444)
         window.indicatorpaneel = {
             laad: () => {
-                if (kompasViz && kompasViz.currentNode) {
-                    kompasViz._loadBenchmarkBarChart(kompasViz.currentNode);
+                if (!kompasViz) return;
+                if (kompasViz.currentNode && kompasViz.currentNode.data?.uuid) {
+                    kompasViz._lastBenchmarkPromise = kompasViz._loadBenchmarkBarChart(kompasViz.currentNode);
+                } else if (window.state?.currentIndicator) {
+                    kompasViz._lastBenchmarkPromise = kompasViz._loadBenchmarkBarChart(window.state.currentIndicator);
                 }
             }
         };
