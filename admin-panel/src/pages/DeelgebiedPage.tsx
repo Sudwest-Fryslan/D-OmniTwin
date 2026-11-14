@@ -159,6 +159,8 @@ export const DeelgebiedPage: React.FC = () => {
     const [woonplaatsGeo, setWoonplaatsGeo] = useState<any>(null);
     const [showWoonplaatsGrenzen, setShowWoonplaatsGrenzen] = useState(true);
     const [hoveredBuurt, setHoveredBuurt] = useState<string | null>(null);
+    const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+    const [isHoveringMap, setIsHoveringMap] = useState(false);
     const mapSvgRef = useRef<SVGSVGElement>(null);
 
     // Per thema view mode: 'aandacht' | 'kansen' (default 'aandacht')
@@ -273,10 +275,97 @@ export const DeelgebiedPage: React.FC = () => {
     ];
 
     // D3 Choropleth renderen
+    const getBuurtTopIndicatoren = (buurtId: string) => {
+        const list: { indicator_naam: string; z_score: number; z_score_abs: number; impact: string }[] = [];
+        if (!data) return list;
+        for (const kw of data.kwadranten) {
+            for (const th of kw.themas) {
+                for (const item of [...th.top10_aandachtspunten, ...th.top10_kansen]) {
+                    const bd = item.buurten_drilldown?.find(b => b.buurt_id === buurtId);
+                    if (bd) {
+                        list.push({
+                            indicator_naam: item.indicator_naam,
+                            z_score: bd.buurt_z_score,
+                            z_score_abs: Math.abs(bd.buurt_z_score),
+                            impact: item.impact
+                        });
+                    }
+                }
+            }
+        }
+        list.sort((a, b) => b.z_score_abs - a.z_score_abs);
+        const seen = new Set<string>();
+        return list.filter(item => {
+            if (seen.has(item.indicator_naam)) return false;
+            seen.add(item.indicator_naam);
+            return true;
+        }).slice(0, 3);
+    };
+
+    const renderHoverPanel = () => {
+        if (!hoveredBuurt || !isHoveringMap) return null;
+        const feat = geoData?.features?.find((f: any) => f.properties.buurt_id === hoveredBuurt);
+        if (!feat) return null;
+
+        const topInds = getBuurtTopIndicatoren(hoveredBuurt);
+        const buurtNaam = feat.properties.buurt_naam;
+
+        return (
+            <div style={{
+                position: 'fixed',
+                top: mousePos.y + 15,
+                left: mousePos.x + 15,
+                width: '260px',
+                background: 'rgba(30, 41, 59, 0.95)',
+                backdropFilter: 'blur(4px)',
+                border: '1px solid var(--color-border)',
+                borderRadius: '8px',
+                padding: '0.85rem 1rem',
+                boxShadow: '0 4px 16px rgba(0,0,0,0.5)',
+                zIndex: 9999,
+                pointerEvents: 'none',
+                color: 'white'
+            }}>
+                <div style={{ fontWeight: 600, marginBottom: '0.4rem', fontSize: '0.9rem', color: '#f8fafc' }}>
+                    {buurtNaam}
+                </div>
+                {topInds.length > 0 ? (
+                    <>
+                        {topInds.map((ind, i) => (
+                            <div key={i} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', padding: '0.2rem 0', borderBottom: i < topInds.length - 1 ? '1px solid rgba(255,255,255,0.1)' : 'none' }}>
+                                <span style={{ color: 'var(--color-text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '160px' }} title={ind.indicator_naam}>
+                                    {ind.indicator_naam}
+                                </span>
+                                <span style={{ fontWeight: 600, color: ind.z_score_abs >= 1.0 ? '#60a5fa' : 'var(--color-text-muted)' }}>
+                                    {ind.z_score > 0 ? '+' : ''}{ind.z_score.toFixed(2)}
+                                </span>
+                            </div>
+                        ))}
+                    </>
+                ) : (
+                    feat.properties.indicator_naam ? (
+                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', padding: '0.2rem 0' }}>
+                            <span style={{ color: 'var(--color-text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '160px' }}>
+                                {feat.properties.indicator_naam}
+                            </span>
+                            <span style={{ fontWeight: 600, color: '#60a5fa' }}>
+                                {feat.properties.max_z_score > 0 ? '+' : ''}{Number(feat.properties.max_z_score).toFixed(2)}
+                            </span>
+                        </div>
+                    ) : (
+                        <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>
+                            z={feat.properties.max_z_score > 0 ? '+' : ''}{feat.properties.max_z_score}
+                        </div>
+                    )
+                )}
+            </div>
+        );
+    };
+
     const renderChoropleth = () => {
         if (geoLoading) {
             return (
-                <div style={{ height: '220px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <div style={{ height: '320px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                     <div style={{
                         width: '24px',
                         height: '24px',
@@ -291,14 +380,14 @@ export const DeelgebiedPage: React.FC = () => {
 
         if (!geoData || !geoData.features || geoData.features.length === 0) {
             return (
-                <div style={{ height: '220px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--color-text-muted)', fontSize: '0.8rem' }}>
+                <div style={{ height: '320px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--color-text-muted)', fontSize: '0.8rem' }}>
                     Geen kaartdata beschikbaar
                 </div>
             );
         }
 
         const width = 460;
-        const height = 340;
+        const height = 320;
 
         const sortedFeatures = [...geoData.features].sort((a: any, b: any) => {
             const aZ = a.properties?.max_z_score_abs || 0;
@@ -319,43 +408,84 @@ export const DeelgebiedPage: React.FC = () => {
         const pathGenerator = d3.geoPath().projection(projection);
 
         return (
-            <svg ref={mapSvgRef} viewBox={`0 0 ${width} ${height}`} style={{ width: '100%', height: 'auto', display: 'block' }}>
-                {sortedFeatures.map((f: any) => {
-                    const isHovered = hoveredBuurt === f.properties.buurt_id;
-                    const d = pathGenerator(f as any) || '';
+            <div
+                style={{
+                    width: '100%',
+                    height: '320px',
+                    position: 'relative',
+                    borderRadius: '8px',
+                    overflow: 'hidden',
+                    background: 'var(--color-surface)',
+                    border: '1px solid var(--color-border)'
+                }}
+                onMouseMove={(e) => setMousePos({ x: e.clientX, y: e.clientY })}
+                onMouseEnter={() => setIsHoveringMap(true)}
+                onMouseLeave={() => {
+                    setIsHoveringMap(false);
+                    setHoveredBuurt(null);
+                }}
+            >
+                <svg ref={mapSvgRef} viewBox={`0 0 ${width} ${height}`} style={{ width: '100%', height: '100%', display: 'block' }}>
+                    {sortedFeatures.map((f: any) => {
+                        const isHovered = hoveredBuurt === f.properties.buurt_id;
+                        const d = pathGenerator(f as any) || '';
 
-                    return (
+                        return (
+                            <path
+                                key={f.properties.buurt_id}
+                                d={d}
+                                fill={f.properties.kleur_hex}
+                                stroke={isHovered ? '#0f172a' : 'var(--color-border)'}
+                                strokeWidth={isHovered ? 2 : 1}
+                                opacity={isHovered ? 1 : 0.85}
+                                style={{ cursor: 'pointer', transition: 'opacity 0.15s, stroke-width 0.15s' }}
+                                onMouseEnter={() => setHoveredBuurt(f.properties.buurt_id)}
+                                onMouseLeave={() => setHoveredBuurt(null)}
+                            />
+                        );
+                    })}
+                    {/* Centroid labels */}
+                    {sortedFeatures.map((f: any) => {
+                        const centroid = pathGenerator.centroid(f as any);
+                        const bounds = pathGenerator.bounds(f as any);
+                        const w = bounds[1][0] - bounds[0][0];
+                        if (w <= 28 || isNaN(centroid[0]) || isNaN(centroid[1])) return null;
+
+                        return (
+                            <text
+                                key={`label-${f.properties.buurt_id}`}
+                                x={centroid[0]}
+                                y={centroid[1]}
+                                textAnchor="middle"
+                                dy=".35em"
+                                style={{
+                                    fontSize: '9px',
+                                    fontWeight: 600,
+                                    fill: '#1e293b',
+                                    pointerEvents: 'none',
+                                    textShadow: '1px 1px 2px white, -1px -1px 2px white, 1px -1px 2px white, -1px 1px 2px white'
+                                }}
+                            >
+                                {f.properties.buurt_naam}
+                            </text>
+                        );
+                    })}
+                    {/* Woonplaatsgrenzen overlay (paarse stippellijn) */}
+                    {showWoonplaatsGrenzen && woonplaatsGeo?.features?.map((f: any, i: number) => (
                         <path
-                            key={f.properties.buurt_id}
-                            d={d}
-                            fill={f.properties.kleur_hex}
-                            stroke={isHovered ? '#fff' : '#334155'}
-                            strokeWidth={isHovered ? 2 : 0.6}
-                            opacity={isHovered ? 1 : 0.85}
-                            style={{ cursor: 'pointer', transition: 'opacity 0.15s, stroke-width 0.15s' }}
-                            onMouseEnter={() => setHoveredBuurt(f.properties.buurt_id)}
-                            onMouseLeave={() => setHoveredBuurt(null)}
-                        >
-                            <title>{`${f.properties.buurt_naam}\n${f.properties.indicator_naam || 'Indicator'}: z=${f.properties.max_z_score}\n${f.properties.impact || ''}`}</title>
-                        </path>
-                    );
-                })}
-                {/* Woonplaatsgrenzen overlay (paarse stippellijn) */}
-                {showWoonplaatsGrenzen && woonplaatsGeo?.features?.map((f: any, i: number) => (
-                    <path
-                        key={`wp-${i}`}
-                        d={pathGenerator(f as any) || ''}
-                        fill="none"
-                        stroke="#8b5cf6"
-                        strokeWidth={2.5}
-                        strokeDasharray="6,3"
-                        opacity={0.85}
-                        pointerEvents="none"
-                    >
-                        <title>{f.properties?.woonplaats || f.properties?.deelgebied || f.properties?.naam}</title>
-                    </path>
-                ))}
-            </svg>
+                            key={`wp-${i}`}
+                            d={pathGenerator(f as any) || ''}
+                            fill="none"
+                            stroke="#8b5cf6"
+                            strokeWidth={2.5}
+                            strokeDasharray="6,3"
+                            opacity={0.85}
+                            pointerEvents="none"
+                        />
+                    ))}
+                </svg>
+                {renderHoverPanel()}
+            </div>
         );
     };
 
@@ -697,19 +827,19 @@ export const DeelgebiedPage: React.FC = () => {
 
                 {/* Right column: D3 Afwijkingskaart (~48% van het beeld) */}
                 <div style={{
-                    background: 'var(--color-bg-alt, #161f2e)',
+                    background: 'var(--color-surface)',
                     border: '1px solid var(--color-border)',
                     borderRadius: 'var(--radius-md)',
                     padding: '1.25rem',
                     display: 'flex',
                     flexDirection: 'column',
-                    gap: '0.5rem',
+                    gap: '0.75rem',
                     width: '100%'
                 }}>
                     {/* Bovenste rij: titel + lagen-toggle */}
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <span style={{ fontSize: '0.9rem', fontWeight: 600, color: 'var(--color-primary)', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                            <Map size={16} /> Afwijkingskaart
+                            <Map size={16} /> Z-score Afwijkingskaart
                         </span>
                         {woonplaatsGeo && (
                             <label style={{ fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.4rem', cursor: 'pointer', color: 'var(--color-text-muted)' }}>
@@ -724,45 +854,17 @@ export const DeelgebiedPage: React.FC = () => {
                         )}
                     </div>
 
-                    {/* Onderste rij: legenda links (auto) + kaart rechts (flex:1) */}
-                    <div style={{ display: 'flex', gap: '0.75rem', flex: 1, minHeight: 0 }}>
-                        {/* Linker subkolom: legenda + hover-info */}
-                        <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', flexShrink: 0 }}>
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem', fontSize: '0.72rem' }}>
-                                {legendItems.map(l => (
-                                    <div key={l.color} style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
-                                        <div style={{ width: '10px', height: '10px', borderRadius: '2px', background: l.color, flexShrink: 0 }} />
-                                        <span style={{ color: 'var(--color-text-muted)', whiteSpace: 'nowrap' }}>{l.label}</span>
-                                    </div>
-                                ))}
-                            </div>
-                            {hoveredBuurt && (
-                                <div style={{
-                                    fontSize: '0.72rem',
-                                    color: 'var(--color-text-secondary)',
-                                    marginTop: '0.5rem',
-                                    maxWidth: '140px',
-                                    overflow: 'hidden',
-                                    textOverflow: 'ellipsis'
-                                }}>
-                                    {(() => {
-                                        const feat = geoData?.features?.find((f: any) => f.properties.buurt_id === hoveredBuurt);
-                                        if (!feat) return null;
-                                        return (
-                                            <span>
-                                                <strong>{feat.properties.buurt_naam}</strong><br/>
-                                                z={feat.properties.max_z_score > 0 ? '+' : ''}{feat.properties.max_z_score}
-                                            </span>
-                                        );
-                                    })()}
-                                </div>
-                            )}
-                        </div>
+                    {/* Kaart render met vaste container & floating tooltip */}
+                    {renderChoropleth()}
 
-                        {/* Rechter subkolom: D3 kaart */}
-                        <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', minWidth: 0 }}>
-                            {renderChoropleth()}
-                        </div>
+                    {/* Horizontale legenda eronder (zoals Thema-Analyse) */}
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem', fontSize: '0.72rem' }}>
+                        {legendItems.map(l => (
+                            <div key={l.color} style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                                <div style={{ width: '10px', height: '10px', borderRadius: '2px', background: l.color, flexShrink: 0 }} />
+                                <span style={{ color: 'var(--color-text-muted)', whiteSpace: 'nowrap' }}>{l.label}</span>
+                            </div>
+                        ))}
                     </div>
                 </div>
             </header>

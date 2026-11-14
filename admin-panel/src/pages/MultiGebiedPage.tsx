@@ -106,6 +106,8 @@ export const MultiGebiedPage: React.FC = () => {
     const [sortField, setSortField] = useState<'z_score' | 'buurt' | 'thema'>('z_score');
     const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
     const [hoveredBuurt, setHoveredBuurt] = useState<string | null>(null);
+    const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+    const [isHoveringMap, setIsHoveringMap] = useState(false);
     const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
     // Sprint 18 Track C: Woonplaatslaag in rapport
     const [woonplaatsGeo, setWoonplaatsGeo] = useState<any>(null);
@@ -259,7 +261,7 @@ export const MultiGebiedPage: React.FC = () => {
         if (!geoData || geoData.features.length === 0) return null;
 
         const width = 500;
-        const height = 400;
+        const height = 360;
 
         // Sorteer features: grootste oppervlakte eerst (donut fix)
         const sortedFeatures = [...geoData.features].sort(
@@ -268,55 +270,96 @@ export const MultiGebiedPage: React.FC = () => {
 
         // D3 geoMercator projectie, fit op de bounding box
         const projection = d3.geoMercator().fitSize(
-            [width - 40, height - 40],
+            [width - 32, height - 32],
             { type: 'FeatureCollection', features: sortedFeatures } as any
         );
         // Offset voor padding
         projection.translate([
-            (projection.translate()[0] || 0) + 20,
-            (projection.translate()[1] || 0) + 20
+            (projection.translate()[0] || 0) + 16,
+            (projection.translate()[1] || 0) + 16
         ]);
 
         const pathGenerator = d3.geoPath().projection(projection);
 
         return (
-            <svg ref={svgRef} viewBox={`0 0 ${width} ${height}`} style={{ width: '100%', height: 'auto', maxHeight: '400px' }}>
-                {sortedFeatures.map(f => {
-                    const isHovered = hoveredBuurt === f.properties.buurt_id;
-                    const d = pathGenerator(f as any) || '';
+            <div
+                style={{
+                    width: '100%',
+                    height: '360px',
+                    position: 'relative',
+                    borderRadius: '8px',
+                    overflow: 'hidden',
+                    background: 'var(--color-surface)',
+                    border: '1px solid var(--color-border)'
+                }}
+                onMouseMove={(e) => setMousePos({ x: e.clientX, y: e.clientY })}
+                onMouseEnter={() => setIsHoveringMap(true)}
+                onMouseLeave={() => {
+                    setIsHoveringMap(false);
+                    setHoveredBuurt(null);
+                }}
+            >
+                <svg ref={svgRef} viewBox={`0 0 ${width} ${height}`} style={{ width: '100%', height: '100%', display: 'block' }}>
+                    {sortedFeatures.map(f => {
+                        const isHovered = hoveredBuurt === f.properties.buurt_id;
+                        const d = pathGenerator(f as any) || '';
 
-                    return (
+                        return (
+                            <path
+                                key={f.properties.buurt_id}
+                                d={d}
+                                fill={f.properties.kleur_hex}
+                                stroke={isHovered ? '#0f172a' : 'var(--color-border)'}
+                                strokeWidth={isHovered ? 2 : 1}
+                                opacity={isHovered ? 1 : 0.85}
+                                style={{ cursor: 'pointer', transition: 'opacity 0.15s, stroke-width 0.15s' }}
+                                onMouseEnter={() => setHoveredBuurt(f.properties.buurt_id)}
+                                onMouseLeave={() => setHoveredBuurt(null)}
+                            />
+                        );
+                    })}
+                    {/* Centroid labels */}
+                    {sortedFeatures.map(f => {
+                        const centroid = pathGenerator.centroid(f as any);
+                        const bounds = pathGenerator.bounds(f as any);
+                        const w = bounds[1][0] - bounds[0][0];
+                        if (w <= 28 || isNaN(centroid[0]) || isNaN(centroid[1])) return null;
+
+                        return (
+                            <text
+                                key={`label-${f.properties.buurt_id}`}
+                                x={centroid[0]}
+                                y={centroid[1]}
+                                textAnchor="middle"
+                                dy=".35em"
+                                style={{
+                                    fontSize: '9px',
+                                    fontWeight: 600,
+                                    fill: '#1e293b',
+                                    pointerEvents: 'none',
+                                    textShadow: '1px 1px 2px white, -1px -1px 2px white, 1px -1px 2px white, -1px 1px 2px white'
+                                }}
+                            >
+                                {f.properties.buurt_naam}
+                            </text>
+                        );
+                    })}
+                    {/* Sprint 18 Track C: Woonplaatsgrenzen overlay */}
+                    {showWoonplaatsGrenzen && woonplaatsGeo?.features?.map((f: any, i: number) => (
                         <path
-                            key={f.properties.buurt_id}
-                            d={d}
-                            fill={f.properties.kleur_hex}
-                            stroke={isHovered ? '#fff' : '#334155'}
-                            strokeWidth={isHovered ? 2 : 0.5}
-                            opacity={isHovered ? 1 : 0.85}
-                            style={{ cursor: 'pointer', transition: 'opacity 0.15s' }}
-                            onMouseEnter={() => setHoveredBuurt(f.properties.buurt_id)}
-                            onMouseLeave={() => setHoveredBuurt(null)}
-                        >
-                            <title>{`${f.properties.buurt_naam}\n${f.properties.indicator_naam}: z=${f.properties.max_z_score}\n${f.properties.impact}`}</title>
-                        </path>
-                    );
-                })}
-                {/* Sprint 18 Track C: Woonplaatsgrenzen overlay */}
-                {showWoonplaatsGrenzen && woonplaatsGeo?.features?.map((f: any, i: number) => (
-                    <path
-                        key={`wp-${i}`}
-                        d={pathGenerator(f as any) || ''}
-                        fill="none"
-                        stroke="#8b5cf6"
-                        strokeWidth={2.5}
-                        strokeDasharray="6,3"
-                        opacity={0.8}
-                        pointerEvents="none"
-                    >
-                        <title>{f.properties?.woonplaats || f.properties?.naam}</title>
-                    </path>
-                ))}
-            </svg>
+                            key={`wp-${i}`}
+                            d={pathGenerator(f as any) || ''}
+                            fill="none"
+                            stroke="#8b5cf6"
+                            strokeWidth={2.5}
+                            strokeDasharray="6,3"
+                            opacity={0.85}
+                            pointerEvents="none"
+                        />
+                    ))}
+                </svg>
+                {renderHoverPanel()}
+            </div>
         );
     };
 
@@ -382,43 +425,57 @@ export const MultiGebiedPage: React.FC = () => {
     // ─── Hover Panel (Top 3) ────────────────────────────────────────────────
 
     const renderHoverPanel = () => {
-        const b = hoveredBuurt ? data?.buurten_analyse.find(x => x.buurt_id === hoveredBuurt) : null;
+        if (!hoveredBuurt || !data || !isHoveringMap) return null;
+        const b = data.buurten_analyse.find(x => x.buurt_id === hoveredBuurt);
+        if (!b) return null;
+
         return (
             <div style={{
-                marginTop: '0.75rem', height: '140px', overflow: 'hidden',
-                transition: 'opacity 0.15s',
-                opacity: hoveredBuurt ? 1 : 0,
-                pointerEvents: 'none'
+                position: 'fixed',
+                top: mousePos.y + 15,
+                left: mousePos.x + 15,
+                width: '270px',
+                background: 'rgba(30, 41, 59, 0.95)',
+                backdropFilter: 'blur(4px)',
+                border: '1px solid var(--color-border)',
+                borderRadius: '8px',
+                padding: '0.85rem 1rem',
+                boxShadow: '0 4px 16px rgba(0,0,0,0.5)',
+                zIndex: 9999,
+                pointerEvents: 'none',
+                color: 'white'
             }}>
-                {!b ? (
-                    <div style={{ padding: '0.75rem', fontSize: '0.85rem', color: 'var(--color-text-muted)' }}>
-                        Beweeg muis over een buurt
-                    </div>
-                ) : (
-                    <div style={{
-                        padding: '0.75rem',
-                        background: 'var(--color-bg-alt)', borderRadius: 'var(--radius-sm)',
-                        fontSize: '0.85rem', borderLeft: `3px solid ${b.kleur_hex}`
-                    }}>
-                        <strong>{b.buurt_naam}</strong>
-                        <div style={{ marginTop: '0.5rem' }}>
-                            {b.top_3.map((t, i) => (
-                                <div key={i} style={{
-                                    display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                                    padding: '0.2rem 0',
-                                    borderTop: i > 0 ? '1px solid rgba(255,255,255,0.06)' : 'none'
-                                }}>
-                                    <span style={{ color: 'var(--color-text-muted)', marginRight: '0.5rem' }}>{i + 1}.</span>
-                                    <span style={{ flex: 1 }}>{t.indicator_naam}</span>
-                                    <span style={{
-                                        fontFamily: 'monospace', fontWeight: 600, marginLeft: '0.5rem',
-                                        color: t.z_score_abs >= 1.5 ? '#2b6ca3' : t.z_score_abs >= 1.0 ? '#c17c3e' : '#8c96a0'
-                                    }}>
-                                        z={t.z_score > 0 ? '+' : ''}{t.z_score}
-                                    </span>
-                                </div>
-                            ))}
+                <div style={{ fontWeight: 600, marginBottom: '0.4rem', fontSize: '0.9rem', color: '#f8fafc' }}>
+                    {b.buurt_naam}
+                </div>
+                {b.top_3 && b.top_3.length > 0 ? (
+                    b.top_3.map((t, i) => (
+                        <div key={i} style={{
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            fontSize: '0.8rem',
+                            padding: '0.2rem 0',
+                            borderBottom: i < b.top_3.length - 1 ? '1px solid rgba(255,255,255,0.1)' : 'none'
+                        }}>
+                            <span style={{ color: 'var(--color-text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '170px' }} title={t.indicator_naam}>
+                                {t.indicator_naam}
+                            </span>
+                            <span style={{
+                                fontWeight: 600,
+                                color: t.z_score_abs >= 1.5 ? '#60a5fa' : t.z_score_abs >= 1.0 ? '#d4b483' : 'var(--color-text-muted)'
+                            }}>
+                                {t.z_score > 0 ? '+' : ''}{t.z_score}
+                            </span>
                         </div>
+                    ))
+                ) : (
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', padding: '0.2rem 0' }}>
+                        <span style={{ color: 'var(--color-text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '170px' }}>
+                            {b.indicator_naam}
+                        </span>
+                        <span style={{ fontWeight: 600, color: '#60a5fa' }}>
+                            {b.max_z_score > 0 ? '+' : ''}{b.max_z_score}
+                        </span>
                     </div>
                 )}
             </div>
@@ -588,8 +645,6 @@ export const MultiGebiedPage: React.FC = () => {
                                     </div>
                                 ))}
                             </div>
-                            {/* Hover info — Top 3 */}
-                            {renderHoverPanel()}
                         </div>
 
                         {/* Thema Aggregaat */}
