@@ -218,9 +218,6 @@ getFillColor: d => {
             }
 
             await loadGemeenten(); // NEW: Load gemeente options
-            await loadGebiedstypes();
-            loadDataTellers(); // Kop en voet: aantallen uit de database (niet wachten)
-            startVerbindingscontrole(); // Melding alleen bij een verbindingsprobleem
             setupGemeenteSelector(); // NEW: Setup gemeente change handler
             setupEventListeners();
             setupTabBar();
@@ -235,14 +232,18 @@ getFillColor: d => {
             // Track C — Indicator zoekfunctie (Sprint 11B)
             initIndicatorSearch();
 
+            // #443: Startkaart met automatische gebiedsfocus, startindicator, legenda en kompas-details
+            await initStartKaart();
+
+            loadDataTellers(); // Kop en voet: aantallen uit de database (niet wachten)
+            startVerbindingscontrole(); // Melding alleen bij een verbindingsprobleem
+
             // Sprint 18: Externe kaartlagen laden (dynamische toggles)
             await loadExterneKaartlagen();
 
-            // DON'T auto-open any panel - let user click tab buttons
-
-            // Escape key → reset actieve indicator
+            // Escape key → reset actieve indicator (niet wanneer een modal/dialoog het event al afvangt)
             document.addEventListener('keydown', (e) => {
-                if (e.key === 'Escape' && state.currentIndicator) {
+                if (e.key === 'Escape' && !e.defaultPrevented && state.currentIndicator) {
                     resetKaartIndicator();
                 }
             });
@@ -417,16 +418,22 @@ function togglePanel(panelId) {
     if (state.activePanelId === panelId) {
         container.classList.remove('open');
         state.activePanelId = null;
-        buttons.forEach(btn => btn.classList.remove('active'));
+        buttons.forEach(btn => {
+            if (btn.dataset.panel !== 'kompas' && btn.id !== 'chat-toggle-btn') {
+                btn.classList.remove('active');
+            }
+        });
         updateMapPadding(document.getElementById('rechter-dock') && !document.getElementById('rechter-dock').classList.contains('collapsed'));
         return;
     }
 
     // On screens < 1400px: softly collapse rechter dock if open (FE-5.2)
+    let dockCollapsedByCompactScreen = false;
     if (window.innerWidth < 1400) {
         const dockEl = document.getElementById('rechter-dock');
         if (dockEl && !dockEl.classList.contains('collapsed') && window.state?.dockMode !== 'floating') {
             dockEl.classList.add('collapsed');
+            dockCollapsedByCompactScreen = true;
         }
     }
 
@@ -442,6 +449,10 @@ function togglePanel(panelId) {
     state.activePanelId = panelId;
 
     buttons.forEach(btn => {
+        if (btn.dataset.panel === 'kompas' || btn.id === 'chat-toggle-btn') {
+            if (dockCollapsedByCompactScreen) btn.classList.remove('active');
+            return;
+        }
         btn.classList.toggle('active', btn.dataset.panel === panelId);
     });
 
@@ -758,6 +769,16 @@ async function loadGemeenten() {
     }
 
     loadedGemeenten = gemeenten;
+
+    // #443: Bij allereerste bezoek (geen sleutel in localStorage) standaardgemeente van de organisatie kiezen.
+    // Als de gebruiker het filter eerder bewust heeft gewist (localStorage === ''), blijft het leeg.
+    const opgeslagenGemeente = localStorage.getItem('omnitwin-gemeente');
+    if (opgeslagenGemeente === null && organisatie?.standaard_gemeente_code) {
+        const heeftStandaard = gemeenten.some(g => g.code === organisatie.standaard_gemeente_code);
+        if (heeftStandaard) {
+            state.currentGemeenteCode = organisatie.standaard_gemeente_code;
+        }
+    }
 
     // Initialiseer initiële waarde via zetGemeente (zonder kaart-reload bij init)
     zetGemeente(state.currentGemeenteCode, null, false);
@@ -1156,6 +1177,80 @@ async function loadGebiedstypes() {
     }
 }
 
+/**
+ * #443: Initialiseert de startkaart met automatische gebiedsfocus (standaardgemeente + CBS Buurten),
+ * startindicator (Bevolkingsdichtheid → Inwoners → eerste met data) in modus 'waarde',
+ * geopend Legenda-paneel links en geopend Kompas + Indicator Detailpaneel rechts.
+ * Vult pas aan het einde #gebiedstype-select zodat E2E-wachtcondities pas slagen als de startkaart klaarstaat.
+ */
+async function initStartKaart() {
+    showLoading(true, 'Startkaart voorbereiden...');
+    let gebiedstypes = [];
+
+    try {
+        const response = await fetch('/api/data/gebiedstypes?select=id,naam,code,beschrijving,bron,niveau&order=naam.asc');
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        gebiedstypes = await response.json();
+
+        const startGt = gebiedstypes.find(gt => gt.code === 'CBS_BUURT')
+            || gebiedstypes.find(gt => (gt.naam || '').toLowerCase().includes('buurt'))
+            || gebiedstypes[0];
+
+        if (startGt) {
+            state.currentGebiedstype = String(startGt.id);
+            await loadIndicatoren(state.currentGebiedstype);
+
+            const indSelect = document.getElementById('indicator-select');
+            if (indSelect) {
+                const metData = Array.from(indSelect.options).filter(
+                    o => o.value && !o.disabled && Number(o.dataset.coverage || 0) > 0
+                );
+                const startOpt = metData.find(o => o.textContent.trim().toLowerCase().startsWith('bevolkingsdichtheid'))
+                    || metData.find(o => o.textContent.trim().toLowerCase().startsWith('inwoners'))
+                    || metData[0];
+
+                if (startOpt) {
+                    indSelect.value = startOpt.value;
+                    state.currentIndicator = startOpt.value;
+                    const startNaam = startOpt.textContent.replace(/\s*\(\d+\s+gebieden\).*$/, '').trim();
+                    const covEl = document.getElementById('indicator-coverage');
+                    if (covEl && startOpt.dataset.coverage) {
+                        covEl.textContent = `${startOpt.dataset.coverage} gebieden met data`;
+                    }
+                    updateIndicatorBadge(startNaam);
+                    document.querySelectorAll('#indicator-accordion .indicator-item').forEach(el => {
+                        el.classList.toggle('active', el.dataset.uuid === startOpt.value);
+                    });
+                }
+            }
+
+            // Open rechter dock (Kompas + Indicator Details) en linker Legenda-paneel
+            openRechterDock('kompas', false, false);
+            togglePanel('legenda');
+
+            await loadKaartData({ bijOpstart: true });
+            if (window.kompasViz?._lastBenchmarkPromise) {
+                await window.kompasViz._lastBenchmarkPromise.catch(() => {});
+            }
+        }
+    } catch (error) {
+        console.error('❌ Fout bij initialiseren startkaart:', error);
+        showError('Fout bij laden van gebiedstypes');
+    } finally {
+        populateGebiedstypeSelect(gebiedstypes);
+        const gtSelect = document.getElementById('gebiedstype-select');
+        if (gtSelect && state.currentGebiedstype) {
+            gtSelect.value = state.currentGebiedstype;
+        }
+        const gtCountEl = document.getElementById('gebiedstype-count');
+        if (gtCountEl && state.currentData?.features) {
+            gtCountEl.textContent = `${state.currentData.features.length} gebieden in selectie`;
+        }
+        updateButtonState();
+        showLoading(false);
+    }
+}
+
 async function loadIndicatoren(gebiedstypeId) {
     showLoading(true, 'Indicatoren laden...');
 
@@ -1184,13 +1279,15 @@ async function loadIndicatoren(gebiedstypeId) {
     }
 }
 
-async function loadKaartData() {
+async function loadKaartData({ bijOpstart = false } = {}) {
     if (!state.currentGebiedstype) {
         showError('Selecteer eerst een gebiedstype');
         return;
     }
 
     showLoading(true, 'Kaart data laden...');
+    const prevData = state.currentData;
+    state.currentData = null;
 
     try {
         // 1. Fetch Geometries via pg_featureserv (limit=10000 ensures we get all features)
@@ -1219,6 +1316,9 @@ async function loadKaartData() {
 
         const geojson = await geoRes.json();
         const attributes = await attrRes.json();
+
+        // Filter gebieden zonder geldige geometrie uit de kaartlaag
+        geojson.features = (geojson.features || []).filter(f => f && f.geometry && f.geometry.coordinates);
         
         // 3. Merge attributes into GeoJSON features
         geojson.features.forEach(f => {
@@ -1229,24 +1329,29 @@ async function loadKaartData() {
         });
         geojson.metadata = attributes.metadata;
 
-        state.currentData = geojson;
-        state.currentJaar = geojson.metadata?.jaar || null;
-        state.currentDataRevision = (state.currentDataRevision || 0) + 1;
-        // Alleen inzoomen bij een ander gebiedstype of andere gemeente, niet bij een indicatorwissel
+        // Alleen inzoomen bij een ander gebiedstype of andere gemeente, niet bij een indicatorwissel.
+        // Bij automatische opstart (#443) laten we fittedFor nog open zodat een eerste handmatige
+        // klik op 'Toon op Kaart' nog wel inzoomt en pas daarna wordt vergrendeld.
         const fitKey = `${state.currentGebiedstype}|${state.currentGemeenteCode || ''}`;
-        if (state.fittedFor !== fitKey) {
+        if (bijOpstart) {
+            state.initialDataLoaded = false;
+        } else if (state.fittedFor !== fitKey) {
             state.initialDataLoaded = false;
             state.fittedFor = fitKey;
         }
 
-        displayOnMap(geojson);
+        state.currentData = geojson;
+        state.currentJaar = geojson.metadata?.jaar || null;
+        state.currentDataRevision = (state.currentDataRevision || 0) + 1;
+
+        displayOnMap(geojson, { direct: bijOpstart });
         updateFeatureCount(geojson.metadata);
         const gtCountEl = document.getElementById('gebiedstype-count');
         if (gtCountEl && geojson.features) {
             gtCountEl.textContent = `${geojson.features.length} gebieden in selectie`;
         }
         updateGemeenteFilterChip(geojson.features ? geojson.features.length : null);
-updateLegenda(geojson);
+        updateLegenda(geojson);
         // #258: indicatorpaneel bijwerken (actuele waarden)
         window.EventBus?.emit('KAARTDATA_GELADEN', { jaar: null });
 
@@ -1257,6 +1362,7 @@ updateLegenda(geojson);
 
         console.log(`✅ ${geojson.features.length} gebieden geladen (Lego architecture merge)`);
     } catch (error) {
+        if (!state.currentData && prevData) state.currentData = prevData;
         console.error('❌ Fout bij laden kaart data:', error);
         showError('Fout bij laden van kaart data: ' + error.message);
     } finally {
@@ -1814,7 +1920,7 @@ function geojsonGeomToWkt(geometry) {
 // Map Visualization with deck.gl
 // ============================================================================
 
-function displayOnMap(geojson) {
+function displayOnMap(geojson, { direct = false } = {}) {
     const { GeoJsonLayer } = deck;
 
     // Bronvermelding 3DBAG (CC BY 4.0) alleen tonen als de panden zichtbaar zijn
@@ -1910,17 +2016,11 @@ function displayOnMap(geojson) {
             if (featureId && isGebiedSelected(featureId)) {
                 return [234, 179, 8, 255]; // Selectie goud (#eab308)
             }
-            const value = d.properties?.indicator_waarde;
-            const isNoData = value === null || value === undefined || state.kaartModus === 'uit';
-            if (isNoData) {
-                // #373: Duidelijke randen voor gebieden zonder data zodat grenzen ook op hoog zoomniveau niet wegvallen
-                return state.currentTheme === 'dark'
-                    ? [210, 210, 210, 180]
-                    : [70, 70, 70, 200];
-            }
+            // #373 / #443: Duidelijke, contrastrijke randen voor alle gebieden (met én zonder actieve indicator)
+            // zodat grenzen altijd scherp en helder afgebakend zijn (in licht thema donkergrijs, in donker thema lichtgrijs)
             return state.currentTheme === 'dark'
-                ? [255, 255, 255, 200]
-                : [255, 255, 255, 220]; // Witte border voor ingekleurde gebieden
+                ? [210, 210, 210, 180]
+                : [70, 70, 70, 200];
         },
         lineWidthUnits: 'pixels',
         getLineWidth: d => {
@@ -2314,7 +2414,7 @@ function displayOnMap(geojson) {
             zetKaartPositie(state.herstelPositie);
             state.herstelPositie = null;
         } else {
-            fitBounds(geojson);
+            fitBounds(geojson, { direct });
         }
         state.initialDataLoaded = true;
     }
@@ -2335,7 +2435,7 @@ function zetKaartPositie(positie) {
 }
 window.zetKaartPositie = zetKaartPositie;
 
-function fitBounds(geojson) {
+function fitBounds(geojson, { direct = false } = {}) {
     // Bounding box over alle coördinaten (Polygon en MultiPolygon)
     let minLon = Infinity, maxLon = -Infinity;
     let minLat = Infinity, maxLat = -Infinity;
@@ -2393,6 +2493,9 @@ function fitBounds(geojson) {
     }
 
     // Zelfde mechanisme als de rest van de app: gecontroleerde viewState
+    const transitionProps = direct
+        ? { transitionDuration: 0, transitionInterpolator: undefined }
+        : A11y.cameraTransition(1000, true);
     state.currentViewState = {
         ...state.currentViewState,
         longitude,
@@ -2400,7 +2503,7 @@ function fitBounds(geojson) {
         zoom,
         pitch: state.enable3D ? 45 : 0,
         bearing: 0,
-        ...A11y.cameraTransition(1000, true)
+        ...transitionProps
     };
     state.deckgl.setProps({ viewState: state.currentViewState });
 }
@@ -2717,17 +2820,6 @@ function resetKaartIndicator() {
 function populateGebiedstypeSelect(gebiedstypes) {
     const select = document.getElementById('gebiedstype-select');
     select.innerHTML = '<option value="">Selecteer een gebiedstype</option>';
-
-    select.addEventListener('change', (e) => {
-        state.currentGebiedstype = e.target.value;
-        const selectedOption = e.target.options[e.target.selectedIndex];
-        
-        if (e.target.value) {
-            document.getElementById('gebiedstype-count').textContent = 'Gegevens laden...';
-        } else {
-            document.getElementById('gebiedstype-count').textContent = 'Selecteer een gebiedstype';
-        }
-    });
 
     gebiedstypes.forEach(gt => {
         const option = document.createElement('option');
@@ -3721,8 +3813,14 @@ function setupEventListeners() {
     // Gebiedstype selection
     document.getElementById('gebiedstype-select').addEventListener('change', async (e) => {
         const selectedId = e.target.value;
+        if (selectedId && selectedId === state.currentGebiedstype && document.querySelectorAll('#indicator-select option').length > 1) {
+            updateButtonState();
+            return;
+        }
         state.currentGebiedstype = selectedId || null;
         state.currentIndicator = null;
+        const btn = document.getElementById('toon-kaart-btn');
+        if (btn) btn.disabled = true;
 
         if (selectedId) {
             // Aantal gebieden van dit type ophalen (de gebiedstypes-query levert geen aantal)
@@ -4362,13 +4460,20 @@ function exportCSV() {
     const features = state.currentData.features;
     if (features.length === 0) return;
 
-    // Get headers
-    const props = features[0].properties;
-    const headers = Object.keys(props).join(',');
+    // Get headers (union of keys across all features so a first feature without data doesn't drop indicator columns)
+    const headerSet = new Set();
+    features.forEach(f => {
+        if (f.properties) Object.keys(f.properties).forEach(k => headerSet.add(k));
+    });
+    const headerKeys = [...headerSet];
+    const headers = headerKeys.join(',');
 
     // Get rows
     const rows = features.map(f => {
-        return Object.values(f.properties).map(val => {
+        const p = f.properties || {};
+        return headerKeys.map(k => {
+            const val = p[k];
+            if (val === null || val === undefined) return '';
             if (typeof val === 'string') return `"${val}"`;
             return val;
         }).join(',');
