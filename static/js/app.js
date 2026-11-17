@@ -233,7 +233,8 @@ getFillColor: d => {
             initIndicatorSearch();
 
             // #443: Startkaart met automatische gebiedsfocus, startindicator, legenda en kompas-details
-            await initStartKaart();
+            window.startKaartKlaar = initStartKaart();
+            await window.startKaartKlaar;
 
             loadDataTellers(); // Kop en voet: aantallen uit de database (niet wachten)
             startVerbindingscontrole(); // Melding alleen bij een verbindingsprobleem
@@ -400,12 +401,24 @@ function showNotification(message) {
 function setupTabBar() {
     document.querySelectorAll('.tab-button').forEach(btn => {
         const panelId = btn.dataset.panel;
-        // Knoppen die het rechter dock bedienen (Kompas en Assistent) openen geen linker paneel
-        if (!panelId || panelId === 'kompas' || btn.id === 'chat-toggle-btn') return;
+        // Knoppen die het rechter dock of de rondleiding bedienen openen geen linker paneel
+        if (!panelId || panelId === 'kompas' || btn.id === 'chat-toggle-btn' || btn.id === 'tour-start-btn') return;
 
         btn.addEventListener('click', (e) => {
             togglePanel(panelId);
         });
+    });
+
+    // #442: Rondleiding startknoppen (linker balk, Info & Start paneel, en D-Omni Assistent)
+    ['tour-start-btn', 'info-tour-btn', 'chat-start-tour-btn'].forEach(id => {
+        const btn = document.getElementById(id);
+        if (btn) {
+            btn.addEventListener('click', () => {
+                if (typeof window.startRondleiding === 'function') {
+                    window.startRondleiding(btn);
+                }
+            });
+        }
     });
 }
 
@@ -419,7 +432,7 @@ function togglePanel(panelId) {
         container.classList.remove('open');
         state.activePanelId = null;
         buttons.forEach(btn => {
-            if (btn.dataset.panel !== 'kompas' && btn.id !== 'chat-toggle-btn') {
+            if (btn.dataset.panel !== 'kompas' && btn.id !== 'chat-toggle-btn' && btn.id !== 'tour-start-btn') {
                 btn.classList.remove('active');
             }
         });
@@ -449,6 +462,7 @@ function togglePanel(panelId) {
     state.activePanelId = panelId;
 
     buttons.forEach(btn => {
+        if (btn.id === 'tour-start-btn') return;
         if (btn.dataset.panel === 'kompas' || btn.id === 'chat-toggle-btn') {
             if (dockCollapsedByCompactScreen) btn.classList.remove('active');
             return;
@@ -1151,6 +1165,11 @@ async function loadDataTellers() {
         zet('header-gebieden-count', gebieden);
         zet('footer-gebieden-count', gebieden);
         zet('header-indicatoren-count', indicatoren);
+        if (indicatoren !== null) {
+            document.querySelectorAll('.js-indicatoren-count').forEach(el => {
+                el.textContent = indicatoren.toLocaleString('nl-NL');
+            });
+        }
     } catch (error) {
         console.warn('⚠️ Tellers konden niet worden geladen:', error);
         ['header-gebieden-count', 'footer-gebieden-count', 'header-indicatoren-count']
@@ -4843,6 +4862,53 @@ let welcomeDialog = null;
  * Toont de modal alleen als de gebruiker nog niet eerder heeft bezocht.
  */
 function initOnboarding() {
+    const buurtBtn = document.getElementById('welcome-btn-buurt');
+    const buurtWrap = document.getElementById('welcome-buurtkiezer-wrap');
+    const tourBtn = document.getElementById('welcome-btn-tour');
+
+    if (buurtBtn && buurtWrap) {
+        buurtBtn.addEventListener('click', () => {
+            const open = buurtWrap.hidden;
+            buurtWrap.hidden = !open;
+            buurtBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
+            if (open && !buurtWrap.firstElementChild && window.BuurtKiezer) {
+                const form = window.BuurtKiezer.maak({
+                    idPrefix: 'welcome-adres',
+                    onGevonden: async ({ gebied_id, statusEl }) => {
+                        if (window.startKaartKlaar && typeof window.startKaartKlaar.then === 'function') {
+                            statusEl.textContent = 'Even geduld, kaart wordt voorbereid…';
+                            try {
+                                await window.startKaartKlaar;
+                            } catch (_) {
+                                // Ga door
+                            }
+                        }
+                        dismissWelcomeModal();
+                        if (window.EventBus) {
+                            window.EventBus.emit('CHAT_GEBIEDEN_TONEN', {
+                                ids: [gebied_id],
+                                zoom: true,
+                            });
+                        }
+                    },
+                });
+                buurtWrap.appendChild(form);
+            }
+            if (open) {
+                buurtWrap.querySelector('input')?.focus();
+            }
+        });
+    }
+
+    if (tourBtn) {
+        tourBtn.addEventListener('click', () => {
+            dismissWelcomeModal();
+            if (typeof window.startRondleiding === 'function') {
+                window.startRondleiding(document.getElementById('tour-start-btn'));
+            }
+        });
+    }
+
     if (localStorage.getItem(ONBOARDING_KEY)) return; // Al eerder welkom geheten
 
     const overlay = document.getElementById('welcome-modal-overlay');
@@ -4860,27 +4926,6 @@ function initOnboarding() {
     welcomeDialog = A11y.openDialog(overlay, { labelledBy: 'welcome-title', onEscape: dismissWelcomeModal });
 
     console.log('👋 Welkomstmodal getoond (eerste bezoek)');
-}
-
-/**
- * Verwerk CTA-klik vanuit de welkomstmodal.
- * @param {'kaart'|'kompas'} action
- */
-function startOnboarding(action) {
-    dismissWelcomeModal();
-
-    // Kleine vertraging zodat de fade-out zichtbaar is
-    setTimeout(() => {
-        if (action === 'kaart') {
-            // Open het Kaartconfiguratie-paneel
-            togglePanel('controls');
-            window.EventBus.emit('ONBOARDING_ACTION', { action: 'kaart' });
-        } else if (action === 'kompas') {
-            // Open het Kompas-paneel
-            togglePanel('kompas');
-            window.EventBus.emit('ONBOARDING_ACTION', { action: 'kompas' });
-        }
-    }, 300);
 }
 
 /**
@@ -4968,6 +5013,7 @@ function initContextualTooltips() {
  * @param {'indicator'|'buurt'|'kompas'|'ai'} key
  */
 function showContextualTooltip(key) {
+    if (window.tourActief) return;
     const flag = TOOLTIP_FLAGS[key];
     const message = TOOLTIP_MESSAGES[key];
     if (!flag || !message) return;
