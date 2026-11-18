@@ -121,14 +121,36 @@ def test_adres_geeft_gebied_van_de_installatie(installatie, monkeypatch):
         locatie, "buurt_bij_adres", lambda a: {"buurtcode": "BU19000101", "buurtnaam": "Sneek binnen de grachten"}
     )
     uit = router.buurt(router.BuurtVraag(adres="8601 CR"), db=None)
-    assert (uit.gebied_id, uit.naam) == ("BU19000101", "Sneek binnen de grachten")
+    assert (uit.gebied_id, uit.naam, uit.gemeente_code, uit.gebiedstype_id) == (
+        "BU19000101",
+        "Sneek binnen de grachten",
+        "1900",
+        "b",
+    )
+
+
+def test_buurtnaam_geeft_gebied_van_de_installatie(monkeypatch):
+    gebieden = [
+        {"id": "BU19000199", "naam": "Verspreide huizen Sneek", "gemeente_code": "1900", "gebiedstype_id": "b"},
+        *GEBIEDEN,
+    ]
+    monkeypatch.setattr(router, "laad_gebieden", lambda db: gebieden)
+    for zoekterm in ("Sneek binnen de grachten", "binnen de grachten", "Sneek"):
+        uit = router.buurt(router.BuurtVraag(adres=zoekterm), db=None)
+        assert (uit.gebied_id, uit.naam, uit.gemeente_code, uit.gebiedstype_id) == (
+            "BU19000101",
+            "Sneek binnen de grachten",
+            "1900",
+            "b",
+        )
 
 
 def test_locatie_geeft_gebied_van_de_installatie(installatie, monkeypatch):
     monkeypatch.setattr(
         locatie, "buurt_bij_punt", lambda lat, lon: {"buurtcode": "BU19000101", "buurtnaam": "Sneek binnen de grachten"}
     )
-    assert router.buurt(router.BuurtVraag(lat=53.03, lon=5.66), db=None).gebied_id == "BU19000101"
+    uit = router.buurt(router.BuurtVraag(lat=53.03, lon=5.66), db=None)
+    assert (uit.gebied_id, uit.gemeente_code, uit.gebiedstype_id) == ("BU19000101", "1900", "b")
 
 
 def test_buurt_buiten_de_installatie_is_404(installatie, monkeypatch):
@@ -158,9 +180,10 @@ def test_ongeldige_invoer(installatie):
         router.BuurtVraag()  # adres of locatie verplicht
     with pytest.raises(ValidationError):
         router.BuurtVraag(lat=53.0)  # lon ontbreekt
-    with pytest.raises(HTTPException) as e:
-        router.buurt(router.BuurtVraag(adres="Sneek"), db=None)
-    assert e.value.status_code == 422
+    for slechte_invoer in ("Onbekend Dorp", "ab"):
+        with pytest.raises(HTTPException) as e:
+            router.buurt(router.BuurtVraag(adres=slechte_invoer), db=None)
+        assert e.value.status_code == 422
     with pytest.raises(HTTPException) as e:
         router.buurt(router.BuurtVraag(lat=48.85, lon=2.35), db=None)
     assert e.value.status_code == 422
