@@ -83,8 +83,8 @@ describe('AIUsecasesPage', () => {
         }] }));
         render(<AIUsecasesPage />);
         const kaarten = await screen.findByTestId('ai-kaarten');
-        // Zonder minmax(0, 1fr) wordt de rasterkolom zo breed als de breedste tabel
-        expect(kaarten.style.gridTemplateColumns).toBe('minmax(0, 1fr)');
+        // Zonder minmax(0, 1fr) wordt de rasterkolom zo breed als de breedste tabel (jsdom 31 formatteert 0 als 0px)
+        expect(kaarten.style.gridTemplateColumns).toMatch(/^minmax\(0(px)?, 1fr\)$/);
         const cel = await screen.findByText('x'.repeat(400));
         expect(cel).toHaveClass('cel-lang');
         expect(screen.getByText('y'.repeat(400))).toHaveClass('cel-lang');
