@@ -13,7 +13,7 @@
      * Bouw een formulier om een buurt te zoeken op postcode/adres of locatie.
      *
      * @param {object} opts
-     * @param {Function} opts.onGevonden  ({ gebied_id, naam, herkomst, statusEl }) => void | Promise<void>
+     * @param {Function} opts.onGevonden  ({ gebied_id, naam, gemeente_code, gebiedstype_id, herkomst, statusEl }) => void | Promise<void>
      * @param {string}   [opts.idPrefix='chat-adres']
      * @param {string}   [opts.extraClass='']
      * @returns {HTMLFormElement}
@@ -30,7 +30,7 @@
 
         const label = document.createElement('label');
         label.htmlFor = id;
-        label.textContent = 'Postcode of adres';
+        label.textContent = 'Postcode, adres of buurtnaam';
 
         const rij = document.createElement('div');
         rij.className = 'chat-buurtkiezer-rij';
@@ -39,7 +39,7 @@
         input.id = id;
         input.type = 'text';
         input.autocomplete = 'postal-code';
-        input.placeholder = 'bijv. 8601 CR';
+        input.placeholder = 'bijv. 8601 CR of buurtnaam';
         input.maxLength = 200;
 
         const zoek = document.createElement('button');
@@ -76,6 +76,8 @@
                     await onGevonden({
                         gebied_id: data.gebied_id,
                         naam: data.naam,
+                        gemeente_code: data.gemeente_code || null,
+                        gebiedstype_id: data.gebiedstype_id || null,
                         herkomst,
                         statusEl: status,
                     });
@@ -109,7 +111,7 @@
             e.preventDefault();
             const adres = input.value.trim();
             if (!adres) {
-                status.textContent = 'Vul een postcode of adres in.';
+                status.textContent = 'Vul een postcode, adres of buurtnaam in.';
                 input.focus();
                 return;
             }

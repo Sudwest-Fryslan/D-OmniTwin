@@ -325,7 +325,15 @@ class ChatPanel {
     _buurtKiezer(vraag) {
         return window.BuurtKiezer.maak({
             idPrefix: 'chat-adres',
-            onGevonden: ({ gebied_id, herkomst }) => {
+            onGevonden: ({ gebied_id, gemeente_code, gebiedstype_id, herkomst }) => {
+                if (window.EventBus) {
+                    window.EventBus.emit('CHAT_GEBIEDEN_TONEN', {
+                        ids: [gebied_id],
+                        gemeenteCode: gemeente_code || null,
+                        gebiedstypeId: gebiedstype_id || null,
+                        zoom: true,
+                    });
+                }
                 this.sendVraag(vraag, {
                     huidig_gebied_id: gebied_id,
                     geselecteerde_gebied_ids: [gebied_id],

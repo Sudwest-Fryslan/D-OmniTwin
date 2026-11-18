@@ -31,7 +31,7 @@
             ankers: ['#hoofdinhoud'],
             wat: 'Elke vlek op de kaart is een gebied (zoals een buurt); de kleur volgt de gekozen indicator en grijs betekent geen data.',
             betekent: 'De kleur laat zien hoe een buurt scoort ten opzichte van andere gebieden.',
-            probeer: 'Klik op een buurt op de kaart. Gebruik Shift+klik om meerdere buurten te vergelijken.',
+            probeer: 'Beweeg over buurten voor de exacte waarde of klik op een buurt om die te selecteren. Met Shift+klik selecteer je meerdere buurten (de vergelijking zie je onderaan in het Kompas-paneel).',
         },
         {
             id: 'legenda',
@@ -46,8 +46,8 @@
             titel: '3. Het D-Omni Kompas',
             ankers: ['#rechter-dock'],
             wat: 'Het Kompas bundelt alle thema\'s in ringen. Eronder zie je direct de tijdreeks, definitie, bron, vergelijking met het gemeentegemiddelde en top-uitschieters.',
-            betekent: 'Gekleurde thema\'s tonen hoe een buurt presteert; het kwadrant Samenstelling is puur beschrijvend (neutraal blauw, zonder goed of slecht).',
-            probeer: 'Klik op een segment in het wiel om in te zoomen op een thema en bekijk het detail van de geselecteerde buurt.',
+            betekent: 'De kleuren van rood (via oranje/geel) naar groen laten zien of een thema of indicator negatief of positief scoort. Blauw (Samenstelling) is puur beschrijvend zonder goed of slecht; grijs betekent geen data.',
+            probeer: 'Klik op een segment in het wiel om in te zoomen op een thema, of scroll in dit paneel naar beneden voor de cijfers en de vergelijking tussen buurten.',
         },
         {
             id: 'rapport-assistent',

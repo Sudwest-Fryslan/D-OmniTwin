@@ -4213,9 +4213,15 @@ function setupEventListeners() {
                     await loadIndicatoren(data.gebiedstypeId);
                 }
             }
+            const idInHuidigeKaart = state.currentData?.features?.some(f => ids.includes(f.properties?.id ?? f.id));
+            let doelGemeente = data.gemeenteCode ?? null;
+            if (!doelGemeente && state.currentGemeenteCode && ids.length > 0 && !idInHuidigeKaart) {
+                const match = /^(?:BU|WK)(\d{4})/.exec(ids[0]);
+                doelGemeente = (match && loadedGemeenten.some(g => g.code === match[1])) ? match[1] : '';
+            }
             // Een gemeentefilter op een andere gemeente zou de gebieden verbergen
-            if (data.gemeenteCode && state.currentGemeenteCode && state.currentGemeenteCode !== data.gemeenteCode) {
-                zetGemeente(data.gemeenteCode, null, false);
+            if (doelGemeente !== null && state.currentGemeenteCode !== doelGemeente) {
+                zetGemeente(doelGemeente, null, false);
                 state.currentData = null;
             }
 
@@ -4232,11 +4238,16 @@ function setupEventListeners() {
             updateGemeenteFilterChip(state.currentData?.features?.length ?? null);
             updateSelectionUI();
             updateButtonState();
+            if (ids.length > 0) loadGebiedDetails(ids[0]);
             if (data.zoom) zoomNaarGebieden(ids);
 
-            if (data.openKompas && state.kompasWindow) {
-                state.kompasWindow.open();
-                if (window.kompasViz && window.kompasViz.currentConfigId) {
+            if (data.openKompas) {
+                openRechterDock('kompas', true, false);
+            } else {
+                const dockEl = document.getElementById('rechter-dock');
+                const isKompasOpen = (dockEl && !dockEl.classList.contains('collapsed'))
+                    || (state.kompasWindow && state.kompasWindow.isVisible);
+                if (isKompasOpen && ids.length > 0 && window.kompasViz && window.kompasViz.currentConfigId) {
                     loadKompasForSelection(window.kompasViz.currentConfigId);
                 }
             }
@@ -4874,7 +4885,7 @@ function initOnboarding() {
             if (open && !buurtWrap.firstElementChild && window.BuurtKiezer) {
                 const form = window.BuurtKiezer.maak({
                     idPrefix: 'welcome-adres',
-                    onGevonden: async ({ gebied_id, statusEl }) => {
+                    onGevonden: async ({ gebied_id, gemeente_code, gebiedstype_id, statusEl }) => {
                         if (window.startKaartKlaar && typeof window.startKaartKlaar.then === 'function') {
                             statusEl.textContent = 'Even geduld, kaart wordt voorbereid…';
                             try {
@@ -4887,6 +4898,9 @@ function initOnboarding() {
                         if (window.EventBus) {
                             window.EventBus.emit('CHAT_GEBIEDEN_TONEN', {
                                 ids: [gebied_id],
+                                gemeenteCode: gemeente_code || null,
+                                gebiedstypeId: gebiedstype_id || null,
+                                openKompas: true,
                                 zoom: true,
                             });
                         }

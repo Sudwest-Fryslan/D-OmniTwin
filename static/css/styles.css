@@ -3994,6 +3994,16 @@ textarea {
   outline: 2px solid color-mix(in srgb, var(--action-color) 40%, transparent);
 }
 
+.chat-buurtkiezer-rij .chat-actie-btn {
+  width: auto;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.chat-buurtkiezer .chat-actie-btn:hover {
+  transform: none;
+}
+
 .chat-buurtkiezer-status:empty {
   display: none;
 }

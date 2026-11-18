@@ -15,7 +15,7 @@ from __future__ import annotations
 import json
 
 import pytest
-from e2e_helpers import WORKUM, laad_buurtenkaart, wacht_op_selectie
+from e2e_helpers import laad_buurtenkaart, wacht_op_selectie
 from playwright.sync_api import expect
 
 pytestmark = pytest.mark.e2e
@@ -91,14 +91,21 @@ def test_rondleiding_start_vanuit_assistent_chip(app_page):
 
 
 def test_welkomstmodal_mijn_buurt_met_gemockte_locatie(app_page_fresh):
-    """'Mijn buurt opzoeken' in de welkomstmodal zoekt via /api/locatie/buurt en selecteert de buurt."""
+    """'Mijn buurt opzoeken' in de welkomstmodal zoekt via /api/locatie/buurt, wisselt gemeente en selecteert de buurt."""
     page = app_page_fresh
+    waadhoeke_buurt = "BU19492808"
 
     def mock_locatie(route):
         route.fulfill(
             status=200,
             content_type="application/json",
-            body=json.dumps({"gebied_id": WORKUM, "naam": "Workum"}),
+            body=json.dumps(
+                {
+                    "gebied_id": waadhoeke_buurt,
+                    "naam": "Franeker It Stiselplak",
+                    "gemeente_code": "1949",
+                }
+            ),
         )
 
     page.route("**/api/locatie/buurt", mock_locatie)
@@ -114,8 +121,20 @@ def test_welkomstmodal_mijn_buurt_met_gemockte_locatie(app_page_fresh):
     form = page.locator("#welcome-buurtkiezer-wrap form.chat-buurtkiezer")
     expect(form).to_be_visible()
 
-    form.locator("input").fill("8711 AA")
+    invoer = form.locator("input")
+    box = invoer.bounding_box()
+    assert box and box["width"] > 150, f"Invoerveld is te smal of platgedrukt: {box}"
+
+    invoer.fill("8801 AA")
     form.locator("button[type='submit']").click()
 
     expect(modal).to_be_hidden()
-    wacht_op_selectie(page, [WORKUM])
+    wacht_op_selectie(page, [waadhoeke_buurt])
+    page.wait_for_function(
+        "(bid) => window.state.currentGemeenteCode === '1949'"
+        " && !!(window.state.currentData && window.state.currentData.features.some(f => (f.properties?.id || f.id) === bid))",
+        arg=waadhoeke_buurt,
+        polling=100,
+    )
+    expect(page.locator("#gemeente-filter-tekst")).to_have_text("Gemeente: Waadhoeke")
+    expect(page.locator("#selection-badge-naam")).to_have_text("Franeker It Stiselplak")
