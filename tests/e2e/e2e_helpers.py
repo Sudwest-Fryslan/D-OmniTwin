@@ -561,11 +561,12 @@ def klik_buurt_op_kaart(page: Page, gebied_id: str, shift: bool = False, terugva
 
 def selecteer_buurt_via_app(page: Page, gebied_id: str, shift: bool = False):
     """Selectie via de onClick-handler van de gebiedenlaag (zelfde codepad als een klik)."""
+    page.wait_for_function("() => window.state?.currentData?.features?.length > 0")
     page.evaluate(
         """([gebiedId, shift]) => {
             const s = window.state;
-            const laag = s.deckgl.props.layers.find(l => l && l.id.startsWith('gebieden-layer-'));
-            const f = s.currentData.features.find(f => (f.id || f.properties.id) === gebiedId);
+            const laag = s.deckgl && s.deckgl.props && s.deckgl.props.layers && s.deckgl.props.layers.find(l => l && l.id.startsWith('gebieden-layer-'));
+            const f = s.currentData && s.currentData.features && s.currentData.features.find(f => (f.id || f.properties.id) === gebiedId);
             if (!laag || !f) throw new Error('laag of buurt niet gevonden: ' + gebiedId);
             laag.props.onClick({ object: f, coordinate: null }, { srcEvent: { shiftKey: shift } });
         }""",
