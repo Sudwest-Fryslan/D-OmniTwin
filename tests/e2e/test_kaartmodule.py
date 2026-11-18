@@ -233,8 +233,10 @@ _BBOX_SCHERM_JS = """
   const v = s.currentViewState;
   const kaart = document.getElementById('map').getBoundingClientRect();
   const paneel = document.querySelector('.panel-container.open');
+  const dock = document.querySelector('#rechter-dock:not(.collapsed)');
   return {
     links: paneel ? paneel.getBoundingClientRect().right - kaart.left : 0,
+    rechts: (dock && s.dockMode !== 'floating') ? Math.max(0, kaart.right - dock.getBoundingClientRect().left) : 0,
     x0: Math.min(hoeken[0][0], hoeken[1][0]), x1: Math.max(hoeken[0][0], hoeken[1][0]),
     y0: Math.min(hoeken[0][1], hoeken[1][1]), y1: Math.max(hoeken[0][1], hoeken[1][1]),
     breedte: vp.width, hoogte: vp.height,
@@ -288,10 +290,11 @@ def test_kaart_zoomt_in_op_geladen_gebieden(app_page):
 
     assert b["camera"][2] > start["zoom"] + 1, f"niet ingezoomd: {b['camera']} (start {start})"
     links = b["links"]
+    rechts = b.get("rechts", 0)
     assert b["x0"] >= links - 5 and b["x1"] <= b["breedte"] + 5, f"buiten beeld horizontaal: {b}, paneel tot {links}"
     assert b["y0"] >= -5 and b["y1"] <= b["hoogte"] + 5, f"buiten beeld verticaal: {b}"
     # Gebieden vullen een behoorlijk deel van de vrije ruimte (echt ingezoomd, niet alleen verschoven)
-    assert (b["x1"] - b["x0"]) > 0.4 * (b["breedte"] - links) or (b["y1"] - b["y0"]) > 0.4 * b["hoogte"], b
+    assert (b["x1"] - b["x0"]) > 0.4 * (b["breedte"] - links - rechts) or (b["y1"] - b["y0"]) > 0.4 * b["hoogte"], b
 
     # Nogmaals 'Toon op kaart' met hetzelfde gebiedstype: camera blijft staan
     zoom_kaart(page, 300)
