@@ -1,7 +1,7 @@
 """Browser-E2E-tests voor de interactieve rondleiding en welkomstmodal (#442).
 
 Toetst:
-1. De rondleiding start niet vanzelf; start via #tour-start-btn (?), doorloopt 4 stappen met
+1. De rondleiding start niet vanzelf; start via #info-tour-btn (i) of #chat-start-tour-btn, doorloopt 4 stappen met
    drie-regelige uitleg (Wat zie je / Wat betekent het / Probeer het), selecteert een voorbeeldbuurt,
    sluit met Escape zonder dat de actieve indicator verloren gaat, ruimt de voorbeeldselectie op en
    zet de focus terug op de startknop.
@@ -22,7 +22,7 @@ pytestmark = pytest.mark.e2e
 
 
 def test_rondleiding_vier_stappen_voorbeeldbuurt_escape_behoudt_indicator_en_focus(app_page):
-    """? opent de 4-staps spotlight-tour; Escape sluit zonder de actieve indicator te wissen."""
+    """#info-tour-btn opent de 4-staps spotlight-tour; Escape sluit zonder de actieve indicator te wissen (#532)."""
     page = app_page
     laad_buurtenkaart(page)
 
@@ -33,8 +33,12 @@ def test_rondleiding_vier_stappen_voorbeeldbuurt_escape_behoudt_indicator_en_foc
     assert indicator_voor, "Startkaart moet een actieve indicator hebben (#443)"
     assert page.evaluate("() => window.state.selectedGebiedIds.size") == 0
 
-    # Start via de vaste ?-knop in de linker navigatiebalk
-    tour_knop = page.locator("#tour-start-btn")
+    # Vaste ?-knop in de linker navigatiebalk bestaat niet meer (#532)
+    expect(page.locator("#tour-start-btn")).to_have_count(0)
+
+    # Start via #info-tour-btn in het Info-paneel (i)
+    page.locator('[data-panel="info"]').click()
+    tour_knop = page.locator("#info-tour-btn")
     expect(tour_knop).to_be_visible()
     tour_knop.click()
 
@@ -70,7 +74,7 @@ def test_rondleiding_vier_stappen_voorbeeldbuurt_escape_behoudt_indicator_en_foc
     indicator_na = page.evaluate("() => window.state && window.state.currentIndicator")
     assert indicator_na == indicator_voor, "Escape tijdens de rondleiding mag de actieve indicator niet wissen"
     assert page.evaluate("() => window.state.selectedGebiedIds.size") == 0
-    assert page.evaluate("() => document.activeElement && document.activeElement.id") == "tour-start-btn"
+    assert page.evaluate("() => document.activeElement && document.activeElement.id") == "info-tour-btn"
 
 
 def test_rondleiding_start_vanuit_assistent_chip(app_page):

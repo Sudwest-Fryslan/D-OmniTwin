@@ -4,7 +4,7 @@ Controleert zonder browser dat:
 1. Alle stapankers (#id of [data-panel="x"]) in static/js/core/rondleiding.js bestaan in templates/index.html.
 2. Elke stap de drie-regelige duidingsstructuur (wat, betekent, probeer) bevat en geen organisatie-hardcodes heeft.
 3. buurtkiezer.js en rondleiding.js vóór chat.js en app.js worden geladen in templates/index.html.
-4. De herhaalbare instapknoppen (#tour-start-btn, #info-tour-btn, #chat-start-tour-btn) en de 2-ingangen welkomstmodal aanwezig zijn, en verweesde startOnboarding/ONBOARDING_ACTION weg zijn.
+4. De herhaalbare instapknoppen (#info-tour-btn, #chat-start-tour-btn) en de 2-ingangen welkomstmodal aanwezig zijn, losse #tour-start-btn weg is (#532), en verweesde startOnboarding/ONBOARDING_ACTION weg zijn.
 5. #panel-rapport geen misleidende 'Directe AI analyse' of 'Genereer AI Rapport' meer toont.
 """
 
@@ -84,11 +84,12 @@ def test_scripts_en_knoppen_aanwezig_in_index_html():
         "welcome-btn-help",
         "welcome-skip-btn",
         "welcome-buurtkiezer-wrap",
-        "tour-start-btn",
         "info-tour-btn",
         "chat-start-tour-btn",
     ):
         assert f'id="{verplicht_id}"' in html, f"Element #{verplicht_id} ontbreekt in templates/index.html"
+
+    assert 'id="tour-start-btn"' not in html, "Losse vraagtekenknop #tour-start-btn mag niet meer voorkomen (#532)"
 
 
 def test_gedeelde_buurtkiezer_en_verweesde_onboarding_opgeruimd():
