@@ -401,16 +401,16 @@ function showNotification(message) {
 function setupTabBar() {
     document.querySelectorAll('.tab-button').forEach(btn => {
         const panelId = btn.dataset.panel;
-        // Knoppen die het rechter dock of de rondleiding bedienen openen geen linker paneel
-        if (!panelId || panelId === 'kompas' || btn.id === 'chat-toggle-btn' || btn.id === 'tour-start-btn') return;
+        // Knoppen die het rechter dock bedienen openen geen linker paneel
+        if (!panelId || panelId === 'kompas' || btn.id === 'chat-toggle-btn') return;
 
         btn.addEventListener('click', (e) => {
             togglePanel(panelId);
         });
     });
 
-    // #442: Rondleiding startknoppen (linker balk, Info & Start paneel, en D-Omni Assistent)
-    ['tour-start-btn', 'info-tour-btn', 'chat-start-tour-btn'].forEach(id => {
+    // #442 / #532: Rondleiding startknoppen (Info & Start paneel en D-Omni Assistent)
+    ['info-tour-btn', 'chat-start-tour-btn'].forEach(id => {
         const btn = document.getElementById(id);
         if (btn) {
             btn.addEventListener('click', () => {
@@ -432,7 +432,7 @@ function togglePanel(panelId) {
         container.classList.remove('open');
         state.activePanelId = null;
         buttons.forEach(btn => {
-            if (btn.dataset.panel !== 'kompas' && btn.id !== 'chat-toggle-btn' && btn.id !== 'tour-start-btn') {
+            if (btn.dataset.panel !== 'kompas' && btn.id !== 'chat-toggle-btn') {
                 btn.classList.remove('active');
             }
         });
@@ -462,7 +462,6 @@ function togglePanel(panelId) {
     state.activePanelId = panelId;
 
     buttons.forEach(btn => {
-        if (btn.id === 'tour-start-btn') return;
         if (btn.dataset.panel === 'kompas' || btn.id === 'chat-toggle-btn') {
             if (dockCollapsedByCompactScreen) btn.classList.remove('active');
             return;
@@ -4918,7 +4917,7 @@ function initOnboarding() {
         tourBtn.addEventListener('click', () => {
             dismissWelcomeModal();
             if (typeof window.startRondleiding === 'function') {
-                window.startRondleiding(document.getElementById('tour-start-btn'));
+                window.startRondleiding(document.getElementById('info-tour-btn') || document.querySelector('[data-panel="info"]'));
             }
         });
     }

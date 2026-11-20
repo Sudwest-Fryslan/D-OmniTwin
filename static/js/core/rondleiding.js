@@ -468,7 +468,9 @@
     async function startRondleiding(triggerEl) {
         const kandidaatTrigger = (triggerEl instanceof HTMLElement)
             ? triggerEl
-            : (document.activeElement instanceof HTMLElement ? document.activeElement : document.getElementById('tour-start-btn'));
+            : (document.activeElement instanceof HTMLElement && document.activeElement !== document.body
+                ? document.activeElement
+                : (document.getElementById('info-tour-btn') || document.querySelector('[data-panel="info"]')));
 
         // Sluit de welkomstmodal indien nog open
         const welcomeOverlay = document.getElementById('welcome-modal-overlay');
@@ -491,12 +493,6 @@
         window.tourActief = true;
         if (typeof window.hideContextualTooltip === 'function') {
             window.hideContextualTooltip();
-        }
-
-        const tourBtn = document.getElementById('tour-start-btn');
-        if (tourBtn) {
-            tourBtn.classList.add('active');
-            tourBtn.setAttribute('aria-expanded', 'true');
         }
 
         kiesVoorbeeldBuurt();
@@ -534,12 +530,6 @@
         window.removeEventListener('resize', onResizeOfTransition);
         document.getElementById('rechter-dock')?.removeEventListener('transitionend', onResizeOfTransition);
         document.querySelector('.panel-container')?.removeEventListener('transitionend', onResizeOfTransition);
-
-        const tourBtn = document.getElementById('tour-start-btn');
-        if (tourBtn) {
-            tourBtn.classList.remove('active');
-            tourBtn.setAttribute('aria-expanded', 'false');
-        }
 
         if (overlayEl) {
             overlayEl.style.display = 'none';
