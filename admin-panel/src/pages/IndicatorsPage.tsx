@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { indicatorenAPI, polariteitenAPI, colorSchemasAPI } from '../services/api';
 import { useAdminStore } from '../hooks/useAdminStore';
-import { Search, ChevronLeft, ChevronRight, Edit, Save, X, Loader2, CheckCircle, Bot, Clock } from 'lucide-react';
+import { Search, ChevronLeft, ChevronRight, Edit, Save, X, Loader2, CheckCircle, Bot, Clock, Eye, EyeOff } from 'lucide-react';
 import type { Indicator, IndicatorUpdate, OntologieStatus } from '../types';
 
 // ── Helper: Status Badge ────────────────────────────────────────────────────
@@ -30,6 +30,8 @@ export const IndicatorsPage: React.FC = () => {
     const [search, setSearch] = useState('');
     // #246: standaard alleen indicatoren met data; definities zonder levering vervuilen de lijst
     const [metData, setMetData] = useState(true);
+    // #526: statusfilter actief / inactief / alle
+    const [statusFilter, setStatusFilter] = useState<'alle' | 'actief' | 'inactief'>('alle');
     const [offset, setOffset] = useState(0);
     const [activeTab, setActiveTab] = useState<'basis' | 'validatie'>('basis');
     const limit = 20;
@@ -66,11 +68,13 @@ export const IndicatorsPage: React.FC = () => {
         fetchData();
     }, [setColorSchemas, setPolariteiten]);
 
+    const isActiefParam = statusFilter === 'actief' ? true : statusFilter === 'inactief' ? false : undefined;
+
     useEffect(() => {
         const fetchIndicators = async () => {
             setLoading(true);
             try {
-                const res = await indicatorenAPI.getAll({ search, met_data: metData, limit, offset });
+                const res = await indicatorenAPI.getAll({ search, met_data: metData, is_actief: isActiefParam, limit, offset });
                 setIndicators(res.data.indicatoren);
                 setTotal(res.data.total);
             } catch (error) {
@@ -82,7 +86,7 @@ export const IndicatorsPage: React.FC = () => {
 
         const debounce = setTimeout(fetchIndicators, 300);
         return () => clearTimeout(debounce);
-    }, [search, metData, offset]);
+    }, [search, metData, isActiefParam, offset]);
 
     const handleSelectIndicator = async (uuid: string) => {
         try {
@@ -96,6 +100,7 @@ export const IndicatorsPage: React.FC = () => {
                 polariteit: res.data.polariteit || 'hoger_is_beter',
                 color_schema_id: res.data.color_schema_id || 1,
                 admin_notes: res.data.admin_notes || '',
+                is_actief: res.data.is_actief !== false,
             });
             // Validatie tab: pre-fill met de huidige of AI-beschrijving
             setValidatieBeschrijving(
@@ -106,13 +111,28 @@ export const IndicatorsPage: React.FC = () => {
         }
     };
 
+    const handleToggleActief = async (indicator: Indicator, e?: React.MouseEvent) => {
+        if (e) e.stopPropagation();
+        const nieuweStatus = indicator.is_actief === false;
+        try {
+            const res = await indicatorenAPI.update(indicator.uuid, { is_actief: nieuweStatus });
+            if (selectedIndicator?.uuid === indicator.uuid) {
+                setSelectedIndicator(res.data);
+                setEditForm(prev => ({ ...prev, is_actief: nieuweStatus }));
+            }
+            setIndicators(prev => prev.map(ind => ind.uuid === indicator.uuid ? { ...ind, is_actief: nieuweStatus } : ind));
+        } catch (error) {
+            console.error('Error toggling indicator status:', error);
+        }
+    };
+
     const handleSave = async () => {
         if (!selectedIndicator) return;
         setSaving(true);
         try {
             const res = await indicatorenAPI.update(selectedIndicator.uuid, editForm);
             setSelectedIndicator(res.data);
-            const listRes = await indicatorenAPI.getAll({ search, met_data: metData, limit, offset });
+            const listRes = await indicatorenAPI.getAll({ search, met_data: metData, is_actief: isActiefParam, limit, offset });
             setIndicators(listRes.data.indicatoren);
         } catch (error) {
             console.error('Error saving indicator:', error);
@@ -173,7 +193,7 @@ export const IndicatorsPage: React.FC = () => {
             {/* Left: List */}
             <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
                 <div className="card" style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-                    <div style={{ marginBottom: '1rem' }}>
+                    <div style={{ marginBottom: '1rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                         <div style={{ position: 'relative' }}>
                             <input
                                 type="text"
@@ -195,15 +215,32 @@ export const IndicatorsPage: React.FC = () => {
                                 }}
                             />
                         </div>
-                        <label htmlFor="filter-met-data" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.5rem', fontSize: '0.875rem' }}>
-                            <input
-                                id="filter-met-data"
-                                type="checkbox"
-                                checked={metData}
-                                onChange={(e) => { setMetData(e.target.checked); setOffset(0); }}
-                            />
-                            Alleen indicatoren met data
-                        </label>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem' }}>
+                            <label htmlFor="filter-met-data" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.875rem', cursor: 'pointer' }}>
+                                <input
+                                    id="filter-met-data"
+                                    type="checkbox"
+                                    checked={metData}
+                                    onChange={(e) => { setMetData(e.target.checked); setOffset(0); }}
+                                />
+                                Alleen indicatoren met data
+                            </label>
+
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                <label htmlFor="filter-status" style={{ fontSize: '0.875rem', color: 'var(--color-text-secondary)' }}>Status:</label>
+                                <select
+                                    id="filter-status"
+                                    className="form-select"
+                                    value={statusFilter}
+                                    onChange={(e) => { setStatusFilter(e.target.value as 'alle' | 'actief' | 'inactief'); setOffset(0); }}
+                                    style={{ padding: '4px 8px', fontSize: '0.85rem' }}
+                                >
+                                    <option value="alle">Alle indicatoren</option>
+                                    <option value="actief">Alleen actief</option>
+                                    <option value="inactief">Alleen inactief</option>
+                                </select>
+                            </div>
+                        </div>
                     </div>
 
                     <div style={{ flex: 1, overflow: 'auto' }}>
@@ -216,6 +253,7 @@ export const IndicatorsPage: React.FC = () => {
                                 <thead>
                                     <tr>
                                         <th>Naam</th>
+                                        <th>Status</th>
                                         <th>Polariteit</th>
                                         <th>Ontologie</th>
                                     </tr>
@@ -238,10 +276,34 @@ export const IndicatorsPage: React.FC = () => {
                                                     <span>{ind.naam}</span>
                                                     {ind.is_actief === false && (
                                                         <span style={{ fontSize: '11px', padding: '3px 8px', background: '#ffffff', color: '#ef4444', border: '1px solid #ef4444', borderRadius: '12px', fontWeight: 600, boxShadow: '0 1px 2px rgba(0,0,0,0.1)' }}>
-                                                            ● Inactief (Gemerged)
+                                                            ● {ind.vervangen_door_id ? 'Inactief (Gemerged)' : 'Inactief'}
                                                         </span>
                                                     )}
                                                 </div>
+                                            </td>
+                                            <td>
+                                                <button
+                                                    type="button"
+                                                    className="btn btn-icon"
+                                                    onClick={(e) => handleToggleActief(ind, e)}
+                                                    title={ind.is_actief !== false ? 'Deactiveren (verbergen in viewer en kompas)' : 'Activeren (zichtbaar in viewer en kompas)'}
+                                                    aria-label={`${ind.naam} ${ind.is_actief !== false ? 'deactiveren' : 'activeren'}`}
+                                                    aria-pressed={ind.is_actief !== false}
+                                                    style={{
+                                                        color: ind.is_actief !== false ? 'var(--color-success, #22c55e)' : 'var(--color-text-muted, #94a3b8)',
+                                                        padding: '4px 6px',
+                                                        display: 'inline-flex',
+                                                        alignItems: 'center',
+                                                        gap: '4px',
+                                                        fontSize: '0.8rem',
+                                                        border: '1px solid var(--color-border)',
+                                                        borderRadius: '4px',
+                                                        background: 'var(--color-surface)',
+                                                    }}
+                                                >
+                                                    {ind.is_actief !== false ? <Eye size={15} /> : <EyeOff size={15} />}
+                                                    <span>{ind.is_actief !== false ? 'Actief' : 'Inactief'}</span>
+                                                </button>
                                             </td>
                                             <td>
                                                 <span className={`badge ${ind.polariteit === 'lager_is_beter' ? 'badge-negative' : 'badge-positive'}`}>
@@ -308,7 +370,7 @@ export const IndicatorsPage: React.FC = () => {
                                     </h3>
                                     {selectedIndicator.is_actief === false && (
                                         <span style={{ fontSize: '12px', padding: '4px 10px', background: '#ef4444', color: '#ffffff', borderRadius: '12px', fontWeight: 600, boxShadow: '0 2px 4px rgba(239, 68, 68, 0.2)' }}>
-                                            ● Inactief (Gemerged)
+                                            ● {selectedIndicator.vervangen_door_id ? 'Inactief (Gemerged)' : 'Inactief'}
                                         </span>
                                     )}
                                 </div>
@@ -337,6 +399,30 @@ export const IndicatorsPage: React.FC = () => {
                                 {/* ── TAB: Basis Info ── */}
                                 {activeTab === 'basis' && (
                                     <>
+                                        {/* Status in viewer & Kompas (#526) */}
+                                        <div style={{ padding: '10px 12px', background: 'var(--color-surface-light, #1E293B)', borderRadius: '6px', marginBottom: '14px', border: '1px solid var(--color-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                            <div>
+                                                <div style={{ fontWeight: 600, fontSize: '0.85rem' }}>Status in viewer & Kompas</div>
+                                                <div style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)', marginTop: '2px' }}>
+                                                    {editForm.is_actief !== false ? 'Zichtbaar in kiezer en Kompas' : 'Verborgen in viewer en buiten Kompas'}
+                                                </div>
+                                            </div>
+                                            <button
+                                                type="button"
+                                                className={`btn ${editForm.is_actief !== false ? 'btn-secondary' : 'btn-danger'}`}
+                                                style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.8rem', padding: '6px 12px' }}
+                                                onClick={() => setEditForm(prev => ({ ...prev, is_actief: prev.is_actief === false }))}
+                                                aria-pressed={editForm.is_actief !== false}
+                                                aria-label={`Indicator ${editForm.is_actief !== false ? 'deactiveren' : 'activeren'}`}
+                                            >
+                                                {editForm.is_actief !== false ? (
+                                                    <><Eye size={14} style={{ color: 'var(--color-success, #22c55e)' }} /> Actief</>
+                                                ) : (
+                                                    <><EyeOff size={14} /> Inactief</>
+                                                )}
+                                            </button>
+                                        </div>
+
                                         <div className="form-group">
                                             <label htmlFor="indicators-naam" className="form-label">Naam</label>
                                             <input id="indicators-naam" type="text" className="form-input" value={editForm.naam || ''} onChange={(e) => setEditForm({ ...editForm, naam: e.target.value })} />

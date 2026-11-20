@@ -29,7 +29,7 @@ BEGIN
         FROM public.indicatoren i
         LEFT JOIN public.gebied_data gd ON i.uuid = gd.indicator_uuid
         LEFT JOIN public.gebieden g ON gd.gebied_id = g.id
-        WHERE i.status IN ('O', 'C')
+        WHERE i.status IN ('O', 'C') AND i.is_actief = true
         GROUP BY i.uuid, i.naam, i.code, i.omschrijving, i.eenheid, i.categorie
         ORDER BY 
             COUNT(DISTINCT CASE 
@@ -51,7 +51,7 @@ BEGIN
             MAX(gd.jaar)::integer as nieuwste_jaar
         FROM public.indicatoren i
         LEFT JOIN public.gebied_data gd ON i.uuid = gd.indicator_uuid
-        WHERE i.status IN ('O', 'C')
+        WHERE i.status IN ('O', 'C') AND i.is_actief = true
         GROUP BY i.uuid, i.naam, i.code, i.omschrijving, i.eenheid, i.categorie
         ORDER BY i.naam;
     END IF;
