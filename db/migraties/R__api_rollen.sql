@@ -134,7 +134,7 @@ WHERE toegang = 'openbaar' OR public.verzoek_mag_intern();
 
 -- Indicatorenlijst met aantallen (frontend: indicatorkeuze, /rpc/get_indicatoren_stats).
 -- SECURITY DEFINER met vaste search_path: web_anon heeft geen rechten in public nodig.
--- Met toegang (#254); interne indicatoren alleen met X-Omnitwin-Toegang: intern. De aantallen
+-- Met toegang (#254) en alleen actieve indicatoren (#526); interne indicatoren alleen met X-Omnitwin-Toegang: intern. De aantallen
 -- tellen alle waarden van de indicator (ook interne van een openbare indicator).
 DROP FUNCTION IF EXISTS api.get_indicatoren_stats(uuid);
 CREATE FUNCTION api.get_indicatoren_stats(p_gebiedstype_id uuid DEFAULT NULL)

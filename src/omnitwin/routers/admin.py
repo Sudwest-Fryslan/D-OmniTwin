@@ -70,6 +70,7 @@ class IndicatorUpdate(BaseModel):
     polariteit: str | None = None  # hoger_is_beter | lager_is_beter | neutraal
     color_schema_id: int | None = None
     admin_notes: str | None = None
+    is_actief: bool | None = None
 
 
 class OntologieValidatie(BaseModel):
@@ -299,12 +300,14 @@ def get_indicatoren(
     search: str | None = None,
     score_type: str | None = None,
     ontologie_status: str | None = None,
+    is_actief: bool | None = None,
     met_data: bool = False,
     limit: int = 100,
     offset: int = 0,
     db: Session = Depends(get_db),
 ):
     """Get all indicators with admin info. Filter by ontologie_status for validation workflow.
+    is_actief: filter op actieve (true) of inactieve (false) indicatoren (#526).
     met_data: alleen indicatoren met minstens één waarde (#246; definities zonder levering weg)."""
     met_data_sql = (
         " AND EXISTS (SELECT 1 FROM gebied_data gd WHERE gd.indicator_uuid = i.uuid AND gd.waarde IS NOT NULL)"
@@ -345,6 +348,10 @@ def get_indicatoren(
         query += " AND i.ontologie_status = :ontologie_status"
         params["ontologie_status"] = ontologie_status
 
+    if is_actief is not None:
+        query += " AND i.is_actief = :is_actief"
+        params["is_actief"] = is_actief
+
     if met_data:
         query += met_data_sql
 
@@ -365,6 +372,9 @@ def get_indicatoren(
     if ontologie_status:
         count_query += " AND i.ontologie_status = :ontologie_status"
         count_params["ontologie_status"] = ontologie_status
+    if is_actief is not None:
+        count_query += " AND i.is_actief = :is_actief"
+        count_params["is_actief"] = is_actief
     if met_data:
         count_query += met_data_sql
     total = db.execute(text(count_query), count_params).scalar()
@@ -508,6 +518,9 @@ def update_indicator(
     if data.admin_notes is not None:
         updates.append("admin_notes = :admin_notes")
         params["admin_notes"] = data.admin_notes
+    if data.is_actief is not None:
+        updates.append("is_actief = :is_actief")
+        params["is_actief"] = data.is_actief
 
     if not updates:
         raise HTTPException(400, "No fields to update")

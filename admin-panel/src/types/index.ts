@@ -55,6 +55,7 @@ export interface IndicatorUpdate {
     polariteit?: string;
     color_schema_id?: number;
     admin_notes?: string;
+    is_actief?: boolean;
 }
 
 export interface IndicatorenResponse {
