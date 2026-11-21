@@ -88,7 +88,8 @@ docs/4-ux-design/testresultaten/*.json
 docs/4-ux-design/testresultaten/traces/
 !docs/5-secops/privacy-quickscan.md
 docs/6-ai-parallel-track/
-docs/7-projectmanagement/
+docs/7-projectmanagement/*
+!docs/7-projectmanagement/taxonomie-kompas-beheer/
 docs/8-communicatie/gespreksleidraad_*.md
 docs/8-communicatie/overleg_leidraad_*.md
 docs/10-testen/
