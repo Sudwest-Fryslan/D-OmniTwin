@@ -4,7 +4,7 @@
 **Architectuur:** Eduard Witteveen / D-OmniTwin Team  
 **Issue:** [#525](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/525) (K1 — mijlpaal `0.7.0 — UX en toegankelijkheid`)  
 **Gerelateerde issues:** [#444](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/444) (Rechter dock), [#466](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/466) (Soepele gebiedsselectie & `getFreezone`), [#258](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/258) (Favorieten), [#442](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/442)/[#532](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/532) (Rondleiding), [#527](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/527) (K2 — Kaartlagen groeperen), [#528](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/528) (K3 — Aanbevolen kaartlagen), [#529](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/529) (K4 — WMS-lagen & legenda)  
-**Bronreview:** [`docs/7-projectmanagement/ux-design/review_ontwerpkeuze_navigatie_D-OmniTwin_issue_525.md`](../7-projectmanagement/ux-design/review_ontwerpkeuze_navigatie_D-OmniTwin_issue_525.md)  
+**Bronreview:** interne UX-review *Ontwerpkeuze navigatie D-OmniTwin* (issue [#525](https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/525))  
 **Status:** Geïmplementeerd — vastgestelde UX-fundatie voor 0.7.0  
 **Datum:** 21 november 2026
 
