@@ -31,7 +31,7 @@ from pathlib import Path
 import httpx
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
 from fastapi.concurrency import run_in_threadpool
-from pydantic import BaseModel, field_validator
+from pydantic import BaseModel, Field, field_validator
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
@@ -84,6 +84,17 @@ def _check_toegang(v: str) -> str:
     return v
 
 
+def _strip_optional_text(v: str | None, max_len: int, veld: str) -> str | None:
+    if v is None:
+        return None
+    s = v.strip()
+    if not s:
+        return None
+    if len(s) > max_len:
+        raise ValueError(f"{veld} mag maximaal {max_len} tekens bevatten")
+    return s
+
+
 class ExterneKaartlaagCreate(BaseModel):
     naam: str
     beschrijving: str | None = None
@@ -101,7 +112,21 @@ class ExterneKaartlaagCreate(BaseModel):
     opacity: float = 0.15
     actief: bool = True
     volgorde: int = 0
+    groep_naam: str | None = None
+    groep_volgorde: int = 0
+    kompas_thema_naam: str | None = None
+    gekoppelde_indicatoren: list[uuid.UUID] = Field(default_factory=list)
     toegang: str = "openbaar"  # openbaar | intern (alleen met rol lezer of beheerder, #254)
+
+    @field_validator("groep_naam")
+    @classmethod
+    def check_groep_naam(cls, v: str | None) -> str | None:
+        return _strip_optional_text(v, 120, "groep_naam")
+
+    @field_validator("kompas_thema_naam")
+    @classmethod
+    def check_kompas_thema_naam(cls, v: str | None) -> str | None:
+        return _strip_optional_text(v, 150, "kompas_thema_naam")
 
     @field_validator("toegang")
     @classmethod
@@ -161,12 +186,40 @@ class ExterneKaartlaagUpdate(BaseModel):
     opacity: float | None = None
     actief: bool | None = None
     volgorde: int | None = None
+    groep_naam: str | None = None
+    groep_volgorde: int | None = None
+    kompas_thema_naam: str | None = None
+    gekoppelde_indicatoren: list[uuid.UUID] | None = None
     toegang: str | None = None
+
+    @field_validator("groep_naam")
+    @classmethod
+    def check_groep_naam(cls, v: str | None) -> str | None:
+        return _strip_optional_text(v, 120, "groep_naam")
+
+    @field_validator("kompas_thema_naam")
+    @classmethod
+    def check_kompas_thema_naam(cls, v: str | None) -> str | None:
+        return _strip_optional_text(v, 150, "kompas_thema_naam")
 
     @field_validator("toegang")
     @classmethod
     def check_toegang(cls, v: str | None) -> str | None:
         return None if v is None else _check_toegang(v)
+
+
+class KaartlaagVolgordeItem(BaseModel):
+    """Nieuwe positie van één kaartlaag binnen zijn groep (#527)."""
+
+    id: int
+    volgorde: int
+    groep_volgorde: int
+
+
+class KaartlaagVolgordeUpdate(BaseModel):
+    """Bulk-update van groep- en laagvolgordes vanuit het beheerpaneel (#527)."""
+
+    items: list[KaartlaagVolgordeItem]
 
 
 class BuurtenRequest(BaseModel):
@@ -320,10 +373,12 @@ def get_actieve_lagen(db: Session = Depends(get_db)):
     rows = db.execute(
         text("""
         SELECT id, naam, beschrijving, laag_type, bron_type,
-               kleur_lijn, kleur_fill, opacity, volgorde, toegang
+               kleur_lijn, kleur_fill, opacity, volgorde,
+               groep_naam, groep_volgorde, kompas_thema_naam,
+               gekoppelde_indicatoren, toegang
         FROM externe_kaartlagen
         WHERE actief = true
-        ORDER BY volgorde, naam
+        ORDER BY groep_volgorde, volgorde, naam
     """)
     ).fetchall()
 
@@ -339,6 +394,10 @@ def get_actieve_lagen(db: Session = Depends(get_db)):
                 "kleur_fill": r.kleur_fill,
                 "opacity": r.opacity,
                 "volgorde": r.volgorde,
+                "groep_naam": r.groep_naam,
+                "groep_volgorde": r.groep_volgorde,
+                "kompas_thema_naam": r.kompas_thema_naam,
+                "gekoppelde_indicatoren": [str(u) for u in (r.gekoppelde_indicatoren or [])],
                 "toegang": r.toegang,
             }
             for r in rows
@@ -465,6 +524,36 @@ def get_buurten_voor_feature(laag_id: int, body: BuurtenRequest, db: Session = D
 # ============================================================================
 
 
+def _serialiseer_admin_laag(r) -> dict:
+    """Zet een database-rij van externe_kaartlagen om naar JSON voor het beheerpaneel."""
+    return {
+        "id": r.id,
+        "naam": r.naam,
+        "beschrijving": r.beschrijving,
+        "laag_type": r.laag_type,
+        "bron_type": r.bron_type,
+        "url": r.url,
+        "typename": r.typename,
+        "srsname": r.srsname,
+        "versie": r.versie,
+        "filter_type": r.filter_type,
+        "filter_waarde": r.filter_waarde,
+        "koppel_veld": r.koppel_veld,
+        "kleur_lijn": r.kleur_lijn,
+        "kleur_fill": r.kleur_fill,
+        "opacity": r.opacity,
+        "actief": r.actief,
+        "volgorde": r.volgorde,
+        "groep_naam": r.groep_naam,
+        "groep_volgorde": r.groep_volgorde,
+        "kompas_thema_naam": r.kompas_thema_naam,
+        "gekoppelde_indicatoren": [str(u) for u in (r.gekoppelde_indicatoren or [])],
+        "toegang": r.toegang,
+        "created_at": r.created_at.isoformat() if r.created_at else None,
+        "updated_at": r.updated_at.isoformat() if r.updated_at else None,
+    }
+
+
 @admin_router.get("")
 def admin_get_alle_lagen(
     db: Session = Depends(get_db),
@@ -475,41 +564,81 @@ def admin_get_alle_lagen(
         SELECT id, naam, beschrijving, laag_type, bron_type,
                url, typename, srsname, versie,
                filter_type, filter_waarde, koppel_veld,
-               kleur_lijn, kleur_fill, opacity, actief, volgorde, toegang,
-               created_at, updated_at
+               kleur_lijn, kleur_fill, opacity, actief, volgorde,
+               groep_naam, groep_volgorde, kompas_thema_naam,
+               gekoppelde_indicatoren, toegang, created_at, updated_at
         FROM externe_kaartlagen
-        ORDER BY volgorde, naam
+        ORDER BY groep_volgorde, volgorde, naam
     """)
     ).fetchall()
 
     return {
-        "lagen": [
-            {
-                "id": r.id,
-                "naam": r.naam,
-                "beschrijving": r.beschrijving,
-                "laag_type": r.laag_type,
-                "bron_type": r.bron_type,
-                "url": r.url,
-                "typename": r.typename,
-                "srsname": r.srsname,
-                "versie": r.versie,
-                "filter_type": r.filter_type,
-                "filter_waarde": r.filter_waarde,
-                "koppel_veld": r.koppel_veld,
-                "kleur_lijn": r.kleur_lijn,
-                "kleur_fill": r.kleur_fill,
-                "opacity": r.opacity,
-                "actief": r.actief,
-                "volgorde": r.volgorde,
-                "toegang": r.toegang,
-                "created_at": r.created_at.isoformat() if r.created_at else None,
-                "updated_at": r.updated_at.isoformat() if r.updated_at else None,
-            }
-            for r in rows
-        ],
+        "lagen": [_serialiseer_admin_laag(r) for r in rows],
         "totaal": len(rows),
     }
+
+
+@admin_router.get("/koppelopties")
+def admin_get_koppelopties(
+    db: Session = Depends(get_db),
+):
+    """Beschikbare Kompasthema's, bestaande groepsnamen en actieve indicatoren voor kaartlaagkoppeling (#527)."""
+    themas = [r[0] for r in db.execute(text("SELECT DISTINCT naam FROM public.kompas_themas ORDER BY naam")).fetchall()]
+    groepen = [
+        r[0]
+        for r in db.execute(
+            text(
+                "SELECT DISTINCT groep_naam FROM public.externe_kaartlagen "
+                "WHERE groep_naam IS NOT NULL AND BTRIM(groep_naam) <> '' ORDER BY groep_naam"
+            )
+        ).fetchall()
+    ]
+    ind_rows = db.execute(
+        text("""
+        SELECT i.uuid::text AS uuid, i.naam, MIN(kt.naam) AS thema
+        FROM public.indicatoren i
+        LEFT JOIN public.kompas_indicator_mapping kim ON kim.indicator_uuid = i.uuid
+        LEFT JOIN public.kompas_onderdelen ko ON ko.id = kim.onderdeel_id
+        LEFT JOIN public.kompas_themas kt ON kt.id = ko.thema_id
+        WHERE i.is_actief = true
+        GROUP BY i.uuid, i.naam
+        ORDER BY i.naam
+    """)
+    ).fetchall()
+
+    return {
+        "themas": themas,
+        "groepen": groepen,
+        "indicatoren": [{"uuid": r.uuid, "naam": r.naam, "thema": r.thema} for r in ind_rows],
+    }
+
+
+@admin_router.put("/volgorde")
+def admin_update_volgorde(
+    data: KaartlaagVolgordeUpdate,
+    db: Session = Depends(get_db),
+):
+    """Werk groep- en laagvolgordes van externe kaartlagen in één transactie bij (#527)."""
+    if not data.items:
+        raise HTTPException(400, "Geen volgorde-items opgegeven")
+
+    bijgewerkt = 0
+    for item in data.items:
+        res = db.execute(
+            text("""
+                UPDATE externe_kaartlagen
+                SET volgorde = :volgorde,
+                    groep_volgorde = :groep_volgorde,
+                    updated_at = NOW()
+                WHERE id = :id
+            """),
+            {"id": item.id, "volgorde": item.volgorde, "groep_volgorde": item.groep_volgorde},
+        )
+        bijgewerkt += res.rowcount or 0
+    db.commit()
+
+    logger.info("Volgorde externe kaartlagen bijgewerkt (%d rijen)", bijgewerkt)
+    return {"bijgewerkt": bijgewerkt, "status": "bijgewerkt"}
 
 
 @admin_router.post("")
@@ -523,11 +652,13 @@ def admin_create_laag(
         INSERT INTO externe_kaartlagen
             (naam, beschrijving, laag_type, bron_type, url, typename,
              srsname, versie, filter_type, filter_waarde, koppel_veld,
-             kleur_lijn, kleur_fill, opacity, actief, volgorde, toegang)
+             kleur_lijn, kleur_fill, opacity, actief, volgorde,
+             groep_naam, groep_volgorde, kompas_thema_naam, gekoppelde_indicatoren, toegang)
         VALUES
             (:naam, :beschrijving, :laag_type, :bron_type, :url, :typename,
              :srsname, :versie, :filter_type, :filter_waarde, :koppel_veld,
-             :kleur_lijn, :kleur_fill, :opacity, :actief, :volgorde, :toegang)
+             :kleur_lijn, :kleur_fill, :opacity, :actief, :volgorde,
+             :groep_naam, :groep_volgorde, :kompas_thema_naam, CAST(:gekoppelde_indicatoren AS uuid[]), :toegang)
         RETURNING id
     """),
         {
@@ -547,6 +678,10 @@ def admin_create_laag(
             "opacity": data.opacity,
             "actief": data.actief,
             "volgorde": data.volgorde,
+            "groep_naam": data.groep_naam,
+            "groep_volgorde": data.groep_volgorde,
+            "kompas_thema_naam": data.kompas_thema_naam,
+            "gekoppelde_indicatoren": [str(u) for u in data.gekoppelde_indicatoren],
             "toegang": data.toegang,
         },
     )
@@ -594,6 +729,7 @@ def admin_update_laag(
         "opacity",
         "actief",
         "volgorde",
+        "groep_volgorde",
         "toegang",
     }
     for field_name in allowed_fields:
@@ -601,6 +737,16 @@ def admin_update_laag(
         if value is not None:
             updates.append(f"{field_name} = :{field_name}")
             params[field_name] = value
+
+    # Nullable velden die expliciet gewist mogen worden (null of lege lijst via model_fields_set)
+    for nullable_text_field in ("groep_naam", "kompas_thema_naam"):
+        if nullable_text_field in data.model_fields_set:
+            updates.append(f"{nullable_text_field} = :{nullable_text_field}")
+            params[nullable_text_field] = getattr(data, nullable_text_field)
+
+    if "gekoppelde_indicatoren" in data.model_fields_set:
+        updates.append("gekoppelde_indicatoren = CAST(:gekoppelde_indicatoren AS uuid[])")
+        params["gekoppelde_indicatoren"] = [str(u) for u in (data.gekoppelde_indicatoren or [])]
 
     if len(updates) <= 1:
         raise HTTPException(400, "Geen velden om bij te werken")

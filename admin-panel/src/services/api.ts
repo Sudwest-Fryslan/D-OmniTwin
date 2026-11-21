@@ -122,11 +122,14 @@ export const dashboardAPI = {
     getExport: () => api.get('/dashboard/export', { responseType: 'blob' })
 };
 
-// Externe Kaartlagen (Sprint 18 Track B)
+// Externe Kaartlagen (Sprint 18 Track B + #527 groepering & volgorde)
 export const externeKaartlagenAPI = {
     getAll: () => api.get<{ lagen: import('../types').ExterneKaartlaag[]; totaal: number }>('/externe-lagen'),
+    getKoppelOpties: () => api.get<import('../types').ExterneKaartlaagKoppelOpties>('/externe-lagen/koppelopties'),
     create: (data: import('../types').ExterneKaartlaagCreate) => api.post<{ id: number; naam: string; status: string }>('/externe-lagen', data),
     update: (id: number, data: import('../types').ExterneKaartlaagUpdate) => api.put<{ id: number; status: string }>(`/externe-lagen/${id}`, data),
+    updateVolgorde: (items: import('../types').KaartlaagVolgordeItem[]) =>
+        api.put<{ bijgewerkt: number; status: string }>('/externe-lagen/volgorde', { items }),
     delete: (id: number) => api.delete<{ id: number; naam: string; status: string }>(`/externe-lagen/${id}`),
     getLokaalBestanden: () => api.get<{ bestanden: import('../types').LokaalBestand[]; totaal: number }>('/externe-lagen/lokale-bestanden'),
     upload: (file: File) => {

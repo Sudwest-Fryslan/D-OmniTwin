@@ -108,6 +108,28 @@
       "type": "integer"
     },
     {
+      "name": "groep_naam",
+      "type": "string",
+      "constraints": {
+        "maxLength": 120
+      }
+    },
+    {
+      "name": "groep_volgorde",
+      "type": "integer"
+    },
+    {
+      "name": "kompas_thema_naam",
+      "type": "string",
+      "constraints": {
+        "maxLength": 150
+      }
+    },
+    {
+      "name": "gekoppelde_indicatoren",
+      "type": "array"
+    },
+    {
       "name": "toegang",
       "type": "string",
       "constraints": {
