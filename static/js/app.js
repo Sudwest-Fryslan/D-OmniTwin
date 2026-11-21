@@ -1716,11 +1716,144 @@ function internLabel() {
 }
 
 /**
- * Laadt actieve externe kaartlagen en rendert toggles in het kaartlagen-paneel.
+ * Groepeert externe kaartlagen op effectieve groepsnaam (#527):
+ * groep_naam || kompas_thema_naam || 'Overige kaartlagen'.
+ * Sorteert groepen op laagste groep_volgorde (standaard 0), met 'Overige kaartlagen'
+ * altijd als laatste, en binnen elke groep op (volgorde, naam).
+ */
+function groepeerExterneKaartlagen(lagen) {
+    const groepen = new Map();
+    (Array.isArray(lagen) ? lagen : []).forEach((laag) => {
+        const explicieteGroep = (laag.groep_naam || '').trim();
+        const themaGroep = (laag.kompas_thema_naam || '').trim();
+        const isOverig = !explicieteGroep && !themaGroep;
+        const groepsnaam = explicieteGroep || themaGroep || 'Overige kaartlagen';
+        const groepVolgorde = Number.isFinite(Number(laag.groep_volgorde)) ? Number(laag.groep_volgorde) : 0;
+
+        if (!groepen.has(groepsnaam)) {
+            groepen.set(groepsnaam, { naam: groepsnaam, isOverig, volgorde: groepVolgorde, lagen: [] });
+        }
+        const g = groepen.get(groepsnaam);
+        if (groepVolgorde < g.volgorde) g.volgorde = groepVolgorde;
+        g.lagen.push(laag);
+    });
+
+    const resultaat = Array.from(groepen.values()).sort((a, b) => {
+        if (a.isOverig !== b.isOverig) return a.isOverig ? 1 : -1;
+        if (a.volgorde !== b.volgorde) return a.volgorde - b.volgorde;
+        return a.naam.localeCompare(b.naam, 'nl');
+    });
+
+    resultaat.forEach((g) => {
+        g.lagen.sort((a, b) => {
+            const va = Number.isFinite(Number(a.volgorde)) ? Number(a.volgorde) : 0;
+            const vb = Number.isFinite(Number(b.volgorde)) ? Number(b.volgorde) : 0;
+            if (va !== vb) return va - vb;
+            return String(a.naam || '').localeCompare(String(b.naam || ''), 'nl');
+        });
+    });
+
+    return resultaat;
+}
+
+window.groepeerExterneKaartlagen = groepeerExterneKaartlagen;
+
+/**
+ * Bouwt één regel voor een externe kaartlaag en hangt deze aan targetContainer.
+ */
+function renderExterneLaagRij(laag, targetContainer, rootContainer) {
+    const item = document.createElement('div');
+    item.className = 'externe-laag-item';
+
+    const label = document.createElement('label');
+    label.className = 'checkbox-label externe-laag-label';
+
+    const checkbox = document.createElement('input');
+    checkbox.type = 'checkbox';
+    checkbox.id = `toggle-externe-laag-${laag.id}`;
+    checkbox.dataset.laagId = String(laag.id);
+
+    const checkboxCustom = document.createElement('span');
+    checkboxCustom.className = 'checkbox-custom';
+
+    const colorDot = document.createElement('span');
+    colorDot.className = 'layer-color-dot';
+    colorDot.style.backgroundColor = laag.kleur_lijn || '#8B5CF6';
+
+    const labelText = document.createElement('span');
+    labelText.className = 'layer-naam';
+    labelText.textContent = laag.naam;
+
+    label.appendChild(checkbox);
+    label.appendChild(checkboxCustom);
+    label.appendChild(colorDot);
+    label.appendChild(labelText);
+    if (laag.toegang === 'intern') label.appendChild(internLabel());
+    item.appendChild(label);
+
+    let descDiv = null;
+    if (laag.beschrijving) {
+        const infoBtn = document.createElement('button');
+        infoBtn.type = 'button';
+        infoBtn.className = 'layer-info-btn';
+        infoBtn.setAttribute('aria-label', `Informatie over ${laag.naam}`);
+        infoBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>';
+        item.appendChild(infoBtn);
+
+        descDiv = document.createElement('div');
+        descDiv.className = 'layer-desc';
+        descDiv.textContent = laag.beschrijving;
+
+        infoBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            rootContainer.querySelectorAll('.layer-desc.open').forEach(d => {
+                if (d !== descDiv) d.classList.remove('open');
+            });
+            descDiv.classList.toggle('open');
+        });
+    }
+
+    targetContainer.appendChild(item);
+    if (descDiv) targetContainer.appendChild(descDiv);
+
+    checkbox.addEventListener('change', async (e) => {
+        if (e.target.checked) {
+            await laadExterneKaartlaagFeatures(laag);
+        } else {
+            verwijderExterneKaartlaag(laag.id);
+        }
+    });
+}
+
+/**
+ * Maakt het chevron-icoon voor een inklapbare kaartlagengroep via SVG DOM API.
+ */
+function maakGroepChevronSvg() {
+    const ns = 'http://www.w3.org/2000/svg';
+    const svg = document.createElementNS(ns, 'svg');
+    svg.setAttribute('class', 'externe-groep-chevron');
+    svg.setAttribute('viewBox', '0 0 24 24');
+    svg.setAttribute('fill', 'none');
+    svg.setAttribute('stroke', 'currentColor');
+    svg.setAttribute('stroke-width', '2');
+    svg.setAttribute('stroke-linecap', 'round');
+    svg.setAttribute('stroke-linejoin', 'round');
+    svg.setAttribute('aria-hidden', 'true');
+    const poly = document.createElementNS(ns, 'polyline');
+    poly.setAttribute('points', '6 9 12 15 18 9');
+    svg.appendChild(poly);
+    return svg;
+}
+
+/**
+ * Laadt actieve externe kaartlagen en rendert deze per in-/uitklapbare groep (#527).
  */
 async function loadExterneKaartlagen() {
     try {
-        const res = await fetch('/api/data/externe_kaartlagen?actief=eq.true&order=volgorde.asc,naam.asc');
+        let res = await fetch('/api/data/externe_kaartlagen?actief=eq.true&order=groep_volgorde.asc,volgorde.asc,naam.asc');
+        if (!res.ok && res.status === 400) {
+            res = await fetch('/api/data/externe_kaartlagen?actief=eq.true&order=volgorde.asc,naam.asc');
+        }
         if (!res.ok) return;
         const data = await res.json();
         state.externeKaartlagen = data || [];
@@ -1728,83 +1861,51 @@ async function loadExterneKaartlagen() {
         const container = document.getElementById('externe-lagen-list');
         if (!container) return;
 
-        // Render compacte toggles veilig via DOM API (geen innerHTML)
         container.replaceChildren();
-        state.externeKaartlagen.forEach(laag => {
-            // Compact row wrapper
-            const item = document.createElement('div');
-            item.className = 'externe-laag-item';
+        const groepen = groepeerExterneKaartlagen(state.externeKaartlagen);
 
-            // Label wrapper (checkbox + kleur-dot + naam)
-            const label = document.createElement('label');
-            label.className = 'checkbox-label externe-laag-label';
+        groepen.forEach((groep, idx) => {
+            const groepEl = document.createElement('div');
+            groepEl.className = 'externe-lagen-groep';
 
-            // Checkbox
-            const checkbox = document.createElement('input');
-            checkbox.type = 'checkbox';
-            checkbox.id = `toggle-externe-laag-${laag.id}`;
-            checkbox.dataset.laagId = String(laag.id);
+            const bodyId = `externe-groep-body-${idx}`;
+            const headerBtn = document.createElement('button');
+            headerBtn.type = 'button';
+            headerBtn.className = 'externe-groep-header';
+            headerBtn.setAttribute('aria-expanded', 'true');
+            headerBtn.setAttribute('aria-controls', bodyId);
 
-            // Custom checkbox span
-            const checkboxCustom = document.createElement('span');
-            checkboxCustom.className = 'checkbox-custom';
+            const titelSpan = document.createElement('span');
+            titelSpan.className = 'externe-groep-titel';
+            titelSpan.textContent = groep.naam;
 
-            // Kleur-dot die de lijnkleur van de laag toont
-            const colorDot = document.createElement('span');
-            colorDot.className = 'layer-color-dot';
-            colorDot.style.backgroundColor = laag.kleur_lijn || '#8B5CF6';
+            const metaSpan = document.createElement('span');
+            metaSpan.className = 'externe-groep-meta';
 
-            // Laagnaam (compact, zonder emoji)
-            const labelText = document.createElement('span');
-            labelText.className = 'layer-naam';
-            labelText.textContent = laag.naam;
+            const countSpan = document.createElement('span');
+            countSpan.className = 'externe-groep-count';
+            countSpan.textContent = String(groep.lagen.length);
 
-            label.appendChild(checkbox);
-            label.appendChild(checkboxCustom);
-            label.appendChild(colorDot);
-            label.appendChild(labelText);
-            // Interne laag (#254): alleen na inloggen in de lijst; met een label
-            if (laag.toegang === 'intern') label.appendChild(internLabel());
-            item.appendChild(label);
+            metaSpan.appendChild(countSpan);
+            metaSpan.appendChild(maakGroepChevronSvg());
+            headerBtn.appendChild(titelSpan);
+            headerBtn.appendChild(metaSpan);
 
-            // Inline beschrijving (verborgen, verschijnt bij klik op ℹ)
-            let descDiv = null;
-            if (laag.beschrijving) {
-                // Info button
-                const infoBtn = document.createElement('button');
-                infoBtn.type = 'button';
-                infoBtn.className = 'layer-info-btn';
-                infoBtn.setAttribute('aria-label', `Informatie over ${laag.naam}`);
-                infoBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>';
-                item.appendChild(infoBtn);
+            const bodyEl = document.createElement('div');
+            bodyEl.id = bodyId;
+            bodyEl.className = 'externe-groep-body';
 
-                // Beschrijving div (inline, onder het item)
-                descDiv = document.createElement('div');
-                descDiv.className = 'layer-desc';
-                descDiv.textContent = laag.beschrijving;
+            groep.lagen.forEach((laag) => renderExterneLaagRij(laag, bodyEl, container));
 
-                // Click handler: toggle beschrijving
-                infoBtn.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    // Sluit alle andere beschrijvingen
-                    container.querySelectorAll('.layer-desc.open').forEach(d => {
-                        if (d !== descDiv) d.classList.remove('open');
-                    });
-                    descDiv.classList.toggle('open');
-                });
-            }
-
-            container.appendChild(item);
-            if (descDiv) container.appendChild(descDiv);
-
-            // Toggle event listener
-            checkbox.addEventListener('change', async (e) => {
-                if (e.target.checked) {
-                    await laadExterneKaartlaagFeatures(laag);
-                } else {
-                    verwijderExterneKaartlaag(laag.id);
-                }
+            headerBtn.addEventListener('click', () => {
+                const nieuwOpen = headerBtn.getAttribute('aria-expanded') !== 'true';
+                headerBtn.setAttribute('aria-expanded', String(nieuwOpen));
+                bodyEl.hidden = !nieuwOpen;
             });
+
+            groepEl.appendChild(headerBtn);
+            groepEl.appendChild(bodyEl);
+            container.appendChild(groepEl);
         });
 
         if (state.externeKaartlagen.length > 0) {

@@ -292,12 +292,32 @@ export interface ExterneKaartlaag {
     opacity: number;
     actief: boolean;
     volgorde: number;
+    groep_naam: string | null;
+    groep_volgorde: number;
+    kompas_thema_naam: string | null;
+    gekoppelde_indicatoren: string[];
     created_at: string | null;
     updated_at: string | null;
 }
 
 export type ExterneKaartlaagCreate = Omit<ExterneKaartlaag, 'id' | 'created_at' | 'updated_at'>;
 export type ExterneKaartlaagUpdate = Partial<ExterneKaartlaagCreate>;
+
+export interface ExterneKaartlaagKoppelOpties {
+    themas: string[];
+    groepen: string[];
+    indicatoren: Array<{
+        uuid: string;
+        naam: string;
+        thema: string | null;
+    }>;
+}
+
+export interface KaartlaagVolgordeItem {
+    id: number;
+    volgorde: number;
+    groep_volgorde: number;
+}
 
 export interface LokaalBestand {
     bestandsnaam: string;

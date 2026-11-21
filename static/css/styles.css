@@ -1229,6 +1229,85 @@ textarea {
   padding: 0.25rem 0.5rem 0.5rem;
 }
 
+/* Gegroepeerde externe kaartlagen (#527) */
+.externe-lagen-groep {
+  border: 1px solid var(--panel-border);
+  border-radius: var(--border-radius-sm);
+  background: var(--tint-subtle);
+  margin-bottom: 8px;
+  overflow: hidden;
+}
+
+.externe-groep-header {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 10px;
+  background: transparent;
+  border: none;
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: 0.82rem;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color var(--transition-fast);
+}
+
+.externe-groep-header:hover {
+  background: var(--tint-hover);
+}
+
+.externe-groep-header:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: -2px;
+}
+
+.externe-groep-titel {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.externe-groep-meta {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.externe-groep-count {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  background: var(--tint);
+  padding: 1px 6px;
+  border-radius: 999px;
+}
+
+.externe-groep-chevron {
+  width: 15px;
+  height: 15px;
+  color: var(--text-secondary);
+  transition: transform var(--transition-fast);
+}
+
+.externe-groep-header[aria-expanded="false"] .externe-groep-chevron {
+  transform: rotate(-90deg);
+}
+
+.externe-groep-body {
+  padding: 2px 8px 6px;
+  border-top: 1px solid var(--panel-border);
+  background: var(--panel-bg);
+}
+
+.externe-groep-body[hidden] {
+  display: none;
+}
+
 
 
 /* Slider Styling */

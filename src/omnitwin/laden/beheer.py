@@ -54,6 +54,23 @@ def _getal(w, standaard=None):
     return standaard if w is None else float(w)
 
 
+def _parse_uuid_lijst(waarde) -> list[str]:
+    """Zet een lijst, JSON-array-string of ;-gescheiden UUID-tekst om naar een UUID-stringlijst."""
+    if waarde is None or waarde == "":
+        return []
+    if isinstance(waarde, list):
+        return [str(v).strip() for v in waarde if str(v).strip()]
+    tekst = str(waarde).strip()
+    if not tekst:
+        return []
+    if tekst.startswith("["):
+        data = json.loads(tekst)
+        if not isinstance(data, list):
+            raise ValueError("gekoppelde_indicatoren JSON moet een lijst zijn")
+        return [str(v).strip() for v in data if str(v).strip()]
+    return [deel.strip() for deel in tekst.split(";") if deel.strip()]
+
+
 def kompasprofielen(cur, regels: list[dict]) -> dict:
     """Kompasprofielen aanvullen: profiel aanmaken als hij niet bestaat, hiërarchie en koppelingen erbij."""
     uit = {"regels": len(regels), "nieuweProfielen": [], "gekoppeld": 0, "alAanwezig": 0, "indicatorOnbekend": []}
@@ -115,14 +132,23 @@ def externe_kaartlagen(cur, regels: list[dict]) -> dict:
     met_toegang = cur.fetchone() is not None
     for r in regels:
         toegang = (r.pop("toegang", None) or "openbaar").strip().lower()
-        velden = {k: v for k, v in r.items() if v is not None}
+        velden = {k: v for k, v in r.items() if v is not None and v != ""}
         if "opacity" in velden:
             velden["opacity"] = float(velden["opacity"])
         if "volgorde" in velden:
             velden["volgorde"] = int(float(velden["volgorde"]))
+        if "groep_volgorde" in velden:
+            velden["groep_volgorde"] = int(float(velden["groep_volgorde"]))
+        if "gekoppelde_indicatoren" in velden:
+            velden["gekoppelde_indicatoren"] = _parse_uuid_lijst(velden["gekoppelde_indicatoren"])
         if "actief" in velden:
             velden["actief"] = _bool(velden["actief"])
         laag = ExterneKaartlaagCreate(**velden).model_dump()
+        for optioneel in ("groep_naam", "groep_volgorde", "kompas_thema_naam", "gekoppelde_indicatoren"):
+            if optioneel not in velden:
+                laag.pop(optioneel, None)
+        if "gekoppelde_indicatoren" in laag:
+            laag["gekoppelde_indicatoren"] = [str(u) for u in laag["gekoppelde_indicatoren"]]
         if met_toegang:
             laag["toegang"] = "intern" if toegang == "intern" else "openbaar"
         else:
@@ -139,9 +165,9 @@ def externe_kaartlagen(cur, regels: list[dict]) -> dict:
             uit["alAanwezig"].append(laag["naam"])
             continue
         kolommen = list(laag)
+        placeholders = ["%s::uuid[]" if k == "gekoppelde_indicatoren" else "%s" for k in kolommen]
         cur.execute(
-            f"INSERT INTO public.externe_kaartlagen ({', '.join(kolommen)}) "
-            f"VALUES ({', '.join(['%s'] * len(kolommen))})",
+            f"INSERT INTO public.externe_kaartlagen ({', '.join(kolommen)}) VALUES ({', '.join(placeholders)})",
             [laag[k] for k in kolommen],
         )
         uit["toegevoegd"].append(laag["naam"])
