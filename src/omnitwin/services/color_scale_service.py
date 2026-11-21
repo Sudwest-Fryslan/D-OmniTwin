@@ -225,7 +225,8 @@ class ColorScaleService:
                     cs.classificatie,
                     cs.klassen,
                     cs.nodata_kleur,
-                    i.score_type
+                    i.score_type,
+                    i.polariteit
                 FROM indicatoren i
                 LEFT JOIN color_schemas cs ON i.color_schema_id = cs.id
                 WHERE i.uuid::text = :indicator_uuid AND i.color_schema_id IS NOT NULL AND i.is_actief = true
@@ -247,7 +248,8 @@ class ColorScaleService:
                     COALESCE(vp.klassen_override, cs.klassen) as klassen,
                     cs.nodata_kleur,
                     vp.midpoint_waarde,
-                    i.score_type
+                    i.score_type,
+                    i.polariteit
                 FROM indicatoren i
                 LEFT JOIN visualisatie_profielen vp
                     ON i.naam LIKE vp.indicator_pattern AND vp.is_actief = true
@@ -285,18 +287,18 @@ class ColorScaleService:
             num_classes = 7
             nodata_color = "#d1d5db"
             classificatie = "quantile"
-            score_type = "+/+"
+            pol = "+/+"
         else:
             colors = config["colors"]
             num_classes = config["klassen"]
             nodata_color = config["nodata_kleur"]
             classificatie = config["classificatie"]
-            score_type = config.get("score_type", "+/+")
+            pol = config.get("polariteit") or config.get("score_type", "+/+")
 
             color_ramp = self.generate_color_ramp(colors, num_classes)
 
         # Lager is beter: kleuren omkeren (één regel, omnitwin.polariteit, #120)
-        should_reverse = polariteit.lager_is_beter(score_type)
+        should_reverse = polariteit.lager_is_beter(pol)
         if should_reverse:
             color_ramp = list(reversed(color_ramp))
 

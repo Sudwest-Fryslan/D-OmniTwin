@@ -203,6 +203,12 @@ def test_palet_vijf_kleuren_kleurenblindvriendelijk():
     assert kleuren[0] == pk.PALET_FALLBACK["min"] and kleuren[-1] == pk.PALET_FALLBACK["max"]
 
 
+def test_palet_neutraal_vijf_kleuren_oplopend_blauw():
+    kleuren = lk.palet(neutraal=True)
+    assert len(kleuren) == 5 and len(set(kleuren)) == 5
+    assert kleuren[0] == pk.PALET_NEUTRAAL_FALLBACK["min"] and kleuren[-1] == pk.PALET_NEUTRAAL_FALLBACK["max"]
+
+
 def test_legenda_a_tot_e_met_melding_voorlopig():
     kleuren = lk.palet()
     leg = lk.legenda(kleuren)
@@ -213,6 +219,20 @@ def test_legenda_a_tot_e_met_melding_voorlopig():
     assert leg[-1]["omschrijving"] == "label E (ongunstigst), kwintiel 0–20%"
     assert "kwintiel" not in lk.legenda(kleuren, voorlopig=False)[0]["omschrijving"]
     assert "Voorlopige drempels (kwintielen)" in lk.MELDING_VOORLOPIG
+
+
+def test_legenda_neutraal_zonder_gunstig_of_ongunstig():
+    kleuren = lk.palet(neutraal=True)
+    leg = lk.legenda(kleuren, voorlopig=True, neutraal=True)
+    assert [k["label"] for k in leg] == ["A", "B", "C", "D", "E"]
+    assert leg[0]["omschrijving"] == "label A (hoogst), kwintiel 80–100%"
+    assert leg[-1]["omschrijving"] == "label E (laagst), kwintiel 0–20%"
+    assert not any("gunstig" in item["omschrijving"] for item in leg)
+
+    leg_vast = lk.legenda(kleuren, voorlopig=False, neutraal=True)
+    assert leg_vast[0]["omschrijving"] == "label A (hoogst)"
+    assert leg_vast[-1]["omschrijving"] == "label E (laagst)"
+    assert "Geen oordeel gunstig of ongunstig" in lk.MELDING_VOORLOPIG_NEUTRAAL
 
 
 def test_classificatie_label_ae_bekend():
