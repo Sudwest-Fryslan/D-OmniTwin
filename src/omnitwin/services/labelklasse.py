@@ -37,6 +37,10 @@ MELDING_VOORLOPIG = (
     "Voorlopige drempels (kwintielen): A = gunstigste 20% van de vergelijkbare gebieden, "
     "E = ongunstigste 20%. De drempels van de Klimaatmonitor volgen."
 )
+MELDING_VOORLOPIG_NEUTRAAL = (
+    "Voorlopige indeling (kwintielen, neutrale indicator): A = hoogste 20% van de vergelijkbare gebieden, "
+    "E = laagste 20%. Geen oordeel gunstig of ongunstig."
+)
 
 # Drempel: (label, ondergrens, bovengrens); None = open grens
 Drempel = tuple[str, float | None, float | None]
@@ -98,21 +102,21 @@ def aggregeer(scores_met_gewicht: Iterable[tuple[int | None, float | None]]) -> 
     return pk.aggregeer(scores_met_gewicht, KLASSEN)
 
 
-def palet(color_service=None) -> list[str]:
-    """5 kleuren voor score 1..5 (E..A), kleurenblindvriendelijk uit color_schemas."""
-    return pk.palet(color_service, klassen=KLASSEN)
+def palet(color_service=None, neutraal: bool = False) -> list[str]:
+    """5 kleuren voor score 1..5 (E..A), kleurenblindvriendelijk uit color_schemas (neutraal: blauw)."""
+    return pk.palet(color_service, neutraal=neutraal, klassen=KLASSEN)
 
 
-def legenda(kleuren: list[str], voorlopig: bool = True) -> list[dict[str, object]]:
-    """A..E (gunstigst eerst), met kleur; 'klasse' = labelscore (5 = A)."""
+def legenda(kleuren: list[str], voorlopig: bool = True, neutraal: bool = False) -> list[dict[str, object]]:
+    """A..E (gunstigst/hoogst eerst), met kleur; 'klasse' = labelscore (5 = A)."""
     uit = []
     for lbl in LABELS:
         s = label_naar_score(lbl)
         tekst = f"label {lbl}"
         if lbl == LABELS[0]:
-            tekst += " (gunstigst)"
+            tekst += " (hoogst)" if neutraal else " (gunstigst)"
         elif lbl == LABELS[-1]:
-            tekst += " (ongunstigst)"
+            tekst += " (laagst)" if neutraal else " (ongunstigst)"
         if voorlopig:
             van, tot = (s - 1) * 100 // KLASSEN, s * 100 // KLASSEN
             tekst += f", kwintiel {van}–{tot}%"

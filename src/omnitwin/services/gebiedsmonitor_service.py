@@ -11,10 +11,21 @@ from typing import Any
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
+from omnitwin import polariteit
 from omnitwin.services import kleine_aantallen as ka
 from omnitwin.services import labelklasse as lk
 from omnitwin.services import percentielklasse as pk
 from omnitwin.services.kompas_service import KompasScoringService
+
+
+def _kaart_polariteit(row: dict[str, Any]) -> str:
+    """Bepaal de effectieve polariteit van een kaartindicator (#539)."""
+    if row.get("is_neutraal_kwadrant"):
+        return polariteit.NEUTRAAL
+    pol = row.get("polariteit")
+    if pol in polariteit.POLARITEITEN:
+        return pol
+    return polariteit.uit_oud(row.get("score_type"), row.get("interpretatie_logica"))
 
 
 class GebiedsmonitorService:
@@ -69,12 +80,23 @@ class GebiedsmonitorService:
                 ind.naam as indicator_naam,
                 ind.code as indicator_code,
                 ind.eenheid,
-                COALESCE(ind.score_type, '+/+') as score_type
+                COALESCE(ind.score_type, '+/+') as score_type,
+                ind.polariteit as polariteit,
+                ind.interpretatie_logica as interpretatie_logica,
+                {neutraal_kwadrant_kolom} AS is_neutraal_kwadrant
             FROM gebieden g
         """
 
         # 2. Join Logic
         if indicator_uuid:
+            neutraal_kwadrant_kolom = (
+                "(EXISTS (SELECT 1 FROM v_kompas_hierarchie vkh"
+                " WHERE vkh.indicator_uuid = CAST(:indicator_uuid AS uuid)"
+                " AND lower(vkh.titel_naam) LIKE '%samenstelling%')"
+                " AND NOT EXISTS (SELECT 1 FROM v_kompas_hierarchie vkh2"
+                " WHERE vkh2.indicator_uuid = CAST(:indicator_uuid AS uuid)"
+                " AND lower(vkh2.titel_naam) NOT LIKE '%samenstelling%'))"
+            )
             if jaar is not None:
                 join_type = "LEFT JOIN" if show_all else "INNER JOIN"
                 query_base += f"""
@@ -106,9 +128,10 @@ class GebiedsmonitorService:
             # placeholders for no indicator
             query_base += """
                 CROSS JOIN (SELECT NULL as waarde, NULL as jaar, NULL as bron) i
-                CROSS JOIN (SELECT NULL as naam, NULL as code, NULL as eenheid, '+/+' as score_type) ind
+                CROSS JOIN (SELECT NULL as naam, NULL as code, NULL as eenheid, '+/+' as score_type, 'hoger_is_beter' as polariteit, NULL as interpretatie_logica) ind
             """
             n_kolom = "CAST(NULL AS integer)"
+            neutraal_kwadrant_kolom = "FALSE"
 
         # 3. Filters
         query_base += " WHERE g.gebiedstype_id = CAST(:gebiedstype_id AS uuid)"
@@ -123,7 +146,8 @@ class GebiedsmonitorService:
         if jaar is not None:
             params["jaar"] = jaar
 
-        result = self.db.execute(text(query_base.replace("{n_kolom}", n_kolom)), params)
+        sql = query_base.replace("{n_kolom}", n_kolom).replace("{neutraal_kwadrant_kolom}", neutraal_kwadrant_kolom)
+        result = self.db.execute(text(sql), params)
         rows = [dict(row._mapping) for row in result]
 
         # Kleine aantallen (#325): een waarde met n onder de drempel tonen we niet; het gebied
@@ -150,6 +174,8 @@ class GebiedsmonitorService:
         percentiel = (modus == "percentiel" or labels) and bool(indicator_uuid)
         klasse_per_gebied: dict[str, dict[str, Any]] = {}
         label_bron = None
+        indicator_polariteit = _kaart_polariteit(rows[0]) if rows and indicator_uuid else None
+        is_neutraal = indicator_polariteit == polariteit.NEUTRAAL
 
         if indicator_uuid and len(all_values) > 0:
             color_ramp, breaks, nodata_color = color_service.compute_colors_for_data(all_values, indicator_uuid)
@@ -157,14 +183,14 @@ class GebiedsmonitorService:
                 color_ramp, klasse_per_gebied, label_bron = self._percentielklassen_kaart(
                     rows, gebiedstype_id, indicator_uuid, jaar, color_service, labels=True
                 )
-                klassen_legenda = lk.legenda(color_ramp, voorlopig=label_bron != lk.BRON_DREMPELS)
+                klassen_legenda = lk.legenda(color_ramp, voorlopig=label_bron != lk.BRON_DREMPELS, neutraal=is_neutraal)
                 for k in klassen_legenda:
                     k["aantal"] = sum(1 for v in klasse_per_gebied.values() if v["klasse"] == k["klasse"])
             elif percentiel:
                 color_ramp, klasse_per_gebied = self._percentielklassen_kaart(
                     rows, gebiedstype_id, indicator_uuid, jaar, color_service
                 )
-                klassen_legenda = pk.legenda(color_ramp)
+                klassen_legenda = pk.legenda(color_ramp, neutraal=is_neutraal)
                 for k in klassen_legenda:
                     k["aantal"] = sum(1 for v in klasse_per_gebied.values() if v["klasse"] == k["klasse"])
             else:
@@ -225,6 +251,7 @@ class GebiedsmonitorService:
                 "indicator_code": rows[0]["indicator_code"] if rows and indicator_uuid else None,
                 "eenheid": rows[0]["eenheid"] if rows and indicator_uuid else None,
                 "score_type": rows[0]["score_type"] if rows and indicator_uuid else None,
+                "polariteit": indicator_polariteit,
                 # #161: bij één unieke waarde is er geen spreiding om te kleuren
                 "aantal_unieke_waarden": len(set(all_values)),
                 # #255: kaartmodus en klassen voor de legenda (waarde: bereik per kleur;
@@ -239,7 +266,11 @@ class GebiedsmonitorService:
                 "legenda_melding": (
                     "Alle gebieden hebben dezelfde waarde: geen kleurverschil."
                     if len(set(all_values)) == 1 and len(all_values) > 1
-                    else (lk.MELDING_VOORLOPIG if labels and label_bron != lk.BRON_DREMPELS else None)
+                    else (
+                        (lk.MELDING_VOORLOPIG_NEUTRAAL if is_neutraal else lk.MELDING_VOORLOPIG)
+                        if labels and label_bron != lk.BRON_DREMPELS
+                        else None
+                    )
                 ),
             },
             "data": data_dict,
@@ -255,14 +286,15 @@ class GebiedsmonitorService:
         labels (#256): labelscore 1..5 (5 = A) uit de drempels in indicator_labels of,
         zonder drempels, kwintielen. Geeft dan (5 kleuren, {...}, bron).
         """
-        kleuren = lk.palet(color_service) if labels else pk.palet(color_service)
+        pol = _kaart_polariteit(rows[0]) if rows else polariteit.HOGER_IS_BETER
+        neutraal = pol == polariteit.NEUTRAAL
+        kleuren = lk.palet(color_service, neutraal=neutraal) if labels else pk.palet(color_service, neutraal=neutraal)
         drempels = lk.drempels_uit_db(self.db, [indicator_uuid]).get(str(indicator_uuid)) if labels else None
         bron = lk.BRON_DREMPELS if drempels else lk.BRON_KWINTIEL
         met_waarde = [r for r in rows if r["indicator_waarde"] is not None]
         if not met_waarde:
             return (kleuren, {}, bron) if labels else (kleuren, {})
-        score_type = met_waarde[0]["score_type"]
-        hoger_beter = pk.hoger_is_beter(score_type)
+        hoger_beter = True if neutraal else (pol != polariteit.LAGER_IS_BETER)
         referentie = pk.referentie_waarden(
             self.db, gebiedstype_id, {r["gemeente_code"] for r in met_waarde}, [indicator_uuid], jaar=jaar
         )
