@@ -22,7 +22,7 @@
 | **UX & Design** | `/docs/4-ux-design/` | UI-patronen, "Classic Premium UI", design-system, Kompas Taxonomie Studio concept ([`concept-visueel-taxonomie-indicatorenbeheer.md`](./4-ux-design/concept-visueel-taxonomie-indicatorenbeheer.md)), thema per organisatie met NL Design System-tokens ([`9-beheer/thema-s.md`](./9-beheer/thema-s.md)), gebruikerservaringen (`gebruikerservaringen/`) | frontend-viz, web-carto-design |
 | **SecOps** | `/docs/5-secops/` | Security-beleid, deployment, toegangsbeheer | env-setup, backend-db |
 | **AI Parallel Track** | `/docs/6-ai-parallel-track/` | LLM-integratie, ontologie, AI-chat, prompting | innovation-lab, technisch-communicatie |
-| **Projectmanagement** | `/docs/7-projectmanagement/` | Sprints, voortgang, besluiten, archief | project-manager |
+| **Projectmanagement** | `/docs/7-projectmanagement/` | Sprints, voortgang, besluiten, archief, Kompas Taxonomie Studio review ([`aanvullende-review-kompas-taxonomie-studio-v2-ontologie.md`](./7-projectmanagement/taxonomie-kompas-beheer/aanvullende-review-kompas-taxonomie-studio-v2-ontologie.md)) | project-manager |
 | **Communicatie** | `/docs/8-communicatie/` | Stakeholdercommunicatie, rapportages, presentaties | technisch-communicatie |
 | **Beheer & Applicatie** | `/docs/9-beheer/` | Handleidingen, workflows en applicatiebeheer; eigen huisstijl ([`thema-s.md`](./9-beheer/thema-s.md)) | project-manager, backend-db |
 | **Testcases & Scenario's** | [`/docs/testcases/`](./testcases/) | Functionele scenario's, E2E-toetsen (TC-06-*), nulmetingen (NM-001) | project-manager, backend-db |
