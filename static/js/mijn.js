@@ -63,7 +63,37 @@
     }).catch(() => { laatstBewaard = ''; });
   }
 
+  const LOKALE_FAVORIETEN_KEY = 'omnitwin_favorieten_lokaal';
+  const MAX_LOKALE_FAVORIETEN = 25;
+
+  function leesLokaleFavorieten() {
+    try {
+      const raw = localStorage.getItem(LOKALE_FAVORIETEN_KEY);
+      const parsed = raw ? JSON.parse(raw) : [];
+      return Array.isArray(parsed) ? parsed : [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  function schrijfLokaleFavorieten(lijst) {
+    try {
+      localStorage.setItem(LOKALE_FAVORIETEN_KEY, JSON.stringify(lijst.slice(0, MAX_LOKALE_FAVORIETEN)));
+    } catch (e) {
+      /* negeer opslagfout (bv. privémodus) */
+    }
+  }
+
+  function werkOpslagStatusBij() {
+    const statusEl = $('mijn-opslag-status');
+    if (!statusEl) return;
+    statusEl.textContent = ingelogd()
+      ? 'Favorieten worden bewaard op uw account.'
+      : 'Favorieten worden lokaal in deze browser bewaard.';
+  }
+
   async function herstelPositie() {
+    if (!ingelogd()) return;
     try {
       const data = await api('/instellingen');
       const p = data && data.kaartpositie;
@@ -109,6 +139,12 @@
   }
 
   async function laadFavorieten() {
+    werkOpslagStatusBij();
+    if (!ingelogd()) {
+      favorieten = leesLokaleFavorieten();
+      tekenFavorieten();
+      return;
+    }
     try {
       favorieten = (await api('/favorieten')).favorieten || [];
       tekenFavorieten();
@@ -123,6 +159,21 @@
     const naam = (invoer.value || '').trim();
     if (!ids.length) { melding('Selecteer eerst gebieden op de kaart.', true); return; }
     if (!naam) { melding('Geef de selectie een naam.', true); invoer.focus(); return; }
+    if (!ingelogd()) {
+      const lokaal = leesLokaleFavorieten().filter((f) => f.naam !== naam);
+      const nieuw = {
+        id: `lokaal-${Date.now()}`,
+        naam,
+        gebiedIds: ids,
+        gebiedstypeId: window.state?.currentGebiedstype || null,
+      };
+      lokaal.unshift(nieuw);
+      schrijfLokaleFavorieten(lokaal);
+      invoer.value = '';
+      melding(`Bewaard in browser: ${nieuw.naam} (${nieuw.gebiedIds.length} gebieden)`);
+      await laadFavorieten();
+      return;
+    }
     try {
       const f = await api('/favorieten', {
         method: 'POST',
@@ -137,6 +188,13 @@
   }
 
   async function verwijder(f) {
+    if (!ingelogd()) {
+      const resterend = leesLokaleFavorieten().filter((item) => item.id !== f.id);
+      schrijfLokaleFavorieten(resterend);
+      melding(`Verwijderd: ${f.naam}`);
+      await laadFavorieten();
+      return;
+    }
     try {
       await api(`/favorieten/${encodeURIComponent(f.id)}`, { method: 'DELETE' });
       melding(`Verwijderd: ${f.naam}`);
@@ -154,7 +212,7 @@
   function werkKnopBij() {
     const knop = $('mijn-bewaar-selectie');
     if (knop) knop.disabled = selectieIds().length === 0;
-    // Knop in de selectiebadge: naar het favorietenblok
+    // Knop in de selectiebadge: opent het linker tabblad Favorieten
     const badge = document.getElementById('selection-badge');
     if (badge && !document.getElementById('selection-bewaar-btn')) {
       const b = document.createElement('button');
@@ -164,9 +222,13 @@
       b.textContent = '☆ Bewaar';
       b.title = 'Bewaar deze selectie als favoriet';
       b.addEventListener('click', () => {
-        const knopInfo = document.querySelector('.tab-button[data-panel="info"]');
-        if (knopInfo && !knopInfo.classList.contains('active')) knopInfo.click();
-        $('mijn-favoriet-naam').focus();
+        if (typeof window.openLinkerPanel === 'function') {
+          window.openLinkerPanel('favorieten');
+        } else {
+          const knopFav = document.querySelector('.tab-button[data-panel="favorieten"]');
+          if (knopFav && !knopFav.classList.contains('active')) knopFav.click();
+        }
+        $('mijn-favoriet-naam')?.focus();
       });
       const wis = document.getElementById('selection-clear-btn');
       badge.insertBefore(b, wis || null);
@@ -175,18 +237,20 @@
 
   function init() {
     const blok = $('mijn-favorieten');
-    if (!blok || !window.EventBus || !ingelogd()) return;
+    if (!blok || !window.EventBus) return;
     blok.hidden = false;
-    $('mijn-bewaar-selectie').addEventListener('click', bewaarSelectie);
-    $('mijn-favoriet-naam').addEventListener('keydown', (e) => { if (e.key === 'Enter') bewaarSelectie(); });
+    $('mijn-bewaar-selectie')?.addEventListener('click', bewaarSelectie);
+    $('mijn-favoriet-naam')?.addEventListener('keydown', (e) => { if (e.key === 'Enter') bewaarSelectie(); });
     window.EventBus.on('SELECTIE_GEWIJZIGD', werkKnopBij);
     werkKnopBij();
     laadFavorieten();
-    herstelPositie();
-    // Kaartpositie: elke 15 s als hij veranderd is, en bij het verlaten van de pagina
-    setInterval(() => { if (document.visibilityState === 'visible') bewaarPositie(false); }, 15000);
-    document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') bewaarPositie(true); });
-    window.addEventListener('pagehide', () => bewaarPositie(true));
+    if (ingelogd()) {
+      herstelPositie();
+      // Kaartpositie: elke 15 s als hij veranderd is, en bij het verlaten van de pagina
+      setInterval(() => { if (document.visibilityState === 'visible') bewaarPositie(false); }, 15000);
+      document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') bewaarPositie(true); });
+      window.addEventListener('pagehide', () => bewaarPositie(true));
+    }
     window.mijnVoorkeuren = { bewaarPositie, laadFavorieten };
   }
 

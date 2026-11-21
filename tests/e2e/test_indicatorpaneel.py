@@ -163,7 +163,7 @@ def test_favoriet_bewaren_na_inloggen(ingelogd):
     selecteer_buurt_via_app(page, WORKUM, shift=True)
     wacht_op_selectie(page, [BOLSWARD_ZUIDOOST, WORKUM])
 
-    # Knop in de selectiebalk opent Info & Start met het naamveld
+    # Knop in de selectiebalk opent Favorieten met het naamveld
     klik(page, page.locator("#selection-bewaar-btn"))
     expect(page.locator("#mijn-favorieten")).to_be_visible()
     page.locator("#mijn-favoriet-naam").fill(FAVORIET)
@@ -188,7 +188,7 @@ def test_favoriet_bewaren_na_inloggen(ingelogd):
         " && Math.abs(window.state.currentViewState.longitude - 5.52) < 1e-4",
         timeout=TRAAG_MS,
     )
-    open_paneel(page, "Info & Start")
+    open_paneel(page, "Favorieten")
     knop = page.locator(".mijn-favoriet-open", has_text=FAVORIET)
     klik_en_bevestig(page, knop, "() => window.state.selectedGebiedIds.size === 2", f"favoriet {FAVORIET}")
     wacht_op_selectie(page, [BOLSWARD_ZUIDOOST, WORKUM])

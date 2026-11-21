@@ -249,9 +249,14 @@
   /* Kaartselectie: hoort bij de kaart (zelfde goud als de selectierand in app.js), niet bij het thema */
   --map-selection-color: #eab308;
 
-  /* Layout */
-  --tab-bar-width: 70px;
-  --panel-width: 360px;
+  /* Layout (#525: compacte randtabs 48px bovenop aan de schermrand gekoppelde docks) */
+  --randtab-width: 48px;
+  --tab-bar-width: var(--randtab-width);
+  --randtab-header-inset: calc(var(--randtab-width) + 12px);
+  --randtab-body-inset: calc(var(--randtab-width) - var(--spacing-md) + 10px);
+  --left-dock-width: clamp(380px, 24vw, 440px);
+  --dock-width: clamp(440px, 30vw, 560px);
+  --panel-width: var(--left-dock-width);
 }
 
 
@@ -575,56 +580,102 @@ textarea {
 }
 
 /* ============================================================================
-   Vertical Tab Bar (NEW)
+   Vaste Randtabs Links & Rechts (#525: Chrome-achtige afgebogen tabs zonder balk)
    ============================================================================ */
 
 .tab-bar {
-  position: absolute;
-  /* Float over map */
-  left: 10px;
-  top: 10px;
-  width: auto;
+  position: fixed;
+  top: 80px;
+  width: var(--randtab-width);
+  height: auto;
   background: transparent;
   display: flex;
   flex-direction: column;
-  align-items: center;
   padding: 0;
-  gap: 0.75rem;
-  z-index: 200;
+  gap: 6px;
+  z-index: 220;
+  pointer-events: none;
+}
+
+.tab-bar-left {
+  left: 0;
+  align-items: flex-start;
+}
+
+.tab-bar-right {
+  right: 0;
+  align-items: flex-end;
 }
 
 .tab-button {
-  width: 50px;
-  height: 50px;
-  border-radius: 25px;
+  pointer-events: auto;
+  position: relative;
+  width: var(--randtab-width);
+  height: 44px;
+  padding: 0;
   /* Dekkende achtergrond: kaartlabels (bv. "Noordzee") schemerden door de knoppen heen */
   background: var(--bg-secondary);
-  backdrop-filter: blur(4px);
-  /* Slight blur for map readability */
-  -webkit-backdrop-filter: blur(4px);
-  border: 2px solid rgba(255, 255, 255, 0.2);
-  /* Subtle border */
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid var(--panel-border);
   cursor: pointer;
-  transition: all var(--transition-normal);
-  display: flex;
+  transition: background-color 150ms ease, color 150ms ease, border-color 150ms ease, box-shadow 150ms ease;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
+  overflow: hidden;
+  white-space: nowrap;
   color: var(--text-primary);
-  font-size: 1.25rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  font-size: 0.875rem;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.16);
 }
 
-.tab-button:hover {
+.tab-rand-left {
+  border-radius: 0 14px 14px 0;
+  border-left: none;
+}
+
+.tab-rand-right {
+  flex-direction: row-reverse;
+  border-radius: 14px 0 0 14px;
+  border-right: none;
+}
+
+.tab-button:hover,
+.tab-button:focus-visible {
+  z-index: 230;
   background: var(--bg-primary);
-  transform: scale(1.05);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+  border-color: var(--primary-color);
+  color: var(--primary-color);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.24);
+}
+
+.tab-button:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 1px;
 }
 
 .tab-button.active {
   background: var(--tab-active-bg);
-  border: var(--tab-active-border-width) solid var(--tab-active-border);
+  border-color: var(--tab-active-border);
+  border-width: var(--tab-active-border-width);
   color: var(--tab-active-text);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.32);
+}
+
+.tab-button.active.tab-rand-left {
+  border-left: none;
+}
+
+.tab-button.active.tab-rand-right {
+  border-right: none;
+}
+
+.tab-button.active:hover,
+.tab-button.active:focus-visible {
+  background: var(--tab-active-bg);
+  border-color: var(--tab-active-border);
+  color: var(--tab-active-text);
 }
 
 .tab-button.active .tab-icon {
@@ -632,102 +683,166 @@ textarea {
 }
 
 .tab-icon {
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
 .tab-icon svg {
-  width: 24px;
-  height: 24px;
+  width: 22px;
+  height: 22px;
   stroke: currentColor;
   stroke-width: 2;
   fill: none;
 }
 
-/* Ensure contrast in light mode: Dark icons on transparent bg */
-:root:not([data-theme="dark"]) .tab-button:not(.active) {
-  color: var(--text-primary);
-  border-color: rgba(0, 0, 0, 0.15);
+@media (prefers-reduced-motion: reduce) {
+  .tab-button {
+    transition: none;
+  }
 }
 
-:root:not([data-theme="dark"]) .tab-button:not(.active):hover {
+/* Ensure contrast in light mode */
+:root:not([data-theme="dark"]) .tab-button:not(.active) {
+  color: var(--text-primary);
+  border-color: rgba(0, 0, 0, 0.16);
+}
+
+:root:not([data-theme="dark"]) .tab-button:not(.active):hover,
+:root:not([data-theme="dark"]) .tab-button:not(.active):focus-visible {
   background: var(--bg-primary);
 }
 
-/* Actieve knop: kleuren uit het thema (--d-omnitwin-tab-active-*) */
-.tab-button.active {
-  background: var(--tab-active-bg);
-  border: var(--tab-active-border-width) solid var(--tab-active-border);
-  color: var(--tab-active-text);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
-}
-
 /* ============================================================================
-   Panel Container (NEW)
+   Linker Dock Container (#525: strak tegen left: 0, tabs bovenop)
    ============================================================================ */
 
 .panel-container {
   position: fixed;
-  /* Fixed to viewport */
-  left: 80px;
-  /* After pill buttons */
-  top: 100px;
-  /* Clearly below the header */
+  left: 0;
+  top: 80px;
   bottom: 35px;
-  /* Above footer */
-  width: var(--panel-width);
-  background: transparent;
-  box-shadow: none;
-  transform: translateX(-500px);
-  /* Fully hidden off-screen */
+  width: var(--left-dock-width);
+  background: var(--panel-bg);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--panel-border);
+  border-left: none;
+  border-radius: 0 var(--border-radius) var(--border-radius) 0;
+  box-shadow: 4px 0 24px rgba(0, 0, 0, 0.15);
+  transform: translateX(calc(-100% - 24px));
   opacity: 0;
-  /* Also fade out */
-  transition: transform 300ms cubic-bezier(0.4, 0, 0.2, 1), opacity 200ms ease;
-  z-index: 150;
-  overflow-y: auto;
-  overflow-x: hidden;
+  transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s ease;
+  z-index: 200;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
   pointer-events: none;
 }
 
 .panel-container.open {
   transform: translateX(0);
   opacity: 1;
-  /* Make visible! */
-  pointer-events: none;
-  /* Disable interaction on container itself to allow clicking map through transparent areas */
+  pointer-events: auto;
 }
 
-.panel-container::-webkit-scrollbar {
+.panel-container .dock-body::-webkit-scrollbar,
+.dock-body::-webkit-scrollbar {
   width: 6px;
 }
 
-.panel-container::-webkit-scrollbar-track {
+.panel-container .dock-body::-webkit-scrollbar-track,
+.dock-body::-webkit-scrollbar-track {
   background: transparent;
-  /* Invisible track */
 }
 
-.panel-container::-webkit-scrollbar-thumb {
+.panel-container .dock-body::-webkit-scrollbar-thumb,
+.dock-body::-webkit-scrollbar-thumb {
   background: var(--border-color);
   border-radius: 3px;
 }
 
-.panel-container::-webkit-scrollbar-thumb:hover {
+.panel-container .dock-body::-webkit-scrollbar-thumb:hover,
+.dock-body::-webkit-scrollbar-thumb:hover {
   background: var(--text-secondary);
 }
 
 /* Panel Content Switching */
 .panel-content {
   display: none !important;
-  padding: var(--spacing-lg);
-  min-height: 100%;
+  padding: var(--spacing-md);
+  min-height: auto;
   background: transparent;
-  /* No background on panel content itself */
 }
 
 .panel-content.active {
   display: block !important;
-  animation: fadeInPanel 0.3s ease;
+  animation: fadeInPanel 0.25s ease;
+}
+
+.panel-container .panel {
+  background: transparent;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  border: none;
+  box-shadow: none;
+  border-radius: 0;
+  padding: 0;
+  margin-bottom: var(--spacing-md);
+}
+
+#gebied-info.panel {
+  margin-top: var(--spacing-md);
+  padding-top: var(--spacing-md);
+  border-top: 1px solid var(--panel-border);
+  margin-bottom: 0;
+}
+
+.dock-sectie {
+  margin-top: var(--spacing-md);
+  padding-top: var(--spacing-md);
+  border-top: 1px solid var(--panel-border);
+}
+
+.dock-header-title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.dock-header-title::before {
+  content: '';
+  width: 4px;
+  height: 1.1rem;
+  background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+.dock-reset-btn {
+  background: none;
+  border: 1px solid var(--panel-border);
+  border-radius: 6px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 3px 8px;
+  font-size: 0.78rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  transition: all var(--transition-fast);
+}
+
+.dock-reset-btn:hover {
+  border-color: var(--secondary-color);
+  color: var(--secondary-color);
 }
 
 @keyframes fadeInPanel {
@@ -958,7 +1073,8 @@ textarea {
 }
 
 
-/* Checkbox Styling */
+/* Checkbox Styling (#525: .form-group label.checkbox-label wint van .form-group label) */
+.form-group label.checkbox-label,
 .checkbox-label {
   display: flex;
   align-items: center;
@@ -1024,44 +1140,31 @@ textarea {
   font-weight: bold;
 }
 
-/* Sprint 22 Track D: Externe Kaartlagen — Compact UI */
+/* Sprint 22 Track D & #525: Externe Kaartlagen — geen afkap/overlap bij lange laagnamen */
 #externe-lagen-list {
-  --layer-item-height: 40px;
-  max-height: calc(5 * var(--layer-item-height));
-  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
   position: relative;
-}
-
-#externe-lagen-list::-webkit-scrollbar {
-  width: 4px;
-}
-
-#externe-lagen-list::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-#externe-lagen-list::-webkit-scrollbar-thumb {
-  background: color-mix(in srgb, var(--text-primary) 25%, transparent);
-  border-radius: 2px;
-}
-
-#externe-lagen-list::-webkit-scrollbar-thumb:hover {
-  background: color-mix(in srgb, var(--text-primary) 40%, transparent);
 }
 
 .externe-laag-item {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
-  height: var(--layer-item-height, 40px);
+  min-height: 40px;
+  padding: 3px 0;
+  gap: 6px;
   position: relative;
 }
 
-.externe-laag-label {
+.externe-laag-item .externe-laag-label {
+  display: flex;
+  align-items: center;
   flex: 1;
   min-width: 0;
   margin-bottom: 0;
-  padding: 0.25rem 0.5rem;
+  padding: 0.25rem 0.4rem;
   gap: 0.5rem;
 }
 
@@ -1074,9 +1177,9 @@ textarea {
 }
 
 .layer-naam {
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  line-height: 1.35;
   font-size: 0.85rem;
 }
 
@@ -1668,52 +1771,51 @@ textarea {
 
 
 /* ============================================================================
-   Responsive Design
+   Responsive Design (#525: vaste randtabs + bottom sheet <= 900px)
    ============================================================================ */
 
 @media (max-width: 1024px) {
   :root {
-    --panel-width: 320px;
+    --left-dock-width: min(380px, calc(100vw - 56px));
+    --dock-width: min(440px, calc(100vw - 56px));
   }
 }
 
-@media (max-width: 768px) {
-  .app-layout {
-    flex-direction: column-reverse;
+@media (max-width: 900px) {
+  :root {
+    --randtab-header-inset: 0.75rem;
+    --randtab-body-inset: 0px;
   }
 
   .tab-bar {
-    width: 100%;
-    height: 60px;
-    flex-direction: row;
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    justify-content: space-around;
-    padding: 0.5rem;
+    top: 72px;
+    width: 42px;
+    gap: 4px;
+  }
+
+  .tab-button {
+    width: 42px;
+    height: 40px;
+    padding: 0;
   }
 
   .panel-container {
     left: 0;
     right: 0;
     top: auto;
-    bottom: 60px;
+    bottom: 0;
     width: 100%;
-    height: 50vh;
-    max-height: 70vh;
+    height: 48vh;
+    max-height: 75vh;
+    border-radius: var(--border-radius) var(--border-radius) 0 0;
+    border: 1px solid var(--panel-border);
+    border-bottom: none;
     transform: translateY(100%);
   }
 
   .panel-container.open {
     transform: translateY(0);
   }
-
-  .map-container {
-    height: calc(100vh - 80px - 60px);
-    /* Header + tab bar */
-  }
-
-
 }
 
 /* ============================================================================
@@ -1745,7 +1847,7 @@ textarea {
 /* Kompas Controls */
 .kompas-controls {
   margin-bottom: var(--spacing-lg);
-  padding: var(--spacing-md);
+  padding: 0.25rem 0.75rem 0.5rem;
   background: var(--bg-secondary);
   border-radius: var(--border-radius-sm);
   border: 1px solid var(--border-color);
@@ -2038,6 +2140,7 @@ textarea {
 
 .floating-window-header .dock-tabs {
   display: flex;
+  flex-wrap: wrap;
   gap: 4px;
 }
 
@@ -2046,8 +2149,8 @@ textarea {
   background: transparent;
   border: none;
   border-bottom: 2px solid transparent;
-  padding: 6px 12px;
-  font-size: 0.875rem;
+  padding: 5px 8px;
+  font-size: 0.82rem;
   font-weight: 500;
   cursor: pointer;
   border-radius: 4px 4px 0 0;
@@ -4420,31 +4523,87 @@ dialog#meld-dialoog::backdrop {
 }
 
 /* ============================================================================
-   Rechter Dock-architectuur & Samengevoegd Detailpaneel (Issue #444, v0.7.0)
+   Rechter Dock-architectuur & Samengevoegd Detailpaneel (Issue #444/#525, v0.7.0)
    ============================================================================ */
 
-/* --- Rechter Dock Hoofdcontainer --- */
+/* --- Rechter Dock Hoofdcontainer (#525: strak tegen right: 0, tabs bovenop) --- */
 .rechter-dock {
   position: fixed;
   top: 80px;
   right: 0;
   bottom: 35px;
-  width: clamp(440px, 30vw, 560px);
+  width: var(--dock-width);
   background: var(--panel-bg);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  border-left: 1px solid var(--panel-border);
+  border: 1px solid var(--panel-border);
+  border-right: none;
   border-radius: var(--border-radius) 0 0 var(--border-radius);
   z-index: 200;
   display: flex;
   flex-direction: column;
-  transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
+  transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s ease;
   box-shadow: -4px 0 24px rgba(0, 0, 0, 0.15);
 }
 
 .rechter-dock.collapsed {
-  transform: translateX(100%);
+  transform: translateX(calc(100% + 24px));
+  opacity: 0;
   pointer-events: none;
+}
+
+/* --- Bovenin-inzetruimte rondom vaste randtabs (#525 Optie 2) --- */
+#linker-dock .dock-header {
+  padding-left: var(--randtab-header-inset);
+}
+
+#linker-dock #gemeente-combobox-wrapper {
+  padding-left: var(--randtab-body-inset);
+}
+
+#linker-dock #legenda-content > .help-text {
+  padding-left: var(--randtab-body-inset);
+  min-height: 92px;
+}
+
+#linker-dock #color-scale-container .legenda-section:first-child > .subsection-title,
+#linker-dock #kaart-modus,
+#linker-dock #legenda-modus-uit {
+  margin-left: var(--randtab-body-inset);
+}
+
+#linker-dock #kaart-modus {
+  margin-bottom: 18px;
+}
+
+#linker-dock #panel-favorieten #mijn-favorieten-titel,
+#linker-dock #panel-favorieten #mijn-opslag-status,
+#linker-dock #panel-favorieten .mijn-bewaar {
+  margin-left: var(--randtab-body-inset);
+}
+
+#rechter-dock .dock-header {
+  padding-right: var(--randtab-header-inset);
+}
+
+#rechter-dock #kompas-viz-section .viz-header,
+#rechter-dock #kompas-viz-section .kompas-controls {
+  padding-right: var(--randtab-body-inset);
+}
+
+#rechter-dock #dock-panel-chat .chat-panel-header,
+#rechter-dock #dock-panel-chat .chat-message:first-child {
+  padding-right: var(--randtab-body-inset);
+}
+
+#rechter-dock #panel-rapport {
+  padding-right: var(--randtab-body-inset);
+}
+
+#rechter-dock #panel-info > .subsection-title,
+#rechter-dock #panel-info > div:first-of-type {
+  padding-right: var(--randtab-body-inset);
 }
 
 /* Gedimde weergave tijdens cameravlucht wanneer dock al open stond (#465/#466) */
@@ -4459,7 +4618,8 @@ dialog#meld-dialoog::backdrop {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0.5rem 0.75rem;
+  min-height: 44px;
+  padding: 0.45rem 0.75rem;
   border-bottom: 1px solid var(--panel-border);
   background: var(--tint-subtle);
   flex-shrink: 0;
@@ -4736,11 +4896,14 @@ dialog#meld-dialoog::backdrop {
     width: 100%;
     height: 48vh;
     border-left: none;
+    border-right: none;
     border-top: 1px solid var(--panel-border);
     border-radius: var(--border-radius) var(--border-radius) 0 0;
     transform: translateY(0);
+    opacity: 1;
   }
   .rechter-dock.collapsed {
     transform: translateY(100%);
+    opacity: 0;
   }
 }

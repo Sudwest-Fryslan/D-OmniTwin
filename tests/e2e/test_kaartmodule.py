@@ -88,7 +88,7 @@ def test_tc_01_002a_meervoudige_klikselectie(app_page):
     # 4. Selectie-indicator toont alle drie
     badge = page.locator("#selection-badge")
     expect(badge).to_contain_text("3 gebieden geselecteerd")
-    open_paneel(page, "Rapport")
+    open_paneel(page, "Rapport & Export")
     rapport = page.locator("#rapport-gebied-info")
     for naam in ("Workum", "Koudum", "Hindeloopen"):
         expect(rapport).to_contain_text(naam)
@@ -138,7 +138,7 @@ def test_tc_01_003b_bag_woonplaatsen(app_page):
     laad_buurtenkaart(page)
 
     # 1. Kaartlagen → BAG Woonplaatsen aanzetten
-    open_paneel(page, "Kaartlagen")
+    open_paneel(page, "Legenda & Kaartlagen")
     laag = page.evaluate("() => window.state.externeKaartlagen.find(l => l.naam === 'BAG Woonplaatsen')")
     assert laag, "externe kaartlaag 'BAG Woonplaatsen' ontbreekt in de sample-stuurdata"
     toggle = page.locator(f"#toggle-externe-laag-{laag['id']}")
@@ -180,7 +180,7 @@ def test_tc_01_003b_bag_woonplaatsen(app_page):
     open_kompas(page, "Workum")
 
     # 5. Laag uitzetten: overlay weg, selectie blijft
-    open_paneel(page, "Kaartlagen")
+    open_paneel(page, "Legenda & Kaartlagen")
     page.locator(f"label:has(#toggle-externe-laag-{laag['id']})").click()
     expect(toggle).not_to_be_checked()
     page.wait_for_function(
@@ -211,7 +211,7 @@ def test_kaart_canvas_exporteerbaar(app_page, tmp_path):
     )
     assert resultaten and all(isinstance(r, int) and r > 1000 for r in resultaten), resultaten
 
-    open_paneel(page, "Exporteren")
+    open_paneel(page, "Rapport & Export")
     with page.expect_download() as dl:
         page.locator("#export-screenshot-btn").click()
     pad = tmp_path / "kaart.png"

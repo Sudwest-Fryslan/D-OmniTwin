@@ -34,7 +34,7 @@ def test_rapportdialoog_focus_vasthouden_escape_en_focus_terug(app_page):
     selecteer_buurt_via_app(page, WORKUM)
     wacht_op_selectie(page, [WORKUM])
 
-    open_paneel(page, "Rapport")
+    open_paneel(page, "Rapport & Export")
     knop = page.locator("#open-rapport-btn")
     expect(knop).to_be_enabled()
     knop.focus()

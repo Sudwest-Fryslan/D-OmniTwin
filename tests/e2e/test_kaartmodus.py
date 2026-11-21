@@ -61,7 +61,7 @@ def test_tc_01_004_kaartmodus(app_page):
     page = app_page
     laad_buurtenkaart(page)
     kies_indicator(page, INDICATOR)
-    open_paneel(page, "Legenda")
+    open_paneel(page, "Legenda & Kaartlagen")
     klassen = page.locator("#legenda-klassen li")
 
     # 1. Standaard: werkelijke waarde, klassen met bereik en eenheid
@@ -105,7 +105,7 @@ def test_tc_01_004_label_ae(app_page):
     page = app_page
     laad_buurtenkaart(page)
     kies_indicator(page, INDICATOR)
-    open_paneel(page, "Legenda")
+    open_paneel(page, "Legenda & Kaartlagen")
     klassen = page.locator("#legenda-klassen li")
 
     with page.expect_response(
