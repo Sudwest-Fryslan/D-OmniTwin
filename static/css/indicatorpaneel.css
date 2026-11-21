@@ -60,11 +60,14 @@
   margin-top: var(--spacing-xs);
 }
 
-/* Mijn favorieten (paneel Info & Start) */
+/* Mijn favorieten (#258 / #525: eigen tab links voor ingelogde en anonieme bezoekers) */
 .mijn-favorieten {
-  margin-bottom: var(--spacing-lg);
-  padding-bottom: var(--spacing-md);
-  border-bottom: 1px solid var(--panel-border);
+  margin-bottom: 0;
+}
+
+.mijn-opslag-status {
+  margin: 0 0 var(--spacing-sm);
+  line-height: 1.4;
 }
 
 .mijn-bewaar {

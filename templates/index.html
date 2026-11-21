@@ -213,22 +213,11 @@
   <!-- Main Application Layout -->
   <div class="app-layout">
 
-    <!-- Vertical Tab Bar (Left, 40px) -->
-    <nav class="tab-bar" aria-label="Panelen">
-      <button class="tab-button" data-panel="info" title="Info & Start" aria-label="Info & Start">
-        <span class="tab-icon">
-          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-            class="lucide lucide-info">
-            <circle cx="12" cy="12" r="10" />
-            <path d="M12 16v-4" />
-            <path d="M12 8h.01" />
-          </svg>
-        </span>
-      </button>
-      <button class="tab-button" data-panel="controls" title="Kaartconfiguratie" aria-label="Kaartconfiguratie">
-        <span class="tab-icon">
-          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+    <!-- Linker Randtabs: Kaartsturing & Invoer (#525: 3 compacte tabs op left: 0 bovenop linker dock) -->
+    <nav id="left-tab-bar" class="tab-bar tab-bar-left" aria-label="Kaartsturing en invoer">
+      <button type="button" class="tab-button tab-rand-left" data-panel="controls" title="Kaartconfiguratie" aria-label="Kaartconfiguratie" aria-expanded="false" aria-controls="panel-controls">
+        <span class="tab-icon" aria-hidden="true">
+          <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none"
             stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
             class="lucide lucide-sliders-horizontal-icon lucide-sliders-horizontal">
             <path d="M10 5H3" />
@@ -243,182 +232,45 @@
           </svg>
         </span>
       </button>
-      <button class="tab-button" data-panel="legenda" title="Legenda" aria-label="Legenda">
-        <span class="tab-icon">
-          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+      <button type="button" class="tab-button tab-rand-left" data-panel="legenda" title="Legenda &amp; Kaartlagen" aria-label="Legenda &amp; Kaartlagen" aria-expanded="false" aria-controls="panel-legenda">
+        <span class="tab-icon" aria-hidden="true">
+          <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none"
             stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-            class="lucide lucide-table-of-contents-icon lucide-table-of-contents">
-            <path d="M16 5H3" />
-            <path d="M16 12H3" />
-            <path d="M16 19H3" />
-            <path d="M21 5h.01" />
-            <path d="M21 12h.01" />
-            <path d="M21 19h.01" />
+            class="lucide lucide-layers">
+            <path d="M12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83z" />
+            <path d="M2 12a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 12" />
+            <path d="M2 17a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 17" />
           </svg>
         </span>
       </button>
-
-      <button class="tab-button" data-panel="layers" title="Kaartlagen" aria-label="Kaartlagen">
-        <span class="tab-icon">
-          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+      <button type="button" class="tab-button tab-rand-left" data-panel="favorieten" title="Favorieten" aria-label="Favorieten" aria-expanded="false" aria-controls="panel-favorieten">
+        <span class="tab-icon" aria-hidden="true">
+          <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none"
             stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-            class="lucide lucide-map-icon lucide-map">
-            <path
-              d="M14.106 5.553a2 2 0 0 0 1.788 0l3.659-1.83A1 1 0 0 1 21 4.619v12.764a1 1 0 0 1-.553.894l-4.553 2.277a2 2 0 0 1-1.788 0l-4.212-2.106a2 2 0 0 0-1.788 0l-3.659 1.83A1 1 0 0 1 3 19.381V6.618a1 1 0 0 1 .553-.894l4.553-2.277a2 2 0 0 1 1.788 0z" />
-            <path d="M15 5.764v15" />
-            <path d="M9 3.236v15" />
-          </svg>
-        </span>
-      </button>
-      <!-- Data Upload verwijderd (Sprint 18 B4) — nu via beheeromgeving -->
-      <button class="tab-button" data-panel="export" title="Exporteren" aria-label="Exporteren">
-        <span class="tab-icon">
-          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-            class="lucide lucide-download-icon lucide-download">
-            <path d="M12 15V3" />
-            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-            <path d="m7 10 5 5 5-5" />
-          </svg>
-        </span>
-      </button>
-      <button class="tab-button" data-panel="kompas" title="D-Omni Kompas" aria-label="D-Omni Kompas">
-        <span class="tab-icon">
-          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-            class="lucide lucide-compass-icon lucide-compass">
-            <path d="m16.24 7.76-1.804 5.411a2 2 0 0 1-1.265 1.265L7.76 16.24l1.804-5.411a2 2 0 0 1 1.265-1.265z" />
-            <circle cx="12" cy="12" r="10" />
-          </svg>
-        </span>
-      </button>
-      <button class="tab-button" data-panel="rapport" title="Rapport" aria-label="Rapport">
-        <span class="tab-icon">
-          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-            class="lucide lucide-file-chart-column-icon lucide-file-chart-column">
-            <path
-              d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z" />
-            <path d="M14 2v5a1 1 0 0 0 1 1h5" />
-            <path d="M8 18v-1" />
-            <path d="M12 18v-6" />
-            <path d="M16 18v-3" />
-          </svg>
-        </span>
-      </button>
-      <!-- D-Omni Assistant Chat Toggle -->
-      <button class="tab-button chat-tab-button" id="chat-toggle-btn" title="D-Omni Assistent" aria-label="D-Omni Assistent">
-        <span class="tab-icon">
-          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-            class="lucide lucide-cpu-icon lucide-cpu">
-            <path d="M12 20v2"/><path d="M12 2v2"/><path d="M17 20v2"/><path d="M17 2v2"/>
-            <path d="M2 12h2"/><path d="M2 17h2"/><path d="M2 7h2"/>
-            <path d="M20 12h2"/><path d="M20 17h2"/><path d="M20 7h2"/>
-            <path d="M7 20v2"/><path d="M7 2v2"/>
-            <rect x="4" y="4" width="16" height="16" rx="2"/>
-            <rect x="8" y="8" width="8" height="8" rx="1"/>
+            class="lucide lucide-star">
+            <path d="M11.525 2.295a.53.53 0 0 1 .95 0l2.31 4.679a2.123 2.123 0 0 0 1.595 1.16l5.166.756a.53.53 0 0 1 .294.904l-3.736 3.638a2.123 2.123 0 0 0-.611 1.878l.882 5.14a.53.53 0 0 1-.771.56l-4.618-2.428a2.122 2.122 0 0 0-1.973 0L6.396 21.01a.53.53 0 0 1-.77-.56l.881-5.139a2.122 2.122 0 0 0-.611-1.879L2.16 9.795a.53.53 0 0 1 .294-.906l5.165-.755a2.122 2.122 0 0 0 1.597-1.16z" />
           </svg>
         </span>
       </button>
     </nav>
 
-    <!-- Expandable Panel Container -->
-    <aside class="panel-container">
-
-      <!-- Panel 0: Info & Start -->
-      <div id="panel-info" class="panel-content">
-        <div class="panel">
-          <!-- #258: favorieten van de ingelogde gebruiker (static/js/mijn.js) -->
-          <section id="mijn-favorieten" class="mijn-favorieten" aria-labelledby="mijn-favorieten-titel" hidden>
-            <h3 class="panel-title" id="mijn-favorieten-titel">Mijn favorieten</h3>
-            <div class="mijn-bewaar">
-              <label for="mijn-favoriet-naam" class="visually-hidden">Naam van de selectie</label>
-              <input type="text" id="mijn-favoriet-naam" class="form-control" maxlength="80"
-                placeholder="Naam van de selectie" autocomplete="off">
-              <button type="button" id="mijn-bewaar-selectie" class="btn btn-secondary" disabled>Bewaar selectie</button>
-            </div>
-            <p id="mijn-melding" class="help-text" role="status" aria-live="polite"></p>
-            <p id="mijn-favorieten-leeg" class="help-text">Nog geen favorieten. Selecteer gebieden op de kaart en bewaar de selectie met een naam.</p>
-            <ul id="mijn-favorieten-lijst" class="mijn-favorieten-lijst"></ul>
-          </section>
-
-          <h3 class="panel-title">Welkom bij D-OmniTwin</h3>
-          
-          <div style="margin-bottom: 20px;">
-            <p style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 12px;">Een beslisondersteunend platform voor gebiedsanalyse in Fryslân.</p>
-            
-            <div style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 20px;">
-              <div style="display: flex; gap: 10px; align-items: flex-start; padding: 12px; background: var(--tint-subtle); border-radius: var(--border-radius-sm);">
-                <div style="color: var(--accent-text); font-weight: bold;">1.</div>
-                <div>
-                  <div style="font-weight: 500; font-size: 0.9rem; margin-bottom: 4px;">Kies gemeente</div>
-                  <div style="font-size: 0.8rem; color: var(--text-secondary);">Selecteer een Friese gemeente of bekijk heel Fryslân in de Kaart Configuratie.</div>
-                </div>
-              </div>
-              <div style="display: flex; gap: 10px; align-items: flex-start; padding: 12px; background: var(--tint-subtle); border-radius: var(--border-radius-sm);">
-                <div style="color: var(--accent-text); font-weight: bold;">2.</div>
-                <div>
-                  <div style="font-weight: 500; font-size: 0.9rem; margin-bottom: 4px;">Kies indicator</div>
-                  <div style="font-size: 0.8rem; color: var(--text-secondary);">Selecteer uit <span class="js-indicatoren-count">de beschikbare</span> indicatoren over leefbaarheid en gezondheid.</div>
-                </div>
-              </div>
-              <div style="display: flex; gap: 10px; align-items: flex-start; padding: 12px; background: var(--tint-subtle); border-radius: var(--border-radius-sm);">
-                <div style="color: var(--accent-text); font-weight: bold;">3.</div>
-                <div>
-                  <div style="font-weight: 500; font-size: 0.9rem; margin-bottom: 4px;">Bekijk het Kompas</div>
-                  <div style="font-size: 0.8rem; color: var(--text-secondary);">Klik op een buurt voor een volledig gebiedsprofiel en rapportages.</div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px;">
-            <button type="button" id="info-tour-btn" class="btn btn-primary" style="display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%;">
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg>
-              Start interactieve rondleiding
-            </button>
-          </div>
-
-          <h3 class="panel-title" style="margin-top: 24px; border-top: 1px solid var(--panel-border); padding-top: 20px;">Kaartbediening</h3>
-          <div style="display: flex; flex-direction: column; gap: 8px; font-size: 0.85rem;">
-            <div style="display: flex; justify-content: space-between;">
-              <span style="color: var(--text-secondary);">Pannen</span>
-              <kbd style="background: var(--tint); padding: 2px 6px; border-radius: 4px; font-family: monospace;">Drag</kbd>
-            </div>
-            <div style="display: flex; justify-content: space-between;">
-              <span style="color: var(--text-secondary);">Zoomen</span>
-              <kbd style="background: var(--tint); padding: 2px 6px; border-radius: 4px; font-family: monospace;">Scroll</kbd>
-            </div>
-            <div style="display: flex; justify-content: space-between;">
-              <span style="color: var(--text-secondary);">Roteren</span>
-              <kbd style="background: var(--tint); padding: 2px 6px; border-radius: 4px; font-family: monospace;">Ctrl+Drag</kbd>
-            </div>
-          </div>
-
-          <h3 class="panel-title" style="margin-top: 24px; border-top: 1px solid var(--panel-border); padding-top: 20px;">D-Omni Assistent</h3>
-          <div style="background: color-mix(in srgb, var(--action-color) 10%, transparent); border: 1px solid color-mix(in srgb, var(--action-color) 20%, transparent); padding: 12px; border-radius: var(--border-radius-sm); font-size: 0.85rem; color: var(--text-secondary);">
-            <p style="margin-bottom: 8px;">Klik op het <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: inline-block; vertical-align: middle; margin: 0 2px;"><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="8" y="8" width="8" height="8" rx="1"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="M2 12h2"/><path d="M20 12h2"/></svg> icoon linksonder om de AI assistent te openen.</p>
-            <p style="margin-top: 8px;"><a href="/static/ai.html" target="_blank" rel="noopener noreferrer">AI in deze toepassing</a>: welke functies AI gebruiken, of ze aan staan, de verklaring en melden.</p>
-            <button type="button" id="info-meld-btn" class="btn btn-secondary" style="display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; margin-top: 10px;">
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>
-              Feedback of afwijking melden
-            </button>
-          </div>
-
-          <div style="margin-top: 30px;">
-            <a href="/static/help.html" target="_blank" rel="noopener noreferrer" class="panel-btn" style="display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; text-decoration: none; color: var(--primary-color);">
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
-              Volledige Handleiding
-            </a>
-          </div>
+    <!-- Linker Dock (Kaartconfiguratie, Legenda & Kaartlagen, Favorieten — Issue #525) -->
+    <aside id="linker-dock" class="panel-container" role="region" aria-label="Kaartsturing en invoer">
+      <div class="dock-header linker-dock-header">
+        <h3 id="linker-dock-titel" class="dock-header-title">Kaartconfiguratie</h3>
+        <div class="dock-actions">
+          <button type="button" id="reset-indicator-btn" class="dock-reset-btn" title="Wis indicator van kaart" onclick="resetKaartIndicator()" style="display: none;">
+            ✕ Wis indicator
+          </button>
+          <button type="button" id="linker-dock-close" class="dock-action-btn" title="Sluiten" aria-label="Linker zijpaneel sluiten">✕</button>
         </div>
       </div>
 
-      <!-- Panel 1: Controls (was Sidebar) -->
+      <div class="dock-body linker-dock-body">
+
+      <!-- Panel 1: Kaartconfiguratie -->
       <div id="panel-controls" class="panel-content active">
         <div class="panel">
-          <h3 class="panel-title">Kaart Configuratie</h3>
 
           <!-- Gemeente Selector (Toegankelijke filterbare combobox #308) -->
           <div class="form-group combobox-group" id="gemeente-combobox-wrapper">
@@ -581,221 +433,108 @@
         </div>
       </div>
 
-      <!-- Panel 2: Legenda -->
+      <!-- Panel 2: Legenda & Kaartlagen (#525: samengevoegd in 3 vaste secties) -->
       <div id="panel-legenda" class="panel-content">
         <div class="panel">
-          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
-            <h3 class="panel-title" style="margin-bottom: 0;">Legenda</h3>
-            <button id="reset-indicator-btn" title="Wis indicator van kaart" onclick="resetKaartIndicator()"
-              style="display: none; background: none; border: 1px solid var(--panel-border); border-radius: 6px; color: var(--text-secondary); cursor: pointer; padding: 3px 8px; font-size: 0.8rem; gap: 4px; align-items: center; transition: all 0.2s;"
-              onmouseover="this.style.borderColor='var(--secondary-color)'; this.style.color='var(--secondary-color)';"
-              onmouseout="this.style.borderColor='var(--panel-border)'; this.style.color='var(--text-secondary)';">
-              ✕ Wis indicator
-            </button>
-          </div>
-          <div id="legenda-content">
-            <p class="help-text">Selecteer een indicator om de legenda te tonen</p>
+          <!-- Sectie 1: Indicator-legenda -->
+          <section id="legenda-indicator-sectie" class="legenda-dock-sectie" aria-label="Indicator-legenda">
+            <div id="legenda-content">
+              <p class="help-text">Selecteer een indicator om de legenda te tonen</p>
 
-            <!-- Dynamic Color Scale (populated by JS) -->
-            <div id="color-scale-container" style="display: none;">
-              <div class="legenda-section">
-                <h4 class="subsection-title">Kleurenschaal</h4>
-                <!-- #255: kaartmodus percentielklasse / label A–E (#256) / werkelijke waarde / uit -->
-                <div id="kaart-modus" class="kaart-modus" role="radiogroup" aria-label="Kaartkleuring">
-                  <label for="kaart-modus-percentiel"><input type="radio" id="kaart-modus-percentiel" name="kaart-modus" value="percentiel"> Percentielklasse</label>
-                  <label for="kaart-modus-label"><input type="radio" id="kaart-modus-label" name="kaart-modus" value="label"> Label A–E</label>
-                  <label for="kaart-modus-waarde"><input type="radio" id="kaart-modus-waarde" name="kaart-modus" value="waarde" checked> Werkelijke waarde</label>
-                  <label for="kaart-modus-uit"><input type="radio" id="kaart-modus-uit" name="kaart-modus" value="uit"> Uit</label>
+              <!-- Dynamic Color Scale (populated by JS) -->
+              <div id="color-scale-container" style="display: none;">
+                <div class="legenda-section">
+                  <h4 class="subsection-title">Kleurenschaal</h4>
+                  <!-- #255: kaartmodus percentielklasse / label A–E (#256) / werkelijke waarde / uit -->
+                  <div id="kaart-modus" class="kaart-modus" role="radiogroup" aria-label="Kaartkleuring">
+                    <label for="kaart-modus-percentiel"><input type="radio" id="kaart-modus-percentiel" name="kaart-modus" value="percentiel"> Percentielklasse</label>
+                    <label for="kaart-modus-label"><input type="radio" id="kaart-modus-label" name="kaart-modus" value="label"> Label A–E</label>
+                    <label for="kaart-modus-waarde"><input type="radio" id="kaart-modus-waarde" name="kaart-modus" value="waarde" checked> Werkelijke waarde</label>
+                    <label for="kaart-modus-uit"><input type="radio" id="kaart-modus-uit" name="kaart-modus" value="uit"> Uit</label>
+                  </div>
+                  <p id="legenda-modus-uit" class="help-text" style="display: none;">Kaartkleuring staat uit. De indicator blijft gekozen.</p>
+                  <svg id="color-gradient-bar" width="100%" height="30" style="margin: 10px 0;">
+                    <!-- Gradient will be generated by JS -->
+                  </svg>
+                  <div class="legenda-labels">
+                    <span id="legend-min-label">Min</span>
+                    <span id="legend-max-label">Max</span>
+                  </div>
+                  <ul id="legenda-klassen" class="legenda-klassen" aria-label="Klassen"></ul>
                 </div>
-                <p id="legenda-modus-uit" class="help-text" style="display: none;">Kaartkleuring staat uit. De indicator blijft gekozen.</p>
-                <svg id="color-gradient-bar" width="100%" height="30" style="margin: 10px 0;">
-                  <!-- Gradient will be generated by JS -->
-                </svg>
-                <div class="legenda-labels">
-                  <span id="legend-min-label">Min</span>
-                  <span id="legend-max-label">Max</span>
-                </div>
-                <ul id="legenda-klassen" class="legenda-klassen" aria-label="Klassen"></ul>
-              </div>
 
-              <div class="legenda-section">
-                <h4 class="subsection-title">Gebiedsdekking</h4>
-                <div class="coverage-bar">
-                  <div id="coverage-fill" class="coverage-fill"></div>
+                <div class="legenda-section">
+                  <h4 class="subsection-title">Gebiedsdekking</h4>
+                  <div class="coverage-bar">
+                    <div id="coverage-fill" class="coverage-fill"></div>
+                  </div>
+                  <p id="coverage-text" class="help-text">0 van 0 gebieden (0%)</p>
                 </div>
-                <p id="coverage-text" class="help-text">0 van 0 gebieden (0%)</p>
               </div>
             </div>
-          </div>
-        </div>
-      </div>
+          </section>
 
-
-
-      <!-- Panel 3: Layers (Basemap) -->
-      <div id="panel-layers" class="panel-content">
-        <div class="panel">
-          <h3 class="panel-title">Kaartlagen</h3>
-
-          <div class="form-group">
-            <label for="mapbox-style-select">Basemap (PDOK)</label>
-            <select id="mapbox-style-select" class="form-control">
-              <option value="https://api.pdok.nl/kadaster/brt-achtergrondkaart/ogc/v1/styles/standaard__webmercatorquad?f=mapbox">PDOK Standaard (Light)</option>
-              <option value="https://api.pdok.nl/kadaster/brt-achtergrondkaart/ogc/v1/styles/darkmode__webmercatorquad?f=mapbox">PDOK Dark Mode</option>
-              <option value="https://api.pdok.nl/kadaster/brt-achtergrondkaart/ogc/v1/styles/pastel__webmercatorquad?f=mapbox">PDOK Pastel</option>
-              <option value="https://api.pdok.nl/kadaster/brt-achtergrondkaart/ogc/v1/styles/water__webmercatorquad?f=mapbox">PDOK Water</option>
-            </select>
-          </div>
-
-          <div class="form-group">
-            <label for="basemap-opacity">Basemap Transparantie</label>
-            <input type="range" id="basemap-opacity" class="slider" min="0" max="100" value="100" step="5">
-            <span class="help-text">Huidige: <span id="opacity-value">100</span>%</span>
-          </div>
-
-          <!-- Gebiedslagen: dynamisch ingeladen via loadExterneKaartlagen() -->
-          <!-- Omgevingsvisie SWF is nu een externe kaartlaag (Sprint 18 B4) -->
-          <div class="form-group" style="margin-top: 1rem; border-top: 1px solid var(--border-color); padding-top: 1rem;">
-            <h4 class="subsection-title">Gebiedslagen</h4>
-            <div id="externe-lagen-list" style="margin-top: 0.5rem;">
+          <!-- Sectie 2: Externe kaartlagen (klaar voor #527 groepen, #528 suggesties en #529 WMS) -->
+          <section id="externe-lagen-sectie" class="legenda-dock-sectie dock-sectie" aria-label="Externe kaartlagen">
+            <h4 class="subsection-title">Externe kaartlagen</h4>
+            <div id="externe-lagen-list">
               <!-- Gevuld door loadExterneKaartlagen() -->
             </div>
-          </div>
+          </section>
+
+          <!-- Sectie 3: Achtergrondkaart (Basemap PDOK & transparantie) -->
+          <section id="basemap-sectie" class="legenda-dock-sectie dock-sectie" aria-label="Achtergrondkaart">
+            <h4 class="subsection-title">Achtergrondkaart</h4>
+
+            <div class="form-group">
+              <label for="mapbox-style-select">Basemap (PDOK)</label>
+              <select id="mapbox-style-select" class="form-control">
+                <option value="https://api.pdok.nl/kadaster/brt-achtergrondkaart/ogc/v1/styles/standaard__webmercatorquad?f=mapbox">PDOK Standaard (Light)</option>
+                <option value="https://api.pdok.nl/kadaster/brt-achtergrondkaart/ogc/v1/styles/darkmode__webmercatorquad?f=mapbox">PDOK Dark Mode</option>
+                <option value="https://api.pdok.nl/kadaster/brt-achtergrondkaart/ogc/v1/styles/pastel__webmercatorquad?f=mapbox">PDOK Pastel</option>
+                <option value="https://api.pdok.nl/kadaster/brt-achtergrondkaart/ogc/v1/styles/water__webmercatorquad?f=mapbox">PDOK Water</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="basemap-opacity">Basemap Transparantie</label>
+              <input type="range" id="basemap-opacity" class="slider" min="0" max="100" value="100" step="5">
+              <span class="help-text">Huidige: <span id="opacity-value">100</span>%</span>
+            </div>
+          </section>
         </div>
       </div>
 
-      <!-- Panel 4: Upload VERWIJDERD (Sprint 18 B4) — nu via admin /externe-lagen -->
-
-      <!-- Panel 5: Export -->
-      <div id="panel-export" class="panel-content">
+      <!-- Panel 3: Favorieten (#258 / #525: voor zowel ingelogde als niet-ingelogde gebruikers) -->
+      <div id="panel-favorieten" class="panel-content">
         <div class="panel">
-          <h3 class="panel-title">Data Exporteren</h3>
-
-          <div class="form-group">
-            <button id="export-screenshot-btn" class="btn btn-secondary">
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
-                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                class="lucide lucide-camera-icon lucide-camera">
-                <path
-                  d="M13.997 4a2 2 0 0 1 1.76 1.05l.486.9A2 2 0 0 0 18.003 7H20a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h1.997a2 2 0 0 0 1.759-1.048l.489-.904A2 2 0 0 1 10.004 4z" />
-                <circle cx="12" cy="13" r="3" />
-              </svg>
-              Screenshot Kaart (PNG)
-            </button>
-          </div>
-
-          <div class="form-group">
-            <button id="export-geojson-btn" class="btn btn-secondary" disabled>
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
-                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                class="lucide lucide-map">
-                <polygon points="3 6 9 3 15 6 21 3 21 21 15 18 9 21 3 18 3 6" />
-                <line x1="9" x2="9" y1="3" y2="21" />
-                <line x1="15" x2="15" y1="6" y2="21" />
-              </svg>
-              Download GeoJSON
-            </button>
-            <span class="help-text">Alleen beschikbaar met geladen data</span>
-          </div>
-
-          <div class="form-group">
-            <button id="export-csv-btn" class="btn btn-secondary" disabled>
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
-                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                class="lucide lucide-table">
-                <path d="M12 3v18" />
-                <rect width="18" height="18" x="3" y="3" rx="2" />
-                <path d="M3 9h18" />
-                <path d="M3 15h18" />
-              </svg>
-              Download CSV
-            </button>
-            <span class="help-text">Tabel met gebied data</span>
-          </div>
+          <section id="mijn-favorieten" class="mijn-favorieten" aria-labelledby="mijn-favorieten-titel">
+            <h4 class="subsection-title" id="mijn-favorieten-titel">Mijn favorieten</h4>
+            <p id="mijn-opslag-status" class="help-text mijn-opslag-status"></p>
+            <div class="mijn-bewaar">
+              <label for="mijn-favoriet-naam" class="visually-hidden">Naam van de selectie</label>
+              <input type="text" id="mijn-favoriet-naam" class="form-control" maxlength="80"
+                placeholder="Naam van de selectie" autocomplete="off">
+              <button type="button" id="mijn-bewaar-selectie" class="btn btn-secondary" disabled>Bewaar selectie</button>
+            </div>
+            <p id="mijn-melding" class="help-text" role="status" aria-live="polite"></p>
+            <p id="mijn-favorieten-leeg" class="help-text">Nog geen favorieten. Selecteer gebieden op de kaart en bewaar de selectie met een naam.</p>
+            <ul id="mijn-favorieten-lijst" class="mijn-favorieten-lijst"></ul>
+          </section>
         </div>
       </div>
 
-      <!-- Panel 6: Kompas (Opens Floating Window) -->
-      <div id="panel-kompas" class="panel-content">
-        <div class="panel">
-          <h3 class="panel-title">D-Omni Kompas</h3>
-          <p class="help-text">Het kompas toont een hiërarchische visualisatie van indicatoren voor een geselecteerd
-            gebied.</p>
-
-          <button id="open-kompas-btn" class="btn btn-primary" style="margin-top: 1rem;">
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
-              stroke="currentColor" stroke-width="2" style="margin-right: 8px;">
-              <path d="m16.24 7.76-1.804 5.411a2 2 0 0 1-1.265 1.265L7.76 16.24l1.804-5.411a2 2 0 0 1 1.265-1.265z" />
-              <circle cx="12" cy="12" r="10" />
-            </svg>
-            Open Kompas Venster
-          </button>
-
-          <p class="help-text" style="margin-top: 1rem;">💡 Klik op een gebied op de kaart terwijl dit paneel open is om
-            automatisch het kompas te openen met data van dat gebied.</p>
-        </div>
       </div>
-
-      <!-- Panel 7: Rapport Output -->
-      <div id="panel-rapport" class="panel-content">
-        <div class="panel">
-          <h3 class="panel-title">Rapport Output</h3>
-          <p class="help-text">Genereer een Gebiedsfactsheet of uitgebreid rapport voor het geselecteerde gebied.</p>
-          <div class="placeholder-box"
-            style="display: flex; flex-direction: column; gap: 1rem; align-items: flex-start;">
-            <p id="rapport-gebied-info"><strong>Status:</strong> Geen gebied geselecteerd</p>
-            <button id="open-rapport-btn" class="btn btn-primary" disabled
-              style="width: 100%; justify-content: center;">
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
-                stroke="currentColor" stroke-width="2" style="margin-right: 8px;">
-                <path
-                  d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z" />
-                <path d="M14 2v5a1 1 0 0 0 1 1h5" />
-                <path d="M8 18v-1" />
-                <path d="M12 18v-6" />
-                <path d="M16 18v-3" />
-              </svg>
-              Open Rapportkeuze
-            </button>
-            <p style="font-size:0.75rem; opacity:0.55; margin-top:0.5rem;">
-              💡 Selecteer 1 gebied → kies rapport type.<br>
-              Shift+Klik meerdere gebieden → direct Benchmark.
-            </p>
-          </div>
-        </div>
-      </div>
-
     </aside>
 
     <!-- ================================================================
-         Rechter Dock (D-Omni Kompas & D-Omni Assistent) — Issue #444
+         Rechter Dock (Kompas, Assistent, Rapport & Export, Info — #444/#525)
          ================================================================ -->
-    <aside id="rechter-dock" class="rechter-dock collapsed" role="region" aria-label="Zijpaneel met Kompas en Assistent">
+    <aside id="rechter-dock" class="rechter-dock collapsed" role="region" aria-label="Zijpaneel met Kompas, Assistent, Rapport en Info">
       <div class="dock-header">
-        <div role="tablist" class="dock-tabs" aria-label="Zijpaneel functies">
-          <button id="dock-tab-kompas" role="tab" class="dock-tab active" aria-selected="true" aria-controls="dock-panel-kompas">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
-              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="dock-tab-icon">
-              <path d="m16.24 7.76-1.804 5.411a2 2 0 0 1-1.265 1.265L7.76 16.24l1.804-5.411a2 2 0 0 1 1.265-1.265z" />
-              <circle cx="12" cy="12" r="10" />
-            </svg>
-            <span>Kompas</span>
-          </button>
-          <button id="dock-tab-chat" role="tab" class="dock-tab" aria-selected="false" aria-controls="dock-panel-chat">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
-              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="dock-tab-icon">
-              <path d="M12 20v2"/><path d="M12 2v2"/><path d="M17 20v2"/><path d="M17 2v2"/>
-              <path d="M2 12h2"/><path d="M2 17h2"/><path d="M2 7h2"/>
-              <path d="M20 12h2"/><path d="M20 17h2"/><path d="M20 7h2"/>
-              <path d="M7 20v2"/><path d="M7 2v2"/>
-              <rect x="4" y="4" width="16" height="16" rx="2"/>
-              <rect x="8" y="8" width="8" height="8" rx="1"/>
-            </svg>
-            <span>Assistent</span>
-          </button>
-        </div>
+        <h3 id="rechter-dock-titel" class="dock-header-title">D-Omni Kompas</h3>
         <div class="dock-actions">
-          <button id="dock-btn-detach" class="dock-action-btn" title="Losmaken naar zwevend venster" aria-label="Venster losmaken naar zwevend venster">
+          <button type="button" id="dock-btn-detach" class="dock-action-btn" title="Losmaken naar zwevend venster" aria-label="Venster losmaken naar zwevend venster">
             <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none"
               stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
@@ -803,7 +542,7 @@
               <line x1="10" y1="14" x2="21" y2="3"/>
             </svg>
           </button>
-          <button id="dock-btn-close" class="dock-action-btn" title="Sluiten" aria-label="Zijpaneel sluiten">✕</button>
+          <button type="button" id="dock-btn-close" class="dock-action-btn" title="Sluiten" aria-label="Zijpaneel sluiten">✕</button>
         </div>
       </div>
 
@@ -819,7 +558,7 @@
               </button>
             </div>
             <!-- Kompas Configuration Selector (Custom Dropdown) -->
-            <div class="kompas-controls" style="padding: 0.25rem 0.75rem 0.5rem;">
+            <div class="kompas-controls">
               <label id="kompas-config-label" class="visually-hidden">Configuratie:</label>
               <div class="custom-select-container" id="kompas-config-container">
                 <div class="custom-select-trigger" id="custom-select-trigger" role="button" tabindex="0" aria-haspopup="true" aria-expanded="false" aria-labelledby="kompas-config-label selected-config-text">
@@ -1036,8 +775,215 @@
             </button>
           </div>
         </div>
+
+        <!-- Tab 3: Rapport & Export (#525: samengevoegd en naar rechts verplaatst) -->
+        <div id="dock-panel-rapport" role="tabpanel" class="dock-panel" aria-label="Rapport &amp; Export" hidden>
+          <section id="panel-rapport" aria-label="Gebiedsrapportage">
+            <h4 class="subsection-title">Gebiedsrapportage</h4>
+            <p class="help-text">Genereer een Gebiedsfactsheet of uitgebreid rapport voor het geselecteerde gebied.</p>
+            <div class="placeholder-box"
+              style="display: flex; flex-direction: column; gap: 1rem; align-items: flex-start;">
+              <p id="rapport-gebied-info"><strong>Status:</strong> Geen gebied geselecteerd</p>
+              <button type="button" id="open-rapport-btn" class="btn btn-primary" disabled
+                style="width: 100%; justify-content: center;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" stroke-width="2" style="margin-right: 8px;" aria-hidden="true">
+                  <path
+                    d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z" />
+                  <path d="M14 2v5a1 1 0 0 0 1 1h5" />
+                  <path d="M8 18v-1" />
+                  <path d="M12 18v-6" />
+                  <path d="M16 18v-3" />
+                </svg>
+                Open Rapportkeuze
+              </button>
+              <p style="font-size:0.75rem; opacity:0.65; margin-top:0.25rem;">
+                💡 Selecteer 1 gebied → kies rapporttype.<br>
+                Shift+Klik meerdere gebieden → direct Benchmark.
+              </p>
+            </div>
+          </section>
+
+          <section id="panel-export" class="dock-sectie" aria-label="Data Exporteren">
+            <h4 class="subsection-title">Data Exporteren</h4>
+
+            <div class="form-group">
+              <button type="button" id="export-screenshot-btn" class="btn btn-secondary">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                  class="lucide lucide-camera-icon lucide-camera" aria-hidden="true">
+                  <path
+                    d="M13.997 4a2 2 0 0 1 1.76 1.05l.486.9A2 2 0 0 0 18.003 7H20a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h1.997a2 2 0 0 0 1.759-1.048l.489-.904A2 2 0 0 1 10.004 4z" />
+                  <circle cx="12" cy="13" r="3" />
+                </svg>
+                Screenshot Kaart (PNG)
+              </button>
+            </div>
+
+            <div class="form-group">
+              <button type="button" id="export-geojson-btn" class="btn btn-secondary" disabled>
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                  class="lucide lucide-map" aria-hidden="true">
+                  <polygon points="3 6 9 3 15 6 21 3 21 21 15 18 9 21 3 18 3 6" />
+                  <line x1="9" x2="9" y1="3" y2="21" />
+                  <line x1="15" x2="15" y1="6" y2="21" />
+                </svg>
+                Download GeoJSON
+              </button>
+              <span class="help-text">Alleen beschikbaar met geladen data</span>
+            </div>
+
+            <div class="form-group">
+              <button type="button" id="export-csv-btn" class="btn btn-secondary" disabled>
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                  class="lucide lucide-table" aria-hidden="true">
+                  <path d="M12 3v18" />
+                  <rect width="18" height="18" x="3" y="3" rx="2" />
+                  <path d="M3 9h18" />
+                  <path d="M3 15h18" />
+                </svg>
+                Download CSV
+              </button>
+              <span class="help-text">Tabel met gebied data</span>
+            </div>
+          </section>
+        </div>
+
+        <!-- Tab 4: Info & Start (#525: naar rechts verplaatst, zonder Favorieten) -->
+        <div id="dock-panel-info" role="tabpanel" class="dock-panel" aria-label="Info &amp; Start" hidden>
+          <div id="panel-info">
+            <h4 class="subsection-title">Welkom bij D-OmniTwin</h4>
+
+            <div style="margin-bottom: 16px;">
+              <p style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 12px;">Een beslisondersteunend platform voor gebiedsanalyse.</p>
+
+              <div style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px;">
+                <div style="display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px; background: var(--tint-subtle); border-radius: var(--border-radius-sm);">
+                  <div style="color: var(--accent-text); font-weight: bold;">1.</div>
+                  <div>
+                    <div style="font-weight: 500; font-size: 0.9rem; margin-bottom: 2px;">Kies gemeente</div>
+                    <div style="font-size: 0.8rem; color: var(--text-secondary);">Selecteer een gemeente in Kaartconfiguratie links.</div>
+                  </div>
+                </div>
+                <div style="display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px; background: var(--tint-subtle); border-radius: var(--border-radius-sm);">
+                  <div style="color: var(--accent-text); font-weight: bold;">2.</div>
+                  <div>
+                    <div style="font-weight: 500; font-size: 0.9rem; margin-bottom: 2px;">Kies indicator</div>
+                    <div style="font-size: 0.8rem; color: var(--text-secondary);">Selecteer uit <span class="js-indicatoren-count">de beschikbare</span> indicatoren over leefbaarheid en gezondheid.</div>
+                  </div>
+                </div>
+                <div style="display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px; background: var(--tint-subtle); border-radius: var(--border-radius-sm);">
+                  <div style="color: var(--accent-text); font-weight: bold;">3.</div>
+                  <div>
+                    <div style="font-weight: 500; font-size: 0.9rem; margin-bottom: 2px;">Bekijk het Kompas</div>
+                    <div style="font-size: 0.8rem; color: var(--text-secondary);">Klik op een buurt voor een volledig gebiedsprofiel en rapportages.</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px;">
+              <button type="button" id="info-tour-btn" class="btn btn-primary" style="display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg>
+                Start interactieve rondleiding
+              </button>
+            </div>
+
+            <section class="dock-sectie" aria-label="Kaartbediening">
+              <h4 class="subsection-title">Kaartbediening</h4>
+              <div style="display: flex; flex-direction: column; gap: 8px; font-size: 0.85rem;">
+                <div style="display: flex; justify-content: space-between;">
+                  <span style="color: var(--text-secondary);">Pannen</span>
+                  <kbd style="background: var(--tint); padding: 2px 6px; border-radius: 4px; font-family: monospace;">Drag</kbd>
+                </div>
+                <div style="display: flex; justify-content: space-between;">
+                  <span style="color: var(--text-secondary);">Zoomen</span>
+                  <kbd style="background: var(--tint); padding: 2px 6px; border-radius: 4px; font-family: monospace;">Scroll</kbd>
+                </div>
+                <div style="display: flex; justify-content: space-between;">
+                  <span style="color: var(--text-secondary);">Roteren</span>
+                  <kbd style="background: var(--tint); padding: 2px 6px; border-radius: 4px; font-family: monospace;">Ctrl+Drag</kbd>
+                </div>
+              </div>
+            </section>
+
+            <section class="dock-sectie" aria-label="D-Omni Assistent en melden">
+              <h4 class="subsection-title">D-Omni Assistent</h4>
+              <div style="background: color-mix(in srgb, var(--action-color) 10%, transparent); border: 1px solid color-mix(in srgb, var(--action-color) 20%, transparent); padding: 12px; border-radius: var(--border-radius-sm); font-size: 0.85rem; color: var(--text-secondary);">
+                <p style="margin-bottom: 8px;">Klik op het <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: inline-block; vertical-align: middle; margin: 0 2px;"><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="8" y="8" width="8" height="8" rx="1"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="M2 12h2"/><path d="M20 12h2"/></svg> icoon aan de rechterrand om de AI assistent te openen.</p>
+                <p style="margin-top: 8px;"><a href="/static/ai.html" target="_blank" rel="noopener noreferrer">AI in deze toepassing</a>: welke functies AI gebruiken, of ze aan staan, de verklaring en melden.</p>
+                <button type="button" id="info-meld-btn" class="btn btn-secondary" style="display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; margin-top: 10px;">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>
+                  Feedback of afwijking melden
+                </button>
+              </div>
+            </section>
+
+            <div style="margin-top: 20px;">
+              <a href="/static/help.html" target="_blank" rel="noopener noreferrer" class="panel-btn" style="display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; text-decoration: none; color: var(--primary-color);">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+                Volledige Handleiding
+              </a>
+            </div>
+          </div>
+        </div>
       </div>
     </aside>
+
+    <!-- Rechter Randtabs: Analyse, Output & Ondersteuning (#525: 4 compacte tabs op right: 0 bovenop rechter dock) -->
+    <nav id="right-tab-bar" class="tab-bar tab-bar-right" aria-label="Analyse, rapportage en hulp">
+      <button type="button" class="tab-button tab-rand-right" data-panel="kompas" title="D-Omni Kompas" aria-label="D-Omni Kompas" aria-expanded="false" aria-controls="dock-panel-kompas">
+        <span class="tab-icon" aria-hidden="true">
+          <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+            class="lucide lucide-compass-icon lucide-compass">
+            <path d="m16.24 7.76-1.804 5.411a2 2 0 0 1-1.265 1.265L7.76 16.24l1.804-5.411a2 2 0 0 1 1.265-1.265z" />
+            <circle cx="12" cy="12" r="10" />
+          </svg>
+        </span>
+      </button>
+      <button type="button" class="tab-button tab-rand-right chat-tab-button" id="chat-toggle-btn" data-panel="chat" title="D-Omni Assistent" aria-label="D-Omni Assistent" aria-expanded="false" aria-controls="dock-panel-chat">
+        <span class="tab-icon" aria-hidden="true">
+          <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+            class="lucide lucide-cpu-icon lucide-cpu">
+            <path d="M12 20v2"/><path d="M12 2v2"/><path d="M17 20v2"/><path d="M17 2v2"/>
+            <path d="M2 12h2"/><path d="M2 17h2"/><path d="M2 7h2"/>
+            <path d="M20 12h2"/><path d="M20 17h2"/><path d="M20 7h2"/>
+            <path d="M7 20v2"/><path d="M7 2v2"/>
+            <rect x="4" y="4" width="16" height="16" rx="2"/>
+            <rect x="8" y="8" width="8" height="8" rx="1"/>
+          </svg>
+        </span>
+      </button>
+      <button type="button" class="tab-button tab-rand-right" data-panel="rapport" title="Rapport &amp; Export" aria-label="Rapport &amp; Export" aria-expanded="false" aria-controls="dock-panel-rapport">
+        <span class="tab-icon" aria-hidden="true">
+          <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+            class="lucide lucide-file-chart-column-icon lucide-file-chart-column">
+            <path
+              d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z" />
+            <path d="M14 2v5a1 1 0 0 0 1 1h5" />
+            <path d="M8 18v-1" />
+            <path d="M12 18v-6" />
+            <path d="M16 18v-3" />
+          </svg>
+        </span>
+      </button>
+      <button type="button" class="tab-button tab-rand-right" data-panel="info" title="Info &amp; Start" aria-label="Info &amp; Start" aria-expanded="false" aria-controls="dock-panel-info">
+        <span class="tab-icon" aria-hidden="true">
+          <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+            class="lucide lucide-info">
+            <circle cx="12" cy="12" r="10" />
+            <path d="M12 16v-4" />
+            <path d="M12 8h.01" />
+          </svg>
+        </span>
+      </button>
+    </nav>
 
     <!-- ================================================================
          Floating Kompas Window (Draggable, Resizable Host)
@@ -1046,7 +992,7 @@
       <div class="floating-window-header">
         <span id="kompas-window-title" class="visually-hidden">D-Omni Kompas</span>
         <div role="tablist" class="floating-tabs dock-tabs" aria-label="Zwevend venster functies">
-          <button id="float-tab-kompas" role="tab" class="dock-tab active" aria-selected="true" aria-controls="dock-panel-kompas">
+          <button type="button" id="float-tab-kompas" role="tab" class="dock-tab active" data-float-tab="kompas" aria-selected="true" aria-controls="dock-panel-kompas">
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
               stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="dock-tab-icon">
               <path d="m16.24 7.76-1.804 5.411a2 2 0 0 1-1.265 1.265L7.76 16.24l1.804-5.411a2 2 0 0 1 1.265-1.265z" />
@@ -1054,7 +1000,7 @@
             </svg>
             <span>Kompas</span>
           </button>
-          <button id="float-tab-chat" role="tab" class="dock-tab" aria-selected="false" aria-controls="dock-panel-chat">
+          <button type="button" id="float-tab-chat" role="tab" class="dock-tab" data-float-tab="chat" aria-selected="false" aria-controls="dock-panel-chat">
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
               stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="dock-tab-icon">
               <path d="M12 20v2"/><path d="M12 2v2"/><path d="M17 20v2"/><path d="M17 2v2"/>
@@ -1065,6 +1011,23 @@
               <rect x="8" y="8" width="8" height="8" rx="1"/>
             </svg>
             <span>Assistent</span>
+          </button>
+          <button type="button" id="float-tab-rapport" role="tab" class="dock-tab" data-float-tab="rapport" aria-selected="false" aria-controls="dock-panel-rapport">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="dock-tab-icon">
+              <path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z" />
+              <path d="M14 2v5a1 1 0 0 0 1 1h5" />
+            </svg>
+            <span>Rapport</span>
+          </button>
+          <button type="button" id="float-tab-info" role="tab" class="dock-tab" data-float-tab="info" aria-selected="false" aria-controls="dock-panel-info">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="dock-tab-icon">
+              <circle cx="12" cy="12" r="10" />
+              <path d="M12 16v-4" />
+              <path d="M12 8h.01" />
+            </svg>
+            <span>Info</span>
           </button>
         </div>
         <div class="window-controls">
@@ -1229,8 +1192,8 @@
   <script src="/static/js/draggable-window.js"></script>
   <script src="/static/js/kompas.js"></script>
   <script src="/static/js/chat.js"></script>
-  <script src="/static/js/app.js?v=7"></script>
-  <script src="/static/js/mijn.js"></script>
+  <script src="/static/js/app.js?v=10"></script>
+  <script src="/static/js/mijn.js?v=2"></script>
 </body>
 
 </html>

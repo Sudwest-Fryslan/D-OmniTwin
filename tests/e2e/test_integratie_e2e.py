@@ -132,7 +132,7 @@ def test_tc_06_001_fase5_export_bronvermelding(app_page, tmp_path: Path):
     page.locator("#dock-btn-close").click()
     op_kaart = aantal_kaartgebieden(page)
 
-    open_paneel(page, "Exporteren")
+    open_paneel(page, "Rapport & Export")
     csv_knop = page.locator("#export-csv-btn")
     expect(csv_knop).to_be_enabled()
     with page.expect_download() as dl:

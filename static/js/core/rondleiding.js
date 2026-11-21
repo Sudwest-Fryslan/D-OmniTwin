@@ -35,11 +35,11 @@
         },
         {
             id: 'legenda',
-            titel: '2. Indicator & legenda',
+            titel: '2. Indicator, legenda & kaartlagen',
             ankers: ['#panel-legenda', '[data-panel="controls"]'],
-            wat: 'De legenda toont de kleurenschaal en gebiedsdekking van de actieve indicator.',
+            wat: 'Links staan je kaartsturing: de legenda met kleurenschaal, externe kaartlagen en achtergrondkaart.',
             betekent: 'Kies zelf tussen werkelijke waarde, percentielklasse 1–8 of label A–E. Een hoge waarde is niet altijd gunstig — kijk altijd naar de legenda.',
-            probeer: 'Wissel de weergave in de legenda, of kies een andere gemeente of indicator via Kaartconfiguratie (tweede icoon links).',
+            probeer: 'Wissel de weergave of schakel een kaartlaag in, of kies een andere gemeente of indicator via Kaartconfiguratie (bovenste tab links).',
         },
         {
             id: 'kompas',
@@ -53,9 +53,9 @@
             id: 'rapport-assistent',
             titel: '4. Rapport & D-Omni Assistent',
             ankers: ['[data-panel="rapport"]', '#chat-toggle-btn'],
-            wat: 'De knoppen voor Rapport (met bovenaan de Gebiedsfactsheet) en de D-Omni Assistent.',
+            wat: 'Rechtsonder de Kompas-tab staan de knoppen voor de D-Omni Assistent en Rapport & Export (met de Gebiedsfactsheet en data-downloads).',
             betekent: 'De Gebiedsfactsheet vat een buurt feitelijk samen per thema (zonder AI). De Assistent haalt antwoorden uit de beheerde data; schrijft een taalmodel de samenvatting, dan staat er een AI-label bij — controleer altijd de bron.',
-            probeer: 'Open Rapport voor de geselecteerde buurt, of stel een vraag in gewone taal aan de Assistent.',
+            probeer: 'Open Rapport & Export voor de geselecteerde buurt, of stel een vraag in gewone taal aan de Assistent.',
         },
     ];
 
@@ -68,6 +68,7 @@
     let voorbeeldGebiedId = null;
     let voorbeeldGebiedNaam = null;
     let oorspronkelijkePanelId = null;
+    let oorspronkelijkeRightTab = null;
 
     function isZichtbaar(el) {
         if (!el) return false;
@@ -256,8 +257,8 @@
         if (stap.id === 'kaart') {
             const hoofd = document.querySelector('#hoofdinhoud');
             const basis = hoofd ? hoofd.getBoundingClientRect() : { left: 70, top: 64, right: vw - 20, bottom: vh - 40 };
-            let left = Math.max(basis.left + 72, 72);
-            let right = Math.min(basis.right - 16, vw - 16);
+            let left = Math.max(basis.left + 56, 56);
+            let right = Math.min(basis.right - 56, vw - 56);
             const top = Math.max(basis.top + 12, 68);
             const bottom = Math.min(basis.bottom - 36, vh - 36);
 
@@ -380,7 +381,9 @@
     function voorbereidStap(stap) {
         if (stap.id === 'legenda') {
             // Zorg dat het Legenda-paneel zichtbaar is zonder onnodig te sluiten als het al open staat
-            if (window.state && window.state.activePanelId !== 'legenda' && typeof window.togglePanel === 'function') {
+            if (typeof window.openLinkerPanel === 'function') {
+                window.openLinkerPanel('legenda');
+            } else if (window.state && window.state.activePanelId !== 'legenda' && typeof window.togglePanel === 'function') {
                 window.togglePanel('legenda');
             }
         } else if (stap.id === 'kompas') {
@@ -489,6 +492,12 @@
 
         startTriggerEl = kandidaatTrigger;
         oorspronkelijkePanelId = window.state?.activePanelId || null;
+        const dockEl = document.getElementById('rechter-dock');
+        const rightOpenVoor = Boolean(
+            (dockEl && !dockEl.classList.contains('collapsed'))
+            || (window.state?.dockMode === 'floating' && window.state?.kompasWindow?.isVisible)
+        );
+        oorspronkelijkeRightTab = rightOpenVoor ? (window.state?.activeRightTab || 'kompas') : null;
 
         window.tourActief = true;
         if (typeof window.hideContextualTooltip === 'function') {
@@ -537,10 +546,19 @@
 
         herstelVoorbeeldBuurt();
 
-        // Herstel oorspronkelijke linkerpaneel-stand als de tour het had gewijzigd
-        if (oorspronkelijkePanelId && window.state && window.state.activePanelId !== oorspronkelijkePanelId && typeof window.togglePanel === 'function') {
-            window.togglePanel(oorspronkelijkePanelId);
+        // Herstel oorspronkelijke linkerpaneel- en rechter-dock-stand als de tour die had gewijzigd
+        if (oorspronkelijkePanelId && window.state && window.state.activePanelId !== oorspronkelijkePanelId) {
+            if (typeof window.openLinkerPanel === 'function') {
+                window.openLinkerPanel(oorspronkelijkePanelId);
+            } else if (typeof window.togglePanel === 'function') {
+                window.togglePanel(oorspronkelijkePanelId);
+            }
         }
+        if (oorspronkelijkeRightTab && typeof window.openRechterDock === 'function') {
+            window.openRechterDock(oorspronkelijkeRightTab, false, false);
+        }
+        oorspronkelijkePanelId = null;
+        oorspronkelijkeRightTab = null;
 
         if (dialogHandle) {
             const h = dialogHandle;
