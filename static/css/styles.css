@@ -4715,8 +4715,15 @@ dialog#meld-dialoog::backdrop {
 }
 
 #rechter-dock #dock-panel-chat .chat-panel-header,
+#rechter-dock #dock-panel-chat .chat-context-bar,
 #rechter-dock #dock-panel-chat .chat-message:first-child {
   padding-right: var(--randtab-body-inset);
+}
+
+#dock-panel-chat.active {
+  min-height: 0;
+  max-height: 100%;
+  overflow: hidden;
 }
 
 #rechter-dock #panel-rapport {
@@ -5004,6 +5011,103 @@ dialog#meld-dialoog::backdrop {
 .chat-action-chip:hover {
   background: color-mix(in srgb, var(--primary-color) 20%, transparent);
   transform: translateY(-1px);
+}
+
+/* --- #445: Contextbalk en interactieve suggestie-chips in D-Omni Assistent --- */
+.chat-context-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 0;
+  margin-bottom: 6px;
+  border-bottom: 1px solid var(--panel-border);
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+
+.chat-context-bar[hidden] {
+  display: none;
+}
+
+.chat-context-label {
+  font-weight: 600;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+.chat-context-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  max-width: 100%;
+  padding: 2px 8px;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--primary-color) 10%, var(--tint-subtle));
+  border: 1px solid color-mix(in srgb, var(--primary-color) 28%, var(--panel-border));
+  color: var(--text-primary);
+  font-size: 0.74rem;
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.chat-start-chips,
+.chat-vervolg-chips {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.chat-vervolg-chips {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px dashed var(--panel-border);
+}
+
+.chat-vervolg-label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  letter-spacing: 0.02em;
+}
+
+.chat-suggestie-chip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  text-align: left;
+  padding: 0.48rem 0.72rem;
+  border-radius: var(--border-radius-sm);
+  border: 1px solid color-mix(in srgb, var(--primary-color) 32%, var(--panel-border));
+  background: color-mix(in srgb, var(--primary-color) 7%, var(--tint-subtle));
+  color: var(--text-primary);
+  font-size: 0.8rem;
+  font-weight: 500;
+  line-height: 1.35;
+  cursor: pointer;
+  transition: background var(--transition-fast), border-color var(--transition-fast), transform var(--transition-fast);
+}
+
+.chat-suggestie-chip:hover {
+  background: color-mix(in srgb, var(--primary-color) 16%, transparent);
+  border-color: var(--primary-color);
+  transform: translateX(3px);
+}
+
+.chat-suggestie-chip:focus-visible,
+.chat-actie-btn:focus-visible,
+.chat-action-chip:focus-visible {
+  outline: 2px solid var(--primary-color);
+  outline-offset: 2px;
+}
+
+.chat-suggestie-chip.actie-activated {
+  opacity: 0.55;
+  pointer-events: none;
+  border-color: var(--color-success);
 }
 
 

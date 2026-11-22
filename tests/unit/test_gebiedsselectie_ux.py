@@ -121,7 +121,11 @@ def test_kompas_deduplicatie_en_request_tracking():
 
     # B1 deduplicatie
     assert "_lastGebiedReq" in content, "kompas.js moet _lastGebiedReq bijhouden voor deduplicatie"
-    assert "reqKey = `${configId}|${gebiedId}`" in content or "reqKey = `${configId}|" in content
+    assert (
+        "reqKey = `${configId}|${gebiedId}`" in content
+        or "reqKey = `${configId}|" in content
+        or "reqKey = this._maakSelectieSleutel(" in content
+    )
 
     # B2 request tracking
     assert "_detailsRequestId" in content, "kompas.js moet _detailsRequestId bijhouden"

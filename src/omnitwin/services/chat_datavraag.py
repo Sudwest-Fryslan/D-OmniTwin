@@ -122,8 +122,8 @@ def gevraagd_aantal(vraag: str) -> int | None:
     return int(n) if n.isdigit() else _GETALWOORDEN[n]
 
 
-_LAAG_WOORDEN = r"\b(laagste|minste|kleinste|dichtst|dichtste|kortste|onderste)\b"
-_HOOG_WOORDEN = r"\b(hoogste|meeste|grootste|verst|verste|langste|bovenste|top)\b"
+_LAAG_WOORDEN = r"\b(laagst|laagste|minst|minste|kleinst|kleinste|dichtst|dichtste|kortst|kortste|onderste)\b"
+_HOOG_WOORDEN = r"\b(hoogst|hoogste|meest|meeste|grootst|grootste|verst|verste|langst|langste|bovenste|top)\b"
 
 
 def gevraagde_volgorde(vraag: str) -> str:
@@ -784,7 +784,13 @@ def aanname_tekst(herkenning: GebiedHerkenning, herkomst: str | None = None) -> 
     Van welk gebied gaat het antwoord uit, als dat niet in de vraag stond (#233)? Dan zegt de
     assistent dat vooraf: 'Ik ga uit van Bolsward-Zuidoost (geselecteerd op de kaart).'
     Kwam de buurt uit een postcode/adres of de locatie (#336), dan zegt hij dat.
+    Bij een actief gemeentefilter op de kaart (#445) meldt hij dat ook vooraf.
     """
+    if herkenning.bron == "gemeente" and herkenning.herkend:
+        return (
+            f"Ik ga uit van gemeente {herkenning.herkend[0]} (actief filter op de kaart). "
+            "Een andere gemeente of buurt? Pas het filter aan of noem de naam in je vraag."
+        )
     if herkenning.bron != "kaart" or not herkenning.herkend:
         return None
     namen = herkenning.herkend
@@ -841,28 +847,47 @@ def beantwoord_datavraag(
     # 'bij mij in de buurt' zonder geselecteerde buurt: niet alle buurten, maar vragen welke (#233)
     eigen_buurt = vraagt_eigen_buurt(vraag) and not herkenning.gevraagd
 
-    # Geen gebied in vraag of kaart: alle gebieden van het voorkeurstype, als dat er weinig zijn
+    # Geen gebied in vraag of kaart: actief gemeentefilter (#445), anders alle gebieden als het er weinig zijn
     if not herkenning.gevraagd and not eigen_buurt:
-        van_type = [g["id"] for g in gebieden if g["gebiedstype_id"] == voorkeur]
-        if 0 < len(van_type) <= MAX_ALLE_GEBIEDEN:
-            herkenning.gevraagd = van_type
-            herkenning.bron = "alle"
+        gemeente_code = str(context.get("huidige_gemeente_code") or "").strip()
+        if gemeente_code and expliciet:
+            van_gemeente = [
+                g["id"] for g in gebieden if g["gebiedstype_id"] == voorkeur and g.get("gemeente_code") == gemeente_code
+            ]
+            if van_gemeente:
+                herkenning.gevraagd = van_gemeente
+                herkenning.herkend = [gemeenten.get(gemeente_code, gemeente_code)]
+                herkenning.bron = "gemeente"
+        if not herkenning.gevraagd:
+            van_type = [g["id"] for g in gebieden if g["gebiedstype_id"] == voorkeur]
+            if 0 < len(van_type) <= MAX_ALLE_GEBIEDEN:
+                herkenning.gevraagd = van_type
+                herkenning.bron = "alle"
 
-    # Indicatoren: woorden, begrippen en AI-zoeken per deelvraag (zonder gebiedsnamen)
-    gebiedswoorden = (
-        [g["naam"] for g in gebieden] + [plaats_van(g["naam"]) for g in gebieden] + list(gemeenten.values())
-    )
-    onderwerp = resterende_tekst(vraag, gebiedswoorden)
-    ai_treffers: list[dict[str, Any]] = []
-    for deel in deelvragen(vraag):
-        tekst = resterende_tekst(deel, gebiedswoorden)
-        if len(tekst) > 3:
-            try:
-                ai_treffers.extend(r for r in (zoek(tekst) or []) if "error" not in r)
-            except Exception:
-                db.rollback()
+    # Indicatoren: actieve kaartindicator (#445) of woorden, begrippen en AI-zoeken per deelvraag
     indicatoren = laad_indicatoren(db)
-    treffers = herken_indicatoren(onderwerp, indicatoren, ai_treffers)
+    actieve_uuid = str(context.get("huidige_indicator_uuid") or "").strip()
+    actieve_ind = next((i for i in indicatoren if str(i["uuid"]) == actieve_uuid), None) if actieve_uuid else None
+    if actieve_ind and context.get("gebruik_actieve_indicator"):
+        treffers = [IndicatorTreffer(str(actieve_ind["uuid"]), actieve_ind["naam"], "specifiek", 1.0)]
+    else:
+        gebiedswoorden = (
+            [g["naam"] for g in gebieden] + [plaats_van(g["naam"]) for g in gebieden] + list(gemeenten.values())
+        )
+        onderwerp = resterende_tekst(vraag, gebiedswoorden)
+        ai_treffers: list[dict[str, Any]] = []
+        for deel in deelvragen(vraag):
+            tekst = resterende_tekst(deel, gebiedswoorden)
+            if len(tekst) > 3:
+                try:
+                    ai_treffers.extend(r for r in (zoek(tekst) or []) if "error" not in r)
+                except Exception:
+                    db.rollback()
+        treffers = herken_indicatoren(onderwerp, indicatoren, ai_treffers)
+        if not treffers and actieve_ind and expliciet:
+            verwijst_actief = bool(re.search(r"\b(deze|huidige|geselecteerde)\s+indicator\b", normaliseer(vraag)))
+            if verwijst_actief or not _tokens(onderwerp):
+                treffers = [IndicatorTreffer(str(actieve_ind["uuid"]), actieve_ind["naam"], "specifiek", 1.0)]
 
     gebied_herkend = herkenning.bron in ("vraag", "kaart")
     if not expliciet and not ((gebied_herkend or eigen_buurt) and treffers):
@@ -927,8 +952,11 @@ def beantwoord_datavraag(
         gevraagde_volgorde(vraag),
         gevraagd_aantal(vraag),
     )
-    basis["gebied_ids"] = alle_ids
-    eerste = per_id.get(alle_ids[0], {})
+    if herkenning.bron == "gemeente" and feiten:
+        basis["gebied_ids"] = [w["gebied_id"] for w in feiten[0]["waarden"]]
+    else:
+        basis["gebied_ids"] = alle_ids
+    eerste = per_id.get((basis["gebied_ids"] or alle_ids)[0], {})
     basis["gebiedstype_id"] = eerste.get("gebiedstype_id")
     basis["gemeente_code"] = eerste.get("gemeente_code")
     basis["feiten"] = feiten

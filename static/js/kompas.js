@@ -332,6 +332,7 @@ class KompasVisualization {
             this.currentData = data;
             this.currentConfigId = configId;
             this.currentGebiedId = null;
+            this._loadedSelectionKey = null;
 
             // Update UI
             document.getElementById('kompas-info').innerHTML =
@@ -353,17 +354,33 @@ class KompasVisualization {
         }
     }
 
+    _maakSelectieSleutel(configId, gebiedIds) {
+        const ids = Array.isArray(gebiedIds) ? [...gebiedIds].map(String).filter(Boolean).sort() : [];
+        return `${configId || ''}|${ids.join(',')}`;
+    }
+
+    heeftSelectieGeladen(configId, gebiedIds) {
+        const sleutel = this._maakSelectieSleutel(configId, gebiedIds);
+        if (this._loadingSelectionKey && this._loadingSelectionKey === sleutel) return true;
+        if (!this.currentData || !this._loadedSelectionKey) return false;
+        return this._loadedSelectionKey === sleutel;
+    }
+
     async loadGebiedData(configId, gebiedId) {
         /**
          * Laad kompas data voor specifiek gebied (met waarden)
          */
-        // B1 deduplicatie: identieke aanroep binnen 300 ms negeren (#465/#466)
-        const reqKey = `${configId}|${gebiedId}`;
+        // B1 deduplicatie: identieke aanroep binnen 300 ms of nog lopend negeren (#445/#465/#466)
+        const reqKey = this._maakSelectieSleutel(configId, [gebiedId]);
         const nu = (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
+        if (this._loadingSelectionKey === reqKey) {
+            return Promise.resolve(this.currentData);
+        }
         if (this._lastGebiedReq && this._lastGebiedReq.key === reqKey && (nu - this._lastGebiedReq.time < 300)) {
             return Promise.resolve(this.currentData);
         }
         this._lastGebiedReq = { key: reqKey, time: nu };
+        this._loadingSelectionKey = reqKey;
 
         // Sprint 7 / #444 / #463: Bewaar expanded state EN indicator UUID vóór re-render
         const wasExpanded = this.isExpanded;
@@ -387,6 +404,7 @@ class KompasVisualization {
             this.currentData = data;
             this.currentConfigId = configId;
             this.currentGebiedId = gebiedId;
+            this._loadedSelectionKey = reqKey;
 
             // Update UI
             document.getElementById('kompas-info').innerHTML =
@@ -438,6 +456,10 @@ class KompasVisualization {
             if (reqId !== this._loadRequestId) return;
             console.error('❌ Fout bij ophalen gebied data:', error);
             this.showError('Kon gebied data niet laden: ' + (error.message || 'Onbekende fout'));
+        } finally {
+            if (this._loadingSelectionKey === reqKey) {
+                this._loadingSelectionKey = null;
+            }
         }
     }
 
@@ -453,6 +475,18 @@ class KompasVisualization {
         if (gebiedIds.length === 1) {
             return this.loadGebiedData(configId, gebiedIds[0]);
         }
+
+        // B1 deduplicatie (#445/#466): voorkom dubbele load + loading-flikkering bij snelle overgang vanuit Assistent
+        const reqKey = this._maakSelectieSleutel(configId, gebiedIds);
+        const nu = (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
+        if (this._loadingSelectionKey === reqKey) {
+            return Promise.resolve(this.currentData);
+        }
+        if (this._lastGebiedReq && this._lastGebiedReq.key === reqKey && (nu - this._lastGebiedReq.time < 300)) {
+            return Promise.resolve(this.currentData);
+        }
+        this._lastGebiedReq = { key: reqKey, time: nu };
+        this._loadingSelectionKey = reqKey;
 
         // Sprint 7 / #444 / #463: Bewaar expanded state EN indicator UUID vóór re-render
         const wasExpanded = this.isExpanded;
@@ -525,6 +559,7 @@ class KompasVisualization {
             this.currentData = merged;
             this.currentConfigId = configId;
             this.currentGebiedId = gebiedIds[0]; // Primary for history lookups
+            this._loadedSelectionKey = reqKey;
 
             // Update UI
             document.getElementById('kompas-info').innerHTML =
@@ -577,6 +612,10 @@ class KompasVisualization {
             console.error('❌ Fout bij multi-gebied kompas:', error);
             this.showError('Kon multi-gebied data niet laden');
             this.hideLoading();
+        } finally {
+            if (this._loadingSelectionKey === reqKey) {
+                this._loadingSelectionKey = null;
+            }
         }
     }
 
@@ -2946,10 +2985,13 @@ class KompasVisualization {
         resultsDropdown.style.display = 'block';
     }
 
-    navigateToIndicator(uuid) {
+    navigateToIndicator(uuid, opts = {}) {
         /**
          * Navigeer het kompas naar een specifieke indicator op basis van UUID.
+         * opts.syncNaarKaart = false voorkomt een dubbele INDICATOR_SELECTED-lus op t=800ms (#445)
+         * wanneer navigatie zelf al door INDICATOR_SELECTED (bijv. vanuit de Assistent) is gestart.
          */
+        const syncNaarKaart = opts.syncNaarKaart !== false;
         if (!this.root || !this._zoomFn) {
             console.warn("⚠️ Kompas niet klaar voor navigatie, uitgesteld");
             this._pendingIndicatorUuid = uuid;
@@ -2967,9 +3009,11 @@ class KompasVisualization {
             // 2. Open details paneel na een korte delay (ivm zoom animatie)
             setTimeout(() => {
                 this.expandDetails(targetNode);
-                // 3. Sync naar kaart
-                const themaCtx = this._vindThemaContext(targetNode);
-                this.syncIndicatorToMap(targetNode.data.uuid, targetNode.data.name, themaCtx.themaNamen);
+                // 3. Sync naar kaart alleen als navigatie vanuit het Kompas zelf kwam (niet al via INDICATOR_SELECTED)
+                if (syncNaarKaart) {
+                    const themaCtx = this._vindThemaContext(targetNode);
+                    this.syncIndicatorToMap(targetNode.data.uuid, targetNode.data.name, themaCtx.themaNamen);
+                }
             }, 800);
         } else {
             console.warn(`⚠️ Indicator met UUID ${uuid} niet gevonden in huidige hiërarchie.`);
@@ -3352,14 +3396,14 @@ document.addEventListener('DOMContentLoaded', async function () {
             }
             if (kompasViz._isSyncing) return; // ← LOOP GUARD
             
-            // Rechter dock architectuur (#444): open het Kompas tabblad
+            // Rechter dock architectuur (#444/#445): open het Kompas tabblad zonder onnodige dubbele herlaad
             if (typeof window.openRechterDock === 'function') {
-                window.openRechterDock('kompas');
+                window.openRechterDock('kompas', false);
             }
 
             console.log('🧭↔🤖 Kompas sync: navigating to indicator', data.name, data.uuid);
             kompasViz._isSyncing = true;
-            kompasViz.navigateToIndicator(data.uuid);
+            kompasViz.navigateToIndicator(data.uuid, { syncNaarKaart: false });
             // Reset guard na animatie (navigateToIndicator heeft 800ms delay)
             setTimeout(() => { kompasViz._isSyncing = false; }, 1200);
         });
@@ -3405,16 +3449,16 @@ document.addEventListener('DOMContentLoaded', async function () {
         window.EventBus.on('KOMPAS_OPEN_REQUESTED', () => {
             console.log('🧭 Chat sync: opening kompas window');
             if (typeof window.openRechterDock === 'function') {
-                window.openRechterDock('kompas');
+                window.openRechterDock('kompas', false);
             } else if (typeof window.openKompasVenster === 'function') {
                 window.openKompasVenster();
             } else if (window.state && window.state.kompasWindow) {
                 window.state.kompasWindow.open();
             }
-            // Toon de huidige kaartselectie
+            // Laad de huidige kaartselectie alleen als die nog niet in het Kompas staat (#445)
             const ids = window.state?.selectedGebiedIds ? [...window.state.selectedGebiedIds] : [];
             const configId = kompasViz.currentConfigId;
-            if (ids.length > 0 && configId) {
+            if (ids.length > 0 && configId && !kompasViz.heeftSelectieGeladen(configId, ids)) {
                 if (ids.length === 1) kompasViz.loadGebiedData(configId, ids[0]);
                 else kompasViz.loadMultiGebiedData(configId, ids);
             }
