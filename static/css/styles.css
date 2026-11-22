@@ -4715,8 +4715,15 @@ dialog#meld-dialoog::backdrop {
 }
 
 #rechter-dock #dock-panel-chat .chat-panel-header,
+#rechter-dock #dock-panel-chat .chat-context-bar,
 #rechter-dock #dock-panel-chat .chat-message:first-child {
   padding-right: var(--randtab-body-inset);
+}
+
+#dock-panel-chat.active {
+  min-height: 0;
+  max-height: 100%;
+  overflow: hidden;
 }
 
 #rechter-dock #panel-rapport {

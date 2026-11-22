@@ -4051,6 +4051,12 @@ function switchDockTab(tab) {
         }
     });
 
+    // #445: gedeelde scrollcontainer (.dock-body) resetten bij tabwissel zodat o.a. het Kompas-wiel altijd bovenaan zichtbaar start
+    const rechterDockBody = document.querySelector('#rechter-dock .dock-body') || document.querySelector('#kompas-window .dock-body');
+    if (rechterDockBody) {
+        rechterDockBody.scrollTop = 0;
+    }
+
     const dockEl = document.getElementById('rechter-dock');
     const floatEl = document.getElementById('kompas-window');
     const isFloating = window.state?.dockMode === 'floating';

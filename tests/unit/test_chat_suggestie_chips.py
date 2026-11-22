@@ -82,9 +82,12 @@ def test_css_bevat_suggestie_chips_met_thematokens_en_focusring():
     css = STYLES_CSS.read_text(encoding="utf-8")
     for selector in (".chat-context-bar", ".chat-context-pill", ".chat-suggestie-chip", ".chat-vervolg-chips"):
         assert selector in css
-    sectie = css[css.index(".chat-context-bar") :]
+    sectie = css[css.index("/* --- #445: Contextbalk") :]
     assert ":focus-visible" in sectie
-    assert not re.search(r"#[0-9a-fA-F]{3,8}\b", sectie), "Geen vaste hexkleuren in #445 CSS (WCAG/thema's)"
+    sectie_zonder_commentaar = re.sub(r"/\*.*?\*/", "", sectie, flags=re.DOTALL)
+    assert not re.search(r"#[0-9a-fA-F]{3,8}\b", sectie_zonder_commentaar), (
+        "Geen vaste hexkleuren in #445 CSS (WCAG/thema's)"
+    )
 
 
 def test_chat_js_geen_hardcoded_plaatsnamen_en_juiste_eventbus_koppeling():
@@ -230,3 +233,4 @@ def test_startchips_meervoud_werkwoord_en_kompas_dubbele_laad_preventie():
     assert "bron === 'kompas-bekijken'" in app
     assert "bron: 'kompas-bekijken'" in chat
     assert "heeftSelectieGeladen" in app
+    assert "rechterDockBody.scrollTop = 0" in app
