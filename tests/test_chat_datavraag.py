@@ -601,3 +601,72 @@ def test_aanname_zegt_waar_de_buurt_vandaan_kwam(herkomst, tekst):
 )
 def test_eigen_buurt_varianten(vraag):
     assert dv.vraagt_eigen_buurt(vraag)
+
+
+# ── #445: Kaartcontext (actieve gemeente & actieve indicator) ────────────────
+
+
+def test_actieve_gemeente_code_scope_bij_expliciete_datavraag(nep_ouderen, monkeypatch):
+    """#445: Bij > MAX_ALLE_GEBIEDEN zonder buurtselectie gebruikt een datavraag huidige_gemeente_code."""
+    monkeypatch.setattr(dv, "MAX_ALLE_GEBIEDEN", 1)
+    r = dv.beantwoord_datavraag(
+        "Welke 2 buurten scoren het laagst op ouderen?",
+        {"huidige_gemeente_code": "1900", "geen_llm": True},
+        NepDB(),
+        lambda t: [],
+        lambda s, u, *_: pytest.fail("geen model"),
+    )
+    assert r is not None
+    assert r["gebieden_bron"] == "gemeente"
+    assert r["aanname"] and "actief filter op de kaart" in r["aanname"]
+    assert len(r["feiten"]) == 1
+    assert len(r["gebied_ids"]) == 2
+    assert r["gebied_ids"][0] == "BU19000004"  # 18.0% is het laagst
+
+
+def test_actieve_gemeente_code_negeert_eigen_buurt_vraag(nep_ouderen, monkeypatch):
+    """'Bij mij in de buurt' zonder selectie blijft vragen welke buurt, ook met gemeentefilter."""
+    monkeypatch.setattr(dv, "MAX_ALLE_GEBIEDEN", 1)
+    r = dv.beantwoord_datavraag(
+        "hoeveel % is bejaard bij mij in de buurt?",
+        {"huidige_gemeente_code": "1900", "geen_llm": True},
+        NepDB(),
+        lambda t: [],
+        lambda s, u, *_: pytest.fail("geen model"),
+    )
+    assert r is not None
+    assert r["vraag_buurt"] is True
+    assert r["feiten"] == []
+
+
+def test_gebruik_actieve_indicator_uit_chip_matcht_exact_zonder_ai_zoeken(nep_ouderen):
+    """#445: Chip met gebruik_actieve_indicator gebruikt exact huidige_indicator_uuid zonder AI-zoeken."""
+    r = dv.beantwoord_datavraag(
+        "Welke 2 buurten scoren het hoogst op deze indicator?",
+        {
+            "huidige_gemeente_code": "1900",
+            "huidige_indicator_uuid": OUDEREN["uuid"],
+            "gebruik_actieve_indicator": True,
+            "geen_llm": True,
+        },
+        NepDB(),
+        lambda t: pytest.fail("AI-zoeken mag niet nodig zijn bij expliciete actieve indicator"),
+        lambda s, u, *_: pytest.fail("geen model"),
+    )
+    assert r is not None
+    assert [t.uuid for t in r["indicatoren"]] == [OUDEREN["uuid"]]
+    assert r["gebied_ids"][0] == "BU19000002"  # 29.5% is het hoogst
+
+
+def test_onbekend_onderwerp_valt_niet_onterecht_terug_op_actieve_indicator(nep_ouderen):
+    """Zonder gebruik_actieve_indicator geeft een onbekend onderwerp geen antwoord over een andere indicator."""
+    r = dv.beantwoord_datavraag(
+        "Hoeveel fietsenstallingen zijn er in Bolsward-Zuidoost?",
+        {"huidige_indicator_uuid": OUDEREN["uuid"], "geen_llm": True},
+        NepDB(),
+        lambda t: [],
+        lambda s, u, *_: pytest.fail("geen model"),
+    )
+    assert r is not None
+    assert r["feiten"] == []
+    assert "geen indicator" in r["narrative"]

@@ -1,17 +1,233 @@
 /**
  * D-Omni Assistant — Chat Zijpaneel
  * Sprint 10: Intent-based chat met Command Dispatch
- * 
+ * #445: Interactieve contextuele suggestie-chips & kaartsturing
+ *
  * Architectuur:
  * - POST /api/chat → Command Dispatch JSON
- * - Actie-knoppen dispatchen EventBus events naar kaart/kompas
+ * - Actie-knoppen en suggestie-chips dispatchen EventBus events naar kaart/kompas/rapportkeuze
  * - Chat-historiek groeit omhoog (standaard chat-gedrag)
  */
+
+/**
+ * Kort lange indicator- of buurtlabels netjes in voor compacte chips.
+ */
+function kortChatLabel(tekst, maxLen = 32) {
+    const schoon = String(tekst || '').trim();
+    if (!schoon || schoon.length <= maxLen) return schoon;
+    return schoon.slice(0, Math.max(1, maxLen - 1)).trimEnd() + '…';
+}
+
+/**
+ * Bouwt contextuele start-chips op basis van de actieve kaart- en selectiestatus (#445).
+ * Geen hardcoded plaats- of indicatornamen (ADR 0007): alles komt uit de actuele state.
+ */
+function bouwStartSuggestieChips(ctx = {}) {
+    const indicatorUuid = ctx.indicatorUuid ? String(ctx.indicatorUuid) : '';
+    const indicatorNaam = ctx.indicatorNaam ? String(ctx.indicatorNaam).trim() : '';
+    const gebiedIds = Array.isArray(ctx.gebiedIds) ? ctx.gebiedIds.map(String).filter(Boolean) : [];
+    const gebiedNamen = Array.isArray(ctx.gebiedNamen) ? ctx.gebiedNamen.map(String).filter(Boolean) : [];
+    const gemeenteNaam = ctx.gemeenteNaam ? String(ctx.gemeenteNaam).trim() : '';
+    const gemeenteSuffix = gemeenteNaam && !gemeenteNaam.startsWith('code ') ? ` in ${gemeenteNaam}` : '';
+
+    const heeftIndicator = Boolean(indicatorUuid && indicatorNaam);
+    const heeftGebied = gebiedIds.length > 0;
+    const indLabel = kortChatLabel(indicatorNaam, 32);
+    const buurtNaam = gebiedNamen[0] || gebiedIds[0] || '';
+    const buurtLabel = gebiedIds.length === 1
+        ? kortChatLabel(buurtNaam, 26)
+        : `${gebiedIds.length} gebieden`;
+
+    const chips = [];
+
+    if (heeftIndicator && heeftGebied) {
+        const werkwoord = gebiedIds.length === 1 ? 'scoort' : 'scoren';
+        chips.push({
+            type: 'VRAAG',
+            label: `📊 Hoe ${werkwoord} ${buurtLabel} op ${indLabel}?`,
+            title: `Vraag cijfers op voor ${indicatorNaam}`,
+            vraag: gebiedIds.length === 1
+                ? `Hoe scoort ${buurtNaam} op ${indicatorNaam}?`
+                : `Hoe scoren deze gebieden op ${indicatorNaam}?`,
+            extraContext: {
+                gebruik_actieve_indicator: true,
+                huidige_indicator_uuid: indicatorUuid,
+            },
+        });
+        chips.push({
+            type: 'VRAAG',
+            label: `📉 5 laagste buurten op ${indLabel}`,
+            title: `Bekijk de 5 buurten met de laagste waarde voor ${indicatorNaam}`,
+            vraag: `Welke 5 buurten${gemeenteSuffix} scoren het laagst op ${indicatorNaam}?`,
+            extraContext: {
+                gebruik_actieve_indicator: true,
+                huidige_indicator_uuid: indicatorUuid,
+                negeer_kaartselectie: true,
+            },
+        });
+        chips.push({
+            type: 'OPEN_KOMPAS',
+            label: `🧭 Open Kompas voor ${buurtLabel}`,
+            title: 'Open het D-Omni Kompas voor de geselecteerde gebieden',
+            gebiedIds,
+        });
+        chips.push({
+            type: 'MAAK_RAPPORT',
+            label: `📄 Kies rapport voor ${buurtLabel}`,
+            title: 'Open de rapportkeuze voor de geselecteerde gebieden',
+            gebiedIds,
+        });
+    } else if (heeftIndicator) {
+        chips.push({
+            type: 'VRAAG',
+            label: `📉 5 laagste buurten op ${indLabel}`,
+            title: `Bekijk de 5 buurten met de laagste waarde voor ${indicatorNaam}`,
+            vraag: `Welke 5 buurten${gemeenteSuffix} scoren het laagst op ${indicatorNaam}?`,
+            extraContext: {
+                gebruik_actieve_indicator: true,
+                huidige_indicator_uuid: indicatorUuid,
+            },
+        });
+        chips.push({
+            type: 'VRAAG',
+            label: `📈 5 hoogste buurten op ${indLabel}`,
+            title: `Bekijk de 5 buurten met de hoogste waarde voor ${indicatorNaam}`,
+            vraag: `Welke 5 buurten${gemeenteSuffix} scoren het hoogst op ${indicatorNaam}?`,
+            extraContext: {
+                gebruik_actieve_indicator: true,
+                huidige_indicator_uuid: indicatorUuid,
+            },
+        });
+        chips.push({
+            type: 'BEKIJK_IN_KOMPAS',
+            label: `🧭 Bekijk ${indLabel} in Kompas`,
+            title: `Open ${indicatorNaam} in het D-Omni Kompas`,
+            indicatorUuid,
+            indicatorNaam,
+        });
+    } else if (heeftGebied) {
+        chips.push({
+            type: 'OPEN_KOMPAS',
+            label: `🧭 Open Kompas voor ${buurtLabel}`,
+            title: 'Open het D-Omni Kompas voor de geselecteerde gebieden',
+            gebiedIds,
+        });
+        chips.push({
+            type: 'MAAK_RAPPORT',
+            label: `📄 Kies rapport voor ${buurtLabel}`,
+            title: 'Open de rapportkeuze voor de geselecteerde gebieden',
+            gebiedIds,
+        });
+        chips.push({
+            type: 'VRAAG',
+            label: '❓ Wat kan ik hier vragen?',
+            title: 'Bekijk mogelijkheden en rolprofielen',
+            vraag: 'Wat kan jij?',
+        });
+    } else {
+        chips.push({
+            type: 'VRAAG',
+            label: '❓ Wat kan ik hier vragen?',
+            title: 'Bekijk mogelijkheden en rolprofielen',
+            vraag: 'Wat kan jij?',
+        });
+        chips.push({
+            type: 'OPEN_KOMPAS',
+            label: '🧭 Open het Kompas',
+            title: 'Open het D-Omni Kompas',
+        });
+    }
+
+    return chips;
+}
+
+/**
+ * Bouwt contextuele vervolgchips onder een assistent-antwoord (#445).
+ * Voorkomt duplicaten met al meegeleverde backend-acties.
+ */
+function bouwVervolgChips(response = {}, ctx = {}) {
+    if (!response || response.intent === 'HELP_ONBOARDING' || response.vraag_buurt) {
+        return [];
+    }
+
+    const bestaandeTypes = new Set(
+        Array.isArray(response.acties) ? response.acties.map(a => a?.type).filter(Boolean) : []
+    );
+    const antwoordGebieden = Array.isArray(response.kaart_actie?.gebied_ids)
+        ? response.kaart_actie.gebied_ids.map(String).filter(Boolean)
+        : [];
+    const ctxGebieden = Array.isArray(ctx.gebiedIds) ? ctx.gebiedIds.map(String).filter(Boolean) : [];
+    const gebiedIds = antwoordGebieden.length > 0 ? antwoordGebieden : ctxGebieden;
+
+    const indicatoren = Array.isArray(response.indicatoren) ? response.indicatoren : [];
+    const eersteInd = indicatoren[0] || null;
+    const chips = [];
+
+    if (eersteInd?.uuid && eersteInd?.naam && !bestaandeTypes.has('TOON_OP_KAART')) {
+        chips.push({
+            type: 'TOON_OP_KAART',
+            label: `🗺️ Toon op kaart: ${kortChatLabel(eersteInd.naam, 28)}`,
+            title: `Toon ${eersteInd.naam} op de kaart`,
+            indicatorUuid: String(eersteInd.uuid),
+            indicatorNaam: String(eersteInd.naam),
+            gebiedIds: antwoordGebieden,
+        });
+    }
+
+    if (gebiedIds.length > 0 && !bestaandeTypes.has('OPEN_KOMPAS')) {
+        chips.push({
+            type: 'OPEN_KOMPAS',
+            label: '🧭 Open Kompas',
+            title: 'Open het D-Omni Kompas voor deze selectie',
+            gebiedIds,
+        });
+    }
+
+    if (gebiedIds.length > 0 && !bestaandeTypes.has('MAAK_RAPPORT')) {
+        chips.push({
+            type: 'MAAK_RAPPORT',
+            label: '📄 Kies rapport',
+            title: 'Open de rapportkeuze voor deze selectie',
+            gebiedIds,
+        });
+    }
+
+    const topInd = (eersteInd?.uuid && eersteInd?.naam)
+        ? { uuid: String(eersteInd.uuid), naam: String(eersteInd.naam) }
+        : (ctx.indicatorUuid && ctx.indicatorNaam
+            ? { uuid: String(ctx.indicatorUuid), naam: String(ctx.indicatorNaam) }
+            : null);
+
+    if (
+        chips.length < 3
+        && topInd
+        && response.intent === 'DATAVRAAG'
+        && response.debug?.gebieden_bron === 'kaart'
+    ) {
+        const gemNaam = ctx.gemeenteNaam ? String(ctx.gemeenteNaam).trim() : '';
+        const gemSuffix = gemNaam && !gemNaam.startsWith('code ') ? ` in ${gemNaam}` : '';
+        chips.push({
+            type: 'VRAAG',
+            label: `📉 5 laagste buurten op ${kortChatLabel(topInd.naam, 28)}`,
+            title: `Bekijk de 5 laagste buurten voor ${topInd.naam}`,
+            vraag: `Welke 5 buurten${gemSuffix} scoren het laagst op ${topInd.naam}?`,
+            extraContext: {
+                gebruik_actieve_indicator: true,
+                huidige_indicator_uuid: topInd.uuid,
+                negeer_kaartselectie: true,
+            },
+        });
+    }
+
+    return chips.slice(0, 3);
+}
 
 class ChatPanel {
     constructor() {
         this.panelEl = document.getElementById('dock-panel-chat') || document.getElementById('chat-panel');
         this.dockEl = document.getElementById('rechter-dock');
+        this.contextBarEl = document.getElementById('chat-context-bar');
+        this.startChipsEl = document.getElementById('chat-start-chips');
         this.messagesEl = document.getElementById('chat-messages');
         this.inputEl = document.getElementById('chat-input');
         this.sendBtn = document.getElementById('chat-send-btn');
@@ -22,6 +238,7 @@ class ChatPanel {
         this.isLoading = false;
 
         this._setupEventListeners();
+        this.refreshContext();
         console.log('🤖 D-Omni Assistant ChatPanel initialized');
     }
 
@@ -37,6 +254,7 @@ class ChatPanel {
             this.panelEl.classList.add('open');
         }
         this.toggleBtn?.classList.add('active');
+        this.refreshContext();
         setTimeout(() => this.inputEl?.focus(), 300);
     }
 
@@ -219,7 +437,7 @@ class ChatPanel {
                 // FE-5.3: Actiechip om indicator in Kompas te bekijken zonder gedwongen tabwissel
                 const chip = el('button', 'chat-action-chip', '📊 Bekijk in Kompas');
                 chip.type = 'button';
-                chip.title = `Bekijk '${escapeHtml(ind.naam || 'indicator')}' in het Kompas`;
+                chip.title = `Bekijk '${ind.naam || 'indicator'}' in het Kompas`;
                 chip.addEventListener('click', (e) => {
                     e.stopPropagation();
                     if (typeof window.switchDockTab === 'function') {
@@ -228,7 +446,8 @@ class ChatPanel {
                     if (ind.uuid && window.EventBus) {
                         window.EventBus.emit('INDICATOR_SELECTED', {
                             uuid: ind.uuid,
-                            name: ind.naam || ''
+                            name: ind.naam || '',
+                            bron: 'kompas-bekijken',
                         });
                     }
                 });
@@ -237,6 +456,17 @@ class ChatPanel {
                 lijst.appendChild(item);
             }
             bubble.appendChild(lijst);
+        }
+
+        // #445: Contextuele vervolgchips onder het antwoord (zonder duplicaten met backend-acties)
+        const vervolgChips = bouwVervolgChips(response, this._getUiContext());
+        if (vervolgChips.length > 0) {
+            const vervolgEl = el('div', 'chat-vervolg-chips');
+            vervolgEl.appendChild(el('span', 'chat-vervolg-label', 'Vervolgacties'));
+            for (const chip of vervolgChips) {
+                vervolgEl.appendChild(this._maakChipKnop(chip, { markeerActief: true }));
+            }
+            bubble.appendChild(vervolgEl);
         }
 
         this.messagesEl.appendChild(block);
@@ -291,7 +521,13 @@ class ChatPanel {
         this.addLoadingIndicator();
 
         try {
-            const context = { ...this._getKaartContext(), ...extraContext };
+            const basisContext = this._getKaartContext();
+            const { negeer_kaartselectie, ...restExtra } = extraContext || {};
+            if (negeer_kaartselectie) {
+                delete basisContext.huidig_gebied_id;
+                delete basisContext.geselecteerde_gebied_ids;
+            }
+            const context = { ...basisContext, ...restExtra };
             const response = await fetch('/api/chat', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -347,7 +583,8 @@ class ChatPanel {
     // Actie Handlers (Command Dispatch → EventBus)
     // ========================================================================
 
-    _handleActie(btn) {
+    _handleActie(btn, opts = {}) {
+        const markeerActief = opts.markeerActief !== false;
         const type = btn.dataset.type;
         const uuid = btn.dataset.uuid;
         const thema = btn.dataset.thema;
@@ -360,9 +597,9 @@ class ChatPanel {
             config: btn.dataset.configId
         });
 
-        // Visuele feedback: voeg vinkje toe en verander stijl
+        // Visuele feedback: voeg vinkje toe en verander stijl (behalve herbruikbare start-chips)
         const originalText = btn.textContent;
-        if (!originalText.startsWith('✅')) {
+        if (markeerActief && !originalText.startsWith('✅')) {
             btn.textContent = '✅ ' + originalText;
             btn.classList.add('actie-activated');
         }
@@ -376,12 +613,12 @@ class ChatPanel {
                         gebiedstypeId: btn.dataset.gebiedstypeId || null, gemeenteCode: btn.dataset.gemeenteCode || null,
                         uuid: uuid || null,
                         zoom: true,
-                        name: originalText.replace(/^[🗺📋📄\s]+/, '').replace(/^Toon( op kaart)?: /, '')
+                        name: btn.dataset.indicatorNaam || originalText.replace(/^[🗺📋📄\s\uFE0F]+/, '').replace(/^Toon( op kaart)?: /, '')
                     });
                 } else if (uuid && window.EventBus) {
                     window.EventBus.emit('INDICATOR_SELECTED', {
                         uuid: uuid,
-                        name: originalText.replace(/^[🗺📋📄\s]+/, '').replace('Toon: ', '')
+                        name: btn.dataset.indicatorNaam || originalText.replace(/^[🗺📋📄\s\uFE0F]+/, '').replace(/^Toon( op kaart)?: /, '')
                     });
                 }
                 break;
@@ -390,32 +627,64 @@ class ChatPanel {
                 if (uuid && window.EventBus) {
                     window.EventBus.emit('INDICATOR_SELECTED', {
                         uuid: uuid,
-                        name: originalText.replace(/^[🗺📋📄\s]+/, '')
+                        name: btn.dataset.indicatorNaam || originalText.replace(/^[🗺📋📄\s\uFE0F]+/, '')
                     });
                 }
                 break;
 
             case 'MAAK_RAPPORT': {
-                // Gebruik geselecteerde gebieden van de kaart indien beschikbaar
-                // #149: gebieden uit het antwoord gaan voor de kaartselectie
+                // #445: Open de bestaande rapportkeuze-modal via EventBus (gebruiker kiest zelf het rapporttype)
                 const geselecteerd = gebiedIds.length > 0
                     ? gebiedIds
                     : (window.state?.selectedGebiedIds ? [...window.state.selectedGebiedIds] : []);
 
-                if (geselecteerd.length === 0) {
-                    // Geen selectie: open lege benchmark pagina
+                if (window.EventBus) {
+                    window.EventBus.emit('MAAK_RAPPORT', {
+                        ids: geselecteerd,
+                        thema: thema || null,
+                    });
+                } else if (geselecteerd.length === 0) {
                     window.open('/rapport/benchmark', '_blank', 'noopener,noreferrer');
                 } else if (geselecteerd.length === 1) {
-                    // Eén gebied: open gebiedsdossier
                     window.open(`/rapport/${geselecteerd[0]}`, '_blank', 'noopener,noreferrer');
                 } else {
-                    // Multi-selectie: open benchmark met alle gebieden
                     const [a, ...rest] = geselecteerd;
                     window.open(
                         `/rapport/benchmark?gebied_a=${a}&gebieden_b=${rest.join(',')}`,
                         '_blank',
                         'noopener,noreferrer'
                     );
+                }
+                break;
+            }
+
+            case 'BEKIJK_IN_KOMPAS':
+                if (typeof window.openRechterDock === 'function') {
+                    window.openRechterDock('kompas', false, true);
+                } else if (typeof window.switchDockTab === 'function') {
+                    window.switchDockTab('kompas');
+                }
+                if (uuid && window.EventBus) {
+                    window.EventBus.emit('INDICATOR_SELECTED', {
+                        uuid,
+                        name: btn.dataset.indicatorNaam || originalText,
+                        bron: 'kompas-bekijken',
+                    });
+                }
+                break;
+
+            case 'VRAAG': {
+                const vraagTekst = btn.dataset.vraag || '';
+                let extraContext = {};
+                if (btn.dataset.extraContext) {
+                    try {
+                        extraContext = JSON.parse(btn.dataset.extraContext);
+                    } catch (e) {
+                        extraContext = {};
+                    }
+                }
+                if (vraagTekst) {
+                    this.sendVraag(vraagTekst, extraContext);
                 }
                 break;
             }
@@ -523,6 +792,109 @@ class ChatPanel {
     }
 
     // ========================================================================
+    // Contextbalk & Dynamische Suggestie-chips (#445)
+    // ========================================================================
+
+    _getUiContext() {
+        const st = window.state || {};
+        const gebiedIds = st.selectedGebiedIds ? [...st.selectedGebiedIds].map(String).filter(Boolean) : [];
+        const gebiedNamen = typeof window.getSelectedGebiedNamen === 'function'
+            ? window.getSelectedGebiedNamen()
+            : [];
+        const gemeenteCode = st.currentGemeenteCode ? String(st.currentGemeenteCode) : '';
+        const gemeenteNaam = typeof window.getActieveGemeenteNaam === 'function'
+            ? window.getActieveGemeenteNaam()
+            : null;
+        return {
+            indicatorUuid: st.currentIndicator ? String(st.currentIndicator) : '',
+            indicatorNaam: st.currentIndicatorNaam ? String(st.currentIndicatorNaam) : '',
+            gebiedIds,
+            gebiedNamen: Array.isArray(gebiedNamen) ? gebiedNamen : [],
+            gemeenteCode,
+            gemeenteNaam: gemeenteNaam || '',
+        };
+    }
+
+    _maakChipKnop(chip, opts = {}) {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'chat-suggestie-chip';
+        btn.textContent = chip.label || '';
+        btn.title = chip.title || chip.label || '';
+        btn.dataset.type = chip.type || '';
+        if (opts.dynamicStart) btn.dataset.dynamicChip = 'true';
+        if (chip.indicatorUuid) btn.dataset.uuid = chip.indicatorUuid;
+        if (chip.indicatorNaam) btn.dataset.indicatorNaam = chip.indicatorNaam;
+        if (Array.isArray(chip.gebiedIds) && chip.gebiedIds.length > 0) {
+            btn.dataset.gebiedIds = chip.gebiedIds.join(',');
+        }
+        if (chip.vraag) btn.dataset.vraag = chip.vraag;
+        if (chip.extraContext) btn.dataset.extraContext = JSON.stringify(chip.extraContext);
+        btn.addEventListener('click', () => this._handleActie(btn, { markeerActief: opts.markeerActief }));
+        return btn;
+    }
+
+    refreshContext() {
+        const ctx = this._getUiContext();
+        this._renderContextBar(ctx);
+        this._renderStartChips(ctx);
+    }
+
+    _renderContextBar(ctx) {
+        if (!this.contextBarEl) return;
+        this.contextBarEl.textContent = '';
+
+        const pills = [];
+        if (ctx.indicatorNaam) {
+            pills.push({ tekst: `📊 ${kortChatLabel(ctx.indicatorNaam, 34)}`, title: `Actieve indicator: ${ctx.indicatorNaam}` });
+        }
+        if (ctx.gebiedIds.length === 1) {
+            const naam = ctx.gebiedNamen[0] || ctx.gebiedIds[0];
+            pills.push({ tekst: `📍 ${kortChatLabel(naam, 26)}`, title: `Geselecteerd gebied: ${naam}` });
+        } else if (ctx.gebiedIds.length > 1) {
+            pills.push({ tekst: `📍 ${ctx.gebiedIds.length} gebieden`, title: `${ctx.gebiedIds.length} gebieden geselecteerd` });
+        } else if (ctx.gemeenteNaam) {
+            pills.push({ tekst: `🗺️ ${kortChatLabel(ctx.gemeenteNaam, 26)}`, title: `Actief gemeentefilter: ${ctx.gemeenteNaam}` });
+        }
+
+        if (pills.length === 0) {
+            this.contextBarEl.hidden = true;
+            return;
+        }
+
+        const label = document.createElement('span');
+        label.className = 'chat-context-label';
+        label.textContent = 'Actief:';
+        this.contextBarEl.appendChild(label);
+
+        for (const p of pills) {
+            const pill = document.createElement('span');
+            pill.className = 'chat-context-pill';
+            pill.textContent = p.tekst;
+            pill.title = p.title;
+            this.contextBarEl.appendChild(pill);
+        }
+        this.contextBarEl.hidden = false;
+    }
+
+    _renderStartChips(ctx) {
+        if (!this.startChipsEl) return;
+        // Verwijder alleen dynamische chips; behoud #chat-start-tour-btn en zijn click-listener (#442)
+        this.startChipsEl.querySelectorAll('[data-dynamic-chip="true"]').forEach(el => el.remove());
+
+        const tourBtn = this.startChipsEl.querySelector('#chat-start-tour-btn');
+        const chips = bouwStartSuggestieChips(ctx);
+        for (const chip of chips) {
+            const btn = this._maakChipKnop(chip, { dynamicStart: true, markeerActief: false });
+            if (tourBtn) {
+                this.startChipsEl.insertBefore(btn, tourBtn);
+            } else {
+                this.startChipsEl.appendChild(btn);
+            }
+        }
+    }
+
+    // ========================================================================
     // Interne Helpers
     // ========================================================================
 
@@ -547,6 +919,16 @@ class ChatPanel {
 
         // Input state
         this.inputEl?.addEventListener('input', () => this._updateSendButton());
+
+        // #445: Contextbalk en start-chips direct meebewegen met kaart-, selectie- en indicatorwijzigingen
+        if (window.EventBus) {
+            const ververs = () => this.refreshContext();
+            window.EventBus.on('INDICATOR_SELECTED', ververs);
+            window.EventBus.on('INDICATOR_CLEARED', ververs);
+            window.EventBus.on('SELECTIE_GEWIJZIGD', ververs);
+            window.EventBus.on('KAARTDATA_GELADEN', ververs);
+            window.EventBus.on('GEMEENTE_GEWIJZIGD', ververs);
+        }
     }
 
     _updateSendButton() {
@@ -556,7 +938,7 @@ class ChatPanel {
     }
 
     _getKaartContext() {
-        // Haal huidige kaart-staat op als context voor de LLM
+        // Haal huidige kaart-staat op als context voor de LLM en datavraag-route
         const context = {};
         // #233: 'bij mij in de buurt' = de selectie op de kaart (ook een multi-selectie)
         if (window.state?.selectedGebiedId) {
@@ -567,6 +949,9 @@ class ChatPanel {
         }
         if (window.state?.currentIndicator) {
             context.huidige_indicator_uuid = window.state.currentIndicator;
+        }
+        if (window.state?.currentGemeenteCode) {
+            context.huidige_gemeente_code = window.state.currentGemeenteCode;
         }
         return context;
     }

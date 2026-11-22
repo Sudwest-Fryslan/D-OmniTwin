@@ -33,8 +33,8 @@ def test_html_css_en_wiring_voor_aanbevolen_kaartlagen():
     assert "hidden" in sec_html
     assert sec_html.index('id="externe-lagen-aanbevolen"') < sec_html.index('id="externe-lagen-list"')
     assert 'href="/static/css/styles.css"' in html
-    assert "/static/js/kompas.js?v=3" in html
-    assert "/static/js/app.js?v=13" in html
+    assert re.search(r"/static/js/kompas\.js\?v=\d+", html)
+    assert re.search(r"/static/js/app\.js\?v=\d+", html)
 
     # CSS blok gebruikt uitsluitend tokens (geen hardcoded hexwaarden)
     css_match = re.search(

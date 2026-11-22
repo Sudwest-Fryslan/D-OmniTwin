@@ -846,7 +846,14 @@ function zetGemeente(code, naamOptioneel = null, herlaadKaart = true) {
             loadKaartData();
         }
     }
+
+    window.EventBus?.emit('GEMEENTE_GEWIJZIGD', {
+        code: cleanCode,
+        name: cleanCode ? naam : null,
+    });
 }
+
+window.getActieveGemeenteNaam = () => (state.currentGemeenteCode ? gemeenteNaam(state.currentGemeenteCode) : null);
 
 async function loadGemeenten() {
     const info = document.getElementById('gemeente-info');
@@ -3340,6 +3347,7 @@ function resetKaartIndicator() {
     }
 
     updateButtonState();
+    window.EventBus?.emit('INDICATOR_CLEARED');
     console.log('✅ Kaart gereset naar basisweergave');
 }
 
@@ -3989,7 +3997,10 @@ function openRechterDock(tab = 'kompas', reloadData = true, manualOpen = false) 
     updateMapPadding(!isFloating);
 
     if (reloadData && tab === 'kompas' && state?.selectedGebiedIds?.size > 0 && window.kompasViz?.currentConfigId) {
-        loadKompasForSelection(window.kompasViz.currentConfigId);
+        const ids = [...state.selectedGebiedIds];
+        if (!window.kompasViz.heeftSelectieGeladen?.(window.kompasViz.currentConfigId, ids)) {
+            loadKompasForSelection(window.kompasViz.currentConfigId);
+        }
     }
 }
 window.openRechterDock = openRechterDock;
@@ -4060,6 +4071,7 @@ function switchDockTab(tab) {
     });
 
     if (targetTab === 'chat') {
+        window.chatPanel?.refreshContext?.();
         setTimeout(() => document.getElementById('chat-input')?.focus(), 200);
     } else if (targetTab === 'kompas') {
         requestAnimationFrame(() => {
@@ -4504,30 +4516,42 @@ function setupEventListeners() {
         csvBtn.addEventListener('click', exportCSV);
     }
 
+    // Helper: open de rapportkeuze-modal voor 1 of meerdere gebieden, of de tab Rapport & Export bij lege selectie (#445)
+    function openRapportKeuzeVoorGebieden(ids) {
+        const geldigeIds = Array.isArray(ids) ? ids.filter(Boolean) : [];
+        if (geldigeIds.length === 0) {
+            openRechterDock('rapport', false, true);
+            return;
+        }
+        const baseUrl = '';
+        if (geldigeIds.length > 1) {
+            openMultiSelectRapportModal(geldigeIds, baseUrl);
+        } else {
+            openRapportTypeModal(geldigeIds[0], baseUrl);
+        }
+    }
+
     // AI Rapport Output Button — Sprint 8D: Keuze-overlay (Gebiedsdossier vs Benchmark)
     const rapportBtn = document.getElementById('open-rapport-btn');
     if (rapportBtn) {
         rapportBtn.addEventListener('click', () => {
             const ids = [...state.selectedGebiedIds];
             if (ids.length === 0) return;
-
-            // Altijd relatieve URLs gebruiken — werkt met localhost, ngrok, en productie
-            const baseUrl = '';
-
-            if (ids.length > 1) {
-                // Multi-select: keuze-modal (Benchmark vs Multi-Gebiedsdossier)
-                openMultiSelectRapportModal(ids, baseUrl);
-            } else {
-                // Single-select: toon inline keuze-overlay
-                openRapportTypeModal(ids[0], baseUrl);
-            }
+            openRapportKeuzeVoorGebieden(ids);
         });
     }
 
     // Kompas Sync Handler - Updates map AND legend when indicator clicked in Kompas
     const handleIndicatorSelection = async (data) => {
-        const { uuid, name, thema, themas } = data || {};
+        const { uuid, name, thema, themas, bron } = data || {};
         console.log('🔗 Kompas sync event received:', name, uuid);
+
+        // #445: Als de gebruiker vanuit de Assistent de reeds actieve kaartindicator in het Kompas opent,
+        // herlaad de kaartdata (720kB + .loading-overlay + tegel-cancels) dan niet onnodig opnieuw.
+        if (bron === 'kompas-bekijken' && uuid && state.currentIndicator === uuid && state.currentData?.features?.length > 0) {
+            if (name && !state.currentIndicatorNaam) state.currentIndicatorNaam = name;
+            return;
+        }
 
         state.currentIndicator = uuid;
         state.currentIndicatorNaam = name || null;
@@ -4733,6 +4757,20 @@ function setupEventListeners() {
         // Ook automatisch na een antwoord (kaart_actie, zoom: true): de kaart beweegt mee.
         window.EventBus.on('CHAT_GEBIEDEN_TONEN', async (data) => {
             const ids = (data.ids || []).filter(Boolean);
+            const huidigeIds = [...state.selectedGebiedIds];
+            const zelfdeSelectie = ids.length > 0
+                && huidigeIds.length === ids.length
+                && ids.every(id => state.selectedGebiedIds.has(id));
+            const zelfdeType = !data.gebiedstypeId || state.currentGebiedstype === data.gebiedstypeId;
+            const zelfdeGemeente = !data.gemeenteCode || state.currentGemeenteCode === data.gemeenteCode;
+
+            // #445: Als de gebieden al geselecteerd zijn en we alleen het Kompas openen, voorkom herladen/flikkering
+            if (data.openKompas && !data.uuid && !data.zoom && zelfdeSelectie && zelfdeType && zelfdeGemeente) {
+                const moetLaden = !window.kompasViz?.heeftSelectieGeladen?.(window.kompasViz?.currentConfigId, ids);
+                openRechterDock('kompas', moetLaden, true);
+                return;
+            }
+
             if (data.gebiedstypeId && state.currentGebiedstype !== data.gebiedstypeId) {
                 const select = document.getElementById('gebiedstype-select');
                 if (select && [...select.options].some(o => o.value === data.gebiedstypeId)) {
@@ -4781,6 +4819,23 @@ function setupEventListeners() {
                 }
             }
             console.log(`✅ Chat: ${ids.length} gebied(en) geselecteerd`, ids);
+        });
+
+        // #445: Chat -> Rapportkeuze-modal (gebruiker kiest zelf het rapporttype)
+        window.EventBus.on('MAAK_RAPPORT', (data) => {
+            const gevraagd = Array.isArray(data?.ids) ? data.ids.filter(Boolean) : [];
+            const doelIds = gevraagd.length > 0 ? gevraagd : [...state.selectedGebiedIds];
+            if (gevraagd.length > 0) {
+                const huidig = [...state.selectedGebiedIds];
+                const isGelijk = huidig.length === doelIds.length && doelIds.every(id => state.selectedGebiedIds.has(id));
+                if (!isGelijk) {
+                    clearGebiedSelection();
+                    doelIds.forEach(id => state.selectedGebiedIds.add(id));
+                    updateSelectionUI();
+                    updateButtonState();
+                }
+            }
+            openRapportKeuzeVoorGebieden(doelIds);
         });
     } else {
         console.error('❌ EventBus not available for subscription');

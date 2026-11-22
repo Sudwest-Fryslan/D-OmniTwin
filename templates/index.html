@@ -753,12 +753,13 @@
               </svg>
             </button>
           </div>
+          <div id="chat-context-bar" class="chat-context-bar" aria-live="polite" hidden></div>
           <div id="chat-messages" class="chat-messages" style="flex: 1; min-height: 250px; overflow-y: auto;">
             <!-- Welkomstbericht -->
             <div class="chat-message chat-message-assistant">
               <div class="chat-message-bubble assistant">
                 <p class="chat-narrative">Welkom bij de D-Omni Assistent. Stel een vraag over gebieden, indicatoren of leefbaarheid en ik help je de data te verkennen.</p>
-                <div class="chat-acties" style="margin-top: 8px;">
+                <div id="chat-start-chips" class="chat-acties chat-start-chips" style="margin-top: 8px;">
                   <button type="button" id="chat-start-tour-btn" class="chat-actie-btn">🧭 Geef me een rondleiding</button>
                 </div>
               </div>
@@ -1191,9 +1192,9 @@
   <script src="/static/js/core/buurtkiezer.js"></script>
   <script src="/static/js/core/rondleiding.js"></script>
   <script src="/static/js/draggable-window.js"></script>
-  <script src="/static/js/kompas.js?v=3"></script>
-  <script src="/static/js/chat.js"></script>
-  <script src="/static/js/app.js?v=13"></script>
+  <script src="/static/js/kompas.js?v=5"></script>
+  <script src="/static/js/chat.js?v=4"></script>
+  <script src="/static/js/app.js?v=16"></script>
   <script src="/static/js/mijn.js?v=2"></script>
 </body>
 
