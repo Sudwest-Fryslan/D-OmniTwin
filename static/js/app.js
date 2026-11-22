@@ -31,6 +31,13 @@ function kaartModusParam() {
 const state = {
     currentGebiedstype: null,
     currentIndicator: null,
+    currentIndicatorNaam: null,
+    currentIndicatorThemas: [],
+    actiefKompasThema: null,
+    actiefKompasNodeType: null,
+    actiefKompasPrimaireThemas: [],
+    actiefKompasSecundaireThemas: [],
+    actiefKompasThemaIndicatoren: [],
     currentJaar: null,
     currentDataRevision: 0,
     currentGemeenteCode: localStorage.getItem('omnitwin-gemeente') || '', // Default: Alle gemeenten (empty = no filter)
@@ -77,6 +84,7 @@ const state = {
     // Sprint 18: Externe kaartlagen (WFS, PDOK, etc.)
     externeKaartlagen: [],         // Actieve lagen definitie [{id, naam, kleur_lijn, ...}]
     externeKaartlaagData: {},      // { laag_id: { laag, geojson } }
+    externeKaartlagenLaden: new Set(), // Lagen die op dit moment geladen worden (#528)
 
     // Performance / UX (#466): bijhouden of de gebruiker het dock handmatig heeft gesloten
     dockManuallyClosed: false,
@@ -1320,11 +1328,19 @@ async function initStartKaart() {
                     indSelect.value = startOpt.value;
                     state.currentIndicator = startOpt.value;
                     const startNaam = startOpt.textContent.replace(/\s*\(\d+\s+gebieden\).*$/, '').trim();
+                    state.currentIndicatorNaam = startNaam;
+                    state.currentIndicatorThemas = [];
+                    state.actiefKompasThema = null;
+                    state.actiefKompasNodeType = null;
+                    state.actiefKompasPrimaireThemas = [];
+                    state.actiefKompasSecundaireThemas = [];
+                    state.actiefKompasThemaIndicatoren = [];
                     const covEl = document.getElementById('indicator-coverage');
                     if (covEl && startOpt.dataset.coverage) {
                         covEl.textContent = `${startOpt.dataset.coverage} gebieden met data`;
                     }
                     updateIndicatorBadge(startNaam);
+                    updateAanbevolenExterneLagen();
                     document.querySelectorAll('#indicator-accordion .indicator-item').forEach(el => {
                         el.classList.toggle('active', el.dataset.uuid === startOpt.value);
                     });
@@ -1759,19 +1775,235 @@ function groepeerExterneKaartlagen(lagen) {
 window.groepeerExterneKaartlagen = groepeerExterneKaartlagen;
 
 /**
+ * Bouwt per indicator-UUID een lijst met unieke Kompas-namen ([thema, onderdeel, titel]) uit een hiërarchieboom (#528).
+ */
+function bouwKompasIndicatorThemaMap(hierarchie) {
+    const map = {};
+    const wortel = hierarchie && hierarchie.hierarchie ? hierarchie.hierarchie : hierarchie;
+    function loop(node, titel, thema, onderdeel) {
+        if (!node || typeof node !== 'object') return;
+        const type = node.type || '';
+        const naam = (node.name || '').trim();
+        const nieuwTitel = type === 'titel' ? naam : titel;
+        const nieuwThema = type === 'thema' ? naam : thema;
+        const nieuwOnderdeel = type === 'onderdeel' ? naam : onderdeel;
+        if (node.uuid) {
+            const key = String(node.uuid).trim().toLowerCase();
+            if (!map[key]) map[key] = [];
+            [nieuwThema, nieuwOnderdeel, nieuwTitel].forEach((n) => {
+                if (n && !map[key].includes(n)) map[key].push(n);
+            });
+        }
+        if (Array.isArray(node.children)) {
+            node.children.forEach((kind) => loop(kind, nieuwTitel, nieuwThema, nieuwOnderdeel));
+        }
+    }
+    loop(wortel, '', '', '');
+    return map;
+}
+
+window.bouwKompasIndicatorThemaMap = bouwKompasIndicatorThemaMap;
+
+/**
+ * Selecteert en ordent externe kaartlagen passend bij het actieve Kompasthema of indicator (#528).
+ * Geeft { contextLabel, lagen } terug; muteert de invoerarray niet.
+ */
+function selecteerAanbevolenExterneLagen(lagen, context = {}) {
+    const lijst = Array.isArray(lagen) ? lagen : [];
+    const norm = (v) => String(v || '').trim().toLowerCase();
+    const schoonIndicatorNaam = (naam) => {
+        const tekst = String(naam || '').trim();
+        if (!tekst) return '';
+        return tekst
+            .replace(/\s*·\s*intern$/i, '')
+            .replace(/\s*\((?:\d+\s+gebieden|geen data)\)\s*$/i, '')
+            .trim();
+    };
+
+    const actiefThema = String(context.actiefThema || '').trim();
+    const themaIndicatorSet = new Set(
+        (Array.isArray(context.themaIndicatorUuids) ? context.themaIndicatorUuids : [])
+            .map(norm)
+            .filter(Boolean)
+    );
+    const indicatorUuid = norm(context.indicatorUuid);
+    const indicatorNaam = schoonIndicatorNaam(context.indicatorNaam);
+    const indicatorThemaSet = new Set(
+        (Array.isArray(context.indicatorThemas) ? context.indicatorThemas : [])
+            .map(norm)
+            .filter(Boolean)
+    );
+
+    const prioriteitPerLaag = new Map();
+    const kenToe = (laag, prioriteit) => {
+        const bestaand = prioriteitPerLaag.get(laag);
+        if (bestaand === undefined || prioriteit < bestaand) {
+            prioriteitPerLaag.set(laag, prioriteit);
+        }
+    };
+
+    let contextLabel = null;
+    if (actiefThema) {
+        const primaireSet = new Set(
+            (Array.isArray(context.primaireThemas) && context.primaireThemas.length
+                ? context.primaireThemas
+                : [actiefThema]
+            )
+                .map(norm)
+                .filter(Boolean)
+        );
+        const secundaireSet = new Set(
+            (Array.isArray(context.secundaireThemas) ? context.secundaireThemas : [])
+                .map(norm)
+                .filter(Boolean)
+        );
+        contextLabel = actiefThema;
+        lijst.forEach((laag) => {
+            if (!laag) return;
+            const laagThema = norm(laag.kompas_thema_naam);
+            if (laagThema && primaireSet.has(laagThema)) {
+                kenToe(laag, 0);
+            } else if (laagThema && secundaireSet.has(laagThema)) {
+                kenToe(laag, 1);
+            }
+            const gekoppeld = Array.isArray(laag.gekoppelde_indicatoren) ? laag.gekoppelde_indicatoren : [];
+            if (gekoppeld.some((u) => themaIndicatorSet.has(norm(u)))) {
+                kenToe(laag, 1);
+            }
+        });
+    }
+    if ((prioriteitPerLaag.size === 0 && context.actiefNodeType === 'titel' && indicatorUuid) || (!actiefThema && indicatorUuid)) {
+        let eersteGekoppeldeThema = '';
+        lijst.forEach((laag) => {
+            if (!laag) return;
+            const gekoppeld = Array.isArray(laag.gekoppelde_indicatoren) ? laag.gekoppelde_indicatoren : [];
+            if (gekoppeld.some((u) => norm(u) === indicatorUuid)) {
+                kenToe(laag, 0);
+            }
+            const laagThemaOrig = String(laag.kompas_thema_naam || '').trim();
+            const laagThema = norm(laagThemaOrig);
+            if (laagThema && indicatorThemaSet.has(laagThema)) {
+                if (!eersteGekoppeldeThema) eersteGekoppeldeThema = laagThemaOrig;
+                kenToe(laag, 1);
+            }
+        });
+        contextLabel = indicatorNaam || eersteGekoppeldeThema || (Array.from(context.indicatorThemas || []).find(Boolean) || null);
+    }
+
+    if (!contextLabel || prioriteitPerLaag.size === 0) {
+        return { contextLabel: null, lagen: [] };
+    }
+
+    const gesorteerd = Array.from(prioriteitPerLaag.keys()).sort((a, b) => {
+        const pa = prioriteitPerLaag.get(a);
+        const pb = prioriteitPerLaag.get(b);
+        if (pa !== pb) return pa - pb;
+        const ga = Number.isFinite(Number(a.groep_volgorde)) ? Number(a.groep_volgorde) : 0;
+        const gb = Number.isFinite(Number(b.groep_volgorde)) ? Number(b.groep_volgorde) : 0;
+        if (ga !== gb) return ga - gb;
+        const va = Number.isFinite(Number(a.volgorde)) ? Number(a.volgorde) : 0;
+        const vb = Number.isFinite(Number(b.volgorde)) ? Number(b.volgorde) : 0;
+        if (va !== vb) return va - vb;
+        return String(a.naam || '').localeCompare(String(b.naam || ''), 'nl');
+    });
+
+    return { contextLabel, lagen: gesorteerd };
+}
+
+window.selecteerAanbevolenExterneLagen = selecteerAanbevolenExterneLagen;
+
+/**
+ * Verzamelt bekende Kompas-themanamen (Ring 2/3) bij een indicator-UUID uit cache of actief profiel (#528).
+ */
+function haalThemasVoorIndicator(uuid) {
+    if (!uuid) return [];
+    const key = String(uuid).trim().toLowerCase();
+    const themas = new Set();
+    if (kompasIndicatorThemas && Array.isArray(kompasIndicatorThemas[key])) {
+        kompasIndicatorThemas[key].forEach((t) => {
+            if (t) themas.add(t);
+        });
+    }
+    const actieveBoom = window.kompasViz?.currentData?.hierarchie;
+    if (actieveBoom) {
+        const actiefMap = bouwKompasIndicatorThemaMap(actieveBoom);
+        (actiefMap[key] || []).forEach((t) => {
+            if (t) themas.add(t);
+        });
+    }
+    if (Array.isArray(state.currentIndicatorThemas)) {
+        state.currentIndicatorThemas.forEach((t) => {
+            if (t) themas.add(t);
+        });
+    }
+    return Array.from(themas);
+}
+
+/**
+ * Houdt de vinkstatus van een externe kaartlaag synchroon tussen het aanbevolen blok en de groepenlijst (#528).
+ */
+function syncExterneLaagCheckboxes(laagId, checked, disabled = null) {
+    if (laagId === undefined || laagId === null || typeof document === 'undefined') return;
+    const sectie = document.getElementById('externe-lagen-sectie') || document;
+    if (!sectie || typeof sectie.querySelectorAll !== 'function') return;
+    const doelId = String(laagId);
+    sectie.querySelectorAll('input[type="checkbox"][data-laag-id]').forEach((cb) => {
+        if (String(cb.dataset?.laagId ?? '') !== doelId) return;
+        cb.checked = Boolean(checked);
+        if (disabled !== null) {
+            cb.disabled = Boolean(disabled);
+        }
+    });
+}
+
+window.syncExterneLaagCheckboxes = syncExterneLaagCheckboxes;
+
+/**
+ * Maakt het kaartlagen-icoon voor de header van het aanbevolen-blok via SVG DOM API (#528).
+ */
+function maakAanbevolenIconSvg() {
+    const ns = 'http://www.w3.org/2000/svg';
+    const svg = document.createElementNS(ns, 'svg');
+    svg.setAttribute('class', 'externe-aanbevolen-icon');
+    svg.setAttribute('viewBox', '0 0 24 24');
+    svg.setAttribute('fill', 'none');
+    svg.setAttribute('stroke', 'currentColor');
+    svg.setAttribute('stroke-width', '2');
+    svg.setAttribute('stroke-linecap', 'round');
+    svg.setAttribute('stroke-linejoin', 'round');
+    svg.setAttribute('aria-hidden', 'true');
+    const p1 = document.createElementNS(ns, 'polygon');
+    p1.setAttribute('points', '12 2 2 7 12 12 22 7 12 2');
+    const p2 = document.createElementNS(ns, 'polyline');
+    p2.setAttribute('points', '2 17 12 22 22 17');
+    const p3 = document.createElementNS(ns, 'polyline');
+    p3.setAttribute('points', '2 12 12 17 22 12');
+    svg.appendChild(p1);
+    svg.appendChild(p2);
+    svg.appendChild(p3);
+    return svg;
+}
+
+/**
  * Bouwt één regel voor een externe kaartlaag en hangt deze aan targetContainer.
  */
-function renderExterneLaagRij(laag, targetContainer, rootContainer) {
+function renderExterneLaagRij(laag, targetContainer, rootContainer, opts = {}) {
     const item = document.createElement('div');
     item.className = 'externe-laag-item';
 
     const label = document.createElement('label');
     label.className = 'checkbox-label externe-laag-label';
 
+    const idPrefix = (opts && opts.idPrefix) || 'toggle-externe-laag-';
     const checkbox = document.createElement('input');
     checkbox.type = 'checkbox';
-    checkbox.id = `toggle-externe-laag-${laag.id}`;
+    checkbox.id = `${idPrefix}${laag.id}`;
     checkbox.dataset.laagId = String(laag.id);
+    checkbox.checked = Boolean(
+        (state.externeKaartlaagData && state.externeKaartlaagData[laag.id]) ||
+        (state.externeKaartlagenLaden && state.externeKaartlagenLaden.has(laag.id))
+    );
+    checkbox.disabled = Boolean(state.externeKaartlagenLaden && state.externeKaartlagenLaden.has(laag.id));
 
     const checkboxCustom = document.createElement('span');
     checkboxCustom.className = 'checkbox-custom';
@@ -1817,6 +2049,7 @@ function renderExterneLaagRij(laag, targetContainer, rootContainer) {
     if (descDiv) targetContainer.appendChild(descDiv);
 
     checkbox.addEventListener('change', async (e) => {
+        syncExterneLaagCheckboxes(laag.id, e.target.checked);
         if (e.target.checked) {
             await laadExterneKaartlaagFeatures(laag);
         } else {
@@ -1824,6 +2057,64 @@ function renderExterneLaagRij(laag, targetContainer, rootContainer) {
         }
     });
 }
+
+/**
+ * Werkt het uitgelichte blok 'Aanbevolen bij [Thema / Indicator]' bij (#528).
+ */
+function updateAanbevolenExterneLagen() {
+    if (typeof document === 'undefined') return;
+    const aanbevolenEl = document.getElementById('externe-lagen-aanbevolen');
+    if (!aanbevolenEl) return;
+
+    const { contextLabel, lagen } = selecteerAanbevolenExterneLagen(state.externeKaartlagen, {
+        indicatorUuid: state.currentIndicator,
+        indicatorNaam: state.currentIndicatorNaam,
+        indicatorThemas: haalThemasVoorIndicator(state.currentIndicator),
+        actiefThema: state.actiefKompasThema,
+        actiefNodeType: state.actiefKompasNodeType,
+        primaireThemas: state.actiefKompasPrimaireThemas,
+        secundaireThemas: state.actiefKompasSecundaireThemas,
+        themaIndicatorUuids: state.actiefKompasThemaIndicatoren,
+    });
+
+    if (!lagen.length) {
+        aanbevolenEl.hidden = true;
+        aanbevolenEl.dataset.renderSignature = '';
+        aanbevolenEl.replaceChildren();
+        return;
+    }
+
+    const sig = JSON.stringify({ contextLabel, ids: lagen.map((l) => l.id) });
+    if (!aanbevolenEl.hidden && aanbevolenEl.dataset.renderSignature === sig) {
+        return;
+    }
+
+    const sectie = document.getElementById('externe-lagen-sectie') || aanbevolenEl;
+    const headerEl = document.createElement('div');
+    headerEl.className = 'externe-aanbevolen-header';
+
+    const titelSpan = document.createElement('span');
+    titelSpan.className = 'externe-aanbevolen-titel';
+    titelSpan.textContent = `Aanbevolen bij ${contextLabel}`;
+
+    const countSpan = document.createElement('span');
+    countSpan.className = 'externe-groep-count';
+    countSpan.textContent = String(lagen.length);
+
+    headerEl.appendChild(maakAanbevolenIconSvg());
+    headerEl.appendChild(titelSpan);
+    headerEl.appendChild(countSpan);
+
+    const bodyEl = document.createElement('div');
+    bodyEl.className = 'externe-aanbevolen-body';
+    lagen.forEach((laag) => renderExterneLaagRij(laag, bodyEl, sectie, { idPrefix: 'toggle-aanbevolen-laag-' }));
+
+    aanbevolenEl.replaceChildren(headerEl, bodyEl);
+    aanbevolenEl.dataset.renderSignature = sig;
+    aanbevolenEl.hidden = false;
+}
+
+window.updateAanbevolenExterneLagen = updateAanbevolenExterneLagen;
 
 /**
  * Maakt het chevron-icoon voor een inklapbare kaartlagengroep via SVG DOM API.
@@ -1861,6 +2152,10 @@ async function loadExterneKaartlagen() {
         const container = document.getElementById('externe-lagen-list');
         if (!container) return;
 
+        const sectie = document.getElementById('externe-lagen-sectie') || container;
+        const aanbevolenEl = document.getElementById('externe-lagen-aanbevolen');
+        if (aanbevolenEl) aanbevolenEl.dataset.renderSignature = '';
+
         container.replaceChildren();
         const groepen = groepeerExterneKaartlagen(state.externeKaartlagen);
 
@@ -1895,7 +2190,7 @@ async function loadExterneKaartlagen() {
             bodyEl.id = bodyId;
             bodyEl.className = 'externe-groep-body';
 
-            groep.lagen.forEach((laag) => renderExterneLaagRij(laag, bodyEl, container));
+            groep.lagen.forEach((laag) => renderExterneLaagRij(laag, bodyEl, sectie));
 
             headerBtn.addEventListener('click', () => {
                 const nieuwOpen = headerBtn.getAttribute('aria-expanded') !== 'true';
@@ -1907,6 +2202,8 @@ async function loadExterneKaartlagen() {
             groepEl.appendChild(bodyEl);
             container.appendChild(groepEl);
         });
+
+        updateAanbevolenExterneLagen();
 
         if (state.externeKaartlagen.length > 0) {
             console.log(`\u{1F310} ${state.externeKaartlagen.length} externe kaartlagen beschikbaar`);
@@ -1920,6 +2217,9 @@ async function loadExterneKaartlagen() {
  * Haalt features op via de backend WFS proxy en toont ze op de kaart.
  */
 async function laadExterneKaartlaagFeatures(laag) {
+    if (state.externeKaartlagenLaden.has(laag.id)) return;
+    state.externeKaartlagenLaden.add(laag.id);
+    syncExterneLaagCheckboxes(laag.id, true, true);
     showLoading(true, `${laag.naam} laden...`);
     try {
         const res = await fetch(`/api/externe-lagen/${laag.id}/features`);
@@ -1927,6 +2227,8 @@ async function laadExterneKaartlaagFeatures(laag) {
         const geojson = await res.json();
 
         state.externeKaartlaagData[laag.id] = { laag, geojson };
+        state.externeKaartlagenLaden.delete(laag.id);
+        syncExterneLaagCheckboxes(laag.id, true, false);
 
         // Re-render kaart met de nieuwe laag
         if (state.currentData) {
@@ -1940,10 +2242,13 @@ async function laadExterneKaartlaagFeatures(laag) {
     } catch (e) {
         console.error(`\u274C Fout bij laden ${laag.naam}:`, e);
         showError(`${laag.naam} kon niet worden geladen`);
-        // Toggle terugzetten
-        const toggle = document.getElementById(`toggle-externe-laag-${laag.id}`);
-        if (toggle) toggle.checked = false;
+        state.externeKaartlagenLaden.delete(laag.id);
+        syncExterneLaagCheckboxes(laag.id, false, false);
     } finally {
+        if (state.externeKaartlagenLaden.has(laag.id)) {
+            state.externeKaartlagenLaden.delete(laag.id);
+            syncExterneLaagCheckboxes(laag.id, Boolean(state.externeKaartlaagData[laag.id]), false);
+        }
         showLoading(false);
     }
 }
@@ -1953,6 +2258,7 @@ async function laadExterneKaartlaagFeatures(laag) {
  */
 function verwijderExterneKaartlaag(laagId) {
     delete state.externeKaartlaagData[laagId];
+    syncExterneLaagCheckboxes(laagId, false, false);
     if (state.currentData) {
         displayOnMap(state.currentData);
     } else {
@@ -2997,12 +3303,22 @@ function resetKaartIndicator() {
 
     // Reset state
     state.currentIndicator = null;
+    state.currentIndicatorNaam = null;
+    state.currentIndicatorThemas = [];
+    state.actiefKompasThema = null;
+    state.actiefKompasNodeType = null;
+    state.actiefKompasPrimaireThemas = [];
+    state.actiefKompasSecundaireThemas = [];
+    state.actiefKompasThemaIndicatoren = [];
     state.currentData = null;
     state.currentMinValue = null;
     state.currentMaxValue = null;
 
     // Track B3: Badge wissen
     updateIndicatorBadge(null);
+
+    // #528: aanbevolen kaartlagen bijwerken/verbergen
+    updateAanbevolenExterneLagen();
 
     // Reset indicator dropdown
     const select = document.getElementById('indicator-select');
@@ -4057,11 +4373,28 @@ function setupEventListeners() {
         if (selectedId) {
             const selectedOption = e.target.options[e.target.selectedIndex];
             const coverage = selectedOption.dataset.coverage;
+            state.currentIndicatorNaam = selectedOption.text;
+            state.currentIndicatorThemas = [];
+            state.actiefKompasThema = null;
+            state.actiefKompasNodeType = null;
+            state.actiefKompasPrimaireThemas = [];
+            state.actiefKompasSecundaireThemas = [];
+            state.actiefKompasThemaIndicatoren = [];
             document.getElementById('indicator-coverage').textContent =
                 coverage ? `${coverage} gebieden met data` : 'Data beschikbaarheid onbekend';
+            updateAanbevolenExterneLagen();
             if (window.EventBus) {
                 window.EventBus.emit('INDICATOR_SELECTED', { uuid: selectedId, name: selectedOption.text });
             }
+        } else {
+            state.currentIndicatorNaam = null;
+            state.currentIndicatorThemas = [];
+            state.actiefKompasThema = null;
+            state.actiefKompasNodeType = null;
+            state.actiefKompasPrimaireThemas = [];
+            state.actiefKompasSecundaireThemas = [];
+            state.actiefKompasThemaIndicatoren = [];
+            updateAanbevolenExterneLagen();
         }
 
         updateButtonState();
@@ -4193,10 +4526,20 @@ function setupEventListeners() {
 
     // Kompas Sync Handler - Updates map AND legend when indicator clicked in Kompas
     const handleIndicatorSelection = async (data) => {
-        const { uuid, name } = data;
+        const { uuid, name, thema, themas } = data || {};
         console.log('🔗 Kompas sync event received:', name, uuid);
 
         state.currentIndicator = uuid;
+        state.currentIndicatorNaam = name || null;
+        state.currentIndicatorThemas = Array.isArray(themas) && themas.length
+            ? themas
+            : (thema ? [thema] : []);
+        state.actiefKompasThema = null;
+        state.actiefKompasNodeType = null;
+        state.actiefKompasPrimaireThemas = [];
+        state.actiefKompasSecundaireThemas = [];
+        state.actiefKompasThemaIndicatoren = [];
+        updateAanbevolenExterneLagen();
 
         // Fallback (#450): als er nog geen gebiedstype actief was, automatisch terugvallen op CBS_BUURT
         if (!state.currentGebiedstype) {
@@ -4250,6 +4593,20 @@ function setupEventListeners() {
     if (window.EventBus) {
         console.log('🚌 Subscribing to EventBus: INDICATOR_SELECTED, GEMEENTE_SELECTED, GEBIEDSTYPE_SELECTED');
         window.EventBus.on('INDICATOR_SELECTED', handleIndicatorSelection);
+
+        // #528: aanbevolen externe kaartlagen bij klikken op een Kompasthema of profielwissel
+        window.EventBus.on('KOMPAS_THEMA_SELECTED', (data) => {
+            state.actiefKompasThema = data?.thema || null;
+            state.actiefKompasNodeType = data?.nodeType || null;
+            state.actiefKompasPrimaireThemas = Array.isArray(data?.primaireThemas) ? data.primaireThemas : [];
+            state.actiefKompasSecundaireThemas = Array.isArray(data?.secundaireThemas) ? data.secundaireThemas : [];
+            state.actiefKompasThemaIndicatoren = Array.isArray(data?.indicatorUuids) ? data.indicatorUuids : [];
+            updateAanbevolenExterneLagen();
+        });
+
+        window.EventBus.on('KOMPAS_HIERARCHIE_GELADEN', () => {
+            updateAanbevolenExterneLagen();
+        });
 
         // A3: Timeslider Year Changed
         window.EventBus.on('YEAR_CHANGED', async (data) => {
@@ -5341,6 +5698,7 @@ function setMapHoverCursor(isHovering) {
 
 /** Cache voor de Kompas-hiërarchie (thema → indicator mapping) */
 let kompasHierarchie = null;
+let kompasIndicatorThemas = {}; // Cache: indicator_uuid -> [Kompasthema-namen] (#528)
 let accordionIndicatoren = []; // Flat list met thema-info voor zoekfilter
 
 /**
@@ -5381,7 +5739,9 @@ async function fetchKompasHierarchie() {
         }
 
         kompasHierarchie = themaMap;
+        kompasIndicatorThemas = bouwKompasIndicatorThemaMap(root);
         console.log(`📂 Kompas-hiërarchie geladen: ${Object.keys(themaMap).length} indicatoren gemapt`);
+        updateAanbevolenExterneLagen();
         return themaMap;
     } catch (e) {
         console.warn('⚠️ Kompas-hiërarchie niet beschikbaar, fallback naar flat lijst:', e.message);
@@ -5526,10 +5886,18 @@ function selectAccordionIndicator(uuid, naam) {
 
     // Update state
     state.currentIndicator = uuid;
+    state.currentIndicatorNaam = naam;
+    state.currentIndicatorThemas = [];
+    state.actiefKompasThema = null;
+    state.actiefKompasNodeType = null;
+    state.actiefKompasPrimaireThemas = [];
+    state.actiefKompasSecundaireThemas = [];
+    state.actiefKompasThemaIndicatoren = [];
     updateButtonState();
 
     // Track B3: Update badge
     updateIndicatorBadge(naam);
+    updateAanbevolenExterneLagen();
 
     // Emit EventBus event (identiek aan Kompas-selectie flow)
     if (window.EventBus) {
