@@ -639,7 +639,7 @@ class KompasVisualization {
 
         if (currentNode !== this.root) {
             console.log(`🔍 Zoom hersteld naar: ${currentNode.data.name}`);
-            this._zoomFn(null, currentNode);
+            this._zoomFn(null, currentNode, { stil: true });
         }
     }
 
@@ -859,7 +859,9 @@ class KompasVisualization {
         const self = this;
 
         // Click handler following D3 Observable pattern
-        function clicked(event, p) {
+        function clicked(event, p, opts = {}) {
+            const stil = Boolean(opts && opts.stil);
+
             // Check if we are clicking the center (parent) while expanded
             if (self.isExpanded && p === (parent.datum() || root)) {
                 // Clicking center when expanded -> Close details
@@ -874,7 +876,8 @@ class KompasVisualization {
             // Leaf node - EXPAND Window behavior
             if (!p.children && p.data.uuid) {
                 // Sync to map immediately (Interactive Legend)
-                self.syncIndicatorToMap(p.data.uuid, p.data.name);
+                const themaCtx = self._vindThemaContext(p);
+                self.syncIndicatorToMap(p.data.uuid, p.data.name, themaCtx.themaNamen);
 
                 // Update breadcrumb om de volledige keten tot de indicator te tonen
                 self.updateBreadcrumb(p);
@@ -952,6 +955,21 @@ class KompasVisualization {
 
             // Update breadcrumb
             self.updateBreadcrumb(p);
+
+            if (!stil && !self._isSyncing && window.EventBus) {
+                const themaCtx = self._vindThemaContext(p);
+                window.EventBus.emit('KOMPAS_THEMA_SELECTED', {
+                    thema: themaCtx.actiefLabel,
+                    ring2Thema: themaCtx.thema,
+                    kwadrant: themaCtx.kwadrant,
+                    onderdeel: themaCtx.onderdeel,
+                    nodeType: p.data?.type || 'root',
+                    nodeName: p.data?.name || null,
+                    primaireThemas: themaCtx.primaireThemas,
+                    secundaireThemas: themaCtx.secundaireThemas,
+                    indicatorUuids: themaCtx.indicatorUuids,
+                });
+            }
         }
 
         // Attach click handlers
@@ -979,6 +997,7 @@ class KompasVisualization {
 
         // Initialize default breadcrumb state on load
         this.updateBreadcrumb(root); // Initialize with Root (will trigger "Start" text logic)
+        window.EventBus?.emit('KOMPAS_HIERARCHIE_GELADEN', { hierarchie });
     }
 
     arcVisible(d) {
@@ -1338,6 +1357,75 @@ class KompasVisualization {
         }
     }
 
+    _vindThemaContext(node) {
+        /**
+         * Bepaalt thema-/onderdeelcontext en bijbehorende indicator-UUID's binnen het geklikte subniveau (#528).
+         */
+        let cur = node;
+        let thema = null;
+        let kwadrant = null;
+        let onderdeel = null;
+
+        while (cur && cur.data) {
+            const type = cur.data.type;
+            if (type === 'onderdeel' && !onderdeel) {
+                onderdeel = cur.data.name || null;
+            } else if (type === 'thema' && !thema) {
+                thema = cur.data.name || null;
+            } else if (type === 'titel' && !kwadrant) {
+                kwadrant = cur.data.name || null;
+            }
+            cur = cur.parent;
+        }
+
+        const nodeType = node?.data?.type || 'root';
+        const uniek = (arr) => Array.from(new Set(arr.filter(Boolean)));
+        const uuidSet = new Set();
+        const kindNamen = new Set();
+
+        const collectSubtree = (n) => {
+            if (!n) return;
+            const d = n.data || n;
+            if (d.uuid) uuidSet.add(String(d.uuid));
+            if (d.type === 'onderdeel' && d.name && d.name !== thema) {
+                kindNamen.add(d.name);
+            }
+            const kids = n.children || d.children;
+            if (Array.isArray(kids)) kids.forEach(collectSubtree);
+        };
+        if (nodeType === 'thema' || nodeType === 'onderdeel') {
+            collectSubtree(node);
+        }
+
+        let actiefLabel = null;
+        let primaireThemas = [];
+        let secundaireThemas = [];
+
+        if (nodeType === 'onderdeel') {
+            actiefLabel = onderdeel;
+            primaireThemas = uniek([onderdeel]);
+            secundaireThemas = thema && thema !== onderdeel ? [thema] : [];
+        } else if (nodeType === 'thema') {
+            actiefLabel = thema;
+            primaireThemas = uniek([thema]);
+            secundaireThemas = Array.from(kindNamen);
+        } else if (nodeType === 'titel') {
+            actiefLabel = kwadrant;
+            primaireThemas = uniek([kwadrant]);
+        }
+
+        return {
+            thema,
+            kwadrant,
+            onderdeel,
+            actiefLabel,
+            primaireThemas,
+            secundaireThemas,
+            themaNamen: uniek([thema, onderdeel, kwadrant]),
+            indicatorUuids: Array.from(uuidSet),
+        };
+    }
+
     reset() {
         /**
          * Reset kompas naar het beginniveau (root)
@@ -1355,12 +1443,25 @@ class KompasVisualization {
         }
         if (this._zoomFn && this.root) {
             this._zoomFn(null, this.root);
-        } else if (this.currentData && this.currentData.hierarchie) {
-            this.renderSunburst(this.currentData.hierarchie);
+        } else {
+            if (this.currentData && this.currentData.hierarchie) {
+                this.renderSunburst(this.currentData.hierarchie);
+            }
+            window.EventBus?.emit('KOMPAS_THEMA_SELECTED', {
+                thema: null,
+                ring2Thema: null,
+                kwadrant: null,
+                onderdeel: null,
+                nodeType: 'root',
+                nodeName: null,
+                primaireThemas: [],
+                secundaireThemas: [],
+                indicatorUuids: [],
+            });
         }
     }
 
-    syncIndicatorToMap(indicatorUuid, indicatorName) {
+    syncIndicatorToMap(indicatorUuid, indicatorName, themaOfLijst = null) {
         /**
          * Trigger map update when clicking indicator in kompas
          * Uses EventBus for decoupled communication
@@ -1368,11 +1469,16 @@ class KompasVisualization {
         console.log('🔗 Sync indicator to map:', indicatorName, indicatorUuid);
 
         if (window.EventBus) {
+            const themas = Array.isArray(themaOfLijst)
+                ? themaOfLijst.filter(Boolean)
+                : (themaOfLijst ? [themaOfLijst] : []);
             // Set guard to prevent the Kompas from re-processing its own event
             this._isSyncing = true;
             window.EventBus.emit('INDICATOR_SELECTED', {
                 uuid: indicatorUuid,
-                name: indicatorName
+                name: indicatorName,
+                thema: themas[0] || null,
+                themas
             });
             console.log('✅ Event dispatched via EventBus: INDICATOR_SELECTED');
             // Reset guard after event propagation completes
@@ -2856,13 +2962,14 @@ class KompasVisualization {
 
             // 1. Zoom naar de parent (Thema) om context te tonen, of naar de node zelf als deze kinderen heeft
             const zoomTarget = targetNode.children ? targetNode : (targetNode.parent || targetNode);
-            this._zoomFn(null, zoomTarget);
+            this._zoomFn(null, zoomTarget, { stil: true });
 
             // 2. Open details paneel na een korte delay (ivm zoom animatie)
             setTimeout(() => {
                 this.expandDetails(targetNode);
                 // 3. Sync naar kaart
-                this.syncIndicatorToMap(targetNode.data.uuid, targetNode.data.name);
+                const themaCtx = this._vindThemaContext(targetNode);
+                this.syncIndicatorToMap(targetNode.data.uuid, targetNode.data.name, themaCtx.themaNamen);
             }, 800);
         } else {
             console.warn(`⚠️ Indicator met UUID ${uuid} niet gevonden in huidige hiërarchie.`);

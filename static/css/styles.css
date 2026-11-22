@@ -1308,6 +1308,49 @@ textarea {
   display: none;
 }
 
+/* Uitgelichte externe kaartlagen bij Kompasthema of indicator (#528) */
+.externe-lagen-aanbevolen {
+  border: 1px solid color-mix(in srgb, var(--primary-color) 35%, var(--panel-border));
+  border-left: 3px solid var(--primary-color);
+  border-radius: var(--border-radius-sm);
+  background: color-mix(in srgb, var(--primary-color) 7%, var(--panel-bg));
+  margin-bottom: 10px;
+  overflow: hidden;
+}
+
+.externe-lagen-aanbevolen[hidden] {
+  display: none;
+}
+
+.externe-aanbevolen-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 7px 10px;
+  color: var(--primary-color);
+  font-size: 0.8rem;
+  font-weight: 600;
+  border-bottom: 1px solid color-mix(in srgb, var(--primary-color) 18%, var(--panel-border));
+}
+
+.externe-aanbevolen-icon {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+}
+
+.externe-aanbevolen-titel {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.externe-aanbevolen-body {
+  padding: 2px 8px 6px;
+  background: var(--panel-bg);
+}
+
 
 
 /* Slider Styling */
