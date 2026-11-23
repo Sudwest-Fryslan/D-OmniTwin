@@ -144,7 +144,7 @@ def externe_kaartlagen(cur, regels: list[dict]) -> dict:
         if "actief" in velden:
             velden["actief"] = _bool(velden["actief"])
         laag = ExterneKaartlaagCreate(**velden).model_dump()
-        for optioneel in ("groep_naam", "groep_volgorde", "kompas_thema_naam", "gekoppelde_indicatoren"):
+        for optioneel in ("groep_naam", "groep_volgorde", "kompas_thema_naam", "gekoppelde_indicatoren", "wms_stijl"):
             if optioneel not in velden:
                 laag.pop(optioneel, None)
         if "gekoppelde_indicatoren" in laag:

@@ -1413,6 +1413,84 @@ textarea {
   border: none;
 }
 
+/* Externe WMS-lagen, opacity-regelaar en legenda (#529) */
+.layer-color-dot--wms {
+  border-radius: 2px;
+  background: conic-gradient(
+    var(--primary-color) 0deg 90deg,
+    var(--tint-hover) 90deg 180deg,
+    var(--primary-color) 180deg 270deg,
+    var(--tint-hover) 270deg 360deg
+  );
+  border-color: var(--panel-border);
+}
+
+.externe-laag-actief-details {
+  margin: 0 0 6px 26px;
+  padding: 6px 8px;
+  border-left: 2px solid var(--panel-border);
+  background: var(--tint-subtle);
+  border-radius: 0 var(--border-radius-sm) var(--border-radius-sm) 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.externe-laag-actief-details[hidden] {
+  display: none;
+}
+
+.externe-laag-opacity-rij {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.76rem;
+  color: var(--text-secondary);
+}
+
+.externe-laag-opacity-label {
+  flex-shrink: 0;
+}
+
+.externe-laag-opacity-slider {
+  flex: 1;
+  min-width: 70px;
+  height: 4px;
+  accent-color: var(--primary-color);
+  cursor: pointer;
+}
+
+.externe-laag-opacity-waarde {
+  min-width: 2.3rem;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.externe-laag-wms-legenda {
+  padding-top: 2px;
+}
+
+.externe-laag-legenda-img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  border-radius: 4px;
+  background: var(--surface-light);
+  padding: 2px;
+}
+
+.externe-laag-legenda-img[hidden] {
+  display: none;
+}
+
+.externe-laag-legenda-leeg {
+  font-size: 0.74rem;
+  color: var(--text-secondary);
+  font-style: italic;
+}
+
 /* Subsection Title */
 .subsection-title {
   font-size: 0.9rem;

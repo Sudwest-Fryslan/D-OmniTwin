@@ -174,4 +174,38 @@ describe('ExterneKaartlagenPage (#527)', () => {
             )
         );
     });
+
+    it('schakelt bij Bron Type = WMS naar overlay-defaults, verbergt vectorvelden en bewaart wms_stijl (#529)', async () => {
+        const createSpy = vi.spyOn(externeKaartlagenAPI, 'create').mockImplementation(() => ok({ id: 5, naam: 'WMS Bomen', status: 'aangemaakt' }));
+        render(<ExterneKaartlagenPage />);
+
+        await userEvent.click(await screen.findByRole('button', { name: /Nieuwe Laag/ }));
+        await userEvent.selectOptions(screen.getByLabelText('Bron Type'), 'WMS');
+
+        expect((screen.getByLabelText('Laag Type') as HTMLSelectElement).value).toBe('overlay');
+        expect(screen.getByText('80%')).toBeInTheDocument();
+        expect(screen.queryByLabelText('Filter Type')).not.toBeInTheDocument();
+        expect(screen.queryByLabelText('SRS')).not.toBeInTheDocument();
+        expect(screen.queryByLabelText('Lijn')).not.toBeInTheDocument();
+
+        await userEvent.type(screen.getByLabelText('Naam *'), 'WMS Bomen');
+        await userEvent.type(screen.getByLabelText('WFS/WMS URL *'), 'https://geo.example.org/geoserver/wms');
+        await userEvent.type(screen.getByLabelText('Laagnaam (LAYERS)'), 'swf:gv_bomen');
+        await userEvent.type(screen.getByLabelText('WMS Stijl (optioneel)'), 'groen_stijl');
+
+        await userEvent.click(screen.getByRole('button', { name: 'Laag Toevoegen' }));
+
+        await waitFor(() =>
+            expect(createSpy).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    naam: 'WMS Bomen',
+                    bron_type: 'WMS',
+                    laag_type: 'overlay',
+                    opacity: 0.8,
+                    typename: 'swf:gv_bomen',
+                    wms_stijl: 'groen_stijl',
+                })
+            )
+        );
+    });
 });

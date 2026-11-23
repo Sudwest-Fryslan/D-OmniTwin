@@ -31,6 +31,7 @@ const EMPTY_FORM: ExterneKaartlaagCreate = {
     groep_volgorde: 0,
     kompas_thema_naam: null,
     gekoppelde_indicatoren: [],
+    wms_stijl: null,
 };
 
 const EMPTY_KOPPEL_OPTIES: ExterneKaartlaagKoppelOpties = {
@@ -201,6 +202,7 @@ export const ExterneKaartlagenPage: React.FC = () => {
             groep_volgorde: laag.groep_volgorde ?? 0,
             kompas_thema_naam: laag.kompas_thema_naam || null,
             gekoppelde_indicatoren: laag.gekoppelde_indicatoren || [],
+            wms_stijl: laag.wms_stijl || null,
         });
         setIndicatorZoek('');
         setShowForm(true);
@@ -217,6 +219,7 @@ export const ExterneKaartlagenPage: React.FC = () => {
             ...form,
             groep_naam: form.groep_naam?.trim() || null,
             kompas_thema_naam: form.kompas_thema_naam?.trim() || null,
+            wms_stijl: form.wms_stijl?.trim() || null,
             groep_volgorde: Number(form.groep_volgorde) || 0,
             gekoppelde_indicatoren: form.gekoppelde_indicatoren || [],
         };
@@ -453,9 +456,10 @@ export const ExterneKaartlagenPage: React.FC = () => {
                         <div className="form-group">
                             <label className="form-label" htmlFor="el-laag-type">Laag Type</label>
                             <select id="el-laag-type" className="form-control" value={form.laag_type}
-                                onChange={e => updateField('laag_type', e.target.value as 'selectie' | 'data_koppel')}>
+                                onChange={e => updateField('laag_type', e.target.value as 'selectie' | 'data_koppel' | 'overlay')}>
                                 <option value="selectie">Selectie (klik → buurten selecteren)</option>
                                 <option value="data_koppel">Data Koppel (CBS-buurt verrijking)</option>
+                                <option value="overlay">Overlay (visuele referentielaag)</option>
                             </select>
                         </div>
 
@@ -560,11 +564,26 @@ export const ExterneKaartlagenPage: React.FC = () => {
                             <select id="el-bron-type" className="form-control" value={form.bron_type}
                                 onChange={e => {
                                     const v = e.target.value as 'WFS' | 'WMS' | 'GeoJSON' | 'lokaal';
-                                    updateField('bron_type', v);
-                                    if (v === 'lokaal') {
-                                        updateField('filter_type', 'alles');
-                                        updateField('filter_waarde', '');
-                                    }
+                                    setForm(prev => {
+                                        const wasWms = prev.bron_type === 'WMS';
+                                        const next = { ...prev, bron_type: v };
+                                        if (v === 'WMS') {
+                                            next.laag_type = 'overlay';
+                                            if (prev.versie === '2.0.0' || !prev.versie) next.versie = '1.3.0';
+                                            next.srsname = 'EPSG:3857';
+                                            next.filter_type = 'alles';
+                                            next.filter_waarde = '';
+                                            if (prev.opacity === 0.15) next.opacity = 0.8;
+                                        } else if (v === 'lokaal') {
+                                            next.filter_type = 'alles';
+                                            next.filter_waarde = '';
+                                        } else if (wasWms && v === 'WFS') {
+                                            if (prev.versie === '1.3.0') next.versie = '2.0.0';
+                                            if (prev.srsname === 'EPSG:3857') next.srsname = 'EPSG:28992';
+                                            if (prev.opacity === 0.8) next.opacity = 0.15;
+                                        }
+                                        return next;
+                                    });
                                 }}>
                                 <option value="WFS">WFS (externe service)</option>
                                 <option value="WMS">WMS</option>
@@ -602,80 +621,103 @@ export const ExterneKaartlagenPage: React.FC = () => {
 
                         {/* TypeName */}
                         <div className="form-group">
-                            <label className="form-label" htmlFor="el-typename">TypeName</label>
+                            <label className="form-label" htmlFor="el-typename">
+                                {form.bron_type === 'WMS' ? 'Laagnaam (LAYERS)' : 'TypeName'}
+                            </label>
                             <input id="el-typename" className="form-control" value={form.typename || ''}
                                 onChange={e => updateField('typename', e.target.value)}
-                                placeholder="bijv. bag:woonplaats" />
+                                placeholder={form.bron_type === 'WMS' ? 'bijv. swf:gv_bomen' : 'bijv. bag:woonplaats'} />
                         </div>
 
-                        {/* SRS Name */}
-                        <div className="form-group">
-                            <label className="form-label" htmlFor="el-srsname">SRS</label>
-                            <select id="el-srsname" className="form-control" value={form.srsname}
-                                onChange={e => updateField('srsname', e.target.value)}>
-                                <option value="EPSG:28992">EPSG:28992 (Rijksdriehoek)</option>
-                                <option value="EPSG:4326">EPSG:4326 (WGS84)</option>
-                            </select>
-                        </div>
+                        {/* WMS Stijl (alleen bij WMS) */}
+                        {form.bron_type === 'WMS' && (
+                            <div className="form-group">
+                                <label className="form-label" htmlFor="el-wms-stijl">WMS Stijl (optioneel)</label>
+                                <input id="el-wms-stijl" className="form-control" value={form.wms_stijl || ''}
+                                    onChange={e => updateField('wms_stijl', e.target.value || null)}
+                                    placeholder="Standaard serverstijl (leeg laten)" />
+                            </div>
+                        )}
 
-                        {/* Filter type */}
-                        <div className="form-group">
-                            <label className="form-label" htmlFor="el-filter-type">Filter Type</label>
-                            <select id="el-filter-type" className="form-control" value={form.filter_type}
-                                onChange={e => updateField('filter_type', e.target.value as 'bbox' | 'provincie' | 'alles')}>
-                                <option value="provincie">Provincie (bbox)</option>
-                                <option value="bbox">Custom BBox</option>
-                                <option value="alles">Geen filter (alles)</option>
-                            </select>
-                        </div>
+                        {/* Vectorvelden: SRS & Filter (niet relevant voor WMS) */}
+                        {form.bron_type !== 'WMS' && (
+                            <>
+                                {/* SRS Name */}
+                                <div className="form-group">
+                                    <label className="form-label" htmlFor="el-srsname">SRS</label>
+                                    <select id="el-srsname" className="form-control" value={form.srsname}
+                                        onChange={e => updateField('srsname', e.target.value)}>
+                                        <option value="EPSG:28992">EPSG:28992 (Rijksdriehoek)</option>
+                                        <option value="EPSG:4326">EPSG:4326 (WGS84)</option>
+                                    </select>
+                                </div>
 
-                        {/* Filter waarde */}
-                        <div className="form-group">
-                            <label className="form-label" htmlFor="el-filter-waarde">
-                                {form.filter_type === 'provincie' ? 'Provincie' : 'BBox (minX,minY,maxX,maxY)'}
-                            </label>
-                            {form.filter_type === 'provincie' ? (
-                                <select id="el-filter-waarde" className="form-control"
-                                    value={form.filter_waarde || ''}
-                                    onChange={e => updateField('filter_waarde', e.target.value)}>
-                                    <option value="Fryslân">Fryslân</option>
-                                    <option value="Groningen">Groningen</option>
-                                    <option value="Drenthe">Drenthe</option>
-                                    <option value="Overijssel">Overijssel</option>
-                                    <option value="Flevoland">Flevoland</option>
-                                    <option value="Gelderland">Gelderland</option>
-                                    <option value="Utrecht">Utrecht</option>
-                                    <option value="Noord-Holland">Noord-Holland</option>
-                                    <option value="Zuid-Holland">Zuid-Holland</option>
-                                    <option value="Zeeland">Zeeland</option>
-                                    <option value="Noord-Brabant">Noord-Brabant</option>
-                                    <option value="Limburg">Limburg</option>
-                                    <option value="Nederland">Nederland</option>
-                                </select>
-                            ) : (
-                                <input id="el-filter-waarde" className="form-control"
-                                    value={form.filter_waarde || ''}
-                                    onChange={e => updateField('filter_waarde', e.target.value)}
-                                    placeholder="90000,535000,250000,640000" />
-                            )}
-                        </div>
+                                {/* Filter type */}
+                                <div className="form-group">
+                                    <label className="form-label" htmlFor="el-filter-type">Filter Type</label>
+                                    <select id="el-filter-type" className="form-control" value={form.filter_type}
+                                        onChange={e => updateField('filter_type', e.target.value as 'bbox' | 'provincie' | 'alles')}>
+                                        <option value="provincie">Provincie (bbox)</option>
+                                        <option value="bbox">Custom BBox</option>
+                                        <option value="alles">Geen filter (alles)</option>
+                                    </select>
+                                </div>
 
-                        {/* Kleuren */}
+                                {/* Filter waarde */}
+                                <div className="form-group">
+                                    <label className="form-label" htmlFor="el-filter-waarde">
+                                        {form.filter_type === 'provincie' ? 'Provincie' : 'BBox (minX,minY,maxX,maxY)'}
+                                    </label>
+                                    {form.filter_type === 'provincie' ? (
+                                        <select id="el-filter-waarde" className="form-control"
+                                            value={form.filter_waarde || ''}
+                                            onChange={e => updateField('filter_waarde', e.target.value)}>
+                                            <option value="Fryslân">Fryslân</option>
+                                            <option value="Groningen">Groningen</option>
+                                            <option value="Drenthe">Drenthe</option>
+                                            <option value="Overijssel">Overijssel</option>
+                                            <option value="Flevoland">Flevoland</option>
+                                            <option value="Gelderland">Gelderland</option>
+                                            <option value="Utrecht">Utrecht</option>
+                                            <option value="Noord-Holland">Noord-Holland</option>
+                                            <option value="Zuid-Holland">Zuid-Holland</option>
+                                            <option value="Zeeland">Zeeland</option>
+                                            <option value="Noord-Brabant">Noord-Brabant</option>
+                                            <option value="Limburg">Limburg</option>
+                                            <option value="Nederland">Nederland</option>
+                                        </select>
+                                    ) : (
+                                        <input id="el-filter-waarde" className="form-control"
+                                            value={form.filter_waarde || ''}
+                                            onChange={e => updateField('filter_waarde', e.target.value)}
+                                            placeholder="90000,535000,250000,640000" />
+                                    )}
+                                </div>
+                            </>
+                        )}
+
+                        {/* Kleuren / Transparantie */}
                         <div className="form-group">
-                            <span className="form-label" id="el-kleuren-label">Kleuren</span>
+                            <span className="form-label" id="el-kleuren-label">
+                                {form.bron_type === 'WMS' ? 'Transparantie (serverstijl)' : 'Kleuren'}
+                            </span>
                             <div role="group" aria-labelledby="el-kleuren-label" style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-                                <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem' }}>
-                                    Lijn
-                                    <input type="color" value={form.kleur_lijn}
-                                        onChange={e => updateField('kleur_lijn', e.target.value)}
-                                        style={{ width: '40px', height: '30px', border: 'none', cursor: 'pointer' }} />
-                                </label>
-                                <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem' }}>
-                                    Vul
-                                    <input type="color" value={form.kleur_fill}
-                                        onChange={e => updateField('kleur_fill', e.target.value)}
-                                        style={{ width: '40px', height: '30px', border: 'none', cursor: 'pointer' }} />
-                                </label>
+                                {form.bron_type !== 'WMS' && (
+                                    <>
+                                        <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem' }}>
+                                            Lijn
+                                            <input type="color" value={form.kleur_lijn}
+                                                onChange={e => updateField('kleur_lijn', e.target.value)}
+                                                style={{ width: '40px', height: '30px', border: 'none', cursor: 'pointer' }} />
+                                        </label>
+                                        <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem' }}>
+                                            Vul
+                                            <input type="color" value={form.kleur_fill}
+                                                onChange={e => updateField('kleur_fill', e.target.value)}
+                                                style={{ width: '40px', height: '30px', border: 'none', cursor: 'pointer' }} />
+                                        </label>
+                                    </>
+                                )}
                                 <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem' }}>
                                     Opacity
                                     <input type="range" min="0" max="1" step="0.05"
@@ -819,7 +861,11 @@ export const ExterneKaartlagenPage: React.FC = () => {
                                                     </td>
                                                     <td style={{ padding: '0.65rem 0.5rem' }}>
                                                         <span className="badge" style={{ fontSize: '0.75rem' }}>
-                                                            {laag.laag_type === 'selectie' ? '🗺️ Selectie' : '📊 Data'}
+                                                            {laag.laag_type === 'selectie'
+                                                                ? '🗺️ Selectie'
+                                                                : laag.laag_type === 'overlay'
+                                                                    ? '🖼️ Overlay'
+                                                                    : '📊 Data'}
                                                         </span>
                                                     </td>
                                                     <td style={{ padding: '0.65rem 0.5rem', fontSize: '0.85rem' }}>
@@ -830,13 +876,20 @@ export const ExterneKaartlagenPage: React.FC = () => {
                                                         </span>
                                                     </td>
                                                     <td style={{ padding: '0.65rem 0.5rem', textAlign: 'center' }}>
-                                                        <div style={{ display: 'flex', justifyContent: 'center', gap: '4px' }}>
-                                                            <span style={{
-                                                                display: 'inline-block', width: '20px', height: '20px',
-                                                                borderRadius: '4px', border: '2px solid ' + laag.kleur_lijn,
-                                                                background: laag.kleur_fill + Math.round(laag.opacity * 255).toString(16).padStart(2, '0'),
-                                                            }} title={`Lijn: ${laag.kleur_lijn}, Vul: ${laag.kleur_fill}, Opacity: ${Math.round(laag.opacity * 100)}%`} />
-                                                        </div>
+                                                        {laag.bron_type === 'WMS' ? (
+                                                            <span className="badge" style={{ fontSize: '0.75rem' }}
+                                                                title={laag.wms_stijl ? `Stijl: ${laag.wms_stijl}` : 'Standaard serverstijl'}>
+                                                                Serverstijl ({Math.round(laag.opacity * 100)}%)
+                                                            </span>
+                                                        ) : (
+                                                            <div style={{ display: 'flex', justifyContent: 'center', gap: '4px' }}>
+                                                                <span style={{
+                                                                    display: 'inline-block', width: '20px', height: '20px',
+                                                                    borderRadius: '4px', border: '2px solid ' + laag.kleur_lijn,
+                                                                    background: laag.kleur_fill + Math.round(laag.opacity * 255).toString(16).padStart(2, '0'),
+                                                                }} title={`Lijn: ${laag.kleur_lijn}, Vul: ${laag.kleur_fill}, Opacity: ${Math.round(laag.opacity * 100)}%`} />
+                                                            </div>
+                                                        )}
                                                     </td>
                                                     <td style={{ padding: '0.65rem 0.5rem', textAlign: 'center' }}>
                                                         <button

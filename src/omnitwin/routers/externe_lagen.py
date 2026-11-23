@@ -20,18 +20,21 @@ Endpoints (admin):
 - POST   /api/admin/externe-lagen/upload       → Bestand uploaden naar data-upload/
 """
 
+import ipaddress
 import logging
+import math
 import os
 import re
 import shutil
 import time
 import uuid
 from pathlib import Path
+from urllib.parse import parse_qsl, urlsplit, urlunsplit
 
 import httpx
-from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
+from fastapi import APIRouter, Depends, File, HTTPException, Query, Response, UploadFile
 from fastapi.concurrency import run_in_threadpool
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
@@ -66,10 +69,36 @@ PROVINCIE_BBOXEN = {
 }
 
 # ============================================================================
-# In-memory WFS cache — {laag_id: (timestamp, geojson_dict)}
+# In-memory WFS & WMS cache
 # ============================================================================
 _wfs_cache: dict = {}
 CACHE_TTL_SEC = 86400  # 24 uur
+
+# {laag_id: (timestamp, content_type, png_bytes)}
+_wms_legend_cache: dict[int, tuple[float, str, bytes]] = {}
+WMS_LEGEND_TTL_SEC = 3600  # 1 uur
+
+_VALID_WMS_CRS = frozenset({"EPSG:3857", "EPSG:28992", "EPSG:4326", "CRS:84"})
+_VALID_WMS_IMAGE_TYPES = ("image/png", "image/jpeg", "image/webp", "image/gif")
+_OGC_WMS_PARAMS = frozenset(
+    {
+        "service",
+        "version",
+        "request",
+        "layers",
+        "layer",
+        "styles",
+        "style",
+        "crs",
+        "srs",
+        "bbox",
+        "width",
+        "height",
+        "format",
+        "transparent",
+        "sld_version",
+    }
+)
 
 # ============================================================================
 # Pydantic models
@@ -116,7 +145,30 @@ class ExterneKaartlaagCreate(BaseModel):
     groep_volgorde: int = 0
     kompas_thema_naam: str | None = None
     gekoppelde_indicatoren: list[uuid.UUID] = Field(default_factory=list)
+    wms_stijl: str | None = None
     toegang: str = "openbaar"  # openbaar | intern (alleen met rol lezer of beheerder, #254)
+
+    @model_validator(mode="before")
+    @classmethod
+    def pas_wms_standaarden_toe(cls, data):
+        if isinstance(data, dict) and str(data.get("bron_type") or "").strip().upper() == "WMS":
+            data = dict(data)
+            if not data.get("laag_type"):
+                data["laag_type"] = "overlay"
+            if data.get("opacity") is None or data.get("opacity") == "":
+                data["opacity"] = 0.8
+            if not data.get("versie"):
+                data["versie"] = "1.3.0"
+            if not data.get("srsname"):
+                data["srsname"] = "EPSG:3857"
+            if not data.get("filter_type"):
+                data["filter_type"] = "alles"
+        return data
+
+    @field_validator("wms_stijl")
+    @classmethod
+    def check_wms_stijl(cls, v: str | None) -> str | None:
+        return _strip_optional_text(v, 120, "wms_stijl")
 
     @field_validator("groep_naam")
     @classmethod
@@ -136,8 +188,8 @@ class ExterneKaartlaagCreate(BaseModel):
     @field_validator("laag_type")
     @classmethod
     def check_laag_type(cls, v: str) -> str:
-        if v not in ("selectie", "data_koppel"):
-            raise ValueError("laag_type moet 'selectie' of 'data_koppel' zijn")
+        if v not in ("selectie", "data_koppel", "overlay"):
+            raise ValueError("laag_type moet 'selectie', 'data_koppel' of 'overlay' zijn")
         return v
 
     @field_validator("bron_type")
@@ -190,7 +242,20 @@ class ExterneKaartlaagUpdate(BaseModel):
     groep_volgorde: int | None = None
     kompas_thema_naam: str | None = None
     gekoppelde_indicatoren: list[uuid.UUID] | None = None
+    wms_stijl: str | None = None
     toegang: str | None = None
+
+    @field_validator("laag_type")
+    @classmethod
+    def check_laag_type(cls, v: str | None) -> str | None:
+        if v is not None and v not in ("selectie", "data_koppel", "overlay"):
+            raise ValueError("laag_type moet 'selectie', 'data_koppel' of 'overlay' zijn")
+        return v
+
+    @field_validator("wms_stijl")
+    @classmethod
+    def check_wms_stijl(cls, v: str | None) -> str | None:
+        return _strip_optional_text(v, 120, "wms_stijl")
 
     @field_validator("groep_naam")
     @classmethod
@@ -358,6 +423,101 @@ async def _fetch_wfs(row) -> dict:
     return geojson
 
 
+def _valideer_wms_bron_url(url: str) -> tuple[str, list[tuple[str, str]]]:
+    """Valideer de opgeslagen WMS-URL (SSRF-preventie) en strip eventuele conflicterende OGC-parameters."""
+    parts = urlsplit((url or "").strip())
+    if parts.scheme.lower() not in ("http", "https") or not parts.hostname:
+        raise HTTPException(400, "Ongeldige WMS-bron URL")
+
+    host = parts.hostname.lower().rstrip(".")
+    if host == "localhost" or host.endswith((".localhost", ".local", ".internal")):
+        raise HTTPException(400, "Interne WMS-host is niet toegestaan")
+
+    try:
+        ip = ipaddress.ip_address(host)
+    except ValueError:
+        ip = None
+
+    if ip is not None and (
+        ip.is_loopback or ip.is_private or ip.is_link_local or ip.is_multicast or ip.is_reserved or ip.is_unspecified
+    ):
+        raise HTTPException(400, "Interne WMS-host is niet toegestaan")
+
+    basis_url = urlunsplit((parts.scheme, parts.netloc, parts.path, "", ""))
+    basis_params = [
+        (k, v) for k, v in parse_qsl(parts.query, keep_blank_values=True) if k.lower() not in _OGC_WMS_PARAMS
+    ]
+    return basis_url, basis_params
+
+
+def _valideer_bbox(bbox: str | None) -> str:
+    """Controleer dat bbox exact 4 eindige getallen (minx,miny,maxx,maxy) bevat."""
+    if not bbox:
+        raise HTTPException(400, "Ontbrekende bbox parameter")
+    delen = [d.strip() for d in bbox.split(",")]
+    if len(delen) != 4:
+        raise HTTPException(400, "Ongeldige bbox parameter")
+    try:
+        minx, miny, maxx, maxy = (float(d) for d in delen)
+    except ValueError:
+        raise HTTPException(400, "Ongeldige bbox parameter")
+    if not all(math.isfinite(c) for c in (minx, miny, maxx, maxy)) or minx >= maxx or miny >= maxy:
+        raise HTTPException(400, "Ongeldige bbox parameter")
+    return f"{minx},{miny},{maxx},{maxy}"
+
+
+def _bouw_wms_params(
+    row,
+    req_op: str,
+    bbox: str | None,
+    width: int,
+    height: int,
+    crs: str,
+) -> list[tuple[str, str]]:
+    """Bouw OGC WMS-parameters voor GetMap of GetLegendGraphic op basis van laagconfiguratie."""
+    versie = "1.1.1" if (row.versie or "").strip() == "1.1.1" else "1.3.0"
+    layers = (row.typename or "").strip()
+    stijl = (getattr(row, "wms_stijl", None) or "").strip()
+
+    if req_op == "getmap":
+        bbox_norm = _valideer_bbox(bbox)
+        if not (64 <= width <= 2048) or not (64 <= height <= 2048):
+            raise HTTPException(400, "Width en height moeten tussen 64 en 2048 liggen")
+        crs_norm = (crs or "EPSG:3857").strip().upper()
+        if crs_norm not in _VALID_WMS_CRS:
+            raise HTTPException(400, f"Niet-ondersteund CRS '{crs}'")
+        crs_sleutel = "CRS" if versie == "1.3.0" else "SRS"
+        return [
+            ("SERVICE", "WMS"),
+            ("VERSION", versie),
+            ("REQUEST", "GetMap"),
+            ("LAYERS", layers),
+            ("STYLES", stijl),
+            ("FORMAT", "image/png"),
+            ("TRANSPARENT", "TRUE"),
+            (crs_sleutel, crs_norm),
+            ("BBOX", bbox_norm),
+            ("WIDTH", str(width)),
+            ("HEIGHT", str(height)),
+        ]
+
+    if req_op == "getlegendgraphic":
+        eerste_laag = layers.split(",")[0].strip()
+        params = [
+            ("SERVICE", "WMS"),
+            ("VERSION", versie),
+            ("REQUEST", "GetLegendGraphic"),
+            ("LAYER", eerste_laag),
+            ("FORMAT", "image/png"),
+            ("TRANSPARENT", "TRUE"),
+        ]
+        if stijl:
+            params.append(("STYLE", stijl))
+        return params
+
+    raise HTTPException(400, "Alleen GetMap en GetLegendGraphic worden ondersteund")
+
+
 # ============================================================================
 # Public endpoints
 # ============================================================================
@@ -375,7 +535,7 @@ def get_actieve_lagen(db: Session = Depends(get_db)):
         SELECT id, naam, beschrijving, laag_type, bron_type,
                kleur_lijn, kleur_fill, opacity, volgorde,
                groep_naam, groep_volgorde, kompas_thema_naam,
-               gekoppelde_indicatoren, toegang
+               gekoppelde_indicatoren, wms_stijl, toegang
         FROM externe_kaartlagen
         WHERE actief = true
         ORDER BY groep_volgorde, volgorde, naam
@@ -398,6 +558,7 @@ def get_actieve_lagen(db: Session = Depends(get_db)):
                 "groep_volgorde": r.groep_volgorde,
                 "kompas_thema_naam": r.kompas_thema_naam,
                 "gekoppelde_indicatoren": [str(u) for u in (r.gekoppelde_indicatoren or [])],
+                "wms_stijl": r.wms_stijl,
                 "toegang": r.toegang,
             }
             for r in rows
@@ -410,7 +571,7 @@ def get_actieve_lagen(db: Session = Depends(get_db)):
 async def get_laag_features(laag_id: int, db: Session = Depends(get_db)):
     """
     WFS proxy: haal features op voor een externe laag.
-    Response wordt 24u gecached per laag_id.
+    Response wordt 24u gecached per laag_id. Voor WMS-lagen wordt verwezen naar /wms.
     """
     # Interne laag zonder rol: 401/403 (#254), vóór de cache
     await run_in_threadpool(toegang.vereis_kaartlaag, db, laag_id)
@@ -420,7 +581,7 @@ async def get_laag_features(laag_id: int, db: Session = Depends(get_db)):
         lambda: db.execute(
             text("""
         SELECT id, naam, bron_type, url, typename, srsname, versie,
-               filter_type, filter_waarde
+               filter_type, filter_waarde, wms_stijl
         FROM externe_kaartlagen
         WHERE id = :id AND actief = true
     """),
@@ -430,6 +591,22 @@ async def get_laag_features(laag_id: int, db: Session = Depends(get_db)):
 
     if not row:
         raise HTTPException(404, f"Kaartlaag {laag_id} niet gevonden of niet actief")
+
+    if row.bron_type == "WMS":
+        return {
+            "type": "FeatureCollection",
+            "features": [],
+            "metadata": {
+                "laag_id": laag_id,
+                "laag_naam": row.naam,
+                "bron": row.url,
+                "bron_type": row.bron_type,
+                "typename": row.typename,
+                "wms_url": f"/api/externe-lagen/{laag_id}/wms",
+                "wms_stijl": row.wms_stijl,
+                "features_count": 0,
+            },
+        }
 
     # Cache check
     cached = _wfs_cache.get(laag_id)
@@ -463,6 +640,79 @@ async def get_laag_features(laag_id: int, db: Session = Depends(get_db)):
     logger.info("%s features opgehaald voor laag %d (%s): %d features", row.bron_type, laag_id, row.naam, feature_count)
 
     return geojson
+
+
+@router.get("/api/externe-lagen/{laag_id}/wms")
+async def proxy_wms_laag(
+    laag_id: int,
+    request: str = Query("GetMap"),
+    bbox: str | None = Query(None),
+    width: int = Query(256),
+    height: int = Query(256),
+    crs: str = Query("EPSG:3857"),
+    db: Session = Depends(get_db),
+):
+    """Gecontroleerde WMS-proxy voor GetMap en GetLegendGraphic (#529)."""
+    await run_in_threadpool(toegang.vereis_kaartlaag, db, laag_id)
+    row = await run_in_threadpool(
+        lambda: db.execute(
+            text("""
+        SELECT id, naam, bron_type, url, typename, srsname, versie, wms_stijl, toegang
+        FROM externe_kaartlagen
+        WHERE id = :id AND actief = true
+    """),
+            {"id": laag_id},
+        ).fetchone()
+    )
+
+    if not row:
+        raise HTTPException(404, f"Kaartlaag {laag_id} niet gevonden of niet actief")
+    if row.bron_type != "WMS":
+        raise HTTPException(400, "Kaartlaag is geen WMS-laag")
+    if not (row.typename or "").strip():
+        raise HTTPException(400, "WMS-laag mist typename (LAYERS)")
+
+    req_op = (request or "").strip().lower()
+    if req_op not in ("getmap", "getlegendgraphic"):
+        raise HTTPException(400, "Alleen GetMap en GetLegendGraphic worden ondersteund")
+
+    basis_url, basis_params = _valideer_wms_bron_url(row.url)
+    wms_params = _bouw_wms_params(row, req_op, bbox, width, height, crs)
+
+    if req_op == "getlegendgraphic":
+        cached = _wms_legend_cache.get(laag_id)
+        if cached and (time.time() - cached[0]) < WMS_LEGEND_TTL_SEC:
+            return Response(
+                content=cached[2],
+                media_type=cached[1],
+                headers={"Cache-Control": "private, max-age=600"},
+            )
+
+    try:
+        async with httpx.AsyncClient(timeout=30.0, follow_redirects=True) as client:
+            resp = await client.get(basis_url, params=[*basis_params, *wms_params])
+            resp.raise_for_status()
+    except httpx.TimeoutException:
+        raise HTTPException(504, f"Timeout bij ophalen van WMS-laag {row.naam}")
+    except httpx.HTTPStatusError as e:
+        raise HTTPException(502, f"WMS fout bij {row.naam}: HTTP {e.response.status_code}")
+    except Exception as e:
+        logger.error("WMS proxy fout voor laag %s: %s", row.naam, e)
+        raise HTTPException(502, f"Fout bij ophalen van WMS-laag {row.naam}")
+
+    raw_ct = (resp.headers.get("content-type") or "").split(";", 1)[0].strip().lower()
+    if not any(raw_ct.startswith(t) for t in _VALID_WMS_IMAGE_TYPES):
+        logger.warning("WMS %s gaf ongeldig content-type '%s' terug", row.naam, raw_ct)
+        raise HTTPException(502, f"WMS-server gaf geen geldige afbeelding terug voor {row.naam}")
+
+    if req_op == "getlegendgraphic":
+        _wms_legend_cache[laag_id] = (time.time(), raw_ct, resp.content)
+
+    return Response(
+        content=resp.content,
+        media_type=raw_ct,
+        headers={"Cache-Control": "private, max-age=600"},
+    )
 
 
 @router.post("/api/externe-lagen/{laag_id}/buurten")
@@ -548,6 +798,7 @@ def _serialiseer_admin_laag(r) -> dict:
         "groep_volgorde": r.groep_volgorde,
         "kompas_thema_naam": r.kompas_thema_naam,
         "gekoppelde_indicatoren": [str(u) for u in (r.gekoppelde_indicatoren or [])],
+        "wms_stijl": getattr(r, "wms_stijl", None),
         "toegang": r.toegang,
         "created_at": r.created_at.isoformat() if r.created_at else None,
         "updated_at": r.updated_at.isoformat() if r.updated_at else None,
@@ -566,7 +817,7 @@ def admin_get_alle_lagen(
                filter_type, filter_waarde, koppel_veld,
                kleur_lijn, kleur_fill, opacity, actief, volgorde,
                groep_naam, groep_volgorde, kompas_thema_naam,
-               gekoppelde_indicatoren, toegang, created_at, updated_at
+               gekoppelde_indicatoren, wms_stijl, toegang, created_at, updated_at
         FROM externe_kaartlagen
         ORDER BY groep_volgorde, volgorde, naam
     """)
@@ -653,12 +904,12 @@ def admin_create_laag(
             (naam, beschrijving, laag_type, bron_type, url, typename,
              srsname, versie, filter_type, filter_waarde, koppel_veld,
              kleur_lijn, kleur_fill, opacity, actief, volgorde,
-             groep_naam, groep_volgorde, kompas_thema_naam, gekoppelde_indicatoren, toegang)
+             groep_naam, groep_volgorde, kompas_thema_naam, gekoppelde_indicatoren, wms_stijl, toegang)
         VALUES
             (:naam, :beschrijving, :laag_type, :bron_type, :url, :typename,
              :srsname, :versie, :filter_type, :filter_waarde, :koppel_veld,
              :kleur_lijn, :kleur_fill, :opacity, :actief, :volgorde,
-             :groep_naam, :groep_volgorde, :kompas_thema_naam, CAST(:gekoppelde_indicatoren AS uuid[]), :toegang)
+             :groep_naam, :groep_volgorde, :kompas_thema_naam, CAST(:gekoppelde_indicatoren AS uuid[]), :wms_stijl, :toegang)
         RETURNING id
     """),
         {
@@ -682,6 +933,7 @@ def admin_create_laag(
             "groep_volgorde": data.groep_volgorde,
             "kompas_thema_naam": data.kompas_thema_naam,
             "gekoppelde_indicatoren": [str(u) for u in data.gekoppelde_indicatoren],
+            "wms_stijl": data.wms_stijl,
             "toegang": data.toegang,
         },
     )
@@ -690,6 +942,7 @@ def admin_create_laag(
 
     # Invalideer cache voor nieuwe laag
     _wfs_cache.pop(new_id, None)
+    _wms_legend_cache.pop(new_id, None)
 
     logger.info("Nieuwe externe laag aangemaakt: [%d] %s", new_id, data.naam)
     return {"id": new_id, "naam": data.naam, "status": "aangemaakt"}
@@ -739,7 +992,7 @@ def admin_update_laag(
             params[field_name] = value
 
     # Nullable velden die expliciet gewist mogen worden (null of lege lijst via model_fields_set)
-    for nullable_text_field in ("groep_naam", "kompas_thema_naam"):
+    for nullable_text_field in ("groep_naam", "kompas_thema_naam", "wms_stijl"):
         if nullable_text_field in data.model_fields_set:
             updates.append(f"{nullable_text_field} = :{nullable_text_field}")
             params[nullable_text_field] = getattr(data, nullable_text_field)
@@ -757,6 +1010,7 @@ def admin_update_laag(
 
     # Invalideer cache voor deze laag
     _wfs_cache.pop(laag_id, None)
+    _wms_legend_cache.pop(laag_id, None)
 
     logger.info("Externe laag %d bijgewerkt", laag_id)
     return {"id": laag_id, "status": "bijgewerkt"}
@@ -777,6 +1031,7 @@ def admin_delete_laag(
 
     # Cache opruimen
     _wfs_cache.pop(laag_id, None)
+    _wms_legend_cache.pop(laag_id, None)
 
     logger.info("Externe laag verwijderd: [%d] %s", row.id, row.naam)
     return {"id": row.id, "naam": row.naam, "status": "verwijderd"}

@@ -94,7 +94,7 @@ CREATE VIEW api.externe_kaartlagen AS
 SELECT id, naam, beschrijving, laag_type, bron_type, url, typename, srsname, versie,
        filter_type, filter_waarde, koppel_veld, kleur_lijn, kleur_fill, opacity,
        actief, volgorde, groep_naam, groep_volgorde, kompas_thema_naam,
-       gekoppelde_indicatoren, created_at, updated_at, toegang
+       gekoppelde_indicatoren, wms_stijl, created_at, updated_at, toegang
 FROM public.externe_kaartlagen
 WHERE toegang = 'openbaar' OR public.verzoek_mag_intern();
 
