@@ -246,8 +246,9 @@
   --selection-badge-bg: var(--d-omnitwin-selection-badge-background-color, #047857);
   --selection-badge-text: var(--d-omnitwin-selection-badge-color, #ffffff);
 
-  /* Kaartselectie: hoort bij de kaart (zelfde goud als de selectierand in app.js), niet bij het thema */
-  --map-selection-color: #eab308;
+  /* Kaartselectie (#500): contrastrijk magenta standaard, overschreven via organisatie-instelling */
+  --map-selection-color: #e6007e;
+  --map-selection-fill: transparent;
 
   /* Layout (#525: compacte randtabs 48px bovenop aan de schermrand gekoppelde docks) */
   --randtab-width: 48px;
@@ -4040,8 +4041,16 @@ textarea {
   height: 12px;
   border: 2.5px solid var(--map-selection-color);
   border-radius: 3px;
-  background: color-mix(in srgb, var(--map-selection-color) 8%, transparent);
+  background: var(--map-selection-fill, transparent);
   flex-shrink: 0;
+}
+
+.legenda-selectie-sample--halo {
+  box-shadow: 0 0 0 1.5px var(--panel-bg);
+}
+
+.legenda-selectie-sample--gestreept {
+  border-style: dashed;
 }
 
 /* --- D3: No-data legenda hint --- */

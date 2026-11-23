@@ -55,6 +55,11 @@ class Organisatie(BaseModel):
     logos: list[Logo]
     meld_url: str = org_service.STANDAARD_MELD_URL  # waar "Melden" heen gaat (#312)
     n_drempel: int = 10  # kleine aantallen (#325): minder waarnemingen = niet tonen
+    # Kaartselectie & highlight (#500)
+    selectie_kleur: str = org_service.SELECTIE_KLEUR_STANDAARD
+    selectie_lijndikte: int = org_service.SELECTIE_LIJNDIKTE_STANDAARD
+    selectie_lijntype: Literal["doorgetrokken", "gestreept", "halo"] = org_service.SELECTIE_LIJNTYPE_STANDAARD
+    selectie_vulling: bool = org_service.SELECTIE_VULLING_STANDAARD
 
 
 # ── Invoer (PUT en import) ──────────────────────────────────────────────────
@@ -66,6 +71,7 @@ _OIN = re.compile(r"^\d{20}$")
 _EMAIL = re.compile(r"^[^@\s<>\"']+@[^@\s<>\"']+\.[A-Za-z]{2,}$")
 _STUURTEKENS = re.compile(r"[\x00-\x1f\x7f]")
 _MELD_URL = re.compile(r"^(https://[^\s/?#]+[^\s]*|mailto:[^@\s<>\"']+@[^@\s<>\"']+\.[A-Za-z]{2,})$")
+_HEX_KLEUR = re.compile(r"^#[0-9A-Fa-f]{6}$")
 
 
 def _tekst(waarde: str | None, veld: str, maximum: int, verplicht: bool = False) -> str | None:
@@ -125,6 +131,19 @@ class OrganisatieInvoer(BaseModel):
     meld_url: str | None = None
     # Kleine aantallen (#325): een waarde met minder waarnemingen tonen we niet; leeg = 10
     n_drempel: int | None = Field(default=None, ge=1, le=1000)
+    # Kaartselectie & highlight (#500): leeg = standaard (#e6007e, 4 px, halo, false)
+    selectie_kleur: str | None = None
+    selectie_lijndikte: int | None = Field(default=None, ge=2, le=8)
+    selectie_lijntype: Literal["doorgetrokken", "gestreept", "halo"] | None = None
+    selectie_vulling: bool | None = None
+
+    @field_validator("selectie_kleur")
+    @classmethod
+    def _selectie_kleur(cls, v: str | None) -> str | None:
+        v = (v or "").strip() or None
+        if v is not None and not _HEX_KLEUR.fullmatch(v):
+            raise ValueError("selectie_kleur moet een geldige hexkleur (#RRGGBB) zijn")
+        return v.lower() if v is not None else None
 
     @field_validator("code")
     @classmethod

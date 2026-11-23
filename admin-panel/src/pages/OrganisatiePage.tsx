@@ -4,10 +4,37 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowDown, ArrowUp, Download, Plus, Save, Trash2, Upload } from 'lucide-react';
 import { gebiedenAPI, organisatieAPI } from '../services/api';
-import type { Organisatie, OrganisatieInvoer, OrganisatieLogo, ThemaInfo } from '../services/api';
+import type { Organisatie, OrganisatieInvoer, OrganisatieLogo, SelectieLijntype, ThemaInfo } from '../services/api';
 import Beeldmerk from '../components/Beeldmerk';
 
 const GEMEENTECODE = /^\d{4}$/;
+const HEX_KLEUR = /^#[0-9a-fA-F]{6}$/;
+
+const SELECTIE_KLEUR_STANDAARD = '#e6007e';
+const SELECTIE_LIJNDIKTE_STANDAARD = 4;
+const SELECTIE_LIJNTYPE_STANDAARD: SelectieLijntype = 'halo';
+const SELECTIE_VULLING_STANDAARD = false;
+
+const SELECTIE_PRESETS: { naam: string; hex: string }[] = [
+    { naam: 'Magenta (standaard)', hex: '#e6007e' },
+    { naam: 'SWF-roze', hex: '#ff00e3' },
+    { naam: 'Donkercyan', hex: '#007ba3' },
+    { naam: 'Goud (legacy)', hex: '#eab308' },
+];
+
+function hexLuminantie(hex: string): number {
+    const h = hex.replace('#', '');
+    const kanalen = [0, 2, 4].map(i => parseInt(h.slice(i, i + 2), 16) / 255);
+    const lin = kanalen.map(c => (c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4));
+    return 0.2126 * lin[0] + 0.7152 * lin[1] + 0.0722 * lin[2];
+}
+
+function contrastRatio(a: string, b: string): number {
+    if (!HEX_KLEUR.test(a) || !HEX_KLEUR.test(b)) return 1;
+    const la = hexLuminantie(a);
+    const lb = hexLuminantie(b);
+    return (Math.max(la, lb) + 0.05) / (Math.min(la, lb) + 0.05);
+}
 
 export function alsInvoer(org: Organisatie): OrganisatieInvoer {
     return {
@@ -22,6 +49,10 @@ export function alsInvoer(org: Organisatie): OrganisatieInvoer {
         logos: org.logos.map(l => ({ pad: l.pad, naam: l.naam, rol: l.rol })),
         meld_url: org.meld_url ?? null,
         n_drempel: org.n_drempel ?? null,
+        selectie_kleur: org.selectie_kleur ?? SELECTIE_KLEUR_STANDAARD,
+        selectie_lijndikte: org.selectie_lijndikte ?? SELECTIE_LIJNDIKTE_STANDAARD,
+        selectie_lijntype: org.selectie_lijntype ?? SELECTIE_LIJNTYPE_STANDAARD,
+        selectie_vulling: org.selectie_vulling ?? SELECTIE_VULLING_STANDAARD,
     };
 }
 
@@ -289,6 +320,143 @@ export const OrganisatiePage: React.FC = () => {
                     Een eigen thema maak je als bestand (zie de documentatie <em>Thema's</em>). De inlogpagina van Keycloak
                     wisselt niet mee: zet daar <code>loginTheme</code> van realm <code>omnitwin</code> apart.
                 </p>
+            </section>
+
+            <section className="card" aria-labelledby="kop-selectiestijl">
+                <h3 id="kop-selectiestijl" className="card-title" style={{ marginBottom: 'var(--spacing-md)' }}>
+                    Kaartselectie &amp; highlight
+                </h3>
+                {(() => {
+                    const kleur = form.selectie_kleur ?? SELECTIE_KLEUR_STANDAARD;
+                    const geldigeKleur = HEX_KLEUR.test(kleur) ? kleur : SELECTIE_KLEUR_STANDAARD;
+                    const dikte = form.selectie_lijndikte ?? SELECTIE_LIJNDIKTE_STANDAARD;
+                    const lijntype: SelectieLijntype = form.selectie_lijntype ?? SELECTIE_LIJNTYPE_STANDAARD;
+                    const vulling = form.selectie_vulling ?? SELECTIE_VULLING_STANDAARD;
+                    const ratioLicht = contrastRatio(geldigeKleur, '#ffffff');
+                    const ratioDonker = contrastRatio(geldigeKleur, '#0f172a');
+                    const laagContrast = ratioLicht < 3 || ratioDonker < 3;
+                    return (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-md)' }}>
+                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'var(--spacing-xs)', alignItems: 'center' }}>
+                                <span className="form-label" style={{ marginRight: 'var(--spacing-xs)' }}>Snelkeuze:</span>
+                                {SELECTIE_PRESETS.map(p => (
+                                    <button
+                                        key={p.hex}
+                                        type="button"
+                                        className="btn btn-secondary"
+                                        aria-pressed={geldigeKleur.toLowerCase() === p.hex}
+                                        style={{
+                                            display: 'inline-flex', alignItems: 'center', gap: '0.4rem',
+                                            outline: geldigeKleur.toLowerCase() === p.hex ? '2px solid var(--merk-bg)' : 'none',
+                                        }}
+                                        onClick={() => zet({ selectie_kleur: p.hex })}
+                                    >
+                                        <span aria-hidden="true" style={{ width: 14, height: 14, borderRadius: 3, background: p.hex, border: '1px solid var(--color-border)' }} />
+                                        <span>{p.naam}</span>
+                                    </button>
+                                ))}
+                            </div>
+
+                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))', gap: 'var(--spacing-md)' }}>
+                                <div className="form-group">
+                                    <label className="form-label" htmlFor="org-selectie-kleur-hex">Selectiekleur (#RRGGBB)</label>
+                                    <div style={{ display: 'flex', gap: 'var(--spacing-xs)', alignItems: 'center' }}>
+                                        <input
+                                            type="color"
+                                            aria-label="Selectiekleur kiezen"
+                                            value={geldigeKleur}
+                                            onChange={e => zet({ selectie_kleur: e.target.value.toLowerCase() })}
+                                            style={{ width: 42, height: 36, padding: 2, borderRadius: 4, border: '1px solid var(--color-border)', cursor: 'pointer' }}
+                                        />
+                                        <input
+                                            id="org-selectie-kleur-hex"
+                                            className="form-input"
+                                            maxLength={7}
+                                            pattern="^#[0-9A-Fa-f]{6}$"
+                                            value={kleur}
+                                            onChange={e => zet({ selectie_kleur: e.target.value })}
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="form-group">
+                                    <label className="form-label" htmlFor="org-selectie-lijndikte">
+                                        Lijndikte ({dikte} px)
+                                    </label>
+                                    <input
+                                        id="org-selectie-lijndikte"
+                                        type="range"
+                                        min={2}
+                                        max={8}
+                                        step={1}
+                                        value={dikte}
+                                        onChange={e => zet({ selectie_lijndikte: Number(e.target.value) })}
+                                        style={{ width: '100%' }}
+                                    />
+                                </div>
+
+                                <div className="form-group">
+                                    <label className="form-label" htmlFor="org-selectie-lijntype">Lijntype</label>
+                                    <select
+                                        id="org-selectie-lijntype"
+                                        className="form-select"
+                                        value={lijntype}
+                                        onChange={e => zet({ selectie_lijntype: e.target.value as SelectieLijntype })}
+                                    >
+                                        <option value="halo">Halo (dubbele contrast-rand)</option>
+                                        <option value="doorgetrokken">Doorgetrokken</option>
+                                        <option value="gestreept">Gestreept</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <label htmlFor="org-selectie-vulling" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
+                                <input
+                                    id="org-selectie-vulling"
+                                    type="checkbox"
+                                    checked={vulling}
+                                    onChange={e => zet({ selectie_vulling: e.target.checked })}
+                                />
+                                <span>Doorzichtige vlakvulling bij hover en selectie tonen (standaard uit voor onvertekende indicatorkleuren)</span>
+                            </label>
+
+                            <div data-testid="selectie-contrast-info" style={{ fontSize: '0.82rem', color: laagContrast ? 'var(--color-warning)' : 'var(--color-text-secondary)' }}>
+                                Contrast (WCAG 1.4.11 ≥ 3,0:1): licht {ratioLicht.toFixed(2)}:1 · donker {ratioDonker.toFixed(2)}:1
+                                {laagContrast && ' — kleur haalt zelf geen 3:1 op alle ondergronden; gebruik bij voorkeur Magenta of schakel Halo in.'}
+                            </div>
+
+                            <div data-testid="selectie-stijl-voorbeeld" style={{ display: 'flex', gap: 'var(--spacing-md)', flexWrap: 'wrap' }}>
+                                {[
+                                    { label: 'Lichte kaart', bg: '#f1f5f9', halo: '#ffffff', tekst: '#1e293b' },
+                                    { label: 'Donkere kaart', bg: '#0f172a', halo: '#0f172a', tekst: '#f1f5f9' },
+                                ].map(v => (
+                                    <div key={v.label} style={{ background: v.bg, color: v.tekst, padding: '0.6rem 0.9rem', borderRadius: 6, border: '1px solid var(--color-border)', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                                        <svg width="48" height="30" viewBox="0 0 48 30" aria-hidden="true">
+                                            {lijntype === 'halo' && (
+                                                <polygon
+                                                    points="6,6 42,4 38,26 8,24"
+                                                    fill="none"
+                                                    stroke={v.halo}
+                                                    strokeWidth={dikte + 3}
+                                                    strokeLinejoin="round"
+                                                />
+                                            )}
+                                            <polygon
+                                                points="6,6 42,4 38,26 8,24"
+                                                fill={vulling ? `${geldigeKleur}26` : 'none'}
+                                                stroke={geldigeKleur}
+                                                strokeWidth={dikte}
+                                                strokeDasharray={lijntype === 'gestreept' ? '6 4' : undefined}
+                                                strokeLinejoin="round"
+                                            />
+                                        </svg>
+                                        <span style={{ fontSize: '0.78rem' }}>{v.label}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    );
+                })()}
             </section>
 
             <section className="card" aria-labelledby="kop-org">
