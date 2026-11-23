@@ -2024,6 +2024,79 @@ function haalThemasVoorIndicator(uuid) {
     return Array.from(themas);
 }
 
+const MERCATOR_MAX = 20037508.342789244;
+
+function lonLatNaarMercator(lon, lat) {
+    const x = (Number(lon) * MERCATOR_MAX) / 180;
+    const clampedLat = Math.max(-85.05112878, Math.min(85.05112878, Number(lat)));
+    const rad = (clampedLat * Math.PI) / 180;
+    const y = Math.log(Math.tan(Math.PI / 4 + rad / 2)) * (MERCATOR_MAX / Math.PI);
+    return [x, y];
+}
+
+/**
+ * Converteert WGS84 tile-bbox ({ west, south, east, north }) naar EPSG:3857 meters voor WMS GetMap (#529).
+ */
+function berekenWmsMercatorBbox(bbox) {
+    if (!bbox) return null;
+    const west = bbox.west ?? bbox[0];
+    const south = bbox.south ?? bbox[1];
+    const east = bbox.east ?? bbox[2];
+    const north = bbox.north ?? bbox[3];
+    if (![west, south, east, north].every(Number.isFinite)) return null;
+    const [minX, minY] = lonLatNaarMercator(west, south);
+    const [maxX, maxY] = lonLatNaarMercator(east, north);
+    return `${minX.toFixed(2)},${minY.toFixed(2)},${maxX.toFixed(2)},${maxY.toFixed(2)}`;
+}
+
+window.berekenWmsMercatorBbox = berekenWmsMercatorBbox;
+
+/**
+ * Werkt de transparantie van een actieve externe kaartlaag live bij (#529).
+ */
+function zetExterneLaagOpacity(laagId, nieuweOpacity) {
+    const clamped = Math.max(0, Math.min(1, Number(nieuweOpacity)));
+    if (!Number.isFinite(clamped)) return;
+    const doelId = String(laagId);
+
+    if (typeof state !== 'undefined' && Array.isArray(state.externeKaartlagen)) {
+        state.externeKaartlagen.forEach((l) => {
+            if (l && String(l.id) === doelId) l.opacity = clamped;
+        });
+    }
+    const entry = typeof state !== 'undefined' && state.externeKaartlaagData ? state.externeKaartlaagData[laagId] : null;
+    if (entry && entry.laag) {
+        entry.laag.opacity = clamped;
+    }
+
+    if (typeof document !== 'undefined') {
+        const sectie = document.getElementById('externe-lagen-sectie') || document;
+        const pct = Math.round(clamped * 100);
+        if (sectie && typeof sectie.querySelectorAll === 'function') {
+            sectie.querySelectorAll('input[data-laag-opacity-id]').forEach((sl) => {
+                if (String(sl.dataset?.laagOpacityId ?? '') === doelId) {
+                    sl.value = String(pct);
+                }
+            });
+            sectie.querySelectorAll('[data-laag-opacity-waarde]').forEach((lbl) => {
+                if (String(lbl.dataset?.laagOpacityWaarde ?? '') === doelId) {
+                    lbl.textContent = `${pct}%`;
+                }
+            });
+        }
+    }
+
+    if (entry && typeof state !== 'undefined' && state.deckgl) {
+        if (state.currentData) {
+            displayOnMap(state.currentData);
+        } else {
+            renderExterneLagenOnly();
+        }
+    }
+}
+
+window.zetExterneLaagOpacity = zetExterneLaagOpacity;
+
 /**
  * Houdt de vinkstatus van een externe kaartlaag synchroon tussen het aanbevolen blok en de groepenlijst (#528).
  */
@@ -2037,6 +2110,16 @@ function syncExterneLaagCheckboxes(laagId, checked, disabled = null) {
         cb.checked = Boolean(checked);
         if (disabled !== null) {
             cb.disabled = Boolean(disabled);
+        }
+    });
+    sectie.querySelectorAll('.externe-laag-actief-details[data-laag-details-id]').forEach((details) => {
+        if (String(details.dataset?.laagDetailsId ?? '') !== doelId) return;
+        details.hidden = !checked;
+        if (checked && typeof details.querySelector === 'function') {
+            const img = details.querySelector('.externe-laag-legenda-img');
+            if (img && !img.getAttribute('src') && img.dataset?.wmsLegendUrl) {
+                img.src = img.dataset.wmsLegendUrl;
+            }
         }
     });
 }
@@ -2093,9 +2176,12 @@ function renderExterneLaagRij(laag, targetContainer, rootContainer, opts = {}) {
     const checkboxCustom = document.createElement('span');
     checkboxCustom.className = 'checkbox-custom';
 
+    const isWms = laag.bron_type === 'WMS';
     const colorDot = document.createElement('span');
-    colorDot.className = 'layer-color-dot';
-    colorDot.style.backgroundColor = laag.kleur_lijn || '#8B5CF6';
+    colorDot.className = isWms ? 'layer-color-dot layer-color-dot--wms' : 'layer-color-dot';
+    if (!isWms) {
+        colorDot.style.backgroundColor = laag.kleur_lijn || '#8B5CF6';
+    }
 
     const labelText = document.createElement('span');
     labelText.className = 'layer-naam';
@@ -2130,8 +2216,79 @@ function renderExterneLaagRij(laag, targetContainer, rootContainer, opts = {}) {
         });
     }
 
+    const detailsDiv = document.createElement('div');
+    detailsDiv.className = 'externe-laag-actief-details';
+    detailsDiv.dataset.laagDetailsId = String(laag.id);
+    detailsDiv.hidden = !checkbox.checked;
+
+    const standaardOpacity = Number.isFinite(Number(laag.opacity))
+        ? Number(laag.opacity)
+        : (isWms ? 0.8 : 0.15);
+    const pct = Math.round(Math.max(0, Math.min(1, standaardOpacity)) * 100);
+
+    const opacityRij = document.createElement('div');
+    opacityRij.className = 'externe-laag-opacity-rij';
+
+    const opacityLabel = document.createElement('span');
+    opacityLabel.className = 'externe-laag-opacity-label';
+    opacityLabel.textContent = 'Transparantie';
+
+    const opacitySlider = document.createElement('input');
+    opacitySlider.type = 'range';
+    opacitySlider.className = 'externe-laag-opacity-slider';
+    opacitySlider.min = '0';
+    opacitySlider.max = '100';
+    opacitySlider.step = '5';
+    opacitySlider.value = String(pct);
+    opacitySlider.dataset.laagOpacityId = String(laag.id);
+    opacitySlider.setAttribute('aria-label', `Transparantie ${laag.naam}`);
+
+    const opacityWaarde = document.createElement('span');
+    opacityWaarde.className = 'externe-laag-opacity-waarde';
+    opacityWaarde.dataset.laagOpacityWaarde = String(laag.id);
+    opacityWaarde.textContent = `${pct}%`;
+
+    opacitySlider.addEventListener('input', (e) => {
+        zetExterneLaagOpacity(laag.id, Number(e.target.value) / 100);
+    });
+
+    opacityRij.appendChild(opacityLabel);
+    opacityRij.appendChild(opacitySlider);
+    opacityRij.appendChild(opacityWaarde);
+    detailsDiv.appendChild(opacityRij);
+
+    if (isWms) {
+        const legendaBox = document.createElement('div');
+        legendaBox.className = 'externe-laag-wms-legenda';
+
+        const legendUrl = `/api/externe-lagen/${laag.id}/wms?request=GetLegendGraphic`;
+        const legendImg = document.createElement('img');
+        legendImg.className = 'externe-laag-legenda-img';
+        legendImg.alt = `Legenda ${laag.naam}`;
+        legendImg.loading = 'lazy';
+        legendImg.dataset.wmsLegendUrl = legendUrl;
+        if (checkbox.checked) {
+            legendImg.src = legendUrl;
+        }
+
+        const legendLeeg = document.createElement('span');
+        legendLeeg.className = 'externe-laag-legenda-leeg';
+        legendLeeg.textContent = 'Geen legenda beschikbaar bij bron';
+        legendLeeg.hidden = true;
+
+        legendImg.addEventListener('error', () => {
+            legendImg.hidden = true;
+            legendLeeg.hidden = false;
+        });
+
+        legendaBox.appendChild(legendImg);
+        legendaBox.appendChild(legendLeeg);
+        detailsDiv.appendChild(legendaBox);
+    }
+
     targetContainer.appendChild(item);
     if (descDiv) targetContainer.appendChild(descDiv);
+    targetContainer.appendChild(detailsDiv);
 
     checkbox.addEventListener('change', async (e) => {
         syncExterneLaagCheckboxes(laag.id, e.target.checked);
@@ -2299,9 +2456,20 @@ async function loadExterneKaartlagen() {
 }
 
 /**
- * Haalt features op via de backend WFS proxy en toont ze op de kaart.
+ * Haalt features op via de backend WFS proxy of activeert een WMS-laag (#529).
  */
 async function laadExterneKaartlaagFeatures(laag) {
+    if (laag.bron_type === 'WMS') {
+        state.externeKaartlaagData[laag.id] = { laag, isWms: true };
+        syncExterneLaagCheckboxes(laag.id, true, false);
+        if (state.currentData) {
+            displayOnMap(state.currentData);
+        } else {
+            renderExterneLagenOnly();
+        }
+        console.log(`\u{1F310} WMS-laag geactiveerd: ${laag.naam}`);
+        return;
+    }
     if (state.externeKaartlagenLaden.has(laag.id)) return;
     state.externeKaartlagenLaden.add(laag.id);
     syncExterneLaagCheckboxes(laag.id, true, true);
@@ -2353,61 +2521,108 @@ function verwijderExterneKaartlaag(laagId) {
 }
 
 /**
+ * Bouwt een Deck.gl laag (TileLayer+BitmapLayer voor WMS of GeoJsonLayer voor vector; #529).
+ */
+function maakExterneDeckLaag(laagIdStr, entry) {
+    if (!entry || !entry.laag) return null;
+    const { laag, geojson: laagGeojson, isWms } = entry;
+
+    if (isWms || laag.bron_type === 'WMS') {
+        const { TileLayer, BitmapLayer } = deck;
+        const laagOpacity = Number.isFinite(Number(laag.opacity)) ? Number(laag.opacity) : 0.8;
+        return new TileLayer({
+            id: `externe-laag-${laagIdStr}`,
+            data: `/api/externe-lagen/${laag.id}/wms`,
+            minZoom: 0,
+            maxZoom: 19,
+            tileSize: 256,
+            opacity: laagOpacity,
+            pickable: false,
+            refinementStrategy: 'best-available',
+            getTileData: async (tile) => {
+                const bbox3857 = berekenWmsMercatorBbox(tile?.bbox);
+                if (!bbox3857) return null;
+                const url = `/api/externe-lagen/${laag.id}/wms?request=GetMap&crs=EPSG:3857&width=256&height=256&bbox=${encodeURIComponent(bbox3857)}`;
+                const res = await fetch(url, { signal: tile?.signal, credentials: 'same-origin' });
+                if (!res.ok) return null;
+                const blob = await res.blob();
+                if (typeof createImageBitmap === 'function') {
+                    return await createImageBitmap(blob);
+                }
+                return url;
+            },
+            renderSubLayers: (props) => {
+                if (!props.data || !props.tile?.bbox) return null;
+                const { west, south, east, north } = props.tile.bbox;
+                return new BitmapLayer(props, {
+                    data: null,
+                    image: props.data,
+                    bounds: [west, south, east, north],
+                    pickable: false,
+                    parameters: {
+                        depthTest: false,
+                        blend: true
+                    }
+                });
+            }
+        });
+    }
+
+    if (!laagGeojson || !laagGeojson.features) return null;
+    const { GeoJsonLayer } = deck;
+    const lijnRgb = hexNaarRgb(laag.kleur_lijn) || [139, 92, 246];
+    const fillRgb = hexNaarRgb(laag.kleur_fill) || [139, 92, 246];
+    const laagOpacity = Number.isFinite(Number(laag.opacity)) ? Number(laag.opacity) : 0.15;
+    const fillOpacity = Math.round(Math.max(0, Math.min(1, laagOpacity)) * 255);
+    const lineOpacity = Math.round((laagOpacity === 0 ? 0 : Math.min(1, laagOpacity + 0.5)) * 255);
+    const isOverlay = laag.laag_type === 'overlay';
+
+    return new GeoJsonLayer({
+        id: `externe-laag-${laagIdStr}`,
+        data: laagGeojson,
+        filled: true,
+        stroked: true,
+        extruded: false,
+
+        getFillColor: [...fillRgb, fillOpacity],
+        getLineColor: [...lijnRgb, lineOpacity],
+        lineWidthUnits: 'pixels',
+        getLineWidth: 3,
+        lineWidthMinPixels: 2,
+
+        pickable: !isOverlay,
+        autoHighlight: !isOverlay,
+        highlightColor: [...lijnRgb, 80],
+
+        parameters: {
+            depthTest: false,
+            blend: true
+        },
+
+        onClick: (info) => {
+            if (info.object && laag.laag_type === 'selectie') {
+                selectBuurtenVanExterneLaag(laag, info.object);
+            }
+        },
+
+        updateTriggers: {
+            getFillColor: [laagGeojson, laagOpacity],
+            getLineColor: [laagOpacity]
+        }
+    });
+}
+
+/**
  * Rendert alleen externe kaartlagen op de Deck.gl kaart,
  * voor gebruik wanneer er nog geen CBS-buurtdata geladen is.
  */
 function renderExterneLagenOnly() {
     if (!state.deckgl) return;
-    const { GeoJsonLayer } = deck;
     const layers = [];
 
     for (const [laagIdStr, entry] of Object.entries(state.externeKaartlaagData)) {
-        const { laag, geojson: laagGeojson } = entry;
-        if (!laagGeojson || !laagGeojson.features) continue;
-
-        const hexToRgb = (hex) => {
-            const r = parseInt(hex.slice(1, 3), 16);
-            const g = parseInt(hex.slice(3, 5), 16);
-            const b = parseInt(hex.slice(5, 7), 16);
-            return [r, g, b];
-        };
-        const lijnKleur = hexToRgb(laag.kleur_lijn || '#8B5CF6');
-        const fillKleur = hexToRgb(laag.kleur_fill || '#8B5CF6');
-        const fillOpacity = Math.round((laag.opacity || 0.15) * 255);
-
-        const externeLaag = new GeoJsonLayer({
-            id: `externe-laag-${laagIdStr}`,
-            data: laagGeojson,
-            filled: true,
-            stroked: true,
-            extruded: false,
-
-            getFillColor: [...fillKleur, fillOpacity],
-            getLineColor: [...lijnKleur, 200],
-            lineWidthUnits: 'pixels',
-            getLineWidth: 3,
-            lineWidthMinPixels: 2,
-
-            pickable: true,
-            autoHighlight: true,
-            highlightColor: [...lijnKleur, 80],
-
-            parameters: {
-                depthTest: false,
-                blend: true
-            },
-
-            onClick: (info) => {
-                if (info.object && laag.laag_type === 'selectie') {
-                    selectBuurtenVanExterneLaag(laag, info.object);
-                }
-            },
-
-            updateTriggers: {
-                getFillColor: [laagGeojson]
-            }
-        });
-        layers.push(externeLaag);
+        const deckLaag = maakExterneDeckLaag(laagIdStr, entry);
+        if (deckLaag) layers.push(deckLaag);
     }
 
     state.deckgl.setProps({ layers });
@@ -2792,8 +3007,23 @@ function displayOnMap(geojson, { direct = false } = {}) {
 
     });
 
-    // Build layers array (gebieden + optioneel BAG panden)
+    // Build layers array (gebieden + WMS/overlay + selectie/highlight + 3D + vectorlagen)
     const layers = [layer];
+    const externeOverlayLagen = [];
+    const externeVectorLagen = [];
+    for (const [laagIdStr, entry] of Object.entries(state.externeKaartlaagData)) {
+        const deckLaag = maakExterneDeckLaag(laagIdStr, entry);
+        if (!deckLaag) continue;
+        const isOverlay = Boolean(entry.isWms || entry.laag?.bron_type === 'WMS' || entry.laag?.laag_type === 'overlay');
+        if (isOverlay) {
+            externeOverlayLagen.push(deckLaag);
+        } else {
+            externeVectorLagen.push(deckLaag);
+        }
+    }
+    // WMS en visuele overlays onder de selectierand zodat selectie/highlight scherp zichtbaar blijft (#500/#529)
+    layers.push(...externeOverlayLagen);
+
     const selectieStijl = state.selectieStijl || normaliseerSelectieStijl();
     const haloKleur = state.currentTheme === 'dark' ? [15, 23, 42, 235] : [255, 255, 255, 240];
 
@@ -2962,56 +3192,8 @@ function displayOnMap(geojson, { direct = false } = {}) {
         layers.push(bag3dLayer);
     }
 
-    // Sprint 18: Externe kaartlagen overlay layers
-    for (const [laagIdStr, entry] of Object.entries(state.externeKaartlaagData)) {
-        const { laag, geojson: laagGeojson } = entry;
-        if (!laagGeojson || !laagGeojson.features) continue;
-
-        // Parse kleur hex naar RGB array
-        const hexToRgb = (hex) => {
-            const r = parseInt(hex.slice(1, 3), 16);
-            const g = parseInt(hex.slice(3, 5), 16);
-            const b = parseInt(hex.slice(5, 7), 16);
-            return [r, g, b];
-        };
-        const lijnKleur = hexToRgb(laag.kleur_lijn || '#8B5CF6');
-        const fillKleur = hexToRgb(laag.kleur_fill || '#8B5CF6');
-        const fillOpacity = Math.round((laag.opacity || 0.15) * 255);
-
-        const externeLaag = new GeoJsonLayer({
-            id: `externe-laag-${laagIdStr}`,
-            data: laagGeojson,
-            filled: true,
-            stroked: true,
-            extruded: false,
-
-            getFillColor: [...fillKleur, fillOpacity],
-            getLineColor: [...lijnKleur, 200],
-            lineWidthUnits: 'pixels',
-            getLineWidth: 3,
-            lineWidthMinPixels: 2,
-
-            pickable: true,
-            autoHighlight: true,
-            highlightColor: [...lijnKleur, 80],
-
-            parameters: {
-                depthTest: false,
-                blend: true
-            },
-
-            onClick: (info) => {
-                if (info.object && laag.laag_type === 'selectie') {
-                    selectBuurtenVanExterneLaag(laag, info.object);
-                }
-            },
-
-            updateTriggers: {
-                getFillColor: [laagGeojson]
-            }
-        });
-        layers.push(externeLaag);
-    }
+    // Sprint 18: Overige (selectie/data_koppel) externe kaartlagen
+    layers.push(...externeVectorLagen);
 
     // Omgevingsvisie Deelgebieden overlay layer
     if (state.showOmgevingsvisieLayer && state.omgevingsvisieData && state.omgevingsvisieData.features) {

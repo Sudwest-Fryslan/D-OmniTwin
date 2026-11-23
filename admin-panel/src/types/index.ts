@@ -278,7 +278,7 @@ export interface ExterneKaartlaag {
     id: number;
     naam: string;
     beschrijving: string | null;
-    laag_type: 'selectie' | 'data_koppel';
+    laag_type: 'selectie' | 'data_koppel' | 'overlay';
     bron_type: 'WFS' | 'WMS' | 'GeoJSON' | 'lokaal';
     url: string;
     typename: string | null;
@@ -296,6 +296,7 @@ export interface ExterneKaartlaag {
     groep_volgorde: number;
     kompas_thema_naam: string | null;
     gekoppelde_indicatoren: string[];
+    wms_stijl?: string | null;
     created_at: string | null;
     updated_at: string | null;
 }

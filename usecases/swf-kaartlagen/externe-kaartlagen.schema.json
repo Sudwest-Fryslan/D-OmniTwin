@@ -22,7 +22,8 @@
       "constraints": {
         "enum": [
           "selectie",
-          "data_koppel"
+          "data_koppel",
+          "overlay"
         ]
       }
     },
@@ -128,6 +129,13 @@
     {
       "name": "gekoppelde_indicatoren",
       "type": "array"
+    },
+    {
+      "name": "wms_stijl",
+      "type": "string",
+      "constraints": {
+        "maxLength": 120
+      }
     },
     {
       "name": "toegang",
