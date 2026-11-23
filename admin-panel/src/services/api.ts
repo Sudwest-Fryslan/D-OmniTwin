@@ -277,6 +277,8 @@ const publicApi = axios.create({
 });
 
 // De eigen organisatie van deze instantie (#231): naam, gemeentecode(s), logo's, contact
+export type SelectieLijntype = 'doorgetrokken' | 'gestreept' | 'halo';
+
 export interface Organisatie {
     code: string;
     naam: string;
@@ -292,6 +294,11 @@ export interface Organisatie {
     meld_url?: string | null;
     /** Kleine aantallen (#325): een waarde met minder waarnemingen tonen we niet (standaard 10) */
     n_drempel?: number;
+    /** Kaartselectie & highlight (#500): contrastrijke kleur, dikte, lijntype en vlakvulling */
+    selectie_kleur?: string;
+    selectie_lijndikte?: number;
+    selectie_lijntype?: SelectieLijntype;
+    selectie_vulling?: boolean;
 }
 
 export interface OrganisatieLogo { pad: string; naam: string | null; rol: string }
@@ -309,6 +316,10 @@ export interface OrganisatieInvoer {
     logos: OrganisatieLogo[];
     meld_url?: string | null;
     n_drempel?: number | null;
+    selectie_kleur?: string | null;
+    selectie_lijndikte?: number | null;
+    selectie_lijntype?: SelectieLijntype | null;
+    selectie_vulling?: boolean | null;
 }
 
 // Thema uit static/css/themes, met de kleurtokens (#hex) van het lichte en donkere blok

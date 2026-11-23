@@ -181,10 +181,20 @@ _VELDEN = (
     "logos",
     "meld_url",
     "n_drempel",
+    "selectie_kleur",
+    "selectie_lijndikte",
+    "selectie_lijntype",
+    "selectie_vulling",
 )
 
 # Meldplek als de instantie geen eigen meld_url heeft (#312): een nieuw issue bij D-OmniTwin zelf
 STANDAARD_MELD_URL = "https://github.com/Sudwest-Fryslan/D-OmniTwin/issues/new"
+
+# Kaartselectie & highlight (#500, ADR 0011): contrastrijk magenta (#e6007e) + dubbele halo-rand (4 px), zonder vlakvulling
+SELECTIE_KLEUR_STANDAARD = "#e6007e"
+SELECTIE_LIJNDIKTE_STANDAARD = 4
+SELECTIE_LIJNTYPE_STANDAARD = "halo"
+SELECTIE_VULLING_STANDAARD = False
 
 
 def wijzigingen(oud: dict[str, Any] | None, nieuw: dict[str, Any]) -> dict[str, Any]:
@@ -211,14 +221,18 @@ def wijzigingen(oud: dict[str, Any] | None, nieuw: dict[str, Any]) -> dict[str, 
 _SCHRIJF = text("""
     INSERT INTO public.organisatie
         (id, code, naam, korte_naam, oin, gemeente_codes, benchmark_provincie, contact_email, thema, logos,
-         meld_url, n_drempel, bijgewerkt_op)
+         meld_url, n_drempel, selectie_kleur, selectie_lijndikte, selectie_lijntype, selectie_vulling, bijgewerkt_op)
     VALUES (true, :code, :naam, :korte_naam, :oin, :gemeente_codes, :benchmark_provincie, :contact_email,
-            :thema, CAST(:logos AS jsonb), :meld_url, :n_drempel, now())
+            :thema, CAST(:logos AS jsonb), :meld_url, :n_drempel,
+            :selectie_kleur, :selectie_lijndikte, :selectie_lijntype, :selectie_vulling, now())
     ON CONFLICT (id) DO UPDATE SET
         code = EXCLUDED.code, naam = EXCLUDED.naam, korte_naam = EXCLUDED.korte_naam, oin = EXCLUDED.oin,
         gemeente_codes = EXCLUDED.gemeente_codes, benchmark_provincie = EXCLUDED.benchmark_provincie,
         contact_email = EXCLUDED.contact_email, thema = EXCLUDED.thema, logos = EXCLUDED.logos,
-        meld_url = EXCLUDED.meld_url, n_drempel = EXCLUDED.n_drempel, bijgewerkt_op = now()
+        meld_url = EXCLUDED.meld_url, n_drempel = EXCLUDED.n_drempel,
+        selectie_kleur = EXCLUDED.selectie_kleur, selectie_lijndikte = EXCLUDED.selectie_lijndikte,
+        selectie_lijntype = EXCLUDED.selectie_lijntype, selectie_vulling = EXCLUDED.selectie_vulling,
+        bijgewerkt_op = now()
 """)
 
 
@@ -234,9 +248,9 @@ def schrijf_organisatie(db: Session, org: dict[str, Any]) -> None:
     db.commit()
 
 
+# SELECT * zodat een database vóór V054 (zonder selectie_*-kolommen) ook blijft werken met de standaardwaarden
 _SQL = text("""
-    SELECT code, naam, korte_naam, oin, gemeente_codes, benchmark_provincie,
-           contact_email, logos, thema, meld_url, n_drempel
+    SELECT *
     FROM public.organisatie
     LIMIT 1
 """)
@@ -260,6 +274,15 @@ def _als_dict(rij) -> dict[str, Any]:
         "meld_url": m.get("meld_url") or STANDAARD_MELD_URL,
         # Kleine aantallen (#325): leeg = de standaard (10)
         "n_drempel": m.get("n_drempel") or N_DREMPEL_STANDAARD,
+        # Kaartselectie & highlight (#500): leeg = #e6007e, 4 px, halo, zonder vlakvulling
+        "selectie_kleur": (m.get("selectie_kleur") or SELECTIE_KLEUR_STANDAARD).lower(),
+        "selectie_lijndikte": m.get("selectie_lijndikte")
+        if m.get("selectie_lijndikte") is not None
+        else SELECTIE_LIJNDIKTE_STANDAARD,
+        "selectie_lijntype": m.get("selectie_lijntype") or SELECTIE_LIJNTYPE_STANDAARD,
+        "selectie_vulling": bool(m["selectie_vulling"])
+        if m.get("selectie_vulling") is not None
+        else SELECTIE_VULLING_STANDAARD,
         "logos": [
             {"pad": l.get("pad"), "naam": l.get("naam"), "rol": l.get("rol", "partner")}
             for l in logos

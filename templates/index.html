@@ -30,7 +30,11 @@
   <script src="/static/vendor/d3@7.9.0/d3.min.js" integrity="sha384-CjloA8y00+1SDAUkjs099PVfnY2KmDC2BZnws9kh8D/lX1s46w6EPhpXdqMfjK6i"></script>
 </head>
 
-<body>
+<body
+  data-selectie-kleur="{{ organisatie.selectie_kleur if organisatie and organisatie.selectie_kleur else '#e6007e' }}"
+  data-selectie-lijndikte="{{ organisatie.selectie_lijndikte if organisatie and organisatie.selectie_lijndikte is not none else 4 }}"
+  data-selectie-lijntype="{{ organisatie.selectie_lijntype if organisatie and organisatie.selectie_lijntype else 'halo' }}"
+  data-selectie-vulling="{{ 'true' if organisatie and organisatie.selectie_vulling else 'false' }}">
   <a href="#hoofdinhoud" class="skip-link">Direct naar de kaart</a>
 
   <!-- ================================================================
@@ -1194,7 +1198,7 @@
   <script src="/static/js/draggable-window.js"></script>
   <script src="/static/js/kompas.js?v=5"></script>
   <script src="/static/js/chat.js?v=4"></script>
-  <script src="/static/js/app.js?v=17"></script>
+  <script src="/static/js/app.js?v=19"></script>
   <script src="/static/js/mijn.js?v=2"></script>
 </body>
 

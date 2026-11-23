@@ -169,6 +169,36 @@ describe('OrganisatiePage', () => {
         expect(await screen.findByRole('alert')).toHaveTextContent('geen geldige JSON');
         expect(importeer).not.toHaveBeenCalled();
     });
+
+    it('toont en bewaart kaartselectie- en highlightstijl met WCAG-contrastcontrole (#500)', async () => {
+        const zet = vi.spyOn(organisatieAPI, 'zet').mockImplementation(data => ok({ ...ORG, ...data }));
+        const user = userEvent.setup();
+        render(<OrganisatiePage />);
+        await screen.findByLabelText('Naam');
+
+        // Standaard: Magenta (#e6007e), halo, 4 px, vlakvulling uit
+        expect(screen.getByLabelText('Selectiekleur (#RRGGBB)')).toHaveValue('#e6007e');
+        expect(screen.getByLabelText('Lijntype')).toHaveValue('halo');
+        expect(screen.getByLabelText(/Doorzichtige vlakvulling/)).not.toBeChecked();
+        expect(screen.getByTestId('selectie-contrast-info')).not.toHaveTextContent(/haalt zelf geen 3:1/);
+
+        // Kies Goud (legacy) -> toont WCAG-waarschuwing, kies daarna Donkercyan + gestreept + vulling aan
+        await user.click(screen.getByRole('button', { name: /Goud \(legacy\)/ }));
+        expect(screen.getByTestId('selectie-contrast-info')).toHaveTextContent(/haalt zelf geen 3:1/);
+
+        await user.click(screen.getByRole('button', { name: /Donkercyan/ }));
+        await user.selectOptions(screen.getByLabelText('Lijntype'), 'gestreept');
+        await user.click(screen.getByLabelText(/Doorzichtige vlakvulling/));
+        await user.click(screen.getByRole('button', { name: /Opslaan/ }));
+
+        await waitFor(() => expect(zet).toHaveBeenCalledTimes(1));
+        expect(zet.mock.calls[0][0]).toMatchObject({
+            selectie_kleur: '#007ba3',
+            selectie_lijntype: 'gestreept',
+            selectie_lijndikte: 4,
+            selectie_vulling: true,
+        });
+    });
 });
 
 describe('foutmelding', () => {

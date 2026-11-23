@@ -93,6 +93,77 @@ const state = {
 // Publiceer state op window zodat chat.js en andere modules de kaartselectie kunnen lezen
 window.state = state;
 
+/**
+ * Kaartselectie- & highlightstijl (#500, ADR 0007, ADR 0011).
+ * Standaard: Magenta (#e6007e), 4 px, dubbele halo-rand, zonder doorzichtige vlakvulling.
+ */
+function hexNaarRgb(hex, fallback = [230, 0, 126]) {
+    if (typeof hex !== 'string' || !/^#[0-9a-fA-F]{6}$/.test(hex.trim())) {
+        return fallback;
+    }
+    const h = hex.trim().slice(1);
+    return [
+        parseInt(h.slice(0, 2), 16),
+        parseInt(h.slice(2, 4), 16),
+        parseInt(h.slice(4, 6), 16),
+    ];
+}
+
+function normaliseerSelectieStijl(bron = {}) {
+    const kleurRaw = typeof bron?.selectie_kleur === 'string' ? bron.selectie_kleur.trim().toLowerCase() : '';
+    const kleur = /^#[0-9a-f]{6}$/.test(kleurRaw) ? kleurRaw : '#e6007e';
+    const dikteRaw = Number(bron?.selectie_lijndikte);
+    const dikte = Number.isFinite(dikteRaw) ? Math.min(8, Math.max(2, Math.round(dikteRaw))) : 4;
+    const lijntype = ['doorgetrokken', 'gestreept', 'halo'].includes(bron?.selectie_lijntype)
+        ? bron.selectie_lijntype
+        : 'halo';
+    const vulling = bron?.selectie_vulling === true || bron?.selectie_vulling === 'true';
+    return {
+        kleur,
+        rgb: hexNaarRgb(kleur),
+        dikte,
+        lijntype,
+        vulling,
+    };
+}
+
+function pasSelectiestijlToe(bron) {
+    const stijl = normaliseerSelectieStijl(bron);
+    const vorige = state.selectieStijl;
+    const gewijzigd = !vorige
+        || vorige.kleur !== stijl.kleur
+        || vorige.dikte !== stijl.dikte
+        || vorige.lijntype !== stijl.lijntype
+        || vorige.vulling !== stijl.vulling;
+    state.selectieStijl = stijl;
+
+    if (typeof document !== 'undefined' && document.documentElement) {
+        const rootStyle = document.documentElement.style;
+        rootStyle.setProperty('--map-selection-color', stijl.kleur);
+        rootStyle.setProperty(
+            '--map-selection-fill',
+            stijl.vulling ? `color-mix(in srgb, ${stijl.kleur} 16%, transparent)` : 'transparent',
+        );
+        document.querySelectorAll('.legenda-selectie-sample').forEach(el => {
+            el.classList.toggle('legenda-selectie-sample--halo', stijl.lijntype === 'halo');
+            el.classList.toggle('legenda-selectie-sample--gestreept', stijl.lijntype === 'gestreept');
+        });
+    }
+    return gewijzigd;
+}
+
+if (typeof document !== 'undefined') {
+    const ds = document.body?.dataset || {};
+    pasSelectiestijlToe({
+        selectie_kleur: ds.selectieKleur,
+        selectie_lijndikte: ds.selectieLijndikte,
+        selectie_lijntype: ds.selectieLijntype,
+        selectie_vulling: ds.selectieVulling,
+    });
+} else {
+    state.selectieStijl = normaliseerSelectieStijl();
+}
+
 // Toegankelijkheid (WCAG 2.1.1): elementen met role="button" die geen echte
 // <button> zijn, reageren op Enter en Spatie net als op een klik.
 document.addEventListener('keydown', (e) => {
@@ -783,7 +854,14 @@ function changeMapboxStyle(styleUrl) {
 async function laadOrganisatieVoorGemeenten() {
     try {
         const response = await fetch('/api/organisatie');
-        if (response.ok) return await response.json();
+        if (response.ok) {
+            const org = await response.json();
+            const stijlGewijzigd = pasSelectiestijlToe(org);
+            if (stijlGewijzigd && state.currentData && state.deckgl) {
+                displayOnMap(state.currentData);
+            }
+            return org;
+        }
     } catch (error) {
         console.warn('⚠️ Organisatie niet beschikbaar');
     }
@@ -2531,26 +2609,15 @@ function displayOnMap(geojson, { direct = false } = {}) {
             return getColorRGB(value, minValue, maxValue, state.enable3D);
         },
 
-        // Track D: Gouden outline bij selectie, borders voor overige
-        getLineColor: d => {
-            const featureId = d.id || d.properties?.id;
-            if (featureId && isGebiedSelected(featureId)) {
-                return [234, 179, 8, 255]; // Selectie goud (#eab308)
-            }
-            // #373 / #443: Duidelijke, contrastrijke randen voor alle gebieden (met én zonder actieve indicator)
-            // zodat grenzen altijd scherp en helder afgebakend zijn (in licht thema donkergrijs, in donker thema lichtgrijs)
-            return state.currentTheme === 'dark'
+        // #373 / #443 / #500: Duidelijke, contrastrijke gebiedsgrenzen op de basislaag;
+        // de geselecteerde rand zelf staat op selection-halo-layer / selection-overlay-layer.
+        getLineColor: () => (
+            state.currentTheme === 'dark'
                 ? [210, 210, 210, 180]
-                : [70, 70, 70, 200];
-        },
+                : [70, 70, 70, 200]
+        ),
         lineWidthUnits: 'pixels',
-        getLineWidth: d => {
-            const featureId = d.id || d.properties?.id;
-            if (featureId && isGebiedSelected(featureId)) {
-                return 3.5; // Duidelijke gouden rand bij selectie (pixels)
-            }
-            return 1.5; // 1.5px zodat gebiedsgrenzen niet wegvallen op hoog niveau (#373)
-        },
+        getLineWidth: 1.5,
 
         // 3D Height (#373: bij geen data of modus 'uit' altijd plat op de grond)
         getElevation: d => {
@@ -2564,10 +2631,12 @@ function displayOnMap(geojson, { direct = false } = {}) {
             return normalized * 1000 * state.heightScale;
         },
 
-        // Interactivity
+        // Interactivity (#500: hover-vlakvulling alleen wanneer selectie_vulling aan staat)
         pickable: true,
-        autoHighlight: true,
-        highlightColor: [234, 179, 8, 150], // Geo Gold hover (#eab308)
+        autoHighlight: Boolean((state.selectieStijl || normaliseerSelectieStijl()).vulling),
+        highlightColor: (state.selectieStijl || normaliseerSelectieStijl()).vulling
+            ? [...(state.selectieStijl || normaliseerSelectieStijl()).rgb, 90]
+            : [0, 0, 0, 0],
 
         // Track B4: Hover cursor feedback
         onHover: (info) => {
@@ -2725,9 +2794,10 @@ function displayOnMap(geojson, { direct = false } = {}) {
 
     // Build layers array (gebieden + optioneel BAG panden)
     const layers = [layer];
+    const selectieStijl = state.selectieStijl || normaliseerSelectieStijl();
+    const haloKleur = state.currentTheme === 'dark' ? [15, 23, 42, 235] : [255, 255, 255, 240];
 
-    // Performance FIX: Add a separate layer for selected borders to ensure they are drawn on top,
-    // without sorting the base layer data.
+    // Performance FIX + #500: Selectieranden altijd scherp bovenop, met optionele contrast-halo, streeppatroon en vlakvulling
     if (state.selectedGebiedIds.size > 0 && geojson.features) {
         const selectedFeatures = geojson.features.filter(f => {
             const id = f.id || f.properties?.id;
@@ -2736,42 +2806,97 @@ function displayOnMap(geojson, { direct = false } = {}) {
 
         if (selectedFeatures.length > 0) {
             const { GeoJsonLayer } = deck;
-            const selectionLayer = new GeoJsonLayer({
+            const selectieFc = { type: 'FeatureCollection', features: selectedFeatures };
+            // Unieke ID per selectie voor de gevulde laag voorkomt Deck.gl tessellatie-buffer-corruptie/spikes (#500)
+            const selectieSleutel = selectedFeatures.map(f => f.id || f.properties?.id).sort().join(',');
+
+            if (selectieStijl.vulling) {
+                layers.push(new GeoJsonLayer({
+                    id: `selection-fill-layer-${selectieSleutel}`,
+                    data: selectieFc,
+                    filled: true,
+                    stroked: false,
+                    getFillColor: [...selectieStijl.rgb, 45],
+                    pickable: false,
+                    parameters: { depthTest: false, blend: true },
+                }));
+            }
+
+            if (selectieStijl.lijntype === 'halo') {
+                layers.push(new GeoJsonLayer({
+                    id: 'selection-halo-layer',
+                    data: selectieFc,
+                    filled: false,
+                    stroked: true,
+                    lineWidthUnits: 'pixels',
+                    lineWidthMinPixels: 3,
+                    getLineColor: haloKleur,
+                    getLineWidth: selectieStijl.dikte + 3,
+                    pickable: false,
+                    parameters: { depthTest: false, blend: true },
+                }));
+            }
+
+            const overlayProps = {
                 id: 'selection-overlay-layer',
-                data: { type: 'FeatureCollection', features: selectedFeatures },
+                data: selectieFc,
                 filled: false,
                 stroked: true,
-                lineWidthMinPixels: 2,
-                getLineColor: [234, 179, 8, 255], // Geo Gold (#eab308)
                 lineWidthUnits: 'pixels',
-                getLineWidth: 3,
+                lineWidthMinPixels: 2,
+                getLineColor: [...selectieStijl.rgb, 255],
+                getLineWidth: selectieStijl.dikte,
                 pickable: false,
                 parameters: {
-                    depthTest: false // Force draw on top in 2D
+                    depthTest: false, // Force draw on top in 2D
+                    blend: true
                 }
-            });
-            layers.push(selectionLayer);
+            };
+            if (selectieStijl.lijntype === 'gestreept') {
+                overlayProps.extensions = [new deck.PathStyleExtension({ dash: true })];
+                overlayProps.getLineDashArray = () => [3, 2];
+                overlayProps.getDashArray = () => [3, 2];
+                overlayProps.dashJustified = false;
+            }
+            layers.push(new GeoJsonLayer(overlayProps));
         }
     }
 
-    // Sprint 18 F3: Extra layer voor Top-buurt highlight (Altijd on top, onafhankelijk van dash bugs in 3D/base layer)
+    // Sprint 18 F3 + #500: Extra layer voor Top-buurt highlight in de organisatie-selectiekleur
     if (state.highlightedGebiedId && geojson.features) {
         const highlightFeature = geojson.features.find(f => {
             const id = f.id || f.properties?.id;
             return id === state.highlightedGebiedId;
         });
-        
+
         if (highlightFeature) {
             const { GeoJsonLayer } = deck;
+            const highlightFc = { type: 'FeatureCollection', features: [highlightFeature] };
+            const highlightDikte = Math.max(selectieStijl.dikte + 2, 5);
+
+            if (selectieStijl.lijntype === 'halo') {
+                layers.push(new GeoJsonLayer({
+                    id: 'highlight-halo-layer',
+                    data: highlightFc,
+                    stroked: true,
+                    filled: false,
+                    lineWidthUnits: 'pixels',
+                    getLineColor: haloKleur,
+                    getLineWidth: highlightDikte + 3,
+                    pickable: false,
+                    parameters: { depthTest: false },
+                }));
+            }
+
             const highlightLayer = new GeoJsonLayer({
                 id: 'highlight-layer',
-                data: { type: 'FeatureCollection', features: [highlightFeature] },
+                data: highlightFc,
                 extensions: [new deck.PathStyleExtension({dash: true})],
                 stroked: true,
                 filled: false,
                 lineWidthUnits: 'pixels',
-                getLineColor: [236, 201, 75, 255], // Geo Gold (#ECC94B)
-                getLineWidth: 6, // 6 pixels dik, consistent ongeacht zoom level
+                getLineColor: [...selectieStijl.rgb, 255],
+                getLineWidth: highlightDikte,
                 getLineDashArray: d => [2, 1], // [dash, gap]
                 getDashArray: d => [2, 1], // Sometimes required instead of getLineDashArray
                 dashJustified: false, // Zet op false om render-issues met justifed path lengths te voorkomen
@@ -2814,8 +2939,8 @@ function displayOnMap(geojson, { direct = false } = {}) {
             getLineWidth: 1,
 
             pickable: true,
-            autoHighlight: true,
-            highlightColor: [234, 179, 8, 150],
+            autoHighlight: Boolean(selectieStijl.vulling),
+            highlightColor: selectieStijl.vulling ? [...selectieStijl.rgb, 90] : [0, 0, 0, 0],
 
             material: {
                 ambient: 0.65,
@@ -3280,10 +3405,16 @@ function updateLegenda(geojson) {
     if (hintsContainer) {
         // #161: geen spreiding in de waarden (alle gebieden dezelfde waarde)
         const melding = geojson.metadata.legenda_melding;
+        const lijntype = (state.selectieStijl || normaliseerSelectieStijl()).lijntype;
+        const sampleKlassen = [
+            'legenda-selectie-sample',
+            lijntype === 'halo' ? 'legenda-selectie-sample--halo' : '',
+            lijntype === 'gestreept' ? 'legenda-selectie-sample--gestreept' : '',
+        ].filter(Boolean).join(' ');
         hintsContainer.innerHTML = `
             ${melding ? `<p class="legenda-melding help-text" role="note">${escapeHtml(melding)}</p>` : ''}
             <div class="legenda-selectie-hint">
-                <span class="legenda-selectie-sample"></span>
+                <span class="${sampleKlassen}"></span>
                 <span>Geselecteerd gebied</span>
             </div>
             <div class="legenda-nodata-hint">
