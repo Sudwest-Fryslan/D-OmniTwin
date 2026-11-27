@@ -138,6 +138,10 @@
       }
     },
     {
+      "name": "info_actief",
+      "type": "boolean"
+    },
+    {
       "name": "toegang",
       "type": "string",
       "constraints": {

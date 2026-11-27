@@ -143,8 +143,17 @@ def externe_kaartlagen(cur, regels: list[dict]) -> dict:
             velden["gekoppelde_indicatoren"] = _parse_uuid_lijst(velden["gekoppelde_indicatoren"])
         if "actief" in velden:
             velden["actief"] = _bool(velden["actief"])
+        if "info_actief" in velden:
+            velden["info_actief"] = _bool(velden["info_actief"])
         laag = ExterneKaartlaagCreate(**velden).model_dump()
-        for optioneel in ("groep_naam", "groep_volgorde", "kompas_thema_naam", "gekoppelde_indicatoren", "wms_stijl"):
+        for optioneel in (
+            "groep_naam",
+            "groep_volgorde",
+            "kompas_thema_naam",
+            "gekoppelde_indicatoren",
+            "wms_stijl",
+            "info_actief",
+        ):
             if optioneel not in velden:
                 laag.pop(optioneel, None)
         if "gekoppelde_indicatoren" in laag:

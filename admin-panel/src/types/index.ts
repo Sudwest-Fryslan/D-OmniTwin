@@ -297,6 +297,7 @@ export interface ExterneKaartlaag {
     kompas_thema_naam: string | null;
     gekoppelde_indicatoren: string[];
     wms_stijl?: string | null;
+    info_actief?: boolean;
     created_at: string | null;
     updated_at: string | null;
 }

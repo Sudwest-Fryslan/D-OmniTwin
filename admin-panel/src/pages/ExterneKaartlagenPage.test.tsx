@@ -193,6 +193,10 @@ describe('ExterneKaartlagenPage (#527)', () => {
         await userEvent.type(screen.getByLabelText('Laagnaam (LAYERS)'), 'swf:gv_bomen');
         await userEvent.type(screen.getByLabelText('WMS Stijl (optioneel)'), 'groen_stijl');
 
+        const infoCheckbox = screen.getByLabelText('Objectinformatie bij klik (GetFeatureInfo) inschakelen') as HTMLInputElement;
+        expect(infoCheckbox.checked).toBe(false);
+        await userEvent.click(infoCheckbox);
+
         await userEvent.click(screen.getByRole('button', { name: 'Laag Toevoegen' }));
 
         await waitFor(() =>
@@ -204,6 +208,7 @@ describe('ExterneKaartlagenPage (#527)', () => {
                     opacity: 0.8,
                     typename: 'swf:gv_bomen',
                     wms_stijl: 'groen_stijl',
+                    info_actief: true,
                 })
             )
         );
