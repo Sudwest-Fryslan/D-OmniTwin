@@ -85,6 +85,8 @@ const state = {
     externeKaartlagen: [],         // Actieve lagen definitie [{id, naam, kleur_lijn, ...}]
     externeKaartlaagData: {},      // { laag_id: { laag, geojson } }
     externeKaartlagenLaden: new Set(), // Lagen die op dit moment geladen worden (#528)
+    wmsInspectieLaagId: null,      // Actieve WMS-laag in GetFeatureInfo-inspectiemodus (#530)
+    wmsInspectieTriggerEl: null,   // Element om focus naar terug te zetten bij sluiten (#530)
 
     // Performance / UX (#466): bijhouden of de gebruiker het dock handmatig heeft gesloten
     dockManuallyClosed: false,
@@ -321,6 +323,7 @@ getFillColor: d => {
 
             // Sprint 18: Externe kaartlagen laden (dynamische toggles)
             await loadExterneKaartlagen();
+            initWmsInspectieUi();
 
             // Escape key → reset actieve indicator (niet wanneer een modal/dialoog het event al afvangt)
             document.addEventListener('keydown', (e) => {
@@ -807,8 +810,16 @@ function initDeckGL() {
         },
 
         // Track B4: Cursor feedback bij hover over pickable objecten
+        onClick: (info) => {
+            if (isWmsInspectieActief() && Array.isArray(info?.coordinate) && info.coordinate.length >= 2) {
+                inspecteerWmsPunt(state.wmsInspectieLaagId, info.coordinate);
+                return true;
+            }
+            return false;
+        },
         getCursor: ({isHovering, isDragging}) => {
             if (isDragging) return 'grabbing';
+            if (isWmsInspectieActief()) return 'crosshair';
             if (isHovering) return 'pointer';
             return 'grab';
         }
@@ -2052,6 +2063,241 @@ function berekenWmsMercatorBbox(bbox) {
 window.berekenWmsMercatorBbox = berekenWmsMercatorBbox;
 
 /**
+ * Berekent een klein vierkant GetFeatureInfo-venster (101x101 px) in EPSG:3857 rond [lon, lat],
+ * onafhankelijk van 3D-pitch of kaartrotatie (#530).
+ */
+function berekenWmsFeatureInfoVenster(lon, lat, zoom, groottePx = 101) {
+    if (!Number.isFinite(Number(lon)) || !Number.isFinite(Number(lat))) return null;
+    const R = 6378137;
+    const [cx, cy] = lonLatNaarMercator(Number(lon), Number(lat));
+    const z = Number.isFinite(Number(zoom)) ? Number(zoom) : 12;
+    const res = (2 * Math.PI * R) / (512 * Math.pow(2, z));
+    const half = ((groottePx - 1) / 2) * res;
+    const minX = cx - half;
+    const minY = cy - half;
+    const maxX = cx + half;
+    const maxY = cy + half;
+    const midden = Math.floor(groottePx / 2);
+    return {
+        bbox: `${minX.toFixed(2)},${minY.toFixed(2)},${maxX.toFixed(2)},${maxY.toFixed(2)}`,
+        width: groottePx,
+        height: groottePx,
+        i: midden,
+        j: midden,
+    };
+}
+
+window.berekenWmsFeatureInfoVenster = berekenWmsFeatureInfoVenster;
+
+function isWmsInspectieActief() {
+    return typeof state !== 'undefined' && state.wmsInspectieLaagId !== null && state.wmsInspectieLaagId !== undefined;
+}
+
+window.isWmsInspectieActief = isWmsInspectieActief;
+
+function vindActieveWmsLaag(laagId) {
+    if (laagId === null || laagId === undefined) return null;
+    const doel = String(laagId);
+    const entry = state.externeKaartlaagData ? state.externeKaartlaagData[laagId] || state.externeKaartlaagData[doel] : null;
+    if (entry?.laag) return entry.laag;
+    if (Array.isArray(state.externeKaartlagen)) {
+        return state.externeKaartlagen.find((l) => l && String(l.id) === doel) || null;
+    }
+    return null;
+}
+
+function syncWmsInspectieUi() {
+    if (typeof document === 'undefined') return;
+    const actief = isWmsInspectieActief();
+    const actiefId = actief ? String(state.wmsInspectieLaagId) : null;
+    const laag = actief ? vindActieveWmsLaag(actiefId) : null;
+
+    const mapEl = document.getElementById('map');
+    if (mapEl) mapEl.classList.toggle('wms-inspectie-actief', actief);
+
+    document.querySelectorAll('.externe-laag-inspect-btn[data-laag-inspect-id]').forEach((btn) => {
+        const isDeze = actief && String(btn.dataset.laagInspectId) === actiefId;
+        btn.setAttribute('aria-pressed', isDeze ? 'true' : 'false');
+        btn.textContent = isDeze ? 'ℹ️ Inspectie actief' : 'ℹ️ Inspecteer laag';
+    });
+
+    const balk = document.getElementById('wms-inspectie-balk');
+    const tekst = document.getElementById('wms-inspectie-tekst');
+    if (balk) {
+        balk.hidden = !actief;
+        if (actief && tekst) {
+            const naam = laag?.naam || 'WMS-laag';
+            tekst.textContent = `Laag-inspectie actief: ${naam} — klik op de kaart`;
+        }
+    }
+}
+
+function sluitWmsFeatureInfoPaneel(opts = {}) {
+    if (typeof document === 'undefined') return;
+    const paneel = document.getElementById('wms-feature-info-paneel');
+    if (paneel) paneel.hidden = true;
+    if (opts.herstelFocus && state.wmsInspectieTriggerEl && typeof state.wmsInspectieTriggerEl.focus === 'function' && state.wmsInspectieTriggerEl.isConnected) {
+        state.wmsInspectieTriggerEl.focus();
+    }
+}
+
+function stopWmsInspectie(opts = {}) {
+    const wasActief = isWmsInspectieActief();
+    state.wmsInspectieLaagId = null;
+    syncWmsInspectieUi();
+    if (opts.sluitPaneel) {
+        sluitWmsFeatureInfoPaneel({ herstelFocus: false });
+    }
+    if (wasActief && opts.herstelFocus && state.wmsInspectieTriggerEl && typeof state.wmsInspectieTriggerEl.focus === 'function' && state.wmsInspectieTriggerEl.isConnected) {
+        state.wmsInspectieTriggerEl.focus();
+    }
+}
+
+function toggleWmsInspectie(laagId, triggerEl = null) {
+    const doelId = Number(laagId);
+    if (!Number.isFinite(doelId)) return;
+    if (String(state.wmsInspectieLaagId) === String(doelId)) {
+        stopWmsInspectie({ sluitPaneel: true, herstelFocus: false });
+        return;
+    }
+    if (triggerEl) state.wmsInspectieTriggerEl = triggerEl;
+    state.wmsInspectieLaagId = doelId;
+    syncWmsInspectieUi();
+}
+
+function renderWmsFeatureInfoResultaat(laagNaam, payload, foutMelding = null) {
+    if (typeof document === 'undefined') return;
+    const paneel = document.getElementById('wms-feature-info-paneel');
+    const titelEl = document.getElementById('wms-feature-info-titel');
+    const inhoudEl = document.getElementById('wms-feature-info-inhoud');
+    if (!paneel || !inhoudEl) return;
+
+    if (titelEl) {
+        titelEl.textContent = laagNaam ? `Objectinformatie — ${laagNaam}` : 'Objectinformatie';
+    }
+    inhoudEl.replaceChildren();
+
+    if (foutMelding) {
+        const p = document.createElement('p');
+        p.className = 'wms-feature-info-leeg';
+        p.textContent = foutMelding;
+        inhoudEl.appendChild(p);
+    } else if (!payload) {
+        const p = document.createElement('p');
+        p.className = 'wms-feature-info-leeg';
+        p.textContent = 'Gegevens ophalen…';
+        inhoudEl.appendChild(p);
+    } else if (Array.isArray(payload.features) && payload.features.length > 0) {
+        payload.features.forEach((feat, idx) => {
+            const kaart = document.createElement('div');
+            kaart.className = 'wms-feature-info-object';
+            if (payload.features.length > 1) {
+                const kop = document.createElement('div');
+                kop.className = 'wms-feature-info-object-kop';
+                kop.textContent = `Object ${idx + 1}`;
+                kaart.appendChild(kop);
+            }
+            const tabel = document.createElement('dl');
+            tabel.className = 'wms-feature-info-lijst';
+            (feat.eigenschappen || []).forEach((item) => {
+                const dt = document.createElement('dt');
+                dt.textContent = item.sleutel;
+                const dd = document.createElement('dd');
+                dd.textContent = item.waarde;
+                tabel.appendChild(dt);
+                tabel.appendChild(dd);
+            });
+            kaart.appendChild(tabel);
+            inhoudEl.appendChild(kaart);
+        });
+    } else if (payload.tekst) {
+        const pre = document.createElement('pre');
+        pre.className = 'wms-feature-info-pre';
+        pre.textContent = payload.tekst;
+        inhoudEl.appendChild(pre);
+    } else {
+        const p = document.createElement('p');
+        p.className = 'wms-feature-info-leeg';
+        p.textContent = 'Geen objectinformatie gevonden op deze locatie.';
+        inhoudEl.appendChild(p);
+    }
+
+    paneel.hidden = false;
+    paneel.focus();
+}
+
+async function inspecteerWmsPunt(laagId, coordinate) {
+    if (!Array.isArray(coordinate) || coordinate.length < 2) return;
+    const laag = vindActieveWmsLaag(laagId);
+    const zoom = state.currentViewState?.zoom ?? 12;
+    const venster = berekenWmsFeatureInfoVenster(coordinate[0], coordinate[1], zoom, 101);
+    if (!venster) return;
+
+    renderWmsFeatureInfoResultaat(laag?.naam || '', null);
+
+    try {
+        const params = new URLSearchParams({
+            bbox: venster.bbox,
+            width: String(venster.width),
+            height: String(venster.height),
+            i: String(venster.i),
+            j: String(venster.j),
+            crs: 'EPSG:3857',
+        });
+        const res = await fetch(`/api/externe-lagen/${encodeURIComponent(laagId)}/feature-info?${params.toString()}`, {
+            credentials: 'same-origin',
+        });
+        if (!res.ok) {
+            const errData = await res.json().catch(() => ({}));
+            throw new Error(errData.detail || `HTTP ${res.status}`);
+        }
+        const data = await res.json();
+        renderWmsFeatureInfoResultaat(data.laag_naam || laag?.naam || '', data);
+    } catch (e) {
+        renderWmsFeatureInfoResultaat(laag?.naam || '', null, `Kon objectinformatie niet ophalen (${e.message || 'onbekende fout'}).`);
+    }
+}
+
+function initWmsInspectieUi() {
+    if (typeof document === 'undefined') return;
+    const stopBtn = document.getElementById('wms-inspectie-stop-btn');
+    const sluitBtn = document.getElementById('wms-feature-info-sluit');
+    const middenBtn = document.getElementById('wms-inspectie-midden-btn');
+
+    if (stopBtn) {
+        stopBtn.addEventListener('click', () => stopWmsInspectie({ sluitPaneel: true, herstelFocus: true }));
+    }
+    if (sluitBtn) {
+        sluitBtn.addEventListener('click', () => sluitWmsFeatureInfoPaneel({ herstelFocus: true }));
+    }
+    if (middenBtn) {
+        middenBtn.addEventListener('click', () => {
+            if (!isWmsInspectieActief()) return;
+            const v = state.currentViewState;
+            if (v && Number.isFinite(Number(v.longitude)) && Number.isFinite(Number(v.latitude))) {
+                state.wmsInspectieTriggerEl = middenBtn;
+                inspecteerWmsPunt(state.wmsInspectieLaagId, [v.longitude, v.latitude]);
+            }
+        });
+    }
+
+    // Capture-fase: voorkom dat de bestaande Escape-handler (r. 326) de actieve indicator wist (#530)
+    document.addEventListener('keydown', (e) => {
+        if (e.key !== 'Escape') return;
+        const paneel = document.getElementById('wms-feature-info-paneel');
+        if (paneel && !paneel.hidden) {
+            e.preventDefault();
+            sluitWmsFeatureInfoPaneel({ herstelFocus: true });
+            return;
+        }
+        if (isWmsInspectieActief()) {
+            e.preventDefault();
+            stopWmsInspectie({ sluitPaneel: true, herstelFocus: true });
+        }
+    }, { capture: true });
+}
+
+/**
  * Werkt de transparantie van een actieve externe kaartlaag live bij (#529).
  */
 function zetExterneLaagOpacity(laagId, nieuweOpacity) {
@@ -2284,6 +2530,19 @@ function renderExterneLaagRij(laag, targetContainer, rootContainer, opts = {}) {
         legendaBox.appendChild(legendImg);
         legendaBox.appendChild(legendLeeg);
         detailsDiv.appendChild(legendaBox);
+
+        if (laag.info_actief) {
+            const inspectBtn = document.createElement('button');
+            inspectBtn.type = 'button';
+            inspectBtn.className = 'externe-laag-inspect-btn';
+            inspectBtn.dataset.laagInspectId = String(laag.id);
+            const isActief = String(state.wmsInspectieLaagId) === String(laag.id);
+            inspectBtn.setAttribute('aria-pressed', isActief ? 'true' : 'false');
+            inspectBtn.textContent = isActief ? 'ℹ️ Inspectie actief' : 'ℹ️ Inspecteer laag';
+            inspectBtn.title = `Objectinformatie opvragen bij klik op ${laag.naam}`;
+            inspectBtn.addEventListener('click', () => toggleWmsInspectie(laag.id, inspectBtn));
+            detailsDiv.appendChild(inspectBtn);
+        }
     }
 
     targetContainer.appendChild(item);
@@ -2510,6 +2769,9 @@ async function laadExterneKaartlaagFeatures(laag) {
  * Verwijdert een externe kaartlaag van de kaart.
  */
 function verwijderExterneKaartlaag(laagId) {
+    if (String(state.wmsInspectieLaagId) === String(laagId)) {
+        stopWmsInspectie({ sluitPaneel: true, herstelFocus: false });
+    }
     delete state.externeKaartlaagData[laagId];
     syncExterneLaagCheckboxes(laagId, false, false);
     if (state.currentData) {
@@ -2600,6 +2862,7 @@ function maakExterneDeckLaag(laagIdStr, entry) {
         },
 
         onClick: (info) => {
+            if (isWmsInspectieActief()) return false;
             if (info.object && laag.laag_type === 'selectie') {
                 selectBuurtenVanExterneLaag(laag, info.object);
             }
@@ -2873,6 +3136,7 @@ function displayOnMap(geojson, { direct = false } = {}) {
         },
 
         onClick: (info, event) => {
+            if (isWmsInspectieActief()) return false;
             // Sprint 18 F3: Clear visual highlight on any map click
             if (state.highlightedGebiedId) {
                 state.highlightedGebiedId = null;
@@ -3221,6 +3485,7 @@ function displayOnMap(geojson, { direct = false } = {}) {
             },
 
             onClick: (info) => {
+                if (isWmsInspectieActief()) return false;
                 if (info.object) {
                     const props = info.object.properties;
                     selectBuurtenFromDeelgebied(props.id, props.deelgebied);

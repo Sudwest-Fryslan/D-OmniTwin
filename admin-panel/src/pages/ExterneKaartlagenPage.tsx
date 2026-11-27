@@ -32,6 +32,7 @@ const EMPTY_FORM: ExterneKaartlaagCreate = {
     kompas_thema_naam: null,
     gekoppelde_indicatoren: [],
     wms_stijl: null,
+    info_actief: false,
 };
 
 const EMPTY_KOPPEL_OPTIES: ExterneKaartlaagKoppelOpties = {
@@ -203,6 +204,7 @@ export const ExterneKaartlagenPage: React.FC = () => {
             kompas_thema_naam: laag.kompas_thema_naam || null,
             gekoppelde_indicatoren: laag.gekoppelde_indicatoren || [],
             wms_stijl: laag.wms_stijl || null,
+            info_actief: Boolean(laag.info_actief),
         });
         setIndicatorZoek('');
         setShowForm(true);
@@ -220,6 +222,7 @@ export const ExterneKaartlagenPage: React.FC = () => {
             groep_naam: form.groep_naam?.trim() || null,
             kompas_thema_naam: form.kompas_thema_naam?.trim() || null,
             wms_stijl: form.wms_stijl?.trim() || null,
+            info_actief: form.bron_type === 'WMS' ? Boolean(form.info_actief) : false,
             groep_volgorde: Number(form.groep_volgorde) || 0,
             gekoppelde_indicatoren: form.gekoppelde_indicatoren || [],
         };
@@ -577,10 +580,14 @@ export const ExterneKaartlagenPage: React.FC = () => {
                                         } else if (v === 'lokaal') {
                                             next.filter_type = 'alles';
                                             next.filter_waarde = '';
+                                            next.info_actief = false;
                                         } else if (wasWms && v === 'WFS') {
                                             if (prev.versie === '1.3.0') next.versie = '2.0.0';
                                             if (prev.srsname === 'EPSG:3857') next.srsname = 'EPSG:28992';
                                             if (prev.opacity === 0.8) next.opacity = 0.15;
+                                            next.info_actief = false;
+                                        } else {
+                                            next.info_actief = false;
                                         }
                                         return next;
                                     });
@@ -629,14 +636,23 @@ export const ExterneKaartlagenPage: React.FC = () => {
                                 placeholder={form.bron_type === 'WMS' ? 'bijv. swf:gv_bomen' : 'bijv. bag:woonplaats'} />
                         </div>
 
-                        {/* WMS Stijl (alleen bij WMS) */}
+                        {/* WMS Stijl & Objectinformatie (alleen bij WMS) */}
                         {form.bron_type === 'WMS' && (
-                            <div className="form-group">
-                                <label className="form-label" htmlFor="el-wms-stijl">WMS Stijl (optioneel)</label>
-                                <input id="el-wms-stijl" className="form-control" value={form.wms_stijl || ''}
-                                    onChange={e => updateField('wms_stijl', e.target.value || null)}
-                                    placeholder="Standaard serverstijl (leeg laten)" />
-                            </div>
+                            <>
+                                <div className="form-group">
+                                    <label className="form-label" htmlFor="el-wms-stijl">WMS Stijl (optioneel)</label>
+                                    <input id="el-wms-stijl" className="form-control" value={form.wms_stijl || ''}
+                                        onChange={e => updateField('wms_stijl', e.target.value || null)}
+                                        placeholder="Standaard serverstijl (leeg laten)" />
+                                </div>
+                                <div className="form-group">
+                                    <label htmlFor="el-info-actief" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontSize: '0.9rem' }}>
+                                        <input id="el-info-actief" type="checkbox" checked={Boolean(form.info_actief)}
+                                            onChange={e => updateField('info_actief', e.target.checked)} />
+                                        <span>Objectinformatie bij klik (GetFeatureInfo) inschakelen</span>
+                                    </label>
+                                </div>
+                            </>
                         )}
 
                         {/* Vectorvelden: SRS & Filter (niet relevant voor WMS) */}
@@ -879,7 +895,7 @@ export const ExterneKaartlagenPage: React.FC = () => {
                                                         {laag.bron_type === 'WMS' ? (
                                                             <span className="badge" style={{ fontSize: '0.75rem' }}
                                                                 title={laag.wms_stijl ? `Stijl: ${laag.wms_stijl}` : 'Standaard serverstijl'}>
-                                                                Serverstijl ({Math.round(laag.opacity * 100)}%)
+                                                                Serverstijl ({Math.round(laag.opacity * 100)}%){laag.info_actief ? ' · Klik-info' : ''}
                                                             </span>
                                                         ) : (
                                                             <div style={{ display: 'flex', justifyContent: 'center', gap: '4px' }}>
