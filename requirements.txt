@@ -13,7 +13,7 @@
 #   docker run --rm -v "$PWD:/w" -w /w python:3.11-slim sh -c "pip install uv && <commando>"
 
 # --- Web Framework ---
-fastapi==0.163.1        # samen met starlette en uvicorn bijwerken (#172); Dependabot slaat ze over
+fastapi==0.165.0        # samen met starlette en uvicorn bijwerken (#172); Dependabot slaat ze over
 starlette==1.10.0        # starlette 1.x: zie #172 (CORS in main.py)
 uvicorn[standard]==0.54.0  # [standard] = watchfiles + httptools voor hot-reload
 python-dotenv>=1.2.4
